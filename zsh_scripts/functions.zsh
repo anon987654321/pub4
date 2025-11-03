@@ -45,8 +45,14 @@ backup() {
 # Display system information
 sysinfo() {
     echo "Hostname: $(hostname)"
-    echo "Uptime: $(uptime -p)"
-    echo "CPU: $(lscpu | grep "Model name" | cut -d: -f2 | xargs)"
-    echo "Memory: $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
+    if command -v uptime >/dev/null 2>&1; then
+        echo "Uptime: $(uptime | sed 's/.*up //' | sed 's/,.*//')"
+    fi
+    if command -v uname >/dev/null 2>&1; then
+        echo "OS: $(uname -s) $(uname -r)"
+    fi
+    if command -v free >/dev/null 2>&1; then
+        echo "Memory: $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}')"
+    fi
     echo "Disk: $(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')"
 }

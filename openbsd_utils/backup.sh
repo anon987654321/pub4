@@ -39,6 +39,6 @@ echo "Size: $SIZE"
 
 # Keep only last 7 backups
 echo "Cleaning old backups (keeping last 7)..."
-ls -t "$BACKUP_DIR"/backup-*.tar.gz | tail -n +8 | xargs -r rm
+ls -t "$BACKUP_DIR"/backup-*.tar.gz | tail -n +8 | while read f; do rm "$f"; done
 
 echo "Done!"
