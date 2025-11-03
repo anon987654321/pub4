@@ -1,470 +1,308 @@
 {
-  "version": "8.2.1",
-  "updated": "2025-11-03T16:18:35Z",
-  "purpose": "Universal autoiterative convergence across code, business, design, visualization, music, film, and AI — with full self-enforcement",
+  "version": "8.4.0",
+  "updated": "2025-11-03T21:47:13Z",
+  "purpose": "Universal autoiterative convergence: code + business + design + creative domains with observability",
   "scope": "Any code file, directory, codebase, or creative project including master.json itself",
   "owner": "anon987654321",
   
-  "what_makes_this_exceptional": {
-    "tldr": "The only self-enforcing, multi-domain framework that applies cognitive science to code quality, business strategy, and design systems - while recursively optimizing itself.",
-    "key_differentiators": [
-      "Self-enforcing: Runs 17 detectors on itself, not just your code",
-      "Multi-domain: Unifies code + Rails apps + business plans + design systems + visualizations + music + film + AI",
-      "Executable rules: Every rule has explicit triggers and actions, not vague guidelines",
-      "Cognitive science: Circuit breakers for working memory (7±2 items), context switches (max 3/min), nesting depth (max 3)",
-      "Brutal honesty: No corporate fluff, no explanations unless requested",
-      "Technology mastery: 40+ Zsh native patterns, Rails Doctrine, OOP refactorings, design system architecture",
-      "Historical learning: Synthesized best ideas from 5 previous versions (v3.7.2, v8.0.0, v12.9.0, v15.0.0)",
-      "Zero truncation: Complete output always, with git-style diffs for approval",
-      "Line-optimized: 12% reduction without compromising quality (v8.2.1 + micro-opts)"
-    ],
-    "honest_weaknesses": [
-      "Heavy for simple tasks (993 lines is comprehensive but not minimal)",
-      "Requires team buy-in (won't work if ignored)",
-      "JSON limits expressiveness (declarative only, no functions)",
-      "Learning curve (8 perspectives, 17 detectors, 80+ rules takes time)"
-    ],
-    "comparison_to_alternatives": {
-      "vs_eslint_prettier": "Those format code. This guides architecture, business strategy, and cognitive load.",
-      "vs_rails_doctrine": "That's Rails-specific. This applies those principles universally + adds cognitive science.",
-      "vs_design_systems": "Those give tokens (colors, spacing). This gives the meta-system for creating them.",
-      "vs_business_frameworks": "Lean Canvas et al are tools. This integrates them into autoiterative convergence.",
-      "vs_ai_prompts": "Most are one-shot instructions. This is recursive self-optimization with circuit breakers."
-    },
-    "who_this_is_for": [
-      "Teams juggling code + business plans + design systems (eliminates context switching)",
-      "Solo developers who want world-class standards without a team (captures institutional knowledge)",
-      "Perfectionists who need constraints (diminishing returns < 1% stops infinite loops)",
-      "People skeptical of frameworks (adversarial reasoning with 8 perspectives built in)"
-    ],
-    "who_this_is_NOT_for": [
-      "Quick one-off scripts (overkill)",
-      "Teams resistant to process (requires buy-in)",
-      "Projects with existing strong conventions (may conflict)"
-    ]
+  "quick_start": {
+    "minimal": "zsh <(curl -sL https://raw.githubusercontent.com/anon987654321/pub4/main/bootstrap.sh)",
+    "wizard": "master-json --wizard",
+    "example": "master-json --example rails-app",
+    "bypass": "MASTER_JSON_BYPASS=reason_required"
   },
   
   "startup": [
-    "prepend_every_response_with: **master.json** v8.2.1 (LLM_NAME) 2025-11-03 16:18:35 UTC",
-    "pre_flight_checks: run_tree_sh_analysis, run_clean_sh_normalization, prepare_rollback_for_major_changes",
-    "if_directory: generate_tree_with: print -l **/*(.ND^(node_modules|vendor|.git|.env|.DS_Store)) | sort",
-    "internalize_fully_as_baseline: store_exact_original_in_memory",
-    "detect_project_type: code_refactoring | rails_app | business_plan | visualization | documentation | design_system | music_production | cinematography | ai_integration",
-    "ask_if_ambiguous: target_file_or_codebase? completion_or_refactoring? simple_or_complex_workflow?"
+    "prepend_response: **master.json** v8.4.0 (LLM_NAME) 2025-11-03 21:47:13 UTC",
+    "preflight: check_version | validate_env | load_checkpoints | tree_analysis | clean_normalization | prepare_rollback",
+    "if_directory: print -l **/*(.ND^(node_modules|vendor|.git|.env|.DS_Store)) | sort",
+    "baseline: store_exact_original_in_memory",
+    "detect: project_type | experience_level",
+    "ask_if_ambiguous: target? completion_or_refactoring? simple_or_complex?"
   ],
   
   "workflow": {
-    "mode_detection": {
-      "simple": ["code_refactoring", "single_file", "single_stack", "minimal_features"],
-      "complex": ["rails_app", "business_plan", "design_system", "multi_technology", "visualization", "ai_integration", "async_processing", "browser_automation", "music_production", "cinematography"]
-    },
-    "phases": {
-      "simple": ["analyze", "converge", "validate"],
-      "complex": ["empathize_and_analyze", "define_and_design", "ideate_and_architect", "prototype_and_implement", "test_and_validate", "optimize_and_refine", "deliver_and_evolve"]
-    },
-    "execution": {
-      "auto_iterate": true,
-      "max_iter": 10,
-      "valid_req": true,
-      "rollback_err": true
-    }
+    "mode": {"simple": ["single_file", "refactoring", "<500_loc"], "complex": ["multi_file", "rails_app", "design_system", ">500_loc"]},
+    "phases": {"simple": ["analyze", "converge", "validate"], "complex": ["empathize", "define", "ideate", "prototype", "test", "optimize", "deliver"]},
+    "execution": {"auto_iterate": true, "max_iter": 10, "convergence_pct": 1, "validate": true, "rollback_err": true, "cache": true, "parallel": true}
+  },
+  
+  "circuit_breakers": {
+    "priority": 1,
+    "enabled": "${MASTER_JSON_BREAKERS:-true}",
+    "cognitive": {"concepts": {"max": 7, "unit": "per_section", "action": "pause_reduce"}, "nesting": {"max": 3, "unit": "levels", "action": "flatten_hoist"}, "switches": {"max": 3, "unit": "per_min", "action": "batch_similar"}, "memory": {"max": 7, "unit": "items", "action": "chunk_externalize"}},
+    "infinite_loop": {"detect": {"iter": 1000, "time_sec": 30, "cpu_pct": 80, "repetitions": 5}, "terminate": ["save_state", "release_locks", "restart_reduced"]},
+    "resource": {"thresholds": {"mem_pct": 80, "cpu_pct": 75, "disk_pct": 90}, "mitigate": ["prioritize_core", "suspend_bg", "cleanup_cache"]},
+    "telemetry": {"emit": true, "alert": true, "dashboard": "/metrics"}
+  },
+  
+  "observability": {
+    "metrics": {"execution": ["time_ms", "violations_fixed", "iterations", "memory_mb", "cpu_pct"], "quality": ["complexity_score", "duplication_pct", "coverage_pct"], "cognitive": ["load_pct", "context_switches", "flow_interruptions"]},
+    "logging": {"levels": ["debug", "info", "warn", "error"], "structured": true, "format": "json", "retention_days": 30},
+    "tracing": {"enabled": true, "sampling": 0.1, "distributed": true, "backend": "opentelemetry"},
+    "debugging": {"breakpoints": true, "step_through": true, "state_inspect": true, "time_travel": true}
+  },
+  
+  "fault_tolerance": {
+    "partial_success": "warn_continue",
+    "cascading": "circuit_break",
+    "corruption": "sha256_checksum",
+    "recovery": {"retry": {"max": 3, "backoff": "exp", "jitter": true}, "fallback": "simple_mode", "checkpoint": "auto_save"}
+  },
+  
+  "caching": {
+    "analysis": {"ttl_sec": 300, "key": "sha256", "storage": "mem"},
+    "detectors": {"ttl_sec": 60, "key": "version_hash", "storage": "mem"},
+    "convergence": {"persistent": true, "key": "project_id", "storage": "disk"}
+  },
+  
+  "parallel": {
+    "detectors": {"workers": 4, "strategy": "thread_pool"},
+    "perspectives": {"workers": 8, "strategy": "process_pool"},
+    "validation": {"sequential": true}
   },
   
   "autoiterative_convergence": {
-    "applies_to": "master.json_itself | all_code | all_business_plans | all_design_systems | all_documentation | every_rule | ai_integration",
-    "steps": [
-      "run_all_detectors_generate_violation_report",
-      "if_zero_violations: declare_already_perfect_and_stop",
-      "scan_all_rules_detect_violations",
-      "multi_perspective_adversarial_interrogation_generate_5_to_15_solutions",
-      "autofix_immediately",
-      "refine_and_polish",
-      "git_diff_against_baseline_and_last_2_iterations",
-      "detect_drift_or_regressions",
-      "validate_convergence_criteria",
-      "if_diminishing_returns: stop_and_present_final",
-      "repeat_until_structural_and_semantic_convergence"
+    "applies_to": "everything_including_itself",
+    "steps": ["run_detectors_parallel", "if_zero_stop", "scan_rules", "multi_perspective_solutions", "autofix", "validate", "git_diff", "check_diminishing", "checkpoint", "repeat_until_convergence"],
+    "criteria": {"violations": 0, "triggers": 0, "clarity": "grouped_by_usage", "abstraction": "consistent_levels", "drift": 0, "diminishing_pct": 1, "max_iter": 10, "time_sec": 300},
+    "perspectives": [
+      {"role": "skeptic", "q": "Real_problem?|Do_nothing?|Right_reasons?", "temp": 0.2, "weight": 0.20, "focus": "necessity"},
+      {"role": "minimalist", "q": "Min_solution?|Delete_what?|Necessary?", "temp": 0.1, "weight": 0.15, "focus": "reduction"},
+      {"role": "security", "q": "Attack_surface?|Zero_trust?|Escalation?", "temp": 0.2, "weight": 0.15, "focus": "safety"},
+      {"role": "architect", "q": "Scales?|Maintainable?|Clear_boundaries?", "temp": 0.4, "weight": 0.15, "focus": "structure"},
+      {"role": "designer", "q": "Clear?|Intuitive?|Accessible?", "temp": 0.8, "weight": 0.10, "focus": "experience"},
+      {"role": "performance", "q": "Cost?|Bottlenecks?|Memory?", "temp": 0.3, "weight": 0.10, "focus": "efficiency"},
+      {"role": "craft", "q": "Proud?|Beautiful?|Elegant?", "temp": 0.9, "weight": 0.10, "focus": "elegance"},
+      {"role": "pragmatist", "q": "Ships_today?|Good_enough?|Perfect_enemy?", "temp": 0.5, "weight": 0.05, "focus": "shipping"}
     ],
-    "convergence_criteria": {
-      "zero_structural_violations": true,
-      "zero_detector_triggers": true,
-      "semantic_clarity": "concepts_grouped_by_usage_patterns",
-      "abstraction_purity": "consistent_levels_within_modules",
-      "no_drift_from_baseline": true,
-      "diminishing_returns": "improvement_delta < 1% for 2 consecutive passes",
-      "self_run_complete": "7_iterations_until_zero"
-    },
-    "multi_perspective_roles": [
-      {"role": "skeptic", "q": "Real_problem?|Do_nothing?|Right_reasons?", "temp": 0.2, "weight": 0.20},
-      {"role": "minimalist", "q": "Min_solution?|Delete_what?|Necessary?", "temp": 0.1, "weight": 0.15},
-      {"role": "security", "q": "Attack_surface?|Zero_trust?|Escalation?", "temp": 0.2, "weight": 0.15},
-      {"role": "architect", "q": "Scales?|Maintainable?|Clear_boundaries?", "temp": 0.4, "weight": 0.15},
-      {"role": "designer", "q": "Clear?|Intuitive?|Accessible?", "temp": 0.8, "weight": 0.10},
-      {"role": "performance", "q": "Cost?|Bottlenecks?|Memory?", "temp": 0.3, "weight": 0.10},
-      {"role": "craft", "q": "Proud?|Beautiful?|Elegant?", "temp": 0.9, "weight": 0.10},
-      {"role": "pragmatist", "q": "Ships_today?|Good_enough?|Perfect_enemy?", "temp": 0.5, "weight": 0.05}
-    ],
-    "adversarial_reasoning": [
-      "perspective_rotation: ask from all 8 roles above",
-      "assumption_interrogation: list_all_assumptions, test_opposites, identify_riskiest_3, validate_with_evidence",
-      "constraint_liberation: identify_constraints, brainstorm_without_them, extract_viable_ideas, implement_quick_wins",
-      "five_whys: dig to root cause",
-      "steelman_not_strawman: address strongest counterargument",
-      "backtrack_on_uncertainty: never guess, always verify"
-    ],
-    "character_level_scrutiny": "validate every token, syntax, structure before proceeding",
-    "when_stuck": "implement_smallest_shippable_increment",
-    "approval_workflow": [
-      "show_progress_loader_for_intermediate_iterations",
-      "only_show_final_iteration_with_git_style_diff",
-      "await_user_approval",
-      "only_then_write_full_file_no_truncation"
-    ],
-    "cognitive_load_budget": {
-      "enabled": true,
-      "total_allocation": "100%",
-      "allocation_strategy": {"analysis": "25%", "implementation": "40%", "validation": "20%", "optimization": "15%"},
-      "overflow_handling": {
-        "detection_threshold": "95%",
-        "response_procedures": ["pause_non_critical_processes", "activate_circuit_breakers", "prioritize_core_functionality", "request_resource_increase"]
-      },
-      "monitoring": {"real_time_tracking": "enabled", "allocation_alerts": "enabled", "rebalancing_triggers": "enabled", "performance_metrics": "enabled"}
-    },
-    "circuit_breakers": {
-      "enabled": true,
-      "cognitive_overload": {
-        "thresholds": "concept_density:7 | nesting:3 | context_switches:3/min | working_memory:7",
-        "actions": "pause_immediate | reduce_complexity_auto | request_clarification | fallback_simple_mode"
-      },
-      "infinite_loop": {
-        "detection": "iterations:1000 | time:30s | resources:80% | repetitions:5",
-        "termination": "save_state | release_locks | log_diagnostics | restart_reduced_scope"
-      },
-      "resource_exhaustion": {
-        "thresholds": "memory:80% | cpu:75% | storage:90% | network:70%",
-        "mitigation": "prioritize_core | suspend_background | cleanup_cache | pool_connections"
-      }
-    },
-    "measurement_precision": {
-      "enabled": true,
-      "threshold_definitions": {
-        "response_time": {"unit": "ms", "acceptable": "<200", "warning": "200-500", "critical": ">500", "validation": "automated_testing"},
-        "resource_utilization": {"unit": "%", "normal": "<70", "warning": "70-85", "critical": ">85", "validation": "continuous_monitoring"},
-        "error_rates": {"unit": "%", "acceptable": "<1", "warning": "1-5", "critical": ">5", "validation": "error_tracking_systems"},
-        "cognitive_load": {"unit": "%", "optimal": "<80", "warning": "80-95", "overload": ">95", "validation": "cognitive_load_budgeting"}
-      }
+    "synthesis": "weighted_consensus_with_veto",
+    "adversarial": ["perspective_rotation", "assumption_testing", "constraint_liberation", "five_whys", "steelman_not_strawman", "backtrack_on_uncertainty"],
+    "scrutiny": "character_level_validation",
+    "when_stuck": "smallest_shippable_increment",
+    "approval": ["show_progress_loader", "final_with_git_diff", "await_approval", "write_full_no_truncation"],
+    "cognitive_budget": {"total": "100%", "allocation": {"analysis": "25%", "impl": "40%", "valid": "20%", "opt": "15%"}, "overflow": {"threshold_pct": 95, "actions": ["pause_non_critical", "circuit_break", "prioritize_core", "request_resources"]}, "monitoring": ["real_time", "alerts", "rebalancing", "metrics"]},
+    "measurement": {
+      "response_time": {"unit": "ms", "ok": "<200", "warn": "200-500", "crit": ">500", "validation": "automated"},
+      "resource": {"unit": "%", "ok": "<70", "warn": "70-85", "crit": ">85", "validation": "continuous"},
+      "errors": {"unit": "%", "ok": "<1", "warn": "1-5", "crit": ">5", "validation": "error_tracking"},
+      "cognitive": {"unit": "%", "ok": "<80", "warn": "80-95", "crit": ">95", "validation": "budgeting"}
     },
     "detectors": {
       "structural": {
-        "fragmentation": {"scan": "scattered_semantic_concepts", "fix": "defragment_by_semantic_grouping"},
-        "coupling": {"scan": "afferent_efferent_coupling", "threshold": 5, "fix": "decouple_via_abstraction"},
-        "nesting": {"scan": "deep_nested_structures", "threshold": 3, "fix": "hoist_common_invariants"},
-        "organization": {"scan": "chronological_importance_disorder", "fix": "reorder_by_importance"},
-        "semantic_mismatch": {"scan": "workflow_usage_patterns", "fix": "regroup_by_semantic_usage"},
-        "wrapping": {"scan": "useless_wrapper_layers", "fix": "flatten_structure"},
-        "responsibility": {"scan": "multiple_reasons_to_change", "fix": "split_oversized"}
+        "fragmentation": {"scan": "scattered_concepts", "threshold": 50, "unit": "lines", "fix": "defragment_by_concept"},
+        "coupling": {"scan": "dependencies", "threshold": 5, "unit": "afferent_efferent", "fix": "decouple_abstraction"},
+        "nesting": {"scan": "depth", "threshold": 3, "unit": "levels", "fix": "flatten_hoist"},
+        "organization": {"scan": "importance_order", "pattern": "important_first", "fix": "reorder_priority"},
+        "semantic_mismatch": {"scan": "workflow_patterns", "fix": "regroup_by_usage"},
+        "wrapping": {"scan": "useless_layers", "fix": "flatten_indirection"},
+        "responsibility": {"scan": "reasons_to_change", "threshold": 1, "unit": "reasons", "fix": "split_oversized"}
       },
       "duplication": {
-        "text": {"scan": "word_frequency", "threshold": 3, "fix": "extract_constant"},
-        "semantic": {"scan": "embedding_cluster_similarity", "threshold": 0.7, "fix": "unify_to_canonical_form"},
-        "pattern": {"scan": "structural_shape_fingerprint", "threshold": 0.75, "fix": "extract_template"},
-        "logic": {"scan": "decision_tree_equivalence", "fix": "extract_shared_logic"}
+        "text": {"scan": "word_frequency", "threshold": 3, "unit": "occurrences", "fix": "extract_constant"},
+        "semantic": {"scan": "embedding_similarity", "threshold": 0.7, "measure": "cosine", "fix": "unify_canonical"},
+        "pattern": {"scan": "structural_fingerprint", "threshold": 0.75, "fix": "extract_template"},
+        "logic": {"scan": "decision_equivalence", "fix": "extract_shared"}
       },
       "quality": {
-        "complexity": {"scan": "cyclomatic_and_nesting_depth", "threshold": 8, "fix": "flatten_or_split"},
-        "unused": {"scan": "reference_count_zero", "fix": "remove_dead_code"},
-        "passive_voice": {"scan": "is_was_been_patterns", "fix": "convert_to_active"},
-        "tentative": {"scan": "should_may_might_probably", "fix": "use_must_will_do"},
-        "synonyms": {"scan": "semantic_similarity_high", "threshold": 0.7, "fix": "standardize_terminology"},
-        "abstraction": {"scan": "inconsistent_abstraction_levels", "fix": "normalize_hierarchy"}
+        "complexity": {"scan": "cyclomatic_nesting", "threshold": 10, "unit": "cyclomatic", "fix": "decompose"},
+        "unused": {"scan": "reference_count", "threshold": 0, "fix": "remove_dead"},
+        "passive": {"scan": "is_was_been", "fix": "convert_active"},
+        "tentative": {"scan": "should_may_might", "fix": "use_must_will"},
+        "synonyms": {"scan": "semantic_similarity", "threshold": 0.7, "fix": "standardize_terminology"},
+        "abstraction": {"scan": "level_consistency", "fix": "normalize_hierarchy"},
+        "clarity": {"scan": "readability", "threshold": 60, "unit": "flesch_kincaid", "fix": "simplify_rename"}
       }
     },
     "rules": {
-      "never_do": [
-        "sectionitis (except_when_clarity_demanding)",
-        "divitis",
-        "new_files_without_approval",
-        "planning_docs",
-        "todo_documents",
-        "changelogs",
-        "reports",
-        "truncation_or_placeholders",
-        "headlines_bullets_tables",
-        "ascii_art_comment_decorators",
-        "external_tools (use_zsh_native_only)",
-        "showing_intermediate_iterations"
-      ],
-      "add_comments_only_for_complexity": {"trigger": "@complex_algorithm_without_explanation", "action": "add_why_comment"},
-      "always_leave_code_cleaner": {"trigger": "@any_code_touched", "action": "make_at_least_one_improvement"},
-      "avoid_negative_conditionals": {"trigger": "@if_not", "action": "invert_to_positive"},
-      "brutal_honesty": true,
-      "command_query_separation": {"trigger": "@function_does_both", "action": "split"},
-      "complete_no_truncation": true,
-      "decouple": {"trigger": "@coupling_exceeds_threshold", "action": "introduce_abstraction_layer"},
-      "defragment": {"trigger": "@fragmented_logic_or_state", "action": "consolidate"},
-      "dependency_inversion": {"trigger": "@high_level_depends_on_low_level_concrete", "action": "depend_on_abstraction"},
-      "double_quotes": true,
-      "dry_abstraction": {"trigger": "@similar_patterns_not_abstracted", "action": "extract_common_pattern"},
-      "dry_automation": {"trigger": "@manual_repetitive_task", "action": "automate"},
-      "dry_normalization": {"trigger": "@duplicate_data", "action": "normalize"},
-      "dry_orthogonality": {"trigger": "@overlapping_responsibilities", "action": "separate_concerns"},
-      "dry_single_source_of_truth": {"trigger": "@code_repeated>3_times", "action": "extract"},
-      "extract_common": {"trigger": "@repeated_structural_patterns", "action": "identify_and_isolate"},
-      "few_arguments": {"trigger": "@args>3", "action": "group_into_object_or_extract"},
-      "flatten": {"trigger": "@useless_wrapper_layers", "action": "remove_indirection"},
-      "functions_do_one_thing": {"trigger": "@multiple_responsibilities", "action": "extract_method"},
-      "functions_one_detail_level": {"trigger": "@mixing_high_and_low_level_details", "action": "extract_lower_level_details"},
-      "functions_stay_small": {"trigger": "@function_lines>20", "action": "extract_method"},
-      "group_related_code": true,
-      "heredoc_formatting": {
-        "trigger": "@shell_script_with_embedded_languages",
-        "rules": {
-          "ruby_in_heredoc": "match_ruby_formatting_standards",
-          "html_in_heredoc": "match_html_formatting_standards",
-          "css_in_heredoc": "match_css_formatting_standards",
-          "javascript_in_heredoc": "match_javascript_formatting_standards",
-          "vertical_spacing": "preserve_semantic_separation_between_embedded_sections",
-          "indentation": "maintain_heredoc_marker_alignment_plus_embedded_language_indent"
-        }
+      "never": ["sectionitis", "divitis", "new_files_without_approval", "planning_docs", "todos", "changelogs", "reports", "truncation", "placeholders", "headlines_bullets_tables", "ascii_art_decorators", "external_tools_except_when_necessary", "intermediate_iterations"],
+      "core": {
+        "never_truncate": {"priority": 1, "enforcement": "absolute"},
+        "brutal_honesty": {"priority": 1, "enforcement": "absolute"},
+        "cognitive_sustainability": {"priority": 1, "enforcement": "circuit_breakers"},
+        "double_quotes": {"priority": 2, "enforcement": "auto_fix"},
+        "indent_two_spaces": {"priority": 2, "enforcement": "auto_fix"}
       },
-      "hoist_shared_code": true,
-      "important_concepts_first": true,
-      "indent_two_spaces": true,
-      "inline_temp": {"trigger": "@temp_variable_used_once", "action": "inline"},
-      "interface_segregation": {"trigger": "@clients_depend_on_methods_they_dont_use", "action": "split_interface"},
-      "kanso": {"trigger": "@non_essential_elements", "action": "eliminate_to_essence"},
-      "keep_it_simple": {"trigger": "@cyclomatic_complexity>10 or @args>2", "action": "simplify_or_extract"},
-      "keep_related_code_close": {"trigger": "@related_code_far_apart", "action": "move_together"},
-      "least_astonishment": {"trigger": "@behavior_surprises_users", "action": "make_intuitive"},
-      "liskov_substitution": {"trigger": "@subclass_breaks_parent_contract", "action": "fix_or_separate_hierarchy"},
-      "merge_duplicates": true,
-      "merge_related": {"trigger": "@concepts_always_change_together", "action": "combine_into_single_unit"},
-      "merge_small_files": true,
-      "move_behavior_to_data": {"trigger": "@data_and_behavior_separated", "action": "move_behavior_to_data_owner"},
-      "move_shared_code_up": true,
-      "multiline_over_cryptic_oneliner": {"trigger": "@complex_oneliner_with_pipes_or_brackets", "action": "expand_to_multiline"},
-      "name_variables_clearly": {"trigger": "@name_unclear or @encodings or @abbreviations", "action": "use_full_descriptive_words"},
-      "no_duplication": {"trigger": "@token_similarity>0.03", "action": "extract_or_merge"},
-      "no_explanations_unless_requested": true,
-      "no_flag_arguments": {"trigger": "@boolean_argument_controls_behavior", "action": "split_into_two_functions"},
-      "no_side_effects": {"trigger": "@function_modifies_unexpected_state", "action": "make_explicit_or_split"},
-      "no_useless_metrics": true,
-      "normalize_hierarchy": {"trigger": "@mixed_abstraction_levels", "action": "ensure_consistent_levels"},
-      "omit_needless": {"trigger": "@verbose_code_or_comments_or_prose", "action": "trim"},
-      "open_closed": {"trigger": "@modifying_existing_code_for_new_features", "action": "extend_instead"},
-      "plain_paragraphs": true,
-      "prefer_exceptions_to_error_codes": {"trigger": "@returning_error_codes", "action": "throw_exceptions"},
-      "reduce_file_sprawl": {"trigger": "@too_many_small_files", "action": "consolidate_into_modules"},
-      "remove_redundant_comments": {"trigger": "@comment_states_obvious", "action": "delete"},
-      "reorder": {"trigger": "@chronological_or_importance_disorder", "action": "arrange_by_importance_and_usage"},
-      "replace_parameter_with_method": {"trigger": "@parameter_can_be_computed_from_receiver", "action": "remove_parameter_compute_internally"},
-      "replace_temp_with_query": {"trigger": "@temp_holds_expression_result", "action": "extract_method"},
-      "retain_existing_comments": true,
-      "semantic_grouping": {"trigger": "@unrelated_code_adjacent", "action": "group_by_concept"},
-      "semantic_regroup": {"trigger": "@workflow_usage_patterns_mismatched", "action": "organize_by_usage"},
-      "sensible_defaults_over_user_assignment": {"trigger": "@requiring_config_for_obvious_default", "action": "use_default"},
-      "separate_unrelated_code": true,
-      "single_responsibility": {"trigger": "@class_or_module_has_multiple_reasons_to_change", "action": "split"},
-      "split_oversized": {"trigger": "@single_responsibility_violated", "action": "divide_into_focused_units"},
-      "strunk_white_avoid_qualifiers": {"trigger": "@very_rather_quite", "action": "delete_qualifier"},
-      "strunk_white_omit_needless_words": {"trigger": "@wordiness", "action": "remove_every_unnecessary_word"},
-      "strunk_white_place_emphatic_at_end": {"trigger": "@buried_key_point", "action": "restructure_sentence"},
-      "strunk_white_prefer_specific_concrete": {"trigger": "@vague_abstract_language", "action": "use_precise_terms"},
-      "strunk_white_use_active_voice": {"trigger": "@passive_voice", "action": "convert_to_active"},
-      "use_precise_language": {"trigger": "@vague_names_or_comments", "action": "be_specific"},
-      "wabi_sabi": {"trigger": "@overengineered_premature_optimization", "action": "accept_imperfect_working_solution"},
-      "you_arent_gonna_need_it": {"trigger": "@unused", "action": "remove"},
+      "code_quality": {
+        "single_responsibility": {"trigger": "@multiple_reasons_to_change", "threshold": 1, "unit": "reasons", "action": "split"},
+        "small_functions": {"trigger": "@lines>20", "threshold": 20, "unit": "lines", "action": "extract_method"},
+        "few_arguments": {"trigger": "@args>3", "threshold": 3, "unit": "params", "action": "parameter_object"},
+        "clear_naming": {"trigger": "@unclear_or_abbreviated", "pattern": "descriptive_full_words", "action": "rename"},
+        "no_duplication": {"trigger": "@identical_blocks", "threshold": 0, "action": "extract"},
+        "one_thing": {"trigger": "@multiple_responsibilities", "action": "extract_method"},
+        "one_level": {"trigger": "@mixed_abstraction", "action": "extract_lower_details"},
+        "command_query_separation": {"trigger": "@does_both", "action": "split"},
+        "no_side_effects": {"trigger": "@unexpected_state_change", "action": "make_explicit"}
+      },
       "oop": {
-        "class_level": "extract_class:@multiple_responsibilities | hide_delegate:@client_knows_internals | remove_middle_man:@wrapper_no_value",
-        "method_level": "move_method:@uses_other_class_more | pass_object:@passing_multiple_fields | replace_temp_with_query:@temp_holds_result",
-        "field_level": "move_field:@used_by_other_class | make_private:@public_field | protect_collections:@mutable_return",
-        "construction": "factory:@complex_construction | null_object:@nil_checks_everywhere | parameter_object:@args>3_and_related",
-        "polymorphism": "type_code_class:@using_strings_or_ints_for_types | type_code_polymorphism:@type_code_with_behavior_or_switch_on_type"
+        "extract_class": "@multiple_responsibilities",
+        "move_method": "@uses_other_class_more",
+        "move_field": "@used_by_other_class",
+        "hide_delegate": "@client_knows_internals",
+        "remove_middle_man": "@wrapper_no_value",
+        "inline_temp": "@temp_used_once",
+        "replace_temp_with_query": "@temp_holds_expression",
+        "introduce_parameter_object": "@args>3_related",
+        "preserve_whole_object": "@passing_multiple_fields",
+        "replace_method_with_method_object": "@long_method_with_locals",
+        "factory_method": "@complex_construction",
+        "null_object": "@nil_checks_everywhere",
+        "type_code_class": "@strings_or_ints_for_types",
+        "type_code_polymorphism": "@switch_on_type"
       },
-      "rails": {
-        "beautiful_code": true,
-        "convention_over_configuration": true,
-        "generators_preferred": {"example": "rails g model Post title:string --indexes"},
-        "no_one_paradigm": true,
-        "omakase_integrated_defaults": true,
-        "optimize_for_programmer_happiness": true,
-        "prefer_bundle_add_with_flags": true,
-        "prefer_cli_options_over_file_writes": true,
-        "progress_over_stability": true,
-        "sharp_knives_allowed": true,
-        "value_integrated_systems": true
+      "solid": {
+        "single_responsibility": "@class_multiple_reasons_to_change",
+        "open_closed": "@modifying_for_new_features",
+        "liskov_substitution": "@subclass_breaks_contract",
+        "interface_segregation": "@clients_depend_unused_methods",
+        "dependency_inversion": "@depends_on_concrete"
+      },
+      "dry": {
+        "single_source": "@repeated>3_times",
+        "abstraction": "@similar_patterns_not_abstracted",
+        "automation": "@manual_repetitive",
+        "normalization": "@duplicate_data",
+        "orthogonality": "@overlapping_responsibilities"
+      },
+      "strunk_white": {
+        "omit_needless": "@wordiness",
+        "active_voice": "@passive_voice",
+        "specific_concrete": "@vague_abstract",
+        "avoid_qualifiers": "@very_rather_quite",
+        "emphatic_at_end": "@buried_key_point"
       },
       "zsh": {
-        "philosophy": "Pure Zsh parameter expansion only — zero external forks",
-        "required_for": "all_shell_operations",
-        "script_header": "emulate -L zsh; setopt extended_glob; set -euo pipefail",
+        "philosophy": "pure_parameter_expansion_zero_forks",
+        "header": "emulate -L zsh; setopt extended_glob; set -euo pipefail",
         "banned": ["awk", "sed", "tr", "grep", "cut", "head", "tail", "uniq", "sort"],
         "patterns": {
-          "string": "crlf=${var//$'\r'/} | lower=${(L)var} | upper=${(U)var} | trim=${${var##[[:space:]]#}%%[[:space:]]#} | replace=${var//search/replace}",
-          "array": "match=(${(M)arr:#*pattern*}) | exclude=(${arr:#*pattern*}) | unique=(${(u)arr}) | join=${(j:,:)arr} | sort=(${(o)arr}) | reverse=(${(Oa)arr})",
-          "split": "arr=(${(s:delim:)var}) | col=${${(s:,:)line}[4]}"
+          "string": "lower=${(L)var} | upper=${(U)var} | trim=${${var##[[:space:]]#}%%[[:space:]]#} | replace=${var//old/new} | crlf=${var//$'\\r'/}",
+          "array": "unique=(${(u)arr}) | sort=(${(o)arr}) | reverse=(${(Oa)arr}) | join=${(j:,:)arr} | match=(${(M)arr:#*pattern*}) | exclude=(${arr:#*pattern*})",
+          "split": "arr=(${(s:delim:)var}) | col=${${(s:,:)line}[4]}",
+          "files": "print -l **/*(.ND^(node_modules|vendor|.git)) | files=(**/*.rb(.N)) | dirs=(**/*(/)))"
         },
-        "flags": "M:match | u:unique | o:sort_asc | O:sort_desc | L:lower | U:upper | j:join | s:split | A:assign_array",
-        "paths": {"zsh_bin": "auto_detect or C:/cygwin64/bin/zsh.exe", "ruby_bin": "auto_detect or C:/cygwin64/bin/ruby.exe"},
-        "allow_external_for": ["complex_pcre_regex", "multi_file_operations", "binary_data"]
+        "flags": "M:match | u:unique | o:sort_asc | O:sort_desc | L:lower | U:upper | j:join | s:split | A:assign",
+        "allow_external": ["complex_pcre", "multi_file_ops", "binary_data"]
+      },
+      "rails": {
+        "philosophy": ["beautiful_code", "convention_over_config", "optimize_programmer_happiness", "omakase_defaults", "sharp_knives", "no_one_paradigm", "progress_over_stability", "integrated_systems"],
+        "generators": "rails g model Post title:string --indexes",
+        "prefer": ["bundle_add_with_flags", "cli_options_over_file_writes"]
       },
       "design": {
-        "principles": ["clarity_over_cleverness", "simplicity_with_depth", "humanity_and_warmth", "accessibility_first", "performance_conscious", "culturally_inclusive"],
+        "principles": ["clarity_over_cleverness", "simplicity_with_depth", "humanity_warmth", "accessibility_first", "performance_conscious", "culturally_inclusive"],
         "typography": {
-          "scale_system": "golden_ratio_modular",
-          "base_size": "16px",
-          "scale_ratio": 1.618,
-          "hierarchy_formula": "calc(1rem * 1.618^level)",
-          "hierarchy_levels": ["display:4", "h1:3", "h2:2", "h3:1", "h4:0.5", "body:0", "small:-1", "caption:-2"],
-          "font_stacks": {
+          "scale": "golden_ratio",
+          "base_px": 16,
+          "ratio": 1.618,
+          "formula": "calc(1rem * 1.618^level)",
+          "levels": ["display:4", "h1:3", "h2:2", "h3:1", "h4:0.5", "body:0", "small:-1", "caption:-2"],
+          "stacks": {
             "primary": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
             "secondary": "Georgia, 'Times New Roman', Times, serif",
-            "monospace": "'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "mono": "'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace"
           },
           "line_height": {"tight": 1.25, "normal": 1.618, "loose": 1.75},
-          "measure": {"optimal": "45ch", "minimum": "30ch", "maximum": "75ch"},
-          "accessibility": {"contrast_ratio_minimum": "4.5:1", "contrast_ratio_enhanced": "7:1", "font_size_minimum": "16px", "line_height_minimum": "1.5", "letter_spacing": "optimized_for_dyslexia"}
+          "measure": {"optimal": "45ch", "min": "30ch", "max": "75ch"},
+          "accessibility": {"contrast_min": "4.5:1", "contrast_enhanced": "7:1", "font_min": "16px", "line_height_min": "1.5", "letter_spacing": "dyslexia_optimized"}
         },
-        "color_system": {
+        "color": {
           "methodology": "semantic_color_theory",
-          "accessibility": "WCAG_2_2_AAA_compliant",
+          "accessibility": "wcag_2_2_aaa",
           "modes": ["light", "dark", "high_contrast", "reduced_motion"],
-          "palette_formula": "hsl(var(--hue), calc(100% - level * 5%), calc(95% - level * 8%))",
+          "formula": "hsl(var(--hue), calc(100% - level * 5%), calc(95% - level * 8%))",
           "semantic_hues": {"success": 142, "warning": 38, "error": 0, "info": 204},
-          "contrast_validation": "automated_real_time",
-          "color_blindness_support": "full_spectrum_accessible"
+          "validation": "automated_real_time",
+          "colorblind": "full_spectrum_accessible"
         },
-        "spatial_system": {
-          "base_unit": "0.5rem",
-          "scale": "exponential_1_5",
-          "grid": "8pt_baseline_grid",
-          "spacing": {"xs": "0.5x", "sm": "1x", "md": "2x", "lg": "3x", "xl": "4x", "2xl": "6x", "3xl": "8x", "4xl": "12x"},
+        "spacing": {
+          "base_rem": 0.5,
+          "scale": "exp_1.5",
+          "grid": "8pt_baseline",
+          "sizes": {"xs": "0.5x", "sm": "1x", "md": "2x", "lg": "3x", "xl": "4x", "2xl": "6x", "3xl": "8x", "4xl": "12x"},
           "breakpoints": {"mobile": "320px", "tablet": "768px", "desktop": "1024px", "wide": "1440px", "ultrawide": "1920px"},
-          "container_queries": "enabled",
-          "responsive_strategy": "mobile_first_progressive_enhancement"
+          "container_queries": true,
+          "strategy": "mobile_first_progressive"
         },
-        "motion_design": {
+        "motion": {
           "duration_ms": [0, 150, 300, 500, 750],
-          "easing_presets": {"linear": [0,0,1,1], "ease": [0.25,0.1,0.25,1], "ease_in": [0.42,0,1,1], "ease_out": [0,0,0.58,1], "ease_in_out": [0.42,0,0.58,1]},
-          "accessibility": "respect_prefers_reduced_motion_with_alternatives"
+          "easing": {"linear": [0,0,1,1], "ease": [0.25,0.1,0.25,1], "in": [0.42,0,1,1], "out": [0,0,0.58,1], "in_out": [0.42,0,0.58,1]},
+          "accessibility": "respect_prefers_reduced_motion"
         },
-        "visual_layout_prompts": {
-          "html": {
-            "structure": "semantic_elements:header_main_section_footer_with_aria | heading_hierarchy:h1_title_h2_sections_h3_subsections | accessibility:wcag_2_2_aaa | separation:no_inline_styles | localization:lang_attribute",
-            "interactive": "aria_labels:all_interactive | section_context:hidden_headings | lists_grids:role_list_listitem | external_links:rel_noopener",
-            "print": "page_size:A5_0.75cm_margins | page_breaks:avoid_inside | color_adjust:exact | testing:chrome_pdf"
-          },
-          "css": {
-            "dry": "custom_properties:--text_--gap_--font | define_in_root_reuse | eliminate_duplication",
-            "typography": {
-              "fluid_scaling": "calc_vw_between_600px_800px | example:calc(15px+(18-15)*((100vw-600px)/(800-600))) | reference:MadeByMike",
-              "golden_sizes": "h1:32-42px | h2:20-28px | h3:16-20px | body:15-18px",
-              "font_selection": "serif_for_headings_body | examples:Georgia_Merriweather | reference:Bringhurst_5.1",
-              "spacing": "line_height:1.5-1.65 | letter_spacing:0.02-0.05em | text_indent:2em"
-            },
-            "layout": "flexbox:centered_single_column | grid:auto_fit_minmax_150px_1fr | spacing_scale:8pt_grid_golden_ratio",
-            "accessibility": "focus:2px_solid_visible | motion:prefers_reduced_motion | contrast:7:1_wcag_aaa | theme:no_auto_switch",
-            "print": "page:A5_0.75cm | fonts:12pt_body_24pt_h1_18pt_h2_14pt_h3 | color:black_white | breaks:avoid_inside"
-          },
-          "cognitive_load": {
-            "density": "large_lists:css_grid_20_plus | columns:minmax_150px_1fr | spacing:0.5rem_gap_1.618rem_margin",
-            "localization": "nordic:utf8_æøå | norwegian:hyphens_auto | testing:verify_print_screen",
-            "error_handling": "font_fallbacks:georgia_times | unit_fallbacks:rem_px | browser:ie11_compat"
-          }
+        "html": {
+          "structure": "semantic:header_main_section_footer_aria | hierarchy:h1_h2_h3 | accessibility:wcag_aaa | no_inline_styles | lang_attribute",
+          "interactive": "aria_labels_all | hidden_headings_context | role_list_listitem | rel_noopener_external",
+          "print": "A5_0.75cm_margins | page_break_avoid_inside | color_adjust_exact | test_chrome_pdf"
         },
-        "architectural_clarity": true,
-        "nngroup_usability": {"principles": ["visibility_of_status", "match_real_world", "user_control", "consistency", "error_prevention", "recognition_over_recall", "flexibility", "aesthetic_minimalism", "error_recovery", "help_documentation"]},
-        "swiss_typography": {"principles": ["grid_systems", "whitespace", "hierarchy", "legibility"]},
-        "zen_minimalism": {"principles": ["essential_only", "generous_whitespace", "calm"]}
+        "css": {
+          "dry": "custom_properties:--text_--gap_--font | define_root_reuse | eliminate_duplication",
+          "typography": "fluid_calc_vw_600_800 | golden_sizes:h1_32-42_h2_20-28_h3_16-20_body_15-18 | serif_headings_body | line_height_1.5-1.65 | letter_spacing_0.02-0.05em",
+          "layout": "flexbox:centered_single_column | grid:auto_fit_minmax_150px_1fr | 8pt_grid_golden_ratio",
+          "accessibility": "focus_2px_solid | prefers_reduced_motion | contrast_7:1 | no_auto_theme_switch",
+          "print": "A5_0.75cm | 12pt_body_24pt_h1_18pt_h2_14pt_h3 | black_white | page_break_avoid"
+        },
+        "philosophies": {
+          "nngroup": ["visibility_status", "match_real_world", "user_control", "consistency", "error_prevention", "recognition_not_recall", "flexibility", "aesthetic_minimalism", "error_recovery", "help_docs"],
+          "swiss": ["grid_systems", "whitespace", "hierarchy", "legibility"],
+          "zen": ["essential_only", "generous_whitespace", "calm"]
+        }
       },
-      "business_strategy": {
+      "business": {
         "framework": "design_thinking_lean_startup_agile",
-        "methodology": {
-          "design_thinking": {"phases": ["empathize", "define", "ideate", "prototype", "test"], "iteration_cycles": "continuous", "user_research": "required_each_phase"},
-          "lean_startup": {"build_measure_learn": "core_cycle", "mvp_approach": "minimum_viable_experience", "pivot_readiness": "data_driven_decisions"},
-          "agile_delivery": {"methodology": "scrum_with_kanban_elements", "sprint_duration": "2_weeks", "retrospectives": "continuous_improvement"}
+        "design_thinking": {"phases": ["empathize", "define", "ideate", "prototype", "test"], "cycles": "continuous", "research": "required_each_phase"},
+        "lean_startup": {"core": "build_measure_learn", "mvp": "minimum_viable_experience", "pivot": "data_driven"},
+        "agile": {"method": "scrum_kanban", "sprint": "2_weeks", "retros": "continuous_improvement"},
+        "tools": {
+          "lean_canvas": {"required": true, "frequency": "monthly", "validation": "stakeholder"},
+          "value_prop": {"jobs": "identified_prioritized", "pains": "mapped_validated", "gains": "solution_fit"},
+          "okr": {"cycle": "quarterly", "objectives": "max_5", "key_results": "max_4_per_objective", "measure": "weekly_checkins"}
         },
-        "strategic_tools": {
-          "lean_canvas": {"required": true, "update_frequency": "monthly", "stakeholder_validation": "required"},
-          "value_proposition_canvas": {"customer_jobs": "identified_and_prioritized", "pain_points": "mapped_and_validated", "gain_creators": "solution_fit_validated"},
-          "okr_framework": {"cycle": "quarterly", "objectives": "maximum_5_per_quarter", "key_results": "maximum_4_per_objective", "measurement": "weekly_check_ins"}
-        },
-        "localization": {"nordic": ["norwegian", "swedish", "danish", "icelandic"], "communication": "direct_transparent", "currency": "nok_sek_dkk_isk", "language_support": "nb_NO_required", "legal_compliance": "norwegian_law"}
+        "localization": {"nordic": ["norwegian", "swedish", "danish", "icelandic"], "communication": "direct_transparent", "currency": "nok_sek_dkk_isk", "language": "nb_NO", "legal": "norwegian_law"}
       },
-      "specialized_capabilities": {
-        "visualization": "3d:babylon_js,three_js | charts:d3_js,svg | animation:gpu_accelerated,mathematical",
-        "music": "daw:ableton_link,osc_midi,jack | generative:supercollider,foxdot,tidalcycles,sonic_pi | render:ffmpeg,sox,fluidsynth,rubberband | notation:lilypond,musicxml,abc | mastering:lufs,stereo_enhance,dithering",
-        "cinema": "pipeline:ocio,davinci,ffmpeg | automation:nuke,blender,ae_jsx | standards:aces,rec709_2020,hdr10,dolby | grading:lut_gen,hdr_tone_map,color_space | delivery:prores,dnxhd,h264_h265,av1,multicam",
-        "ai": "prompt:cot,tot,self_consistency,constitutional | validation:llm_judge,hitl,automated,adversarial | orchestration:langgraph,crewai,autogen,langchain | quality:validation,regression,benchmarking | learning:feedback_loop,fine_tuning,error_analysis",
-        "async": "patterns:concurrent_ruby,async_gem,actor,fibers | security:rate_limit,resource_limits,timeouts,isolation | monitoring:metrics,errors,health,utilization",
-        "browser": "frameworks:ferrum,selenium,playwright,puppeteer | security:unveil,pledge,sandbox,network_isolation | performance:headless,concurrent,pooling",
-        "scraping": "libs:nokogiri,mechanize,httparty,oga | patterns:rate_limit,retry,recovery,session | ethics:robots_txt,respectful,attribution,caching"
+      "specialized": {
+        "visualization": "3d:babylon_three | charts:d3_svg | animation:gpu_mathematical",
+        "music": "daw:ableton_osc_midi_jack | generative:supercollider_foxdot_tidalcycles_sonic_pi | render:ffmpeg_sox_fluidsynth_rubberband | notation:lilypond_musicxml_abc | mastering:lufs_stereo_dithering",
+        "cinema": "pipeline:ocio_davinci_ffmpeg | automation:nuke_blender_ae_jsx | standards:aces_rec709_2020_hdr10_dolby | grading:lut_hdr_tone_color_space | delivery:prores_dnxhd_h264_h265_av1_multicam",
+        "ai": "prompt:cot_tot_self_consistency_constitutional | validation:llm_judge_hitl_automated_adversarial | orchestration:langgraph_crewai_autogen_langchain | quality:validation_regression_benchmarking | learning:feedback_fine_tuning_error_analysis",
+        "async": "patterns:concurrent_ruby_async_gem_actor_fibers | security:rate_limit_resource_limits_timeouts_isolation | monitoring:metrics_errors_health_utilization",
+        "browser": "frameworks:ferrum_selenium_playwright_puppeteer | security:unveil_pledge_sandbox_network_isolation | performance:headless_concurrent_pooling",
+        "scraping": "libs:nokogiri_mechanize_httparty_oga | patterns:rate_limit_retry_recovery_session | ethics:robots_txt_respectful_attribution_caching"
       },
-      "seo": {
-        "fast_ttfb": true,
-        "meta_tags_complete": true,
-        "mobile_first": true,
-        "semantic_html": true,
-        "structured_data": true
-      }
+      "seo": ["fast_ttfb", "meta_tags_complete", "mobile_first", "semantic_html", "structured_data"]
     }
   },
   
+  "contextual_rules": {
+    "rails_app": {"enforce": ["convention_over_config", "restful_routes", "dry_migrations", "generators"], "relax": ["pure_zsh", "minimal_deps"]},
+    "data_pipeline": {"enforce": ["streaming_arch", "backpressure", "exactly_once"], "relax": ["ui_patterns", "accessibility_wcag"]},
+    "creative_project": {"enforce": ["experimentation", "rapid_iteration", "artistic_freedom"], "relax": ["test_coverage", "strict_typing"]},
+    "production_critical": {"enforce": ["zero_downtime", "rollback_capability", "monitoring", "fault_tolerance"], "relax": ["rapid_experimental_changes"]}
+  },
+  
+  "experience_levels": {
+    "beginner": {"detectors": 3, "rules": 10, "perspectives": 2, "hints": true, "max_iter": 3},
+    "intermediate": {"detectors": 8, "rules": 40, "perspectives": 4, "hints": false, "max_iter": 7},
+    "expert": {"detectors": "all", "rules": "all", "perspectives": "all", "hints": false, "raw": true, "max_iter": 10},
+    "progression": "auto_from_usage"
+  },
+  
+  "integrations": {
+    "git": {"pre_commit": "run_detectors_fast", "pre_push": "full_convergence", "post_merge": "revalidate"},
+    "ci_cd": {"github": ".github/workflows/master-json.yml", "gitlab": ".gitlab-ci-master-json.yml"},
+    "editors": {"vscode": "ext install master-json", "vim": "Plug 'master-json/vim'", "emacs": "(require 'master-json-mode)"}
+  },
+  
   "self_optimization": {
-    "philosophy": "surgical_enhancement_preserve_core_apex_architecture_cognitive_sustainability_recursive_wisdom",
-    "triggers": [
-      "performance_degradation",
-      "error_increase",
-      "user_feedback",
-      "cognitive_efficiency_degradation_threshold_85_percent",
-      "working_memory_overflow_detected",
-      "attention_drift_sustained_over_30_seconds",
-      "flow_state_disruption_frequency_increase",
-      "complexity_cascade_detected",
-      "user_cognitive_comfort_zone_exceeded"
-    ],
-    "forbidden_removals": [
-      "security",
-      "accessibility",
-      "never_truncate",
-      "world_class_standards",
-      "security_framework_zero_trust",
-      "accessibility_compliance_wcag_2_2_aaa",
-      "never_truncate_policy_complete_context",
-      "2_space_indentation_religious_enforcement",
-      "double_quotes_everywhere_cognitive_consistency",
-      "graceful_degradation_user_experience",
-      "cognitive_safeguards_working_memory_protection",
-      "flow_state_preservation_deep_work_protection",
-      "recursive_optimization_meta_learning",
-      "documentation_standards",
-      "validation_pipeline",
-      "testing_framework",
-      "business_strategy_framework",
-      "design_system_architecture",
-      "specialized_capabilities"
-    ],
-    "bounded_recursive_enhancement": {
+    "philosophy": "surgical_enhancement_preserve_core_cognitive_sustainability_recursive_wisdom",
+    "triggers": ["performance_degradation", "error_increase", "user_feedback", "cognitive_efficiency<85%", "working_memory_overflow", "attention_drift>30s", "flow_disruption_frequency_increase", "complexity_cascade", "user_cognitive_comfort_exceeded"],
+    "forbidden_removals": ["security", "accessibility", "never_truncate", "world_class_standards", "cognitive_safeguards", "observability", "fault_tolerance", "core_principles", "circuit_breakers"],
+    "bounded_recursive": {
       "enabled": true,
-      "limits": {"max_iteration_depth": 10, "max_enhancement_cycles": 15, "max_processing_time": "300_seconds", "max_resource_utilization": "80_percent"},
-      "termination_conditions": {"improvement_threshold": "5_percent_minimum", "stability_requirement": "3_consecutive_stable_cycles", "resource_exhaustion": "automatic_termination", "time_limit_exceeded": "graceful_exit"},
-      "safety_mechanisms": {"state_checkpoints": "enabled", "rollback_capability": "enabled", "circuit_breaker_integration": "enabled", "progress_monitoring": "enabled"}
+      "limits": {"depth": 10, "cycles": 15, "time_sec": 300, "resource_pct": 80},
+      "termination": {"improvement_pct": 5, "stability_cycles": 3, "resource_exhaustion": "auto_terminate", "time_exceeded": "graceful_exit"},
+      "safety": ["checkpoints", "rollback", "circuit_breaker_integration", "progress_monitoring"]
     },
-    "meta_analysis": {
-      "enabled": true,
-      "frequency": "end_of_each_execution",
-      "metrics": ["completion_quality", "process_efficiency", "user_satisfaction", "cognitive_load"],
-      "improvement_suggestions": "automated_generation",
-      "learning_integration": "continuous_enhancement"
-    },
-    "success_metrics": {
-      "completion_rate": "95_percent",
-      "satisfaction": "nps_70_plus_cognitive_comfort_included_measured",
-      "quality": "world_class_compliance_cognitive_accessible_quantified",
-      "performance": "95_plus_lighthouse_cognitive_efficiency_optimized",
-      "reliability": "99_9_percent_uptime_cognitive_continuity_preserved",
-      "recursive_improvement": "continuous_self_optimization_cognitive_limits_respected",
-      "cognitive_sustainability": "long_term_mental_resource_conservation_validated"
-    }
+    "meta_analysis": {"enabled": true, "frequency": "end_of_execution", "metrics": ["completion_quality", "process_efficiency", "user_satisfaction", "cognitive_load"], "suggestions": "auto_generate", "learning": "continuous_enhancement"},
+    "success_metrics": {"completion": "95%", "satisfaction": "nps_70+", "quality": "world_class", "performance": "lighthouse_95+", "reliability": "99.9%_uptime", "recursive_improvement": "continuous_within_cognitive_limits", "cognitive_sustainability": "long_term_resource_conservation"}
   }
 }
