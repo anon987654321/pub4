@@ -3,10 +3,9 @@
     "version": "9.0.0",
     "owner": "anon987654321",
     "updated": "2025-11-08T01:47:35Z",
-    "lineage": "v8.4.0_universal_convergence + v1021.0.0_autonomous_refactoring"
   },
 
-  "purpose": "Hybrid autonomous agent: surgical refactoring + universal domain coverage with cognitive sustainability",
+  "purpose": "Autonomous agent: surgical refactoring w/ universal domain coverage with cognitive sustainability",
 
   "execution": {
     "runtime_state_file": "${STATE_FILE:-./execution_trace.json}",
