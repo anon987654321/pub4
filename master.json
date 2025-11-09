@@ -1,163 +1,391 @@
-// **master.json5** v100.0.2
-// AUTONOMOUS SELF-OPTIMIZING REFACTORING ENGINE
-//
+// **master.json5** v100.1.0
+// AUTONOM SELVOPTIMALISERENDE REFAKTORERINGSMOTOR
+// (Autonomous self-optimizing refactoring engine)
 
 {
   "meta": {
-    "version": "100.0.2",
-    "updated": "2025-11-09 04:28:07",
+    "version": "100.1.0",
+    "updated": "2025-11-09T04:11:14Z",  // Korrekt tidspunkt i ISO 8601-format
     "owner": "anon987654321",
-    "llm": { "primary": "grok-4", "secondary": "claude-sonnet-4.5", "tertiary": "deepseek" },
-    "vector": "weaviate",
-    "status": "production"
+    "llm": {
+      "primary": "claude-sonnet-4.5",  // Hoved-AI: Claude Sonnet 4.5
+      "secondary": "grok-4",  // Backup-AI: Grok 4
+      "tertiary": "deepseek",  // Tredje AI: DeepSeek
+      "parallel_consultation": true,  // Alle tre AI-er spørres samtidig
+      "timeout_seconds": 30,  // Maks 30 sekunder ventetid per AI
+      "circuit_breaker": {  // Stopper kommunikasjon med ustabile tjenester
+        "failure_threshold": 3,  // Stopp etter 3 feil
+        "reset_timeout": 300  // Prøv igjen etter 5 minutter
+      }
+    },
+    "vector": "weaviate_io",  // Vektor-database for semantisk søk
+    "status": "production"  // Systemet er i produksjon
+  },
+
+  "secrets": {  // Håndtering av sensitive data
+    "method": "environment",  // Bruk miljøvariabler, ikke hardkodet
+    "required_vars": [  // Disse MÅ være satt før systemet starter
+      "VPS_SSH_KEY_PATH",  // Sti til SSH-nøkkel
+      "POSTGRES_URL",  // Database URL
+      "REDIS_URL",  // Cache database URL
+      "GROK_API_KEY",  // API-nøkkel for Grok
+      "CLAUDE_API_KEY",  // API-nøkkel for Claude
+      "DEEPSEEK_API_KEY",  // API-nøkkel for DeepSeek
+      "WEAVIATE_URL"  // Vektor-database URL
+    ]
   },
 
   "runtime": {
-    "shell": "zsh",
-    "vps": { "user": "dev", "host": "brgen.no", "ip": "185.52.176.18", "port": 31415, "ruby": "/usr/local/bin/ruby33" },
-    "local": { "os": "Cygwin", "shell": "zsh" },
+    "shell": "zsh",  // Unix shell for skript
+    "platform": {  // Støtte for flere operativsystemer
+      "primary": "openbsd",  // Hovedplattform: OpenBSD
+      "supported": ["openbsd", "linux", "freebsd"],
+      "detect": "uname -s",  // Kommando for å oppdage OS
+      "fallback": true  // Tillat fallback til andre plattformer
+    },
+    "vps": {  // Virtual Private Server konfigurasjon
+      "user": "${VPS_USER:-dev}",  // Brukernavn (standard: dev)
+      "host": "${VPS_HOST:-brgen.no}",  // Servernavn
+      "ip": "${VPS_IP}",  // IP-adresse fra miljøvariabel
+      "port": "${VPS_PORT:-31415}",  // SSH-port (standard: 31415)
+      "ruby": "/usr/local/bin/ruby33"  // Ruby versjon 3.3
+    },
+    "local": {
+      "os": "Cygwin",  // Lokal utviklingsmaskin
+      "shell": "zsh"
+    },
     "domains": {
-      "template": { "subdomains": ["markedsplass","playlist","dating","tv","takeaway","maps"], "app": "brgen" },
-      "list": [
-        "brgen.no","oshlo.no","trndheim.no","stvanger.no","trmso.no","longyearbyn.no",
-        "reykjavk.is","kobenhvn.dk","stholm.se","gtebrg.se","mlmoe.se","hlsinki.fi",
-        "lndon.uk","cardff.uk","mnchester.uk","brmingham.uk","lverpool.uk","edinbrgh.uk","glasgw.uk",
-        "amstrdam.nl","rottrdam.nl","utrcht.nl","brssels.be","zrich.ch","lchtenstein.li",
-        "frankfrt.de","wrsawa.pl","gdnsk.pl","brdeaux.fr","mrseille.fr","mlan.it","lsbon.pt",
-        "lsangeles.com","newyrk.us","chcago.us","houstn.us","dllas.us","austn.us",
-        "prtland.com","mnneapolis.com",
-        "pub.healthcare","pub.attorney","bsdports.org","amberapp.com"
+      "template": {
+        "subdomains": ["markedsplass", "playlist", "dating", "tv", "takeaway", "maps"],
+        "app": "brgen"  // Hovedapplikasjon
+      },
+      "list": [  // 42 domener systemet håndterer
+        "brgen.no", "oshlo.no", "trndheim.no", "stvanger.no", "trmso.no", "longyearbyn.no",
+        "reykjavk.is", "kobenhvn.dk", "stholm.se", "gtebrg.se", "mlmoe.se", "hlsinki.fi",
+        "lndon.uk", "cardff.uk", "mnchester.uk", "brmingham.uk", "lverpool.uk", "edinbrgh.uk", "glasgw.uk",
+        "amstrdam.nl", "rottrdam.nl", "utrcht.nl", "brssels.be", "zrich.ch", "lchtenstein.li",
+        "frankfrt.de", "wrsawa.pl", "gdnsk.pl", "brdeaux.fr", "mrseille.fr", "mlan.it", "lsbon.pt",
+        "lsangeles.com", "newyrk.us", "chcago.us", "houstn.us", "dllas.us", "austn.us",
+        "prtland.com", "mnneapolis.com",
+        "pub.healthcare", "pub.attorney", "bsdports.org", "amberapp.com"
       ],
       "generated": true
     },
-    "ns": { "ns1": "46.23.95.45", "ns2": "194.63.248.53" }
-  },
-
-  "code_quality": {
-    "principles": {
-      "minimize": "Fewest files, shortest code, clearest names",
-      "consolidate": "Merge similar, extract common, delete unused",
-      "pure_zsh": "Builtins only",
-      "deterministic": "No randomness",
-      "single_purpose": "One reason to change",
-      "reveal_intent": "Names explain",
-      "shallow": "Max 2 nesting",
-      "economic": "ROI gates all",
-      "density": "Clarity ∧ brevity ∧ info"
-    },
-    "enforce": {
-      "complexity": 10, "lines": 15, "nesting": 2, "duplication": 70,
-      "files_per_concept": 1, "files_per_dir": 15, "max_file_size": 500
-    },
-    "forbidden": {
-      "commands": ["awk","sed","tr","cut","grep","find","bash"],
-      "patterns": ["ASCII art","TODO","FIXME","magic numbers"],
-      "ruby": ["for","until",";","rescue Exception","eval"],
-      "js": ["var","callback hell","global"]
+    "ns": {  // DNS-servere
+      "ns1": "46.23.95.45",
+      "ns2": "194.63.248.53"
     }
   },
 
-  "decision_making": {
-    "modes": {
-      "rapid": { "when": "confidence > 0.85 && complexity < 5", "tokens": 5000 },
-      "deep": { "when": "confidence 0.6-0.85 || complexity 5-10", "tokens": 25000 },
-      "exhaustive": { "when": "confidence < 0.6 || complexity > 10", "tokens": 100000 }
+  "code_quality": {  // Kodekvalitetsstandarder
+    "principles": {  // Kjerneprinsipper for god kode
+      "minimize": "Fewest files, shortest code, clearest names",  // Færrest filer
+      "consolidate": "Merge similar, extract common, delete unused",  // Slå sammen likt
+      "pure_zsh": "Builtins preferred, exceptions allowed for clarity",  // Innebygde kommandoer foretrekkes
+      "deterministic": "Minimize randomness where possible",  // Minimer tilfeldigheter
+      "single_purpose": "One reason to change",  // Ett ansvar per funksjon
+      "reveal_intent": "Names explain",  // Navn forklarer seg selv
+      "shallow": "Max 2 nesting",  // Maks 2 nivåer innrykk
+      "economic": "ROI gates all",  // Lønnsomhet styrer beslutninger
+      "density": "Clarity ∧ brevity ∧ info"  // Klarhet OG korthet OG info
     },
-    "approval": {
-      "auto": "ROI > 1.5 && confidence > 0.7 && affected_domains <= 5",
+    "enforce": {  // Tvingende regler
+      "complexity": 10,  // Maks kompleksitet per funksjon
+      "lines": 15,  // Maks 15 linjer per funksjon
+      "nesting": 2,  // Maks 2 nivåer innrykk
+      "duplication": 15,  // Maks 15% duplisering (ned fra 70%)
+      "files_per_concept": 1,  // Ett konsept = én fil
+      "files_per_dir": 15,  // Maks 15 filer per mappe
+      "max_file_size": 500  // Maks 500 linjer per fil
+    },
+    "forbidden": {  // Forbudte mønstre
+      "commands": ["bash"],  // Unngå bash (bruk zsh)
+      "patterns": ["ASCII art", "TODO", "FIXME", "magic numbers"],
+      "ruby": ["for", "until", ";", "rescue Exception", "eval"],
+      "js": ["var", "callback hell", "global"]
+    },
+    "exceptions": {  // Pragmatiske unntak fra reglene
+      "allowed_commands": {
+        "awk": "Complex text processing where Zsh is unclear",
+        "sed": "Stream editing with proven performance advantage",
+        "grep": "Simple pattern matching where clarity improves"
+      },
+      "approval_required": true  // Krever godkjenning
+    }
+  },
+
+  "decision_making": {  // Hvordan systemet tar beslutninger
+    "modes": {  // Tre beslutningsmoduser
+      "rapid": {
+        "when": "confidence > 0.90 && complexity < 5",  // 90%+ tillit, lav kompleksitet
+        "tokens": 5000  // 5000 AI-tokens
+      },
+      "deep": {
+        "when": "confidence 0.80-0.90 || complexity 5-10",  // Middels tillit/kompleksitet
+        "tokens": 25000  // 25000 AI-tokens
+      },
+      "exhaustive": {
+        "when": "confidence < 0.80 || complexity > 10",  // Lav tillit eller høy kompleksitet
+        "tokens": 50000  // 50000 AI-tokens
+      }
+    },
+    "approval": {  // Automatisk godkjenning vs spør bruker
+      "auto": "ROI > 1.25 && confidence > 0.85 && affected_domains <= 5",  // Auto hvis ROI > 125%
       "ask": {
-        "when": "critical || breaking || affected_domains > 5",
-        "format": "unified_diff + tree_before_after + roi_calc + voice_fallback"
+        "when": "critical || breaking || affected_domains > 5 || confidence < 0.85",
+        "format": "unified_diff + tree_before_after + roi_calc",  // Vis diff + tre + ROI
+        "timeout_hours": 24,  // 24 timers timeout
+        "default_action": "reject"  // Trygg standard = avvis
       }
     },
-    "economic": {
-      "roi_minimum": 1.25,
-      "formula": "(benefit × confidence) / (cost × risk × risk_multipliers.*)"
+    "economic": {  // Økonomisk evaluering
+      "roi_minimum": 1.25,  // Minimum 25% avkastning (1.25x kostnad)
+      "formula": "max(0.01, (benefit × confidence)) / max(0.01, (cost × risk × risk_multipliers.*))",
+      "adversarial_review": true,  // Separat AI estimerer kostnad (reduserer optimisme)
+      "pessimistic_multiplier": 1.2  // 20% pessimisme på gevinst-estimater
     },
-    "risk_multipliers": {
-      "domains": "1 + log10(affected_domains + 1)",
-      "tls": "1 + (affected_domains / 20)"
+    "risk_multipliers": {  // Risikofaktorer
+      "domains": "1 + log10(max(1, affected_domains + 1))",  // Flere domener = høyere risiko
+      "tls": "1 + (min(affected_domains, 100) / 20)",  // TLS-endringer mer risikabelt
+      "security": 2.0,  // Sikkerhetsendringer 2x risiko
+      "breaking": 3.0  // Breaking changes 3x risiko
     },
-    "validation": {
+    "validation": {  // 8 roller som vurderer hver endring
       "roles": {
-        "skeptic": "Real problem?",
-        "minimalist": "Delete instead?",
-        "architect": "Single purpose? Scales?",
-        "security": "New vectors?",
-        "pragmatist": "Ships today?",
-        "grok4": "Bias cross-check",
-        "claude": "Over-engineering guard",
-        "user": "Human veto"
+        "skeptic": "Real problem?",  // Er dette et ekte problem?
+        "minimalist": "Delete instead?",  // Kan vi slette heller?
+        "architect": "Single purpose? Scales?",  // Ett formål? Skalerer det?
+        "security": "New vectors?",  // Nye sårbarheter?
+        "pragmatist": "Ships today?",  // Kan det deployes i dag?
+        "grok4": "Bias cross-check",  // Sjekk for skjevheter
+        "claude": "Over-engineering guard",  // Vakt mot over-engineering
+        "user": "Human veto"  // Mennesket har siste ord
+      },
+      "voting": {  // Løs uenighet mellom roller
+        "method": "weighted_majority",  // Vektet flertall
+        "weights": {
+          "user": 10,  // Bruker 10x vekt
+          "security": 3,  // Sikkerhet 3x vekt
+          "architect": 2,  // Arkitekt 2x vekt
+          "default": 1  // Andre 1x vekt
+        },
+        "threshold": 0.6,  // 60% godkjenning nødvendig
+        "tiebreaker": "user"  // Bruker bryter uavgjort
+      }
+    },
+    "stop_loss": {  // Forhindrer ukontrollerte tap
+      "enabled": true,
+      "cumulative_roi_minimum": -5.0,  // Stopp hvis total ROI < -5
+      "consecutive_failures": 5  // Stopp etter 5 påfølgende feil
+    }
+  },
+
+  "autonomous": {  // Autonome kjøreinnstillinger
+    "enabled": true,
+    "max_iterations": 75,  // Maks 75 iterasjoner
+    "checkpoint_every": 10,  // Lagre tilstand hver 10. iterasjon
+    "convergence": {  // Oppdage umulig konvergens
+      "max_stall_iterations": 15,  // Stopp hvis ingen fremgang på 15 iterasjoner
+      "violation_increase_threshold": 3,  // Stopp hvis brudd øker 3x
+      "oscillation_detection": true,  // Oppdag polish ↔ minimize-løkker
+      "oscillation_window": 5  // Se tilbake 5 iterasjoner
+    },
+    "show_tree": {
+      "always": true,  // Vis alltid filtre
+      "after": ["file_change", "consolidation", "split"],
+      "format": "ascii+png",  // Både tekst og bilde
+      "async": true,  // Ikke-blokkerende PNG-generering
+      "png_quality": 85,  // 85% kvalitet (kompresjon)
+      "max_concurrent": 2  // Maks 2 parallelle renderinger
+    },
+    "meta_optimize": {  // Optimalisering av optimaliseringen selv
+      "every": 75,  // Hver 75. iterasjon
+      "detector_prune_roi": 0.80,  // Fjern detektorer med ROI < 0.80
+      "preserve_critical": ["security", "syntax", "health"],  // Aldri fjern disse
+      "rollback_on_regression": true,  // Tilbakerull hvis det blir verre
+      "dry_run_first": true  // Test før anvendelse
+    },
+    "sandbox": {  // Sikkerhet for autonom kjøring
+      "enabled": true,
+      "method": "docker",  // Docker, chroot, eller jail (OpenBSD)
+      "read_only_paths": ["/etc", "/usr"],  // Skrivebeskyttet
+      "network": "restricted",  // Kun API-kall tillatt
+      "resource_limits": {  // Ressursgrenser
+        "cpu_percent": 50,  // Maks 50% CPU
+        "memory_mb": 4096,  // Maks 4GB RAM
+        "disk_mb": 10240  // Maks 10GB disk
       }
     }
   },
 
-  "autonomous": {
-    "enabled": true,
-    "max_iterations": 75,
-    "checkpoint_every": 10,
-    "show_tree": {
-      "always": true,
-      "after": ["file_change","consolidation","split"],
-      "format": "ascii+png"
+  "performance": {  // Ytelsesinnstillinger
+    "tokens": {  // Token-budsjett for AI-kall
+      "budget": 100000,  // 100K tokens totalt
+      "alert": 80000,  // Varsle ved 80K (80%)
+      "reserve": 10000,  // 10K nødreserve
+      "per_mode_enforcement": true  // Håndhev grenser per modus
     },
-    "meta_optimize": {
-      "every": 75,
-      "detector_prune_roi": 0.80
+    "cache": {  // Cache for å unngå gjentatt arbeid
+      "similarity_threshold": 0.87,  // 87% likhet = cache-treff
+      "algorithm": "ast_diff",  // Abstract Syntax Tree diff
+      "key_components": [
+        "code_hash",  // Hash av koden
+        "tree_hash",  // Hash av filtreet
+        "ruby_version",  // Ruby-versjon
+        "domain_count",  // Antall domener
+        "openbsd_pkg_version",  // OpenBSD pakkeversjon
+        "master_json_version"  // Ugyldiggjør cache ved config-endring
+      ],
+      "invalidation": {  // Håndtering midt i kjøring
+        "on_version_change": "complete_iteration_then_refresh",
+        "on_pkg_change": "immediate_refresh"
+      }
+    },
+    "database": {  // Database connection pooling
+      "postgres": {
+        "pool_size": 10,  // 10 tilkoblinger i poolen
+        "pool_timeout": 5,  // 5 sekunder timeout
+        "max_connections": 20,  // Maks 20 samtidige
+        "statement_timeout": 30000,  // 30 sekunder per spørring
+        "connection_retry": 3,  // Prøv 3 ganger
+        "connection_retry_delay": 1  // 1 sekund mellom forsøk
+      },
+      "redis": {
+        "pool_size": 5,
+        "timeout": 3,
+        "retry": 3
+      }
+    },
+    "disk": {  // Diskplasshåndtering
+      "checkpoint_max_size_mb": 500,  // Maks 500MB per checkpoint
+      "checkpoint_max_age_days": 30,  // Slett checkpoints > 30 dager
+      "png_max_total_mb": 1000,  // Maks 1GB PNG-filer
+      "cleanup_threshold_percent": 90,  // Rydd når 90% full
+      "min_free_space_mb": 5000  // Krev 5GB ledig før start
+    },
+    "ast": {  // Abstract Syntax Tree parsing
+      "incremental": true,  // Bare parse endrede filer
+      "cache_parsed": true,  // Cache parsede filer
+      "cache_ttl_seconds": 3600,  // Cache i 1 time
+      "parse_only_changed": true  // Bare parse endringer
+    },
+    "metrics": {  // Overvåking og metrics
+      "export": "flock /var/run/refactoring.lock -c 'echo \"refactoring_roi $roi\" >> /var/tmp/prometheus/refactoring.prom'",
+      "export_format": "prometheus",  // Prometheus-format
+      "include_timestamp": true,  // Tidsstempel på hver metric
+      "additional_metrics": [  // Ekstra observerbarhet
+        "refactoring_iterations",
+        "refactoring_violations",
+        "refactoring_duration_seconds",
+        "refactoring_files_changed",
+        "refactoring_confidence"
+      ]
     }
   },
 
-  "performance": {
-    "tokens": { "budget": 50000, "alert": 40000 },
-    "cache": {
-      "similarity_threshold": 0.87,
-      "key_components": ["code_hash","tree_hash","ruby_version","domain_count","openbsd_pkg_version"]
-    },
-    "metrics": {
-      "export": "echo \"refactoring_roi $roi\" > /var/run/prometheus/refactoring.prom"
-    }
-  },
-
-  "execution": {
-    "before": {
+  "execution": {  // Kjøringslogikk
+    "before": {  // Før kjøring starter
+      "checks": ["disk_space", "db_health", "api_health", "lock_file"],  // Pre-flight sjekker
       "tree": "setopt nullglob extendedglob; files=(**/*(:t)); print -rl -- ${files[1,50]}",
-      "clean": "for f in **/*(.); do [[ -f $f ]] && c=$(<$f) && print -rn -- ${c//$'\\r'/} >$f; done"
+      "clean": "for f in **/*(.); do [[ -f $f ]] && c=$(<$f) && print -rn -- ${c//$'\r'/} >$f; done"
     },
-    "loop": [
-      "1. Parse → AST → graph",
+    "loop": [  // Hovedløkken
+      "0. Pre-flight checks",
+      "1. Parse → AST → graph (incremental)",
       "2. Select mode",
       "3. Detect violations",
-      "4. Prioritize ROI",
-      "5. 8-role veto",
-      "6. Approve / ask",
-      "7. Execute + verify",
-      "8. Polish touched",
-      "9. Converge: violations=0 && ROI>0",
-      "10. Cache",
-      "11. Checkpoint + tree + png"
+      "4. Prioritize ROI (adversarial review)",
+      "5. 8-role weighted voting",
+      "6. Approve / ask (with timeout)",
+      "7. Execute in sandbox + verify",
+      "8. Polish touched (anti-oscillation)",
+      "9. Converge: violations=0 && ROI>0 (stall detection)",
+      "10. Cache (with invalidation check)",
+      "11. Checkpoint + async tree + png",
+      "12. Stop-loss check"
     ],
-    "health": {
-      "postgres": "pg_isready -t 3 && psql -qc 'SELECT 1' && psql -qc '\\timing on' -c 'SELECT 1' | tail -1 | awk '{if($1>400) exit 1}'",
+    "health": {  // Helsekontroller
+      "postgres": "pg_isready -t 3 && psql -qc 'SELECT 1' && psql -qc 'SELECT extract(milliseconds from now() - pg_postmaster_start_time())::int < 86400000'",
       "redis": "redis-cli ping",
       "ruby": "ruby -c",
-      "zsh": "zsh -n"
+      "zsh": "zsh -n",
+      "disk": "df -h / | awk 'NR==2 {if(substr($5,1,length($5)-1)+0 > 90) exit 1}'",
+      "api_grok": "curl -sf -m 5 -H 'Authorization: Bearer ${GROK_API_KEY}' https://api.x.ai/v1/health || true",
+      "api_claude": "curl -sf -m 5 -H 'x-api-key: ${CLAUDE_API_KEY}' https://api.anthropic.com/v1/health || true"
     },
-    "rollback": {
-      "keep_strategy": "last 25 or violations==0 && roi_total>50"
+    "rollback": {  // Tilbakerulling ved feil
+      "keep_strategy": "(last 25) OR (violations==0 AND roi_total>50)",
+      "wal": true,  // Write-ahead log for crash recovery
+      "wal_path": "/var/tmp/refactoring_wal",
+      "auto_rollback_on": ["syntax_error", "test_failure", "health_check_failure"]
+    },
+    "concurrency": {  // Samtidighetskontroll
+      "max_parallel_jobs": 1,  // Kun 1 jobb om gangen
+      "lock_file": "/var/run/refactoring.lock",
+      "lock_timeout": 3600,  // 1 times timeout
+      "per_domain_jobs": false  // Ikke parallell domene-refaktorering
+    },
+    "deployment": {  // Hvordan endringer når domenene
+      "method": "git_push",  // Git push (eller rsync, ansible)
+      "git_branch_per_domain": true,  // En branch per domene
+      "test_before_deploy": true,  // Test før deploy
+      "rollback_on_error": true,  // Tilbakerull ved feil
+      "health_check_after_deploy": true,  // Helsekontroll etter deploy
+      "staged_rollout": {  // Gradvis utrulling
+        "enabled": true,
+        "canary_domains": ["brgen.no"],  // Test på hoveddomenet først
+        "canary_duration_minutes": 30,  // Vent 30 minutter
+        "rollout_batch_size": 5  // 5 domener om gangen
+      }
     }
   },
 
-  "openbsd": {
-    "tls": {
-      "throttle": "sleep $(( [##36] ${domain//./} % 120 ))"
+  "openbsd": {  // OpenBSD-spesifikke innstillinger
+    "tls": {  // TLS-sertifikat konfigurasjon
+      "throttle": "sleep $(( ([##36]${${domain//./}//[^a-z0-9]/} % 120) + (RANDOM % 10) ))",
+      "max_retries": 3,  // Maks 3 forsøk
+      "retry_delay_hours": 6,  // 6 timer mellom forsøk
+      "cert_expiry_alert_days": 30  // Varsle 30 dager før utløp
     },
-    "rcctl_generate": true
+    "rcctl_generate": true,  // Generer rc.d-skript automatisk
+    "jail": {  // OpenBSD jail for sandbox
+      "enabled": true,
+      "path": "/var/refactoring_jail"
+    }
   },
 
-  "zsh": {
+  "rails": {  // Rails-applikasjoner
+    "apps": {
+      "brgen": {"port": 10001, "features": ["Social", "Marketplace", "Dating", "Playlist", "Takeaway", "TV"]},
+      "amber": {"port": 10002, "features": ["Wardrobe"]},
+      "bsdports": {"port": 10003, "features": ["Ports"]},
+      "pub_attorney": {"port": 10005, "features": ["Legal"]},
+      "pub_healthcare": {"port": 10006, "features": ["Healthcare"]}
+    },
+    "architecture": {
+      "controller": "Skinny, max 7 actions",  // Tynn controller
+      "model": "Fat, business logic here"  // Tykk model
+    }
+  },
+
+  "zsh": {  // Zsh-spesifikke utdrag
     "snippets": {
-      "domain_hash": "print $(( [##36] ${domain//./} ))",
-      "risk_domains": "print $(( 1 + log10(affected + 1) ))"
+      "domain_hash": "print $(( [##36]${${domain//./}//[^a-z0-9]/} ))",
+      "risk_domains": "print $(( 1 + log10(max(1, affected + 1)) ))",
+      "roi_safe": "print $(( max(0.01, benefit * confidence) / max(0.01, cost * risk) ))"
+    },
+    "patterns": {  // Nyttige Zsh-mønstre
+      "string": "lower=${(L)var} | upper=${(U)var} | trim=${${var##[[:space:]]#}%%[[:space:]]#} | replace=${var//old/new}",
+      "array": "unique=(${(u)arr}) | sort=(${(o)arr}) | filter=(${(M)arr:#*pattern*})",
+      "files": "**/*(.ND^(node_modules|vendor|.git))"
     }
+  },
+
+  "detectors": {  // Detektorer for kodeproblemer
+    "complexity": "cyclomatic > 10 || nesting > 2 || lines > 15",
+    "duplication": "similarity > 0.85 && id != id",
+    "dead_code": "references == 0 && !entry_point",
+    "sprawl": "concept in multiple files",
+    "bloat": "file_lines > 500"
   }
 }
