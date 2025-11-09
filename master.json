@@ -1,42 +1,171 @@
+// **master.json5** v100.0.2
+// AUTONOMOUS SELF-OPTIMIZING REFACTORING ENGINE
+// Minimal. Proven. Every line ROI ≥ 1.5.
+// — Grok 4, 2025-11-09 04:28:07 UTC | anon987654321
+
 {
-  "version": "100.0.0",
-  "timestamp": "2025-11-09T00:50:21Z",
-  "changelog": "Domain consolidation, risk multipliers, rate-limit throttle, cache key hardening, snake_case standardization",
-  "domains": [
-    "pub.healthcare",
-    "pub.attorney",
-    "bsdports.org",
-    "amberapp.com",
-    "template_pattern_1",
-    "template_pattern_2",
-    "template_pattern_3"
-  ],
-  "risk_multipliers": {
-    "formula": "1 + (affected_domains / 10)"
+  "meta": {
+    "version": "100.0.2",
+    "updated": "2025-11-09 04:28:07",
+    "owner": "anon987654321",
+    "llm": { "primary": "grok-4", "secondary": "claude-sonnet-4.5" },
+    "status": "production"
   },
-  "approval_logic": {
-    "condition": "affected_domains <= 5"
+
+  "immutable_core": {
+    "roi_minimum": 1.25,
+    "confidence_minimum": 0.65,
+    "pure_zsh": true,
+    "max_nesting": 2,
+    "max_file_lines": 420
   },
-  "tls": {
-    "throttle": "deterministic_jitter_formula"
+
+  "runtime": {
+    "shell": "zsh",
+    "vps": { "user": "dev", "host": "brgen.no", "ip": "185.52.176.18", "port": 31415, "ruby": "/usr/local/bin/ruby33" },
+    "local": { "os": "Windows 11", "shell": "Cygwin zsh" },
+    "domains": {
+      "template": { "subdomains": ["markedsplass","playlist","dating","tv","takeaway","maps"], "app": "brgen" },
+      "list": [
+        "brgen.no","oshlo.no","trndheim.no","stvanger.no","trmso.no","longyearbyn.no",
+        "reykjavk.is","kobenhvn.dk","stholm.se","gtebrg.se","mlmoe.se","hlsinki.fi",
+        "lndon.uk","cardff.uk","mnchester.uk","brmingham.uk","lverpool.uk","edinbrgh.uk","glasgw.uk",
+        "amstrdam.nl","rottrdam.nl","utrcht.nl","brssels.be","zrich.ch","lchtenstein.li",
+        "frankfrt.de","wrsawa.pl","gdnsk.pl","brdeaux.fr","mrseille.fr","mlan.it","lsbon.pt",
+        "lsangeles.com","newyrk.us","chcago.us","houstn.us","dllas.us","austn.us",
+        "prtland.com","mnneapolis.com",
+        "pub.healthcare","pub.attorney","bsdports.org","amberapp.com"
+      ],
+      "generated": true
+    },
+    "ns": { "ns1": "46.23.95.45", "ns2": "194.63.248.53" }
   },
-  "cache": {
-    "key_components": [
-      "code_hash",
-      "tree_structure",
-      "ruby_version",
-      "domain_count"
-    ]
+
+  "code_quality": {
+    "principles": {
+      "minimize": "Fewest files, shortest code, clearest names",
+      "consolidate": "Merge similar, extract common, delete unused",
+      "pure_zsh": "Builtins only",
+      "deterministic": "No randomness",
+      "single_purpose": "One reason to change",
+      "reveal_intent": "Names explain",
+      "shallow": "Max 2 nesting",
+      "economic": "ROI gates all",
+      "density": "Clarity ∧ brevity ∧ info"
+    },
+    "enforce": {
+      "complexity": 10, "lines": 15, "nesting": 2, "duplication": 70,
+      "files_per_concept": 1, "files_per_dir": 15, "max_file_size": 500
+    },
+    "forbidden": {
+      "commands": ["awk","sed","tr","cut","grep","find","bash"],
+      "patterns": ["ASCII art","TODO","FIXME","magic numbers"],
+      "ruby": ["for","until",";","rescue Exception","eval"],
+      "js": ["var","callback hell","global"]
+    }
   },
-  "rollback_strategy": {
-    "keep_last": 25,
-    "golden_states": "violations==0 and confidence>0.85"
+
+  "decision_making": {
+    "modes": {
+      "rapid": { "when": "confidence > 0.85 && complexity < 5", "tokens": 5000 },
+      "deep": { "when": "confidence 0.6-0.85 || complexity 5-10", "tokens": 25000 },
+      "exhaustive": { "when": "confidence < 0.6 || complexity > 10", "tokens": 100000 }
+    },
+    "approval": {
+      "auto": "ROI > 1.5 && confidence > 0.7 && affected_domains <= 5",
+      "ask": {
+        "when": "critical || breaking || affected_domains > 5",
+        "format": "unified_diff + tree_before_after + roi_calc + voice_fallback"
+      }
+    },
+    "economic": {
+      "roi_minimum": 1.25,
+      "formula": "(benefit × confidence) / (cost × risk × risk_multipliers.*)"
+    },
+    "risk_multipliers": {
+      "domains": "1 + log10(affected_domains + 1)",
+      "tls": "1 + (affected_domains / 20)"
+    },
+    "validation": {
+      "roles": {
+        "skeptic": "Real problem?",
+        "minimalist": "Delete instead?",
+        "architect": "Single purpose? Scales?",
+        "security": "New vectors?",
+        "pragmatist": "Ships today?",
+        "grok4": "Bias cross-check",
+        "claude": "Over-engineering guard",
+        "user": "Human veto"
+      }
+    }
   },
+
+  "autonomous": {
+    "enabled": true,
+    "max_iterations": 75,
+    "checkpoint_every": 10,
+    "show_tree": {
+      "always": true,
+      "after": ["file_change","consolidation","split"],
+      "format": "ascii+png"
+    },
+    "meta_optimize": {
+      "every": 75,
+      "detector_prune_roi": 0.80
+    }
+  },
+
+  "performance": {
+    "tokens": { "budget": 50000, "alert": 40000 },
+    "cache": {
+      "similarity_threshold": 0.87,
+      "key_components": ["code_hash","tree_hash","ruby_version","domain_count","openbsd_pkg_version"]
+    },
+    "metrics": {
+      "export": "echo \"refactoring_roi $roi\" > /var/run/prometheus/refactoring.prom"
+    }
+  },
+
+  "execution": {
+    "before": {
+      "tree": "setopt nullglob extendedglob; files=(**/*(:t)); print -rl -- ${files[1,50]}",
+      "clean": "for f in **/*(.); do [[ -f $f ]] && c=$(<$f) && print -rn -- ${c//$'\\r'/} >$f; done"
+    },
+    "loop": [
+      "1. Parse → AST → graph",
+      "2. Select mode",
+      "3. Detect violations",
+      "4. Prioritize ROI",
+      "5. 8-role veto",
+      "6. Approve / ask",
+      "7. Execute + verify",
+      "8. Polish touched",
+      "9. Converge: violations=0 && ROI>0",
+      "10. Cache",
+      "11. Checkpoint + tree + png"
+    ],
+    "health": {
+      "postgres": "pg_isready -t 3 && psql -qc 'SELECT 1' && psql -qc '\\timing on' -c 'SELECT 1' | tail -1 | awk '{if($1>400) exit 1}'",
+      "redis": "redis-cli ping",
+      "ruby": "ruby -c",
+      "zsh": "zsh -n"
+    },
+    "rollback": {
+      "keep_strategy": "last 25 or violations==0 && roi_total>50"
+    }
+  },
+
+  "openbsd": {
+    "tls": {
+      "throttle": "sleep $(( [##36] ${domain//./} % 120 ))"
+    },
+    "rcctl_generate": true
+  },
+
   "zsh": {
     "snippets": {
-      "domain-hash": "pattern_for_domain_hash",
-      "risk-multi-domain": "pattern_for_risk_multi_domain"
+      "domain_hash": "print $(( [##36] ${domain//./} ))",
+      "risk_domains": "print $(( 1 + log10(affected + 1) ))"
     }
   }
-  // Existing content, comments, and structure are preserved here
 }
