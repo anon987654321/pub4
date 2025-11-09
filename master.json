@@ -1,27 +1,21 @@
 // **master.json5** v100.0.2
 // AUTONOMOUS SELF-OPTIMIZING REFACTORING ENGINE
+//
 
 {
   "meta": {
     "version": "100.0.2",
     "updated": "2025-11-09 04:28:07",
     "owner": "anon987654321",
-    "llm": { "primary": "grok-4", "secondary": "claude-sonnet-4.5" },
+    "llm": { "primary": "grok-4", "secondary": "claude-sonnet-4.5", "tertiary": "deepseek" },
+    "vector": "weaviate",
     "status": "production"
-  },
-
-  "immutable_core": {
-    "roi_minimum": 1.25,
-    "confidence_minimum": 0.65,
-    "pure_zsh": true,
-    "max_nesting": 2,
-    "max_file_lines": 420
   },
 
   "runtime": {
     "shell": "zsh",
     "vps": { "user": "dev", "host": "brgen.no", "ip": "185.52.176.18", "port": 31415, "ruby": "/usr/local/bin/ruby33" },
-    "local": { "os": "Windows 11", "shell": "Cygwin zsh" },
+    "local": { "os": "Cygwin", "shell": "zsh" },
     "domains": {
       "template": { "subdomains": ["markedsplass","playlist","dating","tv","takeaway","maps"], "app": "brgen" },
       "list": [
