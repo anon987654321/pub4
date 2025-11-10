@@ -5,42 +5,54 @@ set -euo pipefail
 # Usage: ./clean.sh [target_folder]
 
 dir="${1:-.}"
-if [ ! -d "$dir" ]; then
-
-  printf "Error: '%s' is not a directory\n" "$dir"
+if [[ ! -d "$dir" ]]; then
+  print "Error: '$dir' is not a directory"
   exit 1
 fi
 
 for file in "$dir"/**/*(.N); do
-
-  if file -b "$file" | grep -q "text"; then
-
+  # Check if file is text using pure zsh pattern matching
+  local filetype=$(file -b "$file")
+  if [[ $filetype == *text* ]]; then
     tmp=$(mktemp)
     if [[ $? -ne 0 ]]; then
-
-      echo "Error: mktemp failed"
+      print "Error: mktemp failed"
       exit 1
-
     fi
 
-    # Removes CRLF, trims trailing whitespaces, reduces blank lines.
+    # Pure zsh: remove CRLF, trim trailing whitespace, reduce blank lines
+    local content=$(<"$file")
+    content=${content//$'\r'/}  # Remove carriage returns
 
-    tr -d '\r' < "$file" | awk '{sub(/[ \t]+$/, "");} NF{print; if(p)print ""} {p=NF}' > "$tmp" 2>/dev/null
+    local -a lines=("${(@f)content}")  # Split into array of lines
+    local -a cleaned=()
+    local prev_blank=0
+
+    for line in "${lines[@]}"; do
+      # Trim trailing whitespace
+      line=${line%%[[:space:]]#}
+
+      if [[ -z $line ]]; then
+        # Blank line - only add if previous wasn't blank
+        if [[ $prev_blank -eq 0 ]]; then
+          cleaned+=("")
+          prev_blank=1
+        fi
+      else
+        cleaned+=("$line")
+        prev_blank=0
+      fi
+    done
+
+    # Write cleaned content
+    print -l "${cleaned[@]}" > "$tmp"
 
     if [[ $? -eq 0 ]]; then
       mv "$tmp" "$file"
-
-      echo "Cleaned: $file"
-
+      print "Cleaned: $file"
     else
-
       rm "$tmp"
-
-      echo "Failed: $file"
-
+      print "Failed: $file"
     fi
-
   fi
-
 done
-
