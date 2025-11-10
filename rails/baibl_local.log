@@ -1,0 +1,4 @@
+[2025-10-21 09:39:39] Starting BAIBL AI Bible application setup with Norwegian interface and advanced text analysis
+[2025-10-21 09:39:39] Setting up full Rails application: baibl
+
+/usr/bin/mkdir: cannot create directory ‘/home’: Permission denied

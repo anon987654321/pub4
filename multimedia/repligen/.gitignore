@@ -1,0 +1,25 @@
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+repligen.log
+
+# Generated outputs
+*_generated_*
+masterpiece_*
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# API tokens
+.env
+.env.local
+config.json
+!.config/repligen/config.json.example
