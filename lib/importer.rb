@@ -142,8 +142,22 @@ class Importer
                 data['content']
               end
     
-    # Write to destination
-    dest_path = File.join(@dest_dir, repo, path)
+    # Write to destination with proper path validation
+    # First, normalize and sanitize the path components
+    path_components = path.split('/').reject { |p| p == '.' || p == '..' || p.empty? }
+    safe_path = File.join(*path_components)
+    
+    dest_path = File.join(@dest_dir, repo, safe_path)
+    
+    # Ensure the destination is within our target directory
+    real_dest = File.expand_path(dest_path)
+    base_dir = File.expand_path(File.join(@dest_dir, repo))
+    
+    unless real_dest.start_with?(base_dir + File::SEPARATOR) || real_dest == base_dir
+      puts "\n  ✗ Skipping #{path}: Path validation failed"
+      return
+    end
+    
     FileUtils.mkdir_p(File.dirname(dest_path))
     File.write(dest_path, content)
     
