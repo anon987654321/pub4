@@ -1,0 +1,28 @@
+# Test files
+test_files/
+
+# Imported code
+imports/
+
+# Prompt exports
+prompts_export_*.txt
+
+# Ruby
+*.gem
+*.rbc
+.bundle
+.config
+vendor/bundle/
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+*.tmp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

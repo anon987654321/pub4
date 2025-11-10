@@ -387,5 +387,49 @@
     "dead_code": "references == 0 && !entry_point",
     "sprawl": "concept in multiple files",
     "bloat": "file_lines > 500"
+  },
+
+  "policy": {
+    "forbid_ternary": true,
+    "max_line_length": 120,
+    "spacing_scale": [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64],
+    "dedup_threshold": 3
+  },
+
+  "tools": {
+    "file_extensions": ["rb", "sh", "zsh", "html", "js", "css", "scss", "json", "md", "c", "cmake", "py"],
+    "external_tools": {
+      "rb": "rubocop -a",
+      "js": "prettier --write",
+      "css": "prettier --write",
+      "scss": "prettier --write",
+      "py": "black",
+      "c": "clang-format -i"
+    }
+  },
+
+  "design_system": {
+    "typography": "Font families: ≤3 weights/family; ❌ >4 weights/family; ❌ Body lh <1.4; ❌ Justified; ❌ ALL CAPS >3 words\n",
+    "gestalt": "PROXIMITY:\nRelated: 8-16px; Unrelated: 24-48px (2-3×)\n\nSIMILARITY:\nButtons: same height/radius/weight\nIcons: same size per context (nav 24px)\n\nFIGURE-GROUND:\nPrimary: #171717 on #FFFFFF ≈15:1\nSecondary: #525252 on #FAFAFA ≈7:1\n",
+    "components": "BUTTONS (Primary):\nH: 44 (mobile) / 40 (desktop), Pad: 16/24, Radius: 8, Font: 16/600\nBg: #2563EB; Text: #FFF; Hover: #1D4ED8; Active: #1E40AF\nDisabled: #93C5FD; Focus: 2px #3B82F6 (offset 2px); Transition ≤300ms\n\nINPUTS:\nText: H 44/40; Pad 12/16; Border 1 #D1D5DB; Radius 6; Font 16/400\nPlaceholder #9CA3AF; Focus border #2563EB + shadow 0 0 0 3 rgba(37,99,235,.1)\n",
+    "accessibility": "CONTRAST (WCAG 2.1 AA):\nText <18px: ≥4.5:1; Large (≥18px or ≥14px bold): ≥3:1; UI: ≥3:1\n\nTOUCH TARGETS:\nMobile ≥44×44; Desktop ≥40×40; Spacing ≥8px\n\nFOCUS:\nVisible on ALL interactives, 2px outline + 2px offset; ≥3:1 contrast\n",
+    "contrast_min_ratio": 4.5
+  },
+
+  "prompts": {
+    "refactor": "You are an expert code refactorer. Apply SOLID principles, minimize complexity, and ensure readability.",
+    "security": "You are a security auditor. Check for SQL injection, XSS, CSRF, and other common vulnerabilities.",
+    "performance": "You are a performance optimizer. Identify bottlenecks, N+1 queries, and inefficient algorithms.",
+    "accessibility": "You are an accessibility expert. Ensure WCAG 2.1 AA compliance, proper ARIA labels, and keyboard navigation.",
+    "zsh_best_practices": "Pure Zsh preferred. Use builtins over external commands. Max nesting: 2. No bash/ksh patterns."
+  },
+
+  "imports": {
+    "owner": "anon987654321",
+    "repos": ["pub", "pub2", "pub3", "railsy"],
+    "branch": "main",
+    "include_extensions": ["rb", "sh", "zsh", "html", "js", "css", "scss", "json", "md", "c", "cmake", "py"],
+    "exclude_paths": ["vendor/", "node_modules/", "tmp/", ".git/"],
+    "dest_dir": "imports"
   }
 }
