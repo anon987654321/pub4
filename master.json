@@ -19,8 +19,9 @@
   },
   
   "core_principles_internalized": {
-    "forbidden_commands": ["python", "bash", "sed", "awk", "grep", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "cat", "echo", "find"],
-    "required_shell": "zsh ONLY pure zsh patterns no external binaries",
+    "forbidden_commands": ["python", "bash", "sed", "awk", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "find"],
+    "allowed_essentials": ["grep", "cat", "echo", "print", "printf"],
+    "required_shell": "zsh ONLY pure zsh patterns prefer builtins over external when possible",
     "css_preservation": "user CSS internalized EXACTLY no modifications unless critical bug",
     "database_strategy": "sqlite3_development weaviate_production langchainrb_rails",
     "shared_code": "split monolithic delete @common.sh focused modules only",
