@@ -3,15 +3,28 @@
 
   "stock": "fuji_velvia",
   "effects": {
+
     "film_curve": 1.0,
+
     "color_separate": 0.7,
+
     "highlight_roll": 0.8,
+
     "micro_contrast": 0.4,
+
     "grain": 0.15,
+
     "vintage_lens": 0.6
+
   },
+
   "color": {
+
     "temp": 5900,
+
     "intensity": 0.7
+
   }
+
 }
+

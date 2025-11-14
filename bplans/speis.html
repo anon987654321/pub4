@@ -5,355 +5,216 @@
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>SPEIS - Avansert Romfart og Forsvarsteknologi</title>
-
     <!-- Google Fonts -->
-
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-
         /* CSS Variables - SYRE™/LA2 Design */
-
         :root {
-
             --primary-color: #1a1a1a;
-
             --background-color: #ffffff;
-
             --text-color: #222222;
-
             --highlight-color: #5d93ff;
-
             --gradient-primary: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
-
             --font-family: 'Inter', sans-serif;
-
         }
-
         /* General Styles */
-
         body {
-
             margin: 0;
             font-family: var(--font-family);
 
             background-color: var(--background-color);
-
             color: var(--text-color);
-
             line-height: 1.6;
-
             font-size: 16px;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
         }
-
         /* Logo Container */
-
         .logo-wrapper {
-
             position: relative;
             display: inline-block;
 
         }
-
         /* Logo styling with SYRE™ animated gradient */
-
         .logo-container {
-
             font-family: 'Black Han Sans', sans-serif;
             font-size: 80px;
 
             color: transparent;
-
             background: var(--gradient-primary);
-
             background-size: 400%;
-
             background-clip: text;
-
             -webkit-background-clip: text;
-
             animation: gradientMove 5s infinite linear;
-
         }
-
         /* Header styling */
-
         header {
-
             text-align: center;
             padding: 40px 20px;
 
             background-color: var(--background-color);
-
             border-bottom: 1px solid #e0e0e0;
-
         }
-
         .header-text {
-
             font-size: 1.2rem;
-
             font-weight: 500;
             color: var(--text-color);
 
             margin-top: 1rem;
-
             max-width: 900px;
-
             text-align: center;
-
         }
-
         /* Main content */
-
         main {
-
             max-width: 1000px;
             margin: 3rem auto;
 
             padding: 0 2rem;
-
         }
-
         section {
-
             padding: 3rem 0;
-
             border-bottom: 1px solid #e0e0e0;
         }
 
         h2 {
-
             font-size: 2.5rem;
-
             color: var(--primary-color);
             margin-bottom: 2rem;
 
             position: relative;
-
         }
-
         h2::after {
-
             content: '';
-
             position: absolute;
             bottom: -0.5rem;
 
             left: 0;
-
             width: 60px;
-
             height: 4px;
-
             background: var(--gradient-primary);
-
         }
-
         h3 {
-
             font-size: 1.8rem;
-
             color: var(--text-color);
             margin: 2rem 0 1rem 0;
 
         }
-
         h4 {
-
             font-size: 1.4rem;
-
             color: var(--highlight-color);
             margin: 1.5rem 0 1rem 0;
 
         }
-
         p {
-
             font-size: 1.1rem;
-
             color: #444444;
             margin-bottom: 1.5rem;
 
         }
-
         ul {
-
             margin: 1rem 0;
-
             padding-left: 2rem;
         }
 
         li {
-
             margin-bottom: 0.8rem;
-
             font-size: 1.1rem;
         }
 
         /* Aurora Ship Image */
-
         .aurora-image {
-
             width: 100%;
             max-width: 600px;
 
             height: 350px;
-
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-
             border-radius: 12px;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
             color: white;
-
             font-size: 1.5rem;
-
             font-weight: bold;
-
             margin: 2rem auto;
-
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-
         }
-
         /* Chart container */
-
         .chart-container {
-
             max-width: 500px;
             margin: 2rem auto;
 
         }
-
         @keyframes gradientMove {
-
             0% { background-position: 0% 50%; }
-
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
 
         }
-
         /* Responsive Design */
-
         @media (max-width: 768px) {
-
             .logo-container {
                 font-size: 60px;
 
             }
-
             h2 {
-
                 font-size: 2rem;
-
             }
-
             main {
-
                 padding: 0 1rem;
-
             }
-
         }
-
     </style>
-
 </head>
-
 <body>
-
     <header>
-
         <div class="logo-wrapper">
-
             <div class="logo-container">SPEIS</div>
-
         </div>
-
         <div class="header-text">
-
             Avansert Romfart, Forsvarsteknologi og Aerospace Manufacturing<br>
-
             NATO Aurora, Kampfly-ventures og SYRE™ 3D-printing
-
         </div>
-
     </header>
-
     <main>
-
         <!-- NATO Aurora Flagship Section -->
-
         <section id="nato-aurora">
             <h2>NATO Aurora Arktisk Dominanse</h2>
 
             <div class="aurora-image">
-
                 NATO Aurora-klasse Arktisk Skip
-
             </div>
             <h3>Strategiske Mål</h3>
 
             <ul>
-
                 <li><strong>Arktisk Dominanse</strong>: Sikre NATOs kontroll over arktiske skipsleder og uutnyttede ressurser</li>
                 <li><strong>Motvirke Russisk Ekspansjon</strong>: Nøytralisere Russlands dominans med overlegne fartøy</li>
 
                 <li><strong>Geopolitisk Stabilitet</strong>: Beskytte NATO-allierte grenser og interesser i Arktis</li>
-
                 <li><strong>Kongsberg-konkurrent</strong>: Posisjonere Norge som ledende maritime teknologi-leverandør</li>
-
             </ul>
-
             <h3>Aurora-klassens Nøkkelegenskaper</h3>
-
             <ul>
-
                 <li><strong>Hybrid Nukleær og AI-dreven Fremdrift</strong>: Doble nukleære reaktorer med AI-optimalisering</li>
                 <li><strong>Isbrytingskapasitet</strong>: Bryte gjennom 3.5 meter flerårig is</li>
 
                 <li><strong>Avanserte Forsvars- og Overvåkningssystemer</strong>: NATO-standard missilforsvar og sonar-array</li>
-
                 <li><strong>Modulære Oppdragssystemer</strong>: Konfigurerbare rom for UAV-er, våpensystemer og forskningsutstyr</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="auroraChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Fighter Jet Ventures Section -->
-
         <section id="kampfly-ventures">
-
             <h2>Kampfly-ventures: 7.-10. Generasjon</h2>
             <h3>Neste-generasjons Kampfly</h3>
 
             <p>SPEIS utvikler revolusjonerende kampfly-teknologi for 7.-10. generasjon jagerfly, med fokus på AI-styring, stealth-teknologi og avanserte våpensystemer.</p>
-
             <h3>Teknologiske Gjennombrudd</h3>
             <ul>
 
@@ -361,40 +222,27 @@
                 <li><strong>8. Generasjon</strong>: Quantum-radar og avancerte metamaterialer</li>
 
                 <li><strong>9. Generasjon</strong>: Energivåpen og adaptive stealth-overflater</li>
-
                 <li><strong>10. Generasjon</strong>: Rombaserte plattformer og FTL-kommunikasjon</li>
-
             </ul>
-
             <h3>Venture Struktur</h3>
-
             <ul>
-
                 <li><strong>SPEIS Aerospace Division</strong>: Hovedutviklingsavdeling</li>
                 <li><strong>Partner med NATO-land</strong>: Teknologideling og co-finansiering</li>
 
                 <li><strong>Kongsberg Joint Venture</strong>: Konkurranse og samarbeid</li>
-
                 <li><strong>SYRE™ Manufacturing</strong>: 3D-printing av kritiske komponenter</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="jetChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- SYRE™ 3D-Printing Section -->
-
         <section id="syre-3d-printing">
-
             <h2>SYRE™ 3D-Printing for Aerospace</h2>
             <h3>Revolusjonerende Produksjonsteknologi</h3>
 
             <p>SYRE™ 3D-printing teknologi transformerer aerospace manufacturing med on-demand produksjon av kritiske komponenter for både Aurora-skip og kampfly-systemer.</p>
-
             <h3>Teknologiske Fordeler</h3>
             <ul>
 
@@ -402,25 +250,18 @@
                 <li><strong>Materialmangfold</strong>: Avanserte metallegeringer og kompositter</li>
 
                 <li><strong>Kvalitetskontroll</strong>: AI-dreven kvalitetssikring i sanntid</li>
-
                 <li><strong>Kostnadsreduksjon</strong>: 60% reduksjon i produksjonskostnader</li>
-
             </ul>
-
             <h3>Samarbeid med Shoe Division</h3>
-
             <p>SYRE™ teknologien deles mellom aerospace og footwear-divisjonene, hvor lærdommer fra presisjonsproduksjon av sko forbedrer aerospace-komponenter og omvendt.</p>
-
         </section>
         <!-- Markedsanalyse Section -->
 
         <section id="marked">
-
             <h2>Markedsanalyse og Konkurranseposisjon</h2>
             <h3>Global Aerospace Market</h3>
 
             <p>Den globale aerospace- og forsvarsindustrien forventes å vokse til over USD 1.5 billioner innen 2030. SPEIS posisjonerer seg som en betydelig aktør i det nordiske markedet.</p>
-
             <h3>Kongsberg-konkurrent</h3>
             <p>Som direkte konkurrent til Kongsberg Gruppen, tilbyr SPEIS:</p>
 
@@ -428,29 +269,20 @@
                 <li><strong>Innovativ teknologi</strong>: Mer avanserte AI- og 3D-printing løsninger</li>
 
                 <li><strong>Raskere utvikling</strong>: Agile development og rapid prototyping</li>
-
                 <li><strong>Internasjonale partnerskap</strong>: Sterkere NATO-relasjoner</li>
-
                 <li><strong>Kostnadseffektivitet</strong>: 30% lavere produksjonskostnader</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="marketChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Finansiering Section -->
-
         <section id="finansiering">
-
             <h2>Finansiering og Investeringer</h2>
             <h3>Kapitalbehov</h3>
 
             <p>SPEIS søker NOK 500 millioner i startkapital for å utvikle Aurora-prototypen og etablere 3D-printing produksjonsfasiliteter.</p>
-
             <h3>Finansieringskilder</h3>
             <ul>
 
@@ -458,238 +290,132 @@
                 <li><strong>NATO Innovation Fund</strong>: NOK 200 millioner</li>
 
                 <li><strong>Private investorer</strong>: NOK 100 millioner</li>
-
                 <li><strong>Industripartnerskap</strong>: NOK 50 millioner</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="financeChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Konklusjon Section -->
-
         <section id="konklusjon">
-
             <h2>Konklusjon</h2>
             <p>SPEIS representerer fremtiden for norsk aerospace- og forsvarsteknologi. Med NATO Aurora som flaggskip, banebrytende kampfly-ventures, og revolusjonerende SYRE™ 3D-printing teknologi, posisjonerer vi Norge som en global leder innen avansert maritime og luftromsteknologi.</p>
 
             <p>Som en seriøs konkurrent til Kongsberg, kombinerer SPEIS innovativ teknologi med kostnadseffektiv produksjon for å levere neste-generasjons løsninger til NATO og internasjonale partnere.</p>
-
             <p><strong>SPEIS - Der fremtiden tas form!</strong></p>
-
         </section>
     </main>
+
     <script>
 
         // Aurora Capabilities Chart
-
         const auroraCtx = document.getElementById('auroraChart').getContext('2d');
         const auroraChart = new Chart(auroraCtx, {
 
             type: 'radar',
-
             data: {
-
                 labels: ['Isbrytning', 'Forsvar', 'Hastighet', 'Autonomi', 'Miljøvennlighet'],
-
                 datasets: [{
-
                     label: 'Aurora-klasse',
-
                     data: [95, 90, 85, 92, 88],
-
                     backgroundColor: 'rgba(93, 147, 255, 0.2)',
-
                     borderColor: '#5d93ff',
-
                     borderWidth: 2
-
                 }, {
-
                     label: 'Konkurrenter',
-
                     data: [70, 75, 80, 60, 65],
-
                     backgroundColor: 'rgba(200, 200, 200, 0.2)',
-
                     borderColor: '#888888',
-
                     borderWidth: 2
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Aurora vs Konkurrenter - Kapabiliteter' }
-
                 },
-
                 scales: {
-
                     r: { beginAtZero: true, max: 100 }
-
                 }
-
             }
-
         });
-
         // Fighter Jet Development Timeline
-
         const jetCtx = document.getElementById('jetChart').getContext('2d');
-
         const jetChart = new Chart(jetCtx, {
             type: 'line',
 
             data: {
-
                 labels: ['2025', '2027', '2030', '2035', '2040'],
-
                 datasets: [{
-
                     label: '7. Gen Kampfly',
-
                     data: [10, 50, 90, 100, 100],
-
                     borderColor: '#ff007f',
-
                     backgroundColor: 'rgba(255, 0, 127, 0.1)',
-
                     fill: true
-
                 }, {
-
                     label: '8. Gen Kampfly',
-
                     data: [0, 10, 40, 80, 100],
-
                     borderColor: '#00c9ff',
-
                     backgroundColor: 'rgba(0, 201, 255, 0.1)',
-
                     fill: true
-
                 }, {
-
                     label: '9-10. Gen Kampfly',
-
                     data: [0, 0, 5, 25, 60],
-
                     borderColor: '#ffcc00',
-
                     backgroundColor: 'rgba(255, 204, 0, 0.1)',
-
                     fill: true
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Kampfly Utvikling Timeline' }
-
                 },
-
                 scales: { y: { beginAtZero: true, max: 100 } }
-
             }
-
         });
-
         // Market Position Chart
-
         const marketCtx = document.getElementById('marketChart').getContext('2d');
-
         const marketChart = new Chart(marketCtx, {
             type: 'doughnut',
 
             data: {
-
                 labels: ['SPEIS', 'Kongsberg', 'Andre'],
-
                 datasets: [{
-
                     data: [35, 40, 25],
-
                     backgroundColor: ['#5d93ff', '#ff8c00', '#cccccc'],
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Forventet Markedsandel - Nordisk Aerospace' },
-
                     legend: { position: 'bottom' }
-
                 }
-
             }
-
         });
-
         // Financial Projections Chart
-
         const financeCtx = document.getElementById('financeChart').getContext('2d');
-
         const financeChart = new Chart(financeCtx, {
             type: 'bar',
 
             data: {
-
                 labels: ['År 1', 'År 2', 'År 3', 'År 4', 'År 5'],
-
                 datasets: [{
-
                     label: 'Omsetning (MNOK)',
-
                     data: [50, 150, 400, 800, 1200],
-
                     backgroundColor: '#5d93ff',
-
                 }, {
-
                     label: 'Netto Resultat (MNOK)',
-
                     data: [-100, -50, 50, 200, 400],
-
                     backgroundColor: '#ff007f',
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Økonomiske Prognoser' }
-
                 },
-
                 scales: { y: { beginAtZero: false } }
-
             }
-
         });
-
     </script>
-
 </body>
-
 </html>
-

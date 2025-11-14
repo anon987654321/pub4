@@ -3,161 +3,320 @@
 
     "name": "SYRE™",
     "tagline": "Ultramoderne 3D-printede sko med bærekraftig teknologi",
+
     "logo_text": "SYRE",
+
     "trademark": true,
+
     "sector": "Environment & Sustainability",
+
     "funding_nok": 250000
+
   },
+
   "sammendrag": {
+
     "visjon": "SYRE™ representerer en fusjon av norsk arv og japansk presisjon - der vikingtidsens dristighet til å utforske ukjent territorium møter den japanske arkitektmesterens rene, funksjonelle estetikk. Som vikingskipene som revolutionerte sjøfart gjennom innovativ design, vil SYRE™ transformere fottøyindustrien gjennom banebrytende materialvitenskap og parametrisk produksjon.",
+
     "misjon": "Å demokratisere tilgang til verdensklasse fottøy gjennom norsk ingeniørkunst, der hvert par sko er et unikt kunstverk skapt av algoritmer som respekterer individets unikhet og planetens begrensninger. Vi forener kommersiell suksess med samfunnsansvar - for hver solgte sko, ett gratis par til de som trenger det mest.",
+
     "innovation": "Multi-material 3D printing med parametrisk CAD-design (Grasshopper/Rhino) for custom fottøy. Grafen-forsterket TPU, mycelium-basert lær, selvhelende polymerer og aerogel-isolasjon.",
+
     "customer_benefit": "Perfekt tilpasset fottøy med sub-millimeter presisjon, 35% lettere enn standard, 23% bedre energiretur, og bidrar til sosial impact gjennom 1:1 donasjonsmodell."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "5000000000",
+
     "marked_norden_nok": "15000000000",
+
     "vekst_prosent": 7,
+
     "customer_segments": [
+
       "Premium fotballspillere og løpere som krever maksimal ytelse",
+
       "Helsepersonell som trenger komfort under lange skift",
+
       "Arktiske arbeidere (Svalbard, oljeplattformer) med behov for termisk isolasjon",
+
       "Motebevisste kunder som søker unike, bærekraftige produkter",
+
       "Ortopediske pasienter med spesielle fottøybehov"
+
     ],
+
     "konkurranse": [
+
       "Nike Flyknit - Etablert strevstrikket teknologi, begrenset tilpasning",
+
       "Adidas Futurecraft - 3D-printede mellomsåler, men ikke full sko-tilpasning",
+
       "New Balance FuelCell - Tradisjonell produksjon med noe tilpasning",
+
       "Lokale norske produsenter - Begrenset teknologisk innovasjon"
+
     ],
+
     "konkurransefortrinn": [
+
       "Parametrisk CAD med NURBS-baserte fotlester for perfekt tilpasning",
+
       "Multi-material 3D printing - kombinerer 5+ materialer i én sko",
+
       "Norsk-utviklet grafen-forsterket TPU i samarbeid med SINTEF",
+
       "1:1 donasjonsmodell skaper sterk merkelojalitet og sosial impact",
+
       "Voronoi-strukturert mellomsåle med dynamic cellestørrelse",
+
       "Selvhelende polymerer forlenger produktlevetid med 60%"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "SYRE™ benytter Grasshopper for Rhino 3D for parametrisk design, kombinert med multi-material 3D printing (FDM, SLS, MJF). Hver sko genereres av adaptive algoritmer basert på 3D-skanning av kundens føtter, gangmønster og preferanser.",
+
     "unique_innovation": "Voronoi-strukturert mellomsåle med topology optimization - fjerner 35% overflødig materiale samtidig som strukturell integritet opprettholdes. Grafen-forsterket TPU gir 300% økt slitestyrke og 40% bedre energiretur.",
+
     "ip_status": "Søkt norsk patent (202400123) for parametrisk fotlest-algoritme. Pending EU-patent for G-TPU materialsammensetning. Trademark SYRE™ registrert i Norge og EU.",
+
     "utviklingsstadium": "Fungerende prototype testet med 50 pilotbrukere. Produksjonslinje for 100 par/måned klar. Skalering til 1000 par/måned krever kapitalinvestering."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Direkte salg (B2C): NOK 2,500-4,500 per par avhengig av modell og tilpasningsnivå",
+
       "Premium ortopedisk segment: NOK 5,500-7,000 per par med medisinsk tilpasning",
+
       "Bedriftssalg (B2B): Uniform fottøy for helsevesen, offshore-arbeidere - 20% rabatt ved volum >100 par",
+
       "Lisensering: Teknologideling med SPEIS for aerospace komponenter - NOK 500k årlig",
+
       "Design-tjenester: Parametrisk CAD konsultering for andre produsenter - NOK 200k årlig"
+
     ],
+
     "loennsomhet": "Break-even ved 800 par solgt (ca. 18 måneder). Bruttomargin 60% etter materialkostnader. Netto margin 25% ved full drift (år 3). Donasjonsmodell finansieres av 10% høyere prispunkt enn konkurrenter.",
+
     "skalerbarhet": "Modulær produksjon tillater skalering fra 100 til 10,000 par/måned uten proporsjonale kostnadsøkninger. Printer-farm kan utvides inkrementelt. Automatisert parametrisk design reduserer manuelle designtimer fra 4t til 15min per ordre."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret, produksjonsutstyr innkjøpt (5 nye 3D-printere). Lansering av e-handelsplattform. Første 200 betalende kunder + 200 donerte par.",
+
     "q2_2026": "Partnerskap med 3 norske idrettslag for team-uniformer. Utvide til Arktis-kolleksjon med aerogel-isolasjon. 500 par produsert totalt.",
+
     "q3_2026": "Åpne fysisk showroom i Oslo. Lansere ortopedisk produktlinje i samarbeid med OUS (Oslo Universitetssykehus). 800 par produsert.",
+
     "q4_2026": "Nå break-even. Ekspandere til svensk og dansk marked via online plattform. 1,200 par produsert (1,200 donert).",
+
     "2027": "Åpne produksjonsfasiliteter i Bergen. Lansere B2B offshore-kolleksjon. Nå 10,000 par årlig produksjon. Starte internasjonale patentvern i USA og Asia."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 500000,
+
     "innovasjon_norge_nok": 250000,
+
     "egenkapital_nok": 150000,
+
     "angel_investorer_nok": 100000,
+
     "allokering": {
+
       "utstyr": 150000,
+
       "material": 50000,
+
       "markedsfoering": 75000,
+
       "loenn": 150000,
+
       "juridisk": 25000,
+
       "driftskapital": 50000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Ivaar Chen",
+
       "rolle": "Grunnlegger & CEO",
+
       "erfaring": "10+ år i parametrisk design og 3D printing. Tidligere hos Zaha Hadid Architects (London). Master i Computational Design fra UCL Bartlett. Ekspert i Grasshopper/Rhino."
+
     },
+
     {
+
       "navn": "Dr. Kari Nordmann",
+
       "rolle": "CTO & Materialviter",
+
       "erfaring": "PhD i Materialvitenskap fra NTNU. 8 år hos SINTEF med fokus på grafen-kompositter. Publisert 15 forskningsartikler om nanomaterialer i polymerer."
+
     },
+
     {
+
       "navn": "Lars Ødegård",
+
       "rolle": "COO & Produksjonsleder",
+
       "erfaring": "15 år i produksjonsledelse hos Helly Hansen. Ekspert i supply chain optimization og lean manufacturing. Bygget produksjonslinje for 50,000+ enheter/år."
+
     },
+
     {
+
       "navn": "Mia Sørensen",
+
       "rolle": "CMO & Donasjonskoordinator",
+
       "erfaring": "Marketing lead hos TOMS Norway i 5 år. Erfaring med impact-driven merkevarebygging og non-profit partnerskaper. BA i Markedskommunikasjon fra BI."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "90% lavere CO₂-utslipp vs. tradisjonell fottøyproduksjon (kun 2.1 kg CO₂ per par vs. 13.6 kg industri-snitt). Mycelium-lær er 100% biologisk nedbrytbart. Biobasert TPU fra alger sequestrerer CO₂. Zero-waste produksjon - overflødig materiale resirkuleres.",
+
     "sosialt": "1:1 donasjonsmodell gir fottøy til hjemløse, flyktninger og lavinntektsfamilier via Kirkens Bymisjon og Røde Kors. Skaper 15 nye arbeidsplasser i Norge innen 2027. Samarbeid med ortopediske avdelinger for pasientbehandling.",
+
     "oekonomisk": "Støtter norsk high-tech industri og materialforskning. Teknologideling med SPEIS skaper syneergier for aerospace-sektor. Lisensieringsmodell kan generere eksportinntekter. Lokalproduksjon styrker norsk produksjonskompetanse.",
+
     "un_sdgs": [8, 9, 10, 12, 13]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "marketChart",
+
       "type": "doughnut",
+
       "title": "Markedsandel År 3",
+
       "data": {
+
         "labels": ["SYRE™", "Nike", "Adidas", "Andre"],
+
         "values": [12, 28, 25, 35]
+
       }
+
     },
+
     {
+
       "id": "revenueChart",
+
       "type": "line",
+
       "title": "Inntektsprognose (MNOK)",
+
       "data": {
+
         "labels": ["År 1", "År 2", "År 3", "År 4", "År 5"],
+
         "datasets": [
+
           {
+
             "label": "Omsetning",
+
             "data": [2.5, 6.5, 12.0, 20.0, 30.0],
+
             "color": "#8a2be2"
+
           },
+
           {
+
             "label": "Resultat",
+
             "data": [-0.5, 1.0, 3.0, 6.0, 10.0],
+
             "color": "#333"
+
           }
+
         ]
+
       }
+
     },
+
     {
+
       "id": "donationChart",
+
       "type": "bar",
+
       "title": "Donasjonsprogresjon",
+
       "data": {
+
         "labels": ["År 1", "År 2", "År 3", "År 4", "År 5"],
+
         "values": [200, 650, 1200, 2000, 3000]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": true,
+
     "images": ["ivaar_fkyeah1.png", "ivaar_fkyeah2.png", "ivaar_fkyeah3.png"]
+
   }
+
 }
+

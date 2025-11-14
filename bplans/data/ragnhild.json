@@ -3,155 +3,308 @@
 
     "name": "Ragnhild",
     "tagline": "Moderne begravelsesbyrå med Karaokekiste, Diskokiste og Klovnepallbærere",
+
     "logo_text": "Ragnhild",
+
     "trademark": false,
+
     "sector": "Social Innovation",
+
     "funding_nok": 150000
+
   },
+
   "sammendrag": {
+
     "visjon": "Ragnhild skal transformere den norske begravelsesindustrien fra dyster tradisjon til personlig feiring av liv. Vi tror at døden skal markeres med glede, humor og ærlighet - ikke bare sorg og formalitet.",
+
     "misjon": "Tilby moderne begravelsestjenester som respekterer avdødes personlighet og ønsker. Fra Karaokekiste med innebygd lydsystem til Klovnepallbærere som sprer smil - vi skreddersyr hver seremoni.",
+
     "innovation": "LED-belyste kister (Diskokiste), integrerte PA-systemer (Karaokekiste), holografiske minneprosjeksjoner, og performative seremonier med profesjonelle entertainers som pallbærere.",
+
     "customer_benefit": "Pårørende får en begravelse som virkelig gjenspeiler avdødes liv og verdier. Reduserer begravelseskostnader med 30% via digital markedsføring og direkte bestilling. Fjerner taboo rundt død gjennom humor og openness."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "1500000000",
+
     "marked_norden_nok": "5000000000",
+
     "vekst_prosent": 3,
+
     "customer_segments": [
+
       "Eldre som ønsker å planlegge egen begravelse med personlig touch (60+ år)",
+
       "Pårørende til unge avdøde som ønsker livbejaende seremoni (familie 20-50 år)",
+
       "LGBTQ+ community som søker inkluderende og non-tradisjonelle seremonier",
+
       "Humanister og sekulære familier uten religiøs tilknytning",
+
       "Kreative yrker (kunstnere, musikere) som ønsker ukonvensjonelle begravelser"
+
     ],
+
     "konkurranse": [
+
       "Tradisjonelle begravelsesbyråer (Fonus, Jølstad, Norrem) - formelle, høye priser",
+
       "Kirkelige begravelser - religiøse, lite fleksibilitet",
+
       "DIY begravelser - lovlig men komplisert, mangler profesjonalitet",
+
       "Nye aktører (Legacy, Memoria) - digitale, men fortsatt konservative"
+
     ],
+
     "konkurransefortrinn": [
+
       "Unike produkter: Karaokekiste, Diskokiste, Neonkiste - ingen andre tilbyr dette",
+
       "Performative tjenester: Klovnepallbærere, Stand-up comedian som taler, Live-musikere",
+
       "30% lavere priser enn etablerte aktører via digitalt salg og direkte import av kister",
+
       "Holografiske minneprosjeksjoner - 3D-video av avdøde under seremoni",
+
       "Full transparens: Online priskalkulator, ingen skjulte kostnader",
+
       "Miljøvennlige alternativer: Mycelium-kister (biologisk nedbrytbare på 45 dager)"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "Ragnhild benytter LED strip lighting i kister (Diskokiste), Bluetooth PA-system (Karaokekiste), og holografisk projektor for minnevisninger. Alle kister custom-bygges med CNC-frest tre og integrert elektronikk.",
+
     "unique_innovation": "Holografisk minneprojeksjon: Vi 3D-skanner bilder og video av avdøde og projiserer som Pepper's Ghost hologram under seremoni. Gir illusjon av at avdøde er til stede og snakker til gjester.",
+
     "ip_status": "Trademark 'Ragnhild™' registrert. Patent pending for 'Integrated Audiovisual Funeral Casket System'. Design-patent for Diskokiste RGB-layout.",
+
     "utviklingsstadium": "3 Karaokekister solgt og brukt i seremonier (5-stjerners anmeldelser). Diskokiste prototype testet på messe. Holografi-system i beta-testing. Klovnepallbærere booket 15 ganger siste år."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Begravelsespakker: NOK 15,000-45,000 per seremoni (vs. NOK 50,000-80,000 tradisjonelt)",
+
       "Premium kister: Karaokekiste NOK 25,000, Diskokiste NOK 30,000, Mycelium-kiste NOK 20,000",
+
       "Performative tjenester: Klovnepallbærere NOK 8,000, Stand-up taler NOK 5,000, Live-band NOK 15,000",
+
       "Holografisk minneprojeksjon: NOK 12,000 per seremoni",
+
       "Pre-need salg: Kunder bestiller egen begravelse i forveien - 100% forhåndsbetaling"
+
     ],
+
     "loennsomhet": "Break-even ved 50 seremonier årlig (ca. 1 per uke). Netto margin 35% på komplette pakker. Pre-need salg gir kontantstrøm før leveranse. Ved 200 seremonier årlig (år 3): NOK 6M omsetning, NOK 2.1M profitt.",
+
     "skalerbarhet": "Franchise-modell for andre norske byer (Bergen, Trondheim, Stavanger) - NOK 250k franchise fee + 8% royalty. Digital markedsføring tillater nasjonal rekkevidde. Performere rekrutteres lokalt."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Produsere 10 Karaokekister og 5 Diskokister. Ansette 2 begravelseskonsulenter. Lansere ny nettside med online booking.",
+
     "q2_2026": "Gjennomføre 30 seremonier. Rekruttere og trene 5 Klovnepallbærere-team. Teste holografi-system på 5 begravelser. Media coverage i VG/Dagbladet.",
+
     "q3_2026": "Åpne fysisk showroom i Oslo (Grünerløkka). Nå 60 seremonier totalt. Lansere Mycelium-kiste for miljøbevisste.",
+
     "q4_2026": "Ekspandere til Bergen med første franchise. Nå 100 seremonier årlig. Break-even oppnådd.",
+
     "2027": "Åpne 3 nye franchises (Trondheim, Stavanger, Tromsø). Lansere VR-basert begravelsesplanlegging. Nå 400 seremonier årlig."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 300000,
+
     "innovasjon_norge_nok": 150000,
+
     "angel_nok": 100000,
+
     "crowdfunding_nok": 50000,
+
     "allokering": {
+
       "kiste_produksjon": 80000,
+
       "holografi_utstyr": 50000,
+
       "markedsfoering": 60000,
+
       "showroom": 40000,
+
       "loenn": 50000,
+
       "driftskapital": 20000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Ragnhild Solvang",
+
       "rolle": "Grunnlegger & CEO",
+
       "erfaring": "8 år som begravelseskonsulent hos Fonus. Ble frustrert over bransjen's manglende innovasjon. Stand-up comedian på si (5 års erfaring). BA i Teatervitenskap fra UiO."
+
     },
+
     {
+
       "navn": "Kristoffer Hanssen",
+
       "rolle": "CTO & Product Designer",
+
       "erfaring": "10 år som møbelsnekker og designer. Ekspert i CNC-fresing og LED-integrasjon. Bygget custom stage props for festivaler. Autodidakt elektronikk-hacker."
+
     },
+
     {
+
       "navn": "Maria Johansen",
+
       "rolle": "Head of Ceremonies",
+
       "erfaring": "Tidligere prest i Den norske kirke (15 år), forlot på grunn av ønske om mer kreative seremonier. Master i Liturgikk. Nettverk av 50+ musikere og performere."
+
     },
+
     {
+
       "navn": "Erik 'The Clown' Nilsen",
+
       "rolle": "Lead Pallbearer & Entertainment Director",
+
       "erfaring": "20 år som profesjonell klovn (sirkus, barnehager, festivaler). Erfaring fra 500+ events. Sertifisert pallbærer (ja, det finnes). Trained in improv comedy."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "Mycelium-kister er 100% biologisk nedbrytbare på 45 dager (vs. 10-25 år for tre). LED-systemer bruker solcellebatterier (0 strømforbruk under seremoni). Lokal produksjon reduserer transport-utslipp.",
+
     "sosialt": "Fjerner stigma rundt død og begravelser. Gir LGBTQ+ og ikke-religiøse grupper inkluderende alternativ. Ansetter performere med nedsatt funksjonsevne. 5% av profitt til Kirkens Bymisjon for begravelser til vanskeligstilte.",
+
     "oekonomisk": "Reduserer begravelseskostnader for norske familier med 30% (spart NOK 15,000+ per begravelse). Skaper 20+ jobber for kreative yrker (musikere, komikere, designere) innen 3 år.",
+
     "un_sdgs": [3, 8, 10, 12]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "adoptionChart",
+
       "type": "bar",
+
       "title": "Tjenesteadopsjon (%)",
+
       "data": {
+
         "labels": ["Karaokekiste", "Diskokiste", "Klovnepallbærere", "Holografi", "Mycelium-kiste"],
+
         "values": [35, 25, 45, 15, 20]
+
       }
+
     },
+
     {
+
       "id": "revenueChart",
+
       "type": "line",
+
       "title": "Omsetning (MNOK)",
+
       "data": {
+
         "labels": ["År 1", "År 2", "År 3", "År 4", "År 5"],
+
         "datasets": [
+
           {"label": "Omsetning", "data": [1.5, 3.2, 6.0, 10.0, 15.0], "color": "#ff007f"}
+
         ]
+
       }
+
     },
+
     {
+
       "id": "satisfactionChart",
+
       "type": "radar",
+
       "title": "Kundetilfredshet (1-10)",
+
       "data": {
+
         "labels": ["Personalisering", "Pris", "Service", "Innovasjon", "Respekt", "Glede"],
+
         "datasets": [
+
           {"label": "Ragnhild", "data": [9.5, 9.0, 9.2, 10, 9.8, 9.7], "color": "#ff007f"},
+
           {"label": "Tradisjonelt byrå", "data": [6.0, 5.5, 7.0, 3.0, 8.0, 4.0], "color": "#888"}
+
         ]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

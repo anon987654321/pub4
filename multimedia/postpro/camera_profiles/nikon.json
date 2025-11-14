@@ -3,16 +3,30 @@
 
   "profiles": {
     "z9": {
+
       "color_matrix": [0.9669, -0.0145, -0.0524, -0.2854, 1.3010, -0.0156, -0.0627, 0.1369, 0.9258],
+
       "saturation": 1.08,
+
       "vibrance": 0.18,
+
       "picture_control": "standard"
+
     },
+
     "d850": {
+
       "color_matrix": [0.9545, -0.0228, -0.0317, -0.2757, 1.2894, 0.0137, -0.0527, 0.1264, 0.9263],
+
       "saturation": 1.12,
+
       "vibrance": 0.22,
+
       "picture_control": "vivid"
+
     }
+
   }
+
 }
+

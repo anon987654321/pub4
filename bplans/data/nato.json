@@ -3,157 +3,312 @@
 
     "name": "NATO Aurora",
     "tagline": "Arktiske dominanseskip som overgår russiske Arktika-klasse",
+
     "logo_text": "NATO Aurora",
+
     "trademark": false,
+
     "sector": "Maritime + Defense",
+
     "funding_nok": 500000
+
   },
+
   "sammendrag": {
+
     "visjon": "NATO Aurora skal sikre vestlig overlegenhet i Arktis gjennom verdens mest avanserte isbrytere. Som russiske Arktika-klasse truet vestlig dominans, vil Aurora gjenopprette balansen med overlegen teknologi.",
+
     "misjon": "Designe og bygge nuclear-hybrid Arctic icebreakers med 3.5m isbryting-kapasitet, AI-optimalisert propulsjon og Polar Class 1 sertifisering. Tilby NATO ubegrenset operasjonell rekkevidde i nordområdene.",
+
     "innovation": "Dual nuclear reactor design (2x 175 MW RITM-200 inspirert), hybrid-electric stealth mode, adaptive hull coating for redusert friksjon, AI-drevet rute-optimalisering basert på satellitt-is-data.",
+
     "customer_benefit": "NATO får strategisk kontroll over Arktis. Norge styrker nordområdeforsvar. Sivile anvendelser: arktisk shipping-support (NOK 50 milliarder årlig marked), ressurskontroll (olje/gass), Search & Rescue."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "25000000000",
+
     "marked_norden_nok": "80000000000",
+
     "vekst_prosent": 8,
+
     "customer_segments": [
+
       "NATO medlemsland med arktiske interesser (Norge, USA, Canada, Danmark/Grønland)",
+
       "Norsk Kystvakt for suverenitetshåndhevelse",
+
       "Arktiske shippingselskaper (Hurtigruten, Maersk Arctic operations)",
+
       "Olje- og gassselskaper (Equinor, Shell, BP) for arktisk ressursutvinning",
+
       "Research-organisasjoner (UNIS, Polar Institute) for ekspedisjoner"
+
     ],
+
     "konkurranse": [
+
       "Russland Arktika-klasse: 50 Let Pobedy (75,000 ton, 2.8m isbryting)",
+
       "Russland Lider-klasse: 120 MW dual reactor, under konstruksjon",
+
       "Canada's Diefenbaker-klasse (diesel-electric, 2.5m isbryting)",
+
       "USA Polar Security Cutters (under design, diesel-electric)",
+
       "Kina's Xue Long 2 (diesel, research focus, 1.5m isbryting)"
+
     ],
+
     "konkurransefortrinn": [
+
       "3.5m isbryting vs. 2.8m for Arktika (25% overlegen kapasitet)",
+
       "Dual reactor: 350 MW total (vs. 175 MW Arktika) - 2x propulsjonskraft",
+
       "Hybrid-electric stealth mode: 0 akustisk signatur for militære operasjoner",
+
       "AI route optimization: 15% kortere reisetid gjennom is vs. menneskelige navigatører",
+
       "Polar Class 1 hull: opererer year-round i thickest multiyear ice",
+
       "Adaptive nanocoating: 20% redusert hull friction = lavere energiforbruk",
+
       "Ubegrenset operasjonell rekkevidde (nuclear) vs. 3-6 måneder (diesel)"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "NATO Aurora benytter dual RITM-200 inspirert pressurized water reactors (PWR) med 175 MW hver. Reaktorene driver både steam turbines (direktepropulsjon) og electric generators (stealth mode). AI-system integrerer real-time satellittdata (Sentinel-1 SAR) for is-tetthet og optimaliserer rute + propulsjonskraft.",
+
     "unique_innovation": "Hybrid-electric architecture tillater switching mellom nuclear-direct (high speed, high noise) og electric-battery (low speed, zero noise) modes. Batteripakke på 50 MWh gir 12 timers stealth operations. Adaptive hull coating (nanotechnology) endrer overflateegenskaper basert på is-type.",
+
     "ip_status": "Klassifisert forsvarsteknologi under NATO Security Agreement (ST/SG/AC.3). Deler av AI-algoritmer åpen kildekode. Samarbeid med Kongsberg Maritime og Rolls-Royce Marine.",
+
     "utviklingsstadium": "Konseptdesign fullført med DNV GL. Propulsjon-simulering testet. Reaktor-design lisensiert fra Rosatom (pre-sanctions). Krever full-skala prototype og arktisk testing (NOK 5 milliarder)."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "NATO-kontrakter: NOK 18-25 milliarder per skip (6 skip bestilt = NOK 120 milliarder)",
+
       "Norsk Forsvar: NOK 20 milliarder for 1 skip + 30 års vedlikehold",
+
       "Sivile isbryter-tjenester: NOK 500M årlig (escort for shipping)",
+
       "Olje/gass support: NOK 1 milliard årlig (platform supply + emergency response)",
+
       "Research chartres: NOK 50M årlig (UNIS, universities, dokumentarfilmer)"
+
     ],
+
     "loennsomhet": "Første skip-kontrakt sikrer profitabilitet (margin 20%). Byggekostnad NOK 15 milliarder, salg NOK 20 milliarder. Vedlikeholdskontrakter (30 år @ NOK 500M/år) = NOK 15 milliarder recurring. Break-even ved 1 solgt skip + 2 års vedlikehold.",
+
     "skalerbarhet": "Modular construction tillater 2-3 skip simultant i Norwegian shipyards. Produksjonstid 5 år per skip. NATO har indikert behov for 6 Aurora-class + 12 variants (diesel-hybrid for non-nuclear countries). Total adressable market: NOK 300+ milliarder over 20 år."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Fullføre preliminary design review med DNV GL. Sikre reactor-design-lisens. Etablere partnerskap med Kongsberg Maritime.",
+
     "q2_2026": "Detaljert engineering av hull, propulsion, og reaktorsystemer. Bygge 1:10 scale model for tank-testing hos SINTEF Ocean. Presentere for NATO Defence Innovation Accelerator.",
+
     "q3_2026": "Sikre første kontrakt med Norsk Forsvar (1 skip, NOK 20 milliarder). Starte konstruksjon av prototyp-moduler (propulsion, power systems).",
+
     "q4_2026": "Etablere produksjonsfasilitet i Ålesund. Ansette 500 skipsbyggere og ingeniører. Starte reactor-konstruksjon under IAEA-tilsyn.",
+
     "2027": "Legge kjøl for første Aurora-skip. Fullføre reactor-installasjon. Arktisk testing av propulsion-system. Sikre 3 ekstra NATO-kontrakter (Canada, USA, Danmark)."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 1000000,
+
     "innovasjon_norge_nok": 500000,
+
     "nato_grant_nok": 300000,
+
     "venture_nok": 200000,
+
     "allokering": {
+
       "engineering": 300000,
+
       "prototype": 250000,
+
       "fasiliteter": 200000,
+
       "sikkerhet": 100000,
+
       "loenn": 100000,
+
       "driftskapital": 50000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Admiral (ret.) Haakon Bruun-Hanssen",
+
       "rolle": "CEO & Strategic Advisor",
+
       "erfaring": "Former Chief of Norwegian Navy (2009-2013). 40 år maritim erfaring. Ekspert i arktiske operasjoner og NATO-samarbeid. Leder for Arctic Security Working Group."
+
     },
+
     {
+
       "navn": "Dr. Olga Petrova",
+
       "rolle": "CTO Nuclear Systems",
+
       "erfaring": "PhD i Nuclear Engineering fra MIPT (Moscow). 15 år hos Rosatom design bureau. Designet RITM-200 safety systems. Defected til Norge 2019. Security cleared NATO SECRET."
+
     },
+
     {
+
       "navn": "Knut Johannessen",
+
       "rolle": "Chief Naval Architect",
+
       "erfaring": "25 år hos Ulstein Design & Solutions. Designet 50+ offshore og research vessels. Master i Marine Technology fra NTNU. Ekspert i ice-class hull design og DNV GL-regler."
+
     },
+
     {
+
       "navn": "Captain (ret.) Emma Hansen",
+
       "rolle": "Head of Operations & Training",
+
       "erfaring": "20 år i Kystvakten, kommanderte KV Svalbard (Polar Class 5). Erfaring fra 30+ Arktiske ekspedisjoner. Master i Navigation fra Sjøkrigsskolen."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "Nuclear propulsion = zero CO₂ emissions vs. diesel (120,000 tonn CO₂/år spart). Reactors har 50-års levetid uten refueling. Hybrid-electric mode reduserer underwater noise pollution (kritisk for marine mammals).",
+
     "sosialt": "Sikrer norsk suverenitet i nordområdene. Støtter Search & Rescue operasjoner (redder 50+ liv årlig). Skaper 2,000+ høykompetanse jobber. Samarbeid med UNIS for arktisk forskning.",
+
     "oekonomisk": "Reduserer Norges avhengighet av utenlandsk forsvarsteknologi. Eksportpotensiale NOK 300+ milliarder over 20 år. Styrker norsk maritim industri (Kongsberg, Ulstein, Rolls-Royce Marine Norge).",
+
     "un_sdgs": [9, 13, 14, 16]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "capabilityChart",
+
       "type": "bar",
+
       "title": "Isbryting-kapasitet (meter)",
+
       "data": {
+
         "labels": ["NATO Aurora", "Russland Arktika", "Canada Diefenbaker", "USA Polar", "Kina Xue Long"],
+
         "values": [3.5, 2.8, 2.5, 2.0, 1.5]
+
       }
+
     },
+
     {
+
       "id": "costChart",
+
       "type": "line",
+
       "title": "Operasjonskostnad (MNOK per år)",
+
       "data": {
+
         "labels": ["År 1", "År 5", "År 10", "År 20", "År 30"],
+
         "datasets": [
+
           {"label": "Aurora (nuclear)", "data": [500, 450, 400, 350, 300], "color": "#00c9ff"},
+
           {"label": "Diesel equivalent", "data": [800, 900, 1000, 1100, 1200], "color": "#888"}
+
         ]
+
       }
+
     },
+
     {
+
       "id": "coverageChart",
+
       "type": "radar",
+
       "title": "Strategisk Dekning",
+
       "data": {
+
         "labels": ["Barents Sea", "Svalbard", "Grønland", "Canadian Arctic", "North Pole", "Bering Strait"],
+
         "datasets": [
+
           {"label": "NATO Aurora", "data": [100, 100, 95, 90, 85, 80], "color": "#00c9ff"}
+
         ]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

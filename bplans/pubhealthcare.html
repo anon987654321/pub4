@@ -5,379 +5,207 @@
   <meta charset="UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.googleapis.com https://fonts.gstatic.com;">
-
   <meta name="description" content="pub.healthcare — Business plan for autonomous parametric hospitals: self-constructing, self-managing facilities powered by AI, robotics, and parametric design.">
-
   <meta name="keywords" content="pub.healthcare, autonomous hospital, parametric architecture, AI, robotics, healthcare innovation, telemedicine, sustainability">
-
   <meta name="author" content="PubHealthcare AS">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
-
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat+Alternates:wght@700&display=swap" rel="stylesheet" font-display="swap">
-
   <title>pub.healthcare — Autonomous Parametric Hospitals</title>
-
   <style>
-
     :root {
-
       --primary-color: #d3d3d3;
-
       --background-color: #ffffff;
-
       --text-color: #000000;
-
       --accent-color: #d32f2f;
-
       --neutral-light: #e0e0e0;
-
       --neutral-dark: #757575;
-
       --font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-
       --heading-font-family: 'Montserrat Alternates', sans-serif;
-
       --base-font-size: 15px;
-
       --line-height: 1.6;
-
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body { font-family: var(--font-family); font-size: var(--base-font-size); line-height: var(--line-height); color: var(--text-color); background: var(--background-color); padding: 1rem; }
-
     main { max-width: 74ch; margin: 0 auto; }
-
     h1, h2 { font-family: var(--heading-font-family); font-weight: 700; color: var(--primary-color); letter-spacing: 0.04em; }
-
     h1 { font-size: 2.4rem; margin-bottom: 1rem; }
-
     h2 { font-size: 1.8rem; margin-top: 1.6rem; margin-bottom: 0.6rem; color: #111; }
-
     h3 { font-size: 1.2rem; margin-top: 1rem; margin-bottom: 0.4rem; }
-
     p { margin: 0.5rem 0 0.8rem; }
-
     ul { margin: 0.4rem 0 0.8rem 1.1rem; }
-
     li { margin: 0.35rem 0; }
-
     a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
-
     a:hover, a:focus { color: #b71c1c; text-decoration: underline; outline: none; }
-
     address { font-style: normal; color: var(--neutral-dark); margin-bottom: 1rem; }
-
     time { color: var(--neutral-dark); }
-
     .warning_box { padding: 0.8rem; margin: 1.1rem 0; border-left: 3px solid var(--accent-color); background: #fff; border-radius: 2px; }
-
     .warning_title { font-weight: 600; color: var(--accent-color); text-transform: uppercase; margin-bottom: 0.25rem; }
-
     table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: #fff; }
-
     th, td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--neutral-light); text-align: left; }
-
     th { background: #f3f3f3; position: sticky; top: 0; z-index: 1; }
-
     tr:nth-child(even) td { background: #fafafa; }
-
     caption { caption-side: top; text-align: left; font-weight: 600; margin-bottom: 0.4rem; }
-
     footer { font-size: 0.9rem; color: var(--neutral-dark); text-align: center; padding: 1rem 0; margin-top: 1.5rem; border-top: 1px solid var(--neutral-light); }
-
     .footer-links { margin-top: 0.4rem; display: flex; justify-content: center; gap: 0.8rem; }
-
     .badge { display: inline-block; padding: 0.15rem 0.45rem; font-size: 0.85rem; border: 1px solid var(--neutral-light); border-radius: 999px; color: #333; background: #f9f9f9; }
-
     @media (min-width: 768px) { body { padding: 1.6rem 1rem; } h1 { font-size: 2.8rem; } h2 { font-size: 2rem; } }
-
     @media print {
-
       body { padding: 12mm; }
-
       a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; }
-
       footer { position: fixed; bottom: 0; left: 0; right: 0; background: none; border: 0; }
-
     }
-
   </style>
-
 </head>
-
 <body>
-
   <main>
-
     <header>
-
       <h1>pub.healthcare — Autonomous Parametric Hospitals</h1>
-
       <address>
-
         <p>PubHealthcare AS, Kanalveien 10, 5068 Bergen • <b><a href="mailto:info@pub.healthcare" aria-label="Email PubHealthcare AS">info@pub.healthcare</a></b></p>
-
         <p><span class="badge">Framework: master.json v111.3-autonomous</span></p>
-
         <p><time datetime="2025-09-29">29 September 2025</time></p>
-
       </address>
-
     </header>
-
     <section aria-labelledby="exec">
-
       <h2 id="exec">Executive summary</h2>
-
       <p>pub.healthcare delivers autonomous parametric hospitals — self-constructing, self-managing facilities powered by AI, robotics, and parametric design. The platform dynamically matches capacity to demand, shortens time-to-care, lifts quality and safety, and lowers total cost of ownership. The initial focus is U.S. care deserts and surge capacity, then global deployment with sovereign hosting and GDPR/HIPAA alignment.</p>
     </section>
 
     <section aria-labelledby="problem">
-
       <h2 id="problem">Problem</h2>
-
       <ul>
         <li>Persistent access gaps: urban ER overcrowding and rural closures increase mortality and cost.</li>
 
         <li>Fragile capacity: pandemics, wildfires, and heatwaves create unpredictable surges.</li>
-
         <li>Workforce shortages: burnout and administrative overhead reduce effective care time.</li>
-
         <li>CapEx/OpEx burden: conventional brick-and-mortar is slow to build and expensive to operate.</li>
-
       </ul>
-
     </section>
-
     <section aria-labelledby="solution">
-
       <h2 id="solution">Solution: Autonomous Parametric Hospitals</h2>
-
       <p>Parametric architecture, modular robotics, and AI orchestration create hospitals that assemble themselves, reconfigure on demand, and operate safely with high reliability. Key innovations include:</p>
       <h3>Environment optimization</h3>
 
       <p>Automated systems continuously adjust air changes, temperature, pressure, light, and noise to optimize recovery and staff performance.</p>
-
       <h3>Continuous health and biosafety monitoring</h3>
-
       <p>Embedded sensors track environmental parameters and pathogen load in real time to maintain sterile conditions and early incident detection.</p>
-
       <h3>AI‑driven patient care</h3>
-
       <p>Each patient is paired with a privacy‑preserving AI companion that helps coordinate care plans, reminders, and education; clinicians remain in full control.</p>
-
       <h3>Advanced diagnostics and robotic procedures</h3>
-
       <p>Micro‑robotic swarms and precision automation support imaging, sample logistics, and minimally invasive tasks to increase throughput and consistency.</p>
-
       <h3>Global data integration and telemedicine</h3>
-
       <p>Standards‑based data pipelines anticipate demand, pre‑stage resources, and extend reach via telemedicine drones for remote triage and delivery.</p>
-
       <h3>Immersive training and therapeutic technologies</h3>
-
       <p>AR for just‑in‑time guidance; VR and biofeedback programs for pain, rehab, and behavioral health.</p>
-
       <h3>Adaptive infrastructure</h3>
-
       <p>Parametric layouts reconfigure in minutes: med‑surg to step‑down to ICU, surge tents to inpatient pods, all with safety interlocks.</p>
-
       <h3>Energy self‑sufficiency</h3>
-
       <p>On‑site renewables, storage, and waste‑heat recovery provide resilient operations with reduced operating cost and emissions.</p>
-
     </section>
-
     <section aria-labelledby="market">
-
       <h2 id="market">Market and customers</h2>
-
       <ul>
         <li>Primary: U.S. IDNs and state systems seeking resilient surge capacity and brownfield retrofits.</li>
 
         <li>Secondary: Ministries of health, NGOs, and defense medical units requiring rapidly deployable care.</li>
-
         <li>Initial beachheads: emergency care, step‑down, ambulatory surgery centers, dialysis, behavioral health.</li>
-
       </ul>
-
     </section>
-
     <section aria-labelledby="tech">
-
       <h2 id="tech">Technology architecture</h2>
-
       <ul>
         <li>Parametric design: rulesets constrain geometry, flows, and clearances to code and infection control.</li>
 
         <li>Robotic assembly: modular chassis, service spines, and MEP quick‑connects enable rapid build and reconfiguration.</li>
-
         <li>AI orchestration: demand forecasting, bed/OR scheduling, supply/autoclave logistics, and staffing assist.</li>
-
         <li>Interop and privacy: HL7 FHIR compatibility today; hAPI roadmap for richer semantics and streaming telemetry.</li>
-
         <li>Security: OpenBSD‑hardened control plane; zero‑trust network access; encryption in transit and at rest.</li>
-
       </ul>
-
       <div class="warning_box" role="note" aria-labelledby="note-hapi">
-
         <div class="warning_title" id="note-hapi">Standards</div>
-
         <p>Interoperability aligns with HL7 FHIR; future upgrades to hAPI drafts will preserve compatibility. All PHI processing targets HIPAA/GDPR compliance under least‑privilege access.</p>
-
       </div>
-
     </section>
-
     <section aria-labelledby="roadmap">
-
       <h2 id="roadmap">Roadmap (24 months)</h2>
-
       <ol>
         <li><strong>Pilot (0–6 months)</strong>: Modular urgent‑care unit; integrate EHR, imaging, and sterilization loops; validate biosafety KPIs.</li>
 
         <li><strong>Scale (6–18 months)</strong>: Add OR/ASC modules; deploy telemetry and surge pods across two regions; commission energy microgrid.</li>
-
         <li><strong>Globalization (18–24 months)</strong>: NGO deployment kit; multilingual clinical pathways; sovereign hosting patterns.</li>
-
       </ol>
-
     </section>
-
     <section aria-labelledby="financials">
-
       <h2 id="financials">Financials (indicative)</h2>
-
       <table role="grid" aria-label="Financial projections for pub.healthcare">
         <caption>Projected revenue and users (USD)</caption>
 
         <thead>
-
           <tr>
-
             <th scope="col">Year</th>
-
             <th scope="col">Revenue (M)</th>
-
             <th scope="col">Gross margin</th>
-
             <th scope="col">Deployments</th>
-
           </tr>
-
         </thead>
-
         <tbody>
-
           <tr>
-
             <td scope="row">Y1</td>
-
             <td>2.5</td>
-
             <td>55%</td>
-
             <td>8</td>
-
           </tr>
-
           <tr>
-
             <td scope="row">Y2</td>
-
             <td>7.0</td>
-
             <td>60%</td>
-
             <td>20</td>
-
           </tr>
-
           <tr>
-
             <td scope="row">Y3</td>
-
             <td>15.0</td>
-
             <td>65%</td>
-
             <td>45</td>
-
           </tr>
-
         </tbody>
-
       </table>
-
       <p>Revenue mix: subscription (control plane, orchestration), deployment services, and managed operations (optional).</p>
-
     </section>
-
     <section aria-labelledby="risks">
-
       <h2 id="risks">Risks and mitigations</h2>
-
       <ul>
         <li><strong>Regulatory</strong>: Build to prevailing codes; engage AHJs early; third‑party safety certification.</li>
 
         <li><strong>Clinical adoption</strong>: Co‑design with clinicians; simulation labs; staged go‑lives.</li>
-
         <li><strong>Cybersecurity</strong>: OpenBSD hardening, zero‑trust, red‑team testing, immutable infra as code.</li>
-
         <li><strong>Supply constraints</strong>: Dual sourcing for critical modules; inventory buffers; local fab partners.</li>
-
       </ul>
-
     </section>
-
     <section aria-labelledby="ethics">
-
       <h2 id="ethics">Privacy, safety, and ethics</h2>
-
       <ul>
         <li>Privacy by design: data minimization, on‑prem inference paths, and auditability.</li>
 
         <li>Patient agency: opt‑in companions; human‑in‑the‑loop decisions; transparent explanations.</li>
-
         <li>Equity: tiered pricing and NGO partnerships to reach underserved communities.</li>
-
       </ul>
-
     </section>
-
     <section aria-labelledby="links">
-
       <h2 id="links">Links</h2>
-
       <p>Website: <a href="https://pub.healthcare/" aria-label="Visit pub.healthcare">pub.healthcare</a></p>
     </section>
 
     <footer>
-
       <p>© 2025 PubHealthcare AS</p>
-
       <div class="footer-links" aria-label="Social links">
         <a href="https://www.linkedin.com" aria-label="LinkedIn">LinkedIn</a>
 
         <a href="https://www.twitter.com" aria-label="Twitter">Twitter</a>
-
         <a href="https://www.facebook.com" aria-label="Facebook">Facebook</a>
-
       </div>
-
     </footer>
-
   </main>
-
 </body>
-
 </html>
-

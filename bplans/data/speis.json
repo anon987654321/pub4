@@ -3,148 +3,294 @@
 
     "name": "SPEIS",
     "tagline": "NATO Aurora skip + kampfly 7-10. generasjon",
+
     "logo_text": "SPEIS",
+
     "trademark": false,
+
     "sector": "Maritime + Defense",
+
     "funding_nok": 500000
+
   },
+
   "sammendrag": {
+
     "visjon": "SPEIS skal etablere Norge som ledende leverandør av arktiske dominanseskip og neste generasjons kampfly til NATO. Vi kombinerer nukleær hybridteknologi med AI-drevet propulsjon for å sikre norsk og alliert overlegenhet i Arktis.",
+
     "misjon": "Utvikle og produsere nuclear-hybrid Arctic dominance ships som overgår russiske Arktika-klasse isbrytere, samt kampfly generasjon 7-10 med modulære misjonssystemer for fremtidens forsvarsbehov.",
+
     "innovation": "Nuclear-hybrid propulsion med AI-optimalisering, 3.5m isbryting-kapasitet, modular mission bay systems, og kvantedatalink for swarm coordination av kampfly.",
+
     "customer_benefit": "NATO får overlegen arktisk kontroll, Norge styrker nasjonal sikkerhet og forsvarsindustri, teknologideling med SYRE™ for materialer og 3D-printing."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "50000000000",
+
     "marked_norden_nok": "120000000000",
+
     "vekst_prosent": 5,
+
     "customer_segments": [
+
       "NATO medlemsland med arktiske interesser (Norge, USA, Canada, Danmark)",
+
       "Norsk Forsvarsmateriell (FMA) for Sjøforsvaret og Luftforsvaret",
+
       "Arktiske ressurskontroll-organisasjoner (olje, gass, fiskeri)",
+
       "Kystvakt og Search & Rescue operasjoner i nordområdene"
+
     ],
+
     "konkurranse": [
+
       "Russlands Arktika-klasse isbrytere (50 Let Pobedy, 75,000 ton)",
+
       "USA Zumwalt-class destroyers og Ford-class carriers",
+
       "Kinas Type 055 destroyers og polar research vessels",
+
       "Frankrike/Tyskland FCAS (Future Combat Air System) kampfly",
+
       "USA NGAD (Next Generation Air Dominance) program"
+
     ],
+
     "konkurransefortrinn": [
+
       "Dual nuclear reactor design gir ubegrenset rekkevidde i arktiske farvann",
+
       "Polar Class 1 hull med 3.5m isbryting vs. 2.8m for Arktika",
+
       "AI-drevet propulsjon optimaliserer energibruk i sanntid",
+
       "Modular mission bay tillater hurtig rekonfigurering for ulike oppdrag",
+
       "Generasjon 7-10 kampfly med swarm intelligence og autonomous operations",
+
       "Teknologideling med SYRE™ for 3D-printede aerospace komponenter"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "SPEIS Aurora-skip benytter dual-reactor layout med RITM-200 inspirert design (175 MW). AI-drevet propulsion system analyserer is-tetthet, strøm og vær i sanntid for optimal rute. Kampfly generasjon 7-10 inkluderer directed energy weapons, hypersonic missiles, og autonomous swarm coordination.",
+
     "unique_innovation": "Hybrid nuclear-electric propulsion lar skip operere i elektro-modus for stealth operations (zero akustisk signatur). Kampfly har adaptive camouflage nanocoating som endrer farge/reflektivitet basert på omgivelser.",
+
     "ip_status": "Klassifisert forsvarsteknologi under NATO Security Agreement. Deler av AI-algoritmer patent-beskyttet. Samarbeidsavtale med Kongsberg Defence & Aerospace.",
+
     "utviklingsstadium": "Skip: Konseptdesign fase med SINTEF Marintek. Kampfly: Prototype avionics testet i simulator. Krever full-skala produksjonsfasilitet og testing."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Direkte salg til NATO medlemsland: NOK 15-25 milliarder per skip",
+
       "Kampfly kontrakter: NOK 800 millioner - 1.5 milliarder per fly",
+
       "Vedlikehold og oppgraderinger: 15% av initial kostnad årlig (30 års levetid)",
+
       "Teknologilisenser til allierte nasjoner: NOK 500 millioner årlig",
+
       "Sivilavledede teknologier (isbrytere for shipping): NOK 5-8 milliarder per skip"
+
     ],
+
     "loennsomhet": "Første skip-kontrakt sikrer profitabilitet (margin 20-25%). Kampfly-programmet krever 5-7 års investering før første leveranse. Vedlikeholdskontrakter gir stabil langsiktig inntekt.",
+
     "skalerbarhet": "Modular design tillater parallell produksjon av skip-seksjoner. Kampfly kan produseres 12-24 enheter årlig ved full kapasitet. Teknologiplattform skalerbar til ubemannede varianter."
+
   },
+
   "veikart": {
+
     "q1_2026": "Sikre Innovasjon Norge finansiering. Fullføre preliminary design review for Aurora-skip. Etablere partnerskap med Kongsberg Defence.",
+
     "q2_2026": "Bygge full-skala prototype av AI propulsion system. Påbegynne kampfly avionics integration testing. Ansette 25 ingeniører.",
+
     "q3_2026": "Presentere Aurora-design for NATO Defence Innovation Accelerator. Secure første kontrakt med Sjøforsvaret (1 skip, NOK 18 milliarder).",
+
     "q4_2026": "Starte konstruksjon av prototype Aurora-skip. Kampfly simulator operativ for pilot training. Ansette 50 flere fagarbeidere.",
+
     "2027": "Første Aurora-skip på sjøen for arktisk testing. Kampfly prototype første testflyvning. Ekspandere til produksjonsfasilitet for 3 skip parallelt."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 1000000,
+
     "innovasjon_norge_nok": 500000,
+
     "forsvarsbudsjett_nok": 300000,
+
     "venture_nok": 200000,
+
     "allokering": {
+
       "forskning": 250000,
+
       "prototype": 300000,
+
       "fasiliteter": 200000,
+
       "loenn": 150000,
+
       "sikkerhet": 50000,
+
       "driftskapital": 50000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Admiral (ret.) Bjørn Haugen",
+
       "rolle": "CEO & Strategic Advisor",
+
       "erfaring": "35 år i Sjøforsvaret, tidligere sjef for Kystvakten. Ekspert i arktiske operasjoner og NATO-samarbeid. Master i Strategiske Studier fra Naval Postgraduate School."
+
     },
+
     {
+
       "navn": "Dr. Siri Johansen",
+
       "rolle": "CTO Nuclear Systems",
+
       "erfaring": "PhD i Nuclear Engineering fra MIT. 12 år hos Institute for Energy Technology. Designet sikkerhetssystemer for norske forskningsreaktorer."
+
     },
+
     {
+
       "navn": "Colonel (ret.) Erik Svendsen",
+
       "rolle": "Chief Aerospace Engineer",
+
       "erfaring": "25 år i Luftforsvaret, testet F-35 og F-16. Master i Aerospace Engineering fra NTNU. Leder for avionics integration team."
+
     },
+
     {
+
       "navn": "Knut Andreassen",
+
       "rolle": "COO & Manufacturing Director",
+
       "erfaring": "18 år hos Kongsberg Maritime, bygget subsea production systems. Ekspert i prosjektledelse for komplekse forsvarssystemer."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "Nuclear propulsion gir zero-emission operations sammenlignet med diesel-drevne skip (80,000 tonn CO₂ spart per skip årlig). Modulær design forlenger levetid til 50+ år, reduserer behov for nybygg.",
+
     "sosialt": "Skaper 500+ høykompetanse jobber i Norge innen maritim og aerospace engineering. Styrker Norges rolle i NATO og nordområdesikkerhet. Samarbeid med NTNU og universiteter for forskeropplæring.",
+
     "oekonomisk": "Reduserer Norges avhengighet av utenlandsk forsvarsteknologi. Eksportpotensiale NOK 50+ milliarder over 20 år. Teknologispinn-offs til sivil shipping og energi-sektor.",
+
     "un_sdgs": [8, 9, 16]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "capabilitiesChart",
+
       "type": "radar",
+
       "title": "Kapabiliteter vs Konkurrenter",
+
       "data": {
+
         "labels": ["Isbryting", "Stealth", "Rekkevidde", "Payload", "AI-system", "Modularitet"],
+
         "datasets": [
+
           {"label": "SPEIS Aurora", "data": [95, 85, 100, 90, 95, 90], "color": "#ff007f"},
+
           {"label": "Russland Arktika", "data": [80, 40, 85, 85, 50, 60], "color": "#888"}
+
         ]
+
       }
+
     },
+
     {
+
       "id": "timelineChart",
+
       "type": "gantt",
+
       "title": "Utviklingstidsplan",
+
       "data": {
+
         "milestones": [
+
           {"phase": "Design", "start": "2026-Q1", "end": "2026-Q3"},
+
           {"phase": "Prototype", "start": "2026-Q2", "end": "2027-Q2"},
+
           {"phase": "Testing", "start": "2027-Q1", "end": "2027-Q4"},
+
           {"phase": "Produksjon", "start": "2027-Q3", "end": "2028-Q4"}
+
         ]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

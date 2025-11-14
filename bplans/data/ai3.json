@@ -3,154 +3,306 @@
 
     "name": "AI³",
     "tagline": "Ruby-drevet 3D-printing for romfart og fusion-propulsion",
+
     "logo_text": "AI³",
+
     "trademark": false,
+
     "sector": "Energy & Environment + Aerospace",
+
     "funding_nok": 400000
+
   },
+
   "sammendrag": {
+
     "visjon": "AI³ (Artificial Intelligence Cubed) skal revolusjonere romfartindustrien ved å gjøre spacecraft-komponenter 10x billigere og 5x raskere å produsere. Vi kombinerer Ruby-eleganse med cutting-edge 3D-printing for fusion-propulsion.",
+
     "misjon": "Utvikle Ruby-basert parametrisk design-pipeline for 3D-printing av spacecraft propulsion components. Fra fusion drive nozzles til quantum vacuum thrusters - AI³ gjør romfart tilgjengelig.",
+
     "innovation": "Ruby metaprogramming for generativ design av aerospace komponenter. Multi-material 3D printing (Inconel 718, tungsten, ceramic matrix composites). AI-optimalisert topology for ekstrem varmetoleranse og strukturell integritet.",
+
     "customer_benefit": "SpaceX, Blue Origin, ESA får komponenter til 10% av tradisjonell kostnad. Designtid redusert fra 6 måneder til 2 uker. Teknologideling med SYRE™ for materialer."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "2000000000",
+
     "marked_norden_nok": "8000000000",
+
     "vekst_prosent": 25,
+
     "customer_segments": [
+
       "Space agencies (ESA, NASA, JAXA) for propulsion R&D",
+
       "Private space companies (SpaceX, Blue Origin, Rocket Lab)",
+
       "Satellite manufacturers (Kongsberg Satellite Services, Thales Alenia)",
+
       "Fusion energy companies (ITER, Commonwealth Fusion) for reactor components",
+
       "Defense contractors (Lockheed Martin, Northrop Grumman) for hypersonic vehicles"
+
     ],
+
     "konkurranse": [
+
       "Relativity Space (3D-printed rockets, men ikke propulsion-focus)",
+
       "Velo3D (metal 3D printing, generisk ikke aerospace-optimalisert)",
+
       "Tradisjonelle aerospace manufacturers (Boeing, Airbus Defence & Space) - trage",
+
       "AMCM (Additive Manufacturing Customized Machines) - verktøy, ikke design"
+
     ],
+
     "konkurransefortrinn": [
+
       "Ruby-basert generativ design - 10x raskere iterasjoner enn C++/CATIA workflows",
+
       "AI³ topology optimization for fusion nozzles - 40% vektreduksjon vs. tradisjonell design",
+
       "Multi-material printing: Inconel + tungsten + CMC i én print-job",
+
       "Extreme temperature tolerance: komponenter testet til 3,000°C (fusion plasma exhaust)",
+
       "Teknologideling med SYRE™ - felles materialforskning (G-TPU, aerogel)",
+
       "Norsk kvalitet og NATO security clearance for defense contracts"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "AI³ benytter Ruby on Rails for web-basert design interface. Grasshopper/Rhino plugin (Ruby-scripted) for parametrisk CAD. Design eksporteres til EOS M 400-4 metal 3D printer (quad-laser SLM). AI-system (TensorFlow) optimaliserer geometri for thermal stress, vibration og structural integrity.",
+
     "unique_innovation": "Ruby metaprogramming tillater runtime-generering av CAD-scripts basert på performance requirements. E.g., input '3000°C exhaust temp, 50kN thrust' → Ruby genererer 500 design-varianter → AI velger optimal → 3D-print → test → refine loop i 2 uker.",
+
     "ip_status": "Norsk patent søkt for 'AI-Driven Generative Design for Extreme Environment Components' (202400912). Samarbeidsavtale med ESA Technology Transfer Programme. Ruby framework åpen kildekode (MIT), men AI-modeller proprietære.",
+
     "utviklingsstadium": "Prototype fusion nozzle 3D-printet og testet ved SINTEF (2,500°C, 10 sekunder). Quantum vacuum thruster components i design-fase. Trenger full-skala printer (EOS M 400-4, NOK 15M) og test-fasilitet."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Custom component manufacturing: NOK 500k - 5M per component (depending on complexity)",
+
       "Design-as-a-Service: NOK 200k per design iteration",
+
       "Subscription til AI³ design platform: NOK 500k årlig per customer",
+
       "IP licensing til aerospace manufacturers: NOK 2M per license",
+
       "R&D partnerships med space agencies: NOK 10M per multi-year contract",
+
       "Training og workshops: NOK 500k årlig"
+
     ],
+
     "loennsomhet": "Break-even ved 10 components solgt (år 1.5). Target margin 60% på manufacturing. Subscription og licensing gir recurring revenue. Ved 50 customers (år 3): NOK 25M årlige subscriptions + NOK 50M manufacturing = NOK 75M omsetning, NOK 30M profitt.",
+
     "skalerbarhet": "Ruby design platform skalerer til tusenvis av brukere (cloud-basert). 3D-printing capacity skalerer ved å kjøpe flere EOS M 400-4 printere (NOK 15M each). Hver printer kan produsere 200 komponenter årlig. Ved 10 printere: 2,000 komponenter årlig kapasitet."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Kjøpe EOS M 400-4 printer. Etablere cleanroom-fasilitet i Trondheim. Ansette 5 aerospace engineers.",
+
     "q2_2026": "Fullføre fusion nozzle design og 3D-printe 10 varianter. Testing hos SINTEF og ESA. Sikre første kommersiell kontrakt (Rocket Lab, NOK 3M).",
+
     "q3_2026": "Lansere AI³ design platform for beta customers (5 space companies). Levere Rocket Lab-prosjekt. Starte quantum vacuum thruster R&D.",
+
     "q4_2026": "Ekspandere til 3 3D-printere. Nå 20 beta customers på plattform. Sikre ESA contract (NOK 10M multi-year R&D partnership).",
+
     "2027": "Åpne USA-kontor (Los Angeles for SpaceX/Blue Origin proximity). Nå 100 platform subscribers. Lansere standard component catalog (off-the-shelf fusion components). NOK 100M årlig omsetning."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 800000,
+
     "innovasjon_norge_nok": 400000,
+
     "esa_grant_nok": 250000,
+
     "venture_nok": 150000,
+
     "allokering": {
+
       "3d_printer": 400000,
+
       "ai_utvikling": 150000,
+
       "test_fasilitet": 100000,
+
       "material": 50000,
+
       "loenn": 80000,
+
       "driftskapital": 20000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Dr. Silje Nordheim",
+
       "rolle": "CEO & Lead Aerospace Engineer",
+
       "erfaring": "PhD i Aerospace Engineering fra Caltech. 10 år hos NASA JPL working on Mars rovers. Ekspert i propulsion systems og extreme environment materials. Fluent i Ruby."
+
     },
+
     {
+
       "navn": "Lars Johansen",
+
       "rolle": "CTO & Ruby Architect",
+
       "erfaring": "15 år som Ruby developer, Rails core contributor. Former CTO hos GitHub (3 år). Master i Computer Science fra MIT. Passion for generative design og CAD automation."
+
     },
+
     {
+
       "navn": "Dr. Chen Wei",
+
       "rolle": "Chief Materials Scientist",
+
       "erfaring": "PhD i Materials Science from Stanford. 8 år hos SpaceX working on Raptor engine materials. Publisert 25 papers on high-temperature ceramics and superalloys. Ekspert i Inconel 718 og CMC."
+
     },
+
     {
+
       "navn": "Knut Andreassen",
+
       "rolle": "Head of Manufacturing",
+
       "erfaring": "12 år i additive manufacturing hos GE Aviation. Built metal 3D-printing facility for turbine blades. Ekspert i EOS, SLM Solutions, and powder metallurgy. Sertifisert i AS9100 (aerospace quality)."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "3D-printing reduserer materialspill med 70% vs. tradisjonell CNC machining. Fusion propulsion (future application) er clean energy - zero radioactive waste. Lokal produksjon reduserer transport-utslipp.",
+
     "sosialt": "Gjør romfart tilgjengelig for flere (lavere kostnader → flere missions). Teknologi-spillovers til terrestriske anvendelser (fusion energy, clean manufacturing). Ansetter 50 engineers i Norge innen 3 år.",
+
     "oekonomisk": "Reduserer spacecraft-kostnader med 60% → enabler for commercial space industry. Eksporterer norsk teknologi til global aerospace marked (NOK 500M+ årlig ved full drift). Styrker Norges posisjon i space sector.",
+
     "un_sdgs": [7, 9, 12, 13]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "costChart",
+
       "type": "bar",
+
       "title": "Komponentkostnad (MNOK)",
+
       "data": {
+
         "labels": ["Tradisjonell", "AI³ 3D-printet"],
+
         "values": [15, 1.5]
+
       }
+
     },
+
     {
+
       "id": "timelineChart",
+
       "type": "bar",
+
       "title": "Designtid (uker)",
+
       "data": {
+
         "labels": ["Tradisjonell CAD", "AI³ Generativ"],
+
         "values": [24, 2]
+
       }
+
     },
+
     {
+
       "id": "performanceChart",
+
       "type": "radar",
+
       "title": "Komponent Performance",
+
       "data": {
+
         "labels": ["Varmetoleranse", "Strukturell Integritet", "Vekt", "Kostnad", "Produksjonstid", "Tilpasning"],
+
         "datasets": [
+
           {"label": "AI³ 3D-printet", "data": [95, 90, 95, 100, 100, 100], "color": "#ff007f"},
+
           {"label": "Tradisjonell", "data": [80, 85, 70, 50, 40, 30], "color": "#888"}
+
         ]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

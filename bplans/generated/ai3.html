@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AI³ - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js for Data Visualization -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
     <style>
@@ -17,211 +22,327 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 AI³
+
             </div>
+
         </div>
+
         <div class="header-text">
 
             Ruby-drevet 3D-printing for romfart og fusion-propulsion<br>
             Sektor: Energy & Environment + Aerospace
+
         </div>
+
     </header>
+
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>AI³ (Artificial Intelligence Cubed) skal revolusjonere romfartindustrien ved å gjøre spacecraft-komponenter 10x billigere og 5x raskere å produsere. Vi kombinerer Ruby-eleganse med cutting-edge 3D-printing for fusion-propulsion.</p>
+
             <h3>Misjon</h3>
+
             <p>Utvikle Ruby-basert parametrisk design-pipeline for 3D-printing av spacecraft propulsion components. Fra fusion drive nozzles til quantum vacuum thrusters - AI³ gjør romfart tilgjengelig.</p>
 
             <h3>Innovasjon</h3>
@@ -232,67 +353,57 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 2.0 milliarder</li>
                 <li><strong>Norden:</strong> NOK 8.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 25%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>Space agencies (ESA, NASA, JAXA) for propulsion R&D</li>
                 <li>Private space companies (SpaceX, Blue Origin, Rocket Lab)</li>
 
                 <li>Satellite manufacturers (Kongsberg Satellite Services, Thales Alenia)</li>
-
                 <li>Fusion energy companies (ITER, Commonwealth Fusion) for reactor components</li>
-
                 <li>Defense contractors (Lockheed Martin, Northrop Grumman) for hypersonic vehicles</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Relativity Space (3D-printed rockets, men ikke propulsion-focus)</li>
                 <li>Velo3D (metal 3D printing, generisk ikke aerospace-optimalisert)</li>
 
                 <li>Tradisjonelle aerospace manufacturers (Boeing, Airbus Defence & Space) - trage</li>
-
                 <li>AMCM (Additive Manufacturing Customized Machines) - verktøy, ikke design</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>Ruby-basert generativ design - 10x raskere iterasjoner enn C++/CATIA workflows</li>
                 <li>AI³ topology optimization for fusion nozzles - 40% vektreduksjon vs. tradisjonell design</li>
 
                 <li>Multi-material printing: Inconel + tungsten + CMC i én print-job</li>
-
                 <li>Extreme temperature tolerance: komponenter testet til 3,000°C (fusion plasma exhaust)</li>
-
                 <li>Teknologideling med SYRE™ - felles materialforskning (G-TPU, aerogel)</li>
-
                 <li>Norsk kvalitet og NATO security clearance for defense contracts</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>AI³ benytter Ruby on Rails for web-basert design interface. Grasshopper/Rhino plugin (Ruby-scripted) for parametrisk CAD. Design eksporteres til EOS M 400-4 metal 3D printer (quad-laser SLM). AI-system (TensorFlow) optimaliserer geometri for thermal stress, vibration og structural integrity.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -306,38 +417,35 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>Custom component manufacturing: NOK 500k - 5M per component (depending on complexity)</li>
                 <li>Design-as-a-Service: NOK 200k per design iteration</li>
 
                 <li>Subscription til AI³ design platform: NOK 500k årlig per customer</li>
-
                 <li>IP licensing til aerospace manufacturers: NOK 2M per license</li>
-
                 <li>R&D partnerships med space agencies: NOK 10M per multi-year contract</li>
-
                 <li>Training og workshops: NOK 500k årlig</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Break-even ved 10 components solgt (år 1.5). Target margin 60% på manufacturing. Subscription og licensing gir recurring revenue. Ved 50 customers (år 3): NOK 25M årlige subscriptions + NOK 50M manufacturing = NOK 75M omsetning, NOK 30M profitt.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Ruby design platform skalerer til tusenvis av brukere (cloud-basert). 3D-printing capacity skalerer ved å kjøpe flere EOS M 400-4 printere (NOK 15M each). Hver printer kan produsere 200 komponenter årlig. Ved 10 printere: 2,000 komponenter årlig kapasitet.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Finansiering sikret. Kjøpe EOS M 400-4 printer. Etablere cleanroom-fasilitet i Trondheim. Ansette 5 aerospace engineers.</p>
 
             <h3>Q2 2026</h3>
@@ -354,10 +462,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 800,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -365,67 +475,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 400,000</li>
                 <li><strong>Esa Grant Nok:</strong> NOK 250,000</li>
+
                 <li><strong>Venture Nok:</strong> NOK 150,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>3d Printer</td>
 
                         <td>400,000</td>
                         <td>50.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Ai Utvikling</td>
 
                         <td>150,000</td>
                         <td>18.8%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Test Fasilitet</td>
 
                         <td>100,000</td>
                         <td>12.5%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Material</td>
 
                         <td>50,000</td>
                         <td>6.3%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>80,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>20,000</td>
                         <td>2.5%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Dr. Silje Nordheim - CEO & Lead Aerospace Engineer</h3>
+
             <p>PhD i Aerospace Engineering fra Caltech. 10 år hos NASA JPL working on Mars rovers. Ekspert i propulsion systems og extreme environment materials. Fluent i Ruby.</p>
 
             <h3>Lars Johansen - CTO & Ruby Architect</h3>
@@ -441,9 +577,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>3D-printing reduserer materialspill med 70% vs. tradisjonell CNC machining. Fusion propulsion (future application) er clean energy - zero radioactive waste. Lokal produksjon reduserer transport-utslipp.</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -457,131 +593,192 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Komponentkostnad (MNOK)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="costChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Designtid (uker)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="timelineChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Komponent Performance</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="performanceChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Chart.js Configurations -->
-
     <script>
-
         {
-
             const ctx = document.getElementById('costChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["Tradisjonell","AI³ 3D-printet"],
+
                     datasets: [{
+
                         label: 'Komponentkostnad (MNOK)',
+
                         data: [15,1.5],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('timelineChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["Tradisjonell CAD","AI³ Generativ"],
+
                     datasets: [{
+
                         label: 'Designtid (uker)',
+
                         data: [24,2],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('performanceChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'radar',
 
                 data: {
                     labels: ["Varmetoleranse","Strukturell Integritet","Vekt","Kostnad","Produksjonstid","Tilpasning"],
+
                     datasets: [
+
                         {
+
                             label: 'AI³ 3D-printet',
 
                             data: [95,90,95,100,100,100],
                             borderColor: '#ff007f',
+
                             backgroundColor: '#ff007f33',
+
                         },
+
                         {
+
                             label: 'Tradisjonell',
 
                             data: [80,85,70,50,40,30],
                             borderColor: '#888',
+
                             backgroundColor: '#88833',
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     }
+
                 }
+
             });
+
         }
+
     </script>
 
 </body>
-
 </html>
-

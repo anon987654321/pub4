@@ -3,123 +3,208 @@
 
 #
 # Features:
+
 # - Display current LLM model in prompt
+
 # - Show cognitive load (7±2 tracking)
+
 # - Active assistant indicator
+
 # - Token count display for long contexts
+
 # - Security status (pledge/unveil state)
+
 #
+
 # Installation:
+
 # 1. Add this to your ~/.config/starship/starship.toml
+
 # 2. Set environment variables in your shell config:
+
 #    export AIGHT_MODEL="gpt-4"
+
 # 3. Reload your shell or run: eval "$(starship init zsh)"
+
 # Aight REPL active indicator
+
 [custom.aight]
 
 command = "echo -n '🤖'"
 when = 'test -n "$AIGHT_SESSION"'
+
 format = "[$output]($style) "
+
 style = "bold blue"
+
 description = "Aight REPL session active"
+
 # Current LLM model display
+
 [custom.aight_model]
 
 command = "echo -n $AIGHT_MODEL"
 when = 'test -n "$AIGHT_MODEL"'
+
 format = "[$output]($style) "
+
 style = "cyan"
+
 description = "Active LLM model (e.g., gpt-4, claude-3)"
+
 # Cognitive load indicator (7±2 tracking)
+
 [custom.aight_load]
 
 command = "test -f ~/.aight_load && cat ~/.aight_load || echo ''"
 when = 'test -f ~/.aight_load'
+
 format = "[$output]($style) "
+
 style = "yellow bold"
+
 description = "Cognitive load indicator (⚠️ = moderate, 🔥 = high, 💥 = overload)"
+
 # Security status (OpenBSD pledge/unveil)
+
 [custom.aight_security]
 
 command = """
 if [ "$(uname)" = "OpenBSD" ]; then
+
   echo -n '🔒'
+
 else
+
   echo -n '🔓'
+
 fi
+
 """
+
 when = 'test -n "$AIGHT_SESSION"'
+
 format = "[$output]($style) "
+
 style = "green"
+
 description = "Security status (🔒 = pledge/unveil active, 🔓 = standard)"
+
 # Token context indicator (appears when context is large)
+
 [custom.aight_tokens]
 
 command = """
 if [ -f ~/.aight_tokens ]; then
+
   tokens=$(cat ~/.aight_tokens)
+
   if [ "$tokens" -gt 1000 ]; then
+
     echo -n "📊${tokens}"
+
   fi
+
 fi
+
 """
+
 when = 'test -f ~/.aight_tokens'
+
 format = "[$output]($style) "
+
 style = "magenta"
+
 description = "Token count for large contexts"
+
 # Format string - customize order of elements
+
 format = """
 
 [┌─](bold green)\
 $directory\
+
 $git_branch\
+
 $git_status\
+
 $custom.aight\
+
 $custom.aight_model\
+
 $custom.aight_load\
+
 $custom.aight_security\
+
 $custom.aight_tokens\
+
 $line_break\
+
 [└─](bold green)\
+
 $character\
+
 """
+
 # Directory configuration
+
 [directory]
 
 style = "bold cyan"
 truncation_length = 3
+
 truncate_to_repo = true
+
 format = "[$path]($style)[$read_only]($read_only_style) "
+
 # Git branch
+
 [git_branch]
 
 symbol = "🌱 "
 style = "bold purple"
+
 format = "[$symbol$branch]($style) "
+
 # Git status
+
 [git_status]
 
 style = "bold red"
 format = "([$all_status$ahead_behind]($style) )"
+
 # Character (prompt symbol)
+
 [character]
 
 success_symbol = "[❯](bold green)"
 error_symbol = "[❯](bold red)"
+
 vicmd_symbol = "[❮](bold green)"
+
 # Optional: Ruby version indicator (useful for aight development)
+
 [ruby]
 
 symbol = "💎 "
 style = "bold red"
+
 format = "[$symbol$version]($style) "
+
 detect_extensions = ["rb"]
+
 detect_files = ["Gemfile", ".ruby-version"]
+
 detect_folders = []
+
 # Optional: Time indicator for session duration
+
 [time]
 
 disabled = false
 time_format = "%H:%M:%S"
+
 style = "bold yellow"
+
 format = "[$time]($style) "
+

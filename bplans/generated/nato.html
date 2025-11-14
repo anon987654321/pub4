@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>NATO Aurora - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js for Data Visualization -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
     <style>
@@ -17,211 +22,327 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 NATO Aurora
+
             </div>
+
         </div>
+
         <div class="header-text">
 
             Arktiske dominanseskip som overgår russiske Arktika-klasse<br>
             Sektor: Maritime + Defense
+
         </div>
+
     </header>
+
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>NATO Aurora skal sikre vestlig overlegenhet i Arktis gjennom verdens mest avanserte isbrytere. Som russiske Arktika-klasse truet vestlig dominans, vil Aurora gjenopprette balansen med overlegen teknologi.</p>
+
             <h3>Misjon</h3>
+
             <p>Designe og bygge nuclear-hybrid Arctic icebreakers med 3.5m isbryting-kapasitet, AI-optimalisert propulsjon og Polar Class 1 sertifisering. Tilby NATO ubegrenset operasjonell rekkevidde i nordområdene.</p>
 
             <h3>Innovasjon</h3>
@@ -232,71 +353,59 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 25.0 milliarder</li>
                 <li><strong>Norden:</strong> NOK 80.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 8%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>NATO medlemsland med arktiske interesser (Norge, USA, Canada, Danmark/Grønland)</li>
                 <li>Norsk Kystvakt for suverenitetshåndhevelse</li>
 
                 <li>Arktiske shippingselskaper (Hurtigruten, Maersk Arctic operations)</li>
-
                 <li>Olje- og gassselskaper (Equinor, Shell, BP) for arktisk ressursutvinning</li>
-
                 <li>Research-organisasjoner (UNIS, Polar Institute) for ekspedisjoner</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Russland Arktika-klasse: 50 Let Pobedy (75,000 ton, 2.8m isbryting)</li>
                 <li>Russland Lider-klasse: 120 MW dual reactor, under konstruksjon</li>
 
                 <li>Canada's Diefenbaker-klasse (diesel-electric, 2.5m isbryting)</li>
-
                 <li>USA Polar Security Cutters (under design, diesel-electric)</li>
-
                 <li>Kina's Xue Long 2 (diesel, research focus, 1.5m isbryting)</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>3.5m isbryting vs. 2.8m for Arktika (25% overlegen kapasitet)</li>
                 <li>Dual reactor: 350 MW total (vs. 175 MW Arktika) - 2x propulsjonskraft</li>
 
                 <li>Hybrid-electric stealth mode: 0 akustisk signatur for militære operasjoner</li>
-
                 <li>AI route optimization: 15% kortere reisetid gjennom is vs. menneskelige navigatører</li>
-
                 <li>Polar Class 1 hull: opererer year-round i thickest multiyear ice</li>
-
                 <li>Adaptive nanocoating: 20% redusert hull friction = lavere energiforbruk</li>
-
                 <li>Ubegrenset operasjonell rekkevidde (nuclear) vs. 3-6 måneder (diesel)</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>NATO Aurora benytter dual RITM-200 inspirert pressurized water reactors (PWR) med 175 MW hver. Reaktorene driver både steam turbines (direktepropulsjon) og electric generators (stealth mode). AI-system integrerer real-time satellittdata (Sentinel-1 SAR) for is-tetthet og optimaliserer rute + propulsjonskraft.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -310,36 +419,34 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>NATO-kontrakter: NOK 18-25 milliarder per skip (6 skip bestilt = NOK 120 milliarder)</li>
                 <li>Norsk Forsvar: NOK 20 milliarder for 1 skip + 30 års vedlikehold</li>
 
                 <li>Sivile isbryter-tjenester: NOK 500M årlig (escort for shipping)</li>
-
                 <li>Olje/gass support: NOK 1 milliard årlig (platform supply + emergency response)</li>
-
                 <li>Research chartres: NOK 50M årlig (UNIS, universities, dokumentarfilmer)</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Første skip-kontrakt sikrer profitabilitet (margin 20%). Byggekostnad NOK 15 milliarder, salg NOK 20 milliarder. Vedlikeholdskontrakter (30 år @ NOK 500M/år) = NOK 15 milliarder recurring. Break-even ved 1 solgt skip + 2 års vedlikehold.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Modular construction tillater 2-3 skip simultant i Norwegian shipyards. Produksjonstid 5 år per skip. NATO har indikert behov for 6 Aurora-class + 12 variants (diesel-hybrid for non-nuclear countries). Total adressable market: NOK 300+ milliarder over 20 år.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Finansiering sikret. Fullføre preliminary design review med DNV GL. Sikre reactor-design-lisens. Etablere partnerskap med Kongsberg Maritime.</p>
 
             <h3>Q2 2026</h3>
@@ -356,10 +463,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 1,000,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -367,67 +476,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 500,000</li>
                 <li><strong>Nato Grant Nok:</strong> NOK 300,000</li>
+
                 <li><strong>Venture Nok:</strong> NOK 200,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>Engineering</td>
 
                         <td>300,000</td>
                         <td>30.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Prototype</td>
 
                         <td>250,000</td>
                         <td>25.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Fasiliteter</td>
 
                         <td>200,000</td>
                         <td>20.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Sikkerhet</td>
 
                         <td>100,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>100,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>50,000</td>
                         <td>5.0%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Admiral (ret.) Haakon Bruun-Hanssen - CEO & Strategic Advisor</h3>
+
             <p>Former Chief of Norwegian Navy (2009-2013). 40 år maritim erfaring. Ekspert i arktiske operasjoner og NATO-samarbeid. Leder for Arctic Security Working Group.</p>
 
             <h3>Dr. Olga Petrova - CTO Nuclear Systems</h3>
@@ -443,9 +578,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>Nuclear propulsion = zero CO₂ emissions vs. diesel (120,000 tonn CO₂/år spart). Reactors har 50-års levetid uten refueling. Hybrid-electric mode reduserer underwater noise pollution (kritisk for marine mammals).</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -459,140 +594,204 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Isbryting-kapasitet (meter)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="capabilityChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Operasjonskostnad (MNOK per år)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="costChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Strategisk Dekning</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="coverageChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Chart.js Configurations -->
-
     <script>
-
         {
-
             const ctx = document.getElementById('capabilityChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["NATO Aurora","Russland Arktika","Canada Diefenbaker","USA Polar","Kina Xue Long"],
+
                     datasets: [{
+
                         label: 'Isbryting-kapasitet (meter)',
+
                         data: [3.5,2.8,2.5,2.0,1.5],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('costChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'line',
 
                 data: {
                     labels: ["År 1","År 5","År 10","År 20","År 30"],
+
                     datasets: [
+
                         {
+
                             label: 'Aurora (nuclear)',
 
                             data: [500,450,400,350,300],
                             borderColor: '#00c9ff',
+
                             backgroundColor: '#00c9ff33',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                         {
+
                             label: 'Diesel equivalent',
 
                             data: [800,900,1000,1100,1200],
                             borderColor: '#888',
+
                             backgroundColor: '#88833',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('coverageChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'radar',
 
                 data: {
                     labels: ["Barents Sea","Svalbard","Grønland","Canadian Arctic","North Pole","Bering Strait"],
+
                     datasets: [
+
                         {
+
                             label: 'NATO Aurora',
 
                             data: [100,100,95,90,85,80],
                             borderColor: '#00c9ff',
+
                             backgroundColor: '#00c9ff33',
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     }
+
                 }
+
             });
+
         }
+
     </script>
 
 </body>
-
 </html>
-

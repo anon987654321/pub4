@@ -5,617 +5,311 @@
   <meta charset="UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>MyTOOnz</title>
-
   <style>
-
     * {
-
       margin: 0;
-
       padding: 0;
-
       box-sizing: border-box;
-
     }
-
     body {
-
       font-family: arial, sans-serif;
-
       background: #fff;
-
       color: #202124;
-
       min-height: 100vh;
-
       display: flex;
-
       flex-direction: column;
-
     }
-
     .container {
-
       flex: 1;
-
       display: flex;
-
       flex-direction: column;
-
       align-items: center;
-
       justify-content: center;
-
       padding: 2rem;
-
     }
-
     .logo-title {
-
       font-size: 0;
-
       height: 0;
-
       overflow: hidden;
-
     }
-
     .logo-svg {
-
       width: 350px;
-
       height: auto;
-
       margin-bottom: 2rem;
-
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
       cursor: pointer;
-
       filter: drop-shadow(0 2px 4px rgba(33, 150, 243, 0.1));
-
       will-change: transform;
-
     }
-
     .logo-svg:hover {
-
       transform: scale(1.05) rotate(-1deg);
-
     }
-
     .logo-svg:active {
-
       transform: scale(0.98);
-
     }
-
     /* Eye animations - more subtle */
-
     @keyframes blink {
-
       0%, 96%, 100% { transform: scaleY(1); }
-
       98% { transform: scaleY(0.1); }
-
     }
-
     @keyframes look-around-1 {
-
       0%, 100% { transform: translate(0, 0); }
-
       25% { transform: translate(-0.5px, 0); }
-
       50% { transform: translate(0.5px, -0.5px); }
-
       75% { transform: translate(0, 0.5px); }
-
     }
-
     @keyframes look-around-2 {
-
       0%, 100% { transform: translate(0, 0); }
-
       25% { transform: translate(0.5px, 0.5px); }
-
       50% { transform: translate(-0.5px, 0); }
-
       75% { transform: translate(0.5px, -0.5px); }
-
     }
-
     @keyframes pulse {
-
       0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4); }
-
       70% { box-shadow: 0 0 0 8px rgba(33, 150, 243, 0); }
-
       100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
-
     }
-
     .eye-1 { animation: blink 7s infinite, look-around-1 10s infinite; transition: transform 0.2s ease; }
-
     .eye-2 { animation: blink 7s infinite 0.1s, look-around-2 11s infinite; transition: transform 0.2s ease; }
-
     .eye-3 { animation: blink 7s infinite 0.2s, look-around-1 12s infinite; transition: transform 0.2s ease; }
-
     .eye-4 { animation: blink 7s infinite 0.3s, look-around-2 13s infinite; transition: transform 0.2s ease; }
-
     .search-box {
-
       width: 100%;
-
       max-width: 480px;
-
       position: relative;
-
     }
-
     .search-input {
-
       width: 100%;
-
       height: 44px;
-
       border: 1px solid #ddd;
-
       border-radius: 30px;
-
       padding: 10px 45px;
-
       font-size: 16px;
-
       outline: none;
-
       transition: all 0.2s;
-
       font-family: arial, sans-serif;
-
       background: #fff;
-
       color: #333;
-
     }
-
     .search-input::placeholder {
-
       color: #ccc;
-
     }
-
     .search-input:hover {
-
       border-color: #bbb;
-
     }
-
     .search-input:focus {
-
       border-color: #2196F3;
-
       box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-
     }
-
     .search-input.typing {
-
       animation: pulse 1.5s infinite;
-
     }
-
     .search-icon {
-
       position: absolute;
-
       left: 14px;
-
       top: 50%;
-
       transform: translateY(-50%);
-
       width: 20px;
-
       height: 20px;
-
       cursor: pointer;
-
       color: #9aa0a6;
-
       pointer-events: auto;
-
     }
-
     .search-icon:hover {
-
       color: #202124;
-
     }
-
     .camera-icon {
-
       position: absolute;
-
       right: 14px;
-
       top: 50%;
-
       transform: translateY(-50%);
-
       width: 20px;
-
       height: 20px;
-
       cursor: pointer;
-
       color: #9aa0a6;
-
       pointer-events: auto;
-
     }
-
     .camera-icon:hover {
-
       color: #202124;
-
     }
-
     .demo-results {
-
       display: none;
-
       margin-top: 3rem;
-
       max-width: 700px;
-
       width: 100%;
-
       opacity: 0;
-
       transform: translateY(20px);
-
       transition: opacity 0.4s ease, transform 0.4s ease;
-
     }
-
     .demo-results.show {
-
       display: block;
-
       animation: fadeInUp 0.5s ease forwards;
-
     }
-
     @keyframes fadeInUp {
-
       from {
-
         opacity: 0;
-
         transform: translateY(20px);
-
       }
-
       to {
-
         opacity: 1;
-
         transform: translateY(0);
-
       }
-
     }
-
     .demo-title {
-
       font-size: 1.2rem;
-
       margin-bottom: 1.5rem;
-
       color: #333;
-
       text-align: center;
-
       font-weight: 500;
-
     }
-
     .comic-strip {
-
       display: grid;
-
       grid-template-columns: repeat(3, 1fr);
-
       gap: 12px;
-
       background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
-
       padding: 2rem;
-
       border-radius: 16px;
-
       border: 1px solid #ddd;
-
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
     }
-
     .comic-panel {
-
       aspect-ratio: 1;
-
       background: white;
-
       border: 3px solid #333;
-
       border-radius: 8px;
-
       display: flex;
-
       flex-direction: column;
-
       align-items: center;
-
       justify-content: center;
-
       padding: 1rem;
-
       position: relative;
-
       box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
-
       transition: transform 0.2s ease;
-
     }
-
     .comic-panel:hover {
-
       transform: translateY(-2px);
-
       box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.15);
-
     }
-
     .panel-character {
-
       font-size: 3rem;
-
       margin-bottom: 0.5rem;
-
     }
-
     .panel-text {
-
       font-size: 0.75rem;
-
       text-align: center;
-
       font-family: 'Comic Sans MS', cursive, sans-serif;
-
       color: #202124;
-
       line-height: 1.3;
-
     }
-
     .speech-bubble {
-
       position: relative;
-
       background: white;
-
       border: 2px solid #202124;
-
       border-radius: 12px;
-
       padding: 0.5rem 0.75rem;
-
       max-width: 80%;
-
       margin-top: 0.5rem;
-
     }
-
     .speech-bubble:after {
-
       content: '';
-
       position: absolute;
-
       bottom: -10px;
-
       left: 50%;
-
       transform: translateX(-50%);
-
       width: 0;
-
       height: 0;
-
       border-left: 8px solid transparent;
-
       border-right: 8px solid transparent;
-
       border-top: 10px solid #202124;
-
     }
-
     footer {
-
       padding: 1.5rem 2rem;
-
       display: flex;
-
       justify-content: flex-end;
-
       align-items: center;
-
       font-size: 10px;
-
       color: #ccc;
-
     }
-
     .footer-right {
-
       display: flex;
-
       gap: 1rem;
-
     }
-
     .footer-right a {
-
       color: #ccc;
-
       text-decoration: none;
-
       transition: color 0.2s;
-
     }
-
     .footer-right a:hover {
-
       color: #2196F3;
-
     }
-
     @media (max-width: 640px) {
-
       .logo-svg {
-
         width: 280px;
-
       }
-
       .comic-strip {
-
         grid-template-columns: 1fr;
-
         gap: 1rem;
-
         padding: 1.5rem;
-
       }
-
       footer {
-
         padding: 1rem 2rem;
-
         justify-content: center;
-
       }
-
       .footer-right {
-
         flex-wrap: wrap;
-
         justify-content: center;
-
       }
-
       .search-input {
-
         font-size: 16px; /* Prevents zoom on iOS */
-
       }
-
     }
-
     /* Respect user's motion preferences */
-
     @media (prefers-reduced-motion: reduce) {
-
       *,
-
       *::before,
-
       *::after {
-
         animation-duration: 0.01ms !important;
-
         animation-iteration-count: 1 !important;
-
         transition-duration: 0.01ms !important;
-
       }
-
       .logo-svg {
-
         filter: none;
-
       }
-
     }
-
     /* Performance optimization hints */
-
     .eye-1, .eye-2, .eye-3, .eye-4 {
-
       will-change: transform;
-
     }
-
     .comic-panel {
-
       will-change: transform;
-
     }
-
   </style>
-
 </head>
-
 <body>
-
   <div class="container">
-
     <h1 class="logo-title">MyTOOnz</h1>
-
     <svg class="logo-svg" viewBox="0 0 560 160" xmlns="http://www.w3.org/2000/svg" aria-label="MyTOOnz">
-
       <defs>
-
         <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-
           <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1">
-
             <animate attributeName="stop-color" values="#2196F3;#42A5F5;#1976D2;#2196F3" dur="8s" repeatCount="indefinite" />
-
           </stop>
-
           <stop offset="100%" style="stop-color:#1976D2;stop-opacity:1">
-
             <animate attributeName="stop-color" values="#1976D2;#2196F3;#42A5F5;#1976D2" dur="8s" repeatCount="indefinite" />
-
           </stop>
-
         </linearGradient>
-
         <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
-
           <stop offset="0%" style="stop-color:#42A5F5;stop-opacity:1">
-
             <animate attributeName="stop-color" values="#42A5F5;#1976D2;#2196F3;#42A5F5" dur="10s" repeatCount="indefinite" />
-
           </stop>
-
           <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1">
-
             <animate attributeName="stop-color" values="#2196F3;#42A5F5;#1976D2;#2196F3" dur="10s" repeatCount="indefinite" />
-
           </stop>
-
         </linearGradient>
-
       </defs>
-
       <!-- M -->
-
       <path d="M 20 40 L 20 130 L 38 130 L 38 75 L 55 110 L 65 110 L 82 75 L 82 130 L 100 130 L 100 40 L 80 40 L 60 90 L 40 40 Z" fill="url(#grad1)" stroke="#1976D2" stroke-width="1"/>
-
       <!-- y (lowercase) -->
       <path d="M 110 70 L 110 115 L 128 115 L 128 82 C 128 74 132 70 140 70 C 148 70 152 74 152 82 L 152 115 L 170 115 L 170 80 C 170 65 162 57 148 57 C 138 57 130 61 126 68 L 126 60 L 110 60 Z M 110 115 L 110 145 C 110 150 112 152 117 152 L 122 152 L 122 138 L 120 138 C 118 138 117 137 117 135 L 117 115 Z" fill="url(#grad1)" stroke="#1976D2" stroke-width="1"/>
 
@@ -626,36 +320,28 @@
         <rect x="223" y="60" width="20" height="70" rx="4" fill="#2196F3"/>
 
         <circle cx="213" cy="50" r="16" fill="white" stroke="#2196F3" stroke-width="4"/>
-
         <circle class="eye-1" cx="213" cy="50" r="7" fill="#333"/>
-
         <circle cx="215" cy="47" r="3" fill="white"/>
         <circle cx="253" cy="50" r="16" fill="white" stroke="#2196F3" stroke-width="4"/>
 
         <circle class="eye-2" cx="253" cy="50" r="7" fill="#333"/>
-
         <circle cx="255" cy="47" r="3" fill="white"/>
       </g>
 
       <!-- O (capital O) -->
-
       <g>
-
         <circle cx="315" cy="85" r="40" fill="none" stroke="#2196F3" stroke-width="22"/>
         <circle cx="303" cy="78" r="10" fill="white"/>
 
         <circle class="eye-3" cx="304" cy="79" r="5" fill="#333"/>
-
         <circle cx="306" cy="77" r="2" fill="white"/>
         <circle cx="327" cy="78" r="10" fill="white"/>
 
         <circle class="eye-4" cx="326" cy="79" r="5" fill="#333"/>
-
         <circle cx="328" cy="77" r="2" fill="white"/>
         <path d="M 300 95 Q 315 105 330 95" fill="none" stroke="#2196F3" stroke-width="4" stroke-linecap="round"/>
 
       </g>
-
       <!-- O (second capital O) -->
       <g>
 
@@ -663,17 +349,14 @@
         <circle cx="383" cy="78" r="10" fill="white"/>
 
         <circle cx="386" cy="79" r="5" fill="#333"/>
-
         <circle cx="388" cy="77" r="2" fill="white"/>
         <circle cx="407" cy="78" r="10" fill="white"/>
 
         <circle cx="404" cy="79" r="5" fill="#333"/>
-
         <circle cx="406" cy="77" r="2" fill="white"/>
         <path d="M 383 95 Q 395 103 407 95" fill="none" stroke="#2196F3" stroke-width="4" stroke-linecap="round"/>
 
       </g>
-
       <!-- n (lowercase) -->
       <path d="M 430 60 L 430 130 L 448 130 L 448 82 C 448 74 452 70 460 70 C 468 70 472 74 472 82 L 472 130 L 490 130 L 490 80 C 490 65 482 57 468 57 C 458 57 450 61 446 68 L 446 60 Z" fill="#2196F3"/>
 
@@ -684,377 +367,197 @@
     <div class="search-box">
 
       <svg class="search-icon" id="searchIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
         <circle cx="11" cy="11" r="8"></circle>
-
         <path d="m21 21-4.35-4.35"></path>
-
       </svg>
-
       <input type="text" id="searchInput" class="search-input" placeholder="Hvordan var dagen din?" autocomplete="off">
-
       <svg class="camera-icon" id="cameraIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-
         <circle cx="12" cy="13" r="4"></circle>
-
       </svg>
-
       <input type="file" id="photoInput" accept="image/*" hidden>
-
     </div>
-
     <div class="demo-results" id="demoResults">
-
       <div class="demo-title">✨ Din tegneserie forhåndsvisning</div>
-
       <div class="comic-strip" id="comicStrip"></div>
-
     </div>
-
   </div>
-
   <footer>
-
     <div class="footer-right">
-
       <a href="#om">Om</a>
-
       <a href="#kontakt">Kontakt</a>
-
       <a href="#annonser">Annonser</a>
-
       <a href="#personvern">Personvern</a>
-
       <a href="#vilkar">Vilkår</a>
-
     </div>
-
   </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
   <script>
-
     document.addEventListener('DOMContentLoaded', () => {
-
       const cameraIcon = document.getElementById('cameraIcon');
-
       const photoInput = document.getElementById('photoInput');
-
       const searchIcon = document.getElementById('searchIcon');
-
       const searchInput = document.getElementById('searchInput');
-
       const logoSvg = document.querySelector('.logo-svg');
-
       const demoResults = document.getElementById('demoResults');
-
       const comicStrip = document.getElementById('comicStrip');
-
       let clickCount = 0;
-
       // Random prompts
-
       const prompts = [
-
         'Hvordan var dagen din?',
-
         'Fortell oss noe morsomt som skjedde...',
-
         'Hva fikk deg til å smile i dag?',
-
         'Beskriv morgeneventyret ditt...',
-
         'Del et øyeblikk verdt å huske...'
-
       ];
-
       function updatePrompt() {
-
         searchInput.placeholder = prompts[Math.floor(Math.random() * prompts.length)];
-
       }
       updatePrompt();
 
       setInterval(updatePrompt, 6000);
-
       // Eyes follow cursor with throttling for performance
-
       let rafId = null;
-
       let mouseX = 0;
-
       let mouseY = 0;
-
       document.addEventListener('mousemove', (e) => {
-
         mouseX = e.clientX;
-
         mouseY = e.clientY;
-
         if (!rafId) {
-
           rafId = requestAnimationFrame(updateEyes);
-
         }
       });
 
       function updateEyes() {
-
         const eyes = document.querySelectorAll('.eye-1, .eye-2, .eye-3, .eye-4');
-
         eyes.forEach(eye => {
-
           const rect = eye.getBoundingClientRect();
-
           const eyeX = rect.left + rect.width / 2;
-
           const eyeY = rect.top + rect.height / 2;
-
           const angle = Math.atan2(mouseY - eyeY, mouseX - eyeX);
-
           const maxMove = 1;
-
           const moveX = Math.cos(angle) * maxMove;
-
           const moveY = Math.sin(angle) * maxMove;
-
           eye.style.transform = `translate(${moveX}px, ${moveY}px)`;
-
         });
-
         rafId = null;
-
       }
-
       // Touch support for mobile
-
       document.addEventListener('touchmove', (e) => {
-
         const touch = e.touches[0];
-
         if (touch) {
-
           const eyes = document.querySelectorAll('.eye-1, .eye-2, .eye-3, .eye-4');
-
           eyes.forEach(eye => {
-
             const rect = eye.getBoundingClientRect();
-
             const eyeX = rect.left + rect.width / 2;
-
             const eyeY = rect.top + rect.height / 2;
-
             const angle = Math.atan2(touch.clientY - eyeY, touch.clientX - eyeX);
-
             const maxMove = 1;
-
             const moveX = Math.cos(angle) * maxMove;
-
             const moveY = Math.sin(angle) * maxMove;
-
             eye.style.transform = `translate(${moveX}px, ${moveY}px)`;
-
           });
-
         }
-
       });
-
       // Easter egg on logo click
-
       logoSvg.addEventListener('click', () => {
-
         clickCount++;
-
         if (clickCount === 5) {
-
           confetti({
-
             particleCount: 200,
-
             spread: 100,
-
             origin: { y: 0.6 }
-
           });
-
           clickCount = 0;
-
         }
-
       });
-
       // Typing animation
-
       searchInput.addEventListener('input', () => {
-
         if (searchInput.value.trim()) {
-
           searchInput.classList.add('typing');
-
         } else {
-
           searchInput.classList.remove('typing');
-
           demoResults.classList.remove('show');
-
         }
-
       });
-
       // Camera icon click
-
       cameraIcon.addEventListener('click', () => photoInput.click());
-
       // Photo upload
-
       photoInput.addEventListener('change', (e) => {
-
         if (e.target.files[0]) {
           confetti({
 
             particleCount: 100,
-
             spread: 70,
-
             origin: { y: 0.6 }
-
           });
-
           alert('Bilde lastet opp! Ansiktet ditt vil vises i tegneserien.');
-
         }
-
       });
-
       // Generate demo comic
-
       function generateDemoComic(userText) {
-
         const scenarios = [
-
           {
-
             panels: [
-
               { emoji: '😊', text: 'Begynte morgenen min...' },
-
               { emoji: '☕', text: 'Fikk litt kaffe!' },
-
               { emoji: '🎉', text: 'Flott dag i vente!' }
-
             ]
-
           },
-
           {
-
             panels: [
-
               { emoji: '💭', text: 'Tenker på...' },
-
               { emoji: '💡', text: 'Fikk en idé!' },
-
               { emoji: '✨', text: 'Gjør det!' }
-
             ]
-
           },
-
           {
-
             panels: [
-
               { emoji: '😴', text: 'Følte meg trøtt...' },
-
               { emoji: '🍕', text: 'Tok litt mat' },
-
               { emoji: '😄', text: 'Mye bedre nå!' }
-
             ]
-
           }
-
         ];
-
         const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-
         comicStrip.innerHTML = scenario.panels.map(panel => `
-
           <div class="comic-panel">
-
             <div class="panel-character">${panel.emoji}</div>
             <div class="speech-bubble">
 
               <div class="panel-text">${panel.text}</div>
-
             </div>
-
           </div>
-
         `).join('');
-
         demoResults.classList.add('show');
-
         setTimeout(() => {
-
           demoResults.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
         }, 100);
       }
 
       // Search icon click
-
       searchIcon.addEventListener('click', () => {
-
         if (searchInput.value.trim()) {
-
           confetti({
-
             particleCount: 100,
-
             spread: 70,
-
             origin: { y: 0.6 }
-
           });
-
           generateDemoComic(searchInput.value);
-
         }
-
       });
-
       // Enter key
-
       searchInput.addEventListener('keydown', (e) => {
-
         if (e.key === 'Enter' && searchInput.value.trim()) {
-
           confetti({
-
             particleCount: 100,
-
             spread: 70,
-
             origin: { y: 0.6 }
-
           });
-
           generateDemoComic(searchInput.value);
-
         }
-
       });
-
     });
-
   </script>
-
 </body>
-
 </html>
-

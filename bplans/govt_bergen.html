@@ -5,337 +5,198 @@
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Bergens Selvstyreparti - Forretningsplan</title>
-
     <!-- Google Fonts -->
-
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-
         /* CSS Variables */
-
         :root {
-
             --primary-color: #1a1a1a;
-
             --background-color: #f5f5f5;
-
             --text-color: #222222;
-
             --highlight-color: #5d93ff;
-
             --font-family: 'Inter', sans-serif;
-
         }
-
         /* General Styles */
-
         body {
-
             margin: 0;
             font-family: var(--font-family);
 
             background-color: var(--background-color);
-
             color: var(--text-color);
-
             line-height: 1.6;
-
             font-size: 16px;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
         }
-
         /* Logo Container */
-
         .logo-wrapper {
-
             position: relative;
             display: inline-block;
 
         }
-
         /* Logo styling with animated gradient */
-
         .logo-container {
-
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
 
             color: transparent;
-
             background: linear-gradient(45deg, #ff8c00, #ff0080, #8a2be2, #ff8c00);
-
             background-size: 400%;
-
             background-clip: text;
-
             -webkit-background-clip: text;
-
             animation: gradientMove 5s infinite linear;
-
         }
-
         /* Header styling */
-
         header {
-
             text-align: center;
             padding: 20px;
 
             background-color: var(--background-color);
-
         }
-
         .header-text {
-
             font-size: 1rem;
-
             font-weight: 500;
             color: var(--text-color);
 
             margin-top: -1.2rem;
-
             max-width: 100%;
-
             text-align: center;
-
         }
-
         /* Main content */
-
         main {
-
             max-width: 900px;
             margin: 3rem auto;
 
             padding: 0 1rem;
-
         }
-
         section {
-
             padding: 2rem 0;
-
             border-bottom: 1px solid #e0e0e0;
         }
 
         h2 {
-
             font-size: 2rem;
-
             color: var(--primary-color);
             margin-bottom: 1.5rem;
 
         }
-
         h3 {
-
             font-size: 1.5rem;
-
             color: var(--text-color);
             margin-bottom: 1rem;
 
         }
-
         p {
-
             font-size: 1rem;
-
             color: #333333;
         }
 
         /* Image Placeholder Styles */
-
         .image-placeholder {
-
             width: 100%;
             height: 250px;
 
             background-color: #cccccc;
-
             border-radius: 8px;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
             color: #666666;
-
             font-size: 1.5rem;
-
             margin: 1rem 0;
-
         }
-
         @keyframes gradientMove {
-
             0% { background-position: 0% 50%; }
-
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
 
         }
-
     </style>
-
 </head>
-
 <body>
-
     <header>
-
         <!-- Logo Wrapper with TM Symbol -->
-
         <div class="logo-wrapper">
-
             <div class="logo-container">Bergens Selvstyreparti</div>
-
         </div>
-
         <div class="header-text">
-
             En ny tid for Bergen: Frihet, Autonomi, Transparens
-
         </div>
-
     </header>
-
     <main>
-
         <!-- Sammendrag Section -->
-
         <section id="sammendrag">
             <h2>Sammendrag</h2>
 
             <h3>Visjon</h3>
-
             <p>Å skape en selvstyrt og autonom Bergen, hvor innbyggerne aktivt deltar i beslutningsprosesser og får direkte innflytelse på hvordan byen styres.</p>
-
             <h3>Misjon</h3>
-
             <p>Å redusere byråkrati, gi tilbake makten til folket, og etablere et styresett som setter frihet, autonomi og rettferdighet i sentrum.</p>
-
             <div class="image-placeholder">Bilde: Visjon og Misjon</div>
-
         </section>
-
         <!-- Markedsanalyse Section -->
-
         <section id="marked">
-
             <h2>Markedsanalyse</h2>
             <p>Bergen er en by med stort potensial for politisk endring. Vår analyse viser at innbyggerne er klare for en ny politisk bevegelse som fokuserer på lokale løsninger og mer direkte involvering i beslutningsprosesser.</p>
 
             <div class="image-placeholder">Bilde: Markedsanalyse</div>
-
             <!-- Chart.js Market Research Graph -->
-
             <canvas id="marketChart" width="400" height="200"></canvas>
-
             <script>
                 var ctx = document.getElementById('marketChart').getContext('2d');
 
                 var marketChart = new Chart(ctx, {
-
                     type: 'bar',
-
                     data: {
-
                         labels: ['Bergen', 'Oslo', 'Stavanger', 'Trondheim'],
-
                         datasets: [{
-
                             label: 'Støtte for Selvstyrepartiet',
-
                             data: [60, 45, 70, 50],
-
                             backgroundColor: 'rgba(93, 147, 255, 0.6)',
-
                             borderColor: 'rgba(93, 147, 255, 1)',
-
                             borderWidth: 1
-
                         }]
-
                     },
-
                     options: {
-
                         scales: {
-
                             y: {
-
                                 beginAtZero: true
-
                             }
-
                         }
-
                     }
-
                 });
-
             </script>
-
         </section>
-
         <!-- Teknologi og Produktutvikling Section -->
-
         <section id="teknologi">
-
             <h2>Teknologi og Produktutvikling</h2>
             <h3>Parametrisk Arkitektur</h3>
 
             <p>Vi ønsker å implementere innovativ, parametrisk arkitektur som muliggjør bærekraftige og fleksible bygg i Bergen.</p>
-
             <div class="image-placeholder">Bilde: Parametrisk Arkitektur</div>
-
             <h3>Desentraliserte Teknologier</h3>
-
             <p>Ved å implementere blockchain-teknologi for transparent og desentralisert styring, kan vi sikre at beslutningene er rettferdige og lett tilgjengelige for alle.</p>
-
             <div class="image-placeholder">Bilde: Desentraliserte Teknologier</div>
         </section>
 
         <!-- Finansiering Section -->
-
         <section id="finansiering">
-
             <h2>Finansiering</h2>
             <p>Vi søker finansiering for å utvikle vår plattform og teknologi, som skal hjelpe Bergen å oppnå større autonomi. Vi har mål om å samle inn NOK 10 millioner for de første fasene.</p>
 
             <div class="image-placeholder">Bilde: Finansiering</div>
-
         </section>
-
         <!-- Konklusjon Section -->
-
         <section id="konklusjon">
-
             <h2>Konklusjon</h2>
             <p>Bergens Selvstyreparti representerer en ny vei fremover for Bergen, hvor frihet og autonomi er i sentrum. Gjennom partnerskap og finansiering kan vi skape en bedre fremtid for våre innbyggere.</p>
 
             <div class="image-placeholder">Bilde: Konklusjon</div>
-
         </section>
-
     </main>
-
 </body>
-
 </html>
-

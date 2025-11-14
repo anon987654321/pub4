@@ -3,15 +3,28 @@
 
   "stock": "kodak_portra",
   "effects": {
+
     "skin_protect": 0.9,
+
     "film_curve": 0.8,
+
     "highlight_roll": 0.6,
+
     "micro_contrast": 0.25,
+
     "grain": 0.2,
+
     "base_tint": 0.08
+
   },
+
   "color": {
+
     "temp": 5300,
+
     "intensity": 0.5
+
   }
+
 }
+

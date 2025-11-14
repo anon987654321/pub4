@@ -3,151 +3,300 @@
 
     "name": "Norwegian Hedge",
     "tagline": "Hedgefond med Ruby-drevne handelsbots og AI³ integrasjon",
+
     "logo_text": "Norwegian Hedge",
+
     "trademark": false,
+
     "sector": "Technology + Finance",
+
     "funding_nok": 300000
+
   },
+
   "sammendrag": {
+
     "visjon": "Norwegian Hedge skal demokratisere tilgang til institusjonell trading-teknologi for nordiske investorer. Vi kombinerer Ruby's eleganse med cutting-edge AI for å levere alfa i alle markedsforhold.",
+
     "misjon": "Utvikle og drifte et hedgefond med 100% automatisert trading via Ruby bot-swarm. Ingen menneskelige beslutninger i execution - kun maskiner drevet av data, matematikk og AI³.",
+
     "innovation": "Ruby-basert bot swarm med specialiserte strategier (scalping, arbitrage, mean reversion, momentum). AI³ (Artificial Intelligence Cubed) for meta-læring på tvers av bots.",
+
     "customer_benefit": "Investorer får tilgang til high-frequency trading og kvantitative strategier med lavere fees enn tradisjonelle hedgefond (1.5%/15% vs. 2%/20%). Transparent rapportering i sanntid."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "150000000000",
+
     "marked_norden_nok": "500000000000",
+
     "vekst_prosent": 8,
+
     "customer_segments": [
+
       "High-net-worth individuals (HNWI) med NOK 5M+ investbart kapital",
+
       "Family offices i Norden som søker diversifisering",
+
       "Institusjonelle investorer (pensjonsfond, forsikring) med alternativ allokering",
+
       "Tech-entrepreneurs som forstår algoritmisk trading"
+
     ],
+
     "konkurranse": [
+
       "Norske hedgefond: HitecVision, Viking Venture, Argentum (kun equity, ikke quant)",
+
       "Svenske Renaissance Technologies (globalt, ikke norden-fokus)",
+
       "Danske Systematic (tilsvarende kvant approach men høyere fees)",
+
       "Internasjonale robo-advisors (Wealthfront, Betterment) - passive, ikke aktive"
+
     ],
+
     "konkurransefortrinn": [
+
       "Ruby on Rails infrastruktur - raskere utvikling enn Python/C++ konkurrenter",
+
       "AI³ meta-learning - bots lærer fra hverandres strategier",
+
       "Norden-fokus med deep knowledge av nordiske markeder og regulering",
+
       "Lower fee structure: 1.5% management + 15% performance vs. 2%/20% industri-snitt",
+
       "Real-time transparent reporting via web dashboard",
+
       "Tax-efficient for norske investorer (aksjesparekonto-kompatibel for <1.5M NOK)"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "Norwegian Hedge bot-swarm består av 50+ Ruby bots, hver med spesialisert strategi. Bots kommuniserer via Redis message queue, deler orderbook data via WebSocket feeds (Binance, Kraken, Oslo Børs). AI³ bruker reinforcement learning for å optimalisere bot-parametere.",
+
     "unique_innovation": "AI³ (AI Cubed): 1) Bot-level AI for execution, 2) Portfolio-level AI for allocation, 3) Meta-level AI som lærer av begge og justerer strategi-miksen. Ruby's metaprogramming tillater runtime bot-regeneration basert på market regime.",
+
     "ip_status": "Proprietær Ruby bot framework (25,000 LOC). AI³ algoritmer trade secret. Søker patent på 'Dynamic Strategy Allocation via Multi-Agent Reinforcement Learning'.",
+
     "utviklingsstadium": "Paper-trading miljø live med 6 måneders backtest (Sharpe ratio 2.1). Krever broker-integrering og kapital for live trading. Regulatorisk approval fra Finanstilsynet pending."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Management fee: 1.5% av assets under management (AUM) årlig",
+
       "Performance fee: 15% av returns over 5% high-water mark",
+
       "Subscription-based bot lisensiering til andre fond: NOK 500k/år",
+
       "Consulting til finansinstitusjoner for quant infrastruktur: NOK 1.5M per prosjekt"
+
     ],
+
     "loennsomhet": "Break-even ved NOK 200M AUM (management fees dekker kostnader). Target 12% årlig return (net av fees). Med NOK 500M AUM ved år 3: Management fees NOK 7.5M + Performance fees NOK 9M = NOK 16.5M årlige inntekter.",
+
     "skalerbarhet": "Bot infrastructure kan håndtere NOK 10 milliarder AUM uten significant re-engineering. Ruby microservices kan deployes til 100+ cloud instances. Begrensning er market liquidity, ikke teknologi."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Fullføre Finanstilsynet registrering som forvaltningsselskap. Åpne for første 10 investorer (minimum NOK 5M hver, total NOK 50M AUM).",
+
     "q2_2026": "Live trading startet med 20 bots. Oppnå 10% return i Q2. Utvide til 30 bots med futures og options. Nå NOK 100M AUM.",
+
     "q3_2026": "Lansere web dashboard for transparent reporting. Onboarde 20 nye investorer. Nå NOK 200M AUM (break-even).",
+
     "q4_2026": "Ekspandere til svenske og danske markeder. Etablere Stockholm-kontor. Nå NOK 350M AUM.",
+
     "2027": "Lansere 'Norwegian Hedge Lite' for retail investorer (min NOK 100k). Nå NOK 1 milliard AUM. Åpne for institusjonelle kunder."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 600000,
+
     "innovasjon_norge_nok": 300000,
+
     "angel_nok": 200000,
+
     "grunnlegger_nok": 100000,
+
     "allokering": {
+
       "teknologi": 200000,
+
       "regulatorisk": 100000,
+
       "markedsfoering": 100000,
+
       "loenn": 150000,
+
       "trading_capital": 30000,
+
       "driftskapital": 20000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Magnus Finstad",
+
       "rolle": "CEO & Lead Quant Developer",
+
       "erfaring": "10 år i quant trading hos Danske Bank og SEB. Built high-frequency trading systems i C++ og Python. Master i Applied Mathematics fra KTH. Ruby enthusiast og Rails contributor."
+
     },
+
     {
+
       "navn": "Dr. Kristine Aasen",
+
       "rolle": "CTO & AI Research Lead",
+
       "erfaring": "PhD i Machine Learning fra Stanford. 5 år hos Google DeepMind working on reinforcement learning. Publisert 12 papers om multi-agent systems. Fluent i Ruby og Python."
+
     },
+
     {
+
       "navn": "Anders Berge",
+
       "rolle": "CFO & Compliance Officer",
+
       "erfaring": "15 år i finansbransjen, tidligere Risk Manager hos DNB. Chartered Financial Analyst (CFA). Ekspert i norsk og EU regulering av forvaltningsselskaper."
+
     },
+
     {
+
       "navn": "Lena Tveit",
+
       "rolle": "Head of Investor Relations",
+
       "erfaring": "8 år som Private Banker hos Nordea. Nettverk av 200+ HNWI i Norden. Master i Finance fra BI. Erfaring med alternative investments."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "Allokererer 5% av returns til grønne teknologi investeringer. Carbon-neutral operations (cloud providers med 100% renewable energy). Ekskluderer fossil fuel selskaper fra trading universe.",
+
     "sosialt": "Ansetter junior developers fra underrepresenterte grupper og gir opplæring i quant finance. 2% av management fees går til financial literacy programs i norske skoler.",
+
     "oekonomisk": "Skaper høykompetanse jobber i fintech i Norge. Teknologi-spillovers til annen norsk software industri. Gjør institusjonelle trading strategies tilgjengelig for mindre investorer.",
+
     "un_sdgs": [8, 9, 10]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "performanceChart",
+
       "type": "line",
+
       "title": "Backtest Performance (6 måneder)",
+
       "data": {
+
         "labels": ["Mnd 1", "Mnd 2", "Mnd 3", "Mnd 4", "Mnd 5", "Mnd 6"],
+
         "datasets": [
+
           {"label": "Norwegian Hedge", "data": [2.1, 4.5, 6.8, 9.2, 11.1, 13.5], "color": "#00c9ff"},
+
           {"label": "Oslo Børs (OBX)", "data": [1.2, 2.1, 2.8, 3.5, 4.2, 5.0], "color": "#888"}
+
         ]
+
       }
+
     },
+
     {
+
       "id": "allocationChart",
+
       "type": "doughnut",
+
       "title": "Asset Allocation",
+
       "data": {
+
         "labels": ["Equities", "Futures", "Options", "Crypto", "Cash"],
+
         "values": [40, 25, 15, 10, 10]
+
       }
+
     },
+
     {
+
       "id": "botChart",
+
       "type": "bar",
+
       "title": "Top 10 Bots by Return",
+
       "data": {
+
         "labels": ["Scalper-1", "Arbitrage-3", "Mean-Rev-5", "Momentum-2", "Vol-Trade-1", "Pairs-7", "Stat-Arb-2", "Grid-Bot-4", "Swing-1", "Breakout-3"],
+
         "values": [18.2, 15.8, 14.3, 12.9, 11.5, 10.8, 9.7, 8.6, 7.5, 6.4]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+
