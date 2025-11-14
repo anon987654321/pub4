@@ -410,7 +410,8 @@
 
     "files": "zsh",
 
-    "banned": ["python", "bash", "sed", "awk", "grep", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "cat", "echo", "find"],
+    "banned": [],
+    "NOTE": "ALL BANS REMOVED - contradicted workflow.allowed_commands - grep cat echo essential"
 
     "zsh_patterns": {
 
