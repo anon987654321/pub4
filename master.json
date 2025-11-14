@@ -37,7 +37,12 @@
       "user": "anon987654321",
       "pat_location": "G:/priv/accounts.txt",
       "pat_note": "use PAT not password for push",
-      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main"
+      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
+      "reference_repos": [
+        "anon987654321/railsy - my old openbsd rails setups",
+        "basicfeatures/openbsd-rails - original setup",
+        "anonymous-donor/openbsd-rails - original setup alt account"
+      ]
     },
     "database": {
       "development": "sqlite3 at db/development.sqlite3",
@@ -50,6 +55,13 @@
     "forbidden_commands": ["python", "bash", "sed", "awk", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "find"],
     "allowed_essentials": ["grep", "cat", "echo", "print", "printf"],
     "required_shell": "zsh ONLY pure zsh patterns prefer builtins over external when possible",
+    "editing_workflow": {
+      "CRITICAL": "ALL work encoded back into actual .sh files via edit tool in-place",
+      "pattern": "analyze README -> generate code -> edit .sh directly with heredocs",
+      "heredoc_style": "cat > file.rb << 'RUBY' content RUBY for models controllers views",
+      "never": "create temporary files planning docs intermediate steps",
+      "always": "surgical edits to existing .sh files preserve structure add missing sections"
+    },
     "css_preservation": "user CSS internalized EXACTLY no modifications unless critical bug",
     "database_strategy": "sqlite3_development weaviate_production langchainrb_rails",
     "shared_code": "split monolithic delete @common.sh focused modules only",
