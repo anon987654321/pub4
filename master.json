@@ -1,11 +1,23 @@
 {
-  "version": "30.0.0",
-
+  "version": "30.1.0",
   "purpose": "surgical refactoring with professional web design codification",
-
-  "updated": "2025-11-14T18:51:00Z",
-
+  "updated": "2025-11-14T19:57:00Z",
   "llm_target": "github_copilot_cli",
+  
+  "core_principles_internalized": {
+    "forbidden_commands": ["python", "bash", "sed", "awk", "grep", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "cat", "echo", "find"],
+    "required_shell": "zsh ONLY pure zsh patterns no external binaries",
+    "css_preservation": "user CSS internalized EXACTLY no modifications unless critical bug",
+    "database_strategy": "sqlite3_development weaviate_production langchainrb_rails",
+    "shared_code": "split monolithic delete @common.sh focused modules only",
+    "token_efficiency": "edit_files_directly no_inline_code_in_chat batch_operations trust_execution",
+    "deployment_ready": "production_complete means ssh_deploy no_local_testing trust_and_push",
+    "competitive_research": {
+      "required": "web_search ar5iv.org for features before implementing",
+      "takeaway_insights": "doordash 65%_market checkout_friction loyalty real_time_tracking",
+      "playlist_insights": "spotify_blend collaborative_realtime apple_ecosystem audio_quality"
+    }
+  },
   
   "optimization": {
     "performance": {
