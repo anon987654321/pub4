@@ -4,14 +4,14 @@ class CraneTTS
   include DillaConstants
 
   LESSONS = {
-    intro: "Good evening! I'm Professor Crane, and today we'll explore the fascinating intersection of digital signal processing and neo-soul aesthetics. Think of it as if Miles Davis met MATLAB at a dinner party!",
-    swing: "Ah yes, the swing factor! You see, quantization is for amateurs. The human ear craves temporal imperfection. We're adding a sixty-two percent swing ratio - that's the rhythmic equivalent of a perfectly aged Bordeaux.",
-    dm9: "Now we encounter the D minor ninth chord. Four glorious intervals stacked like a well-constructed argument: root, minor third, perfect fifth, minor seventh, and the pièce de résistance, the major ninth. This is harmonic sophistication incarnate!",
-    g7sus4: "The suspended fourth! Delightfully unresolved, like a question mark in sonic form. We delay gratification by suspending the third with a fourth. It's musical foreplay, if you will.",
-    pads: "Listen to those lush pads breathing in the stereo field! We're employing multiple oscillators with subtle detuning - what acousticians call chorus effect. It's like having an ensemble where everyone is slightly drunk, but in a good way.",
-    drums: "The drums! Notice the micro-timing variations? That's J Dilla's gift to humanity - drunk drumming, scientifically known as quantization offset. Each hit deviates by milliseconds, creating what we call groove.",
-    mastering: "Now for the mastering chain. We compress, we limit, we subtly distort. Think of it as audio cosmetic surgery - we're enhancing what nature gave us without looking too obvious about it.",
-    loop: "And there we have it! The beat loops infinitely, like Sisyphus, but with significantly better rhythm section. Shall we continue our sonic education?"
+    intro: "Yo, Professor Crane here. Today we're recreating legendary producer techniques. J Dilla's MPC three thousand. Madlib's SP four oh four. Flying Lotus on Ableton. Watch how their equipment translates to pure SoX wizardry.",
+    chord_theory: "These jazz voicings come straight from Slum Village Fantastic. Minor sevenths, major sevenths, diminished chords. Stacked in thirds like Dilla programmed them. Moog style analog drift adds that vintage oscillator instability.",
+    microtiming: "MPC three thousand magic right here. Kicks drift plus or minus forty milliseconds. Snares drag thirty to forty behind. That's how Dilla humanized the machine. Drunk timing. Unquantized groove.",
+    swing: "Sixty-two to sixty-six percent swing. Not your basic fifty-fifty quantize. SP twelve hundred and MPC sequencer feel. Every other hit pushes late. That's pocket. That's bounce.",
+    pads: "SP four oh four effects chain in action. Tape saturation. Vinyl simulator. Deep reverb like Flying Lotus runs in Ableton. Detuned oscillators create that Minimoog warmth Dilla used for basslines.",
+    bass: "Walking bassline following chord roots. Not just one drone. Jazz bassist approach. Electric bass timbre with overdrive. Anchors the harmony like a proper rhythm section.",
+    mix: "MPC style mixer ratios. Drums at seventy-five percent. Pads at forty-five. Bass at sixty-five. Crane Song HEDD harmonic enhancement. Triode for second harmonic warmth. Pentode for third harmonic brightness.",
+    complete: "There it is. Legendary producer techniques recreated in SoX. Dilla microtiming. Madlib tape saturation. FlyLo stereo width. Proper frequency balance from Sound on Sound guidelines. That's how you make beats that breathe."
   }.freeze
 
   def speak(text)

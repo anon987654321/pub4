@@ -1,11 +1,10 @@
-# frozen_string_literal: true
-
 {
   "fall_in_love": {
     "name": "Fall in Love (Slum Village)",
-    "tempo": 90,
-    "swing": 0.58,
-    "chords": ["Dm9", "G7sus4", "Cmaj9", "Am7"],
+    "tempo": 87,
+    "swing": 0.64,
+    "chords": ["Em7", "A7", "Dmaj7", "Gmaj7", "F#m7", "Bm7"],
+    "bassline": ["E", "A", "D", "G", "F#", "B"],
     "arrangement": {
       "intro": 8,
       "verse": 16,
@@ -16,9 +15,10 @@
   },
   "players": {
     "name": "Players (Slum Village)",
-    "tempo": 88,
+    "tempo": 91,
     "swing": 0.62,
-    "chords": ["Ebm9", "Abm7", "Dbmaj9", "Gbmaj7"],
+    "chords": ["Dm7", "G7", "Cmaj7", "Am7", "Em7", "F#dim7"],
+    "bassline": ["D", "G", "C", "A", "E", "F#"],
     "arrangement": {
       "intro": 8,
       "verse": 16,
@@ -27,11 +27,26 @@
       "outro": 16
     }
   },
-  "stakes_is_high": {
-    "name": "Stakes Is High (De La Soul)",
-    "tempo": 92,
-    "swing": 0.56,
-    "chords": ["Am9", "Dm7", "G7sus4", "Cmaj7"],
+  "fantastic": {
+    "name": "Fantastic (Slum Village)",
+    "tempo": 93,
+    "swing": 0.58,
+    "chords": ["C#m7", "E7", "Amaj7", "F#m7", "Bm7", "G#m7"],
+    "bassline": ["C#", "E", "A", "F#", "B", "G#"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  },
+  "climax": {
+    "name": "Climax (Slum Village)",
+    "tempo": 89,
+    "swing": 0.66,
+    "chords": ["Gm7", "C7", "Fmaj7", "Dm7", "Ebmaj7", "Am7"],
+    "bassline": ["G", "C", "F", "D", "Eb", "A"],
     "arrangement": {
       "intro": 8,
       "verse": 16,

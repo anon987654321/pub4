@@ -8,7 +8,7 @@ module DillaConstants
   AMBIENT_DRONE_FILE = "#{CHECKPOINT_DIR}/ambient_drone.wav"
   SOUNDFONT_PATH = "#{Dir.pwd}/Jnsgm2.sf2".freeze
   RHODES_PROG = 4
-  MIN_FILE_SIZE = 1000
+  MIN_FILE_SIZE = 500
   RANDOM_RANGE = 10_000
   DEFAULT_BARS = 64
   AMBIENT_DRONE_DURATION = 300
@@ -50,13 +50,14 @@ module SoxHelpers
 end
 
 class Progression
-  attr_reader :name, :tempo, :swing, :chords, :arrangement
+  attr_reader :name, :tempo, :swing, :chords, :bassline, :arrangement
 
-  def initialize(name:, tempo:, swing:, chords:, arrangement:)
+  def initialize(name:, tempo:, swing:, chords:, bassline:, arrangement:)
     @name = name
     @tempo = tempo
     @swing = swing
     @chords = chords.freeze
+    @bassline = bassline.freeze
     @arrangement = arrangement.freeze
   end
 
@@ -72,6 +73,7 @@ class Progression
         tempo: prog["tempo"],
         swing: prog["swing"],
         chords: prog["chords"],
+        bassline: prog["bassline"],
         arrangement: prog["arrangement"].transform_keys(&:to_sym)
       )
     end.transform_keys(&:to_sym)

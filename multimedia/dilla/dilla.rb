@@ -48,6 +48,7 @@ PROGRESSIONS = Progression.load_all(File.join(__dir__, "__shared", "progressions
 
 class DillaEngine
   include DillaConstants
+  include SoxHelpers
 
   def initialize
     FileUtils.mkdir_p(CHECKPOINT_DIR)
@@ -72,30 +73,66 @@ class DillaEngine
 
   def generate_track(progression_name)
     prog = PROGRESSIONS[progression_name]
-    puts "\n🎵 #{prog.name} (#{prog.tempo} BPM, swing: #{prog.swing})"
+    puts "\n🎵 #{prog.name} (#{prog.tempo} BPM, swing: #{(prog.swing * 100).round}%)"
 
-    @professor.speak(CraneTTS::LESSONS[:intro])
-    sleep 3
-    @professor.speak(CraneTTS::LESSONS[:swing])
-
-    drums = @drums.generate_drums(prog.tempo, prog.swing, 4)
+    # Generate all elements first
+    drums = @drums.generate_drums(prog.tempo, prog.swing, 8)
     return nil unless drums
 
-    @professor.speak(CraneTTS::LESSONS[:pads])
-    pads = @pad_gen.generate_dreamy_pad(prog.chords.first, prog.beat_duration * 16)
-    return nil unless pads
+    # Generate pads cycling through chord progression
+    pad_files = []
+    4.times do |i|
+      chord = prog.chords[i % prog.chords.length]
+      pad = @pad_gen.generate_dreamy_pad(chord, prog.beat_duration * 8)
+      pad_files << pad if pad
+    end
+    
+    combined_pads = tempfile("combined_pads")
+    system("#{SOX_PATH} #{pad_files.join(" ")} \"#{combined_pads}\" 2>/dev/null")
+    
+    # Don't cleanup pad files until after we check combined_pads
+    return nil unless valid?(combined_pads)
+    cleanup_files(pad_files)
 
-    @professor.speak(CraneTTS::LESSONS[:drums])
-    bass = generate_simple_bass(prog.chords.first, prog.beat_duration * 16)
+    # Generate walking bassline
+    bass = generate_walking_bass(prog.bassline, prog.beat_duration * 32)
     return nil unless bass
 
-    @professor.speak(CraneTTS::LESSONS[:mastering])
-    mixed = @mixer.mix_tracks(drums, pads, bass, generate_silence(prog.beat_duration * 16))
-    return nil unless mixed
+    # Mix all elements - DON'T cleanup until after mixing
+    silence = generate_silence(prog.beat_duration * 32)
+    mixed = @mixer.mix_tracks(drums, combined_pads, bass, silence)
+    
+    # Now we can cleanup since we're done with source files
+    cleanup_files(silence)
+    
+    return nil unless mixed && valid?(mixed)
 
-    @professor.speak(CraneTTS::LESSONS[:loop])
+    # Master the track
     output = @master.master_track(mixed)
-    [drums, pads, bass, mixed].each { |f| File.delete(f) rescue nil }
+    
+    # Final cleanup
+    cleanup_files(drums, combined_pads, bass, mixed)
+    
+    # Play TTS narration OVER the beat
+    if output && valid?(output)
+      Thread.new do
+        sleep 1
+        @professor.speak(CraneTTS::LESSONS[:intro])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:chord_theory])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:microtiming])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:swing])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:pads])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:bass])
+        sleep 8
+        @professor.speak(CraneTTS::LESSONS[:complete])
+      end
+    end
+    
     output
   end
 
@@ -115,9 +152,10 @@ class DillaEngine
       if output
         prog = PROGRESSIONS[prog_name]
         timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
-        saved_file = "#{OUTPUT_DIR}/#{prog.name.gsub(/[^a-zA-Z0-9]/, '_')}_#{timestamp}.wav"
+        filename = "#{prog.name.gsub(/[^a-zA-Z0-9]/, '_')}_#{timestamp}.wav"
+        saved_file = File.join(Dir.pwd, filename)
         FileUtils.cp(output, saved_file)
-        puts "💾 Saved: #{File.basename(saved_file)}"
+        puts "💾 Saved: #{filename}"
         play_track(output)
         File.delete(output) rescue nil
       end
@@ -130,20 +168,41 @@ class DillaEngine
 
   private
 
-  def generate_simple_bass(chord_name, duration)
+  def generate_walking_bass(bassline, duration)
     out = "#{CHECKPOINT_DIR}/bass_#{Time.now.to_i}.wav"
     notes = {
-      "C" => 261.63, "D" => 293.66, "E" => 329.63, "F" => 349.23,
-      "G" => 392.00, "A" => 440.00, "B" => 493.88,
-      "Db" => 277.18, "Eb" => 311.13, "Gb" => 369.99, "Ab" => 415.30, "Bb" => 466.16
+      "C" => 130.81, "D" => 146.83, "E" => 164.81, "F" => 174.61,
+      "G" => 196.00, "A" => 220.00, "B" => 246.94,
+      "C#" => 138.59, "D#" => 155.56, "F#" => 184.99, "G#" => 207.65, "A#" => 233.08,
+      "Db" => 138.59, "Eb" => 155.56, "Gb" => 184.99, "Ab" => 207.65, "Bb" => 233.08
     }
 
-    root = chord_name[0..1]
-    root = chord_name[0] unless notes[root]
-    freq = (notes[root] || 261.63) / 2.0
-
-    system("#{SOX_PATH} -n \"#{out}\" synth #{duration} sine #{freq} sine #{freq * 0.5} fade h 0.05 #{duration} 0.1 gain -3 2>/dev/null")
+    # Calculate note duration
+    note_dur = duration / bassline.length.to_f
+    
+    # Generate each bass note
+    bass_notes = []
+    bassline.each_with_index do |note, i|
+      freq = notes[note] || 130.81
+      note_file = tempfile("bass_note_#{i}")
+      
+      # Fingered electric bass with slight pitch envelope
+      system("#{SOX_PATH} -n \"#{note_file}\" synth #{note_dur} sine #{freq} sine #{freq * 2} vol 0.3 sine #{freq * 0.5} vol 0.4 fade h 0.01 #{note_dur} 0.08 overdrive 8 gain -4 2>/dev/null")
+      bass_notes << note_file
+    end
+    
+    # Concatenate bass notes
+    system("#{SOX_PATH} #{bass_notes.join(" ")} \"#{out}\" 2>/dev/null")
+    cleanup_files(bass_notes)
     out
+  end
+
+  def tempfile(prefix)
+    "#{CHECKPOINT_DIR}/#{prefix}_#{Time.now.to_i}_#{rand(10000)}.wav"
+  end
+
+  def cleanup_files(*files)
+    files.flatten.compact.each { |f| File.delete(f) rescue nil }
   end
 
   def generate_silence(duration)
