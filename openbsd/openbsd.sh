@@ -63,15 +63,27 @@ ALL_DOMAINS=(${(u)${(f)"$(print -l ${APPS[(I)*.domains]})"}//.domains/})
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
 readonly PTR_HOSTNAME="ns.brgen.no"
+# Status reporting - dmesg style
+status() {
+  printf '%s %-24s %-4s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$3"
+}
+
+spin() {
+  local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local pid=$1
+  local i=0
+  while kill -0 $pid 2>/dev/null; do
+    printf '\r%s %s' "${chars:$((i++ % 10)):1}" "$2"
+    sleep 0.1
+  done
+  printf '\r'
+}
+
 # Logging with structured output
-
 log() {
-
   local level="${1:-INFO}"
   shift
-
   printf '{"time":"%s","level":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
-
 }
 
 save_state() {
