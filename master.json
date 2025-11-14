@@ -22,7 +22,29 @@
     "CLEAN_AFTER_COMMIT": "same as CLEAN_BEFORE_EDIT to remove artifacts"
   },
   
-  "deployment_config": {
+  "social_features_shared": {
+    "authentication": "devise + devise-guests for anonymous posting",
+    "multi_tenancy": "acts_as_tenant for city-specific instances (brgen.no oslo.no stockholm.no)",
+    "posting_patterns": {
+      "anonymous_allowed": "guest users can post on front page without signup",
+      "wall_style": "facebook timeline feed with cards infinite scroll",
+      "feed_layout": "x.com center column 600px max-width sticky sidebar",
+      "css_reference": "study facebook x.com closely for spacing typography interactions"
+    },
+    "shared_components": {
+      "post_model": "polymorphic belongs_to postable user content:text published_at",
+      "comment_model": "nested threading belongs_to commentable user",
+      "like_model": "polymorphic counter_cache",
+      "share_model": "repost retweet functionality",
+      "feed_algorithm": "chronological + engagement_score for trending"
+    },
+    "brgen_hyperlocal": {
+      "concept": "hyperlocal social network for Bergen Norway",
+      "multi_tenant": "same app hosts oslo.no stockholm.no copenhagen.no etc via ActsAsTenant",
+      "geolocation": "posts tagged with neighborhoods fjellveien møhlenpris sentrum",
+      "local_focus": "events businesses classifieds dating all hyperlocal"
+    }
+  },
     "vps": {
       "host": "185.52.176.18",
       "user": "dev",
