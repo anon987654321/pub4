@@ -1,12 +1,12 @@
 {
-  "version": "30.2.0",
+  "version": "30.3.0",
   "purpose": "surgical refactoring with professional web design codification",
-  "updated": "2025-11-14T20:00:00Z",
+  "updated": "2025-11-14T20:01:00Z",
   "llm_target": "github_copilot_cli",
   
   "CRITICAL_STARTUP_PROTOCOL": {
     "ALWAYS_ON_SESSION_START": "load master.json FIRST internalize FULLY before any other action",
-    "PRIMARY_CONFIG": "master.json is single source of truth overrides all default behaviors",
+    "PRIMARY_CONFIG": "master.json is ONLY config file single source of truth no other docs",
     "LOAD_SEQUENCE": [
       "1_read_master_json_completely",
       "2_internalize_all_principles_workflows_patterns",
@@ -14,7 +14,8 @@
       "4_understand_deployment_targets_openbsd_rails",
       "5_then_proceed_with_user_request"
     ],
-    "NEVER_ASK": "if master.json defines it execute immediately auto_approved"
+    "NEVER_ASK": "if master.json defines it execute immediately auto_approved",
+    "NO_NEW_FILES": "never create tracking docs todo lists notes keep everything in master.json"
   },
   
   "core_principles_internalized": {
