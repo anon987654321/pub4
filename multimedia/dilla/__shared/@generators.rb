@@ -108,29 +108,191 @@ end
 class DrumGenerator
   include SoxHelpers
 
+  GOLDBABY_PATH = "G:/music/samples/goldbaby".freeze
+  
+  DRUM_STYLES = {
+    dilla: { swing: 0.64, kick_offset: 40, snare_offset: -35 },
+    flylo: { swing: 0.58, kick_offset: 25, snare_offset: -20 },
+    techno: { swing: 0.52, kick_offset: 5, snare_offset: 0 }
+  }.freeze
+
   def generate_drums(tempo, swing, bars)
-    print "  🥁 Dilla Drums (microtiming)... "
+    style = DRUM_STYLES.keys.sample
+    config = DRUM_STYLES[style]
+    
+    print "  🥁 #{style.to_s.capitalize} Drums (microtiming)... "
+    
+    case style
+    when :dilla
+      output = generate_dilla_drums(tempo, config[:swing], bars, config)
+    when :flylo
+      output = generate_flylo_drums(tempo, config[:swing], bars, config)
+    when :techno
+      output = generate_techno_drums(tempo, bars, config)
+    end
+    
+    puts output && valid?(output) ? "✓" : "✗"
+    output
+  end
+
+  private
+
+  def generate_dilla_drums(tempo, swing, bars, config)
     beat_dur = 60.0 / tempo
     kick = generate_kick
     snare = generate_snare
     hat = generate_hihat
 
     patterns = bars.times.map do |bar|
-      generate_bar_dilla(kick, snare, hat, bar, beat_dur, swing)
+      generate_bar_dilla(kick, snare, hat, bar, beat_dur, swing, config)
     end.compact
 
     output = tempfile("drums")
     system(sox_cmd("#{patterns.join(" ")} \"#{output}\" 2>/dev/null"))
     cleanup_files(patterns, kick, snare, hat)
-    puts valid?(output) ? "✓" : "✗"
     output
   end
 
-  private
+  def generate_flylo_drums(tempo, swing, bars, config)
+    # Flying Lotus: off-grid, layered, glitchy, skips beats randomly
+    beat_dur = 60.0 / tempo
+    kick = generate_kick
+    snare = generate_layered_snare
+    hat = generate_hihat
+
+    patterns = bars.times.map do |bar|
+      generate_bar_flylo(kick, snare, hat, bar, beat_dur, swing, config)
+    end.compact
+
+    output = tempfile("drums_flylo")
+    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" overdrive 8 12 2>/dev/null"))
+    cleanup_files(patterns, kick, snare, hat)
+    output
+  end
+
+  def generate_techno_drums(tempo, bars, config)
+    # Industrial techno: 4-on-floor, heavy distortion, sparse claps
+    beat_dur = 60.0 / tempo
+    kick = generate_heavy_kick
+    clap = generate_sparse_clap
+    hat = generate_909_hat
+
+    patterns = bars.times.map do |bar|
+      generate_bar_techno(kick, clap, hat, bar, beat_dur)
+    end.compact
+
+    output = tempfile("drums_techno")
+    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" overdrive 25 35 equalizer 60 2q 4 2>/dev/null"))
+    cleanup_files(patterns, kick, clap, hat)
+    output
+  end
+
+  def generate_bar_dilla(kick, snare, hat, bar_num, beat_dur, swing, config)
+    bar_dur = beat_dur * 4
+    bar_file = tempfile("bar")
+    
+    events = []
+    
+    # Kicks on 1,2,3,4 with Dilla drift (±40ms)
+    4.times do |beat|
+      offset = rand(-config[:kick_offset]..config[:kick_offset]) / 1000.0
+      events << "#{kick} #{beat * beat_dur + offset}"
+    end
+    
+    # Snares on 2,4 with signature drag (-40ms to -15ms)
+    [1, 3].each do |beat|
+      drag = rand(config[:snare_offset]..-15) / 1000.0
+      events << "#{snare} #{beat * beat_dur + drag}"
+    end
+    
+    # Swung hats (8th notes with swing + microtiming)
+    8.times do |eighth|
+      offset = (eighth % 2 == 1) ? (beat_dur * swing * 0.5) : 0
+      jitter = (eighth % 2 == 1) ? rand(-15..15) / 1000.0 : rand(-5..5) / 1000.0
+      events << "#{hat} #{(eighth * beat_dur * 0.5) + offset + jitter}"
+    end
+    
+    build_event_bar(events, bar_file, bar_dur)
+    bar_file
+  end
+
+  def generate_bar_flylo(kick, snare, hat, bar_num, beat_dur, swing, config)
+    # FlyLo: skips kicks randomly, layers snares, very irregular hats
+    bar_dur = beat_dur * 4
+    bar_file = tempfile("bar_flylo")
+    
+    events = []
+    
+    # Kicks: sometimes skip beats (20% chance)
+    4.times do |beat|
+      next if rand < 0.2
+      offset = rand(-config[:kick_offset]..config[:kick_offset]) / 1000.0
+      events << "#{kick} #{beat * beat_dur + offset}"
+    end
+    
+    # Layered snares: main + ghost
+    [1, 3].each do |beat|
+      position = beat * beat_dur
+      events << "#{snare} #{position + (config[:snare_offset] / 1000.0)}"
+      # Ghost snare layer (early, quieter)
+      events << "#{snare} #{position - 0.015}" if rand < 0.6
+    end
+    
+    # Irregular hats: skip 25% randomly, big timing variations
+    8.times do |eighth|
+      next if rand < 0.25
+      offset = (eighth % 2 == 1) ? (beat_dur * swing * 0.5) : 0
+      jitter = rand(-30..30) / 1000.0
+      events << "#{hat} #{(eighth * beat_dur * 0.5) + offset + jitter}"
+    end
+    
+    build_event_bar(events, bar_file, bar_dur)
+    bar_file
+  end
+
+  def generate_bar_techno(kick, clap, hat, bar_num, beat_dur)
+    # Industrial techno: solid 4-on-floor, sparse claps on 2+4, offbeat 909 hats
+    bar_dur = beat_dur * 4
+    bar_file = tempfile("bar_techno")
+    
+    events = []
+    
+    # 4-on-floor kicks (no swing, no variation - industrial precision)
+    4.times do |beat|
+      events << "#{kick} #{beat * beat_dur}"
+    end
+    
+    # Claps only on 2 and 4 (backbeat)
+    [1, 3].each do |beat|
+      events << "#{clap} #{beat * beat_dur}"
+    end
+    
+    # 909 hats on offbeats only (classic techno)
+    8.times do |eighth|
+      next if (eighth % 2) == 0  # Only offbeats
+      events << "#{hat} #{eighth * beat_dur * 0.5}"
+    end
+    
+    build_event_bar(events, bar_file, bar_dur)
+    bar_file
+  end
+
+  def build_event_bar(events, bar_file, bar_dur)
+    commands = events.map { |e| file, time = e.split; "\"#{file}\" trim 0 0.5 pad #{time}@0" }
+    system(sox_cmd("-m #{commands.join(" ")} \"#{bar_file}\" trim 0 #{bar_dur} 2>/dev/null"))
+    bar_file
+  end
 
   def generate_kick
     out = tempfile("kick")
     system(sox_cmd("-n \"#{out}\" synth 0.3 sine 55 fade h 0.001 0.3 0.15 overdrive 15 gain -3 2>/dev/null"))
+    out
+  end
+
+  def generate_heavy_kick
+    # Industrial techno: heavier, more distorted
+    out = tempfile("kick_heavy")
+    system(sox_cmd("-n \"#{out}\" synth 0.35 sine 45 fade h 0.001 0.35 0.2 overdrive 30 gain -2 2>/dev/null"))
     out
   end
 
@@ -140,13 +302,33 @@ class DrumGenerator
     out
   end
 
+  def generate_layered_snare
+    # FlyLo style: add some reverb for depth
+    out = tempfile("snare_layered")
+    system(sox_cmd("-n \"#{out}\" synth 0.2 noise lowpass 3500 highpass 200 fade h 0.001 0.2 0.08 reverb 20 overdrive 5 gain -5 2>/dev/null"))
+    out
+  end
+
+  def generate_sparse_clap
+    # Techno: sparse clap with long reverb
+    out = tempfile("clap")
+    system(sox_cmd("-n \"#{out}\" synth 0.15 noise highpass 2500 fade h 0.001 0.15 0.05 reverb 80 50 100 gain -6 2>/dev/null"))
+    out
+  end
+
   def generate_hihat
     out = tempfile("hat")
     system(sox_cmd("-n \"#{out}\" synth 0.04 noise highpass 9000 fade h 0.001 0.04 0.015 gain -10 2>/dev/null"))
     out
   end
 
-  def generate_bar_dilla(kick, snare, hat, bar_num, beat_dur, swing)
+  def generate_909_hat
+    # 909 style: brighter, tighter
+    out = tempfile("hat_909")
+    system(sox_cmd("-n \"#{out}\" synth 0.03 noise highpass 10000 fade h 0.001 0.03 0.01 gain -10 2>/dev/null"))
+    out
+  end
+end
     bar_dur = beat_dur * 4
     offset = bar_num * bar_dur
     hits = []

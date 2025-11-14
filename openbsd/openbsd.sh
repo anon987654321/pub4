@@ -32,70 +32,34 @@ readonly LOG_DIR="/var/log/rails"
 readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 # Create structure
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
-# Domain mappings (40+ domains)
-typeset -A all_domains
+# Unified deployment config - modern zsh nested associative arrays
+typeset -A APPS
+APPS[brgen.port]=11006
+APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
+APPS[brgen.subdomains]="markedsplass playlist dating tv takeaway maps"
 
-all_domains=(
-  [brgen.no]="markedsplass playlist dating tv takeaway maps"
-  [oshlo.no]="markedsplass playlist dating tv takeaway maps"
-  [trndheim.no]="markedsplass playlist dating tv takeaway maps"
-  [stvanger.no]="markedsplass playlist dating tv takeaway maps"
-  [trmso.no]="markedsplass playlist dating tv takeaway maps"
-  [reykjavk.is]="markadur playlist dating tv takeaway maps"
-  [kobenhvn.dk]="markedsplads playlist dating tv takeaway maps"
-  [stholm.se]="marknadsplats playlist dating tv takeaway maps"
-  [gteborg.se]="marknadsplats playlist dating tv takeaway maps"
-  [mlmoe.se]="marknadsplats playlist dating tv takeaway maps"
-  [hlsinki.fi]="markkinapaikka playlist dating tv takeaway maps"
-  [lndon.uk]="marketplace playlist dating tv takeaway maps"
-  [mnchester.uk]="marketplace playlist dating tv takeaway maps"
-  [brmingham.uk]="marketplace playlist dating tv takeaway maps"
-  [edinbrgh.uk]="marketplace playlist dating tv takeaway maps"
-  [glasgw.uk]="marketplace playlist dating tv takeaway maps"
-  [lverpool.uk]="marketplace playlist dating tv takeaway maps"
-  [amstrdam.nl]="marktplaats playlist dating tv takeaway maps"
-  [rottrdam.nl]="marktplaats playlist dating tv takeaway maps"
-  [utrcht.nl]="marktplaats playlist dating tv takeaway maps"
-  [brssels.be]="marche playlist dating tv takeaway maps"
-  [zrich.ch]="marktplatz playlist dating tv takeaway maps"
-  [lchtenstein.li]="marktplatz playlist dating tv takeaway maps"
-  [frankfrt.de]="marktplatz playlist dating tv takeaway maps"
-  [mrseille.fr]="marche playlist dating tv takeaway maps"
-  [mlan.it]="mercato playlist dating tv takeaway maps"
-  [lsbon.pt]="mercado playlist dating tv takeaway maps"
-  [lsangeles.com]="marketplace playlist dating tv takeaway maps"
-  [newyrk.us]="marketplace playlist dating tv takeaway maps"
-  [chcago.us]="marketplace playlist dating tv takeaway maps"
-  [dtroit.us]="marketplace playlist dating tv takeaway maps"
-  [houstn.us]="marketplace playlist dating tv takeaway maps"
-  [dllas.us]="marketplace playlist dating tv takeaway maps"
-  [austn.us]="marketplace playlist dating tv takeaway maps"
-  [prtland.com]="marketplace playlist dating tv takeaway maps"
-  [mnneapolis.com]="marketplace playlist dating tv takeaway maps"
-  [pub.attorney]=""
-  [freehelp.legal]=""
-  [bsdports.org]=""
-  [hjerterom.no]=""
-  [privcam.no]=""
-  [amberapp.com]=""
-  [foodielicio.us]=""
-  [stacyspassion.com]=""
-  [antibettingblog.com]=""
-  [anticasinoblog.com]=""
-  [antigamblingblog.com]=""
-  [foball.no]=""
-)
-# App to port mappings - fixed ports
-typeset -A app_domains
-app_domains=(
-  [brgen:11006]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
-  [amber:10001]="amberapp.com"
-  [blognet:10002]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-  [bsdports:10003]="bsdports.org"
-  [hjerterom:10004]="hjerterom.no"
-  [privcam:10005]="privcam.no"
-  [pubattorney:10006]="pub.attorney freehelp.legal"
-)
+APPS[amber.port]=10001
+APPS[amber.domains]="amberapp.com"
+
+APPS[blognet.port]=10002
+APPS[blognet.domains]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
+
+APPS[bsdports.port]=10003
+APPS[bsdports.domains]="bsdports.org"
+
+APPS[hjerterom.port]=10004
+APPS[hjerterom.domains]="hjerterom.no"
+
+APPS[privcam.port]=10005
+APPS[privcam.domains]="privcam.no"
+
+APPS[pubattorney.port]=10006
+APPS[pubattorney.domains]="pub.attorney freehelp.legal"
+
+# Extract all unique domains for DNS config
+typeset -a ALL_DOMAINS
+ALL_DOMAINS=(${(u)${(f)"$(print -l ${APPS[(I)*.domains]})"}//.domains/})
+
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
 readonly PTR_HOSTNAME="ns.brgen.no"
