@@ -351,25 +351,113 @@ h1 {
 }
 CSS
 
-# Stimulus controller for playback
+# Stimulus controller for playback with fixes from index.html analysis
 cat > app/javascript/controllers/audio_player_controller.js << 'JS'
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["audio", "track", "progress", "currentTime", "duration"]
+  static targets = ["audio", "track", "progress", "currentTime", "duration", "queue", "volume"]
   static values = { url: String }
   
   connect() {
     this.audio = new Audio()
+    this.audio.crossOrigin = "anonymous"
+    this.audio.preload = "auto"
+    this.audio.volume = this.getVolume()
+    
     this.audio.addEventListener('timeupdate', this.updateProgress.bind(this))
     this.audio.addEventListener('ended', this.playNext.bind(this))
+    this.audio.addEventListener('error', this.handleError.bind(this))
+    
+    this.nextAudio = new Audio() // Preload buffer
+    this.nextAudio.crossOrigin = "anonymous"
+    this.nextAudio.preload = "auto"
+    
+    this.crossfading = false
+    this.loadShuffleOrder()
+    
+    // Setup Web Audio API for frequency analysis
+    this.initAnalyser()
+  }
+  
+  initAnalyser() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext
+      this.audioContext = new AudioContext()
+      this.analyser = this.audioContext.createAnalyser()
+      this.analyser.fftSize = 512
+      this.analyser.smoothingTimeConstant = 0.78
+      this.freqData = new Uint8Array(this.analyser.frequencyBinCount)
+      this.prevData = new Uint8Array(this.analyser.frequencyBinCount)
+      this.fluxHistory = []
+      this.lastBeat = 0
+      
+      const source = this.audioContext.createMediaElementSource(this.audio)
+      source.connect(this.analyser)
+      this.analyser.connect(this.audioContext.destination)
+    } catch (e) {
+      console.warn('Web Audio API not available', e)
+    }
   }
   
   play(event) {
     const url = event.currentTarget.dataset.url
-    this.audio.src = url
-    this.audio.play()
-    this.markPlaying(event.currentTarget)
+    const trackElement = event.currentTarget
+    
+    if (this.crossfading) return
+    
+    this.crossfadeTo(url, trackElement)
+    this.preloadNext(trackElement)
+  }
+  
+  crossfadeTo(url, trackElement) {
+    this.crossfading = true
+    const oldAudio = this.audio
+    const newAudio = this.nextAudio
+    
+    newAudio.src = url
+    newAudio.volume = 0
+    
+    newAudio.play().then(() => {
+      // Smooth 2-second crossfade
+      const fadeSteps = 40
+      const fadeInterval = 50 // ms
+      let step = 0
+      
+      const fade = setInterval(() => {
+        step++
+        const progress = step / fadeSteps
+        
+        newAudio.volume = Math.min(1, progress) * this.getVolume()
+        oldAudio.volume = Math.max(0, 1 - progress) * this.getVolume()
+        
+        if (step >= fadeSteps) {
+          clearInterval(fade)
+          oldAudio.pause()
+          oldAudio.currentTime = 0
+          
+          // Swap audio elements
+          this.audio = newAudio
+          this.nextAudio = oldAudio
+          this.crossfading = false
+          
+          this.markPlaying(trackElement)
+          this.updateQueue()
+        }
+      }, fadeInterval)
+    }).catch(err => {
+      console.error('Playback error:', err)
+      this.crossfading = false
+      this.playNext()
+    })
+  }
+  
+  preloadNext(currentElement) {
+    const next = currentElement.nextElementSibling
+    if (next && next.dataset.url) {
+      this.nextAudio.src = next.dataset.url
+      this.nextAudio.load()
+    }
   }
   
   pause() {
@@ -382,10 +470,60 @@ export default class extends Controller {
   }
   
   updateProgress() {
-    if (this.hasProgressTarget) {
+    if (this.hasProgressTarget && this.audio.duration) {
       const percent = (this.audio.currentTime / this.audio.duration) * 100
       this.progressTarget.style.width = `${percent}%`
+      
+      if (this.hasCurrentTimeTarget) {
+        this.currentTimeTarget.textContent = this.formatTime(this.audio.currentTime)
+      }
+      if (this.hasDurationTarget) {
+        this.durationTarget.textContent = this.formatTime(this.audio.duration)
+      }
     }
+    
+    // Beat detection with improved threshold calibration
+    this.detectBeat()
+  }
+  
+  detectBeat() {
+    if (!this.analyser || !this.freqData) return
+    
+    this.analyser.getByteFrequencyData(this.freqData)
+    const n = this.freqData.length
+    
+    // Calculate spectral flux
+    let flux = 0
+    for (let i = 0; i < n; i++) {
+      const diff = Math.max(0, this.freqData[i] - this.prevData[i])
+      flux += diff * diff
+      this.prevData[i] = this.freqData[i]
+    }
+    flux = Math.sqrt(flux / n) / 255
+    
+    this.fluxHistory.push(flux)
+    if (this.fluxHistory.length > 40) this.fluxHistory.shift()
+    
+    const avgFlux = this.fluxHistory.reduce((a, b) => a + b, 0) / this.fluxHistory.length
+    const threshold = avgFlux * 1.65 // Improved from 1.45
+    
+    const now = performance.now()
+    if (flux > threshold && flux > 0.15 && now - this.lastBeat > 120) {
+      this.lastBeat = now
+      this.dispatchBeatEvent()
+    }
+  }
+  
+  dispatchBeatEvent() {
+    this.element.dispatchEvent(new CustomEvent('beat', {
+      bubbles: true,
+      detail: { timestamp: performance.now() }
+    }))
+  }
+  
+  handleError(event) {
+    console.error('Audio error:', event)
+    setTimeout(() => this.playNext(), 500) // Graceful retry
   }
   
   playNext() {
@@ -393,12 +531,59 @@ export default class extends Controller {
     const next = current?.nextElementSibling
     if (next) {
       next.click()
+    } else {
+      // Loop back to first track
+      this.trackTargets[0]?.click()
     }
   }
   
   markPlaying(element) {
     this.trackTargets.forEach(t => t.classList.remove('playing'))
     element.classList.add('playing')
+  }
+  
+  updateQueue() {
+    if (!this.hasQueueTarget) return
+    
+    const current = this.trackTargets.find(t => t.classList.contains('playing'))
+    const index = this.trackTargets.indexOf(current)
+    const next = this.trackTargets[index + 1]
+    
+    this.queueTarget.innerHTML = `
+      <div class="current">${current?.dataset.title || 'Unknown'}</div>
+      ${next ? `<div class="next">Next: ${next.dataset.title}</div>` : ''}
+    `
+  }
+  
+  setVolume(event) {
+    const volume = parseFloat(event.currentTarget.value)
+    this.audio.volume = volume
+    this.saveVolume(volume)
+  }
+  
+  getVolume() {
+    return parseFloat(sessionStorage.getItem('playlist_volume') || '0.8')
+  }
+  
+  saveVolume(volume) {
+    sessionStorage.setItem('playlist_volume', volume)
+  }
+  
+  loadShuffleOrder() {
+    const saved = sessionStorage.getItem('playlist_shuffle_order')
+    if (saved) {
+      this.shuffleOrder = JSON.parse(saved)
+    }
+  }
+  
+  saveShuffleOrder() {
+    sessionStorage.setItem('playlist_shuffle_order', JSON.stringify(this.shuffleOrder))
+  }
+  
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 }
 JS
