@@ -94,7 +94,7 @@ save_state() {
   "phase": "$1",
   "evidence": ${2:-0},
   "apps": ${3:-0},
-  "domains": ${#all_domains[@]}
+  "domains": ${#ALL_DOMAINS[@]}
 }
 EOF
 }
@@ -261,7 +261,8 @@ setup_dns_dnssec() {
 www IN CNAME @
 @ IN CAA 0 issue "letsencrypt.org"
 $([[ "$domain" == "brgen.no" ]] && print "ns IN A $MAIN_IP")
-$(for sub in ${(s/ /)all_domains[$domain]}; do print "$sub IN CNAME @"; done)
+    local subdomains=${APPS[${app}.subdomains]}
+    [[ -n $subdomains ]] && print "$subdomains" | while read sub; do print "$sub IN CNAME @"; done
 EOF
     # Sign zone
     cd /var/nsd/zones/master
@@ -764,7 +765,11 @@ pre_point() {
 
   local app_count=0
 
-  for app_port in "${(@k)app_domains}"; do
+  for key in ${(k)APPS}; do
+    [[ $key == *.port ]] || continue
+    local app=${key%.port}
+    local port=${APPS[$key]}
+    local domains=${APPS[${app}.domains]}
     deploy_rails_app "$app_port"
 
     app_count=$((app_count + 1))
