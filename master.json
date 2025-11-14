@@ -410,7 +410,19 @@
 
   },
 
-  "copilot_workflow": {
+  "rails_architecture": {
+    "database": "sqlite3_development weaviate_production via_langchainrb_rails",
+    "shared_modules": "split into focused files no monolithic common.sh",
+    "competitor_research": {
+      "takeaway": "doordash_ubereats 65%_us_market checkout_friction loyalty_programs real_time_tracking",
+      "playlist": "spotify_blend collaborative_realtime apple_music_ecosystem audio_quality social_discovery"
+    },
+    "css_preservation": "user css internalized EXACTLY no changes unless critical reason",
+    "performance": {
+      "playlist_demo": "index.html has playback issues needs optimization via master.json",
+      "fixes": "audio crossfade buffer preload canvas rendering"
+    }
+  },
     "intent_reporting": "always_on_first_tool_call",
 
     "tool_efficiency": "batch_independent_operations minimize_llm_turns",
