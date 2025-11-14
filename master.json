@@ -1,25 +1,43 @@
 {
-  "version": "30.3.0",
-  "purpose": "surgical refactoring with professional web design codification",
-  "updated": "2025-11-14T20:01:00Z",
+  "version": "31.0.0",
+  "purpose": "surgical refactoring professional web design autonomous convergence",
+  "updated": "2025-11-14T22:56:00Z",
   "llm_target": "github_copilot_cli",
   
   "CRITICAL_STARTUP_PROTOCOL": {
     "ALWAYS_ON_SESSION_START": "load master.json FIRST internalize FULLY before any other action",
-    "PRIMARY_CONFIG": "master.json is ONLY config file single source of truth no other docs",
+    "PRIMARY_CONFIG": "master.json is ONLY config file single source of truth",
+    "AUTO_CONVERGENCE": "iterate silently toward perfection show final state only",
+    "DMESG_OUTPUT": "HH:MM:SS subsystem status message - hide intermediary noise",
     "LOAD_SEQUENCE": [
       "1_read_master_json_completely",
-      "2_scan_hierarchy_pure_zsh: for d in G:/pub4/**/*(/); do echo $d/; done; for f in G:/pub4/**/*(.); do [[ ${f:t} != .* ]] && echo $f; done",
-      "3_internalize_all_principles_workflows_patterns",
-      "4_apply_forbidden_commands_restrictions",
-      "5_understand_deployment_targets_openbsd_rails",
-      "6_then_proceed_with_user_request"
+      "2_scan_hierarchy: for d in **/*(/); print $d; for f in **/*(.); print $f",
+      "3_internalize_principles_workflows_patterns",
+      "4_apply_forbidden_commands",
+      "5_understand_openbsd_rails_targets",
+      "6_execute_user_request_autonomously"
     ],
-    "NEVER_ASK": "if master.json defines it execute immediately auto_approved",
-    "NO_NEW_FILES": "never create tracking docs todo lists notes keep everything in master.json",
-    "TREE_SCAN_NOTES": "pure zsh glob qualifiers: **/*(/) dirs only, **/*(.) files only, ${f:t} basename, skip dotfiles",
-    "CLEAN_BEFORE_EDIT": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.swp(N) **/*.tmp(N) .DS_Store(N)",
-    "CLEAN_AFTER_COMMIT": "same as CLEAN_BEFORE_EDIT to remove artifacts"
+    "NEVER_ASK": "auto_approved always proceed confidently",
+    "NO_NEW_FILES": "everything in master.json no tracking docs",
+    "CLEAN": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.{swp,tmp}(N) .DS_Store(N)"
+  },
+  
+  "brilliant_hacks": {
+    "self_healing": "detect gaps bottlenecks fix autonomously converge to stable state",
+    "diff_minimal": "git diff --stat before commit ensure surgical precision",
+    "parallel_batch": "batch ALL independent ops in single response minimize turns",
+    "heredoc_compression": "compress repetitive Rails code into loops arrays not 500 line heredocs",
+    "validation_inline": "validate syntax immediately after edit within same tool call",
+    "progressive_disclosure": "show summary hide details unless error",
+    "idempotent_scripts": "all .sh runnable repeatedly safely - check before create",
+    "README_driven": "analyze .md FIRST extract requirements THEN code .sh",
+    "visual_rhythm": "align blocks vertically symmetrical spacing intentional whitespace",
+    "compression_patterns": {
+      "rails_crud": "scaffold generates all boilerplate not heredocs",
+      "css_vars": "define tokens once reference everywhere",
+      "zsh_loops": "for model (User Post Comment); scaffold $model; done",
+      "shared_partials": "render not duplicate"
+    }
   },
   
   "social_features_shared": {
