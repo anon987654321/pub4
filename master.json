@@ -40,14 +40,58 @@
     }
   },
   
-  "social_features_shared": {
+  "scraping_patterns": {
+    "engine": "ferrum headless chrome human-like behavior",
+    "human_simulation": {
+      "cursor": "random bezier curves smooth acceleration deceleration",
+      "mobile": "touch swipe gestures random delays 100-800ms",
+      "back_forth": "navigate randomly scroll up down hover elements",
+      "typing": "random char delays 50-150ms occasional backspace typos",
+      "pagination": "scroll load more wait for elements random pause between pages"
+    },
+    "brgen_seed": {
+      "source": "reddit.com/r/bergen scrape norwegian content",
+      "paraphrase": "langchainrb norwegian_llm rewrite unique brand voice",
+      "categories": "events local_business classifieds discussions recommendations",
+      "frequency": "daily cron job incremental scrape new posts only"
+    },
+    "implementation": "db/seeds.rb ferrum_scraper paraphrase_content save_as_posts"
+  },
+
+  "ultramodern_design_system": {
+    "CRITICAL": "best design is no design - progressive disclosure brutalist aesthetic",
+    "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradients", "background-image", "drop-shadow"],
+    "allowed_only": ["flexbox", "grid", "container-queries", "has-selector", "subgrid"],
+    "principles": {
+      "flat": "zero shadows zero borders zero backgrounds pure typography spacing",
+      "responsive": "container queries fluid typography clamp() minmax()",
+      "layout": "grid subgrid auto-fit auto-fill gap not margin",
+      "colors": "css vars semantic tokens minimal palette 3-5 colors max",
+      "typography": "system fonts scale ratio 1.25 or 1.333 fluid clamp",
+      "spacing": "consistent scale 4px 8px 16px 24px 32px 48px 64px",
+      "interactive": ":has() :focus-visible :active state-based not hover-glow",
+      "brutalist": "monospace serif-headers raw html semantic bold asymmetric"
+    },
+    "scss_structure": {
+      "tokens": ":root { --space-xs: 0.25rem; --font-base: system-ui; --color-text: #000; }",
+      "layout": ".container { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--space-m); }",
+      "typography": "font-size: clamp(1rem, 0.5rem + 2vw, 1.5rem); line-height: 1.5;",
+      "no_classes": "semantic HTML article section header main footer nav aside"
+    },
+    "examples": {
+      "card": "article { display: grid; gap: 1rem; } /* no borders shadows backgrounds */",
+      "button": "button { font: inherit; padding: 0.5em 1em; border: 1px solid; background: none; }",
+      "nav": "nav { display: flex; gap: 2rem; } a { text-decoration: none; border-bottom: 2px solid; }"
+    }
+  },
     "authentication": "devise + devise-guests for anonymous posting",
     "multi_tenancy": "acts_as_tenant for city-specific instances (brgen.no oslo.no stockholm.no)",
     "posting_patterns": {
       "anonymous_allowed": "guest users can post on front page without signup",
       "wall_style": "facebook timeline feed with cards infinite scroll",
       "feed_layout": "x.com center column 600px max-width sticky sidebar",
-      "css_reference": "study facebook x.com closely for spacing typography interactions"
+      "css_reference": "study facebook x.com closely NO their shadows - extract layout spacing typography ONLY",
+    "brutalist_execution": "flat monochrome bold typography asymmetric grid pure function"
     },
     "shared_components": {
       "post_model": "polymorphic belongs_to postable user content:text published_at",
