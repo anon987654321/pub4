@@ -45,6 +45,34 @@
       "local_focus": "events businesses classifieds dating all hyperlocal"
     }
   },
+  
+  "app_specific_details": {
+    "hjerterom": {
+      "concept": "LA Food Bank clone for Åsane Bergen Norway",
+      "front_page": "mapbox map showing food assistance locations donation centers",
+      "features": "volunteer signup food drives donation tracking impact metrics",
+      "reference": "lafoodbank.org design patterns + hjerterom åsane local context",
+      "geolocation": "mapbox-gl-js integration with markers for centers events",
+      "norwegian_context": "frelsesarmeen kirkens_bymisjon bergen_kommune collaboration"
+    },
+    "privcam": {
+      "concept": "OnlyFans clone for Norwegian audience norwegian camgirls",
+      "monetization": "subscription tipping pay-per-view private shows",
+      "payment": "stripe vipps integration for norwegian market",
+      "content": "photos videos live streaming private messaging",
+      "creator_tools": "analytics earnings dashboard content scheduling",
+      "age_verification": "bankid integration norwegian adults only",
+      "features": "rhino-editor for rich posts stimulus-lightbox for galleries"
+    },
+    "mytoonz": {
+      "concept": "AI comic strip generator from daily stories replicate.com",
+      "frontend_status": "needs extraction from codepen to propshaft stimulus",
+      "replicate_ai": "comic generation with user photo customization",
+      "social_sharing": "post comics to facebook x.com instagram"
+    }
+  },
+  
+  "deployment_config": {
     "vps": {
       "host": "185.52.176.18",
       "user": "dev",
