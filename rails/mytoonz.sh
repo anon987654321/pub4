@@ -25,10 +25,8 @@ setup_mytoonz_specific() {
     log "Setting up MyToonz-specific features..."
     cd "$BASE_DIR/$APP_NAME"
     # Install required gems
-
-    install_gem "httparty"
+    install_gem "langchainrb_rails"
     install_gem "redis"
-
     install_gem "sidekiq"
 
     # Setup Active Storage for photo uploads
@@ -55,99 +53,92 @@ setup_mytoonz_specific() {
 }
 
 create_replicate_service() {
-    log "Creating Replicate AI integration service..."
+    log "Creating Replicate AI integration via langchainrb_rails..."
 
     mkdir -p app/services
-    cat > app/services/replicate_service.rb << 'RUBY'
-
-require 'httparty'
-class ReplicateService
-
-  include HTTParty
-  base_uri 'https://api.replicate.com/v1'
+    cat > app/services/comic_generator_service.rb << 'RUBY'
+class ComicGeneratorService
   def initialize
-
-    @api_token = ENV['REPLICATE_API_TOKEN']
-    raise "REPLICATE_API_TOKEN not set" unless @api_token
+    @llm = Langchain::LLM::Replicate.new(
+      api_key: ENV['REPLICATE_API_TOKEN']
+    )
   end
 
   def generate_comic_strip(prompt:, style: "comic", user_photo_url: nil)
-    model = select_model(style)
-    input = build_input(prompt, style, user_photo_url)
-    response = self.class.post(
-
-      '/predictions',
-      headers: headers,
-      body: {
-
-        version: model[:version],
-        input: input
-      }.to_json
-    )
-    handle_response(response)
-  end
-  def get_prediction(prediction_id)
-    response = self.class.get(
-
-      "/predictions/#{prediction_id}",
-      headers: headers
-
-    )
-    handle_response(response)
-  end
-  private
-  def headers
-
-    {
-      'Authorization' => "Token #{@api_token}",
-
-      'Content-Type' => 'application/json'
-
-    }
-  end
-  def select_model(style)
-    models = {
-      comic: {
-        name: 'stable-diffusion',
-
-        version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf'
-      },
-      anime: {
-        name: 'anything-v4',
-        version: '42a996d39a96aedc57b2e0aa8105dea39c9c89d5f3c654c9ea1f10c80b3c3d07'
-      },
-      cartoon: {
-        name: 'dreamshaper',
-        version: '5f1c286b04e3c9b8c8e4b03b66e06a19e9cc7bbcf06e4e9e0a72f7d7b8c4a5b1'
+    model_version = select_model_version(style)
+    enhanced_prompt = enhance_prompt(prompt, style)
+    
+    # Using langchainrb_rails Replicate wrapper
+    response = @llm.complete(
+      prompt: enhanced_prompt,
+      model: model_version,
+      options: {
+        image: user_photo_url,
+        width: 1024,
+        height: 576,
+        num_outputs: 4,
+        guidance_scale: 7.5,
+        num_inference_steps: 50,
+        negative_prompt: "blurry, bad quality, distorted, ugly, text, watermark"
       }
+    )
+    
+    parse_response(response)
+  end
+
+  def check_generation_status(prediction_id)
+    # Poll for completion
+    @llm.get_prediction(prediction_id)
+  end
+
+  private
+
+  def select_model_version(style)
+    models = {
+      comic: "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+      anime: "cjwbw/anything-v4.0:42a996d39a96aedc57b2e0aa8105dea39c9c89d5f3c654c9ea1f10c80b3c3d07",
+      cartoon: "prompthero/openjourney:9936c2001faa2194a261c01381f90e65261879985476014a0a37a334593a05eb"
     }
     models[style.to_sym] || models[:comic]
   end
-  def build_input(prompt, style, user_photo_url)
-    base_prompt = enhance_prompt(prompt, style)
 
-    input = {
-      prompt: base_prompt,
-
-      negative_prompt: "blurry, bad quality, distorted, ugly",
-      width: 1024,
-
-      height: 576,
-      num_outputs: 4,
-      guidance_scale: 7.5,
-      num_inference_steps: 50
-    }
-    input[:image] = user_photo_url if user_photo_url
-    input
-  end
   def enhance_prompt(user_prompt, style)
-
     style_modifiers = {
-      comic: "comic book style, vibrant colors, bold lines, comic panel",
-      anime: "anime art style, manga, Japanese animation",
-
-      cartoon: "cartoon style, animated, colorful, fun"
+      comic: "comic book style, vibrant colors, bold lines, comic panel, professional illustration",
+      anime: "anime art style, manga, Japanese animation, detailed, high quality",
+      cartoon: "cartoon style, animated, colorful, fun, expressive characters"
     }
+    
+    "#{user_prompt}, #{style_modifiers[style.to_sym]}, trending on artstation, masterpiece"
+  end
+
+  def parse_response(response)
+    case response.status
+    when "succeeded"
+      {
+        status: :completed,
+        images: response.output,
+        prediction_id: response.id
+      }
+    when "processing", "starting"
+      {
+        status: :processing,
+        prediction_id: response.id
+      }
+    when "failed"
+      {
+        status: :failed,
+        error: response.error
+      }
+    else
+      {
+        status: :pending,
+        prediction_id: response.id
+      }
+    end
+  end
+end
+RUBY
     modifier = style_modifiers[style.to_sym] || style_modifiers[:comic]
     "#{modifier}, #{user_prompt}, high quality, detailed, professional artwork"
   end
