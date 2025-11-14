@@ -17,7 +17,33 @@
     ],
     "NEVER_ASK": "if master.json defines it execute immediately auto_approved",
     "NO_NEW_FILES": "never create tracking docs todo lists notes keep everything in master.json",
-    "TREE_SCAN_NOTES": "pure zsh glob qualifiers: **/*(/) dirs only, **/*(.) files only, ${f:t} basename, skip dotfiles"
+    "TREE_SCAN_NOTES": "pure zsh glob qualifiers: **/*(/) dirs only, **/*(.) files only, ${f:t} basename, skip dotfiles",
+    "CLEAN_BEFORE_EDIT": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.swp(N) **/*.tmp(N) .DS_Store(N)",
+    "CLEAN_AFTER_COMMIT": "same as CLEAN_BEFORE_EDIT to remove artifacts"
+  },
+  
+  "deployment_config": {
+    "vps": {
+      "host": "185.52.176.18",
+      "user": "dev",
+      "ssh_cmd": "ssh dev@185.52.176.18",
+      "app_dir": "/home/brgen/app",
+      "repo_dir": "/home/dev/pub4",
+      "services": "postgresql redis relayd nsd httpd pf",
+      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
+    },
+    "github": {
+      "repo": "https://github.com/anon987654321/pub4.git",
+      "user": "anon987654321",
+      "pat_location": "G:/priv/accounts.txt",
+      "pat_note": "use PAT not password for push",
+      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main"
+    },
+    "database": {
+      "development": "sqlite3 at db/development.sqlite3",
+      "production": "postgresql + weaviate via langchainrb_rails",
+      "config_file": "/home/brgen/app/config/database.yml"
+    }
   },
   
   "core_principles_internalized": {
