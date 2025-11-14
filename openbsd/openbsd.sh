@@ -407,7 +407,7 @@ domain "$domain" {
 
   challengedir "/var/www/acme"
 
-  alternative names { www.$domain ${all_domains[$domain]// /.${domain} }.${domain} }
+  alternative names { www.$domain }
 
 }
 
@@ -740,7 +740,7 @@ setup_cron() {
   for line in "${current_cron[@]}"; do
     [[ "$line" != *acme-client* ]] && filtered_cron+=("$line")
   done
-  filtered_cron+=("0 0 * * * for d in ${(@k)all_domains}; do acme-client \$d; done")
+  filtered_cron+=("0 0 * * * for d in $ALL_DOMAINS; do acme-client \$d; done")
   print -l "${filtered_cron[@]}" | crontab -
   log "Cron configured"
 }
@@ -810,7 +810,7 @@ post_point() {
 
   save_state "complete" 100 7
   log "INFO" "Post-point deployment complete"
-  log "INFO" "  Domains configured: ${#all_domains[@]}"
+  log "INFO" "  Domains configured: ${#ALL_DOMAINS[@]}"
   log "INFO" "  TLS certificates obtained"
 
   log "INFO" "  relayd load balancer running"

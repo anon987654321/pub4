@@ -1634,13 +1634,24 @@ NAVLINKS_EOF
 mkdir -p app/assets/stylesheets
 
 cat <<'CSSEOF' > app/assets/stylesheets/application.css
-/* Brgen Ultraminimal Professional Stylesheet */
-
-/* Brutalist aesthetic with functional clarity */
-
-:root {
-
-  --color-bg: #fafafa;
+/* Brutalist Zero-Decoration System */
+:root{--space-xs:.25rem;--space-s:.5rem;--space-m:1rem;--space-l:1.5rem;--space-xl:2rem;--font-base:system-ui,sans-serif;--font-mono:ui-monospace,monospace;--c-text:#000;--c-bg:#fff;--c-accent:#00f;--c-muted:#666}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font:clamp(1rem,.9rem + .5vw,1.125rem)/1.5 var(--font-base);color:var(--c-text);background:var(--c-bg)}
+h1,h2,h3{font-family:var(--font-mono);font-weight:700;line-height:1.2}
+h1{font-size:clamp(2rem,1.5rem + 2vw,3rem)}
+h2{font-size:clamp(1.5rem,1.2rem + 1.5vw,2rem)}
+a{color:inherit;text-decoration:none;border-bottom:2px solid var(--c-accent)}
+a:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
+button,input,textarea{font:inherit;border:1px solid;background:none;padding:var(--space-s) var(--space-m)}
+button:active{transform:translateY(1px)}
+.container{display:grid;grid-template-columns:minmax(var(--space-m),1fr) minmax(auto,60ch) minmax(var(--space-m),1fr);gap:var(--space-l)}
+.container>*{grid-column:2}
+.feed{display:grid;gap:var(--space-xl)}
+article{display:grid;gap:var(--space-m);padding-block:var(--space-xl);border-top:1px solid var(--c-muted)}
+nav{display:flex;gap:var(--space-l);padding:var(--space-m);border-bottom:1px solid}
+@container(min-width:600px){.feed{grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))}}
+CSSEOF
 
   --color-text: #1a1a1a;
   --color-border: #e0e0e0;

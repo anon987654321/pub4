@@ -329,58 +329,43 @@ class DrumGenerator
     out
   end
 end
-    bar_dur = beat_dur * 4
-    offset = bar_num * bar_dur
-    hits = []
 
-    # Kick pattern with Dilla microtiming (-20ms to +40ms variation)
-    [0, 1.5, 2, 3.5].each do |beat|
-      t = offset + (beat * beat_dur)
-      microtiming = (rand(-20..40) / 1000.0)
-      t += microtiming
-      hits << pad_sample(kick, t, bar_dur)
-    end
+class BassMaker
+  include SoxHelpers
 
-    # Snare on 1 and 3 (laid back, -30ms to -10ms behind beat)
-    [1, 3].each do |beat|
-      t = offset + (beat * beat_dur)
-      drag = (rand(-40..-15) / 1000.0)  # Dilla signature laid-back snare
-      t += drag
-      hits << pad_sample(snare, t, bar_dur)
-    end
-
-    # Hi-hats with varying swing (16th notes)
-    16.times do |i|
-      t = offset + (i * beat_dur * 0.25)
-      
-      # Apply swing to off-beats
-      if i.odd?
-        swing_offset = beat_dur * 0.25 * (swing - 0.5)
-        t += swing_offset
-        
-        # Add subtle random microtiming (±15ms)
-        microtiming = (rand(-15..15) / 1000.0)
-        t += microtiming
-      else
-        # Even hi-hats stay closer to grid (±5ms)
-        microtiming = (rand(-5..5) / 1000.0)
-        t += microtiming
-      end
-      
-      hits << pad_sample(hat, t, bar_dur)
-    end
-
-    out = tempfile("bar")
-    system(sox_cmd("-m #{hits.join(" ")} \"#{out}\" 2>/dev/null"))
-    cleanup_files(hits)
-    out
+  def generate_bass(chord_progression, duration)
+    print "  🎸 Walking Bass... "
+    bass_notes = chord_progression.map { |chord_name| extract_root_note(chord_name) }
+    output = generate_bass_line(bass_notes, duration / bass_notes.size)
+    puts output && valid?(output) ? "✓" : "✗"
+    output
   end
 
-  def pad_sample(sample, offset, duration)
-    out = tempfile("pad")
-    # Ensure offset is never negative
-    safe_offset = [offset, 0].max
-    system(sox_cmd("\"#{sample}\" \"#{out}\" pad #{safe_offset} 0 trim 0 #{duration} 2>/dev/null"))
-    out
+  private
+
+  def extract_root_note(chord_name)
+    root = chord_name[0]
+    root += chord_name[1] if chord_name.length > 1 && ['#', 'b'].include?(chord_name[1])
+    NOTES[root] || 130.81
+  end
+
+  def generate_bass_line(frequencies, note_duration)
+    output = tempfile("bass")
+    
+    notes = frequencies.map.with_index do |freq, i|
+      position = i * note_duration
+      "synth #{note_duration} sine #{freq} fade h 0.1 #{note_duration} 0.2"
+    end
+
+    command = sox_cmd([
+      "-n \"#{output}\"",
+      notes.join(" : newfile : "),
+      "overdrive 10 20",
+      "norm -18",
+      "2>/dev/null"
+    ].join(" "))
+
+    system(command)
+    valid?(output) ? output : nil
   end
 end
