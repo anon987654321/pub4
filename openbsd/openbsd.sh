@@ -113,17 +113,14 @@ log() {
 }
 
 save_state() {
-
   cat > "${DEPLOY_BASE}/state.json" << EOF
-
 {
   "version": "$VERSION",
-
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "phase": "$1",
   "evidence": ${2:-0},
   "apps": ${3:-0},
-  "domains": ${#all_domains[@]}"
+  "domains": ${#all_domains[@]}
 }
 EOF
 }
