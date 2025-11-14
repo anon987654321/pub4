@@ -120,6 +120,47 @@
   },
   
   "deployment_config": {
+    "domains": {
+      "brgen": "brgen.no",
+      "amber": "amber.brgen.no",
+      "hjerterom": "hjerterom.brgen.no",
+      "bsdports": ["bsdports.org", "bsdports.net"],
+      "dating": "dating.brgen.no",
+      "marketplace": "markedsplass.brgen.no",
+      "playlist": "playlist.brgen.no",
+      "tv": "tv.brgen.no",
+      "takeaway": "takeaway.brgen.no",
+      "privcam": "privcam.no",
+      "mytoonz": "mytoonz.no",
+      "blognet": "blognet.no",
+      "baibl": "baibl.no"
+    },
+    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
+    "whyp_alliance": {
+      "platform": "whyp.it audio sharing - allied platform",
+      "features": "guest_uploads 24h_links embed_players high_quality privacy_encrypted",
+      "integration": "playlist app embeds whyp tracks + local mp3 from .mp3/ folder",
+      "tech_stack": "Laravel REST API JWT Nuxt TailwindCSS",
+      "pricing": "free tier + paid unlimited_uploads extended_links"
+    },
+    "index_html_analysis": {
+      "PURPOSE": "demo for playlist.brgen.no - MUST refactor into Rails app",
+      "youtube_tracks": "21 curated J Dilla Flying Lotus Slum Village tracks",
+      "local_mp3": "22 original productions by user in .mp3/*.mp3 folder",
+      "audio_engine": "crossfade between tracks shuffle playback YouTube IFrame API + HTML5 Audio",
+      "visualizer": "3D tunnel renderer with frequency analyser beat detection dithering",
+      "interactions": "mousemove gyroscope keyboard_controls (Space/Enter=start ArrowRight=next)",
+      "performance_issues": "YouTube embed latency crossfade timing beat_detection_threshold needs tuning",
+      "FIXES_NEEDED": [
+        "improve crossfade smoothness between YouTube and MP3",
+        "calibrate beat detection threshold (currently avgFlux * 1.45)",
+        "handle YouTube API errors gracefully retry logic",
+        "preload next track for instant transitions",
+        "add playback queue UI display current/next track",
+        "persist shuffle order to sessionStorage",
+        "add volume controls separate for music/effects"
+      ]
+    },
     "vps": {
       "host": "185.52.176.18",
       "user": "dev",
