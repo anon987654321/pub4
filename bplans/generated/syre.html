@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>SYRE™ - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Swiper CSS for Carousel -->
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
 
     <!-- Chart.js for Data Visualization -->
@@ -20,233 +25,353 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 SYRE
+
             </div>
+
             <div class="trademark-symbol">™</div>
+
         </div>
 
         <div class="header-text">
-
             Ultramoderne 3D-printede sko med bærekraftig teknologi<br>
             Sektor: Environment & Sustainability
+
         </div>
+
     </header>
+
     <!-- Swiper Carousel for Product Images -->
+
     <div class="swiper">
 
         <div class="swiper-wrapper">
             <div class="swiper-slide">
+
                 <img src="../assets/images/ivaar_fkyeah1.png" alt="SYRE™" loading="lazy">
 
             </div>
             <div class="swiper-slide">
+
                 <img src="../assets/images/ivaar_fkyeah2.png" alt="SYRE™" loading="lazy">
 
             </div>
             <div class="swiper-slide">
+
                 <img src="../assets/images/ivaar_fkyeah3.png" alt="SYRE™" loading="lazy">
 
             </div>
         </div>
+
         <div class="swiper-pagination"></div>
 
     </div>
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>SYRE™ representerer en fusjon av norsk arv og japansk presisjon - der vikingtidsens dristighet til å utforske ukjent territorium møter den japanske arkitektmesterens rene, funksjonelle estetikk. Som vikingskipene som revolutionerte sjøfart gjennom innovativ design, vil SYRE™ transformere fottøyindustrien gjennom banebrytende materialvitenskap og parametrisk produksjon.</p>
+
             <h3>Misjon</h3>
+
             <p>Å demokratisere tilgang til verdensklasse fottøy gjennom norsk ingeniørkunst, der hvert par sko er et unikt kunstverk skapt av algoritmer som respekterer individets unikhet og planetens begrensninger. Vi forener kommersiell suksess med samfunnsansvar - for hver solgte sko, ett gratis par til de som trenger det mest.</p>
 
             <h3>Innovasjon</h3>
@@ -257,67 +382,57 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 5.0 milliarder</li>
                 <li><strong>Norden:</strong> NOK 15.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 7%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>Premium fotballspillere og løpere som krever maksimal ytelse</li>
                 <li>Helsepersonell som trenger komfort under lange skift</li>
 
                 <li>Arktiske arbeidere (Svalbard, oljeplattformer) med behov for termisk isolasjon</li>
-
                 <li>Motebevisste kunder som søker unike, bærekraftige produkter</li>
-
                 <li>Ortopediske pasienter med spesielle fottøybehov</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Nike Flyknit - Etablert strevstrikket teknologi, begrenset tilpasning</li>
                 <li>Adidas Futurecraft - 3D-printede mellomsåler, men ikke full sko-tilpasning</li>
 
                 <li>New Balance FuelCell - Tradisjonell produksjon med noe tilpasning</li>
-
                 <li>Lokale norske produsenter - Begrenset teknologisk innovasjon</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>Parametrisk CAD med NURBS-baserte fotlester for perfekt tilpasning</li>
                 <li>Multi-material 3D printing - kombinerer 5+ materialer i én sko</li>
 
                 <li>Norsk-utviklet grafen-forsterket TPU i samarbeid med SINTEF</li>
-
                 <li>1:1 donasjonsmodell skaper sterk merkelojalitet og sosial impact</li>
-
                 <li>Voronoi-strukturert mellomsåle med dynamic cellestørrelse</li>
-
                 <li>Selvhelende polymerer forlenger produktlevetid med 60%</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>SYRE™ benytter Grasshopper for Rhino 3D for parametrisk design, kombinert med multi-material 3D printing (FDM, SLS, MJF). Hver sko genereres av adaptive algoritmer basert på 3D-skanning av kundens føtter, gangmønster og preferanser.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -331,36 +446,34 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>Direkte salg (B2C): NOK 2,500-4,500 per par avhengig av modell og tilpasningsnivå</li>
                 <li>Premium ortopedisk segment: NOK 5,500-7,000 per par med medisinsk tilpasning</li>
 
                 <li>Bedriftssalg (B2B): Uniform fottøy for helsevesen, offshore-arbeidere - 20% rabatt ved volum >100 par</li>
-
                 <li>Lisensering: Teknologideling med SPEIS for aerospace komponenter - NOK 500k årlig</li>
-
                 <li>Design-tjenester: Parametrisk CAD konsultering for andre produsenter - NOK 200k årlig</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Break-even ved 800 par solgt (ca. 18 måneder). Bruttomargin 60% etter materialkostnader. Netto margin 25% ved full drift (år 3). Donasjonsmodell finansieres av 10% høyere prispunkt enn konkurrenter.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Modulær produksjon tillater skalering fra 100 til 10,000 par/måned uten proporsjonale kostnadsøkninger. Printer-farm kan utvides inkrementelt. Automatisert parametrisk design reduserer manuelle designtimer fra 4t til 15min per ordre.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Finansiering sikret, produksjonsutstyr innkjøpt (5 nye 3D-printere). Lansering av e-handelsplattform. Første 200 betalende kunder + 200 donerte par.</p>
 
             <h3>Q2 2026</h3>
@@ -377,10 +490,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 500,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -388,67 +503,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 250,000</li>
                 <li><strong>Egenkapital Nok:</strong> NOK 150,000</li>
+
                 <li><strong>Angel Investorer Nok:</strong> NOK 100,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>Utstyr</td>
 
                         <td>150,000</td>
                         <td>30.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Material</td>
 
                         <td>50,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Markedsfoering</td>
 
                         <td>75,000</td>
                         <td>15.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>150,000</td>
                         <td>30.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Juridisk</td>
 
                         <td>25,000</td>
                         <td>5.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>50,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Ivaar Chen - Grunnlegger & CEO</h3>
+
             <p>10+ år i parametrisk design og 3D printing. Tidligere hos Zaha Hadid Architects (London). Master i Computational Design fra UCL Bartlett. Ekspert i Grasshopper/Rhino.</p>
 
             <h3>Dr. Kari Nordmann - CTO & Materialviter</h3>
@@ -464,9 +605,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>90% lavere CO₂-utslipp vs. tradisjonell fottøyproduksjon (kun 2.1 kg CO₂ per par vs. 13.6 kg industri-snitt). Mycelium-lær er 100% biologisk nedbrytbart. Biobasert TPU fra alger sequestrerer CO₂. Zero-waste produksjon - overflødig materiale resirkuleres.</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -480,150 +621,227 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Markedsandel År 3</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="marketChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Inntektsprognose (MNOK)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="revenueChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Donasjonsprogresjon</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="donationChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Swiper JS -->
-
     <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
-
     <script>
         const swiper = new Swiper('.swiper', {
+
             loop: true,
+
             pagination: {
+
                 el: '.swiper-pagination',
+
                 clickable: true,
+
             },
+
             autoplay: {
+
                 delay: 3000,
+
             },
+
         });
+
     </script>
+
     <!-- Chart.js Configurations -->
+
     <script>
 
         {
-
             const ctx = document.getElementById('marketChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'doughnut',
 
                 data: {
                     labels: ["SYRE™","Nike","Adidas","Andre"],
+
                     datasets: [{
+
                         data: [12,28,25,35],
+
                         backgroundColor: ['#ff007f', '#00c9ff', '#ffcc00', '#8a2be2', '#333', '#888'],
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' },
+
                         title: { display: false }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('revenueChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'line',
 
                 data: {
                     labels: ["År 1","År 2","År 3","År 4","År 5"],
+
                     datasets: [
+
                         {
+
                             label: 'Omsetning',
 
                             data: [2.5,6.5,12.0,20.0,30.0],
                             borderColor: '#8a2be2',
+
                             backgroundColor: '#8a2be233',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                         {
+
                             label: 'Resultat',
 
                             data: [-0.5,1.0,3.0,6.0,10.0],
                             borderColor: '#333',
+
                             backgroundColor: '#33333',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('donationChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["År 1","År 2","År 3","År 4","År 5"],
+
                     datasets: [{
+
                         label: 'Donasjonsprogresjon',
+
                         data: [200,650,1200,2000,3000],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
     </script>
 
 </body>
-
 </html>
-

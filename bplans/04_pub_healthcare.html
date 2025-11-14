@@ -5,286 +5,339 @@
   <meta charset="UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net;">
-
   <meta name="description" content="pub.healthcare — Automated pharmaceutical manufacturing platform revolutionizing medication production and distribution through AI-driven parametric chemistry">
-
   <meta name="keywords" content="pub.healthcare, pharmaceutical manufacturing, AI, parametric chemistry, automated synthesis, Norway healthcare, Innovasjon Norge">
-
   <meta name="author" content="pub.healthcare AS">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
-
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
-
   <title>pub.healthcare — Automated Pharmaceutical Manufacturing</title>
-
   <style>
-
     :root {
-
       --primary-color: #1a1a1a;
-
       --background-color: #ffffff;
-
       --text-color: #222222;
-
       --terra-cotta: #DA7756;
-
       --terra-cotta-dark: #C15F3C;
-
       --terra-cotta-light: #E89B7E;
-
       --neutral-light: #e0e0e0;
-
       --neutral-dark: #757575;
-
       --font-family: 'Source Serif 4', Georgia, serif;
-
       --base-font-size: 16px;
-
       --line-height: 1.8;
-
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-
       font-family: var(--font-family);
-
       font-size: var(--base-font-size);
       line-height: var(--line-height);
+
       color: var(--text-color);
+
       background: var(--background-color);
+
       padding: 2rem 1rem;
+
       max-width: 680px;
+
       margin: 0 auto;
+
     }
+
     main { margin: 0 auto; }
+
     h1, h2, h3 { font-family: var(--font-family); font-weight: 600; color: var(--primary-color); }
 
     h1 {
-
       font-size: 2.8rem;
-
       line-height: 1.4;
       margin-bottom: 2rem;
+
       color: var(--terra-cotta);
+
     }
+
     h2 {
+
       font-size: 2rem;
 
       line-height: 1.4;
       margin-top: 3rem;
+
       margin-bottom: 1.5rem;
+
       color: var(--primary-color);
+
     }
+
     h3 {
+
       font-size: 1.4rem;
 
       line-height: 1.4;
       margin-top: 2rem;
+
       margin-bottom: 1rem;
+
       color: var(--terra-cotta-dark);
+
     }
+
     h4 {
+
       font-size: 1.1rem;
 
       font-weight: 600;
       margin-top: 1.5rem;
+
       margin-bottom: 0.75rem;
+
       color: var(--primary-color);
+
     }
+
     p { margin: 0 0 1.5rem; }
+
     ul, ol { margin: 0 0 1.5rem 1.5rem; }
 
     li { margin: 0.5rem 0; }
-
     a { color: var(--terra-cotta); text-decoration: none; font-weight: 400; }
-
     a:hover, a:focus { color: var(--terra-cotta-dark); text-decoration: underline; outline: 2px solid var(--terra-cotta); outline-offset: 2px; }
-
     address { font-style: normal; color: var(--neutral-dark); margin-bottom: 2rem; }
-
     time { color: var(--neutral-dark); }
-
     .badge {
-
       display: inline-block;
-
       padding: 0.25rem 0.75rem;
       font-size: 0.85rem;
+
       border: 1px solid var(--terra-cotta-light);
+
       color: var(--terra-cotta-dark);
+
       background: var(--background-color);
+
       margin: 0.25rem 0;
+
     }
+
     .vision-box {
+
       padding: 2rem;
 
       margin: 2rem 0 3rem;
       border-left: 4px solid var(--terra-cotta);
+
       background: var(--background-color);
+
       font-size: 1.2rem;
+
       font-style: italic;
+
       line-height: 1.6;
+
     }
+
     .highlight-box {
+
       padding: 1.5rem;
 
       margin: 2rem 0;
       border-left: 4px solid var(--terra-cotta);
+
       background: var(--background-color);
+
     }
+
     .code-block {
+
       font-family: 'Courier New', monospace;
 
       font-size: 0.9rem;
       background: #f5f5f5;
+
       padding: 1.5rem;
+
       margin: 1.5rem 0;
+
       overflow-x: auto;
+
       line-height: 1.6;
+
       border-left: 4px solid var(--terra-cotta-light);
+
     }
+
     table {
+
       width: 100%;
 
       border-collapse: collapse;
       margin: 2rem 0;
+
       background: var(--background-color);
+
     }
+
     th, td {
+
       padding: 1rem;
 
       border: 1px solid var(--neutral-light);
       text-align: left;
+
     }
+
     th {
+
       background: #f8f8f8;
 
       font-weight: 600;
       color: var(--primary-color);
+
     }
+
     tr:nth-child(even) td { background: #fafafa; }
+
     caption {
 
       caption-side: top;
-
       text-align: left;
       font-weight: 600;
+
       margin-bottom: 1rem;
+
       color: var(--primary-color);
+
     }
+
     .chart-container {
+
       margin: 3rem 0;
 
       padding: 2rem 0;
     }
+
     canvas {
+
       max-width: 100%;
 
       height: auto;
     }
+
     footer {
+
       font-size: 0.9rem;
 
       color: var(--neutral-dark);
       text-align: center;
+
       padding: 3rem 0 1rem;
+
       margin-top: 4rem;
+
       border-top: 1px solid var(--neutral-light);
+
     }
+
     .footer-links {
+
       margin-top: 1rem;
 
       display: flex;
       justify-content: center;
+
       gap: 1.5rem;
+
     }
+
     strong { font-weight: 600; color: var(--primary-color); }
+
     @media (min-width: 768px) {
 
       body { padding: 3rem 2rem; }
-
       h1 { font-size: 3.2rem; }
       h2 { font-size: 2.2rem; }
+
     }
+
     @media print {
+
       body { padding: 12mm; max-width: none; }
 
       a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; }
       .chart-container { page-break-inside: avoid; }
+
     }
+
   </style>
+
 </head>
 
 <body>
-
   <main>
-
     <header>
-
       <h1>pub.healthcare — Automated Pharmaceutical Manufacturing</h1>
-
       <address>
-
         <p>pub.healthcare AS • Kanalveien 10, 5068 Bergen, Norge</p>
-
         <p><strong>Kontakt:</strong> <a href="mailto:kontakt@pub.healthcare" aria-label="Email pub.healthcare">kontakt@pub.healthcare</a></p>
         <p><span class="badge">Master.json v502.0.0 compliant</span></p>
+
         <p><time datetime="2025-10-17">17. oktober 2025</time></p>
+
       </address>
+
       <div class="vision-box" role="note" aria-label="Vision Statement">
+
         "From prescription to production in 24 hours — Making essential medications accessible to everyone"
 
       </div>
     </header>
+
     <section aria-labelledby="executive">
 
       <h2 id="executive">Executive Summary</h2>
-
       <p>pub.healthcare er en AI-drevet, automatisert farmasøytisk produksjonsplattform som bruker parametrisk kjemi-algoritmer og robotisert laboratorieutstyr for å produsere medisiner på bestilling. Systemet eliminerer flaskehalser i forsyningskjeden og gjør livsviktige legemidler universelt tilgjengelige.</p>
       <p>Plattformen kombinerer maskinlæring, Ruby/Crystal kontrollsystemer, og distribuert produksjon for å skape et desentralisert nettverk av mini-fabrikker i sykehus og apotek. Dette reduserer produksjonstid fra 6-12 uker til 24 timer, kutter kostnader med 75%, og gjør Norge selvforsynt med kritiske medisiner.</p>
 
       <p><strong>Søknad til Innovasjon Norge:</strong> NOK 7,5M i tilskudd (50% av totalt kapitalbehov NOK 15M) for å skalere fra TRL 5 til TRL 8 gjennom pilotprogram i Nord-Norge.</p>
-
     </section>
-
     <section aria-labelledby="problem">
-
       <h2 id="problem">Problem: Flaskehalser i Legemiddelforsyning</h2>
-
       <h3>Global Sårbarhet</h3>
       <ul>
 
         <li><strong>Pandemi-eksponering:</strong> COVID-19 viste hvordan globale forsyningskjeder kollapser under press</li>
         <li><strong>Geopolitisk risiko:</strong> 80% av API (active pharmaceutical ingredients) produseres i Kina og India</li>
+
         <li><strong>Lengre leveringstider:</strong> Tradisjonell produksjon tar 6-12 uker fra bestilling til levering</li>
+
         <li><strong>Høye kostnader:</strong> Mellommannsledd og transport utgjør 60% av sluttprisen</li>
+
       </ul>
+
       <h3>Spesifikke Norske Utfordringer</h3>
+
       <ul>
 
         <li><strong>Geografiske avstander:</strong> 47 kommuner mangler lokale apotek</li>
         <li><strong>Sjeldne sykdommer:</strong> Pasienter med orphan diseases venter måneder på spesialtilpassede medisiner</li>
+
         <li><strong>Beredskap:</strong> Manglende kapasitet til rask produksjon av vaksiner og antivirale medisiner</li>
+
         <li><strong>Medisinmangel:</strong> Legemiddelverket rapporterer økende antall legemiddelmangelsituasjoner</li>
+
       </ul>
+
     </section>
+
     <section aria-labelledby="solution">
 
       <h2 id="solution">Løsning: Parametrisk Farmasøytisk Syntese</h2>
-
       <h3>1. Parametric Pharmaceutical Synthesis</h3>
       <h4>AI-Driven Recipe Optimization</h4>
 
       <p>Maskinlæringsalgoritmer optimaliserer syntesereaksjoner for godkjente medisiner. Systemet er trent på FDA/EMA-godkjente farmasøytiske prosesser og kan forutsi optimal syntesevei, reagensliste, reaksjonsbetingelser og forventet utbytte.</p>
-
       <h4>Ruby/Crystal Control System</h4>
       <p>Sanntidskontroll av laboratorieutstyr for presise kjemiske reaksjoner. Systemet integrerer med kommersielt tilgjengelig laboratorieutstyr via standardiserte API-er.</p>
 
@@ -293,33 +346,43 @@
 
   attr_reader :temperature, :pressure, :ph_level
   def initialize(equipment_id)
+
     @equipment_id = equipment_id
 
     @api = EquipmentAPI.new(secure_endpoint)
   end
+
   def execute_synthesis(medication_name, quantity)
+
     recipe = RecipeDatabase.fetch(medication_name)
 
     validate_regulatory_approval(recipe)
     recipe.steps.each do |step|
+
       execute_step(step)
 
       monitor_quality_parameters
       log_to_blockchain(step, timestamp, parameters)
+
     end
+
     perform_final_qc_analysis
+
     package_for_dispensing
 
   end
   private
+
   def validate_regulatory_approval(recipe)
 
     LegemiddelverketAPI.verify_approval(recipe.compound_id)
-
   end
 end</pre>
+
       </div>
+
       <h4>Digital Twin Simulation</h4>
+
       <p>Virtuell testing av synteseverier før fysisk produksjon. Reduserer sløsing og øker første gangs suksessrate til 95%.</p>
 
       <h4>Quality Assurance AI</h4>
@@ -329,7 +392,6 @@ end</pre>
       <h4>Distributed Manufacturing</h4>
 
       <p>Nettverk av mini-fabrikker i sykehus og apotek. Hver enhet kan produsere 50-200 doser per dag, skalerbart opp til 2000+ doser.</p>
-
       <h4>OpenBSD Security</h4>
       <p>Zero-trust arkitektur for reseptvalidering og produksjonslogging. All kommunikasjon er kryptert, og systemet følger medisinske IT-sikkerhetsstandarder.</p>
 
@@ -343,120 +405,168 @@ end</pre>
     <section aria-labelledby="usecases">
 
       <h2 id="usecases">Bruksområder: Norsk Helsevesen</h2>
-
       <h3>A. Emergency Medication Production</h3>
       <p><strong>Scenario:</strong> Universitetssykehuset i Nord-Norge (UNN) trenger kritisk medisin for akuttpasienter.</p>
 
       <ul>
         <li>Landsbygdesykehus i Nord-Norge kan produsere kritiske medisiner lokalt</li>
+
         <li>Pandemi-respons: Rask oppskalering av antiviral/vaksine-produksjon</li>
+
         <li>Orphan drugs: On-demand syntese for sjeldne sykdommer (små pasientpopulasjoner)</li>
+
       </ul>
+
       <h3>B. Personalized Medicine</h3>
+
       <ul>
 
         <li><strong>Custom dosages:</strong> Pediatriske/geriatriske pasienter får riktig dosering</li>
         <li><strong>Patient-specific formulations:</strong> Allergenfrie hjelpestoffer for pasienter med allergi</li>
+
         <li><strong>Pharmacogenomic optimization:</strong> Dosering basert på genetiske profiler (CYP450-varianter)</li>
+
       </ul>
+
       <h3>C. Supply Chain Resilience</h3>
+
       <ul>
 
         <li>Eliminere avhengighet av internasjonale farmasøytiske forsyningskjeder</li>
         <li>Strategiske medisindelagre gjennom desentralisert produksjon</li>
+
         <li>Redusere medisinspill (produsere kun det som trengs)</li>
+
       </ul>
+
       <div class="highlight-box" role="note" aria-label="Dugnad for Medisin">
+
         <h4>"Dugnad for Medisin" — Samfunnsdrevet helseinnovasjon</h4>
 
         <p>Bygger på Norges tradisjon med universell helsetjeneste (gratis på brukstidspunktet). Stemmer overens med "likemannsbehandling"-prinsippet (lik behandling for alle). Utnytter norsk farmasøytisk ekspertise (Weifa, Nycomed arv). Posisjonerer Norge som global leder innen helse-AI/automatisering.</p>
       </div>
+
     </section>
+
     <section aria-labelledby="technology">
 
       <h2 id="technology">Teknologistack</h2>
-
       <h3>AI Recipe Optimization</h3>
       <div class="code-block" role="region" aria-label="AI optimization code">
 
 <pre>class SynthesisOptimizer
-
   def optimize_route(target_molecule, constraints)
     # Use graph neural networks to predict optimal synthesis pathways
+
     # Trained on FDA/EMA-approved pharmaceutical processes
+
     # Outputs: reagent list, reaction conditions, expected yield
+
   end
+
   def predict_yield(reaction_conditions)
+
     # Machine learning model predicting synthesis success rate
 
     # Based on historical lab data and literature
   end
+
 end</pre>
+
       </div>
+
       <h3>Security Architecture</h3>
+
       <ul>
 
         <li><strong>OpenBSD Foundation:</strong> Sikkerhetsherdede kontrollsystem</li>
         <li><strong>Zero-Trust Network:</strong> All tilgang krever autentisering og autorisasjon</li>
+
         <li><strong>End-to-End Encryption:</strong> TLS 1.3 for all kommunikasjon</li>
+
         <li><strong>Blockchain Logging:</strong> Uforanderlig logg av all produksjon for sporbarhet</li>
+
       </ul>
+
       <h3>Regulatory Integration</h3>
+
       <ul>
 
         <li><strong>Legemiddelverket API:</strong> Sanntidsverifisering av godkjenninger</li>
         <li><strong>FEST-database:</strong> Integrasjon med norsk legemiddeldatabase</li>
+
         <li><strong>HL7 FHIR:</strong> Standardisert integrasjon med EPJ-systemer</li>
+
       </ul>
+
     </section>
+
     <section aria-labelledby="regulatory">
 
       <h2 id="regulatory">Regulatorisk Compliance (Legemiddelverket)</h2>
-
       <h3>Norwegian Medicines Agency Integration</h3>
       <ul>
 
         <li><strong>Sanntidsrapportering:</strong> All produksjon logges til nasjonal database</li>
         <li><strong>Batch traceability:</strong> Blockchain-reskontro for hver produserte dose</li>
+
         <li><strong>Quality certificates:</strong> Automatisk generering av farmasøytisk dokumentasjon</li>
+
         <li><strong>Inspections:</strong> Fjernrevisjonsmuligheter for regulerende myndigheter</li>
+
       </ul>
+
       <h3>GMP (Good Manufacturing Practice) Compliance</h3>
+
       <ul>
 
         <li>Automatisert renromsovervåking (partikkeltall, fuktighet, temperatur)</li>
         <li>Sterilitetstesting med AI-forbedret mikroskopi</li>
+
         <li>Stabilitetstestingsprotokoller integrert i produksjonsflyt</li>
+
         <li>Dokumentasjon av alle avvik og korrigerende tiltak</li>
+
       </ul>
+
       <h3>Regulatory Sandbox</h3>
+
       <p>Samarbeid med Legemiddelverket om pilotprogram i Nord-Norge. Sandkasse-miljø tillater raskere godkjenning samtidig som full sikkerhet opprettholdes.</p>
 
     </section>
     <section aria-labelledby="business">
 
       <h2 id="business">Forretningsmodell</h2>
-
       <h3>Revenue Streams</h3>
       <h4>1. Hospital Licensing</h4>
 
       <p>NOK 500K per år per installasjon (utstyr + programvare + vedlikehold). Inkluderer:</p>
-
       <ul>
         <li>Komplett laboratorieutstyr</li>
+
         <li>AI-programvare og kontrollsystem</li>
+
         <li>24/7 teknisk support</li>
+
         <li>Automatiske programvareoppdateringer</li>
+
       </ul>
+
       <h4>2. Per-Dose Fees</h4>
+
       <p>NOK 5-50 per medisin produsert (erstatter tradisjonelt apotekpåslag). Prisingen er:</p>
 
       <ul>
         <li>Generika: NOK 5-15 per dose</li>
+
         <li>Spesialiserte medisiner: NOK 20-35 per dose</li>
+
         <li>Orphan drugs: NOK 35-50 per dose</li>
+
       </ul>
+
       <h4>3. R&D Partnerships</h4>
+
       <p>Farmasøytiske selskaper lisensierer plattform for produksjon av klinisk prøvemateriale. Raskere og billigere enn tradisjonelle kontraktsprodusenter.</p>
 
       <h4>4. Government Contracts</h4>
@@ -466,414 +576,712 @@ end</pre>
       <table role="grid" aria-label="Norwegian market size breakdown">
 
         <caption>Adresserbart Marked i Norge</caption>
-
         <thead>
           <tr>
+
             <th scope="col">Segment</th>
+
             <th scope="col">Antall</th>
+
             <th scope="col">Pris/År</th>
+
             <th scope="col">Totalt (NOK)</th>
+
           </tr>
+
         </thead>
+
         <tbody>
+
           <tr>
+
             <td>Sykehusapotek</td>
+
             <td>55</td>
+
             <td>500K</td>
+
             <td>27,5M</td>
+
           </tr>
+
           <tr>
+
             <td>Apotek (mindre enheter)</td>
+
             <td>500</td>
+
             <td>200K</td>
+
             <td>100M</td>
+
           </tr>
+
           <tr>
+
             <td>Per-dose produksjon</td>
+
             <td>5M doser</td>
+
             <td>20 (snitt)</td>
+
             <td>100M</td>
+
           </tr>
+
           <tr>
+
             <th colspan="3" scope="row">Total Norge</th>
+
             <td><strong>227,5M</strong></td>
+
           </tr>
+
           <tr>
+
             <th colspan="3" scope="row">Nordisk potensial</th>
+
             <td><strong>1,2B</strong></td>
+
           </tr>
+
         </tbody>
+
       </table>
+
     </section>
+
     <section aria-labelledby="innovation">
 
       <h2 id="innovation">Innovasjon Norge Alignment</h2>
-
       <h3>Innovation (TRL 5 → TRL 8)</h3>
       <ul>
 
         <li><strong>Novel parametric chemistry algorithms</strong> for automatisert syntesevei-optimalisering</li>
         <li><strong>First-in-Norway desentralisert farmasøytisk produksjonsnettverk</strong></li>
+
         <li><strong>AI-drevet kvalitetssikring</strong> reduserer menneskelig feil i medisinproduksjon</li>
+
       </ul>
+
       <h3>R&D Strategy</h3>
+
       <ul>
 
         <li><strong>Samarbeid med NTNU:</strong> Institutt for kjemi utvikler syntese-algoritmer</li>
         <li><strong>SINTEF Partnership:</strong> Sikkerhetsprotokoller for automatisert kjemikaliehåndtering</li>
+
         <li><strong>Legemiddelverket:</strong> Regulatorisk sandkasse for pilotprogram i Nord-Norge</li>
+
       </ul>
+
       <h3>Market Validation</h3>
+
       <ul>
 
         <li><strong>Letter of Intent:</strong> Universitetssykehuset i Nord-Norge (UNN) for pilotinstallasjon</li>
         <li><strong>Helsedirektoratet Interest:</strong> Pandemiberedskapsarbeidsgruppe-involvering</li>
+
         <li><strong>Pharmacy Chain Partnership:</strong> Apotek 1 utforsker distribuert produksjonsmodell</li>
+
       </ul>
+
       <h3>Social Impact</h3>
+
       <ul>
 
         <li><strong>Rural Healthcare Access:</strong> 47 kommuner i Norge mangler lokale apotek</li>
         <li><strong>Medication Affordability:</strong> 40% kostnadsreduksjon gjennom eliminering av mellommenn</li>
+
         <li><strong>Climate Impact:</strong> 75% reduksjon i farmasøytisk transport-utslipp</li>
+
         <li><strong>Job Creation:</strong> 50 stillinger (ingeniører, farmasisister, reguleringseksperter) innen år 3</li>
+
       </ul>
+
       <h3>Risk Assessment</h3>
+
       <ul>
 
         <li><strong>Teknisk:</strong> Automatisert syntese oppnår 95% suksessrate i pilot (reduseres av AI-optimalisering)</li>
         <li><strong>Regulatorisk:</strong> Legemiddelverket godkjenningstid 12-18 måneder (sandkasse-program fremskynder)</li>
+
         <li><strong>Marked:</strong> Sykehusadopsjon avhenger av refusjonsmodell (jobber med Helsedirektoratet)</li>
+
         <li><strong>Finansiell:</strong> NOK 15M kapital nødvendig (søker NOK 7,5M fra Innovasjon Norge, 50% tilskudd)</li>
+
       </ul>
+
     </section>
+
     <section aria-labelledby="financials">
 
       <h2 id="financials">Financial Projections</h2>
-
       <p><strong>Funding Request: NOK 7,5M fra Innovasjon Norge</strong></p>
       <table role="grid" aria-label="Financial projections for pub.healthcare">
 
         <caption>Finansielle Fremskrivninger (NOK)</caption>
-
         <thead>
           <tr>
+
             <th scope="col">År</th>
+
             <th scope="col">Inntekt</th>
+
             <th scope="col">Kostnader</th>
+
             <th scope="col">Netto</th>
+
             <th scope="col">Enheter</th>
+
           </tr>
+
         </thead>
+
         <tbody>
+
           <tr>
+
             <td scope="row">1</td>
+
             <td>2M</td>
+
             <td>10M</td>
+
             <td>-8M</td>
+
             <td>3 (pilot)</td>
+
           </tr>
+
           <tr>
+
             <td scope="row">2</td>
+
             <td>15M</td>
+
             <td>18M</td>
+
             <td>-3M</td>
+
             <td>25 (sykehus)</td>
+
           </tr>
+
           <tr>
+
             <td scope="row">3</td>
+
             <td>45M</td>
+
             <td>32M</td>
+
             <td>+13M</td>
+
             <td>90 (sykehus + apotek)</td>
+
           </tr>
+
           <tr>
+
             <td scope="row">4</td>
+
             <td>120M</td>
+
             <td>65M</td>
+
             <td>+55M</td>
+
             <td>250 (Nordisk ekspansjon)</td>
+
           </tr>
+
         </tbody>
+
       </table>
+
       <h3>Key Metrics</h3>
+
       <ul>
 
         <li><strong>Medisiner produsert:</strong> År 1: 50K doser → År 3: 2M doser</li>
         <li><strong>Kostnad per dose:</strong> År 1: NOK 150 → År 3: NOK 35 (stordriftsfordeler)</li>
+
         <li><strong>Lives impacted:</strong> År 3: 100K pasienter med forbedret medisin-tilgang</li>
+
       </ul>
+
     </section>
+
     <section aria-labelledby="competitive">
 
       <h2 id="competitive">Competitive Advantage</h2>
-
       <table role="grid" aria-label="Competitive comparison">
         <caption>Sammenligning med Eksisterende Løsninger</caption>
 
         <thead>
           <tr>
+
             <th scope="col">Feature</th>
+
             <th scope="col">pub.healthcare</th>
+
             <th scope="col">Tradisjonell Pharma</th>
+
             <th scope="col">Hospital Compounding</th>
+
           </tr>
+
         </thead>
+
         <tbody>
+
           <tr>
+
             <th scope="row">Produksjonstid</th>
+
             <td>24 timer</td>
+
             <td>6-12 uker</td>
+
             <td>2-4 dager</td>
+
           </tr>
+
           <tr>
+
             <th scope="row">Tilpasning</th>
+
             <td>Fullt parametrisk</td>
+
             <td>Kun batch-størrelser</td>
+
             <td>Manuell compounding</td>
+
           </tr>
+
           <tr>
+
             <th scope="row">Kostnad per dose</th>
+
             <td>NOK 35</td>
+
             <td>NOK 150</td>
+
             <td>NOK 80</td>
+
           </tr>
+
           <tr>
+
             <th scope="row">Regulatory Compliance</th>
+
             <td>Automatisert</td>
+
             <td>Manuelle revisjoner</td>
+
             <td>Manuell dokumentasjon</td>
+
           </tr>
+
           <tr>
+
             <th scope="row">Supply Chain Risk</th>
+
             <td>Zero (lokal produksjon)</td>
+
             <td>Høy (global)</td>
+
             <td>Medium (råmaterialer)</td>
+
           </tr>
+
         </tbody>
+
       </table>
+
     </section>
+
     <section aria-labelledby="visualizations">
 
       <h2 id="visualizations">Data Visualizations</h2>
-
       <div class="chart-container">
         <h3>Medication Production Timeline: 24-Hour Cycle</h3>
 
         <canvas id="timelineChart" width="600" height="300" aria-label="24-hour production timeline from prescription to dispensing"></canvas>
       </div>
+
       <div class="chart-container">
+
         <h3>Norwegian Hospital Network Deployment: 3-Year Phased Rollout</h3>
 
         <canvas id="deploymentChart" width="600" height="300" aria-label="Hospital installations over 3 years"></canvas>
       </div>
+
       <div class="chart-container">
+
         <h3>Cost Reduction Through Automation</h3>
 
         <canvas id="costChart" width="600" height="300" aria-label="Cost per dose reduction from NOK 150 to NOK 35"></canvas>
       </div>
+
       <div class="chart-container">
+
         <h3>Social Impact: Patients Served in Rural Areas</h3>
 
         <canvas id="impactChart" width="600" height="300" aria-label="Cumulative patients served in rural areas"></canvas>
       </div>
+
     </section>
+
     <section aria-labelledby="master">
 
       <h2 id="master">Master.json v502.0.0 Compliance</h2>
-
       <h3>Design System Alignment</h3>
       <ul>
 
         <li><strong>Tadao Ando Aesthetic:</strong> Minimalistisk design med fokus på funksjon</li>
         <li><strong>Terra-cotta Accent:</strong> #DA7756 brukt for viktige elementer</li>
+
         <li><strong>Source Serif 4 Typography:</strong> Lesbar og profesjonell typografi</li>
+
         <li><strong>Radical Whitespace:</strong> 60% negativ space for optimal lesbarhet</li>
+
       </ul>
+
       <h3>Technical Implementation</h3>
+
       <ul>
 
         <li><strong>CSP Headers:</strong> Streng Content Security Policy for sikkerhet</li>
         <li><strong>OpenBSD Architecture:</strong> Sikkerhetsherdede systemer for medisinsk enhetskontroll</li>
+
         <li><strong>WCAG AA Accessibility:</strong> Full tastaturnavigasjon og skjermleser-støtte</li>
+
         <li><strong>Progressive Enhancement:</strong> HTML→CSS→JS for optimal ytelse</li>
+
       </ul>
+
     </section>
+
     <section aria-labelledby="success">
 
       <h2 id="success">Success Criteria</h2>
-
       <ul>
         <li>✓ Innovasjon Norge innsendingsklar (alle 9 påkrevde seksjoner)</li>
 
         <li>✓ Legemiddelverket regulatorisk vei dokumentert</li>
         <li>✓ Teknisk gjennomførbarhet demonstrert (Ruby/Crystal kontrollsystem)</li>
+
         <li>✓ Markedsvalidering (UNN letter of intent, Helsedirektoratet interesse)</li>
+
         <li>✓ Finansiell modell troverdig (50% tilskudd, realistiske inntektsfremskrivninger)</li>
+
         <li>✓ Sosial innvirkning kvantifisert (100K pasienter, 47 landsbygdkommuner betjent)</li>
+
         <li>✓ Master.json design-compliance (Tadao Ando estetikk, WCAG AA)</li>
+
       </ul>
+
     </section>
+
     <footer>
 
       <p>© 2025 pub.healthcare AS • Bergen, Norge</p>
-
       <div class="footer-links" aria-label="Contact links">
         <a href="mailto:kontakt@pub.healthcare" aria-label="Email">Kontakt</a>
+
         <a href="https://pub.healthcare" aria-label="Website">pub.healthcare</a>
+
       </div>
+
     </footer>
+
   </main>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-
     // Chart.js visualizations for ECharts-style data presentation
     // 1. Medication Production Timeline (24-hour cycle)
+
     const timelineCtx = document.getElementById('timelineChart');
 
     if (timelineCtx) {
       new Chart(timelineCtx, {
+
         type: 'bar',
+
         data: {
+
           labels: ['Prescription\nReceived', 'AI Recipe\nOptimization', 'Synthesis\nExecution', 'Quality\nControl', 'Packaging\n& Dispensing'],
+
           datasets: [{
+
             label: 'Hours',
+
             data: [0.5, 2, 18, 2.5, 1],
+
             backgroundColor: '#DA7756',
+
             borderColor: '#C15F3C',
+
             borderWidth: 1
+
           }]
+
         },
+
         options: {
+
           responsive: true,
+
           plugins: {
+
             legend: { display: false },
+
             title: {
+
               display: true,
+
               text: 'From Prescription to Production: 24 Hours',
+
               font: { size: 16, family: 'Source Serif 4' }
+
             }
+
           },
+
           scales: {
+
             y: {
+
               beginAtZero: true,
+
               title: { display: true, text: 'Hours' }
+
             }
+
           }
+
         }
+
       });
+
     }
+
     // 2. Norwegian Hospital Network Deployment
+
     const deploymentCtx = document.getElementById('deploymentChart');
 
     if (deploymentCtx) {
       new Chart(deploymentCtx, {
+
         type: 'line',
+
         data: {
+
           labels: ['Q1\nYear 1', 'Q2\nYear 1', 'Q3\nYear 1', 'Q4\nYear 1', 'Q1\nYear 2', 'Q2\nYear 2', 'Q3\nYear 2', 'Q4\nYear 2', 'Q1\nYear 3', 'Q2\nYear 3', 'Q3\nYear 3', 'Q4\nYear 3'],
+
           datasets: [{
+
             label: 'Cumulative Installations',
+
             data: [1, 2, 3, 3, 8, 12, 18, 25, 40, 60, 75, 90],
+
             backgroundColor: 'rgba(218, 119, 86, 0.2)',
+
             borderColor: '#DA7756',
+
             borderWidth: 2,
+
             fill: true,
+
             tension: 0.4
+
           }]
+
         },
+
         options: {
+
           responsive: true,
+
           plugins: {
+
             legend: { display: true },
+
             title: {
+
               display: true,
+
               text: '55 Hospital Installations Over 3 Years',
+
               font: { size: 16, family: 'Source Serif 4' }
+
             }
+
           },
+
           scales: {
+
             y: {
+
               beginAtZero: true,
+
               title: { display: true, text: 'Installations' }
+
             }
+
           }
+
         }
+
       });
+
     }
+
     // 3. Cost Reduction Curve
+
     const costCtx = document.getElementById('costChart');
 
     if (costCtx) {
       new Chart(costCtx, {
+
         type: 'line',
+
         data: {
+
           labels: ['Year 1\nPilot', 'Year 2\nScale', 'Year 3\nOptimize', 'Year 4\nMature'],
+
           datasets: [{
+
             label: 'Cost per Dose (NOK)',
+
             data: [150, 85, 35, 30],
+
             backgroundColor: 'rgba(193, 95, 60, 0.2)',
+
             borderColor: '#C15F3C',
+
             borderWidth: 2,
+
             fill: true,
+
             tension: 0.4
+
           }]
+
         },
+
         options: {
+
           responsive: true,
+
           plugins: {
+
             legend: { display: true },
+
             title: {
+
               display: true,
+
               text: '77% Cost Reduction Through Automation',
+
               font: { size: 16, family: 'Source Serif 4' }
+
             }
+
           },
+
           scales: {
+
             y: {
+
               beginAtZero: true,
+
               title: { display: true, text: 'NOK per Dose' }
+
             }
+
           }
+
         }
+
       });
+
     }
+
     // 4. Social Impact Dashboard
+
     const impactCtx = document.getElementById('impactChart');
 
     if (impactCtx) {
       new Chart(impactCtx, {
+
         type: 'bar',
+
         data: {
+
           labels: ['Nordland', 'Troms', 'Finnmark', 'Møre og\nRomsdal', 'Sogn og\nFjordane', 'Oppland', 'Hedmark'],
+
           datasets: [{
+
             label: 'Patients Served',
+
             data: [15000, 12000, 8000, 18000, 14000, 11000, 10000],
+
             backgroundColor: '#DA7756',
+
             borderColor: '#C15F3C',
+
             borderWidth: 1
+
           }]
+
         },
+
         options: {
+
           responsive: true,
+
           plugins: {
+
             legend: { display: true },
+
             title: {
+
               display: true,
+
               text: 'Rural Healthcare Access: 88,000 Patients Year 3',
+
               font: { size: 16, family: 'Source Serif 4' }
+
             }
+
           },
+
           scales: {
+
             y: {
+
               beginAtZero: true,
+
               title: { display: true, text: 'Patients Served' }
+
             }
+
           }
+
         }
+
       });
+
     }
+
   </script>
+
 </body>
+
 </html>
 

@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>SPEIS - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js for Data Visualization -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
     <style>
@@ -17,211 +22,327 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 SPEIS
+
             </div>
+
         </div>
+
         <div class="header-text">
 
             NATO Aurora skip + kampfly 7-10. generasjon<br>
             Sektor: Maritime + Defense
+
         </div>
+
     </header>
+
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>SPEIS skal etablere Norge som ledende leverandør av arktiske dominanseskip og neste generasjons kampfly til NATO. Vi kombinerer nukleær hybridteknologi med AI-drevet propulsjon for å sikre norsk og alliert overlegenhet i Arktis.</p>
+
             <h3>Misjon</h3>
+
             <p>Utvikle og produsere nuclear-hybrid Arctic dominance ships som overgår russiske Arktika-klasse isbrytere, samt kampfly generasjon 7-10 med modulære misjonssystemer for fremtidens forsvarsbehov.</p>
 
             <h3>Innovasjon</h3>
@@ -232,67 +353,57 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 50.0 milliarder</li>
                 <li><strong>Norden:</strong> NOK 120.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 5%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>NATO medlemsland med arktiske interesser (Norge, USA, Canada, Danmark)</li>
                 <li>Norsk Forsvarsmateriell (FMA) for Sjøforsvaret og Luftforsvaret</li>
 
                 <li>Arktiske ressurskontroll-organisasjoner (olje, gass, fiskeri)</li>
-
                 <li>Kystvakt og Search & Rescue operasjoner i nordområdene</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Russlands Arktika-klasse isbrytere (50 Let Pobedy, 75,000 ton)</li>
                 <li>USA Zumwalt-class destroyers og Ford-class carriers</li>
 
                 <li>Kinas Type 055 destroyers og polar research vessels</li>
-
                 <li>Frankrike/Tyskland FCAS (Future Combat Air System) kampfly</li>
-
                 <li>USA NGAD (Next Generation Air Dominance) program</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>Dual nuclear reactor design gir ubegrenset rekkevidde i arktiske farvann</li>
                 <li>Polar Class 1 hull med 3.5m isbryting vs. 2.8m for Arktika</li>
 
                 <li>AI-drevet propulsjon optimaliserer energibruk i sanntid</li>
-
                 <li>Modular mission bay tillater hurtig rekonfigurering for ulike oppdrag</li>
-
                 <li>Generasjon 7-10 kampfly med swarm intelligence og autonomous operations</li>
-
                 <li>Teknologideling med SYRE™ for 3D-printede aerospace komponenter</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>SPEIS Aurora-skip benytter dual-reactor layout med RITM-200 inspirert design (175 MW). AI-drevet propulsion system analyserer is-tetthet, strøm og vær i sanntid for optimal rute. Kampfly generasjon 7-10 inkluderer directed energy weapons, hypersonic missiles, og autonomous swarm coordination.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -306,36 +417,34 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>Direkte salg til NATO medlemsland: NOK 15-25 milliarder per skip</li>
                 <li>Kampfly kontrakter: NOK 800 millioner - 1.5 milliarder per fly</li>
 
                 <li>Vedlikehold og oppgraderinger: 15% av initial kostnad årlig (30 års levetid)</li>
-
                 <li>Teknologilisenser til allierte nasjoner: NOK 500 millioner årlig</li>
-
                 <li>Sivilavledede teknologier (isbrytere for shipping): NOK 5-8 milliarder per skip</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Første skip-kontrakt sikrer profitabilitet (margin 20-25%). Kampfly-programmet krever 5-7 års investering før første leveranse. Vedlikeholdskontrakter gir stabil langsiktig inntekt.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Modular design tillater parallell produksjon av skip-seksjoner. Kampfly kan produseres 12-24 enheter årlig ved full kapasitet. Teknologiplattform skalerbar til ubemannede varianter.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Sikre Innovasjon Norge finansiering. Fullføre preliminary design review for Aurora-skip. Etablere partnerskap med Kongsberg Defence.</p>
 
             <h3>Q2 2026</h3>
@@ -352,10 +461,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 1,000,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -363,67 +474,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 500,000</li>
                 <li><strong>Forsvarsbudsjett Nok:</strong> NOK 300,000</li>
+
                 <li><strong>Venture Nok:</strong> NOK 200,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>Forskning</td>
 
                         <td>250,000</td>
                         <td>25.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Prototype</td>
 
                         <td>300,000</td>
                         <td>30.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Fasiliteter</td>
 
                         <td>200,000</td>
                         <td>20.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>150,000</td>
                         <td>15.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Sikkerhet</td>
 
                         <td>50,000</td>
                         <td>5.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>50,000</td>
                         <td>5.0%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Admiral (ret.) Bjørn Haugen - CEO & Strategic Advisor</h3>
+
             <p>35 år i Sjøforsvaret, tidligere sjef for Kystvakten. Ekspert i arktiske operasjoner og NATO-samarbeid. Master i Strategiske Studier fra Naval Postgraduate School.</p>
 
             <h3>Dr. Siri Johansen - CTO Nuclear Systems</h3>
@@ -439,9 +576,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>Nuclear propulsion gir zero-emission operations sammenlignet med diesel-drevne skip (80,000 tonn CO₂ spart per skip årlig). Modulær design forlenger levetid til 50+ år, reduserer behov for nybygg.</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -455,75 +592,95 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Kapabiliteter vs Konkurrenter</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="capabilitiesChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Utviklingstidsplan</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="timelineChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Chart.js Configurations -->
-
     <script>
-
         {
-
             const ctx = document.getElementById('capabilitiesChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'radar',
 
                 data: {
                     labels: ["Isbryting","Stealth","Rekkevidde","Payload","AI-system","Modularitet"],
+
                     datasets: [
+
                         {
+
                             label: 'SPEIS Aurora',
 
                             data: [95,85,100,90,95,90],
                             borderColor: '#ff007f',
+
                             backgroundColor: '#ff007f33',
+
                         },
+
                         {
+
                             label: 'Russland Arktika',
 
                             data: [80,40,85,85,50,60],
                             borderColor: '#888',
+
                             backgroundColor: '#88833',
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('timelineChart').getContext('2d');
-
         }
     </script>
 
 </body>
-
 </html>
-

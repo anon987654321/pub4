@@ -3,16 +3,30 @@
 
   "profiles": {
     "x-t4": {
+
       "color_matrix": [1.0425, -0.0228, -0.0163, -0.3475, 1.2994, 0.0979, -0.0964, 0.2264, 0.9710],
+
       "saturation": 1.15,
+
       "vibrance": 0.25,
+
       "film_simulation": "classic_chrome"
+
     },
+
     "x-t3": {
+
       "color_matrix": [1.0239, -0.0145, -0.0094, -0.3357, 1.2810, 0.0547, -0.0894, 0.2169, 0.9725],
+
       "saturation": 1.12,
+
       "vibrance": 0.22,
+
       "film_simulation": "classic_chrome"
+
     }
+
   }
+
 }
+

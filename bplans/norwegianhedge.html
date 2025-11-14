@@ -5,295 +5,180 @@
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Norwegian Hedge - Konsolidert Hedge Fund</title>
-
     <!-- Google Fonts -->
-
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-
         /* CSS Variables - SYRE™/LA2 Design */
-
         :root {
-
             --primary-color: #1a1a1a;
-
             --background-color: #ffffff;
-
             --text-color: #222222;
-
             --highlight-color: #5d93ff;
-
             --gradient-primary: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
-
             --font-family: 'Inter', sans-serif;
-
         }
-
         /* General Styles */
-
         body {
-
             margin: 0;
             font-family: var(--font-family);
 
             background-color: var(--background-color);
-
             color: var(--text-color);
-
             line-height: 1.6;
-
             font-size: 16px;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
         }
-
         /* Logo Container */
-
         .logo-wrapper {
-
             position: relative;
             display: inline-block;
 
         }
-
         /* Logo styling with SYRE™ animated gradient */
-
         .logo-container {
-
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
 
             color: transparent;
-
             background: var(--gradient-primary);
-
             background-size: 400%;
-
             background-clip: text;
-
             -webkit-background-clip: text;
-
             animation: gradientMove 5s infinite linear;
-
         }
-
         /* Header styling */
-
         header {
-
             text-align: center;
             padding: 40px 20px;
 
             background-color: var(--background-color);
-
             border-bottom: 1px solid #e0e0e0;
-
         }
-
         .header-text {
-
             font-size: 1.2rem;
-
             font-weight: 500;
             color: var(--text-color);
 
             margin-top: 1rem;
-
             max-width: 800px;
-
             text-align: center;
-
         }
-
         /* Main content */
-
         main {
-
             max-width: 1000px;
             margin: 3rem auto;
 
             padding: 0 2rem;
-
         }
-
         section {
-
             padding: 3rem 0;
-
             border-bottom: 1px solid #e0e0e0;
         }
 
         h2 {
-
             font-size: 2.5rem;
-
             color: var(--primary-color);
             margin-bottom: 2rem;
 
             position: relative;
-
         }
-
         h2::after {
-
             content: '';
-
             position: absolute;
             bottom: -0.5rem;
 
             left: 0;
-
             width: 60px;
-
             height: 4px;
-
             background: var(--gradient-primary);
-
         }
-
         h3 {
-
             font-size: 1.8rem;
-
             color: var(--text-color);
             margin: 2rem 0 1rem 0;
 
         }
-
         h4 {
-
             font-size: 1.4rem;
-
             color: var(--highlight-color);
             margin: 1.5rem 0 1rem 0;
 
         }
-
         p {
-
             font-size: 1.1rem;
-
             color: #444444;
             margin-bottom: 1.5rem;
 
         }
-
         ul {
-
             margin: 1rem 0;
-
             padding-left: 2rem;
         }
 
         li {
-
             margin-bottom: 0.8rem;
-
             font-size: 1.1rem;
         }
 
         /* Chart container */
-
         .chart-container {
-
             max-width: 500px;
             margin: 2rem auto;
 
         }
-
         @keyframes gradientMove {
-
             0% { background-position: 0% 50%; }
-
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
 
         }
-
         /* Responsive Design */
-
         @media (max-width: 768px) {
-
             .logo-container {
                 font-size: 50px;
 
             }
-
             h2 {
-
                 font-size: 2rem;
-
             }
-
             main {
-
                 padding: 0 1rem;
-
             }
-
         }
-
     </style>
-
 </head>
-
 <body>
-
     <header>
-
         <div class="logo-wrapper">
-
             <div class="logo-container">NORWEGIAN HEDGE</div>
-
         </div>
-
         <div class="header-text">
-
             Konsolidert Hedge Fund med Nordic Prosperity Fund<br>
-
             Ruby Trading Bot Swarm, AI³ Integration og Avanserte Handelsstrategier
-
         </div>
-
     </header>
-
     <main>
-
         <!-- Sammendrag Section -->
-
         <section id="sammendrag">
             <h2>Sammendrag</h2>
 
             <h3>Visjon</h3>
-
             <p>Å skape Nordens ledende hedge fund som kombinerer tradisjonell finansekspertise med cutting-edge AI-teknologi og automatiserte handelssystemer for å levere konsistent høy avkastning.</p>
-
             <h3>Misjon</h3>
-
             <p>Gjennom Nordic Prosperity Fund, Ruby Trading Bot Swarm og AI³-integrasjon tilbyr vi sofistikerte investeringsløsninger som optimaliserer porteføljer og maksimerer verdiskapning for våre klienter.</p>
-
         </section>
         <!-- Nordic Prosperity Fund Section -->
 
         <section id="nordic-prosperity-fund">
-
             <h2>Nordic Prosperity Fund</h2>
             <h3>Flaggskipfond</h3>
 
             <p>Nordic Prosperity Fund er vårt hovedinvesteringsfond som fokuserer på nordiske markeder med global diversifisering. Fondet kombinerer fundamental analyse med kvantitative strategier.</p>
-
             <h3>Fondsstrategi</h3>
             <ul>
 
@@ -301,29 +186,20 @@
                 <li><strong>Global diversifisering</strong>: 30% allokering til internasjonale markeder</li>
 
                 <li><strong>Multi-asset tilnærming</strong>: Aksjer, obligasjoner, råvarer og kryptovalutaer</li>
-
                 <li><strong>ESG-integrering</strong>: Bærekraftige investeringer som kjernestrategi</li>
-
                 <li><strong>Risikostyring</strong>: Avanserte hedging-strategier for porteføljebeskyttelse</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="prosperityChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Ruby Trading Bot Swarm Section -->
-
         <section id="ruby-trading-bots">
-
             <h2>Ruby Trading Bot Swarm</h2>
             <h3>Automatiserte Handelssystemer</h3>
 
             <p>Vårt nettverk av Ruby-baserte handelsbots utfører høyfrekvent handel med små beløp i svært høy hastighet, og bruker det nyeste innen finansiell maskinlæring til å kontinuerlig forbedre prestasjon.</p>
-
             <h3>Bot Swarm Arkitektur</h3>
             <ul>
 
@@ -331,44 +207,29 @@
                 <li><strong>Arbitrasje-algoritmer</strong>: Utnytter prisforskjeller mellom markeder og børser</li>
 
                 <li><strong>Momentum-strategier</strong>: Identifiserer og følger markedstrender</li>
-
                 <li><strong>Mean Reversion</strong>: Kapitaliserer på midlertidige prisavvik</li>
-
                 <li><strong>Options Market Making</strong>: Automatisert market making i opsjonsmarkeder</li>
-
             </ul>
-
             <h3>Teknologisk Infrastruktur</h3>
-
             <ul>
-
                 <li><strong>Ruby/Roda backend</strong>: Høy-ytelse handelssystemer</li>
                 <li><strong>Real-time data feeds</strong>: Millisekund latency for markedsdata</li>
 
                 <li><strong>Risk management</strong>: Automatiske stopp-loss og posisjonsstørrelse</li>
-
                 <li><strong>Backtesting engine</strong>: Kontinuerlig validering av strategier</li>
-
                 <li><strong>Distributed computing</strong>: AWS/Azure for skalerbar ytelse</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="botChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Research og Trading Strategier Section -->
-
         <section id="research-strategier">
-
             <h2>Research og Trading Strategier</h2>
             <h3>Kvantitative Forskningsmetoder</h3>
 
             <p>Vårt forskningsteam utvikler proprietary algoritmer basert på moderne portfolio theory, machine learning og alternative datakilder.</p>
-
             <h3>Forskningsområder</h3>
             <ul>
 
@@ -376,39 +237,25 @@
                 <li><strong>Genetic Algorithms</strong>: Evolusjonære strategier for porteføljeoptimalisering</li>
 
                 <li><strong>Neural Networks</strong>: Deep learning for prisforutsigelse</li>
-
                 <li><strong>Reinforcement Learning</strong>: Adaptive handelsstrategier</li>
-
                 <li><strong>Sentiment Analysis</strong>: Tekstanalyse av nyheter og sosiale medier</li>
-
             </ul>
-
             <h3>Alternative Datakilder</h3>
-
             <ul>
-
                 <li><strong>Satellite imagery</strong>: Råvareprising basert på satellittdata</li>
                 <li><strong>Web scraping</strong>: Økonomiske indikatorer fra offentlige kilder</li>
 
                 <li><strong>Social media sentiment</strong>: Twitter/Reddit stemningsanalyse</li>
-
                 <li><strong>Options flow</strong>: Institusjonell handelsaktivitet</li>
-
                 <li><strong>Macroeconomic indicators</strong>: Real-time økonomiske data</li>
-
             </ul>
-
         </section>
-
         <!-- AI³ Integration Section -->
-
         <section id="ai3-integration">
-
             <h2>AI³ Integration</h2>
             <h3>Intelligent Trading Assistant</h3>
 
             <p>AI³-plattformen fungerer som en intelligent assistant som koordinerer alle handelssystemer, analyserer markedsforhold og foreslår porteføljeoptimaliseringer.</p>
-
             <h3>AI³ Kapabiliteter</h3>
             <ul>
 
@@ -416,42 +263,28 @@
                 <li><strong>Risk assessment</strong>: Real-time risikovurdering og allokering</li>
 
                 <li><strong>Market regime detection</strong>: Identifiserer markedsendringer automatisk</li>
-
                 <li><strong>Portfolio rebalancing</strong>: Dynamisk rebalansering basert på markedsforhold</li>
-
                 <li><strong>Client reporting</strong>: Automatisert rapportering og kommunikasjon</li>
-
             </ul>
-
             <h3>Ruby/LangChain.rb Integration</h3>
-
             <ul>
-
                 <li><strong>Vector search</strong>: Weaviate for intelligent dokumentsøk</li>
                 <li><strong>Context preservation</strong>: Historisk markedsminne for bedre beslutninger</li>
 
                 <li><strong>Natural language interface</strong>: Kommunikasjon med fund managere på norsk</li>
-
                 <li><strong>OpenBSD security</strong>: Sikker databehandling og trading</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="ai3Chart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Finansiell Ytelse Section -->
-
         <section id="finansiell-ytelse">
-
             <h2>Finansiell Ytelse og Prognoser</h2>
             <h3>Historisk Prestasjoner</h3>
 
             <p>Våre backtesting-resultater viser konsistent alpha-generering på tvers av forskjellige markedsforhold, med Sharpe ratios som overgår benchmarks.</p>
-
             <h3>Forventet Avkastning</h3>
             <ul>
 
@@ -459,255 +292,145 @@
                 <li><strong>Ruby Bot Swarm</strong>: 25-40% årlig avkastning (høyere volatilitet)</li>
 
                 <li><strong>Kombinert portefølje</strong>: 15-22% årlig avkastning</li>
-
                 <li><strong>Maximum drawdown</strong>: Maks 8-12% for konservative strategier</li>
-
             </ul>
-
             <div class="chart-container">
-
                 <canvas id="performanceChart" width="400" height="200"></canvas>
-
             </div>
         </section>
 
         <!-- Risikoanalyse Section -->
-
         <section id="risikoanalyse">
-
             <h2>Risikoanalyse og SWOT</h2>
             <h3>Risikoer</h3>
 
             <ul>
-
                 <li><strong>Markedsrisiko</strong>: Volatilitet i kryptovaluta- og aksjemarkeder</li>
                 <li><strong>Teknologirisiko</strong>: Systemfeil eller cyberangrep</li>
 
                 <li><strong>Regulatorisk risiko</strong>: Endringer i finansregulering</li>
-
                 <li><strong>Likviditetsrisiko</strong>: Problemer med å likvidere posisjoner</li>
-
             </ul>
-
             <h3>Styrker</h3>
-
             <ul>
-
                 <li><strong>Teknologisk fortrinn</strong>: Avanserte AI- og automatiseringssystemer</li>
                 <li><strong>Diversifisering</strong>: Multi-asset og multi-strategy tilnærming</li>
 
                 <li><strong>Norsk ekspertise</strong>: Dyp forståelse av nordiske markeder</li>
-
                 <li><strong>Skalerbarhet</strong>: Automatiserte systemer som kan håndtere økt kapital</li>
-
             </ul>
-
         </section>
-
         <!-- Konklusjon Section -->
-
         <section id="konklusjon">
-
             <h2>Konklusjon</h2>
             <p>Norwegian Hedge representerer en ny generasjon hedge fund som kombinerer tradisjonell finansekspertise med cutting-edge teknologi. Gjennom Nordic Prosperity Fund, Ruby Trading Bot Swarm og AI³-integrasjon leverer vi sofistikerte investeringsløsninger som skaper konsistent værdi for våre klienter.</p>
 
             <p>Med fokus på nordiske markeder, bærekraftige investeringer og teknologisk innovasjon, posisjonerer Norwegian Hedge seg som den ledende alternative asset manageren i Norden.</p>
-
             <p><strong>Norwegian Hedge - Hvor teknologi møter tradisjon for å skape fremtidens investeringer.</strong></p>
-
         </section>
     </main>
+
     <script>
 
         // Nordic Prosperity Fund Allocation Chart
-
         const prosperityCtx = document.getElementById('prosperityChart').getContext('2d');
         const prosperityChart = new Chart(prosperityCtx, {
 
             type: 'doughnut',
-
             data: {
-
                 labels: ['Nordiske aksjer', 'Internasjonale aksjer', 'Obligasjoner', 'Kryptovalutaer', 'Råvarer'],
-
                 datasets: [{
-
                     data: [40, 30, 15, 10, 5],
-
                     backgroundColor: ['#5d93ff', '#ff007f', '#00c9ff', '#ffcc00', '#8a2be2'],
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Nordic Prosperity Fund - Asset Allokering' },
-
                     legend: { position: 'bottom' }
-
                 }
-
             }
-
         });
-
         // Ruby Bot Performance Chart
-
         const botCtx = document.getElementById('botChart').getContext('2d');
-
         const botChart = new Chart(botCtx, {
             type: 'line',
 
             data: {
-
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun'],
-
                 datasets: [{
-
                     label: 'Skalperingsroboter (%)',
-
                     data: [2.5, 3.1, 2.8, 3.5, 4.2, 3.8],
-
                     borderColor: '#5d93ff',
-
                     backgroundColor: 'rgba(93, 147, 255, 0.1)',
-
                     fill: true
-
                 }, {
-
                     label: 'Arbitrasje-bots (%)',
-
                     data: [1.8, 2.2, 2.5, 2.1, 2.8, 3.2],
-
                     borderColor: '#ff007f',
-
                     backgroundColor: 'rgba(255, 0, 127, 0.1)',
-
                     fill: true
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Ruby Bot Swarm - Månedlig Avkastning' }
-
                 },
-
                 scales: { y: { beginAtZero: true } }
-
             }
-
         });
-
         // AI³ Performance Metrics
-
         const ai3Ctx = document.getElementById('ai3Chart').getContext('2d');
-
         const ai3Chart = new Chart(ai3Ctx, {
             type: 'radar',
 
             data: {
-
                 labels: ['Risikoanalyse', 'Porteføljeoptimalisering', 'Markedsforutsigelse', 'Handelsautomatisering', 'Rapportering'],
-
                 datasets: [{
-
                     label: 'AI³ Ytelse',
-
                     data: [92, 88, 85, 95, 90],
-
                     backgroundColor: 'rgba(93, 147, 255, 0.2)',
-
                     borderColor: '#5d93ff',
-
                     borderWidth: 2
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'AI³ System Kapabiliteter (%)' }
-
                 },
-
                 scales: {
-
                     r: { beginAtZero: true, max: 100 }
-
                 }
-
             }
-
         });
-
         // Historical Performance Chart
-
         const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-
         const performanceChart = new Chart(performanceCtx, {
             type: 'line',
 
             data: {
-
                 labels: ['2020', '2021', '2022', '2023', '2024', '2025E'],
-
                 datasets: [{
-
                     label: 'Norwegian Hedge (%)',
-
                     data: [15.5, 18.2, 12.8, 16.9, 19.5, 17.0],
-
                     borderColor: '#5d93ff',
-
                     backgroundColor: 'rgba(93, 147, 255, 0.1)',
-
                     fill: true
-
                 }, {
-
                     label: 'OSEBX (%)',
-
                     data: [8.2, 12.5, -2.1, 10.3, 8.9, 7.5],
-
                     borderColor: '#cccccc',
-
                     backgroundColor: 'rgba(200, 200, 200, 0.1)',
-
                     fill: true
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Historisk Avkastning vs Benchmark' }
-
                 },
-
                 scales: { y: { beginAtZero: false } }
-
             }
-
         });
-
     </script>
-
 </body>
-
 </html>
-

@@ -3,153 +3,304 @@
 
     "name": "Bergen Selvstyreparti",
     "tagline": "Blockchain-basert lokalt styresett og transparent beslutningstaking",
+
     "logo_text": "Bergen Selvstyreparti",
+
     "trademark": false,
+
     "sector": "Civic Tech",
+
     "funding_nok": 200000
+
   },
+
   "sammendrag": {
+
     "visjon": "Bergen Selvstyreparti skal demokratisere kommunalt styresett gjennom teknologi. Vi tror at hver innbygger skal ha direkte innflytelse over lokalpolitiske beslutninger, ikke bare hvert 4. år.",
+
     "misjon": "Utvikle og implementere en blockchain-basert governance-plattform som gir bergensere direkte stemmerett i kommunale saker. Full transparens i budsjettbruk og beslutningstaking.",
+
     "innovation": "Decentralized Autonomous Organization (DAO) for kommunestyret. Blockchain-basert stemming med kryptografisk anonymitet. Smart contracts for budsjettallokeringer. AI-drevet policy-analyse.",
+
     "customer_benefit": "Innbyggere får reell innflytelse på lokalpolitikk. Reduserer korrupsjon og ineffektivitet gjennom transparens. Engasjerer unge velgere (18-35 år) som tradisjonelt har lav valgdeltakelse."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "15000000000",
+
     "marked_norden_nok": "50000000000",
+
     "vekst_prosent": 15,
+
     "customer_segments": [
+
       "Bergenske innbyggere (287,000) som ønsker mer direkte demokrati",
+
       "Andre norske kommuner (356 totalt) som kan adoptere plattformen",
+
       "Nordiske byer interessert i demokrati-innovasjon",
+
       "Politiske partier som ønsker medlemsengasjement-verktøy",
+
       "Internasjonale governance-organisasjoner (UNDP, World Bank)"
+
     ],
+
     "konkurranse": [
+
       "Tradisjonell representativ demokrati (4-års valgsyklus, begrenset deltakelse)",
+
       "Innbyggerinitiativ-plattformer (Change.org, petisjon.no) - ingen reell beslutningsmakt",
+
       "Estnias e-governance (digitalt, men ikke blockchain-basert eller direkte demokrati)",
+
       "Barcelona En Comú (bruker Decidim, men ikke blockchain)",
+
       "Aragon DAO framework (generisk, ikke kommunetilpasset)"
+
     ],
+
     "konkurransefortrinn": [
+
       "Første blockchain-baserte kommunestyret i verden - global media attention",
+
       "Kryptografisk sikker og anonym stemming (ingen coercion eller vote buying)",
+
       "Smart contracts sikrer automatisk utførelse av vedtak (ingen byråkratisk forsinkelse)",
+
       "AI policy-analyse gir innbyggere forståelig sammendrag av komplekse saker",
+
       "Full budsjett-transparens i sanntid - hver krone sporet på blockchain",
+
       "Åpen kildekode - andre kommuner kan adoptere gratis (vi tjener på support/hosting)"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "Plattformen bygger på Ethereum blockchain med Layer 2 scaling (Polygon). Smart contracts skrevet i Solidity. Frontend er Ruby on Rails med React. BankID-integrasjon for sikker autentisering. IPFS for decentralisert dokumentlagring.",
+
     "unique_innovation": "Quadratic voting: Innbyggere får 100 'voice credits' per måned. Kan bruke 1 credit på 1 sak (1 stemme), eller 100 credits på 1 sak (10 stemmer) - kostnaden er kvadratisk. Dette balanserer intense minoriteter mot apathetic majoriteter.",
+
     "ip_status": "Åpen kildekode (MIT lisens). Bergen Selvstyreparti™ trademark registrert. Quadratic voting-implementasjon for kommunalt styresett er patent-pending (202400456).",
+
     "utviklingsstadium": "MVP live med 500 testbrukere i Årstad bydel. Gjennomført 15 pilotavstemninger. Smart contracts audited av ConsenSys. Krever skalering til 287,000 brukere og juridisk godkjenning."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Bergen kommune: Hosting og support fee NOK 5M årlig (vs. NOK 50M+ tradisjonelle IT-systemer)",
+
       "Lisensering til andre norske kommuner: NOK 500k setup + NOK 200k årlig per kommune",
+
       "Konsulentarbeid for demokrati-innovasjon: NOK 2M per prosjekt",
+
       "Internasjonale organisasjoner (UNDP, World Bank): NOK 10M per land-deployment",
+
       "Training og workshops for politiker og innbyggere: NOK 500k årlig"
+
     ],
+
     "loennsomhet": "Break-even ved 5 kommuner + Bergen-kontrakt (år 2). Ved 30 kommuner (10% av Norge): NOK 11M årlige inntekter. Internasjonal skalering kan nå NOK 100M+ ved deployments i 10+ land.",
+
     "skalerbarhet": "Plattformen er designet for millioner av brukere (Polygon håndterer 7,000 tx/sec). Hver kommune er en separat smart contract instance. Teknisk skalering billig (AWS + Polygon). Hovedutfordring er juridisk tilpasning per jurisdiksjon."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Fullføre juridisk godkjenning fra Bergen kommune og Kommunaldepartementet. Skalere plattform til 287,000 brukere.",
+
     "q2_2026": "Live-lansering i Bergen med 5 reelle kommunestyresaker. Oppnå 30% innbyggerdeltakelse (vs. 60% i kommunevalg). Media-kampanje nasjonalt.",
+
     "q3_2026": "10 kommuner signerer intensjonsavtaler. Gjennomføre 50 avstemninger i Bergen. Dokumentere kostnadsbesparelser og økt deltakelse.",
+
     "q4_2026": "Første 3 kommuner går live (Trondheim, Tromsø, Stavanger). Presentere på OECD Democracy Forum i Paris. Sikre NOK 10M i internasjonale kontrakter.",
+
     "2027": "30 norske kommuner på plattformen. Første internasjonale deployment (Reykjavik, Island). Ansette 20 utviklere. Nå NOK 15M årlig omsetning."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 400000,
+
     "innovasjon_norge_nok": 200000,
+
     "venture_nok": 150000,
+
     "kommunal_tilskudd_nok": 50000,
+
     "allokering": {
+
       "utvikling": 150000,
+
       "sikkerhet_audit": 80000,
+
       "juridisk": 60000,
+
       "markedsfoering": 50000,
+
       "loenn": 40000,
+
       "driftskapital": 20000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Kari Normann",
+
       "rolle": "CEO & Political Strategist",
+
       "erfaring": "10 år som kommunepolitiker i Bergen (Miljøpartiet). Master i Statsvitenskap fra UiB. Erfaring med byråkrati og beslutningsprosesser. Passionate om direkte demokrati."
+
     },
+
     {
+
       "navn": "Bjørn Kristiansen",
+
       "rolle": "CTO & Blockchain Architect",
+
       "erfaring": "8 år som blockchain-utvikler, tidligere hos ConsenSys. Ekspert i Ethereum og smart contracts. Master i Datateknologi fra NTNU. Bygget 5 DAO-plattformer."
+
     },
+
     {
+
       "navn": "Dr. Lisa Chen",
+
       "rolle": "Chief Democracy Officer",
+
       "erfaring": "PhD i Political Science fra Stanford. Forsker på digital demokrati og participatory budgeting. Publisert 15 papers om e-governance. Rådgiver for Barcelona En Comú."
+
     },
+
     {
+
       "navn": "Erik Solberg",
+
       "rolle": "Head of Legal & Compliance",
+
       "erfaring": "12 år som advokat med fokus på forvaltningsrett. Partner hos Wikborg Rein. Ekspert i kommunelov og personvern (GDPR). Jobbet med digitalisering av offentlig sektor."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "Reduserer papirforbruk i kommunal administrasjon med 90% (digital-first approach). Blockchain-transaksjonskostnader lavere enn tradisjonelle IT-systemer (Polygon PoS vs. data centers).",
+
     "sosialt": "Øker politisk deltakelse fra marginaliserte grupper (unge, innvandrere, lav-inntekt). Reduserer politikerforakt gjennom transparens. Empowers innbyggere med reell beslutningsmakt. Educerer om demokrati og civic engagement.",
+
     "oekonomisk": "Reduserer kommunale IT-kostnader med 80% (blockchain vs. legacy systems). Eliminerer ineffektiv budsjettering gjennom transparens. Skaper 100+ tech-jobber i Bergen. Eksporterer norsk demokrati-teknologi globalt.",
+
     "un_sdgs": [10, 11, 16, 17]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "adoptionChart",
+
       "type": "line",
+
       "title": "Brukeradopsjon (tusen)",
+
       "data": {
+
         "labels": ["Mnd 1", "Mnd 3", "Mnd 6", "Mnd 9", "Mnd 12"],
+
         "datasets": [
+
           {"label": "Aktive brukere", "data": [5, 25, 75, 150, 250], "color": "#00c9ff"}
+
         ]
+
       }
+
     },
+
     {
+
       "id": "efficiencyChart",
+
       "type": "bar",
+
       "title": "Beslutningshastighet (dager)",
+
       "data": {
+
         "labels": ["Tradisjonelt", "Bergen Selvstyreparti"],
+
         "values": [90, 7]
+
       }
+
     },
+
     {
+
       "id": "savingsChart",
+
       "type": "bar",
+
       "title": "Kostnadsreduksjon (MNOK årlig)",
+
       "data": {
+
         "labels": ["IT-systemer", "Administrasjon", "Konsulenter", "Totalt"],
+
         "values": [40, 15, 10, 65]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

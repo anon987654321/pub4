@@ -5,367 +5,228 @@
   <meta charset="UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta name="description" content="Ragnhilds Begravelsesbyrå – Moderne begravelsestjenester med fokus på verdighet, personalisering og profesjonalitet.">
-
   <title>Ragnhilds Begravelsesbyrå – Forretningsplan</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.googleapis.com;">
-
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-
   <style>
-
     :root {
-
       --terra-cotta: #DA7756;
-
       --primary-dark: #C15F3C;
-
       --primary-light: #E89B7E;
-
       --text-primary: #3D3929;
-
       --text-secondary: #6B645A;
-
       --bg: #FFFCF7;
-
       --surface: #F5F2ED;
-
       --success: #4A7C59;
-
       --warning: #D97706;
-
       --error: #DC2626;
-
       --info: #2563EB;
-
     }
-
     * { box-sizing: border-box; }
-
     html, body {
-
       margin: 0;
       padding: 0;
+
       background: var(--bg);
 
       color: var(--text-primary);
-
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-
       font-size: 16px;
-
       line-height: 1.6;
-
     }
-
     @media (prefers-reduced-motion: reduce) {
-
       *, *::before, *::after {
-
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
 
         transition-duration: 0.01ms !important;
-
       }
-
     }
-
     header {
-
       background: var(--terra-cotta);
-
       color: #fff;
       padding: 2rem 3rem;
 
       text-align: center;
-
     }
-
     header h1 {
-
       font-size: 2.441rem;
-
       font-weight: 700;
       margin: 0 0 0.5rem 0;
 
       line-height: 1.25;
-
     }
-
     .badge {
-
       display: inline-block;
-
       padding: 0.25rem 0.75rem;
       border: 1px solid rgba(255,255,255,0.5);
 
       border-radius: 999px;
-
       font-size: 0.8rem;
-
       color: #fff;
-
       font-weight: 500;
-
     }
-
     main {
-
       max-width: 900px;
-
       margin: 3rem auto;
       padding: 0 2rem;
 
     }
-
     section {
-
       background: var(--surface);
-
       border-radius: 8px;
       padding: 2.5rem;
 
       margin-bottom: 4rem;
-
     }
-
     h2 {
-
       font-size: 1.953rem;
-
       font-weight: 600;
       margin: 0 0 1.5rem 0;
 
       color: var(--text-primary);
-
       line-height: 1.25;
-
     }
-
     h3 {
-
       font-size: 1.563rem;
-
       font-weight: 600;
       margin: 2rem 0 1rem 0;
 
       color: var(--text-primary);
-
     }
-
     h4 {
-
       font-size: 1.25rem;
-
       font-weight: 600;
       margin: 1.5rem 0 0.75rem 0;
 
       color: var(--text-primary);
-
     }
-
     p {
-
       margin: 0 0 1rem 0;
-
       color: var(--text-primary);
     }
 
     ul, ol {
-
       margin: 0 0 1rem 0;
-
       padding-left: 1.5rem;
       color: var(--text-primary);
 
     }
-
     li {
-
       margin-bottom: 0.5rem;
-
     }
     strong {
 
       font-weight: 600;
-
       color: var(--text-primary);
     }
 
     .metric {
-
       display: inline-block;
-
       padding: 0.5rem 1rem;
       background: var(--bg);
 
       border-left: 3px solid var(--terra-cotta);
-
       margin: 0.5rem 0;
-
       font-weight: 500;
-
     }
-
     .chart-container {
-
       width: 100%;
-
       height: 400px;
       margin: 2rem 0;
 
       background: var(--bg);
-
       border-radius: 8px;
-
       padding: 1rem;
-
     }
-
     .assumption {
-
       font-size: 0.9rem;
-
       color: var(--text-secondary);
       font-style: italic;
 
       margin-top: 0.5rem;
-
     }
-
     table {
-
       width: 100%;
-
       border-collapse: collapse;
       margin: 1.5rem 0;
 
     }
-
     th, td {
-
       text-align: left;
-
       padding: 0.75rem;
       border-bottom: 1px solid #ddd;
 
     }
-
     th {
-
       font-weight: 600;
-
       color: var(--text-primary);
       background: var(--bg);
 
     }
-
     footer {
-
       background: var(--text-primary);
-
       color: var(--bg);
       padding: 2rem 3rem;
 
       text-align: center;
-
       margin-top: 4rem;
-
     }
-
     footer p {
-
       margin: 0.5rem 0;
-
       color: var(--bg);
     }
 
   </style>
-
 </head>
-
 <body>
-
   <header>
-
     <h1>Ragnhilds Begravelsesbyrå</h1>
-
     <span class="badge" aria-label="Framework badge">Framework: master.json v300.3.0</span>
-
   </header>
-
   <main>
-
     <section>
-
       <h2>Formål og Visjon</h2>
       <p><strong>Ragnhilds Begravelsesbyrå</strong> tilbyr profesjonelle begravelsestjenester i Norge med fokus på personalisering, verdighet og moderne gjennomføring. Vi adresserer et marked der tradisjonelle aktører dominerer, men der etterspørselen etter skreddersydde seremonier øker.</p>
 
       <p class="metric"><strong>Visjon:</strong> Bli et anerkjent alternativ i Oslo-regionen innen 2027</p>
-
       <p class="metric"><strong>Mål:</strong> 200-250 seremonier årlig innen år 3</p>
-
     </section>
-
     <section>
-
       <h2>Problem og Mulighet</h2>
-
       <h3>Markedsutfordringer</h3>
       <p>Det norske begravelsesmarkedet har flere strukturelle utfordringer:</p>
 
       <ul>
-
         <li><strong>Standardiserte tjenester:</strong> Mange familier opplever manglende fleksibilitet hos etablerte aktører</li>
-
         <li><strong>Begrenset personalisering:</strong> Økende etterspørsel etter unike seremonier som reflekterer avdødes liv</li>
-
         <li><strong>Prisintransparens:</strong> Vanskelig for pårørende å sammenligne tjenester og kostnader</li>
-
         <li><strong>Geografisk konsentrasjon:</strong> Færre aktører i vekstområder rundt Oslo</li>
-
       </ul>
-
       <h3>Markedsstørrelse (Norge)</h3>
-
       <div class="chart-container" id="marketSizeChart"></div>
-
       <p class="assumption">Basert på SSB data: ~40,000 dødsfall årlig i Norge (2023), estimert markedsverd i begravelsesbransjen på 2,4-2,8 mrd NOK årlig.</p>
       <ul>
 
         <li><strong>TAM (Total Addressable Market):</strong> 2,6 mrd NOK – hele det norske markedet</li>
-
         <li><strong>SAM (Serviceable Addressable Market):</strong> 520 MNOK – Oslo-regionen (ca. 20% av nasjonalt marked)</li>
         <li><strong>SOM (Serviceable Obtainable Market):</strong> 15-20 MNOK – realistisk markedsandel år 3 (3-4% av Oslo-markedet)</li>
 
       </ul>
-
     </section>
-
     <section>
-
       <h2>Hvorfor nå? Timing og marked</h2>
-
       <h3>Tre konvergerende trender</h3>
       <ol>
 
         <li><strong>Demografisk endring:</strong> Økning i dødsfall framover pga. aldrende befolkning (SSB prognoser: 50,000+ årlig innen 2030)</li>
-
         <li><strong>Kulturskifte:</strong> Yngre generasjoner ønsker mer personlige og sekulære seremonier</li>
-
         <li><strong>Digital transformasjon:</strong> Mulighet for mer transparent prising og online booking</li>
-
       </ol>
-
       <p>Dette er det ideelle tidspunktet for en ny aktør som kombinerer tradisjonell respekt med moderne forventninger.</p>
-
     </section>
-
     <section>
       <h2>Løsning og Tjenester</h2>
 
@@ -373,102 +234,58 @@
       <table>
 
         <thead>
-
           <tr>
-
             <th>Pakke</th>
-
             <th>Innhold</th>
-
             <th>Pris (NOK)</th>
-
           </tr>
-
         </thead>
-
         <tbody>
-
           <tr>
-
             <td><strong>Basis</strong></td>
-
             <td>Standard seremoni, kiste, transport, dokumenthåndtering</td>
-
             <td>45,000 - 55,000</td>
-
           </tr>
-
           <tr>
-
             <td><strong>Personlig</strong></td>
-
             <td>Basis + tilpasset seremoni, musikkvalg, personlig tale, blomster</td>
-
             <td>65,000 - 85,000</td>
-
           </tr>
-
           <tr>
-
             <td><strong>Premium</strong></td>
-
             <td>Personlig + eksklusiv lokasjon, catering, minnebok, video-streaming</td>
-
             <td>95,000 - 125,000</td>
-
           </tr>
-
         </tbody>
-
       </table>
-
       <h3>Differensiering</h3>
-
       <ul>
-
         <li><strong>Transparent prising:</strong> Alle priser publisert online med detaljert nedbrytning</li>
         <li><strong>Digital plattform:</strong> Online booking, dokumenthåndtering og kommunikasjon</li>
 
         <li><strong>Personalisering:</strong> Dedikerte rådgivere som jobber tett med familier</li>
-
         <li><strong>Moderne fasiliteter:</strong> Nytt seremonilokale med fleksibel utforming</li>
-
       </ul>
-
     </section>
-
     <section>
-
       <h2>Konkurranse og Posisjonering</h2>
-
       <h3>Konkurranselandskap Oslo-regionen</h3>
       <ul>
 
         <li><strong>Tradisjonelle aktører:</strong> Jølstad, Fonus, Norse – stor markedsandel, men mindre innovasjon</li>
-
         <li><strong>Kirkelige:</strong> Lavere priser, men begrenset til medlemmer og mindre fleksibilitet</li>
-
         <li><strong>Små uavhengige:</strong> Nisjeaktører, men begrenset kapasitet og markedsføring</li>
-
       </ul>
-
       <h3>Konkurransefortrinn</h3>
-
       <ol>
-
         <li><strong>Kombinasjon av respekt og modernitet</strong> – appellerer til både eldre og yngre</li>
         <li><strong>Digital-først tilnærming</strong> – reduserer administrasjonskostnader</li>
 
         <li><strong>Transparent prising</strong> – bygger tillit i en følelsesladet situasjon</li>
-
         <li><strong>Erfaring fra andre bransjer</strong> – Ragnhilds bakgrunn fra event-bransjen</li>
-
       </ol>
-
       <p class="assumption">Risiko: Etablerte aktører kan kopiere våre innovasjoner. Mitigering: Rask skalering og sterkt merkevarebygning.</p>
-
     </section>
-
     <section>
       <h2>Team og Utførelse</h2>
 
@@ -476,104 +293,62 @@
       <p><strong>Ragnhild Larsen</strong> – 15 års erfaring fra event- og konferansebransjen, med spesialisering i logistikk og klienthåndtering. Etablerte og drev "Livsglede Events" (2012-2023) med 40+ årlige arrangementer.</p>
 
       <p class="assumption">Track record: Bygde Livsglede Events fra 0 til 3,2 MNOK årlig omsetning over 5 år. Solgt i 2023.</p>
-
       <h3>Nøkkelansettelser (År 1)</h3>
-
       <ul>
-
         <li><strong>Autorisert begravelsesbyr åd (heltid):</strong> Sertifisert fagperson med 10+ års erfaring</li>
         <li><strong>Administrativ leder (deltid → heltid):</strong> Dokumenthåndtering, booking, kundeservice</li>
 
         <li><strong>Marketing & digital (konsulent):</strong> SEO, Google Ads, lokal synlighet</li>
-
       </ul>
-
       <h3>Hvorfor dette team</h3>
-
       <p>Ragnhilds styrke er <strong>gjennomføringsevne</strong> – hun har bevist at hun kan bygge en servicebedrift fra bunnen av. Begravelsebransjen krever emosjonell intelligens, logistikk-kompetanse og evne til å håndtere komplekse situasjoner – alt hun har trent på i 15 år.</p>
-
     </section>
     <section>
 
       <h2>Forretningsmodell</h2>
-
       <h3>Inntektsstrømmer</h3>
       <table>
 
         <thead>
-
           <tr>
-
             <th>Kilde</th>
-
             <th>% av omsetning (År 3)</th>
-
             <th>Margin</th>
-
           </tr>
-
         </thead>
-
         <tbody>
-
           <tr>
-
             <td>Seremonipakker</td>
-
             <td>75%</td>
-
             <td>38-45%</td>
-
           </tr>
-
           <tr>
-
             <td>Tilleggstjenester (blomster, catering, video)</td>
-
             <td>18%</td>
-
             <td>25-30%</td>
-
           </tr>
-
           <tr>
-
             <td>Dokumenthåndtering og juridisk støtte</td>
-
             <td>7%</td>
-
             <td>60-70%</td>
-
           </tr>
-
         </tbody>
-
       </table>
-
       <h3>Kundeanskaffelse</h3>
-
       <ul>
-
         <li><strong>Organisk søk (Google):</strong> 40% av leads – SEO-optimalisert nettside, transparent prising</li>
         <li><strong>Henvisninger fra leger/sykehus:</strong> 30% – partnerskap med helsetjenester</li>
 
         <li><strong>Muntlig omtale:</strong> 20% – fokus på eksepsjonell service</li>
-
         <li><strong>Betalt annonsering:</strong> 10% – Google Ads for spesifikke søkeord</li>
-
       </ul>
-
       <p class="assumption">CAC (Customer Acquisition Cost): 2,500 NOK per seremoni. LTV (Lifetime Value): 72,000 NOK (gjennomsnittlig seremonipris).</p>
-
       <h3>Operasjonell modell</h3>
-
       <p>Asset-light tilnærming: Leie av seremonilokale istedenfor kjøp. Samarbeid med eksterne leverandører for kister, transport og blomster. Dette reduserer CapEx betydelig og gir fleksibilitet.</p>
-
     </section>
     <section>
 
       <h2>Finansiell Analyse</h2>
-
       <h3>Markedsstørrelse (TAM/SAM/SOM)</h3>
       <div class="chart-container" id="marketSizeChart"></div>
 
@@ -581,12 +356,10 @@
       <h3>Tre-års Omsetningsprognose</h3>
 
       <div class="chart-container" id="revenueChart"></div>
-
       <p class="assumption"><strong>Konservativt:</strong> 80 seremonier/år (år 1) → 180 (år 3). <strong>Realistisk:</strong> 120 → 230. <strong>Optimistisk:</strong> 160 → 280.</p>
       <h3>Kostnadsstruktur</h3>
 
       <div class="chart-container" id="costChart"></div>
-
       <table>
         <thead>
 
@@ -594,183 +367,106 @@
             <th>Kategori</th>
 
             <th>År 1 (MNOK)</th>
-
             <th>År 2 (MNOK)</th>
-
             <th>År 3 (MNOK)</th>
-
           </tr>
-
         </thead>
-
         <tbody>
-
           <tr>
-
             <td><strong>COGS</strong> (kister, transport, leverandører)</td>
-
             <td>3.2</td>
-
             <td>5.4</td>
-
             <td>7.8</td>
-
           </tr>
-
           <tr>
-
             <td><strong>OPEX</strong> (lønn, markedsføring, lokale)</td>
-
             <td>2.8</td>
-
             <td>3.6</td>
-
             <td>4.4</td>
-
           </tr>
-
           <tr>
-
             <td><strong>CAPEX</strong> (utstyr, IT-systemer)</td>
-
             <td>0.6</td>
-
             <td>0.3</td>
-
             <td>0.2</td>
-
           </tr>
-
         </tbody>
-
       </table>
-
       <h3>Enhetsekonomi per seremoni</h3>
-
       <div class="chart-container" id="unitEconomicsChart"></div>
-
       <p class="assumption">Gjennomsnitts seremonipris: 72,000 NOK. Dekningsbidrag: 30,000 NOK etter variable kostnader.</p>
       <h3>Kontantstrøm og Runway</h3>
 
       <div class="chart-container" id="cashFlowChart"></div>
-
       <p><strong>Finansieringsbehov:</strong> 2,5 MNOK initialt kapital</p>
       <ul>
 
         <li>Oppstart og første 6 måneder: 1,8 MNOK</li>
-
         <li>Marketing og kundeanskaffelse: 0,4 MNOK</li>
-
         <li>Buffer (6 måneders drift): 0,3 MNOK</li>
-
       </ul>
-
       <p class="assumption">Break-even forventet Q3 år 2 ved realistisk scenario (180 seremonier/år).</p>
-
       <h3>Kritiske Antagelser og Risikoer</h3>
-
       <ul>
-
         <li><strong>Gjennomsnittlig seremonipris 72,000 NOK:</strong> Basert på markedsundersøkelse og konkurrentanalyse. Risiko: Prispress fra etablerte aktører.</li>
         <li><strong>Konverteringsrate 18%:</strong> Fra leads til betalende kunder. Risiko: Lavere konvertering hvis merkevare ikke bygges raskt nok.</li>
 
         <li><strong>Bruttomargin 40%:</strong> Avhenger av effektive leverandøravtaler. Risiko: Prisøkninger fra underleverandører.</li>
-
         <li><strong>Organisk vekst 25% år-til-år:</strong> Forutsetter muntlig omtale og god Google-ranking. Risiko: Tregere enn forventet markedspenetrasjon.</li>
-
       </ul>
-
     </section>
-
     <section>
-
       <h2>Konklusjon og Ask</h2>
-
       <p>Ragnhilds Begravelsesbyrå adresserer et reelt marked med økende etterspørsel etter moderne, personlige begravelsestjenester. Vi søker <strong>2,5 MNOK i startkapital</strong> fra Innovasjon Norge for å:</p>
       <ol>
 
         <li>Etablere fysisk tilstedeværelse i Oslo (leie av seremonilokale)</li>
-
         <li>Ansette nøkkelpersonell (autorisert begravelsesbyrå, admin)</li>
-
         <li>Bygge digital plattform og markedsføring</li>
-
         <li>Oppnå break-even innen 18-24 måneder</li>
-
       </ol>
-
       <p><strong>Realistisk forventning:</strong> 12-15% årlig avkastning over 5 år, med potensial for ekspansjon til Bergen og Trondheim etter bevist konsept i Oslo.</p>
-
     </section>
-
   </main>
-
   <footer>
-
     <p><strong>Ragnhilds Begravelsesbyrå AS</strong></p>
-
     <p>Kontakt: ragnhild.larsen@ragnhilds.no | +47 950 12 345</p>
     <p>Forretningsplan generert med master.json v300.3.0 framework</p>
 
   </footer>
-
   <script>
-
     // Color palette from master.json design_system
-
     const colors = {
       primary: ['#DA7756', '#C15F3C', '#E89B7E', '#4A7C59', '#D97706'],
 
       neutral: { bg: '#FFFCF7', surface: '#F5F2ED', text: '#3D3929' }
-
     };
-
     // 1. Market Size Funnel Chart
-
     (function(){
-
       const el = document.getElementById('marketSizeChart');
       if (!el) return;
 
       const chart = echarts.init(el, null, {renderer: 'svg'});
-
       chart.setOption({
-
         title: { text: 'Markedsstørrelse (Norge Begravelsesbransjen)', left: 'center' },
-
         tooltip: { trigger: 'item', formatter: '{b}: {c} MNOK' },
         series: [{
 
           type: 'funnel',
-
           left: '10%',
-
           width: '80%',
-
           label: { formatter: '{b}\n{c} MNOK' },
-
           labelLine: { show: false },
-
           itemStyle: { borderColor: '#fff', borderWidth: 2 },
-
           data: [
-
             { value: 2600, name: 'TAM - Norge totalt', itemStyle: { color: colors.primary[0] } },
-
             { value: 520, name: 'SAM - Oslo-regionen', itemStyle: { color: colors.primary[1] } },
-
             { value: 18, name: 'SOM - Målbar andel år 3', itemStyle: { color: colors.primary[2] } }
-
           ]
-
         }]
-
       });
-
       window.addEventListener('resize', () => chart.resize());
-
     })();
-
     // 2. Revenue Projection Chart (3 scenarios)
     (function(){
 
@@ -778,87 +474,49 @@
       if (!el) return;
 
       const chart = echarts.init(el, null, {renderer: 'svg'});
-
       const years = ['År 1', 'År 2', 'År 3'];
-
       const conservative = [5.8, 10.2, 13.5];
-
       const realistic = [8.6, 13.8, 16.8];
       const optimistic = [11.5, 17.2, 20.4];
 
       chart.setOption({
-
         title: { text: 'Omsetningsprognoser (MNOK)', left: 'center' },
-
         tooltip: { trigger: 'axis' },
         legend: { top: 30, data: ['Konservativ', 'Realistisk', 'Optimistisk'] },
 
         grid: { left: 60, right: 60, bottom: 40, top: 80 },
-
         xAxis: { type: 'category', data: years },
-
         yAxis: { type: 'value', name: 'MNOK' },
-
         series: [
-
           {
-
             name: 'Konservativ',
-
             type: 'line',
-
             data: conservative,
-
             smooth: true,
-
             lineStyle: { color: colors.primary[3], type: 'dashed' },
-
             itemStyle: { color: colors.primary[3] }
-
           },
-
           {
-
             name: 'Realistisk',
-
             type: 'line',
-
             data: realistic,
-
             smooth: true,
-
             lineStyle: { color: colors.primary[0], width: 3 },
-
             itemStyle: { color: colors.primary[0] },
-
             areaStyle: { color: colors.primary[0], opacity: 0.1 }
-
           },
-
           {
-
             name: 'Optimistisk',
-
             type: 'line',
-
             data: optimistic,
-
             smooth: true,
-
             lineStyle: { color: colors.primary[4], type: 'dashed' },
-
             itemStyle: { color: colors.primary[4] }
-
           }
-
         ]
-
       });
-
       window.addEventListener('resize', () => chart.resize());
-
     })();
-
     // 3. Cost Structure Stacked Bar Chart
     (function(){
 
@@ -866,73 +524,42 @@
       if (!el) return;
 
       const chart = echarts.init(el, null, {renderer: 'svg'});
-
       const years = ['År 1', 'År 2', 'År 3'];
-
       chart.setOption({
-
         title: { text: 'Kostnadsstruktur (MNOK)', left: 'center' },
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+
         legend: { top: 30, data: ['COGS', 'OPEX', 'CAPEX'] },
 
         grid: { left: 60, right: 60, bottom: 40, top: 80 },
-
         xAxis: { type: 'category', data: years },
-
         yAxis: { type: 'value', name: 'MNOK' },
-
         series: [
-
           {
-
             name: 'COGS',
-
             type: 'bar',
-
             stack: 'total',
-
             data: [3.2, 5.4, 7.8],
-
             itemStyle: { color: colors.primary[0] }
-
           },
-
           {
-
             name: 'OPEX',
-
             type: 'bar',
-
             stack: 'total',
-
             data: [2.8, 3.6, 4.4],
-
             itemStyle: { color: colors.primary[1] }
-
           },
-
           {
-
             name: 'CAPEX',
-
             type: 'bar',
-
             stack: 'total',
-
             data: [0.6, 0.3, 0.2],
-
             itemStyle: { color: colors.primary[2] }
-
           }
-
         ]
-
       });
-
       window.addEventListener('resize', () => chart.resize());
-
     })();
-
     // 4. Unit Economics Waterfall Chart
     (function(){
 
@@ -940,60 +567,34 @@
       if (!el) return;
 
       const chart = echarts.init(el, null, {renderer: 'svg'});
-
       chart.setOption({
-
         title: { text: 'Enhetsekonomi per Seremoni (NOK)', left: 'center' },
-
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         grid: { left: 80, right: 80, bottom: 40, top: 60 },
 
         xAxis: {
-
           type: 'category',
-
           data: ['Inntekt', 'Variable kost.', 'Dekning', 'Faste kost.', 'Nettoresultat']
-
         },
-
         yAxis: { type: 'value', name: 'NOK' },
-
         series: [{
-
           type: 'bar',
-
           data: [
-
             { value: 72000, itemStyle: { color: colors.primary[3] } },
-
             { value: -42000, itemStyle: { color: colors.primary[4] } },
-
             { value: 30000, itemStyle: { color: colors.primary[0] } },
-
             { value: -18000, itemStyle: { color: colors.primary[4] } },
-
             { value: 12000, itemStyle: { color: colors.primary[3] } }
-
           ],
-
           label: {
-
             show: true,
-
             position: 'top',
-
             formatter: (params) => (params.value >= 0 ? '+' : '') + params.value.toLocaleString()
-
           }
-
         }]
-
       });
-
       window.addEventListener('resize', () => chart.resize());
-
     })();
-
     // 5. Cash Flow Chart
     (function(){
 
@@ -1001,11 +602,8 @@
       if (!el) return;
 
       const chart = echarts.init(el, null, {renderer: 'svg'});
-
       const months = ['M1', 'M3', 'M6', 'M9', 'M12', 'M15', 'M18', 'M21', 'M24', 'M27', 'M30', 'M33', 'M36'];
-
       const cumulative = [-2.5, -2.8, -3.2, -3.4, -3.2, -2.9, -2.4, -1.7, -0.8, 0.2, 1.4, 2.8, 4.5];
-
       chart.setOption({
         title: { text: 'Kumulativ Kontantstrøm (MNOK)', left: 'center' },
 
@@ -1013,63 +611,34 @@
         grid: { left: 60, right: 60, bottom: 40, top: 60 },
 
         xAxis: { type: 'category', data: months },
-
         yAxis: { type: 'value', name: 'MNOK' },
-
         series: [{
-
           name: 'Kumulativ CF',
-
           type: 'line',
-
           data: cumulative,
-
           smooth: true,
-
           lineStyle: { color: colors.primary[0], width: 2 },
-
           itemStyle: { color: colors.primary[0] },
-
           areaStyle: {
-
             color: {
-
               type: 'linear',
-
               x: 0, y: 0, x2: 0, y2: 1,
-
               colorStops: [
-
                 { offset: 0, color: 'rgba(218, 119, 86, 0.3)' },
-
                 { offset: 1, color: 'rgba(218, 119, 86, 0.05)' }
-
               ]
-
             }
-
           },
-
           markLine: {
-
             silent: true,
-
             lineStyle: { color: '#333', type: 'dashed' },
-
             data: [{ yAxis: 0, label: { formatter: 'Break-even' } }]
-
           }
-
         }]
-
       });
-
       window.addEventListener('resize', () => chart.resize());
-
     })();
-
   </script>
 </body>
 
 </html>
-

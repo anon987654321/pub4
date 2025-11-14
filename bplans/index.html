@@ -3,268 +3,432 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Business Plans - Innovasjon Norge</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+
         :root {
 
             --primary-color: #000000;
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --accent-color: #8a2be2;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         body {
+
             margin: 0;
 
             font-family: var(--font-family);
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
         }
+
         header {
+
             text-align: center;
 
             padding: 3rem 1rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
             color: white;
+
         }
+
         .logo {
+
             font-family: 'Black Han Sans', sans-serif;
 
             font-size: 3rem;
             margin-bottom: 0.5rem;
+
         }
+
         .subtitle {
+
             font-size: 1.2rem;
 
             opacity: 0.9;
         }
+
         main {
+
             max-width: 1200px;
 
             margin: 3rem auto;
             padding: 0 1rem;
+
         }
+
         .stats {
+
             display: grid;
 
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2rem;
+
             margin-bottom: 3rem;
+
         }
+
         .stat-card {
+
             background: #f8f9fa;
 
             padding: 1.5rem;
             border-radius: 8px;
+
             text-align: center;
+
         }
+
         .stat-value {
+
             font-size: 2.5rem;
 
             font-weight: bold;
             color: var(--accent-color);
+
         }
+
         .stat-label {
+
             font-size: 0.9rem;
 
             color: #666;
             margin-top: 0.5rem;
+
         }
+
         .plans-grid {
+
             display: grid;
 
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
+
             margin-top: 2rem;
+
         }
+
         .plan-card {
+
             background: white;
 
             border: 1px solid #e0e0e0;
             border-radius: 12px;
+
             padding: 2rem;
+
             transition: transform 0.3s, box-shadow 0.3s;
+
             cursor: pointer;
+
         }
+
         .plan-card:hover {
+
             transform: translateY(-5px);
 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
+
         .plan-name {
+
             font-size: 1.5rem;
 
             font-weight: bold;
             margin-bottom: 0.5rem;
+
             color: var(--primary-color);
+
         }
+
         .plan-sector {
+
             font-size: 0.9rem;
 
             color: #666;
             margin-bottom: 1rem;
+
         }
+
         .plan-tagline {
+
             font-size: 0.95rem;
 
             color: #444;
             margin-bottom: 1rem;
+
         }
+
         .plan-funding {
+
             font-size: 1.1rem;
 
             font-weight: 600;
             color: var(--accent-color);
+
             margin-top: 1rem;
+
         }
+
         .plan-link {
+
             display: inline-block;
 
             margin-top: 1rem;
             padding: 0.75rem 1.5rem;
+
             background: var(--accent-color);
+
             color: white;
+
             text-decoration: none;
+
             border-radius: 6px;
+
             transition: background 0.3s;
+
         }
+
         .plan-link:hover {
+
             background: #6a1bb2;
 
         }
         footer {
+
             text-align: center;
 
             padding: 2rem;
             margin-top: 4rem;
+
             background: #f8f9fa;
+
             color: #666;
+
         }
+
         @media (max-width: 768px) {
+
             .logo {
 
                 font-size: 2rem;
             }
+
             .plans-grid {
+
                 grid-template-columns: 1fr;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
+
         <div class="logo">Business Plans</div>
+
         <div class="subtitle">Innovasjon Norge Funding Applications</div>
+
     </header>
+
     <main>
+
         <div class="stats">
 
             <div class="stat-card">
                 <div class="stat-value">8</div>
+
                 <div class="stat-label">Business Plans</div>
+
             </div>
+
             <div class="stat-card">
+
                 <div class="stat-value">2.8M</div>
+
                 <div class="stat-label">Total Funding (NOK)</div>
+
             </div>
+
             <div class="stat-card">
+
                 <div class="stat-value">6</div>
+
                 <div class="stat-label">Sectors Covered</div>
+
             </div>
+
             <div class="stat-card">
+
                 <div class="stat-value">100%</div>
+
                 <div class="stat-label">Norwegian Content</div>
+
             </div>
+
         </div>
+
         <h2 style="margin-bottom: 1rem;">Available Business Plans</h2>
+
         <div class="plans-grid">
 
             <!-- SYRE -->
-
             <div class="plan-card">
                 <div class="plan-name">SYRE™</div>
+
                 <div class="plan-sector">Environment & Sustainability</div>
+
                 <div class="plan-tagline">Ultramoderne 3D-printede sko med bærekraftig teknologi</div>
+
                 <div class="plan-funding">NOK 250,000</div>
+
                 <a href="generated/syre.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- SPEIS -->
+
             <div class="plan-card">
 
                 <div class="plan-name">SPEIS</div>
                 <div class="plan-sector">Maritime + Defense</div>
+
                 <div class="plan-tagline">NATO Aurora skip + kampfly 7-10. generasjon</div>
+
                 <div class="plan-funding">NOK 500,000</div>
+
                 <a href="generated/speis.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- Norwegian Hedge -->
+
             <div class="plan-card">
 
                 <div class="plan-name">Norwegian Hedge</div>
                 <div class="plan-sector">Technology + Finance</div>
+
                 <div class="plan-tagline">Hedgefond med Ruby-drevne handelsbots og AI³ integrasjon</div>
+
                 <div class="plan-funding">NOK 300,000</div>
+
                 <a href="generated/norwegianhedge.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- pub.healthcare -->
+
             <div class="plan-card">
 
                 <div class="plan-name">pub.healthcare</div>
                 <div class="plan-sector">Health</div>
+
                 <div class="plan-tagline">Autonome parametriske sykehus - selvbyggende helseinfrastruktur</div>
+
                 <div class="plan-funding">NOK 500,000</div>
+
                 <a href="generated/pubhealthcare.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- Ragnhild -->
+
             <div class="plan-card">
 
                 <div class="plan-name">Ragnhild</div>
                 <div class="plan-sector">Social Innovation</div>
+
                 <div class="plan-tagline">Moderne begravelsesbyrå med Karaokekiste, Diskokiste og Klovnepallbærere</div>
+
                 <div class="plan-funding">NOK 150,000</div>
+
                 <a href="generated/ragnhild.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- Bergen Selvstyreparti -->
+
             <div class="plan-card">
 
                 <div class="plan-name">Bergen Selvstyreparti</div>
                 <div class="plan-sector">Civic Tech</div>
+
                 <div class="plan-tagline">Blockchain-basert lokalt styresett og transparent beslutningstaking</div>
+
                 <div class="plan-funding">NOK 200,000</div>
+
                 <a href="generated/govt_bergen.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- NATO Aurora -->
+
             <div class="plan-card">
 
                 <div class="plan-name">NATO Aurora</div>
                 <div class="plan-sector">Maritime + Defense</div>
+
                 <div class="plan-tagline">Arktiske dominanseskip som overgår russiske Arktika-klasse</div>
+
                 <div class="plan-funding">NOK 500,000</div>
+
                 <a href="generated/nato.html" class="plan-link">View Plan →</a>
+
             </div>
+
             <!-- AI³ -->
+
             <div class="plan-card">
 
                 <div class="plan-name">AI³</div>
                 <div class="plan-sector">Energy & Environment + Aerospace</div>
+
                 <div class="plan-tagline">Ruby-drevet 3D-printing for romfart og fusion-propulsion</div>
+
                 <div class="plan-funding">NOK 400,000</div>
+
                 <a href="generated/ai3.html" class="plan-link">View Plan →</a>
+
             </div>
+
         </div>
+
     </main>
+
     <footer>
+
         <p><strong>Total Funding Request:</strong> NOK 2,800,000</p>
 
         <p>Generated: October 2025 | Target: innovasjonnorge.no</p>
         <p>All content in Norwegian | Compliant with Innovation Norway requirements</p>
+
     </footer>
+
 </body>
+
 </html>
+

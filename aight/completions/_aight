@@ -3,124 +3,214 @@
 
 # Follows master.json v502.0.0 principles: modern zsh patterns, evidence-based design
 #
+
 # Installation:
+
 # 1. Copy this file to your zsh completions directory:
+
 #    mkdir -p ~/.zsh/completions
+
 #    cp _aight ~/.zsh/completions/
+
 # 2. Add to your .zshrc:
+
 #    fpath=(~/.zsh/completions $fpath)
+
 #    autoload -Uz compinit && compinit
+
 # 3. Reload shell or run: source ~/.zshrc
+
 _aight() {
+
   local -a commands
 
   commands=(
     'repl:Start interactive REPL with LLM integration (default)'
+
     'starship:Generate Starship prompt configuration'
+
     'completions:Install zsh completions'
+
   )
+
   local -a global_options
+
   global_options=(
 
     '(-r --repl)'{-r,--repl}'[Start interactive REPL (default)]'
     '(-s --starship)'{-s,--starship}'[Generate Starship configuration]'
+
     '(-c --completions)'{-c,--completions}'[Install zsh completions]'
+
     '(-m --model)'{-m,--model}'[Set LLM model]:model:(gpt-4 gpt-3.5-turbo claude-3-opus claude-3-sonnet)'
+
     '(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
+
     '(-h --help)'{-h,--help}'[Show help message]'
+
   )
+
   # REPL commands (available within REPL session)
+
   local -a repl_commands
 
   repl_commands=(
     '.help:Show available REPL commands'
+
     '.explain:Ask LLM to explain last result'
+
     '.refactor:Get refactoring suggestions for code'
+
     '.test:Generate tests for code'
+
     '.doc:Generate documentation for code'
+
     '.security:Security analysis of code'
+
     '.performance:Performance suggestions for code'
+
     '.history:Show command history'
+
     '.clear:Clear context and reset cognitive load'
+
     '.context:Show current session context'
+
     '.model:Change LLM model'
+
     '.exit:Exit REPL session'
+
   )
+
   # Context-aware completion
+
   local curcontext="$curcontext" state line
 
   typeset -A opt_args
   _arguments -C \
+
     $global_options \
 
     '1: :->command' \
     '*::arg:->args'
+
   case $state in
+
     command)
 
       _describe -t commands 'aight command' commands
       ;;
+
     args)
+
       case $line[1] in
+
         repl)
+
           _message 'Start REPL - no additional arguments needed'
+
           ;;
+
         starship)
+
           _message 'Generate Starship config - no additional arguments needed'
+
           ;;
+
         completions)
+
           _message 'Install completions - no additional arguments needed'
+
           ;;
+
       esac
+
       ;;
+
   esac
+
 }
+
 # Modern zsh completion features
+
 _aight_models() {
 
   local -a models
   models=(
+
     'gpt-4:OpenAI GPT-4 (most capable)'
+
     'gpt-3.5-turbo:OpenAI GPT-3.5 Turbo (fast and cost-effective)'
+
     'claude-3-opus:Anthropic Claude 3 Opus (highest intelligence)'
+
     'claude-3-sonnet:Anthropic Claude 3 Sonnet (balanced)'
+
     'claude-3-haiku:Anthropic Claude 3 Haiku (fastest)'
+
   )
+
   _describe -t models 'LLM model' models
+
 }
+
 # Cache completion results for performance
+
 _aight_cache_policy() {
 
   # Rebuild cache if older than 1 day
   local -a oldp
+
   oldp=( "$1"(Nm+1) )
+
   (( $#oldp ))
+
 }
+
 # Enable completion caching
+
 if (( $+functions[_aight] )); then
 
   compdef _aight aight
 fi
+
 # Additional completion for REPL commands when in REPL context
+
 _aight_repl() {
 
   local -a repl_cmds
   repl_cmds=(
+
     '.help'
+
     '.explain'
+
     '.refactor'
+
     '.test'
+
     '.doc'
+
     '.security'
+
     '.performance'
+
     '.history'
+
     '.clear'
+
     '.context'
+
     '.model'
+
     '.exit'
+
   )
+
   _multi_parts . repl_cmds
+
 }
+
 # Main completion dispatcher
+
 _aight "$@"
 

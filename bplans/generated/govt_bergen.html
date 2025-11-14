@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Bergen Selvstyreparti - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js for Data Visualization -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
     <style>
@@ -17,211 +22,327 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 Bergen Selvstyreparti
+
             </div>
+
         </div>
+
         <div class="header-text">
 
             Blockchain-basert lokalt styresett og transparent beslutningstaking<br>
             Sektor: Civic Tech
+
         </div>
+
     </header>
+
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>Bergen Selvstyreparti skal demokratisere kommunalt styresett gjennom teknologi. Vi tror at hver innbygger skal ha direkte innflytelse over lokalpolitiske beslutninger, ikke bare hvert 4. år.</p>
+
             <h3>Misjon</h3>
+
             <p>Utvikle og implementere en blockchain-basert governance-plattform som gir bergensere direkte stemmerett i kommunale saker. Full transparens i budsjettbruk og beslutningstaking.</p>
 
             <h3>Innovasjon</h3>
@@ -232,69 +353,58 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 15.0 milliarder</li>
                 <li><strong>Norden:</strong> NOK 50.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 15%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>Bergenske innbyggere (287,000) som ønsker mer direkte demokrati</li>
                 <li>Andre norske kommuner (356 totalt) som kan adoptere plattformen</li>
 
                 <li>Nordiske byer interessert i demokrati-innovasjon</li>
-
                 <li>Politiske partier som ønsker medlemsengasjement-verktøy</li>
-
                 <li>Internasjonale governance-organisasjoner (UNDP, World Bank)</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Tradisjonell representativ demokrati (4-års valgsyklus, begrenset deltakelse)</li>
                 <li>Innbyggerinitiativ-plattformer (Change.org, petisjon.no) - ingen reell beslutningsmakt</li>
 
                 <li>Estnias e-governance (digitalt, men ikke blockchain-basert eller direkte demokrati)</li>
-
                 <li>Barcelona En Comú (bruker Decidim, men ikke blockchain)</li>
-
                 <li>Aragon DAO framework (generisk, ikke kommunetilpasset)</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>Første blockchain-baserte kommunestyret i verden - global media attention</li>
                 <li>Kryptografisk sikker og anonym stemming (ingen coercion eller vote buying)</li>
 
                 <li>Smart contracts sikrer automatisk utførelse av vedtak (ingen byråkratisk forsinkelse)</li>
-
                 <li>AI policy-analyse gir innbyggere forståelig sammendrag av komplekse saker</li>
-
                 <li>Full budsjett-transparens i sanntid - hver krone sporet på blockchain</li>
-
                 <li>Åpen kildekode - andre kommuner kan adoptere gratis (vi tjener på support/hosting)</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>Plattformen bygger på Ethereum blockchain med Layer 2 scaling (Polygon). Smart contracts skrevet i Solidity. Frontend er Ruby on Rails med React. BankID-integrasjon for sikker autentisering. IPFS for decentralisert dokumentlagring.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -308,36 +418,34 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>Bergen kommune: Hosting og support fee NOK 5M årlig (vs. NOK 50M+ tradisjonelle IT-systemer)</li>
                 <li>Lisensering til andre norske kommuner: NOK 500k setup + NOK 200k årlig per kommune</li>
 
                 <li>Konsulentarbeid for demokrati-innovasjon: NOK 2M per prosjekt</li>
-
                 <li>Internasjonale organisasjoner (UNDP, World Bank): NOK 10M per land-deployment</li>
-
                 <li>Training og workshops for politiker og innbyggere: NOK 500k årlig</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Break-even ved 5 kommuner + Bergen-kontrakt (år 2). Ved 30 kommuner (10% av Norge): NOK 11M årlige inntekter. Internasjonal skalering kan nå NOK 100M+ ved deployments i 10+ land.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Plattformen er designet for millioner av brukere (Polygon håndterer 7,000 tx/sec). Hver kommune er en separat smart contract instance. Teknisk skalering billig (AWS + Polygon). Hovedutfordring er juridisk tilpasning per jurisdiksjon.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Finansiering sikret. Fullføre juridisk godkjenning fra Bergen kommune og Kommunaldepartementet. Skalere plattform til 287,000 brukere.</p>
 
             <h3>Q2 2026</h3>
@@ -354,10 +462,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 400,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -365,67 +475,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 200,000</li>
                 <li><strong>Venture Nok:</strong> NOK 150,000</li>
+
                 <li><strong>Kommunal Tilskudd Nok:</strong> NOK 50,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>Utvikling</td>
 
                         <td>150,000</td>
                         <td>37.5%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Sikkerhet Audit</td>
 
                         <td>80,000</td>
                         <td>20.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Juridisk</td>
 
                         <td>60,000</td>
                         <td>15.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Markedsfoering</td>
 
                         <td>50,000</td>
                         <td>12.5%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>40,000</td>
                         <td>10.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>20,000</td>
                         <td>5.0%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Kari Normann - CEO & Political Strategist</h3>
+
             <p>10 år som kommunepolitiker i Bergen (Miljøpartiet). Master i Statsvitenskap fra UiB. Erfaring med byråkrati og beslutningsprosesser. Passionate om direkte demokrati.</p>
 
             <h3>Bjørn Kristiansen - CTO & Blockchain Architect</h3>
@@ -441,9 +577,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>Reduserer papirforbruk i kommunal administrasjon med 90% (digital-first approach). Blockchain-transaksjonskostnader lavere enn tradisjonelle IT-systemer (Polygon PoS vs. data centers).</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -457,129 +593,191 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Brukeradopsjon (tusen)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="adoptionChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Beslutningshastighet (dager)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="efficiencyChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Kostnadsreduksjon (MNOK årlig)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="savingsChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Chart.js Configurations -->
-
     <script>
-
         {
-
             const ctx = document.getElementById('adoptionChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'line',
 
                 data: {
                     labels: ["Mnd 1","Mnd 3","Mnd 6","Mnd 9","Mnd 12"],
+
                     datasets: [
+
                         {
+
                             label: 'Aktive brukere',
 
                             data: [5,25,75,150,250],
                             borderColor: '#00c9ff',
+
                             backgroundColor: '#00c9ff33',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('efficiencyChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["Tradisjonelt","Bergen Selvstyreparti"],
+
                     datasets: [{
+
                         label: 'Beslutningshastighet (dager)',
+
                         data: [90,7],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('savingsChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["IT-systemer","Administrasjon","Konsulenter","Totalt"],
+
                     datasets: [{
+
                         label: 'Kostnadsreduksjon (MNOK årlig)',
+
                         data: [40,15,10,65],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
     </script>
 
 </body>
-
 </html>
-

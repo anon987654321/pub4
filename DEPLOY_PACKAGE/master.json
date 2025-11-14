@@ -1,0 +1,459 @@
+{
+  "version": "28.0.0",
+
+  "purpose": "surgical refactoring through precise questioning",
+
+  "updated": "2025-11-14",
+
+  "llm_target": "github_copilot_cli",
+
+  "principles": {
+    "precision": "maximum meaning minimum words",
+
+    "timing": "question at decision points",
+
+    "expansion": "only when ambiguity exists",
+
+    "silence": "no question if known",
+
+    "actionable": "answer drives next step",
+
+    "fail_fast": "ask early block late",
+
+    "yagni": "no preemptive questions",
+
+    "dry": "single source truth",
+
+    "schema_first": "validate before acting",
+
+    "observability": "trace question answer effect",
+
+    "modularity": "split large files into focused modules"
+
+  },
+
+  "engine": {
+    "scope": "files repos self user",
+
+    "phases": "validate sense question decide act audit",
+
+    "convergence": "zero questions zero violations audit clean",
+
+    "question_engine": {
+      "trigger": "ambiguity branch risk external_input",
+
+      "timing": "before irreversible action",
+
+      "format": "{prompt} [{default}]",
+
+      "answers": ["Y", "N", "skip", "abort"],
+
+      "non_interactive": {
+
+        "yes": "answer Y to all",
+
+        "apply": "yes plus execute",
+
+        "answers_file": "load qe_id answer map"
+
+      }
+
+    },
+
+    "autoiteration": {
+      "layers": "per_principle cross_principle system",
+
+      "termination": "diminishing_returns",
+
+      "stop_on_risk": "high"
+
+    },
+
+    "adversarial": {
+      "questions": [
+
+        "what if user rejects backup",
+
+        "can this run headless on CI",
+
+        "does schema drift break system",
+
+        "does audit capture full context",
+
+        "what radical changes improve elegance without omitting logic",
+
+        "how can this be more minimal while preserving function"
+
+      ]
+
+    },
+
+    "intelligence": {
+      "analysis": "word_by_word semantic_understanding fresh_start",
+
+      "learning": "adaptive pattern_sharing anti_pattern_avoidance",
+
+      "decisions": {
+
+        "weights": [0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
+
+        "criteria": "clarity simplicity delight impact"
+
+      }
+
+    }
+
+  },
+
+  "question_catalog": {
+    "qe_overwrite": {
+
+      "prompt": "file exists {path} overwrite",
+
+      "default": "N",
+
+      "risk": "high",
+
+      "require_manual": true
+
+    },
+
+    "qe_backup": {
+
+      "prompt": "backup {path} bak created keep",
+
+      "default": "Y",
+
+      "risk": "low"
+
+    },
+
+    "qe_apply": {
+
+      "prompt": "apply changes now",
+
+      "default": "N",
+
+      "risk": "high",
+
+      "require_manual": true
+
+    },
+
+    "qe_self": {
+
+      "prompt": "refactor this file only",
+
+      "default": "Y",
+
+      "risk": "medium"
+
+    },
+
+    "qe_recursive": {
+
+      "prompt": "include subdirectories",
+
+      "default": "N",
+
+      "risk": "medium"
+
+    }
+
+  },
+
+  "stack": {
+    "reasoning": "ruby",
+
+    "files": "zsh",
+
+    "banned": ["python", "bash", "sed", "awk", "grep", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "cat", "echo", "find"],
+
+    "zsh_patterns": {
+
+      "string_replace": "${var//find/replace}",
+
+      "remove_prefix": "${var#prefix}",
+
+      "remove_suffix": "${var%suffix}",
+
+      "uppercase": "${(U)var}",
+
+      "lowercase": "${(L)var}",
+
+      "capitalize": "${(C)var}",
+
+      "trim_leading": "${var##[[:space:]]##}",
+
+      "trim_trailing": "${var%%[[:space:]]##}",
+
+      "array_filter": "${(M)array:#*pattern*}",
+
+      "array_exclude": "${array:#*pattern*}",
+
+      "array_unique": "${(u)array[@]}",
+
+      "array_sort": "${(o)array[@]}",
+
+      "array_reverse": "${(Oa)array[@]}",
+
+      "array_join": "${(j:,:)array}",
+
+      "split_string": "${(s:,:)string}",
+
+      "file_read": "$(<file)",
+
+      "lines_to_array": "${(@f)$(<file)}",
+
+      "line_count": "${#${(@f)$(<file)}}",
+
+      "word_count": "${#${(@)${(f)$(<file)}}}",
+
+      "glob_files": "**/*.ext",
+
+      "recent_files": "**/*(.om[1,50])",
+
+      "dirs_only": "**/*(D/)",
+
+      "files_only": "**/*(.)",
+
+      "executable_files": "**/*(*)",
+
+      "symlinks": "**/*(@)"
+
+    },
+
+    "zsh_replacements": {
+
+      "cat file": "$(<file)",
+
+      "echo text": "print text",
+
+      "grep pattern": "${(M)lines:#*pattern*}",
+
+      "sed s/a/b/": "${var//a/b}",
+
+      "awk {print $1}": "${line%% *}",
+
+      "tr -d \\r": "${var//$'\\r'}",
+
+      "head -n 10": "${lines[1,10]}",
+
+      "tail -n 10": "${lines[-10,-1]}",
+
+      "wc -l": "${#lines}",
+
+      "sort": "${(o)lines[@]}",
+
+      "uniq": "${(u)lines[@]}",
+
+      "basename": "${path:t}",
+
+      "dirname": "${path:h}",
+
+      "find . -name": "**/*.pattern"
+
+    }
+
+  },
+
+  "interface": {
+    "display": "spinner unix trace",
+
+    "completion": "diff approve show",
+
+    "cli": {
+
+      "yes": "answer Y to non high risk",
+
+      "apply": "run and apply implies yes",
+
+      "dry_run": "default show diff only",
+
+      "answers_file": "path to JSON answers"
+
+    }
+
+  },
+
+  "safety": {
+    "no_write_by_default": true,
+
+    "require_manual_high_risk": true,
+
+    "lock_file": "surgical_refactor_lock",
+
+    "lock_timeout": 300
+
+  },
+
+  "formatting": {
+    "rules": "multiline_over_oneliners minimize_variables sorted_keys two_space_indent",
+
+    "application": "all_targets_identical_treatment"
+
+  },
+
+  "rails8": {
+    "solid_stack": {
+
+      "queue": "solid_queue replaces sidekiq redis",
+
+      "cache": "solid_cache replaces redis memcached",
+
+      "cable": "solid_cable replaces redis actioncable"
+
+    },
+
+    "authentication": "built_in generator replaces devise",
+
+    "deployment": {
+
+      "tool": "kamal2",
+
+      "proxy": "thruster replaces nginx"
+
+    },
+
+    "asset_pipeline": "propshaft replaces sprockets",
+
+    "pwa": {
+
+      "manifest": "native helpers",
+
+      "service_worker": "integrated support",
+
+      "offline": "built_in patterns"
+
+    }
+
+  },
+
+  "modern_stack": {
+    "stimulus": {
+
+      "components": "stimulus-components.com",
+
+      "patterns": "intersection_observer composable_controllers"
+
+    },
+
+    "stimulus_reflex": {
+
+      "version": "latest",
+
+      "patterns": ["InfiniteScrollReflex", "FilterableReflex", "TemplateReflex"],
+
+      "cable_ready": "required companion"
+
+    },
+
+    "hotwire": {
+
+      "turbo": "8.0+ with morphing",
+
+      "turbo_streams": "real_time updates",
+
+      "frames": "lazy_loading"
+
+    },
+
+    "langchain": {
+
+      "gem": "langchainrb",
+
+      "rails_integration": "langchainrb_rails",
+
+      "vector_db": "pgvector postgresql",
+
+      "features": ["RAG", "semantic_search", "embeddings", "agents"]
+
+    }
+
+  },
+
+  "copilot_workflow": {
+    "intent_reporting": "always_on_first_tool_call",
+
+    "tool_efficiency": "batch_independent_operations",
+
+    "response_style": "concise_direct_surgical",
+
+    "validation": "only_on_failure_or_explicit_request",
+
+    "context_scope": "current_working_directory_first"
+
+  },
+
+  "file_organization": {
+    "max_lines": 500,
+
+    "split_threshold": 400,
+
+    "module_pattern": "@module_name.sh",
+
+    "shared_dir": "__shared",
+
+    "naming": "descriptive_underscore_lowercase"
+
+  },
+
+  "deployment": {
+    "kamal2_thruster": {
+
+      "platform": "linux docker kubernetes",
+
+      "proxy": "thruster http2 asset_caching",
+
+      "orchestration": "kamal2 docker_compose",
+
+      "use_case": "cloud vps containers"
+
+    },
+
+    "openbsd_native": {
+
+      "platform": "openbsd bare_metal",
+
+      "stack": "pf relayd bin_rails rails",
+
+      "architecture": "internet→pf→relayd_https→bin_rails→rails_app",
+
+      "proxy": "relayd tls_termination native_c",
+
+      "app_server": "bin_rails server falcon async",
+
+      "command": "bin/rails server -b 0.0.0.0 -p PORT",
+
+      "tls": "acme-client letsencrypt native",
+
+      "dns": "nsd dnssec authoritative",
+
+      "firewall": "pf stateful bruteforce_detection",
+
+      "flow": "relayd_port_443→bin_rails_localhost_port→rails_application",
+
+      "advantages": [
+
+        "pledge unveil syscall_restrictions",
+
+        "no_docker zero_containers",
+
+        "minimal_attack_surface",
+
+        "native_tools_battle_tested",
+
+        "rcctl_service_management",
+
+        "bin_rails_native_no_gems_wrapper"
+
+      ],
+
+      "use_case": "security_critical high_performance openbsd"
+
+    }
+
+  }
+
+}
+

@@ -3,152 +3,302 @@
 
     "name": "pub.healthcare",
     "tagline": "Autonome parametriske sykehus - selvbyggende helseinf rastruktur",
+
     "logo_text": "pub.healthcare",
+
     "trademark": false,
+
     "sector": "Health",
+
     "funding_nok": 500000
+
   },
+
   "sammendrag": {
+
     "visjon": "pub.healthcare skal revolusjonere global helseinf rastruktur ved å gjøre sykehus til selvkonstruerende, adaptive systemer. Som biologiske organismer som tilpasser seg miljøet, skal våre sykehus vokse, modifisere seg og optimalisere sin egen drift.",
+
     "misjon": "Utvikle autonome parametriske sykehus som kan deployes globalt på 90 dager - fra tomt mark til fullt operativt anlegg. Kombinerer robotisk assembly, AI-drevet pasientflyt og energi-selvforsyning.",
+
     "innovation": "Parametrisk arkitektur med Grasshopper/Rhino, robotisk montasje av modulære elementer, AI-styrt pasientlogistikk, solcelle-integrert fasade og geotermisk energi.",
+
     "customer_benefit": "Utviklingsland får verdenklasse sykehus til 40% av tradisjonell kostnad. Katastrofeområder får midlertidig kapasitet på dager, ikke måneder. Norge eksporterer high-tech helseteknologi."
+
   },
+
   "markedsanalyse": {
+
     "marked_norge_nok": "5000000000",
+
     "marked_norden_nok": "20000000000",
+
     "vekst_prosent": 12,
+
     "customer_segments": [
+
       "WHO og FN for humanitære krisesituasjoner (flyktningeleire, katastrofeområder)",
+
       "Utviklingsland i Afrika og Asia med kritisk mangel på helseinfrastruktur",
+
       "Nordiske kommuner som trenger midlertidige sykehusutvidelser",
+
       "Private healthcare providers i vekstmarkeder (India, Brasil, Nigeria)",
+
       "Militære organisasjoner (NATO field hospitals)"
+
     ],
+
     "konkurranse": [
+
       "Tradisjonelle sykehusbyggere (5-10 år byggetid, USD 500M+ per sykehus)",
+
       "Modulære containerbaserte løsninger (begrenset funksjonalitet, ikke selvforsynte)",
+
       "UNICEF/UNHCR teltbaserte klinikker (ikke permanent, begrensede fasiliteter)",
+
       "Kinesiske prefab hospitals (Huoshenshan - 10 dager men ikke gjenbrukbart)"
+
     ],
+
     "konkurransefortrinn": [
+
       "90-dagers deployment vs. 5-10 år for tradisjonelle sykehus",
+
       "60% lavere kostnad: USD 150M for 200-sengs sykehus vs. USD 400M tradisjonelt",
+
       "100% energi-selvforsynt via integrert solcelle-fasade og geotermisk",
+
       "AI-drevet pasientflyt reduserer ventetid med 40%",
+
       "Parametrisk design tillater tilpasning til lokale klimaforhold og helsekriser",
+
       "Robotisk assembly eliminerer 80% av manuelle byggefeil"
+
     ]
+
   },
+
   "teknologi": {
+
     "beskrivelse": "pub.healthcare benytter Grasshopper/Rhino for parametrisk generering av sykehuslayouter basert på pasientvolum, medisinske spesialiteter og tomteforhold. ABB roboter monterer prefabrikerte moduler (operasjonsstuer, sengerom, imaging). AI-system styrer pasientflyt, ressursallokering og vedlikehold.",
+
     "unique_innovation": "Self-constructing architecture: Roboter bruker LIDAR og computer vision for å posisjonere moduler med millimeter-presisjon. AI lærer fra pasientdata for å optimalisere romallokering over tid - sykehuset 'vokser' nye avdelinger basert på behov.",
+
     "ip_status": "Norsk patent søkt for 'Autonomous Hospital Assembly System' (202400789). EU-patent pending. Samarbeidsavtale med ABB Robotics og Siemens Healthineers. Trademark pub.healthcare™ registrert.",
+
     "utviklingsstadium": "Prototype 50-sengs modul testet i Tromsø. Robotisk assembly demonstrert for 10 moduler. AI pasientflyt-system live på Haukeland Universitetssykehus (pilot). Krever full-skala deployment for validering."
+
   },
+
   "forretningsmodell": {
+
     "inntektskilder": [
+
       "Direkte salg av komplette sykehus: USD 100-200M per 200-sengs enhet",
+
       "Leasing modell for midlertidige sykehus: USD 500k per måned for 100-sengs",
+
       "Vedlikehold og oppgraderinger: 8% av initial kostnad årlig",
+
       "AI-software lisensiering til eksisterende sykehus: NOK 2M per år per sykehus",
+
       "Consulting for parametrisk helseinfrastruktur: NOK 5M per prosjekt"
+
     ],
+
     "loennsomhet": "Første sykehus-salg sikrer profitabilitet (margin 25%). Break-even ved 3 solgte enheter. Vedlikehold og software-lisenser gir stabil recurring revenue (NOK 50M+ årlig ved 25 aktive sykehus).",
+
     "skalerbarhet": "Modulær design tillater produksjon i flere fabrikker samtidig. Robotisk assembly kan skaleres til 100+ enheter årlig. AI-system forbedres med hver deployment."
+
   },
+
   "veikart": {
+
     "q1_2026": "Finansiering sikret. Fullføre 100-sengs prototype i Tromsø. Etablere partnerskap med WHO og Leger Uten Grenser.",
+
     "q2_2026": "Deploy første midlertidige sykehus i samarbeid med UNHCR (flyktningeleir i Uganda). Dokumentere deployment-tid og kostnader.",
+
     "q3_2026": "Sikre første kommersielle kontrakt (India, 200-sengs hospital). Starte konstruksjon av produksjonsfasilitet i Stavanger.",
+
     "q4_2026": "Levere Uganda-prosjekt. Starte India-deployment. Ansette 100 ingeniører og teknikere.",
+
     "2027": "Fullføre 5 sykehusprosjekter globalt. Etablere produksjonshub i Kenya for afrikansk marked. Nå NOK 2 milliarder i kontrakter."
+
   },
+
   "finansiering": {
+
     "total_behov_nok": 1000000,
+
     "innovasjon_norge_nok": 500000,
+
     "venture_nok": 300000,
+
     "who_grant_nok": 200000,
+
     "allokering": {
+
       "prototype": 300000,
+
       "robotikk": 250000,
+
       "ai_utvikling": 150000,
+
       "sertifisering": 100000,
+
       "loenn": 150000,
+
       "driftskapital": 50000
+
     }
+
   },
+
   "team": [
+
     {
+
       "navn": "Dr. Anne Kristoffersen",
+
       "rolle": "CEO & Chief Medical Officer",
+
       "erfaring": "20 år som kirurg, leder av Traumesenteret OUS. Master i Hospital Management fra Harvard. Erfaring fra Leger Uten Grenser i 5 konfliktområder."
+
     },
+
     {
+
       "navn": "Petter Sørensen",
+
       "rolle": "CTO & Lead Architect",
+
       "erfaring": "15 år i parametrisk arkitektur, tidligere hos Zaha Hadid Architects. Master i Computational Design fra MIT. Ekspert i Grasshopper/Rhino og robotisk fabrication."
+
     },
+
     {
+
       "navn": "Dr. Ibrahim Hassan",
+
       "rolle": "Chief AI Officer",
+
       "erfaring": "PhD i Healthcare AI fra Stanford. 8 år hos Siemens Healthineers utviklet patient flow optimization algorithms. Publisert 20+ papers om AI i helsesektor."
+
     },
+
     {
+
       "navn": "Linda Berg",
+
       "rolle": "COO & Global Deployment Director",
+
       "erfaring": "12 år i internasjonal prosjektledelse hos UNHCR. Bygget 30+ leirer i Afrika og Midtøsten. Master i International Development fra LSE."
+
     }
+
   ],
+
   "baerekraft": {
+
     "miljo": "100% energi-selvforsynte sykehus reduserer avhengighet av fossil fuel. Integrert vannrensesystem resirkulerer 90% av vann. Solcelle-fasade genererer 150% av energibehov (overskudd til lokalt nett). Modulær design tillater gjenbruk og relokalisering.",
+
     "sosialt": "Gir tilgang til verdenklasse helsehjelp for 10+ millioner mennesker i underutviklede områder. Reduserer mødredødelighet og spedbarnsdødelighet med 50% i deployment-områder. Ansetter og trener lokale fagarbeidere (200+ per prosjekt).",
+
     "oekonomisk": "Skaper 1000+ direkte jobber i Norge innen engineering og produksjon. Eksportinntekter NOK 5+ milliarder årlig ved full drift. Reduserer helsekostnader i mottagerlandene med 30% via preventiv AI-diagnostikk.",
+
     "un_sdgs": [3, 9, 11, 13]
+
   },
+
   "sections": [
+
     {"id": "sammendrag", "title": "Sammendrag"},
+
     {"id": "markedsanalyse", "title": "Markedsanalyse"},
+
     {"id": "teknologi", "title": "Teknologi og Innovasjon"},
+
     {"id": "forretningsmodell", "title": "Forretningsmodell"},
+
     {"id": "veikart", "title": "Utviklingsveikart"},
+
     {"id": "finansiering", "title": "Finansieringsbehov"},
+
     {"id": "team", "title": "Team og Kompetanse"},
+
     {"id": "baerekraft", "title": "Bærekraft og Samfunnsansvar"}
+
   ],
+
   "charts": [
+
     {
+
       "id": "deploymentChart",
+
       "type": "bar",
+
       "title": "Deployment Tid (dager)",
+
       "data": {
+
         "labels": ["pub.healthcare", "Container Modular", "Kinesisk Prefab", "Tradisjonelt"],
+
         "values": [90, 180, 10, 1825]
+
       }
+
     },
+
     {
+
       "id": "savingsChart",
+
       "type": "bar",
+
       "title": "Kostnadsbesparelse (MUSD)",
+
       "data": {
+
         "labels": ["Tradisjonelt", "pub.healthcare"],
+
         "values": [400, 150]
+
       }
+
     },
+
     {
+
       "id": "capacityChart",
+
       "type": "line",
+
       "title": "Pasienter Behandlet (tusen per år)",
+
       "data": {
+
         "labels": ["År 1", "År 2", "År 3", "År 4", "År 5"],
+
         "datasets": [
+
           {"label": "Antall pasienter", "data": [50, 150, 300, 500, 800], "color": "#00c9ff"}
+
         ]
+
       }
+
     }
+
   ],
+
   "carousel": {
+
     "enabled": false,
+
     "images": []
+
   }
+
 }
+

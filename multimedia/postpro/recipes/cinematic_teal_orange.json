@@ -3,15 +3,28 @@
 
   "stock": "kodak_vision3",
   "effects": {
+
     "teal_orange": 1.2,
+
     "bloom_pro": 0.8,
+
     "grain": 0.35,
+
     "highlight_roll": 0.75,
+
     "micro_contrast": 0.3,
+
     "shadow_lift": 0.15
+
   },
+
   "color": {
+
     "temp": 4800,
+
     "intensity": 0.8
+
   }
+
 }
+

@@ -3,36 +3,70 @@
 
     "default_settings": {
       "response_delay": 1000,
+
       "max_message_length": 2000,
+
       "rate_limit": {
+
         "messages_per_minute": 60,
+
         "burst_limit": 10
+
       }
+
     },
+
     "platforms": {
+
       "discord": {
+
         "enabled": true,
+
         "bot_token": "${DISCORD_BOT_TOKEN}",
+
         "command_prefix": "!"
+
       },
+
       "snapchat": {
+
         "enabled": true,
+
         "api_key": "${SNAPCHAT_API_KEY}"
+
       },
+
       "4chan": {
+
         "enabled": false,
+
         "note": "Anonymous platform - use with caution"
+
       },
+
       "onlyfans": {
+
         "enabled": false,
+
         "api_key": "${ONLYFANS_API_KEY}"
+
       },
+
       "reddit": {
+
         "enabled": true,
+
         "client_id": "${REDDIT_CLIENT_ID}",
+
         "client_secret": "${REDDIT_CLIENT_SECRET}",
+
         "user_agent": "AI3ChatBot/1.0"
+
       }
+
     }
+
   }
+
 }
+

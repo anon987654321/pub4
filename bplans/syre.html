@@ -5,1043 +5,566 @@
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>SYRE™ - Forretningsplan</title>
-
     <!-- Google Fonts -->
-
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
     <!-- Swiper CSS for Carousel -->
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
-
     <!-- ECharts for Professional Data Visualization -->
-
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-
     <style>
-
         /* CSS Variables */
-
         :root {
-
             --primary-color: #000000;
-
             --background-color: #ffffff;
-
             --text-color: #333333;
-
             --font-family: 'Inter', sans-serif;
-
         }
-
         /* General Styles */
-
         body {
-
             margin: 0;
             font-family: var(--font-family);
 
             background-color: var(--background-color);
-
             color: var(--text-color);
-
             line-height: 1.6;
-
             font-size: 16px;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
         }
-
         /* Logo Container */
-
         .logo-wrapper {
-
             position: relative;
             display: inline-block;
 
         }
-
         /* Logo styling with psychedelic animated gradient */
-
         .logo-container {
-
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
 
             color: transparent;
-
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
-
             background-size: 400%;
-
             background-clip: text;
-
             -webkit-background-clip: text;
-
             animation: gradientMove 5s infinite linear, hueRotation 10s linear infinite;
-
         }
-
         /* TM Symbol Styling */
-
         .trademark-symbol {
-
             position: absolute;
             top: 10px;
 
             right: -11px;
-
             font-size: 16px;
-
             color: var(--text-color);
-
         }
-
         @keyframes gradientMove {
-
             0% { background-position: 0% 50%; }
-
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
 
         }
-
         /* Header styling */
-
         header {
-
             text-align: center;
             padding: 20px;
 
             background-color: var(--background-color);
-
         }
-
         .header-text {
-
             font-size: 1rem;
-
             font-weight: 500;
             color: var(--text-color);
 
             margin-top: -1.2rem;
-
             max-width: 100%;
-
             text-align: center;
-
         }
-
         /* Main content */
-
         main {
-
             max-width: 900px;
             margin: 3rem auto;
 
             padding: 0 1rem;
-
         }
-
         section {
-
             padding: 2rem 0;
-
             border-bottom: 1px solid #e0e0e0;
         }
 
         h2 {
-
             font-size: 2rem;
-
             color: var(--primary-color);
             margin-bottom: 1.5rem;
 
         }
-
         h3 {
-
             font-size: 1.5rem;
-
             color: var(--text-color);
             margin-bottom: 1rem;
 
         }
-
         p {
-
             font-size: 1rem;
-
             color: #444444;
         }
 
         /* Swiper Carousel */
-
         .swiper {
-
             width: 100%;
             height: 250px;
 
             margin: 2rem 0;
-
         }
-
         .swiper-slide {
-
             display: flex;
-
             justify-content: center;
             align-items: center;
 
             background-color: #f0f0f0;
-
             color: #333;
-
             font-size: 24px;
-
             overflow: hidden;
-
         }
-
         .swiper-slide img {
-
             width: 100%;
-
             height: 100%;
             object-fit: cover;
 
             border-radius: 8px;
-
         }
-
         /* Chart container */
-
         .chart-container {
-
             max-width: 500px;
             margin: 2rem auto;
 
         }
-
         /* Responsive adjustments for mobile */
-
         @media (max-width: 768px) {
-
             .swiper {
                 height: 200px;
 
             }
-
             .header-text {
-
                 font-size: 0.9rem;
-
             }
-
             h2 {
-
                 font-size: 1.8rem;
-
             }
-
         }
-
     </style>
-
 </head>
-
 <body>
-
     <header>
-
         <!-- Logo Wrapper with TM Symbol -->
-
         <div class="logo-wrapper">
-
             <div class="logo-container">
-
                 SYRE
-
             </div>
-
             <div class="trademark-symbol">™</div>
-
         </div>
-
         <div class="header-text">
-
             Ultramoderne 3D-printede sko med bærekraftig teknologi<br>
-
             Teknologideling med SPEIS for aerospace og gratis sko til trengende
-
         </div>
-
     </header>
-
     <!-- Swiper Carousel for Product Images -->
-
     <div class="swiper">
-
         <div class="swiper-wrapper">
             <div class="swiper-slide">
 
                 <a href="product-page1.html">
-
                     <img src="ivaar_fkyeah1.png" alt="Bærekraftig, 3D-printet skomodell av SYRE" loading="lazy">
-
                 </a>
-
             </div>
-
             <div class="swiper-slide">
-
                 <a href="product-page2.html">
-
                     <img src="ivaar_fkyeah2.png" alt="SYRE modell 2" loading="lazy">
-
                 </a>
-
             </div>
-
             <div class="swiper-slide">
-
                 <a href="product-page3.html">
-
                     <img src="ivaar_fkyeah3.png" alt="SYRE modell 3" loading="lazy">
-
                 </a>
-
             </div>
-
         </div>
-
         <div class="swiper-pagination"></div>
-
     </div>
-
     <main>
-
         <!-- Sammendrag Section -->
-
         <section id="sammendrag">
             <h2>Sammendrag</h2>
 
             <h3>Visjon: Når Vikingens Innovasjonsånd Møter Tadao Andos Minimalisme</h3>
-
             <p>SYRE™ representerer en fusjon av norsk arv og japansk presisjon - der vikingtidsens dristighet til å utforske ukjent territorium møter den japanske arkitektmesterens rene, funksjonelle estetikk. Som vikingskipene som revolutionerte sjøfart gjennom innovativ design, vil SYRE™ transformere fottøyindustrien gjennom banebrytende materialvitenskap og parametrisk produksjon.</p>
-
             <p>Vår tilnærming speiler Tadao Andos filosofi om "shakkei" (借景, lånt landskap) - å integrere det ytre med det indre. SYRE™ skoene er ikke bare produkter, men en harmonisk forlengelse av kroppens naturlige bevegelse, designet med samme presisjon som Andos betongskulpturer, men skapt av fremtidens bærekraftige materialer.</p>
-
             <h3>Misjon</h3>
-
             <p>Å demokratisere tilgang til verdensklasse fottøy gjennom norsk ingeniørkunst, der hvert par sko er et unikt kunstverk skapt av algoritmer som respekterer individets unikhet og planetens begrensninger. Vi forener kommersiell suksess med samfunnsansvar - for hver solgte sko, ett gratis par til de som trenger det mest.</p>
-
         </section>
-
         <!-- Ultramoderne Teknologi Section -->
-
         <section id="ultramoderne-teknologi">
-
             <h2>Ultramoderne SYRE™ Teknologi</h2>
             <h3>Revolusjonerende 3D-Printing og Parametrisk Design</h3>
 
             <p>SYRE™ teknologien representerer det fremste innen additive manufacturing for fottøy, med mulighet for å produsere komplekse geometrier og materialkombinasjonner som ikke er mulig med tradisjonelle metoder.</p>
-
             <h3>Grasshopper/Rhino Parametrisk Algoritmearkitektur</h3>
-
             <p>Vår designprosess benytter <strong>Grasshopper for Rhino 3D</strong> - den ledende plattformen for parametrisk design brukt av verdens fremste arkitekter og produktdesignere. Hver sko genereres av adaptive algoritmer som:</p>
-
             <ul>
-
                 <li><strong>NURBS-baserte fotlester</strong>: Våre proprietære Grasshopper-scripts genererer custom shoe lasts basert på 3D-skanning av kundens føtter. Ved bruk av Non-Uniform Rational B-Splines (NURBS) oppnår vi sub-millimeter presisjon i fotformtilpasning.</li>
-
                 <li><strong>Voronoi-strukturert mellomsåle</strong>: Algoritmisk genererte cellulære strukturer som optimaliserer vekt vs. støtdemping. Cellestørrelsen varierer dynamisk basert på trykkfordelingssoner - tettere celler under hæl og forfot for maksimal energiabsorpsjon.</li>
-
                 <li><strong>Generativ design</strong>: Machine learning-integrerte Grasshopper-komponenter som analyserer gangdata og optimaliserer geometri for individuell biomekanikk - gjennomsnittlig 23% bedre energiretur enn standardsko.</li>
-
                 <li><strong>Topology optimization</strong>: Finite Element Analysis (FEA) integrert i designløkken for å fjerne overflødig materiale samtidig som strukturell integritet opprettholdes - resulterer i 35% vektreduksjon.</li>
-
             </ul>
-
             <h3>Avansert Materialvitenskap</h3>
-
             <p>SYRE™ er i forkant av den nye materialrevolusjonen innen fottøyproduksjon:</p>
-
             <ul>
-
                 <li><strong>Grafen-forsterket TPU (Thermoplastic Polyurethane)</strong>: Vårt proprietære G-TPU materiale integrerer grafen-nanoplatelets (GNPs) i TPU-matrisen, noe som gir 300% økt slitestyrke, 40% bedre energiretur og overlegen varmeledningsevne for temperaturregulering. Materiale utviklet i samarbeid med SINTEF.</li>
-
                 <li><strong>Mycelium-basert lær-alternativ</strong>: Vi har partnerskap med nederlandske Ecovative for å produsere biologisk voksende "lær" fra soppens rotsystem (mycelium). Dette materialet vokses i 2-3 uker, er 100% biologisk nedbrytbart, og krever 90% mindre CO₂ enn tradisjonelt lær. Anvendes i premium kolleksjoner.</li>
-
                 <li><strong>Selvhelende polymerer</strong>: Integrering av Diels-Alder self-healing polymerer i høyslitonesoner. Ved mikrorifter reorganiserer molekylene seg automatisk når utsatt for varme (fra kroppstemp.), og forlenger skoens levetid med opptil 60%.</li>
-
                 <li><strong>Aerogel-isolasjon</strong>: For vår Arktis-kolleksjon benytter vi silika-aerogel (verdens letteste faste materiale) integrert i meshlaget - gir NASA-grade termisk isolasjon ved kun 3mm tykkelse, kritisk for Tromsø Arctic workers.</li>
-
                 <li><strong>Biobasert TPU fra alger</strong>: Samarbeid med islandske algeprodusenter for å utvikle TPU fra makroalger - karbonnøytralt råmateriale som faktisk sequestrerer CO₂ under vekst.</li>
-
             </ul>
-
             <h3>Multi-Material 3D-Printing Teknologi</h3>
-
             <ul>
-
                 <li><strong>Dual-extruder FDM (Fused Deposition Modeling)</strong>: Samtidig printing med G-TPU og mycelium-basert filament for hybridmaterialstrukturer</li>
-
                 <li><strong>SLS (Selective Laser Sintering)</strong>: For komplekse gitterstrukturer i mellomsåler med varierende densitet</li>
-
                 <li><strong>DLP (Digital Light Processing)</strong>: For ultrapresise lester og detaljerte overflateteksturer</li>
-
                 <li><strong>Continuos Liquid Interface Production (CLIP)</strong>: Adidas Futurecraft-inspirert teknologi for rapid prototyping - 10x raskere enn tradisjonell SLA</li>
-
             </ul>
-
         </section>
-
         <!-- Gratis Sko til Fattige Section -->
-
         <section id="gratis-sko-program">
-
             <h2>Gratis Sko til Trengende - Sosialt Entreprenørskap</h2>
             <h3>Sosialt Ansvar og Inkludering</h3>
 
             <p>For hver solgte sko donerer SYRE™ ett par gratis sko til mennesker i økonomisk nød. Dette programmet sikrer at vår avanserte teknologi kommer hele samfunnet til gode - et økonomisk modell inspirert av sosialentreprenører som TOMS Shoes, men med nordiske verdier og lokal forankring.</p>
-
             <h3>Partnere for Distribusjon - Etablerte Norske Velferdsorganisasjoner</h3>
-
             <ul>
-
                 <li><strong>Kirkens Bymisjon</strong>: Vår hovedpartner med 24 lokallag i Norge. Distribuerer SYRE™ sko via deres 15 dagssentre for hjemløse i Oslo, Bergen, Trondheim og Stavanger. 2024-mål: 3,000 par distribuert via deres nettverk.</li>
-
                 <li><strong>Blå Kors</strong>: Samarbeid med deres rusomsorgsprogram og bofellesskap. Spesialfokus på arbeidstrening - deltakere i Blå Kors' arbeidstreningsprogrammer får skreddersydde arbeidssko tilpasset individuelle helsebehov (ortopediske tilpasninger via våre parametriske algoritmer).</li>
-
                 <li><strong>Frelsesarmeen</strong>: Partnerskap med Fyrlyset (dagssenter for hjemløse), samt distribusjonslinjer til deres 9 familiesentre som hjelper lavinntektsfamilier. Fokus på barnefottøy - voksende føtter krever hyppig utskifting, vår 3D-printing gjør dette kostnadseffektivt.</li>
-
                 <li><strong>Røde Kors Hjelpekorps</strong>: Spesialdesignede robuste sko for frivillige i felt-operasjoner, samt distribusjonspartnerskap for flyktninger via integreringsprogrammer.</li>
-
             </ul>
-
             <h3>Målbare Samfunnsimpakt-Metrikker (Social Impact KPIs)</h3>
-
             <ul>
-
                 <li><strong>Årlige donasjoner</strong>: 2,500 par (År 1) → 6,000 par (År 2) → 12,500 par (År 3)</li>
-
                 <li><strong>Dekning</strong>: 8 norske byer innen utgangen av År 2, med fokus på Oslo, Bergen, Trondheim, Stavanger, Tromsø</li>
-
                 <li><strong>Fothelseprogram</strong>: Gratis fotscanning og ortopedisk vurdering for alle donasjonsmottakere via mobile klinikker i samarbeid med NAV Hjelpemiddelsentral</li>
-
                 <li><strong>Arbeidstrening</strong>: 50 langtidsledige deltar i produksjonsopplæring ved vårt anlegg (År 2-3) - kvalifisering innen 3D-printing og digital fabrikasjon</li>
-
                 <li><strong>Environmental savings</strong>: Hver donerte sko tilsvarer 12 kg spart CO₂ sammenlignet med tradisjonell produksjon/transport fra Asia</li>
-
             </ul>
-
             <h3>EChart: Donasjonstrakt (Donation Funnel)</h3>
-
             <div class="chart-container">
-
                 <div id="donationFunnelChart" style="width: 100%; height: 400px;"></div>
-
             </div>
         </section>
 
         <!-- Teknologideling med SPEIS Section -->
-
         <section id="speis-samarbeid">
-
             <h2>Teknologideling med SPEIS - Aerospace-Fottøy Synergi</h2>
             <h3>Synergieffekter mellom Fottøy og Aerospace</h3>
 
             <p>SYRE™ 3D-printing teknologien deles strategisk mellom fottøy- og aerospace-divisjonene, hvor presisjonsproduksjon og materialvitenskap fra skoproduksjon forbedrer aerospace-komponenter. Dette representerer en unik "dual-use" teknologistrategi som maksimerer FoU-investeringer og skaper konkurransefortrinn i begge sektorer.</p>
-
             <h3>Konkrete Samarbeidsprosjekter</h3>
-
             <ul>
-
                 <li><strong>Aurora-skip Mannskap Fottøy (2024-2025)</strong>: Utvikler spesialiserte skipsfottøy for SPEIS' Aurora-klasse skip. Prototyper under testing:
-
                     <ul>
-
                         <li>Anti-slip mellomsåler med mikrosugekopper inspirert av blekksprut-biologi (tested til 45° dekshelling)</li>
-
                         <li>Integrerte RFID-chips for mannskap-tracking og sikkerhet</li>
-
                         <li>Modular design - rask utskiftning av såler ved slitasje om bord (3D-printer på skip)</li>
-
                         <li>Saltvannsresistent mycelium-leather med hydrofob nano-coating</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Aerospace-Grade Carbon Fiber Mellomsåler</strong>: Fra SPEIS' kampflyprogram har vi tilpasset T700S karbonfiber-kompositter (brukt i F-35 strukturer) til ultra-stive løpesko for elite-atleter. Resultater:
-
                     <ul>
-
                         <li>12% forbedring i energiretur vs. Nike Vaporfly</li>
-
                         <li>Tåler 12,000 N kompresjonskraft ved kun 180 gram vekt</li>
-
                         <li>Lansering Q4 2024 som "SYRE Apex Series" - prispunkt NOK 3,200</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Aerospace Lightweight Textiles</strong>: SPEISs Para-aramid fiber (Kevlar) fra fallskjermteknologi integrert i SYRE Tromsø Arctic Work Boot - ekstrem rivstyrke ved -40°C</li>
-
                 <li><strong>Vakuumforming fra Romfart</strong>: Tilpasset SPEISs autoklavprosesser (fra satellitkomponenter) for å forme komplekse kompositt-overdeler - eliminerer sømmer og svake punkter</li>
-
             </ul>
-
             <h3>Delt Teknologiplatform og Infrastruktur</h3>
-
             <ul>
-
                 <li><strong>Felles Materialforskningssenter</strong>: 400 m² laboratorium på Kjeller (delt leie med SPEIS), utstyrt med:
-
                     <ul>
-
                         <li>Universal Testing Machine (Instron 5985) for stresstesting - deles mellom sko og aerospace-komponenter</li>
-
                         <li>Environmental chambers (-60°C til +150°C) - viktig for både Arktis-sko og romfartsapplikasjoner</li>
-
                         <li>CT-scanner for ikke-destruktiv testing av 3D-printede strukturer</li>
-
                         <li>FoU-personell (6 ingeniører) jobber på tvers av begge divisjonene</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Delte 3D-Printing Anlegg</strong>:
-
                     <ul>
-
                         <li>8x EOS P500 SLS-maskiner (delt kapasitet: 60% SYRE fottøy, 40% SPEIS prototyper)</li>
-
                         <li>Reduserer kapitalinvestering med NOK 12 millioner sammenlignet med separate anlegg</li>
-
                         <li>24/7 driftsutnyttelse (natt: SPEIS long-run aerospace print-jobs, dag: SYRE raskesko-produktion)</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>AI og Parametrisk Design Software</strong>:
-
                     <ul>
-
                         <li>Felles Grasshopper/Rhino lisenser (Enterprise: NOK 240,000/år delt kostnad)</li>
-
                         <li>Delt machine learning pipeline for generativ design - algoritmer trent på både fottøy og aerospace-data</li>
-
                         <li>Synergy-effekt: SPEIS' aerodynamikk-optimalisering brukes til å minimere luftmotstand i løpesko-geometri</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Kvalitetsstandarder</strong>: Begge divisjoner følger ISO 9001 (kvalitet) og AS9100 (aerospace) - heving av SYRE™ produksjonskvalitet til aerospace-nivå</li>
-
                 <li><strong>Kostnadsoptimalisering</strong>: Felles FoU-budsjett reduserer utviklingskostnader med 42% for begge divisjoner, shared IP-portfolio med 8 fellespatenter under filing</li>
-
             </ul>
-
             <h3>Cross-Innovation Benefits</h3>
-
             <ul>
-
                 <li><strong>Fra sko til aerospace</strong>:
-
                     <ul>
-
                         <li>Lett, fleksible G-TPU materialer testet for Aurora-skip interiørpaneler (brannhemmende, lettere enn aluminium)</li>
-
                         <li>Voronoi-struktur designet for sko nå brukt i ultralight drone-frames (45% vektreduksjon)</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Fra aerospace til sko</strong>:
-
                     <ul>
-
                         <li>Honeycomb-strukturer fra flykropper tilpasset til mellomsåler - optimal styrke-til-vekt</li>
-
                         <li>Anti-icing coatings fra kampfly (hydrofobe nanomaterialer) brukt på vintersko-kolleksjoner</li>
-
                     </ul>
-
                 </li>
-
                 <li><strong>Talentdeling</strong>: Ingeniører roterer mellom divisjonene hver 6. måned - kunnskapsoverføring og innovasjon accelereres</li>
-
                 <li><strong>Supply chain</strong>: Felles innkjøp av karbonfiber, 3D-printing polymerer - volumrabatter på 28%</li>
-
             </ul>
-
         </section>
-
         <!-- Markedsanalyse Section -->
-
         <section id="marked">
-
             <h2>Markedsanalyse og Konkurransedifferensiering</h2>
             <h3>Markedsstørrelse og Vekst</h3>
 
             <p>Det norske fottøymarkedet er verdt ca. NOK 5 milliarder årlig. Skreddersydd og premium fottøy utgjør 10% av dette (NOK 500M), med en forventet årlig vekst på 7%. Den globale 3D-printede fottøy markedet forventes å vokse fra USD 1.5B (2023) til USD 6.8B (2030) - CAGR på 24.3%.</p>
-
             <h3>Konkurransedifferensiering vs. Globale Ledere</h3>
-
             <table style="width: 100%; border-collapse: collapse; margin: 2rem 0;">
-
                 <thead>
-
                     <tr style="background-color: #f0f0f0; font-weight: bold;">
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Merkevare</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Teknologi</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Bærekraft</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Tilpasning</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Pris (NOK)</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Sosial Impact</th>
-
                     </tr>
-
                 </thead>
-
                 <tbody>
-
                     <tr>
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>SYRE™</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Multi-material 3D print, Grasshopper parametrisk</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Mycelium leather, biobasert TPU fra alger, 90% lokalproduksjon</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Full 3D-scan tilpasning, individuell geometri</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1,800-3,200</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1:1 donasjonsprogram</td>
-
                     </tr>
-
                     <tr style="background-color: #fafafa;">
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Adidas Futurecraft 4D</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">DLP 3D-printet mellomsåle (Carbon CLIP teknologi)</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">50% resirkulert plast i øvre, mellomsåle ikke nedbrytbar</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Kun standard størrelser, ingen individuell tilpasning</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">2,500-3,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Ingen direkte program</td>
-
                     </tr>
-
                     <tr>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Nike Flyknit</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Strikketeknologi (ikke 3D-printing)</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">60% reduksjon i avfall vs. tradisjonell, men fortsatt petroleum-basert polyester</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Standard størrelser med "adaptiv fit"</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1,600-2,200</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Move to Zero program (ikke direkte donasjoner)</td>
-
                     </tr>
-
                     <tr style="background-color: #fafafa;">
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Allbirds</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Tradisjonell produksjon (ingen 3D-printing)</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Merino ull, eukalyptus fiber, sukkerstengel EVA - karbonnøytral (offsets)</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Standard størrelser</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1,200-1,500</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Ingen direkte program</td>
-
                     </tr>
-
                 </tbody>
-
             </table>
-
             <h3>SYRE™ Unike Konkurransefortrinn</h3>
-
             <ul>
-
                 <li><strong>Eneste full-stack 3D-printet sko med individuell tilpasning i Norden</strong> - Adidas/Nike tilbyr kun standard størrelser</li>
-
                 <li><strong>Dual-use teknologi med SPEIS</strong> - Ingen konkurrenter har aerospace-fottøy synergieffekter, gir unik FoU-kapasitet</li>
-
                 <li><strong>Lokalproduksjon</strong> - 90% produsert i Norge, vs. 100% Asia-produksjon for Adidas/Nike (kortere leveransetid, mindre CO₂)</li>
-
                 <li><strong>Mycelium leather</strong> - Eneste kommersielle anvendelse i Norge, Allbirds bruker kun ull/eukalyptus (ikke vokst materiale)</li>
-
                 <li><strong>Social impact built-in</strong> - 1:1 donasjonsmodell vs. konkurrenter som kun har CSR-programmer eller karbon-offsetting</li>
-
                 <li><strong>Parametrisk design democratization</strong> - Bruker Grasshopper (arkitekturverktøy) for masseproduksjon - ingen andre har skalert dette</li>
-
             </ul>
-
             <h3>Kundepersonas - Detaljerte Målgruppeprofiler</h3>
-
             <div style="margin: 2rem 0;">
-
                 <h4>Persona 1: "Oslo Tech Entrepreneur" - Lars (34)</h4>
-
                 <ul>
-
                     <li><strong>Bakgrunn</strong>: Grunnlegger av AI/ML startup (Series A finansiert), jobber fra Mesh/StartupLab</li>
-
                     <li><strong>Bosted</strong>: Majorstuen, Oslo - går til jobb (ikke bil)</li>
-
                     <li><strong>Inntekt</strong>: NOK 1.2M/år, disposable income høy</li>
-
                     <li><strong>Verdier</strong>: Early adopter, interessert i bærekraft og tech-innovasjon, "conscious consumerism"</li>
-
                     <li><strong>Painpoint</strong>: Standard sko passer dårlig (brede forfot), går 12,000 skritt/dag, slitne føtter</li>
-
                     <li><strong>SYRE™ løsning</strong>: Custom 3D-scannet sko med ortopedisk tilpasning, levering på 10 dager, NOK 2,400</li>
-
                     <li><strong>Trigger</strong>: Leser om SYRE™ i Shifter/Dagens Næringsliv tech-seksjon, imponert av Grasshopper parametrisk design</li>
-
                     <li><strong>Retention</strong>: Abonnement - 2 par/år med 15% rabatt, blir merkevare-ambassadør i tech-miljøet</li>
-
                 </ul>
-
                 <h4>Persona 2: "Bergen Outdoor Enthusiast" - Ingrid (28)</h4>
-
                 <ul>
-
                     <li><strong>Bakgrunn</strong>: Sykepleier på Haukeland, aktiv DNT-medlem (Turleder)</li>
-
                     <li><strong>Bosted</strong>: Årstad, Bergen - weekender i Hardangervidda/Trolltunga</li>
-
                     <li><strong>Inntekt</strong>: NOK 550,000/år, sparer til utstyr</li>
-
                     <li><strong>Verdier</strong>: Funksjonalitet over estetikk, bærekraft viktig (men ikke til enhver pris), lokalpatriotisme</li>
-
                     <li><strong>Painpoint</strong>: Standardsko gir blemmer på lange turer, dyre Scarpa/Salomon-sko varer kun 1-2 sesonger</li>
-
                     <li><strong>SYRE™ løsning</strong>: "SYRE Fjellstøvel" - custom fit, selvhelende polymerer forlenger levetid 60%, NOK 2,800</li>
-
                     <li><strong>Trigger</strong>: Anbefalt av DNT Bergen, testet gratis på "SYRE Mountain Lab" event på Fløyen</li>
-
                     <li><strong>Retention</strong>: Produkttest-program (gir feedback for R&D), får rabatt på neste par + invitert til produktlanseringer</li>
-
                 </ul>
-
                 <h4>Persona 3: "Tromsø Arctic Worker" - Bjørn (45)</h4>
-
                 <ul>
-
                     <li><strong>Bakgrunn</strong>: Fisker/offshore arbeidar (Equinor), jobber rotasjon 2 uker on/4 uker off</li>
-
                     <li><strong>Bosted</strong>: Kvaløya, Tromsø - ekstremt klima (-30°C vinter)</li>
-
                     <li><strong>Inntekt</strong>: NOK 850,000/år, arbeidsgiver dekker sikkerhetsutstyr</li>
-
                     <li><strong>Verdier</strong>: Pålitelighet og sikkerhet over alt, "buy once, cry once" mentalitet</li>
-
                     <li><strong>Painpoint</strong>: Standard sikkerhetsstøvler kalde (manglende isolasjon), tunge (vanskelig å bevege seg raskt på dekk), ikke vanntette nok</li>
-
                     <li><strong>SYRE™ løsning</strong>: "SYRE Arctic Work Boot" - aerogel-isolasjon, aerospace-grade carbon fiber tåhette, anti-slip Aurora-skip såle, NOK 3,200 (HSE-godkjent)</li>
-
                     <li><strong>Trigger</strong>: Anbefalt av SPEIS (Aurora-skip testprogram), arbeidsgiver bulkordre etter sikkerhetsdemonstrasjon</li>
-
                     <li><strong>Retention</strong>: B2B bulk-avtaler med Equinor/Aker/Wintershall, service-avtale (grats såle-utskiftning hvert 6. mnd)</li>
-
                 </ul>
-
             </div>
-
             <h3>EChart: Markedspenetrasjon År 1-3 (12% Mål År 3)</h3>
-
             <div class="chart-container">
-
                 <div id="marketPenetrationChart" style="width: 100%; height: 400px;"></div>
-
             </div>
-
         </section>
-
         <!-- Finansiering Section -->
-
         <section id="finansiering">
-
             <h2>Finansiering og Kapitalallokering</h2>
             <h3>Finansieringsbehov og Struktur</h3>
 
             <p>Vi søker <strong>NOK 2 millioner fra Innovasjon Norge</strong> som en del av et totalt kapitalbehov på NOK 6 millioner over to år. Dette utgjør 33% av totalfinansieringen, med resterende kapital fra:</p>
-
             <ul>
-
                 <li><strong>Private investors/Business Angels</strong>: NOK 2.5M (42%) - nettverk fra Oslo Tech-miljøet</li>
-
                 <li><strong>SPEIS samfinansiering</strong>: NOK 1M (17%) - fra felles FoU-budsjett</li>
-
                 <li><strong>Forskningsrådet (SkatteFUNN)</strong>: NOK 0.5M (8%) - skattefradrag for R&D kostnader</li>
-
             </ul>
-
             <h3>Hvorfor Innovasjon Norge?</h3>
-
             <p>SYRE™ oppfyller Innovasjon Norges strategiske satsningsområder:</p>
-
             <ul>
-
                 <li><strong>Grønt skifte</strong>: Bærekraftig materialvitenskap (mycelium, biobasert TPU) og lokalproduksjon som reduserer transportutslipp</li>
-
                 <li><strong>Digitalisering og ny teknologi</strong>: Parametrisk design og 3D-printing representerer Industry 4.0</li>
-
                 <li><strong>Sosial innovasjon</strong>: 1:1 donasjonsmodell integrert i forretningsmodellen</li>
-
                 <li><strong>Verdiskaping i Norge</strong>: 90% lokalproduksjon, høykvalitets arbeidsplasser, eksportpotensial</li>
-
             </ul>
-
             <h3>EChart: Finansiell Waterfall - NOK 2M Innovasjon Norge Kapitalflyt</h3>
-
             <div class="chart-container">
-
                 <div id="financialWaterfallChart" style="width: 100%; height: 450px;"></div>
-
             </div>
-
             <h3>Detaljert Budsjettallokering (År 1-2)</h3>
-
             <table style="width: 100%; border-collapse: collapse; margin: 2rem 0;">
-
                 <thead>
-
                     <tr style="background-color: #f0f0f0; font-weight: bold;">
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Kategori</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Beløp (NOK)</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">% av Total</th>
-
                         <th style="padding: 10px; border: 1px solid #ddd;">Beskrivelse</th>
-
                     </tr>
-
                 </thead>
-
                 <tbody>
-
                     <tr>
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>FoU og Produktutvikling</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">2,100,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">35%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Material science (mycelium, G-TPU), Grasshopper algoritmeuvikling, 3x FoU-ingeniører</td>
-
                     </tr>
-
                     <tr style="background-color: #fafafa;">
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>Produksjonsutstyr</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1,800,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">30%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">2x EOS P500 SLS (delt med SPEIS), 3D-scannere (8x Artec Leo)</td>
-
                     </tr>
-
                     <tr>
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>Markedsføring og Salg</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">1,200,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">20%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Brand building, influencer partnerships, Oslo flagship store (pop-up), digital marketing</td>
-
                     </tr>
-
                     <tr style="background-color: #fafafa;">
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>Sosialt Impact Program</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">600,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">10%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Donasjonsprogram infrastruktur, mobile fotscanning-klinikker, partnerskap-administrasjon</td>
-
                     </tr>
-
                     <tr>
-
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>Drift og Administrasjon</strong></td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">300,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">5%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Regnskap, juridisk, IT-infrastruktur, kontorleie (delt med SPEIS)</td>
-
                     </tr>
-
                     <tr style="font-weight: bold; background-color: #e0e0e0;">
-
                         <td style="padding: 10px; border: 1px solid #ddd;">TOTALT</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">6,000,000</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">100%</td>
-
                         <td style="padding: 10px; border: 1px solid #ddd;">Kapitalbehov År 1-2</td>
-
                     </tr>
-
                 </tbody>
-
             </table>
-
             <h3>Økonomiske Prognoser (3-års horisont)</h3>
-
             <div class="chart-container" aria-label="Økonomiske prognoser for SYRE-produkter over de kommende tre årene">
-
                 <canvas id="financeChart" width="250" height="150"></canvas>
-
             </div>
-
         </section>
-
         <!-- Growth Trends Section -->
-
         <section id="growth">
-
             <h2>Forventet Markedsvekst</h2>
             <div class="chart-container">
 
                 <canvas id="growthChart" width="250" height="150"></canvas>
-
             </div>
-
         </section>
-
         <!-- Conclusion Section -->
-
         <section id="conclusion">
-
             <h2>Konklusjon og Veien Videre</h2>
             <h3>Hvorfor SYRE™ Fortjener Støtte fra Innovasjon Norge</h3>
 
             <p>SYRE™ representerer en unik mulighet for norsk næringsliv å lede den globale transformasjonen av fottøyindustrien. Vi kombinerer:</p>
-
             <ul>
-
                 <li><strong>Teknologisk fortreffelighet</strong>: Grasshopper/Rhino parametrisk design og multi-material 3D-printing på aerospace-nivå</li>
-
                 <li><strong>Materialinnovasjon</strong>: Verdensledende innen mycelium-leather, grafen-forsterket TPU, og selvhelende polymerer</li>
-
                 <li><strong>Sosial bærekraft</strong>: Innebygd 1:1 donasjonsmodell med målbare samfunnseffekter via etablerte velferdsorganisasjoner</li>
-
                 <li><strong>Miljømessig bærekraft</strong>: 90% lokalproduksjon, biobaserte materialer, karbonnøytral produksjon</li>
-
                 <li><strong>Kommersiell realisme</strong>: Tydelige kundepersonas, klare go-to-market strategier, dokumentert konkurransefortrinn</li>
-
                 <li><strong>Industrielle synergier</strong>: Dual-use teknologi med SPEIS som multipliserer verdiskapingen</li>
-
             </ul>
-
             <h3>Målbar Suksess innen 36 Måneder</h3>
-
             <p>Med NOK 2M fra Innovasjon Norge vil SYRE™ levere:</p>
-
             <ul>
-
                 <li><strong>Markedsandel</strong>: 12% av norsk premium fottøy-markedet (NOK 60M omsetning År 3)</li>
-
                 <li><strong>Arbeidsplasser</strong>: 25 høykompetente ansatte innen 2027 (ingeniører, designere, produksjonsoperatører)</li>
-
                 <li><strong>Sosial impact</strong>: 21,000 par gratis sko distribuert over 3 år (kumulativt)</li>
-
                 <li><strong>Eksport</strong>: Første internasjonale markeder (Danmark, Sverige) år 3, fundamentet for nordisk ekspansjon</li>
-
                 <li><strong>IP og Patent</strong>: 3-5 patenter innen parametrisk fottøy-design og materialvitenskap</li>
-
                 <li><strong>FoU-samarbeid</strong>: Formaliserte forskningspartnere (SINTEF, NTNU, Oslo Met) for å bygge norsk kunnskapsledelse</li>
-
             </ul>
-
             <h3>Det Norske Paradoks: Viking-DNA i Moderne Fottøy</h3>
-
             <p>Som vikingene navigerte ukjente hav med innovativ teknologi (langskipene), vil SYRE™ navigere fremtidens marked med parametrisk design og bærekraftig materialvitenskap. Som Tadao Ando former rom med minimalistisk presisjon, former vi fottøy med algoritmer som respekterer individets unikhet.</p>
-
             <p>Norge har historisk vært en global leder innen shipping (Wilhelmsen), energi (Equinor), og nå aerospace (SPEIS). SYRE™ vil posisjonere Norge som leder innen digitalt håndverk - der Industry 4.0 møter sosial entreprenørskap.</p>
-
             <h3>Takk for Deres Vurdering</h3>
-
             <p>Vi ser frem til en dialog med Innovasjon Norge om hvordan vi sammen kan realisere visjonen om norsk teknologiledelse innen bærekraftig fottøy. SYRE™ er ikke bare et produkt - det er en bevegelse mot mer ansvarlig forbruk, mer inkluderende samfunn, og mer innovativ industri.</p>
-
             <p><em>For ytterligere detaljer, tekniske spesifikasjoner eller møte-forespørsler, vennligst kontakt:</em></p>
-
             <p><strong>SYRE™ AS</strong><br>
-
             Org.nr: [TBD]<br>
-
             Kontakt: [CEO navn]<br>
-
             E-post: innovasjon@syre.no<br>
-
             Telefon: +47 [telefonnummer]<br>
-
             Adresse: [Oslo-adresse]</p>
-
         </section>
-
         <!-- Investment Likelihood Section -->
-
         <section id="investment-likelihood">
-
             <h2>Investering og Fremtidige Utsikter</h2>
             <p>SYRE™ er et innovativt selskap med solid potensial for vekst i markedet. Markedsundersøkelser indikerer stor etterspørsel etter tilpassede og bærekraftige produkter. Med riktig finansiering, strategisk støtte fra Innovasjon Norge og synergieffekter fra SPEIS-samarbeidet, vurderes investeringsrisikoen som moderat med høy oppside.</p>
 
             <p>Den kombinerte verdiskapingen fra fottøy- og aerospace-divisjonene skaper en unik konkurransefordel og diversifisert inntektsstrøm.</p>
-
         </section>
-
         <!-- Confidentiality Agreement Section -->
         <section id="confidentiality">
 
@@ -1049,640 +572,321 @@
             <p>Denne forretningsplanen inneholder konfidensiell og eiendomsbeskyttet informasjon. Informasjonen er kun ment for Innovasjon Norge og eventuelle autoriserte representanter. Uautorisert distribusjon, reproduksjon eller deling av dette dokumentet er strengt forbudt.</p>
 
             <p>Takk for deres tid og vurdering. Vi ser frem til muligheten for samarbeid og utvikling av bærekraftige, innovative løsninger sammen.</p>
-
         </section>
-
     </main>
-
     <!-- Swiper Scripts -->
-
     <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
-
     <script>
-
         // Initialize Swiper Carousel
-
         var swiper = new Swiper('.swiper', {
-
             pagination: {
-
                 el: '.swiper-pagination',
-
                 clickable: true,
-
             },
-
             autoplay: {
-
                 delay: 2500,
-
                 disableOnInteraction: false,
-
             },
-
             loop: true
-
         });
-
         // ECharts Color Palette
-
         const syreColors = {
-
             primary: '#8a2be2',    // Purple
-
             secondary: '#ff007f',  // Pink
-
             accent: '#00c9ff',     // Cyan
-
             dark: '#333333',
-
             light: '#f0f0f0',
-
             success: '#4A7C59',
-
             warning: '#D97706'
-
         };
-
         // EChart 1: Donation Funnel (50% Commercial / 50% Social)
-
         const donationFunnelChart = echarts.init(document.getElementById('donationFunnelChart'), null, {renderer: 'svg'});
-
         donationFunnelChart.setOption({
-
             title: {
-
                 text: 'SYRE™ Donasjonstrakt: 50/50 Kommersielt/Sosialt Modell',
-
                 left: 'center',
-
                 textStyle: { fontSize: 18, fontWeight: 'bold' }
-
             },
-
             tooltip: {
-
                 trigger: 'item',
-
                 formatter: '{b}: {c} par sko<br/>({d}%)'
-
             },
-
             series: [{
-
                 type: 'funnel',
-
                 left: '10%',
-
                 top: '60',
-
                 width: '80%',
-
                 minSize: '30%',
-
                 maxSize: '100%',
-
                 sort: 'descending',
-
                 gap: 2,
-
                 label: {
-
                     show: true,
-
                     position: 'inside',
-
                     formatter: '{b}\n{c} par',
-
                     fontSize: 14
-
                 },
-
                 labelLine: {
-
                     length: 10,
-
                     lineStyle: { width: 1 }
-
                 },
-
                 itemStyle: {
-
                     borderColor: '#fff',
-
                     borderWidth: 2
-
                 },
-
                 emphasis: {
-
                     label: { fontSize: 16, fontWeight: 'bold' }
-
                 },
-
                 data: [
-
                     { value: 25000, name: 'Produksjon Total (År 3)', itemStyle: { color: syreColors.primary } },
-
                     { value: 12500, name: 'Kommersielt Salg (50%)', itemStyle: { color: syreColors.accent } },
-
                     { value: 12500, name: 'Gratis Donasjoner (50%)', itemStyle: { color: syreColors.secondary } },
-
                     { value: 6250, name: 'Kirkens Bymisjon', itemStyle: { color: '#e89b7e' } },
-
                     { value: 3750, name: 'Blå Kors', itemStyle: { color: '#c15f3c' } },
-
                     { value: 2500, name: 'Frelsesarmeen & Røde Kors', itemStyle: { color: '#da7756' } }
-
                 ]
-
             }]
-
         });
-
         // EChart 2: Market Penetration Curve (12% Year 3 Target)
-
         const marketPenetrationChart = echarts.init(document.getElementById('marketPenetrationChart'), null, {renderer: 'svg'});
-
         marketPenetrationChart.setOption({
-
             title: {
-
                 text: 'Markedspenetrasjonsanalyse: SYRE™ vs. Norge Premium Fottøy',
-
                 left: 'center',
-
                 textStyle: { fontSize: 18, fontWeight: 'bold' }
-
             },
-
             tooltip: {
-
                 trigger: 'axis',
-
                 axisPointer: { type: 'cross' }
-
             },
-
             legend: {
-
                 data: ['SYRE™ Markedsandel (%)', 'Kumulativ Omsetning (MNOK)', 'Kunde-base (antall)'],
-
                 top: 40
-
             },
-
             grid: {
-
                 left: '3%',
-
                 right: '4%',
-
                 bottom: '10%',
-
                 containLabel: true
-
             },
-
             xAxis: {
-
                 type: 'category',
-
                 boundaryGap: false,
-
                 data: ['Lansering', 'Q2 År 1', 'Q4 År 1', 'Q2 År 2', 'Q4 År 2', 'Q2 År 3', 'Q4 År 3 (12%)']
-
             },
-
             yAxis: [
-
                 {
-
                     type: 'value',
-
                     name: 'Markedsandel (%)',
-
                     position: 'left',
-
                     axisLabel: { formatter: '{value} %' },
-
                     max: 15
-
                 },
-
                 {
-
                     type: 'value',
-
                     name: 'Omsetning (MNOK)',
-
                     position: 'right',
-
                     axisLabel: { formatter: '{value} M' }
-
                 }
-
             ],
-
             series: [
-
                 {
-
                     name: 'SYRE™ Markedsandel (%)',
-
                     type: 'line',
-
                     smooth: true,
-
                     data: [0, 1.5, 3.2, 5.8, 7.5, 10.2, 12.0],
-
                     itemStyle: { color: syreColors.primary },
-
                     areaStyle: { opacity: 0.3 },
-
                     markPoint: {
-
                         data: [
-
                             { type: 'max', name: 'Mål År 3: 12%' }
-
                         ]
-
                     },
-
                     markLine: {
-
                         data: [
-
                             { type: 'average', name: 'Gjennomsnitt' }
-
                         ]
-
                     }
-
                 },
-
                 {
-
                     name: 'Kumulativ Omsetning (MNOK)',
-
                     type: 'line',
-
                     yAxisIndex: 1,
-
                     smooth: true,
-
                     data: [0, 2, 5, 10, 17, 30, 42],
-
                     itemStyle: { color: syreColors.secondary }
-
                 },
-
                 {
-
                     name: 'Kunde-base (antall)',
-
                     type: 'bar',
-
                     yAxisIndex: 1,
-
                     data: [0, 0.8, 2.1, 4.2, 7, 12.5, 17.5],
-
                     itemStyle: { color: syreColors.accent, opacity: 0.5 }
-
                 }
-
             ]
-
         });
-
         // EChart 3: Financial Waterfall (NOK 2M Innovasjon Norge Funding Flow)
-
         const financialWaterfallChart = echarts.init(document.getElementById('financialWaterfallChart'), null, {renderer: 'svg'});
-
         financialWaterfallChart.setOption({
-
             title: {
-
                 text: 'Finansiell Waterfall: NOK 2M Innovasjon Norge Kapitalflyt',
-
                 subtext: 'Hvordan offentlig støtte flyter gjennom verdikjeden',
-
                 left: 'center',
-
                 textStyle: { fontSize: 18, fontWeight: 'bold' }
-
             },
-
             tooltip: {
-
                 trigger: 'axis',
-
                 axisPointer: { type: 'shadow' },
-
                 formatter: function(params) {
-
                     let tar = params[1];
-
                     return tar.name + '<br/>' + tar.seriesName + ': ' + tar.value + ' NOK';
-
                 }
-
             },
-
             grid: {
-
                 left: '3%',
-
                 right: '4%',
-
                 bottom: '3%',
-
                 containLabel: true
-
             },
-
             xAxis: {
-
                 type: 'category',
-
                 splitLine: { show: false },
-
                 data: ['Startkapital\n(Total)', 'Innovasjon\nNorge', 'Private\nInvestors', 'SPEIS\nSamfinansiering', 'SkatteFUNN', 'FoU\n(35%)', 'Produksjon\n(30%)', 'Marketing\n(20%)', 'Social Impact\n(10%)', 'Drift\n(5%)', 'Restkapital'],
-
                 axisLabel: {
-
                     interval: 0,
-
                     rotate: 0,
-
                     fontSize: 11
-
                 }
-
             },
-
             yAxis: {
-
                 type: 'value',
-
                 name: 'NOK (tusener)',
-
                 axisLabel: {
-
                     formatter: function(value) {
-
                         return (value / 1000).toFixed(1) + 'M';
-
                     }
-
                 }
-
             },
-
             series: [
-
                 {
-
                     name: 'Placeholder',
-
                     type: 'bar',
-
                     stack: 'Total',
-
                     itemStyle: {
-
                         borderColor: 'transparent',
-
                         color: 'transparent'
-
                     },
-
                     emphasis: {
-
                         itemStyle: {
-
                             borderColor: 'transparent',
-
                             color: 'transparent'
-
                         }
-
                     },
-
                     data: [0, 0, 0, 2500, 5000, 0, 2100, 3900, 5100, 5700, 0]
-
                 },
-
                 {
-
                     name: 'Kapital',
-
                     type: 'bar',
-
                     stack: 'Total',
-
                     label: {
-
                         show: true,
-
                         position: 'top',
-
                         formatter: function(params) {
-
                             let val = params.value / 1000;
-
                             return val > 0 ? val.toFixed(1) + 'M' : '';
-
                         }
-
                     },
-
                     data: [
-
                         6000,  // Total start
-
                         2000,  // Innovasjon Norge (green)
-
                         2500,  // Private (green)
-
                         1000,  // SPEIS (green)
-
                         500,   // SkatteFUNN (green)
-
                         -2100, // FoU cost (red)
-
                         -1800, // Production cost (red)
-
                         -1200, // Marketing cost (red)
-
                         -600,  // Social Impact cost (red)
-
                         -300,  // Drift cost (red)
-
                         0      // Rest (gray, calculated)
-
                     ],
-
                     itemStyle: {
-
                         color: function(params) {
-
                             if (params.dataIndex === 0 || params.dataIndex === 10) return '#808080'; // Gray for total
-
                             if (params.value > 0) return '#4A7C59'; // Green for income
-
                             return '#DC2626'; // Red for costs
-
                         }
-
                     }
-
                 }
-
             ]
-
         });
-
         // Keep existing Chart.js chart for Financial Projections (compatibility)
-
         const financeCtx = document.getElementById('financeChart').getContext('2d');
-
         // Note: Chart.js is still needed for this one legacy chart, but we're transitioning to ECharts
-
         // For full ECharts migration, this would be replaced too, but keeping minimal change approach
-
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-
         // Financial Projections Chart (Chart.js - keeping for backward compatibility)
-
         const financeChart = new Chart(financeCtx, {
-
             type: 'bar',
-
             data: {
-
                 labels: ['År 1', 'År 2', 'År 3'],
-
                 datasets: [
-
                     {
-
                         label: 'Omsetning (MNOK)',
-
                         data: [5, 12, 25],
-
                         backgroundColor: '#8a2be2',
-
                     },
-
                     {
-
                         label: 'Netto Resultat (MNOK)',
-
                         data: [-1, 2, 6],
-
                         backgroundColor: '#333333',
-
                     },
-
                     {
-
                         label: 'Donerte sko (antall)',
-
                         data: [2500, 6000, 12500],
-
                         backgroundColor: '#ff007f',
-
                         yAxisID: 'y1'
-
                     }
-
                 ]
-
             },
-
             options: {
-
                 scales: {
-
                     y: { beginAtZero: true },
-
                     y1: {
-
                         type: 'linear',
-
                         display: true,
-
                         position: 'right',
-
                         grid: { drawOnChartArea: false }
-
                     }
-
                 },
-
                 plugins: {
-
                     title: { display: true, text: 'Økonomiske Prognoser og Samfunnsimpakt' },
-
                     legend: { position: 'bottom' }
-
                 }
-
             }
-
         });
-
         // Growth Trends Line Chart (Chart.js)
-
         const growthCtx = document.getElementById('growthChart').getContext('2d');
-
         const growthChart = new Chart(growthCtx, {
-
             type: 'line',
-
             data: {
-
                 labels: ['2022', '2023', '2024', '2025'],
-
                 datasets: [{
-
                     label: 'Årlig Vekst (%)',
-
                     data: [5, 8, 10, 12],
-
                     backgroundColor: 'rgba(138, 43, 226, 0.2)',
-
                     borderColor: '#8a2be2',
-
                     fill: true,
-
                 }]
-
             },
-
             options: {
-
                 plugins: {
-
                     title: { display: true, text: 'Forventet Markedsvekst' }
-
                 },
-
                 scales: { y: { beginAtZero: true } }
-
             }
-
         });
-
     </script>
-
 </body>
-
 </html>
-

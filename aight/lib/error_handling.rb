@@ -6,11 +6,17 @@ module ErrorHandling
 
     yield
   rescue StandardError => e
+
     handle_error(e)
+
     nil # Return nil or an appropriate error response
+
   end
+
   def handle_error(exception)
+
     puts "An error occurred: #{exception.message}"
 
   end
 end
+

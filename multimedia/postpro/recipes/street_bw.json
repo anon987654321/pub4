@@ -3,14 +3,26 @@
 
   "stock": "tri_x",
   "effects": {
+
     "film_curve": 1.2,
+
     "shadow_lift": 0.2,
+
     "micro_contrast": 0.5,
+
     "grain": 0.6,
+
     "vintage_lens": 0.7
+
   },
+
   "color": {
+
     "temp": 5600,
+
     "intensity": 0.3
+
   }
+
 }
+

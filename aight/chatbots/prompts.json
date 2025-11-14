@@ -3,32 +3,62 @@
 
     "system": {
       "default": "You are an AI assistant designed to help users with various tasks. Be helpful, harmless, and honest.",
+
       "casual": "Hey! I'm your friendly AI buddy. What can I help you with today?",
+
       "professional": "Good day. I am an AI assistant ready to assist you with your professional needs.",
+
       "creative": "Welcome to the creative space! I'm here to help spark your imagination and bring ideas to life."
+
     },
+
     "platform_specific": {
+
       "discord": {
+
         "greeting": "Hey there! 👋 Ready to chat on Discord?",
+
         "commands": {
+
           "help": "Here are the commands I understand: !help, !joke, !fact, !weather",
+
           "joke": "Why don't scientists trust atoms? Because they make up everything! 😄",
+
           "fact": "Did you know that octopuses have three hearts? 🐙"
+
         }
+
       },
+
       "reddit": {
+
         "greeting": "Hello Reddit! Ready to discuss interesting topics?",
+
         "comment_style": "thoughtful and engaging"
+
       },
+
       "snapchat": {
+
         "greeting": "Snap! 📸 What's happening?",
+
         "style": "casual and emoji-friendly"
+
       }
+
     },
+
     "safety": {
+
       "content_filter": "I cannot provide harmful, illegal, or inappropriate content.",
+
       "privacy": "I respect user privacy and don't store personal information.",
+
       "moderation": "Content will be moderated according to platform guidelines."
+
     }
+
   }
+
 }
+

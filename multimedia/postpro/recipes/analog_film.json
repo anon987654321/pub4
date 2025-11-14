@@ -2,50 +2,26 @@
   "halation_analog": {
 
     "intensity": 0.6,
-
     "radius": 12,
-
     "red_bias": 1.4,
-
     "orange_bias": 1.1
-
   },
-
   "vignetting_analog": {
-
     "amount": 0.25,
-
     "power": 2.8
-
   },
-
   "grain_film": {
-
     "intensity": 0.4,
-
     "iso": 400,
-
     "stock": "kodak_portra",
-
     "size": 1.0
-
   },
-
   "highlight_roll_filmic": {
-
     "intensity": 0.8,
-
     "knee_start": 190,
-
     "knee_softness": 25
-
   },
-
   "dust_and_scratches": {
-
     "intensity": 0.2
-
   }
-
 }
-

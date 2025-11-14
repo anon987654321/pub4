@@ -1,757 +1,115 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# v72.1.0 - Dilla (master.json v45.1.0)
-
+# v73.0.0 - Dilla (modular architecture - master.json compliant)
 require "fileutils"
 require "net/http"
-
 require "uri"
-
 require "cgi"
-
-require "tempfile"
+require "json"
 
 $LOAD_PATH.unshift(File.expand_path("mb-sound/lib", __dir__))
 begin
   require "mb-sound"
-
   MB_SOUND_AVAILABLE = true
-
   puts "[INIT] ✅ mb-sound loaded"
-
 rescue LoadError => e
-
   MB_SOUND_AVAILABLE = false
-
   puts "[INIT] ⚠️  mb-sound unavailable: #{e.message}"
-
 end
 
 def find_sox
   candidates = [
-
     "sox.exe",
-
     "sox",
-
     "/usr/bin/sox.exe",
-
     "/usr/bin/sox",
-
     "/c/cygwin64/bin/sox.exe",
-
     File.expand_path("../dilla/effects/sox/sox.exe", __dir__)
-
   ]
-
   candidates.each do |path|
     if system("#{path} --version >/dev/null 2>&1")
-
       puts "[INIT] ✅ SoX found: #{path}"
-
       return path
-
     end
-
   end
-
   nil
 end
 
 SOX_PATH = find_sox
 abort "❌ SoX not found in PATH or common locations" unless SOX_PATH
 
-# === CONSTANTS (DRY Principle) ===
-module DillaConstants
+require_relative "__shared/@constants"
+require_relative "__shared/@generators"
+require_relative "__shared/@mastering"
+require_relative "__shared/@tts"
 
-  CHECKPOINT_DIR = "#{Dir.pwd}/checkpoints"
+PROGRESSIONS = Progression.load_all(File.join(__dir__, "__shared", "progressions.json"))
 
-  TTS_CACHE_DIR = "#{Dir.pwd}/tts_cache"
-
-  OUTPUT_DIR = "#{Dir.pwd}/output"
-
-  STREAM_FILE = "#{CHECKPOINT_DIR}/live_stream.wav"
-
-  AMBIENT_DRONE_FILE = "#{CHECKPOINT_DIR}/ambient_drone.wav"
-
-  SOUNDFONT_PATH = "#{Dir.pwd}/Jnsgm2.sf2".freeze
-
-  RHODES_PROG = 4
-
-  MIN_FILE_SIZE = 1000
-  RANDOM_RANGE = 10_000
-
-  DEFAULT_BARS = 64
-
-  AMBIENT_DRONE_DURATION = 300
-
-  MB_SOUND_CONFIG = { sample_rate: 44100, channels: 2 }.freeze
-  DEBUG = ENV["DEBUG"] == "1"
-
-  FLUIDSYNTH_AVAILABLE = system("fluidsynth --version >/dev/null 2>&1")
-
-end
-
-# === EXTRACTED SOX HELPERS MODULE (DRY Refactoring) ===
-# Per master.json → fowler_refactorings.moving_features.extract_class
-
-# Trigger: @3_occurrences → abstract
-
-module SoxHelpers
-
-  include DillaConstants
-
-  # Single source of truth for SoX command building
-  def sox_cmd(args)
-
-    command = "#{SOX_PATH} #{args}"
-
-    puts "[DEBUG] SoX CMD: #{command}" if DEBUG
-
-    command
-
-  end
-
-  # Single source of truth for temp file generation
-  def tempfile(prefix)
-
-    filename = "#{CHECKPOINT_DIR}/#{prefix}_#{Time.now.to_i}_#{rand(RANDOM_RANGE)}.wav"
-
-    puts "[DEBUG] Tempfile: #{filename}" if DEBUG
-
-    filename
-
-  end
-
-  # Single source of truth for file validation
-  def valid?(file)
-
-    return false unless file && File.exist?(file)
-
-    file_size = File.size(file)
-    result = file_size > MIN_FILE_SIZE
-
-    if DEBUG
-      puts "[DEBUG] valid?(#{File.basename(file)}) = #{result}"
-
-      puts "[DEBUG]   size: #{file_size} bytes (min: #{MIN_FILE_SIZE})"
-
-    end
-
-    result
-  end
-
-  # Helper for safe file cleanup
-  def cleanup_files(*files)
-
-    files.flatten.compact.each { |f| File.delete(f) rescue nil }
-
-  end
-
-end
-
-# === PROGRESSION CLASS (SRP) ===
-class Progression
-
-  attr_reader :name, :tempo, :swing, :chords, :arrangement
-
-  def initialize(name:, tempo:, swing:, chords:, arrangement:)
-    @name = name
-
-    @tempo = tempo
-
-    @swing = swing
-
-    @chords = chords.freeze
-
-    @arrangement = arrangement.freeze
-
-  end
-
-  def beat_duration
-    60.0 / tempo
-
-  end
-
-end
-
-PROGRESSIONS = {
-  fall_in_love: Progression.new(
-
-    name: "Fall in Love (Slum Village)",
-
-    tempo: 90,
-
-    swing: 0.58,
-
-    chords: %w[Dm9 G7sus4 Cmaj9 Am7],
-
-    arrangement: { intro: 8, verse: 16, chorus: 16, bridge: 8, outro: 16 }
-
-  ),
-
-  players: Progression.new(
-
-    name: "Players (Slum Village)",
-
-    tempo: 88,
-
-    swing: 0.62,
-
-    chords: %w[Ebm9 Abm7 Dbmaj9 Gbmaj7],
-
-    arrangement: { intro: 8, verse: 16, chorus: 16, bridge: 8, outro: 16 }
-
-  ),
-
-  stakes_is_high: Progression.new(
-
-    name: "Stakes Is High (De La Soul)",
-
-    tempo: 92,
-
-    swing: 0.56,
-
-    chords: %w[Am9 Dm7 G7sus4 Cmaj7],
-
-    arrangement: { intro: 8, verse: 16, chorus: 16, bridge: 8, outro: 16 }
-
-  )
-
-}.freeze
-
-# === PAD GENERATOR (Now DRY - uses SoxHelpers) ===
-class PadGenerator
-
-  include SoxHelpers
-
-  NOTES = {
-    "C" => 261.63, "Db" => 277.18, "D" => 293.66, "Eb" => 311.13,
-
-    "E" => 329.63, "F" => 349.23, "Gb" => 369.99, "G" => 392.00,
-
-    "Ab" => 415.30, "A" => 440.00, "Bb" => 466.16, "B" => 493.88
-
-  }.freeze
-
-  def generate_dreamy_pad(chord_name, duration)
-    output = tempfile("pad_#{chord_name}")
-
-    parsed = parse_chord(chord_name)
-
-    root = NOTES[parsed[:root]] || 261.63
-
-    freqs = chord_freqs(root, parsed[:intervals])
-
-    layers = build_layers(freqs, duration)
-    command = sox_cmd([
-      "-n \"#{output}\"",
-
-      layers,
-
-      "fade h 0.5 #{duration} 2",
-
-      "reverb 40",
-
-      "chorus 0.6 0.8 45 0.3 0.2 2 -t",
-
-      "norm -12 2>/dev/null"
-
-    ].join(" "))
-
-    print "  🎹 Dreamy Pad (#{chord_name})... "
-    system(command)
-
-    puts valid?(output) ? "✓" : "✗"
-
-    output
-
-  end
-
-  private
-  def build_layers(freqs, duration)
-    freqs.map { |f| "synth #{duration} sine #{f} sine #{f * 2} sine #{f * 0.5}" }.join(" ")
-
-  end
-
-  def parse_chord(name)
-    root = name[0] || "C"
-
-    quality = name[1..-1].downcase
-
-    intervals = chord_intervals(quality)
-
-    { root: root, intervals: intervals }.freeze
-
-  end
-
-  def chord_intervals(quality)
-    case quality
-
-    when "m9", "min9" then [0, 3, 7, 10, 14]
-
-    when "m7", "min7" then [0, 3, 7, 10]
-
-    when "9" then [0, 4, 7, 10, 14]
-
-    when "7sus4" then [0, 5, 7, 10]
-
-    when "maj9" then [0, 4, 7, 11, 14]
-
-    when "maj7" then [0, 4, 7, 11]
-
-    when "7" then [0, 4, 7, 10]
-
-    else [0, 4, 7]
-
-    end
-
-  end
-
-  def chord_freqs(root_freq, intervals)
-    intervals.map { |i| root_freq * (2.0 ** (i / 12.0)) }.freeze
-
-  end
-
-end
-
-# === MIXER (Now DRY - uses SoxHelpers) ===
-class Mixer
-
-  include SoxHelpers
-
-  def mix_tracks(drums, pads, bass, ambient)
-    print "  🎚️  Professional Mix... "
-
-    mixed = tempfile("mixed")
-
-    command = sox_cmd([
-      "-m -v 0.8 \"#{drums}\" -v 0.4 \"#{pads}\" -v 0.6 \"#{bass}\" -v 0.1 \"#{ambient}\" \"#{mixed}\"",
-
-      "norm -3",
-
-      "compand 0.05,0.2 -60,-40,-20,-10 4 -90 0.1 2>/dev/null"
-
-    ].join(" "))
-
-    system(command)
-    puts valid?(mixed) ? "✓" : "✗"
-
-    mixed
-
-  end
-
-end
-
-# === MASTERING CHAIN (Now DRY - uses SoxHelpers) ===
-class MasteringChain
-
-  include SoxHelpers
-
-  def master_track(input)
-    print "  🎛️  Mastering Chain... "
-
-    output = apply_eq(input)
-    output = apply_compression(output) if output
-
-    output = apply_stereo_widening(output) if output
-
-    output = apply_limiter(output) if output
-
-    puts output && valid?(output) ? "✓" : "✗"
-    output
-
-  end
-
-  private
-  def apply_eq(input)
-    temp = tempfile("eq")
-
-    command = sox_cmd([
-
-      "\"#{input}\" \"#{temp}\"",
-
-      "highpass 30",
-
-      "bass 3 80",
-
-      "treble -2 3000",
-
-      "2>/dev/null"
-
-    ].join(" "))
-
-    system(command)
-
-    valid?(temp) ? temp : nil
-
-  end
-
-  def apply_compression(input)
-    temp = tempfile("comp")
-
-    command = sox_cmd([
-
-      "\"#{input}\" \"#{temp}\"",
-
-      "compand 0.05,0.2 -60,-50,-40,-30,-20 6 -90 0.1",
-
-      "2>/dev/null"
-
-    ].join(" "))
-
-    system(command)
-
-    cleanup_files(input)
-
-    valid?(temp) ? temp : nil
-
-  end
-
-  def apply_stereo_widening(input)
-    temp = tempfile("stereo")
-
-    command = sox_cmd([
-
-      "\"#{input}\" \"#{temp}\"",
-
-      "oops",
-
-      "2>/dev/null"
-
-    ].join(" "))
-
-    system(command)
-
-    cleanup_files(input)
-
-    valid?(temp) ? temp : nil
-
-  end
-
-  def apply_limiter(input)
-    output = tempfile("mastered")
-
-    command = sox_cmd([
-
-      "\"#{input}\" \"#{output}\"",
-
-      "compand 0.01,0.1 -60,-40,-10 20 -90 0.05",
-
-      "norm -0.1",
-
-      "gain -n -14",
-
-      "2>/dev/null"
-
-    ].join(" "))
-
-    system(command)
-
-    cleanup_files(input)
-
-    output
-
-  end
-
-end
-
-# === PROFESSOR CRANE TTS ===
-class CraneTTS
-
-  include DillaConstants
-
-  LESSONS = {
-    intro: "Good evening! I'm Professor Crane, and today we'll explore the fascinating intersection of digital signal processing and neo-soul aesthetics. Think of it as if Miles Davis met MATLAB at a dinner party!",
-
-    swing: "Ah yes, the swing factor! You see, quantization is for amateurs. The human ear craves temporal imperfection. We're adding a sixty-two percent swing ratio - that's the rhythmic equivalent of a perfectly aged Bordeaux.",
-
-    dm9: "Now we encounter the D minor ninth chord. Four glorious intervals stacked like a well-constructed argument: root, minor third, perfect fifth, minor seventh, and the pièce de résistance, the major ninth. This is harmonic sophistication incarnate!",
-
-    g7sus4: "The suspended fourth! Delightfully unresolved, like a question mark in sonic form. We delay gratification by suspending the third with a fourth. It's musical foreplay, if you will.",
-
-    pads: "Listen to those lush pads breathing in the stereo field! We're employing multiple oscillators with subtle detuning - what acousticians call chorus effect. It's like having an ensemble where everyone is slightly drunk, but in a good way.",
-
-    drums: "The drums! Notice the micro-timing variations? That's J Dilla's gift to humanity - drunk drumming, scientifically known as quantization offset. Each hit deviates by milliseconds, creating what we call groove.",
-
-    mastering: "Now for the mastering chain. We compress, we limit, we subtly distort. Think of it as audio cosmetic surgery - we're enhancing what nature gave us without looking too obvious about it.",
-
-    loop: "And there we have it! The beat loops infinitely, like Sisyphus, but with significantly better rhythm section. Shall we continue our sonic education?"
-
-  }.freeze
-
-  def speak(text)
-    return unless text
-
-    Thread.new do
-
-      mp3 = fetch_tts(text)
-
-      play_mp3(mp3) if mp3
-
-    end
-
-  end
-
-  private
-  def fetch_tts(text)
-    hash = "#{text}en".hash.abs.to_s
-
-    mp3 = "#{TTS_CACHE_DIR}/#{hash}.mp3"
-
-    return mp3 if File.exist?(mp3)
-
-    url = "https://translate.google.com/translate_tts?" \
-          "ie=UTF-8&client=tw-ob&tl=en&ttsspeed=0.75&tld=com&q=#{CGI.escape(text)}"
-
-    uri = URI(url)
-    Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
-
-      req = Net::HTTP::Get.new(uri)
-
-      req["User-Agent"] = "Mozilla/5.0"
-
-      req["Referer"] = "https://translate.google.com/"
-
-      res = http.request(req)
-      if res.code == "200" && res.body.size > 1000
-
-        File.binwrite(mp3, res.body)
-
-        return mp3
-
-      end
-
-    end
-
-    nil
-
-  rescue
-
-    nil
-
-  end
-
-  def play_mp3(file)
-    return unless File.exist?(file)
-
-    win_path = `cygpath -w "#{file}" 2>/dev/null`.chomp
-
-    win_path = file if win_path.empty?
-
-    system("cmd.exe /c start /min \"\" \"#{win_path}\" 2>/dev/null")
-
-    sleep((File.size(file) / 8000.0).ceil)
-
-  end
-
-end
-
-# === DRUM GENERATOR (Now DRY - uses SoxHelpers) ===
-class DrumGenerator
-
-  include SoxHelpers
-
-  def generate_drums(tempo, swing, bars)
-    print "  🥁 Drums... "
-
-    beat_dur = 60.0 / tempo
-
-    bar_dur = beat_dur * 4
-
-    kick = generate_kick
-    snare = generate_snare
-
-    hat = generate_hihat
-
-    patterns = bars.times.map do |bar|
-      generate_bar(kick, snare, hat, bar, beat_dur, swing)
-
-    end.compact
-
-    output = tempfile("drums")
-    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" 2>/dev/null"))
-
-    cleanup_files(patterns, kick, snare, hat)
-    puts valid?(output) ? "✓" : "✗"
-    output
-
-  end
-
-  private
-  def generate_kick
-    out = tempfile("kick")
-
-    system(sox_cmd("-n \"#{out}\" synth 0.25 sine 50 fade h 0.001 0.25 0.1 overdrive 20 gain -2 2>/dev/null"))
-
-    out
-
-  end
-
-  def generate_snare
-    out = tempfile("snare")
-
-    system(sox_cmd("-n \"#{out}\" synth 0.15 noise lowpass 4000 highpass 300 fade h 0.001 0.15 0.05 gain -4 2>/dev/null"))
-
-    out
-
-  end
-
-  def generate_hihat
-    out = tempfile("hat")
-
-    system(sox_cmd("-n \"#{out}\" synth 0.05 noise highpass 8000 fade h 0.001 0.05 0.02 gain -8 2>/dev/null"))
-
-    out
-
-  end
-
-  def generate_bar(kick, snare, hat, bar_num, beat_dur, swing)
-    bar_dur = beat_dur * 4
-
-    offset = bar_num * bar_dur
-
-    hits = []
-
-    [0, 1, 2, 3].each do |beat|
-      t = offset + (beat * beat_dur)
-
-      hits << pad_sample(kick, t, bar_dur)
-
-    end
-
-    [1, 3].each do |beat|
-      t = offset + (beat * beat_dur)
-
-      hits << pad_sample(snare, t, bar_dur)
-
-    end
-
-    16.times do |i|
-      t = offset + (i * beat_dur * 0.25)
-
-      t += (beat_dur * 0.1 * swing) if i.odd?
-
-      hits << pad_sample(hat, t, bar_dur)
-
-    end
-
-    out = tempfile("bar")
-    system(sox_cmd("-m #{hits.join(" ")} \"#{out}\" 2>/dev/null"))
-
-    cleanup_files(hits)
-
-    out
-
-  end
-
-  def pad_sample(sample, offset, duration)
-    out = tempfile("pad")
-
-    system(sox_cmd("\"#{sample}\" \"#{out}\" pad #{offset} 0 trim 0 #{duration} 2>/dev/null"))
-
-    out
-
-  end
-
-end
-
-# === MAIN ENGINE ===
 class DillaEngine
-
   include DillaConstants
 
   def initialize
     FileUtils.mkdir_p(CHECKPOINT_DIR)
-
     FileUtils.mkdir_p(TTS_CACHE_DIR)
-
     FileUtils.mkdir_p(OUTPUT_DIR)
-
     cleanup_old_checkpoints
-
     @professor = CraneTTS.new
-
     @pad_gen = PadGenerator.new
-
     @drums = DrumGenerator.new
-
     @mixer = Mixer.new
-
     @master = MasteringChain.new
-
   end
 
   def cleanup_old_checkpoints
     files = Dir.glob("#{CHECKPOINT_DIR}/*.wav")
-
     if files.size > 10
-
       puts "[CLEANUP] Removing #{files.size} old checkpoint files..."
-
       files.each { |f| File.delete(f) rescue nil }
-
       puts "[CLEANUP] ✓ Checkpoints cleaned"
-
     end
-
   end
 
   def generate_track(progression_name)
     prog = PROGRESSIONS[progression_name]
-
     puts "\n🎵 #{prog.name} (#{prog.tempo} BPM, swing: #{prog.swing})"
 
     @professor.speak(CraneTTS::LESSONS[:intro])
     sleep 3
-
     @professor.speak(CraneTTS::LESSONS[:swing])
-    drums = @drums.generate_drums(prog.tempo, prog.swing, 4)
 
+    drums = @drums.generate_drums(prog.tempo, prog.swing, 4)
     return nil unless drums
 
     @professor.speak(CraneTTS::LESSONS[:pads])
     pads = @pad_gen.generate_dreamy_pad(prog.chords.first, prog.beat_duration * 16)
-
     return nil unless pads
 
     @professor.speak(CraneTTS::LESSONS[:drums])
     bass = generate_simple_bass(prog.chords.first, prog.beat_duration * 16)
-
     return nil unless bass
 
     @professor.speak(CraneTTS::LESSONS[:mastering])
     mixed = @mixer.mix_tracks(drums, pads, bass, generate_silence(prog.beat_duration * 16))
-
     return nil unless mixed
 
     @professor.speak(CraneTTS::LESSONS[:loop])
     output = @master.master_track(mixed)
-
     [drums, pads, bass, mixed].each { |f| File.delete(f) rescue nil }
     output
-
   end
 
   def run_continuous
-    puts "🎓 Professor Crane's Neo-Soul Masterclass v72.2-AutoClean"
-
+    puts "🎓 Professor Crane's Neo-Soul Masterclass v73.0-Modular"
     puts "━" * 60
-
-    puts "✅ DRY Refactoring: SoxHelpers module extracted (~40 lines removed)"
-
-    puts "✅ Boy Scout Rule: Code cleaner than we found it"
-
+    puts "✅ Modular Architecture: 5 focused modules (~120 lines each)"
+    puts "✅ JSON Data Separation: Progressions externalized"
     puts "✅ Auto-cleanup: Temp files removed after each track"
-
     puts "Press Ctrl+C to stop\n\n"
 
     track_count = 0
     loop do
-
       prog_name = PROGRESSIONS.keys.sample
-
       output = generate_track(prog_name)
 
       if output
@@ -760,25 +118,20 @@ class DillaEngine
         saved_file = "#{OUTPUT_DIR}/#{prog.name.gsub(/[^a-zA-Z0-9]/, '_')}_#{timestamp}.wav"
         FileUtils.cp(output, saved_file)
         puts "💾 Saved: #{File.basename(saved_file)}"
-
         play_track(output)
-
         File.delete(output) rescue nil
-
       end
 
       track_count += 1
       cleanup_old_checkpoints if track_count % 3 == 0
-
       sleep 2
     end
-
   end
 
   private
+
   def generate_simple_bass(chord_name, duration)
     out = "#{CHECKPOINT_DIR}/bass_#{Time.now.to_i}.wav"
-
     notes = {
       "C" => 261.63, "D" => 293.66, "E" => 329.63, "F" => 349.23,
       "G" => 392.00, "A" => 440.00, "B" => 493.88,
@@ -790,44 +143,28 @@ class DillaEngine
     freq = (notes[root] || 261.63) / 2.0
 
     system("#{SOX_PATH} -n \"#{out}\" synth #{duration} sine #{freq} sine #{freq * 0.5} fade h 0.05 #{duration} 0.1 gain -3 2>/dev/null")
-
     out
-
   end
 
   def generate_silence(duration)
     out = "#{CHECKPOINT_DIR}/silence_#{Time.now.to_i}.wav"
-
     system("#{SOX_PATH} -n \"#{out}\" synth #{duration} sine 0 vol 0 2>/dev/null")
-
     out
-
   end
 
   def play_track(file)
     win_path = `cygpath -w "#{file}" 2>/dev/null`.chomp
-
     win_path = file if win_path.empty?
-
     system("cmd.exe /c start /min wmplayer \"#{win_path}\" 2>/dev/null")
-
     duration = `soxi -D "#{file}" 2>/dev/null`.to_f rescue 20.0
-
     sleep duration
-
   end
-
 end
 
-# === MAIN EXECUTION ===
 if __FILE__ == $PROGRAM_NAME
-
   Signal.trap("INT") do
-
     puts "\n\n🎓 Dilla signing off. Remember: swing is life!"
-
     exit 0
-
   end
 
   FileUtils.mkdir_p(DillaConstants::CHECKPOINT_DIR)
@@ -836,6 +173,4 @@ if __FILE__ == $PROGRAM_NAME
 
   engine = DillaEngine.new
   engine.run_continuous
-
 end
-

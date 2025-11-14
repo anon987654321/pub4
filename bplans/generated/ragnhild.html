@@ -3,13 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Ragnhild - Forretningsplan</title>
+
     <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js for Data Visualization -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
     <style>
@@ -17,211 +22,327 @@
 
         :root {
             --primary-color: #000000;
+
             --background-color: #ffffff;
+
             --text-color: #333333;
+
             --font-family: 'Inter', sans-serif;
+
         }
+
         /* General Styles */
+
         body {
 
             margin: 0;
             font-family: var(--font-family);
+
             background-color: var(--background-color);
+
             color: var(--text-color);
+
             line-height: 1.6;
+
             font-size: 16px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
         }
+
         /* Logo Container */
+
         .logo-wrapper {
 
             position: relative;
             display: inline-block;
+
         }
+
         /* Logo styling with psychedelic animated gradient */
+
         .logo-container {
 
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
+
             color: transparent;
+
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
+
             background-size: 400%;
+
             background-clip: text;
+
             -webkit-background-clip: text;
+
             animation: gradientMove 5s infinite linear;
+
         }
+
         /* TM Symbol Styling */
+
         .trademark-symbol {
 
             position: absolute;
             top: 10px;
+
             right: -11px;
+
             font-size: 16px;
+
             color: var(--text-color);
+
         }
+
         @keyframes gradientMove {
+
             0% { background-position: 0% 50%; }
 
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+
         }
+
         /* Header styling */
+
         header {
 
             text-align: center;
             padding: 20px;
+
             background-color: var(--background-color);
+
         }
+
         .header-text {
+
             font-size: 1rem;
 
             font-weight: 500;
             color: var(--text-color);
+
             margin-top: -1.2rem;
+
             max-width: 100%;
+
             text-align: center;
+
         }
+
         /* Main content */
+
         main {
 
             max-width: 900px;
             margin: 3rem auto;
+
             padding: 0 1rem;
+
         }
+
         section {
+
             padding: 2rem 0;
 
             border-bottom: 1px solid #e0e0e0;
         }
+
         h2 {
+
             font-size: 2rem;
 
             color: var(--primary-color);
             margin-bottom: 1.5rem;
+
         }
+
         h3 {
+
             font-size: 1.5rem;
 
             color: var(--text-color);
             margin-bottom: 1rem;
+
         }
+
         p {
+
             font-size: 1rem;
 
             color: #444444;
             margin-bottom: 1rem;
+
         }
+
         ul {
+
             list-style-position: inside;
 
             padding-left: 1rem;
         }
+
         li {
+
             margin-bottom: 0.5rem;
 
         }
         /* Swiper Carousel */
+
         .swiper {
 
             width: 100%;
             height: 250px;
+
             margin: 2rem 0;
+
         }
+
         .swiper-slide {
+
             display: flex;
 
             justify-content: center;
             align-items: center;
+
             background-color: #f0f0f0;
+
             overflow: hidden;
+
         }
+
         .swiper-slide img {
+
             width: 100%;
 
             height: 100%;
             object-fit: cover;
+
             border-radius: 8px;
+
         }
+
         /* Chart container */
+
         .chart-container {
 
             max-width: 600px;
             margin: 2rem auto;
+
             padding: 1rem;
+
         }
+
         .chart-wrapper {
+
             position: relative;
 
             height: 400px;
         }
+
         /* Table styling */
+
         table {
 
             width: 100%;
             border-collapse: collapse;
+
             margin: 1rem 0;
+
         }
+
         th, td {
+
             padding: 0.75rem;
 
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+
         }
+
         th {
+
             background-color: #f5f5f5;
 
             font-weight: 600;
         }
+
         /* Responsive adjustments for mobile */
+
         @media (max-width: 768px) {
 
             .logo-container {
                 font-size: 50px;
+
             }
+
             .swiper {
+
                 height: 200px;
 
             }
             .header-text {
+
                 font-size: 0.9rem;
 
             }
             h2 {
+
                 font-size: 1.8rem;
 
             }
             .chart-wrapper {
+
                 height: 300px;
 
             }
         }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
 
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
+
             <div class="logo-container">
+
                 Ragnhild
+
             </div>
+
         </div>
+
         <div class="header-text">
 
             Moderne begravelsesbyrå med Karaokekiste, Diskokiste og Klovnepallbærere<br>
             Sektor: Social Innovation
+
         </div>
+
     </header>
+
     <main>
+
         <!-- Sammendrag Section -->
 
         <section id="sammendrag">
             <h2>Sammendrag</h2>
+
             <h3>Visjon</h3>
+
             <p>Ragnhild skal transformere den norske begravelsesindustrien fra dyster tradisjon til personlig feiring av liv. Vi tror at døden skal markeres med glede, humor og ærlighet - ikke bare sorg og formalitet.</p>
+
             <h3>Misjon</h3>
+
             <p>Tilby moderne begravelsestjenester som respekterer avdødes personlighet og ønsker. Fra Karaokekiste med innebygd lydsystem til Klovnepallbærere som sprer smil - vi skreddersyr hver seremoni.</p>
 
             <h3>Innovasjon</h3>
@@ -232,67 +353,57 @@
 
         </section>
         <!-- Markedsanalyse Section -->
+
         <section id="markedsanalyse">
 
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
+
             <ul>
 
                 <li><strong>Norge:</strong> NOK 1.5 milliarder</li>
                 <li><strong>Norden:</strong> NOK 5.0 milliarder</li>
+
                 <li><strong>Årlig vekst:</strong> 3%</li>
+
             </ul>
+
             <h3>Kundesegmenter</h3>
+
             <ul>
 
                 <li>Eldre som ønsker å planlegge egen begravelse med personlig touch (60+ år)</li>
                 <li>Pårørende til unge avdøde som ønsker livbejaende seremoni (familie 20-50 år)</li>
 
                 <li>LGBTQ+ community som søker inkluderende og non-tradisjonelle seremonier</li>
-
                 <li>Humanister og sekulære familier uten religiøs tilknytning</li>
-
                 <li>Kreative yrker (kunstnere, musikere) som ønsker ukonvensjonelle begravelser</li>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <li>Tradisjonelle begravelsesbyråer (Fonus, Jølstad, Norrem) - formelle, høye priser</li>
                 <li>Kirkelige begravelser - religiøse, lite fleksibilitet</li>
 
                 <li>DIY begravelser - lovlig men komplisert, mangler profesjonalitet</li>
-
                 <li>Nye aktører (Legacy, Memoria) - digitale, men fortsatt konservative</li>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <li>Unike produkter: Karaokekiste, Diskokiste, Neonkiste - ingen andre tilbyr dette</li>
                 <li>Performative tjenester: Klovnepallbærere, Stand-up comedian som taler, Live-musikere</li>
 
                 <li>30% lavere priser enn etablerte aktører via digitalt salg og direkte import av kister</li>
-
                 <li>Holografiske minneprosjeksjoner - 3D-video av avdøde under seremoni</li>
-
                 <li>Full transparens: Online priskalkulator, ingen skjulte kostnader</li>
-
                 <li>Miljøvennlige alternativer: Mycelium-kister (biologisk nedbrytbare på 45 dager)</li>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
         <section id="teknologi">
 
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
+
             <p>Ragnhild benytter LED strip lighting i kister (Diskokiste), Bluetooth PA-system (Karaokekiste), og holografisk projektor for minnevisninger. Alle kister custom-bygges med CNC-frest tre og integrert elektronikk.</p>
 
             <h3>Unik Innovasjon</h3>
@@ -306,36 +417,34 @@
 
         </section>
         <!-- Forretningsmodell Section -->
+
         <section id="forretningsmodell">
 
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
+
             <ul>
 
                 <li>Begravelsespakker: NOK 15,000-45,000 per seremoni (vs. NOK 50,000-80,000 tradisjonelt)</li>
                 <li>Premium kister: Karaokekiste NOK 25,000, Diskokiste NOK 30,000, Mycelium-kiste NOK 20,000</li>
 
                 <li>Performative tjenester: Klovnepallbærere NOK 8,000, Stand-up taler NOK 5,000, Live-band NOK 15,000</li>
-
                 <li>Holografisk minneprojeksjon: NOK 12,000 per seremoni</li>
-
                 <li>Pre-need salg: Kunder bestiller egen begravelse i forveien - 100% forhåndsbetaling</li>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p>Break-even ved 50 seremonier årlig (ca. 1 per uke). Netto margin 35% på komplette pakker. Pre-need salg gir kontantstrøm før leveranse. Ved 200 seremonier årlig (år 3): NOK 6M omsetning, NOK 2.1M profitt.</p>
-
             <h3>Skalerbarhet</h3>
             <p>Franchise-modell for andre norske byer (Bergen, Trondheim, Stavanger) - NOK 250k franchise fee + 8% royalty. Digital markedsføring tillater nasjonal rekkevidde. Performere rekrutteres lokalt.</p>
 
         </section>
         <!-- Utviklingsveikart Section -->
+
         <section id="veikart">
 
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
+
             <p>Finansiering sikret. Produsere 10 Karaokekister og 5 Diskokister. Ansette 2 begravelseskonsulenter. Lansere ny nettside med online booking.</p>
 
             <h3>Q2 2026</h3>
@@ -352,10 +461,12 @@
 
         </section>
         <!-- Finansieringsbehov Section -->
+
         <section id="finansiering">
 
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
+
             <p><strong>NOK 300,000</strong></p>
 
             <h3>Finansieringskilder</h3>
@@ -363,67 +474,93 @@
 
                 <li><strong>Innovasjon Norge:</strong> NOK 150,000</li>
                 <li><strong>Angel Nok:</strong> NOK 100,000</li>
+
                 <li><strong>Crowdfunding Nok:</strong> NOK 50,000</li>
 
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
+
                         <th>Kategori</th>
+
                         <th>Beløp (NOK)</th>
+
                         <th>Andel</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     <tr>
+
                         <td>Kiste Produksjon</td>
 
                         <td>80,000</td>
                         <td>26.7%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Holografi Utstyr</td>
 
                         <td>50,000</td>
                         <td>16.7%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Markedsfoering</td>
 
                         <td>60,000</td>
                         <td>20.0%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Showroom</td>
 
                         <td>40,000</td>
                         <td>13.3%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Loenn</td>
 
                         <td>50,000</td>
                         <td>16.7%</td>
+
                     </tr>
+
                     <tr>
+
                         <td>Driftskapital</td>
 
                         <td>20,000</td>
                         <td>6.7%</td>
+
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
         <!-- Team og Kompetanse Section -->
+
         <section id="team">
 
             <h2>Team og Kompetanse</h2>
             <h3>Ragnhild Solvang - Grunnlegger & CEO</h3>
+
             <p>8 år som begravelseskonsulent hos Fonus. Ble frustrert over bransjen's manglende innovasjon. Stand-up comedian på si (5 års erfaring). BA i Teatervitenskap fra UiO.</p>
 
             <h3>Kristoffer Hanssen - CTO & Product Designer</h3>
@@ -439,9 +576,9 @@
         <!-- Bærekraft og Samfunnsansvar Section -->
 
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
+
             <p>Mycelium-kister er 100% biologisk nedbrytbare på 45 dager (vs. 10-25 år for tre). LED-systemer bruker solcellebatterier (0 strømforbruk under seremoni). Lokal produksjon reduserer transport-utslipp.</p>
 
             <h3>Sosial Påvirkning</h3>
@@ -455,138 +592,200 @@
 
         </section>
         <!-- Charts Section -->
+
         <section id="charts">
 
             <h2>Visualiseringer</h2>
-
             <div class="chart-container">
                 <h3>Tjenesteadopsjon (%)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="adoptionChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Omsetning (MNOK)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="revenueChart"></canvas>
+
                 </div>
+
             </div>
+
             <div class="chart-container">
+
                 <h3>Kundetilfredshet (1-10)</h3>
 
                 <div class="chart-wrapper">
                     <canvas id="satisfactionChart"></canvas>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- Chart.js Configurations -->
-
     <script>
-
         {
-
             const ctx = document.getElementById('adoptionChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'bar',
 
                 data: {
                     labels: ["Karaokekiste","Diskokiste","Klovnepallbærere","Holografi","Mycelium-kiste"],
+
                     datasets: [{
+
                         label: 'Tjenesteadopsjon (%)',
+
                         data: [35,25,45,15,20],
+
                         backgroundColor: '#8a2be2',
+
                     }]
+
                 },
+
                 options: {
+
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { display: false }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('revenueChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'line',
 
                 data: {
                     labels: ["År 1","År 2","År 3","År 4","År 5"],
+
                     datasets: [
+
                         {
+
                             label: 'Omsetning',
 
                             data: [1.5,3.2,6.0,10.0,15.0],
                             borderColor: '#ff007f',
+
                             backgroundColor: '#ff007f33',
+
                             tension: 0.4,
+
                             fill: true
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     },
+
                     scales: {
+
                         y: { beginAtZero: true }
+
                     }
+
                 }
+
             });
+
         }
+
         {
 
             const ctx = document.getElementById('satisfactionChart').getContext('2d');
-
             new Chart(ctx, {
                 type: 'radar',
 
                 data: {
                     labels: ["Personalisering","Pris","Service","Innovasjon","Respekt","Glede"],
+
                     datasets: [
+
                         {
+
                             label: 'Ragnhild',
 
                             data: [9.5,9.0,9.2,10,9.8,9.7],
                             borderColor: '#ff007f',
+
                             backgroundColor: '#ff007f33',
+
                         },
+
                         {
+
                             label: 'Tradisjonelt byrå',
 
                             data: [6.0,5.5,7.0,3.0,8.0,4.0],
                             borderColor: '#888',
+
                             backgroundColor: '#88833',
+
                         },
+
                     ]
+
                 },
 
                 options: {
                     responsive: true,
+
                     maintainAspectRatio: false,
+
                     plugins: {
+
                         legend: { position: 'bottom' }
+
                     }
+
                 }
+
             });
+
         }
+
     </script>
 
 </body>
-
 </html>
-

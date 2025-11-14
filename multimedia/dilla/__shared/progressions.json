@@ -1,0 +1,43 @@
+# frozen_string_literal: true
+
+{
+  "fall_in_love": {
+    "name": "Fall in Love (Slum Village)",
+    "tempo": 90,
+    "swing": 0.58,
+    "chords": ["Dm9", "G7sus4", "Cmaj9", "Am7"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  },
+  "players": {
+    "name": "Players (Slum Village)",
+    "tempo": 88,
+    "swing": 0.62,
+    "chords": ["Ebm9", "Abm7", "Dbmaj9", "Gbmaj7"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  },
+  "stakes_is_high": {
+    "name": "Stakes Is High (De La Soul)",
+    "tempo": 92,
+    "swing": 0.56,
+    "chords": ["Am9", "Dm7", "G7sus4", "Cmaj7"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  }
+}
