@@ -9,14 +9,15 @@
     "PRIMARY_CONFIG": "master.json is ONLY config file single source of truth no other docs",
     "LOAD_SEQUENCE": [
       "1_read_master_json_completely",
-      "2_run_tree_scan G:/pub4/sh/tree.sh for full hierarchy",
+      "2_scan_hierarchy_pure_zsh: for d in G:/pub4/**/*(/); do echo $d/; done; for f in G:/pub4/**/*(.); do [[ ${f:t} != .* ]] && echo $f; done",
       "3_internalize_all_principles_workflows_patterns",
       "4_apply_forbidden_commands_restrictions",
       "5_understand_deployment_targets_openbsd_rails",
       "6_then_proceed_with_user_request"
     ],
     "NEVER_ASK": "if master.json defines it execute immediately auto_approved",
-    "NO_NEW_FILES": "never create tracking docs todo lists notes keep everything in master.json"
+    "NO_NEW_FILES": "never create tracking docs todo lists notes keep everything in master.json",
+    "TREE_SCAN_NOTES": "pure zsh glob qualifiers: **/*(/) dirs only, **/*(.) files only, ${f:t} basename, skip dotfiles"
   },
   
   "core_principles_internalized": {
