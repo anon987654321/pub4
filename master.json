@@ -1,9 +1,9 @@
 {
-  "version": "29.0.0",
+  "version": "30.0.0",
 
-  "purpose": "surgical refactoring through precise questioning and autonomous deployment",
+  "purpose": "surgical refactoring with professional web design codification",
 
-  "updated": "2025-11-14T18:34:57Z",
+  "updated": "2025-11-14T18:51:00Z",
 
   "llm_target": "github_copilot_cli",
   
@@ -425,8 +425,39 @@
     
     "deployment_readiness": "production_complete means ssh_upload_run no_local_testing",
     
-    "session_continuity": "analyze_state_restore_context_execute seamless_handoff"
+    "session_continuity": "analyze_state_restore_context_execute seamless_handoff",
+    
+    "token_efficiency": "edit_files_directly no_inline_code_in_chat trust_and_execute"
 
+  },
+  
+  "design_system": {
+    "base_template": "bsdports.scss from __OLD_BACKUPS",
+    "typography": {
+      "scale": "1.25_modular",
+      "sizes_px": [12, 14, 16, 18, 22, 28, 36, 48, 64],
+      "line_height": "1.4_body 1.2_headings",
+      "measure": "45-75ch optimal 66ch ideal"
+    },
+    "spacing": {
+      "unit": "8px",
+      "scale": [4, 8, 12, 16, 24, 32, 48, 64, 96, 128],
+      "proximity_rule": "8-16px related 24-48px unrelated"
+    },
+    "color": {
+      "contrast_wcag": "4.5_text 3.0_ui",
+      "palette_rule": "60_dominant 30_neutral 10_accent"
+    },
+    "interaction": {
+      "touch_targets": "44x44px minimum",
+      "transitions": "200-300ms ease",
+      "feedback": "immediate visual states"
+    },
+    "accessibility": {
+      "semantic_html": "required",
+      "keyboard_nav": "full_support",
+      "aria": "when_semantic_insufficient"
+    }
   },
 
   "file_organization": {
