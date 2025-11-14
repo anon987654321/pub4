@@ -47,51 +47,49 @@
   },
   
   "innovation_research_2024": {
+    "CRITICAL": "implement all innovations below into rails .sh installers NOT just documentation",
     "social_algorithms": {
-      "recommendation_systems": "GNN graph_neural_networks for modeling infosphere echo_chambers filter_bubbles",
-      "feed_optimization": "interest_based + community_driven NOT chronological engagement_score trending",
-      "transparency": "white_house AI_bill_of_rights congressional_oversight user_control"
+      "implementation": "add Post model with engagement_score:integer trending_score:float GNN via langchainrb",
+      "feed_controller": "def feed; @posts = Post.where(tenant).order(engagement_score: :desc, created_at: :desc); end",
+      "stimulus_infinite_scroll": "@stimulus-components/infinite-scroll for feed pagination",
+      "recommendation_job": "sidekiq job calculate_engagement_scores using likes shares comments recency"
     },
     "modern_css_2024": {
-      "container_queries": "@container rules component_responsive NOT viewport_only game_changer",
-      "native_nesting": "no preprocessors improved clarity maintainability",
-      "cascade_layers": "@layer explicit inheritance control",
-      "new_selectors": ":has() parent styling based on child state no JS",
-      "subgrid": "child grids participate in parent perfect alignment",
-      "logical_properties": "multi_directional writing modes flexibility"
+      "implementation": "add to application.scss with @container queries for card layouts",
+      "card_component": ".cards { container-type: inline-size; } @container (width > 60ch) { .card { flex-direction: row; } }",
+      "use_has_selector": ".post:has(.comment) { border-color: blue; } for interactive states",
+      "subgrid_layout": ".feed { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }"
     },
     "pwa_offline_first": {
-      "service_worker": "cache_first static network_first API background_sync forms",
-      "indexeddb": "NOT localStorage structured transactional storage",
-      "turbo_offline": "rails 8 built_in caching background_sync",
-      "core_web_vitals": "performance accessibility progressive_enhancement"
+      "implementation": "create public/service-worker.js and public/manifest.json in all .sh installers",
+      "service_worker_template": "cache assets HTML CSS JS on install, network-first for API, fallback to /offline.html",
+      "manifest_generation": "rails app:generate:manifest with icons start_url display:standalone",
+      "turbo_offline_gem": "add gem turbo-offline to Gemfile enable background_sync for forms"
     },
     "typography_2024": {
-      "pairings": "abril_fatface+lato fugaz_one+work_sans space_mono+plus_jakarta raleway+merriweather",
-      "hierarchy": "heading subheading body caption consistent_scale typescales_plugin",
-      "figma_plugins": "fontpair typescales font_changer google_fonts_plugin",
-      "trends": "responsive_variables brand_centric neutral+expressive accessibility mobile_first"
+      "implementation": "add @import url(fonts.googleapis.com) in application.scss",
+      "font_stack": "h1-h6 { font-family: 'Fugaz One', sans-serif; } body { font-family: 'Work Sans', sans-serif; }",
+      "responsive_scale": "font-size: clamp(1rem, 2vw, 1.5rem) for fluid typography",
+      "css_vars": ":root { --font-heading: 'Abril Fatface'; --font-body: 'Lato'; }"
     },
     "rails8_hotwire_native": {
-      "single_codebase": "web PWA iOS Android unified business_logic",
-      "progressive_enhancement": "web_first add native_screens where_fidelity_critical",
-      "turbo_morphing": "ultra_smooth partial_updates indistinguishable_from_SPA minimal_JS",
-      "bridge_components": "camera GPS push_notifications native_SDK_access",
-      "offline_support": "turbo_offline caching background_sync full_functionality",
-      "rapid_iteration": "instant_updates no_app_store_reviews for most changes"
+      "implementation": "add turbo-rails stimulus-rails solid_queue solid_cache solid_cable to Gemfile",
+      "turbo_native_bridge": "create app/javascript/controllers/bridge_controller.js for native SDK",
+      "turbo_morphing": "turbo:morph events for smooth updates meta name=turbo-refresh-method content=morph",
+      "native_manifest": "create public/turbo-native-config.json with native screen definitions"
     },
     "hjerterom_logistics": {
-      "ant_colony_optimization": "ACO heterogeneous_fleets transshipment_points carbon_reduction",
-      "genetic_algorithms": "GA VRP perishable_goods cost_minimal timely_delivery",
-      "deep_learning_hybrid": "real_time dynamic_adjustments traffic demand_forecasting",
-      "iot_5g": "real_time_tracking route_adjustment cold_chain green_logistics"
+      "implementation": "create app/services/route_optimizer_service.rb using ACO algorithm",
+      "mapbox_integration": "add mapbox-gl gem stimulus-mapbox controller for front page map",
+      "volunteer_routing": "Volunteer model with geocoder gem lat:float lng:float optimize_routes method",
+      "food_drive_scheduler": "FoodDrive model with recurring events via ice_cube gem genetic_algorithm for optimal schedules"
     },
     "privcam_creator_economy": {
-      "monetization_models": "subscriptions tipping PPV merchandising affiliate sponsorships",
-      "platform_economics": "transaction_fees 5-10% premium_services analytics promo_tools",
-      "diversification": "multi_platform strategy algorithm_risk_mitigation",
-      "engagement": "niche_communities exclusive_access direct_messaging AI_recommendations",
-      "norwegian_market": "vipps bankID stripe_integration adults_only verification"
+      "implementation": "Creator model with stripe_customer_id vipps_merchant_id earnings:decimal",
+      "subscription_engine": "gem pay gem receipts for invoices Subscription model with plans tiers",
+      "tipping_system": "Tip model polymorphic belongs_to stripe_payment_intent_id process_tip_job",
+      "analytics_dashboard": "CreatorDashboard controller with chartkick gem revenue_by_day subscribers_growth",
+      "bankid_verification": "gem omniauth-bankid Age18Plus verification callback create verified_creator flag"
     }
   },
   
