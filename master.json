@@ -421,6 +421,19 @@
     },
 
     "asset_pipeline": "propshaft replaces sprockets",
+    
+    "rich_text_editor": "tiptap via rhino-editor gem compatible with ActionText ActiveStorage",
+    "image_viewer": "stimulus-lightbox wrapper for lightgallery.js (licensed)",
+    "frontend_refactoring": {
+      "codepen_extraction": "extract codepen demos into propshaft assets/stylesheets views stimulus",
+      "never_inline": "move inline styles to application.scss or component.css",
+      "stimulus_components": "@stimulus-components/* from npm"
+    },
+    "missing_features_audit": {
+      "tiptap_integration": ["privcam", "hjerterom", "blognet", "brgen_playlist"],
+      "codepen_refactor": "mytoonz.sh complete structure needs frontend extraction",
+      "reference_repo": "https://github.com/basicfeatures/openbsd-rails (20stars archived)"
+    },
 
     "pwa": {
 
