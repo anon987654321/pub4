@@ -1,11 +1,26 @@
 {
-  "version": "28.0.0",
+  "version": "29.0.0",
 
-  "purpose": "surgical refactoring through precise questioning",
+  "purpose": "surgical refactoring through precise questioning and autonomous deployment",
 
-  "updated": "2025-11-14",
+  "updated": "2025-11-14T18:34:57Z",
 
   "llm_target": "github_copilot_cli",
+  
+  "optimization": {
+    "performance": {
+      "parallel_operations": "batch independent file reads/writes in single response",
+      "tool_efficiency": "minimize llm turns via parallel tool calling",
+      "caching": "leverage existing analysis avoid redundant checks",
+      "incremental": "surgical fixes not wholesale rewrites"
+    },
+    "workflow": {
+      "analyze_once": "comprehensive upfront analysis then act",
+      "validate_sparingly": "trust specs avoid over-verification",
+      "commit_frequently": "small atomic commits with clear messages",
+      "deploy_confidently": "production ready means deploy dont hesitate"
+    }
+  },
 
   "session_restore": {
     "supported": true,
@@ -43,7 +58,15 @@
 
     "observability": "trace question answer effect",
 
-    "modularity": "split large files into focused modules"
+    "modularity": "split large files into focused modules",
+    
+    "production_ready": "complete means deploy comprehensive means exhaustive",
+    
+    "trust_specs": "README defines truth implement faithfully",
+    
+    "verify_outcomes": "test results not intermediate steps",
+    
+    "autonomous_execution": "auto_approve means act dont ask"
 
   },
 
@@ -390,13 +413,19 @@
   "copilot_workflow": {
     "intent_reporting": "always_on_first_tool_call",
 
-    "tool_efficiency": "batch_independent_operations",
+    "tool_efficiency": "batch_independent_operations minimize_llm_turns",
 
-    "response_style": "concise_direct_surgical",
+    "response_style": "concise_direct_surgical action_over_explanation",
 
-    "validation": "only_on_failure_or_explicit_request",
+    "validation": "only_on_failure_or_explicit_request trust_implementation",
 
-    "context_scope": "current_working_directory_first"
+    "context_scope": "current_working_directory_first leverage_previous_analysis",
+    
+    "error_handling": "fix_forward_not_rollback surgical_correction_immediate",
+    
+    "deployment_readiness": "production_complete means ssh_upload_run no_local_testing",
+    
+    "session_continuity": "analyze_state_restore_context_execute seamless_handoff"
 
   },
 
