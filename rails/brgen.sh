@@ -46,12 +46,12 @@ log "Installing Rails 8 Solid Stack + Multi-Tenancy"
 cat > Gemfile << 'GEMFILE'
 source "https://rubygems.org"
 
-ruby "3.3.0"
+ruby "3.3.7"
 
 gem "rails", "~> 8.0.0"
 gem "pg", "~> 1.5"
 
-gem "puma", "~> 6.0"
+gem "falcon"
 
 gem "solid_queue"
 
@@ -77,11 +77,13 @@ gem "devise"
 
 gem "devise-guests"
 
-gem "omniauth-openid-connect"
-
 gem "acts_as_tenant"
 
 gem "pagy"
+
+gem "ferrum"
+
+gem "langchainrb"
 
 gem "faker"
 
@@ -108,8 +110,160 @@ end
 GEMFILE
 
 bundle install
+
+npm install rhino-editor @stimulus-components/lightbox
 setup_rails8_solid_stack
 setup_rails8_authentication
+
+log "Generating Post model and controller"
+bin/rails generate model Post title:string content:text karma:integer anonymous:boolean
+bin/rails generate controller Posts index show new create
+
+log "Creating routes"
+cat > config/routes.rb << 'ROUTES'
+Rails.application.routes.draw do
+  root "posts#index"
+  resources :posts, only: [:index, :show, :new, :create]
+  
+  get "up" => "rails/health#show", as: :rails_health_check
+end
+ROUTES
+
+log "Creating PostsController"
+cat > app/controllers/posts_controller.rb << 'CONTROLLER'
+class PostsController < ApplicationController
+  def index
+    @posts = Post.order(created_at: :desc).limit(50)
+  end
+  
+  def show
+    @post = Post.find(params[:id])
+  end
+  
+  def new
+    @post = Post.new
+  end
+  
+  def create
+    @post = Post.new(post_params)
+    if @post.save
+      redirect_to @post
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+  
+  private
+  
+  def post_params
+    params.require(:post).permit(:title, :content)
+  end
+end
+CONTROLLER
+
+log "Creating Posts views"
+mkdir -p app/views/posts
+
+cat > app/views/posts/index.html.erb << 'VIEW'
+<div class="posts">
+  <h1>Brgen.no - Bergen Community</h1>
+  <%= link_to 'New Post', new_post_path, class: 'button' %>
+  
+  <% @posts.each do |post| %>
+    <article class="post">
+      <h2><%= link_to post.title, post %></h2>
+      <div class="content"><%= simple_format post.content %></div>
+      <footer>
+        <span><%= post.karma || 0 %> karma</span>
+        <span><%= time_ago_in_words(post.created_at) %> ago</span>
+      </footer>
+    </article>
+  <% end %>
+</div>
+VIEW
+
+cat > app/views/posts/show.html.erb << 'VIEW'
+<article class="post-detail">
+  <h1><%= @post.title %></h1>
+  <div class="content"><%= simple_format @post.content %></div>
+  <footer>
+    <span><%= @post.karma || 0 %> karma</span>
+    <span><%= time_ago_in_words(@post.created_at) %> ago</span>
+  </footer>
+  <%= link_to 'Back', root_path %>
+</article>
+VIEW
+
+cat > app/views/posts/new.html.erb << 'VIEW'
+<div class="new-post">
+  <h1>New Post</h1>
+  
+  <%= form_with model: @post do |f| %>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title, required: true %>
+    </div>
+    
+    <div class="field">
+      <%= f.label :content %>
+      <%= f.text_area :content, rows: 10, required: true %>
+    </div>
+    
+    <%= f.submit 'Create Post', class: 'button' %>
+  <% end %>
+  
+  <%= link_to 'Cancel', root_path %>
+</div>
+VIEW
+
+log "Creating BrgenScraperService"
+mkdir -p app/services
+
+cat > app/services/brgen_scraper_service.rb << 'SERVICE'
+class BrgenScraperService
+  def self.scrape_and_seed
+    browser = Ferrum::Browser.new(headless: true, timeout: 30)
+    
+    begin
+      browser.go_to("https://old.reddit.com/r/bergen/")
+      browser.network.wait_for_idle
+      
+      posts = browser.css(".thing")
+      posts[0..9].each do |post|
+        title = post.at_css(".title")&.text
+        content = post.at_css(".entry .md")&.text
+        next unless title && content
+        
+        paraphrased = paraphrase_norwegian(content)
+        
+        Post.create!(
+          title: title,
+          content: paraphrased,
+          anonymous: true,
+          karma: 0
+        )
+      end
+    ensure
+      browser.quit
+    end
+  end
+  
+  private
+  
+  def self.paraphrase_norwegian(text)
+    return text unless ENV["OPENAI_API_KEY"]
+    
+    llm = Langchain::LLM::OpenAI.new(api_key: ENV["OPENAI_API_KEY"])
+    prompt = "Paraphrase this Norwegian text in unique voice, keep meaning: #{text[0..500]}"
+    response = llm.complete(prompt: prompt)
+    response.completion || text
+  rescue
+    text
+  end
+end
+SERVICE
+
+bin/rails db:migrate
 
 # Multi-tenancy with ActsAsTenant
 log "Configuring advanced multi-tenancy"
