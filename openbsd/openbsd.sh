@@ -249,6 +249,10 @@ setup_dns_dnssec() {
   done
   # Create zone files
   for domain in $ALL_DOMAINS; do
+    # Extract base app name from domain (brgen.no -> brgen)
+    local app="${domain%%.*}"
+    local subdomains="${APPS[${app}.subdomains]}"
+    
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
 \$ORIGIN $domain.
 
@@ -260,13 +264,19 @@ setup_dns_dnssec() {
 www IN CNAME @
 @ IN CAA 0 issue "letsencrypt.org"
 $([[ "$domain" == "brgen.no" ]] && print "ns IN A $MAIN_IP")
-    local subdomains=${APPS[${app}.subdomains]}
-    [[ -n $subdomains ]] && print "$subdomains" | while read sub; do print "$sub IN CNAME @"; done
 EOF
+    
+    # Add subdomains if defined
+    if [[ -n $subdomains ]]; then
+      for sub in ${(s: :)subdomains}; do
+        print "$sub IN CNAME @" >> "/var/nsd/zones/master/$domain.zone"
+      done
+    fi
+    
     # Sign zone
     cd /var/nsd/zones/master
-    zsk_base=$(cat ../keys/"$domain.zsk")
-    ksk_base=$(cat ../keys/"$domain.ksk")
+    zsk_base=$(<../keys/"$domain.zsk")
+    ksk_base=$(<../keys/"$domain.ksk")
 
     # Pure zsh: extract first 16 chars with parameter expansion
 
