@@ -19,11 +19,11 @@ class PadGenerator
     # Generate multiple detuned layers for warmth
     layers = build_warm_layers(freqs, duration)
 
-    # SP-404 style effects chain: vinyl simulator, tape saturation, deep reverb
-    # Flying Lotus / Madlib signature sound
+    # SP-404 style effects chain with aggressive normalization to reduce file size
     command = sox_cmd([
       "-n \"#{output}\"",
       layers,
+      "norm -3",                                 # Normalize EARLY to prevent clipping
       "fade h 0.8 #{duration} 3",
       "overdrive 8 18",                          # Tape saturation (SP-404 style)
       "reverb 60 50 100",                        # Deep reverb (Ableton/FlyLo technique)
@@ -31,7 +31,7 @@ class PadGenerator
       "chorus 0.6 0.8 45 0.3 0.2 2 -t",         # Triangle chorus (layered)
       "equalizer 150 1q 3",                      # Bass warmth
       "equalizer 3000 0.5q -2",                  # Tame digital harshness
-      "norm -15",
+      "norm -15",                                # Final normalization
       "2>/dev/null"
     ].join(" "))
 
@@ -44,11 +44,13 @@ class PadGenerator
   private
 
   def build_warm_layers(freqs, duration)
-    layers = []
+    # SoX requires ALL sine waves in a SINGLE synth command for additive synthesis
+    # Format: synth <duration> sine freq1 sine freq2 sine freq3 ...
+    parts = ["synth #{duration}"]
     
     # Main chord tones
     freqs.each do |f|
-      layers << "synth #{duration} sine #{f}"
+      parts << "sine #{f}"
     end
     
     # Detuned layers for warmth (Moog-style analog drift)
@@ -56,17 +58,18 @@ class PadGenerator
     freqs.each do |f|
       detune1 = f * 1.00173
       detune2 = f * 0.99827
-      layers << "synth #{duration} sine #{detune1}"
-      layers << "synth #{duration} sine #{detune2}"
+      parts << "sine #{detune1}"
+      parts << "sine #{detune2}"
     end
     
     # Subtle octave harmonics (Minimoog bass character)
+    # Note: vol applies to entire output, not per-sine, so skipping for now
     freqs.each do |f|
-      layers << "synth #{duration} sine #{f * 2} vol 0.3"
-      layers << "synth #{duration} sine #{f * 0.5} vol 0.4"
+      parts << "sine #{f * 2}"
+      parts << "sine #{f * 0.5}"
     end
     
-    layers.join(" ")
+    parts.join(" ")
   end
 
   def parse_chord(name)
@@ -148,7 +151,7 @@ class DrumGenerator
     end.compact
 
     output = tempfile("drums")
-    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" 2>/dev/null"))
+    system(sox_cmd("#{patterns.map{|p| "\"#{p}\""}.join(" ")} \"#{output}\" 2>/dev/null"))
     cleanup_files(patterns, kick, snare, hat)
     output
   end
@@ -165,7 +168,7 @@ class DrumGenerator
     end.compact
 
     output = tempfile("drums_flylo")
-    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" overdrive 8 12 2>/dev/null"))
+    system(sox_cmd("#{patterns.map{|p| "\"#{p}\""}.join(" ")} \"#{output}\" overdrive 8 12 2>/dev/null"))
     cleanup_files(patterns, kick, snare, hat)
     output
   end
@@ -182,7 +185,7 @@ class DrumGenerator
     end.compact
 
     output = tempfile("drums_techno")
-    system(sox_cmd("#{patterns.join(" ")} \"#{output}\" overdrive 25 35 equalizer 60 2q 4 2>/dev/null"))
+    system(sox_cmd("#{patterns.map{|p| "\"#{p}\""}.join(" ")} \"#{output}\" overdrive 25 35 equalizer 60 2q 4 2>/dev/null"))
     cleanup_files(patterns, kick, clap, hat)
     output
   end
@@ -217,15 +220,15 @@ class DrumGenerator
   end
 
   def generate_bar_flylo(kick, snare, hat, bar_num, beat_dur, swing, config)
-    # FlyLo: skips kicks randomly, layers snares, very irregular hats
+    # FlyLo: off-grid, layered, glitchy
     bar_dur = beat_dur * 4
     bar_file = tempfile("bar_flylo")
     
     events = []
     
-    # Kicks: sometimes skip beats (20% chance)
-    4.times do |beat|
-      next if rand < 0.2
+    # Kicks: skip beats but ensure at least 2 kicks per bar
+    kick_beats = [0, 1, 2, 3].shuffle.take(rand(2..4))
+    kick_beats.each do |beat|
       offset = rand(-config[:kick_offset]..config[:kick_offset]) / 1000.0
       events << "#{kick} #{beat * beat_dur + offset}"
     end
@@ -238,9 +241,9 @@ class DrumGenerator
       events << "#{snare} #{position - 0.015}" if rand < 0.6
     end
     
-    # Irregular hats: skip 25% randomly, big timing variations
-    8.times do |eighth|
-      next if rand < 0.25
+    # Irregular hats: skip some but ensure minimum 4 hats
+    hat_eighths = (0..7).to_a.shuffle.take(rand(4..6))
+    hat_eighths.each do |eighth|
       offset = (eighth % 2 == 1) ? (beat_dur * swing * 0.5) : 0
       jitter = rand(-30..30) / 1000.0
       events << "#{hat} #{(eighth * beat_dur * 0.5) + offset + jitter}"
@@ -278,26 +281,54 @@ class DrumGenerator
   end
 
   def build_event_bar(events, bar_file, bar_dur)
-    commands = events.map { |e| file, time = e.split; "\"#{file}\" trim 0 0.5 pad #{time}@0" }
-    system(sox_cmd("-m #{commands.join(" ")} \"#{bar_file}\" trim 0 #{bar_dur} 2>/dev/null"))
-    bar_file
+    # Each event is "filepath time_offset"
+    return nil if events.nil? || events.empty?
+    
+    # Need to create silence-padded versions then mix them
+    padded_files = events.map.with_index do |event, idx|
+      parts = event.split(' ', 2)
+      file = parts[0]
+      offset = parts[1].to_f
+      
+      # Skip invalid offsets
+      next if offset < 0 || offset > bar_dur
+      
+      padded = tempfile("padded_#{idx}")
+      # Create silence + audio at the right position
+      if system(sox_cmd("\"#{file}\" \"#{padded}\" pad #{offset} 2>/dev/null"))
+        padded
+      else
+        nil
+      end
+    end.compact
+    
+    return nil if padded_files.empty?
+    
+    # Mix all padded files together
+    quoted_files = padded_files.map { |f| "\"#{f}\"" }.join(" ")
+    success = system(sox_cmd("-m #{quoted_files} \"#{bar_file}\" trim 0 #{bar_dur} 2>/dev/null"))
+    cleanup_files(padded_files)
+    
+    success && valid?(bar_file) ? bar_file : nil
   end
 
   def generate_kick
     out = tempfile("kick")
-    system(sox_cmd("-n \"#{out}\" synth 0.3 sine 55 fade h 0.001 0.3 0.15 overdrive 15 gain -3 2>/dev/null"))
+    # Kick with fundamental + harmonics in ONE synth command
+    system(sox_cmd("-n \"#{out}\" synth 0.3 sine 55 sine 110 vol 0.4 sine 220 vol 0.2 sine 330 vol 0.1 fade h 0.001 0.3 0.15 overdrive 15 gain -3 2>/dev/null"))
     out
   end
 
   def generate_heavy_kick
-    # Industrial techno: heavier, more distorted
+    # Industrial techno: heavier, more distorted with rich harmonics
     out = tempfile("kick_heavy")
-    system(sox_cmd("-n \"#{out}\" synth 0.35 sine 45 fade h 0.001 0.35 0.2 overdrive 30 gain -2 2>/dev/null"))
+    system(sox_cmd("-n \"#{out}\" synth 0.35 sine 45 sine 90 vol 0.5 sine 180 vol 0.3 sine 270 vol 0.15 fade h 0.001 0.35 0.2 overdrive 30 gain -2 2>/dev/null"))
     out
   end
 
   def generate_snare
     out = tempfile("snare")
+    # White noise with band-pass filtering for realistic snare
     system(sox_cmd("-n \"#{out}\" synth 0.18 noise lowpass 3500 highpass 200 fade h 0.001 0.18 0.06 overdrive 5 gain -5 2>/dev/null"))
     out
   end

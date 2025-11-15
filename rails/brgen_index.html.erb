@@ -1,0 +1,15 @@
+<div class="posts">
+  <h1>Brgen.no - Bergen Community</h1>
+  <%= link_to 'New Post', new_post_path, class: 'button' %>
+  
+  <% @posts.each do |post| %>
+    <article class="post">
+      <h2><%= link_to post.title, post %></h2>
+      <div class="content"><%= simple_format post.content %></div>
+      <footer>
+        <span><%= post.karma || 0 %> karma</span>
+        <span><%= time_ago_in_words(post.created_at) %> ago</span>
+      </footer>
+    </article>
+  <% end %>
+</div>

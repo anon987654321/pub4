@@ -5,6 +5,13 @@ class Mixer
 
   def mix_tracks(drums, pads, bass, ambient)
     print "  🎚️  Professional Mix... "
+    
+    # Verify all inputs exist and are valid
+    unless drums && valid?(drums) && pads && valid?(pads) && bass && valid?(bass)
+      puts "✗ (missing components)"
+      return nil
+    end
+    
     mixed = tempfile("mixed")
 
     # MPC-style mixer: slight saturation, wide stereo image
@@ -14,7 +21,7 @@ class Mixer
     
     result = system(command)
     puts valid?(mixed) ? "✓" : "✗"
-    mixed
+    valid?(mixed) ? mixed : nil
   end
 end
 

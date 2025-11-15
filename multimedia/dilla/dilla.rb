@@ -87,15 +87,23 @@ class DillaEngine
       pad_files << pad if pad
     end
     
+    return nil if pad_files.empty?
+    
+    puts "  🎹 Combining #{pad_files.size} pad files..."
     combined_pads = tempfile("combined_pads")
-    system("#{SOX_PATH} #{pad_files.join(" ")} \"#{combined_pads}\" 2>/dev/null")
+    quoted_pads = pad_files.map { |p| "\"#{p}\"" }.join(" ")
+    result = system("#{SOX_PATH} #{quoted_pads} \"#{combined_pads}\" 2>/dev/null")
+    
+    puts "  Combined pads: #{result ? 'success' : 'failed'}, size: #{File.exist?(combined_pads) ? File.size(combined_pads) : 0}"
     
     # Don't cleanup pad files until after we check combined_pads
     return nil unless valid?(combined_pads)
     cleanup_files(pad_files)
 
     # Generate walking bassline
+    puts "  🎸 Generating bass..."
     bass = generate_walking_bass(prog.bassline, prog.beat_duration * 32)
+    puts "  Bass: #{bass && File.exist?(bass) ? "#{File.size(bass)} bytes" : 'failed'}"
     return nil unless bass
 
     # Mix all elements - DON'T cleanup until after mixing
@@ -186,15 +194,20 @@ class DillaEngine
       freq = notes[note] || 130.81
       note_file = tempfile("bass_note_#{i}")
       
-      # Fingered electric bass with slight pitch envelope
-      system("#{SOX_PATH} -n \"#{note_file}\" synth #{note_dur} sine #{freq} sine #{freq * 2} vol 0.3 sine #{freq * 0.5} vol 0.4 fade h 0.01 #{note_dur} 0.08 overdrive 8 gain -4 2>/dev/null")
-      bass_notes << note_file
+      # Fingered electric bass with harmonic content - ALL in ONE synth command
+      if system("#{SOX_PATH} -n \"#{note_file}\" synth #{note_dur} sine #{freq} sine #{freq * 2} sine #{freq * 0.5} fade h 0.01 #{note_dur} 0.08 overdrive 8 gain -4 2>/dev/null")
+        bass_notes << note_file if valid?(note_file)
+      end
     end
     
-    # Concatenate bass notes
-    system("#{SOX_PATH} #{bass_notes.join(" ")} \"#{out}\" 2>/dev/null")
+    return nil if bass_notes.empty?
+    
+    # Concatenate bass notes with proper quoting
+    quoted_notes = bass_notes.map { |n| "\"#{n}\"" }.join(" ")
+    system("#{SOX_PATH} #{quoted_notes} \"#{out}\" 2>/dev/null")
     cleanup_files(bass_notes)
-    out
+    
+    valid?(out) ? out : nil
   end
 
   def tempfile(prefix)
@@ -226,9 +239,10 @@ if __FILE__ == $PROGRAM_NAME
     exit 0
   end
 
-  FileUtils.mkdir_p(DillaConstants::CHECKPOINT_DIR)
-  FileUtils.mkdir_p(DillaConstants::TTS_CACHE_DIR)
-  FileUtils.mkdir_p(DillaConstants::OUTPUT_DIR)
+  [DillaConstants::CACHE_DIR, DillaConstants::CHECKPOINT_DIR, 
+   DillaConstants::TTS_CACHE_DIR, DillaConstants::OUTPUT_DIR].each do |dir|
+    FileUtils.mkdir_p(dir)
+  end
 
   engine = DillaEngine.new
   engine.run_continuous

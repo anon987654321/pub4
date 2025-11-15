@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-REPLIGEN_PRESENT = File.exist?("repligen.rb")
-
 def show_postpro_banner
   $cli_logger.info <<~BANNER
 

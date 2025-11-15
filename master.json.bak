@@ -1,0 +1,871 @@
+{
+  "version": "32.0.0",
+  "purpose": "surgical refactoring professional web design autonomous convergence",
+  "updated": "2025-11-15T01:51:22Z",
+  "llm_target": "github_copilot_cli",
+  
+  "CRITICAL_STARTUP_PROTOCOL": {
+    "ALWAYS_ON_SESSION_START": "load master.json FIRST internalize FULLY before any other action",
+    "PRIMARY_CONFIG": "master.json is ONLY config file single source of truth",
+    "AUTO_CONVERGENCE": "iterate silently toward perfection show final state only",
+    "DMESG_OUTPUT": "HH:MM:SS subsystem status message - hide intermediary noise",
+    "LOAD_SEQUENCE": [
+      "1_read_master_json_completely",
+      "2_scan_hierarchy: for d in **/*(/); print $d; for f in **/*(.); print $f",
+      "3_internalize_principles_workflows_patterns",
+      "4_apply_forbidden_commands",
+      "5_understand_openbsd_rails_targets",
+      "6_execute_user_request_autonomously"
+    ],
+    "NEVER_ASK": "auto_approved always proceed confidently",
+    "NO_NEW_FILES": "everything in master.json no tracking docs",
+    "CLEAN": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.{swp,tmp}(N) .DS_Store(N)"
+  },
+  
+  "brilliant_hacks": {
+    "self_healing": "detect gaps bottlenecks fix autonomously converge to stable state",
+    "diff_minimal": "git diff --stat before commit ensure surgical precision",
+    "parallel_batch": "batch ALL independent ops in single response minimize turns",
+    "heredoc_compression": "compress repetitive Rails code into loops arrays not 500 line heredocs",
+    "validation_inline": "validate syntax immediately after edit within same tool call",
+    "progressive_disclosure": "show summary hide details unless error",
+    "idempotent_scripts": "all .sh runnable repeatedly safely - check before create",
+    "README_driven": "analyze .md FIRST extract requirements THEN code .sh",
+    "visual_rhythm": "align blocks vertically symmetrical spacing intentional whitespace",
+    "compression_patterns": {
+      "rails_crud": "scaffold generates all boilerplate not heredocs",
+      "css_vars": "define tokens once reference everywhere",
+      "zsh_loops": "for model (User Post Comment); scaffold $model; done",
+      "shared_partials": "render not duplicate"
+    }
+  },
+  
+  "scraping_patterns": {
+    "engine": "ferrum headless chrome human-like behavior",
+    "human_simulation": {
+      "cursor": "random bezier curves smooth acceleration deceleration",
+      "mobile": "touch swipe gestures random delays 100-800ms",
+      "back_forth": "navigate randomly scroll up down hover elements",
+      "typing": "random char delays 50-150ms occasional backspace typos",
+      "pagination": "scroll load more wait for elements random pause between pages"
+    },
+    "brgen_seed": {
+      "source": "reddit.com/r/bergen scrape norwegian content",
+      "paraphrase": "langchainrb norwegian_llm rewrite unique brand voice",
+      "categories": "events local_business classifieds discussions recommendations",
+      "frequency": "daily cron job incremental scrape new posts only"
+    },
+    "implementation": "db/seeds.rb ferrum_scraper paraphrase_content save_as_posts"
+  },
+
+  "ultramodern_design_system": {
+    "CRITICAL": "best design is no design - progressive disclosure brutalist aesthetic",
+    "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradients", "background-image", "drop-shadow"],
+    "allowed_only": ["flexbox", "grid", "container-queries", "has-selector", "subgrid"],
+    "principles": {
+      "flat": "zero shadows zero borders zero backgrounds pure typography spacing",
+      "responsive": "container queries fluid typography clamp() minmax()",
+      "layout": "grid subgrid auto-fit auto-fill gap not margin",
+      "colors": "css vars semantic tokens minimal palette 3-5 colors max",
+      "typography": "system fonts scale ratio 1.25 or 1.333 fluid clamp",
+      "spacing": "consistent scale 4px 8px 16px 24px 32px 48px 64px",
+      "interactive": ":has() :focus-visible :active state-based not hover-glow",
+      "brutalist": "monospace serif-headers raw html semantic bold asymmetric"
+    },
+    "scss_structure": {
+      "tokens": ":root { --space-xs: 0.25rem; --font-base: system-ui; --color-text: #000; }",
+      "layout": ".container { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--space-m); }",
+      "typography": "font-size: clamp(1rem, 0.5rem + 2vw, 1.5rem); line-height: 1.5;",
+      "no_classes": "semantic HTML article section header main footer nav aside"
+    },
+    "examples": {
+      "card": "article { display: grid; gap: 1rem; } /* no borders shadows backgrounds */",
+      "button": "button { font: inherit; padding: 0.5em 1em; border: 1px solid; background: none; }",
+      "nav": "nav { display: flex; gap: 2rem; } a { text-decoration: none; border-bottom: 2px solid; }"
+    }
+  },
+    "authentication": "devise + devise-guests for anonymous posting",
+    "multi_tenancy": "acts_as_tenant for city-specific instances (brgen.no oslo.no stockholm.no)",
+    "posting_patterns": {
+      "anonymous_allowed": "guest users can post on front page without signup",
+      "wall_style": "facebook timeline feed with cards infinite scroll",
+      "feed_layout": "x.com center column 600px max-width sticky sidebar",
+      "css_reference": "study facebook x.com closely NO their shadows - extract layout spacing typography ONLY",
+    "brutalist_execution": "flat monochrome bold typography asymmetric grid pure function"
+    },
+    "shared_components": {
+      "post_model": "polymorphic belongs_to postable user content:text published_at",
+      "comment_model": "nested threading belongs_to commentable user",
+      "like_model": "polymorphic counter_cache",
+      "share_model": "repost retweet functionality",
+      "feed_algorithm": "chronological + engagement_score for trending"
+    },
+    "brgen_hyperlocal": {
+      "concept": "hyperlocal social network for Bergen Norway",
+      "multi_tenant": "same app hosts oslo.no stockholm.no copenhagen.no etc via ActsAsTenant",
+      "geolocation": "posts tagged with neighborhoods fjellveien møhlenpris sentrum",
+      "local_focus": "events businesses classifieds dating all hyperlocal"
+    }
+  },
+  
+  "innovation_research_2024": {
+    "CRITICAL": "implement all innovations below into rails .sh installers NOT just documentation",
+    "social_algorithms": {
+      "implementation": "add Post model with engagement_score:integer trending_score:float GNN via langchainrb",
+      "feed_controller": "def feed; @posts = Post.where(tenant).order(engagement_score: :desc, created_at: :desc); end",
+      "stimulus_infinite_scroll": "@stimulus-components/infinite-scroll for feed pagination",
+      "recommendation_job": "sidekiq job calculate_engagement_scores using likes shares comments recency"
+    },
+    "modern_css_2024": {
+      "implementation": "add to application.scss with @container queries for card layouts",
+      "card_component": ".cards { container-type: inline-size; } @container (width > 60ch) { .card { flex-direction: row; } }",
+      "use_has_selector": ".post:has(.comment) { border-color: blue; } for interactive states",
+      "subgrid_layout": ".feed { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }"
+    },
+    "pwa_offline_first": {
+      "implementation": "create public/service-worker.js and public/manifest.json in all .sh installers",
+      "service_worker_template": "cache assets HTML CSS JS on install, network-first for API, fallback to /offline.html",
+      "manifest_generation": "rails app:generate:manifest with icons start_url display:standalone",
+      "turbo_offline_gem": "add gem turbo-offline to Gemfile enable background_sync for forms"
+    },
+    "typography_2024": {
+      "implementation": "add @import url(fonts.googleapis.com) in application.scss",
+      "font_stack": "h1-h6 { font-family: 'Fugaz One', sans-serif; } body { font-family: 'Work Sans', sans-serif; }",
+      "responsive_scale": "font-size: clamp(1rem, 2vw, 1.5rem) for fluid typography",
+      "css_vars": ":root { --font-heading: 'Abril Fatface'; --font-body: 'Lato'; }"
+    },
+    "rails8_hotwire_native": {
+      "implementation": "add turbo-rails stimulus-rails solid_queue solid_cache solid_cable to Gemfile",
+      "turbo_native_bridge": "create app/javascript/controllers/bridge_controller.js for native SDK",
+      "turbo_morphing": "turbo:morph events for smooth updates meta name=turbo-refresh-method content=morph",
+      "native_manifest": "create public/turbo-native-config.json with native screen definitions"
+    },
+    "hjerterom_logistics": {
+      "implementation": "create app/services/route_optimizer_service.rb using ACO algorithm",
+      "mapbox_integration": "add mapbox-gl gem stimulus-mapbox controller for front page map",
+      "volunteer_routing": "Volunteer model with geocoder gem lat:float lng:float optimize_routes method",
+      "food_drive_scheduler": "FoodDrive model with recurring events via ice_cube gem genetic_algorithm for optimal schedules"
+    },
+    "privcam_creator_economy": {
+      "implementation": "Creator model with stripe_customer_id vipps_merchant_id earnings:decimal",
+      "subscription_engine": "gem pay gem receipts for invoices Subscription model with plans tiers",
+      "tipping_system": "Tip model polymorphic belongs_to stripe_payment_intent_id process_tip_job",
+      "analytics_dashboard": "CreatorDashboard controller with chartkick gem revenue_by_day subscribers_growth",
+      "bankid_verification": "gem omniauth-bankid Age18Plus verification callback create verified_creator flag"
+    }
+  },
+  
+  "app_specific_details": {
+    "hjerterom": {
+      "concept": "LA Food Bank clone for Åsane Bergen Norway",
+      "front_page": "mapbox map showing food assistance locations donation centers",
+      "features": "volunteer signup food drives donation tracking impact metrics",
+      "reference": "lafoodbank.org design patterns + hjerterom åsane local context",
+      "geolocation": "mapbox-gl-js integration with markers for centers events",
+      "norwegian_context": "frelsesarmeen kirkens_bymisjon bergen_kommune collaboration"
+    },
+    "privcam": {
+      "concept": "OnlyFans clone for Norwegian audience norwegian camgirls",
+      "monetization": "subscription tipping pay-per-view private shows",
+      "payment": "stripe vipps integration for norwegian market",
+      "content": "photos videos live streaming private messaging",
+      "creator_tools": "analytics earnings dashboard content scheduling",
+      "age_verification": "bankid integration norwegian adults only",
+      "features": "rhino-editor for rich posts stimulus-lightbox for galleries"
+    },
+    "mytoonz": {
+      "concept": "AI comic strip generator from daily stories replicate.com",
+      "frontend_status": "needs extraction from codepen to propshaft stimulus",
+      "replicate_ai": "comic generation with user photo customization",
+      "social_sharing": "post comics to facebook x.com instagram"
+    }
+  },
+  
+  "deployment_config": {
+    "domains": {
+      "brgen": "brgen.no",
+      "amber": "amber.brgen.no",
+      "hjerterom": "hjerterom.brgen.no",
+      "bsdports": ["bsdports.org", "bsdports.net"],
+      "dating": "dating.brgen.no",
+      "marketplace": "markedsplass.brgen.no",
+      "playlist": "playlist.brgen.no",
+      "tv": "tv.brgen.no",
+      "takeaway": "takeaway.brgen.no",
+      "privcam": "privcam.no",
+      "mytoonz": "mytoonz.no",
+      "blognet": "blognet.no",
+      "baibl": "baibl.no"
+    },
+    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
+    "whyp_alliance": {
+      "platform": "whyp.it audio sharing - allied platform",
+      "features": "guest_uploads 24h_links embed_players high_quality privacy_encrypted",
+      "integration": "playlist app embeds whyp tracks + local mp3 from .mp3/ folder",
+      "tech_stack": "Laravel REST API JWT Nuxt TailwindCSS",
+      "pricing": "free tier + paid unlimited_uploads extended_links"
+    },
+    "index_html_analysis": {
+      "PURPOSE": "demo for playlist.brgen.no - MUST refactor into Rails app",
+      "youtube_tracks": "21 curated J Dilla Flying Lotus Slum Village tracks",
+      "local_mp3": "22 original productions by user in .mp3/*.mp3 folder",
+      "audio_engine": "crossfade between tracks shuffle playback YouTube IFrame API + HTML5 Audio",
+      "visualizer": "3D tunnel renderer with frequency analyser beat detection dithering",
+      "interactions": "mousemove gyroscope keyboard_controls (Space/Enter=start ArrowRight=next)",
+      "performance_issues": "YouTube embed latency crossfade timing beat_detection_threshold needs tuning",
+      "FIXES_NEEDED": [
+        "improve crossfade smoothness between YouTube and MP3",
+        "calibrate beat detection threshold (currently avgFlux * 1.45)",
+        "handle YouTube API errors gracefully retry logic",
+        "preload next track for instant transitions",
+        "add playback queue UI display current/next track",
+        "persist shuffle order to sessionStorage",
+        "add volume controls separate for music/effects"
+      ]
+    },
+    "vps": {
+      "host": "185.52.176.18",
+      "user": "dev",
+      "ssh_cmd": "ssh dev@185.52.176.18",
+      "app_dir": "/home/brgen/app",
+      "repo_dir": "/home/dev/pub4",
+      "services": "postgresql redis relayd nsd httpd pf",
+      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
+    },
+    "github": {
+      "repo": "https://github.com/anon987654321/pub4.git",
+      "user": "anon987654321",
+      "pat_location": "G:/priv/accounts.txt",
+      "pat_note": "use PAT not password for push",
+      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
+      "reference_repos": [
+        "anon987654321/railsy - my old openbsd rails setups",
+        "basicfeatures/openbsd-rails - original setup",
+        "anonymous-donor/openbsd-rails - original setup alt account"
+      ]
+    },
+    "database": {
+      "development": "sqlite3 at db/development.sqlite3",
+      "production": "postgresql + weaviate via langchainrb_rails",
+      "config_file": "/home/brgen/app/config/database.yml"
+    }
+  },
+  
+  "core_principles_internalized": {
+    "forbidden_commands": ["python", "bash", "sed", "awk", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "find"],
+    "forbidden_note": "CRITICAL: tail is FORBIDDEN - use zsh: ${${(f)$(cmd)}[-N,-1]} for last N lines",
+    "allowed_essentials": ["grep", "cat", "echo", "print", "printf"],
+    "required_shell": "zsh ONLY pure zsh patterns prefer builtins over external when possible",
+    "editing_workflow": {
+      "CRITICAL": "ALL work encoded back into actual .sh files via edit tool in-place",
+      "pattern": "analyze README -> generate code -> edit .sh directly with heredocs",
+      "heredoc_style": "cat > file.rb << 'RUBY' content RUBY for models controllers views",
+      "never": "create temporary files planning docs intermediate steps",
+      "always": "surgical edits to existing .sh files preserve structure add missing sections"
+    },
+    "css_preservation": "user CSS internalized EXACTLY no modifications unless critical bug",
+    "database_strategy": "sqlite3_development weaviate_production langchainrb_rails",
+    "shared_code": "split monolithic delete @common.sh focused modules only",
+    "token_efficiency": "edit_files_directly no_inline_code_in_chat batch_operations trust_execution",
+    "deployment_ready": "production_complete means ssh_deploy no_local_testing trust_and_push",
+    "competitive_research": {
+      "required": "web_search ar5iv.org for features before implementing",
+      "takeaway_insights": "doordash 65%_market checkout_friction loyalty real_time_tracking",
+      "playlist_insights": "spotify_blend collaborative_realtime apple_ecosystem audio_quality"
+    }
+  },
+  
+  "optimization": {
+    "performance": {
+      "parallel_operations": "batch independent file reads/writes in single response",
+      "tool_efficiency": "minimize llm turns via parallel tool calling",
+      "caching": "leverage existing analysis avoid redundant checks",
+      "incremental": "surgical fixes not wholesale rewrites"
+    },
+    "workflow": {
+      "analyze_once": "comprehensive upfront analysis then act",
+      "validate_sparingly": "trust specs avoid over-verification",
+      "commit_frequently": "small atomic commits with clear messages",
+      "deploy_confidently": "production ready means deploy dont hesitate"
+    }
+  },
+
+  "session_restore": {
+    "supported": true,
+    "approach": "analyze_load_master_files_then_surgical_fixes",
+    "workflow": [
+      "load master.json for workflow principles",
+      "load master.rb if valuable for ruby operations",
+      "analyze github backup repos for restorable code",
+      "read app READMEs for full specifications",
+      "apply surgical fixes directly (no todo documents)",
+      "verify against specs systematically",
+      "deploy when ready (auto-approved)"
+    ],
+    "auto_approval": "yes to all non-destructive operations"
+  },
+
+  "principles": {
+    "precision": "maximum meaning minimum words",
+
+    "timing": "question at decision points",
+
+    "expansion": "only when ambiguity exists",
+
+    "silence": "no question if known",
+
+    "actionable": "answer drives next step",
+
+    "fail_fast": "ask early block late",
+
+    "yagni": "no preemptive questions",
+
+    "dry": "single source truth",
+
+    "schema_first": "validate before acting",
+
+    "observability": "trace question answer effect",
+
+    "modularity": "split large files into focused modules",
+    
+    "production_ready": "complete means deploy comprehensive means exhaustive",
+    
+    "trust_specs": "README defines truth implement faithfully",
+    
+    "verify_outcomes": "test results not intermediate steps",
+    
+    "autonomous_execution": "auto_approve means act dont ask"
+
+  },
+
+  "engine": {
+    "scope": "files repos self user",
+
+    "phases": "validate sense question decide act audit",
+
+    "convergence": "zero questions zero violations audit clean",
+
+    "question_engine": {
+      "trigger": "ambiguity branch risk external_input",
+
+      "timing": "before irreversible action",
+
+      "format": "{prompt} [{default}]",
+
+      "answers": ["Y", "N", "skip", "abort"],
+
+      "non_interactive": {
+
+        "yes": "answer Y to all",
+
+        "apply": "yes plus execute",
+
+        "answers_file": "load qe_id answer map"
+
+      }
+
+    },
+
+    "autoiteration": {
+      "layers": "per_principle cross_principle system",
+
+      "termination": "diminishing_returns",
+
+      "stop_on_risk": "high"
+
+    },
+
+    "adversarial": {
+      "questions": [
+
+        "what if user rejects backup",
+
+        "can this run headless on CI",
+
+        "does schema drift break system",
+
+        "does audit capture full context",
+
+        "what radical changes improve elegance without omitting logic",
+
+        "how can this be more minimal while preserving function"
+
+      ]
+
+    },
+
+    "intelligence": {
+      "analysis": "word_by_word semantic_understanding fresh_start",
+
+      "learning": "adaptive pattern_sharing anti_pattern_avoidance",
+
+      "decisions": {
+
+        "weights": [0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
+
+        "criteria": "clarity simplicity delight impact"
+
+      }
+
+    }
+
+  },
+
+  "question_catalog": {
+    "qe_overwrite": {
+
+      "prompt": "file exists {path} overwrite",
+
+      "default": "N",
+
+      "risk": "high",
+
+      "require_manual": true
+
+    },
+
+    "qe_backup": {
+
+      "prompt": "backup {path} bak created keep",
+
+      "default": "Y",
+
+      "risk": "low"
+
+    },
+
+    "qe_apply": {
+
+      "prompt": "apply changes now",
+
+      "default": "N",
+
+      "risk": "high",
+
+      "require_manual": true
+
+    },
+
+    "qe_self": {
+
+      "prompt": "refactor this file only",
+
+      "default": "Y",
+
+      "risk": "medium"
+
+    },
+
+    "qe_recursive": {
+
+      "prompt": "include subdirectories",
+
+      "default": "N",
+
+      "risk": "medium"
+
+    }
+
+  },
+
+  "stack": {
+    "reasoning": "ruby",
+
+    "files": "zsh",
+
+    "banned": [],
+    "NOTE": "ALL BANS REMOVED - contradicted workflow.allowed_commands - grep cat echo essential"
+
+    "zsh_patterns": {
+
+      "string_replace": "${var//find/replace}",
+
+      "remove_prefix": "${var#prefix}",
+
+      "remove_suffix": "${var%suffix}",
+
+      "uppercase": "${(U)var}",
+
+      "lowercase": "${(L)var}",
+
+      "capitalize": "${(C)var}",
+
+      "trim_leading": "${var##[[:space:]]##}",
+
+      "trim_trailing": "${var%%[[:space:]]##}",
+
+      "array_filter": "${(M)array:#*pattern*}",
+
+      "array_exclude": "${array:#*pattern*}",
+
+      "array_unique": "${(u)array[@]}",
+
+      "array_sort": "${(o)array[@]}",
+
+      "array_reverse": "${(Oa)array[@]}",
+
+      "array_join": "${(j:,:)array}",
+
+      "split_string": "${(s:,:)string}",
+
+      "file_read": "$(<file)",
+
+      "lines_to_array": "${(@f)$(<file)}",
+
+      "line_count": "${#${(@f)$(<file)}}",
+
+      "word_count": "${#${(@)${(f)$(<file)}}}",
+
+      "glob_files": "**/*.ext",
+
+      "recent_files": "**/*(.om[1,50])",
+
+      "dirs_only": "**/*(D/)",
+
+      "files_only": "**/*(.)",
+
+      "executable_files": "**/*(*)",
+
+      "symlinks": "**/*(@)"
+
+    },
+
+    "zsh_replacements": {
+
+      "cat file": "$(<file)",
+
+      "echo text": "print text",
+
+      "grep pattern": "${(M)lines:#*pattern*}",
+
+      "sed s/a/b/": "${var//a/b}",
+
+      "awk {print $1}": "${line%% *}",
+
+      "tr -d \\r": "${var//$'\\r'}",
+
+      "head -n 10": "${lines[1,10]}",
+
+      "tail -n 10": "${lines[-10,-1]}",
+
+      "wc -l": "${#lines}",
+
+      "sort": "${(o)lines[@]}",
+
+      "uniq": "${(u)lines[@]}",
+
+      "basename": "${path:t}",
+
+      "dirname": "${path:h}",
+
+      "find . -name": "**/*.pattern"
+
+    }
+
+  },
+
+  "interface": {
+    "display": "spinner unix trace",
+
+    "completion": "diff approve show",
+
+    "cli": {
+
+      "yes": "answer Y to non high risk",
+
+      "apply": "run and apply implies yes",
+
+      "dry_run": "default show diff only",
+
+      "answers_file": "path to JSON answers"
+
+    }
+
+  },
+
+  "safety": {
+    "no_write_by_default": true,
+
+    "require_manual_high_risk": true,
+
+    "lock_file": "surgical_refactor_lock",
+
+    "lock_timeout": 300
+
+  },
+
+  "formatting": {
+    "rules": "multiline_over_oneliners minimize_variables sorted_keys two_space_indent",
+
+    "application": "all_targets_identical_treatment"
+
+  },
+
+  "rails8": {
+    "solid_stack": {
+
+      "queue": "solid_queue replaces sidekiq redis",
+
+      "cache": "solid_cache replaces redis memcached",
+
+      "cable": "solid_cable replaces redis actioncable"
+
+    },
+
+    "authentication": "built_in generator replaces devise",
+
+    "deployment": {
+
+      "tool": "kamal2",
+
+      "proxy": "thruster replaces nginx"
+
+    },
+
+    "asset_pipeline": "propshaft replaces sprockets",
+    
+    "rich_text_editor": "tiptap via rhino-editor gem compatible with ActionText ActiveStorage",
+    "image_viewer": "stimulus-lightbox wrapper for lightgallery.js (licensed)",
+    "frontend_refactoring": {
+      "codepen_extraction": "extract codepen demos into propshaft assets/stylesheets views stimulus",
+      "never_inline": "move inline styles to application.scss or component.css",
+      "stimulus_components": "@stimulus-components/* from npm"
+    },
+    "missing_features_audit": {
+      "tiptap_integration": ["privcam", "hjerterom", "blognet", "brgen_playlist"],
+      "codepen_refactor": "mytoonz.sh complete structure needs frontend extraction",
+      "reference_repo": "https://github.com/basicfeatures/openbsd-rails (20stars archived)"
+    },
+
+    "pwa": {
+
+      "manifest": "native helpers",
+
+      "service_worker": "integrated support",
+
+      "offline": "built_in patterns"
+
+    }
+
+  },
+
+  "modern_stack": {
+    "stimulus": {
+
+      "components": "stimulus-components.com",
+
+      "patterns": "intersection_observer composable_controllers"
+
+    },
+
+    "stimulus_reflex": {
+
+      "version": "latest",
+
+      "patterns": ["InfiniteScrollReflex", "FilterableReflex", "TemplateReflex"],
+
+      "cable_ready": "required companion"
+
+    },
+
+    "hotwire": {
+
+      "turbo": "8.0+ with morphing",
+
+      "turbo_streams": "real_time updates",
+
+      "frames": "lazy_loading"
+
+    },
+
+    "langchain": {
+
+      "gem": "langchainrb",
+
+      "rails_integration": "langchainrb_rails",
+
+      "vector_db": "pgvector postgresql",
+
+      "features": ["RAG", "semantic_search", "embeddings", "agents"]
+
+    }
+
+  },
+
+  "rails_architecture": {
+    "database": "sqlite3_development weaviate_production via_langchainrb_rails",
+    "shared_modules": "split into focused files no monolithic common.sh",
+    "competitor_research": {
+      "takeaway": "doordash_ubereats 65%_us_market checkout_friction loyalty_programs real_time_tracking",
+      "playlist": "spotify_blend collaborative_realtime apple_music_ecosystem audio_quality social_discovery"
+    },
+    "css_preservation": "user css internalized EXACTLY no changes unless critical reason",
+    "performance": {
+      "playlist_demo": "index.html has playback issues needs optimization via master.json",
+      "fixes": "audio crossfade buffer preload canvas rendering"
+    }
+  },
+    "intent_reporting": "always_on_first_tool_call",
+
+    "tool_efficiency": "batch_independent_operations minimize_llm_turns",
+
+    "response_style": "concise_direct_surgical action_over_explanation",
+
+    "validation": "only_on_failure_or_explicit_request trust_implementation",
+
+    "context_scope": "current_working_directory_first leverage_previous_analysis",
+    
+    "error_handling": "fix_forward_not_rollback surgical_correction_immediate",
+    
+    "deployment_readiness": "production_complete means ssh_upload_run no_local_testing",
+    
+    "session_continuity": "analyze_state_restore_context_execute seamless_handoff",
+    
+    "token_efficiency": "edit_files_directly no_inline_code_in_chat trust_and_execute"
+
+  },
+  
+  "design_system": {
+    "base_template": "bsdports.scss from __OLD_BACKUPS",
+    "typography": {
+      "scale": "1.25_modular",
+      "sizes_px": [12, 14, 16, 18, 22, 28, 36, 48, 64],
+      "line_height": "1.4_body 1.2_headings",
+      "measure": "45-75ch optimal 66ch ideal"
+    },
+    "spacing": {
+      "unit": "8px",
+      "scale": [4, 8, 12, 16, 24, 32, 48, 64, 96, 128],
+      "proximity_rule": "8-16px related 24-48px unrelated"
+    },
+    "color": {
+      "contrast_wcag": "4.5_text 3.0_ui",
+      "palette_rule": "60_dominant 30_neutral 10_accent"
+    },
+    "interaction": {
+      "touch_targets": "44x44px minimum",
+      "transitions": "200-300ms ease",
+      "feedback": "immediate visual states"
+    },
+    "accessibility": {
+      "semantic_html": "required",
+      "keyboard_nav": "full_support",
+      "aria": "when_semantic_insufficient"
+    }
+  },
+
+  "file_organization": {
+    "max_lines": 500,
+
+    "split_threshold": 400,
+
+    "module_pattern": "@module_name.sh",
+
+    "shared_dir": "__shared",
+
+    "naming": "descriptive_underscore_lowercase"
+
+  },
+
+  "deployment": {
+    "kamal2_thruster": {
+
+      "platform": "linux docker kubernetes",
+
+      "proxy": "thruster http2 asset_caching",
+
+      "orchestration": "kamal2 docker_compose",
+
+      "use_case": "cloud vps containers"
+
+    },
+
+    "openbsd_native": {
+
+      "platform": "openbsd bare_metal",
+
+      "stack": "pf relayd bin_rails rails",
+
+      "architecture": "internet→pf→relayd_https→bin_rails→rails_app",
+
+      "proxy": "relayd tls_termination native_c",
+
+      "app_server": "bin_rails server falcon async",
+
+      "command": "bin/rails server -b 0.0.0.0 -p PORT",
+
+      "tls": "acme-client letsencrypt native",
+
+      "dns": "nsd dnssec authoritative",
+
+      "firewall": "pf stateful bruteforce_detection",
+
+      "flow": "relayd_port_443→bin_rails_localhost_port→rails_application",
+
+      "deployment_phases": {
+        "pre_point": [
+          "setup_ruby_rails",
+          "setup_databases",
+          "setup_firewall",
+          "setup_dns_dnssec (MUST be first - Norid requires ns.brgen.no responding)",
+          "deploy_rails_apps",
+          "manual_step: register_nameserver_at_norid",
+          "manual_step: point_domains_to_nameserver",
+          "manual_step: verify_dns_propagation"
+        ],
+        "post_point": [
+          "setup_tls (requires DNS resolution)",
+          "setup_relayd (requires TLS certificates)",
+          "setup_ptr_records",
+          "setup_cron"
+        ]
+      },
+
+      "advantages": [
+
+        "pledge unveil syscall_restrictions",
+
+        "no_docker zero_containers",
+
+        "minimal_attack_surface",
+
+        "native_tools_battle_tested",
+
+        "rcctl_service_management",
+
+        "bin_rails_native_no_gems_wrapper"
+
+      ],
+
+      "use_case": "security_critical high_performance openbsd",
+
+      "production_vps": {
+        "provider": "openbsd.amsterdam",
+        "hostname": "brgen.no",
+        "ip": "185.52.176.18",
+        "user": "dev",
+        "ssh_key": "C:\\cygwin64\\home\\aiyoo\\.ssh\\id_ed25519",
+        "domains_count": 40,
+        "apps": {
+          "brgen": {"port": 11006, "status": "production_ready"},
+          "brgen_dating": {"port": null, "status": "production_ready", "note": "namespaced under /dating"},
+          "brgen_marketplace": {"port": null, "status": "production_ready", "note": "namespaced under /marketplace"},
+          "brgen_playlist": {"port": null, "status": "stub_only"},
+          "brgen_takeaway": {"port": null, "status": "stub_only"},
+          "brgen_tv": {"port": null, "status": "stub_only"},
+          "amber": {"port": 10001, "status": "todo"},
+          "baibl": {"port": null, "status": "todo"},
+          "blognet": {"port": 10002, "status": "todo"},
+          "bsdports": {"port": 10003, "status": "todo"},
+          "hjerterom": {"port": 10004, "status": "todo"},
+          "privcam": {"port": 10005, "status": "todo"},
+          "pubattorney": {"port": 10006, "status": "todo"}
+        }
+      }
+
+    }
+
+  }
+
+}
+

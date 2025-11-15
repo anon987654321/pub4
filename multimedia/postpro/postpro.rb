@@ -31,5 +31,6 @@ end
 
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
+REPLIGEN_PRESENT = File.exist?(File.join(__dir__, "..", "repligen", "repligen.rb"))
 
 auto_launch if __FILE__ == $0

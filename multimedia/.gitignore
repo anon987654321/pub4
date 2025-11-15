@@ -1,0 +1,17 @@
+# Runtime cache folders
+.cache/
+checkpoints/
+tts_cache/
+output/
+
+# Generated files
+*.log
+*.db
+*.wav
+*.mp3
+*.jpg
+*.png
+*.webp
+*_processed_*.jpg
+*_masterpiece_*.jpg
+*_generated_*.png
