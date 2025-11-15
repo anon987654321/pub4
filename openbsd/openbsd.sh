@@ -234,8 +234,7 @@ setup_dns_dnssec() {
   fi
   mkdir -p /var/nsd/zones/master /var/nsd/zones/keys
   # Generate DNSSEC keys
-
-  for domain in "${(@k)all_domains}"; do
+  for domain in $ALL_DOMAINS; do
     if [[ ! -f "/var/nsd/zones/keys/$domain.zsk" ]]; then
 
       cd /var/nsd/zones/keys
@@ -249,7 +248,7 @@ setup_dns_dnssec() {
     fi
   done
   # Create zone files
-  for domain in "${(@k)all_domains}"; do
+  for domain in $ALL_DOMAINS; do
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
 \$ORIGIN $domain.
 
