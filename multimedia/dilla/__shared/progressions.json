@@ -3,8 +3,8 @@
     "name": "Fall in Love (Slum Village)",
     "tempo": 87,
     "swing": 0.64,
-    "chords": ["Em7", "A7", "Dmaj7", "Gmaj7", "F#m7", "Bm7"],
-    "bassline": ["E", "A", "D", "G", "F#", "B"],
+    "chords": ["Ab", "Bbm7", "Cm7", "Gm7"],
+    "bassline": ["Ab", "Bb", "C", "G"],
     "arrangement": {
       "intro": 8,
       "verse": 16,
@@ -17,8 +17,8 @@
     "name": "Players (Slum Village)",
     "tempo": 91,
     "swing": 0.62,
-    "chords": ["Dm7", "G7", "Cmaj7", "Am7", "Em7", "F#dim7"],
-    "bassline": ["D", "G", "C", "A", "E", "F#"],
+    "chords": ["Cmaj7", "Gmaj7", "Em7", "Cmaj7", "Gmaj7", "Em7"],
+    "bassline": ["C", "G", "E", "C", "G", "E"],
     "arrangement": {
       "intro": 8,
       "verse": 16,
@@ -31,8 +31,8 @@
     "name": "Fantastic (Slum Village)",
     "tempo": 93,
     "swing": 0.58,
-    "chords": ["C#m7", "E7", "Amaj7", "F#m7", "Bm7", "G#m7"],
-    "bassline": ["C#", "E", "A", "F#", "B", "G#"],
+    "chords": ["Fmaj7", "Gm7", "Am7", "Dm7"],
+    "bassline": ["F", "G", "A", "D"],
     "arrangement": {
       "intro": 8,
       "verse": 16,
@@ -47,6 +47,34 @@
     "swing": 0.66,
     "chords": ["Gm7", "C7", "Fmaj7", "Dm7", "Ebmaj7", "Am7"],
     "bassline": ["G", "C", "F", "D", "Eb", "A"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  },
+  "get_it_together": {
+    "name": "Get It Together (Slum Village)",
+    "tempo": 90,
+    "swing": 0.63,
+    "chords": ["Dm7", "Gm7", "Am7", "Dm7"],
+    "bassline": ["D", "G", "A", "D"],
+    "arrangement": {
+      "intro": 8,
+      "verse": 16,
+      "chorus": 16,
+      "bridge": 8,
+      "outro": 16
+    }
+  },
+  "la_la": {
+    "name": "La La (Slum Village)",
+    "tempo": 88,
+    "swing": 0.65,
+    "chords": ["Ebmaj7", "Fm7", "Gm7", "Cm7"],
+    "bassline": ["Eb", "F", "G", "C"],
     "arrangement": {
       "intro": 8,
       "verse": 16,

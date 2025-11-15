@@ -181,7 +181,7 @@ module PostproBootstrap
       exit 1
     end
 
-    profiles_path = "camera_profiles"
+    profiles_path = File.join(__dir__, "..", "camera_profiles")
     camera_profiles = load_camera_profiles(profiles_path)
     config = load_master_config
     { gems: gems, camera_profiles: camera_profiles, config: config }

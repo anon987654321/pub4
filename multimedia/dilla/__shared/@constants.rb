@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 module DillaConstants
-  CHECKPOINT_DIR = "#{Dir.pwd}/checkpoints"
-  TTS_CACHE_DIR = "#{Dir.pwd}/tts_cache"
-  OUTPUT_DIR = "#{Dir.pwd}/output"
+  CACHE_DIR = File.join(File.dirname(__dir__), ".cache")
+  CHECKPOINT_DIR = File.join(CACHE_DIR, "checkpoints")
+  TTS_CACHE_DIR = File.join(CACHE_DIR, "tts_cache")
+  OUTPUT_DIR = File.join(CACHE_DIR, "output")
   STREAM_FILE = "#{CHECKPOINT_DIR}/live_stream.wav"
   AMBIENT_DRONE_FILE = "#{CHECKPOINT_DIR}/ambient_drone.wav"
   SOUNDFONT_PATH = "#{Dir.pwd}/Jnsgm2.sf2".freeze
