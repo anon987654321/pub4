@@ -1,7 +1,7 @@
 {
-  "version": "32.0.0",
+  "version": "33.0.0",
   "purpose": "surgical refactoring professional web design autonomous convergence",
-  "updated": "2025-11-15T01:51:22Z",
+  "updated": "2025-11-15T03:17:22Z",
   "llm_target": "github_copilot_cli",
   "CRITICAL_STARTUP_PROTOCOL": {
     "ALWAYS_ON_SESSION_START": "load master.json FIRST internalize FULLY before any other action",
@@ -227,9 +227,11 @@
   },
   "core_principles_internalized": {
     "forbidden_commands": ["python", "bash", "sed", "awk", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "find"],
-    "forbidden_note": "CRITICAL: tail is FORBIDDEN - use zsh: ${${(f)$(cmd)}[-N,-1]} for last N lines",
-    "allowed_essentials": ["grep", "cat", "echo", "print", "printf"],
-    "required_shell": "zsh ONLY pure zsh patterns prefer builtins over external when possible",
+    "forbidden_note": "CRITICAL: use zsh native patterns ONLY no external forks for performance",
+    "forbidden_syntax": ["messy quote escaping", "excessive backslashes", "ascii decorators in comments"],
+    "allowed_essentials": ["print", "grep only when necessary"],
+    "required_shell": "zsh ONLY pure parameter expansion no external commands",
+    "quote_style": "clean readable avoid backslash noise use alternative quoting",
     "editing_workflow": {
       "CRITICAL": "ALL work encoded back into actual .sh files via edit tool in-place",
       "pattern": "analyze README -> generate code -> edit .sh directly with heredocs",
@@ -246,6 +248,31 @@
       "required": "web_search ar5iv.org for features before implementing",
       "takeaway_insights": "doordash 65%_market checkout_friction loyalty real_time_tracking",
       "playlist_insights": "spotify_blend collaborative_realtime apple_ecosystem audio_quality"
+    },
+    "multimedia_tools": {
+      "location": "multimedia/",
+      "structure": "3 focused tools modular architecture zero sprawl",
+      "cache_dir": ".cache/ (gitignored runtime: checkpoints tts_cache output)",
+      "dilla": {
+        "purpose": "Neo-soul beat generator J Dilla microtiming",
+        "main": "dilla.rb (249 lines)",
+        "modules": ["@constants.rb", "@generators.rb", "@mastering.rb", "@tts.rb", "progressions.json"],
+        "features": ["3 drum styles (Dilla 64% FlyLo 58% Techno 52%)", "SP-404 mastering chain", "6 jazz progressions", "Professor Crane TTS", "SoX synthesis"],
+        "status": "complete functional"
+      },
+      "postpro": {
+        "purpose": "Professional cinematic image post-processing",
+        "main": "postpro.rb (36 lines)",
+        "modules": ["@bootstrap.rb", "@cli.rb", "@fx_core.rb", "@fx_creative.rb", "@mastering.rb"],
+        "features": ["4 film stocks (Portra Vision3 Velvia TriX)", "4 presets (Portrait Landscape Street Blockbuster)", "camera profiles (Fuji Nikon Kodak)", "5 JSON recipes", "Repligen integration"],
+        "status": "complete requires libvips"
+      },
+      "repligen": {
+        "purpose": "Replicate.com AI generation CLI",
+        "main": "repligen.rb (558 lines self-contained)",
+        "features": ["model discovery SQLite3 database", "LoRA generation", "chain workflows (masterpiece quick)", "cost tracking", "interactive menu CLI args"],
+        "status": "complete functional"
+      }
     }
   },
   "optimization": {
@@ -293,48 +320,111 @@
   "stack": {
     "reasoning": "ruby",
     "files": "zsh",
+    "app_server": "falcon not puma async high performance",
+    "zsh_philosophy": "no external forks pure parameter expansion maximum performance",
     "zsh_patterns": {
-      "string_replace": "${var//find/replace}",
-      "remove_prefix": "${var#prefix}",
-      "remove_suffix": "${var%suffix}",
-      "uppercase": "${(U)var}",
-      "lowercase": "${(L)var}",
-      "capitalize": "${(C)var}",
-      "trim_leading": "${var##[[:space:]]##}",
-      "trim_trailing": "${var%%[[:space:]]##}",
-      "array_filter": "${(M)array:#*pattern*}",
-      "array_exclude": "${array:#*pattern*}",
-      "array_unique": "${(u)array[@]}",
-      "array_sort": "${(o)array[@]}",
-      "array_reverse": "${(Oa)array[@]}",
-      "array_join": "${(j:,:)array}",
-      "split_string": "${(s:,:)string}",
-      "file_read": "$(<file)",
-      "lines_to_array": "${(@f)$(<file)}",
-      "line_count": "${#${(@f)$(<file)}}",
-      "word_count": "${#${(@)${(f)$(<file)}}}",
-      "glob_files": "**/*.ext",
-      "recent_files": "**/*(.om[1,50])",
-      "dirs_only": "**/*(D/)",
-      "files_only": "**/*(.)",
-      "executable_files": "**/*(*)",
-      "symlinks": "**/*(@)"
+      "string_ops": {
+        "replace_all": "${var//search/replace}",
+        "remove_crlf": "${var//$'\\r'/}",
+        "uppercase": "${(U)var}",
+        "lowercase": "${(L)var}",
+        "capitalize": "${(C)var}",
+        "trim_start": "${var##[[:space:]]#}",
+        "trim_end": "${var%%[[:space:]]#}",
+        "trim_both": "${${var##[[:space:]]#}%%[[:space:]]#}",
+        "extract_field": "${${(s:,:)line}[4]}",
+        "split_to_array": "arr=( ${(s:delim:)var} )",
+        "remove_prefix": "${var#prefix}",
+        "remove_suffix": "${var%suffix}",
+        "basename": "${path:t}",
+        "dirname": "${path:h}"
+      },
+      "array_ops": {
+        "filter_matching": "${(M)arr:#*pattern*}",
+        "filter_excluding": "${arr:#*pattern*}",
+        "unique": "${(u)arr[@]}",
+        "join": "${(j:,:)arr}",
+        "reverse": "${(Oa)arr[@]}",
+        "sort_asc": "${(o)arr[@]}",
+        "sort_desc": "${(O)arr[@]}",
+        "first_n": "${arr[1,10]}",
+        "last_n": "${arr[-10,-1]}",
+        "count": "${#arr}"
+      },
+      "file_ops": {
+        "read_file": "$(<file)",
+        "lines_to_array": "${(@f)$(<file)}",
+        "line_count": "${#${(@f)$(<file)}}",
+        "word_count": "${#${(@)${(f)$(<file)}}}",
+        "glob_files": "**/*.ext",
+        "recent_files": "**/*(.om[1,50])",
+        "dirs_only": "**/*(D/)",
+        "files_only": "**/*(.)",
+        "executable_files": "**/*(*)",
+        "symlinks": "**/*(@)"
+      },
+      "pattern_match": {
+        "grep_equivalent": "${(M)lines:#*query*}",
+        "inverse_grep": "${lines:#*query*}",
+        "awk_column": "${${(s:,:)line}[4]}"
+      },
+      "flags": {
+        "M": "match instead of filter",
+        "u": "unique elements",
+        "o": "sort ascending",
+        "O": "sort descending",
+        "L": "lowercase",
+        "U": "uppercase",
+        "j": "join array",
+        "s": "split string",
+        "f": "split on newlines",
+        "A": "assign to array"
+      }
     },
-    "zsh_replacements": {
-      "cat file": "$(<file)",
-      "echo text": "print text",
-      "grep pattern": "${(M)lines:#*pattern*}",
-      "sed s/a/b/": "${var//a/b}",
-      "awk {print $1}": "${line%% *}",
-      "tr -d \\r": "${var//$'\\r'}",
-      "head -n 10": "${lines[1,10]}",
-      "tail -n 10": "${lines[-10,-1]}",
-      "wc -l": "${#lines}",
-      "sort": "${(o)lines[@]}",
-      "uniq": "${(u)lines[@]}",
-      "basename": "${path:t}",
-      "dirname": "${path:h}",
-      "find . -name": "**/*.pattern"
+    "openbsd_native": {
+      "service_mgmt": {
+        "enable": "doas rcctl enable service",
+        "start": "doas rcctl start service",
+        "stop": "doas rcctl stop service",
+        "restart": "doas rcctl restart service",
+        "check": "doas rcctl check service",
+        "list_enabled": "doas rcctl ls on",
+        "list_failed": "doas rcctl ls failed"
+      },
+      "package_mgmt": {
+        "install": "doas pkg_add package",
+        "search": "pkg_info -Q pattern",
+        "list": "pkg_info",
+        "remove": "doas pkg_delete package",
+        "cleanup": "doas pkg_delete -a"
+      },
+      "firewall": {
+        "reload": "doas pfctl -f /etc/pf.conf",
+        "enable": "doas pfctl -e",
+        "show_rules": "doas pfctl -s rules",
+        "show_states": "doas pfctl -s states",
+        "test_config": "doas pfctl -nf /etc/pf.conf"
+      },
+      "proxy": {
+        "reload": "doas relayctl reload",
+        "show_hosts": "doas relayctl show hosts",
+        "show_summary": "doas relayctl show summary"
+      },
+      "dns": {
+        "reload": "doas nsd-control reload",
+        "reload_zone": "doas nsd-control reload domain.com",
+        "reconfig": "doas nsd-control reconfig"
+      },
+      "tls": {
+        "renew_cert": "doas acme-client -v domain.com",
+        "renew_all": "doas acme-client -v"
+      },
+      "network": {
+        "interfaces": "ifconfig",
+        "routes": "netstat -rn",
+        "connections": "netstat -an",
+        "stats": "systat vmstat"
+      }
     }
   },
   "formatting": {
