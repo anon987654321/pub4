@@ -38,7 +38,7 @@ if [[ ! -f "config/application.rb" ]]; then
 
   log "Creating Rails 8 application"
 
-  rails new . --database=postgresql --skip-git --css=scss --javascript=esbuild
+  rails new . --database=postgresql --skip-git --css=sass --javascript=esbuild
 
 fi
 
@@ -315,7 +315,7 @@ if [[ ! -f "config/application.rb" ]]; then
 
   log "Creating Rails 8 application"
 
-  rails new . --database=postgresql --skip-git --css=scss --javascript=esbuild
+  rails new . --database=postgresql --skip-git --css=sass --javascript=esbuild
 
 fi
 
