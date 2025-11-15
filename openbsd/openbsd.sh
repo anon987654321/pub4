@@ -251,7 +251,7 @@ setup_dns_dnssec() {
   for domain in $ALL_DOMAINS; do
     # Extract base app name from domain (brgen.no -> brgen)
     local app="${domain%%.*}"
-    local subdomains="${APPS[${app}.subdomains]}"
+    local subdomains="${APPS[${app}.subdomains]:-}"
     
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
 \$ORIGIN $domain.
