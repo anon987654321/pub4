@@ -294,9 +294,8 @@ remote-control:
   control-enable: no
 
 EOF
-
-  for domain in "${(@k)all_domains}"; do
-
+  # Configure NSD
+  for domain in $ALL_DOMAINS; do
     cat >> /var/nsd/etc/nsd.conf << EOF
 
 zone:
@@ -393,9 +392,8 @@ authority letsencrypt {
   account key "/etc/acme/letsencrypt-privkey.pem"
 }
 EOF
-  for domain in "${(@k)all_domains}"; do
-    if [[ -n "${all_domains[$domain]}" ]]; then
-      cat >> /etc/acme-client.conf << EOF
+  for domain in $ALL_DOMAINS; do
+    cat >> /etc/acme-client.conf << EOF
 domain "$domain" {
 
   domain key "/etc/ssl/private/$domain.key" ecdsa
@@ -456,8 +454,7 @@ EOF
   rcctl enable httpd
   rcctl restart httpd
   # Get certificates
-  for domain in "${(@k)all_domains}"; do
-
+  for domain in $ALL_DOMAINS; do
     acme-client -v "$domain" || warn "Certificate failed for $domain"
   done
 
