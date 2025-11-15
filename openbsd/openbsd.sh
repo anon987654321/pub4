@@ -409,27 +409,6 @@ domain "$domain" {
 }
 
 EOF
-
-    else
-
-      cat >> /etc/acme-client.conf << EOF
-
-domain "$domain" {
-
-  domain key "/etc/ssl/private/$domain.key" ecdsa
-
-  domain full chain certificate "/etc/ssl/$domain.crt"
-
-  sign with letsencrypt
-
-  challengedir "/var/www/acme"
-
-}
-
-EOF
-
-    fi
-
   done
 
   # httpd for ACME
