@@ -115,14 +115,6 @@ validate_environment() {
   log "INFO" "Validating environment..."
   local evidence=0
 
-  local -A checks=(
-    ["root"]="$EUID -eq 0"
-    ["openbsd"]="uname -s matches OpenBSD"
-
-    ["network"]="connectivity to 8.8.8.8"
-    ["zsh"]="command -v zsh found"
-    ["pkg_add"]="command -v pkg_add found"
-  )
   [[ $EUID -eq 0 ]] || error "Must run with doas/root"
   evidence=$((evidence + 20))
   local os=$(uname -s 2>/dev/null || print "unknown")
