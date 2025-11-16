@@ -1,7 +1,208 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Brgen - Complete Rails 8 Social Network with Advanced Multi-Tenancy
+# BRGEN - Minimal Working Deployment v1.0
+# Deploy live to brgen.no + playlist.brgen.no
+
+readonly APP_NAME="brgen"
+readonly APP_DIR="/home/brgen/app"
+readonly PORT="11006"
+
+log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"; }
+
+cd "$APP_DIR" || exit 1
+log "Deploying brgen from $APP_DIR"
+
+# Ensure Rails app exists
+if [[ ! -f "config/application.rb" ]]; then
+  log "Creating minimal Rails app"
+  rails new . --database=postgresql --skip-git --minimal
+fi
+
+# Minimal Gemfile
+cat > Gemfile << 'GEMFILE'
+source "https://rubygems.org"
+ruby "~> 3.3.0"
+gem "rails", "~> 7.2"
+gem "pg"
+gem "falcon"
+gem "solid_queue"
+gem "solid_cache"
+gem "turbo-rails"
+gem "stimulus-rails"
+GEMFILE
+
+bundle install
+
+# Routes
+cat > config/routes.rb << 'ROUTES'
+Rails.application.routes.draw do
+  root "home#index"
+  resources :posts
+  get "playlist" => "playlist#index"
+  get "up" => "rails/health#show", as: :rails_health_check
+end
+ROUTES
+
+# Controllers
+mkdir -p app/controllers
+cat > app/controllers/home_controller.rb << 'CTRL'
+class HomeController < ApplicationController
+  def index
+    @posts = Post.order(created_at: :desc).limit(20) rescue []
+  end
+end
+CTRL
+
+cat > app/controllers/posts_controller.rb << 'CTRL'
+class PostsController < ApplicationController
+  def index
+    @posts = Post.order(created_at: :desc)
+  end
+  
+  def show
+    @post = Post.find(params[:id])
+  end
+  
+  def new
+    @post = Post.new
+  end
+  
+  def create
+    @post = Post.new(post_params)
+    if @post.save
+      redirect_to @post
+    else
+      render :new
+    end
+  end
+  
+  private
+  def post_params
+    params.require(:post).permit(:title, :content)
+  end
+end
+CTRL
+
+cat > app/controllers/playlist_controller.rb << 'CTRL'
+class PlaylistController < ApplicationController
+  def index
+    @playlists = [{name: "Playlist 1", tracks: 5}, {name: "Playlist 2", tracks: 3}]
+  end
+end
+CTRL
+
+# Models
+bin/rails generate model Post title:string content:text --force
+bin/rails db:create db:migrate
+
+# Views
+mkdir -p app/views/{home,posts,playlist,layouts}
+
+cat > app/views/layouts/application.html.erb << 'LAYOUT'
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BRGEN.NO</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <style>
+    body{font:16px/1.6 system-ui;max-width:800px;margin:2rem auto;padding:0 1rem}
+    h1{color:#0066cc}
+    .post{background:#f5f5f5;padding:1rem;margin:1rem 0;border-radius:4px}
+    a{color:#0066cc;text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <header>
+    <h1><%= link_to "BRGEN.NO", root_path %></h1>
+    <nav>
+      <%= link_to "Posts", posts_path %> |
+      <%= link_to "Playlist", playlist_path %>
+    </nav>
+  </header>
+  <%= yield %>
+</body>
+</html>
+LAYOUT
+
+cat > app/views/home/index.html.erb << 'VIEW'
+<h2>Welcome to Brgen</h2>
+<p>Bergen's community platform</p>
+<% if @posts.any? %>
+  <% @posts.each do |post| %>
+    <div class="post">
+      <h3><%= link_to post.title, post %></h3>
+      <p><%= post.content&.truncate(200) %></p>
+    </div>
+  <% end %>
+<% else %>
+  <p><%= link_to "Create first post", new_post_path %></p>
+<% end %>
+VIEW
+
+cat > app/views/posts/index.html.erb << 'VIEW'
+<h2>All Posts</h2>
+<%= link_to "New Post", new_post_path %>
+<% @posts.each do |post| %>
+  <div class="post">
+    <h3><%= link_to post.title, post %></h3>
+  </div>
+<% end %>
+VIEW
+
+cat > app/views/posts/show.html.erb << 'VIEW'
+<h2><%= @post.title %></h2>
+<p><%= @post.content %></p>
+<%= link_to "Back", posts_path %>
+VIEW
+
+cat > app/views/posts/new.html.erb << 'VIEW'
+<h2>New Post</h2>
+<%= form_with model: @post do |f| %>
+  <p><%= f.label :title %><br><%= f.text_field :title, size: 50 %></p>
+  <p><%= f.label :content %><br><%= f.text_area :content, rows: 10, cols: 50 %></p>
+  <p><%= f.submit %></p>
+<% end %>
+VIEW
+
+cat > app/views/playlist/index.html.erb << 'VIEW'
+<h2>Playlists</h2>
+<% @playlists.each do |pl| %>
+  <div class="post">
+    <h3><%= pl[:name] %></h3>
+    <p><%= pl[:tracks] %> tracks</p>
+  </div>
+<% end %>
+VIEW
+
+# Falcon config
+cat > config/falcon.rb << 'FALCON'
+#!/usr/bin/env ruby
+require "async"
+require "async/http/endpoint"
+require "async/http/server"
+
+ENV["RAILS_ENV"] ||= "production"
+require_relative "../config/environment"
+
+port = ENV.fetch("PORT", 11006).to_i
+app = Rails.application
+
+Async do
+  endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
+  bound = endpoint.bound
+  puts "Falcon: brgen.no on port #{port}"
+  Async::HTTP::Server.new(app, bound).run
+end
+FALCON
+
+chmod +x config/falcon.rb
+
+log "Brgen app configured. Restart service: doas rcctl restart brgen"
+
 # Multi-domain: brgen.no, oshlo.no, trndheim.no, stvanger.no, trmso.no, etc.
 
 # Multi-subdomain: marketplace.brgen.no, dating.brgen.no, playlist.brgen.no
