@@ -42,12 +42,29 @@
 ## Active Tasks
 
 ### Current Objective: brgen.no Live
-1. ❌ Extract valuable logic from BRGEN_OLD.zip
-2. ❌ Analyze all rails/*.sh files for missing features
-3. ❌ Update rails/brgen.sh with consolidated logic
-4. ❌ Deploy minimal working brgen app
-5. ❌ Configure DNS/TLS for brgen.no
-6. ❌ Add playlist.brgen.no subdomain
+1. ✅ VPS infrastructure deployed (Ruby, Rails, PostgreSQL, Redis, PF, httpd)
+2. ✅ Session recovery system created (.resume_session.copilot)
+3. ⚠️  brgen service running but not externally accessible (PF firewall/port config needed)
+4. 🔄 @common.sh consolidation started (20 files → 8 modules per master.json)
+5. ❌ Deploy minimal working brgen app
+6. ❌ Configure DNS/TLS for brgen.no
+7. ❌ Add playlist.brgen.no subdomain
+
+### Consolidation Status (Reduce File Sprawl)
+**Target structure:**
+- @core_setup.sh (infrastructure)
+- @rails8_stack.sh (Rails 8 Solid Stack)
+- @stimulus_controllers.sh (frontend)
+- @pwa_setup.sh (PWA/service workers)
+- @reflex_patterns.sh (StimulusReflex)
+- @view_generators.sh (ERB generators)
+- @social_features.sh ← merge @reddit + @twitter + @voting
+- @chat_features.sh ← merge @messaging + @messenger
+- @marketplace_features.sh ← merge @airbnb + @booking + @momondo + @travel_search
+- @ai_features.sh ← rename @langchain_features.sh
+- @route_helpers.sh (utilities)
+
+**Files to delete after merge:** 11 redundant competitor files
 
 ### Analysis Queued
 - [ ] rails/brgen.sh (2646 lines)
