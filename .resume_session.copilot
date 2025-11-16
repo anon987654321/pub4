@@ -1,0 +1,104 @@
+# Copilot CLI Session Recovery - 2025-11-16T21:05:34.998Z
+
+## Session Context
+- **User**: anon987654321 (Norway locale)
+- **Primary Goal**: Deploy brgen.no + playlist.brgen.no live on VPS (185.52.176.18)
+- **Framework**: master.json v44.3.0 (chaos-hardened Rails on OpenBSD)
+
+## Current State
+
+### VPS Infrastructure (185.52.176.18)
+✅ **Completed**:
+- Ruby 3.3 + Rails 7.2 installed
+- PostgreSQL + Redis running
+- PF firewall configured
+- httpd running for ACME challenges
+- User: dev (password: tata1234, doas enabled)
+- Base directory: /home/brgen/app
+
+⚠️ **Partial**:
+- NSD DNS setup failed (unbound conflict)
+- Rails apps need deployment
+
+❌ **Pending**:
+- brgen.no live deployment
+- playlist.brgen.no subdomain
+- TLS certificates (--post-point phase)
+- relayd reverse proxy
+
+### Repository Status
+- **Local**: G:\pub4 (Windows)
+- **Remote**: github.com/anon987654321/pub4
+- **VPS Clone**: /home/dev/pub4
+- **Last sync**: openbsd.sh syntax fix committed
+
+### Key Files Analyzed
+1. **master.json** - Fully internalized (chaos engineering framework)
+2. **openbsd/openbsd.sh** - Fixed syntax error, pre-point ran successfully
+3. **rails/brgen.sh** - 2646 lines, needs simplification
+4. **rails/__shared/@*.sh** - 20 helper modules identified
+5. **BRGEN_OLD.zip** - Large backup file in pub4 root (extraction timed out)
+
+## Active Tasks
+
+### Current Objective: brgen.no Live
+1. ❌ Extract valuable logic from BRGEN_OLD.zip
+2. ❌ Analyze all rails/*.sh files for missing features
+3. ❌ Update rails/brgen.sh with consolidated logic
+4. ❌ Deploy minimal working brgen app
+5. ❌ Configure DNS/TLS for brgen.no
+6. ❌ Add playlist.brgen.no subdomain
+
+### Analysis Queued
+- [ ] rails/brgen.sh (2646 lines)
+- [ ] rails/brgen_playlist.sh (646 lines)
+- [ ] rails/brgen_marketplace.sh (525 lines)
+- [ ] rails/brgen_dating.sh (639 lines)
+- [ ] rails/brgen_takeaway.sh (230 lines)
+- [ ] rails/brgen_tv.sh (310 lines)
+- [ ] rails/__shared/@common.sh
+- [ ] rails/__shared/@rails8_stack.sh
+- [ ] rails/__shared/@stimulus_controllers.sh
+- [ ] rails/__shared/@pwa_setup.sh
+- [ ] All other __shared/@*.sh files
+
+## Master.json Execution Model
+```
+lifecycle.on_load → convergence → max_cycles: 12
+Current cycle: 0 (analysis phase)
+Goal: violations=0, confidence>=0.95
+```
+
+## Credentials
+- See G:\priv\accounts.txt for tokens/passwords
+- VPS: dev@185.52.176.18
+- Email: wee2aef5ohg@gmail.com
+
+## User Gists Discovered
+- 100+ gists analyzed
+- Notable: FETAT PRECURSOR (ad4f3c1a2c4b9f41d8489882d0b9a6fa)
+- Typography guides, audio visualizers, Ruby projects
+- Action: Mine for reusable patterns
+
+## Next Steps (Auto-resume)
+1. Run systematic analysis of all rails/*.sh files
+2. Extract common patterns into master.json feature modules
+3. Consolidate brgen.sh to minimal working deployment
+4. Test on VPS
+5. Iterate per convergence model (max 12 cycles)
+
+## Commands to Resume
+```powershell
+cd G:\pub4
+# Start VPS deployment
+ssh dev@185.52.176.18 "cd ~/pub4 && git pull"
+# Continue brgen deployment
+zsh rails/brgen.sh  # After consolidation
+```
+
+## Session Recovery Notes
+- Windows paths use backslashes
+- VPS uses OpenBSD 7.7+
+- All deployments follow master.json chaos principles
+- No new files - work directly on existing
+- Delete backups after logic extracted
