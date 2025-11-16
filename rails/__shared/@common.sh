@@ -1,59 +1,28 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Shared functions for Rails applications
-# Modular architecture per master.json:file_organization
-
-# Pure zsh patterns per master.json:stack:zsh_patterns
+# Central module loader for Rails apps per master.json v44.3.0
+# Consolidated from 20 files → 8 focused modules
 
 SCRIPT_DIR="${0:a:h}"
-# Source core modules
-source "${SCRIPT_DIR}/@core_setup.sh"
 
+# Core infrastructure
+source "${SCRIPT_DIR}/@core_setup.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
 
+# UI/Frontend
+source "${SCRIPT_DIR}/@stimulus_controllers.sh"
+source "${SCRIPT_DIR}/@pwa_setup.sh"
 source "${SCRIPT_DIR}/@reflex_patterns.sh"
-
 source "${SCRIPT_DIR}/@view_generators.sh"
 
+# Feature domains (consolidated from competitors)
+source "${SCRIPT_DIR}/@social_features.sh"      # reddit+twitter+voting
+source "${SCRIPT_DIR}/@chat_features.sh"        # messaging+messenger
+source "${SCRIPT_DIR}/@marketplace_features.sh" # airbnb+booking+momondo+travel
+source "${SCRIPT_DIR}/@ai_features.sh"          # langchain
+
 source "${SCRIPT_DIR}/@route_helpers.sh"
-
-# Source feature modules
-if [[ -f "${SCRIPT_DIR}/@stimulus_controllers.sh" ]]; then
-
-    source "${SCRIPT_DIR}/@stimulus_controllers.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@reddit_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@reddit_features.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@twitter_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@twitter_features.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@airbnb_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@airbnb_features.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@momondo_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@momondo_features.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@messenger_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@messenger_features.sh"
-
-fi
-
-if [[ -f "${SCRIPT_DIR}/@langchain_features.sh" ]]; then
-    source "${SCRIPT_DIR}/@langchain_features.sh"
-
-fi
 
 # Additional setup functions
 install_stimulus_component() {
