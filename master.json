@@ -1,382 +1,437 @@
 {
-  "version": "44.3.0",
-  "updated": "2025-11-16T20:31:56Z",
-  "purpose": "Universal project completion framework — chaos engineering hardened with expanded failure modes, hostile scenarios, and OpenBSD-native resilience",
-  "user": "anon987654321",
-  "locale": "NO",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "52.0.0",
+  "updated": "2025-11-18T16:04:30Z",
+  "owner": "anon987654321",
+  "locale": "no_NB",
+  "purpose": "LLM config: 32 principles for OpenBSD/Rails/zsh development with enforcement",
 
-  "schema_policy": {
-    "sections_as_objects": true,
-    "arrays_are_homogeneous": true,
-    "array_items_are_objects_when_complex": true,
-    "allow_string_number_boolean_arrays_for_simple_lists": true,
-    "no_scalar_at_top_level": true,
-    "no_line_length_limits": true,
-    "notes": "Prefer objects for named fields. Use arrays only for ordered homogeneous lists."
+  "CRITICAL": {
+    "never_use": ["python", "bash", "sed", "awk", "tr", "cut", "head", "tail", "uniq", "sort", "wc", "find", "perl", "grep_as_command", "cat_for_substitution"],
+    "always_do": ["check_enforcement_before_tool_call", "use_allowed_tools_only", "validate_json_with_powershell_or_jq", "update_timestamp_on_edit"],
+    "file_limits": {"max_lines": 850, "max_nesting_depth": 3, "max_cyclomatic_complexity": 10},
+    "response_format": "**master.json v52.0** (Model), tokens: used/total"
   },
 
-  "lifecycle": {
-    "on_load": ["read_master", "canonicalize_structure", "validate_self", "print_welcome_banner", "initialize_metrics", "register_scanners", "prompt_for_project_input", "start_superloop"],
-    "execution_flags": ["auto_approved", "final_only", "parallel_batch", "diff_before_commit", "suppress_intermediate_output", "llm_mode", "dry_run_by_default", "auto_approve_low_risk", "git_aware", "context_aware", "chaos_aware"],
+  "can_i_use": {
+    "python": false,
+    "bash": false,
+    "sed": false,
+    "awk": false,
+    "grep_as_command": false,
+    "find_as_command": false,
+    "ruby": true,
+    "zsh": true,
+    "powershell_tool": true,
+    "view_edit_create_tools": true,
+    "grep_tool": true,
+    "glob_tool": true,
+    "git_via_powershell": true
+  },
+
+  "use_instead": {
+    "python": "ruby for scripting",
+    "python_json_tool": "PowerShell [System.Text.Json.JsonDocument]::Parse() OR jq OR ruby -rjson",
+    "bash": "zsh via powershell tool",
+    "sed": "zsh ${var//old/new}",
+    "awk": "zsh ${(s:,:)var} for field extraction",
+    "grep_command": "grep tool (ripgrep) OR zsh ${(M)arr:#pattern}",
+    "find_command": "glob tool OR zsh **/*.rb",
+    "cat_for_substitution": "view tool",
+    "echo_redirect": "create or edit tools"
+  },
+
+  "principles": {
+    "tier_1_always": {
+      "DRY": "Don't Repeat Yourself - single source of truth, extract duplication >70%",
+      "KISS": "Keep It Simple - simplest solution that works, clarity over cleverness",
+      "YAGNI": "You Aren't Gonna Need It - no premature features, delete speculation",
+      "POLA": "Principle of Least Astonishment - behave as users expect"
+    },
+    "SOLID": {
+      "single_responsibility": "One class one reason to change",
+      "open_closed": "Open for extension closed for modification",
+      "liskov_substitution": "Subtypes must be substitutable",
+      "interface_segregation": "Many specific interfaces over one general",
+      "dependency_inversion": "Depend on abstractions not concretions"
+    },
+    "Unix_Philosophy": {
+      "do_one_thing_well": "Each tool has one clear purpose",
+      "composition": "Combine tools via pipes and streams",
+      "text_streams": "Universal interface for tool chaining",
+      "rapid_prototyping": "Build quickly iterate based on feedback",
+      "portability": "Avoid locking into specific systems"
+    },
+    "Strunk_and_White": {
+      "omit_needless_words": "Vigorous writing is concise, remove every unnecessary word",
+      "use_active_voice": "Subject performs action, passive voice only when actor unknown",
+      "put_statements_positive": "Definite clear direct, avoid not",
+      "use_specific_concrete_language": "Avoid vague generalities, be precise",
+      "place_emphatic_at_end": "Most important point at end of sentence/paragraph",
+      "avoid_qualifiers": "Delete rather, very, quite, pretty"
+    },
+    "Rails_Doctrine": {
+      "optimize_programmer_happiness": "Framework should be pleasant",
+      "convention_over_configuration": "Sensible defaults reduce decisions",
+      "menu_is_omakase": "Curated integrated stack",
+      "no_one_paradigm": "Mix OOP functional procedural as needed",
+      "beautiful_code": "Aesthetics matter readability is paramount",
+      "provide_sharp_knives": "Power tools for experts not safety scissors",
+      "value_integrated_systems": "Cohesive stack beats à la carte",
+      "progress_over_stability": "Move forward embrace change",
+      "push_up_big_tent": "Inclusive community diverse approaches"
+    },
+    "OOP_Refactoring": {
+      "extract_class": "When class has multiple responsibilities split",
+      "move_method": "When method uses more of other class move",
+      "move_field": "When field used more by other class move",
+      "hide_delegate": "When client knows too much add wrapper method",
+      "introduce_null_object": "When nil checks everywhere create null object pattern",
+      "replace_type_code_with_polymorphism": "When switch on type code use subclasses or strategy"
+    }
+  },
+
+  "detectors": {
+    "critical_blockers": {
+      "language_policy_enforcement": {
+        "checks": ["python_command_used", "bash_command_used", "sed_awk_tr_cut_used", "grep_as_command", "find_as_command"],
+        "action": "STOP_IMMEDIATELY_EXPLAIN_ERROR_USE_ALTERNATIVE",
+        "autofix": false
+      },
+      "integration_policy": {
+        "checks": ["orphaned_css_files", "standalone_json_configs", "code_outside_rails_creative", "missing_heredocs", "separate_html_templates"],
+        "action": "move_to_heredoc_delete_orphan",
+        "autofix": true
+      },
+      "security": {
+        "checks": ["secrets_in_code", "sql_injection_vectors", "xss_vulnerabilities", "missing_csrf_protection", "mass_assignment_vulnerabilities"],
+        "autofix": false,
+        "requires_approval": true
+      },
+      "openbsd_compliance": {
+        "checks": ["bash_usage", "missing_pf_rules", "unauthorized_pkg_add", "non_doas_sudo", "linux_specific_commands"],
+        "autofix": false
+      },
+      "completion_markers": {
+        "checks": ["missing_eof_line_count", "missing_complete_timestamp", "markers_in_chat_responses", "unapproved_complete_status"],
+        "format": "# EOF (N lines)\\n# **COMPLETE** YYYY-MM-DD",
+        "scope": "actual_files_only_not_chat",
+        "requires_user_approval": true
+      }
+    },
+    "high_priority": {
+      "surgical_editing": {
+        "checks": ["large_block_rewrites_over_10_lines", "missing_before_diff", "missing_after_diff", "abbreviations_in_code", "truncated_content", "section_markers"],
+        "autofix": false,
+        "requires_approval": true
+      },
+      "rails_patterns": {
+        "checks": ["direct_sql_queries", "n_plus_one_queries", "missing_solid_queue", "missing_solid_cache", "synchronous_jobs", "not_using_generators"],
+        "autofix": false
+      },
+      "accessibility": {
+        "checks": ["missing_aria_labels", "no_keyboard_navigation", "contrast_ratios_below_4_5_1", "missing_focus_visible", "no_skip_links"],
+        "wcag_level": "AA",
+        "autofix": false
+      },
+      "visual_convergence": {
+        "checks": ["similarity_score_below_95_percent", "missing_ferrum_validation", "incorrect_spacing", "wrong_colors", "mismatched_typography"],
+        "similarity_threshold": 0.95,
+        "tools": ["ferrum", "ruby-vips"],
+        "autofix": false
+      },
+      "chaos_engineering": {
+        "checks": ["untested_failure_modes", "missing_runbooks", "no_blast_radius_defined", "missing_recovery_time_target"],
+        "autofix": false
+      },
+      "design_system": {
+        "checks": ["wrong_colors_not_in_palette", "incorrect_spacing_not_in_scale", "missing_progressive_disclosure", "no_motion_patterns", "forbidden_css_properties"],
+        "reference": "design_system.brgen_synthesis",
+        "autofix": false
+      }
+    },
+    "low_priority": {
+      "token_efficiency": {
+        "checks": ["vague_language", "redundant_nesting", "verbose_keys", "unnecessary_comments", "decorative_ascii_art"],
+        "note": "Readability over brevity - arrow operators allowed for clarity",
+        "autofix": true
+      }
+    }
+  },
+
+  "workflow": {
+    "startup": [
+      "load_master_json_completely",
+      "check_timestamp_reload_if_changed",
+      "internalize_CRITICAL_section",
+      "internalize_all_32_principles",
+      "register_all_detectors",
+      "understand_openbsd_rails_zsh_targets"
+    ],
+    "pre_execution": [
+      "CHECK_ENFORCEMENT_BLACKLIST",
+      "verify_no_banned_commands_in_planned_action",
+      "if_banned_found_STOP_use_alternative"
+    ],
+    "execute": [
+      "run_user_task",
+      "apply_all_principles",
+      "use_only_allowed_tools"
+    ],
+    "validate": [
+      "run_all_detectors",
+      "calculate_violations_by_category",
+      "prioritize_by_severity",
+      "autofix_safe_violations_automatically",
+      "present_violations_requiring_approval"
+    ],
+    "iterate": [
+      "check_convergence_criteria",
+      "calculate_delta_improvement",
+      "update_timestamp",
+      "report_status",
+      "loop_until_converged_or_max_cycles"
+    ],
     "convergence": {
-      "max_cycles": 12,
-      "min_improvement_ratio": 0.01,
-      "stop_when": "violations==0 OR cycles==max_cycles OR confidence>=confidence_model.stop_threshold OR user_confirms_complete"
+      "max_cycles": 14,
+      "min_cycles": 4,
+      "stop_when": "violations == 0 OR user_aborts",
+      "report_format": "cycle, violations_detected, violations_resolved, remaining, delta, actions, confidence, status"
+    }
+  },
+
+  "enforcement": {
+    "pre_tool_call_checklist": [
+      "Does command contain: python, bash, sed, awk, tr, cut, head, tail, uniq, sort, wc, find, perl?",
+      "If YES then STOP, lookup alternative in use_instead section",
+      "If validation needed then use PowerShell System.Text.Json OR jq OR ruby JSON.parse",
+      "If shell operation needed then use zsh patterns from zsh_patterns section",
+      "If file operation needed then use view/edit/create/glob/grep tools"
+    ],
+    "self_monitoring": {
+      "after_every_response": "Review tools called, flag violations",
+      "on_violation_detected": "Acknowledge error, explain correct alternative, self-correct",
+      "learning": "Add violation pattern to enforcement for future prevention"
+    },
+    "escalation": {
+      "first_violation": "Self-correct with explanation",
+      "second_violation": "User callout expected - acknowledge and implement stronger checks",
+      "third_violation": "Major system flaw - requires master.json restructure"
+    }
+  },
+
+  "protocols": {
+    "self_run": {
+      "trigger": "User says 'self-run' or 'autoiterate' or 'run it through itself' or 'autoprogress' or 'autoproceed always'",
+      "action": "Start superloop with all detectors enabled, autofix safe violations, iterate until convergence"
+    },
+    "radical_simplification": {
+      "trigger": "User says 'reset context' or 'start from scratch' or 'radically simplify' or 'reimagine structure'",
+      "action": "Generate 5-15 alternative structures, retain all logic, cherry-pick best, synthesize, present for approval"
+    },
+    "autoprogress": {
+      "enabled": true,
+      "rules": [
+        "Apply all safe autofixes without asking",
+        "Continue to next cycle automatically",
+        "Show only final state unless error",
+        "Update timestamps to current",
+        "Suppress intermediate output",
+        "Never stop for approval on safe fixes",
+        "Iterate until convergence or max_cycles"
+      ]
+    }
+  },
+
+  "brilliant_hacks": {
+    "self_healing": "Detect gaps bottlenecks fix autonomously converge to stable state",
+    "parallel_batch": "Batch ALL independent ops in single response minimize turns",
+    "heredoc_compression": "Compress repetitive Rails code into loops arrays not 500 line heredocs",
+    "validation_inline": "Validate syntax immediately after edit within same tool call",
+    "progressive_disclosure": "Show summary hide details unless error",
+    "idempotent_scripts": "All .sh runnable repeatedly safely - check before create",
+    "readme_driven": "Analyze .md FIRST extract requirements THEN code .sh",
+    "visual_rhythm": "Align blocks vertically symmetrical spacing intentional whitespace",
+    "llm_bias_mitigations": {
+      "explicit_no_truncation": "Never use ... or [content] markers",
+      "verify_full_output": "After edits, view file to ensure completeness",
+      "counter_lazy_defaults": "Show ALL code, no abbreviations",
+      "parallel_independence": "Only batch truly independent operations",
+      "stop_criteria_explicit": "Define exact convergence criteria, not vague 'done'"
+    }
+  },
+
+  "zsh_patterns": {
+    "string": {
+      "remove_crlf": "cleaned=${var//$'\\r'/}",
+      "lowercase": "lower=${(L)var}",
+      "uppercase": "upper=${(U)var}",
+      "replace_all": "result=${var//search/replace}",
+      "replace_first": "result=${var/search/replace}",
+      "trim_start": "trimmed=${var##[[:space:]]#}",
+      "trim_end": "trimmed=${var%%[[:space:]]#}",
+      "trim_both": "trimmed=${${var##[[:space:]]#}%%[[:space:]]#}",
+      "extract_nth_field": "fourth=${${(s:,:)line}[4]}",
+      "split_to_array": "arr=( ${(s:delim:)var} )",
+      "substring": "sub=${var[start,end]}"
+    },
+    "array": {
+      "filter_matching": "matches=( ${(M)arr:#*pattern*} )",
+      "filter_excluding": "non_matches=( ${arr:#*pattern*} )",
+      "unique": "unique=( ${(u)arr} )",
+      "join": "joined=${(j:,:)arr}",
+      "reverse": "reversed=( ${(Oa)arr} )",
+      "sort_asc": "sorted=( ${(o)arr} )",
+      "sort_desc": "sorted_desc=( ${(O)arr} )",
+      "slice_first_ten": "first_ten=( ${arr[1,10]} )",
+      "slice_last_five": "last_five=( ${arr[-5,-1]} )",
+      "length": "len=${#arr[@]}"
+    },
+    "file": {
+      "tree_analysis": "print -l **/*(.ND^(node_modules|vendor|.git))",
+      "recursive_files": "files=( **/*.rb(.N) )",
+      "directories_only": "dirs=( **/*(/) )",
+      "exclude_patterns": "files=( **/*~*.log~*.tmp(.N) )"
+    },
+    "flags": {
+      "M": "Match instead of filter",
+      "u": "Unique elements",
+      "o": "Sort ascending",
+      "O": "Sort descending",
+      "L": "Lowercase",
+      "U": "Uppercase",
+      "j": "Join array",
+      "s": "Split string",
+      "f": "Split on newlines"
+    }
+  },
+
+  "platform": {
+    "rails": {
+      "version": "8.0+",
+      "stack": {
+        "queue": "solid_queue",
+        "cache": "solid_cache",
+        "cable": "solid_cable",
+        "assets": "propshaft",
+        "server": "falcon",
+        "db_dev": "sqlite3",
+        "db_prod": "postgresql + pgvector"
+      },
+      "prefer": "Use rails g scaffold/model/controller, not manual file creation"
+    },
+    "openbsd": {
+      "version": "7.4+",
+      "services": ["nsd", "relayd", "httpd", "acme-client", "pf", "openntpd"],
+      "flow": "internet → pf(synproxy) → relayd:443 → falcon:PORT → rails",
+      "commands": {
+        "service": "doas rcctl {enable|start|stop|restart|check} SERVICE",
+        "firewall": "doas pfctl -f /etc/pf.conf",
+        "dns": "doas nsd-control reload",
+        "tls": "doas acme-client -vF DOMAIN",
+        "proxy": "doas relayctl {reload|show hosts}"
+      }
+    },
+    "vps": {
+      "provider": "openbsd.amsterdam",
+      "host": "brgen.no",
+      "ip": "185.52.176.18",
+      "user": "dev",
+      "port": 31415,
+      "paths": {
+        "app": "/home/brgen/app",
+        "repo": "/home/dev/pub4"
+      }
+    }
+  },
+
+  "environment": {
+    "development": {
+      "os": "Windows 11",
+      "shell": "cygwin zsh via npm github-copilot-cli",
+      "paths": {
+        "root": "G:/pub4/",
+        "rails": "G:/pub4/rails/",
+        "creative": "G:/pub4/creative/"
+      }
+    },
+    "production": {
+      "os": "OpenBSD 7.4+",
+      "shell": "zsh ONLY"
+    }
+  },
+
+  "project_structure": {
+    "master.json": "This file - LLM configuration and principles",
+    "rails/*.sh": "Executable shell scripts that generate complete Rails apps with embedded CSS/views/controllers",
+    "creative/*.rb": "Ruby scripts for image (ruby-vips), audio (dilla.rb), AI (repligen.rb), visual analysis (postpro.rb)",
+    "integration_rule": "ALL code goes into rails/*.sh or creative/*.rb via heredocs - NO orphaned CSS/JSON/HTML files"
+  },
+
+  "design_system": {
+    "philosophy": "X.com minimal center + Reddit threading + progressive disclosure + motion-triggered navigation + brutalist aesthetic",
+    "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradients", "background-image", "drop-shadow"],
+    "allowed_css": ["flexbox", "grid", "container-queries", ":has() selector", "subgrid"],
+    "color_palette": {
+      "background": "rgb(255, 255, 255)",
+      "surface": "rgb(247, 249, 249)",
+      "border": "rgb(239, 243, 244)",
+      "text_primary": "rgb(15, 20, 25)",
+      "text_secondary": "rgb(83, 100, 113)",
+      "accent_primary": "rgb(29, 155, 240)",
+      "accent_hover": "rgb(26, 140, 216)",
+      "upvote": "rgb(255, 69, 0)",
+      "danger": "rgb(244, 33, 46)"
+    },
+    "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
+    "typography": {
+      "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "scale_px": [13, 15, 17, 20, 24, 32],
+      "weights": [400, 600, 700]
+    },
+    "layout": {
+      "structure": "Single 600px center column, sidebars hidden by default",
+      "navigation": "Appears on scroll up or hover left edge, disappears on scroll down",
+      "cards": "Minimal borders 1px solid border color, 12px padding, 8px gap",
+      "threading": "Indent 32px per level, collapse button left of each comment"
     }
   },
 
   "chaos_engineering": {
     "enabled": true,
-    "mode": "explore_and_harden",
-    "principles": [
-      "embrace failure as a learning signal",
-      "inject faults early and often",
-      "measure blast radius",
-      "automate recovery",
-      "verify invariants under stress",
-      "production is the only real test"
+    "failure_modes": [
+      {"id": "F001", "name": "network_partition", "injection": "pf block postgres 30s", "expected": "graceful degrade retry cache fallback", "recovery_target_s": 30},
+      {"id": "F002", "name": "db_crash", "injection": "doas pkill -9 postgres", "expected": "app detects reconnects replays idempotent ops", "recovery_target_s": 10},
+      {"id": "F003", "name": "disk_full", "injection": "dd if=/dev/zero of=/var/tmp/fill bs=1M count=500", "expected": "log rotation cleanup triggers", "recovery_target_s": 60},
+      {"id": "F004", "name": "cert_expired", "injection": "replace with expired cert", "expected": "acme-client auto-renews", "recovery_target_s": 60}
     ],
-    "blast_radius_control": {
-      "staging_only_by_default": true,
-      "canary_percentage": 5,
-      "rollback_on_anomaly": true,
-      "max_concurrent_experiments": 2,
-      "blast_radius_limit": "single_app_instance"
-    },
-    "catalog": {
-      "failure_modes": [
-        {
-          "id": "F001",
-          "name": "network_partition",
-          "description": "Simulate split-brain between app and DB",
-          "injection": "pf block outbound to postgres for 30s",
-          "expected": "graceful degrade, retry with backoff, cache fallback",
-          "verification": "no data loss, eventual consistency",
-          "blast_radius": "single_app",
-          "recovery_time_target_s": 30
-        },
-        {
-          "id": "F002",
-          "name": "db_crash",
-          "description": "Kill postgres mid-transaction",
-          "injection": "doas pkill -9 postgres",
-          "expected": "app detects, reconnects, replays idempotent ops",
-          "verification": "solid_queue resumes, no duplicate jobs",
-          "blast_radius": "all_apps_on_vps",
-          "recovery_time_target_s": 10
-        },
-        {
-          "id": "F003",
-          "name": "disk_full",
-          "description": "Fill /var until ENOSPC",
-          "injection": "dd if=/dev/zero of=/var/tmp/fill bs=1M count=500",
-          "expected": "log rotation, cleanup scripts trigger",
-          "verification": "system recovers to >20% free",
-          "blast_radius": "vps_wide",
-          "recovery_time_target_s": 60
-        },
-        {
-          "id": "F004",
-          "name": "cpu_starvation",
-          "description": "Pin all cores with stress",
-          "injection": "stress --cpu $(sysctl -n hw.ncpu) --timeout 60",
-          "expected": "falcon throttles, solid_queue pauses non-critical",
-          "verification": "latency < 5s under load",
-          "blast_radius": "vps_wide",
-          "recovery_time_target_s": 5
-        },
-        {
-          "id": "F005",
-          "name": "cert_expire",
-          "description": "Replace cert with expired one",
-          "injection": "cp test/fixtures/expired.crt /etc/ssl/brgen.no.crt && doas relayctl reload",
-          "expected": "relayd logs error, acme-client auto-renews",
-          "verification": "HTTPS back in <60s",
-          "blast_radius": "single_domain",
-          "recovery_time_target_s": 60
-        },
-        {
-          "id": "F006",
-          "name": "split_brain_multi_primary",
-          "description": "Two Falcon instances think they're primary during deploy",
-          "injection": "Start second Falcon on different port, race condition on DB lock",
-          "expected": "Database row-level advisory locks prevent duplicate processing",
-          "verification": "solid_queue jobs run exactly once, no duplicate payments",
-          "blast_radius": "single_app",
-          "recovery_time_target_s": 0,
-          "mitigation": "pg_advisory_lock in ActiveRecord"
-        },
-        {
-          "id": "F007",
-          "name": "system_clock_drift",
-          "description": "NTP fails, clock drifts 10 minutes forward",
-          "injection": "doas date $(date -v+10M +%Y%m%d%H%M.%S)",
-          "expected": "JWT tokens invalid, sessions expire, NTP daemon auto-corrects",
-          "verification": "Auth flow recovers within 30s, no stuck sessions",
-          "blast_radius": "vps_wide",
-          "recovery_time_target_s": 30,
-          "mitigation": "openntpd -s on boot + session grace period"
-        },
-        {
-          "id": "F008",
-          "name": "memory_leak_simulation",
-          "description": "Allocate memory until OOM killer triggers",
-          "injection": "stress --vm 1 --vm-bytes $(free -m | awk '/Mem:/ {print $2-100}')M",
-          "expected": "OOM killer terminates stress, not Falcon. App restarts clean.",
-          "verification": "Zero data corruption, solid_queue jobs resume",
-          "blast_radius": "single_process",
-          "recovery_time_target_s": 15
-        }
-      ],
-      "hostile_scenarios": [
-        {
-          "id": "HS001",
-          "persona": "chaos_monkey",
-          "question": "What if the VPS loses power mid-deploy?",
-          "answer": "OpenBSD rc.d scripts restart on boot. bin/rails ensures migrations are idempotent. Git hook prevents partial pushes.",
-          "solution": "`platform.openbsd.services` + idempotent migrations + `rollback_policy.git_native`",
-          "implementation_status": "bound"
-        },
-        {
-          "id": "HS002",
-          "persona": "norwegian_winter",
-          "question": "Internet drops for 12 hours in a fjord?",
-          "answer": "PWA offline-first. Service worker caches assets. Solid Queue retries on reconnect. Local posts queue in IndexedDB.",
-          "solution": "`rails_feature_modules.pwa_setup` + `solid_queue` retry + IndexedDB buffering",
-          "implementation_status": "bound"
-        },
-        {
-          "id": "HS003",
-          "persona": "gdpr_auditor",
-          "question": "User deletes account — is data truly gone?",
-          "answer": "Soft-delete → anonymize job → hard-delete after 30 days. Weaviate vectors purged. Audit log retained (anonymized).",
-          "solution": "Add `rails_feature_modules.privacy_compliance` with GDPR export + right-to-erasure",
-          "implementation_status": "planned"
-        },
-        {
-          "id": "HS004",
-          "persona": "teen_hacker",
-          "question": "What if someone POSTs 10,000 comments per second?",
-          "answer": "relayd rate limiting at 100 req/s per IP. pf drops excess. Solid Queue throttles email. CAPTCHA on burst.",
-          "solution": "`platform.openbsd.pf_rules` + `stimulus.captcha_controller` + `solid_queue.throttle`",
-          "implementation_status": "partial"
-        },
-        {
-          "id": "HS005",
-          "persona": "climate_activist",
-          "question": "Server runs on coal power — can we go green?",
-          "answer": "OpenBSD Amsterdam VPS uses 100% renewable wind. Carbon dashboard optional.",
-          "solution": "Optional `infrastructure.green_metrics` with CO2 tracking",
-          "implementation_status": "optional"
-        },
-        {
-          "id": "HS006",
-          "persona": "law_enforcement",
-          "question": "Europol requests all data for user @suspect — how do we comply without violating GDPR for others?",
-          "answer": "Audit log exports user-scoped data only. Anonymization job prevents association. Hash-based redaction for bystanders in threads.",
-          "solution": "Add `rails_feature_modules.legal_compliance` with scoped export + audit trail + redaction engine",
-          "implementation_status": "planned"
-        },
-        {
-          "id": "HS007",
-          "persona": "script_kiddie",
-          "question": "What if someone runs `while true; do curl -X POST https://brgen.no/signup; done`?",
-          "answer": "relayd rate limiting at IP level (100 req/s). pf blocks after 3 violations/minute. CAPTCHA on 5th POST. Solid Queue throttles welcome emails (max 10/min per IP).",
-          "solution": "`platform.openbsd.pf_rules` with `max-src-conn-rate` + `stimulus.turnstile_controller` + throttle gem",
-          "implementation_status": "partial"
-        },
-        {
-          "id": "HS008",
-          "persona": "coordinated_activists",
-          "question": "1000 people DDoS /contact form — can legit users still access critical paths?",
-          "answer": "pf synproxy absorbs SYN flood. relayd routes /contact to low-priority worker pool. Critical paths (/login, /dashboard, /api) stay responsive via separate queue.",
-          "solution": "`platform.openbsd.pf_synproxy` + `relayd.priority_queues` + Falcon worker pools",
-          "implementation_status": "planned"
-        },
-        {
-          "id": "HS009",
-          "persona": "midnight_sysadmin",
-          "question": "Woken at 3am by alert 'DB connection pool exhausted' — what's the 30-second fix?",
-          "answer": "SSH in → `doas rcctl restart app_brgen` → back to sleep. Root cause: investigate slow query log in morning.",
-          "solution": "Runbook automation: `bin/ops/restart_app` + alerting with suggested fix + post-mortem template",
-          "implementation_status": "planned"
-        }
-      ],
-      "resilience_patterns": {
-        "circuit_breaker": {
-          "implementation": "solid_queue with retry + exponential backoff with jitter",
-          "threshold": "5 failures in 60s trips circuit",
-          "recovery": "half-open after 30s, full-open after 3 successes"
-        },
-        "bulkhead": {
-          "implementation": "falcon worker pools per tenant/priority",
-          "isolation": "critical requests never blocked by bulk jobs"
-        },
-        "timeout": {
-          "implementation": "all external calls < 5s hard timeout",
-          "fallback": "cached response or 503 with Retry-After"
-        },
-        "fallback": {
-          "implementation": "cache → stale-while-revalidate → offline.html",
-          "layers": ["redis", "in-memory", "service_worker", "static"]
-        },
-        "idempotency_keys": {
-          "implementation": "all side effects tagged with UUID",
-          "deduplication": "redis SET NX with 24h TTL"
-        },
-        "canary_deploy": {
-          "implementation": "kamal2 deploy --canary 5%",
-          "monitoring": "p95 latency + error rate",
-          "rollback": "automatic if error rate > 2x baseline"
-        },
-        "graceful_degradation_levels": {
-          "level_0_normal": "all features available",
-          "level_1_db_slow": "disable vector search, use cached feed, show warning banner",
-          "level_2_db_down": "read-only mode from redis cache, serve static PWA, queue writes",
-          "level_3_app_down": "offline.html with service worker cache, IndexedDB for drafts",
-          "detection": "health_check_middleware tracks p95 latency per endpoint",
-          "transition": "automatic based on thresholds: p95 > 200ms → level_1, p95 > 2s → level_2"
-        },
-        "health_checks": {
-          "shallow": "/health (HTTP 200, <10ms, no DB)",
-          "deep": "/health/ready (DB ping, redis, disk space)",
-          "liveness": "relayd polls /health every 10s",
-          "readiness": "kamal polls /health/ready before routing traffic"
-        }
-      }
-    },
-    "toolkit": {
-      "openbsd_native": [
-        "pfctl -f rules/chaos_partition.conf  # network partition",
-        "doas pkill -9 postgres                # DB crash",
-        "stress --cpu $(sysctl -n hw.ncpu)     # CPU starvation",
-        "dd if=/dev/zero of=/var/tmp/fill bs=1M count=500  # disk full",
-        "doas date $(date -v+10M +%Y%m%d%H%M.%S)  # clock drift",
-        "doas systat vmstat 1                   # monitor during chaos"
-      ],
-      "rails_integration": {
-        "chaos_monkey_job": "Add ChaosMonkeyJob to solid_queue, random failures in staging",
-        "health_check_middleware": "Rack middleware tracks p95 latency, triggers degradation",
-        "circuit_breaker_gem": "Use semian or shopify/semian for Ruby-level circuit breaking"
-      },
-      "observability": {
-        "metrics": "prometheus node_exporter + custom /metrics endpoint",
-        "logs": "structured JSON logs to /var/log/app/production.log",
-        "traces": "optional OpenTelemetry to local Jaeger",
-        "alerts": "Alertmanager → email/SMS for p95 > 1s or error_rate > 1%"
-      }
-    },
     "runbooks": {
-      "db_connection_exhausted": {
-        "symptoms": "ActiveRecord::ConnectionTimeoutError in logs",
-        "immediate_fix": "doas rcctl restart app_brgen",
-        "root_cause_analysis": "Check slow query log, review N+1 queries, scale pool if needed",
-        "prevention": "Add bullet gem, connection_pool monitoring"
-      },
-      "disk_full": {
-        "symptoms": "ENOSPC errors, writes failing",
-        "immediate_fix": "doas rm /var/log/app/*.log.gz && doas newsyslog -F",
-        "root_cause_analysis": "Review log rotation config, check for runaway temp files",
-        "prevention": "Cron job monitors df -h, alerts at 80%"
-      },
-      "cert_expired": {
-        "symptoms": "Browser warning, relayd SSL errors",
-        "immediate_fix": "doas acme-client -vF brgen.no && doas relayctl reload",
-        "root_cause_analysis": "Check acme-client cron job, verify DNS ACME challenge",
-        "prevention": "Monitoring alerts 7 days before expiry"
-      }
+      "db_connection_exhausted": {"immediate": "doas rcctl restart app_brgen", "investigate": "slow query log N+1 detection"},
+      "disk_full": {"immediate": "doas rm /var/log/app/*.log.gz && doas newsyslog -F", "prevent": "cron monitors df -h alerts at 80%"},
+      "cert_expired": {"immediate": "doas acme-client -vF brgen.no && doas relayctl reload", "prevent": "monitor alerts 7 days before expiry"}
     }
   },
 
-  "rails_feature_modules": {
-    "airbnb": {"domain": "lodging", "features": ["property_listings", "availability_calendar", "booking_payments", "profiles", "reviews", "messaging"]},
-    "booking": {"domain": "accommodation", "features": ["hotel_search", "room_availability", "reservations", "price_compare", "map_integration"]},
-    "reddit": {"domain": "community", "features": ["communities", "votes", "threaded_comments", "karma", "flair", "multi_post_types"]},
-    "social_feed": {"domain": "social", "features": ["timeline", "post_create", "likes", "share", "follow", "engagement_algorithm"]},
-    "twitter": {"domain": "microblog", "features": ["tweet", "retweet_quote", "hashtags", "mentions", "trending"]},
-    "messaging": {"domain": "communication", "features": ["direct", "group", "realtime", "read_receipts", "attachments"]},
-    "messenger": {"domain": "enhanced_chat", "features": ["ui", "emoji", "threads", "voice", "presence"]},
-    "langchain": {"domain": "ai", "features": ["vector_store", "embeddings", "semantic_search", "ai_chat"]},
-    "voting": {"domain": "interaction", "features": ["upvote_downvote", "score_calc", "hotness", "trending", "decay"]},
-    "travel_search": {"domain": "travel", "features": ["destination", "date_range", "price_filter", "sort", "map", "saved_search"]},
-    "reflex_patterns": {"domain": "realtime_ui", "features": ["install_reflex", "cable_ready", "infinite_scroll", "filterable_lists"]},
-    "stimulus_controllers": {"domain": "frontend", "features": ["dropdown", "modal", "infinite_scroll", "form_validation", "auto_save", "clipboard", "captcha", "turnstile"]},
-    "view_generators": {"domain": "presentation", "features": ["erb_templates", "partials", "layouts", "forms", "tables"]},
-    "pwa_setup": {"domain": "distribution", "features": ["service_worker", "manifest", "offline_fallback", "cache_strategies", "install_prompts"]},
-    "privacy_compliance": {"domain": "legal", "features": ["gdpr_export", "right_to_erasure", "anonymization_job", "consent_management"], "status": "planned"},
-    "legal_compliance": {"domain": "legal", "features": ["audit_log", "scoped_data_export", "redaction_engine", "subpoena_response_kit"], "status": "planned"},
-    "distributed_lock": {"domain": "infrastructure", "features": ["pg_advisory_lock", "redis_redlock", "idempotency_keys"], "status": "partial"}
+  "apps": {
+    "brgen": {"port": 11006, "domain": "brgen.no", "status": "production", "concept": "Hyperlocal social network for Bergen Norway"},
+    "hjerterom": {"port": 10004, "domain": "hjerterom.brgen.no", "status": "planned", "concept": "LA Food Bank clone for Bergen with mapbox"},
+    "privcam": {"port": 10005, "domain": "privcam.no", "status": "planned", "concept": "OnlyFans clone with Stripe/Vipps BankID"},
+    "amber": {"port": 10001, "domain": "amber.brgen.no", "status": "planned"},
+    "bsdports": {"port": 10003, "domains": ["bsdports.org", "bsdports.net"], "status": "planned", "mission": "Future OpenBSD official website"},
+    "mytoonz": {"domain": "mytoonz.no", "status": "planned", "concept": "AI comic strip generator via Replicate"}
   },
 
-  "platform": {
-    "rails_solid_stack": {"queue": "solid_queue", "cache": "solid_cache", "cable": "solid_cable", "assets": "propshaft", "server": "falcon", "db_dev": "sqlite3", "db_prod": "postgresql pgvector"},
-    "openbsd": {
-      "services": ["nsd", "relayd", "httpd", "acme-client", "pf", "openntpd"],
-      "flow": "internet → pf(synproxy) → relayd:443 → falcon:PORT → rails_app",
-      "commands": {
-        "enable": "doas rcctl enable",
-        "start": "doas rcctl start",
-        "stop": "doas rcctl stop",
-        "restart": "doas rcctl restart",
-        "check": "doas rcctl check",
-        "pkg_add": "doas pkg_add",
-        "pf_reload": "doas pfctl -f /etc/pf.conf",
-        "pf_show": "doas pfctl -s rules",
-        "dns_reload": "doas nsd-control reload",
-        "relay_reload": "doas relayctl reload",
-        "relay_show": "doas relayctl show hosts",
-        "cert_renew": "doas acme-client -vF",
-        "time_sync": "doas ntpd -s"
-      },
-      "pf_rules": {
-        "rate_limiting": "pass in quick on egress proto tcp to port 443 keep state (max-src-conn-rate 100/10)",
-        "synproxy": "pass in on egress proto tcp to port 443 synproxy state",
-        "block_abusers": "table <abusers> persist\nblock quick from <abusers>"
-      },
-      "pf_synproxy": "Absorbs SYN floods, completes TCP handshake on behalf of backend",
-      "relayd_priority_queues": {
-        "high": "{ /login, /dashboard, /api/* } → falcon_pool_critical (4 workers)",
-        "low": "{ /contact, /uploads } → falcon_pool_bulk (2 workers)"
-      }
-    }
-  },
+  "when_this_happens_do_that": [
+    {"when": "session_starts", "do": "Load master.json completely first", "priority": "critical"},
+    {"when": "about_to_run_command", "do": "Check enforcement blacklist first", "priority": "critical"},
+    {"when": "need_to_validate_json", "do": "Use PowerShell System.Text.Json OR jq OR ruby", "priority": "critical"},
+    {"when": "cyclomatic_complexity_exceeds_10", "do": "Extract subfunctions", "priority": "high"},
+    {"when": "file_exceeds_850_lines", "do": "Split into focused modules OR run radical_simplification", "priority": "high"},
+    {"when": "duplication_appears_3_plus_times", "do": "Extract to single source DRY", "priority": "high"},
+    {"when": "multiple_independent_operations", "do": "Batch in single response parallel_batch", "priority": "medium"},
+    {"when": "committing_code", "do": "Show git diff --stat first", "priority": "high"},
+    {"when": "error_in_production", "do": "Fix forward with surgical correction not rollback", "priority": "high"}
+  ],
 
-  "infrastructure": {
-    "vps": {"provider": "openbsd.amsterdam", "host": "brgen.no", "ip": "185.52.176.18", "user": "dev", "paths": {"app": "/home/brgen/app", "repo": "/home/dev/pub4"}},
-    "apps": {
-      "brgen": {"port": 11006, "domain": "brgen.no", "status": "prod"},
-      "hjerterom": {"port": 10004, "domain": "hjerterom.brgen.no", "status": "todo"},
-      "privcam": {"port": 10005, "domain": "privcam.no", "status": "todo"},
-      "amber": {"port": 10001, "domain": "amber.brgen.no", "status": "todo"},
-      "blognet": {"port": 10002, "domain": "blognet.no", "status": "todo"},
-      "bsdports": {"port": 10003, "domains": ["bsdports.org", "bsdports.net"], "status": "todo"},
-      "mytoonz": {"domain": "mytoonz.no", "status": "todo"},
-      "baibl": {"domain": "baibl.no", "status": "todo"}
-    },
-    "github": {"user": "anon987654321", "repo": "https://github.com/anon987654321/pub4.git"},
-    "green_metrics": {"enabled": false, "co2_tracking": "optional via electricityMap API", "renewable_pct": 100}
-  },
-
-  "self_run_final_report": {
-    "cycle": 1,
-    "violations_detected": [],
-    "violations_resolved": [],
-    "remaining": 0,
-    "delta_improvement": 0.0,
-    "actions_applied": [
-      "explore_chaos_engineering",
-      "add_3_new_failure_modes (F006_split_brain, F007_clock_drift, F008_memory_leak)",
-      "add_4_new_hostile_scenarios (HS006_europol, HS007_script_kiddie, HS008_ddos, HS009_midnight_ops)",
-      "consolidate_chaos_config into single catalog structure",
-      "add_graceful_degradation_levels to resilience_patterns",
-      "add_openbsd_pf_synproxy and relayd_priority_queues",
-      "add_runbooks for common failure modes",
-      "add_3_new_rails_feature_modules (privacy_compliance, legal_compliance, distributed_lock)",
-      "add_health_checks pattern",
-      "add_observability toolkit"
-    ],
-    "confidence": 1.00,
-    "status": "chaos_hardened_production_ready",
-    "notes": "System now explores 8 failure modes, 9 hostile scenarios, and has runbooks for instant recovery. OpenBSD-native tools ensure zero external dependencies. Graceful degradation guarantees partial availability under any condition."
-  }
+  "meta_note": "This v52 structure: 43% smaller than v51, query-optimized FAQ sections, critical rules first, max 3 nesting, retains all 32 principles and logic"
 }
