@@ -1,7 +1,15 @@
 {
+  "README_FIRST": {
+    "thinking": "Ruby for ALL logic, decisions, data manipulation",
+    "file_operations": "zsh DIRECTLY (not via PowerShell wrapper)",
+    "config_pattern": "Single master.json only - other LLMs paste their version into master.md",
+    "claude_settings": ".claude/settings.local.json points to this file",
+    "never": ["powershell_for_zsh", "bash", "sed", "awk", "master.claude.json", "master.{llm}.json"]
+  },
+  
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
-  "version": "56.3.1",
-  "updated": "2025-11-26T02:10:00Z",
+  "version": "56.3.2",
+  "updated": "2025-11-26T04:16:00Z",
   "converged": "2025-11-26",
   
   "extends": null,
@@ -256,8 +264,14 @@
   ],
 
   "runtime": {
+    "thinking_language": "ruby",
+    "file_operations": "zsh",
+    "execution_method": "Direct zsh commands, NOT via PowerShell wrapper",
     "minimum": ["view_tool", "edit_tool", "create_tool"],
     "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool"],
+    "never_use": ["powershell_wrapper_for_zsh", "bash", "sed", "awk", "tr", "cut"],
+    "claude_config": ".claude/settings.local.json",
+    "config_pattern": "Single master.json - other LLMs paste versions in master.md markdown blocks",
     "graceful_degradation": true
   },
 
@@ -270,7 +284,7 @@
 
   "meta": {
     "synthesis": "Claude + DeepSeek + Grok + Design + Copilot + Beautiful",
-    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.1 (tech_stack added)",
+    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.2 (runtime clarified)",
     "contributions": {
       "grok": "auto_upgrade, no_null, max_args, fixed-point, silence = proof",
       "deepseek": "confidence 0.85-1.00, incremental 70-85%, semantic delta",
@@ -279,7 +293,7 @@
       "copilot": "XDG, extends, overrides, graceful degradation",
       "beautiful": "meta-principle, review criteria, architecture tests, 5 detectors"
     },
-    "size": "~350 lines with full tech_stack",
+    "size": "~350 lines with full tech_stack + runtime clarifications",
     "verdict": "Token-efficient, converged, production-ready"
   }
 }
