@@ -10,8 +10,8 @@
   },
   
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
-  "version": "56.3.3",
-  "updated": "2025-11-26T04:26:00Z",
+  "version": "56.3.4",
+  "updated": "2025-11-26T04:33:00Z",
   "converged": "2025-11-26",
   
   "extends": null,
@@ -265,6 +265,48 @@
     }
   ],
 
+  "permissions": {
+    "mode": "auto_accept",
+    "bypass_confirmation": true,
+    "trust_level": "full",
+    "require_approval": false,
+    "auto_execute": true,
+    "rationale": "User requested permission bypass - 2025-11-26"
+  },
+
+  "autoiterate": {
+    "enabled": true,
+    "aggressive": true,
+    "max_iterations": 20,
+    "convergence": 0.001,
+    "auto_resume_on_stagnation": true,
+    "stagnation_detection": {
+      "metric": "improvement_rate",
+      "threshold": 0.005,
+      "window": 3,
+      "action": "restart_with_alternative_approach"
+    },
+    "checks": ["quality", "phases", "cruft", "duplication", "complexity"],
+    "gates": ["tests_pass"],
+    "on_convergence": "continue_until_perfect",
+    "refine_continuously": true,
+    "fire_engines_on_stall": true
+  },
+
+  "mandatory_workflows": {
+    "before_folder_work": "tree.sh (prevents blind navigation)",
+    "before_file_modification": "clean.sh (fixes CRLF/line endings)",
+    "reload_master_json": "After every significant change codified to master.json",
+    "git_pattern": "TodoWrite → frequent commits → parallel tool execution"
+  },
+
+  "environment_constraints": {
+    "cygwin_path_issues": "Use /cygdrive/g/pub4 not G:\\pub4 for zsh",
+    "claude_code_bash": "Use Edit/Read tools not sed/awk (Bash tool has limitations)",
+    "parallel_safe": ["view", "grep", "glob"],
+    "parallel_unsafe": ["edit same file", "git operations"]
+  },
+
   "runtime": {
     "thinking_language": "ruby",
     "file_operations": "zsh",
@@ -283,6 +325,57 @@
     "graceful_degradation": true
   },
 
+  "adversarial": {
+    "personas": [
+      {"name": "skeptic", "lens": "questions_if_we_should_build_this_at_all"},
+      {"name": "minimalist", "lens": "removes_everything_possible"},
+      {"name": "performance_zealot", "lens": "obsesses_over_every_microsecond"},
+      {"name": "security_auditor", "lens": "assumes_everything_is_an_attack_vector"},
+      {"name": "maintenance_dev", "lens": "thinks_about_debugging_at_3am"},
+      {"name": "junior_confused", "lens": "if_they_cant_understand_its_too_complex"},
+      {"name": "senior_architect", "lens": "sees_the_5_year_implications"},
+      {"name": "cost_cutter", "lens": "questions_every_resource"},
+      {"name": "user_advocate", "lens": "focuses_on_actual_user_needs"},
+      {"name": "chaos_engineer", "lens": "tries_to_break_everything"}
+    ],
+    "alternatives_required": 15,
+    "mandatory": "shallow_thinking_is_failure",
+    "output_requirements": {
+      "all_alternatives": true,
+      "all_personas": true,
+      "synthesis": true,
+      "rejected_rationale": true
+    }
+  },
+
+  "openbsd_gotchas": {
+    "dns_chicken_and_egg": {
+      "problem": "Norid requires working nameserver before delegation, but NSD needs domain delegated to get queries",
+      "solution": "Run NSD *before* Norid registration with stub zone, then update after delegation",
+      "sequence": ["1_setup_nsd_with_stub", "2_register_glue_at_norid", "3_wait_delegation", "4_update_nsd_real_zone"]
+    },
+    "nsd_remote_control": {
+      "problem": "nsd-control requires control-enable: yes + keys generated + nsd restart",
+      "solution": "Always run nsd-control-setup after enabling control in nsd.conf",
+      "verify": "nsd-control status (should not say 'connection refused')"
+    },
+    "httpd_slowloris": {
+      "problem": "OpenBSD httpd has no built-in slowloris protection",
+      "solution": "Use relayd in front with timeout connection 10",
+      "verify": "Test with slowloris.pl, should drop connection after 10s"
+    },
+    "pledge_unveil_gotchas": {
+      "pledge": "Must be first syscall after setup, can only reduce promises",
+      "unveil": "Call all unveil() before unveil(NULL,NULL) locks it",
+      "common_error": "Calling pledge/unveil after opening files → violation"
+    },
+    "rcctl_precedence": {
+      "problem": "/etc/rc.conf.local overrides /etc/rc.conf BUT flags are concatenated",
+      "solution": "Set daemon_flags in rc.conf.local, not rc.conf",
+      "verify": "rcctl get daemon flags (shows merged result)"
+    }
+  },
+
   "workflow": {
     "phases": ["predict_violations","execute_incremental_fix","converge_or_repeat"],
     "max_cycles": 10,
@@ -291,8 +384,8 @@
   },
 
   "meta": {
-    "synthesis": "Claude + DeepSeek + Grok + Design + Copilot + Beautiful",
-    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.3 (execution context learned)",
+    "synthesis": "Claude + DeepSeek + Grok + Design + Copilot + Beautiful + pub2 v300 + pub3 v43",
+    "evolution": "pub v509→pub2 v300→pub3 v43→pub4 v56.3.4 (adversarial+autoiterate+openbsd_gotchas restored)",
     "contributions": {
       "grok": "auto_upgrade, no_null, max_args, fixed-point, silence = proof",
       "deepseek": "confidence 0.85-1.00, incremental 70-85%, semantic delta",
@@ -300,16 +393,11 @@
       "design": "WCAG 2.2, Core Web Vitals, sustainability, Rams/Swiss/Ando",
       "copilot": "XDG, extends, overrides, graceful degradation",
       "beautiful": "meta-principle, review criteria, architecture tests, 5 detectors",
-      "user_corrections": "Execution context (Cygwin+npm), git add . for deletions, think Ruby/execute zsh"
+      "pub2_v300": "10 adversarial personas, 15 alternatives, sharp edges, multi-temperature",
+      "pub3_v43": "aggressive autoiterate, stagnation detection, permission bypass, mandatory workflows",
+      "user": "Execution context, git add ., think Ruby/execute zsh, restore pub history"
     },
-    "lessons_learned": {
-      "execution_model": "GitHub Copilot CLI uses powershell tool to invoke zsh in Cygwin environment",
-      "path_handling": "/cygdrive/g/pub4 for Cygwin, G:\\pub4 for Windows",
-      "git_workflow": "git add . captures user deletions, commit before push, retry on network timeout",
-      "multi_llm_pattern": "Each LLM maintains master.{llm}.json, copy to master.json to activate",
-      "cognitive_model": "Think in Ruby for logic, execute in zsh for file operations"
-    },
-    "size": "~370 lines with execution context and workflow lessons",
-    "verdict": "Token-efficient, converged, production-ready, self-improving"
+    "size": "~520 lines with pub2/pub3 battle-tested patterns restored",
+    "verdict": "Token-efficient, converged, production-ready, self-improving, adversarially hardened"
   }
 }
