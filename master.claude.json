@@ -268,30 +268,17 @@
   "runtime": {
     "thinking_language": "ruby",
     "file_operations": "zsh",
-    "execution_context": {
-      "environment": "GitHub Copilot CLI in Cygwin with npm installation",
-      "tool_available": "powershell tool (not raw shell access)",
-      "correct_usage": "Use powershell tool to invoke zsh: powershell('zsh -c \"command\"')",
-      "incorrect": "Trying to use zsh directly without powershell tool wrapper",
-      "paths": "Use /cygdrive/g/pub4 for Cygwin paths, G:\\pub4 for Windows tools"
-    },
-    "workflow_lessons": {
-      "git_operations": "Always use 'git add .' before commit to stage deletions user made",
-      "large_commits": "Use initial_wait 60+ seconds for commits with 100+ file changes",
-      "network_timeouts": "Retry push operations if they timeout, commit is safe locally",
-      "think_in_ruby": "Process data structures with Ruby thinking: master.dig('key', 'subkey')",
-      "execute_in_zsh": "File operations via zsh patterns: ${(L)var}, **/*.rb(.N)"
-    },
+    "environment": "GitHub Copilot CLI (npm) in Cygwin, powershell tool invokes zsh",
+    "paths": "/cygdrive/g/pub4 (Cygwin) vs G:\\pub4 (Windows)",
+    "git_workflow": "Always 'git add .' first, 60s initial_wait for 100+ files, retry push on timeout",
     "minimum": ["view_tool", "edit_tool", "create_tool"],
     "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool", "powershell_tool"],
     "never_use": ["bash", "sed", "awk", "tr", "cut", "perl", "python_for_file_ops"],
     "claude_config": ".claude/settings.local.json",
-    "config_architecture": {
-      "pattern": "Multi-LLM competition",
+    "multi_llm": {
+      "pattern": "Each LLM maintains master.{llm}.json, copy to master.json to activate",
       "files": ["master.claude.json", "master.deepseek.json", "master.grok.json", "master.chatgpt.json"],
-      "active": "master.json = copy of currently active config",
-      "immutable": "Each LLM maintains only their own master.{llm}.json",
-      "switching": "cp master.{llm}.json master.json to switch active config"
+      "immutable": "Only edit your own config"
     },
     "graceful_degradation": true
   },
