@@ -1,16 +1,17 @@
 {
   "README_FIRST": {
     "thinking": "Ruby for ALL logic, decisions, data manipulation",
-    "file_operations": "zsh DIRECTLY (not via PowerShell wrapper)",
+    "file_operations": "zsh for file ops (via powershell tool in Copilot CLI environment)",
+    "execution_context": "GitHub Copilot CLI runs in Cygwin, use powershell tool to invoke zsh commands",
     "config_pattern": "Multi-LLM: master.{llm}.json for each LLM's immutable version",
-    "active_config": "master.json = symlink/copy of currently active config",
+    "active_config": "master.json = copy of currently active config",
     "claude_settings": ".claude/settings.local.json points to master.json",
-    "never": ["powershell_for_zsh", "bash", "sed", "awk", "tr", "cut"]
+    "never": ["bash", "sed", "awk", "tr", "cut", "perl", "python for file ops"]
   },
   
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
-  "version": "56.3.2",
-  "updated": "2025-11-26T04:16:00Z",
+  "version": "56.3.3",
+  "updated": "2025-11-26T04:26:00Z",
   "converged": "2025-11-26",
   
   "extends": null,
@@ -267,10 +268,23 @@
   "runtime": {
     "thinking_language": "ruby",
     "file_operations": "zsh",
-    "execution_method": "Direct zsh commands, NOT via PowerShell wrapper",
+    "execution_context": {
+      "environment": "GitHub Copilot CLI in Cygwin with npm installation",
+      "tool_available": "powershell tool (not raw shell access)",
+      "correct_usage": "Use powershell tool to invoke zsh: powershell('zsh -c \"command\"')",
+      "incorrect": "Trying to use zsh directly without powershell tool wrapper",
+      "paths": "Use /cygdrive/g/pub4 for Cygwin paths, G:\\pub4 for Windows tools"
+    },
+    "workflow_lessons": {
+      "git_operations": "Always use 'git add .' before commit to stage deletions user made",
+      "large_commits": "Use initial_wait 60+ seconds for commits with 100+ file changes",
+      "network_timeouts": "Retry push operations if they timeout, commit is safe locally",
+      "think_in_ruby": "Process data structures with Ruby thinking: master.dig('key', 'subkey')",
+      "execute_in_zsh": "File operations via zsh patterns: ${(L)var}, **/*.rb(.N)"
+    },
     "minimum": ["view_tool", "edit_tool", "create_tool"],
-    "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool"],
-    "never_use": ["powershell_wrapper_for_zsh", "bash", "sed", "awk", "tr", "cut"],
+    "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool", "powershell_tool"],
+    "never_use": ["bash", "sed", "awk", "tr", "cut", "perl", "python_for_file_ops"],
     "claude_config": ".claude/settings.local.json",
     "config_architecture": {
       "pattern": "Multi-LLM competition",
@@ -291,16 +305,24 @@
 
   "meta": {
     "synthesis": "Claude + DeepSeek + Grok + Design + Copilot + Beautiful",
-    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.2 (runtime clarified)",
+    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.3 (execution context learned)",
     "contributions": {
       "grok": "auto_upgrade, no_null, max_args, fixed-point, silence = proof",
       "deepseek": "confidence 0.85-1.00, incremental 70-85%, semantic delta",
-      "claude": "Rails 8/OpenBSD 7.6+, design system, zsh patterns, synthesis",
+      "claude": "Rails 8/OpenBSD 7.6+, design system, zsh patterns, synthesis, multi-LLM architecture",
       "design": "WCAG 2.2, Core Web Vitals, sustainability, Rams/Swiss/Ando",
       "copilot": "XDG, extends, overrides, graceful degradation",
-      "beautiful": "meta-principle, review criteria, architecture tests, 5 detectors"
+      "beautiful": "meta-principle, review criteria, architecture tests, 5 detectors",
+      "user_corrections": "Execution context (Cygwin+npm), git add . for deletions, think Ruby/execute zsh"
     },
-    "size": "~350 lines with full tech_stack + runtime clarifications",
-    "verdict": "Token-efficient, converged, production-ready"
+    "lessons_learned": {
+      "execution_model": "GitHub Copilot CLI uses powershell tool to invoke zsh in Cygwin environment",
+      "path_handling": "/cygdrive/g/pub4 for Cygwin, G:\\pub4 for Windows",
+      "git_workflow": "git add . captures user deletions, commit before push, retry on network timeout",
+      "multi_llm_pattern": "Each LLM maintains master.{llm}.json, copy to master.json to activate",
+      "cognitive_model": "Think in Ruby for logic, execute in zsh for file operations"
+    },
+    "size": "~370 lines with execution context and workflow lessons",
+    "verdict": "Token-efficient, converged, production-ready, self-improving"
   }
 }
