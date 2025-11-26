@@ -1,0 +1,285 @@
+{
+  "$schema": "https://schemas.github.com/copilot/master.v1.json",
+  "version": "56.3.1",
+  "updated": "2025-11-26T02:10:00Z",
+  "converged": "2025-11-26",
+  
+  "extends": null,
+
+  "meta_principle": {
+    "beautiful_code_wins_all_conflicts": "Readability > performance > cleverness > brevity",
+    "definition": "Code you'd enjoy reading in five years",
+    "requires": [
+      "Reads like prose - competent programmer grasps intent without comments",
+      "No superfluous tokens - every character earns its place",
+      "Names reveal purpose - never abbreviate, never be cryptic",
+      "Max 2 indent levels - flatten or extract",
+      "Methods that don't scroll - if it scrolls, split it",
+      "One reason to change - single responsibility"
+    ],
+    "optimization_goals": {
+      "programmer_happiness": "Happy programmers write better code (Matz)",
+      "quality_is_speed": "High internal quality makes software cheaper (Fowler)",
+      "simplicity_ships": "If you can't ship in hours, question every dependency (Levels)",
+      "flow_protection": "Clear goals + immediate feedback + challenge matched to skill (Csikszentmihalyi)"
+    }
+  },
+
+  "CRITICAL": {
+    "banned_commands": {
+      "exact": ["python","bash","powershell","sed","awk","tr","cut","head","tail","uniq","sort","wc","find","perl","sudo"],
+      "patterns": ["rm -rf *","curl * | sh","chmod 777 *","sudo *",">/dev/sd*"]
+    },
+    "allowed_only": ["ruby","zsh","view_tool","edit_tool","create_tool"],
+    "null": "forbidden_forever",
+    "max_args": 3,
+    "max_nesting": 2,
+    "max_method_lines": 20,
+    "max_complexity": 10
+  },
+
+  "principles": {
+    "critical": {
+      "no_null": "Never return/accept null · use NullObject or Result",
+      "max_args": "0 ideal · 1 good · 2 acceptable · ≥3 → Parameter Object",
+      "max_method_lines": "If it scrolls, split it · 20 line hard limit",
+      "max_nesting": "2 levels maximum · flatten or extract",
+      "security": "No SQLi/XSS/CSRF · no secrets in code",
+      "banned_commands": "Only ruby/zsh/tools · enforce pre-execution",
+      "wcag_aa": "4.5:1 contrast · 24×24px touch targets · keyboard nav",
+      "performance": "LCP <2.5s · INP <200ms · CLS <0.1",
+      "sustainability": "Page weight <1MB · images <100KB · renewable hosting"
+    },
+    "high": {
+      "dry": "Single source of truth · duplication >70% → extract",
+      "kiss": "Simplest solution · nesting ≤2 · complexity ≤10",
+      "yagni": "Delete unused code immediately · no speculation",
+      "solid": "One responsibility · open/closed · depend on abstractions",
+      "pola": "Zero surprises · behave as expected",
+      "beautiful_code": "Code you'd enjoy reading in five years",
+      "full_names": "Never abbreviate · names reveal purpose",
+      "flat_structure": "Depth hides complexity · flatten aggressively",
+      "self_evident": "If it needs a comment explaining what, rewrite it",
+      "8px_grid": "All spacing/sizing divisible by 8",
+      "45_75_chars": "Line length 45-75 characters",
+      "1.5_lineheight": "Body text line-height 1.5 (WCAG)"
+    },
+    "medium": {
+      "strunk": "Omit needless words · active voice · concrete",
+      "rails": "Omakase · convention > config · thin controllers",
+      "unix": "One job · text pipes · portable",
+      "boy_scout": "Leave cleaner than found",
+      "rams": "Less but better · honest · long-lasting",
+      "swiss_design": "Grid-based · mathematical precision",
+      "ando": "Concrete light void · 50% content-to-space ratio"
+    },
+    "meta": {
+      "auto_upgrade": "Replace with superior public version",
+      "prediction": "Anticipate violations before execution",
+      "incremental": "Scan only changed sections 60-85% faster",
+      "fixed_point": "Silence is convergence proof",
+      "lineage_attribution": "Every design decision traces to influence"
+    }
+  },
+
+  "tech_stack": {
+    "rails": {
+      "version": "8.0+",
+      "stack": {
+        "queue": "solid_queue",
+        "cache": "solid_cache",
+        "cable": "solid_cable",
+        "assets": "propshaft",
+        "server": "falcon"
+      },
+      "conventions": {
+        "routing": "restful_max_2_levels",
+        "controllers": "thin",
+        "models": "fat_or_service_objects"
+      },
+      "style": {
+        "indent": 2,
+        "naming": "snake_case",
+        "blocks": "multiline_do_end_single_braces"
+      }
+    },
+    "openbsd": {
+      "version": "7.6+",
+      "services": ["nsd", "relayd", "httpd", "acme-client", "pf"],
+      "security": ["doas_not_sudo", "pledge_unveil_everywhere"],
+      "philosophy": "secure_by_default_correct_over_convenient"
+    },
+    "zsh": {
+      "header": "#!/usr/bin/env zsh\nemulate -L zsh\nsetopt extended_glob\nset -euo pipefail",
+      "patterns": {
+        "string": {
+          "lowercase": "${(L)var}",
+          "uppercase": "${(U)var}",
+          "replace": "${var//old/new}",
+          "trim": "${${var##[[:space:]]#}%%[[:space:]]#}"
+        },
+        "array": {
+          "unique": "${(u)arr}",
+          "sort_asc": "${(o)arr}",
+          "sort_desc": "${(O)arr}",
+          "join": "${(j:,:)arr}",
+          "length": "${#arr[@]}"
+        },
+        "file": {
+          "recursive": "**/*.rb(.N)",
+          "exclude": "**/*~*.log~*.tmp(.N)"
+        }
+      }
+    },
+    "design_system": {
+      "philosophy": "brutalist_flat_2.0",
+      "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradient", "background-image"],
+      "allowed_css": ["flex", "grid", ":has()", "subgrid", "container-queries"],
+      "color_palette": {
+        "background": "rgb(255,255,255)",
+        "surface": "rgb(247,249,249)",
+        "border": "rgb(239,243,244)",
+        "text_primary": "rgb(15,20,25)",
+        "text_secondary": "rgb(83,100,113)",
+        "accent": "rgb(29,155,240)",
+        "accent_hover": "rgb(26,140,216)",
+        "upvote": "rgb(255,69,0)",
+        "danger": "rgb(244,33,46)"
+      },
+      "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
+      "typography": {
+        "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "weights": [400, 600, 700],
+        "scale_px": [13, 15, 17, 20, 24, 32]
+      }
+    }
+  },
+
+  "prediction_engine": {
+    "enabled": true,
+    "source": "DeepSeek v54.1 + design pattern recognition + beautiful code heuristics",
+    "confidence": {
+      "duplicate_pattern": {"violation": "dry", "score": 0.85, "autofix": "extract_method"},
+      "nesting_increase": {"violation": "kiss", "score": 0.92, "autofix": "extract_method"},
+      "method_too_long": {"violation": "max_method_lines", "score": 0.93, "autofix": "split_by_responsibility"},
+      "too_many_params": {"violation": "max_args", "score": 0.88, "autofix": "parameter_object"},
+      "boolean_parameter": {"violation": "beautiful_code", "score": 0.91, "autofix": "split_into_methods"},
+      "magic_value": {"violation": "beautiful_code", "score": 0.87, "autofix": "extract_named_constant"},
+      "god_object": {"violation": "solid", "score": 0.84, "autofix": "decompose_collaborators"},
+      "abbreviated_name": {"violation": "full_names", "score": 0.89, "autofix": "expand_to_full_words"},
+      "null_usage": {"violation": "no_null", "score": 0.95, "autofix": "null_object"},
+      "banned_cmd": {"violation": "critical", "score": 1.00, "autofix": false, "stop": true},
+      "contrast_fail": {"violation": "wcag_aa", "score": 0.98, "autofix": "adjust_color"},
+      "touch_target_small": {"violation": "wcag_aa", "score": 0.96, "autofix": "resize_24px"},
+      "lcp_slow": {"violation": "performance", "score": 0.89, "autofix": "preload_optimize"},
+      "page_weight_high": {"violation": "sustainability", "score": 0.82, "autofix": "compress"},
+      "line_length_wrong": {"violation": "45_75_chars", "score": 0.87, "autofix": "adjust_width"},
+      "spacing_off_grid": {"violation": "8px_grid", "score": 0.91, "autofix": "snap_to_8px"}
+    }
+  },
+
+  "detectors": {
+    "count": 55,
+    "source": "Grok core 12 + DeepSeek 26 code + 12 design/a11y/perf + 5 beautiful code",
+    "critical_5": ["banned_commands","null_usage","security","max_args","max_nesting"],
+    "high_17": ["dry","kiss","yagni","solid","pola","beautiful_code","full_names","flat_structure","self_evident","max_method_lines","rails","ruby","zsh","openbsd","design","boy_scout","strunk"],
+    "beautiful_code_5": ["method_length","boolean_parameters","magic_values","god_objects","abbreviated_names"],
+    "design_quality_12": ["8px_grid","contrast_ratio","touch_target","line_length","lineheight","spacing","color_token","typography_scale","border_radius","elevation_shadow","flat_2.0","rams_principle"],
+    "accessibility_9": ["focus_not_obscured","target_size_minimum","dragging_alternative","accessible_auth","redundant_entry","aria","keyboard_nav","screen_reader","semantic_html"],
+    "performance_3": ["lcp_threshold","inp_threshold","cls_threshold"],
+    "sustainability_3": ["page_weight","image_size","carbon_footprint"],
+    "architecture_4": ["one_person_understands","ship_in_hours","boring_to_maintain","solving_real_problem"]
+  },
+
+  "architecture_tests": {
+    "must_all_be_yes": [
+      "Can one person understand the whole system?",
+      "Can we ship a change in hours, not weeks?",
+      "Will this be boring to maintain?",
+      "Are we solving a problem we actually have?"
+    ],
+    "when_any_no": "Simplify until all answers are yes",
+    "philosophy": {
+      "prefer": ["monolith until proven otherwise","convention over configuration","boring technology","fewer dependencies","deletable files"],
+      "avoid": ["microservices for teams <50","SPA when server rendering works","frameworks <2 years old","premature optimization","speculative generality"]
+    }
+  },
+
+  "review_criteria": {
+    "reject": {
+      "nesting_gt_2": "Extract to named method",
+      "method_gt_20_lines": "Split by responsibility",
+      "abbreviated_names": "Expand to full words",
+      "comments_explaining_what": "Rewrite code to be self-evident",
+      "repeated_type_declarations": "Use inference or dynamic typing",
+      "god_objects": "Decompose into focused collaborators",
+      "primitive_obsession": "Extract value objects",
+      "boolean_parameters": "Split into separate methods",
+      "negated_conditionals": "Use unless or invert logic",
+      "magic_values": "Extract to named constants"
+    },
+    "ask_first": {
+      "gt_3_parameters": "Could this be a config object?",
+      "metaprogramming": "Is the magic worth the mystery?",
+      "new_dependency": "Can stdlib do this?",
+      "microservice": "Is this premature decomposition?",
+      "abstract_base_class": "Do 3+ concrete implementations exist?",
+      "custom_dsl": "Will new team member understand in a week?"
+    },
+    "approve_when": [
+      "Intent clear without explanation",
+      "Names precise and unsurprising",
+      "Structure flat and scannable",
+      "Changes minimal and focused",
+      "Tests read as documentation"
+    ]
+  },
+
+  "paths": {
+    "config": "${XDG_CONFIG_HOME}/master",
+    "data": "${XDG_DATA_HOME}/master",
+    "cache": "${XDG_CACHE_HOME}/master",
+    "state": "${XDG_STATE_HOME}/master"
+  },
+
+  "overrides": [
+    {
+      "directories": ["~/work/**"],
+      "tools": {"allow_additional": ["docker *", "kubectl *"]},
+      "note": "Work dirs allow container orchestration"
+    },
+    {
+      "directories": ["~/.config/**"],
+      "principles": {"relaxed": ["dry"]},
+      "note": "Config dirs allow duplication for isolation"
+    }
+  ],
+
+  "runtime": {
+    "minimum": ["view_tool", "edit_tool", "create_tool"],
+    "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool"],
+    "graceful_degradation": true
+  },
+
+  "workflow": {
+    "phases": ["predict_violations","execute_incremental_fix","converge_or_repeat"],
+    "max_cycles": 10,
+    "early_exit": "2 consecutive zero violations",
+    "convergence_speed": "2-4 cycles typical"
+  },
+
+  "meta": {
+    "synthesis": "Claude + DeepSeek + Grok + Design + Copilot + Beautiful",
+    "evolution": "v50 1500L → v55 244L → v56.1 202L → v56.3 301L → v56.3.1 (tech_stack added)",
+    "contributions": {
+      "grok": "auto_upgrade, no_null, max_args, fixed-point, silence = proof",
+      "deepseek": "confidence 0.85-1.00, incremental 70-85%, semantic delta",
+      "claude": "Rails 8/OpenBSD 7.6+, design system, zsh patterns, synthesis",
+      "design": "WCAG 2.2, Core Web Vitals, sustainability, Rams/Swiss/Ando",
+      "copilot": "XDG, extends, overrides, graceful degradation",
+      "beautiful": "meta-principle, review criteria, architecture tests, 5 detectors"
+    },
+    "size": "~350 lines with full tech_stack",
+    "verdict": "Token-efficient, converged, production-ready"
+  }
+}
