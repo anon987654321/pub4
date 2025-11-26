@@ -2,9 +2,10 @@
   "README_FIRST": {
     "thinking": "Ruby for ALL logic, decisions, data manipulation",
     "file_operations": "zsh DIRECTLY (not via PowerShell wrapper)",
-    "config_pattern": "Single master.json only - other LLMs paste their version into master.md",
-    "claude_settings": ".claude/settings.local.json points to this file",
-    "never": ["powershell_for_zsh", "bash", "sed", "awk", "master.claude.json", "master.{llm}.json"]
+    "config_pattern": "Multi-LLM: master.{llm}.json for each LLM's immutable version",
+    "active_config": "master.json = symlink/copy of currently active config",
+    "claude_settings": ".claude/settings.local.json points to master.json",
+    "never": ["powershell_for_zsh", "bash", "sed", "awk", "tr", "cut"]
   },
   
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
@@ -271,7 +272,13 @@
     "recommended": ["ruby", "zsh", "view_tool", "edit_tool", "create_tool"],
     "never_use": ["powershell_wrapper_for_zsh", "bash", "sed", "awk", "tr", "cut"],
     "claude_config": ".claude/settings.local.json",
-    "config_pattern": "Single master.json - other LLMs paste versions in master.md markdown blocks",
+    "config_architecture": {
+      "pattern": "Multi-LLM competition",
+      "files": ["master.claude.json", "master.deepseek.json", "master.grok.json", "master.chatgpt.json"],
+      "active": "master.json = copy of currently active config",
+      "immutable": "Each LLM maintains only their own master.{llm}.json",
+      "switching": "cp master.{llm}.json master.json to switch active config"
+    },
     "graceful_degradation": true
   },
 

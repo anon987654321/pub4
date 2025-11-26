@@ -25,7 +25,7 @@ source "https://rubygems.org"
 ruby "~> 3.3.0"
 gem "rails", "~> 7.2"
 gem "pg"
-gem "falcon"
+gem "puma"
 gem "solid_queue"
 gem "solid_cache"
 gem "turbo-rails"
@@ -199,9 +199,10 @@ Async do
 end
 FALCON
 
-chmod +x config/falcon.rb
+# Fix production.rb logger
+sed -i 's/ActiveSupport::TaggedLogging\.logger(STDOUT)/Logger.new(STDOUT)/' config/environments/production.rb
 
-log "Brgen app configured. Restart service: doas rcctl restart brgen"
+log "Brgen app configured. Start: RAILS_ENV=production bundle exec puma -b tcp://0.0.0.0:11006"
 
 # Multi-domain: brgen.no, oshlo.no, trndheim.no, stvanger.no, trmso.no, etc.
 

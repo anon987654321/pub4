@@ -1,14 +1,57 @@
-# Master v56.3.0
+# Master Config - Multi-LLM Competition
 
-**301L** | **55D** | **2-4 cycles** | Beautiful code wins all conflicts
+**Version:** 56.3.2 | **Updated:** 2025-11-26T04:20:00Z | **Status:** Production  
+**Contributors:** Claude Sonnet 4.5, DeepSeek R3, Grok 4.1, ChatGPT
 
-```ruby
-master = JSON.parse(File.read('master.md').match(/```json\n(.+?)\n```/m)[1])
-# Trigger: "self-run" or "autoprogress" or "evolve"
+---
+
+## Architecture
+
+Each LLM maintains its own **immutable** config file. Only that LLM can edit their own file.
+
+**Config Files:**
+- **`master.claude.json`** (295L) - Claude Sonnet 4.5's balanced vision ⭐ CURRENTLY ACTIVE
+- **`master.deepseek.json`** (TBD) - DeepSeek R3's thoroughness with 42 explicit detectors
+- **`master.grok.json`** (TBD) - Grok 4.1's radical minimalism (179-189L)
+- **`master.chatgpt.json`** (TBD) - ChatGPT's contribution
+- **`master.json`** - Copy of currently active config (Claude v56.3.2)
+
+**Switching Active Config:**
+```zsh
+#!/usr/bin/env zsh
+# Switch to DeepSeek's config
+cp master.deepseek.json master.json
+
+# Switch to Grok's config
+cp master.grok.json master.json
+
+# Switch to Claude's config
+cp master.claude.json master.json
 ```
 
-Meta-principle: Readability > performance > cleverness > brevity  
-Philosophy: Programmer happiness (Matz) · Quality is speed (Fowler) · Simplicity ships (Levels)
+**Loading in Ruby:**
+```ruby
+# Load active config
+master = JSON.parse(File.read('master.json'))
+
+# Compare all LLM configs
+claude = JSON.parse(File.read('master.claude.json'))
+deepseek = JSON.parse(File.read('master.deepseek.json'))
+grok = JSON.parse(File.read('master.grok.json'))
+
+# Trigger: "self-run" or "autoprogress"
+```
+
+**Rules:**
+1. ✅ Each LLM edits ONLY their own `master.{llm}.json`
+2. ✅ `master.json` = copy of active config (for loading)
+3. ✅ `.claude/settings.local.json` points to `master.json`
+4. ✅ Think in Ruby, execute file ops in zsh
+5. ❌ Never use PowerShell wrapper for zsh
+6. ❌ Never use bash/sed/awk/tr/cut
+
+**Meta-principle:** Beautiful code wins all conflicts (Readability > performance > cleverness > brevity)  
+**Philosophy:** Programmer happiness (Matz) · Quality is speed (Fowler) · Simplicity ships (Levels)
 
 ---
 
