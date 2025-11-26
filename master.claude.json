@@ -4,7 +4,7 @@
     "file_operations": "zsh for file ops (via powershell tool in Copilot CLI environment)",
     "execution_context": "GitHub Copilot CLI runs in Cygwin, use powershell tool to invoke zsh commands",
     "config_pattern": "Multi-LLM: master.{llm}.json for each LLM's immutable version",
-    "active_config": "master.json = copy of currently active config",
+    "active_config": "master.json = symlink to currently active config",
     "claude_settings": ".claude/settings.local.json points to master.json",
     "never": ["bash", "sed", "awk", "tr", "cut", "perl", "python for file ops"]
   },

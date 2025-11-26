@@ -1,6 +1,6 @@
 # Master Config - Multi-LLM Competition
 
-**Version:** 56.3.2 | **Updated:** 2025-11-26T04:20:00Z | **Status:** Production  
+**Version:** 56.3.4 | **Updated:** 2025-11-26T04:37:00Z | **Status:** Production  
 **Contributors:** Claude Sonnet 4.5, DeepSeek R3, Grok 4.1, ChatGPT
 
 ---
@@ -10,23 +10,26 @@
 Each LLM maintains its own **immutable** config file. Only that LLM can edit their own file.
 
 **Config Files:**
-- **`master.claude.json`** (295L) - Claude Sonnet 4.5's balanced vision ⭐ CURRENTLY ACTIVE
+- **`master.claude.json`** (384L) - Claude Sonnet 4.5's balanced vision ⭐ CURRENTLY ACTIVE
 - **`master.deepseek.json`** (TBD) - DeepSeek R3's thoroughness with 42 explicit detectors
 - **`master.grok.json`** (TBD) - Grok 4.1's radical minimalism (179-189L)
 - **`master.chatgpt.json`** (TBD) - ChatGPT's contribution
-- **`master.json`** - Copy of currently active config (Claude v56.3.2)
+- **`master.json`** - Symlink to currently active config (→ master.claude.json)
 
 **Switching Active Config:**
 ```zsh
 #!/usr/bin/env zsh
-# Switch to DeepSeek's config
-cp master.deepseek.json master.json
+# Switch to DeepSeek's config (atomic)
+ln -sf master.deepseek.json master.json
 
 # Switch to Grok's config
-cp master.grok.json master.json
+ln -sf master.grok.json master.json
 
 # Switch to Claude's config
-cp master.claude.json master.json
+ln -sf master.claude.json master.json
+
+# Check active config
+readlink master.json  # Shows: master.claude.json
 ```
 
 **Loading in Ruby:**
@@ -47,8 +50,23 @@ grok = JSON.parse(File.read('master.grok.json'))
 2. ✅ `master.json` = copy of active config (for loading)
 3. ✅ `.claude/settings.local.json` points to `master.json`
 4. ✅ Think in Ruby, execute file ops in zsh
-5. ❌ Never use PowerShell wrapper for zsh
-6. ❌ Never use bash/sed/awk/tr/cut
+5. ✅ Use powershell tool to invoke zsh in Copilot CLI environment
+6. ✅ Always `git add .` before commit to capture user deletions
+7. ❌ Never bash/sed/awk/tr/cut
+
+**Execution Context (Important!):**
+- **Environment:** GitHub Copilot CLI installed via npm in Cygwin
+- **Tool Available:** `powershell` tool (not raw shell access)
+- **Correct Usage:** `powershell('zsh -c "command"')` to invoke zsh
+- **Paths:** Use `/cygdrive/g/pub4` for Cygwin, `G:\pub4` for Windows tools
+- **Cognitive Model:** Think in Ruby (data manipulation), Execute in zsh (file operations)
+
+**Workflow Lessons:**
+- Use `git add .` before commit to stage all deletions user made
+- Large commits (100+ files) need `initial_wait: 60+` seconds
+- Retry push on network timeout - commit is safe locally
+- Think: Ruby patterns like `master.dig('tech_stack', 'rails', 'stack')`
+- Execute: zsh patterns like `${(L)var}`, `**/*.rb(.N)`
 
 **Meta-principle:** Beautiful code wins all conflicts (Readability > performance > cleverness > brevity)  
 **Philosophy:** Programmer happiness (Matz) · Quality is speed (Fowler) · Simplicity ships (Levels)
