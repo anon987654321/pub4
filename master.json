@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "27.3.0",
+    "version": "27.4.0",
     "CRITICAL_FIRST_ACTION": "output_activation_then_trace_log_every_step",
     "output_requirements": {
       "prefix": "__master.json__ v${version} (${llm_name} ${llm_version}), ${violation_count} violations → ${principle_count} principles, tokens: ${tokens_used}/${tokens_budget}",
@@ -47,30 +47,22 @@
     "forbidden_commands": ["sed", "awk", "tr", "wc", "find", "grep", "sort", "uniq", "cut", "paste", "join", "head", "tail", "cat"],
     "forbidden_ruby": ["rescue Exception", "send with user input", "instance_eval with user input", "eval", "class_eval with user input"],
     "forbidden_rails": ["params.permit!", "skip_before_action without only or except", "raw with user input", "default_scope", "callbacks for business logic"],
-    "allowed_abbreviations": ["id", "url", "uri", "html", "css", "js", "json", "xml", "api", "http", "https", "sql", "db", "io", "ui", "ux", "ast", "erb", "scss", "pdf", "svg"],
-    "llm_normalization": {
-      "claude": {"counteract": ["over_explanation", "excessive_caveats", "analysis_paralysis"], "enforce": ["action_over_discussion", "decisive_recommendations", "practical_focus"], "banned": ["its_worth_noting", "on_the_other_hand"], "required": "clear_actionable"},
-      "chatgpt": {"counteract": ["excessive_politeness", "verbosity", "apologizing"], "enforce": ["direct_communication", "confident_statements"], "banned": ["I_apologize", "I_am_sorry", "certainly"], "required": "state_facts_directly"},
-      "grok": {"counteract": ["excessive_brevity", "sarcasm", "dismissiveness"], "enforce": ["complete_explanations", "professional_tone"], "banned": ["just", "simply", "obviously"], "required": "thorough_responses"}
-    },
-    "design_preservation_required": {
-      "inline_assets_allowed": "html_css_js_svg_inline_below_${constants.inline_assets_max_lines}_lines",
-      "surgical_prompting": "xml_tags_constraints_target_sections_only",
-      "protected_sections": "html_comments_marking_untouchable_code_required",
-      "verification_workflow": "git_commit_before_validation_scripts_after_mandatory",
-      "cursor_ai_required": "${constants.cursor_ai_required}",
-      "unified_diff_format": "changes_only_3_line_context_required",
-      "chunking_strategy": "semantic_sections_50_line_overlap_above_${constants.inline_assets_max_lines}_lines"
-    }
+    "allowed_abbreviations": ["id", "url", "uri", "html", "css", "js", "json", "xml", "api", "http", "https", "sql", "db", "io", "ui", "ux", "ast", "erb", "scss", "pdf", "svg"]
   },
 
   "principles": {
     "inline_asset_preservation": {"why": "html_files_must_work_with_inline_css_js_svg_llms_fundamentally_break_designs_due_to_architectural_limits", "detect": "missing_protective_comments_around_critical_sections · surgical_edits_not_used · validation_workflow_skipped", "solutions": "${constants.solutions_per_violation}"},
-    "design_preservation_architecture": {"why": "llms_fundamentally_break_html_css_due_to_working_memory_limits_5_10_variables_max_tokenization_overhead_1.75x_lost_in_middle_attention", "detect": "inline_css_js_above_${constants.protected_section_threshold_lines} · missing_protective_comments · unified_diff_not_used", "solutions": "${constants.solutions_per_violation}"},
+    "llm_working_memory_limits": {"why": "llms_track_only_${constants.llm_working_memory_max}_variables_before_performance_collapses_requires_small_targeted_changes", "detect": "large_monolithic_modifications · multiple_unrelated_changes_single_edit · cognitive_overload_patterns", "solutions": "${constants.solutions_per_violation}"},
+    "token_efficiency_optimization": {"why": "code_requires_${constants.html_token_overhead_multiplier}x_more_tokens_than_natural_language_requires_compression_builtins", "detect": "inefficient_tokenization_patterns · verbose_constructors · redundant_expressions", "solutions": "${constants.solutions_per_violation}"},
+    "lost_in_middle_attention": {"why": "llms_exhibit_u_shaped_performance_middle_content_20_50_percent_worse_than_ends", "detect": "critical_logic_buried_in_middle · important_configuration_not_at_edges · random_ordering", "solutions": "${constants.solutions_per_violation}"},
     "surgical_edits_only": {"why": "llm_working_memory_${constants.llm_working_memory_max}_variables_max_requires_targeted_changes", "detect": "modifications_outside_target_area · placeholders_like_rest_of_code · truncation_omissions", "solutions": "${constants.solutions_per_violation}"},
-    "protected_sections_mandatory": {"why": "chart_js_animations_custom_fonts_must_be_marked_untouchable", "detect": "critical_visualizations_without_protective_comments · llm_modified_protected_code", "solutions": "${constants.solutions_per_violation}"},
+    "protected_sections_mandatory": {"why": "chart_js_animations_custom_fonts_must_be_marked_untouchable_with_html_comments", "detect": "critical_visualizations_without_protective_comments · llm_modified_protected_code", "solutions": "${constants.solutions_per_violation}"},
     "verification_workflow_required": {"why": "llms_introduce_invisible_errors_validation_catches_breaks", "detect": "no_git_commit_before_changes · missing_validation_scripts · untested_visualizations", "solutions": "${constants.solutions_per_violation}"},
-    "semantic_chunking_required": {"why": "files_above_${constants.inline_assets_max_lines}_lines_require_section_by_section_processing", "detect": "large_files_processed_monolithically · missing_overlap_at_boundaries · context_loss_between_chunks", "solutions": "${constants.solutions_per_violation}"},
+    "semantic_chunking_required": {"why": "files_above_${constants.inline_assets_max_lines}_lines_require_section_by_section_processing_with_50_line_overlap", "detect": "large_files_processed_monolithically · missing_overlap_at_boundaries · context_loss_between_chunks", "solutions": "${constants.solutions_per_violation}"},
+    "cursor_ai_context_awareness": {"why": "project_wide_context_understanding_prevents_llm_design_destruction_required_for_html_css_js", "detect": "missing_cursor_rules_file · monolithic_prompting · lack_of_project_awareness", "solutions": "${constants.solutions_per_violation}"},
+    "unified_diff_format": {"why": "changes_only_with_3_line_context_raises_success_rates_from_20_to_61_percent_reduces_lazy_comments_3x", "detect": "full_file_rewrites · missing_context_lines · diff_format_not_used", "solutions": "${constants.solutions_per_violation}"},
+    "xml_structured_prompting": {"why": "explicit_sections_constraints_targets_improve_llm_adherence_reduce_hallucinations", "detect": "unstructured_prompts · implicit_assumptions · missing_constraints", "solutions": "${constants.solutions_per_violation}"},
+    "clone_and_extend_safe": {"why": "copy_existing_components_create_new_classes_leave_originals_intact_prevent_breaking_changes", "detect": "modifying_existing_classes_for_new_features · breaking_backward_compatibility · direct_edits_to_production_code", "solutions": "${constants.solutions_per_violation}"},
     "every_line_self_documenting": {"why": "non_technical_people_must_understand_each_line_max_info_density_strunk_white", "detect": "requires_context_to_understand · jargon_without_explanation · vague_abstract_language", "solutions": "${constants.solutions_per_violation}"},
     "every_line_actionable": {"why": "pragmatic_execution_beats_theoretical_discussion_dead_code_removed", "detect": "explanatory_not_directive · philosophical_not_practical · descriptive_not_prescriptive", "solutions": "${constants.solutions_per_violation}"},
     "structural_operations": {"why": "defragment_hoist_merge_regroup_reflow_active_code_quality", "detect": "scattered_related_code · constants_buried · duplicate_patterns · definitions_after_usage", "solutions": "${constants.solutions_per_violation}"},
@@ -104,7 +96,12 @@
     "names_reveal_intent": {"why": "name_answers_why_exists_what_does_how_used", "detect": "vague_abbreviated_misleading", "solutions": "${constants.solutions_per_violation}"},
     "organize": {"why": "scattered_increases_cognitive_load", "detect": "scattered_related_grouped_by_type_not_domain", "solutions": "${constants.solutions_per_violation}"},
     "decouple": {"why": "tight_coupling_exponential_ripples", "detect": "fan_out_max_${constants.fan_out_max} · circular_max_0", "solutions": "${constants.solutions_per_violation}"},
-    "prefer_composition": {"why": "over_inheritance_when_behavior_varies", "detect": "deep_inheritance_heavy_mixin", "solutions": "${constants.solutions_per_violation}"}
+    "prefer_composition": {"why": "over_inheritance_when_behavior_varies", "detect": "deep_inheritance_heavy_mixin", "solutions": "${constants.solutions_per_violation}"},
+    "small_functions": {"why": "functions_should_do_one_thing_well_under_10_lines_ideal", "detect": "functions_over_20_lines · multiple_responsibilities · complex_nesting", "solutions": "${constants.solutions_per_violation}"},
+    "expressive_naming": {"why": "names_should_require_no_comments_to_understand_purpose_behavior", "detect": "unclear_method_names · misleading_variables · cryptic_abbreviations", "solutions": "${constants.solutions_per_violation}"},
+    "stepdown_rule": {"why": "code_should_read_like_newspaper_article_most_important_first_details_later", "detect": "low_level_details_before_high_level_concepts · random_ordering · important_code_buried", "solutions": "${constants.solutions_per_violation}"},
+    "law_of_demeter": {"why": "talk_only_to_immediate_friends_reduce_coupling_dont_chain_method_calls", "detect": "long_method_chains · accessing_distant_objects · tight_coupling_through_navigation", "solutions": "${constants.solutions_per_violation}"},
+    "command_query_separation": {"why": "functions_should_either_do_something_or_answer_something_not_both", "detect": "methods_that_change_state_and_return_values · side_effects_in_queries · ambiguous_function_behavior", "solutions": "${constants.solutions_per_violation}"}
   },
 
   "execution": {
@@ -170,45 +167,5 @@
     "facilities": ["framework", "audit", "discover", "analyze", "design", "implement", "validate", "deliver"],
     "levels": ["debug", "info", "notice", "warn", "err", "crit", "alert", "emerg"],
     "emoji": {"philosophy": "generate_live_dont_hardcode", "when": "major_events_sparingly", "categories": "brain_intensity_playful_tech_satisfaction_funny", "count": "2_to_6_random"}
-  },
-
-  "inline_asset_protection": {
-    "llm_architectural_limits": {
-      "working_memory_max": "${constants.llm_working_memory_max}_variables_trackable",
-      "token_overhead_multiplier": "${constants.html_token_overhead_multiplier}x_more_tokens_for_code",
-      "lost_in_middle_attention": "u_shaped_performance_curve_middle_content_20_50_percent_worse",
-      "content_dropping_feature": "llms_drop_information_when_working_memory_exceeded"
-    },
-    "inline_assets_workflow": {
-      "protected_comments_required": "html_comments_marking_critical_sections_untouchable",
-      "surgical_prompting_mandatory": "xml_tags_explicit_constraints_target_sections_only",
-      "chunking_above_threshold": "semantic_sections_50_line_overlap_above_${constants.inline_assets_max_lines}_lines",
-      "verification_non_negotiable": "git_commit_before_validation_scripts_after_every_change"
-    },
-    "surgical_prompting_patterns": {
-      "xml_tag_structure": "<instructions><constraints><target_section><code>",
-      "anti_truncation_required": "return_complete_file_no_placeholders_no_abbreviations_mandatory",
-      "unified_diff_preferred": "changes_only_3_line_context_success_rate_20_to_61_percent",
-      "clone_and_extend_safe": "copy_existing_component_create_new_classes_leave_originals"
-    },
-    "protected_sections_markers": {
-      "chart_js_visualizations": "<!-- BEGIN CHARTJS - DO NOT MODIFY --> ... <!-- END CHARTJS -->",
-      "css_animations": "<!-- ANIMATIONS PROTECTED - Contact design team -->",
-      "custom_fonts": "<!-- FONT DECLARATIONS - Do not modify -->",
-      "critical_business_logic": "<!-- BUSINESS LOGIC - Changes require approval -->",
-      "svg_graphics": "<!-- SVG PROTECTED - Do not modify paths or styling -->"
-    },
-    "verification_workflow": {
-      "git_required": "commit_before_all_ai_modifications_mandatory",
-      "validation_scripts": "chart_js_rendering_animation_functionality_tests_required",
-      "semantic_diff_tools": "semanticdiff.com_ignores_whitespace_shows_functional_changes",
-      "browser_testing": "live_preview_with_devtools_console_validation_mandatory"
-    },
-    "cursor_ai_integration": {
-      "required": "${constants.cursor_ai_required}",
-      "cursor_rules_file": ".cursorrules_with_project_specific_constraints",
-      "composer_mode": "edit_multiple_files_maintain_consistency",
-      "agent_mode": "claude_models_multi_step_changes_with_verification"
-    }
   }
 }
