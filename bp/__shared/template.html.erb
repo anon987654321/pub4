@@ -5,25 +5,18 @@
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title><%= data['meta']['name'] %> - Forretningsplan</title>
-
     <!-- Google Fonts -->
-
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <% if data['carousel']['enabled'] %>
 
     <!-- Swiper CSS for Carousel -->
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
     <% end %>
 
     <!-- Chart.js for Data Visualization -->
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-
     <style>
         /* CSS Variables */
 
@@ -31,359 +24,227 @@
             --primary-color: #000000;
 
             --background-color: #ffffff;
-
             --text-color: #333333;
-
             --font-family: 'Inter', sans-serif;
-
         }
-
         /* General Styles */
-
         body {
-
             margin: 0;
             font-family: var(--font-family);
 
             background-color: var(--background-color);
-
             color: var(--text-color);
-
             line-height: 1.6;
-
             font-size: 16px;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
         }
-
         /* Logo Container */
-
         .logo-wrapper {
-
             position: relative;
             display: inline-block;
 
         }
-
         /* Logo styling with psychedelic animated gradient */
-
         .logo-container {
-
             font-family: 'Black Han Sans', sans-serif;
             font-size: 70px;
 
             color: transparent;
-
             background: linear-gradient(45deg, #ff007f, #00c9ff, #ffcc00, #ff007f);
-
             background-size: 400%;
-
             background-clip: text;
-
             -webkit-background-clip: text;
-
             animation: gradientMove 5s infinite linear;
-
         }
-
         /* TM Symbol Styling */
-
         .trademark-symbol {
-
             position: absolute;
             top: 10px;
 
             right: -11px;
-
             font-size: 16px;
-
             color: var(--text-color);
-
         }
-
         @keyframes gradientMove {
-
             0% { background-position: 0% 50%; }
-
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
 
         }
-
         /* Header styling */
-
         header {
-
             text-align: center;
             padding: 20px;
 
             background-color: var(--background-color);
-
         }
-
         .header-text {
-
             font-size: 1rem;
-
             font-weight: 500;
             color: var(--text-color);
 
             margin-top: -1.2rem;
-
             max-width: 100%;
-
             text-align: center;
-
         }
-
         /* Main content */
-
         main {
-
             max-width: 900px;
             margin: 3rem auto;
 
             padding: 0 1rem;
-
         }
-
         section {
-
             padding: 2rem 0;
-
             border-bottom: 1px solid #e0e0e0;
         }
 
         h2 {
-
             font-size: 2rem;
-
             color: var(--primary-color);
             margin-bottom: 1.5rem;
 
         }
-
         h3 {
-
             font-size: 1.5rem;
-
             color: var(--text-color);
             margin-bottom: 1rem;
 
         }
-
         p {
-
             font-size: 1rem;
-
             color: #444444;
             margin-bottom: 1rem;
 
         }
-
         ul {
-
             list-style-position: inside;
-
             padding-left: 1rem;
         }
 
         li {
-
             margin-bottom: 0.5rem;
-
         }
         /* Swiper Carousel */
 
         .swiper {
-
             width: 100%;
             height: 250px;
 
             margin: 2rem 0;
-
         }
-
         .swiper-slide {
-
             display: flex;
-
             justify-content: center;
             align-items: center;
 
             background-color: #f0f0f0;
-
             overflow: hidden;
-
         }
-
         .swiper-slide img {
-
             width: 100%;
-
             height: 100%;
             object-fit: cover;
 
             border-radius: 8px;
-
         }
-
         /* Chart container */
-
         .chart-container {
-
             max-width: 600px;
             margin: 2rem auto;
 
             padding: 1rem;
-
         }
-
         .chart-wrapper {
-
             position: relative;
-
             height: 400px;
         }
 
         /* Table styling */
-
         table {
-
             width: 100%;
             border-collapse: collapse;
 
             margin: 1rem 0;
-
         }
-
         th, td {
-
             padding: 0.75rem;
-
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
 
         }
-
         th {
-
             background-color: #f5f5f5;
-
             font-weight: 600;
         }
 
         /* Responsive adjustments for mobile */
-
         @media (max-width: 768px) {
-
             .logo-container {
                 font-size: 50px;
 
             }
-
             .swiper {
-
                 height: 200px;
-
             }
             .header-text {
 
                 font-size: 0.9rem;
-
             }
             h2 {
 
                 font-size: 1.8rem;
-
             }
             .chart-wrapper {
 
                 height: 300px;
-
             }
         }
 
     </style>
-
 </head>
-
 <body>
-
     <header>
-
         <!-- Logo Wrapper with Optional TM Symbol -->
         <div class="logo-wrapper">
 
             <div class="logo-container">
-
                 <%= data['meta']['logo_text'] %>
-
             </div>
-
             <% if data['meta']['trademark'] %>
-
             <div class="trademark-symbol">™</div>
-
             <% end %>
-
         </div>
-
         <div class="header-text">
-
             <%= data['meta']['tagline'] %><br>
-
             Sektor: <%= data['meta']['sector'] %>
-
         </div>
-
     </header>
-
     <% if data['carousel']['enabled'] %>
-
     <!-- Swiper Carousel for Product Images -->
-
     <div class="swiper">
         <div class="swiper-wrapper">
 
             <% data['carousel']['images'].each do |image| %>
-
             <div class="swiper-slide">
-
                 <img src="../assets/images/<%= image %>" alt="<%= data['meta']['name'] %>" loading="lazy">
-
             </div>
-
             <% end %>
-
         </div>
-
         <div class="swiper-pagination"></div>
-
     </div>
-
     <% end %>
-
     <main>
-
         <!-- Sammendrag Section -->
-
         <section id="sammendrag">
             <h2>Sammendrag</h2>
 
             <h3>Visjon</h3>
-
             <p><%= data['sammendrag']['visjon'] %></p>
-
             <h3>Misjon</h3>
-
             <p><%= data['sammendrag']['misjon'] %></p>
-
             <h3>Innovasjon</h3>
             <p><%= data['sammendrag']['innovation'] %></p>
 
@@ -394,63 +255,43 @@
         <!-- Markedsanalyse Section -->
 
         <section id="markedsanalyse">
-
             <h2>Markedsanalyse</h2>
             <h3>Markedsstørrelse</h3>
 
             <ul>
-
                 <li><strong>Norge:</strong> NOK <%= (data['markedsanalyse']['marked_norge_nok'].to_i / 1_000_000_000.0).round(1) %> milliarder</li>
                 <li><strong>Norden:</strong> NOK <%= (data['markedsanalyse']['marked_norden_nok'].to_i / 1_000_000_000.0).round(1) %> milliarder</li>
 
                 <li><strong>Årlig vekst:</strong> <%= data['markedsanalyse']['vekst_prosent'] %>%</li>
-
             </ul>
-
             <h3>Kundesegmenter</h3>
-
             <ul>
-
                 <% data['markedsanalyse']['customer_segments'].each do |segment| %>
                 <li><%= segment %></li>
 
                 <% end %>
-
             </ul>
-
             <h3>Konkurranse</h3>
-
             <ul>
-
                 <% data['markedsanalyse']['konkurranse'].each do |competitor| %>
                 <li><%= competitor %></li>
 
                 <% end %>
-
             </ul>
-
             <h3>Konkurransefortrinn</h3>
-
             <ul>
-
                 <% data['markedsanalyse']['konkurransefortrinn'].each do |advantage| %>
                 <li><%= advantage %></li>
 
                 <% end %>
-
             </ul>
-
         </section>
-
         <!-- Teknologi og Innovasjon Section -->
-
         <section id="teknologi">
-
             <h2>Teknologi og Innovasjon</h2>
             <h3>Teknologibeskrivelse</h3>
 
             <p><%= data['teknologi']['beskrivelse'] %></p>
-
             <h3>Unik Innovasjon</h3>
             <p><%= data['teknologi']['unique_innovation'] %></p>
 
@@ -464,23 +305,17 @@
         <!-- Forretningsmodell Section -->
 
         <section id="forretningsmodell">
-
             <h2>Forretningsmodell</h2>
             <h3>Inntektskilder</h3>
 
             <ul>
-
                 <% data['forretningsmodell']['inntektskilder'].each do |revenue| %>
                 <li><%= revenue %></li>
 
                 <% end %>
-
             </ul>
-
             <h3>Lønnsomhet</h3>
-
             <p><%= data['forretningsmodell']['loennsomhet'] %></p>
-
             <h3>Skalerbarhet</h3>
             <p><%= data['forretningsmodell']['skalerbarhet'] %></p>
 
@@ -488,12 +323,10 @@
         <!-- Utviklingsveikart Section -->
 
         <section id="veikart">
-
             <h2>Utviklingsveikart</h2>
             <h3>Q1 2026</h3>
 
             <p><%= data['veikart']['q1_2026'] %></p>
-
             <h3>Q2 2026</h3>
             <p><%= data['veikart']['q2_2026'] %></p>
 
@@ -510,12 +343,10 @@
         <!-- Finansieringsbehov Section -->
 
         <section id="finansiering">
-
             <h2>Finansieringsbehov</h2>
             <h3>Total Kapitalbehov</h3>
 
             <p><strong>NOK <%= number_with_delimiter(data['finansiering']['total_behov_nok']) %></strong></p>
-
             <h3>Finansieringskilder</h3>
             <ul>
 
@@ -523,79 +354,48 @@
                 <% data['finansiering'].each do |key, value| %>
 
                     <% if key != 'total_behov_nok' && key != 'innovasjon_norge_nok' && key != 'allokering' && value.is_a?(Integer) %>
-
                 <li><strong><%= key.split('_').map(&:capitalize).join(' ') %>:</strong> NOK <%= number_with_delimiter(value) %></li>
-
                     <% end %>
-
                 <% end %>
-
             </ul>
-
             <h3>Budsjettallokering</h3>
-
             <table>
-
                 <thead>
                     <tr>
 
                         <th>Kategori</th>
-
                         <th>Beløp (NOK)</th>
-
                         <th>Andel</th>
-
                     </tr>
-
                 </thead>
-
                 <tbody>
-
                     <% total = data['finansiering']['allokering'].values.sum %>
-
                     <% data['finansiering']['allokering'].each do |category, amount| %>
-
                     <tr>
-
                         <td><%= category.split('_').map(&:capitalize).join(' ') %></td>
-
                         <td><%= number_with_delimiter(amount) %></td>
-
                         <td><%= ((amount.to_f / total) * 100).round(1) %>%</td>
-
                     </tr>
-
                     <% end %>
-
                 </tbody>
-
             </table>
-
         </section>
-
         <!-- Team og Kompetanse Section -->
-
         <section id="team">
-
             <h2>Team og Kompetanse</h2>
             <% data['team'].each do |member| %>
 
             <h3><%= member['navn'] %> - <%= member['rolle'] %></h3>
-
             <p><%= member['erfaring'] %></p>
             <% end %>
 
         </section>
-
         <!-- Bærekraft og Samfunnsansvar Section -->
-
         <section id="baerekraft">
-
             <h2>Bærekraft og Samfunnsansvar</h2>
             <h3>Miljømessig Påvirkning</h3>
 
             <p><%= data['baerekraft']['miljo'] %></p>
-
             <h3>Sosial Påvirkning</h3>
             <p><%= data['baerekraft']['sosialt'] %></p>
 
@@ -609,272 +409,143 @@
         <!-- Charts Section -->
 
         <% if data['charts'] && data['charts'].any? %>
-
         <section id="charts">
             <h2>Visualiseringer</h2>
 
             <% data['charts'].each do |chart| %>
-
             <div class="chart-container">
-
                 <h3><%= chart['title'] %></h3>
                 <div class="chart-wrapper">
 
                     <canvas id="<%= chart['id'] %>"></canvas>
-
                 </div>
-
             </div>
-
             <% end %>
-
         </section>
-
         <% end %>
-
     </main>
-
     <% if data['carousel']['enabled'] %>
-
     <!-- Swiper JS -->
-
     <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
     <script>
 
         const swiper = new Swiper('.swiper', {
-
             loop: true,
-
             pagination: {
-
                 el: '.swiper-pagination',
-
                 clickable: true,
-
             },
-
             autoplay: {
-
                 delay: 3000,
-
             },
-
         });
-
     </script>
-
     <% end %>
-
     <!-- Chart.js Configurations -->
-
     <% if data['charts'] && data['charts'].any? %>
-
     <script>
         <% data['charts'].each do |chart| %>
 
         {
-
             const ctx = document.getElementById('<%= chart['id'] %>').getContext('2d');
-
             <% if chart['type'] == 'doughnut' %>
-
             new Chart(ctx, {
-
                 type: 'doughnut',
-
                 data: {
-
                     labels: <%= chart['data']['labels'].to_json %>,
-
                     datasets: [{
-
                         data: <%= chart['data']['values'].to_json %>,
-
                         backgroundColor: ['#ff007f', '#00c9ff', '#ffcc00', '#8a2be2', '#333', '#888'],
-
                     }]
-
                 },
-
                 options: {
-
                     responsive: true,
-
                     maintainAspectRatio: false,
-
                     plugins: {
-
                         legend: { position: 'bottom' },
-
                         title: { display: false }
-
                     }
-
                 }
-
             });
-
             <% elsif chart['type'] == 'line' %>
-
             new Chart(ctx, {
-
                 type: 'line',
-
                 data: {
-
                     labels: <%= chart['data']['labels'].to_json %>,
-
                     datasets: [
-
                         <% chart['data']['datasets'].each do |dataset| %>
-
                         {
-
                             label: '<%= dataset['label'] %>',
-
                             data: <%= dataset['data'].to_json %>,
-
                             borderColor: '<%= dataset['color'] %>',
-
                             backgroundColor: '<%= dataset['color'] %>33',
-
                             tension: 0.4,
-
                             fill: true
-
                         },
-
                         <% end %>
-
                     ]
-
                 },
-
                 options: {
-
                     responsive: true,
-
                     maintainAspectRatio: false,
-
                     plugins: {
-
                         legend: { position: 'bottom' }
-
                     },
-
                     scales: {
-
                         y: { beginAtZero: true }
-
                     }
-
                 }
-
             });
-
             <% elsif chart['type'] == 'bar' %>
-
             new Chart(ctx, {
-
                 type: 'bar',
-
                 data: {
-
                     labels: <%= chart['data']['labels'].to_json %>,
-
                     datasets: [{
-
                         label: '<%= chart['title'] %>',
-
                         data: <%= chart['data']['values'].to_json %>,
-
                         backgroundColor: '#8a2be2',
-
                     }]
-
                 },
-
                 options: {
-
                     responsive: true,
-
                     maintainAspectRatio: false,
-
                     plugins: {
-
                         legend: { display: false }
-
                     },
-
                     scales: {
-
                         y: { beginAtZero: true }
-
                     }
-
                 }
-
             });
-
             <% elsif chart['type'] == 'radar' %>
-
             new Chart(ctx, {
-
                 type: 'radar',
-
                 data: {
-
                     labels: <%= chart['data']['labels'].to_json %>,
-
                     datasets: [
-
                         <% chart['data']['datasets'].each do |dataset| %>
-
                         {
-
                             label: '<%= dataset['label'] %>',
-
                             data: <%= dataset['data'].to_json %>,
-
                             borderColor: '<%= dataset['color'] %>',
-
                             backgroundColor: '<%= dataset['color'] %>33',
-
                         },
-
                         <% end %>
-
                     ]
-
                 },
-
                 options: {
-
                     responsive: true,
-
                     maintainAspectRatio: false,
-
                     plugins: {
-
                         legend: { position: 'bottom' }
-
                     }
-
                 }
-
             });
-
             <% end %>
-
         }
-
         <% end %>
-
     </script>
-
     <% end %>
-
 </body>
-
 </html>
-

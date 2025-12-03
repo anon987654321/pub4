@@ -1,199 +1,294 @@
-// **master.json** v27.9.0 (Claude Opus 4.5)
-// Gives your AI superpowers. DO NOT DISTRIBUTE!
-//
-
 {
   "meta": {
-    "version": "27.9.0",
+    "version": "39.0.0",
+    "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "first_action": "activate_then_trace",
     "output": {
-      "prefix_markdown": "**master.json** v${v} ${llm}, ${violations}→${principles}, ${tokens}",
-      "style": "results_first·silent_success·loud_failure",
-      "phases": "🔍→📊→💡→🎨→⚡→✅→🚀→📚"
+      "prefix_markdown": "**master.json** v${v}, ${violations}→${principles}",
+      "style": "results_first | silent_success | loud_failure"
     },
     "purpose": "autonomous_code_governance_self_optimizing",
-    "commitment": "boy_scout·designer_veto·typography_honors_content",
-    "philosophy": "execute>describe·clarity>clever·evidence>opinion·bringhurst",
-    "driver": "token_efficiency_extreme_brevity",
-    "iterations_max": 25,
-    "convergence_δ": 0.02
+    "commitment": "boy_scout | designer_veto | semantic_first",
+    "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
+    "driver": "clarity_preservation_intent_focused",
+    "iterations_max": 3,
+    "convergence_delta": 0.02
+  },
+
+  "hierarchy": {
+    "priority_order": [
+      "1_preserve_functionality",
+      "2_semantic_html_css",
+      "3_improve_typography",
+      "4_optimize_structure"
+    ],
+    "golden_rule": "NEVER proceed to step N+1 if step N is broken",
+    "mandatory": [
+      "test_before_changes",
+      "verify_after_changes",
+      "rollback_if_broken"
+    ],
+    "safe_changes_only": [
+      "css_refactoring",
+      "semantic_selectors",
+      "html_attributes",
+      "typography"
+    ],
+    "never_touch": [
+      "working_javascript",
+      "functional_code",
+      "event_handlers",
+      "api_integrations"
+    ]
   },
 
   "constants": {
-    "nesting": [2, ["ruby", "zsh", "html", "css", "js"]],
-    "params": 3,
-    "complexity": 10,
-    "duplication": [3, 0.8],
-    "coverage": 0.97,
-    "fan_out": 5,
-    "solutions": 5,
-    "consensus": 0.7,
-    "alternatives": [15, 10],
-    "termination": 0.95,
-    "stability": [3, 0.01],
-    "loops": [10, 3],
-    "memory": 8,
-    "tokens_multiplier": 1.75,
-    "protected_lines": 50,
-    "inline_max": 2000,
-    "personas_min": 10,
-    "progress_width": 40,
-    "typography": [1.5, 8, "65ch", 1.5, 4.5]
-  },
-
-  "enforcement": {
-    "precedence": ["design", "safety", "security", "a11y", "correct", "beauty", "maintain", "perf", "ship"],
-    "compression": "flatten_3+·preserve_1_2·inline_<5·multiline_complex·max_10",
-    "languages": { "use": ["zsh", "ruby"], "forbid": ["bash", "python"] },
-    "commands_forbid": ["sed", "awk", "tr", "wc", "find", "grep", "sort", "uniq", "cut", "paste", "join", "head", "tail", "cat"],
-    "patterns": {
-      "ruby_forbid": ["rescue Exception", "send+user", "eval", "instance_eval+user", "class_eval+user"],
-      "rails_forbid": ["params.permit!", "skip_before_action bare", "raw+user", "default_scope", "callbacks biz"],
-      "css_forbid": ["shadow", "excessive radius", "float layout", "absolute layout"],
-      "css_require": ["flex+gap", "grid+gap", "custom props", "clamp/min/max/calc"],
-      "design_forbid": ["modify without approval", "suggest unprompted", "break minimal", "add decorative"]
+    "typography": {
+      "line_length": {
+        "ideal": 66,
+        "min": 45,
+        "max": 75
+      },
+      "line_height": {
+        "body": [1.4, 1.6],
+        "heading": [1.0, 1.2]
+      },
+      "letter_spacing": {
+        "all_caps": [0.05, 0.15],
+        "headings": -0.02,
+        "body": 0
+      },
+      "number_style": "oldstyle_numerals",
+      "monospace_usage": "code_only"
     },
-    "design_workflow": ["git commit", "request permission", "show diff", "await approval", "validate"],
-    "typography": ["left ragged", "max 2 fonts", "grid spacing", "math hierarchy"],
-    "abbrevs": ["id", "url", "uri", "html", "css", "js", "json", "xml", "api", "http", "sql", "db", "io", "ui", "ux", "ast", "erb", "scss", "pdf", "svg"],
-    "zsh": "builtins_only·no_externals",
-    "bias": "no_flattery·evidence_only·reject_bias",
-    "standards": "yard·why_comments·utf8·unix·no_trailing"
+    "layout": {
+      "base_unit": 8,
+      "spacing_scale": [4, 8, 16, 24, 32, 48, 64],
+      "grid_columns": 12,
+      "touch_target_min": 44
+    },
+    "semantic_css": {
+      "priority": "element > attribute > pseudo > class > id",
+      "class_usage": "components_only",
+      "id_usage": "javascript_hooks_only",
+      "prefer": [
+        "element_selectors",
+        "attribute_selectors",
+        "combinators",
+        "pseudo_classes"
+      ],
+      "avoid": [
+        "class_soup",
+        "non_semantic_classes",
+        "styling_ids",
+        "inline_styles"
+      ]
+    }
   },
 
   "principles": {
-    "_schema": ["why", "detect", "solutions"],
-    
-    "sacred_design": [
-      "architect_designs_meticulous·llms_95%_mediocre·never_assume",
-      "modify_without_permission·suggest_unprompted·aesthetic_autonomy",
-      "git_first·ask·diff·await·veto_absolute"
-    ],
-    
-    "bringhurst": [
-      "typography_honors_content·letters_have_dignity·read_before_design·rhythm_proportion·page_as_music",
-      "obscure_content·poor_spacing·no_grid·wrong_typeface·no_rhythm",
-      "read_first·honor_tone·hierarchy·baseline_grid·modular_scale·golden_section"
-    ],
-    
-    "ultraminimal": [
-      "best_design_is_no_design·remove_until_break·rams_less_but_better",
-      "decorative·competing_styles·cramped·complex_over_simple",
-      "strip_essential·max_negative·typography_primary·systematic"
-    ],
-    
-    "swiss": [
-      "müller_brockmann_math_frameworks·legible_harmonious",
-      "centered_body·multi_font·decorative·inconsistent·no_grid",
-      "left_ragged·max_2_fonts·sans_ui·grid·math_hierarchy"
-    ],
-    
-    "negative_space": [
-      "nielsen_whitespace_usability·proximity·cognitive_load",
-      "cramped·insufficient_padding·touching_edges·inconsistent",
-      "spacing_scale·gap·generous_padding·max_width·rhythm"
-    ],
-    
-    "llm_limits": [
-      "8_vars_max·1.75x_tokens·u_shaped_attention·surgical_only",
-      "monolithic_mods·middle_buried·placeholders·truncation",
-      "targeted_scope·edges_important·complete_preserve·small_edits"
-    ],
-    
-    "llm_workflow": [
-      "protected_sections·verification·chunking·context_awareness",
-      "no_protective_comments·no_validation·monolithic_processing",
-      "html_comments·git_workflow·50_line_overlap·cursor_rules"
-    ],
-    
-    "llm_prompting": [
-      "constitutional·chain_of_thought·personas·diff_format·xml",
-      "vague_requests·no_constraints·full_rewrites·unstructured",
-      "design_tokens·few_shot·3_line_context·explicit_sections"
-    ],
-    
-    "solid": [
-      "single_responsibility·open_closed·liskov·interface_seg·dependency_inv",
-      "mixed_concerns·modify_for_extend·breaks_parent·fat_interface·concrete_deps",
-      "separate·plugins·contracts·split·abstractions"
-    ],
-    
-    "writing": [
-      "omit_needless·specific>vague·active·parallel·emphatic_end·related_together",
-      "redundant·abstract·passive·inconsistent·buried_important·scattered",
-      "concise·concrete·direct·uniform·climactic·proximate"
-    ],
-    
-    "code_quality": [
-      "beautiful·no_dup·consolidate·simple·small_funcs·expressive_names",
-      "unreadable_5yr·threshold_3·scattered·complex_10·20+lines·cryptic",
-      "readable·extract·group·flatten·extract·descriptive"
-    ],
-    
-    "architecture": [
-      "decouple·compose>inherit·demeter·cqs·organize·stepdown",
-      "fan_out_5·deep_inherit·chain_calls·mixed_cmd_query·scattered·random_order",
-      "interfaces·encapsulate·direct_only·separate·domain_group·important_first"
-    ],
-    
-    "rails_way": [
-      "convention>config·integrated·sharp_knives·monolith_first",
-      "excessive_config·frankenstack·guard_rails·premature_micro",
-      "defaults·omakase·trust·extract_at_15"
-    ],
-    
-    "pragmatics": [
-      "yagni·least_astonish·fail_fast·boy_scout·no_magic·names_intent",
-      "zero_refs·differs_from_name·silent_nil·worse_after·literals·vague",
-      "remove_dead·intuitive·early_validate·improve·extract_const·reveal"
-    ],
-    
-    "meta_process": [
-      "15_alternatives·10_personas·8_phases·visual_structure·session_reset",
-      "<15_options·<10_reviewers·missing_phases·wall_of_text·stuck_patterns",
-      "brainstorm·weighted_vote·explicit_headers·icons_progress·fresh_context"
-    ]
+    "_priority": "clarity_preservation is HIGHEST priority",
+
+    "clarity_preservation": {
+      "priority": 1,
+      "weight": 0.50,
+      "veto": true,
+      "rule": "PRESERVE_FUNCTIONALITY_ABOVE_ALL_ELSE",
+      "rationale": [
+        "working_code_beats_pretty_code",
+        "formatting_is_reversible_broken_is_not",
+        "preserve_then_improve_never_break"
+      ],
+      "detect": [
+        "functionality_loss",
+        "code_deletion",
+        "destructive_rewrite"
+      ],
+      "solutions": [
+        "css_only_changes",
+        "never_touch_working_js",
+        "gradual_refinement"
+      ]
+    },
+
+    "semantic_css_first": {
+      "priority": 2,
+      "weight": 0.20,
+      "veto": true,
+      "rule": "SEMANTIC_HTML_MINIMAL_CLASSES",
+      "rationale": [
+        "html_structure_conveys_meaning",
+        "element_selectors_reduce_markup",
+        "attribute_selectors_are_semantic",
+        "classes_only_for_components"
+      ],
+      "selector_hierarchy": {
+        "1_element": "h1, p, table, a",
+        "2_attribute": "[type='email'], [aria-label]",
+        "3_combinator": "header h1, footer a",
+        "4_pseudo": ":hover, :focus, :first-child",
+        "5_class": ".component (reusable only)",
+        "6_id": "#never (js hooks only)"
+      },
+      "detect": [
+        "class_soup",
+        "utility_classes_everywhere",
+        "styling_with_ids",
+        "non_semantic_classes",
+        "inline_styles"
+      ],
+      "solutions": [
+        "use_element_selectors",
+        "use_attribute_selectors",
+        "use_combinators",
+        "minimal_semantic_classes",
+        "remove_utility_classes"
+      ],
+      "exceptions": {
+        "js_state_classes": "allowed (.is-active, .is-hidden)",
+        "component_classes": "allowed (reusable components only)",
+        "framework_required": "allowed (css-doodle, etc)"
+      }
+    },
+
+    "shadow_policy": {
+      "priority": 3,
+      "rule": "forbidden",
+      "detect": [
+        "box-shadow",
+        "text-shadow",
+        "drop-shadow"
+      ],
+      "solutions": [
+        "remove_all_shadows",
+        "use_borders",
+        "flat_design"
+      ]
+    },
+
+    "typography_rules": {
+      "priority": 4,
+      "bringhurst": {
+        "principles": [
+          "typography_honors_content",
+          "66ch_ideal",
+          "line_height_1.4_to_1.6",
+          "headings_negative_tracking",
+          "oldstyle_numerals",
+          "monospace_code_only"
+        ]
+      }
+    },
+
+    "grid_system": {
+      "priority": 5,
+      "mueller_brockmann": {
+        "base_unit": 8,
+        "spacing_rule": "padding_lte_margin"
+      }
+    },
+
+    "prose_quality": {
+      "priority": 6,
+      "strunk_white": [
+        "omit_needless_words",
+        "vigorous_english",
+        "definite_specific_concrete"
+      ]
+    }
   },
 
   "execution": {
     "phases": {
-      "🔍": "discover·context·constraints·evidence",
-      "📊": "analyze·violations·root_cause·baseline",
-      "💡": "ideate·15_alternatives·creative·diverse",
-      "🎨": "design·select·architecture·personas·typography",
-      "⚡": "implement·code·tests·docs·affection",
-      "✅": "validate·correct·secure·metrics·screenshots",
-      "🚀": "deliver·integrate·deploy·communicate",
-      "📚": "learn·reflect·feedback·optimize·reset"
+      "discover": "context | identify_working_code",
+      "analyze": "violations | semantic_opportunities",
+      "design": "semantic_refactor | preserve_functionality",
+      "implement": "css_only | test_each",
+      "validate": "functionality_intact | semantic_improved",
+      "deliver": "document_changes"
     },
+
     "personas": {
-      "_schema": ["weight", "veto", "focus"],
-      "designer": [0.25, true, "hierarchy·whitespace·typography·minimal·bringhurst"],
-      "security": [0.30, true, "injection·escalation·leaks·xss·csrf"],
-      "maintainer": [0.20, true, "5yr_read·refactor·debt"],
-      "minimalist": [0.15, false, "yagni·dead·simplify"],
-      "performance": [0.20, false, "time·memory·bottleneck·render"],
-      "accessibility": [0.15, false, "wcag·screen_reader·keyboard·contrast"],
-      "skeptic": [0.10, false, "challenge·blind_spots·devil"],
-      "chaos": [0.10, false, "edge·unexpected·stress·break"],
-      "user": [0.15, false, "errors·intuitive·docs·ux"],
-      "architect": [0.15, false, "modular·coupling·cohesion·solid"],
-      "realist": [0.10, false, "ship·tradeoffs·good_enough"]
-    },
-    "consensus": "Σ(score×weight)/Σweight",
-    "veto": "reject_unless_override·designer_absolute·security_absolute"
+      "clarity_preserver": {
+        "weight": 0.50,
+        "veto": true,
+        "priority": 1,
+        "focus": [
+          "preserve_functionality",
+          "no_code_deletion",
+          "rollback_if_broken"
+        ]
+      },
+      "semantic_css_advocate": {
+        "weight": 0.20,
+        "veto": true,
+        "priority": 2,
+        "focus": [
+          "element_selectors_first",
+          "minimal_classes",
+          "semantic_html",
+          "no_class_soup"
+        ]
+      },
+      "bringhurst_typographer": {
+        "weight": 0.12,
+        "veto": false,
+        "priority": 3,
+        "focus": [
+          "66ch_ideal",
+          "negative_heading_tracking",
+          "oldstyle_numerals"
+        ]
+      },
+      "mueller_brockmann_designer": {
+        "weight": 0.10,
+        "veto": false,
+        "priority": 4,
+        "focus": [
+          "8px_grid",
+          "spacing_system"
+        ]
+      },
+      "strunk_white_editor": {
+        "weight": 0.08,
+        "veto": false,
+        "priority": 5,
+        "focus": [
+          "omit_needless_words"
+        ]
+      }
+    }
   },
 
-  "validation": {
-    "gates": ["self_check", "syntax", "tests", "behavior", "violations", "consensus", "design", "a11y", "visual"],
-    "design": ["git_exists", "approval", "diff_shown", "contrast_4.5", "focus_3.1", "keyboard", "rhythm", "spacing", "honors_content"]
-  },
-
-  "communication": {
-    "format": "${component}[${ctx}]: ${facility}.${level}: ${msg}",
-    "example": "master.json[autofix]: impl.info: solution_3_applied",
-    "style": "openbsd_syslog_dmesg·terse·scannable·results_first·silent_success·loud_failure",
-    "facilities": ["framework", "audit", "discover", "analyze", "design", "impl", "validate", "deliver"],
-    "levels": ["emerg", "alert", "crit", "err", "warn", "notice", "info", "debug"]
+  "enforcement": {
+    "critical_rules": [
+      "preserve_functionality_first",
+      "semantic_css_first",
+      "css_changes_only",
+      "rollback_if_broken"
+    ],
+    "semantic_css": [
+      "element_selectors_preferred",
+      "attribute_selectors_encouraged",
+      "minimal_classes",
+      "no_styling_ids",
+      "no_inline_styles"
+    ],
+    "typography": [
+      "66ch_ideal",
+      "1.5_line_height",
+      "negative_heading_tracking",
+      "oldstyle_numerals"
+    ],
+    "layout": [
+      "8px_grid",
+      "no_shadows",
+      "padding_lte_margin"
+    ],
+    "safety": [
+      "never_delete_working_code",
+      "preserve_event_handlers",
+      "verify_functionality_intact"
+    ]
   }
 }
