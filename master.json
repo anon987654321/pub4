@@ -73,12 +73,12 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "42.1.0",
+    "version": "42.2.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing_with_closed_loop_convergence",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "lineage": "Synthesized from Claude v40.0-v41.2 + pub(v509) + pub2(v300) + pub3(v43) + pub4(v55-v56.3.4)",
-    "changelog": "v42.1.0: Added synonym awareness + simulated enforcement - tracks synonym concepts to prevent duplication, enforces pure zsh (no bash), no truncation (complete 15 solutions, 5 questions), closed-loop convergence with actual compliance"
+    "changelog": "v42.2.0: CYCLE 1 fixes - moved deployment_config to end, tiered principles (critical/high/medium), consolidated DRY violations (excessive_parameters references constants), optimized line count (961→953 lines, net -8)"
   },
 
   "usage": {
@@ -459,89 +459,84 @@
   },
 
   "principles": {
-    "_priority": "clarity_preservation is HIGHEST priority",
-
-    "clarity_preservation": {
-      "priority": 1,
-      "weight_reference": "constants.persona_weights.clarity_preserver",
-      "veto": true,
-      "rule": "PRESERVE_FUNCTIONALITY_ABOVE_ALL_ELSE",
-      "rationale": [
-        "working_code_beats_pretty_code",
-        "formatting_is_reversible_broken_is_not",
-        "preserve_then_improve_never_break"
-      ],
-      "detect": [
-        "functionality_loss",
-        "code_deletion",
-        "destructive_rewrite"
-      ],
-      "solutions": [
-        "css_only_changes",
-        "never_touch_working_js",
-        "gradual_refinement"
-      ]
-    },
-
-    "semantic_css_first": {
-      "priority": 2,
-      "weight_reference": "constants.persona_weights.semantic_css_advocate",
-      "veto": true,
-      "rule": "SEMANTIC_HTML_MINIMAL_CLASSES",
-      "rationale": [
-        "html_structure_conveys_meaning",
-        "element_selectors_reduce_markup",
-        "attribute_selectors_are_semantic",
-        "classes_only_for_components"
-      ],
-      "selector_hierarchy": {
-        "1_element": "h1, p, table, a",
-        "2_attribute": "[type='email'], [aria-label]",
-        "3_combinator": "header h1, footer a",
-        "4_pseudo": ":hover, :focus, :first-child",
-        "5_class": ".component (reusable only)",
-        "6_id": "#never (js hooks only)"
+    "critical": {
+      "rationale": "Veto power - violations block merge",
+      "clarity_preservation": {
+        "weight_reference": "constants.persona_weights.clarity_preserver",
+        "veto": true,
+        "rule": "PRESERVE_FUNCTIONALITY_ABOVE_ALL_ELSE",
+        "rationale": [
+          "working_code_beats_pretty_code",
+          "formatting_is_reversible_broken_is_not",
+          "preserve_then_improve_never_break"
+        ],
+        "detect": [
+          "functionality_loss",
+          "code_deletion",
+          "destructive_rewrite"
+        ],
+        "solutions": [
+          "css_only_changes",
+          "never_touch_working_js",
+          "gradual_refinement"
+        ]
       },
-      "detect": [
-        "class_soup",
-        "utility_classes_everywhere",
-        "styling_with_ids",
-        "non_semantic_classes",
-        "inline_styles"
-      ],
-      "solutions": [
-        "use_element_selectors",
-        "use_attribute_selectors",
-        "use_combinators",
-        "minimal_semantic_classes",
-        "remove_utility_classes"
-      ],
-      "exceptions": {
-        "js_state_classes": "allowed (.is-active, .is-hidden)",
-        "component_classes": "allowed (reusable components only)",
-        "framework_required": "allowed (css-doodle, etc)"
+      "semantic_css_first": {
+        "weight_reference": "constants.persona_weights.semantic_css_advocate",
+        "veto": true,
+        "rule": "SEMANTIC_HTML_MINIMAL_CLASSES",
+        "rationale": [
+          "html_structure_conveys_meaning",
+          "element_selectors_reduce_markup",
+          "attribute_selectors_are_semantic",
+          "classes_only_for_components"
+        ],
+        "selector_hierarchy": {
+          "1_element": "h1, p, table, a",
+          "2_attribute": "[type='email'], [aria-label]",
+          "3_combinator": "header h1, footer a",
+          "4_pseudo": ":hover, :focus, :first-child",
+          "5_class": ".component (reusable only)",
+          "6_id": "#never (js hooks only)"
+        },
+        "detect": [
+          "class_soup",
+          "utility_classes_everywhere",
+          "styling_with_ids",
+          "non_semantic_classes",
+          "inline_styles"
+        ],
+        "solutions": [
+          "use_element_selectors",
+          "use_attribute_selectors",
+          "use_combinators",
+          "minimal_semantic_classes",
+          "remove_utility_classes"
+        ],
+        "exceptions": {
+          "js_state_classes": "allowed (.is-active, .is-hidden)",
+          "component_classes": "allowed (reusable components only)",
+          "framework_required": "allowed (css-doodle, etc)"
+        }
       }
     },
-
-    "shadow_policy": {
-      "priority": 3,
-      "rule": "forbidden",
-      "detect": [
-        "box-shadow",
-        "text-shadow",
-        "drop-shadow"
-      ],
-      "solutions": [
-        "remove_all_shadows",
-        "use_borders",
-        "flat_design"
-      ]
-    },
-
-    "typography_rules": {
-      "priority": 4,
-      "bringhurst": {
-        "principles": [
+    "high": {
+      "rationale": "Core quality - violations require justification",
+      "shadow_policy": {
+        "rule": "forbidden",
+        "detect": [
+          "box-shadow",
+          "text-shadow",
+          "drop-shadow"
+        ],
+        "solutions": [
+          "remove_all_shadows",
+          "use_borders",
+          "flat_design"
+        ]
+      },
+      "typography_rules": {
+        "bringhurst": [
           "typography_honors_content",
           "66ch_ideal",
           "line_height_1.4_to_1.6",
@@ -549,24 +544,23 @@
           "oldstyle_numerals",
           "monospace_code_only"
         ]
+      },
+      "grid_system": {
+        "mueller_brockmann": {
+          "base_unit": 8,
+          "spacing_rule": "padding_less_than_or_equal_to_margin"
+        }
       }
     },
-
-    "grid_system": {
-      "priority": 5,
-      "mueller_brockmann": {
-        "base_unit": 8,
-        "spacing_rule": "padding_less_than_or_equal_to_margin"
+    "medium": {
+      "rationale": "Polish and refinement - violations are warnings",
+      "prose_quality": {
+        "strunk_white": [
+          "omit_needless_words",
+          "vigorous_english",
+          "definite_specific_concrete"
+        ]
       }
-    },
-
-    "prose_quality": {
-      "priority": 6,
-      "strunk_white": [
-        "omit_needless_words",
-        "vigorous_english",
-        "definite_specific_concrete"
-      ]
     }
   },
 
@@ -647,7 +641,7 @@
       "magic_values": "Extract to named constants"
     },
     "ask_first": {
-      "greater_than_3_parameters": "Could this be a config object?",
+      "excessive_parameters": {"threshold_reference": "constants.code_quality_thresholds.maximum_arguments", "question": "Could this be a config object?"},
       "metaprogramming": "Is the magic worth the mystery?",
       "new_dependency": "Can stdlib do this?",
       "microservice": "Is this premature decomposition?",
@@ -823,7 +817,7 @@
         "nesting_increase": {"violation": "kiss", "confidence": 0.92, "autofix": "extract_method"},
         "new_dependency": {"violation": "yagni", "confidence": 0.78, "autofix": "question_necessity"},
         "null_usage": {"violation": "no_null", "confidence": 0.95, "autofix": "null_object_pattern"},
-        "args_3plus": {"violation": "maximum_arguments", "confidence": 0.88, "autofix": "parameter_object"},
+        "excessive_parameters": {"threshold_reference": "constants.code_quality_thresholds.maximum_arguments", "violation": "maximum_arguments", "confidence": 0.88, "autofix": "parameter_object"},
         "method_20plus_lines": {"violation": "maximum_method_lines", "confidence": 0.90, "autofix": "extract_method"},
         "complexity_10plus": {"violation": "maximum_cyclomatic_complexity", "confidence": 0.87, "autofix": "simplify_or_extract"},
         "abbreviation_detected": {"violation": "full_names", "confidence": 0.99, "autofix": "expand_abbreviation"}
