@@ -10,7 +10,6 @@
   <meta name="theme-color" content="#000000"/>
   <meta name="description" content="Audio-reactive warp tunnel visualizer"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>"/>
-  <link rel="manifest" href="manifest.webmanifest"/>
 
   <style>
     :root {
@@ -228,7 +227,6 @@
       font: 12px/1.2 ui-monospace, monospace;
       padding: 8px;
       border: 1px solid #333;
-      border-radius: 4px;
       display: none;
     }
 
@@ -490,22 +488,29 @@
     };
 
     // MP3 discovery (playlist files + .mp3 listing)
+    // Embedded playlist data (self-contained, no external dependencies)
+    const EMBEDDED_PLAYLIST = [
+      "akmd-stailings.mp3",
+      "akmd_mike_t-alt_kan_skje.mp3",
+      "akmd_mike_t_jan_hakim-diverse.mp3",
+      "angelo_reira_and_johann-sandviken_hotell_a.mp3",
+      "angelo_reira_and_johann-sandviken_hotell_b.mp3",
+      "chase_swayze-traffic.mp3",
+      "haisam_and_johann-pb1.mp3",
+      "jan_hakim_and_johann-stailings_a.mp3",
+      "johann_uten_grenser-amiga.mp3",
+      "mike_t_jr-rauingar.mp3"
+    ];
+
     async function detectMp3Playlist(){
       if(!AUDIO_POLICY.mp3_default) return null;
       
-      // Hardcoded playlist for .mp3/ directory
-      return [
-        {title:"AKMD - Stailings", artist:"", src:".mp3/akmd-stailings.mp3"},
-        {title:"AKMD Mike T - Alt Kan Skje", artist:"", src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
-        {title:"AKMD Mike T Jan Hakim - Diverse", artist:"", src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-        {title:"Angelo Reira Johann - Sandviken Hotell A", artist:"", src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"},
-        {title:"Angelo Reira Johann - Sandviken Hotell B", artist:"", src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
-        {title:"Chase Swayze - Traffic", artist:"", src:".mp3/chase_swayze-traffic.mp3"},
-        {title:"Haisam Johann - PB1", artist:"", src:".mp3/haisam_and_johann-pb1.mp3"},
-        {title:"Jan Hakim Johann - Stailings A", artist:"", src:".mp3/jan_hakim_and_johann-stailings_a.mp3"},
-        {title:"Johann Uten Grenser - Amiga", artist:"", src:".mp3/johann_uten_grenser-amiga.mp3"},
-        {title:"Mike T Jr - Rauingar", artist:"", src:".mp3/mike_t_jr-rauingar.mp3"}
-      ];
+      // Use embedded playlist data
+      return EMBEDDED_PLAYLIST.map(filename => ({
+        title: filename.replace(/\.mp3$/i, '').replace(/[-_]/g, ' '),
+        artist: '',
+        src: `.mp3/${filename}`
+      }));
     }
 
     // File System Access API (file://) local folder
