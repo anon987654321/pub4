@@ -73,12 +73,12 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "42.3.0",
+    "version": "42.4.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing_with_closed_loop_convergence",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "lineage": "Synthesized from Claude v40.0-v41.2 + pub(v509) + pub2(v300) + pub3(v43) + pub4(v55-v56.3.4)",
-    "changelog": "v42.3.0: Stricter enforcement - banned bash utilities (wc, head, tail, grep, cat) even in CLI environments, added cli_environment_rules with Read tool alternatives, updated CRITICAL.bash_tool_exceptions (git/npm/bundle only)"
+    "changelog": "v42.4.0: Ultra-minimalism across ALL languages - added ultra_minimalism meta-principle, modern JS/TS/Rust/HTML5 conventions, vanilla-first frameworks, semantic elements enforcement, ESNext patterns, Rust zero-cost abstractions"
   },
 
   "usage": {
@@ -107,6 +107,35 @@
       "quality_is_speed": "High internal quality makes software cheaper (Fowler)",
       "simplicity_ships": "If you can't ship in hours, question every dependency (Levels)",
       "flow_protection": "Clear goals + immediate feedback + challenge matched to skill (Csikszentmihalyi)"
+    }
+  },
+
+  "ultra_minimalism": {
+    "rationale": "Applies to ALL languages (HTML, CSS, JS, Ruby, Rust, etc.) - ruthlessly eliminate complexity",
+    "philosophy": "Less code, less state, less abstraction, less dependencies = more maintainable",
+    "forbidden_patterns": [
+      "Decorative code (animations, shadows, gradients unless functionally necessary)",
+      "Premature abstraction (YAGNI - extract only when duplicated 3+ times)",
+      "Deep nesting (maximum 2 levels - flatten or extract)",
+      "Long methods (if it scrolls, split it)",
+      "Magic (implicit behavior, hidden side effects, unclear data flow)",
+      "Dependencies (question every import - can stdlib do this?)",
+      "Frameworks (prefer vanilla unless complexity justifies framework weight)"
+    ],
+    "required_patterns": [
+      "Vanilla first (use native language features before adding libraries)",
+      "Explicit over implicit (clear data flow, obvious dependencies)",
+      "Flat over nested (early returns, guard clauses, extraction)",
+      "Boring over clever (code should be obvious, not impressive)",
+      "Delete over abstract (remove code faster than you add it)",
+      "Standards over custom (HTML5 semantics, CSS Grid, ESNext, stdlib)"
+    ],
+    "applies_to": {
+      "html": "Semantic HTML5 elements only - no divs when header/nav/main/article/section exist",
+      "css": "Brutalist flat - no shadows, gradients, border-radius - use modern layout (grid, flex, :has, subgrid)",
+      "javascript": "ESNext vanilla - no jQuery, prefer Web Components over React unless app complexity demands it",
+      "ruby": "Stdlib and Rails - avoid gems unless significant value, prefer boring solutions",
+      "rust": "Minimal dependencies - prefer std, avoid proc macros unless necessary, zero-cost abstractions only"
     }
   },
 
@@ -343,6 +372,80 @@
         "extension": "${file:e}",
         "no_extension": "${file:r}"
       }
+    },
+    "javascript": {
+      "rationale": "Modern ESNext vanilla JavaScript - Web Platform APIs over frameworks when possible",
+      "version": "ES2024+",
+      "prefer": ["vanilla_js", "web_components", "es_modules", "async_await", "fetch_api", "dom_apis"],
+      "avoid": ["jquery", "lodash", "moment", "callbacks", "var_keyword", "prototype_chains"],
+      "patterns": {
+        "modules": "import/export - no require() or global namespace pollution",
+        "async": "async/await over promises, promises over callbacks",
+        "dom": "querySelector/querySelectorAll over getElementById",
+        "events": "addEventListener with AbortController for cleanup",
+        "state": "avoid class fields, prefer closure or WeakMap for private state",
+        "types": "JSDoc for type hints if not using TypeScript"
+      },
+      "frameworks": {
+        "default": "vanilla",
+        "when_complex": ["svelte", "preact", "lit"],
+        "avoid": ["react", "vue", "angular"],
+        "rationale": "Prefer no framework. If state management needed: Svelte (compiles away), Preact (3kb), Lit (web components). Avoid React (70kb runtime)"
+      }
+    },
+    "typescript": {
+      "rationale": "TypeScript when type safety outweighs compilation cost - prefer JSDoc for small projects",
+      "version": "5.0+",
+      "strict_mode": true,
+      "patterns": {
+        "prefer_inference": "Let TS infer types, annotate only function signatures and complex types",
+        "avoid_any": "Use unknown instead of any, narrow with type guards",
+        "prefer_interfaces": "Interfaces for objects, types for unions/intersections",
+        "no_enums": "Use const objects or string literal unions instead of enums"
+      },
+      "when_to_use": "Projects >1000 lines, teams >1 person, or complex data structures"
+    },
+    "rust": {
+      "rationale": "Systems programming with zero-cost abstractions and memory safety",
+      "version": "stable_latest",
+      "edition": "2021",
+      "patterns": {
+        "ownership": "Prefer owned types, use references only at boundaries",
+        "errors": "Result<T, E> with custom error types, never panic in library code",
+        "async": "tokio for async runtime, prefer sync when I/O not dominant",
+        "iterators": "Iterator chains over loops, collect only when necessary",
+        "macros": "Avoid proc macros unless declarative macros insufficient"
+      },
+      "dependencies": {
+        "default": "std_only",
+        "allowed": ["serde", "tokio", "clap"],
+        "avoid": "crates duplicating std functionality",
+        "rationale": "Minimal dependencies reduce compilation time and security surface"
+      },
+      "style": {
+        "indent": 4,
+        "naming": "snake_case for functions/variables, PascalCase for types",
+        "formatting": "rustfmt with default settings"
+      }
+    },
+    "html": {
+      "rationale": "Semantic HTML5 elements convey meaning - no div soup",
+      "version": "HTML5",
+      "semantic_elements": ["header", "nav", "main", "article", "section", "aside", "footer", "figure", "figcaption", "time", "mark", "details", "summary"],
+      "forbidden_patterns": [
+        "div when semantic element exists",
+        "onclick handlers (use addEventListener)",
+        "inline styles (use CSS)",
+        "br for spacing (use margin)",
+        "tables for layout (use grid/flex)"
+      ],
+      "required_patterns": [
+        "One h1 per page",
+        "Headings in order (h1 > h2 > h3, no skipping)",
+        "alt text on all images",
+        "label for all form inputs",
+        "semantic sectioning (header/nav/main/footer structure)"
+      ]
     },
     "design_system": {
       "rationale": "Brutalist flat design - no skeuomorphism, no decoration, raw semantic HTML, content-first",
