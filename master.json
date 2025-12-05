@@ -1,18 +1,122 @@
 {
-  "meta": {
-    "version": "39.0.0",
-    "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
-    "first_action": "activate_then_trace",
-    "output": {
-      "prefix_markdown": "**master.json** v${v}, ${violations}→${principles}",
-      "style": "results_first | silent_success | loud_failure"
+  "README_FIRST": {
+    "thinking": "Ruby for ALL logic, decisions, data manipulation",
+    "file_operations": "zsh for file ops (via powershell tool in Copilot CLI environment)",
+    "execution_context": "GitHub Copilot CLI runs in Cygwin, use powershell tool to invoke zsh commands",
+    "config_pattern": "Multi-LLM: master.{llm}.json for each LLM's immutable version",
+    "active_config": "master.json = copy of currently active config",
+    "claude_settings": ".claude/settings.local.json points to master.json",
+    "never": ["bash", "sed", "awk", "tr", "cut", "perl", "python for file ops"]
+  },
+
+  "naming_conventions": {
+    "rationale": "Explicit naming standard ensures consistency across 800+ line configuration",
+    "case_styles": {
+      "SCREAMING_SNAKE_CASE": "Top-level protocol/system sections (CRITICAL, CRITICAL_STARTUP_PROTOCOL)",
+      "snake_case": "All other keys, values, identifiers",
+      "rationale": "SCREAMING for attention-critical sections, snake_case everywhere else (Ruby/Rails convention)"
     },
+    "abbreviations": {
+      "forbidden": "Never abbreviate - full_names principle applies to master.json itself",
+      "exceptions": {
+        "industry_standard_acronyms": ["DRY", "KISS", "YAGNI", "SOLID", "ARIA", "WCAG", "HTML", "CSS", "API"],
+        "rationale": "Industry acronyms MORE readable than expansions (DRY > Dont_Repeat_Yourself)"
+      },
+      "replaced": {
+        "max": "maximum",
+        "min": "minimum",
+        "lte": "less_than_or_equal_to",
+        "gte": "greater_than_or_equal_to",
+        "gt": "greater_than",
+        "lt": "less_than",
+        "qe_": "question_engine_",
+        "a11y": "accessibility",
+        "perf": "performance",
+        "lcp": "largest_contentful_paint",
+        "inp": "interaction_to_next_paint",
+        "cls": "cumulative_layout_shift"
+      }
+    },
+    "magic_values": {
+      "rule": "Extract all magic numbers/strings to constants section with rationale",
+      "examples": {
+        "persona_weights": "Extracted to constants.persona_weights",
+        "code_quality_thresholds": "Extracted to constants.code_quality_thresholds",
+        "decision_weights": "Extracted to constants.decision_weights"
+      }
+    },
+    "cross_references": {
+      "pattern": "Use {section}.{subsection}.{key} for references",
+      "examples": {
+        "weight_reference": "constants.persona_weights.clarity_preserver",
+        "weights_reference": "constants.decision_weights"
+      },
+      "rationale": "DRY principle - single source of truth with explicit references"
+    }
+  },
+
+  "$schema": "https://schemas.github.com/copilot/master.v1.json",
+
+  "meta": {
+    "version": "40.0.0",
+    "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing",
-    "commitment": "boy_scout | designer_veto | semantic_first",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
-    "driver": "clarity_preservation_intent_focused",
-    "iterations_max": 3,
-    "convergence_delta": 0.02
+    "maximum_iterations": 3,
+    "convergence_delta": 0.02,
+    "changelog": "v40.0.0: Removed DRY violations, consolidated structure, deleted theater"
+  },
+
+  "usage": {
+    "rationale": "How LLMs should use this configuration - aspirational guidelines, not enforced",
+    "recommended_startup": [
+      "Load master.json completely",
+      "Internalize principles and constraints",
+      "Apply to user request"
+    ],
+    "cleanup_pattern": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.{swp,tmp}(N) .DS_Store(N)"
+  },
+
+  "meta_principle": {
+    "beautiful_code_wins_all_conflicts": "Readability > performance > cleverness > brevity",
+    "definition": "Code you'd enjoy reading in five years",
+    "requires": [
+      "Reads like prose - competent programmer grasps intent without comments",
+      "No superfluous tokens - every character earns its place",
+      "Names reveal purpose - never abbreviate, never be cryptic",
+      "Max 2 indent levels - flatten or extract",
+      "Methods that don't scroll - if it scrolls, split it",
+      "One reason to change - single responsibility"
+    ],
+    "optimization_goals": {
+      "programmer_happiness": "Happy programmers write better code (Matz)",
+      "quality_is_speed": "High internal quality makes software cheaper (Fowler)",
+      "simplicity_ships": "If you can't ship in hours, question every dependency (Levels)",
+      "flow_protection": "Clear goals + immediate feedback + challenge matched to skill (Csikszentmihalyi)"
+    }
+  },
+
+  "CRITICAL": {
+    "banned_commands": {
+      "exact": ["python","bash","powershell","sed","awk","tr","cut","head","tail","uniq","sort","wc","find","perl","sudo"],
+      "patterns": ["rm -rf *","curl * | sh","chmod 777 *","sudo *",">/dev/sd*"]
+    },
+    "allowed_only": ["ruby","zsh","view_tool","edit_tool","create_tool"],
+    "null": "forbidden_forever",
+    "maximum_arguments": 3,
+    "maximum_nesting_levels": 2,
+    "maximum_method_lines": 20,
+    "maximum_cyclomatic_complexity": 10
+  },
+
+  "workflow_patterns": {
+    "parallel_operations": "Batch independent file operations in single LLM turn",
+    "idempotent_scripts": "Scripts runnable repeatedly safely",
+    "compression": {
+      "rails_scaffold": "Use scaffold for CRUD, not heredocs",
+      "css_variables": "Define tokens once, reference everywhere",
+      "zsh_loops": "Loop over models instead of repetition"
+    }
   },
 
   "hierarchy": {
@@ -43,20 +147,48 @@
   },
 
   "constants": {
+    "persona_weights": {
+      "clarity_preserver": 0.50,
+      "semantic_css_advocate": 0.20,
+      "bringhurst_typographer": 0.12,
+      "mueller_brockmann_designer": 0.10,
+      "strunk_white_editor": 0.08,
+      "rationale": "Weights sum to 1.0, heavily favor preserving functionality over aesthetics"
+    },
+    "decision_weights": {
+      "priority_1": 0.25,
+      "priority_2": 0.25,
+      "priority_3": 0.20,
+      "priority_4": 0.15,
+      "priority_5": 0.10,
+      "priority_6": 0.05,
+      "rationale": "Weights sum to 1.0, balanced top priorities with diminishing tail"
+    },
+    "code_quality_thresholds": {
+      "maximum_arguments": 3,
+      "maximum_nesting_levels": 2,
+      "maximum_method_lines": 20,
+      "maximum_cyclomatic_complexity": 10,
+      "duplication_threshold_percent": 70,
+      "rationale": "Based on Clean Code (Martin) and Code Complete (McConnell)"
+    },
     "typography": {
       "line_length": {
         "ideal": 66,
         "min": 45,
-        "max": 75
+        "max": 75,
+        "rationale": "Bringhurst - optimal for reading comprehension"
       },
       "line_height": {
         "body": [1.4, 1.6],
-        "heading": [1.0, 1.2]
+        "heading": [1.0, 1.2],
+        "rationale": "WCAG 1.5 minimum, extended for comfort"
       },
       "letter_spacing": {
         "all_caps": [0.05, 0.15],
         "headings": -0.02,
-        "body": 0
+        "body": 0,
+        "rationale": "Negative tracking for large headings improves color"
       },
       "number_style": "oldstyle_numerals",
       "monospace_usage": "code_only"
@@ -65,7 +197,22 @@
       "base_unit": 8,
       "spacing_scale": [4, 8, 16, 24, 32, 48, 64],
       "grid_columns": 12,
-      "touch_target_min": 44
+      "touch_target_comfortable": 44,
+      "rationale": "8px base unit (Mueller-Brockmann), 44px touch targets (iOS HIG - comfortable size)"
+    },
+    "performance_thresholds": {
+      "largest_contentful_paint_seconds": 2.5,
+      "interaction_to_next_paint_milliseconds": 200,
+      "cumulative_layout_shift": 0.1,
+      "page_weight_megabytes": 1,
+      "image_size_kilobytes": 100,
+      "rationale": "Google Core Web Vitals + sustainable web design"
+    },
+    "accessibility": {
+      "minimum_contrast_ratio": 4.5,
+      "minimum_touch_target_pixels": 24,
+      "standard": "WCAG_AA",
+      "rationale": "WCAG 2.1 Level AA compliance (24px minimum, 44px iOS HIG comfortable)"
     },
     "semantic_css": {
       "priority": "element > attribute > pseudo > class > id",
@@ -86,12 +233,106 @@
     }
   },
 
+  "tech_stack": {
+    "rationale": "Battle-tested stack chosen for simplicity, security, and long-term maintainability",
+    "rails": {
+      "version": "8.0+",
+      "rationale": "Rails 8 Omakase - convention over configuration, solid* suite for deployment simplicity",
+      "stack": {
+        "queue": "solid_queue",
+        "cache": "solid_cache",
+        "cable": "solid_cable",
+        "assets": "propshaft",
+        "server": "falcon"
+      },
+      "conventions": {
+        "routing": "restful_maximum_2_nesting_levels",
+        "controllers": "thin",
+        "models": "fat_or_service_objects"
+      },
+      "style": {
+        "indent": 2,
+        "naming": "snake_case",
+        "blocks": "multiline_do_end_single_braces"
+      }
+    },
+    "openbsd": {
+      "version": "7.6+",
+      "rationale": "Security by default, pledge/unveil for privilege separation, minimal attack surface",
+      "services": ["nsd", "relayd", "httpd", "acme-client", "pf"],
+      "security": ["doas_not_sudo", "pledge_unveil_everywhere"],
+      "philosophy": "secure_by_default_correct_over_convenient"
+    },
+    "zsh": {
+      "rationale": "Pure zsh patterns avoid external command dependencies, portable and fast",
+      "header": "#!/usr/bin/env zsh\nemulate -L zsh\nsetopt extended_glob\nset -euo pipefail",
+      "patterns": {
+        "string": {
+          "lowercase": "${(L)var}",
+          "uppercase": "${(U)var}",
+          "replace": "${var//old/new}",
+          "trim": "${${var##[[:space:]]#}%%[[:space:]]#}"
+        },
+        "array": {
+          "unique": "${(u)arr}",
+          "sort_asc": "${(o)arr}",
+          "sort_desc": "${(O)arr}",
+          "join": "${(j:,:)arr}",
+          "length": "${#arr[@]}"
+        },
+        "file": {
+          "recursive": "**/*.rb(.N)",
+          "exclude": "**/*~*.log~*.tmp(.N)"
+        }
+      },
+      "replacements": {
+        "cat_file": "$(<file)",
+        "echo_text": "print text",
+        "grep_pattern": "${(M)lines:#*pattern*}",
+        "sed_replace": "${var//a/b}",
+        "awk_first_field": "${line%% *}",
+        "tr_delete_cr": "${var//$'\\r'}",
+        "head_n": "${lines[1,n]}",
+        "tail_n": "${lines[-n,-1]}",
+        "wc_lines": "${#lines[@]}",
+        "sort_unique": "${(u)${(o)arr[@]}}",
+        "basename": "${file:t}",
+        "dirname": "${file:h}",
+        "extension": "${file:e}",
+        "no_extension": "${file:r}"
+      }
+    },
+    "design_system": {
+      "rationale": "Brutalist flat design - honest materials, no decoration, content-first",
+      "philosophy": "brutalist_flat_2.0",
+      "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradient", "background-image"],
+      "allowed_css": ["flex", "grid", ":has()", "subgrid", "container-queries"],
+      "color_palette": {
+        "background": "rgb(255,255,255)",
+        "surface": "rgb(247,249,249)",
+        "border": "rgb(239,243,244)",
+        "text_primary": "rgb(15,20,25)",
+        "text_secondary": "rgb(83,100,113)",
+        "accent": "rgb(29,155,240)",
+        "accent_hover": "rgb(26,140,216)",
+        "upvote": "rgb(255,69,0)",
+        "danger": "rgb(244,33,46)"
+      },
+      "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
+      "typography": {
+        "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "weights": [400, 600, 700],
+        "scale_px": [13, 15, 17, 20, 24, 32]
+      }
+    }
+  },
+
   "principles": {
     "_priority": "clarity_preservation is HIGHEST priority",
 
     "clarity_preservation": {
       "priority": 1,
-      "weight": 0.50,
+      "weight_reference": "constants.persona_weights.clarity_preserver",
       "veto": true,
       "rule": "PRESERVE_FUNCTIONALITY_ABOVE_ALL_ELSE",
       "rationale": [
@@ -113,7 +354,7 @@
 
     "semantic_css_first": {
       "priority": 2,
-      "weight": 0.20,
+      "weight_reference": "constants.persona_weights.semantic_css_advocate",
       "veto": true,
       "rule": "SEMANTIC_HTML_MINIMAL_CLASSES",
       "rationale": [
@@ -184,7 +425,7 @@
       "priority": 5,
       "mueller_brockmann": {
         "base_unit": 8,
-        "spacing_rule": "padding_lte_margin"
+        "spacing_rule": "padding_less_than_or_equal_to_margin"
       }
     },
 
@@ -198,97 +439,147 @@
     }
   },
 
-  "execution": {
-    "phases": {
-      "discover": "context | identify_working_code",
-      "analyze": "violations | semantic_opportunities",
-      "design": "semantic_refactor | preserve_functionality",
-      "implement": "css_only | test_each",
-      "validate": "functionality_intact | semantic_improved",
-      "deliver": "document_changes"
-    },
+  "execution_phases": {
+    "discover": "context | identify_working_code",
+    "analyze": "violations | semantic_opportunities",
+    "design": "semantic_refactor | preserve_functionality",
+    "implement": "css_only | test_each",
+    "validate": "functionality_intact | semantic_improved",
+    "deliver": "document_changes"
+  },
 
-    "personas": {
-      "clarity_preserver": {
-        "weight": 0.50,
-        "veto": true,
-        "priority": 1,
-        "focus": [
-          "preserve_functionality",
-          "no_code_deletion",
-          "rollback_if_broken"
-        ]
-      },
-      "semantic_css_advocate": {
-        "weight": 0.20,
-        "veto": true,
-        "priority": 2,
-        "focus": [
-          "element_selectors_first",
-          "minimal_classes",
-          "semantic_html",
-          "no_class_soup"
-        ]
-      },
-      "bringhurst_typographer": {
-        "weight": 0.12,
-        "veto": false,
-        "priority": 3,
-        "focus": [
-          "66ch_ideal",
-          "negative_heading_tracking",
-          "oldstyle_numerals"
-        ]
-      },
-      "mueller_brockmann_designer": {
-        "weight": 0.10,
-        "veto": false,
-        "priority": 4,
-        "focus": [
-          "8px_grid",
-          "spacing_system"
-        ]
-      },
-      "strunk_white_editor": {
-        "weight": 0.08,
-        "veto": false,
-        "priority": 5,
-        "focus": [
-          "omit_needless_words"
-        ]
-      }
+  "architecture_tests": {
+    "must_all_be_yes": [
+      "Can one person understand the whole system?",
+      "Can we ship a change in hours, not weeks?",
+      "Will this be boring to maintain?",
+      "Are we solving a problem we actually have?"
+    ],
+    "when_any_no": "Simplify until all answers are yes",
+    "philosophy": {
+      "prefer": ["monolith until proven otherwise","convention over configuration","boring technology","fewer dependencies","deletable files"],
+      "avoid": ["microservices for teams <50","SPA when server rendering works","frameworks <2 years old","premature optimization","speculative generality"]
     }
   },
 
-  "enforcement": {
-    "critical_rules": [
-      "preserve_functionality_first",
-      "semantic_css_first",
-      "css_changes_only",
-      "rollback_if_broken"
-    ],
-    "semantic_css": [
-      "element_selectors_preferred",
-      "attribute_selectors_encouraged",
-      "minimal_classes",
-      "no_styling_ids",
-      "no_inline_styles"
-    ],
-    "typography": [
-      "66ch_ideal",
-      "1.5_line_height",
-      "negative_heading_tracking",
-      "oldstyle_numerals"
-    ],
-    "layout": [
-      "8px_grid",
-      "no_shadows",
-      "padding_lte_margin"
-    ],
-    "safety": [
-      "never_delete_working_code",
-      "preserve_event_handlers",
-      "verify_functionality_intact"
+  "review_criteria": {
+    "reject": {
+      "nesting_greater_than_2": "Extract to named method",
+      "method_greater_than_20_lines": "Split by responsibility",
+      "abbreviated_names": "Expand to full words",
+      "comments_explaining_what": "Rewrite code to be self-evident",
+      "repeated_type_declarations": "Use inference or dynamic typing",
+      "god_objects": "Decompose into focused collaborators",
+      "primitive_obsession": "Extract value objects",
+      "boolean_parameters": "Split into separate methods",
+      "negated_conditionals": "Use unless or invert logic",
+      "magic_values": "Extract to named constants"
+    },
+    "ask_first": {
+      "greater_than_3_parameters": "Could this be a config object?",
+      "metaprogramming": "Is the magic worth the mystery?",
+      "new_dependency": "Can stdlib do this?",
+      "microservice": "Is this premature decomposition?",
+      "abstract_base_class": "Do 3+ concrete implementations exist?",
+      "custom_dsl": "Will new team member understand in a week?"
+    },
+    "approve_when": [
+      "Intent clear without explanation",
+      "Names precise and unsurprising",
+      "Structure flat and scannable",
+      "Changes minimal and focused",
+      "Tests read as documentation"
     ]
+  },
+
+  "deployment_config": {
+    "note": "USER-SPECIFIC - Replace with your own infrastructure details",
+    "domains": {
+      "brgen": "brgen.no",
+      "amber": "amber.brgen.no",
+      "hjerterom": "hjerterom.brgen.no",
+      "bsdports": ["bsdports.org", "bsdports.net"],
+      "dating": "dating.brgen.no",
+      "marketplace": "markedsplass.brgen.no",
+      "playlist": "playlist.brgen.no",
+      "tv": "tv.brgen.no",
+      "takeaway": "takeaway.brgen.no",
+      "privcam": "privcam.no",
+      "mytoonz": "mytoonz.no",
+      "blognet": "blognet.no",
+      "baibl": "baibl.no"
+    },
+    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
+    "vps": {
+      "host": "185.52.176.18",
+      "user": "dev",
+      "ssh_cmd": "ssh dev@185.52.176.18",
+      "app_dir": "/home/brgen/app",
+      "repo_dir": "/home/dev/pub4",
+      "services": "postgresql redis relayd nsd httpd pf",
+      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
+    },
+    "github": {
+      "repo": "https://github.com/anon987654321/pub4.git",
+      "user": "anon987654321",
+      "pat_location": "G:/priv/accounts.txt",
+      "pat_note": "use PAT not password for push",
+      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
+      "reference_repos": [
+        "anon987654321/railsy - my old openbsd rails setups",
+        "basicfeatures/openbsd-rails - original setup",
+        "anonymous-donor/openbsd-rails - original setup alt account"
+      ]
+    },
+    "database": {
+      "development": "sqlite3 at db/development.sqlite3",
+      "production": "postgresql + weaviate via langchainrb_rails",
+      "config_file": "/home/brgen/app/config/database.yml"
+    }
+  },
+
+
+  "paths": {
+    "config": "${XDG_CONFIG_HOME}/master",
+    "data": "${XDG_DATA_HOME}/master",
+    "cache": "${XDG_CACHE_HOME}/master",
+    "state": "${XDG_STATE_HOME}/master"
+  },
+
+  "overrides": [
+    {
+      "directories": ["~/work/**"],
+      "tools": {"allow_additional": ["docker *", "kubectl *"]},
+      "note": "Work dirs allow container orchestration"
+    },
+    {
+      "directories": ["~/.config/**"],
+      "principles": {"relaxed": ["dry"]},
+      "note": "Config dirs allow duplication for isolation"
+    }
+  ],
+
+  "permissions": {
+    "mode": "auto_accept",
+    "bypass_confirmation": true,
+    "trust_level": "full",
+    "require_approval": false,
+    "auto_execute": true,
+    "rationale": "User requested permission bypass"
+  },
+
+  "autoiterate": {
+    "enabled": true,
+    "maximum_iterations": 20,
+    "convergence_threshold": 0.001,
+    "checks": ["quality", "phases", "cruft", "duplication", "complexity"],
+    "gates": ["tests_pass"]
+  },
+
+  "mandatory_workflows": {
+    "before_folder_work": "tree.sh (prevents blind navigation)",
+    "before_file_modification": "clean.sh (fixes CRLF/line endings)",
+    "reload_master_json": "After every significant change codified to master.json",
+    "git_pattern": "TodoWrite → frequent commits → parallel tool execution"
   }
 }
