@@ -58,11 +58,11 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "41.1.0",
+    "version": "41.2.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
-    "changelog": "v41.1.0: Self-enforcement pass - removed duplication (execution_phases, CRITICAL thresholds), added formatting rules, replaced protected_sections with self_enforcement (operational not aspirational), unified iterations in autoiterate section"
+    "changelog": "v41.2.0: Restored UI/UX patterns - added Nielsen Norman heuristics (10), Gestalt principles (6), quality scoring dimensions (8 weighted), perfectionist checks (forbidden language, source attribution, magic number rules, whitespace, terminology consistency)"
   },
 
   "usage": {
@@ -218,7 +218,22 @@
       "minimum_contrast_ratio": 4.5,
       "minimum_touch_target_pixels": 24,
       "standard": "WCAG_AA",
-      "rationale": "WCAG 2.1 Level AA compliance (24px minimum, 44px iOS HIG comfortable)"
+      "rationale": "WCAG 2.1 Level AA compliance (24px minimum, 44px iOS HIG comfortable)",
+      "nielsen_norman_heuristics": {
+        "rationale": "Evidence-based usability checklist - industry standard for interface evaluation",
+        "heuristics": [
+          {"name": "visibility_of_system_status", "check": "user_always_knows_current_state_within_2_seconds"},
+          {"name": "match_system_real_world", "check": "terminology_matches_user_mental_models"},
+          {"name": "user_control_freedom", "check": "undo_redo_cancel_available_for_all_actions"},
+          {"name": "consistency_standards", "check": "patterns_consistent_within_app_and_with_platform"},
+          {"name": "error_prevention", "check": "common_errors_prevented_by_design_not_just_handled"},
+          {"name": "recognition_over_recall", "check": "no_memory_load_between_interface_sections"},
+          {"name": "flexibility_efficiency", "check": "both_novice_and_expert_paths_available"},
+          {"name": "aesthetic_minimalist", "check": "every_element_serves_clear_purpose"},
+          {"name": "help_recognize_diagnose_recover", "check": "error_messages_clear_with_solutions"},
+          {"name": "help_documentation", "check": "contextual_help_discoverable_when_needed"}
+        ]
+      }
     },
     "semantic_css": {
       "priority": "element > attribute > pseudo > class > id",
@@ -330,6 +345,15 @@
         "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         "weights": [400, 600, 700],
         "scale_px": [13, 15, 17, 20, 24, 32]
+      },
+      "gestalt_principles": {
+        "rationale": "Visual perception rules for layout decisions - research-backed cognitive psychology",
+        "proximity": "elements_close_together_perceived_as_related",
+        "similarity": "similar_elements_perceived_as_grouped",
+        "closure": "mind_fills_gaps_to_create_complete_shapes",
+        "continuity": "eyes_follow_smooth_paths_and_lines",
+        "figure_ground": "distinguish_foreground_from_background",
+        "common_fate": "elements_moving_together_perceived_as_group"
       }
     }
   },
@@ -577,6 +601,22 @@
     }
   },
 
+  "quality_scoring": {
+    "rationale": "Weighted quality dimensions enable objective measurement and prioritization",
+    "dimensions": {
+      "security_vulnerabilities": {"weight": 10, "gate": "zero_tolerance"},
+      "code_duplication": {"weight": 10, "threshold_reference": "constants.code_quality_thresholds.duplication_threshold_percent"},
+      "cyclomatic_complexity": {"weight": 9, "threshold_reference": "constants.code_quality_thresholds.maximum_cyclomatic_complexity"},
+      "test_coverage": {"weight": 8, "minimum": 0.80},
+      "accessibility_compliance": {"weight": 7, "standard_reference": "constants.accessibility.standard"},
+      "performance_vitals": {"weight": 6, "thresholds_reference": "constants.performance_thresholds"},
+      "documentation_quality": {"weight": 5, "check": "all_public_apis_documented"},
+      "naming_clarity": {"weight": 4, "check": "no_abbreviations_clear_intent"}
+    },
+    "scoring": "sum(dimension_score * weight) / sum(weights)",
+    "minimum_acceptable_score": 0.85
+  },
+
   "review_criteria": {
     "reject": {
       "nesting_greater_than_2": "Extract to named method",
@@ -733,7 +773,35 @@
       "alert_on_loss": true
     },
     "self_audit_pattern": "After every major change, run master.json through itself until convergence",
-    "convergence_proof": "No violations found in 2 consecutive self-audit runs"
+    "convergence_proof": "No violations found in 2 consecutive self-audit runs",
+    "perfectionist_checks": {
+      "rationale": "Cosmetic refinements from v40.0.1 perfectionist pass - codified for repeatability",
+      "forbidden_language": {
+        "marketing_speak": ["battle-tested", "robust", "enterprise-grade", "world-class", "cutting-edge", "best-in-class"],
+        "vague_qualifiers": ["very", "highly", "extremely", "significantly"],
+        "action": "remove_or_replace_with_specific_evidence"
+      },
+      "source_attribution": {
+        "rule": "every_claim_must_cite_source",
+        "examples": ["Bringhurst", "Mueller-Brockmann", "Clean Code (Martin)", "Twitter color system"],
+        "action": "add_source_field_to_claims"
+      },
+      "magic_numbers": {
+        "rule": "explain_every_number_in_rationale",
+        "examples": ["8px grid (Mueller-Brockmann)", "66ch ideal (Bringhurst)", "4.5:1 contrast (WCAG AA)"],
+        "action": "add_rationale_field_with_citation"
+      },
+      "whitespace": {
+        "no_double_blank_lines": true,
+        "consistent_section_spacing": "single_blank_line_between_top_level_sections",
+        "action": "normalize_whitespace"
+      },
+      "terminology_consistency": {
+        "rule": "same_concept_same_term",
+        "check": "search_for_synonyms_and_unify",
+        "examples": ["maximum not max", "minimum not min", "threshold not limit"]
+      }
+    }
   },
 
   "mandatory_workflows": {
