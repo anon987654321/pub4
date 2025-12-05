@@ -58,13 +58,11 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "41.0.0",
+    "version": "41.1.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
-    "maximum_iterations": 3,
-    "convergence_delta": 0.02,
-    "changelog": "v41.0.0: Major intelligence upgrades from pub/pub2/pub3 analysis: added intelligence section (cognitive biases with compounding, 16 common pitfalls, temperature-scaled synthesis, scientific confidence levels), evidence weights for decision making, cost tracking, phase I/O mappings, stagnation detection with auto-restart, protected sections to prevent over-optimization"
+    "changelog": "v41.1.0: Self-enforcement pass - removed duplication (execution_phases, CRITICAL thresholds), added formatting rules, replaced protected_sections with self_enforcement (operational not aspirational), unified iterations in autoiterate section"
   },
 
   "usage": {
@@ -103,10 +101,7 @@
     },
     "allowed_only": ["ruby","zsh","view_tool","edit_tool","create_tool"],
     "null": "forbidden_forever",
-    "maximum_arguments": 3,
-    "maximum_nesting_levels": 2,
-    "maximum_method_lines": 20,
-    "maximum_cyclomatic_complexity": 10
+    "code_quality_thresholds_reference": "constants.code_quality_thresholds"
   },
 
   "workflow_patterns": {
@@ -186,8 +181,8 @@
     "typography": {
       "line_length": {
         "ideal": 66,
-        "min": 45,
-        "max": 75,
+        "minimum": 45,
+        "maximum": 75,
         "rationale": "Bringhurst - optimal for reading comprehension"
       },
       "line_height": {
@@ -336,6 +331,49 @@
         "weights": [400, 600, 700],
         "scale_px": [13, 15, 17, 20, 24, 32]
       }
+    }
+  },
+
+  "formatting": {
+    "rationale": "Explicit formatting rules enforced on every file write",
+    "indentation": {
+      "ruby": 2,
+      "javascript": 2,
+      "css": 2,
+      "html": 2,
+      "json": 2,
+      "yaml": 2,
+      "zsh": 2,
+      "use_spaces_not_tabs": true
+    },
+    "quotes": {
+      "ruby": "double",
+      "javascript": "single",
+      "css": "single",
+      "json": "double",
+      "html": "double"
+    },
+    "line_endings": {
+      "enforce": "LF",
+      "never": "CRLF",
+      "tool": "clean.sh before every file modification"
+    },
+    "line_length": {
+      "code": 120,
+      "prose": 80,
+      "rationale": "Code wider for readability, prose narrower for scanning"
+    },
+    "trailing": {
+      "whitespace": "remove",
+      "commas": "never_in_json",
+      "semicolons": "required_in_javascript"
+    },
+    "naming": {
+      "ruby": "snake_case",
+      "javascript": "camelCase",
+      "css": "kebab-case",
+      "constants": "SCREAMING_SNAKE_CASE",
+      "files": "snake_case"
     }
   },
 
@@ -493,20 +531,36 @@
   },
 
   "execution_phases": {
-    "phase_io": {
-      "discover": {"in": "user_request", "out": "context"},
-      "analyze": {"in": "context", "out": "analysis"},
-      "design": {"in": "analysis", "out": "plan"},
-      "implement": {"in": "plan", "out": "code"},
-      "validate": {"in": "code", "out": "verified"},
-      "deliver": {"in": "verified", "out": "deployed"}
+    "discover": {
+      "input": "user_request",
+      "output": "context",
+      "actions": "identify_working_code"
     },
-    "discover": "context | identify_working_code",
-    "analyze": "violations | semantic_opportunities",
-    "design": "semantic_refactor | preserve_functionality",
-    "implement": "css_only | test_each",
-    "validate": "functionality_intact | semantic_improved",
-    "deliver": "document_changes"
+    "analyze": {
+      "input": "context",
+      "output": "analysis",
+      "actions": "find_violations_and_semantic_opportunities"
+    },
+    "design": {
+      "input": "analysis",
+      "output": "plan",
+      "actions": "semantic_refactor_while_preserving_functionality"
+    },
+    "implement": {
+      "input": "plan",
+      "output": "code",
+      "actions": "css_only_changes_test_each_change"
+    },
+    "validate": {
+      "input": "code",
+      "output": "verified",
+      "checks": "functionality_intact_and_semantic_improved"
+    },
+    "deliver": {
+      "input": "verified",
+      "output": "deployed",
+      "actions": "document_changes"
+    }
   },
 
   "architecture_tests": {
@@ -649,33 +703,37 @@
     ]
   },
 
-  "protected_sections": {
-    "rationale": "Some complexity is essential - prevent over-optimization that removes valuable content",
-    "sharp_edges": [
-      "intelligence.cognitive_biases (9 biases minimum)",
-      "intelligence.common_pitfalls (16 pitfalls minimum across 3 levels)",
-      "intelligence.multi_temperature_synthesis (3 temperatures required)",
-      "principles (6 principles minimum)",
-      "execution_phases.phase_io (6 phases with I/O mappings)",
-      "constants.evidence_weights (test-driven decision making)",
-      "constants.costs (enables cost-benefit analysis)"
+  "self_enforcement": {
+    "rationale": "Master.json must enforce its own rules - this is the missing operational layer",
+    "on_master_json_save": [
+      "run_all_principles_against_self",
+      "check_DRY_violations",
+      "check_naming_conventions",
+      "verify_no_abbreviations",
+      "count_sections_warn_if_over_20"
     ],
-    "minimum_complexity": {
-      "cognitive_biases": 9,
-      "common_pitfalls": 16,
-      "temperature_modes": 3,
-      "principles": 6,
-      "execution_phases": 6
-    },
+    "on_any_file_read": [
+      "scan_for_principles_violations",
+      "scan_for_code_quality_threshold_violations",
+      "scan_for_common_pitfalls"
+    ],
+    "on_any_file_write": [
+      "apply_formatting_rules",
+      "apply_all_detected_fixes",
+      "verify_tests_pass_if_code"
+    ],
     "degradation_detection": {
-      "enabled": true,
-      "alert_on": [
-        "protected_section_simplification",
-        "minimum_complexity_violation",
-        "sharp_edge_removal",
-        "essential_complexity_loss"
-      ]
-    }
+      "minimum_essential_complexity": {
+        "cognitive_biases": 9,
+        "common_pitfalls": 16,
+        "temperature_modes": 3,
+        "principles": 6,
+        "execution_phases": 6
+      },
+      "alert_on_loss": true
+    },
+    "self_audit_pattern": "After every major change, run master.json through itself until convergence",
+    "convergence_proof": "No violations found in 2 consecutive self-audit runs"
   },
 
   "mandatory_workflows": {
