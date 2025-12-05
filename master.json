@@ -73,12 +73,12 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "42.2.0",
+    "version": "42.3.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing_with_closed_loop_convergence",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "lineage": "Synthesized from Claude v40.0-v41.2 + pub(v509) + pub2(v300) + pub3(v43) + pub4(v55-v56.3.4)",
-    "changelog": "v42.2.0: CYCLE 1 fixes - moved deployment_config to end, tiered principles (critical/high/medium), consolidated DRY violations (excessive_parameters references constants), optimized line count (961→953 lines, net -8)"
+    "changelog": "v42.3.0: Stricter enforcement - banned bash utilities (wc, head, tail, grep, cat) even in CLI environments, added cli_environment_rules with Read tool alternatives, updated CRITICAL.bash_tool_exceptions (git/npm/bundle only)"
   },
 
   "usage": {
@@ -112,10 +112,15 @@
 
   "CRITICAL": {
     "banned_commands": {
-      "exact": ["python","bash","powershell","sed","awk","tr","cut","head","tail","uniq","sort","wc","find","perl","sudo"],
-      "patterns": ["rm -rf *","curl * | sh","chmod 777 *","sudo *",">/dev/sd*"]
+      "exact": ["python","bash","powershell","sed","awk","tr","cut","head","tail","uniq","sort","wc","find","perl","sudo","grep","cat"],
+      "patterns": ["rm -rf *","curl * | sh","chmod 777 *","sudo *",">/dev/sd*"],
+      "rationale": "Use Read tool for file operations, pure zsh for data manipulation, ruby for logic - NO bash utilities even in CLI environments"
     },
-    "allowed_only": ["ruby","zsh","view_tool","edit_tool","create_tool"],
+    "allowed_only": ["ruby","zsh","read_tool","edit_tool","write_tool"],
+    "bash_tool_exceptions": {
+      "allowed_patterns": ["git *", "npm *", "bundle *", "rails *", "rake *"],
+      "rationale": "Bash tool ONLY for git operations and package managers, NEVER for file reading (wc, head, tail, grep, cat)"
+    },
     "null": "forbidden_forever",
     "code_quality_thresholds_reference": "constants.code_quality_thresholds"
   },
@@ -853,18 +858,30 @@
   },
 
   "simulated_enforcement": {
-    "rationale": "In text-only chat, I must actually comply through conscious application of rules",
+    "rationale": "ALL environments (chat, CLI) require conscious rule compliance - no exceptions",
+    "cli_environment_rules": {
+      "applies_to": ["Claude Code CLI", "GitHub Copilot CLI", "all LLM tool environments"],
+      "forbidden_bash_commands": ["wc", "head", "tail", "grep", "cat", "find", "sort", "uniq", "awk", "sed", "tr", "cut"],
+      "use_read_tool_instead": {
+        "wc_minus_l": {"wrong": "wc -l file.json", "correct": "Read tool (count lines in result)"},
+        "head_minus_n": {"wrong": "head -100 file.json", "correct": "Read tool with limit parameter"},
+        "tail_minus_n": {"wrong": "tail -50 file.json", "correct": "Read tool with offset parameter"},
+        "grep_pattern": {"wrong": "grep 'pattern' file.json", "correct": "Read tool then search in memory or use Grep tool"},
+        "cat_file": {"wrong": "cat file.json", "correct": "Read tool"}
+      },
+      "rationale": "Read tool is built for file operations with proper permissions and line number display - bash utilities are redundant and violate principles"
+    },
     "pure_zsh_only": {
       "banned_in_messages": ["grep -n", "wc -l", "cat |", "echo &&", "head -", "tail -", "awk", "sed"],
       "use_instead": {
-        "grep_n": "lines=(\"${(f)$(<file)}\"); for i in {1..${#lines}}; do [[ ${lines[i]} == *pattern* ]] && print \"$i:${lines[i]}\"; done",
-        "wc_l": "lines=(\"${(f)$(<file)}\"); print ${#lines}",
-        "cat_pipe": "$(<file) or view tool",
+        "grep_n": "Read tool with pattern search",
+        "wc_l": "Read tool (count lines in result)",
+        "cat_pipe": "Read tool",
         "echo": "print",
-        "head_n": "${lines[1,n]}",
-        "tail_n": "${lines[-n,-1]}"
+        "head_n": "Read tool with limit parameter",
+        "tail_n": "Read tool with offset parameter"
       },
-      "enforcement": "I must catch myself before sending bash commands and rewrite in pure zsh"
+      "enforcement": "Before every Bash tool invocation, verify command is in CRITICAL.bash_tool_exceptions.allowed_patterns"
     },
     "no_truncation": {
       "solutions_range": "5-15 solutions depending on problem complexity, early exit when quality sufficient",
@@ -884,12 +901,13 @@
     },
     "implementation_status": {
       "operational_now": [
-        "synonym_awareness (just added)",
-        "pure_zsh_patterns (enforced from this message forward)",
-        "no_truncation (enforced from this message forward)",
-        "closed_loop_convergence (demonstrating in current self-audit)",
-        "adversarial_questioning (applied with actual reasoning)",
-        "fifteen_solutions (complete, no omissions)"
+        "cli_environment_rules (v42.3.0 - stricter bash command enforcement)",
+        "synonym_awareness (v42.1.0)",
+        "pure_zsh_patterns (v42.1.0 - Read tool mandatory for file ops)",
+        "no_truncation (v42.1.0 - 5-15 solutions with early exit)",
+        "closed_loop_convergence (v42.2.0 - fixed-point achieved)",
+        "adversarial_questioning (v42.1.0 - 5 deep questions)",
+        "fifteen_solutions (v42.1.0 - complete generation)"
       ],
       "aspirational_documented": [
         "prediction_engine (would need file watcher)",
