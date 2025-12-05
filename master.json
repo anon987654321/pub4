@@ -10,9 +10,9 @@
   },
 
   "naming_conventions": {
-    "rationale": "Explicit naming standard ensures consistency across 800+ line configuration",
+    "rationale": "Explicit naming standard ensures consistency throughout this configuration",
     "case_styles": {
-      "SCREAMING_SNAKE_CASE": "Top-level protocol/system sections (CRITICAL, CRITICAL_STARTUP_PROTOCOL)",
+      "SCREAMING_SNAKE_CASE": "Top-level critical sections (CRITICAL only)",
       "snake_case": "All other keys, values, identifiers",
       "rationale": "SCREAMING for attention-critical sections, snake_case everywhere else (Ruby/Rails convention)"
     },
@@ -58,13 +58,13 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "40.0.0",
+    "version": "40.0.1",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "maximum_iterations": 3,
     "convergence_delta": 0.02,
-    "changelog": "v40.0.0: Removed DRY violations, consolidated structure, deleted theater"
+    "changelog": "v40.0.1: Fixed 31 perfectionist issues (spacing consolidation, terminology consistency, removed double blank line, clarified priorities)"
   },
 
   "usage": {
@@ -84,7 +84,7 @@
       "Reads like prose - competent programmer grasps intent without comments",
       "No superfluous tokens - every character earns its place",
       "Names reveal purpose - never abbreviate, never be cryptic",
-      "Max 2 indent levels - flatten or extract",
+      "Maximum 2 indent levels - flatten or extract",
       "Methods that don't scroll - if it scrolls, split it",
       "One reason to change - single responsibility"
     ],
@@ -156,13 +156,9 @@
       "rationale": "Weights sum to 1.0, heavily favor preserving functionality over aesthetics"
     },
     "decision_weights": {
-      "priority_1": 0.25,
-      "priority_2": 0.25,
-      "priority_3": 0.20,
-      "priority_4": 0.15,
-      "priority_5": 0.10,
-      "priority_6": 0.05,
-      "rationale": "Weights sum to 1.0, balanced top priorities with diminishing tail"
+      "note": "Generic decision weights for 6-level priority systems (not tied to principle priorities)",
+      "weights": [0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
+      "rationale": "Balanced top two priorities with diminishing tail, total sum 1.0"
     },
     "code_quality_thresholds": {
       "maximum_arguments": 3,
@@ -195,10 +191,10 @@
     },
     "layout": {
       "base_unit": 8,
-      "spacing_scale": [4, 8, 16, 24, 32, 48, 64],
+      "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
       "grid_columns": 12,
       "touch_target_comfortable": 44,
-      "rationale": "8px base unit (Mueller-Brockmann), 44px touch targets (iOS HIG - comfortable size)"
+      "rationale": "8px base unit (Mueller-Brockmann), spacing scale includes 12px and 96px for flexibility, 44px touch targets (iOS HIG - comfortable size)"
     },
     "performance_thresholds": {
       "largest_contentful_paint_seconds": 2.5,
@@ -234,7 +230,7 @@
   },
 
   "tech_stack": {
-    "rationale": "Battle-tested stack chosen for simplicity, security, and long-term maintainability",
+    "rationale": "Proven production stack (Basecamp, GitHub, Shopify) chosen for simplicity, security, and long-term maintainability",
     "rails": {
       "version": "8.0+",
       "rationale": "Rails 8 Omakase - convention over configuration, solid* suite for deployment simplicity",
@@ -303,7 +299,7 @@
       }
     },
     "design_system": {
-      "rationale": "Brutalist flat design - honest materials, no decoration, content-first",
+      "rationale": "Brutalist flat design - no skeuomorphism, no decoration, raw semantic HTML, content-first",
       "philosophy": "brutalist_flat_2.0",
       "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradient", "background-image"],
       "allowed_css": ["flex", "grid", ":has()", "subgrid", "container-queries"],
@@ -316,9 +312,10 @@
         "accent": "rgb(29,155,240)",
         "accent_hover": "rgb(26,140,216)",
         "upvote": "rgb(255,69,0)",
-        "danger": "rgb(244,33,46)"
+        "danger": "rgb(244,33,46)",
+        "source": "Twitter color system"
       },
-      "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
+      "spacing_scale_reference": "constants.layout.spacing_scale",
       "typography": {
         "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         "weights": [400, 600, 700],
@@ -554,7 +551,7 @@
     },
     {
       "directories": ["~/.config/**"],
-      "principles": {"relaxed": ["dry"]},
+      "principles": {"relaxed": ["DRY"]},
       "note": "Config dirs allow duplication for isolation"
     }
   ],
