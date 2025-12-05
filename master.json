@@ -58,13 +58,13 @@
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "40.0.1",
+    "version": "41.0.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "maximum_iterations": 3,
     "convergence_delta": 0.02,
-    "changelog": "v40.0.1: Fixed 31 perfectionist issues (spacing consolidation, terminology consistency, removed double blank line, clarified priorities)"
+    "changelog": "v41.0.0: Major intelligence upgrades from pub/pub2/pub3 analysis: added intelligence section (cognitive biases with compounding, 16 common pitfalls, temperature-scaled synthesis, scientific confidence levels), evidence weights for decision making, cost tracking, phase I/O mappings, stagnation detection with auto-restart, protected sections to prevent over-optimization"
   },
 
   "usage": {
@@ -159,6 +159,21 @@
       "note": "Generic decision weights for 6-level priority systems (not tied to principle priorities)",
       "weights": [0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
       "rationale": "Balanced top two priorities with diminishing tail, total sum 1.0"
+    },
+    "evidence_weights": {
+      "tests": 0.50,
+      "static_analysis": 0.30,
+      "complexity_checks": 0.20,
+      "rationale": "Test evidence weighs 2.5x more than complexity metrics for decision making"
+    },
+    "costs": {
+      "claude_sonnet_4_input_per_mtok": 3.00,
+      "claude_sonnet_4_output_per_mtok": 15.00,
+      "claude_opus_4_input_per_mtok": 15.00,
+      "claude_opus_4_output_per_mtok": 75.00,
+      "developer_hour_usd": 100,
+      "deployment_failure_usd": 5000,
+      "rationale": "Enables cost-benefit analysis - deployment failure equals 50 developer hours"
     },
     "code_quality_thresholds": {
       "maximum_arguments": 3,
@@ -324,6 +339,47 @@
     }
   },
 
+  "intelligence": {
+    "multi_temperature_synthesis": {
+      "temperatures": [
+        {"temp": 0.1, "purpose": "deterministic_precise", "use_for": "security,compliance,standards"},
+        {"temp": 0.5, "purpose": "balanced_practical", "use_for": "implementation,refactoring,decisions"},
+        {"temp": 0.9, "purpose": "creative_exploratory", "use_for": "ideation,alternatives,edge_cases"}
+      ],
+      "synthesis": "combine_perspectives_weight_by_evidence",
+      "rationale": "Different problem types require different thinking modes - security needs deterministic, ideation needs creative"
+    },
+    "cognitive_biases": {
+      "rationale": "Track which biases compound to create danger zones",
+      "biases": [
+        {"type": "recency", "risk": "overweight_recent_events", "severity": "medium", "compound_with": "confirmation"},
+        {"type": "confirmation", "risk": "seek_only_supporting_evidence", "severity": "high", "compound_with": "authority,bandwagon"},
+        {"type": "anchoring", "risk": "first_option_dominates", "severity": "high", "compound_with": "availability"},
+        {"type": "availability", "risk": "easily_remembered_dominates", "severity": "medium", "compound_with": "recency"},
+        {"type": "sunk_cost", "risk": "continue_bad_path_due_to_investment", "severity": "high", "compound_with": "optimism"},
+        {"type": "optimism", "risk": "underestimate_difficulty_and_risk", "severity": "high", "compound_with": "dunning_kruger"},
+        {"type": "dunning_kruger", "risk": "overestimate_ability_underestimate_complexity", "severity": "critical", "compound_with": "optimism,authority"},
+        {"type": "authority", "risk": "trust_expert_without_verification", "severity": "medium", "compound_with": "confirmation"},
+        {"type": "bandwagon", "risk": "follow_popular_without_evaluation", "severity": "low", "compound_with": "confirmation"}
+      ]
+    },
+    "common_pitfalls": {
+      "rationale": "Organized by level for actionable knowledge",
+      "code_level": ["off_by_one", "null_pointer", "race_condition", "resource_leak", "injection", "integer_overflow"],
+      "design_level": ["circular_dependency", "hidden_coupling", "shotgun_surgery", "feature_envy"],
+      "cognitive_level": ["false_assumption", "premature_abstraction", "scope_creep", "hallucination", "context_loss", "over_mitigation"]
+    },
+    "scientific_confidence": {
+      "rationale": "Quantify claim strength for evidence-based decisions",
+      "levels": {
+        "0.9_to_1.0": "peer_reviewed_research",
+        "0.7_to_0.9": "industry_best_practices",
+        "0.5_to_0.7": "documented_case_studies",
+        "below_0.5": "speculation_or_opinion"
+      }
+    }
+  },
+
   "principles": {
     "_priority": "clarity_preservation is HIGHEST priority",
 
@@ -437,6 +493,14 @@
   },
 
   "execution_phases": {
+    "phase_io": {
+      "discover": {"in": "user_request", "out": "context"},
+      "analyze": {"in": "context", "out": "analysis"},
+      "design": {"in": "analysis", "out": "plan"},
+      "implement": {"in": "plan", "out": "code"},
+      "validate": {"in": "code", "out": "verified"},
+      "deliver": {"in": "verified", "out": "deployed"}
+    },
     "discover": "context | identify_working_code",
     "analyze": "violations | semantic_opportunities",
     "design": "semantic_refactor | preserve_functionality",
@@ -570,7 +634,48 @@
     "maximum_iterations": 20,
     "convergence_threshold": 0.001,
     "checks": ["quality", "phases", "cruft", "duplication", "complexity"],
-    "gates": ["tests_pass"]
+    "gates": ["tests_pass"],
+    "stagnation_detection": {
+      "metric": "improvement_rate",
+      "threshold": 0.005,
+      "window": 3,
+      "action": "restart_with_alternative_approach",
+      "rationale": "Detects plateau over 3 iterations and fires alternative approach"
+    },
+    "halt_when": [
+      "plateau_detected_over_3_iterations",
+      "convergence_threshold_achieved",
+      "maximum_iterations_reached"
+    ]
+  },
+
+  "protected_sections": {
+    "rationale": "Some complexity is essential - prevent over-optimization that removes valuable content",
+    "sharp_edges": [
+      "intelligence.cognitive_biases (9 biases minimum)",
+      "intelligence.common_pitfalls (16 pitfalls minimum across 3 levels)",
+      "intelligence.multi_temperature_synthesis (3 temperatures required)",
+      "principles (6 principles minimum)",
+      "execution_phases.phase_io (6 phases with I/O mappings)",
+      "constants.evidence_weights (test-driven decision making)",
+      "constants.costs (enables cost-benefit analysis)"
+    ],
+    "minimum_complexity": {
+      "cognitive_biases": 9,
+      "common_pitfalls": 16,
+      "temperature_modes": 3,
+      "principles": 6,
+      "execution_phases": 6
+    },
+    "degradation_detection": {
+      "enabled": true,
+      "alert_on": [
+        "protected_section_simplification",
+        "minimum_complexity_violation",
+        "sharp_edge_removal",
+        "essential_complexity_loss"
+      ]
+    }
   },
 
   "mandatory_workflows": {
