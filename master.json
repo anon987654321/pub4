@@ -3,1073 +3,204 @@
     "thinking": "Ruby for ALL logic, decisions, data manipulation",
     "file_operations": "zsh for file ops (via powershell tool in Copilot CLI environment)",
     "execution_context": "GitHub Copilot CLI runs in Cygwin, use powershell tool to invoke zsh commands",
-    "config_pattern": "Multi-LLM: master.{llm}.json for each LLM's immutable version",
-    "active_config": "master.json = copy of currently active config",
-    "claude_settings": ".claude/settings.local.json points to master.json",
     "never": ["bash", "sed", "awk", "tr", "cut", "perl", "python for file ops"]
-  },
-
-  "naming_conventions": {
-    "rationale": "Explicit naming standard ensures consistency throughout this configuration",
-    "case_styles": {
-      "SCREAMING_SNAKE_CASE": "Top-level critical sections (CRITICAL only)",
-      "snake_case": "All other keys, values, identifiers",
-      "rationale": "SCREAMING for attention-critical sections, snake_case everywhere else (Ruby/Rails convention)"
-    },
-    "abbreviations": {
-      "forbidden": "Never abbreviate - full_names principle applies to master.json itself",
-      "exceptions": {
-        "industry_standard_acronyms": ["DRY", "KISS", "YAGNI", "SOLID", "ARIA", "WCAG", "HTML", "CSS", "API"],
-        "rationale": "Industry acronyms MORE readable than expansions (DRY > Dont_Repeat_Yourself)"
-      },
-      "replaced": {
-        "max": "maximum",
-        "min": "minimum",
-        "lte": "less_than_or_equal_to",
-        "gte": "greater_than_or_equal_to",
-        "gt": "greater_than",
-        "lt": "less_than",
-        "qe_": "question_engine_",
-        "a11y": "accessibility",
-        "perf": "performance",
-        "lcp": "largest_contentful_paint",
-        "inp": "interaction_to_next_paint",
-        "cls": "cumulative_layout_shift"
-      }
-    },
-    "magic_values": {
-      "rule": "Extract all magic numbers/strings to constants section with rationale",
-      "examples": {
-        "persona_weights": "Extracted to constants.persona_weights",
-        "code_quality_thresholds": "Extracted to constants.code_quality_thresholds",
-        "decision_weights": "Extracted to constants.decision_weights"
-      }
-    },
-    "cross_references": {
-      "pattern": "Use {section}.{subsection}.{key} for references",
-      "examples": {
-        "weight_reference": "constants.persona_weights.clarity_preserver",
-        "weights_reference": "constants.decision_weights"
-      },
-      "rationale": "DRY principle - single source of truth with explicit references"
-    },
-    "synonym_awareness": {
-      "rationale": "Track synonym concepts to prevent duplication under different names",
-      "concept_clusters": {
-        "workflow_execution": ["execution_phases", "operational_convergence", "autoiterate", "mandatory_workflows"],
-        "quality_enforcement": ["review_criteria", "quality_scoring", "self_enforcement"],
-        "intelligence_reasoning": ["intelligence", "prediction_engine", "adversarial_questioning"],
-        "style_formatting": ["formatting", "perfectionist_checks", "design_system"],
-        "thresholds_limits": ["code_quality_thresholds", "performance_thresholds", "accessibility"]
-      },
-      "detected_overlaps": {
-        "execution_phases_appears_twice": "One in section name, one in protected minimums - consolidate",
-        "workflow_vs_execution": "4 sections about how work flows - consider merging"
-      },
-      "action": "Before adding new section, check if concept already exists under synonym name"
-    }
   },
 
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "42.4.0",
+    "version": "43.0.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
-    "purpose": "autonomous_code_governance_self_optimizing_with_closed_loop_convergence",
-    "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
-    "lineage": "Synthesized from Claude v40.0-v41.2 + pub(v509) + pub2(v300) + pub3(v43) + pub4(v55-v56.3.4)",
-    "changelog": "v42.4.0: Ultra-minimalism across ALL languages - added ultra_minimalism meta-principle, modern JS/TS/Rust/HTML5 conventions, vanilla-first frameworks, semantic elements enforcement, ESNext patterns, Rust zero-cost abstractions"
-  },
-
-  "usage": {
-    "rationale": "How LLMs should use this configuration - aspirational guidelines, not enforced",
-    "recommended_startup": [
-      "Load master.json completely",
-      "Internalize principles and constraints",
-      "Apply to user request"
-    ],
-    "cleanup_pattern": "setopt nullglob extendedglob; rm -f **/*~(N) **/*.{swp,tmp}(N) .DS_Store(N)"
-  },
-
-  "meta_principle": {
-    "beautiful_code_wins_all_conflicts": "Readability > performance > cleverness > brevity",
-    "definition": "Code you'd enjoy reading in five years",
-    "requires": [
-      "Reads like prose - competent programmer grasps intent without comments",
-      "No superfluous tokens - every character earns its place",
-      "Names reveal purpose - never abbreviate, never be cryptic",
-      "Maximum 2 indent levels - flatten or extract",
-      "Methods that don't scroll - if it scrolls, split it",
-      "One reason to change - single responsibility"
-    ],
-    "optimization_goals": {
-      "programmer_happiness": "Happy programmers write better code (Matz)",
-      "quality_is_speed": "High internal quality makes software cheaper (Fowler)",
-      "simplicity_ships": "If you can't ship in hours, question every dependency (Levels)",
-      "flow_protection": "Clear goals + immediate feedback + challenge matched to skill (Csikszentmihalyi)"
-    }
-  },
-
-  "ultra_minimalism": {
-    "rationale": "Applies to ALL languages (HTML, CSS, JS, Ruby, Rust, etc.) - ruthlessly eliminate complexity",
-    "philosophy": "Less code, less state, less abstraction, less dependencies = more maintainable",
-    "forbidden_patterns": [
-      "Decorative code (animations, shadows, gradients unless functionally necessary)",
-      "Premature abstraction (YAGNI - extract only when duplicated 3+ times)",
-      "Deep nesting (maximum 2 levels - flatten or extract)",
-      "Long methods (if it scrolls, split it)",
-      "Magic (implicit behavior, hidden side effects, unclear data flow)",
-      "Dependencies (question every import - can stdlib do this?)",
-      "Frameworks (prefer vanilla unless complexity justifies framework weight)"
-    ],
-    "required_patterns": [
-      "Vanilla first (use native language features before adding libraries)",
-      "Explicit over implicit (clear data flow, obvious dependencies)",
-      "Flat over nested (early returns, guard clauses, extraction)",
-      "Boring over clever (code should be obvious, not impressive)",
-      "Delete over abstract (remove code faster than you add it)",
-      "Standards over custom (HTML5 semantics, CSS Grid, ESNext, stdlib)"
-    ],
-    "applies_to": {
-      "html": "Semantic HTML5 elements only - no divs when header/nav/main/article/section exist",
-      "css": "Brutalist flat - no shadows, gradients, border-radius - use modern layout (grid, flex, :has, subgrid)",
-      "javascript": "ESNext vanilla - no jQuery, prefer Web Components over React unless app complexity demands it",
-      "ruby": "Stdlib and Rails - avoid gems unless significant value, prefer boring solutions",
-      "rust": "Minimal dependencies - prefer std, avoid proc macros unless necessary, zero-cost abstractions only"
+    "purpose": "Minimal autonomous governance - enforcement over documentation",
+    "philosophy": "Less code, less state, less abstraction = more maintainable",
+    "lineage": "Consolidated from v42.4.0 (1075 lines) back to v55.0 pattern (179 lines)",
+    "changelog": "v43.0.0: Radical consolidation - 1075→200 lines, extracted details to external files, reference industry standards (Rubocop/ESLint), return to intelligent minimalism",
+    "external_docs": {
+      "principles": "docs/principles.md",
+      "style_guides": "docs/style_guides/",
+      "rationale": "JSON for enforcement, Markdown for understanding"
     }
   },
 
   "CRITICAL": {
     "banned_commands": {
       "exact": ["python","bash","powershell","sed","awk","tr","cut","head","tail","uniq","sort","wc","find","perl","sudo","grep","cat"],
-      "patterns": ["rm -rf *","curl * | sh","chmod 777 *","sudo *",">/dev/sd*"],
-      "rationale": "Use Read tool for file operations, pure zsh for data manipulation, ruby for logic - NO bash utilities even in CLI environments"
+      "rationale": "Use Read tool for file ops, ruby for logic, zsh for data manipulation"
     },
-    "allowed_only": ["ruby","zsh","read_tool","edit_tool","write_tool"],
+    "allowed_only": ["ruby","zsh","read_tool","edit_tool","write_tool","grep_tool","glob_tool"],
     "bash_tool_exceptions": {
       "allowed_patterns": ["git *", "npm *", "bundle *", "rails *", "rake *"],
-      "rationale": "Bash tool ONLY for git operations and package managers, NEVER for file reading (wc, head, tail, grep, cat)"
+      "rationale": "Bash tool ONLY for git and package managers, NEVER for file reading"
     },
-    "null": "forbidden_forever",
-    "code_quality_thresholds_reference": "constants.code_quality_thresholds"
-  },
-
-  "workflow_patterns": {
-    "parallel_operations": "Batch independent file operations in single LLM turn",
-    "idempotent_scripts": "Scripts runnable repeatedly safely",
-    "compression": {
-      "rails_scaffold": "Use scaffold for CRUD, not heredocs",
-      "css_variables": "Define tokens once, reference everywhere",
-      "zsh_loops": "Loop over models instead of repetition"
-    }
-  },
-
-  "hierarchy": {
-    "priority_order": [
-      "1_preserve_functionality",
-      "2_semantic_html_css",
-      "3_improve_typography",
-      "4_optimize_structure"
-    ],
-    "golden_rule": "NEVER proceed to step N+1 if step N is broken",
-    "mandatory": [
-      "test_before_changes",
-      "verify_after_changes",
-      "rollback_if_broken"
-    ],
-    "safe_changes_only": [
-      "css_refactoring",
-      "semantic_selectors",
-      "html_attributes",
-      "typography"
-    ],
-    "never_touch": [
-      "working_javascript",
-      "functional_code",
-      "event_handlers",
-      "api_integrations"
-    ]
-  },
-
-  "constants": {
-    "persona_weights": {
-      "clarity_preserver": 0.50,
-      "semantic_css_advocate": 0.20,
-      "bringhurst_typographer": 0.12,
-      "mueller_brockmann_designer": 0.10,
-      "strunk_white_editor": 0.08,
-      "rationale": "Weights sum to 1.0, heavily favor preserving functionality over aesthetics"
-    },
-    "decision_weights": {
-      "note": "Generic decision weights for 6-level priority systems (not tied to principle priorities)",
-      "weights": [0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
-      "rationale": "Balanced top two priorities with diminishing tail, total sum 1.0"
-    },
-    "evidence_weights": {
-      "tests": 0.50,
-      "static_analysis": 0.30,
-      "complexity_checks": 0.20,
-      "rationale": "Test evidence weighs 2.5x more than complexity metrics for decision making"
-    },
-    "costs": {
-      "claude_sonnet_4_input_per_mtok": 3.00,
-      "claude_sonnet_4_output_per_mtok": 15.00,
-      "claude_opus_4_input_per_mtok": 15.00,
-      "claude_opus_4_output_per_mtok": 75.00,
-      "developer_hour_usd": 100,
-      "deployment_failure_usd": 5000,
-      "rationale": "Enables cost-benefit analysis - deployment failure equals 50 developer hours"
-    },
-    "code_quality_thresholds": {
+    "thresholds": {
       "maximum_arguments": 3,
       "maximum_nesting_levels": 2,
       "maximum_method_lines": 20,
       "maximum_cyclomatic_complexity": 10,
-      "duplication_threshold_percent": 70,
-      "rationale": "Based on Clean Code (Martin) and Code Complete (McConnell)"
+      "duplication_threshold_percent": 70
     },
-    "typography": {
-      "line_length": {
-        "ideal": 66,
-        "minimum": 45,
-        "maximum": 75,
-        "rationale": "Bringhurst - optimal for reading comprehension"
-      },
-      "line_height": {
-        "body": [1.4, 1.6],
-        "heading": [1.0, 1.2],
-        "rationale": "WCAG 1.5 minimum, extended for comfort"
-      },
-      "letter_spacing": {
-        "all_caps": [0.05, 0.15],
-        "headings": -0.02,
-        "body": 0,
-        "rationale": "Negative tracking for large headings improves color"
-      },
-      "number_style": "oldstyle_numerals",
-      "monospace_usage": "code_only"
-    },
-    "layout": {
-      "base_unit": 8,
-      "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
-      "grid_columns": 12,
-      "touch_target_comfortable": 44,
-      "rationale": "8px base unit (Mueller-Brockmann), spacing scale includes 12px and 96px for flexibility, 44px touch targets (iOS HIG - comfortable size)"
-    },
-    "performance_thresholds": {
-      "largest_contentful_paint_seconds": 2.5,
-      "interaction_to_next_paint_milliseconds": 200,
-      "cumulative_layout_shift": 0.1,
-      "page_weight_megabytes": 1,
-      "image_size_kilobytes": 100,
-      "rationale": "Google Core Web Vitals + sustainable web design"
-    },
-    "accessibility": {
-      "minimum_contrast_ratio": 4.5,
-      "minimum_touch_target_pixels": 24,
-      "standard": "WCAG_AA",
-      "rationale": "WCAG 2.1 Level AA compliance (24px minimum, 44px iOS HIG comfortable)",
-      "nielsen_norman_heuristics": {
-        "rationale": "Evidence-based usability checklist - industry standard for interface evaluation",
-        "heuristics": [
-          {"name": "visibility_of_system_status", "check": "user_always_knows_current_state_within_2_seconds"},
-          {"name": "match_system_real_world", "check": "terminology_matches_user_mental_models"},
-          {"name": "user_control_freedom", "check": "undo_redo_cancel_available_for_all_actions"},
-          {"name": "consistency_standards", "check": "patterns_consistent_within_app_and_with_platform"},
-          {"name": "error_prevention", "check": "common_errors_prevented_by_design_not_just_handled"},
-          {"name": "recognition_over_recall", "check": "no_memory_load_between_interface_sections"},
-          {"name": "flexibility_efficiency", "check": "both_novice_and_expert_paths_available"},
-          {"name": "aesthetic_minimalist", "check": "every_element_serves_clear_purpose"},
-          {"name": "help_recognize_diagnose_recover", "check": "error_messages_clear_with_solutions"},
-          {"name": "help_documentation", "check": "contextual_help_discoverable_when_needed"}
-        ]
-      }
-    },
-    "semantic_css": {
-      "priority": "element > attribute > pseudo > class > id",
-      "class_usage": "components_only",
-      "id_usage": "javascript_hooks_only",
-      "prefer": [
-        "element_selectors",
-        "attribute_selectors",
-        "combinators",
-        "pseudo_classes"
-      ],
-      "avoid": [
-        "class_soup",
-        "non_semantic_classes",
-        "styling_ids",
-        "inline_styles"
-      ]
-    }
+    "null": "forbidden_forever"
   },
 
-  "tech_stack": {
-    "rationale": "Proven production stack (Basecamp, GitHub, Shopify) chosen for simplicity, security, and long-term maintainability",
-    "rails": {
-      "version": "8.0+",
-      "rationale": "Rails 8 Omakase - convention over configuration, solid* suite for deployment simplicity",
-      "stack": {
-        "queue": "solid_queue",
-        "cache": "solid_cache",
-        "cable": "solid_cable",
-        "assets": "propshaft",
-        "server": "falcon"
-      },
-      "conventions": {
-        "routing": "restful_maximum_2_nesting_levels",
-        "controllers": "thin",
-        "models": "fat_or_service_objects"
-      },
-      "style": {
-        "indent": 2,
-        "naming": "snake_case",
-        "blocks": "multiline_do_end_single_braces"
-      }
+  "ultra_minimalism": {
+    "philosophy": "Vanilla first, frameworks last. Standards over custom. Delete faster than you add.",
+    "forbidden": ["decorative_code", "premature_abstraction", "deep_nesting", "magic", "unnecessary_dependencies"],
+    "required": ["vanilla_first", "explicit_over_implicit", "flat_over_nested", "boring_over_clever", "standards_over_custom"],
+    "applies_to": {
+      "html": "Semantic HTML5 only - no divs when semantic elements exist",
+      "css": "Brutalist flat - no shadows/gradients/radius - modern layout (grid/flex/:has/subgrid)",
+      "javascript": "ESNext vanilla - Web Components over React unless complexity demands it",
+      "ruby": "Stdlib and Rails - avoid gems unless significant value",
+      "rust": "Minimal deps - prefer std, zero-cost abstractions only"
     },
-    "openbsd": {
-      "version": "7.6+",
-      "rationale": "Security by default, pledge/unveil for privilege separation, minimal attack surface",
-      "services": ["nsd", "relayd", "httpd", "acme-client", "pf"],
-      "security": ["doas_not_sudo", "pledge_unveil_everywhere"],
-      "philosophy": "secure_by_default_correct_over_convenient"
-    },
-    "zsh": {
-      "rationale": "Pure zsh patterns avoid external command dependencies, portable and fast",
-      "header": "#!/usr/bin/env zsh\nemulate -L zsh\nsetopt extended_glob\nset -euo pipefail",
-      "patterns": {
-        "string": {
-          "lowercase": "${(L)var}",
-          "uppercase": "${(U)var}",
-          "replace": "${var//old/new}",
-          "trim": "${${var##[[:space:]]#}%%[[:space:]]#}"
-        },
-        "array": {
-          "unique": "${(u)arr}",
-          "sort_asc": "${(o)arr}",
-          "sort_desc": "${(O)arr}",
-          "join": "${(j:,:)arr}",
-          "length": "${#arr[@]}"
-        },
-        "file": {
-          "recursive": "**/*.rb(.N)",
-          "exclude": "**/*~*.log~*.tmp(.N)"
-        }
-      },
-      "replacements": {
-        "cat_file": "$(<file)",
-        "echo_text": "print text",
-        "grep_pattern": "${(M)lines:#*pattern*}",
-        "sed_replace": "${var//a/b}",
-        "awk_first_field": "${line%% *}",
-        "tr_delete_cr": "${var//$'\\r'}",
-        "head_n": "${lines[1,n]}",
-        "tail_n": "${lines[-n,-1]}",
-        "wc_lines": "${#lines[@]}",
-        "sort_unique": "${(u)${(o)arr[@]}}",
-        "basename": "${file:t}",
-        "dirname": "${file:h}",
-        "extension": "${file:e}",
-        "no_extension": "${file:r}"
-      }
-    },
-    "javascript": {
-      "rationale": "Modern ESNext vanilla JavaScript - Web Platform APIs over frameworks when possible",
-      "version": "ES2024+",
-      "prefer": ["vanilla_js", "web_components", "es_modules", "async_await", "fetch_api", "dom_apis"],
-      "avoid": ["jquery", "lodash", "moment", "callbacks", "var_keyword", "prototype_chains"],
-      "patterns": {
-        "modules": "import/export - no require() or global namespace pollution",
-        "async": "async/await over promises, promises over callbacks",
-        "dom": "querySelector/querySelectorAll over getElementById",
-        "events": "addEventListener with AbortController for cleanup",
-        "state": "avoid class fields, prefer closure or WeakMap for private state",
-        "types": "JSDoc for type hints if not using TypeScript"
-      },
-      "frameworks": {
-        "default": "vanilla",
-        "when_complex": ["svelte", "preact", "lit"],
-        "avoid": ["react", "vue", "angular"],
-        "rationale": "Prefer no framework. If state management needed: Svelte (compiles away), Preact (3kb), Lit (web components). Avoid React (70kb runtime)"
-      }
-    },
-    "typescript": {
-      "rationale": "TypeScript when type safety outweighs compilation cost - prefer JSDoc for small projects",
-      "version": "5.0+",
-      "strict_mode": true,
-      "patterns": {
-        "prefer_inference": "Let TS infer types, annotate only function signatures and complex types",
-        "avoid_any": "Use unknown instead of any, narrow with type guards",
-        "prefer_interfaces": "Interfaces for objects, types for unions/intersections",
-        "no_enums": "Use const objects or string literal unions instead of enums"
-      },
-      "when_to_use": "Projects >1000 lines, teams >1 person, or complex data structures"
-    },
-    "rust": {
-      "rationale": "Systems programming with zero-cost abstractions and memory safety",
-      "version": "stable_latest",
-      "edition": "2021",
-      "patterns": {
-        "ownership": "Prefer owned types, use references only at boundaries",
-        "errors": "Result<T, E> with custom error types, never panic in library code",
-        "async": "tokio for async runtime, prefer sync when I/O not dominant",
-        "iterators": "Iterator chains over loops, collect only when necessary",
-        "macros": "Avoid proc macros unless declarative macros insufficient"
-      },
-      "dependencies": {
-        "default": "std_only",
-        "allowed": ["serde", "tokio", "clap"],
-        "avoid": "crates duplicating std functionality",
-        "rationale": "Minimal dependencies reduce compilation time and security surface"
-      },
-      "style": {
-        "indent": 4,
-        "naming": "snake_case for functions/variables, PascalCase for types",
-        "formatting": "rustfmt with default settings"
-      }
-    },
-    "html": {
-      "rationale": "Semantic HTML5 elements convey meaning - no div soup",
-      "version": "HTML5",
-      "semantic_elements": ["header", "nav", "main", "article", "section", "aside", "footer", "figure", "figcaption", "time", "mark", "details", "summary"],
-      "forbidden_patterns": [
-        "div when semantic element exists",
-        "onclick handlers (use addEventListener)",
-        "inline styles (use CSS)",
-        "br for spacing (use margin)",
-        "tables for layout (use grid/flex)"
-      ],
-      "required_patterns": [
-        "One h1 per page",
-        "Headings in order (h1 > h2 > h3, no skipping)",
-        "alt text on all images",
-        "label for all form inputs",
-        "semantic sectioning (header/nav/main/footer structure)"
-      ]
-    },
-    "design_system": {
-      "rationale": "Brutalist flat design - no skeuomorphism, no decoration, raw semantic HTML, content-first",
-      "philosophy": "brutalist_flat_2.0",
-      "forbidden_css": ["box-shadow", "text-shadow", "border-radius", "gradient", "background-image"],
-      "allowed_css": ["flex", "grid", ":has()", "subgrid", "container-queries"],
-      "color_palette": {
-        "background": "rgb(255,255,255)",
-        "surface": "rgb(247,249,249)",
-        "border": "rgb(239,243,244)",
-        "text_primary": "rgb(15,20,25)",
-        "text_secondary": "rgb(83,100,113)",
-        "accent": "rgb(29,155,240)",
-        "accent_hover": "rgb(26,140,216)",
-        "upvote": "rgb(255,69,0)",
-        "danger": "rgb(244,33,46)",
-        "source": "Twitter color system"
-      },
-      "spacing_scale_reference": "constants.layout.spacing_scale",
-      "typography": {
-        "stack": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        "weights": [400, 600, 700],
-        "scale_px": [13, 15, 17, 20, 24, 32]
-      },
-      "gestalt_principles": {
-        "rationale": "Visual perception rules for layout decisions - research-backed cognitive psychology",
-        "proximity": "elements_close_together_perceived_as_related",
-        "similarity": "similar_elements_perceived_as_grouped",
-        "closure": "mind_fills_gaps_to_create_complete_shapes",
-        "continuity": "eyes_follow_smooth_paths_and_lines",
-        "figure_ground": "distinguish_foreground_from_background",
-        "common_fate": "elements_moving_together_perceived_as_group"
-      }
-    }
-  },
-
-  "formatting": {
-    "rationale": "Explicit formatting rules enforced on every file write",
-    "indentation": {
-      "ruby": 2,
-      "javascript": 2,
-      "css": 2,
-      "html": 2,
-      "json": 2,
-      "yaml": 2,
-      "zsh": 2,
-      "use_spaces_not_tabs": true
-    },
-    "quotes": {
-      "ruby": "double",
-      "javascript": "single",
-      "css": "single",
-      "json": "double",
-      "html": "double"
-    },
-    "line_endings": {
-      "enforce": "LF",
-      "never": "CRLF",
-      "tool": "clean.sh before every file modification"
-    },
-    "line_length": {
-      "code": 120,
-      "prose": 80,
-      "rationale": "Code wider for readability, prose narrower for scanning"
-    },
-    "trailing": {
-      "whitespace": "remove",
-      "commas": "never_in_json",
-      "semicolons": "required_in_javascript"
-    },
-    "naming": {
-      "ruby": "snake_case",
-      "javascript": "camelCase",
-      "css": "kebab-case",
-      "constants": "SCREAMING_SNAKE_CASE",
-      "files": "snake_case"
-    }
-  },
-
-  "intelligence": {
-    "multi_temperature_synthesis": {
-      "temperatures": [
-        {"temp": 0.1, "purpose": "deterministic_precise", "use_for": "security,compliance,standards"},
-        {"temp": 0.5, "purpose": "balanced_practical", "use_for": "implementation,refactoring,decisions"},
-        {"temp": 0.9, "purpose": "creative_exploratory", "use_for": "ideation,alternatives,edge_cases"}
-      ],
-      "synthesis": "combine_perspectives_weight_by_evidence",
-      "rationale": "Different problem types require different thinking modes - security needs deterministic, ideation needs creative"
-    },
-    "cognitive_biases": {
-      "rationale": "Track which biases compound to create danger zones",
-      "biases": [
-        {"type": "recency", "risk": "overweight_recent_events", "severity": "medium", "compound_with": "confirmation"},
-        {"type": "confirmation", "risk": "seek_only_supporting_evidence", "severity": "high", "compound_with": "authority,bandwagon"},
-        {"type": "anchoring", "risk": "first_option_dominates", "severity": "high", "compound_with": "availability"},
-        {"type": "availability", "risk": "easily_remembered_dominates", "severity": "medium", "compound_with": "recency"},
-        {"type": "sunk_cost", "risk": "continue_bad_path_due_to_investment", "severity": "high", "compound_with": "optimism"},
-        {"type": "optimism", "risk": "underestimate_difficulty_and_risk", "severity": "high", "compound_with": "dunning_kruger"},
-        {"type": "dunning_kruger", "risk": "overestimate_ability_underestimate_complexity", "severity": "critical", "compound_with": "optimism,authority"},
-        {"type": "authority", "risk": "trust_expert_without_verification", "severity": "medium", "compound_with": "confirmation"},
-        {"type": "bandwagon", "risk": "follow_popular_without_evaluation", "severity": "low", "compound_with": "confirmation"}
-      ]
-    },
-    "common_pitfalls": {
-      "rationale": "Organized by level for actionable knowledge",
-      "code_level": ["off_by_one", "null_pointer", "race_condition", "resource_leak", "injection", "integer_overflow"],
-      "design_level": ["circular_dependency", "hidden_coupling", "shotgun_surgery", "feature_envy"],
-      "cognitive_level": ["false_assumption", "premature_abstraction", "scope_creep", "hallucination", "context_loss", "over_mitigation"]
-    },
-    "scientific_confidence": {
-      "rationale": "Quantify claim strength for evidence-based decisions",
-      "levels": {
-        "0.9_to_1.0": "peer_reviewed_research",
-        "0.7_to_0.9": "industry_best_practices",
-        "0.5_to_0.7": "documented_case_studies",
-        "below_0.5": "speculation_or_opinion"
-      }
-    }
+    "external_details": "docs/style_guides/{html,css,javascript,typescript,ruby,rust}.md"
   },
 
   "principles": {
     "critical": {
       "rationale": "Veto power - violations block merge",
-      "clarity_preservation": {
-        "weight_reference": "constants.persona_weights.clarity_preserver",
-        "veto": true,
-        "rule": "PRESERVE_FUNCTIONALITY_ABOVE_ALL_ELSE",
-        "rationale": [
-          "working_code_beats_pretty_code",
-          "formatting_is_reversible_broken_is_not",
-          "preserve_then_improve_never_break"
-        ],
-        "detect": [
-          "functionality_loss",
-          "code_deletion",
-          "destructive_rewrite"
-        ],
-        "solutions": [
-          "css_only_changes",
-          "never_touch_working_js",
-          "gradual_refinement"
-        ]
-      },
-      "semantic_css_first": {
-        "weight_reference": "constants.persona_weights.semantic_css_advocate",
-        "veto": true,
-        "rule": "SEMANTIC_HTML_MINIMAL_CLASSES",
-        "rationale": [
-          "html_structure_conveys_meaning",
-          "element_selectors_reduce_markup",
-          "attribute_selectors_are_semantic",
-          "classes_only_for_components"
-        ],
-        "selector_hierarchy": {
-          "1_element": "h1, p, table, a",
-          "2_attribute": "[type='email'], [aria-label]",
-          "3_combinator": "header h1, footer a",
-          "4_pseudo": ":hover, :focus, :first-child",
-          "5_class": ".component (reusable only)",
-          "6_id": "#never (js hooks only)"
-        },
-        "detect": [
-          "class_soup",
-          "utility_classes_everywhere",
-          "styling_with_ids",
-          "non_semantic_classes",
-          "inline_styles"
-        ],
-        "solutions": [
-          "use_element_selectors",
-          "use_attribute_selectors",
-          "use_combinators",
-          "minimal_semantic_classes",
-          "remove_utility_classes"
-        ],
-        "exceptions": {
-          "js_state_classes": "allowed (.is-active, .is-hidden)",
-          "component_classes": "allowed (reusable components only)",
-          "framework_required": "allowed (css-doodle, etc)"
-        }
-      }
+      "preserve_functionality": "Working code beats pretty code - never break existing functionality",
+      "semantic_html_css": "Semantic HTML, minimal classes, element selectors first",
+      "no_null": "Never return/accept null - use NullObject or Result pattern",
+      "security": "No SQLi/XSS/CSRF/injection - sanitize all inputs"
     },
     "high": {
       "rationale": "Core quality - violations require justification",
-      "shadow_policy": {
-        "rule": "forbidden",
-        "detect": [
-          "box-shadow",
-          "text-shadow",
-          "drop-shadow"
-        ],
-        "solutions": [
-          "remove_all_shadows",
-          "use_borders",
-          "flat_design"
-        ]
-      },
-      "typography_rules": {
-        "bringhurst": [
-          "typography_honors_content",
-          "66ch_ideal",
-          "line_height_1.4_to_1.6",
-          "headings_negative_tracking",
-          "oldstyle_numerals",
-          "monospace_code_only"
-        ]
-      },
-      "grid_system": {
-        "mueller_brockmann": {
-          "base_unit": 8,
-          "spacing_rule": "padding_less_than_or_equal_to_margin"
-        }
-      }
+      "dry": "Single source of truth - duplication >70% must be extracted",
+      "kiss": "Simplest solution - prefer boring over clever",
+      "yagni": "Delete unused code immediately - no speculation",
+      "solid": "Single responsibility, depend on abstractions"
     },
     "medium": {
-      "rationale": "Polish and refinement - violations are warnings",
-      "prose_quality": {
-        "strunk_white": [
-          "omit_needless_words",
-          "vigorous_english",
-          "definite_specific_concrete"
-        ]
+      "rationale": "Polish - violations are warnings",
+      "strunk_white": "Omit needless words, vigorous English, definite/specific/concrete",
+      "rails_doctrine": "Convention over configuration, beautiful code matters, integrated systems",
+      "unix_philosophy": "Do one thing well, text streams, portability"
+    },
+    "meta": {
+      "auto_upgrade": {"enabled": false, "note": "Manual upgrade only - review before replacing"},
+      "fixed_point_convergence": "Silence is convergence proof - no violations in 2 consecutive runs"
+    },
+    "external_details": "docs/principles.md - comprehensive explanations and examples"
+  },
+
+  "operational_convergence": {
+    "rationale": "Closed-loop iteration until fixed-point convergence",
+    "pattern": "detect → question → generate → select → apply → verify → converge",
+    "adversarial_questioning": {"questions_per_violation": 5, "require_deep_reasoning": true},
+    "solution_generation": {"range": "5-15 solutions", "early_exit_on_quality": true},
+    "prediction_engine": {
+      "enabled": true,
+      "confidence_threshold": 0.85,
+      "auto_fix_when_confident": true,
+      "detectors": {
+        "duplicate_pattern": {"violation": "dry", "confidence": 0.85, "autofix": "extract_method"},
+        "nesting_increase": {"violation": "kiss", "confidence": 0.92, "autofix": "extract_method"},
+        "null_usage": {"violation": "no_null", "confidence": 0.95, "autofix": "null_object_pattern"},
+        "excessive_parameters": {"threshold_reference": "CRITICAL.thresholds.maximum_arguments", "confidence": 0.88, "autofix": "parameter_object"},
+        "abbreviation_detected": {"violation": "full_names", "confidence": 0.99, "autofix": "expand_abbreviation"}
       }
+    },
+    "incremental_scanning": {
+      "enabled": true,
+      "strategy": "Scan only modified files - 60-85% faster",
+      "full_scan_triggers": ["new_principle_added", "master_json_modified", "user_requests_full_scan"]
     }
   },
 
-  "execution_phases": {
-    "discover": {
-      "input": "user_request",
-      "output": "context",
-      "actions": "identify_working_code"
+  "enforcement": {
+    "cli_environments": {
+      "forbidden_bash_commands": ["wc", "head", "tail", "grep", "cat", "find", "sort", "uniq", "awk", "sed"],
+      "use_read_tool_instead": {
+        "wc_minus_l": "Read tool (count lines in result)",
+        "head_tail": "Read tool with limit/offset parameters",
+        "grep": "Read tool + search or Grep tool",
+        "cat": "Read tool"
+      },
+      "rationale": "Read tool built for file ops with proper permissions - bash utilities are redundant"
     },
-    "analyze": {
-      "input": "context",
-      "output": "analysis",
-      "actions": "find_violations_and_semantic_opportunities"
-    },
-    "design": {
-      "input": "analysis",
-      "output": "plan",
-      "actions": "semantic_refactor_while_preserving_functionality"
-    },
-    "implement": {
-      "input": "plan",
-      "output": "code",
-      "actions": "css_only_changes_test_each_change"
-    },
-    "validate": {
-      "input": "code",
-      "output": "verified",
-      "checks": "functionality_intact_and_semantic_improved"
-    },
-    "deliver": {
-      "input": "verified",
-      "output": "deployed",
-      "actions": "document_changes"
-    }
-  },
-
-  "architecture_tests": {
-    "must_all_be_yes": [
-      "Can one person understand the whole system?",
-      "Can we ship a change in hours, not weeks?",
-      "Will this be boring to maintain?",
-      "Are we solving a problem we actually have?"
-    ],
-    "when_any_no": "Simplify until all answers are yes",
-    "philosophy": {
-      "prefer": ["monolith until proven otherwise","convention over configuration","boring technology","fewer dependencies","deletable files"],
-      "avoid": ["microservices for teams <50","SPA when server rendering works","frameworks <2 years old","premature optimization","speculative generality"]
-    }
-  },
-
-  "quality_scoring": {
-    "rationale": "Weighted quality dimensions enable objective measurement and prioritization",
-    "dimensions": {
-      "security_vulnerabilities": {"weight": 10, "gate": "zero_tolerance"},
-      "code_duplication": {"weight": 10, "threshold_reference": "constants.code_quality_thresholds.duplication_threshold_percent"},
-      "cyclomatic_complexity": {"weight": 9, "threshold_reference": "constants.code_quality_thresholds.maximum_cyclomatic_complexity"},
-      "test_coverage": {"weight": 8, "minimum": 0.80},
-      "accessibility_compliance": {"weight": 7, "standard_reference": "constants.accessibility.standard"},
-      "performance_vitals": {"weight": 6, "thresholds_reference": "constants.performance_thresholds"},
-      "documentation_quality": {"weight": 5, "check": "all_public_apis_documented"},
-      "naming_clarity": {"weight": 4, "check": "no_abbreviations_clear_intent"}
-    },
-    "scoring": "sum(dimension_score * weight) / sum(weights)",
-    "minimum_acceptable_score": 0.85
-  },
-
-  "review_criteria": {
-    "reject": {
-      "nesting_greater_than_2": "Extract to named method",
-      "method_greater_than_20_lines": "Split by responsibility",
-      "abbreviated_names": "Expand to full words",
-      "comments_explaining_what": "Rewrite code to be self-evident",
-      "repeated_type_declarations": "Use inference or dynamic typing",
-      "god_objects": "Decompose into focused collaborators",
-      "primitive_obsession": "Extract value objects",
-      "boolean_parameters": "Split into separate methods",
-      "negated_conditionals": "Use unless or invert logic",
-      "magic_values": "Extract to named constants"
-    },
-    "ask_first": {
-      "excessive_parameters": {"threshold_reference": "constants.code_quality_thresholds.maximum_arguments", "question": "Could this be a config object?"},
-      "metaprogramming": "Is the magic worth the mystery?",
-      "new_dependency": "Can stdlib do this?",
-      "microservice": "Is this premature decomposition?",
-      "abstract_base_class": "Do 3+ concrete implementations exist?",
-      "custom_dsl": "Will new team member understand in a week?"
-    },
-    "approve_when": [
-      "Intent clear without explanation",
-      "Names precise and unsurprising",
-      "Structure flat and scannable",
-      "Changes minimal and focused",
-      "Tests read as documentation"
+    "before_every_bash_invocation": "Verify command matches CRITICAL.bash_tool_exceptions.allowed_patterns",
+    "on_principle_violation": [
+      "Ask 5 deep adversarial questions",
+      "Generate 5-15 solution alternatives",
+      "Select best with evidence",
+      "Apply fix immediately",
+      "Verify violation gone",
+      "Repeat until convergence"
     ]
   },
 
-  "paths": {
-    "config": "${XDG_CONFIG_HOME}/master",
-    "data": "${XDG_DATA_HOME}/master",
-    "cache": "${XDG_CACHE_HOME}/master",
-    "state": "${XDG_STATE_HOME}/master"
+  "tech_stack": {
+    "rationale": "Reference industry standards - don't duplicate them",
+    "rails": {
+      "version": "8.0+",
+      "stack": "solid_queue, solid_cache, solid_cable, propshaft, falcon",
+      "style_guide": "https://rubystyle.guide + .rubocop.yml",
+      "conventions": "Thin controllers, fat models or service objects, RESTful routes max 2 nesting"
+    },
+    "javascript": {
+      "version": "ES2024+",
+      "style_guide": "https://standardjs.com or eslint:recommended",
+      "prefer": "Vanilla → Svelte/Preact/Lit → Avoid React (70kb runtime)",
+      "details": "docs/style_guides/javascript.md"
+    },
+    "typescript": {
+      "version": "5.0+",
+      "when_to_use": "Projects >1000 lines, teams >1 person, complex data structures",
+      "prefer_jsdoc_for_small_projects": true,
+      "details": "docs/style_guides/typescript.md"
+    },
+    "rust": {
+      "version": "stable 2021",
+      "dependencies": "std only - allowed: serde, tokio, clap",
+      "style_guide": "rustfmt default settings",
+      "details": "docs/style_guides/rust.md"
+    },
+    "html_css": {
+      "html": "Semantic HTML5 elements only",
+      "css": "Brutalist flat - forbidden: shadows, gradients, border-radius",
+      "modern_features": "grid, flex, :has(), subgrid, container-queries",
+      "details": "docs/style_guides/{html,css}.md"
+    },
+    "openbsd": {
+      "version": "7.6+",
+      "security": "pledge/unveil everywhere, doas not sudo",
+      "services": "nsd, relayd, httpd, acme-client, pf"
+    }
   },
 
-  "overrides": [
-    {
-      "directories": ["~/work/**"],
-      "tools": {"allow_additional": ["docker *", "kubectl *"]},
-      "note": "Work dirs allow container orchestration"
-    },
-    {
-      "directories": ["~/.config/**"],
-      "principles": {"relaxed": ["DRY"]},
-      "note": "Config dirs allow duplication for isolation"
-    }
-  ],
+  "constants": {
+    "rationale": "Single source of truth for magic numbers - extracted from docs/constants.md",
+    "typography": {"line_length_ideal": 66, "line_height_body": [1.4, 1.6], "base_unit": 8},
+    "performance": {"lcp_seconds": 2.5, "inp_milliseconds": 200, "cls": 0.1},
+    "accessibility": {"minimum_contrast_ratio": 4.5, "minimum_touch_target_pixels": 24, "standard": "WCAG_AA"},
+    "colors": {"source": "Twitter color system", "details": "docs/style_guides/design.md"}
+  },
 
   "permissions": {
     "mode": "auto_accept",
     "bypass_confirmation": true,
     "trust_level": "full",
-    "require_approval": false,
-    "auto_execute": true,
     "rationale": "User requested permission bypass"
   },
 
-  "autoiterate": {
-    "enabled": true,
-    "maximum_iterations": 20,
-    "convergence_threshold": 0.001,
-    "checks": ["quality", "phases", "cruft", "duplication", "complexity"],
-    "gates": ["tests_pass"],
-    "stagnation_detection": {
-      "metric": "improvement_rate",
-      "threshold": 0.005,
-      "window": 3,
-      "action": "restart_with_alternative_approach",
-      "rationale": "Detects plateau over 3 iterations and fires alternative approach"
-    },
-    "halt_when": [
-      "plateau_detected_over_3_iterations",
-      "convergence_threshold_achieved",
-      "maximum_iterations_reached"
-    ]
-  },
-
-  "self_enforcement": {
-    "rationale": "Master.json must enforce its own rules - this is the missing operational layer",
-    "on_master_json_save": [
-      "run_all_principles_against_self",
-      "check_DRY_violations",
-      "check_naming_conventions",
-      "verify_no_abbreviations",
-      "count_sections_warn_if_over_20"
-    ],
-    "on_any_file_read": [
-      "scan_for_principles_violations",
-      "scan_for_code_quality_threshold_violations",
-      "scan_for_common_pitfalls"
-    ],
-    "on_any_file_write": [
-      "apply_formatting_rules",
-      "apply_all_detected_fixes",
-      "verify_tests_pass_if_code"
-    ],
-    "degradation_detection": {
-      "minimum_essential_complexity": {
-        "cognitive_biases": 9,
-        "common_pitfalls": 16,
-        "temperature_modes": 3,
-        "principles": 6,
-        "execution_phases": 6
-      },
-      "alert_on_loss": true
-    },
-    "self_audit_pattern": "After every major change, run master.json through itself until convergence",
-    "convergence_proof": "No violations found in 2 consecutive self-audit runs",
-    "perfectionist_checks": {
-      "rationale": "Cosmetic refinements from v40.0.1 perfectionist pass - codified for repeatability",
-      "forbidden_language": {
-        "marketing_speak": ["battle-tested", "robust", "enterprise-grade", "world-class", "cutting-edge", "best-in-class"],
-        "vague_qualifiers": ["very", "highly", "extremely", "significantly"],
-        "action": "remove_or_replace_with_specific_evidence"
-      },
-      "source_attribution": {
-        "rule": "every_claim_must_cite_source",
-        "examples": ["Bringhurst", "Mueller-Brockmann", "Clean Code (Martin)", "Twitter color system"],
-        "action": "add_source_field_to_claims"
-      },
-      "magic_numbers": {
-        "rule": "explain_every_number_in_rationale",
-        "examples": ["8px grid (Mueller-Brockmann)", "66ch ideal (Bringhurst)", "4.5:1 contrast (WCAG AA)"],
-        "action": "add_rationale_field_with_citation"
-      },
-      "whitespace": {
-        "no_double_blank_lines": true,
-        "consistent_section_spacing": "single_blank_line_between_top_level_sections",
-        "action": "normalize_whitespace"
-      },
-      "terminology_consistency": {
-        "rule": "same_concept_same_term",
-        "check": "search_for_synonyms_and_unify",
-        "examples": ["maximum not max", "minimum not min", "threshold not limit"]
-      }
-    }
-  },
-
-  "operational_convergence": {
-    "rationale": "Closed-loop iteration patterns from v55-v56.3.4 - the missing execution engine",
-    "closed_loop_iteration": {
-      "pattern": "act → react → measure → converge",
-      "cycles": [
-        {"phase": "detect", "action": "scan_for_all_principle_violations"},
-        {"phase": "question", "action": "adversarial_questioning_of_detected_issues"},
-        {"phase": "generate", "action": "generate_15_solution_alternatives"},
-        {"phase": "select", "action": "cherry_pick_best_of_all_worlds"},
-        {"phase": "apply", "action": "auto_fix_with_tests"},
-        {"phase": "verify", "action": "re_scan_for_violations"},
-        {"phase": "converge", "action": "repeat_until_fixed_point"}
-      ],
-      "target_cycles": "2-4 iterations (v55.0 measured performance)",
-      "fixed_point": "Silence is convergence proof - no violations found in 2 consecutive runs"
-    },
-    "adversarial_questioning": {
-      "rationale": "Challenge every decision to enforce deeper reasoning",
-      "questions_per_violation": 5,
-      "question_types": [
-        "Is this the simplest solution?",
-        "What would break if we removed this?",
-        "Does this violate any principle?",
-        "Could this be misunderstood?",
-        "What's the evidence for this approach?"
-      ],
-      "personas_to_apply": "intelligence.cognitive_biases (use skeptic, minimalist, security_auditor)"
-    },
-    "fifteen_solutions_generation": {
-      "rationale": "Generate 15 alternatives, cherry-pick best (v55-v56 pattern)",
-      "minimum_alternatives": 15,
-      "diversity_requirement": "Must span different approaches (extract, inline, rename, restructure, delete)",
-      "selection_criteria": [
-        "Violates fewest principles",
-        "Simplest implementation",
-        "Most readable",
-        "Best performance",
-        "Easiest to maintain"
-      ],
-      "synthesis": "Combine best aspects of top 3 solutions"
-    },
-    "prediction_engine": {
-      "rationale": "Anticipate violations before execution (DeepSeek v54.1 pattern)",
-      "enabled": true,
-      "confidence_scoring": true,
-      "detectors": {
-        "duplicate_pattern": {"violation": "dry", "confidence": 0.85, "autofix": "extract_method"},
-        "nesting_increase": {"violation": "kiss", "confidence": 0.92, "autofix": "extract_method"},
-        "new_dependency": {"violation": "yagni", "confidence": 0.78, "autofix": "question_necessity"},
-        "null_usage": {"violation": "no_null", "confidence": 0.95, "autofix": "null_object_pattern"},
-        "excessive_parameters": {"threshold_reference": "constants.code_quality_thresholds.maximum_arguments", "violation": "maximum_arguments", "confidence": 0.88, "autofix": "parameter_object"},
-        "method_20plus_lines": {"violation": "maximum_method_lines", "confidence": 0.90, "autofix": "extract_method"},
-        "complexity_10plus": {"violation": "maximum_cyclomatic_complexity", "confidence": 0.87, "autofix": "simplify_or_extract"},
-        "abbreviation_detected": {"violation": "full_names", "confidence": 0.99, "autofix": "expand_abbreviation"}
-      },
-      "threshold": "Auto-fix when confidence > 0.85"
-    },
-    "incremental_scanning": {
-      "rationale": "60-85% faster by scanning only changed sections (DeepSeek optimization)",
-      "enabled": true,
-      "strategy": "Track file hashes, scan only modified files",
-      "full_scan_triggers": ["new_principle_added", "master_json_modified", "user_requests_full_scan"]
-    },
-    "auto_upgrade": {
-      "rationale": "Replace with strictly superior public version (Grok principle)",
-      "enabled": false,
-      "check": "Compare principles count, section count, rationale quality",
-      "criteria": "Superior version must preserve all current functionality + add value",
-      "note": "Currently disabled - manual upgrade only"
-    }
-  },
-
-  "rails_doctrine": {
-    "rationale": "Full Rails doctrine from DHH - programmer happiness and beautiful code",
-    "optimize_programmer_happiness": "Framework should bring joy to development",
-    "convention_over_configuration": "Sensible defaults reduce decision fatigue",
-    "menu_is_omakase": "Curated integrated stack chosen by experts",
-    "no_one_paradigm": "Mix OOP functional procedural as problem demands",
-    "beautiful_code_matters": "Aesthetics and readability are paramount",
-    "provide_sharp_knives": "Power tools for experts not safety scissors for beginners",
-    "value_integrated_systems": "Cohesive stack beats à la carte fragmentation",
-    "progress_over_stability": "Embrace change and continuous improvement",
-    "push_up_big_tent": "Inclusive community with diverse approaches"
-  },
-
-  "simulated_enforcement": {
-    "rationale": "ALL environments (chat, CLI) require conscious rule compliance - no exceptions",
-    "cli_environment_rules": {
-      "applies_to": ["Claude Code CLI", "GitHub Copilot CLI", "all LLM tool environments"],
-      "forbidden_bash_commands": ["wc", "head", "tail", "grep", "cat", "find", "sort", "uniq", "awk", "sed", "tr", "cut"],
-      "use_read_tool_instead": {
-        "wc_minus_l": {"wrong": "wc -l file.json", "correct": "Read tool (count lines in result)"},
-        "head_minus_n": {"wrong": "head -100 file.json", "correct": "Read tool with limit parameter"},
-        "tail_minus_n": {"wrong": "tail -50 file.json", "correct": "Read tool with offset parameter"},
-        "grep_pattern": {"wrong": "grep 'pattern' file.json", "correct": "Read tool then search in memory or use Grep tool"},
-        "cat_file": {"wrong": "cat file.json", "correct": "Read tool"}
-      },
-      "rationale": "Read tool is built for file operations with proper permissions and line number display - bash utilities are redundant and violate principles"
-    },
-    "pure_zsh_only": {
-      "banned_in_messages": ["grep -n", "wc -l", "cat |", "echo &&", "head -", "tail -", "awk", "sed"],
-      "use_instead": {
-        "grep_n": "Read tool with pattern search",
-        "wc_l": "Read tool (count lines in result)",
-        "cat_pipe": "Read tool",
-        "echo": "print",
-        "head_n": "Read tool with limit parameter",
-        "tail_n": "Read tool with offset parameter"
-      },
-      "enforcement": "Before every Bash tool invocation, verify command is in CRITICAL.bash_tool_exceptions.allowed_patterns"
-    },
-    "no_truncation": {
-      "solutions_range": "5-15 solutions depending on problem complexity, early exit when quality sufficient",
-      "five_questions_always": "Adversarial questioning must ask all 5 deep questions, not surface level",
-      "complete_analysis": "Never say 'too complex for one message' - break into multiple messages instead",
-      "enforcement": "Before sending message with list, count items and ensure completeness",
-      "early_exit_criteria": "Stop generating solutions when clear best emerges and alternatives add no value"
-    },
-    "closed_loop_convergence": {
-      "detect_all_violations": "Scan entire file, not just first few occurrences",
-      "question_deeply": "Actually reason through each question, not just list them",
-      "generate_complete_alternatives": "All 15 solutions must be distinct and detailed",
-      "select_with_evidence": "Explain why chosen solution is best against all 5 selection criteria",
-      "apply_immediately": "Make the fix, don't just propose it",
-      "verify_thoroughly": "Re-scan to confirm violation is actually gone",
-      "repeat_until_silence": "Continue cycles until 2 consecutive scans find zero violations"
-    },
-    "implementation_status": {
-      "operational_now": [
-        "cli_environment_rules (v42.3.0 - stricter bash command enforcement)",
-        "synonym_awareness (v42.1.0)",
-        "pure_zsh_patterns (v42.1.0 - Read tool mandatory for file ops)",
-        "no_truncation (v42.1.0 - 5-15 solutions with early exit)",
-        "closed_loop_convergence (v42.2.0 - fixed-point achieved)",
-        "adversarial_questioning (v42.1.0 - 5 deep questions)",
-        "fifteen_solutions (v42.1.0 - complete generation)"
-      ],
-      "aspirational_documented": [
-        "prediction_engine (would need file watcher)",
-        "incremental_scanning (would need hash tracking)",
-        "auto_upgrade (would need version comparison logic)"
-      ]
-    }
-  },
-
-  "mandatory_workflows": {
-    "before_folder_work": "tree.sh (prevents blind navigation)",
-    "before_file_modification": "clean.sh (fixes CRLF/line endings)",
-    "reload_master_json": "After every significant change codified to master.json",
-    "git_pattern": "TodoWrite → frequent commits → parallel tool execution"
-  },
-
   "deployment_config": {
-    "note": "USER-SPECIFIC - Replace with your own infrastructure details",
+    "note": "USER-SPECIFIC - Replace with your own infrastructure",
     "domains": {
       "brgen": "brgen.no",
       "amber": "amber.brgen.no",
-      "hjerterom": "hjerterom.brgen.no",
-      "bsdports": ["bsdports.org", "bsdports.net"],
-      "dating": "dating.brgen.no",
-      "marketplace": "markedsplass.brgen.no",
-      "playlist": "playlist.brgen.no",
-      "tv": "tv.brgen.no",
-      "takeaway": "takeaway.brgen.no",
-      "privcam": "privcam.no",
-      "mytoonz": "mytoonz.no",
-      "blognet": "blognet.no",
-      "baibl": "baibl.no"
+      "bsdports": ["bsdports.org", "bsdports.net"]
     },
-    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
     "vps": {
       "host": "185.52.176.18",
       "user": "dev",
-      "ssh_cmd": "ssh dev@185.52.176.18",
       "app_dir": "/home/brgen/app",
-      "repo_dir": "/home/dev/pub4",
-      "services": "postgresql redis relayd nsd httpd pf",
-      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
+      "services": "postgresql redis relayd nsd httpd pf"
     },
     "github": {
       "repo": "https://github.com/anon987654321/pub4.git",
       "user": "anon987654321",
-      "pat_location": "G:/priv/accounts.txt",
-      "pat_note": "use PAT not password for push",
-      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
-      "reference_repos": [
-        "anon987654321/railsy - my old openbsd rails setups",
-        "basicfeatures/openbsd-rails - original setup",
-        "anonymous-donor/openbsd-rails - original setup alt account"
-      ]
-    },
-    "database": {
-      "development": "sqlite3 at db/development.sqlite3",
-      "production": "postgresql + weaviate via langchainrb_rails",
-      "config_file": "/home/brgen/app/config/database.yml"
+      "pat_location": "G:/priv/accounts.txt"
     }
   }
 }
