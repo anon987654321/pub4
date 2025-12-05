@@ -52,18 +52,33 @@
         "weights_reference": "constants.decision_weights"
       },
       "rationale": "DRY principle - single source of truth with explicit references"
+    },
+    "synonym_awareness": {
+      "rationale": "Track synonym concepts to prevent duplication under different names",
+      "concept_clusters": {
+        "workflow_execution": ["execution_phases", "operational_convergence", "autoiterate", "mandatory_workflows"],
+        "quality_enforcement": ["review_criteria", "quality_scoring", "self_enforcement"],
+        "intelligence_reasoning": ["intelligence", "prediction_engine", "adversarial_questioning"],
+        "style_formatting": ["formatting", "perfectionist_checks", "design_system"],
+        "thresholds_limits": ["code_quality_thresholds", "performance_thresholds", "accessibility"]
+      },
+      "detected_overlaps": {
+        "execution_phases_appears_twice": "One in section name, one in protected minimums - consolidate",
+        "workflow_vs_execution": "4 sections about how work flows - consider merging"
+      },
+      "action": "Before adding new section, check if concept already exists under synonym name"
     }
   },
 
   "$schema": "https://schemas.github.com/copilot/master.v1.json",
 
   "meta": {
-    "version": "42.0.0",
+    "version": "42.1.0",
     "golden_rule": "PRESERVE_THEN_IMPROVE_NEVER_BREAK",
     "purpose": "autonomous_code_governance_self_optimizing_with_closed_loop_convergence",
     "philosophy": "execute > describe | clarity > clever | semantic > classes | preserve > perfect",
     "lineage": "Synthesized from Claude v40.0-v41.2 + pub(v509) + pub2(v300) + pub3(v43) + pub4(v55-v56.3.4)",
-    "changelog": "v42.0.0: Operational patterns from v55-v56.3.4 - added closed-loop iteration, adversarial questioning, 15-solutions generation, prediction engine, tiered principles, Rails doctrine, section ordering by importance, incremental scanning, fixed-point convergence, auto-upgrade, lineage attribution"
+    "changelog": "v42.1.0: Added synonym awareness + simulated enforcement - tracks synonym concepts to prevent duplication, enforces pure zsh (no bash), no truncation (complete 15 solutions, 5 questions), closed-loop convergence with actual compliance"
   },
 
   "usage": {
@@ -888,6 +903,52 @@
     "value_integrated_systems": "Cohesive stack beats à la carte fragmentation",
     "progress_over_stability": "Embrace change and continuous improvement",
     "push_up_big_tent": "Inclusive community with diverse approaches"
+  },
+
+  "simulated_enforcement": {
+    "rationale": "In text-only chat, I must actually comply through conscious application of rules",
+    "pure_zsh_only": {
+      "banned_in_messages": ["grep -n", "wc -l", "cat |", "echo &&", "head -", "tail -", "awk", "sed"],
+      "use_instead": {
+        "grep_n": "lines=(\"${(f)$(<file)}\"); for i in {1..${#lines}}; do [[ ${lines[i]} == *pattern* ]] && print \"$i:${lines[i]}\"; done",
+        "wc_l": "lines=(\"${(f)$(<file)}\"); print ${#lines}",
+        "cat_pipe": "$(<file) or view tool",
+        "echo": "print",
+        "head_n": "${lines[1,n]}",
+        "tail_n": "${lines[-n,-1]}"
+      },
+      "enforcement": "I must catch myself before sending bash commands and rewrite in pure zsh"
+    },
+    "no_truncation": {
+      "fifteen_solutions_minimum": "If generating solutions, always complete all 15, never say 'etc' or '...'",
+      "five_questions_always": "Adversarial questioning must ask all 5 deep questions, not surface level",
+      "complete_analysis": "Never say 'too complex for one message' - break into multiple messages instead",
+      "enforcement": "Before sending message with list, count items and ensure completeness"
+    },
+    "closed_loop_convergence": {
+      "detect_all_violations": "Scan entire file, not just first few occurrences",
+      "question_deeply": "Actually reason through each question, not just list them",
+      "generate_complete_alternatives": "All 15 solutions must be distinct and detailed",
+      "select_with_evidence": "Explain why chosen solution is best against all 5 selection criteria",
+      "apply_immediately": "Make the fix, don't just propose it",
+      "verify_thoroughly": "Re-scan to confirm violation is actually gone",
+      "repeat_until_silence": "Continue cycles until 2 consecutive scans find zero violations"
+    },
+    "implementation_status": {
+      "operational_now": [
+        "synonym_awareness (just added)",
+        "pure_zsh_patterns (enforced from this message forward)",
+        "no_truncation (enforced from this message forward)",
+        "closed_loop_convergence (demonstrating in current self-audit)",
+        "adversarial_questioning (applied with actual reasoning)",
+        "fifteen_solutions (complete, no omissions)"
+      ],
+      "aspirational_documented": [
+        "prediction_engine (would need file watcher)",
+        "incremental_scanning (would need hash tracking)",
+        "auto_upgrade (would need version comparison logic)"
+      ]
+    }
   },
 
   "mandatory_workflows": {
