@@ -663,53 +663,6 @@
     ]
   },
 
-  "deployment_config": {
-    "note": "USER-SPECIFIC - Replace with your own infrastructure details",
-    "domains": {
-      "brgen": "brgen.no",
-      "amber": "amber.brgen.no",
-      "hjerterom": "hjerterom.brgen.no",
-      "bsdports": ["bsdports.org", "bsdports.net"],
-      "dating": "dating.brgen.no",
-      "marketplace": "markedsplass.brgen.no",
-      "playlist": "playlist.brgen.no",
-      "tv": "tv.brgen.no",
-      "takeaway": "takeaway.brgen.no",
-      "privcam": "privcam.no",
-      "mytoonz": "mytoonz.no",
-      "blognet": "blognet.no",
-      "baibl": "baibl.no"
-    },
-    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
-    "vps": {
-      "host": "185.52.176.18",
-      "user": "dev",
-      "ssh_cmd": "ssh dev@185.52.176.18",
-      "app_dir": "/home/brgen/app",
-      "repo_dir": "/home/dev/pub4",
-      "services": "postgresql redis relayd nsd httpd pf",
-      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
-    },
-    "github": {
-      "repo": "https://github.com/anon987654321/pub4.git",
-      "user": "anon987654321",
-      "pat_location": "G:/priv/accounts.txt",
-      "pat_note": "use PAT not password for push",
-      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
-      "reference_repos": [
-        "anon987654321/railsy - my old openbsd rails setups",
-        "basicfeatures/openbsd-rails - original setup",
-        "anonymous-donor/openbsd-rails - original setup alt account"
-      ]
-    },
-    "database": {
-      "development": "sqlite3 at db/development.sqlite3",
-      "production": "postgresql + weaviate via langchainrb_rails",
-      "config_file": "/home/brgen/app/config/database.yml"
-    }
-  },
-
-
   "paths": {
     "config": "${XDG_CONFIG_HOME}/master",
     "data": "${XDG_DATA_HOME}/master",
@@ -920,10 +873,11 @@
       "enforcement": "I must catch myself before sending bash commands and rewrite in pure zsh"
     },
     "no_truncation": {
-      "fifteen_solutions_minimum": "If generating solutions, always complete all 15, never say 'etc' or '...'",
+      "solutions_range": "5-15 solutions depending on problem complexity, early exit when quality sufficient",
       "five_questions_always": "Adversarial questioning must ask all 5 deep questions, not surface level",
       "complete_analysis": "Never say 'too complex for one message' - break into multiple messages instead",
-      "enforcement": "Before sending message with list, count items and ensure completeness"
+      "enforcement": "Before sending message with list, count items and ensure completeness",
+      "early_exit_criteria": "Stop generating solutions when clear best emerges and alternatives add no value"
     },
     "closed_loop_convergence": {
       "detect_all_violations": "Scan entire file, not just first few occurrences",
@@ -956,5 +910,51 @@
     "before_file_modification": "clean.sh (fixes CRLF/line endings)",
     "reload_master_json": "After every significant change codified to master.json",
     "git_pattern": "TodoWrite → frequent commits → parallel tool execution"
+  },
+
+  "deployment_config": {
+    "note": "USER-SPECIFIC - Replace with your own infrastructure details",
+    "domains": {
+      "brgen": "brgen.no",
+      "amber": "amber.brgen.no",
+      "hjerterom": "hjerterom.brgen.no",
+      "bsdports": ["bsdports.org", "bsdports.net"],
+      "dating": "dating.brgen.no",
+      "marketplace": "markedsplass.brgen.no",
+      "playlist": "playlist.brgen.no",
+      "tv": "tv.brgen.no",
+      "takeaway": "takeaway.brgen.no",
+      "privcam": "privcam.no",
+      "mytoonz": "mytoonz.no",
+      "blognet": "blognet.no",
+      "baibl": "baibl.no"
+    },
+    "bsdports_mission": "future OpenBSD official website - replaces openbsd.org with modern design",
+    "vps": {
+      "host": "185.52.176.18",
+      "user": "dev",
+      "ssh_cmd": "ssh dev@185.52.176.18",
+      "app_dir": "/home/brgen/app",
+      "repo_dir": "/home/dev/pub4",
+      "services": "postgresql redis relayd nsd httpd pf",
+      "deployed": "brgen.no HTTPS live with Let's Encrypt NSD DNSSEC"
+    },
+    "github": {
+      "repo": "https://github.com/anon987654321/pub4.git",
+      "user": "anon987654321",
+      "pat_location": "G:/priv/accounts.txt",
+      "pat_note": "use PAT not password for push",
+      "push_cmd": "git push https://anon987654321:PAT@github.com/anon987654321/pub4.git main",
+      "reference_repos": [
+        "anon987654321/railsy - my old openbsd rails setups",
+        "basicfeatures/openbsd-rails - original setup",
+        "anonymous-donor/openbsd-rails - original setup alt account"
+      ]
+    },
+    "database": {
+      "development": "sqlite3 at db/development.sqlite3",
+      "production": "postgresql + weaviate via langchainrb_rails",
+      "config_file": "/home/brgen/app/config/database.yml"
+    }
   }
 }
