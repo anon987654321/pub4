@@ -245,10 +245,6 @@
 
 <body>
 
-</head>
-
-<body>
-
   <noscript><div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</div></noscript>
 
   <h1 class="city-carousel" id="cityCarousel" aria-live="polite">
@@ -324,6 +320,7 @@
     "use strict";
 
     // Welcome banner (lifecycle: print_welcome_banner)
+    // URL params: chaos=1 to show chaos panel, shuffleSeed=<number> for reproducible shuffle
     (function(){try{console.log("%cRadio Bergen","color:#9cf;font-weight:bold;","v44.3.0 chaos-aware");}catch{}})();
 
     // Elements
@@ -336,9 +333,11 @@
     // Environment
     const EMBEDDED = window.top !== window.self;
 
-    const IN_FILE_PROTOCOL = location.protocol === "file:";
+    // Defensive check for file:// protocol
+    const IN_FILE_PROTOCOL = (location.protocol || '') === "file:";
 
-    const IN_SANDBOX = false;
+    // Runtime sandbox detection: checks if running in a sandboxed iframe
+    const IN_SANDBOX = !!(window.frameElement && window.frameElement.hasAttribute && window.frameElement.hasAttribute('sandbox'));
 
     const ORIENTATION_ALLOWED = !EMBEDDED && 'DeviceOrientationEvent' in window;
 
@@ -349,8 +348,8 @@
 
     const isLowEnd=(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)||(navigator.deviceMemory&&navigator.deviceMemory<=2);
 
-    // Policy: MP3 discovery ON by default for pub4/.mp3
-    const AUDIO_POLICY = { mp3_default:true, shuffle:false };
+    // Policy: MP3 discovery ON by default for pub4/.mp3, shuffle enabled by default
+    const AUDIO_POLICY = { mp3_default:true, shuffle:true };
 
     // Chaos toggles (blast radius limited to this SPA)
     const __chaos = window.__chaos = {
@@ -373,9 +372,9 @@
 
     const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
     // Carousel
-    class SimpleCarousel{constructor(el,ms=2800){this.slides=[...el.querySelectorAll(".carousel-slide")];this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),ms)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}}
+    class SimpleCarousel{constructor(el,ms=2800){this.slides=[...el.querySelectorAll(".carousel-slide")];this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),ms)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}cleanup(){if(this.t){clearInterval(this.t);this.t=null;}}}
 
-    new SimpleCarousel(document.getElementById("cityCarousel"));
+    const cityCarousel = new SimpleCarousel(document.getElementById("cityCarousel"));
 
     // Tracks (YT curated)
     const YOUTUBE_TRACKS=[
@@ -514,9 +513,10 @@
     }
 
     // File System Access API (file://) local folder
+    // Guard for missing showDirectoryPicker
     async function pickLocalMp3sInteractive(){
 
-      if(!('showDirectoryPicker' in window)) return null;
+      if(!window.showDirectoryPicker || typeof window.showDirectoryPicker !== 'function') return null;
 
       try{
 
@@ -551,17 +551,71 @@
     // YouTube helpers
     const YT_ORIGIN="https://www.youtube.com";
 
-    const ytPost=(i,f,a=[])=>{if(IN_SANDBOX)return;try{if(!i||!i.contentWindow)return;i.contentWindow.postMessage({event:"command",func:f,args:a},YT_ORIGIN)}catch{try{i.contentWindow.postMessage({event:"command",func:f,args:a},"*")}catch{}}};
+    // Track whether we've warned about wildcard usage
+    let __ytPostWildcardWarned = false;
+
+    // Robust ytPost: determines targetOrigin from iframe.src when available
+    // Recognizes YouTube hostnames and uses YT_ORIGIN for them
+    // Falls back to '*' only when necessary, with one-time console.warn
+    const ytPost=(iframe,func,args=[])=>{
+      if(IN_SANDBOX)return;
+      if(!iframe||!iframe.contentWindow)return;
+      
+      let targetOrigin = YT_ORIGIN; // default
+      
+      // Try to determine origin from iframe src
+      try {
+        const src = iframe.src || iframe.getAttribute('src');
+        if(src && src !== 'about:blank') {
+          const url = new URL(src, location.href);
+          const hostname = url.hostname.toLowerCase();
+          
+          // Check if it's a YouTube domain
+          if(hostname === 'youtube.com' || hostname === 'www.youtube.com' || 
+             hostname === 'youtu.be' || hostname === 'youtube-nocookie.com' || 
+             hostname === 'www.youtube-nocookie.com') {
+            targetOrigin = YT_ORIGIN;
+          } else {
+            targetOrigin = url.origin;
+          }
+        }
+      } catch(e) {
+        // If URL parsing fails, we'll use the default or fallback
+      }
+      
+      // Try posting with determined origin
+      try {
+        iframe.contentWindow.postMessage({event:"command",func:func,args:args}, targetOrigin);
+      } catch(e) {
+        // If that fails, fall back to wildcard with warning
+        try {
+          if(!__ytPostWildcardWarned) {
+            console.warn('ytPost: falling back to wildcard origin for iframe', iframe.id || iframe, 'func:', func);
+            __ytPostWildcardWarned = true;
+          }
+          iframe.contentWindow.postMessage({event:"command",func:func,args:args}, "*");
+        } catch(e2) {
+          // Silently fail if even wildcard doesn't work
+        }
+      }
+    };
 
     function loadYTAPIOnce(){ if(window.YT&&window.YT.Player) return; if(window.__YT_API_REQ) return; window.__YT_API_REQ=true; const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.async=true;document.head.appendChild(s); }
 
-    // Fisher-Yates shuffle
-    function shuffleInPlace(arr){
+    // Mulberry32 PRNG for seeded shuffle (simple, deterministic)
+    function mulberry32(seed) {
+      return function() {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
 
-      for(let i=arr.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[arr[i],arr[j]]=[arr[j],arr[i]]}
-
+    // Fisher-Yates shuffle (optionally seeded)
+    function shuffleInPlace(arr, rng = Math.random){
+      for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
       return arr;
-
     }
 
     // MP3 controller (two audio elements crossfading)
@@ -662,9 +716,39 @@
 
       currentKey(){return this.activeKey}
 
-      load(id,start=0){const to=this.inactiveKey; if(this.apiReady){try{const p=this._p(to);p.loadVideoById({videoId:id,startSeconds:start,suggestedQuality:"tiny"});p.setVolume(0);p.mute?.()}catch{}} else {const f=this._f(to);const s=`https://www.youtube.com/embed/${id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&enablejsapi=1${start?`&start=${start}`:""}`; f.src=s; f.onload=()=>{ytPost(f,"playVideo",[]);ytPost(f,"setVolume",[0]);ytPost(f,"mute",[])}}}
+      load(id,start=0){
+        const to=this.inactiveKey; 
+        if(this.apiReady){
+          try{
+            const p=this._p(to);
+            p.loadVideoById({videoId:id,startSeconds:start,suggestedQuality:"tiny"});
+            p.setVolume(0);
+            p.mute?.();
+          }catch{}
+        } else {
+          // Set fallback iframe src with proper YouTube embed URL including enablejsapi and origin
+          const f=this._f(to);
+          const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}${start?`&start=${start}`:""}`;
+          f.src = embedUrl;
+          f.onload=()=>{
+            // Use ytPost to send commands to fallback iframe
+            ytPost(f,"playVideo",[]);
+            ytPost(f,"setVolume",[0]);
+            ytPost(f,"mute",[]);
+          };
+        }
+      }
 
-      play({fadeIn=false,ms=FADE_MS}={}){const from=this.activeKey,to=this.inactiveKey;const steps=30,dt=ms/steps;clearInterval(this._fadeIv);let k=0; if(this.apiReady){try{this._p(to).playVideo();}catch{}}else{ytPost(this._f(to),"playVideo",[])}
+      play({fadeIn=false,ms=FADE_MS}={}){
+        const from=this.activeKey,to=this.inactiveKey;
+        const steps=30,dt=ms/steps;
+        clearInterval(this._fadeIv);
+        let k=0; 
+        if(this.apiReady){
+          try{this._p(to).playVideo();}catch{}
+        }else{
+          ytPost(this._f(to),"playVideo",[]);
+        }
 
         this._fadeIv=setInterval(()=>{k++;const t=k/steps;const vTo=Math.round(5+t*95), vFrom=Math.round(100*(1-t));
 
@@ -695,7 +779,19 @@
 
         this.tracks = mp3.concat(yt);
 
-        if(AUDIO_POLICY.shuffle) shuffleInPlace(this.tracks);
+        // Apply shuffle with optional seeded PRNG
+        if(AUDIO_POLICY.shuffle) {
+          const shuffleSeed = urlp.get('shuffleSeed');
+          if(shuffleSeed) {
+            // Use seeded shuffle for reproducible playlists
+            const seed = parseInt(shuffleSeed, 10) || 42;
+            const rng = mulberry32(seed);
+            shuffleInPlace(this.tracks, rng);
+          } else {
+            // Use default random shuffle
+            shuffleInPlace(this.tracks);
+          }
+        }
 
         this.index=0; this.started=false; this.muted=true;
 
@@ -715,7 +811,19 @@
 
       async start(){
 
-        if(!this.tracks.length){this.tracks=YOUTUBE_TRACKS.map(t=>({type:'yt',title:t.title,artist:t.artist,id:t.id,start:t.start||0})); if(AUDIO_POLICY.shuffle)shuffleInPlace(this.tracks);}
+        if(!this.tracks.length){
+          this.tracks=YOUTUBE_TRACKS.map(t=>({type:'yt',title:t.title,artist:t.artist,id:t.id,start:t.start||0})); 
+          if(AUDIO_POLICY.shuffle){
+            const shuffleSeed = urlp.get('shuffleSeed');
+            if(shuffleSeed) {
+              const seed = parseInt(shuffleSeed, 10) || 42;
+              const rng = mulberry32(seed);
+              shuffleInPlace(this.tracks, rng);
+            } else {
+              shuffleInPlace(this.tracks);
+            }
+          }
+        }
 
         this.started=true; this.updateUI();
 
@@ -861,7 +969,7 @@
 
       }
 
-      function start(){if(applyPatch())return;let tries=0;const iv=setInterval(()=>{tries++;if(applyPatch()||tries>200)clearInterval(iv)},25)}
+      function start(){if(applyPatch())return;let tries=0;window.__RB_PERF_PATCH_IV=setInterval(()=>{tries++;if(applyPatch()||tries>200){clearInterval(window.__RB_PERF_PATCH_IV);window.__RB_PERF_PATCH_IV=null;}},25)}
 
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 
@@ -885,9 +993,29 @@
     // Input & sensors
     let mouseDown=false,mouseActive=false,mousePos={x:0,y:0},orientationActive=false,beta=0,gamma=0;
 
-    const sendInput=()=>{if(window.tunnelRenderer){window.tunnelRenderer.mouse={x:mousePos.x,y:mousePos.y,down:mouseDown,active:mouseActive};window.tunnelRenderer.ori={active:orientationActive,beta,gamma}}};
+    // Throttle input updates via requestAnimationFrame
+    let inputChanged = false;
+    let inputRafHandle = null;
 
-    const setupSensors=()=>{if(!ORIENTATION_ALLOWED||IN_SANDBOX)return;try{if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){DeviceOrientationEvent.requestPermission().then(s=>{if(s==="granted")window.addEventListener("deviceorientation",e=>{beta=e.beta||0;gamma=e.gamma||0;orientationActive=true;sendInput()},{passive:true})}).catch(()=>{})}else if(window.DeviceOrientationEvent){window.addEventListener("deviceorientation",e=>{beta=e.beta||0;gamma=e.gamma||0;orientationActive=true;sendInput()},{passive:true})}}catch{}};
+    const sendInput=()=>{
+      if(window.tunnelRenderer){
+        window.tunnelRenderer.mouse={x:mousePos.x,y:mousePos.y,down:mouseDown,active:mouseActive};
+        window.tunnelRenderer.ori={active:orientationActive,beta,gamma};
+      }
+      inputChanged = false;
+    };
+
+    const scheduleInputUpdate=()=>{
+      inputChanged = true;
+      if(!inputRafHandle) {
+        inputRafHandle = requestAnimationFrame(()=>{
+          if(inputChanged) sendInput();
+          inputRafHandle = null;
+        });
+      }
+    };
+
+    const setupSensors=()=>{if(!ORIENTATION_ALLOWED||IN_SANDBOX)return;try{if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){DeviceOrientationEvent.requestPermission().then(s=>{if(s==="granted")window.addEventListener("deviceorientation",e=>{beta=e.beta||0;gamma=e.gamma||0;orientationActive=true;scheduleInputUpdate()},{passive:true})}).catch(()=>{})}else if(window.DeviceOrientationEvent){window.addEventListener("deviceorientation",e=>{beta=e.beta||0;gamma=e.gamma||0;orientationActive=true;scheduleInputUpdate()},{passive:true})}}catch{}};
 
     const setUIInversion=a=>a?uiEl.classList.add("ui-inverted"):uiEl.classList.remove("ui-inverted");
 
@@ -946,14 +1074,16 @@
 
     canvas.addEventListener("mouseup",()=>{mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},false);
 
-    canvas.addEventListener("mousemove",e=>{const r=canvas.getBoundingClientRect();mousePos.x=(e.clientX-r.left)*INTERNAL_SCALE;mousePos.y=(e.clientY-r.top)*INTERNAL_SCALE;mouseActive=true;sendInput()},false);
+    // Throttle mousemove via requestAnimationFrame to reduce high-frequency updates
+    canvas.addEventListener("mousemove",e=>{const r=canvas.getBoundingClientRect();mousePos.x=(e.clientX-r.left)*INTERNAL_SCALE;mousePos.y=(e.clientY-r.top)*INTERNAL_SCALE;mouseActive=true;scheduleInputUpdate()},false);
 
     canvas.addEventListener("mouseleave",()=>{mouseActive=false;mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},false);
 
     let touchStartX=0,touchStartY=0,lastTapTime=0;const swipeThreshold=70,doubleTapMs=300;
     canvas.addEventListener("touchstart",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;touchStartX=x;touchStartY=y;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;mouseDown=true;canvas.classList.add("canvas-inverted");setUIInversion(true);sendInput()}},{passive:false});
 
-    canvas.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;sendInput()}},{passive:false});
+    // Throttle touchmove via requestAnimationFrame to reduce high-frequency updates
+    canvas.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;scheduleInputUpdate()}},{passive:false});
 
     canvas.addEventListener("touchend",e=>{e.preventDefault();mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();if(audio?.started){const t=e.changedTouches[0],r=canvas.getBoundingClientRect(),endX=t.clientX-r.left,endY=t.clientY-r.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}}else{const now=performance.now();if(now-lastTapTime<doubleTapMs){const d=document.documentElement;!document.fullscreenElement?d.requestFullscreen?.():document.exitFullscreen?.()}lastTapTime=now}}},{passive:false});
 
@@ -1032,6 +1162,33 @@
     const boot=()=>{requestAnimationFrame(animate);document.getElementById("overlay").focus()};
 
     document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+
+    // Cleanup: clear intervals and remove event listeners on unload
+    function cleanup() {
+      // Clear UI dots interval
+      if(window.__RB_DOTS_IV) {
+        clearInterval(window.__RB_DOTS_IV);
+        window.__RB_DOTS_IV = null;
+      }
+      // Clear carousel interval
+      if(cityCarousel && cityCarousel.cleanup) {
+        cityCarousel.cleanup();
+      }
+      // Clear perf patch retry interval (if still active)
+      if(window.__RB_PERF_PATCH_IV) {
+        clearInterval(window.__RB_PERF_PATCH_IV);
+        window.__RB_PERF_PATCH_IV = null;
+      }
+      // Cancel any pending input rAF
+      if(inputRafHandle) {
+        cancelAnimationFrame(inputRafHandle);
+        inputRafHandle = null;
+      }
+    }
+
+    // Register cleanup handlers
+    window.addEventListener('unload', cleanup);
+    window.addEventListener('beforeunload', cleanup);
 
   </script>
 
