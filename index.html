@@ -320,7 +320,7 @@
     "use strict";
 
     // Welcome banner (lifecycle: print_welcome_banner)
-    // URL params: chaos=1 to show chaos panel, shuffleSeed=<number> for reproducible shuffle
+    // URL params: chaos=1 to show chaos panel, shuffleSeed=<number> for reproducible shuffle (defaults to 42 if invalid)
     (function(){try{console.log("%cRadio Bergen","color:#9cf;font-weight:bold;","v44.3.0 chaos-aware");}catch{}})();
 
     // Elements
@@ -337,7 +337,13 @@
     const IN_FILE_PROTOCOL = (location.protocol || '') === "file:";
 
     // Runtime sandbox detection: checks if running in a sandboxed iframe
-    const IN_SANDBOX = !!(window.frameElement && window.frameElement.hasAttribute && window.frameElement.hasAttribute('sandbox'));
+    // Wrapped in try-catch to handle potential cross-origin access restrictions
+    let IN_SANDBOX = false;
+    try {
+      IN_SANDBOX = !!(window.frameElement && window.frameElement.hasAttribute && window.frameElement.hasAttribute('sandbox'));
+    } catch(e) {
+      // Cross-origin access may throw SecurityError
+    }
 
     const ORIENTATION_ALLOWED = !EMBEDDED && 'DeviceOrientationEvent' in window;
 
@@ -572,11 +578,10 @@
           const hostname = url.hostname.toLowerCase();
           
           // Check if it's a YouTube domain (handle subdomains)
-          if(hostname === 'youtube.com' || hostname === 'www.youtube.com' || 
-             hostname.endsWith('.youtube.com') ||
-             hostname === 'youtu.be' || 
-             hostname === 'youtube-nocookie.com' || hostname === 'www.youtube-nocookie.com' ||
-             hostname.endsWith('.youtube-nocookie.com')) {
+          const youtubeHosts = ['youtube.com', 'youtu.be', 'youtube-nocookie.com'];
+          const isYouTube = youtubeHosts.some(host => hostname === host || hostname.endsWith('.' + host));
+          
+          if(isYouTube) {
             targetOrigin = YT_ORIGIN;
           } else {
             targetOrigin = url.origin;
@@ -1189,8 +1194,8 @@
       }
     }
 
-    // Register cleanup handlers
-    window.addEventListener('unload', cleanup);
+    // Register cleanup handlers (using pagehide for better modern browser compatibility)
+    window.addEventListener('pagehide', cleanup);
     window.addEventListener('beforeunload', cleanup);
 
   </script>
