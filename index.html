@@ -522,7 +522,7 @@
     // Guard for missing showDirectoryPicker
     async function pickLocalMp3sInteractive(){
 
-      if(!window.showDirectoryPicker || typeof window.showDirectoryPicker !== 'function') return null;
+      if(typeof window.showDirectoryPicker !== 'function') return null;
 
       try{
 
@@ -977,7 +977,9 @@
 
       }
 
-      function start(){if(applyPatch())return;let tries=0;window.__RB_PERF_PATCH_IV=setInterval(()=>{tries++;if(applyPatch()||tries>200){clearInterval(window.__RB_PERF_PATCH_IV);window.__RB_PERF_PATCH_IV=null;}},25)}
+      const MAX_PATCH_RETRIES = 200;
+
+      function start(){if(applyPatch())return;let tries=0;window.__RB_PERF_PATCH_IV=setInterval(()=>{tries++;if(applyPatch()||tries>MAX_PATCH_RETRIES){clearInterval(window.__RB_PERF_PATCH_IV);window.__RB_PERF_PATCH_IV=null;}},25)}
 
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 
