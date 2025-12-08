@@ -53,17 +53,17 @@
 
     .swipe-hint.show{opacity:1}
 
-    :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box;box-shadow:none!important;text-shadow:none!important}
+    :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box}
 
     @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
+    .yt-hidden{position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1}
   </style>
 
 </head>
 
 <body>
 
-  <noscript><div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</div></noscript>
+  <noscript><main style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</main></noscript>
 
   <h1 class="city-carousel" id="cityCarousel" aria-live="polite">
     <div class="carousel-container">
@@ -106,12 +106,10 @@
 
   <div class="swipe-hint" id="swipeHint">← Swipe for tracks →</div>
 
-  <div id="yt-player-a" aria-hidden="true" role="none" style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></div>
-  <div id="yt-player-b" aria-hidden="true" role="none" style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></div>
-
-  <iframe id="player-fallback-a" src="about:blank" title="YouTube audio player A (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></iframe>
-
-  <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" style="position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1"></iframe>
+  <div id="yt-player-a" aria-hidden="true" class="yt-hidden"></div>
+  <div id="yt-player-b" aria-hidden="true" class="yt-hidden"></div>
+  <iframe id="player-fallback-a" src="about:blank" title="YouTube audio player A (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
+  <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
 
   <script>
     "use strict";
@@ -172,85 +170,23 @@
 
     ];
 
-    const loadYouTubeAPI=()=>{if(IN_SANDBOX||window.__YT_API_LOADED)return;window.__YT_API_LOADED=true;const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.async=true;document.head.appendChild(s)};
+    const loadYouTubeAPI=()=>{if(IN_SANDBOX||window.__YT_API_LOADED)return;window.__YT_API_LOADED=true;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.async=true;document.head.appendChild(s)};
 
-    // MP3 Playlist Detection and Parsing
+    const tryFetch=async(url,parser)=>{try{const r=await fetch(url);if(r.ok)return await parser(r)}catch{}return null};
     const detectMp3Playlist=async()=>{
-
       if(IN_SANDBOX)return null;
-
       let tracks=[];
-
-      try{
-
-        let r=await fetch("playlist.json");
-
-        if(r.ok){
-
-          const data=await r.json();
-
-          if(Array.isArray(data)&&data.length>0)tracks=tracks.concat(data.map(t=>({...t,src:t.src})));
-
-        }
-
-      }catch{}
-
-      try{
-
-        let r=await fetch("playlist.m3u");
-
-        if(r.ok){
-
-          const text=await r.text();
-
-          const m3uTracks=parseM3U(text);
-
-          if(m3uTracks&&m3uTracks.length>0)tracks=tracks.concat(m3uTracks);
-
-        }
-
-      }catch{}
-
-      try{
-
-        let r=await fetch("index.json");
-
-        if(r.ok){
-
-          const data=await r.json();
-
-          if(Array.isArray(data)){
-
-            const mp3Files=data.filter(f=>typeof f==='string'&&f.toLowerCase().endsWith('.mp3'));
-
-            tracks=tracks.concat(mp3Files.map(f=>{
-
-              const name=f.replace(/\.mp3$/i,'').replace(/[-_]/g,' ');
-
-              return{title:name,artist:'',src:f};
-
-            }));
-
-          }else if(data.files&&Array.isArray(data.files)){
-
-            const mp3Files=data.files.filter(f=>typeof f==='string'&&f.toLowerCase().endsWith('.mp3'));
-
-            tracks=tracks.concat(mp3Files.map(f=>{
-
-              const name=f.replace(/\.mp3$/i,'').replace(/[-_]/g,' ');
-
-              return{title:name,artist:'',src:f};
-
-            }));
-
-          }
-
-        }
-
-      }catch{}
-
+      const json=await tryFetch('playlist.json',r=>r.json());
+      if(json&&Array.isArray(json))tracks=json.map(t=>({...t,src:t.src}));
+      const m3u=await tryFetch('playlist.m3u',r=>r.text());
+      if(m3u){const parsed=parseM3U(m3u);if(parsed)tracks=tracks.concat(parsed)}
+      const idx=await tryFetch('index.json',r=>r.json());
+      if(idx){
+        const files=(Array.isArray(idx)?idx:idx.files)||[];
+        const mp3=files.filter(f=>typeof f==='string'&&f.toLowerCase().endsWith('.mp3'));
+        tracks=tracks.concat(mp3.map(f=>({title:f.replace(/\.mp3$/i,'').replace(/[-_]/g,' '),artist:'',src:f})));
+      }
       return tracks.length>0?tracks:null;
-
     };
 
     const parseM3U=(text)=>{
