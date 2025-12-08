@@ -809,7 +809,7 @@ workflow_patterns:
     
   cygwin_bash_integration:
     context: copilot_CLI_runs_inside_cygwin_npm_environment
-    path_format: "/cygdrive/g/path" not "G:\path"
+    path_format: '"/cygdrive/g/path" not "G:\path"'
     git_commands: wrap_in_bash_c_when_using_powershell_tool
     example: "bash -c 'cd /cygdrive/g/pub && git push'"
     rationale: powershell_hangs_on_long_git_operations_bash_is_reliable
@@ -831,7 +831,7 @@ workflow_patterns:
     storage: never_commit_tokens_to_repo
     usage: embed_in_git_remote_url_for_https_push
     rotation: tokens_in_remote_urls_persist_until_remote_set_url_changes
-    clearing: "git remote set-url origin NEW_URL" replaces_old_token
+    clearing: '"git remote set-url origin NEW_URL" replaces_old_token'
     
   debugging_github_pages:
     check_sequence:
