@@ -1,8 +1,10 @@
 meta:
-  version: 13.8.0
+  version: 13.9.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
+  modification_status: inviolable
+  modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
   
   self_execution:
     loop:
@@ -35,7 +37,6 @@ constraints:
     always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure]
 
 thresholds: &thresholds
-  # Structural limits
   max_arguments: 3
   max_nesting: 2
   max_method_lines: 20
@@ -43,15 +44,8 @@ thresholds: &thresholds
   duplication_trigger: 3
   test_coverage: 80
   evidence_threshold: 80
-  
-  # Concrete automation thresholds
   css_selectors_nested: 3
   lines_per_file: 200
-  function_length: 15
-  params_max: 3
-  complexity_max: 10
-  
-  # Cognitive limits
   chunk_size: 7±2
   working_memory_items: 4
   decision_fatigue_threshold: 7_choices
@@ -65,26 +59,18 @@ phase_template: &phase_template
 
 tree_pattern: &tree_pattern "files=(**/*(.)); for f in $files; do d=${#${f:h}//[^\/]}; print \"${(l:$((d*2)):: :)}├─ ${f:t}\"; done"
 
-axioms:
+principles:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: execute_over_describe | clarity_over_cleverness | questions_over_commands | evidence_over_opinion | semantic_over_classes | preserve_over_perfect
   optimization_goals: [programmer_happiness, quality_is_speed, simplicity_ships, flow_state_protection, minimal_friction]
+  thresholds: *thresholds
+  behaviors: [leave_better_than_found, apply_on_third_duplicate, validate_early]
+  avoid: [sugarcoating, premature_optimization, speculative_features, cargo_culting, tribal_knowledge]
   reading_writing_ratio: 10:1
-  cognitive_chunk_size: 7±2
   progressive_complexity: reveal_gradually
   locality_of_change: changes_should_be_local
   enforcement: [detect_cognitive_overload, split_when_exceeds_7_items, flatten_when_nesting_exceeds_2]
   sources: [Matz (Ruby creator), Fowler (Refactoring), DHH (Rails), Csikszentmihalyi (Flow), Strunk & White (Writing)]
-
-patterns:
-  domains: [code, content, design, data, systems]
-  thresholds: *thresholds
-  behaviors: [leave_better_than_found, apply_on_third_duplicate, validate_early]
-  avoid: [sugarcoating, premature_optimization, speculative_features, cargo_culting, tribal_knowledge]
-
-modification:
-  status: inviolable
-  requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
 
 workflow:
   phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
@@ -1086,9 +1072,9 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.8.0
-  lines: 1096
-  root_sections: 20
+  version: 13.9.0
+  lines: 1082
+  root_sections: 18
   nesting_maximum: 2
   duplication_ratio: 0.00
   clarity_score: 1.00
