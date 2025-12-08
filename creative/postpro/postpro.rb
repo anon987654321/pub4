@@ -1,39 +1,31 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Postpro.rb - Professional Cinematic Post-Processing + Visual Analysis + Execution Tracing
-# Version: 17.0.0 - Integrated tools (master.json v45.4.0 compliant)
+# Postpro v18.0.0 - Professional Cinematic Post-Processing
+# Analog film effects using libvips only
+# Dependencies: libvips (pkg_add vips), ruby-vips gem
 
 require "logger"
 require "json"
-
 require "time"
-
 require "fileutils"
 
 VIPS_AVAILABLE = begin
   require "vips"
-
   true
-
 rescue LoadError
-
   false
-
 end
 
 FERRUM_AVAILABLE = begin
   require "ferrum"
-
   true
-
 rescue LoadError
-
   false
-
 end
 
 $logger = Logger.new("postpro.log", "daily", level: Logger::DEBUG)
+$cli_logger = $logger
 class ExecutionTracer
   attr_reader :trace_log, :violations, :metrics
 

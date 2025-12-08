@@ -1,33 +1,22 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Repligen - Replicate.com AI Generation CLI
-# Version: 5.0.0 - Consolidated (zero sprawl per master.json)
-
+# Repligen v8.0.0 - Replicate.com AI Generation CLI
+# SQLite3 database + Ferrum web scraping + Chain workflows
+# Dependencies: sqlite3 gem, ferrum gem (optional)
 #
-
 # Usage:
-
 #   ruby repligen.rb              # Interactive menu
-
-#   ruby repligen.rb sync 100     # Sync 100 models
-
+#   ruby repligen.rb sync 1000    # Sync models via API
+#   ruby repligen.rb scrape 50    # Scrape replicate.com/explore
 #   ruby repligen.rb search upscale
-
 #   ruby repligen.rb stats
 
 require "net/http"
-
 require "json"
-
 require "fileutils"
-# ============================================================================
 
-# CONFIGURATION
-
-# ============================================================================
 CONFIG_PATH = File.expand_path("~/.config/repligen/config.json")
-
 DB_PATH = File.expand_path("repligen.db", __dir__)
 
 # Model type patterns (embedded)

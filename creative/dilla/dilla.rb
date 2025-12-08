@@ -1,78 +1,32 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# v73.0.0 - Dilla (modular architecture - master.json compliant)
+# Dilla v74.0.0 - J Dilla Beat Generator
+# Produces complete tracks using J Dilla's chord progressions and microtiming
+# Dependencies: SoX (pkg_add sox on OpenBSD)
+
 require "fileutils"
-
 require "net/http"
-
 require "uri"
-
 require "cgi"
-
 require "json"
 
-$LOAD_PATH.unshift(File.expand_path("mb-sound/lib", __dir__))
-begin
-
-  require "mb-sound"
-
-  MB_SOUND_AVAILABLE = true
-
-  puts "[INIT] ✅ mb-sound loaded"
-
-rescue LoadError => e
-
-  MB_SOUND_AVAILABLE = false
-
-  puts "[INIT] ⚠️  mb-sound unavailable: #{e.message}"
-
-end
-
 def find_sox
-  candidates = [
-
-    "sox.exe",
-
-    "sox",
-
-    "/usr/bin/sox.exe",
-
-    "/usr/bin/sox",
-
-    "/c/cygwin64/bin/sox.exe",
-
-    File.expand_path("../dilla/effects/sox/sox.exe", __dir__)
-
-  ]
-
-  candidates.each do |path|
-
-    if system("#{path} --version >/dev/null 2>&1")
-
-      puts "[INIT] ✅ SoX found: #{path}"
-
-      return path
-
-    end
-
+  ["sox.exe", "sox", "/usr/bin/sox", "/usr/local/bin/sox"].each do |path|
+    return path if system("#{path} --version >/dev/null 2>&1")
   end
-
   nil
-
 end
 
 SOX_PATH = find_sox
-abort "❌ SoX not found in PATH or common locations" unless SOX_PATH
+abort "SoX not found - install with: pkg_add sox" unless SOX_PATH
 
-require_relative "dilla_shared/@constants"
-require_relative "dilla_shared/@generators"
+require_relative "@constants"
+require_relative "@generators"
+require_relative "@mastering"
+require_relative "@tts"
 
-require_relative "dilla_shared/@mastering"
-
-require_relative "dilla_shared/@tts"
-
-PROGRESSIONS = Progression.load_all(File.join(__dir__, "__shared", "progressions.json"))
+PROGRESSIONS = Progression.load_all(File.join(__dir__, "progressions.json"))
 class DillaEngine
   include DillaConstants
 
