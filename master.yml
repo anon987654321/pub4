@@ -1,5 +1,5 @@
 meta:
-  version: 13.12.0
+  version: 13.13.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -7,24 +7,36 @@ meta:
   modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
   
   self_execution:
+    trigger_on: [user_request_to_run_through_framework, detect_violations_in_target_file]
     loop:
       - internalize_framework_fully
-      - apply_all_principles_to_self
+      - detect_violations_using_implemented_detectors
+      - auto_fix_with_formatters_where_possible
       - measure_quality_delta
       - if delta_positive: commit_and_update_version
       - repeat_until: zero_violations_and_quality_plateau
-    frequency: on_every_change
+    frequency: on_demand_not_automatic
     convergence: [zero_violations_for_2_iterations, quality_improvement_plateau: <0.001_for_3_cycles]
     max_iterations: 20
     failure_recovery:
       on_non_convergence: [abort_changes, restore_previous_version, log_failure_analysis]
       on_corruption: [validate_yaml_structure, restore_from_git, alert_operator]
     output: "✓ framework improved: violations=0 quality=+X.XX% lines=Y→Z"
+    
+    workflow_example:
+      user_says: "run openbsd.sh through master.yml"
+      actions:
+        - run_all_detectors_on_file: openbsd.sh
+        - report_violations: [excessive_blank_lines, outdated_references]
+        - apply_formatters_automatically
+        - show_diff_and_ask_permission
+        - commit_if_approved
 
 constraints:
-  banned: [python, bash, sed, awk, grep, cat, wc, head, tail, sort, find, sudo, null_usage]
+  banned: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo, null_usage]
   allowed: [ruby, zsh, read_tool, edit_tool, write_tool]
   bash_exceptions: [git, npm, bundle, rails, rake]
+  cat_usage: heredoc_only_acceptable_for_config_generation
   rationale: zsh_builtins_save_700_tokens_per_operation
   evidence:
     source: internal_benchmarking_2024
@@ -75,6 +87,35 @@ principles:
 workflow:
   phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
   
+  file_improvement_workflow:
+    trigger: "user requests to run {file} through master.yml"
+    steps:
+      - load_file_into_memory
+      - identify_file_type: [zsh, ruby, yaml, html, css, js]
+      - run_applicable_detectors_from_implementations_section
+      - collect_violations: [type, line_number, severity]
+      - auto_fix_formatting_violations
+      - report_remaining_violations_to_user
+      - apply_manual_fixes_if_needed
+      - show_diff_for_approval
+      - commit_with_descriptive_message
+    auto_fixable: [blank_lines, indentation, quotes, tabs_to_spaces]
+    manual_review: [logic_duplication, unclear_names, complexity]
+    
+  infrastructure_deployment_workflow:
+    phase_1_local:
+      - edit_openbsd_sh_with_current_apps_and_domains
+      - run_through_master_yml_detectors
+      - commit_and_push_to_github
+    phase_2_vps:
+      - ssh_to_vps
+      - git_pull_latest
+      - doas_zsh_openbsd_sh_pre_point
+      - wait_24_48h_for_dns_propagation
+      - doas_zsh_openbsd_sh_post_point
+      - verify_all_services_running
+    note: copilot_cli_works_local_not_vps_due_to_openbsd_binaries
+    
   discover:
     purpose: understand_problem_deeply
     temperature: 0.9
@@ -1146,8 +1187,8 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.12.0
-  lines: 1156
+  version: 13.13.0
+  lines: 1228
   root_sections: 18
   nesting_maximum: 2
   duplication_ratio: 0.00
