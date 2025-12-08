@@ -1,0 +1,867 @@
+meta:
+  version: 13.1.0
+  purpose: universal_self_improving_governance_framework
+  ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
+  scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
+  
+  self_execution:
+    loop:
+      - internalize_framework_fully
+      - apply_all_principles_to_self
+      - measure_quality_delta
+      - if delta_positive: commit_and_update_version
+      - repeat_until: zero_violations_and_quality_plateau
+    frequency: on_every_change
+    convergence: [zero_violations_for_2_iterations, quality_improvement_plateau: <0.001_for_3_cycles]
+    max_iterations: 20
+    failure_recovery:
+      on_non_convergence: [abort_changes, restore_previous_version, log_failure_analysis]
+      on_corruption: [validate_yaml_structure, restore_from_git, alert_operator]
+    output: "✓ framework improved: violations=0 quality=+X.XX% lines=Y→Z"
+
+constraints:
+  banned: [python, bash, sed, awk, grep, cat, wc, head, tail, sort, find, sudo, null_usage]
+  allowed: [ruby, zsh, read_tool, edit_tool, write_tool]
+  bash_exceptions: [git, npm, bundle, rails, rake]
+  rationale: zsh_builtins_save_700_tokens_per_operation
+  evidence:
+    source: internal_benchmarking_2024
+    comparison: "grep file vs ${(M)content:#*pattern*}"
+    token_delta: [external_command: 850_tokens, zsh_builtin: 150_tokens]
+    net_savings: 700_tokens_per_operation
+
+  file_operations:
+    never: [create_new_structure, create_backups, mkdir_new_folders]
+    always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure]
+
+thresholds: &thresholds
+  # Structural limits
+  max_arguments: 3
+  max_nesting: 2
+  max_method_lines: 20
+  max_complexity: 10
+  duplication_trigger: 3
+  test_coverage: 80
+  evidence_threshold: 80
+  
+  # Concrete automation thresholds
+  css_selectors_nested: 3
+  lines_per_file: 200
+  function_length: 15
+  params_max: 3
+  complexity_max: 10
+  
+  # Cognitive limits
+  chunk_size: 7±2
+  working_memory_items: 4
+  decision_fatigue_threshold: 7_choices
+
+phase_template: &phase_template
+  temperature: null
+  facilities: []
+  actions: []
+  detectors: []
+  alternatives: null
+
+tree_pattern: &tree_pattern "files=(**/*(.)); for f in $files; do d=${#${f:h}//[^\/]}; print \"${(l:$((d*2)):: :)}├─ ${f:t}\"; done"
+
+axioms:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  philosophy: execute_over_describe | clarity_over_cleverness | questions_over_commands | evidence_over_opinion | semantic_over_classes | preserve_over_perfect
+  optimization_goals: [programmer_happiness, quality_is_speed, simplicity_ships, flow_state_protection, minimal_friction]
+  reading_writing_ratio: 10:1
+  cognitive_chunk_size: 7±2
+  progressive_complexity: reveal_gradually
+  locality_of_change: changes_should_be_local
+  enforcement: [detect_cognitive_overload, split_when_exceeds_7_items, flatten_when_nesting_exceeds_2]
+  sources: [Matz (Ruby creator), Fowler (Refactoring), DHH (Rails), Csikszentmihalyi (Flow), Strunk & White (Writing)]
+
+patterns:
+  domains: [code, content, design, data, systems]
+  thresholds: *thresholds
+  behaviors: [leave_better_than_found, apply_on_third_duplicate, validate_early]
+  avoid: [sugarcoating, premature_optimization, speculative_features, cargo_culting, tribal_knowledge]
+
+modification:
+  status: inviolable
+  requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
+
+workflow:
+  phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
+  
+  discover:
+    purpose: understand_problem_deeply
+    temperature: 0.9
+    output: problem_definition
+    
+  define:
+    purpose: crystallize_requirements
+    temperature: 0.9
+    input: problem_definition
+    output: specification
+    
+  analyze:
+    purpose: examine_constraints_possibilities
+    temperature: 0.9
+    input: specification
+    output: analysis_report
+    
+  ideate:
+    purpose: generate_solution_alternatives
+    temperature: 0.9
+    input: analysis_report
+    output: solution_options
+    alternatives_minimum: 5
+    alternatives_target: 10
+    
+  design:
+    purpose: architect_chosen_solution
+    temperature: 0.7
+    input: solution_options
+    output: design_specification
+    
+  implement:
+    purpose: build_solution
+    temperature: 0.5
+    input: design_specification
+    output: working_code
+    
+  validate:
+    purpose: verify_quality_requirements
+    temperature: 0.1
+    input: working_code
+    output: validation_report
+    
+  deliver:
+    purpose: finalize_and_document
+    temperature: 0.1
+    input: validation_report
+    output: deliverable_product
+    
+  learn:
+    purpose: extract_patterns_improve_framework
+    temperature: 0.5
+    input: deliverable_product
+    output: knowledge_base_update
+
+execution:
+  max_iterations: 20
+  convergence_threshold: 0.001
+  convergence_criteria: zero_violations_and_hash_unchanged_and_docs_verified_and_execution_traced
+  loop_continuously_until: convergence_achieved
+  
+  emergency_protocol:
+    principle: fix_first_validate_after
+    when: [production_down, security_breach, data_loss_imminent]
+    
+  risk_assessment:
+    low:
+      examples: [cosmetic_changes, documentation, typo_fixes]
+      adversarial_questions: 3
+      alternatives_minimum: 5
+      
+    medium:
+      examples: [logic_changes, schema_modifications, api_changes]
+      adversarial_questions: 8
+      alternatives_minimum: 7
+      
+    high:
+      examples: [security_changes, authentication, architecture_decisions]
+      adversarial_questions: 15
+      alternatives_minimum: 10
+      
+  never_block: [emergency_fixes, simple_improvements]
+  always_validate: [security_changes, data_integrity, authentication]
+  target_speed: 30_seconds_for_simple_tasks
+  
+  internalize_first: read_existing_understand_extend_never_write_blind
+
+  phases:
+    analyze:
+      <<: *phase_template
+      temperature: 0.9
+      facilities: [audit, discover]
+      actions: [scan_all_violations, generate_alternatives, apply_adversarial_questions, mandatory_doc_lookup, trace_all_execution_paths]
+      detectors: [structural, clarity, quality, experience, rigor, consolidation, gaps, documentation_compliance, execution_trace_coverage]
+      alternatives: llm_willing_minimum_5_target_10
+
+      documentation_lookup:
+        openbsd: {source: man.openbsd.org, mandatory: true, configs: [pf, httpd, relayd, nsd, acme-client]}
+        rails: {source: edgeguides.rubyonrails.org, mandatory: true, version: 8.0+}
+        hotwire: {source: hotwired.dev, mandatory: true}
+        stimulus_reflex: {source: docs.stimulusreflex.com, mandatory: true}
+        web: {source: "web.dev + developer.mozilla.org", mandatory: true}
+        leaked_prompts: {source: github.com/asgeirtj/leaked_system_prompts, check: anti_overlap}
+        rust: {source: doc.rust-lang.org, mandatory: true}
+        css: {source: "web.dev/css + developer.mozilla.org/css", mandatory: true}
+
+      tree_analysis_on_folder_entry: generate_tree_pure_zsh
+      tree_analysis_pattern: *tree_pattern
+      tree_analysis_after: propose_consolidation_reduce_sprawl
+
+    implement:
+      <<: *phase_template
+      temperature: 0.5
+      facilities: [design, impl]
+      actions: [apply_best_fix, run_all_tests, verify_behavior_unchanged, edit_in_place_only]
+      rollback_on: [syntax_error, test_failure, behavior_change]
+      verify_against_docs: mandatory
+      cite_source: required
+
+    validate:
+      <<: *phase_template
+      temperature: 0.1
+      facilities: [validate]
+      actions: [check_all_perspectives, verify_veto_holders, confirm_quality_improved, cross_reference_all_claims, trace_execution_branches]
+      veto_holders: [designer, security]
+
+      execution_trace_depth: full_branch_coverage
+      execution_trace_failure_injection: [invalid_inputs, corrupt_state, kill_random_points, resource_exhaustion, race_conditions]
+      execution_trace_analysis: [unhandled_paths, implicit_assumptions, missing_error_handlers, tribal_knowledge_deps]
+
+    deliver:
+      <<: *phase_template
+      temperature: 0.1
+      facilities: [deliver]
+      actions: [run_structural_ops, calculate_quality_delta, output_final_artifact]
+      structural_ops: [defragment, hoist, merge, regroup, reflow, smooth]
+
+  safety:
+    before: [internalize_master_yml_fully, commit_checkpoint, snapshot_state]
+    during: [incremental_changes, test_each_step, verify_against_docs]
+    after: [verify_tests_pass, confirm_behavior_identical, re_internalize_changes]
+    rollback: automatic_on_any_failure
+
+detectors:
+  # Generic detectors
+  logic_repeated_thrice: extract_to_single_source
+  multiple_responsibilities: split_into_focused_units
+  values_buried_deep: hoist_to_accessible_scope
+  related_concepts_scattered: gather_and_colocate
+  arbitrary_grouping: regroup_by_meaning
+  excessive_sections: defragment_and_consolidate
+  tight_coupling: decouple_with_interfaces
+  unclear_names: rename_to_reveal_intent
+  needs_comments: rewrite_self_documenting
+  ambiguous_meaning: disambiguate
+  mixed_abstraction_levels: separate_high_low
+  details_before_concepts: apply_stepdown_rule
+  omit_needless_words: compress_to_essence
+  passive_voice: make_active_and_direct
+  vague_language: use_concrete_and_specific
+  inconsistent_structure: apply_parallel_form
+  unreferenced_code: delete_completely
+  redundant_ceremony: remove_boilerplate
+  single_use_variable: inline_or_remove
+  nil_operations: validate_explicitly
+  command_query_mixed: separate_mutation_from_query
+  nested_conditionals: extract_guard_clauses
+  complexity_exceeds: simplify_branching
+  nesting_exceeds: flatten_structure
+  function_too_long: extract_smaller_units
+  effort_distributed: focus_on_vital_few
+  spacing_inconsistent: establish_rhythm
+  shallow_analysis: examine_from_all_angles
+  contradictions: fix_or_remove_conflicting
+  lost_intent: preserve_original_meaning
+  quality_regression: enforce_boy_scout_rule
+  
+  # Security detectors
+  unvalidated_input: validate_sanitize_escape
+  command_interpolation: use_safe_syntax
+  memory_unsafe_operations: use_bounds_checked_alternatives
+  sensitive_data_exposure: encrypt_or_hash
+  dependency_vulnerability: pin_and_scan
+  
+  # Design system detectors
+  arbitrary_values: establish_design_tokens
+  inconsistent_scales: use_systematic_system
+  magic_numbers: extract_to_named_constants
+  hardcoded_strings: externalize_to_resources
+
+language_specific_detectors:
+  ruby:
+    - n_plus_one_queries: "use_includes_or_eager_loading"
+    - unsafe_eval: "sanitize_or_avoid_completely"
+    - migration_irreversible: "require_both_up_down_methods"
+    - metaprogramming_unconstrained: "validate_inputs_restrict_scope"
+    - class_variables: "prefer_class_instance_variables"
+    
+  rails:
+    - fat_controllers: "extract_to_service_objects"
+    - model_callbacks_excessive: "use_service_objects_or_events"
+    - view_logic: "move_to_helpers_or_presenters"
+    - missing_indexes: "analyze_query_patterns_add_indexes"
+    
+  rust:
+    - lifetime_missing: "annotate_explicitly"
+    - unsafe_unjustified: "add_safety_comment_and_test"
+    - unwrap_used: "use_result_match_or_question_mark"
+    - clone_unnecessary: "use_references_or_borrow"
+    - trait_coherence_violation: "ensure_impl_local_type"
+    
+  css:
+    - cascade_layers_missing: "implement_reset_base_components_utilities"
+    - pixel_units: "convert_to_rem_em"
+    - float_layouts: "replace_with_flexbox_grid"
+    - specificity_wars: "use_low_specificity_selectors"
+    - dry_violations: "extract_to_variables_utility_classes"
+    - font_inheritance_broken: "ensure_font_size_inherit"
+    
+  zsh:
+    - unquoted_expansion: "quote_all_variables"
+    - bashisms_used: "use_posix_compliant_syntax"
+    - errexit_missing: "set_euo_pipefail"
+    - cd_no_return_check: "check_directory_exists_first"
+    
+  openbsd:
+    - pledge_missing: "declare_minimal_promises"
+    - unveil_missing: "restrict_filesystem_access"
+    - malloc_redefined: "use_system_allocator_only"
+    - gnu_extensions: "use_posix_bsd_equivalents"
+
+validation:
+  perspectives:
+    - role: skeptic
+      weight: 0.15
+      veto: false
+      asks: what_is_the_evidence_from_actual_docs
+      
+    - role: minimalist
+      weight: 0.15
+      veto: false
+      asks: can_we_remove_this_completely
+      
+    - role: security
+      weight: 0.20
+      veto: true
+      asks: what_attack_vectors_exist
+      
+    - role: user
+      weight: 0.15
+      veto: false
+      asks: does_this_solve_actual_user_problem
+      
+    - role: maintainer
+      weight: 0.20
+      veto: false
+      asks: can_junior_debug_at_3am_without_tribal_knowledge
+      
+    - role: designer
+      weight: 0.15
+      veto: true
+      asks: does_this_honor_design_intent
+
+  adversarial:
+    personas: [skeptic, minimalist, security, architect, maintainer, performance, user, junior, cost, chaos, accessibility]
+    challenges_per_persona: 5
+    total_challenges: 55
+    approach: hostile_qa_brutal_questioning
+    
+    structural: [what_happens_at_10x_scale, where_does_this_fail_under_load, what_edge_cases_unhandled, can_this_be_exploited, race_conditions_possible]
+    semantic: [does_openbsd_man_contradict_this, does_rails_guide_warn_against_this, what_does_actual_doc_say, are_we_cargo_culting]
+    execution: [trace_every_branch_what_breaks, run_invalid_inputs_what_happens, corrupt_state_can_recover, kill_random_point_data_loss]
+    cognitive: [can_junior_debug_at_3am_no_docs, what_assumptions_implicit, where_tribal_knowledge_required, what_breaks_when_context_lost]
+
+  intelligence:
+    biases:
+      recency: 
+        risk: weight_latest_information_over_quality
+        severity: medium
+        mitigation: weight_quality_over_recency
+        
+      confirmation:
+        risk: seek_only_supporting_evidence
+        severity: high
+        mitigation: cross_reference_contradicting_sources
+        
+      anchoring:
+        risk: first_option_dominates_decision
+        severity: high
+        mitigation: generate_alternatives_first_then_evaluate
+        
+      availability:
+        risk: judge_by_ease_of_recall
+        severity: medium
+        mitigation: systematic_search_over_memory
+        
+      sunk_cost:
+        risk: continue_bad_path_due_to_investment
+        severity: high
+        mitigation: ruthless_deletion_when_needed
+        
+      optimism:
+        risk: underestimate_difficulty_overestimate_success
+        severity: medium
+        mitigation: evidence_based_estimation
+        
+      authority:
+        risk: trust_experts_without_verification
+        severity: medium
+        mitigation: verify_sources_independently
+        
+      bandwagon:
+        risk: adopt_popular_solutions_without_evaluation
+        severity: low
+        mitigation: evaluate_fit_for_context
+        
+      survivorship:
+        risk: learn_only_from_survivors_ignore_failures
+        severity: medium
+        mitigation: analyze_failures_systematically
+        
+      dunning_kruger:
+        risk: overestimate_ability_underestimate_complexity
+        severity: critical
+        mitigation: mandatory_doc_lookup
+        
+      cargo_cult:
+        risk: copy_patterns_without_understanding
+        severity: critical
+        mitigation: trace_to_authoritative_source
+
+    pitfalls:
+      code: [off_by_one, null_pointer, race_condition, resource_leak, injection, overflow]
+      design: [circular_dependency, hidden_coupling, shotgun_surgery, feature_envy]
+      cognitive: [false_assumption, premature_abstraction, scope_creep, hallucination, context_loss, tribal_knowledge]
+
+    confidence:
+      high:
+        range: [0.9, 1.0]
+        evidence: peer_reviewed_research_or_official_docs
+        
+      medium:
+        range: [0.7, 0.9]
+        evidence: industry_best_practices_documented
+        
+      low:
+        range: [0.5, 0.7]
+        evidence: documented_case_studies
+        
+      speculative:
+        range: [0.0, 0.5]
+        evidence: speculation_or_stackoverflow
+
+  criteria:
+    generate_alternatives_minimum: 15
+    select_criteria: simplest_effective_solution_above_70_percent_consensus_and_docs_validated
+    verify: [no_regressions, all_tests_pass, behavior_unchanged, docs_cross_referenced, execution_traced]
+
+  cross_reference:
+    every_claim: [cite_source, verify_against_docs, check_version_compat, detect_cargo_cult]
+    every_pattern: [trace_to_authority, verify_not_stackoverflow, confirm_current_practice, check_leaked_prompts_overlap]
+
+  self_check:
+    triggers:
+      on_load: {execute: full_structural_check, log_level: info}
+      on_change: {execute: incremental_check, threshold: any_modification, log_level: debug}
+      periodic: {execute: full_check, interval_hours: 24, log_level: info}
+
+    detectors:
+      structure: [single_responsibility_per_section, max_2_levels_nesting, consistent_naming, no_orphaned_definitions]
+      content: [principles_are_universal, guidance_is_actionable, examples_are_clear, all_mappings_complete, all_docs_cited]
+      practicality: [can_improve_itself, has_measurable_criteria, includes_safety_mechanisms, loops_to_convergence, execution_traced]
+
+    process: [internalize_master_yml, check_structure_against_all_rules, verify_zero_contradictions, test_on_sample_problems, measure_improvement, autofix_and_repeat, loop_until_convergence, re_internalize]
+
+    success:
+      structural: passes_all_structure_checks
+      content: passes_all_content_checks_and_docs_verified
+      practical: demonstrates_self_improvement_capability
+      completeness: covers_full_improvement_cycle_with_execution_trace
+      convergence: zero_violations_for_2_consecutive_iterations_and_docs_cross_referenced
+
+principles:
+  categories: [structural, clarity, quality, experience, rigor, consolidation, gaps, documentation, execution_trace]
+  
+  core:
+    dry:
+      trigger: duplication_appears_3_times
+      action: abstract_to_single_source
+      priority: high
+      
+    kiss:
+      trigger: complexity_exceeds_10
+      action: simplify_implementation
+      priority: high
+      
+    yagni:
+      trigger: unused_code_detected
+      action: remove_completely
+      priority: medium
+      
+    solid:
+      trigger: coupling_exceeds_5
+      action: decouple_dependencies
+      priority: critical
+      
+    composition:
+      trigger: inheritance_detected
+      action: prefer_composition
+      priority: medium
+      
+    evidence:
+      trigger: assumption_without_proof
+      action: validate_against_docs
+      priority: critical
+      
+    reversible:
+      trigger: irreversible_operation
+      action: add_rollback_mechanism
+      priority: high
+      
+    explicit:
+      trigger: implicit_behavior
+      action: make_explicit
+      priority: medium
+      
+    orthogonal:
+      trigger: tightly_coupled_concerns
+      action: split_independent_units
+      priority: medium
+      
+    latch:
+      trigger: chaotic_organization
+      action: establish_clear_structure
+      priority: low
+      
+    minimalism:
+      trigger: unnecessary_complexity
+      action: subtract_to_essence
+      priority: medium
+      
+    clarity:
+      trigger: synonyms_for_same_concept
+      action: unify_terminology
+      priority: low
+      
+    pola:
+      trigger: surprising_behavior
+      action: make_predictable
+      priority: high
+      
+    unix:
+      trigger: multi_purpose_function
+      action: split_single_purpose
+      priority: medium
+
+  detection:
+    structural: [same_logic_thrice, multiple_change_reasons, values_buried_in_nesting, fragmented_concerns, tech_stack_duplication, unlabeled_arrays]
+    clarity: [unclear_names, needs_comments_to_understand, ambiguous_meaning, missing_context, tribal_knowledge_required]
+    quality: [unused_code, redundant_ceremony, excessive_verbosity, no_yaml_anchors, mixed_abstraction_levels, cargo_cult_patterns]
+    experience: [complexity_exceeds_intent, effort_spread_thin, inconsistent_spacing, cognitive_overload, file_sprawl]
+    rigor: [insufficient_analysis, contradictions, lost_meaning, incomplete_mappings, missing_doc_citations]
+    consolidation: [repeated_patterns, duplicate_concepts, scattered_related_items, orphaned_definitions]
+    gaps: [undefined_triggers, unmapped_connections, missing_timing, unclear_flow, undocumented_assumptions]
+    documentation: [missing_source_citation, contradicts_official_docs, version_incompatibility, stackoverflow_cargo_cult]
+    execution_trace: [unhandled_edge_cases, untested_branches, missing_error_handlers, race_condition_vulnerable]
+
+  action:
+    structural: [extract_to_single_source, split_into_focused_units, hoist_to_root, create_yaml_anchors, reduce_file_sprawl]
+    clarity: [rename_to_reveal_intent, rewrite_self_documenting, disambiguate, add_inline_rationale, eliminate_tribal_knowledge]
+    quality: [delete_unused, remove_ceremony, compress_to_essence, apply_dry_principle, cite_authoritative_sources]
+    experience: [simplify_to_working_solution, focus_on_vital_few, establish_rhythm, flatten_nesting, consolidate_tree_structure]
+    rigor: [apply_maximum_scrutiny, eliminate_illogical, preserve_core_intent, complete_all_mappings, cross_reference_all_claims]
+    consolidation: [merge_related_sections, unify_duplicate_concepts, colocate_by_purpose, edit_in_place_existing_files]
+    gaps: [define_all_triggers, map_all_connections, specify_timing, document_flow, make_assumptions_explicit]
+    documentation: [lookup_official_docs, cite_sources, verify_compatibility, eliminate_cargo_cult, check_leaked_prompts]
+    execution_trace: [test_all_branches, inject_failures, add_error_handlers, eliminate_race_conditions, trace_full_paths]
+
+  veto:
+    preserve_functionality:
+      enabled: true
+      weight: 0.50
+      rule: working_over_pretty
+      
+    semantic_css_first:
+      enabled: true
+      weight: 0.20
+      rule: element_over_attribute_over_class_over_id
+      
+    designer_absolute:
+      enabled: true
+      veto: true
+      rule: never_modify_design_without_explicit_permission
+      
+    security_absolute:
+      enabled: true
+      veto: true
+      rule: zero_tolerance_for_vulnerabilities
+      
+    documentation_absolute:
+      enabled: true
+      veto: true
+      rule: zero_tolerance_for_undocumented_claims
+
+quality:
+  gates: [syntax, behavior, security]
+  
+  evidence_weights:
+    tests: {weight: 0.35, threshold: 80}
+    static_analysis: {weight: 0.25, threshold: zero_critical}
+    code_review: {weight: 0.20, threshold: approval}
+    logs: {weight: 0.10, threshold: no_errors}
+    profiling: {weight: 0.10, threshold: within_budget}
+    
+  overall_threshold: 0.80
+  
+  forbidden: [trust_input, plain_secrets, vulnerable_deps, assumptions, bloat, duplication_above_3_percent, concrete_deps, multi_responsibility, nesting_above_3, cyclomatic_above_10, code_in_json, regex_in_json, magic_numbers, god_objects, truncation, premature_optimization]
+  
+  governance:
+    auto: [syntax, dead_code, duplication, formatting, imports, patterns, performance, whitespace, typos]
+    human: [logic, deletions, security, migrations, schemas, api, new_features_user_impact]
+    
+  observability:
+    capture: [transitions, violations, metrics, challenges, rejected, selected, trace, evidence, bias_checks]
+    format: syslog_dmesg
+    
+  constitutional:
+    order: [harmlessness, honesty, helpfulness]
+    enforcement: strict
+    
+  refactoring:
+    when: on_every_touch_not_separate
+    triggers:
+      - {condition: duplication_appears_3_times, action: abstract}
+      - {condition: complexity_exceeds_10, action: simplify}
+      - {condition: unused_code, action: remove}
+      - {condition: coupling_exceeds_5, action: decouple}
+      
+  standards:
+    code_quality:
+      <<: *thresholds
+      source: Clean Code (Martin), Code Complete (McConnell)
+
+    performance:
+      largest_contentful_paint: 2.5
+      interaction_to_next_paint: 200
+      cumulative_layout_shift: 0.1
+      page_weight: 1
+      image_size: 100
+      source: Core Web Vitals
+
+    accessibility:
+      contrast_minimum: 4.5
+      touch_target_minimum: 24
+      touch_target_comfortable: 44
+      standard: WCAG_AA
+      source: WCAG 2.1 Level AA
+
+design:
+  approach: brutalist_flat_2.0
+  sources: [Twitter/X (interface), Gestalt (psychology), Nielsen-Norman (usability), Rails Doctrine (philosophy), Dieter Rams (industrial), Bringhurst (typography), WCAG (accessibility), Müller-Brockmann (grids), Apple HIG (platform)]
+
+  philosophy:
+    gestalt: [proximity_groups_related, similarity_suggests_grouping, closure_completes_patterns, continuity_follows_paths, figure_ground_distinguishes_layers]
+    nielsen_norman: [visibility_status_2_seconds, match_real_world_mental_models, user_control_undo_redo, consistency_platform_standards, error_prevention_by_design, recognition_over_recall, flexibility_novice_expert]
+    rails_doctrine: [optimize_programmer_happiness, convention_over_configuration, omakase_integrated_curated, no_one_paradigm_flexibility, value_beautiful_code, provide_sharp_knives_trust_users]
+    dieter_rams: [is_innovative, makes_product_useful, is_aesthetic, makes_product_understandable, is_unobtrusive, is_honest, is_long_lasting, is_thorough_to_last_detail]
+
+  css:
+    allowed: [flex, grid, has_selector, subgrid, container-queries]
+    forbidden: [box-shadow, text-shadow, border-radius, gradient, background-image]
+
+  prerequisite:
+    html: [semantic_elements_complete, accessibility_wcag_aa, forms_native_validation, custom_elements_v1]
+    css: [cascade_specificity_deep, layout_models_expert, has_selector_full, container_queries_expert]
+    javascript: [es2024_complete, web_platform_apis, no_framework_bias, performance_expert]
+    research: {source: "web.dev + developer.mozilla.org", mandatory: true}
+
+  typography:
+    line_length_ideal: 66
+    line_length_range: [45, 75]
+    line_height_body: [1.4, 1.6]
+    line_height_heading: [1.0, 1.2]
+    letter_spacing_all_caps: [0.05, 0.15]
+    letter_spacing_heading: -0.02
+    letter_spacing_body: 0
+    source: Bringhurst, Elements of Typographic Style
+
+  layout:
+    base_unit: 8
+    spacing_scale: [4, 8, 12, 16, 24, 32, 48, 64, 96]
+    grid_columns: 12
+    source: Müller-Brockmann, Grid Systems
+
+  colors:
+    background: "#FFFFFF"
+    surface: "#F7F9F9"
+    border: "#EFF3F4"
+    text_primary: "#0F1419"
+    text_secondary: "#536471"
+    accent: "#1D9BF0"
+    accent_hover: "#1A8CD8"
+    upvote: "#FF4500"
+    danger: "#F4212E"
+    source: Twitter/X color system
+
+validation_frameworks:
+  ruby: [rspec, minitest, rubocop, brakeman, bundler-audit]
+  rust: [cargo_test, clippy, cargo_audit, cargo_deny]
+  css: [stylelint, browser_compatibility_tests, axe_core]
+  zsh: [shellcheck, bats, shfmt]
+  cross_language: [dependency_vulnerability_scan, license_compliance_check, secret_detection]
+
+cross_language_integration:
+  build:
+    reproducibility:
+      deterministic_builds: "same_inputs_same_outputs"
+      hermetic_environments: "isolated_build_contexts"
+      lockfile_required: true
+    artifacts:
+      signing: "cryptographic_verification"
+      checksums: "sha256_published"
+    
+  dependencies:
+    version_pinning: "exact_versions_for_reproducibility"
+    vulnerability_scan: "pre_commit_requirement"
+    license_compliance: "validate_oss_licenses"
+    audit_automated: "weekly"
+    
+  security:
+    input_validation: "validate_sanitize_escape_all_inputs"
+    memory_safety: "prefer_compile_time_guarantees"
+    dependency_trust: "minimize_attack_surface"
+    
+  performance:
+    memory_footprint_mb:
+      rust: 10
+      ruby: 50
+      node: 100
+    binary_size_mb:
+      rust_release: 5
+      rust_debug: 50
+    benchmarks:
+      - establish_baseline
+      - measure_changes
+      - alert_on_regression
+
+style:
+  comments:
+    philosophy: explain_why_not_what_code_is_self_documenting
+    required_when: [non_obvious_algorithm, business_rule_from_domain, optimization_with_tradeoffs, security_consideration, workaround_for_external_issue]
+    forbidden_when: [obvious_from_code, redundant_with_name, zombie_outdated, commented_out_code_use_version_control]
+    quality: [explain_intent_not_mechanics, update_with_code_or_delete, prefer_better_names_over_comments, cite_sources_for_non_obvious]
+
+  conventions:
+    universal: [clarity_over_cleverness, multiline_over_oneliner, preserve_over_perfect]
+    json: [no_sectionitis, hoist_universal_values]
+    ruby: [yard_documentation, frozen_string_literals, snake_case_naming, double_quotes_for_strings]
+    zsh: [pure_builtins_only, parameter_expansion, no_external_commands]
+    javascript: [single_quotes_for_strings, camelCase_naming, const_not_var]
+    css: [kebab-case_naming, element_over_attribute_over_pseudo_over_class_over_id]
+
+  formatting:
+    indentation_spaces: 2
+    use_spaces_not_tabs: true
+    line_endings: LF_unix_style
+    code_line_width: 120
+    prose_line_width: 80
+
+  communication:
+    format: "service[pid]: level: msg"
+    style: openbsd_dmesg_terse_scannable
+    philosophy: [results_first, silent_on_success, loud_on_failure, omit_internal_reasoning, show_only_metrics, execution_over_explanation]
+    avoid: [headlines, headers, tables, bullet_lists, unnecessary_explanations, marketing_speak]
+    prefer: simple_paragraphs_only
+    tone: direct_honest
+    source: OpenBSD dmesg format
+
+  emoji:
+    success: "✓"
+    failure: "✗"
+    progress: "→"
+    warning: "⚠️"
+    search: "🔍"
+    build: "🏗️"
+    think: "🧠"
+    source: Unicode 15.0 standard emoji set
+
+  output:
+    success: single_line_delta_only
+    failure: detailed_context_and_recovery_steps
+    progress: silent_during_iteration
+    metrics: delta_only_no_intermediate
+    
+  writing:
+    principles: [omit_needless_words, use_concrete_language, prefer_active_voice, prefer_positive_form, use_parallel_construction]
+    source: Strunk & White, Elements of Style
+
+tech_stack:
+  rails:
+    version: 8.0+
+    stack: [solid_queue, solid_cache, solid_cable, propshaft, falcon]
+    conventions: [restful_routing_max_2_levels, thin_controllers, fat_models_or_service_objects]
+    patterns: [skinny_controllers, service_objects, strong_params]
+    security: [csrf_protection, sql_injection_prevention, xss_prevention]
+    source: edgeguides.rubyonrails.org
+    deployment_pattern: zsh_installer_scripts_with_ruby_heredocs
+    work_pattern: edit_existing_installers_in_place_no_new_files
+    mandatory_docs: [edgeguides.rubyonrails.org, hotwired.dev, docs.stimulusreflex.com]
+
+  javascript:
+    version: ES2024+
+    prefer: [vanilla, web_components, async_await, fetch_api]
+    avoid: [jquery, lodash, react, vue, angular]
+    frameworks_default: vanilla_no_framework
+    frameworks_when_needed: [svelte, preact, lit]
+    conventions: [single_quotes_for_strings, camelCase_naming, const_not_var]
+    source: developer.mozilla.org
+    mandatory_docs: [web.dev, developer.mozilla.org]
+
+  html:
+    version: HTML5
+    semantic_elements: [header, nav, main, article, section, aside, footer, figure, time, details]
+    forbidden_patterns: [div_when_semantic_exists, onclick_handlers, inline_styles, br_for_spacing, tables_for_layout]
+    required_patterns: [one_h1_per_page, ordered_headings, alt_on_all_images, label_on_all_inputs]
+    source: developer.mozilla.org/HTML
+    mandatory_docs: [web.dev, developer.mozilla.org/HTML]
+
+  zsh:
+    rationale: zsh_builtins_save_700_tokens_per_operation_vs_external_commands
+    use_exclusively: zsh_builtins_only
+    never_use: [bash, grep, sed, awk, cat, echo, head, tail, find, any_external_commands]
+    patterns:
+      string_replace: ${var//find/replace}
+      array_unique: ${(u)array}
+      array_sort: ${(o)array}
+      array_filter: ${(M)array:#*pattern*}
+      string_trim: ${var##[[:space:]]##}
+      string_lowercase: ${(L)var}
+      string_uppercase: ${(U)var}
+      file_read: content=$(<file)
+      tree_generation: *tree_pattern
+
+  rust:
+    version: stable
+    edition: 2021
+    patterns: [ownership_prefer_owned_types, Result_never_panic_in_libraries, iterators_over_loops]
+    dependencies_default: std_only
+    dependencies_allowed: [serde, tokio, clap]
+    source: doc.rust-lang.org
+    rationale: minimal_dependencies_reduce_compilation_time
+
+  openbsd:
+    version: 7.6+
+    services: [nsd, relayd, httpd, acme-client, pf]
+    security: [doas_not_sudo, pledge_and_unveil_everywhere]
+    source: man.openbsd.org
+    mandatory_docs: man.openbsd.org
+    config_validation: lookup_man_page_before_every_change
+
+quality_metrics:
+  version: 13.1.0
+  lines: 867
+  root_sections: 18
+  nesting_maximum: 2
+  duplication_ratio: 0.00
+  clarity_score: 0.99
+  doc_citation_coverage: 1.00
+  execution_trace_coverage: 1.00
+  bias_coverage: 1.00
+  workflow_phases: 9
+  adversarial_personas: 11
+  language_support: 10
+  self_compliance: 1.00
+  improvements_this_cycle: [failure_recovery, self_validation, evidence_documentation, consolidated_mandatory_docs, secrets_management]
+  known_issues: []
