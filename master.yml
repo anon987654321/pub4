@@ -33,11 +33,12 @@ meta:
         - commit_if_approved
 
 constraints:
-  banned: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo, null_usage]
-  allowed: [ruby, zsh, read_tool, edit_tool, write_tool]
-  bash_exceptions: [git, npm, bundle, rails, rake]
-  cat_usage: heredoc_only_acceptable_for_config_generation
-  rationale: zsh_builtins_save_700_tokens_per_operation
+  banned: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo, null_usage, cat, Get-Content_with_Measure-Object, powershell_with_pipes]
+  allowed: [ruby, zsh, view_tool, edit_tool, create_tool, glob_tool, grep_tool]
+  bash_exceptions: [git, npm, bundle, rails, rake]  
+  powershell_rule: FORBIDDEN_use_view_edit_create_tools_instead
+  critical_rule: when_powershell_hangs_for_30sec_STOP_use_file_tools_directly
+  rationale: zsh_builtins_save_700_tokens_per_operation_and_never_hang
   evidence:
     source: internal_benchmarking_2024
     comparison: "grep file vs ${(M)content:#*pattern*}"
