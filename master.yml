@@ -1,5 +1,5 @@
 meta:
-  version: 13.10.0
+  version: 13.11.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -1101,15 +1101,29 @@ tech_stack:
 
   openbsd:
     version: 7.6+
-    services: [nsd, relayd, httpd, acme-client, pf]
+    philosophy: simple_secure_correct_by_default
+    documentation: man.openbsd.org_is_canonical_source
+    services: [nsd, relayd, httpd, acme-client, pf, smtpd]
     security: [doas_not_sudo, pledge_and_unveil_everywhere]
-    source: man.openbsd.org
-    mandatory_docs: man.openbsd.org
+    
+    daemon_config_mappings:
+      pf.conf: {daemon: "pf(4)", man: "man.openbsd.org/pf.conf", purpose: packet_filter_firewall}
+      relayd.conf: {daemon: "relayd(8)", man: "man.openbsd.org/relayd.conf", purpose: load_balancer_tls_termination}
+      httpd.conf: {daemon: "httpd(8)", man: "man.openbsd.org/httpd.conf", purpose: acme_challenges_only}
+      nsd.conf: {daemon: "nsd(8)", man: "man.openbsd.org/nsd.conf", purpose: authoritative_dns_dnssec}
+      acme-client.conf: {daemon: "acme-client(1)", man: "man.openbsd.org/acme-client.conf", purpose: lets_encrypt_certs}
+      smtpd.conf: {daemon: "smtpd(8)", man: "man.openbsd.org/smtpd.conf", purpose: mail_transfer_agent}
+      doas.conf: {command: "doas(1)", man: "man.openbsd.org/doas.conf", purpose: privilege_escalation}
+      rc.d_scripts: {framework: "rc.d(8)", man: "man.openbsd.org/rc.d", purpose: service_control}
+    
+    architecture: "Internet → pf → relayd[TLS] → Falcon → Rails"
+    deployment_phases: [pre_point_infra_dns, dns_propagation_24_48h, post_point_tls_rails]
+    security_layers: [pf_firewall, rate_limiting, bruteforce_ban, tls_1_3, security_headers, unprivileged_rails]
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.10.0
-  lines: 1082
+  version: 13.11.0
+  lines: 1132
   root_sections: 18
   nesting_maximum: 2
   duplication_ratio: 0.00
