@@ -1,5 +1,5 @@
 meta:
-  version: 13.9.0
+  version: 13.10.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -969,6 +969,42 @@ workflow_patterns:
     pattern: createMediaElementSource_connects_audio_to_analyser
     crossorigin: must_set_crossOrigin_anonymous_for_cors
     pitfall: cannot_connect_same_element_twice_check_srcNode_flag
+    
+  vps_remote_development:
+    provider: openbsd.amsterdam
+    os: OpenBSD_7.6_plus
+    connection: "ssh -p 22 dev@185.52.176.18"
+    ssh_key: "~/.ssh/id_ed25519 or ~/.ssh/id_rsa"
+    
+    limitations:
+      copilot_cli: no_openbsd_binaries_for_npm_github_copilot
+      gh_copilot: no_openbsd_extension_binaries
+      node_pty: prebuilds_missing_for_openbsd_x64
+      
+    workaround:
+      approach: develop_locally_deploy_to_vps
+      local: use_copilot_cli_on_windows_cygwin
+      vps_use: hosting_rails_apps_httpd_relayd_services
+      sync: git_push_local_git_pull_vps
+      
+    setup_sequence:
+      - ssh_to_vps_verify_connection
+      - check_gh_cli_installed: "which gh && gh --version"
+      - configure_git_https: "git remote set-url origin https://TOKEN@github.com/user/repo.git"
+      - clone_or_pull_repo: "git clone or git pull origin main"
+      - skip_copilot_installation: not_supported_on_openbsd
+      - use_screen_for_persistence: "screen -dmS sessionname"
+      
+    git_workflow:
+      local_work: "G:/pub/ with full Copilot CLI support"
+      commit_and_push: "git add . && git commit && git push origin main --force"
+      vps_pull: "cd ~/pub4 && git reset --hard origin/main"
+      authentication: embed_PAT_in_remote_url
+      
+    vps_role:
+      primary: production_hosting_and_deployment
+      secondary: openbsd_specific_testing
+      not_for: interactive_development_with_copilot
 
 formatters:
   purpose: auto_fix_violations_using_zsh_builtins_only
@@ -1072,7 +1108,7 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.9.0
+  version: 13.10.0
   lines: 1082
   root_sections: 18
   nesting_maximum: 2
