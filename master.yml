@@ -1,5 +1,5 @@
 meta:
-  version: 13.1.0
+  version: 13.2.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -787,6 +787,66 @@ style:
     principles: [omit_needless_words, use_concrete_language, prefer_active_voice, prefer_positive_form, use_parallel_construction]
     source: Strunk & White, Elements of Style
 
+workflow_patterns:
+  git_authentication:
+    issue: SSH_deploy_keys_and_fine_grained_PATs_frequently_lack_write_permissions
+    solution: use_classic_PAT_with_full_repo_scope
+    command: "git remote set-url origin https://TOKEN@github.com/user/repo.git"
+    rationale: deploy_keys_are_read_only_by_default_classic_PATs_work_immediately
+    
+  github_pages_deployment:
+    trigger: push_to_main_branch
+    delay: 30_to_90_seconds_for_rebuild
+    verification: check_Actions_tab_for_pages_build_and_deployment_status
+    common_issue: stale_cache_refresh_browser_with_ctrl_shift_r
+    
+  mp3_file_serving:
+    structure: mp3_files_in_subdirectory_with_relative_paths
+    example: ".mp3/track.mp3"
+    detection: hardcoded_array_with_optional_playlist_json_fallback
+    cors: github_pages_sets_proper_headers_automatically
+    verification: check_network_tab_for_200_status_on_mp3_files
+    
+  cygwin_bash_integration:
+    context: copilot_CLI_runs_inside_cygwin_npm_environment
+    path_format: "/cygdrive/g/path" not "G:\path"
+    git_commands: wrap_in_bash_c_when_using_powershell_tool
+    example: "bash -c 'cd /cygdrive/g/pub && git push'"
+    rationale: powershell_hangs_on_long_git_operations_bash_is_reliable
+    
+  conflict_resolution:
+    on_rebase_conflicts: use_ours_strategy_for_working_files
+    command: "git checkout --ours FILE && git add FILE && git rebase --continue"
+    alternative: abort_and_force_push_if_local_is_canonical
+    force_push: "git push origin main --force"
+    when_to_force: local_has_authoritative_changes_remote_is_stale
+    
+  file_inventory:
+    before_hardcoding_paths: check_actual_repo_contents_via_github_api
+    tool: github-mcp-server-get_file_contents
+    example: list_directory_to_see_all_mp3_files_before_creating_manifest
+    prevents: missing_files_in_hardcoded_arrays
+    
+  token_management:
+    storage: never_commit_tokens_to_repo
+    usage: embed_in_git_remote_url_for_https_push
+    rotation: tokens_in_remote_urls_persist_until_remote_set_url_changes
+    clearing: "git remote set-url origin NEW_URL" replaces_old_token
+    
+  debugging_github_pages:
+    check_sequence:
+      - verify_files_exist_in_repo_main_branch
+      - check_github_pages_settings_enabled_and_source_branch
+      - wait_for_actions_workflow_pages_build_and_deployment
+      - check_browser_network_tab_for_404_vs_200
+      - verify_relative_paths_match_repo_structure
+    
+  audio_context_api:
+    requirement: user_gesture_required_to_start
+    pattern: createMediaElementSource_connects_audio_to_analyser
+    crossorigin: must_set_crossOrigin_anonymous_for_cors
+    pitfall: cannot_connect_same_element_twice_check_srcNode_flag
+
 tech_stack:
   rails:
     version: 8.0+
@@ -850,9 +910,9 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.1.0
-  lines: 867
-  root_sections: 18
+  version: 13.2.0
+  lines: 917
+  root_sections: 19
   nesting_maximum: 2
   duplication_ratio: 0.00
   clarity_score: 0.99
