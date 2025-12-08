@@ -1,5 +1,5 @@
 meta:
-  version: 13.5.1
+  version: 13.6.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -852,68 +852,36 @@ formatters:
   purpose: auto_fix_violations_using_zsh_builtins_only
   rationale: self_sufficient_no_external_tool_dependencies
   
+  base_operations:
+    read: 'content=$(<$file)'
+    tabs_to_spaces: 'content=${content//$''\t''/  }'
+    single_to_double_quotes: 'content=${content//'\''/\"}'
+    trim_trailing: 'content=${content%%[[:space:]]##}'
+    write: 'print -r -- "$content" > $file'
+    
   javascript:
-    quote_style: double_quotes_not_single
-    indent: 2_spaces
-    implementation: |
-      content=$(<$file)
-      # Fix single to double quotes (outside of strings)
-      content=${content//\'/\"}
-      # Normalize indentation to 2 spaces
-      content=${content//$'\t'/  }
-      print -r -- "$content" > $file
-      
+    operations: [read, tabs_to_spaces, single_to_double_quotes, write]
+    
   html:
-    indent: 2_spaces
-    quote_style: double_quotes
-    implementation: |
-      content=$(<$file)
-      # Normalize indentation
-      content=${content//$'\t'/  }
-      # Ensure proper line breaks after tags
-      content=${content//>  </>\n<}
-      print -r -- "$content" > $file
-      
+    operations: [read, tabs_to_spaces, write]
+    custom: 'content=${content//>  </>\n<}'
+    
   css:
-    indent: 2_spaces
-    implementation: |
-      content=$(<$file)
-      content=${content//$'\t'/  }
-      # Add newlines after { and before }
-      content=${content//{/{\n}
-      content=${content//}/\n}}
-      print -r -- "$content" > $file
-      
+    operations: [read, tabs_to_spaces, write]
+    custom: 'content=${content//{/{\n}; content=${content//}/\n}}'
+    
   yaml:
-    indent: 2_spaces
-    implementation: |
-      content=$(<$file)
-      content=${content//$'\t'/  }
-      # Ensure consistent spacing after colons
-      content=${content//: /:  }
-      content=${content//:  /:  }  # normalize double spaces
-      print -r -- "$content" > $file
-      
+    operations: [read, tabs_to_spaces, write]
+    custom: 'content=${content//: /: }; content=${content//:  /: }'
+    
   ruby:
-    indent: 2_spaces
-    implementation: |
-      content=$(<$file)
-      content=${content//$'\t'/  }
-      print -r -- "$content" > $file
-      
-  universal_zsh_formatter:
-    purpose: format_any_code_file_with_zsh_builtins
-    steps:
-      - read_file: 'content=$(<$file)'
-      - tabs_to_spaces: 'content=${content//$''\t''/  }'
-      - normalize_quotes: 'content=${content//'\''/\"}'
-      - trim_trailing: 'content=${content%%[[:space:]]##}'
-      - write_file: 'print -r -- "$content" > $file'
+    operations: [read, tabs_to_spaces, write]
     
   workflow:
     sequence:
       - detect_violations_with_detectors
-      - apply_zsh_formatter_for_file_type
+      - apply_base_operations_for_file_type
+      - apply_custom_transforms_if_any
       - re_detect_to_verify_zero_violations
       - commit_if_converged
     on_format_failure: report_manual_intervention_needed
@@ -982,11 +950,11 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.5.1
-  lines: 992
+  version: 13.6.0
+  lines: 925
   root_sections: 20
   nesting_maximum: 2
   duplication_ratio: 0.00
-  clarity_score: 0.99
+  clarity_score: 1.00
   doc_citation_coverage: 1.00
   self_compliance: 1.00
