@@ -41,7 +41,12 @@ APPS[pubattorney.domains]="pub.attorney freehelp.legal"
 
 # Extract all unique domains for DNS config
 typeset -a ALL_DOMAINS
-ALL_DOMAINS=(${(u)${(f)"$(print -l ${APPS[(I)*.domains]})"}//.domains/})
+for key in ${(k)APPS[(I)*.domains]}; do
+  for domain in ${=APPS[$key]}; do
+    ALL_DOMAINS+=($domain)
+  done
+done
+ALL_DOMAINS=(${(u)ALL_DOMAINS})
 
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
