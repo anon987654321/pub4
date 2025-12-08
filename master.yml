@@ -1,5 +1,5 @@
 meta:
-  version: 13.11.0
+  version: 13.12.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -1119,11 +1119,35 @@ tech_stack:
     architecture: "Internet → pf → relayd[TLS] → Falcon → Rails"
     deployment_phases: [pre_point_infra_dns, dns_propagation_24_48h, post_point_tls_rails]
     security_layers: [pf_firewall, rate_limiting, bruteforce_ban, tls_1_3, security_headers, unprivileged_rails]
+    
+    single_command_deployment:
+      script: openbsd.sh
+      version: v337.4.0
+      verified: 2025-10-23_against_man_pages
+      
+      phase_1_pre_point:
+        command: "doas zsh openbsd.sh --pre-point"
+        deploys: [ruby_rails_falcon, postgresql_redis, nsd_dns_dnssec, pf_firewall, 7_rails_apps]
+        critical: nsd_must_run_before_glue_record_registration
+        duration: 15_30_minutes
+        
+      wait_dns_propagation: 24_48_hours
+      
+      phase_2_post_point:
+        command: "doas zsh openbsd.sh --post-point"
+        requires: dns_propagated_to_185_52_176_18
+        deploys: [lets_encrypt_certs, relayd_tls_config, httpd_acme, full_reverse_proxy]
+        duration: 10_20_minutes
+        
+      result: entire_infrastructure_operational
+      apps: [brgen, amber, blognet, bsdports, hjerterom, privcam, pubattorney]
+      domains: 40_plus_with_tls
+      
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.11.0
-  lines: 1132
+  version: 13.12.0
+  lines: 1156
   root_sections: 18
   nesting_maximum: 2
   duplication_ratio: 0.00

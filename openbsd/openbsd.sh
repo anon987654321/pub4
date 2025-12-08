@@ -1,146 +1,98 @@
 #!/usr/bin/env zsh
-# OpenBSD Infrastructure v337.4.0 - Converged with master.json
+# OpenBSD Infrastructure v337.4.0 - Converged with master.yml
 
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 #
 # ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
 #
-# VERIFIED: 2025-10-23 against man.openbsd.org + master.json principles
+# VERIFIED: 2025-10-23 against man.openbsd.org + master.yml principles
 set -euo pipefail
-# Constants
-readonly VERSION="337.4.0"
 
+readonly VERSION="337.4.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
 readonly PTR4_API="http://ptr4.openbsd.amsterdam"
 readonly PTR6_API="http://ptr6.openbsd.amsterdam"
-
-# Deployment paths
-
 readonly DEPLOY_BASE="/var/rails"
-
 readonly APP_BASE="/home"
-
 readonly LOG_DIR="/var/log/rails"
-
 readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
-# Create structure
 
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
 
 # Unified deployment config - modern zsh nested associative arrays
-
 typeset -A APPS
-
 APPS[brgen.port]=11006
-
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
-
 APPS[brgen.subdomains]="markedsplass playlist dating tv takeaway maps"
-
 APPS[amber.port]=10001
 APPS[amber.domains]="amberapp.com"
-
 APPS[blognet.port]=10002
 APPS[blognet.domains]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-
 APPS[bsdports.port]=10003
 APPS[bsdports.domains]="bsdports.org"
-
 APPS[hjerterom.port]=10004
 APPS[hjerterom.domains]="hjerterom.no"
-
 APPS[privcam.port]=10005
 APPS[privcam.domains]="privcam.no"
-
 APPS[pubattorney.port]=10006
 APPS[pubattorney.domains]="pub.attorney freehelp.legal"
 
 # Extract all unique domains for DNS config
 typeset -a ALL_DOMAINS
-
 ALL_DOMAINS=(${(u)${(f)"$(print -l ${APPS[(I)*.domains]})"}//.domains/})
 
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
-
 readonly PTR_HOSTNAME="ns.brgen.no"
 
 # Status reporting - dmesg style
-
 status() {
-
   printf '%s %-24s %-4s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$3"
-
 }
 
 spin() {
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-
   local pid=$1
-
   local i=0
-
   while kill -0 $pid 2>/dev/null; do
-
     printf '\r%s %s' "${chars:$((i++ % 10)):1}" "$2"
-
     sleep 0.1
-
   done
-
   printf '\r'
-
 }
 
 # Logging with structured output
 log() {
-
   local level="${1:-INFO}"
-
   shift
-
   printf '{"time":"%s","level":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
-
 }
 
 save_state() {
   cat > "${DEPLOY_BASE}/state.json" << EOF
-
 {
-
   "version": "$VERSION",
-
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-
   "phase": "$1",
-
   "evidence": ${2:-0},
-
   "apps": ${3:-0},
-
   "domains": ${#ALL_DOMAINS[@]}
-
 }
-
 EOF
-
 }
 
 error() {
-
   log "ERROR" "$*"
-
   exit 1
-
 }
 
 warn() {
   log "WARN" "$*"
 }
-# Environment validation with evidence scoring
 
+# Environment validation with evidence scoring
 validate_environment() {
   log "INFO" "Validating environment..."
   local evidence=0
