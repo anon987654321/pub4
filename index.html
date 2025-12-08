@@ -126,6 +126,16 @@
 
     new SimpleCarousel(document.getElementById("cityCarousel"));
 
+    const MP3_TRACKS=[
+      {artist:'AKMD',title:'Stailings',src:'.mp3/akmd-stailings.mp3'},
+      {artist:'AKMD & Mike T',title:'Alt Kan Skje',src:'.mp3/akmd_mike_t-alt_kan_skje.mp3'},
+      {artist:'AKMD, Mike T & Jan Hakim',title:'Diverse',src:'.mp3/akmd_mike_t_jan_hakim-diverse.mp3'},
+      {artist:'Angelo Reira & Johann',title:'Sandviken Hotell A',src:'.mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3'},
+      {artist:'Angelo Reira & Johann',title:'Sandviken Hotell B',src:'.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3'},
+      {artist:'Chase Swayze',title:'Traffic',src:'.mp3/chase_swayze-traffic.mp3'},
+      {artist:'Haisam & Johann',title:'PB1',src:'.mp3/haisam_and_johann-pb1.mp3'}
+    ];
+
     const YOUTUBE_TRACKS=[
 
       {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
@@ -615,7 +625,7 @@
     }
 
     class AudioEngine{
-      constructor(){this.apiReady=false;this.players={a:null,b:null};this.started=false;this.muted=true;this.trackIndex=0;this.tracks=YOUTUBE_TRACKS.slice().sort(()=>Math.random()-.5);this.activeKey="a";this.inactiveKey="b";this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;this.beatPhase=0;this.energyLevel=.5}
+      constructor(tracks){this.apiReady=false;this.players={a:null,b:null};this.started=false;this.muted=true;this.trackIndex=0;this.tracks=tracks.slice().sort(()=>Math.random()-.5);this.activeKey="a";this.inactiveKey="b";this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;this.beatPhase=0;this.energyLevel=.5}
 
       initAPI(){if(IN_SANDBOX)return;try{this.players.a=new YT.Player("yt-player-a",{width:"1",height:"1",playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onReady("a"),onStateChange:e=>this.onStateChange("a",e),onError:()=>this.onError("a")}});this.players.b=new YT.Player("yt-player-b",{width:"1",height:"1",playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onReady("b"),onStateChange:e=>this.onStateChange("b",e),onError:()=>this.onError("b")}});this.apiReady=true}catch{this.apiReady=false}}
 
@@ -649,29 +659,62 @@
 
     let audio=null;
 
-    const initAudioEngine=async()=>{
-
-      const mp3Tracks=await detectMp3Playlist();
-
-      if(mp3Tracks&&mp3Tracks.length>0){
-
-        audio=new Mp3AudioEngine(mp3Tracks);
-
-        console.log(`Using MP3 audio engine with ${mp3Tracks.length} tracks`);
-
-      }else{
-
-        audio=new AudioEngine();
-
-        console.log('Using YouTube audio engine');
-
+    class UnifiedAudioEngine{
+      constructor(tracks){
+        this.started=false;this.muted=true;this.trackIndex=0;
+        this.tracks=tracks.slice().sort(()=>Math.random()-.5);
+        this.activeKey='a';this.inactiveKey='b';
+        this.mp3Players={a:new Audio(),b:new Audio()};
+        this.mp3Players.a.crossOrigin='anonymous';this.mp3Players.b.crossOrigin='anonymous';
+        this.mp3Players.a.preload='auto';this.mp3Players.b.preload='auto';
+        this.mp3Players.a.volume=0;this.mp3Players.b.volume=0;
+        this.ytPlayers={a:null,b:null};this.ytReady=false;
+        this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;
+        this.beatPhase=0;this.energyLevel=.5;this._beatEnv=0;
+        this.audioContext=null;this.analyser=null;this.dataArray=null;
+        try{this.audioContext=new(window.AudioContext||window.webkitAudioContext)();this.analyser=this.audioContext.createAnalyser();this.analyser.fftSize=512;this.dataArray=new Uint8Array(this.analyser.frequencyBinCount)}catch{}
       }
+      
+      initYTAPI(){if(IN_SANDBOX)return;try{this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}});this.ytReady=true}catch{}}
+      
+      onYTReady(k){try{this.ytPlayers[k].unMute();this.ytPlayers[k].setVolume(0)}catch{}if(this.started&&k===this.activeKey){const t=this.tracks[this.trackIndex];if(t.id)this._loadYT(k,t,{fadeIn:START_FADE_IN})}}
+      
+      onYTState(k,e){if(IN_SANDBOX)return;const S=YT.PlayerState;if(e.data===S.ENDED){if(k===this.activeKey)this.next({fast:true})}else if(e.data===S.PLAYING){clearTimeout(this._loadWatch);try{const p=this.ytPlayers[k];const s=()=>{const d=p.getDuration?p.getDuration()||0:0;if(d>0){const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);clearTimeout(this._prefadeTimer);this._prefadeTimer=setTimeout(()=>this.next({}),m)}};s();setTimeout(s,500)}catch{}}}
+      
+      onYTError(){clearTimeout(this._loadWatch);this.next({fast:true})}
+      
+      start(){this.started=true;this.updateUI();const t=this.tracks[this.trackIndex];t.src?this._loadMP3(this.activeKey,t,{fadeIn:START_FADE_IN}):this._loadYT(this.activeKey,t,{fadeIn:START_FADE_IN})}
+      
+      _loadMP3(k,t,{fadeIn}){if(!t.src)return;const p=this.mp3Players[k];p.src=t.src;p.load();p.onended=()=>{if(k===this.activeKey)this.next({fast:true})};try{if(!p._srcNode&&this.audioContext){p._srcNode=this.audioContext.createMediaElementSource(p);p._srcNode.connect(this.analyser);this.analyser.connect(this.audioContext.destination)}}catch{}p.play().catch(()=>{});if(fadeIn){let vol=0;const iv=setInterval(()=>{vol+=.033;p.volume=Math.min(1,vol);if(vol>=1)clearInterval(iv)},50)}else{p.volume=1}}
+      
+      _loadYT(k,t,{fadeIn}){if(!t.id||IN_SANDBOX)return;clearTimeout(this._loadWatch);if(this.ytReady&&this.ytPlayers[k]&&this.ytPlayers[k].loadVideoById){try{const p=this.ytPlayers[k];p.loadVideoById({videoId:t.id,startSeconds:t.start||0,suggestedQuality:'tiny'});p.unMute();if(fadeIn)this._fadeYT(k,FADE_MS);this._loadWatch=setTimeout(()=>{try{const n=p.getCurrentTime?p.getCurrentTime():0;if(n<.1)this.next({fast:true})}catch{this.next({fast:true})}},4000)}catch{}}else{const f=document.getElementById('player-fallback-'+k);if(!f)return;const s=`https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start?`&start=${t.start}`:''}`;f.src=s;f.onload=()=>{ytPost(f,'playVideo',[]);if(fadeIn){ytPost(f,'setVolume',[0]);ytPost(f,'unMute',[]);this._fadeYT(k,FADE_MS)}else{ytPost(f,'setVolume',[100]);ytPost(f,'unMute',[])}};this._loadWatch=setTimeout(()=>this.next({fast:true}),5000)}}
+      
+      _fadeYT(k,ms){if(!this.ytReady||IN_SANDBOX)return;const steps=30,dt=ms/steps;let i=0;const iv=setInterval(()=>{i++;const vol=Math.round(100*i/steps);try{if(this.ytPlayers[k])this.ytPlayers[k].setVolume(vol);else ytPost(document.getElementById('player-fallback-'+k),'setVolume',[vol])}catch{}if(i>=steps)clearInterval(iv)},dt)}
+      
+      next({fast=false}={}){if(IN_SANDBOX)return;clearInterval(this._fadeIv);clearTimeout(this._prefadeTimer);const n=(this.trackIndex+1)%this.tracks.length,t=this.tracks[n],cur=this.tracks[this.trackIndex],f=this.activeKey,o=this.inactiveKey;if(cur.src&&this.mp3Players[f]){try{this.mp3Players[f].pause();this.mp3Players[f].volume=0}catch{}}if(cur.id&&this.ytReady){try{if(this.ytPlayers[f])this.ytPlayers[f].stopVideo()}catch{}}if(t.src){this._loadMP3(o,t,{fadeIn:false});setTimeout(()=>{this._crossfadeMP3(f,o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500)}else{this._loadYT(o,t,{fadeIn:false});setTimeout(()=>{if(this.ytReady)this._fadeYT(o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500);this.activeKey=o;this.inactiveKey=f}}
+      
+      _crossfadeMP3(from,to,ms){const steps=30,dt=ms/steps;let i=0;clearInterval(this._fadeIv);this._fadeIv=setInterval(()=>{i++;const t=i/steps;try{this.mp3Players[from].volume=Math.max(0,1-t)}catch{}try{this.mp3Players[to].volume=Math.min(1,t)}catch{}if(i>=steps){clearInterval(this._fadeIv);this.activeKey=to;this.inactiveKey=from}},dt)}
+      
+      prev(){const p=(this.trackIndex-1+this.tracks.length)%this.tracks.length,t=this.tracks[p];this.trackIndex=p;this.updateUI();t.src?this._loadMP3(this.activeKey,t,{fadeIn:true}):this._loadYT(this.activeKey,t,{fadeIn:true})}
+      
+      toggleMute(){this.muted=!this.muted;const t=this.tracks[this.trackIndex];if(t.src){try{this.mp3Players[this.activeKey].muted=this.muted}catch{}}else if(t.id&&this.ytReady){try{this.muted?this.ytPlayers[this.activeKey].mute():this.ytPlayers[this.activeKey].unMute()}catch{}}try{navigator.vibrate?.(6)}catch{}}
+      
+      updateUI(){const u=document.getElementById('uiLabel');if(!u)return;const t=this.tracks[this.trackIndex];u.textContent=(t.artist?`${t.artist} - `:'')+t.title}
+      
+      data(){if(this.analyser&&this.dataArray){try{this.analyser.getByteFrequencyData(this.dataArray);const n=this.dataArray.length;let bass=0,mid=0,high=0;for(let i=0;i<n*.2;i++)bass+=this.dataArray[i];for(let i=n*.2|0;i<n*.6;i++)mid+=this.dataArray[i];for(let i=n*.6|0;i<n;i++)high+=this.dataArray[i];bass/=n*.2*255;mid/=n*.4*255;high/=n*.4*255;const avg=(bass+mid+high)/3;this.beatPhase+=.08*motionScale();const beat=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=(this._beatEnv||0)+(beat-(this._beatEnv||0))*(beat?.4:.06);return{bass,mid,high,average:avg,beat:this._beatEnv,energy:this.energyLevel}}catch{}}const m=motionScale();this.beatPhase+=.08*m;const b=.5+.4*Math.sin(this.beatPhase*.8),i=.45+.35*Math.sin(this.beatPhase*1.2+.7),h=.35+.35*Math.sin(this.beatPhase*1.8+1.2),a=(b+i+h)/3,r=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=(this._beatEnv||0)+(r-(this._beatEnv||0))*(r?.4:.06);return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel}}
+    }
 
+    const initAudioEngine=async()=>{
+      const detected=await detectMp3Playlist();
+      const mp3List=detected&&detected.length>0?detected:MP3_TRACKS;
+      const allTracks=[...mp3List,...YOUTUBE_TRACKS];
+      audio=new UnifiedAudioEngine(allTracks);
+      console.log(`Unified: ${mp3List.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
     };
 
     initAudioEngine();
 
-    window.onYouTubeIframeAPIReady=()=>audio.initAPI();
+    window.onYouTubeIframeAPIReady=()=>audio?.initYTAPI?.();
 
     const canvas=document.getElementById("canvas"),uiEl=document.getElementById("ui");
 
