@@ -1,5 +1,5 @@
 meta:
-  version: 13.3.0
+  version: 13.4.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -807,12 +807,13 @@ workflow_patterns:
     cors: github_pages_sets_proper_headers_automatically
     verification: check_network_tab_for_200_status_on_mp3_files
     
-  cygwin_bash_integration:
+  cygwin_zsh_integration:
     context: copilot_CLI_runs_inside_cygwin_npm_environment
+    shell: zsh_not_bash_bash_is_banned
     path_format: "/cygdrive/g/path" not "G:\path"
-    git_commands: wrap_in_bash_c_when_using_powershell_tool
-    example: "bash -c 'cd /cygdrive/g/pub && git push'"
-    rationale: powershell_hangs_on_long_git_operations_bash_is_reliable
+    git_commands: wrap_in_zsh_c_when_using_powershell_tool
+    example: "zsh -c 'cd /cygdrive/g/pub && git push'"
+    rationale: zsh_is_allowed_bash_is_banned_per_constraints
     
   conflict_resolution:
     on_rebase_conflicts: use_ours_strategy_for_working_files
@@ -846,6 +847,75 @@ workflow_patterns:
     pattern: createMediaElementSource_connects_audio_to_analyser
     crossorigin: must_set_crossOrigin_anonymous_for_cors
     pitfall: cannot_connect_same_element_twice_check_srcNode_flag
+
+formatters:
+  purpose: auto_fix_violations_after_detection
+  
+  javascript:
+    tool: prettier
+    config:
+      printWidth: 120
+      tabWidth: 2
+      useTabs: false
+      semi: true
+      singleQuote: true
+      trailingComma: es5
+      bracketSpacing: false
+      arrowParens: avoid
+    command: "prettier --write --single-quote --no-semi --trailing-comma=es5"
+    
+  html:
+    tool: prettier
+    config:
+      printWidth: 120
+      tabWidth: 2
+      useTabs: false
+      htmlWhitespaceSensitivity: ignore
+    command: "prettier --write --html-whitespace-sensitivity ignore"
+    
+  css:
+    tool: prettier
+    config:
+      printWidth: 120
+      tabWidth: 2
+      useTabs: false
+      singleQuote: false
+    command: "prettier --write"
+    
+  ruby:
+    tool: rubocop
+    config: .rubocop.yml
+    command: "rubocop --auto-correct"
+    
+  rust:
+    tool: rustfmt
+    config: rustfmt.toml
+    command: "rustfmt"
+    
+  yaml:
+    tool: prettier
+    config:
+      printWidth: 120
+      tabWidth: 2
+      useTabs: false
+    command: "prettier --write"
+    
+  json:
+    tool: prettier
+    config:
+      printWidth: 120
+      tabWidth: 2
+      useTabs: false
+    command: "prettier --write"
+    
+  workflow:
+    sequence:
+      - detect_violations
+      - run_appropriate_formatter
+      - re_detect_to_verify
+      - commit_if_zero_violations
+    on_format_failure: report_manual_intervention_needed
+    integration: pre_commit_hook_or_ci
 
 tech_stack:
   rails:
@@ -910,9 +980,9 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.3.0
-  lines: 920
-  root_sections: 19
+  version: 13.4.0
+  lines: 990
+  root_sections: 20
   nesting_maximum: 2
   duplication_ratio: 0.00
   clarity_score: 0.99
