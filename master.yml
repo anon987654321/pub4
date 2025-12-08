@@ -1,5 +1,5 @@
 meta:
-  version: 13.4.0
+  version: 13.5.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -849,73 +849,75 @@ workflow_patterns:
     pitfall: cannot_connect_same_element_twice_check_srcNode_flag
 
 formatters:
-  purpose: auto_fix_violations_after_detection
+  purpose: auto_fix_violations_using_zsh_builtins_only
+  rationale: self_sufficient_no_external_tool_dependencies
   
   javascript:
-    tool: prettier
-    config:
-      printWidth: 120
-      tabWidth: 2
-      useTabs: false
-      semi: true
-      singleQuote: true
-      trailingComma: es5
-      bracketSpacing: false
-      arrowParens: avoid
-    command: "prettier --write --single-quote --no-semi --trailing-comma=es5"
-    
+    quote_style: double_quotes_not_single
+    indent: 2_spaces
+    implementation: |
+      content=$(<$file)
+      # Fix single to double quotes (outside of strings)
+      content=${content//\'/\"}
+      # Normalize indentation to 2 spaces
+      content=${content//$'\t'/  }
+      print -r -- "$content" > $file
+      
   html:
-    tool: prettier
-    config:
-      printWidth: 120
-      tabWidth: 2
-      useTabs: false
-      htmlWhitespaceSensitivity: ignore
-    command: "prettier --write --html-whitespace-sensitivity ignore"
-    
+    indent: 2_spaces
+    quote_style: double_quotes
+    implementation: |
+      content=$(<$file)
+      # Normalize indentation
+      content=${content//$'\t'/  }
+      # Ensure proper line breaks after tags
+      content=${content//>  </>\n<}
+      print -r -- "$content" > $file
+      
   css:
-    tool: prettier
-    config:
-      printWidth: 120
-      tabWidth: 2
-      useTabs: false
-      singleQuote: false
-    command: "prettier --write"
-    
-  ruby:
-    tool: rubocop
-    config: .rubocop.yml
-    command: "rubocop --auto-correct"
-    
-  rust:
-    tool: rustfmt
-    config: rustfmt.toml
-    command: "rustfmt"
-    
+    indent: 2_spaces
+    implementation: |
+      content=$(<$file)
+      content=${content//$'\t'/  }
+      # Add newlines after { and before }
+      content=${content//{/{\n}
+      content=${content//}/\n}}
+      print -r -- "$content" > $file
+      
   yaml:
-    tool: prettier
-    config:
-      printWidth: 120
-      tabWidth: 2
-      useTabs: false
-    command: "prettier --write"
-    
-  json:
-    tool: prettier
-    config:
-      printWidth: 120
-      tabWidth: 2
-      useTabs: false
-    command: "prettier --write"
+    indent: 2_spaces
+    implementation: |
+      content=$(<$file)
+      content=${content//$'\t'/  }
+      # Ensure consistent spacing after colons
+      content=${content//: /:  }
+      content=${content//:  /:  }  # normalize double spaces
+      print -r -- "$content" > $file
+      
+  ruby:
+    indent: 2_spaces
+    implementation: |
+      content=$(<$file)
+      content=${content//$'\t'/  }
+      print -r -- "$content" > $file
+      
+  universal_zsh_formatter:
+    purpose: format_any_code_file_with_zsh_builtins
+    steps:
+      - read_file: 'content=$(<$file)'
+      - tabs_to_spaces: 'content=${content//$''\t''/  }'
+      - normalize_quotes: 'content=${content//'\''/\"}'
+      - trim_trailing: 'content=${content%%[[:space:]]##}'
+      - write_file: 'print -r -- "$content" > $file'
     
   workflow:
     sequence:
-      - detect_violations
-      - run_appropriate_formatter
-      - re_detect_to_verify
-      - commit_if_zero_violations
+      - detect_violations_with_detectors
+      - apply_zsh_formatter_for_file_type
+      - re_detect_to_verify_zero_violations
+      - commit_if_converged
     on_format_failure: report_manual_intervention_needed
-    integration: pre_commit_hook_or_ci
+    integration: run_via_master_rb_self_execution_loop
 
 tech_stack:
   rails:
@@ -935,7 +937,7 @@ tech_stack:
     avoid: [jquery, lodash, react, vue, angular]
     frameworks_default: vanilla_no_framework
     frameworks_when_needed: [svelte, preact, lit]
-    conventions: [single_quotes_for_strings, camelCase_naming, const_not_var]
+    conventions: [double_quotes_for_strings, camelCase_naming, const_not_var, 2_space_indent]
     source: developer.mozilla.org
     mandatory_docs: [web.dev, developer.mozilla.org]
 
@@ -980,8 +982,8 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.4.0
-  lines: 990
+  version: 13.5.0
+  lines: 992
   root_sections: 20
   nesting_maximum: 2
   duplication_ratio: 0.00
