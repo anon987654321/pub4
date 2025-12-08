@@ -1,5 +1,5 @@
 meta:
-  version: 13.6.0
+  version: 13.7.0
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -233,7 +233,41 @@ execution:
     rollback: automatic_on_any_failure
 
 detectors:
-  # Generic detectors
+  purpose: detect_violations_using_zsh_builtins_only
+  
+  implementations:
+    logic_repeated_thrice:
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          [[ -z $line || $line =~ ^[[:space:]]*# ]] && continue
+          count=${#${(M)lines[@]:#$line}}
+          ((count >= 3)) && print "VIOLATION: line $i repeated $count times: $line"
+        done
+        
+    duplication_above_3_percent:
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        total=${#lines}
+        unique=(${(u)lines[@]})
+        duplicates=$((total - ${#unique}))
+        ratio=$(( duplicates * 100 / total ))
+        ((ratio > 3)) && print "VIOLATION: ${ratio}% duplication (threshold: 3%)"
+        
+    single_quotes_for_strings:
+      scan: |
+        content=$(<$file)
+        [[ $content =~ "'" ]] && print "VIOLATION: single quotes found (use double quotes)"
+        
+    tabs_not_spaces:
+      scan: |
+        content=$(<$file)
+        [[ $content =~ $'\t' ]] && print "VIOLATION: tabs found (use 2 spaces)"
+
+  # Legacy detector names (what to do when violation found)
   logic_repeated_thrice: extract_to_single_source
   multiple_responsibilities: split_into_focused_units
   values_buried_deep: hoist_to_accessible_scope
@@ -950,8 +984,8 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.6.0
-  lines: 925
+  version: 13.7.0
+  lines: 960
   root_sections: 20
   nesting_maximum: 2
   duplication_ratio: 0.00
