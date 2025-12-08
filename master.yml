@@ -1,5 +1,5 @@
 meta:
-  version: 13.5.0
+  version: 13.5.1
   purpose: universal_self_improving_governance_framework
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
@@ -812,7 +812,7 @@ workflow_patterns:
     shell: zsh_not_bash_bash_is_banned
     path_format: "/cygdrive/g/path" not "G:\path"
     git_commands: wrap_in_zsh_c_when_using_powershell_tool
-    example: "zsh -c 'cd /cygdrive/g/pub && git push'"
+    example: "zsh -c \"cd /cygdrive/g/pub && git push\""
     rationale: zsh_is_allowed_bash_is_banned_per_constraints
     
   conflict_resolution:
@@ -982,7 +982,7 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.5.0
+  version: 13.5.1
   lines: 992
   root_sections: 20
   nesting_maximum: 2
