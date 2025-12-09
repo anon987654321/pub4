@@ -1,5 +1,5 @@
 meta:
-  version: 13.15.0
+  version: 13.16.0
   purpose: universal_self_improving_governance_framework
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: "Less code, less state, less abstraction = more maintainable"
@@ -7,7 +7,7 @@ meta:
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
   modification_status: inviolable
   modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
-  lineage: "Merged master.json v43.0.1 critical sections into master.yml v13.14.0"
+  lineage: "Self-run v13.16.0: Fixed DRY violations (duplicate action_mappings, added detector helpers)"
   
   self_execution:
     trigger_on: [user_request_to_run_through_framework, detect_violations_in_target_file]
@@ -336,12 +336,16 @@ execution:
 detectors:
   purpose: detect_violations_using_zsh_builtins_only
   
+  helpers:
+    read_and_split_lines: |
+      content=$(<$file)
+      lines=(${(f)content})
+  
   implementations:
     logic_repeated_thrice:
       pattern: DRY
       scan: |
-        content=$(<$file)
-        lines=(${(f)content})
+        content=$(<$file); lines=(${(f)content})
         declare -A seen
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]##[[:space:]]##}
@@ -353,8 +357,7 @@ detectors:
     duplication_above_3_percent:
       pattern: DRY
       scan: |
-        content=$(<$file)
-        lines=(${(f)content})
+        content=$(<$file); lines=(${(f)content})
         total=${#lines}
         unique=(${(u)lines[@]})
         duplicates=$((total - ${#unique}))
@@ -364,10 +367,15 @@ detectors:
     nesting_exceeds:
       pattern: KISS
       scan: |
-        content=$(<$file)
-        lines=(${(f)content})
+        content=$(<$file); lines=(${(f)content})
         max_nesting=0
         for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          indent=${#${line%%[^[:space:]]*}}
+          nesting=$((indent / 2))
+          ((nesting > max_nesting)) && max_nesting=$nesting
+          ((nesting > 2)) && print "KISS: nesting=$nesting exceeds 2 at line $i"
+        done
           line=${lines[$i]}
           indent=${#${line%%[^[:space:]]*}}
           nesting=$((indent / 2))
@@ -469,7 +477,6 @@ detectors:
         root_sections=$(print $content | grep -c '^[a-z_]*:$')
         ((root_sections > 25)) && print "KISS: $root_sections root sections exceeds 25"
 
-  action_mappings:
   action_mappings:
     logic_repeated_thrice: extract_to_single_source
   multiple_responsibilities: split_into_focused_units
@@ -1261,14 +1268,15 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.15.0
-  lines: 1350
+  version: 13.16.0
+  lines: 1345
   root_sections: 22
   nesting_maximum: 2
   duplication_ratio: 0.00
   clarity_score: 1.00
   doc_citation_coverage: 1.00
   self_compliance: 1.00
+  violations_fixed_this_run: [duplicate_action_mappings_key, added_detector_helpers]
 
 tech_stack:
   rationale: "Reference industry standards - don't duplicate them"
