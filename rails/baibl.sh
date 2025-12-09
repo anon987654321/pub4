@@ -8,7 +8,8 @@ APP_NAME="baibl"
 BASE_DIR="/home/dev/rails"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BRGEN_IP="46.23.95.45"
+SERVER_IP="185.52.176.18"
+APP_PORT=$((10000 + RANDOM % 10000))
 source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting BAIBL AI Bible application setup with Norwegian interface and advanced text analysis"

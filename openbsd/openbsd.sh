@@ -23,20 +23,20 @@ readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 
 # Unified deployment config - modern zsh nested associative arrays
 typeset -A APPS
-APPS[brgen.port]=11006
+APPS[brgen.port]=$((10000 + RANDOM % 10000))
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
 APPS[brgen.subdomains]="markedsplass playlist dating tv takeaway maps"
-APPS[amber.port]=10001
+APPS[amber.port]=$((10000 + RANDOM % 10000))
 APPS[amber.domains]="amberapp.com"
-APPS[blognet.port]=10002
+APPS[blognet.port]=$((10000 + RANDOM % 10000))
 APPS[blognet.domains]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-APPS[bsdports.port]=10003
+APPS[bsdports.port]=$((10000 + RANDOM % 10000))
 APPS[bsdports.domains]="bsdports.org"
-APPS[hjerterom.port]=10004
+APPS[hjerterom.port]=$((10000 + RANDOM % 10000))
 APPS[hjerterom.domains]="hjerterom.no"
-APPS[privcam.port]=10005
+APPS[privcam.port]=$((10000 + RANDOM % 10000))
 APPS[privcam.domains]="privcam.no"
-APPS[pubattorney.port]=10006
+APPS[pubattorney.port]=$((10000 + RANDOM % 10000))
 APPS[pubattorney.domains]="pub.attorney freehelp.legal"
 
 # Extract all unique domains for DNS config

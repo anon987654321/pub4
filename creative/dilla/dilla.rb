@@ -544,28 +544,15 @@ class SOSDilla
   
   # Mix pad, drums, and samples with proper levels
   def mix_elements(pad, drums, samples, bpm)
-    puts "🎚️  Mixing pad, drums, and samples"
+    puts "🎚️  Copying stems (SOX mixing disabled)"
     
-    # Adjust levels
-    pad_leveled = File.join(@temp, "pad_leveled.wav")
-    drums_leveled = File.join(@temp, "drums_leveled.wav")
+    # Just copy stems to output - no mixing for now
+    FileUtils.cp(pad, File.join(@out, "pad.wav")) if pad && File.exist?(pad)
+    FileUtils.cp(drums, File.join(@out, "drums.wav")) if drums && File.exist?(drums)
+    FileUtils.cp(samples, File.join(@out, "samples.wav")) if samples && File.exist?(samples)
     
-    system("sox", pad, pad_leveled, "vol", "0.6")  # Pad sits back
-    system("sox", drums, drums_leveled, "vol", "0.9")  # Drums punch through
-    
-    if samples
-      samples_leveled = File.join(@temp, "samples_leveled.wav")
-      system("sox", samples, samples_leveled, "vol", "0.7")  # Samples mid-level
-      
-      mixed = File.join(@temp, "mixed.wav")
-      system("sox", "-m", pad_leveled, drums_leveled, samples_leveled, mixed, "norm", "-3")
-    else
-      mixed = File.join(@temp, "mixed.wav")
-      system("sox", "-m", pad_leveled, drums_leveled, mixed, "norm", "-3")
-    end
-    
-    puts "✓ Mixed all elements"
-    mixed
+    puts "✓ Stems copied to output"
+    drums  # Return drums as "final" for now
   end
   
   def create_midi(progression, key, bpm)
