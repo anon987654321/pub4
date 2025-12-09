@@ -602,9 +602,9 @@ detectors:
 
   action_mappings:
     logic_repeated_thrice: extract_to_single_source
-    duplicate_const_declaration: remove_duplicate_keep_first
-    duplicate_let_declaration: remove_duplicate_keep_first
-    duplicate_var_declaration: remove_duplicate_keep_first
+    duplicate_const_declaration: remove_duplicate_declaration
+    duplicate_let_declaration: remove_duplicate_declaration
+    duplicate_var_declaration: remove_duplicate_declaration
     duplicate_function_declaration: consolidate_or_rename
     duplicate_class_declaration: consolidate_or_rename
   multiple_responsibilities: split_into_focused_units
