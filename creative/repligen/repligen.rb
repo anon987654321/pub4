@@ -1,834 +1,756 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Repligen v8.0.0 - Replicate.com AI Generation CLI
-# SQLite3 database + Ferrum web scraping + Chain workflows
-# Dependencies: sqlite3 gem, ferrum gem (optional)
-#
-# Usage:
-#   ruby repligen.rb              # Interactive menu
-#   ruby repligen.rb sync 1000    # Sync models via API
-#   ruby repligen.rb scrape 50    # Scrape replicate.com/explore
-#   ruby repligen.rb search upscale
-#   ruby repligen.rb stats
-
 require "net/http"
 require "json"
+require "logger"
+require "optparse"
 require "fileutils"
 
-CONFIG_PATH = File.expand_path("~/.config/repligen/config.json")
-DB_PATH = File.expand_path("repligen.db", __dir__)
+# Repligen - AI Content Generation with Postpro Integration  
+# Version: 7.3.0 - Master.json Optimized
 
-# Model type patterns (embedded)
-MODEL_TYPES = {
-
-  "text-to-image" => ["text.*image", "txt2img", "t2i", "dalle", "stable.*diffusion", "flux", "sdxl", "imagen"],
-  "image-to-video" => ["image.*video", "img2vid", "i2v", "animate"],
-
-  "upscale" => ["upscale", "super.*res", "enhance"],
-
-  "image-processing" => ["background", "rembg", "segment", "mask"],
-
-  "style-transfer" => ["style", "artistic"],
-
-  "video" => ["video", "motion"],
-
-  "audio" => ["audio", "music", "sound", "tts", "speech"],
-
-  "3d" => ["3d", "mesh", "model"]
-
-}.freeze
-
-CHAIN_TEMPLATES = {
-
-  "masterpiece" => [
-
-    { type: "text-to-image", count: 1 },
-    { types: ["upscale", "style-transfer", "image-processing"], count_range: [3, 8] },
-
-    { types: ["upscale", "image-to-video"], count: 1 }
-
-  ],
-
-  "quick" => [
-
-    { type: "text-to-image", count: 1 },
-
-    { type: "upscale", count: 1 }
-
-  ]
-
-}.freeze
-
-# ============================================================================
-
-# BOOTSTRAP
-
-# ============================================================================
-def ensure_gems
-
-  begin
-
-    require "sqlite3"
-  rescue LoadError
-
-    puts "[repligen] Installing sqlite3..."
-
-    system("gem install sqlite3 --no-document")
-
-    require "sqlite3"
-
+module Bootstrap
+  def self.dmesg(msg)
+    puts "[repligen] #{msg}"
   end
 
-  tty_available = begin
+  def self.startup_banner
+    ruby_version = RUBY_VERSION
+    os = RbConfig::CONFIG["host_os"]
+    pwd = Dir.pwd
+    dmesg "boot ruby=#{ruby_version} os=#{os} pwd=#{pwd}"
+  end
 
-    require "tty-prompt"
-
+  def self.ensure_sqlite3
+    require "sqlite3"
+    dmesg "OK sqlite3 gem present"
     true
   rescue LoadError
-
-    puts "[repligen] tty-prompt not available, using basic prompts"
-
-    false
-
-  end
-
-  tty_available
-
-end
-
-# ============================================================================
-
-# CONFIG MODULE
-
-# ============================================================================
-module Config
-
-  def self.load
-
-    return ENV["REPLICATE_API_TOKEN"] if ENV["REPLICATE_API_TOKEN"]
-    return load_from_file if File.exist?(CONFIG_PATH)
-
-    fail_with_instructions
-
-  end
-
-  def self.save(token)
-
-    FileUtils.mkdir_p(File.dirname(CONFIG_PATH))
-
-    File.write(CONFIG_PATH, JSON.pretty_generate({ api_token: token }))
-    File.chmod(0600, CONFIG_PATH)
-
-  end
-
-  private
-
-  def self.load_from_file
-
-    token = JSON.parse(File.read(CONFIG_PATH))["api_token"]
-    return token if token
-    fail_with_instructions
-
-  end
-
-  def self.fail_with_instructions
-
-    abort <<~MSG
-
-      Missing REPLICATE_API_TOKEN
-      Get your token: https://replicate.com/account/api-tokens
-
-      Then either:
-        export REPLICATE_API_TOKEN=r8_...
-      Or:
-
-        echo '{"api_token":"r8_..."}' > #{CONFIG_PATH}
-
-        chmod 600 #{CONFIG_PATH}
-
-    MSG
-
-  end
-
-end
-
-# ============================================================================
-
-# DATABASE MODULE
-
-# ============================================================================
-Model = Struct.new(:id, :owner, :name, :description, :type, :cost, :runs, :url, keyword_init: true)
-
-class Database
-
-  attr_reader :db
-  def initialize(path = DB_PATH)
-    @db = SQLite3::Database.new(path)
-
-    @db.results_as_hash = true
-    setup_schema
-
-  end
-
-  def setup_schema
-
-    @db.execute_batch <<-SQL
-
-      CREATE TABLE IF NOT EXISTS models (
-        id TEXT PRIMARY KEY,
-
-        owner TEXT NOT NULL,
-
-        name TEXT NOT NULL,
-
-        description TEXT,
-
-        type TEXT,
-
-        cost REAL DEFAULT 0.05,
-
-        runs INTEGER DEFAULT 0,
-
-        url TEXT,
-
-        synced_at INTEGER
-
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_type ON models(type);
-
-      CREATE INDEX IF NOT EXISTS idx_owner ON models(owner);
-
-    SQL
-
-  end
-
-  def save(model)
-
-    @db.execute(<<-SQL, model.values_at(:id, :owner, :name, :description, :type, :cost, :runs, :url))
-
-      INSERT OR REPLACE INTO models (id, owner, name, description, type, cost, runs, url, synced_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, #{Time.now.to_i})
-
-    SQL
-
-  end
-
-  def by_type(type, limit = 100)
-
-    rows = @db.execute("SELECT * FROM models WHERE type = ? ORDER BY RANDOM() LIMIT ?", [type, limit])
-
-    rows.map { |r| Model.new(**r.transform_keys(&:to_sym).slice(*Model.members)) }
-  end
-
-  def search(query, limit = 20)
-
-    pattern = "%#{query}%"
-
-    rows = @db.execute(
-      "SELECT * FROM models WHERE id LIKE ? OR description LIKE ? ORDER BY runs DESC LIMIT ?",
-
-      [pattern, pattern, limit]
-
-    )
-
-    rows.map { |r| Model.new(**r.transform_keys(&:to_sym).slice(*Model.members)) }
-
-  end
-
-  def random(count = 10)
-
-    rows = @db.execute("SELECT * FROM models ORDER BY RANDOM() LIMIT ?", [count])
-
-    rows.map { |r| Model.new(**r.transform_keys(&:to_sym).slice(*Model.members)) }
-  end
-
-  def count
-
-    @db.execute("SELECT COUNT(*) as c FROM models")[0]["c"]
-
-  end
-  def stats
-
-    total = count
-
-    by_type = @db.execute("SELECT type, COUNT(*) as count FROM models WHERE type IS NOT NULL GROUP BY type ORDER BY count DESC")
-    { total: total, by_type: by_type }
-
-  end
-
-end
-
-# ============================================================================
-
-# API MODULE
-
-# ============================================================================
-class API
-
-  BASE = "https://api.replicate.com/v1"
-
-  def initialize(token)
-    @token = token
-
-  end
-  def models(limit: 1000)
-
-    all_models = []
-
-    cursor = nil
-    loop do
-
-      uri = URI("#{BASE}/models")
-
-      uri.query = cursor ? URI.encode_www_form({ cursor: cursor }) : ""
-      data = get(uri)
-
-      results = data["results"] || []
-
-      all_models.concat(results)
-
-      next_url = data["next"]
-
-      cursor = next_url ? URI.decode_www_form(URI.parse(next_url).query || "").to_h["cursor"] : nil
-
-      break if cursor.nil? || all_models.size >= limit
-    end
-
-    all_models.map { |m| parse_model(m) }
-
-  end
-
-  def predict(model_id, input)
-    owner, name = model_id.split("/")
-
-    model = get(URI("#{BASE}/models/#{owner}/#{name}"))
-    version = model.dig("latest_version", "id")
-
-    raise "No version for #{model_id}" unless version
-
-    pred = post(URI("#{BASE}/predictions"), {
-
-      version: version,
-
-      input: input
-    })
-
-    wait_for(pred["id"])
-
-  end
-
-  private
-  def get(uri)
-
-    req = Net::HTTP::Get.new(uri)
-    req["Authorization"] = "Token #{@token}"
-    request(req, uri)
-
-  end
-
-  def post(uri, body)
-
-    req = Net::HTTP::Post.new(uri)
-
-    req["Authorization"] = "Token #{@token}"
-    req["Content-Type"] = "application/json"
-
-    req.body = body.to_json
-
-    request(req, uri)
-
-  end
-
-  def request(req, uri)
-
-    res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
-
-      http.request(req)
-    end
-
-    raise "API error #{res.code}: #{res.body}" unless res.code.to_i.between?(200, 299)
-
-    JSON.parse(res.body)
-
-  end
-
-  def wait_for(id, timeout: 600)
-
-    start = Time.now
-
-    loop do
-      pred = get(URI("#{BASE}/predictions/#{id}"))
-
-      case pred["status"]
-
-      when "succeeded" then return pred["output"]
-
-      when "failed" then raise "Prediction failed: #{pred['error']}"
-
-      when "canceled" then raise "Canceled"
-
+    dmesg "WARN sqlite3 gem missing, attempting install..."
+    begin
+      if system("gem install sqlite3 --no-document")
+        require "sqlite3"
+        dmesg "OK sqlite3 gem installed"
+        true
+      else
+        dmesg "WARN sqlite3 install failed, fallback to JSONL logging"
+        false
       end
-
-      raise "Timeout after #{timeout}s" if Time.now - start > timeout
-
-      print "."
-
-      sleep 3
-
+    rescue => e
+      dmesg "WARN sqlite3 unavailable: #{e.message}, using JSONL fallback"
+      false
     end
-
   end
 
-  def parse_model(data)
+  def self.ensure_ferrum
+    require "ferrum"
+    dmesg "OK ferrum gem present"
+    true
+  rescue LoadError
+    dmesg "WARN ferrum gem missing, attempting install..."
+    begin
+      if system("gem install ferrum --no-document")
+        require "ferrum"
+        dmesg "OK ferrum gem installed"
+        true
+      else
+        dmesg "WARN ferrum install failed, web scraping disabled"
+        false
+      end
+    rescue => e
+      dmesg "WARN ferrum unavailable: #{e.message}"
+      false
+    end
+  end
+
+  def self.ensure_token
+    return ENV["REPLICATE_API_TOKEN"] if ENV["REPLICATE_API_TOKEN"]
+
+    config_dir = File.expand_path("~/.config/repligen")
+    config_file = File.join(config_dir, "config.json")
+
+    if File.exist?(config_file)
+      begin
+        config = JSON.parse(File.read(config_file))
+        token = config["api_token"]
+        if token && !token.empty?
+          ENV["REPLICATE_API_TOKEN"] = token
+          dmesg "OK REPLICATE_API_TOKEN loaded from user config"
+          return token
+        end
+      rescue => e
+        dmesg "WARN config file corrupted: #{e.message}"
+      end
+    end
+
+    if $stdin.tty?
+      dmesg "PROMPT Enter REPLICATE_API_TOKEN (from https://replicate.com/account):"
+      print "Token: "
+      token = gets.chomp.strip
+
+      if token && !token.empty?
+        FileUtils.mkdir_p(config_dir)
+        config = { "api_token" => token }
+        File.write(config_file, JSON.pretty_generate(config))
+        File.chmod(0600, config_file)
+        ENV["REPLICATE_API_TOKEN"] = token
+        dmesg "OK token saved to user config (#{config_file})"
+        return token
+      end
+    end
+
+    dmesg "ERROR no REPLICATE_API_TOKEN available"
+    nil
+  end
+
+  def self.ensure_anthropic_token
+    return ENV["ANTHROPIC_API_KEY"] if ENV["ANTHROPIC_API_KEY"]
+
+    config_dir = File.expand_path("~/.config/repligen")
+    config_file = File.join(config_dir, "config.json")
+
+    if File.exist?(config_file)
+      begin
+        config = JSON.parse(File.read(config_file))
+        token = config["anthropic_api_key"]
+        if token && !token.empty?
+          ENV["ANTHROPIC_API_KEY"] = token
+          dmesg "OK ANTHROPIC_API_KEY loaded from user config"
+          return token
+        end
+      rescue => e
+        dmesg "WARN config parse error: #{e.message}"
+      end
+    end
+
+    dmesg "WARN ANTHROPIC_API_KEY not found, Claude vision disabled"
+    nil
+  end
+
+  def self.load_master_config
+    return {} unless File.exist?("master.json")
+    
+    begin
+      master = JSON.parse(File.read("master.json").gsub(/^.*\/\/.*$/, ""))
+      config = master.dig("config", "multimedia", "repligen") || {}
+      dmesg "OK loaded defaults from master.json"
+      config
+    rescue => e
+      dmesg "WARN failed to parse master.json: #{e.message}"
+      {}
+    end
+  end
+
+  def self.run
+    startup_banner
+    sqlite_available = ensure_sqlite3
+    ferrum_available = ensure_ferrum
+    token = ensure_token
+    anthropic_token = ensure_anthropic_token
+    config = load_master_config
 
     {
-
-      id: "#{data['owner']}/#{data['name']}",
-      owner: data["owner"],
-
-      name: data["name"],
-
-      description: data["description"],
-
-      type: infer_type(data["name"], data["description"]),
-
-      cost: 0.05,
-
-      runs: data["run_count"] || 0,
-
-      url: data["url"]
-
+      sqlite_available: sqlite_available,
+      ferrum_available: ferrum_available,
+      token: token,
+      anthropic_token: anthropic_token,
+      config: config
     }
 
   end
-
-  def infer_type(name, desc)
-
-    combined = "#{name} #{desc}".downcase
-
-    MODEL_TYPES.each do |type, patterns|
-      patterns.each do |pattern|
-
-        return type if combined.match?(/#{pattern}/i)
-
-      end
-
-    end
-
-    "other"
-
-  end
-
 end
+class Repligen
+  API = 'https://api.replicate.com/v1'
+  
+  MODELS = {
+    ra2: 'anon987654321/ra2:983967a65f090aa0ced0d227e809ae57b29f2d1d1ae4f84a17dd25176e0d313d',
+    imagen3: 'google/imagen-3:bffd1835e5c4ea8d40c18ff2f349a24e7fbdcfe5353135b008bc5795e492e7a6',
+    flux: 'black-forest-labs/flux-1.1-pro:8f3e0970b7e77b40f6e940f648098297c4419816f9a6f3503697e9a058b28cfa',
+    wan480: 'wan-ai/wan-2.1-i2v-480p:8cedc4c0313c89c8e5a98b3ad5e960a4c60e3b95c0bb7c89a96bbf90c74e967f',
+    sdv: 'stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b3e7bf3f',
+    lora: 'replicate/fast-flux-trainer:8b10794665aed907bb98a1a5324cd1d3a8bea0e9b31e65210967fb9c9e2e08ed',
+    music: 'meta/musicgen:7be0f12c54a8d85c3f0b1b9c0b0d4e8c0b0d4e8c0b0d4e8c0b0d4e8c0b0d4e8c',
+    upscale: 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa'
+  }.freeze
+  
+  COSTS = { ra2: 0.08, imagen3: 0.01, flux: 0.03, wan480: 0.08, sdv: 0.10, music: 0.02, upscale: 0.002, lora: 1.46 }.freeze
+  
+  CHAINS = {
+    cinematic: %w[ra2 upscale],
+    quick: %w[imagen3 upscale],
+    video: %w[imagen3 wan480],
+    full: %w[imagen3 wan480 music],
+    creative: %w[flux upscale wan480 music],
+    chaos: -> { MODELS.keys.sample(rand(8..15)) }
+  }.freeze
 
-# ============================================================================
-
-# CHAIN BUILDER
-
-# ============================================================================
-Chain = Struct.new(:models, :cost, keyword_init: true)
-
-class ChainBuilder
-
-  def initialize(db, api)
-    @db = db
-    @api = api
-
+  def initialize(token = nil)
+    @bootstrap = Bootstrap.run
+    @token = token || @bootstrap[:token]
+    @logger = Logger.new($stderr, level: ENV["DEBUG"] ? Logger::DEBUG : Logger::WARN)
+    @config = @bootstrap[:config]
+    
+    if @bootstrap[:sqlite_available]
+      @db = init_db
+      @storage_mode = :sqlite
+    else
+      @db = nil
+      @storage_mode = :jsonl
+      @jsonl_file = "repligen_chains.jsonl"
+    end
+    
+    @postpro = File.exist?("postpro.rb")
   end
 
-  def build(template_name = "masterpiece")
-
-    template = CHAIN_TEMPLATES[template_name]
-
-    raise "Unknown template: #{template_name}" unless template
-    models = []
-
-    cost = 0.0
-
-    template.each do |phase|
-      type = phase[:type] || phase[:types]&.sample
-
-      count = if phase[:count_range]
-                rand(phase[:count_range][0]..phase[:count_range][1])
-
-              else
-
-                phase[:count]
-
-              end
-
-      count.times do
-
-        candidates = @db.by_type(type, 20)
-
-        next if candidates.empty?
-        model = candidates.sample
-
-        models << model
-
-        cost += model.cost
-      end
-
-    end
-
-    Chain.new(models: models, cost: cost.round(3))
-
+  def run(cmd = nil, *args)
+    return auth_error unless @token
+    interactive_cli
   end
 
-  def execute(chain, initial_input)
-    puts "\n🎬 EXECUTING CHAIN (#{chain.models.size} steps)"
+  def default_chain
+    (@config["default_chain"] || "quick").to_sym
+  end
 
-    puts "=" * 70
-    output = initial_input
-
-    total_cost = 0.0
-
-    chain.models.each_with_index do |model, i|
-      puts "\n[#{i+1}/#{chain.models.size}] #{model.id} (#{model.type})"
-
-      begin
-        input = format_input(model.type, output)
-
-        output = @api.predict(model.id, input)
-
-        total_cost += model.cost
-
-        puts "  ✓ $#{model.cost.round(3)}"
-
-        sleep 1 # Rate limit
-
-      rescue => e
-
-        puts "  ✗ #{e.message}"
-
-        puts "  → Continuing with previous output"
-
-      end
-
+  def autorun_default
+    Bootstrap.dmesg "autorun mode: #{default_chain} chain"
+    result = chain_and_offer(default_chain, "digital art")
+    
+    if result && @postpro && !$stdin.tty?
+      Bootstrap.dmesg "launching postpro.rb --from-repligen --auto"
+      system("ruby postpro.rb --from-repligen --auto")
     end
-
-    puts "\n" + "=" * 70
-
-    puts "✓ Complete! Total: $#{total_cost.round(3)}"
-
-    { output: output, cost: total_cost }
+    
+    result
   end
 
   private
 
-  def format_input(type, prev)
-
-    case type
-    when "text-to-image"
-      { prompt: prev.is_a?(String) ? prev : "masterpiece artwork" }
-
-    when "image-to-video"
-
-      prev.is_a?(String) && prev.start_with?("http") ?
-
-        { image: prev } : { prompt: "cinematic motion" }
-
-    when "upscale"
-
-      prev.is_a?(String) && prev.start_with?("http") ?
-
-        { image: prev, scale: 2 } : { prompt: "enhance" }
-
-    when "image-processing", "style-transfer"
-
-      prev.is_a?(String) && prev.start_with?("http") ?
-
-        { image: prev } : { prompt: "process" }
-
-    else
-
-      prev.is_a?(Hash) ? prev : { input: prev }
-
-    end
-
+  def auth_error
+    puts "Set REPLICATE_API_TOKEN. Get token at https://replicate.com/account"
+    exit 1
   end
 
-end
+  def init_db
+    return nil unless @bootstrap[:sqlite_available]
+    
+    begin
+      require "sqlite3"
+      SQLite3::Database.new("repligen.db").tap do |db|
+        db.execute("CREATE TABLE IF NOT EXISTS chains (id INTEGER PRIMARY KEY, models TEXT, cost REAL, created_at INTEGER)")
+      end
+    rescue => e
+      Bootstrap.dmesg "WARN sqlite3 initialization failed: #{e.message}"
+      nil
+    end
+  end
 
-# ============================================================================
+  def log_chain(models, cost)
+    if @storage_mode == :sqlite && @db
+      @db.execute("INSERT INTO chains (models, cost, created_at) VALUES (?, ?, ?)", 
+                  [models.join(","), cost, Time.now.to_i])
+    else
+      log_entry = {
+        models: models,
+        cost: cost,
+        timestamp: Time.now.iso8601
+      }
+      File.open(@jsonl_file, "a") { |f| f.puts JSON.generate(log_entry) }
+    end
+  end
 
-# INTERACTIVE MENU
+  def request(endpoint, method = :get, body = nil)
+    uri = URI("#{API}/#{endpoint}")
+    req = method == :post ? Net::HTTP::Post.new(uri) : Net::HTTP::Get.new(uri)
+    req['Authorization'] = "Token #{@token}"
+    req['Content-Type'] = 'application/json'
+    req.body = body.to_json if body
 
-# ============================================================================
-def show_menu
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 300) { |http| http.request(req) }
+    raise "API Error: #{response.code} #{response.body}" unless response.code.to_i.between?(200, 299)
+    
+    JSON.parse(response.body)
+  end
 
-  puts "\n" + "=" * 60
+  def predict(model_key, input)
+    model, version = MODELS[model_key].split(':')
+    
+    pred = request('predictions', :post, {
+      version: version,
+      input: format_input(model_key, input),
+      webhook: ENV['WEBHOOK_URL']
+    })
+    
+    wait_for(pred['id'])
+  end
 
-  puts "🎨 REPLIGEN - Replicate.com AI Generation"
-  puts "=" * 60
+  def wait_for(id, timeout = 600)
+    start = Time.now
+    
+    loop do
+      pred = request("predictions/#{id}")
+      
+      case pred['status']
+      when 'succeeded' then return pred['output']
+      when 'failed' then raise pred['error']
+      when 'canceled' then raise 'Canceled'
+      end
+      
+      raise 'Timeout' if Time.now - start > timeout
+      
+      print '.'
+      sleep 2
+    end
+  end
 
-  puts
+  def format_input(model, input)
+    case model
+    when :ra2, :imagen3, :flux then { prompt: input.is_a?(String) ? input : 'digital art', num_outputs: 1 }
+    when :wan480, :sdv then input.start_with?('http') ? { image: input, num_frames: 96 } : { prompt: input }
+    when :music then { prompt: 'cinematic', duration: 10 }
+    when :upscale then { image: input, scale: 2 }
+    when :lora then { input_images: input.is_a?(Array) ? input.join(',') : input, trigger_word: 'subject' }
+    else { input: input }
+    end
+  end
 
-  puts "1. Sync Models from Replicate"
+  def chain(type, prompt)
+    models = chain_for(type)
+    puts "Running #{models.length}-step chain..."
+    
+    output = prompt
+    cost = 0.0
+    
+    models.each_with_index do |model, i|
+      puts "Step #{i + 1}: #{model}"
+      output = predict(model.to_sym, output)
+      cost += COSTS[model.to_sym]
+    end
+    
+    log_chain(models, cost)
+    
+    puts "\nComplete! Cost: $%.3f" % cost
+    
+    save_output(output, type, prompt) if output.is_a?(String) && output.start_with?("http")
+    output
+  end
 
-  puts "2. Search Models"
+  def save_output(url, type, prompt)
+    uri = URI(url)
+    response = Net::HTTP.get_response(uri)
+    
+    return unless response.code == '200'
+    
+    filename = "#{sanitize(prompt)}_generated_#{type}_#{Time.now.strftime('%Y%m%d%H%M%S')}.jpg"
+    File.write(filename, response.body)
+    puts "Saved: #{filename}"
+    File.utime(Time.now, Time.now, filename)
+  rescue StandardError => e
+    puts "Could not save output: #{e.message}"
+  end
 
-  puts "3. Generate with LoRA URL"
+  def sanitize(prompt)
+    prompt.to_s.gsub(/[^\w\-_]/, '_').slice(0, 20)
+  end
 
-  puts "4. Run Chain Workflow"
+  def chain_for(type)
+    CHAINS[type].respond_to?(:call) ? CHAINS[type].call : CHAINS[type]
+  end
 
-  puts "5. Show Statistics"
+  def generate(prompt)
+    chain(:quick, prompt)
+  end
 
-  puts "6. Exit"
+  def gen_and_offer(prompt)
+    result = generate(prompt)
+    offer_postpro if @postpro && result
+    result
+  end
 
-  puts
+  def chain_and_offer(type, prompt)
+    result = chain(type, prompt)
+    offer_postpro if @postpro && result
+    result
+  end
 
-  print "Choose [1-6]: "
+  def train_lora(urls)
+    raise 'Provide image URLs' if urls.empty?
+    
+    puts 'Training LoRA...'
+    output = predict(:lora, urls)
+    puts "Model: #{output}"
+    output
+  end
 
-  gets.chomp
+  def cost(chain_type)
+    chain_for(chain_type).sum { |m| COSTS[m.to_sym] }
+  end
 
-end
-
-def interactive_mode
-
-  ensure_gems
-
-  token = Config.load
-  api = API.new(token)
-
-  db = Database.new
-
-  loop do
-
-    choice = show_menu
-
-    case choice
-    when "1"
-
-      print "How many models to sync? [100]: "
-      limit = gets.chomp
-
-      limit = limit.empty? ? 100 : limit.to_i
-
-      sync_models(api, db, limit)
-
-    when "2"
-
-      print "Search query: "
-
-      query = gets.chomp
-      results = db.search(query, 20)
-
-      puts "\n📋 Results (#{results.size}):"
-
-      results.each { |m| puts "  #{m.id} - #{m.description&.slice(0, 60)}" }
-
-    when "3"
-
-      print "LoRA model URL (replicate.com/owner/model): "
-
-      url = gets.chomp
-      if url =~ /replicate\.com\/([\w-]+\/[\w-]+)/
-
-        model_id = $1
-
-        print "Prompt [masterpiece, best quality]: "
-
-        prompt = gets.chomp
-
-        prompt = "masterpiece, best quality" if prompt.empty?
-
-        generate_with_lora(api, model_id, prompt)
-
+  def offer_postpro
+    if $stdin.tty?
+      puts "\nPostpro.rb detected! Want to apply cinematic processing?"
+      print "Launch postpro? (Y/n): "
+      
+      response = gets.chomp.downcase
+      if response.empty? || response.start_with?("y")
+        puts "Launching postpro.rb with masterpiece presets..."
+        system("ruby postpro.rb --from-repligen")
       else
+        puts "Run 'ruby postpro.rb' later to process generated images"
+      end
+    else
+      Bootstrap.dmesg "non-interactive mode, skipping postpro offer"
+    end
+  end
 
-        puts "❌ Invalid URL"
+  def interactive
+    puts "\nRepligen Interactive Mode"
+    puts "Commands: (g)enerate, (c)hain, (l)ora, cost, quit"
+    puts "Postpro.rb integration: Active" if @postpro
+    
+    loop do
+      print "> "
+      input = gets&.chomp&.split || []
+      cmd = input.shift
+      
+      handle_cmd(cmd, input)
+    rescue => e
+      puts "Error: #{e.message}"
+      @logger.debug e.backtrace.join("\n")
+    end
+  end
 
+  def handle_cmd(cmd, args)
+    case cmd
+    when 'g', 'generate' then gen_and_offer(args.empty? ? 'digital art' : args.join(' '))
+    when 'c', 'chain' then chain_and_offer(args[0]&.to_sym || :quick, args[1..-1]&.join(' ') || 'art')
+    when 'l', 'lora' then train_lora(args)
+    when 'cost' then puts "$%.3f" % cost(args[0]&.to_sym || :quick)
+    when 'postpro', 'p'
+      @postpro ? system('ruby postpro.rb') : puts("postpro.rb not found")
+    when 'discover', 'd' then discover_models(args)
+    when 'radical', 'r' then radical_chain(args)
+    when 'q', 'quit' then exit
+    else puts "Unknown: #{cmd}"
+    end
+  end
+
+  def discover_models(args)
+    pages = (args[0] || 5).to_i
+    scraper = ReplicateExplorer.new(@bootstrap[:anthropic_token])
+    models = scraper.discover(max_pages: pages)
+    puts "Discovered #{models.size} models"
+    models.each { |m| puts "  #{m['id']}: #{m['type']}" }
+  end
+
+  def radical_chain(args)
+    style = args[0] || 'cinematic'
+    length = (args[1] || 5).to_i
+    scraper = ReplicateExplorer.new(@bootstrap[:anthropic_token])
+    chain = scraper.build_radical_chain(style: style, length: length)
+
+    puts "\nRadical #{style} chain (#{chain.length} steps):"
+    chain.each_with_index { |m, i| puts "  #{i+1}. #{m[:id]} ($#{m[:cost]})" }
+    total = chain.sum { |m| m[:cost] }
+    puts "\nTotal: $#{total.round(3)}"
+  end
+end
+
+if __FILE__ == $0
+  OptionParser.new do |opts|
+    opts.banner = 'Usage: repligen.rb [command] [args]'
+    opts.on('-t TOKEN', '--token TOKEN', 'API token') { |t| ENV['REPLICATE_API_TOKEN'] = t }
+    opts.on('-d', '--debug', 'Debug mode') { ENV['DEBUG'] = '1' }
+    opts.on('-h', '--help', 'Show help') { puts opts; exit }
+  end.parse!
+  
+  begin
+    Repligen.new.run(ARGV[0], *ARGV[1..-1])
+  rescue Interrupt
+    puts "\nBye"
+  rescue => e
+    puts "Fatal: #{e.message}"
+    puts e.backtrace if ENV['DEBUG']
+    exit 1
+  end
+end
+
+# Replicate model discovery via Ferrum + GPT-4 Vision
+class ReplicateExplorer
+  def initialize(anthropic_token, db = nil)
+    @anthropic_token = anthropic_token
+    @browser = nil
+    @db = db || init_db
+    @models = load_from_db
+  end
+
+  def init_db
+    require "sqlite3"
+    db = SQLite3::Database.new("repligen_models.db")
+    db.execute <<-SQL
+      CREATE TABLE IF NOT EXISTS models (
+        id TEXT PRIMARY KEY,
+        type TEXT,
+        description TEXT,
+        cost REAL,
+        documentation TEXT,
+        discovered_at INTEGER
+      )
+    SQL
+    db
+  rescue LoadError
+    Bootstrap.dmesg "WARN sqlite3 unavailable, models won't persist"
+    nil
+  end
+
+  def discover(max_pages: 5)
+    return [] unless setup_browser
+    Bootstrap.dmesg "discovering models from replicate.com/explore"
+
+    discovered = []
+    begin
+      @browser.goto("https://www.replicate.com/explore")
+      sleep rand(3..7)
+
+      max_pages.times do |page|
+        html = @browser.body
+        screenshot = screenshot_page(page)
+
+        if screenshot && @anthropic_token
+          models = extract_via_gpt4v(screenshot, html)
+          discovered.concat(models) if models
+          Bootstrap.dmesg "page #{page+1}: #{models&.size || 0} models"
+        end
+
+        break unless next_page
+        sleep rand(3..7)
       end
 
-    when "4"
+      discovered.each { |m| save_model_to_db(m) }
+      @models = load_from_db
+      discovered
+    rescue => e
+      Bootstrap.dmesg "ERROR discovery: #{e.message}"
+      []
+    ensure
+      cleanup
+    end
+  end
 
-      print "Template [masterpiece/quick]: "
+  def build_radical_chain(style: "cinematic", length: 5)
+    return [] if @models.empty?
 
-      template = gets.chomp
-      template = "masterpiece" if template.empty?
+    categories = {
+      image: @models.values.select { |m| m["type"] =~ /image|art/i },
+      video: @models.values.select { |m| m["type"] =~ /video|motion/i },
+      audio: @models.values.select { |m| m["type"] =~ /audio|music/i },
+      enhance: @models.values.select { |m| m["type"] =~ /upscale|enhance/i },
+      style: @models.values.select { |m| m["type"] =~ /style|artistic/i }
+    }
 
-      run_chain(db, api, template)
-
-    when "5"
-
-      show_stats(db)
-
-    when "6", "q", "quit", "exit"
-      puts "\n👋 Goodbye!"
-
-      exit 0
+    chain = case style
+    when "cinematic"
+      [categories[:image].sample, categories[:style].sample,
+       categories[:enhance].sample, categories[:video].sample,
+       categories[:audio].sample].compact
+    when "experimental"
+      @models.values.sample(length)
+    when "quality"
+      [categories[:image].sample, *categories[:enhance].sample(2),
+       categories[:style].sample].compact
     else
-
-      puts "\n⚠️  Invalid choice"
-
-    end
-  end
-
-end
-
-# ============================================================================
-
-# COMMANDS
-
-# ============================================================================
-def sync_models(api, db, limit)
-
-  puts "\n📡 Syncing #{limit} models from Replicate..."
-
-  models = api.models(limit: limit)
-  models.each { |m| db.save(m) }
-
-  puts "✓ Synced #{models.size} models"
-
-end
-
-def generate_with_lora(api, model_id, prompt)
-
-  puts "\n🚀 Generating with #{model_id}..."
-
-  output = api.predict(model_id, { prompt: prompt })
-  output_dir = "output/#{model_id.gsub('/', '_')}_#{Time.now.to_i}"
-
-  FileUtils.mkdir_p(output_dir)
-
-  if output.is_a?(Array)
-
-    output.each_with_index do |url, i|
-
-      filename = File.join(output_dir, "image_#{i}.png")
-      puts "💾 Downloading #{url}..."
-
-      system("curl -s -o '#{filename}' '#{url}'")
-
-      puts "✓ #{filename}"
-
+      @models.values.sample(length)
     end
 
-  elsif output.is_a?(String)
-
-    filename = File.join(output_dir, "output.png")
-
-    puts "💾 Downloading #{output}..."
-
-    system("curl -s -o '#{filename}' '#{output}'")
-
-    puts "✓ #{filename}"
-
+    chain.map { |m| { id: m["id"], cost: m["cost"] || 0.05 } }
   end
 
-  puts "\n✓ Complete! Output: #{output_dir}"
+  private
 
-end
+  def setup_browser
+    require "ferrum"
+    @browser = Ferrum::Browser.new(headless: true, timeout: 30, window_size: [1920, 1080])
+    FileUtils.mkdir_p("discovery_screenshots")
+    true
+  rescue LoadError
+    Bootstrap.dmesg "ERROR ferrum gem required"
+    false
+  rescue => e
+    Bootstrap.dmesg "ERROR browser: #{e.message}"
+    false
+  end
 
-def run_chain(db, api, template)
-  builder = ChainBuilder.new(db, api)
+  def screenshot_page(page_num)
+    path = "discovery_screenshots/page_#{page_num}.png"
+    @browser.screenshot(path: path, full: true)
+    path
+  rescue => e
+    Bootstrap.dmesg "WARN screenshot: #{e.message}"
+    nil
+  end
 
-  chain = builder.build(template)
-  puts "\n🎬 Chain Built (#{chain.models.size} steps, $#{chain.cost})"
+  def extract_via_gpt4v(screenshot, html)
+    return nil unless @anthropic_token
+    require "base64"
 
-  chain.models.each_with_index { |m, i| puts "  #{i+1}. #{m.id} ($#{m.cost})" }
+    image_b64 = Base64.strict_encode64(File.read(screenshot))
+    uri = URI("https://api.anthropic.com/v1/messages")
+    req = Net::HTTP::Post.new(uri)
+    req["x-api-key"] = @anthropic_token
+    req["anthropic-version"] = "2023-06-01"
+    req["Content-Type"] = "application/json"
+    req.body = JSON.generate({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/png", data: image_b64 }},
+          { type: "text", text: "Extract Replicate models from this screenshot as JSON: [{\"id\":\"owner/name\",\"type\":\"image/video/audio\",\"description\":\"...\",\"cost\":0.05}]. HTML context: #{html[0..3000]}" }
+        ]
+      }]
+    })
 
-  print "\nExecute? [y/N]: "
-  return unless gets.chomp.downcase == "y"
+    res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 90) { |http| http.request(req) }
+    return nil unless res.code == "200"
 
-  print "Initial prompt: "
-  prompt = gets.chomp
+    content = JSON.parse(res.body).dig("content", 0, "text")
+    JSON.parse(content.gsub(/```json\n?/, "").gsub(/```/, ""))
+  rescue => e
+    Bootstrap.dmesg "WARN claude vision: #{e.message}"
+    nil
+  end
 
-  prompt = "masterpiece artwork" if prompt.empty?
-  result = builder.execute(chain, prompt)
+  def next_page
+    btn = @browser.at_css('a[rel="next"]') || @browser.at_css('button:contains("Next")')
+    return false unless btn
+    btn.click
+    true
+  rescue
+    false
+  end
 
-  puts "\n✓ Final output: #{result[:output]}"
+  def cleanup
+    @browser&.quit
+    @browser = nil
+  end
 
-end
-def show_stats(db)
+  def load_from_db
+    return {} unless @db
+    @db.results_as_hash = true
+    rows = @db.execute("SELECT * FROM models")
+    rows.map { |r| [r["id"], r] }.to_h
+  rescue
+    {}
+  end
 
-  stats = db.stats
-
-  puts "\n📊 Database Statistics"
-  puts "=" * 60
-
-  puts "Total models: #{stats[:total]}"
-
-  puts "\nBy Type:"
-
-  stats[:by_type].each { |row| puts "  #{row['type']&.ljust(20)} #{row['count']}" }
-
-end
-
-# ============================================================================
-
-# CLI
-
-# ============================================================================
-if __FILE__ == $PROGRAM_NAME
-
-  case ARGV[0]
-
-  when "sync"
-    ensure_gems
-
-    token = Config.load
-
-    api = API.new(token)
-
-    db = Database.new
-
-    limit = ARGV[1]&.to_i || 100
-
-    sync_models(api, db, limit)
-
-  when "search"
-
-    ensure_gems
-
-    db = Database.new
-    query = ARGV[1] || ""
-
-    results = db.search(query, 20)
-
-    puts "Results (#{results.size}):"
-
-    results.each { |m| puts "  #{m.id} - #{m.description&.slice(0, 60)}" }
-
-  when "stats"
-
-    ensure_gems
-
-    db = Database.new
-    show_stats(db)
-
-  when "--help", "-h"
-
-    puts <<~HELP
-
-      Repligen - Replicate.com AI Generation CLI
-      Usage:
-
-        ruby repligen.rb              # Interactive menu
-
-        ruby repligen.rb sync 100     # Sync 100 models
-        ruby repligen.rb search upscale
-
-        ruby repligen.rb stats
-
-      Features:
-
-        - Model discovery & database
-
-        - LoRA generation
-        - Chain workflows (masterpiece/quick)
-
-        - Cost tracking
-
-    HELP
-
-  else
-
-    interactive_mode
-
+  def save_model_to_db(model)
+    return unless @db
+    @db.execute(<<-SQL, [model["id"], model["type"], model["description"], model["cost"] || 0.05, model["documentation"], Time.now.to_i])
+      INSERT OR REPLACE INTO models (id, type, description, cost, documentation, discovered_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    SQL
+  rescue => e
+    Bootstrap.dmesg "WARN db save: #{e.message}"
   end
 end
 
+  def interactive_cli
+    puts "\n" + "="*60
+    puts "REPLIGEN - Cinematic AI Generation Pipeline"
+    puts "="*60
+    puts
+
+    puts "Please enter LoRA URL (or press Enter to skip):"
+    print "> "
+    lora_url = gets.chomp.strip
+    lora_url = nil if lora_url.empty?
+
+    puts "\nShould the resulting artwork be a photo or a movie?"
+    print "> "
+    output_type = gets.chomp.downcase.strip
+    is_video = output_type.include?("movie") || output_type.include?("video")
+
+    puts "\nDo you have a link to the background soundtrack? (or press Enter to skip):"
+    print "> "
+    soundtrack_url = gets.chomp.strip
+    soundtrack_url = nil if soundtrack_url.empty?
+
+    puts "\nDescribe the scene/artwork you want to create:"
+    print "> "
+    prompt = gets.chomp.strip
+    prompt = "digital art" if prompt.empty?
+
+    puts "\n" + "-"*60
+    puts "Building your cinematic pipeline..."
+    puts "-"*60
+
+    chain_steps = []
+
+    if lora_url
+      puts "• Using custom LoRA: #{lora_url}"
+      chain_steps << :ra2
+    else
+      chain_steps << :flux
+    end
+
+    chain_steps << :upscale
+
+    if is_video
+      puts "• Adding motion + camera angles"
+      chain_steps << :wan480
+    end
+
+    if soundtrack_url
+      puts "• Integrating soundtrack: #{soundtrack_url}"
+    elsif is_video
+      puts "• Generating cinematic soundtrack"
+      chain_steps << :music
+    end
+
+    puts "• Relighting + professional color grading"
+
+    puts "\nPipeline: #{chain_steps.join(' → ')}"
+    estimated_cost = chain_steps.sum { |m| COSTS[m] || 0.05 }
+    puts "Estimated cost: $#{estimated_cost.round(3)}"
+
+    print "\nProceed? (Y/n): "
+    response = gets.chomp.downcase
+    return unless response.empty? || response.start_with?("y")
+
+    puts "\nGenerating..."
+    result = execute_chain(chain_steps, prompt)
+
+    if @postpro && result
+      puts "\n" + "="*60
+      puts "POSTPRO.RB INTEGRATION"
+      puts "="*60
+      puts "Apply cinematic film-grade color grading?"
+      puts "• Kodak Portra curves • Skin tone protection"
+      puts "• Professional grain • Highlight rolloff"
+      print "\nLaunch postpro.rb? (Y/n): "
+
+      response = gets.chomp.downcase
+      system("ruby postpro.rb --from-repligen") if response.empty? || response.start_with?("y")
+    end
+
+    puts "\n✓ Complete! Output saved."
+    puts "\nGenerate another? (y/N): "
+    response = gets.chomp.downcase
+    interactive_cli if response.start_with?("y")
+  end
+
+  def execute_chain(steps, prompt)
+    output = prompt
+    cost = 0.0
+
+    steps.each_with_index do |model, i|
+      puts "\nStep #{i+1}/#{steps.length}: #{model}"
+      output = predict(model, output)
+      cost += COSTS[model]
+    end
+
+    log_chain(steps.map(&:to_s), cost)
+    save_output(output, :custom, prompt) if output.is_a?(String) && output.start_with?("http")
+    output
+  end
