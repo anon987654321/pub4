@@ -1,5 +1,5 @@
 meta:
-  version: 13.17.0
+  version: 13.18.0
   purpose: universal_self_improving_governance_framework
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: "Less code, less state, less abstraction = more maintainable"
@@ -7,7 +7,7 @@ meta:
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
   modification_status: inviolable
   modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
-  lineage: "Self-run v13.17.0: Added consolidation_workflow + documentation_philosophy to prevent incomplete work"
+  lineage: "Self-run v13.18.0: Implemented Strunk & White auto-rewrite system (detectors + semantic formatters + approval workflow)"
   
   self_execution:
     trigger_on: [user_request_to_run_through_framework, detect_violations_in_target_file]
@@ -280,18 +280,68 @@ workflow:
       
   file_improvement_workflow:
     trigger: "user requests to run {file} through master.yml"
+    rationale: "Complete workflow that detects, rewrites, and commits improvements"
+    
     steps:
-      - load_file_into_memory
-      - identify_file_type: [zsh, ruby, yaml, html, css, js]
-      - run_applicable_detectors_from_implementations_section
-      - collect_violations: [type, line_number, severity]
-      - auto_fix_formatting_violations
-      - report_remaining_violations_to_user
-      - apply_manual_fixes_if_needed
-      - show_diff_for_approval
-      - commit_with_descriptive_message
-    auto_fixable: [blank_lines, indentation, quotes, tabs_to_spaces]
-    manual_review: [logic_duplication, unclear_names, complexity]
+      1_load_and_identify:
+        - load_file_into_memory: "view tool with full content"
+        - identify_file_type: [zsh, ruby, yaml, html, css, js, markdown]
+        - note_file_path: "for edit tool calls"
+        
+      2_detect_all_violations:
+        - run_applicable_detectors: "from implementations section"
+        - collect_violations: "type, line_number, severity, pattern"
+        - categorize: [syntax_auto_fixable, semantic_llm_required, manual_review]
+        
+      3_apply_syntax_fixes:
+        - auto_fix: [blank_lines, indentation, quotes, tabs_to_spaces]
+        - method: "zsh builtins in syntax_formatters"
+        - confirmation: not_required
+        - result: "cleaned syntax, ready for semantic improvements"
+        
+      4_apply_semantic_rewrites:
+        - filter: "STRUNK_WHITE violations only"
+        - threshold: "3+ violations to proceed"
+        - for_each_violation:
+            - extract_context: "surrounding 3 lines"
+            - generate_rewrite: "LLM with semantic_formatters instruction"
+            - show_diff: "before/after with line numbers"
+            - get_approval: ["Accept", "Reject", "Edit", "Accept All"]
+        - apply_approved: "sequential edit tool calls"
+        
+      5_verify_improvements:
+        - re_run_detectors: "verify violations fixed"
+        - check_convergence: "zero violations of fixed types"
+        - measure_quality_delta: "lines removed, clarity improved"
+        
+      6_commit_changes:
+        - show_final_diff: "all changes together"
+        - generate_commit_message: "master.yml v{version}: Fix {types}\n\nDetails"
+        - commit_and_push: "if user approves"
+        
+    auto_fixable: 
+      syntax: [blank_lines, indentation, quotes, tabs_to_spaces, trailing_whitespace]
+      semantic_safe: [obvious_passive_voice, clear_wordiness]
+      
+    require_approval:
+      semantic_changes: [passive_to_active, compress_wordiness, strengthen_verbs]
+      line_removals: [remove_needless_sections, consolidate_duplicates]
+      logic_changes: [refactor_structure, rename_functions]
+      
+    never_auto_fix:
+      critical: [security_issues, authentication, data_integrity]
+      complex: [architecture_decisions, api_changes, schema_modifications]
+      manual_only: [unclear_names_without_context, ambiguous_logic]
+    
+    output_format:
+      summary: "Fixed {count} violations: {breakdown_by_type}"
+      details: "Line-by-line diffs with before/after"
+      commit: "Git message with violation types and improvements"
+      
+    convergence:
+      max_iterations: 3
+      success: "zero violations of targeted types for 2 consecutive runs"
+      failure: "report remaining violations, suggest manual review"
     
   infrastructure_deployment_workflow:
     phase_1_local:
@@ -539,6 +589,62 @@ detectors:
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
           [[ $line =~ "[a-z]:[[:space:]]*[a-z]{1,2}$" ]] && print "CLARITY: unclear name at line $i (1-2 chars)"
+        done
+    
+    passive_voice:
+      pattern: STRUNK_WHITE
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        passive_indicators=("is being" "was being" "has been" "have been" "had been" "will be" "would be" "should be" "can be" "could be" "may be" "might be")
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          [[ $line =~ ":" || $line =~ "^[[:space:]]*#" || $line =~ "^[[:space:]]*$" ]] && continue
+          for indicator in $passive_indicators; do
+            [[ ${(L)line} =~ ${indicator} ]] && print "STRUNK_WHITE: passive voice at line $i ('$indicator')" && break
+          done
+        done
+    
+    needless_words:
+      pattern: STRUNK_WHITE
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        wordy_phrases=("in order to" "due to the fact" "at this point in time" "for the purpose of" "with regard to" "in the event that" "it is important to note" "it should be noted" "the fact that" "there is/are" "in spite of")
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          [[ $line =~ ":" || $line =~ "^[[:space:]]*#" || $line =~ "^[[:space:]]*$" ]] && continue
+          for phrase in $wordy_phrases; do
+            [[ ${(L)line} =~ ${phrase// /_} || ${(L)line} =~ ${phrase} ]] && print "STRUNK_WHITE: needless words at line $i ('$phrase')" && break
+          done
+        done
+    
+    vague_language:
+      pattern: STRUNK_WHITE
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        vague_terms=("very" "really" "quite" "rather" "somewhat" "fairly" "pretty" "basically" "generally" "usually" "normally" "typically" "stuff" "things" "nice" "good" "bad")
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          [[ $line =~ ":" || $line =~ "^[[:space:]]*#" || $line =~ "^[[:space:]]*$" ]] && continue
+          for term in $vague_terms; do
+            [[ ${(L)line} =~ "[[:space:]]${term}[[:space:]]" ]] && print "STRUNK_WHITE: vague language at line $i ('$term')" && break
+          done
+        done
+    
+    weak_verbs:
+      pattern: STRUNK_WHITE
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        weak_verbs=("make" "do" "have" "get" "put" "take" "give")
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          [[ $line =~ ":" || $line =~ "^[[:space:]]*#" || $line =~ "^[[:space:]]*$" ]] && continue
+          for verb in $weak_verbs; do
+            [[ ${(L)line} =~ "[[:space:]]${verb}[[:space:]]" || ${(L)line} =~ "[[:space:]]${verb}s[[:space:]]" ]] && print "STRUNK_WHITE: weak verb at line $i ('$verb')" && break
+          done
         done
         
     single_quotes_for_strings:
@@ -1246,43 +1352,122 @@ workflow_patterns:
       not_for: interactive_development_with_copilot
 
 formatters:
-  purpose: auto_fix_violations_using_zsh_builtins_only
-  rationale: self_sufficient_no_external_tool_dependencies
+  purpose: auto_fix_violations_using_zsh_builtins_and_llm_rewriting
+  rationale: self_sufficient_no_external_tool_dependencies_plus_semantic_improvements
   
-  base_operations:
-    read: 'content=$(<$file)'
-    tabs_to_spaces: 'content=${content//$''\t''/  }'
-    single_to_double_quotes: 'content=${content//'\''/\"}'
-    trim_trailing: 'content=${content%%[[:space:]]##}'
-    write: 'print -r -- "$content" > $file'
+  syntax_formatters:
+    base_operations:
+      read: 'content=$(<$file)'
+      tabs_to_spaces: 'content=${content//$''\t''/  }'
+      single_to_double_quotes: 'content=${content//'\''/\"}'
+      trim_trailing: 'content=${content%%[[:space:]]##}'
+      write: 'print -r -- "$content" > $file'
+      
+    javascript:
+      operations: [read, tabs_to_spaces, single_to_double_quotes, write]
+      
+    html:
+      operations: [read, tabs_to_spaces, write]
+      custom: 'content=${content//>  </>\n<}'
+      
+    css:
+      operations: [read, tabs_to_spaces, write]
+      custom: 'content=${content//{/{\n}; content=${content//}/\n}}'
+      
+    yaml:
+      operations: [read, tabs_to_spaces, write]
+      custom: 'content=${content//: /: }; content=${content//:  /: }'
+      
+    ruby:
+      operations: [read, tabs_to_spaces, write]
+  
+  semantic_formatters:
+    rationale: "LLM-powered rewriting for clarity improvements"
+    temperature: 0.3
+    model: "high_quality_reasoning_model"
     
-  javascript:
-    operations: [read, tabs_to_spaces, single_to_double_quotes, write]
+    passive_to_active:
+      trigger: STRUNK_WHITE:passive_voice
+      instruction: "Convert passive voice to active. Example: 'is being processed' → 'processes', 'was created by' → 'created'"
+      preserve: [code_blocks, technical_terms, proper_nouns]
+      
+    compress_wordiness:
+      trigger: STRUNK_WHITE:needless_words
+      instruction: "Remove needless words while preserving meaning. Example: 'in order to' → 'to', 'due to the fact that' → 'because', 'at this point in time' → 'now'"
+      preserve: [technical_accuracy, domain_terminology]
+      
+    strengthen_verbs:
+      trigger: STRUNK_WHITE:weak_verbs
+      instruction: "Replace weak verbs with strong specific ones. Example: 'make better' → 'improve', 'get data' → 'fetch', 'do processing' → 'process'"
+      preserve: [technical_API_names, established_patterns]
+      
+    concretize_vague:
+      trigger: STRUNK_WHITE:vague_language
+      instruction: "Replace vague terms with concrete specifics. Example: 'very fast' → '2x faster', 'pretty good' → 'maintains 99% accuracy', 'some stuff' → 'configuration data'"
+      preserve: [intentional_approximations, natural_language]
+      
+  auto_rewrite_workflow:
+    enabled: true
+    mode: "interactive"
     
-  html:
-    operations: [read, tabs_to_spaces, write]
-    custom: 'content=${content//>  </>\n<}'
+    steps:
+      1_detect_violations:
+        action: "Run all detectors on target file"
+        output: "List of violations with line numbers"
+        
+      2_apply_syntax_fixes:
+        action: "Auto-fix syntax violations (tabs, quotes, spacing)"
+        confirmation: not_required
+        
+      3_identify_semantic_issues:
+        action: "Filter for STRUNK_WHITE violations"
+        threshold: "Only rewrite if 3+ violations found"
+        
+      4_generate_rewrites:
+        action: "For each violation, generate improved version"
+        method: "LLM with semantic_formatters instructions"
+        context: "Show surrounding 3 lines for context"
+        
+      5_show_diff:
+        action: "Display before/after for each change"
+        format: "Line-by-line with colors (red=old, green=new)"
+        
+      6_get_approval:
+        action: "Ask user to approve each rewrite"
+        options: ["Accept", "Reject", "Edit", "Accept All", "Reject All"]
+        
+      7_apply_changes:
+        action: "Use edit tool to save approved changes"
+        method: "Sequential edits for each accepted rewrite"
+        
+      8_verify:
+        action: "Re-run detectors to confirm fixes"
+        success: "Zero violations of types that were fixed"
+        
+      9_commit:
+        action: "Git commit with descriptive message"
+        message_format: "master.yml: Fix {violation_types}\n\nFixed {count} violations:\n{list}"
     
-  css:
-    operations: [read, tabs_to_spaces, write]
-    custom: 'content=${content//{/{\n}; content=${content//}/\n}}'
-    
-  yaml:
-    operations: [read, tabs_to_spaces, write]
-    custom: 'content=${content//: /: }; content=${content//:  /: }'
-    
-  ruby:
-    operations: [read, tabs_to_spaces, write]
-    
+    safety:
+      never_auto_fix: [logic_changes, security_issues, architecture_decisions]
+      always_show_diff: true
+      require_approval: [semantic_changes, line_removals]
+      auto_approve_safe: [whitespace, quotes, indentation]
+      rollback_on: [test_failure, user_rejection, syntax_error]
+      
   workflow:
     sequence:
       - detect_violations_with_detectors
-      - apply_base_operations_for_file_type
-      - apply_custom_transforms_if_any
-      - re_detect_to_verify_zero_violations
-      - commit_if_converged
+      - apply_syntax_formatters_for_file_type
+      - identify_semantic_violations
+      - generate_llm_rewrites_for_strunk_white
+      - show_diff_with_edit_tool
+      - get_user_approval_interactive
+      - apply_approved_edits_sequentially
+      - re_detect_to_verify_convergence
+      - commit_if_improvements_made
     on_format_failure: report_manual_intervention_needed
-    integration: run_via_master_rb_self_execution_loop
+    integration: run_via_file_improvement_workflow
 
 tech_stack:
   rails:
