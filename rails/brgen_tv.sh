@@ -7,8 +7,9 @@ set -euo pipefail
 APP_NAME="brgen_tv"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen TV setup with video streaming and live broadcasting"
 
@@ -891,6 +892,78 @@ cat <<EOF > app/assets/stylesheets/tv.scss
 EOF
 
 bin/rails db:migrate
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #673ab7;
+  --secondary: #5f6368;
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --text: #ffffff;
+  --border: #2a2a2a;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
+
+.video-grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.video-card:hover { border-color: var(--primary); }
+
+.video-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.video-info { padding: var(--spacing); }
+.video-title { font-weight: 600; margin-bottom: 0.5rem; }
+.video-meta { color: var(--secondary); font-size: 0.9rem; }
+
+.player-container {
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: calc(var(--spacing) * 2);
+}
+
+video { width: 100%; aspect-ratio: 16/9; background: #000; }
+
+.episode-list { display: grid; gap: calc(var(--spacing) / 2); }
+.episode {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--spacing);
+  display: flex;
+  gap: var(--spacing);
+  cursor: pointer;
+}
+.episode:hover { border-color: var(--primary); }
+
+button, .button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .video-grid { grid-template-columns: 1fr; }
+}
+EOF
 
 generate_turbo_views "shows" "show"
 generate_turbo_views "episodes" "episode"

@@ -7,8 +7,9 @@ set -euo pipefail
 APP_NAME="brgen_playlist"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen Playlist setup with music streaming and collaboration features"
 
@@ -441,6 +442,73 @@ end
 EOF
 
 mkdir -p app/views/brgen_playlist_logo
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #ff5722;
+  --secondary: #5f6368;
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --text: #ffffff;
+  --border: #3a3a3a;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
+
+.player {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--spacing);
+  position: sticky;
+  top: var(--spacing);
+}
+
+.waveform { height: 80px; width: 100%; background: var(--bg); border-radius: 4px; margin: var(--spacing) 0; }
+
+.playlist { display: grid; gap: calc(var(--spacing) / 2); }
+.track {
+  background: var(--surface);
+  padding: var(--spacing);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  cursor: pointer;
+}
+.track:hover { border-color: var(--primary); }
+.track.playing { border-color: var(--primary); background: rgba(255, 87, 34, 0.1); }
+
+.track img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; }
+.track-info { flex: 1; }
+.track-title { font-weight: 600; }
+.track-artist { color: var(--secondary); font-size: 0.9rem; }
+
+button, .button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover { opacity: 0.9; }
+
+@media (max-width: 768px) {
+  main { padding: calc(var(--spacing) / 2); }
+}
+EOF
 
 cat <<EOF > app/views/brgen_playlist_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_playlist.logo_alt") do %>

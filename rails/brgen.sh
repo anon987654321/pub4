@@ -6,8 +6,9 @@ set -euo pipefail
 APP_NAME="brgen"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen core setup"
 
@@ -667,6 +668,79 @@ puts "Seeded posts and listings for all cities with Faker data."
 EOF
 
 mkdir -p app/views/brgen_logo
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #1a73e8;
+  --secondary: #5f6368;
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --text: #202124;
+  --border: #dadce0;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
+
+header, footer { background: var(--surface); border-bottom: 1px solid var(--border); padding: var(--spacing); }
+footer { border-top: 1px solid var(--border); border-bottom: none; }
+
+nav { display: flex; gap: var(--spacing); align-items: center; }
+nav a { text-decoration: none; color: var(--text); }
+nav a:hover { color: var(--primary); }
+
+h1, h2, h3 { margin-bottom: var(--spacing); font-weight: 600; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+
+section { margin-bottom: calc(var(--spacing) * 2); }
+
+form { display: grid; gap: var(--spacing); max-width: 600px; }
+label { font-weight: 500; }
+input, textarea, select { 
+  padding: 0.5rem; 
+  border: 1px solid var(--border); 
+  border-radius: 4px;
+  font-family: inherit;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button, .button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:hover, .button:hover { opacity: 0.9; }
+
+.grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card { background: var(--surface); padding: var(--spacing); border: 1px solid var(--border); border-radius: 4px; }
+.hidden { display: none; }
+
+#map { height: 400px; width: 100%; margin-bottom: var(--spacing); }
+#search-results { margin-top: var(--spacing); }
+
+@media (max-width: 768px) {
+  main { padding: calc(var(--spacing) / 2); }
+  .grid { grid-template-columns: 1fr; }
+}
+EOF
 
 cat <<EOF > app/views/brgen_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen.logo_alt") do %>

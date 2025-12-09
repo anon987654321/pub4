@@ -205,7 +205,77 @@ class Repligen
 
   def run(cmd = nil, *args)
     return auth_error unless @token
-    interactive_cli
+    
+    case cmd
+    when "scrape"
+      scrape_replicate_explore
+    else
+      interactive_cli
+    end
+  end
+  
+  def scrape_replicate_explore
+    unless @bootstrap[:ferrum_available]
+      Bootstrap.dmesg "ERROR ferrum gem required for scraping. Install: gem install ferrum"
+      return false
+    end
+    
+    require "ferrum"
+    Bootstrap.dmesg "scrape replicate.com/explore starting..."
+    
+    browser = Ferrum::Browser.new(headless: true, timeout: 30)
+    page_count = 0
+    model_count = 0
+    
+    begin
+      ["trending", "featured", "image-to-text", "text-to-image", "image-to-video", "text-to-video", "text-to-speech", "speech-to-text"].each do |category|
+        url = "https://replicate.com/explore/#{category}"
+        Bootstrap.dmesg "scrape category=#{category}"
+        
+        browser.goto(url)
+        sleep 2
+        
+        browser.execute("window.scrollTo(0, document.body.scrollHeight)")
+        sleep 1
+        
+        models = browser.css("a[href*='/']").map do |link|
+          href = link.attribute("href")
+          next unless href&.match?(/^\/[^\/]+\/[^\/]+$/)
+          
+          text = link.text.strip
+          next if text.empty?
+          
+          { url: "https://replicate.com#{href}", text: text }
+        end.compact.uniq
+        
+        models.each do |model|
+          next unless model[:url].match?(/replicate\.com\/([^\/]+)\/([^\/]+)$/)
+          
+          owner = $1
+          name = $2
+          
+          if @db
+            existing = @db.execute("SELECT id FROM models WHERE owner = ? AND name = ?", [owner, name])
+            next unless existing.empty?
+            
+            @db.execute("INSERT INTO models (owner, name, description, url, created_at) VALUES (?, ?, ?, ?, ?)",
+                       [owner, name, model[:text], model[:url], Time.now.to_i])
+            model_count += 1
+          end
+        end
+        
+        page_count += 1
+        Bootstrap.dmesg "scraped page=#{page_count} models_found=#{models.size} models_saved=#{model_count}"
+      end
+      
+      Bootstrap.dmesg "scrape complete pages=#{page_count} models=#{model_count}"
+      true
+    rescue => e
+      Bootstrap.dmesg "ERROR scrape failed: #{e.message}"
+      false
+    ensure
+      browser.quit
+    end
   end
 
   def default_chain
@@ -238,6 +308,7 @@ class Repligen
       require "sqlite3"
       SQLite3::Database.new("repligen.db").tap do |db|
         db.execute("CREATE TABLE IF NOT EXISTS chains (id INTEGER PRIMARY KEY, models TEXT, cost REAL, created_at INTEGER)")
+        db.execute("CREATE TABLE IF NOT EXISTS models (id INTEGER PRIMARY KEY, owner TEXT, name TEXT, description TEXT, runs INTEGER, url TEXT, created_at INTEGER)")
       end
     rescue => e
       Bootstrap.dmesg "WARN sqlite3 initialization failed: #{e.message}"

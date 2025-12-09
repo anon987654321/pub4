@@ -7,8 +7,9 @@ set -euo pipefail
 APP_NAME="brgen_takeaway"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen Takeaway setup with food delivery and restaurant management"
 
@@ -746,6 +747,90 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
 EOF
 
 bin/rails db:migrate
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #ff5722;
+  --secondary: #5f6368;
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --text: #202124;
+  --border: #dadce0;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
+
+.restaurant-grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.restaurant-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.restaurant-card:hover { border-color: var(--primary); }
+
+.restaurant-card img { width: 100%; height: 180px; object-fit: cover; }
+.restaurant-info { padding: var(--spacing); }
+.restaurant-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; }
+.restaurant-cuisine { color: var(--secondary); margin-bottom: 0.5rem; }
+.restaurant-rating { color: var(--primary); font-weight: 600; }
+
+.menu-grid { display: grid; gap: var(--spacing); }
+.menu-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--spacing);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart {
+  position: fixed;
+  bottom: var(--spacing);
+  right: var(--spacing);
+  background: var(--primary);
+  color: white;
+  padding: var(--spacing);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.delivery-status {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: calc(var(--spacing) * 2);
+  text-align: center;
+}
+
+#delivery-map { height: 300px; border-radius: 8px; margin: var(--spacing) 0; }
+
+button, .button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .restaurant-grid, .menu-grid { grid-template-columns: 1fr; }
+}
+EOF
 
 generate_turbo_views "restaurants" "restaurant"
 generate_turbo_views "orders" "order"

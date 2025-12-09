@@ -7,8 +7,9 @@ set -euo pipefail
 APP_NAME="brgen_marketplace"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen Marketplace setup with Solidus e-commerce platform"
 
@@ -197,6 +198,84 @@ end
 EOF
 
 mkdir -p app/views/brgen_marketplace_logo
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #ff9800;
+  --secondary: #5f6368;
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --text: #202124;
+  --border: #dadce0;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
+
+header, footer { background: var(--surface); border-bottom: 1px solid var(--border); padding: var(--spacing); }
+footer { border-top: 1px solid var(--border); border-bottom: none; }
+
+nav { display: flex; gap: var(--spacing); align-items: center; flex-wrap: wrap; }
+nav a { text-decoration: none; color: var(--text); }
+nav a:hover { color: var(--primary); }
+
+h1, h2, h3 { margin-bottom: var(--spacing); font-weight: 600; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+
+.grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.product-card { 
+  background: var(--surface); 
+  padding: var(--spacing); 
+  border: 1px solid var(--border); 
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.product-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: var(--spacing); }
+.price { font-size: 1.25rem; font-weight: 600; color: var(--primary); }
+
+button, .button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:hover, .button:hover { opacity: 0.9; }
+
+.cart { position: relative; }
+.cart-count { 
+  position: absolute; 
+  top: -8px; 
+  right: -8px; 
+  background: var(--primary); 
+  color: white; 
+  border-radius: 50%; 
+  width: 20px; 
+  height: 20px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 0.75rem; 
+}
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+}
+EOF
 
 cat <<EOF > app/views/brgen_marketplace_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_marketplace.logo_alt") do %>

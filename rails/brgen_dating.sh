@@ -7,8 +7,9 @@ set -euo pipefail
 APP_NAME="brgen_dating"
 BASE_DIR="/home/dev/rails"
 BRGEN_IP="46.23.95.45"
+SCRIPT_DIR="${0:a:h}"
 
-source "./__shared.sh"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 log "Starting Brgen Dating setup with enhanced matchmaking"
 
@@ -294,6 +295,76 @@ end
 EOF
 
 mkdir -p app/views/brgen_dating_logo
+
+cat <<'EOF' > app/assets/stylesheets/application.css
+:root {
+  --primary: #e91e63;
+  --secondary: #5f6368;
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --text: #202124;
+  --border: #dadce0;
+  --spacing: 1rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+main { max-width: 600px; margin: 0 auto; padding: var(--spacing); }
+
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: calc(var(--spacing) * 2);
+  text-align: center;
+}
+
+.profile-card img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: var(--spacing);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+  margin-top: calc(var(--spacing) * 2);
+}
+
+.button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button.like { background: var(--primary); color: white; }
+.button.pass { background: var(--surface); border: 2px solid var(--border); }
+.button.super { background: #2196f3; color: white; }
+
+.matches { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.match-card { text-align: center; }
+.match-card img { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; }
+
+@media (max-width: 768px) {
+  main { padding: calc(var(--spacing) / 2); }
+}
+EOF
 
 cat <<EOF > app/views/brgen_dating_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_dating.logo_alt") do %>
