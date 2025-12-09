@@ -1,126 +1,128 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# BRGEN - Complete Rails 8 Social Network Generator
-# Per master.json v28.0, Rails 8 Solid Stack, OpenBSD deployment ready
+# BRGEN v3.0.0 - Rails 8 Complete Social Network
+# Updated for Rails 8.0, PWA, Propshaft, modern patterns
+# Per master.yml v13.16.0
 
-# Run after openbsd.sh --pre-point creates /home/brgen/app structure
-readonly VERSION="2.0.0"
+readonly VERSION="3.0.0"
 readonly APP_NAME="brgen"
-
 readonly BASE_DIR="/home/brgen"
 readonly APP_DIR="${BASE_DIR}/app"
 readonly BRGEN_IP="185.52.176.18"
 readonly BRGEN_PORT="11006"
-SCRIPT_DIR="${0:a:h}"
-source "${SCRIPT_DIR}/__shared/@common.sh"
 
-log "Starting BRGEN v${VERSION} complete setup"
-# Validate preconditions
+SCRIPT_DIR="${0:a:h}"
+source "${SCRIPT_DIR}/__shared/load_modules.sh"
+
+log "BRGEN v${VERSION} - Rails 8 Complete Setup"
 
 if [[ ! -d "$APP_DIR" ]]; then
-
-  log "ERROR: $APP_DIR does not exist. Run: doas zsh openbsd.sh --pre-point"
+  log "ERROR: $APP_DIR missing. Run: doas zsh openbsd.sh --pre-point"
   exit 1
 fi
+
 cd "$APP_DIR"
 log "Working in: $APP_DIR"
 
-# Initialize Rails app if needed
 if [[ ! -f "config/application.rb" ]]; then
-
   log "Creating Rails 8 application"
-  rails new . --database=postgresql --skip-git --css=scss --javascript=esbuild
+  rails new . --database=postgresql --skip-git --css=tailwind --javascript=esbuild
 fi
-# Update Gemfile with full stack
-log "Installing Rails 8 Solid Stack + StimulusReflex + LangChain"
 
+log "Installing Rails 8 + PWA stack"
 cat > Gemfile << 'GEMFILE'
 source "https://rubygems.org"
-
 ruby "3.3.0"
-# Rails 8 core
-gem "rails", "~> 8.0.0"
 
+gem "rails", "~> 8.0"
 gem "pg", "~> 1.5"
 gem "puma", "~> 6.0"
-# Rails 8 Solid Stack (replaces Redis)
-gem "solid_queue"
 
+# Rails 8 Solid Stack (Redis-free)
+gem "solid_queue"
 gem "solid_cache"
 gem "solid_cable"
-# Asset pipeline
+
+# Rails 8 Authentication
+gem "bcrypt", "~> 3.1"
+
+# Assets (Propshaft is default in Rails 8)
 gem "propshaft"
+gem "tailwindcss-rails"
+gem "importmap-rails"
 
-gem "cssbundling-rails"
-gem "jsbundling-rails"
-# Hotwire stack
+# Hotwire
 gem "turbo-rails"
-
 gem "stimulus-rails"
+
+# StimulusReflex for real-time
 gem "stimulus_reflex", "~> 3.5"
 gem "cable_ready", "~> 5.0"
-# Authentication
+
+# Core features
 gem "devise"
-
 gem "devise-guests"
-gem "omniauth-openid-connect"
-# Multi-tenancy
 gem "acts_as_tenant"
-
-# Pagination & utilities
 gem "pagy"
+gem "image_processing"
 
-gem "faker"
-# Geolocation
+# Location
 gem "geocoder"
 
-# Active Storage variants
-gem "image_processing", "~> 1.2"
-
-# LangChain AI
+# AI
 gem "langchainrb"
-
-gem "langchainrb_rails"
 gem "ruby-openai"
-# Background jobs (uses Solid Queue)
-gem "good_job" # Alternative if needed
 
-# Performance
+# PWA support
+gem "serviceworker-rails"
+
 gem "bootsnap", require: false
 
 group :development, :test do
   gem "debug"
-
   gem "brakeman"
-  gem "rubocop-rails-omakase"
+  gem "rubocop-rails-omakase", require: false
 end
+
 group :development do
   gem "web-console"
+end
+GEMFILE
+
+bundle install
 
 end
 GEMFILE
 bundle install
-# Setup Rails 8 Solid Stack
 
+# Setup Rails 8 Solid Stack
+log "Configuring Rails 8 Solid Stack"
 setup_rails8_solid_stack
 
-# Setup Rails 8 authentication
-setup_rails8_authentication
+# Setup Rails 8 authentication (built-in)
+log "Installing Rails 8 authentication"
+if [[ ! -f "app/models/session.rb" ]]; then
+  bin/rails generate authentication
+fi
 
-# Database configuration
+# Configure database
 log "Configuring PostgreSQL"
-
 content=$(<config/database.yml)
 content="${content//database: app_/database: brgen_}"
 content="${content//username: brgen/username: brgen_user}"
 print -r -- "$content" > config/database.yml
-# Install Stimulus + StimulusReflex
-log "Setting up StimulusReflex"
 
+# Setup PWA
+log "Setting up Progressive Web App"
+setup_full_pwa "BRGEN"
+
+# Setup StimulusReflex
+log "Installing StimulusReflex"
 bin/rails generate stimulus_reflex:install
-# Setup models (core social features)
-log "Generating core models"
+
+# Generate models
+log "Generating Rails 8 models"
 
 # Community (multi-tenant parent)
 bin/rails generate model Community name:string description:text subdomain:string:uniq slug:string:uniq
