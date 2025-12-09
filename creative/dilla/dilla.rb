@@ -628,15 +628,20 @@ class SOSDilla
   
   def find_soundfont
     candidates = [
+      File.join(__dir__, "soundfonts", "GeneralUser GS 1.471", "GeneralUser GS v1.471.sf2"),
+      File.join(__dir__, "soundfonts", "FluidR3_GM.sf2"),
       "/usr/share/sounds/sf2/FluidR3_GM.sf2",
       "/usr/local/share/soundfonts/neo_soul_keys.sf2",
-      "/System/Library/Audio/Sounds/Banks/Bank.sf2"
+      "/System/Library/Audio/Sounds/Banks/Bank.sf2",
+      "C:/soundfonts/FluidR3_GM.sf2"
     ]
     
     soundfont = candidates.find { |path| File.exist?(path) }
     return soundfont if soundfont
     
-    puts "No soundfont found. Install FluidR3_GM.sf2"
+    puts "No soundfont found in:"
+    candidates.each { |c| puts "  #{c}" }
+    puts "\nDownload: http://www.schristiancollins.com/soundfonts.php"
     exit 1
   end
   
