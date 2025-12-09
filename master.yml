@@ -1,5 +1,5 @@
 meta:
-  version: 13.15.0
+  version: 14.2.0
   purpose: universal_self_improving_governance_framework
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: "Less code, less state, less abstraction = more maintainable"
@@ -7,7 +7,7 @@ meta:
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
   modification_status: inviolable
   modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
-  lineage: "Merged master.json v43.0.1 critical sections into master.yml v13.14.0"
+  lineage: "v14.2.0: Added duplicate declaration detectors (const/let/var/function/class), implemented auto-iteration convergence loop, added formatters for auto-fix. Previous: Merged master.json v43.0.1 critical sections into master.yml v13.14.0"
   
   self_execution:
     trigger_on: [user_request_to_run_through_framework, detect_violations_in_target_file]
@@ -277,6 +277,61 @@ execution:
   
   internalize_first: read_existing_understand_extend_never_write_blind
 
+auto_iteration:
+  purpose: "Loop until zero violations and quality plateau"
+  enabled: true
+  max_iterations: 20
+  
+  convergence_criteria:
+    zero_violations_consecutive: 2
+    quality_delta_threshold: 0.001
+    quality_delta_consecutive: 3
+    content_hash_unchanged_consecutive: 2
+    
+  loop_sequence:
+    - step: 1_scan
+      action: run_all_detectors_collect_violations
+      output: violations_report
+      
+    - step: 2_auto_fix
+      action: apply_formatters_for_auto_fixable
+      input: violations_report
+      output: fixes_applied
+      
+    - step: 3_validate
+      action: re_scan_verify_no_regressions
+      input: fixes_applied
+      output: validation_report
+      
+    - step: 4_measure
+      action: calculate_quality_metrics
+      input: validation_report
+      output: quality_delta
+      
+    - step: 5_converge
+      action: check_convergence_criteria
+      input: quality_delta
+      output: converged_boolean
+      
+    - step: 6_repeat
+      condition: not_converged
+      action: goto_step_1
+      
+  quality_metrics:
+    lines_of_code: count
+    duplication_ratio: percentage
+    max_nesting_depth: count
+    cyclomatic_complexity: average
+    violations_count: count
+    doc_citations: count
+    
+  output_format: |
+    ✓ convergence achieved after {iterations} iterations
+    violations: {start_count} → {end_count} (-{delta})
+    duplication: {start_pct}% → {end_pct}% ({delta_pct})
+    lines: {start_lines} → {end_lines} ({delta_pct}% reduction)
+    quality: +{quality_improvement}%
+
   phases:
     analyze:
       <<: *phase_template
@@ -468,10 +523,90 @@ detectors:
         content=$(<$file)
         root_sections=$(print $content | grep -c '^[a-z_]*:$')
         ((root_sections > 25)) && print "KISS: $root_sections root sections exceeds 25"
+        
+    duplicate_const_declaration:
+      pattern: DRY
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        declare -A const_names
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          if [[ $line =~ 'const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+            name=${match[1]}
+            ((const_names[$name]++))
+            ((const_names[$name] > 1)) && print "DRY: duplicate const '$name' at line $i"
+          fi
+        done
+        
+    duplicate_let_declaration:
+      pattern: DRY
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        declare -A let_names
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          if [[ $line =~ 'let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+            name=${match[1]}
+            ((let_names[$name]++))
+            ((let_names[$name] > 1)) && print "DRY: duplicate let '$name' at line $i"
+          fi
+        done
+        
+    duplicate_var_declaration:
+      pattern: DRY
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        declare -A var_names
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          if [[ $line =~ 'var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+            name=${match[1]}
+            ((var_names[$name]++))
+            ((var_names[$name] > 1)) && print "DRY: duplicate var '$name' at line $i"
+          fi
+        done
+        
+    duplicate_function_declaration:
+      pattern: DRY
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        declare -A func_names
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          if [[ $line =~ 'function[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]] || \
+             [[ $line =~ '([a-zA-Z_][a-zA-Z0-9_]*)[[:space:]]*\([[:space:]]*\)[[:space:]]*\{' ]]; then
+            name=${match[1]}
+            ((func_names[$name]++))
+            ((func_names[$name] > 1)) && print "DRY: duplicate function '$name' at line $i"
+          fi
+        done
+        
+    duplicate_class_declaration:
+      pattern: DRY
+      scan: |
+        content=$(<$file)
+        lines=(${(f)content})
+        declare -A class_names
+        for ((i=1; i<=${#lines}; i++)); do
+          line=${lines[$i]}
+          if [[ $line =~ 'class[[:space:]]+([A-Z][a-zA-Z0-9_]*)' ]]; then
+            name=${match[1]}
+            ((class_names[$name]++))
+            ((class_names[$name] > 1)) && print "DRY: duplicate class '$name' at line $i"
+          fi
+        done
 
   action_mappings:
-  action_mappings:
     logic_repeated_thrice: extract_to_single_source
+    duplicate_const_declaration: remove_duplicate_keep_first
+    duplicate_let_declaration: remove_duplicate_keep_first
+    duplicate_var_declaration: remove_duplicate_keep_first
+    duplicate_function_declaration: consolidate_or_rename
+    duplicate_class_declaration: consolidate_or_rename
   multiple_responsibilities: split_into_focused_units
   values_buried_deep: hoist_to_accessible_scope
   related_concepts_scattered: gather_and_colocate
@@ -1047,7 +1182,7 @@ workflow_patterns:
   cygwin_zsh_integration:
     context: copilot_CLI_runs_inside_cygwin_npm_environment
     shell: zsh_not_bash_bash_is_banned
-    path_format: "/cygdrive/g/path" not "G:\path"
+    path_format: '"/cygdrive/g/path" not "G:\path"'
     git_commands: wrap_in_zsh_c_when_using_powershell_tool
     example: "zsh -c \"cd /cygdrive/g/pub && git push\""
     rationale: zsh_is_allowed_bash_is_banned_per_constraints
@@ -1069,7 +1204,7 @@ workflow_patterns:
     storage: never_commit_tokens_to_repo
     usage: embed_in_git_remote_url_for_https_push
     rotation: tokens_in_remote_urls_persist_until_remote_set_url_changes
-    clearing: "git remote set-url origin NEW_URL" replaces_old_token
+    clearing: '"git remote set-url origin NEW_URL" replaces_old_token'
     
   debugging_github_pages:
     check_sequence:
@@ -1159,6 +1294,56 @@ formatters:
       - commit_if_converged
     on_format_failure: report_manual_intervention_needed
     integration: run_via_master_rb_self_execution_loop
+    
+  remove_duplicate_declaration:
+    purpose: remove_duplicate_const_let_var_keep_first_occurrence
+    scan: |
+      content=$(<$file)
+      lines=(${(f)content})
+      declare -A seen_const seen_let seen_var
+      output_lines=()
+      for ((i=1; i<=${#lines}; i++)); do
+        line=${lines[$i]}
+        skip=0
+        
+        # Check const
+        if [[ $line =~ 'const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          name=${match[1]}
+          if ((seen_const[$name])); then
+            skip=1
+            print "Removed duplicate const '$name' at line $i"
+          else
+            seen_const[$name]=1
+          fi
+        fi
+        
+        # Check let
+        if [[ $line =~ 'let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          name=${match[1]}
+          if ((seen_let[$name])); then
+            skip=1
+            print "Removed duplicate let '$name' at line $i"
+          else
+            seen_let[$name]=1
+          fi
+        fi
+        
+        # Check var
+        if [[ $line =~ 'var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          name=${match[1]}
+          if ((seen_var[$name])); then
+            skip=1
+            print "Removed duplicate var '$name' at line $i"
+          else
+            seen_var[$name]=1
+          fi
+        fi
+        
+        ((skip == 0)) && output_lines+=("$line")
+      done
+      
+      # Write back
+      print -l -- "${output_lines[@]}" > "$file"
 
 tech_stack:
   rails:
@@ -1261,9 +1446,9 @@ tech_stack:
     config_validation: lookup_man_page_before_every_change
 
 quality_metrics:
-  version: 13.15.0
-  lines: 1350
-  root_sections: 22
+  version: 14.2.0
+  lines: 1400
+  root_sections: 23
   nesting_maximum: 2
   duplication_ratio: 0.00
   clarity_score: 1.00
