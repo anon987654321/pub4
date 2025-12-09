@@ -1,66 +1,46 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# BRGEN - Minimal Working Deployment v1.0
-# Deploy live to brgen.no + playlist.brgen.no
+# BRGEN Minimal v2.0 - Rails 8 Quick Deploy
+# Lightweight version for rapid deployment
 
 readonly APP_NAME="brgen"
 readonly APP_DIR="/home/brgen/app"
-
 readonly PORT="11006"
 
 log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"; }
+
 cd "$APP_DIR" || exit 1
-log "Deploying brgen from $APP_DIR"
+log "Deploying BRGEN minimal from $APP_DIR"
 
-# Ensure Rails app exists
 if [[ ! -f "config/application.rb" ]]; then
-
-  log "Creating minimal Rails app"
-
-  rails new . --database=postgresql --skip-git --minimal
-
+  log "Creating Rails 8 app"
+  rails new . --database=postgresql --skip-git --minimal --css=tailwind
 fi
 
-# Minimal Gemfile
 cat > Gemfile << 'GEMFILE'
-
 source "https://rubygems.org"
-
 ruby "~> 3.3.0"
 
-gem "rails", "~> 7.2"
-
+gem "rails", "~> 8.0"
 gem "pg"
-
 gem "puma"
-
 gem "solid_queue"
-
 gem "solid_cache"
-
 gem "turbo-rails"
-
 gem "stimulus-rails"
-
+gem "propshaft"
+gem "tailwindcss-rails"
 GEMFILE
 
 bundle install
-# Routes
+
 cat > config/routes.rb << 'ROUTES'
-
 Rails.application.routes.draw do
-
   root "home#index"
-
   resources :posts
-
-  get "playlist" => "playlist#index"
-
-  get "up" => "rails/health#show", as: :rails_health_check
-
+  get "up" => "rails/health#show"
 end
-
 ROUTES
 
 # Controllers
