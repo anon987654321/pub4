@@ -1,32 +1,15 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Blognet: AI-powered blogging with Tiptap, social feed, engagement scores
-# Implements innovation_research_2024: container queries, PWA, Hotwire Native
+# Blognet: Multi-blog platform with AI content generation
 
-readonly VERSION="2.0.0"
-readonly APP_NAME="blognet"
-
-readonly PORT="11008"
-
+APP_NAME="blognet"
+BASE_DIR="/home/dev/rails"
+SERVER_IP="185.52.176.18"
+APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-APP_DIR="/home/brgen/app"
 
-cd "$APP_DIR"
-
-log() { printf '{"time":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" }
-log "Installing Blognet v${VERSION} with social algorithms + PWA"
-# Gemfile with innovation stack
-cat > Gemfile << 'GEMFILE'
-
-source "https://rubygems.org"
-
-ruby "3.3.0"
-
-gem "rails", "~> 8.0"
-gem "pg"
-
-gem "puma"
+source "${SCRIPT_DIR}/__shared/@common.sh"
 
 gem "solid_queue"
 

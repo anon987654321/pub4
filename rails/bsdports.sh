@@ -1,33 +1,15 @@
 #!/usr/bin/env zsh
-# -- INITIAL SETUP --
+set -euo pipefail
 
-echo "Creating new Rails application..."
-rails new bsdports -m https://www.rubyonrails.org
+# BSDPorts - OpenBSD Package Repository Browser
 
-cd bsdports
-echo "Adding necessary gems..."
-bundle add net-ftp
-bundle add rubygems-package
+APP_NAME="bsdports"
+BASE_DIR="/home/dev/rails"
+SERVER_IP="185.52.176.18"
+APP_PORT=$((10000 + RANDOM % 10000))
+SCRIPT_DIR="${0:a:h}"
 
-bundle add pry
-bundle add stimulus_reflex
-bundle add langchainrb
-
-bundle add langchainrb_rails
-
-echo "Installing gems..."
-
-bundle install
-
-# -- CREATE NECESSARY MODELS --
-
-echo "Generating models..."
-
-bin/rails generate model Category name:string platform:references
-bin/rails generate model Platform name:string
-
-bin/rails generate model Port name:string summary:text url:string description:text category:references platform:references
-echo "Migrating database..."
+source "${SCRIPT_DIR}/__shared/@common.sh"
 bin/rails db:migrate
 
 # -- CREATE SEEDS.RB --

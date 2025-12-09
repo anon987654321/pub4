@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
-# OpenBSD Infrastructure v337.4.0 - Converged with master.yml
+# OpenBSD Infrastructure v338.0.0 - Rails 8 + Solid Stack
 
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 #
-# ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails
+# ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails 8
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
 #
-# VERIFIED: 2025-10-23 against man.openbsd.org + master.yml principles
+# VERIFIED: 2025-12-09 against man.openbsd.org + master.yml v14.1.0
 set -euo pipefail
 
-readonly VERSION="337.4.0"
+readonly VERSION="338.0.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
 readonly PTR4_API="http://ptr4.openbsd.amsterdam"
@@ -21,22 +21,22 @@ readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
 
-# Unified deployment config - modern zsh nested associative arrays
+# Unified deployment config - fixed ports for predictable routing
 typeset -A APPS
-APPS[brgen.port]=$((10000 + RANDOM % 10000))
+APPS[brgen.port]=11006
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
 APPS[brgen.subdomains]="markedsplass playlist dating tv takeaway maps"
-APPS[amber.port]=$((10000 + RANDOM % 10000))
+APPS[amber.port]=10001
 APPS[amber.domains]="amberapp.com"
-APPS[blognet.port]=$((10000 + RANDOM % 10000))
+APPS[blognet.port]=10002
 APPS[blognet.domains]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-APPS[bsdports.port]=$((10000 + RANDOM % 10000))
+APPS[bsdports.port]=10003
 APPS[bsdports.domains]="bsdports.org"
-APPS[hjerterom.port]=$((10000 + RANDOM % 10000))
+APPS[hjerterom.port]=10004
 APPS[hjerterom.domains]="hjerterom.no"
-APPS[privcam.port]=$((10000 + RANDOM % 10000))
+APPS[privcam.port]=10005
 APPS[privcam.domains]="privcam.no"
-APPS[pubattorney.port]=$((10000 + RANDOM % 10000))
+APPS[pubattorney.port]=10006
 APPS[pubattorney.domains]="pub.attorney freehelp.legal"
 
 # Extract all unique domains for DNS config
@@ -156,7 +156,7 @@ EOF
   local gems=(
 
     "bundler:2.5.0"
-    "rails:7.2.0"
+    "rails:8.0.0"
 
     "pg:1.5.0"
     "redis:5.0.0"
@@ -174,6 +174,12 @@ EOF
     "rack-attack:6.7.0"
 
     "sidekiq:7.2.0"
+
+    "solid_queue:1.0.0"
+
+    "solid_cache:1.0.0"
+
+    "solid_cable:1.0.0"
 
     "propshaft:0.8.0"
 
