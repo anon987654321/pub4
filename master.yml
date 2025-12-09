@@ -1,5 +1,5 @@
 meta:
-  version: 13.16.0
+  version: 13.17.0
   purpose: universal_self_improving_governance_framework
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: "Less code, less state, less abstraction = more maintainable"
@@ -7,7 +7,7 @@ meta:
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
   modification_status: inviolable
   modification_requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
-  lineage: "Self-run v13.16.0: Fixed DRY violations (duplicate action_mappings, added detector helpers)"
+  lineage: "Self-run v13.17.0: Added consolidation_workflow + documentation_philosophy to prevent incomplete work"
   
   self_execution:
     trigger_on: [user_request_to_run_through_framework, detect_violations_in_target_file]
@@ -62,6 +62,79 @@ ultra_minimalism:
     javascript: "ESNext vanilla - Web Components over React unless complexity demands it"
     ruby: "Stdlib and Rails - avoid gems unless significant value"
     rust: "Minimal deps - prefer std, zero-cost abstractions only"
+
+documentation_philosophy:
+  rationale: "READMEs sell the vision before explaining the mechanics"
+  inspiration: "Apple product launches, Stripe docs, Basecamp manifestos"
+  
+  structure:
+    opening_hook:
+      purpose: "Capture essence in 2-3 paragraphs - make reader WANT this"
+      style: "Bold claims, vivid contrasts, emotional resonance"
+      tone: "Confident but not arrogant, revolutionary but grounded"
+      examples:
+        - "Transform X into Y. Not hours. Not days. Seconds."
+        - "While others fumble with Z, you'll be doing A faster than you can say B"
+        - "This isn't just another X—it's the first Y that actually understands Z"
+      forbidden: [boring_introductions, feature_lists_first, technical_jargon_opening]
+      
+    technical_credibility:
+      placement: "After the hook - now they want details"
+      content: "Real specs, actual benchmarks, honest limitations"
+      style: "Precise numbers, clear comparisons, professional terminology"
+      build_trust: "Show deep understanding through specific technical details"
+      
+    practical_value:
+      placement: "After credibility - show them how"
+      content: "Usage examples, integration patterns, real workflows"
+      style: "Copy-paste ready, progressive complexity, outcome-focused"
+      
+  writing_principles:
+    voice:
+      - "Write like you're explaining to a brilliant peer, not a beginner"
+      - "Assume intelligence, provide context, respect time"
+      - "Bold assertions need evidence - back up claims with specifics"
+      - "Enthusiasm is authentic when backed by substance"
+      
+    structure:
+      - "Start with the revolution (why this matters)"
+      - "Prove with specifics (how it works)"
+      - "Enable with examples (what you can do)"
+      - "Invite with honesty (limitations and tradeoffs)"
+      
+    language:
+      - "Strong verbs over weak adjectives: 'shatters' not 'breaks nicely'"
+      - "Concrete over abstract: '54.2% golden ratio' not 'optimized timing'"
+      - "Active over passive: 'Dilla generates' not 'beats are generated'"
+      - "Rhythmic sentences: vary length, build momentum, land punches"
+      
+    forbidden:
+      - "Marketing fluff without technical substance"
+      - "False superlatives ('best ever', 'only solution')"
+      - "Passive voice corporate-speak"
+      - "Apologetic or uncertain language"
+      - "Feature lists as opening paragraphs"
+      - "Wall-of-text technical dumps"
+      
+  quality_checklist:
+    opening_test: "Would this make me click 'clone' before reading technical details?"
+    technical_test: "Do specific numbers and implementations build credibility?"
+    practical_test: "Can I copy-paste an example and immediately get value?"
+    voice_test: "Does this sound like a passionate expert, not a marketer or manual?"
+    essence_test: "Does this capture what makes this tool special/different/powerful?"
+    
+  examples_of_excellence:
+    dilla_readme: "Hook with revolution, prove with Dilla's math, enable with workflows"
+    postpro_readme: "Contrast digital vs cinema, show film science, demonstrate mastering"
+    repligen_readme: "Promise speed, prove with chains, enable with integration"
+    
+  revision_process:
+    1: "Write technical README (features, usage, specs)"
+    2: "Extract the essence: What makes this special? Why does it exist?"
+    3: "Craft opening: Bold vision paragraph that sells the transformation"
+    4: "Weave narrative: Revolution → Proof → Practice"
+    5: "Test hooks: Would I stop and read this? Does it spark curiosity?"
+    6: "Verify claims: Every bold statement needs technical backup"
 
 thresholds: &thresholds
   max_arguments: 3
@@ -161,6 +234,50 @@ operational_convergence:
 workflow:
   phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
   
+  consolidation_workflow:
+    rationale: "CRITICAL: Always analyze existing before writing new"
+    trigger: "user requests consolidation or mentions external sources"
+    mandatory_steps:
+      1_discover_all_sources:
+        - check_local: "view all relevant local files with glob/grep"
+        - check_github: "use github-mcp-server to fetch external repos"
+        - check_backups: "search for any backup/old versions"
+        - document_findings: "file sizes, line counts, feature lists"
+        blocking: true
+        skip_penalty: "incomplete_consolidation + wasted_time"
+        
+      2_compare_exhaustively:
+        - size_comparison: "larger files usually have more features"
+        - feature_extraction: "list unique capabilities per version"
+        - quality_assessment: "completeness, documentation, patterns"
+        - determine_canonical: "which version is most complete?"
+        blocking: true
+        
+      3_internalize_before_writing:
+        - read_complete_source: "understand FULL implementation"
+        - understand_architecture: "design patterns, dependencies"
+        - note_all_features: "nothing gets lost"
+        principle: "internalize_first: read_existing_understand_extend_never_write_blind"
+        blocking: true
+        violation_result: "incomplete_work + feature_loss + user_frustration"
+        
+      4_minimal_modification:
+        - use_best_version_as_base: "start with most complete"
+        - only_essential_changes: "fix bugs, update paths, remove decorations"
+        - preserve_all_functionality: "every feature must transfer"
+        - test_thoroughly: "verify nothing lost"
+        
+      5_verification:
+        - compare_line_counts: "should be similar to canonical"
+        - verify_all_features: "checklist against original"
+        - test_execution: "actually run the code"
+        - user_confirmation: "does this match expectations?"
+    
+    violation_prevention:
+      never_write_without: [complete_source_analysis, feature_inventory, size_comparison]
+      always_check_first: [github_repos, local_backups, alternative_versions]
+      red_flags: [significantly_smaller_output, missing_features, user_confusion]
+      
   file_improvement_workflow:
     trigger: "user requests to run {file} through master.yml"
     steps:
