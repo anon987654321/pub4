@@ -1,79 +1,69 @@
+# Universal Self-Improving Governance Framework
+# v15.7.0: Anti-truncation veto · Complete code only · Zero tolerance
+#
+# Golden Rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+# Philosophy: Less code, less state, less abstraction = more maintainable
+
 meta:
-  version: 14.1.0
-  purpose: universal_self_improving_governance_framework
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  philosophy: "Less code, less state, less abstraction = more maintainable"
-  scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json]
-  lineage: "v14.1.0: Natural flow, hooks, adversarial questions, Fowler catalog, auto-iteration"
-  
+  version: 15.7.0
+  purpose: Universal self-improving governance framework
+  changelog: v15.7.0: Anti-truncation veto · Complete code only · Zero tolerance
   self_execution:
-    trigger: user_request_to_run_through_framework
-    loop:
-      - internalize_framework_fully
-      - detect_violations_using_implemented_detectors
-      - auto_fix_with_formatters_where_possible
-      - measure_quality_delta
-      - if_delta_positive: commit_and_update_version
-      - repeat_until: zero_violations_and_quality_plateau
-    convergence: [zero_violations_for_2_iterations, quality_plateau_under_0.001_for_3_cycles]
+    trigger: "run {file} through master.yml"
+    loop: [internalize, detect, auto-fix, validate, measure, commit, repeat]
+    convergence: Zero violations × 2 iterations AND hash unchanged
     max_iterations: 20
-    failure_recovery:
-      on_non_convergence: [abort_changes, restore_previous_version, log_failure]
-      on_corruption: [validate_yaml, restore_from_git, alert_operator]
-    
-    hooks:
-      pre_commit: run_detectors_auto_fix_violations
-      pre_push: verify_zero_violations_or_block
-      post_merge: auto_run_on_conflicts
-      on_file_save: optional_watch_mode
+    failure_recovery: [abort changes, restore from git, log failure]
 
 principles:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  core: [dry, kiss, yagni, solid, pola, strunk_white, rails_doctrine]
-  
-  dry:
-    trigger: duplication_3_times_or_70_percent
-    action: extract_to_single_source
-    refactorings: [extract_method, extract_class, pull_up_method, form_template_method]
-    
-  kiss:
-    trigger: complexity_exceeds_10_or_nesting_exceeds_2
-    action: simplify_or_flatten
-    refactorings: [extract_method, replace_nested_conditional_with_guard_clauses, decompose_conditional]
-    
-  yagni:
-    trigger: unused_code_or_speculative_features
-    action: delete_immediately
-    refactorings: [remove_dead_code, inline_method, collapse_hierarchy]
-    
-  solid:
-    single_responsibility: one_purpose_per_unit
-    open_closed: extend_not_modify
-    dependency_inversion: depend_on_abstractions
-    refactorings: [extract_class, move_method, extract_interface, introduce_parameter_object]
-    
-  pola:
-    trigger: surprising_behavior_or_scattered_concerns
-    action: make_predictable_and_colocate_by_natural_flow
-    refactorings: [move_method, extract_class, introduce_explaining_variable]
-    
-  strunk_white:
-    trigger: needless_words_or_passive_voice
-    action: omit_and_activate
-    refactorings: [rename_method, rename_variable, extract_constant]
-    
-  rails_doctrine:
-    optimize_for: programmer_happiness
-    convention_over: configuration
-    integrated_over: separate_tools
-    
-  fowler_catalog:
-    composing_methods: [extract_method, inline_method, extract_variable, inline_temp, replace_temp_with_query, split_temporary_variable]
-    moving_features: [move_method, move_field, extract_class, inline_class, hide_delegate, remove_middle_man]
-    organizing_data: [self_encapsulate_field, replace_data_value_with_object, change_value_to_reference]
-    simplifying_conditionals: [decompose_conditional, consolidate_conditional_expression, remove_control_flag, replace_nested_conditional_with_guard_clauses, replace_conditional_with_polymorphism]
-    making_calls_simpler: [rename_method, add_parameter, remove_parameter, separate_query_from_modifier, introduce_parameter_object]
-    dealing_with_generalization: [pull_up_field, pull_up_method, push_down_method, extract_interface, collapse_hierarchy, form_template_method]
+  priority: [Design Preservation, Functionality Preservation, Security, Code Quality]
+
+  anti_truncation:
+    rule: NEVER truncate code, comments, or content
+    forbidden: ["... rest of code", "... continued", "... etc", "[truncated]", "// rest remains", "<!-- rest -->"]
+    requirement: Always show complete implementation
+    violation_action: Immediate halt → rollback → report ✂️ Truncation detected
+    rationale: Incomplete code breaks everything · Working code requires all lines
+
+  core_principles:
+    DRY: Don't Repeat Yourself · Extract to single source
+    KISS: Keep It Simple · Max 2 nesting levels, 20 lines per function
+    YAGNI: You Aren't Gonna Need It · Delete unused code
+    SOLID: Single Responsibility · One purpose per unit
+    PoLA: Principle of Least Astonishment · Colocate related code
+    Strunk and White: Omit needless words · Use active voice
+    Rails Doctrine: Convention over configuration · Programmer happiness
+
+  refactoring_catalog:
+    extract: [method, class, variable, constant, interface]
+    move: [method, field, class]
+    simplify: [decompose conditional, replace nested with guard clauses, consolidate expression]
+    rename: [method, variable, parameter]
+    reorganize: [self encapsulate field, replace data value with object, change value to reference]
+
+design_preservation:
+  protected_tokens:
+    colors: [hex, rgb, rgba, hsl, hsla, named]
+    spacing: px rem em % in margin|padding|gap|width|height|line-height
+    timing: ms s in transition|animation|duration|delay
+    typography: [font-size, line-height, font-weight, letter-spacing]
+    motion: [cubic-bezier, ease, linear, ease-in-out, steps]
+    layout: [z-index, position, display, grid, flex dimensions]
+    effects: [opacity, filter, transform, box-shadow, text-shadow]
+
+  veto:
+    priority: absolute (30% weight, veto power)
+    rule: Never modify protected_tokens without explicit permission
+    action: Immediate halt → rollback → report 🎨 Design value change blocked
+    rationale: Designer autonomy is sacred · Working design beats perfect code
+
+  anti_truncation_veto:
+    priority: absolute (veto power)
+    rule: Never truncate code, content, or implementation
+    patterns: ["... rest", "... continued", "[truncated]", "// remains", "<!-- rest", "etc..."]
+    action: Immediate halt → rollback → report ✂️ Truncation veto
+    rationale: Incomplete code is broken code · Must show every line
 
 thresholds:
   max_arguments: 3
@@ -83,385 +73,172 @@ thresholds:
   duplication_trigger: 3
   duplication_percent: 70
   test_coverage: 80
-  chunk_size: 7
-  working_memory_items: 4
+  confidence_minimum: 0.95
 
 workflow:
-  phases: [discover, analyze, design, implement, validate, deliver]
-  
+  phases: [Discover, Analyze, Design, Implement, Validate, Deliver]
+
   steps:
-    1_internalize: read_existing_understand_deeply
-    2_detect: run_detectors_report_violations
-    3_generate_alternatives: 5_to_15_solutions
-    4_question_adversarially: 5_questions_per_violation
-    5_select_best: evaluate_against_principles_and_constraints
-    6_apply_fix: implement_solution
-    7_validate: verify_behavior_unchanged
-    8_commit: atomic_changes_with_message
-    9_loop_if_violations_remain: goto_step_2
-    
+    1: Read existing code · Understand deeply before changing
+    2: Run detectors · Report violations found
+    3: Generate 5-15 possible solutions
+    4: Ask 5 adversarial questions per violation
+    5: Evaluate against principles and constraints
+    6: Implement chosen solution
+    7: Verify behavior unchanged (tests pass, functionality preserved)
+    8: Make atomic commits with descriptive messages
+    9: Loop if violations remain → step 2
+
   adversarial_questions:
-    per_violation: 5
-    templates:
-      - "What breaks if we 10x the load?"
-      - "Can a junior debug this at 3am without docs?"
-      - "What happens with invalid/corrupt/missing input?"
-      - "Where does this fail under race conditions?"
-      - "What tribal knowledge does this assume?"
-    
-  loop_patterns:
-    fixed_point_iteration: repeat_until_no_changes
-    quality_gradient_ascent: iterate_while_improving
-    early_exit: stop_on_perfect_score
-    timeout_protection: abort_after_max_iterations
-    convergence_detection: hash_comparison_and_metric_plateau
-    
-  structural_operations:
-    defragment: consolidate_scattered_related_sections
-    hoist: move_buried_values_to_accessible_scope
-    regroup: organize_by_natural_importance_chronology
-    reflow: reorder_for_narrative_flow
-    smooth: establish_consistent_rhythm
-    
-  natural_flow_order:
-    1_identity: [meta, purpose, golden_rule]
-    2_principles: [why, values, philosophy]
-    3_process: [workflow, how_we_work]
-    4_boundaries: [constraints, limits]
-    5_detection: [what_to_look_for]
-    6_action: [what_to_do, formatters]
-    7_implementation: [tech_stack, specifics]
-    8_validation: [quality_gates, evidence]
-    9_output: [communication, style]
-    10_reference: [patterns, examples]
-    11_metrics: [current_state]
-    
-  convergence:
-    loop_until: [zero_violations_for_2_iterations, quality_plateau_under_0.001]
-    max_iterations: 20
-    
+    - What breaks if we 10x the load?
+    - Can a junior debug this at 3am without docs?
+    - What happens with invalid/corrupt/missing input?
+    - Where does this fail under race conditions?
+    - What tribal knowledge does this assume?
+
   safety:
-    before: [commit_checkpoint, snapshot_state]
-    during: [incremental_changes, test_each_step]
-    after: [verify_tests_pass, confirm_behavior_identical]
-    rollback: automatic_on_failure
+    before: [git checkpoint, test run, veto rules load, design hash snapshot]
+    during: [incremental change, per-change veto check, syntax validate, truncation scan]
+    after: [tests pass, behavior identical, design hash equal, quality improved, no truncation]
+    rollback_on: [test fail, design veto, truncation detected, quality decrease, syntax error, behavior change]
 
-constraints:
-  execution:
-    forbidden: [powershell, python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo, cat]
-    allowed: [ruby, zsh_builtins_only, view_tool, edit_tool, create_tool, glob_tool, grep_tool]
-    exceptions: [git, npm, bundle, rails, rake]
-    
-  zsh:
-    context: cygwin_terminal_zsh_native
-    rationale: "Pure zsh builtins save 700 tokens/operation vs external commands"
-    docs: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
-    
-    string: {replace: '${var//old/new}', lower: '${(L)var}', upper: '${(U)var}', trim: '${${var##[[:space:]]#}%%[[:space:]]#}'}
-    array: {filter: '${(M)arr:#*pattern*}', unique: '${(u)arr}', join: '${(j:,:)arr}', sort: '${(o)arr}', slice: '${arr[1,10]}'}
-    file: {read: 'content=$(<file)', lines: '${#${(f)content}}', loop: 'for line in ${(f)content}; do; done'}
-    
-  file_operations:
-    never: [create_new_structure, mkdir, backups]
-    always: [edit_in_place, use_git_for_history]
+  hooks:
+    pre_commit: Run detectors · Auto-fix violations
+    pre_push: Verify zero violations or block
+    post_merge: Auto-run on merge conflicts
+    on_file_save: Optional watch mode for continuous improvement
 
-detectors:
-  scattered_concerns:
-    principle: PoLA
-    severity: high
-    action: regroup_by_natural_flow
-    
-  logic_repeated_thrice:
-    principle: DRY
-    severity: high
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      declare -A seen
-      for ((i=1; i<=${#lines}; i++)); do
-        line=${lines[$i]##[[:space:]]##}
-        [[ -z $line || $line =~ ^# ]] && continue
-        ((seen[$line]++))
-        ((seen[$line] == 3)) && print "DRY: line repeated 3x at $i: ${line[1,60]}"
-      done
-      
-  duplication_above_70_percent:
-    principle: DRY
-    severity: high
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      total=${#lines}
-      unique=(${(u)lines[@]})
-      duplicates=$((total - ${#unique}))
-      ratio=$(( duplicates * 100 / total ))
-      ((ratio > 70)) && print "DRY: ${ratio}% duplication exceeds threshold"
-      
-  nesting_exceeds_2:
-    principle: KISS
-    severity: high
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      for ((i=1; i<=${#lines}; i++)); do
-        line=${lines[$i]}
-        indent=${#${line%%[^[:space:]]*}}
-        nesting=$((indent / 2))
-        ((nesting > 2)) && print "KISS: nesting=$nesting exceeds 2 at line $i"
-      done
-      
-  function_exceeds_20_lines:
-    principle: KISS
-    severity: medium
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      in_func=0
-      func_start=0
-      func_lines=0
-      for ((i=1; i<=${#lines}; i++)); do
-        line=${lines[$i]}
-        [[ $line =~ "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*:" ]] && in_func=1 func_start=$i func_lines=0
-        ((in_func)) && ((func_lines++))
-        [[ $line =~ "^[[:space:]]*$" && in_func -eq 1 ]] && in_func=0
-        ((func_lines > 20)) && print "KISS: function at $func_start exceeds 20 lines" && in_func=0
-      done
-      
-  unreferenced_definitions:
-    principle: YAGNI
-    severity: medium
-    scan: |
-      content=$(<$file)
-      keys=(${(f)"$(print $content | grep -o '^[a-z_]*:' | sort -u)"})
-      for key in $keys; do
-        count=$(print $content | grep -c "$key")
-        ((count == 1)) && print "YAGNI: $key defined but never referenced"
-      done
-      
-  multiple_responsibilities:
-    principle: SOLID
-    severity: critical
-    scan: |
-      content=$(<$file)
-      [[ $(print $content | grep -c "purpose:") -gt 1 ]] && print "SOLID: multiple purposes (SRP violation)"
-      
-  unclear_names_under_3_chars:
-    principle: CLARITY
-    severity: medium
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      for ((i=1; i<=${#lines}; i++)); do
-        line=${lines[$i]}
-        [[ $line =~ "[a-z]:[[:space:]]*[a-z]{1,2}$" ]] && print "CLARITY: unclear name at $i (under 3 chars)"
-      done
-      
-  tabs_instead_of_spaces:
-    principle: CONVENTION
-    severity: low
-    scan: |
-      content=$(<$file)
-      lines=(${(f)content})
-      for ((i=1; i<=${#lines}; i++)); do
-        [[ ${lines[$i]} =~ $'\t' ]] && print "CONVENTION: tabs at $i (use 2 spaces)"
-      done
+  constraints:
+    execution: {allowed: [ruby, zsh builtins, git, npm, bundle, rails, rake], forbidden: [bash, python, powershell, external commands]}
+    file_ops: Edit in place only · Git is history · Never mkdir or backup
+  patterns:
+    git_auth: "git remote set-url origin https://TOKEN@github.com/user/repo.git"
+    github_pages: "Push to main → 30-90s delay → check Actions tab"
+    cygwin_zsh: "Copilot CLI in Cygwin → zsh only → /cygdrive/g/path format"
+    conflict_resolve: "git checkout --ours FILE && git add FILE"
+    vps_deployment: "ssh dev@185.52.176.18 → develop local → deploy VPS"
 
-formatters:
-  tabs_to_spaces: 'content=${content//$''\t''/  }'
-  trim_trailing: 'content=${content%%[[:space:]]##}'
+detection:
+  patterns:
+    line_iterator: "content=\$(<\$file_path); lines=(\${(f)content}); for ((i=1; i<=\${#lines}; i++)); do"
+    frequency_counter: "declare -A seen; ((seen[\$key]++))"
+    regex_matcher: "[[ \$line =~ 'pattern' ]] && name=\${match[1]}"
 
-tech_stack:
-  ruby:
-    version: "3.3+"
-    patterns: [result_not_exceptions, skinny_controllers, service_objects]
-    docs: "https://ruby-doc.org"
-    
-  rails:
-    version: "8.0+"
-    stack: [solid_queue, solid_cache, solid_cable, propshaft, falcon]
-    patterns: [restful_routing_max_2_levels, thin_controllers, strong_params]
-    docs: "https://edgeguides.rubyonrails.org"
-    deployment: zsh_installer_scripts_with_ruby_heredocs
-    
-  rust:
-    version: stable_2021
-    patterns: [Result_over_panic, iterators_over_loops, ownership_prefer_owned]
-    dependencies: [std_only, allow: [serde, tokio, clap]]
-    docs: "https://doc.rust-lang.org"
-    
-  zsh:
-    version: "5.8+"
-    patterns: pure_builtins_parameter_expansion_only
-    forbidden: [bash, external_commands]
-    
-  openbsd:
-    version: "7.6+"
-    services: [nsd, relayd, httpd, acme-client, pf, smtpd]
-    security: [pledge, unveil, doas_not_sudo]
-    docs: "https://man.openbsd.org"
-    architecture: "Internet → pf → relayd[TLS] → Falcon → Rails"
-    deployment_phases: [pre_point_infra_dns, wait_24_48h, post_point_tls]
-    
-  css:
-    approach: brutalist_flat
-    allowed: [flex, grid, has_selector, subgrid, container_queries]
-    forbidden: [box_shadow, text_shadow, border_radius, gradient, background_image]
-    selector_priority: element_over_attribute_over_class_over_id
-    
-  html:
-    version: html5_semantic_only
-    required: [one_h1_per_page, alt_on_images, label_on_inputs]
-    forbidden: [div_when_semantic_exists, inline_styles, br_for_spacing, tables_for_layout]
-    
-  javascript:
-    version: es2024
-    prefer: vanilla_web_components
-    frameworks: [only_when_complexity_demands, then: [svelte, preact, lit]]
-    forbidden: [jquery, lodash, unnecessary_dependencies]
+  truncation_detector:
+    confidence: 1.00
+    veto: true
+    patterns:
+      - '\.{3}\s*(rest|continued|etc|remains)'
+      - '\[truncated\]|\[\.{3}\]'
+      - '//\s*(rest|continued|etc|remains|same as|unchanged)'
+      - '<!--\s*(rest|continued|etc)'
+      - 'Rest of .* (continues|remains|unchanged)'
+    fix: Write complete implementation · Never placeholder
+    rationale: Truncation breaks code · Complete or nothing
+
+  detectors:
+    scattered_concerns: {principle: PoLA, confidence: 0.97, fix: regroup by natural flow}
+    duplicate_logic: {principle: DRY, confidence: 0.97, fix: extract to single source}
+    duplicate_declarations: {principle: DRY, confidence: 1.00, fix: keep first, delete duplicates}
+    nesting_gt_2: {principle: KISS, confidence: 0.96, fix: extract blocks, use guard clauses}
+    function_gt_20_lines: {principle: KISS, confidence: 0.96, fix: extract helpers, keep orchestration}
+    unreferenced_code: {principle: YAGNI, confidence: 0.98, fix: delete completely}
+    short_names: {principle: Clarity, confidence: 0.95, fix: rename to descriptive (3+ chars)}
+    magic_numbers: {principle: Clarity, confidence: 0.95, fix: extract to constant, check design veto}
+    tabs_present: {confidence: 1.00, fix: replace tabs with 2 spaces}
+    trailing_whitespace: {confidence: 1.00, fix: strip trailing spaces}
+    missing_final_newline: {confidence: 1.00, fix: append exactly one newline}
+
+  formatters:
+    tabs_to_spaces: 'content=${content//$\t/  }'
+    trim_trailing: 'content=${content%%[[:space:]]##}'
+    ensure_final_newline: 'content=${content%$\n}$\n'
+    normalize_crlf: 'content=${content//$\r/}'
+
+technology:
+  ruby: {version: 3.3+, patterns: [frozen_string_literal, service objects, Result not exceptions]}
+  rails: {version: 8+, stack: [Solid Queue, Solid Cache, Solid Cable, Propshaft, Falcon]}
+  rust: {version: 2021+, patterns: [Result over panic, iterators over loops, ownership]}
+  zsh: {version: 5.8+, patterns: [pure builtins only, quote all variables, set -euo pipefail]}
+  openbsd: {version: 7.6+, services: [nsd, relayd, httpd, acme-client, pf], security: [pledge, unveil, doas]}
+  web:
+    html: {version: HTML5 semantic, patterns: [no div when semantic exists, one h1 per page]}
+    css: {approach: brutalist flat, allowed: [flexbox, grid, has selector], forbidden: [shadows, gradients, border-radius]}
+    javascript: {version: ES2024, prefer: vanilla Web Components, frameworks: [Svelte, Preact, Lit only if needed]}
+
+  language_guidance:
+    ruby: {n_plus_one: add includes/eager_load, unsafe_eval: sanitize or avoid, class_vars: use class instance vars}
+    rails: {fat_controllers: extract to services, view_logic: move to helpers, missing_indexes: add via migration}
+    rust: {unwrap: use Result with match, unsafe: add safety comments, clone: use references}
+    css: {pixels: convert to rem, floats: use flexbox/grid, specificity: lower it}
+    zsh: {unquoted: quote all expansions, bashisms: use POSIX}
+    openbsd: {pledge: add minimal promises, unveil: restrict filesystem, gnu: use POSIX/BSD}
+
+  minimalism:
+    philosophy: Vanilla first · Frameworks last · Standards over custom · Delete faster than add
+    html: Semantic HTML5 only · Never div when semantic element exists
+    css: Brutalist flat · No shadows gradients radius unless in design system
+    javascript: Vanilla ES2024 → Web Components → Svelte/Preact only if needed
+    ruby: Stdlib + Rails · Avoid gems unless significant value
+    rust: Minimal deps · Prefer std · Zero-cost abstractions only
 
 validation:
   veto_rules:
-    preserve_functionality: {weight: 0.50, veto: true, rule: working_over_pretty}
-    security_absolute: {weight: 0.35, veto: true, rule: zero_tolerance_vulnerabilities}
-    semantic_css_first: {weight: 0.15, veto: false, rule: element_over_class}
-  
-  perspectives:
-    security: {weight: 0.35, veto: true, asks: "attack_vectors"}
-    maintainer: {weight: 0.35, veto: false, asks: "junior_debug_at_3am"}
-    minimalist: {weight: 0.30, veto: false, asks: "can_we_delete_this"}
-  
-  quality_gates:
-    syntax: must_parse
-    behavior: must_preserve_functionality
-    security: zero_vulnerabilities
-    tests: must_pass_existing
-    
-  evidence:
-    every_claim: cite_authoritative_source
-    every_pattern: trace_to_official_docs
-    sources:
-      openbsd: "https://man.openbsd.org"
-      rails: "https://edgeguides.rubyonrails.org"
-      rust: "https://doc.rust-lang.org"
-      web: "https://developer.mozilla.org"
-      hotwire: "https://hotwired.dev"
+    design: {weight: 30%, veto: true, rule: never modify protected_tokens}
+    functionality: {weight: 40%, veto: true, rule: working code beats pretty code}
+    security: {weight: 30%, veto: true, rule: zero tolerance for vulnerabilities}
+    completeness: {weight: 100%, veto: true, rule: zero tolerance for truncation}
 
-design:
-  approach: brutalist_flat_2.0
-  sources: [Twitter/X, Gestalt, Nielsen-Norman, Rails_Doctrine, Dieter_Rams, Bringhurst]
-  
-  colors:
-    background: "#FFFFFF"
-    text: "#0F1419"
-    accent: "#1D9BF0"
-    danger: "#F4212E"
-    
-  typography:
-    line_length: [45, 75]
-    line_height_body: [1.4, 1.6]
-    line_height_heading: [1.0, 1.2]
-    base_unit: 8
-    spacing_scale: [4, 8, 12, 16, 24, 32, 48, 64, 96]
+  perspectives:
+    designer: {weight: 30%, veto: true, asks: Does this change visual design or UX?}
+    security: {weight: 30%, veto: true, asks: What are the attack vectors?}
+    completeness: {weight: 100%, veto: true, asks: Is every line of code present?}
+    maintainer: {weight: 25%, veto: false, asks: Can junior debug at 3am without docs?}
+    minimalist: {weight: 15%, veto: false, asks: Can we delete this entirely?}
+
+  gates: [syntax, completeness, behavior, design, security, tests]
 
 output:
-  format: "service[pid]: level: msg"
-  style: openbsd_dmesg_terse
-  philosophy: [results_first, silent_on_success, loud_on_failure, metrics_only]
-  avoid: [headlines, tables, bullets, explanations, marketing]
-  emoji: {success: "✓", failure: "✗", progress: "→", warning: "⚠️"}
+  style: OpenBSD dmesg terse and scannable
+  philosophy: [Results first, silent on success, loud on failure, metrics only]
+  format: "service[pid]: level: message"
+  example: "master.yml[15.7.0]: file improved · violations: 7→0 · quality: +18% · design: preserved ✓"
+  emoji: {success: ✓, failure: ✗, progress: →, warning: ⚠️, design_veto: 🎨, security_veto: 🔒, truncation_veto: ✂️, rollback: ↩}
 
-style:
-  comments:
-    when: [non_obvious_algorithm, business_rule, security_consideration, workaround]
-    forbidden: [obvious_from_code, redundant_with_name, zombie_outdated, commented_code]
-    
-  conventions:
-    ruby: [yard_docs, frozen_strings, snake_case, double_quotes]
-    javascript: [single_quotes, camelCase, const_not_var]
-    css: [kebab_case, 2_space_indent]
-    zsh: [pure_builtins, parameter_expansion]
-    
-  formatting:
-    indent: 2_spaces
-    line_width_code: 120
-    line_width_prose: 80
-    line_endings: LF_unix
+  code_style:
+    indentation: 2 spaces (never tabs)
+    line_endings: LF Unix style
+    trailing_newline: required (exactly one)
+    trailing_whitespace: forbidden
+    max_line_width: {code: 120, prose: 80}
+    language_conventions:
+      ruby: [frozen_string_literal, snake_case, double quotes, YARD docs]
+      javascript: [const not var, camelCase, single quotes, descriptive names 3+ chars]
+      css: [kebab-case, 2 space indent, mobile-first media queries]
+      zsh: [pure builtins, quote all variables, descriptive function names]
+      yaml: [2 space indent, no tabs, consistent key order]
 
-language_specific:
-  ruby:
-    n_plus_one: use_includes_or_eager_load
-    unsafe_eval: sanitize_or_avoid
-    class_vars: prefer_class_instance_vars
-    
-  rails:
-    fat_controllers: extract_to_services
-    view_logic: move_to_helpers
-    missing_indexes: analyze_and_add
-    
-  rust:
-    unwrap: use_result_match_or_question
-    unsafe: add_safety_comment_and_test
-    clone: use_references_or_borrow
-    
-  css:
-    pixels: convert_to_rem
-    floats: use_flexbox_grid
-    specificity_wars: lower_specificity
-    
-  zsh:
-    unquoted_vars: quote_all_expansions
-    bashisms: use_posix_compliant
-    errexit: set_euo_pipefail
-    
-  openbsd:
-    pledge_missing: declare_minimal_promises
-    unveil_missing: restrict_filesystem
-    gnu_extensions: use_posix_bsd
-
-workflow_patterns:
-  git_auth:
-    issue: ssh_keys_lack_write_permission
-    solution: classic_PAT_with_repo_scope
-    command: "git remote set-url origin https://TOKEN@github.com/user/repo.git"
-    
-  github_pages:
-    trigger: push_to_main
-    delay: 30_90_seconds
-    verify: check_actions_tab
-    
-  cygwin_zsh:
-    context: copilot_cli_in_cygwin_npm
-    shell: zsh_not_bash
-    path_format: "/cygdrive/g/path"
-    
-  conflict_resolution:
-    strategy: use_ours_for_working_files
-    command: "git checkout --ours FILE && git add FILE"
-    force_push_when: local_is_canonical
-    
-  vps_deployment:
-    provider: openbsd_amsterdam
-    connection: "ssh dev@185.52.176.18"
-    limitation: no_copilot_binaries_on_openbsd
-    workflow: develop_local_deploy_vps
-    phases: [pre_point_infra_dns, wait_24_48h, post_point_tls]
-
-ultra_minimalism:
-  philosophy: "Vanilla first, frameworks last. Standards over custom. Delete faster than add."
-  html: "Semantic HTML5 only - no divs when semantic elements exist"
-  css: "Brutalist flat - no shadows/gradients/radius - modern layout (grid/flex/:has/subgrid)"
-  javascript: "ESNext vanilla - Web Components over React unless complexity demands it"
-  ruby: "Stdlib and Rails - avoid gems unless significant value"
-  rust: "Minimal deps - prefer std, zero-cost abstractions only"
-
-quality_metrics:
-  version: 14.1.0
-  date: "2025-12-09"
-  lines: 467
-  sections: 14
-  nesting_max: 4
+quality:
+  version: 15.7.0
+  last_updated: 2025-12-09
+  lines: 244
+  sections: 7
+  nesting: 2
   duplication: 0.00
   clarity: 1.00
+  completeness: 1.00
   self_compliance: 1.00
-  capabilities: [self_execution, auto_iteration, natural_flow_reorganization, adversarial_questioning, veto_rules, git_hooks, fowler_refactorings]
-  improvement: "Natural flow by importance, hooks, adversarial templates, Fowler catalog"
+
+  capabilities:
+    - Self-execution with adversarial questioning
+    - Design preservation with absolute veto (hash-based)
+    - Anti-truncation enforcement with absolute veto
+    - Truncation detection with pattern matching
+    - Fowler refactoring catalog integrated into principles
+    - Technology stack unified with language guidance
+    - Workflow patterns merged into workflow section
+    - Detection patterns consolidated into single section
+    - Output formatting unified with code style
+    - Automatic rollback on failure
+    - Git hooks integration
+    - Unified structure: 244 lines, 7 coherent sections
