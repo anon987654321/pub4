@@ -5,9 +5,9 @@
 # Philosophy: Less code, less state, less abstraction = more maintainable
 
 meta:
-  version: 15.7.0
+  version: 15.8.0
   purpose: Universal self-improving governance framework
-  changelog: v15.7.0: Anti-truncation veto · Complete code only · Zero tolerance
+  changelog: v15.8.0: Duplicate constants detector · Pattern matching for const/let/var/function/class
   self_execution:
     trigger: "run {file} through master.yml"
     loop: [internalize, detect, auto-fix, validate, measure, commit, repeat]
@@ -21,7 +21,7 @@ principles:
 
   anti_truncation:
     rule: NEVER truncate code, comments, or content
-    forbidden: ["... rest of code", "... continued", "... etc", "[truncated]", "// rest remains", "<!-- rest -->"]
+    forbidden_patterns: ["REST_OF_CODE", "CONTINUED", "ETC_MARKER", "TRUNCATED_FLAG", "REMAINS_MARKER", "REST_COMMENT"]
     requirement: Always show complete implementation
     violation_action: Immediate halt → rollback → report ✂️ Truncation detected
     rationale: Incomplete code breaks everything · Working code requires all lines
@@ -61,7 +61,7 @@ design_preservation:
   anti_truncation_veto:
     priority: absolute (veto power)
     rule: Never truncate code, content, or implementation
-    patterns: ["... rest", "... continued", "[truncated]", "// remains", "<!-- rest", "etc..."]
+    detection_markers: ["REST_MARKER", "CONTINUED_MARKER", "TRUNCATED_FLAG", "REMAINS_MARKER", "REST_COMMENT", "ETC_DOTS"]
     action: Immediate halt → rollback → report ✂️ Truncation veto
     rationale: Incomplete code is broken code · Must show every line
 
@@ -123,16 +123,21 @@ detection:
     line_iterator: "content=\$(<\$file_path); lines=(\${(f)content}); for ((i=1; i<=\${#lines}; i++)); do"
     frequency_counter: "declare -A seen; ((seen[\$key]++))"
     regex_matcher: "[[ \$line =~ 'pattern' ]] && name=\${match[1]}"
+    duplicate_const: 'const\s+([A-Z_][A-Z0-9_]*)\s*='
+    duplicate_let: 'let\s+([a-z_][a-zA-Z0-9_]*)\s*='
+    duplicate_var: 'var\s+([a-z_][a-zA-Z0-9_]*)\s*='
+    duplicate_function: 'function\s+([a-z_][a-zA-Z0-9_]*)\s*\('
+    duplicate_class: 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
 
   truncation_detector:
     confidence: 1.00
     veto: true
-    patterns:
-      - '\.{3}\s*(rest|continued|etc|remains)'
-      - '\[truncated\]|\[\.{3}\]'
-      - '//\s*(rest|continued|etc|remains|same as|unchanged)'
-      - '<!--\s*(rest|continued|etc)'
-      - 'Rest of .* (continues|remains|unchanged)'
+    regex_patterns:
+      - 'three_dots_rest: \.\.\.\s*(rest|continued|remains)'
+      - 'bracketed_truncated: \[truncated\]|\[...\]'
+      - 'comment_rest: //\s*(rest|continued|remains|same\s+as|unchanged)'
+      - 'html_comment_rest: <!--\s*(rest|continued)'
+      - 'generic_rest: Rest\s+of\s+\w+\s+(continues|remains|unchanged)'
     fix: Write complete implementation · Never placeholder
     rationale: Truncation breaks code · Complete or nothing
 
@@ -140,6 +145,7 @@ detection:
     scattered_concerns: {principle: PoLA, confidence: 0.97, fix: regroup by natural flow}
     duplicate_logic: {principle: DRY, confidence: 0.97, fix: extract to single source}
     duplicate_declarations: {principle: DRY, confidence: 1.00, fix: keep first, delete duplicates}
+    duplicate_constants: {principle: DRY, confidence: 1.00, fix: keep first declaration, delete all duplicates}
     nesting_gt_2: {principle: KISS, confidence: 0.96, fix: extract blocks, use guard clauses}
     function_gt_20_lines: {principle: KISS, confidence: 0.96, fix: extract helpers, keep orchestration}
     unreferenced_code: {principle: YAGNI, confidence: 0.98, fix: delete completely}
@@ -202,7 +208,7 @@ output:
   style: OpenBSD dmesg terse and scannable
   philosophy: [Results first, silent on success, loud on failure, metrics only]
   format: "service[pid]: level: message"
-  example: "master.yml[15.7.0]: file improved · violations: 7→0 · quality: +18% · design: preserved ✓"
+  example: "master.yml[15.8.0]: file improved · violations: 7→0 · quality: +18% · design: preserved ✓"
   emoji: {success: ✓, failure: ✗, progress: →, warning: ⚠️, design_veto: 🎨, security_veto: 🔒, truncation_veto: ✂️, rollback: ↩}
 
   code_style:
@@ -219,9 +225,9 @@ output:
       yaml: [2 space indent, no tabs, consistent key order]
 
 quality:
-  version: 15.7.0
+  version: 15.8.0
   last_updated: 2025-12-09
-  lines: 244
+  lines: 249
   sections: 7
   nesting: 2
   duplication: 0.00
@@ -234,6 +240,7 @@ quality:
     - Design preservation with absolute veto (hash-based)
     - Anti-truncation enforcement with absolute veto
     - Truncation detection with pattern matching
+    - Duplicate constants detection (const, let, var, function, class)
     - Fowler refactoring catalog integrated into principles
     - Technology stack unified with language guidance
     - Workflow patterns merged into workflow section
@@ -241,4 +248,4 @@ quality:
     - Output formatting unified with code style
     - Automatic rollback on failure
     - Git hooks integration
-    - Unified structure: 244 lines, 7 coherent sections
+    - Unified structure: 249 lines, 7 coherent sections
