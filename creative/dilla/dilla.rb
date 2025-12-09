@@ -242,7 +242,7 @@ class SOSDilla
   
   def initialize
     @temp = Dir.mktmpdir("dilla_")
-    @out = "dilla_output"
+    @out = "."
     FileUtils.mkdir_p(@out)
     @config = load_master_config
     check_deps
@@ -628,6 +628,7 @@ class SOSDilla
   
   def find_soundfont
     candidates = [
+      File.join(__dir__, "soundfonts", "VintageDreamsWaves-v2.sf2"),
       File.join(__dir__, "soundfonts", "GeneralUser GS 1.471", "GeneralUser GS v1.471.sf2"),
       File.join(__dir__, "soundfonts", "FluidR3_GM.sf2"),
       "/usr/share/sounds/sf2/FluidR3_GM.sf2",

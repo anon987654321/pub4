@@ -1,902 +1,860 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Brgen Dating - Location-based dating platform
-# Per brgen_dating_README.md specifications
+# Brgen Dating setup: Location-based dating platform with matchmaking, Mapbox, live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
+# Framework v37.3.2 compliant
 
-readonly VERSION="2.0.0"
-readonly APP_NAME="brgen"
+APP_NAME="brgen_dating"
+BASE_DIR="/home/dev/rails"
+BRGEN_IP="46.23.95.45"
 
-readonly BASE_DIR="/home/brgen"
+source "./__shared.sh"
 
-readonly APP_DIR="${BASE_DIR}/app"
+log "Starting Brgen Dating setup with enhanced matchmaking"
 
-SCRIPT_DIR="${0:a:h}"
-source "${SCRIPT_DIR}/__shared/@common.sh"
+setup_full_app "$APP_NAME"
 
-log "Setting up Brgen Dating"
-if [[ ! -d "$APP_DIR" ]]; then
-  log "ERROR: Brgen app not found at $APP_DIR. Run brgen.sh first."
+command_exists "ruby"
+command_exists "node"
+command_exists "psql"
+command_exists "redis-server"
 
-  exit 1
+install_gem "faker"
 
-fi
-
-cd "$APP_DIR"
-log "Generating dating models"
-bin/rails generate model Dating::Profile user:references bio:text age:integer gender:string location:string lat:decimal lng:decimal max_distance:integer interests:text status:string last_active_at:datetime
+bin/rails generate scaffold Profile user:references bio:text location:string lat:decimal lng:decimal gender:string age:integer photos:attachments interests:text
+bin/rails generate scaffold Match initiator:references{polymorphic} receiver:references{polymorphic} status:string
 bin/rails generate model Dating::Like user:references liked_user:references
-
 bin/rails generate model Dating::Dislike user:references disliked_user:references
 
-bin/rails generate model Dating::Match initiator:references receiver:references status:string matched_at:datetime
-
-bin/rails db:migrate
-log "Configuring dating models"
-cat > app/models/dating/profile.rb << 'EOF'
-class Dating::Profile < ApplicationRecord
-
-  belongs_to :user
-
-  has_many_attached :photos
-
-  validates :bio, length: { maximum: 500 }
-  validates :age, presence: true, numericality: { in: 18..100 }
-
-  validates :gender, inclusion: { in: %w[male female non-binary] }
-
-  geocoded_by :location
-  after_validation :geocode, if: :location_changed?
-
-  scope :within_radius, ->(lat, lng, radius) { near([lat, lng], radius) }
-  scope :available, -> { where(status: 'active') }
-
-  scope :recently_active, -> { where('last_active_at > ?', 7.days.ago) }
-
-  def complete?
-    bio.present? && age.present? && gender.present? && photos.attached?
-
-  end
-
-end
-
-EOF
-
-cat > app/models/dating/like.rb << 'EOF'
-class Dating::Like < ApplicationRecord
-
-  belongs_to :user
-
-  belongs_to :liked_user, class_name: 'User'
-
-  validates :user_id, uniqueness: { scope: :liked_user_id }
-end
-
-EOF
-
-cat > app/models/dating/dislike.rb << 'EOF'
-class Dating::Dislike < ApplicationRecord
-
-  belongs_to :user
-
-  belongs_to :disliked_user, class_name: 'User'
-
-  validates :user_id, uniqueness: { scope: :disliked_user_id }
-end
-
-EOF
-
-cat > app/models/dating/match.rb << 'EOF'
-class Dating::Match < ApplicationRecord
-
-  belongs_to :initiator, class_name: 'Dating::Profile'
-
-  belongs_to :receiver, class_name: 'Dating::Profile'
-
-  validates :initiator_id, uniqueness: { scope: :receiver_id }
-  enum status: { pending: 'pending', matched: 'matched', expired: 'expired' }
-  scope :active, -> { where(status: 'matched') }
-end
-
-EOF
-
-log "Creating matchmaking service"
+# Add matchmaking service
 mkdir -p app/services/dating
-cat > app/services/dating/matchmaking_service.rb << 'EOF'
-
+cat <<EOF > app/services/dating/matchmaking_service.rb
 module Dating
-
   class MatchmakingService
-
     def self.find_matches(user)
+      return [] unless user.profile
 
-      return [] unless user.profile&.complete?
+      # Get users who liked this user and this user also liked
+      likes_given = user.dating_likes.pluck(:liked_user_id)
+      likes_received = Dating::Like.where(liked_user_id: user.id).pluck(:user_id)
+      mutual_likes = likes_given & likes_received
 
-      excluded_ids = get_excluded_user_ids(user)
-      potential_matches = Dating::Profile.joins(:user)
-        .where.not(user_id: excluded_ids)
-
-        .where(gender: compatible_genders(user.profile.gender))
-
-        .available
-
-        .recently_active
-
-      if user.profile.lat.present? && user.profile.lng.present?
-        potential_matches = potential_matches.within_radius(
-
-          user.profile.lat,
-
-          user.profile.lng,
-
-          user.profile.max_distance || 50
-
+      # Create matches for mutual likes
+      mutual_likes.each do |match_id|
+        match_user = User.find(match_id)
+        Match.find_or_create_by(
+          initiator: user.profile,
+          receiver: match_user.profile,
+          status: 'matched'
         )
-
       end
 
-      score_and_rank_matches(potential_matches, user)
+      # Return potential matches based on location and interests
+      find_potential_matches(user)
+    end
+
+    def self.find_potential_matches(user)
+      return [] unless user.profile
+
+      # Exclude already liked/disliked users
+      excluded_ids = [user.id]
+      excluded_ids += user.dating_likes.pluck(:liked_user_id)
+      excluded_ids += user.dating_dislikes.pluck(:disliked_user_id)
+
+      # Find profiles within reasonable distance and similar interests
+      Profile.joins(:user)
+             .where.not(user_id: excluded_ids)
+             .where(gender: compatible_genders(user.profile.gender))
+             .near([user.profile.lat, user.profile.lng], 50) # 50km radius
+             .limit(10)
     end
 
     private
-    def self.get_excluded_user_ids(user)
-      excluded = [user.id]
-
-      excluded += Dating::Like.where(user: user).pluck(:liked_user_id)
-
-      excluded += Dating::Dislike.where(user: user).pluck(:disliked_user_id)
-
-      excluded += user.blocked_users.pluck(:blocked_user_id) if user.respond_to?(:blocked_users)
-
-      excluded
-
-    end
 
     def self.compatible_genders(user_gender)
       case user_gender
-
       when 'male' then ['female', 'non-binary']
-
       when 'female' then ['male', 'non-binary']
-
       when 'non-binary' then ['male', 'female', 'non-binary']
-
       else ['male', 'female', 'non-binary']
-
       end
-
     end
-
-    def self.score_and_rank_matches(profiles, user)
-      scored = profiles.map do |profile|
-
-        score = calculate_compatibility_score(profile, user)
-
-        { profile: profile, score: score }
-
-      end
-
-      scored.sort_by { |item| -item[:score] }
-        .first(20)
-
-        .map { |item| item[:profile] }
-
-    end
-
-    def self.calculate_compatibility_score(profile, user)
-      score = 0
-
-      if profile.lat && profile.lng && user.profile.lat && user.profile.lng
-        distance = Geocoder::Calculations.distance_between(
-
-          [user.profile.lat, user.profile.lng],
-
-          [profile.lat, profile.lng]
-
-        )
-
-        score += [50 - distance, 0].max
-
-      end
-
-      if profile.interests.present? && user.profile.interests.present?
-        user_interests = user.profile.interests.split(',').map(&:strip)
-
-        profile_interests = profile.interests.split(',').map(&:strip)
-
-        common = user_interests & profile_interests
-
-        score += common.length * 10
-
-      end
-
-      age_diff = (profile.age - user.profile.age).abs
-      score += [20 - age_diff, 0].max
-
-      if profile.last_active_at && profile.last_active_at > 7.days.ago
-        score += 15
-
-      end
-
-      score
-    end
-
   end
-
 end
-
 EOF
 
-log "Generating dating controllers"
-bin/rails generate controller Dating::Profiles index show like dislike
-bin/rails generate controller Dating::Matches index show
-
-bin/rails generate controller Dating::MyProfile show edit update
-
-log "Implementing controllers"
-cat > app/controllers/dating/profiles_controller.rb << 'EOF'
+# Enhanced Profile controller with matchmaking
+mkdir -p app/controllers/dating
+cat <<EOF > app/controllers/dating/profiles_controller.rb
 module Dating
-
   class ProfilesController < ApplicationController
-
+    before_action :set_profile, only: [:show, :edit, :update, :like, :dislike]
     before_action :authenticate_user!
 
-    before_action :ensure_profile_exists
-
-    before_action :set_profile, only: [:show, :like, :dislike]
-
     def index
-      @profiles = MatchmakingService.find_matches(current_user)
-
-      @current_profile = @profiles.first
-
-      respond_to do |format|
-        format.html
-
-        format.json { render json: @profiles }
-
-      end
-
+      @profiles = MatchmakingService.find_potential_matches(current_user)
+      @pagy, @profiles = pagy(@profiles) unless @stimulus_reflex
     end
 
     def show
-      @match = Dating::Match.active
-
-        .where('(initiator_id = ? AND receiver_id = ?) OR (initiator_id = ? AND receiver_id = ?)',
-
-               current_user.profile.id, @profile.id, @profile.id, current_user.profile.id)
-
-        .first
-
     end
 
     def like
-      result = create_interaction(:like)
+      Dating::Like.find_or_create_by(
+        user: current_user,
+        liked_user: @profile.user
+      )
 
-      respond_to do |format|
-
-        format.turbo_stream { render_interaction_response(result) }
-
-        format.json { render json: result }
-
+      # Check for match
+      if Dating::Like.exists?(user: @profile.user, liked_user: current_user)
+        Match.find_or_create_by(
+          initiator: current_user.profile,
+          receiver: @profile,
+          status: 'matched'
+        )
+        flash[:notice] = "It's a match! 🎉"
       end
 
+      redirect_to dating_profiles_path
     end
 
     def dislike
-      result = create_interaction(:dislike)
+      Dating::Dislike.find_or_create_by(
+        user: current_user,
+        disliked_user: @profile.user
+      )
 
-      respond_to do |format|
-
-        format.turbo_stream { render_interaction_response(result) }
-
-        format.json { render json: result }
-
-      end
-
+      redirect_to dating_profiles_path
     end
 
     private
+
     def set_profile
-      @profile = Dating::Profile.find(params[:id])
-
+      @profile = Profile.find(params[:id])
     end
-
-    def ensure_profile_exists
-      redirect_to new_dating_my_profile_path unless current_user.profile&.complete?
-
-    end
-
-    def create_interaction(type)
-      case type
-
-      when :like
-
-        Dating::Like.find_or_create_by(user: current_user, liked_user: @profile.user)
-
-        if Dating::Like.exists?(user: @profile.user, liked_user: current_user)
-          match = Dating::Match.create!(
-
-            initiator: current_user.profile,
-
-            receiver: @profile,
-
-            status: 'matched',
-
-            matched_at: Time.current
-
-          )
-
-          { success: true, matched: true, match: match }
-
-        else
-
-          { success: true, matched: false }
-
-        end
-
-      when :dislike
-        Dating::Dislike.find_or_create_by(user: current_user, disliked_user: @profile.user)
-
-        { success: true }
-
-      end
-
-    end
-
-    def render_interaction_response(result)
-      if result[:matched]
-
-        render turbo_stream: [
-
-          turbo_stream.replace("profile-card-#{@profile.id}",
-
-            partial: "dating/shared/match_celebration",
-
-            locals: { match: result[:match] }
-
-          ),
-
-          turbo_stream.append("notifications",
-
-            partial: "dating/shared/match_notification",
-
-            locals: { match: result[:match] }
-
-          )
-
-        ]
-
-      else
-
-        render turbo_stream: turbo_stream.remove("profile-card-#{@profile.id}")
-
-      end
-
-    end
-
   end
-
 end
-
 EOF
 
-log "Creating dating views"
-mkdir -p app/views/dating/profiles
-cat > app/views/dating/profiles/index.html.erb << 'EOF'
+cat <<EOF > app/reflexes/profiles_infinite_scroll_reflex.rb
+class ProfilesInfiniteScrollReflex < InfiniteScrollReflex
+  def load_more
+    @pagy, @collection = pagy(Profile.all.order(created_at: :desc), page: page)
+    super
+  end
+end
+EOF
 
-<%= tag.section class: "dating-discover", data: { controller: "swipe", "swipe-profile-id-value": @current_profile&.id } do %>
+cat <<EOF > app/reflexes/matches_infinite_scroll_reflex.rb
+class MatchesInfiniteScrollReflex < InfiniteScrollReflex
+  def load_more
+    @pagy, @collection = pagy(Match.where(initiator: current_user.profile).or(Match.where(receiver: current_user.profile)).order(created_at: :desc), page: page)
+    super
+  end
+end
+EOF
 
-  <%= tag.header do %>
+generate_mapbox_controller "mapbox" 5.3467 60.3971 "profiles"
 
-    <%= tag.h1 "Oppdag Personer" %>
+cat <<EOF > app/controllers/profiles_controller.rb
+class ProfilesController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_profile, only: [:show, :edit, :update, :destroy]
 
-    <%= tag.nav do %>
+  def index
+    @pagy, @profiles = pagy(Profile.all.order(created_at: :desc)) unless @stimulus_reflex
+  end
 
-      <%= link_to "Meldinger", dating_matches_path %>
+  def show
+  end
 
-      <%= link_to "Min Profil", dating_my_profile_path %>
+  def new
+    @profile = Profile.new
+  end
 
-    <% end %>
+  def create
+    @profile = Profile.new(profile_params)
+    @profile.user = current_user
+    if @profile.save
+      respond_to do |format|
+        format.html { redirect_to profiles_path, notice: t("brgen_dating.profile_created") }
+        format.turbo_stream
+      end
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
 
-  <% end %>
+  def edit
+  end
 
-  <% if @current_profile %>
-    <%= tag.article id: "profile-card-#{@current_profile.id}", class: "profile-card", data: { "swipe-target": "card" } do %>
+  def update
+    if @profile.update(profile_params)
+      respond_to do |format|
+        format.html { redirect_to profiles_path, notice: t("brgen_dating.profile_updated") }
+        format.turbo_stream
+      end
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
 
-      <% if @current_profile.photos.attached? %>
+  def destroy
+    @profile.destroy
+    respond_to do |format|
+      format.html { redirect_to profiles_path, notice: t("brgen_dating.profile_deleted") }
+      format.turbo_stream
+    end
+  end
 
-        <%= image_tag @current_profile.photos.first, alt: @current_profile.user.username, class: "profile-image" %>
+  private
 
-      <% end %>
+  def set_profile
+    @profile = Profile.find(params[:id])
+    redirect_to profiles_path, alert: t("brgen_dating.not_authorized") unless @profile.user == current_user || current_user&.admin?
+  end
 
-      <%= tag.div class: "profile-info" do %>
-        <%= tag.h2 "#{@current_profile.user.username}, #{@current_profile.age}" %>
+  def profile_params
+    params.require(:profile).permit(:bio, :location, :lat, :lng, :gender, :age, photos: [])
+  end
+end
+EOF
 
-        <%= tag.p @current_profile.bio %>
+cat <<EOF > app/controllers/matches_controller.rb
+class MatchesController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_match, only: [:show, :edit, :update, :destroy]
 
-        <% if @current_profile.location.present? %>
-          <%= tag.p class: "location" do %>
+  def index
+    @pagy, @matches = pagy(Match.where(initiator: current_user.profile).or(Match.where(receiver: current_user.profile)).order(created_at: :desc)) unless @stimulus_reflex
+  end
 
-            <%= tag.span "📍" %>
+  def show
+  end
 
-            <%= @current_profile.location %>
+  def new
+    @match = Match.new
+  end
 
-          <% end %>
+  def create
+    @match = Match.new(match_params)
+    @match.initiator = current_user.profile
+    if @match.save
+      respond_to do |format|
+        format.html { redirect_to matches_path, notice: t("brgen_dating.match_created") }
+        format.turbo_stream
+      end
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
 
-        <% end %>
+  def edit
+  end
 
-        <% if @current_profile.interests.present? %>
-          <%= tag.div class: "interests" do %>
+  def update
+    if @match.update(match_params)
+      respond_to do |format|
+        format.html { redirect_to matches_path, notice: t("brgen_dating.match_updated") }
+        format.turbo_stream
+      end
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
 
-            <% @current_profile.interests.split(',').each do |interest| %>
+  def destroy
+    @match.destroy
+    respond_to do |format|
+      format.html { redirect_to matches_path, notice: t("brgen_dating.match_deleted") }
+      format.turbo_stream
+    end
+  end
 
-              <%= tag.span interest.strip, class: "interest-tag" %>
+  private
 
-            <% end %>
+  def set_match
+    @match = Match.where(initiator: current_user.profile).or(Match.where(receiver: current_user.profile)).find(params[:id])
+    redirect_to matches_path, alert: t("brgen_dating.not_authorized") unless @match.initiator == current_user.profile || @match.receiver == current_user.profile || current_user&.admin?
+  end
 
-          <% end %>
+  def match_params
+    params.require(:match).permit(:receiver_id, :status)
+  end
+end
+EOF
 
-        <% end %>
+cat <<EOF > app/controllers/home_controller.rb
+class HomeController < ApplicationController
+  def index
+    @pagy, @posts = pagy(Post.all.order(created_at: :desc), items: 10) unless @stimulus_reflex
+    @profiles = Profile.all.order(created_at: :desc).limit(5)
+  end
+end
+EOF
 
-      <% end %>
+mkdir -p app/views/brgen_dating_logo
 
-      <%= tag.div class: "actions" do %>
-        <%= button_tag "❌", data: { action: "click->swipe#dislike" }, class: "dislike-button", "aria-label": "Dislike" %>
-
-        <%= button_tag "💚", data: { action: "click->swipe#like" }, class: "like-button", "aria-label": "Like" %>
-
-      <% end %>
-
-    <% end %>
-
-  <% else %>
-
-    <%= tag.p "Ingen flere profiler å vise for øyeblikket. Kom tilbake senere!" %>
-
-  <% end %>
-
+cat <<EOF > app/views/brgen_dating_logo/_logo.html.erb
+<%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_dating.logo_alt") do %>
+  <%= tag.title t("brgen_dating.logo_title", default: "Brgen Dating Logo") %>
+  <%= tag.path d: "M50 15 C70 5, 90 25, 50 45 C10 25, 30 5, 50 15", fill: "#e91e63", stroke: "#1a73e8", "stroke-width": "2" %>
 <% end %>
-
 EOF
 
-log "Creating Stimulus swipe controller"
-mkdir -p app/javascript/controllers
-cat > app/javascript/controllers/swipe_controller.js << 'EOF'
-
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  static targets = ["card"]
-
-  static values = { profileId: Number }
-
-  connect() {
-    this.setupSwipeGestures()
-
-    this.setupKeyboardControls()
-
-  }
-
-  setupSwipeGestures() {
-    let startX = null
-
-    this.cardTarget.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].clientX
-
-    })
-
-    this.cardTarget.addEventListener('touchend', (e) => {
-      if (!startX) return
-
-      const endX = e.changedTouches[0].clientX
-      const deltaX = endX - startX
-
-      if (Math.abs(deltaX) > 100) {
-        if (deltaX > 0) {
-
-          this.like()
-
-        } else {
-
-          this.dislike()
-
-        }
-
-      }
-
-      startX = null
-    })
-
-  }
-
-  setupKeyboardControls() {
-    document.addEventListener('keydown', (e) => {
-
-      if (e.key === 'ArrowRight' || e.key === 'l') {
-
-        this.like()
-
-      } else if (e.key === 'ArrowLeft' || e.key === 'd') {
-
-        this.dislike()
-
-      }
-
-    })
-
-  }
-
-  like() {
-    this.animateCard('right')
-
-    this.submitInteraction('like')
-
-  }
-
-  dislike() {
-    this.animateCard('left')
-
-    this.submitInteraction('dislike')
-
-  }
-
-  animateCard(direction) {
-    const card = this.cardTarget
-
-    const translateX = direction === 'right' ? '100vw' : '-100vw'
-
-    const rotation = direction === 'right' ? '30deg' : '-30deg'
-
-    card.style.transition = 'transform 0.3s ease-out'
-    card.style.transform = `translateX(${translateX}) rotate(${rotation})`
-
-    setTimeout(() => card.remove(), 300)
-  }
-
-  submitInteraction(action) {
-    const url = `/dating/profiles/${this.profileIdValue}/${action}`
-
-    fetch(url, {
-      method: 'POST',
-
-      headers: {
-
-        'X-CSRF-Token': this.getCSRFToken(),
-
-        'Accept': 'text/vnd.turbo-stream.html'
-
-      }
-
-    })
-
-    .then(response => response.text())
-
-    .then(html => {
-
-      if (html.includes('match_celebration')) {
-
-        this.showMatchCelebration()
-
-      }
-
-      this.loadNextProfile()
-
-    })
-
-  }
-
-  showMatchCelebration() {
-    const celebration = document.createElement('div')
-
-    celebration.className = 'match-celebration'
-
-    celebration.innerHTML = `
-
-      <div class="celebration-content">
-
-        <h2>Match! 🎉</h2>
-
-        <p>Dere likte hverandre!</p>
-
-        <button onclick="this.parentElement.parentElement.remove()">Start chat</button>
-
-      </div>
-
-    `
-
-    document.body.appendChild(celebration)
-
-  }
-
-  loadNextProfile() {
-    window.location.reload()
-
-  }
-
-  getCSRFToken() {
-    return document.querySelector('meta[name="csrf-token"]').content
-
-  }
-
-}
-
+cat <<EOF > app/views/shared/_header.html.erb
+<%= tag.header role: "banner" do %>
+  <%= render partial: "brgen_dating_logo/logo" %>
+<% end %>
 EOF
 
-log "Adding dating styles"
-cat >> app/assets/stylesheets/application.scss << 'SCSS'
-/* Dating styles */
-.dating-discover {
+cat <<EOF > app/views/shared/_footer.html.erb
+<%= tag.footer role: "contentinfo" do %>
+  <%= tag.nav class: "footer-links" aria-label: t("shared.footer_nav") do %>
+    <%= link_to "", "https://facebook.com", class: "footer-link fb", "aria-label": "Facebook" %>
+    <%= link_to "", "https://twitter.com", class: "footer-link tw", "aria-label": "Twitter" %>
+    <%= link_to "", "https://instagram.com", class: "footer-link ig", "aria-label": "Instagram" %>
+    <%= link_to t("shared.about"), "#", class: "footer-link text" %>
+    <%= link_to t("shared.contact"), "#", class: "footer-link text" %>
+    <%= link_to t("shared.terms"), "#", class: "footer-link text" %>
+    <%= link_to t("shared.privacy"), "#", class: "footer-link text" %>
+  <% end %>
+<% end %>
+EOF
 
-  max-width: 500px;
-
-  margin: 0 auto;
-
-  padding: var(--spacing-unit);
-
-  .profile-card {
-    background: var(--color-surface);
-
-    border-radius: var(--border-radius);
-
-    overflow: hidden;
-
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
-    .profile-image {
-      width: 100%;
-
-      height: 400px;
-
-      object-fit: cover;
-
+cat <<EOF > app/views/home/index.html.erb
+<% content_for :title, t("brgen_dating.home_title") %>
+<% content_for :description, t("brgen_dating.home_description") %>
+<% content_for :keywords, t("brgen_dating.home_keywords", default: "brgen dating, profiles, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.home_title') %>",
+    "description": "<%= t('brgen_dating.home_description') %>",
+    "url": "<%= request.original_url %>",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Brgen Dating",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "<%= image_url('brgen_dating_logo.svg') %>"
+      }
     }
-
-    .profile-info {
-      padding: calc(var(--spacing-unit) * 2);
-
-      h2 {
-        margin: 0 0 var(--spacing-unit) 0;
-
-        font-size: 1.5rem;
-
-      }
-
-      .location {
-        color: var(--color-text-dim);
-
-        margin: var(--spacing-unit) 0;
-
-      }
-
-      .interests {
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: calc(var(--spacing-unit) / 2);
-
-        margin-top: var(--spacing-unit);
-
-        .interest-tag {
-          background: var(--color-primary);
-
-          color: var(--color-bg);
-
-          padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
-
-          border-radius: calc(var(--border-radius) / 2);
-
-          font-size: 0.875rem;
-
-        }
-
-      }
-
-    }
-
-    .actions {
-      display: flex;
-
-      justify-content: space-around;
-
-      padding: calc(var(--spacing-unit) * 2);
-
-      gap: var(--spacing-unit);
-
-      button {
-        width: 80px;
-
-        height: 80px;
-
-        border: none;
-
-        border-radius: 50%;
-
-        font-size: 2rem;
-
-        cursor: pointer;
-
-        transition: transform 0.2s;
-
-        &:hover {
-          transform: scale(1.1);
-
-        }
-
-        &.dislike-button {
-          background: #ff6b6b;
-
-        }
-
-        &.like-button {
-          background: #51cf66;
-
-        }
-
-      }
-
-    }
-
   }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "post-heading" do %>
+    <%= tag.h1 t("brgen_dating.post_title"), id: "post-heading" %>
+    <%= tag.div data: { turbo_frame: "notices" } do %>
+      <%= render "shared/notices" %>
+    <% end %>
+    <%= render partial: "posts/form", locals: { post: Post.new } %>
+  <% end %>
+  <%= tag.section aria-labelledby: "map-heading" do %>
+    <%= tag.h2 t("brgen_dating.map_title"), id: "map-heading" %>
+    <%= tag.div id: "map" data: { controller: "mapbox", "mapbox-api-key-value": ENV["MAPBOX_API_KEY"], "mapbox-profiles-value": @profiles.to_json } %>
+  <% end %>
+  <%= render partial: "shared/search", locals: { model: "Profile", field: "bio" } %>
+  <%= tag.section aria-labelledby: "profiles-heading" do %>
+    <%= tag.h2 t("brgen_dating.profiles_title"), id: "profiles-heading" %>
+    <%= link_to t("brgen_dating.new_profile"), new_profile_path, class: "button", "aria-label": t("brgen_dating.new_profile") if current_user %>
+    <%= turbo_frame_tag "profiles" data: { controller: "infinite-scroll" } do %>
+      <% @profiles.each do |profile| %>
+        <%= render partial: "profiles/card", locals: { profile: profile } %>
+      <% end %>
+      <%= tag.div id: "sentinel", class: "hidden", data: { reflex: "ProfilesInfiniteScroll#load_more", next_page: @pagy.next || 2 } %>
+    <% end %>
+    <%= tag.button t("brgen_dating.load_more"), id: "load-more", data: { reflex: "click->ProfilesInfiniteScroll#load_more", "next-page": @pagy.next || 2, "reflex-root": "#load-more" }, class: @pagy&.next ? "" : "hidden", "aria-label": t("brgen_dating.load_more") %>
+  <% end %>
+  <%= tag.section aria-labelledby: "posts-heading" do %>
+    <%= tag.h2 t("brgen_dating.posts_title"), id: "posts-heading" %>
+    <%= turbo_frame_tag "posts" data: { controller: "infinite-scroll" } do %>
+      <% @posts.each do |post| %>
+        <%= render partial: "posts/card", locals: { post: post } %>
+      <% end %>
+      <%= tag.div id: "sentinel", class: "hidden", data: { reflex: "PostsInfiniteScroll#load_more", next_page: @pagy.next || 2 } %>
+    <% end %>
+    <%= tag.button t("brgen_dating.load_more"), id: "load-more", data: { reflex: "click->PostsInfiniteScroll#load_more", "next-page": @pagy.next || 2, "reflex-root": "#load-more" }, class: @pagy&.next ? "" : "hidden", "aria-label": t("brgen_dating.load_more") %>
+  <% end %>
+  <%= render partial: "shared/chat" %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-}
-
-.match-celebration {
-  position: fixed;
-
-  top: 0;
-
-  left: 0;
-
-  right: 0;
-
-  bottom: 0;
-
-  background: rgba(0,0,0,0.8);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  z-index: 9999;
-
-  animation: fadeIn 0.3s;
-
-  .celebration-content {
-    background: var(--color-surface);
-
-    padding: calc(var(--spacing-unit) * 4);
-
-    border-radius: var(--border-radius);
-
-    text-align: center;
-
-    animation: scaleIn 0.3s;
-
-    h2 {
-      font-size: 2rem;
-
-      margin-bottom: var(--spacing-unit);
-
-    }
-
-    button {
-      margin-top: calc(var(--spacing-unit) * 2);
-
-      padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
-
-      background: var(--color-primary);
-
-      color: var(--color-bg);
-
-      border: none;
-
-      border-radius: calc(var(--border-radius) / 2);
-
-      font-size: 1rem;
-
-      cursor: pointer;
-
-      &:hover {
-        opacity: 0.9;
-
-      }
-
-    }
-
+cat <<EOF > app/views/profiles/index.html.erb
+<% content_for :title, t("brgen_dating.profiles_title") %>
+<% content_for :description, t("brgen_dating.profiles_description") %>
+<% content_for :keywords, t("brgen_dating.profiles_keywords", default: "brgen dating, profiles, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.profiles_title') %>",
+    "description": "<%= t('brgen_dating.profiles_description') %>",
+    "url": "<%= request.original_url %>",
+    "hasPart": [
+      <% @profiles.each do |profile| %>
+      {
+        "@type": "Person",
+        "name": "<%= profile.user.email %>",
+        "description": "<%= profile.bio&.truncate(160) %>",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "<%= profile.location %>"
+        }
+      }<%= "," unless profile == @profiles.last %>
+      <% end %>
+    ]
   }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "profiles-heading" do %>
+    <%= tag.h1 t("brgen_dating.profiles_title"), id: "profiles-heading" %>
+    <%= tag.div data: { turbo_frame: "notices" } do %>
+      <%= render "shared/notices" %>
+    <% end %>
+    <%= link_to t("brgen_dating.new_profile"), new_profile_path, class: "button", "aria-label": t("brgen_dating.new_profile") if current_user %>
+    <%= turbo_frame_tag "profiles" data: { controller: "infinite-scroll" } do %>
+      <% @profiles.each do |profile| %>
+        <%= render partial: "profiles/card", locals: { profile: profile } %>
+      <% end %>
+      <%= tag.div id: "sentinel", class: "hidden", data: { reflex: "ProfilesInfiniteScroll#load_more", next_page: @pagy.next || 2 } %>
+    <% end %>
+    <%= tag.button t("brgen_dating.load_more"), id: "load-more", data: { reflex: "click->ProfilesInfiniteScroll#load_more", "next-page": @pagy.next || 2, "reflex-root": "#load-more" }, class: @pagy&.next ? "" : "hidden", "aria-label": t("brgen_dating.load_more") %>
+  <% end %>
+  <%= render partial: "shared/search", locals: { model: "Profile", field: "bio" } %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-}
+cat <<EOF > app/views/profiles/_card.html.erb
+<%= turbo_frame_tag dom_id(profile) do %>
+  <%= tag.article class: "post-card", id: dom_id(profile), role: "article" do %>
+    <%= tag.div class: "post-header" do %>
+      <%= tag.span t("brgen_dating.posted_by", user: profile.user.email) %>
+      <%= tag.span profile.created_at.strftime("%Y-%m-%d %H:%M") %>
+    <% end %>
+    <%= tag.h2 profile.user.email %>
+    <%= tag.p profile.bio %>
+    <%= tag.p t("brgen_dating.profile_location", location: profile.location) %>
+    <%= tag.p t("brgen_dating.profile_gender", gender: profile.gender) %>
+    <%= tag.p t("brgen_dating.profile_age", age: profile.age) %>
+    <% if profile.photos.attached? %>
+      <% profile.photos.each do |photo| %>
+        <%= image_tag photo, style: "max-width: 200px;", alt: t("brgen_dating.profile_photo", email: profile.user.email) %>
+      <% end %>
+    <% end %>
+    <%= render partial: "shared/vote", locals: { votable: profile } %>
+    <%= tag.p class: "post-actions" do %>
+      <%= link_to t("brgen_dating.view_profile"), profile_path(profile), "aria-label": t("brgen_dating.view_profile") %>
+      <%= link_to t("brgen_dating.edit_profile"), edit_profile_path(profile), "aria-label": t("brgen_dating.edit_profile") if profile.user == current_user || current_user&.admin? %>
+      <%= button_to t("brgen_dating.delete_profile"), profile_path(profile), method: :delete, data: { turbo_confirm: t("brgen_dating.confirm_delete") }, form: { data: { turbo_frame: "_top" } }, "aria-label": t("brgen_dating.delete_profile") if profile.user == current_user || current_user&.admin? %>
+    <% end %>
+  <% end %>
+<% end %>
+EOF
 
-@keyframes fadeIn {
-  from { opacity: 0; }
+cat <<EOF > app/views/profiles/_form.html.erb
+<%= form_with model: profile, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
+  <%= tag.div data: { turbo_frame: "notices" } do %>
+    <%= render "shared/notices" %>
+  <% end %>
+  <% if profile.errors.any? %>
+    <%= tag.div role: "alert" do %>
+      <%= tag.p t("brgen_dating.errors", count: profile.errors.count) %>
+      <%= tag.ul do %>
+        <% profile.errors.full_messages.each do |msg| %>
+          <%= tag.li msg %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :bio, t("brgen_dating.profile_bio"), "aria-required": true %>
+    <%= form.text_area :bio, required: true, data: { "character-counter-target": "input", "textarea-autogrow-target": "input", "form-validation-target": "input", action: "input->character-counter#count input->textarea-autogrow#resize input->form-validation#validate" }, title: t("brgen_dating.profile_bio_help") %>
+    <%= tag.span data: { "character-counter-target": "count" } %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_bio" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :location, t("brgen_dating.profile_location"), "aria-required": true %>
+    <%= form.text_field :location, required: true, data: { "form-validation-target": "input", action: "input->form-validation#validate" }, title: t("brgen_dating.profile_location_help") %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_location" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :lat, t("brgen_dating.profile_lat"), "aria-required": true %>
+    <%= form.number_field :lat, required: true, step: "any", data: { "form-validation-target": "input", action: "input->form-validation#validate" }, title: t("brgen_dating.profile_lat_help") %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_lat" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :lng, t("brgen_dating.profile_lng"), "aria-required": true %>
+    <%= form.number_field :lng, required: true, step: "any", data: { "form-validation-target": "input", action: "input->form-validation#validate" }, title: t("brgen_dating.profile_lng_help") %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_lng" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :gender, t("brgen_dating.profile_gender"), "aria-required": true %>
+    <%= form.text_field :gender, required: true, data: { "form-validation-target": "input", action: "input->form-validation#validate" }, title: t("brgen_dating.profile_gender_help") %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_gender" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :age, t("brgen_dating.profile_age"), "aria-required": true %>
+    <%= form.number_field :age, required: true, data: { "form-validation-target": "input", action: "input->form-validation#validate" }, title: t("brgen_dating.profile_age_help") %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "profile_age" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :photos, t("brgen_dating.profile_photos") %>
+    <%= form.file_field :photos, multiple: true, accept: "image/*", data: { controller: "file-preview", "file-preview-target": "input" } %>
+    <% if profile.photos.attached? %>
+      <% profile.photos.each do |photo| %>
+        <%= image_tag photo, style: "max-width: 200px;", alt: t("brgen_dating.profile_photo", email: profile.user.email) %>
+      <% end %>
+    <% end %>
+    <%= tag.div data: { "file-preview-target": "preview" }, style: "display: none;" %>
+  <% end %>
+  <%= form.submit t("brgen_dating.#{profile.persisted? ? 'update' : 'create'}_profile"), data: { turbo_submits_with: t("brgen_dating.#{profile.persisted? ? 'updating' : 'creating'}_profile") } %>
+<% end %>
+EOF
 
-  to { opacity: 1; }
+cat <<EOF > app/views/profiles/new.html.erb
+<% content_for :title, t("brgen_dating.new_profile_title") %>
+<% content_for :description, t("brgen_dating.new_profile_description") %>
+<% content_for :keywords, t("brgen_dating.new_profile_keywords", default: "add profile, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.new_profile_title') %>",
+    "description": "<%= t('brgen_dating.new_profile_description') %>",
+    "url": "<%= request.original_url %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "new-profile-heading" do %>
+    <%= tag.h1 t("brgen_dating.new_profile_title"), id: "new-profile-heading" %>
+    <%= render partial: "profiles/form", locals: { profile: @profile } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-}
+cat <<EOF > app/views/profiles/edit.html.erb
+<% content_for :title, t("brgen_dating.edit_profile_title") %>
+<% content_for :description, t("brgen_dating.edit_profile_description") %>
+<% content_for :keywords, t("brgen_dating.edit_profile_keywords", default: "edit profile, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.edit_profile_title') %>",
+    "description": "<%= t('brgen_dating.edit_profile_description') %>",
+    "url": "<%= request.original_url %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "edit-profile-heading" do %>
+    <%= tag.h1 t("brgen_dating.edit_profile_title"), id: "edit-profile-heading" %>
+    <%= render partial: "profiles/form", locals: { profile: @profile } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-@keyframes scaleIn {
-  from { transform: scale(0.8); }
+cat <<EOF > app/views/profiles/show.html.erb
+<% content_for :title, @profile.user.email %>
+<% content_for :description, @profile.bio&.truncate(160) %>
+<% content_for :keywords, t("brgen_dating.profile_keywords", email: @profile.user.email, default: "profile, #{@profile.user.email}, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "<%= @profile.user.email %>",
+    "description": "<%= @profile.bio&.truncate(160) %>",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "<%= @profile.location %>"
+    }
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "profile-heading" class: "post-card" do %>
+    <%= tag.div data: { turbo_frame: "notices" } do %>
+      <%= render "shared/notices" %>
+    <% end %>
+    <%= tag.h1 @profile.user.email, id: "profile-heading" %>
+    <%= render partial: "profiles/card", locals: { profile: @profile } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-  to { transform: scale(1); }
+cat <<EOF > app/views/matches/index.html.erb
+<% content_for :title, t("brgen_dating.matches_title") %>
+<% content_for :description, t("brgen_dating.matches_description") %>
+<% content_for :keywords, t("brgen_dating.matches_keywords", default: "brgen dating, matches, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.matches_title') %>",
+    "description": "<%= t('brgen_dating.matches_description') %>",
+    "url": "<%= request.original_url %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "matches-heading" do %>
+    <%= tag.h1 t("brgen_dating.matches_title"), id: "matches-heading" %>
+    <%= tag.div data: { turbo_frame: "notices" } do %>
+      <%= render "shared/notices" %>
+    <% end %>
+    <%= link_to t("brgen_dating.new_match"), new_match_path, class: "button", "aria-label": t("brgen_dating.new_match") %>
+    <%= turbo_frame_tag "matches" data: { controller: "infinite-scroll" } do %>
+      <% @matches.each do |match| %>
+        <%= render partial: "matches/card", locals: { match: match } %>
+      <% end %>
+      <%= tag.div id: "sentinel", class: "hidden", data: { reflex: "MatchesInfiniteScroll#load_more", next_page: @pagy.next || 2 } %>
+    <% end %>
+    <%= tag.button t("brgen_dating.load_more"), id: "load-more", data: { reflex: "click->MatchesInfiniteScroll#load_more", "next-page": @pagy.next || 2, "reflex-root": "#load-more" }, class: @pagy&.next ? "" : "hidden", "aria-label": t("brgen_dating.load_more") %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-}
+cat <<EOF > app/views/matches/_card.html.erb
+<%= turbo_frame_tag dom_id(match) do %>
+  <%= tag.article class: "post-card", id: dom_id(match), role: "article" do %>
+    <%= tag.div class: "post-header" do %>
+      <%= tag.span t("brgen_dating.initiated_by", user: match.initiator.user.email) %>
+      <%= tag.span match.created_at.strftime("%Y-%m-%d %H:%M") %>
+    <% end %>
+    <%= tag.h2 match.receiver.user.email %>
+    <%= tag.p t("brgen_dating.match_status", status: match.status) %>
+    <%= render partial: "shared/vote", locals: { votable: match } %>
+    <%= tag.p class: "post-actions" do %>
+      <%= link_to t("brgen_dating.view_match"), match_path(match), "aria-label": t("brgen_dating.view_match") %>
+      <%= link_to t("brgen_dating.edit_match"), edit_match_path(match), "aria-label": t("brgen_dating.edit_match") if match.initiator == current_user.profile || match.receiver == current_user.profile || current_user&.admin? %>
+      <%= button_to t("brgen_dating.delete_match"), match_path(match), method: :delete, data: { turbo_confirm: t("brgen_dating.confirm_delete") }, form: { data: { turbo_frame: "_top" } }, "aria-label": t("brgen_dating.delete_match") if match.initiator == current_user.profile || match.receiver == current_user.profile || current_user&.admin? %>
+    <% end %>
+  <% end %>
+<% end %>
+EOF
 
-SCSS
+cat <<EOF > app/views/matches/_form.html.erb
+<%= form_with model: match, local: true, data: { controller: "form-validation", turbo: true } do |form| %>
+  <%= tag.div data: { turbo_frame: "notices" } do %>
+    <%= render "shared/notices" %>
+  <% end %>
+  <% if match.errors.any? %>
+    <%= tag.div role: "alert" do %>
+      <%= tag.p t("brgen_dating.errors", count: match.errors.count) %>
+      <%= tag.ul do %>
+        <% match.errors.full_messages.each do |msg| %>
+          <%= tag.li msg %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :receiver_id, t("brgen_dating.match_receiver"), "aria-required": true %>
+    <%= form.collection_select :receiver_id, Profile.all, :id, :user_email, { prompt: t("brgen_dating.receiver_prompt") }, required: true %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "match_receiver_id" } %>
+  <% end %>
+  <%= tag.fieldset do %>
+    <%= form.label :status, t("brgen_dating.match_status"), "aria-required": true %>
+    <%= form.select :status, ["pending", "accepted", "rejected"], { prompt: t("brgen_dating.status_prompt"), selected: match.status }, required: true %>
+    <%= tag.span class: "error-message" data: { "form-validation-target": "error", for: "match_status" } %>
+  <% end %>
+  <%= form.submit t("brgen_dating.#{match.persisted? ? 'update' : 'create'}_match"), data: { turbo_submits_with: t("brgen_dating.#{match.persisted? ? 'updating' : 'creating'}_match") } %>
+<% end %>
+EOF
 
-log "Adding dating routes"
-routes_block=$(cat << 'ROUTES'
-  namespace :dating do
+cat <<EOF > app/views/matches/new.html.erb
+<% content_for :title, t("brgen_dating.new_match_title") %>
+<% content_for :description, t("brgen_dating.new_match_description") %>
+<% content_for :keywords, t("brgen_dating.new_match_keywords", default: "add match, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.new_match_title') %>",
+    "description": "<%= t('brgen_dating.new_match_description') %>",
+    "url": "<%= request.original_url %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "new-match-heading" do %>
+    <%= tag.h1 t("brgen_dating.new_match_title"), id: "new-match-heading" %>
+    <%= render partial: "matches/form", locals: { match: @match } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-    resources :profiles, only: [:index, :show] do
+cat <<EOF > app/views/matches/edit.html.erb
+<% content_for :title, t("brgen_dating.edit_match_title") %>
+<% content_for :description, t("brgen_dating.edit_match_description") %>
+<% content_for :keywords, t("brgen_dating.edit_match_keywords", default: "edit match, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "<%= t('brgen_dating.edit_match_title') %>",
+    "description": "<%= t('brgen_dating.edit_match_description') %>",
+    "url": "<%= request.original_url %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "edit-match-heading" do %>
+    <%= tag.h1 t("brgen_dating.edit_match_title"), id: "edit-match-heading" %>
+    <%= render partial: "matches/form", locals: { match: @match } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-      member do
+cat <<EOF > app/views/matches/show.html.erb
+<% content_for :title, t("brgen_dating.match_title", receiver: @match.receiver.user.email) %>
+<% content_for :description, t("brgen_dating.match_description", receiver: @match.receiver.user.email) %>
+<% content_for :keywords, t("brgen_dating.match_keywords", receiver: @match.receiver.user.email, default: "match, #{@match.receiver.user.email}, brgen dating, matchmaking") %>
+<% content_for :schema do %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "<%= @match.receiver.user.email %>",
+    "description": "<%= @match.receiver.bio&.truncate(160) %>"
+  }
+  </script>
+<% end %>
+<%= render "shared/header" %>
+<%= tag.main role: "main" do %>
+  <%= tag.section aria-labelledby: "match-heading" class: "post-card" do %>
+    <%= tag.div data: { turbo_frame: "notices" } do %>
+      <%= render "shared/notices" %>
+    <% end %>
+    <%= tag.h1 t("brgen_dating.match_title", receiver: @match.receiver.user.email), id: "match-heading" %>
+    <%= render partial: "matches/card", locals: { match: @match } %>
+  <% end %>
+<% end %>
+<%= render "shared/footer" %>
+EOF
 
-        post :like
+generate_turbo_views "profiles" "profile"
+generate_turbo_views "matches" "match"
 
-        post :dislike
+cat <<EOF > db/seeds.rb
+require "faker"
 
-      end
-
-    end
-
-    resources :matches, only: [:index, :show]
-
-    resource :my_profile, controller: 'my_profile', only: [:show, :edit, :update, :new, :create]
-
-  end
-
-ROUTES
-
-)
-
-add_routes_block "$routes_block"
-log "Creating dating seed data"
-cat >> db/seeds.rb << 'EOF'
-# Dating seed data
-if Rails.env.development? && Dating::Profile.count.zero?
-
-  print "Creating dating profiles...\n"
-
-  User.limit(20).each do |user|
-    next if user.profile.present?
-
-    profile = Dating::Profile.create!(
-      user: user,
-
-      bio: Faker::Lorem.paragraph(sentence_count: 2),
-
-      age: rand(22..45),
-
-      gender: ['male', 'female', 'non-binary'].sample,
-
-      location: ["Oslo", "Bergen", "Trondheim"].sample,
-
-      lat: rand(58.0..63.0),
-
-      lng: rand(5.0..11.0),
-
-      max_distance: [25, 50, 100].sample,
-
-      interests: ["hiking", "music", "travel", "food", "art", "sports"].sample(3).join(', '),
-
-      status: 'active',
-
-      last_active_at: rand(1..48).hours.ago
-
-    )
-
-    print "."
-  end
-
-  print "\nDating profiles created!\n"
+puts "Creating demo users with Faker..."
+demo_users = []
+10.times do
+  demo_users << User.create!(
+    email: Faker::Internet.unique.email,
+    password: "password123",
+    name: Faker::Name.name
+  )
 end
 
+puts "Created #{demo_users.count} demo users."
+
+puts "Creating demo profiles with Faker..."
+genders = ['male', 'female', 'non-binary']
+locations = ['Bergen', 'Oslo', 'Stavanger', 'Trondheim', 'Åsane']
+base_coords = { 'Bergen' => [60.3913, 5.3221], 'Oslo' => [59.9139, 10.7522], 'Stavanger' => [58.9700, 5.7331], 'Trondheim' => [63.4305, 10.3951], 'Åsane' => [60.4650, 5.3220] }
+
+demo_users.each do |user|
+  location = locations.sample
+  coords = base_coords[location]
+
+  Profile.create!(
+    user: user,
+    bio: Faker::Lorem.paragraph(sentence_count: 3),
+    location: location,
+    lat: coords[0] + rand(-0.05..0.05),
+    lng: coords[1] + rand(-0.05..0.05),
+    gender: genders.sample,
+    age: rand(22..45),
+    interests: [Faker::Hobby.activity, Faker::Hobby.activity, Faker::Hobby.activity].join(', ')
+  )
+end
+
+puts "Created #{Profile.count} demo profiles."
+
+puts "Creating demo matches with Faker..."
+profiles = Profile.all.to_a
+20.times do
+  initiator = profiles.sample
+  receiver = profiles.sample
+  next if initiator == receiver
+
+  Match.create!(
+    initiator: initiator,
+    receiver: receiver,
+    status: ['pending', 'matched', 'rejected'].sample
+  )
+end
+
+puts "Created #{Match.count} demo matches."
+
+puts "Creating demo likes and dislikes..."
+30.times do
+  user = demo_users.sample
+  liked_user = demo_users.sample
+  next if user == liked_user
+
+  Dating::Like.create!(
+    user: user,
+    liked_user: liked_user
+  )
+end
+
+20.times do
+  user = demo_users.sample
+  disliked_user = demo_users.sample
+  next if user == disliked_user
+
+  Dating::Dislike.create!(
+    user: user,
+    disliked_user: disliked_user
+  )
+end
+
+puts "Created #{Dating::Like.count} likes and #{Dating::Dislike.count} dislikes."
+puts "Seed data creation complete!"
 EOF
 
-log "Brgen Dating setup complete!"
-log "Access dating at: http://localhost:11006/dating/profiles"
+commit "Brgen Dating setup complete: Location-based dating platform with Mapbox, live search, and anonymous features"
 
+log "Brgen Dating setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
+
+# Change Log:
+# - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
+# - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.
+# - Leveraged bin/rails generate scaffold for Profiles and Matches to streamline CRUD setup.
+# - Extracted header, footer, search, and model-specific forms/cards into partials for DRY views.
+# - Included Mapbox for profile locations, live search, infinite scroll, and anonymous posting/chat via shared utilities.
+# - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
+# - Finalized for unprivileged user on OpenBSD 7.5.
