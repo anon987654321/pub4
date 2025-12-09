@@ -1,52 +1,63 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Stimulus controller generators for Rails 8 PWA
-# All controllers follow master.json requirements:
+# Stimulus Controllers for Rails 8
+# Modern patterns, TypeScript-ready, proper lifecycle management
 
-# - init: constants only
-# - connect: setup with cleanup
-
-# - disconnect: ALWAYS present with full cleanup
-generate_character_counter_controller() {
-
-  log "Generating character-counter Stimulus controller"
+generate_autosave_controller() {
+  log "Generating autosave controller"
   mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/character_counter_controller.js
+  
+  cat <<'EOF' > app/javascript/controllers/autosave_controller.js
 import { Controller } from "@hotwired/stimulus"
+
 export default class extends Controller {
-
-  static targets = ["input", "count"]
-  static values = { max: Number }
-
-  connect() {
-
-    this.update()
+  static values = {
+    url: String,
+    delay: { type: Number, default: 1000 }
   }
 
-  update() {
-    const length = this.inputTarget.value.length
-    this.countTarget.textContent = this.hasMaxValue
+  connect() {
+    this.timeout = null
+    this.saving = false
+  }
 
-      ? `${length} / ${this.maxValue}`
-      : length
+  save() {
+    clearTimeout(this.timeout)
+    this.timeout = setTimeout(() => this.persist(), this.delayValue)
+  }
+
+  async persist() {
+    if (this.saving) return
+    
+    this.saving = true
+    const formData = new FormData(this.element)
+    
+    try {
+      const response = await fetch(this.urlValue, {
+        method: "PATCH",
+        body: formData,
+        headers: {
+          "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+        }
+      })
+      
+      if (response.ok) {
+        this.element.classList.add("saved")
+        setTimeout(() => this.element.classList.remove("saved"), 2000)
+      }
+    } finally {
+      this.saving = false
+    }
   }
 
   disconnect() {
-    // Cleanup not needed for this controller
+    clearTimeout(this.timeout)
   }
 }
 EOF
-  log "character-counter controller generated"
-
+  log "✓ autosave controller"
 }
-generate_textarea_autogrow_controller() {
-  log "Generating textarea-autogrow Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/textarea_autogrow_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
 
   static targets = ["input"]
   connect() {
