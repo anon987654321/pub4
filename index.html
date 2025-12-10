@@ -129,13 +129,13 @@
     new SimpleCarousel(document.getElementById("cityCarousel"));
 
     const MP3_TRACKS=[
-      {artist:"AKMD",title:"Stailings",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/akmd-stailings.mp3"},
-      {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/akmd_mike_t-alt_kan_skje.mp3"},
-      {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"},
-      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
-      {artist:"Chase Swayze",title:"Traffic",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/chase_swayze-traffic.mp3"},
-      {artist:"Haisam & Johann",title:"PB1",src:"https://github.com/anon987654321/pub4/raw/main/.mp3/haisam_and_johann-pb1.mp3"}
+      {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
+      {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
+      {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
+      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"},
+      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
+      {artist:"Chase Swayze",title:"Traffic",src:".mp3/chase_swayze-traffic.mp3"},
+      {artist:"Haisam & Johann",title:"PB1",src:".mp3/haisam_and_johann-pb1.mp3"}
     ];
 
     const YOUTUBE_TRACKS=[
@@ -189,22 +189,34 @@
       s.src="https://www.youtube.com/iframe_api";
       s.async=true;
       s.defer=true;
+      s.onerror=()=>console.warn('YouTube API load failed');
       document.head.appendChild(s);
+      
+      // Timeout if API never loads
+      setTimeout(()=>{
+        if(!window.YT||!window.YT.Player){
+          console.warn('YouTube API timeout - using fallback iframes');
+        }
+      },10000);
     };
 
     const tryFetch=async(url,parser)=>{try{const r=await fetch(url);if(r.ok)return await parser(r)}catch{}return null};
     const detectMp3Playlist=async()=>{
       if(IN_SANDBOX)return null;
       let tracks=[];
-      const json=await tryFetch('playlist.json',r=>r.json());
-      if(json&&Array.isArray(json))tracks=json.map(t=>({...t,src:t.src}));
-      const m3u=await tryFetch('playlist.m3u',r=>r.text());
-      if(m3u){const parsed=parseM3U(m3u);if(parsed)tracks=tracks.concat(parsed)}
+      const json=await tryFetch('.mp3/playlist.json',r=>r.json());
+      if(json){
+        const files=(Array.isArray(json)?json:json.files)||[];
+        const mp3=files.filter(f=>typeof f==='string'&&f.toLowerCase().endsWith('.mp3'));
+        tracks=tracks.concat(mp3.map(f=>({title:f.replace(/\.mp3$/i,'').replace(/[-_]/g,' '),artist:'',src:'.mp3/'+f})));
+      }
+      const m3u=await tryFetch('.mp3/playlist.m3u',r=>r.text());
+      if(m3u){const parsed=parseM3U(m3u);if(parsed)tracks=tracks.concat(parsed.map(t=>({...t,src:'.mp3/'+t.src})))}
       const idx=await tryFetch('index.json',r=>r.json());
       if(idx){
         const files=(Array.isArray(idx)?idx:idx.files)||[];
         const mp3=files.filter(f=>typeof f==='string'&&f.toLowerCase().endsWith('.mp3'));
-        tracks=tracks.concat(mp3.map(f=>({title:f.replace(/\.mp3$/i,'').replace(/[-_]/g,' '),artist:'',src:f})));
+        tracks=tracks.concat(mp3.map(f=>({title:f.replace(/\.mp3$/i,'').replace(/[-_]/g,' '),artist:'',src:'.mp3/'+f})));
       }
       return tracks.length>0?tracks:null;
     };
@@ -315,7 +327,7 @@
 
         }
 
-        // Setup event listeners
+        // Setup event listeners with timeout protection
         ['a','b'].forEach(k=>{
 
           const p=this.players[k];
@@ -336,8 +348,8 @@
 
           });
 
-          p.addEventListener('error',()=>{
-
+          p.addEventListener('error',(e)=>{
+            console.warn('MP3 audio error:',e);
             if(k===this.activeKey)this.beginCrossfade({fast:true});
 
           });
@@ -361,9 +373,14 @@
 
             this.analyser.connect(this.audioContext.destination);
 
+          }else if(activePlayer&&activePlayer._sourceNode){
+            // Already connected, reconnect analyser chain if needed
+            activePlayer._sourceNode.disconnect();
+            activePlayer._sourceNode.connect(this.analyser);
+            this.analyser.connect(this.audioContext.destination);
           }
 
-        }catch{}
+        }catch(e){console.warn('Audio analyser connection:',e)}
 
       }
 
@@ -416,12 +433,22 @@
 
         }
 
-        // Auto-play when ready
-        p.addEventListener('canplay',()=>{
-
+        // Auto-play when ready with timeout protection
+        let canplayFired=false;
+        const canplayHandler=()=>{
+          canplayFired=true;
           if(!this.muted||fadeIn)p.play().catch(()=>{});
-
-        },{once:true});
+        };
+        p.addEventListener('canplay',canplayHandler,{once:true});
+        
+        // Timeout fallback if canplay never fires
+        setTimeout(()=>{
+          if(!canplayFired){
+            console.warn('Audio load timeout:',t.src);
+            p.removeEventListener('canplay',canplayHandler);
+            if(k===this.activeKey)this.beginCrossfade({fast:true});
+          }
+        },8000);
 
       }
 
@@ -692,9 +719,11 @@
       const allTracks=[...mp3List,...YOUTUBE_TRACKS];
       audio=new UnifiedAudioEngine(allTracks);
       console.log(`Unified: ${mp3List.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
+      return audio; // Return for promise chain
     };
 
-    initAudioEngine();
+    // Initialize audio engine immediately
+    let audioInitPromise=initAudioEngine();
 
     window.onYouTubeIframeAPIReady=()=>audio?.initYTAPI?.();
 
@@ -716,7 +745,7 @@
 
       class PixelTunnel{
 
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=64;this.baseRadius=75;this.zStep=4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?2:1;this.ringPxCull=.15}
 
         resize(w,h,s){this.w=w;this.h=h;this.s=s;this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);this.imageData=this.ctx.getImageData(0,0,w,h);this.data=this.imageData.data;this.u32=new Uint32Array(this.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;this.BLACK32=new Uint32Array(t.buffer)[0];this.init()}
 
@@ -875,8 +904,7 @@
     const startApp=async e=>{if(audio?.started)return;
 
       // Ensure audio engine is initialized
-
-      if(!audio)await initAudioEngine();
+      if(!audio)await audioInitPromise;
 
       try{navigator.vibrate?.(12)}catch{}if(e)rippleAtEvent(e);document.getElementById("overlay").style.pointerEvents="none";document.getElementById("overlay").classList.add("ack");document.getElementById("start-title").classList.add("clicked");canvas.classList.add("start-ack");setupSensors();if(IN_SANDBOX){const u=document.getElementById("uiLabel");if(u)u.textContent="Visual-only (sandboxed)"}else{
 
@@ -976,6 +1004,9 @@
       if(pageHidden){
         setTimeout(()=>requestAnimationFrame(animate),200);
         return;
+      }else{
+        // Resume full speed when visible again
+        lastRenderT=n-MIN_FRAME_MS_ACTUAL; // Force immediate render
       }
 
       // Dynamic quality adjustment
@@ -1095,7 +1126,7 @@
 
     class HypergridSpiralViz{constructor(ctx){this.ctx=ctx;this.w=0;this.h=0;this.time=0;this.grids=[];this.particles=[];this.rotation=0;}resize(w,h,s){const buf=initBuffer(this.ctx,w,h);this.w=w;this.h=h;this.imageData=buf.imageData;this.u32=buf.u32;this.BLACK32=buf.BLACK32;this.grids=[];this.particles=[];for(let i=0;i<80;i++){this.grids.push({z:-200+i*5,rot:0});}for(let i=0;i<120;i++){this.particles.push({angle:Math.random()*TAU,radius:Math.random()*150,z:-200+Math.random()*400,speed:0.5+Math.random()*1.5,orbitSpeed:0.02+Math.random()*0.04,trail:[]});}}frame(a){try{for(let i=0;i<this.u32.length;i++){const r=(this.u32[i]&255),g=(this.u32[i]>>8&255),b=(this.u32[i]>>16&255);this.u32[i]=pack32((r*0.92)|0,(g*0.92)|0,(b*0.92)|0,255);}const p=window.parallaxOffset||{x:0,y:0};const cx=this.w/2+p.x,cy=this.h/2+p.y,m=window.motionScale?.()||1;this.time+=m*0.6;this.rotation+=m*0.015;const beatPulse=(a?.beat||0)*50;const audioExpand=(a?.average||0)*40;const rot=makeRotation(cx,cy,this.rotation);for(const g of this.grids){g.z+=1.2*m;g.rot+=0.02*m;if(g.z>200){g.z-=400;}const sc=250/(250+g.z);const size=(50+audioExpand+beatPulse)*sc;const depth=Math.max(0,1-Math.abs(g.z)/200);const hue=atmosphericHue(depth,this.time*25)%360/360;const col=THEMES[window.vizTheme].fn(hue*255,255,a);const grot=makeRotation(cx,cy,this.rotation+g.rot);const x1=(cx-size)|0,y1=(cy-size)|0,x2=(cx+size)|0,y2=(cy+size)|0;const rx1=grot.x(x1,y1)|0,ry1=grot.y(x1,y1)|0,rx2=grot.x(x2,y1)|0,ry2=grot.y(x2,y1)|0;const rx3=grot.x(x2,y2)|0,ry3=grot.y(x2,y2)|0,rx4=grot.x(x1,y2)|0,ry4=grot.y(x1,y2)|0;drawLine(this.u32,this.w,this.h,rx1,ry1,rx2,ry2,col);drawLine(this.u32,this.w,this.h,rx2,ry2,rx3,ry3,col);drawLine(this.u32,this.w,this.h,rx3,ry3,rx4,ry4,col);drawLine(this.u32,this.w,this.h,rx4,ry4,rx1,ry1,col);}for(const pt of this.particles){pt.z+=pt.speed*m;pt.angle+=pt.orbitSpeed*m;if(pt.z>200){pt.z-=400;pt.radius=Math.random()*150;pt.angle=Math.random()*TAU;pt.trail=[];}const sc=280/(280+pt.z);const spiral=pt.z*0.03+this.time*0.5;const r=(pt.radius+Math.sin(spiral)*20)*sc;const ang=pt.angle+spiral;const px=(cx+Math.cos(ang)*r)|0,py=(cy+Math.sin(ang)*r)|0;const depth=Math.max(0,1-Math.abs(pt.z)/200);const hue2=atmosphericHue(depth,this.time*40)%360/360;const pcol=THEMES[window.vizTheme].fn(hue2*255,255,a);const psize=(2+beatPulse*0.08)*sc;drawCircle(this.u32,this.w,this.h,px,py,Math.max(1,psize|0),pcol,false);}this.ctx.putImageData(this.imageData,0,0);}catch(e){console.error('HypergridSpiralViz:',e);}}}
 
-    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');window.vizRenderers=[window.tunnelRenderer,new InfinityGridViz(ctx),new CymaticWavesViz(ctx),new FractalCascadeViz(ctx),new VortexNestViz(ctx),new NeuralWebViz(ctx),new CosmicEmanationViz(ctx),new HypergridSpiralViz(ctx)];sizeCanvas();if(window.tunnelRenderer&&window.tunnelRenderer.colorForRow32){window.tunnelRenderer.colorForRow32=function(i,l,a){return THEMES[window.vizTheme].fn(i,l,a);};}setInterval(()=>{if(!window.vizAutoSwitch)return;const idx=window.audio?.trackIndex;if(idx!==undefined&&idx!==lastTrackIndex&&lastTrackIndex!==-1){window.vizMode=(window.vizMode+1)%window.vizRenderers.length;window.psychedelicMode=window.vizPsychedelicModes[window.vizMode];console.log('🎵 Track changed → Visualizer:',window.vizNames[window.vizMode]);}lastTrackIndex=idx;},500);window.addEventListener('keydown',e=>{if(e.code==='KeyV'){e.preventDefault();window.vizMode=(window.vizMode+1)%window.vizRenderers.length;window.psychedelicMode=window.vizPsychedelicModes[window.vizMode];console.log('Visualizer:',window.vizNames[window.vizMode]);}if(e.code==='KeyC'){e.preventDefault();window.vizTheme=(window.vizTheme+1)%THEMES.length;console.log('Theme:',THEMES[window.vizTheme].name);}if(e.code==='KeyA'){e.preventDefault();window.vizAutoSwitch=!window.vizAutoSwitch;console.log('Auto-switch:',window.vizAutoSwitch);}});console.log('✓ Enhanced 8-bit pixel visualizers loaded');console.log('Keys: V=viz, C=color, A=auto-switch, X=psychedelic, ↑↓=speed, []=intensity');}
+    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');window.vizRenderers=[window.tunnelRenderer,new InfinityGridViz(ctx),new CymaticWavesViz(ctx),new FractalCascadeViz(ctx),new VortexNestViz(ctx),new NeuralWebViz(ctx),new CosmicEmanationViz(ctx),new HypergridSpiralViz(ctx)];sizeCanvas();if(window.tunnelRenderer&&window.tunnelRenderer.colorForRow32){window.tunnelRenderer.colorForRow32=function(i,l,a){return THEMES[window.vizTheme].fn(i,l,a);};}if(window.__VIZ_SWITCH_IV)clearInterval(window.__VIZ_SWITCH_IV);window.__VIZ_SWITCH_IV=setInterval(()=>{if(!window.vizAutoSwitch)return;const idx=window.audio?.trackIndex;if(idx!==undefined&&idx!==lastTrackIndex&&lastTrackIndex!==-1){window.vizMode=(window.vizMode+1)%window.vizRenderers.length;window.psychedelicMode=window.vizPsychedelicModes[window.vizMode];console.log('🎵 Track changed → Visualizer:',window.vizNames[window.vizMode]);}lastTrackIndex=idx;},500);window.addEventListener('keydown',e=>{if(e.code==='KeyV'){e.preventDefault();window.vizMode=(window.vizMode+1)%window.vizRenderers.length;window.psychedelicMode=window.vizPsychedelicModes[window.vizMode];console.log('Visualizer:',window.vizNames[window.vizMode]);}if(e.code==='KeyC'){e.preventDefault();window.vizTheme=(window.vizTheme+1)%THEMES.length;console.log('Theme:',THEMES[window.vizTheme].name);}if(e.code==='KeyA'){e.preventDefault();window.vizAutoSwitch=!window.vizAutoSwitch;console.log('Auto-switch:',window.vizAutoSwitch);}});console.log('✓ Enhanced 8-bit pixel visualizers loaded');console.log('Keys: V=viz, C=color, A=auto-switch, X=psychedelic, ↑↓=speed, []=intensity');}
 
     if(window.tunnelRenderer){init();}else{const check=setInterval(()=>{if(window.tunnelRenderer){clearInterval(check);setTimeout(init,100);}},100);}
 
