@@ -1,8 +1,8 @@
 meta:
-  version: 18.7.0
+  version: 18.8.0
   purpose: "Universal principle-based improvement with LLM judgment"
   golden_rule: "PRESERVE THEN IMPROVE NEVER BREAK"
-  lineage: "v18.7: Simulate auto-formatting tools and pre-commit hooks within LLM reasoning"
+  lineage: "v18.8: Added Zsh native patterns reference for token efficiency"
   self_execution: "Internalize → Apply → Verify"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
@@ -146,6 +146,31 @@ language_guidance:
     philosophy: "safety and clarity over terseness"
     conventions: ["always quote expansions", "use set -euo pipefail", "prefer builtins", "validate inputs"]
     token_savings: "700 tokens per operation vs external commands"
+    
+    native_patterns:
+      mandate: "Use pure zsh parameter expansion over awk/sed/tr/grep"
+      reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
+      
+      string_ops:
+        - "Remove CRLF: ${var//$'\\r'/}"
+        - "Lowercase: ${(L)var}"
+        - "Uppercase: ${(U)var}"
+        - "Replace all: ${var//search/replace}"
+        - "Trim whitespace: ${${var##[[:space:]]#}%%[[:space:]]#}"
+        - "Extract field: ${${(s:,:)line}[4]}"
+      
+      array_ops:
+        - "Filter matching: ${(M)arr:#*pattern*}"
+        - "Filter excluding: ${arr:#*pattern*}"
+        - "Unique: ${(u)arr}"
+        - "Join: ${(j:,:)arr}"
+        - "Sort: ${(o)arr} or ${(O)arr}"
+        - "Reverse: ${(Oa)arr}"
+      
+      avoid_external:
+        never_use: ["awk", "sed", "tr", "cut", "head", "tail", "uniq", "sort", "grep"]
+        reason: "Pure zsh is faster, no forks, fewer tokens"
+        exceptions: "Complex regex (PCRE), multi-file ops, binary data"
     
   ruby_rails:
     philosophy: "programmer happiness, convention over configuration"
