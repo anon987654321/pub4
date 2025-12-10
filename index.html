@@ -808,9 +808,30 @@
 
       class PixelTunnel{
 
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15;this.stars=[]}
 
-        resize(w,h,s){this.w=w;this.h=h;this.s=s;this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);this.imageData=this.ctx.getImageData(0,0,w,h);this.data=this.imageData.data;this.u32=new Uint32Array(this.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;this.BLACK32=new Uint32Array(t.buffer)[0];this.init()}
+        resize(w,h,s){
+          this.w=w;this.h=h;this.s=s;
+          this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);
+          this.imageData=this.ctx.getImageData(0,0,w,h);
+          this.data=this.imageData.data;
+          this.u32=new Uint32Array(this.data.buffer);
+          const t=new Uint8ClampedArray(4);t[3]=255;
+          this.BLACK32=new Uint32Array(t.buffer)[0];
+          
+          // Initialize star field
+          this.stars=[];
+          for(let i=0;i<80;i++){
+            this.stars.push({
+              x:(Math.random()-0.5)*w*2,
+              y:(Math.random()-0.5)*h*2,
+              z:Math.random()*this.fov*2-this.fov,
+              brightness:Math.random()*0.5+0.5
+            });
+          }
+          
+          this.init();
+        }
 
         clearImageData(){
           // Motion blur: fade previous frame instead of full clear
@@ -863,6 +884,27 @@
           this.bassWobble=(this.bassWobble||0)*0.92+(a?.bass||0)*(a?.beat||0)*0.08;
           
           this.clearImageData();
+          
+          // Draw star field
+          for(const star of this.stars){
+            star.z-=this.speed*2*m;
+            if(star.z<-this.fov){
+              star.z+=this.fov*2;
+              star.x=(Math.random()-0.5)*this.w*2;
+              star.y=(Math.random()-0.5)*this.h*2;
+            }
+            
+            const sc=this.fov/(this.fov+star.z);
+            const sx=(this.w/2+star.x*sc)|0;
+            const sy=(this.h/2+star.y*sc)|0;
+            const brightness=(star.brightness*(1-star.z/this.fov)*180)|0;
+            
+            if(sx>0&&sx<this.w&&sy>0&&sy<this.h){
+              const col=pack32(brightness*0.3,brightness*0.5,brightness,255);
+              this.setPixel32(sx,sy,col);
+            }
+          }
+          
           const l=this.particles.length;
           let s=false;
           
