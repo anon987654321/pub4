@@ -33,18 +33,7 @@
 </head>
 <body>
   <noscript><main style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</main></noscript>
-      <span class="carousel-slide">playlist.lndon.uk</span><span class="carousel-slide">playlist.cardff.uk</span><span class="carousel-slide">playlist.mnchester.uk</span>
-      <span class="carousel-slide">playlist.brmingham.uk</span><span class="carousel-slide">playlist.lverpool.uk</span><span class="carousel-slide">playlist.edinbrgh.uk</span>
-      <span class="carousel-slide">playlist.glasgw.uk</span><span class="carousel-slide">playlist.amstrdam.nl</span><span class="carousel-slide">playlist.rottrdam.nl</span>
-      <span class="carousel-slide">playlist.utrcht.nl</span><span class="carousel-slide">playlist.brssels.be</span><span class="carousel-slide">playlist.zrich.ch</span>
-      <span class="carousel-slide">playlist.lchtenstein.li</span><span class="carousel-slide">playlist.frankfrt.de</span><span class="carousel-slide">playlist.wrsawa.pl</span>
-      <span class="carousel-slide">playlist.gdnsk.pl</span><span class="carousel-slide">playlist.brdeaux.fr</span><span class="carousel-slide">playlist.mrseille.fr</span>
-      <span class="carousel-slide">playlist.mlan.it</span><span class="carousel-slide">playlist.lsbon.pt</span><span class="carousel-slide">playlist.lsangeles.com</span>
-      <span class="carousel-slide">playlist.newyrk.us</span><span class="carousel-slide">playlist.chcago.us</span><span class="carousel-slide">playlist.houstn.us</span>
-      <span class="carousel-slide">playlist.dllas.us</span><span class="carousel-slide">playlist.austn.us</span><span class="carousel-slide">playlist.prtland.com</span>
-      <span class="carousel-slide">playlist.mnneapolis.com</span>
-    </div>
-  </h1>
+  <h1 style="position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;z-index:95;pointer-events:none;user-select:none;margin:0">playlist.brgen.no</h1>
   <canvas id="canvas" aria-label="Audio-reactive warp tunnel visualizer" tabindex="0"></canvas>
   <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0"><div><h2 id="start-title">Tap to start</h2></div></div>
   <div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true"><span class="label" id="uiLabel">Streaming</span><span class="dots" id="uiDots" aria-hidden="true"></span></div>
@@ -429,9 +418,9 @@
       }
       _loadYT(k,t,{fadeIn}){if(!t.id||IN_SANDBOX)return;clearTimeout(this._loadWatch);if(this.ytReady&&this.ytPlayers[k]&&this.ytPlayers[k].loadVideoById){try{const p=this.ytPlayers[k];p.loadVideoById({videoId:t.id,startSeconds:t.start||0,suggestedQuality:'tiny'});p.unMute();if(fadeIn)this._fadeYT(k,FADE_MS);this._loadWatch=setTimeout(()=>{try{const n=p.getCurrentTime?p.getCurrentTime():0;if(n<.1)this.next({fast:true})}catch{this.next({fast:true})}},4000)}catch{}}else{const f=document.getElementById('player-fallback-'+k);if(!f)return;const s=`https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start?`&start=${t.start}`:''}`;f.src=s;f.onload=()=>{ytPost(f,'playVideo',[]);if(fadeIn){ytPost(f,'setVolume',[0]);ytPost(f,'unMute',[]);this._fadeYT(k,FADE_MS)}else{ytPost(f,'setVolume',[100]);ytPost(f,'unMute',[])}};this._loadWatch=setTimeout(()=>this.next({fast:true}),5000)}}
       _fadeYT(k,ms){if(!this.ytReady||IN_SANDBOX)return;const steps=30,dt=ms/steps;let i=0;const iv=setInterval(()=>{i++;const vol=Math.round(100*i/steps);try{if(this.ytPlayers[k])this.ytPlayers[k].setVolume(vol);else ytPost(document.getElementById('player-fallback-'+k),'setVolume',[vol])}catch{}if(i>=steps)clearInterval(iv)},dt)}
-      next({fast=false}={}){if(IN_SANDBOX)return;clearInterval(this._fadeIv);clearTimeout(this._prefadeTimer);const n=(this.trackIndex+1)%this.tracks.length,t=this.tracks[n],cur=this.tracks[this.trackIndex],f=this.activeKey,o=this.inactiveKey;if(cur.src&&this.mp3Players[f]){try{this.mp3Players[f].pause();this.mp3Players[f].volume=0}catch{}}if(cur.id&&this.ytReady){try{if(this.ytPlayers[f])this.ytPlayers[f].stopVideo()}catch{}}if(t.src){this._loadMP3(o,t,{fadeIn:false});setTimeout(()=>{this._crossfadeMP3(f,o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500)}else{this._loadYT(o,t,{fadeIn:false});setTimeout(()=>{if(this.ytReady)this._fadeYT(o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500);this.activeKey=o;this.inactiveKey=f}}
+      next({fast=false}={}){if(IN_SANDBOX)return;clearInterval(this._fadeIv);clearTimeout(this._prefadeTimer);const n=(this.trackIndex+1)%this.tracks.length,t=this.tracks[n],cur=this.tracks[this.trackIndex],f=this.activeKey,o=this.inactiveKey;if(cur.src&&this.mp3Players[f]){try{this.mp3Players[f].pause();this.mp3Players[f].volume=0}catch{}}if(cur.id&&this.ytReady){try{if(this.ytPlayers[f])this.ytPlayers[f].stopVideo()}catch{}}if(window.tunnelRenderer)window.tunnelRenderer.rampSpeed();if(t.src){this._loadMP3(o,t,{fadeIn:false});setTimeout(()=>{this._crossfadeMP3(f,o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500)}else{this._loadYT(o,t,{fadeIn:false});setTimeout(()=>{if(this.ytReady)this._fadeYT(o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500);this.activeKey=o;this.inactiveKey=f}}
       _crossfadeMP3(from,to,ms){const steps=30,dt=ms/steps;let i=0;clearInterval(this._fadeIv);this._fadeIv=setInterval(()=>{i++;const t=i/steps;try{this.mp3Players[from].volume=Math.max(0,1-t)}catch{}try{this.mp3Players[to].volume=Math.min(1,t)}catch{}if(i>=steps){clearInterval(this._fadeIv);this.activeKey=to;this.inactiveKey=from}},dt)}
-      prev(){const p=(this.trackIndex-1+this.tracks.length)%this.tracks.length,t=this.tracks[p];this.trackIndex=p;this.updateUI();t.src?this._loadMP3(this.activeKey,t,{fadeIn:true}):this._loadYT(this.activeKey,t,{fadeIn:true})}
+      prev(){const p=(this.trackIndex-1+this.tracks.length)%this.tracks.length,t=this.tracks[p];this.trackIndex=p;this.updateUI();if(window.tunnelRenderer)window.tunnelRenderer.rampSpeed();t.src?this._loadMP3(this.activeKey,t,{fadeIn:true}):this._loadYT(this.activeKey,t,{fadeIn:true})}
       toggleMute(){this.muted=!this.muted;const t=this.tracks[this.trackIndex];if(t.src){try{this.mp3Players[this.activeKey].muted=this.muted}catch{}}else if(t.id&&this.ytReady){try{this.muted?this.ytPlayers[this.activeKey].mute():this.ytPlayers[this.activeKey].unMute()}catch{}}try{navigator.vibrate?.(6)}catch{}}
       updateUI(){const u=document.getElementById('uiLabel');if(!u)return;const t=this.tracks[this.trackIndex];u.textContent=(t.artist?`${t.artist} - `:'')+t.title}
       data(){if(this.analyser&&this.dataArray){try{this.analyser.getByteFrequencyData(this.dataArray);const n=this.dataArray.length,n2=n*.2|0,n6=n*.6|0;let bass=0,mid=0,high=0;for(let i=0;i<n2;i++)bass+=this.dataArray[i];for(let i=n2;i<n6;i++)mid+=this.dataArray[i];for(let i=n6;i<n;i++)high+=this.dataArray[i];bass/=n2*255;mid/=(n6-n2)*255;high/=(n-n6)*255;const avg=(bass+mid+high)/3;this.beatPhase+=.08*motionScale();const beat=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(beat?.4:0)*.06;return{bass,mid,high,average:avg,beat:this._beatEnv,energy:this.energyLevel}}catch{}}const m=motionScale();this.beatPhase+=.08*m;const b=.5+.4*Math.sin(this.beatPhase*.8),i=.45+.35*Math.sin(this.beatPhase*1.2+.7),h=.35+.35*Math.sin(this.beatPhase*1.8+1.2),a=(b+i+h)/3,r=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(r?.4:0)*.06;return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel}}
@@ -447,14 +436,14 @@
     window.onYouTubeIframeAPIReady=()=>audio?.initYTAPI?.();
     const canvas=document.getElementById("canvas"),uiEl=document.getElementById("ui");
     let INTERNAL_SCALE=1,w=0,h=0;
-    const SCALE_MAX=Math.min(2,DPR)*(isLowEnd?.9:1),SCALE_MIN=isLowEnd?.4:.5,TARGET_MS=16.7;
+    const SCALE_MAX=Math.min(2,DPR)*(isLowEnd?.9:1),SCALE_MIN=isLowEnd?.5:.65,TARGET_MS=16.7;
     let ewma=TARGET_MS,lastScaleAdjust=0,MIN_FRAME_MS=16;
     const updateMinFrameInterval=()=>MIN_FRAME_MS=typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?33:16;
-    const applyInternalScale=(b=isLowEnd?.6:.7)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
+    const applyInternalScale=(b=isLowEnd?.7:.85)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
     (()=>{
       const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
       class PixelTunnel{
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15;this.stars=[]}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.speedMultiplier=1;this.targetSpeed=1;this.segments=isLowEnd?40:64;this.baseRadius=75;this.zStep=isLowEnd?5:3;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15;this.stars=[];this.beatPulse=0}
         resize(w,h,s){
           this.w=w;this.h=h;this.s=s;
           this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);
@@ -490,16 +479,18 @@
           const v=Math.max(0,Math.min(1,a?.average??.45));
           const h=Math.max(0,Math.min(1,a?.high??.35));
           const d=i/Math.max(1,l-1);
-          // Blue/purple wireframe with audio-reactive hue shifts
-          const hueShift=Math.sin(this.time*0.3+d*Math.PI)*0.5+0.5; // oscillating hue
-          const beatPulse=(a?.beat||0)*80;
-          // Base: dark blue to cyan gradient with depth
-          const r=Math.round((30*h+beatPulse*0.8+hueShift*40)/16)*16;
-          const g=Math.round((60*v+d*30+beatPulse*0.3)/16)*16;
-          const u=Math.round((180+b*60+hueShift*20)/16)*16;
+          // Dark blue/pink color scheme: 3 colors total
+          // Base dark blue (20,30,180) → bright cyan (80,140,255) → hot pink accent on beat
+          const hueShift=Math.sin(this.time*0.25)*0.5+0.5;
+          const beatFlash=(a?.beat||0)*100;
+          // Blue channel dominant (180-255), low red (20-100), moderate green (30-140)
+          const r=Math.round(20+h*60+beatFlash*0.9+hueShift*20);
+          const g=Math.round(30+v*80+d*30+beatFlash*0.4);
+          const u=Math.round(180+b*75-beatFlash*0.3);
           return pack32(r,g,u,255);
         }
-        init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
+        init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments,c);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0,rowIndex:c})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;p.rowIndex=co.rowIndex;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
+        rampSpeed(){this.speedMultiplier=0.5;this.targetSpeed=1}
         frame(a){
           const m=motionScale();
           // Bass wobble accumulator
@@ -538,22 +529,24 @@
               center.y+=(this.h/2-center.y)*.015;
             }
             const f=(a?.average||0)*64+(a?.beat?8:0);
+            const beatScale=1+this.beatPulse*0.15;
             const sc=this.fov/(this.fov+row[0].z);
-            const r=(this.baseRadius+f)*sc;
+            const r=(this.baseRadius+f)*sc*beatScale;
             if(r<this.ringPxCull)continue;
             for(let j=0,k=row.length;j<k;j++){
               const p=row[j],z=this.fov/(this.fov+p.z);
               p.x2d=p.x*z+center.x;
               p.y2d=p.y*z+center.y;
               p.radiusAudio=p.radius+f;
+              const actualSpeed=this.speed*this.speedMultiplier;
               if(this.mouse.down){
-                p.z+=this.speed*m;
+                p.z+=actualSpeed*m;
                 if(p.z>this.fov){p.z-=this.fov*2;s=true}
               }else{
-                p.z-=this.speed*m;
+                p.z-=actualSpeed*m;
                 if(p.z<-this.fov){p.z+=this.fov*2;s=true}
               }
-              const n=this.getCirclePos(p.centerX,p.centerY,p.radiusAudio,p.index,p.segments);
+              const n=this.getCirclePos(p.centerX,p.centerY,p.radiusAudio,p.index,p.segments,p.rowIndex||0);
               p.x=n.x;
               p.y=n.y;
             }
