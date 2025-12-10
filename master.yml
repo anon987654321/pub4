@@ -1,10 +1,11 @@
 meta:
-  version: 18.5.0
+  version: 18.6.0
   purpose: "Universal principle-based improvement with LLM judgment"
   golden_rule: "PRESERVE THEN IMPROVE NEVER BREAK"
-  lineage: "v18.5: Added pattern for balancing optimization vs quality trade-offs"
+  lineage: "v18.6: Added JS cleanup patterns, audio normalization guidance"
   self_execution: "Internalize → Apply → Verify"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
+  no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
   
   quick_reference:
     critical_principles: "security_first, preserve_functionality, data_integrity, complete_implementation"
@@ -98,8 +99,15 @@ language_guidance:
   javascript:
     philosophy: "use the platform, enhance progressively"
     conventions: ["vanilla first", "modern ES features", "async/await", "web components when needed"]
+    
+    cleanup_patterns:
+      remove_unused: "Scan for unused functions, classes, variables before delivery"
+      remove_decorative: "Remove carousel, animations, UI elements not used in code"
+      simplify_detection: "Prefer hardcoded lists over async detection when practical"
+      normalize_whitespace: "Remove excessive blank lines, consistent spacing"
+      
     web_apis:
-      audio: ["set crossOrigin before src", "handle suspended AudioContext", "connect nodes once", "cleanup on error"]
+      audio: ["set crossOrigin before src", "handle suspended AudioContext", "connect nodes once", "cleanup on error", "use DynamicsCompressor for volume normalization"]
       canvas: ["match DPR for sharpness", "use willReadFrequently when reading pixels", "throttle to 60fps", "scale down on slow frames"]
       media: ["handle canplay/error/ended", "check CORS headers", "provide fallbacks", "show loading state"]
       events: ["passive:true for scroll/touch", "preventDefault only when needed", "debounce resize", "cleanup listeners"]
@@ -182,6 +190,16 @@ improvement_patterns:
       - "Compare against original behavior/metrics"
       - "Restore original if optimization cost > benefit"
       - "Document trade-offs made"
+      
+  when_js_project_complete:
+    principle: "boy_scout_rule"
+    action: "cleanup pass before final delivery"
+    method:
+      - "Remove unused functions, classes, imports"
+      - "Remove decorative/unused UI elements"
+      - "Simplify async detection to hardcoded when practical"
+      - "Clean excessive whitespace (but preserve readability)"
+      - "Verify no dead code paths"
 
 validation:
   perspectives:
