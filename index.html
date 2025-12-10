@@ -794,13 +794,13 @@
 
     let INTERNAL_SCALE=1,w=0,h=0;
 
-    const SCALE_MAX=Math.min(2,DPR)*(isLowEnd?.9:1),SCALE_MIN=isLowEnd?.6:.7,TARGET_MS=16.7;
+    const SCALE_MAX=Math.min(2,DPR)*(isLowEnd?.9:1),SCALE_MIN=isLowEnd?.4:.5,TARGET_MS=16.7;
 
     let ewma=TARGET_MS,lastScaleAdjust=0,MIN_FRAME_MS=16;
 
     const updateMinFrameInterval=()=>MIN_FRAME_MS=typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?33:16;
 
-    const applyInternalScale=(b=isLowEnd?.8:1)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
+    const applyInternalScale=(b=isLowEnd?.6:.7)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
 
     (()=>{
 
@@ -808,25 +808,155 @@
 
       class PixelTunnel{
 
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?24:40;this.baseRadius=75;this.zStep=isLowEnd?8:5;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?3:2;this.ringPxCull=.15}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15}
 
         resize(w,h,s){this.w=w;this.h=h;this.s=s;this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);this.imageData=this.ctx.getImageData(0,0,w,h);this.data=this.imageData.data;this.u32=new Uint32Array(this.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;this.BLACK32=new Uint32Array(t.buffer)[0];this.init()}
 
-        clearImageData(){this.u32.fill(this.BLACK32)}
+        clearImageData(){
+          // Motion blur: fade previous frame instead of full clear
+          for(let i=0;i<this.u32.length;i++){
+            const r=(this.u32[i]&255);
+            const g=(this.u32[i]>>8&255);
+            const b=(this.u32[i]>>16&255);
+            // Decay to 85% for trail effect
+            this.u32[i]=pack32((r*0.85)|0,(g*0.85)|0,(b*0.85)|0,255);
+          }
+        }
 
         setPixel32(x,y,c){if(x<=0||x>=this.w||y<=0||y>=this.h)return;const i=x+y*this.imageData.width;this.u32[i]=c}
 
         drawLine32(x1,y1,x2,y2,c){let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1),sx=x1<x2?1:-1,sy=y1<y2?1:-1,err=dx-dy,lx=x1,ly=y1;for(;;){if(lx>0&&lx<this.w&&ly>0&&ly<this.h)this.setPixel32(lx,ly,c);if(lx===x2&&ly===y2)break;const e2=2*err;if(e2>-dy){err-=dy;lx+=sx}if(e2<dx){err+=dx;ly+=sy}}}
 
-        getCirclePos(cx,cy,r,i,s){const a=i*(Math.PI*2/s)+this.time;return{x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r}}
+        getCirclePos(cx,cy,r,i,s){
+          // Add bass-reactive rotation wobble
+          const wobble=(this.bassWobble||0)*0.1;
+          const a=i*(Math.PI*2/s)+this.time+wobble;
+          return{x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r};
+        }
 
         addParticle(x,y,z,a){return{x,y,z,x2d:0,y2d:0,radius:this.baseRadius,radiusAudio:this.baseRadius,index:0,segments:this.segments,centerX:0,centerY:0,audioIndex:a}}
 
-        colorForRow32(i,l,a){const b=Math.max(0,Math.min(1,a?.bass??.5)),v=Math.max(0,Math.min(1,a?.average??.45)),h=Math.max(0,Math.min(1,a?.high??.35)),d=i/Math.max(1,l-1),r=Math.round(180*h+40*d),g=Math.round(90*v+60*d),u=Math.round(220*b);return pack32(r,g,u,255)}
+        colorForRow32(i,l,a){
+          const b=Math.max(0,Math.min(1,a?.bass??.5));
+          const v=Math.max(0,Math.min(1,a?.average??.45));
+          const h=Math.max(0,Math.min(1,a?.high??.35));
+          const d=i/Math.max(1,l-1);
+          
+          // Blue/purple wireframe with audio-reactive hue shifts
+          const hueShift=Math.sin(this.time*0.3+d*Math.PI)*0.5+0.5; // oscillating hue
+          const beatPulse=(a?.beat||0)*80;
+          
+          // Base: dark blue to cyan gradient with depth
+          const r=Math.round((30*h+beatPulse*0.8+hueShift*40)/16)*16;
+          const g=Math.round((60*v+d*30+beatPulse*0.3)/16)*16;
+          const u=Math.round((180+b*60+hueShift*20)/16)*16;
+          
+          return pack32(r,g,u,255);
+        }
 
         init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
 
-        frame(a){const m=motionScale();this.clearImageData();const l=this.particles.length;let s=false;for(let i=0;i<l;i++){const row=this.particles[i],rowBack=i>0?this.particles[i-1]:null,center=this.centers[i];if(this.mouse.active){center.x=(this.w/2-this.mouse.x/this.s)*((row[0].z-this.fov)/500)+this.w/2;center.y=(this.h/2-this.mouse.y/this.s)*((row[0].z-this.fov)/500)+this.h/2}else if(this.ori.active){const mx=-this.ori.gamma*(this.w/180),my=-this.ori.beta*(this.h/180);center.x=this.w/2+mx*((row[0].z-this.fov)/500);center.y=this.h/2+my*((row[0].z-this.fov)/500)}else{center.x+=(this.w/2-center.x)*.015;center.y+=(this.h/2-center.y)*.015}const f=(a?.average||0)*64+(a?.beat?8:0),sc=this.fov/(this.fov+row[0].z),r=(this.baseRadius+f)*sc;if(r<this.ringPxCull)continue;for(let j=0,k=row.length;j<k;j++){const p=row[j],z=this.fov/(this.fov+p.z);p.x2d=p.x*z+center.x;p.y2d=p.y*z+center.y;p.radiusAudio=p.radius+f;if(this.mouse.down){p.z+=this.speed*m;if(p.z>this.fov){p.z-=this.fov*2;s=true}}else{p.z-=this.speed*m;if(p.z<-this.fov){p.z+=this.fov*2;s=true}}const n=this.getCirclePos(p.centerX,p.centerY,p.radiusAudio,p.index,p.segments);p.x=n.x;p.y=n.y}const c=this.colorForRow32(i,l,a);for(let j=1;j<row.length;j++){const p=row[j],v=row[j-1];this.drawLine32(p.x2d|0,p.y2d|0,v.x2d|0,v.y2d|0,c)}if(row.length>2){const f=row[0],t=row[row.length-1];this.drawLine32(t.x2d|0,t.y2d|0,f.x2d|0,f.y2d|0,c)}if(i>0&&i<l-1&&rowBack&&i%this.tieRowStride===0){for(let j=0;j<row.length;j++){const p=row[j],b=rowBack[j];this.drawLine32(p.x2d|0,p.y2d|0,b.x2d|0,b.y2d|0,c)}}}if(s)this.particles=this.particles.sort((a,b)=>b[0].z-a[0].z);this.time+=(this.mouse.down?-.005:.005)*m;this.ctx.putImageData(this.imageData,0,0)}
+        frame(a){
+          const m=motionScale();
+          
+          // Bass wobble accumulator
+          this.bassWobble=(this.bassWobble||0)*0.92+(a?.bass||0)*(a?.beat||0)*0.08;
+          
+          this.clearImageData();
+          const l=this.particles.length;
+          let s=false;
+          
+          for(let i=0;i<l;i++){
+            const row=this.particles[i],rowBack=i>0?this.particles[i-1]:null,center=this.centers[i];
+            
+            if(this.mouse.active){
+              center.x=(this.w/2-this.mouse.x/this.s)*((row[0].z-this.fov)/500)+this.w/2;
+              center.y=(this.h/2-this.mouse.y/this.s)*((row[0].z-this.fov)/500)+this.h/2;
+            }else if(this.ori.active){
+              const mx=-this.ori.gamma*(this.w/180),my=-this.ori.beta*(this.h/180);
+              center.x=this.w/2+mx*((row[0].z-this.fov)/500);
+              center.y=this.h/2+my*((row[0].z-this.fov)/500);
+            }else{
+              center.x+=(this.w/2-center.x)*.015;
+              center.y+=(this.h/2-center.y)*.015;
+            }
+            
+            const f=(a?.average||0)*64+(a?.beat?8:0);
+            const sc=this.fov/(this.fov+row[0].z);
+            const r=(this.baseRadius+f)*sc;
+            
+            if(r<this.ringPxCull)continue;
+            
+            for(let j=0,k=row.length;j<k;j++){
+              const p=row[j],z=this.fov/(this.fov+p.z);
+              p.x2d=p.x*z+center.x;
+              p.y2d=p.y*z+center.y;
+              p.radiusAudio=p.radius+f;
+              
+              if(this.mouse.down){
+                p.z+=this.speed*m;
+                if(p.z>this.fov){p.z-=this.fov*2;s=true}
+              }else{
+                p.z-=this.speed*m;
+                if(p.z<-this.fov){p.z+=this.fov*2;s=true}
+              }
+              
+              const n=this.getCirclePos(p.centerX,p.centerY,p.radiusAudio,p.index,p.segments);
+              p.x=n.x;
+              p.y=n.y;
+            }
+            
+            const c=this.colorForRow32(i,l,a);
+            
+            // Draw ring segments
+            for(let j=1;j<row.length;j++){
+              const p=row[j],v=row[j-1];
+              this.drawLine32(p.x2d|0,p.y2d|0,v.x2d|0,v.y2d|0,c);
+            }
+            
+            // Close ring
+            if(row.length>2){
+              const f=row[0],t=row[row.length-1];
+              this.drawLine32(t.x2d|0,t.y2d|0,f.x2d|0,f.y2d|0,c);
+            }
+            
+            // Depth connections
+            if(i>0&&i<l-1&&rowBack&&i%this.tieRowStride===0){
+              for(let j=0;j<row.length;j++){
+                const p=row[j],b=rowBack[j];
+                this.drawLine32(p.x2d|0,p.y2d|0,b.x2d|0,b.y2d|0,c);
+              }
+            }
+          }
+          
+          // CRT scanlines + vignette effect
+          const cx=this.w/2,cy=this.h/2;
+          const maxDist=Math.hypot(cx,cy);
+          
+          for(let y=0;y<this.h;y++){
+            for(let x=0;x<this.w;x++){
+              const i=x+y*this.w;
+              const r=(this.u32[i]&255);
+              const g=(this.u32[i]>>8&255);
+              const b=(this.u32[i]>>16&255);
+              
+              // Scanline darkening (every 3rd row)
+              let brightness=y%3===0?0.6:1.0;
+              
+              // Vignette: darker at edges
+              const dist=Math.hypot(x-cx,y-cy);
+              const vignette=1.0-Math.pow(dist/maxDist,2.2)*0.5;
+              
+              brightness*=vignette;
+              
+              this.u32[i]=pack32((r*brightness)|0,(g*brightness)|0,(b*brightness)|0,255);
+            }
+          }
+          
+          if(s)this.particles=this.particles.sort((a,b)=>b[0].z-a[0].z);
+          this.time+=(this.mouse.down?-.005:.005)*m;
+          this.ctx.putImageData(this.imageData,0,0);
+        }
 
       }
 
