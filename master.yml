@@ -1,8 +1,8 @@
 meta:
-  version: 18.8.0
+  version: 18.9.0
   purpose: "Universal principle-based improvement with LLM judgment"
   golden_rule: "PRESERVE THEN IMPROVE NEVER BREAK"
-  lineage: "v18.8: Added Zsh native patterns reference for token efficiency"
+  lineage: "v18.9: Added direct execution mandate - don't create wrapper scripts"
   self_execution: "Internalize → Apply → Verify"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
@@ -262,7 +262,16 @@ improvement_patterns:
       - "Never disable tests without documenting why"
       - "If uncertain, revert and ask for guidance"
       
-  when_optimization_degrades_quality:
+  when_user_asks_to_do_something:
+    principle: "bias_for_action"
+    action: "execute directly, don't create wrapper scripts"
+    method:
+      - "Use powershell/shell tools to execute commands directly"
+      - "Chain commands with && or ; for multi-step operations"
+      - "Create files only when specifically requested or necessary artifacts"
+      - "NEVER create .sh/.ps1 scripts just to run a sequence of commands"
+      - "Exception: rc.d scripts, systemd units, or persistent automation"
+    rationale: "User wants results, not intermediate scripts that add friction"
     principle: "preserve_functionality"
     action: "find balance between performance and user experience"
     method:
