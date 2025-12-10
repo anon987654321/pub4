@@ -808,7 +808,7 @@
 
       class PixelTunnel{
 
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?24:32;this.baseRadius=75;this.zStep=isLowEnd?8:6;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?3:2;this.ringPxCull=.15}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?24:40;this.baseRadius=75;this.zStep=isLowEnd?8:5;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?3:2;this.ringPxCull=.15}
 
         resize(w,h,s){this.w=w;this.h=h;this.s=s;this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);this.imageData=this.ctx.getImageData(0,0,w,h);this.data=this.imageData.data;this.u32=new Uint32Array(this.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;this.BLACK32=new Uint32Array(t.buffer)[0];this.init()}
 
