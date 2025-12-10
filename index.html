@@ -684,9 +684,15 @@
         }catch{}
       }
 
-      initYTAPI(){if(IN_SANDBOX)return;try{this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}});this.ytReady=true}catch{}}
+      initYTAPI(){if(IN_SANDBOX)return;try{this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}});this.ytReady=true}catch{}}
 
-      onYTReady(k){try{this.ytPlayers[k].unMute();this.ytPlayers[k].setVolume(0)}catch{}if(this.started&&k===this.activeKey){const t=this.tracks[this.trackIndex];if(t.id)this._loadYT(k,t,{fadeIn:START_FADE_IN})}}
+      onYTReady(k){
+        try{
+          this.ytPlayers[k].setVolume(0);
+          this.ytPlayers[k].mute();
+        }catch{}
+        // Don't auto-load video on ready - only load when explicitly called
+      }
 
       onYTState(k,e){if(IN_SANDBOX)return;const S=YT.PlayerState;if(e.data===S.ENDED){if(k===this.activeKey)this.next({fast:true})}else if(e.data===S.PLAYING){clearTimeout(this._loadWatch);try{const p=this.ytPlayers[k];const s=()=>{const d=p.getDuration?p.getDuration()||0:0;if(d>0){const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);clearTimeout(this._prefadeTimer);this._prefadeTimer=setTimeout(()=>this.next({}),m)}};s();setTimeout(s,500)}catch{}}}
 
@@ -802,7 +808,7 @@
 
       class PixelTunnel{
 
-        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?2:1;this.ringPxCull=.15}
+        constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?24:32;this.baseRadius=75;this.zStep=isLowEnd?8:6;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=isLowEnd?3:2;this.ringPxCull=.15}
 
         resize(w,h,s){this.w=w;this.h=h;this.s=s;this.ctx.fillStyle="#000";this.ctx.fillRect(0,0,w,h);this.imageData=this.ctx.getImageData(0,0,w,h);this.data=this.imageData.data;this.u32=new Uint32Array(this.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;this.BLACK32=new Uint32Array(t.buffer)[0];this.init()}
 
@@ -1068,13 +1074,20 @@
 
       // Dynamic quality adjustment
       if(n-lastScaleAdjust>700){
-        if(ewma>22){
-          setScaleAndResize(INTERNAL_SCALE*.92);
+        if(ewma>18){
+          setScaleAndResize(INTERNAL_SCALE*.9);
           lastScaleAdjust=n;
-        }else if(ewma<14&&INTERNAL_SCALE<SCALE_MAX){
-          setScaleAndResize(INTERNAL_SCALE*1.06);
+        }else if(ewma<13&&INTERNAL_SCALE<SCALE_MAX){
+          setScaleAndResize(INTERNAL_SCALE*1.05);
           lastScaleAdjust=n;
         }
+      }
+      
+      // Emergency brake if completely stalled
+      if(ewma>100){
+        console.warn('Performance emergency: ewma',ewma.toFixed(1),'ms');
+        setScaleAndResize(SCALE_MIN);
+        lastScaleAdjust=n;
       }
 
       let a=audio?.started?audio.data():{average:0,beat:0,bass:.5,mid:.45,high:.35};
