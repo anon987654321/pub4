@@ -60,8 +60,6 @@
     let audio;
     (()=>{const e=document.getElementById("uiDots");if(!e)return;const s=[0,1,2,3,2,1];let i=0;const t=()=>{e.textContent=".".repeat(s[i]);i=(i+1)%s.length};t();try{clearInterval(window.__RB_DOTS_IV)}catch{}window.__RB_DOTS_IV=setInterval(t,600)})();
     const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
-    class SimpleCarousel{constructor(e,i=2800){this.slides=Array.from(e.querySelectorAll(".carousel-slide"));this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),i)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}}
-    new SimpleCarousel(document.getElementById("cityCarousel"));
     const MP3_TRACKS=[
       {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
       {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},

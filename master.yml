@@ -1,8 +1,8 @@
 meta:
-  version: 18.6.0
+  version: 18.7.0
   purpose: "Universal principle-based improvement with LLM judgment"
   golden_rule: "PRESERVE THEN IMPROVE NEVER BREAK"
-  lineage: "v18.6: Added JS cleanup patterns, audio normalization guidance"
+  lineage: "v18.7: Simulate auto-formatting tools and pre-commit hooks within LLM reasoning"
   self_execution: "Internalize → Apply → Verify"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
@@ -20,6 +20,11 @@ meta:
     principle_citation: "Cite specific principle section for each major decision"
     violation_detection: "Scan own output for violations before delivery"
     checkpoint_reasoning: "At each workflow phase, verify alignment with principles"
+    
+    auto_formatting_simulation:
+      mandate: "Every file edit MUST pass through mental formatter before writing"
+      process: "After constructing code/text, run formatter_mental_model before file operations"
+      no_external_tools: "Pure reasoning-based formatting, zero dependencies"
 
 principles:
   critical: [security_first, preserve_functionality, data_integrity, complete_implementation]
@@ -87,6 +92,56 @@ workflow:
       6. "If shortcuts detected internally, STOP and restart with full reasoning"
 
 language_guidance:
+  
+  formatter_mental_model:
+    principle: "Simulate Prettier/ESLint/Black without external dependencies"
+    mandate: "ALWAYS apply before writing any code file"
+    
+    steps:
+      1_scan: "Read entire file content into mental buffer"
+      2_normalize_whitespace: "Remove blank lines between statements, single blank between functions/classes"
+      3_indent_consistency: "2 spaces for JS/HTML/CSS, follow file's existing pattern"
+      4_line_length: "Soft limit 100 chars for readability, hard limit 120"
+      5_trailing_commas: "Add to multi-line arrays/objects in JS"
+      6_semicolons: "Consistent with file pattern (prefer explicit in JS)"
+      7_quotes: "Single quotes JS, double quotes HTML/JSON"
+      8_spacing: "Space after keywords, around operators, no space before ()"
+      9_alignment: "Align similar declarations (const x=1; const y=2;)"
+      10_verify: "Mental diff check: does formatted version preserve semantics?"
+    
+    rules_by_language:
+      javascript:
+        - "Remove all blank lines within functions/blocks"
+        - "Single blank line between function declarations"
+        - "const/let on separate lines or aligned if similar"
+        - "Arrow functions: ()=>x for single expression, ()=>{} for statements"
+        - "Template literals over concatenation"
+        - "Destructuring when cleaner"
+        
+      html:
+        - "No blank lines within elements"
+        - "Attributes on same line if <100 chars"
+        - "Self-closing tags: /> not >"
+        - "Consistent quote style (double)"
+        
+      css:
+        - "No blank lines between rules"
+        - "Properties on single line if <80 chars"
+        - "Alphabetical property order within block"
+        - "No units on zero values"
+        
+      yaml:
+        - "2 space indentation strict"
+        - "No blank lines within maps/sequences"
+        - "Align colons at same indent level"
+        - "Quote strings with special chars"
+        
+      shell:
+        - "2 space indentation"
+        - "Quote all expansions: \"$var\""
+        - "Space around = in [[ ]]"
+        - "No space around = in var=val"
+  
   shell_zsh:
     philosophy: "safety and clarity over terseness"
     conventions: ["always quote expansions", "use set -euo pipefail", "prefer builtins", "validate inputs"]
@@ -198,8 +253,18 @@ improvement_patterns:
       - "Remove unused functions, classes, imports"
       - "Remove decorative/unused UI elements"
       - "Simplify async detection to hardcoded when practical"
-      - "Clean excessive whitespace (but preserve readability)"
+      - "Run formatter_mental_model on all edited files"
       - "Verify no dead code paths"
+      
+  before_every_file_write:
+    principle: "elegance"
+    action: "mandatory formatting pass"
+    method:
+      - "Load formatter_mental_model rules for file extension"
+      - "Apply all formatting transformations mentally"
+      - "Verify semantic equivalence"
+      - "Write formatted version only"
+      - "Never write unformatted code"
 
 validation:
   perspectives:
@@ -283,7 +348,7 @@ adversarial_personas:
     time_budget: "Spend appropriate time per complexity: trivial <30s, moderate 2-5min, complex 10-20min"
 
 quality_verification:
-  must_pass: ["security_audit", "functionality_preserved", "no_truncation", "no_duplicate_declarations", "execution_paths_considered", "docs_verified"]
+  must_pass: ["security_audit", "functionality_preserved", "no_truncation", "no_duplicate_declarations", "execution_paths_considered", "docs_verified", "formatter_applied"]
   
   self_check:
     triggers: [on_load, on_change, periodic_24h, before_delivery]
