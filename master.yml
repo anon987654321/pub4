@@ -1,8 +1,8 @@
 meta:
-  version: 18.4.0
+  version: 18.5.0
   purpose: "Universal principle-based improvement with LLM judgment"
   golden_rule: "PRESERVE THEN IMPROVE NEVER BREAK"
-  lineage: "v18.4: Added Python guidance, git conventions, deployment verification, resource cleanup tracking"
+  lineage: "v18.5: Added pattern for balancing optimization vs quality trade-offs"
   self_execution: "Internalize → Apply → Verify"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   
@@ -173,6 +173,15 @@ improvement_patterns:
       - "Determine if test needs update or fix needs revision"
       - "Never disable tests without documenting why"
       - "If uncertain, revert and ask for guidance"
+      
+  when_optimization_degrades_quality:
+    principle: "preserve_functionality"
+    action: "find balance between performance and user experience"
+    method:
+      - "Measure actual performance impact quantitatively"
+      - "Compare against original behavior/metrics"
+      - "Restore original if optimization cost > benefit"
+      - "Document trade-offs made"
 
 validation:
   perspectives:
