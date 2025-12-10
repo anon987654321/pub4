@@ -692,9 +692,66 @@
 
       onYTError(){clearTimeout(this._loadWatch);this.next({fast:true})}
 
-      start(){this.started=true;this.muted=false;this.updateUI();const t=this.tracks[this.trackIndex];t.src?this._loadMP3(this.activeKey,t,{fadeIn:START_FADE_IN}):this._loadYT(this.activeKey,t,{fadeIn:START_FADE_IN})}
+      start(){
+        this.started=true;
+        this.muted=false;
+        this.updateUI();
+        
+        // Resume AudioContext if suspended
+        if(this.audioContext&&this.audioContext.state==='suspended'){
+          this.audioContext.resume().catch(()=>{});
+        }
+        
+        const t=this.tracks[this.trackIndex];
+        t.src?this._loadMP3(this.activeKey,t,{fadeIn:START_FADE_IN}):this._loadYT(this.activeKey,t,{fadeIn:START_FADE_IN});
+      }
 
-      _loadMP3(k,t,{fadeIn}){if(!t.src)return;const p=this.mp3Players[k];p.src=t.src;p.load();p.onended=()=>{if(k===this.activeKey)this.next({fast:true})};p.onloadedmetadata=()=>{const d=p.duration;if(d>0){const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);clearTimeout(this._prefadeTimer);this._prefadeTimer=setTimeout(()=>this.next({}),m)}};try{if(!p._srcNode&&this.audioContext){p._srcNode=this.audioContext.createMediaElementSource(p);p._srcNode.connect(this.analyser);this.analyser.connect(this.audioContext.destination)}}catch{}p.play().catch(()=>{});if(fadeIn){let vol=0;const iv=setInterval(()=>{vol+=.033;p.volume=Math.min(1,vol);if(vol>=1)clearInterval(iv)},50)}else{p.volume=1}}
+      _loadMP3(k,t,{fadeIn}){
+        if(!t.src)return;
+        const p=this.mp3Players[k];
+        p.src=t.src;
+        p.load();
+        
+        p.onended=()=>{if(k===this.activeKey)this.next({fast:true})};
+        p.onerror=(e)=>{
+          console.warn('MP3 load error:',t.src,e);
+          if(k===this.activeKey)this.next({fast:true});
+        };
+        p.onloadedmetadata=()=>{
+          const d=p.duration;
+          if(d>0){
+            const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);
+            clearTimeout(this._prefadeTimer);
+            this._prefadeTimer=setTimeout(()=>this.next({}),m);
+          }
+        };
+        
+        // Connect to analyser once
+        try{
+          if(!p._srcNode&&this.audioContext){
+            p._srcNode=this.audioContext.createMediaElementSource(p);
+            p._srcNode.connect(this.analyser);
+            this.analyser.connect(this.audioContext.destination);
+          }
+        }catch(e){console.warn('AudioContext connection:',e)}
+        
+        // Attempt play
+        p.play().catch((e)=>{
+          console.warn('MP3 play failed:',t.src,e);
+          if(k===this.activeKey)setTimeout(()=>this.next({fast:true}),1000);
+        });
+        
+        if(fadeIn){
+          let vol=0;
+          const iv=setInterval(()=>{
+            vol+=.033;
+            p.volume=Math.min(1,vol);
+            if(vol>=1)clearInterval(iv);
+          },50);
+        }else{
+          p.volume=1;
+        }
+      }
 
       _loadYT(k,t,{fadeIn}){if(!t.id||IN_SANDBOX)return;clearTimeout(this._loadWatch);if(this.ytReady&&this.ytPlayers[k]&&this.ytPlayers[k].loadVideoById){try{const p=this.ytPlayers[k];p.loadVideoById({videoId:t.id,startSeconds:t.start||0,suggestedQuality:'tiny'});p.unMute();if(fadeIn)this._fadeYT(k,FADE_MS);this._loadWatch=setTimeout(()=>{try{const n=p.getCurrentTime?p.getCurrentTime():0;if(n<.1)this.next({fast:true})}catch{this.next({fast:true})}},4000)}catch{}}else{const f=document.getElementById('player-fallback-'+k);if(!f)return;const s=`https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start?`&start=${t.start}`:''}`;f.src=s;f.onload=()=>{ytPost(f,'playVideo',[]);if(fadeIn){ytPost(f,'setVolume',[0]);ytPost(f,'unMute',[]);this._fadeYT(k,FADE_MS)}else{ytPost(f,'setVolume',[100]);ytPost(f,'unMute',[])}};this._loadWatch=setTimeout(()=>this.next({fast:true}),5000)}}
 
