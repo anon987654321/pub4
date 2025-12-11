@@ -1,0 +1,28 @@
+# Claude CLI specific files - user data, not to be committed
+.claude/
+*.db
+*.sqlite3
+
+# Ruby
+*.gem
+*.rbc
+.bundle
+.config
+coverage
+InstalledFiles
+lib/bundler/man
+pkg
+rdoc
+spec/reports
+test/tmp
+test/version_tmp
+tmp
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test artifacts
+*.log
