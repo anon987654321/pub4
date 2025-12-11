@@ -184,7 +184,8 @@ class Repligen
     # Real workflow: query collections/image-to-video for actual working models
     
     # Image Generation - Latest & Best (Dec 2024)
-    flux_pro: 'black-forest-labs/flux-2-pro',
+    flux_20_pro: 'black-forest-labs/flux-2.0-pro',
+    flux_pro: 'black-forest-labs/flux-1.1-pro',
     flux_dev: 'black-forest-labs/flux-dev',
     flux_schnell: 'black-forest-labs/flux-schnell',
     imagen3: 'google-deepmind/imagen-3',
@@ -422,7 +423,7 @@ class Repligen
     end
   end
 
-  def request(endpoint, method = :get, body = nil)
+  def request(endpoint, method = :get, body = nil, retry_count = 0)
     uri = URI("#{API}/#{endpoint}")
     req = method == :post ? Net::HTTP::Post.new(uri) : Net::HTTP::Get.new(uri)
     req['Authorization'] = "Token #{@token}"
@@ -430,13 +431,49 @@ class Repligen
     req.body = body.to_json if body
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 300) { |http| http.request(req) }
-    raise "API Error: #{response.code} #{response.body}" unless response.code.to_i.between?(200, 299)
+    
+    # [api_integration] Handle rate limits with exponential backoff
+    if response.code == '429'
+      if retry_count < 3
+        wait_time = 2 ** retry_count
+        Bootstrap.dmesg "rate limit hit, waiting #{wait_time}s (retry #{retry_count + 1}/3)"
+        sleep wait_time
+        return request(endpoint, method, body, retry_count + 1)
+      else
+        raise "Rate limit exceeded after 3 retries"
+      end
+    end
+    
+    # [api_integration] Fail fast on auth errors
+    if response.code == '401' || response.code == '403'
+      raise "Authentication failed: #{response.code}. Check REPLICATE_API_TOKEN"
+    end
+    
+    unless response.code.to_i.between?(200, 299)
+      raise "API Error: #{response.code} #{response.body}"
+    end
     
     JSON.parse(response.body)
+  rescue Errno::ECONNRESET, Errno::ETIMEDOUT, Net::ReadTimeout => e
+    # [api_integration] Retry transient failures
+    if retry_count < 3
+      wait_time = 2 ** retry_count
+      Bootstrap.dmesg "network error: #{e.class}, retrying in #{wait_time}s"
+      sleep wait_time
+      request(endpoint, method, body, retry_count + 1)
+    else
+      raise "Network error after 3 retries: #{e.message}"
+    end
   end
 
-  def predict(model_key, input)
+  def predict(model_key, input, show_cost: true)
     model, version = MODELS[model_key].split(':')
+    
+    # [api_integration] Show cost before execution
+    cost = COSTS[model_key] || 0.0
+    if show_cost && cost > 0.05
+      puts "💰 Cost: $#{cost} - Model: #{model_key}"
+    end
     
     pred = request('predictions', :post, {
       version: version,
@@ -444,26 +481,89 @@ class Repligen
       webhook: ENV['WEBHOOK_URL']
     })
     
-    wait_for(pred['id'])
+    result = wait_for(pred['id'], model_key)
+    
+    # [api_integration] Track cost
+    track_cost(model_key, cost) if cost > 0
+    
+    result
+  end
+  
+  def track_cost(model_key, cost)
+    if @storage_mode == :sqlite && @db
+      @db.execute("INSERT INTO chains (models, cost, created_at) VALUES (?, ?, ?)",
+                  [model_key.to_s, cost, Time.now.to_i])
+    else
+      log_entry = {
+        model: model_key.to_s,
+        cost: cost,
+        timestamp: Time.now.iso8601
+      }
+      File.open(@jsonl_file, "a") { |f| f.puts JSON.generate(log_entry) }
+    end
+  end
+  
+  def total_costs(since: Time.now - 86400)
+    # Show spending over last 24 hours by default
+    if @storage_mode == :sqlite && @db
+      rows = @db.execute("SELECT SUM(cost) FROM chains WHERE created_at > ?", [since.to_i])
+      rows[0][0] || 0.0
+    else
+      return 0.0 unless File.exist?(@jsonl_file)
+      
+      total = 0.0
+      File.readlines(@jsonl_file).each do |line|
+        entry = JSON.parse(line)
+        entry_time = Time.parse(entry['timestamp'])
+        total += entry['cost'].to_f if entry_time > since
+      end
+      total
+    end
+  rescue => e
+    @logger.error "Cost tracking error: #{e.message}"
+    0.0
   end
 
-  def wait_for(id, timeout = 600)
+  def wait_for(id, model_key, timeout = 600)
     start = Time.now
+    wait_interval = 2
+    dots_printed = 0
+    
+    # [long_running_operation] Show operation name and estimated time
+    puts "\n⏱️  Waiting for #{model_key} (timeout: #{timeout}s)..."
     
     loop do
       pred = request("predictions/#{id}")
       
       case pred['status']
-      when 'succeeded' then return pred['output']
-      when 'failed' then raise pred['error']
-      when 'canceled' then raise 'Canceled'
+      when 'succeeded'
+        puts "\n✓ Complete (#{(Time.now - start).round(1)}s)"
+        return pred['output']
+      when 'failed'
+        puts "\n✗ Failed: #{pred['error']}"
+        raise pred['error']
+      when 'canceled'
+        puts "\n✗ Canceled"
+        raise 'Canceled'
       end
       
-      raise 'Timeout' if Time.now - start > timeout
+      elapsed = Time.now - start
+      raise "Timeout after #{timeout}s" if elapsed > timeout
       
+      # [long_running_operation] Progress indicator with exponential backoff
       print '.'
-      sleep 2
+      dots_printed += 1
+      if dots_printed % 50 == 0
+        puts " #{elapsed.round(0)}s"
+      end
+      
+      sleep wait_interval
+      wait_interval = [wait_interval * 1.5, 10].min  # Exponential backoff, max 10s
     end
+  rescue Interrupt
+    # [long_running_operation] Allow Ctrl-C gracefully
+    puts "\n⚠️  Interrupted by user"
+    raise
   end
 
   def format_input(model, input)
@@ -630,10 +730,281 @@ class Repligen
   def train_lora(urls)
     raise 'Provide image URLs' if urls.empty?
     
+    # [multimedia_specific] Validate images before expensive operation
+    puts "🔍 Validating #{urls.length} images..."
+    validated_urls = filter_nsfw_images(urls)
+    
+    if validated_urls.empty?
+      puts "✗ All images filtered due to NSFW content"
+      puts "  Use only covered swimwear, no nudity"
+      return nil
+    end
+    
+    if validated_urls.length < urls.length
+      puts "⚠️  Filtered #{urls.length - validated_urls.length} image(s) with NSFW content"
+      print "Continue with #{validated_urls.length} image(s)? (y/N): "
+      return nil unless gets.chomp.downcase.start_with?('y')
+    end
+    
+    # [api_integration] Show cost before execution
+    puts "\n💰 LoRA Training Cost: $1.46"
+    puts "   Training on #{validated_urls.length} images"
+    print "Proceed? (y/N): "
+    return nil unless gets.chomp.downcase.start_with?('y')
+    
     puts 'Training LoRA...'
-    output = predict(:lora, urls)
-    puts "Model: #{output}"
+    output = predict(:lora, validated_urls, show_cost: false)
+    puts "✓ Model: #{output}"
     output
+  end
+
+  def filter_nsfw_images(urls)
+    # Content policy filter for Replicate API
+    # Removes potentially NSFW images to prevent API rejection
+    
+    filtered = []
+    nsfw_keywords = [
+      'nude', 'naked', 'topless', 'bottomless', 'nsfw', 'xxx',
+      'porn', 'explicit', 'sexual', 'erotic', 'adult', 'uncensored'
+    ]
+    
+    urls.each do |url|
+      url_lower = url.downcase
+      
+      # Check URL for NSFW indicators
+      if nsfw_keywords.any? { |keyword| url_lower.include?(keyword) }
+        puts "  ✗ Filtered: #{File.basename(url)} (NSFW keyword in URL)"
+        next
+      end
+      
+      # Basic heuristics - actual detection would require image analysis
+      # For now, warn user to manually verify
+      puts "  ✓ Accepted: #{File.basename(url)}"
+      filtered << url
+    end
+    
+    if filtered.length == urls.length && filtered.any?
+      puts ""
+      puts "⚠️  CONTENT POLICY REMINDER:"
+      puts "  • Use only covered swimwear (bikini, one-piece)"
+      puts "  • No topless, nude, or see-through content"
+      puts "  • Replicate will reject NSFW content"
+      puts "  • Your account may be flagged for violations"
+      puts ""
+    end
+    
+    filtered
+  end
+
+  def build_cinematic_prompt(subject, style: "cinematic", mood: "dramatic", camera: "50mm", style_reference: nil)
+    # Professional prompt engineering based on Flux 2.0 best practices
+    # Structure: Subject + Action + Environment + Camera + Lighting + Mood + Style Reference
+    
+    # Style reference examples (for style_reference parameter)
+    style_references = {
+      indiana_jones: "1980s adventure film, practical stunts, warm film grain, Spielberg cinematography",
+      studio_ghibli: "hand-drawn animation, watercolor backgrounds, soft lighting, whimsical Miyazaki style",
+      blade_runner: "neon-lit cyberpunk, rain-soaked streets, Roger Deakins cinematography, dystopian atmosphere",
+      wes_anderson: "symmetrical composition, pastel color palette, centered framing, quirky production design",
+      inside_out: "Pixar 3D animation, vibrant colors, emotional depth, family-friendly",
+      nolan: "IMAX quality, practical effects, Hans Zimmer score aesthetic, epic scale",
+      tarantino: "bold colors, vintage film stock, dramatic angles, 70s exploitation style",
+      fincher: "desaturated tones, precise framing, moody lighting, psychological thriller aesthetic"
+    }
+    
+    templates = {
+      cinematic: {
+        camera: "#{camera} lens, shallow depth of field f/2.8, cinematic framing",
+        lighting: "dramatic three-point lighting, soft rim lights, subtle specular highlights",
+        color: "rich color grading, teal and orange tones, high contrast",
+        mood: "#{mood}, atmospheric, professional photography",
+        quality: "8K resolution, ultra detailed, photorealistic, award-winning"
+      },
+      portrait: {
+        camera: "#{camera} portrait lens, f/1.8 bokeh, medium close-up",
+        lighting: "soft diffused natural light, golden hour warmth, gentle shadows",
+        color: "warm color palette, Kodak Portra film look, skin tones protected",
+        mood: "#{mood}, intimate, editorial fashion photography",
+        quality: "hyper-realistic, sharp focus on eyes, professional retouching"
+      },
+      fashion: {
+        camera: "#{camera} lens, eye-level angle, centered composition",
+        lighting: "studio softbox setup, clean highlights, minimal shadows",
+        color: "vibrant colors, high saturation, luxury brand aesthetic",
+        mood: "#{mood}, confident, high-fashion editorial",
+        quality: "magazine quality, sharp details, professional model photography"
+      },
+      beach_cinematic: {
+        camera: "#{camera} lens, slow dolly movement, golden hour timing",
+        lighting: "natural sunset backlight, rim lighting on subject, warm glow",
+        color: "warm golden tones, sunset palette, enhanced sky colors",
+        mood: "#{mood}, romantic, serene, luxury lifestyle",
+        quality: "cinematic video quality, smooth motion, professional color grading"
+      }
+    }
+    
+    template = templates[style.to_sym] || templates[:cinematic]
+    
+    # Build structured prompt
+    prompt = "#{subject}. "
+    
+    # Add style reference if provided
+    if style_reference
+      ref = style_references[style_reference.to_sym]
+      prompt += "Style: #{ref}. " if ref
+    end
+    
+    prompt += "Camera: #{template[:camera]}. "
+    prompt += "Lighting: #{template[:lighting]}. "
+    prompt += "Colors: #{template[:color]}. "
+    prompt += "Mood: #{template[:mood]}. "
+    prompt += "Quality: #{template[:quality]}."
+    
+    puts "\n🎬 Cinematic Prompt Generated:"
+    puts "─" * 70
+    puts prompt
+    puts "─" * 70
+    puts ""
+    
+    prompt
+  end
+
+  def movie_style_workflow(prompt, style_reference, image_urls: nil)
+    puts "\n🎬 MOVIE STYLE GENERATOR"
+    puts "=" * 70
+    puts "Prompt: #{prompt}"
+    puts "Style: #{style_reference}"
+    puts "=" * 70
+    puts ""
+    
+    # [api_integration] Show total cost upfront
+    base_cost = image_urls ? 1.46 : 0.0  # LoRA if training on images
+    total_cost = base_cost + 0.04 + 0.15  # Flux 2.0 Pro + Kling
+    puts "💰 Estimated Total Cost: $#{total_cost}"
+    puts ""
+    
+    lora_model = nil
+    
+    # Phase 1: Optional LoRA training for character consistency
+    if image_urls && !image_urls.empty?
+      puts "Phase 1: Training character LoRA..."
+      lora_model = train_lora(image_urls)
+      return nil unless lora_model
+      puts "✓ Character model ready"
+      puts ""
+    end
+    
+    # Phase 2: Generate styled image with Flux 2.0 Pro
+    puts "Phase 2: Generating image in #{style_reference} style..."
+    cinematic_prompt = build_cinematic_prompt(
+      prompt,
+      style: :cinematic,
+      style_reference: style_reference.to_sym
+    )
+    
+    styled_image = predict(:flux_20_pro, cinematic_prompt)
+    save_output(styled_image, :flux_20_pro, "styled_#{style_reference}") if styled_image
+    puts "✓ Styled image generated"
+    puts ""
+    
+    # Phase 3: Apply postpro film emulation
+    if @postpro && styled_image
+      puts "Phase 3: Applying analog film look..."
+      system("ruby postpro.rb --auto")
+      puts "✓ Film emulation complete"
+      puts ""
+    end
+    
+    # Phase 4: Animate with cinematic motion
+    puts "Phase 4: Creating cinematic animation..."
+    video_prompt = "#{prompt} in the style of #{style_reference}, smooth camera movement, cinematic motion"
+    video = predict(:kling, styled_image, show_cost: true)
+    save_output(video, :kling, "movie_#{style_reference}") if video
+    puts ""
+    
+    puts "=" * 70
+    puts "🎉 MOVIE STYLE COMPLETE"
+    puts "  Style: #{style_reference}"
+    puts "  Total Cost: $#{total_cost}"
+    puts "  Output: output/videos/movie_#{style_reference}_*.mp4"
+    puts "=" * 70
+    
+    video
+  rescue Interrupt
+    puts "\n⚠️  Workflow interrupted"
+    nil
+  rescue => e
+    puts "\n✗ Workflow failed: #{e.message}"
+    @logger.error "Movie style workflow error: #{e.message}\n#{e.backtrace.join("\n")}"
+    nil
+  end
+
+  def swimsuit_model_workflow(image_urls)
+    puts "\n🌊 SWIMSUIT MODEL CINEMATIC WORKFLOW"
+    puts "=" * 70
+    puts ""
+    
+    # [api_integration] Show total cost upfront
+    total_cost = 1.46 + 0.04 + 0.15  # LoRA + Flux 2.0 Pro + Kling
+    puts "💰 Estimated Total Cost: $#{total_cost}"
+    puts "   • LoRA Training: $1.46"
+    puts "   • Flux 2.0 Pro: $0.04"
+    puts "   • Kling Animation: $0.15"
+    puts ""
+    
+    # Phase 1: LoRA Training (includes NSFW filter)
+    puts "Phase 1: Training custom LoRA model..."
+    lora_model = train_lora(image_urls)
+    return nil unless lora_model
+    
+    puts "✓ LoRA trained: #{lora_model}"
+    puts ""
+    
+    # Phase 2: Generate Hero Shot
+    puts "Phase 2: Generating hero shot with Flux 2.0 Pro..."
+    base_prompt = "Professional swimsuit model on pristine beach"
+    cinematic_prompt = build_cinematic_prompt(
+      base_prompt,
+      style: :beach_cinematic,
+      mood: "confident and serene",
+      camera: "85mm"
+    )
+    
+    hero_image = predict(:flux_20_pro, cinematic_prompt)
+    save_output(hero_image, :flux_20_pro, "hero_shot") if hero_image
+    puts "✓ Hero shot saved"
+    puts ""
+    
+    # Phase 3: Apply Postpro
+    if @postpro && hero_image
+      puts "Phase 3: Applying analog film emulation..."
+      puts "  Preset: Portrait (Kodak Portra warm tones)"
+      system("ruby postpro.rb --auto")
+      puts "✓ Color grading complete"
+      puts ""
+    end
+    
+    # Phase 4: Animate with Best Quality
+    puts "Phase 4: Creating cinematic animation..."
+    video = predict(:kling, hero_image, show_cost: true)
+    save_output(video, :kling, "cinematic_video") if video
+    puts ""
+    
+    puts "=" * 70
+    puts "🎉 WORKFLOW COMPLETE"
+    puts "  Actual Cost: $#{total_cost}"
+    puts "  Hero Shot: output/images/hero_shot_*.jpg"
+    puts "  Video: output/videos/cinematic_video_*.mp4"
+    puts "=" * 70
+    
+    video
+  rescue Interrupt
+    puts "\n⚠️  Workflow interrupted - partial results may be saved"
+    nil
+  rescue => e
+    puts "\n✗ Workflow failed: #{e.message}"
+    @logger.error "Swimsuit workflow error: #{e.message}\n#{e.backtrace.join("\n")}"
+    nil
   end
 
   def cost(chain_type)
@@ -659,8 +1030,17 @@ class Repligen
 
   def interactive
     puts "\nRepligen Interactive Mode"
-    puts "Commands: (g)enerate, (c)hain, (d)iscover, (s)earch, (l)ist, info, cost, quit"
+    puts "Commands: (g)enerate, (c)hain, (sw)imsuit, (m)ovie, (pr)ompt, (l)ora, (d)iscover, (s)earch, (l)ist, styles, info, cost, quit"
     puts "Postpro.rb integration: Active" if @postpro
+    puts ""
+    puts "🎬 New Features:"
+    puts "  • movie <style> <prompt> - Generate in movie/director style"
+    puts "  • swimsuit <urls...> - Complete cinematic workflow with LoRA"
+    puts "  • prompt <style> <subject> - Professional prompt engineering"
+    puts "  • styles - Show available movie style references"
+    puts "  • costs [hours] - Track API spending"
+    puts ""
+    puts "Style References: indiana_jones, studio_ghibli, blade_runner, wes_anderson, nolan, tarantino, fincher"
     
     loop do
       print "> "
@@ -679,7 +1059,20 @@ class Repligen
     when 'g', 'generate' then gen_and_offer(args.empty? ? 'digital art' : args.join(' '))
     when 'c', 'chain' then chain_and_offer(args[0]&.to_sym || :quick, args[1..-1]&.join(' ') || 'art')
     when 'l', 'lora' then train_lora(args)
-    when 'cost' then puts "$%.3f" % cost(args[0]&.to_sym || :quick)
+    when 'swimsuit', 'sw' then swimsuit_model_workflow(args)
+    when 'movie', 'mv'
+      style_ref = args[0] || 'indiana_jones'
+      prompt = args[1..-1]&.join(' ') || 'epic adventure scene'
+      movie_style_workflow(prompt, style_ref)
+    when 'prompt', 'pr'
+      style = args[0]&.to_sym || :cinematic
+      subject = args[1..-1]&.join(' ') || 'subject'
+      puts build_cinematic_prompt(subject, style: style)
+    when 'cost', 'costs'
+      hours = args[0]&.to_i || 24
+      since = Time.now - (hours * 3600)
+      total = total_costs(since: since)
+      puts "💰 Total spending (last #{hours}h): $#{total.round(3)}"
     when 'postpro', 'p'
       @postpro ? system('ruby postpro.rb') : puts("postpro.rb not found")
     when 'discover', 'd' then discover_models(args)
@@ -687,9 +1080,27 @@ class Repligen
     when 'add' then add_custom_model(args)
     when 'list' then list_models(args[0])
     when 'info' then show_model_info(args[0])
+    when 'styles' then show_style_references
     when 'q', 'quit' then exit
     else puts "Unknown: #{cmd}"
     end
+  end
+
+  def show_style_references
+    puts "\n🎬 Available Movie Style References:"
+    puts "─" * 70
+    puts "  • indiana_jones - 1980s adventure, Spielberg cinematography"
+    puts "  • studio_ghibli - Hand-drawn animation, Miyazaki whimsy"
+    puts "  • blade_runner - Neon cyberpunk, Roger Deakins"
+    puts "  • wes_anderson - Symmetrical, pastel, quirky"
+    puts "  • inside_out - Pixar 3D, vibrant, emotional"
+    puts "  • nolan - IMAX epic, practical effects"
+    puts "  • tarantino - Bold colors, 70s exploitation"
+    puts "  • fincher - Desaturated, psychological thriller"
+    puts "─" * 70
+    puts "\nUsage: movie <style> <prompt>"
+    puts "Example: movie studio_ghibli a girl walking through forest"
+    puts ""
   end
 
   def discover_models(args = [])

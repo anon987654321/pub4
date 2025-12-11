@@ -6,7 +6,7 @@ meta:
   self_execution: "Internalize → Apply → Verify → Converge"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
-  current_datetime: "2025-12-11T22:00:08.851Z"
+  current_datetime: "2025-12-11T22:01:00.878Z"
   always_active: true
   load_priority: 1
   scope: "all_sessions_all_contexts"
@@ -32,7 +32,7 @@ meta:
       compliance_check: "Ask LLM to explain golden_rule - should quote 'PRESERVE_THEN_IMPROVE_NEVER_BREAK'"
       failure_mode: "If verification fails, LLM must reload and re-internalize completely"
     portability:
-      windows: "Use absolute path G:/pub/master.yml or G:\pub\master.yml"
+      windows: "Use absolute path G:/pub/master.yml or G:pubmaster.yml"
       unix: "Use ~/pub/master.yml or resolve from $HOME"
       cygwin: "Path accessible as /cygdrive/g/pub/master.yml"
       url_fallback: "https://raw.githubusercontent.com/[user]/pub/main/master.yml (if public repo exists)"
@@ -376,7 +376,7 @@ execution:
       mandate: "Use pure zsh parameter expansion over awk/sed/tr/grep"
       reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
       string_ops:
-        - "Remove CRLF: ${var//$'\r'/}"
+        - "Remove CRLF: ${var//$''/}"
         - "Lowercase: ${(L)var}"
         - "Uppercase: ${(U)var}"
         - "Replace all: ${var//search/replace}"
@@ -401,7 +401,8 @@ execution:
       filter_lines: "${(M)${(f)"$(< file)"}:#*pattern*}"
       unique_lines: "${(u)${(f)"$(< file)"}}"
       sort_lines: "${(o)${(f)"$(< file)"}}"
-      join_lines: "${(j:\n:)${(f)"$(< file)"}}"
+      join_lines: "${(j:
+:)${(f)"$(< file)"}}"
       word_count: "${#${(w)"$(< file)"}}"
       find_replace_file: "print -r -- "${${(f)"$(< file)"}//old/new}" > file"
       append_unique: "print -l -- "${(u)${(f)"$(< file)"}[@]} new_line" > file"
@@ -409,7 +410,7 @@ execution:
       count_yaml_keys: "zsh -c 'print ${#${(M)${(f)"$(< master.yml)"}:#[a-z_]*:}}'"
       extract_versions: "zsh -c 'print -l ${(M)${(f)"$(< master.yml)"}:#*version:*}'"
       remove_blank_lines: "zsh -c 'print -l ${${(f)"$(< file)"}:#}' > file.tmp && mv file.tmp file"
-      filter_comments: "zsh -c 'print -l ${${(f)"$(< file)"}:#\#*}'"
+      filter_comments: "zsh -c 'print -l ${${(f)"$(< file)"}:##*}'"
     token_comparison:
       powershell: "Get-Content file | Where-Object {$_ -match 'pattern'} | Measure-Object # ~60 chars"
       zsh_builtin: "print ${#${(M)${(f)"$(< file)"}:#*pattern*}} # ~45 chars, 700 token savings"
@@ -580,7 +581,7 @@ reference:
     clarity: 1.0
     cognitive_load_reduction: "60%"
     constraint_compliance: "zsh_only_for_all_operations"
-    last_updated: "2025-12-11T22:00:08.851Z"
+    last_updated: "2025-12-11T22:01:00.878Z"
     changes_37_7:
       - "Successfully consolidated 15→6 root sections for cognitive_chunk_size compliance"
       - "New structure: meta, core, execution, output, quality, reference"

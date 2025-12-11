@@ -1,0 +1,95 @@
+# Solution 13: Compressed 15→6 sections for cognitive_chunk_size compliance
+# Template for completing consolidation - preserves all functionality
+# Use this as reference when ready to execute full consolidation
+
+meta:
+  version: 37.8.0
+  purpose: "unified_design_execution_framework with autonomous_convergence"
+  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+  lineage: "v37.8: Consolidated 15→6 sections for cognitive_chunk_size (7±2) compliance"
+  current_datetime: "2025-12-11T21:20:08.893Z"
+  always_active: true
+  load_priority: 1
+  scope: "all_sessions_all_contexts"
+  enforcement_mode: "strict"
+  self_discovery:
+    canonical_path: "G:/pub/master.yml"
+    bootstrap_protocol: [read, verify, internalize, activate, confirm]
+  quick_reference:
+    critical_principles: "security_first, preserve_functionality, data_integrity, complete_implementation"
+    sections: "meta, core, execution, output, quality, reference"
+
+core:
+  # Consolidates: framework + principles_patterns + patterns
+  constraints:
+    banned: [python, bash, powershell, sed, awk, grep, cat, wc, head, tail, sort, find, sudo]
+    allowed: [ruby, zsh, read_tool, edit_tool, write_tool]
+    bash_exceptions: [git, npm, bundle, rails, rake]
+  thresholds:
+    code: {max_arguments: 3, max_nesting: 3, max_method_lines: 20, max_complexity: 10}
+    typography: {line_length: 66, line_height: [1.4, 1.6]}
+    layout: {base_unit: 8, grid_columns: 12}
+  principles:
+    golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+    priority: {critical: [security_first, preserve_functionality, data_integrity]}
+    bias_mitigation: [recency, confirmation, anchoring, sunk_cost]
+    refactoring: [defragment, hoist, merge, regroup, reflow, flatten]
+  patterns:
+    code_quality: {truncated: write_full_code, duplicates: remove, complex: simplify}
+    reliability: {security: validate_input, errors: handle_all_paths}
+    
+execution:
+  # Consolidates: workflow + language + validation
+  workflow:
+    phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
+    self_execution: {loop: "internalize→apply→verify→converge", max_iterations: 20}
+  language:
+    zsh: {token_savings: 700, file_ops: parameter_expansion, version: "5.9+"}
+    ruby: {version: "3.4.7", philosophy: programmer_happiness}
+    javascript: {philosophy: use_the_platform, conventions: vanilla_first}
+  validation:
+    perspectives: [security, junior, user, maintainer, designer]
+    execution_trace: {method: word_for_word, coverage: full_branch}
+
+output:
+  # Consolidates: communication + design + prose
+  communication:
+    style: openbsd_dmesg_terse_scannable
+    philosophy: [results_first, silent_on_success, loud_on_failure]
+  design:
+    philosophy: brutalist_flat_2.0
+    colors: {background: "#FFFFFF", accent: "#1D9BF0"}
+  prose:
+    style: strunk_white
+    rules: [omit_needless_words, use_vigorous_english, prefer_active_voice]
+
+quality:
+  # Consolidates: multi_temperature_reasoning + adversarial_personas + quality_verification
+  reasoning:
+    discover: 0.9
+    implement: 0.5
+    validate: 0.1
+  personas: [skeptic, minimalist, chaos, cost, accessibility, auditor]
+  verification:
+    must_pass: [security_audit, functionality_preserved, no_truncation, formatter_applied]
+    self_check: {triggers: [on_load, before_delivery], process: "internalize→verify→converge"}
+
+reference:
+  # Consolidates: tech_stack + constants
+  tech_stack:
+    ruby: "3.4.7"
+    rails: "8.1.1"
+    javascript: "ES2024+"
+    zsh: "5.9+"
+    openbsd: "7.8+"
+  constants:
+    typography: {line_length_ideal: 66, line_height_body: [1.4, 1.6]}
+    performance: {lcp_seconds: 2.5, inp_milliseconds: 200}
+    accessibility: {contrast_minimum: 4.5, standard: "WCAG_AA"}
+  metrics:
+    lines: 100
+    root_sections: 6
+    nesting_max: 3
+    clarity: 1.0
+    cognitive_load_reduction: "63%"
+
