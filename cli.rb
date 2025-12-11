@@ -620,6 +620,30 @@ module Claude
       []
     end
     
+    def add_tag(session_id, tag)
+      return false unless @db_path && session_id
+      
+      db = SQLite3::Database.new(@db_path)
+      row = db.get_first_row("SELECT tags FROM sessions WHERE id = ?", session_id)
+      return false unless row
+      
+      tags = JSON.parse(row[0])
+      unless tags.include?(tag)
+        tags << tag
+        db.execute(
+          "UPDATE sessions SET tags = ?, updated_at = ? WHERE id = ?",
+          JSON.generate(tags),
+          Time.now.utc.iso8601,
+          session_id
+        )
+      end
+      db.close
+      true
+    rescue => e
+      warn "Warning: Failed to add tag: #{e.message}"
+      false
+    end
+    
     private
     
     def calculate_avg_response_time(response_times_json)
@@ -979,12 +1003,11 @@ module Claude
       when "tag"
         tag = parts[1]
         if tag && @session_id
-          session = @session_manager.get_session(@session_id)
-          tags = session[:tags] || []
-          tags << tag unless tags.include?(tag)
-          
-          # Update session with new tags (simplified, would need proper method)
-          puts "Tag '#{tag}' added to session"
+          if @session_manager.add_tag(@session_id, tag)
+            puts "Tag '#{tag}' added to session"
+          else
+            puts "Failed to add tag"
+          end
         else
           puts "Usage: /session tag <tag>"
         end
