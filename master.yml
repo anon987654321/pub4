@@ -6,7 +6,7 @@ meta:
   self_execution: "Internalize → Apply → Verify → Converge"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
-  current_datetime: "2025-12-11T21:35:20.719Z"
+  current_datetime: "2025-12-11T22:00:08.851Z"
   always_active: true
   load_priority: 1
   scope: "all_sessions_all_contexts"
@@ -32,10 +32,11 @@ meta:
       compliance_check: "Ask LLM to explain golden_rule - should quote 'PRESERVE_THEN_IMPROVE_NEVER_BREAK'"
       failure_mode: "If verification fails, LLM must reload and re-internalize completely"
     portability:
-      windows: "Use absolute path G:/pub/master.yml or G:\\pub\\master.yml"
+      windows: "Use absolute path G:/pub/master.yml or G:\pub\master.yml"
       unix: "Use ~/pub/master.yml or resolve from $HOME"
       cygwin: "Path accessible as /cygdrive/g/pub/master.yml"
       url_fallback: "https://raw.githubusercontent.com/[user]/pub/main/master.yml (if public repo exists)"
+    zshrc_bootstrap: "First zsh launch prompts config - press 0 to create minimal ~/.zshrc"
   quick_reference:
     first_use: "New session? Verify master.yml loaded by asking LLM to cite meta.version"
     flow: "Read this section first for immediate orientation"
@@ -62,7 +63,7 @@ meta:
 core:
   constraints:
     banned: [python, bash, sed, awk, grep, cat, wc, head, tail, sort, find, sudo]
-    allowed: [ruby, zsh, read_tool, edit_tool, write_tool]
+    allowed: [ruby, zsh]
     bash_exceptions: [git, npm, bundle, rails, rake]
     null_usage: forbidden_forever
     rationale: "zsh_builtins_save_700_tokens_per_operation"
@@ -305,6 +306,7 @@ execution:
     deployment_verification: "check console for errors → test primary workflow → verify API calls → monitor for 5min"
     mp3_serving: ".mp3/subdirectory with relative paths, CORS headers automatic on GitHub Pages"
     cygwin_zsh: "copilot CLI runs in Cygwin/npm environment, path format: /cygdrive/g/path"
+    cygwin_git_workaround: "If Cygwin git fails (missing .dll), use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
     conflict_resolution: "git checkout --ours FILE && git add FILE && git rebase --continue"
     vps_development: "develop locally (full Copilot), deploy to OpenBSD VPS (no Copilot binaries)"
   ai_assisted:
@@ -361,7 +363,7 @@ execution:
         - "Quote strings with special chars"
       shell:
         - "2 space indentation"
-        - "Quote all expansions: \"$var\""
+        - "Quote all expansions: "$var""
         - "Space around = in [[ ]]"
         - "No space around = in var=val"
   shell_zsh:
@@ -374,7 +376,7 @@ execution:
       mandate: "Use pure zsh parameter expansion over awk/sed/tr/grep"
       reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
       string_ops:
-        - "Remove CRLF: ${var//$'\\r'/}"
+        - "Remove CRLF: ${var//$'\r'/}"
         - "Lowercase: ${(L)var}"
         - "Uppercase: ${(U)var}"
         - "Replace all: ${var//search/replace}"
@@ -392,25 +394,25 @@ execution:
         reason: "Pure zsh is faster, no forks, fewer tokens"
         exceptions: "Complex regex (PCRE), multi-file ops, binary data"
     file_operations:
-      read_lines: "${(f)\"$(< file)\"}"
-      count_lines: "${#${(f)\"$(< file)\"}}"
-      read_first_n: "${(f)\"$(< file)\"}[1,n]"
-      read_last_n: "${(f)\"$(< file)\"}[-n,-1]"
-      filter_lines: "${(M)${(f)\"$(< file)\"}:#*pattern*}"
-      unique_lines: "${(u)${(f)\"$(< file)\"}}"
-      sort_lines: "${(o)${(f)\"$(< file)\"}}"
-      join_lines: "${(j:\\n:)${(f)\"$(< file)\"}}"
-      word_count: "${#${(w)\"$(< file)\"}}"
-      find_replace_file: "print -r -- \"${${(f)\"$(< file)\"}//old/new}\" > file"
-      append_unique: "print -l -- \"${(u)${(f)\"$(< file)\"}[@]} new_line\" > file"
+      read_lines: "${(f)"$(< file)"}"
+      count_lines: "${#${(f)"$(< file)"}}"
+      read_first_n: "${(f)"$(< file)"}[1,n]"
+      read_last_n: "${(f)"$(< file)"}[-n,-1]"
+      filter_lines: "${(M)${(f)"$(< file)"}:#*pattern*}"
+      unique_lines: "${(u)${(f)"$(< file)"}}"
+      sort_lines: "${(o)${(f)"$(< file)"}}"
+      join_lines: "${(j:\n:)${(f)"$(< file)"}}"
+      word_count: "${#${(w)"$(< file)"}}"
+      find_replace_file: "print -r -- "${${(f)"$(< file)"}//old/new}" > file"
+      append_unique: "print -l -- "${(u)${(f)"$(< file)"}[@]} new_line" > file"
     efficiency_examples:
-      count_yaml_keys: "zsh -c 'print ${#${(M)${(f)\"$(< master.yml)\"}:#[a-z_]*:}}'"
-      extract_versions: "zsh -c 'print -l ${(M)${(f)\"$(< master.yml)\"}:#*version:*}'"
-      remove_blank_lines: "zsh -c 'print -l ${${(f)\"$(< file)\"}:#}' > file.tmp && mv file.tmp file"
-      filter_comments: "zsh -c 'print -l ${${(f)\"$(< file)\"}:#\\#*}'"
+      count_yaml_keys: "zsh -c 'print ${#${(M)${(f)"$(< master.yml)"}:#[a-z_]*:}}'"
+      extract_versions: "zsh -c 'print -l ${(M)${(f)"$(< master.yml)"}:#*version:*}'"
+      remove_blank_lines: "zsh -c 'print -l ${${(f)"$(< file)"}:#}' > file.tmp && mv file.tmp file"
+      filter_comments: "zsh -c 'print -l ${${(f)"$(< file)"}:#\#*}'"
     token_comparison:
       powershell: "Get-Content file | Where-Object {$_ -match 'pattern'} | Measure-Object # ~60 chars"
-      zsh_builtin: "print ${#${(M)${(f)\"$(< file)\"}:#*pattern*}} # ~45 chars, 700 token savings"
+      zsh_builtin: "print ${#${(M)${(f)"$(< file)"}:#*pattern*}} # ~45 chars, 700 token savings"
   ruby_rails:
     philosophy: "programmer happiness, convention over configuration"
     conventions: ["thin controllers", "check edgeguides.rubyonrails.org", "write tests"]
@@ -578,7 +580,7 @@ reference:
     clarity: 1.0
     cognitive_load_reduction: "60%"
     constraint_compliance: "zsh_only_for_all_operations"
-    last_updated: "2025-12-11T21:35:20.719Z"
+    last_updated: "2025-12-11T22:00:08.851Z"
     changes_37_7:
       - "Successfully consolidated 15→6 root sections for cognitive_chunk_size compliance"
       - "New structure: meta, core, execution, output, quality, reference"
