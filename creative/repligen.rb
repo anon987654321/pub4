@@ -8,7 +8,22 @@ require "optparse"
 require "fileutils"
 
 # Repligen - AI Content Generation with Postpro Integration  
-# Version: 7.3.0 - Master.json Optimized
+# Version: 8.1.0 - Dynamic Model Discovery + Working Image-to-Video
+#
+# PROVEN WORKFLOW (Dec 2025):
+# 1. Query /v1/collections/image-to-video for current models
+# 2. Use first available model with latest_version.id
+# 3. Convert image to base64 data URI
+# 4. Poll prediction status every 10s
+# 5. Download output from replicate.delivery URL
+#
+# WORKING COMMAND:
+# $coll = GET /v1/collections/image-to-video
+# $model = $coll.models[0]
+# $version = $model.latest_version.id
+# POST /v1/predictions with {version, input: {image: data:image/*;base64,...}}
+#
+# See execute_simple_generation() for working implementation
 
 module Bootstrap
   def self.dmesg(msg)
@@ -164,24 +179,101 @@ class Repligen
   API = 'https://api.replicate.com/v1'
   
   MODELS = {
-    ra2: 'anon987654321/ra2:983967a65f090aa0ced0d227e809ae57b29f2d1d1ae4f84a17dd25176e0d313d',
-    imagen3: 'google/imagen-3:bffd1835e5c4ea8d40c18ff2f349a24e7fbdcfe5353135b008bc5795e492e7a6',
-    flux: 'black-forest-labs/flux-1.1-pro:8f3e0970b7e77b40f6e940f648098297c4419816f9a6f3503697e9a058b28cfa',
-    wan480: 'wan-ai/wan-2.1-i2v-480p:8cedc4c0313c89c8e5a98b3ad5e960a4c60e3b95c0bb7c89a96bbf90c74e967f',
-    sdv: 'stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b3e7bf3f',
-    lora: 'replicate/fast-flux-trainer:8b10794665aed907bb98a1a5324cd1d3a8bea0e9b31e65210967fb9c9e2e08ed',
-    music: 'meta/musicgen:7be0f12c54a8d85c3f0b1b9c0b0d4e8c0b0d4e8c0b0d4e8c0b0d4e8c0b0d4e8c',
-    upscale: 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa'
+    # NOTE: Use discover/search commands to get current working models!
+    # Model IDs change frequently on Replicate. These are placeholders.
+    # Real workflow: query collections/image-to-video for actual working models
+    
+    # Image Generation - Latest & Best (Dec 2024)
+    flux_pro: 'black-forest-labs/flux-2-pro',
+    flux_dev: 'black-forest-labs/flux-dev',
+    flux_schnell: 'black-forest-labs/flux-schnell',
+    imagen3: 'google-deepmind/imagen-3',
+    imagen4: 'google/imagen-4',
+    seedream: 'bytedance/seedream-4.5',
+    ideogram: 'ideogram-ai/ideogram-v3-turbo',
+    sdxl: 'stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
+    
+    # Image-to-Video - IMPORTANT: Query API dynamically!
+    # These model IDs are often invalid. Use: GET /v1/collections/image-to-video
+    kling: 'kuaishou/kling-video-v2.1',
+    luma: 'lumalabs/ray2',
+    veo: 'google/veo-3.1',
+    sora: 'openai/sora-2',
+    hailuo: 'minimax/video-01',
+    hailuo_fast: 'minimax/hailuo-2.3-fast',
+    seedance_pro: 'bytedance/seedance-1-pro',
+    seedance_fast: 'bytedance/seedance-1-fast',
+    runway: 'runwayml/gen-4-image',
+    wan720: 'alibaba-pai/wan-video-i2v-720p',
+    wan1080: 'alibaba-pai/wan-video-i2v-1080p',
+    
+    # Enhancement & Upscaling
+    upscale: 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa',
+    upscale_video: 'topazlabs/video-upscale',
+    upscale_topaz: 'topazlabs/image-upscale',
+    crystal: 'philz1337x/crystal-upscaler',
+    clarity: 'philz1337x/clarity-upscaler',
+    
+    # Audio & Music  
+    music: 'meta/musicgen-stereo-large',
+    speech: 'minimax/speech-02-turbo',
+    chatterbox: 'ressemble-ai/chatterbox-multilingual',
+    kokoro: 'jaaari/kokoro-82m',
+    transcribe: 'openai/gpt-4o-transcribe',
+    
+    # Utility
+    depth: 'fofr/depth-anything-v2',
+    rembg: 'lucataco/remove-bg',
+    rembg_video: 'arielreplicate/robust_video_matting',
+    ocr: 'datalab-to/marker',
+    lora: 'ostris/flux-dev-lora-trainer'
   }.freeze
   
-  COSTS = { ra2: 0.08, imagen3: 0.01, flux: 0.03, wan480: 0.08, sdv: 0.10, music: 0.02, upscale: 0.002, lora: 1.46 }.freeze
+  COSTS = { 
+    # Image models
+    flux_pro: 0.04, flux_dev: 0.025, flux_schnell: 0.003, imagen3: 0.01, imagen4: 0.015,
+    seedream: 0.03, ideogram: 0.04, sdxl: 0.02,
+    
+    # Video models
+    kling: 0.15, luma: 0.12, veo: 0.20, sora: 0.30, 
+    hailuo: 0.08, hailuo_fast: 0.05, seedance_pro: 0.15, seedance_fast: 0.08,
+    runway: 0.10, wan720: 0.06, wan1080: 0.10,
+    
+    # Enhancement
+    upscale: 0.002, upscale_video: 0.01, upscale_topaz: 0.008, crystal: 0.015, clarity: 0.01,
+    
+    # Audio
+    music: 0.02, speech: 0.01, chatterbox: 0.015, kokoro: 0.005, transcribe: 0.006,
+    
+    # Utility
+    depth: 0.005, rembg: 0.002, rembg_video: 0.008, ocr: 0.003, lora: 1.46
+  }.freeze
   
   CHAINS = {
-    cinematic: %w[ra2 upscale],
-    quick: %w[imagen3 upscale],
-    video: %w[imagen3 wan480],
-    full: %w[imagen3 wan480 music],
-    creative: %w[flux upscale wan480 music],
+    # Quick Image Chains
+    quick: %w[flux_schnell upscale],
+    image_pro: %w[flux_pro clarity],
+    ultra_image: %w[seedream upscale_topaz],
+    
+    # Video Chains - Cinematic Quality
+    hollywood: %w[flux_pro clarity kling music],
+    cinematic: %w[flux_pro crystal luma speech],
+    ultra_hd: %w[imagen4 upscale_topaz veo chatterbox],
+    premium: %w[seedream crystal sora music],
+    anime: %w[ideogram upscale kling],
+    
+    # Fast Prototyping  
+    fast_video: %w[flux_schnell wan720],
+    budget: %w[imagen3 wan720 music],
+    speed: %w[flux_schnell hailuo_fast kokoro],
+    
+    # Advanced Pipelines
+    masterpiece: %w[flux_pro depth crystal luma chatterbox],
+    experimental: %w[seedream rembg upscale kling music],
+    multi_angle: %w[flux_pro depth clarity kling runway music],
+    professional: %w[imagen4 upscale_topaz seedance_pro speech],
+    
+    # Chaos mode
     chaos: -> { MODELS.keys.sample(rand(8..15)) }
   }.freeze
 
@@ -376,12 +468,91 @@ class Repligen
 
   def format_input(model, input)
     case model
-    when :ra2, :imagen3, :flux then { prompt: input.is_a?(String) ? input : 'digital art', num_outputs: 1 }
-    when :wan480, :sdv then input.start_with?('http') ? { image: input, num_frames: 96 } : { prompt: input }
-    when :music then { prompt: 'cinematic', duration: 10 }
-    when :upscale then { image: input, scale: 2 }
-    when :lora then { input_images: input.is_a?(Array) ? input.join(',') : input, trigger_word: 'subject' }
-    else { input: input }
+    # Image Generation Models
+    when :flux_pro, :flux_dev, :flux_schnell, :imagen3, :imagen4, :seedream, :ideogram, :sdxl
+      { prompt: input.is_a?(String) ? input : 'cinematic masterpiece', num_outputs: 1 }
+    
+    # Image-to-Video Models (State of the Art Dec 2024)
+    when :kling
+      if input.start_with?('http')
+        { image: input, duration: 10, fps: 24, prompt: 'smooth cinematic camera movement' }
+      else
+        { prompt: input, duration: 10, fps: 24 }
+      end
+    
+    when :luma
+      if input.start_with?('http')
+        { image: input, loop: false, keyframes: { frame0: { type: 'image', url: input } } }
+      else
+        { prompt: input }
+      end
+    
+    when :veo, :sora
+      if input.start_with?('http')
+        { image: input, prompt: 'dynamic cinematic movement', length: 8 }
+      else
+        { prompt: input, length: 8 }
+      end
+    
+    when :hailuo, :hailuo_fast
+      if input.start_with?('http')
+        { image: input, prompt: 'smooth realistic motion', duration: 6 }
+      else
+        { prompt: input, duration: 6 }
+      end
+    
+    when :seedance_pro, :seedance_fast
+      if input.start_with?('http')
+        { image: input, duration: 5, fps: 24 }
+      else
+        { prompt: input, duration: 5 }
+      end
+    
+    when :wan720, :wan1080
+      if input.start_with?('http')
+        { image: input, num_frames: 81, fps: 16 }
+      else
+        { prompt: input, num_frames: 81 }
+      end
+    
+    when :runway
+      { image: input, duration: 5, fps: 24 }
+    
+    # Enhancement Models
+    when :upscale, :upscale_topaz
+      { image: input, scale: 4 }
+    
+    when :upscale_video
+      { video: input, scale: 2 }
+    
+    when :crystal, :clarity
+      { image: input, creativity: 0.35, resemblance: 0.6 }
+    
+    when :depth
+      { image: input }
+    
+    when :rembg, :rembg_video
+      { image: input }
+    
+    when :ocr
+      { file: input }
+    
+    # Audio Models  
+    when :music
+      { prompt: input.is_a?(String) ? input : 'epic cinematic orchestral', duration: 10 }
+    
+    when :speech, :chatterbox, :kokoro
+      { text: input.is_a?(String) ? input : 'Amazing cinematic video' }
+    
+    when :transcribe
+      { audio: input }
+    
+    # Training
+    when :lora
+      { input_images: input.is_a?(Array) ? input.join(',') : input, trigger_word: 'subject', steps: 1000 }
+    
+    else
+      { input: input }
     end
   end
 
@@ -412,12 +583,24 @@ class Repligen
     
     return unless response.code == '200'
     
-    filename = "#{sanitize(prompt)}_generated_#{type}_#{Time.now.strftime('%Y%m%d%H%M%S')}.jpg"
+    # Determine output directory based on type
+    dir = case type.to_s
+    when /video|kling|luma|veo|wan|hailuo|runway/ then 'output/videos'
+    when /audio|music/ then 'output/audio'
+    else 'output/images'
+    end
+    
+    FileUtils.mkdir_p(dir)
+    
+    # Determine file extension
+    ext = url.match(/\.(mp4|mov|webm|mp3|wav|jpg|png|gif)$/i)&.captures&.first || 'jpg'
+    
+    filename = File.join(dir, "#{sanitize(prompt)}_#{type}_#{Time.now.strftime('%Y%m%d_%H%M%S')}.#{ext}")
     File.write(filename, response.body)
-    puts "Saved: #{filename}"
+    puts "💾 Saved: #{filename}"
     File.utime(Time.now, Time.now, filename)
   rescue StandardError => e
-    puts "Could not save output: #{e.message}"
+    puts "⚠️  Could not save output: #{e.message}"
   end
 
   def sanitize(prompt)
@@ -476,7 +659,7 @@ class Repligen
 
   def interactive
     puts "\nRepligen Interactive Mode"
-    puts "Commands: (g)enerate, (c)hain, (l)ora, cost, quit"
+    puts "Commands: (g)enerate, (c)hain, (d)iscover, (s)earch, (l)ist, info, cost, quit"
     puts "Postpro.rb integration: Active" if @postpro
     
     loop do
@@ -500,30 +683,224 @@ class Repligen
     when 'postpro', 'p'
       @postpro ? system('ruby postpro.rb') : puts("postpro.rb not found")
     when 'discover', 'd' then discover_models(args)
-    when 'radical', 'r' then radical_chain(args)
+    when 'search', 's' then search_models(args.join(' '))
+    when 'add' then add_custom_model(args)
+    when 'list' then list_models(args[0])
+    when 'info' then show_model_info(args[0])
     when 'q', 'quit' then exit
     else puts "Unknown: #{cmd}"
     end
   end
 
-  def discover_models(args)
-    pages = (args[0] || 5).to_i
-    scraper = ReplicateExplorer.new(@bootstrap[:anthropic_token])
-    models = scraper.discover(max_pages: pages)
-    puts "Discovered #{models.size} models"
-    models.each { |m| puts "  #{m['id']}: #{m['type']}" }
+  def discover_models(args = [])
+    puts "\n🔍 Discovering models from Replicate API..."
+    
+    categories = args.empty? ? ['trending', 'featured'] : args
+    discovered = []
+    
+    categories.each do |category|
+      puts "\n📂 Category: #{category}"
+      
+      begin
+        # Use Replicate API to get models
+        endpoint = case category
+        when 'trending' then 'models'
+        when 'featured' then 'collections/featured'
+        else "collections/#{category}"
+        end
+        
+        response = request(endpoint, :get)
+        models = response['results'] || response['models'] || []
+        
+        models.first(20).each do |model|
+          owner = model['owner']
+          name = model['name']
+          url = model['url']
+          description = model['description']
+          runs = model['run_count'] || 0
+          
+          discovered << {
+            id: "#{owner}/#{name}",
+            owner: owner,
+            name: name,
+            description: description,
+            runs: runs,
+            url: url
+          }
+          
+          puts "  ✓ #{owner}/#{name} (#{runs} runs)"
+        end
+        
+      rescue => e
+        puts "  ⚠️  Error fetching #{category}: #{e.message}"
+      end
+    end
+    
+    # Save to database
+    if @db && discovered.any?
+      discovered.each do |model|
+        @db.execute(
+          "INSERT OR REPLACE INTO models (owner, name, description, runs, url, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+          [model[:owner], model[:name], model[:description], model[:runs], model[:url], Time.now.to_i]
+        )
+      end
+      puts "\n💾 Saved #{discovered.size} models to database"
+    end
+    
+    discovered
   end
 
-  def radical_chain(args)
-    style = args[0] || 'cinematic'
-    length = (args[1] || 5).to_i
-    scraper = ReplicateExplorer.new(@bootstrap[:anthropic_token])
-    chain = scraper.build_radical_chain(style: style, length: length)
+  def search_models(query)
+    puts "\n🔍 Searching Replicate for: #{query}"
+    
+    begin
+      # Search via API
+      response = request("models?search=#{URI.encode_www_form_component(query)}", :get)
+      results = response['results'] || []
+      
+      if results.empty?
+        puts "No models found"
+        return
+      end
+      
+      puts "\n📋 Found #{results.size} models:\n"
+      results.first(10).each_with_index do |model, i|
+        puts "#{i+1}. #{model['owner']}/#{model['name']}"
+        puts "   #{model['description']&.slice(0, 60)}..."
+        puts "   Runs: #{model['run_count'] || 0}"
+        puts
+      end
+      
+    rescue => e
+      puts "⚠️  Search failed: #{e.message}"
+    end
+  end
+  
+  def add_custom_model(args)
+    if args.size < 2
+      puts "Usage: add <name> <owner/model> [cost]"
+      return
+    end
+    
+    name = args[0].to_sym
+    model_id = args[1]
+    cost = args[2]&.to_f || 0.05
+    
+    if MODELS[name]
+      puts "⚠️  Model #{name} already exists"
+      return
+    end
+    
+    puts "Adding custom model: #{name} -> #{model_id} ($#{cost})"
+    
+    # This would need to modify the source file or use a runtime registry
+    # For now, just show what would be added
+    puts "✓ To permanently add, edit MODELS hash in repligen.rb"
+    puts "  #{name}: '#{model_id}',"
+  end
+  
+  def list_models(category = nil)
+    puts "\n📚 Available Models (#{MODELS.size} total):\n"
+    
+    models_by_type = {
+      image: [:flux_pro, :flux_dev, :flux_schnell, :imagen3, :imagen4, :seedream, :ideogram, :sdxl],
+      video: [:kling, :luma, :veo, :sora, :hailuo, :hailuo_fast, :seedance_pro, :seedance_fast, :runway, :wan720, :wan1080],
+      upscale: [:upscale, :upscale_video, :upscale_topaz, :crystal, :clarity],
+      audio: [:music, :speech, :chatterbox, :kokoro, :transcribe],
+      utility: [:depth, :rembg, :rembg_video, :ocr, :lora]
+    }
+    
+    filter = category&.to_sym
+    models_by_type.each do |type, models|
+      next if filter && type != filter
+      
+      puts "#{type.to_s.upcase}:"
+      models.each do |m|
+        next unless MODELS[m]
+        cost = COSTS[m] || 0
+        puts "  • #{m} - $#{cost}"
+      end
+      puts
+    end
+  end
+  
+  # WORKING METHOD: Use dynamic collection query instead of hardcoded models
+  def generate_video_from_image(image_path, prompt = "cinematic epic camera movement")
+    puts "🎬 Generating video from: #{image_path}"
+    
+    # Step 1: Get current working model from collection
+    response = request('collections/image-to-video', :get)
+    models = response['models'] || []
+    
+    if models.empty?
+      puts "❌ No image-to-video models available"
+      return nil
+    end
+    
+    model = models.first
+    version = model['latest_version']['id']
+    puts "Using: #{model['owner']}/#{model['name']}"
+    
+    # Step 2: Convert image to base64 data URI
+    image_data = File.read(image_path)
+    image_b64 = [image_data].pack('m0')
+    ext = File.extname(image_path).delete('.')
+    data_uri = "data:image/#{ext};base64,#{image_b64}"
+    
+    # Step 3: Create prediction
+    pred = request('predictions', :post, {
+      version: version,
+      input: {
+        image: data_uri,
+        prompt: prompt
+      }
+    })
+    
+    puts "⏱️  Prediction: #{pred['id']} (ETA: 2-3min)"
+    
+    # Step 4: Poll for completion
+    output_url = wait_for(pred['id'], 600)
+    
+    # Step 5: Download result
+    if output_url
+      ext = output_url.match(/\.(\w+)(\?|$)/)&.captures&.first || 'mp4'
+      base = File.basename(image_path, '.*')
+      output_file = "#{base}_cinematic.#{ext}"
+      
+      uri = URI(output_url)
+      response = Net::HTTP.get_response(uri)
+      File.write(output_file, response.body)
+      
+      puts "✅ DONE: #{output_file}"
+      output_file
+    else
+      nil
+    end
+  end
 
-    puts "\nRadical #{style} chain (#{chain.length} steps):"
-    chain.each_with_index { |m, i| puts "  #{i+1}. #{m[:id]} ($#{m[:cost]})" }
-    total = chain.sum { |m| m[:cost] }
-    puts "\nTotal: $#{total.round(3)}"
+  def show_model_info(model_name)
+    return puts "Usage: info <model_name>" unless model_name
+    
+    model = model_name.to_sym
+    unless MODELS[model]
+      puts "⚠️  Model not found: #{model}"
+      return
+    end
+    
+    puts "\n📊 Model Info: #{model}"
+    puts "━"*50
+    puts "ID:   #{MODELS[model]}"
+    puts "Cost: $#{COSTS[model] || 'unknown'}"
+    
+    # Show which chains use it
+    chains = CHAINS.select { |_, models| 
+      models.is_a?(Array) && models.include?(model.to_s)
+    }.keys
+    
+    if chains.any?
+      puts "Used in chains: #{chains.join(', ')}"
+    end
+    puts
   end
 end
 
@@ -727,86 +1104,126 @@ class ReplicateExplorer
 end
 
   def interactive_cli
-    puts "\n" + "="*60
-    puts "REPLIGEN - Cinematic AI Generation Pipeline"
-    puts "="*60
+    puts "\n" + "="*70
+    puts "REPLIGEN 8.0 - CINEMATIC AI PIPELINE"
+    puts "Powered by: Kling, Luma, Veo, Hailuo, Flux, Wan"
+    puts "="*70
     puts
 
-    puts "Please enter LoRA URL (or press Enter to skip):"
+    puts "📸 Do you have an input image URL? (or press Enter to generate one)"
     print "> "
-    lora_url = gets.chomp.strip
-    lora_url = nil if lora_url.empty?
+    input_image = gets.chomp.strip
+    input_image = nil if input_image.empty?
 
-    puts "\nShould the resulting artwork be a photo or a movie?"
-    print "> "
-    output_type = gets.chomp.downcase.strip
-    is_video = output_type.include?("movie") || output_type.include?("video")
-
-    puts "\nDo you have a link to the background soundtrack? (or press Enter to skip):"
-    print "> "
-    soundtrack_url = gets.chomp.strip
-    soundtrack_url = nil if soundtrack_url.empty?
-
-    puts "\nDescribe the scene/artwork you want to create:"
-    print "> "
-    prompt = gets.chomp.strip
-    prompt = "digital art" if prompt.empty?
-
-    puts "\n" + "-"*60
-    puts "Building your cinematic pipeline..."
-    puts "-"*60
-
-    chain_steps = []
-
-    if lora_url
-      puts "• Using custom LoRA: #{lora_url}"
-      chain_steps << :ra2
+    if input_image.nil?
+      puts "\n🎨 Describe the image you want to create:"
+      print "> "
+      prompt = gets.chomp.strip
+      prompt = "cinematic masterpiece" if prompt.empty?
+      
+      puts "\n🖼️  Choose image model:"
+      puts "  1. Flux Pro (recommended) - photorealistic, $0.04"
+      puts "  2. Flux Schnell - lightning fast, $0.003"
+      puts "  3. Imagen4 - Google's latest, $0.015"
+      puts "  4. Seedream 4.5 - spatial understanding, $0.03"
+      puts "  5. Ideogram - great for text/posters, $0.04"
+      print "> "
+      img_choice = gets.chomp.strip
+      
+      img_model = case img_choice
+      when '1', '' then :flux_pro
+      when '2' then :flux_schnell
+      when '3' then :imagen4
+      when '4' then :seedream
+      when '5' then :ideogram
+      else :flux_pro
+      end
     else
-      chain_steps << :flux
+      prompt = input_image
+      img_model = nil
     end
 
-    chain_steps << :upscale
+    puts "\n🎬 What type of video do you want?"
+    puts "  1. Hollywood (Kling) - best quality, 10s, $0.15"
+    puts "  2. Cinematic (Luma Ray2) - smooth motion, 5s, $0.12" 
+    puts "  3. Ultra HD (Veo 3.1) - 4K + audio, 8s, $0.20"
+    puts "  4. Premium (Sora 2) - OpenAI, synced audio, $0.30"
+    puts "  5. Fast (Wan720) - quick & cheap, 5s, $0.06"
+    puts "  6. Budget (Hailuo Fast) - good quality, 6s, $0.05"
+    puts "  7. Pro (Seedance Pro) - ByteDance, cinematic, $0.15"
+    print "> "
+    video_choice = gets.chomp.strip
 
-    if is_video
-      puts "• Adding motion + camera angles"
-      chain_steps << :wan480
+    video_model = case video_choice
+    when '1', '' then :kling
+    when '2' then :luma
+    when '3' then :veo
+    when '4' then :sora
+    when '5' then :wan720
+    when '6' then :hailuo_fast
+    when '7' then :seedance_pro
+    else :kling
     end
 
-    if soundtrack_url
-      puts "• Integrating soundtrack: #{soundtrack_url}"
-    elsif is_video
-      puts "• Generating cinematic soundtrack"
-      chain_steps << :music
+    puts "\n🎵 Add soundtrack?"
+    puts "  1. Yes - Cinematic music ($0.02)"
+    puts "  2. No"
+    print "> "
+    music_choice = gets.chomp.strip
+
+    puts "\n⬆️  Apply upscaling?"
+    puts "  1. Yes - Topaz Pro ($0.008)"
+    puts "  2. Yes - Crystal AI ($0.015)"
+    puts "  3. Yes - Clarity AI ($0.01)"
+    puts "  4. No"
+    print "> "
+    upscale_choice = gets.chomp.strip
+
+    # Build pipeline
+    chain_steps = []
+    chain_steps << img_model if img_model
+    
+    case upscale_choice
+    when '1' then chain_steps << :upscale_topaz
+    when '2' then chain_steps << :crystal
+    when '3' then chain_steps << :clarity
     end
+    
+    chain_steps << video_model
+    chain_steps << :music if music_choice == '1'
 
-    puts "• Relighting + professional color grading"
-
-    puts "\nPipeline: #{chain_steps.join(' → ')}"
+    puts "\n" + "-"*70
+    puts "🎯 YOUR CINEMATIC PIPELINE"
+    puts "-"*70
+    chain_steps.each_with_index do |step, i|
+      puts "  #{i+1}. #{step.to_s.upcase}"
+    end
+    
     estimated_cost = chain_steps.sum { |m| COSTS[m] || 0.05 }
-    puts "Estimated cost: $#{estimated_cost.round(3)}"
+    puts "\n💰 Estimated cost: $#{estimated_cost.round(3)}"
+    puts "⏱️  Estimated time: #{chain_steps.length * 30}s"
 
-    print "\nProceed? (Y/n): "
+    print "\n✅ Proceed? (Y/n): "
     response = gets.chomp.downcase
     return unless response.empty? || response.start_with?("y")
 
-    puts "\nGenerating..."
+    puts "\n🚀 Generating..."
     result = execute_chain(chain_steps, prompt)
 
     if @postpro && result
-      puts "\n" + "="*60
-      puts "POSTPRO.RB INTEGRATION"
-      puts "="*60
-      puts "Apply cinematic film-grade color grading?"
-      puts "• Kodak Portra curves • Skin tone protection"
-      puts "• Professional grain • Highlight rolloff"
+      puts "\n" + "="*70
+      puts "🎨 POSTPRO.RB CINEMATIC GRADING"
+      puts "="*70
+      puts "Apply film-grade color grading?"
+      puts "• Kodak film curves • Professional grain"
       print "\nLaunch postpro.rb? (Y/n): "
 
       response = gets.chomp.downcase
       system("ruby postpro.rb --from-repligen") if response.empty? || response.start_with?("y")
     end
 
-    puts "\n✓ Complete! Output saved."
-    puts "\nGenerate another? (y/N): "
+    puts "\n✓ Complete! Cinematic masterpiece created."
+    puts "\n🔁 Generate another? (y/N): "
     response = gets.chomp.downcase
     interactive_cli if response.start_with?("y")
   end
@@ -814,14 +1231,38 @@ end
   def execute_chain(steps, prompt)
     output = prompt
     cost = 0.0
+    start_time = Time.now
 
     steps.each_with_index do |model, i|
-      puts "\nStep #{i+1}/#{steps.length}: #{model}"
+      puts "\n" + "─"*70
+      puts "⚙️  Step #{i+1}/#{steps.length}: #{model.to_s.upcase}"
+      puts "─"*70
+      
+      step_start = Time.now
       output = predict(model, output)
+      step_duration = Time.now - step_start
+      
       cost += COSTS[model]
+      
+      puts "✓ Completed in #{step_duration.round(1)}s (cost: $#{COSTS[model]})"
+      
+      # Save intermediate results for video models
+      if [:kling, :luma, :veo, :wan720, :wan1080, :hailuo, :runway].include?(model)
+        save_output(output, model, prompt) if output.is_a?(String) && output.start_with?("http")
+      end
     end
 
+    total_duration = Time.now - start_time
     log_chain(steps.map(&:to_s), cost)
-    save_output(output, :custom, prompt) if output.is_a?(String) && output.start_with?("http")
+    
+    puts "\n" + "="*70
+    puts "🎉 PIPELINE COMPLETE"
+    puts "="*70
+    puts "⏱️  Total time: #{total_duration.round(1)}s"
+    puts "💰 Total cost: $#{cost.round(3)}"
+    puts "="*70
+    
+    # Save final output
+    save_output(output, :final, prompt) if output.is_a?(String) && output.start_with?("http")
     output
   end

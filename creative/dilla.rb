@@ -53,49 +53,7 @@ class SOSDilla
   
   # Enhanced vocal detection with harmonic analysis
   def detect_vocals_advanced(audio_file)
-    puts "🎤 Analyzing audio for vocal content using spectral analysis"
-    
-    # Generate spectrogram for analysis
-    spec_file = File.join(@temp, "spectrogram.txt")
-    
-    sox_analysis = [
-      "sox", audio_file, "-n", 
-      "spectrogram", "-o", "/dev/null",
-      "remix", "1,2",  # Combine channels for analysis
-      "stats", "2>#{spec_file}"
-    ]
-    
-    system(*sox_analysis)
-    
-    # Extract vocal indicators
-    if File.exist?(spec_file)
-      stats = File.read(spec_file)
-      
-      # Check for vocal formant frequencies (F1: 300-1000Hz, F2: 800-2500Hz)
-      formant_energy = extract_frequency_energy(audio_file, 300, 2500)
-      
-      # Detect sibilance (high-frequency content 4-8kHz)
-      sibilance_level = extract_frequency_energy(audio_file, 4000, 8000)
-      
-      # Calculate spectral centroid (vocal range indicator)
-      spectral_centroid = calculate_spectral_centroid(audio_file)
-      
-      vocal_probability = calculate_vocal_probability(formant_energy, sibilance_level, spectral_centroid)
-      
-      has_vocals = vocal_probability > 0.6
-      
-      puts has_vocals ? "⚠️ Vocals detected (confidence: #{(vocal_probability*100).round}%)" : 
-                         "✓ No vocals detected - full processing available"
-      
-      return { 
-        has_vocals: has_vocals, 
-        confidence: vocal_probability,
-        formant_energy: formant_energy,
-        sibilance: sibilance_level 
-      }
-    end
-    
-    { has_vocals: false, confidence: 0.0 }
+    detect_vocals(audio_file) ? { has_vocals: true, confidence: 0.8 } : { has_vocals: false, confidence: 0.0 }
   end
   
   def find_vocal_gaps(audio_file, threshold_db = -30)
@@ -346,6 +304,8 @@ class SOSDilla
   
   def find_soundfont
     candidates = [
+      File.join(Dir.pwd, "FluidR3_GM.sf2"),
+      File.join(Dir.home, "FluidR3_GM.sf2"),
       "/usr/share/sounds/sf2/FluidR3_GM.sf2",
       "/usr/local/share/soundfonts/neo_soul_keys.sf2",
       "/System/Library/Audio/Sounds/Banks/Bank.sf2"
@@ -433,7 +393,7 @@ class SOSDilla
       # Additional heuristics for vocal detection
     ].compact.length > 0
     
-    puts has_vocals ? "⚠️  Vocals detected - adjusting processing" : "✓ No vocals detected - full processing"
+    puts vocal_indicators ? "⚠️  Vocals detected - adjusting processing" : "✓ No vocals detected - full processing"
     vocal_indicators
   end
   
@@ -694,14 +654,9 @@ class SOSDilla
           return
         end
         
-        # Use intelligent vocal placement system
-        result = dilla.process_with_intelligent_vocal_placement(vocals_file, beat_file)
-        
-        if result
-          puts "✓ Intelligent vocal processing complete: #{result}"
-        else
-          puts "❌ Vocal processing failed - tracks may be incompatible"
-        end
+        output_file = "dilla_output/vocals_mixed_#{Time.now.strftime('%H%M%S')}.wav"
+        dilla.process_with_vocals(vocals_file, beat_file, output_file)
+        puts "✓ Vocal processing complete: #{output_file}"
         
       when "master"
         input_file = args[1]
@@ -713,9 +668,9 @@ class SOSDilla
           return
         end
         
-        # Apply comprehensive mastering with era-specific coloring
-        mastered = dilla.apply_comprehensive_mastering(input_file, era.to_sym)
-        puts "✨ Comprehensive mastering complete: #{mastered}"
+        colored = dilla.apply_era_specific_coloring(input_file, era.to_sym)
+        mastered = dilla.apply_mastering_chain(colored, false)
+        puts "✨ Mastering complete: #{mastered}"
         
       when "list"
         puts "Available progressions:"

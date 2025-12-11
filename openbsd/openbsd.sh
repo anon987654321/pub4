@@ -173,8 +173,6 @@ EOF
 
     "rack-attack:6.7.0"
 
-    "sidekiq:7.2.0"
-
     "solid_queue:1.0.0"
 
     "solid_cache:1.0.0"
@@ -533,7 +531,7 @@ deploy_rails_app() {
   local app="${app_port%:*}"
 
   local port="${app_port#*:}"
-  local domains="${app_domains[$app_port]}"
+  local domains="${APPS[${app}.domains]}"
 
   log "Deploying $app on port $port"
 
@@ -575,7 +573,7 @@ source "https://rubygems.org"
 
 ruby "3.3.0"
 
-gem "rails", "~> 7.2.0"
+gem "rails", "~> 8.0.0"
 gem "pg", "~> 1.5"
 
 gem "falcon", "~> 0.47"
@@ -585,6 +583,10 @@ gem "async"
 gem "async-http"
 gem "redis", "~> 5.0"
 
+gem "solid_queue", "~> 1.0"
+gem "solid_cache", "~> 1.0"
+gem "solid_cable", "~> 1.0"
+
 gem "propshaft"
 
 gem "turbo-rails"
@@ -593,8 +595,6 @@ gem "stimulus-rails"
 gem "rack-attack"
 
 gem "bcrypt"
-
-gem "sidekiq"
 
 gem "bootsnap", require: false
 
@@ -831,7 +831,7 @@ pre_point() {
 
     local domains=${APPS[${app}.domains]}
 
-    deploy_rails_app "$app_port"
+    deploy_rails_app "$app:$port"
 
     app_count=$((app_count + 1))
   done
