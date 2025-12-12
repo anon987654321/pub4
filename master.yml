@@ -79,10 +79,6 @@ constants:
 
 principles:
   foundational: 
-    golden_rule: 
-      value: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-      rationale: "Reversibility more valuable than perfection - git history is safety net"
-      evidence: "73% production bugs from 'improvement' commits, not initial implementations"
     
     evidence_over_opinion: 
       value: true
