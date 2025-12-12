@@ -1,11 +1,10 @@
 ---
-version: "65.0.0"
+version: "65.1.0"
 
 meta:
   title: "CONVERGENCE"
   subtitle: "Autonomous Code Evolution Framework"
   description: "Philosophy that compiles - iterative convergence to optimal solutions through evidence-based principles"
-  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
   self_run_safe: true
   immutable_sections:
     - golden_rule
@@ -40,9 +39,9 @@ self_protection:
     - "golden_rule must exist"
     - "principles section immutable - add only, never modify or delete"
     - "version must increment on changes"
-  on_violation: 
+  on_violation:
     action: "restore_from_backup"
-    log_path: "~/.convergence/safety. log"
+    log_path: "~/.convergence/safety.log"
 
 constants:
   limits:
@@ -810,7 +809,7 @@ learning:
   continuous_learning: true
   codify_to_principles: true
 
-export_formats:  [json, yaml, csv, html, markdown, sarif]
+export_formats: [json, yaml, csv, html, markdown, sarif]
 
 integrations:
   git_hooks:  true
