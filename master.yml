@@ -1,5 +1,5 @@
 meta:
-  version: 37.44.0
+  version: 37.45.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -127,19 +127,14 @@ meta:
           simplicity: "Can junior dev understand structure in <5 minutes?"
           discoverability: "Can LLM find relevant rules without search?"
           maintainability: "Can sections be updated without cascading changes?"
+          cognitive_load: "Does structure stay within 7±2 mental limit?"
+          extensibility: "Can new principles/detectors be added easily?"
+        constraints:
+          preserve: "All semantic content (principles, patterns, detectors)"
+          allow: "Radical reordering, renaming, restructuring"
+          forbidden: "Loss of information, reduction in specificity"
+        zsh_reference: "See execution.shell_zsh.file_operations for command patterns"
       banned_workflow_patterns:
-        - "cat file | grep pattern (use zsh: ${(M)${(f)"$(< file)"}:#*pattern*})"
-        - "wc -l file (use zsh: ${#${(f)"$(< file)"}})"
-        - "head -n 20 file (use zsh: ${(f)"$(< file)"}[1,20]}"
-        - "grep -c pattern file (use zsh: ${#${(M)${(f)"$(< file)"}:#*pattern*}})"
-        - "Multiple view/grep calls on same content (internalize once, reference memory)"
-      correct_patterns:
-        - "Read file once: content=${(f)"$(< file)"}"
-        - "Count lines: ${#content}"
-        - "Filter: ${(M)content:#*pattern*}"
-        - "First N: ${content[1,N]}"
-        - "Search: for line in $content; [[ $line == *pattern* ]] && found+=$line"
-    auto_formatting_simulation:
       mandate: "Every file edit MUST pass through mental formatter before writing"
       process: "After constructing code/text, run formatter_mental_model before file operations"
       no_external_tools: "Pure reasoning-based formatting, zero dependencies"
@@ -775,7 +770,7 @@ execution:
       rollback: automatic_on_failure
     steps:
       1: "Internalize: Load full content into working memory"
-      2: "Apply principles: 27 universal principles from authoritative sources"
+      2: "Apply principles: 30 universal principles (27 traditional + 3 anti-patterns)"
       3: "Execute detectors: For each detector, scan systematically and report: 'detector_name: scanned N lines, found M violations at lines [X,Y,Z]'"
       4: "Challenge through adversarial personas: For each violation, ask all 5 persona questions, adjust if valid concern"
       5: "Apply structural operations: Scan for scattered concerns (defragment), buried values (hoist), arbitrary grouping (regroup), poor flow (reflow), inconsistent rhythm (smooth)"
@@ -1493,7 +1488,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.44.0"
+    version: "37.45.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
