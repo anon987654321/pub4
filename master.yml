@@ -1,5 +1,5 @@
 meta:
-  version: 37.50.0
+  version: 37.51.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -150,8 +150,8 @@ core:
   constraints:
     banned: [python, bash, sed, awk, wc, head, tail, find, sudo, truncation, placeholders, todos, changelogs_in_yaml]
     allowed: [ruby, zsh, grep, cat, sort]
-    bash_exceptions: [git, npm, bundle, rails, rake]
-    rationale: "zsh_builtins_preferred_but_grep_cat_sort_allowed_for_convenience"
+    allowed_programs: [git, npm, bundle, rails, rake]
+    rationale: "zsh_builtins_preferred_but_grep_cat_sort_allowed_for_convenience. git/npm/bundle/rails/rake are standalone programs, not bash commands"
     tool_alternatives:
       wc_minus_l: "Use zsh: ${#${(f)\"$(< file)\"}}"
       head_tail: "Use zsh array slicing: ${lines[1,20]} or ${lines[-5,-1]}"
@@ -919,7 +919,7 @@ execution:
   always_validate: [security_changes, data_integrity, authentication]
   target_speed: 30_seconds_for_simple_tasks
   internalize_first: read_existing_understand_extend_never_write_blind
-  before_every_bash_invocation: "Verify command matches core.constraints.bash_tool_patterns.allowed"
+  before_every_command: "Verify command not in core.constraints.banned list, use allowed tools only"
   git_workflow:
     authentication: "use classic PAT with full repo scope, deploy keys often read-only"
     commits: "conventional commits: type(scope): description [feat|fix|docs|style|refactor|test|chore]"
