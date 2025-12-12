@@ -8,10 +8,11 @@
   <title>Radio Bergen</title>
   <meta name="theme-color" content="#000000"/>
   <meta name="description" content="Classic warp tunnel with multiple views. Tilt device for parallax."/>
+  <link rel="preload" href=".mp3/akmd-stailings.mp3" as="audio"/>
   <style>
     :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1}
     html,body{margin:0;height:100%;background:#000;color:#dcdcdc;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
+    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:pan-y;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
     canvas.canvas-inverted{filter:invert(1) hue-rotate(180deg)}
     @keyframes start-ack{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}canvas.start-ack{animation:start-ack 240ms ease-out}
     .ui{position:fixed;right:calc(12px + var(--safe-right));bottom:calc(10px + var(--safe-bottom));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-transform:uppercase;letter-spacing:.28em;white-space:nowrap;pointer-events:none;user-select:none;text-align:right;max-width:min(72vw,800px);overflow:hidden;text-overflow:ellipsis;z-index:90;opacity:.86;background:#000;padding:0 1px}
@@ -33,17 +34,30 @@
   <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0"><div><h2 id="start-title">Tap to start</h2></div></div>
   <div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true"><span class="label" id="uiLabel">Streaming</span><span class="dots" id="uiDots" aria-hidden="true"></span></div>
   <div class="swipe-hint" id="swipeHint">← Swipe for tracks →</div>
+  <div id="helpOverlay" class="overlay" hidden style="font-size:14px;line-height:1.8"><div><h2>Keyboard Shortcuts</h2><div style="text-align:left;max-width:400px"><strong>Playback:</strong> Space/K=play/pause, M=mute, ←/→=prev/next<br><strong>Visual:</strong> V=cycle viz, C=colors, A=auto-switch, X=psychedelic<br><strong>Adjust:</strong> ↑↓=speed, []=intensity<br><strong>Other:</strong> F=fullscreen, I=invert, 0=restart, ?=help</div><p style="margin-top:20px;opacity:0.7">Press any key to close</p></div></div>
   <div id="yt-player-a" aria-hidden="true" class="yt-hidden"></div>
   <div id="yt-player-b" aria-hidden="true" class="yt-hidden"></div>
   <iframe id="player-fallback-a" src="about:blank" title="YouTube audio player A (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
   <script>
     "use strict";
+    // Configuration constants
+    const CONFIG={FADE_MS:3500,START_FADE_IN:true,DPR:Math.min(1.5,window.devicePixelRatio||1),REDUCED_MOTION_SCALE:0.35,NORMAL_MOTION_SCALE:1,PREFERS_REDUCED_MOTION:typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches,LOW_END:(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)||(navigator.deviceMemory&&navigator.deviceMemory<=2)};
     const IN_SANDBOX=false;
-    const FADE_MS=3500,START_FADE_IN=true,DPR=Math.min(2,window.devicePixelRatio||1),isLowEnd=(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)||(navigator.deviceMemory&&navigator.deviceMemory<=2);
+    const FADE_MS=CONFIG.FADE_MS,START_FADE_IN=CONFIG.START_FADE_IN,DPR=CONFIG.DPR,isLowEnd=CONFIG.LOW_END;
     let audio;
-    (()=>{const e=document.getElementById("uiDots");if(!e)return;const s=[0,1,2,3,2,1];let i=0;const t=()=>{e.textContent=".".repeat(s[i]);i=(i+1)%s.length};t();try{clearInterval(window.__RB_DOTS_IV)}catch{}window.__RB_DOTS_IV=setInterval(t,600)})();
-    const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
+    // Resource cleanup tracking
+    const TIMERS=new Set(),INTERVALS=new Set();
+    const trackTimer=(id)=>{TIMERS.add(id);return id};
+    const trackInterval=(id)=>{INTERVALS.add(id);return id};
+    const cleanupAll=()=>{TIMERS.forEach(clearTimeout);INTERVALS.forEach(clearInterval);TIMERS.clear();INTERVALS.clear()};
+    window.addEventListener("beforeunload",cleanupAll);
+    window.addEventListener("pagehide",cleanupAll);
+    // Audio Context lifecycle management
+    let audioContextSuspended=false;
+    document.addEventListener("visibilitychange",()=>{if(audio?.audioContext){if(document.hidden){audio.audioContext.suspend();audioContextSuspended=true}else if(audioContextSuspended){audio.audioContext.resume();audioContextSuspended=false}}},{passive:true});
+    (()=>{const e=document.getElementById("uiDots");if(!e)return;const s=[0,1,2,3,2,1];let i=0;const t=()=>{e.textContent=".".repeat(s[i]);i=(i+1)%s.length};t();try{clearInterval(window.__RB_DOTS_IV)}catch{}window.__RB_DOTS_IV=trackInterval(setInterval(t,600))})();
+    const motionScale=()=>CONFIG.PREFERS_REDUCED_MOTION?CONFIG.REDUCED_MOTION_SCALE:CONFIG.NORMAL_MOTION_SCALE;
     const MP3_TRACKS=[
       {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
       {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
@@ -53,6 +67,8 @@
       {artist:"Jan Hakim & Johann",title:"Stailings A",src:".mp3/jan_hakim_and_johann-stailings_a.mp3"},
       {artist:"Mike T Jr",title:"Rauingar",src:".mp3/mike_t_jr-rauingar.mp3"}
     ];
+    // Unified fade utility
+    const createFader=(steps=30)=>({fade:(from,to,ms,onStep,onComplete)=>{let i=0;const dt=ms/steps;const iv=setInterval(()=>{i++;const progress=i/steps;onStep(progress,1-progress);if(i>=steps){clearInterval(iv);onComplete?.()}},dt);return iv}});
     const YOUTUBE_TRACKS=[
       {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
       {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o"},
@@ -120,7 +136,8 @@
           this.dataArray=new Uint8Array(this.analyser.frequencyBinCount);
           // Connect active player to analyser
           this._connectAnalyser();
-        }catch{
+        }catch(err){
+          console.error("AudioContext initialization failed:",err);
           this.audioContext=null;
         }
         // Setup event listeners with timeout protection
@@ -657,7 +674,7 @@
     canvas.addEventListener("touchend",e=>{e.preventDefault();if(e.touches.length<2)resetPinch();if(e.touches.length===0){mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)}if(audio?.started&&!IN_SANDBOX){const t=e.changedTouches[0],r=canvas.getBoundingClientRect(),endX=t.clientX-r.left,endY=t.clientY-r.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}else{const s=document.getElementById("swipeHint");s.textContent="Warp Tunnel";s.classList.add("show");setTimeout(()=>s.classList.remove("show"),1400)}try{navigator.vibrate?.(10)}catch{}}else{const n=performance.now();if(n-lastTapTime<doubleTapMs)toggleFullscreen();lastTapTime=n}}},{passive:false});
     canvas.addEventListener("touchcancel",()=>{resetPinch();mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},{passive:true});
     window.vizSpeed=1.0;window.vizIntensity=1.0;window.psychedelicMode=0;
-    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
+    addEventListener("keydown",e=>{const helpEl=document.getElementById("helpOverlay");if(e.key==="?"||e.key==="/"){e.preventDefault();if(helpEl){helpEl.hidden=!helpEl.hidden}return}if(!helpEl?.hidden){helpEl.hidden=true;return}if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
     let pageHidden=document.hidden;
     document.addEventListener("visibilitychange",()=>{
       pageHidden=document.hidden;

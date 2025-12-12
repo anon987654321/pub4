@@ -72,16 +72,20 @@ module ToolDefinition
 
   def to_anthropic_tools
     tool_functions.map do |name, schema|
-      {
-        name: name. to_s,
-        description: schema.description,
-        input_schema: {
-          type: 'object',
-          properties: schema.properties,
-          required: schema.required
-        }
-      }
+      build_tool_schema(name, schema)
     end
+  end
+
+  def build_tool_schema(name, schema)
+    {
+      name: name. to_s,
+      description: schema.description,
+      input_schema: {
+        type: 'object',
+        properties: schema.properties,
+        required: schema.required
+      }
+    }
   end
 
   class FunctionSchema
@@ -483,30 +487,40 @@ class Assistant
     @state = :in_progress
     retries = 0
     loop do
-      case @state
-      when :in_progress then handle_llm_response
-      when :requires_action
-        if auto_tool_execution
-          execute_tools
-          @state = :in_progress
-        else
-          break
-        end
-      when :completed, :failed then break
-      end
+      handle_state_transition(auto_tool_execution)
+      break if @state == :completed || @state == :failed
     rescue AnthropicClient::RateLimitError
-      raise if (retries += 1) > MAX_RETRIES
-      wait = 2 ** retries
-      Log.warn("rate limited, waiting #{wait}s")
-      sleep wait
-      retry
+      handle_rate_limit(retries)
+      retries += 1
     rescue AnthropicClient::NetworkError
-      raise if (retries += 1) > MAX_RETRIES
-      Log.warn("network error, retrying")
-      sleep 2
-      retry
+      handle_network_error(retries)
+      retries += 1
     end
     self
+  end
+
+  def handle_state_transition(auto_execute)
+    case @state
+    when :in_progress then handle_llm_response
+    when :requires_action
+      if auto_execute
+        execute_tools
+        @state = :in_progress
+      end
+    end
+  end
+
+  def handle_rate_limit(retries)
+    raise if retries >= MAX_RETRIES
+    wait = 2 ** (retries + 1)
+    Log.warn("rate limited, waiting #{wait}s")
+    sleep wait
+  end
+
+  def handle_network_error(retries)
+    raise if retries >= MAX_RETRIES
+    Log.warn("network error, retrying")
+    sleep 2
   end
 
   def last_response
@@ -716,32 +730,32 @@ class CLI
     end
   end
 
+  HELP_TEXT = <<~HELP
+
+    usage:
+      cli. rb                  interactive mode
+      cli.rb "prompt"         one-shot mode
+      cli.rb --setup          interactive setup
+      cli.rb --check          check configuration
+      cli.rb --test           run self-tests
+
+    interactive commands:
+      /tools      list available tools
+      /stats      show session statistics
+      /config     show configuration
+      /clear      clear conversation
+      /save       save session
+      /help       show this help
+      exit        exit CLI
+
+    configuration:
+      create master.yml in same directory (optional)
+      set ANTHROPIC_API_KEY environment variable
+
+  HELP
+
   def show_help
-    @ui.section("CONVERGENCE CLI v2.2.0 - help") do
-      @ui.puts <<~HELP
-
-        usage: 
-          cli. rb                  interactive mode
-          cli.rb "prompt"         one-shot mode
-          cli.rb --setup          interactive setup
-          cli.rb --check          check configuration
-          cli.rb --test           run self-tests
-
-        interactive commands:
-          /tools      list available tools
-          /stats      show session statistics
-          /config     show configuration
-          /clear      clear conversation
-          /save       save session
-          /help       show this help
-          exit        exit CLI
-
-        configuration: 
-          create master.yml in same directory (optional)
-          set ANTHROPIC_API_KEY environment variable
-
-      HELP
-    end
+    @ui.section("CONVERGENCE CLI v2.2.0 - help") { @ui.puts HELP_TEXT }
   end
 end
 
