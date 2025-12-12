@@ -7,23 +7,26 @@ require "logger"
 require "optparse"
 require "fileutils"
 
-# Repligen - AI Content Generation with Postpro Integration
-# Version: 8.1.0 - Dynamic Model Discovery + Working Image-to-Video
+# Repligen - Cinematic AI Orchestrator
+# Version: 9.0.0 - December 2025 - Complete Rebuild
 #
-# PROVEN WORKFLOW (Dec 2025):
-# 1. Query /v1/collections/image-to-video for current models
-# 2. Use first available model with latest_version.id
-# 3. Convert image to base64 data URI
-# 4. Poll prediction status every 10s
-# 5. Download output from replicate.delivery URL
+# Architecture:
+# - LLM Orchestrator: Llama 3.3 70B (FREE!)
+# - Image Generation: Flux 2 Pro, ra2 LoRA
+# - Video Generation: Veo 3.1, Runway Gen-4.5, Kling 2.6
+# - Post-Processing: Automatic postpro.rb integration
 #
-# WORKING COMMAND:
-# $coll = GET /v1/collections/image-to-video
-# $model = $coll.models[0]
-# $version = $model.latest_version.id
-# POST /v1/predictions with {version, input: {image: data:image/*;base64,...}}
+# Cinematic Workflow:
+# 1. Llama 3.3 enhances user prompt
+# 2. Generate image with LoRA (ra2)
+# 3. Create video with best model
+# 4. Apply film emulation
 #
-# See execute_simple_generation() for working implementation
+# Features:
+# - Interactive CLI with tty-prompt
+# - Webhook support for long operations
+# - Streaming output
+# - Cost tracking & optimization
 
 module Bootstrap
   def self.dmesg(msg)
@@ -35,6 +38,22 @@ module Bootstrap
     os = RbConfig::CONFIG["host_os"]
     pwd = Dir.pwd
     dmesg "boot ruby=#{ruby_version} os=#{os} pwd=#{pwd}"
+  end
+
+  def self.ensure_tty_prompt
+    require "tty-prompt"
+    dmesg "OK tty-prompt gem present"
+    true
+  rescue LoadError
+    dmesg "WARN tty-prompt gem missing, attempting install..."
+    if system("gem install tty-prompt --no-document")
+      require "tty-prompt"
+      dmesg "OK tty-prompt gem installed"
+      true
+    else
+      dmesg "ERROR tty-prompt install failed"
+      false
+    end
   end
 
   def self.ensure_sqlite3
@@ -54,27 +73,6 @@ module Bootstrap
       end
     rescue => e
       dmesg "WARN sqlite3 unavailable: #{e.message}, using JSONL fallback"
-      false
-    end
-  end
-
-  def self.ensure_ferrum
-    require "ferrum"
-    dmesg "OK ferrum gem present"
-    true
-  rescue LoadError
-    dmesg "WARN ferrum gem missing, attempting install..."
-    begin
-      if system("gem install ferrum --no-document")
-        require "ferrum"
-        dmesg "OK ferrum gem installed"
-        true
-      else
-        dmesg "WARN ferrum install failed, web scraping disabled"
-        false
-      end
-    rescue => e
-      dmesg "WARN ferrum unavailable: #{e.message}"
       false
     end
   end
