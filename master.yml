@@ -89,10 +89,11 @@ meta:
         8: "Consolidate cognitive overload: split sections exceeding 9 items"
         9: "Verify all fixes applied, increment version, report summary"
       reimagine_mode:
-        trigger: "User says 'reimagine structure' or 'radical alternatives'"
+        trigger: "User says 'reimagine structure' or 'radical alternatives' for ANY target (master.yml, user code, repos)"
+        applies_to: "Self-improvement AND user code/repo refactoring - universal capability"
         process:
           1: "Clear working memory - simulate fresh session perspective"
-          2: "Extract ONLY core requirements: what must framework enable?"
+          2: "Extract ONLY core requirements: what must this code/system enable?"
           3: "Generate 5-10 radically different organizational structures"
           4: "Score each alternative against: simplicity, discoverability, maintainability, cognitive load"
           5: "Present alternatives with pros/cons, await user selection"
