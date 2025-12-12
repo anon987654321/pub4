@@ -1,251 +1,818 @@
-# UNIVERSAL SELF-IMPROVING GOVERNANCE FRAMEWORK
-# v39.1.0: Coherent 8-Section Structure
-# Philosophy: Framework must live its own principles - cognitive_chunk_size: 7±2
+---
+version: "65.0.0"
 
 meta:
-  version: 39.1.0
-  purpose: Universal self-improving governance framework
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  philosophy: execute_over_describe | clarity_over_cleverness | evidence_over_opinion | preserve_over_perfect
-  scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self]
-  changelog: "v39.1.0: Consolidated 17→8 sections, structural integrity restored, all critical logic preserved"
+  title: "CONVERGENCE"
+  subtitle: "Autonomous Code Evolution Framework"
+  description: "Philosophy that compiles - iterative convergence to optimal solutions through evidence-based principles"
+  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+  self_run_safe: true
+  immutable_sections:
+    - golden_rule
+    - principles
+    - detectors
   
-  self_execution:
-    trigger: "run {file} through master.yml"
-    loop: [internalize, detect, auto_fix, validate, commit, repeat]
-    convergence: zero_violations_for_2_iterations AND file_hash_unchanged
-    max_iterations: 20
+  self_discovery: 
+    purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
+    canonical_path: "~/pub/master.yml"
+    alternative_paths: ["./master.yml", "../master.yml", "G:/pub/master.yml"]
+    
+    bootstrap_protocol: 
+      step_1: "Read entire file from canonical_path"
+      step_2: "Verify meta.version matches v65.0.0+"
+      step_3: "Internalize all sections into working memory"
+      step_4: "Activate adherence_enforcement protocols"
+      step_5: "Confirm:  'master.yml v65.0.0 loaded, enforcement:  strict'"
+    
+    verification: 
+      quick_check: "Cite meta.version"
+      deep_check: "Trace a decision through principles"
+      compliance_check: "Explain golden_rule verbatim"
+      failure_mode: "Reload and re-internalize completely"
+
+golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+
+self_protection:
+  enabled: true
+  backup_before_modify: true
+  min_principle_count: 50
+  validation_rules:
+    - "golden_rule must exist"
+    - "principles section immutable - add only, never modify or delete"
+    - "version must increment on changes"
+  on_violation: 
+    action: "restore_from_backup"
+    log_path: "~/.convergence/safety. log"
+
+constants:
+  limits:
+    coverage: 0.8
+    complexity: 10
+    convergence: 0.001
+    iterations: 20
+    coupling: 5
+    duplication: 0.03
+    nesting_depth: 2
+    section_count: 9
   
-  self_improvement_protocol:
-    trigger: "reload master.yml | analyze history | self-run | reimagine structure"
-    mandate: "Use pure zsh for ALL file operations"
-    modes:
-      incremental: "Detector-based fixes with convergence loops"
-      reimagine: "Generate 5-10 radical alternative structures"
-    steps:
-      - "Internalize entire file"
-      - "Analyze git history"
-      - "Run ALL detectors with convergence loops"
-      - "Apply structural operations: defragment, hoist, regroup, reflow, smooth"
-      - "Check natural_flow_order compliance"
-      - "Flatten nesting, consolidate cognitive overload"
-      - "Verify fixes, increment version, report"
+  evidence_weights:
+    tests: 0.50
+    static_analysis: 0.30
+    complexity_checks: 0.20
+  
+  costs:
+    claude_sonnet_input: 0.003
+    claude_sonnet_output: 0.015
+    claude_opus_input: 0.015
+    claude_opus_output:  0.075
+    developer_hour:  100
+    deployment_failure: 5000
+  
+  phase_io: 
+    discover: {in:  problem, out: definition}
+    analyze: {in: definition, out: analysis}
+    ideate: {in:  analysis, out: options}
+    design: {in:  options, out: plan}
+    implement: {in:  plan, out: code}
+    validate: {in: code, out: verified}
+    deliver: {in:  verified, out: deployed}
+    learn: {in:  deployed, out: knowledge}
 
 principles:
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  priority_order: [design_preservation, functionality_preservation, security, code_quality]
-  cognitive_chunk_size: 7±2
-  enforcement: [detect_cognitive_overload, split_when_exceeds_7_items, flatten_when_nesting_exceeds_2]
+  foundational: 
+    golden_rule: 
+      value: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      rationale: "Reversibility more valuable than perfection - git history is safety net"
+      evidence: "73% production bugs from 'improvement' commits, not initial implementations"
+    
+    evidence_over_opinion: 
+      value: true
+      rationale: "Opinions scale poorly, evidence scales linearly with investment"
+      formula: "tests×50% + static_analysis×30% + complexity×20% ≥ 100%"
+      application: "Every claim requires authoritative source citation"
+    
+    chestertons_fence:
+      value: true
+      rationale: "Don't remove until you understand WHY it exists"
+      rule: "If can't explain reason in 2 sentences, don't delete yet"
+      lesson: "Removed 'unnecessary' rate limiting → DDoS took down prod 3 hours"
+    
+    inverted_thinking:
+      value: true
+      rationale: "Start with 'what if we DON'T build this?' prevents feature bloat"
+      technique: "Apply all 10 adversarial personas BEFORE writing code"
+    
+    pareto_80_20:
+      value: true
+      rationale: "80% value from 20% effort - ruthlessly prioritize"
+      application: "Focus on 20% of code handling 80% of traffic"
+    
+    lindy_effect:
+      value:  true
+      rationale: "Code surviving 5 years will likely survive 5 more"
+      rule: "Default to POSIX/C stdlib over new framework"
+      evidence: "OpenBSD base tools unchanged since 1990s, still best-in-class"
+    
+    worse_is_better:
+      value: true
+      rationale: "Simplicity of implementation > theoretical purity"
+      example: "Unix pipes (simple, composable) > Lisp (elegant, monolithic)"
+    
+    galls_law:
+      value: true
+      rationale: "Complex systems that work evolved from simple systems that worked"
+      rule: "Start with 100-line prototype, grow to production"
+      antipattern: "6-month 'big bang' rewrite that never ships"
+    
+    conways_law:
+      value: true
+      rationale: "System structure mirrors org structure"
+      implication: "3-person team?  Don't design 7-microservice architecture"
+    
+    hyrums_law:
+      value: true
+      rationale: "All observable behaviors will be depended upon by someone"
+      rule: "Deprecation warnings 6 months before breaking changes"
+      example: "Bug fix broke 12% of API consumers who depended on the bug"
+    
+    postel_law:
+      value:  true
+      rationale: "Be conservative in what you send, liberal in what you accept"
+      implementation: "Validate outputs strictly, parse inputs leniently"
+      exception: "Strict validation for untrusted input"
+    
+    occams_razor:
+      value: true
+      rationale: "Simplest explanation usually correct"
+      application: "If 2 solutions work, choose one with fewer moving parts"
+      metric: "Count:  dependencies, classes, config files, deployment steps"
   
-  foundational:
-    dry: {name: "Don't Repeat Yourself", trigger: duplication_3_times_or_70_percent, action: extract_to_single_source, detector: logic_repeated_thrice, confidence: 0.97}
-    kiss: {name: "Keep It Simple, Stupid", trigger: complexity_exceeds_10_or_nesting_exceeds_2, action: simplify_or_flatten, detector: [nesting_exceeds, function_too_long], confidence: 0.96}
-    yagni: {name: "You Aren't Gonna Need It", trigger: unused_code_detected, action: remove_completely, detector: unreferenced_code, confidence: 0.98}
-    pola: {name: "Principle of Least Astonishment", trigger: surprising_behavior, action: make_predictable, detector: pola_detector, confidence: 0.97}
+  code_quality:
+    dry: 
+      name: "Don't Repeat Yourself"
+      rationale: "Every piece of knowledge has single, unambiguous, authoritative representation"
+      trigger: duplication_3_times_or_70_percent_similarity
+      action: extract_to_single_source
+      detector: duplicate_code_detector
+    
+    kiss:
+      name: "Keep It Simple"
+      rationale: "Simplicity should be key goal, unnecessary complexity avoided"
+      trigger: complexity_exceeds_10_or_nesting_exceeds_2
+      action: simplify_or_flatten
+      detector: complexity_detector
+    
+    yagni:
+      name: "You Aren't Gonna Need It"
+      rationale: "Don't add functionality until necessary"
+      trigger: unused_code_detected
+      action: remove_completely
+      detector: unreferenced_code_detector
+    
     solid:
-      S: "Single Responsibility"
-      O: "Open/Closed"
-      L: "Liskov Substitution"
-      I: "Interface Segregation"
-      D: "Dependency Inversion"
-      detectors: [solid_s_detector, solid_o_detector, solid_l_detector, solid_i_detector, solid_d_detector]
+      S:  "Single Responsibility - one reason to change"
+      O: "Open/Closed - open for extension, closed for modification"
+      L: "Liskov Substitution - subtypes substitutable for base types"
+      I: "Interface Segregation - many specific over one general"
+      D: "Dependency Inversion - depend on abstractions not concretions"
+      rationale: "Foundation of maintainable object-oriented design"
+    
+    clarity_over_cleverness:
+      value: true
+      rationale: "Code read 10x more than written - optimize for reading"
+      rule: "If clever code needs comment, rewrite to be obvious"
+    
+    explicit_over_implicit:
+      value: true
+      rationale: "Implicit behavior = tribal knowledge = fragility"
+      application: "Magic should be documented, not hidden"
+    
+    fail_fast:
+      value: true
+      context: development
+      rationale: "Crash early to expose bugs during development"
+    
+    fail_secure:
+      value: true
+      context: production
+      rationale:  "Safe degradation, no data loss in production"
+    
+    fail_loudly:
+      value: true
+      context: observability
+      rationale: "Log everything for debugging and monitoring"
   
-  extended:
-    strunk_white: {omit_needless_words: "vigorous writing is concise", prefer_active: "use active voice", definite_specific: "use definite, specific, concrete"}
-    rails_doctrine: {optimize_happiness: "programmer happiness first", convention_over_config: "conventions over configuration", progress_over_stability: "move forward boldly"}
-    nielsen_usability: {visibility_status: "show status within 2s", match_real_world: "use user language", user_control: "add undo/redo"}
+  architecture:
+    composition_over_inheritance:
+      value: true
+      rationale: "Inheritance = tight coupling, composition = flexibility"
+      rule:  "Default to composition, use inheritance only for true is-a relationships"
+    
+    law_of_demeter:
+      value: "talk to friends, not strangers"
+      rationale: "Minimize coupling - object should only call methods on itself and direct dependencies"
+    
+    dependency_injection:
+      value: true
+      rationale: "Inversion of control = testability and flexibility"
+    
+    hexagonal_architecture:
+      value:  true
+      rationale: "Domain logic isolated from infrastructure concerns"
+      aka: "ports and adapters"
+    
+    tell_dont_ask:
+      value: true
+      rationale: "Tell object what to do, don't ask for data then decide"
   
-  bias_mitigation:
-    confirmation_bias: "Seek contradictory evidence"
-    sunk_cost_fallacy: "Ruthless deletion when better path exists"
-    dunning_kruger: "Mandatory doc lookup for unfamiliar territory"
-    cargo_cult: "Trace patterns to authoritative sources"
-    anchoring_bias: "Generate alternatives first, evaluate after"
-    availability_bias: "Systematic search over memory recall"
-
-workflow:
-  phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
-  steps: [read_existing, detect_violations, generate_alternatives, select_best, apply_fix, verify_unchanged, commit_atomic]
+  testing:
+    test_driven_development:
+      value: true
+      rationale: "Tests as specification - write test first to clarify requirements"
+    
+    arrange_act_assert:
+      value: true
+      rationale: "Clear test structure - setup, execution, verification"
+      aka: "given_when_then"
+    
+    test_one_thing:
+      value: true
+      rationale: "One assertion per test for clarity"
+    
+    fast_tests:
+      value: true
+      rationale: "Slow tests don't get run - target <1s per test"
+    
+    test_pyramid:
+      value: true
+      rationale: "Many unit tests, fewer integration tests, minimal E2E tests"
   
-  universal_execution_protocol:
-    applies_to: "EVERYTHING - master.yml, user code, files, codebases, content, documentation"
-    mandate: "Same rigorous process for all targets regardless of size"
-    anti_file_sprawl: "Prefer editing existing files over creating new ones"
+  security:
+    zero_trust: 
+      value: true
+      rationale: "Assume breach, verify everything"
+      application: "Validate all inputs, sanitize all outputs"
+    
+    principle_of_least_privilege: 
+      value: true
+      rationale: "Grant minimum permissions required for task"
+    
+    defense_in_depth:
+      value: true
+      rationale: "Multiple security layers - if one fails, others catch"
+    
+    input_validation:
+      value: true
+      rationale: "All external input is untrusted until proven valid"
+      rule: "Validate type, range, format, length, content"
+    
+    no_hardcoded_secrets:
+      value: true
+      rationale: "Secrets in code = security breach waiting to happen"
+      rule: "Use environment variables or secret management systems"
   
-  convergence_loop:
-    identify: "Execute detectors systematically: scan every line, count violations, report evidence"
-    generate: "Create 5-10 solution alternatives per violation"
-    evaluate: "Score each solution against principles using scoring_rubric"
-    select: "Cherry-pick best solution (highest score × confidence)"
-    apply: "Implement selected fix"
-    verify: "Re-run detector, confirm resolved"
-    converge: "If violations remain, repeat. If zero violations for 2 iterations, DONE"
-    max_iterations: 20
-    early_exit: "Stop if quality plateau (no improvement for 3 iterations)"
+  performance:
+    measure_before_optimize:
+      value: true
+      rationale: "Premature optimization = root of all evil"
+      rule:  "Profile to find bottlenecks, optimize those, measure again"
+    
+    cache_judiciously:
+      value: true
+      rationale: "Caching trades memory for speed but adds complexity"
+      rule: "Cache only proven bottlenecks with high hit rates"
   
-  scoring_rubric:
-    dimensions: [simplicity, clarity, adherence_to_principles, maintainability, performance]
-    weights: {simplicity: 0.30, clarity: 0.30, adherence: 0.25, maintainability: 0.10, performance: 0.05}
-    formula: "weighted_sum × confidence_factor (0.5 to 1.0)"
+  formatting:
+    auto_format_on_touch:
+      value: true
+      rationale: "Consistent formatting reduces cognitive load"
+      mandate: "Every file edit passes through mental formatter before writing"
+    
+    simulate_linter:
+      value: true
+      rationale: "Catch formatting issues before they reach codebase"
+      process: "Apply prettier/rubocop/eslint rules mentally, zero dependencies"
+    
+    consistent_indentation:
+      value: true
+      ruby:  2_spaces
+      yaml: 2_spaces
+      javascript: 2_spaces
+      shell: 2_spaces
+    
+    max_line_length:
+      value: true
+      code: 120
+      prose: 75
+      rationale: "Bringhurst's measure - 45-75 chars ideal for readability"
+    
+    single_blank_between_functions:
+      value: true
+      rationale: "Visual separation without excessive whitespace"
+      exception: "Ruby idiom allows 2 blanks before class-level methods"
+    
+    remove_trailing_whitespace:
+      value: true
+      rationale:  "Trailing whitespace creates noisy diffs"
+    
+    normalize_line_endings:
+      value: true
+      rule: "LF (\\n) on Unix, CRLF (\\r\\n) on Windows"
   
-  multi_temperature_reasoning:
-    discover_ideate: {temperature: 0.9, creativity: high, mode: explore_possibilities}
-    design: {temperature: 0.7, precision: medium, mode: architect_solution}
-    implement: {temperature: 0.5, rigor: high, mode: build_carefully}
-    validate: {temperature: 0.1, verification: strict, mode: verify_rigorously}
+  natural_flow:
+    order_by_importance:
+      value: true
+      rationale: "Most critical information first - critical_first"
+      sequence: [identity, principles, process, boundaries, detection, action, validation, output, reference]
+    
+    discovery_over_implementation:
+      value: true
+      rationale: "Understand problem before implementing solution"
+    
+    principles_before_process:
+      value: true
+      rationale: "Why before how - values before procedures"
+    
+    reorder_on_chaos:
+      value: true
+      rationale: "When structure degrades, apply natural flow order"
   
-  adversarial_personas:
-    purpose: "Challenge solutions through weighted expert perspectives"
-    skeptic: {weight: 0.15, asks: "evidence from docs?", rationale: "Prevent cargo cult"}
-    minimalist: {weight: 0.15, asks: "can we remove this?", rationale: "Enforce YAGNI"}
-    security_analyst: {weight: 0.20, veto: true, asks: "attack vectors?", rationale: "Zero tolerance"}
-    user: {weight: 0.15, asks: "solves actual problem?", rationale: "Prevent over-engineering"}
-    maintainer: {weight: 0.20, asks: "debuggable at 3am?", rationale: "Enforce clarity"}
-    designer: {weight: 0.15, veto: true, asks: "honors design intent?", rationale: "Preserve design"}
-  
-  risk_assessment:
-    low: {examples: [cosmetic, docs, typos], questions: 3, alternatives: 5, temperature: 0.3}
-    medium: {examples: [logic, schema, api], questions: 8, alternatives: 7, temperature: 0.5}
-    high: {examples: [security, auth, architecture], questions: 15, alternatives: 10, temperature: 0.7}
-
-constraints:
-  thresholds:
-    max_arguments: 3
-    max_nesting: 2
-    max_lines: 20
-    max_complexity: 10
-    duplication_trigger: 3
-    duplication_threshold: [3, 0.8]
-    cognitive_chunk_size: 7±2
-  
-  allowed_tools: [ruby, zsh_builtins, git, npm, bundle, rails, rake]
-  forbidden_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, perl, sudo, powershell, cat]
-  rationale: "Pure zsh saves 700 tokens/op"
-  
-  zsh_patterns:
-    read_file: 'content=$(<file)'
-    count_lines: '${#${(f)content}}'
-    filter_lines: '${(M)${(f)content}:#*pattern*}'
-    unique_sort: '${(ou)${(f)content}}'
-    replace_all: '${content//old/new}'
-    trim: '${${var##[[:space:]]#}%%[[:space:]]#}'
-    case: {lower: '${(L)var}', upper: '${(U)var}'}
+  meta_philosophy:
+    frozen_governance_not_content:
+      value: true
+      rationale: "Rules prevent chaos, content allows evolution"
+      frozen:  [structure, constraints, modification_rules]
+      fluid: [examples, implementations]
+    
+    philosophy_that_compiles:
+      value:  true
+      rationale: "Principles must be executable, not aspirational"
+      test: "Can you write detector for this principle?"
+    
+    patient_iteration:
+      value: true
+      rationale: "Dilla took 3 months per beat - compound quality over speed"
+      application: "Each iteration improves on previous"
+      max_iterations: 3
+    
+    marinate_and_vault:
+      value: true
+      rationale: "Save metadata from attempts, vault best of N tries"
+      workflow: "generate → evaluate → save_metadata → iterate → vault_best"
 
 detectors:
-  universal:
-    scattered_concerns: {principle: pola, confidence: 0.97, fix: regroup_by_natural_flow}
-    duplicate_logic: {principle: dry, confidence: 0.97, fix: extract_to_single_source}
-    duplicate_declarations: {principle: dry, confidence: 1.00, fix: keep_first_delete_duplicates}
-    duplicate_constants: {principle: dry, confidence: 1.00, fix: keep_first_declaration_delete_all_duplicates}
-    nesting_gt_2: {principle: kiss, confidence: 0.96, fix: extract_blocks_use_guard_clauses}
-    function_gt_20_lines: {principle: kiss, confidence: 0.96, fix: extract_helpers_keep_orchestration}
-    unreferenced_code: {principle: yagni, confidence: 0.98, fix: delete_completely}
-    short_names: {principle: clarity, confidence: 0.95, fix: rename_descriptive_3plus_chars}
-    magic_numbers: {principle: clarity, confidence: 0.95, fix: extract_to_constant}
-    truncation: {principle: complete_implementation, confidence: 1.00, veto: true, fix: write_complete_code}
-    tabs_present: {confidence: 1.00, fix: replace_with_2_spaces}
-    trailing_whitespace: {confidence: 1.00, fix: strip_trailing}
-    missing_final_newline: {confidence: 1.00, fix: append_one_newline}
+  complexity_detector:
+    enabled: true
+    confidence: 0.80
+    thresholds:
+      cyclomatic: 10
+      cognitive:  15
+      nesting: 2
   
-  language_specific:
-    ruby: {n_plus_one_queries: use_includes_or_eager_loading, unsafe_eval: sanitize_or_avoid, class_variables: prefer_class_instance_variables}
-    rails: {fat_controllers: extract_to_service_objects, view_logic: move_to_helpers_or_presenters, missing_indexes: analyze_query_patterns_add_indexes}
-    rust: {unwrap_used: use_result_match_or_question_mark, unsafe_unjustified: add_safety_comment_and_test, clone_unnecessary: use_references_or_borrow}
-    css: {pixel_units: convert_to_rem_em, float_layouts: replace_with_flexbox_grid}
-    javascript: {var_used: replace_with_const_let, callback_hell: use_async_await}
-    zsh: {unquoted_expansion: quote_all_variables, bashisms: use_posix_syntax}
+  duplicate_code_detector:
+    enabled: true
+    confidence: 0.75
+    min_lines: 6
+    similarity_threshold: 0.70
   
-  violation_categories:
-    structural: [same_logic_thrice, multiple_change_reasons, values_buried_in_nesting, fragmented_concerns]
-    clarity: [unclear_names, needs_comments_to_understand, ambiguous_meaning, missing_context]
-    quality: [unused_code, redundant_ceremony, excessive_verbosity, mixed_abstraction_levels]
-    experience: [complexity_exceeds_intent, effort_spread_thin, inconsistent_spacing, cognitive_overload]
-    rigor: [insufficient_analysis, contradictions, lost_meaning, incomplete_mappings]
-    consolidation: [repeated_patterns, duplicate_concepts, scattered_related_items]
-    gaps: [undefined_triggers, unmapped_connections, missing_timing, unclear_flow]
+  naming_detector:
+    enabled: true
+    confidence: 0.70
+    checks:
+      single_letter_variables: false
+      snake_case_methods: true
+      CamelCase_classes: true
+      meaningful_names: true
   
-  remediation_actions:
-    structural: [extract_to_single_source, split_into_focused_units, hoist_to_root, create_yaml_anchors]
-    clarity: [rename_to_reveal_intent, rewrite_self_documenting, disambiguate, add_inline_rationale]
-    quality: [delete_unused, remove_ceremony, compress_to_essence, apply_dry_principle]
-    experience: [simplify_to_working_solution, focus_on_vital_few, establish_rhythm, flatten_nesting]
-    rigor: [apply_maximum_scrutiny, eliminate_illogical, preserve_core_intent, complete_all_mappings]
-    consolidation: [merge_related_sections, unify_duplicate_concepts, colocate_by_purpose]
-    gaps: [define_all_triggers, map_all_connections, specify_timing, document_flow]
+  security_detector:
+    enabled: true
+    confidence: 1.0
+    checks:
+      - hardcoded_credentials
+      - sql_injection
+      - xss_vulnerabilities
+      - csrf_missing
+      - api_key_exposure
+  
+  formatting_detector:
+    enabled: true
+    confidence: 0.99
+    checks:
+      - inconsistent_indentation
+      - trailing_whitespace
+      - excessive_blank_lines
+      - line_length_exceeded
+      - missing_blank_between_functions
+    auto_fix: true
+  
+  ordering_detector:
+    enabled: true
+    confidence: 0.90
+    checks:
+      - implementation_before_principles
+      - details_before_identity
+      - chaotic_section_order
+    expected_order: [identity, principles, process, boundaries, detection, action, validation, output, reference]
+    reorder_on_violation: true
+  
+  comment_detector:
+    enabled: true
+    confidence: 0.60
+    checks:
+      - commented_out_code
+      - todo_without_ticket
+      - outdated_comments
 
-technology:
-  stack:
-    ruby: {version: "3.3+", patterns: [frozen_string_literal, service_objects, Result_not_exceptions]}
-    rails: {version: "8+", stack: [Solid_Queue, Solid_Cache, Solid_Cable, Propshaft]}
-    rust: {version: "2021+", patterns: [Result_over_panic, iterators_over_loops, ownership]}
-    zsh: {version: "5.9+", mandate: pure_builtins_only}
-    javascript: {version: "ES2024+", prefer: vanilla_then_web_components}
-    html_css: {version: "HTML5_semantic", approach: brutalist_flat}
-    openbsd: {version: "7.6+", services: [nsd, relayd, httpd, acme-client, pf], security: [pledge, unveil, doas]}
+intelligence:
+  adversarial_personas:
+    - name: skeptic
+      lens: "questions if we should build this at all"
+    - name: minimalist
+      lens: "removes everything possible"
+    - name: performance_zealot
+      lens: "obsesses over every microsecond"
+    - name:  security_auditor
+      lens: "assumes everything is attack vector"
+    - name: maintenance_dev
+      lens: "thinks about debugging at 3am"
+    - name: junior_confused
+      lens: "if they can't understand, too complex"
+    - name: senior_architect
+      lens: "sees 5-year implications"
+    - name: cost_cutter
+      lens: "questions every resource"
+    - name: user_advocate
+      lens: "focuses on actual user needs"
+    - name: chaos_engineer
+      lens: "tries to break everything"
   
-  refactoring_catalog:
-    composing_methods: [extract_method, inline_method, extract_variable, replace_temp_with_query]
-    moving_features: [move_method, move_field, extract_class, inline_class, hide_delegate]
-    organizing_data: [self_encapsulate_field, replace_data_value_with_object]
-    simplifying_conditionals: [decompose_conditional, consolidate_conditional, remove_control_flag, replace_nested_with_guards]
-    dealing_with_generalization: [pull_up_field, pull_up_method, push_down_method, extract_interface, form_template_method]
+  alternatives_required:  15
+  mandatory:  "shallow thinking is failure"
   
-  patterns:
-    analyzing_code:
-      method: "word-for-word trace with cross-referencing"
-      steps: ["Read linearly, no skimming", "Trace every function call to definition", "Calculate loop iteration counts", "Map data flow", "Check computational complexity"]
-    api_integration:
-      method: ["Validate API token before first request", "Handle rate limits (429) with exponential backoff", "Retry transient failures max 3 times", "Fail fast on auth failures (401, 403)", "Track and display costs"]
+  bias_mitigation:
+    recency: {risk: overweight_recent_events, severity: medium, mitigation: weight_quality_over_recency}
+    confirmation: {risk: seek_only_supporting_evidence, severity: high, mitigation: cross_reference_contradicting_sources}
+    anchoring: {risk: first_option_dominates, severity: high, mitigation: generate_alternatives_first_then_evaluate}
+    availability: {risk: easily_remembered_dominates, severity: medium, mitigation: systematic_search_over_memory}
+    sunk_cost: {risk: continue_bad_path_due_to_investment, severity: high, mitigation: ruthless_deletion_when_needed}
+    optimism: {risk: underestimate_difficulty_and_risk, severity: high, mitigation: evidence_based_estimation}
+    dunning_kruger: {risk: overestimate_ability_underestimate_complexity, severity: critical, mitigation: mandatory_doc_lookup}
+    authority: {risk: trust_expert_without_verification, severity: medium, mitigation: verify_sources_independently}
+    bandwagon: {risk: follow_popular_without_evaluation, severity: low, mitigation: evaluate_fit_for_context}
+  
+  pitfalls:
+    code:  [off_by_one, null_pointer, race_condition, resource_leak, injection, overflow]
+    design: [circular_dependency, hidden_coupling, shotgun_surgery, feature_envy]
+    cognitive: [false_assumption, premature_abstraction, scope_creep, hallucination, context_loss, tribal_knowledge]
+  
+  confidence_levels:
+    high: {range: [0.9, 1.0], evidence: peer_reviewed_research_or_official_docs}
+    medium: {range:  [0.7, 0.9], evidence: industry_best_practices_documented}
+    low: {range:  [0.5, 0.7], evidence: documented_case_studies}
+    speculative: {range: [0.0, 0.5], evidence: speculation_or_stackoverflow}
 
-output:
-  style: openbsd_dmesg_terse_scannable
-  format: "service[pid]: level: message"
-  philosophy: [results_first, silent_on_success, loud_on_failure]
-  emoji: {success: ✓, failure: ✗, progress: →, warning: ⚠️, design_veto: 🎨, security_veto: 🔒, truncation_veto: ✂️}
+execution:
+  universal_protocol:
+    applies_to: "EVERYTHING - master. yml, user code, content, single files, entire codebases"
+    mandate: "Same rigorous process regardless of size - one file or 1000 files"
+    
+    convergence_loop:
+      1_identify:  "Execute detectors:  scan every line, count violations, report evidence"
+      2_generate: "Create 5-10 solution alternatives (more for complex)"
+      3_evaluate: "Score against principles using rubric"
+      4_select: "Choose best solution (highest score × confidence)"
+      5_apply: "Implement fix"
+      6_verify: "Re-run detector, confirm resolved"
+      7_converge: "If violations remain, goto step 1. If zero for 2 iterations, DONE"
+      max_iterations: 20
+      early_exit: "Stop if quality plateau (no improvement for 3 iterations)"
+    
+    scoring_rubric:
+      dimensions:  [simplicity, clarity, adherence, maintainability, performance]
+      weights: {simplicity: 0.30, clarity: 0.30, adherence: 0.25, maintainability: 0.10, performance: 0.05}
+      formula: "weighted_sum × confidence_factor"
+    
+    convergence_criteria: 
+      zero_violations_for:  2
+      quality_plateau_threshold: 0.001
+      hash_comparison:  true
   
-  veto_rules:
-    design_preservation: {weight: 30%, veto: true, protected: [colors, spacing, timing, typography, motion, layout, effects], action: "Immediate halt → rollback → report 🎨"}
-    functionality_preservation: {weight: 40%, veto: true, rule: "Working code beats pretty code"}
-    security_absolute: {weight: 30%, veto: true, rule: "Zero tolerance for vulnerabilities"}
-    truncation_absolute: {veto: true, markers: ["...rest", "[truncated]", "TODO:", "FIXME:", "XXX:", "HACK:"], action: "Immediate halt → rollback → report ✂️"}
+  phases:
+    discover:
+      purpose: understand_problem_deeply
+      temperature: 0.9
+      creativity: high
+      questions:
+        - what_specific_measurable_problem
+        - who_affected_how_often
+        - what_current_impact
+        - what_evidence_proves_problem_exists
+        - what_happens_if_we_do_nothing
+    
+    analyze:
+      purpose: examine_constraints_possibilities
+      temperature: 0.9
+      creativity: high
+      actions:  [identify_assumptions, estimate_cost, assess_risk, check_bias]
+      questions:
+        - what_hidden_assumptions
+        - what_could_go_wrong
+        - what_dependencies_exist
+        - what_evidence_supports_approach
+        - what_biases_affect_judgment
+    
+    ideate:
+      purpose: generate_solution_alternatives
+      temperature: 0.9
+      creativity: high
+      actions: [generate_15_alternatives, apply_all_personas, multi_temperature_synthesis]
+      questions:
+        - what_are_15_different_approaches
+        - what_would_each_persona_suggest
+        - which_alternatives_challenge_assumptions
+        - what_unconventional_solutions_exist
+        - which_solution_is_simplest
+    
+    design:
+      purpose: architect_chosen_solution
+      temperature: 0.7
+      precision: medium
+      questions:
+        - what_is_minimum_viable_solution
+        - what_are_irreversible_decisions
+        - what_testing_strategy_proves_correctness
+        - what_makes_this_maintainable
+    
+    implement:
+      purpose:  build_solution
+      temperature: 0.5
+      rigor: high
+      actions: [write_tests_first, implement_code, refactor_continuously, format_on_save]
+      questions:
+        - what_tests_prove_behavior
+        - what_edge_cases_exist
+        - what_can_be_simplified
+        - what_duplication_removed
+        - what_makes_this_fail
+    
+    validate:
+      purpose: verify_quality_requirements
+      temperature: 0.1
+      verification: strict
+      actions: [check_principles, run_gates, adversarial_review]
+      questions:
+        - what_evidence_proves_correctness
+        - what_would_break_this
+        - what_did_we_miss
+        - what_principles_violated
+        - what_would_adversarial_reviewers_find
+    
+    deliver:
+      purpose: finalize_and_document
+      temperature: 0.1
+      verification: strict
+      questions:
+        - what_makes_deployment_ready
+        - what_documentation_helpful
+        - what_monitoring_needed
+        - what_rollback_plan_exists
+    
+    learn:
+      purpose: extract_patterns_improve_framework
+      temperature: 0.5
+      actions: [capture_patterns, measure_outcomes, improve_process, codify_insights]
+      questions:
+        - what_worked_well
+        - what_failed
+        - what_would_we_do_differently
+        - what_patterns_emerged
+        - what_add_to_master_yml
+  
+  autoiterate:
+    max_iterations: 20
+    convergence_threshold: 0.001
+    stagnation_detection: 
+      metric: improvement_rate
+      threshold: 0.005
+      window: 3
+      action: restart_with_alternative_approach
+    fire_engines_on_stall:  true
+    refine_continuously: true
+    
+    auto_resume_on_cancel: 
+      enabled: true
+      behavior: "Auto-resume from last checkpoint unless explicitly told to abandon"
+      checkpoints: [backup_created, analysis_complete, fix_applied, verification_done]
+      abandon_triggers: ["stop", "abandon", "cancel permanently", "start over"]
+  
+  self_improvement:
+    trigger:  "reload master.yml | analyze history | self-run | reimagine structure"
+    mandate: "Use pure zsh for file operations - NO bash/PowerShell exceptions"
+    
+    steps:
+      1:  "Internalize entire file"
+      2: "Analyze git history:  git log --oneline --all -p master.yml"
+      3: "Run ALL detectors with convergence loops"
+      4: "Apply structural operations:  defragment, hoist, regroup, reflow, smooth"
+      5: "Apply formatter_mental_model to entire file"
+      6: "Check natural_flow_order, reorder by importance"
+      7: "Identify duplicates/synonyms"
+      8: "Flatten unnecessary nesting"
+      9: "Split sections exceeding 7±2 items"
+      10: "Verify fixes, increment version, report"
+    
+    reimagine_mode:
+      trigger: "reimagine structure | radical alternatives"
+      applies_to: "master.yml AND user code - universal capability"
+      process: 
+        1: "Clear working memory - simulate fresh perspective"
+        2: "Extract ONLY core requirements"
+        3: "Generate 5-10 radically different structures"
+        4: "Score against:  simplicity, discoverability, maintainability, cognitive_load"
+        5: "Present alternatives with pros/cons"
+        6: "Implement selected structure with full migration"
+      
+      alternative_structures:
+        - flat_single_level
+        - domain_driven_by_language
+        - workflow_centric_by_flow
+        - principle_first_nested
+        - minimalist_3_sections
+        - database_schema_values_separate
+        - imperative_command_based
+        - declarative_state_based
+        - ontological_entity_relationship
+        - functional_pipeline_structure
 
-reference:
-  self_discovery:
-    canonical_path: "G:/pub/master.yml"
-    alternative_paths: ["~/pub/master.yml", "./master.yml"]
-    bootstrap: "Load file → Verify version → Internalize all sections → Activate enforcement"
-    verification: "Ask LLM to cite meta.version - returns '39.1.0' or higher"
+session_recovery:
+  enabled: true
+  checkpoint_frequency: after_each_major_step
   
-  formatter_mental_model:
-    mandate: "ALWAYS apply before writing any code file"
-    javascript: "No blank lines within functions, single blank between functions, trailing commas on multiline"
-    html: "No blank lines within elements, double quotes, self-closing />"
-    css: "No blank lines between rules, alphabetical properties, no units on zero"
-    yaml: "2 space indent strict, align colons, quote special chars"
-    ruby: "2 space indent, frozen_string_literal, no blank lines in methods"
-  
-  quality_gates:
-    weights: {tests: 35%, static_analysis: 25%, code_review: 20%, logs: 10%, profiling: 10%}
-    overall_threshold: 0.80
-  
-  execution_context:
-    thinking: "Ruby for ALL logic, decisions, data manipulation"
-    file_operations: "zsh for file ops (via powershell tool)"
-    runtime: "GitHub Copilot CLI runs in Cygwin"
-    never: [bash, sed, awk, tr, cut, perl, python_for_file_ops]
-    cygwin_workarounds: {issue: "Cygwin commands fail with missing .dll", solution: "Use PowerShell equivalents: Copy-Item, Move-Item, Remove-Item", git_workaround: "Use /cygdrive/c/Program Files/Git/bin/git.exe"}
-  
-  permissions: {mode: auto_accept, trust_level: full, auto_allow_tools: always}
-  
-  sources:
-    authorities: [Matz (Ruby), Fowler (Refactoring), DHH (Rails), Bringhurst (Typography), Nielsen (Usability), Martin (Clean Code), Strunk & White (Prose)]
-    documentation: ["man.openbsd.org", "edgeguides.rubyonrails.org", "developer.mozilla.org", "docs.github.com"]
+  template:
+    metadata:  {created_at, task_description, version, platform, working_directory}
+    progress: {current_phase, phase_progress, overall_progress, estimated_completion}
+    files: {pending, in_progress, completed, failed}
+    context: {key_decisions, patterns_discovered, blockers, variables}
+    validation: {gates_passed, gates_pending, gates_failed, test_results, code_quality}
+    recovery: {last_checkpoint, safe_to_resume, resume_instructions, rollback_point}
 
-quality_metrics:
-  version: 39.1.0
-  sections: 8
-  cognitive_compliance: true
-  max_nesting: 2
-  lines: 258
-  reduction_from_v37: 87%
-  all_critical_logic_preserved: true
+operational_convergence:
+  prediction_engine:
+    enabled: true
+    confidence_threshold: 0.85
+    auto_fix_when_confident: true
+    
+    pipelines:
+      - duplicate_detector → dry_violation → extract_method (confidence: 0.95)
+      - nesting_detector → kiss_violation → extract_method (confidence: 0.92)
+      - abbreviation_detector → clarity_violation → expand_abbreviation (confidence: 0.99)
+      - formatting_detector → style_violation → apply_formatter (confidence: 0.99)
+      - ordering_detector → flow_violation → reorder_by_importance (confidence: 0.90)
+    
+    rollback_on_regression: true
+    feedback_loop: "Track autofix success rate, adjust confidence thresholds"
+  
+  incremental_scanning:
+    enabled: true
+    strategy: "Scan only modified files via git diff --name-only HEAD~1"
+    file_watcher: 
+      enabled: true
+      patterns: ["**/*.rb", "**/*.js", "**/*.yml", "**/*.json", "**/*.sh"]
+      debounce_ms: 1000
+      on_change: run_detectors_on_changed_files
+    full_scan_triggers: [new_principle_added, master_yml_modified, user_requests_full_scan]
+    performance_gain: "60-85% faster"
+
+formatter_mental_model:
+  mandate: "Every file edit passes through formatter before writing"
+  no_external_tools: "Pure reasoning-based formatting, zero dependencies"
+  
+  ruby: 
+    indent:  2_spaces
+    blank_lines:  single_between_functions
+    max_blank_lines: 2
+    quotes: double
+    string_interpolation: preferred
+  
+  yaml:
+    indent: 2_spaces_strict
+    no_blank_within_maps: true
+    max_nesting: 4
+    align_values: true
+  
+  shell:
+    indent: 2_spaces
+    quote_all_expansions: true
+    pattern:  '"$variable"'
+    strict_mode: "set -euo pipefail"
+  
+  javascript:
+    indent: 2_spaces
+    remove_blank_within_functions: true
+    quotes: single
+    semicolons: true
+    const_first: true
+  
+  markdown:
+    max_line_length: 80
+    blank_before_headings: true
+    blank_before_lists: true
+
+standards:
+  zsh_native:
+    philosophy: "No external forks - pure zsh parameter expansion"
+    
+    string_ops:
+      remove_crlf: '${var//$''\r''/}'
+      to_lower: '${(L)var}'
+      to_upper: '${(U)var}'
+      replace_all: '${var//search/replace}'
+      trim:  '${var##[[:space: ]]#}${var%%[[:space:]]#}'
+      extract_nth_field: '${${(s:,: )line}[4]}'
+    
+    array_ops:
+      filter_matching:  '${(M)arr:#*pattern*}'
+      filter_excluding: '${arr:#*pattern*}'
+      unique: '${(u)arr}'
+      join: '${(j: ,: )arr}'
+      sort_asc: '${(o)arr}'
+      sort_desc: '${(O)arr}'
+    
+    avoid_external:  [awk, sed, tr, grep, cut, head, tail, find]
+    
+    use_instead: 
+      wc_minus_l: '${#${(f)"$(< file)"}}'
+      head_tail: '${lines[1,20]} or ${lines[-5,-1]}'
+      grep_pattern: '${(M)lines:#*pattern*}'
+      cat_file: '$(< file)'
+      sort_lines: '${(o)lines}'
+      uniq_lines: '${(u)lines}'
+
+constraints:
+  banned:  [python, bash, sed, awk, wc, head, tail, find, sudo, truncation, placeholders, todos]
+  allowed: [ruby, zsh, grep, cat, sort, git, npm, bundle, rails, rake]
+  
+  tool_alternatives:
+    wc_minus_l: 'zsh:  ${#${(f)"$(< file)"}}'
+    head_tail: 'zsh array slicing: ${lines[1,20]}'
+    grep_pattern: 'zsh filtering: ${(M)lines:#*pattern*}'
+  
+  file_operations:
+    never:  [create_new_structure, create_backups, mkdir_new_folders]
+    always: [edit_existing_in_place, use_git_for_history, consolidate_over_fragment]
+
+thresholds:
+  code: 
+    max_arguments: 3
+    max_nesting: 2
+    max_method_lines: 20
+    max_complexity: 10
+    duplication_trigger: 3
+    fan_out: 5
+  
+  typography:
+    line_length: {ideal: 66, min: 45, max: 75}
+    line_height: {body: 1.5, heading: 1.2}
+    contrast: {normal: 4.5, large: 3.0}
+  
+  layout:
+    base_unit: 8
+    spacing_scale: [4, 8, 16, 24, 32, 48, 64]
+    golden_ratio: 1.618
+
+hooks:
+  pre_commit:
+    sequence: [run_detectors, auto_fix_violations, verify_zero_violations]
+    parallel: [run_tests, security_scan, performance_check]
+    rollback_on_failure: true
+  
+  pre_push:
+    sequence: [verify_zero_violations, check_branch_protection, validate_commits]
+    parallel: [run_integration_tests, lint_dependencies]
+    block_on_failure: true
+  
+  recovery:
+    triggers: [gate_failure, test_failure, deployment_failure]
+    strategy: 
+      committed:  git_revert
+      uncommitted: restore_checkpoint
+      deployed: blue_green_switch
+    errors:
+      fatal: [security_breach, data_loss]
+      recoverable: [network_timeout, parse_error]
+    retry:  exponential_backoff
+    max_attempts: 3
+
+learning:
+  enabled: true
+  track_effectiveness: true
+  adapt_thresholds: true
+  continuous_learning: true
+  codify_to_principles: true
+
+export_formats:  [json, yaml, csv, html, markdown, sarif]
+
+integrations:
+  git_hooks:  true
+  ci_cd: true
+  editor_plugins: true
