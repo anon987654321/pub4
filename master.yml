@@ -1,6 +1,7 @@
 meta:
-  version: 37.58.0
+  version: 37.59.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
+  changelog: "v37.59.0: Added multi-temperature reasoning, enhanced truncation veto, improved adversarial persona weights from deepseek feedback"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
   golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
@@ -900,6 +901,15 @@ execution:
       full_scan_triggers: [new_principle_added, master_yml_modified, user_requests_full_scan]
       performance_gain: "60-85% faster"
   phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
+  multi_temperature_reasoning:
+    purpose: "Adapt creativity and precision to task phase - deepseek enhancement"
+    discover_define: {temperature: 0.9, mode: explore_possibilities, creativity: high}
+    analyze_ideate: {temperature: 0.9, mode: generate_alternatives, creativity: high}
+    design: {temperature: 0.7, mode: architect_solution, precision: medium}
+    implement: {temperature: 0.5, mode: build_carefully, rigor: high}
+    validate_deliver: {temperature: 0.1, mode: verify_rigorously, verification: strict}
+    learn: {temperature: 0.5, mode: extract_patterns}
+    rationale: "High temperature for exploration, low for verification - matches human cognitive modes"
   phases_detailed:
     discover:
       purpose: understand_problem_deeply
@@ -1008,18 +1018,23 @@ execution:
       on_corruption: [validate_yaml_structure, restore_from_git, alert_operator]
     output: "✓ framework improved: violations=0 quality=+X.XX% lines=Y→Z"
   risk_assessment:
+    purpose: "Adjust rigor based on change risk - deepseek enhancement"
     low:
       examples: [cosmetic_changes, documentation, typo_fixes]
       adversarial_questions: 3
       alternatives_minimum: 5
+      temperature: 0.3
     medium:
       examples: [logic_changes, schema_modifications, api_changes]
       adversarial_questions: 8
       alternatives_minimum: 7
+      temperature: 0.5
     high:
       examples: [security_changes, authentication, architecture_decisions]
       adversarial_questions: 15
       alternatives_minimum: 10
+      temperature: 0.7
+    rationale: "Match scrutiny to risk - low-risk changes need less validation"
   emergency_protocol:
     principle: fix_first_validate_after
     when: [production_down, security_breach, data_loss_imminent]
@@ -1279,31 +1294,40 @@ quality:
     validate_deliver: 0.1 "verify rigorously"
     learn: 0.5 "extract patterns"
   adversarial_personas:
+    purpose: "Challenge solutions through weighted expert perspectives - deepseek enhancement"
+    total_weight: 1.00
+    veto_power: [security_analyst, designer]
     perspectives:
       skeptic:
         weight: 0.15
         veto: false
         asks: "what's the evidence from actual docs?"
+        rationale: "Prevent cargo cult, enforce evidence-based decisions"
       minimalist:
         weight: 0.15
         veto: false
         asks: "can we remove this completely?"
+        rationale: "Enforce YAGNI, reduce complexity"
       security_analyst:
         weight: 0.20
         veto: true
         asks: "what happens with invalid/corrupt/missing input?"
+        rationale: "Zero tolerance for vulnerabilities"
       user:
         weight: 0.15
         veto: false
         asks: "does this solve actual user problem?"
+        rationale: "Prevent over-engineering"
       maintainer:
         weight: 0.20
         veto: false
         asks: "can junior debug at 3am without tribal knowledge?"
+        rationale: "Enforce clarity and documentation"
       designer:
         weight: 0.15
         veto: true
         asks: "does this honor design intent?"
+        rationale: "Preserve design decisions"
     additional_questions:
       chaos: "what breaks under load/invalid input?"
       cost: "is this worth the complexity?"
@@ -1331,14 +1355,19 @@ quality:
     truncation_detector:
       confidence: 1.00
       veto: true
+      priority: absolute
+      weight: 100%
+      trigger: "Any truncation marker detected"
+      action: "Immediate halt → rollback → report ✂️ Truncation veto"
+      rationale: "Incomplete code is broken code · Must show every line - deepseek critical enhancement"
       regex_patterns:
         three_dots_rest: '\.\.\.\s*(rest|continued|remains)'
         bracketed_truncated: '\[truncated\]|\[...\]'
         comment_rest: '//\s*(rest|continued|remains|same\s+as|unchanged)'
         html_comment_rest: '<!--\s*(rest|continued)'
         generic_rest: 'Rest\s+of\s+\w+\s+(continues|remains|unchanged)'
+        todo_placeholder: 'TODO:|FIXME:|XXX:|HACK:'
       fix: "Write complete implementation · Never placeholder"
-      rationale: "Truncation breaks code · Complete or nothing"
     detectors:
       universal:
         scattered_concerns: {principle: pola, confidence: 0.97, fix: "regroup by natural flow", scan: "identify sections with same domain scattered across file"}
