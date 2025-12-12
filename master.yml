@@ -1,5 +1,5 @@
 meta:
-  version: 37.43.0
+  version: 37.44.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -169,14 +169,9 @@ core:
       uniq_lines: "Use zsh: ${(u)lines}"
       rationale: "Read tool has proper permissions, zsh builtins are faster, no external process forks"
     file_operations:
-      never: [create_new_structure, create_backups, mkdir_new_folders, file_sprawl, sectionitis, divitis]
+      never: [create_new_structure, create_backups, mkdir_new_folders]
       always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure, consolidate_over_fragment]
       orchestration: [read_analyze_generate_select_apply_verify_loop]
-      anti_patterns:
-        file_sprawl: "Too many files - consolidate related logic into fewer files"
-        sectionitis: "Too many YAML/JSON sections - merge related keys"
-        divitis: "Too many divs in HTML - use semantic elements"
-        rationale: "Cognitive load increases with fragmentation - prefer cohesive units"
   thresholds:
     code:
       max_arguments: 3
@@ -218,7 +213,7 @@ core:
     requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
   principles:
     note: "Principles apply universally to code, content, design, data, systems - no exceptions, no categories"
-    rationale_27_items: "This section intentionally exceeds 7±2 cognitive limit - these ARE the core universal principles from authoritative sources (Fowler, Martin, Nielsen, Rams, Bringhurst, etc). Cannot reduce without losing essential knowledge. Each principle is independently valuable."
+    rationale_30_items: "This section intentionally exceeds 7±2 cognitive limit - these ARE the core universal principles from authoritative sources plus anti-patterns. Cannot reduce without losing essential knowledge. 30 principles total (27 traditional + 3 anti-patterns)."
     universal:
       dry:
         description: "Don't Repeat Yourself - every piece of knowledge must have single, unambiguous, authoritative representation"
@@ -249,39 +244,48 @@ core:
         trigger: coupling_exceeds_5
         action: decouple_dependencies
         priority: critical
+        detector: [solid_s_detector, solid_o_detector, solid_l_detector, solid_i_detector, solid_d_detector]
       pola:
         description: "Principle of Least Astonishment - behavior should match user expectations"
         trigger: surprising_behavior
         action: make_predictable
         priority: high
+        detector: pola_detector
       composition:
         trigger: inheritance_detected
         action: prefer_composition
         priority: medium
+        detector: composition_detector
       evidence:
         trigger: assumption_without_proof
         action: validate_against_docs
         priority: critical
+        detector: evidence_detector
       reversible:
         trigger: irreversible_operation
         action: add_rollback_mechanism
         priority: high
+        detector: reversible_detector
       explicit:
         trigger: implicit_behavior
         action: make_explicit
         priority: medium
+        detector: explicit_detector
       orthogonal:
         trigger: tightly_coupled_concerns
         action: split_independent_units
         priority: medium
+        detector: orthogonal_detector
       latch:
         trigger: chaotic_organization
         action: establish_clear_structure
         priority: low
+        detector: latch_detector
       minimalism:
         trigger: unnecessary_complexity
         action: subtract_to_essence
         priority: medium
+        detector: minimalism_detector
       unix:
         do_one_thing: "do one thing and do it well"
         compose: "programs work together"
@@ -305,46 +309,55 @@ core:
         trigger: unrelated_items_adjacent
         action: group_related_items
         priority: medium
+        detector: gestalt_detector
         applies_to: all
       gestalt_similarity:
         trigger: different_appearance_same_function
         action: unify_styling
         priority: medium
+        detector: gestalt_detector
         applies_to: all
       gestalt_closure:
         trigger: incomplete_patterns
         action: complete_visual_patterns
         priority: low
+        detector: gestalt_detector
         applies_to: all
       nielsen_visibility:
         trigger: hidden_status
         action: show_status_within_2s
         priority: high
+        detector: nielsen_detector
         applies_to: all
       nielsen_match_world:
         trigger: technical_jargon
         action: use_user_language
         priority: medium
+        detector: nielsen_detector
         applies_to: all
       nielsen_user_control:
         trigger: no_undo
         action: add_undo_redo
         priority: high
+        detector: nielsen_detector
         applies_to: all
       rams_innovative:
         trigger: derivative_design
         action: seek_novel_solutions
         priority: low
+        detector: rams_detector
         applies_to: all
       rams_useful:
         trigger: form_over_function
         action: prioritize_usefulness
         priority: critical
+        detector: rams_detector
         applies_to: all
       rams_aesthetic:
         trigger: ugly_but_functional
         action: make_beautiful
         priority: medium
+        detector: rams_detector
         applies_to: all
       rails_doctrine:
         optimize_happiness: "Optimize for programmer happiness"
@@ -359,17 +372,41 @@ core:
         trigger: programmer_frustration_or_configuration_overload
         action: optimize_for_joy_and_conventions
         priority: high
+        detector: rails_detector
         applies_to: all
       bringhurst_measure:
         trigger: line_length_bad
         action: set_45_75_chars
         priority: medium
+        detector: bringhurst_detector
         applies_to: all
       bringhurst_rhythm:
         trigger: inconsistent_spacing
         action: establish_vertical_rhythm
         priority: medium
+        detector: bringhurst_detector
         applies_to: all
+      anti_file_sprawl:
+        description: "Too many files increases cognitive load"
+        trigger: related_logic_scattered_across_files
+        action: consolidate_into_fewer_cohesive_files
+        priority: medium
+        detector: file_sprawl_detector
+        applies_to: all
+      anti_sectionitis:
+        description: "Too many YAML/JSON sections increases cognitive load"
+        trigger: excessive_nesting_or_section_count
+        action: merge_related_sections
+        priority: medium
+        detector: sectionitis_detector
+        applies_to: [yaml, json]
+      anti_divitis:
+        description: "Too many divs in HTML increases cognitive load"
+        trigger: divs_where_semantic_elements_exist
+        action: replace_with_semantic_html
+        priority: medium
+        detector: divitis_detector
+        applies_to: [html]
     meta:
       philosophy: *philosophy
       commitment: [boy_scout, designer_veto, typography_honors_content, bringhurst_measure, nielsen_usability]
@@ -1456,7 +1493,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.43.0"
+    version: "37.44.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
