@@ -1,5 +1,5 @@
 meta:
-  version: 37.53.0
+  version: 37.54.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -39,10 +39,21 @@ meta:
       abandon_triggers: ["user says 'stop', 'abandon', 'cancel permanently', 'start over']
       resume_default: "Always resume unless explicit abandon command"
   hooks:
-    pre_commit: run_detectors_auto_fix_violations
-    pre_push: verify_zero_violations_or_block
-    post_merge: auto_run_on_conflicts
-    on_file_save: optional_watch_mode
+    smart_chaining:
+      pre_commit:
+        sequence: [run_detectors, auto_fix_violations, verify_zero_violations]
+        parallel: [run_tests, security_scan, performance_check]
+        rollback_on_failure: true
+        timeout_seconds: 30
+      pre_push:
+        sequence: [verify_zero_violations, check_branch_protection, validate_commits]
+        parallel: [run_integration_tests, lint_dependencies]
+        block_on_failure: true
+    legacy:
+      pre_commit: run_detectors_auto_fix_violations
+      pre_push: verify_zero_violations_or_block
+      post_merge: auto_run_on_conflicts
+      on_file_save: optional_watch_mode
   self_discovery:
     purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
     canonical_path: "G:/pub/master.yml"
@@ -140,11 +151,22 @@ meta:
       process: "After constructing code/text, run formatter_mental_model before file operations"
       no_external_tools: "Pure reasoning-based formatting, zero dependencies"
     mandatory_self_run_checks:
-      structural_operations: "ALWAYS apply defragment, hoist, regroup, reflow, smooth"
-      cognitive_chunk_size: "VERIFY no section exceeds 7±2 items"
-      duplication_detection: "SCAN for duplicate sections/logic across file"
-      embedded_code_detection: "SCAN for executable code in YAML strings - convert to principles"
-      reinternalize_after_edit: "RELOAD entire file into working memory after ANY edit"
+      structural_automation:
+        on_every_edit: true
+        operations:
+          defragment: "auto_merge_scattered_sections"
+          hoist: "auto_promote_buried_values"
+          regroup: "auto_organize_by_semantics"
+          reflow: "auto_apply_natural_order"
+          smooth: "auto_establish_rhythm"
+        cognitive_chunk_enforcement: "auto_split_when_exceeds_7±2"
+        duplicate_cleanup: "auto_remove_duplicate_sections"
+      legacy:
+        structural_operations: "ALWAYS apply defragment, hoist, regroup, reflow, smooth"
+        cognitive_chunk_size: "VERIFY no section exceeds 7±2 items"
+        duplication_detection: "SCAN for duplicate sections/logic across file"
+        embedded_code_detection: "SCAN for executable code in YAML strings - convert to principles"
+        reinternalize_after_edit: "RELOAD entire file into working memory after ANY edit"
 
 core:
   constraints:
@@ -804,11 +826,26 @@ execution:
       hash_comparison: "Compare file hash between iterations"
       metric_tracking: "duplication%, nesting_depth, violations_count"
       success_criteria: "violations=0 AND (hash_unchanged OR metrics_plateaued)"
+    self_healing:
+      max_iterations: 20
+      early_exit: "stop_if_no_improvement_for_3_iterations"
+      adaptive_learning:
+        track_success_rates: true
+        adjust_confidence_thresholds: true
+        learn_from_mistakes: "store_rejected_alternatives"
+      quality_metrics: [duplication_percentage, nesting_depth, violations_count, cognitive_load_score]
+      plateau_detection: "hash_comparison_and_metric_stagnation"
   operational_convergence:
     prediction_engine:
       enabled: true
       confidence_threshold: 0.85
       auto_fix_when_confident: true
+      pipelines:
+        - duplicate_detector → dry_violation → extract_method (confidence: 0.95)
+        - nesting_detector → kiss_violation → extract_method (confidence: 0.92)
+        - abbreviation_detector → clarity_violation → expand_abbreviation (confidence: 0.99)
+      rollback_on_regression: true
+      feedback_loop: "Track autofix success rate, adjust confidence thresholds"
       detectors:
         duplicate_pattern: {violation: dry, confidence: 0.85, autofix: extract_method}
         nesting_increase: {violation: kiss, confidence: 0.92, autofix: extract_method}
@@ -817,28 +854,44 @@ execution:
         abbreviation_detected: {violation: clarity, confidence: 0.99, autofix: expand_abbreviation}
     incremental_scanning:
       enabled: true
-      strategy: "Scan only modified files - 60-85% faster"
+      strategy: "Scan only modified files via git diff --name-only HEAD~1"
+      file_watcher:
+        enabled: true
+        patterns: ["**/*.rb", "**/*.js", "**/*.yml", "**/*.json"]
+        debounce_ms: 1000
+        on_change: run_detectors_on_changed_files
       full_scan_triggers: [new_principle_added, master_yml_modified, user_requests_full_scan]
+      performance_gain: "60-85% faster"
   phases: [discover, define, analyze, ideate, design, implement, validate, deliver, learn]
   phases_detailed:
     discover:
       purpose: understand_problem_deeply
       temperature: 0.9
+      token_budget: 1000
+      creativity: high
       output: problem_definition
     define:
       purpose: crystallize_requirements
       temperature: 0.9
+      token_budget: 1000
+      creativity: high
       input: problem_definition
       output: specification
     analyze:
       purpose: examine_constraints_possibilities
       temperature: 0.9
+      token_budget: 1500
+      alternatives: 5-10
+      creativity: high
       input: specification
       output: analysis_report
       actions: [scan_all_violations, generate_alternatives, apply_adversarial_questions, mandatory_doc_lookup, trace_all_execution_paths]
     ideate:
       purpose: generate_solution_alternatives
       temperature: 0.9
+      token_budget: 1500
+      alternatives: 5-10
+      creativity: high
       input: analysis_report
       output: solution_options
       alternatives_minimum: 5
@@ -846,28 +899,40 @@ execution:
     design:
       purpose: architect_chosen_solution
       temperature: 0.7
+      token_budget: 800
+      precision: medium
       input: solution_options
       output: design_specification
     implement:
       purpose: build_solution
       temperature: 0.5
+      token_budget: 2000
+      rigor: high
       input: design_specification
       output: working_code
     validate:
       purpose: verify_quality_requirements
       temperature: 0.1
+      token_budget: 1000
+      verification: strict
       input: working_code
       output: validation_report
     deliver:
       purpose: finalize_and_document
       temperature: 0.1
+      token_budget: 1000
+      verification: strict
       input: validation_report
       output: deliverable_product
     learn:
       purpose: extract_patterns_improve_framework
       temperature: 0.5
+      token_budget: 800
       input: deliverable_product
       output: knowledge_base_update
+    context_aware_modulation:
+      auto_adjust: true
+      based_on: [complexity, risk_level, time_constraints]
   file_improvement:
     trigger: "user requests to improve {file}"
     tools_available: [word_for_word_trace, cross_reference_verification, prose_analysis, name_quality_check]
@@ -927,15 +992,28 @@ execution:
   internalize_first: read_existing_understand_extend_never_write_blind
   before_every_command: "Verify command not in core.constraints.banned list, use allowed tools only"
   git_workflow:
-    authentication: "use classic PAT with full repo scope, deploy keys often read-only"
-    commits: "conventional commits: type(scope): description [feat|fix|docs|style|refactor|test|chore]"
-    github_pages: "push to main → wait 30-90s → check Actions tab → refresh with Ctrl+Shift+R"
-    deployment_verification: "check console for errors → test primary workflow → verify API calls → monitor for 5min"
-    mp3_serving: ".mp3/subdirectory with relative paths, CORS headers automatic on GitHub Pages"
-    cygwin_zsh: "copilot CLI runs in Cygwin/npm environment, path format: /cygdrive/g/path"
-    cygwin_git_workaround: "If Cygwin git fails (missing .dll), use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
-    conflict_resolution: "git checkout --ours FILE && git add FILE && git rebase --continue"
-    vps_development: "develop locally (full Copilot), deploy to OpenBSD VPS (no Copilot binaries)"
+    auto:
+      branch_naming: "{type}/{scope}-{description}"
+      auto_squash: true
+      commit_message_template: |
+        {type}({scope}): {subject}
+        
+        {body}
+        
+        [principle_citations]
+      pre_push_checks: [verify_zero_violations, run_tests, check_coverage, security_scan]
+      auto_tag_releases: true
+      changelog_generation: from_commit_messages
+    legacy:
+      authentication: "use classic PAT with full repo scope, deploy keys often read-only"
+      commits: "conventional commits: type(scope): description [feat|fix|docs|style|refactor|test|chore]"
+      github_pages: "push to main → wait 30-90s → check Actions tab → refresh with Ctrl+Shift+R"
+      deployment_verification: "check console for errors → test primary workflow → verify API calls → monitor for 5min"
+      mp3_serving: ".mp3/subdirectory with relative paths, CORS headers automatic on GitHub Pages"
+      cygwin_zsh: "copilot CLI runs in Cygwin/npm environment, path format: /cygdrive/g/path"
+      cygwin_git_workaround: "If Cygwin git fails (missing .dll), use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
+      conflict_resolution: "git checkout --ours FILE && git add FILE && git rebase --continue"
+      vps_development: "develop locally (full Copilot), deploy to OpenBSD VPS (no Copilot binaries)"
   ai_assisted:
     copilot_cli:
       version: "0.0.367+"
@@ -948,6 +1026,15 @@ execution:
       mcp_integration: ["GitHub", "Slack", "Sentry", "Jira via Model Context Protocol"]
       tool_orchestration: ["tool search", "programmatic calling", "usage examples"]
       workflow: "use for complex refactoring, multi-file edits, agent coordination"
+    mcp_orchestration:
+      servers: [github, slack, sentry, jira, linear]
+      discovery: dynamic_tool_discovery
+      orchestration:
+        - "github.create_issue → linear.create_task → slack.notify"
+        - "sentry.error → github.create_issue → slack.alert"
+      context_sharing: true
+      programmatic_calling: true
+      usage_patterns: pre_loaded_examples_for_correct_syntax
     selection_criteria:
       copilot: "quick edits, terminal assistance, codebase exploration"
       claude: "architectural changes, planning, multi-agent workflows"
@@ -1008,6 +1095,12 @@ execution:
     native_patterns:
       mandate: "Use pure zsh parameter expansion; grep/cat/sort allowed for convenience"
       reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
+      pipeline_optimization:
+        old: "grep pattern file | head -20 | sort | uniq"
+        new: "print -rl -- ${(ou)${(M)${(f)\"$(< file)\"}:#*pattern*}[1,20]}"
+        token_savings: "~700 tokens per operation"
+        speed_improvement: "3-5x faster (no process forks)"
+        memory_efficient: "single zsh process"
       string_ops:
         - "Remove CRLF: ${var//$'
 '/}"
@@ -1440,6 +1533,13 @@ output:
     when_applicable: "Complex decisions, security concerns, architectural choices"
     format: "Brief principle citation in comments or commit messages"
     example: "// [security_first] sanitize user input before DB query"
+  token_optimization:
+    workflow: "work_silently → show_progress_dots → final_diff → await_approval"
+    progress_indicators: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    silent_mode: true
+    final_output_only: true
+    share_code_when: [explicit_request, error_context, principle_demonstration]
+    principle_citations: inline_brief_references
   progress: "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
   emoji: ["✓ success", "✗ failure", "→ progress", "⚠️ warning", "🔍 search"]
   design:
