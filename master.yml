@@ -1,5 +1,5 @@
 meta:
-  version: 37.55.0
+  version: 37.57.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -49,9 +49,6 @@ meta:
         sequence: [verify_zero_violations, check_branch_protection, validate_commits]
         parallel: [run_integration_tests, lint_dependencies]
         block_on_failure: true
-    legacy:
-      pre_commit: run_detectors_auto_fix_violations
-      pre_push: verify_zero_violations_or_block
       post_merge: auto_run_on_conflicts
       on_file_save: optional_watch_mode
   self_discovery:
@@ -161,10 +158,6 @@ meta:
           smooth: "auto_establish_rhythm"
         cognitive_chunk_enforcement: "auto_split_when_exceeds_7±2"
         duplicate_cleanup: "auto_remove_duplicate_sections"
-      legacy:
-        structural_operations: "ALWAYS apply defragment, hoist, regroup, reflow, smooth"
-        cognitive_chunk_size: "VERIFY no section exceeds 7±2 items"
-        duplication_detection: "SCAN for duplicate sections/logic across file"
         embedded_code_detection: "SCAN for executable code in YAML strings - convert to principles"
         reinternalize_after_edit: "RELOAD entire file into working memory after ANY edit"
 
@@ -229,81 +222,84 @@ core:
     note: "Principles apply universally to code, content, design, data, systems - organized by domain for cognitive load"
     rationale: "30 principles split into 4 categories (7±2 compliant per category) - preserves all knowledge, improves discoverability"
     code:
-      dry:
-        description: "Don't Repeat Yourself - every piece of knowledge must have single, unambiguous, authoritative representation"
-        trigger: duplication_3_times_or_70_percent
-        action: extract_to_single_source
-        priority: high
-        detector: logic_repeated_thrice
-        refactorings: [extract_method, extract_class, pull_up_method, form_template_method]
-      kiss:
-        description: "Keep It Simple, Stupid - simplicity should be key goal, unnecessary complexity avoided"
-        trigger: complexity_exceeds_10_or_nesting_exceeds_2
-        action: simplify_or_flatten
-        priority: high
-        detector: [nesting_exceeds, function_too_long]
-        refactorings: [extract_method, replace_nested_conditional_with_guard_clauses, decompose_conditional]
-      yagni:
-        description: "You Aren't Gonna Need It - don't add functionality until necessary"
-        trigger: unused_code_detected
-        action: remove_completely
-        priority: medium
-        detector: unreferenced_code
-      solid:
-        S: "Single Responsibility - class/function should have one reason to change"
-        O: "Open/Closed - open for extension, closed for modification"
-        L: "Liskov Substitution - subtypes must be substitutable for base types"
-        I: "Interface Segregation - many specific interfaces better than one general"
-        D: "Dependency Inversion - depend on abstractions not concretions"
-        trigger: coupling_exceeds_5
-        action: decouple_dependencies
-        priority: critical
-        detector: [solid_s_detector, solid_o_detector, solid_l_detector, solid_i_detector, solid_d_detector]
-      pola:
-        description: "Principle of Least Astonishment - behavior should match user expectations"
-        trigger: surprising_behavior
-        action: make_predictable
-        priority: high
-        detector: pola_detector
-      composition:
-        trigger: inheritance_detected
-        action: prefer_composition
-        priority: medium
-        detector: composition_detector
-      evidence:
-        trigger: assumption_without_proof
-        action: validate_against_docs
-        priority: critical
-        detector: evidence_detector
-      reversible:
-        trigger: irreversible_operation
-        action: add_rollback_mechanism
-        priority: high
-        detector: reversible_detector
-      explicit:
-        trigger: implicit_behavior
-        action: make_explicit
-        priority: medium
-        detector: explicit_detector
-      orthogonal:
-        trigger: tightly_coupled_concerns
-        action: split_independent_units
-        priority: medium
-        detector: orthogonal_detector
-      minimalism:
-        trigger: unnecessary_complexity
-        action: subtract_to_essence
-        priority: medium
-        detector: minimalism_detector
-      unix:
-        do_one_thing: "do one thing and do it well"
-        compose: "programs work together"
-        text_streams: "universal interface"
-        portability: "write portable programs"
-        trigger: multi_purpose_function
-        action: split_single_purpose
-        priority: medium
-        detector: unix_detector
+      foundational:
+        dry:
+          description: "Don't Repeat Yourself - every piece of knowledge must have single, unambiguous, authoritative representation"
+          trigger: duplication_3_times_or_70_percent
+          action: extract_to_single_source
+          priority: high
+          detector: logic_repeated_thrice
+          refactorings: [extract_method, extract_class, pull_up_method, form_template_method]
+        kiss:
+          description: "Keep It Simple, Stupid - simplicity should be key goal, unnecessary complexity avoided"
+          trigger: complexity_exceeds_10_or_nesting_exceeds_2
+          action: simplify_or_flatten
+          priority: high
+          detector: [nesting_exceeds, function_too_long]
+          refactorings: [extract_method, replace_nested_conditional_with_guard_clauses, decompose_conditional]
+        yagni:
+          description: "You Aren't Gonna Need It - don't add functionality until necessary"
+          trigger: unused_code_detected
+          action: remove_completely
+          priority: medium
+          detector: unreferenced_code
+        pola:
+          description: "Principle of Least Astonishment - behavior should match user expectations"
+          trigger: surprising_behavior
+          action: make_predictable
+          priority: high
+          detector: pola_detector
+        minimalism:
+          trigger: unnecessary_complexity
+          action: subtract_to_essence
+          priority: medium
+          detector: minimalism_detector
+      architecture:
+        solid:
+          S: "Single Responsibility - class/function should have one reason to change"
+          O: "Open/Closed - open for extension, closed for modification"
+          L: "Liskov Substitution - subtypes must be substitutable for base types"
+          I: "Interface Segregation - many specific interfaces better than one general"
+          D: "Dependency Inversion - depend on abstractions not concretions"
+          trigger: coupling_exceeds_5
+          action: decouple_dependencies
+          priority: critical
+          detector: [solid_s_detector, solid_o_detector, solid_l_detector, solid_i_detector, solid_d_detector]
+        composition:
+          trigger: inheritance_detected
+          action: prefer_composition
+          priority: medium
+          detector: composition_detector
+        evidence:
+          trigger: assumption_without_proof
+          action: validate_against_docs
+          priority: critical
+          detector: evidence_detector
+        reversible:
+          trigger: irreversible_operation
+          action: add_rollback_mechanism
+          priority: high
+          detector: reversible_detector
+        explicit:
+          trigger: implicit_behavior
+          action: make_explicit
+          priority: medium
+          detector: explicit_detector
+      design_philosophy:
+        orthogonal:
+          trigger: tightly_coupled_concerns
+          action: split_independent_units
+          priority: medium
+          detector: orthogonal_detector
+        unix:
+          do_one_thing: "do one thing and do it well"
+          compose: "programs work together"
+          text_streams: "universal interface"
+          portability: "write portable programs"
+          trigger: multi_purpose_function
+          action: split_single_purpose
+          priority: medium
+          detector: unix_detector
     structural:
       latch:
         description: "Location, Alphabet, Time, Category, Hierarchy - organize information by natural axes"
@@ -344,89 +340,92 @@ core:
         detector: bringhurst_detector
         applies_to: all
     universal:
-      gestalt_proximity:
-        trigger: unrelated_items_adjacent
-        action: group_related_items
-        priority: medium
-        detector: gestalt_detector
-        applies_to: all
-      gestalt_similarity:
-        trigger: different_appearance_same_function
-        action: unify_styling
-        priority: medium
-        detector: gestalt_detector
-        applies_to: all
-      gestalt_closure:
-        trigger: incomplete_patterns
-        action: complete_visual_patterns
-        priority: low
-        detector: gestalt_detector
-        applies_to: all
-      nielsen_visibility:
-        trigger: hidden_status
-        action: show_status_within_2s
-        priority: high
-        detector: nielsen_detector
-        applies_to: all
-      nielsen_match_world:
-        trigger: technical_jargon
-        action: use_user_language
-        priority: medium
-        detector: nielsen_detector
-        applies_to: all
-      nielsen_user_control:
-        trigger: no_undo
-        action: add_undo_redo
-        priority: high
-        detector: nielsen_detector
-        applies_to: all
-      rams_innovative:
-        trigger: derivative_design
-        action: seek_novel_solutions
-        priority: low
-        detector: rams_detector
-        applies_to: all
-      rams_useful:
-        trigger: form_over_function
-        action: prioritize_usefulness
-        priority: critical
-        detector: rams_detector
-        applies_to: all
-      rams_aesthetic:
-        trigger: ugly_but_functional
-        action: make_beautiful
-        priority: medium
-        detector: rams_detector
-        applies_to: all
-      rails_doctrine:
-        optimize_happiness: "Optimize for programmer happiness"
-        convention_over_config: "Convention over Configuration"
-        menu_omakase: "The menu is omakase - integrated systems over à la carte"
-        no_one_paradigm: "No one paradigm - flexibility to use multiple approaches"
-        exalt_beautiful_code: "Exalt beautiful code - aesthetics matter"
-        provide_sharp_knives: "Provide sharp knives - trust programmers with powerful tools"
-        value_integrated_systems: "Value integrated systems over modular parts"
-        progress_over_stability: "Progress over stability - move forward boldly"
-        big_tent: "Big tent - welcome diverse developers and use cases"
-        trigger: programmer_frustration_or_configuration_overload
-        action: optimize_for_joy_and_conventions
-        priority: high
-        detector: rails_detector
-        applies_to: all
-      sectionitis:
-        description: "Too many YAML/JSON sections increases cognitive load"
-        trigger: excessive_nesting_or_section_count
-        action: merge_related_sections
-        priority: medium
-        detector: sectionitis_detector
-        applies_to: all
-      divitis:
-        description: "Too many divs in HTML increases cognitive load"
-        trigger: divs_where_semantic_elements_exist
-        action: replace_with_semantic_html
-        priority: medium
-        detector: divitis_detector
-        applies_to: all
+      design:
+        gestalt_proximity:
+          trigger: unrelated_items_adjacent
+          action: group_related_items
+          priority: medium
+          detector: gestalt_detector
+          applies_to: all
+        gestalt_similarity:
+          trigger: different_appearance_same_function
+          action: unify_styling
+          priority: medium
+          detector: gestalt_detector
+          applies_to: all
+        gestalt_closure:
+          trigger: incomplete_patterns
+          action: complete_visual_patterns
+          priority: low
+          detector: gestalt_detector
+          applies_to: all
+        nielsen_visibility:
+          trigger: hidden_status
+          action: show_status_within_2s
+          priority: high
+          detector: nielsen_detector
+          applies_to: all
+        nielsen_match_world:
+          trigger: technical_jargon
+          action: use_user_language
+          priority: medium
+          detector: nielsen_detector
+          applies_to: all
+        nielsen_user_control:
+          trigger: no_undo
+          action: add_undo_redo
+          priority: high
+          detector: nielsen_detector
+          applies_to: all
+        rams_innovative:
+          trigger: derivative_design
+          action: seek_novel_solutions
+          priority: low
+          detector: rams_detector
+          applies_to: all
+        rams_useful:
+          trigger: form_over_function
+          action: prioritize_usefulness
+          priority: critical
+          detector: rams_detector
+          applies_to: all
+        rams_aesthetic:
+          trigger: ugly_but_functional
+          action: make_beautiful
+          priority: medium
+          detector: rams_detector
+          applies_to: all
+      framework:
+        rails_doctrine:
+          optimize_happiness: "Optimize for programmer happiness"
+          convention_over_config: "Convention over Configuration"
+          menu_omakase: "The menu is omakase - integrated systems over à la carte"
+          no_one_paradigm: "No one paradigm - flexibility to use multiple approaches"
+          exalt_beautiful_code: "Exalt beautiful code - aesthetics matter"
+          provide_sharp_knives: "Provide sharp knives - trust programmers with powerful tools"
+          value_integrated_systems: "Value integrated systems over modular parts"
+          progress_over_stability: "Progress over stability - move forward boldly"
+          big_tent: "Big tent - welcome diverse developers and use cases"
+          trigger: programmer_frustration_or_configuration_overload
+          action: optimize_for_joy_and_conventions
+          priority: high
+          detector: rails_detector
+          applies_to: all
+      anti_patterns:
+        sectionitis:
+          description: "Too many YAML/JSON sections increases cognitive load"
+          trigger: excessive_nesting_or_section_count
+          action: merge_related_sections
+          priority: medium
+          detector: sectionitis_detector
+          applies_to: all
+        divitis:
+          description: "Too many divs in HTML increases cognitive load"
+          trigger: divs_where_semantic_elements_exist
+          action: replace_with_semantic_html
+          priority: medium
+          detector: divitis_detector
+          applies_to: all
     meta:
       philosophy: *philosophy
       commitment: [boy_scout, designer_veto, typography_honors_content, bringhurst_measure, nielsen_usability]
@@ -992,28 +991,26 @@ execution:
   internalize_first: read_existing_understand_extend_never_write_blind
   before_every_command: "Verify command not in core.constraints.banned list, use allowed tools only"
   git_workflow:
-    auto:
-      branch_naming: "{type}/{scope}-{description}"
-      auto_squash: true
-      commit_message_template: |
-        {type}({scope}): {subject}
-        
-        {body}
-        
-        [principle_citations]
-      pre_push_checks: [verify_zero_violations, run_tests, check_coverage, security_scan]
-      auto_tag_releases: true
-      changelog_generation: from_commit_messages
-    legacy:
-      authentication: "use classic PAT with full repo scope, deploy keys often read-only"
-      commits: "conventional commits: type(scope): description [feat|fix|docs|style|refactor|test|chore]"
-      github_pages: "push to main → wait 30-90s → check Actions tab → refresh with Ctrl+Shift+R"
-      deployment_verification: "check console for errors → test primary workflow → verify API calls → monitor for 5min"
-      mp3_serving: ".mp3/subdirectory with relative paths, CORS headers automatic on GitHub Pages"
-      cygwin_zsh: "copilot CLI runs in Cygwin/npm environment, path format: /cygdrive/g/path"
-      cygwin_git_workaround: "If Cygwin git fails (missing .dll), use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
-      conflict_resolution: "git checkout --ours FILE && git add FILE && git rebase --continue"
-      vps_development: "develop locally (full Copilot), deploy to OpenBSD VPS (no Copilot binaries)"
+    branch_naming: "{type}/{scope}-{description}"
+    auto_squash: true
+    commit_message_template: |
+      {type}({scope}): {subject}
+      
+      {body}
+      
+      [principle_citations]
+    pre_push_checks: [verify_zero_violations, run_tests, check_coverage, security_scan]
+    auto_tag_releases: true
+    changelog_generation: from_commit_messages
+    authentication: "use classic PAT with full repo scope, deploy keys often read-only"
+    commits: "conventional commits: type(scope): description [feat|fix|docs|style|refactor|test|chore]"
+    github_pages: "push to main → wait 30-90s → check Actions tab → refresh with Ctrl+Shift+R"
+    deployment_verification: "check console for errors → test primary workflow → verify API calls → monitor for 5min"
+    mp3_serving: ".mp3/subdirectory with relative paths, CORS headers automatic on GitHub Pages"
+    cygwin_zsh: "copilot CLI runs in Cygwin/npm environment, path format: /cygdrive/g/path"
+    cygwin_git_workaround: "If Cygwin git fails (missing .dll), use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
+    conflict_resolution: "git checkout --ours FILE && git add FILE && git rebase --continue"
+    vps_development: "develop locally (full Copilot), deploy to OpenBSD VPS (no Copilot binaries)"
   ai_assisted:
     copilot_cli:
       version: "0.0.367+"
@@ -1525,21 +1522,15 @@ output:
   philosophy: ["results_first", "silent_on_success", "loud_on_failure", "omit_internal_reasoning"]
   llm_normalization: ["no apologizing", "no hedging", "direct_honest", "confident_when_evidence"]
   token_optimization:
-    workflow: "work_silently → show_final_diff → await_approval → execute"
+    workflow: "work_silently → show_progress_dots → final_diff → await_approval → execute"
     no_intermediate_output: "Don't share temporary code, iterations, or work-in-progress"
     final_presentation: "Show complete git diff, ask 'proceed?', execute on approval"
-    share_code_when: "User explicitly requests full code or file contents"
-  principle_documentation:
-    when_applicable: "Complex decisions, security concerns, architectural choices"
-    format: "Brief principle citation in comments or commit messages"
-    example: "// [security_first] sanitize user input before DB query"
-  token_optimization:
-    workflow: "work_silently → show_progress_dots → final_diff → await_approval"
+    share_code_when: [explicit_request, error_context, principle_demonstration, user_explicitly_requests_full_code]
     progress_indicators: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     silent_mode: true
     final_output_only: true
-    share_code_when: [explicit_request, error_context, principle_demonstration]
     principle_citations: inline_brief_references
+  principle_documentation:
   progress: "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
   emoji: ["✓ success", "✗ failure", "→ progress", "⚠️ warning", "🔍 search"]
   design:
@@ -1629,7 +1620,7 @@ reference:
     zsh: [shellcheck, bats, shfmt]
     cross_language: [dependency_vulnerability_scan, license_compliance_check, secret_detection]
   metrics:
-    version: "37.48.0"
+    version: "37.55.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
