@@ -1,0 +1,109 @@
+# GitHub Copilot CLI Configuration
+# Optimizations and patterns specific to Copilot CLI environment
+
+version: "1.0.0"
+environment: "github_copilot_cli"
+
+runtime:
+  shell: "Cygwin/npm environment"
+  path_format: "/cygdrive/g/path"
+  models: ["gpt-5.1", "gpt-5.1-codex", "claude-haiku-4.5", "gemini-3-pro"]
+  tools: ["grep (ripgrep)", "glob", "view", "edit", "create"]
+
+features:
+  custom_agents: ".github/agents"
+  image_context: "clipboard support"
+  session_resume: true
+  
+workflow:
+  primary_use: ["quick edits", "file operations", "terminal commands", "grep/glob search"]
+  tool_calling: "parallel tool calls for efficiency"
+  
+zsh_native_patterns:
+  philosophy: "No external forks, pure zsh parameter expansion for maximum performance"
+  token_savings: "~700 tokens per operation vs external commands"
+  speed: "3-5x faster (no process forks)"
+  
+  string_operations:
+    remove_crlf: 'cleaned=${var//$''\r''/}'
+    lowercase: 'lower=${(L)var}'
+    uppercase: 'upper=${(U)var}'
+    replace_all: 'result=${var//search/replace}'
+    trim_start: 'trimmed_start=${var##[[:space:]]#}'
+    trim_end: 'trimmed_end=${var%%[[:space:]]#}'
+    trim_both: 'trimmed_both=${${var##[[:space:]]#}%%[[:space:]]#}'
+    extract_field: 'fourth_column=${${(s:,:)line}[4]}'
+    split_to_array: 'arr=( ${(s:delim:)var} )'
+  
+  array_operations:
+    filter_matching: 'matches=( ${(M)arr:#*pattern*} )'
+    filter_excluding: 'non_matches=( ${arr:#*pattern*} )'
+    unique_elements: 'unique=( ${(u)arr} )'
+    join_array: 'joined=${(j:,:)arr}'
+    reverse_array: 'reversed=( ${(Oa)arr} )'
+    sort_ascending: 'sorted=( ${(o)arr} )'
+    sort_descending: 'sorted_desc=( ${(O)arr} )'
+  
+  file_operations:
+    read_file: 'content=$(<file)'
+    read_lines: 'lines=( ${(f)"$(< file)"} )'
+    count_lines: '${#${(f)"$(< file)"}}'
+    first_n_lines: '${(f)"$(< file)"}[1,n]'
+    last_n_lines: '${(f)"$(< file)"}[-n,-1]'
+    filter_lines: '${(M)${(f)"$(< file)"}:#*pattern*}'
+    unique_lines: '${(u)${(f)"$(< file)"}}'
+    sort_lines: '${(o)${(f)"$(< file)"}}'
+  
+  parameter_expansion_flags:
+    M: "Match instead of filter"
+    u: "Unique elements"
+    o: "Sort ascending"
+    O: "Sort descending"
+    L: "Lowercase"
+    U: "Uppercase"
+    j: "Join array"
+    s: "Split string"
+    A: "Assign to array"
+    f: "Split on newlines"
+  
+  replace_these_commands:
+    awk: "zsh array/string operations"
+    sed: "zsh parameter expansion"
+    tr: "zsh case conversion / character mapping"
+    grep: "zsh pattern matching with (M) flag"
+    cut: "zsh field splitting with (s:delim:)"
+    head_tail: "zsh array slicing [1,10] or [-5,-1]"
+    uniq: "${(u)arr}"
+    sort: "${(o)arr}"
+  
+  exceptions:
+    use_external_for:
+      - "Complex regex requiring PCRE"
+      - "Multi-file operations"
+      - "Binary data processing"
+  
+  efficiency_examples:
+    count_yaml_keys: 'zsh -c ''print ${#${(M)${(f)"$(< master.yml)"}:#[a-z_]*:}}'''
+    extract_versions: 'zsh -c ''print -l ${(M)${(f)"$(< master.yml)"}:#*version:*}'''
+    remove_blanks: 'zsh -c ''print -l ${${(f)"$(< file)"}:#}'' > file.tmp && mv file.tmp file'
+    filter_comments: 'zsh -c ''print -l ${${(f)"$(< file)"}:##*}'''
+
+cygwin_workarounds:
+  issue: "Cygwin commands (cp, mv, etc) fail with missing .dll errors"
+  solution: "Use PowerShell equivalents"
+  never_use: ["cp", "mv", "rm via cygwin"]
+  always_use: ["Copy-Item", "Move-Item", "Remove-Item"]
+  git_workaround: "If Cygwin git fails: /cygdrive/c/Program Files/Git/bin/git.exe"
+
+tool_preferences:
+  copilot_for:
+    - "Quick edits and immediate changes"
+    - "Terminal command assistance"
+    - "File operations (view, edit, create)"
+    - "Codebase exploration (grep/glob)"
+  
+  escalate_to_claude_for:
+    - "Architectural planning"
+    - "Complex refactoring across multiple files"
+    - "Multi-agent workflows"
+    - "Deep analysis requiring extensive context"

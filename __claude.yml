@@ -1,0 +1,120 @@
+# Claude Code CLI Configuration
+# Advanced capabilities specific to Claude's architecture
+
+version: "1.0.0"
+environment: "claude_code_cli"
+
+capabilities:
+  plan_mode: "Shift+Tab twice for pre-execution planning"
+  parallel_agents: true
+  dynamic_tool_discovery: true
+  extended_context: "200k+ tokens"
+
+mcp_integration:
+  protocol: "Model Context Protocol"
+  servers:
+    - github
+    - slack
+    - sentry
+    - jira
+    - linear
+  
+  features:
+    context_sharing: true
+    programmatic_calling: true
+    usage_patterns: "pre_loaded_examples_for_correct_syntax"
+  
+  orchestration_examples:
+    - "github.create_issue → linear.create_task → slack.notify"
+    - "sentry.error → github.create_issue → slack.alert"
+
+workflow:
+  primary_use:
+    - "Architectural changes and planning"
+    - "Complex refactoring across multiple files"
+    - "Multi-agent coordination"
+    - "Deep codebase analysis"
+  
+  plan_mode_workflow:
+    - "Activate plan mode (Shift+Tab twice)"
+    - "Review proposed changes and strategy"
+    - "Approve or refine plan"
+    - "Execute with full context retention"
+
+claude_specific_strengths:
+  analysis:
+    - "Word-for-word code tracing with full execution paths"
+    - "Cross-reference verification across large codebases"
+    - "Bias detection and mitigation"
+    - "Adversarial perspective synthesis"
+  
+  generation:
+    - "15+ solution alternatives with scoring"
+    - "Multi-temperature reasoning (0.9 explore → 0.1 verify)"
+    - "Convergence loops with quality plateau detection"
+  
+  refactoring:
+    - "Principle-based code transformation"
+    - "Detector → Violation → Autofix pipelines"
+    - "Structural operations (defragment, hoist, regroup, reflow)"
+
+comparison_findings:
+  source: "v37.58 (1709 lines) vs v65.0.0 (818 lines)"
+  
+  critical_losses:
+    - "Detailed detector implementations with autofix pipelines"
+    - "Violation categories → remediation mappings"
+    - "Situational pattern matching (API, browser, async)"
+    - "Technology-specific guidance (Ruby/Rails, JS, HTML/CSS)"
+    - "Quality gates with evidence weights"
+  
+  significant_losses:
+    - "Extensive principles catalog (30+ → 12)"
+    - "Adversarial persona question templates"
+    - "Design token protection lists"
+    - "Bias mitigation framework with severity levels"
+    - "Natural flow order & structural operations"
+    - "Zsh efficiency examples and metrics"
+    - "Risk assessment framework"
+    - "Token optimization strategy"
+  
+  notable_losses:
+    - "Complete refactoring catalog (Fowler patterns)"
+    - "Design philosophy & CSS constraints"
+    - "Prose quality guidelines (Strunk & White)"
+    - "Cross-language integration patterns"
+    - "Verification audit protocol"
+    - "Deployment configuration templates"
+  
+  philosophy_shift:
+    v37: "Comprehensive reference manual - everything you need"
+    v65: "Streamlined execution framework - start fast, scale up"
+
+restoration_candidates:
+  high_priority:
+    - "Detector implementations with confidence scores"
+    - "Violation → remediation mapping tables"
+    - "Technology-specific pattern libraries"
+    - "Adversarial question templates"
+  
+  medium_priority:
+    - "Extended principles catalog with triggers"
+    - "Design token protection system"
+    - "Risk assessment temperature modulation"
+    - "Complete refactoring catalog"
+  
+  low_priority:
+    - "Deployment templates (user-specific)"
+    - "Extended prose guidelines"
+    - "Cross-language integration details"
+
+recommendations:
+  approach: "Modular restoration"
+  strategy:
+    - "Keep v65 as lean core framework"
+    - "Restore critical patterns to __patterns.yml"
+    - "Move technology specifics to __tech_stack.yml"
+    - "Create __detectors.yml with full implementation library"
+    - "Maintain version history for rollback capability"
+  
+  rationale: "Progressive disclosure - load what you need when you need it"
