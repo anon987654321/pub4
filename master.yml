@@ -1,5 +1,5 @@
 meta:
-  version: 37.46.0
+  version: 37.47.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -1177,18 +1177,166 @@ quality:
       fix: "Write complete implementation · Never placeholder"
       rationale: "Truncation breaks code · Complete or nothing"
     detectors:
-      scattered_concerns: {principle: pola, confidence: 0.97, fix: "regroup by natural flow", scan: "identify sections with same domain scattered across file"}
-      duplicate_logic: {principle: dry, confidence: 0.97, fix: "extract to single source", scan: "find logic repeated 3+ times"}
-      duplicate_declarations: {principle: dry, confidence: 1.00, fix: "keep first, delete duplicates", scan: "find const/let/var/function/class declared multiple times"}
-      duplicate_constants: {principle: dry, confidence: 1.00, fix: "keep first declaration, delete all duplicates", scan: "find same value defined in multiple locations"}
-      nesting_gt_2: {principle: kiss, confidence: 0.96, fix: "extract blocks, use guard clauses", scan: "count indentation depth, flag >2 levels"}
-      function_gt_20_lines: {principle: kiss, confidence: 0.96, fix: "extract helpers, keep orchestration", scan: "count lines between function boundaries"}
-      unreferenced_code: {principle: yagni, confidence: 0.98, fix: "delete completely"}
-      short_names: {principle: clarity, confidence: 0.95, fix: "rename to descriptive (3+ chars)"}
-      magic_numbers: {principle: clarity, confidence: 0.95, fix: "extract to constant, check design veto"}
-      tabs_present: {confidence: 1.00, fix: "replace tabs with 2 spaces"}
-      trailing_whitespace: {confidence: 1.00, fix: "strip trailing spaces"}
-      missing_final_newline: {confidence: 1.00, fix: "append exactly one newline"}
+      universal:
+        scattered_concerns: {principle: pola, confidence: 0.97, fix: "regroup by natural flow", scan: "identify sections with same domain scattered across file"}
+        duplicate_logic: {principle: dry, confidence: 0.97, fix: "extract to single source", scan: "find logic repeated 3+ times"}
+        duplicate_declarations: {principle: dry, confidence: 1.00, fix: "keep first, delete duplicates", scan: "find const/let/var/function/class declared multiple times"}
+        duplicate_constants: {principle: dry, confidence: 1.00, fix: "keep first declaration, delete all duplicates", scan: "find same value defined in multiple locations"}
+        nesting_gt_2: {principle: kiss, confidence: 0.96, fix: "extract blocks, use guard clauses", scan: "count indentation depth, flag >2 levels"}
+        function_gt_20_lines: {principle: kiss, confidence: 0.96, fix: "extract helpers, keep orchestration", scan: "count lines between function boundaries"}
+        unreferenced_code: {principle: yagni, confidence: 0.98, fix: "delete completely"}
+        short_names: {principle: clarity, confidence: 0.95, fix: "rename to descriptive (3+ chars)"}
+        magic_numbers: {principle: clarity, confidence: 0.95, fix: "extract to constant, check design veto"}
+        tabs_present: {confidence: 1.00, fix: "replace tabs with 2 spaces"}
+        trailing_whitespace: {confidence: 1.00, fix: "strip trailing spaces"}
+        missing_final_newline: {confidence: 1.00, fix: "append exactly one newline"}
+      language_specific:
+        ruby:
+          - n_plus_one_queries: "use_includes_or_eager_loading"
+          - unsafe_eval: "sanitize_or_avoid_completely"
+          - class_variables: "prefer_class_instance_variables"
+        rails:
+          - fat_controllers: "extract_to_service_objects"
+          - view_logic: "move_to_helpers_or_presenters"
+          - missing_indexes: "analyze_query_patterns_add_indexes"
+        rust:
+          - unwrap_used: "use_result_match_or_question_mark"
+          - unsafe_unjustified: "add_safety_comment_and_test"
+          - clone_unnecessary: "use_references_or_borrow"
+        css:
+          - pixel_units: "convert_to_rem_em"
+          - float_layouts: "replace_with_flexbox_grid"
+          - specificity_wars: "use_low_specificity_selectors"
+        zsh:
+          - unquoted_expansion: "quote_all_variables"
+          - bashisms_used: "use_posix_compliant_syntax"
+        openbsd:
+          - pledge_missing: "declare_minimal_promises"
+          - unveil_missing: "restrict_filesystem_access"
+          - gnu_extensions: "use_posix_bsd_equivalents"
+      implementations:
+        purpose: "Systematic violation detection with evidence"
+        mandate: "Execute methodically: count lines scanned, violations found, report evidence"
+        execution_requirement: "Generate alternatives for every violation, score with rubric, verify after fix"
+        execution_model: "Simulated mental execution - LLM traces through file content line-by-line, applies pattern matching logic, reports findings with line numbers"
+        note: "Every principle MUST have detector. Trivial violations (rename) need 1 solution. Complex violations need 5-10 alternatives."
+        action_mappings:
+          logic_repeated_thrice: extract_to_single_source
+          multiple_responsibilities: split_into_focused_units
+          values_buried_deep: hoist_to_accessible_scope
+          related_concepts_scattered: gather_and_colocate
+          arbitrary_grouping: regroup_by_meaning
+          excessive_sections: defragment_and_consolidate
+          tight_coupling: decouple_with_interfaces
+          unclear_names: rename_to_reveal_intent
+          needs_comments: rewrite_self_documenting
+          ambiguous_meaning: disambiguate
+          mixed_abstraction_levels: separate_high_low
+          details_before_concepts: apply_stepdown_rule
+          passive_voice: make_active_and_direct
+          vague_language: use_concrete_and_specific
+          inconsistent_structure: apply_parallel_form
+          unreferenced_code: delete_completely
+          redundant_ceremony: remove_boilerplate
+          single_use_variable: inline_or_remove
+          nil_operations: validate_explicitly
+          command_query_mixed: separate_mutation_from_query
+          nested_conditionals: extract_guard_clauses
+          complexity_exceeds: simplify_branching
+          nesting_exceeds: flatten_structure
+          function_too_long: extract_smaller_units
+          fragmented_concerns: consolidate_related_sections
+          cognitive_overload: split_when_exceeds_7_items
+          duplication_above_threshold: abstract_to_yaml_anchor_or_extract
+        detailed:
+          dry_detector:
+            pattern: "DRY"
+            method: "Scan for lines appearing 3+ times, flag for extraction"
+            autofix: "Generate 5 extraction strategies (function, constant, yaml anchor, merge, hoist), score by simplicity"
+          kiss_detector:
+            pattern: "KISS"
+            method: "Track nesting depth >2, section size >9 items, function >20 lines"
+            autofix: "Generate 7-12 simplification strategies (extract, flatten, guard clauses, split), score by clarity"
+          yagni_detector:
+            pattern: "YAGNI"
+            method: "Scan for unreferenced sections, unused definitions"
+            autofix: "Single solution: delete completely (no alternatives needed)"
+          naming_detector:
+            pattern: "CLARITY"
+            method: "Scan for 1-2 char names (except i,j,k), vague terms (data, thing, stuff)"
+            autofix: "Generate 5-10 name alternatives, score by clarity + domain accuracy"
+          prose_quality_detector:
+            pattern: "STRUNK_WHITE"
+            method: "Scan for needless words (very, really, ALL, EVERY), passive voice, vague language"
+            autofix: "Generate 3-7 rewrite alternatives, score by brevity + clarity"
+          execution_completeness_detector:
+            pattern: "COMPLETE_IMPLEMENTATION"
+            method: "Scan for truncation markers (...rest, [truncated], TODO), placeholders"
+            autofix: "Single solution: write complete implementation (no shortcuts)"
+          solid_s_detector:
+            pattern: "SINGLE_RESPONSIBILITY"
+            method: "Scan for sections with multiple change reasons, multi-purpose functions"
+            autofix: "Generate 5-10 split strategies, score by cohesion"
+          solid_o_detector:
+            pattern: "OPEN_CLOSED"
+            method: "Scan for modification points that should be extension points"
+            autofix: "Generate 5-8 extension mechanisms, score by flexibility"
+          solid_l_detector:
+            pattern: "LISKOV_SUBSTITUTION"
+            method: "Scan for subtype violations, broken contracts"
+            autofix: "Generate 5-8 fixes (strengthen preconditions, weaken postconditions), score by correctness"
+          solid_i_detector:
+            pattern: "INTERFACE_SEGREGATION"
+            method: "Scan for fat interfaces, clients depending on unused methods"
+            autofix: "Generate 5-10 interface split strategies, score by client needs"
+          solid_d_detector:
+            pattern: "DEPENDENCY_INVERSION"
+            method: "Scan for concrete dependencies, tight coupling"
+            autofix: "Generate 5-10 abstraction strategies, score by decoupling"
+          pola_detector:
+            pattern: "LEAST_ASTONISHMENT"
+            method: "Scan for surprising behavior, violated expectations"
+            autofix: "Generate 5-10 predictability improvements, score by user expectations"
+          unix_detector:
+            pattern: "UNIX_PHILOSOPHY"
+            method: "Scan for multi-purpose functions, non-composable units, non-text interfaces"
+            autofix: "Generate 7-12 unix-style decompositions, score by composability"
+          composition_detector:
+            pattern: "COMPOSITION_OVER_INHERITANCE"
+            method: "Scan for inheritance hierarchies, is-a relationships"
+            autofix: "Generate 5-10 composition alternatives, score by flexibility"
+          evidence_detector:
+            pattern: "EVIDENCE_BASED"
+            method: "Scan for claims without sources, assumptions without validation"
+            autofix: "Generate 3-5 documentation strategies, score by authority"
+          reversible_detector:
+            pattern: "REVERSIBLE_OPERATIONS"
+            method: "Scan for irreversible operations, missing rollback"
+            autofix: "Generate 5-8 rollback mechanisms, score by reliability"
+          explicit_detector:
+            pattern: "EXPLICIT_OVER_IMPLICIT"
+            method: "Scan for implicit behavior, magic, hidden assumptions"
+            autofix: "Generate 5-10 explicit alternatives, score by clarity"
+          orthogonal_detector:
+            pattern: "ORTHOGONAL_CONCERNS"
+            method: "Scan for coupled concerns, mixed responsibilities"
+            autofix: "Generate 5-10 separation strategies, score by independence"
+          minimalism_detector:
+            pattern: "MINIMALISM"
+            method: "Scan for unnecessary complexity, unused features, over-engineering"
+            autofix: "Generate 5-12 simplification alternatives, score by essence"
+          gestalt_detector:
+            pattern: "GESTALT_PRINCIPLES"
+            method: "Scan for unrelated items adjacent, different appearance for same function, incomplete patterns"
+            autofix: "Generate 5-10 grouping/styling strategies, score by visual clarity"
+          nielsen_detector:
+            pattern: "NIELSEN_HEURISTICS"
+            method: "Scan for hidden status, technical jargon, missing undo"
+            autofix: "Generate 5-10 usability improvements, score by user experience"
+          bringhurst_detector:
+            pattern: "TYPOGRAPHY"
+            method: "Scan for line length <45 or >75, inconsistent rhythm"
+            autofix: "Generate 3-7 typography fixes, score by readability"
     formatters:
       tabs_to_spaces: "content=${content//$\\t/  }"
       trim_trailing: "content=${content%%[[:space:]]##}"
@@ -1314,30 +1462,6 @@ reference:
     css: {pixels: "convert to rem", floats: "use flexbox/grid", specificity: "lower it"}
     zsh: {unquoted: "quote all expansions", bashisms: "use POSIX"}
     openbsd: {pledge: "add minimal promises", unveil: "restrict filesystem", gnu: "use POSIX/BSD"}
-  language_specific_detectors:
-    ruby:
-      - n_plus_one_queries: "use_includes_or_eager_loading"
-      - unsafe_eval: "sanitize_or_avoid_completely"
-      - class_variables: "prefer_class_instance_variables"
-    rails:
-      - fat_controllers: "extract_to_service_objects"
-      - view_logic: "move_to_helpers_or_presenters"
-      - missing_indexes: "analyze_query_patterns_add_indexes"
-    rust:
-      - unwrap_used: "use_result_match_or_question_mark"
-      - unsafe_unjustified: "add_safety_comment_and_test"
-      - clone_unnecessary: "use_references_or_borrow"
-    css:
-      - pixel_units: "convert_to_rem_em"
-      - float_layouts: "replace_with_flexbox_grid"
-      - specificity_wars: "use_low_specificity_selectors"
-    zsh:
-      - unquoted_expansion: "quote_all_variables"
-      - bashisms_used: "use_posix_compliant_syntax"
-    openbsd:
-      - pledge_missing: "declare_minimal_promises"
-      - unveil_missing: "restrict_filesystem_access"
-      - gnu_extensions: "use_posix_bsd_equivalents"
   tech_stack:
     ruby: "3.4.7 stable (4.0.0-preview2 available)"
     rails: "8.1.1 (job continuations, structured events, local CI)"
@@ -1365,131 +1489,8 @@ reference:
     css: [stylelint, browser_compatibility_tests, axe_core]
     zsh: [shellcheck, bats, shfmt]
     cross_language: [dependency_vulnerability_scan, license_compliance_check, secret_detection]
-  detectors:
-    purpose: "Systematic violation detection with evidence"
-    mandate: "Execute methodically: count lines scanned, violations found, report evidence"
-    execution_requirement: "Generate alternatives for every violation, score with rubric, verify after fix"
-    execution_model: "Simulated mental execution - LLM traces through file content line-by-line, applies pattern matching logic, reports findings with line numbers"
-    note: "Every principle MUST have detector. Trivial violations (rename) need 1 solution. Complex violations need 5-10 alternatives."
-    action_mappings:
-      logic_repeated_thrice: extract_to_single_source
-      multiple_responsibilities: split_into_focused_units
-      values_buried_deep: hoist_to_accessible_scope
-      related_concepts_scattered: gather_and_colocate
-      arbitrary_grouping: regroup_by_meaning
-      excessive_sections: defragment_and_consolidate
-      tight_coupling: decouple_with_interfaces
-      unclear_names: rename_to_reveal_intent
-      needs_comments: rewrite_self_documenting
-      ambiguous_meaning: disambiguate
-      mixed_abstraction_levels: separate_high_low
-      details_before_concepts: apply_stepdown_rule
-      passive_voice: make_active_and_direct
-      vague_language: use_concrete_and_specific
-      inconsistent_structure: apply_parallel_form
-      unreferenced_code: delete_completely
-      redundant_ceremony: remove_boilerplate
-      single_use_variable: inline_or_remove
-      nil_operations: validate_explicitly
-      command_query_mixed: separate_mutation_from_query
-      nested_conditionals: extract_guard_clauses
-      complexity_exceeds: simplify_branching
-      nesting_exceeds: flatten_structure
-      function_too_long: extract_smaller_units
-      fragmented_concerns: consolidate_related_sections
-      cognitive_overload: split_when_exceeds_7_items
-      duplication_above_threshold: abstract_to_yaml_anchor_or_extract
-    implementations:
-      dry_detector:
-        pattern: "DRY"
-        method: "Scan for lines appearing 3+ times, flag for extraction"
-        autofix: "Generate 5 extraction strategies (function, constant, yaml anchor, merge, hoist), score by simplicity"
-      kiss_detector:
-        pattern: "KISS"
-        method: "Track nesting depth >2, section size >9 items, function >20 lines"
-        autofix: "Generate 7-12 simplification strategies (extract, flatten, guard clauses, split), score by clarity"
-      yagni_detector:
-        pattern: "YAGNI"
-        method: "Scan for unreferenced sections, unused definitions"
-        autofix: "Single solution: delete completely (no alternatives needed)"
-      naming_detector:
-        pattern: "CLARITY"
-        method: "Scan for 1-2 char names (except i,j,k), vague terms (data, thing, stuff)"
-        autofix: "Generate 5-10 name alternatives, score by clarity + domain accuracy"
-      prose_quality_detector:
-        pattern: "STRUNK_WHITE"
-        method: "Scan for needless words (very, really, ALL, EVERY), passive voice, vague language"
-        autofix: "Generate 3-7 rewrite alternatives, score by brevity + clarity"
-      execution_completeness_detector:
-        pattern: "COMPLETE_IMPLEMENTATION"
-        method: "Scan for truncation markers (...rest, [truncated], TODO), placeholders"
-        autofix: "Single solution: write complete implementation (no shortcuts)"
-      solid_s_detector:
-        pattern: "SINGLE_RESPONSIBILITY"
-        method: "Scan for sections with multiple change reasons, multi-purpose functions"
-        autofix: "Generate 5-10 split strategies, score by cohesion"
-      solid_o_detector:
-        pattern: "OPEN_CLOSED"
-        method: "Scan for modification points that should be extension points"
-        autofix: "Generate 5-8 extension mechanisms, score by flexibility"
-      solid_l_detector:
-        pattern: "LISKOV_SUBSTITUTION"
-        method: "Scan for subtype violations, broken contracts"
-        autofix: "Generate 5-8 fixes (strengthen preconditions, weaken postconditions), score by correctness"
-      solid_i_detector:
-        pattern: "INTERFACE_SEGREGATION"
-        method: "Scan for fat interfaces, clients depending on unused methods"
-        autofix: "Generate 5-10 interface split strategies, score by client needs"
-      solid_d_detector:
-        pattern: "DEPENDENCY_INVERSION"
-        method: "Scan for concrete dependencies, tight coupling"
-        autofix: "Generate 5-10 abstraction strategies, score by decoupling"
-      pola_detector:
-        pattern: "LEAST_ASTONISHMENT"
-        method: "Scan for surprising behavior, violated expectations"
-        autofix: "Generate 5-10 predictability improvements, score by user expectations"
-      unix_detector:
-        pattern: "UNIX_PHILOSOPHY"
-        method: "Scan for multi-purpose functions, non-composable units, non-text interfaces"
-        autofix: "Generate 7-12 unix-style decompositions, score by composability"
-      composition_detector:
-        pattern: "COMPOSITION_OVER_INHERITANCE"
-        method: "Scan for inheritance hierarchies, is-a relationships"
-        autofix: "Generate 5-10 composition alternatives, score by flexibility"
-      evidence_detector:
-        pattern: "EVIDENCE_BASED"
-        method: "Scan for claims without sources, assumptions without validation"
-        autofix: "Generate 3-5 documentation strategies, score by authority"
-      reversible_detector:
-        pattern: "REVERSIBLE_OPERATIONS"
-        method: "Scan for irreversible operations, missing rollback"
-        autofix: "Generate 5-8 rollback mechanisms, score by reliability"
-      explicit_detector:
-        pattern: "EXPLICIT_OVER_IMPLICIT"
-        method: "Scan for implicit behavior, magic, hidden assumptions"
-        autofix: "Generate 5-10 explicit alternatives, score by clarity"
-      orthogonal_detector:
-        pattern: "ORTHOGONAL_CONCERNS"
-        method: "Scan for coupled concerns, mixed responsibilities"
-        autofix: "Generate 5-10 separation strategies, score by independence"
-      minimalism_detector:
-        pattern: "MINIMALISM"
-        method: "Scan for unnecessary complexity, unused features, over-engineering"
-        autofix: "Generate 5-12 simplification alternatives, score by essence"
-      gestalt_detector:
-        pattern: "GESTALT_PRINCIPLES"
-        method: "Scan for unrelated items adjacent, different appearance for same function, incomplete patterns"
-        autofix: "Generate 5-10 grouping/styling strategies, score by visual clarity"
-      nielsen_detector:
-        pattern: "NIELSEN_HEURISTICS"
-        method: "Scan for hidden status, technical jargon, missing undo"
-        autofix: "Generate 5-10 usability improvements, score by user experience"
-      bringhurst_detector:
-        pattern: "TYPOGRAPHY"
-        method: "Scan for line length <45 or >75, inconsistent rhythm"
-        autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.46.0"
+    version: "37.47.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
