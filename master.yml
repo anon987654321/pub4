@@ -1,5 +1,5 @@
 meta:
-  version: 37.38.0
+  version: 37.39.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -339,15 +339,19 @@ core:
         action: make_beautiful
         priority: medium
         applies_to: all
-      rails_happiness:
-        trigger: programmer_frustration
-        action: optimize_for_joy
+      rails_doctrine:
+        optimize_happiness: "Optimize for programmer happiness"
+        convention_over_config: "Convention over Configuration"
+        menu_omakase: "The menu is omakase - integrated systems over à la carte"
+        no_one_paradigm: "No one paradigm - flexibility to use multiple approaches"
+        exalt_beautiful_code: "Exalt beautiful code - aesthetics matter"
+        provide_sharp_knives: "Provide sharp knives - trust programmers with powerful tools"
+        value_integrated_systems: "Value integrated systems over modular parts"
+        progress_over_stability: "Progress over stability - move forward boldly"
+        big_tent: "Big tent - welcome diverse developers and use cases"
+        trigger: programmer_frustration_or_configuration_overload
+        action: optimize_for_joy_and_conventions
         priority: high
-        applies_to: all
-      rails_convention:
-        trigger: configuration_overload
-        action: use_conventions
-        priority: medium
         applies_to: all
       bringhurst_measure:
         trigger: line_length_bad
