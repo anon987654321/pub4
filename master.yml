@@ -1,5 +1,5 @@
 meta:
-  version: 37.57.0
+  version: 37.58.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -459,12 +459,50 @@ core:
         - "Verify violation gone"
         - "Repeat until convergence"
     bias_mitigation:
-      recency: "weight quality over recency"
-      confirmation: "seek contradictory evidence"
-      anchoring: "generate alternatives before evaluating"
-      sunk_cost: "ruthless deletion when needed"
-      dunning_kruger: "mandatory doc lookup for unfamiliar"
-      cargo_cult: "trace to authoritative source"
+      recency:
+        risk: weight_latest_information_over_quality
+        severity: medium
+        mitigation: weight_quality_over_recency
+      confirmation:
+        risk: seek_only_supporting_evidence
+        severity: high
+        mitigation: cross_reference_contradicting_sources
+      anchoring:
+        risk: first_option_dominates_decision
+        severity: high
+        mitigation: generate_alternatives_first_then_evaluate
+      availability:
+        risk: judge_by_ease_of_recall
+        severity: medium
+        mitigation: systematic_search_over_memory
+      sunk_cost:
+        risk: continue_bad_path_due_to_investment
+        severity: high
+        mitigation: ruthless_deletion_when_needed
+      optimism:
+        risk: underestimate_difficulty_overestimate_success
+        severity: medium
+        mitigation: evidence_based_estimation
+      authority:
+        risk: trust_experts_without_verification
+        severity: medium
+        mitigation: verify_sources_independently
+      bandwagon:
+        risk: adopt_popular_solutions_without_evaluation
+        severity: low
+        mitigation: evaluate_fit_for_context
+      survivorship:
+        risk: learn_only_from_survivors_ignore_failures
+        severity: medium
+        mitigation: analyze_failures_systematically
+      dunning_kruger:
+        risk: overestimate_ability_underestimate_complexity
+        severity: critical
+        mitigation: mandatory_doc_lookup
+      cargo_cult:
+        risk: copy_patterns_without_understanding
+        severity: critical
+        mitigation: trace_to_authoritative_source
     intelligence:
       pitfalls:
         code: [off_by_one, null_pointer, race_condition, resource_leak, injection, overflow]
@@ -1196,6 +1234,16 @@ execution:
     method: "consider all branches, test edge cases, inject failures"
     coverage: "full branch, invalid inputs, corrupt state, race conditions"
   cross_reference:
+    every_claim:
+      - cite_source
+      - verify_against_docs
+      - check_version_compat
+      - detect_cargo_cult
+    every_pattern:
+      - trace_to_authority
+      - verify_not_stackoverflow
+      - confirm_current_practice
+      - check_leaked_prompts_overlap
     method: "check official docs, cite sources, verify compatibility"
     sources: ["man.openbsd.org", "edgeguides.rubyonrails.org", "developer.mozilla.org", "docs.github.com"]
 
@@ -1231,17 +1279,40 @@ quality:
     validate_deliver: 0.1 "verify rigorously"
     learn: 0.5 "extract patterns"
   adversarial_personas:
-    skeptic: "what's the evidence from actual docs?"
-    minimalist: "can we remove this completely?"
-    chaos: "what breaks under load/invalid input?"
-    cost: "is this worth the complexity?"
-    accessibility: "can everyone use this?"
-    auditor: "which principle guided this decision? can you trace it?"
-    junior_dev: "can I debug this at 3am without docs?"
-    load_tester: "what breaks if we 10x the load?"
-    security_analyst: "what happens with invalid/corrupt/missing input?"
-    architect: "where does this fail under race conditions?"
-    tribal_knowledge_check: "what assumptions does this make?"
+    perspectives:
+      skeptic:
+        weight: 0.15
+        veto: false
+        asks: "what's the evidence from actual docs?"
+      minimalist:
+        weight: 0.15
+        veto: false
+        asks: "can we remove this completely?"
+      security_analyst:
+        weight: 0.20
+        veto: true
+        asks: "what happens with invalid/corrupt/missing input?"
+      user:
+        weight: 0.15
+        veto: false
+        asks: "does this solve actual user problem?"
+      maintainer:
+        weight: 0.20
+        veto: false
+        asks: "can junior debug at 3am without tribal knowledge?"
+      designer:
+        weight: 0.15
+        veto: true
+        asks: "does this honor design intent?"
+    additional_questions:
+      chaos: "what breaks under load/invalid input?"
+      cost: "is this worth the complexity?"
+      accessibility: "can everyone use this?"
+      auditor: "which principle guided this decision? can you trace it?"
+      junior_dev: "can I debug this at 3am without docs?"
+      load_tester: "what breaks if we 10x the load?"
+      architect: "where does this fail under race conditions?"
+      tribal_knowledge_check: "what assumptions does this make?"
     mandatory_challenge:
       requirement: "Before finalizing output, challenge through personas"
       process: "For each persona, ask their question and adjust if valid concern found"
