@@ -1,5 +1,5 @@
 meta:
-  version: 37.42.0
+  version: 37.43.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -169,10 +169,14 @@ core:
       uniq_lines: "Use zsh: ${(u)lines}"
       rationale: "Read tool has proper permissions, zsh builtins are faster, no external process forks"
     file_operations:
-      never: [create_new_structure, create_backups, mkdir_new_folders, file_sprawl]
+      never: [create_new_structure, create_backups, mkdir_new_folders, file_sprawl, sectionitis, divitis]
       always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure, consolidate_over_fragment]
       orchestration: [read_analyze_generate_select_apply_verify_loop]
-      anti_sprawl: "Reduce file count - merge related files, consolidate scattered logic, prefer monoliths over microfiles"
+      anti_patterns:
+        file_sprawl: "Too many files - consolidate related logic into fewer files"
+        sectionitis: "Too many YAML/JSON sections - merge related keys"
+        divitis: "Too many divs in HTML - use semantic elements"
+        rationale: "Cognitive load increases with fragmentation - prefer cohesive units"
   thresholds:
     code:
       max_arguments: 3
@@ -1452,7 +1456,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.42.0"
+    version: "37.43.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
