@@ -7,7 +7,7 @@ require "logger"
 require "optparse"
 require "fileutils"
 
-# Repligen - AI Content Generation with Postpro Integration  
+# Repligen - AI Content Generation with Postpro Integration
 # Version: 8.1.0 - Dynamic Model Discovery + Working Image-to-Video
 #
 # PROVEN WORKFLOW (Dec 2025):
@@ -145,7 +145,7 @@ module Bootstrap
 
   def self.load_master_config
     return {} unless File.exist?("master.json")
-    
+
     begin
       master = JSON.parse(File.read("master.json").gsub(/^.*\/\/.*$/, ""))
       config = master.dig("config", "multimedia", "repligen") || {}
@@ -177,12 +177,12 @@ module Bootstrap
 end
 class Repligen
   API = 'https://api.replicate.com/v1'
-  
+
   MODELS = {
     # NOTE: Use discover/search commands to get current working models!
     # Model IDs change frequently on Replicate. These are placeholders.
     # Real workflow: query collections/image-to-video for actual working models
-    
+
     # Image Generation - Latest & Best (Dec 2024)
     flux_20_pro: 'black-forest-labs/flux-2.0-pro',
     flux_pro: 'black-forest-labs/flux-1.1-pro',
@@ -193,7 +193,7 @@ class Repligen
     seedream: 'bytedance/seedream-4.5',
     ideogram: 'ideogram-ai/ideogram-v3-turbo',
     sdxl: 'stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
-    
+
     # Image-to-Video - IMPORTANT: Query API dynamically!
     # These model IDs are often invalid. Use: GET /v1/collections/image-to-video
     kling: 'kuaishou/kling-video-v2.1',
@@ -207,21 +207,21 @@ class Repligen
     runway: 'runwayml/gen-4-image',
     wan720: 'alibaba-pai/wan-video-i2v-720p',
     wan1080: 'alibaba-pai/wan-video-i2v-1080p',
-    
+
     # Enhancement & Upscaling
     upscale: 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa',
     upscale_video: 'topazlabs/video-upscale',
     upscale_topaz: 'topazlabs/image-upscale',
     crystal: 'philz1337x/crystal-upscaler',
     clarity: 'philz1337x/clarity-upscaler',
-    
-    # Audio & Music  
+
+    # Audio & Music
     music: 'meta/musicgen-stereo-large',
     speech: 'minimax/speech-02-turbo',
     chatterbox: 'ressemble-ai/chatterbox-multilingual',
     kokoro: 'jaaari/kokoro-82m',
     transcribe: 'openai/gpt-4o-transcribe',
-    
+
     # Utility
     depth: 'fofr/depth-anything-v2',
     rembg: 'lucataco/remove-bg',
@@ -229,51 +229,51 @@ class Repligen
     ocr: 'datalab-to/marker',
     lora: 'ostris/flux-dev-lora-trainer'
   }.freeze
-  
-  COSTS = { 
+
+  COSTS = {
     # Image models
     flux_pro: 0.04, flux_dev: 0.025, flux_schnell: 0.003, imagen3: 0.01, imagen4: 0.015,
     seedream: 0.03, ideogram: 0.04, sdxl: 0.02,
-    
+
     # Video models
-    kling: 0.15, luma: 0.12, veo: 0.20, sora: 0.30, 
+    kling: 0.15, luma: 0.12, veo: 0.20, sora: 0.30,
     hailuo: 0.08, hailuo_fast: 0.05, seedance_pro: 0.15, seedance_fast: 0.08,
     runway: 0.10, wan720: 0.06, wan1080: 0.10,
-    
+
     # Enhancement
     upscale: 0.002, upscale_video: 0.01, upscale_topaz: 0.008, crystal: 0.015, clarity: 0.01,
-    
+
     # Audio
     music: 0.02, speech: 0.01, chatterbox: 0.015, kokoro: 0.005, transcribe: 0.006,
-    
+
     # Utility
     depth: 0.005, rembg: 0.002, rembg_video: 0.008, ocr: 0.003, lora: 1.46
   }.freeze
-  
+
   CHAINS = {
     # Quick Image Chains
     quick: %w[flux_schnell upscale],
     image_pro: %w[flux_pro clarity],
     ultra_image: %w[seedream upscale_topaz],
-    
+
     # Video Chains - Cinematic Quality
     hollywood: %w[flux_pro clarity kling music],
     cinematic: %w[flux_pro crystal luma speech],
     ultra_hd: %w[imagen4 upscale_topaz veo chatterbox],
     premium: %w[seedream crystal sora music],
     anime: %w[ideogram upscale kling],
-    
-    # Fast Prototyping  
+
+    # Fast Prototyping
     fast_video: %w[flux_schnell wan720],
     budget: %w[imagen3 wan720 music],
     speed: %w[flux_schnell hailuo_fast kokoro],
-    
+
     # Advanced Pipelines
     masterpiece: %w[flux_pro depth crystal luma chatterbox],
     experimental: %w[seedream rembg upscale kling music],
     multi_angle: %w[flux_pro depth clarity kling runway music],
     professional: %w[imagen4 upscale_topaz seedance_pro speech],
-    
+
     # Chaos mode
     chaos: -> { MODELS.keys.sample(rand(8..15)) }
   }.freeze
@@ -283,7 +283,7 @@ class Repligen
     @token = token || @bootstrap[:token]
     @logger = Logger.new($stderr, level: ENV["DEBUG"] ? Logger::DEBUG : Logger::WARN)
     @config = @bootstrap[:config]
-    
+
     if @bootstrap[:sqlite_available]
       @db = init_db
       @storage_mode = :sqlite
@@ -292,13 +292,13 @@ class Repligen
       @storage_mode = :jsonl
       @jsonl_file = "repligen_chains.jsonl"
     end
-    
+
     @postpro = File.exist?("postpro.rb")
   end
 
   def run(cmd = nil, *args)
     return auth_error unless @token
-    
+
     case cmd
     when "scrape"
       scrape_replicate_explore
@@ -306,61 +306,61 @@ class Repligen
       interactive_cli
     end
   end
-  
+
   def scrape_replicate_explore
     unless @bootstrap[:ferrum_available]
       Bootstrap.dmesg "ERROR ferrum gem required for scraping. Install: gem install ferrum"
       return false
     end
-    
+
     require "ferrum"
     Bootstrap.dmesg "scrape replicate.com/explore starting..."
-    
+
     browser = Ferrum::Browser.new(headless: true, timeout: 30)
     page_count = 0
     model_count = 0
-    
+
     begin
       ["trending", "featured", "image-to-text", "text-to-image", "image-to-video", "text-to-video", "text-to-speech", "speech-to-text"].each do |category|
         url = "https://replicate.com/explore/#{category}"
         Bootstrap.dmesg "scrape category=#{category}"
-        
+
         browser.goto(url)
         sleep 2
-        
+
         browser.execute("window.scrollTo(0, document.body.scrollHeight)")
         sleep 1
-        
+
         models = browser.css("a[href*='/']").map do |link|
           href = link.attribute("href")
           next unless href&.match?(/^\/[^\/]+\/[^\/]+$/)
-          
+
           text = link.text.strip
           next if text.empty?
-          
+
           { url: "https://replicate.com#{href}", text: text }
         end.compact.uniq
-        
+
         models.each do |model|
           next unless model[:url].match?(/replicate\.com\/([^\/]+)\/([^\/]+)$/)
-          
+
           owner = $1
           name = $2
-          
+
           if @db
             existing = @db.execute("SELECT id FROM models WHERE owner = ? AND name = ?", [owner, name])
             next unless existing.empty?
-            
+
             @db.execute("INSERT INTO models (owner, name, description, url, created_at) VALUES (?, ?, ?, ?, ?)",
                        [owner, name, model[:text], model[:url], Time.now.to_i])
             model_count += 1
           end
         end
-        
+
         page_count += 1
         Bootstrap.dmesg "scraped page=#{page_count} models_found=#{models.size} models_saved=#{model_count}"
       end
-      
+
       Bootstrap.dmesg "scrape complete pages=#{page_count} models=#{model_count}"
       true
     rescue => e
@@ -378,12 +378,12 @@ class Repligen
   def autorun_default
     Bootstrap.dmesg "autorun mode: #{default_chain} chain"
     result = chain_and_offer(default_chain, "digital art")
-    
+
     if result && @postpro && !$stdin.tty?
       Bootstrap.dmesg "launching postpro.rb --from-repligen --auto"
       system("ruby postpro.rb --from-repligen --auto")
     end
-    
+
     result
   end
 
@@ -396,7 +396,7 @@ class Repligen
 
   def init_db
     return nil unless @bootstrap[:sqlite_available]
-    
+
     begin
       require "sqlite3"
       SQLite3::Database.new("repligen.db").tap do |db|
@@ -411,7 +411,7 @@ class Repligen
 
   def log_chain(models, cost)
     if @storage_mode == :sqlite && @db
-      @db.execute("INSERT INTO chains (models, cost, created_at) VALUES (?, ?, ?)", 
+      @db.execute("INSERT INTO chains (models, cost, created_at) VALUES (?, ?, ?)",
                   [models.join(","), cost, Time.now.to_i])
     else
       log_entry = {
@@ -431,7 +431,7 @@ class Repligen
     req.body = body.to_json if body
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 300) { |http| http.request(req) }
-    
+
     # [api_integration] Handle rate limits with exponential backoff
     if response.code == '429'
       if retry_count < 3
@@ -443,16 +443,16 @@ class Repligen
         raise "Rate limit exceeded after 3 retries"
       end
     end
-    
+
     # [api_integration] Fail fast on auth errors
     if response.code == '401' || response.code == '403'
       raise "Authentication failed: #{response.code}. Check REPLICATE_API_TOKEN"
     end
-    
+
     unless response.code.to_i.between?(200, 299)
       raise "API Error: #{response.code} #{response.body}"
     end
-    
+
     JSON.parse(response.body)
   rescue Errno::ECONNRESET, Errno::ETIMEDOUT, Net::ReadTimeout => e
     # [api_integration] Retry transient failures
@@ -468,27 +468,27 @@ class Repligen
 
   def predict(model_key, input, show_cost: true)
     model, version = MODELS[model_key].split(':')
-    
+
     # [api_integration] Show cost before execution
     cost = COSTS[model_key] || 0.0
     if show_cost && cost > 0.05
       puts "💰 Cost: $#{cost} - Model: #{model_key}"
     end
-    
+
     pred = request('predictions', :post, {
       version: version,
       input: format_input(model_key, input),
       webhook: ENV['WEBHOOK_URL']
     })
-    
+
     result = wait_for(pred['id'], model_key)
-    
+
     # [api_integration] Track cost
     track_cost(model_key, cost) if cost > 0
-    
+
     result
   end
-  
+
   def track_cost(model_key, cost)
     if @storage_mode == :sqlite && @db
       @db.execute("INSERT INTO chains (models, cost, created_at) VALUES (?, ?, ?)",
@@ -502,7 +502,7 @@ class Repligen
       File.open(@jsonl_file, "a") { |f| f.puts JSON.generate(log_entry) }
     end
   end
-  
+
   def total_costs(since: Time.now - 86400)
     # Show spending over last 24 hours by default
     if @storage_mode == :sqlite && @db
@@ -510,7 +510,7 @@ class Repligen
       rows[0][0] || 0.0
     else
       return 0.0 unless File.exist?(@jsonl_file)
-      
+
       total = 0.0
       File.readlines(@jsonl_file).each do |line|
         entry = JSON.parse(line)
@@ -528,13 +528,13 @@ class Repligen
     start = Time.now
     wait_interval = 2
     dots_printed = 0
-    
+
     # [long_running_operation] Show operation name and estimated time
     puts "\n⏱️  Waiting for #{model_key} (timeout: #{timeout}s)..."
-    
+
     loop do
       pred = request("predictions/#{id}")
-      
+
       case pred['status']
       when 'succeeded'
         puts "\n✓ Complete (#{(Time.now - start).round(1)}s)"
@@ -546,17 +546,17 @@ class Repligen
         puts "\n✗ Canceled"
         raise 'Canceled'
       end
-      
+
       elapsed = Time.now - start
       raise "Timeout after #{timeout}s" if elapsed > timeout
-      
+
       # [long_running_operation] Progress indicator with exponential backoff
       print '.'
       dots_printed += 1
       if dots_printed % 50 == 0
         puts " #{elapsed.round(0)}s"
       end
-      
+
       sleep wait_interval
       wait_interval = [wait_interval * 1.5, 10].min  # Exponential backoff, max 10s
     end
@@ -571,7 +571,7 @@ class Repligen
     # Image Generation Models
     when :flux_pro, :flux_dev, :flux_schnell, :imagen3, :imagen4, :seedream, :ideogram, :sdxl
       { prompt: input.is_a?(String) ? input : 'cinematic masterpiece', num_outputs: 1 }
-    
+
     # Image-to-Video Models (State of the Art Dec 2024)
     when :kling
       if input.start_with?('http')
@@ -579,78 +579,78 @@ class Repligen
       else
         { prompt: input, duration: 10, fps: 24 }
       end
-    
+
     when :luma
       if input.start_with?('http')
         { image: input, loop: false, keyframes: { frame0: { type: 'image', url: input } } }
       else
         { prompt: input }
       end
-    
+
     when :veo, :sora
       if input.start_with?('http')
         { image: input, prompt: 'dynamic cinematic movement', length: 8 }
       else
         { prompt: input, length: 8 }
       end
-    
+
     when :hailuo, :hailuo_fast
       if input.start_with?('http')
         { image: input, prompt: 'smooth realistic motion', duration: 6 }
       else
         { prompt: input, duration: 6 }
       end
-    
+
     when :seedance_pro, :seedance_fast
       if input.start_with?('http')
         { image: input, duration: 5, fps: 24 }
       else
         { prompt: input, duration: 5 }
       end
-    
+
     when :wan720, :wan1080
       if input.start_with?('http')
         { image: input, num_frames: 81, fps: 16 }
       else
         { prompt: input, num_frames: 81 }
       end
-    
+
     when :runway
       { image: input, duration: 5, fps: 24 }
-    
+
     # Enhancement Models
     when :upscale, :upscale_topaz
       { image: input, scale: 4 }
-    
+
     when :upscale_video
       { video: input, scale: 2 }
-    
+
     when :crystal, :clarity
       { image: input, creativity: 0.35, resemblance: 0.6 }
-    
+
     when :depth
       { image: input }
-    
+
     when :rembg, :rembg_video
       { image: input }
-    
+
     when :ocr
       { file: input }
-    
-    # Audio Models  
+
+    # Audio Models
     when :music
       { prompt: input.is_a?(String) ? input : 'epic cinematic orchestral', duration: 10 }
-    
+
     when :speech, :chatterbox, :kokoro
       { text: input.is_a?(String) ? input : 'Amazing cinematic video' }
-    
+
     when :transcribe
       { audio: input }
-    
+
     # Training
     when :lora
       { input_images: input.is_a?(Array) ? input.join(',') : input, trigger_word: 'subject', steps: 1000 }
-    
+
     else
       { input: input }
     end
@@ -659,20 +659,20 @@ class Repligen
   def chain(type, prompt)
     models = chain_for(type)
     puts "Running #{models.length}-step chain..."
-    
+
     output = prompt
     cost = 0.0
-    
+
     models.each_with_index do |model, i|
       puts "Step #{i + 1}: #{model}"
       output = predict(model.to_sym, output)
       cost += COSTS[model.to_sym]
     end
-    
+
     log_chain(models, cost)
-    
+
     puts "\nComplete! Cost: $%.3f" % cost
-    
+
     save_output(output, type, prompt) if output.is_a?(String) && output.start_with?("http")
     output
   end
@@ -680,21 +680,21 @@ class Repligen
   def save_output(url, type, prompt)
     uri = URI(url)
     response = Net::HTTP.get_response(uri)
-    
+
     return unless response.code == '200'
-    
+
     # Determine output directory based on type
     dir = case type.to_s
     when /video|kling|luma|veo|wan|hailuo|runway/ then 'output/videos'
     when /audio|music/ then 'output/audio'
     else 'output/images'
     end
-    
+
     FileUtils.mkdir_p(dir)
-    
+
     # Determine file extension
     ext = url.match(/\.(mp4|mov|webm|mp3|wav|jpg|png|gif)$/i)&.captures&.first || 'jpg'
-    
+
     filename = File.join(dir, "#{sanitize(prompt)}_#{type}_#{Time.now.strftime('%Y%m%d_%H%M%S')}.#{ext}")
     File.write(filename, response.body)
     puts "💾 Saved: #{filename}"
@@ -729,29 +729,29 @@ class Repligen
 
   def train_lora(urls)
     raise 'Provide image URLs' if urls.empty?
-    
+
     # [multimedia_specific] Validate images before expensive operation
     puts "🔍 Validating #{urls.length} images..."
     validated_urls = filter_nsfw_images(urls)
-    
+
     if validated_urls.empty?
       puts "✗ All images filtered due to NSFW content"
       puts "  Use only covered swimwear, no nudity"
       return nil
     end
-    
+
     if validated_urls.length < urls.length
       puts "⚠️  Filtered #{urls.length - validated_urls.length} image(s) with NSFW content"
       print "Continue with #{validated_urls.length} image(s)? (y/N): "
       return nil unless gets.chomp.downcase.start_with?('y')
     end
-    
+
     # [api_integration] Show cost before execution
     puts "\n💰 LoRA Training Cost: $1.46"
     puts "   Training on #{validated_urls.length} images"
     print "Proceed? (y/N): "
     return nil unless gets.chomp.downcase.start_with?('y')
-    
+
     puts 'Training LoRA...'
     output = predict(:lora, validated_urls, show_cost: false)
     puts "✓ Model: #{output}"
@@ -761,28 +761,28 @@ class Repligen
   def filter_nsfw_images(urls)
     # Content policy filter for Replicate API
     # Removes potentially NSFW images to prevent API rejection
-    
+
     filtered = []
     nsfw_keywords = [
       'nude', 'naked', 'topless', 'bottomless', 'nsfw', 'xxx',
       'porn', 'explicit', 'sexual', 'erotic', 'adult', 'uncensored'
     ]
-    
+
     urls.each do |url|
       url_lower = url.downcase
-      
+
       # Check URL for NSFW indicators
       if nsfw_keywords.any? { |keyword| url_lower.include?(keyword) }
         puts "  ✗ Filtered: #{File.basename(url)} (NSFW keyword in URL)"
         next
       end
-      
+
       # Basic heuristics - actual detection would require image analysis
       # For now, warn user to manually verify
       puts "  ✓ Accepted: #{File.basename(url)}"
       filtered << url
     end
-    
+
     if filtered.length == urls.length && filtered.any?
       puts ""
       puts "⚠️  CONTENT POLICY REMINDER:"
@@ -792,14 +792,14 @@ class Repligen
       puts "  • Your account may be flagged for violations"
       puts ""
     end
-    
+
     filtered
   end
 
   def build_cinematic_prompt(subject, style: "cinematic", mood: "dramatic", camera: "50mm", style_reference: nil)
     # Professional prompt engineering based on Flux 2.0 best practices
     # Structure: Subject + Action + Environment + Camera + Lighting + Mood + Style Reference
-    
+
     # Style reference examples (for style_reference parameter)
     style_references = {
       indiana_jones: "1980s adventure film, practical stunts, warm film grain, Spielberg cinematography",
@@ -811,7 +811,7 @@ class Repligen
       tarantino: "bold colors, vintage film stock, dramatic angles, 70s exploitation style",
       fincher: "desaturated tones, precise framing, moody lighting, psychological thriller aesthetic"
     }
-    
+
     templates = {
       cinematic: {
         camera: "#{camera} lens, shallow depth of field f/2.8, cinematic framing",
@@ -842,30 +842,30 @@ class Repligen
         quality: "cinematic video quality, smooth motion, professional color grading"
       }
     }
-    
+
     template = templates[style.to_sym] || templates[:cinematic]
-    
+
     # Build structured prompt
     prompt = "#{subject}. "
-    
+
     # Add style reference if provided
     if style_reference
       ref = style_references[style_reference.to_sym]
       prompt += "Style: #{ref}. " if ref
     end
-    
+
     prompt += "Camera: #{template[:camera]}. "
     prompt += "Lighting: #{template[:lighting]}. "
     prompt += "Colors: #{template[:color]}. "
     prompt += "Mood: #{template[:mood]}. "
     prompt += "Quality: #{template[:quality]}."
-    
+
     puts "\n🎬 Cinematic Prompt Generated:"
     puts "─" * 70
     puts prompt
     puts "─" * 70
     puts ""
-    
+
     prompt
   end
 
@@ -876,15 +876,15 @@ class Repligen
     puts "Style: #{style_reference}"
     puts "=" * 70
     puts ""
-    
+
     # [api_integration] Show total cost upfront
     base_cost = image_urls ? 1.46 : 0.0  # LoRA if training on images
     total_cost = base_cost + 0.04 + 0.15  # Flux 2.0 Pro + Kling
     puts "💰 Estimated Total Cost: $#{total_cost}"
     puts ""
-    
+
     lora_model = nil
-    
+
     # Phase 1: Optional LoRA training for character consistency
     if image_urls && !image_urls.empty?
       puts "Phase 1: Training character LoRA..."
@@ -893,7 +893,7 @@ class Repligen
       puts "✓ Character model ready"
       puts ""
     end
-    
+
     # Phase 2: Generate styled image with Flux 2.0 Pro
     puts "Phase 2: Generating image in #{style_reference} style..."
     cinematic_prompt = build_cinematic_prompt(
@@ -901,12 +901,12 @@ class Repligen
       style: :cinematic,
       style_reference: style_reference.to_sym
     )
-    
+
     styled_image = predict(:flux_20_pro, cinematic_prompt)
     save_output(styled_image, :flux_20_pro, "styled_#{style_reference}") if styled_image
     puts "✓ Styled image generated"
     puts ""
-    
+
     # Phase 3: Apply postpro film emulation
     if @postpro && styled_image
       puts "Phase 3: Applying analog film look..."
@@ -914,21 +914,21 @@ class Repligen
       puts "✓ Film emulation complete"
       puts ""
     end
-    
+
     # Phase 4: Animate with cinematic motion
     puts "Phase 4: Creating cinematic animation..."
     video_prompt = "#{prompt} in the style of #{style_reference}, smooth camera movement, cinematic motion"
     video = predict(:kling, styled_image, show_cost: true)
     save_output(video, :kling, "movie_#{style_reference}") if video
     puts ""
-    
+
     puts "=" * 70
     puts "🎉 MOVIE STYLE COMPLETE"
     puts "  Style: #{style_reference}"
     puts "  Total Cost: $#{total_cost}"
     puts "  Output: output/videos/movie_#{style_reference}_*.mp4"
     puts "=" * 70
-    
+
     video
   rescue Interrupt
     puts "\n⚠️  Workflow interrupted"
@@ -943,7 +943,7 @@ class Repligen
     puts "\n🌊 SWIMSUIT MODEL CINEMATIC WORKFLOW"
     puts "=" * 70
     puts ""
-    
+
     # [api_integration] Show total cost upfront
     total_cost = 1.46 + 0.04 + 0.15  # LoRA + Flux 2.0 Pro + Kling
     puts "💰 Estimated Total Cost: $#{total_cost}"
@@ -951,15 +951,15 @@ class Repligen
     puts "   • Flux 2.0 Pro: $0.04"
     puts "   • Kling Animation: $0.15"
     puts ""
-    
+
     # Phase 1: LoRA Training (includes NSFW filter)
     puts "Phase 1: Training custom LoRA model..."
     lora_model = train_lora(image_urls)
     return nil unless lora_model
-    
+
     puts "✓ LoRA trained: #{lora_model}"
     puts ""
-    
+
     # Phase 2: Generate Hero Shot
     puts "Phase 2: Generating hero shot with Flux 2.0 Pro..."
     base_prompt = "Professional swimsuit model on pristine beach"
@@ -969,12 +969,12 @@ class Repligen
       mood: "confident and serene",
       camera: "85mm"
     )
-    
+
     hero_image = predict(:flux_20_pro, cinematic_prompt)
     save_output(hero_image, :flux_20_pro, "hero_shot") if hero_image
     puts "✓ Hero shot saved"
     puts ""
-    
+
     # Phase 3: Apply Postpro
     if @postpro && hero_image
       puts "Phase 3: Applying analog film emulation..."
@@ -983,20 +983,20 @@ class Repligen
       puts "✓ Color grading complete"
       puts ""
     end
-    
+
     # Phase 4: Animate with Best Quality
     puts "Phase 4: Creating cinematic animation..."
     video = predict(:kling, hero_image, show_cost: true)
     save_output(video, :kling, "cinematic_video") if video
     puts ""
-    
+
     puts "=" * 70
     puts "🎉 WORKFLOW COMPLETE"
     puts "  Actual Cost: $#{total_cost}"
     puts "  Hero Shot: output/images/hero_shot_*.jpg"
     puts "  Video: output/videos/cinematic_video_*.mp4"
     puts "=" * 70
-    
+
     video
   rescue Interrupt
     puts "\n⚠️  Workflow interrupted - partial results may be saved"
@@ -1015,7 +1015,7 @@ class Repligen
     if $stdin.tty?
       puts "\nPostpro.rb detected! Want to apply cinematic processing?"
       print "Launch postpro? (Y/n): "
-      
+
       response = gets.chomp.downcase
       if response.empty? || response.start_with?("y")
         puts "Launching postpro.rb with masterpiece presets..."
@@ -1041,12 +1041,12 @@ class Repligen
     puts "  • costs [hours] - Track API spending"
     puts ""
     puts "Style References: indiana_jones, studio_ghibli, blade_runner, wes_anderson, nolan, tarantino, fincher"
-    
+
     loop do
       print "> "
       input = gets&.chomp&.split || []
       cmd = input.shift
-      
+
       handle_cmd(cmd, input)
     rescue => e
       puts "Error: #{e.message}"
@@ -1105,13 +1105,13 @@ class Repligen
 
   def discover_models(args = [])
     puts "\n🔍 Discovering models from Replicate API..."
-    
+
     categories = args.empty? ? ['trending', 'featured'] : args
     discovered = []
-    
+
     categories.each do |category|
       puts "\n📂 Category: #{category}"
-      
+
       begin
         # Use Replicate API to get models
         endpoint = case category
@@ -1119,17 +1119,17 @@ class Repligen
         when 'featured' then 'collections/featured'
         else "collections/#{category}"
         end
-        
+
         response = request(endpoint, :get)
         models = response['results'] || response['models'] || []
-        
+
         models.first(20).each do |model|
           owner = model['owner']
           name = model['name']
           url = model['url']
           description = model['description']
           runs = model['run_count'] || 0
-          
+
           discovered << {
             id: "#{owner}/#{name}",
             owner: owner,
@@ -1138,15 +1138,15 @@ class Repligen
             runs: runs,
             url: url
           }
-          
+
           puts "  ✓ #{owner}/#{name} (#{runs} runs)"
         end
-        
+
       rescue => e
         puts "  ⚠️  Error fetching #{category}: #{e.message}"
       end
     end
-    
+
     # Save to database
     if @db && discovered.any?
       discovered.each do |model|
@@ -1157,23 +1157,23 @@ class Repligen
       end
       puts "\n💾 Saved #{discovered.size} models to database"
     end
-    
+
     discovered
   end
 
   def search_models(query)
     puts "\n🔍 Searching Replicate for: #{query}"
-    
+
     begin
       # Search via API
       response = request("models?search=#{URI.encode_www_form_component(query)}", :get)
       results = response['results'] || []
-      
+
       if results.empty?
         puts "No models found"
         return
       end
-      
+
       puts "\n📋 Found #{results.size} models:\n"
       results.first(10).each_with_index do |model, i|
         puts "#{i+1}. #{model['owner']}/#{model['name']}"
@@ -1181,38 +1181,38 @@ class Repligen
         puts "   Runs: #{model['run_count'] || 0}"
         puts
       end
-      
+
     rescue => e
       puts "⚠️  Search failed: #{e.message}"
     end
   end
-  
+
   def add_custom_model(args)
     if args.size < 2
       puts "Usage: add <name> <owner/model> [cost]"
       return
     end
-    
+
     name = args[0].to_sym
     model_id = args[1]
     cost = args[2]&.to_f || 0.05
-    
+
     if MODELS[name]
       puts "⚠️  Model #{name} already exists"
       return
     end
-    
+
     puts "Adding custom model: #{name} -> #{model_id} ($#{cost})"
-    
+
     # This would need to modify the source file or use a runtime registry
     # For now, just show what would be added
     puts "✓ To permanently add, edit MODELS hash in repligen.rb"
     puts "  #{name}: '#{model_id}',"
   end
-  
+
   def list_models(category = nil)
     puts "\n📚 Available Models (#{MODELS.size} total):\n"
-    
+
     models_by_type = {
       image: [:flux_pro, :flux_dev, :flux_schnell, :imagen3, :imagen4, :seedream, :ideogram, :sdxl],
       video: [:kling, :luma, :veo, :sora, :hailuo, :hailuo_fast, :seedance_pro, :seedance_fast, :runway, :wan720, :wan1080],
@@ -1220,11 +1220,11 @@ class Repligen
       audio: [:music, :speech, :chatterbox, :kokoro, :transcribe],
       utility: [:depth, :rembg, :rembg_video, :ocr, :lora]
     }
-    
+
     filter = category&.to_sym
     models_by_type.each do |type, models|
       next if filter && type != filter
-      
+
       puts "#{type.to_s.upcase}:"
       models.each do |m|
         next unless MODELS[m]
@@ -1234,30 +1234,30 @@ class Repligen
       puts
     end
   end
-  
+
   # WORKING METHOD: Use dynamic collection query instead of hardcoded models
   def generate_video_from_image(image_path, prompt = "cinematic epic camera movement")
     puts "🎬 Generating video from: #{image_path}"
-    
+
     # Step 1: Get current working model from collection
     response = request('collections/image-to-video', :get)
     models = response['models'] || []
-    
+
     if models.empty?
       puts "❌ No image-to-video models available"
       return nil
     end
-    
+
     model = models.first
     version = model['latest_version']['id']
     puts "Using: #{model['owner']}/#{model['name']}"
-    
+
     # Step 2: Convert image to base64 data URI
     image_data = File.read(image_path)
     image_b64 = [image_data].pack('m0')
     ext = File.extname(image_path).delete('.')
     data_uri = "data:image/#{ext};base64,#{image_b64}"
-    
+
     # Step 3: Create prediction
     pred = request('predictions', :post, {
       version: version,
@@ -1266,22 +1266,22 @@ class Repligen
         prompt: prompt
       }
     })
-    
+
     puts "⏱️  Prediction: #{pred['id']} (ETA: 2-3min)"
-    
+
     # Step 4: Poll for completion
     output_url = wait_for(pred['id'], 600)
-    
+
     # Step 5: Download result
     if output_url
       ext = output_url.match(/\.(\w+)(\?|$)/)&.captures&.first || 'mp4'
       base = File.basename(image_path, '.*')
       output_file = "#{base}_cinematic.#{ext}"
-      
+
       uri = URI(output_url)
       response = Net::HTTP.get_response(uri)
       File.write(output_file, response.body)
-      
+
       puts "✅ DONE: #{output_file}"
       output_file
     else
@@ -1291,23 +1291,23 @@ class Repligen
 
   def show_model_info(model_name)
     return puts "Usage: info <model_name>" unless model_name
-    
+
     model = model_name.to_sym
     unless MODELS[model]
       puts "⚠️  Model not found: #{model}"
       return
     end
-    
+
     puts "\n📊 Model Info: #{model}"
     puts "━"*50
     puts "ID:   #{MODELS[model]}"
     puts "Cost: $#{COSTS[model] || 'unknown'}"
-    
+
     # Show which chains use it
-    chains = CHAINS.select { |_, models| 
+    chains = CHAINS.select { |_, models|
       models.is_a?(Array) && models.include?(model.to_s)
     }.keys
-    
+
     if chains.any?
       puts "Used in chains: #{chains.join(', ')}"
     end
@@ -1322,7 +1322,7 @@ if __FILE__ == $0
     opts.on('-d', '--debug', 'Debug mode') { ENV['DEBUG'] = '1' }
     opts.on('-h', '--help', 'Show help') { puts opts; exit }
   end.parse!
-  
+
   begin
     Repligen.new.run(ARGV[0], *ARGV[1..-1])
   rescue Interrupt
@@ -1531,7 +1531,7 @@ end
       print "> "
       prompt = gets.chomp.strip
       prompt = "cinematic masterpiece" if prompt.empty?
-      
+
       puts "\n🖼️  Choose image model:"
       puts "  1. Flux Pro (recommended) - photorealistic, $0.04"
       puts "  2. Flux Schnell - lightning fast, $0.003"
@@ -1540,7 +1540,7 @@ end
       puts "  5. Ideogram - great for text/posters, $0.04"
       print "> "
       img_choice = gets.chomp.strip
-      
+
       img_model = case img_choice
       when '1', '' then :flux_pro
       when '2' then :flux_schnell
@@ -1556,7 +1556,7 @@ end
 
     puts "\n🎬 What type of video do you want?"
     puts "  1. Hollywood (Kling) - best quality, 10s, $0.15"
-    puts "  2. Cinematic (Luma Ray2) - smooth motion, 5s, $0.12" 
+    puts "  2. Cinematic (Luma Ray2) - smooth motion, 5s, $0.12"
     puts "  3. Ultra HD (Veo 3.1) - 4K + audio, 8s, $0.20"
     puts "  4. Premium (Sora 2) - OpenAI, synced audio, $0.30"
     puts "  5. Fast (Wan720) - quick & cheap, 5s, $0.06"
@@ -1593,13 +1593,13 @@ end
     # Build pipeline
     chain_steps = []
     chain_steps << img_model if img_model
-    
+
     case upscale_choice
     when '1' then chain_steps << :upscale_topaz
     when '2' then chain_steps << :crystal
     when '3' then chain_steps << :clarity
     end
-    
+
     chain_steps << video_model
     chain_steps << :music if music_choice == '1'
 
@@ -1609,7 +1609,7 @@ end
     chain_steps.each_with_index do |step, i|
       puts "  #{i+1}. #{step.to_s.upcase}"
     end
-    
+
     estimated_cost = chain_steps.sum { |m| COSTS[m] || 0.05 }
     puts "\n💰 Estimated cost: $#{estimated_cost.round(3)}"
     puts "⏱️  Estimated time: #{chain_steps.length * 30}s"
@@ -1648,15 +1648,15 @@ end
       puts "\n" + "─"*70
       puts "⚙️  Step #{i+1}/#{steps.length}: #{model.to_s.upcase}"
       puts "─"*70
-      
+
       step_start = Time.now
       output = predict(model, output)
       step_duration = Time.now - step_start
-      
+
       cost += COSTS[model]
-      
+
       puts "✓ Completed in #{step_duration.round(1)}s (cost: $#{COSTS[model]})"
-      
+
       # Save intermediate results for video models
       if [:kling, :luma, :veo, :wan720, :wan1080, :hailuo, :runway].include?(model)
         save_output(output, model, prompt) if output.is_a?(String) && output.start_with?("http")
@@ -1665,14 +1665,14 @@ end
 
     total_duration = Time.now - start_time
     log_chain(steps.map(&:to_s), cost)
-    
+
     puts "\n" + "="*70
     puts "🎉 PIPELINE COMPLETE"
     puts "="*70
     puts "⏱️  Total time: #{total_duration.round(1)}s"
     puts "💰 Total cost: $#{cost.round(3)}"
     puts "="*70
-    
+
     # Save final output
     save_output(output, :final, prompt) if output.is_a?(String) && output.start_with?("http")
     output
