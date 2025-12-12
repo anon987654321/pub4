@@ -1,5 +1,5 @@
 meta:
-  version: 37.48.0
+  version: 37.49.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -807,8 +807,8 @@ execution:
         duplicate_pattern: {violation: dry, confidence: 0.85, autofix: extract_method}
         nesting_increase: {violation: kiss, confidence: 0.92, autofix: extract_method}
         null_usage: {violation: no_null, confidence: 0.95, autofix: null_object_pattern}
-        excessive_parameters: {threshold_reference: "thresholds.max_arguments", confidence: 0.88, autofix: parameter_object}
-        abbreviation_detected: {violation: full_names, confidence: 0.99, autofix: expand_abbreviation}
+        excessive_parameters: {threshold_reference: "core.thresholds.code.max_arguments", confidence: 0.88, autofix: parameter_object}
+        abbreviation_detected: {violation: clarity, confidence: 0.99, autofix: expand_abbreviation}
     incremental_scanning:
       enabled: true
       strategy: "Scan only modified files - 60-85% faster"
