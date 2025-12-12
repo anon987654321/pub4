@@ -1,5 +1,5 @@
 meta:
-  version: 37.41.0
+  version: 37.42.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -25,6 +25,18 @@ meta:
     runtime: "GitHub Copilot CLI runs in Cygwin, use powershell tool to invoke zsh commands"
     never: [bash, sed, awk, tr, cut, perl, python_for_file_ops]
     rationale: "Pure reasoning in Ruby, pure zsh for data transformation, Read/Edit/Create tools for file I/O"
+    cygwin_workarounds:
+      issue: "Cygwin commands (cp, mv, etc) fail with missing .dll errors"
+      solution: "Use PowerShell equivalents: Copy-Item, Move-Item, Remove-Item"
+      never_use: ["cp", "mv", "rm via cygwin"]
+      always_use: ["Copy-Item", "Move-Item", "Remove-Item"]
+      git_workaround: "If Cygwin git fails, use Windows native: /cygdrive/c/Program Files/Git/bin/git.exe"
+    auto_resume_on_cancel:
+      enabled: true
+      behavior: "If user cancels mid-operation, auto-resume from last checkpoint unless explicitly told to abandon"
+      checkpoints: "After each major step: backup created, analysis complete, fix applied, verification done"
+      abandon_triggers: ["user says 'stop', 'abandon', 'cancel permanently', 'start over']
+      resume_default: "Always resume unless explicit abandon command"
   hooks:
     pre_commit: run_detectors_auto_fix_violations
     pre_push: verify_zero_violations_or_block
@@ -115,18 +127,6 @@ meta:
           simplicity: "Can junior dev understand structure in <5 minutes?"
           discoverability: "Can LLM find relevant rules without search?"
           maintainability: "Can sections be updated without cascading changes?"
-          cognitive_load: "Does structure stay within 7±2 mental limit?"
-          extensibility: "Can new principles/detectors be added easily?"
-        constraints:
-          preserve: "All semantic content (principles, patterns, detectors)"
-          allow: "Radical reordering, renaming, restructuring"
-          forbidden: "Loss of information, reduction in specificity"
-    workflow_efficiency:
-      internalize_once: "Load file ONCE at session start, work from memory"
-      no_redundant_reads: "Never re-read what's already in working memory"
-      pure_zsh_only: "Use zsh parameter expansion instead of external commands"
-      no_scripts_ever: "Never create .sh/.zsh/.ps1 scripts - execute directly or reason mentally"
-      no_embedded_scripts: "Never embed executable code in YAML - use mental reasoning patterns only"
       banned_workflow_patterns:
         - "cat file | grep pattern (use zsh: ${(M)${(f)"$(< file)"}:#*pattern*})"
         - "wc -l file (use zsh: ${#${(f)"$(< file)"}})"
@@ -1452,7 +1452,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.41.0"
+    version: "37.42.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
