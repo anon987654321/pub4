@@ -1,5 +1,5 @@
 ---
-version: "66.2.0"
+version: "66.3.0"
 
 meta:
   title: "CONVERGENCE"
@@ -15,7 +15,11 @@ meta:
     critical: "Before EVERY command, verify tool is allowed"
     allowed_tools: [ruby, zsh, grep, cat, sort, git, npm, bundle, rails, rake]
     banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
-    mandate: "Ruby for ALL logic | Pure zsh for ALL file operations"
+    mandate: "Choose intelligently - Ruby for logic/analysis, Zsh for file ops"
+    decision_framework:
+      use_ruby_for: [code_analysis, parsing, complex_logic, AST_operations, Ruby_introspection]
+      use_zsh_for: [line_counting, text_filtering, simple_patterns, file_reading, array_ops]
+      never_use: [python, bash, awk, sed, wc_command]
     violation_examples:
       wrong: ["python -c", "wc -l", "head -n", "bash -c", "sed 's'"]
       correct: ["ruby -e", "zsh -c 'print ${#lines}'", "zsh -c '${lines[1,20]}'"]
