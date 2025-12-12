@@ -1,5 +1,5 @@
 ---
-version: "66.0.0"
+version: "66.1.0"
 
 meta:
   title: "CONVERGENCE"
@@ -51,7 +51,7 @@ constants:
     iterations: 20
     coupling: 5
     duplication: 0.03
-    nesting_depth: 2
+    nesting_depth: 4
     section_count: 9
   
   evidence_weights:
