@@ -393,7 +393,11 @@ class SOSDilla
       # Additional heuristics for vocal detection
     ].compact.length > 0
 
-    puts vocal_indicators ? "⚠️  Vocals detected - adjusting processing" : "✓ No vocals detected - full processing"
+    if vocal_indicators
+      puts "⚠️  Vocals detected - adjusting processing"
+    else
+      puts "✓ No vocals detected - full processing"
+    end
     vocal_indicators
   end
 
