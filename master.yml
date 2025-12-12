@@ -1,5 +1,5 @@
 meta:
-  version: 37.52.0
+  version: 37.53.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -205,7 +205,7 @@ core:
     requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
   principles:
     note: "Principles apply universally to code, content, design, data, systems - organized by domain for cognitive load"
-    rationale: "30 principles split into 5 categories (7±2 compliant per category) - preserves all knowledge, improves discoverability"
+    rationale: "30 principles split into 4 categories (7±2 compliant per category) - preserves all knowledge, improves discoverability"
     code:
       dry:
         description: "Don't Repeat Yourself - every piece of knowledge must have single, unambiguous, authoritative representation"
@@ -268,11 +268,6 @@ core:
         action: split_independent_units
         priority: medium
         detector: orthogonal_detector
-      latch:
-        trigger: chaotic_organization
-        action: establish_clear_structure
-        priority: low
-        detector: latch_detector
       minimalism:
         trigger: unnecessary_complexity
         action: subtract_to_essence
@@ -287,6 +282,22 @@ core:
         action: split_single_purpose
         priority: medium
         detector: unix_detector
+    structural:
+      latch:
+        description: "Location, Alphabet, Time, Category, Hierarchy - organize information by natural axes"
+        trigger: chaotic_organization
+        action: establish_clear_structure
+        priority: low
+        detector: latch_detector
+        operations: [defragment, decouple, regroup_by_semantics, establish_natural_order]
+      file_sprawl:
+        description: "Too many files in large codebases increases cognitive load"
+        trigger: related_logic_scattered_across_files
+        action: consolidate_into_fewer_cohesive_files
+        priority: medium
+        detector: file_sprawl_detector
+        prerequisite: "Always run full recursive tree scan before entering new directory"
+        applies_to: large_codebases
     content:
       strunk_white:
         omit_needless_words: "vigorous writing is concise"
@@ -310,7 +321,7 @@ core:
         priority: medium
         detector: bringhurst_detector
         applies_to: all
-    design:
+    universal:
       gestalt_proximity:
         trigger: unrelated_items_adjacent
         action: group_related_items
@@ -365,7 +376,6 @@ core:
         priority: medium
         detector: rams_detector
         applies_to: all
-    rails:
       rails_doctrine:
         optimize_happiness: "Optimize for programmer happiness"
         convention_over_config: "Convention over Configuration"
@@ -381,28 +391,20 @@ core:
         priority: high
         detector: rails_detector
         applies_to: all
-    anti_patterns:
-      anti_file_sprawl:
-        description: "Too many files increases cognitive load"
-        trigger: related_logic_scattered_across_files
-        action: consolidate_into_fewer_cohesive_files
-        priority: medium
-        detector: file_sprawl_detector
-        applies_to: all
-      anti_sectionitis:
+      sectionitis:
         description: "Too many YAML/JSON sections increases cognitive load"
         trigger: excessive_nesting_or_section_count
         action: merge_related_sections
         priority: medium
         detector: sectionitis_detector
-        applies_to: [yaml, json]
-      anti_divitis:
+        applies_to: all
+      divitis:
         description: "Too many divs in HTML increases cognitive load"
         trigger: divs_where_semantic_elements_exist
         action: replace_with_semantic_html
         priority: medium
         detector: divitis_detector
-        applies_to: [html]
+        applies_to: all
     meta:
       philosophy: *philosophy
       commitment: [boy_scout, designer_veto, typography_honors_content, bringhurst_measure, nielsen_usability]
@@ -1334,7 +1336,6 @@ quality:
               pattern: "MINIMALISM"
               method: "Scan for unnecessary complexity, unused features, over-engineering"
               autofix: "Generate 5-12 simplification alternatives, score by essence"
-          design_ux:
             gestalt_detector:
               pattern: "GESTALT_PRINCIPLES"
               method: "Scan for unrelated items adjacent, different appearance for same function, incomplete patterns"
@@ -1351,19 +1352,10 @@ quality:
               pattern: "DIETER_RAMS"
               method: "Scan for derivative design, form over function, ugly but functional"
               autofix: "Generate 5-10 design improvements (innovation, usefulness, aesthetics), score by Rams principles"
-          specialized:
             rails_detector:
               pattern: "RAILS_DOCTRINE"
               method: "Scan for programmer frustration, configuration overload, fragmentation over integration"
               autofix: "Generate 5-10 convention-based solutions, score by happiness + simplicity"
-            latch_detector:
-              pattern: "LATCH_ORGANIZATION"
-              method: "Scan for chaotic organization, unclear grouping, missing structure"
-              autofix: "Generate 5-10 organizational structures (Location, Alphabet, Time, Category, Hierarchy), score by clarity"
-            file_sprawl_detector:
-              pattern: "FILE_SPRAWL"
-              method: "Scan for related logic scattered across multiple files, excessive file count"
-              autofix: "Generate 5-10 consolidation strategies, score by cohesion + cognitive load reduction"
             sectionitis_detector:
               pattern: "SECTIONITIS"
               method: "Scan for excessive YAML/JSON nesting, too many sections, arbitrary grouping"
@@ -1372,6 +1364,18 @@ quality:
               pattern: "DIVITIS"
               method: "Scan for divs where semantic HTML elements exist"
               autofix: "Generate 3-5 semantic HTML alternatives, score by accessibility + standards compliance"
+          structural:
+            latch_detector:
+              pattern: "LATCH_ORGANIZATION"
+              method: "Scan for chaotic organization, unclear grouping, missing structure"
+              autofix: "Generate 5-10 organizational structures (Location, Alphabet, Time, Category, Hierarchy), score by clarity"
+              operations: [defragment, decouple, regroup_by_semantics, establish_natural_order]
+            file_sprawl_detector:
+              pattern: "FILE_SPRAWL"
+              method: "Scan for related logic scattered across multiple files, excessive file count"
+              autofix: "Generate 5-10 consolidation strategies, score by cohesion + cognitive load reduction"
+              prerequisite: "Run full recursive tree scan before entering new directory"
+              applies_to: large_codebases
     formatters:
       tabs_to_spaces: "content=${content//$\\t/  }"
       trim_trailing: "content=${content%%[[:space:]]##}"
