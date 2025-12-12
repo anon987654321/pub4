@@ -1,5 +1,5 @@
 ---
-version: "66.3.0"
+version: "66.4.0"
 
 meta:
   title: "CONVERGENCE"
@@ -16,13 +16,15 @@ meta:
     allowed_tools: [ruby, zsh, grep, cat, sort, git, npm, bundle, rails, rake]
     banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
     mandate: "Choose intelligently - Ruby for logic/analysis, Zsh for file ops"
+    shell_strategy: "ZSH FIRST, PowerShell fallback - saves tokens, follows principles"
     decision_framework:
       use_ruby_for: [code_analysis, parsing, complex_logic, AST_operations, Ruby_introspection]
-      use_zsh_for: [line_counting, text_filtering, simple_patterns, file_reading, array_ops]
+      use_zsh_for: [line_counting, text_filtering, simple_patterns, file_reading, array_ops, git_operations, file_system]
+      use_powershell_for: [fallback_only, when_zsh_unavailable, Windows_specific]
       never_use: [python, bash, awk, sed, wc_command]
     violation_examples:
-      wrong: ["python -c", "wc -l", "head -n", "bash -c", "sed 's'"]
-      correct: ["ruby -e", "zsh -c 'print ${#lines}'", "zsh -c '${lines[1,20]}'"]
+      wrong: ["python -c", "wc -l", "head -n", "bash -c", "sed 's'", "Get-Content (when zsh works)"]
+      correct: ["ruby -e", "zsh -c 'print ${#lines}'", "zsh -c '${lines[1,20]}'", "zsh -c 'git status'"]
   
   self_discovery:
     purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
