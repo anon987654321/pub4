@@ -1,5 +1,5 @@
 meta:
-  version: 37.47.0
+  version: 37.48.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -151,10 +151,6 @@ core:
     banned: [python, bash, sed, awk, wc, head, tail, find, sudo, truncation, placeholders, todos, changelogs_in_yaml]
     allowed: [ruby, zsh, grep, cat, sort]
     bash_exceptions: [git, npm, bundle, rails, rake]
-    bash_tool_patterns:
-      allowed: ["git *", "npm *", "bundle *", "rails *", "rake *"]
-      rationale: "Bash tool ONLY for git and package managers, NEVER for file reading"
-    null_usage: forbidden_forever
     rationale: "zsh_builtins_preferred_but_grep_cat_sort_allowed_for_convenience"
     tool_alternatives:
       wc_minus_l: "Use zsh: ${#${(f)\"$(< file)\"}}"
@@ -209,7 +205,7 @@ core:
     requires: [express_permission, respect_sharp_edges, preserve_functionality, must_converge, show_diff]
   principles:
     note: "Principles apply universally to code, content, design, data, systems - no exceptions, no categories"
-    rationale_30_items: "This section intentionally exceeds 7±2 cognitive limit - these ARE the core universal principles from authoritative sources plus anti-patterns. Cannot reduce without losing essential knowledge. 30 principles total (27 traditional + 3 anti-patterns)."
+    rationale_30_items: "Exceeds 7±2 limit intentionally - core universal principles from authoritative sources plus anti-patterns (30 total: 27 traditional + 3 anti-patterns) - cannot reduce without losing essential knowledge"
     universal:
       dry:
         description: "Don't Repeat Yourself - every piece of knowledge must have single, unambiguous, authoritative representation"
@@ -1215,11 +1211,10 @@ quality:
           - unveil_missing: "restrict_filesystem_access"
           - gnu_extensions: "use_posix_bsd_equivalents"
       implementations:
-        purpose: "Systematic violation detection with evidence"
         mandate: "Execute methodically: count lines scanned, violations found, report evidence"
         execution_requirement: "Generate alternatives for every violation, score with rubric, verify after fix"
-        execution_model: "Simulated mental execution - LLM traces through file content line-by-line, applies pattern matching logic, reports findings with line numbers"
-        note: "Every principle MUST have detector. Trivial violations (rename) need 1 solution. Complex violations need 5-10 alternatives."
+        execution_model: "Simulated mental execution - LLM traces through file line-by-line, applies pattern matching, reports findings with line numbers"
+        note: "Every principle needs detector - trivial violations need 1 solution, complex need 5-10 alternatives"
         action_mappings:
           logic_repeated_thrice: extract_to_single_source
           multiple_responsibilities: split_into_focused_units
@@ -1490,7 +1485,7 @@ reference:
     zsh: [shellcheck, bats, shfmt]
     cross_language: [dependency_vulnerability_scan, license_compliance_check, secret_detection]
   metrics:
-    version: "37.47.0"
+    version: "37.48.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
