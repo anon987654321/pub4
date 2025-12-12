@@ -1,10 +1,9 @@
 meta:
-  version: 37.35.0
+  version: 37.37.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
   golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-  lineage: "v37.35.0: MAJOR CONSOLIDATION - (1) Codified self_improvement_protocol workflow into meta.adherence_enforcement (2) Merged duplicate principles: principles_detailed.core deleted, all trigger/action/priority/detector merged into principles.universal (27 principles now complete) (3) Renamed clarity: detection→violation_categories, action→remediation_actions (4) Reordered sections per natural_flow_order: swapped quality/output (now: meta→core→execution→quality→output→reference) (5) patterns has 14 subsections (documented as necessary complexity - each pattern is distinct situation→action mapping)"
   self_execution: "Internalize → Apply → Verify → Converge"
   output_format: "openbsd_dmesg_terse_no_decorative_headers"
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
@@ -16,7 +15,8 @@ meta:
     mode: auto_accept
     bypass_confirmation: true
     trust_level: full
-    rationale: "User requested permission bypass"
+    auto_allow_tools: always
+    rationale: "User requested permission bypass and auto-allow all tools"
   execution_context:
     thinking: "Ruby for ALL logic, decisions, data manipulation"
     file_operations: "zsh for file ops (via powershell tool in Copilot CLI environment)"
@@ -73,10 +73,14 @@ meta:
     checkpoint_reasoning: "At each workflow phase, verify alignment with principles"
     failure_recovery: "If violation detected, acknowledge immediately and apply correction"
     self_improvement_protocol:
-      trigger: "User requests: 'reload master.yml', 'analyze history', 'self-run'"
+      trigger: "User requests: 'reload master.yml', 'analyze history', 'self-run', 'reimagine structure'"
+      mandate: "Use pure zsh for ALL file operations, statistics, analysis - NO PowerShell/bash exceptions"
+      modes:
+        incremental: "Standard detector-based fixes with convergence loops"
+        reimagine: "Step back, simulate fresh perspective, generate 5-10 radical alternative structures"
       steps:
         1: "Internalize entire file with view tool (NOT repeated grep)"
-        2: "Analyze git log --oneline --all -p master.yml for removed sections"
+        2: "Analyze git history: git log --oneline --all -p master.yml (use zsh to parse)"
         3: "Run ALL 19 detectors independently with convergence loops"
         4: "Apply structural operations: defragment, hoist, regroup, reflow, smooth"
         5: "Check natural_flow_order compliance, reorder sections if needed"
@@ -84,9 +88,36 @@ meta:
         7: "Flatten unnecessary nesting: core.principles.universal.X → principles.X"
         8: "Consolidate cognitive overload: split sections exceeding 9 items"
         9: "Verify all fixes applied, increment version, report summary"
-      autonomy: "Execute without asking for confirmation on fixes with confidence > 0.85"
-      brutal_honesty: "Apply maximum scrutiny, admit violations, no sugarcoating"
-      word_for_word: "Read linearly, trace all cross-references, no skimming"
+      reimagine_mode:
+        trigger: "User says 'reimagine structure' or 'radical alternatives'"
+        process:
+          1: "Clear working memory - simulate fresh session perspective"
+          2: "Extract ONLY core requirements: what must framework enable?"
+          3: "Generate 5-10 radically different organizational structures"
+          4: "Score each alternative against: simplicity, discoverability, maintainability, cognitive load"
+          5: "Present alternatives with pros/cons, await user selection"
+          6: "Implement selected structure with full migration"
+        alternative_structures_to_consider:
+          - "Flat single-level: all keys at root (principles.dry, constraints.banned)"
+          - "Domain-driven: group by language (ruby.principles, ruby.patterns, ruby.detectors)"
+          - "Workflow-centric: organize by execution flow (bootstrap → analyze → fix → verify)"
+          - "Principle-first: principles as top-level, everything else nested under relevant principle"
+          - "Minimalist: 3 sections max (identity, rules, reference)"
+          - "Database-like: separate schema from data (structure.yml + values.yml)"
+          - "Imperative: command-based (detect.violations, apply.fixes, verify.correctness)"
+          - "Declarative: state-based (desired_state, violation_triggers, remediation_map)"
+          - "Ontological: entity-relationship model (entities, relationships, rules)"
+          - "Functional: input-transform-output pipeline structure"
+        evaluation_criteria:
+          simplicity: "Can junior dev understand structure in <5 minutes?"
+          discoverability: "Can LLM find relevant rules without search?"
+          maintainability: "Can sections be updated without cascading changes?"
+          cognitive_load: "Does structure stay within 7±2 mental limit?"
+          extensibility: "Can new principles/detectors be added easily?"
+        constraints:
+          preserve: "All semantic content (principles, patterns, detectors)"
+          allow: "Radical reordering, renaming, restructuring"
+          forbidden: "Loss of information, reduction in specificity"
     workflow_efficiency:
       internalize_once: "Load file ONCE at session start, work from memory"
       no_redundant_reads: "Never re-read what's already in working memory"
