@@ -1,5 +1,5 @@
 meta:
-  version: 37.39.0
+  version: 37.40.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -169,9 +169,10 @@ core:
       uniq_lines: "Use zsh: ${(u)lines}"
       rationale: "Read tool has proper permissions, zsh builtins are faster, no external process forks"
     file_operations:
-      never: [create_new_structure, create_backups, mkdir_new_folders]
-      always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure]
+      never: [create_new_structure, create_backups, mkdir_new_folders, file_sprawl]
+      always: [edit_existing_in_place, use_git_for_history, preserve_tree_structure, consolidate_over_fragment]
       orchestration: [read_analyze_generate_select_apply_verify_loop]
+      anti_sprawl: "Reduce file count - merge related files, consolidate scattered logic, prefer monoliths over microfiles"
   thresholds:
     code:
       max_arguments: 3
@@ -285,6 +286,7 @@ core:
         trigger: multi_purpose_function
         action: split_single_purpose
         priority: medium
+        detector: unix_detector
       strunk_white:
         omit_needless_words: "vigorous writing is concise"
         prefer_active: "use active voice"
@@ -293,6 +295,7 @@ core:
         trigger: needless_words_or_passive_voice
         action: omit_and_activate
         priority: medium
+        detector: prose_quality_detector
         refactorings: [rename_method, rename_variable, extract_constant]
       gestalt_proximity:
         trigger: unrelated_items_adjacent
@@ -650,8 +653,10 @@ core:
 
 execution:
   universal_execution_protocol:
-    applies_to: "EVERYTHING - master.yml, user code, repos, files, configs - NO EXCEPTIONS"
-    mandate: "Same rigorous process for all targets - no special cases, no shortcuts"
+    applies_to: "EVERYTHING - master.yml, user code, single files, entire codebases, content, documentation - NO EXCEPTIONS"
+    mandate: "Same rigorous process for all targets regardless of size or type - one file or 1000 files"
+    scope: "Works equally for: code (any language), content (prose, docs), single files, multi-file projects, large codebases"
+    anti_file_sprawl: "Prefer editing existing files over creating new ones - consolidate, don't fragment"
     auto_iteration: true
     convergence_loop:
       1_identify: "Execute detectors systematically: scan every line, count violations, report evidence"
