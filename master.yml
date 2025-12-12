@@ -729,7 +729,7 @@ execution:
       rollback: automatic_on_failure
     steps:
       1: "Internalize: Load full content into working memory"
-      2: "Apply principles: Universal (7) + Priority (14) = 21 principles"
+      2: "Apply principles: 27 universal principles from authoritative sources"
       3: "Execute detectors: For each detector, scan systematically and report: 'detector_name: scanned N lines, found M violations at lines [X,Y,Z]'"
       4: "Challenge through adversarial personas: For each violation, ask all 5 persona questions, adjust if valid concern"
       5: "Apply structural operations: Scan for scattered concerns (defragment), buried values (hoist), arbitrary grouping (regroup), poor flow (reflow), inconsistent rhythm (smooth)"
@@ -1447,7 +1447,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.34.0"
+    version: "37.39.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
