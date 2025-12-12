@@ -1,5 +1,5 @@
 meta:
-  version: 37.49.0
+  version: 37.50.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -54,12 +54,12 @@ meta:
       mcp_integration: "Create MCP server that injects master.yml content as context for every LLM invocation"
     bootstrap_protocol:
       step_1: "Read entire file from canonical_path or alternatives"
-      step_2: "Verify load: check meta.version matches v37.7.0+"
+      step_2: "Verify load: check meta.version matches v37.49.0+"
       step_3: "Internalize: load all sections into active reasoning context"
       step_4: "Activate: apply adherence_enforcement protocols"
       step_5: "Confirm: respond with 'master.yml [version] loaded, [root_sections] sections active, enforcement: strict'"
     verification:
-      quick_check: "Ask LLM to cite meta.version - returns '37.7.0' or higher"
+      quick_check: "Ask LLM to cite meta.version - returns '37.49.0' or higher"
       deep_check: "Ask LLM to trace a decision through principles - cites specific sections"
       compliance_check: "Ask LLM to explain golden_rule - quotes 'PRESERVE_THEN_IMPROVE_NEVER_BREAK'"
       failure_mode: "If verification fails, LLM must reload and re-internalize completely"
@@ -96,7 +96,7 @@ meta:
       steps:
         1: "Internalize entire file with view tool (NOT repeated grep)"
         2: "Analyze git history: git log --oneline --all -p master.yml (use zsh to parse)"
-        3: "Run ALL 19 detectors independently with convergence loops"
+        3: "Run ALL 28 detectors independently with convergence loops"
         4: "Apply structural operations: defragment, hoist, regroup, reflow, smooth"
         5: "Check natural_flow_order compliance, reorder sections if needed"
         6: "Identify duplicates/synonyms: principles vs principles_detailed, detection vs detectors"
@@ -1243,6 +1243,15 @@ quality:
           fragmented_concerns: consolidate_related_sections
           cognitive_overload: split_when_exceeds_7_items
           duplication_above_threshold: abstract_to_yaml_anchor_or_extract
+          derivative_design: seek_novel_solutions
+          form_over_function: prioritize_usefulness
+          ugly_but_functional: make_beautiful
+          programmer_frustration: optimize_for_joy_and_conventions
+          configuration_overload: apply_conventions
+          chaotic_organization: establish_clear_structure
+          file_sprawl: consolidate_into_fewer_cohesive_files
+          excessive_yaml_nesting: merge_related_sections
+          divs_over_semantic: replace_with_semantic_html
         detailed:
           dry_detector:
             pattern: "DRY"
@@ -1332,6 +1341,30 @@ quality:
             pattern: "TYPOGRAPHY"
             method: "Scan for line length <45 or >75, inconsistent rhythm"
             autofix: "Generate 3-7 typography fixes, score by readability"
+          rams_detector:
+            pattern: "DIETER_RAMS"
+            method: "Scan for derivative design, form over function, ugly but functional"
+            autofix: "Generate 5-10 design improvements (innovation, usefulness, aesthetics), score by Rams principles"
+          rails_detector:
+            pattern: "RAILS_DOCTRINE"
+            method: "Scan for programmer frustration, configuration overload, fragmentation over integration"
+            autofix: "Generate 5-10 convention-based solutions, score by happiness + simplicity"
+          latch_detector:
+            pattern: "LATCH_ORGANIZATION"
+            method: "Scan for chaotic organization, unclear grouping, missing structure"
+            autofix: "Generate 5-10 organizational structures (Location, Alphabet, Time, Category, Hierarchy), score by clarity"
+          file_sprawl_detector:
+            pattern: "FILE_SPRAWL"
+            method: "Scan for related logic scattered across multiple files, excessive file count"
+            autofix: "Generate 5-10 consolidation strategies, score by cohesion + cognitive load reduction"
+          sectionitis_detector:
+            pattern: "SECTIONITIS"
+            method: "Scan for excessive YAML/JSON nesting, too many sections, arbitrary grouping"
+            autofix: "Generate 5-10 flattening strategies, score by simplicity + discoverability"
+          divitis_detector:
+            pattern: "DIVITIS"
+            method: "Scan for divs where semantic HTML elements exist"
+            autofix: "Generate 3-5 semantic HTML alternatives, score by accessibility + standards compliance"
     formatters:
       tabs_to_spaces: "content=${content//$\\t/  }"
       trim_trailing: "content=${content%%[[:space:]]##}"
