@@ -1,5 +1,5 @@
 meta:
-  version: 37.45.0
+  version: 37.46.0
   purpose: "unified_design_execution_framework with autonomous_convergence"
   ethos: [simple_effective_human, evolve_continuously, compress_to_essence, execute_over_describe]
   scope: [ruby, rails, rust, zsh, openbsd, css, html, javascript, yaml, json, self, master_yml]
@@ -9,6 +9,7 @@ meta:
   no_unsolicited_documents: "Never create .md reports, summaries, or analysis documents without explicit user request"
   no_backups: "Never create backup files - git history is the backup"
   no_todo_docs: "Never create plan/todo documents - execute directly instead (violates execute_over_describe)"
+  no_decorations: "Never use ===, ---, ***, ### or similar decorative lines - violates openbsd_dmesg style"
   always_active: true
   load_priority: 1
   enforcement_scope: "all_sessions_all_contexts"
@@ -1488,7 +1489,7 @@ reference:
         method: "Scan for line length <45 or >75, inconsistent rhythm"
         autofix: "Generate 3-7 typography fixes, score by readability"
   metrics:
-    version: "37.45.0"
+    version: "37.46.0"
   deployment_config:
     note: "USER-SPECIFIC - Replace with your own infrastructure"
     domains:
