@@ -3,6 +3,7 @@
 
 require "sqlite3"
 require "json"
+require "fileutils"
 
 # Chain Generator - Creates random model chains for motion graphics
 
