@@ -1,10 +1,10 @@
 # OpenBSD Rails Infrastructure v338.0.0
-Single-file deployment: 40+ domains, 7 Rails apps, NSD DNS+DNSSEC, TLS, PF firewall, Relayd reverse proxy.
+Single-file deployment: 48 domains, 7 Rails apps, NSD DNS+DNSSEC, TLS, PF firewall, Relayd reverse proxy.
 
 ## Architecture
 ```
-Internet → PF (synproxy, rate limit, bruteforce)
-        → Relayd (TLS termination, port 443)
+Internet → PF (bruteforce detection, rate limiting)
+        → Relayd (SNI-based TLS routing per app)
         → Falcon (async HTTP server)
         → Rails 8 apps
 
@@ -33,15 +33,15 @@ doas zsh openbsd.sh --post-point
 ## What Gets Installed
 
 ### Phase 1: --pre-point
-- **Ruby 3.3 + Rails 8.0** (Solid Queue/Cache/Cable - Redis-free)
+- **Ruby 3.3 + Rails 8.0** (Solid Queue/Cache/Cable)
 - **PostgreSQL 16** + **Redis 7**
 - **NSD DNS** with DNSSEC (MUST run before registering glue record)
-- **PF Firewall** (synproxy, rate limiting, bruteforce detection)
-- **7 Rails apps** on fixed ports
+- **PF Firewall** (bruteforce detection, rate limiting, explicit port list)
+- **7 Rails app skeletons** (awaiting code upload)
 
 ### Phase 2: --post-point
-- **TLS certificates** via acme-client (Let's Encrypt)
-- **Relayd reverse proxy** (port 443 → apps)
+- **TLS certificates** via acme-client (Let's Encrypt, 48 domains)
+- **Relayd reverse proxy** (SNI routing: 7 relays, 1 per app)
 - **PTR records** (OpenBSD Amsterdam)
 - **Cron jobs** (certificate renewal)
 
@@ -65,9 +65,17 @@ doas zsh openbsd.sh --post-point
 - ~2GB RAM, 10GB disk
 - Internet connectivity
 
+## Recent Fixes (2025-12-12)
+
+✅ **PF firewall:** Fixed undefined `$domeneshop` variable  
+✅ **PF firewall:** Narrowed port range from 65535 to 7 explicit ports  
+✅ **NSD DNS:** Removed secondary nameserver notify (primary-only mode)  
+✅ **Relayd:** Implemented SNI-based routing for all 7 apps with 48 domains  
+✅ **Code quality:** Improved zsh pattern matching (removed grep dependency)
+
 ## Verify Installation
 
-```bash
+```zsh
 # Check all services running
 rcctl ls on
 
@@ -75,21 +83,27 @@ rcctl ls on
 rcctl check postgresql redis nsd httpd relayd
 rcctl check brgen amber blognet bsdports hjerterom privcam pubattorney
 
+# Verify configs
+doas pfctl -nf /etc/pf.conf
+doas nsd-checkconf /var/nsd/etc/nsd.conf
+doas httpd -n
+doas relayd -n
+
 # Check listening ports
-netstat -an | grep LISTEN | grep -E '1000[1-6]|11006'
+netstat -an | grep LISTEN
 
 # View logs
-tail -f /var/log/messages
-tail -f /var/log/rails/unified.log
+doas tail /var/log/messages
+tail /var/log/rails/unified.log
 ```
 
 ## Security
 
 ### PF Firewall
-- **Synproxy**: TCP SYN flood protection (ports 22, 80, 443)
-- **Rate limiting**: Max 50 connections/30s per IP
-- **Bruteforce protection**: SSH limited to 15 conn/60s
-- **Scrubbing**: no-df, random-id, max-mss 1440
+- **Bruteforce protection:** SSH limited to 15 conn, 5 per 3s
+- **Rate limiting:** DNS limited to 100 conn, 15 per 5s
+- **Explicit ports:** Only 22, 53, 80, 443, 10001-10006, 11006 exposed
+- **Table management:** `pfctl -t bruteforce -T show`
 
 ### Relayd Security Headers (OWASP)
 ```
@@ -113,63 +127,45 @@ All verified against official OpenBSD man pages:
 
 - `/etc/pf.conf` - Firewall (man pf.conf)
 - `/etc/relayd.conf` - Reverse proxy (man relayd.conf)
-- `/etc/httpd.conf` - ACME HTTP-01 challenge
-- `/etc/acme-client.conf` - Let's Encrypt TLS
-- `/etc/nsd/nsd.conf` - DNS server with DNSSEC
-- `/etc/rc.d/{app}` - Service control scripts
+- `/etc/httpd.conf` - ACME HTTP-01 challenge (man httpd.conf)
+- `/etc/acme-client.conf` - Let's Encrypt TLS (man acme-client.conf)
+- `/var/nsd/etc/nsd.conf` - DNS server with DNSSEC (man nsd.conf)
+- `/etc/rc.d/{app}` - Service control scripts (man rc.subr)
 
 ## Troubleshooting
 
 ### Check service status
-```bash
-rcctl check postgresql  # Should return "postgresql(ok)"
-rcctl check nsd         # Should return "nsd(ok)"
+```zsh
+rcctl check postgresql
+rcctl check nsd
+rcctl ls failed
 ```
 
 ### View logs
-```bash
-tail -100 /var/log/messages
+```zsh
+doas tail -100 /var/log/messages
 tail -100 /var/log/rails/unified.log
 ```
 
 ### Test DNS locally
-```bash
+```zsh
 dig @localhost brgen.no SOA
-nsd-checkzone brgen.no /var/nsd/zones/brgen.no.zone
-```
-
-### Test Rails app manually
-```bash
-su -l dev -c "cd /home/dev/rails/brgen && bundle exec falcon --bind tcp://127.0.0.1:11006"
+nsd-checkzone brgen.no /var/nsd/zones/master/brgen.no.zone
 ```
 
 ### Verify TLS certificate
-```bash
+```zsh
 openssl s_client -connect brgen.no:443 -servername brgen.no < /dev/null | grep Verify
-```
-
-## Emergency Rollback
-
-```bash
-# Stop all services
-for app in brgen amber blognet bsdports hjerterom privcam pubattorney; do
-  rcctl stop $app
-  rcctl disable $app
-done
-rcctl stop relayd
-
-# Restore from backup
-ls -la /var/rails/backups/
 ```
 
 ## Version History
 
-- **v338.0.0** (2025-12-09): Rails 8.0 + Solid Stack, fixed ports
+- **v338.0.0** (2025-12-12): Fixed PF bug, SNI routing, narrow ports, primary-only DNS
 - **v337.4.0** (2025-10-23): Initial release with Rails 7.2
 
 ## Verified
 
-- 2025-12-09: Rails 8.0, Solid Queue/Cache/Cable, fixed ports
+- 2025-12-12: All configs verified against man.openbsd.org
 - VPS: dev@185.52.176.18 (185.52.176.18)
-- All configs verified against man.openbsd.org
+- OpenBSD 7.7 amd64
 

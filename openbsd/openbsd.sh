@@ -237,15 +237,12 @@ setup_dns_dnssec() {
 
   log "Configuring NSD with DNSSEC..."
   # Stop unbound if running (conflicts with NSD on port 53)
-
-  # Pure zsh: pattern matching instead of grep
   local -a services_on=("${(@f)$(rcctl ls on)}")
-  if [[ "${services_on[*]}" == *unbound* ]]; then
+  local -a unbound_services=("${(@M)services_on:#*unbound*}")
+  if [[ ${#unbound_services} -gt 0 ]]; then
     log "Stopping unbound to free port 53..."
     rcctl stop unbound
-
     rcctl disable unbound
-
   fi
 
   mkdir -p /var/nsd/zones/master /var/nsd/zones/keys
@@ -350,8 +347,6 @@ EOF
 zone:
   name: "$domain"
   zonefile: master/$domain.zone.signed
-  notify: $BACKUP_NS NOKEY
-  provide-xfr: $BACKUP_NS NOKEY
 EOF
   done
   rcctl enable nsd
@@ -366,6 +361,8 @@ setup_firewall() {
   cat > /etc/pf.conf << 'EOF'
 
 ext_if = "vio0"
+domeneshop = "194.63.248.53"
+
 # Allow all on localhost
 set skip on lo
 
@@ -383,19 +380,19 @@ block in
 
 table <bruteforce> persist
 block quick from <bruteforce>
+
 # SSH
 pass in on $ext_if inet proto tcp from any to $ext_if port 22 keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 
 # DNS
-domeneshop = "194.63.248.53"
-
 pass in on $ext_if inet proto { tcp, udp } from $ext_if to $domeneshop port 53 keep state
 pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
+
 # HTTP/HTTPS
 pass in on $ext_if inet proto tcp from any to $ext_if port { 80, 443 } keep state
 
-# Rails app ports (random high ports)
-pass in on $ext_if inet proto tcp from any to $ext_if port 10000:65535 keep state
+# Rails app ports (explicit list)
+pass in on $ext_if inet proto tcp from any to $ext_if port { 10001 10002 10003 10004 10005 10006 11006 } keep state
 
 # Relayd anchor
 anchor "relayd/*"
@@ -484,43 +481,133 @@ EOF
   log "TLS configured"
 }
 
-# relayd load balancer (verified 2025-10-16 against man.openbsd.org/relayd.conf)
-
+# relayd load balancer with SNI routing for multiple apps
 setup_relayd() {
 
   log "Configuring relayd..."
-  # Simple configuration: single table for brgen, TLS termination on port 443
 
   cat > /etc/relayd.conf << 'EOF'
 
+interval 5
+
+# Backend tables for each app
+table <amber> { 127.0.0.1 }
+table <blognet> { 127.0.0.1 }
+table <bsdports> { 127.0.0.1 }
+table <hjerterom> { 127.0.0.1 }
+table <privcam> { 127.0.0.1 }
+table <pubattorney> { 127.0.0.1 }
 table <brgen> { 127.0.0.1 }
+
 http protocol "https" {
-  tls keypair brgen.no
-
-  # Request headers
   match header set "X-Forwarded-For" value "$REMOTE_ADDR"
-
   match header set "X-Forwarded-Proto" value "https"
+
   # Security headers (OWASP recommendations)
   match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
-
   match response header set "X-Frame-Options" value "DENY"
   match response header set "X-Content-Type-Options" value "nosniff"
   match response header set "Referrer-Policy" value "strict-origin-when-cross-origin"
   match response header set "Permissions-Policy" value "geolocation=(), microphone=(), camera=()"
   match response header set "Content-Security-Policy" value "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
 }
-relay "web" {
-  listen on 0.0.0.0 port 443 tls
 
+# Relay per app with SNI-based TLS keypair selection
+relay "amber" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <amber> port 10001 check tcp
+  tls keypair amberapp.com
+}
+
+relay "blognet" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <blognet> port 10002 check tcp
+  tls keypair foodielicio.us
+  tls keypair stacyspassion.com
+  tls keypair antibettingblog.com
+  tls keypair anticasinoblog.com
+  tls keypair antigamblingblog.com
+  tls keypair foball.no
+}
+
+relay "bsdports" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <bsdports> port 10003 check tcp
+  tls keypair bsdports.org
+}
+
+relay "hjerterom" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <hjerterom> port 10004 check tcp
+  tls keypair hjerterom.no
+}
+
+relay "privcam" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <privcam> port 10005 check tcp
+  tls keypair privcam.no
+}
+
+relay "pubattorney" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "https"
+  forward to <pubattorney> port 10006 check tcp
+  tls keypair pub.attorney
+  tls keypair freehelp.legal
+}
+
+relay "brgen" {
+  listen on 0.0.0.0 port 443 tls
   protocol "https"
   forward to <brgen> port 11006 check tcp
+  tls keypair brgen.no
+  tls keypair oshlo.no
+  tls keypair trndheim.no
+  tls keypair stvanger.no
+  tls keypair trmso.no
+  tls keypair reykjavk.is
+  tls keypair kobenhvn.dk
+  tls keypair stholm.se
+  tls keypair gteborg.se
+  tls keypair mlmoe.se
+  tls keypair hlsinki.fi
+  tls keypair lndon.uk
+  tls keypair mnchester.uk
+  tls keypair brmingham.uk
+  tls keypair edinbrgh.uk
+  tls keypair glasgw.uk
+  tls keypair lverpool.uk
+  tls keypair amstrdam.nl
+  tls keypair rottrdam.nl
+  tls keypair utrcht.nl
+  tls keypair brssels.be
+  tls keypair zrich.ch
+  tls keypair lchtenstein.li
+  tls keypair frankfrt.de
+  tls keypair mrseille.fr
+  tls keypair mlan.it
+  tls keypair lsbon.pt
+  tls keypair lsangeles.com
+  tls keypair newyrk.us
+  tls keypair chcago.us
+  tls keypair dtroit.us
+  tls keypair houstn.us
+  tls keypair dllas.us
+  tls keypair austn.us
+  tls keypair prtland.com
+  tls keypair mnneapolis.com
 }
 EOF
+
   rcctl enable relayd
   rcctl restart relayd
 
-  log "relayd configured (port 443 → brgen:11006)"
+  log "relayd configured with SNI routing for 7 apps"
 
 }
 
