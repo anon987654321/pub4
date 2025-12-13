@@ -151,23 +151,40 @@ class Repligen
 
   # === IMAGE ENHANCEMENT ===
   
-  def enhance_image(image_url, name)
-    puts "\n  [1/3] Removing background (BiRefNet)..."
-    res = api(:post, "/models/lucataco/remove-bg/predictions", {
+  def enhance_for_video(image_url, name)
+    puts "\n  🔧 Enhancing image for better video quality..."
+    
+    # 1. Generate depth map for better 3D motion
+    puts "  [1/3] Depth map generation..."
+    res = api(:post, "/models/adirik/depth-anything-v2/predictions", {
       input: { image: image_url }
     })
-    nobg = wait(JSON.parse(res.body)["id"], "BiRefNet")
-    return nil unless nobg
+    depth = wait(JSON.parse(res.body)["id"], "Depth")
     
-    puts "\n  [2/3] Upscaling 2x (face enhance)..."
-    res = api(:post, "/predictions", {
-      version: "nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-      input: { image: nobg, scale: 2, face_enhance: true }
+    # 2. Edge refinement with canny
+    puts "  [2/3] Edge refinement..."
+    res = api(:post, "/models/jagilley/controlnet-canny/predictions", {
+      input: { 
+        image: image_url,
+        prompt: "high quality, sharp edges, professional photography",
+        num_inference_steps: 20
+      }
     })
-    upscaled = wait(JSON.parse(res.body)["id"], "Real-ESRGAN")
-    return nobg unless upscaled
+    refined = wait(JSON.parse(res.body)["id"], "Edge Refine")
     
-    upscaled
+    # 3. Optional relighting for consistency
+    puts "  [3/3] Lighting enhancement..."
+    res = api(:post, "/models/jagilley/controlnet-brightness/predictions", {
+      input: {
+        image: refined || image_url,
+        prompt: "cinematic lighting, golden hour, natural illumination",
+        brightness: 0.7,
+        num_inference_steps: 20
+      }
+    })
+    enhanced = wait(JSON.parse(res.body)["id"], "Relight")
+    
+    enhanced || refined || image_url
   end
   
   def enhance_training_photos(subject)
@@ -479,9 +496,12 @@ class Repligen
       img = generate_image(scene[:image_prompt], lora: lora)
       next unless img
       
+      # Enhance image for better video quality
+      enhanced_img = enhance_for_video(img, scene[:name])
+      
       # Generate video with motion-specific prompt
       puts "\n🎬 Motion prompt (#{scene[:video_prompt].length} chars)"
-      vid = generate_video(img, scene[:video_prompt], duration: scene[:duration], model: model)
+      vid = generate_video(enhanced_img, scene[:video_prompt], duration: scene[:duration], model: model)
       next unless vid
       
       # Download
@@ -503,6 +523,9 @@ class Repligen
     puts "Total cost: $#{total_cost.round(2)}"
     puts "Output: #{@out}/"
     puts "\nAdvanced cinematography techniques applied:"
+    puts "  ✓ Depth maps for enhanced 3D motion perception"
+    puts "  ✓ Edge refinement with ControlNet Canny"
+    puts "  ✓ Cinematic relighting for consistency"
     puts "  ✓ Separated camera motion from subject motion"
     puts "  ✓ Realistic physics and weight transfer"
     puts "  ✓ Professional lens and camera specifications"

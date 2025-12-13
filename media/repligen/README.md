@@ -1,16 +1,11 @@
-# Media Generation Tools
+# Repligen - AI Media Generation Pipeline
 
 Professional AI media generation with natural language cinematography.
-
-## Files
-
-- **repligen.rb** - Complete media pipeline: image, video, LoRA training, commercial generation, model indexing, chain execution
-- **postpro.rb** - Cinematic photo/video post-processing (film emulation)
-- **dilla.rb** - J Dilla-style beat generator
 
 ## Quick Start
 
 ```bash
+cd repligen
 export REPLICATE_API_TOKEN="your_token"
 
 # Generate image with natural language
@@ -86,15 +81,15 @@ shallow depth of field, editorial photography"
 
 ## Output
 
-All generated media saves to `./repligen/` with timestamped filenames.
+All generated media saves to current directory with timestamped filenames.
 
 ## Post-Processing
 
-Apply film emulation and color grading with `postpro.rb`:
+Apply film emulation and color grading with `../postpro.rb`:
 
 ```bash
 # Upload to OpenBSD VPS
-scp repligen/video.mp4 dev@your-vps:/home/dev/raw/
+scp video.mp4 dev@your-vps:/home/dev/raw/
 
 # Apply cinematic grading
 ssh dev@your-vps 'ruby postpro.rb --video raw/video.mp4 --preset blockbuster'
