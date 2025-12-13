@@ -71,6 +71,36 @@
   - Low-quality image recovery
   - Cost: ~$0.03, Type: image→image
 
+## DEPTH & 3D MODELS
+
+- **marigold-depth**
+  - Monocular depth estimation, create depth maps
+  - Cost: ~$0.02, Type: image→depth_map
+  
+- **zoedepth**
+  - High-quality depth from single image
+  - Cost: ~$0.02, Type: image→depth_map
+
+## RELIGHTING & LIGHTING EFFECTS
+
+- **ic-light**
+  - AI relighting, change lighting direction/intensity
+  - Cost: ~$0.05, Type: image→image
+  
+- **controlnet-brightness**
+  - Adjust exposure, lighting conditions
+  - Cost: ~$0.03, Type: image→image
+
+## MOTION & ANIMATION
+
+- **animate-diff**
+  - Animate static images with motion
+  - Cost: ~$0.10, Type: image→video
+  
+- **roop** (face swap)
+  - Deepfake face replacement
+  - Cost: ~$0.05, Type: image+image→image
+
 ## STYLE TRANSFER & EFFECTS
 
 - **bria/erase**
@@ -111,35 +141,43 @@ TEXT → AUDIO: musicgen, chatterbox
 # Cost: $0.02 + $0.03 + $0.04 + $0.50 = $0.59
 ```
 
-### Chain 2: "Ultra HD Motion Graphics"  
+### Chain 2: "3D Depth Enhanced Motion"  
+```ruby
+[:ra2, :marigold-depth, :ic-light, :kling-2-6]
+# Generate → depth map → relight → animate with depth
+# Cost: $0.02 + $0.02 + $0.05 + $0.50 = $0.59
+```
+
+### Chain 3: "Ultra HD Motion Graphics"  
 ```ruby
 [:imagen-4, :topaz-photo, :bria-genfill, :veo-2, :topaz-video]
 # Generate → upscale 4x → enhance → video → upscale video
 # Cost: $0.02 + $0.05 + $0.03 + $0.80 + $0.15 = $1.05
 ```
 
-### Chain 3: "Music Video Generator"
+### Chain 4: "Music Video Generator"
 ```ruby
 [:flux-2-pro, :kling-2-6, :musicgen]
 # Image → video with dialogue → add music layer
 # Cost: $0.04 + $0.50 + $0.05 = $0.59
 ```
 
-### Chain 4: "Chaos Mode" (8-15 models)
+### Chain 5: "Chaos Mode" (8-15 models)
 ```ruby
 [
   :ra2,           # Custom portrait
+  :marigold,      # Extract depth
   :gfpgan,        # Face restore
+  :ic-light,      # Relight dramatically
   :bria-genfill,  # Add elements
   :flux-2-pro,    # Re-render enhanced
   :topaz-photo,   # Upscale
-  :bria-erase,    # Clean unwanted
   :ideogram-v3,   # Style transfer
   :kling-2-6,     # Animate 10s with audio
   :musicgen       # Add soundtrack
 ]
-# Cost: $0.02+$0.03+$0.03+$0.04+$0.05+$0.02+$0.03+$0.50+$0.05 = $0.77
-# Result: Unprecedented 10s motion graphic with native audio + music
+# Cost: ~$0.85
+# Result: Unprecedented 10s motion graphic with depth, relighting, audio
 ```
 
 ## IMPLEMENTATION PRIORITIES
