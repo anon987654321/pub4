@@ -5,30 +5,35 @@ set -euo pipefail
 # Consolidated from 20 files → 8 focused modules
 
 SCRIPT_DIR="${0:a:h}"
+
 # Core infrastructure
 source "${SCRIPT_DIR}/@core_setup.sh"
-
+source "${SCRIPT_DIR}/@core_database.sh"
+source "${SCRIPT_DIR}/@core_dependencies.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
 
-# UI/Frontend
-source "${SCRIPT_DIR}/@stimulus_controllers.sh"
+# Frontend/UI
+source "${SCRIPT_DIR}/@frontend_stimulus.sh"
+source "${SCRIPT_DIR}/@frontend_pwa.sh"
+source "${SCRIPT_DIR}/@frontend_reflex.sh"
 
-source "${SCRIPT_DIR}/@pwa_setup.sh"
+# Generators
+source "${SCRIPT_DIR}/@generators_crud_views.sh"
 
-source "${SCRIPT_DIR}/@reflex_patterns.sh"
+# Features
+source "${SCRIPT_DIR}/@features_voting_comments.sh"
+source "${SCRIPT_DIR}/@features_messaging_realtime.sh"
+source "${SCRIPT_DIR}/@features_booking_marketplace.sh"
+source "${SCRIPT_DIR}/@features_ai_langchain.sh"
 
-source "${SCRIPT_DIR}/@view_generators.sh"
+# Integrations
+source "${SCRIPT_DIR}/@integrations_chat_actioncable.sh"
+source "${SCRIPT_DIR}/@integrations_search.sh"
 
-# Feature domains (consolidated from competitors)
-source "${SCRIPT_DIR}/@social_features.sh"      # reddit+twitter+voting
-
-source "${SCRIPT_DIR}/@chat_features.sh"        # messaging+messenger
-
-source "${SCRIPT_DIR}/@marketplace_features.sh" # airbnb+booking+momondo+travel
-
-source "${SCRIPT_DIR}/@ai_features.sh"          # langchain
-
-source "${SCRIPT_DIR}/@route_helpers.sh"
+# Helpers
+source "${SCRIPT_DIR}/@helpers_routes.sh"
+source "${SCRIPT_DIR}/@helpers_logging.sh"
+source "${SCRIPT_DIR}/@helpers_installation.sh"
 # Additional setup functions
 install_stimulus_component() {
 
@@ -41,6 +46,7 @@ install_stimulus_component() {
 }
 setup_full_app() {
     local app_name="$1"
+    local use_redis="${2:-false}"  # Optional: default to Solid Stack (Redis-free)
 
     log "Setting up full Rails application: $app_name"
     mkdir -p "$BASE_DIR/$app_name"
@@ -48,21 +54,36 @@ setup_full_app() {
 
     if [ ! -f "config/application.rb" ]; then
         log "Creating new Rails application"
-
-        rails new . --api --database=postgresql --skip-git --skip-bundle
+        rails new . --database=postgresql --skip-git --skip-bundle
     fi
+    
     setup_core
     setup_postgresql
-
-    setup_redis
     setup_rails
-    setup_devise
+    
+    # Rails 8 Solid Stack (database-backed) - No Redis needed!
+    setup_rails8_solid_stack
+    
+    # Optional: Use Redis if specifically requested
+    if [[ "$use_redis" == "true" ]]; then
+        log "Redis explicitly requested - setting up alongside Solid Stack"
+        setup_redis
+    fi
+    
+    # Use Rails 8 authentication (simpler than Devise)
+    setup_rails8_authentication
 }
 setup_devise() {
-    log "Setting up Devise authentication (legacy - use setup_rails8_authentication)"
+    log "Setting up Devise authentication"
+    log "NOTE: Consider migrating to Rails 8 authentication (simpler, built-in)"
+    log "To use Rails 8 auth instead, call: setup_rails8_authentication"
 
     install_gem "devise"
     if [ ! -f "config/initializers/devise.rb" ]; then
+        bin/rails generate devise:install
+        bin/rails generate devise User
+    fi
+}
         bin/rails generate devise:install
 
         bin/rails generate devise User

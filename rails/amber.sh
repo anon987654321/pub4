@@ -5,8 +5,8 @@ set -euo pipefail
 BASE_DIR="$HOME/rails/$APP"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# All functionality consolidated into @common.sh (per master.json ultraminimal principle)
-source "${SCRIPT_DIR}/__shared/@common.sh"
+# All functionality consolidated into @shared_functions.sh (per master.json ultraminimal principle)
+source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
 # Marie Kondo AI Wardrobe Assistant - LangChain-powered organization
 log "Setting up Marie Kondo AI Wardrobe Assistant with LangChain"
 

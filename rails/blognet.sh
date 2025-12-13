@@ -9,7 +9,7 @@ SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
 
-source "${SCRIPT_DIR}/__shared/@common.sh"
+source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
 
 gem "solid_queue"
 

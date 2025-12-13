@@ -7,7 +7,7 @@ set -euo pipefail
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="mytoonz"
 
-source "${BASE_DIR}/__shared/@common.sh"
+source "${BASE_DIR}/__shared/@shared_functions.sh"
 main() {
 
     log "Starting MyToonz setup..."

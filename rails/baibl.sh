@@ -10,7 +10,7 @@ BASE_DIR="/home/dev/rails"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
-source "${SCRIPT_DIR}/__shared/@common.sh"
+source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
 
 log "Starting BAIBL AI Bible application setup with Norwegian interface and advanced text analysis"
 setup_full_app "$APP_NAME"
@@ -19,7 +19,7 @@ command_exists "ruby"
 
 command_exists "node"
 command_exists "psql"
-command_exists "redis-server"
+# Redis optional - using Solid Cable for ActionCable (Rails 8 default)
 # Generate biblical text and analysis models
 bin/rails generate model Book title:string abbreviation:string testament:string chapter_count:integer
 
