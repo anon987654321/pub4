@@ -220,10 +220,10 @@ STOCKS = {
 }.freeze
 
 PRESETS = {
-  portrait: { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
-  landscape: { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
-  street: { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[teal_orange grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
+  portrait: { fx: %w[skin_protect film_curve halation color_bleed highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
+  landscape: { fx: %w[film_curve halation color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
+  street: { fx: %w[film_curve halation chemical_variance shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
+  blockbuster: { fx: %w[teal_orange halation color_bleed grain bloom_pro highlight_roll micro_contrast chemical_variance], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }.freeze
 
 def safe_cast(image, format = 'uchar')
@@ -409,6 +409,45 @@ def base_tint(image, color = [252, 248, 240], intensity = 0.08)
 
   blended = result * 255
   safe_cast(image * (1 - intensity) + blended * intensity)
+end
+
+def halation(image, intensity = 0.4)
+  # Film emulsion light scatter - critical for analog look
+  threshold = 180
+  mask = (image > threshold).cast('float') / 255.0
+  
+  # Multiple radii simulate emulsion layer depth
+  scatter1 = image.gaussblur(20) * 0.3
+  scatter2 = image.gaussblur(40) * 0.2
+  scatter3 = image.gaussblur(80) * 0.1
+  
+  halation = (scatter1 + scatter2 + scatter3) * mask.bandjoin([mask, mask])
+  safe_cast(image + halation * intensity)
+end
+
+def color_bleed(image, intensity = 0.3)
+  # Film emulsion layers cause slight color channel blur
+  # Softens harsh digital edges naturally
+  r, g, b = image.bandsplit
+  
+  # Different blur per channel (emulsion layer depth)
+  r_bleed = r.gaussblur(0.8 * intensity)
+  g_bleed = g.gaussblur(0.6 * intensity)
+  b_bleed = b.gaussblur(1.0 * intensity) # Blue layer deepest in film
+  
+  result = Vips::Image.bandjoin([r_bleed, g_bleed, b_bleed])
+  safe_cast(image * (1 - intensity) + result * intensity)
+end
+
+def chemical_variance(image, intensity = 0.15)
+  # Simulate uneven film development chemistry
+  # Breaks up digital uniformity with organic density variations
+  variance = Vips::Image.gaussnoise(image.width / 10, image.height / 10, sigma: 5)
+                         .resize(10) # Upscale for low-frequency
+                         .gaussblur(20)
+  
+  variance_rgb = rgb_bands(variance * intensity)
+  safe_cast(image + variance_rgb)
 end
 
 def vintage_lens(image, type = 'zeiss', intensity = 0.7)
