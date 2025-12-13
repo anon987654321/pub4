@@ -1,11 +1,12 @@
 ---
-version: "69.0.0"
+version: "70.0.0"
 
 meta:
   title: "CONVERGENCE"
   subtitle: "Autonomous Code Evolution Framework"
   description: "Philosophy that compiles - iterative convergence to optimal solutions through evidence-based principles"
   changelog:
+    "70.0.0": "Added ruby_beauty.minimal_line_noise (DHH principle - every character must justify its existence)"
     "69.0.0": "Added enforcement.require_full_validation, ruby_beauty, rails_doctrine, writing_principles (Strunk & White), html_css_principles, ui_ux_principles (Nielsen), large_html_documents with inline CSS/JS patterns"
     "68.0.0": "Added execution_flow orchestration - bootstrap, validation, feedback loops, integration points"
     "67.0.0": "Added file_operations.anti_sprawl, comments rules, self-protection"
@@ -334,6 +335,19 @@ principles:
       message_format: "imperative mood, 50-char summary, optional body"
 
   ruby_beauty:
+    minimal_line_noise:
+      value: true
+      source: "DHH interview - Rails philosophy"
+      definition: "Every character must justify its existence"
+      examples:
+        good: ["user.save", "if valid?", "posts.recent"]
+        bad: ["user.save()", "if (valid? == true)", "posts.where(published: true).order(created_at: :desc).limit(10)"]
+      application:
+        - "Omit unnecessary punctuation (parens, semicolons)"
+        - "Use Ruby's optional syntax features"
+        - "Chain methods naturally, not verbosely"
+        - "Prefer symbols over strings for keys"
+
     frozen_string_literals:
       value: true
       rule: "# frozen_string_literal: true at top of every Ruby file"
