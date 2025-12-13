@@ -496,12 +496,10 @@ class Repligen
       img = generate_image(scene[:image_prompt], lora: lora)
       next unless img
       
-      # Enhance image for better video quality
-      enhanced_img = enhance_for_video(img, scene[:name])
-      
-      # Generate video with motion-specific prompt
+      # Generate video directly with motion-specific prompt
+      # Modern video models (Kling 2.5) handle depth/motion natively
       puts "\n🎬 Motion prompt (#{scene[:video_prompt].length} chars)"
-      vid = generate_video(enhanced_img, scene[:video_prompt], duration: scene[:duration], model: model)
+      vid = generate_video(img, scene[:video_prompt], duration: scene[:duration], model: model)
       next unless vid
       
       # Download
@@ -523,15 +521,13 @@ class Repligen
     puts "Total cost: $#{total_cost.round(2)}"
     puts "Output: #{@out}/"
     puts "\nAdvanced cinematography techniques applied:"
-    puts "  ✓ Depth maps for enhanced 3D motion perception"
-    puts "  ✓ Edge refinement with ControlNet Canny"
-    puts "  ✓ Cinematic relighting for consistency"
-    puts "  ✓ Separated camera motion from subject motion"
-    puts "  ✓ Realistic physics and weight transfer"
+    puts "  ✓ Separated camera/subject motion in prompts"
+    puts "  ✓ Realistic physics keywords (weight transfer, momentum)"
     puts "  ✓ Professional lens and camera specifications"
     puts "  ✓ Natural lighting with motivated sources"
     puts "  ✓ Film stock color science (Kodak Vision3)"
     puts "  ✓ Authentic micro-expressions and secondary motion"
+    puts "  ✓ Speed modifiers (120fps/240fps slow motion simulation)"
   end
 
   # === MAIN ROUTER ===
