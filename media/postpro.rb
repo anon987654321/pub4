@@ -220,10 +220,10 @@ STOCKS = {
 }.freeze
 
 PRESETS = {
-  portrait: { fx: %w[skin_protect film_curve halation color_bleed highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
-  landscape: { fx: %w[film_curve halation color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
-  street: { fx: %w[film_curve halation chemical_variance shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[teal_orange halation color_bleed grain bloom_pro highlight_roll micro_contrast chemical_variance], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
+  portrait: { fx: %w[grain skin_protect film_curve halation color_bleed highlight_roll micro_contrast color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
+  landscape: { fx: %w[grain film_curve halation color_separate highlight_roll micro_contrast vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
+  street: { fx: %w[grain film_curve halation chemical_variance shadow_lift micro_contrast vintage_lens], stock: :tri_x, temp: 5600, intensity: 1.0 },
+  blockbuster: { fx: %w[grain teal_orange halation color_bleed bloom_pro highlight_roll micro_contrast chemical_variance], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }.freeze
 
 def safe_cast(image, format = 'uchar')
