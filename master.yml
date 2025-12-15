@@ -1,13 +1,14 @@
 # master.yml - Perfect 10/10 Framework
-# Version: 71.2.0
+# Version: 71.2.1
 # Auto-iterated to perfection with comprehensive automation
 
 framework:
-  version: "71.2.0"
+  version: "71.2.1"
   description: "Perfect project generation and refactoring framework"
   purpose: "Pragmatic development with automated principle enforcement"
   quality: "10/10 - Auto-iterated to perfection"
   changelog:
+    "71.2.1": "Fixed gaps: priority conflicts resolved (0=tool policy, 1=code preservation), bootstrap version updated"
     "71.2.0": "Added HTML/CSS/UI/UX principles (Nielsen heuristics, large_html_documents, inline CSS/JS patterns)"
     "71.1.0": "Added critical sections from v69-70: self_discovery, detectors, ruby_beauty, rails_doctrine, file_operations, comments policy"
     "71.0.0": "Added ZSH native patterns, OpenBSD workflow, banned external tools (python/bash/sed/awk/tr/wc/head/tail/find)"
