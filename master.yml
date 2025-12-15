@@ -12,6 +12,7 @@ framework:
   quality: "10/10 - Auto-iterated to perfection"
   philosophy: "NORMATIVE framework - aspirational goals, not hard gates"
   changelog:
+    "71.5.0": "Autofix workflow everywhere - ALL violations autofixed immediately (zero manual fixes)"
     "71.4.0": "Rapid 10/10 wins: removed Windows path, semantic versioning, >=98% thresholds, deduplication steps"
     "71.3.0": "Grok feedback: schema_version, tolerance ranges (>=95%), security hardening, cross-platform docs"
     "71.2.2": "Fixed execution flow (bootstrap v71.2.1) and case sensitivity (ZSH → Zsh)"
@@ -1134,7 +1135,92 @@ comments:
     style: "Inline explanations, not comment blocks"
     rationale: "Decorations add noise, break parsing, violate simplicity"
 
-# Perfect Quick Reference Index
+# Workflow: Intuitive Autofix Everywhere
+workflow:
+  mandate: "ALL violations autofixed immediately - zero tolerance for manual fixes"
+  
+  execution_flow:
+    phase_1_detect:
+      trigger: ["code_commit", "master_yml_update", "scheduled_scan", "on_demand"]
+      scan_targets:
+        - "master.yml validates against own principles"
+        - "external code validates against master.yml"
+        - "bidirectional consistency check"
+      output: "violation_report.json"
+    
+    phase_2_autofix:
+      mandatory: true
+      skip_conditions: "NONE - always attempt autofix"
+      strategies:
+        version_mismatch:
+          detect: "grep version references != framework.version"
+          fix: "sed replace all to match framework.version"
+          verify: "grep confirms all match"
+        
+        case_errors:
+          detect: "grep -i 'ZSH' finds uppercase"
+          fix: "replace ZSH → Zsh throughout"
+          verify: "no uppercase ZSH remains"
+        
+        threshold_idealism:
+          detect: "grep '100%' in thresholds"
+          fix: "replace with >=98% per tolerance_ranges"
+          verify: "all thresholds realistic"
+        
+        security_gaps:
+          detect: "log_path without permissions specified"
+          fix: "add permissions: 0600, owner: root"
+          verify: "all logs secured"
+        
+        redundancy:
+          detect: "duplicate content across sections"
+          fix: "consolidate to single source, add cross-references"
+          verify: "no duplicates remain"
+        
+        inconsistency:
+          detect: "conflicting statements"
+          fix: "align to golden_rule precedence"
+          verify: "consistency_score >=98%"
+      
+      rollback_on_failure: true
+      backup_before_fix: true
+    
+    phase_3_verify:
+      checks:
+        - "all violations resolved"
+        - "no new violations introduced"
+        - "consistency_score >=98%"
+        - "tests pass"
+      
+      on_verification_fail:
+        action: "rollback"
+        escalate: "human review"
+    
+    phase_4_commit:
+      automated: true
+      commit_message_template: "autofix: {violation_type} - {fix_summary}"
+      push_to_remote: false  # Requires manual approval
+  
+  intuitive_interface:
+    cli_command: "master-yml autofix [--target master.yml|code/**] [--dry-run]"
+    
+    integration_points:
+      git_hooks:
+        pre_commit: "Run autofix on staged files"
+        pre_push: "Verify no violations"
+      
+      ci_cd:
+        on_pr: "Autofix and comment with changes"
+        on_merge: "Verify main branch clean"
+      
+      editor_plugins:
+        vscode: "Real-time autofix suggestions"
+        vim: "Lint and fix on save"
+    
+    reporting:
+      format: "JSON + human-readable summary"
+      metrics_dashboard: "violations over time, autofix success rate"
+      alerts: "Slack/email on autofix failures"
 principle_index:
   by_tag:
     solid: ["single_responsibility", "open_closed", "liskov_substitution", "interface_segregation", "dependency_inversion"]
