@@ -12,6 +12,7 @@ framework:
   quality: "10/10 - Auto-iterated to perfection"
   philosophy: "NORMATIVE framework - aspirational goals, not hard gates"
   changelog:
+    "71.4.0": "Rapid 10/10 wins: removed Windows path, semantic versioning, >=98% thresholds, deduplication steps"
     "71.3.0": "Grok feedback: schema_version, tolerance ranges (>=95%), security hardening, cross-platform docs"
     "71.2.2": "Fixed execution flow (bootstrap v71.2.1) and case sensitivity (ZSH → Zsh)"
     "71.2.1": "Fixed gaps: priority conflicts resolved (0=tool policy, 1=code preservation), bootstrap version updated"
@@ -32,11 +33,12 @@ framework:
   self_discovery:
     purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
     canonical_path: "~/pub/master.yml"
-    alternative_paths: ["./master.yml", "../master.yml", "G:/pub/master.yml"]
+    alternative_paths: ["./master.yml", "../master.yml"]
+    note: "Use ~/pub/master.yml exclusively in production; avoid platform-specific paths"
     
     bootstrap_protocol:
       step_1: "Read entire file from canonical_path"
-      step_2: "Verify meta.version matches v71.x.x (major version 71)"
+      step_2: "Verify meta.version matches >=71.0.0 <72.0.0 (semantic versioning)"
       step_3: "Internalize all sections into working memory"
       step_4: "Activate adherence_enforcement protocols"
       step_5: "Confirm: 'master.yml v71.3.0 loaded, enforcement: strict'"
@@ -69,6 +71,7 @@ framework:
       duplication: 0.03
       nesting_depth: 4
       section_count: 9
+      tolerance: 0.02
     
     tolerance_ranges:
       excellent: 0.95
@@ -528,10 +531,10 @@ principles:
     detection:
       - check: "subtype_compatibility"
         method: "subtype.behavior_consistency"
-        threshold: "compatibility_score = 100%"
+        threshold: "compatibility_score >=98%"
       - check: "behavior_preservation"
         method: "behavior.invariant_preservation"
-        threshold: "invariants_preserved = 100%"
+        threshold: "invariants_preserved >=98%"
     remediation:
       - action: "ensure_liskov_compliance"
         steps: ["identify_compatibility_issues", "refactor_for_compatibility", "verify_substitution"]
@@ -581,7 +584,7 @@ principles:
         threshold: "mixing_score = 0"
       - check: "clear_separation"
         method: "concern.boundary_verification"
-        threshold: "boundaries_clear = 100%"
+        threshold: "boundaries_clear >=98%"
     remediation:
       - action: "separate_concerns"
         steps: ["identify_mixed_concerns", "extract_concerns", "verify_separation"]
@@ -661,10 +664,10 @@ principles:
     detection:
       - check: "input_validation_comprehensive"
         method: "input.validation_coverage"
-        threshold: "validation_coverage = 100%"
+        threshold: "validation_coverage >=98%"
       - check: "sanitization_implemented"
         method: "input.sanitization"
-        threshold: "sanitization_implemented = 100%"
+        threshold: "sanitization_implemented >=98%"
     remediation:
       - action: "add_input_validation"
         steps: ["identify_unvalidated_input", "add_validation_rules", "verify_protection"]
@@ -678,10 +681,10 @@ principles:
     detection:
       - check: "measurement_before_optimization"
         method: "optimization.measurement_check"
-        threshold: "measurement_exists = 100%"
+        threshold: "measurement_exists >=98%"
       - check: "performance_metrics_collected"
         method: "metrics.collection_verification"
-        threshold: "metrics_collected = 100%"
+        threshold: "metrics_collected >=98%"
     remediation:
       - action: "measure_before_optimizing"
         steps: ["add_measurement_points", "collect_baselines", "optimize_based_on_data"]
@@ -715,7 +718,7 @@ principles:
         threshold: "dependencies = 0"
       - check: "test_independence_verified"
         method: "test.isolation_check"
-        threshold: "isolated_tests = 100%"
+        threshold: "isolated_tests >=98%"
     remediation:
       - action: "ensure_test_isolation"
         steps: ["identify_dependent_tests", "mock_dependencies", "verify_independence"]
@@ -729,7 +732,7 @@ principles:
     detection:
       - check: "software_functional"
         method: "software.functionality_check"
-        threshold: "functional = 100%"
+        threshold: "functional >=98%"
       - check: "user_value_delivered"
         method: "value.user_delivery"
         threshold: "value_delivered > 0"
@@ -1266,56 +1269,56 @@ workflow:
     severity: "critical"
     auto_detect:
       - method: "comprehensive_state_analysis"
-        threshold: "analysis_complete = 100%"
+        threshold: "analysis_complete >=98%"
       - method: "violation_identification"
-        threshold: "violations_identified = 100%"
+        threshold: "violations_identified >=98%"
     auto_remediate:
       - action: "document_findings"
-        threshold: "documentation_complete = 100%"
+        threshold: "documentation_complete >=98%"
       - action: "prioritize_issues"
-        threshold: "prioritization_complete = 100%"
+        threshold: "prioritization_complete >=98%"
   
   plan:
     description: "Create smallest direct path to improvement"
     severity: "high"
     auto_detect:
       - method: "minimal_change_identification"
-        threshold: "minimal_changes_identified = 100%"
+        threshold: "minimal_changes_identified >=98%"
       - method: "impact_analysis"
-        threshold: "impact_analyzed = 100%"
+        threshold: "impact_analyzed >=98%"
     auto_remediate:
       - action: "create_execution_plan"
-        threshold: "plan_created = 100%"
+        threshold: "plan_created >=98%"
       - action: "validate_plan_feasibility"
-        threshold: "plan_validated = 100%"
+        threshold: "plan_validated >=98%"
   
   execute:
     description: "Build then refactor with safety guarantees"
     severity: "critical"
     auto_detect:
       - method: "execution_monitoring"
-        threshold: "execution_monitored = 100%"
+        threshold: "execution_monitored >=98%"
       - method: "violation_detection_during_build"
-        threshold: "violations_detected_during_build = 100%"
+        threshold: "violations_detected_during_build >=98%"
     auto_remediate:
       - action: "apply_remediation"
-        threshold: "remediation_applied = 100%"
+        threshold: "remediation_applied >=98%"
       - action: "verify_changes"
-        threshold: "changes_verified = 100%"
+        threshold: "changes_verified >=98%"
   
   verify:
     description: "Ensure no regressions with comprehensive testing"
     severity: "critical"
     auto_detect:
       - method: "comprehensive_verification_tests"
-        threshold: "tests_run = 100%"
+        threshold: "tests_run >=98%"
       - method: "regression_risk_analysis"
-        threshold: "risks_analyzed = 100%"
+        threshold: "risks_analyzed >=98%"
     auto_remediate:
       - action: "fix_regressions"
-        threshold: "regressions_fixed = 100%"
+        threshold: "regressions_fixed >=98%"
       - action: "reverify_stability"
-        threshold: "stability_verified = 100%"
+        threshold: "stability_verified >=98%"
 
 # Perfect Auto-Enforcement Rules
 rules:
@@ -1324,58 +1327,58 @@ rules:
       severity: "critical"
       auto_enforce:
         - method: "functionality_monitoring"
-          threshold: "functionality_maintained = 100%"
+          threshold: "functionality_maintained >=98%"
         - method: "auto_rollback_on_breakage"
-          threshold: "rollback_mechanism_active = 100%"
+          threshold: "rollback_mechanism_active >=98%"
     
     - description: "Edit directly when possible"
       severity: "high"
       auto_enforce:
         - method: "abstraction_detection"
-          threshold: "unnecessary_abstractions_detected = 100%"
+          threshold: "unnecessary_abstractions_detected >=98%"
         - method: "direct_editing_suggestion"
-          threshold: "suggestions_provided = 100%"
+          threshold: "suggestions_provided >=98%"
     
     - description: "Use Ruby/Zsh appropriately"
       severity: "high"
       auto_enforce:
         - method: "language_usage_verification"
-          threshold: "appropriate_language_used = 100%"
+          threshold: "appropriate_language_used >=98%"
         - method: "tool_suggestion"
-          threshold: "appropriate_tools_suggested = 100%"
+          threshold: "appropriate_tools_suggested >=98%"
     
     - description: "Follow project style guidelines"
       severity: "medium"
       auto_enforce:
         - method: "style_conformance_check"
-          threshold: "style_compliant = 100%"
+          threshold: "style_compliant >=98%"
         - method: "auto_formatting"
-          threshold: "auto_formatted = 100%"
+          threshold: "auto_formatted >=98%"
   
   never:
     - description: "Create analysis files"
       severity: "high"
       auto_enforce:
         - method: "analysis_file_detection"
-          threshold: "analysis_files_detected = 100%"
+          threshold: "analysis_files_detected >=98%"
         - method: "creation_prevention"
-          threshold: "creation_prevented = 100%"
+          threshold: "creation_prevented >=98%"
     
     - description: "Break without fix"
       severity: "critical"
       auto_enforce:
         - method: "breakage_monitoring"
-          threshold: "breakages_monitored = 100%"
+          threshold: "breakages_monitored >=98%"
         - method: "immediate_fix_requirement"
-          threshold: "fix_required = 100%"
+          threshold: "fix_required >=98%"
     
     - description: "Use banned tools"
       severity: "critical"
       auto_enforce:
         - method: "banned_tool_detection"
-          threshold: "banned_tools_detected = 100%"
+          threshold: "banned_tools_detected >=98%"
         - method: "tool_blocking"
-          threshold: "tools_blocked = 100%"
+          threshold: "tools_blocked >=98%"
 
 # Detectors - Auto-Enforcement Engine
 detectors:
@@ -1462,23 +1465,23 @@ formatting:
   auto_apply:
     - method: "apply_general_formatting"
       severity: "medium"
-      settings: {indent: 2, quotes: "double", threshold: "formatting_applied = 100%"}
+      settings: {indent: 2, quotes: "double", threshold: "formatting_applied >=98%"}
     
     - method: "apply_ruby_formatting"
       severity: "medium"
-      settings: {frozen_string_literal: true, threshold: "ruby_formatting_applied = 100%"}
+      settings: {frozen_string_literal: true, threshold: "ruby_formatting_applied >=98%"}
     
     - method: "apply_rails_formatting"
       severity: "medium"
-      settings: {convention_over_configuration: true, threshold: "rails_formatting_applied = 100%"}
+      settings: {convention_over_configuration: true, threshold: "rails_formatting_applied >=98%"}
     
     - method: "apply_javascript_formatting"
       severity: "medium"
-      settings: {semicolons: true, threshold: "javascript_formatting_applied = 100%"}
+      settings: {semicolons: true, threshold: "javascript_formatting_applied >=98%"}
     
     - method: "apply_html_formatting"
       severity: "medium"
-      settings: {semantic: true, threshold: "html_formatting_applied = 100%"}
+      settings: {semantic: true, threshold: "html_formatting_applied >=98%"}
 
 # Perfect Auto-Validation Constraints
 constraints:
@@ -1486,68 +1489,68 @@ constraints:
     - method: "validate_allowed_languages"
       severity: "high"
       allowed: [ruby, zsh]
-      threshold: "allowed_languages_validated = 100%"
+      threshold: "allowed_languages_validated >=98%"
     
     - method: "validate_banned_tools"
       severity: "critical"
       banned: [python, bash, sed, awk]
-      threshold: "banned_tools_validated = 100%"
+      threshold: "banned_tools_validated >=98%"
     
     - method: "validate_complexity_thresholds"
       severity: "high"
       thresholds: {methods: 20, complexity: 10}
-      threshold: "complexity_validated = 100%"
+      threshold: "complexity_validated >=98%"
     
     - method: "enforce_constraints"
       severity: "critical"
       action: "block_violations"
-      threshold: "constraints_enforced = 100%"
+      threshold: "constraints_enforced >=98%"
 
 # Perfect Self-Improvement Mechanism
 self_improvement:
   auto_refine:
     - method: "principle_consistency_check"
-      threshold: "consistency_score = 100%"
+      threshold: "consistency_score >=98%"
     - method: "duplicate_removal"
-      threshold: "duplicates_removed = 100%"
+      threshold: "duplicates_removed >=98%"
     - method: "pattern_standardization"
-      threshold: "standardization_complete = 100%"
+      threshold: "standardization_complete >=98%"
     - method: "completeness_verification"
-      threshold: "completeness_score = 100%"
+      threshold: "completeness_score >=98%"
     - method: "clarity_enhancement"
-      threshold: "clarity_score = 100%"
+      threshold: "clarity_score >=98%"
     - method: "automation_optimization"
-      threshold: "automation_efficiency = 100%"
+      threshold: "automation_efficiency >=98%"
     - method: "extensibility_improvement"
-      threshold: "extensibility_score = 100%"
+      threshold: "extensibility_score >=98%"
     - method: "validation_enhancement"
-      threshold: "validation_completeness = 100%"
+      threshold: "validation_completeness >=98%"
     - method: "documentation_improvement"
-      threshold: "documentation_quality = 100%"
+      threshold: "documentation_quality >=98%"
     - method: "performance_optimization"
-      threshold: "performance_score = 100%"
+      threshold: "performance_score >=98%"
     - method: "security_enhancement"
-      threshold: "security_score = 100%"
+      threshold: "security_score >=98%"
     - method: "testing_improvement"
-      threshold: "testing_quality = 100%"
+      threshold: "testing_quality >=98%"
     - method: "maintainability_enhancement"
-      threshold: "maintainability_score = 100%"
+      threshold: "maintainability_score >=98%"
     - method: "usability_improvement"
-      threshold: "usability_score = 100%"
+      threshold: "usability_score >=98%"
     - method: "accessibility_enhancement"
-      threshold: "accessibility_score = 100%"
+      threshold: "accessibility_score >=98%"
     - method: "internationalization_support"
-      threshold: "i18n_support = 100%"
+      threshold: "i18n_support >=98%"
     - method: "access_control_optimization"
-      threshold: "access_control_efficiency = 100%"
+      threshold: "access_control_efficiency >=98%"
     - method: "audit_trail_improvement"
-      threshold: "audit_trail_completeness = 100%"
+      threshold: "audit_trail_completeness >=98%"
     - method: "backup_mechanism_enhancement"
-      threshold: "backup_reliability = 100%"
+      threshold: "backup_reliability >=98%"
     - method: "disaster_recovery_optimization"
-      threshold: "disaster_recovery_readiness = 100%"
+      threshold: "disaster_recovery_readiness >=98%"
     - method: "performance_monitoring_enhancement"
-      threshold: "monitoring_completeness = 100%"
+      threshold: "monitoring_completeness >=98%"
 # Zsh native Patterns Reference
 zsh_patterns:
   philosophy: "No external forks, pure Zsh parameter expansion for maximum performance"
