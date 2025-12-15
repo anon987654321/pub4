@@ -1,5 +1,5 @@
 # master.yml - Perfect 10/10 Framework
-# Version: 71.0.0
+# Version: 71.1.0
 # Auto-iterated to perfection with comprehensive automation
 
 framework:
@@ -896,6 +896,166 @@ rails_doctrine:
     rule: "Code should be elegant, not just functional"
     criteria: [readable, maintainable, expressive, concise]
     rationale: "Beautiful code is easier to change"
+
+# HTML/CSS/UI/UX Principles
+html_css_principles:
+  semantic_html:
+    value: true
+    rule: "Use HTML elements for their meaning, not appearance"
+    elements: [header, nav, main, article, section, aside, footer]
+    avoid: "div soup, span abuse"
+  
+  no_divitis:
+    value: true
+    rule: "Maximum 2 wrapper divs"
+    rationale: "Excessive wrappers indicate poor structure"
+    solution: "Use semantic elements, flexbox, grid"
+  
+  css_composition:
+    value: true
+    rule: "Utility classes are acceptable, but prefer semantic"
+    pattern: "Component-level SCSS with BEM naming"
+    avoid: "Tailwind-style atomic CSS (user preference: pure SCSS)"
+  
+  modern_layout:
+    value: true
+    techniques: [flexbox, grid, container_queries]
+    avoid: [floats, absolute_positioning_for_layout, tables_for_layout]
+    rationale: "Modern CSS is more maintainable"
+  
+  accessibility:
+    value: true
+    requirements: [semantic_html, aria_labels, keyboard_navigation, color_contrast_4_5]
+    test: "Tab through page, use screen reader"
+
+ui_ux_principles:
+  nielsen_heuristics:
+    visibility_of_status:
+      value: true
+      rule: "Keep users informed through feedback"
+      application: "Loading states, progress bars, confirmation messages"
+    
+    match_real_world:
+      value: true
+      rule: "Speak user's language, follow conventions"
+      avoid: "System-oriented terminology"
+    
+    user_control:
+      value: true
+      rule: "Users should feel in control, allow undo"
+      application: "Confirmation dialogs, undo buttons, cancel actions"
+    
+    consistency:
+      value: true
+      rule: "Same words, actions, situations = same outcome"
+      application: "Consistent button placement, naming, behavior"
+    
+    error_prevention:
+      value: true
+      rule: "Better than good error messages is preventing errors"
+      application: "Constraints, confirmations, helpful defaults"
+    
+    recognition_over_recall:
+      value: true
+      rule: "Show options, don't make users remember"
+      application: "Dropdowns over text input, visible actions"
+    
+    flexibility_efficiency:
+      value: true
+      rule: "Accelerators for experts, simple for novices"
+      application: "Keyboard shortcuts, batch operations"
+    
+    aesthetic_minimalist:
+      value: true
+      rule: "Dialogues should contain only relevant information"
+      application: "Remove decorative elements, focus on content"
+    
+    help_users_recognize_errors:
+      value: true
+      rule: "Error messages in plain language, suggest solution"
+      format: "What happened + Why + How to fix"
+    
+    help_documentation:
+      value: true
+      rule: "Searchable, task-focused, concrete steps"
+      avoid: "Long explanatory text, system documentation"
+
+large_html_documents:
+  rationale: "Business plans, presentations, visualizations often require inline CSS/JS"
+  
+  document_types:
+    business_plan:
+      characteristics: [verbose, commented, external_libraries, print_friendly]
+      style: development_friendly
+      formatting: preserve_readability
+      example: "Multi-section presentations with data viz"
+    
+    production_app:
+      characteristics: [minified, compressed, performance_critical, single_file]
+      style: production_optimized
+      formatting: minimal_whitespace
+      example: "Audio visualizers, WebGL apps, real-time graphics"
+  
+  inline_css_principles:
+    organization:
+      rule: "Group by component, not by property type"
+      structure: "CSS variables → Resets → Layout → Components → Utilities"
+      rationale: "Easier to find related styles"
+    
+    css_variables:
+      value: true
+      rule: "Define all colors/spacing/fonts in :root"
+      example: ":root { --primary: #000; --spacing: 8px; }"
+      benefit: "Single source of truth, easy theming"
+    
+    modern_css_only:
+      rule: "Use flexbox, grid, container queries - no floats or positioning hacks"
+      avoid: [float, absolute_for_layout, tables_for_layout, clearfix]
+      prefer: [flexbox, grid, logical_properties, container_queries]
+    
+    mobile_first:
+      rule: "Base styles mobile, @media for desktop"
+      pattern: "min-width media queries, not max-width"
+    
+    performance:
+      will_change: "Only on elements actually animating"
+      contain: "Use CSS containment for isolated sections"
+      content_visibility: "Use for long documents"
+  
+  inline_js_principles:
+    production_minified:
+      when: "Performance-critical, production apps"
+      characteristics: [single_line, compressed_vars, no_whitespace]
+      tools: [terser, uglify, closure_compiler]
+      preserve: "Comments with ! prefix for licenses"
+    
+    development_formatted:
+      when: "Business plans, maintainable code"
+      characteristics: [readable, commented, spaced]
+      structure: "Config → Utils → Classes → Init → Event listeners"
+    
+    es6_modern:
+      rule: "Use const/let, arrow functions, destructuring, template literals"
+      avoid: [var, function_keyword_for_lambdas, string_concat]
+    
+    dom_safety:
+      rule: "Check element existence before manipulation"
+      pattern: "const el = document.getElementById('id'); if (!el) return;"
+    
+    memory_management:
+      cleanup: "Track timers/intervals, clear on unload"
+      pattern: "Track timers in Set, clear on beforeunload"
+    
+    event_delegation:
+      value: true
+      rule: "Add listeners to container, check event.target"
+      benefit: "Fewer listeners, dynamic content support"
+  
+  formatting_strategy:
+    decision_tree:
+      production: "Minify JS/CSS, inline everything, optimize for size"
+      business_plan: "Readable formatting, comments, educational"
+      default: "Extract to separate files"
 
 # File Operations & Anti-Sprawl
 file_operations:
