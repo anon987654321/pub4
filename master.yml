@@ -1,17 +1,18 @@
 # master.yml - Perfect 10/10 Framework
-# Version: 71.2.1
+# Version: 71.2.2
 # Auto-iterated to perfection with comprehensive automation
 
 framework:
-  version: "71.2.1"
+  version: "71.2.2"
   description: "Perfect project generation and refactoring framework"
   purpose: "Pragmatic development with automated principle enforcement"
   quality: "10/10 - Auto-iterated to perfection"
   changelog:
+    "71.2.2": "Fixed execution flow (bootstrap v71.2.1) and case sensitivity (ZSH → Zsh)"
     "71.2.1": "Fixed gaps: priority conflicts resolved (0=tool policy, 1=code preservation), bootstrap version updated"
     "71.2.0": "Added HTML/CSS/UI/UX principles (Nielsen heuristics, large_html_documents, inline CSS/JS patterns)"
     "71.1.0": "Added critical sections from v69-70: self_discovery, detectors, ruby_beauty, rails_doctrine, file_operations, comments policy"
-    "71.0.0": "Added ZSH native patterns, OpenBSD workflow, banned external tools (python/bash/sed/awk/tr/wc/head/tail/find)"
+    "71.0.0": "Added Zsh native patterns, OpenBSD workflow, banned external tools (python/bash/sed/awk/tr/wc/head/tail/find)"
     "70.0.0": "Added ruby_beauty.minimal_line_noise (DHH principle)"
     "69.0.0": "Added enforcement.require_full_validation, ruby_beauty, rails_doctrine, writing_principles"
   
@@ -24,10 +25,10 @@ framework:
     
     bootstrap_protocol:
       step_1: "Read entire file from canonical_path"
-      step_2: "Verify meta.version matches v71.2.0+"
+      step_2: "Verify meta.version matches v71.2.1+"
       step_3: "Internalize all sections into working memory"
       step_4: "Activate adherence_enforcement protocols"
-      step_5: "Confirm: 'master.yml v71.2.0 loaded, enforcement: strict'"
+      step_5: "Confirm: 'master.yml v71.2.1 loaded, enforcement: strict'"
     
     verification:
       quick_check: "Cite meta.version"
@@ -83,7 +84,7 @@ framework:
   
   enforcement:
     tool_policy:
-      philosophy: "ZSH native patterns for maximum performance - no external forks"
+      philosophy: "Zsh native patterns for maximum performance - no external forks"
       rationale: "OpenBSD security model - minimal dependencies, reduced attack surface"
       
       allowed_shell: ["zsh", "ksh"]
@@ -96,7 +97,7 @@ framework:
         counting_filtering: ["wc", "head", "tail", "uniq"]
         file_operations: ["find"]
         system: ["sudo"]
-        reason: "Use zsh parameter expansion builtins instead"
+        reason: "Use Zsh parameter expansion builtins instead"
         
       zsh_replacements:
         string_operations:
@@ -178,7 +179,7 @@ framework:
 # Perfect Principles Structure
 principles:
   zsh_native_first:
-    description: "Pure zsh parameter expansion - no external forks"
+    description: "Pure Zsh parameter expansion - no external forks"
     priority: 0
     non_negotiable: true
     severity: "critical"
@@ -1530,9 +1531,9 @@ self_improvement:
       threshold: "disaster_recovery_readiness = 100%"
     - method: "performance_monitoring_enhancement"
       threshold: "monitoring_completeness = 100%"
-# ZSH Native Patterns Reference
+# Zsh native Patterns Reference
 zsh_patterns:
-  philosophy: "No external forks, pure zsh parameter expansion for maximum performance"
+  philosophy: "No external forks, pure Zsh parameter expansion for maximum performance"
   
   parameter_expansion_flags:
     M: "Match instead of filter"
@@ -1631,7 +1632,7 @@ tool_violations:
 
 # Token Economics & Efficiency Doctrine
 token_economics:
-  philosophy: "By replacing multi-tool shell pipelines with pure zsh parameter expansion, you eliminate process boundaries, collapse multiple grammars into one, reduce reasoning entropy for LLMs, minimize iteration diffs, and convert runtime overhead into in-memory transforms—saving both tokens and wall-clock time."
+  philosophy: "By replacing multi-tool shell pipelines with pure Zsh parameter expansion, you eliminate process boundaries, collapse multiple grammars into one, reduce reasoning entropy for LLMs, minimize iteration diffs, and convert runtime overhead into in-memory transforms—saving both tokens and wall-clock time."
   
   token_savings:
     fewer_concepts:
@@ -1769,7 +1770,7 @@ token_economics:
         savings: "46%"
   
   enforcement:
-    mandate: "ALWAYS use zsh parameter expansion over external tools"
+    mandate: "ALWAYS use Zsh parameter expansion over external tools"
     rationale: "Token + runtime efficiency compound over time"
     exceptions: "Complex regex requiring PCRE, multi-file operations, binary data"
     violation_penalty: "Rewrite + document cost analysis"
