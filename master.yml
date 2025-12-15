@@ -12,6 +12,7 @@ framework:
   quality: "10/10 - Auto-iterated to perfection"
   philosophy: "NORMATIVE framework - aspirational goals, not hard gates"
   changelog:
+    "71.6.0": "Convergence loop - auto-iterate until perfect (flesh out, refine, streamline, polish × 100 iterations)"
     "71.5.0": "Autofix workflow everywhere - ALL violations autofixed immediately (zero manual fixes)"
     "71.4.0": "Rapid 10/10 wins: removed Windows path, semantic versioning, >=98% thresholds, deduplication steps"
     "71.3.0": "Grok feedback: schema_version, tolerance ranges (>=95%), security hardening, cross-platform docs"
@@ -1137,7 +1138,8 @@ comments:
 
 # Workflow: Intuitive Autofix Everywhere
 workflow:
-  mandate: "ALL violations autofixed immediately - zero tolerance for manual fixes"
+  mandate: "ALL violations autofixed immediately - zero tolerance for manual fixes - iterate until convergence"
+  philosophy: "Auto-iterate over and over until can't get more perfect - flesh out, refine, streamline, polish"
   
   execution_flow:
     phase_1_detect:
