@@ -1,13 +1,18 @@
 # master.yml - Perfect 10/10 Framework
-# Version: 71.2.2
-# Auto-iterated to perfection with comprehensive automation
+# Version: 71.3.0
+# Auto-iterated to perfection
+# Schema Version: 1.0.0 with comprehensive automation
 
 framework:
-  version: "71.2.2"
+  version: "71.3.0"
+  schema_version: "1.0.0"
+  version:
   description: "Perfect project generation and refactoring framework"
   purpose: "Pragmatic development with automated principle enforcement"
   quality: "10/10 - Auto-iterated to perfection"
+  philosophy: "NORMATIVE framework - aspirational goals, not hard gates"
   changelog:
+    "71.3.0": "Grok feedback: schema_version, tolerance ranges (>=95%), security hardening, cross-platform docs"
     "71.2.2": "Fixed execution flow (bootstrap v71.2.1) and case sensitivity (ZSH → Zsh)"
     "71.2.1": "Fixed gaps: priority conflicts resolved (0=tool policy, 1=code preservation), bootstrap version updated"
     "71.2.0": "Added HTML/CSS/UI/UX principles (Nielsen heuristics, large_html_documents, inline CSS/JS patterns)"
@@ -18,6 +23,12 @@ framework:
   
   golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
   
+  cross_platform:
+    rationale: "Support Windows development, OpenBSD production"
+    windows: "Development environment (G:/ paths)"
+    production: "OpenBSD 7.6+ (rcctl, pkg_add, doas, pf)"
+    principle: "Develop anywhere, deploy to OpenBSD"
+  
   self_discovery:
     purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
     canonical_path: "~/pub/master.yml"
@@ -25,10 +36,10 @@ framework:
     
     bootstrap_protocol:
       step_1: "Read entire file from canonical_path"
-      step_2: "Verify meta.version matches v71.2.1+"
+      step_2: "Verify meta.version matches v71.x.x (major version 71)"
       step_3: "Internalize all sections into working memory"
       step_4: "Activate adherence_enforcement protocols"
-      step_5: "Confirm: 'master.yml v71.2.1 loaded, enforcement: strict'"
+      step_5: "Confirm: 'master.yml v71.3.0 loaded, enforcement: strict'"
     
     verification:
       quick_check: "Cite meta.version"
@@ -46,7 +57,7 @@ framework:
       - "version must increment on changes"
     on_violation:
       action: "restore_from_backup"
-      log_path: "~/.convergence/safety.log"
+      log_path: "/var/log/convergence/safety.log (0600, root) or ~/.convergence/safety.log"
   
   constants:
     limits:
@@ -58,6 +69,12 @@ framework:
       duplication: 0.03
       nesting_depth: 4
       section_count: 9
+    
+    tolerance_ranges:
+      excellent: 0.95
+      good: 0.85
+      acceptable: 0.75
+      note: "Aspirational goals, not hard gates"
     
     evidence_weights:
       tests: 0.50
@@ -84,7 +101,7 @@ framework:
   
   enforcement:
     tool_policy:
-      philosophy: "Zsh native patterns for maximum performance - no external forks"
+      philosophy: "Zsh native - no external process forks (Ruby is impl language, not external tool)"
       rationale: "OpenBSD security model - minimal dependencies, reduced attack surface"
       
       allowed_shell: ["zsh", "ksh"]
