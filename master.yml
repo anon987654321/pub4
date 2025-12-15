@@ -23,10 +23,10 @@ framework:
     
     bootstrap_protocol:
       step_1: "Read entire file from canonical_path"
-      step_2: "Verify meta.version matches v71.0.0+"
+      step_2: "Verify meta.version matches v71.2.0+"
       step_3: "Internalize all sections into working memory"
       step_4: "Activate adherence_enforcement protocols"
-      step_5: "Confirm: 'master.yml v71.0.0 loaded, enforcement: strict'"
+      step_5: "Confirm: 'master.yml v71.2.0 loaded, enforcement: strict'"
     
     verification:
       quick_check: "Cite meta.version"
@@ -178,7 +178,7 @@ framework:
 principles:
   zsh_native_first:
     description: "Pure zsh parameter expansion - no external forks"
-    priority: 1
+    priority: 0
     non_negotiable: true
     severity: "critical"
     applies_to: ["all_shell_scripts", "text_processing"]
@@ -197,7 +197,7 @@ principles:
   
   openbsd_native_tools:
     description: "Use OpenBSD base system tools, avoid GNU alternatives"
-    priority: 2
+    priority: 0
     non_negotiable: true
     severity: "critical"
     applies_to: ["system_administration", "deployment"]
