@@ -14,6 +14,70 @@ framework:
   
   golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
   
+  self_discovery:
+    purpose: "Enable LLMs to find, load, and verify this configuration autonomously"
+    canonical_path: "~/pub/master.yml"
+    alternative_paths: ["./master.yml", "../master.yml", "G:/pub/master.yml"]
+    
+    bootstrap_protocol:
+      step_1: "Read entire file from canonical_path"
+      step_2: "Verify meta.version matches v71.0.0+"
+      step_3: "Internalize all sections into working memory"
+      step_4: "Activate adherence_enforcement protocols"
+      step_5: "Confirm: 'master.yml v71.0.0 loaded, enforcement: strict'"
+    
+    verification:
+      quick_check: "Cite meta.version"
+      deep_check: "Trace a decision through principles"
+      compliance_check: "Explain golden_rule verbatim"
+      failure_mode: "Reload and re-internalize completely"
+  
+  self_protection:
+    enabled: true
+    backup_before_modify: true
+    min_principle_count: 50
+    validation_rules:
+      - "golden_rule must exist"
+      - "principles section immutable - add only, never modify or delete"
+      - "version must increment on changes"
+    on_violation:
+      action: "restore_from_backup"
+      log_path: "~/.convergence/safety.log"
+  
+  constants:
+    limits:
+      coverage: 0.8
+      complexity: 10
+      convergence: 0.001
+      iterations: 20
+      coupling: 5
+      duplication: 0.03
+      nesting_depth: 4
+      section_count: 9
+    
+    evidence_weights:
+      tests: 0.50
+      static_analysis: 0.30
+      complexity_checks: 0.20
+    
+    costs:
+      claude_sonnet_input: 0.003
+      claude_sonnet_output: 0.015
+      claude_opus_input: 0.015
+      claude_opus_output: 0.075
+      developer_hour: 100
+      deployment_failure: 5000
+    
+    phase_io:
+      discover: {in: problem, out: definition}
+      analyze: {in: definition, out: analysis}
+      ideate: {in: analysis, out: options}
+      design: {in: options, out: plan}
+      implement: {in: plan, out: code}
+      validate: {in: code, out: verified}
+      deliver: {in: verified, out: deployed}
+      learn: {in: deployed, out: knowledge}
+  
   enforcement:
     tool_policy:
       philosophy: "ZSH native patterns for maximum performance - no external forks"
@@ -737,6 +801,155 @@ principles:
       - action: "prioritize_information"
         steps: ["identify_priority_issues", "reorder_for_priority", "verify_hierarchy"]
 
+# Ruby & Rails Principles
+ruby_beauty:
+  frozen_string_literals:
+    value: true
+    rule: "# frozen_string_literal: true at top of every Ruby file"
+    rationale: "Performance gain, prevents accidental mutation"
+  
+  keyword_arguments:
+    value: true
+    rule: "Use keyword args for methods with 2+ params"
+    example: "def create(name:, email:, role: 'user')"
+    rationale: "Self-documenting, order-independent, default values"
+  
+  safe_navigation:
+    value: true
+    operator: "&."
+    example: "user&.profile&.avatar_url"
+    rationale: "Prevents NoMethodError on nil, cleaner than &&"
+  
+  string_interpolation:
+    value: true
+    rule: 'Use "#{}" over concatenation'
+    example: '"Hello #{name}"'
+    rationale: "More readable, handles types automatically"
+  
+  blocks_parens_braces:
+    value: true
+    rule: "Use {} for one-line, do/end for multi-line"
+    example: "items.map { |i| i * 2 }"
+    rationale: "Readability convention, visual distinction"
+  
+  tell_dont_ask:
+    value: true
+    rule: "Tell objects what to do, don't ask for data then act"
+    antipattern: "if user.admin? then user.grant_access end"
+    pattern: "user.grant_access_if_admin"
+  
+  small_methods:
+    value: true
+    rule: "Methods under 10 lines ideal, max 20"
+    rationale: "Easier to test, understand, reuse"
+    technique: "Extract till you drop"
+  
+  stepdown_rule:
+    value: true
+    rule: "Code reads like newspaper - most important first"
+    structure: "Public methods → Private helpers → Implementation details"
+    rationale: "Natural reading flow, easy navigation"
+  
+  boy_scout_rule:
+    value: true
+    rule: "Leave code better than you found it"
+    application: "Fix small issues while working on features"
+
+rails_doctrine:
+  convention_over_configuration:
+    value: true
+    rule: "Sensible defaults reduce decisions"
+    application: "Follow Rails conventions, don't fight the framework"
+    benefit: "Shared mental model across Rails developers"
+  
+  programmer_happiness:
+    value: true
+    rule: "Optimize for developer joy, not just performance"
+    application: "Beautiful APIs, minimal configuration, helpful errors"
+  
+  sharp_knives:
+    value: true
+    rule: "Trust developers with power tools, no guard rails"
+    application: "Direct DB access, metaprogramming allowed"
+    responsibility: "With great power comes careful testing"
+  
+  integrated_systems:
+    value: true
+    rule: "Solve whole problem, not assembled parts (Omakase)"
+    application: "Use Rails stack: Hotwire, Turbo, Stimulus, Solid Queue"
+    avoid: "Frankenstack of incompatible tools"
+  
+  monolith_first:
+    value: true
+    rule: "Start monolith, extract services when team >15"
+    rationale: "Microservices = distributed monolith for small teams"
+    application: "Keep it simple until complexity forces split"
+  
+  progress_over_stability:
+    value: true
+    rule: "Ship features, break things, iterate quickly"
+    balance: "In production: stability over progress"
+  
+  beautiful_code:
+    value: true
+    rule: "Code should be elegant, not just functional"
+    criteria: [readable, maintainable, expressive, concise]
+    rationale: "Beautiful code is easier to change"
+
+# File Operations & Anti-Sprawl
+file_operations:
+  anti_sprawl:
+    enabled: true
+    rationale: "File sprawl violates DRY - single source of truth"
+    enforcement: "Edit existing files directly, never create analysis/summary/report/todo files"
+    banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, readme.md, changelog.md]
+    exceptions: [test files, actual deliverables requested by user]
+    violation_penalty: "Delete created file, re-edit original"
+  
+  single_source_truth:
+    value: true
+    rule: "Information lives in ONE canonical location"
+    antipattern: "Same config in 5 files, gets out of sync"
+    solution: "Single source file, others import/reference it"
+  
+  consolidate_over_fragment:
+    value: true
+    rule: "One well-organized file > many small files"
+    threshold: "Consider splitting when file >500 lines AND has distinct concerns"
+  
+  edit_in_place:
+    value: true
+    mandate: "Edit existing files directly via str_replace/file_create"
+    never: "Create separate analysis then 'now apply to original'"
+    rationale: "Saves tokens, reduces file count, maintains single source"
+
+# Comments Policy
+comments:
+  preservation:
+    value: true
+    rule: "Preserve ALL existing comments when editing"
+    rationale: "Existing comments contain context, decisions, warnings"
+  
+  removal_criteria:
+    redundant: true
+    self_explanatory: true
+    examples:
+      remove: ["// increment counter", "// return result", "// end of function"]
+      keep: ["// Workaround for Unicode bug in Ruby 3.0", "// O(n²) but n < 100 so acceptable"]
+  
+  addition_criteria:
+    complex_logic: true
+    non_obvious: true
+    examples:
+      needed: ["Algorithm uses Sieve of Eratosthenes", "Retry with exponential backoff"]
+      not_needed: ["Loop through array", "Set variable to true"]
+  
+  formatting:
+    no_decorations: true
+    banned: ["---", "===", "###", "***", "+++", "///", "boxes", "ascii_art"]
+    style: "Inline explanations, not comment blocks"
+    rationale: "Decorations add noise, break parsing, violate simplicity"
+
 # Perfect Quick Reference Index
 principle_index:
   by_tag:
@@ -982,6 +1195,86 @@ rules:
           threshold: "banned_tools_detected = 100%"
         - method: "tool_blocking"
           threshold: "tools_blocked = 100%"
+
+# Detectors - Auto-Enforcement Engine
+detectors:
+  duplicate_code_detector:
+    enabled: true
+    threshold: 3
+    similarity: 0.70
+    scope: all_files
+    action: extract_to_shared_module
+    priority: high
+  
+  complexity_detector:
+    enabled: true
+    cyclomatic_max: 10
+    nesting_max: 4
+    method_lines_max: 20
+    action: refactor_to_smaller_methods
+    priority: high
+  
+  unreferenced_code_detector:
+    enabled: true
+    finds: [unused_methods, unused_variables, unused_imports, dead_code_paths]
+    action: remove_or_mark_for_review
+    priority: medium
+  
+  security_detector:
+    enabled: true
+    checks: [sql_injection, xss, command_injection, hardcoded_secrets, insecure_random]
+    action: flag_for_immediate_fix
+    priority: critical
+  
+  performance_detector:
+    enabled: true
+    checks: [n_plus_one_queries, missing_indexes, inefficient_loops, memory_leaks]
+    action: suggest_optimization
+    priority: medium
+  
+  style_detector:
+    enabled: true
+    checks: [naming_conventions, indentation, line_length, trailing_whitespace]
+    action: auto_fix_if_confident
+    priority: low
+
+# Auto-Fix Engine
+autofix:
+  enabled: true
+  confidence_threshold: 0.90
+  safe_transformations:
+    whitespace_normalization: true
+    import_sorting: true
+    quote_style_consistency: true
+    trailing_comma_addition: true
+  
+  mappings:
+    duplication_detector:
+      - confidence: 0.95
+        pattern: exact_duplicate
+        action: extract_to_method
+      - confidence: 0.90
+        pattern: similar_with_params
+        action: extract_to_parameterized_method
+    
+    complexity_detector:
+      - confidence: 0.95
+        pattern: nested_conditionals
+        action: extract_guard_clauses
+      - confidence: 0.90
+        pattern: long_method
+        action: extract_sub_methods
+    
+    style_detector:
+      - confidence: 0.99
+        pattern: trailing_whitespace
+        action: remove
+      - confidence: 0.99
+        pattern: multiple_blank_lines
+        action: collapse_to_single
+  
+  rollback_on_regression: true
+  feedback_loop: "Track autofix success rate, adjust confidence thresholds"
 
 # Perfect Auto-Application Formatting
 formatting:
