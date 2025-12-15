@@ -3,11 +3,12 @@
 # Auto-iterated to perfection with comprehensive automation
 
 framework:
-  version: "71.0.0"
+  version: "71.1.0"
   description: "Perfect project generation and refactoring framework"
   purpose: "Pragmatic development with automated principle enforcement"
   quality: "10/10 - Auto-iterated to perfection"
   changelog:
+    "71.1.0": "Added critical sections from v69-70: self_discovery, detectors, ruby_beauty, rails_doctrine, file_operations, comments policy"
     "71.0.0": "Added ZSH native patterns, OpenBSD workflow, banned external tools (python/bash/sed/awk/tr/wc/head/tail/find)"
     "70.0.0": "Added ruby_beauty.minimal_line_noise (DHH principle)"
     "69.0.0": "Added enforcement.require_full_validation, ruby_beauty, rails_doctrine, writing_principles"
