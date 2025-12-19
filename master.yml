@@ -7,7 +7,7 @@ meta:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: pragmatic development, token efficiency, zero sprawl
   canonical_path: ~/pub/master.yml
-  bootstrap: "Read entire file, verify version >=74.3.0 <75.0.0, internalize, enforce"
+  bootstrap: "Read entire file, verify version >=74.0.0 <75.0.0, internalize, enforce"
 
 mandates:
   tool_usage: "use file tools (view/edit/create/grep/glob) when available, shell for operations"

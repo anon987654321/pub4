@@ -71,13 +71,29 @@ class MasterConfig
     @version = @config.dig("meta", "version")
     @forbidden_tools = @config.dig("mandates", "forbidden_tools") || []
     @dangerous_patterns = @config.dig("mandates", "dangerous_patterns") || {}
+    
+    # Pre-compile forbidden tools regex for performance
+    @forbidden_regex = Regexp.union(@forbidden_tools.map { |t| /\b#{Regexp.escape(t)}\b/ })
+    
+    # Pre-process dangerous patterns into compiled regexes
+    @dangerous_regexes = @dangerous_patterns.values.flatten.map do |pattern|
+      case pattern
+      when String
+        # Convert glob-style patterns to regex
+        regex_pattern = Regexp.escape(pattern).gsub('\*', '.*')
+        Regexp.new(regex_pattern)
+      when Regexp
+        pattern
+      end
+    end.compact
+    
     validate_version
   end
   
   def load_config
     path = SEARCH_PATHS.find { |p| File.exist?(p) }
     if path
-      YAML.load_file(path)
+      YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true)
     else
       warn "master.yml not found in search paths, using defaults"
       default_config
@@ -98,19 +114,15 @@ class MasterConfig
   end
   
   def forbidden?(command)
-    @forbidden_tools.any? { |tool| command =~ /\b#{Regexp.escape(tool)}\b/ }
+    command =~ @forbidden_regex
+  end
+  
+  def forbidden_tool(command)
+    @forbidden_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
   end
   
   def dangerous?(command)
-    patterns = @dangerous_patterns.values.flatten
-    patterns.any? do |pattern|
-      case pattern
-      when String
-        command.include?(pattern) || command =~ Regexp.new(Regexp.escape(pattern).gsub('\*', '.*'))
-      when Regexp
-        command =~ pattern
-      end
-    end
+    @dangerous_regexes.any? { |regex| command =~ regex }
   end
   
   def suggest_alternative(tool)
@@ -418,7 +430,7 @@ class ShellTool
   def shell(command:)
     # Check forbidden tools
     if MASTER_CONFIG.forbidden?(command)
-      forbidden_tool = MASTER_CONFIG.forbidden_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+      forbidden_tool = MASTER_CONFIG.forbidden_tool(command)
       alternative = MASTER_CONFIG.suggest_alternative(forbidden_tool)
       return { error: "blocked: #{forbidden_tool} (master.yml forbidden)", alternative: alternative }
     end
