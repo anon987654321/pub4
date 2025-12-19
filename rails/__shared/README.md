@@ -50,11 +50,12 @@ These modules provide specific functionality:
 
 ### Legacy Files (Pre-Consolidation)
 
-These files existed before consolidation and are kept for reference:
+These files existed before consolidation and are kept for backward compatibility:
 
-- @core_setup.sh, @core_database.sh, @core_dependencies.sh (now in @core.sh)
-- @helpers_installation.sh, @helpers_logging.sh, @helpers_routes.sh (now in @helpers.sh)
-- @loader.sh, load_modules.sh, @route_helpers.sh (superseded by @shared_functions.sh)
+- **@core_setup.sh, @core_database.sh, @core_dependencies.sh** - Now consolidated in @core.sh
+- **@helpers_installation.sh, @helpers_logging.sh, @helpers_routes.sh** - Now consolidated in @helpers.sh
+- **@loader.sh, @route_helpers.sh** - Superseded by @shared_functions.sh
+- **load_modules.sh** - Updated to simply source @shared_functions.sh for backward compatibility
 
 ## Usage
 
