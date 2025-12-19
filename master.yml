@@ -203,6 +203,55 @@ openbsd:
     deployed_script: openbsd.sh v338.1.0
     deployment_date: 2025-12-19
     
+  infrastructure_verified_2025_12_19:
+    nsd_dns:
+      status: "running (enabled)"
+      function: "Authoritative DNS for 48 domains"
+      config: "/var/nsd/etc/nsd.conf"
+      zones: "/var/nsd/zones/master/*.zone"
+      note: "needs doas for nsd-control status"
+      
+    pf_firewall:
+      status: "enabled (01:18:06 uptime)"
+      function: "Packet filter, blocks 600M+ bad IPs"
+      config: "/etc/pf.conf"
+      rules: "allows 22,80,443,10001-10007,11006"
+      check: "doas pfctl -s info"
+      
+    relayd_proxy:
+      status: "active (relay web)"
+      function: "TLS termination, SNI routing to backends"
+      config: "/etc/relayd.conf"
+      backends: "brgen:11006 (empty/down - app not running)"
+      issue: "waiting for Rails apps to start"
+      check: "relayctl show summary"
+      
+    httpd_acme:
+      status: "running"
+      function: "ACME challenges for Let's Encrypt"
+      config: "/etc/httpd.conf"
+      port: "80 (for /.well-known/acme-challenge)"
+      
+    postgresql:
+      status: "running"
+      function: "Primary database for Rails apps"
+      version: "PostgreSQL 12+"
+      
+    redis:
+      status: "running"
+      function: "Optional (Solid Stack doesn't require)"
+      note: "Can be disabled in favor of Solid Cable"
+      
+    smtpd:
+      status: "running"
+      function: "Email delivery (OpenSMTPD)"
+      
+  enabled_services:
+    apps: [amber, blognet, brgen, bsdports, hjerterom, privcam, pubattorney]
+    infrastructure: [httpd, nsd, pf, pflogd, postgresql, redis, relayd, smtpd, sshd]
+    system: [cron, dhcpleased, library_aslr, ntpd, resolvd, slaacd, syslogd]
+    status: "Apps enabled but failed (no config/falcon.rb yet)"
+    
   services:
     tool: rcctl
     purpose: "unified interface for daemon management (OpenBSD 5.7+)"
