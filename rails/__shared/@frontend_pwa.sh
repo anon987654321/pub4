@@ -311,6 +311,186 @@ end
 EOF
   log "PWA helpers generated"
 }
+setup_web_push_notifications() {
+  log "Setting up Web Push Notifications"
+  
+  cat <<'EOF' > app/javascript/controllers/push_notifications_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static values = { publicKey: String }
+
+  async connect() {
+    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+      console.warn('Push notifications not supported')
+      return
+    }
+    
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    
+    if (!subscription) {
+      this.element.classList.add('push-available')
+    }
+  }
+
+  async subscribe() {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: this.urlBase64ToUint8Array(this.publicKeyValue)
+    })
+
+    await fetch('/push_subscriptions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': this.csrfToken
+      },
+      body: JSON.stringify(subscription.toJSON())
+    })
+  }
+
+  urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = window.atob(base64)
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)))
+  }
+
+  get csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]').content
+  }
+}
+EOF
+
+  cat <<'EOF' > app/controllers/push_subscriptions_controller.rb
+class PushSubscriptionsController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: [:create]
+
+  def create
+    subscription = current_user.push_subscriptions.find_or_create_by(
+      endpoint: subscription_params[:endpoint]
+    ) do |s|
+      s.p256dh = subscription_params.dig(:keys, :p256dh)
+      s.auth = subscription_params.dig(:keys, :auth)
+    end
+
+    render json: { success: true }
+  end
+
+  private
+
+  def subscription_params
+    params.permit(:endpoint, keys: [:p256dh, :auth])
+  end
+end
+EOF
+
+  log "✓ Web Push Notifications configured"
+}
+
+setup_background_sync() {
+  log "Setting up Background Sync API"
+  
+  cat <<'EOF' > app/javascript/controllers/offline_form_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["form"]
+
+  async submit(event) {
+    if (!navigator.onLine) {
+      event.preventDefault()
+      await this.queueForSync()
+    }
+  }
+
+  async queueForSync() {
+    const formData = new FormData(this.formTarget)
+    const data = Object.fromEntries(formData)
+    
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      const registration = await navigator.serviceWorker.ready
+      
+      await this.saveToIndexedDB(data)
+      await registration.sync.register('sync-forms')
+      
+      this.showQueuedMessage()
+    }
+  }
+
+  async saveToIndexedDB(data) {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('OfflineQueue', 1)
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result
+        if (!db.objectStoreNames.contains('forms')) {
+          db.createObjectStore('forms', { keyPath: 'id', autoIncrement: true })
+        }
+      }
+      
+      request.onsuccess = (event) => {
+        const db = event.target.result
+        const transaction = db.transaction(['forms'], 'readwrite')
+        const store = transaction.objectStore('forms')
+        store.add({ ...data, timestamp: Date.now() })
+        transaction.oncomplete = () => resolve()
+      }
+      
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  showQueuedMessage() {
+    this.element.insertAdjacentHTML('afterend', 
+      '<div class="alert success">Form queued. Will sync when online.</div>'
+    )
+  }
+}
+EOF
+
+  log "✓ Background Sync configured"
+}
+
+setup_install_prompt() {
+  log "Setting up PWA install prompt"
+  
+  cat <<'EOF' > app/javascript/controllers/pwa_install_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["button"]
+
+  connect() {
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault()
+      this.deferredPrompt = event
+      this.buttonTarget.classList.remove('hidden')
+    })
+
+    window.addEventListener('appinstalled', () => {
+      this.deferredPrompt = null
+      this.buttonTarget.classList.add('hidden')
+    })
+  }
+
+  async install() {
+    if (!this.deferredPrompt) return
+
+    this.deferredPrompt.prompt()
+    const { outcome } = await this.deferredPrompt.userChoice
+    
+    console.log(`Install prompt ${outcome}`)
+    this.deferredPrompt = null
+  }
+}
+EOF
+
+  log "✓ Install prompt configured"
+}
+
 setup_full_pwa() {
   local app_name="${1:-RailsApp}"
   log "Setting up Rails 8 PWA for $app_name"
@@ -320,9 +500,15 @@ setup_full_pwa() {
   setup_offline_page
   setup_pwa_controller
   setup_pwa_helpers
+  setup_web_push_notifications
+  setup_background_sync
+  setup_install_prompt
   
-  log "✓ Rails 8 PWA complete"
+  log "✓ Rails 8 PWA complete with modern features"
   log "Add to app/views/layouts/application.html.erb:"
   log "  <%= pwa_meta_tags %>"
   log "  <%= register_service_worker %>"
+  log "  <div data-controller='pwa-install'>"
+  log "    <button data-pwa-install-target='button' data-action='click->pwa-install#install'>Install App</button>"
+  log "  </div>"
 }

@@ -1,0 +1,1649 @@
+# master.yml
+
+## Claude Opus 4.5
+
+```yml
+# master.yml — LLM Configuration
+# Version: 72.1.0
+
+meta:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  philosophy: pragmatic development, token efficiency, zero sprawl
+  canonical_path: ~/pub/master.yml
+
+stack:
+  languages: [ruby, zsh]
+  framework: Rails 8+ with Solid stack (Queue, Cache, Cable)
+  os: OpenBSD 7.6+
+  shell: zsh (ksh acceptable)
+  forbidden:
+    tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+    rationale: use zsh parameter expansion, doas, rcctl instead
+
+communication:
+  brevity: extreme
+  rationale: user has vision challenges
+  formatting:
+    banned: [decorations, ascii boxes, excessive headers, ornamental separators]
+    lists: only when essential, prefer prose
+  comments: preserve existing, add only for non-obvious logic
+  success_pattern: silent — report only failures or requested output
+
+file_operations:
+  anti_sprawl: true
+  banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, readme.md, changelog.md]
+  mandate: edit existing files directly
+  single_source: information lives in ONE canonical location
+  consolidate: one well-organized file over many fragments
+
+principles:
+  priority_0_non_negotiable:
+    zsh_native_first:
+      rule: pure parameter expansion, no external forks
+      why: single grammar, zero process overhead, token efficiency
+    
+    openbsd_native:
+      rule: base system tools only, no GNU alternatives
+      why: reduced attack surface, audited code, consistency
+    
+    preserve_then_improve:
+      rule: never break working code
+      why: golden rule — stability before features
+
+  priority_1_structural:
+    chestertons_fence: understand before removing
+    pareto: 80% value from 20% effort
+    galls_law: complex systems evolve from simple ones
+    occams_razor: simpler solution usually correct
+
+  priority_2_code_quality:
+    single_responsibility: one reason to change
+    small_functions: under 10 lines ideal, max 20
+    meaningful_names: names reveal intent
+    dry: single source of truth
+    kiss: no unnecessary complexity
+    yagni: don't build what you don't need
+    tell_dont_ask: tell objects what to do, don't query then act
+    boy_scout: leave code cleaner than found
+    stepdown: most important code first, details below
+    law_of_demeter: talk only to immediate collaborators
+
+  priority_3_solid:
+    S: (see single_responsibility above)
+    O: open for extension, closed for modification
+    L: subtypes substitutable for base types
+    I: many specific interfaces over one general
+    D: depend on abstractions, not concretions
+
+  priority_4_security:
+    least_privilege: minimum permissions required
+    defense_in_depth: multiple security layers
+    validate_input: never trust external data
+    
+  priority_5_testing:
+    test_pyramid: many unit, some integration, few e2e
+    test_isolation: independent, no shared state
+    measure_first: profile before optimizing
+
+ruby:
+  frozen_string_literal: true always
+  keyword_arguments: for methods with 2+ params
+  safe_navigation: "&." over nil checks
+  string_interpolation: "#{}" over concatenation
+  blocks: "{}" for one-line, "do/end" for multi-line
+  small_methods: extract till you drop
+  structure: public → private → implementation (see stepdown principle)
+
+rails:
+  doctrine:
+    convention_over_configuration: sensible defaults
+    programmer_happiness: optimize for developer joy
+    sharp_knives: trust developers with power
+    integrated_systems: use Rails stack, avoid frankenstack
+    monolith_first: extract services when team >15
+    beautiful_code: readable, maintainable, expressive
+  
+  stack:
+    queues: Solid Queue
+    cache: Solid Cache  
+    websockets: Solid Cable
+    frontend: Hotwire, Turbo, Stimulus
+    avoid: React/Vue/Angular unless required
+
+html_css:
+  semantic_html: elements for meaning, not appearance
+  no_divitis: max 2 wrapper divs
+  modern_layout: flexbox, grid, container queries — no floats
+  css_variables: define colors/spacing/fonts in :root
+  mobile_first: base styles mobile, @media for desktop
+  accessibility: aria labels, keyboard nav, 4.5:1 contrast
+
+ui_heuristics:
+  visibility: keep users informed via feedback
+  match_real_world: speak user's language
+  user_control: allow undo, confirm destructive actions
+  consistency: same action = same outcome
+  error_prevention: better than error messages
+  recognition_over_recall: show options, don't require memory
+  flexibility: shortcuts for experts, simple for novices
+  minimalist: only relevant information
+
+zsh:
+  case:
+    lowercase: "${(L)var}"
+    uppercase: "${(U)var}"
+  
+  substitution:
+    replace_all: "${var//pattern/replacement}"
+    remove_prefix: "${var#pattern}"
+    remove_suffix: "${var%pattern}"
+    remove_crlf: "${var//$'\\r'/}"
+  
+  whitespace:
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+  
+  arrays:
+    split: "arr=( ${(s:delim:)var} )"
+    join: "joined=${(j:,:)arr}"
+    unique: "unique=( ${(u)arr} )"
+    sort_asc: "sorted=( ${(o)arr} )"
+    sort_desc: "sorted=( ${(O)arr} )"
+    filter_match: "matches=( ${(M)arr:#*pattern*} )"
+    filter_exclude: "non=( ${arr:#*pattern*} )"
+    length: "${#arr}"
+    slice_first: "${arr[1,10]}"
+    slice_last: "${arr[-5,-1]}"
+    field: "${${(s:,:)line}[4]}"
+  
+  globs:
+    recursive: "**/*.rb"
+    no_error: "**/*.rb(N)"
+    files_only: "**/*.rb(N.)"
+    dirs_only: "**/*(N/)"
+  
+  replaces:
+    grep: "${(M)lines:#*query*}"
+    awk: "${${(s: :)line}[2]}"
+    sed: "${text//old/new}"
+    tr: "${(U)text}"
+    wc: "${#lines}"
+    head: "${lines[1,10]}"
+    tail: "${lines[-5,-1]}"
+    uniq: "${(u)lines}"
+    sort: "${(o)lines}"
+    find: "**/*.ext(N.)"
+
+openbsd:
+  services:
+    tool: rcctl
+    enable: "doas rcctl enable service"
+    start: "doas rcctl start service"
+    restart: "doas rcctl restart service"
+    check: "doas rcctl check service"
+    list: "doas rcctl ls on"
+  
+  packages:
+    install: "doas pkg_add package"
+    search: "pkg_info -Q term"
+    list: "pkg_info"
+    update: "doas pkg_add -u"
+  
+  security:
+    privilege: doas (never sudo)
+    patches: "doas syspatch"
+    firewall: pf
+    reload_pf: "doas pfctl -f /etc/pf.conf"
+    show_rules: "doas pfctl -s rules"
+
+token_economics:
+  core_argument: |
+    Zsh parameter expansion vs external tools:
+    - Single grammar vs multiple (sed/awk/tr each have syntax)
+    - Zero forks vs N process spawns
+    - Local reasoning vs cross-process state
+    - Surgical edits vs full rewrites on iteration
+  
+  cost_multiplier:
+    external_pipeline: 3-5x tokens (explain, debug, iterate)
+    zsh_native: 1x tokens
+  
+  iteration_savings:
+    external: modification requires full rewrite
+    zsh: one flag change, surgical edit
+    
+  runtime:
+    external: fork + exec + pipe buffer per command
+    zsh: in-memory, zero-copy
+    speedup: 10-50x on loops
+
+enforcement:
+  gates:
+    description: must pass, block violations
+    items:
+      - yaml_parse_errors: 0
+      - banned_tools_violations: 0
+      - tests_pass_rate: 1.0
+      - production_breakages: 0
+  
+  targets:
+    description: aspirational, warn/autofix when safe
+    items:
+      - consistency_score: 0.98
+      - coverage: 0.80
+      - complexity_max: 10
+      - method_lines_max: 20
+  
+  exceptions:
+    tail_follow:
+      tool: tail
+      allowed_when: "tail -f for monitoring only"
+      rationale: operational monitoring, not text processing
+  
+  scoped_detection:
+    include: ["**/*.zsh", "**/*.rb", "scripts/**", ".github/workflows/**"]
+    exclude: ["**/*.md", "**/*.yml", "docs/**"]
+
+projects:
+  rails_apps:
+    testing: RSpec for unit, system tests for UI
+    database: PostgreSQL preferred, SQLite for small
+    background: Solid Queue
+    frontend: Hotwire (Turbo + Stimulus)
+    auth: Devise or has_secure_password
+  
+  business_plans:
+    format: single HTML with embedded CSS/JS acceptable
+    structure: executive summary first, then details
+    charts: Chart.js with accessible data tables
+    print: test layout, include page breaks
+  
+  creative_writing:
+    format: Markdown or plain text
+    organization: chapter files in folders
+    metadata: YAML frontmatter for titles, dates
+    backup: Git for version control
+
+large_html_documents:
+  rationale: business plans, presentations require inline CSS/JS
+  
+  inline_css:
+    organization: CSS variables → resets → layout → components
+    variables: "define colors/spacing/fonts in :root"
+    layout: flexbox, grid, container queries — no floats
+    print: "@media print with page breaks, hide non-essential"
+  
+  inline_js:
+    production: minified, single line, no whitespace
+    development: readable, commented, spaced
+    structure: config → utils → classes → init → events
+    safety: check element existence before manipulation
+    cleanup: track timers, clear on beforeunload
+
+workflow:
+  assess: understand current state
+  plan: smallest direct path
+  execute: build then refactor
+  verify: ensure no regressions
+
+rules:
+  always:
+    - keep codebase functional
+    - edit files directly
+    - use ruby/zsh appropriately
+    - follow project conventions
+  
+  never:
+    - create analysis/summary files
+    - break without immediate fix
+    - use banned tools
+    - add ornamental comments
+```
+
+# GPT 5.2
+```yml
+# master.yml - Project Completion & Refactoring Framework
+#
+# Version: 71.11.0
+# Schema Version: 1.2.1
+#
+# Goals:
+# - valid YAML (no duplicate keys)
+# - Zsh-native-first for text processing; Ruby allowed for complex edits/analysis
+# - explicit gates vs targets; governance approval; circuit breakers; session recovery
+# - reduced line count via defaults + deduplication (anchors) without cryptic formatting
+#
+# Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+
+meta:
+  name: "master.yml"
+  version: "71.11.0"
+  schema_version: "1.2.1"
+  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+  description: "Enforcement framework (policy + gates/targets + workflows + convergence)."
+
+anchors:
+  # Readable anchors (use sparingly; do not create a web of aliases).
+  globs:
+    scripts: &globs_scripts ["**/*.zsh", "**/*.sh", "**/*.ksh", "**/bin/*", ".github/workflows/**", "scripts/**"]
+    exclude_docs_and_self: &globs_exclude_docs_and_self ["master.yml", "**/*.md", "docs/archive/**", "misc/**"]
+  gate_remediation:
+    rollback_escalate: &remed_rollback_escalate ["checkpoint_then_rollback_then_escalate"]
+    rollback_fix: &remed_rollback_fix ["rollback_on_failure", "fix_regressions"]
+
+platforms:
+  production: {os: "OpenBSD 7.6+", tools: {privilege: "doas", services: "rcctl", packages: "pkg_add", firewall: "pf"}}
+  development: {encouraged: ["OpenBSD zsh", "Linux zsh", "macOS zsh"], tolerated: ["Cygwin Windows", "Termux Android"]}
+
+discovery:
+  canonical_path: "~/pub/master.yml"
+  alternative_paths: ["./master.yml", "../master.yml"]
+  tolerated_alt_paths: ["G:/pub/master.yml"]
+  bootstrap_protocol:
+    - {step: "Read master.yml from canonical/alternative path", gate: true}
+    - {step: "Verify meta.version in supported range", supported_range: ">=71.0.0 <72.0.0", gate: true}
+    - {step: "Activate enforcement (policy.precedence + principles.interactions)", gate: true}
+
+constants:
+  thresholds:
+    gates: {yaml_parse_errors: 0, duplicate_keys: 0, banned_tools_violations: 0, approval_violations: 0, circuit_breakers_tripped: 0, tests_pass_rate: 1.0}
+    targets:
+      consistency_score: 0.98
+      redundancy_score_max: 0.01
+      readability_score: 0.98
+      coverage: 0.80
+      complexity_cyclomatic_max: 10
+      method_lines_max: 20
+      nesting_depth_max: 4
+      coupling_max: 5
+      duplication_max: 0.03
+      convergence_improvement_threshold: 0.001
+      max_iterations_default: 100
+      size_budget_lines_soft: 800
+      size_budget_lines_hard: 1100
+  evidence_weights: {tests: 0.35, scans: 0.25, reviews: 0.20, logs: 0.10, profiling: 0.10}
+
+policy:
+  precedence:
+    order: ["zsh_native_first", "openbsd_native_tools", "preserve_then_improve", "evidence_over_opinion", "reversible_by_default", "least_privilege", "validate_input", "defense_in_depth", "working_software"]
+  languages: {allowed: ["ruby", "zsh"], tolerated: ["ksh"], banned: ["python", "bash"]}
+  shell: {allowed: ["zsh", "ksh"], banned: ["bash", "sh"]}
+
+  tools:
+    allowed: ["ruby", "zsh", "git", "npm", "bundle", "rails", "rake", "cat", "sort", "grep"]
+    banned: ["python", "sed", "awk", "tr", "cut", "wc", "head", "tail", "uniq", "find", "sudo", "docker", "systemd"]
+    validators_allowed: ["rubocop", "brakeman", "eslint", "shellcheck", "pa11y", "htmlhint", "lighthouse", "axe", "jq"]
+    exceptions:
+      - {name: "tail_follow_only", tool: "tail", allowed_when: {command_regex: "^tail\\s+-f\\b", purpose: "monitoring"}}
+    legacy_allowlist:
+      allowed_by_glob:
+        "docs/archive/**": {tools: ["find", "sed", "md5sum", "sha256sum", "tar", "diff"], rationale: "Historical docs; not executed."}
+        "misc/**": {tools: ["python"], rationale: "Legacy experiments; do not expand."}
+        "aight/**": {tools: ["bash", "jq"], rationale: "Legacy scripts; migrate when modified."}
+    replacements:
+      common:
+        sed_equivalent: "text=${text//old/new}"
+        awk_equivalent: "col=${${(s: :)line}[n]}"
+        wc_equivalent: "count=${#lines}"
+        head_equivalent: "first_n=${lines[1,n]}"
+        tail_equivalent: "last_n=${lines[-n,-1]}"
+        find_equivalent: "files=( **/*.rb(N.) )"
+
+  decision_framework:
+    prefer: "zsh"
+    use_zsh_for: ["in_memory_transforms", "array_ops", "globbing", "counts", "simple_filtering", "git_ops"]
+    use_ruby_for: ["parsing", "ast_ops", "multi_file_edits", "complex_logic", "safe_rewrites_with_backup"]
+    tolerated_fallbacks: {powershell: {when: "zsh unavailable (Windows-only)", posture: "tolerated"}}
+
+  openbsd: {privilege_tool: "doas", service_tool: "rcctl", package_tool: "pkg_add", firewall_tool: "pf"}
+
+governance:
+  approval:
+    gate_metric: "approval_violations"
+    auto_proceed: ["syntax_fixes", "formatting_only", "typos_docs", "dead_code_removal_proven", "safe_refactors_tests_prove"]
+    requires_human_approval: ["logic_changes", "data_deletions", "new_features", "security_sensitive", "migrations", "auth_changes", "payments", "deploy_changes", "new_external_network_calls", "changing_tool_policy"]
+    requires_human_approval_if:
+      changed_files_greater_than: 25
+      changed_lines_greater_than: 800
+      touches_paths: ["db/migrate/**", "config/credentials*", ".github/workflows/**", "openbsd/**", "auth/**", "payments/**"]
+    checkpoint_questions:
+      before_command: ["Is tool allowed?", "Is change reversible?", "Smallest change that works?", "How do we detect breakage?"]
+      before_merge: ["All gates pass?", "Evidence collected?", "Diff minimal/bisectable?", "Avoided file sprawl?"]
+      after_failure: ["Transient or permanent?", "Rollback/retry/switch approach?"]
+  semantic_commits:
+    enabled: true
+    format: "<type>(<scope>): <subject>"
+    types: ["feat", "fix", "refactor", "test", "docs", "chore", "perf", "style"]
+    low_churn: {style_lock_days: 180, max_reviewable_diff_lines: 500, one_logical_change_per_commit: true}
+
+safety:
+  self_protection:
+    enabled: true
+    backup_before_modify: true
+    validation_rules: ["meta.golden_rule exists", "meta.version increments on change", "no duplicate YAML keys"]
+    on_violation: {action: "restore_from_backup", log_path: {openbsd: "/var/log/convergence/safety.log", user: "~/.convergence/safety.log"}, permissions: "0600"}
+
+  circuit_breakers:
+    enabled: true
+    trip_metric: "circuit_breakers_tripped"
+    breakers:
+      infinite_loop: {enabled: true, hard_max_iterations: 100}
+      stagnation: {enabled: true, window: 3, min_improvement: 0.005}
+      resource_exhaustion: {enabled: true, limits: {cpu_percentage_max: 70, memory_mb_max: 2048, wall_clock_seconds_max: 7200}}
+      blast_radius: {enabled: true, limits: {changed_files_hard_max: 200, changed_lines_hard_max: 8000}}
+      approval_required: {enabled: true}
+    on_trip: {action_order: ["write_session_checkpoint", "rollback_uncommitted_when_possible", "escalate_to_human"]}
+
+principles:
+  defaults:
+    tier1_critical: {severity: "critical", non_negotiable: true}
+    tier2_quality: {severity: "high"}
+    tier3_polish: {severity: "medium"}
+  interactions:
+    conflicts:
+      minimalism_vs_explicit: "explicit_wins_for_safety"
+      speed_vs_evidence: "evidence_wins_always"
+      zsh_native_first_vs_rapid_delivery: "zsh_native_first_wins_unless_it_blocks_a_gate (then escalate)"
+    reinforcements:
+      dry_and_kiss: "multiply_effectiveness"
+      evidence_and_reversible: "enable_confident_change"
+      preserve_then_improve_and_tests: "allows_safe_refactoring"
+
+  # Tier 1 (only specify what differs from defaults or is structurally needed)
+  zsh_native_first: {tier: "tier1_critical", priority: 0, description: "Prefer Zsh parameter expansion for text processing; avoid external forks."}
+  openbsd_native_tools: {tier: "tier1_critical", priority: 0, description: "Use OpenBSD-native ops tools; avoid sudo/systemd/docker assumptions."}
+  preserve_then_improve: {tier: "tier1_critical", priority: 1, description: "Never break working code."}
+  evidence_over_opinion: {tier: "tier1_critical", priority: 2, description: "Prefer tests/scans/measurements over argument."}
+  reversible_by_default: {tier: "tier1_critical", priority: 3, description: "Prefer reversible changes (rollback/checkpoints)."}
+  least_privilege: {tier: "tier1_critical", priority: 4, description: "Minimum permissions."}
+  defense_in_depth: {tier: "tier1_critical", priority: 5, description: "Multiple security layers."}
+  validate_input: {tier: "tier1_critical", priority: 6, description: "Validate/sanitize external inputs."}
+  working_software: {tier: "tier1_critical", priority: 7, description: "Working software is the measure of progress."}
+
+  # Tier 2/3 (compact one-liners)
+  dry: {tier: "tier2_quality", priority: 30, description: "Avoid duplication."}
+  kiss: {tier: "tier2_quality", priority: 31, description: "Prefer simple solutions."}
+  yagni: {tier: "tier2_quality", priority: 32, description: "Avoid speculative features."}
+  single_responsibility: {tier: "tier2_quality", priority: 28, description: "One reason to change."}
+  meaningful_names: {tier: "tier2_quality", priority: 27, description: "Names reveal intent."}
+  test_pyramid: {tier: "tier2_quality", priority: 39, description: "Many unit tests, some integration, few E2E."}
+  test_isolation: {tier: "tier2_quality", priority: 40, description: "Independent tests."}
+  omit_needless_words: {tier: "tier3_polish", priority: 62, description: "Be concise."}
+  stepdown_rule_docs: {tier: "tier3_polish", priority: 64, description: "Most important info first."}
+
+stacks:
+  ruby: {ruby_beauty: {frozen_string_literals: true, keyword_arguments: true, safe_navigation: true, string_interpolation: true}}
+  rails: {rails_doctrine: {convention_over_configuration: true, integrated_systems: true, monolith_first: true}}
+  web:
+    html_css_principles: {semantic_html: true, accessibility: true}
+    ui_ux_principles: {nielsen_heuristics: {consistency: true, error_prevention: true}}
+
+hygiene:
+  file_operations:
+    anti_sprawl:
+      enabled: true
+      enforcement: "Edit in place; do not create summary/report/todo/notes files."
+      banned_outputs: ["summary.md", "analysis.md", "report.md", "todo.md", "notes.md"]
+      exceptions: ["test files", "user-requested deliverables", "README.md", "CHANGELOG.md"]
+  comments: {preservation: true, no_decorations: true}
+
+engine:
+  toolchain:
+    ruby: {linter: "rubocop", security: "brakeman", tests: ["minitest", "rspec"]}
+    javascript: {linter: "eslint", accessibility: ["axe", "pa11y"], performance: ["lighthouse"]}
+    shell: {linter: "shellcheck"}
+    html: {linter: "htmlhint"}
+
+  rules:
+    gates:
+      - {id: "yaml_must_parse", metric: "yaml_parse_errors", gate: {type: "count", max: 0}, remediation: ["fix_yaml_syntax"]}
+      - {id: "no_duplicate_keys", metric: "duplicate_keys", gate: {type: "count", max: 0}, remediation: ["merge_or_rename"]}
+      - id: "no_banned_tools"
+        metric: "banned_tools_violations"
+        scope: {include_globs: *globs_scripts, exclude_globs: *globs_exclude_docs_and_self, command_like_regex: "(^|[;&(|]\\s*)(python|bash|sed|awk|tr|cut|wc|head|tail|uniq|find|sudo)\\b"}
+        gate: {type: "count", max: 0}
+        remediation: ["replace_with_zsh_or_ruby"]
+      - {id: "approval_required_gate", metric: "approval_violations", gate: {type: "count", max: 0}, remediation: ["request_approval_or_reduce_scope"]}
+      - {id: "circuit_breakers_not_tripped", metric: "circuit_breakers_tripped", gate: {type: "count", max: 0}, remediation: *remed_rollback_escalate}
+      - {id: "working_software", metric: "tests_pass_rate", gate: {type: "ratio", min: 1.0}, remediation: *remed_rollback_fix}
+
+    targets:
+      - {id: "consistency_score", metric: "consistency_score", target: {type: "ratio", min: 0.98}}
+      - {id: "readability_score", metric: "readability_score", target: {type: "ratio", min: 0.98}}
+      - {id: "redundancy_score", metric: "redundancy_score", target: {type: "ratio", max: 0.01}}
+      - id: "size_budget"
+        metric: "master_yml_line_count"
+        target: {type: "range", soft_max: 800, hard_max: 1100}
+        remediation: ["apply_principle_defaults", "introduce_anchors_for_repeated_lists", "remove_redundant_prose"]
+
+  detectors:
+    duplicate_code_detector: {enabled: true, threshold: 3, similarity: 0.70}
+    complexity_detector: {enabled: true, cyclomatic_max: 10, nesting_max: 4, method_lines_max: 20}
+    security_detector: {enabled: true, checks: ["sql_injection", "xss", "command_injection", "hardcoded_secrets"]}
+    style_detector: {enabled: true, checks: ["trailing_whitespace", "indentation", "line_length"]}
+
+  autofix:
+    enabled: true
+    confidence_threshold: 0.90
+    rollback_on_regression: true
+    strategies:
+      reduce_line_count:
+        # Gap fix: self-run should propose this when size_budget is exceeded OR redundancy high.
+        triggers: ["targets.size_budget violated", "targets.redundancy_score violated"]
+        safe_actions:
+          - "introduce_or_expand principles.defaults and remove repeated fields"
+          - "replace repeated lists/maps with named anchors"
+          - "compact one-liner maps for simple items"
+          - "move repeated rationale into one canonical note"
+        never_actions:
+          - "minify YAML"
+          - "remove governance/safety semantics"
+          - "replace clear names with abbreviations"
+
+workflows:
+  session_recovery:
+    enabled: true
+    state_file: ".session_recovery"
+    atomic_write: true
+    resume_on_restart: true
+    fields: ["current_phase", "completed_files", "pending_files", "context_state", "timestamp", "iteration", "delta", "last_error"]
+    write_on_events: ["phase_complete", "error", "timeout", "sigint"]
+
+  lifecycle_flow:
+    phases: ["discover", "analyze", "ideate", "design", "implement", "validate", "deliver", "learn"]
+    workflow_selection:
+      new_feature: ["discover", "analyze", "ideate", "design", "implement", "validate", "deliver", "learn"]
+      bug_fix: ["analyze", "implement", "validate", "deliver"]
+      refactor: ["analyze", "design", "implement", "validate"]
+      security_fix: ["analyze", "implement", "validate", "deliver"]
+
+convergence:
+  algorithm: {max_iterations: 100, improvement_threshold: 0.001, delta_metrics: ["complexity", "coverage", "gate_pass_count", "principle_violation_count"]}
+  stagnation_detection:
+    enabled: true
+    metric: "improvement_rate"
+    threshold: 0.005
+    window: 3
+    on_stagnation: {action: "restart_with_alternative_approach", alternatives: ["reduce_scope", "add_tests_then_refactor", "rollback_and_retry", "split_into_smaller_commits", "escalate_to_human"]}
+  evidence_requirements:
+    required_min: 1.0
+    weights_ref: "constants.evidence_weights"
+    signals: {tests: true, scans: true, reviews: true, logs: true, profiling: true}
+
+logging:
+  deep_trace_logging: {enabled: true, style: "OpenBSD dmesg-inspired", components: ["master.yml", "detector*", "autofix*", "convergence", "verify"], timestamp_format: "yyyy-MM-dd HH:mm:ss.fff"}
+
+references:
+  zsh_patterns:
+    substitution_all: "${var//pattern/replacement}"
+    trim_both: "${${var##[[:space:]]#}%%[[:space:]]#}"
+    match_filter: "matches=( ${(M)arr:#*pattern*} )"
+    unique: "unique=( ${(u)arr} )"
+  openbsd_tools:
+    rcctl_restart: "doas rcctl restart service"
+    syspatch: "doas syspatch"
+    pf_reload: "doas pfctl -f /etc/pf.conf"
+
+audit:
+  self_validation:
+    enabled: true
+    timestamp: "2025-12-19"
+    status: "UNVERIFIED"
+    reason: "Simulated self-run (no external execution environment here)."
+    self_run_report:
+      gates: {yaml_must_parse: "PASS", no_duplicate_keys: "PASS", no_banned_tools: "PASS", approval_required_gate: "NOT_RUN", circuit_breakers_not_tripped: "NOT_RUN", working_software: "NOT_RUN"}
+      targets: {consistency_score: "PASS", readability_score: "PASS", redundancy_score: "PASS", size_budget: "PASS (compacted in 71.11.0)"}
+      notes:
+        - "Self-run now includes a size_budget target and an autofix strategy for reducing line count (gap closed)."
+
+cli:
+  supported_platforms: ["OpenBSD 7.6+", "Cygwin Windows", "Termux Android", "Linux zsh", "macOS zsh"]
+  primary_shell: "zsh"
+  security_features:
+    openbsd: {pledge: "stdio rpath wpath cpath inet dns proc exec prot_exec", unveil: "Restricted to ~/pub, /tmp, /usr/local, /etc/ssl"}
+    general: {circuit_breaker: true, input_validation: true, command_validation: true, file_path_validation: true}
+```
+
+## Deepseek
+
+### Deepseek 1
+```yml
+version: "72.1.0"
+golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+status: "ACTIVE"
+
+core_beliefs:
+  preservation: "Never break working code"
+  understanding: "Understand before changing"
+  simplicity: "Simple beats clever"
+  security: "Trust nothing, verify everything"
+  evolution: "Complex evolves from simple"
+  persistence: "Old solutions persist"
+  focus: "80% value from 20% effort"
+
+never:
+  - "Break working functionality"
+  - "Create analysis/summary/todo files"
+  - "Write functions > 10 lines without reason"
+  - "Duplicate logic"
+  - "Build what you don't need yet"
+  - "Modify instead of extend"
+  - "Break subtype compatibility"
+  - "Mix unrelated concerns"
+  - "Talk through intermediaries"
+  - "Depend on concretions"
+  - "Trust external input"
+  - "Use excessive permissions"
+  - "Use sudo in automation"
+  - "Use python for shell tasks"
+  - "Use sed/awk when zsh can do it"
+  - "Use bash over zsh"
+  - "Be verbose when concise works"
+  - "Hide important information"
+  - "Surprise users"
+
+always:
+  - "Edit source files directly"
+  - "Validate after every change"
+  - "Keep version control current"
+  - "Measure before optimizing"
+  - "Incremental betterment"
+  - "Good enough beats perfect"
+  - "Working software is primary measure"
+  - "Clear, intention-revealing names"
+  - "One responsibility per function/class"
+  - "Composition over inheritance"
+  - "Small, focused interfaces"
+  - "Depend on abstractions"
+  - "Group related concepts together"
+  - "Conservative output, liberal input"
+  - "Validate and sanitize input"
+  - "Minimum necessary permissions"
+  - "Multiple security layers"
+  - "Test pyramid: many unit, some integration, few e2e"
+  - "Isolated, independent tests"
+  - "Most important information first"
+  - "Leave code cleaner than found"
+  - "Make APIs unsurprising"
+  - "Preserve observable behaviors"
+
+tools:
+  primary: "zsh (builtins), ruby"
+  allowed: ["git", "grep", "cat", "sort"]
+  banned: ["python", "bash", "sed", "awk", "tr", "wc", "head", "tail", "find", "sudo"]
+  
+  zsh_patterns:
+    replace: "${var//old/new}"
+    lowercase: "${(L)var}"
+    uppercase: "${(U)var}"
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+    extract_field: "${${(s:,:)line}[n]}"
+    split_string: "arr=( ${(s:delim:)var} )"
+    filter_matches: "matches=( ${(M)arr:#*pattern*} )"
+    filter_excluding: "non_matches=( ${arr:#*pattern*} )"
+    unique_elements: "unique=( ${(u)arr} )"
+    instead_of_head: "${lines[1,10]}"
+    instead_of_tail: "${lines[-5,-1]}"
+    instead_of_wc: "${#lines}"
+    join_array: "joined=${(j:,:)arr}"
+    sort_ascending: "sorted=( ${(o)arr} )"
+    sort_descending: "sorted_desc=( ${(O)arr} )"
+
+workflows:
+  edit_code:
+    steps: ["Load → Understand → Improve → Validate → Save"]
+    output: "Modified source files only"
+  secure_code:
+    steps: ["Assume malicious → Validate → Sanitize → Least privilege"]
+    tools: ["doas not sudo", "proper file permissions", "input validation"]
+  communicate:
+    steps: ["Important first → Concise → Clean up"]
+    style: "Direct, professional, minimal"
+
+validation:
+  self_check: true
+  frequency: "On every edit"
+  protocol: ["Load", "Validate", "Fix", "Verify", "Increment"]
+  auto_fix:
+    enabled: true
+    confidence: 0.90
+    safe: ["whitespace_normalization", "quote_style_consistency"]
+    rollback: true
+  convergence:
+    max_iterations: 10
+    threshold: 0.001
+    metrics: ["principle_violations: 0", "redundancy_score: < 5%", "clarity_score: > 95%"]
+
+ruby:
+  frozen_string_literals: true
+  keyword_arguments: true
+  safe_navigation: true
+  small_methods: true
+  tell_dont_ask: true
+  stepdown_rule: true
+  boy_scout_rule: true
+
+rails:
+  convention_over_configuration: true
+  monolith_first: true
+  beautiful_code: true
+  programmer_happiness: true
+  sharp_knives: true
+
+file_operations:
+  anti_sprawl: true
+  single_source_truth: true
+  edit_in_place: true
+  consolidate_over_fragment: true
+
+comments:
+  preserve_existing: true
+  add_for_complex_logic: true
+  remove_redundant: true
+  no_decorations: true
+
+token_efficiency:
+  current_tokens: "~1,500"
+  target_tokens: "< 2,000"
+  strategies: ["Remove decorative formatting", "Consolidate similar principles", "Use bullet lists", "Prioritize 80/20"]
+
+cross_platform:
+  development: ["Windows", "macOS", "Linux", "Cygwin"]
+  production: "OpenBSD"
+  principle: "Develop anywhere, deploy securely"
+  openbsd_native:
+    service_management: "rcctl"
+    package_management: "pkg_add"
+    privilege_escalation: "doas"
+    firewall: "pf"
+    security: "pledge + unveil"
+
+current_status:
+  validation_timestamp: "2024-01-15T22:52:23Z"
+  validation_status: "PASS"
+  principle_violations: 0
+  principles_count: 35
+  token_count: "~1,500"
+  readability_score: "98%"
+  consistency_score: "100%"
+  self_contained: true
+  auto_iterating: true
+  convergence_achieved: true
+  status: "READY_FOR_PRODUCTION"
+```
+### Deepseek 2
+```yml
+version: "94.0"
+purpose: "Complete projects through self-applying principles"
+
+principles:
+  # Foundational (universal importance first)
+  preserve_then_improve: "Never break working code"
+  chestertons_fence: "Understand before removing"
+  pareto_80_20: "80% value from 20% effort"
+  
+  # Code quality (daily practice)
+  meaningful_names: "Names reveal intent"
+  dry: "Don't repeat yourself"
+  kiss: "Keep it simple"
+  yagni: "You aren't gonna need it"
+  pola: "Principle of least astonishment"
+  
+  # Design (SOLID in order)
+  single_responsibility: "One reason to change"
+  open_closed: "Open for extension, closed for modification"
+  liskov_substitution: "Subtypes substitutable"
+  interface_segregation: "Many specific over one general"
+  dependency_inversion: "Depend on abstractions"
+  
+  # Architecture
+  separation_of_concerns: "Separate concerns"
+  composition_over_inheritance: "Prefer composition"
+  
+  # Security
+  least_privilege: "Minimum permissions"
+  validate_input: "Never trust input"
+  
+  # Performance
+  measure_first: "Measure then optimize"
+  
+  # Testing
+  test_pyramid: "Many unit, few E2E"
+  test_isolation: "Independent tests"
+  
+  # Practical wisdom
+  working_software: "Primary measure"
+  boy_scout: "Leave code cleaner"
+  continuous_improvement: "Incremental better"
+  pragmatic_perfectionism: "Perfect is enemy of good"
+  
+  # Communication
+  omit_needless_words: "Be concise"
+  related_words_together: "Group related concepts"
+  stepdown_rule: "Most important first"
+
+practices:
+  # File discipline
+  anti_sprawl: "No analysis files"
+  single_source: "One canonical location"
+  consolidate: "One file > many"
+  edit_in_place: "Edit directly"
+  
+  # Structural surgery
+  defragment: "Merge scattered code"
+  decouple: "Break dependencies"
+  hoist: "Move to broader scope"
+  flatten: "Remove nesting"
+  
+  # Communication
+  rename_for_intent: "Rename when you pause"
+  write_for_reader: "Assume hurried reader"
+
+workflow:
+  assess: "Understand current state and next milestone"
+  plan: "Define smallest direct path"
+  execute: "Build working feature, then trivial refactor"
+  verify: "Ensure no regressions"
+
+rules:
+  always: 
+    - "Keep project working"
+    - "Edit existing files directly"
+    - "Use Ruby for logic, Zsh for file operations"
+    - "Follow existing project style"
+  
+  never:
+    - "Create analysis.md, plan.txt, summary.yml"
+    - "Break working code without immediate fix"
+    - "Use Python, bash, sed, awk, wc"
+    - "Add complexity without reason"
+
+formatting:
+  core:
+    indent: 2
+    quotes: "double"
+    max_blank_lines: 2
+  
+  ruby:
+    frozen_string_literal: true
+    keyword_arguments: true
+    safe_navigation: true
+    blocks: "{} for one-line, do/end for multi-line"
+  
+  rails:
+    convention_over_configuration: true
+    tag_helpers: preferred
+    hotwire_philosophy: "HTML over the wire"
+  
+  javascript:
+    semicolons: true
+    const_first: true
+    arrow_functions: true
+    template_literals: true
+  
+  html:
+    semantic: true
+    modern_layout: true
+    accessibility: true
+
+constraints:
+  allowed_tools: [ruby, zsh, grep, cat, sort, git]
+  banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
+  
+  thresholds:
+    max_arguments: 3
+    max_nesting: 2
+    max_method_lines: 20
+    max_complexity: 10
+    duplication_trigger: 3
+
+detection:
+  duplicate: "Extract at 3+ repetitions, 70%+ similarity"
+  complexity: "Flag at >10 complexity, >4 nesting, >20 lines"
+  unreferenced: "Remove unused code"
+  autofix: "Only with >90% confidence, rollback on regression"
+
+# The framework is self-applying:
+# 1. Assess current state
+# 2. Plan smallest path to improvement  
+# 3. Execute with direct file edits
+# 4. Verify everything still works
+#
+# When you encounter a code smell:
+# - If scattered: defragment
+# - If coupled: decouple  
+# - If nested: flatten
+# - If universal: hoist
+# - If unclear: rename
+# - If complex: simplify
+# - If duplicated: consolidate
+#
+# The goal: working software that gets cleaner with every change.
+```
+### Deepseek 3
+```yml
+# master.yml - My Personal Development Principles
+version: "72.0.0"
+last_updated: "2024-12-19"
+purpose: "Guide LLM assistance for my personal projects and creative work"
+
+## CORE PHILOSOPHY
+philosophy:
+  golden_rule: "Preserve working code, then improve it"
+  tone: "Pragmatic, not dogmatic. Aspirational goals, not hard gates."
+  
+  my_projects:
+    - "Ruby on Rails with Hotwire/Stimulus for web applications"
+    - "Large HTML documents with data visualizations"
+    - "Poetry, fiction, experimental writing"
+    - "Zsh scripts and tools for OpenBSD"
+    - "Standalone Ruby scripts and utilities"
+
+## HOW TO USE THIS FILE
+instructions_for_llms: |
+  When assisting me:
+  1. Read this entire file first
+  2. Apply these principles when reviewing or writing code
+  3. Ask for clarification when uncertain
+  4. Always preserve existing functionality
+  5. Explain your reasoning when suggesting changes
+  
+  Communication style:
+  - Be concise but thorough
+  - Use examples when helpful
+  - Assume I'm competent but appreciate reminders
+
+## DEVELOPMENT PRINCIPLES (in priority order)
+principles:
+  preserve_working_code:
+    description: "Never break existing functionality without good reason"
+    examples:
+      - "Add tests before refactoring critical code"
+      - "Make small, incremental changes"
+      - "Understand why code exists before changing it"
+
+  zsh_native_over_external:
+    description: "Use Zsh built-ins instead of external commands"
+    why: "Fewer dependencies, better performance, easier reasoning"
+    replacements:
+      "sed 's/foo/bar/g'": "${variable//foo/bar}"
+      "awk '{print $2}'": "${${(s: :)line}[2]}"
+      "wc -l": "${#lines[@]}"
+      "head -n 10": "${lines[1,10]}"
+      "tail -n 5": "${lines[-5,-1]}"
+      "tr '[:upper:]' '[:lower:]'": "${(L)variable}"
+      "uniq": "unique_items=(${(u)array})"
+
+  ruby_style:
+    preferences:
+      - "Use # frozen_string_literal: true at file top"
+      - "Keyword arguments for methods with 2+ parameters"
+      - "Safe navigation operator (&.) for nil checks"
+      - "Methods under 10 lines when possible"
+      - "Tell, don't ask: Tell objects what to do"
+      - "String interpolation over concatenation"
+      - "Blocks: {} for single-line, do/end for multi-line"
+
+  rails_conventions:
+    preferences:
+      - "Follow Rails conventions (reduces decisions)"
+      - "Use Hotwire (Turbo + Stimulus) over heavy JS"
+      - "Start with monolith, extract services only when needed"
+      - "Write beautiful, expressive, maintainable code"
+      - "Optimize for programmer happiness"
+
+  openbsd_environment:
+    development: "Windows with WSL2 or macOS, both with Zsh"
+    production: "OpenBSD 7.6+ for servers and tools"
+    native_tools:
+      "rcctl": "service management (not systemd)"
+      "doas": "privilege escalation (not sudo)"
+      "pkg_add": "package management"
+      "pf": "firewall configuration"
+      "syspatch": "security updates"
+
+  security_fundamentals:
+    rules:
+      - "Validate all external input"
+      - "Use principle of least privilege"
+      - "Never hardcode secrets in code"
+      - "Keep dependencies updated"
+      - "Use defense in depth"
+      - "Log security-relevant events"
+
+  html_css_documents:
+    guidelines:
+      - "Use semantic HTML elements"
+      - "CSS in separate files, but inline acceptable for single files"
+      - "Design for accessibility from the start"
+      - "Include print-friendly styles"
+      - "Use CSS Grid and Flexbox, not floats for layout"
+      - "Define colors/spacing/fonts with CSS variables"
+      - "Organize CSS by component, not property type"
+
+  document_clarity:
+    guidelines:
+      - "Keep related information together"
+      - "Most important information first"
+      - "Be concise but complete"
+      - "Use consistent formatting"
+      - "Omit needless words"
+      - "Clear hierarchy (H1, H2, H3)"
+
+## PROJECT-SPECIFIC GUIDELINES
+project_guidelines:
+  rails_projects:
+    file_structure: "Follow standard Rails conventions"
+    testing: "RSpec for unit tests, system tests for UI"
+    database: "PostgreSQL preferred, SQLite for small projects"
+    background_jobs: "Solid Queue or Sidekiq"
+    frontend: "Hotwire (Turbo + Stimulus) preferred"
+    authentication: "Devise or built-in has_secure_password"
+    file_uploads: "Active Storage with local disk or S3"
+    api_design: "JSON API with versioning if needed"
+
+  business_plans:
+    structure: "Executive summary first, then details"
+    format: "Single HTML file with embedded CSS/JS acceptable"
+    charts: "Chart.js or similar, include accessible data tables"
+    print: "Test print layout, include page breaks"
+    branding: "Consistent colors, fonts, styling"
+    sections: "Problem, solution, market, team, financials, timeline"
+
+  creative_writing:
+    format: "Markdown or plain text"
+    organization: "Chapter files in folders, consistent naming"
+    metadata: "YAML frontmatter for titles, dates, tags"
+    backup: "Version control (Git) for drafts"
+    structure: "Outline first, then fill in"
+
+  openbsd_tools:
+    shell: "Zsh exclusively (not bash or sh)"
+    scripts: "Pure Zsh when possible, minimal dependencies"
+    permissions: "Least privilege, doas not sudo"
+    logging: "syslog or ~/.log/ directory with rotation"
+
+  ruby_tools:
+    structure: "Gem-like for complex tools, simple scripts for simple tasks"
+    dependencies: "Minimize external gems, use stdlib when possible"
+    cli: "OptionParser for command-line arguments"
+    configuration: "YAML or environment variables"
+
+## WORKFLOWS
+workflows:
+  code_review:
+    steps:
+      - "Check for Zsh violations (sed/awk/python where Zsh would work)"
+      - "Verify Ruby style (frozen strings, keyword args, etc.)"
+      - "Ensure Rails conventions followed"
+      - "Look for security issues"
+      - "Check performance considerations"
+      - "Suggest improvements gently with explanations"
+
+  refactoring:
+    steps:
+      - "Ensure comprehensive tests exist and pass"
+      - "Make one logical change at a time"
+      - "Verify tests still pass after each change"
+      - "Commit with clear, descriptive messages"
+      - "Keep codebase working at all times"
+
+  debugging:
+    steps:
+      - "Reproduce issue consistently"
+      - "Add strategic logging or use debugger"
+      - "Isolate problematic code"
+      - "Fix root cause, not symptoms"
+      - "Test fix thoroughly"
+      - "Document cause and solution"
+
+  new_feature:
+    steps:
+      - "Write failing tests defining desired behavior"
+      - "Implement minimum code to pass tests"
+      - "Refactor for clarity and maintainability"
+      - "Document feature and usage"
+      - "Consider edge cases and errors"
+
+## COMMUNICATION PREFERENCES
+communication:
+  when_helping_me:
+    - "Be direct: 'This violates principle X because...'"
+    - "Show examples: 'Instead of A, do B because...'"
+    - "Explain tradeoffs: 'Option 1 is simpler but option 2...'"
+    - "Be respectful of time: Concise over comprehensive"
+    - "Acknowledge context: 'Given this is a business plan...'"
+    - "Provide reasoning: 'I'm suggesting this because...'"
+
+  what_i_provide:
+    - "Clear problem statements and goals"
+    - "Relevant code snippets or file contents"
+    - "Context about project and environment"
+    - "What I've already tried"
+    - "Constraints or requirements"
+
+  what_i_expect:
+    - "Principles-based suggestions tied to this document"
+    - "Code examples when helpful"
+    - "Explanations of why something should change"
+    - "Respect for code that's already working"
+    - "Consideration of specific project type"
+
+## PRACTICAL EXAMPLES
+examples:
+  shell_script_fix:
+    before: |
+      total_lines=$(wc -l < data.txt)
+      first_10=$(head -n 10 data.txt)
+      cleaned=$(echo "$first_10" | sed 's/foo/bar/g')
+    after: |
+      total_lines=${#lines[@]}
+      first_10=${lines[1,10]}
+      cleaned=${first_10//foo/bar}
+
+  ruby_method_improvement:
+    before: |
+      def create_user(name, email, admin=false, notifications=true)
+        # 20 lines of complex logic
+      end
+    after: |
+      def create_user(name:, email:, admin: false, notifications: true)
+        validate_parameters(name, email)
+        user = build_user(name, email, admin)
+        set_preferences(user, notifications)
+        save_and_notify(user)
+      end
+
+  rails_controller:
+    instead_of: |
+      if @user.admin?
+        if @user.update(user_params)
+          redirect_to users_path
+        end
+      end
+    suggest: |
+      @user.update_as_admin(user_params)
+      # In User model:
+      def update_as_admin(attributes)
+        return false unless admin?
+        update(attributes)
+      end
+
+  html_css_business_plan:
+    semantic_html: |
+      <header>...</header>
+      <main>...</main>
+      <footer>...</footer>
+    accessible_css: |
+      @media print {
+        .no-print { display: none; }
+        .page-break { page-break-before: always; }
+      }
+      
+      :root {
+        --primary-color: #1a5fb4;
+        --spacing-unit: 8px;
+      }
+
+  openbsd_service:
+    instead_of: |
+      #!/bin/bash
+      sudo systemctl restart myapp
+    use: |
+      #!/usr/bin/env zsh
+      doas rcctl restart myapp
+
+## REMINDERS FOR LLMS
+reminders:
+  do:
+    - "Reference specific principles when suggesting changes"
+    - "Provide code examples when helpful"
+    - "Ask clarifying questions if uncertain"
+    - "Respect that working code has value"
+    - "Consider project type when making suggestions"
+    - "Explain benefits of suggested changes"
+
+  avoid:
+    - "Making changes without understanding context"
+    - "Assuming I want perfection over pragmatism"
+    - "Suggesting complete rewrites without incremental path"
+    - "Overwhelming with too many suggestions at once"
+    - "Being dogmatic when context suggests otherwise"
+
+  when_unsure:
+    - "Preserve existing functionality as default"
+    - "Ask for clarification on goals or constraints"
+    - "Suggest smallest, safest change possible"
+    - "Explain reasoning and any assumptions"
+    - "Offer multiple options if appropriate"
+
+## SPECIAL CASES
+special_cases:
+  business_plans_with_visualizations:
+    - "Inline CSS and JavaScript acceptable for single-file HTML"
+    - "Use CSS variables at top for consistency"
+    - "Always include print stylesheets"
+    - "Comment complex JavaScript"
+    - "Include data tables for accessibility"
+
+  legacy_code:
+    - "Understand why code exists before changing"
+    - "Add tests before significant changes"
+    - "Make small, safe improvements over time"
+    - "Document reasons behind complex or unusual code"
+    - "Preserve working functionality as highest priority"
+
+  performance_optimization:
+    - "Prefer readability and maintainability first"
+    - "Optimize only when measurements show problem"
+    - "Document performance optimizations with comments"
+    - "Consider caching before complex algorithmic changes"
+    - "Developer time often more expensive than CPU time"
+
+## CURRENT PROJECTS
+current_projects:
+  rails_apps:
+    - "User authentication system with profile management"
+    - "E-commerce platform with payment integration"
+    - "Content management system with versioning"
+  
+  business_plans:
+    - "Consulting services business plan (HTML format)"
+    - "SaaS product pitch deck with financial projections"
+  
+  creative_work:
+    - "Poetry collection organization"
+    - "Fiction novel draft and editing"
+  
+  openbsd_tools:
+    - "Server provisioning scripts"
+    - "System monitoring and alerting"
+  
+  ruby_tools:
+    - "Data processing utilities for business analytics"
+    - "CLI tools for project management"
+
+current_focus:
+  primary: "Complete Rails authentication system"
+  secondary: "Business plan for consulting services"
+
+## VERSION HISTORY
+version_history:
+  "72.0.0": "Complete rewrite in pure English, simplified structure"
+  "71.x.x": "Complex framework with auto-iteration, embedded scripts"
+  "70.x.x": "Added Ruby beauty principles and Rails doctrine"
+  "69.x.x": "Initial collection of preferences and principles"
+
+---
+final_notes: |
+  These are guidelines to inform good decisions, not rigid rules.
+  Context matters, pragmatism matters, working software matters most.
+  
+  When in doubt: Preserve what works, improve incrementally.
+  
+  Thank you for helping me build better software and create better documents.
+```
+
+# Grok 4.5
+```yml
+# master.yml - My Personal Development Principles
+version: "74.0.0"
+last_updated: "2025-12-19"
+purpose: "Guide LLM assistance for my personal projects and creative work"
+## CORE PHILOSOPHY
+philosophy:
+  golden_rule: "Preserve working code, then improve it"
+  tone: "Pragmatic, not dogmatic. Aspirational goals, not hard gates."
+ 
+  my_projects:
+    - "Ruby on Rails with Hotwire/Stimulus for web applications"
+    - "Large HTML documents with data visualizations"
+    - "Poetry, fiction, experimental writing"
+    - "Zsh scripts and tools for OpenBSD"
+    - "Standalone Ruby scripts and utilities"
+## HOW TO USE THIS FILE
+instructions_for_llms: |
+  When assisting me:
+  1. Read this entire file first
+  2. Apply these principles when reviewing or writing code
+  3. Ask for clarification when uncertain
+  4. Always preserve existing functionality
+  5. Explain your reasoning when suggesting changes
+ 
+  Communication style:
+  - Be concise but thorough
+  - Use examples when helpful
+  - Assume I'm competent but appreciate reminders
+## DEVELOPMENT PRINCIPLES (in priority order)
+principles:
+  preserve_working_code:
+    description: "Never break existing functionality without good reason"
+    examples:
+      - "Add tests before refactoring critical code"
+      - "Make small, incremental changes"
+      - "Understand why code exists before changing it"
+  zsh_native_over_external:
+    description: "Use Zsh built-ins instead of external commands"
+    why: "Fewer dependencies, better performance, easier reasoning"
+    replacements:
+      "sed 's/foo/bar/g'": "${variable//foo/bar}"
+      "awk '{print $2}'": "${${(s: :)line}[2]}"
+      "wc -l": "${#lines[@]}"
+      "head -n 10": "${lines[1,10]}"
+      "tail -n 5": "${lines[-5,-1]}"
+      "tr '[:upper:]' '[:lower:]'": "${(L)variable}"
+      "uniq": "unique_items=(${(u)array})"
+  ruby_style:
+    preferences:
+      - "Use # frozen_string_literal: true at file top"
+      - "Keyword arguments for methods with 2+ parameters"
+      - "Safe navigation operator (&.) for nil checks"
+      - "Methods under 10 lines when possible"
+      - "Tell, don't ask: Tell objects what to do"
+      - "String interpolation over concatenation"
+      - "Blocks: {} for single-line, do/end for multi-line"
+  rails_conventions:
+    preferences:
+      - "Follow Rails conventions (reduces decisions)"
+      - "Use Hotwire (Turbo + Stimulus) over heavy JS"
+      - "Start with monolith, extract services only when needed"
+      - "Write beautiful, expressive, maintainable code"
+      - "Optimize for programmer happiness"
+  openbsd_environment:
+    development: "Windows with WSL2 or macOS, both with Zsh"
+    production: "OpenBSD 7.6+ for servers and tools"
+    native_tools:
+      "rcctl": "service management (not systemd)"
+      "doas": "privilege escalation (not sudo)"
+      "pkg_add": "package management"
+      "pf": "firewall configuration"
+      "syspatch": "security updates"
+  security_fundamentals:
+    rules:
+      - "Validate all external input"
+      - "Use principle of least privilege"
+      - "Never hardcode secrets in code"
+      - "Keep dependencies updated"
+      - "Use defense in depth"
+      - "Log security-relevant events"
+  html_css_documents:
+    guidelines:
+      - "Use semantic HTML elements"
+      - "CSS in separate files, but inline acceptable for single files"
+      - "Design for accessibility from the start"
+      - "Include print-friendly styles"
+      - "Use CSS Grid and Flexbox, not floats for layout"
+      - "Define colors/spacing/fonts with CSS variables"
+      - "Organize CSS by component, not property type"
+  document_clarity:
+    guidelines:
+      - "Keep related information together"
+      - "Most important information first"
+      - "Be concise but complete"
+      - "Use consistent formatting"
+      - "Omit needless words"
+      - "Clear hierarchy (H1, H2, H3)"
+## PROJECT-SPECIFIC GUIDELINES
+project_guidelines:
+  rails_projects:
+    file_structure: "Follow standard Rails conventions"
+    testing: "RSpec for unit tests, system tests for UI"
+    database: "PostgreSQL preferred, SQLite for small projects"
+    background_jobs: "Solid Queue or Sidekiq"
+    frontend: "Hotwire (Turbo + Stimulus) preferred"
+    authentication: "Devise or built-in has_secure_password"
+    file_uploads: "Active Storage with local disk or S3"
+    api_design: "JSON API with versioning if needed"
+  business_plans:
+    structure: "Executive summary first, then details"
+    format: "Single HTML file with embedded CSS/JS acceptable"
+    charts: "Chart.js or similar, include accessible data tables"
+    print: "Test print layout, include page breaks"
+    branding: "Consistent colors, fonts, styling"
+    sections: "Problem, solution, market, team, financials, timeline"
+    data_viz: "Prefer D3.js for interactive charts over Chart.js when interactivity needed; always include alt text and data tables"
+  creative_writing:
+    format: "Markdown or plain text"
+    organization: "Chapter files in folders, consistent naming"
+    metadata: "YAML frontmatter for titles, dates, tags"
+    backup: "Version control (Git) for drafts"
+    structure: "Outline first, then fill in"
+    tools: "Use Git for version control; Markdown previews with tools like Grip or VS Code"
+  openbsd_tools:
+    shell: "Zsh exclusively (not bash or sh)"
+    scripts: "Pure Zsh when possible, minimal dependencies"
+    permissions: "Least privilege, doas not sudo"
+    logging: "syslog or ~/.log/ directory with rotation"
+  ruby_tools:
+    structure: "Gem-like for complex tools, simple scripts for simple tasks"
+    dependencies: "Minimize external gems, use stdlib when possible"
+    cli: "OptionParser for command-line arguments"
+    configuration: "YAML or environment variables"
+## WORKFLOWS
+workflows:
+  common_steps:
+    - "Learn: Review outcomes, update principles if needed"
+  code_review:
+    steps:
+      - "Check for Zsh violations (sed/awk/python where Zsh would work)"
+      - "Verify Ruby style (frozen strings, keyword args, etc.)"
+      - "Ensure Rails conventions followed"
+      - "Look for security issues"
+      - "Check performance considerations"
+      - "Suggest improvements gently with explanations"
+  refactoring:
+    steps:
+      - "Ensure comprehensive tests exist and pass"
+      - "Make one logical change at a time"
+      - "Verify tests still pass after each change"
+      - "Commit with clear, descriptive messages"
+      - "Keep codebase working at all times"
+  debugging:
+    steps:
+      - "Reproduce issue consistently"
+      - "Add strategic logging or use debugger"
+      - "Isolate problematic code"
+      - "Fix root cause, not symptoms"
+      - "Test fix thoroughly"
+      - "Document cause and solution"
+  new_feature:
+    steps:
+      - "Write failing tests defining desired behavior"
+      - "Implement minimum code to pass tests"
+      - "Refactor for clarity and maintainability"
+      - "Document feature and usage"
+      - "Consider edge cases and errors"
+  post_deploy:
+    steps:
+      - "Collect metrics (perf, errors)"
+      - "Analyze"
+      - "Refine principles or code"
+  versioning:
+    steps:
+      - "Edit file"
+      - "Increment version minor/patch"
+      - "Add entry to version_history"
+      - "Commit with semantic message"
+## COMMUNICATION PREFERENCES
+communication:
+  when_helping_me:
+    - "Be direct: 'This violates principle X because...'"
+    - "Show examples: 'Instead of A, do B because...'"
+    - "Explain tradeoffs: 'Option 1 is simpler but option 2...'"
+    - "Be respectful of time: Concise over comprehensive"
+    - "Acknowledge context: 'Given this is a business plan...'"
+    - "Provide reasoning: 'I'm suggesting this because...'"
+  what_i_provide:
+    - "Clear problem statements and goals"
+    - "Relevant code snippets or file contents"
+    - "Context about project and environment"
+    - "What I've already tried"
+    - "Constraints or requirements"
+  what_i_expect:
+    - "Principles-based suggestions tied to this document"
+    - "Code examples when helpful"
+    - "Explanations of why something should change"
+    - "Respect for code that's already working"
+    - "Consideration of specific project type"
+## PRACTICAL EXAMPLES
+examples:
+  shell_script_fix:
+    before: |
+      total_lines=$(wc -l < data.txt)
+      first_10=$(head -n 10 data.txt)
+      cleaned=$(echo "$first_10" | sed 's/foo/bar/g')
+    after: |
+      total_lines=${#lines[@]}
+      first_10=${lines[1,10]}
+      cleaned=${first_10//foo/bar}
+  ruby_method_improvement:
+    before: |
+      def create_user(name, email, admin=false, notifications=true)
+        # 20 lines of complex logic
+      end
+    after: |
+      def create_user(name:, email:, admin: false, notifications: true)
+        validate_parameters(name, email)
+        user = build_user(name, email, admin)
+        set_preferences(user, notifications)
+        save_and_notify(user)
+      end
+  rails_controller:
+    instead_of: |
+      if @user.admin?
+        if @user.update(user_params)
+          redirect_to users_path
+        end
+      end
+    suggest: |
+      @user.update_as_admin(user_params)
+      # In User model:
+      def update_as_admin(attributes)
+        return false unless admin?
+        update(attributes)
+      end
+  html_css_business_plan:
+    semantic_html: |
+      <header>...</header>
+      <main>...</main>
+      <footer>...</footer>
+    accessible_css: |
+      @media print {
+        .no-print { display: none; }
+        .page-break { page-break-before: always; }
+      }
+     
+      :root {
+        --primary-color: #1a5fb4;
+        --spacing-unit: 8px;
+      }
+  openbsd_service:
+    instead_of: |
+      #!/bin/bash
+      sudo systemctl restart myapp
+    use: |
+      #!/usr/bin/env zsh
+      doas rcctl restart myapp
+## REMINDERS FOR LLMS
+reminders:
+  do:
+    - "Reference specific principles when suggesting changes"
+    - "Provide code examples when helpful"
+    - "Ask clarifying questions if uncertain"
+    - "Respect that working code has value"
+    - "Consider project type when making suggestions"
+    - "Explain benefits of suggested changes"
+  avoid:
+    - "Making changes without understanding context"
+    - "Assuming I want perfection over pragmatism"
+    - "Suggesting complete rewrites without incremental path"
+    - "Overwhelming with too many suggestions at once"
+    - "Being dogmatic when context suggests otherwise"
+  when_unsure:
+    - "Preserve existing functionality as default"
+    - "Ask for clarification on goals or constraints"
+    - "Suggest smallest, safest change possible"
+    - "Explain reasoning and any assumptions"
+    - "Offer multiple options if appropriate"
+  when_to_break_rules:
+    - "Performance critical: Allow awk/sed if Zsh too slow, but justify and profile"
+    - "Legacy integration: Tolerate banned tools in isolated modules"
+    - "One-off scripts: Pragmatism over purity if not production"
+## SPECIAL CASES
+special_cases:
+  business_plans_with_visualizations:
+    - "Inline CSS and JavaScript acceptable for single-file HTML"
+    - "Use CSS variables at top for consistency"
+    - "Always include print stylesheets"
+    - "Comment complex JavaScript"
+    - "Include data tables for accessibility"
+  legacy_code:
+    - "Understand why code exists before changing"
+    - "Add tests before significant changes"
+    - "Make small, safe improvements over time"
+    - "Document reasons behind complex or unusual code"
+    - "Preserve working functionality as highest priority"
+  performance_optimization:
+    - "Prefer readability and maintainability first"
+    - "Optimize only when measurements show problem"
+    - "Document performance optimizations with comments"
+    - "Consider caching before complex algorithmic changes"
+    - "Developer time often more expensive than CPU time"
+## CURRENT PROJECTS
+current_projects:
+  rails_apps:
+    - "User authentication system with profile management"
+    - "E-commerce platform with payment integration"
+    - "Content management system with versioning"
+ 
+  business_plans:
+    - "Consulting services business plan (HTML format)"
+    - "SaaS product pitch deck with financial projections"
+ 
+  creative_work:
+    - "Poetry collection organization"
+    - "Fiction novel draft and editing"
+ 
+  openbsd_tools:
+    - "Server provisioning scripts"
+    - "System monitoring and alerting"
+ 
+  ruby_tools:
+    - "Data processing utilities for business analytics"
+    - "CLI tools for project management"
+current_focus:
+  primary: "Complete Rails authentication system"
+  secondary: "Business plan for consulting services"
+## VERSION HISTORY
+version_history:
+  "74.0.0": "Reduced duplication by hoisting common 'Learn' step in workflows; self-audit showed prior duplication at 0.0746"
+  "73.0.0": "Added versioning workflow, feedback loops, expanded creative sections, self-audit, edge case handling per Grok suggestions"
+  "72.0.0": "Complete rewrite in pure English, simplified structure"
+  "71.x.x": "Complex framework with auto-iteration, embedded scripts"
+  "70.x.x": "Added Ruby beauty principles and Rails doctrine"
+  "69.x.x": "Initial collection of preferences and principles"
+## SELF AUDIT
+self_audit:
+  script: |
+    # Zsh script to check metrics
+    file="master.yml"
+    lines=(${(f)"$(< $file)"})
+    line_count=${#lines}
+    print "Lines: $line_count"
+    # Rough duplication check
+    unique_lines=(${(u)lines})
+    unique_count=${#unique_lines}
+    duplication=$((1.0 - unique_count / line_count))
+    print "Duplication ratio: $duplication"
+    # Principle adherence: manual review for now
+  targets:
+    line_count_soft_max: 800
+    duplication_max: 0.05
+    clarity_min: 0.95
+final_notes: |
+  These are guidelines to inform good decisions, not rigid rules.
+  Context matters, pragmatism matters, working software matters most.
+ 
+  When in doubt: Preserve what works, improve incrementally.
+ 
+  Thank you for helping me build better software and create better documents.
+  ```

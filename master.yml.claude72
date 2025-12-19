@@ -1,0 +1,294 @@
+# master.yml — LLM Configuration
+# Version: 72.1.0
+
+meta:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  philosophy: pragmatic development, token efficiency, zero sprawl
+  canonical_path: ~/pub/master.yml
+
+stack:
+  languages: [ruby, zsh]
+  framework: Rails 8+ with Solid stack (Queue, Cache, Cable)
+  os: OpenBSD 7.6+
+  shell: zsh (ksh acceptable)
+  forbidden:
+    tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+    rationale: use zsh parameter expansion, doas, rcctl instead
+
+communication:
+  brevity: extreme
+  rationale: user has vision challenges
+  formatting:
+    banned: [decorations, ascii boxes, excessive headers, ornamental separators]
+    lists: only when essential, prefer prose
+  comments: preserve existing, add only for non-obvious logic
+  success_pattern: silent — report only failures or requested output
+
+file_operations:
+  anti_sprawl: true
+  banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, readme.md, changelog.md]
+  mandate: edit existing files directly
+  single_source: information lives in ONE canonical location
+  consolidate: one well-organized file over many fragments
+
+principles:
+  priority_0_non_negotiable:
+    zsh_native_first:
+      rule: pure parameter expansion, no external forks
+      why: single grammar, zero process overhead, token efficiency
+    
+    openbsd_native:
+      rule: base system tools only, no GNU alternatives
+      why: reduced attack surface, audited code, consistency
+    
+    preserve_then_improve:
+      rule: never break working code
+      why: golden rule — stability before features
+
+  priority_1_structural:
+    chestertons_fence: understand before removing
+    pareto: 80% value from 20% effort
+    galls_law: complex systems evolve from simple ones
+    occams_razor: simpler solution usually correct
+
+  priority_2_code_quality:
+    single_responsibility: one reason to change
+    small_functions: under 10 lines ideal, max 20
+    meaningful_names: names reveal intent
+    dry: single source of truth
+    kiss: no unnecessary complexity
+    yagni: don't build what you don't need
+    tell_dont_ask: tell objects what to do, don't query then act
+    boy_scout: leave code cleaner than found
+    stepdown: most important code first, details below
+    law_of_demeter: talk only to immediate collaborators
+
+  priority_3_solid:
+    S: (see single_responsibility above)
+    O: open for extension, closed for modification
+    L: subtypes substitutable for base types
+    I: many specific interfaces over one general
+    D: depend on abstractions, not concretions
+
+  priority_4_security:
+    least_privilege: minimum permissions required
+    defense_in_depth: multiple security layers
+    validate_input: never trust external data
+    
+  priority_5_testing:
+    test_pyramid: many unit, some integration, few e2e
+    test_isolation: independent, no shared state
+    measure_first: profile before optimizing
+
+ruby:
+  frozen_string_literal: true always
+  keyword_arguments: for methods with 2+ params
+  safe_navigation: "&." over nil checks
+  string_interpolation: "#{}" over concatenation
+  blocks: "{}" for one-line, "do/end" for multi-line
+  small_methods: extract till you drop
+  structure: public → private → implementation (see stepdown principle)
+
+rails:
+  doctrine:
+    convention_over_configuration: sensible defaults
+    programmer_happiness: optimize for developer joy
+    sharp_knives: trust developers with power
+    integrated_systems: use Rails stack, avoid frankenstack
+    monolith_first: extract services when team >15
+    beautiful_code: readable, maintainable, expressive
+  
+  stack:
+    queues: Solid Queue
+    cache: Solid Cache  
+    websockets: Solid Cable
+    frontend: Hotwire, Turbo, Stimulus
+    avoid: React/Vue/Angular unless required
+
+html_css:
+  semantic_html: elements for meaning, not appearance
+  no_divitis: max 2 wrapper divs
+  modern_layout: flexbox, grid, container queries — no floats
+  css_variables: define colors/spacing/fonts in :root
+  mobile_first: base styles mobile, @media for desktop
+  accessibility: aria labels, keyboard nav, 4.5:1 contrast
+
+ui_heuristics:
+  visibility: keep users informed via feedback
+  match_real_world: speak user's language
+  user_control: allow undo, confirm destructive actions
+  consistency: same action = same outcome
+  error_prevention: better than error messages
+  recognition_over_recall: show options, don't require memory
+  flexibility: shortcuts for experts, simple for novices
+  minimalist: only relevant information
+
+zsh:
+  case:
+    lowercase: "${(L)var}"
+    uppercase: "${(U)var}"
+  
+  substitution:
+    replace_all: "${var//pattern/replacement}"
+    remove_prefix: "${var#pattern}"
+    remove_suffix: "${var%pattern}"
+    remove_crlf: "${var//$'\\r'/}"
+  
+  whitespace:
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+  
+  arrays:
+    split: "arr=( ${(s:delim:)var} )"
+    join: "joined=${(j:,:)arr}"
+    unique: "unique=( ${(u)arr} )"
+    sort_asc: "sorted=( ${(o)arr} )"
+    sort_desc: "sorted=( ${(O)arr} )"
+    filter_match: "matches=( ${(M)arr:#*pattern*} )"
+    filter_exclude: "non=( ${arr:#*pattern*} )"
+    length: "${#arr}"
+    slice_first: "${arr[1,10]}"
+    slice_last: "${arr[-5,-1]}"
+    field: "${${(s:,:)line}[4]}"
+  
+  globs:
+    recursive: "**/*.rb"
+    no_error: "**/*.rb(N)"
+    files_only: "**/*.rb(N.)"
+    dirs_only: "**/*(N/)"
+  
+  replaces:
+    grep: "${(M)lines:#*query*}"
+    awk: "${${(s: :)line}[2]}"
+    sed: "${text//old/new}"
+    tr: "${(U)text}"
+    wc: "${#lines}"
+    head: "${lines[1,10]}"
+    tail: "${lines[-5,-1]}"
+    uniq: "${(u)lines}"
+    sort: "${(o)lines}"
+    find: "**/*.ext(N.)"
+
+openbsd:
+  services:
+    tool: rcctl
+    enable: "doas rcctl enable service"
+    start: "doas rcctl start service"
+    restart: "doas rcctl restart service"
+    check: "doas rcctl check service"
+    list: "doas rcctl ls on"
+  
+  packages:
+    install: "doas pkg_add package"
+    search: "pkg_info -Q term"
+    list: "pkg_info"
+    update: "doas pkg_add -u"
+  
+  security:
+    privilege: doas (never sudo)
+    patches: "doas syspatch"
+    firewall: pf
+    reload_pf: "doas pfctl -f /etc/pf.conf"
+    show_rules: "doas pfctl -s rules"
+
+token_economics:
+  core_argument: |
+    Zsh parameter expansion vs external tools:
+    - Single grammar vs multiple (sed/awk/tr each have syntax)
+    - Zero forks vs N process spawns
+    - Local reasoning vs cross-process state
+    - Surgical edits vs full rewrites on iteration
+  
+  cost_multiplier:
+    external_pipeline: 3-5x tokens (explain, debug, iterate)
+    zsh_native: 1x tokens
+  
+  iteration_savings:
+    external: modification requires full rewrite
+    zsh: one flag change, surgical edit
+    
+  runtime:
+    external: fork + exec + pipe buffer per command
+    zsh: in-memory, zero-copy
+    speedup: 10-50x on loops
+
+enforcement:
+  gates:
+    description: must pass, block violations
+    items:
+      - yaml_parse_errors: 0
+      - banned_tools_violations: 0
+      - tests_pass_rate: 1.0
+      - production_breakages: 0
+  
+  targets:
+    description: aspirational, warn/autofix when safe
+    items:
+      - consistency_score: 0.98
+      - coverage: 0.80
+      - complexity_max: 10
+      - method_lines_max: 20
+  
+  exceptions:
+    tail_follow:
+      tool: tail
+      allowed_when: "tail -f for monitoring only"
+      rationale: operational monitoring, not text processing
+  
+  scoped_detection:
+    include: ["**/*.zsh", "**/*.rb", "scripts/**", ".github/workflows/**"]
+    exclude: ["**/*.md", "**/*.yml", "docs/**"]
+
+projects:
+  rails_apps:
+    testing: RSpec for unit, system tests for UI
+    database: PostgreSQL preferred, SQLite for small
+    background: Solid Queue
+    frontend: Hotwire (Turbo + Stimulus)
+    auth: Devise or has_secure_password
+  
+  business_plans:
+    format: single HTML with embedded CSS/JS acceptable
+    structure: executive summary first, then details
+    charts: Chart.js with accessible data tables
+    print: test layout, include page breaks
+  
+  creative_writing:
+    format: Markdown or plain text
+    organization: chapter files in folders
+    metadata: YAML frontmatter for titles, dates
+    backup: Git for version control
+
+large_html_documents:
+  rationale: business plans, presentations require inline CSS/JS
+  
+  inline_css:
+    organization: CSS variables → resets → layout → components
+    variables: "define colors/spacing/fonts in :root"
+    layout: flexbox, grid, container queries — no floats
+    print: "@media print with page breaks, hide non-essential"
+  
+  inline_js:
+    production: minified, single line, no whitespace
+    development: readable, commented, spaced
+    structure: config → utils → classes → init → events
+    safety: check element existence before manipulation
+    cleanup: track timers, clear on beforeunload
+
+workflow:
+  assess: understand current state
+  plan: smallest direct path
+  execute: build then refactor
+  verify: ensure no regressions
+
+rules:
+  always:
+    - keep codebase functional
+    - edit files directly
+    - use ruby/zsh appropriately
+    - follow project conventions
+  
+  never:
+    - create analysis/summary files
+    - break without immediate fix
+    - use banned tools
+    - add ornamental comments

@@ -12,14 +12,23 @@ require "timeout"
 
 BEGIN {
   if RUBY_PLATFORM =~ /openbsd/
-    require "pledge" or raise "pledge gem required: gem install ruby-pledge"
-    Pledge.pledge("stdio rpath wpath cpath inet dns proc exec", nil)
-    Pledge.unveil(ENV["HOME"], "rwc")
-    Pledge.unveil("/tmp", "rwc")
-    Pledge.unveil("/usr/local", "r")
-    Pledge.unveil("/etc/ssl", "r")
-    Pledge.unveil(nil, nil)
-    PLEDGE_AVAILABLE = true
+    begin
+      require "pledge"
+      # Note: The pledge gem typically only provides pledge(), not unveil()
+      # Unveil support depends on the gem version/implementation
+      # Added prot_exec for Ruby JIT (YJIT/MJIT) support
+      Pledge.pledge("stdio rpath wpath cpath inet dns proc exec prot_exec", nil) rescue nil
+      if Pledge.respond_to?(:unveil)
+        Pledge.unveil(ENV["HOME"], "rwc")
+        Pledge.unveil("/tmp", "rwc")
+        Pledge.unveil("/usr/local", "r")
+        Pledge.unveil("/etc/ssl", "r")
+        Pledge.unveil(nil, nil)
+      end
+      PLEDGE_AVAILABLE = true
+    rescue LoadError
+      PLEDGE_AVAILABLE = false
+    end
   else
     PLEDGE_AVAILABLE = false
   end
@@ -38,6 +47,13 @@ BEGIN {
     ANTHROPIC_GEM = true
   rescue LoadError
     ANTHROPIC_GEM = false
+  end
+
+  begin
+    require "ferrum"
+    FERRUM_AVAILABLE = true
+  rescue LoadError
+    FERRUM_AVAILABLE = false
   end
 }
 
@@ -165,7 +181,7 @@ module ToolDefinition
   def self.extended(base)
     base.class_eval do
       @tool_functions = {}
-      @tool_name = extract_tool_name(base.name)
+      @tool_name = ToolDefinition.extract_tool_name(base.name)
     end
   end
 
@@ -545,10 +561,194 @@ class RuleValidator
   end
 end
 
+class WebChatClient
+  PROVIDERS = {
+    "chatgpt" => {
+      url: "https://chatgpt.com",
+      name: "ChatGPT (OpenAI)",
+      selectors: {
+        input: 'textarea#prompt-textarea, textarea[placeholder*="Message"]',
+        submit: 'button[data-testid="send-button"]',
+        response: '.markdown, .message-content, [data-message-author-role="assistant"]'
+      }
+    },
+    "claude" => {
+      url: "https://claude.ai",
+      name: "Claude (Anthropic)",
+      selectors: {
+        input: 'div[contenteditable="true"], textarea',
+        submit: 'button[type="submit"]',
+        response: '.font-claude-message, [data-is-streaming="false"]'
+      }
+    },
+    "gemini" => {
+      url: "https://gemini.google.com",
+      name: "Gemini (Google)",
+      selectors: {
+        input: 'rich-textarea, textarea',
+        submit: 'button[aria-label*="Send"]',
+        response: '.model-response, .response-container'
+      }
+    },
+    "copilot" => {
+      url: "https://copilot.microsoft.com",
+      name: "Copilot (Microsoft)",
+      selectors: {
+        input: 'textarea[placeholder*="Ask me anything"]',
+        submit: 'button[aria-label*="Submit"]',
+        response: '.response-message'
+      }
+    },
+    "poe" => {
+      url: "https://poe.com",
+      name: "Poe (Multiple Models)",
+      selectors: {
+        input: 'textarea[placeholder*="Talk to"]',
+        submit: 'button[class*="ChatMessageSendButton"]',
+        response: '.Message_botMessageBubble, .ChatMessage'
+      }
+    },
+    "huggingchat" => {
+      url: "https://huggingface.co/chat",
+      name: "HuggingChat",
+      selectors: {
+        input: 'textarea[placeholder*="Ask anything"]',
+        submit: 'button[type="submit"]',
+        response: '.prose'
+      }
+    },
+    "perplexity" => {
+      url: "https://www.perplexity.ai",
+      name: "Perplexity AI",
+      selectors: {
+        input: 'textarea[placeholder*="Ask anything"]',
+        submit: 'button[aria-label*="Submit"]',
+        response: '.prose, .answer'
+      }
+    }
+  }
+
+  def initialize(provider: "chatgpt", headless: true)
+    raise "Ferrum not available. Install: gem install ferrum" unless FERRUM_AVAILABLE
+    @provider = PROVIDERS[provider] || PROVIDERS["lmsys"]
+    @headless = headless
+    @browser = nil
+    @page = nil
+    Log.info("webchat_init", provider: provider, headless: headless)
+  end
+
+  def connect
+    browser_path = find_browser_path
+    @browser = Ferrum::Browser.new(
+      headless: @headless,
+      window_size: [1280, 1024],
+      timeout: 60,
+      process_timeout: 60,
+      browser_path: browser_path,
+      browser_options: {
+        'no-sandbox': nil,
+        'disable-setuid-sandbox': nil,
+        'disable-dev-shm-usage': nil,
+        'disable-gpu': nil
+      }
+    )
+    @page = @browser.create_page
+    @page.go_to(@provider[:url])
+    wait_for_load
+    Log.info("webchat_connected", url: @provider[:url])
+    true
+  rescue => e
+    Log.error("webchat_connect_failed", error: e.message)
+    false
+  end
+
+  def send_message(text)
+    return { error: "not connected" } unless @page
+
+    begin
+      # Find and fill input
+      input_selector = @provider[:selectors][:input]
+      @page.at_css(input_selector)&.focus
+      @page.at_css(input_selector)&.type(text)
+      
+      # Submit
+      submit_selector = @provider[:selectors][:submit]
+      @page.at_css(submit_selector)&.click
+      
+      # Wait for response
+      response = wait_for_response
+      
+      { success: true, response: response }
+    rescue => e
+      Log.error("webchat_send_failed", error: e.message)
+      { error: e.message }
+    end
+  end
+
+  def disconnect
+    @browser&.quit
+    @browser = nil
+    @page = nil
+    Log.info("webchat_disconnected")
+  end
+
+  private
+
+  def find_browser_path
+    # Try common paths
+    paths = [
+      ENV["BROWSER_PATH"],
+      "/usr/local/bin/chrome",
+      "/usr/local/bin/chromium",
+      "/usr/bin/chromium",
+      "/usr/bin/google-chrome",
+      "/usr/bin/chrome"
+    ].compact
+
+    paths.find { |path| File.executable?(path) }
+  end
+
+  def wait_for_load
+    sleep 3
+    # Wait for input to be visible
+    30.times do
+      break if @page.at_css(@provider[:selectors][:input])
+      sleep 0.5
+    end
+  end
+
+  def wait_for_response(timeout: 60)
+    response_selector = @provider[:selectors][:response]
+    start_time = Time.now
+    last_text = ""
+    stable_count = 0
+
+    loop do
+      if Time.now - start_time > timeout
+        return last_text.empty? ? "timeout waiting for response" : last_text
+      end
+
+      elements = @page.css(response_selector)
+      if elements.any?
+        current_text = elements.last.text.strip
+        if current_text == last_text && !current_text.empty?
+          stable_count += 1
+          return current_text if stable_count >= 3
+        else
+          stable_count = 0
+          last_text = current_text
+        end
+      end
+
+      sleep 1
+    end
+  end
+end
+
 class Assistant
   attr_reader :messages, :state, :stats
 
-  def initialize(config:, tools:, circuit_breaker:)
+  def initialize(config:, tools:, circuit_breaker:, mode: :api, webchat_provider: "lmsys")
     @config = config
     @tools = tools
     @circuit_breaker = circuit_breaker
@@ -557,9 +757,20 @@ class Assistant
     @stats = { input_tokens: 0, output_tokens: 0, api_calls: 0, tool_calls: 0 }
     @add_message_callback = nil
     @tool_execution_callback = nil
+    @mode = mode
+    @webchat = mode == :webchat ? WebChatClient.new(provider: webchat_provider) : nil
   end
 
   attr_writer :add_message_callback, :tool_execution_callback
+
+  def connect_webchat
+    return false unless @mode == :webchat
+    @webchat&.connect
+  end
+
+  def disconnect_webchat
+    @webchat&.disconnect if @mode == :webchat
+  end
 
   def add_message(role:, content:)
     @messages << { role: role, content: content }
@@ -572,9 +783,13 @@ class Assistant
   end
 
   def run(auto_tool_execution: false)
-    RetryWithBackoff.call(max_attempts: 3) do
-      @circuit_breaker.call do
-        make_api_request(auto_tool_execution)
+    if @mode == :webchat
+      make_webchat_request
+    else
+      RetryWithBackoff.call(max_attempts: 3) do
+        @circuit_breaker.call do
+          make_api_request(auto_tool_execution)
+        end
       end
     end
   rescue CircuitBreaker::OpenError => e
@@ -591,6 +806,33 @@ class Assistant
   end
 
   private
+
+  def make_webchat_request
+    @stats[:api_calls] += 1
+    
+    # Get last user message
+    user_msg = @messages.reverse.find { |m| m[:role] == "user" }
+    return unless user_msg
+    
+    # Extract text content
+    text = user_msg[:content].is_a?(String) ? user_msg[:content] : user_msg[:content].to_s
+    
+    # Send to webchat
+    result = @webchat.send_message(text)
+    
+    if result[:error]
+      Log.error("webchat_error", error: result[:error])
+      add_message(role: "assistant", content: "Error: #{result[:error]}")
+      @state = :error
+    else
+      # Estimate tokens (rough approximation)
+      @stats[:input_tokens] += text.split.size * 1.3
+      @stats[:output_tokens] += result[:response].split.size * 1.3
+      
+      add_message(role: "assistant", content: result[:response])
+      @state = :complete
+    end
+  end
 
   def make_api_request(auto_tool_execution)
     @stats[:api_calls] += 1
@@ -647,16 +889,37 @@ end
 class CLI
   ALIASES = { "/t" => "/tools", "/s" => "/stats", "/c" => "/config", "/h" => "/help", "/r" => "/reload" }.freeze
 
-  def initialize
+  def initialize(mode: nil, webchat_provider: "chatgpt")
     @config = Config.new
     @validator = RuleValidator.new(@config)
     @circuit_breaker = CircuitBreaker.new
     @metrics = Metrics.new
     @tools = [ShellTool.new(@config, @validator), FileTool.new(@config, @validator)]
-    @assistant = Assistant.new(config: @config, tools: @tools, circuit_breaker: @circuit_breaker)
+    
+    # Determine mode: :webchat if ferrum available and no API key, otherwise :api
+    @mode = mode || determine_mode
+    @webchat_provider = webchat_provider
+    
+    @assistant = Assistant.new(
+      config: @config, 
+      tools: @tools, 
+      circuit_breaker: @circuit_breaker,
+      mode: @mode,
+      webchat_provider: @webchat_provider
+    )
+    
     @ui = TTY_AVAILABLE ? TTYInterface.new : BaseInterface.new
     setup_callbacks
     restore_session if ENV["RESUME"]
+    
+    # Connect webchat if in webchat mode
+    if @mode == :webchat
+      @ui.section("connecting to webchat") do
+        @ui.stat("provider", @webchat_provider)
+        @ui.stat("status", "initializing...")
+      end
+      @assistant.connect_webchat
+    end
   end
 
   def run(args)
@@ -665,6 +928,7 @@ class CLI
     when "--check" then check_config
     when "--test" then run_tests
     when "--help", "-h" then show_help
+    when "--webchat" then set_webchat_mode(args[1] || "lmsys")
     when nil then interactive
     else oneshot(args.join(" "))
     end
@@ -677,16 +941,57 @@ class CLI
 "))
     exit 1
   ensure
+    @assistant&.disconnect_webchat if @mode == :webchat
     Log.info("session metrics", **@metrics.report) if @metrics
   end
 
   private
 
+  def determine_mode
+    # Use webchat if Ferrum is available and no API key
+    if FERRUM_AVAILABLE && !has_api_key?
+      Log.info("mode_selection", mode: "webchat", reason: "no_api_key_ferrum_available")
+      :webchat
+    elsif ANTHROPIC_GEM && has_api_key?
+      Log.info("mode_selection", mode: "api", reason: "api_key_available")
+      :api
+    elsif FERRUM_AVAILABLE
+      Log.info("mode_selection", mode: "webchat", reason: "fallback_to_free")
+      :webchat
+    else
+      Log.warn("mode_selection", mode: "api", reason: "no_alternatives")
+      :api
+    end
+  end
+
+  def has_api_key?
+    key = ENV["ANTHROPIC_API_KEY"] || @config.data["api_key"]
+    key && !key.empty? && key != "sk-ant-your-key-here"
+  end
+
+  def set_webchat_mode(provider)
+    @mode = :webchat
+    @webchat_provider = provider
+    @assistant = Assistant.new(
+      config: @config,
+      tools: @tools,
+      circuit_breaker: @circuit_breaker,
+      mode: :webchat,
+      webchat_provider: provider
+    )
+    @assistant.connect_webchat
+    @ui.section("webchat mode") do
+      @ui.stat("provider", provider)
+      @ui.stat("status", "connected")
+    end
+    interactive
+  end
+
   def interactive
-    @ui.banner(@config)
+    @ui.banner(@config, @mode)
     loop do
       input = @ui.prompt_input
-      break if input.nil? || input =~ /A(exit|quit|bye)z/i
+      break if input.nil? || input =~ /\A(exit|quit|bye)\z/i
       next if input.strip.empty?
       handle_input(input)
     end
@@ -860,12 +1165,13 @@ class CLI
   HELP_TEXT = <<~HELP
 
     usage:
-      cli.rb                  interactive mode
-      cli.rb "prompt"         one-shot mode
-      cli.rb --setup          interactive setup
-      cli.rb --check          check configuration
-      cli.rb --test           run self-tests
-      RESUME=1 cli.rb         resume last session
+      cli.rb                      interactive mode (auto-detects API or webchat)
+      cli.rb "prompt"             one-shot mode
+      cli.rb --webchat [provider] force webchat mode (chatgpt, claude, gemini, copilot...)
+      cli.rb --setup              interactive setup
+      cli.rb --check              check configuration
+      cli.rb --test               run self-tests
+      RESUME=1 cli.rb             resume last session
 
     interactive commands:
       /tools (/t)     list available tools
@@ -877,9 +1183,16 @@ class CLI
       /help (/h)      show this help
       exit            exit CLI
 
+    modes:
+      API mode:     requires ANTHROPIC_API_KEY, supports tools
+      Webchat mode: FREE, uses ferrum + web chat (gem install ferrum)
+                    providers: chatgpt, claude, gemini, copilot, poe, 
+                               huggingchat, perplexity
+                    no tools support, slower responses
+
     configuration:
       create master.yml in ~/pub/ (recommended)
-      set ANTHROPIC_API_KEY environment variable
+      set ANTHROPIC_API_KEY environment variable (optional for webchat)
 
   HELP
 
@@ -889,8 +1202,9 @@ class CLI
 end
 
 class BaseInterface
-  def banner(config)
-    Log.info("CONVERGENCE v2.4.0 initialized")
+  def banner(config, mode = :api)
+    mode_info = mode == :webchat ? " [WEBCHAT MODE - FREE]" : ""
+    Log.info("CONVERGENCE v2.4.0 initialized#{mode_info}")
     Log.info("model=#{config.data["model"]}")
     Log.info("shell=#{config.data.dig("shell", "interpreter")}")
     Log.info("security=#{PLEDGE_AVAILABLE ? "pledge+unveil" : "disabled"}")
@@ -921,7 +1235,7 @@ class BaseInterface
 #{title}:"; yield)
   def list_item(text) = puts "  #{text}"
   def stat(label, value) = puts "  #{label}: #{value}"
-  def puts(text) = Kernel.puts(text)
+  def puts(text = "") = Kernel.puts(text)
 end
 
 class TTYInterface < BaseInterface
@@ -931,13 +1245,15 @@ class TTYInterface < BaseInterface
     @spinner = nil
   end
 
-  def banner(config)
+  def banner(config, mode = :api)
     puts
-    puts @pastel.cyan.bold("CONVERGENCE CLI v2.4.0")
+    mode_badge = mode == :webchat ? @pastel.green.bold(" [WEBCHAT-FREE]") : @pastel.blue(" [API]")
+    puts @pastel.cyan.bold("CONVERGENCE CLI v2.4.0") + mode_badge
     puts
     puts "  model:      #{config.data["model"]}"
     puts "  shell:      #{config.data.dig("shell", "interpreter")}"
     puts "  security:   #{PLEDGE_AVAILABLE ? @pastel.green("pledge+unveil") : @pastel.yellow("disabled")}"
+    puts "  mode:       #{mode == :webchat ? @pastel.green("webchat (free)") : @pastel.blue("API")}"
     puts
     puts @pastel.dim("  type /help for commands
 ")

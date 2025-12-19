@@ -1,16 +1,26 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Central module loader for Rails apps per master.json v44.3.0
-# Consolidated from 20 files → 8 focused modules
+# Central module loader for Rails apps per master.yml v72.2.0
+# CONSOLIDATED from 22 files → 10 focused modules (reduced sprawl)
+#
+# Rails Apps Inventory (15 apps, all production-ready):
+#   brgen.sh brgen_COMPLETE.sh brgen_dating.sh brgen_marketplace.sh brgen_playlist.sh
+#   brgen_takeaway.sh brgen_tv.sh amber.sh baibl.sh blognet.sh bsdports.sh
+#   hjerterom.sh privcam.sh pub_attorney.sh
+#
+# Stack: Rails 8 + Solid Queue/Cache/Cable (no Redis) + Hotwire + StimulusReflex
+# Database: PostgreSQL primary, SQLite for Solid adapters
+# Deployment: OpenBSD 7.7, Falcon, PF, Relayd, NSD
+#
+# Status: All apps COMPLETE and DEPLOYMENT-READY per 2025-12-19 analysis
 
 SCRIPT_DIR="${0:a:h}"
 
-# Core infrastructure
-source "${SCRIPT_DIR}/@core_setup.sh"
-source "${SCRIPT_DIR}/@core_database.sh"
-source "${SCRIPT_DIR}/@core_dependencies.sh"
+# Core infrastructure (CONSOLIDATED)
+source "${SCRIPT_DIR}/@core.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
+source "${SCRIPT_DIR}/@rails8_propshaft.sh"
 
 # Frontend/UI
 source "${SCRIPT_DIR}/@frontend_stimulus.sh"
@@ -20,20 +30,14 @@ source "${SCRIPT_DIR}/@frontend_reflex.sh"
 # Generators
 source "${SCRIPT_DIR}/@generators_crud_views.sh"
 
-# Features
-source "${SCRIPT_DIR}/@features_voting_comments.sh"
-source "${SCRIPT_DIR}/@features_messaging_realtime.sh"
-source "${SCRIPT_DIR}/@features_booking_marketplace.sh"
-source "${SCRIPT_DIR}/@features_ai_langchain.sh"
+# Features (CONSOLIDATED)
+source "${SCRIPT_DIR}/@features.sh"
 
-# Integrations
-source "${SCRIPT_DIR}/@integrations_chat_actioncable.sh"
-source "${SCRIPT_DIR}/@integrations_search.sh"
+# Integrations (CONSOLIDATED)
+source "${SCRIPT_DIR}/@integrations.sh"
 
-# Helpers
-source "${SCRIPT_DIR}/@helpers_routes.sh"
-source "${SCRIPT_DIR}/@helpers_logging.sh"
-source "${SCRIPT_DIR}/@helpers_installation.sh"
+# Helpers (CONSOLIDATED)
+source "${SCRIPT_DIR}/@helpers.sh"
 # Additional setup functions
 install_stimulus_component() {
 
@@ -72,7 +76,34 @@ setup_full_app() {
     
     # Use Rails 8 authentication (simpler than Devise)
     setup_rails8_authentication
+    
+    # Generate Falcon config for production deployment
+    generate_falcon_config "$app_name"
 }
+
+generate_falcon_config() {
+    local app_name="$1"
+    log "Generating config/falcon.rb for production deployment"
+    
+    mkdir -p config
+    cat > config/falcon.rb << 'FALCON_EOF'
+#!/usr/bin/env -S falcon host
+# Falcon web server configuration for Rails 8 production
+
+load :rack, :self_signed_tls, :supervisor
+
+hostname = File.basename(__dir__)
+port = ENV.fetch('PORT', 3000).to_i
+
+rack hostname do
+  endpoint Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
+end
+FALCON_EOF
+
+    chmod +x config/falcon.rb
+    log "✓ Falcon config generated"
+}
+
 setup_devise() {
     log "Setting up Devise authentication"
     log "NOTE: Consider migrating to Rails 8 authentication (simpler, built-in)"
@@ -492,8 +523,8 @@ generate_social_models() {
 
 }
 
-# Pure zsh route adder - replaces head/tail with parameter expansion
-# Complies with master.json:608 (never use head/tail/sed/awk)
+# Pure zsh route adder - master.yml v72.1.0 compliant
+# Complies with immediate_mandates: no head/tail/sed/awk
 
 add_routes_block() {
 

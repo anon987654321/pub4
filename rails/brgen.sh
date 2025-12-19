@@ -24,6 +24,10 @@ install_gem "acts_as_tenant"
 install_gem "pagy"
 install_gem "faker"
 
+# LangChain AI integration
+setup_langchainrb
+setup_langchainrb_rails
+
 bin/rails generate model Follower follower:references followed:references
 bin/rails generate scaffold Listing title:string description:text price:decimal category:string status:string user:references location:string lat:decimal lng:decimal photos:attachments
 bin/rails generate scaffold City name:string subdomain:string country:string city:string language:string favicon:string analytics:string tld:string

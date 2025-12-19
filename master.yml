@@ -367,6 +367,13 @@ projects:
       - "Ruby version ~> 3.3 (not hardcoded 3.3.0)"
       - "Redis removed from Solid Stack apps"
       - "bundle install runs automatically"
+    deployment_issues:
+      generator_missing_falcon_config:
+        issue: "Rails generators didn't create config/falcon.rb"
+        impact: "Apps fail to start - LoadError: cannot load config/falcon.rb"
+        fix: "Added generate_falcon_config() to @shared_functions.sh"
+        location: "setup_full_app() now calls generate_falcon_config()"
+        status: "FIXED 2025-12-19T21:27 - generators now complete"
     
   rails_apps:
     location: ~/pub/rails/

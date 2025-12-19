@@ -1,0 +1,194 @@
+# master.yml v71.6.0
+framework:
+  version: "71.6.0"
+  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+  description: "Self-validating code quality framework"
+  
+  constants:
+    tolerance_ranges:
+      excellent: 0.95
+      good: 0.85
+      acceptable: 0.75
+
+principles:
+  preserve_then_improve:
+    description: "Never break working code"
+    priority: 0
+    applies_to: ["all_code"]
+  
+  chestertons_fence:
+    description: "Understand before removing"
+    priority: 1
+    applies_to: ["refactoring"]
+  
+  single_responsibility:
+    description: "One reason to change"
+    priority: 2
+    applies_to: ["classes", "functions"]
+  
+  dry:
+    description: "Don't repeat yourself"
+    priority: 3
+    applies_to: ["code_quality"]
+  
+  least_privilege:
+    description: "Minimum permissions required"
+    priority: 4
+    applies_to: ["security"]
+  
+  validate_input:
+    description: "Never trust external input"
+    priority: 5
+    applies_to: ["security"]
+  
+  kiss:
+    description: "Keep it simple"
+    priority: 6
+    applies_to: ["design"]
+  
+  meaningful_names:
+    description: "Names reveal intent"
+    priority: 7
+    applies_to: ["readability"]
+  
+  small_functions:
+    description: "Functions under 10 lines ideal"
+    priority: 8
+    applies_to: ["maintainability"]
+  
+  composition_over_inheritance:
+    description: "Prefer composition to inheritance"
+    priority: 9
+    applies_to: ["design"]
+  
+  defense_in_depth:
+    description: "Multiple security layers"
+    priority: 10
+    applies_to: ["security"]
+  
+  test_pyramid:
+    description: "Many unit, some integration, few E2E tests"
+    priority: 11
+    applies_to: ["testing"]
+  
+  working_software:
+    description: "Working software is primary measure"
+    priority: 12
+    applies_to: ["delivery"]
+  
+  boy_scout:
+    description: "Leave code cleaner than you found it"
+    priority: 13
+    applies_to: ["refactoring"]
+  
+  omit_needless_words:
+    description: "Be concise in communication"
+    priority: 14
+    applies_to: ["communication"]
+  
+  stepdown_rule:
+    description: "Most important information first"
+    priority: 15
+    applies_to: ["documentation"]
+  
+  edit_in_place:
+    description: "Edit directly, no analysis files"
+    priority: 16
+    applies_to: ["workflow"]
+
+enforcement:
+  tool_policy:
+    philosophy: "Zsh native first, Ruby for implementation"
+    allowed_tools: ["ruby", "zsh", "git", "grep", "cat", "sort"]
+    
+    zsh_replacements:
+      remove_crlf: "cleaned=${var//$'\\r'/}"
+      lowercase: "lower=${(L)var}"
+      uppercase: "upper=${(U)var}"
+      replace_all: "result=${var//search/replace}"
+      trim_whitespace: "trimmed=${${var##[[:space:]]#}%%[[:space:]]#}"
+      extract_field: "fourth_column=${${(s:,:)line}[4]}"
+      split_string: "arr=( ${(s:delim:)var} )"
+      filter_matches: "matches=( ${(M)arr:#*pattern*} )"
+      unique_elements: "unique=( ${(u)arr} )"
+      first_ten: "${lines[1,10]}"
+      last_five: "${lines[-5,-1]}"
+    
+    banned_tools: ["python", "bash", "sed", "awk", "tr", "wc", "head", "tail", "cut", "find", "sudo"]
+    banned_patterns: ["analysis.md", "summary.md", "todo.md", "report.md"]
+  
+  self_protection:
+    backup_before_modify: true
+    validation_on_edit: true
+    version_increment_required: true
+
+ruby_beauty:
+  frozen_string_literals: true
+  keyword_arguments: true
+  safe_navigation: true
+  small_methods: true
+  tell_dont_ask: true
+
+rails_doctrine:
+  convention_over_configuration: true
+  monolith_first: true
+  beautiful_code: true
+
+file_operations:
+  anti_sprawl: true
+  single_source_truth: true
+  edit_in_place: true
+
+comments:
+  preserve_existing: true
+  add_for_complex_logic: true
+  remove_redundant: true
+
+autofix:
+  enabled: true
+  confidence_threshold: 0.90
+  safe_transformations:
+    whitespace_normalization: true
+    quote_style_consistency: true
+  rollback_on_failure: true
+
+self_validation:
+  protocol:
+    1: "Load framework into memory"
+    2: "Validate against principles"
+    3: "Fix violations immediately"
+    4: "Verify zero violations"
+    5: "Increment version if changed"
+  
+  required_success_rate: 1.0
+  frequency: "on_every_edit"
+  current_status: "PASS"
+
+token_efficiency:
+  current_tokens: "~4,000"
+  target_tokens: "< 5,000"
+  strategies:
+    - "Remove decorative comments"
+    - "Consolidate similar principles"
+    - "Use bullet lists not paragraphs"
+    - "Eliminate meta-commentary"
+    - "Prioritize 80/20 principles"
+
+workflows:
+  edit_in_place:
+    steps:
+      - "Load target file"
+      - "Analyze for improvements"
+      - "Apply changes directly"
+      - "Validate against principles"
+      - "Save if validation passes"
+    
+    banned_outputs: ["analysis.md", "summary.txt", "todo.md", "notes.md"]
+  
+  auto_iteration:
+    max_iterations: 10
+    improvement_threshold: 0.001
+    convergence_criteria:
+      - "Zero principle violations"
+      - "Consistency score > 99%"
+      - "Readability score > 95%"

@@ -96,6 +96,23 @@ class Repligen
     wait(JSON.parse(res.body)["id"], lora ? "RA2 LoRA" : "Flux Pro")
   end
 
+  # === VIDEO EXTENSION ===
+  
+  def extend_video(video_url, prompt, extension_prompt = nil)
+    puts "\n📹 Extending video with Luma Ray 2..."
+    
+    # Luma Ray 2 Extend feature - adds 5-10s per extension
+    res = api(:post, "/models/luma/ray-2/predictions", {
+      input: {
+        prompt: extension_prompt || prompt,
+        extend_video: video_url,
+        aspect_ratio: "16:9"
+      }
+    })
+    
+    wait(JSON.parse(res.body)["id"], "Luma Extend")
+  end
+
   # === VIDEO GENERATION ===
   
   def generate_video(image_url, prompt, duration: 10, model: :hailuo)
