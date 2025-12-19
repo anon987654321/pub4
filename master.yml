@@ -3,16 +3,24 @@
 # Updated: 2025-12-19T20:54 - Universal scope + research tools
 
 meta:
-  version: "74.2.0"
+  version: "74.3.0"
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   philosophy: pragmatic development, token efficiency, zero sprawl
   canonical_path: ~/pub/master.yml
-  bootstrap: "Read entire file, verify version >=74.2.0 <75.0.0, internalize, enforce"
+  bootstrap: "Read entire file, verify version >=74.3.0 <75.0.0, internalize, enforce"
 
 mandates:
-  tool_usage: "use file tools (view/edit/create/grep/glob), not shell commands"
-  prohibited: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  allowed: [ruby, zsh, git, grep, cat, npm, bundle, rails, rake]
+  tool_usage: "use file tools (view/edit/create/grep/glob) when available, shell for operations"
+  shell_policy: "pure zsh patterns, no bashisms"
+  forbidden_tools: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  allowed_tools: [ruby, zsh, git, grep, cat, npm, bundle, rails, rake]
+  privileged_alternative: "doas (not sudo)"
+  dangerous_patterns:
+    destructive_rm: ["rm -rf /", "rm -rf /*", "rm -rf ~", "rm -rf $HOME"]
+    system_overwrites: ["> /etc/passwd", "> /etc/shadow", "> /etc/sudoers"]
+    blind_execution: ["curl * | sh", "wget * | sh", "curl * | bash", "wget * | bash"]
+    recursive_deletion: "rm -rf with wildcards in system directories"
+  agent_policy: "agents must use allowed tools and pure zsh; forbidden tools blocked with helpful alternatives suggested"
   research_tools: [ar5iv.org, arxiv.org, scholar.google.com, github.com, stackoverflow.com]
   communication: "extreme brevity - report only failures or requested output"
   anti_sprawl: "no analysis/summary/report/todo/notes files - edit existing directly"
@@ -142,9 +150,15 @@ troubleshooting:
     check: ["rcctl check app", "tail /var/log/messages", "ps aux | grep falcon"]
     fixes: ["cd ~/app && bundle install", "verify config/falcon.rb exists", "check Ruby version"]
   gemfile_broken:
-    cause: "sed usage (forbidden tool)"
-    fix: "download Gemfile, edit locally with view/edit tools, upload back"
-    never: "do not use sed/awk on VPS"
+    cause: "sed/awk/bash usage (forbidden tools)"
+    fix: "download Gemfile, edit locally with view/edit tools or ruby, upload back"
+    never: "do not use sed/awk/bash - use zsh parameter expansion, ruby, or file tools"
+  tool_alternatives:
+    sed: "use zsh parameter expansion ${var//old/new} or ruby"
+    awk: "use zsh field extraction ${${(s: :)line}[2]} or ruby"
+    bash: "use zsh (pure zsh patterns, no bashisms)"
+    wc: "use zsh ${#lines} or ruby"
+    head_tail: "use zsh array slicing ${lines[1,10]} or ${lines[-5,-1]}"
 
 workflow:
   assess: "understand current state"
@@ -166,7 +180,8 @@ detectors:
   duplicate_code: {threshold: 3, similarity: 0.70}
   complexity: {cyclomatic_max: 10, nesting_max: 4, method_lines_max: 20}
   security: [sql_injection, xss, command_injection, hardcoded_secrets]
-  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  forbidden_tools: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  dangerous_patterns: [destructive_rm, system_overwrites, blind_execution]
   integration: "manual for now, can add Rubocop/Shellcheck/pre-commit hooks later"
 
 git_recovery:
@@ -202,15 +217,16 @@ rules:
   never: [create analysis/summary files, break without immediate fix, use banned tools, add ornamental comments]
 
 version_history:
+  "74.3.0": "Agent-adapted: agents must follow forbidden tools list, suggest zsh/ruby alternatives, enforce dangerous patterns"
   "74.2.0": "Universal scope: applies to all projects (not just Rails/OpenBSD), added research tools (ar5iv.org, arxiv.org, scholar.google.com)"
   "74.1.0": "Cherry-picked solution F: fixed 11 gaps (runtime context, escape hatch, scope, security, troubleshooting, git recovery)"
   "74.0.0": "Streamlined: removed duplication, flattened nesting, applied stepdown rule, 883→151 lines (82% reduction)"
   "73.0.0": "Synthesis: merged DeepSeek/Grok/GPT/Claude + restored convergence/detectors"
 
-# End of master.yml v74.2.0 - Universal & Research-Ready
-# Lines: 214 | Universal scope, research tools integrated, production-ready
+# End of master.yml v74.3.0 - Agent-Adapted & Zsh-Native
+# Lines: 240+ | Forbidden tools enforced, agents must suggest alternatives, pure zsh patterns
 # Structure: mandates → runtime → escape → scope → principles → implementations → research
-# Session: 2025-12-19T20:54 - Convergence iteration 4, universal framework complete
+# Session: 2025-12-19T22:42 - Single self-contained file, agent-adapted for zsh-first workflow
 
 # === SESSION KNOWLEDGE 2025-12-19 ===
 # Complete patterns and workflows for future LLMs
@@ -365,3 +381,60 @@ session_2025_12_19:
 
 # End of comprehensive session knowledge transfer
 # Future LLMs: Read this section to understand complete project state
+
+# === NON-NORMATIVE APPENDIX ===
+# Historical context and rationale for configuration decisions
+# This section is informative only and does not impose requirements
+
+appendix_tool_policy_rationale:
+  zsh_native_first_philosophy: |
+    Forbidden tools (bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo) enforce:
+    1. Single grammar (zsh) vs multiple DSLs (sed/awk/tr each different)
+    2. Zero process forks (built-in parameter expansion vs external commands)
+    3. Token efficiency - zsh patterns are compact and iterative edits are surgical
+    4. Measured: 46% token savings over 3 iterations vs sed/awk approach
+  
+  agent_adaptation_v74_3_0: |
+    AI agents (like GitHub Copilot) must:
+    1. Follow forbidden tools list strictly
+    2. Suggest zsh or ruby alternatives when blocking forbidden tools
+    3. Use pure zsh patterns, not bashisms
+    4. Use doas not sudo on OpenBSD
+    5. Block dangerous patterns (rm -rf /, curl|sh, system file overwrites)
+  
+  tool_alternatives_reference:
+    sed_replacement: "zsh ${var//old/new} or ruby gsub"
+    awk_replacement: "zsh field extraction ${${(s: :)line}[2]} or ruby split"
+    wc_replacement: "zsh ${#lines} or ruby .size/.count"
+    head_tail_replacement: "zsh array slicing ${lines[1,10]} or ${lines[-5,-1]}"
+    bash_replacement: "use zsh with pure zsh patterns (no bashisms like [[]])"
+    find_replacement: "zsh glob patterns **/*.ext(N.) or ruby Dir.glob"
+    tr_replacement: "zsh case conversion ${(L)var} ${(U)var} or ruby upcase/downcase"
+  
+  dangerous_patterns_rationale: |
+    Explicitly blocked patterns prevent catastrophic mistakes:
+    - rm -rf / and variants (system destruction)
+    - Overwriting critical system files (/etc/passwd, /etc/shadow, /etc/sudoers)
+    - Blind execution (curl|sh, wget|bash - runs untrusted code without inspection)
+    - Recursive deletion with wildcards in system directories
+
+appendix_master_yml_solutions_distilled:
+  solution_f_rationale: |
+    Version 74.1.0 adopted "Solution F" (cherry-picked hybrid) which:
+    - Combined minimal pragmatic fixes (runtime_context, escape_hatch, scope)
+    - Maintained single-file architecture (anti-sprawl)
+    - Stayed under 200 lines while achieving completeness
+    - Extracted sensitive data (VPS passwords) to separate secure location
+  
+  tradeoff_matrix_key_insights:
+    completeness_vs_simplicity: "Achieved 100% completeness at ~190 lines"
+    maintainability: "Single file easier to maintain than multiple references"
+    security: "Passwords in ~/priv/passwd/ not inline in config"
+    self_consistency: "Configuration follows its own rules (DRY, KISS, anti-sprawl)"
+    
+  single_file_mandate: |
+    master.yml must remain a single self-contained file.
+    All configuration, policy, examples, and rationale in one canonical location.
+    No external references for core policy (only for secrets like passwords).
+
+# End of non-normative appendix

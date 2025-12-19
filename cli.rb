@@ -8,6 +8,7 @@
 # Just: chmod +x cli.rb && ./cli.rb
 
 require "json"
+require "yaml"
 require "net/http"
 require "uri"
 require "fileutils"
@@ -54,6 +55,89 @@ rescue LoadError
     false
   end
 end
+
+# Master.yml configuration loader
+class MasterConfig
+  attr_reader :config, :version, :forbidden_tools, :dangerous_patterns
+  
+  SEARCH_PATHS = [
+    File.expand_path("~/pub/master.yml"),
+    File.join(Dir.pwd, "master.yml"),
+    File.join(File.dirname(__FILE__), "master.yml")
+  ].freeze
+  
+  def initialize
+    @config = load_config
+    @version = @config.dig("meta", "version")
+    @forbidden_tools = @config.dig("mandates", "forbidden_tools") || []
+    @dangerous_patterns = @config.dig("mandates", "dangerous_patterns") || {}
+    validate_version
+  end
+  
+  def load_config
+    path = SEARCH_PATHS.find { |p| File.exist?(p) }
+    if path
+      YAML.load_file(path)
+    else
+      warn "master.yml not found in search paths, using defaults"
+      default_config
+    end
+  rescue => e
+    warn "error loading master.yml: #{e.message}, using defaults"
+    default_config
+  end
+  
+  def validate_version
+    return unless @version
+    major, minor = @version.split(".").map(&:to_i)
+    if major < 74
+      warn "master.yml version #{@version} < 74.x, some features may not work"
+    elsif major >= 75
+      warn "master.yml version #{@version} >= 75.x, compatibility uncertain"
+    end
+  end
+  
+  def forbidden?(command)
+    @forbidden_tools.any? { |tool| command =~ /\b#{Regexp.escape(tool)}\b/ }
+  end
+  
+  def dangerous?(command)
+    patterns = @dangerous_patterns.values.flatten
+    patterns.any? do |pattern|
+      case pattern
+      when String
+        command.include?(pattern) || command =~ Regexp.new(Regexp.escape(pattern).gsub('\*', '.*'))
+      when Regexp
+        command =~ pattern
+      end
+    end
+  end
+  
+  def suggest_alternative(tool)
+    alternatives = @config.dig("troubleshooting", "tool_alternatives") || {}
+    alternatives[tool] || "use zsh parameter expansion or ruby instead"
+  end
+  
+  private
+  
+  def default_config
+    {
+      "meta" => { "version" => "74.3.0" },
+      "mandates" => {
+        "forbidden_tools" => %w[bash python sed awk tr wc head tail cut find sudo],
+        "dangerous_patterns" => {
+          "destructive_rm" => ["rm -rf /", "rm -rf /*", "rm -rf ~"],
+          "system_overwrites" => ["> /etc/passwd", "> /etc/shadow"],
+          "blind_execution" => ["| sh", "| bash"]
+        }
+      }
+    }
+  end
+end
+
+# Load master.yml at startup
+MASTER_CONFIG = MasterConfig.new
+warn "master.yml v#{MASTER_CONFIG.version || 'unknown'} loaded\n" if FIRST_RUN
 
 # Check for browser
 def find_browser
@@ -152,6 +236,7 @@ module UI
   def banner(mode)
     puts "convergence v3.0"
     puts "mode: #{mode}"
+    puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
     puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}" if RUBY_PLATFORM =~ /openbsd/
     puts "type /help for commands\n\n"
   end
@@ -330,10 +415,20 @@ class ShellTool
   extend ToolDSL
   tool :shell, "Execute shell command", { command: { type: "string", description: "command" } }, [:command]
 
-  BLOCKED = %w[sudo rm -rf passwd shadow python bash sed awk tr wc head tail find]
-
   def shell(command:)
-    BLOCKED.each { |b| return { error: "blocked: #{b} (master.yml)" } if command =~ /\b#{Regexp.escape(b)}\b/ }
+    # Check forbidden tools
+    if MASTER_CONFIG.forbidden?(command)
+      forbidden_tool = MASTER_CONFIG.forbidden_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+      alternative = MASTER_CONFIG.suggest_alternative(forbidden_tool)
+      return { error: "blocked: #{forbidden_tool} (master.yml forbidden)", alternative: alternative }
+    end
+    
+    # Check dangerous patterns
+    if MASTER_CONFIG.dangerous?(command)
+      return { error: "blocked: dangerous pattern detected (master.yml)" }
+    end
+    
+    # Execute with zsh preference
     shell_path = ["/usr/local/bin/zsh", "/bin/zsh", "/bin/ksh", ENV["SHELL"]].find { |s| s && File.executable?(s) } || "/bin/sh"
     stdout, stderr, status = Open3.capture3(shell_path, "-c", command)
     { stdout: stdout[0..4000], stderr: stderr[0..1000], exit: status.exitstatus }
