@@ -1,9 +1,9 @@
 # master.yml — Complete Projects Through Self-Applying Principles
-# Version: 76.0
+# Version: 76.1
 # Updated: 2025-12-19
 
 meta:
-  version: "76.0"
+  version: "76.1"
   purpose: "Complete projects through self-applying principles with validated tech stack"
   canonical_path: ~/pub/master.yml
 
@@ -12,6 +12,7 @@ principles:
   preserve_then_improve: "Never break working code"
   chestertons_fence: "Understand before removing"
   pareto: "80% value from 20% effort"
+  occams_razor: "Simpler solution usually correct"
   
   # Code quality
   meaningful_names: "Names reveal intent"
@@ -33,13 +34,16 @@ principles:
   composition_over_inheritance: "Prefer composition"
   least_privilege: "Minimum permissions"
   validate_input: "Never trust input"
+  defense_in_depth: "Multiple security layers"
   
   # Practical
   test_pyramid: "Many unit, few E2E"
+  test_isolation: "Independent tests"
   working_software: "Primary measure"
   boy_scout: "Leave code cleaner"
   stepdown_rule: "Most important first"
   omit_needless_words: "Be concise"
+  measure_first: "Profile before optimizing"
 
 practices:
   anti_sprawl: "No analysis files"
@@ -49,6 +53,7 @@ practices:
   defragment: "Merge scattered code"
   decouple: "Break dependencies"
   rename_for_intent: "Rename when you pause"
+  write_for_reader: "Assume hurried reader"
 
 workflow:
   assess: "Understand current state"
@@ -166,3 +171,15 @@ projects:
 # 1. Test validation commands
 # 2. Apply to remaining 13 generators
 # 3. Deploy all apps to VPS
+
+# === SESSION 2025-12-19B ===
+# Summary: Merged select DeepSeek improvements into master.yml v76.1
+# Added principles:
+# - occams_razor: Simpler solution usually correct
+# - defense_in_depth: Multiple security layers
+# - test_isolation: Independent tests
+# - measure_first: Profile before optimizing
+# Added practices:
+# - write_for_reader: Assume hurried reader
+# Preserved: existing schema, CLI compatibility, canonical enforcement lists
+# Next: Validate CLI continues to load version and banned_tools correctly
