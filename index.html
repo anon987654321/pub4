@@ -5,227 +5,222 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>pub4</title>
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
-    canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; background: #0b0f1a; color: #e7eefc; }
+    canvas { width: min(92vw, 920px); height: min(92vw, 920px); background: #0b0f1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
+    .hud { position: fixed; left: 12px; bottom: 10px; font-size: 12px; opacity: 0.8; user-select: none; }
+    .hud code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <canvas id="c"></canvas>
+  <canvas id="c" width="900" height="900" aria-label="animation canvas"></canvas>
+  <div class="hud">
+    <div>Toggle: <code>Space</code> Pause/Play</div>
+  </div>
+
 <script>
 (() => {
-  'use strict';
-
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d', { alpha: false });
 
-  let DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  const W = canvas.width;
+  const H = canvas.height;
 
-  // Track timers/intervals created by the animation/visibility sections so we can cleanly stop.
-  const _timers = new Set();
-  const _intervals = new Set();
-  function trackTimer(id) { if (id != null) _timers.add(id); return id; }
-  function trackInterval(id) { if (id != null) _intervals.add(id); return id; }
-  function clearTrackedTimers() {
-    for (const id of _timers) clearTimeout(id);
-    _timers.clear();
-    for (const id of _intervals) clearInterval(id);
-    _intervals.clear();
-  }
+  // Timing
+  let MIN_FRAME_MS = 1000 / 120; // can be adjusted at runtime; must be let
+  const MAX_DT_MS = 100;         // clamp big spikes
 
-  function resize() {
-    const w = Math.floor(window.innerWidth * DPR);
-    const h = Math.floor(window.innerHeight * DPR);
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-    }
-  }
-
-  window.addEventListener('resize', resize, { passive: true });
-  resize();
-
-  // --- Reduced motion handling (improved but behavior-preserving) ---
-  const prefersReducedMotionMql = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-  let prefersReducedMotion = !!(prefersReducedMotionMql && prefersReducedMotionMql.matches);
-  if (prefersReducedMotionMql) {
-    const onMql = (e) => { prefersReducedMotion = !!e.matches; };
-    // Safari < 14
-    if (typeof prefersReducedMotionMql.addEventListener === 'function') {
-      prefersReducedMotionMql.addEventListener('change', onMql);
-    } else if (typeof prefersReducedMotionMql.addListener === 'function') {
-      prefersReducedMotionMql.addListener(onMql);
-    }
-  }
-
-  // --- Touch/mouse listeners (safer defaults; passive where possible) ---
-  const pointer = { x: 0, y: 0, down: false };
-  function setPointerFromEvent(e) {
-    const rect = canvas.getBoundingClientRect();
-    pointer.x = (e.clientX - rect.left) * DPR;
-    pointer.y = (e.clientY - rect.top) * DPR;
-  }
-
-  // We must keep touch-action: none on canvas to preserve dragging behavior.
-  // Use passive listeners where we never call preventDefault.
-  canvas.addEventListener('pointerdown', (e) => {
-    pointer.down = true;
-    setPointerFromEvent(e);
-  }, { passive: true });
-  canvas.addEventListener('pointermove', (e) => {
-    setPointerFromEvent(e);
-  }, { passive: true });
-  window.addEventListener('pointerup', () => { pointer.down = false; }, { passive: true });
-
-  // --- Rendering / animation state ---
-  // NOTE: Was const but reassigned (bug). Make it let.
-  let MIN_FRAME_MS = 1000 / 60;
-
-  // Draw routine (placeholder; existing behavior should remain). If your original index.html had
-  // a specific draw/update, keep it; this patch is focused on the render loop/visibility sections.
-  let t0 = performance.now();
-  function render(dt, now) {
-    // Example minimal rendering to keep file functional.
-    // Replace with original render logic when applying in-repo patch.
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#0f0';
-    ctx.font = `${16 * DPR}px system-ui, sans-serif`;
-    ctx.fillText(`dt: ${dt.toFixed(2)}ms`, 10 * DPR, 24 * DPR);
-    ctx.fillText(`visible: ${!document.hidden}`, 10 * DPR, 44 * DPR);
-    if (prefersReducedMotion) {
-      ctx.fillText(`reduced motion`, 10 * DPR, 64 * DPR);
-    }
-  }
-
-  // --- rAF-only render loop with pause/resume on visibilitychange ---
-  // Freeze fix: Avoid mixing rAF with setTimeout-based stepping which can be throttled in background.
-  // When hidden, we pause the loop; on visible, we resume and reset timing.
   let rafId = 0;
-  let running = false;
+  let running = true;
   let pausedByVisibility = false;
-  let lastNow = performance.now();
 
-  // Stall watchdog: if rAF stops firing while we think we're running (e.g., GPU/driver hiccup),
-  // trigger a soft restart when visible.
-  const STALL_MS = 2000;
-  let stallIntervalId = 0;
-  let lastFrameAt = performance.now();
+  let lastFrameT = performance.now();
+  let lastRenderT = lastFrameT;
+  let lastSeenFrameT = lastFrameT; // used for stall watchdog
 
-  function beginWatchdog() {
-    if (stallIntervalId) return;
-    // Use an interval but track it for cleanup.
-    stallIntervalId = trackInterval(setInterval(() => {
-      if (!running) return;
-      if (document.hidden) return; // hidden is expected to throttle
-      const now = performance.now();
-      if (now - lastFrameAt > STALL_MS) {
-        // Soft restart: cancel and re-request rAF.
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(tick);
-        lastFrameAt = now;
+  // Scene state
+  const dots = [];
+  const N = 220;
+  for (let i = 0; i < N; i++) {
+    dots.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() * 2 - 1) * 35,
+      vy: (Math.random() * 2 - 1) * 35,
+      r: 1.2 + Math.random() * 2.6,
+    });
+  }
+
+  function resizeToCSSPixels() {
+    // intentionally keep fixed backing store for crispness; CSS scales
+    // (no-op placeholder)
+  }
+
+  function step(dt) {
+    const s = dt / 1000;
+    for (const p of dots) {
+      p.x += p.vx * s;
+      p.y += p.vy * s;
+      if (p.x < 0) { p.x = 0; p.vx *= -1; }
+      if (p.x > W) { p.x = W; p.vx *= -1; }
+      if (p.y < 0) { p.y = 0; p.vy *= -1; }
+      if (p.y > H) { p.y = H; p.vy *= -1; }
+    }
+  }
+
+  function render() {
+    ctx.fillStyle = '#0b0f1a';
+    ctx.fillRect(0, 0, W, H);
+
+    // links
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(140, 190, 255, 0.08)';
+    for (let i = 0; i < N; i++) {
+      const a = dots[i];
+      for (let j = i + 1; j < N; j++) {
+        const b = dots[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < 60*60) {
+          const alpha = 1 - Math.sqrt(d2) / 60;
+          ctx.strokeStyle = `rgba(140,190,255,${0.12 * alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
       }
-    }, 500));
-  }
-
-  function endWatchdog() {
-    if (!stallIntervalId) return;
-    clearInterval(stallIntervalId);
-    _intervals.delete(stallIntervalId);
-    stallIntervalId = 0;
-  }
-
-  function tick(now) {
-    rafId = 0;
-    if (!running) return;
-
-    // If we were resumed after being hidden, lastNow is already reset by resume().
-    let dt = now - lastNow;
-    lastNow = now;
-    lastFrameAt = now;
-
-    // Clamp dt to avoid giant jumps after stalls/visibility changes.
-    // Keep behavior broadly the same while preventing runaway physics.
-    if (!Number.isFinite(dt) || dt < 0) dt = MIN_FRAME_MS;
-    if (dt > 250) dt = 250;
-
-    // Reduced motion: keep rendering but effectively lower update intensity by increasing min frame.
-    // This preserves behavior while respecting user preference.
-    const targetMin = prefersReducedMotion ? (1000 / 30) : (1000 / 60);
-    MIN_FRAME_MS = targetMin;
-
-    // Optionally skip rendering if dt is too small to save work
-    // (still rAF-only; no timers)
-    if (dt >= MIN_FRAME_MS - 0.001) {
-      render(dt, now);
     }
 
-    rafId = requestAnimationFrame(tick);
+    // dots
+    ctx.fillStyle = '#cfe3ff';
+    for (const p of dots) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  function start() {
+  function cancelAnimFrame() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  function restartAnimFrame() {
+    // Reset timing baselines so we don't get a huge dt spike on resume.
+    const now = performance.now();
+    lastFrameT = now;
+    lastRenderT = now;
+    lastSeenFrameT = now;
+
+    if (!rafId) rafId = requestAnimationFrame(animate);
+  }
+
+  // Visible-only stall watchdog: if rAF stops delivering frames while visible,
+  // restart it. (Some browsers/extensions can occasionally stall rAF.)
+  let stallTimer = 0;
+  function startStallWatchdog() {
+    stopStallWatchdog();
+    stallTimer = window.setInterval(() => {
+      if (!running) return;
+      if (document.hidden) return;
+      const now = performance.now();
+      if (now - lastSeenFrameT > 2000) {
+        // restart
+        cancelAnimFrame();
+        restartAnimFrame();
+      }
+    }, 500);
+  }
+  function stopStallWatchdog() {
+    if (stallTimer) {
+      clearInterval(stallTimer);
+      stallTimer = 0;
+    }
+  }
+
+  function animate(t) {
+    rafId = 0;
+
+    // If hidden, do not schedule more frames. visibilitychange handler will resume.
+    if (document.hidden) {
+      pausedByVisibility = true;
+      cancelAnimFrame();
+      return;
+    }
+
+    lastSeenFrameT = t;
+
+    if (!running) {
+      // paused by user; don't enqueue
+      return;
+    }
+
+    const dt = Math.min(MAX_DT_MS, t - lastFrameT);
+    if (dt >= MIN_FRAME_MS) {
+      lastFrameT = t;
+      step(dt);
+      render();
+      lastRenderT = t;
+    }
+
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function play() {
     if (running) return;
     running = true;
-    pausedByVisibility = false;
-    lastNow = performance.now();
-    lastFrameAt = lastNow;
-    beginWatchdog();
-    if (!rafId) rafId = requestAnimationFrame(tick);
+    restartAnimFrame();
+    startStallWatchdog();
   }
 
-  function stop() {
+  function pause() {
+    if (!running) return;
     running = false;
-    pausedByVisibility = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = 0;
-    endWatchdog();
-    clearTrackedTimers();
+    cancelAnimFrame();
+    // keep watchdog running only when playing
+    stopStallWatchdog();
   }
 
-  function pauseForVisibility() {
-    if (!running) return;
-    if (pausedByVisibility) return;
-    pausedByVisibility = true;
-    // Do not call stop(); just pause rAF and watchdog; keep state.
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = 0;
-    endWatchdog();
-  }
-
-  function resumeFromVisibility() {
-    if (!running) return;
-    if (!pausedByVisibility) return;
-    pausedByVisibility = false;
-    // Reset timing so dt doesn't accumulate while hidden.
-    lastNow = performance.now();
-    lastFrameAt = lastNow;
-    beginWatchdog();
-    if (!rafId) rafId = requestAnimationFrame(tick);
-  }
-
-  // --- Visibility handling (pause/resume only; avoids accidental hidden throttling) ---
-  function onVisibilityChange() {
+  // Proper pause/resume on visibilitychange:
+  // - when hidden: cancel rAF immediately
+  // - when visible: restart rAF and reset timing baselines
+  document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      pauseForVisibility();
-    } else {
-      // Safari sometimes fires visibilitychange before layout is ready; defer one task.
-      trackTimer(setTimeout(() => {
-        resize();
-        resumeFromVisibility();
-      }, 0));
+      if (rafId) cancelAnimFrame();
+      pausedByVisibility = true;
+      // watchdog should not run when hidden
+      // (it is visible-only anyway, but stop it to avoid needless work)
+      stopStallWatchdog();
+      return;
     }
-  }
 
-  document.addEventListener('visibilitychange', onVisibilityChange, { passive: true });
+    if (pausedByVisibility) {
+      pausedByVisibility = false;
+      if (running) {
+        restartAnimFrame();
+        startStallWatchdog();
+      }
+    }
+  }, { passive: true });
 
-  // Ensure we start only when page is visible.
-  if (!document.hidden) start();
-  else {
-    // If loaded hidden, wait until visible.
-    pausedByVisibility = true;
-  }
+  // Controls
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      running ? pause() : play();
+    }
+  });
 
-  // Expose for debugging (optional)
-  window.__pub4 = { start, stop };
+  window.addEventListener('resize', resizeToCSSPixels, { passive: true });
+
+  // Start
+  render();
+  restartAnimFrame();
+  startStallWatchdog();
 })();
 </script>
 </body>
