@@ -1,0 +1,28 @@
+# Editor artifacts
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Node modules
+node_modules/
+
+# Ruby
+.bundle/
+vendor/bundle/
+
+# Rails
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep

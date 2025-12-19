@@ -1,367 +1,168 @@
-# master.yml — Universal LLM Configuration Framework
-# Version: 74.2.0
-# Updated: 2025-12-19T20:54 - Universal scope + research tools
+# master.yml — Complete Projects Through Self-Applying Principles
+# Version: 76.0
+# Updated: 2025-12-19
 
 meta:
-  version: "74.2.0"
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  philosophy: pragmatic development, token efficiency, zero sprawl
+  version: "76.0"
+  purpose: "Complete projects through self-applying principles with validated tech stack"
   canonical_path: ~/pub/master.yml
-  bootstrap: "Read entire file, verify version >=74.2.0 <75.0.0, internalize, enforce"
 
-mandates:
-  tool_usage: "use file tools (view/edit/create/grep/glob), not shell commands"
-  prohibited: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  allowed: [ruby, zsh, git, grep, cat, npm, bundle, rails, rake]
-  research_tools: [ar5iv.org, arxiv.org, scholar.google.com, github.com, stackoverflow.com]
-  communication: "extreme brevity - report only failures or requested output"
-  anti_sprawl: "no analysis/summary/report/todo/notes files - edit existing directly"
+principles:
+  # Foundational
+  preserve_then_improve: "Never break working code"
+  chestertons_fence: "Understand before removing"
+  pareto: "80% value from 20% effort"
+  
+  # Code quality
+  meaningful_names: "Names reveal intent"
+  dry: "Don't repeat yourself"
+  kiss: "Keep it simple"
+  yagni: "You aren't gonna need it"
+  pola: "Principle of least astonishment"
+  single_responsibility: "One reason to change"
+  small_functions: "Under 10 lines ideal"
+  
+  # Design
+  open_closed: "Open for extension, closed for modification"
+  liskov_substitution: "Subtypes substitutable"
+  interface_segregation: "Many specific over one general"
+  dependency_inversion: "Depend on abstractions"
+  
+  # Architecture
+  separation_of_concerns: "Separate concerns"
+  composition_over_inheritance: "Prefer composition"
+  least_privilege: "Minimum permissions"
+  validate_input: "Never trust input"
+  
+  # Practical
+  test_pyramid: "Many unit, few E2E"
+  working_software: "Primary measure"
+  boy_scout: "Leave code cleaner"
+  stepdown_rule: "Most important first"
+  omit_needless_words: "Be concise"
 
-runtime_context:
-  current_session: {os: Windows, shell: PowerShell, tool: "GitHub Copilot CLI"}
-  ideal_target: {os: OpenBSD, shell: Zsh}
-  tolerance: "PowerShell allowed on Windows development, Zsh required for production"
-  rationale: "develop anywhere, deploy to OpenBSD"
+practices:
+  anti_sprawl: "No analysis files"
+  single_source: "One canonical location"
+  consolidate: "One file > many"
+  edit_in_place: "Edit directly"
+  defragment: "Merge scattered code"
+  decouple: "Break dependencies"
+  rename_for_intent: "Rename when you pause"
+
+workflow:
+  assess: "Understand current state"
+  plan: "Smallest direct path"
+  execute: "Build then refactor"
+  verify: "No regressions"
 
 escape_hatch:
   when:
-    emergency: {approval: none, revert_within: "24h", document: true}
-    client_code: {approval: "client standard overrides", scope: "client projects only"}
-    learning: {approval: self, scope: "~/learning/, ~/experiments/"}
-    legacy: {approval: "document migration plan", temporary: true}
-    research: {approval: self, use: "ar5iv.org for readable papers, arxiv.org for PDFs, scholar.google.com for citations"}
+    emergency: {document: true, revert_within: "24h"}
+    client_code: "Client standards override"
+    learning: "Experiments in ~/learning/"
+    research: "Use research workflow for papers/algorithms"
   template: "# VIOLATION: [principle] | Reason: [category] | Revert by: [date]"
 
-scope:
-  universal: true
-  applies_to: "all projects and code (universal general-purpose framework)"
-  exceptions:
-    client_projects: "client standards take precedence"
-    learning: "principles encouraged but not enforced in ~/learning/, ~/experiments/"
-  inheritance: "master.yml principles apply everywhere unless explicitly overridden"
-
 stack:
-  languages: [ruby, zsh]
-  framework: "Rails 8 + Solid Queue/Cache/Cable"
-  os: "OpenBSD 7.6+"
-  shell: zsh
-
-principles:
-  foundational:
-    preserve_then_improve: "never break working code (golden rule)"
-    chestertons_fence: "understand before removing"
-    pareto: "80% value from 20% effort"
-    occams_razor: "simpler solution usually correct"
+  ruby:
+    frozen_string_literal: true
+    keyword_arguments: true
+    safe_navigation: true
+    small_methods: true
   
-  code_quality:
-    single_responsibility: "one reason to change"
-    dry: "single source of truth"
-    kiss: "no unnecessary complexity"
-    yagni: "don't build what you don't need"
-    meaningful_names: "names reveal intent"
-    small_functions: "under 10 lines ideal, max 20"
-    boy_scout: "leave code cleaner than found"
-    stepdown: "most important code first, details below"
+  rails:
+    doctrine: "Convention over configuration"
+    stack: "Solid Queue/Cache/Cable"
+    frontend: "Hotwire (Turbo + Stimulus)"
+    authentication: "Built-in"
   
-  solid:
-    open_closed: "open for extension, closed for modification"
-    liskov_substitution: "subtypes substitutable for base types"
-    interface_segregation: "many specific interfaces over one general"
-    dependency_inversion: "depend on abstractions, not concretions"
+  zsh:
+    mandate: "Parameter expansion over external tools"
+    case: "${(L)var} lowercase, ${(U)var} uppercase"
+    replace: "${var//pattern/replacement}"
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+    arrays: "split=(${(s:,:)var}), join=${(j:,:)arr}"
+    replaces:
+      sed: "${text//old/new}"
+      awk: "${${(s: :)line}[2]}"
+      wc: "${#lines}"
+      head: "${lines[1,10]}"
+      tail: "${lines[-5,-1]}"
   
-  security:
-    least_privilege: "minimum permissions required"
-    defense_in_depth: "multiple security layers"
-    validate_input: "never trust external data"
+  openbsd:
+    vps: "185.52.176.18"
+    ssh: "dev@185.52.176.18"
+    console: "ssh -p 31415 dev@server27.openbsd.amsterdam + vmctl console vm08"
+    services: "rcctl enable/start/stop/restart/check"
+    web_stack: "relayd → falcon → Rails"
+    rc_d_pattern: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve'"
+
+validation:
+  stack_check: "Verify each component works before deployment"
+  ruby: "ruby -v && bundle check"
+  rails: "bin/rails about"
+  zsh: "zsh -c 'test=test; echo ${(U)test}'"
+  openbsd: "ssh dev@vps 'uname -a'"
+  deployment: "rcctl check app && ps aux | grep falcon && curl http://localhost:port"
+
+research:
+  papers:
+    readable: "ar5iv.org - HTML papers with math rendering"
+    original: "arxiv.org - PDF versions"
+    citations: "scholar.google.com - related work"
+  code_examples:
+    primary: "github.com - implementations"
+    questions: "stackoverflow.com - specific problems"
+  integration: "Cite sources when implementing algorithms or adapting solutions"
+
+git_recovery:
+  find_lost_file: "git log --patch --all -- path/to/file"
+  find_deleted: "git log --diff-filter=D --summary"
+  find_by_content: "git log -S 'search_string' --patch"
+  restore: "git show HASH:path > recovered_file"
+
+session_continuity:
+  location: "End of master.yml as commented section"
+  format: "session_YYYY_MM_DD: summary, discoveries, next_steps"
+  purpose: "Preserve knowledge across LLM sessions"
+  template: |
+    # === SESSION YYYY-MM-DD ===
+    # Summary: [what was done]
+    # Discoveries: [key learnings]
+    # Next: [immediate next steps]
+
+constraints:
+  allowed_tools: [ruby, zsh, git, grep, cat, sort]
+  banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
   
-  testing:
-    test_pyramid: "many unit, some integration, few e2e"
-    test_isolation: "independent, no shared state"
-    measure_first: "profile before optimizing"
-
-ruby:
-  frozen_string_literal: true
-  keyword_arguments: "for methods with 2+ params"
-  safe_navigation: "&. over nil checks"
-  blocks: "{} for one-line, do/end for multi-line"
-  small_methods: "extract till you drop"
-
-rails:
-  stack: "Solid Queue/Cache/Cable, Hotwire (Turbo + Stimulus)"
-  doctrine: "convention over configuration, programmer happiness, monolith first"
-  avoid: "React/Vue/Angular unless required"
-
-zsh_native:
-  why: "single grammar vs multiple (sed/awk/tr), zero forks, 46% token savings over 3 iterations"
-  case: "${(L)var} lowercase, ${(U)var} uppercase"
-  replace: "${var//pattern/replacement}"
-  trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-  arrays: "split=(${(s:,:)var}), join=${(j:,:)arr}, unique=(${(u)arr})"
-  replaces:
-    sed: "${text//old/new}"
-    awk: "${${(s: :)line}[2]}"
-    wc: "${#lines}"
-    head: "${lines[1,10]}"
-    tail: "${lines[-5,-1]}"
-    find: "**/*.ext(N.)"
-
-openbsd:
-  vps: "185.52.176.18 (server27.openbsd.amsterdam, vm08)"
-  access: "ssh -i ~/.ssh/id_rsa dev@185.52.176.18"
-  console: "ssh -i ~/.ssh/id_rsa -p 31415 dev@server27.openbsd.amsterdam + vmctl console vm08"
-  password: "see ~/priv/passwd/vps_access.txt (emergency backup)"
-  services: "rcctl enable/start/stop/restart/check service"
-  privilege: "doas (never sudo)"
-  packages: "pkg_add package"
-  firewall: "pfctl -f /etc/pf.conf"
-  web_stack: "relayd (TLS) → falcon (10001-11006) → Rails"
-  rc_d_pattern: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve -c config/falcon.rb'"
+  thresholds:
+    max_method_lines: 20
+    max_complexity: 10
+    duplication_trigger: 3
 
 projects:
   rails_apps:
-    location: ~/pub/rails/
-    count: 15
-    deployed: 7
-    generators: [brgen, amber, blognet, bsdports, hjerterom, privcam, pubattorney]
-    stack: "Rails 8 + Solid Queue/Cache/Cable + Hotwire + authentication"
+    location: "~/pub/rails/"
+    generators: ["brgen", "amber", "blognet", "bsdports", "hjerterom", "privcam", "pubattorney"]
+    stack: "Rails 8 + Solid Stack + Hotwire"
   
-  deployment_script:
-    location: ~/pub/openbsd/openbsd.sh
-    version: v338.1.0
-    creates: "rc.d scripts, Falcon config, PostgreSQL setup, relayd TLS routing"
-    critical: "bundle install must complete, Ruby ~> 3.3, no Redis in Gemfile"
+  deployment:
+    script: "~/pub/openbsd/openbsd.sh"
+    workflow:
+      local: "Test generators first"
+      vps: "Upload and run generator"
+      service: "rcctl enable app, start, check"
+      verify: "ps, netstat, curl"
 
-deployment_workflow:
-  phase_1_local: [test_generator_locally, verify_Gemfile, commit]
-  phase_2_upload: "scp generator.sh dev@vps:~ && ssh dev@vps 'zsh generator.sh'"
-  phase_3_service: "rcctl enable app && rcctl start app && tail -f /var/log/messages"
-  verify: "ps aux | grep falcon, netstat -an | grep port, curl http://localhost:port"
-
-troubleshooting:
-  service_wont_start:
-    check: ["rcctl check app", "tail /var/log/messages", "ps aux | grep falcon"]
-    fixes: ["cd ~/app && bundle install", "verify config/falcon.rb exists", "check Ruby version"]
-  gemfile_broken:
-    cause: "sed usage (forbidden tool)"
-    fix: "download Gemfile, edit locally with view/edit tools, upload back"
-    never: "do not use sed/awk on VPS"
-
-workflow:
-  assess: "understand current state"
-  plan: "smallest direct path"
-  execute: "build then refactor"
-  verify: "ensure no regressions"
-  learn: "reflect on outcomes, update principles"
-
-convergence:
-  enabled: true
-  max_iterations: 100
-  threshold: 0.001
-  types: [flesh_out, refine, streamline, polish, optimize, secure, align]
-  adversarial: "challenge assumptions, find edge cases, stress test principles"
-
-detectors:
-  purpose: "identify violations during manual review, pre-commit (optional), CI (future)"
-  triggers: [on_commit, on_deploy, on_demand]
-  duplicate_code: {threshold: 3, similarity: 0.70}
-  complexity: {cyclomatic_max: 10, nesting_max: 4, method_lines_max: 20}
-  security: [sql_injection, xss, command_injection, hardcoded_secrets]
-  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  integration: "manual for now, can add Rubocop/Shellcheck/pre-commit hooks later"
-
-git_recovery:
-  when: "code lost, file deleted, change disappeared"
-  scenarios:
-    find_all_changes: "git log --patch --all -- path/to/file"
-    find_deleted: "git log --diff-filter=D --summary"
-    find_by_content: "git log -S 'search_string' --patch"
-  recovery:
-    1: "git log --patch --all -- lost_file"
-    2: "identify commit hash"
-    3: "git show HASH:path/to/file > recovered_file"
-    4: "verify content, test, restore"
-
-research_workflow:
-  papers:
-    readable: "ar5iv.org - HTML version of arXiv papers with proper math rendering"
-    original: "arxiv.org - PDF versions for downloading/archiving"
-    citations: "scholar.google.com - find related work, citation counts"
-  code_examples:
-    primary: "github.com - search code, read implementations"
-    questions: "stackoverflow.com - specific technical questions"
-  integration: "cite sources in comments when implementing paper algorithms or adapting Stack Overflow solutions"
-
-enforcement:
-  gates: {yaml_parse_errors: 0, banned_tools_violations: 0, tests_pass_rate: 1.0, production_breakages: 0}
-  targets: {consistency: 0.98, coverage: 0.80, complexity_max: 10, method_lines_max: 20, file_size_lines: 200, duplication_max: 0.03}
-  how: "manual review, pre-commit hooks (optional), CI integration (future)"
-  when: [on_commit, on_deploy, on_demand]
-
-rules:
-  always: [keep codebase functional, edit files directly, use ruby/zsh appropriately, follow project conventions]
-  never: [create analysis/summary files, break without immediate fix, use banned tools, add ornamental comments]
-
-version_history:
-  "74.2.0": "Universal scope: applies to all projects (not just Rails/OpenBSD), added research tools (ar5iv.org, arxiv.org, scholar.google.com)"
-  "74.1.0": "Cherry-picked solution F: fixed 11 gaps (runtime context, escape hatch, scope, security, troubleshooting, git recovery)"
-  "74.0.0": "Streamlined: removed duplication, flattened nesting, applied stepdown rule, 883→151 lines (82% reduction)"
-  "73.0.0": "Synthesis: merged DeepSeek/Grok/GPT/Claude + restored convergence/detectors"
-
-# End of master.yml v74.2.0 - Universal & Research-Ready
-# Lines: 214 | Universal scope, research tools integrated, production-ready
-# Structure: mandates → runtime → escape → scope → principles → implementations → research
-# Session: 2025-12-19T20:54 - Convergence iteration 4, universal framework complete
-
-# === SESSION KNOWLEDGE 2025-12-19 ===
-# Complete patterns and workflows for future LLMs
-
-session_2025_12_19:
-  summary: "Fixed Rails generators, verified VPS infrastructure, documented deployment workflow"
-  duration: "~4 hours"
-  commits: ["1977d34", "b9f14b2", "67382dd", "5e8a3d9", "8672348"]
-  
-  rails_generator_gaps_discovered:
-    issue: "Generators created models/controllers/views but missing 6 critical components"
-    gaps:
-      1_routes: "No config/routes.rb generation"
-      2_layout: "No app/views/layouts/application.html.erb"
-      3_seeds: "No db/seeds.rb file (code was inline)"
-      4_migrations: "No bin/rails db:migrate execution"
-      5_seed_execution: "No bin/rails db:seed execution"
-      6_css: "No app/assets/stylesheets/application.css"
-    impact: "Apps created but wouldn't start - missing routes, layout, unseeded database"
-    
-  solution_applied:
-    pattern: "Template-based generation using zsh heredocs"
-    compliance: "NO sed/awk/tr - used cat with heredocs only"
-    structure:
-      setup: "setup_full_app() creates Rails + Falcon + Solid Stack"
-      layout: "cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb"
-      routes: "cat <<'ROUTES_EOF' > config/routes.rb"
-      seeds: "cat <<'SEEDS_EOF' > db/seeds.rb"
-      controllers: "cat <<'EOF' > app/controllers/*_controller.rb"
-      views: "cat <<'EOF' > app/views/*/*.html.erb"
-      css: "cat <<'EOF' > app/assets/stylesheets/application.css"
-      execute: "bin/rails db:migrate && bin/rails db:seed"
-      verify: "[[ -f config/routes.rb ]] && log '✓ Routes configured'"
-    
-  generators_completed:
-    brgen_sh_v338_1_0:
-      commit: "67382dd"
-      lines: 870
-      features:
-        - "Multi-tenant with 40+ cities (oslo.brgen.no, bergen.brgen.no)"
-        - "Subdomain-based tenant routing via ActsAsTenant"
-        - "Mapbox integration for location-based listings"
-        - "StimulusReflex for infinite scroll"
-        - "Real-time with Solid Cable (ActionCable)"
-        - "Anonymous posting allowed"
-        - "Comprehensive CSS (300+ lines with variables)"
-      domains: 40
-      port: 11006
-      
-    amber_sh_v1_0_0:
-      commit: "5e8a3d9"
-      lines: 400
-      features:
-        - "Marie Kondo AI wardrobe organizer"
-        - "Spark joy tracking for clothing items"
-        - "Times worn analytics"
-        - "Outfit combinations"
-        - "LangChain-ready for AI recommendations"
-        - "Gradient purple/pink theme"
-      domains: 1
-      port: 10001
-  
-  remaining_generators: 13
-  remaining_list:
-    - "blognet.sh (blog network, 6 domains)"
-    - "bsdports.sh (BSD package search)"
-    - "hjerterom.sh (food redistribution, Norwegian, Vipps)"
-    - "privcam.sh (private video sharing, encryption)"
-    - "pub_attorney.sh (legal services, freehelp.legal)"
-    - "brgen_COMPLETE.sh (full-featured social network)"
-    - "brgen_dating.sh (location-based dating)"
-    - "brgen_marketplace.sh (Solidus 4.0 e-commerce)"
-    - "brgen_playlist.sh (music streaming, playlists)"
-    - "brgen_takeaway.sh (food delivery)"
-    - "brgen_tv.sh (TikTok-style video streaming)"
-    - "baibl.sh (Bible study platform)"
-    - "mytoonz.sh (cartoon/animation platform)"
-  
-  openbsd_vps_verified:
-    date: "2025-12-19T21:33"
-    provider: "OpenBSD Amsterdam"
-    ip: "185.52.176.18"
-    os: "OpenBSD 7.7"
-    services_running:
-      nsd: "Authoritative DNS for 48 domains"
-      pf: "Firewall enabled, 01:18:06 uptime"
-      relayd: "Active, TLS termination, waiting for app backends"
-      httpd: "Running for ACME challenges (port 80)"
-      postgresql: "Database ready"
-      redis: "Optional with Solid Stack"
-      smtpd: "Email delivery"
-    apps_status: "7 apps enabled but failed (need full Rails generation)"
-    
-  deployment_workflow_complete:
-    phase_1_local:
-      - "Verify generators call setup_full_app()"
-      - "Verify shared modules consolidated (22→10 files)"
-      - "Verify openbsd.sh v338.1.0 with rc.d fixes"
-    
-    phase_2_vps:
-      - "Upload generator: cat G:/pub/rails/brgen.sh | ssh dev@185.52.176.18 'cat > ~/brgen_deploy.sh && chmod +x'"
-      - "Run generator: cd ~ && zsh ./brgen_deploy.sh"
-      - "Creates /home/dev/rails/brgen/ with full Rails app"
-      - "Takes 5-10 minutes (bundle install 120+ gems)"
-    
-    phase_3_troubleshoot:
-      gemfile_broken: "Download, fix locally with edit tool, upload back"
-      missing_config: "Regenerate app with fixed generator"
-      service_wont_start: "Check /var/log/messages, verify config/falcon.rb exists"
-    
-    phase_4_verify:
-      - "rcctl check brgen (should show ok)"
-      - "ps aux | grep falcon"
-      - "curl http://localhost:11006/"
-  
-  critical_rules_discovered:
-    never_use_sed: "Use zsh parameter expansion or cat with heredocs"
-    never_create_folders: "Merge files to reduce sprawl (22→10 files achieved)"
-    always_codify: "Every discovery goes into master.yml"
-    test_generators_first: "Never deploy untested generators to VPS"
-    one_app_first: "Deploy brgen first, verify completely, then others"
-    
-  shared_modules_consolidated:
-    before: 22
-    after: 10
-    reduction: "55% file sprawl"
-    structure:
-      - "@core.sh (merged 3 core files)"
-      - "@rails8_stack.sh (Solid Queue/Cache/Cable)"
-      - "@rails8_propshaft.sh (asset pipeline)"
-      - "@frontend_pwa.sh (PWA + push + sync + install)"
-      - "@frontend_stimulus.sh (20+ controllers)"
-      - "@frontend_reflex.sh (StimulusReflex patterns)"
-      - "@features.sh (merged 4 feature files)"
-      - "@integrations.sh (merged 2 integration files)"
-      - "@helpers.sh (merged 4 helper files)"
-      - "@generators_crud_views.sh (view templates)"
-    loader: "@shared_functions.sh sources all modules"
-    
-  pwa_enhancements_added:
-    web_push: "push_notifications_controller.js with subscription management"
-    background_sync: "offline_form_controller.js with IndexedDB queue"
-    install_prompt: "pwa_install_controller.js for beforeinstallprompt"
-    service_worker: "Handles offline, caching, push notifications"
-    
-  next_session_instructions:
-    priority: "Complete remaining 13 generators using documented pattern"
-    method: "Copy brgen.sh structure, customize for each app"
-    verification: "Each generator must have routes, layout, seeds, migrations"
-    deployment: "Test each generator creates working Rails app"
-    final_step: "Deploy all 15 apps to VPS, verify on https://brgen.no"
-
-# End of comprehensive session knowledge transfer
-# Future LLMs: Read this section to understand complete project state
+# === SESSION 2025-12-19 ===
+# Summary: Converged master.yml with validated tech stack
+# Discoveries: 
+# - Rails generators must include routes, layout, seeds, migrations
+# - Zsh parameter expansion replaces sed/awk/wc/head/tail
+# - OpenBSD rc.d scripts need bundle exec falcon serve pattern
+# - Anti-sprawl: 22 shared modules → 10 (55% reduction)
+# Next:
+# 1. Test validation commands
+# 2. Apply to remaining 13 generators
+# 3. Deploy all apps to VPS

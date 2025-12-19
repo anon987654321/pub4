@@ -8,6 +8,7 @@
 # Just: chmod +x cli.rb && ./cli.rb
 
 require "json"
+require "yaml"
 require "net/http"
 require "uri"
 require "fileutils"
@@ -54,6 +55,130 @@ rescue LoadError
     false
   end
 end
+
+# Master.yml configuration loader
+class MasterConfig
+  attr_reader :config, :version, :banned_tools
+  
+  SEARCH_PATHS = [
+    File.expand_path("~/pub/master.yml"),
+    File.join(Dir.pwd, "master.yml"),
+    File.join(File.dirname(__FILE__), "master.yml")
+  ].freeze
+  
+  # Dangerous patterns hard-coded for safety
+  DANGEROUS_PATTERNS = [
+    "rm -rf /",
+    "rm -rf /*",
+    "rm -rf ~",
+    "rm -rf $HOME",
+    "> /etc/passwd",
+    "> /etc/shadow",
+    "> /etc/sudoers",
+    "| sh",
+    "| bash"
+  ].freeze
+  
+  def initialize
+    @config = load_config
+    @version = @config.dig("meta", "version")
+    @banned_tools = @config.dig("constraints", "banned_tools") || []
+    
+    # Pre-compile banned tools regex for performance
+    @banned_regex = if @banned_tools.any?
+      Regexp.new('\\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\\b')
+    else
+      /(?!)/  # Regex that never matches
+    end
+    
+    validate_version
+  end
+  
+  def load_config
+    path = SEARCH_PATHS.find { |p| File.exist?(p) }
+    if path
+      YAML.safe_load_file(path, aliases: false)
+    else
+      warn "master.yml not found in search paths, using defaults"
+      default_config
+    end
+  rescue => e
+    warn "error loading master.yml: #{e.message}, using defaults"
+    default_config
+  end
+  
+  def validate_version
+    return unless @version
+    
+    # Parse version with fallback for non-standard formats
+    parts = @version.to_s.split(".").map do |p|
+      p.match?(/\A\d+\z/) ? p.to_i : 0
+    end
+    major = parts[0] || 0
+    
+    if major < 76
+      warn "master.yml version #{@version} < 76.x, may have compatibility issues"
+    elsif major >= 77
+      warn "master.yml version #{@version} >= 77.x, compatibility uncertain"
+    end
+  rescue => e
+    warn "unable to validate master.yml version: #{e.message}"
+  end
+  
+  def banned?(command)
+    command =~ @banned_regex
+  end
+  
+  def banned_tool(command)
+    @banned_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+  end
+  
+  def dangerous?(command)
+    DANGEROUS_PATTERNS.any? { |pattern| command.include?(pattern) }
+  end
+  
+  def suggest_alternative(tool)
+    # Get zsh replacements from config if available
+    zsh_replaces = @config.dig("stack", "zsh", "replaces") || {}
+    
+    case tool
+    when "sed"
+      zsh_replaces["sed"] || "use zsh: ${var//old/new}"
+    when "awk"
+      zsh_replaces["awk"] || "use zsh: ${${(s: :)line}[2]}"
+    when "bash"
+      "use zsh with pure zsh patterns"
+    when "wc"
+      zsh_replaces["wc"] || "use zsh: ${#lines}"
+    when "head"
+      zsh_replaces["head"] || "use zsh: ${lines[1,10]}"
+    when "tail"
+      zsh_replaces["tail"] || "use zsh: ${lines[-5,-1]}"
+    when "python"
+      "use ruby instead"
+    when "sudo"
+      "use doas on OpenBSD"
+    else
+      "use zsh parameter expansion or ruby"
+    end
+  end
+  
+  private
+  
+  def default_config
+    {
+      "meta" => { "version" => "76.0" },
+      "constraints" => {
+        "banned_tools" => %w[python bash sed awk wc head tail find sudo],
+        "allowed_tools" => %w[ruby zsh git grep cat sort]
+      }
+    }
+  end
+end
+
+# Load master.yml at startup
+MASTER_CONFIG = MasterConfig.new
+warn "master.yml v#{MASTER_CONFIG.version || 'unknown'} loaded\n" if FIRST_RUN
 
 # Check for browser
 def find_browser
@@ -152,6 +277,7 @@ module UI
   def banner(mode)
     puts "convergence v3.0"
     puts "mode: #{mode}"
+    puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
     puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}" if RUBY_PLATFORM =~ /openbsd/
     puts "type /help for commands\n\n"
   end
@@ -330,10 +456,20 @@ class ShellTool
   extend ToolDSL
   tool :shell, "Execute shell command", { command: { type: "string", description: "command" } }, [:command]
 
-  BLOCKED = %w[sudo rm -rf passwd shadow python bash sed awk tr wc head tail find]
-
   def shell(command:)
-    BLOCKED.each { |b| return { error: "blocked: #{b} (master.yml)" } if command =~ /\b#{Regexp.escape(b)}\b/ }
+    # Check banned tools
+    if MASTER_CONFIG.banned?(command)
+      banned_tool = MASTER_CONFIG.banned_tool(command)
+      alternative = MASTER_CONFIG.suggest_alternative(banned_tool)
+      return { error: "blocked: #{banned_tool} (master.yml banned)", alternative: alternative }
+    end
+    
+    # Check dangerous patterns
+    if MASTER_CONFIG.dangerous?(command)
+      return { error: "blocked: dangerous pattern detected (master.yml)" }
+    end
+    
+    # Execute with zsh preference
     shell_path = ["/usr/local/bin/zsh", "/bin/zsh", "/bin/ksh", ENV["SHELL"]].find { |s| s && File.executable?(s) } || "/bin/sh"
     stdout, stderr, status = Open3.capture3(shell_path, "-c", command)
     { stdout: stdout[0..4000], stderr: stderr[0..1000], exit: status.exitstatus }
