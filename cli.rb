@@ -58,7 +58,7 @@ end
 
 # Master.yml configuration loader
 class MasterConfig
-  attr_reader :config, :version, :forbidden_tools, :dangerous_patterns
+  attr_reader :config, :version, :banned_tools
   
   SEARCH_PATHS = [
     File.expand_path("~/pub/master.yml"),
@@ -66,26 +66,30 @@ class MasterConfig
     File.join(File.dirname(__FILE__), "master.yml")
   ].freeze
   
+  # Dangerous patterns hard-coded for safety
+  DANGEROUS_PATTERNS = [
+    "rm -rf /",
+    "rm -rf /*",
+    "rm -rf ~",
+    "rm -rf $HOME",
+    "> /etc/passwd",
+    "> /etc/shadow",
+    "> /etc/sudoers",
+    "| sh",
+    "| bash"
+  ].freeze
+  
   def initialize
     @config = load_config
     @version = @config.dig("meta", "version")
-    @forbidden_tools = @config.dig("mandates", "forbidden_tools") || []
-    @dangerous_patterns = @config.dig("mandates", "dangerous_patterns") || {}
+    @banned_tools = @config.dig("constraints", "banned_tools") || []
     
-    # Pre-compile forbidden tools regex for performance
-    @forbidden_regex = Regexp.union(@forbidden_tools.map { |t| /\b#{Regexp.escape(t)}\b/ })
-    
-    # Pre-process dangerous patterns into compiled regexes
-    @dangerous_regexes = @dangerous_patterns.values.flatten.map do |pattern|
-      case pattern
-      when String
-        # Convert glob-style patterns to regex
-        regex_pattern = Regexp.escape(pattern).gsub('\*', '.*')
-        Regexp.new(regex_pattern)
-      when Regexp
-        pattern
-      end
-    end.compact
+    # Pre-compile banned tools regex for performance
+    @banned_regex = if @banned_tools.any?
+      Regexp.new('\\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\\b')
+    else
+      /(?!)/  # Regex that never matches
+    end
     
     validate_version
   end
@@ -93,7 +97,7 @@ class MasterConfig
   def load_config
     path = SEARCH_PATHS.find { |p| File.exist?(p) }
     if path
-      YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true)
+      YAML.safe_load_file(path, aliases: true)
     else
       warn "master.yml not found in search paths, using defaults"
       default_config
@@ -105,43 +109,66 @@ class MasterConfig
   
   def validate_version
     return unless @version
-    major, minor = @version.split(".").map(&:to_i)
-    if major < 74
-      warn "master.yml version #{@version} < 74.x, some features may not work"
-    elsif major >= 75
-      warn "master.yml version #{@version} >= 75.x, compatibility uncertain"
+    
+    # Parse version with fallback for non-standard formats
+    parts = @version.to_s.split(".").map { |p| p.to_i rescue 0 }
+    major = parts[0] || 0
+    
+    if major < 76
+      warn "master.yml version #{@version} < 76.x, may have compatibility issues"
+    elsif major >= 77
+      warn "master.yml version #{@version} >= 77.x, compatibility uncertain"
     end
+  rescue => e
+    warn "unable to validate master.yml version: #{e.message}"
   end
   
-  def forbidden?(command)
-    command =~ @forbidden_regex
+  def banned?(command)
+    command =~ @banned_regex
   end
   
-  def forbidden_tool(command)
-    @forbidden_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+  def banned_tool(command)
+    @banned_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
   end
   
   def dangerous?(command)
-    @dangerous_regexes.any? { |regex| command =~ regex }
+    DANGEROUS_PATTERNS.any? { |pattern| command.include?(pattern) }
   end
   
   def suggest_alternative(tool)
-    alternatives = @config.dig("troubleshooting", "tool_alternatives") || {}
-    alternatives[tool] || "use zsh parameter expansion or ruby instead"
+    # Get zsh replacements from config if available
+    zsh_replaces = @config.dig("stack", "zsh", "replaces") || {}
+    
+    case tool
+    when "sed"
+      zsh_replaces["sed"] || "use zsh: ${var//old/new}"
+    when "awk"
+      zsh_replaces["awk"] || "use zsh: ${${(s: :)line}[2]}"
+    when "bash"
+      "use zsh with pure zsh patterns"
+    when "wc"
+      zsh_replaces["wc"] || "use zsh: ${#lines}"
+    when "head"
+      zsh_replaces["head"] || "use zsh: ${lines[1,10]}"
+    when "tail"
+      zsh_replaces["tail"] || "use zsh: ${lines[-5,-1]}"
+    when "python"
+      "use ruby instead"
+    when "sudo"
+      "use doas on OpenBSD"
+    else
+      "use zsh parameter expansion or ruby"
+    end
   end
   
   private
   
   def default_config
     {
-      "meta" => { "version" => "74.3.0" },
-      "mandates" => {
-        "forbidden_tools" => %w[bash python sed awk tr wc head tail cut find sudo],
-        "dangerous_patterns" => {
-          "destructive_rm" => ["rm -rf /", "rm -rf /*", "rm -rf ~"],
-          "system_overwrites" => ["> /etc/passwd", "> /etc/shadow"],
-          "blind_execution" => ["| sh", "| bash"]
-        }
+      "meta" => { "version" => "76.0" },
+      "constraints" => {
+        "banned_tools" => %w[python bash sed awk wc head tail find sudo],
+        "allowed_tools" => %w[ruby zsh git grep cat sort]
       }
     }
   end
@@ -428,11 +455,11 @@ class ShellTool
   tool :shell, "Execute shell command", { command: { type: "string", description: "command" } }, [:command]
 
   def shell(command:)
-    # Check forbidden tools
-    if MASTER_CONFIG.forbidden?(command)
-      forbidden_tool = MASTER_CONFIG.forbidden_tool(command)
-      alternative = MASTER_CONFIG.suggest_alternative(forbidden_tool)
-      return { error: "blocked: #{forbidden_tool} (master.yml forbidden)", alternative: alternative }
+    # Check banned tools
+    if MASTER_CONFIG.banned?(command)
+      banned_tool = MASTER_CONFIG.banned_tool(command)
+      alternative = MASTER_CONFIG.suggest_alternative(banned_tool)
+      return { error: "blocked: #{banned_tool} (master.yml banned)", alternative: alternative }
     end
     
     # Check dangerous patterns
