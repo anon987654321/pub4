@@ -1,4 +1,4 @@
-# OpenBSD Rails Infrastructure v338.0.0
+# OpenBSD Rails Infrastructure v338.1.0
 Single-file deployment: 48 domains, 7 Rails apps, NSD DNS+DNSSEC, TLS, PF firewall, Relayd reverse proxy.
 
 ## Architecture
@@ -65,7 +65,15 @@ doas zsh openbsd.sh --post-point
 - ~2GB RAM, 10GB disk
 - Internet connectivity
 
-## Recent Fixes (2025-12-12)
+## Recent Fixes (2025-12-19)
+
+✅ **rc.d scripts:** Fixed to use `bundle exec falcon serve` instead of broken ruby33 direct execution  
+✅ **Gemfile:** Changed Ruby version from "3.3.0" to "~> 3.3" for compatibility  
+✅ **Solid Stack:** Removed Redis dependency from Gemfile and .env  
+✅ **Bundle install:** Added automatic gem installation step during deployment  
+✅ **Falcon:** Properly configured for OpenBSD (env -S flag not supported)
+
+## Previous Fixes (2025-12-12)
 
 ✅ **PF firewall:** Fixed undefined `$domeneshop` variable  
 ✅ **PF firewall:** Narrowed port range from 65535 to 7 explicit ports  
@@ -160,6 +168,7 @@ openssl s_client -connect brgen.no:443 -servername brgen.no < /dev/null | grep V
 
 ## Version History
 
+- **v338.1.0** (2025-12-19): Fixed rc.d Falcon execution, Ruby version, removed Redis, added bundle install
 - **v338.0.0** (2025-12-12): Fixed PF bug, SNI routing, narrow ports, primary-only DNS
 - **v337.4.0** (2025-10-23): Initial release with Rails 7.2
 

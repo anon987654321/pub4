@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
-# OpenBSD Infrastructure v338.0.0 - Rails 8 + Solid Stack
+# OpenBSD Infrastructure v338.1.0 - Rails 8 + Solid Stack
 
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 #
 # ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails 8
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
 #
-# VERIFIED: 2025-12-09 against man.openbsd.org + master.yml v14.1.0
+# VERIFIED: 2025-12-19 against man.openbsd.org, Rails 8 guides, Hotwire docs
 set -euo pipefail
 
-readonly VERSION="338.0.0"
+readonly VERSION="338.1.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
 readonly PTR4_API="http://ptr4.openbsd.amsterdam"
@@ -658,7 +658,7 @@ SQL
 
 source "https://rubygems.org"
 
-ruby "3.3.0"
+ruby "~> 3.3"
 
 gem "rails", "~> 8.0.0"
 gem "pg", "~> 1.5"
@@ -668,7 +668,6 @@ gem "falcon", "~> 0.47"
 gem "async"
 
 gem "async-http"
-gem "redis", "~> 5.0"
 
 gem "solid_queue", "~> 1.0"
 gem "solid_cache", "~> 1.0"
@@ -686,6 +685,10 @@ gem "bcrypt"
 gem "bootsnap", require: false
 
 GEMFILE
+
+  # Install gems
+  log "Installing gems for $app"
+  cd "$app_dir" && doas -u "$app" bundle install --quiet --jobs=4 || warn "Bundle install failed for $app"
 
   # Database config
 
@@ -718,8 +721,6 @@ PORT=$port
 
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 DATABASE_URL=postgresql://${app}_user:${db_pass}@localhost/${app}_production
-
-REDIS_URL=redis://localhost:6379/0
 
 RAILS_LOG_TO_STDOUT=true
 
@@ -760,24 +761,25 @@ Async do
 end
 FALCON
   chmod +x "$app_dir/config/falcon.rb"
-  # rc.d service script - all apps use falcon.rb for consistency
+  # rc.d service script - use bundle exec falcon serve
+  # Note: OpenBSD env does not support -S flag, bundle exec required
   cat > "/etc/rc.d/${app}" << EOF
-
 #!/bin/ksh
 #
 # rc.d script for ${app} Rails app with Falcon (async HTTP server)
 #
 daemon_user="$app"
 daemon_execdir="/home/$app/app"
-daemon="/usr/local/bin/ruby33"
-daemon_flags="/home/$app/app/config/falcon.rb"
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec falcon serve -c /home/$app/app/config/falcon.rb"
 daemon_timeout="60"
+
 . /etc/rc.d/rc.subr
-pexp="ruby33.*/home/$app/app/config/falcon.rb"
 
+pexp="falcon serve.*$app/app/config/falcon.rb"
 rc_bg=YES
-
 rc_reload=NO
+
 rc_cmd \$1
 EOF
 
