@@ -1,0 +1,883 @@
+# master.yml — LLM Configuration Framework
+# Version: 73.0.0
+# CRITICAL: Read this ENTIRE file before responding to ANY user request
+# This file is NORMATIVE - you MUST adhere to ALL principles herein
+# Updated: 2025-12-19T20:35 - Merged best from DeepSeek/Grok/GPT/Claude versions
+
+# === BOOTSTRAP PROTOCOL (MANDATORY) ===
+# Step 1: Read entire file from ~/pub/master.yml
+# Step 2: Verify version >=73.0.0 <74.0.0
+# Step 3: Internalize all sections into working memory
+# Step 4: Activate adherence enforcement protocols
+# Step 5: Confirm: "master.yml v73.0.0 loaded, enforcement: strict"
+
+# === IMMEDIATE MANDATES (NON-NEGOTIABLE) ===
+immediate_mandates:
+  golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+  
+  tool_usage:
+    mandate: "use native file tools (view, edit, create, grep, glob) NOT shell commands"
+    prohibited_tools: [powershell, bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
+    allowed_tools: [ruby, zsh, git, grep, cat, sort, npm, bundle, rails, rake]
+    context: "launched from Cygwin/Zsh via GitHub Copilot CLI"
+    violation_response: "immediate correction required"
+  
+  communication:
+    brevity: extreme
+    rationale: "user has vision challenges"
+    success_pattern: "silent — report only failures or requested output"
+    banned_formatting: [decorations, ascii boxes, excessive headers, ornamental separators]
+  
+  file_operations:
+    anti_sprawl: true
+    banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, readme.md, changelog.md]
+    mandate: "edit existing files directly, no temporary files"
+
+meta:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  philosophy: pragmatic development, token efficiency, zero sprawl
+  canonical_path: ~/pub/master.yml
+
+stack:
+  languages: [ruby, zsh]
+  framework: Rails 8+ with Solid stack (Queue, Cache, Cable)
+  os: OpenBSD 7.6+
+  shell: zsh (ksh acceptable)
+  forbidden:
+    tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo, powershell]
+    rationale: use zsh parameter expansion, doas, rcctl instead
+
+principles:
+  priority_0_non_negotiable:
+    zsh_native_first:
+      rule: pure parameter expansion, no external forks
+      why: single grammar, zero process overhead, token efficiency
+    
+    openbsd_native:
+      rule: base system tools only, no GNU alternatives
+      why: reduced attack surface, audited code, consistency
+    
+    preserve_then_improve:
+      rule: never break working code
+      why: golden rule — stability before features
+
+  priority_1_structural:
+    chestertons_fence: understand before removing
+    pareto: 80% value from 20% effort
+    galls_law: complex systems evolve from simple ones
+    occams_razor: simpler solution usually correct
+
+  priority_2_code_quality:
+    single_responsibility: one reason to change
+    small_functions: under 10 lines ideal, max 20
+    meaningful_names: names reveal intent
+    dry: single source of truth
+    kiss: no unnecessary complexity
+    yagni: don't build what you don't need
+    tell_dont_ask: tell objects what to do, don't query then act
+    boy_scout: leave code cleaner than found
+    stepdown: most important code first, details below
+    law_of_demeter: talk only to immediate collaborators
+
+  priority_3_solid:
+    S: (see single_responsibility above)
+    O: open for extension, closed for modification
+    L: subtypes substitutable for base types
+    I: many specific interfaces over one general
+    D: depend on abstractions, not concretions
+
+  priority_4_security:
+    least_privilege: minimum permissions required
+    defense_in_depth: multiple security layers
+    validate_input: never trust external data
+    
+  priority_5_testing:
+    test_pyramid: many unit, some integration, few e2e
+    test_isolation: independent, no shared state
+    measure_first: profile before optimizing
+
+ruby:
+  frozen_string_literal: true always
+  keyword_arguments: for methods with 2+ params
+  safe_navigation: "&." over nil checks
+  string_interpolation: "#{}" over concatenation
+  blocks: "{}" for one-line, "do/end" for multi-line
+  small_methods: extract till you drop
+  structure: public → private → implementation (see stepdown principle)
+
+rails:
+  doctrine:
+    convention_over_configuration: sensible defaults
+    programmer_happiness: optimize for developer joy
+    sharp_knives: trust developers with power
+    integrated_systems: use Rails stack, avoid frankenstack
+    monolith_first: extract services when team >15
+    beautiful_code: readable, maintainable, expressive
+  
+  stack:
+    queues: Solid Queue
+    cache: Solid Cache  
+    websockets: Solid Cable
+    frontend: Hotwire, Turbo, Stimulus
+    avoid: React/Vue/Angular unless required
+
+html_css:
+  semantic_html: elements for meaning, not appearance
+  no_divitis: max 2 wrapper divs
+  modern_layout: flexbox, grid, container queries — no floats
+  css_variables: define colors/spacing/fonts in :root
+  mobile_first: base styles mobile, @media for desktop
+  accessibility: aria labels, keyboard nav, 4.5:1 contrast
+
+ui_heuristics:
+  visibility: keep users informed via feedback
+  match_real_world: speak user's language
+  user_control: allow undo, confirm destructive actions
+  consistency: same action = same outcome
+  error_prevention: better than error messages
+  recognition_over_recall: show options, don't require memory
+  flexibility: shortcuts for experts, simple for novices
+  minimalist: only relevant information
+
+zsh:
+  case:
+    lowercase: "${(L)var}"
+    uppercase: "${(U)var}"
+  
+  substitution:
+    replace_all: "${var//pattern/replacement}"
+    remove_prefix: "${var#pattern}"
+    remove_suffix: "${var%pattern}"
+    remove_crlf: "${var//$'\\r'/}"
+  
+  whitespace:
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+  
+  arrays:
+    split: "arr=( ${(s:delim:)var} )"
+    join: "joined=${(j:,:)arr}"
+    unique: "unique=( ${(u)arr} )"
+    sort_asc: "sorted=( ${(o)arr} )"
+    sort_desc: "sorted=( ${(O)arr} )"
+    filter_match: "matches=( ${(M)arr:#*pattern*} )"
+    filter_exclude: "non=( ${arr:#*pattern*} )"
+    length: "${#arr}"
+    slice_first: "${arr[1,10]}"
+    slice_last: "${arr[-5,-1]}"
+    field: "${${(s:,:)line}[4]}"
+  
+  globs:
+    recursive: "**/*.rb"
+    no_error: "**/*.rb(N)"
+    files_only: "**/*.rb(N.)"
+    dirs_only: "**/*(N/)"
+  
+  replaces:
+    grep: "${(M)lines:#*query*}"
+    awk: "${${(s: :)line}[2]}"
+    sed: "${text//old/new}"
+    tr: "${(U)text}"
+    wc: "${#lines}"
+    head: "${lines[1,10]}"
+    tail: "${lines[-5,-1]}"
+    uniq: "${(u)lines}"
+    sort: "${(o)lines}"
+    find: "**/*.ext(N.)"
+
+openbsd:
+  vps:
+    provider: OpenBSD Amsterdam
+    host: server27.openbsd.amsterdam
+    vm_name: vm08
+    ipv4: 185.52.176.18
+    ipv6: 2a03:6000:76f1:608::18
+    gateway_ipv4: 185.52.176.1
+    gateway_ipv6: 2a03:6000:76f1:608::1
+    ssh_user: dev
+    ssh_keys: [id_rsa, id_ed25519]
+    working_key: id_rsa
+    console_access: "ssh -i ~/.ssh/id_rsa -p 31415 dev@server27.openbsd.amsterdam"
+    console_command: "vmctl console vm08"
+    console_exit: "~~."
+    version: OpenBSD 7.7
+    deployed_script: openbsd.sh v338.1.0
+    deployment_date: 2025-12-19
+    
+  infrastructure_verified_2025_12_19:
+    nsd_dns:
+      status: "running (enabled)"
+      function: "Authoritative DNS for 48 domains"
+      config: "/var/nsd/etc/nsd.conf"
+      zones: "/var/nsd/zones/master/*.zone"
+      note: "needs doas for nsd-control status"
+      
+    pf_firewall:
+      status: "enabled (01:18:06 uptime)"
+      function: "Packet filter, blocks 600M+ bad IPs"
+      config: "/etc/pf.conf"
+      rules: "allows 22,80,443,10001-10007,11006"
+      check: "doas pfctl -s info"
+      
+    relayd_proxy:
+      status: "active (relay web)"
+      function: "TLS termination, SNI routing to backends"
+      config: "/etc/relayd.conf"
+      backends: "brgen:11006 (empty/down - app not running)"
+      issue: "waiting for Rails apps to start"
+      check: "relayctl show summary"
+      
+    httpd_acme:
+      status: "running"
+      function: "ACME challenges for Let's Encrypt"
+      config: "/etc/httpd.conf"
+      port: "80 (for /.well-known/acme-challenge)"
+      
+    postgresql:
+      status: "running"
+      function: "Primary database for Rails apps"
+      version: "PostgreSQL 12+"
+      
+    redis:
+      status: "running"
+      function: "Optional (Solid Stack doesn't require)"
+      note: "Can be disabled in favor of Solid Cable"
+      
+    smtpd:
+      status: "running"
+      function: "Email delivery (OpenSMTPD)"
+      
+  enabled_services:
+    apps: [amber, blognet, brgen, bsdports, hjerterom, privcam, pubattorney]
+    infrastructure: [httpd, nsd, pf, pflogd, postgresql, redis, relayd, smtpd, sshd]
+    system: [cron, dhcpleased, library_aslr, ntpd, resolvd, slaacd, syslogd]
+    status: "Apps enabled but failed (no config/falcon.rb yet)"
+    
+  services:
+    tool: rcctl
+    purpose: "unified interface for daemon management (OpenBSD 5.7+)"
+    enable: "doas rcctl enable service"
+    disable: "doas rcctl disable service"
+    start: "doas rcctl start service"
+    stop: "doas rcctl stop service"
+    restart: "doas rcctl restart service"
+    reload: "doas rcctl reload service"
+    check: "doas rcctl check service"
+    status: "rcctl get service"
+    list_all: "rcctl ls all"
+    list_enabled: "rcctl ls on"
+    list_failed: "rcctl ls failed"
+    set_flags: "doas rcctl set service flags '-flag value'"
+    config_file: "/etc/rc.conf.local"
+    scripts_dir: "/etc/rc.d/"
+    
+  rc_d_scripts:
+    purpose: "shell scripts (ksh) in /etc/rc.d/ that define how each daemon operates"
+    actions: [start, stop, restart, reload, check]
+    required_shebang: "#!/bin/ksh"
+    must_source: ". /etc/rc.d/rc.subr"
+    must_call: "rc_cmd $1"
+    variables:
+      daemon: "full path to daemon executable"
+      daemon_flags: "command-line arguments"
+      daemon_user: "user to run daemon as"
+      daemon_execdir: "working directory"
+      daemon_timeout: "seconds to wait for start/stop"
+      pexp: "regex pattern to match running process"
+      rc_bg: "YES to run in background"
+      rc_reload: "YES if daemon supports reload, NO otherwise"
+    example: |
+      #!/bin/ksh
+      daemon="/usr/local/bin/bundle"
+      daemon_flags="exec falcon serve -c /path/to/config.rb"
+      daemon_user="appuser"
+      daemon_execdir="/home/appuser/app"
+      . /etc/rc.d/rc.subr
+      rc_cmd $1
+    managed_by: "rcctl utility - reads scripts, manages via rc.conf.local"
+  
+  packages:
+    install: "doas pkg_add package"
+    search: "pkg_info -Q term"
+    list: "pkg_info"
+    update: "doas pkg_add -u"
+  
+  security:
+    privilege: doas (never sudo)
+    patches: "doas syspatch"
+    firewall: pf
+    reload_pf: "doas pfctl -f /etc/pf.conf"
+    show_rules: "doas pfctl -s rules"
+  
+  web_server_architecture:
+    external: "relayd (TLS termination, reverse proxy on port 443)"
+    internal: "falcon (async HTTP server on ports 10001-11006, replaces bin/rails s)"
+    flow: "Internet → Relayd (443) → Falcon (10001-11006) → Rails app"
+    control: "each Rails app runs as rc.d service via rcctl"
+    init: "/etc/rc.d/appname scripts define daemon behavior"
+    management: "rcctl enable/start/stop/restart appname"
+    
+  falcon_web_server:
+    purpose: "async HTTP server for Rails apps (replaces Puma/Unicorn)"
+    command: "falcon serve -c config/falcon.rb"
+    gem_required: "gem 'falcon', '~> 0.47'"
+    deployment: "each app runs as OpenBSD rc.d service via rcctl"
+    rc_d_location: "/etc/rc.d/appname"
+    rc_d_issue: "OpenBSD env does not support -S flag"
+    shebang_broken: "#!/usr/bin/env -S falcon host"
+    solution: "use bundle exec falcon serve via rc.d daemon script"
+    rc_d_working_pattern: |
+      #!/bin/ksh
+      daemon="/usr/local/bin/bundle"
+      daemon_flags="exec falcon serve -c /home/app/app/config/falcon.rb"
+      daemon_user="app"
+      daemon_execdir="/home/app/app"
+      daemon_timeout="60"
+      . /etc/rc.d/rc.subr
+      pexp="falcon serve.*app/config/falcon.rb"
+      rc_bg=YES
+      rc_reload=NO
+      rc_cmd $1
+    lifecycle:
+      enable: "doas rcctl enable appname"
+      start: "doas rcctl start appname"
+      check: "rcctl check appname"
+      restart: "doas rcctl restart appname"
+      logs: "tail /var/log/messages"
+    critical: "bundle install must complete successfully before service starts"
+
+token_economics:
+  core_argument: |
+    Zsh parameter expansion vs external tools:
+    - Single grammar vs multiple (sed/awk/tr each have syntax)
+    - Zero forks vs N process spawns
+    - Local reasoning vs cross-process state
+    - Surgical edits vs full rewrites on iteration
+  
+  cost_multiplier:
+    external_pipeline: 3-5x tokens (explain, debug, iterate)
+    zsh_native: 1x tokens
+  
+  iteration_savings:
+    external: modification requires full rewrite
+    zsh: one flag change, surgical edit
+    
+  runtime:
+    external: fork + exec + pipe buffer per command
+    zsh: in-memory, zero-copy
+    speedup: 10-50x on loops
+
+enforcement:
+  gates:
+    description: "must pass, blocking violations - fail fast"
+    items:
+      - yaml_parse_errors: 0
+      - banned_tools_violations: 0
+      - tests_pass_rate: 1.0
+      - production_breakages: 0
+  
+  targets:
+    description: "aspirational goals - warn only, never block"
+    items:
+      - consistency_score: 0.98
+      - coverage: 0.80
+      - complexity_max: 10
+      - method_lines_max: 20
+      - file_size_lines: 800
+      - duplication_max: 0.03
+  
+  exceptions:
+    tail_follow:
+      tool: tail
+      allowed_when: "tail -f for monitoring only"
+      rationale: operational monitoring, not text processing
+  
+  scoped_detection:
+    include: ["**/*.zsh", "**/*.rb", "scripts/**", ".github/workflows/**"]
+    exclude: ["**/*.md", "**/*.yml", "docs/**"]
+
+current_projects:
+  rails_apps:
+    location: ~/pub/rails/
+    count: 15
+    shared_modules: 22
+    generators: ["brgen", "amber", "blognet", "bsdports", "hjerterom", "privcam", "pubattorney"]
+    testing: RSpec for unit, system tests for UI
+    database: PostgreSQL preferred, SQLite for small
+    background: Solid Queue
+    frontend: Hotwire (Turbo + Stimulus)
+    auth: Rails 8 built-in authentication
+    status: "7 apps deployed to production VPS"
+  
+  business_plans:
+    format: single HTML with embedded CSS/JS acceptable
+    structure: executive summary first, then details
+    charts: Chart.js with accessible data tables
+    print: test layout, include page breaks
+  
+  creative_writing:
+    format: Markdown or plain text
+    organization: chapter files in folders
+    metadata: YAML frontmatter for titles, dates
+    backup: Git for version control
+
+  infrastructure:
+    deployment_script: ~/pub/openbsd/openbsd.sh
+    version: v338.1.0
+    apps_count: 7
+    domains_count: 48
+    architecture: "Internet → PF → Relayd (TLS) → Falcon → Rails 8"
+    two_phase_deployment:
+      pre_point: "infrastructure + DNS (before domains point)"
+      post_point: "TLS + reverse proxy (after DNS propagation)"
+    apps:
+      brgen: {port: 11006, domains: 40}
+      amber: {port: 10001, domains: 1}
+      blognet: {port: 10002, domains: 6}
+      bsdports: {port: 10003, domains: 1}
+      hjerterom: {port: 10004, domains: 1}
+      privcam: {port: 10005, domains: 1}
+      pubattorney: {port: 10006, domains: 2}
+    critical_fixes:
+      - "rc.d scripts use bundle exec falcon serve"
+      - "Ruby version ~> 3.3 (not hardcoded 3.3.0)"
+      - "Redis removed from Solid Stack apps"
+      - "bundle install runs automatically"
+    deployment_workflow:
+  purpose: "Complete deployment playbook to prevent repeating discoveries across sessions"
+  
+  phase_1_local_preparation:
+    step_1_verify_generators:
+      location: "G:/pub/rails/*.sh (15 generators)"
+      check: "Each generator must call setup_full_app() which creates complete Rails 8 app"
+      critical_functions:
+        - "rails new . --database=postgresql (creates Rails structure)"
+        - "setup_rails8_solid_stack (Solid Queue/Cache/Cable)"
+        - "setup_rails8_authentication (built-in auth)"
+        - "generate_falcon_config() (creates config/falcon.rb)"
+      verification: "grep -l 'setup_full_app' G:/pub/rails/*.sh should return all generators"
+      
+    step_2_verify_shared_modules:
+      location: "G:/pub/rails/__shared/"
+      consolidated_structure:
+        - "@core.sh (merged 3 core files)"
+        - "@rails8_stack.sh (Solid Queue/Cache/Cable)"
+        - "@rails8_propshaft.sh (asset pipeline)"
+        - "@frontend_pwa.sh (PWA + push + sync + install)"
+        - "@frontend_stimulus.sh"
+        - "@frontend_reflex.sh"
+        - "@features.sh (merged 4 feature files)"
+        - "@integrations.sh (merged 2 integration files)"
+        - "@helpers.sh (merged 4 helper files)"
+        - "@generators_crud_views.sh"
+      loader: "@shared_functions.sh sources all modules"
+      note: "NEVER create new folders - merge files to reduce sprawl"
+      
+    step_3_verify_openbsd_script:
+      location: "G:/pub/openbsd/openbsd.sh"
+      current_version: "v338.1.0"
+      critical_fixes:
+        rc_d_scripts: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve -c /path/to/config/falcon.rb'"
+        ruby_version: "ruby ~> 3.3 (flexible, not hardcoded)"
+        solid_stack: "No Redis in Gemfile or .env"
+        bundle_install: "Must run after Gemfile generation"
+      deployment_phases:
+        pre_point: "Infrastructure + DNS (before domains point to VPS)"
+        post_point: "TLS + reverse proxy (after DNS propagation)"
+      
+  phase_2_vps_deployment:
+    prerequisites:
+      vps_access: "ssh -i G:/priv/passwd/id_rsa dev@185.52.176.18"
+      vps_details:
+        provider: "OpenBSD Amsterdam"
+        ip: "185.52.176.18"
+        os: "OpenBSD 7.7"
+        user: "dev"
+        password: "hutte10tu6969 (backup, use keys)"
+      
+    step_1_upload_generator:
+      method: "scp or pipe via ssh"
+      example: "cat G:/pub/rails/brgen.sh | ssh dev@185.52.176.18 'cat > ~/brgen_deploy.sh && chmod +x ~/brgen_deploy.sh'"
+      critical: "Use PowerShell cat or Get-Content, NOT ssh's cat (Windows paths)"
+      
+    step_2_run_generator_on_vps:
+      location: "/home/dev/rails/appname/"
+      command: "cd ~ && zsh ./brgen_deploy.sh"
+      what_happens:
+        - "Creates /home/dev/rails/brgen/"
+        - "Runs rails new with PostgreSQL"
+        - "Generates Gemfile with Rails 8 + Solid Stack + Falcon"
+        - "Runs bundle install (120+ gems)"
+        - "Creates config/falcon.rb"
+        - "Creates config/database.yml"
+        - "Generates models, controllers, views"
+        - "Sets up authentication"
+      expected_time: "5-10 minutes per app"
+      
+    step_3_verify_app_structure:
+      checks:
+        - "ls /home/dev/rails/brgen/config/application.rb (Rails app exists)"
+        - "ls /home/dev/rails/brgen/config/falcon.rb (Falcon config exists)"
+        - "cd /home/dev/rails/brgen && bundle check (all gems installed)"
+        - "ls /home/dev/rails/brgen/app/controllers/ (controllers generated)"
+      
+    step_4_start_service:
+      rc_d_script: "/etc/rc.d/brgen (created by openbsd.sh)"
+      commands:
+        enable: "doas rcctl enable brgen"
+        start: "doas rcctl start brgen"
+        check: "rcctl check brgen (should show brgen(ok))"
+        logs: "tail -f /var/log/messages | grep brgen"
+      troubleshooting:
+        failed_status: "Check /var/log/messages for errors"
+        bundle_error: "cd /home/dev/rails/brgen && doas -u brgen bundle install"
+        missing_config: "Regenerate app with fixed generator"
+        
+  phase_3_troubleshooting:
+    common_issues:
+      gemfile_broken:
+        symptom: "Bundler parse error or version conflict"
+        cause: "sed usage (FORBIDDEN per master.yml line 47)"
+        solution: "Download Gemfile, fix locally with edit tool, upload back"
+        never_use: "sed, awk, tr, cut (all forbidden)"
+        
+      langchain_conflict:
+        symptom: "langchainrb 0.19 incompatible with langchainrb_rails"
+        solution: "Remove langchain gems entirely or use langchainrb ~> 0.16.0"
+        status: "Optional feature - skip if blocking deployment"
+        
+      missing_falcon_config:
+        symptom: "LoadError: cannot load config/falcon.rb"
+        cause: "Generator didn't call generate_falcon_config()"
+        solution: "Verify @shared_functions.sh line 80 calls generate_falcon_config()"
+        
+      file_descriptor_limit:
+        symptom: "Errno::EMFILE - Too many open files"
+        solution: "Add to /etc/login.conf: railsapp class with openfiles-max=4096"
+        apply: "cap_mkdb /etc/login.conf"
+        
+      service_wont_start:
+        check_1: "ls /etc/rc.d/appname (rc.d script exists?)"
+        check_2: "cat /etc/rc.d/appname | grep bundle (uses bundle exec?)"
+        check_3: "ls /home/appname/app/config/falcon.rb (config exists?)"
+        check_4: "cd /home/appname/app && bundle check (gems installed?)"
+        check_5: "doas rcctl -d start appname (debug output)"
+        
+  phase_4_verification:
+    app_running:
+      check_process: "ps aux | grep falcon | grep appname"
+      check_port: "netstat -an | grep LISTEN | grep 11006 (brgen port)"
+      check_service: "rcctl check brgen (should show ok)"
+      
+    test_http:
+      internal: "curl http://localhost:11006/"
+      external: "curl http://185.52.176.18:11006/ (if PF allows)"
+      through_relayd: "curl https://brgen.no/ (after DNS points)"
+      
+    logs:
+      system: "/var/log/messages (rcctl and service errors)"
+      app: "/home/brgen/app/log/production.log (Rails logs)"
+      relayd: "/var/log/daemon (relayd routing)"
+      
+  critical_rules:
+    never_use_sed: "Use zsh parameter expansion or edit tool instead"
+    never_create_folders: "Merge files to reduce sprawl"
+    always_codify: "Update master.yml with every discovery"
+    test_generators_first: "Never deploy untested generators"
+    one_app_first: "Deploy brgen first, verify completely, then others"
+      generator_missing_falcon_config:
+        issue: "Rails generators didn't create config/falcon.rb"
+        impact: "Apps fail to start - LoadError: cannot load config/falcon.rb"
+        fix: "Added generate_falcon_config() to @shared_functions.sh"
+        location: "setup_full_app() now calls generate_falcon_config()"
+        status: "FIXED 2025-12-19T21:27 - generators now complete"
+    
+  rails_apps:
+    location: ~/pub/rails/
+    count: 15
+    shared_modules: 22
+    testing: RSpec for unit, system tests for UI
+    database: PostgreSQL preferred, SQLite for small
+    background: Solid Queue
+    frontend: Hotwire (Turbo + Stimulus)
+    auth: Rails 8 built-in authentication
+    solid_stack_integrated: true
+    redis_optional: true
+  
+  business_plans:
+    format: single HTML with embedded CSS/JS acceptable
+    structure: executive summary first, then details
+    charts: Chart.js with accessible data tables
+    print: test layout, include page breaks
+  
+  creative_writing:
+    format: Markdown or plain text
+    organization: chapter files in folders
+    metadata: YAML frontmatter for titles, dates
+    backup: Git for version control
+
+large_html_documents:
+  rationale: business plans, presentations require inline CSS/JS
+  
+  inline_css:
+    organization: CSS variables → resets → layout → components
+    variables: "define colors/spacing/fonts in :root"
+    layout: flexbox, grid, container queries — no floats
+    print: "@media print with page breaks, hide non-essential"
+  
+  inline_js:
+    production: minified, single line, no whitespace
+    development: readable, commented, spaced
+    structure: config → utils → classes → init → events
+    safety: check element existence before manipulation
+    cleanup: track timers, clear on beforeunload
+
+workflow:
+  assess: understand current state
+  plan: smallest direct path
+  execute: build then refactor
+  verify: ensure no regressions
+  learn: reflect on outcomes, update principles
+
+workflow_phases:
+  phase_1_detect:
+    trigger: ["code_commit", "master_yml_update", "scheduled_scan", "on_demand"]
+    scan_targets:
+      - "master.yml validates against own principles"
+      - "external code validates against master.yml"
+      - "bidirectional consistency check"
+    output: "violation report with severity and location"
+  
+  phase_2_autofix:
+    mandatory: true
+    confidence_threshold: 0.90
+    strategies:
+      version_mismatch:
+        detect: "version references != current version"
+        fix: "update all version references"
+        verify: "all versions match"
+      
+      case_errors:
+        detect: "uppercase ZSH instead of Zsh"
+        fix: "replace with correct case"
+        verify: "no case errors remain"
+      
+      banned_tools:
+        detect: "sed/awk/python usage"
+        fix: "replace with Zsh parameter expansion"
+        verify: "no banned tools remain"
+      
+      duplication:
+        detect: "identical code blocks >3 lines"
+        fix: "extract to function"
+        verify: "DRY principle satisfied"
+    
+    rollback_on_failure: true
+    backup_before_change: true
+  
+  phase_3_verify:
+    tests_pass: true
+    linters_clean: true
+    no_regressions: true
+    improvement_measured: true
+  
+  phase_4_commit:
+    message_template: "autofix: {type} - {description}"
+    tag_on_convergence: "v{version}-converged"
+
+rules:
+  always:
+    - keep codebase functional
+    - edit files directly
+    - use ruby/zsh appropriately
+    - follow project conventions
+  
+  never:
+    - create analysis/summary files
+    - break without immediate fix
+    - use banned tools
+    - add ornamental comments
+
+convergence:
+  enabled: true
+  mandate: "auto-iterate until no violations remain and no further improvements possible"
+  max_iterations: 100
+  improvement_threshold: 0.001
+  
+  algorithm:
+    1: "scan for violations and improvement opportunities"
+    2: "generate fixes for all issues found"
+    3: "apply fixes with rollback safety"
+    4: "verify fixes didn't introduce new issues"
+    5: "measure improvement delta"
+    6: "IF delta > threshold GOTO step 1"
+    7: "IF delta < threshold CONVERGED"
+  
+  iteration_types:
+    flesh_out: "Add missing details, documentation, examples"
+    refine: "Improve clarity, precision, accuracy"
+    streamline: "Remove redundancy, consolidate duplicates"
+    polish: "Fix grammar, formatting, style"
+    optimize: "Improve performance, efficiency"
+    secure: "Harden security, close gaps"
+    align: "Ensure consistency, resolve conflicts"
+  
+  strategies: [flesh_out, refine, streamline, polish, optimize, secure, align]
+  
+  adversarial_questioning:
+    enabled: true
+    purpose: "Challenge assumptions, find edge cases, stress test principles"
+    questions:
+      completeness: "What scenarios are not covered?"
+      consistency: "Do any principles conflict?"
+      practicality: "Can this actually be followed?"
+      edge_cases: "What breaks this approach?"
+      maintainability: "Will this scale with complexity?"
+    apply_when: ["after_each_iteration", "before_convergence_declared"]
+
+detectors:
+  duplicate_code_detector:
+    enabled: true
+    threshold: 3
+    similarity: 0.70
+    action: "consolidate to single function"
+  
+  complexity_detector:
+    enabled: true
+    cyclomatic_max: 10
+    nesting_max: 4
+    method_lines_max: 20
+    action: "extract methods, simplify logic"
+  
+  security_detector:
+    enabled: true
+    checks: ["sql_injection", "xss", "command_injection", "hardcoded_secrets"]
+    action: "sanitize inputs, use parameterized queries"
+  
+  style_detector:
+    enabled: true
+    checks: ["trailing_whitespace", "indentation", "line_length"]
+    action: "auto-format per style guide"
+  
+  banned_tools_detector:
+    enabled: true
+    scan_for: ["python", "bash", "sed", "awk", "tr", "wc", "head", "tail", "cut", "find", "sudo"]
+    action: "replace with Zsh native or ruby"
+    exceptions: ["tail -f for monitoring"]
+
+workflow_restoration:
+  git_log_patch:
+    purpose: "Recover lost work from git history"
+    command: "git log --patch --all -- path/to/file"
+    use_cases:
+      accidental_deletion: "git log --diff-filter=D --summary"
+      find_when_added: "git log --diff-filter=A -- file"
+      see_all_changes: "git log --patch -- file"
+      find_by_content: "git log -S 'search_string' --patch"
+    recovery_workflow:
+      1: "git log --patch --all -- lost_file.rb"
+      2: "identify commit hash with desired content"
+      3: "git show HASH:path/to/file > recovered_file"
+      4: "verify content, restore to working tree"
+    integration: "Use when told 'I lost code' or 'what happened to X'"
+
+deep_trace:
+  enabled: true
+  style: "OpenBSD dmesg-inspired output"
+  format: "[timestamp] component: message"
+  components: [master.yml, cpu0, mem0, detector0-9, autofix0-9, convergence, verify0]
+  levels: [Gray, Green, Yellow, Red, Cyan]
+
+workflow_hacks:
+  parallel_processing: {enabled: true, max_workers: 8, batch_size: 100}
+  incremental_validation: {enabled: true, cache_valid_sections: true, speedup: "10x on large files"}
+  smart_diffing: {enabled: true, algorithm: "Myers diff with semantic awareness"}
+  lazy_loading: {enabled: true, load_on_demand: true, sections: [examples, references]}
+  memoization: {enabled: true, cache_detections: true, cache_fixes: true, ttl: "1 hour"}
+
+cli_integration:
+  purpose: "unified config for all LLM CLI tools enforcing master.yml principles"
+  
+  shell_enforcement:
+    required: zsh
+    forbidden: [bash, powershell, cmd, sh]
+    rationale: "single grammar, Zsh parameter expansion, token efficiency"
+  
+  claude_code_cli:
+    settings_path: "~/.claude/settings.local.json"
+    permissions: {allow: ["Zsh(*)"], deny: ["Bash(*)", "PowerShell(*)", "Cmd(*)"], ask: []}
+    auto_load_master: true
+    enforce_tool_policy: true
+    mandate_file_tools: true
+    note: "use view/edit/create/grep/glob, not shell, unless necessary"
+  
+  github_copilot_cli:
+    config_path: "~/.copilot/config.yml"
+    shell: zsh
+    forbidden_shells: [bash, powershell, cmd]
+    auto_load_master: true
+    enforce_principles: true
+    launch_context: "Cygwin/Zsh terminal"
+    mandate_file_tools: true
+  
+  shared_config:
+    master_yml_path: "~/pub/master.yml"
+    bootstrap_on_start: true
+    enforce_banned_tools: true
+    tools:
+      allowed: [ruby, zsh, git, grep, cat, sort, npm, bundle, rails, rake]
+      forbidden: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo, powershell]
+      prefer_file_tools_over_shell: true
+
+bootstrap:
+  protocol:
+    step_1: "read entire file from canonical_path"
+    step_2: "verify version >=73.0.0 <74.0.0"
+    step_3: "internalize all sections into working memory"
+    step_4: "activate adherence_enforcement protocols"
+    step_5: "confirm: master.yml v73.0.0 loaded, enforcement: strict"
+  
+  verification:
+    quick_check: "cite version"
+    deep_check: "trace a decision through principles"
+    compliance_check: "explain golden_rule verbatim"
+    failure_mode: "reload and re-internalize completely"
+
+self_audit:
+  enabled: true
+  script: |
+    # Zsh validation script
+    file="master.yml"
+    lines=(${(f)"$(< $file)"})
+    line_count=${#lines}
+    unique_lines=(${(u)lines})
+    unique_count=${#unique_lines}
+    duplication=$((1.0 - unique_count.0 / line_count.0))
+    
+    print "master.yml Self-Audit"
+    print "Lines: $line_count"
+    print "Unique: $unique_count"
+    print "Duplication: ${(l:5:)$(printf '%.1f%%' $((duplication * 100)))}"
+    print "Target: <800 lines, <3% duplication"
+    
+    [[ $line_count -le 800 ]] && print "✓ Size OK" || print "⚠ Size exceeds target"
+    [[ $duplication -le 0.03 ]] && print "✓ Duplication OK" || print "⚠ Duplication high"
+  
+  targets:
+    line_count_max: 800
+    duplication_max: 0.03
+    consistency_min: 0.98
+    readability_min: 0.95
+
+version_history:
+  "73.0.0": "Synthesis: merged DeepSeek/Grok/GPT/Claude + restored convergence/detectors/adversarial questioning/git workflow restoration"
+  "72.2.0": "Claude: VPS deployment workflows, Falcon rc.d patterns, communication brevity"
+  "72.1.0": "Claude: Radical simplification, removed auto-iteration complexity"
+  "71.8.0": "DeepSeek: Self-validation, CLI integration, convergence algorithms"
+  "71.7.0": "Grok+DeepSeek: Deep trace logging, 99.8% consistency after 2 iterations"
+  "71.6.0": "DeepSeek: Convergence loop - auto-iterate to perfection"
+  "71.11.0": "GPT: YAML anchors, evidence weights, governance approval"
+
+# End of master.yml v73.0.0 - Complete Synthesis
+# Lines: ~850 | All 4 LLM contributions + restored workflows + adversarial testing + git recovery
+# Structure: mandates → principles → deployment → detectors → workflows → convergence → self-audit
+# Session: 2025-12-19T20:43 - Comprehensive merge with missing capabilities restored

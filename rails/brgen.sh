@@ -24,9 +24,13 @@ install_gem "acts_as_tenant"
 install_gem "pagy"
 install_gem "faker"
 
-# LangChain AI integration (optional - skip if blocking)
-# setup_langchainrb
-# setup_langchainrb_rails
+# Rails 8 auth + devise-guests for anonymous posting
+install_gem "devise"
+install_gem "devise-guests"
+
+bin/rails generate devise:install
+bin/rails generate devise User
+bin/rails generate devise_guests:install
 
 # Generate application layout with PWA support
 cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb

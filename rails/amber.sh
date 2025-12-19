@@ -23,9 +23,13 @@ command_exists "psql"
 install_gem "pagy"
 install_gem "faker"
 
-# LangChain AI for wardrobe analysis (optional - skip if blocking)
-# setup_langchainrb
-# setup_langchainrb_rails
+# Rails 8 auth + devise-guests for anonymous wardrobe access
+install_gem "devise"
+install_gem "devise-guests"
+
+bin/rails generate devise:install
+bin/rails generate devise User
+bin/rails generate devise_guests:install
 
 # Generate application layout with PWA support
 cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
@@ -115,6 +119,9 @@ bin/rails generate model Item title:string category:string color:string size:str
 bin/rails generate model Outfit name:string description:text category:string season:string occasion:string user:references
 
 generate_all_stimulus_controllers
+
+# Use default CSS from bsdports template
+generate_default_css "$APP_NAME"
 
 # Home controller
 cat <<'EOF' > app/controllers/home_controller.rb

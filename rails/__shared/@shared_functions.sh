@@ -21,6 +21,7 @@ SCRIPT_DIR="${0:a:h}"
 source "${SCRIPT_DIR}/@core.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
 source "${SCRIPT_DIR}/@rails8_propshaft.sh"
+source "${SCRIPT_DIR}/@default_application_css.sh"
 
 # Frontend/UI
 source "${SCRIPT_DIR}/@frontend_stimulus.sh"
@@ -102,6 +103,21 @@ FALCON_EOF
 
     chmod +x config/falcon.rb
     log "✓ Falcon config generated"
+}
+
+setup_devise_guests() {
+  log "Setting up devise-guests for anonymous posting"
+  
+  install_gem "devise"
+  install_gem "devise-guests"
+  
+  if [ ! -f "config/initializers/devise.rb" ]; then
+    bin/rails generate devise:install
+    bin/rails generate devise User
+    bin/rails generate devise_guests:install
+  fi
+  
+  log "✓ Devise + devise-guests configured"
 }
 
 setup_devise() {
