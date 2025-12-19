@@ -367,7 +367,148 @@ projects:
       - "Ruby version ~> 3.3 (not hardcoded 3.3.0)"
       - "Redis removed from Solid Stack apps"
       - "bundle install runs automatically"
-    deployment_issues:
+    deployment_workflow:
+  purpose: "Complete deployment playbook to prevent repeating discoveries across sessions"
+  
+  phase_1_local_preparation:
+    step_1_verify_generators:
+      location: "G:/pub/rails/*.sh (15 generators)"
+      check: "Each generator must call setup_full_app() which creates complete Rails 8 app"
+      critical_functions:
+        - "rails new . --database=postgresql (creates Rails structure)"
+        - "setup_rails8_solid_stack (Solid Queue/Cache/Cable)"
+        - "setup_rails8_authentication (built-in auth)"
+        - "generate_falcon_config() (creates config/falcon.rb)"
+      verification: "grep -l 'setup_full_app' G:/pub/rails/*.sh should return all generators"
+      
+    step_2_verify_shared_modules:
+      location: "G:/pub/rails/__shared/"
+      consolidated_structure:
+        - "@core.sh (merged 3 core files)"
+        - "@rails8_stack.sh (Solid Queue/Cache/Cable)"
+        - "@rails8_propshaft.sh (asset pipeline)"
+        - "@frontend_pwa.sh (PWA + push + sync + install)"
+        - "@frontend_stimulus.sh"
+        - "@frontend_reflex.sh"
+        - "@features.sh (merged 4 feature files)"
+        - "@integrations.sh (merged 2 integration files)"
+        - "@helpers.sh (merged 4 helper files)"
+        - "@generators_crud_views.sh"
+      loader: "@shared_functions.sh sources all modules"
+      note: "NEVER create new folders - merge files to reduce sprawl"
+      
+    step_3_verify_openbsd_script:
+      location: "G:/pub/openbsd/openbsd.sh"
+      current_version: "v338.1.0"
+      critical_fixes:
+        rc_d_scripts: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve -c /path/to/config/falcon.rb'"
+        ruby_version: "ruby ~> 3.3 (flexible, not hardcoded)"
+        solid_stack: "No Redis in Gemfile or .env"
+        bundle_install: "Must run after Gemfile generation"
+      deployment_phases:
+        pre_point: "Infrastructure + DNS (before domains point to VPS)"
+        post_point: "TLS + reverse proxy (after DNS propagation)"
+      
+  phase_2_vps_deployment:
+    prerequisites:
+      vps_access: "ssh -i G:/priv/passwd/id_rsa dev@185.52.176.18"
+      vps_details:
+        provider: "OpenBSD Amsterdam"
+        ip: "185.52.176.18"
+        os: "OpenBSD 7.7"
+        user: "dev"
+        password: "hutte10tu6969 (backup, use keys)"
+      
+    step_1_upload_generator:
+      method: "scp or pipe via ssh"
+      example: "cat G:/pub/rails/brgen.sh | ssh dev@185.52.176.18 'cat > ~/brgen_deploy.sh && chmod +x ~/brgen_deploy.sh'"
+      critical: "Use PowerShell cat or Get-Content, NOT ssh's cat (Windows paths)"
+      
+    step_2_run_generator_on_vps:
+      location: "/home/dev/rails/appname/"
+      command: "cd ~ && zsh ./brgen_deploy.sh"
+      what_happens:
+        - "Creates /home/dev/rails/brgen/"
+        - "Runs rails new with PostgreSQL"
+        - "Generates Gemfile with Rails 8 + Solid Stack + Falcon"
+        - "Runs bundle install (120+ gems)"
+        - "Creates config/falcon.rb"
+        - "Creates config/database.yml"
+        - "Generates models, controllers, views"
+        - "Sets up authentication"
+      expected_time: "5-10 minutes per app"
+      
+    step_3_verify_app_structure:
+      checks:
+        - "ls /home/dev/rails/brgen/config/application.rb (Rails app exists)"
+        - "ls /home/dev/rails/brgen/config/falcon.rb (Falcon config exists)"
+        - "cd /home/dev/rails/brgen && bundle check (all gems installed)"
+        - "ls /home/dev/rails/brgen/app/controllers/ (controllers generated)"
+      
+    step_4_start_service:
+      rc_d_script: "/etc/rc.d/brgen (created by openbsd.sh)"
+      commands:
+        enable: "doas rcctl enable brgen"
+        start: "doas rcctl start brgen"
+        check: "rcctl check brgen (should show brgen(ok))"
+        logs: "tail -f /var/log/messages | grep brgen"
+      troubleshooting:
+        failed_status: "Check /var/log/messages for errors"
+        bundle_error: "cd /home/dev/rails/brgen && doas -u brgen bundle install"
+        missing_config: "Regenerate app with fixed generator"
+        
+  phase_3_troubleshooting:
+    common_issues:
+      gemfile_broken:
+        symptom: "Bundler parse error or version conflict"
+        cause: "sed usage (FORBIDDEN per master.yml line 47)"
+        solution: "Download Gemfile, fix locally with edit tool, upload back"
+        never_use: "sed, awk, tr, cut (all forbidden)"
+        
+      langchain_conflict:
+        symptom: "langchainrb 0.19 incompatible with langchainrb_rails"
+        solution: "Remove langchain gems entirely or use langchainrb ~> 0.16.0"
+        status: "Optional feature - skip if blocking deployment"
+        
+      missing_falcon_config:
+        symptom: "LoadError: cannot load config/falcon.rb"
+        cause: "Generator didn't call generate_falcon_config()"
+        solution: "Verify @shared_functions.sh line 80 calls generate_falcon_config()"
+        
+      file_descriptor_limit:
+        symptom: "Errno::EMFILE - Too many open files"
+        solution: "Add to /etc/login.conf: railsapp class with openfiles-max=4096"
+        apply: "cap_mkdb /etc/login.conf"
+        
+      service_wont_start:
+        check_1: "ls /etc/rc.d/appname (rc.d script exists?)"
+        check_2: "cat /etc/rc.d/appname | grep bundle (uses bundle exec?)"
+        check_3: "ls /home/appname/app/config/falcon.rb (config exists?)"
+        check_4: "cd /home/appname/app && bundle check (gems installed?)"
+        check_5: "doas rcctl -d start appname (debug output)"
+        
+  phase_4_verification:
+    app_running:
+      check_process: "ps aux | grep falcon | grep appname"
+      check_port: "netstat -an | grep LISTEN | grep 11006 (brgen port)"
+      check_service: "rcctl check brgen (should show ok)"
+      
+    test_http:
+      internal: "curl http://localhost:11006/"
+      external: "curl http://185.52.176.18:11006/ (if PF allows)"
+      through_relayd: "curl https://brgen.no/ (after DNS points)"
+      
+    logs:
+      system: "/var/log/messages (rcctl and service errors)"
+      app: "/home/brgen/app/log/production.log (Rails logs)"
+      relayd: "/var/log/daemon (relayd routing)"
+      
+  critical_rules:
+    never_use_sed: "Use zsh parameter expansion or edit tool instead"
+    never_create_folders: "Merge files to reduce sprawl"
+    always_codify: "Update master.yml with every discovery"
+    test_generators_first: "Never deploy untested generators"
+    one_app_first: "Deploy brgen first, verify completely, then others"
       generator_missing_falcon_config:
         issue: "Rails generators didn't create config/falcon.rb"
         impact: "Apps fail to start - LoadError: cannot load config/falcon.rb"
