@@ -97,7 +97,7 @@ class MasterConfig
   def load_config
     path = SEARCH_PATHS.find { |p| File.exist?(p) }
     if path
-      YAML.safe_load_file(path, aliases: true)
+      YAML.safe_load_file(path, aliases: false)
     else
       warn "master.yml not found in search paths, using defaults"
       default_config
@@ -111,7 +111,9 @@ class MasterConfig
     return unless @version
     
     # Parse version with fallback for non-standard formats
-    parts = @version.to_s.split(".").map { |p| p.to_i rescue 0 }
+    parts = @version.to_s.split(".").map do |p|
+      p.match?(/\A\d+\z/) ? p.to_i : 0
+    end
     major = parts[0] || 0
     
     if major < 76
