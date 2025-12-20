@@ -18,6 +18,37 @@ command_exists() {
     }
 }
 
+# Gem installation helper
+install_gem() {
+    local gem_name="$1"
+    local bundle_output=$(bundle list 2>/dev/null)
+    
+    if [[ "$bundle_output" != *"  * $gem_name "* ]]; then
+        log "Installing gem: $gem_name"
+        bundle add "$gem_name"
+    else
+        log "Gem already installed: $gem_name"
+    fi
+}
+
+# Yarn package installation helper
+install_yarn_package() {
+    local package_name="$1"
+    
+    if [[ -f "package.json" ]]; then
+        local pkg_json=$(<package.json)
+        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
+            log "Installing yarn package: $package_name"
+            yarn add "$package_name"
+        else
+            log "Yarn package already installed: $package_name"
+        fi
+    else
+        log "Installing yarn package: $package_name"
+        yarn add "$package_name"
+    fi
+}
+
 # Ruby environment setup
 setup_ruby() {
     log "Verifying Ruby environment"

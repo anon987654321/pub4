@@ -5,6 +5,19 @@ set -euo pipefail
 # Combines @helpers_installation.sh, @helpers_logging.sh, @helpers_routes.sh
 # Per master.yml v74.2.0 - Rails 8 + Solid Stack
 
+# Logging
+log() {
+    print "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+# Command existence check
+command_exists() {
+    command -v "$1" >/dev/null 2>&1 || {
+        log "ERROR: $1 is required but not installed"
+        exit 1
+    }
+}
+
 # Idempotency check - skip if app already generated
 check_app_exists() {
     local app_name="$1"

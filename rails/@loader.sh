@@ -8,8 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="${0:a:h}"
 
 # Core Infrastructure
-source "${SCRIPT_DIR}/@core_database.sh"
-source "${SCRIPT_DIR}/@core_dependencies.sh"
+source "${SCRIPT_DIR}/@core.sh"
 source "${SCRIPT_DIR}/@rails8_solid_stack.sh"
 
 # Authentication & Authorization
@@ -37,9 +36,7 @@ source "${SCRIPT_DIR}/@integrations_maps.sh"
 source "${SCRIPT_DIR}/@integrations_search.sh"
 
 # Helpers
-source "${SCRIPT_DIR}/@helpers_installation.sh"
-source "${SCRIPT_DIR}/@helpers_routes.sh"
-source "${SCRIPT_DIR}/@helpers_logging.sh"
+source "${SCRIPT_DIR}/@helpers.sh"
 
 # Main setup function - replaces setup_full_app from @common.sh
 setup_full_app() {
