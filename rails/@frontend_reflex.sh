@@ -16,7 +16,8 @@ setup_stimulus_reflex() {
     
     # Add error handling to ApplicationReflex
     if [ -f "app/reflexes/application_reflex.rb" ]; then
-        if ! grep -q "rescue_from" app/reflexes/application_reflex.rb; then
+        local reflex_content=$(<app/reflexes/application_reflex.rb)
+        if [[ "$reflex_content" != *"rescue_from"* ]]; then
             cat >> app/reflexes/application_reflex.rb << 'APPERROR'
 
   # Error handling for all reflexes
