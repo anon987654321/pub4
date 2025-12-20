@@ -11,12 +11,7 @@ setup_solid_queue() {
     bin/rails generate solid_queue:install
   fi
   
-  # Configure for production
-  cat >> config/application.rb << 'EOF'
-
-    config.active_job.queue_adapter = :solid_queue
-EOF
-  
+  # Generator already configures config.active_job.queue_adapter in production.rb
   log "✓ Solid Queue configured"
 }
 

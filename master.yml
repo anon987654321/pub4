@@ -1,13 +1,15 @@
-# master.yml v75.2.0 - Rails 8 + OpenBSD Code Improvement
-# Updated: 2025-12-20T21:38 - Added violation prevention enforcement
+# master.yml v75.3.0 - Rails 8 + OpenBSD Code Improvement
+# Updated: 2025-12-20T22:57 - Added Cygwin/zsh enforcement & deployment workflows
 #
-# ACTIVATION: "✓ master.yml v75.2.0 loaded
+# ACTIVATION: "✓ master.yml v75.3.0 loaded
+#  • Environment: Cygwin/zsh on Windows (GitHub Copilot CLI)
 #  • Deep analysis: nested loops, <2% threshold
 #  • Tiered principles: never break → strong → guidelines
 #  • Zero sprawl: commits only, no temp files
-#  • Zsh native: 46% token savings
+#  • Zsh native: 46% token savings via parameter expansion
 #  • Ruby-first reasoning: algorithms as Ruby, file ops as zsh
-#  • SCAN EVERY COMMAND: Before executing, check forbidden list"
+#  • SCAN EVERY COMMAND: Before executing, check forbidden list
+#  • Deployment: Rails 8 + Falcon + Solid Stack → OpenBSD VPS"
 
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
@@ -22,8 +24,14 @@ reasoning:
     explanations: "Show concrete Ruby or zsh snippets instead of abstract pseudo-code"
   note: "This governs visible output/reasoning surface, not internal LLM thought process"
 
+environment:
+  windows: "Use C:\\cygwin64\\bin\\zsh.exe for all shell operations"
+  cli: "GitHub Copilot CLI (Node.js npm package @github/copilot)"
+  shell_access: "Cygwin/zsh works but not officially supported - use zsh patterns"
+  read_files: "Use cat from zsh, or view tool for line-numbered viewing"
+
 forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
-allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add]
+allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat]
 output: "work via commits with clear messages - no temp files"
 
 enforcement:
@@ -78,9 +86,23 @@ ruby:
   blocks: "{} one-line, do/end multi"
 
 rails:
-  stack: "Solid + Hotwire"
-  avoid: "React/Vue/Angular"
+  version: 8.0.4
+  stack: "Solid + Hotwire + Falcon"
+  avoid: "React/Vue/Angular, Puma (use Falcon), Redis (use Solid)"
   doctrine: "convention > configuration"
+  deployment:
+    server: "Falcon (async, fiber-based, HTTP/2 capable)"
+    replace_puma: "bundle remove puma && bundle add falcon falcon-rails"
+    config: "config/falcon.rb with preload, multi-worker, Falcon::Environment::Rack"
+    solid_stack:
+      queue: "bin/rails generate solid_queue:install - background jobs"
+      cache: "bin/rails generate solid_cache:install - caching layer"
+      cable: "bin/rails generate solid_cable:install - WebSockets"
+      auth: "bin/rails generate authentication - Rails 8 built-in"
+    gotchas:
+      - "Rails 8 includes Propshaft (not Sprockets)"
+      - "Solid Queue generator adds config to production.rb (don't append manually)"
+      - "Falcon needs config/preload.rb with require_relative 'environment'"
 
 zsh:
   why: "zero forks, 46% token savings vs sed/awk/tr"
@@ -123,10 +145,24 @@ openbsd:
   man_pages: "man relayd.conf, man httpd.conf, man pf.conf, man acme-client.conf"
 
 deploy:
-  local: [test, verify_Gemfile, commit]
-  remote: "scp file.sh vps:~ && ssh vps 'zsh file.sh'"
+  local: [test, verify_Gemfile, commit, push]
+  vps_setup:
+    - "ssh dev@185.52.176.18 (password: hutte10tu6969 or key: ~/priv/passwd/id_rsa)"
+    - "doas rm -rf ~/rails/appname (clean slate)"
+    - "cd ~/pub4 && git pull (get latest scripts)"
+    - "cd rails && doas zsh appname.sh (run installer)"
+  rails_deploy:
+    - "Script creates ~/rails/appname and installs all dependencies"
+    - "Falcon configured with 2 workers on port 1000X"
+    - "PostgreSQL database created with credentials from script"
+    - "rc.d service installed: rcctl enable appname && rcctl start appname"
+  verify:
+    - "rcctl check appname (should show 'appname(ok)')"
+    - "ps aux | grep falcon (check processes)"
+    - "curl http://localhost:1000X (test local)"
+    - "curl https://domain.com (test through relayd)"
+  remote: "ssh vps 'cd ~/pub4/rails && doas zsh appname.sh'"
   service: "rcctl enable app && rcctl start app"
-  verify: "ps aux | grep falcon && curl localhost:port"
 
 execution:
   pre_flight:
@@ -151,7 +187,8 @@ self_optimize:
 
 git_recovery: "git log --patch --all -- path/to/file, then git show HASH:path > recovered"
 
-# v75.2.0 - 149 lines
-# Added: Violation prevention enforcement, pre-execution scanning, OpenBSD man pages
-# Enforcement: SCAN EVERY COMMAND before execution for forbidden tools
-# Result: Zero violations via pre-flight checks
+# v75.3.0 - 198 lines
+# Added: Cygwin/zsh environment enforcement, Rails 8 + Falcon deployment workflows
+# Added: Solid Stack gotchas, VPS deployment steps, cat allowed for reading
+# Workflows: Local dev → git push → VPS pull → doas zsh script → rcctl service
+# Result: Codified successful brgen.no deployment pattern
