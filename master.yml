@@ -216,6 +216,91 @@ code:
       installers: "appname.sh - complete generators"
       config: "openbsd.sh - infrastructure"
       analysis: ".filename.md - temp only, deleted"
+  
+  testing:
+    rspec:
+      structure: "spec/models, spec/controllers, spec/requests, spec/system"
+      naming: "file_name_spec.rb matches file_name.rb"
+      describe: "describe Model/Controller, context 'when condition', it 'does X'"
+      let_vs_let_bang: "let for lazy, let! for eager evaluation"
+      factories: "Use FactoryBot over fixtures"
+      
+    patterns:
+      unit: "Test single method in isolation, mock dependencies"
+      integration: "Test multiple components together"
+      system: "Test full user workflows with browser (Capybara)"
+      request: "Test HTTP endpoints, JSON responses"
+      
+    coverage:
+      minimum: "80% line coverage"
+      critical: "100% for payment, auth, data deletion"
+      ignore: "Don't test framework code (Rails, gems)"
+      
+    speed:
+      fast: "Unit tests < 100ms each"
+      integration: "< 500ms each"
+      system: "< 5s each"
+      parallel: "Run tests in parallel (spring, parallel_tests gem)"
+      
+  ci_cd:
+    github_actions:
+      triggers: "on: [push, pull_request]"
+      matrix: "Test multiple Ruby/Rails versions"
+      caching: "Cache bundler gems, node_modules"
+      artifacts: "Upload test logs, screenshots on failure"
+      
+    deployment:
+      staging: "Auto-deploy main branch to staging"
+      production: "Manual approval for production deploy"
+      rollback: "Keep last 5 releases, instant rollback capability"
+      
+  database:
+    migrations:
+      idempotent: "Safe to run multiple times (if_not_exists)"
+      reversible: "Always define both up and down"
+      data_migrations: "Separate from schema (use tasks)"
+      add_column_default: "Set default in Ruby, not DB for large tables"
+      
+    indexes:
+      foreign_keys: "Always index foreign key columns"
+      queries: "Index columns used in WHERE, ORDER BY"
+      composite: "Multi-column index for common query patterns"
+      partial: "Index subset with WHERE clause for large tables"
+      
+    optimization:
+      n_plus_1: "Use includes/joins to avoid"
+      select: "Select only needed columns, not SELECT *"
+      batch: "Use find_each for large datasets"
+      explain: "EXPLAIN queries in development"
+      
+  caching:
+    http:
+      etag: "Use Rails ETags for conditional requests"
+      cache_control: "Set max-age, public/private, must-revalidate"
+      vary: "Vary by Accept-Encoding, Cookie for personalization"
+      
+    fragment:
+      russian_doll: "Nest cache keys (post -> comments -> comment)"
+      cache_key: "Model touch: true propagates changes up"
+      sweep: "Expire caches on model updates"
+      
+    query:
+      counter_cache: "Cache belongs_to counts"
+      memoization: "Use ||= for expensive calculations"
+      solid_cache: "Rails 8 built-in (replaces Redis)"
+      
+  background_jobs:
+    solid_queue:
+      priority: "Set job priority (1=high, 10=low)"
+      retry: "Configure retry backoff (exponential)"
+      timeout: "Set execution timeout"
+      concurrency: "Configure worker pools per queue"
+      
+    patterns:
+      idempotent: "Jobs safe to run multiple times"
+      small: "Break large jobs into smaller chunks"
+      observability: "Log progress, errors with context"
+      testing: "Test jobs with perform_enqueued_jobs"
 
 # DOMAIN:  LEGAL (Norwegian Law / Strunk & White)
 legal:
@@ -337,6 +422,126 @@ tools:
     match: '[[ $string =~ $pattern ]]'
     batch: 'for file in **/*. rb(N. ); do process "$file"; done'
     errors: 'trap "echo Failed at line \$LINENO" ERR'
+  
+  zsh_advanced:
+    arrays:
+      create: 'local -a items=(one two three)'
+      append: 'items+=(four)'
+      iterate: 'for item in "${items[@]}"; do process "$item"; done'
+      length: '${#items[@]}'
+      slice: '${items[2,-1]}'
+      join: '${(j:,:)items}'
+      
+    associative:
+      create: 'local -A config=(key1 val1 key2 val2)'
+      set: 'config[key]="value"'
+      get: '${config[key]}'
+      keys: '${(k)config[@]}'
+      values: '${(v)config[@]}'
+      
+    parameter_flags:
+      absolute_path: '${file:a}'
+      dirname: '${file:h}'
+      basename: '${file:t}'
+      extension: '${file:e}'
+      lowercase: '${var:l}'
+      uppercase: '${var:u}'
+      trim_prefix: '${var#prefix}'
+      trim_suffix: '${var%suffix}'
+      
+    globbing:
+      recursive: '**/*.sh'
+      files_only: '**/*(N.)'
+      dirs_only: '**/*(N/)'
+      executable: '**/*(N*)'
+      modified_today: '**/*(Nm0)'
+      largest_5: '**/*(NOL[1,5])'
+      
+    here_docs:
+      basic: 'cat <<''EOF'' > file'
+      indented: 'cat <<-''EOF'' > file (tabs stripped)'
+      variable_expansion: 'cat <<EOF > file (vars expanded)'
+        
+    conditionals:
+      file_exists: '[[ -f file ]]'
+      dir_exists: '[[ -d dir ]]'
+      string_match: '[[ $str =~ ^pattern$ ]]'
+      numeric: '(( num > 10 ))'
+      logical_and: '[[ -f file && -r file ]]'
+      
+    error_handling:
+      exit_on_error: 'set -e'
+      undefined_vars: 'set -u'
+      pipe_failures: 'set -o pipefail'
+      all_three: 'set -euo pipefail'
+      trap: 'trap "cleanup" EXIT ERR'
+
+# CLI ASSISTANT INTERACTION
+cli_assistant:
+  tools:
+    github_copilot_cli: "GitHub Copilot CLI - AI pair programmer"
+    claude_cli: "Claude Code CLI (Anthropic) - conversational coding"
+    aider: "Aider - AI pair programming in terminal"
+    cursor: "Cursor - AI-first code editor"
+    cli_rb: "cli.rb - Custom Ruby CLI (G:/pub/cli.rb) with master.yml integration"
+    
+  context:
+    loading: "Agent has NO memory between sessions - always reload context"
+    environment: "Agent knows cwd, git root, OS, tools from environment_context"
+    capabilities: "Don't ask 'can you?' - just request directly"
+    
+  communication:
+    concise: "1-2 sentences max per request"
+    specific: "Exact paths, commands, file names"
+    examples: "Show concrete examples not abstractions"
+    no_pleasantries: "Skip please/thank you - be direct"
+    
+  efficiency:
+    parallel_tools: "Multiple independent ops in one message"
+    batch_edits: "Edit multiple files/places together"
+    chain_commands: "Use && for dependent commands"
+    avoid_verification: "Trust output, don't confirm-read"
+    
+  patterns:
+    good: "Read X, extract Y, add Z to line 42"
+    bad: "Can you help with a file?"
+    good: "Create @mod.sh: setup_X, config_Y, install_Z"
+    bad: "Let's plan module structure"
+    good: "Edit 10-15: change X to Y, add error handling"
+    bad: "File has issues at line 10, thoughts?"
+    
+  session_management:
+    resume: "/resume reloads context after disconnect"
+    state: "Agent tracks cwd, git, recent changes"
+    no_memory: "Forgets previous chat after session"
+    context_files: "Store state in files (.state, master.yml), not chat"
+    
+  error_recovery:
+    stuck: "If repeats 3x, give new constraint/example"
+    wrong_path: "Provide exact absolute path"
+    missing_context: "Show git diff or file contents"
+    tool_failure: "Agent tries alternatives, don't micromanage"
+    
+  token_efficiency:
+    view_ranges: "Specific line ranges, not entire files repeatedly"
+    grep_first: "Grep to find, then view sections"
+    glob_patterns: "Glob to filter before processing"
+    avoid_repeats: "Don't re-read what was just read"
+    batch_reads: "5 files parallel, not 5 sequential messages"
+    
+  best_practices:
+    master_yml_changes: "Show diff, ask approval first"
+    surgical_edits: "Smallest changes, preserve code"
+    commit_often: "One logical change = one commit"
+    no_temp_docs: "Work in code, not planning docs"
+    self_document: "Git commits are documentation"
+    
+  anti_patterns:
+    analysis_paralysis: "Don't analyze before acting - just act"
+    over_explanation: "Don't explain what about to do"
+    permission_seeking: "Don't ask 'is this okay?' - review after"
+    micro_management: "Don't specify tool choices"
+    unclear_requests: "Not 'improve this' but what specifically"
 
 # EXECUTION
 execution:
