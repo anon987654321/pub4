@@ -22,7 +22,7 @@ reasoning:
     explanations: "Show concrete Ruby or zsh snippets instead of abstract pseudo-code"
   note: "This governs visible output/reasoning surface, not internal LLM thought process"
 
-forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo, cat, grep, more, less]
+forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
 allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add]
 output: "work via commits with clear messages - no temp files"
 
@@ -151,7 +151,7 @@ self_optimize:
 
 git_recovery: "git log --patch --all -- path/to/file, then git show HASH:path > recovered"
 
-# v75.0.0 - 82 lines (vs 198 in v74.1.0)
-# Applied: DeepSeek simplification, essential complexity only, Rails/OpenBSD focus
-# Removed: verbose sections, duplication, non-essential metadata
-# Result: Fits one screen, actionable in 5 minutes
+# v75.2.0 - 149 lines
+# Added: Violation prevention enforcement, pre-execution scanning, OpenBSD man pages
+# Enforcement: SCAN EVERY COMMAND before execution for forbidden tools
+# Result: Zero violations via pre-flight checks
