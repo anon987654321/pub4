@@ -42,7 +42,8 @@ EOF
     # Pure zsh: check if guest already configured
     [[ "$content" != *"devise_guest"* ]] && {
       # Add guest support after devise line
-      content="${content//devise :database_authenticatable/devise :database_authenticatable\n  devise :guest}"
+      content="${content//devise :database_authenticatable/devise :database_authenticatable
+  devise :guest}"
       print -r -- "$content" > "$user_model"
     }
   fi

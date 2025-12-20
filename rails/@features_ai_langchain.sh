@@ -95,7 +95,9 @@ class RagService
   private
   def build_prompt(question, context)
 
-    context_text = context.map(&:content).join("\n\n")
+    context_text = context.map(&:content).join("
+
+")
 
     <<~PROMPT
       Answer the following question based on the context provided:
@@ -171,17 +173,23 @@ class ContentGenerator
     response.completion
   end
   def generate_post_title(content:)
-    prompt = "Generate a compelling, concise title for this content:\n\n#{content.truncate(500)}"
+    prompt = "Generate a compelling, concise title for this content:
+
+#{content.truncate(500)}"
 
     generate(prompt: prompt, max_tokens: 50)
   end
   def summarize(text:, max_length: 200)
-    prompt = "Summarize the following text in #{max_length} characters or less:\n\n#{text}"
+    prompt = "Summarize the following text in #{max_length} characters or less:
+
+#{text}"
 
     generate(prompt: prompt, max_tokens: max_length / 2)
   end
   def generate_tags(content:, max_tags: 5)
-    prompt = "Generate #{max_tags} relevant tags for this content (comma-separated):\n\n#{content.truncate(500)}"
+    prompt = "Generate #{max_tags} relevant tags for this content (comma-separated):
+
+#{content.truncate(500)}"
 
     tags_string = generate(prompt: prompt, max_tokens: 50)
     tags_string.split(",").map(&:strip).take(max_tags)
@@ -255,4 +263,3 @@ setup_full_langchain() {
   setup_ai_moderation
   log "Full LangChain.rb stack installed. Configure OPENAI_API_KEY in .env"
 }
-

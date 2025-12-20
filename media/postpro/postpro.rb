@@ -156,7 +156,7 @@ module PostproBootstrap
     return {} unless File.exist?("master.json")
 
     begin
-      master = JSON.parse(File.read("master.json").gsub(/^.*\/\/.*$/, ""))
+      master = JSON.parse(File.read("master.json").gsub(/^.*//.*$/, ""))
       config = master.dig("config", "multimedia", "postpro") || {}
       dmesg "OK loaded defaults from master.json"
       config
@@ -172,7 +172,8 @@ module PostproBootstrap
 
     unless gems[:vips]
       dmesg "FATAL libvips unavailable - image processing impossible"
-      puts "\nPostpro.rb requires libvips for image processing."
+      puts "
+Postpro.rb requires libvips for image processing."
       puts "Installation failed. Please install manually:"
       puts "  macOS: brew install vips"
       puts "  Ubuntu/Debian: sudo apt install libvips-dev"

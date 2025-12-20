@@ -86,20 +86,20 @@ const STATIC_ASSETS = [
 
 // Cache-first patterns (immutable assets)
 const CACHE_FIRST = [
-  /\.css$/,
-  /\.js$/,
-  /\.woff2$/,
-  /\.png$/,
-  /\.jpg$/,
-  /\.webp$/,
-  /\.svg$/
+  /.css$/,
+  /.js$/,
+  /.woff2$/,
+  /.png$/,
+  /.jpg$/,
+  /.webp$/,
+  /.svg$/
 ]
 
 // Network-first patterns (dynamic content)
 const NETWORK_FIRST = [
-  /\/api\//,
-  /\/__turbo/,
-  /\/cable$/
+  //api//,
+  //__turbo/,
+  //cable$/
 ]
 
 // Install: Precache static assets
@@ -399,7 +399,8 @@ module PwaHelper
       tag.meta(name: "apple-mobile-web-app-title", content: app_name),
       tag.link(rel: "manifest", href: "/manifest.json"),
       tag.link(rel: "apple-touch-icon", href: "/icon-192.png")
-    ], "\n    ")
+    ], "
+    ")
   end
 
   def register_service_worker

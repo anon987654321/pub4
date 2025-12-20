@@ -552,7 +552,7 @@ export default class extends Controller {
 
         .setLngLat([dist.lng, dist.lat])
 
-        .setPopup(new mapboxgl.Popup().setHTML(\`<h3>Distribution</h3><p>\${dist.schedule}</p>\`))
+        .setPopup(new mapboxgl.Popup().setHTML(`<h3>Distribution</h3><p>${dist.schedule}</p>`))
         .addTo(this.map)
 
     })
@@ -563,7 +563,7 @@ export default class extends Controller {
 
         .setLngLat([give.lng, give.lat])
 
-        .setPopup(new mapboxgl.Popup().setHTML(\`<h3>\${give.title}</h3><p>\${give.description}</p>\`))
+        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${give.title}</h3><p>${give.description}</p>`))
 
         .addTo(this.map)
     })
@@ -624,7 +624,7 @@ export default class extends Controller {
 
   renderMessage(data) {
 
-    return \`<p class="message" data-id="\${data.id}" aria-label="Message from \${data.sender} at \${data.created_at}">\${data.sender}: \${data.content} <small>\${data.created_at}</small></p>\`
+    return `<p class="message" data-id="${data.id}" aria-label="Message from ${data.sender} at ${data.created_at}">${data.sender}: ${data.content} <small>${data.created_at}</small></p>`
 
   }
 
@@ -1697,4 +1697,3 @@ log "   A platform for community mutual aid and resource sharing"
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
 # - Finalized for unprivileged user on OpenBSD 7.5.
-

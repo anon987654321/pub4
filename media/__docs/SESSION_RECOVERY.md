@@ -26,7 +26,7 @@
 
 ### Test Commands
 ```bash
-cd G:\pub\media
+cd G:pubmedia
 export REPLICATE_API_TOKEN="r8_Oru5iWfF9T8jy0iw9FFFuzQHFJiDMNz03ZcHi"
 
 # 15-second video with native audio!
@@ -125,7 +125,7 @@ CHAINS = {
 ### Usage
 ```bash
 # Generate motion graphics
-cd G:\pub\media
+cd G:pubmedia
 export REPLICATE_API_TOKEN="r8_Oru5iWfF9T8jy0iw9FFFuzQHFJiDMNz03ZcHi"
 ruby repligen.rb "your amazing prompt here"
 

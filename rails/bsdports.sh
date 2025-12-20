@@ -91,9 +91,9 @@ def go_fetch(platform, server, root, tgz)
 
         description = File.exist?(description_path) ? File.read(description_path) : nil
 
-        summary = File.exist?(build_script_path) ? File.readlines(build_script_path).find { |line| line =~ /^COMMENT/ }&.gsub("COMMENT=\t", "").strip : nil
+        summary = File.exist?(build_script_path) ? File.readlines(build_script_path).find { |line| line =~ /^COMMENT/ }&.gsub("COMMENT=	", "").strip : nil
 
-        url = File.exist?(build_script_path) ? File.readlines(build_script_path).find { |line| line =~ /^(HOMEPAGE|WWW)/ }&.gsub("HOMEPAGE=\t", "").strip : nil
+        url = File.exist?(build_script_path) ? File.readlines(build_script_path).find { |line| line =~ /^(HOMEPAGE|WWW)/ }&.gsub("HOMEPAGE=	", "").strip : nil
 
         Port.find_or_create_by(name: port, summary: summary, url: url, description: description, category: new_category)
 
@@ -950,4 +950,3 @@ log "   Run: bin/rails db:seed to download and import ports database"
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
 # - Finalized for unprivileged user on OpenBSD 7.5.
-

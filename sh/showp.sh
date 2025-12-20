@@ -19,7 +19,7 @@ output="$HOME/OUTPUT_${root}_${date}.md"
     local file_type=$(file -b "$file" 2>/dev/null)
 
     if [[ "$file_type" == *text* ]]; then
-      print "## \`${file#./}\`"
+      print "## `${file#./}`"
 
       print '```'
       # Pure zsh: $(<file) instead of cat

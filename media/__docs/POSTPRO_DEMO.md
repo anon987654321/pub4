@@ -132,9 +132,4 @@ To use postpro.rb, install libvips:
 ## Verification
 
 ```bash
-cd G:\pub\creative
-ruby -c postpro.rb  # ✓ Syntax OK
-ruby -c repligen.rb # ✓ Syntax OK
-```
-
-Both tools ready for deployment once libvips available.
+cd G:pub

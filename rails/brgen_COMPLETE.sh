@@ -595,7 +595,8 @@ cat > db/seeds.rb << 'EOF'
 # BRGEN seed data
 
 return unless Rails.env.development?
-print "Creating communities...\n"
+print "Creating communities...
+"
 
 cities = ["Oslo", "Bergen", "Trondheim", "Stavanger", "Tromsø"]
 
@@ -610,7 +611,8 @@ cities.each do |city_name|
     community.description = "Local community for #{city_name}"
   end
 end
-print "Creating users...\n"
+print "Creating users...
+"
 10.times do
 
   User.create!(
@@ -622,14 +624,17 @@ print "Creating users...\n"
     karma: rand(0..1000)
   )
 end
-print "Creating posts...\n"
+print "Creating posts...
+"
 Community.all.each do |community|
 
   20.times do
 
     post = community.posts.create!(
       title: Faker::Lorem.sentence(word_count: 5),
-      content: Faker::Lorem.paragraphs(number: 3).join("\n\n"),
+      content: Faker::Lorem.paragraphs(number: 3).join("
+
+"),
       user: User.all.sample,
       karma: rand(-50..500)
     )
@@ -640,7 +645,8 @@ Community.all.each do |community|
     end
   end
 end
-print "Seed data created successfully!\n"
+print "Seed data created successfully!
+"
 EOF
 
 bin/rails db:seed

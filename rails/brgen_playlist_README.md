@@ -313,14 +313,18 @@ module Playlist
 
     def generate_m3u(playlist)
 
-      m3u_content = "#EXTM3U\n"
+      m3u_content = "#EXTM3U
+"
 
-      m3u_content += "#PLAYLIST:#{playlist.name}\n"
+      m3u_content += "#PLAYLIST:#{playlist.name}
+"
 
       playlist.tracks.ordered.each do |track|
 
-        m3u_content += "#EXTINF:#{track.duration},#{track.artist} - #{track.name}\n"
-        m3u_content += "#{track.audio_url}\n"
+        m3u_content += "#EXTINF:#{track.duration},#{track.artist} - #{track.name}
+"
+        m3u_content += "#{track.audio_url}
+"
 
       end
 
@@ -531,7 +535,7 @@ class MusicServiceImporter
 
     # Parse ISO 8601 duration format (PT4M13S) to seconds
 
-    match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+    match = duration.match(/PT(?:(d+)H)?(?:(d+)M)?(?:(d+)S)?/)
 
     return 0 unless match
 
@@ -570,7 +574,7 @@ class PlaylistRecommendationService
 
                                .where(
 
-                                 'CONCAT(playlist_tracks.name, \' \', playlist_tracks.artist) IN (?)',
+                                 'CONCAT(playlist_tracks.name, ' ', playlist_tracks.artist) IN (?)',
                                  track_names
 
                                )
@@ -1111,4 +1115,3 @@ ab -n 100 -c 10 http://localhost:3000/api/v1/playlists
 
 - **Smart home** device integration
 - **Car audio** system compatibility
-

@@ -7,7 +7,7 @@ require "json"
 require "base64"
 
 TOKEN = "r8_Oru5iWfF9T8jy0iw9FFFuzQHFJiDMNz03ZcHi"
-AUDIO = "G:\\music\\livesets\\roadkill Project\\roadkill.mp3"
+AUDIO = "G:\music\livesets\roadkill Project\roadkill.mp3"
 
 def api(path, body)
   uri = URI("https://api.replicate.com/v1#{path}")
@@ -44,12 +44,14 @@ def wait_prediction(id, name)
   end
 end
 
-puts "\n" + "=" * 70
+puts "
+" + "=" * 70
 puts "  🌟 ME2 CATWALK - COMPLETE PIPELINE WITH CUSTOM AUDIO 🌟"
 puts "=" * 70
 
 # Step 1: Generate stunning ME2 image
-puts "\n🎨 Step 1: Generating haute couture image of ME2..."
+puts "
+🎨 Step 1: Generating haute couture image of ME2..."
 res = api("/models/black-forest-labs/flux-pro/predictions", {
   input: {
     prompt: "ME2 beautiful blonde woman with athletic curvy figure in stunning black and gold haute couture evening gown, walking confidently down fashion runway, professional supermodel pose, full body shot, dramatic runway spotlight with soft bokeh background, elegant powerful stride, high-end fashion photography, vogue magazine quality, striking beauty, sharp focus on model, cinematic composition, 16:9 aspect ratio, photorealistic, 8k quality",
@@ -69,7 +71,8 @@ File.write(image_file, Net::HTTP.get(URI(image_url)))
 puts "✓ Image saved: #{image_file}"
 
 # Step 2: Animate to video
-puts "\n🎬 Step 2: Animating runway walk (10 seconds)..."
+puts "
+🎬 Step 2: Animating runway walk (10 seconds)..."
 res = api("/models/minimax/video-01/predictions", {
   input: {
     prompt: "Beautiful blonde model in haute couture gown walking powerfully down runway, confident supermodel stride, smooth elegant motion, fashion show cinematography",
@@ -87,17 +90,20 @@ puts "✓ Video saved: #{video_file}"
 
 # Step 3: Add custom audio
 if File.exist?(AUDIO)
-  puts "\n🎵 Step 3: Adding your custom roadkill beat..."
+  puts "
+🎵 Step 3: Adding your custom roadkill beat..."
   final_file = "me2_catwalk_ROADKILL_#{Time.now.to_i}.mp4"
-  cmd = "ffmpeg -i \"#{video_file}\" -i \"#{AUDIO}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{final_file}\" -y 2>&1"
+  cmd = "ffmpeg -i "#{video_file}" -i "#{AUDIO}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "#{final_file}" -y 2>&1"
   output = `#{cmd}`
   
   if File.exist?(final_file)
     puts "✓ Final video with audio: #{final_file}"
-    puts "\n" + "=" * 70
+    puts "
+" + "=" * 70
     puts "  ✨ COMPLETE! ME2 looking fly on the catwalk with your beat! ✨"
     puts "=" * 70
-    puts "\n📁 Files created:"
+    puts "
+📁 Files created:"
     puts "  Image: #{image_file}"
     puts "  Video (no audio): #{video_file}"
     puts "  Final (with roadkill audio): #{final_file}"
@@ -106,6 +112,7 @@ if File.exist?(AUDIO)
     puts "  Video without audio: #{video_file}"
   end
 else
-  puts "\n⚠  Audio file not found: #{AUDIO}"
+  puts "
+⚠  Audio file not found: #{AUDIO}"
   puts "  Video saved: #{video_file}"
 end

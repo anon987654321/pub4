@@ -148,7 +148,7 @@ zsh:
     replace_all: "${var//pattern/replacement}"
     remove_prefix: "${var#pattern}"
     remove_suffix: "${var%pattern}"
-    remove_crlf: "${var//$'\\r'/}"
+    remove_crlf: "${var//$'\r'/}"
   
   whitespace:
     trim: "${${var##[[:space:]]#}%%[[:space:]]#}"

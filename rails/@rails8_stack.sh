@@ -81,4 +81,3 @@ setup_rails8_solid_stack() {
   
   log "✓ Rails 8 Solid Stack complete (Redis-free)"
 }
-

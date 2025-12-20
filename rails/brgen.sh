@@ -172,7 +172,6 @@ generate_all_stimulus_controllers
 # Generate CRUD views for listings
 generate_crud_views "listing" "listings"
 
-
 cat <<EOF > config/initializers/tenant.rb
 Rails.application.config.middleware.use ActsAsTenant::Middleware
 ActsAsTenant.configure do |config|

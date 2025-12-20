@@ -68,7 +68,8 @@ class Repligen
   # === IMAGE GENERATION ===
   
   def generate_image(prompt, lora: nil)
-    puts "\n🎨 Generating image..."
+    puts "
+🎨 Generating image..."
     puts "Prompt: #{prompt[0..100]}..."
     
     if lora
@@ -99,7 +100,8 @@ class Repligen
   # === VIDEO EXTENSION ===
   
   def extend_video(video_url, prompt, extension_prompt = nil)
-    puts "\n📹 Extending video with Luma Ray 2..."
+    puts "
+📹 Extending video with Luma Ray 2..."
     
     # Luma Ray 2 Extend feature - adds 5-10s per extension
     res = api(:post, "/models/luma/ray-2/predictions", {
@@ -116,7 +118,8 @@ class Repligen
   # === VIDEO GENERATION ===
   
   def generate_video(image_url, prompt, duration: 10, model: :hailuo)
-    puts "\n🎬 Generating #{duration}s video..."
+    puts "
+🎬 Generating #{duration}s video..."
     
     case model
     when :sora
@@ -169,7 +172,8 @@ class Repligen
   # === IMAGE ENHANCEMENT ===
   
   def enhance_for_video(image_url, name)
-    puts "\n  🔧 Enhancing image for better video quality..."
+    puts "
+  🔧 Enhancing image for better video quality..."
     
     # 1. Generate depth map for better 3D motion
     puts "  [1/3] Depth map generation..."
@@ -216,7 +220,8 @@ class Repligen
     FileUtils.mkdir_p(output_dir)
     images = Dir[File.join(input_dir, "*.{jpg,jpeg,png}")].sort
     
-    puts "\n🎨 ENHANCING TRAINING PHOTOS"
+    puts "
+🎨 ENHANCING TRAINING PHOTOS"
     puts "="*70
     puts "Subject: #{subject}"
     puts "Input: #{images.length} photos"
@@ -225,7 +230,8 @@ class Repligen
     
     images.each_with_index do |img_path, i|
       name = File.basename(img_path, ".*")
-      puts "\n[#{i+1}/#{images.length}] #{name}"
+      puts "
+[#{i+1}/#{images.length}] #{name}"
       
       # Read and encode
       img_data = File.read(img_path)
@@ -243,12 +249,14 @@ class Repligen
     end
     
     final_count = Dir[File.join(output_dir, "*")].length
-    puts "\n" + "="*70
+    puts "
+" + "="*70
     puts "✨ ENHANCEMENT COMPLETE!"
     puts "="*70
     puts "Enhanced: #{final_count} photos"
     puts "Output: #{output_dir}/"
-    puts "\nNext: Train LoRA with enhanced photos"
+    puts "
+Next: Train LoRA with enhanced photos"
     puts "  cd __lora && zip -r #{subject}_enhanced_training.zip #{subject}_enhanced/*.png"
   end
 
@@ -270,16 +278,19 @@ class Repligen
       return
     end
     
-    puts "\n🎓 LoRA TRAINING: #{subject}"
+    puts "
+🎓 LoRA TRAINING: #{subject}"
     puts "="*70
     puts "Images: #{images.length}"
     puts "Trigger word: #{subject.upcase}"
-    puts "\nTo train on Replicate:"
+    puts "
+To train on Replicate:"
     puts "1. Create zip: cd __lora && zip -r #{subject}_training.zip #{subject}/*.jpg"
     puts "2. Go to: https://replicate.com/ostris/flux-dev-lora-trainer/train"
     puts "3. Upload zip and set trigger word: #{subject.upcase}"
     puts "4. Training takes 15-30 minutes (~$10)"
-    puts "\nAfter training, use with:"
+    puts "
+After training, use with:"
     puts "  ruby repligen.rb generate '#{subject.upcase} woman as athlete, cinematic portrait'"
   end
 
@@ -288,12 +299,14 @@ class Repligen
   def execute_chain(prompt = nil)
     prompt ||= "beautiful cinematic portrait, golden hour lighting, shallow depth of field, professional photography, warm tones, 85mm lens"
     
-    puts "\n🎬 CINEMATIC CHAIN: RA2 LORA → VIDEO"
+    puts "
+🎬 CINEMATIC CHAIN: RA2 LORA → VIDEO"
     puts "="*70
     puts "Prompt: #{prompt}"
     puts "="*70
     
-    puts "\n[1/3] Generating image with RA2 LoRA..."
+    puts "
+[1/3] Generating image with RA2 LoRA..."
     res = api(:post, "/predictions", {
       version: "387d19ad57699a915fbb12f89e61ffae24a2b04a3d5f065b59281e929d533ae5",
       input: {
@@ -310,7 +323,8 @@ class Repligen
     img_filename = File.join(@out, "chain_image_#{Time.now.strftime("%Y%m%d_%H%M%S")}.webp")
     download(img_url, img_filename)
     
-    puts "\n[2/3] Finding best image-to-video model..."
+    puts "
+[2/3] Finding best image-to-video model..."
     res = api(:get, "/collections/image-to-video")
     models = JSON.parse(res.body)["models"] || []
     video_model = models.max_by { |m| m["run_count"] || 0 }
@@ -323,7 +337,8 @@ class Repligen
     model_id = "#{video_model["owner"]}/#{video_model["name"]}"
     puts "Using: #{model_id} (#{video_model["run_count"]} runs)"
     
-    puts "\n[3/3] Generating video..."
+    puts "
+[3/3] Generating video..."
     res = api(:post, "/predictions", {
       version: video_model["latest_version"]["id"],
       input: {
@@ -338,7 +353,8 @@ class Repligen
     vid_filename = File.join(@out, "chain_video_#{Time.now.strftime("%Y%m%d_%H%M%S")}.mp4")
     download(vid_url, vid_filename)
     
-    puts "\n" + "="*70
+    puts "
+" + "="*70
     puts "✨ CHAIN COMPLETE!"
     puts "="*70
     puts "Image: #{img_filename}"
@@ -377,17 +393,20 @@ class Repligen
   def index_models
     setup_database
     
-    puts "\n📚 INDEXING REPLICATE MODELS"
+    puts "
+📚 INDEXING REPLICATE MODELS"
     puts "="*70
     
-    puts "\nFetching collections..."
+    puts "
+Fetching collections..."
     res = api(:get, "/collections")
     collections = JSON.parse(res.body)["results"] || []
     puts "Found #{collections.size} collections"
     
     total_models = 0
     collections.each_with_index do |coll, idx|
-      puts "\n[#{idx + 1}/#{collections.size}] #{coll["name"]}"
+      puts "
+[#{idx + 1}/#{collections.size}] #{coll["name"]}"
       
       @db.execute(
         "INSERT OR REPLACE INTO collections VALUES (?, ?, ?, ?)",
@@ -423,7 +442,8 @@ class Repligen
       sleep 1
     end
     
-    puts "\n" + "="*70
+    puts "
+" + "="*70
     puts "✨ INDEXING COMPLETE"
     puts "="*70
     puts "Collections: #{collections.size}"
@@ -435,7 +455,8 @@ class Repligen
   def search_models(query)
     setup_database
     
-    puts "\n🔍 SEARCHING: #{query}"
+    puts "
+🔍 SEARCHING: #{query}"
     puts "="*70
     
     results = @db.execute(
@@ -447,19 +468,22 @@ class Repligen
       puts "No results found"
     else
       results.each do |row|
-        puts "\n#{row[0]}"
+        puts "
+#{row[0]}"
         puts "  #{row[1][0..80]}..." if row[1]
         puts "  Category: #{row[2]}"
         puts "  Runs: #{row[3]}"
       end
-      puts "\n#{results.size} results"
+      puts "
+#{results.size} results"
     end
   end
   
   # === COMMERCIAL GENERATOR ===
   
   def generate_commercial(subject, lora: "ra2", model: :kling)
-    puts "\n🎬 TEAM NORWAY BEACH VOLLEYBALL COMMERCIAL"
+    puts "
+🎬 TEAM NORWAY BEACH VOLLEYBALL COMMERCIAL"
     puts "LA 2028 Olympics | Professional Sports Cinematography"
     puts "="*70
     puts "Subject: #{subject}"
@@ -505,17 +529,20 @@ class Repligen
     total_cost = 0
     
     scenes.each_with_index do |scene, i|
-      puts "\n[#{i+1}/#{scenes.length}] #{scene[:name]}"
+      puts "
+[#{i+1}/#{scenes.length}] #{scene[:name]}"
       puts "="*70
       
       # Generate image with detailed prompt
-      puts "\n📸 Image prompt (#{scene[:image_prompt].length} chars)"
+      puts "
+📸 Image prompt (#{scene[:image_prompt].length} chars)"
       img = generate_image(scene[:image_prompt], lora: lora)
       next unless img
       
       # Generate video directly with motion-specific prompt
       # Modern video models (Kling 2.5) handle depth/motion natively
-      puts "\n🎬 Motion prompt (#{scene[:video_prompt].length} chars)"
+      puts "
+🎬 Motion prompt (#{scene[:video_prompt].length} chars)"
       vid = generate_video(img, scene[:video_prompt], duration: scene[:duration], model: model)
       next unless vid
       
@@ -530,14 +557,16 @@ class Repligen
       sleep 2
     end
     
-    puts "\n" + "="*70
+    puts "
+" + "="*70
     puts "✨ COMMERCIAL COMPLETE!"
     puts "="*70
     puts "Generated: #{clips.length}/#{scenes.length} professional cinema shots"
     puts "Total duration: #{clips.length * 10}s"
     puts "Total cost: $#{total_cost.round(2)}"
     puts "Output: #{@out}/"
-    puts "\nAdvanced cinematography techniques applied:"
+    puts "
+Advanced cinematography techniques applied:"
     puts "  ✓ Separated camera/subject motion in prompts"
     puts "  ✓ Realistic physics keywords (weight transfer, momentum)"
     puts "  ✓ Professional lens and camera specifications"
@@ -592,7 +621,8 @@ class Repligen
       if vid
         filename = File.join(@out, "video_#{Time.now.strftime("%Y%m%d_%H%M%S")}.mp4")
         download(vid, filename)
-        puts "\n✨ Complete! 10s video with #{model}"
+        puts "
+✨ Complete! 10s video with #{model}"
       end
       
     when "enhance", "e"
@@ -634,14 +664,17 @@ class Repligen
   end
   
   def show_help
-    puts "\n🎬 REPLIGEN v#{VERSION}"
+    puts "
+🎬 REPLIGEN v#{VERSION}"
     puts "Natural Language Cinematography + LoRA Training"
     puts "="*70
-    puts "\nCommands:"
+    puts "
+Commands:"
     COMMANDS.each do |cmd, desc|
       puts "  #{cmd.ljust(15)} #{desc}"
     end
-    puts "\nExamples:"
+    puts "
+Examples:"
     puts "  ruby repligen.rb generate 'Close-up portrait of woman, golden hour lighting'"
     puts "  ruby repligen.rb video 'Norwegian athlete serves volleyball at sunset beach'"
     puts "  ruby repligen.rb chain 'cinematic portrait with dramatic lighting'"
@@ -650,7 +683,8 @@ class Repligen
     puts "  ruby repligen.rb commercial 'Team Norway' ra2"
     puts "  ruby repligen.rb index"
     puts "  ruby repligen.rb search 'video generation'"
-    puts "\nPrinciples:"
+    puts "
+Principles:"
     puts "  • Use natural language, not keyword-stacking"
     puts "  • Describe cinematography: camera, lens, lighting"
     puts "  • Reference film stocks: Kodak Vision3 500T, Portra 400"

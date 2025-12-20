@@ -452,4 +452,3 @@ stream_url = "rtmp://#{Rails.application.config.streaming_server}/live/#{stream.
 ---
 
 *Built with Rails 8, Hotwire, and modern streaming technologies for OpenBSD 7.5*
-

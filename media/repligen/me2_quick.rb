@@ -7,7 +7,7 @@ require "json"
 
 TOKEN = "r8_Oru5iWfF9T8jy0iw9FFFuzQHFJiDMNz03ZcHi"
 IMAGE_URL = "https://replicate.delivery/yhqm/tBDyxJG8Zd6DQvRvnHpZrEQC7tFkDNW8PSzc9WpLxTMGmJlrA/out-0.webp"
-AUDIO_PATH = "G:\\music\\livesets\\roadkill Project\\roadkill.mp3"
+AUDIO_PATH = "G:\music\livesets\roadkill Project\roadkill.mp3"
 
 def api(path, body)
   uri = URI("https://api.replicate.com/v1#{path}")
@@ -56,14 +56,16 @@ video_url = wait_for_video(id)
 exit unless video_url
 
 video_file = "me2_catwalk_#{Time.now.to_i}.mp4"
-puts "\n📥 Downloading..."
+puts "
+📥 Downloading..."
 File.write(video_file, Net::HTTP.get(URI(video_url)))
 puts "✓ Video saved: #{video_file}"
 
 if File.exist?(AUDIO_PATH)
-  puts "\n🎵 Adding custom audio..."
+  puts "
+🎵 Adding custom audio..."
   output = video_file.gsub(".mp4", "_roadkill.mp4")
-  cmd = "ffmpeg -i \"#{video_file}\" -i \"#{AUDIO_PATH}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{output}\" -y"
+  cmd = "ffmpeg -i "#{video_file}" -i "#{AUDIO_PATH}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "#{output}" -y"
   system(cmd)
   
   if File.exist?(output)

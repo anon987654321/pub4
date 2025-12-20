@@ -52,4 +52,3 @@ print_tree() {
 }
 
 print_tree "${1:-.}"
-

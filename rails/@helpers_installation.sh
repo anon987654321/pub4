@@ -28,7 +28,7 @@ install_yarn_package() {
     
     if [[ -f "package.json" ]]; then
         local pkg_json=$(<package.json)
-        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
+        if [[ "$pkg_json" != *""$package_name""* ]]; then
             log "Installing yarn package: $package_name"
             yarn add "$package_name"
         else

@@ -7,7 +7,7 @@ require "json"
 require "base64"
 
 TOKEN = "r8_Oru5iWfF9T8jy0iw9FFFuzQHFJiDMNz03ZcHi"
-ZIP_PATH = "G:\\pub\\media\\repligen\\__lora\\me2_training.zip"
+ZIP_PATH = "G:\pub\media\repligen\__lora\me2_training.zip"
 
 def api(path, body)
   uri = URI("https://api.replicate.com/v1#{path}")
@@ -18,12 +18,14 @@ def api(path, body)
   Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
 end
 
-puts "\n" + "=" * 70
+puts "
+" + "=" * 70
 puts "  🎨 ME2 LoRA TRAINING - Starting on Replicate 🎨"
 puts "=" * 70
 
 # Step 1: Upload training zip
-puts "\n📤 Step 1: Uploading training images (#{File.size(ZIP_PATH) / 1024}KB)..."
+puts "
+📤 Step 1: Uploading training images (#{File.size(ZIP_PATH) / 1024}KB)..."
 
 # Read and encode the zip file
 zip_data = File.read(ZIP_PATH)
@@ -33,7 +35,8 @@ data_uri = "data:application/zip;base64,#{zip_base64}"
 puts "✓ Training zip prepared"
 
 # Step 2: Create training
-puts "\n🚀 Step 2: Submitting LoRA training job..."
+puts "
+🚀 Step 2: Submitting LoRA training job..."
 puts "   Trigger word: ME2"
 puts "   Steps: 1500"
 puts "   Learning rate: 0.0004"
@@ -72,18 +75,23 @@ res = api("/models/ostris/flux-dev-lora-trainer/versions/4ffd32160efd92e956d39c5
 result = JSON.parse(res.body)
 
 if result["id"]
-  puts "\n✓ Training started!"
+  puts "
+✓ Training started!"
   puts "=" * 70
   puts "Training ID: #{result["id"]}"
   puts "Status URL: https://replicate.com/p/#{result["id"]}"
-  puts "\nThis will take 15-30 minutes and cost ~$10"
+  puts "
+This will take 15-30 minutes and cost ~$10"
   puts "Check status at the URL above"
-  puts "\nOnce complete, use with:"
+  puts "
+Once complete, use with:"
   puts '  ruby repligen.rb generate "ME2 woman walking down catwalk, haute couture"'
   puts "=" * 70
 else
-  puts "\n✗ Training failed!"
+  puts "
+✗ Training failed!"
   puts "Error: #{result["detail"] || result["error"] || "Unknown error"}"
-  puts "\nFull response:"
+  puts "
+Full response:"
   puts JSON.pretty_generate(result)
 end

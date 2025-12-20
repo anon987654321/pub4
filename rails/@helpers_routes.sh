@@ -45,7 +45,7 @@ setup_seeds() {
 
 if Rails.env.development?
   # Add sample data creation here
-  puts "Created sample data for \#{Rails.env} environment"
+  puts "Created sample data for #{Rails.env} environment"
 end
 EOF
     fi

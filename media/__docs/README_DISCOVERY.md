@@ -115,7 +115,7 @@ ruby repligen_v9.rb cinematic "portrait"     # Command line
 
 ### Phase 1: Index Models (Tonight)
 ```bash
-cd G:\pub\media
+cd G:pubmedia
 export REPLICATE_API_TOKEN='your_api_token_here'
 ruby model_indexer.rb index
 ```

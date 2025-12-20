@@ -113,4 +113,3 @@ DEFAULT_DELIVERY_RADIUS_KM=8
 —
 
 Built to run for years: minimal moving parts, easy rollbacks, observable state.
-

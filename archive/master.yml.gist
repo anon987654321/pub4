@@ -137,7 +137,7 @@ zsh:
     replace_all: "${var//pattern/replacement}"
     remove_prefix: "${var#pattern}"
     remove_suffix: "${var%pattern}"
-    remove_crlf: "${var//$'\\r'/}"
+    remove_crlf: "${var//$'\r'/}"
   
   whitespace:
     trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
@@ -373,7 +373,7 @@ policy:
     banned: ["python", "sed", "awk", "tr", "cut", "wc", "head", "tail", "uniq", "find", "sudo", "docker", "systemd"]
     validators_allowed: ["rubocop", "brakeman", "eslint", "shellcheck", "pa11y", "htmlhint", "lighthouse", "axe", "jq"]
     exceptions:
-      - {name: "tail_follow_only", tool: "tail", allowed_when: {command_regex: "^tail\\s+-f\\b", purpose: "monitoring"}}
+      - {name: "tail_follow_only", tool: "tail", allowed_when: {command_regex: "^tail\s+-f\b", purpose: "monitoring"}}
     legacy_allowlist:
       allowed_by_glob:
         "docs/archive/**": {tools: ["find", "sed", "md5sum", "sha256sum", "tar", "diff"], rationale: "Historical docs; not executed."}
@@ -499,7 +499,7 @@ engine:
       - {id: "no_duplicate_keys", metric: "duplicate_keys", gate: {type: "count", max: 0}, remediation: ["merge_or_rename"]}
       - id: "no_banned_tools"
         metric: "banned_tools_violations"
-        scope: {include_globs: *globs_scripts, exclude_globs: *globs_exclude_docs_and_self, command_like_regex: "(^|[;&(|]\\s*)(python|bash|sed|awk|tr|cut|wc|head|tail|uniq|find|sudo)\\b"}
+        scope: {include_globs: *globs_scripts, exclude_globs: *globs_exclude_docs_and_self, command_like_regex: "(^|[;&(|]\s*)(python|bash|sed|awk|tr|cut|wc|head|tail|uniq|find|sudo)\b"}
         gate: {type: "count", max: 0}
         remediation: ["replace_with_zsh_or_ruby"]
       - {id: "approval_required_gate", metric: "approval_violations", gate: {type: "count", max: 0}, remediation: ["request_approval_or_reduce_scope"]}

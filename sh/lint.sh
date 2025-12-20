@@ -41,4 +41,3 @@ for file in **/*.{rb,erb}(.N); do
   fi
   lint_ruby "$file"
 done
-

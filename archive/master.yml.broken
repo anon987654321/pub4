@@ -102,7 +102,7 @@ enforcement:
     allowed_tools: ["ruby", "zsh", "git", "grep", "cat", "sort"]
     
     zsh_replacements:
-      remove_crlf: "cleaned=${var//$'\\r'/}"
+      remove_crlf: "cleaned=${var//$'\r'/}"
       lowercase: "lower=${(L)var}"
       uppercase: "upper=${(U)var}"
       replace_all: "result=${var//search/replace}"

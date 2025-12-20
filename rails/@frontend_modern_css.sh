@@ -331,7 +331,8 @@ add_modern_css_to_manifest() {
     local content=$(<"$manifest")
     [[ "$content" == *"modern.css"* ]] && return 0
     
-    print "\n *= require modern" >> "$manifest"
+    print "
+ *= require modern" >> "$manifest"
     log "✓ Added modern.css to application.css manifest"
   fi
 }

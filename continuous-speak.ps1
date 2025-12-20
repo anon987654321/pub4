@@ -17,7 +17,7 @@ foreach ($voice in $voices) {
 
 Write-Host "`nSelect voice number (or press Enter for Zira): " -NoNewline
 $choice = Read-Host
-if ($choice -match '^\d+$' -and [int]$choice -le $voices.Count) {
+if ($choice -match '^d+$' -and [int]$choice -le $voices.Count) {
     $selectedVoice = $voices[[int]$choice - 1].VoiceInfo.Name
     $synth.SelectVoice($selectedVoice)
     Write-Host "Using: $selectedVoice" -ForegroundColor Green

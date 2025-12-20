@@ -688,4 +688,3 @@ end
 ---
 
 *Bygget med Rails 8, Vipps, og Mapbox for OpenBSD 7.5 - Bekjemper matsvinn og styrker lokalsamfunn*
-

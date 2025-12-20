@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # gh-speak.ps1 - GitHub Copilot with speech
 # Version: 1.1.0
-# Usage: .\gh-speak.ps1 "your question"
+# Usage: .gh-speak.ps1 "your question"
 
 param([string[]]$Query)
 
@@ -26,5 +26,3 @@ $answer = "Speech works. Install GitHub Copilot CLI to connect. Run: gh extensio
 Write-Host $answer
 $synth.Speak($answer)
 Write-Host "Done"
-
-

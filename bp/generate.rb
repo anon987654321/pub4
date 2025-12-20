@@ -8,7 +8,7 @@ require 'fileutils'
 # Helper method for number formatting
 
 def number_with_delimiter(number, delimiter: ',')
-  number.to_s.reverse.gsub(/(\d{3})(?=\d)/, "\\1#{delimiter}").reverse
+  number.to_s.reverse.gsub(/(d{3})(?=d)/, "\1#{delimiter}").reverse
 end
 
 class BusinessPlanGenerator
@@ -40,7 +40,8 @@ class BusinessPlanGenerator
       return false
     end
 
-    puts "\n📋 Found #{json_files.size} business plan(s):"
+    puts "
+📋 Found #{json_files.size} business plan(s):"
     json_files.each { |f| puts "   - #{File.basename(f)}" }
     puts
     # Generate HTML for each plan
@@ -51,19 +52,22 @@ class BusinessPlanGenerator
 
     # Summary
     success_count = results.count(true)
-    puts "\n" + "=" * 50
+    puts "
+" + "=" * 50
     puts "✅ Successfully generated: #{success_count}/#{json_files.size}"
 
     puts "❌ Failed: #{results.count(false)}" if results.count(false) > 0
     # Show warnings
     if @warnings.any?
-      puts "\n⚠️  Warnings:"
+      puts "
+⚠️  Warnings:"
       @warnings.each { |w| puts "   #{w}" }
 
     end
     # Show errors
     if @errors.any?
-      puts "\n❌ Errors:"
+      puts "
+❌ Errors:"
       @errors.each { |e| puts "   #{e}" }
 
     end

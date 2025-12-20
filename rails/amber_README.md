@@ -77,4 +77,3 @@ and stay updated with the latest fashion trends.
 22. **Inspiration Library**: Save and organize style inspirations.
 
 23. **Care Instructions**: Maintain your clothing with personalized care tips.
-

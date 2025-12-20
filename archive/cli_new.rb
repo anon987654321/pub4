@@ -179,7 +179,9 @@ class Config
     errors << "invalid temperature" unless @data["temperature"].is_a?(Numeric) && @data["temperature"].between?(0, 1)
     errors << "master.yml not found or invalid" unless @master_config
 
-    raise ConfigurationError, "validation failed:\n#{errors.map { |e| "  - #{e}" }.join("\n")}" if errors.any?
+    raise ConfigurationError, "validation failed:
+#{errors.map { |e| "  - #{e}" }.join("
+")}" if errors.any?
 
     Log.info("config validated", master_version: @master_config&.dig("framework", "version"))
   end
@@ -251,7 +253,7 @@ class RuleValidator
     banned = ["python", "bash", "sed", "awk", "wc", "head", "tail", "find", "sudo"]
 
     banned.each do |tool|
-      if command.match?(/\b#{Regexp.escape(tool)}\b/)
+      if command.match?(/#{Regexp.escape(tool)}/)
         suggestion = case tool
                      when "python" then "use ruby instead"
                      when "bash" then "use zsh instead"

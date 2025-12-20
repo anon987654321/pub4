@@ -412,7 +412,9 @@ class MarieKondoAiService
       .limit(5)
 
     # Generate personalized advice using retrieved tips as context
-    context = similar_tips.map { |tip| "#{tip.title}: #{tip.content}" }.join("\n\n")
+    context = similar_tips.map { |tip| "#{tip.title}: #{tip.content}" }.join("
+
+")
     prompt = <<~PROMPT
       As Marie Kondo, provide personalized wardrobe organization advice.
 
@@ -444,7 +446,8 @@ class MarieKondoAiService
       .where("season LIKE ? OR season = ?", "%#{season}%", "all-season")
     prompt = <<~PROMPT
       As Marie Kondo's styling assistant, suggest 3 complete outfits using these items:
-      #{suitable_items.map { |i| "- #{i.title} (#{i.color}, #{i.category})" }.join("\n")}
+      #{suitable_items.map { |i| "- #{i.title} (#{i.color}, #{i.category})" }.join("
+")}
       Occasion: #{occasion}
 
       Season: #{season}
@@ -467,10 +470,12 @@ class MarieKondoAiService
     prompt = <<~PROMPT
       As Marie Kondo, help declutter this wardrobe:
       Unworn items (#{unworn_items.count}):
-      #{unworn_items.limit(10).map { |i| "- #{i.title} (#{i.category})" }.join("\n")}
+      #{unworn_items.limit(10).map { |i| "- #{i.title} (#{i.category})" }.join("
+")}
 
       Items over 2 years old (#{old_items.count}):
-      #{old_items.limit(10).map { |i| "- #{i.title} (purchased #{i.purchase_date})" }.join("\n")}
+      #{old_items.limit(10).map { |i| "- #{i.title} (purchased #{i.purchase_date})" }.join("
+")}
 
       Provide gentle, encouraging decluttering advice.
       Help the user let go of items that no longer spark joy.

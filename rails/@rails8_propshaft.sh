@@ -16,7 +16,7 @@ Rails.application.configure do
   config.assets.paths << Rails.root.join("app/javascript")
   
   # Exclude source maps in production
-  config.assets.excluded_patterns << /\.map$/
+  config.assets.excluded_patterns << /.map$/
   
   # Compile additional assets
   config.assets.precompile += %w[application.css application.js]

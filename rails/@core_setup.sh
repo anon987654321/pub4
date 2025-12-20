@@ -33,7 +33,7 @@ install_yarn_package() {
     if [[ -f "package.json" ]]; then
         local pkg_json=$(<package.json)
 
-        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
+        if [[ "$pkg_json" != *""$package_name""* ]]; then
             log "Installing yarn package: $package_name"
 
             yarn add "$package_name"
@@ -151,7 +151,7 @@ setup_seeds() {
 if Rails.env.development?
   # Add sample data creation here
 
-  puts "Created sample data for \#{Rails.env} environment"
+  puts "Created sample data for #{Rails.env} environment"
 end
 EOF
     fi

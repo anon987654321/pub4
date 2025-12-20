@@ -177,4 +177,3 @@ openssl s_client -connect brgen.no:443 -servername brgen.no < /dev/null | grep V
 - 2025-12-12: All configs verified against man.openbsd.org
 - VPS: dev@185.52.176.18 (185.52.176.18)
 - OpenBSD 7.7 amd64
-

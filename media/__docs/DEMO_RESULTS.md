@@ -18,17 +18,17 @@
 - ⚠️  Soundfont required (FluidR3_GM.sf2 - 35MB)
 
 **Test Results:**
-\\ash
+\ash
 $ ruby dilla.rb list
 Available progressions:
   donuts_classic: min7 -> maj7 -> min7 -> dom7
   neo_soul: min9 -> maj9 -> min7 -> dom7
   mpc_soul: maj9 -> min7 -> dom13 -> min7
   drunk: min7b5 -> maj7 -> min7 -> dom7
-\\
+\
 
 **Working Commands:**
-\\ash
+\ash
 # Generate classic Donuts beat in Db at 94 BPM (requires soundfont)
 ruby dilla.rb gen donuts_classic Db 94
 
@@ -37,7 +37,7 @@ ruby dilla.rb list
 
 # Show technical info
 ruby dilla.rb info
-\\
+\
 
 **Features Verified:**
 - ✅ Chord progression algorithms
@@ -57,7 +57,7 @@ ruby dilla.rb info
 - ⚠️  Version mismatch (vips.so.42 vs libvips 8.14)
 
 **Test Results:**
-\\ash
+\ash
 $ ruby -c postpro.rb
 Syntax OK
 ✓ postpro.rb syntax valid
@@ -65,7 +65,7 @@ Syntax OK
 $ ruby postpro.rb --help
 [postpro] boot ruby=3.3.7 os=openbsd7.7
 # Auto-installs dependencies
-\\
+\
 
 **Features Documented:**
 - Film stock emulation (Kodak Portra 400, Fuji Velvia 50, Tri-X 400)
@@ -75,13 +75,13 @@ $ ruby postpro.rb --help
 - 95% JPEG quality output
 
 **Working Commands:**
-\\ash
+\ash
 # Interactive mode with preset selection
 ruby postpro.rb
 
 # Process with portrait preset
 # (produces cinematic film-emulated variations)
-\\
+\
 
 **Note:** Requires libvips version alignment for full functionality.  
 Workaround: Install matching vips version or use containerized environment.
@@ -98,11 +98,11 @@ Workaround: Install matching vips version or use containerized environment.
 - 🔑 Requires: REPLICATE_API_TOKEN environment variable
 
 **Test Results:**
-\\ash
+\ash
 $ ruby -c repligen.rb
 Syntax OK
 ✓ repligen.rb syntax valid
-\\
+\
 
 **Features Documented:**
 - Image generation (Imagen3, Flux Pro)
@@ -114,7 +114,7 @@ Syntax OK
 - Auto-integration with postpro.rb
 
 **Working Commands:**
-\\ash
+\ash
 # Set API token
 export REPLICATE_API_TOKEN="r8_..."
 
@@ -126,13 +126,13 @@ ruby repligen.rb chain video "epic landscape"
 
 # Interactive mode
 ruby repligen.rb
-\\
+\
 
 **Cost Optimization:**
-- quick: \.012 (instant high-res)
-- video: \.090 (text to video)
-- full: \.110 (complete multimedia)
-- creative: \.122 (premium pipeline)
+- quick: .012 (instant high-res)
+- video: .090 (text to video)
+- full: .110 (complete multimedia)
+- creative: .122 (premium pipeline)
 
 ---
 

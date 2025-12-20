@@ -54,10 +54,12 @@ done
 print "Largest files:"
 for i in {1..${#large_files}}; do
 
-  print -f "%2d: %s\n" "$i" "${large_files[i]}"
+  print -f "%2d: %s
+" "$i" "${large_files[i]}"
 
 done
-print "\nDelete? (y/N)"
+print "
+Delete? (y/N)"
 read -r response
 
 if [[ ! "$response" =~ ^[Yy]$ ]]; then

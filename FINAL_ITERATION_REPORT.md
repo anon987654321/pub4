@@ -359,7 +359,7 @@ media/
 **VPS:** 185.52.176.18  
 **User:** dev  
 **Base:** /home/dev/rails  
-**Docs:** G:\pub\rails\DEPLOYMENT_READY.md
+**Docs:** G:pubailsDEPLOYMENT_READY.md
 
 ---
 

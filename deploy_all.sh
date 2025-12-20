@@ -11,7 +11,8 @@ readonly REMOTE_BASE="/home/dev"
 
 # Status reporting
 log() {
-  printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"
+  printf '[%s] %s
+' "$(date +%H:%M:%S)" "$*"
 }
 
 error() {

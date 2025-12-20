@@ -22,8 +22,7 @@ Write-Host "Question: $text"
 # Replace with: gh copilot suggest $text
 "Line one.", "Line two.", "Line three." | ForEach-Object {
     Write-Host $_
-    if ($_ -match '\w') { $synth.Speak($_) }
+    if ($_ -match 'w') { $synth.Speak($_) }
 }
 
 Write-Host "Done"
-

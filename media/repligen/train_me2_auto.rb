@@ -16,12 +16,14 @@ def api(method, path, body = nil)
   Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
 end
 
-puts "\n" + "=" * 70
+puts "
+" + "=" * 70
 puts "  🎨 ME2 LoRA AUTOMATED TRAINING 🎨"
 puts "=" * 70
 
 # Step 1: Upload to a temporary public URL
-puts "\n📤 Step 1: Preparing training data..."
+puts "
+📤 Step 1: Preparing training data..."
 
 # For now, let's use the Replicate file upload endpoint
 zip_path = File.expand_path("__lora/me2_training.zip", __dir__)
@@ -31,7 +33,8 @@ puts "   Training zip: #{zip_size_mb.round(2)}MB"
 puts "   Images: 15 photos of ME2"
 
 # Try uploading via Replicate's file endpoint
-puts "\n📤 Step 2: Uploading to Replicate..."
+puts "
+📤 Step 2: Uploading to Replicate..."
 
 # Create file upload
 upload_res = api(:post, "/files", {
@@ -63,7 +66,8 @@ if upload_data["urls"] && upload_data["urls"]["upload"]
     puts "   ✓ Upload complete!"
     
     # Step 3: Create training
-    puts "\n🚀 Step 3: Starting LoRA training..."
+    puts "
+🚀 Step 3: Starting LoRA training..."
     
     # First, create the destination model
     puts "   Creating model repository..."
@@ -101,33 +105,41 @@ if upload_data["urls"] && upload_data["urls"]["upload"]
       training_result = JSON.parse(training_res.body)
       
       if training_result["id"]
-        puts "\n✓ Training started!"
+        puts "
+✓ Training started!"
         puts "=" * 70
         puts "Training ID: #{training_result["id"]}"
         puts "Status: #{training_result["status"]}"
-        puts "\nMonitor progress:"
+        puts "
+Monitor progress:"
         puts "https://replicate.com/p/#{training_result["id"]}"
-        puts "\nEstimated time: 15-30 minutes"
+        puts "
+Estimated time: 15-30 minutes"
         puts "Cost: ~$10"
-        puts "\nOnce complete, your model will be at:"
+        puts "
+Once complete, your model will be at:"
         puts "https://replicate.com/anon987654321/me2-lora"
         puts "=" * 70
         
         # Save training ID
         File.write("me2_training_id.txt", training_result["id"])
-        puts "\n✓ Training ID saved to: me2_training_id.txt"
+        puts "
+✓ Training ID saved to: me2_training_id.txt"
       else
-        puts "\n✗ Training failed!"
+        puts "
+✗ Training failed!"
         puts JSON.pretty_generate(training_result)
       end
     else
-      puts "\n✗ Model creation failed!"
+      puts "
+✗ Model creation failed!"
       puts JSON.pretty_generate(model_result)
     end
   else
     puts "   ✗ Upload failed: #{upload_result.code}"
   end
 else
-  puts "\n✗ File upload initialization failed!"
+  puts "
+✗ File upload initialization failed!"
   puts JSON.pretty_generate(upload_data)
 end

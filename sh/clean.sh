@@ -23,7 +23,7 @@ for file in "$dir"/**/*(.N); do
     # Pure zsh: remove CRLF, trim trailing whitespace, reduce blank lines
     local content=$(<"$file")
 
-    content=${content//$'\r'/}  # Remove carriage returns
+    content=${content//$''/}  # Remove carriage returns
     local -a lines=("${(@f)content}")  # Split into array of lines
     local -a cleaned=()
 

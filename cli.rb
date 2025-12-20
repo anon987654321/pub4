@@ -36,7 +36,8 @@ end
 
 # First run detection
 FIRST_RUN = !File.exist?(File.expand_path("~/.convergence_installed"))
-warn "convergence v3.0 - first run setup\n" if FIRST_RUN
+warn "convergence v3.0 - first run setup
+" if FIRST_RUN
 
 # Self-bootstrap missing gems
 def ensure_gem(name, require_as = nil)
@@ -86,7 +87,7 @@ class MasterConfig
     
     # Pre-compile banned tools regex for performance
     @banned_regex = if @banned_tools.any?
-      Regexp.new('\\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\\b')
+      Regexp.new('\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\b')
     else
       /(?!)/  # Regex that never matches
     end
@@ -112,7 +113,7 @@ class MasterConfig
     
     # Parse version with fallback for non-standard formats
     parts = @version.to_s.split(".").map do |p|
-      p.match?(/\A\d+\z/) ? p.to_i : 0
+      p.match?(/Ad+z/) ? p.to_i : 0
     end
     major = parts[0] || 0
     
@@ -130,7 +131,7 @@ class MasterConfig
   end
   
   def banned_tool(command)
-    @banned_tools.find { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+    @banned_tools.find { |t| command =~ /#{Regexp.escape(t)}/ }
   end
   
   def dangerous?(command)
@@ -178,7 +179,8 @@ end
 
 # Load master.yml at startup
 MASTER_CONFIG = MasterConfig.new
-warn "master.yml v#{MASTER_CONFIG.version || 'unknown'} loaded\n" if FIRST_RUN
+warn "master.yml v#{MASTER_CONFIG.version || 'unknown'} loaded
+" if FIRST_RUN
 
 # Check for browser
 def find_browser
@@ -206,7 +208,8 @@ end
 
 def check_browser
   return true if find_browser
-  warn "\nno browser found for webchat mode"
+  warn "
+no browser found for webchat mode"
   warn "install chromium:"
   case RUBY_PLATFORM
   when /darwin/ then warn "  brew install chromium"
@@ -223,7 +226,9 @@ def check_browser
   when /openbsd/ then warn "  doas pkg_add chromium"
   when /freebsd/ then warn "  sudo pkg install chromium"
   end
-  warn "\nor set ANTHROPIC_API_KEY to use API mode instead\n"
+  warn "
+or set ANTHROPIC_API_KEY to use API mode instead
+"
   false
 end
 
@@ -235,7 +240,8 @@ ANTHROPIC = ensure_gem("anthropic")
 # Mark first run complete
 if FIRST_RUN
   FileUtils.touch(File.expand_path("~/.convergence_installed"))
-  warn "setup complete\n"
+  warn "setup complete
+"
 end
 
 # Validate we have a working backend
@@ -279,7 +285,9 @@ module UI
     puts "mode: #{mode}"
     puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
     puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}" if RUBY_PLATFORM =~ /openbsd/
-    puts "type /help for commands\n\n"
+    puts "type /help for commands
+
+"
   end
 
   def prompt
@@ -300,7 +308,9 @@ module UI
     raise
   end
 
-  def response(text) = puts("\n#{text}\n")
+  def response(text) = puts("
+#{text}
+")
   def error(msg) = puts(c(:red, "error: #{msg}"))
   def status(msg) = puts(c(:dim, msg))
   def confirm(msg) = TTY ? @prompt.yes?(msg) : (print "#{msg} [y/N] "; $stdin.gets&.strip&.downcase == "y")
@@ -373,7 +383,7 @@ class WebChat
       if elements.any?
         current = elements.last.text.strip
         if current == last && !current.empty?
-          return current.sub(/^(Model [AB]?:?\s*|Response:?\s*)/i, "").strip if (stable += 1) >= 3
+          return current.sub(/^(Model [AB]?:?s*|Response:?s*)/i, "").strip if (stable += 1) >= 3
         else
           stable, last = 0, current
         end
@@ -423,7 +433,8 @@ class APIClient
       execute_tools
     else
       @pending_tool_calls = []
-      content.map { |c| c["text"] }.compact.join("\n")
+      content.map { |c| c["text"] }.compact.join("
+")
     end
   end
 
@@ -564,8 +575,13 @@ class RAG
     results = search(query, k: k)
     return query if results.empty?
 
-    context = results.map { |r| r[:chunk][:text] }.join("\n\n")
-    "Context:\n#{context}\n\nQuestion: #{query}"
+    context = results.map { |r| r[:chunk][:text] }.join("
+
+")
+    "Context:
+#{context}
+
+Question: #{query}"
   end
 
   def stats = { chunks: @chunks.size, provider: @provider }
@@ -617,14 +633,17 @@ class RAG
   end
 
   def chunk_text(text, source: nil, size: 500)
-    paragraphs = text.split(/\n{2,}/)
+    paragraphs = text.split(/
+{2,}/)
     chunks, current, idx = [], "", 0
 
     paragraphs.each do |p|
       p = p.strip
       next if p.empty?
       if current.length + p.length < size
-        current += (current.empty? ? "" : "\n\n") + p
+        current += (current.empty? ? "" : "
+
+") + p
       else
         chunks << make_chunk(current, source, idx) unless current.empty?
         idx += 1
@@ -733,7 +752,7 @@ class CLI
   end
 
   def command(input)
-    parts = input.split(/\s+/, 2)
+    parts = input.split(/s+/, 2)
     cmd, arg = parts[0], parts[1]
 
     case cmd

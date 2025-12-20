@@ -320,14 +320,14 @@ cat <<EOF > app/views/restaurants/index.html.erb
 EOF
 
 cat <<EOF > app/views/restaurants/_card.html.erb
-<%= tag.article class: "restaurant-card", data: { turbo_frame: "restaurant_\#{restaurant.id}" } do %>
+<%= tag.article class: "restaurant-card", data: { turbo_frame: "restaurant_#{restaurant.id}" } do %>
   <%= tag.header do %>
     <%= link_to restaurant_path(restaurant) do %>
       <%= tag.h3 restaurant.name %>
     <% end %>
     <%= tag.div class: "restaurant-meta" do %>
       <%= tag.span restaurant.cuisine, class: "cuisine" %>
-      <%= tag.span "\#{restaurant.rating}/5", class: "rating" if restaurant.rating %>
+      <%= tag.span "#{restaurant.rating}/5", class: "rating" if restaurant.rating %>
     <% end %>
   <% end %>
 
@@ -364,7 +364,7 @@ cat <<EOF > app/views/restaurants/show.html.erb
         <%= tag.p @restaurant.location, class: "location" %>
         <%= tag.p @restaurant.cuisine, class: "cuisine" %>
         <%= tag.div class: "rating" do %>
-          <%= tag.span "\#{@restaurant.rating}/5", class: "rating-value" if @restaurant.rating %>
+          <%= tag.span "#{@restaurant.rating}/5", class: "rating-value" if @restaurant.rating %>
         <% end %>
       <% end %>
     <% end %>
@@ -426,14 +426,14 @@ cat <<EOF > app/views/orders/index.html.erb
 EOF
 
 cat <<EOF > app/views/orders/_card.html.erb
-<%= tag.article class: "order-card", data: { turbo_frame: "order_\#{order.id}" } do %>
+<%= tag.article class: "order-card", data: { turbo_frame: "order_#{order.id}" } do %>
   <%= tag.header do %>
     <%= link_to order_path(order) do %>
       <%= tag.h3 t("takeaway.order_number", number: order.id) %>
     <% end %>
     <%= tag.div class: "order-meta" do %>
       <%= tag.span order.restaurant.name, class: "restaurant-name" %>
-      <%= tag.span order.status.humanize, class: "status status-\#{order.status}" %>
+      <%= tag.span order.status.humanize, class: "status status-#{order.status}" %>
     <% end %>
   <% end %>
 
@@ -931,4 +931,3 @@ log "Brgen Takeaway setup complete. Run 'bin/falcon-host' with PORT set to start
 # - Included live search, infinite scroll, and anonymous posting/chat via shared utilities.
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 # - Finalized for unprivileged user on OpenBSD 7.5.
-

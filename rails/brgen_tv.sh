@@ -375,15 +375,15 @@ cat <<EOF > app/views/shows/index.html.erb
 EOF
 
 cat <<EOF > app/views/shows/_card.html.erb
-<%= tag.article class: "show-card", data: { turbo_frame: "show_\#{show.id}" } do %>
+<%= tag.article class: "show-card", data: { turbo_frame: "show_#{show.id}" } do %>
   <%= tag.header do %>
     <%= link_to show_path(show) do %>
       <%= tag.h3 show.title %>
     <% end %>
     <%= tag.div class: "show-meta" do %>
       <%= tag.span show.genre, class: "genre" %>
-      <%= tag.span "\#{show.rating}/10", class: "rating" if show.rating %>
-      <%= tag.span "\#{show.total_episodes} episodes", class: "episode-count" %>
+      <%= tag.span "#{show.rating}/10", class: "rating" if show.rating %>
+      <%= tag.span "#{show.total_episodes} episodes", class: "episode-count" %>
     <% end %>
   <% end %>
 
@@ -397,7 +397,7 @@ cat <<EOF > app/views/shows/_card.html.erb
     <%= tag.p truncate(show.description, length: 120), class: "description" %>
     <%= tag.div class: "show-details" do %>
       <%= tag.span time_ago_in_words(show.release_date), class: "release-date" %>
-      <%= tag.span "\#{show.duration} min", class: "duration" %>
+      <%= tag.span "#{show.duration} min", class: "duration" %>
     <% end %>
   <% end %>
 
@@ -427,9 +427,9 @@ cat <<EOF > app/views/shows/show.html.erb
         <%= tag.h1 @show.title, id: "show-heading" %>
         <%= tag.div class: "show-meta" do %>
           <%= tag.span @show.genre, class: "genre" %>
-          <%= tag.span "\#{@show.rating}/10", class: "rating" if @show.rating %>
+          <%= tag.span "#{@show.rating}/10", class: "rating" if @show.rating %>
           <%= tag.span @show.release_date.year, class: "year" %>
-          <%= tag.span "\#{@show.duration} min", class: "duration" %>
+          <%= tag.span "#{@show.duration} min", class: "duration" %>
         <% end %>
         <%= tag.p @show.description, class: "description" %>
 
@@ -449,9 +449,9 @@ cat <<EOF > app/views/shows/show.html.erb
             <% episodes.each do |episode| %>
               <%= tag.div class: "episode" do %>
                 <%= tag.div class: "episode-info" do %>
-                  <%= tag.h4 "E\#{episode.episode_number}: \#{episode.title}" %>
+                  <%= tag.h4 "E#{episode.episode_number}: #{episode.title}" %>
                   <%= tag.p episode.description if episode.description.present? %>
-                  <%= tag.span "\#{episode.duration} min", class: "duration" %>
+                  <%= tag.span "#{episode.duration} min", class: "duration" %>
                 <% end %>
                 <%= link_to t("tv.watch_episode"), watch_show_episode_path(@show, episode), class: "button primary" %>
               <% end %>
@@ -468,7 +468,7 @@ cat <<EOF > app/views/shows/show.html.erb
 EOF
 
 cat <<EOF > app/views/episodes/watch.html.erb
-<% content_for :title, "\#{@show.title} - \#{@episode.title}" %>
+<% content_for :title, "#{@show.title} - #{@episode.title}" %>
 <%= render "shared/header" %>
 <%= tag.main role: "main", class: "video-player-page" do %>
   <%= tag.section aria_labelledby: "episode-heading" do %>
@@ -488,8 +488,8 @@ cat <<EOF > app/views/episodes/watch.html.erb
       <%= tag.h1 @episode.title, id: "episode-heading" %>
       <%= tag.div class: "episode-meta" do %>
         <%= link_to @show.title, show_path(@show), class: "show-link" %>
-        <%= tag.span "Season \#{@episode.season_number}, Episode \#{@episode.episode_number}", class: "episode-number" %>
-        <%= tag.span "\#{@episode.duration} min", class: "duration" %>
+        <%= tag.span "Season #{@episode.season_number}, Episode #{@episode.episode_number}", class: "episode-number" %>
+        <%= tag.span "#{@episode.duration} min", class: "duration" %>
       <% end %>
       <%= tag.p @episode.description if @episode.description.present? %>
     <% end %>
@@ -1051,4 +1051,3 @@ log "Brgen TV setup complete. Run 'bin/falcon-host' with PORT set to start on Op
 # - Included live search, infinite scroll, and anonymous posting/chat via shared utilities.
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 # - Finalized for unprivileged user on OpenBSD 7.5.
-

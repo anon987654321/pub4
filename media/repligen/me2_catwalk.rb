@@ -62,7 +62,8 @@ class ME2Catwalk
       16:9 aspect ratio, photorealistic, 8k quality
     PROMPT
 
-    puts "\n✨ ME2 CATWALK GENERATOR ✨"
+    puts "
+✨ ME2 CATWALK GENERATOR ✨"
     puts "=" * 60
     puts "🎨 Generating image..."
     puts "Style: #{style}"
@@ -103,7 +104,8 @@ class ME2Catwalk
       steady cam movement, high fashion video
     PROMPT
 
-    puts "\n🎬 Animating catwalk walk..."
+    puts "
+🎬 Animating catwalk walk..."
     puts "Motion: #{motion}"
     puts "Audio: #{audio_path ? File.basename(audio_path) : 'None'}"
     puts "=" * 60
@@ -134,10 +136,11 @@ class ME2Catwalk
   end
 
   def add_audio_to_video(video_path, audio_path, output_path)
-    puts "\n🎵 Adding custom audio track..."
+    puts "
+🎵 Adding custom audio track..."
     
     # Use ffmpeg to combine video and audio
-    cmd = "ffmpeg -i \"#{video_path}\" -i \"#{audio_path}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{output_path}\" -y"
+    cmd = "ffmpeg -i "#{video_path}" -i "#{audio_path}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "#{output_path}" -y"
     
     system(cmd)
     
@@ -151,7 +154,8 @@ class ME2Catwalk
   end
 
   def generate_full_catwalk(style: "high fashion", lighting: "dramatic runway lighting", motion: "confident runway walk", audio_path: nil)
-    puts "\n" + "=" * 60
+    puts "
+" + "=" * 60
     puts "  🌟 ME2 CATWALK - FULL PIPELINE 🌟"
     puts "=" * 60
     
@@ -163,7 +167,8 @@ class ME2Catwalk
     video_result = animate_catwalk(image_result[:image_url], motion: motion, audio_path: audio_path)
     return unless video_result
     
-    puts "\n" + "=" * 60
+    puts "
+" + "=" * 60
     puts "  ✨ COMPLETE! ✨"
     puts "=" * 60
     puts "📸 Image: #{image_result[:filename]}"
@@ -208,7 +213,7 @@ if __FILE__ == $0
       
       Examples:
         ruby me2_catwalk.rb full
-        ruby me2_catwalk.rb full "designer suit" "golden hour" "elegant walk" "G:\\music\\track.mp3"
+        ruby me2_catwalk.rb full "designer suit" "golden hour" "elegant walk" "G:\music\track.mp3"
         ruby me2_catwalk.rb image "evening gown" "spotlight"
         ruby me2_catwalk.rb video https://... "elegant stride" "audio.mp3"
       

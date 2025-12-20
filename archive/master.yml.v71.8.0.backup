@@ -124,7 +124,7 @@ framework:
         
       zsh_replacements:
         string_operations:
-          remove_crlf: "cleaned=${var//$'\\r'/}"
+          remove_crlf: "cleaned=${var//$'\r'/}"
           lowercase: "lower=${(L)var}"
           uppercase: "upper=${(U)var}"
           replace_all: "result=${var//search/replace}"
@@ -2011,11 +2011,11 @@ token_economics:
     fewer_concepts:
       problem: "External tools are separate languages with unique syntax, edge-case semantics, quoting rules"
       example_bad:
-        code: "awk -F, '{print $4}' | sed 's/\\r//g' | tr '[:upper:]' '[:lower:]'"
+        code: "awk -F, '{print $4}' | sed 's/\r//g' | tr '[:upper:]' '[:lower:]'"
         cost: "LLM must parse 3 grammars, reason about pipes + subshells, track I/O transformations"
         token_overhead: "High - requires extensive explanation, debugging, modification"
       example_good:
-        code: "cleaned=${var//$'\\r'/}; lower=${(L)cleaned}; fourth=${${(s:,:)lower}[4]}"
+        code: "cleaned=${var//$'\r'/}; lower=${(L)cleaned}; fourth=${${(s:,:)lower}[4]}"
         cost: "One grammar, one evaluation model, no process boundaries"
         token_overhead: "Low - compresses efficiently, shorter prompts, fewer corrections"
       net_effect: "Fewer tokens per task"

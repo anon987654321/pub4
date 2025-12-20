@@ -210,7 +210,7 @@ class SOSDilla
     return {} unless File.exist?("../master.json")
 
     begin
-      master = JSON.parse(File.read("../master.json").gsub(/^.*\/\/.*$/, ""))
+      master = JSON.parse(File.read("../master.json").gsub(/^.*//.*$/, ""))
       config = master.dig("config", "multimedia", "dilla") || {}
       puts "[dilla] OK loaded defaults from master.json" if config.any?
       config
@@ -388,8 +388,8 @@ class SOSDilla
     # 2. Spectral centroid in vocal range
     # 3. Amplitude variations suggesting speech/singing
     vocal_indicators = [
-      stats.include?("RMS amplitude") && stats.match(/RMS amplitude:\s+([\d.]+)/),
-      stats.include?("Maximum amplitude") && stats.match(/Maximum amplitude:\s+([\d.]+)/),
+      stats.include?("RMS amplitude") && stats.match(/RMS amplitude:s+([d.]+)/),
+      stats.include?("Maximum amplitude") && stats.match(/Maximum amplitude:s+([d.]+)/),
       # Additional heuristics for vocal detection
     ].compact.length > 0
 

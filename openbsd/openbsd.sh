@@ -54,7 +54,8 @@ readonly PTR_HOSTNAME="ns.brgen.no"
 
 # Status reporting - dmesg style
 status() {
-  printf '%s %-24s %-4s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$3"
+  printf '%s %-24s %-4s %s
+' "$(date +%H:%M:%S)" "$1" "$2" "$3"
 }
 
 spin() {
@@ -62,17 +63,18 @@ spin() {
   local pid=$1
   local i=0
   while kill -0 $pid 2>/dev/null; do
-    printf '\r%s %s' "${chars:$((i++ % 10)):1}" "$2"
+    printf '%s %s' "${chars:$((i++ % 10)):1}" "$2"
     sleep 0.1
   done
-  printf '\r'
+  printf ''
 }
 
 # Logging with structured output
 log() {
   local level="${1:-INFO}"
   shift
-  printf '{"time":"%s","level":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
+  printf '{"time":"%s","level":"%s","msg":"%s"}
+' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
 }
 
 save_state() {
@@ -279,8 +281,8 @@ _create_zone_files() {
     local subdomains="${APPS[${app}.subdomains]:-}"
     
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
-\$ORIGIN $domain.
-\$TTL 24h
+$ORIGIN $domain.
+$TTL 24h
 @ 1h IN SOA ns.brgen.no. admin.brgen.no. ($(date +%Y%m%d)01 1h 15m 1w 3m)
 @ IN NS ns.brgen.no.
 @ IN NS ns.hyp.net.
@@ -751,7 +753,7 @@ pexp="falcon serve.*$app/app/config/falcon.rb"
 rc_bg=YES
 rc_reload=NO
 
-rc_cmd \$1
+rc_cmd $1
 EOF
   chmod +x "/etc/rc.d/${app}"
 }
@@ -772,15 +774,17 @@ setup_ptr_records() {
 
   local token4_raw=$(ftp -MVo- "$PTR4_API/token" 2>/dev/null)
 
-  local token4="${token4_raw//$'\r'/}"
+  local token4="${token4_raw//$''/}"
 
-  token4="${token4//$'\n'/}"
+  token4="${token4//$'
+'/}"
 
   local token6_raw=$(ftp -MVo- "$PTR6_API/token" 2>/dev/null)
 
-  local token6="${token6_raw//$'\r'/}"
+  local token6="${token6_raw//$''/}"
 
-  token6="${token6//$'\n'/}"
+  token6="${token6//$'
+'/}"
   [[ -z "$token4" ]] && warn "Failed to get IPv4 PTR token"
 
   [[ -z "$token6" ]] && warn "Failed to get IPv6 PTR token"
@@ -846,7 +850,7 @@ setup_cron() {
 
   done
 
-  filtered_cron+=("0 0 * * * for d in $ALL_DOMAINS; do acme-client \$d; done")
+  filtered_cron+=("0 0 * * * for d in $ALL_DOMAINS; do acme-client $d; done")
 
   print -l "${filtered_cron[@]}" | crontab -
 

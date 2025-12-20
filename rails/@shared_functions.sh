@@ -311,13 +311,13 @@ setup_anon_chat() {
 class AnonymousChatChannel < ApplicationCable::Channel
   def subscribed
 
-    stream_from "anonymous_chat_\#{params[:room_id]}"
+    stream_from "anonymous_chat_#{params[:room_id]}"
 
   end
 
   def speak(data)
 
-    ActionCable.server.broadcast("anonymous_chat_\#{params[:room_id]}", data)
+    ActionCable.server.broadcast("anonymous_chat_#{params[:room_id]}", data)
 
   end
 
@@ -369,7 +369,7 @@ setup_seeds() {
 if Rails.env.development?
   # Add sample data creation here
 
-  puts "Created sample data for \#{Rails.env} environment"
+  puts "Created sample data for #{Rails.env} environment"
 
 end
 
@@ -478,7 +478,7 @@ import { definitionsFromContext } from "stimulus/webpack-helpers"
 
 const application = Application.start()
 
-const context = require.context(".", true, /\.js$/)
+const context = require.context(".", true, /.js$/)
 
 application.load(definitionsFromContext(context))
 
@@ -704,7 +704,7 @@ export default class extends Controller {
 
         .setLngLat([item.lng, item.lat])
 
-        .setPopup(new mapboxgl.Popup().setHTML(\`<h3>\${item.title}</h3><p>\${item.description}</p>\`))
+        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${item.title}</h3><p>${item.description}</p>`))
         .addTo(this.map)
 
     })
@@ -954,7 +954,7 @@ install_yarn_package() {
     if [[ -f "package.json" ]]; then
 
         local pkg_json=$(<package.json)
-        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
+        if [[ "$pkg_json" != *""$package_name""* ]]; then
 
             log "Installing yarn package: $package_name"
 

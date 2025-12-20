@@ -275,4 +275,3 @@ BSDPorts is a comprehensive package search and management platform that provides
 ---
 
 BSDPorts provides a unified, efficient, and comprehensive package search experience across the BSD ecosystem, making it easier for users and administrators to discover, evaluate, and install packages across different BSD platforms.
-

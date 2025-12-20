@@ -639,4 +639,3 @@ log "Pubattorney setup complete on PORT=$PORT"
 log "Domains: pub.attorney, freehelp.legal"
 
 log "Run: cd /home/dev/rails/$APP_NAME && bin/rails server -p $PORT"
-

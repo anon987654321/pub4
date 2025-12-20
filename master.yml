@@ -440,7 +440,7 @@ tools:
     write:  'print -r -- "$content" > file'
     match: '[[ $string =~ $pattern ]]'
     batch: 'for file in **/*. rb(N. ); do process "$file"; done'
-    errors: 'trap "print Failed at line \$LINENO" ERR'
+    errors: 'trap "print Failed at line $LINENO" ERR'
   
   zsh_advanced:
     arrays:
