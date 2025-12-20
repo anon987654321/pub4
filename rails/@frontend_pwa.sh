@@ -70,17 +70,21 @@ setup_service_worker() {
   mkdir -p public
   
   cat <<'EOF' > public/service-worker.js
-// Service Worker for Rails 8 PWA
-// Workbox-free, vanilla implementation
+// Service Worker for Rails 8 PWA - 2024 Best Practices
+// Caching strategies: cache-first (assets), network-first (API), stale-while-revalidate (pages)
+// See: https://web.dev/service-worker-lifecycle/
 
 const CACHE_VERSION = 'v1'
 const CACHE_NAME = `rails-pwa-${CACHE_VERSION}`
 
+// Critical assets to precache (offline support)
 const STATIC_ASSETS = [
   '/',
-  '/offline'
+  '/offline',
+  '/manifest.json'
 ]
 
+// Cache-first patterns (immutable assets)
 const CACHE_FIRST = [
   /\.css$/,
   /\.js$/,
@@ -91,13 +95,119 @@ const CACHE_FIRST = [
   /\.svg$/
 ]
 
+// Network-first patterns (dynamic content)
 const NETWORK_FIRST = [
   /\/api\//,
   /\/__turbo/,
   /\/cable$/
 ]
 
+// Install: Precache static assets
 self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(STATIC_ASSETS)
+    })
+  )
+  // Activate immediately (skip waiting for old service worker)
+  self.skipWaiting()
+})
+
+// Activate: Clean up old caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      )
+    })
+  )
+  // Take control immediately
+  self.clients.claim()
+})
+
+// Fetch: Route requests based on patterns
+self.addEventListener('fetch', event => {
+  const { request } = event
+  const url = new URL(request.url)
+  
+  // Skip non-GET requests and Chrome extensions
+  if (request.method !== 'GET' || url.protocol === 'chrome-extension:') {
+    return
+  }
+  
+  // Cache-first strategy (assets)
+  if (CACHE_FIRST.some(pattern => pattern.test(url.pathname))) {
+    event.respondWith(cacheFirst(request))
+    return
+  }
+  
+  // Network-first strategy (API, Turbo, ActionCable)
+  if (NETWORK_FIRST.some(pattern => pattern.test(url.pathname))) {
+    event.respondWith(networkFirst(request))
+    return
+  }
+  
+  // Stale-while-revalidate (pages - best UX)
+  event.respondWith(staleWhileRevalidate(request))
+})
+
+// Cache-first: Serve from cache, fallback to network
+async function cacheFirst(request) {
+  const cached = await caches.match(request)
+  if (cached) return cached
+  
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME)
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch (err) {
+    return new Response('Offline', { status: 503 })
+  }
+}
+
+// Network-first: Try network, fallback to cache
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME)
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch (err) {
+    const cached = await caches.match(request)
+    return cached || new Response('Offline', { status: 503 })
+  }
+}
+
+// Stale-while-revalidate: Serve cache immediately, update in background
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request)
+  
+  const fetchPromise = fetch(request).then(response => {
+    if (response.ok) {
+      const cache = caches.open(CACHE_NAME)
+      cache.then(c => c.put(request, response.clone()))
+    }
+    return response
+  }).catch(() => cached || new Response('Offline', { status: 503 }))
+  
+  return cached || fetchPromise
+}
+
+// Background sync for offline forms (future enhancement)
+// self.addEventListener('sync', event => {
+//   if (event.tag === 'sync-forms') {
+//     event.waitUntil(syncForms())
+//   }
+// })
+EOF
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
