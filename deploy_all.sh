@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# Complete VPS deployment orchestrator per master.yml v72.1.0
-# Deploys all 15 Rails apps to OpenBSD VPS 185.52.176.18
+# Complete VPS deployment orchestrator per master.yml v101.0
+# Deploys all Rails apps to OpenBSD VPS 185.52.176.18
 set -euo pipefail
 
 readonly VPS_HOST="185.52.176.18"

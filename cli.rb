@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # CONVERGENCE CLI v3.0
-# Self-bootstrapping AI assistant
+# Self-bootstrapping AI assistant per master.yml v101.0
 #
 # First run: auto-installs gems, checks for browser
 # Just: chmod +x cli.rb && ./cli.rb
