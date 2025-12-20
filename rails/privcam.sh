@@ -9,7 +9,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
-source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
+
+source "${SCRIPT_DIR}/@shared_functions.sh"
+
+# Idempotency: skip if already generated
+check_app_exists "$APP_NAME" "app/models/video.rb" && exit 0
 
 log "Starting Privcam setup"
 setup_full_app "$APP_NAME"
