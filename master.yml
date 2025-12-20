@@ -1,9 +1,9 @@
-# CODE AXIOM v22.0 - UNIVERSAL AUTHORING SYSTEM
+# CODE AXIOM v23.1 - UNIVERSAL AUTHORING SYSTEM
 system: Code Axiom
 purpose: Apply systematic principles to code, legal documents, and business writing
 domains: [code, legal, business]
-version: 22.0
-updated: 2024-12-20
+version: 23.1
+updated: 2025-12-20
 
 # PRINCIPLES - TIER 1: INVIOLABLE
 # When principles conflict, higher tier wins
@@ -418,7 +418,6 @@ tools:
     read_once: "View entire file once, don't re-read repeatedly"
     tree_first: "Run tree.sh equivalent (recursive file list) in new repos before starting"
     no_wrappers: "Avoid useless wrappers - use direct commands"
-    reason: "Minimize forks, surgical edits, token efficient"
 
   patterns:
     replacement_mandate:
@@ -438,7 +437,7 @@ tools:
     write:  'print -r -- "$content" > file'
     match: '[[ $string =~ $pattern ]]'
     batch: 'for file in **/*. rb(N. ); do process "$file"; done'
-    errors: 'trap "echo Failed at line \$LINENO" ERR'
+    errors: 'trap "print Failed at line \$LINENO" ERR'
   
   zsh_advanced:
     arrays:
@@ -475,9 +474,9 @@ tools:
       largest_5: '**/*(NOL[1,5])'
       
     here_docs:
-      basic: 'cat <<''EOF'' > file'
-      indented: 'cat <<-''EOF'' > file (tabs stripped)'
-      variable_expansion: 'cat <<EOF > file (vars expanded)'
+      basic: 'print -r -- "$content" > file # or <<''EOF'''
+      indented: '<<-''EOF'' (strips leading tabs)'
+      variable_expansion: '<<EOF (expands variables)'
         
     conditionals:
       file_exists: '[[ -f file ]]'
