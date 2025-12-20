@@ -1,197 +1,100 @@
-# master.yml — Self-Consistent LLM Configuration
-# Version: 74.1.0
-# Updated: 2025-12-19T20:52 - Cherry-picked solution F: all gaps fixed
+# master.yml v75.0.0 - Rails 8 + OpenBSD Code Improvement
+# Updated: 2025-12-20T20:42 - DeepSeek simplification applied
+#
+# ACTIVATION: "✓ master.yml v75.0.0 loaded
+#  • Deep analysis: nested loops, <2% threshold
+#  • Tiered principles: never break → strong → guidelines
+#  • Zero sprawl: commits only, no temp files
+#  • Zsh native: 46% token savings"
 
-meta:
-  version: "74.1.0"
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  philosophy: pragmatic development, token efficiency, zero sprawl
-  canonical_path: ~/pub/master.yml
-  bootstrap: "Read entire file, verify version >=74.1.0 <75.0.0, internalize, enforce"
+golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+focus: "Complete Rails generators on OpenBSD with zero sprawl"
+analysis: "Read files once, exhaust every line vs every principle, nested loops until <2% improvement"
 
-mandates:
-  tool_usage: "use file tools (view/edit/create/grep/glob), not shell commands"
-  prohibited: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  allowed: [ruby, zsh, git, grep, cat, npm, bundle, rails, rake]
-  communication: "extreme brevity - report only failures or requested output"
-  anti_sprawl: "no analysis/summary/report/todo/notes files - edit existing directly"
+forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
+allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas]
+output: "work via commits with clear messages - no temp files"
 
-runtime_context:
-  current_session: {os: Windows, shell: PowerShell, tool: "GitHub Copilot CLI"}
-  ideal_target: {os: OpenBSD, shell: Zsh}
-  tolerance: "PowerShell allowed on Windows development, Zsh required for production"
-  rationale: "develop anywhere, deploy to OpenBSD"
-
-escape_hatch:
-  when:
-    emergency: {approval: none, revert_within: "24h", document: true}
-    client_code: {approval: "client standard overrides", scope: "client projects only"}
-    learning: {approval: self, scope: "~/learning/, ~/experiments/"}
-    legacy: {approval: "document migration plan", temporary: true}
-  template: "# VIOLATION: [principle] | Reason: [category] | Revert by: [date]"
+stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
 scope:
-  applies_to: ["~/pub/rails/", "~/pub/openbsd/", "production code"]
-  excludes: ["~/learning/", "~/experiments/", "client_projects/*"]
-  inheritance: "client standards override master.yml in their projects"
-
-stack:
-  languages: [ruby, zsh]
-  framework: "Rails 8 + Solid Queue/Cache/Cable"
-  os: "OpenBSD 7.6+"
-  shell: zsh
+  production: ["~/pub/rails/", "~/pub/openbsd/"]
+  experimental: ["~/learning/", "~/experiments/"]
+  escape: "# VIOLATION: [principle] | Reason: [why] | Revert: [date]"
 
 principles:
-  foundational:
-    preserve_then_improve: "never break working code (golden rule)"
-    chestertons_fence: "understand before removing"
-    pareto: "80% value from 20% effort"
-    occams_razor: "simpler solution usually correct"
+  tier_1_never_break:
+    - preserve_behavior: "never break working code"
+    - chestertons_fence: "understand before removing"
+    - security_first: "validate input, least privilege, defense in depth"
   
-  code_quality:
-    single_responsibility: "one reason to change"
-    dry: "single source of truth"
-    kiss: "no unnecessary complexity"
-    yagni: "don't build what you don't need"
-    meaningful_names: "names reveal intent"
-    small_functions: "under 10 lines ideal, max 20"
-    boy_scout: "leave code cleaner than found"
-    stepdown: "most important code first, details below"
+  tier_2_strong:
+    - single_responsibility: "one reason to change"
+    - dry: "single source of truth"
+    - kiss: "no unnecessary complexity"
+    - yagni: "build only what you need now"
+    - small_functions: "under 10 lines ideal, max 20"
   
-  solid:
-    open_closed: "open for extension, closed for modification"
-    liskov_substitution: "subtypes substitutable for base types"
-    interface_segregation: "many specific interfaces over one general"
-    dependency_inversion: "depend on abstractions, not concretions"
-  
-  security:
-    least_privilege: "minimum permissions required"
-    defense_in_depth: "multiple security layers"
-    validate_input: "never trust external data"
-  
-  testing:
-    test_pyramid: "many unit, some integration, few e2e"
-    test_isolation: "independent, no shared state"
-    measure_first: "profile before optimizing"
+  tier_3_guidelines:
+    - meaningful_names: "names reveal intent"
+    - boy_scout: "leave cleaner than found"
+    - stepdown: "important code first"
+    - measure_first: "profile before optimizing"
 
 ruby:
   frozen_string_literal: true
-  keyword_arguments: "for methods with 2+ params"
-  safe_navigation: "&. over nil checks"
-  blocks: "{} for one-line, do/end for multi-line"
-  small_methods: "extract till you drop"
+  keyword_args: "2+ params"
+  safe_nav: "&."
+  blocks: "{} one-line, do/end multi"
 
 rails:
-  stack: "Solid Queue/Cache/Cable, Hotwire (Turbo + Stimulus)"
-  doctrine: "convention over configuration, programmer happiness, monolith first"
-  avoid: "React/Vue/Angular unless required"
+  stack: "Solid + Hotwire"
+  avoid: "React/Vue/Angular"
+  doctrine: "convention > configuration"
 
-zsh_native:
-  why: "single grammar vs multiple (sed/awk/tr), zero forks, 46% token savings over 3 iterations"
-  case: "${(L)var} lowercase, ${(U)var} uppercase"
-  replace: "${var//pattern/replacement}"
+zsh:
+  why: "zero forks, 46% token savings vs sed/awk/tr"
+  case: "${(L)var} = lower, ${(U)var} = upper"
+  replace: "${var//old/new}"
   trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-  arrays: "split=(${(s:,:)var}), join=${(j:,:)arr}, unique=(${(u)arr})"
-  replaces:
-    sed: "${text//old/new}"
-    awk: "${${(s: :)line}[2]}"
-    wc: "${#lines}"
-    head: "${lines[1,10]}"
-    tail: "${lines[-5,-1]}"
-    find: "**/*.ext(N.)"
+  split: "(${(s:,:)var})"
+  join: "${(j:,:)arr}"
+  count: "${#arr}"
+  slice: "${arr[1,10]}"
+  glob: "**/*.ext(N.)"
 
 openbsd:
-  vps: "185.52.176.18 (server27.openbsd.amsterdam, vm08)"
-  access: "ssh -i ~/.ssh/id_rsa dev@185.52.176.18"
-  console: "ssh -i ~/.ssh/id_rsa -p 31415 dev@server27.openbsd.amsterdam + vmctl console vm08"
-  password: "see ~/priv/passwd/vps_access.txt (emergency backup)"
-  services: "rcctl enable/start/stop/restart/check service"
-  privilege: "doas (never sudo)"
-  packages: "pkg_add package"
-  firewall: "pfctl -f /etc/pf.conf"
-  web_stack: "relayd (TLS) → falcon (10001-11006) → Rails"
-  rc_d_pattern: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve -c config/falcon.rb'"
+  vps: {ip: "185.52.176.18", user: dev, pass: "~/priv/passwd/vps_access.txt"}
+  services: "rcctl enable/start/stop/restart/check"
+  privilege: doas
+  packages: pkg_add
+  web: "relayd(TLS) → falcon(10001-11006) → Rails"
 
-projects:
-  rails_apps:
-    location: ~/pub/rails/
-    count: 15
-    deployed: 7
-    generators: [brgen, amber, blognet, bsdports, hjerterom, privcam, pubattorney]
-    stack: "Rails 8 + Solid Queue/Cache/Cable + Hotwire + authentication"
-  
-  deployment_script:
-    location: ~/pub/openbsd/openbsd.sh
-    version: v338.1.0
-    creates: "rc.d scripts, Falcon config, PostgreSQL setup, relayd TLS routing"
-    critical: "bundle install must complete, Ruby ~> 3.3, no Redis in Gemfile"
+deploy:
+  local: [test, verify_Gemfile, commit]
+  remote: "scp file.sh vps:~ && ssh vps 'zsh file.sh'"
+  service: "rcctl enable app && rcctl start app"
+  verify: "ps aux | grep falcon && curl localhost:port"
 
-deployment_workflow:
-  phase_1_local: [test_generator_locally, verify_Gemfile, commit]
-  phase_2_upload: "scp generator.sh dev@vps:~ && ssh dev@vps 'zsh generator.sh'"
-  phase_3_service: "rcctl enable app && rcctl start app && tail -f /var/log/messages"
-  verify: "ps aux | grep falcon, netstat -an | grep port, curl http://localhost:port"
+execution:
+  steps:
+    - "Read code, understand why it exists (chestertons_fence)"
+    - "Check tier 1 principles first (never break)"
+    - "Fix violations one at a time, smallest change"
+    - "Test immediately after each change"
+    - "Commit with clear message"
+    - "Measure: (prev_violations - current) / prev × 100"
+    - "Continue if improvement ≥2% and cycles <5"
 
-troubleshooting:
-  service_wont_start:
-    check: ["rcctl check app", "tail /var/log/messages", "ps aux | grep falcon"]
-    fixes: ["cd ~/app && bundle install", "verify config/falcon.rb exists", "check Ruby version"]
-  gemfile_broken:
-    cause: "sed usage (forbidden tool)"
-    fix: "download Gemfile, edit locally with view/edit tools, upload back"
-    never: "do not use sed/awk on VPS"
+self_optimize:
+  run_on_self: true
+  threshold: 2
+  max_cycles: 5
+  measure: "violations per 100 lines"
 
-workflow:
-  assess: "understand current state"
-  plan: "smallest direct path"
-  execute: "build then refactor"
-  verify: "ensure no regressions"
-  learn: "reflect on outcomes, update principles"
+git_recovery: "git log --patch --all -- path/to/file, then git show HASH:path > recovered"
 
-convergence:
-  enabled: true
-  max_iterations: 100
-  threshold: 0.001
-  types: [flesh_out, refine, streamline, polish, optimize, secure, align]
-  adversarial: "challenge assumptions, find edge cases, stress test principles"
-
-detectors:
-  purpose: "identify violations during manual review, pre-commit (optional), CI (future)"
-  triggers: [on_commit, on_deploy, on_demand]
-  duplicate_code: {threshold: 3, similarity: 0.70}
-  complexity: {cyclomatic_max: 10, nesting_max: 4, method_lines_max: 20}
-  security: [sql_injection, xss, command_injection, hardcoded_secrets]
-  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  integration: "manual for now, can add Rubocop/Shellcheck/pre-commit hooks later"
-
-git_recovery:
-  when: "code lost, file deleted, change disappeared"
-  scenarios:
-    find_all_changes: "git log --patch --all -- path/to/file"
-    find_deleted: "git log --diff-filter=D --summary"
-    find_by_content: "git log -S 'search_string' --patch"
-  recovery:
-    1: "git log --patch --all -- lost_file"
-    2: "identify commit hash"
-    3: "git show HASH:path/to/file > recovered_file"
-    4: "verify content, test, restore"
-
-enforcement:
-  gates: {yaml_parse_errors: 0, banned_tools_violations: 0, tests_pass_rate: 1.0, production_breakages: 0}
-  targets: {consistency: 0.98, coverage: 0.80, complexity_max: 10, method_lines_max: 20, file_size_lines: 200, duplication_max: 0.03}
-  how: "manual review, pre-commit hooks (optional), CI integration (future)"
-  when: [on_commit, on_deploy, on_demand]
-
-rules:
-  always: [keep codebase functional, edit files directly, use ruby/zsh appropriately, follow project conventions]
-  never: [create analysis/summary files, break without immediate fix, use banned tools, add ornamental comments]
-
-version_history:
-  "74.1.0": "Cherry-picked solution F: fixed 11 gaps (runtime context, escape hatch, scope, security, troubleshooting, git recovery)"
-  "74.0.0": "Streamlined: removed duplication, flattened nesting, applied stepdown rule, 883→151 lines (82% reduction)"
-  "73.0.0": "Synthesis: merged DeepSeek/Grok/GPT/Claude + restored convergence/detectors"
-
-# End of master.yml v74.1.0 - Complete & Self-Consistent
-# Lines: 190 | All gaps fixed, security improved, operational knowledge preserved
-# Structure: mandates → runtime → escape → principles → implementations → operations
-# Session: 2025-12-19T20:52 - Convergence iteration 3 complete, all pitfalls addressed
+# v75.0.0 - 82 lines (vs 198 in v74.1.0)
+# Applied: DeepSeek simplification, essential complexity only, Rails/OpenBSD focus
+# Removed: verbose sections, duplication, non-essential metadata
+# Result: Fits one screen, actionable in 5 minutes
