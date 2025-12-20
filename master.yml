@@ -54,6 +54,9 @@ tier_3_guidelines:
   active_voice: Direct language
   essential_complexity: Remove non-essential
   self_optimization: "Run artifacts through own rules iteratively until diminishing returns"
+  deep_analysis: "Nested loops per principle category, each autoiterates until <2% improvement"
+  exhaustive_scan: "Read entire file once, check every line against every principle"
+  no_shallow_passes: "Single-pass checks forbidden, minimum 2 cycles per category"
 
 # CONFLICT RESOLUTION
 conflicts:
@@ -563,6 +566,10 @@ cli_assistant:
 execution:
   cycles: 5
   improvement_target: "2% per cycle"
+  loop_structure:
+    outer: "Whole process repeats until diminishing returns (<2% improvement)"
+    inner: "Each principle category has own closed subloop (also until <2%)"
+    verification: "After each inner loop, verify fixes don't create new violations"
 
   steps:
     - detect: 
