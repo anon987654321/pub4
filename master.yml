@@ -138,8 +138,27 @@ constraints:
   
   thresholds:
     max_method_lines: 20
+    max_file_lines: 200
     max_complexity: 10
     duplication_trigger: 3
+
+convergence:
+  enabled: true
+  max_iterations: 10
+  auto_fix: true
+  stop_on_error: false
+  script: "./converge.sh"
+  state_file: ".convergence_state.json"
+  targets:
+    - "rails/**/*.rb"
+    - "rails/**/*.sh"
+    - "openbsd/**/*.sh"
+  analyzers:
+    ruby: "lib/converge/analyzer.rb"
+    shell: "lib/converge/shell_analyzer.rb"
+  tools:
+    reporter: "lib/converge/reporter.rb"
+    fixer: "lib/converge/fixer.rb"
 
 projects:
   rails_apps:

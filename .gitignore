@@ -26,3 +26,6 @@ vendor/bundle/
 /tmp/*
 !/log/.keep
 !/tmp/.keep
+
+# Convergence state
+.convergence_state.json

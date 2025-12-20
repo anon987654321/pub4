@@ -1,0 +1,65 @@
+name: Auto-Converge
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  converge:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+          
+      - name: Setup Zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+          
+      - name: Run convergence check
+        run: |
+          chmod +x converge.sh
+          ./converge.sh --ci-mode
+        shell: zsh {0}
+        
+      - name: Upload convergence state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: convergence-state
+          path: .convergence_state.json
+          if-no-files-found: ignore
+          
+      - name: Comment on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## ⚠️ Convergence Check Failed\n\n';
+            comment += 'The code contains violations of design principles.\n\n';
+            
+            if (fs.existsSync('.convergence_state.json')) {
+              const state = JSON.parse(fs.readFileSync('.convergence_state.json', 'utf8'));
+              comment += `- **Violations found:** ${state.violations}\n`;
+              comment += `- **Iterations:** ${state.iterations}\n`;
+            }
+            
+            comment += '\nPlease review the violations and fix them before merging.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
