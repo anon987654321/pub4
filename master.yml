@@ -53,6 +53,7 @@ tier_3_guidelines:
   small_units: Keep components focused
   active_voice: Direct language
   essential_complexity: Remove non-essential
+  self_optimization: "Run artifacts through own rules iteratively until diminishing returns"
 
 # CONFLICT RESOLUTION
 conflicts:
@@ -408,12 +409,28 @@ tools:
   reason: "Zero forks, surgical edits, token efficient"
 
   allowed:  [ruby, zsh, git]
-  discouraged: [python, bash, sed, awk, tr, wc, head, tail, cut, find]
+  discouraged: [python, bash, sed, awk, tr, wc, head, tail, cut, find, echo]
   banned: [sudo]
 
   note: "Discouraged tools acceptable when clearer or necessary"
+  
+  efficiency:
+    read_once: "View entire file once, don't re-read repeatedly"
+    tree_first: "Run tree.sh equivalent (recursive file list) in new repos before starting"
+    no_wrappers: "Avoid useless wrappers - use direct commands"
+    reason: "Minimize forks, surgical edits, token efficient"
 
   patterns:
+    replacement_mandate:
+      echo: "Use print (zsh) or Write-Host (PowerShell)"
+      wc_lines: "Use ${#${(@f)content}} (zsh) or @(Get-Content f).Count (PowerShell)"
+      wc_chars: "Use ${#content} (zsh) or (Get-Content f -Raw).Length (PowerShell)"
+      cat: "Use ${(<file)} (zsh) or Get-Content (PowerShell)"
+      head: "Use ${lines[1,10]} (zsh) or Select-Object -First 10 (PowerShell)"
+      tail: "Use ${lines[-10,-1]} (zsh) or Select-Object -Last 10 (PowerShell)"
+      find: "Use **/*(.) glob (zsh) or Get-ChildItem -Recurse (PowerShell)"
+      grep: "Use ${(M)lines:#*pattern*} (zsh) or Select-String (PowerShell)"
+    
     replace:  '${content//old/new}'
     split: 'local -a lines=("${(@f)content}")'
     count: 'local len=${#array[@]}'
