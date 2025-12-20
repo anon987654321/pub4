@@ -165,6 +165,19 @@ From `master.yml`:
 - **max_complexity**: Cyclomatic complexity ≤ 10
 - **consolidate**: Prefer fewer, well-organized files
 
+## Tool Usage Philosophy
+
+The convergence system follows the tool policy from `master.yml`:
+
+**Allowed tools:** ruby, zsh, git, grep, cat, sort
+**Banned tools:** python, bash, sed, awk, wc, head, tail, cut, find, sudo
+
+**Rationale:**
+- `grep` is allowed for simple pattern matching in orchestration scripts
+- `sed`, `awk`, `wc`, etc. should be replaced with zsh parameter expansion in production code
+- The convergence scripts themselves use bash+grep (allowed) when zsh is unavailable
+- Production code (openbsd.sh, _batch_generate.sh) must follow stricter zsh-only rules
+
 ## Future Enhancements
 
 1. **Smart refactoring**: Automatically extract long methods

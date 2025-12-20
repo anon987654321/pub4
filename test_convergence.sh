@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Test script for convergence analyzers (bash-compatible)
 # Use this when zsh is not available
+# Note: This script uses bash and grep (allowed per master.yml)
 
 set -euo pipefail
 
@@ -12,7 +13,10 @@ echo
 
 # Test Ruby analyzer
 echo "Testing Ruby analyzer..."
-ruby "${LIB_DIR}/analyzer.rb" "rails/**/*.rb" "openbsd/**/*.rb" 2>/dev/null | head -20 || echo "No Ruby files to analyze"
+ruby "${LIB_DIR}/analyzer.rb" "rails/**/*.rb" "openbsd/**/*.rb" 2>/dev/null | jq '.summary' 2>/dev/null || {
+  echo "Running without jq (showing first 20 lines):"
+  ruby "${LIB_DIR}/analyzer.rb" "rails/**/*.rb" "openbsd/**/*.rb" 2>/dev/null | grep -A5 '"summary"' || echo "No Ruby files to analyze"
+}
 echo
 
 # Test Shell analyzer
