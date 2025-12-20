@@ -532,7 +532,7 @@ detectors:
         declare -A const_names
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
-          if [[ $line =~ 'const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          if [[ $line =~ "const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
             name=${match[1]}
             ((const_names[$name]++))
             ((const_names[$name] > 1)) && print "DRY: duplicate const '$name' at line $i"
@@ -547,7 +547,7 @@ detectors:
         declare -A let_names
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
-          if [[ $line =~ 'let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          if [[ $line =~ "let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
             name=${match[1]}
             ((let_names[$name]++))
             ((let_names[$name] > 1)) && print "DRY: duplicate let '$name' at line $i"
@@ -562,7 +562,7 @@ detectors:
         declare -A var_names
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
-          if [[ $line =~ 'var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+          if [[ $line =~ "var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
             name=${match[1]}
             ((var_names[$name]++))
             ((var_names[$name] > 1)) && print "DRY: duplicate var '$name' at line $i"
@@ -577,8 +577,7 @@ detectors:
         declare -A func_names
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
-          if [[ $line =~ 'function[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]] || \
-             [[ $line =~ '([a-zA-Z_][a-zA-Z0-9_]*)[[:space:]]*\([[:space:]]*\)[[:space:]]*\{' ]]; then
+          if [[ $line =~ "function[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
             name=${match[1]}
             ((func_names[$name]++))
             ((func_names[$name] > 1)) && print "DRY: duplicate function '$name' at line $i"
@@ -593,7 +592,7 @@ detectors:
         declare -A class_names
         for ((i=1; i<=${#lines}; i++)); do
           line=${lines[$i]}
-          if [[ $line =~ 'class[[:space:]]+([A-Z][a-zA-Z0-9_]*)' ]]; then
+          if [[ $line =~ "class[[:space:]]+([A-Z][a-zA-Z0-9_]*)" ]]; then
             name=${match[1]}
             ((class_names[$name]++))
             ((class_names[$name] > 1)) && print "DRY: duplicate class '$name' at line $i"
@@ -605,10 +604,10 @@ detectors:
     duplicate_const_declaration: remove_duplicate_declaration
     duplicate_let_declaration: remove_duplicate_declaration
     duplicate_var_declaration: remove_duplicate_declaration
-    duplicate_function_declaration: consolidate_or_rename
-    duplicate_class_declaration: consolidate_or_rename
-  multiple_responsibilities: split_into_focused_units
-  values_buried_deep: hoist_to_accessible_scope
+    duplicate_function_declaration: remove_duplicate_declaration
+    duplicate_class_declaration: remove_duplicate_declaration
+    multiple_responsibilities: split_into_focused_units
+    values_buried_deep: hoist_to_accessible_scope
   related_concepts_scattered: gather_and_colocate
   arbitrary_grouping: regroup_by_meaning
   excessive_sections: defragment_and_consolidate
@@ -1296,20 +1295,20 @@ formatters:
     integration: run_via_master_rb_self_execution_loop
     
   remove_duplicate_declaration:
-    purpose: remove_duplicate_const_let_var_keep_first_occurrence
+    purpose: remove_duplicate_const_let_var_function_class_keep_first_occurrence
     scan: |
       content=$(<$file)
       lines=(${(f)content})
-      declare -A seen_const seen_let seen_var
+      declare -A seen_const seen_let seen_var seen_func seen_class
       output_lines=()
       for ((i=1; i<=${#lines}; i++)); do
         line=${lines[$i]}
         skip=0
         
         # Check const
-        if [[ $line =~ 'const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+        if [[ $line =~ "const[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
           name=${match[1]}
-          if ((seen_const[$name])); then
+          if [[ -n ${seen_const[$name]} ]]; then
             skip=1
             print "Removed duplicate const '$name' at line $i"
           else
@@ -1318,9 +1317,9 @@ formatters:
         fi
         
         # Check let
-        if [[ $line =~ 'let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+        if [[ $line =~ "let[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
           name=${match[1]}
-          if ((seen_let[$name])); then
+          if [[ -n ${seen_let[$name]} ]]; then
             skip=1
             print "Removed duplicate let '$name' at line $i"
           else
@@ -1329,13 +1328,35 @@ formatters:
         fi
         
         # Check var
-        if [[ $line =~ 'var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)' ]]; then
+        if [[ $line =~ "var[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
           name=${match[1]}
-          if ((seen_var[$name])); then
+          if [[ -n ${seen_var[$name]} ]]; then
             skip=1
             print "Removed duplicate var '$name' at line $i"
           else
             seen_var[$name]=1
+          fi
+        fi
+        
+        # Check function
+        if [[ $line =~ "function[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*)" ]]; then
+          name=${match[1]}
+          if [[ -n ${seen_func[$name]} ]]; then
+            skip=1
+            print "Removed duplicate function '$name' at line $i"
+          else
+            seen_func[$name]=1
+          fi
+        fi
+        
+        # Check class
+        if [[ $line =~ "class[[:space:]]+([A-Z][a-zA-Z0-9_]*)" ]]; then
+          name=${match[1]}
+          if [[ -n ${seen_class[$name]} ]]; then
+            skip=1
+            print "Removed duplicate class '$name' at line $i"
+          else
+            seen_class[$name]=1
           fi
         fi
         
@@ -1447,7 +1468,7 @@ tech_stack:
 
 quality_metrics:
   version: 14.2.0
-  lines: 1400
+  lines: 1544
   root_sections: 23
   nesting_maximum: 2
   duplication_ratio: 0.00
