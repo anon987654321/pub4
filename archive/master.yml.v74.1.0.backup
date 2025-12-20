@@ -1,34 +1,19 @@
-# master.yml v75.1.0 - Rails 8 + OpenBSD Code Improvement
-# Updated: 2025-12-20T21:26 - Added reasoning preferences per GPT-4 analysis
+# master.yml v75.0.0 - Rails 8 + OpenBSD Code Improvement
+# Updated: 2025-12-20T20:42 - DeepSeek simplification applied
 #
-# ACTIVATION: "✓ master.yml v75.1.0 loaded
+# ACTIVATION: "✓ master.yml v75.0.0 loaded
 #  • Deep analysis: nested loops, <2% threshold
 #  • Tiered principles: never break → strong → guidelines
 #  • Zero sprawl: commits only, no temp files
-#  • Zsh native: 46% token savings
-#  • Ruby-first reasoning: algorithms as Ruby, file ops as zsh"
+#  • Zsh native: 46% token savings"
 
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
 analysis: "Read files once, exhaust every line vs every principle, nested loops until <2% improvement"
 
-reasoning:
-  primary_language: Ruby
-  primary_shell: zsh
-  expression:
-    algorithms: "Express algorithms and examples as Ruby code where practical"
-    file_operations: "Express file operations as zsh parameter expansion and globs, not generic shell"
-    explanations: "Show concrete Ruby or zsh snippets instead of abstract pseudo-code"
-  note: "This governs visible output/reasoning surface, not internal LLM thought process"
-
 forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
 allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas]
 output: "work via commits with clear messages - no temp files"
-mandate:
-  file_ops: "zsh globbing and parameter expansion (**/*.rb(N.), ${(<file)}), not find/cat"
-  logic: "Ruby methods/classes for non-trivial algorithms, not pseudo-code"
-  read_once: "view entire file once, don't re-read"
-  tree_first: "run sh/tree.sh equivalent in new repos before starting"
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
@@ -69,29 +54,14 @@ rails:
 
 zsh:
   why: "zero forks, 46% token savings vs sed/awk/tr"
-  patterns:
-    case: "${(L)var} = lower, ${(U)var} = upper"
-    replace: "${var//old/new}"
-    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-    split: "(${(s:,:)var})"
-    join: "${(j:,:)arr}"
-    count: "${#arr}"
-    slice: "${arr[1,10]}"
-    read: "${(<file)}"
-    match: "[[ $str =~ pattern ]]"
-    glob: "**/*.rb(N.)"
-    glob_dirs: "**/*(N/)"
-    glob_exec: "**/*(N*)"
-  arrays:
-    create: "items=(one two three)"
-    append: "items+=(four)"
-    length: "${#items}"
-    slice: "${items[2,-1]}"
-  flags:
-    abs: "${file:a}"
-    dir: "${file:h}"
-    base: "${file:t}"
-    ext: "${file:e}"
+  case: "${(L)var} = lower, ${(U)var} = upper"
+  replace: "${var//old/new}"
+  trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+  split: "(${(s:,:)var})"
+  join: "${(j:,:)arr}"
+  count: "${#arr}"
+  slice: "${arr[1,10]}"
+  glob: "**/*.ext(N.)"
 
 openbsd:
   vps: {ip: "185.52.176.18", user: dev, pass: "~/priv/passwd/vps_access.txt"}
@@ -99,7 +69,6 @@ openbsd:
   privilege: doas
   packages: pkg_add
   web: "relayd(TLS) → falcon(10001-11006) → Rails"
-  verification: "all tools/daemons/config files must be verified at man.openbsd.org before use"
 
 deploy:
   local: [test, verify_Gemfile, commit]
