@@ -338,82 +338,81 @@ EOF
 
 # PF firewall
 setup_firewall() {
-
   log "Configuring PF firewall..."
   cat > /etc/pf.conf << 'EOF'
-
 ext_if = "vio0"
 domeneshop = "194.63.248.53"
 
 # Allow all on localhost
 set skip on lo
 
-# Block stateless traffic
+# Block stateless traffic (default deny)
 block return
 
-# Establish keep-state
+# Establish keep-state for connections
 pass
 
 # Block all incoming by default
 block in
 
-# Ban brute-force attackers (http://home.nuug.no/~peter/pf/en/bruteforce.html)
-# Manage: pfctl -t bruteforce -T show | flush | delete <IP>
-
+# Ban brute-force attackers
+# See: http://home.nuug.no/~peter/pf/en/bruteforce.html
+# Manage:
+#   pfctl -t bruteforce -T show     # List banned IPs
+#   pfctl -t bruteforce -T flush    # Clear all
+#   pfctl -t bruteforce -T delete <IP>  # Remove specific IP
 table <bruteforce> persist
 block quick from <bruteforce>
 
-# SSH
-pass in on $ext_if inet proto tcp from any to $ext_if port 22 keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
+# SSH: Max 15 concurrent connections, 5 attempts per 3 seconds
+# Exceeding limits adds IP to bruteforce table and kills all connections
+pass in on $ext_if inet proto tcp from any to $ext_if port 22 \
+  keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 
-# DNS
+# DNS: Allow zone transfer to backup NS, public queries rate-limited
 pass in on $ext_if inet proto { tcp, udp } from $ext_if to $domeneshop port 53 keep state
-pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
+pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 \
+  keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
 
-# HTTP/HTTPS
+# HTTP/HTTPS: Port 80 for ACME challenges (redirects to 443), 443 for TLS
 pass in on $ext_if inet proto tcp from any to $ext_if port { 80, 443 } keep state
 
-# Rails app ports (explicit list)
+# Rails app ports: Fixed allocation for predictable Relayd routing
+# brgen:11006, amber:10001, blognet:10002, bsdports:10003,
+# hjerterom:10004, privcam:10005, pubattorney:10006
 pass in on $ext_if inet proto tcp from any to $ext_if port { 10001 10002 10003 10004 10005 10006 11006 } keep state
 
-# Relayd anchor
+# Relayd anchor: Dynamic rules added by relayd(8) for load balancing
 anchor "relayd/*"
-
 EOF
+
   pfctl -f /etc/pf.conf
   rcctl enable pf
-
   log "Firewall configured"
 }
 
 # TLS certificates
 setup_tls() {
-
   log "Setting up TLS certificates..."
   mkdir -p /var/www/acme /etc/acme /etc/ssl/private
 
-  # Generate account key
+  # Generate Let's Encrypt account key (ECDSA P-256 for efficiency)
   [[ -f /etc/acme/letsencrypt-privkey.pem ]] || \
-
     openssl ecparam -genkey -name prime256v1 -out /etc/acme/letsencrypt-privkey.pem
 
   # acme-client configuration
+  # See: https://letsencrypt.org/docs/caa/
   cat > /etc/acme-client.conf << 'EOF'
 authority letsencrypt {
-
   api url "https://acme-v02.api.letsencrypt.org/directory"
-
   account key "/etc/acme/letsencrypt-privkey.pem"
 }
-
 EOF
 
+  # Generate domain configurations (ECDSA keys for better performance)
   for domain in $ALL_DOMAINS; do
-
     cat >> /etc/acme-client.conf << EOF
-
 domain "$domain" {
-
   domain key "/etc/ssl/private/$domain.key" ecdsa
   domain full chain certificate "/etc/ssl/$domain.crt"
   sign with letsencrypt
@@ -423,41 +422,34 @@ domain "$domain" {
 EOF
   done
 
-  # httpd for ACME
+  # httpd for ACME HTTP-01 challenges only (Relayd handles production traffic)
   cat > /etc/httpd.conf << 'EOF'
 types { include "/usr/share/misc/mime.types" }
 prefork 5
 
 server "default" {
   listen on * port 80
-
+  
+  # Serve ACME challenges
   location "/.well-known/acme-challenge/*" {
-
     root "/acme"
-
     request strip 2
   }
-
+  
+  # Redirect everything else to HTTPS
   location * {
-
     block return 302 "https://$HTTP_HOST$REQUEST_URI"
-
   }
-
 }
-
 EOF
 
   rcctl enable httpd
-
   rcctl restart httpd
 
-  # Get certificates
-
+  # Get certificates for all domains (12 second delay between requests)
   for domain in $ALL_DOMAINS; do
-
     acme-client -v "$domain" || warn "Certificate failed for $domain"
-
+    sleep 12
   done
 
   log "TLS configured"
@@ -465,14 +457,12 @@ EOF
 
 # relayd load balancer with SNI routing for multiple apps
 setup_relayd() {
-
   log "Configuring relayd..."
-
+  
   cat > /etc/relayd.conf << 'EOF'
-
 interval 5
 
-# Backend tables for each app
+# Backend tables: one per Rails app
 table <amber> { 127.0.0.1 }
 table <blognet> { 127.0.0.1 }
 table <bsdports> { 127.0.0.1 }
@@ -482,19 +472,23 @@ table <pubattorney> { 127.0.0.1 }
 table <brgen> { 127.0.0.1 }
 
 http protocol "https" {
+  # Preserve real IP for Falcon/Rails logs
   match header set "X-Forwarded-For" value "$REMOTE_ADDR"
   match header set "X-Forwarded-Proto" value "https"
 
-  # Security headers (OWASP recommendations)
+  # OWASP security headers (https://securityheaders.com/)
   match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
   match response header set "X-Frame-Options" value "DENY"
   match response header set "X-Content-Type-Options" value "nosniff"
   match response header set "Referrer-Policy" value "strict-origin-when-cross-origin"
   match response header set "Permissions-Policy" value "geolocation=(), microphone=(), camera=()"
   match response header set "Content-Security-Policy" value "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+  
+  # Enable WebSockets for ActionCable/StimulusReflex
+  http websockets
 }
 
-# Relay per app with SNI-based TLS keypair selection
+# Relay per app: SNI-based TLS routing (automatic domain→app mapping)
 relay "amber" {
   listen on 0.0.0.0 port 443 tls
   protocol "https"
@@ -588,9 +582,7 @@ EOF
 
   rcctl enable relayd
   rcctl restart relayd
-
   log "relayd configured with SNI routing for 7 apps"
-
 }
 
 # Deploy Rails application - orchestrator function
