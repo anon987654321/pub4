@@ -1,26 +1,32 @@
-# CODE AXIOM v21. 0 - UNIVERSAL AUTHORING SYSTEM
-system:  Code Axiom
+# CODE AXIOM v22.0 - UNIVERSAL AUTHORING SYSTEM
+system: Code Axiom
 purpose: Apply systematic principles to code, legal documents, and business writing
 domains: [code, legal, business]
+version: 22.0
+updated: 2024-12-20
 
 # PRINCIPLES - TIER 1: INVIOLABLE
 # When principles conflict, higher tier wins
 tier_1_inviolable:
   preserve_behavior: Don't break what works
-  test_first:  Verify before changing
+  test_first: Verify before changing
   security_first: Never compromise security
-  truth:  Accurate, verifiable claims only
+  truth: Accurate, verifiable claims only
   reversibility: Prefer decisions easy to undo
+  no_documentation_debt: Code is self-documenting via commits, no analysis docs
 
 # PRINCIPLES - TIER 2: STRONG
-tier_2_strong: 
-  kiss:  Simplest solution that works
+tier_2_strong:
+  kiss: Simplest solution that works
   yagni: Build only what you need now
   single_responsibility: One reason to change
   fail_fast: Detect errors immediately
-  dry:  Once and only once
+  dry: Once and only once
   chestertons_fence: Understand why before changing
   clarity: Meaning unambiguous to audience
+  semantic_html: Use proper tags (nav, main, article), no div soup
+  css_preservation: Never break user's pixel-perfect CSS
+  tag_helpers: Use Rails tag helpers, not raw HTML strings
 
 # PRINCIPLES - TIER 3: GUIDELINES
 tier_3_guidelines: 
@@ -101,9 +107,12 @@ code:
     metrics: Measure latency, errors, throughput
 
   documentation:
-    why_not_what: Comments explain reasoning
-    api_docs:  Public interfaces documented
-    runbooks:  Operational procedures for incidents
+    why_not_what: Comments explain reasoning, code explains what
+    api_docs: Public interfaces documented
+    runbooks: Operational procedures for incidents
+    self_documenting: Git commits are primary documentation
+    no_temp_docs: No analysis/planning docs, work directly in code
+    prefix_temp_files: Any temp files must start with . and be deleted
 
   code_review:
     size_limit: "< 400 lines per review"
@@ -116,16 +125,19 @@ code:
     migrations: Must be backwards compatible
 
   code_smells:
-    long_method: "> 10 lines?  Extract"
+    long_method: "> 10 lines? Extract"
     long_parameter_list: "> 3 params? Parameter object"
-    feature_envy: "Uses another class more?  Move method"
+    feature_envy: "Uses another class more? Move method"
     message_chains: "Multiple dots? Hide delegation"
     large_class: "> 10 methods? Extract responsibilities"
     data_clumps: "Fields together? Extract object"
-    primitive_obsession: "Strings for concepts?  Value objects"
+    primitive_obsession: "Strings for concepts? Value objects"
     duplicated_code: "Same code 2+ places? Extract"
     divergent_change: "Changes for multiple reasons? Split"
     shotgun_surgery: "One change, many classes? Consolidate"
+    div_soup: "Nested divs? Use semantic HTML (article, nav, section)"
+    inline_styles: "style= attributes? Extract to CSS"
+    string_concatenation: "Building HTML in strings? Use tag helpers"
 
   refactorings:
     extract_method: "Fragment with meaning?  Extract"
