@@ -19,9 +19,11 @@ setup_stimulus_components() {
     "sortable"
   )
   
+  # Read importmap file once for efficiency
+  local importmap_content=""
+  [[ -f config/importmap.rb ]] && importmap_content=$(<config/importmap.rb)
+  
   for component in "${components[@]}"; do
-    local importmap_content=""
-    [[ -f config/importmap.rb ]] && importmap_content=$(<config/importmap.rb)
     if [[ "$importmap_content" != *"@stimulus-components/${component}"* ]]; then
       log "Pinning @stimulus-components/${component}"
       bin/importmap pin "@stimulus-components/${component}"
@@ -29,8 +31,6 @@ setup_stimulus_components() {
   done
   
   # Pin stimulus-use for composable behaviors
-  local importmap_content=""
-  [[ -f config/importmap.rb ]] && importmap_content=$(<config/importmap.rb)
   if [[ "$importmap_content" != *"stimulus-use"* ]]; then
     log "Pinning stimulus-use"
     bin/importmap pin "stimulus-use"
@@ -139,7 +139,6 @@ import { useDebounce } from "stimulus-use"
 
 export default class extends Controller {
   static targets = ["input", "results"]
-  static debounces = ["search"]
 
   connect() {
     useDebounce(this, { wait: 300 })

@@ -6,7 +6,8 @@ set -euo pipefail
 # Per master.yml v74.2.0 - Rails 8 + Solid Stack
 # 
 # Note: log(), command_exists(), install_gem(), install_yarn_package() are also in @helpers.sh
-# When both are sourced, @helpers.sh version takes precedence (last source wins)
+# This is intentional for self-contained modules - @core.sh should work standalone
+# When both are sourced by @shared_functions.sh, @helpers.sh version takes precedence
 
 # Logging
 log() {
