@@ -92,7 +92,13 @@ setup_redis() {
 # Rails framework setup
 setup_rails() {
     log "Setting up Rails framework components"
-    # Rails 8 defaults include: bootsnap, puma, propshaft, solid_queue, solid_cache, solid_cable
+    # Rails 8 defaults include: bootsnap, puma (remove), propshaft, solid_queue, solid_cache, solid_cable
+    
+    # Replace Puma with Falcon
+    bundle remove puma 2>/dev/null || true
+    install_gem "falcon"
+    install_gem "falcon-rails"
+    
     bundle install
     
     if [ ! -d "db" ]; then
