@@ -233,10 +233,8 @@ setup_databases() {
 }
 
 # DNS with DNSSEC
-setup_dns_dnssec() {
-
-  log "Configuring NSD with DNSSEC..."
-  # Stop unbound if running (conflicts with NSD on port 53)
+# DNS/DNSSEC helpers
+_dns_stop_unbound() {
   local -a services_on=("${(@f)$(rcctl ls on)}")
   local -a unbound_services=("${(@M)services_on:#*unbound*}")
   if [[ ${#unbound_services} -gt 0 ]]; then
@@ -244,93 +242,56 @@ setup_dns_dnssec() {
     rcctl stop unbound
     rcctl disable unbound
   fi
+}
 
-  mkdir -p /var/nsd/zones/master /var/nsd/zones/keys
+_dns_generate_keys() {
+  local domain="$1"
+  if [[ ! -f "/var/nsd/zones/keys/$domain.zsk" ]]; then
+    cd /var/nsd/zones/keys
+    local zsk_base=$(ldns-keygen -a ECDSAP256SHA256 -b 256 "$domain")
+    print "$zsk_base" > "$domain.zsk"
+    local ksk_base=$(ldns-keygen -k -a ECDSAP256SHA256 -b 256 "$domain")
+    print "$ksk_base" > "$domain.ksk"
+  fi
+}
 
-  # Generate DNSSEC keys
-
-  for domain in $ALL_DOMAINS; do
-
-    if [[ ! -f "/var/nsd/zones/keys/$domain.zsk" ]]; then
-
-      cd /var/nsd/zones/keys
-      # ZSK - ECDSA P-256 SHA-256
-      zsk_base=$(ldns-keygen -a ECDSAP256SHA256 -b 256 "$domain")
-
-      print "$zsk_base" > "$domain.zsk"
-
-      # KSK - ECDSA P-256 SHA-256
-
-      ksk_base=$(ldns-keygen -k -a ECDSAP256SHA256 -b 256 "$domain")
-
-      print "$ksk_base" > "$domain.ksk"
-
-    fi
-
-  done
-
-  # Create zone files
-
-  for domain in $ALL_DOMAINS; do
-
-    # Extract base app name from domain (brgen.no -> brgen)
-
-    local app="${domain%%.*}"
-
-    local subdomains="${APPS[${app}.subdomains]:-}"
-
-    cat > "/var/nsd/zones/master/$domain.zone" << EOF
+_dns_create_zone_file() {
+  local domain="$1"
+  local app="${domain%%.*}"
+  local subdomains="${APPS[${app}.subdomains]:-}"
+  
+  cat > "/var/nsd/zones/master/$domain.zone" << EOF
 \$ORIGIN $domain.
-
 \$TTL 24h
 @ 1h IN SOA ns.brgen.no. admin.brgen.no. ($(date +%Y%m%d)01 1h 15m 1w 3m)
-
 @ IN NS ns.brgen.no.
-
 @ IN NS ns.hyp.net.
-
 @ IN A $MAIN_IP
-
 www IN CNAME @
-
 @ IN CAA 0 issue "letsencrypt.org"
-
 $([[ "$domain" == "brgen.no" ]] && print "ns IN A $MAIN_IP")
-
 EOF
+  
+  if [[ -n $subdomains ]]; then
+    for sub in ${(s: :)subdomains}; do
+      print "$sub IN CNAME @" >> "/var/nsd/zones/master/$domain.zone"
+    done
+  fi
+}
 
-    # Add subdomains if defined
-    if [[ -n $subdomains ]]; then
+_dns_sign_zone() {
+  local domain="$1"
+  cd /var/nsd/zones/master
+  local zsk_base=$(<../keys/"$domain.zsk")
+  local ksk_base=$(<../keys/"$domain.ksk")
+  local salt_hash=$(dd if=/dev/urandom bs=1000 count=1 2>/dev/null | sha256)
+  local salt="${salt_hash:0:16}"
+  ldns-signzone -n -p -s "$salt" "$domain.zone" "../keys/$zsk_base" "../keys/$ksk_base"
+}
 
-      for sub in ${(s: :)subdomains}; do
-
-        print "$sub IN CNAME @" >> "/var/nsd/zones/master/$domain.zone"
-
-      done
-
-    fi
-
-    # Sign zone
-    cd /var/nsd/zones/master
-
-    zsk_base=$(<../keys/"$domain.zsk")
-
-    ksk_base=$(<../keys/"$domain.ksk")
-
-    # Pure zsh: extract first 16 chars with parameter expansion
-    local salt_hash=$(dd if=/dev/urandom bs=1000 count=1 2>/dev/null | sha256)
-    local salt="${salt_hash:0:16}"
-    ldns-signzone -n -p -s "$salt" "$domain.zone" "../keys/$zsk_base" "../keys/$ksk_base"
-
-  done
-
-  chown -R _nsd:_nsd /var/nsd/zones
-
-  # NSD configuration
+_dns_create_nsd_config() {
   cat > /var/nsd/etc/nsd.conf << 'EOF'
-
 server:
-
   hide-version: yes
   verbosity: 1
   rrl-ratelimit: 200
@@ -338,21 +299,37 @@ server:
 remote-control:
   control-enable: no
 EOF
-  # Configure NSD
-
+  
   for domain in $ALL_DOMAINS; do
-
     cat >> /var/nsd/etc/nsd.conf << EOF
-
 zone:
   name: "$domain"
   zonefile: master/$domain.zone.signed
 EOF
   done
+}
+
+setup_dns_dnssec() {
+  log "Configuring NSD with DNSSEC..."
+  _dns_stop_unbound
+  mkdir -p /var/nsd/zones/master /var/nsd/zones/keys
+  
+  for domain in $ALL_DOMAINS; do
+    _dns_generate_keys "$domain"
+  done
+  
+  for domain in $ALL_DOMAINS; do
+    _dns_create_zone_file "$domain"
+    _dns_sign_zone "$domain"
+  done
+  
+  chown -R _nsd:_nsd /var/nsd/zones
+  _dns_create_nsd_config
   rcctl enable nsd
   rcctl restart nsd
   log "DNS with DNSSEC configured"
 }
+
 
 # PF firewall
 setup_firewall() {
@@ -612,148 +589,118 @@ EOF
 }
 
 # Deploy Rails application
-deploy_rails_app() {
-
-  local app_port="$1"
-  local app="${app_port%:*}"
-
-  local port="${app_port#*:}"
-  local domains="${APPS[${app}.domains]}"
-
-  log "Deploying $app on port $port"
-
-  # Create user
-
+# App deployment helpers
+_deploy_create_user() {
+  local app="$1"
   id "$app" 2>/dev/null || useradd -m -G www -L railsapp -s /bin/ksh "$app"
+}
 
-  # Create app structure
-
+_deploy_create_dirs() {
+  local app="$1"
   local app_dir="${APP_BASE}/${app}/app"
   doas -u "$app" mkdir -p "$app_dir/"{app,config,db,lib,log,public,tmp}
-  # Database setup
+  print "$app_dir"
+}
 
+_deploy_setup_database() {
+  local app="$1"
   local db_pass=$(openssl rand -hex 16)
   doas -u _postgresql psql -U postgres << SQL 2>/dev/null || true
-
 DROP ROLE IF EXISTS ${app}_user;
-
 CREATE ROLE ${app}_user LOGIN PASSWORD '$db_pass';
 CREATE DATABASE ${app}_production OWNER ${app}_user;
-
 CREATE DATABASE ${app}_development OWNER ${app}_user;
-
 CREATE DATABASE ${app}_test OWNER ${app}_user;
-
 GRANT ALL ON DATABASE ${app}_production TO ${app}_user;
-
 GRANT ALL ON DATABASE ${app}_development TO ${app}_user;
-
 GRANT ALL ON DATABASE ${app}_test TO ${app}_user;
-
 SQL
+  print "$db_pass"
+}
 
-  # Gemfile
-
+_deploy_create_gemfile() {
+  local app="$1"
+  local app_dir="$2"
   doas -u "$app" cat > "$app_dir/Gemfile" << 'GEMFILE'
-
 source "https://rubygems.org"
-
 ruby "~> 3.3"
-
 gem "rails", "~> 8.0.0"
 gem "pg", "~> 1.5"
-
 gem "falcon", "~> 0.47"
-
 gem "async"
-
 gem "async-http"
-
 gem "solid_queue", "~> 1.0"
 gem "solid_cache", "~> 1.0"
 gem "solid_cable", "~> 1.0"
-
 gem "propshaft"
-
 gem "turbo-rails"
 gem "stimulus-rails"
-
 gem "rack-attack"
-
 gem "bcrypt"
-
 gem "bootsnap", require: false
-
 GEMFILE
+}
 
-  # Install gems
+_deploy_install_gems() {
+  local app="$1"
+  local app_dir="$2"
   log "Installing gems for $app"
   cd "$app_dir" && doas -u "$app" bundle install --quiet --jobs=4 || warn "Bundle install failed for $app"
+}
 
-  # Database config
-
+_deploy_create_db_config() {
+  local app="$1"
+  local app_dir="$2"
+  local db_pass="$3"
   doas -u "$app" cat > "$app_dir/config/database.yml" << EOF
-
 production:
-
   adapter: postgresql
-
   encoding: unicode
   pool: 10
-
   username: ${app}_user
-
   password: $db_pass
-
   host: localhost
-
   database: ${app}_production
-
 EOF
+}
 
-  # Environment
-
+_deploy_create_env() {
+  local app="$1"
+  local app_dir="$2"
+  local port="$3"
+  local domains="$4"
+  local db_pass="$5"
   doas -u "$app" cat > "$app_dir/.env" << EOF
-
 RAILS_ENV=production
-
 PORT=$port
-
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 DATABASE_URL=postgresql://${app}_user:${db_pass}@localhost/${app}_production
-
 RAILS_LOG_TO_STDOUT=true
-
 RAILS_SERVE_STATIC_FILES=true
-
 WEB_CONCURRENCY=2
-
 RAILS_MAX_THREADS=5
-
 DOMAINS="$domains"
-
 EOF
+}
 
-  # Falcon config
-
+_deploy_create_falcon_config() {
+  local app="$1"
+  local app_dir="$2"
+  local port="$3"
+  local domains="$4"
   doas -u "$app" cat > "$app_dir/config/falcon.rb" << FALCON
-
 #!/usr/bin/env ruby
-
 require 'async'
 require 'async/http/endpoint'
 require 'async/http/server'
 ENV["RAILS_ENV"] ||= "production"
 port = $port
-
 app = lambda { |env|
   [200, {"Content-Type" => "text/html"},
-
    ["<h1>$app on port $port</h1><p>Serving: $domains</p>"]]
 }
 Async do
   endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
-
     .with(protocol: Async::HTTP::Protocol::HTTP11)
   bound_endpoint = endpoint.bound
   puts "Falcon serving $app on port #{port}"
@@ -761,8 +708,10 @@ Async do
 end
 FALCON
   chmod +x "$app_dir/config/falcon.rb"
-  # rc.d service script - use bundle exec falcon serve
-  # Note: OpenBSD env does not support -S flag, bundle exec required
+}
+
+_deploy_create_rc_script() {
+  local app="$1"
   cat > "/etc/rc.d/${app}" << EOF
 #!/bin/ksh
 #
@@ -782,14 +731,37 @@ rc_reload=NO
 
 rc_cmd \$1
 EOF
-
   chmod +x "/etc/rc.d/${app}"
-  rcctl enable "${app}"
-
-  rcctl start "${app}"
-  log "Deployed $app"
-
 }
+
+_deploy_enable_service() {
+  local app="$1"
+  rcctl enable "${app}"
+  rcctl start "${app}"
+}
+
+deploy_rails_app() {
+  local app_port="$1"
+  local app="${app_port%:*}"
+  local port="${app_port#*:}"
+  local domains="${APPS[${app}.domains]}"
+  
+  log "Deploying $app on port $port"
+  
+  _deploy_create_user "$app"
+  local app_dir=$(_deploy_create_dirs "$app")
+  local db_pass=$(_deploy_setup_database "$app")
+  _deploy_create_gemfile "$app" "$app_dir"
+  _deploy_install_gems "$app" "$app_dir"
+  _deploy_create_db_config "$app" "$app_dir" "$db_pass"
+  _deploy_create_env "$app" "$app_dir" "$port" "$domains" "$db_pass"
+  _deploy_create_falcon_config "$app" "$app_dir" "$port" "$domains"
+  _deploy_create_rc_script "$app"
+  _deploy_enable_service "$app"
+  
+  log "Deployed $app"
+}
+
 # PTR records
 
 setup_ptr_records() {
