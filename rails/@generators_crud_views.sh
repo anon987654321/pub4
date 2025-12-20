@@ -18,7 +18,7 @@ generate_show_view() {
     <%= tag.header do %>
       <%= tag.h1 @<%%= model_singular %>.title %>
       <%= tag.div class: "meta" do %>
-        <%= tag.span t("brgen.posted_by", user: @<%%= model_singular %>.user.email) %>
+        <%= tag.span t(".posted_by", user: @<%%= model_singular %>.user.email) %>
         <%= tag.span @<%%= model_singular %>.created_at.strftime("%Y-%m-%d %H:%M") %>
       <% end %>
     <% end %>
@@ -27,7 +27,7 @@ generate_show_view() {
 
         <%= tag.div class: "photos" do %>
           <% @<%%= model_singular %>.photos.each do |photo| %>
-            <%= image_tag photo, alt: t("brgen.listing_photo", title: @<%%= model_singular %>.title) %>
+            <%= image_tag photo, alt: t(".listing_photo", title: @<%%= model_singular %>.title) %>
           <% end %>
         <% end %>
       <% end %>
@@ -36,14 +36,14 @@ generate_show_view() {
 
       <% end %>
       <%= tag.dl class: "attributes" do %>
-        <%= tag.dt t("brgen.price") %>
+        <%= tag.dt t(".price") %>
 
         <%= tag.dd number_to_currency(@<%%= model_singular %>.price) %>
-        <%= tag.dt t("brgen.category") %>
+        <%= tag.dt t(".category") %>
         <%= tag.dd @<%%= model_singular %>.category %>
-        <%= tag.dt t("brgen.location") %>
+        <%= tag.dt t(".location") %>
         <%= tag.dd @<%%= model_singular %>.location %>
-        <%= tag.dt t("brgen.status") %>
+        <%= tag.dt t(".status") %>
         <%= tag.dd @<%%= model_singular %>.status %>
       <% end %>
     <% end %>
@@ -60,14 +60,14 @@ generate_show_view() {
     <%= render partial: "shared/vote", locals: { votable: @<%%= model_singular %> } %>
     <%= tag.footer class: "actions" do %>
 
-      <%= link_to t("brgen.back"), <%%= model_plural %>_path, class: "button secondary" %>
+      <%= link_to t(".back"), <%%= model_plural %>_path, class: "button secondary" %>
 
       <% if @<%%= model_singular %>.user == current_user || current_user&.admin? %>
-        <%= link_to t("brgen.edit"), edit_<%%= model_singular %>_path(@<%%= model_singular %>), class: "button" %>
-        <%= button_to t("brgen.delete"), <%%= model_singular %>_path(@<%%= model_singular %>),
+        <%= link_to t(".edit"), edit_<%%= model_singular %>_path(@<%%= model_singular %>), class: "button" %>
+        <%= button_to t(".delete"), <%%= model_singular %>_path(@<%%= model_singular %>),
                       method: :delete,
                       class: "button danger",
-                      data: { turbo_confirm: t("brgen.confirm_delete") } %>
+                      data: { turbo_confirm: t(".confirm_delete") } %>
       <% end %>
     <% end %>
   <% end %>

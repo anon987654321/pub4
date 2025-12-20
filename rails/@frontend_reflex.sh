@@ -33,13 +33,11 @@ class InfiniteScrollReflex < ApplicationReflex
   attr_reader :collection
   def load_more
 
-    cable_ready.insert_adjacent_html(
-
-      selector: selector,
-      html: render(collection),
+    morph(
+      selector,
+      render(collection),
       position: position
     )
-    cable_ready.broadcast
   end
 
   def page

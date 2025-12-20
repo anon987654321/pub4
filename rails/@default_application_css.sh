@@ -63,7 +63,7 @@ generate_default_css() {
 }
 
 html {
-  font-size: 16px;
+  font-size: clamp(14px, 1vw + 0.5rem, 18px);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -85,11 +85,11 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.5rem; }
-h5 { font-size: 1.25rem; }
+h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2rem); }
+h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
+h4 { font-size: clamp(1.125rem, 2.5vw, 1.5rem); }
+h5 { font-size: clamp(1rem, 2vw, 1.25rem); }
 h6 { font-size: 1rem; }
 
 p {
@@ -254,6 +254,36 @@ button:disabled {
 
 .card h3 {
   margin-top: 0;
+}
+
+/* Native Dialog */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  background: var(--surface);
+  color: var(--text);
+  max-width: min(90vw, 600px);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+dialog[open] {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Grid */
