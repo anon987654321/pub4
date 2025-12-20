@@ -382,7 +382,7 @@ setup_pwa() {
 
     log "Setting up Progressive Web App features (Rails 8 + PWA.dev best practices)"
 
-    source "${SCRIPT_DIR}/__shared/@pwa_setup.sh"
+    source "${SCRIPT_DIR}/@frontend_pwa.sh"
 
     setup_full_pwa "${APP_NAME}"
 
@@ -554,7 +554,7 @@ add_routes_block() {
 
     } > "$routes_file"
 }
-commit()() {
+commit() {
     local message="${1:-Update application setup}"
     log "Committing changes: $message"
     # Only commit if in git repository
