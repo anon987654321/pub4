@@ -108,25 +108,19 @@ analyze() {
   # Merge reports
   ruby "${LIB_DIR}/reporter.rb" "$ruby_out" "$shell_out" > "${TMP_DIR}/report_${iteration}.txt"
   
-  # Extract violation count using zsh parameter expansion
-  local ruby_json=$(<"$ruby_out")
-  local shell_json=$(<"$shell_out")
-  
-  # Simple JSON parsing with zsh - count violations arrays
-  local ruby_count=$(print "$ruby_json" | grep -o '"violations"' | wc -l)
-  local shell_count=$(print "$shell_json" | grep -o '"violations"' | wc -l)
+  # Count violations using ruby for JSON parsing
+  local ruby_count=$(ruby -rjson -e "puts JSON.parse(File.read('$ruby_out'))['violations'].size" 2>/dev/null || print "0")
+  local shell_count=$(ruby -rjson -e "puts JSON.parse(File.read('$shell_out'))['violations'].size" 2>/dev/null || print "0")
   
   # Create merged violations file
-  print '{"violations":' > "$merged"
-  print "$ruby_json" | sed -n 's/.*"violations":\s*\[\(.*\)\].*/\1/p' >> "$merged"
-  print ']}' >> "$merged"
+  cat "$ruby_out" "$shell_out" | ruby -rjson -e 'data = ARGF.read; jsons = data.scan(/\{[^}]+\}.*?\}/m); violations = []; jsons.each { |j| begin; parsed = JSON.parse(j); violations.concat(parsed["violations"] || []); rescue; end }; puts JSON.generate({violations: violations})' > "$merged"
   
   log "INFO" "Found violations: Ruby=${ruby_count} Shell=${shell_count}"
   
   print "$merged"
 }
 
-# Auto-fix violations
+  # Auto-fix violations
 auto_fix() {
   local violations_file="$1"
   local iteration=$2
@@ -144,8 +138,8 @@ auto_fix() {
     return 1
   }
   
-  # Count fixes from JSON
-  local fixes_count=$(grep -o '"fixes_applied"' "$fix_out" | wc -l)
+  # Count fixes using ruby
+  local fixes_count=$(ruby -rjson -e "puts JSON.parse(File.read('$fix_out'))['fixes_applied']" 2>/dev/null || print "0")
   log "INFO" "Applied ${fixes_count} fixes"
   
   return 0
@@ -155,9 +149,8 @@ auto_fix() {
 check_convergence() {
   local violations_file="$1"
   
-  # Count total violations
-  local content=$(<"$violations_file")
-  local count=$(print "$content" | grep -c '"type":' || print "0")
+  # Count total violations using ruby
+  local count=$(ruby -rjson -e "puts JSON.parse(File.read('$violations_file'))['violations'].size" 2>/dev/null || print "0")
   
   [[ "$count" -eq 0 ]]
 }
@@ -209,9 +202,8 @@ main() {
       break
     fi
     
-    # Count current violations
-    local content=$(<"$violations_file")
-    local current_violations=$(print "$content" | grep -c '"type":' || print "0")
+    # Count current violations using ruby
+    local current_violations=$(ruby -rjson -e "puts JSON.parse(File.read('$violations_file'))['violations'].size" 2>/dev/null || print "0")
     
     log "INFO" "Current violations: $current_violations"
     

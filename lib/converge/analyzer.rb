@@ -141,9 +141,9 @@ module Converge
       complexity = 1 # Base complexity
       
       lines.each do |line|
-        # Count decision points
-        complexity += 1 if line =~ /\b(if|unless|elsif|case|when|while|until|for|rescue|&&|\|\|)\b/
-        # Count additional branches
+        # Count decision points (conditionals and loops)
+        complexity += 1 if line =~ /\b(if|unless|elsif|case|when|while|until|for|rescue)\b/
+        # Count logical operators (each adds a branch)
         complexity += line.scan(/&&|\|\|/).size
       end
       
