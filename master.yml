@@ -49,6 +49,9 @@ practices:
   defragment: "Merge scattered code"
   decouple: "Break dependencies"
   rename_for_intent: "Rename when you pause"
+  idempotency: "check_app_exists() - skip if already generated"
+  clean_html: "Semantic HTML5, no divitis/sectionitis - use main, nav, output"
+  function_extraction: "Split >20 line functions into orchestrator + helpers with _ prefix"
 
 workflow:
   assess: "Understand current state"
@@ -81,6 +84,11 @@ stack:
       stimulus_components: "stimulus-components.com (25+ UI components)"
       clean_html: "Semantic HTML5, no divitis/sectionitis"
       patterns: "Clipboard, Dropdown, Sortable, Dialog, Reveal, AutoSubmit"
+      components_list: "@stimulus-components/{clipboard,dropdown,dialog,character-counter,password-visibility,checkbox-select-all,sortable,reveal,auto-submit}"
+    idempotency:
+      pattern: "check_app_exists(app_name, marker_file)"
+      location: "@helpers.sh"
+      usage: "Call before setup_full_app to skip if already generated"
   
   zsh:
     mandate: "Parameter expansion over external tools"
@@ -102,6 +110,10 @@ stack:
     services: "rcctl enable/start/stop/restart/check"
     web_stack: "relayd → falcon → Rails"
     rc_d_pattern: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve'"
+    refactoring:
+      pattern: "Orchestrator function + _helper_functions"
+      example: "deploy_rails_app() calls _create_app_user, _setup_app_directories, etc"
+      helpers: "Prefix with _ to indicate private, each < 20 lines"
 
 validation:
   stack_check: "Verify each component works before deployment"
@@ -190,6 +202,8 @@ projects:
     location: "~/pub/rails/"
     generators: ["brgen", "amber", "blognet", "bsdports", "hjerterom", "privcam", "pubattorney"]
     stack: "Rails 8 + Solid Stack + Hotwire"
+    shared_modules: "rails/@*.sh (flattened from __shared)"
+    modern_setup: "setup_modern_rails8_stack() in @rails8_modern.sh"
   
   deployment:
     script: "~/pub/openbsd/openbsd.sh"
@@ -198,6 +212,9 @@ projects:
       vps: "Upload and run generator"
       service: "rcctl enable app, start, check"
       verify: "ps, netstat, curl"
+    refactored_functions:
+      - "deploy_rails_app: 170 lines → 8 helpers"
+      - "setup_dns_dnssec: 120 lines → 5 helpers"
 
 # === SESSION 2025-12-19 ===
 # Summary: Converged master.yml with validated tech stack
@@ -210,3 +227,21 @@ projects:
 # 1. Test validation commands
 # 2. Apply to remaining 13 generators
 # 3. Deploy all apps to VPS
+
+# === SESSION 2025-12-20 ===
+# Summary: Added auto-convergence, refactored large functions, Rails 8 modern stack
+# Discoveries:
+# - Convergence rules: detect violations, auto-fix patterns, verify syntax
+# - Function refactoring: orchestrator + _helpers pattern (each < 20 lines)
+# - Rails 8: Built-in auth + StimulusReflex v3.5+ + stimulus-components.com
+# - Clean HTML: Semantic tags (main, nav, output) replace divitis
+# - Idempotency: check_app_exists() prevents duplicate generation
+# - File sprawl: rails/__shared/* → rails/@*.sh (flattened structure)
+# Implementation:
+# - @rails8_modern.sh: Rails 8 auth, StimulusReflex, 9 stimulus-components
+# - openbsd.sh: deploy_rails_app (8 helpers), setup_dns_dnssec (5 helpers)
+# - 7 generators: Added idempotency checks with check_app_exists()
+# Next:
+# 1. Apply modern stack to remaining generators (amber, blognet, bsdports, etc.)
+# 2. Test convergence detection commands
+# 3. Verify Rails 8 authentication flow
