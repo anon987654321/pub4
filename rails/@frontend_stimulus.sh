@@ -59,27 +59,33 @@ EOF
   log "✓ autosave controller"
 }
 
+generate_textarea_autogrow_controller() {
+  log "Generating textarea-autogrow controller"
+  mkdir -p app/javascript/controllers
+  
+  cat <<'EOF' > app/javascript/controllers/textarea_autogrow_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
   static targets = ["input"]
+  
   connect() {
-
     this.resize()
-
   }
+  
   resize() {
-
     this.inputTarget.style.height = "auto"
     this.inputTarget.style.height = `${this.inputTarget.scrollHeight}px`
-
   }
+  
   disconnect() {
     // Cleanup not needed for this controller
-
   }
 }
 EOF
-  log "textarea-autogrow controller generated"
-
+  log "✓ textarea-autogrow controller"
 }
+
 generate_dropdown_controller() {
   log "Generating dropdown Stimulus controller"
   mkdir -p app/javascript/controllers

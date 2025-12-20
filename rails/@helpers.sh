@@ -9,6 +9,7 @@ set -euo pipefail
 check_app_exists() {
     local app_name="$1"
     local marker_file="$2"  # e.g., "app/models/blog.rb"
+    # Use BASE_DIR if set, otherwise fallback to default Rails location
     local base_dir="${BASE_DIR:-/home/dev/rails}"
     
     if [[ -f "${base_dir}/${app_name}/${marker_file}" ]]; then

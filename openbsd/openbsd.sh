@@ -305,9 +305,11 @@ _sign_zones() {
     cd /var/nsd/zones/master
     zsk_base=$(<../keys/"$domain.zsk")
     ksk_base=$(<../keys/"$domain.ksk")
-    # Pure zsh: extract first 16 chars with parameter expansion
-    local salt_hash=$(dd if=/dev/urandom bs=1000 count=1 2>/dev/null | sha256)
-    local salt="${salt_hash:0:16}"
+    # Pure zsh: generate salt using native random
+    local salt=""
+    for i in {1..16}; do
+      salt+="$(printf '%x' $((RANDOM % 16)))"
+    done
     ldns-signzone -n -p -s "$salt" "$domain.zone" "../keys/$zsk_base" "../keys/$ksk_base"
   done
   chown -R _nsd:_nsd /var/nsd/zones
