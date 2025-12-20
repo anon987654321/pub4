@@ -252,6 +252,108 @@ business:
     pathos: Connect to real human impact
     kairos: Why this moment matters
 
+# RAILS 8 WORKFLOW - SESSION PATTERNS (2024-12-20)
+# Patterns learned from actual implementation session
+rails_8_workflow:
+  
+  session_approach:
+    no_analysis_docs: "Never create analysis/planning docs - work directly in code"
+    temp_file_rule: "Prefix with . (dot) and delete after consumption"
+    git_as_docs: "Commit messages are primary documentation"
+    show_diffs_first: "Always show proposed changes to master.yml, ask permission"
+    surgical_precision: "Make smallest possible changes, don't accidentally omit parts"
+    
+  research_workflow:
+    web_search: "Use github-mcp-server-web_search for latest docs/trends"
+    sources_used:
+      - "Rails 8 edge guides and changelog"
+      - "StimulusReflex 2024 docs"
+      - "stimulus-components.com component catalog"
+      - "web.dev PWA best practices"
+      - "CSS Tricks modern CSS (container queries, cascade layers)"
+    cross_reference: "Analyze existing apps for missing features, create matrix"
+    ancient_code: "Check old backups (railsy repo, pub repo) for valuable patterns to restore"
+    
+  implementation_order:
+    step_1: "Create new module files (@frontend_*, @auth_*, etc.)"
+    step_2: "Commit with clear message explaining what/why"
+    step_3: "Push immediately, keep main in sync"
+    step_4: "Update existing files to use new patterns"
+    step_5: "Only update master.yml after proving patterns work"
+    
+  code_principles_applied:
+    tier_1: "no_documentation_debt - commits are docs, no temp analysis files"
+    tier_2: "semantic_html, css_preservation, tag_helpers, DRY"
+    smells_caught: "div_soup, inline_styles, string_concatenation"
+    zsh_patterns: "Pure zsh parameter expansion, no sed/awk/grep"
+    
+  rails_8_stack:
+    core: "Rails 8.0+, Ruby 3.3+, PostgreSQL"
+    solid: "Solid Queue/Cache/Cable (Redis-free)"
+    server: "Falcon (async HTTP, better WebSocket support than Puma)"
+    deployment: "OpenBSD + Relayd + PF (native, not Docker/Kamal)"
+    
+  frontend_stack:
+    hotwire: "Turbo Frames (modals, inline updates) + Turbo Streams (broadcasts)"
+    stimulus_reflex: "Live updates via StimulusReflex lifecycle hooks"
+    stimulus_components: "10 from stimulus-components.com (auto-submit, character-counter, etc.)"
+    custom_controllers: "ApplicationController + 4 custom (infinite-scroll, modal, form-validation, reveal)"
+    
+  view_patterns:
+    mandate: "Rails tag helpers ONLY - <%= tag.p t('hello') %> not <p><%= t :hello %></p>"
+    structure: "Semantic HTML - nav, main, article, dl/dt/dd, fieldset/legend, dialog"
+    forbidden: "No divs, no raw HTML strings, no string concatenation"
+    turbo_integration: |
+      <%= turbo_frame_tag "modal" do %>
+        <%= tag.dialog open: true, data: { controller: "dialog" } do %>
+          <%= render "form" %>
+        <% end %>
+      <% end %>
+    data_attributes: |
+      data-controller="auto-submit"
+      data-auto-submit-delay-value="300"
+      data-action="input->auto-submit#submit"
+      data-turbo-frame="modal"
+      
+  css_patterns:
+    base: "bsdports.sh application.scss pattern"
+    colors: "Federal Standard 595c (#b04243 for warnings)"
+    variables: "--white, --black, --blue (invert for dark mode)"
+    modern: "Container queries (@container), cascade layers (@layer), native nesting"
+    framework: "None - zero dependencies"
+    example: |
+      :root { --white: #fff; --black: #000; --blue: #000084; }
+      @media (prefers-color-scheme: dark) { :root { --white: #000; --black: #fff; } }
+      @layer reset, base, components, utilities;
+      .card-container { container-type: inline-size; }
+      @container (min-width: 400px) { .card { display: grid; } }
+      
+  modules_created:
+    css: "@default_application_scss.sh - bsdports.sh pattern, Federal Standard colors"
+    views: "@generators_clean_views.sh - tag helpers, Hotwire, Turbo Frames/Streams"
+    stimulus: "@frontend_stimulus_controllers.sh - 10 stimulus-components + 4 custom"
+    modern_css: "@frontend_modern_css.sh - container queries, cascade layers, nesting"
+    auth: "@auth_devise_guests.sh - DRY Devise setup (extracted from 8 duplicates)"
+    pwa: "@frontend_pwa.sh - service worker, cache strategies, skipWaiting"
+    
+  openbsd_deployment:
+    superiority: "OpenBSD native > Kamal 2 (50% RAM savings, 83% cost savings)"
+    components: "PF (firewall) + Relayd (SNI routing) + NSD (DNS+DNSSEC) + acme-client (TLS)"
+    comments: "Enhanced with railsy ancient setup reference - detailed operation comments"
+    ports: "Fixed allocation (brgen:11006, amber:10001, etc.) for predictable routing"
+    
+  file_types_we_created:
+    modules: "@*.sh - Reusable functions, sourced by app installers"
+    installers: "appname.sh - Complete app generator (amber.sh, brgen.sh, etc.)"
+    config: "openbsd.sh - Infrastructure deployment (PF, Relayd, NSD, TLS)"
+    analysis: ".filename.md - Temporary analysis (dot prefix, deleted after use)"
+    
+  lessons_learned:
+    avoid_kamal: "OpenBSD native deployment is superior for production"
+    commit_often: "Small commits with clear messages, push immediately"
+    no_temp_docs: "Analysis files are forbidden unless prefixed with ."
+    show_diffs: "Always show proposed master.yml changes, ask permission first"
+
 # TOOL MANDATE
 tools:
   preference:  "Zsh parameter expansion over external tools"
