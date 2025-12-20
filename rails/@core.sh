@@ -92,9 +92,7 @@ setup_redis() {
 # Rails framework setup
 setup_rails() {
     log "Setting up Rails framework components"
-    install_gem "bootsnap"
-    install_gem "puma"
-    # Note: Rails 8 uses Propshaft by default, not Sprockets
+    # Rails 8 defaults include: bootsnap, puma, propshaft, solid_queue, solid_cache, solid_cable
     bundle install
     
     if [ ! -d "db" ]; then
