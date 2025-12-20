@@ -61,6 +61,10 @@ generate_blognet() {
   APP_NAME="blognet"
   BASE_DIR="/home/dev/rails"
   APP_PORT=10002
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/blog.rb" ]] && { log "blognet already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -124,6 +128,10 @@ generate_bsdports() {
   APP_NAME="bsdports"
   BASE_DIR="/home/dev/rails"
   APP_PORT=10003
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/port.rb" ]] && { log "bsdports already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -175,6 +183,10 @@ generate_hjerterom() {
   APP_NAME="hjerterom"
   BASE_DIR="/home/dev/rails"
   APP_PORT=10004
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/organization.rb" ]] && { log "hjerterom already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -237,6 +249,10 @@ generate_privcam() {
   APP_NAME="privcam"
   BASE_DIR="/home/dev/rails"
   APP_PORT=10005
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/video.rb" ]] && { log "privcam already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -286,6 +302,10 @@ generate_pub_attorney() {
   APP_NAME="pub_attorney"
   BASE_DIR="/home/dev/rails"
   APP_PORT=10006
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/legal_case.rb" ]] && { log "pub_attorney already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -337,6 +357,10 @@ generate_brgen_complete() {
   APP_NAME="brgen_complete"
   BASE_DIR="/home/dev/rails"
   APP_PORT=11001
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -f "${app_dir}/app/models/post.rb" ]] && { log "brgen_complete already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"
@@ -389,6 +413,10 @@ generate_brgen_marketplace() {
   APP_NAME="brgen_marketplace"
   BASE_DIR="/home/dev/rails"
   APP_PORT=11002
+  local app_dir="${BASE_DIR}/${APP_NAME}"
+  
+  # Idempotency: skip if already generated
+  [[ -d "${app_dir}/vendor/assets/spree" ]] && { log "brgen_marketplace already exists, skipping"; return 0; }
   
   setup_full_app "$APP_NAME"
   generate_common_features "$APP_NAME"

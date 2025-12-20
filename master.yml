@@ -132,8 +132,47 @@ session_continuity:
     # Discoveries: [key learnings]
     # Next: [immediate next steps]
 
+convergence:
+  enabled: true
+  max_iterations: 10
+  auto_fix: true
+  run_first: "sh/tree.sh"  # Always run before starting work
+  
+  detect:
+    # Ruby violations
+    long_methods: "ruby -e 'ARGF.read.scan(/def \w+.*?^  end/m).select{|m| m.lines.count > 20}'"
+    large_files: "for f in **/*.rb(.); do [[ $(ruby -e \"puts File.readlines('$f').count\") -gt 200 ]] && print $f; done"
+    banned_tools: "grep -rn 'python\\|bash\\|sed\\|awk\\|wc\\|head\\|tail\\|find\\|sudo' --include='*.sh'"
+    
+  fix:
+    # Auto-fix patterns (applied by LLM during session)
+    long_method: "Extract to private methods, each < 20 lines"
+    large_file: "Split by responsibility OR extract sourced modules"
+    duplication: "Extract to shared function"
+    banned_tool: "Replace with zsh parameter expansion per stack.zsh.replaces"
+
+  verify:
+    ruby: "ruby -c $file"  # Syntax check
+    zsh: "zsh -n $file"    # Syntax check
+    rails: "bin/rails test"
+    
+  loop: |
+    iteration=0
+    while [[ $iteration -lt ${max_iterations:-10} ]]; do
+      violations=$(detect_all)
+      [[ -z "$violations" ]] && { print "Converged"; break }
+      fix_violations "$violations"
+      ((iteration++))
+    done
+
+mandates:
+  pre_work: "Run sh/tree.sh to understand repo structure before any changes"
+  no_new_files: "Edit existing files; never create analysis/summary/plan files"
+  tool_usage: "Use file tools (view/edit/create/grep) not shell commands for file ops"
+  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  communication: "Extreme brevity - report only failures or requested output"
+
 constraints:
-  allowed_tools: [ruby, zsh, git, grep, cat, sort]
   banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
   
   thresholds:
