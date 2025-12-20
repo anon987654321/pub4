@@ -20,6 +20,7 @@ SCRIPT_DIR="${0:a:h}"
 # Core infrastructure (CONSOLIDATED)
 source "${SCRIPT_DIR}/@core.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
+source "${SCRIPT_DIR}/@rails8_modern.sh"
 source "${SCRIPT_DIR}/@rails8_propshaft.sh"
 source "${SCRIPT_DIR}/@default_application_css.sh"
 
@@ -131,11 +132,7 @@ setup_devise() {
         bin/rails generate devise User
     fi
 }
-        bin/rails generate devise:install
 
-        bin/rails generate devise User
-    fi
-}
 setup_stripe() {
     log "Setting up Stripe payment processing"
 

@@ -11,7 +11,11 @@ BASE_DIR="/home/dev/rails"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 PORT=12109
-source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
+
+source "${SCRIPT_DIR}/@shared_functions.sh"
+
+# Idempotency: skip if already generated
+check_app_exists "$APP_NAME" "app/models/legal_case.rb" && exit 0
 
 log "Starting Pubattorney setup"
 setup_full_app "$APP_NAME"

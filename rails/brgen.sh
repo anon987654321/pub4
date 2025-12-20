@@ -9,7 +9,10 @@ SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
 
-source "${SCRIPT_DIR}/__shared/@shared_functions.sh"
+source "${SCRIPT_DIR}/@shared_functions.sh"
+
+# Idempotency: skip if already generated
+check_app_exists "$APP_NAME" "app/models/community.rb" && exit 0
 
 log "Starting Brgen core setup"
 
@@ -24,15 +27,15 @@ install_gem "acts_as_tenant"
 install_gem "pagy"
 install_gem "faker"
 
-# Rails 8 auth + devise-guests for anonymous posting
-install_gem "devise"
+# Rails 8 Modern Stack
+setup_modern_rails8_stack
+
+# Multi-tenancy with devise-guests for anonymous posting
 install_gem "devise-guests"
 
-bin/rails generate devise:install
-bin/rails generate devise User
 bin/rails generate devise_guests:install
 
-# Generate application layout with PWA support
+# Generate clean semantic HTML layout (no divitis)
 cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
@@ -41,21 +44,33 @@ cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title><%= content_for?(:title) ? yield(:title) + " - Brgen" : "Brgen - #{ActsAsTenant.current_tenant&.name}" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : t('brgen.home_description') %>">
-  <meta name="keywords" content="<%= content_for?(:keywords) ? yield(:keywords) : 'brgen, community, marketplace' %>">
-  
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  
-  <%= pwa_meta_tags %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
-  <%= register_service_worker %>
-  
   <%= yield :head %>
-  <%= content_for?(:schema) ? yield(:schema) : "" %>
 </head>
 <body>
-  <%= yield %>
+  <% if current_user %>
+    <nav>
+      <%= link_to "Home", root_path %>
+      <%= link_to "Search", search_path %>
+      <%= link_to "Profile", profile_path(current_user) %>
+      <%= button_to "Sign out", session_path, method: :delete %>
+    </nav>
+  <% end %>
+  
+  <% if flash.any? %>
+    <% flash.each do |type, msg| %>
+      <output data-controller="reveal" data-reveal-hidden-class="hidden" class="flash-<%= type %>">
+        <%= msg %>
+      </output>
+    <% end %>
+  <% end %>
+  
+  <main>
+    <%= yield %>
+  </main>
 </body>
 </html>
 LAYOUT_EOF

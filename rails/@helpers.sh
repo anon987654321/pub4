@@ -5,6 +5,20 @@ set -euo pipefail
 # Combines @helpers_installation.sh, @helpers_logging.sh, @helpers_routes.sh
 # Per master.yml v74.2.0 - Rails 8 + Solid Stack
 
+# Idempotency check - skip if app already generated
+check_app_exists() {
+    local app_name="$1"
+    local marker_file="$2"  # e.g., "app/models/blog.rb"
+    # Use BASE_DIR if set, otherwise fallback to default Rails location
+    local base_dir="${BASE_DIR:-/home/dev/rails}"
+    
+    if [[ -f "${base_dir}/${app_name}/${marker_file}" ]]; then
+        print "${app_name} already exists, skipping"
+        return 0  # App exists
+    fi
+    return 1  # App does not exist
+}
+
 # Gem installation helper
 install_gem() {
     local gem_name="$1"
