@@ -69,6 +69,7 @@ openbsd:
   privilege: doas
   packages: pkg_add
   web: "relayd(TLS) → falcon(10001-11006) → Rails"
+  verification: "all tools/daemons/config files must be verified at man.openbsd.org before use"
 
 deploy:
   local: [test, verify_Gemfile, commit]
