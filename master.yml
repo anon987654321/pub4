@@ -75,7 +75,12 @@ stack:
     doctrine: "Convention over configuration"
     stack: "Solid Queue/Cache/Cable"
     frontend: "Hotwire (Turbo + Stimulus)"
-    authentication: "Built-in"
+    authentication: "Built-in (Rails 8)"
+    modern:
+      stimulus_reflex: "v3.5+ for reactive updates"
+      stimulus_components: "stimulus-components.com (25+ UI components)"
+      clean_html: "Semantic HTML5, no divitis/sectionitis"
+      patterns: "Clipboard, Dropdown, Sortable, Dialog, Reveal, AutoSubmit"
   
   zsh:
     mandate: "Parameter expansion over external tools"
