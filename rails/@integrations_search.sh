@@ -73,5 +73,5 @@ EOF
   log "Search results partial created for ${model}"
 }
 
-# Export functions
-setup_live_search "$@"
+# Module loaded - functions ready for use
+# Based on: https://www.colby.so/posts/live-search-with-rails-and-stimulusreflex
