@@ -22,8 +22,9 @@ setup_rails8_authentication() {
 install_stimulus_components() {
   log "Installing stimulus-components from stimulus-components.com"
   
-  # Core components for common UI patterns
-  local components=(
+  # Core components for common UI patterns (zsh array)
+  local -a components
+  components=(
     "@stimulus-components/clipboard"
     "@stimulus-components/dropdown"
     "@stimulus-components/dialog"
@@ -36,7 +37,13 @@ install_stimulus_components() {
   )
   
   for component in "${components[@]}"; do
-    install_yarn_package "$component"
+    # install_yarn_package is defined in @helpers.sh which is sourced by @shared_functions.sh
+    if command -v install_yarn_package >/dev/null 2>&1; then
+      install_yarn_package "$component"
+    else
+      log "Installing $component via yarn"
+      yarn add "$component"
+    fi
   done
   
   log "✓ Stimulus components installed"
@@ -112,11 +119,13 @@ import { Application } from "@hotwired/stimulus"
 import { StimulusReflex } from "stimulus_reflex"
 
 const application = Application.start()
-StimulusReflex.initialize(application)
 
 // Configure Stimulus development experience
 application.debug = false
 window.Stimulus = application
+
+// Initialize StimulusReflex after application is configured
+StimulusReflex.initialize(application)
 
 export { application }
 EOF
