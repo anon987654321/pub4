@@ -94,7 +94,7 @@ setup_rails() {
     log "Setting up Rails framework components"
     install_gem "bootsnap"
     install_gem "puma"
-    install_gem "sprockets-rails"
+    # Note: Rails 8 uses Propshaft by default, not Sprockets
     bundle install
     
     if [ ! -d "db" ]; then
