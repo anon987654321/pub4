@@ -27,8 +27,12 @@ reasoning:
 environment:
   windows: "Use C:\\cygwin64\\bin\\zsh.exe for all shell operations"
   cli: "GitHub Copilot CLI (Node.js npm package @github/copilot)"
-  shell_access: "Cygwin/zsh works but not officially supported - use zsh patterns"
+  shell_access: "Run zsh scripts with: zsh path/to/script.sh (works in GitHub Copilot CLI)"
   read_files: "Use cat from zsh, or view tool for line-numbered viewing"
+  config_locations:
+    claude: "G:\\.claude\\settings.local.json (auto_load master.yml, mandate zsh-only)"
+    copilot: "~\\.copilot\\config.json (trusted_folders, user settings)"
+  execution_trick: "Prefix commands with 'zsh' to run zsh scripts (e.g. zsh ../sh/showp.sh)"
 
 forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
 allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat]
