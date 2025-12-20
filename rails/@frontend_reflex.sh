@@ -12,8 +12,27 @@ setup_stimulus_reflex() {
 
     if [ ! -f "app/reflexes/application_reflex.rb" ]; then
         bin/rails generate stimulus_reflex:install
-
     fi
+    
+    # Add error handling to ApplicationReflex
+    if [ -f "app/reflexes/application_reflex.rb" ]; then
+        if ! grep -q "rescue_from" app/reflexes/application_reflex.rb; then
+            cat >> app/reflexes/application_reflex.rb << 'APPERROR'
+
+  # Error handling for all reflexes
+  rescue_from StandardError do |exception|
+    logger.error "Reflex error: #{exception.message}"
+    logger.error exception.backtrace.join("\n")
+    
+    morph :nothing
+    cable_ready[stream_name].console_log(
+      message: "An error occurred. Please try again."
+    ).broadcast
+  end
+APPERROR
+        fi
+    fi
+    
     setup_infinite_scroll_reflex
     setup_filterable_reflex
 
@@ -31,28 +50,17 @@ setup_infinite_scroll_reflex() {
 class InfiniteScrollReflex < ApplicationReflex
   include Pagy::Backend
   attr_reader :collection
+
   def load_more
-
-    cable_ready.insert_adjacent_html(
-
-      selector: selector,
-      html: render(collection),
-      position: position
-    )
-    cable_ready.broadcast
+    morph selector, render(collection)
   end
 
   def page
     element.dataset.next_page
-
   end
-  def position
-    "beforebegin"
 
-  end
   def selector
     raise NotImplementedError, "Override selector in subclass"
-
   end
 end
 INFINITEOF
@@ -171,8 +179,7 @@ class ${model_class}sInfiniteScrollReflex < InfiniteScrollReflex
   end
 
   def selector
-    "#sentinel"
-
+    dom_id(${model_class}.new, :list)
   end
 end
 EOF

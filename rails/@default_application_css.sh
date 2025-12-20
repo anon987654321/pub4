@@ -37,7 +37,7 @@ generate_default_css() {
   --info: #17a2b8;
 }
 
-/* Dark mode colors */
+/* Dark mode colors - with improved focus-visible */
 @media (prefers-color-scheme: dark) {
   :root {
     --white: #000000;
@@ -52,6 +52,12 @@ generate_default_css() {
     --grey-light: #666666;
     --grey: #ababab;
     --grey-dark: #f0f0f0;
+  }
+  
+  /* Dark mode focus enhancement */
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
 }
 
@@ -78,18 +84,18 @@ body {
   flex-direction: column;
 }
 
-/* Typography */
+/* Typography - using clamp() for responsive sizing */
 h1, h2, h3, h4, h5, h6 {
   margin-bottom: 1rem;
   font-weight: 600;
   line-height: 1.2;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.5rem; }
-h5 { font-size: 1.25rem; }
+h1 { font-size: clamp(2rem, 5vw, 2.5rem); }
+h2 { font-size: clamp(1.75rem, 4vw, 2rem); }
+h3 { font-size: clamp(1.5rem, 3vw, 1.75rem); }
+h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); }
+h5 { font-size: clamp(1.125rem, 2vw, 1.25rem); }
 h6 { font-size: 1rem; }
 
 p {
@@ -256,7 +262,7 @@ button:disabled {
   margin-top: 0;
 }
 
-/* Grid */
+/* Grid - use gap instead of margin utilities */
 .grid {
   display: grid;
   gap: 1.5rem;
@@ -268,6 +274,19 @@ button:disabled {
   display: none;
 }
 
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .text-center {
   text-align: center;
 }
@@ -276,20 +295,39 @@ button:disabled {
   color: var(--text-secondary);
 }
 
-.mt-1 { margin-top: 0.5rem; }
-.mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mt-4 { margin-top: 2rem; }
+/* Native <dialog> element styling */
+dialog {
+  border: none;
+  border-radius: 8px;
+  padding: 2rem;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 90%;
+}
 
-.mb-1 { margin-bottom: 0.5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 1.5rem; }
-.mb-4 { margin-bottom: 2rem; }
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
 
-.p-1 { padding: 0.5rem; }
-.p-2 { padding: 1rem; }
-.p-3 { padding: 1.5rem; }
-.p-4 { padding: 2rem; }
+dialog[open] {
+  animation: dialog-fade-in 0.2s ease-out;
+}
+
+@keyframes dialog-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Note: Use loading="lazy" on img and iframe elements for performance */
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -310,10 +348,6 @@ button:disabled {
   .grid {
     grid-template-columns: 1fr;
   }
-  
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.75rem; }
-  h3 { font-size: 1.5rem; }
 }
 
 /* Focus visible for accessibility */

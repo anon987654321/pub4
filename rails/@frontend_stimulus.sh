@@ -1,517 +1,211 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Stimulus Controllers for Rails 8
-# Modern patterns, TypeScript-ready, proper lifecycle management
+# Stimulus Controllers for Rails 8 - Modern patterns with stimulus-components and stimulus-use
+# Consolidates official components via importmap, keeps only 3 custom controllers
 
-generate_autosave_controller() {
-  log "Generating autosave controller"
+setup_stimulus_components() {
+  log "Setting up official Stimulus components via importmap"
+  
+  # Pin official stimulus-components packages
+  local components=(
+    "clipboard"
+    "dropdown"
+    "dialog"
+    "reveal"
+    "character-counter"
+    "password-visibility"
+    "auto-submit"
+    "sortable"
+  )
+  
+  for component in "${components[@]}"; do
+    if ! grep -q "@stimulus-components/${component}" config/importmap.rb 2>/dev/null; then
+      log "Pinning @stimulus-components/${component}"
+      bin/importmap pin "@stimulus-components/${component}"
+    fi
+  done
+  
+  # Pin stimulus-use for composable behaviors
+  if ! grep -q "stimulus-use" config/importmap.rb 2>/dev/null; then
+    log "Pinning stimulus-use"
+    bin/importmap pin "stimulus-use"
+  fi
+  
+  log "✓ Official Stimulus components pinned"
+}
+
+generate_controllers_index() {
+  log "Generating controllers index with official components + custom controllers"
   mkdir -p app/javascript/controllers
   
-  cat <<'EOF' > app/javascript/controllers/autosave_controller.js
+  cat <<'EOF' > app/javascript/controllers/index.js
+// Import and register all Stimulus controllers from stimulus-components and custom
+
+import { application } from "./application"
+
+// Official stimulus-components - registered via importmap
+import Clipboard from "@stimulus-components/clipboard"
+import Dropdown from "@stimulus-components/dropdown"
+import Dialog from "@stimulus-components/dialog"
+import Reveal from "@stimulus-components/reveal"
+import CharacterCounter from "@stimulus-components/character-counter"
+import PasswordVisibility from "@stimulus-components/password-visibility"
+import AutoSubmit from "@stimulus-components/auto-submit"
+import Sortable from "@stimulus-components/sortable"
+
+application.register("clipboard", Clipboard)
+application.register("dropdown", Dropdown)
+application.register("dialog", Dialog)
+application.register("reveal", Reveal)
+application.register("character-counter", CharacterCounter)
+application.register("password-visibility", PasswordVisibility)
+application.register("auto-submit", AutoSubmit)
+application.register("sortable", Sortable)
+
+// Custom controllers - kept for specific app needs
+import InfiniteScrollController from "./infinite_scroll_controller"
+import SearchController from "./search_controller"
+import NotificationController from "./notification_controller"
+
+application.register("infinite-scroll", InfiniteScrollController)
+application.register("search", SearchController)
+application.register("notification", NotificationController)
+EOF
+  
+  log "✓ controllers index with official + custom controllers"
+}
+
+generate_infinite_scroll_controller() {
+  log "Generating infinite-scroll controller with stimulus-use"
+  mkdir -p app/javascript/controllers
+  
+  cat <<'EOF' > app/javascript/controllers/infinite_scroll_controller.js
 import { Controller } from "@hotwired/stimulus"
+import { useIntersection } from "stimulus-use"
 
 export default class extends Controller {
   static values = {
     url: String,
-    delay: { type: Number, default: 1000 }
+    page: { type: Number, default: 1 }
   }
 
   connect() {
-    this.timeout = null
-    this.saving = false
+    useIntersection(this)
   }
 
-  save() {
-    clearTimeout(this.timeout)
-    this.timeout = setTimeout(() => this.persist(), this.delayValue)
+  appear(entry) {
+    if (this.loading) return
+    this.loadMore()
   }
 
-  async persist() {
-    if (this.saving) return
-    
-    this.saving = true
-    const formData = new FormData(this.element)
+  async loadMore() {
+    this.loading = true
+    const nextPage = this.pageValue + 1
     
     try {
-      const response = await fetch(this.urlValue, {
-        method: "PATCH",
-        body: formData,
-        headers: {
-          "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
-        }
+      const response = await fetch(`${this.urlValue}?page=${nextPage}`, {
+        headers: { "Accept": "text/html" }
       })
       
       if (response.ok) {
-        this.element.classList.add("saved")
-        setTimeout(() => this.element.classList.remove("saved"), 2000)
+        const html = await response.text()
+        this.element.insertAdjacentHTML("beforebegin", html)
+        this.pageValue = nextPage
       }
+    } catch (error) {
+      console.error("Failed to load more:", error)
     } finally {
-      this.saving = false
+      this.loading = false
     }
-  }
-
-  disconnect() {
-    clearTimeout(this.timeout)
   }
 }
 EOF
-  log "✓ autosave controller"
-}
-
-generate_textarea_autogrow_controller() {
-  log "Generating textarea-autogrow controller"
-  mkdir -p app/javascript/controllers
   
-  cat <<'EOF' > app/javascript/controllers/textarea_autogrow_controller.js
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  static targets = ["input"]
-  
-  connect() {
-    this.resize()
-  }
-  
-  resize() {
-    this.inputTarget.style.height = "auto"
-    this.inputTarget.style.height = `${this.inputTarget.scrollHeight}px`
-  }
-  
-  disconnect() {
-    // Cleanup not needed for this controller
-  }
-}
-EOF
-  log "✓ textarea-autogrow controller"
+  log "✓ infinite-scroll controller with useIntersection"
 }
 
-generate_dropdown_controller() {
-  log "Generating dropdown Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/dropdown_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  static targets = ["menu"]
-  connect() {
-
-    this.boundClickOutside = this.clickOutside.bind(this)
-
-  }
-  toggle(event) {
-
-    event.preventDefault()
-    this.menuTarget.classList.toggle("hidden")
-
-    if (!this.menuTarget.classList.contains("hidden")) {
-      document.addEventListener("click", this.boundClickOutside)
-    } else {
-
-      document.removeEventListener("click", this.boundClickOutside)
-    }
-  }
-
-  clickOutside(event) {
-    if (!this.element.contains(event.target)) {
-      this.close()
-    }
-  }
-  close() {
-
-    this.menuTarget.classList.add("hidden")
-    document.removeEventListener("click", this.boundClickOutside)
-  }
-  disconnect() {
-    document.removeEventListener("click", this.boundClickOutside)
-
-  }
-}
-EOF
-  log "dropdown controller generated"
-
-}
-generate_modal_controller() {
-  log "Generating modal Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/modal_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  connect() {
-    this.boundHandleKeyup = this.handleKeyup.bind(this)
-
-    document.addEventListener("keyup", this.boundHandleKeyup)
-
-  }
-  open(event) {
-
-    event.preventDefault()
-    this.element.showModal()
-  }
-  close() {
-    this.element.close()
-
-  }
-  handleKeyup(event) {
-    if (event.key === "Escape") {
-      this.close()
-
-    }
-  }
-  backdropClick(event) {
-
-    if (event.target === this.element) {
-      this.close()
-    }
-  }
-  disconnect() {
-
-    document.removeEventListener("keyup", this.boundHandleKeyup)
-  }
-}
-EOF
-  log "modal controller generated"
-
-}
-generate_clipboard_controller() {
-  log "Generating clipboard Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/clipboard_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  static targets = ["source", "button"]
-  static values = { successMessage: { type: String, default: "Copied!" } }
-
-  copy(event) {
-
-    event.preventDefault()
-    const text = this.sourceTarget.value || this.sourceTarget.textContent
-
-    navigator.clipboard.writeText(text).then(() => {
-      this.showSuccess()
-    }).catch(err => {
-
-      console.error("Failed to copy:", err)
-    })
-
-  }
-  showSuccess() {
-    if (!this.hasButtonTarget) return
-    const originalText = this.buttonTarget.textContent
-    this.buttonTarget.textContent = this.successMessageValue
-    this.timeout = setTimeout(() => {
-      this.buttonTarget.textContent = originalText
-
-    }, 2000)
-  }
-
-  disconnect() {
-    clearTimeout(this.timeout)
-
-  }
-}
-EOF
-  log "clipboard controller generated"
-
-}
-generate_autosave_controller() {
-  log "Generating autosave Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/autosave_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  static values = { delay: { type: Number, default: 1000 } }
-  connect() {
-
-    this.timeout = null
-
-  }
-  save() {
-
-    clearTimeout(this.timeout)
-    this.timeout = setTimeout(() => {
-
-      this.element.requestSubmit()
-    }, this.delayValue)
-  }
-
-  disconnect() {
-    clearTimeout(this.timeout)
-
-  }
-}
-EOF
-  log "autosave controller generated"
-
-}
-generate_password_visibility_controller() {
-  log "Generating password-visibility Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/password_visibility_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  static targets = ["input", "icon"]
-  toggle(event) {
-
-    event.preventDefault()
-
-    const type = this.inputTarget.type === "password" ? "text" : "password"
-    this.inputTarget.type = type
-
-    if (this.hasIconTarget) {
-      this.iconTarget.textContent = type === "password" ? "👁" : "👁‍🗨"
-
-    }
-  }
-
-  disconnect() {
-    // Cleanup not needed for this controller
-
-  }
-}
-EOF
-  log "password-visibility controller generated"
-
-}
-generate_form_validation_controller() {
-  log "Generating form-validation Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/form_validation_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  static targets = ["input", "error"]
-  validate(event) {
-
-    const input = event.target
-
-    const errorTarget = this.errorTargets.find(
-      el => el.dataset.for === input.id
-
-    )
-    if (!errorTarget) return
-
-    if (input.validity.valid) {
-      errorTarget.textContent = ""
-      input.classList.remove("invalid")
-    } else {
-      errorTarget.textContent = input.validationMessage
-
-      input.classList.add("invalid")
-
-    }
-  }
-  disconnect() {
-    // Cleanup not needed for this controller
-  }
-}
-EOF
-  log "form-validation controller generated"
-
-}
-generate_infinite_scroll_controller() {
-  log "Generating infinite-scroll Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/infinite_scroll_controller.js
-
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  connect() {
-    this.observer = new IntersectionObserver(
-
-      entries => this.handleIntersection(entries),
-
-      { threshold: 0.1 }
-    )
-
-    const sentinel = document.getElementById("sentinel")
-    if (sentinel) {
-      this.observer.observe(sentinel)
-    }
-  }
-  handleIntersection(entries) {
-
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        this.loadMore()
-      }
-    })
-
-  }
-  loadMore() {
-    // Trigger reflex or fetch for more content
-    const sentinel = document.getElementById("sentinel")
-    if (sentinel && sentinel.dataset.reflex) {
-      this.stimulate(sentinel.dataset.reflex)
-    }
-
-  }
-  disconnect() {
-    if (this.observer) {
-      this.observer.disconnect()
-    }
-  }
-}
-
-EOF
-  log "infinite-scroll controller generated"
-}
 generate_search_controller() {
-  log "Generating search Stimulus controller"
+  log "Generating search controller with stimulus-use debounce"
   mkdir -p app/javascript/controllers
+  
   cat <<'EOF' > app/javascript/controllers/search_controller.js
-
 import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
+import { useDebounce } from "stimulus-use"
 
+export default class extends Controller {
   static targets = ["input", "results"]
-  static values = { delay: { type: Number, default: 300 } }
+  static debounces = ["search"]
 
   connect() {
-
-    this.timeout = null
+    useDebounce(this, { wait: 300 })
   }
 
   search() {
-    clearTimeout(this.timeout)
-    this.timeout = setTimeout(() => {
-
-      const query = this.inputTarget.value.trim()
-      if (query.length < 2) {
-        this.resultsTarget.innerHTML = ""
-
-        return
-      }
-
-      this.performSearch(query)
-    }, this.delayValue)
-
+    const query = this.inputTarget.value.trim()
+    
+    if (query.length < 2) {
+      this.resultsTarget.innerHTML = ""
+      return
+    }
+    
+    this.performSearch(query)
   }
+
   async performSearch(query) {
     try {
       const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
-
         headers: { "Accept": "text/html" }
       })
+      
       if (response.ok) {
-
         this.resultsTarget.innerHTML = await response.text()
       }
     } catch (error) {
       console.error("Search failed:", error)
     }
-
-  }
-  disconnect() {
-    clearTimeout(this.timeout)
   }
 }
 EOF
-  log "search controller generated"
-
+  
+  log "✓ search controller with useDebounce"
 }
+
 generate_notification_controller() {
-  log "Generating notification Stimulus controller"
+  log "Generating notification controller"
   mkdir -p app/javascript/controllers
+  
   cat <<'EOF' > app/javascript/controllers/notification_controller.js
-
 import { Controller } from "@hotwired/stimulus"
+
 export default class extends Controller {
-
-  static values = { duration: { type: Number, default: 5000 } }
-  connect() {
-
-    this.timeout = setTimeout(() => {
-
-      this.dismiss()
-    }, this.durationValue)
-
+  static values = {
+    duration: { type: Number, default: 5000 }
   }
-  dismiss() {
 
+  connect() {
+    this.timeout = setTimeout(() => this.dismiss(), this.durationValue)
+  }
+
+  dismiss() {
     this.element.remove()
   }
+
   disconnect() {
     clearTimeout(this.timeout)
   }
-
 }
 EOF
-  log "notification controller generated"
-
+  
+  log "✓ notification controller"
 }
-generate_dialog_controller() {
-  log "Generating dialog Stimulus controller"
-  mkdir -p app/javascript/controllers
-  cat <<'EOF' > app/javascript/controllers/dialog_controller.js
 
-import { Controller } from "@hotwired/stimulus"
-export default class extends Controller {
-
-  connect() {
-    this.boundHandleKeyup = this.handleKeyup.bind(this)
-
-    document.addEventListener("keyup", this.boundHandleKeyup)
-
-  }
-  open(event) {
-
-    if (event) event.preventDefault()
-    this.element.showModal()
-  }
-  close(event) {
-    if (event) event.preventDefault()
-
-    this.element.close()
-  }
-  handleKeyup(event) {
-    if (event.key === "Escape") {
-
-      this.close()
-    }
-  }
-  backdropClick(event) {
-
-    if (event.target === this.element) {
-      this.close()
-    }
-  }
-  disconnect() {
-
-    document.removeEventListener("keyup", this.boundHandleKeyup)
-  }
-}
-EOF
-  log "dialog controller generated"
-
-}
-generate_all_stimulus_controllers() {
-  log "Generating all standard Stimulus controllers"
-  generate_character_counter_controller
-  generate_textarea_autogrow_controller
-
-  generate_dropdown_controller
-  generate_modal_controller
-
-  generate_clipboard_controller
-  generate_autosave_controller
-
-  generate_password_visibility_controller
-  generate_form_validation_controller
+setup_all_stimulus() {
+  log "Setting up all Stimulus components and controllers"
+  setup_stimulus_components
+  generate_controllers_index
   generate_infinite_scroll_controller
   generate_search_controller
   generate_notification_controller
-  generate_dialog_controller
-  log "All Stimulus controllers generated successfully!"
+  log "✓ All Stimulus setup complete - using official components + 3 custom controllers"
 }
