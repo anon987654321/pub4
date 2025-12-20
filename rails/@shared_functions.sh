@@ -85,25 +85,48 @@ setup_full_app() {
 
 generate_falcon_config() {
     local app_name="$1"
+    local port="${2:-3000}"
     log "Generating config/falcon.rb for production deployment"
     
     mkdir -p config
+    
+    # Create preload file for Rails environment
+    cat > config/preload.rb << 'PRELOAD_EOF'
+# frozen_string_literal: true
+require_relative "environment"
+PRELOAD_EOF
+    
     cat > config/falcon.rb << 'FALCON_EOF'
 #!/usr/bin/env -S falcon host
+# frozen_string_literal: true
 # Falcon web server configuration for Rails 8 production
+# Based on: https://socketry.github.io/falcon-rails/
 
-load :rack, :self_signed_tls, :supervisor
+require "falcon/environment/rack"
 
 hostname = File.basename(__dir__)
-port = ENV.fetch('PORT', 3000).to_i
+port = ENV.fetch("PORT", 3000).to_i
+workers = ENV.fetch("WEB_CONCURRENCY", 2).to_i
 
-rack hostname do
-  endpoint Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
+service hostname do
+  include Falcon::Environment::Rack
+  
+  # Preload Rails before forking workers
+  preload "config/preload.rb"
+  
+  # Worker processes for concurrency
+  count workers
+  
+  # HTTP/1.1 endpoint (use HTTP/2 in production with TLS)
+  endpoint do
+    Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
+      .with(protocol: Async::HTTP::Protocol::HTTP11)
+  end
 end
 FALCON_EOF
 
     chmod +x config/falcon.rb
-    log "✓ Falcon config generated"
+    log "✓ Falcon config generated (#{workers} workers on port #{port})"
 }
 
 setup_devise_guests() {
