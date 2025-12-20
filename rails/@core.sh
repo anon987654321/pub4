@@ -2,20 +2,47 @@
 set -euo pipefail
 
 # @core.sh - Consolidated core functionality
-# Combines @core_setup.sh, @core_database.sh, @core_dependencies.sh
-# Per master.yml v74.2.0 - Rails 8 + Solid Stack
+# Merged: @core_setup.sh, @core_database.sh, @core_dependencies.sh
+# Per master.yml v101.0
 
-# Logging
 log() {
     print "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
-# Command existence check
 command_exists() {
     command -v "$1" >/dev/null 2>&1 || {
         log "ERROR: $1 is required but not installed"
         exit 1
     }
+}
+
+install_gem() {
+    local gem_name="$1"
+    local bundle_output=$(bundle list 2>/dev/null)
+    
+    if [[ "$bundle_output" != *"  * $gem_name "* ]]; then
+        log "Installing gem: $gem_name"
+        bundle add "$gem_name"
+    else
+        log "Gem already installed: $gem_name"
+    fi
+}
+
+install_yarn_package() {
+    local package_name="$1"
+    
+    if [[ -f "package.json" ]]; then
+        local pkg_json=$(<package.json)
+        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
+            log "Installing yarn package: $package_name"
+            yarn add "$package_name"
+        else
+            log "Yarn package already installed: $package_name"
+        fi
+    else
+        log "Installing yarn package: $package_name"
+        yarn add "$package_name"
+    fi
 }
 
 # Ruby environment setup
@@ -130,4 +157,9 @@ if Rails.env.development?
 end
 EOF
     fi
+}
+
+migrate_db() {
+    log "Migrating database"
+    bin/rails db:create db:migrate
 }

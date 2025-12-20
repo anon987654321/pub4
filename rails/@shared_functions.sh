@@ -1,46 +1,33 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Central module loader for Rails apps per master.yml v72.2.0
-# CONSOLIDATED from 22 files → 10 focused modules (reduced sprawl)
-#
-# Rails Apps Inventory (15 apps, all production-ready):
-#   brgen.sh brgen_COMPLETE.sh brgen_dating.sh brgen_marketplace.sh brgen_playlist.sh
-#   brgen_takeaway.sh brgen_tv.sh amber.sh baibl.sh blognet.sh bsdports.sh
-#   hjerterom.sh privcam.sh pub_attorney.sh
-#
+# Central module loader for Rails apps per master.yml v101.0
+# Merged: @loader.sh, load_modules.sh
+# Rails Apps: brgen, amber, blognet, bsdports, hjerterom, privcam, and variants
 # Stack: Rails 8 + Solid Queue/Cache/Cable (no Redis) + Hotwire + StimulusReflex
 # Database: PostgreSQL primary, SQLite for Solid adapters
 # Deployment: OpenBSD 7.7, Falcon, PF, Relayd, NSD
-#
-# Status: All apps COMPLETE and DEPLOYMENT-READY per 2025-12-19 analysis
 
 SCRIPT_DIR="${0:a:h}"
 
-# Core infrastructure (CONSOLIDATED)
 source "${SCRIPT_DIR}/@core.sh"
 source "${SCRIPT_DIR}/@rails8_stack.sh"
 source "${SCRIPT_DIR}/@rails8_modern.sh"
 source "${SCRIPT_DIR}/@rails8_propshaft.sh"
 source "${SCRIPT_DIR}/@default_application_css.sh"
 
-# Frontend/UI
 source "${SCRIPT_DIR}/@frontend_stimulus.sh"
 source "${SCRIPT_DIR}/@frontend_pwa.sh"
 source "${SCRIPT_DIR}/@frontend_reflex.sh"
 
-# Generators
 source "${SCRIPT_DIR}/@generators_crud_views.sh"
 
-# Features (CONSOLIDATED)
 source "${SCRIPT_DIR}/@features.sh"
 
-# Integrations (CONSOLIDATED)
 source "${SCRIPT_DIR}/@integrations.sh"
 
-# Helpers (CONSOLIDATED)
 source "${SCRIPT_DIR}/@helpers.sh"
-# Additional setup functions
+
 install_stimulus_component() {
 
     local component_name="$1"
@@ -382,7 +369,7 @@ setup_pwa() {
 
     log "Setting up Progressive Web App features (Rails 8 + PWA.dev best practices)"
 
-    source "${SCRIPT_DIR}/__shared/@pwa_setup.sh"
+    source "${SCRIPT_DIR}/@frontend_pwa.sh"
 
     setup_full_pwa "${APP_NAME}"
 
@@ -554,7 +541,7 @@ add_routes_block() {
 
     } > "$routes_file"
 }
-commit()() {
+commit() {
     local message="${1:-Update application setup}"
     log "Committing changes: $message"
     # Only commit if in git repository

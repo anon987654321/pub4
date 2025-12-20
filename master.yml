@@ -1,247 +1,101 @@
-# master.yml — Complete Projects Through Self-Applying Principles
-# Version: 76.0
-# Updated: 2025-12-19
+# master.yml v101
 
 meta:
-  version: "76.0"
-  purpose: "Complete projects through self-applying principles with validated tech stack"
-  canonical_path: ~/pub/master.yml
+  version: "101.0"
+  updated: "2025-12-20"
+  path: "~/pub/master.yml"
+  consumers: ["GitHub Copilot", "Claude Code", "cli.rb"]
 
 principles:
-  # Foundational
   preserve_then_improve: "Never break working code"
   chestertons_fence: "Understand before removing"
   pareto: "80% value from 20% effort"
-  
-  # Code quality
-  meaningful_names: "Names reveal intent"
-  dry: "Don't repeat yourself"
-  kiss: "Keep it simple"
-  yagni: "You aren't gonna need it"
-  pola: "Principle of least astonishment"
+  dry: "Single source of truth"
+  kiss: "Simplest solution"
+  yagni: "Build when needed"
   single_responsibility: "One reason to change"
-  small_functions: "Under 10 lines ideal"
-  
-  # Design
-  open_closed: "Open for extension, closed for modification"
-  liskov_substitution: "Subtypes substitutable"
-  interface_segregation: "Many specific over one general"
-  dependency_inversion: "Depend on abstractions"
-  
-  # Architecture
-  separation_of_concerns: "Separate concerns"
-  composition_over_inheritance: "Prefer composition"
-  least_privilege: "Minimum permissions"
-  validate_input: "Never trust input"
-  
-  # Practical
-  test_pyramid: "Many unit, few E2E"
-  working_software: "Primary measure"
-  boy_scout: "Leave code cleaner"
-  stepdown_rule: "Most important first"
-  omit_needless_words: "Be concise"
+  small_functions: "Under 20 lines"
+  omit_needless_words: "Brevity"
 
 practices:
-  anti_sprawl: "No analysis files"
-  single_source: "One canonical location"
-  consolidate: "One file > many"
-  edit_in_place: "Edit directly"
-  defragment: "Merge scattered code"
-  decouple: "Break dependencies"
-  rename_for_intent: "Rename when you pause"
-  idempotency: "check_app_exists() - skip if already generated"
-  clean_html: "Semantic HTML5, no divitis/sectionitis - use main, nav, output"
-  function_extraction: "Split >20 line functions into orchestrator + helpers with _ prefix"
+  no_analysis_files: "No summary/plan/report files"
+  single_source: "One location per concept"
+  edit_in_place: "Modify existing files"
+  orchestrator_helpers: "Main calls _underscore helpers"
+  idempotency: "Check before generate"
+  clean_html: "Semantic elements"
+  dependency_first: "Use packages before custom code"
 
 workflow:
-  assess: "Understand current state"
-  plan: "Smallest direct path"
-  execute: "Build then refactor"
-  verify: "No regressions"
+  phases: [assess, plan, execute, verify]
+  loop: "Repeat until no violations"
+  max_iterations: 10
 
-escape_hatch:
-  when:
-    emergency: {document: true, revert_within: "24h"}
-    client_code: "Client standards override"
-    learning: "Experiments in ~/learning/"
-    research: "Use research workflow for papers/algorithms"
-  template: "# VIOLATION: [principle] | Reason: [category] | Revert by: [date]"
+modes:
+  edit_existing:
+    description: "Modify existing files only"
+    when: "Refactoring, fixes, consolidation"
+    default: true
+  scaffold:
+    description: "May create new files"
+    when: "New apps, explicit request"
 
-stack:
+refactoring:
+  before_custom_code:
+    - "Check stimulus-components.com"
+    - "Check stimulus-use behaviors"
+    - "Check Rails generators"
+    - "Check rubygems/npm"
+  consolidation:
+    triggers:
+      - "3+ files with same prefix"
+      - "File under 50 lines"
+      - "Duplicate functions"
+    deprecation: "# DEPRECATED: Merged into @[target].sh"
+  cross_reference:
+    before: ["Map dependencies", "Find duplicates", "List unused"]
+    after: ["Verify paths", "Syntax check", "Test imports"]
+
+ai:
+  communication: "Report failures only"
+  file_ops: "Native tools, not shell"
+  banned_patterns:
+    - "Creating analysis files"
+    - "Asking permission"
+    - "Explaining intent"
+    - "New files in edit mode"
+
+stacks:
   ruby:
     frozen_string_literal: true
-    keyword_arguments: true
-    safe_navigation: true
     small_methods: true
-  
   rails:
-    doctrine: "Convention over configuration"
+    version: "8.x"
     stack: "Solid Queue/Cache/Cable"
-    frontend: "Hotwire (Turbo + Stimulus)"
-    authentication: "Built-in (Rails 8)"
-    modern:
-      stimulus_reflex: "v3.5+ for reactive updates"
-      stimulus_components: "stimulus-components.com (25+ UI components)"
-      clean_html: "Semantic HTML5, no divitis/sectionitis"
-      patterns: "Clipboard, Dropdown, Sortable, Dialog, Reveal, AutoSubmit"
-      components_list: "@stimulus-components/{clipboard,dropdown,dialog,character-counter,password-visibility,checkbox-select-all,sortable,reveal,auto-submit}"
-    idempotency:
-      pattern: "check_app_exists(app_name, marker_file)"
-      location: "@helpers.sh"
-      usage: "Call before setup_full_app to skip if already generated"
-  
+    auth: "bin/rails generate authentication"
+  javascript:
+    importmap_first: true
+    stimulus_components: [clipboard, dropdown, dialog, reveal, character-counter, password-visibility, auto-submit, sortable]
+    stimulus_use: [useIntersection, useDebounce, useClickOutside, useLazyLoad]
   zsh:
     mandate: "Parameter expansion over external tools"
-    case: "${(L)var} lowercase, ${(U)var} uppercase"
-    replace: "${var//pattern/replacement}"
-    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-    arrays: "split=(${(s:,:)var}), join=${(j:,:)arr}"
-    replaces:
-      sed: "${text//old/new}"
-      awk: "${${(s: :)line}[2]}"
-      wc: "${#lines}"
-      head: "${lines[1,10]}"
-      tail: "${lines[-5,-1]}"
-  
-  openbsd:
-    vps: "185.52.176.18"
-    ssh: "dev@185.52.176.18"
-    console: "ssh -p 31415 dev@server27.openbsd.amsterdam + vmctl console vm08"
-    services: "rcctl enable/start/stop/restart/check"
-    web_stack: "relayd → falcon → Rails"
-    rc_d_pattern: "daemon=/usr/local/bin/bundle, daemon_flags='exec falcon serve'"
-    refactoring:
-      pattern: "Orchestrator function + _helper_functions"
-      example: "deploy_rails_app() calls _create_app_user, _setup_app_directories, etc"
-      helpers: "Prefix with _ to indicate private, each < 20 lines"
+    banned: [sed, awk, bash, python, tr, wc, head, tail, cut, find]
+  css:
+    custom_properties: true
+    dark_mode: "@media (prefers-color-scheme: dark)"
+
+constraints:
+  thresholds:
+    max_method_lines: 20
+    max_file_lines: 200
 
 validation:
-  stack_check: "Verify each component works before deployment"
-  ruby: "ruby -v && bundle check"
-  rails: "bin/rails about"
-  zsh: "zsh -c 'test=test; echo ${(U)test}'"
-  openbsd: "ssh dev@vps 'uname -a'"
-  deployment: "rcctl check app && ps aux | grep falcon && curl http://localhost:port"
-
-research:
-  papers:
-    readable: "ar5iv.org - HTML papers with math rendering"
-    original: "arxiv.org - PDF versions"
-    citations: "scholar.google.com - related work"
-  code_examples:
-    primary: "github.com - implementations"
-    questions: "stackoverflow.com - specific problems"
-  integration: "Cite sources when implementing algorithms or adapting solutions"
-
-git_recovery:
-  find_lost_file: "git log --patch --all -- path/to/file"
-  find_deleted: "git log --diff-filter=D --summary"
-  find_by_content: "git log -S 'search_string' --patch"
-  restore: "git show HASH:path > recovered_file"
-
-session_continuity:
-  location: "End of master.yml as commented section"
-  format: "session_YYYY_MM_DD: summary, discoveries, next_steps"
-  purpose: "Preserve knowledge across LLM sessions"
-  template: |
-    # === SESSION YYYY-MM-DD ===
-    # Summary: [what was done]
-    # Discoveries: [key learnings]
-    # Next: [immediate next steps]
+  zsh: "zsh -n file.sh"
+  ruby: "ruby -c file.rb"
 
 convergence:
   enabled: true
-  max_iterations: 10
   auto_fix: true
-  run_first: "sh/tree.sh"  # Always run before starting work
-  
-  detect:
-    # Ruby violations
-    long_methods: "ruby -e 'ARGF.read.scan(/def \w+.*?^  end/m).select{|m| m.lines.count > 20}'"
-    large_files: "for f in **/*.rb(.); do [[ $(ruby -e \"puts File.readlines('$f').count\") -gt 200 ]] && print $f; done"
-    banned_tools: "grep -rn 'python\\|bash\\|sed\\|awk\\|wc\\|head\\|tail\\|find\\|sudo' --include='*.sh'"
-    
-  fix:
-    # Auto-fix patterns (applied by LLM during session)
-    long_method: "Extract to private methods, each < 20 lines"
-    large_file: "Split by responsibility OR extract sourced modules"
-    duplication: "Extract to shared function"
-    banned_tool: "Replace with zsh parameter expansion per stack.zsh.replaces"
 
-  verify:
-    ruby: "ruby -c $file"  # Syntax check
-    zsh: "zsh -n $file"    # Syntax check
-    rails: "bin/rails test"
-    
-  loop: |
-    iteration=0
-    while [[ $iteration -lt ${max_iterations:-10} ]]; do
-      violations=$(detect_all)
-      [[ -z "$violations" ]] && { print "Converged"; break }
-      fix_violations "$violations"
-      ((iteration++))
-    done
-
-mandates:
-  pre_work: "Run sh/tree.sh to understand repo structure before any changes"
-  no_new_files: "Edit existing files; never create analysis/summary/plan files"
-  tool_usage: "Use file tools (view/edit/create/grep) not shell commands for file ops"
-  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
-  communication: "Extreme brevity - report only failures or requested output"
-
-constraints:
-  banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
-  
-  thresholds:
-    max_method_lines: 20
-    max_complexity: 10
-    duplication_trigger: 3
-
-projects:
-  rails_apps:
-    location: "~/pub/rails/"
-    generators: ["brgen", "amber", "blognet", "bsdports", "hjerterom", "privcam", "pubattorney"]
-    stack: "Rails 8 + Solid Stack + Hotwire"
-    shared_modules: "rails/@*.sh (flattened from __shared)"
-    modern_setup: "setup_modern_rails8_stack() in @rails8_modern.sh"
-  
-  deployment:
-    script: "~/pub/openbsd/openbsd.sh"
-    workflow:
-      local: "Test generators first"
-      vps: "Upload and run generator"
-      service: "rcctl enable app, start, check"
-      verify: "ps, netstat, curl"
-    refactored_functions:
-      - "deploy_rails_app: 170 lines → 8 helpers"
-      - "setup_dns_dnssec: 120 lines → 5 helpers"
-
-# === SESSION 2025-12-19 ===
-# Summary: Converged master.yml with validated tech stack
-# Discoveries: 
-# - Rails generators must include routes, layout, seeds, migrations
-# - Zsh parameter expansion replaces sed/awk/wc/head/tail
-# - OpenBSD rc.d scripts need bundle exec falcon serve pattern
-# - Anti-sprawl: 22 shared modules → 10 (55% reduction)
-# Next:
-# 1. Test validation commands
-# 2. Apply to remaining 13 generators
-# 3. Deploy all apps to VPS
-
-# === SESSION 2025-12-20 ===
-# Summary: Added auto-convergence, refactored large functions, Rails 8 modern stack
-# Discoveries:
-# - Convergence rules: detect violations, auto-fix patterns, verify syntax
-# - Function refactoring: orchestrator + _helpers pattern (each < 20 lines)
-# - Rails 8: Built-in auth + StimulusReflex v3.5+ + stimulus-components.com
-# - Clean HTML: Semantic tags (main, nav, output) replace divitis
-# - Idempotency: check_app_exists() prevents duplicate generation
-# - File sprawl: rails/__shared/* → rails/@*.sh (flattened structure)
-# Implementation:
-# - @rails8_modern.sh: Rails 8 auth, StimulusReflex, 9 stimulus-components
-# - openbsd.sh: deploy_rails_app (8 helpers), setup_dns_dnssec (5 helpers)
-# - 7 generators: Added idempotency checks with check_app_exists()
-# Next:
-# 1. Apply modern stack to remaining generators (amber, blognet, bsdports, etc.)
-# 2. Test convergence detection commands
-# 3. Verify Rails 8 authentication flow
+escape:
+  emergency: "# VIOLATION: [principle] | Revert: [date]"
