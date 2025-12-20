@@ -40,16 +40,8 @@ source "${SCRIPT_DIR}/@integrations.sh"
 
 # Helpers (CONSOLIDATED)
 source "${SCRIPT_DIR}/@helpers.sh"
-# Additional setup functions
-install_stimulus_component() {
 
-    local component_name="$1"
-
-    log "Installing Stimulus component: $component_name"
-    yarn add "@stimulus-components/${component_name}"
-    log "Stimulus component installed: $component_name"
-    log "Register in app/javascript/controllers/index.js"
-}
+# Additional setup functions beyond core helpers
 setup_full_app() {
     local app_name="$1"
     local use_redis="${2:-false}"  # Optional: default to Solid Stack (Redis-free)
@@ -355,28 +347,7 @@ EOF
 
 }
 
-setup_seeds() {
-
-    log "Setting up database seeds"
-
-    if [ ! -f "db/seeds.rb" ] || [ ! -s "db/seeds.rb" ]; then
-
-        cat > db/seeds.rb << EOF
-
-# Seeds for #{APP_NAME}
-# Create sample data for development
-
-if Rails.env.development?
-  # Add sample data creation here
-
-  puts "Created sample data for \#{Rails.env} environment"
-
-end
-
-EOF
-    fi
-
-}
+# setup_seeds is already defined in @helpers.sh - removed duplicate
 
 setup_pwa() {
 
@@ -536,48 +507,8 @@ generate_social_models() {
 
 }
 
-# Pure zsh route adder - master.yml v72.1.0 compliant
-# Complies with immediate_mandates: no head/tail/sed/awk
-
-add_routes_block() {
-
-    local routes_block="$1"
-
-    local routes_file="config/routes.rb"
-    # Read all lines, remove last 'end', append routes, add 'end'
-    local routes_lines=("${(@f)$(<$routes_file)}")
-    {
-        print -l "${routes_lines[1,-2]}"
-
-        print -r -- "$routes_block"
-        print "end"
-
-    } > "$routes_file"
-}
-commit() {
-    local message="${1:-Update application setup}"
-    log "Committing changes: $message"
-    # Only commit if in git repository
-
-    if [ -d ".git" ]; then
-        git add -A
-
-        git commit -m "$message" || log "Nothing to commit"
-
-    else
-        log "Not a git repository, skipping commit"
-
-    fi
-
-}
-
-migrate_db() {
-
-    log "Migrating database"
-
-    bin/rails db:create db:migrate
-
-}
+# Routes, commit, migrate_db, and setup_seeds are already defined in @helpers.sh
+# Removed duplicate functions for DRY compliance
 
 generate_turbo_views() {
     local model_name="$1"
@@ -945,36 +876,7 @@ end
 EOF
 }
 
-install_yarn_package() {
-
-    local package_name="$1"
-
-    # Pure zsh: pattern matching instead of grep
-
-    if [[ -f "package.json" ]]; then
-
-        local pkg_json=$(<package.json)
-        if [[ "$pkg_json" != *"\"$package_name\""* ]]; then
-
-            log "Installing yarn package: $package_name"
-
-            yarn add "$package_name"
-
-        else
-
-            log "Yarn package already installed: $package_name"
-
-        fi
-
-    else
-
-        log "Installing yarn package: $package_name"
-
-        yarn add "$package_name"
-
-    fi
-
-}
+# install_yarn_package is already defined in @core.sh - removed duplicate
 
 setup_stimulus_use() {
 

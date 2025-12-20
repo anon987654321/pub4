@@ -4,6 +4,9 @@ set -euo pipefail
 # @core.sh - Consolidated core functionality
 # Combines @core_setup.sh, @core_database.sh, @core_dependencies.sh
 # Per master.yml v74.2.0 - Rails 8 + Solid Stack
+# 
+# Note: log(), command_exists(), install_gem(), install_yarn_package() are also in @helpers.sh
+# When both are sourced, @helpers.sh version takes precedence (last source wins)
 
 # Logging
 log() {

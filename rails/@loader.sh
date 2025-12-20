@@ -9,11 +9,11 @@ SCRIPT_DIR="${0:a:h}"
 
 # Core Infrastructure
 source "${SCRIPT_DIR}/@core.sh"
-source "${SCRIPT_DIR}/@rails8_solid_stack.sh"
+# source "${SCRIPT_DIR}/@rails8_solid_stack.sh"  # File doesn't exist yet
 
 # Authentication & Authorization
-source "${SCRIPT_DIR}/@auth_devise.sh"
-source "${SCRIPT_DIR}/@auth_oauth.sh"
+# source "${SCRIPT_DIR}/@auth_devise.sh"  # File doesn't exist yet
+# source "${SCRIPT_DIR}/@auth_oauth.sh"  # File doesn't exist yet
 
 # Features
 source "${SCRIPT_DIR}/@features_voting_comments.sh"
@@ -28,11 +28,11 @@ source "${SCRIPT_DIR}/@frontend_pwa.sh"
 
 # Generators
 source "${SCRIPT_DIR}/@generators_crud_views.sh"
-source "${SCRIPT_DIR}/@generators_models.sh"
+# source "${SCRIPT_DIR}/@generators_models.sh"  # File doesn't exist yet
 
 # Integrations
-source "${SCRIPT_DIR}/@integrations_payment.sh"
-source "${SCRIPT_DIR}/@integrations_maps.sh"
+# source "${SCRIPT_DIR}/@integrations_payment.sh"  # File doesn't exist yet
+# source "${SCRIPT_DIR}/@integrations_maps.sh"  # File doesn't exist yet
 source "${SCRIPT_DIR}/@integrations_search.sh"
 
 # Helpers
@@ -53,6 +53,6 @@ setup_full_app() {
     
     setup_core
     setup_postgresql
-    setup_rails8_solid_stack  # Rails 8 Solid Stack (no Redis needed)
+    # setup_rails8_solid_stack  # Rails 8 Solid Stack (no Redis needed) - file doesn't exist yet
     setup_rails
 }
