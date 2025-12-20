@@ -141,13 +141,40 @@ module Converge
     end
 
     def analyze_banned_tools(file, lines)
+      in_heredoc = false
+      heredoc_marker = nil
+      
       lines.each_with_index do |line, idx|
+        # Track heredoc state
+        if line =~ /<<-?['"]?(\w+)['"]?/
+          in_heredoc = true
+          heredoc_marker = $1
+          next
+        elsif in_heredoc && line =~ /^#{heredoc_marker}\s*$/
+          in_heredoc = false
+          heredoc_marker = nil
+          next
+        end
+        
+        # Skip lines in heredocs (they're content, not commands)
+        next if in_heredoc
+        
         # Skip comments
         next if line =~ /^\s*#/
         
         BANNED_TOOLS.each do |tool|
-          # Check for tool usage (as command, not in strings)
-          if line =~ /\b#{tool}\b/ && line !~ /["'].*\b#{tool}\b.*["']/
+          # Check for tool usage (as command, not in strings or Ruby code)
+          # Skip if in double quotes, single quotes, or Ruby interpolation
+          next if line =~ /["'].*\b#{tool}\b.*["']/
+          next if line =~ /Faker::/  # Ruby code
+          next if line =~ /\.#{tool}/  # Ruby method call
+          
+          if line =~ /\b#{tool}\b/
+            # Additional check: make sure it's a shell command
+            # Skip if it's in an ERB tag or Ruby context
+            next if line =~ /<%.*#{tool}.*%>/
+            next if line =~ /[A-Z]\w*\.#{tool}/  # Class method
+            
             @violations << {
               type: 'banned_tool',
               file: file,

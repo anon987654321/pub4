@@ -406,8 +406,8 @@ generate_remaining_stubs() {
   local apps=("baibl:10007" "brgen_playlist:11003" "brgen_takeaway:11004" "brgen_tv:11005" "mytoonz:11007")
   
   for app_port in $apps; do
-    local app=$(echo $app_port | cut -d: -f1)
-    local port=$(echo $app_port | cut -d: -f2)
+    local app="${app_port%%:*}"
+    local port="${app_port##*:}"
     
     log "Generating ${app}.sh (stub)"
     
