@@ -1,12 +1,13 @@
-# master.yml v75.1.0 - Rails 8 + OpenBSD Code Improvement
-# Updated: 2025-12-20T21:26 - Added reasoning preferences per GPT-4 analysis
+# master.yml v75.2.0 - Rails 8 + OpenBSD Code Improvement
+# Updated: 2025-12-20T21:38 - Added violation prevention enforcement
 #
-# ACTIVATION: "✓ master.yml v75.1.0 loaded
+# ACTIVATION: "✓ master.yml v75.2.0 loaded
 #  • Deep analysis: nested loops, <2% threshold
 #  • Tiered principles: never break → strong → guidelines
 #  • Zero sprawl: commits only, no temp files
 #  • Zsh native: 46% token savings
-#  • Ruby-first reasoning: algorithms as Ruby, file ops as zsh"
+#  • Ruby-first reasoning: algorithms as Ruby, file ops as zsh
+#  • SCAN EVERY COMMAND: Before executing, check forbidden list"
 
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
@@ -21,14 +22,28 @@ reasoning:
     explanations: "Show concrete Ruby or zsh snippets instead of abstract pseudo-code"
   note: "This governs visible output/reasoning surface, not internal LLM thought process"
 
-forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
-allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas]
+forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo, cat, grep, more, less]
+allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add]
 output: "work via commits with clear messages - no temp files"
+
+enforcement:
+  pre_execution: "SCAN EVERY COMMAND before running - if any word matches forbidden list, STOP and rewrite using zsh/ruby"
+  examples:
+    bad: "head -5 file"
+    good: "print -l ${(f)$(<file)}[1,5]"
+    bad: "grep pattern file"
+    good: "print -l ${(M)${(f)$(<file)}:#*pattern*}"
+    bad: "cat file | wc -l"
+    good: "${#${(f)$(<file)}}"
+    bad: "find . -name *.rb"
+    good: "**/*.rb(N.)"
+
 mandate:
   file_ops: "zsh globbing and parameter expansion (**/*.rb(N.), ${(<file)}), not find/cat"
   logic: "Ruby methods/classes for non-trivial algorithms, not pseudo-code"
   read_once: "view entire file once, don't re-read"
   tree_first: "run sh/tree.sh equivalent in new repos before starting"
+  pre_check: "Before EVERY command execution, verify no forbidden tools present"
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
@@ -94,12 +109,18 @@ zsh:
     ext: "${file:e}"
 
 openbsd:
-  vps: {ip: "185.52.176.18", user: dev, pass: "~/priv/passwd/vps_access.txt"}
-  services: "rcctl enable/start/stop/restart/check"
+  vps: {ip: "185.52.176.18", user: dev, key: "~/priv/passwd/id_rsa"}
+  services: "rcctl enable/start/stop/restart/check/reload"
   privilege: doas
-  packages: pkg_add
-  web: "relayd(TLS) → falcon(10001-11006) → Rails"
-  verification: "all tools/daemons/config files must be verified at man.openbsd.org before use"
+  packages: "pkg_add -v"
+  web: "relayd(TLS) → httpd(acme-client) → falcon(10001-11006) → Rails"
+  verification: "all tools/daemons/config files MUST be verified at man.openbsd.org before use"
+  configs:
+    relayd: "/etc/relayd.conf - TLS termination, load balancing"
+    httpd: "/etc/httpd.conf - ACME challenges only"
+    pf: "/etc/pf.conf - packet filter firewall"
+    acme: "/etc/acme-client.conf - Let's Encrypt certs"
+  man_pages: "man relayd.conf, man httpd.conf, man pf.conf, man acme-client.conf"
 
 deploy:
   local: [test, verify_Gemfile, commit]
@@ -108,8 +129,13 @@ deploy:
   verify: "ps aux | grep falcon && curl localhost:port"
 
 execution:
+  pre_flight:
+    - "RELOAD master.yml - confirm activation message"
+    - "SCAN command for forbidden tools before EVERY execution"
+    - "If forbidden tool found: STOP, rewrite with zsh/ruby, then execute"
+  
   steps:
-    - "Read code, understand why it exists (chestertons_fence)"
+    - "Read code once completely, understand why it exists (chestertons_fence)"
     - "Check tier 1 principles first (never break)"
     - "Fix violations one at a time, smallest change"
     - "Test immediately after each change"
