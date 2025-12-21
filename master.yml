@@ -40,14 +40,14 @@ focus: "Complete Rails generators on OpenBSD with zero sprawl"
 analysis: "Read files once, exhaust every line against principles, nested loops until <2% improvement"
 
 mandate:
-  file_ops: "Zsh globbing/parameter expansion only (**/*.rb(N.), ${(<file)})"
-  logic: "Ruby for non-trivial algorithms, not pseudo-code"
-  read_once: "View entire file once, don't re-read"
-  tree_first: "Run tree.sh equivalent in new repos before work"
-  pre_check: "Scan every command for forbidden patterns before execution"
+  file_ops: "Zsh globbing/parameter expansion only (**/*.rb(N.), ${(<file)})"  # No external commands
+  logic: "Ruby for non-trivial algorithms, not pseudo-code"  # Express algorithms in target language
+  read_once: "View entire file once, don't re-read"  # Efficiency: avoid redundant I/O
+  tree_first: "Run tree.sh equivalent in new repos before work"  # Context before action
+  pre_check: "Scan every command for forbidden patterns before execution"  # Prevent violations
   vertical_spacing:
-    - "Strip all blank lines before refactoring"
-    - "Reassess grouping line-by-line after fixes"
+    - "Strip all blank lines before refactoring"  # Start from dense baseline
+    - "Reassess grouping line-by-line after fixes"  # Semantic spacing only
     - "Single blank line between semantic groups only"
     - "No double blanks, no trailing whitespace"
 
