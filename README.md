@@ -1,164 +1,91 @@
-# pub4 - Modern Rails 8 on OpenBSD
+# pub4 - Rails 8 on OpenBSD
 
-Production-ready Rails 8 applications deployed on OpenBSD 7.6+ with Falcon, using Zsh-native patterns and master.yml governance.
+Production Rails 8 applications with Falcon on OpenBSD 7.6+, governed by master.yml.
 
-## System Architecture
+## Stack
 
-**Stack:**
-- Ruby 3.3 + Rails 8.0.4
-- Falcon (async HTTP/2 server)
-- Solid Queue/Cache/Cable (Redis-free)
-- Hotwire + StimulusReflex + Stimulus Components
-- OpenBSD 7.6+ with relayd/httpd/pf
-- SQLite3 (development/production)
-- LangChain for AI features
+Ruby 3.3, Rails 8.0.4, Falcon, Solid Queue/Cache/Cable, Hotwire, StimulusReflex, SQLite3, LangChain, OpenBSD 7.6+ (relayd/httpd/pf), Let's Encrypt, VPS 185.52.176.18
 
-**Infrastructure:**
-- VPS: 185.52.176.18 (server27.openbsd.amsterdam)
-- TLS: Let's Encrypt via acme-client
-- Proxy: relayd → httpd → Falcon (ports 10001-10006, 11006)
-- Firewall: pf with strict ruleset
+## Applications
 
-## Rails Applications
+| App | Port | Purpose | Domains |
+|-----|------|---------|---------|
+| amber | 10001 | AI Fashion Wardrobe | amberapp.com |
+| blognet | 10002 | Multi-blog Platform | foodielicio.us, stacyspassion.com |
+| bsdports | 10003 | BSD Ports Browser | bsdports.org |
+| hjerterom | 10004 | Food Redistribution | hjerterom.no |
+| privcam | 10005 | Privacy Webcam | privcam.no |
+| pubattorney | 10006 | Legal Help | pub.attorney, freehelp.legal |
+| brgen | 11006 | Reddit Clone | brgen.no + 20 domains, 6 subdomains |
 
-### Core Apps (ports 10001-10006)
-- **amber** (10001) - AI Fashion Wardrobe Assistant - amberapp.com
-- **blognet** (10002) - Multi-blog Platform - foodielicio.us, stacyspassion.com
-- **bsdports** (10003) - BSD Ports Browser - bsdports.org
-- **hjerterom** (10004) - Food Redistribution - hjerterom.no
-- **privcam** (10005) - Privacy-First Webcam - privcam.no
-- **pubattorney** (10006) - Legal Help Platform - pub.attorney, freehelp.legal
+## Media Tools
 
-### Flagship App (port 11006)
-- **brgen** - Reddit-style Community Platform
-  - Main: brgen.no + 20 Nordic/European domains
-  - Subdomains: marketplace, playlist, dating, tv, takeaway, maps
+- **postpro.rb** - FFmpeg video post-processing
+- **repligen.rb** - Multi-platform video generator
+- **dilla.rb** - J Dilla-style audio swing
 
-## Media Processing Tools
+## CLI
 
-Ruby scripts for video/audio processing:
-- **postpro.rb** - FFmpeg video post-processing (metadata, thumbnails)
-- **repligen.rb** - Multi-platform video generator (YouTube/TikTok/Instagram)
-- **dilla.rb** - Audio beat manipulation (J Dilla-style swing)
-
-## CLI Tools
-
-- **cli.rb** - Interactive Rails generator with Claude Code integration
-- **master.yml** - Constitutional governance document (v85.0)
+- **cli.rb** - Interactive Rails generator
+- **master.yml** v85.0 - Constitutional governance
 
 ## Deployment
 
-### Local Development
+Local:
 ```zsh
 cd rails/appname
-bundle install
-rails db:migrate db:seed
-rails server  # Uses Falcon
+bundle install && rails db:migrate db:seed && rails server
 ```
 
-### Production Deployment
+Production:
 ```zsh
-# On VPS
 doas pkg_add git ruby ruby33-bundler node
-cd /home/dev && git clone https://github.com/anon987654321/pub4.git
-cd pub4/openbsd && doas zsh openbsd.sh  # Setup infrastructure
-cd pub4/rails/appname && doas zsh appname.sh  # Deploy app
+git clone https://github.com/anon987654321/pub4.git && cd pub4
+doas zsh openbsd/openbsd.sh
+doas zsh rails/appname/appname.sh
 doas rcctl enable appname && doas rcctl start appname
 ```
 
-### Verification
+Verify:
 ```zsh
-rcctl check appname  # Should show "appname(ok)"
-curl http://localhost:1000X  # Test backend
-curl -I https://domain.com  # Test TLS frontend
+rcctl check appname && curl http://localhost:1000X && curl -I https://domain.com
 ```
 
-## master.yml Governance
+## master.yml
 
 Self-optimizing constitutional document enforcing:
-- Zsh-only patterns (no bash/sed/awk/grep)
-- Ruby for all logic (no Python)
-- Preserve-then-improve doctrine
-- Security-first architecture
-- Zero file sprawl
+- Zsh-only (no bash/sed/awk)
+- Ruby-only logic
+- Preserve-then-improve
+- Security-first
+- Zero sprawl
 
-**Current Version:** v85.0.0  
-**Self-optimization cycles:** 5 max, <2% improvement threshold
+v85.0: 5 cycles max, <2% threshold
 
-## Project Structure
+## Structure
 
 ```
 pub4/
-├── master.yml          # Constitutional governance
-├── cli.rb             # Interactive Rails generator
-├── rails/             # Rails 8 applications
-│   ├── amber/
-│   ├── blognet/
-│   ├── brgen/
-│   ├── bsdports/
-│   ├── hjerterom/
-│   ├── privcam/
-│   ├── pubattorney/
-│   └── *.sh           # Shared modules (auth, stack, hotwire, etc.)
-├── openbsd/
-│   ├── openbsd.sh     # VPS infrastructure setup
-│   └── README.md      # OpenBSD deployment guide
-├── media/
-│   ├── postpro.rb     # Video post-processing
-│   ├── repligen.rb    # Multi-platform video generator
-│   └── dilla.rb       # Audio beat manipulation
-└── sh/                # Utility scripts (tree.sh, clean.sh, etc.)
+├── master.yml
+├── cli.rb
+├── rails/{amber,blognet,brgen,bsdports,hjerterom,privcam,pubattorney}/
+├── openbsd/{openbsd.sh,README.md}
+├── media/{postpro,repligen,dilla}.rb
+└── sh/
 ```
 
-## Session Changelog (2025-12-21)
+## Changelog (2025-12-21)
 
-### Rails Applications
-- ✅ Consolidated 42 scripts into 7 app-based folders
-- ✅ Extracted shared logic into 12 feature modules (@auth, @stack, @hotwire, etc.)
-- ✅ Removed @shared_functions.sh file sprawl
-- ✅ Fixed Falcon config syntax (symbols → strings)
-- ✅ Integrated LangChain into all apps
-- ✅ Added comprehensive views with Rails tag helpers (no divitis)
-- ✅ Integrated stimulus-components.com throughout
-- ✅ Switched all apps to SQLite3
+**Rails:** 42 scripts → 7 apps + 12 modules | SQLite3, LangChain, Hotwire, stimulus-components
 
-### OpenBSD Infrastructure
-- ✅ Updated relayd.conf with all app backends
-- ✅ Configured pf.conf firewall rules
-- ✅ Setup acme-client for Let's Encrypt
-- ✅ Created rc.d services for all apps
-- ✅ Verified man.openbsd.org documentation compliance
+**OpenBSD:** relayd/pf/acme-client, rc.d services
 
-### Media Tools
-- ✅ Consolidated repligen/ sprawl into single repligen.rb
-- ✅ Optimized postpro.rb through master.yml
-- ✅ Enhanced dilla.rb with proper error handling
+**Media:** Consolidated, optimized
 
-### master.yml Evolution
-- v78.0: Added silent_success, tool_permissions wildcards, overrides
-- v79.5: Merged Grok's structural improvements
-- v80.0: Added immutability boundaries (ChatGPT suggestions)
-- v80.2: Fixed DeepSeek-identified gaps (cross-platform paths, secret management)
-- v81.0: Added disaster recovery, health checks, backup procedures
-- v85.0: Comprehensive Zsh patterns, error recovery, environment detection
+**master.yml:** v78→85 (Grok/ChatGPT/DeepSeek: structure, security, recovery, Zsh patterns)
 
-### Key Improvements
-- Zero file sprawl (reduced from 60+ files to organized structure)
-- All shared logic in feature modules
-- Consistent naming conventions (lowercase, underscores)
-- No ASCII decorations in comments
-- Zsh-native patterns throughout
-- Security-first secret management
+**Result:** Zero sprawl, lowercase/underscores, Zsh-native
 
 ## Contributing
 
-All changes must:
-1. Pass through master.yml principles
-2. Use Zsh patterns (no forbidden commands)
-3. Preserve existing behavior
-4. Include clear commit messages
-5. Self-optimize until <2% improvement
-
-## License
-
-Private repository - All rights reserved
+Pass master.yml principles, use Zsh patterns, preserve behavior, clear commits, self-optimize to <2%.
