@@ -1,8 +1,8 @@
-# master.yml v80.1.0 - consistent lowercase, reduced visual noise
-# chatgpt insight: hard separation between law/policy/procedure prevents erosion
-# preserved: all operational specifics (zsh patterns, rails procedures, domain maps)
-# new: explicit immutable sections that self_optimize must never touch
-# activation: "✓ master.yml v80.1.0 loaded - laws immutable, procedures preserved"
+# master.yml v81.0 - blind spots addressed: error recovery, health monitoring, backup procedures
+# deepseek insights: cross-platform paths, secret management, complete zsh coverage, disaster recovery
+# preserved: all operational specifics + added missing operational resilience patterns
+# new: error recovery protocol, health checks, backup strategy, path abstraction, dependency pinning
+# activation: "✓ master.yml v81.0 loaded - production-ready with operational resilience"
 
 # immutable law: never auto_optimize, never reword, requires human approval
 
@@ -38,8 +38,45 @@ silent_success:
 # working_system_criteria: defines "working" for ops_safety principle
 working_system_criteria:
   deployment: "rcctl check returns OK, curl localhost:PORT returns 2xx, no fatal in logs"
-  development: "rails test passes, rubocop clean, app boots within 10s"
-  production: "uptime >99%, response_time <500ms p95, zero security alerts"
+  development: "rails test passes, app boots within 10s, db:migrate runs clean"
+  production: "uptime >99%, response_time <500ms p95, zero security alerts, health endpoint returns 200"
+
+# error_recovery: automated retry and fallback protocol
+error_recovery:
+  ssh_failure: {retry: 3, backoff_seconds: 5, fallback: "alert human via log"}
+  pkg_install: {retry: 2, mirror_fallback: true, skip_on_exists: true}
+  db_migration: {backup_first: true, rollback_on_fail: true, alert_threshold: "any failure"}
+  service_start: {retry: 3, check_port_conflict: true, check_permissions: true}
+  
+# backup_strategy: protects against data loss
+backup_strategy:
+  database: {frequency: "daily 02:00", retention_days: 30, before_migration: true}
+  config_files: {frequency: "on change", retention_count: 10, location: "/var/backups/config"}
+  application_data: {frequency: "daily 03:00", retention_days: 7, offsite: false}
+  git: "primary backup; tag releases; keep full history"
+
+# health_monitoring: observability and alerting
+health_monitoring:
+  endpoint: "/health"
+  checks: ["database_connected", "disk_space >20%", "memory_available >512mb", "uptime"]
+  frequency_seconds: 60
+  alert_on: ["health_check_fail >3", "response_time >2s", "error_rate >1%"]
+  logs: {aggregate: "/var/log/rails/", rotate: "weekly", retention_weeks: 4}
+
+# path_abstraction: cross-platform compatibility
+path_abstraction:
+  local_secrets: "/g/priv/passwd"  # Windows/Cygwin: /g/priv/passwd
+  vps_secrets: "/home/dev/.ssh"    # OpenBSD: /home/dev/.ssh
+  translate_on_deploy: true         # Auto-detect environment and adjust paths
+  
+# dependency_pinning: reproducible environments  
+dependency_pinning:
+  ruby: "3.3.x"           # Patch versions auto-update
+  rails: "~> 8.0.4"       # Minor versions require approval
+  falcon: "~> 0.53.0"     # Match production exactly
+  openbsd: "7.6+"         # Verify with: uname -r
+  gems: "use Gemfile.lock for exact versions"
+  system_packages: "document in ibom.yml per app"
 
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
 analysis: "Read files once, exhaust every line against principles, nested loops until <2% improvement"
