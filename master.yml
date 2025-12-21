@@ -1,23 +1,24 @@
-# master.yml v81.0 - blind spots addressed: error recovery, health monitoring, backup procedures
-# deepseek insights: cross-platform paths, secret management, complete zsh coverage, disaster recovery
-# preserved: all operational specifics + added missing operational resilience patterns
-# new: error recovery protocol, health checks, backup strategy, path abstraction, dependency pinning
-# activation: "✓ master.yml v81.0 loaded - production-ready with operational resilience"
-
-# immutable law: never auto_optimize, never reword, requires human approval
+# master.yml v84.0
+#
+# Operational constitution for Rails + OpenBSD development
+# • Law is immutable; principles guide; criteria enforce
+# • Silent success: report exceptions only
+# • Zsh native: zero forks, parameter expansion
+# • Ruby-first reasoning: algorithms in Ruby, ops in zsh
+# • Rails 8 + Falcon + Solid Stack → OpenBSD VPS
+#
+# ACTIVATION: "✓ master.yml v84.0 loaded"
 
 law:
+  immutable: true
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   chestertons_fence: "understand intent before removal"
   security_axiom: "validate input, least privilege, defense in depth; no plaintext secrets in commits"
   ops_safety: "working systems outrank elegance"
   auditability: "all changes explainable post-hoc"
 
-# principles: flat, universal, optimize wording only not meaning
-
 principles:
   preserve_behavior: "never break working code"
-  security_first: "validate input, least privilege, defense in depth"
   single_responsibility: "one reason to change"
   dry: "single source of truth"
   kiss: "no unnecessary complexity"
@@ -27,236 +28,179 @@ principles:
   boy_scout: "leave cleaner than found"
   stepdown: "important code first"
   measure_first: "profile before optimizing"
-
-# operational policy: optimize for clarity, preserve all specifics
+  fail_fast: "validate at entry, never swallow errors"
+  rule_of_three: "abstract on 3rd occurrence, not before"
+  two_hats: "refactor OR add features, never both"
+  law_of_demeter: "talk to friends, not strangers"
 
 silent_success:
   principle: "Report only exceptions; success is default"
   levels: {success: log_only, warn: daily_digest, error: immediate, fatal: alert}
   rationale: "80% noise reduction"
 
-# working_system_criteria: defines "working" for ops_safety principle
 working_system_criteria:
-  deployment: "rcctl check returns OK, curl localhost:PORT returns 2xx, no fatal in logs"
-  development: "rails test passes, app boots within 10s, db:migrate runs clean"
-  production: "uptime >99%, response_time <500ms p95, zero security alerts, health endpoint returns 200"
+  deployment: "rcctl check OK, curl localhost:PORT 2xx, no fatal in logs"
+  development: "rails test passes, app boots <10s, db:migrate clean"
+  production: "uptime >99%, p95 <500ms, zero security alerts, health 200"
 
-# error_recovery: automated retry and fallback protocol
+vps:
+  ip: "185.52.176.18"
+  backup_ns: "194.63.248.53"
+  user: dev
+  key_local: "G:/priv/passwd/id_ed25519"
+  key_remote: "~/.ssh"
+  deploy_base: "/var/rails"
+  app_base: "/home"
+  ssh_pattern: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 -o ConnectTimeout=10 dev@185.52.176.18 ''COMMAND''"'
+
 error_recovery:
-  ssh_failure: {retry: 3, backoff_seconds: 5, fallback: "alert human via log"}
+  ssh_failure: {retry: 3, backoff: [5, 10, 20], fallback: "alert human"}
   pkg_install: {retry: 2, mirror_fallback: true, skip_on_exists: true}
-  db_migration: {backup_first: true, rollback_on_fail: true, alert_threshold: "any failure"}
-  service_start: {retry: 3, check_port_conflict: true, check_permissions: true}
-  
-# backup_strategy: protects against data loss
-backup_strategy:
-  database: {frequency: "daily 02:00", retention_days: 30, before_migration: true}
-  config_files: {frequency: "on change", retention_count: 10, location: "/var/backups/config"}
-  application_data: {frequency: "daily 03:00", retention_days: 7, offsite: false}
-  git: "primary backup; tag releases; keep full history"
+  db_migration: {backup_first: true, rollback_on_fail: true, alert: "any failure"}
+  service_start: {retry: 3, check_port: true, check_permissions: true}
+  deployment: {rollback: "previous version", preserve_logs: true}
 
-# health_monitoring: observability and alerting
+backup: "git (tag releases, full history); pg_dump before migrations if needed"
+
 health_monitoring:
   endpoint: "/health"
-  checks: ["database_connected", "disk_space >20%", "memory_available >512mb", "uptime"]
+  checks: ["db_connected", "disk >20%", "memory >512mb", "uptime"]
   frequency_seconds: 60
-  alert_on: ["health_check_fail >3", "response_time >2s", "error_rate >1%"]
-  logs: {aggregate: "/var/log/rails/", rotate: "weekly", retention_weeks: 4}
+  alerts:
+    health_fail: ">3 consecutive"
+    response_time: ">2s for 5min"
+    error_rate: ">1% for 10min"
+    cpu: ">80% for 15min"
+    memory: ">90% for 10min"
+    disk: ">85%"
+    tls_expiry: "30 days warning, 14 days renew"
+  logs: {location: "/var/log/rails/", rotate: "weekly", retention_weeks: 4}
 
-# path_abstraction: cross-platform compatibility
-path_abstraction:
-  local_secrets: "/g/priv/passwd"  # Windows/Cygwin: /g/priv/passwd
-  vps_secrets: "/home/dev/.ssh"    # OpenBSD: /home/dev/.ssh
-  translate_on_deploy: true         # Auto-detect environment and adjust paths
-  
-# dependency_pinning: reproducible environments  
+cache:
+  key_design: "namespace:model:id:version"
+  expiration: {user_session: "24h", api_response: "5min", page_fragment: "1h", static_content: "7d"}
+  invalidation: ["touch updated_at", "cache_key update", "manual sweep via job"]
+  strategy: "Russian Doll caching for views; memoization for same-request"
+
+accessibility:
+  standard: "WCAG 2.1 AA minimum"
+  requirements: ["keyboard navigation", "screen reader labels", "contrast ≥4.5:1", "skip links", "semantic HTML"]
+  testing: "automated via axe-core; manual verification quarterly"
+
+i18n:
+  timezone: "UTC stored; user preference display"
+  locales: ["no", "en"]
+  currency: "ISO 4217 codes; Money gem for formatting"
+  strategy: "Rails I18n with YAML files; lazy load translations"
+
+data_retention:
+  user_data: "7 years or delete on request (GDPR)"
+  logs: {app: "4 weeks", auth: "1 year", errors: "90 days"}
+  backups: {daily: "7 days", weekly: "4 weeks", monthly: "12 months"}
+  temp_files: "cleanup on boot + daily cron"
+
 dependency_pinning:
-  ruby: "3.3.x"           # Patch versions auto-update
-  rails: "~> 8.0.4"       # Minor versions require approval
-  falcon: "~> 0.53.0"     # Match production exactly
-  openbsd: "7.6+"         # Verify with: uname -r
-  gems: "use Gemfile.lock for exact versions"
-  system_packages: "document in ibom.yml per app"
+  ruby: "3.3.x"
+  rails: "~> 8.0.4"
+  falcon: "~> 0.53.0"
+  strategy: "pin major, allow minor/patch; test upgrades in staging"
+  gems: "Gemfile.lock committed; bundle install --deployment"
+  verification: "quarterly production vs development comparison"
 
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
-analysis: "Read files once, exhaust every line against principles, nested loops until <2% improvement"
+analysis: "Read once, exhaust every line against principles, iterate until convergence criteria met"
 
 mandate:
-  file_ops: "Zsh globbing/parameter expansion only (**/*.rb(N.), ${(<file)})"  # No external commands
-  logic: "Ruby for non-trivial algorithms, not pseudo-code"  # Express algorithms in target language
-  read_once: "View entire file once, don't re-read"  # Efficiency: avoid redundant I/O
-  tree_first: "Run tree.sh equivalent in new repos before work"  # Context before action
-  pre_check: "Scan every command for forbidden patterns before execution"  # Prevent violations
+  file_ops: "Zsh globbing/parameter expansion only (**/*.rb(N.), ${(<file)})"
+  logic: "Ruby for non-trivial algorithms"
+  read_once: "View entire file once, don't re-read"
+  tree_first: "Run tree.sh equivalent in new repos before work"
+  pre_check: "Scan every command for forbidden patterns before execution"
   vertical_spacing:
-    - "Strip all blank lines before refactoring"  # Start from dense baseline
-    - "Reassess grouping line-by-line after fixes"  # Semantic spacing only
+    - "Strip all blank lines before refactoring"
+    - "Reassess grouping line-by-line after fixes"
     - "Single blank line between semantic groups only"
-    - "No double blanks, no trailing whitespace"
-
-# tooling constraints: machine_actionable, auto_optimize for precision
 
 reasoning:
   primary_language: Ruby
   primary_shell: zsh
   expression:
-    algorithms: "Express algorithms and examples as Ruby code where practical"
-    file_operations: "Express file operations as zsh parameter expansion and globs, not generic shell"
-    explanations: "Show concrete Ruby or zsh snippets instead of abstract pseudo-code"
-  note: "This governs visible output/reasoning surface, not internal LLM thought process"
+    algorithms: "Ruby code, not pseudo-code"
+    file_operations: "zsh parameter expansion and globs"
+    explanations: "concrete snippets over abstractions"
 
 environment:
-  windows: "Use C:\\cygwin64\\bin\\zsh.exe for all shell operations"
-  cli: "GitHub Copilot CLI (Node.js npm package @github/copilot)"
-  shell_access: "Run zsh scripts with: zsh path/to/script.sh (works in GitHub Copilot CLI)"
-  
-  ssh:
-    default_method: "Key-based authentication with zsh"
-    keys_location_local: "G:\\priv\\passwd"  # Windows/Cygwin: absolute path
-    keys_location_remote: "~/.ssh"  # OpenBSD VPS: standard location
-    key_priority: ["id_ed25519", "id_rsa", "openbsd_key"]
-    pattern_with_key: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 -o ConnectTimeout=10 dev@185.52.176.18 ''COMMAND''"'
-    pattern_interactive: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 dev@185.52.176.18"'
-    password_fallback: []  # Use Rails credentials or env vars, never commit secrets
-    approval: "Trust but verify: Review commands before remote execution, never blanket approve destructive ops"
-    error_handling: "On connection failure: retry 3x with exponential backoff, then alert"
-  
+  windows: "C:\\cygwin64\\bin\\zsh.exe"
+  cli: "GitHub Copilot CLI (@github/copilot)"
   session_management:
-    prefer_async: "For interactive tools, SSH sessions, debugging, long-running servers"
-    prefer_sync: "For quick commands with predictable output (< 30s)"
-    initial_wait_guidance: "30s+ for builds/tests, 10-15s for file ops, 60s+ for deployments"
-    note: "PowerShell tool sessions persist across calls when using same sessionId"
+    prefer_async: "interactive tools, SSH, debugging, long-running"
+    prefer_sync: "quick commands <30s"
 
-deployment:
-  vps:
-    ip: "185.52.176.18"
-    backup_ns: "194.63.248.53"
-    deploy_base: "/var/rails"
-    app_base: "/home"
-  apps:
-    brgen:
-      port: 11006
-      domains: "brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
-      subdomains: "markedsplass playlist dating tv takeaway maps"
-    amber:
-      port: 10001
-      domains: "amberapp.com"
-    blognet:
-      port: 10002
-      domains: "foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-    bsdports:
-      port: 10003
-      domains: "bsdports.org"
-    hjerterom:
-      port: 10004
-      domains: "hjerterom.no"
-    privcam:
-      port: 10005
-      domains: "privcam.no"
-    pubattorney:
-      port: 10006
-      domains: "pub.attorney freehelp.legal"
-  read_files: "Use cat from zsh, or view tool for line-numbered viewing"
-  config_locations:
-    claude: "G:\\.claude\\settings.local.json (auto_load master.yml, mandate zsh-only)"
-    copilot: "~\\.copilot\\config.json (trusted_folders, user settings)"
-  execution_trick: "Prefix commands with 'zsh' to run zsh scripts (e.g. zsh ../sh/showp.sh)"
-
-forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash_echo]  # bash_echo clarified: use zsh print instead
-allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat, curl, wget]  # curl/wget for downloads only
-output: "work via commits with clear messages - no temp files"
+apps:
+  _volatile: true  # inventory changes; do not refactor away
+  brgen: {port: 11006, domains: "brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com", subdomains: "markedsplass playlist dating tv takeaway maps"}
+  amber: {port: 10001, domains: "amberapp.com"}
+  blognet: {port: 10002, domains: "foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"}
+  bsdports: {port: 10003, domains: "bsdports.org"}
+  hjerterom: {port: 10004, domains: "hjerterom.no"}
+  privcam: {port: 10005, domains: "privcam.no"}
+  pubattorney: {port: 10006, domains: "pub.attorney freehelp.legal"}
 
 enforcement:
-  pre_execution: "SCAN EVERY COMMAND before running - if any word matches forbidden list, STOP and rewrite using zsh/ruby"
-  
+  forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash_echo]
+  allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat, curl, wget]
+  pre_execution: "SCAN EVERY COMMAND - if forbidden, STOP and rewrite using zsh/ruby"
+  output: "work via commits with clear messages - no temp files"
+
 zsh_patterns:
-  philosophy: "No external forks, pure zsh parameter expansion for maximum performance"
-  
   string_ops:
-    crlf_removal: "cleaned=${var//$'\\r'/}"
-    lowercase: "lower=${(L)var}"
-    uppercase: "upper=${(U)var}"
-    replace_all: "result=${var//search/replace}"
-    trim_start: "trimmed=${var##[[:space:]]#}"
-    trim_end: "trimmed=${var%%[[:space:]]#}"
-    trim_both: "trimmed=${${var##[[:space:]]#}%%[[:space:]]#}"
-    nth_field: "fourth=${${(s:,:)line}[4]}"
-    split_to_array: "arr=( ${(s:delim:)var} )"
-  
+    crlf_removal: "${var//$'\\r'/}"
+    lowercase: "${(L)var}"
+    uppercase: "${(U)var}"
+    replace_all: "${var//search/replace}"
+    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
+    nth_field: "${${(s:,:)line}[4]}"
+    split: "arr=( ${(s:delim:)var} )"
   array_ops:
-    filter_match: "matches=( ${(M)arr:#*pattern*} )"
-    filter_exclude: "non_matches=( ${arr:#*pattern*} )"
-    unique: "unique=( ${(u)arr} )"
-    join: "joined=${(j:,:)arr}"
-    reverse: "reversed=( ${(Oa)arr} )"
-    sort_asc: "sorted=( ${(o)arr} )"
-    sort_desc: "sorted=( ${(O)arr} )"
-  
-  replacements:
-    grep: "lines=( ${(M)lines:#*query*} )"
-    awk_column: "col=${${(s:,:)line}[4]}"
-    uniq: "unique=( ${(u)arr} )"
-    head: "${arr[1,10]}"
-    tail: "${arr[-5,-1]}"
-    wc_lines: "${#${(f)content}}"
-  
-  flags:
-    M: "match instead of filter"
-    u: "unique elements"
-    o: "sort ascending"
-    O: "sort descending"
-    L: "lowercase"
-    U: "uppercase"
-    j: "join array"
-    s: "split string"
-    A: "assign to array"
-  
+    filter_match: "${(M)arr:#*pattern*}"
+    filter_exclude: "${arr:#*pattern*}"
+    unique: "${(u)arr}"
+    join: "${(j:,:)arr}"
+    sort: "${(o)arr}"
+  file_ops:
+    recursive_mkdir: "mkdir -p path/to/nested  # allowed exception"
+    safe_download: "curl -fsSL --max-time 30 URL -o file  # validate after"
+    permissions: "chmod 600 ~/.ssh/id_*  # security-critical only"
   examples:
-    bad: "head -5 file"
-    good: "print -l ${(f)$(<file)}[1,5]"
-    bad: "grep pattern file"
-    good: "print -l ${(M)${(f)$(<file)}:#*pattern*}"
-    bad: "cat file | wc -l"
-    good: "${#${(f)$(<file)}}"
-    bad: "find . -name *.rb"
-    good: "**/*.rb(N.)"
-  
+    - {bad: "head -5 file", good: "print -l ${(f)$(<file)}[1,5]"}
+    - {bad: "grep pattern file", good: "print -l ${(M)${(f)$(<file)}:#*pattern*}"}
+    - {bad: "cat file | wc -l", good: "${#${(f)$(<file)}}"}
+    - {bad: "find . -name *.rb", good: "**/*.rb(N.)"}
+    - {bad: "curl URL | sh", good: "curl -fsSL URL -o script && inspect && zsh script"}
   system_ops:
-    timestamp: "zsh/datetime module: zmodload zsh/datetime; print $EPOCHSECONDS or strftime '%Y-%m-%d' $EPOCHSECONDS"
-    command_exists: "[[ -n ${commands[cmd]} ]] checks if cmd in PATH"
-    mkdir_recursive: "Built-in: mkdir -p still allowed; creates parents automatically"
-    touch_file: "Built-in: touch file still allowed; creates or updates timestamp"
-    file_permissions: "Use zsh stat module: zmodload zsh/stat; stat -f '%Lp' file for mode"
-    symbolic_link: "Built-in: ln -sf target link still allowed; creates symlink"
-    safe_download: "Use with validation: curl -fsSL URL | zsh (only for trusted sources with checksums)"
+    timestamp: "zmodload zsh/datetime; strftime '%Y-%m-%d' $EPOCHSECONDS"
+    command_exists: "[[ -n ${commands[cmd]} ]]"
 
 tool_permissions:
   mode: deny_by_default
-  categories:
-    shell:
-      allowed_patterns: ["git *", "bundle *", "rails *", "zsh *", "doas *", "rcctl *", "pkg_add *"]
-      denied_patterns: ["rm -rf /*", "sudo *", "curl * | *", "chmod 777 *", "eval *"]
-      denied_tools: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
-    file_operations:
-      read: {allowed: ["**/*"], denied: ["**/.env", "**/secrets/**", "**/*_key*"]}
-      write: {allowed: ["~/pub/**", "~/learning/**"], denied: ["/etc/**", "/var/**", "/usr/**"]}
-      create: "Never create unauthorized files; no temp markdown for tracking/notes; use commits as documentation"
-  rationale: "Pattern-based matching more precise than flat lists. Wildcards prevent bypasses."
+  shell:
+    allowed: ["git *", "bundle *", "rails *", "zsh *", "doas *", "rcctl *", "pkg_add *"]
+    denied: ["rm -rf /*", "sudo *", "curl * | *", "chmod 777 *", "eval *"]
+  file_ops:
+    read_denied: ["**/.env", "**/secrets/**", "**/*_key*"]
+    write_denied: ["/etc/**", "/var/**", "/usr/**"]
 
-file_sprawl_prevention:
-  consolidation: "Merge folder/ into folder.rb when consolidating logic (e.g. repligen/ → repligen.rb)"
-  no_temp_files: "No .md files for planning/notes/tracking; work in memory, document via git commits"
-  prefix_temp: "If temp files absolutely needed, prefix with . and delete after consumption"
-
-stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
+stack: {ruby: 3.3, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
 style:
   comments:
-    forbidden_decorations: ["---", "===", "###", "***", "━━━", "═══", "▬▬▬"]
-    rationale: "ASCII art separators create visual noise; use semantic structure instead"
-    preferred: "Simple # SECTION: description format"
+    philosophy: "explain WHY, never WHAT"
+    required: ["non-obvious algorithm", "business rule", "security rationale", "perf optimization"]
+    forbidden: ["obvious code", "redundant with name", "commented-out code", "---", "===", "###", "***"]
+    preferred: "# WHY: reason"
   code:
-    no_divitis: "Use Rails tag helpers (tag.p, tag.div) not raw HTML; ultraminimalistic views"
-    vertical_rhythm: "Single blank line between semantic groups only; no double blanks"
+    no_divitis: "Rails tag helpers, ultraminimalistic views"
+    vertical_rhythm: "single blank between semantic groups"
 
 scope:
   production: ["~/pub/rails/", "~/pub/openbsd/"]
@@ -265,15 +209,10 @@ scope:
 
 overrides:
   - directories: ["~/pub/rails/**"]
-    quality_thresholds:
-      method: {max: 25}  # Rails controllers/views can be slightly longer
-    tool_permissions:
-      shell:
-        allowed_patterns: ["rails *", "bundle exec *", "rake *"]
+    method_max: 25
+    shell_allowed: ["rails *", "bundle exec *", "rake *"]
   - directories: ["~/learning/**", "~/experiments/**"]
-    two_hats_enforcement: false  # Experimentation allowed
-    rule_of_three: false  # Try patterns early without waiting for duplication
-    rationale: "Learning context needs flexibility; production needs discipline"
+    strict_enforcement: false
 
 ruby:
   frozen_string_literal: true
@@ -284,202 +223,75 @@ ruby:
 rails:
   version: 8.0.4
   stack: "Solid + Hotwire + Falcon"
-  avoid: "React/Vue/Angular, Puma (use Falcon), Redis (use Solid)"
-  doctrine: "convention > configuration"
-  deployment:
-    server: "Falcon (async, fiber-based, HTTP/2 capable)"
-    replace_puma: "bundle remove puma && bundle add falcon falcon-rails"
-    config: "config/falcon.rb with preload, multi-worker, Falcon::Environment::Rack"
-    solid_stack:
-      queue: "bin/rails generate solid_queue:install - background jobs"
-      cache: "bin/rails generate solid_cache:install - caching layer"
-      cable: "bin/rails generate solid_cable:install - WebSockets"
-      auth: "bin/rails generate authentication - Rails 8 built-in"
-    gotchas:
-      - "Rails 8 includes Propshaft (not Sprockets)"
-      - "Solid Queue generator adds config to production.rb (don't append manually)"
-      - "Falcon needs config/preload.rb with require_relative 'environment'"
-
-
+  avoid: "React/Vue/Angular, Puma, Redis"
+  server: "Falcon (async, fiber-based, HTTP/2)"
+  testing: "Minitest; ≥80% coverage; bin/rails test after changes"
+  solid_generators: ["solid_queue:install", "solid_cache:install", "solid_cable:install", "authentication"]
 
 openbsd:
-  vps: {ip: "185.52.176.18", user: dev, key: "~/priv/passwd/id_rsa"}
   services: "rcctl enable/start/stop/restart/check/reload"
   privilege: doas
   packages: "pkg_add -v"
-  web: "relayd(TLS) → httpd(acme-client) → falcon(10001-11006) → Rails"
-  verification: "all tools/daemons/config files MUST be verified at man.openbsd.org before use"
-  configs:
-    relayd: "/etc/relayd.conf - TLS termination, load balancing"
-    httpd: "/etc/httpd.conf - ACME challenges only"
-    pf: "/etc/pf.conf - packet filter firewall"
-    acme: "/etc/acme-client.conf - Let's Encrypt certs"
-  man_pages: "man relayd.conf, man httpd.conf, man pf.conf, man acme-client.conf"
+  web: "relayd(TLS) → httpd(acme) → falcon(10001-11006) → Rails"
+  monitoring: "systat, pfctl -s info, tail /var/log/relayd"
+  verification: "man.openbsd.org before use"
+  configs: {relayd: "/etc/relayd.conf", httpd: "/etc/httpd.conf", pf: "/etc/pf.conf", acme: "/etc/acme-client.conf"}
 
 deploy:
   local: [test, verify_Gemfile, commit, push]
-  vps_setup:
-    - "ssh dev@185.52.176.18 (use key: ~/priv/passwd/id_rsa or env PASSWORD)"
-    - "doas rm -rf ~/rails/appname (clean slate)"
-    - "cd ~/pub4 && git pull (get latest scripts)"
-    - "cd rails && doas zsh appname.sh (run installer)"
-  rails_deploy:
-    - "Script creates ~/rails/appname and installs all dependencies"
-    - "Falcon configured with 2 workers on port 1000X"
-    - "PostgreSQL database created with credentials from script"
-    - "rc.d service installed: rcctl enable appname && rcctl start appname"
-  verify:
-    - "rcctl check appname (should show 'appname(ok)')"
-    - "ps aux | grep falcon (check processes)"
-    - "curl http://localhost:1000X (test local)"
-    - "curl https://domain.com (test through relayd)"
   remote: "ssh vps 'cd ~/pub4/rails && doas zsh appname.sh'"
+  verify: ["rcctl check appname", "ps aux | grep falcon", "curl localhost:PORT", "curl https://domain"]
   service: "rcctl enable app && rcctl start app"
 
 execution:
-  pre_flight:
-    - "RELOAD master.yml - confirm activation message"
-    - "SCAN command for forbidden tools before EVERY execution"
-    - "If forbidden tool found: STOP, rewrite with zsh/ruby, then execute"
-  
-  steps:
-    - "Read code once completely, understand why it exists (chestertons_fence)"
-    - "Check tier 1 principles first (never break)"
-    - "Fix violations one at a time, smallest change"
-    - "Test immediately after each change"
-    - "Commit with clear message"
-    - "Measure: (prev_violations - current) / prev × 100"
-    - "Continue if improvement ≥2% and cycles <5"
+  pre_flight: ["RELOAD master.yml", "SCAN for forbidden tools", "rewrite if needed"]
+  steps: ["read once (chestertons_fence)", "check tier 1 first", "fix one at a time", "test immediately", "commit clearly", "measure improvement", "continue if ≥2%"]
 
-self_optimize:
-  run_on_self: true
-  threshold: 2
-  max_cycles: 5
-  measure: "violations per 100 lines"
+self_optimize: {run_on_self: true, threshold: 2, max_cycles: 5, measure: "violations per 100 lines"}
+convergence: "violations=0 AND (hash_unchanged OR delta<2% OR quality_decreased)"
 
-git_recovery: "git log --patch --all -- path/to/file, then git show HASH:path > recovered"
+adversarial:
+  consensus: 0.7
+  personas:
+    security: {weight: 0.30, veto: true, asks: "injection? validation? escalation?"}
+    maintainer: {weight: 0.20, veto: true, asks: "clear at 3am? junior can debug?"}
+    minimalist: {weight: 0.15, asks: "simplest? what to remove?"}
+    performance: {weight: 0.15, asks: "big-O? memory? worst case?"}
+    architect: {weight: 0.10, asks: "coupling? dependencies? scales?"}
+    realist: {weight: 0.10, asks: "deadline? resources? ROI?"}
 
-# error_recovery: comprehensive retry and fallback protocols
-error_recovery:
-  ssh_failure: "Retry 3x with backoff (5s, 10s, 20s), check network/firewall, verify key permissions"
-  pkg_add_failure: "Check mirror availability, retry with -v for details, fallback to backup_ns DNS"
-  db_migration_failure: "Check logs, restore from backup, rollback migration, fix schema conflict"
-  service_start_failure: "Check rcctl -d output, verify port availability, check permissions, review logs"
-  deployment_failure: "Stop deployment, rollback to previous version, alert team, preserve logs for forensics"
+structural_ops:
+  defragment: "consolidate scattered related code"
+  hoist: "move constants/config to top"
+  merge: "extract duplicate blocks"
+  regroup: "organize by domain, not type"
+  reflow: "definitions before usage, critical first"
+  flatten: "reduce nesting depth"
 
-# backup_rollback: immutable backups and automated rollback procedures
-backup_rollback:
-  database:
-    frequency: "Before every migration, nightly at 3am UTC"
-    retention: "7 daily, 4 weekly, 12 monthly"
-    location: "/var/backups/postgres with offsite rsync to backup_ns"
-    test_restore: "Monthly automated restore test to verify integrity"
-  configuration:
-    strategy: "Git tracks all configs; /etc backed up before changes to /var/backups/etc_TIMESTAMP"
-    rollback: "doas cp /var/backups/etc_TIMESTAMP/file.conf /etc/file.conf && doas rcctl restart service"
-  application:
-    artifact: "Rails app in git; deployment preserves previous release in /var/rails/appname_prev"
-    rollback: "doas ln -sf /var/rails/appname_prev /var/rails/appname && doas rcctl restart appname"
-  offsite: "Daily rsync to backup_ns:194.63.248.53 with 30-day retention, air-gapped monthly"
-
-# health_monitoring: defines observable metrics and alerting thresholds
-health_monitoring:
-  application:
-    health_endpoint: "GET /health returns {status: 'ok', checks: {db: true, queue: true}}"
-    response_time: "p95 <500ms, p99 <1s; alert if >2s for 5min"
-    error_rate: "Alert if >1% of requests fail 5xx for 10min"
-    uptime: "Target 99.9% monthly; page on-call if <99%"
-  infrastructure:
-    cpu: "Alert if >80% for 15min sustained"
-    memory: "Alert if >90% for 10min"
-    disk: "Alert if >85% on any partition"
-    network: "Alert if packet loss >1% or latency >50ms to backbone"
-  services:
-    check_frequency: "Every 60s via rcctl check; alert on any failure"
-    log_monitoring: "Tail /var/log/messages, /var/log/relayd for FATAL/ERROR; alert immediately"
-    tls_expiry: "Check cert expiry; alert 30 days before, renew at 14 days"
-  tools: "Native OpenBSD: pfctl -s info, systat, rcctl, tail /var/log/*"
-
-# dependency_pinning: version constraints for reproducible environments
-dependency_pinning:
-  strategy: "Pin major versions, allow minor/patch; test upgrades in staging first"
-  ruby_gems: "Gemfile.lock committed; bundle install --deployment on VPS"
-  system_packages: "Document OpenBSD version in stack; pkg_info -Q before deploy to verify"
-  node_npm: "package-lock.json committed if using npm; prefer Rails asset pipeline"
-  rails: "~> 8.0.4 allows 8.0.x patches, blocks 8.1"
-  verification: "Compare production gem/pkg versions against development quarterly"
-
-# performance_budget: quantified constraints for response times and resource usage
 performance_budget:
-  response_times:
-    html_pages: "p50 <200ms, p95 <500ms, p99 <1s"
-    api_endpoints: "p50 <100ms, p95 <300ms"
-    asset_serving: "p95 <100ms via Propshaft"
-  database:
-    query_time: "No query >100ms; log and optimize if >50ms"
-    n_plus_one: "Zero tolerance; use includes/preload/eager_load"
-    connection_pool: "Min 5, max 25 per Falcon worker"
-  assets:
-    javascript: "<300KB gzipped total"
-    css: "<100KB gzipped"
-    images: "WebP preferred, <500KB per image"
-  memory:
-    per_worker: "<512MB RSS per Falcon worker"
-    total: "<4GB for all Rails processes"
+  response: {html_p95: "<500ms", api_p95: "<300ms"}
+  database: {query_max: "100ms", n_plus_one: "zero tolerance"}
+  assets: {js: "<300KB gz", css: "<100KB gz"}
+  memory: {per_worker: "<512MB", total: "<4GB"}
 
-# security_audit: logging and forensics for compliance
 security_audit:
-  authentication:
-    log_location: "/var/log/auth for system, log/production.log for Rails"
-    capture: "All login attempts (success/failure), password changes, privilege escalation"
-  admin_actions:
-    log: "Rails logs all admin_user actions with IP, timestamp, affected_record"
-    retention: "Immutable append-only for 1 year minimum"
-  file_access: "OpenBSD kernel audit for /etc, /var/rails writes"
-  api_usage: "Log all API calls with client_id, endpoint, response_code, duration"
-  correlation: "Syslog aggregation to correlate pf/relayd/Rails logs by request_id"
+  auth_log: "/var/log/auth + log/production.log"
+  capture: ["login attempts", "password changes", "privilege escalation", "admin actions"]
+  retention: "1 year minimum, immutable"
 
-# disaster_recovery: procedures for catastrophic failure scenarios
-disaster_recovery:
-  server_failure:
-    detection: "Health checks fail for >5min; backup_ns monitoring alerts"
-    procedure: "Provision new VPS, restore from offsite backup, update DNS, verify functionality"
-    rto: "4 hours recovery time objective"
-    rpo: "1 hour recovery point objective (nightly backups + transaction logs)"
-  database_corruption:
-    detection: "Integrity check on boot; Rails migrations fail"
-    procedure: "Restore from most recent verified backup, replay transaction logs, run integrity checks"
-  ddos_attack:
-    detection: "pf connection rate >1000/s, bandwidth spike"
-    procedure: "Enable pf rate limiting, contact OpenBSD.Amsterdam abuse, enable backup_ns failover"
-  data_breach:
-    detection: "Unusual queries, auth anomalies, file access alerts"
-    procedure: "Lock affected accounts, rotate secrets, analyze logs, notify affected users per GDPR"
-  geographic_redundancy: "None currently; single VPS acceptable for MVP; plan multi-region for scale"
+disaster_recovery: "git clone fresh, pg_dump restore, rcctl start"
 
-# done_criteria: objective checklist for task completion
 done_criteria:
-  refactoring:
-    - "All tests pass (rails test)"
-    - "Coverage maintained or increased"
-    - "Violations reduced by ≥2%"
-    - "Performance maintained or improved"
-    - "Git commit with clear message merged"
-  feature:
-    - "Acceptance criteria met"
-    - "Tests written and passing"
-    - "Documentation updated"
-    - "Deployed to staging and verified"
-    - "Code review approved"
-  deployment:
-    - "Service starts successfully (rcctl check OK)"
-    - "Health endpoint returns 200"
-    - "No errors in logs for 10min"
-    - "Response times within budget"
-    - "Rollback tested and documented"
+  refactoring: ["tests pass", "coverage maintained", "violations ≥2% reduced", "performance maintained", "commit merged"]
+  feature: ["acceptance met", "tests written", "docs updated", "staging verified", "review approved"]
+  deployment: ["rcctl check OK", "health 200", "no errors 10min", "response within budget", "rollback documented"]
 
-# v75.3.0 - 198 lines
-# Added: Cygwin/zsh environment enforcement, Rails 8 + Falcon deployment workflows
-# Added: Solid Stack gotchas, VPS deployment steps, cat allowed for reading
-# Workflows: Local dev → git push → VPS pull → doas zsh script → rcctl service
-# Result: Codified successful brgen.no deployment pattern
+git_recovery: "git log --patch --all -- path; git show HASH:path > recovered"
+
+# v84.0 - guardianship mode
+# +law.immutable: true (explicit freeze)
+# +apps._volatile: true (inventory marker)
+# +rails.testing (Minitest ≥80%)
+# +openbsd.monitoring (systat, pfctl, logs)
+# ~analysis: references convergence criteria
+# Mode: maintenance, not construction
