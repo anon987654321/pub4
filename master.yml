@@ -1,7 +1,5 @@
-# master.yml v78.0.0 - Silent Success + Tool Wildcards + Directory Overrides
-# Updated: 2025-12-21T03:30 - Tier 1 imports from design principles research
+# master.yml v78.0.0
 #
-# ACTIVATION: "✓ master.yml v78.0.0 loaded
 #  • Silent success: Report exceptions only, success is default
 #  • Tool wildcards: Pattern-based permission matching
 #  • Directory overrides: Context-specific rule customization
@@ -9,8 +7,9 @@
 #  • Zero sprawl: Commits only, no temp files
 #  • Zsh native: 46% token savings via parameter expansion
 #  • Ruby-first reasoning: Algorithms as Ruby, file ops as zsh
-#  • SCAN EVERY COMMAND: Before executing, check forbidden patterns
 #  • Deployment: Rails 8 + Falcon + Solid Stack → OpenBSD VPS"
+#
+# ACTIVATION: "✓ master.yml v78.0.0 loaded
 
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
 
