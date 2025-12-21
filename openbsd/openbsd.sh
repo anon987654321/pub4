@@ -48,46 +48,16 @@ for key in ${(k)APPS[(I)*.domains]}; do
 done
 ALL_DOMAINS=(${(u)ALL_DOMAINS})
 
-generate_rcd_script() {
-  local app=$1 port=$2
-  cat <<'EOF' | doas tee /etc/rc.d/$app > /dev/null
-#!/bin/ksh
-# Rails/Falcon startup script - OpenBSD rc.d(8)
-# Based on: https://cvsweb.openbsd.org/ports/infrastructure/templates/rc.template
-
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec falcon --bind http://0.0.0.0:PORT --config config/falcon.rb"
-daemon_user="dev"
-rc_bg=YES
-rc_reload=NO
-
-. /etc/rc.d/rc.subr
-
-pexp="falcon.*:PORT"
-
-rc_pre() {
-  install -d -o ${daemon_user} /var/run/APP
-  cd /home/${daemon_user}/rails/APP || return 1
-}
-
-rc_cmd $1
-EOF
-  doas sed -i "s/APP/$app/g; s/PORT/$port/g" /etc/rc.d/$app
-  doas chmod +x /etc/rc.d/$app
-  print "[✓] Generated /etc/rc.d/$app (port $port)"
-}
-
-# Generate rc.d service script per app
 generate_rc_script() {
   local app=$1
   local port=$2
   local user="dev"
   local app_dir="/home/dev/rails/${app}"
   
-  cat > "/etc/rc.d/${app}" <<RCEOF
+  doas tee /etc/rc.d/${app} > /dev/null <<RCEOF
 #!/bin/ksh
 # OpenBSD rc.d script for ${app}
-# https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/infrastructure/templates/rc.template
+# https://cvsweb.openbsd.org/ports/infrastructure/templates/rc.template
 
 daemon="${app_dir}/bin/rails"
 daemon_user="${user}"
@@ -523,10 +493,9 @@ EOF
 setup_relayd() {
   log "Configuring relayd..."
   
-  cat > /etc/relayd.conf << 'EOF'
-interval 5
-
-# Backend tables: one per Rails app
+  cat > /etc/relayd.conf <<EOF
+# Backend tables per app
+table <httpd> { 127.0.0.1 }
 table <amber> { 127.0.0.1 }
 table <blognet> { 127.0.0.1 }
 table <bsdports> { 127.0.0.1 }
@@ -535,118 +504,161 @@ table <privcam> { 127.0.0.1 }
 table <pubattorney> { 127.0.0.1 }
 table <brgen> { 127.0.0.1 }
 
+http protocol "http" {
+  match request header set "Connection" value "close"
+  match response header remove "Server"
+}
+
 http protocol "https" {
-  # Preserve real IP for Falcon/Rails logs
-  match header set "X-Forwarded-For" value "$REMOTE_ADDR"
-  match header set "X-Forwarded-Proto" value "https"
-
-  # OWASP security headers (https://securityheaders.com/)
-  match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
-  match response header set "X-Frame-Options" value "DENY"
-  match response header set "X-Content-Type-Options" value "nosniff"
-  match response header set "Referrer-Policy" value "strict-origin-when-cross-origin"
-  match response header set "Permissions-Policy" value "geolocation=(), microphone=(), camera=()"
-  match response header set "Content-Security-Policy" value "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+  # Host-based routing
+  pass request header "Host" value "amberapp.com" forward to <amber>
+  pass request header "Host" value "www.amberapp.com" forward to <amber>
   
-  # Enable WebSockets for ActionCable/StimulusReflex
-  http websockets
+  pass request header "Host" value "foodielicio.us" forward to <blognet>
+  pass request header "Host" value "stacyspassion.com" forward to <blognet>
+  pass request header "Host" value "antibettingblog.com" forward to <blognet>
+  pass request header "Host" value "anticasinoblog.com" forward to <blognet>
+  pass request header "Host" value "antigamblingblog.com" forward to <blognet>
+  pass request header "Host" value "foball.no" forward to <blognet>
+  
+  pass request header "Host" value "bsdports.org" forward to <bsdports>
+  pass request header "Host" value "www.bsdports.org" forward to <bsdports>
+  
+  pass request header "Host" value "hjerterom.no" forward to <hjerterom>
+  pass request header "Host" value "www.hjerterom.no" forward to <hjerterom>
+  
+  pass request header "Host" value "privcam.no" forward to <privcam>
+  pass request header "Host" value "www.privcam.no" forward to <privcam>
+  
+  pass request header "Host" value "pub.attorney" forward to <pubattorney>
+  pass request header "Host" value "freehelp.legal" forward to <pubattorney>
+  
+  pass request header "Host" value "brgen.no" forward to <brgen>
+  pass request header "Host" value "oshlo.no" forward to <brgen>
+  pass request header "Host" value "trndheim.no" forward to <brgen>
+  pass request header "Host" value "stvanger.no" forward to <brgen>
+  pass request header "Host" value "trmso.no" forward to <brgen>
+  pass request header "Host" value "reykjavk.is" forward to <brgen>
+  pass request header "Host" value "kobenhvn.dk" forward to <brgen>
+  pass request header "Host" value "stholm.se" forward to <brgen>
+  pass request header "Host" value "gteborg.se" forward to <brgen>
+  pass request header "Host" value "mlmoe.se" forward to <brgen>
+  pass request header "Host" value "hlsinki.fi" forward to <brgen>
+  pass request header "Host" value "lndon.uk" forward to <brgen>
+  pass request header "Host" value "mnchester.uk" forward to <brgen>
+  pass request header "Host" value "brmingham.uk" forward to <brgen>
+  pass request header "Host" value "edinbrgh.uk" forward to <brgen>
+  pass request header "Host" value "glasgw.uk" forward to <brgen>
+  pass request header "Host" value "lverpool.uk" forward to <brgen>
+  pass request header "Host" value "amstrdam.nl" forward to <brgen>
+  pass request header "Host" value "rottrdam.nl" forward to <brgen>
+  pass request header "Host" value "utrcht.nl" forward to <brgen>
+  pass request header "Host" value "brssels.be" forward to <brgen>
+  pass request header "Host" value "zrich.ch" forward to <brgen>
+  pass request header "Host" value "lchtenstein.li" forward to <brgen>
+  pass request header "Host" value "frankfrt.de" forward to <brgen>
+  pass request header "Host" value "mrseille.fr" forward to <brgen>
+  pass request header "Host" value "mlan.it" forward to <brgen>
+  pass request header "Host" value "lsbon.pt" forward to <brgen>
+  pass request header "Host" value "lsangeles.com" forward to <brgen>
+  pass request header "Host" value "newyrk.us" forward to <brgen>
+  pass request header "Host" value "chcago.us" forward to <brgen>
+  pass request header "Host" value "dtroit.us" forward to <brgen>
+  pass request header "Host" value "houstn.us" forward to <brgen>
+  pass request header "Host" value "dllas.us" forward to <brgen>
+  pass request header "Host" value "austn.us" forward to <brgen>
+  pass request header "Host" value "prtland.com" forward to <brgen>
+  pass request header "Host" value "mnneapolis.com" forward to <brgen>
+
+  # Preserve client info
+  match request header append "X-Forwarded-For" value "\$REMOTE_ADDR"
+  match request header append "X-Forwarded-Port" value "\$REMOTE_PORT"
+  match request header append "X-Forwarded-By" value "\$SERVER_ADDR:\$SERVER_PORT"
+  match request header set "Connection" value "close"
+
+  # Security headers (https://securityheaders.com/)
+  match response header remove "Server"
+  match response header append "Strict-Transport-Security" value "max-age=31536000; includeSubDomains"
+  match response header append "X-Frame-Options" value "SAMEORIGIN"
+  match response header append "X-XSS-Protection" value "1; mode=block"
+  match response header append "X-Content-Type-Options" value "nosniff"
+  match response header append "Referrer-Policy" value "strict-origin"
+  match response header append "Feature-Policy" value "accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'"
+
+  # TLS keypairs
+  tls keypair "amberapp.com"
+  tls keypair "foodielicio.us"
+  tls keypair "stacyspassion.com"
+  tls keypair "antibettingblog.com"
+  tls keypair "anticasinoblog.com"
+  tls keypair "antigamblingblog.com"
+  tls keypair "foball.no"
+  tls keypair "bsdports.org"
+  tls keypair "hjerterom.no"
+  tls keypair "privcam.no"
+  tls keypair "pub.attorney"
+  tls keypair "freehelp.legal"
+  tls keypair "brgen.no"
+  tls keypair "oshlo.no"
+  tls keypair "trndheim.no"
+  tls keypair "stvanger.no"
+  tls keypair "trmso.no"
+  tls keypair "reykjavk.is"
+  tls keypair "kobenhvn.dk"
+  tls keypair "stholm.se"
+  tls keypair "gteborg.se"
+  tls keypair "mlmoe.se"
+  tls keypair "hlsinki.fi"
+  tls keypair "lndon.uk"
+  tls keypair "mnchester.uk"
+  tls keypair "brmingham.uk"
+  tls keypair "edinbrgh.uk"
+  tls keypair "glasgw.uk"
+  tls keypair "lverpool.uk"
+  tls keypair "amstrdam.nl"
+  tls keypair "rottrdam.nl"
+  tls keypair "utrcht.nl"
+  tls keypair "brssels.be"
+  tls keypair "zrich.ch"
+  tls keypair "lchtenstein.li"
+  tls keypair "frankfrt.de"
+  tls keypair "mrseille.fr"
+  tls keypair "mlan.it"
+  tls keypair "lsbon.pt"
+  tls keypair "lsangeles.com"
+  tls keypair "newyrk.us"
+  tls keypair "chcago.us"
+  tls keypair "dtroit.us"
+  tls keypair "houstn.us"
+  tls keypair "dllas.us"
+  tls keypair "austn.us"
+  tls keypair "prtland.com"
+  tls keypair "mnneapolis.com"
 }
 
-# Relay per app: SNI-based TLS routing (automatic domain→app mapping)
-relay "amber" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <amber> port 10001 check tcp
-  tls keypair amberapp.com
+relay "http" {
+  listen on ${MAIN_IP} port 80
+  protocol "http"
+  forward to <httpd> port 80
 }
 
-relay "blognet" {
-  listen on 0.0.0.0 port 443 tls
+relay "https" {
+  listen on ${MAIN_IP} port 443 tls
   protocol "https"
-  forward to <blognet> port 10002 check tcp
-  tls keypair foodielicio.us
-  tls keypair stacyspassion.com
-  tls keypair antibettingblog.com
-  tls keypair anticasinoblog.com
-  tls keypair antigamblingblog.com
-  tls keypair foball.no
-}
-
-relay "bsdports" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <bsdports> port 10003 check tcp
-  tls keypair bsdports.org
-}
-
-relay "hjerterom" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <hjerterom> port 10004 check tcp
-  tls keypair hjerterom.no
-}
-
-relay "privcam" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <privcam> port 10005 check tcp
-  tls keypair privcam.no
-}
-
-relay "pubattorney" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <pubattorney> port 10006 check tcp
-  tls keypair pub.attorney
-  tls keypair freehelp.legal
-}
-
-relay "brgen" {
-  listen on 0.0.0.0 port 443 tls
-  protocol "https"
-  forward to <brgen> port 11006 check tcp
-  tls keypair brgen.no
-  tls keypair oshlo.no
-  tls keypair trndheim.no
-  tls keypair stvanger.no
-  tls keypair trmso.no
-  tls keypair reykjavk.is
-  tls keypair kobenhvn.dk
-  tls keypair stholm.se
-  tls keypair gteborg.se
-  tls keypair mlmoe.se
-  tls keypair hlsinki.fi
-  tls keypair lndon.uk
-  tls keypair mnchester.uk
-  tls keypair brmingham.uk
-  tls keypair edinbrgh.uk
-  tls keypair glasgw.uk
-  tls keypair lverpool.uk
-  tls keypair amstrdam.nl
-  tls keypair rottrdam.nl
-  tls keypair utrcht.nl
-  tls keypair brssels.be
-  tls keypair zrich.ch
-  tls keypair lchtenstein.li
-  tls keypair frankfrt.de
-  tls keypair mrseille.fr
-  tls keypair mlan.it
-  tls keypair lsbon.pt
-  tls keypair lsangeles.com
-  tls keypair newyrk.us
-  tls keypair chcago.us
-  tls keypair dtroit.us
-  tls keypair houstn.us
-  tls keypair dllas.us
-  tls keypair austn.us
-  tls keypair prtland.com
-  tls keypair mnneapolis.com
+  forward to <httpd> port 80
+  forward to <amber> port ${APPS[amber.port]}
+  forward to <blognet> port ${APPS[blognet.port]}
+  forward to <bsdports> port ${APPS[bsdports.port]}
+  forward to <hjerterom> port ${APPS[hjerterom.port]}
+  forward to <privcam> port ${APPS[privcam.port]}
+  forward to <pubattorney> port ${APPS[pubattorney.port]}
+  forward to <brgen> port ${APPS[brgen.port]}
 }
 EOF
 
   rcctl enable relayd
   rcctl restart relayd
-  log "relayd configured with SNI routing for 7 apps"
+  log "relayd configured with host-based routing"
 }
 
 # Deploy Rails application - orchestrator function
