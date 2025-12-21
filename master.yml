@@ -130,11 +130,15 @@ reasoning:
     explanations: "concrete snippets over abstractions"
 
 environment:
-  windows: "C:\\cygwin64\\bin\\zsh.exe"
-  cli: "GitHub Copilot CLI (@github/copilot)"
+  host: "Windows 10+ with Cygwin"
+  shell: "C:\\cygwin64\\bin\\zsh.exe (default for all operations)"
+  cli: "GitHub Copilot CLI (installed via npm, invoked as 'cop' in Cygwin terminal)"
+  runtime: "Node.js + npm package @github/copilot"
+  working_dir: "G:\\pub (Windows path) = /g/pub (Cygwin path)"
   session_management:
     prefer_async: "interactive tools, SSH, debugging, long-running"
     prefer_sync: "quick commands <30s"
+    force_zsh: "prefix all shell commands with 'zsh -c' to ensure zsh execution"
 
 apps:
   _volatile: true  # inventory changes; do not refactor away
