@@ -16,23 +16,22 @@ law:
   auditability: "all changes explainable post-hoc"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PRINCIPLES — OPTIMIZE WORDING ONLY, NOT MEANING
+# PRINCIPLES — FLAT, UNIVERSAL, OPTIMIZE WORDING ONLY NOT MEANING
 # ═══════════════════════════════════════════════════════════════════════════════
 
 principles:
-  design:
-    single_responsibility: "one reason to change"
-    dry: "single source of truth"
-    kiss: "no unnecessary complexity"
-    yagni: "build only what you need now"
-  code_quality:
-    small_functions: "under 10 lines ideal, max 20"
-    meaningful_names: "names reveal intent"
-    boy_scout: "leave cleaner than found"
-    stepdown: "important code first"
-  workflow:
-    measure_first: "profile before optimizing"
-    preserve_behavior: "never break working code"
+  preserve_behavior: "never break working code"
+  chestertons_fence: "understand before removing"
+  security_first: "validate input, least privilege, defense in depth"
+  single_responsibility: "one reason to change"
+  dry: "single source of truth"
+  kiss: "no unnecessary complexity"
+  yagni: "build only what you need now"
+  small_functions: "under 10 lines ideal, max 20"
+  meaningful_names: "names reveal intent"
+  boy_scout: "leave cleaner than found"
+  stepdown: "important code first"
+  measure_first: "profile before optimizing"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # OPERATIONAL POLICY — OPTIMIZE FOR CLARITY, PRESERVE ALL SPECIFICS
@@ -152,19 +151,13 @@ tool_permissions:
     file_operations:
       read: {allowed: ["**/*"], denied: ["**/.env", "**/secrets/**", "**/*_key*"]}
       write: {allowed: ["~/pub/**", "~/learning/**"], denied: ["/etc/**", "/var/**", "/usr/**"]}
+      create: "Never create unauthorized files; no temp markdown for tracking/notes; use commits as documentation"
   rationale: "Pattern-based matching more precise than flat lists. Wildcards prevent bypasses."
 
-mandate:
-  file_ops: "zsh globbing and parameter expansion (**/*.rb(N.), ${(<file)}), not find/cat"
-  logic: "Ruby methods/classes for non-trivial algorithms, not pseudo-code"
-  read_once: "view entire file once, don't re-read"
-  tree_first: "run sh/tree.sh equivalent in new repos before starting"
-  pre_check: "Before EVERY command execution, scan for forbidden patterns (not just exact matches)"
-  vertical_spacing:
-    - "Before refactoring: strip all blank lines from file"
-    - "After fixes: reassess logical grouping line-by-line"
-    - "Add single blank line only between semantically distinct groups"
-    - "No double blank lines, no trailing whitespace"
+file_sprawl_prevention:
+  consolidation: "Merge folder/ into folder.rb when consolidating logic (e.g. repligen/ → repligen.rb)"
+  no_temp_files: "No .md files for planning/notes/tracking; work in memory, document via git commits"
+  prefix_temp: "If temp files absolutely needed, prefix with . and delete after consumption"
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
@@ -184,20 +177,6 @@ overrides:
     two_hats_enforcement: false  # Experimentation allowed
     rule_of_three: false  # Try patterns early without waiting for duplication
     rationale: "Learning context needs flexibility; production needs discipline"
-
-principles:
-  preserve_behavior: "never break working code"
-  chestertons_fence: "understand before removing"
-  security_first: "validate input, least privilege, defense in depth"
-  single_responsibility: "one reason to change"
-  dry: "single source of truth"
-  kiss: "no unnecessary complexity"
-  yagni: "build only what you need now"
-  small_functions: "under 10 lines ideal, max 20"
-  meaningful_names: "names reveal intent"
-  boy_scout: "leave cleaner than found"
-  stepdown: "important code first"
-  measure_first: "profile before optimizing"
 
 ruby:
   frozen_string_literal: true
