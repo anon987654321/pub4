@@ -76,6 +76,29 @@ Verify:
 rcctl check appname && curl http://localhost:1000X && curl -I https://domain.com
 ```
 
+## OpenBSD Infrastructure
+
+Production DNS authority with complete security stack:
+
+### NSD DNS + DNSSEC
+- **Authoritative nameserver** for 48+ domains
+- **DNSSEC** with ECDSAP256SHA256 (algorithm 13)
+- ZSK + KSK per domain, NSEC3 salt
+- Primary-only mode (no secondary)
+- **Critical:** Must deploy BEFORE registering glue records
+
+### Security Stack
+- **PF Firewall:** Bruteforce detection, rate limiting, explicit ports
+- **Relayd:** SNI-based TLS routing, OWASP headers
+- **acme-client:** Let's Encrypt for 48 domains, auto-renewal
+- **Falcon:** Async HTTP/2 server, 2 workers per app
+
+### Two-Phase Deployment
+1. `--pre-point`: Infrastructure + NSD (before DNS points here)
+2. `--post-point`: TLS + Relayd (after 24-48h propagation)
+
+Complete automation: `openbsd/openbsd.sh`. Verified against man.openbsd.org.
+
 ## master.yml
 
 Self-optimizing constitutional document enforcing:
