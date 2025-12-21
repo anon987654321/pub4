@@ -48,6 +48,68 @@ for key in ${(k)APPS[(I)*.domains]}; do
 done
 ALL_DOMAINS=(${(u)ALL_DOMAINS})
 
+generate_rcd_script() {
+  local app=$1 port=$2
+  cat <<'EOF' | doas tee /etc/rc.d/$app > /dev/null
+#!/bin/ksh
+# Rails/Falcon startup script - OpenBSD rc.d(8)
+# Based on: https://cvsweb.openbsd.org/ports/infrastructure/templates/rc.template
+
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec falcon --bind http://0.0.0.0:PORT --config config/falcon.rb"
+daemon_user="dev"
+rc_bg=YES
+rc_reload=NO
+
+. /etc/rc.d/rc.subr
+
+pexp="falcon.*:PORT"
+
+rc_pre() {
+  install -d -o ${daemon_user} /var/run/APP
+  cd /home/${daemon_user}/rails/APP || return 1
+}
+
+rc_cmd $1
+EOF
+  doas sed -i "s/APP/$app/g; s/PORT/$port/g" /etc/rc.d/$app
+  doas chmod +x /etc/rc.d/$app
+  print "[✓] Generated /etc/rc.d/$app (port $port)"
+}
+
+# Generate rc.d service script per app
+generate_rc_script() {
+  local app=$1
+  local port=$2
+  local user="dev"
+  local app_dir="/home/dev/rails/${app}"
+  
+  cat > "/etc/rc.d/${app}" <<'RCEOF'
+#!/bin/ksh
+# OpenBSD rc.d script for ${app}
+# https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/infrastructure/templates/rc.template
+
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec falcon --bind http://127.0.0.1:${port} --config config/falcon.rb"
+daemon_user="${user}"
+
+. /etc/rc.d/rc.subr
+
+pexp="falcon.*${port}"
+rc_bg=YES
+rc_reload=NO
+
+rc_start() {
+  cd ${app_dir} && \
+  ${rcexec} "RAILS_ENV=production PORT=${port} ${daemon} ${daemon_flags}"
+}
+
+rc_cmd $1
+RCEOF
+  chmod +x "/etc/rc.d/${app}"
+  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app}"
+}
+
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
 readonly PTR_HOSTNAME="ns.brgen.no"
