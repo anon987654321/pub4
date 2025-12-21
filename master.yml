@@ -1,17 +1,27 @@
-# master.yml v75.3.0 - Rails 8 + OpenBSD Code Improvement
-# Updated: 2025-12-20T22:57 - Added Cygwin/zsh enforcement & deployment workflows
+# master.yml v78.0.0 - Silent Success + Tool Wildcards + Directory Overrides
+# Updated: 2025-12-21T03:30 - Tier 1 imports from design principles research
 #
-# ACTIVATION: "✓ master.yml v75.3.0 loaded
-#  • Environment: Cygwin/zsh on Windows (GitHub Copilot CLI)
-#  • Deep analysis: nested loops, <2% threshold
-#  • Tiered principles: never break → strong → guidelines
-#  • Zero sprawl: commits only, no temp files
+# ACTIVATION: "✓ master.yml v78.0.0 loaded
+#  • Silent success: Report exceptions only, success is default
+#  • Tool wildcards: Pattern-based permission matching
+#  • Directory overrides: Context-specific rule customization
+#  • Deep analysis: Nested loops, <2% threshold
+#  • Zero sprawl: Commits only, no temp files
 #  • Zsh native: 46% token savings via parameter expansion
-#  • Ruby-first reasoning: algorithms as Ruby, file ops as zsh
-#  • SCAN EVERY COMMAND: Before executing, check forbidden list
+#  • Ruby-first reasoning: Algorithms as Ruby, file ops as zsh
+#  • SCAN EVERY COMMAND: Before executing, check forbidden patterns
 #  • Deployment: Rails 8 + Falcon + Solid Stack → OpenBSD VPS"
 
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+
+silent_success:
+  principle: "Report only exceptions; success is default state"
+  levels:
+    success: log_only
+    warn: daily_digest
+    error: immediate
+    fatal: alert
+  rationale: "80% noise reduction. CLI outputs minimal info unless problems occur."
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
 analysis: "Read files once, exhaust every line vs every principle, nested loops until <2% improvement"
 
@@ -80,12 +90,29 @@ enforcement:
     bad: "find . -name *.rb"
     good: "**/*.rb(N.)"
 
+tool_permissions:
+  mode: deny_by_default
+  categories:
+    shell:
+      allowed_patterns: ["git *", "bundle *", "rails *", "zsh *", "doas *", "rcctl *", "pkg_add *"]
+      denied_patterns: ["rm -rf /*", "sudo *", "curl * | *", "chmod 777 *", "eval *"]
+      denied_tools: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
+    file_operations:
+      read: {allowed: ["**/*"], denied: ["**/.env", "**/secrets/**", "**/*_key*"]}
+      write: {allowed: ["~/pub/**", "~/learning/**"], denied: ["/etc/**", "/var/**", "/usr/**"]}
+  rationale: "Pattern-based matching more precise than flat lists. Wildcards prevent bypasses."
+
 mandate:
   file_ops: "zsh globbing and parameter expansion (**/*.rb(N.), ${(<file)}), not find/cat"
   logic: "Ruby methods/classes for non-trivial algorithms, not pseudo-code"
   read_once: "view entire file once, don't re-read"
   tree_first: "run sh/tree.sh equivalent in new repos before starting"
-  pre_check: "Before EVERY command execution, verify no forbidden tools present"
+  pre_check: "Before EVERY command execution, scan for forbidden patterns (not just exact matches)"
+  vertical_spacing:
+    - "Before refactoring: strip all blank lines from file"
+    - "After fixes: reassess logical grouping line-by-line"
+    - "Add single blank line only between semantically distinct groups"
+    - "No double blank lines, no trailing whitespace"
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
@@ -93,6 +120,18 @@ scope:
   production: ["~/pub/rails/", "~/pub/openbsd/"]
   experimental: ["~/learning/", "~/experiments/"]
   escape: "# VIOLATION: [principle] | Reason: [why] | Revert: [date]"
+
+overrides:
+  - directories: ["~/pub/rails/**"]
+    quality_thresholds:
+      method: {max: 25}  # Rails controllers/views can be slightly longer
+    tool_permissions:
+      shell:
+        allowed_patterns: ["rails *", "bundle exec *", "rake *"]
+  - directories: ["~/learning/**", "~/experiments/**"]
+    two_hats_enforcement: false  # Experimentation allowed
+    rule_of_three: false  # Try patterns early without waiting for duplication
+    rationale: "Learning context needs flexibility; production needs discipline"
 
 principles:
   tier_1_never_break:
