@@ -84,30 +84,30 @@ generate_rc_script() {
   local user="dev"
   local app_dir="/home/dev/rails/${app}"
   
-  cat > "/etc/rc.d/${app}" <<'RCEOF'
+  cat > "/etc/rc.d/${app}" <<RCEOF
 #!/bin/ksh
 # OpenBSD rc.d script for ${app}
 # https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/infrastructure/templates/rc.template
 
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec falcon --bind http://127.0.0.1:${port} --config config/falcon.rb"
+daemon="${app_dir}/bin/rails"
 daemon_user="${user}"
+daemon_flags="server -e production -p ${port} -b 127.0.0.1"
 
 . /etc/rc.d/rc.subr
 
-pexp="falcon.*${port}"
+pexp="rails server.*${port}"
 rc_bg=YES
 rc_reload=NO
 
 rc_start() {
   cd ${app_dir} && \
-  ${rcexec} "RAILS_ENV=production PORT=${port} ${daemon} ${daemon_flags}"
+  \${rcexec} "RAILS_ENV=production PORT=${port} \${daemon} \${daemon_flags}"
 }
 
-rc_cmd $1
+rc_cmd \$1
 RCEOF
   chmod +x "/etc/rc.d/${app}"
-  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app}"
+  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app} (rails server on port ${port})"
 }
 
 # PTR configuration: reverse DNS points to primary nameserver
