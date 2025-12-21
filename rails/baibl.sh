@@ -36,11 +36,9 @@ install_gem "faker"
 
 # Add AI and language processing gems
 
-bundle add langchain
+bundle add langchainrb_rails
 
 bundle add ruby-openai
-
-bundle add weaviate-ruby
 bundle add text-translator
 bundle add linguistics
 

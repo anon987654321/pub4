@@ -134,23 +134,18 @@ overrides:
     rationale: "Learning context needs flexibility; production needs discipline"
 
 principles:
-  tier_1_never_break:
-    - preserve_behavior: "never break working code"
-    - chestertons_fence: "understand before removing"
-    - security_first: "validate input, least privilege, defense in depth"
-  
-  tier_2_strong:
-    - single_responsibility: "one reason to change"
-    - dry: "single source of truth"
-    - kiss: "no unnecessary complexity"
-    - yagni: "build only what you need now"
-    - small_functions: "under 10 lines ideal, max 20"
-  
-  tier_3_guidelines:
-    - meaningful_names: "names reveal intent"
-    - boy_scout: "leave cleaner than found"
-    - stepdown: "important code first"
-    - measure_first: "profile before optimizing"
+  preserve_behavior: "never break working code"
+  chestertons_fence: "understand before removing"
+  security_first: "validate input, least privilege, defense in depth"
+  single_responsibility: "one reason to change"
+  dry: "single source of truth"
+  kiss: "no unnecessary complexity"
+  yagni: "build only what you need now"
+  small_functions: "under 10 lines ideal, max 20"
+  meaningful_names: "names reveal intent"
+  boy_scout: "leave cleaner than found"
+  stepdown: "important code first"
+  measure_first: "profile before optimizing"
 
 ruby:
   frozen_string_literal: true

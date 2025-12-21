@@ -90,14 +90,14 @@ generate_falcon_config() {
     
     mkdir -p config
     
-    # Create preload file for Rails environment
-    cat > config/preload.rb << 'PRELOAD_EOF'
+    # Create preload file for Rails environment  
+    cat > preload.rb << 'PRELOAD_EOF'
 # frozen_string_literal: true
-require_relative "environment"
+require_relative "config/environment"
 PRELOAD_EOF
     
-    cat > config/falcon.rb << 'FALCON_EOF'
-#!/usr/bin/env -S falcon host
+    cat > falcon.rb << 'FALCON_EOF'
+#!/usr/bin/env -S falcon-host
 # frozen_string_literal: true
 # Falcon web server configuration for Rails 8 production
 # Based on: https://socketry.github.io/falcon-rails/
@@ -105,19 +105,20 @@ PRELOAD_EOF
 require "falcon/environment/rack"
 
 hostname = File.basename(__dir__)
-port = ENV.fetch("PORT", 3000).to_i
-workers = ENV.fetch("WEB_CONCURRENCY", 2).to_i
 
 service hostname do
   include Falcon::Environment::Rack
   
   # Preload Rails before forking workers
-  preload "config/preload.rb"
+  preload "preload.rb"
   
   # Worker processes for concurrency
-  count workers
+  count ENV.fetch("WEB_CONCURRENCY", 2).to_i
   
-  # HTTP/1.1 endpoint (use HTTP/2 in production with TLS)
+  # Port configuration
+  port { ENV.fetch("PORT", 3000).to_i }
+  
+  # HTTP/1.1 endpoint
   endpoint do
     Async::HTTP::Endpoint.parse("http://0.0.0.0:#{port}")
       .with(protocol: Async::HTTP::Protocol::HTTP11)
@@ -125,8 +126,8 @@ service hostname do
 end
 FALCON_EOF
 
-    chmod +x config/falcon.rb
-    log "✓ Falcon config generated (#{workers} workers on port #{port})"
+    chmod +x falcon.rb
+    log "✓ Falcon config generated for production"
 }
 
 setup_devise_guests() {
