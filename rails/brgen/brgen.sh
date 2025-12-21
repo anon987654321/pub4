@@ -61,7 +61,10 @@ bin/rails db:migrate
 
 log "Creating Falcon config"
 cat > config/falcon.rb << 'FALCONEOF'
-load :rack, :supervisor
+# frozen_string_literal: true
+
+load :rack
+load :supervisor
 
 hostname = File.basename(__dir__)
 port = ENV.fetch("PORT", "11006")
