@@ -48,6 +48,9 @@ vps:
   host_port: 31415
   vm_name: "vm08"
   ip4: "185.52.176.18"
+  ssh_method: "async mode with zsh wrapper"
+  ssh_command: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 dev@185.52.176.18"'
+  ssh_proven: "Use powershell tool in async mode, then write_powershell for interaction"
   ip4_gateway: "185.52.176.1"
   ip4_subnet: "255.255.255.192"
   ip6: "2a03:6000:76f1:608::18"
