@@ -116,8 +116,8 @@ deployment:
     copilot: "~\\.copilot\\config.json (trusted_folders, user settings)"
   execution_trick: "Prefix commands with 'zsh' to run zsh scripts (e.g. zsh ../sh/showp.sh)"
 
-forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
-allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat]
+forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash_echo]  # bash_echo clarified: use zsh print instead
+allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat, curl, wget]  # curl/wget for downloads only
 output: "work via commits with clear messages - no temp files"
 
 enforcement:
