@@ -17,7 +17,6 @@ law:
 
 principles:
   preserve_behavior: "never break working code"
-  chestertons_fence: "understand before removing"
   security_first: "validate input, least privilege, defense in depth"
   single_responsibility: "one reason to change"
   dry: "single source of truth"
@@ -73,7 +72,7 @@ environment:
     key_priority: ["id_ed25519", "id_rsa", "openbsd_key"]
     pattern_with_key: 'zsh -c "ssh -i /g/priv/passwd/id_ed25519 -o ConnectTimeout=10 dev@185.52.176.18 ''COMMAND''"'
     pattern_interactive: 'zsh -c "ssh -i /g/priv/passwd/id_ed25519 dev@185.52.176.18"'
-    password_fallback: ["tata1234", "hutte10tu6969"]
+    password_fallback: []  # Use Rails credentials or env vars, never commit secrets
     approval: "Trust but verify: Review commands before remote execution, never blanket approve destructive ops"
   
   session_management:
@@ -196,11 +195,6 @@ file_sprawl_prevention:
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
 
-file_sprawl_prevention:
-  consolidation: "Merge folder/ into folder.rb when consolidating logic (e.g. repligen/ → repligen.rb)"
-  no_temp_files: "No .md files for planning/notes/tracking; work in memory, document via git commits"
-  prefix_temp: "If temp files absolutely needed, prefix with . and delete after consumption"
-
 style:
   comments:
     forbidden_decorations: ["---", "===", "###", "***", "━━━", "═══", "▬▬▬"]
@@ -295,7 +289,7 @@ openbsd:
 deploy:
   local: [test, verify_Gemfile, commit, push]
   vps_setup:
-    - "ssh dev@185.52.176.18 (password: hutte10tu6969 or key: ~/priv/passwd/id_rsa)"
+    - "ssh dev@185.52.176.18 (use key: ~/priv/passwd/id_rsa or env PASSWORD)"
     - "doas rm -rf ~/rails/appname (clean slate)"
     - "cd ~/pub4 && git pull (get latest scripts)"
     - "cd rails && doas zsh appname.sh (run installer)"
