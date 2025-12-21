@@ -281,8 +281,8 @@ _create_zone_files() {
     local subdomains="${APPS[${app}.subdomains]:-}"
     
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
-$ORIGIN $domain.
-$TTL 24h
+\$ORIGIN $domain.
+\$TTL 24h
 @ 1h IN SOA ns.brgen.no. admin.brgen.no. ($(date +%Y%m%d)01 1h 15m 1w 3m)
 @ IN NS ns.brgen.no.
 @ IN NS ns.hyp.net.
