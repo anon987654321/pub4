@@ -1,29 +1,47 @@
-# master.yml v79.5.0 - Design Excellence via Structural Refinement
-# Grok 4 collaboration: 4-cycle restructuring (hoist→group→flatten→polish)
-# Claude refinement: Preserve intentional decisions, OpenBSD-specific patterns
-# 25% reduction via semantic grouping, not feature loss
-# ACTIVATION: "✓ master.yml v79.5.0 loaded - Hoisted principles, chronological flow"
+# master.yml v80.0.0 - Immutability Boundaries + Operational Density
+# ChatGPT insight: Hard separation between Law/Policy/Procedure prevents erosion
+# Preserved: All operational specifics (Zsh patterns, Rails procedures, domain maps)
+# New: Explicit immutable sections that self-optimize must never touch
+# ACTIVATION: "✓ master.yml v80.0.0 loaded - Laws immutable, procedures preserved"
 
-golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+# ═══════════════════════════════════════════════════════════════════════════════
+# IMMUTABLE LAW — NEVER AUTO-OPTIMIZE, NEVER REWORD, REQUIRES HUMAN APPROVAL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+law:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  chestertons_fence: "understand intent before removal"
+  security_axiom: "validate input, least privilege, defense in depth; no plaintext secrets in commits"
+  ops_safety: "working systems outrank elegance"
+  auditability: "all changes explainable post-hoc"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PRINCIPLES — OPTIMIZE WORDING ONLY, NOT MEANING
+# ═══════════════════════════════════════════════════════════════════════════════
 
 principles:
-  preserve_behavior: "never break working code"
-  chestertons_fence: "understand before removing"
-  security_first: "validate input, least privilege, defense in depth; no plain-text secrets in commits"
-  single_responsibility: "one reason to change"
-  dry: "single source of truth"
-  kiss: "no unnecessary complexity"
-  yagni: "build only what you need now"
-  small_functions: "under 10 lines ideal, max 20"
-  meaningful_names: "names reveal intent"
-  boy_scout: "leave cleaner than found"
-  stepdown: "important code first"
-  measure_first: "profile before optimizing"
+  design:
+    single_responsibility: "one reason to change"
+    dry: "single source of truth"
+    kiss: "no unnecessary complexity"
+    yagni: "build only what you need now"
+  code_quality:
+    small_functions: "under 10 lines ideal, max 20"
+    meaningful_names: "names reveal intent"
+    boy_scout: "leave cleaner than found"
+    stepdown: "important code first"
+  workflow:
+    measure_first: "profile before optimizing"
+    preserve_behavior: "never break working code"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OPERATIONAL POLICY — OPTIMIZE FOR CLARITY, PRESERVE ALL SPECIFICS
+# ═══════════════════════════════════════════════════════════════════════════════
 
 silent_success:
   principle: "Report only exceptions; success is default"
   levels: {success: log_only, warn: daily_digest, error: immediate, fatal: alert}
-  rationale: "80% noise reduction in CLI output"
+  rationale: "80% noise reduction"
 
 focus: "Complete Rails generators on OpenBSD with zero sprawl"
 analysis: "Read files once, exhaust every line against principles, nested loops until <2% improvement"
@@ -39,6 +57,10 @@ mandate:
     - "Reassess grouping line-by-line after fixes"
     - "Single blank line between semantic groups only"
     - "No double blanks, no trailing whitespace"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TOOLING CONSTRAINTS — MACHINE-ACTIONABLE, AUTO-OPTIMIZE FOR PRECISION
+# ═══════════════════════════════════════════════════════════════════════════════
 
 reasoning:
   primary_language: Ruby
