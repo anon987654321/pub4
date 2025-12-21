@@ -44,14 +44,24 @@ working_system_criteria:
   production: "uptime >99%, p95 <500ms, zero security alerts, health 200"
 
 vps:
-  ip: "185.52.176.18"
+  host: "server27.openbsd.amsterdam"
+  host_port: 31415
+  vm_name: "vm08"
+  ip4: "185.52.176.18"
+  ip4_gateway: "185.52.176.1"
+  ip4_subnet: "255.255.255.192"
+  ip6: "2a03:6000:76f1:608::18"
+  ip6_gateway: "2a03:6000:76f1:608::1"
+  ip6_subnet: 64
   backup_ns: "194.63.248.53"
   user: dev
   key_local: "G:/priv/passwd/id_ed25519"
   key_remote: "~/.ssh"
   deploy_base: "/var/rails"
   app_base: "/home"
-  ssh_pattern: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 -o ConnectTimeout=10 dev@185.52.176.18 ''COMMAND''"'
+  ssh_to_host: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 -p 31415 dev@server27.openbsd.amsterdam"'
+  ssh_to_vm: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 dev@185.52.176.18"'
+  vmctl_console: "ssh to host, then: vmctl console vm08"
 
 error_recovery:
   ssh_failure: {retry: 3, backoff: [5, 10, 20], fallback: "alert human"}
