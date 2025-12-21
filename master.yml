@@ -38,6 +38,21 @@ environment:
   windows: "Use C:\\cygwin64\\bin\\zsh.exe for all shell operations"
   cli: "GitHub Copilot CLI (Node.js npm package @github/copilot)"
   shell_access: "Run zsh scripts with: zsh path/to/script.sh (works in GitHub Copilot CLI)"
+  
+  ssh:
+    default_method: "Key-based authentication with zsh"
+    keys_location: "/g/priv/passwd"
+    key_priority: ["id_ed25519", "id_rsa", "openbsd_key"]
+    pattern_with_key: 'zsh -c "ssh -i /g/priv/passwd/id_ed25519 -o ConnectTimeout=10 dev@185.52.176.18 ''COMMAND''"'
+    pattern_interactive: 'zsh -c "ssh -i /g/priv/passwd/id_ed25519 dev@185.52.176.18"'
+    password_fallback: ["tata1234", "hutte10tu6969"]
+    approval: "Trust but verify: Review commands before remote execution, never blanket approve destructive ops"
+  
+  session_management:
+    prefer_async: "For interactive tools, SSH sessions, debugging, long-running servers"
+    prefer_sync: "For quick commands with predictable output (< 30s)"
+    initial_wait_guidance: "30s+ for builds/tests, 10-15s for file ops, 60s+ for deployments"
+    note: "PowerShell tool sessions persist across calls when using same sessionId"
 
 deployment:
   vps:
