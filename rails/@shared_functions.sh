@@ -96,7 +96,7 @@ generate_falcon_config() {
 require_relative "config/environment"
 PRELOAD_EOF
     
-    cat > falcon.rb << 'FALCON_EOF'
+    cat > config/falcon.rb << 'FALCON_EOF'
 #!/usr/bin/env -S falcon-host
 # frozen_string_literal: true
 # Falcon web server configuration for Rails 8 production
@@ -110,7 +110,7 @@ service hostname do
   include Falcon::Environment::Rack
   
   # Preload Rails before forking workers
-  preload "preload.rb"
+  preload "../preload.rb"
   
   # Worker processes for concurrency
   count ENV.fetch("WEB_CONCURRENCY", 2).to_i
@@ -126,8 +126,8 @@ service hostname do
 end
 FALCON_EOF
 
-    chmod +x falcon.rb
-    log "✓ Falcon config generated for production"
+    chmod +x config/falcon.rb
+    log "✓ Falcon config generated at config/falcon.rb for production"
 }
 
 setup_devise_guests() {
