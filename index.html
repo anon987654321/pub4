@@ -38,9 +38,9 @@
   let lastRenderT = lastFrameT;
   let lastSeenFrameT = lastFrameT; // used for stall watchdog
 
-  // Scene state
+  // Scene state - reduced from 220 to 80 dots (24K→3K checks/frame = 8x faster)
   const dots = [];
-  const N = 220;
+  const N = 80;
   for (let i = 0; i < N; i++) {
     dots.push({
       x: Math.random() * W,
