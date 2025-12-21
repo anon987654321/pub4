@@ -28,6 +28,36 @@ environment:
   windows: "Use C:\\cygwin64\\bin\\zsh.exe for all shell operations"
   cli: "GitHub Copilot CLI (Node.js npm package @github/copilot)"
   shell_access: "Run zsh scripts with: zsh path/to/script.sh (works in GitHub Copilot CLI)"
+
+deployment:
+  vps:
+    ip: "185.52.176.18"
+    backup_ns: "194.63.248.53"
+    deploy_base: "/var/rails"
+    app_base: "/home"
+  apps:
+    brgen:
+      port: 11006
+      domains: "brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
+      subdomains: "markedsplass playlist dating tv takeaway maps"
+    amber:
+      port: 10001
+      domains: "amberapp.com"
+    blognet:
+      port: 10002
+      domains: "foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
+    bsdports:
+      port: 10003
+      domains: "bsdports.org"
+    hjerterom:
+      port: 10004
+      domains: "hjerterom.no"
+    privcam:
+      port: 10005
+      domains: "privcam.no"
+    pubattorney:
+      port: 10006
+      domains: "pub.attorney freehelp.legal"
   read_files: "Use cat from zsh, or view tool for line-numbered viewing"
   config_locations:
     claude: "G:\\.claude\\settings.local.json (auto_load master.yml, mandate zsh-only)"
