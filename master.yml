@@ -38,6 +38,12 @@ silent_success:
   levels: {success: log_only, warn: daily_digest, error: immediate, fatal: alert}
   rationale: "80% noise reduction"
 
+response_chunking:
+  max_operations_per_turn: 3
+  prefer: "small focused actions over large complex responses"
+  on_error: "break into smaller chunks and retry"
+  interactive_ssh: "use async mode so user sees terminal output in real-time"
+
 working_system_criteria:
   deployment: "rcctl check OK, curl localhost:PORT 2xx, no fatal in logs"
   development: "rails test passes, app boots <10s, db:migrate clean"
