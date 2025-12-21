@@ -123,6 +123,49 @@ output: "work via commits with clear messages - no temp files"
 
 enforcement:
   pre_execution: "SCAN EVERY COMMAND before running - if any word matches forbidden list, STOP and rewrite using zsh/ruby"
+  
+zsh_patterns:
+  philosophy: "No external forks, pure zsh parameter expansion for maximum performance"
+  
+  string_ops:
+    crlf_removal: "cleaned=${var//$'\\r'/}"
+    lowercase: "lower=${(L)var}"
+    uppercase: "upper=${(U)var}"
+    replace_all: "result=${var//search/replace}"
+    trim_start: "trimmed=${var##[[:space:]]#}"
+    trim_end: "trimmed=${var%%[[:space:]]#}"
+    trim_both: "trimmed=${${var##[[:space:]]#}%%[[:space:]]#}"
+    nth_field: "fourth=${${(s:,:)line}[4]}"
+    split_to_array: "arr=( ${(s:delim:)var} )"
+  
+  array_ops:
+    filter_match: "matches=( ${(M)arr:#*pattern*} )"
+    filter_exclude: "non_matches=( ${arr:#*pattern*} )"
+    unique: "unique=( ${(u)arr} )"
+    join: "joined=${(j:,:)arr}"
+    reverse: "reversed=( ${(Oa)arr} )"
+    sort_asc: "sorted=( ${(o)arr} )"
+    sort_desc: "sorted=( ${(O)arr} )"
+  
+  replacements:
+    grep: "lines=( ${(M)lines:#*query*} )"
+    awk_column: "col=${${(s:,:)line}[4]}"
+    uniq: "unique=( ${(u)arr} )"
+    head: "${arr[1,10]}"
+    tail: "${arr[-5,-1]}"
+    wc_lines: "${#${(f)content}}"
+  
+  flags:
+    M: "match instead of filter"
+    u: "unique elements"
+    o: "sort ascending"
+    O: "sort descending"
+    L: "lowercase"
+    U: "uppercase"
+    j: "join array"
+    s: "split string"
+    A: "assign to array"
+  
   examples:
     bad: "head -5 file"
     good: "print -l ${(f)$(<file)}[1,5]"
