@@ -4,9 +4,7 @@
 # New: Explicit immutable sections that self-optimize must never touch
 # ACTIVATION: "✓ master.yml v80.0.0 loaded - Laws immutable, procedures preserved"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# IMMUTABLE LAW — NEVER AUTO-OPTIMIZE, NEVER REWORD, REQUIRES HUMAN APPROVAL
-# ═══════════════════════════════════════════════════════════════════════════════
+# IMMUTABLE LAW: NEVER AUTO-OPTIMIZE, NEVER REWORD, REQUIRES HUMAN APPROVAL
 
 law:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
@@ -15,9 +13,7 @@ law:
   ops_safety: "working systems outrank elegance"
   auditability: "all changes explainable post-hoc"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# PRINCIPLES — FLAT, UNIVERSAL, OPTIMIZE WORDING ONLY NOT MEANING
-# ═══════════════════════════════════════════════════════════════════════════════
+# PRINCIPLES: FLAT, UNIVERSAL, OPTIMIZE WORDING ONLY NOT MEANING
 
 principles:
   preserve_behavior: "never break working code"
@@ -33,9 +29,7 @@ principles:
   stepdown: "important code first"
   measure_first: "profile before optimizing"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# OPERATIONAL POLICY — OPTIMIZE FOR CLARITY, PRESERVE ALL SPECIFICS
-# ═══════════════════════════════════════════════════════════════════════════════
+# OPERATIONAL POLICY: OPTIMIZE FOR CLARITY, PRESERVE ALL SPECIFICS
 
 silent_success:
   principle: "Report only exceptions; success is default"
@@ -57,9 +51,7 @@ mandate:
     - "Single blank line between semantic groups only"
     - "No double blanks, no trailing whitespace"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# TOOLING CONSTRAINTS — MACHINE-ACTIONABLE, AUTO-OPTIMIZE FOR PRECISION
-# ═══════════════════════════════════════════════════════════════════════════════
+# TOOLING CONSTRAINTS: MACHINE-ACTIONABLE, AUTO-OPTIMIZE FOR PRECISION
 
 reasoning:
   primary_language: Ruby
@@ -160,6 +152,20 @@ file_sprawl_prevention:
   prefix_temp: "If temp files absolutely needed, prefix with . and delete after consumption"
 
 stack: {ruby: 3.3, rails: 8, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
+
+file_sprawl_prevention:
+  consolidation: "Merge folder/ into folder.rb when consolidating logic (e.g. repligen/ → repligen.rb)"
+  no_temp_files: "No .md files for planning/notes/tracking; work in memory, document via git commits"
+  prefix_temp: "If temp files absolutely needed, prefix with . and delete after consumption"
+
+style:
+  comments:
+    forbidden_decorations: ["---", "===", "###", "***", "━━━", "═══", "▬▬▬"]
+    rationale: "ASCII art separators create visual noise; use semantic structure instead"
+    preferred: "Simple # SECTION: description format"
+  code:
+    no_divitis: "Use Rails tag helpers (tag.p, tag.div) not raw HTML; ultraminimalistic views"
+    vertical_rhythm: "Single blank line between semantic groups only; no double blanks"
 
 scope:
   production: ["~/pub/rails/", "~/pub/openbsd/"]
