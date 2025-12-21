@@ -246,31 +246,7 @@ rails:
       - "Solid Queue generator adds config to production.rb (don't append manually)"
       - "Falcon needs config/preload.rb with require_relative 'environment'"
 
-zsh:
-  why: "zero forks, 46% token savings vs sed/awk/tr"
-  patterns:
-    case: "${(L)var} = lower, ${(U)var} = upper"
-    replace: "${var//old/new}"
-    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-    split: "(${(s:,:)var})"
-    join: "${(j:,:)arr}"
-    count: "${#arr}"
-    slice: "${arr[1,10]}"
-    read: "${(<file)}"
-    match: "[[ $str =~ pattern ]]"
-    glob: "**/*.rb(N.)"
-    glob_dirs: "**/*(N/)"
-    glob_exec: "**/*(N*)"
-  arrays:
-    create: "items=(one two three)"
-    append: "items+=(four)"
-    length: "${#items}"
-    slice: "${items[2,-1]}"
-  flags:
-    abs: "${file:a}"
-    dir: "${file:h}"
-    base: "${file:t}"
-    ext: "${file:e}"
+
 
 openbsd:
   vps: {ip: "185.52.176.18", user: dev, key: "~/priv/passwd/id_rsa"}
