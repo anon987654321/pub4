@@ -1,33 +1,76 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Hjerterom setup: Food redistribution platform with Mapbox, Vipps, analytics, live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
-APP_NAME="hjerterom"
+# Hjerterom - Mental health and food redistribution platform
+# Rails 8 + Solid Stack + Mapbox + Vipps + Analytics
 
-BASE_DIR="/home/dev/rails"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-SERVER_IP="185.52.176.18"
-APP_PORT=$((10000 + RANDOM % 10000))
+readonly APP_NAME="hjerterom"
+readonly BASE_DIR="/home/dev/rails"
+readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly SERVER_IP="185.52.176.18"
+readonly APP_PORT=$((10000 + RANDOM % 10000))
 
 source "${SCRIPT_DIR}/@shared_functions.sh"
 
-# Idempotency: skip if already generated
-check_app_exists "$APP_NAME" "app/models/food_donation.rb" && exit 0
-log "Starting Hjerterom setup"
-setup_full_app "$APP_NAME"
+main() {
+  check_app_exists "$APP_NAME" "app/models/food_donation.rb" && exit 0
+  
+  log "Starting Hjerterom setup"
+  setup_environment
+  setup_full_app "$APP_NAME"
+  install_dependencies
+  generate_models
+  setup_initializers
+  generate_controllers
+  generate_views
+  configure_routes
+  setup_authentication
+  finalize_setup
+  
+  log "Hjerterom setup complete"
+}
 
-command_exists "ruby"
+setup_environment() {
+  command_exists "ruby"
+  command_exists "node"
+  command_exists "psql"
+}
 
-command_exists "node"
-command_exists "psql"
-# Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-install_gem "faker"
-install_gem "omniauth-vipps"
+install_dependencies() {
+  install_gem "faker"
+  install_gem "omniauth-vipps"
+  install_gem "ahoy_matey"
+  install_gem "blazer"
+  install_gem "chartkick"
+}
 
-install_gem "ahoy_matey"
+generate_models() {
+  bin/rails generate model Distribution \
+    location:string schedule:datetime capacity:integer \
+    lat:decimal lng:decimal
+  
+  bin/rails generate model Giveaway \
+    title:string description:text quantity:integer \
+    pickup_time:datetime location:string lat:decimal lng:decimal \
+    user:references status:string anonymous:boolean
+  
+  bin/rails generate migration AddVippsToUsers \
+    vipps_id:string citizenship_status:string claim_count:integer
+}
 
-install_gem "blazer"
+setup_initializers() {
+  write_ahoy_initializer
+  write_blazer_initializer
+}
+
+generate_controllers() {
+  write_application_controller
+  write_home_controller
+  write_distributions_controller
+  write_giveaways_controller
+}
+
+main "$@"
 
 install_gem "chartkick"
 bin/rails generate model Distribution location:string schedule:datetime capacity:integer lat:decimal lng:decimal
@@ -36,36 +79,32 @@ bin/rails generate model Giveaway title:string description:text quantity:integer
 
 bin/rails generate migration AddVippsToUsers vipps_id:string citizenship_status:string claim_count:integer
 
-cat <<EOF > config/initializers/ahoy.rb
-
+write_ahoy_initializer() {
+  cat > config/initializers/ahoy.rb << 'EOF'
 class Ahoy::Store < Ahoy::DatabaseStore
 end
 
 Ahoy.track_visits_immediately = true
-
 EOF
-cat <<EOF > config/initializers/blazer.rb
-
-Blazer.data_sources["main"] = {
-
-  url: ENV["DATABASE_URL"],
-  smart_variables: {
-
-    user_id: "SELECT id, email FROM users ORDER BY email"
-  }
-
 }
 
+write_blazer_initializer() {
+  cat > config/initializers/blazer.rb << 'EOF'
+Blazer.data_sources["main"] = {
+  url: ENV["DATABASE_URL"],
+  smart_variables: {
+    user_id: "SELECT id, email FROM users ORDER BY email"
+  }
+}
 EOF
+}
 
-cat <<EOF > app/controllers/application_controller.rb
-
+write_application_controller() {
+  cat > app/controllers/application_controller.rb << 'EOF'
 class ApplicationController < ActionController::Base
-
   before_action :authenticate_user!, except: [:index, :show], unless: :guest_user_allowed?
 
   def after_sign_in_path_for(resource)
-
     root_path
   end
 
@@ -73,11 +112,13 @@ class ApplicationController < ActionController::Base
 
   def guest_user_allowed?
     controller_name == "home" ||
-
     (controller_name == "posts" && action_name.in?(["index", "show", "create"])) ||
-
     (controller_name == "distributions" && action_name.in?(["index", "show"])) ||
     (controller_name == "giveaways" && action_name.in?(["index", "show"]))
+  end
+end
+EOF
+}
   end
 
 end
