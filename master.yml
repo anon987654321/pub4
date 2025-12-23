@@ -8,12 +8,12 @@
 # fingerprint: master_96.0_unified
 
 meta:
-  version: v97.0
-  fingerprint: master_97.0_battle_tested
-  updated: "2025-12-23T17:57:00Z"
+  version: v98.0
+  fingerprint: master_98.0_gorails_integrated
+  updated: "2025-12-23T18:09:00Z"
   center: "principles define quality across all domains"
   capability: "Claude Sonnet 4.5+"
-  learned_from: "4 hours autonomous beautification + feature capture"
+  learned_from: "GoRails patterns + StimulusReflex mastery + marketplace architecture"
   
 session_knowledge:
   project: brgen
@@ -27,13 +27,35 @@ session_knowledge:
     ssh_key: /cygdrive/g/priv/passwd/id_rsa
     location: server27.openbsd.amsterdam
   apps:
-    brgen: { port: 37824, domains: 35 }
+    brgen: { port: 37824, domains: 35, type: "marketplace", features: [reddit_clone, x_layout, voting, comments, merit_badges] }
     amber: { port: 42189, domains: 1 }
     blognet: { port: 51673, domains: 6 }
     bsdports: { port: 29458, domains: 1 }
     hjerterom: { port: 48217, domains: 1 }
     privcam: { port: 33946, domains: 1 }
     pubattorney: { port: 56381, domains: 2 }
+  
+  marketplace_features:
+    reddit_clone_capabilities:
+      posts: [create, edit, delete, vote, comment, share]
+      voting: [upvote, downvote, score_calculation, hot_algorithm]
+      comments: [nested_threads, collapse, vote, sort_by_best]
+      moderation: [report, hide, pin, lock, remove]
+      feeds: [hot, new, top, rising, controversial]
+    
+    x_layout_features:
+      timeline: [infinite_scroll, real_time_updates, quote_posts, repost]
+      interactions: [like, repost, quote, reply, bookmark]
+      media: [image_gallery, video_player, gif_support]
+      engagement: [trends, hashtags, mentions, notifications]
+    
+    social_features_all_apps:
+      voting_system: "merit gem for badges + reputation"
+      comments: "nested with voting and sorting"
+      sharing: "twitter, facebook, linkedin, copy, qr, native"
+      lightbox: "lightgallery with purchased license"
+      pwa: "offline support, install prompt, notifications"
+      mobile_first: "48px touch targets, bottom nav, swipe"
   deployment:
     status: pre-point complete weeks ago
     next: "doas zsh ~/openbsd.sh --post-point"
@@ -59,25 +81,72 @@ session_knowledge:
   
   shared_components:
     purpose: "reusable patterns across all Rails apps"
-    location: "rails/__shared/"
+    location: "rails/ (flat structure with @*.sh modules)"
+    architecture: "modular scripts source components into apps"
     patterns:
       social_sharing:
         files: [stimulus_controllers/social_share_controller.js, helpers/social_sharing_helper.rb]
         features: [twitter, facebook, linkedin, copy_link, qr_code, native_share_api]
       lightbox:
-        npm: lightgallery@^2.7.0
+        npm: "lightgallery@^2.7.0 stimulus-lightbox"
         controller: lightgallery_controller.js
-        features: [zoom, fullscreen, thumbnails, video]
+        license: purchased
+        features: [zoom, fullscreen, thumbnails, video, swipe, touch]
+      rich_editor:
+        npm: "@tiptap/core @tiptap/starter-kit"
+        style: medium_inspired
+        script: rich_editor_system.sh
+        features: [markdown, slash_commands, collaborative, mentions, embeds]
       mobile_first:
         css: stylesheets/mobile_first.css
         targets: [touch_friendly_48px, bottom_nav, pull_to_refresh, swipe_gestures]
       pwa:
         files: [manifest.json, service_worker.js, pwa.js]
+        script: "@frontend_pwa.sh"
         features: [offline, install_prompt, push_notifications, background_sync]
       stimulus_components:
         npm: "@stimulus-components/*"
+        script: "@frontend_stimulus.sh"
         components: [dropdown, modal, tabs, tooltip, notification, autosave]
+      voting_reviews:
+        gem: merit
+        script: voting_system.sh
+        readme: VOTING_README.md
+        patterns: [upvotes, downvotes, ratings, reviews, reputation, badges]
+        universal: "available for all models in all apps"
+    
+    rails_best_practices:
+      source: "gorails.com Chris Oliver + Julian Rubisch StimulusReflex Patterns"
+      gorails_patterns:
+        hotwire_first: "use Turbo Frames and Streams before custom JS"
+        minimal_javascript: "Stimulus only for targeted interactivity"
+        broadcast_updates: "real-time via Turbo Streams and ActionCable"
+        component_composition: "small, focused ViewComponents with slots"
+        progressive_enhancement: "works without JS, better with it"
+      
+      stimulus_reflex_patterns:
+        reflexes_for_state: "granular UI updates without page reload"
+        optimistic_ui: "instant feedback, server confirms"
+        lifecycle_callbacks: "beforeReflex, afterReflex for loading states"
+        authorization: "always verify permissions in reflexes"
+        dry_concerns: "extract shared reflex logic to mixins"
+        morph_strategies: "page, selector, nothing - choose appropriately"
+      
+      viewcomponent_patterns:
+        slots: "composable component sections"
+        previews: "visual development environment"
+        testing: "fast unit tests in isolation"
+        collections: "efficient rendering of lists"
+        polymorphism: "variants for different contexts"
+      
+      jumpstart_wisdom:
+        madmin: "auto-generated admin panels"
+        noticed: "unified notification system"
+        pay: "multi-provider payment integration"
+        generators: "scaffold with best practices baked in"
+    
     integration:
+      workflow: "rails/@loader.sh sources all @*.sh modules"
       add_to_generators: true
       update_shared_functions: true
       test_in_brgen_first: true
