@@ -90,8 +90,7 @@ class Repligen
     false
   end
 
-  # === IMAGE GENERATION ===
-  
+    
   def generate_image(prompt, lora: nil)
     puts "🎨 Generating image..."
     puts "Prompt: #{prompt[0..100]}..."
@@ -124,8 +123,7 @@ class Repligen
     })
   end
 
-  # === VIDEO EXTENSION ===
-  
+    
   def extend_video(video_url, prompt, extension_prompt = nil)
     puts "
 📹 Extending video with Luma Ray 2..."
@@ -142,8 +140,7 @@ class Repligen
     wait_for_completion(JSON.parse(res.body)["id"], "Luma Extend")
   end
 
-  # === VIDEO GENERATION ===
-  
+    
   def generate_video(image_url, prompt, duration: 10, model: :hailuo)
     puts "
 🎬 Generating #{duration}s video..."
@@ -196,8 +193,7 @@ class Repligen
     end
   end
 
-  # === IMAGE ENHANCEMENT ===
-  
+    
   def enhance_for_video(image_url, name)
     puts "
   🔧 Enhancing image for better video quality..."
@@ -287,8 +283,7 @@ Next: Train LoRA with enhanced photos"
     puts "  cd __lora && zip -r #{subject}_enhanced_training.zip #{subject}_enhanced/*.png"
   end
 
-  # === LORA TRAINING ===
-  
+    
   def train_lora(subject)
     input_dir = File.join("__lora", subject)
     
@@ -321,8 +316,7 @@ After training, use with:"
     puts "  ruby repligen.rb generate '#{subject.upcase} woman as athlete, cinematic portrait'"
   end
 
-  # === CHAIN EXECUTION ===
-  
+    
   def execute_chain(prompt = nil)
     prompt ||= "beautiful cinematic portrait, golden hour lighting, shallow depth of field, professional photography, warm tones, 85mm lens"
     
@@ -389,8 +383,7 @@ After training, use with:"
     puts "="*70
   end
   
-  # === MODEL INDEXING ===
-  
+    
   def setup_database
     require "sqlite3"
     @db = SQLite3::Database.new(@db_path)
@@ -506,8 +499,7 @@ Fetching collections..."
     end
   end
   
-  # === COMMERCIAL GENERATOR ===
-  
+    
   def generate_commercial(subject, lora: "ra2", model: :kling)
     puts "
 🎬 TEAM NORWAY BEACH VOLLEYBALL COMMERCIAL"
@@ -603,8 +595,7 @@ Advanced cinematography techniques applied:"
     puts "  ✓ Speed modifiers (120fps/240fps slow motion simulation)"
   end
 
-  # === MAIN ROUTER ===
-  
+    
   def run(args)
     if args.empty?
       show_help

@@ -1,12 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# =============================================================================
 # SOS DILLA v2.1.0 - Cross-Platform Lo-Fi Production System
-# =============================================================================
 # Targets: Cygwin (Windows 11), OpenBSD VPS, Android Termux (Samsung)
 # Backend: FFmpeg (universal) - replaces SoX for cross-platform compatibility
-# =============================================================================
 # Sources:
 #   - J Dilla: Fantastic Vol 1 & 2, Donuts, The Shining, unreleased
 #   - Flying Lotus: Los Angeles (2008)
@@ -14,7 +11,6 @@
 #   - Sonitex STX-1260, NastyVCS mkII, Moog DFAM
 #   - arXiv papers on tape/vinyl emulation
 #   - Bahadırhan Koçer: "Understanding Dub Drums" (dub techno)
-# =============================================================================
 
 require "json"
 require "fileutils"
@@ -24,7 +20,7 @@ require "securerandom"
 class SOSDilla
   VERSION = "2.1.0"
   CONFIG_FILE = File.join(File.dirname(__FILE__), "dilla_config.json")
-  
+
   # Load shared config
   def self.load_config
     if File.exist?(CONFIG_FILE)
@@ -37,12 +33,10 @@ class SOSDilla
     puts "⚠️  Config parse error: #{e.message}"
     {}
   end
-  
+
   CONFIG = load_config
 
-  # ===========================================================================
-  # CHORD PROGRESSIONS (from shared config)
-  # ===========================================================================
+  CHORD PROGRESSIONS (from shared config)
   def self.get_chords(artist, album, track = nil)
     chords = CONFIG.dig("chords", "#{artist}_#{album}")
     return chords[track] if track && chords&.dig(track)
