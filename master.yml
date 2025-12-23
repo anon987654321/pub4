@@ -8,11 +8,12 @@
 # fingerprint: master_96.0_unified
 
 meta:
-  version: v96.0
-  fingerprint: master_96.0_unified
-  updated: "2025-12-23T13:44:39Z"
+  version: v97.0
+  fingerprint: master_97.0_battle_tested
+  updated: "2025-12-23T17:57:00Z"
   center: "principles define quality across all domains"
   capability: "Claude Sonnet 4.5+"
+  learned_from: "4 hours autonomous beautification + feature capture"
   
 session_knowledge:
   project: brgen
@@ -55,6 +56,31 @@ session_knowledge:
         desc: "AI media generation via Replicate API"
         backend: replicate.com
         principles: [observability, feedback, sovereignty]
+  
+  shared_components:
+    purpose: "reusable patterns across all Rails apps"
+    location: "rails/__shared/"
+    patterns:
+      social_sharing:
+        files: [stimulus_controllers/social_share_controller.js, helpers/social_sharing_helper.rb]
+        features: [twitter, facebook, linkedin, copy_link, qr_code, native_share_api]
+      lightbox:
+        npm: lightgallery@^2.7.0
+        controller: lightgallery_controller.js
+        features: [zoom, fullscreen, thumbnails, video]
+      mobile_first:
+        css: stylesheets/mobile_first.css
+        targets: [touch_friendly_48px, bottom_nav, pull_to_refresh, swipe_gestures]
+      pwa:
+        files: [manifest.json, service_worker.js, pwa.js]
+        features: [offline, install_prompt, push_notifications, background_sync]
+      stimulus_components:
+        npm: "@stimulus-components/*"
+        components: [dropdown, modal, tabs, tooltip, notification, autosave]
+    integration:
+      add_to_generators: true
+      update_shared_functions: true
+      test_in_brgen_first: true
 
 inviolable:
   center_guard:
@@ -547,6 +573,34 @@ beautification:
   minimum_delta: 0.02
   anti_patterns: [over_polishing, forced_symmetry]
   
+  heredoc_strategy:
+    threshold: "heredoc > 50 lines"
+    actions:
+      - "extract to write_*_file() function"
+      - "consider template file if reusable"
+      - "use single quotes for non-interpolated content"
+      - "loop for repetitive sections"
+    template_extraction:
+      when: "heredoc appears in 3+ files"
+      location: "rails/__shared/templates/"
+      naming: "verb_noun.ext (e.g., generate_model.rb.erb)"
+  
+  rails_generator_pattern:
+    structure:
+      - "readonly constants at top"
+      - "main() orchestrator function"
+      - "setup_* for configuration"
+      - "generate_* for Rails commands"
+      - "write_* for file creation"
+      - "finalize_* for cleanup"
+    heredoc_functions:
+      naming: "write_{component}_{file_type}"
+      examples: [write_application_controller, write_routes_config, write_model_base]
+    shared_extraction:
+      when: "pattern appears in 3+ generators"
+      destination: "@shared_functions.sh"
+      test: "source in new generator, verify works"
+  
   process:
     phase_1_scan:
       - "read entire file into memory"
@@ -613,6 +667,95 @@ beautification:
     metrics_table: true
     violations_eliminated: true
     confidence_scores: true
+
+documentation_mode:
+  purpose: "create professional, concise, actionable READMEs"
+  trigger: [create_readme, update_readme, document_app]
+  
+  structure:
+    required_sections:
+      - header: "# App Name - One-line Description"
+      - metadata: "Version, Stack, Port, Domain(s)"
+      - overview: "1-2 paragraph description"
+      - features: "Bulleted list of capabilities"
+      - quick_start: "Single command to run"
+      - tagline: "Memorable closing line"
+    
+    optional_sections:
+      - installation: "Detailed setup (if complex)"
+      - configuration: "Environment variables"
+      - documentation: "Link to detailed docs"
+  
+  principles:
+    - concise: "No fluff, only essentials"
+    - professional: "Consistent structure"
+    - actionable: "Quick start always present"
+    - scoped: "One README per component, no cross-references"
+    - current: "Reflects actual stack (Rails 8, Solid Stack)"
+  
+  anti_patterns:
+    - verbose_history: "No 'how we got here' stories"
+    - tutorial_style: "No step-by-step for obvious things"
+    - dependency_lists: "Gemfile/package.json is source of truth"
+    - api_documentation: "Keep in code or separate API docs"
+  
+  length_targets:
+    app_readme: "30-50 lines"
+    tool_readme: "40-70 lines"
+    infrastructure_readme: "20-40 lines"
+
+feature_implementation:
+  purpose: "systematic feature addition to existing apps"
+  trigger: [add_feature, implement_requirement, enhance_app]
+  
+  workflow:
+    phase_1_analyze:
+      - "read feature requirements"
+      - "identify affected apps"
+      - "check for existing similar features"
+      - "estimate effort and dependencies"
+    
+    phase_2_design:
+      - "choose implementation pattern"
+      - "identify shared vs app-specific code"
+      - "plan database migrations if needed"
+      - "design API/UI interfaces"
+    
+    phase_3_shared_first:
+      - "create shared components in __shared/"
+      - "add to @shared_functions.sh if generator change"
+      - "test in isolation"
+      - "document usage"
+    
+    phase_4_integrate:
+      - "add to app generators"
+      - "update existing app if deployed"
+      - "run generators to verify"
+      - "commit incrementally"
+    
+    phase_5_validate:
+      - "test functionality"
+      - "check mobile responsiveness"
+      - "verify accessibility"
+      - "update documentation"
+  
+  patterns:
+    social_features:
+      - voting: "acts_as_votable gem"
+      - karma: "counter_cache + calculation"
+      - sharing: "meta-tags gem + Stimulus controller"
+      - notifications: "Solid Cable + Turbo Streams"
+    
+    pwa:
+      - manifest: "app/views/pwa/manifest.json.erb"
+      - service_worker: "app/javascript/service_worker.js"
+      - install_prompt: "Stimulus controller"
+    
+    mobile_first:
+      - breakpoints: [320px, 768px, 1024px, 1280px]
+      - touch_targets: "min 48x48px"
+      - navigation: "bottom fixed on mobile"
+      - gestures: "swipe.js or Stimulus"
 
 gap_prevention:
   missing_operation:
