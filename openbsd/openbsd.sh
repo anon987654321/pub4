@@ -1,23 +1,31 @@
 #!/usr/bin/env zsh
-# OpenBSD Infrastructure v338.1.0 - Rails 8 + Solid Stack
-
+# OpenBSD Infrastructure - Rails 8 + Solid Stack
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 #
 # ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails 8
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
 #
 # VERIFIED: 2025-12-19 against man.openbsd.org, Rails 8 guides, Hotwire docs
+
 set -euo pipefail
 
+# ============================================================================
+# CONSTANTS
+# ============================================================================
 readonly VERSION="338.1.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
 readonly PTR4_API="http://ptr4.openbsd.amsterdam"
 readonly PTR6_API="http://ptr6.openbsd.amsterdam"
+readonly PTR_HOSTNAME="ns.brgen.no"
+
 readonly DEPLOY_BASE="/var/rails"
 readonly APP_BASE="/home"
 readonly LOG_DIR="/var/log/rails"
 readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
+
+readonly SPINNER_FRAMES='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+readonly SPINNER_FRAME_COUNT=10
 
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
 
