@@ -207,10 +207,8 @@ class BusinessPlanGenerator
   end
 end
 
-# Run generator if executed directly
 if __FILE__ == $PROGRAM_NAME
   generator = BusinessPlanGenerator.new
   success = generator.generate_all
   exit(success ? 0 : 1)
-end
 end
