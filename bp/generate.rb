@@ -17,8 +17,6 @@ class BusinessPlanGenerator
   DATA_DIR = File.join(__dir__, 'data')
   TEMPLATE_FILE = File.join(__dir__, '__shared', 'template.html.erb')
   OUTPUT_DIR = File.join(__dir__, 'generated')
-  
-  SEPARATOR = '=' * 50
 
   def initialize
     @errors = []
@@ -46,7 +44,7 @@ class BusinessPlanGenerator
 
   def print_header
     puts "🚀 Business Plan Generator"
-    puts SEPARATOR
+    puts
   end
 
   def ensure_output_directory
@@ -76,8 +74,8 @@ class BusinessPlanGenerator
   def print_summary(results, total)
     success_count = results.count(true)
     failure_count = results.count(false)
-    
-    puts "\n#{SEPARATOR}"
+
+    puts
     puts "✅ Successfully generated: #{success_count}/#{total}"
     puts "❌ Failed: #{failure_count}" if failure_count > 0
     
