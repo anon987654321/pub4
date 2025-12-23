@@ -10,119 +10,118 @@ require "time"
 require "fileutils"
 
 module PostproBootstrap
-  def self.dmesg(msg)
+  def self.log_message(msg)
     puts "[postpro] #{msg}"
   end
 
   def self.startup_banner
     ruby_version = RUBY_VERSION
     os = RbConfig::CONFIG["host_os"]
-    dmesg "boot ruby=#{ruby_version} os=#{os}"
+    log_message "boot ruby=#{ruby_version} os=#{os}"
   end
 
   def self.ensure_gems
     vips_available = ensure_vips
     tty_available = ensure_tty_prompt
 
-    dmesg "vipsgem=#{vips_available} tty=#{tty_available}"
+    log_message "vipsgem=#{vips_available} tty=#{tty_available}"
     { vips: vips_available, tty: tty_available }
   end
 
-  def self.ensure_vips
-    require "vips"
+  def self.ensure_gem(gem_name, require_name: gem_name)
+    require require_name
     true
   rescue LoadError
-    dmesg "WARN ruby-vips gem missing, attempting install..."
-    begin
-      if system("gem install ruby-vips --no-document")
-        require "vips"
-        dmesg "OK ruby-vips gem installed"
-        true
-      else
-        dmesg "WARN ruby-vips install failed"
-        probe_and_install_libvips
-        false
-      end
-    rescue => e
-      dmesg "WARN ruby-vips unavailable: #{e.message}"
+    log_message "WARN #{gem_name} gem missing, attempting install..."
+    install_gem(gem_name, require_name)
+  end
+
+  def self.install_gem(gem_name, require_name)
+    if system("gem install #{gem_name} --no-document")
+      require require_name
+      log_message "OK #{gem_name} gem installed"
+      true
+    else
+      log_message "WARN #{gem_name} install failed"
       false
     end
+  rescue => e
+    log_message "WARN #{gem_name} unavailable: #{e.message}"
+    false
+  end
+
+  def self.ensure_vips
+    ensure_gem("ruby-vips", require_name: "vips") || (probe_and_install_libvips && false)
   end
 
   def self.ensure_tty_prompt
-    require "tty-prompt"
-    true
-  rescue LoadError
-    dmesg "WARN tty-prompt gem missing, attempting install..."
-    begin
-      if system("gem install tty-prompt --no-document")
-        require "tty-prompt"
-        dmesg "OK tty-prompt gem installed"
-        true
-      else
-        dmesg "WARN tty-prompt install failed, degraded prompt experience"
-        false
-      end
-    rescue => e
-      dmesg "WARN tty-prompt unavailable: #{e.message}"
-      false
-    end
+    ensure_gem("tty-prompt")
   end
 
   def self.probe_and_install_libvips
-    dmesg "probing libvips installation..."
+    log_message "probing libvips installation..."
+    return true if libvips_installed?
 
-    if system("pkg-config --exists vips")
-      dmesg "OK libvips already installed"
-      return true
-    end
+    install_libvips_for_os
+    verify_libvips_installation
+  end
 
-    # Detect package manager and attempt install
+  def self.libvips_installed?
+    system("pkg-config --exists vips") && (log_message("OK libvips already installed"); true)
+  end
+
+  def self.install_libvips_for_os
     os = RbConfig::CONFIG["host_os"]
     case os
-    when /darwin/
-      if system("which brew > /dev/null 2>&1")
-        dmesg "attempting: brew install vips"
-        system("brew install vips")
-      else
-        dmesg "ERROR homebrew not found, install manually: brew install vips"
-      end
-    when /linux/
-      if system("which apt > /dev/null 2>&1")
-        dmesg "attempting: apt install libvips-dev"
-        system("sudo apt update && sudo apt install -y libvips-dev")
-      elsif system("which dnf > /dev/null 2>&1")
-        dmesg "attempting: dnf install vips-devel"
-        system("sudo dnf install -y vips-devel")
-      elsif system("which yum > /dev/null 2>&1")
-        dmesg "attempting: yum install vips-devel"
-        system("sudo yum install -y vips-devel")
-      elsif system("which apk > /dev/null 2>&1")
-        dmesg "attempting: apk add vips-dev"
-        system("sudo apk add vips-dev")
-      elsif system("which pacman > /dev/null 2>&1")
-        dmesg "attempting: pacman -S libvips"
-        system("sudo pacman -S --noconfirm libvips")
-      else
-        dmesg "ERROR no supported package manager found"
-      end
-    when /openbsd/
-      if system("which pkg_add > /dev/null 2>&1")
-        dmesg "attempting: pkg_add vips"
-        system("doas pkg_add vips")
-      else
-        dmesg "ERROR pkg_add not found"
-      end
-    else
-      dmesg "ERROR unsupported OS: #{os}"
+    when /darwin/ then install_on_macos
+    when /linux/ then install_on_linux
+    when /openbsd/ then install_on_openbsd
+    else log_message "ERROR unsupported OS: #{os}"
     end
+  end
 
-    # Verify installation
+  def self.install_on_macos
+    if system("which brew > /dev/null 2>&1")
+      log_message "attempting: brew install vips"
+      system("brew install vips")
+    else
+      log_message "ERROR homebrew not found, install manually: brew install vips"
+    end
+  end
+
+  def self.install_on_linux
+    installers = {
+      "apt" => "sudo apt update && sudo apt install -y libvips-dev",
+      "dnf" => "sudo dnf install -y vips-devel",
+      "yum" => "sudo yum install -y vips-devel",
+      "apk" => "sudo apk add vips-dev",
+      "pacman" => "sudo pacman -S --noconfirm libvips"
+    }
+
+    installer = installers.keys.find { |cmd| system("which #{cmd} > /dev/null 2>&1") }
+    if installer
+      log_message "attempting: #{installers[installer]}"
+      system(installers[installer])
+    else
+      log_message "ERROR no supported package manager found"
+    end
+  end
+
+  def self.install_on_openbsd
+    if system("which pkg_add > /dev/null 2>&1")
+      log_message "attempting: pkg_add vips"
+      system("doas pkg_add vips")
+    else
+      log_message "ERROR pkg_add not found"
+    end
+  end
+
+  def self.verify_libvips_installation
     if system("pkg-config --exists vips")
-      dmesg "OK libvips installation successful"
+      log_message "OK libvips installation successful"
       true
     else
-      dmesg "ERROR libvips installation failed"
+      log_message "ERROR libvips installation failed"
       false
     end
   end
@@ -143,12 +142,12 @@ module PostproBootstrap
           profiles[vendor] = data["profiles"]
         end
       rescue => e
-        dmesg "WARN failed to load profile #{File.basename(file)}: #{e.message}"
+      log_message "WARN failed to load profile #{File.basename(file)}: #{e.message}"
       end
     end
 
     brands = profiles.keys.join(",")
-    dmesg "camera_profiles=#{brands.empty? ? 'none' : brands}"
+    log_message "camera_profiles=#{brands.empty? ? 'none' : brands}"
     profiles
   end
 
@@ -156,12 +155,13 @@ module PostproBootstrap
     return {} unless File.exist?("master.json")
 
     begin
-      master = JSON.parse(File.read("master.json").gsub(/^.*//.*$/, ""))
+      content = File.read("master.json").gsub(%r{^.*//.*$}, "")
+      master = JSON.parse(content)
       config = master.dig("config", "multimedia", "postpro") || {}
-      dmesg "OK loaded defaults from master.json"
+      log_message "OK loaded defaults from master.json"
       config
     rescue => e
-      dmesg "WARN failed to parse master.json: #{e.message}"
+      log_message "WARN failed to parse master.json: #{e.message}"
       {}
     end
   end

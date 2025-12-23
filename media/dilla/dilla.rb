@@ -236,7 +236,9 @@ class SOSDilla
     end
 
     def run(cmd)
-      system(cmd + " >/dev/null 2>&1")
+      success = system(cmd + " >/dev/null 2>&1")
+      raise "FFmpeg command failed: #{cmd}" unless success
+      success
     end
 
     def tone(freq:, duration:, wave: :sine, output:, amp: 0.8)
@@ -325,60 +327,76 @@ class SOSDilla
   def generate_dub(pattern: :one_drop, progression: "dub_meditative", key: "E", bpm: 120, bars: 4)
     puts "🎚️  Generating: #{pattern} | #{progression} | #{key} | #{bpm}BPM"
     
-    pat = DUB_PATTERNS[pattern]
     duration = (60.0 / bpm) * 4 * bars
     base_freq = note_freq(key, 2)
 
-    # Generate layers
-    drums = temp("drums.wav")
-    bass = temp("bass.wav")
-    chords = temp("chords.wav")
+    drums = generate_drums(duration)
+    bass = generate_bass(base_freq, duration)
+    chords = generate_chords(base_freq, duration)
+    
+    mixed = mix_layers(drums, bass, chords)
+    master_track(mixed, "dub_#{pattern}_#{key}_#{bpm}_#{timestamp}.wav")
+  end
 
-    # Drums: kick + noise
-    kick = temp("kick.wav")
+  def generate_drums(duration)
+    kick = temp_file("kick.wav")
     @ffmpeg.tone(freq: 55, duration: 0.3, wave: :sine, output: kick, amp: 0.9)
     @ffmpeg.lowpass(input: kick, output: kick, cutoff: 120)
 
-    hat = temp("hat.wav")
+    hat = temp_file("hat.wav")
     @ffmpeg.noise(duration: 0.05, output: hat, amp: 0.15)
     @ffmpeg.highpass(input: hat, output: hat, cutoff: 8000)
 
-    silence = temp("silence.wav")
+    drums = temp_file("drums.wav")
+    silence = temp_file("silence.wav")
     @ffmpeg.tone(freq: 1, duration: duration, wave: :sine, output: silence, amp: 0)
     @ffmpeg.mix(inputs: [silence, kick, hat], output: drums, volumes: [1, 0.8, 0.3])
+    
+    apply_dub_fx(drums, :drums)
+  end
 
-    # Bass
+  def generate_bass(base_freq, duration)
+    bass = temp_file("bass.wav")
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :sine, output: bass, amp: 0.7)
     @ffmpeg.lowpass(input: bass, output: bass, cutoff: 200)
+    apply_dub_fx(bass, :bass)
+  end
 
-    # Chords  
+  def generate_chords(base_freq, duration)
+    chords = temp_file("chords.wav")
     @ffmpeg.tone(freq: base_freq * 4, duration: duration, wave: :triangle, output: chords, amp: 0.25)
+    apply_dub_fx(chords, :chords)
+  end
 
-    # Process with dub FX
-    drums_fx = temp("drums_fx.wav")
-    @ffmpeg.reverb(input: drums, output: drums_fx, decay: 0.4, size: :spring)
-    @ffmpeg.echo(input: drums_fx, output: drums_fx, delay_ms: 375, feedback: 0.35)
+  def apply_dub_fx(input, type)
+    output = temp_file("#{type}_fx.wav")
+    case type
+    when :drums
+      @ffmpeg.reverb(input: input, output: output, decay: 0.4, size: :spring)
+      @ffmpeg.echo(input: output, output: output, delay_ms: 375, feedback: 0.35)
+    when :bass
+      @ffmpeg.compress(input: input, output: output, threshold: -15, ratio: 4)
+    when :chords
+      @ffmpeg.echo(input: input, output: output, delay_ms: 125, feedback: 0.4)
+      @ffmpeg.reverb(input: output, output: output, decay: 0.5, size: :large)
+    end
+    output
+  end
 
-    bass_fx = temp("bass_fx.wav")
-    @ffmpeg.compress(input: bass, output: bass_fx, threshold: -15, ratio: 4)
+  def mix_layers(drums, bass, chords)
+    mixed = temp_file("mixed.wav")
+    @ffmpeg.mix(inputs: [drums, bass, chords], output: mixed, volumes: [1.0, 0.8, 0.5])
+    mixed
+  end
 
-    chords_fx = temp("chords_fx.wav")
-    @ffmpeg.echo(input: chords, output: chords_fx, delay_ms: 125, feedback: 0.4)
-    @ffmpeg.reverb(input: chords_fx, output: chords_fx, decay: 0.5, size: :large)
-
-    # Mix
-    mixed = temp("mixed.wav")
-    @ffmpeg.mix(inputs: [drums_fx, bass_fx, chords_fx], output: mixed, volumes: [1.0, 0.8, 0.5])
-
-    # Master
-    final = File.join(@output_dir, "dub_#{pattern}_#{key}_#{bpm}_#{timestamp}.wav")
-    master_out = temp("master.wav")
-    @ffmpeg.eq(input: mixed, output: master_out, bands: [
+  def master_track(input, filename)
+    final = File.join(@output_dir, filename)
+    master_out = temp_file("master.wav")
+    @ffmpeg.eq(input: input, output: master_out, bands: [
       { freq: 60, gain: 2, q: 0.7 },
       { freq: 3000, gain: -1, q: 1.5 }
     ])
     @ffmpeg.normalize(input: master_out, output: final)
-
     puts "✓ Generated: #{final}"
     final
   end
@@ -389,26 +407,31 @@ class SOSDilla
     duration = 8.0
     base_freq = note_freq(key, 3)
 
-    raw = temp("raw.wav")
+    raw = temp_file("raw.wav")
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :triangle, output: raw, amp: 0.5)
 
-    crushed = temp("crushed.wav")
-    @ffmpeg.bitcrush(input: raw, output: crushed, bits: 14)
+    processed = apply_dilla_chain(raw)
+    
+    final = File.join(@output_dir, "dilla_#{style}_#{key}_#{bpm}_#{timestamp}.wav")
+    @ffmpeg.compress(input: processed, output: final, threshold: -20, ratio: 4)
 
-    warm = temp("warm.wav")
+    puts "✓ Generated: #{final}"
+    final
+  end
+
+  def apply_dilla_chain(input)
+    crushed = temp_file("crushed.wav")
+    @ffmpeg.bitcrush(input: input, output: crushed, bits: 14)
+
+    warm = temp_file("warm.wav")
     @ffmpeg.saturate(input: crushed, output: warm, drive: 1.8)
 
-    eq_out = temp("eq.wav")
+    eq_out = temp_file("eq.wav")
     @ffmpeg.eq(input: warm, output: eq_out, bands: [
       { freq: 100, gain: 3, q: 0.8 },
       { freq: 8000, gain: -2.5, q: 1.2 }
     ])
-
-    final = File.join(@output_dir, "dilla_#{style}_#{key}_#{bpm}_#{timestamp}.wav")
-    @ffmpeg.compress(input: eq_out, output: final, threshold: -20, ratio: 4)
-
-    puts "✓ Generated: #{final}"
-    final
+    eq_out
   end
 
   def master(input:, era: :rhythm_and_sound)
@@ -416,21 +439,26 @@ class SOSDilla
     v = VINTAGE[era] || VINTAGE[:rhythm_and_sound]
     puts "   #{v[:desc]}"
 
-    processed = temp("master.wav")
+    processed = apply_vintage_processing(input, v)
     
-    if v[:bits]
-      @ffmpeg.bitcrush(input: input, output: processed, bits: v[:bits])
-      @ffmpeg.saturate(input: processed, output: processed, drive: 1.5)
-    else
-      @ffmpeg.reverb(input: input, output: processed, decay: v[:reverb]/10.0, size: :medium)
-      @ffmpeg.echo(input: processed, output: processed, delay_ms: 280, feedback: v[:echo])
-    end
-
     final = File.join(@output_dir, "master_#{era}_#{timestamp}.wav")
     @ffmpeg.normalize(input: processed, output: final)
 
     puts "✓ Mastered: #{final}"
     final
+  end
+
+  def apply_vintage_processing(input, vintage)
+    processed = temp_file("master.wav")
+    
+    if vintage[:bits]
+      @ffmpeg.bitcrush(input: input, output: processed, bits: vintage[:bits])
+      @ffmpeg.saturate(input: processed, output: processed, drive: 1.5)
+    else
+      @ffmpeg.reverb(input: input, output: processed, decay: vintage[:reverb]/10.0, size: :medium)
+      @ffmpeg.echo(input: processed, output: processed, delay_ms: 280, feedback: vintage[:echo])
+    end
+    processed
   end
 
   def export_config
@@ -449,7 +477,9 @@ class SOSDilla
     440.0 * (2.0 ** ((semitones[note].to_i - 9 + (octave - 4) * 12) / 12.0))
   end
 
-  def temp(name); File.join(@temp_dir, name) end
+  def temp_file(name)
+    File.join(@temp_dir, name)
+  end
   def timestamp; Time.now.strftime("%Y%m%d_%H%M%S") end
   def cleanup; FileUtils.rm_rf(@temp_dir) end
 
@@ -724,24 +754,32 @@ class SOSDilla
     profile = GEAR_PROFILES[gear] || GEAR_PROFILES[:sp1200]
     puts "🎛️  Applying #{profile[:name]} character..."
     
-    temp1 = temp("gear1.wav")
-    temp2 = temp("gear2.wav")
+    resampled = apply_gear_resample(input, profile)
+    crushed = apply_gear_bitcrush(resampled, profile)
+    filtered = apply_gear_filter(crushed, profile)
     
-    # Resample to gear's native rate
-    @ffmpeg.resample(input: input, output: temp1, rate: profile[:sample_rate])
-    
-    # Bitcrush
-    @ffmpeg.bitcrush(input: temp1, output: temp2, bits: profile[:bits])
-    
-    # Filter
-    temp3 = temp("gear3.wav")
-    @ffmpeg.lowpass(input: temp2, output: temp3, cutoff: profile[:filter_hz])
-    
-    # Saturation
-    @ffmpeg.saturate(input: temp3, output: output, drive: profile[:saturation])
+    @ffmpeg.saturate(input: filtered, output: output, drive: profile[:saturation])
     
     puts "   Character: #{profile[:character]}"
     output
+  end
+
+  def apply_gear_resample(input, profile)
+    temp1 = temp_file("gear1.wav")
+    @ffmpeg.resample(input: input, output: temp1, rate: profile[:sample_rate])
+    temp1
+  end
+
+  def apply_gear_bitcrush(input, profile)
+    temp2 = temp_file("gear2.wav")
+    @ffmpeg.bitcrush(input: input, output: temp2, bits: profile[:bits])
+    temp2
+  end
+
+  def apply_gear_filter(input, profile)
+    temp3 = temp_file("gear3.wav")
+    @ffmpeg.lowpass(input: input, output: temp3, cutoff: profile[:filter_hz])
+    temp3
   end
 
   # ===========================================================================
@@ -753,32 +791,8 @@ class SOSDilla
     
     current = input
     chain.each_with_index do |effect, i|
-      next_file = temp("chain_#{i}.wav")
-      
-      case effect[:type]
-      when :bitcrush
-        @ffmpeg.bitcrush(input: current, output: next_file, bits: effect[:bits])
-      when :resample
-        @ffmpeg.resample(input: current, output: next_file, rate: effect[:rates])
-      when :lowpass
-        @ffmpeg.lowpass(input: current, output: next_file, cutoff: effect[:cutoff])
-      when :highpass
-        @ffmpeg.highpass(input: current, output: next_file, cutoff: effect[:cutoff])
-      when :saturation, :tape_sat, :tube_sat, :transformer
-        @ffmpeg.saturate(input: current, output: next_file, drive: effect[:drive] || (1.0 + (effect[:amount] || 0.3)))
-      when :compression
-        @ffmpeg.compress(input: current, output: next_file, threshold: effect[:threshold], ratio: effect[:ratio])
-      when :reverb
-        @ffmpeg.reverb(input: current, output: next_file, decay: effect[:decay], size: :medium)
-      when :delay
-        @ffmpeg.echo(input: current, output: next_file, delay_ms: effect[:time_ms], feedback: effect[:feedback])
-      when :tremolo
-        @ffmpeg.tremolo(input: current, output: next_file, rate: effect[:rate], depth: effect[:depth])
-      else
-        FileUtils.cp(current, next_file)
-      end
-      
-      current = next_file
+      next_file = temp_file("chain_#{i}.wav")
+      current = apply_effect(current, next_file, effect)
     end
     
     final = File.join(@output_dir, "random_#{aesthetic}_#{SecureRandom.hex(4)}_#{timestamp}.wav")
@@ -786,6 +800,33 @@ class SOSDilla
     
     puts "✓ Generated: #{final}"
     { file: final, chain: chain }
+  end
+
+  def apply_effect(input, output, effect)
+    case effect[:type]
+    when :bitcrush
+      @ffmpeg.bitcrush(input: input, output: output, bits: effect[:bits])
+    when :resample
+      @ffmpeg.resample(input: input, output: output, rate: effect[:rates])
+    when :lowpass
+      @ffmpeg.lowpass(input: input, output: output, cutoff: effect[:cutoff])
+    when :highpass
+      @ffmpeg.highpass(input: input, output: output, cutoff: effect[:cutoff])
+    when :saturation, :tape_sat, :tube_sat, :transformer
+      drive = effect[:drive] || (1.0 + (effect[:amount] || 0.3))
+      @ffmpeg.saturate(input: input, output: output, drive: drive)
+    when :compression
+      @ffmpeg.compress(input: input, output: output, threshold: effect[:threshold], ratio: effect[:ratio])
+    when :reverb
+      @ffmpeg.reverb(input: input, output: output, decay: effect[:decay], size: :medium)
+    when :delay
+      @ffmpeg.echo(input: input, output: output, delay_ms: effect[:time_ms], feedback: effect[:feedback])
+    when :tremolo
+      @ffmpeg.tremolo(input: input, output: output, rate: effect[:rate], depth: effect[:depth])
+    else
+      FileUtils.cp(input, output)
+    end
+    output
   end
 
   # ===========================================================================

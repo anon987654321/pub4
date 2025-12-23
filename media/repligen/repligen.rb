@@ -33,18 +33,32 @@ class Repligen
 
   def api(method, path, body = nil)
     uri = URI("https://api.replicate.com/v1#{path}")
+    req = build_request(method, uri, body)
+    execute_request(uri, req)
+  rescue => e
+    puts "❌ API error: #{e.message}"
+    nil
+  end
+
+  def build_request(method, uri, body)
     req = method == :get ? Net::HTTP::Get.new(uri) : Net::HTTP::Post.new(uri)
     req["Authorization"] = "Token #{@token}"
     req["Content-Type"] = "application/json"
     req.body = body.to_json if body
+    req
+  end
+
+  def execute_request(uri, req)
     Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
   end
 
-  def wait(id, name)
+  def wait_for_completion(id, name)
     print "⏳ #{name}..."
     loop do
       sleep 3
       res = api(:get, "/predictions/#{id}")
+      return handle_api_failure(name) unless res
+      
       data = JSON.parse(res.body)
       case data["status"]
       when "succeeded"
@@ -57,44 +71,57 @@ class Repligen
         print "."
       end
     end
+  rescue => e
+    puts " ✗ #{e.message}"
+    nil
+  end
+
+  def handle_api_failure(name)
+    puts " ✗ API request failed for #{name}"
+    nil
   end
 
   def download(url, filename)
     puts "📥 Downloading..."
     File.write(filename, Net::HTTP.get(URI(url)))
     puts "✓ Saved: #{filename}"
+  rescue => e
+    puts "❌ Download failed: #{e.message}"
+    false
   end
 
   # === IMAGE GENERATION ===
   
   def generate_image(prompt, lora: nil)
-    puts "
-🎨 Generating image..."
+    puts "🎨 Generating image..."
     puts "Prompt: #{prompt[0..100]}..."
     
-    if lora
-      # Use custom LoRA
-      res = api(:post, "/predictions", {
-        version: "387d19ad57699a915fbb12f89e61ffae24a2b04a3d5f065b59281e929d533ae5",
-        input: {
-          prompt: prompt,
-          aspect_ratio: "16:9",
-          output_format: "webp",
-          num_inference_steps: 35
-        }
-      })
-    else
-      # Use Flux Pro for best quality
-      res = api(:post, "/models/black-forest-labs/flux-pro/predictions", {
-        input: {
-          prompt: prompt,
-          aspect_ratio: "16:9",
-          output_format: "webp"
-        }
-      })
-    end
+    res = lora ? generate_with_lora(prompt) : generate_with_flux_pro(prompt)
+    return nil unless res
     
-    wait(JSON.parse(res.body)["id"], lora ? "RA2 LoRA" : "Flux Pro")
+    wait_for_completion(JSON.parse(res.body)["id"], lora ? "RA2 LoRA" : "Flux Pro")
+  end
+
+  def generate_with_lora(prompt)
+    api(:post, "/predictions", {
+      version: "387d19ad57699a915fbb12f89e61ffae24a2b04a3d5f065b59281e929d533ae5",
+      input: {
+        prompt: prompt,
+        aspect_ratio: "16:9",
+        output_format: "webp",
+        num_inference_steps: 35
+      }
+    })
+  end
+
+  def generate_with_flux_pro(prompt)
+    api(:post, "/models/black-forest-labs/flux-pro/predictions", {
+      input: {
+        prompt: prompt,
+        aspect_ratio: "16:9",
+        output_format: "webp"
+      }
+    })
   end
 
   # === VIDEO EXTENSION ===
@@ -112,7 +139,7 @@ class Repligen
       }
     })
     
-    wait(JSON.parse(res.body)["id"], "Luma Extend")
+    wait_for_completion(JSON.parse(res.body)["id"], "Luma Extend")
   end
 
   # === VIDEO GENERATION ===
@@ -131,7 +158,7 @@ class Repligen
           duration: duration
         }
       })
-      wait(JSON.parse(res.body)["id"], "Sora 2 #{duration}s")
+      wait_for_completion(JSON.parse(res.body)["id"], "Sora 2 #{duration}s")
       
     when :kling
       # Kling 2.5 Turbo Pro - 1.4M runs, realistic physics (fastest)
@@ -143,7 +170,7 @@ class Repligen
           aspect_ratio: "16:9"
         }
       })
-      wait(JSON.parse(res.body)["id"], "Kling 2.5 Pro #{duration}s")
+      wait_for_completion(JSON.parse(res.body)["id"], "Kling 2.5 Pro #{duration}s")
       
     when :wan
       # Wan 2.5 - open source, audio sync, 109K runs (affordable)
@@ -154,7 +181,7 @@ class Repligen
           duration: duration
         }
       })
-      wait(JSON.parse(res.body)["id"], "Wan 2.5 #{duration}s")
+      wait_for_completion(JSON.parse(res.body)["id"], "Wan 2.5 #{duration}s")
       
     else
       # Minimax Hailuo 2.3 - default, good motion (affordable)
@@ -165,7 +192,7 @@ class Repligen
           prompt_optimizer: true
         }
       })
-      wait(JSON.parse(res.body)["id"], "Hailuo 2.3 10s")
+      wait_for_completion(JSON.parse(res.body)["id"], "Hailuo 2.3 10s")
     end
   end
 
@@ -180,7 +207,7 @@ class Repligen
     res = api(:post, "/models/adirik/depth-anything-v2/predictions", {
       input: { image: image_url }
     })
-    depth = wait(JSON.parse(res.body)["id"], "Depth")
+    depth = wait_for_completion(JSON.parse(res.body)["id"], "Depth")
     
     # 2. Edge refinement with canny
     puts "  [2/3] Edge refinement..."
@@ -191,7 +218,7 @@ class Repligen
         num_inference_steps: 20
       }
     })
-    refined = wait(JSON.parse(res.body)["id"], "Edge Refine")
+    refined = wait_for_completion(JSON.parse(res.body)["id"], "Edge Refine")
     
     # 3. Optional relighting for consistency
     puts "  [3/3] Lighting enhancement..."
@@ -203,7 +230,7 @@ class Repligen
         num_inference_steps: 20
       }
     })
-    enhanced = wait(JSON.parse(res.body)["id"], "Relight")
+    enhanced = wait_for_completion(JSON.parse(res.body)["id"], "Relight")
     
     enhanced || refined || image_url
   end
@@ -317,7 +344,7 @@ After training, use with:"
       }
     })
     
-    img_url = wait(JSON.parse(res.body)["id"], "RA2 LoRA")
+    img_url = wait_for_completion(JSON.parse(res.body)["id"], "RA2 LoRA")
     return unless img_url
     
     img_filename = File.join(@out, "chain_image_#{Time.now.strftime("%Y%m%d_%H%M%S")}.webp")
@@ -347,7 +374,7 @@ After training, use with:"
       }
     })
     
-    vid_url = wait(JSON.parse(res.body)["id"], "Video generation")
+    vid_url = wait_for_completion(JSON.parse(res.body)["id"], "Video generation")
     return unless vid_url
     
     vid_filename = File.join(@out, "chain_video_#{Time.now.strftime("%Y%m%d_%H%M%S")}.mp4")
