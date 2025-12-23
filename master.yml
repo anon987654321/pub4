@@ -37,6 +37,24 @@ session_knowledge:
     status: pre-point complete weeks ago
     next: "doas zsh ~/openbsd.sh --post-point"
     goal: "curl https://brgen.no working"
+  
+  media_tools:
+    purpose: "multimedia generation and processing"
+    tools:
+      dilla:
+        desc: "lo-fi audio production with FFmpeg"
+        backend: ffmpeg
+        targets: [cygwin, termux, openbsd]
+        principles: [human_scale, clarity, idempotency]
+      postpro:
+        desc: "cinematic color grading with libvips"
+        backend: libvips
+        gem: ruby-vips
+        principles: [durability, observability, modularity]
+      repligen:
+        desc: "AI media generation via Replicate API"
+        backend: replicate.com
+        principles: [observability, feedback, sovereignty]
 
 inviolable:
   center_guard:
@@ -466,11 +484,15 @@ languages:
     parser: ripper
     formatter: "rubocop --autocorrect"
     conventions: {naming: snake_case, indent: 2, line: 120}
+    error_handling: "rescue with visible failures"
   
   javascript:
     parser: acorn
     formatter: "eslint --fix"
     conventions: {indent: 2, line: 100, semicolons: false}
+    extract_function_at: 15
+    constants_over_literals: true
+    named_functions_preferred: true
   
   zsh:
     parser: "zsh -n"
