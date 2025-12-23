@@ -214,6 +214,59 @@ The PowerShell tool invoked via MCP protocol has limitations with interactive TT
 
 ---
 
+## Solution Confirmed (from Claude Code CLI)
+
+**Date:** 2025-12-23T14:01:58Z  
+**Verified By:** Claude Code CLI (independent verification)
+
+### Root Cause Confirmed
+
+**Fingerprint Analysis:**
+- Local key fingerprint: `SHA256:AdPKhPftKypjAZBuD7/6LfEODKlOK01ag6jGpmGLMXs`
+- Key source: `G:\priv\passwd\id_rsa.pub`
+- Status: **NOT present** in remote `~/.ssh/authorized_keys`
+
+**Evidence:**
+- BatchMode test result: `Permission denied (publickey,password,keyboard-interactive)`
+- Both `openbsd_key` and `id_rsa` are identical (same fingerprint)
+- All key authentication attempts fail → password fallback
+
+### One-Time Manual Setup (Required)
+
+```bash
+# Step 1: Display public key for copying
+cat G:\priv\passwd\id_rsa.pub
+
+# Step 2: SSH to server manually (password: hutte10tu6969)
+ssh dev@185.52.176.18
+
+# Step 3: On remote server, execute:
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1DuUwGSw3T9jwdNKKyNEjMLriOIZiMwo3Vft9G2E4X5VjI8ebPFTpQIZM1bDNGgQYuYbZLtB1eY70Keo3iF/pPHgj5CGuistZLJf+2a/H4scKOpGyRsVBS4IHGdykH/bbkRqmgpDBVhNQvwsKYKvdQF/P7+YTGPuOA773N6d6KshLtb9olb7R9cePoQsltohUXxDsoInAW0o3k+93vKTPflIU/j8/zroDIDBT+7KO9uT7Q7yOkhXXMypLEoNkLuhWvPmrIhlmbd+ov2DUIZwTMmyIi4hdNwrs/pD5IOtjOgffGWVXIjISDD5B6CM1tf1lIKyuhh79KncipXwa33K5JflozFzYlB8CLq72+Y7kMkv7mEBOU95TpauvKJKvkKFhD4PTcpxoNKLwpcpFUSmmfOhBd1QzKt4Ge8A+nUtNaTSvALviUQ7UbOJhkGf8rCYeaZNCiFM/oyVkVCS/3Xy1Ks1OKfq9IWCVPct/XiBP8rP4Yk22K7pxIXHaIEkizReiZDSbs1UDr8akypYUwVVGAfnzEwSbf7hEM4gi5rbrgrfbkaZiXut4clGi3acXQyk6SvkZJV/ffJo6NGKZkMeBX9LWuRi/Pl8V2qpDlxGvofwEOf5u2jqP6HBxonYJ4A2dOWeMVJpH3SxeFa64j/vEVrwUDsca3OuKC+PDBlnqzQ== wee2aef5ohg@gmail.com" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+exit
+
+# Step 4: Verify automated key auth works
+ssh -i G:\priv\passwd\openbsd_key -o BatchMode=yes dev@185.52.176.18 "hostname"
+```
+
+### After Setup
+
+**Benefits:**
+- All future SSH connections work non-interactively
+- Both GitHub Copilot CLI and Claude Code CLI can automate deployments
+- No password prompts ever again
+- Secure key-based authentication per OpenBSD best practices
+
+**Usage:**
+```bash
+ssh -i G:\priv\passwd\openbsd_key dev@185.52.176.18 "any command"
+scp -i G:\priv\passwd\openbsd_key file.txt dev@185.52.176.18:~/
+```
+
+---
+
 ## Working Solutions (Manual Intervention Required)
 
 ### Solution 1: Add Public Key to Server (Recommended)
