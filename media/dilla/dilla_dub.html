@@ -546,7 +546,14 @@
   </div>
 
 <script>
-// Shared config - matches dilla_config.json
+const CONSTANTS = {
+  CHAIN_MIN_LENGTH: 3,
+  CHAIN_MAX_LENGTH: 7,
+  KHZ_DIVISOR: 1000,
+  CANVAS_SCALE: 2,
+  WAVEFORM_BG: '#1a1a1e'
+};
+
 const CONFIG = {
   chords: {
     dilla_fantastic_vol2: {
@@ -671,6 +678,11 @@ function loadPattern(name) {
   state.swing = p.swing || 50;
 }
 
+function toggleActiveButton(container, activeButton) {
+  container.querySelectorAll('.aesthetic-btn, .gear-item, .chord-box').forEach(el => el.classList.remove('active'));
+  activeButton.classList.add('active');
+}
+
 function buildGear() {
   const grid = document.getElementById('gear-grid');
   grid.innerHTML = Object.entries(CONFIG.gear).map(([id, g]) => 
@@ -682,8 +694,7 @@ function buildGear() {
   ).join('');
   grid.querySelectorAll('.gear-item').forEach(el => {
     el.addEventListener('click', () => {
-      grid.querySelectorAll('.gear-item').forEach(e => e.classList.remove('active'));
-      el.classList.add('active');
+      toggleActiveButton(grid, el);
       state.gear = el.dataset.gear;
       document.getElementById('lcd-gear').textContent = el.dataset.gear.toUpperCase();
       document.getElementById('sonitex-bits').value = CONFIG.gear[state.gear].bits;
@@ -698,8 +709,7 @@ function buildAesthetics() {
   ).join('');
   grid.querySelectorAll('.aesthetic-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      grid.querySelectorAll('.aesthetic-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      toggleActiveButton(grid, btn);
       state.aesthetic = btn.dataset.aesthetic;
       generateChain();
     });
@@ -707,7 +717,7 @@ function buildAesthetics() {
 }
 
 function generateChain() {
-  const len = 3 + Math.floor(Math.random() * 4);
+  const len = CONSTANTS.CHAIN_MIN_LENGTH + Math.floor(Math.random() * (CONSTANTS.CHAIN_MAX_LENGTH - CONSTANTS.CHAIN_MIN_LENGTH + 1));
   const used = new Set();
   state.chain = [];
   
@@ -722,56 +732,71 @@ function generateChain() {
   renderChain();
 }
 
+function formatChainValue(type, value) {
+  if (type === 'lowpass') return (value / CONSTANTS.KHZ_DIVISOR) + 'kHz';
+  if (type === 'delay') return value + 'ms';
+  return value;
+}
+
 function renderChain() {
   const container = document.getElementById('chain-effects');
   container.innerHTML = state.chain.map((e, i) => {
-    let val = e.value;
-    if (e.type === 'lowpass') val = (val/1000) + 'kHz';
-    if (e.type === 'delay') val += 'ms';
+    const val = formatChainValue(e.type, e.value);
     const cls = e.type.replace('_','');
-    return `<div class="chain-effect ${cls}">${e.type}:${val}${i < state.chain.length-1 ? '<span class="arrow">→</span>' : ''}</div>`;
+    const arrow = i < state.chain.length - 1 ? '<span class="arrow">→</span>' : '';
+    return `<div class="chain-effect ${cls}">${e.type}:${val}${arrow}</div>`;
   }).join('');
 }
 
 function drawWaveform() {
   const canvas = document.getElementById('waveform-canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth * 2;
-  canvas.height = canvas.offsetHeight * 2;
-  ctx.scale(2, 2);
-  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  canvas.width = canvas.offsetWidth * CONSTANTS.CANVAS_SCALE;
+  canvas.height = canvas.offsetHeight * CONSTANTS.CANVAS_SCALE;
+  ctx.scale(CONSTANTS.CANVAS_SCALE, CONSTANTS.CANVAS_SCALE);
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
   
-  function draw() {
-    requestAnimationFrame(draw);
-    ctx.fillStyle = '#1a1a1e';
+  function drawFrame() {
+    requestAnimationFrame(drawFrame);
+    ctx.fillStyle = CONSTANTS.WAVEFORM_BG;
     ctx.fillRect(0, 0, w, h);
     
     if (state.analyser && state.playing) {
-      const data = new Uint8Array(state.analyser.frequencyBinCount);
-      state.analyser.getByteFrequencyData(data);
-      const barW = w / data.length * 2.5;
-      let x = 0;
-      for (let i = 0; i < data.length; i++) {
-        const barH = (data[i] / 255) * h;
-        const grad = ctx.createLinearGradient(0, h - barH, 0, h);
-        grad.addColorStop(0, '#d4a574');
-        grad.addColorStop(1, '#2d8f6f');
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, h - barH, barW - 1, barH);
-        x += barW;
-      }
+      drawFrequencyBars(ctx, w, h);
     } else {
-      ctx.beginPath();
-      ctx.strokeStyle = '#2d8f6f44';
-      ctx.lineWidth = 2;
-      for (let x = 0; x < w; x++) {
-        const y = h/2 + Math.sin(x * 0.05 + Date.now() * 0.001) * 15;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+      drawIdleWave(ctx, w, h);
     }
   }
-  draw();
+  drawFrame();
+}
+
+function drawFrequencyBars(ctx, w, h) {
+  const data = new Uint8Array(state.analyser.frequencyBinCount);
+  state.analyser.getByteFrequencyData(data);
+  const barW = w / data.length * 2.5;
+  let x = 0;
+  
+  for (let i = 0; i < data.length; i++) {
+    const barH = (data[i] / 255) * h;
+    const grad = ctx.createLinearGradient(0, h - barH, 0, h);
+    grad.addColorStop(0, '#d4a574');
+    grad.addColorStop(1, '#2d8f6f');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, h - barH, barW - 1, barH);
+    x += barW;
+  }
+}
+
+function drawIdleWave(ctx, w, h) {
+  ctx.beginPath();
+  ctx.strokeStyle = '#2d8f6f44';
+  ctx.lineWidth = 2;
+  for (let x = 0; x < w; x++) {
+    const y = h / 2 + Math.sin(x * 0.05 + Date.now() * 0.001) * 15;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
 }
 
 let sequencerInterval = null;

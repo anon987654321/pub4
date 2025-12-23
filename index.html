@@ -26,9 +26,12 @@
   const W = canvas.width;
   const H = canvas.height;
 
-  // Timing
-  let MIN_FRAME_MS = 1000 / 120; // can be adjusted at runtime; must be let
-  const MAX_DT_MS = 100;         // clamp big spikes
+  // Constants
+  const LINK_DISTANCE = 60;
+  const LINK_BASE_ALPHA = 0.12;
+  const MIN_FRAME_MS = 1000 / 120;
+  const MAX_DT_MS = 100;
+  const DOT_COUNT = 80;
 
   let rafId = 0;
   let running = true;
@@ -38,10 +41,9 @@
   let lastRenderT = lastFrameT;
   let lastSeenFrameT = lastFrameT; // used for stall watchdog
 
-  // Scene state - reduced from 220 to 80 dots (24K→3K checks/frame = 8x faster)
+  // Scene state - 80 dots for performance (3K checks/frame vs 24K)
   const dots = [];
-  const N = 80;
-  for (let i = 0; i < N; i++) {
+  for (let i = 0; i < DOT_COUNT; i++) {
     dots.push({
       x: Math.random() * W,
       y: Math.random() * H,
@@ -61,30 +63,38 @@
     for (const p of dots) {
       p.x += p.vx * s;
       p.y += p.vy * s;
-      if (p.x < 0) { p.x = 0; p.vx *= -1; }
-      if (p.x > W) { p.x = W; p.vx *= -1; }
-      if (p.y < 0) { p.y = 0; p.vy *= -1; }
-      if (p.y > H) { p.y = H; p.vy *= -1; }
+      bounceIfNeeded(p);
     }
+  }
+
+  function bounceIfNeeded(p) {
+    if (p.x < 0) { p.x = 0; p.vx *= -1; }
+    if (p.x > W) { p.x = W; p.vx *= -1; }
+    if (p.y < 0) { p.y = 0; p.vy *= -1; }
+    if (p.y > H) { p.y = H; p.vy *= -1; }
   }
 
   function render() {
     ctx.fillStyle = '#0b0f1a';
     ctx.fillRect(0, 0, W, H);
+    renderLinks();
+    renderDots();
+  }
 
-    // links
+  function renderLinks() {
     ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(140, 190, 255, 0.08)';
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < DOT_COUNT; i++) {
       const a = dots[i];
-      for (let j = i + 1; j < N; j++) {
+      for (let j = i + 1; j < DOT_COUNT; j++) {
         const b = dots[j];
         const dx = a.x - b.x;
         const dy = a.y - b.y;
-        const d2 = dx*dx + dy*dy;
-        if (d2 < 60*60) {
-          const alpha = 1 - Math.sqrt(d2) / 60;
-          ctx.strokeStyle = `rgba(140,190,255,${0.12 * alpha})`;
+        const d2 = dx * dx + dy * dy;
+        const threshold = LINK_DISTANCE * LINK_DISTANCE;
+        
+        if (d2 < threshold) {
+          const alpha = (1 - Math.sqrt(d2) / LINK_DISTANCE) * LINK_BASE_ALPHA;
+          ctx.strokeStyle = `rgba(140,190,255,${alpha})`;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
@@ -92,8 +102,9 @@
         }
       }
     }
+  }
 
-    // dots
+  function renderDots() {
     ctx.fillStyle = '#cfe3ff';
     for (const p of dots) {
       ctx.beginPath();
