@@ -1,34 +1,24 @@
-#!/usr/bin/env zsh
+#!/bin/sh
 # OpenBSD Infrastructure - Rails 8 + Solid Stack
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
-#
 # ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails 8
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
-#
 # VERIFIED: 2025-12-19 against man.openbsd.org, Rails 8 guides, Hotwire docs
-
 set -euo pipefail
-
-# ============================================================================
-# CONSTANTS
-# ============================================================================
+CONSTANTS
 readonly VERSION="338.1.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
 readonly PTR4_API="http://ptr4.openbsd.amsterdam"
 readonly PTR6_API="http://ptr6.openbsd.amsterdam"
 readonly PTR_HOSTNAME="ns.brgen.no"
-
 readonly DEPLOY_BASE="/var/rails"
 readonly APP_BASE="/home"
 readonly LOG_DIR="/var/log/rails"
 readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
-
 readonly SPINNER_FRAMES='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 readonly SPINNER_FRAME_COUNT=10
-
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
-
 # Unified deployment config - randomized ports for security
 typeset -A APPS
 APPS[brgen.port]=37824
@@ -46,7 +36,6 @@ APPS[privcam.port]=33946
 APPS[privcam.domains]="privcam.no"
 APPS[pubattorney.port]=56381
 APPS[pubattorney.domains]="pub.attorney freehelp.legal"
-
 # Extract all unique domains for DNS config
 typeset -a ALL_DOMAINS
 for key in ${(k)APPS[(I)*.domains]}; do
@@ -55,50 +44,39 @@ for key in ${(k)APPS[(I)*.domains]}; do
   done
 done
 ALL_DOMAINS=(${(u)ALL_DOMAINS})
-
 generate_rc_script() {
   local app=$1
   local port=$2
   local user="dev"
   local app_dir="/home/dev/rails/${app}"
-  
   doas tee /etc/rc.d/${app} > /dev/null <<RCEOF
 #!/bin/ksh
 # OpenBSD rc.d script for ${app}
 # man rc.d(8), man rc.subr(8)
-
 daemon="${app_dir}/bin/rails"
 daemon_user="${user}"
 daemon_flags="server -e production -p ${port} -b 127.0.0.1"
-
 . /etc/rc.d/rc.subr
-
 pexp="rails server.*${port}"
 rc_bg=YES
 rc_reload=NO
-
 rc_start() {
   cd ${app_dir} && \
   \${rcexec} "RAILS_ENV=production PORT=${port} \${daemon} \${daemon_flags}"
 }
-
 rc_cmd \$1
 RCEOF
-  
   doas chmod +x "/etc/rc.d/${app}"
   print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app} (port ${port})"
 }
-
 # PTR configuration: reverse DNS points to primary nameserver
 # This is critical for DNSSEC validation
 readonly PTR_HOSTNAME="ns.brgen.no"
-
 # Status reporting - dmesg style
 status() {
   printf '%s %-24s %-4s %s
 ' "$(date +%H:%M:%S)" "$1" "$2" "$3"
 }
-
 spin() {
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
   local pid=$1
@@ -109,7 +87,6 @@ spin() {
   done
   printf ''
 }
-
 # Logging with structured output
 log() {
   local level="${1:-INFO}"
@@ -117,7 +94,6 @@ log() {
   printf '{"time":"%s","level":"%s","msg":"%s"}
 ' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
 }
-
 save_state() {
   cat > "${DEPLOY_BASE}/state.json" << EOF
 {
@@ -130,151 +106,92 @@ save_state() {
 }
 EOF
 }
-
 error() {
   log "ERROR" "$*"
   exit 1
 }
-
 warn() {
   log "WARN" "$*"
 }
-
 # Environment validation with evidence scoring
 validate_environment() {
   log "INFO" "Validating environment..."
   local evidence=0
-
   [[ $EUID -eq 0 ]] || error "Must run with doas/root"
   evidence=$((evidence + 20))
-
   local os=$(uname -s 2>/dev/null || print "unknown")
-
   [[ "$os" == "OpenBSD" ]] && evidence=$((evidence + 20))
-
   ping -c 1 -W 1000 8.8.8.8 >/dev/null 2>&1 && evidence=$((evidence + 20))
   command -v zsh >/dev/null 2>&1 && evidence=$((evidence + 20))
-
   command -v pkg_add >/dev/null 2>&1 && evidence=$((evidence + 20))
   log "INFO" "Environment evidence: ${evidence}/100"
-
   [[ $evidence -ge 80 ]] || error "Environment validation failed (${evidence}/100)"
   save_state "validated" "$evidence" 0
 }
-
 # Ruby and Rails setup
 setup_ruby_rails() {
-
   log "Setting up Ruby 3.3 and Rails..."
   # Install Ruby
-
   pkg_add -U ruby%3.3 || return 1
   # Create symbolic links
-
   for cmd in ruby erb irb gem bundle rdoc ri rake; do
-
     ln -sf "/usr/local/bin/${cmd}33" "/usr/local/bin/$cmd" 2>/dev/null || true
   done
-
   # Configure gem environment
   cat > /etc/gemrc << 'EOF'
-
 ---
-
 :sources:
-
 - https://rubygems.org/
 install: --no-document
-
 update: --no-document
-
 EOF
-
   # Update RubyGems
-
   gem update --system --no-document || true
-
   # Install essential gems
-
   local gems=(
-
     "bundler:2.5.0"
     "rails:8.0.0"
-
     "pg:1.5.0"
     "redis:5.0.0"
-
     "falcon:0.47.0"
-
     "pledge:1.2.0"
-
     "async:2.8.0"
-
     "async-websocket:0.26.0"
-
     "async-redis:0.8.0"
-
     "rack-attack:6.7.0"
-
     "solid_queue:1.0.0"
-
     "solid_cache:1.0.0"
-
     "solid_cable:1.0.0"
-
     "propshaft:0.8.0"
-
     "turbo-rails:2.0.0"
-
     "stimulus-rails:1.3.0"
-
   )
-
   for gem_spec in "${gems[@]}"; do
-
     local gem="${gem_spec%%:*}"
-
     local version="${gem_spec#*:}"
-
     gem install "$gem" --version "$version" --no-document || log "WARN: Failed $gem"
-
   done
   log "Ruby and Rails configured"
-
 }
-
 # PostgreSQL and Redis setup
-
 setup_databases() {
-
   log "Setting up PostgreSQL and Redis..."
   # PostgreSQL
-
   pkg_add -U postgresql-server postgresql-client || return 1
   if [[ ! -d /var/postgresql/data ]]; then
-
     install -d -o _postgresql -g _postgresql /var/postgresql/data
-
     doas -u _postgresql initdb -D /var/postgresql/data -U postgres -A scram-sha-256 -E UTF8
   fi
-
   rcctl enable postgresql
   rcctl start postgresql
-
   # Redis
-
   pkg_add -U redis || return 1
-
   rcctl enable redis
   rcctl start redis
-
   # Node.js for Rails assets
   pkg_add -U node || return 1
-
   log "Databases ready"
-
 }
-
 # DNS with DNSSEC - orchestrator function
 setup_dns_dnssec() {
   log "Configuring NSD with DNSSEC..."
@@ -288,7 +205,6 @@ setup_dns_dnssec() {
   rcctl restart nsd
   log "DNS with DNSSEC configured"
 }
-
 # Helper: Stop services that conflict with NSD
 _stop_conflicting_services() {
   local -a services_on=("${(@f)$(rcctl ls on)}")
@@ -299,7 +215,6 @@ _stop_conflicting_services() {
     rcctl disable unbound
   fi
 }
-
 # Helper: Generate DNSSEC keys for all domains
 _generate_dnssec_keys() {
   for domain in $ALL_DOMAINS; do
@@ -314,13 +229,11 @@ _generate_dnssec_keys() {
     fi
   done
 }
-
 # Helper: Create zone files for all domains
 _create_zone_files() {
   for domain in $ALL_DOMAINS; do
     local app="${domain%%.*}"
     local subdomains="${APPS[${app}.subdomains]:-}"
-    
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
 \$ORIGIN $domain.
 \$TTL 24h
@@ -332,7 +245,6 @@ www IN CNAME @
 @ IN CAA 0 issue "letsencrypt.org"
 $([[ "$domain" == "brgen.no" ]] && print "ns IN A $MAIN_IP")
 EOF
-
     # Add subdomains if defined
     if [[ -n $subdomains ]]; then
       for sub in ${(s: :)subdomains}; do
@@ -341,7 +253,6 @@ EOF
     fi
   done
 }
-
 # Helper: Sign all zone files
 _sign_zones() {
   for domain in $ALL_DOMAINS; do
@@ -357,7 +268,6 @@ _sign_zones() {
   done
   chown -R _nsd:_nsd /var/nsd/zones
 }
-
 # Helper: Configure NSD
 _configure_nsd() {
   cat > /var/nsd/etc/nsd.conf << 'EOF'
@@ -369,7 +279,6 @@ server:
 remote-control:
   control-enable: no
 EOF
-
   for domain in $ALL_DOMAINS; do
     cat >> /var/nsd/etc/nsd.conf << EOF
 zone:
@@ -378,22 +287,17 @@ zone:
 EOF
   done
 }
-
 # PF firewall
 # ============================================================================
 # FIREWALL CONFIGURATION
 # ============================================================================
-
 setup_firewall() {
   log "Configuring PF firewall..."
-  
   local port_list=$(extract_app_ports)
   generate_pf_config "$port_list"
   apply_pf_config
-  
   log "Firewall configured"
 }
-
 extract_app_ports() {
   local -a app_ports
   for key in ${(k)APPS}; do
@@ -401,26 +305,19 @@ extract_app_ports() {
   done
   print "${(j:, :)app_ports}"
 }
-
 generate_pf_config() {
   local port_list=$1
-  
   cat > /etc/pf.conf << EOF
 ext_if = "vio0"
 domeneshop = "194.63.248.53"
-
 # Allow all on localhost
 set skip on lo
-
 # Block stateless traffic (default deny)
 block return
-
 # Establish keep-state for connections
 pass
-
 # Block all incoming by default
 block in
-
 # Ban brute-force attackers
 # See: http://home.nuug.no/~peter/pf/en/bruteforce.html
 # Manage:
@@ -429,41 +326,32 @@ block in
 #   pfctl -t bruteforce -T delete <IP>  # Remove specific IP
 table <bruteforce> persist
 block quick from <bruteforce>
-
 # SSH: Max 15 concurrent connections, 5 attempts per 3 seconds
 pass in on \$ext_if inet proto tcp from any to \$ext_if port 22 \\
   keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
-
 # DNS: Allow zone transfer to backup NS, public queries rate-limited
 pass in on \$ext_if inet proto { tcp, udp } from \$ext_if to \$domeneshop port 53 keep state
 pass in on \$ext_if inet proto { tcp, udp } from any to \$ext_if port 53 \\
   keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
-
 # HTTP/HTTPS: Port 80 for ACME challenges, 443 for TLS
 pass in on \$ext_if inet proto tcp from any to \$ext_if port { 80, 443 } keep state
-
 # Rails app ports: Randomized for security obscurity
 pass in on \$ext_if inet proto tcp from any to \$ext_if port { $port_list } keep state
-
 # Relayd anchor: Dynamic rules added by relayd(8)
 anchor "relayd/*"
 EOF
 }
-
 apply_pf_config() {
   pfctl -f /etc/pf.conf
   rcctl enable pf
 }
-
 # TLS certificates
 setup_tls() {
   log "Setting up TLS certificates..."
   mkdir -p /var/www/acme /etc/acme /etc/ssl/private
-
   # Generate Let's Encrypt account key (ECDSA P-256 for efficiency)
   [[ -f /etc/acme/letsencrypt-privkey.pem ]] || \
     openssl ecparam -genkey -name prime256v1 -out /etc/acme/letsencrypt-privkey.pem
-
   # acme-client configuration
   # See: https://letsencrypt.org/docs/caa/
   cat > /etc/acme-client.conf << 'EOF'
@@ -472,7 +360,6 @@ authority letsencrypt {
   account key "/etc/acme/letsencrypt-privkey.pem"
 }
 EOF
-
   # Generate domain configurations (ECDSA keys for better performance)
   for domain in $ALL_DOMAINS; do
     cat >> /etc/acme-client.conf << EOF
@@ -485,59 +372,46 @@ domain "$domain" {
 }
 EOF
   done
-
   # httpd for ACME HTTP-01 challenges only (Relayd handles production traffic)
   cat > /etc/httpd.conf << 'EOF'
 types { include "/usr/share/misc/mime.types" }
 prefork 5
-
 server "default" {
   listen on * port 80
-  
   # Serve ACME challenges
   location "/.well-known/acme-challenge/*" {
     root "/acme"
     request strip 2
   }
-  
   # Redirect everything else to HTTPS
   location * {
     block return 302 "https://$HTTP_HOST$REQUEST_URI"
   }
 }
 EOF
-
   rcctl enable httpd
   rcctl restart httpd
-
   # Get certificates for all domains (12 second delay between requests)
   for domain in $ALL_DOMAINS; do
     acme-client -v "$domain" || warn "Certificate failed for $domain"
     sleep 12
   done
-
   log "TLS configured"
 }
-
 # ============================================================================
 # LOAD BALANCER CONFIGURATION
 # ============================================================================
-
 setup_relayd() {
   log "Configuring relayd..."
-  
   generate_relayd_config > /etc/relayd.conf
   apply_relayd_config
-  
   log "Relayd configured"
 }
-
 generate_relayd_config() {
   generate_backend_tables
   generate_http_protocols
   generate_relay_definitions
 }
-
 generate_backend_tables() {
   cat << 'EOF'
 # Backend tables per app
@@ -549,28 +423,22 @@ table <hjerterom> { 127.0.0.1 }
 table <privcam> { 127.0.0.1 }
 table <pubattorney> { 127.0.0.1 }
 table <brgen> { 127.0.0.1 }
-
 EOF
 }
-
 generate_http_protocols() {
   cat << 'EOF'
 http protocol "http" {
   match request header set "Connection" value "close"
   match response header remove "Server"
 }
-
 http protocol "https" {
 EOF
-  
   generate_host_routing
   generate_security_headers
   generate_tls_keypairs
-  
   echo "}"
   echo ""
 }
-
 generate_host_routing() {
   # Amber
   echo '  # Host-based routing'
@@ -578,44 +446,37 @@ generate_host_routing() {
     echo "  pass request header \"Host\" value \"$domain\" forward to <amber>"
   done
   echo ""
-  
   # Blognet
   for domain in foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <blognet>"
   done
   echo ""
-  
   # BSDPorts
   for domain in bsdports.org www.bsdports.org; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <bsdports>"
   done
   echo ""
-  
   # Hjerterom
   for domain in hjerterom.no www.hjerterom.no; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <hjerterom>"
   done
   echo ""
-  
   # Privcam
   for domain in privcam.no www.privcam.no; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <privcam>"
   done
   echo ""
-  
   # PubAttorney
   for domain in pub.attorney freehelp.legal; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <pubattorney>"
   done
   echo ""
-  
   # Brgen (35+ domains)
   for domain in ${=APPS[brgen.domains]}; do
     echo "  pass request header \"Host\" value \"$domain\" forward to <brgen>"
   done
   echo ""
 }
-
 generate_security_headers() {
   cat << 'EOF'
   # Preserve client info
@@ -623,7 +484,6 @@ generate_security_headers() {
   match request header append "X-Forwarded-Port" value "$REMOTE_PORT"
   match request header append "X-Forwarded-By" value "$SERVER_ADDR:$SERVER_PORT"
   match request header set "Connection" value "close"
-
   # Security headers
   match response header remove "Server"
   match response header append "Strict-Transport-Security" value "max-age=31536000; includeSubDomains"
@@ -632,17 +492,14 @@ generate_security_headers() {
   match response header append "X-Content-Type-Options" value "nosniff"
   match response header append "Referrer-Policy" value "strict-origin"
   match response header append "Feature-Policy" value "accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'"
-
 EOF
 }
-
 generate_tls_keypairs() {
   echo "  # TLS keypairs"
   for domain in $ALL_DOMAINS; do
     echo "  tls keypair \"$domain\""
   done
 }
-
 generate_relay_definitions() {
   cat << EOF
 relay "http" {
@@ -650,7 +507,6 @@ relay "http" {
   protocol "http"
   forward to <httpd> port 80
 }
-
 relay "https" {
   listen on ${MAIN_IP} port 443 tls
   protocol "https"
@@ -665,7 +521,6 @@ relay "https" {
 }
 EOF
 }
-
 generate_relay_definitions() {
   cat << EOF
 relay "http" {
@@ -673,7 +528,6 @@ relay "http" {
   protocol "http"
   forward to <httpd> port 80
 }
-
 relay "https" {
   listen on ${MAIN_IP} port 443 tls
   protocol "https"
@@ -688,25 +542,20 @@ relay "https" {
 }
 EOF
 }
-
 apply_relayd_config() {
   rcctl enable relayd
   rcctl check relayd && rcctl reload relayd || rcctl start relayd
 }
-
 # ============================================================================
 # RAILS APPLICATION DEPLOYMENT
 # ============================================================================
-
 # Deploy Rails application - orchestrator function
 deploy_rails_app() {
   local app_port="$1"
   local app="${app_port%:*}"
   local port="${app_port#*:}"
   local domains="${APPS[${app}.domains]}"
-
   log "Deploying $app on port $port"
-
   _create_app_user "$app"
   local app_dir=$(_setup_app_directories "$app")
   local db_pass=$(_setup_app_database "$app")
@@ -715,18 +564,15 @@ deploy_rails_app() {
   _write_app_env "$app_dir" "$app" "$port" "$db_pass" "$domains"
   _write_falcon_config "$app_dir" "$app" "$port" "$domains"
   _create_rc_service "$app" "$port"
-
   rcctl enable "$app"
   rcctl start "$app"
   log "Deployed $app"
 }
-
 # Helper: Create app user
 _create_app_user() {
   local app="$1"
   id "$app" 2>/dev/null || useradd -m -G www -L railsapp -s /bin/ksh "$app"
 }
-
 # Helper: Setup app directories
 _setup_app_directories() {
   local app="$1"
@@ -734,7 +580,6 @@ _setup_app_directories() {
   doas -u "$app" mkdir -p "$app_dir/"{app,config,db,lib,log,public,tmp}
   print "$app_dir"
 }
-
 # Helper: Setup PostgreSQL database for app
 _setup_app_database() {
   local app="$1"
@@ -751,7 +596,6 @@ GRANT ALL ON DATABASE ${app}_test TO ${app}_user;
 SQL
   print "$db_pass"
 }
-
 # Helper: Write Gemfile
 _write_app_gemfile() {
   local app_dir="$1"
@@ -777,7 +621,6 @@ GEMFILE
   log "Installing gems for $app"
   cd "$app_dir" && doas -u "$app" bundle install --quiet --jobs=4 || warn "Bundle install failed for $app"
 }
-
 # Helper: Write database config
 _write_database_config() {
   local app_dir="$1"
@@ -794,7 +637,6 @@ production:
   database: ${app}_production
 EOF
 }
-
 # Helper: Write environment config
 _write_app_env() {
   local app_dir="$1"
@@ -814,7 +656,6 @@ RAILS_MAX_THREADS=5
 DOMAINS="$domains"
 EOF
 }
-
 # Helper: Write Falcon config
 _write_falcon_config() {
   local app_dir="$1"
@@ -842,7 +683,6 @@ end
 FALCON
   chmod +x "$app_dir/config/falcon.rb"
 }
-
 # Helper: Create rc.d service
 _create_rc_service() {
   local app="$1"
@@ -857,221 +697,139 @@ daemon_execdir="/home/$app/app"
 daemon="/usr/local/bin/bundle"
 daemon_flags="exec falcon serve -c /home/$app/app/config/falcon.rb"
 daemon_timeout="60"
-
 . /etc/rc.d/rc.subr
-
 pexp="falcon serve.*$app/app/config/falcon.rb"
 rc_bg=YES
 rc_reload=NO
-
 rc_cmd $1
 EOF
   chmod +x "/etc/rc.d/${app}"
 }
 # PTR records
-
 setup_ptr_records() {
-
   local hostname=$(hostname 2>/dev/null || echo "unknown")
   [[ "$hostname" =~ ^vm[0-9]+ ]] || {
-
     log "Not on OpenBSD Amsterdam VM - skipping PTR"
     return 0
-
   }
-
   log "Setting up PTR records..."
   # Get tokens once (valid for 5 minutes) - pure zsh CRLF removal
-
   local token4_raw=$(ftp -MVo- "$PTR4_API/token" 2>/dev/null)
-
   local token4="${token4_raw//$''/}"
-
   token4="${token4//$'
 '/}"
-
   local token6_raw=$(ftp -MVo- "$PTR6_API/token" 2>/dev/null)
-
   local token6="${token6_raw//$''/}"
-
   token6="${token6//$'
 '/}"
   [[ -z "$token4" ]] && warn "Failed to get IPv4 PTR token"
-
   [[ -z "$token6" ]] && warn "Failed to get IPv6 PTR token"
-
   # Set PTR for primary nameserver
   if [[ -n "$token4" ]]; then
-
     log "INFO" "Setting IPv4 PTR to $PTR_HOSTNAME"
     ftp -MVo- "$PTR4_API/$token4/$PTR_HOSTNAME" 2>/dev/null || warn "IPv4 PTR failed"
-
   fi
   if [[ -n "$token6" ]]; then
     log "INFO" "Setting IPv6 PTR to $PTR_HOSTNAME"
     ftp -MVo- "$PTR6_API/$token6/$PTR_HOSTNAME" 2>/dev/null || warn "IPv6 PTR failed"
   fi
-
   # Wait for cronjob to process (runs every 60 seconds)
   log "INFO" "Waiting 65 seconds for PTR propagation..."
   sleep 65
   log "PTR records configured"
-
 }
 # Login limits
 setup_limits() {
-
   log "Setting up login limits..."
   # Pure zsh: pattern matching instead of grep
-
   local login_conf=$(<"/etc/login.conf" 2>/dev/null)
   [[ "$login_conf" == *railsapp* ]] || \
-
   cat >> /etc/login.conf << 'EOF'
-
 railsapp:\
-
   :openfiles-max=4096:\
-
   :datasize-max=2097152:\
   :maxproc-max=256:\
-
   :tc=daemon:
-
 EOF
-
   cap_mkdb /etc/login.conf
-
   log "Login limits configured"
-
 }
-
 # Cron jobs
-
 setup_cron() {
   log "Setting up cron jobs..."
   # Pure zsh: filter out acme-client lines using array operations
-
   local -a current_cron filtered_cron
   current_cron=("${(@f)$(crontab -l 2>/dev/null)}")
-
   for line in "${current_cron[@]}"; do
-
     [[ "$line" != *acme-client* ]] && filtered_cron+=("$line")
-
   done
-
   filtered_cron+=("0 0 * * * for d in $ALL_DOMAINS; do acme-client $d; done")
-
   print -l "${filtered_cron[@]}" | crontab -
-
   log "Cron configured"
-
 }
-
 # Pre-point deployment (before domains point here)
 # CRITICAL: DNS must be running BEFORE Norid nameserver registration
-
 pre_point() {
   log "INFO" "Starting pre-point deployment v$VERSION"
-
   validate_environment
   setup_ruby_rails
   setup_databases
-
   setup_firewall
-
   setup_limits
   # DNS MUST be set up FIRST (before domain registration)
-
   # Norid requires ns.brgen.no to respond on port 53 before accepting registration
-
   setup_dns_dnssec
-
   # Deploy all apps
-
   local app_count=0
   for key in ${(k)APPS}; do
     [[ $key == *.port ]] || continue
-
     local app=${key%.port}
-
     local port=${APPS[$key]}
-
     local domains=${APPS[${app}.domains]}
-
     deploy_rails_app "$app:$port"
-
     app_count=$((app_count + 1))
   done
-
   save_state "pre_point_complete" 100 "$app_count"
-
   log "INFO" "Pre-point deployment complete"
-
   log "INFO" "  Apps deployed: $app_count"
-
   # Pure zsh: count array elements instead of wc -l
-
   local -a services_on=("${(@f)$(rcctl ls on)}")
   log "INFO" "  Services running: ${#services_on}"
   log "INFO" ""
-
   log "INFO" "IMPORTANT: DNS is now running on port 53"
-
   log "INFO" "1. Register nameserver ns.brgen.no -> $MAIN_IP at Norid"
-
   log "INFO" "2. Point all domains to ns.brgen.no"
-
   log "INFO" "3. Wait for DNS propagation (dig @8.8.8.8 brgen.no)"
-
   log "INFO" "4. Then run: doas zsh openbsd.sh --post-point"
 }
 # Post-point deployment (after domains point here)
 # Run AFTER: 1) Norid accepts ns.brgen.no, 2) Domains point to nameserver
 post_point() {
-
   log "INFO" "Starting post-point deployment v$VERSION"
-
   validate_environment
   # TLS requires domains to resolve (acme-client needs HTTP-01 challenge)
   setup_tls
-
   # relayd requires TLS certificates
-
   setup_relayd
-
   setup_ptr_records
   setup_cron
-
   save_state "complete" 100 7
   log "INFO" "Post-point deployment complete"
-
   log "INFO" "  Domains configured: ${#ALL_DOMAINS[@]}"
-
   log "INFO" "  TLS certificates obtained"
-
   log "INFO" "  relayd load balancer running"
   log "INFO" "  Submit DS records from /var/nsd/zones/keys/*.ds to your registrars"
 }
-
 # Command handling
 case "${1:---pre-point}" in
   --help)
-
     cat << 'EOF'
-
 Unified Rails-OpenBSD Infrastructure v337.3.0
 Usage: doas zsh openbsd.sh [--pre-point|--post-point|--help]
-
 Architecture: Internet → PF → Relayd → Falcon → Rails
-
 Two-stage deployment:
-
   --pre-point   Deploy infrastructure before domains point here:
-
                 - Ruby 3.3 + Rails 8.1 + Falcon async HTTP
-
                 - PostgreSQL + Redis
                 - 7 Rails apps (brgen:11006, amber:10001, blognet:10002,
                   bsdports:10003, hjerterom:10004, privcam:10005,
@@ -1080,36 +838,24 @@ Two-stage deployment:
                 - NSD DNS with DNSSEC
   --post-point  Configure TLS/proxy after domains point to 185.52.176.18:
                 - TLS certificates via acme-client (Let's Encrypt)
-
                 - Relayd reverse proxy (port 443 → brgen:11006)
                 - PTR records (OpenBSD Amsterdam)
                 - Cron jobs (certificate renewal)
 Prerequisites:
 - OpenBSD 7.7+
-
 - Root/doas access
 - Internet connectivity
 Verified: 2025-10-16 against man.openbsd.org (pf.conf, relayd.conf)
 EOF
-
     ;;
-
   --pre-point)
-
     pre_point
-
     ;;
-
   --post-point)
-
     post_point
-
     ;;
-
   *)
-
     print "Usage: doas zsh openbsd.sh [--pre-point|--post-point|--help]"
-
     exit 1
     ;;
 esac

@@ -1,23 +1,17 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# ============================================================================
 # @core.sh - Core Rails 8 + Solid Stack Setup
-# ============================================================================
 # Combines: setup, database, dependencies
-# Per: master.yml v96.1 - Rails 8 + Solid Stack
+# Per: master.yml v100.0 - Rails 8 + Solid Stack
 
-# ============================================================================
-# CONSTANTS
-# ============================================================================
+CONSTANTS
 readonly DEFAULT_PG_USER="dev"
 readonly DEFAULT_PG_HOST="localhost"
 readonly DEFAULT_THREAD_POOL=5
 readonly TEMPLATE_DIR="${0:a:h}/templates"
 
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
+UTILITY FUNCTIONS
 
 log() {
   print "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
