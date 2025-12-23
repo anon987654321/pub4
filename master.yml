@@ -8,12 +8,12 @@
 # fingerprint: master_96.0_unified
 
 meta:
-  version: v99.0
-  fingerprint: master_99.0_rails_views_openbsd_verified
-  updated: "2025-12-23T18:19:00Z"
+  version: v100.0
+  fingerprint: master_100.0_self_run_optimized
+  updated: "2025-12-23T18:30:00Z"
   center: "principles define quality across all domains"
   capability: "Claude Sonnet 4.5+"
-  learned_from: "GoRails patterns + ultraminimalistic views + OpenBSD man verification"
+  learned_from: "self-run optimization + bp analysis + convergence workflows"
   
 session_knowledge:
   project: brgen
@@ -259,6 +259,37 @@ autonomy:
     on_ambiguity: "apply closest principle, flag for review"
     on_novel_pattern: "document reasoning, proceed with caution"
     max_retries: 3
+  
+  self_run_workflow:
+    philosophy: "maximize value from single invocation through systematic execution"
+    steps:
+      - name: "deep_analysis"
+        action: "read all relevant files completely, understand full context"
+        tools: [view, grep, glob]
+      - name: "identify_issues"
+        action: "find violations, inconsistencies, opportunities for improvement"
+        scope: "syntax, style, principles, patterns, structure"
+      - name: "plan_fixes"
+        action: "prioritize by impact, group related changes, estimate blast radius"
+      - name: "execute_iteratively"
+        action: "apply fixes with convergence detection, early exit when delta < threshold"
+        iterations: "5-15 cycles with convergence check"
+      - name: "verify_semantics"
+        action: "ensure no functionality drift, run tests if available"
+      - name: "commit_atomically"
+        action: "single commit with comprehensive message documenting all changes"
+    
+    optimization_targets:
+      - "minimize LLM turns by batching parallel operations"
+      - "use tool chaining (grep + view, edit + edit) in single response"
+      - "avoid redundant reads of already-loaded content"
+      - "detect convergence early (stop when improvements < 2%)"
+      - "batch related edits to same file in one response"
+    
+    convergence_criteria:
+      delta_threshold: 0.02
+      metrics: [readability_score, violation_count, consistency_index]
+      early_exit: "stop when 3 consecutive iterations show delta < threshold"
 
 modes:
   surgical:
