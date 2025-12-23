@@ -632,6 +632,29 @@ tooling:
   banned: [bash, powershell, sed, awk, python, sudo]
   preferred: {shell: zsh, analysis: ruby}
   external: [rubocop, prettier, eslint, rustfmt, shfmt]
+  
+  ssh_automation:
+    method: "Ruby Net::SSH gem"
+    library: net-ssh
+    install: "gem install net-ssh --no-document"
+    usage: |
+      require 'net/ssh'
+      Net::SSH.start(host, user, password: pwd, verify_host_key: :never) do |ssh|
+        output = ssh.exec!('command')
+        # For long-running commands, use channels for incremental output
+        ssh.open_channel do |ch|
+          ch.exec('long_command') do |ch, success|
+            ch.on_data { |c, data| puts data }
+          end
+        end
+        ssh.loop
+      end
+    example_deployment: |
+      Net::SSH.start('185.52.176.18', 'dev', password: 'hutte10tu6969', verify_host_key: :never) do |ssh|
+        ssh.scp.upload!('file.sh', '/home/dev/file.sh')
+        ssh.exec!('doas zsh ~/file.sh')
+      end
+    transparency: "Always output progress, never run silent for >60 seconds"
 
 glossary:
   center: "core purpose all changes preserve"

@@ -1,0 +1,826 @@
+{
+  "_meta": {
+    "name": "DILLA × DUB Production DNA",
+    "version": "2.1.0",
+    "description": "Shared configuration for dilla.rb and dilla.html - chord progressions, timing, gear emulation, effect chains",
+    "sources": [
+      "J Dilla - Fantastic Vol 1 & 2, Donuts, The Shining",
+      "Flying Lotus - Los Angeles (2008)",
+      "Madlib - Madvillainy, Beat Konducta",
+      "Sonitex STX-1260 parameters",
+      "NastyVCS mkII console emulation",
+      "Moog DFAM percussion synthesis",
+      "arXiv papers on tape/vinyl emulation",
+      "SP-303, SP-1200, S950, MPC3000 character analysis"
+    ]
+  },
+
+  "chords": {
+    "_note": "Chord progressions from J Dilla, Flying Lotus, Madlib productions and their sample sources",
+    
+    "dilla_fantastic_vol2": {
+      "fall_in_love": {
+        "key": "Fm",
+        "bpm": 91,
+        "chords": ["Bbm", "Ab", "Fm7", "Fm"],
+        "roman": ["iv", "bIII", "i7", "i"],
+        "feel": "melancholic_groove",
+        "sample_source": "The Escorts - I Can't Stand To See You Cry"
+      },
+      "climax": {
+        "key": "E",
+        "bpm": 96,
+        "chords": ["Emaj7", "G#m7", "G#m7", "G#maj7"],
+        "roman": ["Imaj7", "iii7", "iii7", "IIImaj7"],
+        "feel": "triumphant"
+      },
+      "get_dis_money": {
+        "key": "C#m",
+        "bpm": 90,
+        "chords": ["C#m", "G#m", "A#7", "C#"],
+        "roman": ["i", "v", "VI7", "I"],
+        "feel": "driving"
+      },
+      "thelonious": {
+        "key": "Ebm",
+        "bpm": 92,
+        "chords": ["Ebm", "Bbm"],
+        "roman": ["i", "v"],
+        "feel": "floating_nonresolving",
+        "note": "Two-chord loop that never resolves - creates infinite float"
+      },
+      "selfish": {
+        "key": "G",
+        "bpm": 88,
+        "chords": ["Cmaj7", "Bm7", "Am7", "D7"],
+        "roman": ["IVmaj7", "iii7", "ii7", "V7"],
+        "feel": "sophisticated_soul"
+      },
+      "players": {
+        "key": "Dm",
+        "bpm": 94,
+        "chords": ["Dm7", "Gm7", "Am7", "Dm7"],
+        "roman": ["i7", "iv7", "v7", "i7"],
+        "feel": "dark_groove"
+      }
+    },
+    
+    "dilla_fantastic_vol1": {
+      "look_of_love": {
+        "key": "G",
+        "bpm": 92,
+        "chords": ["Bm7", "Bm7", "Cmaj7", "Em7"],
+        "roman": ["iii7", "iii7", "IVmaj7", "vi7"],
+        "sample_source": "Minnie Riperton - Inside My Love",
+        "feel": "lush_ethereal"
+      },
+      "fan_tas_tic": {
+        "key": "Ab",
+        "bpm": 90,
+        "chords": ["Abmaj7", "Dbmaj7", "Cm7", "Fm7"],
+        "roman": ["Imaj7", "IVmaj7", "iii7", "vi7"],
+        "feel": "neo_soul"
+      }
+    },
+
+    "dilla_donuts": {
+      "time_donut_of_the_heart": {
+        "key": "Ab",
+        "bpm": 94,
+        "chords": ["Dbmaj7", "Cm7", "Fm7", "Bbm7"],
+        "roman": ["IVmaj7", "iii7", "vi7", "ii7"],
+        "sample_source": "Jackson 5 - All I Do Is Think of You (slowed half-speed)",
+        "feel": "nostalgic"
+      },
+      "workinonit": {
+        "key": "Bm",
+        "bpm": 93,
+        "chords": ["Bm7", "Em7", "F#m7", "Bm7"],
+        "roman": ["i7", "iv7", "v7", "i7"],
+        "feel": "workhouse_groove"
+      },
+      "lightworks": {
+        "key": "F#m",
+        "bpm": 95,
+        "chords": ["F#m7", "C#m7", "Dmaj7", "E7"],
+        "roman": ["i7", "v7", "VImaj7", "VII7"],
+        "sample_source": "Raymond Scott - Lightworks",
+        "feel": "experimental"
+      },
+      "waves": {
+        "key": "Bbm",
+        "bpm": 90,
+        "chords": ["Bbm7", "Ebm7", "Abmaj7", "Dbmaj7"],
+        "roman": ["i7", "iv7", "VII7", "IIImaj7"],
+        "feel": "oceanic"
+      },
+      "stop": {
+        "key": "F#m",
+        "bpm": 86,
+        "chords": ["F#m9", "Bm9"],
+        "roman": ["i9", "iv9"],
+        "sample_source": "Dionne Warwick - You're Gonna Need Me",
+        "feel": "simple_devastating"
+      }
+    },
+
+    "dilla_the_shining": {
+      "so_far_to_go": {
+        "key": "Bb",
+        "bpm": 92,
+        "chords": ["Dm7", "Cm7", "F7", "Gm7"],
+        "roman": ["iii7", "ii7", "V7", "vi7"],
+        "feel": "neo_soul_classic"
+      },
+      "wont_do": {
+        "key": "Em",
+        "bpm": 88,
+        "chords": ["Em7", "Am7", "Bm7", "Cmaj7"],
+        "roman": ["i7", "iv7", "v7", "VImaj7"],
+        "feel": "introspective"
+      }
+    },
+
+    "dilla_unreleased": {
+      "worlds_full_of_sadness": {
+        "key": "Gm",
+        "bpm": 78,
+        "chords": ["Gm9", "Cm9", "Ebmaj7", "D7#9"],
+        "roman": ["i9", "iv9", "VImaj7", "V7#9"],
+        "feel": "deep_melancholy",
+        "note": "Extended harmonies with altered dominants"
+      },
+      "earth": {
+        "key": "Dm",
+        "bpm": 84,
+        "chords": ["Dm11", "Gm9", "Am7", "Bbmaj7"],
+        "roman": ["i11", "iv9", "v7", "VImaj7"],
+        "feel": "cosmic_grounded"
+      },
+      "time": {
+        "key": "Fm",
+        "bpm": 82,
+        "chords": ["Fm9", "Bbm7", "Dbmaj9", "Cm7"],
+        "roman": ["i9", "iv7", "VImaj9", "v7"],
+        "feel": "floating_temporal"
+      }
+    },
+
+    "flying_lotus_la": {
+      "camel": {
+        "key": "C",
+        "bpm": 84,
+        "chords": ["Cmaj7", "Fmaj7", "Am7", "Em7"],
+        "roman": ["Imaj7", "IVmaj7", "vi7", "iii7"],
+        "feel": "janky_eastern"
+      },
+      "robertaflack": {
+        "key": "G",
+        "bpm": 81,
+        "chords": ["Gmaj9", "Am9", "Bm7", "Cmaj7"],
+        "roman": ["Imaj9", "ii9", "iii7", "IVmaj7"],
+        "feel": "lush_neosoul",
+        "coproduction": ["Samiyam", "Byron the Aquarius"]
+      },
+      "gng_bng": {
+        "key": "Gm",
+        "bpm": 103,
+        "chords": ["Gm7", "Cm7", "D7", "Gm7"],
+        "roman": ["i7", "iv7", "V7", "i7"],
+        "feel": "heavy_gangster",
+        "coproduction": ["The Gaslamp Killer"]
+      },
+      "riot": {
+        "key": "Bbm",
+        "bpm": 98,
+        "chords": ["Bbm7", "Ebm7", "Fm7", "Gb7"],
+        "roman": ["i7", "iv7", "v7", "VI7"],
+        "feel": "dark_intense"
+      },
+      "sleepy_dinosaur": {
+        "key": "Eb",
+        "bpm": 76,
+        "chords": ["Ebmaj9", "Cm11", "Fm9", "Bb7"],
+        "roman": ["Imaj9", "vi11", "ii9", "V7"],
+        "feel": "dreamy_haze"
+      }
+    },
+
+    "madlib": {
+      "accordion": {
+        "key": "Dm",
+        "bpm": 96,
+        "chords": ["Dm", "Gm", "Am"],
+        "roman": ["i", "iv", "v"],
+        "sample_source": "Daedelus - Experience (Magnus chord organ)",
+        "feel": "hypnotic_minimal"
+      },
+      "meat_grinder": {
+        "key": "Cm",
+        "bpm": 92,
+        "chords": ["Cm7", "Fm7", "Gm7", "Ab7"],
+        "roman": ["i7", "iv7", "v7", "VI7"],
+        "feel": "menacing"
+      },
+      "rhinestone_cowboy": {
+        "key": "Am",
+        "bpm": 88,
+        "chords": ["Am7", "Dm7", "Em7", "Fmaj7"],
+        "roman": ["i7", "iv7", "v7", "VImaj7"],
+        "feel": "western_darkness"
+      },
+      "raid": {
+        "key": "Em",
+        "bpm": 94,
+        "chords": ["Em7", "Am7", "Bm7", "Cmaj7"],
+        "roman": ["i7", "iv7", "v7", "VImaj7"],
+        "feel": "boom_bap_classic"
+      }
+    },
+
+    "classic_sample_sources": {
+      "_note": "Commonly sampled progressions from soul, jazz, funk",
+      
+      "minnie_riperton_inside_my_love": {
+        "key": "G",
+        "chords": ["Gmaj7", "Am7", "Bm7", "Cmaj7"],
+        "roman": ["Imaj7", "ii7", "iii7", "IVmaj7"],
+        "feel": "ethereal_soul"
+      },
+      "isley_brothers_between_sheets": {
+        "key": "Db",
+        "chords": ["Dbmaj7", "Ebm7", "Fm7", "Gbmaj7"],
+        "roman": ["Imaj7", "ii7", "iii7", "IVmaj7"],
+        "feel": "smooth_sensual"
+      },
+      "bobby_caldwell_what_you_wont_do": {
+        "key": "Bb",
+        "chords": ["Bbmaj7", "Cm7", "Dm7", "Ebmaj7"],
+        "roman": ["Imaj7", "ii7", "iii7", "IVmaj7"],
+        "feel": "yacht_soul"
+      },
+      "herbie_hancock_chameleon": {
+        "key": "Bbm",
+        "chords": ["Bbm7", "Eb7"],
+        "roman": ["i7", "IV7"],
+        "feel": "funk_minimal"
+      },
+      "roy_ayers_everybody_loves_sunshine": {
+        "key": "F",
+        "chords": ["Fmaj7", "Gm7", "Am7", "Bbmaj7"],
+        "roman": ["Imaj7", "ii7", "iii7", "IVmaj7"],
+        "feel": "summer_vibes"
+      },
+      "ahmad_jamal_extensions": {
+        "key": "Gm",
+        "chords": ["Gm9", "Cm9", "Dm7", "Ebmaj7"],
+        "roman": ["i9", "iv9", "v7", "VImaj7"],
+        "feel": "jazz_modal"
+      },
+      "lonnie_liston_smith_expansions": {
+        "key": "Gm",
+        "chords": ["Gm11", "Cm9", "Fm9", "Bb7"],
+        "roman": ["i11", "iv9", "bvii9", "III7"],
+        "feel": "cosmic_jazz"
+      },
+      "alice_coltrane_journey_satchidananda": {
+        "key": "Am",
+        "chords": ["Am9", "Dm11", "Em7", "Fmaj7#11"],
+        "roman": ["i9", "iv11", "v7", "VImaj7#11"],
+        "feel": "spiritual_jazz"
+      }
+    }
+  },
+
+  "timing": {
+    "dilla_swing": {
+      "mpc_swing_range": [50, 75],
+      "sweet_spot": [53, 56],
+      "golden_ratio": 62.5,
+      "ppqn": 96,
+      "tempo_range": [82, 92],
+      "nudge_ms": {
+        "kick": -8,
+        "snare": 12,
+        "hihat": -3,
+        "bass": -5
+      },
+      "humanize": {
+        "velocity_variance": 15,
+        "timing_variance_ms": 18
+      }
+    },
+    "flylo_swing": {
+      "tempo_range": [76, 110],
+      "sweet_spot": [52, 58],
+      "sidechain_pump": true
+    },
+    "madlib_swing": {
+      "tempo_range": [88, 98],
+      "approach": "live_triggering",
+      "quantize": false,
+      "note": "Madlib triggers everything live - no sequencing"
+    }
+  },
+
+  "drums": {
+    "_note": "Drum arrangement patterns from Dilla, FlyLo, Madlib",
+    
+    "patterns": {
+      "dilla_lazy": {
+        "name": "Dilla Lazy",
+        "description": "Laid-back, behind-the-beat feel",
+        "kick":  [1,0,0,0, 0,0,1,0, 0,0,0,0, 0,1,0,0],
+        "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        "hihat": [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+        "swing": 54
+      },
+      "dilla_bounce": {
+        "name": "Dilla Bounce",
+        "description": "Heavy pocket groove",
+        "kick":  [1,0,0,1, 0,0,1,0, 0,0,0,1, 0,0,1,0],
+        "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        "hihat": [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+        "swing": 56
+      },
+      "flylo_stutter": {
+        "name": "FlyLo Stutter",
+        "description": "Glitchy, fragmented",
+        "kick":  [1,0,0,0, 0,0,0,1, 0,1,0,0, 0,0,1,0],
+        "snare": [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,1],
+        "hihat": [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,0],
+        "swing": 52
+      },
+      "madlib_chop": {
+        "name": "Madlib Chop",
+        "description": "Live-triggered, organic",
+        "kick":  [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+        "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        "hihat": [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+        "swing": 50,
+        "note": "Intentionally simple - magic is in sample choice"
+      },
+      "boom_bap_classic": {
+        "name": "Boom Bap Classic",
+        "kick":  [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+        "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        "hihat": [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+        "swing": 58
+      }
+    },
+    
+    "mixing": {
+      "kick": {
+        "eq_boost_hz": 60,
+        "eq_cut_hz": 400,
+        "compression_ratio": 4,
+        "compression_attack_ms": 10,
+        "saturation": 0.15
+      },
+      "snare": {
+        "eq_boost_hz": 200,
+        "eq_air_hz": 8000,
+        "compression_ratio": 3,
+        "reverb_send": 0.2
+      },
+      "hihat": {
+        "highpass_hz": 8000,
+        "compression_ratio": 2,
+        "pan_spread": 0.3
+      }
+    }
+  },
+
+  "gear_emulation": {
+    "_note": "Vintage sampler and effect unit characteristics for emulation",
+    
+    "samplers": {
+      "sp1200": {
+        "name": "E-mu SP-1200",
+        "bits": 12,
+        "sample_rate": 26040,
+        "filter_type": "ssm2044_analog",
+        "filter_cutoff_max": 16000,
+        "headroom_db": -6,
+        "character": "punchy_gritty",
+        "used_by": ["Marley Marl", "Pete Rock", "Large Professor", "J Dilla"]
+      },
+      "mpc3000": {
+        "name": "Akai MPC3000",
+        "bits": 16,
+        "sample_rate": 44100,
+        "filter_type": "digital_lowpass",
+        "swing_ppqn": 96,
+        "character": "warm_precise",
+        "used_by": ["J Dilla", "DJ Premier", "Dr. Dre"]
+      },
+      "mpc60": {
+        "name": "Akai MPC60",
+        "bits": 12,
+        "sample_rate": 40000,
+        "filter_type": "analog_vca",
+        "character": "fat_punchy",
+        "used_by": ["DJ Premier", "Pete Rock"]
+      },
+      "sp303": {
+        "name": "Boss SP-303 Dr. Sample",
+        "bits": 16,
+        "sample_rates": [44100, 22050, 11025],
+        "effects": {
+          "vinyl_sim": {
+            "compression": true,
+            "crackle": true,
+            "wow_flutter": true
+          },
+          "lofi": {
+            "sample_rate": 11025,
+            "character": "buttery_dull"
+          }
+        },
+        "character": "lo-fi_cassette_warm",
+        "used_by": ["Madlib", "J Dilla (Donuts)", "MF DOOM", "Flying Lotus"]
+      },
+      "sp404": {
+        "name": "Roland SP-404",
+        "bits": 16,
+        "sample_rate": 44100,
+        "character": "harsh_brittle_compared_to_303",
+        "used_by": ["Madlib", "Dibia$e"]
+      },
+      "s950": {
+        "name": "Akai S950",
+        "bits": 12,
+        "sample_rate_max": 48000,
+        "filter_type": "analog_lowpass",
+        "time_stretch": true,
+        "character": "warm_classic_hip_hop",
+        "used_by": ["Fatboy Slim", "Moby", "J Dilla"]
+      },
+      "s900": {
+        "name": "Akai S900",
+        "bits": 12,
+        "sample_rate_max": 40000,
+        "outputs": 8,
+        "character": "gritty_raw",
+        "used_by": ["Marley Marl"]
+      },
+      "emax": {
+        "name": "E-mu Emax",
+        "bits": 12,
+        "filter_type": "analog_ssm2044",
+        "character": "gritty_cousin_of_sp1200"
+      },
+      "mirage": {
+        "name": "Ensoniq Mirage",
+        "bits": 8,
+        "filter_type": "analog_vcf",
+        "character": "extremely_lofi_harsh"
+      },
+      "eps16": {
+        "name": "Ensoniq EPS-16 Plus",
+        "bits": 16,
+        "effects": true,
+        "character": "clean_with_effects"
+      },
+      "asr10": {
+        "name": "Ensoniq ASR-10",
+        "bits": 16,
+        "effects": true,
+        "filter_type": "digital",
+        "character": "versatile_clean"
+      }
+    },
+
+    "dfam": {
+      "name": "Moog DFAM (Drummer From Another Mother)",
+      "type": "analog_percussion_synthesizer",
+      "oscillators": 2,
+      "waveforms": ["square", "triangle"],
+      "noise": "white",
+      "filter": "moog_ladder_4pole",
+      "filter_modes": ["lowpass", "highpass"],
+      "envelopes": {
+        "vco_decay": { "min": 0, "max": 1 },
+        "vcf_decay": { "min": 0, "max": 1 },
+        "vca_decay": { "min": 0, "max": 1 }
+      },
+      "sequencer_steps": 8,
+      "fm_modulation": true,
+      "hard_sync": true,
+      "patch_points": 24,
+      "sound_types": ["kicks", "toms", "cymbals", "noise_hits", "bass", "drones"],
+      "character": "tribal_industrial_organic"
+    }
+  },
+
+  "effect_chains": {
+    "_note": "Lo-fi effect chain configurations inspired by Sonitex STX-1260, NastyVCS, and vintage gear",
+    
+    "sonitex_stx1260": {
+      "description": "Ultimate lo-fi workstation - 6 processing stages",
+      "stages": {
+        "mix": {
+          "input_gain": { "min": -12, "max": 12, "default": 0 },
+          "output_gain": { "min": -12, "max": 12, "default": 0 },
+          "stereo_width": { "min": 0, "max": 200, "default": 100 },
+          "mid_side_balance": { "min": -100, "max": 100, "default": 0 },
+          "compressor": { "threshold": -20, "ratio": 4 }
+        },
+        "distortion": {
+          "types": ["saturation", "distortion", "amplifier", "digital1", "digital2"],
+          "drive": { "min": 0, "max": 100, "default": 20 },
+          "pre_emphasis": true,
+          "pre_filter_hz": { "min": 20, "max": 20000 },
+          "mix": { "min": 0, "max": 100, "default": 50 }
+        },
+        "vinyl": {
+          "pitch_warping": { "min": 0, "max": 100, "wow_rate_hz": 0.5 },
+          "sibilance": { "min": 0, "max": 100, "note": "harmonic exciter for vinyl hiss quality" },
+          "frequency_response": {
+            "lowpass_hz": { "min": 1000, "max": 20000 },
+            "highpass_hz": { "min": 20, "max": 500 }
+          }
+        },
+        "tone": {
+          "lowpass_hz": { "min": 500, "max": 20000 },
+          "highpass_hz": { "min": 20, "max": 2000 },
+          "resonance": { "min": 0, "max": 100 }
+        },
+        "noise": {
+          "types": ["vinyl_pops", "vinyl_clicks", "vinyl_base", "tape_hiss", "mechanical", "custom_wav"],
+          "pops_amount": { "min": 0, "max": 100 },
+          "clicks_amount": { "min": 0, "max": 100 },
+          "base_noise": { "min": 0, "max": 100 },
+          "noise_gate": { "enabled": true, "threshold": -40 }
+        },
+        "sampling": {
+          "bit_depth": { "min": 4, "max": 16, "default": 12 },
+          "sample_rate": { "options": [44100, 22050, 11025, 8000], "default": 22050 },
+          "reduction_types": ["linear", "sinc", "hold"],
+          "anti_alias_filter": true,
+          "dynamic_lowpass": {
+            "cutoff_hz": { "min": 500, "max": 16000 },
+            "resonance": { "min": 0, "max": 100 }
+          },
+          "presets": ["sp1200", "s950", "mirage", "lofi1", "lofi2", "extreme"]
+        }
+      },
+      "modulation": {
+        "lfo": { "rate_hz": { "min": 0.1, "max": 20 }, "shapes": ["sine", "triangle", "square", "random"] },
+        "envelope_follower": { "attack_ms": 10, "release_ms": 100 }
+      }
+    },
+
+    "nastyvcs": {
+      "description": "Virtual console strip with transformer saturation",
+      "stages": {
+        "input": {
+          "transformer": { "enabled": true, "saturation": 0.3 },
+          "gain_db": { "min": -12, "max": 24 }
+        },
+        "saturation": {
+          "amount": { "min": 0, "max": 100 },
+          "type": "tube_transformer",
+          "level_compensation": true
+        },
+        "filter": {
+          "highpass_hz": { "min": 20, "max": 500 },
+          "lowpass_hz": { "min": 1000, "max": 20000 }
+        },
+        "eq": {
+          "air_shelf_hz": 12000,
+          "air_gain_db": { "min": -6, "max": 6 },
+          "boost_cut_low_hz": 100,
+          "boost_cut_high_hz": 3000,
+          "hi_q": false
+        },
+        "compressor": {
+          "type": "opto_electric",
+          "threshold_db": { "min": -40, "max": 0 },
+          "ratio": { "min": 1, "max": 20 },
+          "attack_modes": ["fast", "medium", "slow"],
+          "release_modes": ["fast", "medium", "slow", "auto"]
+        },
+        "limiter": {
+          "type": "brickwall_parallel",
+          "modes": ["fast", "slow"],
+          "wet_dry": { "min": 0, "max": 100 }
+        },
+        "output": {
+          "transformer": { "enabled": true },
+          "gain_db": { "min": -12, "max": 12 }
+        }
+      },
+      "phase_alignment": { "enabled": true, "samples": { "min": -100, "max": 100 } }
+    },
+
+    "presets": {
+      "dilla_donuts": {
+        "description": "Late Dilla - Boss SP-303 character",
+        "chain": [
+          { "type": "bitcrush", "bits": 14 },
+          { "type": "lowpass", "cutoff_hz": 12000 },
+          { "type": "saturation", "drive": 1.5 },
+          { "type": "vinyl_noise", "amount": 0.1 },
+          { "type": "compression", "ratio": 3, "threshold_db": -18 }
+        ]
+      },
+      "madlib_sp303": {
+        "description": "Madlib vinyl sim compression",
+        "chain": [
+          { "type": "sp303_vinyl_sim", "amount": 0.7 },
+          { "type": "lowpass", "cutoff_hz": 10000 },
+          { "type": "tape_saturation", "drive": 1.3 },
+          { "type": "wow_flutter", "rate_hz": 0.3, "depth": 0.02 }
+        ]
+      },
+      "flylo_haze": {
+        "description": "Flying Lotus textured haze",
+        "chain": [
+          { "type": "vinyl_noise", "amount": 0.15 },
+          { "type": "sidechain_compression", "ratio": 8, "release_ms": 15 },
+          { "type": "reverb", "size": 0.3, "damping": 0.7 },
+          { "type": "lowpass", "cutoff_hz": 14000 }
+        ]
+      },
+      "sp1200_crunch": {
+        "description": "Classic SP-1200 12-bit character",
+        "chain": [
+          { "type": "resample", "rate": 26040 },
+          { "type": "bitcrush", "bits": 12 },
+          { "type": "analog_filter", "type": "ssm2044", "cutoff_hz": 12000 },
+          { "type": "saturation", "drive": 1.8 }
+        ]
+      },
+      "s950_warmth": {
+        "description": "Akai S950 warm 12-bit",
+        "chain": [
+          { "type": "bitcrush", "bits": 12 },
+          { "type": "analog_lowpass", "cutoff_hz": 14000, "resonance": 0.2 },
+          { "type": "tape_saturation", "drive": 1.2 }
+        ]
+      },
+      "extreme_lofi": {
+        "description": "Maximum degradation",
+        "chain": [
+          { "type": "resample", "rate": 8000 },
+          { "type": "bitcrush", "bits": 8 },
+          { "type": "lowpass", "cutoff_hz": 4000 },
+          { "type": "vinyl_noise", "amount": 0.4 },
+          { "type": "wow_flutter", "rate_hz": 0.5, "depth": 0.05 },
+          { "type": "tape_saturation", "drive": 2.5 }
+        ]
+      },
+      "analog_console_warmth": {
+        "description": "NastyVCS-style console coloration",
+        "chain": [
+          { "type": "transformer_saturation", "amount": 0.3 },
+          { "type": "tube_saturation", "drive": 1.2 },
+          { "type": "eq", "bands": [
+            { "freq_hz": 60, "gain_db": 2, "q": 0.7 },
+            { "freq_hz": 3000, "gain_db": -1, "q": 1.5 },
+            { "freq_hz": 12000, "gain_db": 1.5, "q": 0.8 }
+          ]},
+          { "type": "compression", "ratio": 2, "attack_ms": 30, "release_ms": 100 }
+        ]
+      },
+      "dfam_percussion": {
+        "description": "Moog DFAM-style analog percussion processing",
+        "chain": [
+          { "type": "moog_ladder_filter", "cutoff_hz": 2000, "resonance": 0.4 },
+          { "type": "envelope", "attack_ms": 1, "decay_ms": 200 },
+          { "type": "saturation", "drive": 2.0 },
+          { "type": "noise_blend", "amount": 0.1, "type": "white" }
+        ]
+      }
+    },
+
+    "random_chain_generator": {
+      "_note": "Parameters for generating random complex effect chains",
+      "min_effects": 3,
+      "max_effects": 8,
+      "effect_pool": [
+        { "type": "bitcrush", "bits_range": [8, 14], "weight": 0.8 },
+        { "type": "resample", "rate_range": [8000, 44100], "weight": 0.6 },
+        { "type": "lowpass", "cutoff_range": [2000, 16000], "weight": 0.9 },
+        { "type": "highpass", "cutoff_range": [20, 500], "weight": 0.5 },
+        { "type": "saturation", "drive_range": [1.0, 3.0], "weight": 0.85 },
+        { "type": "tape_saturation", "drive_range": [1.0, 2.0], "weight": 0.7 },
+        { "type": "transformer_saturation", "amount_range": [0.1, 0.5], "weight": 0.5 },
+        { "type": "tube_saturation", "drive_range": [1.0, 2.0], "weight": 0.6 },
+        { "type": "vinyl_noise", "amount_range": [0.05, 0.3], "weight": 0.7 },
+        { "type": "tape_hiss", "amount_range": [0.05, 0.2], "weight": 0.5 },
+        { "type": "wow_flutter", "rate_range": [0.1, 1.0], "depth_range": [0.01, 0.05], "weight": 0.4 },
+        { "type": "compression", "ratio_range": [2, 8], "weight": 0.75 },
+        { "type": "reverb", "size_range": [0.1, 0.5], "weight": 0.3 },
+        { "type": "delay", "time_ms_range": [50, 300], "feedback_range": [0.1, 0.5], "weight": 0.3 },
+        { "type": "chorus", "rate_range": [0.5, 3.0], "depth_range": [0.1, 0.5], "weight": 0.2 },
+        { "type": "phaser", "rate_range": [0.1, 2.0], "weight": 0.2 },
+        { "type": "ring_mod", "freq_range": [100, 2000], "weight": 0.1 }
+      ],
+      "aesthetic_targets": {
+        "dark": { "lowpass_bias": 0.9, "saturation_bias": 0.8, "reverb_bias": 0.4 },
+        "deep": { "lowpass_bias": 0.95, "bass_boost": true, "compression_bias": 0.8 },
+        "authentic": { "vintage_sampler_bias": 0.9, "vinyl_noise_bias": 0.7 },
+        "tape": { "tape_saturation_bias": 0.95, "wow_flutter_bias": 0.8, "hiss_bias": 0.6 },
+        "vinyl": { "vinyl_noise_bias": 0.95, "lowpass_bias": 0.7, "sibilance": 0.5 },
+        "gritty": { "bitcrush_bias": 0.9, "saturation_bias": 0.9, "harsh_allowed": true }
+      }
+    }
+  },
+
+  "mixing": {
+    "bus_processing": {
+      "drum_bus": {
+        "saturation_drive": 1.5,
+        "compression_ratio": 4,
+        "eq": [
+          { "freq_hz": 60, "gain_db": 2 },
+          { "freq_hz": 200, "gain_db": -2 },
+          { "freq_hz": 4000, "gain_db": 1 }
+        ],
+        "parallel_compression": { "ratio": 10, "mix": 0.3 }
+      },
+      "sample_bus": {
+        "lowpass_hz": 12000,
+        "highpass_hz": 80,
+        "saturation_drive": 1.2,
+        "vinyl_noise": 0.05
+      },
+      "master": {
+        "compression": { "ratio": 2, "threshold_db": -12 },
+        "limiter_ceiling_db": -0.3,
+        "target_lufs": -14
+      }
+    },
+    
+    "dilla_bass_technique": {
+      "_note": "From MusicTech analysis of Dilla bass tones",
+      "method": "sub_bass_trigger",
+      "oscillator_hz": 40,
+      "trigger_source": "kick",
+      "gate_release_ms": 50,
+      "saturation": 0.15,
+      "eq": [
+        { "freq_hz": 40, "gain_db": 3, "q": 2 },
+        { "freq_hz": 200, "gain_db": -3, "q": 1 }
+      ]
+    }
+  },
+
+  "synthesis": {
+    "pads": {
+      "ethereal_keys": {
+        "oscillators": [
+          { "waveform": "triangle", "detune_cents": -5 },
+          { "waveform": "triangle", "detune_cents": 5 },
+          { "waveform": "sine", "octave": -1, "level": 0.3 }
+        ],
+        "filter": { "type": "lowpass", "cutoff_hz": 2000, "resonance": 0.2 },
+        "envelope": { "attack_ms": 200, "decay_ms": 500, "sustain": 0.7, "release_ms": 1000 },
+        "effects": ["chorus", "reverb"],
+        "character": "lush_floating"
+      },
+      "dilla_rhodes": {
+        "oscillators": [
+          { "waveform": "sine", "level": 1.0 },
+          { "waveform": "sine", "ratio": 2, "level": 0.5 },
+          { "waveform": "sine", "ratio": 3, "level": 0.25 }
+        ],
+        "filter": { "type": "lowpass", "cutoff_hz": 4000 },
+        "envelope": { "attack_ms": 5, "decay_ms": 800, "sustain": 0.4, "release_ms": 500 },
+        "effects": ["tremolo", "chorus", "saturation"],
+        "character": "warm_vintage_electric_piano"
+      },
+      "ambient_wash": {
+        "oscillators": [
+          { "waveform": "sawtooth", "detune_cents": -7 },
+          { "waveform": "sawtooth", "detune_cents": 7 }
+        ],
+        "filter": { "type": "lowpass", "cutoff_hz": 1500, "resonance": 0.3, "lfo_mod": 0.2 },
+        "envelope": { "attack_ms": 500, "decay_ms": 2000, "sustain": 0.8, "release_ms": 3000 },
+        "effects": ["reverb", "delay"],
+        "character": "cosmic_drift"
+      }
+    }
+  },
+
+  "academic_references": {
+    "_note": "From arXiv research on analog audio emulation",
+    "tape_modeling": {
+      "paper": "Neural Modeling of Magnetic Tape Recorders (Mikkonen et al., 2023)",
+      "techniques": ["GRU networks", "impulse response analysis", "hysteresis modeling"],
+      "key_parameters": ["saturation curve", "head bump EQ", "wow/flutter", "bias noise"]
+    },
+    "virtual_analog": {
+      "paper": "Comparative Study of RNNs for Virtual Analog Audio Effects (2024)",
+      "findings": "LSTM best for distortion/EQ, SSMs better for tape saturation/compression",
+      "techniques": ["State-Space Models", "Linear Recurrent Units", "Feature-wise Linear Modulation"]
+    },
+    "tube_amp": {
+      "paper": "Deep Learning for Tube Amplifier Emulation (Damskägg et al., 2019)",
+      "technique": "WaveNet feedforward with pre-emphasis",
+      "target": "Fender Bassman 56F-A"
+    }
+  }
+}
