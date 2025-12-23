@@ -8,12 +8,12 @@
 # fingerprint: master_96.0_unified
 
 meta:
-  version: v98.0
-  fingerprint: master_98.0_gorails_integrated
-  updated: "2025-12-23T18:09:00Z"
+  version: v99.0
+  fingerprint: master_99.0_rails_views_openbsd_verified
+  updated: "2025-12-23T18:19:00Z"
   center: "principles define quality across all domains"
   capability: "Claude Sonnet 4.5+"
-  learned_from: "GoRails patterns + StimulusReflex mastery + marketplace architecture"
+  learned_from: "GoRails patterns + ultraminimalistic views + OpenBSD man verification"
   
 session_knowledge:
   project: brgen
@@ -60,6 +60,48 @@ session_knowledge:
     status: pre-point complete weeks ago
     next: "doas zsh ~/openbsd.sh --post-point"
     goal: "curl https://brgen.no working"
+    
+    openbsd_verification:
+      philosophy: "verify against man.openbsd.org exhaustively"
+      workflow:
+        - "read man pages for every daemon and command"
+        - "verify flags, options, config file syntax"
+        - "check rc.d daemon control scripts"
+        - "validate rcctl enable/disable/restart patterns"
+        - "confirm file permissions and ownership"
+        - "verify chroot paths and user/group isolation"
+      
+      critical_daemons:
+        httpd: 
+          man: "man.openbsd.org/httpd.8 + httpd.conf.5"
+          config: /etc/httpd.conf
+          verify: [listen_syntax, location_blocks, fastcgi_socket, tls_config]
+        
+        relayd:
+          man: "man.openbsd.org/relayd.8 + relayd.conf.5"
+          config: /etc/relayd.conf
+          verify: [table_syntax, relay_proto, forward_to, health_checks]
+        
+        postgresql:
+          man: "man.openbsd.org/postgresql packages"
+          config: /var/postgresql/data/postgresql.conf
+          verify: [listen_addresses, max_connections, shared_buffers, unix_socket]
+        
+        redis:
+          man: "man.openbsd.org/redis packages"
+          config: /etc/redis.conf
+          verify: [bind, port, databases, persistence]
+        
+        puma:
+          man: "third-party gem docs + rc.d integration"
+          verify: [socket_path, workers, threads, preload_app]
+      
+      security_checks:
+        - "doas.conf syntax via man doas.conf.5"
+        - "pf.conf firewall rules via man pf.conf.5"
+        - "file permissions: 0600 secrets, 0644 configs, 0755 scripts"
+        - "user isolation: _postgresql, _redis, _puma users"
+        - "chroot: httpd runs chrooted to /var/www"
   
   media_tools:
     purpose: "multimedia generation and processing"
@@ -117,6 +159,23 @@ session_knowledge:
     
     rails_best_practices:
       source: "gorails.com Chris Oliver + Julian Rubisch StimulusReflex Patterns"
+      
+      ultraminimalistic_views:
+        philosophy: "Rails tag helpers over raw HTML, eliminate divitis"
+        examples:
+          bad: "<p><%= t :hello_world %></p>"
+          good: "<%= tag.p t(:hello_world) %>"
+          bad: "<div class='container'><div class='row'><div class='col'>...</div></div></div>"
+          good: "<%= tag.article class: 'flow' do %>...<% end %>"
+        rules:
+          - "use tag helpers: tag.p, tag.h1, tag.article, tag.section"
+          - "no wrapper divs unless semantically meaningful"
+          - "leverage CSS logical properties and flow layout"
+          - "data attributes via tag helpers: tag.div(data: { controller: 'dropdown' })"
+          - "prefer semantic HTML5: article, section, nav, aside, main"
+          - "single responsibility per partial"
+          - "ViewComponents for logic, partials for pure presentation"
+      
       gorails_patterns:
         hotwire_first: "use Turbo Frames and Streams before custom JS"
         minimal_javascript: "Stimulus only for targeted interactivity"

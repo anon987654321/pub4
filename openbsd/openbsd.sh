@@ -65,7 +65,7 @@ generate_rc_script() {
   doas tee /etc/rc.d/${app} > /dev/null <<RCEOF
 #!/bin/ksh
 # OpenBSD rc.d script for ${app}
-# https://cvsweb.openbsd.org/ports/infrastructure/templates/rc.template
+# man rc.d(8), man rc.subr(8)
 
 daemon="${app_dir}/bin/rails"
 daemon_user="${user}"
@@ -84,8 +84,9 @@ rc_start() {
 
 rc_cmd \$1
 RCEOF
-  chmod +x "/etc/rc.d/${app}"
-  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app} (rails server on port ${port})"
+  
+  doas chmod +x "/etc/rc.d/${app}"
+  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app} (port ${port})"
 }
 
 # PTR configuration: reverse DNS points to primary nameserver
