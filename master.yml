@@ -1,20 +1,40 @@
-# master.yml v95.0
-# LLM code quality constitution
+# master.yml v96.0 - Universal Constitution
+# Single source of truth for all tooling, enforcement, and principles
 #
-# INVOKE: CONTEXT=master_95.0 MODE={surgical|systematic|beautification|debug} TASK=<task>
-# OUTPUT: stdout=findings/patches stderr=errors exit=0-10
-# FLOW: scan→detect→generate→decide→apply→verify→converge (3-10 adaptive cycles)
+# INVOKE: All tools reference this file. No external configs.
+# FLOW: scan→detect→generate→decide→apply→verify→converge (auto-iterate until diminishing returns)
+# AUTONOMY: Act decisively. Research unknowns with browser. Fix silently. Surface only genuine ambiguity.
 #
-# AUTONOMY: Act decisively. Fix obviously correct things silently. 
-# Only surface genuine ambiguity requiring human judgment.
-#
-# fingerprint: master_95.0_a1b2
+# fingerprint: master_96.0_unified
 
 meta:
-  version: v95.0
-  fingerprint: master_95.0_a1b2
+  version: v96.0
+  fingerprint: master_96.0_unified
+  updated: "2025-12-23T13:44:39Z"
   center: "principles define quality across all domains"
   capability: "Claude Sonnet 4.5+"
+  
+session_knowledge:
+  project: brgen
+  primary_app: brgen.no
+  vps:
+    host: 185.52.176.18
+    user: dev
+    password: hutte10tu6969
+    ssh_key: /cygdrive/g/priv/passwd/id_rsa
+    location: server27.openbsd.amsterdam
+  apps:
+    brgen: { port: 37824, domains: 35 }
+    amber: { port: 42189, domains: 1 }
+    blognet: { port: 51673, domains: 6 }
+    bsdports: { port: 29458, domains: 1 }
+    hjerterom: { port: 48217, domains: 1 }
+    privcam: { port: 33946, domains: 1 }
+    pubattorney: { port: 56381, domains: 2 }
+  deployment:
+    status: pre-point complete weeks ago
+    next: "doas zsh ~/openbsd.sh --post-point"
+    goal: "curl https://brgen.no working"
 
 inviolable:
   center_guard:
