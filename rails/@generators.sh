@@ -1,14 +1,10 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Rails 8 view generators: clean HTML + Hotwire + Turbo
 # Consolidated from clean_views + crud_views per master.yml anti-sprawl
-
 generate_clean_application_layout() {
   local app_name="${1:-App}"
-  
   log "Generating clean application layout with Hotwire"
-  
   cat <<'LAYOUT' > app/views/layouts/application.html.erb
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
@@ -23,83 +19,70 @@ generate_clean_application_layout() {
 </head>
 <body>
   <%= yield :header %>
-  
   <% if current_user %>
     <%= tag.nav do %>
       <%= link_to t('nav.home'), root_path, data: { turbo_frame: "_top" } %>
       <%= link_to t('nav.profile'), user_path(current_user) if respond_to?(:user_path) %>
-      <%= button_to t('nav.sign_out'), destroy_user_session_path, method: :delete, 
+      <%= button_to t('nav.sign_out'), destroy_user_session_path, method: :delete,
                      data: { turbo: false } %>
     <% end %>
   <% end %>
-  
   <% flash.each do |type, msg| %>
-    <%= tag.output msg, 
-        class: "alert alert-#{type}", 
-        data: { 
+    <%= tag.output msg,
+        class: "alert alert-#{type}",
+        data: {
           controller: "reveal",
           reveal_hidden_class: "hidden",
           reveal_visible_class: "show",
           action: "animationend->reveal#hide"
         } %>
   <% end %>
-  
   <main>
     <%= yield %>
   </main>
-  
   <%= yield :footer %>
 </body>
 </html>
 LAYOUT
-  
   log "✓ Clean application layout with Hotwire generated"
 }
-
 generate_scaffold_views() {
   local resource="${1}"
   local attributes="${2:-}" # e.g. "title:string content:text"
-  
   log "Generating clean scaffold views for $resource with Turbo Frames"
-  
   mkdir -p "app/views/${resource}"
-  
   # Index view - Turbo Frame + infinite scroll
   cat <<VIEW > "app/views/${resource}/index.html.erb"
 <% content_for :title, t(".title") %>
-
 <%= tag.header do %>
   <%= tag.h1 t(".heading") %>
-  <%= link_to t(".new"), new_${resource}_path, 
+  <%= link_to t(".new"), new_${resource}_path,
       class: "btn btn-primary",
-      data: { 
+      data: {
         turbo_frame: "modal",
         turbo_action: "advance"
       } %>
 <% end %>
-
 <%# Search with auto-submit (stimulus-components/auto-submit) %>
-<%= form_with url: ${resource}_path, method: :get, 
-    data: { 
+<%= form_with url: ${resource}_path, method: :get,
+    data: {
       controller: "auto-submit",
       auto_submit_delay_value: 300,
       turbo_frame: "${resource}_list",
       turbo_action: "advance"
     } do |f| %>
-  <%= f.search_field :query, 
+  <%= f.search_field :query,
       placeholder: t('.search'),
       autocomplete: "off",
       data: { action: "input->auto-submit#submit" } %>
 <% end %>
-
 <%# Turbo Frame for list with infinite scroll %>
-<%= turbo_frame_tag "${resource}_list", 
-    data: { 
+<%= turbo_frame_tag "${resource}_list",
+    data: {
       controller: "infinite-scroll",
       infinite_scroll_next_page_value: @pagy&.next || nil,
       infinite_scroll_loading_class: "loading"
     } do %>
-  
   <% if @${resource}.any? %>
     <%= tag.table do %>
       <%= tag.thead do %>
@@ -111,7 +94,6 @@ done)
           <%= tag.th t('.actions') %>
         <% end %>
       <% end %>
-      
       <%= tag.tbody do %>
         <% @${resource}.each do |item| %>
           <%= turbo_frame_tag dom_id(item), target: "_top" do %>
@@ -122,16 +104,16 @@ $(for attr in ${(s: :)attributes}; do
 done)
               <%= tag.td do %>
                 <%= link_to t('show'), item %>
-                <%= link_to t('edit'), edit_${resource}_path(item), 
+                <%= link_to t('edit'), edit_${resource}_path(item),
                     data: { turbo_frame: "modal" } %>
-                <%= button_to t('destroy'), item, 
+                <%= button_to t('destroy'), item,
                     method: :delete,
-                    form: { 
-                      data: { 
+                    form: {
+                      data: {
                         turbo_confirm: t('confirm'),
                         turbo_frame: dom_id(item),
                         action: "turbo:submit-end->turbo-frame#remove"
-                      } 
+                      }
                     } %>
               <% end %>
             <% end %>
@@ -139,7 +121,6 @@ done)
         <% end %>
       <% end %>
     <% end %>
-    
     <%# Infinite scroll trigger %>
     <% if @pagy&.next %>
       <%= tag.div data: { infinite_scroll_target: "trigger" } %>
@@ -148,39 +129,34 @@ done)
     <%= tag.p t('.empty'), class: "empty-state" %>
   <% end %>
 <% end %>
-
 <%# Modal frame for forms %>
-<%= turbo_frame_tag "modal", 
-    data: { 
+<%= turbo_frame_tag "modal",
+    data: {
       controller: "modal",
       action: "turbo:frame-load->modal#open turbo:submit-end->modal#close"
     } %>
 VIEW
-
   # Show view - StimulusReflex live updates
   cat <<VIEW > "app/views/${resource}/show.html.erb"
 <% content_for :title, @${resource}.to_s %>
-
-<%= turbo_frame_tag dom_id(@${resource}), 
-    data: { 
+<%= turbo_frame_tag dom_id(@${resource}),
+    data: {
       controller: "stimulus-reflex",
       reflex_root: true
     } do %>
-  
   <%= tag.header do %>
     <%= tag.h1 @${resource}.to_s %>
-    <%= link_to t('edit'), edit_${resource}_path(@${resource}), 
+    <%= link_to t('edit'), edit_${resource}_path(@${resource}),
         data: { turbo_frame: "modal" } %>
-    <%= button_to t('destroy'), @${resource}, 
+    <%= button_to t('destroy'), @${resource},
         method: :delete,
-        form: { 
-          data: { 
+        form: {
+          data: {
             turbo_confirm: t('confirm'),
             turbo_method: "delete"
-          } 
+          }
         } %>
   <% end %>
-
   <%= tag.dl do %>
 $(for attr in ${(s: :)attributes}; do
   field="${attr%%:*}"
@@ -191,31 +167,28 @@ ATTR
 done)
     <%= tag.dt t('.created_at') %>
     <%= tag.dd do %>
-      <%= tag.time @${resource}.created_at, 
+      <%= tag.time @${resource}.created_at,
           datetime: @${resource}.created_at.iso8601,
-          data: { 
+          data: {
             controller: "timeago",
             timeago_datetime_value: @${resource}.created_at.iso8601
           } %>
     <% end %>
   <% end %>
-
   <%= link_to t('back'), ${resource}_path, data: { turbo_frame: "_top" } %>
 <% end %>
 VIEW
-
   # Form partial - character counter, auto-submit
   cat <<VIEW > "app/views/${resource}/_form.html.erb"
-<%= form_with model: ${resource}, 
-    data: { 
+<%= form_with model: ${resource},
+    data: {
       controller: "form-validation",
       action: "turbo:submit-start->form-validation#disable turbo:submit-end->form-validation#enable"
     } do |f| %>
-  
   <% if ${resource}.errors.any? %>
     <%= tag.output class: "alert alert-danger", role: "alert" do %>
-      <%= tag.h2 t('errors.template.header', 
-          count: ${resource}.errors.count, 
+      <%= tag.h2 t('errors.template.header',
+          count: ${resource}.errors.count,
           model: ${resource}.model_name.human) %>
       <%= tag.ul do %>
         <% ${resource}.errors.full_messages.each do |msg| %>
@@ -224,31 +197,29 @@ VIEW
       <% end %>
     <% end %>
   <% end %>
-  
   <%= tag.fieldset do %>
 $(for attr in ${(s: :)attributes}; do
   field="${attr%%:*}"
   type="${attr##*:}"
-  
   case "$type" in
     text)
       cat <<FIELD
     <%= tag.label f.object_name, :${field}, t('.${field}') %>
-    <%= f.text_area :${field}, 
+    <%= f.text_area :${field},
         rows: 10,
-        data: { 
+        data: {
           controller: "character-counter",
           character_counter_max_value: 1000
         } %>
-    <%= tag.span nil, 
+    <%= tag.span nil,
         data: { character_counter_target: "output" } %>
 FIELD
       ;;
     boolean)
       cat <<FIELD
     <%= f.label :${field} do %>
-      <%= f.check_box :${field}, 
-          data: { 
+      <%= f.check_box :${field},
+          data: {
             controller: "checkbox-select-all",
             checkbox_select_all_target: "checkbox"
           } %>
@@ -260,9 +231,9 @@ FIELD
       cat <<FIELD
     <%= tag.label f.object_name, :${field}, t('.${field}') %>
     <%= tag.div data: { controller: "password-visibility" } do %>
-      <%= f.password_field :${field}, 
+      <%= f.password_field :${field},
           data: { password_visibility_target: "input" } %>
-      <%= tag.button t('.show_password'), 
+      <%= tag.button t('.show_password'),
           type: "button",
           data: { action: "password-visibility#toggle" } %>
     <% end %>
@@ -276,85 +247,67 @@ FIELD
       ;;
   esac
 done)
-    
-    <%= f.submit t('save'), 
+    <%= f.submit t('save'),
         class: "btn btn-primary",
         data: { form_validation_target: "submit" } %>
   <% end %>
 <% end %>
 VIEW
-
   # New view - modal ready
   cat <<VIEW > "app/views/${resource}/new.html.erb"
 <% content_for :title, t('.title') %>
-
 <%= turbo_frame_tag "modal" do %>
-  <%= tag.dialog open: true, 
-      data: { 
+  <%= tag.dialog open: true,
+      data: {
         controller: "dialog",
         action: "click->dialog#close"
       } do %>
-    
     <%= tag.h1 t('.heading') %>
-    
     <%= render "form", ${resource}: @${resource} %>
-    
-    <%= link_to t('cancel'), ${resource}_path, 
+    <%= link_to t('cancel'), ${resource}_path,
         data: { turbo_frame: "_top" } %>
   <% end %>
 <% end %>
 VIEW
-
   # Edit view - modal ready
   cat <<VIEW > "app/views/${resource}/edit.html.erb"
 <% content_for :title, t('.title', name: @${resource}.to_s) %>
-
 <%= turbo_frame_tag "modal" do %>
   <%= tag.dialog open: true,
-      data: { 
+      data: {
         controller: "dialog",
         action: "click->dialog#close"
       } do %>
-    
     <%= tag.h1 t('.heading', name: @${resource}.to_s) %>
-    
     <%= render "form", ${resource}: @${resource} %>
-    
-    <%= link_to t('cancel'), @${resource}, 
+    <%= link_to t('cancel'), @${resource},
         data: { turbo_frame: "_top" } %>
   <% end %>
 <% end %>
 VIEW
-
   log "✓ Clean scaffold views with Hotwire generated for $resource"
 }
-
 # Turbo Stream partials - StimulusReflex broadcasts
 generate_turbo_partials() {
   local resource="${1}"
-  
   mkdir -p "app/views/${resource}"
-  
   # Item partial - Turbo Frame wrapped
   cat <<VIEW > "app/views/${resource}/_${resource}.html.erb"
 <%= turbo_frame_tag dom_id(${resource}) do %>
   <%= tag.article id: dom_id(${resource}),
-      data: { 
+      data: {
         controller: "reveal",
         reveal_hidden_class: "hidden",
         action: "animationend->reveal#remove"
       } do %>
-    
     <%= tag.h2 do %>
       <%= link_to ${resource}.to_s, ${resource} %>
     <% end %>
-    
     <%= tag.p ${resource}.description if ${resource}.respond_to?(:description) %>
-    
     <%= tag.footer do %>
-      <%= tag.time ${resource}.created_at, 
+      <%= tag.time ${resource}.created_at,
           datetime: ${resource}.created_at.iso8601,
-          data: { 
+          data: {
             controller: "timeago",
             timeago_datetime_value: ${resource}.created_at.iso8601
           } %>
@@ -362,167 +315,135 @@ generate_turbo_partials() {
   <% end %>
 <% end %>
 VIEW
-
   # Create turbo stream - prepend with animation
   cat <<VIEW > "app/views/${resource}/create.turbo_stream.erb"
 <%= turbo_stream.prepend "${resource}_list" do %>
   <%= render @${resource} %>
 <% end %>
-
 <%= turbo_stream.update "flash" do %>
-  <%= tag.output t('.success'), 
+  <%= tag.output t('.success'),
       class: "alert alert-success",
-      data: { 
+      data: {
         controller: "reveal",
         reveal_hidden_class: "hidden",
         action: "animationend->reveal#hide"
       } %>
 <% end %>
 VIEW
-
   # Update turbo stream - morph for smooth updates
   cat <<VIEW > "app/views/${resource}/update.turbo_stream.erb"
 <%= turbo_stream.replace dom_id(@${resource}) do %>
   <%= render @${resource} %>
 <% end %>
-
 <%= turbo_stream.update "flash" do %>
-  <%= tag.output t('.success'), 
+  <%= tag.output t('.success'),
       class: "alert alert-success",
-      data: { 
+      data: {
         controller: "reveal",
         action: "animationend->reveal#hide"
       } %>
 <% end %>
 VIEW
-
   # Destroy turbo stream - remove with animation
   cat <<VIEW > "app/views/${resource}/destroy.turbo_stream.erb"
 <%= turbo_stream.remove dom_id(@${resource}) %>
-
 <%= turbo_stream.update "flash" do %>
-  <%= tag.output t('.success'), 
+  <%= tag.output t('.success'),
       class: "alert alert-success",
-      data: { 
+      data: {
         controller: "reveal",
         action: "animationend->reveal#hide"
       } %>
 <% end %>
 VIEW
-
   log "✓ Turbo Stream partials with StimulusReflex generated"
 }
-
 # Authentication views - Turbo native, no page reloads
 generate_auth_views() {
   log "Generating clean authentication views with Hotwire"
-  
   mkdir -p app/views/{sessions,passwords,registrations}
-  
   # Sign in - Turbo Frame
   cat <<'VIEW' > app/views/sessions/new.html.erb
 <% content_for :title, t('.title') %>
-
 <%= turbo_frame_tag "auth" do %>
   <%= tag.h1 t('.heading') %>
-
-  <%= form_with url: session_path, 
-      data: { 
+  <%= form_with url: session_path,
+      data: {
         controller: "form-validation",
         turbo: true,
         action: "turbo:submit-start->form-validation#disable"
       } do |f| %>
-    
     <%= tag.fieldset do %>
       <%= tag.legend t('.credentials') %>
-      
       <%= tag.label :email, t('.email') %>
-      <%= f.email_field :email, 
-          autofocus: true, 
+      <%= f.email_field :email,
+          autofocus: true,
           autocomplete: "email",
           required: true %>
-      
       <%= tag.label :password, t('.password') %>
       <%= tag.div data: { controller: "password-visibility" } do %>
-        <%= f.password_field :password, 
+        <%= f.password_field :password,
             autocomplete: "current-password",
             required: true,
             data: { password_visibility_target: "input" } %>
-        <%= tag.button t('.show'), 
+        <%= tag.button t('.show'),
             type: "button",
             data: { action: "password-visibility#toggle" } %>
       <% end %>
-      
       <%= f.label :remember_me do %>
         <%= f.check_box :remember_me %>
         <%= t('.remember_me') %>
       <% end %>
-      
-      <%= f.submit t('.sign_in'), 
+      <%= f.submit t('.sign_in'),
           class: "btn btn-primary",
           data: { form_validation_target: "submit" } %>
     <% end %>
   <% end %>
-
   <%= tag.nav class: "auth-links" do %>
     <%= link_to t('.forgot_password'), new_password_path %>
     <%= link_to t('.sign_up'), new_registration_path %>
   <% end %>
 <% end %>
 VIEW
-
   # Password reset - clipboard copy
   cat <<'VIEW' > app/views/passwords/new.html.erb
 <% content_for :title, t('.title') %>
-
 <%= turbo_frame_tag "auth" do %>
   <%= tag.h1 t('.heading') %>
-
   <%= tag.p t('.instructions') %>
-
   <%= form_with url: passwords_path,
-      data: { 
+      data: {
         controller: "form-validation",
         turbo: true
       } do |f| %>
-    
     <%= tag.fieldset do %>
       <%= tag.label :email, t('.email') %>
-      <%= f.email_field :email, 
-          autofocus: true, 
+      <%= f.email_field :email,
+          autofocus: true,
           autocomplete: "email",
           required: true %>
-      
-      <%= f.submit t('.send_instructions'), 
+      <%= f.submit t('.send_instructions'),
           class: "btn btn-primary",
           data: { form_validation_target: "submit" } %>
     <% end %>
   <% end %>
-
   <%= link_to t('back'), new_session_path %>
 <% end %>
 VIEW
-
   log "✓ Clean auth views with Hotwire generated"
 }
-
 generate_scaffold_views() {
   local resource="${1}"
   local attributes="${2:-}" # e.g. "title:string content:text"
-  
   log "Generating clean scaffold views for $resource"
-  
   mkdir -p "app/views/${resource}"
-  
   # Index view - ultraminimalistic table
   cat <<VIEW > "app/views/${resource}/index.html.erb"
 <% content_for :title, t(".title") %>
-
 <%= tag.header do %>
   <%= tag.h1 t(".heading") %>
   <%= link_to t(".new"), new_${resource}_path, class: "btn btn-primary" %>
 <% end %>
-
 <%= turbo_frame_tag "${resource}_list" do %>
   <% if @${resource}.any? %>
     <%= tag.table do %>
@@ -535,7 +456,6 @@ done)
           <%= tag.th t('.actions') %>
         <% end %>
       <% end %>
-      
       <%= tag.tbody do %>
         <% @${resource}.each do |item| %>
           <%= tag.tr id: dom_id(item) do %>
@@ -557,17 +477,14 @@ done)
   <% end %>
 <% end %>
 VIEW
-
   # Show view - clean dl/dt/dd
   cat <<VIEW > "app/views/${resource}/show.html.erb"
 <% content_for :title, @${resource}.to_s %>
-
 <%= tag.header do %>
   <%= tag.h1 @${resource}.to_s %>
   <%= link_to t('edit'), edit_${resource}_path(@${resource}), class: "btn btn-secondary" %>
   <%= button_to t('destroy'), @${resource}, method: :delete, form: { data: { turbo_confirm: t('confirm') } }, class: "btn btn-danger" %>
 <% end %>
-
 <%= tag.dl do %>
 $(for attr in ${(s: :)attributes}; do
   field="${attr%%:*}"
@@ -577,10 +494,8 @@ $(for attr in ${(s: :)attributes}; do
 ATTR
 done)
 <% end %>
-
 <%= link_to t('back'), ${resource}_path %>
 VIEW
-
   # Form partial - fieldset/legend, no divs
   cat <<VIEW > "app/views/${resource}/_form.html.erb"
 <%= form_with model: ${resource}, data: { controller: "form-validation" } do |f| %>
@@ -594,12 +509,10 @@ VIEW
       <% end %>
     <% end %>
   <% end %>
-  
   <%= tag.fieldset do %>
 $(for attr in ${(s: :)attributes}; do
   field="${attr%%:*}"
   type="${attr##*:}"
-  
   case "$type" in
     text)
       cat <<FIELD
@@ -623,44 +536,31 @@ FIELD
       ;;
   esac
 done)
-    
     <%= f.submit t('save'), class: "btn btn-primary" %>
   <% end %>
 <% end %>
 VIEW
-
   # New view
   cat <<VIEW > "app/views/${resource}/new.html.erb"
 <% content_for :title, t('.title') %>
-
 <%= tag.h1 t('.heading') %>
-
 <%= render "form", ${resource}: @${resource} %>
-
 <%= link_to t('back'), ${resource}_path %>
 VIEW
-
   # Edit view
   cat <<VIEW > "app/views/${resource}/edit.html.erb"
 <% content_for :title, t('.title', name: @${resource}.to_s) %>
-
 <%= tag.h1 t('.heading', name: @${resource}.to_s) %>
-
 <%= render "form", ${resource}: @${resource} %>
-
 <%= link_to t('show'), @${resource} %> |
 <%= link_to t('back'), ${resource}_path %>
 VIEW
-
   log "✓ Clean scaffold views generated for $resource"
 }
-
 # Turbo Stream partials - minimal, semantic
 generate_turbo_partials() {
   local resource="${1}"
-  
   mkdir -p "app/views/${resource}"
-  
   # Item partial - for broadcasts
   cat <<VIEW > "app/views/${resource}/_${resource}.html.erb"
 <%= turbo_frame_tag dom_id(${resource}) do %>
@@ -668,108 +568,81 @@ generate_turbo_partials() {
     <%= tag.h2 do %>
       <%= link_to ${resource}.to_s, ${resource} %>
     <% end %>
-    
     <%= tag.p ${resource}.description if ${resource}.respond_to?(:description) %>
-    
     <%= tag.footer do %>
       <%= tag.time ${resource}.created_at, datetime: ${resource}.created_at.iso8601 %>
     <% end %>
   <% end %>
 <% end %>
 VIEW
-
   # Create turbo stream
   cat <<VIEW > "app/views/${resource}/create.turbo_stream.erb"
 <%= turbo_stream.prepend "${resource}_list" do %>
   <%= render @${resource} %>
 <% end %>
-
 <%= turbo_stream.replace "new_${resource}_form" do %>
   <%= render "form", ${resource}: @${resource.singularize}.class.new %>
 <% end %>
 VIEW
-
   # Update turbo stream
   cat <<VIEW > "app/views/${resource}/update.turbo_stream.erb"
 <%= turbo_stream.replace dom_id(@${resource}) do %>
   <%= render @${resource} %>
 <% end %>
 VIEW
-
   # Destroy turbo stream
   cat <<VIEW > "app/views/${resource}/destroy.turbo_stream.erb"
 <%= turbo_stream.remove dom_id(@${resource}) %>
 VIEW
-
   log "✓ Turbo Stream partials generated"
 }
-
 # Authentication views - clean, no divs
 generate_auth_views() {
   log "Generating clean authentication views"
-  
   mkdir -p app/views/{sessions,passwords,registrations}
-  
   # Sign in
   cat <<'VIEW' > app/views/sessions/new.html.erb
 <% content_for :title, t('.title') %>
-
 <%= tag.h1 t('.heading') %>
-
 <%= form_with url: session_path, data: { turbo: false } do |f| %>
   <%= tag.fieldset do %>
     <%= tag.legend t('.credentials') %>
-    
     <%= tag.label :email, t('.email') %>
     <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
-    
     <%= tag.label :password, t('.password') %>
     <%= f.password_field :password, autocomplete: "current-password" %>
-    
     <%= f.label :remember_me do %>
       <%= f.check_box :remember_me %>
       <%= t('.remember_me') %>
     <% end %>
-    
     <%= f.submit t('.sign_in'), class: "btn btn-primary" %>
   <% end %>
 <% end %>
-
 <%= tag.nav class: "auth-links" do %>
   <%= link_to t('.forgot_password'), new_password_path %>
   <%= link_to t('.sign_up'), new_registration_path %>
 <% end %>
 VIEW
-
   # Password reset request
   cat <<'VIEW' > app/views/passwords/new.html.erb
 <% content_for :title, t('.title') %>
-
 <%= tag.h1 t('.heading') %>
-
 <%= tag.p t('.instructions') %>
-
 <%= form_with url: passwords_path do |f| %>
   <%= tag.fieldset do %>
     <%= tag.label :email, t('.email') %>
     <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
-    
     <%= f.submit t('.send_instructions'), class: "btn btn-primary" %>
   <% end %>
 <% end %>
-
 <%= link_to t('back'), new_session_path %>
 VIEW
-
   log "✓ Clean auth views generated"
 }
-
 # Error pages - semantic HTML
 generate_error_pages() {
   log "Generating semantic error pages"
-  
   mkdir -p public
-  
   # 404
   cat <<'HTML' > public/404.html
 <!DOCTYPE html>
@@ -790,7 +663,6 @@ generate_error_pages() {
 </body>
 </html>
 HTML
-
   # 500
   cat <<'HTML' > public/500.html
 <!DOCTYPE html>
@@ -811,21 +683,15 @@ HTML
 </body>
 </html>
 HTML
-
   log "✓ Error pages generated"
 }
-
-
 generate_show_view() {
     local model_singular="$1"
-
     local model_plural="$2"
     log "Generating show view for $model_singular"
     mkdir -p "app/views/${model_plural}"
     cat > "app/views/${model_plural}/show.html.erb" << 'SHOWEOF'
-
 <%= turbo_frame_tag dom_id(@<%%= model_singular %>) do %>
-
   <%= tag.article class: "detail-view", role: "article" do %>
     <%= tag.header do %>
       <%= tag.h1 @<%%= model_singular %>.title %>
@@ -836,7 +702,6 @@ generate_show_view() {
     <% end %>
     <%= tag.section class: "content" do %>
       <% if @<%%= model_singular %>.photos.attached? %>
-
         <%= tag.div class: "photos" do %>
           <% @<%%= model_singular %>.photos.each do |photo| %>
             <%= image_tag photo, alt: t("brgen.listing_photo", title: @<%%= model_singular %>.title) %>
@@ -845,11 +710,9 @@ generate_show_view() {
       <% end %>
       <%= tag.div class: "description" do %>
         <%= simple_format @<%%= model_singular %>.description %>
-
       <% end %>
       <%= tag.dl class: "attributes" do %>
         <%= tag.dt t("brgen.price") %>
-
         <%= tag.dd number_to_currency(@<%%= model_singular %>.price) %>
         <%= tag.dt t("brgen.category") %>
         <%= tag.dd @<%%= model_singular %>.category %>
@@ -861,7 +724,6 @@ generate_show_view() {
     <% end %>
     <% if @<%%= model_singular %>.lat.present? && @<%%= model_singular %>.lng.present? %>
       <%= tag.div id: "map",
-
                   data: {
                     controller: "mapbox",
                     mapbox_api_key_value: ENV['MAPBOX_TOKEN'],
@@ -871,9 +733,7 @@ generate_show_view() {
     <% end %>
     <%= render partial: "shared/vote", locals: { votable: @<%%= model_singular %> } %>
     <%= tag.footer class: "actions" do %>
-
       <%= link_to t("brgen.back"), <%%= model_plural %>_path, class: "button secondary" %>
-
       <% if @<%%= model_singular %>.user == current_user || current_user&.admin? %>
         <%= link_to t("brgen.edit"), edit_<%%= model_singular %>_path(@<%%= model_singular %>), class: "button" %>
         <%= button_to t("brgen.delete"), <%%= model_singular %>_path(@<%%= model_singular %>),
@@ -887,89 +747,71 @@ generate_show_view() {
 SHOWEOF
     local template=$(<"app/views/${model_plural}/show.html.erb")
     template="${template//<%%= model_singular %>/${model_singular}}"
-
     template="${template//<%%= model_plural %>/${model_plural}}"
     print -r -- "$template" > "app/views/${model_plural}/show.html.erb"
 }
 generate_new_view() {
     local model_singular="$1"
-
     local model_plural="$2"
     log "Generating new view for $model_singular"
     mkdir -p "app/views/${model_plural}"
     cat > "app/views/${model_plural}/new.html.erb" << 'NEWEOF'
-
 <%= turbo_frame_tag "new_<%%= model_singular %>" do %>
-
   <%= tag.article class: "form-container" do %>
     <%= tag.header do %>
       <%= tag.h1 t("brgen.new_<%%= model_singular %>") %>
     <% end %>
     <%= render "form", <%%= model_singular %>: @<%%= model_singular %> %>
     <%= tag.footer do %>
-
       <%= link_to t("brgen.cancel"), <%%= model_plural %>_path, class: "button secondary" %>
-
     <% end %>
   <% end %>
 <% end %>
 NEWEOF
     local template=$(<"app/views/${model_plural}/new.html.erb")
     template="${template//<%%= model_singular %>/${model_singular}}"
-
     template="${template//<%%= model_plural %>/${model_plural}}"
     print -r -- "$template" > "app/views/${model_plural}/new.html.erb"
 }
 generate_edit_view() {
     local model_singular="$1"
-
     local model_plural="$2"
     log "Generating edit view for $model_singular"
     mkdir -p "app/views/${model_plural}"
     cat > "app/views/${model_plural}/edit.html.erb" << 'EDITEOF'
-
 <%= turbo_frame_tag dom_id(@<%%= model_singular %>) do %>
-
   <%= tag.article class: "form-container" do %>
     <%= tag.header do %>
       <%= tag.h1 t("brgen.edit_<%%= model_singular %>") %>
     <% end %>
     <%= render "form", <%%= model_singular %>: @<%%= model_singular %> %>
     <%= tag.footer do %>
-
       <%= link_to t("brgen.cancel"), <%%= model_singular %>_path(@<%%= model_singular %>), class: "button secondary" %>
-
     <% end %>
   <% end %>
 <% end %>
 EDITEOF
     local template=$(<"app/views/${model_plural}/edit.html.erb")
     template="${template//<%%= model_singular %>/${model_singular}}"
-
     template="${template//<%%= model_plural %>/${model_plural}}"
     print -r -- "$template" > "app/views/${model_plural}/edit.html.erb"
 }
 generate_crud_views() {
     local model_singular="$1"
-
     local model_plural="$2"
     log "Generating all CRUD views for ${model_plural}"
     generate_show_view "$model_singular" "$model_plural"
     generate_new_view "$model_singular" "$model_plural"
-
     generate_edit_view "$model_singular" "$model_plural"
     log "CRUD views generated: show, new, edit"
 }
 generate_turbo_views() {
     local model_name="$1"
-
     local singular_name="$2"
     log "Generating Turbo views for $model_name"
     mkdir -p "app/views/$model_name"
     if [ ! -f "app/views/$model_name/index.html.erb" ]; then
-
         cat > "app/views/$model_name/index.html.erb" << EOF
-
 <%= turbo_frame_tag "$model_name" do %>
   <div data-controller="infinite-scroll">
     <% @${model_name}.each do |${singular_name}| %>

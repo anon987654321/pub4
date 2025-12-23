@@ -1,56 +1,41 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen core setup: Multi-tenant social and marketplace platform with Mapbox, live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
-
 APP_NAME="brgen"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=11006
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/../solid_stack.sh"
 source "${SCRIPT_DIR}/../authentication.sh"
 source "${SCRIPT_DIR}/../falcon.sh"
 source "${SCRIPT_DIR}/../hotwire.sh"
-
 log() { print -r -- "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
-
 check_app_exists() {
   local app_name=$1
   local marker_file=$2
   [[ -f "${BASE_DIR}/${app_name}/${marker_file}" ]]
 }
-
 setup_full_app() {
   local app_name=$1
   # Implementation would go here
 }
-
 # Idempotency: skip if already generated
 check_app_exists "$APP_NAME" "app/models/community.rb" && exit 0
-
 log "Starting Brgen core setup"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "acts_as_tenant"
 install_gem "pagy"
 install_gem "faker"
-
 # Rails 8 Modern Stack
 setup_modern_rails8_stack
-
 # Multi-tenancy with devise-guests for anonymous posting
 install_gem "devise-guests"
-
 bin/rails generate devise_guests:install
-
 # Generate clean semantic HTML layout (no divitis)
 cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
 <!DOCTYPE html>
@@ -75,7 +60,6 @@ cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
       <%= button_to "Sign out", session_path, method: :delete %>
     </nav>
   <% end %>
-  
   <% if flash.any? %>
     <% flash.each do |type, msg| %>
       <output data-controller="reveal" data-reveal-hidden-class="hidden" class="flash-<%= type %>">
@@ -83,35 +67,29 @@ cat <<'LAYOUT_EOF' > app/views/layouts/application.html.erb
       </output>
     <% end %>
   <% end %>
-  
   <main>
     <%= yield %>
   </main>
 </body>
 </html>
 LAYOUT_EOF
-
 # Generate comprehensive routes for multi-tenant subdomain routing
 cat <<'ROUTES_EOF' > config/routes.rb
 Rails.application.routes.draw do
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
-  
   # PWA routes
   get "/offline", to: "errors#offline"
   post "/push_subscriptions", to: "push_subscriptions#create"
-  
   # Multi-tenant routes (subdomain-based)
   constraints(lambda { |req| City.exists?(subdomain: req.subdomain) }) do
     root to: "home#index"
-    
     resources :listings do
       member do
         post :like
         post :flag
       end
     end
-    
     resources :posts do
       member do
         post :like
@@ -119,34 +97,27 @@ Rails.application.routes.draw do
       end
       resources :comments, only: [:create, :destroy]
     end
-    
     resources :profiles, only: [:show, :edit, :update]
-    
     get "/search", to: "home#search", as: :search
     get "/insights", to: "insights#show"
   end
-  
   # Root domain routes (city selection)
   root to: "cities#index"
   resources :cities, only: [:index, :show]
-  
   # Authentication routes (Rails 8 built-in)
   resource :session
   resources :passwords, param: :token
 end
 ROUTES_EOF
-
 # Generate seed data
 cat <<'SEEDS_EOF' > db/seeds.rb
 # Brgen seed data for multi-tenant platform
-
 cities = [
   { name: "Oslo", subdomain: "oslo", country: "Norway", city: "Oslo", language: "no", tld: "no" },
   { name: "Bergen", subdomain: "bergen", country: "Norway", city: "Bergen", language: "no", tld: "no" },
   { name: "Trondheim", subdomain: "trondheim", country: "Norway", city: "Trondheim", language: "no", tld: "no" },
   { name: "Stavanger", subdomain: "stavanger", country: "Norway", city: "Stavanger", language: "no", tld: "no" }
 ]
-
 cities.each do |city_data|
   city = City.find_or_create_by!(subdomain: city_data[:subdomain]) do |c|
     c.name = city_data[:name]
@@ -155,19 +126,14 @@ cities.each do |city_data|
     c.language = city_data[:language]
     c.tld = city_data[:tld]
   end
-  
   puts "Created city: #{city.name} (#{city.subdomain}.brgen.#{city.tld})"
 end
-
 puts "Seeded #{City.count} cities"
 SEEDS_EOF
-
 bin/rails generate model Follower follower:references followed:references
 bin/rails generate scaffold Listing title:string description:text price:decimal category:string status:string user:references location:string lat:decimal lng:decimal photos:attachments
 bin/rails generate scaffold City name:string subdomain:string country:string city:string language:string favicon:string analytics:string tld:string
-
 generate_infinite_scroll_reflex "Listing" "listings"
-
 cat <<EOF > app/reflexes/insights_reflex.rb
 class InsightsReflex < ApplicationReflex
   def analyze
@@ -177,42 +143,32 @@ class InsightsReflex < ApplicationReflex
   end
 end
 EOF
-
 generate_mapbox_controller "mapbox" 5.3467 60.3971 "listings"
-
 generate_insights_controller "output"
-
-# Generate all Stimulus controllers for Rails 8 PWA  
+# Generate all Stimulus controllers for Rails 8 PWA
 generate_all_stimulus_controllers
-
 # Generate CRUD views for listings
 generate_crud_views "listing" "listings"
-
 cat <<EOF > config/initializers/tenant.rb
 Rails.application.config.middleware.use ActsAsTenant::Middleware
 ActsAsTenant.configure do |config|
   config.require_tenant = true
 end
 EOF
-
 cat <<EOF > app/controllers/application_controller.rb
 class ApplicationController < ActionController::Base
   before_action :set_tenant
   before_action :authenticate_user!, except: [:index, :show], unless: :guest_user_allowed?
-
   def after_sign_in_path_for(resource)
     root_path
   end
-
   private
-
   def set_tenant
     ActsAsTenant.current_tenant = City.find_by(subdomain: request.subdomain)
     unless ActsAsTenant.current_tenant
       redirect_to root_url(subdomain: false), alert: t("brgen.tenant_not_found")
     end
   end
-
   def guest_user_allowed?
     controller_name == "home" ||
     (controller_name == "posts" && action_name.in?(["index", "show", "create"])) ||
@@ -220,7 +176,6 @@ class ApplicationController < ActionController::Base
   end
 end
 EOF
-
 cat <<EOF > app/controllers/home_controller.rb
 class HomeController < ApplicationController
   def index
@@ -229,22 +184,17 @@ class HomeController < ApplicationController
   end
 end
 EOF
-
 cat <<EOF > app/controllers/listings_controller.rb
 class ListingsController < ApplicationController
   before_action :set_listing, only: [:show, :edit, :update, :destroy]
   before_action :initialize_listing, only: [:index, :new]
-
   def index
     @pagy, @listings = pagy(Listing.where(community: ActsAsTenant.current_tenant).order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
   end
-
   def create
     @listing = Listing.new(listing_params)
     @listing.user = current_user
@@ -258,10 +208,8 @@ class ListingsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @listing.update(listing_params)
       respond_to do |format|
@@ -272,7 +220,6 @@ class ListingsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @listing.destroy
     respond_to do |format|
@@ -280,24 +227,19 @@ class ListingsController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_listing
     @listing = Listing.where(community: ActsAsTenant.current_tenant).find(params[:id])
     redirect_to listings_path, alert: t("brgen.not_authorized") unless @listing.user == current_user || current_user&.admin?
   end
-
   def initialize_listing
     @listing = Listing.new
   end
-
   def listing_params
     params.require(:listing).permit(:title, :description, :price, :category, :status, :location, :lat, :lng, photos: [])
   end
 end
 EOF
-
 cat <<EOF > app/views/listings/_listing.html.erb
 <%= turbo_frame_tag dom_id(listing) do %>
   <%= tag.article class: "post-card", id: dom_id(listing), role: "article" do %>
@@ -323,7 +265,6 @@ cat <<EOF > app/views/listings/_listing.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/listings/_form.html.erb
 <%= form_with model: listing, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -388,13 +329,11 @@ cat <<EOF > app/views/listings/_form.html.erb
   <%= form.submit %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_header.html.erb
 <%= tag.header role: "banner" do %>
   <%= render partial: "${APP_NAME}_logo/logo" %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_footer.html.erb
 <%= tag.footer role: "contentinfo" do %>
   <%= tag.nav class: "footer-links" aria-label: t("shared.footer_nav") do %>
@@ -408,7 +347,6 @@ cat <<EOF > app/views/shared/_footer.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/listings/index.html.erb
 <% content_for :title, t("brgen.listings_title") %>
 <% content_for :description, t("brgen.listings_description") %>
@@ -470,7 +408,6 @@ cat <<EOF > app/views/listings/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/cities/index.html.erb
 <% content_for :title, t("brgen.cities_title") %>
 <% content_for :description, t("brgen.cities_description") %>
@@ -503,7 +440,6 @@ cat <<EOF > app/views/cities/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/cities/_city.html.erb
 <%= turbo_frame_tag dom_id(city) do %>
   <%= tag.article class: "post-card", id: dom_id(city), role: "article" do %>
@@ -519,7 +455,6 @@ cat <<EOF > app/views/cities/_city.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/home/index.html.erb
 <% content_for :title, t("brgen.home_title") %>
 <% content_for :description, t("brgen.home_description") %>
@@ -596,7 +531,6 @@ cat <<EOF > app/views/home/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > config/locales/en.yml
 en:
   brgen:
@@ -695,7 +629,6 @@ en:
     view_posts: "View Posts"
     view_listings: "View Listings"
 EOF
-
 cat <<EOF > db/seeds.rb
 cities = [
   { name: "Bergen", subdomain: "brgen", country: "Norway", city: "Bergen", language: "no", tld: "no" },
@@ -739,7 +672,6 @@ cities = [
   { name: "Portland", subdomain: "prtland", country: "USA", city: "Portland", language: "en", tld: "org" },
   { name: "Minneapolis", subdomain: "mnnesota", country: "USA", city: "Minneapolis", language: "en", tld: "org" }
 ]
-
 cities.each do |city|
   City.find_or_create_by(subdomain: city[:subdomain]) do |c|
     c.name = city[:name]
@@ -749,12 +681,9 @@ cities.each do |city|
     c.tld = city[:tld]
   end
 end
-
 puts "Seeded #{cities.count} cities."
-
 # Create demo users with Faker
 require "faker"
-
 demo_users = []
 5.times do
   demo_users << User.create!(
@@ -763,14 +692,11 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users with Faker."
-
 # Seed sample data for each city
 cities.each do |city_data|
   city = City.find_by(subdomain: city_data[:subdomain])
   next unless city
-
   ActsAsTenant.with_tenant(city) do
     # Create 10 posts per city
     10.times do
@@ -782,7 +708,6 @@ cities.each do |city_data|
         community: city
       )
     end
-
     # Create 5 listings per city
     5.times do
       user = demo_users.sample
@@ -801,12 +726,9 @@ cities.each do |city_data|
     end
   end
 end
-
 puts "Seeded posts and listings for all cities with Faker data."
 EOF
-
 mkdir -p app/views/brgen_logo
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #1a73e8;
@@ -817,36 +739,28 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #dadce0;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
-
 header, footer { background: var(--surface); border-bottom: 1px solid var(--border); padding: var(--spacing); }
 footer { border-top: 1px solid var(--border); border-bottom: none; }
-
 nav { display: flex; gap: var(--spacing); align-items: center; }
 nav a { text-decoration: none; color: var(--text); }
 nav a:hover { color: var(--primary); }
-
 h1, h2, h3 { margin-bottom: var(--spacing); font-weight: 600; }
 h1 { font-size: 2rem; }
 h2 { font-size: 1.5rem; }
-
 section { margin-bottom: calc(var(--spacing) * 2); }
-
 form { display: grid; gap: var(--spacing); max-width: 600px; }
 label { font-weight: 500; }
-input, textarea, select { 
-  padding: 0.5rem; 
-  border: 1px solid var(--border); 
+input, textarea, select {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-family: inherit;
 }
@@ -854,7 +768,6 @@ input:focus, textarea:focus, select:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
-
 button, .button {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -866,45 +779,35 @@ button, .button {
   display: inline-block;
 }
 button:hover, .button:hover { opacity: 0.9; }
-
 .grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .card { background: var(--surface); padding: var(--spacing); border: 1px solid var(--border); border-radius: 4px; }
 .hidden { display: none; }
-
 #map { height: 400px; width: 100%; margin-bottom: var(--spacing); }
 #search-results { margin-top: var(--spacing); }
-
 @media (max-width: 768px) {
   main { padding: calc(var(--spacing) / 2); }
   .grid { grid-template-columns: 1fr; }
 }
 EOF
-
 cat <<EOF > app/views/brgen_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen.logo_alt") do %>
   <%= tag.title t("brgen.logo_title", default: "Brgen Logo") %>
   <%= tag.text x: "50", y: "30", "text-anchor": "middle", "font-family": "Helvetica, Arial, sans-serif", "font-size": "20", fill: "#1a73e8" do %>Brgen<% end %>
 <% end %>
 EOF
-
 # Run database migrations and seed
 log "Running database migrations"
 bin/rails db:migrate
-
 log "Seeding database with cities"
 bin/rails db:seed
-
 # Verify setup
 log "Verifying Rails app structure"
 [[ -f "config/routes.rb" ]] && log "✓ Routes configured"
 [[ -f "config/falcon.rb" ]] && log "✓ Falcon config exists"
 [[ -f "app/views/layouts/application.html.erb" ]] && log "✓ Layout exists"
 [[ -d "app/assets/stylesheets" ]] && log "✓ Stylesheets directory exists"
-
 commit "Brgen core setup complete: Multi-tenant social and marketplace platform"
-
 log "Brgen core setup complete. Run 'doas rcctl start brgen' to start on OpenBSD."
-
 # Change Log:
 # v338.1.0 - 2025-12-19
 # - Added config/routes.rb with multi-tenant subdomain routing

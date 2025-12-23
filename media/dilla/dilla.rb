@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-
 # SOS DILLA v2.1.0 - Cross-Platform Lo-Fi Production System
 # Targets: Cygwin (Windows 11), OpenBSD VPS, Android Termux (Samsung)
 # Backend: FFmpeg (universal) - replaces SoX for cross-platform compatibility
@@ -11,16 +10,13 @@
 #   - Sonitex STX-1260, NastyVCS mkII, Moog DFAM
 #   - arXiv papers on tape/vinyl emulation
 #   - Bahadırhan Koçer: "Understanding Dub Drums" (dub techno)
-
 require "json"
 require "fileutils"
 require "tempfile"
 require "securerandom"
-
 class SOSDilla
   VERSION = "2.1.0"
   CONFIG_FILE = File.join(File.dirname(__FILE__), "dilla_config.json")
-
   # Load shared config
   def self.load_config
     if File.exist?(CONFIG_FILE)
@@ -33,31 +29,22 @@ class SOSDilla
     puts "⚠️  Config parse error: #{e.message}"
     {}
   end
-
   CONFIG = load_config
-
   CHORD PROGRESSIONS (from shared config)
   def self.get_chords(artist, album, track = nil)
     chords = CONFIG.dig("chords", "#{artist}_#{album}")
     return chords[track] if track && chords&.dig(track)
     chords
   end
-  
   DILLA_CHORDS = CONFIG.dig("chords") || {}
-  
-  # ===========================================================================
-  # TIMING PROFILES (from shared config)
-  # ===========================================================================
-  DILLA_TIMING = CONFIG.dig("timing", "dilla_swing") || {
+    # TIMING PROFILES (from shared config)
+    DILLA_TIMING = CONFIG.dig("timing", "dilla_swing") || {
     "sweet_spot" => [53, 56],
     "tempo_range" => [82, 92],
     "nudge_ms" => { "kick" => -8, "snare" => 12, "hihat" => -3 }
   }
-
-  # ===========================================================================
-  # PLATFORM DETECTION
-  # ===========================================================================
-  module Platform
+    # PLATFORM DETECTION
+    module Platform
     def self.detect
       @platform ||= begin
         if ENV['PREFIX']&.include?('com.termux')
@@ -77,11 +64,9 @@ class SOSDilla
         end
       end
     end
-
     def self.termux?;  detect == :termux  end
     def self.cygwin?;  detect == :cygwin  end
     def self.openbsd?; detect == :openbsd end
-
     def self.home
       ENV['HOME'] || case detect
         when :termux then '/data/data/com.termux/files/home'
@@ -89,7 +74,6 @@ class SOSDilla
         else Dir.pwd
       end
     end
-
     def self.ffmpeg_paths
       case detect
       when :termux
@@ -102,7 +86,6 @@ class SOSDilla
         %w[ffmpeg /usr/bin/ffmpeg /usr/local/bin/ffmpeg]
       end
     end
-
     def self.install_hint
       case detect
       when :termux  then "pkg install ffmpeg ruby"
@@ -113,11 +96,8 @@ class SOSDilla
       end
     end
   end
-
-  # ===========================================================================
-  # DUB PROGRESSIONS (from transcript: i-v tension, i-iv meditative)
-  # ===========================================================================
-  DUB_PROGRESSIONS = {
+    # DUB PROGRESSIONS (from transcript: i-v tension, i-iv meditative)
+    DUB_PROGRESSIONS = {
     "dub_meditative" => [
       { root: 0, chord: [0, 3, 7], name: "min", function: "i" },
       { root: 5, chord: [0, 3, 7], name: "min", function: "iv" }
@@ -134,11 +114,8 @@ class SOSDilla
       { root: 0, chord: [0, 3, 7, 10], name: "min7", function: "i" }
     ]
   }
-
-  # ===========================================================================
-  # DUB DRUM PATTERNS (from transcript)
-  # ===========================================================================
-  DUB_PATTERNS = {
+    # DUB DRUM PATTERNS (from transcript)
+    DUB_PATTERNS = {
     one_drop: {
       name: "One-Drop",
       desc: "Strong hit on beat 3, reggae foundation",
@@ -172,36 +149,26 @@ class SOSDilla
       rimshot: [0, 0, 1, 0]
     }
   }
-
-  # ===========================================================================
-  # TIMING PROFILES
-  # ===========================================================================
-  DUB_TIMING = {
+    # TIMING PROFILES
+    DUB_TIMING = {
     mechanized: { swing: 0.50, humanize_ms: 2,  desc: "Germanic precision" },
     roots:      { swing: 0.54, humanize_ms: 25, desc: "Laid back, behind beat" },
     hybrid:     { swing: 0.52, humanize_ms: 8,  desc: "Precision with soul" }
   }
-
   DILLA_TIMING = {
     swing: 0.542,
     micro: { kick: -0.008, snare: 0.012, hats: -0.003, bass: -0.005 },
     humanize: { velocity: 15, timing: 0.018 }
   }
-
-  # ===========================================================================
-  # DELAY PRESETS (from transcript)
-  # ===========================================================================
-  DUB_DELAYS = {
+    # DELAY PRESETS (from transcript)
+    DUB_DELAYS = {
     echo_16th:    { time_ms: 125, feedback: 0.45 },
     echo_8th_dot: { time_ms: 375, feedback: 0.55 },
     rimshot:      { time_ms: 380, feedback: 0.50 },
     midside:      { time_ms: 188, feedback: 0.45 }
   }
-
-  # ===========================================================================
-  # VINTAGE EQUIPMENT PROFILES
-  # ===========================================================================
-  VINTAGE = {
+    # VINTAGE EQUIPMENT PROFILES
+    VINTAGE = {
     king_tubby:      { reverb: 3.2, echo: 0.6, desc: "King Tubby Jamaica 1970s" },
     basic_channel:   { reverb: 6.0, echo: 0.55, desc: "Berlin minimal meets dub" },
     rhythm_and_sound:{ reverb: 4.5, echo: 0.58, desc: "Warmth with precision" },
@@ -209,81 +176,62 @@ class SOSDilla
     mpc3000:         { bits: 14, sat: 0.12, desc: "J Dilla MPC character" },
     sp1200:          { bits: 12, sat: 0.15, desc: "E-mu SP-1200 grit" }
   }
-
-  # ===========================================================================
-  # FFMPEG PROCESSOR
-  # ===========================================================================
-  class FFmpegProcessor
+    # FFMPEG PROCESSOR
+    class FFmpegProcessor
     attr_reader :sample_rate
-
     def initialize(sample_rate: 48000)
       @sample_rate = sample_rate
       @ffmpeg = find_ffmpeg
     end
-
     def find_ffmpeg
       Platform.ffmpeg_paths.find { |p| system("#{p} -version >/dev/null 2>&1") } || 'ffmpeg'
     end
-
     def available?
       system("#{@ffmpeg} -version >/dev/null 2>&1")
     end
-
     def run(cmd)
       success = system(cmd + " >/dev/null 2>&1")
       raise "FFmpeg command failed: #{cmd}" unless success
       success
     end
-
     def tone(freq:, duration:, wave: :sine, output:, amp: 0.8)
       w = { sine: 'sine', square: 'square', triangle: 'triangle', sawtooth: 'sawtooth' }[wave] || 'sine'
       run(%Q[#{@ffmpeg} -y -f lavfi -i "#{w}=f=#{freq}:d=#{duration}:r=#{@sample_rate}" -af "volume=#{amp}" "#{output}"])
     end
-
     def noise(duration:, output:, color: :white, amp: 0.5)
       c = { white: 'white', pink: 'pink', brown: 'brown' }[color] || 'white'
       run(%Q[#{@ffmpeg} -y -f lavfi -i "anoisesrc=d=#{duration}:c=#{c}noise:r=#{@sample_rate}" -af "volume=#{amp}" "#{output}"])
     end
-
     def filter(input:, output:, chain:)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "#{chain}" "#{output}"])
     end
-
     def echo(input:, output:, delay_ms: 300, feedback: 0.5, mix: 0.5)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "aecho=0.8:#{mix}:#{delay_ms}:#{feedback}" "#{output}"])
     end
-
     def reverb(input:, output:, decay: 0.5, size: :medium)
       delays = { small: "50|100", medium: "60|120|180", large: "80|160|240|320", spring: "30|45|60" }[size] || "60|120"
       decays = delays.split('|').map { decay.to_s }.join('|')
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "aecho=0.8:0.7:#{delays}:#{decays}" "#{output}"])
     end
-
     def eq(input:, output:, bands:)
       f = bands.map { |b| "equalizer=f=#{b[:freq]}:width_type=q:width=#{b[:q]||1}:g=#{b[:gain]}" }.join(',')
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "#{f}" "#{output}"])
     end
-
     def lowpass(input:, output:, cutoff:)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "lowpass=f=#{cutoff}" "#{output}"])
     end
-
     def highpass(input:, output:, cutoff:)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "highpass=f=#{cutoff}" "#{output}"])
     end
-
     def compress(input:, output:, threshold: -20, ratio: 4)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "acompressor=threshold=#{threshold}dB:ratio=#{ratio}" "#{output}"])
     end
-
     def saturate(input:, output:, drive: 2.0)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "volume=#{drive},atanh,volume=#{1.0/drive}" "#{output}"])
     end
-
     def bitcrush(input:, output:, bits: 12)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "acrusher=bits=#{bits}:mode=lin" "#{output}"])
     end
-
     def mix(inputs:, output:, volumes: nil)
       volumes ||= inputs.map { 1.0 }
       args = inputs.map { |f| %Q[-i "#{f}"] }.join(' ')
@@ -291,17 +239,12 @@ class SOSDilla
       ins = inputs.each_with_index.map { |_,i| "[v#{i}]" }.join
       run(%Q[#{@ffmpeg} -y #{args} -filter_complex "#{vol};#{ins}amix=inputs=#{inputs.length}:duration=longest" "#{output}"])
     end
-
     def normalize(input:, output:, target: -1)
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "loudnorm=I=-16:TP=#{target}" "#{output}"])
     end
   end
-
-  # ===========================================================================
-  # MAIN CLASS
-  # ===========================================================================
-  attr_reader :ffmpeg, :temp_dir, :output_dir
-
+    # MAIN CLASS
+    attr_reader :ffmpeg, :temp_dir, :output_dir
   def initialize
     @temp_dir = Dir.mktmpdir("dilla_")
     @output_dir = File.join(Platform.home, "dilla_output")
@@ -309,7 +252,6 @@ class SOSDilla
     @ffmpeg = FFmpegProcessor.new
     check_deps
   end
-
   def check_deps
     unless @ffmpeg.available?
       puts "❌ FFmpeg not found! Install: #{Platform.install_hint}"
@@ -317,51 +259,40 @@ class SOSDilla
     end
     puts "✓ FFmpeg ready on #{Platform.detect}"
   end
-
   def generate_dub(pattern: :one_drop, progression: "dub_meditative", key: "E", bpm: 120, bars: 4)
     puts "🎚️  Generating: #{pattern} | #{progression} | #{key} | #{bpm}BPM"
-    
     duration = (60.0 / bpm) * 4 * bars
     base_freq = note_freq(key, 2)
-
     drums = generate_drums(duration)
     bass = generate_bass(base_freq, duration)
     chords = generate_chords(base_freq, duration)
-    
     mixed = mix_layers(drums, bass, chords)
     master_track(mixed, "dub_#{pattern}_#{key}_#{bpm}_#{timestamp}.wav")
   end
-
   def generate_drums(duration)
     kick = temp_file("kick.wav")
     @ffmpeg.tone(freq: 55, duration: 0.3, wave: :sine, output: kick, amp: 0.9)
     @ffmpeg.lowpass(input: kick, output: kick, cutoff: 120)
-
     hat = temp_file("hat.wav")
     @ffmpeg.noise(duration: 0.05, output: hat, amp: 0.15)
     @ffmpeg.highpass(input: hat, output: hat, cutoff: 8000)
-
     drums = temp_file("drums.wav")
     silence = temp_file("silence.wav")
     @ffmpeg.tone(freq: 1, duration: duration, wave: :sine, output: silence, amp: 0)
     @ffmpeg.mix(inputs: [silence, kick, hat], output: drums, volumes: [1, 0.8, 0.3])
-    
     apply_dub_fx(drums, :drums)
   end
-
   def generate_bass(base_freq, duration)
     bass = temp_file("bass.wav")
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :sine, output: bass, amp: 0.7)
     @ffmpeg.lowpass(input: bass, output: bass, cutoff: 200)
     apply_dub_fx(bass, :bass)
   end
-
   def generate_chords(base_freq, duration)
     chords = temp_file("chords.wav")
     @ffmpeg.tone(freq: base_freq * 4, duration: duration, wave: :triangle, output: chords, amp: 0.25)
     apply_dub_fx(chords, :chords)
   end
-
   def apply_dub_fx(input, type)
     output = temp_file("#{type}_fx.wav")
     case type
@@ -376,13 +307,11 @@ class SOSDilla
     end
     output
   end
-
   def mix_layers(drums, bass, chords)
     mixed = temp_file("mixed.wav")
     @ffmpeg.mix(inputs: [drums, bass, chords], output: mixed, volumes: [1.0, 0.8, 0.5])
     mixed
   end
-
   def master_track(input, filename)
     final = File.join(@output_dir, filename)
     master_out = temp_file("master.wav")
@@ -394,32 +323,23 @@ class SOSDilla
     puts "✓ Generated: #{final}"
     final
   end
-
   def generate_dilla(style: "donuts", key: "C", bpm: 95)
     puts "🎹 Generating Dilla: #{style} | #{key} | #{bpm}BPM"
-    
     duration = 8.0
     base_freq = note_freq(key, 3)
-
     raw = temp_file("raw.wav")
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :triangle, output: raw, amp: 0.5)
-
     processed = apply_dilla_chain(raw)
-    
     final = File.join(@output_dir, "dilla_#{style}_#{key}_#{bpm}_#{timestamp}.wav")
     @ffmpeg.compress(input: processed, output: final, threshold: -20, ratio: 4)
-
     puts "✓ Generated: #{final}"
     final
   end
-
   def apply_dilla_chain(input)
     crushed = temp_file("crushed.wav")
     @ffmpeg.bitcrush(input: input, output: crushed, bits: 14)
-
     warm = temp_file("warm.wav")
     @ffmpeg.saturate(input: crushed, output: warm, drive: 1.8)
-
     eq_out = temp_file("eq.wav")
     @ffmpeg.eq(input: warm, output: eq_out, bands: [
       { freq: 100, gain: 3, q: 0.8 },
@@ -427,24 +347,18 @@ class SOSDilla
     ])
     eq_out
   end
-
   def master(input:, era: :rhythm_and_sound)
     puts "🎨 Mastering: #{era}"
     v = VINTAGE[era] || VINTAGE[:rhythm_and_sound]
     puts "   #{v[:desc]}"
-
     processed = apply_vintage_processing(input, v)
-    
     final = File.join(@output_dir, "master_#{era}_#{timestamp}.wav")
     @ffmpeg.normalize(input: processed, output: final)
-
     puts "✓ Mastered: #{final}"
     final
   end
-
   def apply_vintage_processing(input, vintage)
     processed = temp_file("master.wav")
-    
     if vintage[:bits]
       @ffmpeg.bitcrush(input: input, output: processed, bits: vintage[:bits])
       @ffmpeg.saturate(input: processed, output: processed, drive: 1.5)
@@ -454,7 +368,6 @@ class SOSDilla
     end
     processed
   end
-
   def export_config
     {
       version: VERSION,
@@ -465,29 +378,24 @@ class SOSDilla
       vintage: VINTAGE.transform_values { |v| v[:desc] }
     }.to_json
   end
-
   def note_freq(note, octave = 4)
     semitones = { "C"=>0,"C#"=>1,"D"=>2,"D#"=>3,"E"=>4,"F"=>5,"F#"=>6,"G"=>7,"G#"=>8,"A"=>9,"A#"=>10,"B"=>11 }
     440.0 * (2.0 ** ((semitones[note].to_i - 9 + (octave - 4) * 12) / 12.0))
   end
-
   def temp_file(name)
     File.join(@temp_dir, name)
   end
   def timestamp; Time.now.strftime("%Y%m%d_%H%M%S") end
   def cleanup; FileUtils.rm_rf(@temp_dir) end
-
-  # ===========================================================================
-  # GEAR EMULATION - Vintage Sampler Character
-  # ===========================================================================
-  GEAR_PROFILES = {
+    # GEAR EMULATION - Vintage Sampler Character
+    GEAR_PROFILES = {
     sp1200: {
       name: "E-mu SP-1200",
       bits: 12, sample_rate: 26040, filter_hz: 12000,
       saturation: 1.8, character: "punchy_gritty"
     },
     mpc3000: {
-      name: "Akai MPC3000", 
+      name: "Akai MPC3000",
       bits: 16, sample_rate: 44100, filter_hz: 18000,
       saturation: 1.2, character: "warm_precise"
     },
@@ -527,11 +435,8 @@ class SOSDilla
       saturation: 2.0, analog_vcf: true, character: "extremely_lofi_harsh"
     }
   }
-
-  # ===========================================================================
-  # RANDOM EFFECT CHAIN GENERATOR
-  # ===========================================================================
-  module ChainGenerator
+    # RANDOM EFFECT CHAIN GENERATOR
+    module ChainGenerator
     EFFECTS = {
       bitcrush:     { bits: [8, 10, 12, 14], weight: 0.8 },
       resample:     { rates: [8000, 11025, 22050, 26040, 32000], weight: 0.6 },
@@ -552,7 +457,6 @@ class SOSDilla
       tremolo:      { rate: [2, 4, 6, 8], depth: [0.3, 0.5, 0.7], weight: 0.2 },
       ring_mod:     { freq: [200, 500, 1000, 2000], weight: 0.08 }
     }
-
     AESTHETICS = {
       dark:      { lowpass: 0.95, saturation: 0.8, reverb: 0.4, bitcrush: 0.3 },
       deep:      { lowpass: 0.95, compression: 0.9, saturation: 0.7, highpass: 0.2 },
@@ -563,31 +467,24 @@ class SOSDilla
       cosmic:    { reverb: 0.8, delay: 0.7, chorus: 0.5, phaser: 0.4, lowpass: 0.6 },
       industrial:{ ring_mod: 0.4, saturation: 0.9, bitcrush: 0.7, compression: 0.8 }
     }
-
     def self.generate(aesthetic: :authentic, length: nil, seed: nil)
       srand(seed) if seed
       prng = Random.new(seed || Random.new_seed)
-      
       weights = AESTHETICS[aesthetic] || AESTHETICS[:authentic]
       chain_length = length || prng.rand(3..7)
-      
       chain = []
       used = Set.new
-      
       chain_length.times do
         candidates = EFFECTS.keys.reject { |e| used.include?(e) }
         break if candidates.empty?
-        
         # Weight selection by aesthetic
         weighted = candidates.map do |effect|
           base_weight = EFFECTS[effect][:weight]
           aesthetic_boost = weights[effect] || 0
           [effect, base_weight + aesthetic_boost]
         end
-        
         total = weighted.sum { |_, w| w }
         roll = prng.rand * total
-        
         selected = nil
         cumulative = 0
         weighted.each do |effect, weight|
@@ -598,32 +495,24 @@ class SOSDilla
           end
         end
         selected ||= candidates.sample(random: prng)
-        
         effect_params = EFFECTS[selected].dup
         effect_params.delete(:weight)
-        
         # Randomize parameters
         params = { type: selected }
         effect_params.each do |param, values|
           params[param] = values.is_a?(Array) ? values.sample(random: prng) : values
         end
-        
         chain << params
         used << selected
       end
-      
       chain
     end
-
     def self.to_s(chain)
       chain.map { |e| "#{e[:type]}(#{e.except(:type).map { |k,v| "#{k}:#{v}" }.join(',')})" }.join(" → ")
     end
   end
-
-  # ===========================================================================
-  # DFAM-STYLE ANALOG PERCUSSION SYNTHESIS
-  # ===========================================================================
-  module DFAM
+    # DFAM-STYLE ANALOG PERCUSSION SYNTHESIS
+    module DFAM
     PRESETS = {
       tribal_kick: {
         osc1: { wave: :sine, freq: 55, decay: 0.3 },
@@ -652,11 +541,8 @@ class SOSDilla
       }
     }
   end
-
-  # ===========================================================================
-  # SONITEX STX-1260 STYLE PROCESSING
-  # ===========================================================================
-  module Sonitex
+    # SONITEX STX-1260 STYLE PROCESSING
+    module Sonitex
     def self.process(ffmpeg, input:, output:, preset: :vintage_vinyl)
       presets = {
         vintage_vinyl: {
@@ -688,16 +574,12 @@ class SOSDilla
           sampling: { bits: 8, rate: 11025 }
         }
       }
-      
       cfg = presets[preset] || presets[:vintage_vinyl]
-      
       # Apply chain: distortion → tone → sampling → noise
       temp1 = output.sub('.wav', '_s1.wav')
       ffmpeg.saturate(input: input, output: temp1, drive: cfg[:distortion][:drive])
-      
       temp2 = output.sub('.wav', '_s2.wav')
       ffmpeg.lowpass(input: temp1, output: temp2, cutoff: cfg[:tone][:lowpass])
-      
       if cfg[:sampling][:bits] < 16
         temp3 = output.sub('.wav', '_s3.wav')
         ffmpeg.bitcrush(input: temp2, output: temp3, bits: cfg[:sampling][:bits])
@@ -705,16 +587,12 @@ class SOSDilla
       else
         FileUtils.cp(temp2, output)
       end
-      
       # Cleanup
       [temp1, temp2].each { |f| File.delete(f) if File.exist?(f) }
     end
   end
-
-  # ===========================================================================
-  # NASTYVCS-STYLE CONSOLE PROCESSING  
-  # ===========================================================================
-  module NastyVCS
+    # NASTYVCS-STYLE CONSOLE PROCESSING
+    module NastyVCS
     def self.process(ffmpeg, input:, output:, settings: {})
       cfg = {
         input_transformer: true,
@@ -725,77 +603,57 @@ class SOSDilla
         compression_attack: :medium,
         output_transformer: true
       }.merge(settings)
-      
       temp = output.sub('.wav', '_nvcs.wav')
-      
       # Transformer saturation
       ffmpeg.saturate(input: input, output: temp, drive: 1.0 + cfg[:saturation])
-      
       # EQ with console character
       ffmpeg.eq(input: temp, output: output, bands: [
         { freq: 80, gain: cfg[:eq_low_db], q: 0.8 },
         { freq: 12000, gain: cfg[:eq_air_db], q: 0.7 }
       ])
-      
       File.delete(temp) if File.exist?(temp)
     end
   end
-
-  # ===========================================================================
-  # APPLY GEAR EMULATION
-  # ===========================================================================
-  def apply_gear(input:, output:, gear: :sp1200)
+    # APPLY GEAR EMULATION
+    def apply_gear(input:, output:, gear: :sp1200)
     profile = GEAR_PROFILES[gear] || GEAR_PROFILES[:sp1200]
     puts "🎛️  Applying #{profile[:name]} character..."
-    
     resampled = apply_gear_resample(input, profile)
     crushed = apply_gear_bitcrush(resampled, profile)
     filtered = apply_gear_filter(crushed, profile)
-    
     @ffmpeg.saturate(input: filtered, output: output, drive: profile[:saturation])
-    
     puts "   Character: #{profile[:character]}"
     output
   end
-
   def apply_gear_resample(input, profile)
     temp1 = temp_file("gear1.wav")
     @ffmpeg.resample(input: input, output: temp1, rate: profile[:sample_rate])
     temp1
   end
-
   def apply_gear_bitcrush(input, profile)
     temp2 = temp_file("gear2.wav")
     @ffmpeg.bitcrush(input: input, output: temp2, bits: profile[:bits])
     temp2
   end
-
   def apply_gear_filter(input, profile)
     temp3 = temp_file("gear3.wav")
     @ffmpeg.lowpass(input: input, output: temp3, cutoff: profile[:filter_hz])
     temp3
   end
-
-  # ===========================================================================
-  # GENERATE RANDOM LO-FI CHAIN
-  # ===========================================================================
-  def generate_random_chain(input:, aesthetic: :authentic, seed: nil)
+    # GENERATE RANDOM LO-FI CHAIN
+    def generate_random_chain(input:, aesthetic: :authentic, seed: nil)
     chain = ChainGenerator.generate(aesthetic: aesthetic, seed: seed)
     puts "🎲 Random chain (#{aesthetic}): #{ChainGenerator.to_s(chain)}"
-    
     current = input
     chain.each_with_index do |effect, i|
       next_file = temp_file("chain_#{i}.wav")
       current = apply_effect(current, next_file, effect)
     end
-    
     final = File.join(@output_dir, "random_#{aesthetic}_#{SecureRandom.hex(4)}_#{timestamp}.wav")
     @ffmpeg.normalize(input: current, output: final)
-    
     puts "✓ Generated: #{final}"
     { file: final, chain: chain }
   end
-
   def apply_effect(input, output, effect)
     case effect[:type]
     when :bitcrush
@@ -822,13 +680,9 @@ class SOSDilla
     end
     output
   end
-
-  # ===========================================================================
-  # CLI
-  # ===========================================================================
-  def self.main(args)
+    # CLI
+    def self.main(args)
     return show_help if args.empty? || args.include?("--help")
-
     dilla = new
     begin
       case args[0]
@@ -883,11 +737,9 @@ class SOSDilla
       dilla.cleanup
     end
   end
-
   def self.show_help
     puts <<~HELP
       SOS Dilla v#{VERSION} | #{Platform.detect}
-
       USAGE:
         dilla.rb dub [pattern] [prog] [key] [bpm]    Generate dub techno
         dilla.rb dilla [style] [key] [bpm]           Generate Dilla-style beat
@@ -897,15 +749,12 @@ class SOSDilla
         dilla.rb chords [artist] [album]             Show chord progressions
         dilla.rb list                                List all options
         dilla.rb config                              Export JSON config
-
       PATTERNS: one_drop, steppers, rockers, atmospheric
       GEAR: #{GEAR_PROFILES.keys.join(', ')}
       AESTHETICS: dark, deep, authentic, tape, vinyl, gritty, cosmic, industrial
       ERAS: king_tubby, basic_channel, rhythm_and_sound, wackie, mpc3000, sp1200
-
       INSTALL: #{Platform.install_hint}
     HELP
   end
 end
-
 SOSDilla.main(ARGV) if __FILE__ == $PROGRAM_NAME

@@ -1,33 +1,24 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen Dating setup: Location-based dating platform with matchmaking, Mapbox, live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
 # Framework v37.3.2 compliant
-
 APP_NAME="brgen_dating"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/@shared_functions.sh"
-
 log "Starting Brgen Dating setup with enhanced matchmaking"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "faker"
-
 bin/rails generate scaffold Profile user:references bio:text location:string lat:decimal lng:decimal gender:string age:integer photos:attachments interests:text
 bin/rails generate scaffold Match initiator:references{polymorphic} receiver:references{polymorphic} status:string
 bin/rails generate model Dating::Like user:references liked_user:references
 bin/rails generate model Dating::Dislike user:references disliked_user:references
-
 # Add matchmaking service
 mkdir -p app/services/dating
 cat <<EOF > app/services/dating/matchmaking_service.rb
@@ -35,12 +26,10 @@ module Dating
   class MatchmakingService
     def self.find_matches(user)
       return [] unless user.profile
-
       # Get users who liked this user and this user also liked
       likes_given = user.dating_likes.pluck(:liked_user_id)
       likes_received = Dating::Like.where(liked_user_id: user.id).pluck(:user_id)
       mutual_likes = likes_given & likes_received
-
       # Create matches for mutual likes
       mutual_likes.each do |match_id|
         match_user = User.find(match_id)
@@ -50,19 +39,15 @@ module Dating
           status: 'matched'
         )
       end
-
       # Return potential matches based on location and interests
       find_potential_matches(user)
     end
-
     def self.find_potential_matches(user)
       return [] unless user.profile
-
       # Exclude already liked/disliked users
       excluded_ids = [user.id]
       excluded_ids += user.dating_likes.pluck(:liked_user_id)
       excluded_ids += user.dating_dislikes.pluck(:disliked_user_id)
-
       # Find profiles within reasonable distance and similar interests
       Profile.joins(:user)
              .where.not(user_id: excluded_ids)
@@ -70,9 +55,7 @@ module Dating
              .near([user.profile.lat, user.profile.lng], 50) # 50km radius
              .limit(10)
     end
-
     private
-
     def self.compatible_genders(user_gender)
       case user_gender
       when 'male' then ['female', 'non-binary']
@@ -84,7 +67,6 @@ module Dating
   end
 end
 EOF
-
 # Enhanced Profile controller with matchmaking
 mkdir -p app/controllers/dating
 cat <<EOF > app/controllers/dating/profiles_controller.rb
@@ -92,21 +74,17 @@ module Dating
   class ProfilesController < ApplicationController
     before_action :set_profile, only: [:show, :edit, :update, :like, :dislike]
     before_action :authenticate_user!
-
     def index
       @profiles = MatchmakingService.find_potential_matches(current_user)
       @pagy, @profiles = pagy(@profiles) unless @stimulus_reflex
     end
-
     def show
     end
-
     def like
       Dating::Like.find_or_create_by(
         user: current_user,
         liked_user: @profile.user
       )
-
       # Check for match
       if Dating::Like.exists?(user: @profile.user, liked_user: current_user)
         Match.find_or_create_by(
@@ -116,28 +94,22 @@ module Dating
         )
         flash[:notice] = "It's a match! 🎉"
       end
-
       redirect_to dating_profiles_path
     end
-
     def dislike
       Dating::Dislike.find_or_create_by(
         user: current_user,
         disliked_user: @profile.user
       )
-
       redirect_to dating_profiles_path
     end
-
     private
-
     def set_profile
       @profile = Profile.find(params[:id])
     end
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/profiles_infinite_scroll_reflex.rb
 class ProfilesInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -146,7 +118,6 @@ class ProfilesInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/matches_infinite_scroll_reflex.rb
 class MatchesInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -155,25 +126,19 @@ class MatchesInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 generate_mapbox_controller "mapbox" 5.3467 60.3971 "profiles"
-
 cat <<EOF > app/controllers/profiles_controller.rb
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_profile, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @profiles = pagy(Profile.all.order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @profile = Profile.new
   end
-
   def create
     @profile = Profile.new(profile_params)
     @profile.user = current_user
@@ -186,10 +151,8 @@ class ProfilesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @profile.update(profile_params)
       respond_to do |format|
@@ -200,7 +163,6 @@ class ProfilesController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @profile.destroy
     respond_to do |format|
@@ -208,36 +170,28 @@ class ProfilesController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_profile
     @profile = Profile.find(params[:id])
     redirect_to profiles_path, alert: t("brgen_dating.not_authorized") unless @profile.user == current_user || current_user&.admin?
   end
-
   def profile_params
     params.require(:profile).permit(:bio, :location, :lat, :lng, :gender, :age, photos: [])
   end
 end
 EOF
-
 cat <<EOF > app/controllers/matches_controller.rb
 class MatchesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_match, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @matches = pagy(Match.where(initiator: current_user.profile).or(Match.where(receiver: current_user.profile)).order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @match = Match.new
   end
-
   def create
     @match = Match.new(match_params)
     @match.initiator = current_user.profile
@@ -250,10 +204,8 @@ class MatchesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @match.update(match_params)
       respond_to do |format|
@@ -264,7 +216,6 @@ class MatchesController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @match.destroy
     respond_to do |format|
@@ -272,20 +223,16 @@ class MatchesController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_match
     @match = Match.where(initiator: current_user.profile).or(Match.where(receiver: current_user.profile)).find(params[:id])
     redirect_to matches_path, alert: t("brgen_dating.not_authorized") unless @match.initiator == current_user.profile || @match.receiver == current_user.profile || current_user&.admin?
   end
-
   def match_params
     params.require(:match).permit(:receiver_id, :status)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/home_controller.rb
 class HomeController < ApplicationController
   def index
@@ -294,9 +241,7 @@ class HomeController < ApplicationController
   end
 end
 EOF
-
 mkdir -p app/views/brgen_dating_logo
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #e91e63;
@@ -307,18 +252,14 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #dadce0;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 600px; margin: 0 auto; padding: var(--spacing); }
-
 .profile-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -326,7 +267,6 @@ main { max-width: 600px; margin: 0 auto; padding: var(--spacing); }
   padding: calc(var(--spacing) * 2);
   text-align: center;
 }
-
 .profile-card img {
   width: 200px;
   height: 200px;
@@ -334,14 +274,12 @@ main { max-width: 600px; margin: 0 auto; padding: var(--spacing); }
   object-fit: cover;
   margin-bottom: var(--spacing);
 }
-
 .actions {
   display: flex;
   gap: var(--spacing);
   justify-content: center;
   margin-top: calc(var(--spacing) * 2);
 }
-
 .button {
   width: 60px;
   height: 60px;
@@ -353,33 +291,27 @@ main { max-width: 600px; margin: 0 auto; padding: var(--spacing); }
   align-items: center;
   justify-content: center;
 }
-
 .button.like { background: var(--primary); color: white; }
 .button.pass { background: var(--surface); border: 2px solid var(--border); }
 .button.super { background: #2196f3; color: white; }
-
 .matches { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .match-card { text-align: center; }
 .match-card img { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; }
-
 @media (max-width: 768px) {
   main { padding: calc(var(--spacing) / 2); }
 }
 EOF
-
 cat <<EOF > app/views/brgen_dating_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_dating.logo_alt") do %>
   <%= tag.title t("brgen_dating.logo_title", default: "Brgen Dating Logo") %>
   <%= tag.path d: "M50 15 C70 5, 90 25, 50 45 C10 25, 30 5, 50 15", fill: "#e91e63", stroke: "#1a73e8", "stroke-width": "2" %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_header.html.erb
 <%= tag.header role: "banner" do %>
   <%= render partial: "brgen_dating_logo/logo" %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_footer.html.erb
 <%= tag.footer role: "contentinfo" do %>
   <%= tag.nav class: "footer-links" aria-label: t("shared.footer_nav") do %>
@@ -393,7 +325,6 @@ cat <<EOF > app/views/shared/_footer.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/home/index.html.erb
 <% content_for :title, t("brgen_dating.home_title") %>
 <% content_for :description, t("brgen_dating.home_description") %>
@@ -456,7 +387,6 @@ cat <<EOF > app/views/home/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/profiles/index.html.erb
 <% content_for :title, t("brgen_dating.profiles_title") %>
 <% content_for :description, t("brgen_dating.profiles_description") %>
@@ -505,7 +435,6 @@ cat <<EOF > app/views/profiles/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/profiles/_card.html.erb
 <%= turbo_frame_tag dom_id(profile) do %>
   <%= tag.article class: "post-card", id: dom_id(profile), role: "article" do %>
@@ -532,7 +461,6 @@ cat <<EOF > app/views/profiles/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/profiles/_form.html.erb
 <%= form_with model: profile, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -592,7 +520,6 @@ cat <<EOF > app/views/profiles/_form.html.erb
   <%= form.submit t("brgen_dating.#{profile.persisted? ? 'update' : 'create'}_profile"), data: { turbo_submits_with: t("brgen_dating.#{profile.persisted? ? 'updating' : 'creating'}_profile") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/profiles/new.html.erb
 <% content_for :title, t("brgen_dating.new_profile_title") %>
 <% content_for :description, t("brgen_dating.new_profile_description") %>
@@ -617,7 +544,6 @@ cat <<EOF > app/views/profiles/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/profiles/edit.html.erb
 <% content_for :title, t("brgen_dating.edit_profile_title") %>
 <% content_for :description, t("brgen_dating.edit_profile_description") %>
@@ -642,7 +568,6 @@ cat <<EOF > app/views/profiles/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/profiles/show.html.erb
 <% content_for :title, @profile.user.email %>
 <% content_for :description, @profile.bio&.truncate(160) %>
@@ -673,7 +598,6 @@ cat <<EOF > app/views/profiles/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/matches/index.html.erb
 <% content_for :title, t("brgen_dating.matches_title") %>
 <% content_for :description, t("brgen_dating.matches_description") %>
@@ -708,7 +632,6 @@ cat <<EOF > app/views/matches/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/matches/_card.html.erb
 <%= turbo_frame_tag dom_id(match) do %>
   <%= tag.article class: "post-card", id: dom_id(match), role: "article" do %>
@@ -727,7 +650,6 @@ cat <<EOF > app/views/matches/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/matches/_form.html.erb
 <%= form_with model: match, local: true, data: { controller: "form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -756,7 +678,6 @@ cat <<EOF > app/views/matches/_form.html.erb
   <%= form.submit t("brgen_dating.#{match.persisted? ? 'update' : 'create'}_match"), data: { turbo_submits_with: t("brgen_dating.#{match.persisted? ? 'updating' : 'creating'}_match") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/matches/new.html.erb
 <% content_for :title, t("brgen_dating.new_match_title") %>
 <% content_for :description, t("brgen_dating.new_match_description") %>
@@ -781,7 +702,6 @@ cat <<EOF > app/views/matches/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/matches/edit.html.erb
 <% content_for :title, t("brgen_dating.edit_match_title") %>
 <% content_for :description, t("brgen_dating.edit_match_description") %>
@@ -806,7 +726,6 @@ cat <<EOF > app/views/matches/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/matches/show.html.erb
 <% content_for :title, t("brgen_dating.match_title", receiver: @match.receiver.user.email) %>
 <% content_for :description, t("brgen_dating.match_description", receiver: @match.receiver.user.email) %>
@@ -833,13 +752,10 @@ cat <<EOF > app/views/matches/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 generate_turbo_views "profiles" "profile"
 generate_turbo_views "matches" "match"
-
 cat <<EOF > db/seeds.rb
 require "faker"
-
 puts "Creating demo users with Faker..."
 demo_users = []
 10.times do
@@ -849,18 +765,14 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users."
-
 puts "Creating demo profiles with Faker..."
 genders = ['male', 'female', 'non-binary']
 locations = ['Bergen', 'Oslo', 'Stavanger', 'Trondheim', 'Åsane']
 base_coords = { 'Bergen' => [60.3913, 5.3221], 'Oslo' => [59.9139, 10.7522], 'Stavanger' => [58.9700, 5.7331], 'Trondheim' => [63.4305, 10.3951], 'Åsane' => [60.4650, 5.3220] }
-
 demo_users.each do |user|
   location = locations.sample
   coords = base_coords[location]
-
   Profile.create!(
     user: user,
     bio: Faker::Lorem.paragraph(sentence_count: 3),
@@ -872,56 +784,44 @@ demo_users.each do |user|
     interests: [Faker::Hobby.activity, Faker::Hobby.activity, Faker::Hobby.activity].join(', ')
   )
 end
-
 puts "Created #{Profile.count} demo profiles."
-
 puts "Creating demo matches with Faker..."
 profiles = Profile.all.to_a
 20.times do
   initiator = profiles.sample
   receiver = profiles.sample
   next if initiator == receiver
-
   Match.create!(
     initiator: initiator,
     receiver: receiver,
     status: ['pending', 'matched', 'rejected'].sample
   )
 end
-
 puts "Created #{Match.count} demo matches."
-
 puts "Creating demo likes and dislikes..."
 30.times do
   user = demo_users.sample
   liked_user = demo_users.sample
   next if user == liked_user
-
   Dating::Like.create!(
     user: user,
     liked_user: liked_user
   )
 end
-
 20.times do
   user = demo_users.sample
   disliked_user = demo_users.sample
   next if user == disliked_user
-
   Dating::Dislike.create!(
     user: user,
     disliked_user: disliked_user
   )
 end
-
 puts "Created #{Dating::Like.count} likes and #{Dating::Dislike.count} dislikes."
 puts "Seed data creation complete!"
 EOF
-
 commit "Brgen Dating setup complete: Location-based dating platform with Mapbox, live search, and anonymous features"
-
 log "Brgen Dating setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
-
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

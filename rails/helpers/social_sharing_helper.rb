@@ -5,7 +5,6 @@ module SocialSharingHelper
     title = options[:title] || content_for(:title) || "Check this out"
     render partial: "shared/social_share", locals: { url: url, title: title }
   end
-
   def share_metadata(options = {})
     content_for :head do
       tag.meta(property: "og:url", content: options[:url]) +

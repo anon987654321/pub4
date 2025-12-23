@@ -1,83 +1,62 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen Playlist setup: Music playlist sharing platform with streaming, collaboration, and social features on OpenBSD 7.5, unprivileged user
 # Framework v37.3.2 compliant with enhanced music sharing capabilities
-
 APP_NAME="brgen_playlist"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/@shared_functions.sh"
-
 log "Starting Brgen Playlist setup with music streaming and collaboration features"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "faker"
-
 # Generate enhanced playlist models
 bin/rails generate model Playlist::Set name:string description:text user:references privacy:string collaborative:boolean
 bin/rails generate model Playlist::Track name:string artist:string audio_url:string duration:integer set:references position:integer
 bin/rails generate model Playlist::Collaboration user:references set:references role:string
 bin/rails generate model Playlist::Like user:references set:references
 bin/rails generate scaffold Comment playlist_set:references user:references content:text
-
 # Add music service integrations
 bundle add spotify-web-api-sdk
 bundle add youtube-api-v3-ruby
 bundle add soundcloud-ruby
 bundle install
-
 # Generate Playlist models (Rails will create proper files)
 log "Generating Playlist::Set model with associations"
 bin/rails generate model Playlist::Set name:string description:text user:references privacy:integer collaborative:boolean
-
 cat <<EOF > app/models/playlist/track.rb
 module Playlist
   class Track < ApplicationRecord
     belongs_to :set, class_name: 'Playlist::Set'
-
     validates :name, :artist, presence: true
     validates :position, presence: true, uniqueness: { scope: :set_id }
     validates :duration, presence: true, numericality: { greater_than: 0 }
-
     before_validation :set_position, if: :new_record?
-
     scope :ordered, -> { order(:position) }
-
     def formatted_duration
       return '0:00' unless duration
-
       minutes = duration / 60
       seconds = duration % 60
       format('%d:%02d', minutes, seconds)
     end
-
     def previous_track
       set.tracks.where('position < ?', position).order(position: :desc).first
     end
-
     def next_track
       set.tracks.where('position > ?', position).order(position: :asc).first
     end
-
     private
-
     def set_position
       self.position ||= (set.tracks.maximum(:position) || 0) + 1
     end
   end
 end
 EOF
-
 # Enhanced controllers with music streaming features
 mkdir -p app/controllers/playlist
 cat <<EOF > app/controllers/playlist/sets_controller.rb
@@ -87,11 +66,9 @@ module Playlist
     before_action :set_playlist_set, only: [:show, :edit, :update, :destroy, :like, :unlike, :collaborate]
     before_action :check_view_permission, only: [:show]
     before_action :check_edit_permission, only: [:edit, :update, :destroy]
-
     def index
       @sets = Playlist::Set.public_playlists.includes(:user, :tracks, :likes)
       @sets = @sets.where("name ILIKE ?", "%#{params[:search]}%") if params[:search].present?
-
       case params[:sort]
       when 'popular'
         @sets = @sets.popular
@@ -100,38 +77,30 @@ module Playlist
       else
         @sets = @sets.order(:name)
       end
-
       @pagy, @sets = pagy(@sets) unless @stimulus_reflex
     end
-
     def show
       @tracks = @set.tracks.ordered
       @comments = @set.comments.includes(:user).order(created_at: :desc).limit(10)
       @new_comment = Comment.new
-
       respond_to do |format|
         format.html
         format.json { render json: serialize_playlist(@set) }
       end
     end
-
     def new
       @set = current_user.playlist_sets.build
     end
-
     def create
       @set = current_user.playlist_sets.build(set_params)
-
       if @set.save
         redirect_to playlist_set_path(@set), notice: 'Playlist created successfully!'
       else
         render :new, status: :unprocessable_entity
       end
     end
-
     def edit
     end
-
     def update
       if @set.update(set_params)
         redirect_to playlist_set_path(@set), notice: 'Playlist updated successfully!'
@@ -139,15 +108,12 @@ module Playlist
         render :edit, status: :unprocessable_entity
       end
     end
-
     def destroy
       @set.destroy
       redirect_to playlist_sets_path, notice: 'Playlist deleted successfully!'
     end
-
     def like
       like = @set.likes.find_or_initialize_by(user: current_user)
-
       if like.persisted?
         like.destroy
         liked = false
@@ -155,7 +121,6 @@ module Playlist
         like.save!
         liked = true
       end
-
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
@@ -167,43 +132,34 @@ module Playlist
         format.json { render json: { liked: liked, like_count: @set.like_count } }
       end
     end
-
     def collaborate
       collaboration_params = params.require(:collaboration).permit(:user_id, :role)
       user = User.find(collaboration_params[:user_id])
-
       collaboration = @set.collaborations.find_or_initialize_by(user: user)
       collaboration.role = collaboration_params[:role]
-
       if collaboration.save
         render json: { success: true, message: 'Collaborator added successfully!' }
       else
         render json: { success: false, errors: collaboration.errors.full_messages }
       end
     end
-
     private
-
     def set_playlist_set
       @set = Playlist::Set.find(params[:id])
     end
-
     def check_view_permission
       unless @set.can_view?(current_user)
         redirect_to playlist_sets_path, alert: 'You do not have permission to view this playlist.'
       end
     end
-
     def check_edit_permission
       unless @set.can_edit?(current_user)
         redirect_to playlist_set_path(@set), alert: 'You do not have permission to edit this playlist.'
       end
     end
-
     def set_params
       params.require(:playlist_set).permit(:name, :description, :privacy, :collaborative)
     end
-
     def serialize_playlist(set)
       {
         id: set.id,
@@ -227,7 +183,6 @@ module Playlist
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/playlists_infinite_scroll_reflex.rb
 class PlaylistsInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -236,7 +191,6 @@ class PlaylistsInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/comments_infinite_scroll_reflex.rb
 class CommentsInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -245,23 +199,18 @@ class CommentsInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/controllers/playlists_controller.rb
 class PlaylistsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_playlist, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @playlists = pagy(Playlist.all.order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @playlist = Playlist.new
   end
-
   def create
     @playlist = Playlist.new(playlist_params)
     @playlist.user = current_user
@@ -274,10 +223,8 @@ class PlaylistsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @playlist.update(playlist_params)
       respond_to do |format|
@@ -288,7 +235,6 @@ class PlaylistsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @playlist.destroy
     respond_to do |format|
@@ -296,36 +242,28 @@ class PlaylistsController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_playlist
     @playlist = Playlist.find(params[:id])
     redirect_to playlists_path, alert: t("brgen_playlist.not_authorized") unless @playlist.user == current_user || current_user&.admin?
   end
-
   def playlist_params
     params.require(:playlist).permit(:name, :description, :tracks)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/comments_controller.rb
 class CommentsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_comment, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @comments = pagy(Comment.all.order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @comment = Comment.new
   end
-
   def create
     @comment = Comment.new(comment_params)
     @comment.user = current_user
@@ -338,10 +276,8 @@ class CommentsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @comment.update(comment_params)
       respond_to do |format|
@@ -352,7 +288,6 @@ class CommentsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @comment.destroy
     respond_to do |format|
@@ -360,20 +295,16 @@ class CommentsController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_comment
     @comment = Comment.find(params[:id])
     redirect_to comments_path, alert: t("brgen_playlist.not_authorized") unless @comment.user == current_user || current_user&.admin?
   end
-
   def comment_params
     params.require(:comment).permit(:playlist_id, :content)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/home_controller.rb
 class HomeController < ApplicationController
   def index
@@ -382,9 +313,7 @@ class HomeController < ApplicationController
   end
 end
 EOF
-
 mkdir -p app/views/brgen_playlist_logo
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #ff5722;
@@ -395,18 +324,14 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #3a3a3a;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
-
 .player {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -415,9 +340,7 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
   position: sticky;
   top: var(--spacing);
 }
-
 .waveform { height: 80px; width: 100%; background: var(--bg); border-radius: 4px; margin: var(--spacing) 0; }
-
 .playlist { display: grid; gap: calc(var(--spacing) / 2); }
 .track {
   background: var(--surface);
@@ -431,12 +354,10 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
 }
 .track:hover { border-color: var(--primary); }
 .track.playing { border-color: var(--primary); background: rgba(255, 87, 34, 0.1); }
-
 .track img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; }
 .track-info { flex: 1; }
 .track-title { font-weight: 600; }
 .track-artist { color: var(--secondary); font-size: 0.9rem; }
-
 button, .button {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -446,25 +367,21 @@ button, .button {
   cursor: pointer;
 }
 button:hover { opacity: 0.9; }
-
 @media (max-width: 768px) {
   main { padding: calc(var(--spacing) / 2); }
 }
 EOF
-
 cat <<EOF > app/views/brgen_playlist_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_playlist.logo_alt") do %>
   <%= tag.title t("brgen_playlist.logo_title", default: "Brgen Playlist Logo") %>
   <%= tag.text x: "50", y: "30", "text-anchor": "middle", "font-family": "Helvetica, Arial, sans-serif", "font-size": "16", fill: "#ff9800" do %>Playlist<% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_header.html.erb
 <%= tag.header role: "banner" do %>
   <%= render partial: "brgen_playlist_logo/logo" %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_footer.html.erb
 <%= tag.footer role: "contentinfo" do %>
   <%= tag.nav class: "footer-links" aria-label: t("shared.footer_nav") do %>
@@ -478,7 +395,6 @@ cat <<EOF > app/views/shared/_footer.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/home/index.html.erb
 <% content_for :title, t("brgen_playlist.home_title") %>
 <% content_for :description, t("brgen_playlist.home_description") %>
@@ -537,7 +453,6 @@ cat <<EOF > app/views/home/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/playlists/index.html.erb
 <% content_for :title, t("brgen_playlist.playlists_title") %>
 <% content_for :description, t("brgen_playlist.playlists_description") %>
@@ -582,7 +497,6 @@ cat <<EOF > app/views/playlists/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/playlists/_card.html.erb
 <%= turbo_frame_tag dom_id(playlist) do %>
   <%= tag.article class: "post-card", id: dom_id(playlist), role: "article" do %>
@@ -602,7 +516,6 @@ cat <<EOF > app/views/playlists/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/playlists/_form.html.erb
 <%= form_with model: playlist, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -638,7 +551,6 @@ cat <<EOF > app/views/playlists/_form.html.erb
   <%= form.submit t("brgen_playlist.#{playlist.persisted? ? 'update' : 'create'}_playlist"), data: { turbo_submits_with: t("brgen_playlist.#{playlist.persisted? ? 'updating' : 'creating'}_playlist") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/playlists/new.html.erb
 <% content_for :title, t("brgen_playlist.new_playlist_title") %>
 <% content_for :description, t("brgen_playlist.new_playlist_description") %>
@@ -663,7 +575,6 @@ cat <<EOF > app/views/playlists/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/playlists/edit.html.erb
 <% content_for :title, t("brgen_playlist.edit_playlist_title") %>
 <% content_for :description, t("brgen_playlist.edit_playlist_description") %>
@@ -688,7 +599,6 @@ cat <<EOF > app/views/playlists/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/playlists/show.html.erb
 <% content_for :title, @playlist.name %>
 <% content_for :description, @playlist.description&.truncate(160) %>
@@ -715,7 +625,6 @@ cat <<EOF > app/views/playlists/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/comments/index.html.erb
 <% content_for :title, t("brgen_playlist.comments_title") %>
 <% content_for :description, t("brgen_playlist.comments_description") %>
@@ -750,7 +659,6 @@ cat <<EOF > app/views/comments/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/comments/_card.html.erb
 <%= turbo_frame_tag dom_id(comment) do %>
   <%= tag.article class: "post-card", id: dom_id(comment), role: "article" do %>
@@ -769,7 +677,6 @@ cat <<EOF > app/views/comments/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/comments/_form.html.erb
 <%= form_with model: comment, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -799,7 +706,6 @@ cat <<EOF > app/views/comments/_form.html.erb
   <%= form.submit t("brgen_playlist.#{comment.persisted? ? 'update' : 'create'}_comment"), data: { turbo_submits_with: t("brgen_playlist.#{comment.persisted? ? 'updating' : 'creating'}_comment") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/comments/new.html.erb
 <% content_for :title, t("brgen_playlist.new_comment_title") %>
 <% content_for :description, t("brgen_playlist.new_comment_description") %>
@@ -824,7 +730,6 @@ cat <<EOF > app/views/comments/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/comments/edit.html.erb
 <% content_for :title, t("brgen_playlist.edit_comment_title") %>
 <% content_for :description, t("brgen_playlist.edit_comment_description") %>
@@ -849,7 +754,6 @@ cat <<EOF > app/views/comments/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/comments/show.html.erb
 <% content_for :title, t("brgen_playlist.comment_title", playlist: @comment.playlist.name) %>
 <% content_for :description, @comment.content&.truncate(160) %>
@@ -879,13 +783,10 @@ cat <<EOF > app/views/comments/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 generate_turbo_views "playlists" "playlist"
 generate_turbo_views "comments" "comment"
-
 cat <<EOF > db/seeds.rb
 require "faker"
-
 puts "Creating demo users with Faker..."
 demo_users = []
 8.times do
@@ -895,13 +796,10 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users."
-
 puts "Creating demo playlists with Faker..."
 genres = ['Rock', 'Pop', 'Jazz', 'Classical', 'Electronic', 'Hip-Hop']
 moods = ['Energetic', 'Relaxing', 'Happy', 'Melancholic', 'Romantic']
-
 20.times do
   Playlist.create!(
     name: "#{Faker::Music.genre} #{moods.sample} Mix",
@@ -910,9 +808,7 @@ moods = ['Energetic', 'Relaxing', 'Happy', 'Melancholic', 'Romantic']
     user: demo_users.sample
   )
 end
-
 puts "Created #{Playlist.count} demo playlists."
-
 puts "Creating demo playlist sets..."
 15.times do
   set = Playlist::Set.create!(
@@ -922,7 +818,6 @@ puts "Creating demo playlist sets..."
     privacy: ['public', 'private', 'unlisted'].sample,
     collaborative: [true, false].sample
   )
-
   # Add tracks to each set
   rand(5..12).times do |i|
     Playlist::Track.create!(
@@ -935,9 +830,7 @@ puts "Creating demo playlist sets..."
     )
   end
 end
-
 puts "Created #{Playlist::Set.count} playlist sets with #{Playlist::Track.count} tracks."
-
 puts "Creating demo comments..."
 40.times do
   Comment.create!(
@@ -946,27 +839,19 @@ puts "Creating demo comments..."
     content: Faker::Lorem.sentence(word_count: rand(10..25))
   )
 end
-
 puts "Created #{Comment.count} demo comments."
-
 puts "Creating demo likes..."
 50.times do
   set = Playlist::Set.all.sample
   user = demo_users.sample
-
   Playlist::Like.find_or_create_by(user: user, set: set)
 end
-
 puts "Created #{Playlist::Like.count} demo likes."
-
 puts "Seed data creation complete!"
 EOF
-
 # Integrate Radio Bergen Visualizer
 log "Integrating Radio Bergen 8-bit pixel visualizer..."
-
 mkdir -p public/visualizer
-
 # Copy Radio Bergen visualizer from G:/pub/index.html
 if [[ -f "/g/pub/index.html" ]]; then
   cp "/g/pub/index.html" public/visualizer/index.html
@@ -974,14 +859,11 @@ if [[ -f "/g/pub/index.html" ]]; then
 else
   log "⚠ Warning: G:/pub/index.html not found, skipping visualizer integration"
 fi
-
 # Add visualizer route
 cat <<'EOF' >> config/routes.rb
-
   # Radio Bergen Visualizer
   get "visualizer", to: redirect("/visualizer/index.html")
 EOF
-
 # Add visualizer link to playlist show view
 cat <<'EOF' > app/views/playlists/show.html.erb
 <% content_for :title, @playlist.name %>
@@ -1004,21 +886,16 @@ cat <<'EOF' > app/views/playlists/show.html.erb
       <%= render "shared/notices" %>
     <% end %>
     <%= tag.h1 @playlist.name, id: "playlist-heading" %>
-
     <%= tag.p class: "visualizer-link" style: "margin: 1em 0;" do %>
       <%= link_to "🎵 Open in Radio Bergen Visualizer", visualizer_path, target: "_blank", class: "button", style: "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;", "aria-label": "Open playlist in Radio Bergen 8-bit visualizer", title: "Experience this playlist with 8-bit pixel visualizations, physics-based motion, and beat-reactive effects" %>
     <% end %>
-
     <%= render partial: "playlists/card", locals: { playlist: @playlist } %>
   <% end %>
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 log "✓ Radio Bergen visualizer integrated"
-
 commit "Brgen Playlist setup complete: Music playlist sharing platform with Radio Bergen visualizer"
-
 log "Brgen Playlist setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
 log ""
 log "📻 Radio Bergen Visualizer Integrated:"
@@ -1035,7 +912,6 @@ log "     - Mouse/gyro parallax support"
 log ""
 log "   Open any playlist and click '🎵 Open in Radio Bergen Visualizer'"
 log "   See G:/pub/README-VISUALIZER.md for full documentation"
-
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

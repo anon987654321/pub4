@@ -1,18 +1,13 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Stimulus controllers: ApplicationController base + common patterns
 # stimulus-components.com integration
-
 generate_application_controller() {
   log "Generating Stimulus ApplicationController with StimulusReflex"
-  
   mkdir -p app/javascript/controllers
-  
   cat <<'JS' > app/javascript/controllers/application_controller.js
 import { Controller } from "@hotwired/stimulus"
 import StimulusReflex from "stimulus_reflex"
-
 // Base controller for all Stimulus controllers
 // Inherit from this to get StimulusReflex + lifecycle hooks
 export default class extends Controller {
@@ -20,27 +15,22 @@ export default class extends Controller {
     StimulusReflex.register(this)
     this.element.dataset.reflexId = this.reflexId
   }
-  
   // Spinner during Reflex operations
   beforeReflex(element, reflex, noop, reflexId) {
     document.body.classList.add("wait")
     element.classList.add("loading")
   }
-  
   reflexSuccess(element, reflex, noop, reflexId) {
     element.classList.remove("loading")
     this.handleAutofocus()
   }
-  
   reflexError(element, reflex, error, reflexId) {
     console.error("Reflex error:", error)
     element.classList.remove("loading")
   }
-  
   afterReflex(element, reflex, noop, reflexId) {
     document.body.classList.remove("wait")
   }
-  
   // Autofocus pattern: browsers only autofocus on page load
   // This handles focus after Turbo/Reflex updates
   handleAutofocus() {
@@ -55,55 +45,45 @@ export default class extends Controller {
       }
     }
   }
-  
   // Helper: Dispatch custom event
   dispatch(name, detail = {}) {
     this.element.dispatchEvent(
-      new CustomEvent(name, { 
-        detail, 
-        bubbles: true, 
-        cancelable: true 
+      new CustomEvent(name, {
+        detail,
+        bubbles: true,
+        cancelable: true
       })
     )
   }
 }
 JS
-  
   log "✓ ApplicationController generated"
 }
-
 generate_infinite_scroll_controller() {
   log "Generating infinite scroll controller"
-  
   cat <<'JS' > app/javascript/controllers/infinite_scroll_controller.js
 import ApplicationController from "./application_controller"
-
 // Infinite scroll with IntersectionObserver
 // Usage: data-controller="infinite-scroll" data-infinite-scroll-next-page-value="2"
 export default class extends ApplicationController {
-  static values = { 
+  static values = {
     nextPage: String,
     loading: { type: Boolean, default: false }
   }
   static targets = ["trigger"]
-  
   connect() {
     super.connect()
-    
     this.observer = new IntersectionObserver(
       entries => this.handleIntersect(entries),
       { threshold: 1.0 }
     )
-    
     if (this.hasTriggerTarget) {
       this.observer.observe(this.triggerTarget)
     }
   }
-  
   disconnect() {
     this.observer?.disconnect()
   }
-  
   handleIntersect(entries) {
     entries.forEach(entry => {
       if (entry.isIntersecting && !this.loadingValue && this.nextPageValue) {
@@ -111,18 +91,15 @@ export default class extends ApplicationController {
       }
     })
   }
-  
   async loadMore() {
     this.loadingValue = true
-    
     try {
       const response = await fetch(this.nextPageValue, {
-        headers: { 
+        headers: {
           "Accept": "text/vnd.turbo-stream.html",
-          "Turbo-Frame": this.element.id 
+          "Turbo-Frame": this.element.id
         }
       })
-      
       if (response.ok) {
         const html = await response.text()
         Turbo.renderStreamMessage(html)
@@ -135,16 +112,12 @@ export default class extends ApplicationController {
   }
 }
 JS
-  
   log "✓ Infinite scroll controller generated"
 }
-
 generate_modal_controller() {
   log "Generating modal controller"
-  
   cat <<'JS' > app/javascript/controllers/modal_controller.js
 import ApplicationController from "./application_controller"
-
 // Modal for Turbo Frames
 // Usage: data-controller="modal" on turbo-frame#modal
 export default class extends ApplicationController {
@@ -153,28 +126,23 @@ export default class extends ApplicationController {
     this.element.addEventListener("turbo:frame-load", this.open.bind(this))
     this.element.addEventListener("turbo:submit-end", this.handleSubmit.bind(this))
   }
-  
   open() {
     const dialog = this.element.querySelector("dialog")
     dialog?.showModal()
-    
     // Close on backdrop click
     dialog?.addEventListener("click", (e) => {
       if (e.target === dialog) {
         this.close()
       }
     })
-    
     // Close on Escape key
     dialog?.addEventListener("cancel", () => this.close())
   }
-  
   handleSubmit(event) {
     if (event.detail.success) {
       this.close()
     }
   }
-  
   close() {
     const dialog = this.element.querySelector("dialog")
     dialog?.close()
@@ -182,27 +150,21 @@ export default class extends ApplicationController {
   }
 }
 JS
-  
   log "✓ Modal controller generated"
 }
-
 generate_form_validation_controller() {
   log "Generating form validation controller"
-  
   cat <<'JS' > app/javascript/controllers/form_validation_controller.js
 import ApplicationController from "./application_controller"
-
 // Form validation and submit button state
 // Usage: data-controller="form-validation"
 export default class extends ApplicationController {
   static targets = ["submit"]
-  
   connect() {
     super.connect()
     this.element.addEventListener("turbo:submit-start", () => this.disable())
     this.element.addEventListener("turbo:submit-end", () => this.enable())
   }
-  
   disable() {
     this.submitTargets.forEach(btn => {
       btn.disabled = true
@@ -210,7 +172,6 @@ export default class extends ApplicationController {
       btn.textContent = btn.dataset.loadingText || "Saving..."
     })
   }
-  
   enable() {
     this.submitTargets.forEach(btn => {
       btn.disabled = false
@@ -219,17 +180,13 @@ export default class extends ApplicationController {
   }
 }
 JS
-  
   log "✓ Form validation controller generated"
 }
-
 generate_reveal_controller() {
   log "Generating reveal controller for flash messages"
-  
   cat <<'JS' > app/javascript/controllers/reveal_controller.js
 import { useTransition } from "stimulus-use"
 import ApplicationController from "./application_controller"
-
 // Animated reveal/hide for flash messages
 // Usage: data-controller="reveal"
 export default class extends ApplicationController {
@@ -238,40 +195,31 @@ export default class extends ApplicationController {
     visibleClass: { type: String, default: "show" },
     removeDelay: { type: Number, default: 5000 }
   }
-  
   connect() {
     super.connect()
     useTransition(this, { element: this.element })
-    
     this.show()
     this.timeout = setTimeout(() => this.hide(), this.removeDelayValue)
   }
-  
   disconnect() {
     clearTimeout(this.timeout)
   }
-  
   show() {
     this.enter()
   }
-  
   hide() {
     this.leave()
   }
-  
   remove() {
     this.element.remove()
   }
 }
 JS
-  
   log "✓ Reveal controller generated"
 }
-
 # Install stimulus-components from stimulus-components.com
 install_stimulus_components() {
   log "Installing stimulus-components.com packages"
-  
   local -a components=(
     "@stimulus-components/auto-submit"
     "@stimulus-components/character-counter"
@@ -284,16 +232,13 @@ install_stimulus_components() {
     "@stimulus-components/sortable"
     "@stimulus-components/timeago"
   )
-  
   for component in "${components[@]}"; do
     install_yarn_package "$component"
   done
-  
   # Register components in index.js
   cat <<'JS' > app/javascript/controllers/index.js
 // Auto-generated by @frontend_stimulus_controllers.sh
 import { application } from "./application"
-
 // Import stimulus-components
 import AutoSubmit from "@stimulus-components/auto-submit"
 import CharacterCounter from "@stimulus-components/character-counter"
@@ -305,7 +250,6 @@ import PasswordVisibility from "@stimulus-components/password-visibility"
 import Reveal from "@stimulus-components/reveal"
 import Sortable from "@stimulus-components/sortable"
 import Timeago from "@stimulus-components/timeago"
-
 // Register components
 application.register("auto-submit", AutoSubmit)
 application.register("character-counter", CharacterCounter)
@@ -317,20 +261,16 @@ application.register("password-visibility", PasswordVisibility)
 application.register("reveal", Reveal)
 application.register("sortable", Sortable)
 application.register("timeago", Timeago)
-
 // Import custom controllers
 import InfiniteScrollController from "./infinite_scroll_controller"
 import ModalController from "./modal_controller"
 import FormValidationController from "./form_validation_controller"
-
 application.register("infinite-scroll", InfiniteScrollController)
 application.register("modal", ModalController)
 application.register("form-validation", FormValidationController)
 JS
-  
   log "✓ stimulus-components installed and registered"
 }
-
 setup_stimulus_controllers() {
   generate_application_controller
   generate_infinite_scroll_controller
@@ -338,6 +278,5 @@ setup_stimulus_controllers() {
   generate_form_validation_controller
   generate_reveal_controller
   install_stimulus_components
-  
   log "✓ Complete Stimulus setup with stimulus-components.com"
 }

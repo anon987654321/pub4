@@ -1,41 +1,31 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen Takeaway setup: Food delivery platform with real-time tracking, restaurant management, and location services on OpenBSD 7.5, unprivileged user
 # Framework v37.3.2 compliant with enhanced food delivery features
-
 APP_NAME="brgen_takeaway"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/@shared_functions.sh"
-
 log "Starting Brgen Takeaway setup with food delivery and restaurant management"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "faker"
-
 # Generate enhanced food delivery models
 bin/rails generate model Restaurant name:string description:text user:references address:string lat:decimal lng:decimal phone:string cuisine_type:string delivery_fee:decimal min_order:decimal
 bin/rails generate model MenuItem restaurant:references name:string description:text price:decimal category:string available:boolean allergies:text
 bin/rails generate model Order user:references restaurant:references status:string total:decimal delivery_address:string delivery_lat:decimal delivery_lng:decimal
 bin/rails generate model OrderItem order:references menu_item:references quantity:integer price:decimal special_instructions:text
 bin/rails generate model DeliveryDriver user:references vehicle_type:string license_number:string available:boolean current_lat:decimal current_lng:decimal
-
 # Add real-time tracking and payment integration
 bundle add stripe
 bundle add geocoder
 bundle add redis
 bundle install
-
 cat <<EOF > app/reflexes/restaurants_infinite_scroll_reflex.rb
 class RestaurantsInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -44,7 +34,6 @@ class RestaurantsInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/orders_infinite_scroll_reflex.rb
 class OrdersInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -53,24 +42,19 @@ class OrdersInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/controllers/restaurants_controller.rb
 class RestaurantsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_restaurant, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @restaurants = pagy(Restaurant.all.order(rating: :desc)) unless @stimulus_reflex
   end
-
   def show
     @menu_items = @restaurant.menu_items.order(:category, :name)
   end
-
   def new
     @restaurant = current_user.restaurants.build
   end
-
   def create
     @restaurant = current_user.restaurants.build(restaurant_params)
     if @restaurant.save
@@ -79,10 +63,8 @@ class RestaurantsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @restaurant.update(restaurant_params)
       redirect_to @restaurant, notice: t("takeaway.restaurant_updated")
@@ -90,41 +72,32 @@ class RestaurantsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @restaurant.destroy
     redirect_to restaurants_url, notice: t("takeaway.restaurant_destroyed")
   end
-
   private
-
   def set_restaurant
     @restaurant = Restaurant.find(params[:id])
   end
-
   def restaurant_params
     params.require(:restaurant).permit(:name, :location, :cuisine, :delivery_fee, :min_order, photos: [])
   end
 end
 EOF
-
 cat <<EOF > app/controllers/menu_items_controller.rb
 class MenuItemsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_restaurant
   before_action :set_menu_item, only: [:show, :edit, :update, :destroy]
-
   def index
     @menu_items = @restaurant.menu_items.order(:category, :name)
   end
-
   def show
   end
-
   def new
     @menu_item = @restaurant.menu_items.build
   end
-
   def create
     @menu_item = @restaurant.menu_items.build(menu_item_params)
     if @menu_item.save
@@ -133,10 +106,8 @@ class MenuItemsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @menu_item.update(menu_item_params)
       redirect_to [@restaurant, @menu_item], notice: t("takeaway.menu_item_updated")
@@ -144,45 +115,35 @@ class MenuItemsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @menu_item.destroy
     redirect_to restaurant_menu_items_url(@restaurant), notice: t("takeaway.menu_item_destroyed")
   end
-
   private
-
   def set_restaurant
     @restaurant = Restaurant.find(params[:restaurant_id])
   end
-
   def set_menu_item
     @menu_item = @restaurant.menu_items.find(params[:id])
   end
-
   def menu_item_params
     params.require(:menu_item).permit(:name, :price, :description, :category)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/orders_controller.rb
 class OrdersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_order, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @orders = pagy(current_user.orders.order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @restaurant = Restaurant.find(params[:restaurant_id]) if params[:restaurant_id]
     @order = current_user.orders.build(restaurant: @restaurant)
   end
-
   def create
     @order = current_user.orders.build(order_params)
     @order.status = "pending"
@@ -192,10 +153,8 @@ class OrdersController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @order.update(order_params)
       redirect_to @order, notice: t("takeaway.order_updated")
@@ -203,89 +162,70 @@ class OrdersController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @order.destroy
     redirect_to orders_url, notice: t("takeaway.order_destroyed")
   end
-
   private
-
   def set_order
     @order = current_user.orders.find(params[:id])
   end
-
   def order_params
     params.require(:order).permit(:restaurant_id, :total_amount, :delivery_address, :order_items)
   end
 end
 EOF
-
 cat <<EOF > app/models/restaurant.rb
 class Restaurant < ApplicationRecord
   belongs_to :user
   has_many :menu_items, dependent: :destroy
   has_many :orders, dependent: :destroy
   has_many_attached :photos
-
   validates :name, presence: true
   validates :location, presence: true
   validates :cuisine, presence: true
   validates :delivery_fee, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :min_order, presence: true, numericality: { greater_than: 0 }
   validates :rating, numericality: { in: 0..5 }, allow_nil: true
-
   scope :by_cuisine, ->(cuisine) { where(cuisine: cuisine) }
   scope :with_low_delivery, -> { where("delivery_fee < ?", 5.0) }
 end
 EOF
-
 cat <<EOF > app/models/menu_item.rb
 class MenuItem < ApplicationRecord
   belongs_to :restaurant
-
   validates :name, presence: true
   validates :price, presence: true, numericality: { greater_than: 0 }
   validates :category, presence: true
-
   scope :by_category, ->(category) { where(category: category) }
   scope :affordable, -> { where("price < ?", 15.0) }
 end
 EOF
-
 cat <<EOF > app/models/order.rb
 class Order < ApplicationRecord
   belongs_to :restaurant
   belongs_to :customer, class_name: "User"
-
   validates :status, presence: true
   validates :total_amount, presence: true, numericality: { greater_than: 0 }
   validates :delivery_address, presence: true
-
   enum status: { pending: 0, confirmed: 1, preparing: 2, out_for_delivery: 3, delivered: 4, cancelled: 5 }
-
   scope :recent, -> { where("created_at > ?", 1.week.ago) }
   scope :for_restaurant, ->(restaurant) { where(restaurant: restaurant) }
 end
 EOF
-
 cat <<EOF > config/routes.rb
 Rails.application.routes.draw do
   devise_for :users, controllers: { omniauth_callbacks: "omniauth_callbacks" }
   root "restaurants#index"
-
   resources :restaurants do
     resources :menu_items
     resources :orders, only: [:new, :create]
   end
-
   resources :orders, except: [:new, :create]
-
   get "search", to: "restaurants#search"
   get "cuisine/:cuisine", to: "restaurants#by_cuisine", as: :cuisine_restaurants
 end
 EOF
-
 cat <<EOF > app/views/restaurants/index.html.erb
 <% content_for :title, t("takeaway.restaurants_title") %>
 <% content_for :description, t("takeaway.restaurants_description") %>
@@ -318,7 +258,6 @@ cat <<EOF > app/views/restaurants/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/restaurants/_card.html.erb
 <%= tag.article class: "restaurant-card", data: { turbo_frame: "restaurant_#{restaurant.id}" } do %>
   <%= tag.header do %>
@@ -330,7 +269,6 @@ cat <<EOF > app/views/restaurants/_card.html.erb
       <%= tag.span "#{restaurant.rating}/5", class: "rating" if restaurant.rating %>
     <% end %>
   <% end %>
-
   <%= tag.div class: "restaurant-info" do %>
     <%= tag.p restaurant.location, class: "location" %>
     <%= tag.div class: "delivery-info" do %>
@@ -338,20 +276,17 @@ cat <<EOF > app/views/restaurants/_card.html.erb
       <%= tag.span t("takeaway.min_order", amount: restaurant.min_order), class: "min-order" %>
     <% end %>
   <% end %>
-
   <% if restaurant.photos.attached? %>
     <%= tag.div class: "restaurant-photos" do %>
       <%= image_tag restaurant.photos.first, alt: restaurant.name, loading: "lazy" %>
     <% end %>
   <% end %>
-
   <%= tag.footer do %>
     <%= link_to t("takeaway.view_menu"), restaurant_path(restaurant), class: "button primary" %>
     <%= link_to t("takeaway.quick_order"), new_restaurant_order_path(restaurant), class: "button secondary" %>
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/restaurants/show.html.erb
 <% content_for :title, @restaurant.name %>
 <% content_for :description, t("takeaway.restaurant_description", name: @restaurant.name) %>
@@ -368,7 +303,6 @@ cat <<EOF > app/views/restaurants/show.html.erb
         <% end %>
       <% end %>
     <% end %>
-
     <% if @restaurant.photos.attached? %>
       <%= tag.div class: "restaurant-gallery" do %>
         <% @restaurant.photos.each do |photo| %>
@@ -376,11 +310,9 @@ cat <<EOF > app/views/restaurants/show.html.erb
         <% end %>
       <% end %>
     <% end %>
-
     <%= tag.section aria_labelledby: "menu-heading" do %>
       <%= tag.h2 t("takeaway.menu"), id: "menu-heading" %>
       <%= link_to t("takeaway.order_now"), new_restaurant_order_path(@restaurant), class: "button primary" %>
-
       <% if @menu_items.any? %>
         <% @menu_items.group_by(&:category).each do |category, items| %>
           <%= tag.div class: "menu-category" do %>
@@ -402,7 +334,6 @@ cat <<EOF > app/views/restaurants/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/index.html.erb
 <% content_for :title, t("takeaway.orders_title") %>
 <%= render "shared/header" %>
@@ -412,7 +343,6 @@ cat <<EOF > app/views/orders/index.html.erb
     <%= tag.div data: { turbo_frame: "notices" } do %>
       <%= render "shared/notices" %>
     <% end %>
-
     <%= turbo_frame_tag "orders", data: { controller: "infinite-scroll" } do %>
       <% @orders.each do |order| %>
         <%= render partial: "orders/card", locals: { order: order } %>
@@ -424,7 +354,6 @@ cat <<EOF > app/views/orders/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/_card.html.erb
 <%= tag.article class: "order-card", data: { turbo_frame: "order_#{order.id}" } do %>
   <%= tag.header do %>
@@ -436,12 +365,10 @@ cat <<EOF > app/views/orders/_card.html.erb
       <%= tag.span order.status.humanize, class: "status status-#{order.status}" %>
     <% end %>
   <% end %>
-
   <%= tag.div class: "order-info" do %>
     <%= tag.p number_to_currency(order.total_amount), class: "total" %>
     <%= tag.p order.created_at.strftime("%Y-%m-%d %H:%M"), class: "created-at" %>
   <% end %>
-
   <%= tag.footer do %>
     <%= link_to t("takeaway.view_order"), order_path(order), class: "button primary" %>
     <% if order.pending? %>
@@ -451,7 +378,6 @@ cat <<EOF > app/views/orders/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > config/locales/takeaway.en.yml
 en:
   takeaway:
@@ -483,10 +409,8 @@ en:
     no_menu_items: "No menu items available yet."
     load_more: "Load More"
 EOF
-
 cat <<EOF > app/assets/stylesheets/takeaway.scss
 // Brgen Takeaway - Food delivery platform styles
-
 .restaurant-card {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -494,58 +418,47 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
   margin-bottom: 1rem;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
   header {
     margin-bottom: 0.5rem;
-
     h3 {
       margin: 0;
       font-size: 1.2rem;
       color: #ff5722;
     }
-
     .restaurant-meta {
       display: flex;
       gap: 1rem;
       margin-top: 0.25rem;
-
       .cuisine {
         background: #f5f5f5;
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
         font-size: 0.8rem;
       }
-
       .rating {
         color: #ff9800;
         font-weight: bold;
       }
     }
   }
-
   .restaurant-info {
     margin-bottom: 1rem;
-
     .location {
       color: #666;
       margin: 0.5rem 0;
     }
-
     .delivery-info {
       display: flex;
       gap: 1rem;
       font-size: 0.9rem;
-
       .delivery-fee {
         color: #4caf50;
       }
-
       .min-order {
         color: #ff9800;
       }
     }
   }
-
   .restaurant-photos img {
     width: 100%;
     max-height: 200px;
@@ -553,11 +466,9 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
     border-radius: 4px;
     margin-bottom: 1rem;
   }
-
   footer {
     display: flex;
     gap: 0.5rem;
-
     .button {
       flex: 1;
       text-align: center;
@@ -566,12 +477,10 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
       text-decoration: none;
       border: none;
       cursor: pointer;
-
       &.primary {
         background: #ff5722;
         color: white;
       }
-
       &.secondary {
         background: #f5f5f5;
         color: #333;
@@ -579,61 +488,50 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
     }
   }
 }
-
 .restaurant-header {
   text-align: center;
   margin-bottom: 2rem;
-
   h1 {
     color: #ff5722;
     margin-bottom: 1rem;
   }
-
   .restaurant-details {
     display: flex;
     justify-content: center;
     gap: 2rem;
     flex-wrap: wrap;
-
     .location, .cuisine {
       margin: 0;
     }
-
     .rating-value {
       color: #ff9800;
       font-weight: bold;
     }
   }
 }
-
 .menu-category {
   margin-bottom: 2rem;
-
   h3 {
     border-bottom: 2px solid #ff5722;
     padding-bottom: 0.5rem;
     color: #ff5722;
   }
-
   .menu-item {
     padding: 1rem;
     border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-
     h4 {
       margin: 0 0 0.5rem 0;
       color: #333;
     }
-
     p {
       margin: 0;
       color: #666;
       flex: 1;
       margin-right: 1rem;
     }
-
     .price {
       font-weight: bold;
       color: #ff5722;
@@ -641,7 +539,6 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
     }
   }
 }
-
 .order-card {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -649,33 +546,27 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
   margin-bottom: 1rem;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
   header {
     margin-bottom: 0.5rem;
-
     h3 {
       margin: 0;
       font-size: 1.1rem;
       color: #333;
     }
-
     .order-meta {
       display: flex;
       gap: 1rem;
       margin-top: 0.25rem;
       align-items: center;
-
       .restaurant-name {
         color: #ff5722;
         font-weight: bold;
       }
-
       .status {
         padding: 0.25rem 0.5rem;
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: bold;
-
         &.status-pending { background: #fff3e0; color: #ff9800; }
         &.status-confirmed { background: #e8f5e8; color: #4caf50; }
         &.status-preparing { background: #e3f2fd; color: #2196f3; }
@@ -685,28 +576,23 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
       }
     }
   }
-
   .order-info {
     margin-bottom: 1rem;
-
     .total {
       font-size: 1.2rem;
       font-weight: bold;
       color: #ff5722;
       margin: 0.5rem 0;
     }
-
     .created-at {
       color: #666;
       margin: 0;
       font-size: 0.9rem;
     }
   }
-
   footer {
     display: flex;
     gap: 0.5rem;
-
     .button {
       flex: 1;
       text-align: center;
@@ -715,12 +601,10 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
       text-decoration: none;
       border: none;
       cursor: pointer;
-
       &.primary {
         background: #ff5722;
         color: white;
       }
-
       &.secondary {
         background: #f5f5f5;
         color: #333;
@@ -728,17 +612,14 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
     }
   }
 }
-
 @media (max-width: 768px) {
   .restaurant-header .restaurant-details {
     flex-direction: column;
     gap: 0.5rem;
   }
-
   .menu-item {
     flex-direction: column;
     align-items: flex-start;
-
     p {
       margin-right: 0;
       margin-bottom: 0.5rem;
@@ -746,9 +627,7 @@ cat <<EOF > app/assets/stylesheets/takeaway.scss
   }
 }
 EOF
-
 bin/rails db:migrate
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #ff5722;
@@ -759,18 +638,14 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #dadce0;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
-
 .restaurant-grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .restaurant-card {
   background: var(--surface);
@@ -780,13 +655,11 @@ main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
   cursor: pointer;
 }
 .restaurant-card:hover { border-color: var(--primary); }
-
 .restaurant-card img { width: 100%; height: 180px; object-fit: cover; }
 .restaurant-info { padding: var(--spacing); }
 .restaurant-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; }
 .restaurant-cuisine { color: var(--secondary); margin-bottom: 0.5rem; }
 .restaurant-rating { color: var(--primary); font-weight: 600; }
-
 .menu-grid { display: grid; gap: var(--spacing); }
 .menu-item {
   background: var(--surface);
@@ -797,7 +670,6 @@ main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
   justify-content: space-between;
   align-items: center;
 }
-
 .cart {
   position: fixed;
   bottom: var(--spacing);
@@ -808,7 +680,6 @@ main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
-
 .delivery-status {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -816,9 +687,7 @@ main { max-width: 1200px; margin: 0 auto; padding: var(--spacing); }
   padding: calc(var(--spacing) * 2);
   text-align: center;
 }
-
 #delivery-map { height: 300px; border-radius: 8px; margin: var(--spacing) 0; }
-
 button, .button {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -827,18 +696,14 @@ button, .button {
   border-radius: 4px;
   cursor: pointer;
 }
-
 @media (max-width: 768px) {
   .restaurant-grid, .menu-grid { grid-template-columns: 1fr; }
 }
 EOF
-
 generate_turbo_views "restaurants" "restaurant"
 generate_turbo_views "orders" "order"
-
 cat <<EOF > db/seeds.rb
 require "faker"
-
 puts "Creating demo users with Faker..."
 demo_users = []
 10.times do
@@ -848,9 +713,7 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users."
-
 puts "Creating demo restaurants with Faker..."
 cuisines = ['Italian', 'Chinese', 'Mexican', 'Japanese', 'Indian', 'Thai', 'Greek', 'French']
 10.times do
@@ -868,9 +731,7 @@ cuisines = ['Italian', 'Chinese', 'Mexican', 'Japanese', 'Indian', 'Thai', 'Gree
     rating: rand(3.5..5.0).round(1)
   )
 end
-
 puts "Created #{Restaurant.count} demo restaurants."
-
 puts "Creating demo menu items..."
 categories = ['Appetizers', 'Main Course', 'Desserts', 'Drinks', 'Sides']
 Restaurant.all.each do |restaurant|
@@ -886,9 +747,7 @@ Restaurant.all.each do |restaurant|
     )
   end
 end
-
 puts "Created #{MenuItem.count} demo menu items."
-
 puts "Creating demo orders..."
 statuses = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered']
 30.times do
@@ -901,7 +760,6 @@ statuses = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'
     delivery_lat: Faker::Address.latitude,
     delivery_lng: Faker::Address.longitude
   )
-
   # Add order items
   rand(1..5).times do
     OrderItem.create!(
@@ -913,16 +771,11 @@ statuses = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'
     )
   end
 end
-
 puts "Created #{Order.count} demo orders with #{OrderItem.count} order items."
-
 puts "Seed data creation complete!"
 EOF
-
 commit "Brgen Takeaway setup complete: Food delivery platform with live search and anonymous features"
-
 log "Brgen Takeaway setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
-
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

@@ -1,29 +1,24 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # @helpers.sh - Consolidated helper functions
 # Combines @helpers_installation.sh, @helpers_logging.sh, @helpers_routes.sh
 # Per master.yml v74.2.0 - Rails 8 + Solid Stack
-
 # Idempotency check - skip if app already generated
 check_app_exists() {
     local app_name="$1"
     local marker_file="$2"  # e.g., "app/models/blog.rb"
     # Use BASE_DIR if set, otherwise fallback to default Rails location
     local base_dir="${BASE_DIR:-/home/dev/rails}"
-    
     if [[ -f "${base_dir}/${app_name}/${marker_file}" ]]; then
         print "${app_name} already exists, skipping"
         return 0  # App exists
     fi
     return 1  # App does not exist
 }
-
 # Gem installation helper
 install_gem() {
     local gem_name="$1"
     local bundle_output=$(bundle list 2>/dev/null)
-    
     if [[ "$bundle_output" != *"  * $gem_name "* ]]; then
         log "Installing gem: $gem_name"
         bundle add "$gem_name"
@@ -31,11 +26,9 @@ install_gem() {
         log "Gem already installed: $gem_name"
     fi
 }
-
 # Yarn package installation helper
 install_yarn_package() {
     local package_name="$1"
-    
     if [[ -f "package.json" ]]; then
         local pkg_json=$(<package.json)
         if [[ "$pkg_json" != *""$package_name""* ]]; then
@@ -49,7 +42,6 @@ install_yarn_package() {
         yarn add "$package_name"
     fi
 }
-
 # Stimulus component installation
 install_stimulus_component() {
     local component_name="$1"
@@ -58,12 +50,10 @@ install_stimulus_component() {
     log "Stimulus component installed: $component_name"
     log "Register in app/javascript/controllers/index.js"
 }
-
 # Route manipulation using pure zsh
 add_routes_block() {
     local routes_block="$1"
     local routes_file="config/routes.rb"
-    
     # Read all lines, remove last 'end', append routes, add 'end'
     local routes_lines=("${(@f)$(<$routes_file)}")
     {
@@ -72,12 +62,10 @@ add_routes_block() {
         print "end"
     } > "$routes_file"
 }
-
 # Git commit helper
 commit() {
     local message="${1:-Update application setup}"
     log "Committing changes: $message"
-    
     # Only commit if in git repository
     if [ -d ".git" ]; then
         git add -A
@@ -86,23 +74,18 @@ commit() {
         log "Not a git repository, skipping commit"
     fi
 }
-
 # Installation helpers consolidated
-
 # Installation helpers - extracted from @core_setup.sh and @common.sh
 # Master.yml v70.0.0 compliant
-
 command_exists() {
     command -v "$1" >/dev/null 2>&1 || {
         log "ERROR: $1 is required but not installed"
         exit 1
     }
 }
-
 install_gem() {
     local gem_name="$1"
     local bundle_output=$(bundle list 2>/dev/null)
-    
     if [[ "$bundle_output" != *"  * $gem_name "* ]]; then
         log "Installing gem: $gem_name"
         bundle add "$gem_name"
@@ -110,10 +93,8 @@ install_gem() {
         log "Gem already installed: $gem_name"
     fi
 }
-
 install_yarn_package() {
     local package_name="$1"
-    
     if [[ -f "package.json" ]]; then
         local pkg_json=$(<package.json)
         if [[ "$pkg_json" != *""$package_name""* ]]; then
@@ -127,7 +108,6 @@ install_yarn_package() {
         yarn add "$package_name"
     fi
 }
-
 install_stimulus_component() {
     local component_name="$1"
     log "Installing Stimulus component: $component_name"
@@ -135,25 +115,18 @@ install_stimulus_component() {
     log "Stimulus component installed: $component_name"
     log "Register in app/javascript/controllers/index.js"
 }
-
 # Logging helpers consolidated
-
 # Logging helper - extracted from @core_setup.sh
 # Master.yml v70.0.0 compliant
-
 log() {
     print "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
-
 # Route helpers consolidated
-
 # Route helpers - from @route_helpers.sh and @common.sh
 # Pure zsh route manipulation per master.yml v70.0.0
-
 add_routes_block() {
     local routes_block="$1"
     local routes_file="config/routes.rb"
-    
     # Read all lines, remove last 'end', append routes, add 'end'
     local routes_lines=("${(@f)$(<$routes_file)}")
     {
@@ -162,11 +135,9 @@ add_routes_block() {
         print "end"
     } > "$routes_file"
 }
-
 commit() {
     local message="${1:-Update application setup}"
     log "Committing changes: $message"
-    
     # Only commit if in git repository
     if [ -d ".git" ]; then
         git add -A
@@ -175,20 +146,16 @@ commit() {
         log "Not a git repository, skipping commit"
     fi
 }
-
 migrate_db() {
     log "Migrating database"
     bin/rails db:create db:migrate
 }
-
 setup_seeds() {
     log "Setting up database seeds"
-    
     if [ ! -f "db/seeds.rb" ] || [ ! -s "db/seeds.rb" ]; then
         cat > db/seeds.rb << EOF
 # Seeds for ${APP_NAME}
 # Create sample data for development
-
 if Rails.env.development?
   # Add sample data creation here
   puts "Created sample data for #{Rails.env} environment"

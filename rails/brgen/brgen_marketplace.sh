@@ -1,28 +1,20 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen Marketplace setup: Multi-vendor marketplace with Solidus, payments, Mapbox, search, and anonymous features on OpenBSD 7.5, unprivileged user
 # Framework v37.3.2 compliant with enhanced e-commerce functionality
-
 APP_NAME="brgen_marketplace"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/@shared_functions.sh"
-
 log "Starting Brgen Marketplace setup with Solidus e-commerce platform"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "faker"
-
 # Install Solidus e-commerce platform
 log "Installing Solidus e-commerce platform"
 bundle add solidus --github='solidusio/solidus'
@@ -31,18 +23,15 @@ bundle add solidus_searchkick --github='solidusio-contrib/solidus_searchkick'
 bundle add solidus_reviews --github='solidusio-contrib/solidus_reviews'
 bundle add solidus_stripe
 bundle install
-
 # Generate Solidus installation
 bin/rails generate solidus:install --auto-accept
 bin/rails generate solidus_searchkick:install
 bin/rails generate solidus_reviews:install
 bin/rails db:migrate
-
 # Add custom marketplace models
 bin/rails generate model Vendor name:string description:text user:references verified:boolean
 bin/rails generate model VendorProduct vendor:references product:references commission_rate:decimal
 bin/rails generate scaffold Listing title:string description:text price:decimal vendor:references category:string status:string location:string lat:decimal lng:decimal photos:attachments
-
 cat <<EOF > app/reflexes/products_infinite_scroll_reflex.rb
 class ProductsInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -51,7 +40,6 @@ class ProductsInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/orders_infinite_scroll_reflex.rb
 class OrdersInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -60,23 +48,18 @@ class OrdersInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/controllers/products_controller.rb
 class ProductsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_product, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @products = pagy(Product.all.order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @product = Product.new
   end
-
   def create
     @product = Product.new(product_params)
     @product.user = current_user
@@ -89,10 +72,8 @@ class ProductsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @product.update(product_params)
       respond_to do |format|
@@ -103,7 +84,6 @@ class ProductsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @product.destroy
     respond_to do |format|
@@ -111,36 +91,28 @@ class ProductsController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_product
     @product = Product.find(params[:id])
     redirect_to products_path, alert: t("brgen_marketplace.not_authorized") unless @product.user == current_user || current_user&.admin?
   end
-
   def product_params
     params.require(:product).permit(:name, :price, :description, photos: [])
   end
 end
 EOF
-
 cat <<EOF > app/controllers/orders_controller.rb
 class OrdersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_order, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @orders = pagy(Order.where(buyer: current_user).order(created_at: :desc)) unless @stimulus_reflex
   end
-
   def show
   end
-
   def new
     @order = Order.new
   end
-
   def create
     @order = Order.new(order_params)
     @order.buyer = current_user
@@ -153,10 +125,8 @@ class OrdersController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @order.update(order_params)
       respond_to do |format|
@@ -167,7 +137,6 @@ class OrdersController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @order.destroy
     respond_to do |format|
@@ -175,20 +144,16 @@ class OrdersController < ApplicationController
       format.turbo_stream
     end
   end
-
   private
-
   def set_order
     @order = Order.where(buyer: current_user).find(params[:id])
     redirect_to orders_path, alert: t("brgen_marketplace.not_authorized") unless @order.buyer == current_user || current_user&.admin?
   end
-
   def order_params
     params.require(:order).permit(:product_id, :status)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/home_controller.rb
 class HomeController < ApplicationController
   def index
@@ -197,9 +162,7 @@ class HomeController < ApplicationController
   end
 end
 EOF
-
 mkdir -p app/views/brgen_marketplace_logo
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #ff9800;
@@ -210,41 +173,33 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #dadce0;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
-
 header, footer { background: var(--surface); border-bottom: 1px solid var(--border); padding: var(--spacing); }
 footer { border-top: 1px solid var(--border); border-bottom: none; }
-
 nav { display: flex; gap: var(--spacing); align-items: center; flex-wrap: wrap; }
 nav a { text-decoration: none; color: var(--text); }
 nav a:hover { color: var(--primary); }
-
 h1, h2, h3 { margin-bottom: var(--spacing); font-weight: 600; }
 h1 { font-size: 2rem; }
 h2 { font-size: 1.5rem; }
-
 .grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-.product-card { 
-  background: var(--surface); 
-  padding: var(--spacing); 
-  border: 1px solid var(--border); 
+.product-card {
+  background: var(--surface);
+  padding: var(--spacing);
+  border: 1px solid var(--border);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
 }
 .product-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: var(--spacing); }
 .price { font-size: 1.25rem; font-weight: 600; color: var(--primary); }
-
 button, .button {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -256,41 +211,36 @@ button, .button {
   display: inline-block;
 }
 button:hover, .button:hover { opacity: 0.9; }
-
 .cart { position: relative; }
-.cart-count { 
-  position: absolute; 
-  top: -8px; 
-  right: -8px; 
-  background: var(--primary); 
-  color: white; 
-  border-radius: 50%; 
-  width: 20px; 
-  height: 20px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 0.75rem; 
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
 }
-
 @media (max-width: 768px) {
   .grid { grid-template-columns: 1fr; }
 }
 EOF
-
 cat <<EOF > app/views/brgen_marketplace_logo/_logo.html.erb
 <%= tag.svg xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 100 50", role: "img", class: "logo", "aria-label": t("brgen_marketplace.logo_alt") do %>
   <%= tag.title t("brgen_marketplace.logo_title", default: "Brgen Marketplace Logo") %>
   <%= tag.text x: "50", y: "30", "text-anchor": "middle", "font-family": "Helvetica, Arial, sans-serif", "font-size": "16", fill: "#4caf50" do %>Marketplace<% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_header.html.erb
 <%= tag.header role: "banner" do %>
   <%= render partial: "brgen_marketplace_logo/logo" %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shared/_footer.html.erb
 <%= tag.footer role: "contentinfo" do %>
   <%= tag.nav class: "footer-links" aria-label: t("shared.footer_nav") do %>
@@ -304,7 +254,6 @@ cat <<EOF > app/views/shared/_footer.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/home/index.html.erb
 <% content_for :title, t("brgen_marketplace.home_title") %>
 <% content_for :description, t("brgen_marketplace.home_description") %>
@@ -363,7 +312,6 @@ cat <<EOF > app/views/home/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/products/index.html.erb
 <% content_for :title, t("brgen_marketplace.products_title") %>
 <% content_for :description, t("brgen_marketplace.products_description") %>
@@ -413,7 +361,6 @@ cat <<EOF > app/views/products/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/products/_card.html.erb
 <%= turbo_frame_tag dom_id(product) do %>
   <%= tag.article class: "post-card", id: dom_id(product), role: "article" do %>
@@ -438,7 +385,6 @@ cat <<EOF > app/views/products/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/products/_form.html.erb
 <%= form_with model: product, local: true, data: { controller: "character-counter form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -483,7 +429,6 @@ cat <<EOF > app/views/products/_form.html.erb
   <%= form.submit t("brgen_marketplace.#{product.persisted? ? 'update' : 'create'}_product"), data: { turbo_submits_with: t("brgen_marketplace.#{product.persisted? ? 'updating' : 'creating'}_product") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/products/new.html.erb
 <% content_for :title, t("brgen_marketplace.new_product_title") %>
 <% content_for :description, t("brgen_marketplace.new_product_description") %>
@@ -508,7 +453,6 @@ cat <<EOF > app/views/products/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/products/edit.html.erb
 <% content_for :title, t("brgen_marketplace.edit_product_title") %>
 <% content_for :description, t("brgen_marketplace.edit_product_description") %>
@@ -533,7 +477,6 @@ cat <<EOF > app/views/products/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/products/show.html.erb
 <% content_for :title, @product.name %>
 <% content_for :description, @product.description&.truncate(160) %>
@@ -565,7 +508,6 @@ cat <<EOF > app/views/products/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/index.html.erb
 <% content_for :title, t("brgen_marketplace.orders_title") %>
 <% content_for :description, t("brgen_marketplace.orders_description") %>
@@ -600,7 +542,6 @@ cat <<EOF > app/views/orders/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/_card.html.erb
 <%= turbo_frame_tag dom_id(order) do %>
   <%= tag.article class: "post-card", id: dom_id(order), role: "article" do %>
@@ -619,7 +560,6 @@ cat <<EOF > app/views/orders/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/orders/_form.html.erb
 <%= form_with model: order, local: true, data: { controller: "form-validation", turbo: true } do |form| %>
   <%= tag.div data: { turbo_frame: "notices" } do %>
@@ -648,7 +588,6 @@ cat <<EOF > app/views/orders/_form.html.erb
   <%= form.submit t("brgen_marketplace.#{order.persisted? ? 'update' : 'create'}_order"), data: { turbo_submits_with: t("brgen_marketplace.#{order.persisted? ? 'updating' : 'creating'}_order") } %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/orders/new.html.erb
 <% content_for :title, t("brgen_marketplace.new_order_title") %>
 <% content_for :description, t("brgen_marketplace.new_order_description") %>
@@ -673,7 +612,6 @@ cat <<EOF > app/views/orders/new.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/edit.html.erb
 <% content_for :title, t("brgen_marketplace.edit_order_title") %>
 <% content_for :description, t("brgen_marketplace.edit_order_description") %>
@@ -698,7 +636,6 @@ cat <<EOF > app/views/orders/edit.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/orders/show.html.erb
 <% content_for :title, t("brgen_marketplace.order_title", product: @order.product.name) %>
 <% content_for :description, t("brgen_marketplace.order_description", product: @order.product.name) %>
@@ -729,13 +666,10 @@ cat <<EOF > app/views/orders/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 generate_turbo_views "products" "product"
 generate_turbo_views "orders" "order"
-
 cat <<EOF > db/seeds.rb
 require "faker"
-
 puts "Creating demo users with Faker..."
 demo_users = []
 8.times do
@@ -745,9 +679,7 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users."
-
 puts "Creating demo vendors..."
 vendors = []
 4.times do
@@ -758,9 +690,7 @@ vendors = []
     verified: [true, false].sample
   )
 end
-
 puts "Created #{vendors.count} vendors."
-
 puts "Creating demo products with Faker..."
 categories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys']
 50.times do
@@ -771,9 +701,7 @@ categories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'To
     user: demo_users.sample
   )
 end
-
 puts "Created #{Product.count} demo products."
-
 puts "Creating demo listings..."
 30.times do
   listing = Listing.create!(
@@ -788,9 +716,7 @@ puts "Creating demo listings..."
     lng: Faker::Address.longitude
   )
 end
-
 puts "Created #{Listing.count} demo listings."
-
 puts "Creating demo orders..."
 20.times do
   Order.create!(
@@ -800,16 +726,11 @@ puts "Creating demo orders..."
     total_amount: Faker::Commerce.price(range: 20.0..300.0)
   )
 end
-
 puts "Created #{Order.count} demo orders."
-
 puts "Seed data creation complete!"
 EOF
-
 commit "Brgen Marketplace setup complete: E-commerce platform with live search, infinite scroll, and anonymous features"
-
 log "Brgen Marketplace setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
-
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

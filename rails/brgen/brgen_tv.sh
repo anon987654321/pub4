@@ -1,28 +1,20 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Brgen TV setup: Video streaming platform with live streaming, content management, and social viewing features on OpenBSD 7.5, unprivileged user
 # Framework v37.3.2 compliant with enhanced video streaming capabilities
-
 APP_NAME="brgen_tv"
 BASE_DIR="/home/dev/rails"
 SERVER_IP="185.52.176.18"
 APP_PORT=$((10000 + RANDOM % 10000))
 SCRIPT_DIR="${0:a:h}"
-
 source "${SCRIPT_DIR}/@shared_functions.sh"
-
 log "Starting Brgen TV setup with video streaming and live broadcasting"
-
 setup_full_app "$APP_NAME"
-
 command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-
 install_gem "faker"
-
 # Generate enhanced video streaming models
 bin/rails generate model Video title:string description:text user:references duration:integer views:integer status:string category:string
 bin/rails generate model LiveStream title:string description:text user:references status:string viewer_count:integer stream_key:string
@@ -30,14 +22,12 @@ bin/rails generate model Channel name:string description:text user:references su
 bin/rails generate model Subscription user:references channel:references
 bin/rails generate model VideoComment video:references user:references content:text timestamp:integer
 bin/rails generate model StreamChat live_stream:references user:references message:text
-
 # Add video processing and streaming capabilities
 bundle add image_processing
 bundle add mini_magick
 bundle add aws-sdk-s3
 bundle add video_info
 bundle install
-
 cat <<EOF > app/reflexes/shows_infinite_scroll_reflex.rb
 class ShowsInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -46,7 +36,6 @@ class ShowsInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/reflexes/episodes_infinite_scroll_reflex.rb
 class EpisodesInfiniteScrollReflex < InfiniteScrollReflex
   def load_more
@@ -55,25 +44,20 @@ class EpisodesInfiniteScrollReflex < InfiniteScrollReflex
   end
 end
 EOF
-
 cat <<EOF > app/controllers/shows_controller.rb
 class ShowsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_show, only: [:show, :edit, :update, :destroy]
-
   def index
     @pagy, @shows = pagy(Show.all.order(release_date: :desc)) unless @stimulus_reflex
   end
-
   def show
     @episodes = @show.episodes.order(:season_number, :episode_number)
     @viewing = current_user&.viewings&.find_by(show: @show)
   end
-
   def new
     @show = current_user.shows.build
   end
-
   def create
     @show = current_user.shows.build(show_params)
     if @show.save
@@ -82,10 +66,8 @@ class ShowsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @show.update(show_params)
       redirect_to @show, notice: t("tv.show_updated")
@@ -93,52 +75,41 @@ class ShowsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @show.destroy
     redirect_to shows_url, notice: t("tv.show_destroyed")
   end
-
   def search
     @pagy, @shows = pagy(Show.where("title ILIKE ? OR description ILIKE ?", "%#{params[:q]}%", "%#{params[:q]}%"))
     render :index
   end
-
   def by_genre
     @pagy, @shows = pagy(Show.where(genre: params[:genre]).order(release_date: :desc))
     render :index
   end
-
   private
-
   def set_show
     @show = Show.find(params[:id])
   end
-
   def show_params
     params.require(:show).permit(:title, :genre, :description, :release_date, :duration, :trailer_url, :poster)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/episodes_controller.rb
 class EpisodesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_show
   before_action :set_episode, only: [:show, :edit, :update, :destroy, :watch]
-
   def index
     @episodes = @show.episodes.order(:season_number, :episode_number)
   end
-
   def show
     @viewing = current_user.viewings.find_or_initialize_by(show: @show, episode: @episode)
   end
-
   def new
     @episode = @show.episodes.build
   end
-
   def create
     @episode = @show.episodes.build(episode_params)
     if @episode.save
@@ -147,10 +118,8 @@ class EpisodesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
   def edit
   end
-
   def update
     if @episode.update(episode_params)
       redirect_to [@show, @episode], notice: t("tv.episode_updated")
@@ -158,12 +127,10 @@ class EpisodesController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
   def destroy
     @episode.destroy
     redirect_to show_episodes_url(@show), notice: t("tv.episode_destroyed")
   end
-
   def watch
     @viewing = current_user.viewings.find_or_create_by(show: @show, episode: @episode)
     respond_to do |format|
@@ -171,35 +138,27 @@ class EpisodesController < ApplicationController
       format.json { render json: @viewing }
     end
   end
-
   private
-
   def set_show
     @show = Show.find(params[:show_id])
   end
-
   def set_episode
     @episode = @show.episodes.find(params[:id])
   end
-
   def episode_params
     params.require(:episode).permit(:title, :description, :duration, :episode_number, :season_number, :video_url)
   end
 end
 EOF
-
 cat <<EOF > app/controllers/viewings_controller.rb
 class ViewingsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_viewing, only: [:show, :update, :destroy]
-
   def index
     @pagy, @viewings = pagy(current_user.viewings.includes(:show, :episode).order(updated_at: :desc))
   end
-
   def show
   end
-
   def update
     if @viewing.update(viewing_params)
       render json: @viewing
@@ -207,73 +166,59 @@ class ViewingsController < ApplicationController
       render json: { errors: @viewing.errors }, status: :unprocessable_entity
     end
   end
-
   def destroy
     @viewing.destroy
     redirect_to viewings_url, notice: t("tv.viewing_destroyed")
   end
-
   private
-
   def set_viewing
     @viewing = current_user.viewings.find(params[:id])
   end
-
   def viewing_params
     params.require(:viewing).permit(:progress, :watched)
   end
 end
 EOF
-
 cat <<EOF > app/models/show.rb
 class Show < ApplicationRecord
   belongs_to :user
   has_many :episodes, dependent: :destroy
   has_many :viewings, dependent: :destroy
   has_one_attached :poster
-
   validates :title, presence: true
   validates :genre, presence: true
   validates :description, presence: true
   validates :release_date, presence: true
   validates :duration, presence: true, numericality: { greater_than: 0 }
   validates :rating, numericality: { in: 0..10 }, allow_nil: true
-
   scope :by_genre, ->(genre) { where(genre: genre) }
   scope :recent, -> { where("release_date > ?", 1.year.ago) }
   scope :popular, -> { where("rating > ?", 7.0) }
-
   def total_episodes
     episodes.count
   end
-
   def latest_episode
     episodes.order(:season_number, :episode_number).last
   end
 end
 EOF
-
 cat <<EOF > app/models/episode.rb
 class Episode < ApplicationRecord
   belongs_to :show
   has_many :viewings, dependent: :destroy
-
   validates :title, presence: true
   validates :duration, presence: true, numericality: { greater_than: 0 }
   validates :episode_number, presence: true, numericality: { greater_than: 0 }
   validates :season_number, presence: true, numericality: { greater_than: 0 }
   validates :video_url, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp }
-
   scope :by_season, ->(season) { where(season_number: season) }
   scope :in_order, -> { order(:season_number, :episode_number) }
-
   def next_episode
     show.episodes.where(
       "(season_number = ? AND episode_number > ?) OR season_number > ?",
       season_number, episode_number, season_number
     ).order(:season_number, :episode_number).first
   end
-
   def previous_episode
     show.episodes.where(
       "(season_number = ? AND episode_number < ?) OR season_number < ?",
@@ -282,35 +227,28 @@ class Episode < ApplicationRecord
   end
 end
 EOF
-
 cat <<EOF > app/models/viewing.rb
 class Viewing < ApplicationRecord
   belongs_to :show
   belongs_to :episode
   belongs_to :user
-
   validates :progress, presence: true, numericality: { greater_than_or_equal_to: 0 }
-
   scope :watched, -> { where(watched: true) }
   scope :in_progress, -> { where(watched: false).where("progress > 0") }
   scope :recent, -> { where("updated_at > ?", 1.week.ago) }
-
   def progress_percentage
     return 0 if episode.duration.zero?
     (progress.to_f / episode.duration * 100).round(1)
   end
-
   def mark_as_watched!
     update!(watched: true, progress: episode.duration)
   end
 end
 EOF
-
 cat <<EOF > config/routes.rb
 Rails.application.routes.draw do
   devise_for :users, controllers: { omniauth_callbacks: "omniauth_callbacks" }
   root "shows#index"
-
   resources :shows do
     resources :episodes do
       member do
@@ -318,15 +256,12 @@ Rails.application.routes.draw do
       end
     end
   end
-
   resources :viewings, only: [:index, :show, :update, :destroy]
-
   get "search", to: "shows#search"
   get "genre/:genre", to: "shows#by_genre", as: :genre_shows
   get "my_shows", to: "viewings#index"
 end
 EOF
-
 cat <<EOF > app/views/shows/index.html.erb
 <% content_for :title, t("tv.shows_title") %>
 <% content_for :description, t("tv.shows_description") %>
@@ -347,21 +282,17 @@ cat <<EOF > app/views/shows/index.html.erb
     <%= tag.div data: { turbo_frame: "notices" } do %>
       <%= render "shared/notices" %>
     <% end %>
-
     <%= tag.div class: "filter-bar" do %>
       <%= form_with url: search_path, method: :get, local: true, data: { turbo_stream: true } do |f| %>
         <%= f.text_field :q, placeholder: t("tv.search_placeholder"), data: { reflex: "input->Shows#search" } %>
       <% end %>
-
       <%= tag.div class: "genre-filters" do %>
         <% %w[Action Comedy Drama Horror Sci-Fi Documentary].each do |genre| %>
           <%= link_to genre, genre_shows_path(genre), class: "genre-button" %>
         <% end %>
       <% end %>
     <% end %>
-
     <%= link_to t("tv.new_show"), new_show_path, class: "button", "aria-label": t("tv.new_show") if current_user %>
-
     <%= turbo_frame_tag "shows", data: { controller: "infinite-scroll" } do %>
       <% @shows.each do |show| %>
         <%= render partial: "shows/card", locals: { show: show } %>
@@ -373,7 +304,6 @@ cat <<EOF > app/views/shows/index.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/shows/_card.html.erb
 <%= tag.article class: "show-card", data: { turbo_frame: "show_#{show.id}" } do %>
   <%= tag.header do %>
@@ -386,13 +316,11 @@ cat <<EOF > app/views/shows/_card.html.erb
       <%= tag.span "#{show.total_episodes} episodes", class: "episode-count" %>
     <% end %>
   <% end %>
-
   <% if show.poster.attached? %>
     <%= tag.div class: "show-poster" do %>
       <%= image_tag show.poster, alt: show.title, loading: "lazy" %>
     <% end %>
   <% end %>
-
   <%= tag.div class: "show-info" do %>
     <%= tag.p truncate(show.description, length: 120), class: "description" %>
     <%= tag.div class: "show-details" do %>
@@ -400,7 +328,6 @@ cat <<EOF > app/views/shows/_card.html.erb
       <%= tag.span "#{show.duration} min", class: "duration" %>
     <% end %>
   <% end %>
-
   <%= tag.footer do %>
     <%= link_to t("tv.watch_now"), show_path(show), class: "button primary" %>
     <% if show.trailer_url.present? %>
@@ -409,7 +336,6 @@ cat <<EOF > app/views/shows/_card.html.erb
   <% end %>
 <% end %>
 EOF
-
 cat <<EOF > app/views/shows/show.html.erb
 <% content_for :title, @show.title %>
 <% content_for :description, @show.description %>
@@ -422,7 +348,6 @@ cat <<EOF > app/views/shows/show.html.erb
           <%= image_tag @show.poster, alt: @show.title %>
         <% end %>
       <% end %>
-
       <%= tag.div class: "show-info" do %>
         <%= tag.h1 @show.title, id: "show-heading" %>
         <%= tag.div class: "show-meta" do %>
@@ -432,16 +357,13 @@ cat <<EOF > app/views/shows/show.html.erb
           <%= tag.span "#{@show.duration} min", class: "duration" %>
         <% end %>
         <%= tag.p @show.description, class: "description" %>
-
         <% if @show.trailer_url.present? %>
           <%= link_to t("tv.watch_trailer"), @show.trailer_url, target: "_blank", class: "button secondary" %>
         <% end %>
       <% end %>
     <% end %>
-
     <%= tag.section aria_labelledby: "episodes-heading" do %>
       <%= tag.h2 t("tv.episodes"), id: "episodes-heading" %>
-
       <% if @episodes.any? %>
         <% @episodes.group_by(&:season_number).each do |season, episodes| %>
           <%= tag.div class: "season" do %>
@@ -466,7 +388,6 @@ cat <<EOF > app/views/shows/show.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > app/views/episodes/watch.html.erb
 <% content_for :title, "#{@show.title} - #{@episode.title}" %>
 <%= render "shared/header" %>
@@ -483,7 +404,6 @@ cat <<EOF > app/views/episodes/watch.html.erb
         <% end %>
       <% end %>
     <% end %>
-
     <%= tag.div class: "episode-info" do %>
       <%= tag.h1 @episode.title, id: "episode-heading" %>
       <%= tag.div class: "episode-meta" do %>
@@ -493,7 +413,6 @@ cat <<EOF > app/views/episodes/watch.html.erb
       <% end %>
       <%= tag.p @episode.description if @episode.description.present? %>
     <% end %>
-
     <%= tag.div class: "episode-navigation" do %>
       <% if @episode.previous_episode %>
         <%= link_to t("tv.previous_episode"), watch_show_episode_path(@show, @episode.previous_episode), class: "button secondary" %>
@@ -506,7 +425,6 @@ cat <<EOF > app/views/episodes/watch.html.erb
 <% end %>
 <%= render "shared/footer" %>
 EOF
-
 cat <<EOF > config/locales/tv.en.yml
 en:
   tv:
@@ -533,10 +451,8 @@ en:
     previous_episode: "Previous Episode"
     next_episode: "Next Episode"
 EOF
-
 cat <<EOF > app/assets/stylesheets/tv.scss
 // Brgen TV - Video streaming platform styles
-
 .show-card {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -545,26 +461,21 @@ cat <<EOF > app/assets/stylesheets/tv.scss
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: transform 0.2s ease;
-
   &:hover {
     transform: translateY(-2px);
   }
-
   header {
     padding: 1rem;
-
     h3 {
       margin: 0;
       font-size: 1.2rem;
       color: #673ab7;
     }
-
     .show-meta {
       display: flex;
       gap: 1rem;
       margin-top: 0.5rem;
       flex-wrap: wrap;
-
       .genre {
         background: #f3e5f5;
         color: #673ab7;
@@ -572,40 +483,33 @@ cat <<EOF > app/assets/stylesheets/tv.scss
         border-radius: 4px;
         font-size: 0.8rem;
       }
-
       .rating {
         color: #ff9800;
         font-weight: bold;
       }
-
       .episode-count {
         color: #666;
         font-size: 0.9rem;
       }
     }
   }
-
   .show-poster {
     width: 100%;
     height: 200px;
     overflow: hidden;
-
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
   }
-
   .show-info {
     padding: 1rem;
-
     .description {
       color: #666;
       margin: 0.5rem 0;
       line-height: 1.4;
     }
-
     .show-details {
       display: flex;
       gap: 1rem;
@@ -613,12 +517,10 @@ cat <<EOF > app/assets/stylesheets/tv.scss
       color: #888;
     }
   }
-
   footer {
     padding: 1rem;
     display: flex;
     gap: 0.5rem;
-
     .button {
       flex: 1;
       text-align: center;
@@ -627,12 +529,10 @@ cat <<EOF > app/assets/stylesheets/tv.scss
       text-decoration: none;
       border: none;
       cursor: pointer;
-
       &.primary {
         background: #673ab7;
         color: white;
       }
-
       &.secondary {
         background: #f5f5f5;
         color: #333;
@@ -640,71 +540,58 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     }
   }
 }
-
 .show-header {
   display: flex;
   gap: 2rem;
   margin-bottom: 2rem;
   align-items: flex-start;
-
   .show-poster-large {
     flex-shrink: 0;
     width: 300px;
-
     img {
       width: 100%;
       border-radius: 8px;
     }
   }
-
   .show-info {
     flex: 1;
-
     h1 {
       color: #673ab7;
       margin-bottom: 1rem;
     }
-
     .show-meta {
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
       flex-wrap: wrap;
-
       .genre {
         background: #f3e5f5;
         color: #673ab7;
         padding: 0.5rem 1rem;
         border-radius: 4px;
       }
-
       .rating {
         color: #ff9800;
         font-weight: bold;
       }
-
       .year, .duration {
         color: #666;
       }
     }
-
     .description {
       line-height: 1.6;
       margin-bottom: 1rem;
     }
   }
 }
-
 .season {
   margin-bottom: 2rem;
-
   h3 {
     border-bottom: 2px solid #673ab7;
     padding-bottom: 0.5rem;
     color: #673ab7;
     margin-bottom: 1rem;
   }
-
   .episode {
     display: flex;
     justify-content: space-between;
@@ -713,26 +600,21 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     border: 1px solid #eee;
     border-radius: 4px;
     margin-bottom: 0.5rem;
-
     .episode-info {
       flex: 1;
-
       h4 {
         margin: 0 0 0.5rem 0;
         color: #333;
       }
-
       p {
         margin: 0 0 0.5rem 0;
         color: #666;
       }
-
       .duration {
         font-size: 0.9rem;
         color: #888;
       }
     }
-
     .button {
       margin-left: 1rem;
       padding: 0.5rem 1rem;
@@ -743,23 +625,19 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     }
   }
 }
-
 .video-player-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
-
   .video-container {
     margin-bottom: 2rem;
     background: #000;
     border-radius: 8px;
     overflow: hidden;
-
     video {
       width: 100%;
       height: auto;
     }
-
     .video-placeholder {
       aspect-ratio: 16/9;
       display: flex;
@@ -769,54 +647,44 @@ cat <<EOF > app/assets/stylesheets/tv.scss
       font-size: 1.2rem;
     }
   }
-
   .episode-info {
     margin-bottom: 2rem;
-
     h1 {
       color: #673ab7;
       margin-bottom: 1rem;
     }
-
     .episode-meta {
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
       flex-wrap: wrap;
-
       .show-link {
         color: #673ab7;
         text-decoration: none;
         font-weight: bold;
       }
-
       .episode-number {
         color: #666;
       }
-
       .duration {
         color: #888;
       }
     }
   }
-
   .episode-navigation {
     display: flex;
     gap: 1rem;
     justify-content: center;
-
     .button {
       padding: 0.75rem 1.5rem;
       border-radius: 4px;
       text-decoration: none;
       border: none;
       cursor: pointer;
-
       &.primary {
         background: #673ab7;
         color: white;
       }
-
       &.secondary {
         background: #f5f5f5;
         color: #333;
@@ -824,13 +692,11 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     }
   }
 }
-
 .filter-bar {
   margin-bottom: 2rem;
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-
   input[type="text"] {
     flex: 1;
     min-width: 200px;
@@ -838,12 +704,10 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     border: 1px solid #ddd;
     border-radius: 4px;
   }
-
   .genre-filters {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-
     .genre-button {
       padding: 0.5rem 1rem;
       background: #f5f5f5;
@@ -851,7 +715,6 @@ cat <<EOF > app/assets/stylesheets/tv.scss
       text-decoration: none;
       border-radius: 4px;
       font-size: 0.9rem;
-
       &:hover {
         background: #673ab7;
         color: white;
@@ -859,41 +722,33 @@ cat <<EOF > app/assets/stylesheets/tv.scss
     }
   }
 }
-
 @media (max-width: 768px) {
   .show-header {
     flex-direction: column;
-
     .show-poster-large {
       width: 100%;
       max-width: 300px;
       margin: 0 auto;
     }
   }
-
   .episode {
     flex-direction: column;
     align-items: flex-start !important;
-
     .button {
       margin-left: 0 !important;
       margin-top: 1rem;
       align-self: stretch;
     }
   }
-
   .filter-bar {
     flex-direction: column;
-
     input[type="text"] {
       min-width: auto;
     }
   }
 }
 EOF
-
 bin/rails db:migrate
-
 cat <<'EOF' > app/assets/stylesheets/application.css
 :root {
   --primary: #673ab7;
@@ -904,18 +759,14 @@ cat <<'EOF' > app/assets/stylesheets/application.css
   --border: #2a2a2a;
   --spacing: 1rem;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
 }
-
 main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
-
 .video-grid { display: grid; gap: var(--spacing); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .video-card {
   background: var(--surface);
@@ -925,21 +776,17 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--spacing); }
   cursor: pointer;
 }
 .video-card:hover { border-color: var(--primary); }
-
 .video-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 .video-info { padding: var(--spacing); }
 .video-title { font-weight: 600; margin-bottom: 0.5rem; }
 .video-meta { color: var(--secondary); font-size: 0.9rem; }
-
 .player-container {
   background: var(--surface);
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: calc(var(--spacing) * 2);
 }
-
 video { width: 100%; aspect-ratio: 16/9; background: #000; }
-
 .episode-list { display: grid; gap: calc(var(--spacing) / 2); }
 .episode {
   background: var(--surface);
@@ -951,7 +798,6 @@ video { width: 100%; aspect-ratio: 16/9; background: #000; }
   cursor: pointer;
 }
 .episode:hover { border-color: var(--primary); }
-
 button, .button {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -960,18 +806,14 @@ button, .button {
   border-radius: 4px;
   cursor: pointer;
 }
-
 @media (max-width: 768px) {
   .video-grid { grid-template-columns: 1fr; }
 }
 EOF
-
 generate_turbo_views "shows" "show"
 generate_turbo_views "episodes" "episode"
-
 cat <<EOF > db/seeds.rb
 require "faker"
-
 puts "Creating demo users with Faker..."
 demo_users = []
 8.times do
@@ -981,9 +823,7 @@ demo_users = []
     name: Faker::Name.name
   )
 end
-
 puts "Created #{demo_users.count} demo users."
-
 puts "Creating demo TV shows with Faker..."
 genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Documentary', 'Thriller', 'Romance']
 15.times do
@@ -998,9 +838,7 @@ genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Documentary', 'Thril
     trailer_url: "https://example.com/trailers/#{Faker::Alphanumeric.alpha(number: 10)}"
   )
 end
-
 puts "Created #{Show.count} demo TV shows."
-
 puts "Creating demo episodes..."
 Show.all.each do |show|
   seasons = rand(1..4)
@@ -1019,9 +857,7 @@ Show.all.each do |show|
     end
   end
 end
-
 puts "Created #{Episode.count} demo episodes."
-
 puts "Creating demo viewings..."
 50.times do
   episode = Episode.all.sample
@@ -1033,16 +869,11 @@ puts "Creating demo viewings..."
     watched: [true, false].sample
   )
 end
-
 puts "Created #{Viewing.count} demo viewings."
-
 puts "Seed data creation complete!"
 EOF
-
 commit "Brgen TV setup complete: Video streaming platform with live search and anonymous features"
-
 log "Brgen TV setup complete. Run 'bin/falcon-host' with PORT set to start on OpenBSD."
-
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

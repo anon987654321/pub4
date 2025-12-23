@@ -1,17 +1,13 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 # Rails 8 PWA Setup - Updated 2025
 # Full Progressive Web App with offline support, push notifications
-
 setup_pwa_manifest() {
   local app_name="${1:-RailsApp}"
   local theme_color="${2:-#1a73e8}"
   local background_color="${3:-#ffffff}"
-
   log "Generating PWA manifest for $app_name"
   mkdir -p public
-  
   cat <<EOF > public/manifest.json
 {
   "name": "${app_name}",
@@ -68,22 +64,18 @@ EOF
 setup_service_worker() {
   log "Generating Rails 8 service worker"
   mkdir -p public
-  
   cat <<'EOF' > public/service-worker.js
 // Service Worker for Rails 8 PWA - 2024 Best Practices
 // Caching strategies: cache-first (assets), network-first (API), stale-while-revalidate (pages)
 // See: https://web.dev/service-worker-lifecycle/
-
 const CACHE_VERSION = 'v1'
 const CACHE_NAME = `rails-pwa-${CACHE_VERSION}`
-
 // Critical assets to precache (offline support)
 const STATIC_ASSETS = [
   '/',
   '/offline',
   '/manifest.json'
 ]
-
 // Cache-first patterns (immutable assets)
 const CACHE_FIRST = [
   /.css$/,
@@ -94,14 +86,12 @@ const CACHE_FIRST = [
   /.webp$/,
   /.svg$/
 ]
-
 // Network-first patterns (dynamic content)
 const NETWORK_FIRST = [
   //api//,
   //__turbo/,
   //cable$/
 ]
-
 // Install: Precache static assets
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -112,7 +102,6 @@ self.addEventListener('install', event => {
   // Activate immediately (skip waiting for old service worker)
   self.skipWaiting()
 })
-
 // Activate: Clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
@@ -127,38 +116,31 @@ self.addEventListener('activate', event => {
   // Take control immediately
   self.clients.claim()
 })
-
 // Fetch: Route requests based on patterns
 self.addEventListener('fetch', event => {
   const { request } = event
   const url = new URL(request.url)
-  
   // Skip non-GET requests and Chrome extensions
   if (request.method !== 'GET' || url.protocol === 'chrome-extension:') {
     return
   }
-  
   // Cache-first strategy (assets)
   if (CACHE_FIRST.some(pattern => pattern.test(url.pathname))) {
     event.respondWith(cacheFirst(request))
     return
   }
-  
   // Network-first strategy (API, Turbo, ActionCable)
   if (NETWORK_FIRST.some(pattern => pattern.test(url.pathname))) {
     event.respondWith(networkFirst(request))
     return
   }
-  
   // Stale-while-revalidate (pages - best UX)
   event.respondWith(staleWhileRevalidate(request))
 })
-
 // Cache-first: Serve from cache, fallback to network
 async function cacheFirst(request) {
   const cached = await caches.match(request)
   if (cached) return cached
-  
   try {
     const response = await fetch(request)
     if (response.ok) {
@@ -170,7 +152,6 @@ async function cacheFirst(request) {
     return new Response('Offline', { status: 503 })
   }
 }
-
 // Network-first: Try network, fallback to cache
 async function networkFirst(request) {
   try {
@@ -185,11 +166,9 @@ async function networkFirst(request) {
     return cached || new Response('Offline', { status: 503 })
   }
 }
-
 // Stale-while-revalidate: Serve cache immediately, update in background
 async function staleWhileRevalidate(request) {
   const cached = await caches.match(request)
-  
   const fetchPromise = fetch(request).then(response => {
     if (response.ok) {
       const cache = caches.open(CACHE_NAME)
@@ -197,17 +176,14 @@ async function staleWhileRevalidate(request) {
     }
     return response
   }).catch(() => cached || new Response('Offline', { status: 503 }))
-  
   return cached || fetchPromise
 }
-
 // Background sync for offline forms (future enhancement)
 // self.addEventListener('sync', event => {
 //   if (event.tag === 'sync-forms') {
 //     event.waitUntil(syncForms())
 //   }
 // })
-
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -215,7 +191,6 @@ self.addEventListener('install', event => {
       .then(() => self.skipWaiting())
   )
 })
-
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -225,13 +200,10 @@ self.addEventListener('activate', event => {
       .then(() => self.clients.claim())
   )
 })
-
 self.addEventListener('fetch', event => {
   const { request } = event
   const url = new URL(request.url)
-
   if (url.origin !== location.origin) return
-
   if (NETWORK_FIRST.some(p => p.test(url.pathname))) {
     event.respondWith(networkFirst(request))
   } else if (CACHE_FIRST.some(p => p.test(url.pathname))) {
@@ -240,11 +212,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirst(request))
   }
 })
-
 async function cacheFirst(request) {
   const cached = await caches.match(request)
   if (cached) return cached
-
   try {
     const response = await fetch(request)
     if (response.ok) {
@@ -256,7 +226,6 @@ async function cacheFirst(request) {
     return caches.match('/offline')
   }
 }
-
 async function networkFirst(request) {
   try {
     const response = await fetch(request)
@@ -269,7 +238,6 @@ async function networkFirst(request) {
     return await caches.match(request) || caches.match('/offline')
   }
 }
-
 self.addEventListener('push', event => {
   const data = event.data?.json() || {}
   event.waitUntil(
@@ -281,7 +249,6 @@ self.addEventListener('push', event => {
     })
   )
 })
-
 self.addEventListener('notificationclick', event => {
   event.notification.close()
   event.waitUntil(
@@ -301,7 +268,6 @@ EOF
 setup_offline_page() {
   log "Generating offline page"
   mkdir -p app/views/errors
-  
   cat <<'EOF' > app/views/errors/offline.html.erb
 <!DOCTYPE html>
 <html lang="en">
@@ -362,20 +328,16 @@ setup_offline_page() {
 </body>
 </html>
 EOF
-
   cat <<'EOF' > config/routes.rb
 Rails.application.routes.draw do
   get '/offline', to: 'errors#offline'
 end
 EOF
-  
   log "Offline page generated"
 }
-
 setup_pwa_controller() {
   log "Generating PWA controller"
   mkdir -p app/controllers
-  
   cat <<'EOF' > app/controllers/errors_controller.rb
 class ErrorsController < ApplicationController
   def offline
@@ -385,11 +347,9 @@ end
 EOF
   log "PWA controller generated"
 }
-
 setup_pwa_helpers() {
   log "Generating PWA helpers"
   mkdir -p app/helpers
-  
   cat <<'EOF' > app/helpers/pwa_helper.rb
 module PwaHelper
   def pwa_meta_tags
@@ -403,7 +363,6 @@ module PwaHelper
     ], "
     ")
   end
-
   def register_service_worker
     javascript_tag <<~JS, type: "module"
       if ('serviceWorker' in navigator) {
@@ -413,9 +372,7 @@ module PwaHelper
       }
     JS
   end
-
   private
-
   def app_name
     Rails.application.class.module_parent_name
   end
@@ -425,34 +382,27 @@ EOF
 }
 setup_web_push_notifications() {
   log "Setting up Web Push Notifications"
-  
   cat <<'EOF' > app/javascript/controllers/push_notifications_controller.js
 import { Controller } from "@hotwired/stimulus"
-
 export default class extends Controller {
   static values = { publicKey: String }
-
   async connect() {
     if (!('serviceWorker' in navigator && 'PushManager' in window)) {
       console.warn('Push notifications not supported')
       return
     }
-    
     const registration = await navigator.serviceWorker.ready
     const subscription = await registration.pushManager.getSubscription()
-    
     if (!subscription) {
       this.element.classList.add('push-available')
     }
   }
-
   async subscribe() {
     const registration = await navigator.serviceWorker.ready
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: this.urlBase64ToUint8Array(this.publicKeyValue)
     })
-
     await fetch('/push_subscriptions', {
       method: 'POST',
       headers: {
@@ -462,24 +412,20 @@ export default class extends Controller {
       body: JSON.stringify(subscription.toJSON())
     })
   }
-
   urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4)
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
     const rawData = window.atob(base64)
     return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)))
   }
-
   get csrfToken() {
     return document.querySelector('meta[name="csrf-token"]').content
   }
 }
 EOF
-
   cat <<'EOF' > app/controllers/push_subscriptions_controller.rb
 class PushSubscriptionsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:create]
-
   def create
     subscription = current_user.push_subscriptions.find_or_create_by(
       endpoint: subscription_params[:endpoint]
@@ -487,62 +433,47 @@ class PushSubscriptionsController < ApplicationController
       s.p256dh = subscription_params.dig(:keys, :p256dh)
       s.auth = subscription_params.dig(:keys, :auth)
     end
-
     render json: { success: true }
   end
-
   private
-
   def subscription_params
     params.permit(:endpoint, keys: [:p256dh, :auth])
   end
 end
 EOF
-
   log "✓ Web Push Notifications configured"
 }
-
 setup_background_sync() {
   log "Setting up Background Sync API"
-  
   cat <<'EOF' > app/javascript/controllers/offline_form_controller.js
 import { Controller } from "@hotwired/stimulus"
-
 export default class extends Controller {
   static targets = ["form"]
-
   async submit(event) {
     if (!navigator.onLine) {
       event.preventDefault()
       await this.queueForSync()
     }
   }
-
   async queueForSync() {
     const formData = new FormData(this.formTarget)
     const data = Object.fromEntries(formData)
-    
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       const registration = await navigator.serviceWorker.ready
-      
       await this.saveToIndexedDB(data)
       await registration.sync.register('sync-forms')
-      
       this.showQueuedMessage()
     }
   }
-
   async saveToIndexedDB(data) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('OfflineQueue', 1)
-      
       request.onupgradeneeded = (event) => {
         const db = event.target.result
         if (!db.objectStoreNames.contains('forms')) {
           db.createObjectStore('forms', { keyPath: 'id', autoIncrement: true })
         }
       }
-      
       request.onsuccess = (event) => {
         const db = event.target.result
         const transaction = db.transaction(['forms'], 'readwrite')
@@ -550,63 +481,49 @@ export default class extends Controller {
         store.add({ ...data, timestamp: Date.now() })
         transaction.oncomplete = () => resolve()
       }
-      
       request.onerror = () => reject(request.error)
     })
   }
-
   showQueuedMessage() {
-    this.element.insertAdjacentHTML('afterend', 
+    this.element.insertAdjacentHTML('afterend',
       '<div class="alert success">Form queued. Will sync when online.</div>'
     )
   }
 }
 EOF
-
   log "✓ Background Sync configured"
 }
-
 setup_install_prompt() {
   log "Setting up PWA install prompt"
-  
   cat <<'EOF' > app/javascript/controllers/pwa_install_controller.js
 import { Controller } from "@hotwired/stimulus"
-
 export default class extends Controller {
   static targets = ["button"]
-
   connect() {
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault()
       this.deferredPrompt = event
       this.buttonTarget.classList.remove('hidden')
     })
-
     window.addEventListener('appinstalled', () => {
       this.deferredPrompt = null
       this.buttonTarget.classList.add('hidden')
     })
   }
-
   async install() {
     if (!this.deferredPrompt) return
-
     this.deferredPrompt.prompt()
     const { outcome } = await this.deferredPrompt.userChoice
-    
     console.log(`Install prompt ${outcome}`)
     this.deferredPrompt = null
   }
 }
 EOF
-
   log "✓ Install prompt configured"
 }
-
 setup_full_pwa() {
   local app_name="${1:-RailsApp}"
   log "Setting up Rails 8 PWA for $app_name"
-  
   setup_pwa_manifest "$app_name"
   setup_service_worker
   setup_offline_page
@@ -615,7 +532,6 @@ setup_full_pwa() {
   setup_web_push_notifications
   setup_background_sync
   setup_install_prompt
-  
   log "✓ Rails 8 PWA complete with modern features"
   log "Add to app/views/layouts/application.html.erb:"
   log "  <%= pwa_meta_tags %>"

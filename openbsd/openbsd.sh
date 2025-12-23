@@ -288,9 +288,7 @@ EOF
   done
 }
 # PF firewall
-# ============================================================================
 # FIREWALL CONFIGURATION
-# ============================================================================
 setup_firewall() {
   log "Configuring PF firewall..."
   local port_list=$(extract_app_ports)
@@ -398,9 +396,7 @@ EOF
   done
   log "TLS configured"
 }
-# ============================================================================
 # LOAD BALANCER CONFIGURATION
-# ============================================================================
 setup_relayd() {
   log "Configuring relayd..."
   generate_relayd_config > /etc/relayd.conf
@@ -546,9 +542,7 @@ apply_relayd_config() {
   rcctl enable relayd
   rcctl check relayd && rcctl reload relayd || rcctl start relayd
 }
-# ============================================================================
 # RAILS APPLICATION DEPLOYMENT
-# ============================================================================
 # Deploy Rails application - orchestrator function
 deploy_rails_app() {
   local app_port="$1"
