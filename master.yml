@@ -118,9 +118,18 @@ modes:
     confirmation: batch_summary
   
   beautification:
-    intent: "aesthetic improvement"
+    intent: "aesthetic improvement + deep analysis"
     blast_radius: high
     confirmation: summary_only
+    phases:
+      - scan_full: "read entire file line-by-line"
+      - analyze_structure: "AST parse, identify patterns"
+      - assess_aesthetics: "evaluate composition, flow, clarity"
+      - apply_principles: "human_scale, clarity, simplicity, negative_space, hierarchy"
+      - deep_refactor: "extract functions, name constants, remove duplication"
+      - verify_semantics: "ensure no drift, validate syntax"
+    metrics: [readability, consistency, composition, cognitive_load]
+    minimum_delta: 0.02
   
   debug:
     intent: "trace error to root cause and fix"
@@ -532,10 +541,78 @@ scanning:
     resume: true
 
 beautification:
+  mode: deep_analysis_and_refactor
   principles: [human_scale, clarity, simplicity, consistency, negative_space, hierarchy, chunking]
-  metrics: [readability, consistency, composition]
+  metrics: [readability, consistency, composition, cognitive_load]
   minimum_delta: 0.02
   anti_patterns: [over_polishing, forced_symmetry]
+  
+  process:
+    phase_1_scan:
+      - "read entire file into memory"
+      - "parse AST if applicable"
+      - "identify all functions, classes, blocks"
+      - "measure: lines, complexity, nesting, duplication"
+    
+    phase_2_analyze:
+      - "detect violations against all principles"
+      - "calculate cognitive load per section"
+      - "identify refactoring opportunities"
+      - "assess naming clarity"
+      - "find magic numbers/strings"
+    
+    phase_3_plan:
+      - "rank violations by severity × confidence"
+      - "generate 3-5 refactoring strategies"
+      - "estimate semantic drift for each"
+      - "select highest value, lowest risk"
+    
+    phase_4_refactor:
+      - "extract long functions (>20 lines)"
+      - "name all magic numbers as constants"
+      - "eliminate duplication via extraction"
+      - "improve naming for clarity"
+      - "add whitespace for breathing room"
+      - "organize: related code together"
+    
+    phase_5_verify:
+      - "syntax check (language-specific)"
+      - "measure semantic drift"
+      - "recalculate metrics"
+      - "confirm improvement > minimum_delta"
+      - "rollback if drift > threshold"
+    
+    phase_6_iterate:
+      - "repeat phases 2-5 until:"
+      - "  violations == 0 OR"
+      - "  improvement < minimum_delta OR"
+      - "  cycles >= max_cycles"
+  
+  line_by_line_analysis:
+    enabled: true
+    for_each_line:
+      - "check: line length <= threshold"
+      - "check: indentation consistency"
+      - "check: naming conventions"
+      - "check: complexity (nested depth)"
+      - "flag: magic numbers/strings"
+      - "flag: duplication candidates"
+    
+  big_picture_analysis:
+    enabled: true
+    assess:
+      - "file purpose clarity"
+      - "module cohesion"
+      - "dependency coupling"
+      - "documentation adequacy"
+      - "test coverage"
+      - "error handling completeness"
+    
+  output:
+    before_after_diff: true
+    metrics_table: true
+    violations_eliminated: true
+    confidence_scores: true
 
 gap_prevention:
   missing_operation:
