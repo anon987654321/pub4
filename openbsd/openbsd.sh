@@ -518,11 +518,27 @@ EOF
   log "TLS configured"
 }
 
-# relayd load balancer with SNI routing for multiple apps
+# ============================================================================
+# LOAD BALANCER CONFIGURATION
+# ============================================================================
+
 setup_relayd() {
   log "Configuring relayd..."
   
-  cat > /etc/relayd.conf <<EOF
+  generate_relayd_config > /etc/relayd.conf
+  apply_relayd_config
+  
+  log "Relayd configured"
+}
+
+generate_relayd_config() {
+  generate_backend_tables
+  generate_http_protocols
+  generate_relay_definitions
+}
+
+generate_backend_tables() {
+  cat << 'EOF'
 # Backend tables per app
 table <httpd> { 127.0.0.1 }
 table <amber> { 127.0.0.1 }
@@ -533,79 +549,81 @@ table <privcam> { 127.0.0.1 }
 table <pubattorney> { 127.0.0.1 }
 table <brgen> { 127.0.0.1 }
 
+EOF
+}
+
+generate_http_protocols() {
+  cat << 'EOF'
 http protocol "http" {
   match request header set "Connection" value "close"
   match response header remove "Server"
 }
 
 http protocol "https" {
-  # Host-based routing
-  pass request header "Host" value "amberapp.com" forward to <amber>
-  pass request header "Host" value "www.amberapp.com" forward to <amber>
+EOF
   
-  pass request header "Host" value "foodielicio.us" forward to <blognet>
-  pass request header "Host" value "stacyspassion.com" forward to <blognet>
-  pass request header "Host" value "antibettingblog.com" forward to <blognet>
-  pass request header "Host" value "anticasinoblog.com" forward to <blognet>
-  pass request header "Host" value "antigamblingblog.com" forward to <blognet>
-  pass request header "Host" value "foball.no" forward to <blognet>
+  generate_host_routing
+  generate_security_headers
+  generate_tls_keypairs
   
-  pass request header "Host" value "bsdports.org" forward to <bsdports>
-  pass request header "Host" value "www.bsdports.org" forward to <bsdports>
-  
-  pass request header "Host" value "hjerterom.no" forward to <hjerterom>
-  pass request header "Host" value "www.hjerterom.no" forward to <hjerterom>
-  
-  pass request header "Host" value "privcam.no" forward to <privcam>
-  pass request header "Host" value "www.privcam.no" forward to <privcam>
-  
-  pass request header "Host" value "pub.attorney" forward to <pubattorney>
-  pass request header "Host" value "freehelp.legal" forward to <pubattorney>
-  
-  pass request header "Host" value "brgen.no" forward to <brgen>
-  pass request header "Host" value "oshlo.no" forward to <brgen>
-  pass request header "Host" value "trndheim.no" forward to <brgen>
-  pass request header "Host" value "stvanger.no" forward to <brgen>
-  pass request header "Host" value "trmso.no" forward to <brgen>
-  pass request header "Host" value "reykjavk.is" forward to <brgen>
-  pass request header "Host" value "kobenhvn.dk" forward to <brgen>
-  pass request header "Host" value "stholm.se" forward to <brgen>
-  pass request header "Host" value "gteborg.se" forward to <brgen>
-  pass request header "Host" value "mlmoe.se" forward to <brgen>
-  pass request header "Host" value "hlsinki.fi" forward to <brgen>
-  pass request header "Host" value "lndon.uk" forward to <brgen>
-  pass request header "Host" value "mnchester.uk" forward to <brgen>
-  pass request header "Host" value "brmingham.uk" forward to <brgen>
-  pass request header "Host" value "edinbrgh.uk" forward to <brgen>
-  pass request header "Host" value "glasgw.uk" forward to <brgen>
-  pass request header "Host" value "lverpool.uk" forward to <brgen>
-  pass request header "Host" value "amstrdam.nl" forward to <brgen>
-  pass request header "Host" value "rottrdam.nl" forward to <brgen>
-  pass request header "Host" value "utrcht.nl" forward to <brgen>
-  pass request header "Host" value "brssels.be" forward to <brgen>
-  pass request header "Host" value "zrich.ch" forward to <brgen>
-  pass request header "Host" value "lchtenstein.li" forward to <brgen>
-  pass request header "Host" value "frankfrt.de" forward to <brgen>
-  pass request header "Host" value "mrseille.fr" forward to <brgen>
-  pass request header "Host" value "mlan.it" forward to <brgen>
-  pass request header "Host" value "lsbon.pt" forward to <brgen>
-  pass request header "Host" value "lsangeles.com" forward to <brgen>
-  pass request header "Host" value "newyrk.us" forward to <brgen>
-  pass request header "Host" value "chcago.us" forward to <brgen>
-  pass request header "Host" value "dtroit.us" forward to <brgen>
-  pass request header "Host" value "houstn.us" forward to <brgen>
-  pass request header "Host" value "dllas.us" forward to <brgen>
-  pass request header "Host" value "austn.us" forward to <brgen>
-  pass request header "Host" value "prtland.com" forward to <brgen>
-  pass request header "Host" value "mnneapolis.com" forward to <brgen>
+  echo "}"
+  echo ""
+}
 
+generate_host_routing() {
+  # Amber
+  echo '  # Host-based routing'
+  for domain in amberapp.com www.amberapp.com; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <amber>"
+  done
+  echo ""
+  
+  # Blognet
+  for domain in foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <blognet>"
+  done
+  echo ""
+  
+  # BSDPorts
+  for domain in bsdports.org www.bsdports.org; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <bsdports>"
+  done
+  echo ""
+  
+  # Hjerterom
+  for domain in hjerterom.no www.hjerterom.no; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <hjerterom>"
+  done
+  echo ""
+  
+  # Privcam
+  for domain in privcam.no www.privcam.no; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <privcam>"
+  done
+  echo ""
+  
+  # PubAttorney
+  for domain in pub.attorney freehelp.legal; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <pubattorney>"
+  done
+  echo ""
+  
+  # Brgen (35+ domains)
+  for domain in ${=APPS[brgen.domains]}; do
+    echo "  pass request header \"Host\" value \"$domain\" forward to <brgen>"
+  done
+  echo ""
+}
+
+generate_security_headers() {
+  cat << 'EOF'
   # Preserve client info
-  match request header append "X-Forwarded-For" value "\$REMOTE_ADDR"
-  match request header append "X-Forwarded-Port" value "\$REMOTE_PORT"
-  match request header append "X-Forwarded-By" value "\$SERVER_ADDR:\$SERVER_PORT"
+  match request header append "X-Forwarded-For" value "$REMOTE_ADDR"
+  match request header append "X-Forwarded-Port" value "$REMOTE_PORT"
+  match request header append "X-Forwarded-By" value "$SERVER_ADDR:$SERVER_PORT"
   match request header set "Connection" value "close"
 
-  # Security headers (https://securityheaders.com/)
+  # Security headers
   match response header remove "Server"
   match response header append "Strict-Transport-Security" value "max-age=31536000; includeSubDomains"
   match response header append "X-Frame-Options" value "SAMEORIGIN"
@@ -614,57 +632,18 @@ http protocol "https" {
   match response header append "Referrer-Policy" value "strict-origin"
   match response header append "Feature-Policy" value "accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'"
 
-  # TLS keypairs
-  tls keypair "amberapp.com"
-  tls keypair "foodielicio.us"
-  tls keypair "stacyspassion.com"
-  tls keypair "antibettingblog.com"
-  tls keypair "anticasinoblog.com"
-  tls keypair "antigamblingblog.com"
-  tls keypair "foball.no"
-  tls keypair "bsdports.org"
-  tls keypair "hjerterom.no"
-  tls keypair "privcam.no"
-  tls keypair "pub.attorney"
-  tls keypair "freehelp.legal"
-  tls keypair "brgen.no"
-  tls keypair "oshlo.no"
-  tls keypair "trndheim.no"
-  tls keypair "stvanger.no"
-  tls keypair "trmso.no"
-  tls keypair "reykjavk.is"
-  tls keypair "kobenhvn.dk"
-  tls keypair "stholm.se"
-  tls keypair "gteborg.se"
-  tls keypair "mlmoe.se"
-  tls keypair "hlsinki.fi"
-  tls keypair "lndon.uk"
-  tls keypair "mnchester.uk"
-  tls keypair "brmingham.uk"
-  tls keypair "edinbrgh.uk"
-  tls keypair "glasgw.uk"
-  tls keypair "lverpool.uk"
-  tls keypair "amstrdam.nl"
-  tls keypair "rottrdam.nl"
-  tls keypair "utrcht.nl"
-  tls keypair "brssels.be"
-  tls keypair "zrich.ch"
-  tls keypair "lchtenstein.li"
-  tls keypair "frankfrt.de"
-  tls keypair "mrseille.fr"
-  tls keypair "mlan.it"
-  tls keypair "lsbon.pt"
-  tls keypair "lsangeles.com"
-  tls keypair "newyrk.us"
-  tls keypair "chcago.us"
-  tls keypair "dtroit.us"
-  tls keypair "houstn.us"
-  tls keypair "dllas.us"
-  tls keypair "austn.us"
-  tls keypair "prtland.com"
-  tls keypair "mnneapolis.com"
+EOF
 }
 
+generate_tls_keypairs() {
+  echo "  # TLS keypairs"
+  for domain in $ALL_DOMAINS; do
+    echo "  tls keypair \"$domain\""
+  done
+}
+
+generate_relay_definitions() {
+  cat << EOF
 relay "http" {
   listen on ${MAIN_IP} port 80
   protocol "http"
@@ -684,11 +663,39 @@ relay "https" {
   forward to <brgen> port ${APPS[brgen.port]}
 }
 EOF
-
-  rcctl enable relayd
-  rcctl restart relayd
-  log "relayd configured with host-based routing"
 }
+
+generate_relay_definitions() {
+  cat << EOF
+relay "http" {
+  listen on ${MAIN_IP} port 80
+  protocol "http"
+  forward to <httpd> port 80
+}
+
+relay "https" {
+  listen on ${MAIN_IP} port 443 tls
+  protocol "https"
+  forward to <httpd> port 80
+  forward to <amber> port ${APPS[amber.port]}
+  forward to <blognet> port ${APPS[blognet.port]}
+  forward to <bsdports> port ${APPS[bsdports.port]}
+  forward to <hjerterom> port ${APPS[hjerterom.port]}
+  forward to <privcam> port ${APPS[privcam.port]}
+  forward to <pubattorney> port ${APPS[pubattorney.port]}
+  forward to <brgen> port ${APPS[brgen.port]}
+}
+EOF
+}
+
+apply_relayd_config() {
+  rcctl enable relayd
+  rcctl check relayd && rcctl reload relayd || rcctl start relayd
+}
+
+# ============================================================================
+# RAILS APPLICATION DEPLOYMENT
+# ============================================================================
 
 # Deploy Rails application - orchestrator function
 deploy_rails_app() {
