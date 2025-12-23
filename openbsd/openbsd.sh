@@ -379,16 +379,30 @@ EOF
 }
 
 # PF firewall
+# ============================================================================
+# FIREWALL CONFIGURATION
+# ============================================================================
+
 setup_firewall() {
   log "Configuring PF firewall..."
-  # Pure zsh: extract port list from APPS associative array
+  
+  local port_list=$(extract_app_ports)
+  generate_pf_config "$port_list"
+  apply_pf_config
+  
+  log "Firewall configured"
+}
+
+extract_app_ports() {
   local -a app_ports
   for key in ${(k)APPS}; do
     [[ $key == *.port ]] && app_ports+=(${APPS[$key]})
   done
-  
-  # Generate port list for PF rules
-  local port_list="${(j:, :)app_ports}"  # join with ", "
+  print "${(j:, :)app_ports}"
+}
+
+generate_pf_config() {
+  local port_list=$1
   
   cat > /etc/pf.conf << EOF
 ext_if = "vio0"
@@ -416,29 +430,28 @@ table <bruteforce> persist
 block quick from <bruteforce>
 
 # SSH: Max 15 concurrent connections, 5 attempts per 3 seconds
-# Exceeding limits adds IP to bruteforce table and kills all connections
-pass in on $ext_if inet proto tcp from any to $ext_if port 22 \
+pass in on \$ext_if inet proto tcp from any to \$ext_if port 22 \\
   keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 
 # DNS: Allow zone transfer to backup NS, public queries rate-limited
-pass in on $ext_if inet proto { tcp, udp } from $ext_if to $domeneshop port 53 keep state
-pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 \
+pass in on \$ext_if inet proto { tcp, udp } from \$ext_if to \$domeneshop port 53 keep state
+pass in on \$ext_if inet proto { tcp, udp } from any to \$ext_if port 53 \\
   keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
 
-# HTTP/HTTPS: Port 80 for ACME challenges (redirects to 443), 443 for TLS
-pass in on $ext_if inet proto tcp from any to $ext_if port { 80, 443 } keep state
+# HTTP/HTTPS: Port 80 for ACME challenges, 443 for TLS
+pass in on \$ext_if inet proto tcp from any to \$ext_if port { 80, 443 } keep state
 
 # Rails app ports: Randomized for security obscurity
-# Dynamic port allocation from APPS array
-pass in on $ext_if inet proto tcp from any to $ext_if port { $port_list } keep state
+pass in on \$ext_if inet proto tcp from any to \$ext_if port { $port_list } keep state
 
-# Relayd anchor: Dynamic rules added by relayd(8) for load balancing
+# Relayd anchor: Dynamic rules added by relayd(8)
 anchor "relayd/*"
 EOF
+}
 
+apply_pf_config() {
   pfctl -f /etc/pf.conf
   rcctl enable pf
-  log "Firewall configured"
 }
 
 # TLS certificates
