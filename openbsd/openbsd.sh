@@ -21,22 +21,22 @@ readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
 
-# Unified deployment config - fixed ports for predictable routing
+# Unified deployment config - randomized ports for security
 typeset -A APPS
-APPS[brgen.port]=11006
+APPS[brgen.port]=37824
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
 APPS[brgen.subdomains]="markedsplass playlist dating tv takeaway maps"
-APPS[amber.port]=10001
+APPS[amber.port]=42189
 APPS[amber.domains]="amberapp.com"
-APPS[blognet.port]=10002
+APPS[blognet.port]=51673
 APPS[blognet.domains]="foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"
-APPS[bsdports.port]=10003
+APPS[bsdports.port]=29458
 APPS[bsdports.domains]="bsdports.org"
-APPS[hjerterom.port]=10004
+APPS[hjerterom.port]=48217
 APPS[hjerterom.domains]="hjerterom.no"
-APPS[privcam.port]=10005
+APPS[privcam.port]=33946
 APPS[privcam.domains]="privcam.no"
-APPS[pubattorney.port]=10006
+APPS[pubattorney.port]=56381
 APPS[pubattorney.domains]="pub.attorney freehelp.legal"
 
 # Extract all unique domains for DNS config
@@ -373,7 +373,16 @@ EOF
 # PF firewall
 setup_firewall() {
   log "Configuring PF firewall..."
-  cat > /etc/pf.conf << 'EOF'
+  # Pure zsh: extract port list from APPS associative array
+  local -a app_ports
+  for key in ${(k)APPS}; do
+    [[ $key == *.port ]] && app_ports+=(${APPS[$key]})
+  done
+  
+  # Generate port list for PF rules
+  local port_list="${(j:, :)app_ports}"  # join with ", "
+  
+  cat > /etc/pf.conf << EOF
 ext_if = "vio0"
 domeneshop = "194.63.248.53"
 
@@ -411,10 +420,9 @@ pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 \
 # HTTP/HTTPS: Port 80 for ACME challenges (redirects to 443), 443 for TLS
 pass in on $ext_if inet proto tcp from any to $ext_if port { 80, 443 } keep state
 
-# Rails app ports: Fixed allocation for predictable Relayd routing
-# brgen:11006, amber:10001, blognet:10002, bsdports:10003,
-# hjerterom:10004, privcam:10005, pubattorney:10006
-pass in on $ext_if inet proto tcp from any to $ext_if port { 10001 10002 10003 10004 10005 10006 11006 } keep state
+# Rails app ports: Randomized for security obscurity
+# Dynamic port allocation from APPS array
+pass in on $ext_if inet proto tcp from any to $ext_if port { $port_list } keep state
 
 # Relayd anchor: Dynamic rules added by relayd(8) for load balancing
 anchor "relayd/*"

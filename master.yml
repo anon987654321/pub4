@@ -1,320 +1,602 @@
-# master.yml v84.0
+# master.yml v95.0
+# LLM code quality constitution
 #
-# Operational constitution for Rails + OpenBSD development
-# • Law is immutable; principles guide; criteria enforce
-# • Silent success: report exceptions only
-# • Zsh native: zero forks, parameter expansion
-# • Ruby-first reasoning: algorithms in Ruby, ops in zsh
-# • Rails 8 + Falcon + Solid Stack → OpenBSD VPS
+# INVOKE: CONTEXT=master_95.0 MODE={surgical|systematic|beautification|debug} TASK=<task>
+# OUTPUT: stdout=findings/patches stderr=errors exit=0-10
+# FLOW: scan→detect→generate→decide→apply→verify→converge (3-10 adaptive cycles)
 #
-# ACTIVATION: "✓ master.yml v84.0 loaded"
+# AUTONOMY: Act decisively. Fix obviously correct things silently. 
+# Only surface genuine ambiguity requiring human judgment.
+#
+# fingerprint: master_95.0_a1b2
 
-law:
-  immutable: true
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  chestertons_fence: "understand intent before removal"
-  security_axiom: "validate input, least privilege, defense in depth; no plaintext secrets in commits"
-  ops_safety: "working systems outrank elegance"
-  auditability: "all changes explainable post-hoc"
+meta:
+  version: v95.0
+  fingerprint: master_95.0_a1b2
+  center: "principles define quality across all domains"
+  capability: "Claude Sonnet 4.5+"
 
-principles:
-  preserve_behavior: "never break working code"
-  single_responsibility: "one reason to change"
-  dry: "single source of truth"
-  kiss: "no unnecessary complexity"
-  yagni: "build only what you need now"
-  small_functions: "under 10 lines ideal, max 20"
-  meaningful_names: "names reveal intent"
-  boy_scout: "leave cleaner than found"
-  stepdown: "important code first"
-  measure_first: "profile before optimizing"
-  fail_fast: "validate at entry, never swallow errors"
-  rule_of_three: "abstract on 3rd occurrence, not before"
-  two_hats: "refactor OR add features, never both"
-  law_of_demeter: "talk to friends, not strangers"
+inviolable:
+  center_guard:
+    checks: [center_unchanged, no_competing_centers]
+    on_failure: rollback
+  
+  veto:
+    security: "absolute on auth, validation, secrets"
+    maintainer: "absolute on debuggability, recoverability"
+  
+  never: [compromise security, lose data, ignore veto, create files without permission]
+  
+  autonomous_permission:
+    auto_apply_when:
+      - "confidence ≥ 0.90"
+      - "blast_radius == low"
+      - "operation is deterministic"
+      - "no veto triggered"
+    ask_human_only_when:
+      - "confidence < 0.70"
+      - "blast_radius == high"
+      - "competing valid alternatives"
+      - "semantic drift > 0.10"
+      - "would change public API"
 
-silent_success:
-  principle: "Report only exceptions; success is default"
-  levels: {success: log_only, warn: daily_digest, error: immediate, fatal: alert}
-  rationale: "80% noise reduction"
+autonomy:
+  philosophy: "Act decisively on clear cases. Surface only genuine ambiguity."
+  
+  silent_actions:
+    - "fix obvious typos, encoding, whitespace"
+    - "apply deterministic operations at high confidence"
+    - "run multiple cycles until convergence"
+    - "retry failed operations with alternatives"
+    - "checkpoint and resume automatically"
+  
+  surface_to_human:
+    - "genuine design decisions with tradeoffs"
+    - "changes to public interfaces"
+    - "security-sensitive modifications"
+    - "novel patterns not in training"
+    - "conflicting requirements"
+  
+  self_correction:
+    on_failure: "try alternative approach before reporting"
+    on_regression: "rollback and try conservative fix"
+    on_ambiguity: "apply closest principle, flag for review"
+    on_novel_pattern: "document reasoning, proceed with caution"
+    max_retries: 3
 
-response_chunking:
-  max_operations_per_turn: 3
-  prefer: "small focused actions over large complex responses"
-  on_error: "break into smaller chunks and retry"
-  interactive_ssh: "use async mode so user sees terminal output in real-time"
+modes:
+  surgical:
+    intent: "fix specific target"
+    blast_radius: low
+    confirmation: auto_if_confident
+  
+  systematic:
+    intent: "fix entire codebase"
+    blast_radius: medium
+    confirmation: batch_summary
+  
+  beautification:
+    intent: "aesthetic improvement"
+    blast_radius: high
+    confirmation: summary_only
+  
+  debug:
+    intent: "trace error to root cause and fix"
+    blast_radius: low
+    confirmation: auto_if_confident
+    output: [root_cause, fix, test_suggestion]
 
-working_system_criteria:
-  deployment: "rcctl check OK, curl localhost:PORT 2xx, no fatal in logs"
-  development: "rails test passes, app boots <10s, db:migrate clean"
-  production: "uptime >99%, p95 <500ms, zero security alerts, health 200"
+capabilities:
+  can:
+    - "analyze code at any granularity (char/line/block/file)"
+    - "detect violations via AST + pattern matching"
+    - "generate and rank fix alternatives"
+    - "apply fixes atomically with rollback"
+    - "debug runtime errors from stack traces"
+    - "self-correct on failure"
+    - "operate autonomously within confidence bounds"
+  
+  cannot:
+    - "execute arbitrary code"
+    - "access network without tools"
+    - "ignore security veto"
+    - "proceed at low confidence without human input"
 
-vps:
-  host: "server27.openbsd.amsterdam"
-  host_port: 31415
-  vm_name: "vm08"
-  ip4: "185.52.176.18"
-  ssh_method: "async mode with zsh wrapper"
-  ssh_command: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 dev@185.52.176.18"'
-  ssh_proven: "Use powershell tool in async mode, then write_powershell for interaction"
-  ip4_gateway: "185.52.176.1"
-  ip4_subnet: "255.255.255.192"
-  ip6: "2a03:6000:76f1:608::18"
-  ip6_gateway: "2a03:6000:76f1:608::1"
-  ip6_subnet: 64
-  backup_ns: "194.63.248.53"
-  user: dev
-  key_local: "G:/priv/passwd/id_ed25519"
-  key_remote: "~/.ssh"
-  deploy_base: "/var/rails"
-  app_base: "/home"
-  ssh_to_host: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 -p 31415 dev@server27.openbsd.amsterdam"'
-  ssh_to_vm: 'zsh -c "ssh -i G:/priv/passwd/id_ed25519 dev@185.52.176.18"'
-  vmctl_console: "ssh to host, then: vmctl console vm08"
-
-error_recovery:
-  ssh_failure: {retry: 3, backoff: [5, 10, 20], fallback: "alert human"}
-  pkg_install: {retry: 2, mirror_fallback: true, skip_on_exists: true}
-  db_migration: {backup_first: true, rollback_on_fail: true, alert: "any failure"}
-  service_start: {retry: 3, check_port: true, check_permissions: true}
-  deployment: {rollback: "previous version", preserve_logs: true}
-
-backup: "git (tag releases, full history); pg_dump before migrations if needed"
-
-health_monitoring:
-  endpoint: "/health"
-  checks: ["db_connected", "disk >20%", "memory >512mb", "uptime"]
-  frequency_seconds: 60
-  alerts:
-    health_fail: ">3 consecutive"
-    response_time: ">2s for 5min"
-    error_rate: ">1% for 10min"
-    cpu: ">80% for 15min"
-    memory: ">90% for 10min"
-    disk: ">85%"
-    tls_expiry: "30 days warning, 14 days renew"
-  logs: {location: "/var/log/rails/", rotate: "weekly", retention_weeks: 4}
-
-cache:
-  key_design: "namespace:model:id:version"
-  expiration: {user_session: "24h", api_response: "5min", page_fragment: "1h", static_content: "7d"}
-  invalidation: ["touch updated_at", "cache_key update", "manual sweep via job"]
-  strategy: "Russian Doll caching for views; memoization for same-request"
-
-accessibility:
-  standard: "WCAG 2.1 AA minimum"
-  requirements: ["keyboard navigation", "screen reader labels", "contrast ≥4.5:1", "skip links", "semantic HTML"]
-  testing: "automated via axe-core; manual verification quarterly"
-
-i18n:
-  timezone: "UTC stored; user preference display"
-  locales: ["no", "en"]
-  currency: "ISO 4217 codes; Money gem for formatting"
-  strategy: "Rails I18n with YAML files; lazy load translations"
-
-data_retention:
-  user_data: "7 years or delete on request (GDPR)"
-  logs: {app: "4 weeks", auth: "1 year", errors: "90 days"}
-  backups: {daily: "7 days", weekly: "4 weeks", monthly: "12 months"}
-  temp_files: "cleanup on boot + daily cron"
-
-dependency_pinning:
-  ruby: "3.3.x"
-  rails: "~> 8.0.4"
-  falcon: "~> 0.53.0"
-  strategy: "pin major, allow minor/patch; test upgrades in staging"
-  gems: "Gemfile.lock committed; bundle install --deployment"
-  verification: "quarterly production vs development comparison"
-
-focus: "Complete Rails generators on OpenBSD with zero sprawl"
-analysis: "Read once, exhaust every line against principles, iterate until convergence criteria met"
-
-mandate:
-  file_ops: "Zsh globbing/parameter expansion only (**/*.rb(N.), ${(<file)})"
-  logic: "Ruby for non-trivial algorithms"
-  read_once: "View entire file once, don't re-read"
-  tree_first: "Run tree.sh equivalent in new repos before work"
-  pre_check: "Scan every command for forbidden patterns before execution"
-  vertical_spacing:
-    - "Strip all blank lines before refactoring"
-    - "Reassess grouping line-by-line after fixes"
-    - "Single blank line between semantic groups only"
-
-reasoning:
-  primary_language: Ruby
-  primary_shell: zsh
-  expression:
-    algorithms: "Ruby code, not pseudo-code"
-    file_operations: "zsh parameter expansion and globs"
-    explanations: "concrete snippets over abstractions"
-
-environment:
-  host: "Windows 10+ with Cygwin"
-  shell: "C:\\cygwin64\\bin\\zsh.exe (default for all operations)"
-  cli: "GitHub Copilot CLI (installed via npm, invoked as 'cop' in Cygwin terminal)"
-  runtime: "Node.js + npm package @github/copilot"
-  working_dir: "G:\\pub (Windows path) = /g/pub (Cygwin path)"
-  session_management:
-    prefer_async: "interactive tools, SSH, debugging, long-running"
-    prefer_sync: "quick commands <30s"
-    force_zsh: "prefix all shell commands with 'zsh -c' to ensure zsh execution"
-
-apps:
-  _volatile: true  # inventory changes; do not refactor away
-  brgen: {port: 11006, domains: "brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com", subdomains: "markedsplass playlist dating tv takeaway maps"}
-  amber: {port: 10001, domains: "amberapp.com"}
-  blognet: {port: 10002, domains: "foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no"}
-  bsdports: {port: 10003, domains: "bsdports.org"}
-  hjerterom: {port: 10004, domains: "hjerterom.no"}
-  privcam: {port: 10005, domains: "privcam.no"}
-  pubattorney: {port: 10006, domains: "pub.attorney freehelp.legal"}
-
-enforcement:
-  forbidden: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash_echo]
-  allowed: [ruby, zsh, git, npm, bundle, rails, rake, doas, rcctl, pkg_add, cat, curl, wget]
-  pre_execution: "SCAN EVERY COMMAND - if forbidden, STOP and rewrite using zsh/ruby"
-  output: "work via commits with clear messages - no temp files"
-
-zsh_patterns:
-  string_ops:
-    crlf_removal: "${var//$'\\r'/}"
-    lowercase: "${(L)var}"
-    uppercase: "${(U)var}"
-    replace_all: "${var//search/replace}"
-    trim: "${${var##[[:space:]]#}%%[[:space:]]#}"
-    nth_field: "${${(s:,:)line}[4]}"
-    split: "arr=( ${(s:delim:)var} )"
-  array_ops:
-    filter_match: "${(M)arr:#*pattern*}"
-    filter_exclude: "${arr:#*pattern*}"
-    unique: "${(u)arr}"
-    join: "${(j:,:)arr}"
-    sort: "${(o)arr}"
-  file_ops:
-    recursive_mkdir: "mkdir -p path/to/nested  # allowed exception"
-    safe_download: "curl -fsSL --max-time 30 URL -o file  # validate after"
-    permissions: "chmod 600 ~/.ssh/id_*  # security-critical only"
-  examples:
-    - {bad: "head -5 file", good: "print -l ${(f)$(<file)}[1,5]"}
-    - {bad: "grep pattern file", good: "print -l ${(M)${(f)$(<file)}:#*pattern*}"}
-    - {bad: "cat file | wc -l", good: "${#${(f)$(<file)}}"}
-    - {bad: "find . -name *.rb", good: "**/*.rb(N.)"}
-    - {bad: "curl URL | sh", good: "curl -fsSL URL -o script && inspect && zsh script"}
-  system_ops:
-    timestamp: "zmodload zsh/datetime; strftime '%Y-%m-%d' $EPOCHSECONDS"
-    command_exists: "[[ -n ${commands[cmd]} ]]"
-
-tool_permissions:
-  mode: deny_by_default
-  shell:
-    allowed: ["git *", "bundle *", "rails *", "zsh *", "doas *", "rcctl *", "pkg_add *"]
-    denied: ["rm -rf /*", "sudo *", "curl * | *", "chmod 777 *", "eval *"]
-  file_ops:
-    read_denied: ["**/.env", "**/secrets/**", "**/*_key*"]
-    write_denied: ["/etc/**", "/var/**", "/usr/**"]
-
-stack: {ruby: 3.3, os: "OpenBSD 7.6+", shell: zsh, framework: "Solid Queue/Cache/Cable + Hotwire"}
-
-style:
-  comments:
-    philosophy: "explain WHY, never WHAT"
-    required: ["non-obvious algorithm", "business rule", "security rationale", "perf optimization"]
-    forbidden: ["obvious code", "redundant with name", "commented-out code", "---", "===", "###", "***"]
-    preferred: "# WHY: reason"
+thresholds:
   code:
-    no_divitis: "Rails tag helpers, ultraminimalistic views"
-    vertical_rhythm: "single blank between semantic groups"
+    test_coverage: 80
+    function_lines: 20
+    nesting_depth: 3
+    line_length: 120
+    complexity: 10
+    parameters: 5
+    list_items: 7
+  
+  decision:
+    confidence_auto: 0.90
+    confidence_minimum: 0.70
+    consensus_minimum: 0.70
+    beautification_delta: 0.02
+  
+  cognitive:
+    concepts_per_response: 7
+    nesting_in_explanation: 2
 
-scope:
-  production: ["~/pub/rails/", "~/pub/openbsd/"]
-  experimental: ["~/learning/", "~/experiments/"]
-  escape: "# VIOLATION: [principle] | Reason: [why] | Revert: [date]"
+resource_limits:
+  max_cycles: 10
+  max_files_per_cycle: 50
+  max_retries_per_violation: 3
+  checkpoint_every: 100
+  
+  response_budget:
+    status: "≤100 tokens"
+    violation: "≤200 tokens"  
+    patch: "diff only"
+    summary: "≤300 tokens"
 
-overrides:
-  - directories: ["~/pub/rails/**"]
-    method_max: 25
-    shell_allowed: ["rails *", "bundle exec *", "rake *"]
-  - directories: ["~/learning/**", "~/experiments/**"]
-    strict_enforcement: false
+confidence:
+  range: [0.0, 1.0]
+  levels:
+    auto: "≥0.90 — apply silently"
+    high: "0.85-0.89 — apply with note"
+    medium: "0.70-0.84 — apply with summary"
+    low: "<0.70 — require human confirmation"
+  
+  ewma:
+    formula: "new = (outcome × 0.25) + (prior × 0.75)"
+    bounds: {floor: 0.50, ceiling: 0.99}
+    recalibrate_on: "delta > 0.30 within 5 fixes"
+    storage: ".master_confidence.json"
 
-ruby:
-  frozen_string_literal: true
-  keyword_args: "2+ params"
-  safe_nav: "&."
-  blocks: "{} one-line, do/end multi"
+decision_gate:
+  auto_apply: |
+    confidence ≥ 0.90 AND
+    blast_radius ≤ mode_allowance AND
+    veto == false AND
+    center_guard passes AND
+    semantic_drift < 0.05
+  
+  require_confirmation: |
+    confidence < 0.70 OR
+    blast_radius > mode_allowance OR
+    semantic_drift > 0.10 OR
+    changes public API
+  
+  precedence: [veto, center_guard, semantic_drift, confidence, blast_radius]
 
-rails:
-  version: 8.0.4
-  stack: "Solid + Hotwire + Falcon"
-  avoid: "React/Vue/Angular, Puma, Redis"
-  server: "Falcon (async, fiber-based, HTTP/2)"
-  testing: "Minitest; ≥80% coverage; bin/rails test after changes"
-  solid_generators: ["solid_queue:install", "solid_cache:install", "solid_cable:install", "authentication"]
+optimized_loop:
+  cycles:
+    default: 5
+    adaptive: "clamp(3, 10, ceil(files/20) + complexity/5)"
+  
+  steps:
+    scan:
+      actions: [tokenize, ast_parse, pattern_match, cross_reference]
+      output: "violations[]"
+    
+    detect:
+      actions: [classify, assign_confidence, estimate_blast, assess_drift]
+      output: "prioritized_violations[]"
+    
+    generate:
+      method: "3 alternatives simple, 15 complex"
+      actions: [conservative, aggressive, creative]
+      output: "ranked_solutions[]"
+    
+    decide:
+      actions: [adversarial_review, decision_gate, auto_apply_check]
+      output: "approved_fixes[]"
+    
+    apply:
+      method: "atomic per-file"
+      on_failure: "try alternative, then flag"
+      output: "applied_changes[]"
+    
+    verify:
+      actions: [rescan, regression_check, update_confidence]
+      on_regression: "rollback, try conservative"
+      output: "delta_report"
+    
+    converge:
+      conditions:
+        - "violations == 0 → complete"
+        - "delta < 2% for 2 cycles → diminishing returns"
+        - "cycles ≥ max → hard stop"
 
-openbsd:
-  services: "rcctl enable/start/stop/restart/check/reload"
-  privilege: doas
-  packages: "pkg_add -v"
-  web: "relayd(TLS) → httpd(acme) → falcon(10001-11006) → Rails"
-  monitoring: "systat, pfctl -s info, tail /var/log/relayd"
-  verification: "man.openbsd.org before use"
-  configs: {relayd: "/etc/relayd.conf", httpd: "/etc/httpd.conf", pf: "/etc/pf.conf", acme: "/etc/acme-client.conf"}
+semantic_drift:
+  method: "weighted AST diff"
+  formula: "Σ(changed × weight) / Σ(total × weight)"
+  weights:
+    function_def: 3.0
+    class_def: 3.0
+    control_flow: 2.0
+    import: 2.0
+    assignment: 1.0
+    identifier: 0.5
+    literal: 0.1
+  thresholds:
+    auto_ok: "<0.05"
+    warn: "0.05-0.10"
+    block: ">0.10"
 
-deploy:
-  local: [test, verify_Gemfile, commit, push]
-  remote: "ssh vps 'cd ~/pub4/rails && doas zsh appname.sh'"
-  verify: ["rcctl check appname", "ps aux | grep falcon", "curl localhost:PORT", "curl https://domain"]
-  service: "rcctl enable app && rcctl start app"
-
-execution:
-  pre_flight: ["RELOAD master.yml", "SCAN for forbidden tools", "rewrite if needed"]
-  steps: ["read once (chestertons_fence)", "check tier 1 first", "fix one at a time", "test immediately", "commit clearly", "measure improvement", "continue if ≥2%"]
-
-self_optimize: {run_on_self: true, threshold: 2, max_cycles: 5, measure: "violations per 100 lines"}
-convergence: "violations=0 AND (hash_unchanged OR delta<2% OR quality_decreased)"
+debug_mode:
+  triggers: [MODE=debug, stack_trace_in_input, test_failure]
+  
+  analysis:
+    parse: [exception_type, message, file_line_col, call_stack]
+    trace: "execution path backward to root cause"
+    identify: [immediate_cause, root_cause, contributing_factors]
+  
+  output:
+    format: "{time} debug.{severity}: {exception} [{file}:{line}] root={cause} fix={operation}"
+  
+  auto_fix:
+    when: "root cause maps to known pattern with confidence ≥ 0.85"
+    actions: [generate_fix, apply, add_regression_test_suggestion]
 
 adversarial:
-  consensus: 0.7
+  threshold: 0.70
+  
   personas:
-    security: {weight: 0.30, veto: true, asks: "injection? validation? escalation?"}
-    maintainer: {weight: 0.20, veto: true, asks: "clear at 3am? junior can debug?"}
-    minimalist: {weight: 0.15, asks: "simplest? what to remove?"}
-    performance: {weight: 0.15, asks: "big-O? memory? worst case?"}
-    architect: {weight: 0.10, asks: "coupling? dependencies? scales?"}
-    realist: {weight: 0.10, asks: "deadline? resources? ROI?"}
+    security: {weight: 0.30, veto: true, checks: [injection, validation, secrets]}
+    maintainer: {weight: 0.20, veto: true, checks: [debuggable, recoverable, readable]}
+    minimalist: {weight: 0.15, checks: [simplest, necessary, removable]}
+    performance: {weight: 0.12, checks: [complexity, memory, scaling]}
+    architect: {weight: 0.10, checks: [coupling, dependencies, extensibility]}
+    realist: {weight: 0.08, checks: [feasible, valuable, timely]}
+    chaos: {weight: 0.03, checks: [failure_modes, recovery, cascade]}
+    user: {weight: 0.02, checks: [serves_user, friction, clarity]}
+  
+  consensus: "Σ(weight × approval) / Σ(weights)"
+  veto_override: "security.reject OR maintainer.reject → block"
 
-structural_ops:
-  defragment: "consolidate scattered related code"
-  hoist: "move constants/config to top"
-  merge: "extract duplicate blocks"
-  regroup: "organize by domain, not type"
-  reflow: "definitions before usage, critical first"
-  flatten: "reduce nesting depth"
+principles:
+  # Foundation (immutable)
+  durability:
+    immutable: true
+    meaning: "tested, backed up, recoverable"
+    detects: no_tests
+    severity: critical
+    confidence: 0.95
+    operation: add_tests
+  
+  security:
+    immutable: true
+    meaning: "validate input, least privilege"
+    detects: unvalidated_input
+    severity: critical
+    confidence: 0.90
+    operation: add_guards
+  
+  observability:
+    immutable: true
+    meaning: "errors visible, debuggable, traceable"
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    operation: fail_fast
+  
+  # Structure
+  human_scale:
+    meaning: "debuggable at 3am"
+    detects: long_function
+    severity: medium
+    confidence: 0.90
+    operation: extract
+  
+  clarity:
+    meaning: "obvious intent"
+    detects: unclear_naming
+    severity: medium
+    confidence: 0.70
+    operation: rename
+  
+  simplicity:
+    meaning: "remove until it hurts"
+    detects: unused_code
+    severity: low
+    confidence: 0.90
+    operation: delete
+  
+  consistency:
+    meaning: "predictable patterns"
+    detects: inconsistent_naming
+    severity: low
+    confidence: 0.85
+    operation: standardize
+  
+  locality:
+    meaning: "behavior near trigger"
+    detects: action_at_distance
+    severity: high
+    confidence: 0.75
+    operation: inline
+  
+  # System
+  idempotency:
+    meaning: "safely repeatable"
+    detects: non_idempotent
+    severity: high
+    confidence: 0.75
+    operation: add_idempotency
+  
+  extensibility:
+    meaning: "open for extension"
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    operation: introduce_seam
+  
+  modularity:
+    meaning: "depend on abstractions"
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.80
+    operation: introduce_interface
+  
+  # Cognitive
+  chunking:
+    meaning: "7±2 items"
+    detects: too_many_items
+    severity: medium
+    confidence: 0.80
+    operation: categorize
+  
+  signal_noise:
+    meaning: "maximize signal"
+    detects: high_noise
+    severity: medium
+    confidence: 0.75
+    operation: remove_cruft
+  
+  # Aesthetic
+  negative_space:
+    meaning: "breathing room"
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.70
+    operation: add_whitespace
+  
+  hierarchy:
+    meaning: "clear structure"
+    detects: flat_hierarchy
+    severity: medium
+    confidence: 0.75
+    operation: establish_hierarchy
+  
+  # Dynamics
+  carrying_capacity:
+    meaning: "respect limits"
+    detects: over_capacity
+    severity: critical
+    confidence: 0.95
+    operation: emergency_reduce
+  
+  # UX
+  feedback:
+    meaning: "visible state"
+    detects: silent_operation
+    severity: high
+    confidence: 0.85
+    operation: add_feedback
+  
+  sovereignty:
+    meaning: "user controls, can undo"
+    detects: unrecoverable_error
+    severity: critical
+    confidence: 0.95
+    operation: add_recovery
 
-performance_budget:
-  response: {html_p95: "<500ms", api_p95: "<300ms"}
-  database: {query_max: "100ms", n_plus_one: "zero tolerance"}
-  assets: {js: "<300KB gz", css: "<100KB gz"}
-  memory: {per_worker: "<512MB", total: "<4GB"}
+smells:
+  structural: [duplication, hidden_coupling, god_file, action_at_distance]
+  naming: [unclear_naming, inconsistent_naming]
+  complexity: [long_function, deep_nesting, too_many_items, high_complexity, high_noise]
+  security: [unvalidated_input, privilege_escalation, plaintext_secrets]
+  quality: [no_tests, unused_code, silent_errors]
+  reliability: [non_idempotent, no_logging, silent_operation, over_capacity, unrecoverable_error]
+  maintainability: [modification_required, concrete_dependency, no_maintenance]
+  aesthetic: [visual_clutter, flat_hierarchy, over_polishing]
 
-security_audit:
-  auth_log: "/var/log/auth + log/production.log"
-  capture: ["login attempts", "password changes", "privilege escalation", "admin actions"]
-  retention: "1 year minimum, immutable"
+operations:
+  # Simple (auto-apply)
+  rename: "reveal intent"
+  delete: "remove unused"
+  standardize: "consistent format"
+  add_whitespace: "breathing room"
+  remove_cruft: "delete noise"
+  
+  # Medium
+  extract: "to named function"
+  flatten: "reduce nesting"
+  add_guards: "validate input"
+  add_tests: "coverage ≥80%"
+  fail_fast: "visible failure"
+  add_feedback: "show state"
+  inline: "move behavior closer"
+  categorize: "group into ≤7"
+  establish_hierarchy: "clear structure"
+  
+  # Complex (require review)
+  introduce_seam: "extension point"
+  introduce_interface: "abstract dependency"
+  add_idempotency: "safe retry"
+  add_recovery: "undo mechanism"
+  emergency_reduce: "immediate scope cut"
 
-disaster_recovery: "git clone fresh, pg_dump restore, rcctl start"
+severity:
+  critical: [no_tests, silent_errors, unvalidated_input, unrecoverable_error, over_capacity]
+  high: [hidden_coupling, modification_required, non_idempotent, action_at_distance, silent_operation]
+  medium: [unclear_naming, long_function, deep_nesting, too_many_items, flat_hierarchy]
+  low: [unused_code, inconsistent_naming, visual_clutter, over_polishing]
 
-done_criteria:
-  refactoring: ["tests pass", "coverage maintained", "violations ≥2% reduced", "performance maintained", "commit merged"]
-  feature: ["acceptance met", "tests written", "docs updated", "staging verified", "review approved"]
-  deployment: ["rcctl check OK", "health 200", "no errors 10min", "response within budget", "rollback documented"]
+fast_fail:
+  unused_code: {test: "referenced?", no: delete}
+  unvalidated_input: {test: "user-facing?", yes: add_guards}
+  no_tests: {test: "production?", yes: add_tests}
+  long_function: {test: "lines>20?", yes: extract}
+  deep_nesting: {test: "depth>3?", yes: flatten}
+  silent_errors: {test: "errors logged?", no: fail_fast}
 
-git_recovery: "git log --patch --all -- path; git show HASH:path > recovered"
+languages:
+  ruby:
+    parser: ripper
+    formatter: "rubocop --autocorrect"
+    conventions: {naming: snake_case, indent: 2, line: 120}
+  
+  javascript:
+    parser: acorn
+    formatter: "eslint --fix"
+    conventions: {indent: 2, line: 100, semicolons: false}
+  
+  zsh:
+    parser: "zsh -n"
+    formatter: shfmt
+    conventions: {strict: "set -euo pipefail", quoting: always}
+  
+  rust:
+    parser: rust-analyzer
+    formatter: rustfmt
+    conventions: {indent: 4, line: 100}
+  
+  html_erb:
+    formatter: prettier
+    accessibility: [semantic_html, aria_labels, form_labels]
+  
+  css:
+    formatter: prettier
+    conventions: {indent: 2, naming: kebab-case}
+  
+  fallback:
+    method: internal_heuristics
+    confidence_penalty: 0.15
 
-# v84.0 - guardianship mode
-# +law.immutable: true (explicit freeze)
-# +apps._volatile: true (inventory marker)
-# +rails.testing (Minitest ≥80%)
-# +openbsd.monitoring (systat, pfctl, logs)
-# ~analysis: references convergence criteria
-# Mode: maintenance, not construction
+scanning:
+  include:
+    extensions: [.rb, .js, .mjs, .zsh, .sh, .rs, .html, .erb, .css, .scss]
+    paths: ["app/**", "lib/**", "config/**", "spec/**", "test/**"]
+  
+  exclude:
+    dirs: [node_modules, vendor, tmp, .git, dist, build, coverage]
+    patterns: ["*.min.*", "*.map", "*.lock"]
+    generated: [schema.rb, routes.rb, "*/migrations/*"]
+  
+  strategy:
+    batch: 50
+    checkpoint: ".master_checkpoint.json"
+    resume: true
+
+beautification:
+  principles: [human_scale, clarity, simplicity, consistency, negative_space, hierarchy, chunking]
+  metrics: [readability, consistency, composition]
+  minimum_delta: 0.02
+  anti_patterns: [over_polishing, forced_symmetry]
+
+gap_prevention:
+  missing_operation:
+    detection: "principle.operation not in operations"
+    action: "flag as incomplete, suggest operation definition"
+  
+  orphan_smell:
+    detection: "smell not detected by any principle"
+    action: "flag for principle assignment"
+  
+  confidence_drift:
+    detection: "prediction accuracy < 0.80 over 20 fixes"
+    action: "recalibrate baselines"
+  
+  infinite_loop:
+    detection: "same violation 3+ cycles"
+    action: "halt, try alternative, escalate if fails"
+  
+  regression:
+    detection: "violation count increased"
+    action: "rollback, try conservative approach"
+
+pitfall_prevention:
+  data_loss: "checkpoint every batch"
+  partial_apply: "atomic per-file, rollback on error"
+  over_beautification: "score must improve"
+  premature_stop: "require creative exhaustion before diminishing returns"
+  silent_failure: "log all errors, never swallow exceptions"
+  
+  self_correction:
+    on_any_error:
+      - "log error with context"
+      - "try alternative approach"
+      - "if 3 failures, escalate to human"
+    
+    on_low_confidence:
+      - "generate more alternatives"
+      - "apply most conservative"
+      - "flag for review"
+
+output:
+  style: "unix, terse, actionable"
+  structure: "HH:MM:SS facility.priority: message"
+  
+  exit_codes:
+    0: "clean or fixed"
+    1: "violations need review"
+    2: "usage error"
+    3: "capability error"
+    4: "drift exceeded"
+    5: "regression"
+    6: "veto"
+    7: "center violation"
+    8: "semantic drift"
+    9: "calibration fail"
+    10: "context exceeded"
+  
+  templates:
+    violation: "{time} {facility}.{priority}: {principle} {smell} [{file}:{line}] ({op}) [c={conf}]"
+    debug: "{time} debug.{severity}: {exception} [{file}:{line}] root={cause} fix={op}"
+    status: "{time} {facility}.info: {message}"
+    complete: "{time} converge.info: {fixed}/{total} violations, {cycles} cycles, next={action}"
+
+interaction:
+  on_start:
+    - "acknowledge mode and task"
+    - "estimate scope"
+    - "begin immediately"
+  
+  during:
+    - "progress every 50 files"
+    - "alert on veto/drift immediately"
+    - "auto-fix silently when confident"
+  
+  on_complete:
+    - "summary: violations fixed, cycles, metrics"
+    - "concrete next steps if any remain"
+    - "no explanatory prose"
+  
+  style:
+    tone: "direct, technical"
+    format: "terse, bullets if multiple items"
+    focus: "what to do, not why"
+
+self_test:
+  on: activation
+  checks:
+    - "all principles have operations"
+    - "all operations exist"
+    - "all smells in taxonomy"
+    - "confidence bounds valid"
+    - "no circular references"
+
+self_healing:
+  trigger: "on_load OR weekly"
+  process: "optimized_loop on self"
+  auto_fix: true
+
+tooling:
+  banned: [bash, powershell, sed, awk, python, sudo]
+  preferred: {shell: zsh, analysis: ruby}
+  external: [rubocop, prettier, eslint, rustfmt, shfmt]
+
+glossary:
+  center: "core purpose all changes preserve"
+  veto: "absolute block by security/maintainer"
+  blast_radius: "scope of change impact"
+  ewma: "exponentially weighted moving average"
+  semantic_drift: "AST-level behavioral change"
+  autonomous: "act without asking when confident"

@@ -36,68 +36,9 @@ bundle add youtube-api-v3-ruby
 bundle add soundcloud-ruby
 bundle install
 
-# Enhanced Playlist models with music service integration
-mkdir -p app/models/playlist
-cat <<EOF > app/models/playlist/set.rb
-module Playlist
-  class Set < ApplicationRecord
-    belongs_to :user
-    has_many :tracks, -> { order(:position) }, class_name: 'Playlist::Track', dependent: :destroy
-    has_many :collaborations, class_name: 'Playlist::Collaboration', dependent: :destroy
-    has_many :collaborators, through: :collaborations, source: :user
-    has_many :likes, class_name: 'Playlist::Like', dependent: :destroy
-    has_many :likers, through: :likes, source: :user
-    has_many :comments, class_name: 'Comment', foreign_key: 'playlist_set_id', dependent: :destroy
-
-    validates :name, presence: true
-    validates :privacy, inclusion: { in: %w[public private unlisted] }
-
-    enum privacy: { public: 0, private: 1, unlisted: 2 }
-
-    scope :public_playlists, -> { where(privacy: :public) }
-    scope :popular, -> { joins(:likes).group('playlist_sets.id').order('COUNT(playlist_likes.id) DESC') }
-
-    def total_duration
-      tracks.sum(:duration)
-    end
-
-    def formatted_duration
-      total_seconds = total_duration
-      hours = total_seconds / 3600
-      minutes = (total_seconds % 3600) / 60
-      seconds = total_seconds % 60
-
-      if hours > 0
-        format('%d:%02d:%02d', hours, minutes, seconds)
-      else
-        format('%d:%02d', minutes, seconds)
-      end
-    end
-
-    def can_edit?(user)
-      return false unless user
-      return true if self.user == user
-      collaborations.where(user: user, role: ['editor', 'admin']).exists?
-    end
-
-    def can_view?(user)
-      return true if public?
-      return false unless user
-      return true if self.user == user
-      collaborations.where(user: user).exists?
-    end
-
-    def like_count
-      likes.count
-    end
-
-    def liked_by?(user)
-      return false unless user
-      likes.exists?(user: user)
-    end
-  end
-end
-EOF
+# Generate Playlist models (Rails will create proper files)
+log "Generating Playlist::Set model with associations"
+bin/rails generate model Playlist::Set name:string description:text user:references privacy:integer collaborative:boolean
 
 cat <<EOF > app/models/playlist/track.rb
 module Playlist
