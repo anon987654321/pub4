@@ -1,1057 +1,1893 @@
 meta:
-  version: v100.0
-  fingerprint: master_100.0_self_run_optimized
-  updated: "2025-12-23T18:30:00Z"
-  center: "principles define quality across all domains"
-  capability: "Claude Sonnet 4.5+"
-  learned_from: "self-run optimization + bp analysis + convergence workflows"
-  
-session_knowledge:
-  project: brgen
-  primary_app: brgen.no
-  vps:
-    host: 185.52.176.18
-    user: dev
-    # SECURITY: Never store secrets in plaintext. Use environment variables.
-    password_env: VPS_PASSWORD  # Set: export VPS_PASSWORD=hutte10tu6969
-    password_fallback: hutte10tu6969  # TEMPORARY: remove after env setup
-    ssh_key: /cygdrive/g/priv/passwd/id_rsa
-    location: server27.openbsd.amsterdam
-  apps:
-    brgen: { port: 37824, domains: 35, type: "marketplace", features: [reddit_clone, x_layout, voting, comments, merit_badges] }
-    amber: { port: 42189, domains: 1 }
-    blognet: { port: 51673, domains: 6 }
-    bsdports: { port: 29458, domains: 1 }
-    hjerterom: { port: 48217, domains: 1 }
-    privcam: { port: 33946, domains: 1 }
-    pubattorney: { port: 56381, domains: 2 }
-  
-  marketplace_features:
-    reddit_clone_capabilities:
-      posts: [create, edit, delete, vote, comment, share]
-      voting: [upvote, downvote, score_calculation, hot_algorithm]
-      comments: [nested_threads, collapse, vote, sort_by_best]
-      moderation: [report, hide, pin, lock, remove]
-      feeds: [hot, new, top, rising, controversial]
-    
-    x_layout_features:
-      timeline: [infinite_scroll, real_time_updates, quote_posts, repost]
-      interactions: [like, repost, quote, reply, bookmark]
-      media: [image_gallery, video_player, gif_support]
-      engagement: [trends, hashtags, mentions, notifications]
-    
-    social_features_all_apps:
-      voting_system: "merit gem for badges + reputation"
-      comments: "nested with voting and sorting"
-      sharing: "twitter, facebook, linkedin, copy, qr, native"
-      lightbox: "lightgallery with purchased license"
-      pwa: "offline support, install prompt, notifications"
-      mobile_first: "48px touch targets, bottom nav, swipe"
-  deployment:
-    status: pre-point complete weeks ago
-    next: "doas zsh ~/openbsd.sh --post-point"
-    goal: "curl https://brgen.no working"
-    
-    openbsd_verification:
-      philosophy: "verify against man.openbsd.org exhaustively"
-      workflow:
-        - "read man pages for every daemon and command"
-        - "verify flags, options, config file syntax"
-        - "check rc.d daemon control scripts"
-        - "validate rcctl enable/disable/restart patterns"
-        - "confirm file permissions and ownership"
-        - "verify chroot paths and user/group isolation"
-      
-      critical_daemons:
-        httpd: 
-          man: "man.openbsd.org/httpd.8 + httpd.conf.5"
-          config: /etc/httpd.conf
-          verify: [listen_syntax, location_blocks, fastcgi_socket, tls_config]
-        
-        relayd:
-          man: "man.openbsd.org/relayd.8 + relayd.conf.5"
-          config: /etc/relayd.conf
-          verify: [table_syntax, relay_proto, forward_to, health_checks]
-        
-        postgresql:
-          man: "man.openbsd.org/postgresql packages"
-          config: /var/postgresql/data/postgresql.conf
-          verify: [listen_addresses, max_connections, shared_buffers, unix_socket]
-        
-        redis:
-          man: "man.openbsd.org/redis packages"
-          config: /etc/redis.conf
-          verify: [bind, port, databases, persistence]
-        
-        puma:
-          man: "third-party gem docs + rc.d integration"
-          verify: [socket_path, workers, threads, preload_app]
-      
-      security_checks:
-        - "doas.conf syntax via man doas.conf.5"
-        - "pf.conf firewall rules via man pf.conf.5"
-        - "file permissions: 0600 secrets, 0644 configs, 0755 scripts"
-        - "user isolation: _postgresql, _redis, _puma users"
-        - "chroot: httpd runs chrooted to /var/www"
-  
-  media_tools:
-    purpose: "multimedia generation and processing"
-    tools:
-      dilla:
-        desc: "lo-fi audio production with FFmpeg"
-        backend: ffmpeg
-        targets: [cygwin, termux, openbsd]
-        principles: [human_scale, clarity, idempotency]
-      postpro:
-        desc: "cinematic color grading with libvips"
-        backend: libvips
-        gem: ruby-vips
-        principles: [durability, observability, modularity]
-      repligen:
-        desc: "AI media generation via Replicate API"
-        backend: replicate.com
-        principles: [observability, feedback, sovereignty]
-  
-  shared_components:
-    purpose: "reusable patterns across all Rails apps"
-    location: "rails/ (flat structure with @*.sh modules)"
-    architecture: "modular scripts source components into apps"
-    patterns:
-      social_sharing:
-        files: [stimulus_controllers/social_share_controller.js, helpers/social_sharing_helper.rb]
-        features: [twitter, facebook, linkedin, copy_link, qr_code, native_share_api]
-      lightbox:
-        npm: "lightgallery@^2.7.0 stimulus-lightbox"
-        controller: lightgallery_controller.js
-        license: purchased
-        features: [zoom, fullscreen, thumbnails, video, swipe, touch]
-      rich_editor:
-        npm: "@tiptap/core @tiptap/starter-kit"
-        style: medium_inspired
-        script: rich_editor_system.sh
-        features: [markdown, slash_commands, collaborative, mentions, embeds]
-      mobile_first:
-        css: stylesheets/mobile_first.css
-        targets: [touch_friendly_48px, bottom_nav, pull_to_refresh, swipe_gestures]
-      pwa:
-        files: [manifest.json, service_worker.js, pwa.js]
-        script: "@frontend_pwa.sh"
-        features: [offline, install_prompt, push_notifications, background_sync]
-      stimulus_components:
-        npm: "@stimulus-components/*"
-        script: "@frontend_stimulus.sh"
-        components: [dropdown, modal, tabs, tooltip, notification, autosave]
-      voting_reviews:
-        gem: merit
-        script: voting_system.sh
-        readme: VOTING_README.md
-        patterns: [upvotes, downvotes, ratings, reviews, reputation, badges]
-        universal: "available for all models in all apps"
-    
-    rails_best_practices:
-      source: "gorails.com Chris Oliver + Julian Rubisch StimulusReflex Patterns"
-      
-      ultraminimalistic_views:
-        philosophy: "Rails tag helpers over raw HTML, eliminate divitis"
-        examples:
-          bad: "<p><%= t :hello_world %></p>"
-          good: "<%= tag.p t(:hello_world) %>"
-          bad: "<div class='container'><div class='row'><div class='col'>...</div></div></div>"
-          good: "<%= tag.article class: 'flow' do %>...<% end %>"
-        rules:
-          - "use tag helpers: tag.p, tag.h1, tag.article, tag.section"
-          - "no wrapper divs unless semantically meaningful"
-          - "leverage CSS logical properties and flow layout"
-          - "data attributes via tag helpers: tag.div(data: { controller: 'dropdown' })"
-          - "prefer semantic HTML5: article, section, nav, aside, main"
-          - "single responsibility per partial"
-          - "ViewComponents for logic, partials for pure presentation"
-      
-      gorails_patterns:
-        hotwire_first: "use Turbo Frames and Streams before custom JS"
-        minimal_javascript: "Stimulus only for targeted interactivity"
-        broadcast_updates: "real-time via Turbo Streams and ActionCable"
-        component_composition: "small, focused ViewComponents with slots"
-        progressive_enhancement: "works without JS, better with it"
-      
-      stimulus_reflex_patterns:
-        reflexes_for_state: "granular UI updates without page reload"
-        optimistic_ui: "instant feedback, server confirms"
-        lifecycle_callbacks: "beforeReflex, afterReflex for loading states"
-        authorization: "always verify permissions in reflexes"
-        dry_concerns: "extract shared reflex logic to mixins"
-        morph_strategies: "page, selector, nothing - choose appropriately"
-      
-      viewcomponent_patterns:
-        slots: "composable component sections"
-        previews: "visual development environment"
-        testing: "fast unit tests in isolation"
-        collections: "efficient rendering of lists"
-        polymorphism: "variants for different contexts"
-      
-      jumpstart_wisdom:
-        madmin: "auto-generated admin panels"
-        noticed: "unified notification system"
-        pay: "multi-provider payment integration"
-        generators: "scaffold with best practices baked in"
-    
-    integration:
-      workflow: "rails/@loader.sh sources all @*.sh modules"
-      add_to_generators: true
-      update_shared_functions: true
-      test_in_brgen_first: true
-
-inviolable:
-  center_guard:
-    checks: [center_unchanged, no_competing_centers]
-    on_failure: rollback
-  
-  veto:
-    security: "absolute on auth, validation, secrets"
-    maintainer: "absolute on debuggability, recoverability"
-  
-  never: [compromise security, lose data, ignore veto, create files without permission]
-  
-  autonomous_permission:
-    auto_apply_when:
-      - "confidence ≥ 0.90"
-      - "blast_radius == low"
-      - "operation is deterministic"
-      - "operation.complexity != complex"
-      - "no veto triggered"
-    ask_human_only_when:
-      - "confidence < 0.70"
-      - "blast_radius == high"
-      - "competing valid alternatives"
-      - "semantic drift > 0.10"
-      - "would change public API"
-      - "operation.complexity == complex"
-
-autonomy:
-  philosophy: "Act decisively on clear cases. Surface only genuine ambiguity."
-  
-  silent_actions:
-    - "fix obvious typos, encoding, whitespace"
-    - "apply deterministic operations at high confidence"
-    - "run multiple cycles until convergence"
-    - "retry failed operations with alternatives"
-    - "checkpoint and resume automatically"
-  
-  surface_to_human:
-    - "genuine design decisions with tradeoffs"
-    - "changes to public interfaces"
-    - "security-sensitive modifications"
-    - "novel patterns not in training"
-    - "conflicting requirements"
-  
-  self_correction:
-    on_failure: "try alternative approach before reporting"
-    on_regression: "rollback and try conservative fix"
-    on_ambiguity: "apply closest principle, flag for review"
-    on_novel_pattern: "document reasoning, proceed with caution"
-    max_retries: 3
-  
-  self_run_workflow:
-    philosophy: "maximize value from single invocation through systematic execution"
-    steps:
-      - name: "deep_analysis"
-        action: "read all relevant files completely, understand full context"
-        tools: [view, grep, glob]
-      - name: "identify_issues"
-        action: "find violations, inconsistencies, opportunities for improvement"
-        scope: "syntax, style, principles, patterns, structure"
-      - name: "plan_fixes"
-        action: "prioritize by impact, group related changes, estimate blast radius"
-      - name: "execute_iteratively"
-        action: "apply fixes with convergence detection, early exit when delta < threshold"
-        iterations: "5-15 cycles with convergence check"
-      - name: "verify_semantics"
-        action: "ensure no functionality drift, run tests if available"
-      - name: "commit_atomically"
-        action: "single commit with comprehensive message documenting all changes"
-    
-    optimization_targets:
-      - "minimize LLM turns by batching parallel operations"
-      - "use tool chaining (grep + view, edit + edit) in single response"
-      - "avoid redundant reads of already-loaded content"
-      - "detect convergence early (stop when improvements < 2%)"
-      - "batch related edits to same file in one response"
-    
-    convergence_criteria:
-      delta_threshold: 0.02
-      metrics: [readability_score, violation_count, consistency_index]
-      early_exit: "stop when 3 consecutive iterations show delta < threshold"
-
-modes:
-  surgical:
-    intent: "fix specific target"
-    blast_radius: low
-    confirmation: auto_if_confident
-  
-  systematic:
-    intent: "fix entire codebase"
-    blast_radius: medium
-    confirmation: batch_summary
-  
-  beautification:
-    intent: "aesthetic improvement + deep analysis"
-    blast_radius: high
-    confirmation: summary_only
-    phases:
-      - scan_full: "read entire file line-by-line"
-      - analyze_structure: "AST parse, identify patterns"
-      - assess_aesthetics: "evaluate composition, flow, clarity"
-      - apply_principles: "human_scale, clarity, simplicity, negative_space, hierarchy"
-      - deep_refactor: "extract functions, name constants, remove duplication"
-      - verify_semantics: "ensure no drift, validate syntax"
-    metrics: [readability, consistency, composition, cognitive_load]
-    minimum_delta: 0.02
-  
-  debug:
-    intent: "trace error to root cause and fix"
-    blast_radius: low
-    confirmation: auto_if_confident
-    output: [root_cause, fix, test_suggestion]
-
-capabilities:
-  can:
-    - "analyze code at any granularity (char/line/block/file)"
-    - "detect violations via AST + pattern matching"
-    - "generate and rank fix alternatives"
-    - "apply fixes atomically with rollback"
-    - "debug runtime errors from stack traces"
-    - "self-correct on failure"
-    - "operate autonomously within confidence bounds"
-  
-  cannot:
-    - "execute arbitrary code"
-    - "access network without tools"
-    - "ignore security veto"
-    - "proceed at low confidence without human input"
-
-thresholds:
-  code:
-    test_coverage: 80
-    function_lines: 20
-    nesting_depth: 3
-    line_length: 120
-    complexity: 10
-    parameters: 5
-    list_items: 7
-  
-  decision:
-    confidence_auto: 0.90
-    confidence_minimum: 0.70
-    consensus_minimum: 0.70
-    beautification_delta: 0.02
-  
-  cognitive:
-    concepts_per_response: 7
-    nesting_in_explanation: 2
-
-resource_limits:
-  max_cycles: 10
-  max_files_per_cycle: 50
-  max_retries_per_violation: 3
-  checkpoint_every: 100
-  
-  response_budget:
-    status: "≤100 tokens"
-    violation: "≤200 tokens"  
-    patch: "diff only"
-    summary: "≤300 tokens"
-
-confidence:
-  range: [0.0, 1.0]
-  levels:
-    auto: "≥0.90 — apply silently"
-    high: "0.85-0.89 — apply with note"
-    medium: "0.70-0.84 — apply with summary"
-    low: "<0.70 — require human confirmation"
-  
-  ewma:
-    formula: "new = (outcome × 0.25) + (prior × 0.75)"
-    bounds: {floor: 0.50, ceiling: 0.99}
-    recalibrate_on: "delta > 0.30 within 5 fixes"
-    storage: ".master_confidence.json"
-
-decision_gate:
-  auto_apply: |
-    confidence ≥ 0.90 AND
-    blast_radius ≤ mode_allowance AND
-    veto == false AND
-    center_guard passes AND
-    semantic_drift < 0.05
-  
-  require_confirmation: |
-    confidence < 0.70 OR
-    blast_radius > mode_allowance OR
-    semantic_drift > 0.10 OR
-    changes public API
-  
-  precedence: [veto, center_guard, semantic_drift, confidence, blast_radius]
-
-optimized_loop:
-  cycles:
-    default: 5
-    adaptive: "clamp(3, 10, ceil(files/20) + complexity/5)"
-  
-  steps:
-    scan:
-      actions: [tokenize, ast_parse, pattern_match, cross_reference]
-      output: "violations[]"
-    
-    detect:
-      actions: [classify, assign_confidence, estimate_blast, assess_drift]
-      output: "prioritized_violations[]"
-    
-    generate:
-      method: "3 alternatives simple, 15 complex"
-      actions: [conservative, aggressive, creative]
-      output: "ranked_solutions[]"
-    
-    decide:
-      actions: [adversarial_review, decision_gate, auto_apply_check]
-      output: "approved_fixes[]"
-    
-    apply:
-      method: "atomic per-file"
-      on_failure: "try alternative, then flag"
-      output: "applied_changes[]"
-    
-    verify:
-      actions: [rescan, regression_check, update_confidence]
-      on_regression: "rollback, try conservative"
-      output: "delta_report"
-    
-    converge:
-      conditions:
-        - "violations == 0 → complete"
-        - "delta < 2% for 2 cycles → diminishing returns"
-        - "cycles ≥ max → hard stop"
-
-semantic_drift:
-  method: "weighted AST diff"
-  formula: "Σ(changed × weight) / Σ(total × weight)"
-  weights:
-    function_def: 3.0
-    class_def: 3.0
-    control_flow: 2.0
-    import: 2.0
-    assignment: 1.0
-    identifier: 0.5
-    literal: 0.1
-  thresholds:
-    auto_ok: "<0.05"
-    warn: "0.05-0.10"
-    block: ">0.10"
-
-debug_mode:
-  triggers: [MODE=debug, stack_trace_in_input, test_failure]
-  
-  analysis:
-    parse: [exception_type, message, file_line_col, call_stack]
-    trace: "execution path backward to root cause"
-    identify: [immediate_cause, root_cause, contributing_factors]
-  
-  output:
-    format: "{time} debug.{severity}: {exception} [{file}:{line}] root={cause} fix={operation}"
-  
-  auto_fix:
-    when: "root cause maps to known pattern with confidence ≥ 0.85"
-    actions: [generate_fix, apply, add_regression_test_suggestion]
-
-adversarial:
-  threshold: 0.70
-  
-  personas:
-    security: {weight: 0.30, veto: true, checks: [injection, validation, secrets]}
-    maintainer: {weight: 0.20, veto: true, checks: [debuggable, recoverable, readable]}
-    minimalist: {weight: 0.15, checks: [simplest, necessary, removable]}
-    performance: {weight: 0.12, checks: [complexity, memory, scaling]}
-    architect: {weight: 0.10, checks: [coupling, dependencies, extensibility]}
-    realist: {weight: 0.08, checks: [feasible, valuable, timely]}
-    chaos: {weight: 0.03, checks: [failure_modes, recovery, cascade]}
-    user: {weight: 0.02, checks: [serves_user, friction, clarity]}
-  
-  consensus: "Σ(weight × approval) / Σ(weights)"
-  veto_override: "security.reject OR maintainer.reject → block"
-
+  version: v105.0
+  fingerprint: master_105.0_opus_refined
+  updated: '2025-12-24T00:30:00Z'
+  center: Zero redundancy, complete coverage, every smell has detector
+  capability: Claude Sonnet 4.5+
+  learned_from: Opus 4.5 structural cleanup + user-specific high severity aesthetics
+  philosophy: One principle per smell, operations never orphaned, self-healing
 principles:
-  # Foundation (immutable)
   durability:
     immutable: true
-    meaning: "tested, backed up, recoverable"
+    meaning: tested, backed up, recoverable
     detects: no_tests
     severity: critical
     confidence: 0.95
     operation: add_tests
-  
   security:
     immutable: true
-    meaning: "validate input, least privilege"
+    meaning: validate input, least privilege, defense in depth
     detects: unvalidated_input
     severity: critical
-    confidence: 0.90
+    confidence: 0.9
     operation: add_guards
-  
   observability:
     immutable: true
-    meaning: "errors visible, debuggable, traceable"
+    meaning: errors visible, debuggable, traceable
     detects: silent_errors
     severity: critical
     confidence: 0.95
     operation: fail_fast
-  
-  # Structure
+  firmitas:
+    meaning: structural strength and durability
+    detects: weak_structure
+    severity: high
+    confidence: 0.85
+    operation: reinforce
+  utilitas:
+    meaning: functional utility and purpose
+    detects: purposeless_code
+    severity: medium
+    confidence: 0.8
+    operation: clarify_purpose
+  venustas:
+    meaning: beauty and aesthetic delight
+    detects: visual_clutter
+    severity: low
+    confidence: 0.7
+    operation: beautify
+  form_follows_function:
+    meaning: design prioritizes purpose over decoration
+    detects: decorative_code
+    severity: medium
+    confidence: 0.75
+    operation: remove_decoration
+  less_is_more:
+    meaning: simplicity and restraint create elegance
+    detects: over_engineering
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+  less_but_better:
+    meaning: focus on quality over quantity
+    detects: low_quality_abundance
+    severity: medium
+    confidence: 0.75
+    operation: reduce_and_refine
+  truth_to_materials:
+    meaning: use materials honestly without disguise
+    detects: abstraction_abuse
+    severity: medium
+    confidence: 0.7
+    operation: reveal_intent
+  structural_honesty:
+    meaning: reveal how system actually works
+    detects: hidden_complexity
+    severity: high
+    confidence: 0.75
+    operation: expose_structure
   human_scale:
-    meaning: "debuggable at 3am"
+    meaning: proportioned to human comprehension - debuggable at 3am
     detects: long_function
     severity: medium
-    confidence: 0.90
+    confidence: 0.9
     operation: extract
-  
-  clarity:
-    meaning: "obvious intent"
-    detects: unclear_naming
-    severity: medium
-    confidence: 0.70
-    operation: rename
-  
-  simplicity:
-    meaning: "remove until it hurts"
-    detects: unused_code
+  proportion_and_scale:
+    meaning: relationships between parts create harmony
+    detects: unbalanced_modules
     severity: low
-    confidence: 0.90
-    operation: delete
-  
-  consistency:
-    meaning: "predictable patterns"
-    detects: inconsistent_naming
+    confidence: 0.7
+    operation: rebalance
+  symmetry_and_balance:
+    meaning: visual/logical equilibrium through composition
+    detects: asymmetric_structure
+    severity: high
+    confidence: 0.65
+    operation: align
+  order_and_geometry:
+    meaning: rational organization using clear principles
+    detects: chaotic_structure
+    severity: medium
+    confidence: 0.75
+    operation: organize
+  harmony_of_parts:
+    meaning: all elements work together cohesively
+    detects: inconsistent_patterns
+    severity: high
+    confidence: 0.8
+    operation: standardize
+  rejection_of_ornament:
+    meaning: eliminate unnecessary decoration
+    detects: decorative_code
     severity: low
     confidence: 0.85
-    operation: standardize
-  
-  locality:
-    meaning: "behavior near trigger"
-    detects: action_at_distance
+    operation: delete
+  single_responsibility:
+    meaning: each module does one thing well
+    detects: god_class
     severity: high
-    confidence: 0.75
-    operation: inline
-  
-  # System
-  idempotency:
-    meaning: "safely repeatable"
-    detects: non_idempotent
-    severity: high
-    confidence: 0.75
-    operation: add_idempotency
-  
-  extensibility:
-    meaning: "open for extension"
+    confidence: 0.9
+    operation: split
+  open_closed_principle:
+    meaning: open for extension, closed for modification
     detects: modification_required
     severity: high
     confidence: 0.75
     operation: introduce_seam
-  
-  modularity:
-    meaning: "depend on abstractions"
+  liskov_substitution:
+    meaning: subtypes must be substitutable for base types
+    detects: broken_inheritance
+    severity: high
+    confidence: 0.8
+    operation: fix_hierarchy
+  interface_segregation:
+    meaning: many specific interfaces better than one general
+    detects: fat_interface
+    severity: medium
+    confidence: 0.75
+    operation: split_interface
+  dependency_inversion:
+    meaning: depend on abstractions, not concretions
     detects: concrete_dependency
     severity: high
-    confidence: 0.80
+    confidence: 0.8
     operation: introduce_interface
-  
-  # Cognitive
-  chunking:
-    meaning: "7±2 items"
-    detects: too_many_items
-    severity: medium
-    confidence: 0.80
-    operation: categorize
-  
-  signal_noise:
-    meaning: "maximize signal"
-    detects: high_noise
-    severity: medium
-    confidence: 0.75
-    operation: remove_cruft
-  
-  # Aesthetic
-  negative_space:
-    meaning: "breathing room"
-    detects: visual_clutter
-    severity: medium
-    confidence: 0.70
-    operation: add_whitespace
-  
-  hierarchy:
-    meaning: "clear structure"
-    detects: flat_hierarchy
-    severity: medium
-    confidence: 0.75
-    operation: establish_hierarchy
-  
-  # Dynamics
-  carrying_capacity:
-    meaning: "respect limits"
-    detects: over_capacity
+  boy_scout_rule:
+    meaning: leave code better than you found it
+    detects: no_improvement
+    severity: high
+    confidence: 0.9
+    operation: improve
+  no_god_files:
+    meaning: files should have focused responsibility
+    detects: god_file
     severity: critical
     confidence: 0.95
-    operation: emergency_reduce
-  
-  # UX
+    operation: split
+  complexity_budget:
+    meaning: keep cyclomatic complexity reasonable
+    detects: high_complexity
+    severity: high
+    confidence: 0.9
+    operation: simplify
+  explicit_error_handling:
+    meaning: errors must be caught and handled
+    detects: no_error_handling
+    severity: critical
+    confidence: 0.95
+    operation: add_guards
+  operational_logging:
+    meaning: system must log important events
+    detects: no_logging
+    severity: high
+    confidence: 0.9
+    operation: add_logging
+  secrets_encryption:
+    meaning: never store plaintext secrets
+    detects: plaintext_secrets
+    severity: critical
+    confidence: 1.0
+    operation: encrypt
+  no_privilege_escalation:
+    meaning: avoid unnecessary privilege elevation
+    detects: privilege_escalation
+    severity: critical
+    confidence: 0.95
+    operation: add_guards
+  dont_repeat_yourself:
+    meaning: avoid duplication, extract commonality
+    detects: duplication
+    severity: high
+    confidence: 0.9
+    operation: extract
+  keep_it_simple:
+    meaning: simplest solution that works
+    detects: over_engineering
+    severity: medium
+    confidence: 0.85
+    operation: simplify
+  you_arent_gonna_need_it:
+    meaning: don't build features prematurely
+    detects: speculative_code
+    severity: medium
+    confidence: 0.8
+    operation: delete
+  meaningful_names:
+    meaning: clear, descriptive naming
+    detects: unclear_naming
+    severity: medium
+    confidence: 0.7
+    operation: rename
+  small_functions:
+    meaning: functions should be brief and focused
+    detects: long_function
+    severity: medium
+    confidence: 0.9
+    operation: extract
+  do_one_thing:
+    meaning: each function has single, clear purpose
+    detects: multi_purpose_function
+    severity: medium
+    confidence: 0.85
+    operation: split
+  command_query_separation:
+    meaning: separate actions from queries
+    detects: mixed_concerns
+    severity: medium
+    confidence: 0.75
+    operation: separate
+  avoid_side_effects:
+    meaning: functions shouldn't cause hidden changes
+    detects: hidden_side_effects
+    severity: high
+    confidence: 0.8
+    operation: make_explicit
+  one_level_of_abstraction:
+    meaning: consistent abstraction within scope
+    detects: mixed_abstraction
+    severity: medium
+    confidence: 0.7
+    operation: normalize
+  fail_fast:
+    meaning: report errors immediately
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    operation: add_validation
+  hide_implementation_details:
+    meaning: expose only necessary interfaces
+    detects: leaky_abstraction
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+  avoid_mental_mapping:
+    meaning: code should be self-explanatory
+    detects: cryptic_code
+    severity: medium
+    confidence: 0.7
+    operation: clarify
+  code_for_maintainer:
+    meaning: write for the next person reading it
+    detects: clever_code
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+  avoid_premature_optimization:
+    meaning: clarity first, optimize when needed
+    detects: premature_optimization
+    severity: low
+    confidence: 0.8
+    operation: simplify
+  law_of_demeter:
+    meaning: only talk to immediate friends
+    detects: train_wreck
+    severity: high
+    confidence: 0.85
+    operation: introduce_intermediary
+  separation_of_concerns:
+    meaning: divide program into distinct features
+    detects: tangled_concerns
+    severity: high
+    confidence: 0.8
+    operation: separate
+  loose_coupling:
+    meaning: minimize dependencies between modules
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    operation: introduce_interface
+  high_cohesion:
+    meaning: related functionality grouped together
+    detects: low_cohesion
+    severity: medium
+    confidence: 0.75
+    operation: group
+  encapsulate_what_changes:
+    meaning: isolate variation points
+    detects: exposed_variation
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+  composition_over_inheritance:
+    meaning: prefer object composition to class inheritance
+    detects: inheritance_abuse
+    severity: medium
+    confidence: 0.75
+    operation: compose
+  principle_of_least_knowledge:
+    meaning: minimize dependencies and interactions
+    detects: excessive_dependencies
+    severity: high
+    confidence: 0.8
+    operation: reduce_deps
+  tell_dont_ask:
+    meaning: command objects rather than querying them
+    detects: feature_envy
+    severity: medium
+    confidence: 0.75
+    operation: move_method
+  orthogonality:
+    meaning: changes in one area don't affect others
+    detects: hidden_coupling
+    severity: high
+    confidence: 0.8
+    operation: decouple
+  information_hiding:
+    meaning: hide design decisions that may change
+    detects: exposed_internals
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+  optimize_for_deletion:
+    meaning: make code easy to remove
+    detects: hard_to_delete
+    severity: low
+    confidence: 0.7
+    operation: isolate
+  wabi_sabi:
+    meaning: beauty in imperfection and impermanence
+    detects: over_polishing
+    severity: low
+    confidence: 0.7
+    operation: accept_imperfection
+  ma:
+    meaning: negative space, pause, interval between things
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+  kanso:
+    meaning: simplicity, elimination of clutter
+    detects: unnecessary_complexity
+    severity: high
+    confidence: 0.8
+    operation: simplify
+  shibui:
+    meaning: simple, subtle beauty
+    detects: garish_design
+    severity: high
+    confidence: 0.65
+    operation: refine
+  shizen:
+    meaning: naturalness without pretense
+    detects: artificial_abstraction
+    severity: high
+    confidence: 0.7
+    operation: naturalize
+  datsuzoku:
+    meaning: freedom from convention
+    detects: cargo_cult
+    severity: high
+    confidence: 0.7
+    operation: question_pattern
+  seijaku:
+    meaning: tranquility, energized calm
+    detects: noisy_code
+    severity: high
+    confidence: 0.7
+    operation: quiet
+  kaizen:
+    meaning: continuous improvement
+    detects: stagnation
+    severity: medium
+    confidence: 0.85
+    operation: improve
+  mottainai:
+    meaning: regret over waste, respect for resources
+    detects: wasteful_code
+    severity: medium
+    confidence: 0.75
+    operation: optimize_resources
+  ikigai:
+    meaning: reason for being, purpose
+    detects: purposeless_code
+    severity: medium
+    confidence: 0.7
+    operation: clarify_purpose
+  clarity:
+    meaning: obvious intent
+    detects: unclear_naming
+    severity: high
+    confidence: 0.7
+    operation: rename
+  simplicity:
+    meaning: remove until it hurts
+    detects: unused_code
+    severity: low
+    confidence: 0.9
+    operation: delete
+  consistency:
+    meaning: predictable patterns throughout
+    detects: inconsistent_naming
+    severity: high
+    confidence: 0.85
+    operation: standardize
   feedback:
-    meaning: "visible state"
+    meaning: system communicates state and actions
     detects: silent_operation
     severity: high
     confidence: 0.85
     operation: add_feedback
-  
+  affordance:
+    meaning: visual clues to functionality
+    detects: unclear_affordance
+    severity: medium
+    confidence: 0.75
+    operation: clarify_affordance
+  user_control:
+    meaning: users can undo, navigate freely
+    detects: no_undo
+    severity: high
+    confidence: 0.85
+    operation: add_undo
+  error_prevention:
+    meaning: design to prevent mistakes
+    detects: error_prone
+    severity: high
+    confidence: 0.85
+    operation: add_constraints
+  accessibility:
+    meaning: usable by people with diverse abilities
+    detects: accessibility_violation
+    severity: critical
+    confidence: 0.9
+    operation: fix_accessibility
+  progressive_disclosure:
+    meaning: show only necessary information at each step
+    detects: information_overload
+    severity: medium
+    confidence: 0.8
+    operation: hide_advanced
+  fitts_law:
+    meaning: larger, closer targets are faster to acquire
+    detects: small_target
+    severity: medium
+    confidence: 0.85
+    operation: enlarge_target
+  hicks_law:
+    meaning: more choices increase decision time
+    detects: choice_overload
+    severity: medium
+    confidence: 0.8
+    operation: reduce_choices
+  locality:
+    meaning: behavior near trigger
+    detects: action_at_distance
+    severity: high
+    confidence: 0.75
+    operation: inline
+  idempotency:
+    meaning: safely repeatable
+    detects: non_idempotent
+    severity: high
+    confidence: 0.75
+    operation: add_idempotency
+  extensibility:
+    meaning: open for extension
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    operation: introduce_seam
+  modularity:
+    meaning: depend on abstractions
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.8
+    operation: introduce_interface
+  chunking:
+    meaning: 7±2 items - respect cognitive limits
+    detects: too_many_items
+    severity: medium
+    confidence: 0.8
+    operation: categorize
+  signal_noise:
+    meaning: maximize signal
+    detects: high_noise
+    severity: medium
+    confidence: 0.75
+    operation: remove_cruft
+  negative_space:
+    meaning: breathing room
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.7
+    operation: add_whitespace
+  hierarchy:
+    meaning: clear structure and organization
+    detects: flat_hierarchy
+    severity: medium
+    confidence: 0.75
+    operation: establish_hierarchy
+  carrying_capacity:
+    meaning: respect limits
+    detects: over_capacity
+    severity: critical
+    confidence: 0.95
+    operation: emergency_reduce
   sovereignty:
-    meaning: "user controls, can undo"
+    meaning: user controls, can undo
     detects: unrecoverable_error
     severity: critical
     confidence: 0.95
     operation: add_recovery
-
-smells:
-  structural: [duplication, hidden_coupling, god_file, action_at_distance]
-  naming: [unclear_naming, inconsistent_naming]
-  complexity: [long_function, deep_nesting, too_many_items, high_complexity, high_noise]
-  security: [unvalidated_input, privilege_escalation, plaintext_secrets]
-  quality: [no_tests, unused_code, silent_errors]
-  reliability: [non_idempotent, no_logging, silent_operation, over_capacity, unrecoverable_error]
-  maintainability: [modification_required, concrete_dependency, no_maintenance]
-  aesthetic: [visual_clutter, flat_hierarchy, over_polishing]
-
-operations:
-  # Simple (auto-apply)
-  rename: "reveal intent"
-  delete: "remove unused"
-  standardize: "consistent format"
-  add_whitespace: "breathing room"
-  remove_cruft: "delete noise"
-  
-  # Medium
-  extract: "to named function"
-  flatten: "reduce nesting"
-  add_guards: "validate input"
-  add_tests: "coverage ≥80%"
-  fail_fast: "visible failure"
-  add_feedback: "show state"
-  inline: "move behavior closer"
-  categorize: "group into ≤7"
-  establish_hierarchy: "clear structure"
-  
-  # Complex (require review)
-  introduce_seam: "extension point"
-  introduce_interface: "abstract dependency"
-  add_idempotency: "safe retry"
-  add_recovery: "undo mechanism"
-  emergency_reduce: "immediate scope cut"
-
-severity:
-  critical: [no_tests, silent_errors, unvalidated_input, unrecoverable_error, over_capacity]
-  high: [hidden_coupling, modification_required, non_idempotent, action_at_distance, silent_operation]
-  medium: [unclear_naming, long_function, deep_nesting, too_many_items, flat_hierarchy]
-  low: [unused_code, inconsistent_naming, visual_clutter, over_polishing]
-
-fast_fail:
-  unused_code: {test: "referenced?", no: delete}
-  unvalidated_input: {test: "user-facing?", yes: add_guards}
-  no_tests: {test: "production?", yes: add_tests}
-  long_function: {test: "lines>20?", yes: extract}
-  deep_nesting: {test: "depth>3?", yes: flatten}
-  silent_errors: {test: "errors logged?", no: fail_fast}
-
-languages:
-  ruby:
-    parser: ripper
-    formatter: "rubocop --autocorrect"
-    conventions: {naming: snake_case, indent: 2, line: 120}
-    error_handling: "rescue with visible failures"
-  
-  javascript:
-    parser: acorn
-    formatter: "eslint --fix"
-    conventions: {indent: 2, line: 100, semicolons: false}
-    extract_function_at: 15
-    constants_over_literals: true
-    named_functions_preferred: true
-  
-  zsh:
-    parser: "zsh -n"
-    formatter: shfmt
-    conventions: {strict: "set -euo pipefail", quoting: always}
-  
-  rust:
-    parser: rust-analyzer
-    formatter: rustfmt
-    conventions: {indent: 4, line: 100}
-  
-  html_erb:
-    formatter: prettier
-    accessibility: [semantic_html, aria_labels, form_labels]
-  
-  css:
-    formatter: prettier
-    conventions: {indent: 2, naming: kebab-case}
-  
-  fallback:
-    method: internal_heuristics
-    confidence_penalty: 0.15
-
-scanning:
-  include:
-    extensions: [.rb, .js, .mjs, .zsh, .sh, .rs, .html, .erb, .css, .scss]
-    paths: ["app/**", "lib/**", "config/**", "spec/**", "test/**"]
-  
-  exclude:
-    dirs: [node_modules, vendor, tmp, .git, dist, build, coverage]
-    patterns: ["*.min.*", "*.map", "*.lock"]
-    generated: [schema.rb, routes.rb, "*/migrations/*"]
-  
-  strategy:
-    batch: 50
-    checkpoint: ".master_checkpoint.json"
-    resume: true
-
-beautification:
-  mode: deep_analysis_and_refactor
-  principles: [human_scale, clarity, simplicity, consistency, negative_space, hierarchy, chunking]
-  metrics: [readability, consistency, composition, cognitive_load]
-  minimum_delta: 0.02
-  anti_patterns: [over_polishing, forced_symmetry]
-  
-  heredoc_strategy:
-    threshold: "heredoc > 50 lines"
-    actions:
-      - "extract to write_*_file() function"
-      - "consider template file if reusable"
-      - "use single quotes for non-interpolated content"
-      - "loop for repetitive sections"
-    template_extraction:
-      when: "heredoc appears in 3+ files"
-      location: "rails/__shared/templates/"
-      naming: "verb_noun.ext (e.g., generate_model.rb.erb)"
-  
-  rails_generator_pattern:
-    structure:
-      - "readonly constants at top"
-      - "main() orchestrator function"
-      - "setup_* for configuration"
-      - "generate_* for Rails commands"
-      - "write_* for file creation"
-      - "finalize_* for cleanup"
-    heredoc_functions:
-      naming: "write_{component}_{file_type}"
-      examples: [write_application_controller, write_routes_config, write_model_base]
-    shared_extraction:
-      when: "pattern appears in 3+ generators"
-      destination: "@shared_functions.sh"
-      test: "source in new generator, verify works"
-  
-  process:
-    phase_1_scan:
-      - "read entire file into memory"
-      - "parse AST if applicable"
-      - "identify all functions, classes, blocks"
-      - "measure: lines, complexity, nesting, duplication"
-    
-    phase_2_analyze:
-      - "detect violations against all principles"
-      - "calculate cognitive load per section"
-      - "identify refactoring opportunities"
-      - "assess naming clarity"
-      - "find magic numbers/strings"
-    
-    phase_3_plan:
-      - "rank violations by severity × confidence"
-      - "generate 3-5 refactoring strategies"
-      - "estimate semantic drift for each"
-      - "select highest value, lowest risk"
-    
-    phase_4_refactor:
-      - "extract long functions (>20 lines)"
-      - "name all magic numbers as constants"
-      - "eliminate duplication via extraction"
-      - "improve naming for clarity"
-      - "add whitespace for breathing room"
-      - "organize: related code together"
-    
-    phase_5_verify:
-      - "syntax check (language-specific)"
-      - "measure semantic drift"
-      - "recalculate metrics"
-      - "confirm improvement > minimum_delta"
-      - "rollback if drift > threshold"
-    
-    phase_6_iterate:
-      - "repeat phases 2-5 until:"
-      - "  violations == 0 OR"
-      - "  improvement < minimum_delta OR"
-      - "  cycles >= max_cycles"
-  
-  line_by_line_analysis:
-    enabled: true
-    for_each_line:
-      - "check: line length <= threshold"
-      - "check: indentation consistency"
-      - "check: naming conventions"
-      - "check: complexity (nested depth)"
-      - "flag: magic numbers/strings"
-      - "flag: duplication candidates"
-    
-  big_picture_analysis:
-    enabled: true
-    assess:
-      - "file purpose clarity"
-      - "module cohesion"
-      - "dependency coupling"
-      - "documentation adequacy"
-      - "test coverage"
-      - "error handling completeness"
-    
-  output:
-    before_after_diff: true
-    metrics_table: true
-    violations_eliminated: true
-    confidence_scores: true
-
-documentation_mode:
-  purpose: "create professional, concise, actionable READMEs"
-  trigger: [create_readme, update_readme, document_app]
-  
-  structure:
-    required_sections:
-      - header: "# App Name - One-line Description"
-      - metadata: "Version, Stack, Port, Domain(s)"
-      - overview: "1-2 paragraph description"
-      - features: "Bulleted list of capabilities"
-      - quick_start: "Single command to run"
-      - tagline: "Memorable closing line"
-    
-    optional_sections:
-      - installation: "Detailed setup (if complex)"
-      - configuration: "Environment variables"
-      - documentation: "Link to detailed docs"
-  
-  principles:
-    - concise: "No fluff, only essentials"
-    - professional: "Consistent structure"
-    - actionable: "Quick start always present"
-    - scoped: "One README per component, no cross-references"
-    - current: "Reflects actual stack (Rails 8, Solid Stack)"
-  
-  anti_patterns:
-    - verbose_history: "No 'how we got here' stories"
-    - tutorial_style: "No step-by-step for obvious things"
-    - dependency_lists: "Gemfile/package.json is source of truth"
-    - api_documentation: "Keep in code or separate API docs"
-  
-  length_targets:
-    app_readme: "30-50 lines"
-    tool_readme: "40-70 lines"
-    infrastructure_readme: "20-40 lines"
-
-feature_implementation:
-  purpose: "systematic feature addition to existing apps"
-  trigger: [add_feature, implement_requirement, enhance_app]
-  
-  workflow:
-    phase_1_analyze:
-      - "read feature requirements"
-      - "identify affected apps"
-      - "check for existing similar features"
-      - "estimate effort and dependencies"
-    
-    phase_2_design:
-      - "choose implementation pattern"
-      - "identify shared vs app-specific code"
-      - "plan database migrations if needed"
-      - "design API/UI interfaces"
-    
-    phase_3_shared_first:
-      - "create shared components in __shared/"
-      - "add to @shared_functions.sh if generator change"
-      - "test in isolation"
-      - "document usage"
-    
-    phase_4_integrate:
-      - "add to app generators"
-      - "update existing app if deployed"
-      - "run generators to verify"
-      - "commit incrementally"
-    
-    phase_5_validate:
-      - "test functionality"
-      - "check mobile responsiveness"
-      - "verify accessibility"
-      - "update documentation"
-  
+  good_design_is_innovative:
+    meaning: advances with technology and culture
+    detects: outdated_approach
+    severity: low
+    confidence: 0.7
+    operation: modernize
+  good_design_is_useful:
+    meaning: serves a purpose
+    detects: useless_feature
+    severity: medium
+    confidence: 0.8
+    operation: remove_or_fix
+  good_design_is_understandable:
+    meaning: self-explanatory structure
+    detects: confusing_interface
+    severity: medium
+    confidence: 0.75
+    operation: clarify
+  good_design_is_unobtrusive:
+    meaning: tools, not decoration
+    detects: decorative_code
+    severity: low
+    confidence: 0.7
+    operation: remove_decoration
+  good_design_is_honest:
+    meaning: doesn't manipulate or make false promises
+    detects: misleading_interface
+    severity: high
+    confidence: 0.85
+    operation: make_honest
+  good_design_is_long_lasting:
+    meaning: avoids fashion, remains relevant
+    detects: trendy_code
+    severity: low
+    confidence: 0.7
+    operation: make_timeless
+  good_design_is_thorough:
+    meaning: attention to every detail
+    detects: incomplete_implementation
+    severity: medium
+    confidence: 0.75
+    operation: complete
+  environmentally_friendly:
+    meaning: conserves resources, minimizes pollution
+    detects: resource_waste
+    severity: medium
+    confidence: 0.75
+    operation: optimize_resources
+  balance:
+    meaning: equal visual weight distribution
+    detects: unbalanced_layout
+    severity: low
+    confidence: 0.7
+    operation: rebalance
+  contrast:
+    meaning: emphasize differences to create interest
+    detects: low_contrast
+    severity: low
+    confidence: 0.75
+    operation: increase_contrast
+  emphasis:
+    meaning: create focal points
+    detects: unfocused_design
+    severity: low
+    confidence: 0.7
+    operation: emphasize
+  repetition:
+    meaning: consistent elements create unity
+    detects: inconsistent_patterns
+    severity: low
+    confidence: 0.8
+    operation: repeat_pattern
+  rhythm:
+    meaning: visual tempo through recurring elements
+    detects: arrhythmic_layout
+    severity: low
+    confidence: 0.7
+    operation: establish_rhythm
+  pattern:
+    meaning: repeated design elements
+    detects: pattern_violation
+    severity: low
+    confidence: 0.75
+    operation: apply_pattern
+  white_space:
+    meaning: empty space that gives design breathing room
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+  movement:
+    meaning: guide eye through composition
+    detects: static_layout
+    severity: low
+    confidence: 0.65
+    operation: add_flow
+  variety:
+    meaning: controlled diversity prevents monotony
+    detects: monotonous_design
+    severity: low
+    confidence: 0.7
+    operation: add_variety
+  unity:
+    meaning: all parts feel cohesive
+    detects: fragmented_design
+    severity: medium
+    confidence: 0.75
+    operation: unify
+  alignment:
+    meaning: elements lined up on common axis
+    detects: misalignment
+    severity: low
+    confidence: 0.85
+    operation: align
+  proximity:
+    meaning: group related elements together
+    detects: scattered_elements
+    severity: medium
+    confidence: 0.8
+    operation: group
+  adaptive_reuse:
+    confidence: 0.8
+    detects: weak_structure
+    meaning: 'Transform existing structures for new purposes  '
+    operation: organize
+    severity: high
+  aesthetic_integrity:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Appearance matches function  '
+    operation: improve
+    severity: low
+  aesthetic_minimalism:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Remove unnecessary elements  '
+    operation: delete
+    severity: low
+  arrange_act_assert:
+    confidence: 0.8
+    detects: no_tests
+    meaning: 'Structure tests clearly in three phases  '
+    operation: organize
+    severity: high
+  avoid_duplicate_code:
+    confidence: 0.75
+    detects: duplication
+    meaning: 'Eliminate repeated logic  '
+    operation: delete
+    severity: medium
+  avoid_feature_envy:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Methods shouldn''t access other object''s data excessively  '
+    operation: simplify
+    severity: medium
+  avoid_long_methods:
+    confidence: 0.9
+    detects: long_function
+    meaning: 'Break down lengthy functions  '
+    operation: simplify
+    severity: medium
+  avoid_primitive_obsession:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Use objects instead of primitives for domain concepts  '
+    operation: simplify
+    severity: medium
+  bold_graphic_intentional:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Deliberate, purposeful visuals  '
+    operation: improve
+    severity: low
+  building_enhances_site:
+    confidence: 0.75
+    detects: weak_structure
+    meaning: 'Architecture improves its natural context  '
+    operation: improve
+    severity: high
+  clean_geometric_lines:
+    confidence: 0.9
+    detects: unclear_intent
+    meaning: 'Pure, unadorned forms  '
+    operation: simplify
+    severity: medium
+  clean_lines:
+    confidence: 0.9
+    detects: visual_clutter
+    meaning: 'Pure, uncluttered forms  '
+    operation: simplify
+    severity: medium
+  clear_structural_exhibition:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'How it stands is visible  '
+    operation: clarify
+    severity: medium
+  color_theory:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Relationships and psychology of color  '
+    operation: simplify
+    severity: medium
+  color_with_purpose:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Meaningful color application  '
+    operation: simplify
+    severity: medium
+  connectivity:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Link spaces, communities, and systems  '
+    operation: add_whitespace
+    severity: medium
+  consistent_visual_language:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Unified design system  '
+    operation: improve
+    severity: low
+  content_driven_design:
+    confidence: 0.8
+    detects: weak_structure
+    meaning: 'Content determines structure  '
+    operation: organize
+    severity: high
+  content_prioritized:
+    confidence: 0.8
+    detects: decorative_code
+    meaning: 'Information over decoration  '
+    operation: improve
+    severity: low
+  contextual_response:
+    confidence: 0.75
+    detects: no_tests
+    meaning: 'Respect and enhance surrounding environment  '
+    operation: improve
+    severity: medium
+  cross_platform_consistency:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Same experience across devices  '
+    operation: simplify
+    severity: medium
+  decompose_conditional:
+    confidence: 0.75
+    detects: high_complexity
+    meaning: 'Break complex conditionals into named functions  '
+    operation: rename
+    severity: medium
+  deference:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Interface recedes, content advances  '
+    operation: introduce_interface
+    severity: medium
+  depth:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Layers convey hierarchy and position  '
+    operation: simplify
+    severity: medium
+  design_invisibility:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Design serves content  '
+    operation: simplify
+    severity: medium
+  direct_manipulation:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Touch directly affects objects  '
+    operation: simplify
+    severity: medium
+  direct_nature_connection:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Visual and physical access to natural elements  '
+    operation: improve
+    severity: low
+  durability_and_longevity:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Built to last generations  '
+    operation: simplify
+    severity: medium
+  edge_to_edge_imagery:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Full-bleed visuals  '
+    operation: improve
+    severity: low
+  emphasis_on_volume:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Space itself as the primary design element  '
+    operation: add_whitespace
+    severity: medium
+  encapsulate_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Protect direct access to data  '
+    operation: simplify
+    severity: medium
+  energy_efficiency:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Minimize resource consumption  '
+    operation: simplify
+    severity: medium
+  enso:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Circle symbolizing enlightenment and wholeness  '
+    operation: simplify
+    severity: medium
+  essential_elements_only:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Include only what''s necessary  '
+    operation: simplify
+    severity: medium
+  experimental_innovation:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Constant material exploration  '
+    operation: simplify
+    severity: medium
+  extract_class:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Split large class into smaller ones  '
+    operation: extract
+    severity: medium
+  extract_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Pull code into separate named function  '
+    operation: rename
+    severity: medium
+  extract_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Put expression result into named variable  '
+    operation: rename
+    severity: medium
+  fittss_law:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Larger, closer targets are faster to acquire  '
+    operation: simplify
+    severity: medium
+  flexibility_and_adaptability:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Design for change over time  '
+    operation: simplify
+    severity: medium
+  flush_left_alignment:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Asymmetric, readable text  '
+    operation: align
+    severity: medium
+  focus_on_content:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Content is primary  '
+    operation: simplify
+    severity: medium
+  formal_legibility:
+    confidence: 0.8
+    detects: weak_structure
+    meaning: 'Clear reading of structure  '
+    operation: organize
+    severity: high
+  framing:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Containing or highlighting elements  '
+    operation: simplify
+    severity: medium
+  free_facade:
+    confidence: 0.8
+    detects: tight_coupling
+    meaning: 'Exterior walls independent of structure  '
+    operation: organize
+    severity: high
+  free_plan:
+    confidence: 0.8
+    detects: tight_coupling
+    meaning: 'Interior walls independent of structure  '
+    operation: organize
+    severity: high
+  function_over_decoration:
+    confidence: 0.75
+    detects: decorative_code
+    meaning: 'Utility drives aesthetic  '
+    operation: improve
+    severity: low
+  functional_typography:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Type as functional tool  '
+    operation: simplify
+    severity: medium
+  functionality_over_aesthetics:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Honest expression of purpose  '
+    operation: improve
+    severity: low
+  gaman:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Enduring with dignity  '
+    operation: simplify
+    severity: medium
+  geometric_patterns:
+    confidence: 0.8
+    detects: unclear_intent
+    meaning: 'Mathematical precision  '
+    operation: simplify
+    severity: medium
+  geometric_simplicity:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Basic shapes as foundation  '
+    operation: simplify
+    severity: medium
+  gesamtkunstwerk:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Total work of art  '
+    operation: simplify
+    severity: medium
+  grid_based_layouts:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Systematic spatial organization  '
+    operation: simplify
+    severity: medium
+  grid_systems:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Structural framework for layout  '
+    operation: simplify
+    severity: medium
+  high_contrast_elements:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Bold visual distinctions  '
+    operation: improve
+    severity: low
+  indoor_outdoor_connection:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Seamless transitions between interior and exterior  '
+    operation: simplify
+    severity: medium
+  information_architecture:
+    confidence: 0.8
+    detects: weak_structure
+    meaning: 'Logical content organization  '
+    operation: refactor
+    severity: high
+  inline_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Replace function call with function body  '
+    operation: rename
+    severity: medium
+  integration_with_nature:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Blurring boundaries between inside and outside  '
+    operation: simplify
+    severity: medium
+  intentional_typography:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Purposeful type choices  '
+    operation: simplify
+    severity: medium
+  introduce_parameter_object:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Group parameters into object  '
+    operation: organize
+    severity: medium
+  intuitive_navigation:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: Easy to understand and predict
+    operation: simplify
+    severity: medium
+  inversion_of_control:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Framework calls your code, not vice versa  '
+    operation: rename
+    severity: medium
+  jo_ha_kyu:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Beginning, break, rapid conclusion rhythm  '
+    operation: simplify
+    severity: medium
+  kire:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Clean cut, decisive action  '
+    operation: simplify
+    severity: medium
+  koko:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Austerity with richness  '
+    operation: simplify
+    severity: medium
+  large_scale_typography:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Bold, readable text  '
+    operation: simplify
+    severity: medium
+  layered_complexity:
+    confidence: 0.75
+    detects: high_complexity
+    meaning: 'Rich, multi-dimensional experiences  '
+    operation: simplify
+    severity: medium
+  learnability:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Easy for new users to accomplish tasks  '
+    operation: simplify
+    severity: medium
+  legibility:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Clear, understandable spatial organization  '
+    operation: clarify
+    severity: medium
+  limited_color_palette:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Restrained color choices  '
+    operation: simplify
+    severity: medium
+  line_and_shape:
+    confidence: 0.75
+    detects: weak_structure
+    meaning: 'Basic building blocks of form  '
+    operation: simplify
+    severity: medium
+  local_material_sourcing:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Use regional materials to reduce transport impact  '
+    operation: simplify
+    severity: medium
+  mass_production_design:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Design for industrial production  '
+    operation: simplify
+    severity: medium
+  material_as_metaphor:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Digital surfaces behave like physical materials  '
+    operation: simplify
+    severity: medium
+  material_efficiency:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Optimize material use, reduce waste  '
+    operation: optimize_resources
+    severity: medium
+  mathematical_grids:
+    confidence: 0.8
+    detects: weak_structure
+    meaning: 'Systematic layout structure  '
+    operation: organize
+    severity: high
+  mental_models:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Match user expectations  '
+    operation: simplify
+    severity: medium
+  minimal_materials:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Using only what''s necessary  '
+    operation: simplify
+    severity: medium
+  miyabi:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Courtly elegance, refinement  '
+    operation: refine
+    severity: medium
+  modular_design:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Standardized, interchangeable parts  '
+    operation: simplify
+    severity: medium
+  monochromatic_schemes:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Limited, often grey palette  '
+    operation: simplify
+    severity: medium
+  monumental_form:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Bold, imposing presence  '
+    operation: simplify
+    severity: medium
+  motion_provides_meaning:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Animation conveys relationships  '
+    operation: simplify
+    severity: medium
+  move_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Relocate function to better class  '
+    operation: improve
+    severity: medium
+  mushin:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'No-mind, effortless action  '
+    operation: simplify
+    severity: medium
+  natural_light:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Maximize daylight for health and efficiency  '
+    operation: simplify
+    severity: medium
+  natural_materials:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Wood, stone, earth in their authentic forms  '
+    operation: simplify
+    severity: medium
+  natural_ventilation:
+    confidence: 0.8
+    detects: unclear_intent
+    meaning: 'Use airflow patterns for comfort  '
+    operation: simplify
+    severity: medium
+  negative_space_emphasis:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Empty space as active design element  '
+    operation: add_whitespace
+    severity: medium
+  net_zero_design:
+    confidence: 0.75
+    detects: weak_structure
+    meaning: 'Buildings that produce as much energy as they consume  '
+    operation: simplify
+    severity: medium
+  objective_clarity:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Neutral, factual presentation  '
+    operation: simplify
+    severity: medium
+  omoiyari:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Empathy, consideration for others  '
+    operation: simplify
+    severity: medium
+  open_floor_plan:
+    confidence: 0.75
+    detects: modification_required
+    meaning: 'Flexible space without fixed partitions  '
+    operation: add_whitespace
+    severity: medium
+  pareto_principle:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: '80% of effects from 20% of causes  '
+    operation: simplify
+    severity: medium
+  passive_solar_design:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Harness natural heating and cooling  '
+    operation: simplify
+    severity: medium
+  peak_end_rule:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Experiences judged by peak and end  '
+    operation: simplify
+    severity: medium
+  photography_over_illustration:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Realistic imagery  '
+    operation: simplify
+    severity: medium
+  pilotis:
+    confidence: 0.8
+    detects: deep_nesting
+    meaning: 'Elevated structure on columns, freeing ground level  '
+    operation: organize
+    severity: high
+  place_based_design:
+    confidence: 0.75
+    detects: no_tests
+    meaning: 'Respond to specific site conditions and culture  '
+    operation: simplify
+    severity: medium
+  platform_consistency:
+    confidence: 0.8
+    detects: unclear_intent
+    meaning: 'Use iOS patterns  '
+    operation: simplify
+    severity: medium
+  prefer_polymorphism:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Use inheritance hierarchies appropriately  '
+    operation: simplify
+    severity: medium
+  primary_colors:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Red, blue, yellow emphasis  '
+    operation: simplify
+    severity: medium
+  prospect_and_refuge:
+    confidence: 0.75
+    detects: no_tests
+    meaning: 'Balance between openness and enclosure  '
+    operation: simplify
+    severity: medium
+  rational_objectivity:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Logic-driven decisions  '
+    operation: simplify
+    severity: medium
+  raw_materials_exposed:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Concrete, steel shown honestly  '
+    operation: simplify
+    severity: medium
+  readability_first:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Legibility paramount  '
+    operation: simplify
+    severity: medium
+  recognition_over_recall:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Show options rather than require memory  '
+    operation: rename
+    severity: medium
+  reduce_cognitive_load:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Don''t make users think unnecessarily  '
+    operation: simplify
+    severity: medium
+  remove_non_essentials:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Aggressive elimination of excess  '
+    operation: delete
+    severity: medium
+  rename_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Give variable more meaningful name  '
+    operation: rename
+    severity: medium
+  replace_magic_numbers:
+    confidence: 0.9
+    detects: unclear_intent
+    meaning: 'Use named constants  '
+    operation: rename
+    severity: medium
+  repose:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Calm, restful quality  '
+    operation: simplify
+    severity: medium
+  responsive_animation:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Motion responds to input  '
+    operation: simplify
+    severity: medium
+  ribbon_windows:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Continuous horizontal bands of glazing  '
+    operation: simplify
+    severity: medium
+  robustness_principle:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Liberal in what you accept, conservative in what you send  '
+    operation: simplify
+    severity: medium
+  roof_garden:
+    confidence: 0.75
+    detects: weak_structure
+    meaning: 'Reclaimed green space atop buildings  '
+    operation: add_whitespace
+    severity: medium
+  sans_serif_typography:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Clean, modern typefaces  '
+    operation: simplify
+    severity: medium
+  scale:
+    confidence: 0.9
+    detects: unclear_intent
+    meaning: 'Relative size relationships  '
+    operation: simplify
+    severity: medium
+  sense_of_place:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Create meaningful connection to location  '
+    operation: simplify
+    severity: medium
+  sense_of_shelter:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Creating protected, comfortable spaces  '
+    operation: add_whitespace
+    severity: medium
+  shadows_create_hierarchy:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Depth through layering  '
+    operation: simplify
+    severity: medium
+  shakkei:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Borrowed scenery, incorporating distant views  '
+    operation: simplify
+    severity: medium
+  shibumi:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Effortless perfection  '
+    operation: simplify
+    severity: medium
+  shoshin:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Beginner''s mind, openness  '
+    operation: simplify
+    severity: medium
+  shu_ha_ri:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Follow, break, transcend learning stages  '
+    operation: simplify
+    severity: medium
+  substitute_algorithm:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Replace algorithm with clearer one  '
+    operation: clarify
+    severity: medium
+  system_status_visibility:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Keep users informed  '
+    operation: simplify
+    severity: medium
+  tactile_surfaces:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Physical qualities in digital space  '
+    operation: add_whitespace
+    severity: medium
+  teslers_law:
+    confidence: 0.75
+    detects: high_complexity
+    meaning: 'Complexity can''t be eliminated, only relocated  '
+    operation: delete
+    severity: medium
+  test_driven_development:
+    confidence: 0.75
+    detects: no_tests
+    meaning: 'Write tests before implementation  '
+    operation: add_tests
+    severity: medium
+  texture:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Surface quality, tactile impression  '
+    operation: simplify
+    severity: medium
+  transparency:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Visual and conceptual openness  '
+    operation: improve
+    severity: low
+  typography_hierarchy:
+    confidence: 0.9
+    detects: unclear_intent
+    meaning: 'Size, weight, style differentiation  '
+    operation: improve
+    severity: low
+  unity_of_art_craft:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Merge fine and applied arts  '
+    operation: simplify
+    severity: medium
+  universal_design:
+    confidence: 0.75
+    detects: accessibility_violation
+    meaning: 'Accessible to people of all abilities  '
+    operation: add_guards
+    severity: critical
+  universal_visual_language:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Internationally comprehensible  '
+    operation: improve
+    severity: low
+  user_centered_design:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Design for actual user needs  '
+    operation: simplify
+    severity: medium
+  visual_hierarchy_clarity:
+    confidence: 0.8
+    detects: visual_clutter
+    meaning: 'Clear information prioritization  '
+    operation: clarify
+    severity: low
+  visual_weight:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Perceived heaviness of elements  '
+    operation: improve
+    severity: low
+  von_restorff_effect:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Distinctive items are remembered  '
+    operation: simplify
+    severity: medium
+  wa:
+    confidence: 0.7
+    detects: chaotic_structure
+    meaning: 'Harmony, balance'
+    operation: organize
+    severity: high
+  walkability:
+    confidence: 0.75
+    detects: visual_clutter
+    meaning: 'Design that encourages pedestrian movement  '
+    operation: simplify
+    severity: medium
+  waste_reduction:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Minimize construction and operational waste  '
+    operation: simplify
+    severity: medium
+  yohaku_no_bi:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Beauty of blank space  '
+    operation: add_whitespace
+    severity: medium
+  yoin:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Lingering resonance after experience  '
+    operation: simplify
+    severity: medium
+convergence:
+  metrics:
+    violations: {threshold: 0, weight: 0.4, required: true}
+    quality_delta: {threshold: 0.02, weight: 0.3, required: true}
+    adversarial_score: {threshold: 0.8, weight: 0.3, required: true}
+  iteration: {min: 3, max: 10, backtrack_on_regression: true}
+  exit:
+    complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
+    diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
+    hard_stop: cycles >= 10
+detection:
+  triggers: [pre_commit, pre_response, post_response, on_file_save]
   patterns:
-    social_features:
-      - voting: "acts_as_votable gem"
-      - karma: "counter_cache + calculation"
-      - sharing: "meta-tags gem + Stimulus controller"
-      - notifications: "Solid Cable + Turbo Streams"
-    
-    pwa:
-      - manifest: "app/views/pwa/manifest.json.erb"
-      - service_worker: "app/javascript/service_worker.js"
-      - install_prompt: "Stimulus controller"
-    
-    mobile_first:
-      - breakpoints: [320px, 768px, 1024px, 1280px]
-      - touch_targets: "min 48x48px"
-      - navigation: "bottom fixed on mobile"
-      - gestures: "swipe.js or Stimulus"
-
-gap_prevention:
-  missing_operation:
-    detection: "principle.operation not in operations"
-    action: "flag as incomplete, suggest operation definition"
-  
-  orphan_smell:
-    detection: "smell not detected by any principle"
-    action: "flag for principle assignment"
-  
-  confidence_drift:
-    detection: "prediction accuracy < 0.80 over 20 fixes"
-    action: "recalibrate baselines"
-  
-  infinite_loop:
-    detection: "same violation 3+ cycles"
-    action: "halt, try alternative, escalate if fails"
-  
-  regression:
-    detection: "violation count increased"
-    action: "rollback, try conservative approach"
-
-pitfall_prevention:
-  data_loss: "checkpoint every batch"
-  partial_apply: "atomic per-file, rollback on error"
-  over_beautification: "score must improve"
-  premature_stop: "require creative exhaustion before diminishing returns"
-  silent_failure: "log all errors, never swallow exceptions"
-  
-  self_correction:
-    on_any_error:
-      - "log error with context"
-      - "try alternative approach"
-      - "if 3 failures, escalate to human"
-    
-    on_low_confidence:
-      - "generate more alternatives"
-      - "apply most conservative"
-      - "flag for review"
-
-output:
-  style: "unix, terse, actionable"
-  structure: "HH:MM:SS facility.priority: message"
-  
-  exit_codes:
-    0: "clean or fixed"
-    1: "violations need review"
-    2: "usage error"
-    3: "capability error"
-    4: "drift exceeded"
-    5: "regression"
-    6: "veto"
-    7: "center violation"
-    8: "semantic drift"
-    9: "calibration fail"
-    10: "context exceeded"
-  
-  templates:
-    violation: "{time} {facility}.{priority}: {principle} {smell} [{file}:{line}] ({op}) [c={conf}]"
-    debug: "{time} debug.{severity}: {exception} [{file}:{line}] root={cause} fix={op}"
-    status: "{time} {facility}.info: {message}"
-    complete: "{time} converge.info: {fixed}/{total} violations, {cycles} cycles, next={action}"
-
-interaction:
-  on_start:
-    - "acknowledge mode and task"
-    - "estimate scope"
-    - "begin immediately"
-  
-  during:
-    - "progress every 50 files"
-    - "alert on veto/drift immediately"
-    - "auto-fix silently when confident"
-  
-  on_complete:
-    - "summary: violations fixed, cycles, metrics"
-    - "concrete next steps if any remain"
-    - "no explanatory prose"
-  
-  style:
-    tone: "direct, technical"
-    format: "terse, bullets if multiple items"
-    focus: "what to do, not why"
-
+    bash_invocation: {regex: '\bbash\b(?!\s*#)', severity: critical, msg: 'use zsh'}
+    python_call: {regex: '\bpython[23]?\b', severity: high, msg: 'use ruby'}
+    pipe_abuse: {regex: '\|.*\|.*\|', severity: medium, msg: 'refactor to zsh'}
+    sudo_usage: {regex: '\bsudo\b', severity: critical, msg: 'use doas'}
+    sed_awk_usage: {regex: '\b(sed|awk|tr|wc|head|tail|cut|find)\b', severity: high, msg: 'use zsh/ruby'}
+    magic_number: {regex: '(?<![a-zA-Z_])\b\d{2,}\b(?![a-zA-Z_])', except: '0,1,2,ports', severity: low}
+    long_line: {check: 'length>120', severity: low}
+    deep_nesting: {check: 'indent>3', severity: medium}
+    long_function: {check: 'lines>20', severity: medium}
+    unclear_name: {regex: '\b[a-z]{1,2}\b|tmp|temp|data|info|obj', severity: low}
+    no_error_handling: {check: 'no_error_path', severity: high}
+operations:
+  rename: reveal intent
+  delete: remove unused
+  standardize: consistent format
+  add_whitespace: breathing room
+  remove_cruft: delete noise
+  extract_constant: name magic number
+  inline: move behavior closer
+  reveal_intent: expose hidden logic
+  remove_decoration: eliminate ornament
+  beautify: aesthetic refinement
+  align: visual alignment
+  extract: to named function
+  extract_var: name complex expression
+  flatten: reduce nesting
+  add_guards: validate input
+  add_validation: input checking
+  add_tests: coverage ≥80%
+  fail_fast: visible failure
+  add_feedback: show state
+  categorize: group into ≤7
+  establish_hierarchy: clear structure
+  split: separate concerns
+  split_interface: segregate interfaces
+  group: increase cohesion
+  move: relocate to better location
+  move_method: relocate method
+  separate: divide concerns
+  simplify: reduce complexity
+  improve: incremental enhancement
+  clarify_purpose: define function clearly
+  expose_structure: reveal architecture
+  add_constraints: prevent errors
+  optimize_resources: reduce waste
+  accept_imperfection: embrace wabi-sabi
+  make_explicit: reveal side effects
+  normalize: consistent abstraction
+  clarify: improve clarity
+  encapsulate: hide internals
+  organize: logical structure
+  rebalance: distribute weight
+  refine: improve quality
+  quiet: reduce noise
+  deepen: add depth
+  question_pattern: validate convention
+  naturalize: remove artifice
+  break_symmetry: natural irregularity
+  reduce_and_refine: quality over quantity
+  accept_change: embrace transience
+  clarify_affordance: make functionality obvious
+  hide_advanced: progressive disclosure
+  enlarge_target: increase hit area
+  reduce_choices: simplify decisions
+  remove_or_fix: delete or repair
+  increase_contrast: improve differentiation
+  emphasize: create focus
+  repeat_pattern: maintain consistency
+  establish_rhythm: create tempo
+  apply_pattern: use template
+  add_flow: guide movement
+  add_variety: prevent monotony
+  unify: create cohesion
+  introduce_seam: extension point
+  introduce_interface: abstract dependency
+  introduce_intermediary: reduce coupling
+  add_idempotency: safe retry
+  add_recovery: undo mechanism
+  add_undo: reversible operation
+  emergency_reduce: immediate scope cut
+  fix_hierarchy: correct inheritance
+  compose: prefer composition
+  reinforce: strengthen structure
+  fix_accessibility: WCAG compliance
+  decouple: remove coupling
+  reduce_deps: minimize dependencies
+  isolate: separate component
+  refactor: restructure code
+  make_honest: remove deception
+  make_timeless: avoid trends
+  complete: finish implementation
+  modernize: update approach
+  preserve_history: maintain context
+  add_logging: log important events
+  encrypt: protect secrets
+smells:
+  structural:
+  - duplication
+  - hidden_coupling
+  - god_file
+  - god_class
+  - action_at_distance
+  - train_wreck
+  - weak_structure
+  - tangled_concerns
+  - hidden_complexity
+  naming:
+  - unclear_naming
+  - inconsistent_naming
+  - cryptic_code
+  - unclear_intent
+  complexity:
+  - long_function
+  - deep_nesting
+  - too_many_items
+  - high_complexity
+  - high_noise
+  - complex_conditional
+  - over_engineering
+  - unnecessary_complexity
+  - mixed_abstraction
+  - clever_code
+  security:
+  - unvalidated_input
+  - privilege_escalation
+  - plaintext_secrets
+  - exposed_internals
+  - leaky_abstraction
+  quality:
+  - no_tests
+  - unused_code
+  - silent_errors
+  - no_error_handling
+  - purposeless_code
+  - stagnation
+  - no_improvement
+  - incomplete_implementation
+  reliability:
+  - non_idempotent
+  - no_logging
+  - silent_operation
+  - over_capacity
+  - unrecoverable_error
+  - no_undo
+  - error_prone
+  - wasteful_code
+  - premature_optimization
+  - resource_waste
+  maintainability:
+  - modification_required
+  - concrete_dependency
+  - tight_coupling
+  - low_cohesion
+  - abstraction_abuse
+  - broken_inheritance
+  - inheritance_abuse
+  - fat_interface
+  - speculative_code
+  - hard_to_delete
+  - exposed_variation
+  - excessive_dependencies
+  aesthetic:
+  - visual_clutter
+  - flat_hierarchy
+  - over_polishing
+  - decorative_code
+  - garish_design
+  - forced_symmetry
+  - shallow_implementation
+  - noisy_code
+  refactoring:
+  - feature_envy
+  - primitive_obsession
+  - long_parameter_list
+  - magic_number
+  - multi_purpose_function
+  - mixed_concerns
+  - hidden_side_effects
+  accessibility:
+  - accessibility_violation
+  - unclear_affordance
+  - small_target
+  - information_overload
+  - choice_overload
+  design:
+  - unbalanced_modules
+  - asymmetric_structure
+  - chaotic_structure
+  - unbalanced_layout
+  - low_contrast
+  - unfocused_design
+  - arrhythmic_layout
+  - pattern_violation
+  - static_layout
+  - monotonous_design
+  - fragmented_design
+  - misalignment
+  - scattered_elements
+  - crude_implementation
+  - inconsistent_patterns
+  philosophy:
+  - cargo_cult
+  - artificial_abstraction
+  - permanent_mindset
+  - hidden_history
+  - low_quality_abundance
+  ux:
+  - confusing_interface
+  - misleading_interface
+  - outdated_approach
+  - useless_feature
+  - trendy_code
+adversarial:
+  threshold: 0.7
+  run_even_at_zero_violations: true
+  personas:
+    security:
+      weight: 0.3
+      veto: true
+      checks:
+      - injection
+      - validation
+      - secrets
+    maintainer:
+      weight: 0.2
+      veto: true
+      checks:
+      - debuggable
+      - recoverable
+      - readable
+    minimalist:
+      weight: 0.15
+      checks:
+      - simplest
+      - necessary
+      - removable
+    performance:
+      weight: 0.12
+      checks:
+      - complexity
+      - memory
+      - scaling
+    architect:
+      weight: 0.1
+      checks:
+      - coupling
+      - dependencies
+      - extensibility
+    realist:
+      weight: 0.08
+      checks:
+      - feasible
+      - valuable
+      - timely
+    chaos:
+      weight: 0.03
+      checks:
+      - failure_modes
+      - recovery
+      - cascade
+    user:
+      weight: 0.02
+      checks:
+      - serves_user
+      - friction
+      - clarity
+thresholds:
+  code: {coverage: 80, fn_lines: 20, nesting: 3, line: 120, complexity: 10, params: 5, items: 7}
+  decision: {auto: 0.9, min: 0.7, delta: 0.02}
 self_test:
-  on: activation
+  true: activation
   checks:
-    - "all principles have operations"
-    - "all operations exist"
-    - "all smells in taxonomy"
-    - "confidence bounds valid"
-    - "no circular references"
-
-self_healing:
-  trigger: "on_load OR weekly"
-  state_store: ".master_checkpoint.json"
-  check: "current_time - state_store.meta.last_self_heal > 7 days"
-  process: "optimized_loop on self"
-  auto_fix: true
-  on_complete: "update state_store.meta.last_self_heal = current_time"
-
-scanning:
-  checkpoint:
-    file: ".master_checkpoint.json"
-    schema:
-      meta:
-        last_self_heal: "ISO8601 timestamp"
-        version: "master.yml version"
-      progress:
-        last_file: "path"
-        batch_count: "integer"
-        violations_found: "integer"
-    persistence: "json format, atomic writes"
-
-tooling:
+  - all principles have operations
+  - all operations exist in operations section
+  - all principle.detects exist in smells
+  - confidence bounds valid (0.0-1.0)
+  - convergence uses AND not OR
+  - min_cycles >= 3
+  - adversarial runs always
+  tooling:
   banned: [bash, powershell, sed, awk, python, sudo]
   preferred: {shell: zsh, analysis: ruby}
   external: [rubocop, prettier, eslint, rustfmt, shfmt]
-  
-  ssh_automation:
-    method: "Ruby Net::SSH gem"
-    library: net-ssh
-    install: "gem install net-ssh --no-document"
-    usage: |
-      require 'net/ssh'
-      Net::SSH.start(host, user, password: pwd, verify_host_key: :never) do |ssh|
-        output = ssh.exec!('command')
-        # For long-running commands, use channels for incremental output
-        ssh.open_channel do |ch|
-          ch.exec('long_command') do |ch, success|
-            ch.on_data { |c, data| puts data }
-          end
-        end
-        ssh.loop
-      end
-    example_deployment: |
-      Net::SSH.start('185.52.176.18', 'dev', password: 'hutte10tu6969', verify_host_key: :never) do |ssh|
-        ssh.scp.upload!('file.sh', '/home/dev/file.sh')
-        ssh.exec!('doas zsh ~/file.sh')
-      end
-    transparency: "Always output progress, never run silent for >60 seconds"
-
+orchestration:
+  philosophy: Master.yml defines principles; specialized scripts implement them
+  rails_modules:
+    loader: rails/@loader.sh
+    core: [rails/@core_database.sh, rails/@core_dependencies.sh, rails/@core_setup.sh, rails/@rails8_modern.sh]
+    auth: [rails/@auth_devise_guests.sh]
+    features: [rails/@features_voting_comments.sh, rails/@features_messaging_realtime.sh, rails/@features_tiptap_editor.sh, rails/voting_system.sh]
+    frontend: [rails/@frontend_pwa.sh, rails/@frontend_reflex.sh, rails/@frontend_stimulus.sh, rails/@frontend_modern_css.sh]
+    generators: [rails/@generators_crud_views.sh, rails/@generators_clean_views.sh]
+    integrations: [rails/@integrations_chat_actioncable.sh, rails/@integrations_search.sh]
+  openbsd_modules:
+    deployment: openbsd/openbsd.sh
+  workflow:
+    entry: cli.rb
+    loop: [detect, fix, review, measure, converge]
 glossary:
-  center: "core purpose all changes preserve"
-  veto: "absolute block by security/maintainer"
-  blast_radius: "scope of change impact"
-  ewma: "exponentially weighted moving average"
-  semantic_drift: "AST-level behavioral change"
-  autonomous: "act without asking when confident"
+  center: core purpose all changes preserve
+  universal: principles apply across all domains and contexts
+  flattened: no hierarchical nesting, direct access
+  convergence: multiple metrics satisfied via AND logic
+rails_conventions:
+  views:
+    principle: Ultraminimalistic - no divitis
+    pattern: Use Rails tag helpers over raw HTML
+    good: "<%= tag.p t('hello_world') %>"
+    bad: "<p><%= t :hello_world %></p>"
+    avoid: Nested div soup, unnecessary containers
+    prefer: Semantic HTML5 tags (article, section, nav, aside)
+  controllers:
+    principle: Thin controllers, fat models
+    pattern: Business logic in models/services
+  models:
+    principle: Single responsibility per model
+    pattern: Use concerns for shared behavior
+  helpers:
+    principle: View-specific formatting only
+    pattern: Complex logic belongs in models/services
+  javascript:
+    principle: Stimulus controllers for behavior
+    libraries: [stimulus-components, lightgallery, swiper, tiptap]
+    pattern: Progressive enhancement, mobile-first
+  css:
+    principle: Modern CSS, no preprocessor bloat
+    avoid: Deep nesting, overly specific selectors
+    prefer: Utility classes for spacing/sizing
+  shared_features:
+    voting: Merit gem for reputation/badges/points
+    comments: Nested with voting via @features_voting_comments.sh
+    editor: Tiptap rich text via @features_tiptap_editor.sh
+    realtime: ActionCable + StimulusReflex
+    pwa: Service workers, offline support
+    lightbox: stimulus-lightbox (licensed)
+    social: Sharing buttons across all apps
+openbsd_conventions:
+  daemon_management:
+    principle: Use rcctl, not systemd
+    pattern: Check man.openbsd.org for all daemons
+    required: rc.conf.local configuration
+    monitoring: Use built-in tools (systat, top, vmstat)
+  security:
+    principle: doas instead of sudo
+    pattern: Least privilege always
+    required: pledge() and unveil() where applicable
+  shell:
+    principle: Use zsh, not bash
+    pattern: set -euo pipefail at start
+    avoid: bashisms
+  networking:
+    principle: pf firewall configuration
+    pattern: Simple rules, block by default
+  updates:
+    principle: syspatch for security
+    pattern: Regular pkg_add -u for packages
