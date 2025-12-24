@@ -1,11 +1,55 @@
 meta:
-  version: v105.0
-  fingerprint: master_105.0_opus_refined
-  updated: '2025-12-24T00:30:00Z'
+  version: v106.0
+  fingerprint: master_106.0_clear_execution_flow
+  updated: '2025-12-24T00:37:00Z'
   center: Zero redundancy, complete coverage, every smell has detector
   capability: Claude Sonnet 4.5+
-  learned_from: Opus 4.5 structural cleanup + user-specific high severity aesthetics
+  learned_from: Opus 4.5 structural cleanup + user-specific high severity aesthetics + execution flow clarity
   philosophy: One principle per smell, operations never orphaned, self-healing
+  
+execution_flow:
+  step_1_load:
+    action: Read this entire master.yml into memory
+    purpose: Internalize all principles, patterns, and workflows
+    
+  step_2_scan:
+    action: For each file in scope, detect violations
+    how: Match file content against detection.patterns regex + principle.detects smells
+    output: List of (file, line, principle_violated, smell, severity, confidence)
+    
+  step_3_generate_fixes:
+    action: For each violation, generate multiple fix options
+    how: Use principle.operation from operations section
+    constraint: Generate 2-5 alternative fixes per violation
+    
+  step_4_evaluate:
+    action: Run adversarial review on each fix option
+    how: Each persona scores fix (0.0-1.0), veto personas can reject
+    threshold: Combined score must exceed adversarial.threshold (0.7)
+    
+  step_5_apply:
+    action: Apply highest-scoring fix for each violation
+    constraint: Use in-place edits, no temporary files
+    
+  step_6_measure:
+    action: Calculate convergence metrics
+    metrics:
+      - violations_remaining (target: 0)
+      - quality_delta (improvement vs previous iteration, target: <0.02)
+      - adversarial_score (combined persona approval, target: >=0.8)
+    
+  step_7_converge:
+    action: Check if convergence.exit conditions met
+    conditions:
+      complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
+      diminishing: delta < 0.02 for 3 consecutive cycles AND cycles >= 3
+      hard_stop: cycles >= 10
+    if_not_converged: Return to step_2_scan (inner loop)
+    if_converged: Move to next file (outer loop)
+    
+  step_8_report:
+    action: Summarize changes made
+    include: Files changed, violations fixed, iterations taken, final scores
 principles:
   durability:
     immutable: true
