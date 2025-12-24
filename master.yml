@@ -1,11 +1,7 @@
 meta:
-  version: v106.0
-  fingerprint: master_106.0_clear_execution_flow
-  updated: '2025-12-24T00:37:00Z'
-  center: Zero redundancy, complete coverage, every smell has detector
-  capability: Claude Sonnet 4.5+
-  learned_from: Opus 4.5 structural cleanup + user-specific high severity aesthetics + execution flow clarity
-  philosophy: One principle per smell, operations never orphaned, self-healing
+  version: v109.0
+  updated: '2025-12-24T03:41:00Z'
+  philosophy: Zero redundancy, complete coverage, every smell has detector, operations never orphaned
   
 execution_flow:
   step_1_load:
@@ -1934,4 +1930,27 @@ openbsd_conventions:
     pattern: Simple rules, block by default
   updates:
     principle: syspatch for security
+
+orchestration:
+  purpose: master.yml defines principles, @*.sh implements specialized workflows
+  delegation:
+    rails_setup: rails/@setup_rails_app.sh
+    rails_features: rails/@features_*.sh (voting, comments, tiptap, etc)
+    openbsd_deploy: openbsd/openbsd.sh
+    testing: Run existing test suites, don't create new ones
+  workflow:
+    step_1: master.yml scans for violations
+    step_2: If Rails-specific, delegate to rails/@*.sh
+    step_3: If OpenBSD-specific, consult openbsd_conventions
+    step_4: Apply fixes using operations defined here
+    step_5: Verify with convergence metrics
+
+glossary:
+  smell: Detectable code issue (e.g., long_function, duplication)
+  principle: Rule that detects smells (e.g., human_scale detects long_function)
+  operation: Fix action (e.g., extract, simplify, delete)
+  severity: critical > high > medium > low
+  confidence: How certain we are (0.0-1.0)
+  convergence: Iterative improvement until violations == 0 or delta < 0.02
+  adversarial: Multiple personas evaluate fixes, must exceed threshold 0.7
     pattern: Regular pkg_add -u for packages

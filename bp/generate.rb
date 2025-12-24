@@ -1,14 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# Business Plan Generator - Bergen business pages
+
+# Business Plan Generator
 # Generates HTML pages from JSON data using ERB templates
+
 require 'json'
 require 'erb'
 require 'fileutils'
-# Number formatting helper
+
 def number_with_delimiter(number, delimiter: ',')
   number.to_s.reverse.gsub(/(\d{3})(?=\d)/, "\\1#{delimiter}").reverse
 end
+
 class BusinessPlanGenerator
   DATA_DIR = File.join(__dir__, 'data')
   TEMPLATE_FILE = File.join(__dir__, '__shared', 'template.html.erb')
@@ -31,8 +34,7 @@ class BusinessPlanGenerator
   end
   private
   def print_header
-    puts "🚀 Business Plan Generator"
-    puts
+    puts "Business Plan Generator\n"
   end
   def ensure_output_directory
     FileUtils.mkdir_p(OUTPUT_DIR)
@@ -45,8 +47,8 @@ class BusinessPlanGenerator
     files
   end
   def print_files_found(files)
-    puts "\n📋 Found #{files.size} business plan(s):"
-    files.each { |f| puts "   - #{File.basename(f)}" }
+    puts "\nFound #{files.size} business plan(s):"
+    files.each { |f| puts "  - #{File.basename(f)}" }
     puts
   end
   def generate_all_plans(json_files, template)
@@ -56,20 +58,21 @@ class BusinessPlanGenerator
     success_count = results.count(true)
     failure_count = results.count(false)
     puts
-    puts "✅ Successfully generated: #{success_count}/#{total}"
-    puts "❌ Failed: #{failure_count}" if failure_count > 0
+    puts "Successfully generated: #{success_count}/#{total}"
+    puts "Failed: #{failure_count}" if failure_count > 0
     print_warnings
     print_errors
   end
   def print_warnings
     return unless @warnings.any?
-    puts "\n⚠️  Warnings:"
-    @warnings.each { |w| puts "   #{w}" }
+    puts "\nWarnings:"
+    @warnings.each { |w| puts "  #{w}" }
   end
+
   def print_errors
     return unless @errors.any?
-    puts "\n❌ Errors:"
-    @errors.each { |e| puts "   #{e}" }
+    puts "\nErrors:"
+    @errors.each { |e| puts "  #{e}" }
   end
   def load_template
     unless File.exist?(TEMPLATE_FILE)
@@ -83,11 +86,11 @@ class BusinessPlanGenerator
   end
   def generate_plan(json_file, template)
     basename = File.basename(json_file, '.json')
-    puts "📝 Processing: #{basename}"
+    puts "Processing: #{basename}"
     data = load_json(json_file)
     return false unless data
     unless validate_data(data, basename)
-      error("  ❌ Validation failed for #{basename}")
+      error("  Validation failed for #{basename}")
       return false
     end
     write_html_file(basename, template, data)
@@ -99,16 +102,16 @@ class BusinessPlanGenerator
     check_file_size(basename, output_file)
     true
   rescue => e
-    error("  ❌ Failed to generate #{basename}.html: #{e.message}")
-    error("     #{e.backtrace.first}")
+    error("  Failed to generate #{basename}.html: #{e.message}")
+    error("  #{e.backtrace.first}")
     false
   end
   def check_file_size(basename, output_file)
     size_kb = File.size(output_file) / 1024.0
     if size_kb > 100
-      warning("  ⚠️  Large file: #{basename}.html (#{size_kb.round(1)} KB)")
+      warning("  Large file: #{basename}.html (#{size_kb.round(1)} KB)")
     end
-    puts "  ✅ Generated: #{basename}.html (#{size_kb.round(1)} KB)"
+    puts "  Generated: #{basename}.html (#{size_kb.round(1)} KB)"
   end
   def load_json(file)
     JSON.parse(File.read(file))
@@ -125,8 +128,10 @@ class BusinessPlanGenerator
       validate_funding_amount(data, basename)
   end
   def validate_required_sections(data, basename)
-    required = %w[meta sammendrag markedsanalyse teknologi forretningsmodell
-                  veikart finansiering team baerekraft]
+    required = %w[
+      meta sammendrag markedsanalyse teknologi forretningsmodell
+      veikart finansiering team baerekraft
+    ]
     missing = required.reject { |section| data.key?(section) }
     if missing.any?
       error("  Missing sections in #{basename}: #{missing.join(', ')}")
@@ -155,6 +160,7 @@ class BusinessPlanGenerator
     @warnings << message
   end
 end
+
 if __FILE__ == $PROGRAM_NAME
   generator = BusinessPlanGenerator.new
   success = generator.generate_all

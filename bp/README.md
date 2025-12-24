@@ -1,7 +1,24 @@
-# Business Pages Generator
+# Business Plans
 
-Generate professional business plan pages from JSON data.
+Interactive business plans with data visualization and responsive design.
 
-**Quick Start:** `ruby generate.rb`
+## Usage
 
-See `generate.rb` for documentation.
+```bash
+ruby generate.rb
+```
+
+## Structure
+
+- `data/*.json` - Business plan data
+- `__shared/template.html.erb` - HTML template
+- `generated/*.html` - Output files
+- `assets/` - Images and media
+
+## Features
+
+- ERB templating with JSON data
+- Chart.js visualizations
+- Swiper image carousels
+- Responsive mobile-first design
+- Self-contained HTML output
