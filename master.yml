@@ -4,14 +4,25 @@ meta:
   philosophy: Zero redundancy, complete coverage, every smell has detector, operations never orphaned
   
 execution_flow:
+  deep_trace_mode:
+    enabled: true
+    purpose: Provide syslog-like transparency of all operations
+    format: "component: action result (OpenBSD dmesg/syslog style, no timestamps, no decorative brackets)"
+    example: "master.yml: scanning openbsd.sh 14 violations detected"
+    output_to: chat console
+    detail_level: full line-by-line analysis and changes
+    man_verification: For OpenBSD files, verify all config files and daemons against man.openbsd.org
+    
   step_1_load:
     action: Read this entire master.yml into memory
     purpose: Internalize all principles, patterns, and workflows
+    trace: "[TRACE] Loading master.yml v{version} into memory"
     
   step_2_scan:
     action: For each file in scope, detect violations
     how: Match file content against detection.patterns regex + principle.detects smells
     output: List of (file, line, principle_violated, smell, severity, confidence)
+    trace: "[TRACE] Scanning {file} - {violations_found} violations detected"
     
   step_3_generate_fixes:
     action: For each violation, generate multiple fix options
@@ -26,6 +37,7 @@ execution_flow:
   step_5_apply:
     action: Apply highest-scoring fix for each violation
     constraint: Use in-place edits, no temporary files
+    trace: "[TRACE] Applying fix to {file}:{line} - {operation} ({confidence})"
     
   step_6_measure:
     action: Calculate convergence metrics
@@ -46,6 +58,25 @@ execution_flow:
   step_8_report:
     action: Summarize changes made
     include: Files changed, violations fixed, iterations taken, final scores
+    trace: "[TRACE] COMPLETE - {files_changed} files, {violations_fixed} fixes, {iterations} cycles"
+    
+  openbsd_verification:
+    enabled: true
+    purpose: Verify all OpenBSD files/daemons against man.openbsd.org
+    process:
+      1: Extract daemon names and config files from openbsd.sh
+      2: Look up each on man.openbsd.org for correct syntax
+      3: Verify flags, options, and paths match official documentation
+      4: Cross-reference parent daemon for each config file
+    daemons_to_verify:
+      - httpd, relayd, acme-client, unbound, nsd, smtpd, sshd
+      - pf, cron, syslogd, ntpd, dhcpd
+    config_files_to_verify:
+      - /etc/httpd.conf, /etc/relayd.conf, /etc/acme-client.conf
+      - /etc/unbound.conf, /etc/nsd.conf, /etc/mail/smtpd.conf
+      - /etc/pf.conf, /etc/ssh/sshd_config
+    trace: "[TRACE] Verifying {daemon} against man.openbsd.org/{daemon}.8"
+
 principles:
   durability:
     immutable: true
