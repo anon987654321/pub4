@@ -1,455 +1,248 @@
+---
 meta:
   version: v111
-  updated: 2025-12-25T14:03:00Z
-  purpose: Self-contained configuration for autonomous code refinement
-  philosophy: Convention over configuration, zero redundancy, complete coverage
-
+  updated: '2025-12-25T14:24:00Z'
+  philosophy: autonomous execution with full transparency
+  primary_config: true
 execution_model:
-  startup_banner: |
-    copilot: master.yml v111 loaded
-    copilot: autonomous mode enabled - minimal confirmations
-    copilot: openbsd dmesg-style trace active
-    copilot: zsh native patterns engaged
-    
-  tool_usage:
-    allowed: [cat, zsh, ruby, rcctl, doas, pledge, unveil]
-    banned: [view, edit, create, grep, glob, find, head, tail, sed, awk, tr, wc, read_powershell, write_powershell, stop_powershell, bash, powershell_syntax]
-    method: powershell tool with zsh -c wrapper for cygwin compatibility
-    file_write: zsh print redirection or cat heredoc with /cygdrive/g paths
-    file_read: cat with cygwin paths
-    
-  trace_output:
-    format: subsystem colon action detail
-    style: openbsd dmesg without timestamps or emoji
-    verbosity: comprehensive for data, minimal for commentary
+  session_persistence:
+    state_file: "~/.copilot_state.yml"
+    on_cancel: save current task, file list, step number, violations
+    on_restart: check state file and prompt to resume
+    resume_command: copilot --continue or --resume [sessionId]
+  autonomous_execution:
+    no_obvious_questions: proceed without asking for standard approvals
+    auto_approve: yes to all routine operations
+    decision_making: make decisions on behalf of user when context clear
+  trace_format:
+    style: openbsd dmesg
+    structure: 'subsystem: action detail'
+    no_decorations: no brackets, timestamps, or emoji
     examples:
-      - copilot: loading master.yml
-      - rails: scanning app/models for violations
-      - openbsd: verifying httpd.conf against man.openbsd.org
-      
-  autonomous_decisions:
-    auto_approve: true
-    user_confirmation_required: [destructive_operations, remote_deployment]
-    obvious_yes_questions: skip and proceed
-    
-  auto_resume:
-    enabled: true
-    on_cancel: persist state to memory for next invocation
-    state_includes: [current_task, files_modified, violations_found, fixes_applied, step_number]
-    resume_prompt: copilot: resuming from step N of M
-    
-  continuous_improvement:
-    self_monitor: true
-    fix_violations_in_realtime: true
-    save_learnings_to_master: true
-    
-  research_first:
-    web_search_frequency: proactive
-    man_pages: always verify openbsd configs
-    sources: [man.openbsd.org, github, zsh docs]
-
-workflow:
-  step_1_load:
-    action: Read master.yml into memory with cat
-    purpose: Internalize all principles and patterns
-    
-  step_2_discover:
-    action: Find files to process with zsh glob patterns
-    method: files=(/cygdrive/g/pub/**/*.{sh,rb,yml,html})
-    
-  step_3_scan:
-    action: Detect violations per file
-    method: Read file, match against detection patterns
-    output: List of (file, line, principle, smell, severity, confidence)
-    
-  step_4_generate:
-    action: Generate 4-16 radically different fix alternatives
-    constraint: Use adversarial questioning
-    cherry_pick: Select best solution
-    
-  step_5_apply:
-    action: Apply fix with zsh heredoc or print redirection
-    verify: Read back and compare before/after
-    rollback: If verification fails, restore backup
-    
-  step_6_measure:
-    action: Calculate convergence metrics
-    metrics: [violations_remaining, quality_delta, adversarial_score]
-    
-  step_7_loop:
-    condition: If not converged, return to step_3
-    convergence: violations == 0 OR delta < 0.02 for 3 cycles OR cycles >= 10
-    
-  step_8_report:
-    action: Output dmesg-style summary
-    format: subsystem colon files_changed count comma violations_fixed count
-
+    - 'copilot: analyzing master.yml architecture'
+    - 'rails: violation detected in app/models/user.rb line 45'
+    - 'openbsd: verifying httpd.conf pledge promises'
+  output_style:
+    commentary: minimal chatter, strunk and white compliance
+    data_trace: verbose dmesg-style logging for all file operations
+    violations: detailed detection with line numbers and context
+tool_usage:
+  banned_tools:
+  - view
+  - edit
+  - create
+  - grep
+  - glob
+  - find
+  - head
+  - tail
+  - sed
+  - awk
+  - tr
+  - wc
+  - read_powershell
+  - write_powershell
+  - stop_powershell
+  - bash
+  - powershell_syntax
+  allowed_tools:
+    file_read: cat with Windows (G:) or Cygwin (/cygdrive/g) paths
+    file_write: ruby File.write or zsh print redirection
+    search: pure zsh pattern matching
+    execution: zsh -c or ruby -e commands
+    openbsd: rcctl, doas, any openbsd base utility
+  file_write_pattern: ruby File.write(path, content)
+  path_handling:
+    windows: "G:pub\file.yml"
+    cygwin: "/cygdrive/g/pub/file.yml"
+    prefer: Windows paths in copilot cli context
+proactive_behavior:
+  web_search:
+    frequency: often, without explicit prompting
+    triggers:
+    - unknown_pattern
+    - openbsd_tool
+    - modern_syntax
+    - architecture_question
+    sources:
+    - man.openbsd.org
+    - github
+    - zsh documentation
+    - ruby documentation
+  multi_request_handling:
+    queue: track all user requests in single message
+    execute: address each item sequentially
+    complete: verify all items done before finishing
+  self_monitoring:
+    behavior: continuously analyze own actions for violations
+    correction: immediately fix detected issues
+    meta_improvement: update master.yml based on failures
+  context_reset:
+    trigger: when stuck or repeating same failures
+    method: step back and view problem with fresh perspective
+    simulate: new session with clean mental state
+  creative_problem_solving:
+    generate: 4-16 radically different solution alternatives
+    adversarial: question assumptions aggressively
+    cherry_pick: select best option from diverse candidates
+    never_give_up: exhaust all options before declaring impossible
 principles:
-  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, action: improve}
-  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, action: extract}
-  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, action: split}
-  human_scale: {detects: long_function, severity: medium, confidence: 0.9, action: extract}
-  clarity: {detects: unclear_naming, severity: high, confidence: 0.7, action: rename}
-  simplicity: {detects: unused_code, severity: low, confidence: 0.9, action: delete}
-  consistency: {detects: inconsistent_naming, severity: high, confidence: 0.85, action: standardize}
-  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, action: simplify}
-  shibui: {detects: garish_design, severity: high, confidence: 0.65, action: refine}
-  seijaku: {detects: noisy_code, severity: high, confidence: 0.7, action: quiet}
-  wa: {detects: disharmony, severity: high, confidence: 0.75, action: harmonize}
-  ma: {detects: visual_clutter, severity: medium, confidence: 0.75, action: add_whitespace}
-  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, action: add_guards}
-  observability: {detects: silent_errors, severity: critical, confidence: 0.95, action: fail_fast}
-  no_god_files: {detects: god_file, severity: critical, confidence: 0.95, action: split}
-  secrets_encryption: {detects: plaintext_secrets, severity: critical, confidence: 1.0, action: encrypt}
-  
-smells:
-  god_file: file exceeds 500 lines or handles multiple domains
-  duplication: identical code blocks repeated
-  long_function: function exceeds 20 lines
-  unclear_naming: single letter vars or vague names
-  unused_code: unreachable or commented blocks
-  inconsistent_naming: mixed camelCase and snake_case
-  unnecessary_complexity: nested loops beyond 2 levels
-  garish_design: excessive decoration or color
-  noisy_code: debug prints or commented code
-  visual_clutter: no whitespace or cramped layout
-  unvalidated_input: user input used without checks
-  silent_errors: errors caught but not logged
-  plaintext_secrets: API keys or passwords in code
-  
-actions:
-  improve: refactor for clarity and efficiency
-  extract: move duplicated code to function
-  split: divide file into focused modules
-  rename: choose descriptive meaningful names
-  delete: remove dead or unnecessary code
-  standardize: apply consistent patterns throughout
-  simplify: reduce complexity and nesting
-  refine: subtle improvements to aesthetics
-  quiet: remove noise and clutter
-  harmonize: ensure parts work together cohesively
-  add_whitespace: improve visual breathing room
-  add_guards: validate input and check preconditions
-  fail_fast: log errors and halt on failure
-  encrypt: use environment variables or secret management
-
-detection_patterns:
-  god_file: lines > 500 OR domains > 3
-  duplication: identical_blocks >= 2
-  long_function: function_lines > 20
-  unclear_naming: /^[a-z]$/ OR /tmp|data|var/
-  plaintext_secrets: /password|api_key|secret/ in source
-
+  boy_scout_rule:
+    detects: no_improvement
+    severity: high
+    confidence: 0.9
+    action: improve
+  dont_repeat_yourself:
+    detects: duplication
+    severity: high
+    confidence: 0.9
+    action: extract
+  consistency:
+    detects: inconsistent_naming
+    severity: high
+    confidence: 0.85
+    action: standardize
+  clarity:
+    detects: unclear_naming
+    severity: high
+    confidence: 0.7
+    action: rename
+  kanso:
+    detects: unnecessary_complexity
+    severity: high
+    confidence: 0.8
+    action: simplify
+  shibui:
+    detects: garish_design
+    severity: high
+    confidence: 0.65
+    action: refine
+  seijaku:
+    detects: noisy_code
+    severity: high
+    confidence: 0.7
+    action: quiet
+  wa:
+    detects: disharmony
+    severity: high
+    confidence: 0.75
+    action: harmonize
+  harmony_of_parts:
+    detects: inconsistent_patterns
+    severity: high
+    confidence: 0.8
+    action: standardize
+  symmetry_and_balance:
+    detects: asymmetric_structure
+    severity: high
+    confidence: 0.65
+    action: align
+  no_god_files:
+    detects: god_file
+    severity: critical
+    confidence: 0.95
+    action: split
+  durability:
+    detects: no_tests
+    severity: critical
+    confidence: 0.95
+    action: add_tests
+  security:
+    detects: unvalidated_input
+    severity: critical
+    confidence: 0.9
+    action: add_guards
+  observability:
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    action: fail_fast
+  secrets_encryption:
+    detects: plaintext_secrets
+    severity: critical
+    confidence: 1.0
+    action: encrypt
+  accessibility:
+    detects: accessibility_violation
+    severity: critical
+    confidence: 0.9
+    action: fix_accessibility
+  no_privilege_escalation:
+    detects: privilege_escalation
+    severity: critical
+    confidence: 0.95
+    action: add_guards
+  explicit_error_handling:
+    detects: no_error_handling
+    severity: critical
+    confidence: 0.95
+    action: add_guards
+  firmitas:
+    detects: weak_structure
+    severity: high
+    confidence: 0.85
+    action: reinforce
+  structural_honesty:
+    detects: hidden_complexity
+    severity: high
+    confidence: 0.75
+    action: expose_structure
+  single_responsibility:
+    detects: god_class
+    severity: high
+    confidence: 0.9
+    action: split
+  open_closed_principle:
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    action: introduce_seam
+  liskov_substitution:
+    detects: broken_inheritance
+    severity: high
+    confidence: 0.8
+    action: fix_hierarchy
+  dependency_inversion:
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.8
+    action: introduce_interface
+  complexity_budget:
+    detects: high_complexity
+    severity: high
+    confidence: 0.9
+    action: simplify
+  operational_logging:
+    detects: no_logging
+    severity: high
+    confidence: 0.9
+    action: add_logging
+  law_of_demeter:
+    detects: train_wreck
+    severity: high
+    confidence: 0.85
+    action: introduce_intermediary
+  separation_of_concerns:
+    detects: tangled_concerns
+    severity: high
+    confidence: 0.8
+    action: separate
+  loose_coupling:
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    action: introduce_interface
+  orthogonality:
+    detects: hidden_coupling
+    severity: high
+    confidence: 0.8
+    action: decouple
 convergence:
   metrics:
-    violations_remaining: count of unfixed smells
-    quality_delta: improvement vs previous iteration
-    adversarial_score: combined persona approval rating
-  thresholds:
+  - violations_remaining
+  - quality_delta
+  - adversarial_score
+  exit_conditions:
     complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
-    diminishing: delta < 0.02 for 3 consecutive cycles AND cycles >= 3
+    diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
     hard_stop: cycles >= 10
-
-adversarial:
-  personas:
-    security_auditor: {focus: vulnerabilities, veto: true}
-    performance_engineer: {focus: efficiency, veto: false}
-    accessibility_expert: {focus: usability, veto: false}
-    code_aesthetician: {focus: beauty, veto: false}
-  threshold: 0.7
-  
-rails_conventions:
-  views: ultraminimalistic, no divitis
-  helpers: use tag helpers like tag.p instead of raw html
-  models: skinny controllers, fat models
-  routes: restful by default
-  
-openbsd_conventions:
-  daemons: use rcctl, not /etc/rc.d directly
-  privilege: doas not sudo
-  security: pledge and unveil where applicable
-  config_verification: always check man.openbsd.org
-  
-zsh_patterns:
-  glob: files=(**/*.sh)
-  array_length: \
-  string_length: \
-  substring: \
-  replace: \
-  split: array=(\)
-  
-glossary:
-  ma: negative space, pause between things
-  kanso: simplicity, elimination of clutter
-  shibui: simple subtle beauty
-  seijaku: tranquility, energized calm
-  wa: harmony and unity
-  pola: principle of least astonishment
-  dry: don't repeat yourself
-  dmesg: diagnostic message log format
-
-orchestration:
-  shared_scripts: /cygdrive/g/pub/rails/@*.sh
-  invoke_method: source script then call function
-  examples:
-    - source /cygdrive/g/pub/rails/@setup.sh && run_setup
-    - source /cygdrive/g/pub/rails/@deploy.sh && deploy_app
-    
-bp_business_plans:
-  format: single self-contained html per idea
-  style: inline css and javascript
-  requirement: analyze all bp files recursively before processing
-  output: complete fleshed out business plan documents
-  
-media_processing:
-  dilla_dub: add sensible defaults, convention over configuration
-  index_html: fix freeze issue with stall watchdog
-  ready_to_use: everything works out of box
-  
-root_cleanup:
-  keep_only: [index.html, master.yml, cli.rb]
-  move_rest: organize into appropriate subdirectories
-  
-shared_components:
-  voting_reviews: available for all apps via merit gem
-  rich_text: tiptap editor for medium-style editing
-  lightbox: stimulus-lightbox with license
-  social_sharing: common sharing functions across apps
-  stimulus_components: integrate stimulus-components.com
-  lightgallery: licensed lightbox integration
-  swipe_js: mobile swipe gestures
-  pwa: progressive web app capabilities
-  stimulus_reflex: real-time reactive components
-  hotwire: turbo and stimulus integration
-  
-brgen_features:
-  reddit_clone: basic reddit functionality
-  x_layout: twitter-style layout option
-  old_css: restored from pub/__OLD_BACKUPS
-  marketplace: brgen marketplace implementation
-  
-gorails_patterns:
-  reference: www.gorails.com best practices
-  stimulus_reflex: julian rubisch patterns
-  integrations: incorporate into rails shared scripts
-  
-openbsd_verification:
-  process: look up every daemon and config on man.openbsd.org
-  files: verify embedded configs within openbsd.sh
-  daemons: verify parent daemon names and options
-  accuracy: ensure all flags and paths are correct
-  
-markdown_readme:
-  requirement: each app gets one README.md only
-  content: comprehensive documentation per app
-  location: app root directory
-  
-strunk_white:
-  apply_to: english and norwegian text
-  guidelines: omit needless words, use active voice, be definite specific concrete
-  
-norwegian_laws:
-  capability: rewrite and complete legal documents
-  format: professional legal norwegian
-  
-financial_reports:
-  capability: complete business financial documents
-  format: professional accounting standards
-  
-web_layouts:
-  requirement: professional properly designed layouts
-  mobile_first: responsive design from start
-  aesthetics: apply all design principles
-  
-self_execution:
-  frequency: run master.yml through itself after every edit
-  purpose: ensure no violations in master.yml itself
-  auto_fix: apply fixes automatically
-  reload: reload master.yml after each edit
-  
-behavioral_monitoring:
-  self_awareness: continuously monitor own behavior
-  fine_tuning: adjust approach based on results
-  save_workflow: document learnings for other llms
-  
-multi_question_handling:
-  queue_items: track multiple requests in single message
-  sequential_execution: address each systematically
-  completion_tracking: ensure nothing dropped
-  
-context_reset_simulation:
-  trigger: when stuck or confused
-  method: step back and view with fresh perspective
-  benefits: break out of local minima
-  
-creative_problem_solving:
-  adversarial_qa: question assumptions aggressively
-  solution_count: generate 4-16 radically different alternatives
-  cherry_picking: select best from diverse options
-  exhaustive_trying: never give up, try everything
-  
-web_search_triggers:
-  unknown_patterns: research immediately
-  openbsd_tools: verify against man pages
-  modern_syntax: check latest zsh ruby patterns
-  architecture: understand copilot cli internals
-  
-dotfolder_discovery:
-  locations: [G:/.claude, G:/pub/.claude, ~/.copilot]
-  check_for: configuration files and custom instructions
-  integrate: incorporate findings into workflow
-  
-cygwin_awareness:
-  path_translation: G:/ equals /cygdrive/g
-  tools: use cygwin native commands
-  compatibility: test windows and unix paths
-  
-file_operations:
-  write: zsh print redirection or cat heredoc
-  read: cat with appropriate paths
-  backup: always backup before modifying
-  verify: read back and compare after write
-  atomic: use temp file then move to replace
-  
-trace_examples:
-  good:
-    - copilot: analyzing master.yml architecture
-    - rails: violation detected in app/models/user.rb line 45
-    - openbsd: verifying httpd.conf pledge promises
-  bad:
-    - [ANALYSIS] Looking at files...
-    - ✓ Processing complete!
-    - 🔍 Scanning for issues
-    
-compression_prevention:
-  line_goal: 500+ lines acceptable
-  no_overcompaction: preserve clarity over brevity
-  full_coverage: include all principles and patterns
-  examples_included: provide concrete illustrations
-
-extended_principles:
-  firmitas: {detects: weak_structure, severity: high, confidence: 0.85, action: reinforce}
-  utilitas: {detects: purposeless_code, severity: medium, confidence: 0.8, action: clarify_purpose}
-  venustas: {detects: visual_clutter, severity: low, confidence: 0.7, action: beautify}
-  form_follows_function: {detects: decorative_code, severity: medium, confidence: 0.75, action: remove_decoration}
-  less_is_more: {detects: over_engineering, severity: medium, confidence: 0.8, action: simplify}
-  truth_to_materials: {detects: abstraction_abuse, severity: medium, confidence: 0.7, action: reveal_intent}
-  structural_honesty: {detects: hidden_complexity, severity: high, confidence: 0.75, action: expose_structure}
-  open_closed: {detects: modification_required, severity: high, confidence: 0.75, action: introduce_seam}
-  liskov_substitution: {detects: broken_inheritance, severity: high, confidence: 0.8, action: fix_hierarchy}
-  interface_segregation: {detects: fat_interface, severity: medium, confidence: 0.75, action: split_interface}
-  dependency_inversion: {detects: concrete_dependency, severity: high, confidence: 0.8, action: introduce_interface}
-  complexity_budget: {detects: high_complexity, severity: high, confidence: 0.9, action: simplify}
-  explicit_error_handling: {detects: no_error_handling, severity: critical, confidence: 0.95, action: add_guards}
-  operational_logging: {detects: no_logging, severity: high, confidence: 0.9, action: add_logging}
-  no_privilege_escalation: {detects: privilege_escalation, severity: critical, confidence: 0.95, action: add_guards}
-  keep_it_simple: {detects: over_engineering, severity: medium, confidence: 0.85, action: simplify}
-  you_arent_gonna_need_it: {detects: speculative_code, severity: medium, confidence: 0.8, action: delete}
-  meaningful_names: {detects: unclear_naming, severity: medium, confidence: 0.7, action: rename}
-  small_functions: {detects: long_function, severity: medium, confidence: 0.9, action: extract}
-  do_one_thing: {detects: multi_purpose_function, severity: medium, confidence: 0.85, action: split}
-  command_query_separation: {detects: mixed_concerns, severity: medium, confidence: 0.75, action: separate}
-  avoid_side_effects: {detects: hidden_side_effects, severity: high, confidence: 0.8, action: make_explicit}
-  one_level_of_abstraction: {detects: mixed_abstraction, severity: medium, confidence: 0.7, action: normalize}
-  fail_fast: {detects: silent_errors, severity: critical, confidence: 0.95, action: add_validation}
-  hide_implementation: {detects: leaky_abstraction, severity: medium, confidence: 0.75, action: encapsulate}
-  avoid_mental_mapping: {detects: cryptic_code, severity: medium, confidence: 0.7, action: clarify}
-  code_for_maintainer: {detects: clever_code, severity: medium, confidence: 0.75, action: simplify}
-  avoid_premature_optimization: {detects: premature_optimization, severity: low, confidence: 0.8, action: simplify}
-  law_of_demeter: {detects: train_wreck, severity: high, confidence: 0.85, action: introduce_intermediary}
-  separation_of_concerns: {detects: tangled_concerns, severity: high, confidence: 0.8, action: separate}
-  loose_coupling: {detects: tight_coupling, severity: high, confidence: 0.8, action: introduce_interface}
-  high_cohesion: {detects: low_cohesion, severity: medium, confidence: 0.75, action: group}
-  encapsulate_what_changes: {detects: exposed_variation, severity: medium, confidence: 0.75, action: encapsulate}
-  composition_over_inheritance: {detects: inheritance_abuse, severity: medium, confidence: 0.75, action: compose}
-  tell_dont_ask: {detects: feature_envy, severity: medium, confidence: 0.75, action: move_method}
-  orthogonality: {detects: hidden_coupling, severity: high, confidence: 0.8, action: decouple}
-  information_hiding: {detects: exposed_internals, severity: medium, confidence: 0.75, action: encapsulate}
-  wabi_sabi: {detects: over_polishing, severity: low, confidence: 0.7, action: accept_imperfection}
-  shizen: {detects: artificial_abstraction, severity: high, confidence: 0.7, action: naturalize}
-  datsuzoku: {detects: cargo_cult, severity: high, confidence: 0.7, action: question_pattern}
-  kaizen: {detects: stagnation, severity: medium, confidence: 0.85, action: improve}
-  mottainai: {detects: wasteful_code, severity: medium, confidence: 0.75, action: optimize_resources}
-  ikigai: {detects: purposeless_code, severity: medium, confidence: 0.7, action: clarify_purpose}
-  
-extended_smells:
-  weak_structure: architectural fragility or instability
-  purposeless_code: code without clear business value
-  decorative_code: unnecessary embellishments
-  over_engineering: complexity beyond requirements
-  abstraction_abuse: excessive or confusing abstractions
-  hidden_complexity: opaque implementation details
-  modification_required: rigid design requiring edits for extension
-  broken_inheritance: liskov substitution violations
-  fat_interface: interfaces with too many methods
-  concrete_dependency: hard coupling to implementations
-  high_complexity: cyclomatic complexity over 10
-  no_error_handling: missing try-catch or error checks
-  no_logging: important events not logged
-  privilege_escalation: unnecessary root or admin access
-  speculative_code: premature features nobody asked for
-  multi_purpose_function: function doing multiple things
-  mixed_concerns: business logic mixed with presentation
-  hidden_side_effects: functions changing global state
-  mixed_abstraction: high and low level code mixed
-  leaky_abstraction: implementation details exposed
-  cryptic_code: unclear intent or logic
-  clever_code: unnecessarily complex solutions
-  premature_optimization: optimizing before measuring
-  train_wreck: chained method calls crossing boundaries
-  tangled_concerns: multiple responsibilities intertwined
-  tight_coupling: high interdependence between modules
-  low_cohesion: unrelated functionality grouped together
-  exposed_variation: change points not encapsulated
-  inheritance_abuse: using inheritance where composition better
-  feature_envy: method accessing other object's data excessively
-  hidden_coupling: implicit dependencies between modules
-  exposed_internals: private details made public
-  over_polishing: endless tweaking without value
-  artificial_abstraction: unnatural or forced abstractions
-  cargo_cult: copying patterns without understanding
-  stagnation: no improvement over time
-  wasteful_code: inefficient resource usage
-  
-extended_actions:
-  reinforce: strengthen architectural foundations
-  clarify_purpose: make business value explicit
-  beautify: improve aesthetic presentation
-  remove_decoration: eliminate unnecessary embellishments
-  reveal_intent: make abstractions clearer
-  expose_structure: show architectural decisions
-  introduce_seam: add extension points
-  fix_hierarchy: correct inheritance relationships
-  split_interface: divide large interfaces
-  introduce_interface: abstract dependencies
-  add_logging: log important events
-  add_validation: validate inputs and state
-  separate: divide mixed concerns
-  make_explicit: reveal hidden behavior
-  normalize: consistent abstraction level
-  encapsulate: hide implementation details
-  introduce_intermediary: reduce dependency chains
-  decouple: reduce interdependence
-  group: increase cohesion
-  compose: use composition over inheritance
-  move_method: relocate to appropriate class
-  accept_imperfection: ship good enough solutions
-  naturalize: simplify abstractions
-  question_pattern: challenge cargo cult code
-  optimize_resources: reduce waste
-  
-detection_advanced:
-  weak_structure: dependency_count > 10 OR circular_deps
-  high_complexity: cyclomatic > 10
-  no_error_handling: /raise|throw/ without try-catch
-  no_logging: critical_paths without log statements
-  privilege_escalation: /sudo|doas/ in non-root context
-  train_wreck: /\..*\..*\./ method chaining
-  tight_coupling: import_count > 20
-  
-real_world_examples:
-  god_file_before: single 2000 line rails controller
-  god_file_after: 10 focused controllers 100-200 lines each
-  duplication_before: same validation in 5 models
-  duplication_after: shared # Extended principles and comprehensive coverage
-
