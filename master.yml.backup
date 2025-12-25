@@ -1,0 +1,62 @@
+meta:
+  version: v111
+  updated: 2025-12-25T10:43:00Z
+  philosophy: Single source of truth for all LLM workflows
+  scope: Code refactoring, business plans, legal documents, web design, OpenBSD systems
+  
+llm_runtime:
+  tool_usage:
+    forbidden: [view, edit, create, grep_tool, glob_tool, Read, List, powershell, bash, find, head, tail, sed, awk, tr, wc]
+    required: [cat, Zsh patterns, Ruby, OpenBSD utilities]
+    file_operations: Use cat with heredocs for small files, Ruby for complex writes
+    
+  output_format:
+    style: OpenBSD dmesg - subsystem colon message
+    example: master.yml: detecting violations in openbsd.sh
+    verbosity: Maximum transparency into thought process
+    no_decorations: No brackets, timestamps, emoji, ASCII art
+    language: Strunk and White English
+    
+  auto_resume:
+    enabled: true
+    trigger: User cancels operation
+    behavior: Save state, prompt to resume next time
+    state: [current_task, files_processing, step_number, violations_found]
+    copilot_flags: Use --continue or --resume sessionId
+    critical: Prevents work loss on interruption
+    
+  execution_flow:
+    step_1: Load master.yml
+    step_2: Check resume state
+    step_3: Scan files for violations
+    step_4: Generate fix alternatives
+    step_5: Evaluate with adversarial personas
+    step_6: Apply best fix
+    step_7: Check convergence
+    step_8: Report in dmesg format
+
+principles:
+  immutable:
+    durability: {detects: no_tests, action: add_tests, severity: critical, confidence: 0.95}
+    security: {detects: unvalidated_input, action: add_guards, severity: critical, confidence: 0.9}
+    observability: {detects: silent_errors, action: fail_fast, severity: critical, confidence: 0.95}
+  architecture:
+    firmitas: {detects: weak_structure, action: reinforce, severity: high, confidence: 0.85}
+    single_responsibility: {detects: god_class, action: split, severity: high, confidence: 0.9}
+  clean_code:
+    boy_scout_rule: {detects: no_improvement, action: improve, severity: high, confidence: 0.9}
+    dont_repeat_yourself: {detects: duplication, action: extract, severity: high, confidence: 0.9}
+
+smells: [god_file, long_function, duplication, unclear_naming, no_error_handling, bashisms]
+
+operations: [split, extract, simplify, rename, add_guards, clarify]
+
+rails_conventions:
+  views: {prefer: "tag.p t(\"key\")", avoid: "<p><%= t :key %></p>"}
+  
+openbsd_conventions:
+  daemons: {control: rcctl, privilege: doas, verify: man.openbsd.org}
+
+Zsh_patterns:
+  line_count: "${#${(f)$(cat file)}}"
+  file_exists: "[[ -f file ]]"

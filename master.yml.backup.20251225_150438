@@ -1,0 +1,149 @@
+meta:
+  version: v111
+  updated: 2025-12-25
+  philosophy: Single source of truth for all LLM interactions
+  scope: Code refactoring, business plans, legal documents, web layouts, OpenBSD administration
+
+execution_model:
+  on_load: |
+    LLM must internalize this entire file on first user message.
+    Reload after any edit to master.yml.
+    Use dmesg-style logging for all operations.
+  
+  on_cancel: |
+    Persist current state to ~/.copilot_state.yml including:
+    current_task, files_being_processed, violations_found, fixes_applied, next_step
+    
+  on_resume: |
+    Check for ~/.copilot_state.yml existence
+    If exists: prompt user to resume from saved state
+    Use: copilot --continue or copilot --resume [sessionId]
+  
+  workflow_loop: |
+    1. Scan file for violations (all principles)
+    2. Generate 2-5 fix alternatives per violation
+    3. Evaluate alternatives (adversarial scoring)
+    4. Apply best fix
+    5. Measure convergence (violations_remaining, quality_delta)
+    6. If not converged: repeat from step 1
+    7. If converged: move to next file
+  
+  output_format: |
+    subsystem: action detail
+    Examples:
+      master.yml: scanning violations
+      openbsd.sh: violation god_file detected line 1-500
+      master.yml: fix applied extract_function
+      convergence: iteration 3 violations 12 delta 0.15
+    
+    Never use: timestamps, square brackets, emoji, ASCII art, verbose explanations
+
+tool_constraints:
+  banned_commands: [wc, head, tail, sed, awk, tr, find, bash, powershell]
+  banned_tools: [view, edit, create, grep_tool, glob_tool, Read, Write, List]
+  
+  allowed: |
+    Direct shell: cat, ls, mv, cp, rm, grep (OpenBSD)
+    Zsh patterns: **/*.ext, ${var//pattern/replacement}
+    Ruby: ruby -e code
+    Heredocs: for file writes
+  
+  file_operations: |
+    Read: cat file
+    Write: ruby -e File.write(path, content)
+    Edit: backup then rewrite
+    List: ls -la
+    Tree: ruby Dir.glob
+    Count: grep -c
+    Search: grep -n
+
+principles:
+  durability: {detects: no_tests, severity: critical, confidence: 0.95, action: add_tests}
+  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, action: add_guards}
+  observability: {detects: silent_errors, severity: critical, confidence: 0.95, action: fail_fast}
+  no_god_files: {detects: god_file, severity: critical, confidence: 0.95, action: split}
+  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, action: improve}
+  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, action: extract}
+  clarity: {detects: unclear_naming, severity: high, confidence: 0.7, action: rename}
+  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, action: simplify}
+
+smells:
+  god_file: Files >500 lines or >3 responsibilities
+  long_function: Functions >20 lines or complexity >10
+  duplication: Identical code blocks >5 lines
+  unclear_naming: Single letters, abbreviations, misleading
+  no_tests: No test coverage
+  unvalidated_input: User input without sanitization
+  silent_errors: Errors caught but not logged
+
+actions:
+  split: Extract into multiple focustreameditor files
+  extract: Pull duplicated code into shared function
+  simplify: Remove complexity, flatten nesting
+  rename: Use clear descriptive names
+  add_tests: Write unit/integration tests
+  add_guards: Validate input, check preconditions
+  improve: Apply boy scout rule
+
+rails_conventions:
+  views: Ultra-minimalist, no divitis
+  helpers: tag.p t(:key) not raw HTML
+  stimulus: data-controller, data-action, data-target
+  shared: Merit, Tiptap, Lightgallery, Swipe.js, PWA
+
+openbsd_patterns:
+  verification: Check man.openbsd.org
+  daemon_control: rcctl
+  privilege: doas
+  security: pledge, unveil
+
+zsh_native_patterns:
+  globbing: **/*.rb, *.{yml,yaml}
+  string: ${var//old/new}, ${var:0:10}
+  array: files=(*.txt), ${#files[@]}
+  conditional: [[ -f file ]], [[ $a == $b ]]
+
+bashism_avoidance:
+  use_zsh: [[ ]] not [ ], $(...) not backticks
+  no_bash: $random_bash, redirect_both, declare
+  reference: mywiki.wooledge.org/Bashism
+
+auto_resume_implementation:
+  state_file: ~/.copilot_state.yml
+  on_cancel: save_progress_to_state_file
+  on_restart: check_and_prompt_resume
+  persist: [task_queue, files_modified, violations, fixes, step]
+
+task_queue:
+  enabled: true
+  mode: sequential
+  skip_obvious_yes: true
+
+self_monitoring:
+  trace_log: .master_trace.log
+  validate_tools: check_ban_list_before_every_call
+  reload_after_edit: automatic
+
+web_research:
+  enabled: true
+  auto_search: [openbsd_man_pages, zsh_patterns, rails_conventions]
+
+adversarial_validation:
+  alternatives: 5-15
+  personas: [security, performance, readability, minimalist, pragmatist]
+  threshold: 0.7
+
+learned_patterns:
+  - never_use_forbidden_tools
+  - zsh_via_powershell_wrapper
+  - dmesg_style_output
+  - auto_resume_on_cancel
+  - proactive_web_search
+  - 5_to_15_alternatives
+  - multi_request_queuing
+  - continuous_monitoring
+  - verify_man_openbsd_org
+  - no_500_line_limit
+  - autonomous_decisions
+  - rails_tag_helpers
+  - strunk_white_enforced
