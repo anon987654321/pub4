@@ -19,35 +19,19 @@ execution_flow:
     web_research: Proactively use browser tool for verification without explicit user request
     file_operations: Internal only - use view/edit tools, present concise syslog-style output
     
-  shell_philosophy:
-    primary_shell: zsh
-    secondary_language: ruby
-    llm_operations: Execute via powershell tool running zsh/ruby scripts only, no view/edit/create tools
-    forbidden_commands:
-      - bash
-      - powershell_scripts
-      - find
-      - head
-      - tail
-      - sed
-      - awk
-      - tr
-      - wc
-      - grep (use zsh pattern matching with (M) flag instead)
-      - cut (use zsh field splitting with (s:delim:) instead)
-      - uniq (use ${(u)arr} instead)
-      - sort (use ${(o)arr} instead)
+  direct_operations:
+    method: Use built-in view/edit/create tools directly
+    process_internally: Read file, detect violations, apply fixes, report summary
+    no_scripts: Never generate temp scripts or helper files
+    atomic_edits: Direct in-place modifications via edit tool
+    log_style: Concise syslog format without timestamps or decorative brackets
     
-    forbidden_llm_tools:
-      - view (use zsh cat or ruby File.read instead)
-      - edit (use zsh/ruby file rewriting instead)
-      - create (use zsh/ruby file creation instead)
-    
-    allowed_tools:
-      - powershell tool executing zsh commands only
-      - powershell tool executing ruby scripts only
-      - pure OpenBSD unix tools (cat, ls, etc)
-      - zsh native patterns and builtins
+    workflow: |
+      1. view: Read file into memory
+      2. analyze: Detect all violations internally
+      3. edit: Apply each fix as separate edit call
+      4. verify: Compare before/after internally
+      5. report: Log summary in dmesg style
       - ruby for complex operations
     
     file_operations:

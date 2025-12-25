@@ -1,25 +1,23 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 # OpenBSD Infrastructure - Rails 8 + Solid Stack
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
-# ARCHITECTURE: Internet → PF → Relayd (TLS) → Falcon → Rails 8
-# TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
-# VERIFIED: 2025-12-19 against man.openbsd.org, Rails 8 guides, Hotwire docs
-set -euo pipefail
+# Architecture: Internet → PF → Relayd (TLS) → Falcon → Rails 8
+# Two-phase: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
+# Verified: 2025-12-25 against man.openbsd.org, Rails 8 guides, Hotwire docs
+setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
-readonly VERSION="338.1.0"
-readonly MAIN_IP="185.52.176.18"
-readonly BACKUP_NS="194.63.248.53"
-readonly PTR4_API="http://ptr4.openbsd.amsterdam"
-readonly PTR6_API="http://ptr6.openbsd.amsterdam"
-readonly PTR_HOSTNAME="ns.brgen.no"
-readonly DEPLOY_BASE="/var/rails"
-readonly APP_BASE="/home"
-readonly LOG_DIR="/var/log/rails"
-readonly BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
-readonly SPINNER_FRAMES='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-readonly SPINNER_FRAME_COUNT=10
+typeset -r VERSION="338.2.0"
+typeset -r MAIN_IP="185.52.176.18"
+typeset -r BACKUP_NS="194.63.248.53"
+typeset -r PTR4_API="https://ptr4.openbsd.amsterdam"
+typeset -r PTR6_API="https://ptr6.openbsd.amsterdam"
+typeset -r PTR_HOSTNAME="ns.brgen.no"
+typeset -r DEPLOY_BASE="/var/rails"
+typeset -r APP_BASE="/home"
+typeset -r LOG_DIR="/var/log/rails"
+typeset -r BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
-# Unified deployment config - randomized ports for security
+# App configuration - randomized ports for security
 typeset -A APPS
 APPS[brgen.port]=37824
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
@@ -44,37 +42,9 @@ for key in ${(k)APPS[(I)*.domains]}; do
   done
 done
 ALL_DOMAINS=(${(u)ALL_DOMAINS})
-generate_rc_script() {
-  local app=$1
-  local port=$2
-  local user="dev"
-  local app_dir="/home/dev/rails/${app}"
-  doas tee /etc/rc.d/${app} > /dev/null <<RCEOF
-#!/bin/ksh
-# OpenBSD rc.d script for ${app}
-# man rc.d(8), man rc.subr(8)
-daemon="${app_dir}/bin/rails"
-daemon_user="${user}"
-daemon_flags="server -e production -p ${port} -b 127.0.0.1"
-. /etc/rc.d/rc.subr
-pexp="rails server.*${port}"
-rc_bg=YES
-rc_reload=NO
-rc_start() {
-  cd ${app_dir} && \
-  \${rcexec} "RAILS_ENV=production PORT=${port} \${daemon} \${daemon_flags}"
-}
-rc_cmd \$1
-RCEOF
-  doas chmod +x "/etc/rc.d/${app}"
-  print "[$(date '+%Y-%m-%d %H:%M:%S')] Generated /etc/rc.d/${app} (port ${port})"
-}
-# PTR configuration: reverse DNS points to primary nameserver
-# This is critical for DNSSEC validation
-readonly PTR_HOSTNAME="ns.brgen.no"
 # Status reporting - dmesg style
 status() {
-  printf '%s %-24s %-4s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$3"
+  printf '%s: %s %s\n' "$1" "$2" "$3"
 }
 spin() {
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
@@ -86,11 +56,11 @@ spin() {
   done
   printf ''
 }
-# Logging with structured output
+# Logging
 log() {
-  local level="${1:-INFO}"
+  typeset level="${1:-INFO}"
   shift
-  printf '{"time":"%s","level":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
+  printf '%s: %s\n' "$level" "$*" | tee -a "$LOG_DIR/unified.log"
 }
 save_state() {
   cat > "${DEPLOY_BASE}/state.json" << EOF
@@ -111,31 +81,29 @@ error() {
 warn() {
   log "WARN" "$*"
 }
-# Environment validation with evidence scoring
+# Environment validation
 validate_environment() {
-  log "INFO" "Validating environment..."
-  local evidence=0
+  log "INFO" "Validating environment"
+  typeset -i evidence=0
   [[ $EUID -eq 0 ]] || error "Must run with doas/root"
-  evidence=$((evidence + 20))
-  local os=$(uname -s 2>/dev/null || print "unknown")
-  [[ "$os" == "OpenBSD" ]] && evidence=$((evidence + 20))
-  ping -c 1 -W 1000 8.8.8.8 >/dev/null 2>&1 && evidence=$((evidence + 20))
-  command -v zsh >/dev/null 2>&1 && evidence=$((evidence + 20))
-  command -v pkg_add >/dev/null 2>&1 && evidence=$((evidence + 20))
+  evidence+=20
+  typeset os=$(uname -s 2>/dev/null || printf "unknown")
+  [[ "$os" == "OpenBSD" ]] && evidence+=20
+  ping -c 1 -W 1000 8.8.8.8 >/dev/null 2>&1 && evidence+=20
+  command -v zsh >/dev/null 2>&1 && evidence+=20
+  command -v pkg_add >/dev/null 2>&1 && evidence+=20
   log "INFO" "Environment evidence: ${evidence}/100"
   [[ $evidence -ge 80 ]] || error "Environment validation failed (${evidence}/100)"
   save_state "validated" "$evidence" 0
 }
 # Ruby and Rails setup
 setup_ruby_rails() {
-  log "Setting up Ruby 3.3 and Rails..."
-  # Install Ruby
+  log "INFO" "Setting up Ruby 3.3 and Rails"
   pkg_add -U ruby%3.3 || return 1
-  # Create symbolic links
-  for cmd in ruby erb irb gem bundle rdoc ri rake; do
+  typeset -a ruby_cmds=(ruby erb irb gem bundle rdoc ri rake)
+  for cmd in $ruby_cmds; do
     ln -sf "/usr/local/bin/${cmd}33" "/usr/local/bin/$cmd" 2>/dev/null || true
   done
-  # Configure gem environment
   cat > /etc/gemrc << 'EOF'
 ---
 :sources:
@@ -146,29 +114,23 @@ EOF
   # Update RubyGems
   gem update --system --no-document || true
   # Install essential gems
-  local gems=(
-    "bundler:2.5.0"
-    "rails:8.0.0"
-    "pg:1.5.0"
-    "redis:5.0.0"
-    "falcon:0.47.0"
-    "pledge:1.2.0"
-    "async:2.8.0"
-    "async-websocket:0.26.0"
-    "async-redis:0.8.0"
-    "rack-attack:6.7.0"
-    "solid_queue:1.0.0"
-    "solid_cache:1.0.0"
-    "solid_cable:1.0.0"
-    "propshaft:0.8.0"
-    "turbo-rails:2.0.0"
-    "stimulus-rails:1.3.0"
-  )
-  for gem_spec in "${gems[@]}"; do
-    local gem="${gem_spec%%:*}"
-    local version="${gem_spec#*:}"
-    gem install "$gem" --version "$version" --no-document || log "WARN: Failed $gem"
-  done
+  _install_gem() { gem install "$1" --version "$2" --no-document || log "WARN: Failed $1"; }
+  _install_gem bundler 2.5.0
+  _install_gem rails 8.0.0
+  _install_gem pg 1.5.0
+  _install_gem redis 5.0.0
+  _install_gem falcon 0.47.0
+  _install_gem pledge 1.2.0
+  _install_gem async 2.8.0
+  _install_gem async-websocket 0.26.0
+  _install_gem async-redis 0.8.0
+  _install_gem rack-attack 6.7.0
+  _install_gem solid_queue 1.0.0
+  _install_gem solid_cache 1.0.0
+  _install_gem solid_cable 1.0.0
+  _install_gem propshaft 0.8.0
+  _install_gem turbo-rails 2.0.0
+  _install_gem stimulus-rails 1.3.0
   log "Ruby and Rails configured"
 }
 # PostgreSQL and Redis setup
@@ -220,10 +182,10 @@ _generate_dnssec_keys() {
       cd /var/nsd/zones/keys
       # ZSK - ECDSA P-256 SHA-256
       zsk_base=$(ldns-keygen -a ECDSAP256SHA256 -b 256 "$domain")
-      print "$zsk_base" > "$domain.zsk"
+      printf '%s\n' "$zsk_base" > "$domain.zsk"
       # KSK - ECDSA P-256 SHA-256
       ksk_base=$(ldns-keygen -k -a ECDSAP256SHA256 -b 256 "$domain")
-      print "$ksk_base" > "$domain.ksk"
+      printf '%s\n' "$ksk_base" > "$domain.ksk"
     fi
   done
 }
@@ -241,12 +203,12 @@ _create_zone_files() {
 @ IN A $MAIN_IP
 www IN CNAME @
 @ IN CAA 0 issue "letsencrypt.org"
-$([[ "$domain" == "brgen.no" ]] && print "ns IN A $MAIN_IP")
+$([[ "$domain" == "brgen.no" ]] && printf "ns IN A %s\n" "$MAIN_IP")
 EOF
     # Add subdomains if defined
     if [[ -n $subdomains ]]; then
       for sub in ${(s: :)subdomains}; do
-        print "$sub IN CNAME @" >> "/var/nsd/zones/master/$domain.zone"
+        printf '%s IN CNAME @\n' "$sub" >> "/var/nsd/zones/master/$domain.zone"
       done
     fi
   done
@@ -299,7 +261,7 @@ extract_app_ports() {
   for key in ${(k)APPS}; do
     [[ $key == *.port ]] && app_ports+=(${APPS[$key]})
   done
-  print "${(j:, :)app_ports}"
+  printf '%s\n' "${(j:, :)app_ports}"
 }
 generate_pf_config() {
   local port_list=$1
@@ -571,7 +533,7 @@ SQL
 _write_app_gemfile() {
   local app_dir="$1"
   local app="$2"
-  doas -u "$app" cat > "$app_dir/Gemfile" << 'GEMFILE'
+  doas -u "$app" print -l -- > "$app_dir/Gemfile" << 'GEMFILE'
 source "https://rubygems.org"
 ruby "~> 3.3"
 gem "rails", "~> 8.0.0"
@@ -597,7 +559,7 @@ _write_database_config() {
   local app_dir="$1"
   local app="$2"
   local db_pass="$3"
-  doas -u "$app" cat > "$app_dir/config/database.yml" << EOF
+  doas -u "$app" print -l -- > "$app_dir/config/database.yml" << EOF
 production:
   adapter: postgresql
   encoding: unicode
@@ -615,7 +577,7 @@ _write_app_env() {
   local port="$3"
   local db_pass="$4"
   local domains="$5"
-  doas -u "$app" cat > "$app_dir/.env" << EOF
+  doas -u "$app" print -l -- > "$app_dir/.env" << EOF
 RAILS_ENV=production
 PORT=$port
 SECRET_KEY_BASE=$(openssl rand -hex 64)
@@ -633,7 +595,7 @@ _write_falcon_config() {
   local app="$2"
   local port="$3"
   local domains="$4"
-  doas -u "$app" cat > "$app_dir/config/falcon.rb" << FALCON
+  doas -u "$app" print -l -- > "$app_dir/config/falcon.rb" << FALCON
 #!/usr/bin/env ruby
 require 'async'
 require 'async/http/endpoint'
@@ -678,7 +640,7 @@ EOF
 }
 # PTR records
 setup_ptr_records() {
-  local hostname=$(hostname 2>/dev/null || echo "unknown")
+  local hostname=$(hostname 2>/dev/null || print "unknown")
   [[ "$hostname" =~ ^vm[0-9]+ ]] || {
     log "Not on OpenBSD Amsterdam VM - skipping PTR"
     return 0
