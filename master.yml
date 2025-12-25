@@ -1,7 +1,13 @@
-meta:
-  version: v109.0
-  updated: '2025-12-24T03:41:00Z'
-  philosophy: Zero redundancy, complete coverage, every smell has detector, operations never orphaned
+
+execution_model:
+  philosophy: Direct file operations via cat/zsh/ruby only
+  no_wrappers: Avoid view/edit/create/grep tools
+  read_with: cat
+  write_with: zsh redirection (cat > file <<EOF ... EOF && mv)
+  trace_format: subsystem colon action detail (no brackets, timestamps, emoji)
+  autonomous: Process without confirmation, verify before/after
+  openbsd_verification: Check man.openbsd.org for all daemons and configs
+
   
 execution_flow:
   deep_trace_mode:
