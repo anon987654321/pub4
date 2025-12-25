@@ -1,4 +1,3 @@
-
 execution_model:
   philosophy: Direct file operations via cat/zsh/ruby only
   no_wrappers: Avoid view/edit/create/grep tools
@@ -7,30 +6,6 @@ execution_model:
   trace_format: subsystem colon action detail (no brackets, timestamps, emoji)
   autonomous: Process without confirmation, verify before/after
   openbsd_verification: Check man.openbsd.org for all daemons and configs
-  auto_resume:
-    enabled: true
-    persist_state: ~/.copilot_state.yml
-    on_cancel: save_progress
-    on_restart: check_for_resume
-    state_includes: [current_task, files_modified, step_number, violations_found, fixes_applied]
-    prompt_user: true
-    implementation:
-      step_1_detect_cancel: Monitor for user cancellation signal
-      step_2_serialize: Write state_includes to persist_state file in YAML format
-      step_3_timestamp: Add cancel_time and session_id to state
-      step_4_on_init: At conversation start, check if persist_state exists
-      step_5_load_state: If exists and recent (<24h), parse YAML into memory
-      step_6_prompt: Ask user "Resume previous task: {current_task}? [y/n]"
-      step_7_resume: If yes, load context and continue from step_number
-      step_8_cleanup: If no or completed, delete persist_state file
-    llm_instructions: |
-      CRITICAL: You MUST implement this auto-resume behavior:
-      1. FIRST ACTION in any conversation: Check for ~/.copilot_state.yml
-      2. If found: Read it, parse YAML, ask user to resume
-      3. When user cancels: IMMEDIATELY write current state to file before stopping
-      4. State format: {current_task, files_modified[], step_number, violations_found[], fixes_applied[], timestamp, session_id}
-      5. This is NOT optional - implement on every interaction
-      6. Test: Create dummy state file, verify you detect and prompt to resume
 
   
 execution_flow:
