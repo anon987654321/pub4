@@ -5,7 +5,7 @@
 # TWO-PHASE: --pre-point (infra + DNS) → DNS propagation → --post-point (TLS + proxy)
 # VERIFIED: 2025-12-19 against man.openbsd.org, Rails 8 guides, Hotwire docs
 set -euo pipefail
-CONSTANTS
+
 readonly VERSION="338.1.0"
 readonly MAIN_IP="185.52.176.18"
 readonly BACKUP_NS="194.63.248.53"
@@ -74,8 +74,7 @@ RCEOF
 readonly PTR_HOSTNAME="ns.brgen.no"
 # Status reporting - dmesg style
 status() {
-  printf '%s %-24s %-4s %s
-' "$(date +%H:%M:%S)" "$1" "$2" "$3"
+  printf '%s %-24s %-4s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$3"
 }
 spin() {
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
@@ -91,8 +90,7 @@ spin() {
 log() {
   local level="${1:-INFO}"
   shift
-  printf '{"time":"%s","level":"%s","msg":"%s"}
-' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
+  printf '{"time":"%s","level":"%s","msg":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" | tee -a "$LOG_DIR/unified.log"
 }
 save_state() {
   cat > "${DEPLOY_BASE}/state.json" << EOF
@@ -495,27 +493,6 @@ generate_tls_keypairs() {
   for domain in $ALL_DOMAINS; do
     echo "  tls keypair \"$domain\""
   done
-}
-generate_relay_definitions() {
-  cat << EOF
-relay "http" {
-  listen on ${MAIN_IP} port 80
-  protocol "http"
-  forward to <httpd> port 80
-}
-relay "https" {
-  listen on ${MAIN_IP} port 443 tls
-  protocol "https"
-  forward to <httpd> port 80
-  forward to <amber> port ${APPS[amber.port]}
-  forward to <blognet> port ${APPS[blognet.port]}
-  forward to <bsdports> port ${APPS[bsdports.port]}
-  forward to <hjerterom> port ${APPS[hjerterom.port]}
-  forward to <privcam> port ${APPS[privcam.port]}
-  forward to <pubattorney> port ${APPS[pubattorney.port]}
-  forward to <brgen> port ${APPS[brgen.port]}
-}
-EOF
 }
 generate_relay_definitions() {
   cat << EOF
