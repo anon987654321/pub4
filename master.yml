@@ -7,22 +7,105 @@ execution_flow:
   deep_trace_mode:
     enabled: true
     purpose: Provide syslog-like transparency of all operations
-    format: "component: action result (OpenBSD dmesg/syslog style, no timestamps, no decorative brackets)"
-    example: "master.yml: scanning openbsd.sh 14 violations detected"
-    output_to: chat console
-    detail_level: full line-by-line analysis and changes
-    man_verification: For OpenBSD files, verify all config files and daemons against man.openbsd.org
+    format: "component: action result (OpenBSD dmesg style per Strunk and White guidelines)"
+    example: "master.yml: scanning openbsd.sh detected 14 violations"
+    output_to: Internal processing with summary report only
+    detail_level: Full line-by-line analysis performed internally
+    man_verification: For OpenBSD files, verify all config files and daemons via web search of man.openbsd.org
+    before_after_diff: Internal checksums before/after to verify processing
+    autonomous_mode: Process all files without user confirmation for obvious fixes
+    line_by_line_mandate: Every line reviewed and edited internally per master.yml specifications
+    diff_batching: Collect all changes and present final summary only
+    web_research: Proactively use browser tool for verification without explicit user request
+    file_operations: Internal only - use view/edit tools, present concise syslog-style output
+    
+  shell_philosophy:
+    primary_shell: zsh
+    secondary_language: ruby
+    llm_operations: Execute via powershell tool running zsh/ruby scripts only, no view/edit/create tools
+    forbidden_commands:
+      - bash
+      - powershell_scripts
+      - find
+      - head
+      - tail
+      - sed
+      - awk
+      - tr
+      - wc
+      - grep (use zsh pattern matching with (M) flag instead)
+      - cut (use zsh field splitting with (s:delim:) instead)
+      - uniq (use ${(u)arr} instead)
+      - sort (use ${(o)arr} instead)
+    
+    forbidden_llm_tools:
+      - view (use zsh cat or ruby File.read instead)
+      - edit (use zsh/ruby file rewriting instead)
+      - create (use zsh/ruby file creation instead)
+    
+    allowed_tools:
+      - powershell tool executing zsh commands only
+      - powershell tool executing ruby scripts only
+      - pure OpenBSD unix tools (cat, ls, etc)
+      - zsh native patterns and builtins
+      - ruby for complex operations
+    
+    file_operations:
+      read_file: "lines=( ${(f)\"$(<file)\"} )"
+      write_file: "print -l -- \"${lines[@]}\" > file"
+      line_count: "${#lines[@]}"
+      get_line_n: "${lines[n]}"
+      append_line: "lines+=( \"new line\" )"
+      prepend_line: "lines=( \"new line\" \"${lines[@]}\" )"
+      delete_line_n: "lines[n]=()"
+      replace_line_n: "lines[n]=\"new content\""
+      
+    string_operations:
+      remove_crlf: "cleaned=\${var//\$'\\r'/}"
+      lowercase: "lower=\${(L)var}"
+      uppercase: "upper=\${(U)var}"
+      replace_all: "result=\${var//search/replace}"
+      trim_both: "trimmed=\${$\{var##[[:space:]]#}%%[[:space:]]#}"
+      extract_field_n: "field=\${$\{(s:,:)line}[n]}"
+      split_string: "arr=( \${(s:delim:)var} )"
+      
+    array_operations:
+      filter_match: "matches=( \${(M)arr:#*pattern*} )"
+      filter_exclude: "non_matches=( \${arr:#*pattern*} )"
+      unique: "unique=( \${(u)arr} )"
+      join: "joined=\${(j:,:)arr}"
+      reverse: "reversed=( \${(Oa)arr} )"
+      sort_asc: "sorted=( \${(o)arr} )"
+      sort_desc: "sorted=( \${(O)arr} )"
+      first_n: "first_ten=\${arr[1,10]}"
+      last_n: "last_five=\${arr[-5,-1]}"
+    
+    pattern_matching:
+      grep_equivalent: "lines=( \${(M)lines:#*query*} )"
+      inverse_grep: "lines=( \${lines:#*query*} )"
+      case_insensitive: "matches=( \${(M)arr:#(#i)*pattern*} )"
+      
+    file_reading_strategy: |
+      # Read file into array, one line per element
+      typeset -a lines
+      lines=( ${(f)"$(<filepath)"} )
+      
+      # Process each line
+      for line in "${lines[@]}"; do
+        # Pure zsh operations on $line
+      done
+      
+      # Write back
+      print -l -- "${lines[@]}" > filepath
     
   step_1_load:
     action: Read this entire master.yml into memory
     purpose: Internalize all principles, patterns, and workflows
-    trace: "[TRACE] Loading master.yml v{version} into memory"
     
   step_2_scan:
-    action: For each file in scope, detect violations
+    action: For each file in scope, detect violations internally
     how: Match file content against detection.patterns regex + principle.detects smells
-    output: List of (file, line, principle_violated, smell, severity, confidence)
-    trace: "[TRACE] Scanning {file} - {violations_found} violations detected"
+    output: Internal list of (file, line, principle_violated, smell, severity, confidence)
     
   step_3_generate_fixes:
     action: For each violation, generate multiple fix options
@@ -35,9 +118,8 @@ execution_flow:
     threshold: Combined score must exceed adversarial.threshold (0.7)
     
   step_5_apply:
-    action: Apply highest-scoring fix for each violation
-    constraint: Use in-place edits, no temporary files
-    trace: "[TRACE] Applying fix to {file}:{line} - {operation} ({confidence})"
+    action: Apply highest-scoring fix for each violation using edit tool
+    constraint: In-place edits via edit tool, present final summary only
     
   step_6_measure:
     action: Calculate convergence metrics
