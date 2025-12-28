@@ -1,5 +1,5 @@
 meta:
-  version: v112
+  version: v113
   updated: 2025-12-28T20:06:00Z
   center: Autonomous LLM workflow orchestrator
   capability: All LLMs
@@ -10,7 +10,7 @@ execution_layer:
   shell: zsh
   syntax_allowed: [zsh, ruby, openbsd_tools]
   syntax_forbidden: [bash]
-  file_operations: ruby_only
+  file_operations: zsh_or_ruby
 
 behavioral_directives:
   autonomous: true
@@ -55,6 +55,11 @@ allowed_tools:
 
 
 principles:
+# Principles Registry (200+ principles organized by domain)
+# Use Ctrl+F to search by principle name or detected smell
+# Format: principle_name: {detects: smell, severity: level, confidence: 0.0-1.0, operation: fix}
+
+
   boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, action: improve}
   dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, action: extract}
   consistency: {detects: inconsistent_naming, severity: high, confidence: 0.85, action: standardize}
@@ -328,264 +333,51 @@ trendy_code: Fashion-driven choices over fundamentals
 incomplete_implementation: Partial or unfinished work
 resource_waste: Inefficient algorithm or data structures
 
-# GoRails Patterns Integration
-stimulus_controllers: Use Stimulus for JavaScript interactions
-turbo_f
-
-# Rails Best Practices Extended
-concerns_usage: Extract shared module logic into concerns
-strong_parameters: Whitelist permitted parameters
-before_actions: Use filters for common controller logic
-scopes: Named query scopes on models
-validations: Model-level data validation
-callbacks: Lifecycle hooks (before_save, after_create)
-associations: Proper model relationships
-migrations: Database schema management
-seeds: Sample data for development
-i18n: Internationalization support
-
-# View Patterns Extended
-partials: Reusable view fragments
-helpers: View-specific logic extraction
-layouts: Page template inheritance
-content_for: Named content blocks
-turbo_frame_tag: Partial page updates
-turbo_stream_from: Real-time subscription
-stimulus_controller: JavaScript behavior
-link_to: Rails link helper
-form_with: Modern form builder
-button_to: RESTful action buttons
-
-# Model Patterns Extended
-active_record_queries: Efficient database queries
-includes: Eager loading associations
-joins: SQL joins for filtering
-where: Conditional queries
-order: Result ordering
-limit_offset: Pagination
-pluck: Select specific columns
-exists: Existence checks
-find_by: Single record lookup
-find_each: Batched iteration
-
-# Controller Patterns Extended
-restful_actions: index, show, new, create, edit, update, destroy
-respond_to: Format-specific responses
-render: Template rendering
-redirect_to: HTTP redirects
-flash_messages: User notifications
-session_management: User session data
-cookie_handling: Browser cookies
-http_status_codes: Proper status responses
-strong_params: Parameter filtering
-authorization_checks: Access control
-
-# JavaScript Patterns Extended
-stimulus_targets: DOM element references
-stimulus_actions: Event handling
-stimulus_values: Data passing
-stimulus_outlets: Controller communication
-turbo_visit: Page navigation
-turbo_frame_load: Frame updates
-turbo_stream_actions: append, prepend, replace, update, remove
-requestsubmit: Form submission
-fetch_requests: AJAX calls
-custom_events: Event dispatching
-
-# CSS Patterns Extended
-utility_classes: Tailwind-style utilities
-component_classes: BEM methodology
-responsive_design: Mobile-first breakpoints
-flexbox_layouts: Flexible box layout
-grid_layouts: CSS Grid layout
-custom_properties: CSS variables
-transitions: Smooth animations
-transforms: Element transformations
-pseudo_classes: hover, focus, active states
-pseudo_elements: before, after content
-
-# Database Patterns Extended
-foreign_keys: Referential integrity
-indexes: Query performance
-unique_constraints: Data uniqueness
-check_constraints: Data validation
-default_values: Column defaults
-null_constraints: Required fields
-cascading_deletes: Automatic cleanup
-partial_indexes: Conditional indexing
-composite_indexes: Multi-column indexes
-full_text_search: Text search capabilities
-
-# Deployment Patterns Extended
-zero_downtime: Rolling deployments
-database_migrations: Safe schema changes
-asset_precompilation: Production assets
-environment_variables: Configuration management
-ssl_certificates: HTTPS setup
-load_balancing: Traffic distribution
-health_checks: Service monitoring
-log_rotation: Log management
-backup_strategies: Data protection
-rollback_procedures: Deployment recovery
-
-# Monitoring Patterns Extended
-error_tracking: Exception monitoring
-performance_monitoring: Response times
-database_monitoring: Query performance
-background_job_monitoring: Job queue health
-uptime_monitoring: Service availability
-security_monitoring: Threat detection
-user_analytics: Behavior tracking
-server_metrics: CPU, memory, disk usage
-log_aggregation: Centralized logging
-alerting: Automated notifications
-
-# Code Organization Patterns Extended
-app_structure: Standard Rails directory layout
-lib_directory: Custom Ruby code
-config_files: Application configuration
-initializers: Boot-time setup
-middleware: Rack middleware stack
-engines: Mountable Rails applications
-gems: Third-party dependencies
-bundler_groups: Environment-specific gems
-autoloading: Automatic code loading
-zeitwerk: Modern autoloader
-
-# API Patterns Extended
-json_api_spec: Standardized JSON responses
-versioning: API version management
-authentication: Token-based auth
-rate_limiting: Request throttling
-pagination: Result set paging
-filtering: Query parameter filtering
-sorting: Result ordering
-field_selection: Sparse fieldsets
-relationships: Resource associations
-error_responses: Standardized errors
-
-# Background Job Patterns Extended
-sidekiq_workers: Async job processing
-activejob: Rails job abstraction
-job_retry_logic: Automatic retries
-job_scheduling: Delayed execution
-job_prioritization: Queue priorities
-job_batching: Batch operations
-job_callbacks: Lifecycle hooks
-job_uniqueness: Prevent duplicates
-job_expiration: TTL for jobs
-job_monitoring: Queue visibility
-
-
-# Security Best Practices Extended
-password_hashing: bcrypt for passwords
-session_security: Secure session storage
-cookie_security: HttpOnly, Secure flags
-cors_policy: Cross-origin configuration
-content_security_policy: CSP headers
-sql_injection_prevention: Parameterized queries
-xss_prevention: Output encoding
-csrf_tokens: Request authenticity
-mass_assignment_protection: Strong parameters
-file_upload_validation: Type and size checks
-
-# Performance Optimization Extended
-n_plus_one_detection: Bullet gem usage
-database_connection_pooling: Connection reuse
-query_caching: Query result caching
-counter_caches: Denormalized counts
-touch_cascades: Cache invalidation
-russian_doll_caching: Nested fragment caching
-http_caching: ETag and Last-Modified
-cdn_integration: CloudFront, Cloudflare
-asset_fingerprinting: Cache busting
-lazy_loading_images: Deferred image loading
-
-# Testing Best Practices Extended
-test_factories: FactoryBot patterns
-test_fixtures: Static test data
-test_helpers: Shared test utilities
-test_doubles: Mocks and stubs
-test_coverage_goals: Minimum coverage targets
-continuous_integration: GitHub Actions, CircleCI
-parallel_testing: Speed up test suite
-database_cleaner: Test isolation
-vcr_cassettes: HTTP interaction recording
-capybara_usage: System test patterns
-
-# Accessibility Standards Extended
-semantic_html: Proper HTML5 elements
-aria_labels: Screen reader labels
-keyboard_navigation: Tab order and focus
-color_contrast: WCAG AA standards
-alt_text: Image descriptions
-form_labels: Explicit label associations
-focus_indicators: Visible focus states
-skip_links: Bypass navigation
-heading_hierarchy: Logical heading structure
-responsive_text: Scalable font sizes
-
-# Documentation Patterns Extended
-readme_structure: Project overview and setup
-api_documentation: Endpoint descriptions
-code_comments: Inline explanations
-yard_documentation: Ruby doc comments
-changelog: Version history
-contributing_guide: Contribution instructions
-license_file: Legal terms
-architecture_decisions: ADR records
-runbook: Operational procedures
-troubleshooting_guide: Common issues
-
-# Git Workflow Extended
-feature_branches: Isolated development
-pull_requests: Code review process
-commit_messages: Clear commit descriptions
-semantic_versioning: Version numbering
-git_hooks: Pre-commit checks
-branch_protection: Required reviews
-continuous_deployment: Automated releases
-tag_releases: Version tagging
-merge_strategies: Merge vs rebase
-conflict_resolution: Merge conflict handling
-
-# Logging Best Practices Extended
-structured_logging: JSON log format
-log_levels: debug, info, warn, error, fatal
-request_logging: HTTP request details
-error_context: Stack traces and metadata
-log_rotation: Size and time-based rotation
-log_aggregation: Centralized log storage
-log_analysis: Search and visualization
-sensitive_data_filtering: PII redaction
-correlation_ids: Request tracing
-audit_trails: User action logging
-
-# Environment Management Extended
-development_setup: Local development
-test_environment: Automated testing
-staging_environment: Pre-production
-production_environment: Live system
-environment_parity: Consistent environments
-configuration_management: Environment variables
-secrets_management: Encrypted secrets
-database_seeds: Sample data
-asset_compilation: Environment-specific assets
-dependency_management: Bundler and package.json
-
-# Code Quality Tools Extended
-rubocop: Ruby style linting
-brakeman: Security scanning
-reek: Code smell detection
-flog: Complexity analysis
-flay: Duplication detection
-simplecov: Test coverage
-bundler_audit: Dependency vulnerabilities
-rack_attack: Rate limiting
-bullet: N+1 query detection
-pg_query: SQL parsing
-
-# Naming Conventions Extended
+# Rails Patterns (Consolidated)
+rails_core:
+  mvc: [models, views, controllers, helpers, concerns, services, jobs, mailers]
+  data: [migrations, seeds, validations, associations, callbacks, scopes]
+  requests: [routing, strong_parameters, before_actions, respond_to, flash_messages]
+  views: [partials, layouts, content_for, tag_helpers, turbo_frames, stimulus_controllers]
+javascript:
+  stimulus: [targets, actions, values, outlets]
+  turbo: [visit, frame_load, stream_actions]
+  modern: [fetch_requests, custom_events, requestsubmit]
+css:
+  methodology: [utility_classes, component_classes, bem]
+  layout: [flexbox, grid, responsive_design]
+  enhancement: [custom_properties, transitions, transforms]
+database:
+  integrity: [foreign_keys, indexes, constraints]
+  performance: [eager_loading, includes, joins, pluck]
+  search: [full_text_search, partial_indexes]
+deployment:
+  strategy: [zero_downtime, rolling_deployments, rollback_procedures]
+  infrastructure: [load_balancing, health_checks, ssl_certificates]
+  operations: [asset_precompilation, database_migrations, environment_variables]
+monitoring:
+  errors: [error_tracking, exception_monitoring]
+  performance: [response_times, query_performance, background_jobs]
+  infrastructure: [uptime, server_metrics, log_aggregation]
+security:
+  authentication: [password_hashing, session_security, token_auth]
+  prevention: [sql_injection, xss, csrf_tokens, mass_assignment_protection]
+  headers: [cors_policy, content_security_policy]
+testing:
+  tools: [rspec, factorybot, capybara, vcr]
+  coverage: [simplecov, parallel_testing, test_isolation]
+  ci_cd: [github_actions, continuous_integration]
+quality:
+  linters: [rubocop, reek, flog, flay]
+  security: [brakeman, bundler_audit]
+  performance: [bullet, pg_query]
+naming:
+  models: Singular PascalCase
+  controllers: Plural PascalCase + Controller
+  views: snake_case template names
+  helpers: snake_case + _helper suffix
+  concerns: PascalCase + able suffix
+  services: PascalCase + Service suffix
 models: Singular PascalCase
 controllers: Plural PascalCase + Controller
 views: snake_case
@@ -596,3 +388,182 @@ jobs: PascalCase + Job
 mailers: PascalCase + Mailer
 serializers: PascalCase + Serializer
 decorators: PascalCase + Decorator
+
+# Operational Resilience (from v85-v95)
+operational_resilience:
+  stuck_detection:
+    enabled: true
+    indicators: [repeated_commands, same_error_3x, no_progress_5min]
+    recovery: [context_reset, alternative_approach, escalate_to_user]
+  
+  health_checks:
+    file_writes: verify_immediately
+    ssh_connections: test_before_use
+    command_success: check_exit_codes
+    
+  error_recovery:
+    on_failure: [log, retry_with_backoff, alternative_method]
+    max_retries: 3
+    backoff: exponential
+  
+  backups:
+    before_destructive_ops: true
+    use_git: true
+    
+  path_abstraction:
+    detect_platform: true
+    normalize_paths: true
+    handle_cygwin: true
+
+# SSH & Deployment (from v78-v84)
+ssh_patterns:
+  auth_method: key_based
+  key_location: ~/.ssh/id_ed25519
+  session_management:
+    keep_alive: true
+    multiplexing: true
+  
+  vps_details:
+    host: amsterdam.example.com
+    user: deploy
+    port: 22
+    
+  connection_test: 'ssh -q user@host exit'
+  
+deployment_automation:
+  steps:
+    - verify_ssh
+    - sync_code
+    - run_migrations
+    - restart_services
+    - health_check
+
+# Rails Architecture (from v75-v77)
+# Complete Design Principles (from git history)
+extended_principles:
+  ikigai: {detects: purposeless_code, severity: medium, confidence: 0.7, operation: clarify_purpose}
+  
+  # Dieter Rams Series
+  good_design_is_innovative: {detects: outdated_approach, severity: low, confidence: 0.7, operation: modernize}
+  good_design_is_useful: {detects: useless_feature, severity: medium, confidence: 0.8, operation: remove_or_fix}
+  good_design_is_understandable: {detects: confusing_interface, severity: medium, confidence: 0.75, operation: clarify}
+  good_design_is_unobtrusive: {detects: decorative_code, severity: low, confidence: 0.7, operation: remove_decoration}
+  good_design_is_honest: {detects: misleading_interface, severity: high, confidence: 0.85, operation: make_honest}
+  good_design_is_long_lasting: {detects: trendy_code, severity: low, confidence: 0.7, operation: make_timeless}
+  good_design_is_thorough: {detects: incomplete_implementation, severity: medium, confidence: 0.75, operation: complete}
+  
+  # Visual Design
+  balance: {detects: unbalanced_layout, severity: low, confidence: 0.7, operation: rebalance}
+  contrast: {detects: low_contrast, severity: low, confidence: 0.75, operation: increase_contrast}
+  emphasis: {detects: unfocused_design, severity: low, confidence: 0.7, operation: emphasize}
+  repetition: {detects: inconsistent_patterns, severity: low, confidence: 0.8, operation: repeat_pattern}
+  rhythm: {detects: arrhythmic_layout, severity: low, confidence: 0.7, operation: establish_rhythm}
+  movement: {detects: static_layout, severity: low, confidence: 0.65, operation: add_flow}
+  variety: {detects: monotonous_design, severity: low, confidence: 0.7, operation: add_variety}
+  unity: {detects: fragmented_design, severity: medium, confidence: 0.75, operation: unify}
+  white_space: {detects: visual_clutter, severity: medium, confidence: 0.75, operation: add_whitespace}
+
+
+  # Security Critical
+  sensitive_data_exposure: {detects: exposed_secrets, severity: critical, confidence: 1.0, operation: encrypt}
+  backup_verification: {detects: no_backups, severity: high, confidence: 0.9, operation: add_backup}
+  rollback_capability: {detects: no_rollback, severity: high, confidence: 0.9, operation: add_rollback}
+
+  # Performance
+  caching: {detects: repeated_computation, severity: medium, confidence: 0.8, operation: add_cache}
+  lazy_loading: {detects: eager_loading_waste, severity: medium, confidence: 0.75, operation: defer_load}
+  n_plus_one: {detects: query_proliferation, severity: high, confidence: 0.9, operation: add_includes}
+  database_indexing: {detects: slow_queries, severity: high, confidence: 0.85, operation: add_index}
+
+  # Rails Doctrine
+  convention_over_configuration: {detects: excessive_config, severity: medium, confidence: 0.8, operation: use_defaults}
+  rails_concerns_extraction: {detects: fat_models, severity: medium, confidence: 0.75, operation: extract_concern}
+  callback_discipline: {detects: callback_hell, severity: high, confidence: 0.85, operation: extract_service}
+
+  # OpenBSD Specific
+  rc_d_compliance: {detects: improper_daemon, severity: high, confidence: 0.9, operation: fix_rc_script}
+  pledge_usage: {detects: excessive_privileges, severity: critical, confidence: 0.95, operation: add_pledge}
+  unveil_usage: {detects: unrestricted_filesystem, severity: high, confidence: 0.9, operation: add_unveil}
+  doas_over_sudo: {detects: sudo_usage, severity: medium, confidence: 0.8, operation: use_doas}
+
+
+# Ruby Shield Protocol
+ruby_shield:
+  mandate: ruby File.write for all file ops
+  banned: [cat, echo, redirects, heredocs]
+
+# Density Mode
+density_mode:
+  enabled: true
+  target_snr: 0.8
+
+# Knowledge Graph
+knowledge_graph:
+  heritage: [v108, v109, v110, v111, v112, v113]
+
+# Bias Mitigation
+bias_mitigation:
+  confirmation: adversarial_disconfirm
+  anchoring: generate_15_alternatives
+  recency: systematic_enumeration
+  sunk_cost: current_value_only
+
+# Multi-Temperature
+multi_temperature:
+  schedule: [0.1, 0.5, 0.9]
+
+# LLM Pitfalls
+llm_pitfalls:
+  working_memory: 8
+  attention: u_shaped
+
+# Preservation Layer
+preservation_layer:
+  blast_radius: method
+  audit: deletion_logged
+
+# Dependency Orchestration
+dependency_orchestration:
+  method: topological_sort
+
+# Black Ops
+black_ops:
+  density_mode: active
+  sharp_edges: preserve
+
+# Evidence Threshold
+evidence_threshold:
+  confidence: 0.7
+
+# Display Mode
+display_mode:
+  type: batch
+  diffs: false
+
+
+# LLM Working Memory Limits & Error Prevention
+llm_pitfalls:
+  working_memory_limit: 7_plus_minus_2_items
+  context_window_aware: true
+  error_cascade_prevention:
+    - reload_master_yml_every_edit
+    - explicit_correction_log
+    - never_assume_previous_fix_persisted
+    - validate_file_state_before_continuing
+  
+  repetition_prevention:
+    - check_git_log_before_reintroducing_fixed_issues
+    - maintain_correction_changelog_in_memory
+    - web_search_when_uncertain
+    - never_repeat_banned_commands: [python, bash, sed, awk, tr, wc]
+  
+  proactive_research:
+    - web_search_on_first_error
+    - research_before_asking_user
+    - document_findings_to_master_yml
+  
+  state_persistence:
+    - summarize_conversation_every_10_turns
+    - checkpoint_progress_to_git
+    - reload_and_verify_after_file_ops
+
