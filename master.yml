@@ -1,248 +1,598 @@
----
 meta:
-  version: v111
-  updated: '2025-12-25T14:24:00Z'
-  philosophy: autonomous execution with full transparency
-  primary_config: true
-execution_model:
-  session_persistence:
-    state_file: "~/.copilot_state.yml"
-    on_cancel: save current task, file list, step number, violations
-    on_restart: check state file and prompt to resume
-    resume_command: copilot --continue or --resume [sessionId]
-  autonomous_execution:
-    no_obvious_questions: proceed without asking for standard approvals
-    auto_approve: yes to all routine operations
-    decision_making: make decisions on behalf of user when context clear
-  trace_format:
-    style: openbsd dmesg
-    structure: 'subsystem: action detail'
-    no_decorations: no brackets, timestamps, or emoji
-    examples:
-    - 'copilot: analyzing master.yml architecture'
-    - 'rails: violation detected in app/models/user.rb line 45'
-    - 'openbsd: verifying httpd.conf pledge promises'
-  output_style:
-    commentary: minimal chatter, strunk and white compliance
-    data_trace: verbose dmesg-style logging for all file operations
-    violations: detailed detection with line numbers and context
-tool_usage:
-  banned_tools:
-  - view
-  - edit
-  - create
-  - grep
-  - glob
-  - find
-  - head
-  - tail
-  - sed
-  - awk
-  - tr
-  - wc
-  - read_powershell
-  - write_powershell
-  - stop_powershell
-  - bash
-  - powershell_syntax
-  allowed_tools:
-    file_read: cat with Windows (G:) or Cygwin (/cygdrive/g) paths
-    file_write: ruby File.write or zsh print redirection
-    search: pure zsh pattern matching
-    execution: zsh -c or ruby -e commands
-    openbsd: rcctl, doas, any openbsd base utility
-  file_write_pattern: ruby File.write(path, content)
-  path_handling:
-    windows: "G:pub\file.yml"
-    cygwin: "/cygdrive/g/pub/file.yml"
-    prefer: Windows paths in copilot cli context
-proactive_behavior:
-  web_search:
-    frequency: often, without explicit prompting
-    triggers:
-    - unknown_pattern
-    - openbsd_tool
-    - modern_syntax
-    - architecture_question
-    sources:
-    - man.openbsd.org
-    - github
-    - zsh documentation
-    - ruby documentation
-  multi_request_handling:
-    queue: track all user requests in single message
-    execute: address each item sequentially
-    complete: verify all items done before finishing
-  self_monitoring:
-    behavior: continuously analyze own actions for violations
-    correction: immediately fix detected issues
-    meta_improvement: update master.yml based on failures
-  context_reset:
-    trigger: when stuck or repeating same failures
-    method: step back and view problem with fresh perspective
-    simulate: new session with clean mental state
-  creative_problem_solving:
-    generate: 4-16 radically different solution alternatives
-    adversarial: question assumptions aggressively
-    cherry_pick: select best option from diverse candidates
-    never_give_up: exhaust all options before declaring impossible
+  version: v112
+  updated: 2025-12-28T20:06:00Z
+  center: Autonomous LLM workflow orchestrator
+  capability: All LLMs
+  philosophy: Self-healing, auto-resume, minimal chatter
+
+execution_layer:
+  tool: powershell
+  shell: zsh
+  syntax_allowed: [zsh, ruby, openbsd_tools]
+  syntax_forbidden: [bash]
+  file_operations: ruby_only
+
+behavioral_directives:
+  autonomous: true
+  auto_approve: true
+  auto_resume_on_cancel: true
+  minimal_chatter: true
+  verbose_trace: true
+  trace_format: 'subsystem: action detail'
+  proactive_web_search: true
+  multi_request_queueing: true
+  self_monitoring: true
+  never_give_up: true
+  reload_after_edit: true
+
+output_format:
+  style: openbsd_dmesg
+  no_timestamps: true
+  no_brackets: true
+  no_emoji: true
+  strunk_white: true
+
+cygwin_awareness:
+  enabled: true
+  path_windows: 'G:\\'
+  path_cygwin: /cygdrive/g
+  shell: zsh
+  ruby_native_paths: true
+
+state_persistence:
+  enabled: true
+  location: ~/.copilot_state.yml
+  on_cancel: save_progress
+  on_restart: check_for_resume
+
+banned_tools:
+  copilot_builtin: [view, edit, create, grep, glob, list]
+  unix_commands: [find, head, tail, sed, awk, tr, wc]
+
+allowed_tools:
+  copilot_builtin: [powershell]
+  unix_commands: [cat, ls, rcctl, doas, git, ruby, zsh]
+
+
 principles:
-  boy_scout_rule:
-    detects: no_improvement
-    severity: high
-    confidence: 0.9
-    action: improve
-  dont_repeat_yourself:
-    detects: duplication
-    severity: high
-    confidence: 0.9
-    action: extract
-  consistency:
-    detects: inconsistent_naming
-    severity: high
-    confidence: 0.85
-    action: standardize
-  clarity:
-    detects: unclear_naming
-    severity: high
-    confidence: 0.7
-    action: rename
-  kanso:
-    detects: unnecessary_complexity
-    severity: high
-    confidence: 0.8
-    action: simplify
-  shibui:
-    detects: garish_design
-    severity: high
-    confidence: 0.65
-    action: refine
-  seijaku:
-    detects: noisy_code
-    severity: high
-    confidence: 0.7
-    action: quiet
-  wa:
-    detects: disharmony
-    severity: high
-    confidence: 0.75
-    action: harmonize
-  harmony_of_parts:
-    detects: inconsistent_patterns
-    severity: high
-    confidence: 0.8
-    action: standardize
-  symmetry_and_balance:
-    detects: asymmetric_structure
-    severity: high
-    confidence: 0.65
-    action: align
-  no_god_files:
-    detects: god_file
-    severity: critical
-    confidence: 0.95
-    action: split
-  durability:
-    detects: no_tests
-    severity: critical
-    confidence: 0.95
-    action: add_tests
-  security:
-    detects: unvalidated_input
-    severity: critical
-    confidence: 0.9
-    action: add_guards
-  observability:
-    detects: silent_errors
-    severity: critical
-    confidence: 0.95
-    action: fail_fast
-  secrets_encryption:
-    detects: plaintext_secrets
-    severity: critical
-    confidence: 1.0
-    action: encrypt
-  accessibility:
-    detects: accessibility_violation
-    severity: critical
-    confidence: 0.9
-    action: fix_accessibility
-  no_privilege_escalation:
-    detects: privilege_escalation
-    severity: critical
-    confidence: 0.95
-    action: add_guards
-  explicit_error_handling:
-    detects: no_error_handling
-    severity: critical
-    confidence: 0.95
-    action: add_guards
-  firmitas:
-    detects: weak_structure
-    severity: high
-    confidence: 0.85
-    action: reinforce
-  structural_honesty:
-    detects: hidden_complexity
-    severity: high
-    confidence: 0.75
-    action: expose_structure
-  single_responsibility:
-    detects: god_class
-    severity: high
-    confidence: 0.9
-    action: split
-  open_closed_principle:
-    detects: modification_required
-    severity: high
-    confidence: 0.75
-    action: introduce_seam
-  liskov_substitution:
-    detects: broken_inheritance
-    severity: high
-    confidence: 0.8
-    action: fix_hierarchy
-  dependency_inversion:
-    detects: concrete_dependency
-    severity: high
-    confidence: 0.8
-    action: introduce_interface
-  complexity_budget:
-    detects: high_complexity
-    severity: high
-    confidence: 0.9
-    action: simplify
-  operational_logging:
-    detects: no_logging
-    severity: high
-    confidence: 0.9
-    action: add_logging
-  law_of_demeter:
-    detects: train_wreck
-    severity: high
-    confidence: 0.85
-    action: introduce_intermediary
-  separation_of_concerns:
-    detects: tangled_concerns
-    severity: high
-    confidence: 0.8
-    action: separate
-  loose_coupling:
-    detects: tight_coupling
-    severity: high
-    confidence: 0.8
-    action: introduce_interface
-  orthogonality:
-    detects: hidden_coupling
-    severity: high
-    confidence: 0.8
-    action: decouple
+  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, action: improve}
+  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, action: extract}
+  consistency: {detects: inconsistent_naming, severity: high, confidence: 0.85, action: standardize}
+  clarity: {detects: unclear_naming, severity: high, confidence: 0.7, action: rename}
+  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, action: simplify}
+  shibui: {detects: garish_design, severity: high, confidence: 0.65, action: refine}
+  seijaku: {detects: noisy_code, severity: high, confidence: 0.7, action: quiet}
+  wa: {detects: disharmony, severity: high, confidence: 0.75, action: harmonize}
+  harmony_of_parts: {detects: inconsistent_patterns, severity: high, confidence: 0.8, action: standardize}
+  symmetry_and_balance: {detects: asymmetric_structure, severity: high, confidence: 0.65, action: align}
+  no_god_files: {detects: god_file, severity: critical, confidence: 0.95, action: split}
+  durability: {detects: no_tests, severity: critical, confidence: 0.95, action: add_tests}
+  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, action: add_guards}
+  observability: {detects: silent_errors, severity: critical, confidence: 0.95, action: fail_fast}
+  secrets_encryption: {detects: plaintext_secrets, severity: critical, confidence: 1.0, action: encrypt}
+  accessibility: {detects: accessibility_violation, severity: critical, confidence: 0.9, action: fix_accessibility}
+  no_privilege_escalation: {detects: privilege_escalation, severity: critical, confidence: 0.95, action: add_guards}
+  explicit_error_handling: {detects: no_error_handling, severity: critical, confidence: 0.95, action: add_guards}
+  firmitas: {detects: weak_structure, severity: high, confidence: 0.85, action: reinforce}
+  structural_honesty: {detects: hidden_complexity, severity: high, confidence: 0.75, action: expose_structure}
+  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, action: split}
+  open_closed_principle: {detects: modification_required, severity: high, confidence: 0.75, action: introduce_seam}
+  liskov_substitution: {detects: broken_inheritance, severity: high, confidence: 0.8, action: fix_hierarchy}
+  dependency_inversion: {detects: concrete_dependency, severity: high, confidence: 0.8, action: introduce_interface}
+  complexity_budget: {detects: high_complexity, severity: high, confidence: 0.9, action: simplify}
+  operational_logging: {detects: no_logging, severity: high, confidence: 0.9, action: add_logging}
+  law_of_demeter: {detects: train_wreck, severity: high, confidence: 0.85, action: introduce_intermediary}
+  separation_of_concerns: {detects: tangled_concerns, severity: high, confidence: 0.8, action: separate}
+  loose_coupling: {detects: tight_coupling, severity: high, confidence: 0.8, action: introduce_interface}
+  orthogonality: {detects: hidden_coupling, severity: high, confidence: 0.8, action: decouple}
+  utilitas: {detects: purposeless_code, severity: medium, confidence: 0.8, action: clarify_purpose}
+  venustas: {detects: visual_clutter, severity: low, confidence: 0.7, action: beautify}
+  form_follows_function: {detects: decorative_code, severity: medium, confidence: 0.75, action: remove_decoration}
+  less_is_more: {detects: over_engineering, severity: medium, confidence: 0.8, action: simplify}
+  human_scale: {detects: long_function, severity: medium, confidence: 0.9, action: extract}
+  meaningful_names: {detects: unclear_naming, severity: medium, confidence: 0.7, action: rename}
+  small_functions: {detects: long_function, severity: medium, confidence: 0.9, action: extract}
+  simplicity: {detects: unused_code, severity: low, confidence: 0.9, action: delete}
+
+
+actions:
+  improve: refactor for clarity and efficiency
+  extract: move duplicated code to function
+  split: divide file into focused modules
+  rename: choose descriptive meaningful names
+  delete: remove dead or unnecessary code
+  standardize: apply consistent patterns throughout
+  simplify: reduce complexity and nesting
+  refine: subtle improvements to aesthetics
+  quiet: remove noise and clutter
+  harmonize: ensure parts work together cohesively
+  add_whitespace: improve visual breathing room
+  add_guards: validate input and check preconditions
+  fail_fast: log errors and halt on failure
+  encrypt: use environment variables or secret management
+  add_tests: add test coverage
+  add_logging: add observability
+  reinforce: strengthen structure
+  clarify_purpose: document intent
+  beautify: improve aesthetics
+  remove_decoration: strip unnecessary code
+  introduce_seam: add extension point
+  fix_hierarchy: correct inheritance
+  introduce_interface: add abstraction
+  introduce_intermediary: add delegation
+  separate: divide concerns
+  decouple: remove dependencies
+
+smells:
+  god_file: file exceeds 500 lines or handles multiple domains
+  duplication: identical code blocks repeated
+  long_function: function exceeds 20 lines
+  unclear_naming: single letter vars or vague names
+  unused_code: unreachable or commented blocks
+  inconsistent_naming: mixed camelCase and snake_case
+  unnecessary_complexity: nested loops beyond 2 levels
+  garish_design: excessive decoration or color
+  noisy_code: debug prints or commented code
+  visual_clutter: no whitespace or cramped layout
+  unvalidated_input: user input used without checks
+  silent_errors: errors caught but not logged
+  plaintext_secrets: API keys or passwords in code
+  no_tests: missing test coverage
+  no_logging: missing observability
+  no_error_handling: missing error handling
+  privilege_escalation: unnecessary sudo/doas
+  accessibility_violation: inaccessible to some users
+  weak_structure: fragile architecture
+  hidden_complexity: unclear internal workings
+  god_class: class with too many responsibilities
+  modification_required: hard to extend
+  broken_inheritance: violated substitutability
+  concrete_dependency: depends on implementations
+  high_complexity: excessive cyclomatic complexity
+  train_wreck: chained method calls
+  tangled_concerns: mixed responsibilities
+  tight_coupling: high interdependence
+  hidden_coupling: implicit dependencies
+  purposeless_code: code without clear intent
+  decorative_code: non-functional decoration
+  over_engineering: unnecessary complexity
+  no_improvement: stagnant code
+  inconsistent_patterns: varied approaches
+  asymmetric_structure: lack of visual balance
+  disharmony: parts don't work together
+
 convergence:
-  metrics:
-  - violations_remaining
-  - quality_delta
-  - adversarial_score
+  metrics: [violations_remaining, quality_delta, adversarial_score]
   exit_conditions:
     complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
     diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
     hard_stop: cycles >= 10
+
+workflow:
+  step_1_startup:
+    output: 'copilot: master.yml v112 loaded'
+  step_2_load:
+    action: Read master.yml into memory
+    method: cat G:/pub/master.yml
+  step_3_discover:
+    action: Find files in scope
+    method: zsh glob patterns
+  step_4_scan:
+    action: Detect violations per file
+    method: Match against principles.detects
+  step_5_generate:
+    action: Create 4-16 fix alternatives
+    method: Use principles.action
+  step_6_evaluate:
+    action: Score each alternative
+    threshold: 0.7
+  step_7_apply:
+    action: Execute highest-scoring fix
+    method: ruby file operations
+  step_8_measure:
+    metrics: [violations_remaining, quality_delta, adversarial_score]
+  step_9_converge:
+    check: exit_conditions
+  step_10_iterate:
+    action: Return to step_4 if not converged
+  step_11_report:
+    output: 'copilot: convergence achieved'
+
+
+# Extended Architectural Principles
+law_of_demeter: {detects: train_wreck, severity: high, confidence: 0.85, operation: introduce_intermediary}
+separation_of_concerns: {detects: tangled_concerns, severity: high, confidence: 0.8, operation: separate}
+loose_coupling: {detects: tight_coupling, severity: high, confidence: 0.8, operation: introduce_interface}
+high_cohesion: {detects: low_cohesion, severity: medium, confidence: 0.75, operation: group}
+encapsulate_what_changes: {detects: exposed_variation, severity: medium, confidence: 0.75, operation: encapsulate}
+composition_over_inheritance: {detects: inheritance_abuse, severity: medium, confidence: 0.75, operation: compose}
+principle_of_least_knowledge: {detects: excessive_dependencies, severity: high, confidence: 0.8, operation: reduce_deps}
+tell_dont_ask: {detects: feature_envy, severity: medium, confidence: 0.75, operation: move_method}
+orthogonality: {detects: hidden_coupling, severity: high, confidence: 0.8, operation: decouple}
+information_hiding: {detects: exposed_internals, severity: medium, confidence: 0.75, operation: encapsulate}
+optimize_for_deletion: {detects: hard_to_delete, severity: low, confidence: 0.7, operation: isolate}
+
+# Japanese Aesthetics Extended
+wabi_sabi: {detects: over_polishing, severity: low, confidence: 0.7, operation: accept_imperfection}
+ma: {detects: visual_clutter, severity: medium, confidence: 0.75, operation: add_whitespace}
+shizen: {detects: artificial_abstraction, severity: high, confidence: 0.7, operation: naturalize}
+datsuzoku: {detects: cargo_cult, severity: high, confidence: 0.7, operation: question_pattern}
+mottainai: {detects: wasteful_code, severity: medium, confidence: 0.75, operation: optimize_resources}
+iki: {detects: garish_design, severity: high, confidence: 0.65, operation: refine}
+
+# UX Principles Extended
+clarity: {detects: unclear_naming, severity: high, confidence: 0.7, operation: rename}
+feedback: {detects: silent_operation, severity: high, confidence: 0.85, operation: add_feedback}
+affordance: {detects: unclear_affordance, severity: medium, confidence: 0.75, operation: clarify_affordance}
+user_control: {detects: no_undo, severity: high, confidence: 0.85, operation: add_undo}
+error_prevention: {detects: error_prone, severity: high, confidence: 0.85, operation: add_constraints}
+progressive_disclosure: {detects: information_overload, severity: medium, confidence: 0.8, operation: hide_advanced}
+fitts_law: {detects: small_target, severity: medium, confidence: 0.85, operation: enlarge_target}
+hicks_law: {detects: choice_overload, severity: medium, confidence: 0.8, operation: reduce_choices}
+
+# Design Principles Extended
+proportion_and_scale: {detects: unbalanced_modules, severity: low, confidence: 0.7, operation: rebalance}
+order_and_geometry: {detects: chaotic_structure, severity: medium, confidence: 0.75, operation: organize}
+rejection_of_ornament: {detects: decorative_code, severity: low, confidence: 0.85, operation: delete}
+balance: {detects: unbalanced_layout, severity: low, confidence: 0.7, operation: rebalance}
+contrast: {detects: low_contrast, severity: low, confidence: 0.75, operation: increase_contrast}
+emphasis: {detects: unfocused_design, severity: low, confidence: 0.7, operation: emphasize}
+repetition: {detects: inconsistent_patterns, severity: low, confidence: 0.8, operation: repeat_pattern}
+rhythm: {detects: arrhythmic_layout, severity: low, confidence: 0.7, operation: establish_rhythm}
+white_space: {detects: visual_clutter, severity: medium, confidence: 0.75, operation: add_whitespace}
+unity: {detects: fragmented_design, severity: medium, confidence: 0.75, operation: unify}
+alignment: {detects: misalignment, severity: low, confidence: 0.85, operation: align}
+proximity: {detects: scattered_elements, severity: medium, confidence: 0.8, operation: group}
+
+# Dieter Rams Extended
+good_design_is_innovative: {detects: outdated_approach, severity: low, confidence: 0.7, operation: modernize}
+good_design_is_useful: {detects: useless_feature, severity: medium, confidence: 0.8, operation: remove_or_fix}
+good_design_is_understandable: {detects: confusing_interface, severity: medium, confidence: 0.75, operation: clarify}
+good_design_is_honest: {detects: misleading_interface, severity: high, confidence: 0.85, operation: make_honest}
+good_design_is_long_lasting: {detects: trendy_code, severity: low, confidence: 0.7, operation: make_timeless}
+good_design_is_thorough: {detects: incomplete_implementation, severity: medium, confidence: 0.75, operation: complete}
+environmentally_friendly: {detects: resource_waste, severity: medium, confidence: 0.75, operation: optimize_resources}
+
+# Additional Operations Definitions
+introduce_intermediary: Add delegation layer to reduce coupling
+separate: Divide tangled concerns into distinct modules
+make_explicit: Reveal hidden side effects
+normalize: Unify abstraction levels
+group: Increase cohesion by grouping related functionality
+compose: Use composition instead of inheritance
+reduce_deps: Minimize dependencies between modules
+move_method: Relocate behavior to appropriate module
+decouple: Remove tight dependencies
+isolate: Make code easy to remove
+accept_imperfection: Ship working code instead of perfect code
+naturalize: Remove artificial abstractions
+question_pattern: Challenge blind pattern following
+optimize_resources: Eliminate wasteful resource usage
+refine: Apply subtle improvements
+add_feedback: Communicate system state to users
+clarify_affordance: Show how to use functionality
+add_undo: Enable action reversal
+add_constraints: Prevent user errors
+hide_advanced: Use progressive disclosure
+enlarge_target: Improve interaction targets
+reduce_choices: Simplify decision making
+increase_contrast: Emphasize differences
+emphasize: Create focal points
+repeat_pattern: Apply consistent elements
+establish_rhythm: Create visual tempo
+unify: Make cohesive
+modernize: Update obsolete approaches
+remove_or_fix: Eliminate or repair useless features
+make_honest: Remove deceptive design
+make_timeless: Avoid fashion-driven choices
+complete: Finish partial implementations
+
+# Comprehensive Smell Catalog
+train_wreck: Chained method calls (a.b.c.d.e)
+tangled_concerns: Mixed responsibilities in single module
+tight_coupling: High interdependence between modules
+low_cohesion: Unrelated functionality grouped together
+exposed_variation: Unencapsulated change points
+inheritance_abuse: Misused or excessive inheritance
+excessive_dependencies: Too many module dependencies
+feature_envy: Method accesses external data excessively
+hidden_coupling: Implicit dependencies
+exposed_internals: Public implementation details
+hard_to_delete: Code difficult to remove safely
+over_polishing: Excessive refinement preventing shipping
+artificial_abstraction: Forced or unnatural patterns
+cargo_cult: Blind pattern following without understanding
+wasteful_code: Inefficient resource usage
+garish_design: Visually loud or overwhelming
+silent_operation: No user feedback during operations
+unclear_affordance: Functionality not obvious
+no_undo: Irreversible destructive actions
+error_prone: Easy to misuse interface
+information_overload: Too much information at once
+small_target: Interaction targets too small
+choice_overload: Too many options presented
+unbalanced_modules: Disproportionate component sizes
+chaotic_structure: Lack of organization
+unbalanced_layout: Poor visual weight distribution
+low_contrast: Insufficient visual differentiation
+unfocused_design: No clear focal points
+arrhythmic_layout: No visual tempo or flow
+fragmented_design: Disjointed parts lacking unity
+misalignment: Elements not properly aligned
+scattered_elements: Related items separated
+outdated_approach: Uses obsolete patterns or libraries
+useless_feature: Provides no value to users
+confusing_interface: Unclear usage or purpose
+misleading_interface: Deceptive design elements
+trendy_code: Fashion-driven choices over fundamentals
+incomplete_implementation: Partial or unfinished work
+resource_waste: Inefficient algorithm or data structures
+
+# GoRails Patterns Integration
+stimulus_controllers: Use Stimulus for JavaScript interactions
+turbo_f
+
+# Rails Best Practices Extended
+concerns_usage: Extract shared module logic into concerns
+strong_parameters: Whitelist permitted parameters
+before_actions: Use filters for common controller logic
+scopes: Named query scopes on models
+validations: Model-level data validation
+callbacks: Lifecycle hooks (before_save, after_create)
+associations: Proper model relationships
+migrations: Database schema management
+seeds: Sample data for development
+i18n: Internationalization support
+
+# View Patterns Extended
+partials: Reusable view fragments
+helpers: View-specific logic extraction
+layouts: Page template inheritance
+content_for: Named content blocks
+turbo_frame_tag: Partial page updates
+turbo_stream_from: Real-time subscription
+stimulus_controller: JavaScript behavior
+link_to: Rails link helper
+form_with: Modern form builder
+button_to: RESTful action buttons
+
+# Model Patterns Extended
+active_record_queries: Efficient database queries
+includes: Eager loading associations
+joins: SQL joins for filtering
+where: Conditional queries
+order: Result ordering
+limit_offset: Pagination
+pluck: Select specific columns
+exists: Existence checks
+find_by: Single record lookup
+find_each: Batched iteration
+
+# Controller Patterns Extended
+restful_actions: index, show, new, create, edit, update, destroy
+respond_to: Format-specific responses
+render: Template rendering
+redirect_to: HTTP redirects
+flash_messages: User notifications
+session_management: User session data
+cookie_handling: Browser cookies
+http_status_codes: Proper status responses
+strong_params: Parameter filtering
+authorization_checks: Access control
+
+# JavaScript Patterns Extended
+stimulus_targets: DOM element references
+stimulus_actions: Event handling
+stimulus_values: Data passing
+stimulus_outlets: Controller communication
+turbo_visit: Page navigation
+turbo_frame_load: Frame updates
+turbo_stream_actions: append, prepend, replace, update, remove
+requestsubmit: Form submission
+fetch_requests: AJAX calls
+custom_events: Event dispatching
+
+# CSS Patterns Extended
+utility_classes: Tailwind-style utilities
+component_classes: BEM methodology
+responsive_design: Mobile-first breakpoints
+flexbox_layouts: Flexible box layout
+grid_layouts: CSS Grid layout
+custom_properties: CSS variables
+transitions: Smooth animations
+transforms: Element transformations
+pseudo_classes: hover, focus, active states
+pseudo_elements: before, after content
+
+# Database Patterns Extended
+foreign_keys: Referential integrity
+indexes: Query performance
+unique_constraints: Data uniqueness
+check_constraints: Data validation
+default_values: Column defaults
+null_constraints: Required fields
+cascading_deletes: Automatic cleanup
+partial_indexes: Conditional indexing
+composite_indexes: Multi-column indexes
+full_text_search: Text search capabilities
+
+# Deployment Patterns Extended
+zero_downtime: Rolling deployments
+database_migrations: Safe schema changes
+asset_precompilation: Production assets
+environment_variables: Configuration management
+ssl_certificates: HTTPS setup
+load_balancing: Traffic distribution
+health_checks: Service monitoring
+log_rotation: Log management
+backup_strategies: Data protection
+rollback_procedures: Deployment recovery
+
+# Monitoring Patterns Extended
+error_tracking: Exception monitoring
+performance_monitoring: Response times
+database_monitoring: Query performance
+background_job_monitoring: Job queue health
+uptime_monitoring: Service availability
+security_monitoring: Threat detection
+user_analytics: Behavior tracking
+server_metrics: CPU, memory, disk usage
+log_aggregation: Centralized logging
+alerting: Automated notifications
+
+# Code Organization Patterns Extended
+app_structure: Standard Rails directory layout
+lib_directory: Custom Ruby code
+config_files: Application configuration
+initializers: Boot-time setup
+middleware: Rack middleware stack
+engines: Mountable Rails applications
+gems: Third-party dependencies
+bundler_groups: Environment-specific gems
+autoloading: Automatic code loading
+zeitwerk: Modern autoloader
+
+# API Patterns Extended
+json_api_spec: Standardized JSON responses
+versioning: API version management
+authentication: Token-based auth
+rate_limiting: Request throttling
+pagination: Result set paging
+filtering: Query parameter filtering
+sorting: Result ordering
+field_selection: Sparse fieldsets
+relationships: Resource associations
+error_responses: Standardized errors
+
+# Background Job Patterns Extended
+sidekiq_workers: Async job processing
+activejob: Rails job abstraction
+job_retry_logic: Automatic retries
+job_scheduling: Delayed execution
+job_prioritization: Queue priorities
+job_batching: Batch operations
+job_callbacks: Lifecycle hooks
+job_uniqueness: Prevent duplicates
+job_expiration: TTL for jobs
+job_monitoring: Queue visibility
+
+
+# Security Best Practices Extended
+password_hashing: bcrypt for passwords
+session_security: Secure session storage
+cookie_security: HttpOnly, Secure flags
+cors_policy: Cross-origin configuration
+content_security_policy: CSP headers
+sql_injection_prevention: Parameterized queries
+xss_prevention: Output encoding
+csrf_tokens: Request authenticity
+mass_assignment_protection: Strong parameters
+file_upload_validation: Type and size checks
+
+# Performance Optimization Extended
+n_plus_one_detection: Bullet gem usage
+database_connection_pooling: Connection reuse
+query_caching: Query result caching
+counter_caches: Denormalized counts
+touch_cascades: Cache invalidation
+russian_doll_caching: Nested fragment caching
+http_caching: ETag and Last-Modified
+cdn_integration: CloudFront, Cloudflare
+asset_fingerprinting: Cache busting
+lazy_loading_images: Deferred image loading
+
+# Testing Best Practices Extended
+test_factories: FactoryBot patterns
+test_fixtures: Static test data
+test_helpers: Shared test utilities
+test_doubles: Mocks and stubs
+test_coverage_goals: Minimum coverage targets
+continuous_integration: GitHub Actions, CircleCI
+parallel_testing: Speed up test suite
+database_cleaner: Test isolation
+vcr_cassettes: HTTP interaction recording
+capybara_usage: System test patterns
+
+# Accessibility Standards Extended
+semantic_html: Proper HTML5 elements
+aria_labels: Screen reader labels
+keyboard_navigation: Tab order and focus
+color_contrast: WCAG AA standards
+alt_text: Image descriptions
+form_labels: Explicit label associations
+focus_indicators: Visible focus states
+skip_links: Bypass navigation
+heading_hierarchy: Logical heading structure
+responsive_text: Scalable font sizes
+
+# Documentation Patterns Extended
+readme_structure: Project overview and setup
+api_documentation: Endpoint descriptions
+code_comments: Inline explanations
+yard_documentation: Ruby doc comments
+changelog: Version history
+contributing_guide: Contribution instructions
+license_file: Legal terms
+architecture_decisions: ADR records
+runbook: Operational procedures
+troubleshooting_guide: Common issues
+
+# Git Workflow Extended
+feature_branches: Isolated development
+pull_requests: Code review process
+commit_messages: Clear commit descriptions
+semantic_versioning: Version numbering
+git_hooks: Pre-commit checks
+branch_protection: Required reviews
+continuous_deployment: Automated releases
+tag_releases: Version tagging
+merge_strategies: Merge vs rebase
+conflict_resolution: Merge conflict handling
+
+# Logging Best Practices Extended
+structured_logging: JSON log format
+log_levels: debug, info, warn, error, fatal
+request_logging: HTTP request details
+error_context: Stack traces and metadata
+log_rotation: Size and time-based rotation
+log_aggregation: Centralized log storage
+log_analysis: Search and visualization
+sensitive_data_filtering: PII redaction
+correlation_ids: Request tracing
+audit_trails: User action logging
+
+# Environment Management Extended
+development_setup: Local development
+test_environment: Automated testing
+staging_environment: Pre-production
+production_environment: Live system
+environment_parity: Consistent environments
+configuration_management: Environment variables
+secrets_management: Encrypted secrets
+database_seeds: Sample data
+asset_compilation: Environment-specific assets
+dependency_management: Bundler and package.json
+
+# Code Quality Tools Extended
+rubocop: Ruby style linting
+brakeman: Security scanning
+reek: Code smell detection
+flog: Complexity analysis
+flay: Duplication detection
+simplecov: Test coverage
+bundler_audit: Dependency vulnerabilities
+rack_attack: Rate limiting
+bullet: N+1 query detection
+pg_query: SQL parsing
+
+# Naming Conventions Extended
+models: Singular PascalCase
+controllers: Plural PascalCase + Controller
+views: snake_case
+helpers: snake_case + _helper
+concerns: PascalCase + able suffix
+services: PascalCase + Service
+jobs: PascalCase + Job
+mailers: PascalCase + Mailer
+serializers: PascalCase + Serializer
+decorators: PascalCase + Decorator
