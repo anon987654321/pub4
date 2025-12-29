@@ -131,7 +131,8 @@
   }
 
   // Visible-only stall watchdog: if rAF stops delivering frames while visible,
-  // restart it. (Some browsers/extensions can occasionally stall rAF.)
+  // console.log("Stall detected, restarting animation");
+        // restart it. (Some browsers/extensions can occasionally stall rAF.)
   let stallTimer = 0;
   function startStallWatchdog() {
     stopStallWatchdog();
@@ -139,12 +140,13 @@
       if (!running) return;
       if (document.hidden) return;
       const now = performance.now();
-      if (now - lastSeenFrameT > 2000) {
+      if (now - lastSeenFrameT > 5000) {
+        // console.log("Stall detected, restarting animation");
         // restart
         cancelAnimFrame();
         restartAnimFrame();
       }
-    }, 500);
+    }, 2000);
   }
   function stopStallWatchdog() {
     if (stallTimer) {
