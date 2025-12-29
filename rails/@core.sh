@@ -3,12 +3,12 @@ set -euo pipefail
 # @core.sh - Core Rails 8 + Solid Stack Setup
 # Combines: setup, database, dependencies
 # Per: master.yml v100.0 - Rails 8 + Solid Stack
-CONSTANTS
+# Constants
 readonly DEFAULT_PG_USER="dev"
 readonly DEFAULT_PG_HOST="localhost"
-readonly DEFAULT_THREAD_POOL=5
+readonly DEFAULT_THREAD_POOL=5  # Standard Rails connection pool size
 readonly TEMPLATE_DIR="${0:a:h}/templates"
-UTILITY FUNCTIONS
+# Utility Functions
 log() {
   print "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
@@ -25,14 +25,14 @@ install_gem() {
     bundle add "${gem_name}"
   fi
 }
-# ENVIRONMENT SETUP
+# Environment Setup
 setup_ruby() {
   log "Verifying Ruby environment"
   command_exists "ruby" || return 1
   command_exists "bundle" || return 1
   if [ ! -f "Gemfile" ]; then
     log "Creating basic Gemfile"
-    bundle init
+    bundle init || { log "ERROR: Failed to initialize Gemfile"; return 1; }
   fi
 }
 setup_yarn() {
@@ -42,7 +42,7 @@ setup_yarn() {
     yarn install
   fi
 }
-# DATABASE CONFIGURATION
+# Database Configuration
 setup_postgresql() {
   log "Setting up PostgreSQL database configuration"
   if [ ! -f "config/database.yml" ]; then
@@ -74,7 +74,7 @@ production:
   url: <%= ENV["DATABASE_URL"] %>
 EOF
 }
-# RAILS FRAMEWORK
+# Rails Framework
 setup_rails() {
   log "Setting up Rails framework components"
   replace_puma_with_falcon
@@ -93,7 +93,7 @@ create_and_migrate_db() {
   log "Creating and migrating database"
   bin/rails db:create db:migrate
 }
-# REDIS (LEGACY)
+# Redis (deprecated - use Solid Cable)
 setup_redis() {
   log "Setting up Redis configuration (legacy - consider Solid Cable)"
   if should_configure_redis; then
@@ -101,13 +101,13 @@ setup_redis() {
   fi
 }
 should_configure_redis() {
-  if [[ ! -f "config/application.rb" ]]; then
+  if [ ! -f "config/application.rb" ]; then
     return 0
   fi
   local app_config=$(<config/application.rb)
-  [[ "$app_config" != *redis* ]]
+  [ "$app_config" != *redis* ]
 }
-# DATABASE SEEDS
+# Database Seeds
 setup_seeds() {
   log "Setting up database seeds"
   if needs_seeds_file; then
@@ -128,7 +128,7 @@ if Rails.env.development?
 end
 EOF
 }
-# HIGH-LEVEL OPERATIONS
+# High-Level Operations
 setup_core() {
   log "Setting up core Rails application structure"
   setup_ruby || return 1
