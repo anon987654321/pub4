@@ -1,4 +1,12 @@
 #!/usr/bin/env zsh
+#
+# Unified Rails-OpenBSD Infrastructure v337.4.0
+# Refactored per master.yml v113 principles
+#
+
+set -euo pipefail
+
+#!/usr/bin/env zsh
 # OpenBSD Infrastructure - Rails 8 + Solid Stack
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 # Architecture: Internet → PF → Relayd (TLS) → Falcon → Rails 8
