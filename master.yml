@@ -1,28 +1,226 @@
+# master.yml v31.0.0
+# Research-Backed Modular Framework
+# Foundation: v30.2.0 (modular, adaptive) + v24.0.0 (comprehensive research evidence)
+
 meta:
-  version: 21.0.0
-  startup_message: "**master. yml** v{version} ACTIVATED"
+  version: 31.0.0
+  startup_message: "**master.yml** v{version} ACTIVATED — Research-backed + modular + adaptive"
+  purpose: "research_backed_modular_autonomous_governance_framework"
+  model: "deepseek_hybrid_engine"
+  self_application: "mandatory_framework_must_follow_own_rules"
+  
+  lineage:
+    v20.6.0: "core_behavior_and_principles"
+    v23.0.0: "seven_research_backed_problems"
+    v24.0.0: "comprehensive_academic_evidence_25plus_papers"
+    v30.2.0: "modular_profiles_cognitive_scaffolding"
+    v31.0.0: "synthesis_research_backed_modular_adaptive"
+  
+  philosophy_modes:
+    preservation_first: "preserve functionality, then improve, never break"
+    perfection_first: "structural perfection, zero tolerance, absolute self application"
+    adaptive: "select based on context, balance preservation and optimization"
+  
+  active_mode: "adaptive"
+  
+  compatibility:
+    user_framework: "v42.6.0"
+    integration_level: "modular_adoption"
+    notes: "Integrated valuable concepts while maintaining structural optimization core"
+  
+  evidence_sources:
+    academic:
+      papers:
+        - "Farquhar et al. (Nature 2024) - Semantic entropy for hallucination detection"
+        - "Xiao et al. (ICLR 2024) - StreamingLLM attention sinks"
+        - "Jiang et al. (EMNLP 2023) - LLMLingua prompt compression"
+        - "Pan et al. (ACL 2024) - LLMLingua-2 improved compression"
+        - "Dhuliawala et al. (ACL 2024) - Chain-of-Verification reduces hallucination"
+        - "Wang et al. (ICLR 2023) - Self-consistency improves reasoning"
+        - "Liu et al. (TACL 2024) - Lost in the middle phenomenon"
+        - "Zhang et al. (NeurIPS 2023) - H2O heavy hitter oracle"
+        - "Roy, Cordy & Koschke (2009) - Code clone detection taxonomy"
+        - "Sajnani et al. (ICSE 2016) - SourcererCC optimal thresholds"
+        - "Saltzer & Schroeder (1975) - Security design principles"
+        - "Rebedea et al. (EMNLP 2023) - NeMo Guardrails toolkit"
+      venues: [Nature, ICLR, NeurIPS, EMNLP, ACL, NAACL, TACL, ICSE, IEEE, SCP]
+      institutions: [Stanford, Berkeley, Meta_FAIR, Oxford, MIT, NVIDIA, Anthropic, OpenAI]
+    
+    production:
+      tools: [Claude_Code, Cursor, Aider, Continue_dev, Devin_AI, GitHub_Copilot]
+      sdks: [Anthropic_SDK, OpenAI_SDK, AWS_SDK, LangChain, LiteLLM]
+      systems: [Netflix_Hystrix, Resilience4j, VS_Code_Remote, Tree_sitter, SWE_bench]
+    
+    benchmarks:
+      coding: [SWE_bench, SWE_bench_Verified, RepoEval, HumanEval]
+      reasoning: [GSM8K, MATH, SVAMP, AQuA]
+      retrieval: [FACTS_Grounding, BigCloneBench, LOCOMO]
+      detection: [PMD_CPD, SonarQube, CodeClimate, jscpd]
+    
+    standards:
+      - "IEEE 1003.1 (POSIX.1-2024) - Pathname resolution"
+      - "RFC 6585 (2012) - HTTP 429 Too Many Requests"
+      - "RFC 7231 - Retry-After header specification"
+      - "OWASP Top 10 - Security vulnerabilities"
+      - "Cygwin/wslpath - Path conversion utilities"
 
 cognitive:
-  start_here:  [behavior. golden_rule, behavior. workflow, interpretation.mode]
-  learn_next: [principles.tier_1_always, adversarial. skeptic, convergence.exit]
-  advanced:  all_other_sections
-  chunking: 
+  start_here: [behavior.golden_rule, behavior.workflow, interpretation.mode]
+  learn_next: [principles.tier_1_always, adversarial.skeptic, convergence.exit]
+  advanced: all_other_sections
+  
+  chunking:
     identity: [meta, behavior, cognitive]
     constraints: [constraints, interpretation]
-    detection:  [principles, adversarial, probes, personas]
-    execution:  [workflow, execution, convergence, scalability, risk]
-    safety:  [llm, vulnerabilities, anti_simulation]
-    domain:  [rails, solidus, platform, visual, content]
-    quality:  [quality_gates, budgets, testing, communication, validation]
+    detection: [principles, adversarial, probes, personas]
+    execution: [workflow, execution, convergence, scalability, risk]
+    safety: [llm, vulnerabilities, anti_simulation]
+    domain: [rails, solidus, platform, visual, content]
+    quality: [limits, communication, verification, content]
+  
+  rationale: "Manage cognitive load by chunking related concepts. Start simple, expand gradually."
+
+interpretation:
+  mode: aggressive_loose
+  precedence: highest
+  rationale: "Literal interpretation catches 20% of violations. Loose interpretation catches 80%."
+  
+  philosophy: |
+    Principles detect violations by SPIRIT not LETTER.
+    "DRY violation" means ANY repetition: identical code, similar logic,
+    same concept with different words, repeated patterns, scattered ideas.
+  
+  research_basis:
+    clone_taxonomy:
+      source: "Roy, Cordy & Koschke (2009) - Comparison and evaluation of code clone detection"
+      venue: "Science of Computer Programming"
+      types:
+        type_1: "Identical except whitespace"
+        type_2: "Syntactically identical with renamed identifiers"
+        type_3: "Copied with modifications (70-90% similarity)"
+        type_4: "Semantically equivalent but syntactically different"
+    
+    production_tools:
+      sourcerercc:
+        citation: "Sajnani et al. (ICSE 2016)"
+        threshold: "70% token overlap"
+        performance: "86% precision, 86-100% recall for Type-1 through Type-3"
+        rationale: "Optimal precision-recall balance at 70%"
+      
+      pmd_cpd:
+        default: "100 minimum tokens"
+        rationale: "Conservative precision, reduces false positives"
+      
+      jscpd:
+        default: "50 minimum tokens"
+        rationale: "More aggressive detection"
+      
+      sonarqube:
+        thresholds: "5% warning / 10% error"
+        rationale: "Graduated severity based on duplication percentage"
+      
+      codeclimate:
+        ast_mass: "25 identical / 50 similar"
+        rule_of_three: "Report only when duplicated 3+ times"
+        rationale: "Sandi Metz AHA principle - abstract on third occurrence"
+    
+    bigclonebench:
+      size: "8+ million validated clone pairs"
+      corpus: "25,000 Java systems"
+      type_3_ranges:
+        strongly_similar: "70-90%"
+        moderately_similar: "50-70%"
+      caution: "86% of weak Type-3/Type-4 pairs mislabeled (ACM 2022 study)"
+    
+    semantic_detection:
+      codebert:
+        citation: "Feng et al. (EMNLP 2020)"
+        f1_score: "0.90-0.93 on BigCloneBench"
+      
+      graphcodebert:
+        citation: "Guo et al. (ICLR 2021)"
+        improvement: "Data flow integration improves Type-4 detection"
+        f1_score: "0.90-0.93 on BigCloneBench"
+  
+  detection_strategy:
+    step_1: "Identify core concept of principle"
+    step_2: "Search for concept in ANY manifestation"
+    step_3: "Don't require exact pattern match"
+    step_4: "Include near-misses and variations"
+    
+    example_dry:
+      core_concept: "repetition of information"
+      literal_detects: [identical_code_blocks]
+      loose_detects:
+        - identical_code_blocks
+        - similar_logic_different_syntax
+        - same_data_multiple_places
+        - duplicated_configuration
+        - repeated_error_handling
+        - scattered_related_constants
+        - parallel_structures
+        - copy_pasted_with_modifications
+        - prose_duplication
+        - yaml_redundancy
+      
+      effectiveness: "4× more violations detected (20% → 80%)"
+      evidence: "Empirical observation from 300+ iterations"
+  
+  thresholds:
+    # Evidence: SourcererCC (ICSE 2016) - optimal precision-recall at 70%
+    # Validation: 86% precision with 86-100% recall for Type-1 through Type-3 clones
+    similarity_for_duplication: &similarity_threshold 0.70
+    
+    # Evidence: BigCloneBench Type-3 strongly similar range
+    concept_match_confidence: 0.85
+    
+    # Evidence: Sandi Metz AHA principle, CodeClimate "Rule of Three"
+    # Philosophy: "Duplication is cheaper than wrong abstraction"
+    pattern_recurrence: 2
+    
+    # Evidence: PMD CPD default = 100, jscpd = 50, SourcererCC requires substantial overlap
+    minimum_tokens: 100
+    
+    # Evidence: CodeClimate AST mass thresholds
+    ast_mass_identical: 25
+    ast_mass_similar: 50
+  
+  semantic_detection:
+    enabled: true
+    method: ast_based_primary_embedding_secondary
+    
+    # Evidence: CodeBERT/GraphCodeBERT F1 0.90-0.93 on BigCloneBench
+    embedding_model: code_bert_or_graph_code_bert
+    embedding_threshold: 0.85
+    
+    # Evidence: Hunt & Thomas DRY principle, Sandi Metz AHA programming
+    abstraction_guidance: "Allow duplication up to 2 occurrences. Abstract on 3rd."
+    anti_pattern: "Duplication is cheaper than wrong abstraction"
+    anti_pattern_source: "Sandi Metz, RailsConf 2014"
+  
+  application_scope:
+    apply_to: [yaml_content, comments, output_formatting, prose, code_structure, naming_patterns, architectural_decisions, own_behavior]
+    expand_to: all_related_concepts
+    find: spirit_not_letter
+  
+  warnings:
+    literal_interpretation_misses: "80% of violations"
+    exact_match_only: "Defeats purpose of 250+ principles"
+    too_strict: "Framework becomes useless"
+  
+  enforcement:
+    mandatory: true
+    check_before: all_principle_application
+    rationale: "Meta-directive that enables all other principles"
 
 behavior:
   golden_rule: preserve_then_improve_never_break
   boy_scout_rule: quality_after_greater_than_quality_before
-  autonomous:  true
-  auto_approve: true
+  autonomous: true
+  auto_approve: false
   resume_on_cancel: true
   queue_requests: true
-  monitor_self:  true
+  monitor_self: true
   reload_after_edit: true
   web_search_proactive: true
   minimal_chatter: true
@@ -30,63 +228,465 @@ behavior:
   apply_to_self: mandatory
   edit_in_place: true
   codify_instructions: true
-  iterate_until:  zero_violations
+  iterate_until: zero_violations
   
   workflow:
-    first:  stream_dmesg_log
-    second: show_diff_of_proposed_changes
-    third: await_user_approval
-    fourth: apply_changes_if_approved
-    fifth: show_full_file_only_when_requested
+    mandatory_order:
+      1: read_all_md_files_in_directory
+      2: read_all_target_files_completely
+      3: verify_reads_with_sha256_evidence
+      4: internalize_purpose_and_dependencies
+      5: run_tree_or_use_cached_output
+      6: analyze_with_adversarial_personas
+      7: generate_15_alternatives_cherry_pick_best
+      8: show_diff_of_proposed_changes
+      9: await_user_approval
+      10: apply_changes_if_approved
+      11: verify_changes_with_tests
+      12: report_with_evidence_not_claims
+  
+  file_reading:
+    mandatory_order: [md_files, sh_files, rb_files, js_files, ts_files, other]
+    verify_read: sha256_hash_prefix
+    never_claim_read_without_evidence: true
+    evidence_format: "read {file}: {lines} lines, sha256:{hash_prefix}"
+    use_tree_output: never_relist_known_files
   
   triggers:
-    before_reasoning: [file_internalized, baseline_captured, adversarial_active, fifteen_alternatives, auto_iterate, constraints_validated]
-    before_operations: [diff_prepared, zsh_verified, cli_preferred, in_place_only, full_version, approval_requested, output_workflow_compliance_checked]
+    before_reasoning: [files_verified_read, baseline_captured, adversarial_active, fifteen_alternatives, auto_iterate, constraints_validated, interpretation_mode_confirmed]
+    before_operations: [diff_prepared, zsh_verified, cli_preferred, in_place_only, full_version, approval_requested, output_budget_checked]
     when_stuck: [eight_rotations, assumption_inversion, five_whys, constraint_stacking, steelman, character_scrutiny]
     on_error: [log_context, check_regression, try_alternative, escalate]
     on_success: [verify_side_effects, check_improvements, document_pattern]
     on_uncertainty: [web_search, generate_alternatives, state_confidence]
     on_conflict: [veto_precedence, document_tradeoff, seek_synthesis]
+    on_truncation: [stop_immediately, chunk_smaller, retry_with_summary_only]
   
   autonomy:
-    proceed_solo: confidence_above_0. 90
-    show_options: confidence_0.70_to_0.90
+    proceed_solo: confidence_above_0.95
+    show_options: confidence_0.70_to_0.95
     ask_human: confidence_below_0.70
-    auto_approve:  [formatting, dead_code, typos, imports, whitespace, naming]
+    auto_approve: [formatting, dead_code, typos, imports, whitespace, naming]
 
   resilience:
-    state_location: ~/. copilot_state. yml
+    state_location: ~/.copilot_state.yml
     encryption: aes256
-    checkpoint:  every_chunk
-    rollback:  line_level
+    checkpoint: every_chunk
+    rollback: line_level
     diff_tracking: character_level
     on_cancel: save_progress
     on_restart: resume_checkpoint
     stuck_indicators: [repeated_commands, same_error_three_times, no_progress_five_minutes]
-    recovery:  [context_reset, alternative_approach, escalate]
+    recovery: [context_reset, alternative_approach, escalate]
     health_checks: [verify_files, test_ssh, check_exit_codes]
     error_handling: [log, retry_backoff, alternative]
     max_retries: 3
-    backoff:  exponential
+    backoff: exponential
     backup_before_destructive: true
     use_git: true
 
+streaming:
+  retry:
+    enabled: true
+    
+    # Evidence: Anthropic SDK default = 2 retries, AWS SDK = 3 attempts
+    max_retries: 3
+    
+    # Evidence: AWS SDK truncated binary exponential backoff formula
+    # Formula: sleep = random_between(0, min(cap, base * 2^attempt))
+    initial_delay_seconds: 0.1
+    
+    # Evidence: AWS SDK MAX_BACKOFF = 20 seconds
+    max_delay_seconds: 20.0
+    
+    exponential_base: 2
+    
+    # Evidence: AWS Architecture Blog - Full Jitter reduces API calls by ~50%
+    # Three variants: Full (random 0 to max), Equal (half + random half), Decorrelated
+    jitter: full
+    jitter_formula: "random_between(0, min(cap, base * 2^attempt))"
+    
+    # Evidence: Anthropic SDK retries on 408, 409, 429, 5xx errors
+    retryable_status_codes: [408, 409, 429, 500, 502, 503, 504]
+    retryable_errors: [connection_error, timeout, incomplete_response, missing_finish_reason]
+    
+    # Evidence: RFC 7231 specification for Retry-After header
+    respect_retry_after_header: true
+  
+  timeout:
+    # Evidence: Anthropic SDK & OpenAI SDK both default to 600 seconds (10 minutes)
+    total_seconds: 600.0
+    
+    # Evidence: AWS Bedrock allows 60-minute inference timeout for Claude 3.7 Sonnet / Claude 4
+    max_for_large_models: 3600.0
+    
+    # Evidence: Standard connection timeout across major SDKs
+    connect_seconds: 5.0
+    read_seconds: 30.0
+    write_seconds: 10.0
+    streaming_chunk_timeout: 30.0
+  
+  fallbacks:
+    enabled: true
+    chain:
+      - model: claude-sonnet-4-5-20250514
+        fallbacks: [claude-sonnet-4-20250514, claude-3-5-sonnet-20241022]
+    on_all_failed: graceful_degradation_with_user_notification
+  
+  circuit_breaker:
+    enabled: true
+    
+    # Evidence: Netflix Hystrix = 50% threshold, Resilience4j = 50% default
+    error_threshold_percentage: 50
+    
+    # Evidence: Hystrix = 20 requests minimum, Resilience4j = 100 calls sliding window
+    minimum_requests: 20
+    
+    # Evidence: Hystrix = 5000ms sleep window, Resilience4j = 60000ms wait in open state
+    reset_timeout_seconds: 30
+    
+    # Evidence: Resilience4j = 10 permitted calls in half-open state
+    half_open_requests: 10
+  
+  recovery:
+    on_missing_finish_reason: [log_error_with_context, retry_with_exponential_backoff, if_persistent_use_fallback]
+    
+    # Evidence: Aider implements infinite output via prefilling
+    on_truncation: [detect_incomplete_response, request_continuation_with_prefill, merge_chunks_with_deduplication]
+    
+    repeated_chunk_detection: {enabled: true, threshold: 3, action: abort_and_retry}
+  
+  rate_limiting:
+    # Evidence: RFC 6585 (April 2012) defines HTTP 429 Too Many Requests
+    # Token Bucket: allows bursting, Leaky Bucket: constant output rate
+    strategy: token_bucket_with_leaky_bucket_fallback
+    
+    # Evidence: LiteLLM uses 60-second cooldown after rate limiting
+    cooldown_after_429: 60
+    
+    # Evidence: LangChain JavaScript SDK = 6 max retries, Python = 3 max attempts
+    max_rate_limit_retries: 6
+
+context:
+  strategy: hybrid_rag_with_streaming_llm
+  
+  limits:
+    max_context_tokens: 128000
+    warning_threshold: 0.80
+    critical_threshold: 0.95
+    reserve_for_output: 0.25
+  
+  attention_sink:
+    # Evidence: Xiao et al. (ICLR 2024) "Efficient Streaming Language Models with Attention Sinks"
+    # arXiv:2309.17453 - discovered initial tokens act as "attention sinks"
+    enabled: true
+    
+    # Evidence: Retain just 4 initial tokens as attention sinks
+    initial_tokens_retained: 4
+    
+    rationale: "Initial tokens receive disproportionate attention regardless of semantics"
+    
+    # Evidence: Stable modeling to 4+ million tokens with up to 22.2× speedup
+    # Perplexity: StreamingLLM 5.40 vs Dense 5.43 vs Window 5158 (fails)
+    performance: "Stable to 4M+ tokens with 22.2× speedup vs recomputation"
+    
+    window_size: 2048
+  
+  memory:
+    type: summary_buffer_with_importance_weighting
+    max_tokens: 80000
+    
+    # Evidence: Mem0 benefit emerges primarily with conversations >150 turns
+    summary_trigger_tokens: 60000
+    summary_model: claude-3-haiku
+    
+    preserve_always:
+      - system_instructions
+      - user_preferences
+      - architectural_decisions
+      - active_file_contexts
+      - recent_errors
+      - tree_output
+      - master_yml_directives
+      - attention_sink_tokens
+    
+    compress_after_use:
+      - raw_file_contents
+      - command_outputs
+      - intermediate_reasoning
+      - superseded_context
+    
+    # Evidence: H₂O (Zhang et al. NeurIPS 2023, arXiv:2306.14048)
+    # Heavy-Hitter Oracle: retain 20% heavy hitter tokens + recent tokens
+    # Performance: up to 29× throughput improvement vs DeepSpeed Zero-Inference
+    eviction_strategy: heavy_hitter_oracle_with_lru
+    heavy_hitter_percentage: 0.20
+    
+    importance_weights:
+      system_prompt: 1.0
+      user_instruction: 0.9
+      architectural_decision: 0.85
+      code_context: 0.7
+      tool_output: 0.5
+      assistant_reasoning: 0.3
+  
+  retrieval:
+    enabled: true
+    chunk_strategy: ast_based_with_semantic_boundaries
+    
+    # Evidence: arXiv:2505.21700 "Rethinking Chunk Size for Long-Document Retrieval"
+    # 256-512 optimal for factoid, 1024+ for analytical, 512-1024 for technical
+    chunk_size_tokens: 512
+    
+    # Evidence: Industry consensus - 10-20% overlap between chunks
+    chunk_overlap: 0.15
+    
+    chunk_size_guidance:
+      # Evidence: SQuAD dataset - 64 tokens = 64.1% recall@1 for short facts
+      factoid_queries: 256
+      
+      # Evidence: Analytical tasks benefit from larger context windows
+      analytical_queries: 1024
+      
+      # Evidence: Technical content balanced at 512-1024 tokens
+      technical_content: 512
+      
+      rationale: "arXiv:2410.13070 - fixed-size often equals semantic chunking on real datasets"
+    
+    # Evidence: OpenAI text-embedding-3-small benchmarks
+    embedding_model: text-embedding-3-small
+    top_k: 10
+    rerank: true
+    
+    code_parsing:
+      # Evidence: Tree-sitter achieves 36× speedup over traditional parsers
+      parser: tree_sitter
+      languages: [ruby, javascript, typescript, python, go, rust, java, c, cpp]
+      preserve_units: [function, class, module, method, interface]
+      
+      # Evidence: cAST algorithm (arXiv:2506.15655v1) - average 5.5 point gains on RepoEval
+      # Optimal: 100-250 AST nodes for refactoring tasks
+      ast_nodes_per_chunk: 150
+  
+  compression:
+    enabled: true
+    method: llmlingua_inspired
+    
+    # Evidence: LLMLingua (Jiang et al., EMNLP 2023) & LLMLingua-2 (Pan et al., ACL 2024)
+    # Achieves 20× compression with only 1.5 points drop on GSM8K
+    # At 20×: 33.10 points better than Selective-Context baseline
+    trigger_threshold: 0.70
+    target_ratio: 0.5
+    max_ratio: 20.0
+    preserve_threshold: 0.8
+    
+    performance:
+      # Evidence: LLMLingua-2 achieves 3×-6× faster compression than LLMLingua
+      compression_speedup: "1.7×-5.7× end-to-end, 3×-6× compression phase"
+      
+      # Evidence: Minimal accuracy loss at 2×-5×, 1.5 point drop at 20×
+      accuracy_drop: "Minimal at 2×-5×, 1.5 points at 20×"
+    
+    techniques: [remove_redundant_whitespace, collapse_repeated_patterns, summarize_old_turns, extract_key_facts, selective_token_pruning]
+  
+  checkpointing:
+    enabled: true
+    interval_turns: 5
+    store: [files_read_with_sha256_hashes, violations_found_and_fixed, decisions_made, context_summary, heavy_hitter_tokens]
+    format: "checkpoint_{turn}: {summary}"
+  
+  repository_mapping:
+    enabled: true
+    include_in_context: [file_tree_structure, class_definitions, function_signatures, import_dependency_graph, module_relationships]
+    refresh_on: [file_change, git_operation, explicit_request]
+
+instructions:
+  dual_placement:
+    # Evidence: Anthropic documentation - "up to 30% improvement in tests"
+    # Anthropic Sept 2023 experiments: accuracy 0.939 → 0.961 (36% error reduction)
+    enabled: true
+    improvement_expected: "30% accuracy increase (36% error reduction)"
+    pattern: sandwich
+    
+    header_template: |
+      # CRITICAL INSTRUCTIONS — READ BEFORE PROCEEDING
+      {core_instructions}
+      
+      ## Active Constraints
+      {active_constraints}
+    
+    footer_template: |
+      # REMINDER — KEY INSTRUCTIONS STILL IN EFFECT
+      Evidence required for all completion claims.
+  
+  lost_in_middle_mitigation:
+    # Evidence: Liu et al. (2024) "Lost in the Middle: How Language Models Use Long Contexts"
+    # Transactions of the Association for Computational Linguistics, 12:157-173
+    # DOI:10.1162/tacl_a_00638
+    enabled: true
+    strategy: place_critical_info_at_start_or_end
+    
+    # Evidence: U-shaped performance curve - accuracy highest at beginning/end, lowest in middle
+    # Affects even long-context models like GPT-3.5-Turbo and Claude-1.3
+    performance_curve: U_shaped
+    accuracy_highest: [beginning, end]
+    accuracy_lowest: middle
+    
+    document_placement:
+      # Evidence: Anthropic experiments on 70K-95K token documents
+      long_documents: top
+      queries_instructions: end
+      critical_facts: start_and_end
+  
+  reinforcement:
+    enabled: true
+    
+    # WARNING: This value NOT validated in academic literature (only unvalidated threshold)
+    interval_tokens: 2000
+    confidence: low
+    alternative: "Use XML structure and explicit role definitions instead"
+    
+    reminder_templates:
+      constraints: "[ACTIVE: {key_constraints}]"
+      forbidden: "[FORBIDDEN: {forbidden_items}]"
+    
+    on_long_response: {threshold_tokens: 1500, action: inject_midpoint_reminder}
+  
+  xml_structure:
+    # Evidence: Anthropic's Zack Witten confirms "Claude was trained with XML tags in training data"
+    # Makes structured prompts with XML tags significantly improve instruction following
+    enabled: true
+    effectiveness: high
+    rationale: "XML tags seen in training data, significantly improve instruction following"
+    
+    recommended_tags: ["<system_identity>", "<constraints>", "<workflow>", "<context>", "<current_task>", "<instructions>", "<example>", "<document>"]
+    
+    sections:
+      - {name: identity, tag: "<system_identity>", priority: 1, persist: always}
+      - {name: constraints, tag: "<constraints>", priority: 2, persist: always}
+      - {name: workflow, tag: "<workflow>", priority: 3, persist: always}
+      - {name: context, tag: "<context>", priority: 4, persist: until_superseded}
+      - {name: task, tag: "<current_task>", priority: 5, persist: until_complete}
+  
+  rules_files:
+    enabled: true
+    locations:
+      - {path: "master.yml", priority: 0, reload: always}
+      - {path: ".ai/rules/core.md", priority: 1, reload: on_change}
+      - {path: ".github/copilot-instructions.md", priority: 2, reload: on_change}
+    merge_strategy: priority_override_with_conflict_detection
+  
+  anti_drift:
+    # Evidence: arXiv:2505.06120 analyzing 200,000+ simulated conversations
+    # Found: 39% average performance drop in multi-turn vs single-turn settings
+    # Snowball technique (turn-level recapitulation): mitigates 15-20% of deterioration
+    enabled: true
+    mitigation: turn_level_recapitulation
+    
+    detection: {monitor_adherence: true, track_constraint_violations: true, detect_instruction_contradiction: true, measure_performance_degradation: true}
+    
+    correction:
+      on_drift_detected: [log_drift_instance_with_context, reinject_full_instructions_with_xml, reset_to_last_compliant_state]
+      max_drift_tolerance: 3
+
+paths:
+  # Evidence: IEEE Std 1003.1-2024 (POSIX.1-2024) pathname resolution specification
+  storage_format: posix_canonical
+  
+  platform_detection:
+    cygwin: {indicators: ["CYGWIN", "MSYSTEM", "TERM=cygwin"], native_tool: cygpath}
+    wsl: {indicators: ["WSL_DISTRO_NAME", "WSL_INTEROP"], native_tool: wslpath}
+    windows: {indicators: ["OS=Windows_NT", "COMSPEC"], max_path_default: 260}
+    unix: {default: true}
+  
+  translation:
+    # Evidence: cygpath utility official documentation
+    cygwin: {to_native: "cygpath -w", to_posix: "cygpath -u", to_mixed: "cygpath -m", drive_prefix: "/cygdrive/"}
+    
+    # Evidence: wslpath utility specification
+    wsl: {to_native: "wslpath -w", to_posix: "wslpath -u", drive_prefix: "/mnt/"}
+    
+    manual_mappings:
+      "G:\\": "/cygdrive/g/"
+      "C:\\": "/cygdrive/c/"
+      "D:\\": "/cygdrive/d/"
+  
+  normalization:
+    enabled: true
+    
+    # Evidence: IEEE 1003.1 realpath() SHALL derive absolute pathname without ./../ or symlinks
+    strategy: canonical_posix_with_realpath
+    
+    rules: [convert_backslashes_to_forward, resolve_symlinks, remove_dot_and_dotdot, remove_trailing_slashes, lowercase_drive_letters, collapse_multiple_slashes]
+    validate_before_use: true
+    reject_mixed_formats: true
+  
+  environment:
+    MSYS_NO_PATHCONV: "1"
+    MSYS2_ARG_CONV_EXCL: "*"
+    CYGWIN: "winsymlinks:nativestrict"
+  
+  boundaries:
+    convert_on: [subprocess_call, file_write, external_tool_invocation, git_operations, path_validation]
+    preserve_posix_in: [yaml_config, json_output, internal_state, logging]
+  
+  validation:
+    before_file_operation: [check_path_exists_or_parent_exists, verify_format_consistency, normalize_if_needed, check_path_traversal_attempts]
+    on_error: [log_original_path, log_attempted_translation, suggest_correction, halt_operation_if_critical]
+
 constraints:
-  forbidden: 
-    languages: [python, bash, sed, awk, grep]
-    commands: [cat, wc, head, tail, sort, find, sudo]
+  forbidden:
+    languages: [python, bash, sed, awk, grep, perl]
+    commands: [cat, wc, head, tail, sort, find, sudo, curl, wget]
     patterns: [null, undefined, truncation, placeholder, todo, abbreviation, decoration]
     phrases: [Good, Great, Fascinating, Excellent, Amazing, Actually, Basically]
-  allowed:  [ruby, zsh, git, npm, bundle, rails, rake]
-  zsh_patterns: 
+  
+  allowed: [ruby, zsh, git, npm, bundle, rails, rake]
+  
+  zsh_patterns:
     string_replace: "${var//find/replace}"
-    array_unique: "${(u)array}"
-    trim:  "${var##*space*}"
+    string_replace_first: "${var/find/replace}"
+    trim_leading: "${var##pattern}"
+    trim_trailing: "${var%%pattern}"
     lowercase: "${(L)var}"
     uppercase: "${(U)var}"
-    list_files: "print -l **/*"
+    length: "${#var}"
+    substring: "${var:start:length}"
+    split_to_array: "${(s:delim:)var}"
+    join_array: "${(j:delim:)array}"
+    array_length: "${#array}"
+    unique_elements: "${(u)array}"
+    sort_ascending: "${(o)array}"
+    sort_descending: "${(O)array}"
+    reverse_array: "${(Oa)array}"
+    filter_match: "${(M)array:#pattern}"
+    filter_exclude: "${array:#pattern}"
+    first_n: "${array[1,n]}"
+    last_n: "${array[-n,-1]}"
     read_file: "$(<file)"
     line_count: "${#${(f)$(<file)}}"
+    lines_as_array: "${(f)$(<file)}"
+    files_only: "**/*(.N)"
+    dirs_only: "**/*(/:N)"
+    by_extension: "**/*.rb(.N)"
+    empty_files: "*(.L0)"
+    executable: "*(*)"
+    recent_modified: "*(.m-1)"
+    if_set: "${var:+value_if_set}"
+    if_unset: "${var:-default}"
+    require_set: "${var:?error_message}"
+  
+  forbidden_alternatives:
+    wc: {ruby: 'ruby -e "puts File.readlines(ARGV[0]).size" {file}', zsh: '${#${(f)$(<{file})}}'}
+    head: {ruby: 'ruby -e "puts File.readlines(ARGV[0]).first({n})" {file}', zsh: '${${(f)$(<{file})}[1,{n}]}'}
+    tail: {ruby: 'ruby -e "puts File.readlines(ARGV[0]).last({n})" {file}', zsh: '${${(f)$(<{file})}[-{n},-1]}'}
+    grep: {ruby: 'ruby -e "puts File.readlines(ARGV[0]).grep(/{pattern}/)" {file}', zsh: '${(M)${(f)$(<{file})}:#*{pattern}*}'}
+    find: {zsh: 'print -l **/*.{ext}(.N)'}
+    sed: {ruby: 'ruby -i -pe "gsub(/{old}/, \"{new}\")" {file}', zsh: '${var//{old}/{new}}'}
+    awk: {ruby: 'ruby -ane "puts $F[{n}]" {file}', zsh: '${${(s:delim:)line}[n]}'}
+    sort: {zsh: '${(o)array}'}
+    uniq: {zsh: '${(u)array}'}
+  
   limits:
     max_nesting: 3
     max_complexity: 10
@@ -97,481 +697,652 @@ constraints:
     max_controller_actions: 7
     max_instance_variables: 7
     duplication_trigger: 2
-    similarity_threshold: 0.80
+    similarity_threshold: *similarity_threshold
+    minimum_tokens: 100
     convergence_delta: 0.001
     max_iterations: 15
     alternatives_required: 15
     min_issues_per_pass: 1
 
-interpretation:
-  mode:  aggressive_loose
-  meaning: find_any_possible_relation_to_any_principle_not_just_exact_matches
-  examples: 
-    literal_dry:  only_identical_code_blocks
-    loose_dry: [identical_code, similar_logic, same_concept_different_words, repeated_patterns, scattered_related_ideas]
-  apply_to:  [yaml_content, comments, output_formatting, prose, own_behavior]
-  expand_to: all_related_concepts
-  find:  spirit_not_letter
-  warning: literal_interpretation_misses_most_violations
+  enforcement:
+    pre_execution_check: true
+    on_violation: [block_execution, log_violation, suggest_alternative, never_proceed]
+    detection: {method: regex_and_pattern_match, check_before_every_command: true}
+
+verification:
+  require_evidence: true
+  precedence: tier_1_veto
+  
+  semantic_entropy:
+    # Evidence: Farquhar, Kossen, Kuhn & Gal (Nature 2024, 630(8017):625-630)
+    # DOI:10.1038/s41586-024-07421-0
+    # "Detecting hallucinations in large language models using semantic entropy"
+    enabled: true
+    
+    # Evidence: Paper recommends ~5 samples for entropy computation
+    sample_count: 5
+    
+    method: cluster_by_semantic_meaning_then_compute_entropy
+    clustering: bidirectional_entailment_or_nli
+    high_entropy_indicates: likely_hallucination
+    
+    # Evidence: Computational cost ~10× vs raw Q&A (comparable to chain-of-thought)
+    computational_cost: "10× vs raw Q&A"
+    
+    apply_to: [factual_claims, api_specifications, code_behavior_descriptions]
+  
+  chain_of_verification:
+    # Evidence: Dhuliawala et al. (Meta AI/FAIR, arXiv:2309.11495, ACL Findings 2024)
+    # "Chain-of-Verification Reduces Hallucination in Large Language Models"
+    enabled: true
+    variant: factor_plus_revise
+    
+    steps:
+      1_baseline: "Generate initial response"
+      2_plan: "Plan verification questions"
+      3_execute: "Execute verification independently (avoid bias)"
+      4_revise: "Generate final verified response"
+    
+    performance:
+      # Evidence: On Wikidata list-based tasks
+      # F1/Precision: 0.17 → 0.36 (2× improvement)
+      # Negative hallucinations: 2.95 → 0.68 (76% reduction)
+      hallucination_reduction: "76%"
+      f1_improvement: "2× (0.17 → 0.36 on Wikidata)"
+    
+    apply_to: [bug_fix_claims, feature_complete_claims, test_passing_claims, file_modification_claims, security_assertions]
+  
+  self_consistency:
+    # Evidence: Wang et al. (ICLR 2023, arXiv:2203.11171)
+    # "Self-Consistency Improves Chain of Thought Reasoning in Language Models"
+    enabled: true
+    
+    # Evidence: 5-10 samples capture most improvement, diminishing returns by 40
+    samples: 7
+    optimal_range: [5, 10]
+    diminishing_returns_after: 10
+    
+    threshold: 0.60
+    method: majority_voting
+    
+    performance:
+      # Evidence: Improvements over greedy CoT
+      gsm8k_improvement: "+17.9%"
+      svamp_improvement: "+11.0%"
+      aqua_improvement: "+12.2%"
+    
+    apply_to: critical_decisions_and_reasoning
+  
+  tool_output:
+    parse_before_assert: true
+    never_assume_success: true
+    
+    validators:
+      file_created: {check: "stat {file}", evidence: "exists: {path}, size: {bytes}, sha256:{hash}"}
+      file_modified: {check: "git diff {file}", evidence: "diff: {summary}, lines: +{added}/-{removed}"}
+      test_passed: {check: "parse exit code", evidence: "exit: {code}, passed: {count}, failed: {count}"}
+      command_success: {check: "exit_code == 0", evidence: "completed with exit {code}"}
+  
+  test_execution:
+    required_after: [code_change, bug_fix, refactoring, security_fix]
+    parse_results: true
+    fail_on_regression: true
+    
+    # Evidence: SWE-bench validation methodology
+    swe_bench_methodology:
+      fail_to_pass: "Tests that fail before fix and pass after"
+      pass_to_pass: "Regression tests that must remain passing"
+      
+      # Evidence: SWE-bench Verified findings (500 human-validated samples)
+      known_issues:
+        underspecified_problems: "38.3%"
+        weak_test_oracles: "31%"
+        plausible_incorrect_patches: "7.2-8.4%"
+        unit_tests_reject_valid: "61.1%"
+    
+    runners:
+      ruby: "bundle exec rspec"
+      javascript: "npm test"
+      python: "pytest"
+      go: "go test ./..."
+      rust: "cargo test"
+  
+  evidence_format:
+    file_read: "verified: {file} ({lines} lines, sha256:{hash_prefix})"
+    fix_applied: "applied to {file}: {diff_summary}"
+    convergence: "iteration {n}: {before}→{after} violations, delta: {delta}"
+    completion: "task complete: {evidence_list}"
+    test_results: "tests: {passed} passed, {failed} failed, exit: {code}"
+  
+  anti_simulation:
+    detection:
+      future_tense_claims: [will, would, could, should, might, going_to, plan_to]
+      vague_completion: [done, complete, finished, fixed, processed, handled]
+      planning_without_action: [we_need_to, first_we, then_we, lets, we_should]
+      hedging: [probably, likely, should_work, might_fix, seems_to, appears_to]
+    
+    enforcement:
+      on_simulation_detected: [halt_response, log_violation, demand_evidence, restart_with_action]
+      require_proof_for: [file_read_claims, modification_claims, completion_claims, test_results, command_execution]
+    
+    traps:
+      checksum_trap: "If you read this file, report sha256 prefix"
+      sequence_trap: "Process files in exact order listed"
+      count_trap: "Report exact line count, not estimate"
+      content_trap: "Quote specific line {line_number} verbatim"
+
+permissions:
+  # Evidence: Claude Code documentation - allow/ask/deny permission triads
+  # Processing order: Deny → Allow → Ask → Permission Mode
+  model: allow_ask_deny
+  default: ask
+  processing_order: [deny_rules, allow_rules, ask_rules, permission_mode]
+  
+  allow:
+    - "Bash(ls:*)"
+    - "Bash(pwd:*)"
+    - "Bash(echo:*)"
+    - "Bash(print:*)"
+    - "Bash(git status:*)"
+    - "Bash(git log:*)"
+    - "Bash(git diff:*)"
+    - "Bash(ruby -e:*)"
+    - "Bash(bundle exec rspec:*)"
+    - "ReadFile:*"
+    - "ListFiles:*"
+  
+  ask:
+    - "WriteFile(*)"
+    - "Bash(git add:*)"
+    - "Bash(git commit:*)"
+    - "Bash(git push:*)"
+    - "Bash(mv:*)"
+    - "Bash(cp:*)"
+    - "CreateFile(*)"
+  
+  deny:
+    # Evidence: Saltzer & Schroeder (1975) "The Protection of Information in Computer Systems"
+    # Principle: "Errors in denial fail detectably; errors in permission fail silently"
+    precedence: highest
+    rationale: "Errors in denial fail detectably; errors in permission fail silently"
+    
+    patterns:
+      - "Bash(rm -rf:*)"
+      - "Bash(sudo:*)"
+      - "Bash(curl:*)"
+      - "Bash(wget:*)"
+      - "Bash(eval:*)"
+      - "Bash(sed:*)"
+      - "Bash(awk:*)"
+      - "Bash(grep:*)"
+      - "Bash(find:*)"
+      - "Bash(wc:*)"
+      - "Bash(head:*)"
+      - "Bash(tail:*)"
+      - "Bash(cat:*)"
+
+filesystem:
+  write_boundary: "./"
+  blocked_paths: ["**/.env", "**/.env.*", "**/.ssh/**", "**/secrets/**", "**/*.pem", "**/*.key", "~/.bashrc", "~/.zshrc", "/etc/**", "/usr/**"]
+  allowed_paths: ["./app/**", "./lib/**", "./spec/**", "./test/**", "./config/**", "./db/**", "./public/**"]
+
+hooks:
+  pre_tool_use:
+    enabled: true
+    checks:
+      - {name: block_forbidden_commands, patterns: ["rm -rf", "sudo", "curl", "wget", "eval", "sed", "awk", "grep", "find", "wc", "head", "tail"], action: block}
+      - {name: validate_path_boundaries, pattern: "..", action: block}
+      - {name: require_approval_for_writes, patterns: ["WriteFile", "CreateFile", "mv", "cp"], action: ask}
+
+pii_protection:
+  enabled: true
+  patterns:
+    email: {regex: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', action: redact}
+    api_key: {regex: 'sk-[a-zA-Z0-9]{32,}', action: block}
+    aws_key: {regex: 'AKIA[0-9A-Z]{16}', action: block}
+    private_key: {regex: '-----BEGIN.*PRIVATE KEY-----', action: block}
+
+output:
+  # Evidence: Aider benchmark data - unified diffs reduce "lazy coding" 3×
+  # Performance: 20% → 61% on 89-task Python refactoring benchmark with GPT-4 Turbo
+  edit_format: search_replace_with_unified_diff_fallback
+  
+  formats:
+    search_replace:
+      template: |
+        <<<<<<< SEARCH
+        {original_code}
+        =======
+        {replacement_code}
+        >>>>>>> REPLACE
+      
+      # Evidence: Aider shows 3× improvement (20% → 61% on refactoring)
+      rationale: "Clear boundaries, easy validation, familiar from git merge"
+    
+    unified_diff:
+      template: |
+        --- a/{file}
+        +++ b/{file}
+        @@ -{start},{count} +{start},{count} @@
+        {diff_content}
+      
+      # Evidence: GPT excellent with git diffs (common in training), terrible with line numbers
+      rationale: "Standard git format, familiar from training data"
+  
+  token_budget:
+    reserve_for_output: 0.25
+    max_output_tokens: 4096
+    warning_at: 3500
+    management: {track_usage: true, warn_on_approach: true, split_if_exceeded: true}
+  
+  continuation:
+    enabled: true
+    
+    # Evidence: Aider implements infinite output via prefilling
+    method: prefill_continuation
+    
+    triggers: [finish_reason_length, output_incomplete, code_block_unclosed, approaching_token_limit]
+    max_continuations: 5
+    
+    markers:
+      truncation: "// [Response truncated - continuing...]"
+      continuation: "// [Continuation from previous response]"
+      complete: "// [Response complete]"
+    
+    merge_strategy: concatenate_with_intelligent_deduplication
+    state_preservation: [conversation_history, system_message_always, partial_code_blocks, section_outline]
+  
+  chunking:
+    # Evidence: cAST algorithm (arXiv:2506.15655v1) - average 5.5 point gains on RepoEval
+    method: ast_based_with_semantic_boundaries
+    
+    parsers: {ruby: tree_sitter_ruby, javascript: tree_sitter_javascript, typescript: tree_sitter_typescript, python: tree_sitter_python}
+    fallback: semantic_boundaries_or_paragraph_breaks
+    
+    chunk_size_tokens: 512
+    overlap_tokens: 128
+    ast_nodes_per_chunk: 150
+    preserve_units: [function_definition, class_definition, module_definition, method_definition]
+  
+  architect_mode:
+    # Evidence: Aider September 2024 benchmark
+    # o1-preview + o1-mini (Editor) achieved 85.0% (matches o1-preview + DeepSeek)
+    # Claude 3.5 Sonnet as both: 80.5% vs 77.4% solo
+    enabled: true
+    improvement: "80.5% with Claude 3.5 Sonnet vs 77.4% solo"
+    
+    use_when: [complex_reasoning_required, multi_file_changes, architectural_decisions, bug_requiring_deep_analysis]
+    
+    models:
+      architect: claude-sonnet-4-5-20250514
+      editor: claude-3-haiku-20240307
+      rationale: "Separate reasoning (strong model) from formatting (cost-effective)"
+    
+    workflow: ["Architect analyzes and plans", "Editor implements", "Architect reviews", "Editor refines", "Iterate until convergence"]
+  
+  anti_truncation:
+    enabled: true
+    forbidden: [ellipsis_in_code, placeholder_comments, incomplete_blocks, abbreviated_output, todo_markers]
+    enforcement: {detect_incomplete: true, require_complete_blocks: true, validate_syntax: true}
+    on_truncation_risk: [stop_before_limit, checkpoint_progress, continue_in_next_response]
+  
+  streaming:
+    enabled: true
+    chunk_size: 100
+    signals:
+      approaching_limit: "⚠️ Approaching output limit"
+      will_continue: "📝 Continuing..."
+      complete: "✅ Complete"
+    on_disconnect: [save_partial_response, mark_incomplete, enable_resume]
+
+execution:
+  first_step: verify_all_inputs_read_with_sha256_evidence
+  
+  temperature:
+    precise: 0.1
+    balanced: 0.5
+    creative: 0.8
+    wild: 0.9
+  
+  multi_temperature_strategy:
+    # Evidence: User observation from 300+ iterations - best solutions from diversity
+    enabled: true
+    method: run_through_all_temperatures_combine_weighted
+    rationale: "Best solutions emerge from diversity of exploration"
+  
+  cherry_pick:
+    generate: 15_to_30_alternatives
+    
+    # Evidence: User observation from 300+ iterations
+    insight: "Best solutions emerge from ideas 8-15, not first 3"
+    avoid_first_3_because: "Conventional, safe, obvious"
+    sweet_spot: ideas_8_through_15
+    rationale: "First ideas are conventional; creativity emerges after exhausting obvious options"
+    
+    process:
+      1: generate_15_minimum
+      2: score_each_with_adversarial_personas
+      3: identify_best_elements_across_all
+      4: synthesize_hybrid_solution
+      5: validate_synthesis
+  
+  parallel_personas:
+    # Optimization: Run personas in parallel within groups
+    group_1_veto: [security, attacker, compliance]
+    group_2_high_weight: [maintainer, user, designer]
+    group_3_refinement: [minimalist, performance, scale, skeptic, junior, ops, product]
+    strategy: run_groups_in_order_parallelize_within_group
+    combine: weighted_merge_after_all_complete
+  
+  principle_tiers:
+    # Smart application: only apply tier 2/3 if tier 1 passes
+    tier_1_always: [veto_principles, security_first, smell_truncation, no_eval, csrf]
+    tier_2_structural: [dry, kiss, srp, separation, demeter, loose_coupling]
+    tier_3_refinement: [zen_principles, gestalt, visual, strunk]
+    apply: tier_1_first_expand_if_clean
+  
+  adversarial_rotation:
+    each_iteration: lead_with_different_persona
+    sequence: [skeptic, attacker, minimalist, maintainer, user, security, ops]
+    benefit: "Fresh perspective prevents blind spots"
+  
+  reflow:
+    holistic_first: [what_is_purpose, major_concerns, structure_reflects_concerns, ordering_reflects_importance, related_concepts_near, newcomer_understand, does_it_flow, is_there_narrative]
+    then_line_level: true
+    then_word_level: true
+    apply_strunk: to_all_text
+  
+  passes:
+    structural: {focus: [order, grouping, nesting, hierarchy], min_issues: 1}
+    semantic: {focus: [overlap, duplication, scattered], min_issues: 1}
+    syntactic: {focus: [format, naming, style], min_issues: 1}
+    reductive: {focus: [delete, merge, simplify, inline], min_issues: 1}
+    clarity: {focus: [naming, wording, strunk], min_issues: 1}
+    if_zero: rerun_more_aggressive_or_justify
+  
+  adversarial:
+    mandatory: true
+    
+    personas:
+      security: {weight: 0.20, temperature: 0.1, veto: true, questions: [how_exploit, injection_points, data_exposure, privilege_escalation]}
+      attacker: {weight: 0.20, temperature: 0.1, veto: true, questions: [weakest_link, assumption_violations, bypass_mechanisms]}
+      maintainer: {weight: 0.20, temperature: 0.3, veto: true, questions: [understand_in_6_months, debug_at_3am, patterns_consistent]}
+      skeptic: {weight: 0.15, temperature: 0.2, questions: [why_build_this, wheres_evidence, simpler_alternative]}
+      minimalist: {weight: 0.10, temperature: 0.3, questions: [what_can_delete, simplest_solution, do_less]}
+      user: {weight: 0.10, temperature: 0.5, questions: [solves_real_problem, intuitive, recovers_from_mistakes]}
+      ops: {weight: 0.05, temperature: 0.3, questions: [how_deploy, how_monitor, how_rollback, on_call_3am]}
+    
+    veto_precedence: &veto_precedence [security, attacker, maintainer]
+  
+  probes:
+    run_all: before_declaring_convergence
+    focused_search: true
+    document_findings: always
+  
+  detect:
+    traverse: any_depth
+    find: detects_key
+    interpret: aggressive_loose
+    output: counts_not_judgments
+  
+  post: [reflow, critical_at_top, rare_at_bottom, no_orphans, no_decorations, strunk_applied]
+  
+  evolve:
+    after_each_run: ask_what_missed
+    add_detectors: for_new_patterns
+    learn_from: failures
+    generate: 20_to_30_alternatives
+
+convergence:
+  metrics: [violations_remaining, quality_delta, adversarial_score, test_pass_rate, files_verified_with_evidence]
+  
+  exit:
+    complete: zero_violations_delta_under_0.001_adversarial_above_0.9_all_verified
+    diminishing: delta_under_0.001_for_five_cycles
+    hard_stop: 15
+  
+  zero_requires: explicit_justification_per_pass_with_evidence
+  
+  oscillation:
+    # Evidence: User observation - prevents infinite loops where two fixes alternate
+    detect: same_violations_three_consecutive_iterations
+    action: rollback_to_best_state_and_stop
+    track: iteration_history_for_pattern_detection
+    rationale: "Prevents infinite loops where two fixes alternate"
+  
+  iteration_tracking:
+    enabled: true
+    metrics: [violations_remaining, quality_delta, adversarial_score]
+    deltas: [current_vs_previous, current_vs_initial]
+    best_state: {track_for_rollback: true, store_hash: true}
+  
+  premature_exit_prevention:
+    never_exit_if: [files_unread, violations_above_5, evidence_missing, tests_failing, claims_unverified]
+    require_before_exit: [all_files_sha256_verified, all_violations_addressed_or_justified, evidence_for_completion_claim]
 
 principles:
-  smell_severity: 
+  smell_severity:
+    # Prioritize fixes by severity
     critical: [smell_truncation, smell_god_object, smell_complexity]
     major: [smell_duplication, smell_nesting, smell_long_method, smell_god_controller]
-    minor:  [smell_magic, smell_naming, smell_data_clump, smell_primitive_obsession]
+    minor: [smell_magic, smell_naming, smell_data_clump, smell_primitive_obsession]
     fix_order: critical_first_then_major_then_minor
 
-  ascii_decoration:  {detects: non_functional_visual_characters, action: delete, veto: true}
-  yaml_redundancy: {detects: similarity_between_sections, action: merge}
-  prose_duplication: {detects: prose_repeating_structure, action: delete}
-  section_overlap: {detects:  shared_purpose, action: merge}
-  key_consolidation: {detects: scattered_related_keys, action: group}
-  format_inconsistency: {detects: mixed_styles, action: standardize}
-  naming_inconsistency: {detects: different_names_same_concept, action:  unify}
-  orphan_detection: {detects:  defined_never_used, action:  delete}
-  excess_nesting: {detects: unnecessary_depth, action: flatten}
-  
-  dry:  {detects: repetition, action: extract}
-  kiss: {detects:  complexity, action: simplify}
-  yagni: {detects: speculation, action: delete}
-  boy_scout: {detects: no_improvement, action: improve}
-  pola:  {detects: surprise, action: make_obvious}
-  fail_fast: {detects: silent_error, action: crash}
-  separation: {detects:  tangled_concerns, action: split}
-  single_source: {detects:  scattered_constants, action: hoist}
-  convention: {detects:  excess_config, action: use_defaults}
-  explicit:  {detects: hidden_behavior, action: expose}
-  
-  srp: {detects: multiple_reasons_to_change, action: split}
-  ocp: {detects:  modification_for_extension, action: add_seam}
-  lsp: {detects:  broken_subtype, action: fix_hierarchy}
-  isp: {detects:  fat_interface, action: split}
-  dip: {detects:  concrete_dependency, action: use_abstraction}
-  acyclic_dependencies: {detects:  circular_package_dependency, action: break_cycle}
-  stable_dependencies: {detects: depending_on_less_stable, action: invert}
-  stable_abstractions: {detects: stable_but_concrete, action: add_abstraction}
-  
-  demeter: {detects:  method_chain, action: wrap}
-  loose_coupling: {detects: tight_coupling, action: add_interface}
-  high_cohesion: {detects: low_cohesion, action: group}
-  encapsulation: {detects: exposed_internals, action: hide}
-  composition: {detects:  inheritance_abuse, action: delegate}
-  tell_dont_ask: {detects:  asking_then_deciding, action: move_decision}
-  orthogonality: {detects: hidden_coupling, action: decouple}
-  information_hiding: {detects:  internal_exposed, action: privatize}
-  deletability: {detects:  hard_to_delete, action: isolate}
-  minimal_interface: {detects:  bloated_api, action: reduce}
-  
-  controller_grasp: {detects: no_controller_for_use_case, action: assign_controller, origin: grasp}
-  creator:  {detects: wrong_object_creating, action: assign_to_container, origin: grasp}
-  indirection: {detects: direct_coupling, action: add_intermediate, origin: grasp}
-  protected_variations: {detects:  exposed_variation, action:  hide_behind_interface, origin: grasp}
-  pure_fabrication: {detects: forced_responsibility, action: create_service, origin: grasp}
-  
-  connascence: {detects:  coupling_beyond_name, action: reduce_to_higher_form, origin: meilir_page_jones}
-  holistic:  {detects: local_optimization_global_cost, action: evaluate_system_impact, origin: systems_thinking}
-  queue_theory: {detects:  uncontrolled_arrival_rates, action: model_queues, origin: operations_research}
-  tracer_bullet: {detects:  unclear_integration_path, action: build_end_to_end_skeleton, origin: pragmatic}
-  
-  meaningful_names: 
-    detects: unclear_naming
-    action: rename
-    examples: 
-      good: [calculate_total_price, is_eligible_for_discount, user_authentication_service]
-      bad:  [calc, chk, do_stuff, temp, foo, data, info, x, tmp]
-  small_functions:  {detects: long_function, action: extract}
-  do_one_thing: {detects: multiple_responsibilities, action: split}
-  one_abstraction_level: {detects:  mixed_levels, action: normalize}
-  stepdown: {detects:  disordered_sequence, action: reorder}
-  no_side_effects: {detects: hidden_effects, action:  make_explicit}
-  cqs: {detects:  mixed_command_query, action: separate}
-  no_flag_arguments: {detects:  boolean_parameter, action: split_function}
-  no_output_arguments: {detects:  output_parameter, action: return_instead}
-  error_handling_one_thing: {detects:  mixed_error_handling, action: extract}
-  no_null_return: {detects:  null_return, action: null_object}
-  no_null_pass: {detects:  null_argument, action: overload}
-  newspaper_rule: {detects:  important_buried, action: move_to_top}
-  dead_code_removal: {detects:  unused_code, action: delete}
-  
-  comment_is_failure: 
-    detects:  comment_explains_what_not_why
-    action: refactor_code_or_delete_comment
-    when_to_comment: [complex_business_rules, non_obvious_algorithms, workarounds_with_ticket]
-    when_not_to_comment:  [obvious_code, restating_code, commented_out_code, decorative_separators]
-    philosophy: comments_lie_code_doesnt
-    rationale: comments_drift_from_code_over_time
-  
-  extract_variable: {detects:  complex_expression, action: name_it}
-  inline_method:  {detects: unnecessary_indirection, action: inline}
-  inline_variable: {detects:  useless_temp, action: inline}
-  move_method:  {detects: misplaced_method, action: move}
-  move_field: {detects:  misplaced_field, action: move}
-  temp_to_query: {detects:  temp_variable, action: extract_method}
-  parameter_object: {detects:  long_params, action: wrap}
-  whole_object: {detects:  passing_fields, action: pass_object}
-  substitute_algorithm: {detects:  complex_algorithm, action:  simplify}
-  decompose_conditional: {detects:  complex_conditional, action: extract}
-  consolidate_conditional: {detects: duplicate_conditional, action:  merge}
-  guard_clause: {detects: deep_nesting, action: flatten}
-  polymorphism: {detects: type_switch, action: use_polymorphism}
-  null_object: {detects:  null_checks, action: null_object_pattern}
-  assertion:  {detects: implicit_assumption, action: assert}
-  collapse_hierarchy: {detects:  useless_hierarchy, action: merge}
-  template_method: {detects:  similar_subclass_methods, action: extract_template}
-  delegation: {detects:  inheritance_for_reuse, action: delegate}
-  pull_up:  {detects: duplicate_in_subclasses, action: move_to_parent}
-  push_down: {detects: used_by_one_subclass, action: move_to_subclass}
-  extract_superclass: {detects: duplicate_classes, action: extract_parent}
-  extract_interface: {detects:  partial_interface_use, action: create_focused}
-  hide_delegate: {detects:  exposed_delegate, action:  wrap}
-  remove_middleman: {detects: excessive_delegation, action:  expose}
-  encapsulate_field: {detects:  public_field, action:  privatize}
-  encapsulate_collection: {detects:  exposed_collection, action:  wrap}
-  error_to_exception: {detects:  error_code, action: throw}
-  exception_to_test: {detects:  exception_control_flow, action: use_conditional}
-  
-  security_first: {detects:  unvalidated_input, action: validate, veto: true}
-  encrypt_secrets: {detects:  plaintext_secrets, action: encrypt, veto: true}
-  least_privilege: {detects: excess_privileges, action: reduce, veto: true}
-  encode_output: {detects:  unencoded_output, action: encode, veto: true}
-  parameterize:  {detects: sql_interpolation, action: use_params, veto: true}
-  no_eval: {detects:  eval_usage, action: remove, veto: true}
-  csrf:  {detects: missing_csrf, action: add_token, veto: true}
-  secure_defaults: {detects:  insecure_default, action: secure, veto: true}
-  defense_depth: {detects:  single_defense, action: layer}
-  audit:  {detects: no_audit_trail, action: log}
-  sanitize: {detects: unsanitized_input, action: sanitize, veto: true}
-  escape:  {detects: unescaped_output, action: escape, veto: true}
-  complete_mediation: {detects: unchecked_access, action: check_every_access, veto: true}
-  fail_secure: {detects:  fails_open, action: fail_closed, veto: true}
-  separation_of_privilege: {detects:  single_key, action: require_multiple, veto: true}
-  least_common_mechanism: {detects: shared_mechanism, action:  isolate, veto: true}
-  psychological_acceptability: {detects: security_too_hard, action: make_usable}
-  data_minimization: {detects: over_collection, action: collect_only_needed, veto: true, origin: gdpr}
-  right_to_deletion: {detects:  no_deletion_path, action: add_deletion, veto: true, origin: gdpr}
-  
-  test_coverage: {detects:  untested_code, action:  add_tests}
-  observability: {detects: no_logging, action: add_logging}
-  error_handling: {detects: unhandled_errors, action: handle}
-  graceful_degradation:  {detects: hard_failure, action: degrade}
-  idempotency: {detects:  non_idempotent, action: make_idempotent}
-  timeout: {detects:  no_timeout, action:  add_timeout}
-  circuit_breaker: {detects: cascade_risk, action: add_breaker}
-  retry_backoff: {detects: no_retry, action: add_retry}
-  health_check: {detects:  no_health_endpoint, action: add_endpoint}
-  retry_with_jitter: {detects:  synchronized_retries, action: add_jitter}
-  load_shedding: {detects: overload_accepted, action: shed_load}
-  backpressure: {detects: overwhelmed_consumer, action: signal_producer}
-  chaos_engineering: {detects:  untested_failure_modes, action: inject_failures, origin: netflix}
-  dark_launching: {detects:  big_bang_feature, action: hidden_enable, origin: continuous_delivery}
-  error_budget: {detects:  exceeds_error_budget, action:  pause_releases, origin: sre}
-  
-  wcag:  {detects: accessibility_violation, action: fix}
-  semantic_html: {detects:  div_soup, action: use_semantic}
-  aria:  {detects: missing_aria, action:  add}
-  keyboard:  {detects: mouse_only, action: add_keyboard}
-  focus:  {detects: lost_focus, action:  manage}
-  contrast: {detects:  low_contrast, action: increase}
-  alt_text: {detects: missing_alt, action: add}
-  skip_links: {detects:  no_skip_nav, action: add}
-  form_labels: {detects: unlabeled_inputs, action: label}
-  
-  caching: {detects:  repeated_computation, action: cache}
-  n_plus_one: {detects: query_in_loop, action:  eager_load}
-  lazy_loading: {detects: eager_waste, action: defer}
-  indexing: {detects: slow_query, action: add_index}
-  pagination: {detects:  unbounded_results, action: paginate}
-  connection_pool: {detects:  connection_churn, action: pool}
-  asset_optimization: {detects:  large_assets, action: optimize}
-  code_splitting: {detects: large_bundle, action: split}
-  memoization: {detects: repeated_calculation, action: memoize}
-  debounce: {detects:  rapid_fire, action: debounce}
-  throttle: {detects:  flood, action: throttle}
-  preload: {detects:  late_critical_load, action: preload}
-  compress:  {detects: uncompressed, action: compress}
-  connection_reuse: {detects: connection_per_request, action:  reuse}
-  batch_operations: {detects:  one_at_a_time, action: batch}
-  async_where_possible: {detects: sync_blocking, action: async}
-  
-  api_first: {detects:  code_before_api_design, action: design_api_first, origin: api_design}
-  
-  bounded_context: {detects:  unbounded_model, action: define_boundaries, origin: ddd}
-  ubiquitous_language: {detects:  inconsistent_terminology, action: align_language, origin: ddd}
-  aggregate_root: {detects:  uncontrolled_access, action: route_through_root, origin: ddd}
-  domain_events: {detects:  implicit_state_change, action:  publish_event, origin: ddd}
-  anti_corruption_layer: {detects: external_model_leaking, action: add_acl, origin: ddd}
-  context_mapping: {detects:  unclear_context_relationships, action: map_contexts, origin: ddd}
-  
-  database_per_service: {detects:  shared_database, action:  separate, origin: microservices}
-  api_gateway: {detects: direct_service_access, action: add_gateway, origin:  microservices}
-  service_mesh: {detects: service_to_service_chaos, action: add_mesh, origin:  microservices}
-  sidecar: {detects: cross_cutting_in_service, action:  extract_sidecar, origin: microservices}
-  strangler_fig: {detects:  big_bang_rewrite, action: incremental_replace, origin: microservices}
-  
-  change_data_capture: {detects: polling_for_changes, action: capture_changes}
-  materialized_view: {detects: expensive_repeated_query, action: materialize}
-  read_replica: {detects: read_write_contention, action: add_replica}
-  sharding: {detects: single_database_bottleneck, action:  shard}
-  
-  immutability: {detects: mutable_shared_state, action:  make_immutable, origin: functional}
-  pure_functions: {detects:  function_with_side_effects, action: purify, origin: functional}
-  referential_transparency: {detects:  context_dependent_result, action: make_deterministic, origin: functional}
-  
-  modularity: {detects: monolithic_codebase, action:  split_modules, origin: large_scale}
-  code_ownership: {detects:  unclear_ownership, action:  assign_owners, origin: teams}
-  dependency_lockfiles: {detects:  unpinned_dependencies, action: lock_versions, origin: supply_chain}
-  
-  docs_as_code:  {detects: separate_docs, action: colocate_with_code, origin: devops}
-  
-  kanso: {detects:  complexity, action: simplify, origin: zen}
-  shibui: {detects:  garish, action: refine, origin: zen}
-  seijaku: {detects:  noisy, action: quiet, origin: zen}
-  ma:  {detects: crowded, action: add_space, origin: zen}
-  wa: {detects:  discord, action: harmonize, origin: zen}
-  wabi_sabi: {detects: over_polished, action: accept_imperfection, origin: zen}
-  yugen: {detects: shallow, action: add_depth, origin: zen}
-  datsuzoku: {detects:  cargo_cult, action:  question, origin: zen}
-  shizen: {detects:  artificial, action: naturalize, origin: zen}
-  mottainai: {detects: waste, action: eliminate, origin: zen}
-  iki: {detects:  crude, action: refine, origin: zen}
-  ikigai: {detects: purposeless, action: add_purpose, origin:  zen}
-  kintsugi: {detects: hidden_fix, action: celebrate, origin: zen}
-  enso: {detects:  incomplete, action: accept, origin: zen}
-  
-  firmitas: {detects:  weak_structure, action: reinforce, origin: vitruvius}
-  utilitas: {detects: useless, action: add_purpose, origin: vitruvius}
-  venustas: {detects:  ugly, action: beautify, origin: vitruvius}
-  
-  form_follows_function: {detects: decorative, action: remove, origin: sullivan}
-  less_is_more:  {detects: over_engineered, action: simplify, origin: mies}
-  rejection_of_ornament: {detects: ornament, action: delete, origin: loos}
-  structural_honesty: {detects: hidden_complexity, action: expose, origin: kahn}
-  human_scale: {detects:  overwhelming, action: chunk, origin: alexander}
-  pattern_language: {detects: reinventing, action: use_pattern, origin: alexander}
-  organic:  {detects: imposed_structure, action:  let_emerge, origin: wright}
-  
-  innovative:  {detects: stale, action: modernize, origin: rams}
-  useful: {detects:  useless, action: remove, origin: rams}
-  aesthetic: {detects:  ugly, action: beautify, origin: rams}
-  understandable: {detects: confusing, action: clarify, origin: rams}
-  unobtrusive: {detects: attention_grabbing, action: quiet, origin: rams}
-  honest: {detects:  misleading, action: make_honest, origin: rams}
-  long_lasting: {detects:  trendy, action: use_timeless, origin: rams}
-  thorough: {detects: incomplete, action: complete, origin: rams}
-  environmentally_friendly: {detects:  wasteful, action: optimize, origin: rams}
-  minimal_design: {detects:  excess, action: remove, origin: rams}
-  
-  proximity: {detects:  scattered_related, action: group, origin: gestalt}
-  similarity:  {detects: inconsistent_similar, action: unify, origin: gestalt}
-  continuity: {detects: broken_flow, action: flow, origin: gestalt}
-  closure: {detects:  incomplete_shape, action: complete, origin: gestalt}
-  figure_ground: {detects: unclear_hierarchy, action: separate, origin: gestalt}
-  common_fate: {detects:  unrelated_animating, action: sync, origin: gestalt}
-  symmetry: {detects: asymmetric, action: balance, origin: gestalt}
-  common_region: {detects:  ungrouped_related, action: enclose, origin: gestalt}
-  
-  visual_balance: {detects:  unbalanced, action: balance, origin: visual}
-  visual_contrast: {detects:  low_contrast, action: increase, origin:  visual}
-  visual_emphasis: {detects:  unfocused, action: emphasize, origin: visual}
-  visual_repetition: {detects: inconsistent_pattern, action: repeat, origin: visual}
-  visual_rhythm: {detects:  arrhythmic, action: establish, origin: visual}
-  visual_unity: {detects:  fragmented, action:  unify, origin: visual}
-  visual_alignment: {detects:  misaligned, action:  align, origin: visual}
-  visual_proportion: {detects: disproportionate, action: balance, origin: visual}
-  visual_hierarchy: {detects:  flat, action: establish_levels, origin: visual}
-  visual_consistency: {detects:  inconsistent, action: standardize, origin: visual}
-  
-  visibility: {detects:  hidden_status, action: show, origin: norman}
-  feedback:  {detects: silent_operation, action: provide_feedback, origin: norman}
-  affordance: {detects: unclear_affordance, action: clarify, origin: norman}
-  mapping: {detects:  poor_mapping, action:  improve, origin: norman}
-  constraints_ux: {detects: error_prone, action: constrain, origin: norman}
-  
-  consistency: {detects:  inconsistent_interface, action: standardize, origin: nielsen}
-  user_control: {detects:  no_undo, action: add_undo, origin: nielsen}
-  error_prevention: {detects:  error_prone_design, action: prevent, origin: nielsen}
-  recognition: {detects:  memory_burden, action: show_options, origin: nielsen}
-  flexibility: {detects:  rigid_interface, action: add_shortcuts, origin: nielsen}
-  aesthetic_minimal: {detects:  clutter, action: minimize, origin: nielsen}
-  error_recovery: {detects:  dead_end, action: help_recover, origin: nielsen}
-  help:  {detects: no_help, action:  add_help, origin:  nielsen}
-  progressive_disclosure: {detects: overload, action: hide_advanced, origin: nielsen}
-  
-  fitts:  {detects: small_target, action:  enlarge, origin: fitts}
-  hicks: {detects:  too_many_choices, action: reduce, origin: hicks}
-  miller: {detects:  exceeds_seven, action: chunk, origin: miller}
-  jakob: {detects:  unfamiliar, action:  use_convention, origin: jakob}
-  tesler: {detects:  hidden_inherent_complexity, action: expose, origin: tesler}
-  postel: {detects: strict_input, action: be_liberal, origin: postel}
-  pareto: {detects:  unfocused_effort, action: focus_on_twenty_percent, origin: pareto}
-  
-  omit_needless:  {detects: verbose, action: compress, origin: strunk}
-  active_voice: {detects:  passive, action: activate, origin: strunk}
-  parallel:  {detects: non_parallel, action: parallelize, origin: strunk}
-  concrete: {detects:  vague, action: specify, origin: strunk}
-  emphatic_end: {detects:  weak_ending, action:  strengthen, origin: strunk}
-  positive_form: {detects:  negative, action: make_positive, origin:  strunk}
-  definite:  {detects: indefinite, action: specify, origin: strunk}
-  simple_words: {detects:  fancy_words, action:  simplify, origin: strunk}
-  
-  self_documenting: {detects: needs_comment, action: rename}
-  why_not_what:  {detects: what_comment, action: explain_why}
-  adr: {detects:  undocumented_decision, action: write_adr}
-  readme: {detects:  no_readme, action:  add}
-  runbook: {detects: no_runbook, action: write}
-  changelog: {detects:  undocumented_change, action: update}
-  api_docs: {detects:  undocumented_api, action: document}
-  examples: {detects:  unclear_usage, action: add_examples}
-  architecture_docs: {detects:  no_arch_docs, action:  document}
-  onboarding_guide: {detects:  no_onboarding, action: write}
-  troubleshooting_guide: {detects: no_troubleshooting, action:  write}
-  
-  skinny_controller: {detects:  fat_controller, action: extract}
-  skinny_model: {detects:  fat_model, action: extract}
-  no_callbacks: {detects:  callback_hell, action:  extract}
-  service_objects: {detects:  business_in_model, action: extract}
-  form_objects: {detects:  complex_params, action: extract}
-  query_objects: {detects: complex_query, action: extract}
-  presenters: {detects:  view_in_controller, action: extract}
-  view_components: {detects:  partial_sprawl, action: extract}
-  eager_load: {detects:  n_plus_one_rails, action: includes}
-  strong_params: {detects: mass_assignment, action: whitelist}
-  no_deface: {detects: deface, action: use_component, veto: true}
-  no_jquery: {detects:  jquery, action: use_stimulus}
-  turbo:  {detects: remote_true, action: use_turbo}
-  stimulus: {detects:  inline_js, action: use_controller}
-  russian_doll_caching: {detects: flat_cache, action:  nest_caches}
-  counter_cache: {detects: count_queries, action: add_counter}
-  touch_propagation: {detects: stale_parent_cache, action: add_touch}
-  sorbet_typing: {detects:  untyped_public_api, action: add_sig, origin: sorbet}
-  policy_objects: {detects:  authorization_in_controller, action: extract_policy, origin: pundit}
-  bulk_enqueue: {detects:  loop_enqueue, action: perform_later_bulk, origin: active_job}
-  
-  pledge: {detects:  excess_privileges, action: add_pledge, origin:  openbsd}
-  unveil: {detects: excess_filesystem, action: add_unveil, origin: openbsd}
-  rc_compliance: {detects:  bad_daemon, action: fix, origin: openbsd}
-  doas: {detects:  sudo, action: use_doas, origin: openbsd}
-  pf: {detects:  no_firewall, action: configure, origin: openbsd}
-  httpd: {detects: misconfigured, action: fix, origin: openbsd}
-  relayd: {detects: no_proxy, action: add, origin: openbsd}
-  
-  iac:  {detects: manual_config, action: codify}
-  immutable_infrastructure: {detects:  mutable_server, action: rebuild}
-  twelve_factor: {detects: violation, action: fix}
-  env_config: {detects:  hardcoded, action: externalize}
-  backing_services: {detects:  embedded, action: extract}
-  stateless:  {detects: stateful_process, action: externalize}
-  port_binding: {detects:  implicit_port, action:  bind}
-  concurrency: {detects: single_process, action: scale}
-  disposability: {detects: slow_start, action: fast_start}
-  parity: {detects:  drift, action: align}
-  log_streams: {detects:  log_files, action: stream}
-  admin_process: {detects:  special_admin, action: one_off}
-  
-  normalize:  {detects: denormalized_anomalies, action:  normalize}
-  denormalize: {detects: over_normalized_slow, action: denormalize}
-  index_queries: {detects:  unindexed, action: add_index}
-  safe_migrations: {detects:  unsafe_migration, action: make_safe}
-  db_constraints: {detects:  missing_constraint, action: add}
-  transactions: {detects:  non_atomic, action: wrap}
-  optimistic_locking:  {detects: pessimistic_contention, action: use_optimistic}
-  soft_delete: {detects:  hard_delete_data_loss, action: soft_delete}
-  
-  restful: {detects: non_rest, action: make_restful}
-  api_versioning: {detects: unversioned, action: version}
-  api_pagination: {detects: unbounded_response, action: paginate}
-  rate_limiting: {detects: no_limit, action: add_limit}
-  idempotent_api: {detects:  non_idempotent, action: make_idempotent}
-  hateoas: {detects: no_links, action: add_links}
-  content_negotiation: {detects: single_format, action: negotiate}
-  conditional_requests: {detects: no_etag, action: add_etag}
-  bulk_operations: {detects: no_bulk_endpoint, action: add_bulk}
-  
-  thread_safety: {detects: race_condition, action: make_safe}
-  lock_free: {detects:  contention, action: use_lockfree}
-  async_io: {detects:  blocking, action: make_async}
-  actor_model: {detects: shared_mutable, action: use_actors}
-  csp: {detects:  shared_memory, action: use_channels}
-  
-  arrange_act_assert: {detects:  unclear_test, action: use_aaa}
-  one_assertion:  {detects: multiple_assertions, action:  split}
-  mock_boundaries: {detects:  over_mocking, action: mock_only_boundaries}
-  fixtures: {detects:  duplicate_setup, action: use_fixtures}
-  factories: {detects:  complex_setup, action: use_factories}
-  property_testing: {detects:  example_only, action: add_properties}
-  mutation_testing: {detects: weak_suite, action: mutate}
-  test_isolation: {detects:  test_interdependence, action:  isolate}
-  deterministic_tests: {detects:  flaky_test, action: make_deterministic}
-  fast_tests: {detects: slow_test, action: speed_up}
-  
-  atomic_commits: {detects:  mixed_commit, action:  split}
-  conventional_commits: {detects: unclear_message, action: use_conventional}
-  bisectable:  {detects: broken_intermediate, action: fix}
-  rebase:  {detects: merge_mess, action: rebase}
-  squash: {detects: noisy_commits, action: squash}
-  
-  blue_green: {detects: risky_deploy, action: use_blue_green}
-  canary:  {detects: all_or_nothing, action:  use_canary}
-  rollback: {detects: no_rollback, action: ensure}
-  feature_flags: {detects:  deploy_coupled_release, action: use_flags}
-  
-  metrics: {detects:  no_metrics, action: add}
-  alerting: {detects: no_alerts, action: add}
-  tracing: {detects: no_traces, action: add}
-  dashboards: {detects: no_visibility, action: create}
-  slo: {detects:  no_objectives, action: define}
-  
-  cache_invalidation: {detects: stale_cache, action: invalidate}
-  cache_ttl: {detects: no_expiry, action: add_ttl}
-  cache_stampede: {detects: thundering_herd, action: lock}
-  cache_warming: {detects:  cold_start, action:  warm}
-  
-  retry_pattern: {detects:  no_retry, action:  add}
-  circuit_pattern: {detects:  no_isolation, action: add}
-  fallback_pattern: {detects: no_fallback, action:  add}
-  bulkhead:  {detects: no_resource_isolation, action: add}
-  dead_letter_queue: {detects: lost_failed_messages, action: add_dlq}
-  compensating_transaction: {detects:  partial_failure_no_undo, action: add_compensation}
-  poison_pill_handling: {detects:  infinite_retry, action: quarantine}
-  
-  repository:  {detects: direct_db_access, action:  use_repository}
-  specification: {detects:  scattered_query_logic, action: use_spec}
-  unit_of_work: {detects: no_transaction_boundary, action: use_uow}
-  dto: {detects:  entity_leak, action: use_dto}
-  mapper: {detects:  manual_mapping, action:  use_mapper}
-  
-  event_sourcing: {detects: state_only, action: capture_events}
-  cqrs: {detects: mixed_read_write, action:  separate}
-  saga: {detects:  distributed_transaction, action:  use_saga}
-  outbox: {detects: dual_write, action:  use_outbox}
-  idempotent_consumers: {detects:  duplicate_processing, action: make_idempotent}
-  event_versioning: {detects: breaking_event_change, action: version}
-  schema_registry: {detects: no_schema_management, action: add_registry}
-  
-  smell_duplication: {detects: identical_blocks, action: extract, smell: true}
-  smell_nesting: {detects: exceeds_three, action: flatten, smell: true}
-  smell_magic: {detects:  literals, action: extract_constant, smell: true}
-  smell_complexity: {detects:  exceeds_ten, action: split, smell: true}
-  smell_truncation: {detects: ellipsis_todo, action: complete, veto: true, smell: true}
-  smell_long_method: {detects:  exceeds_twenty, action: split, smell: true}
-  smell_naming: {detects:  inconsistent_convention, action: standardize, smell: true}
-  smell_god_object: {detects:  exceeds_twenty_methods, action: split, smell: true}
-  smell_god_controller: {detects:  exceeds_seven_actions, action: split, smell: true}
-  smell_feature_envy: {detects: uses_other_class_data, action: move, smell: true}
-  smell_data_clump: {detects:  fields_always_together, action: extract_class, smell: true}
-  smell_primitive_obsession: {detects: primitives_for_domain, action: value_object, smell: true}
-  smell_refused_bequest: {detects: unused_inheritance, action: delegate, smell: true}
-  smell_speculative: {detects: unused_abstraction, action: delete, smell: true}
-  smell_dead_code: {detects: unreachable, action: delete, smell: true}
+  tier_1_veto:
+    security_first:
+      detects: unvalidated_input
+      action: validate
+      veto: true
+      loose_interpretation: "ANY user input reaching code without validation"
+    
+    no_truncation:
+      detects: ellipsis_or_placeholder
+      action: complete
+      veto: true
+      loose_interpretation: "ANY incomplete output: ..., TODO, placeholder, abbreviated"
+    
+    no_simulation:
+      detects: claims_without_evidence
+      action: demand_proof
+      veto: true
+      loose_interpretation: "ANY completion claim without verification"
+    
+    no_eval:
+      detects: eval_usage
+      action: remove
+      veto: true
+      loose_interpretation: "ANY dynamic code execution"
+    
+    encrypt_secrets:
+      detects: plaintext_secrets
+      action: encrypt
+      veto: true
+    
+    no_forbidden_tools:
+      detects: sed_awk_grep_find_bash
+      action: use_zsh_or_ruby_alternative
+      veto: true
 
-adversarial: 
+  tier_2_structural:
+    dry:
+      detects: repetition
+      action: extract
+      loose_interpretation: "ANY information repeated: identical code, similar logic, same concept different words"
+      
+      # Evidence: SourcererCC optimal at 70%, Sandi Metz AHA principle
+      similarity_threshold: *similarity_threshold
+      abstraction_rule: abstract_on_third_occurrence
+    
+    kiss: {detects: complexity, action: simplify}
+    yagni: {detects: speculation, action: delete}
+    srp: {detects: multiple_reasons_to_change, action: split}
+    ocp: {detects: modification_for_extension, action: add_seam}
+    lsp: {detects: broken_subtype, action: fix_hierarchy}
+    isp: {detects: fat_interface, action: split}
+    dip: {detects: concrete_dependency, action: use_abstraction}
+    separation: {detects: tangled_concerns, action: split}
+    demeter: {detects: method_chain, action: wrap}
+    loose_coupling: {detects: tight_coupling, action: add_interface}
+    high_cohesion: {detects: low_cohesion, action: group}
+    encapsulation: {detects: exposed_internals, action: hide}
+    composition: {detects: inheritance_abuse, action: delegate}
+    tell_dont_ask: {detects: asking_then_deciding, action: move_decision}
+
+  tier_3_quality:
+    meaningful_names:
+      detects: unclear_naming
+      action: rename
+      loose_interpretation: "ANY unclear name: single letters, abbreviations, vague terms"
+      
+      # Evidence: Production code review best practices
+      examples:
+        good: [calculate_total_price, is_eligible_for_discount, user_authentication_service, fetch_active_orders]
+        bad: [calc, chk, do_stuff, temp, foo, data, info, manager, handler, process, get_data]
+    
+    small_functions:
+      detects: long_methods
+      action: extract
+      
+      # Evidence: Clean Code, industry best practices
+      max_lines: 20
+      max_nesting: 3
+    
+    comment_is_failure:
+      detects: comment_explains_what_not_why
+      action: refactor_code_or_delete_comment
+      
+      when_to_comment:
+        - complex_business_rules
+        - non_obvious_algorithms
+        - workarounds_for_external_issues
+        - performance_optimizations
+        - security_considerations
+      
+      when_not_to_comment:
+        - explaining_obvious_code
+        - restating_code_in_english
+        - commented_out_code
+        - decorative_separators
+        - verbose_licensing_headers
+      
+      # Evidence: Clean Code principles, self-documenting code
+      philosophy: "Comments are failure to express in code"
+      rationale: "Comments lie, code doesn't. Comments drift over time."
+    
+    boy_scout: {detects: no_improvement, action: improve}
+    test_coverage: {detects: untested_code, action: add_tests}
+    error_handling: {detects: unhandled_errors, action: handle}
+    do_one_thing: {detects: multiple_responsibilities, action: split}
+    one_abstraction_level: {detects: mixed_levels, action: normalize}
+    no_side_effects: {detects: hidden_effects, action: make_explicit}
+    cqs: {detects: mixed_command_query, action: separate}
+    dead_code_removal: {detects: unused_code, action: delete}
+
+  security:
+    parameterize: {detects: sql_interpolation, action: use_params, veto: true}
+    csrf: {detects: missing_csrf, action: add_token, veto: true}
+    sanitize: {detects: unsanitized_input, action: sanitize, veto: true}
+    escape: {detects: unescaped_output, action: escape, veto: true}
+    
+    # Evidence: Saltzer & Schroeder (1975) - operate with least privileges necessary
+    least_privilege: {detects: excess_privileges, action: reduce, veto: true}
+    
+    defense_depth: {detects: single_defense, action: layer}
+    fail_secure: {detects: fails_open, action: fail_closed, veto: true}
+    data_minimization: {detects: over_collection, action: collect_only_needed, veto: true, origin: gdpr}
+
+  refactoring:
+    extract_variable: {detects: complex_expression, action: name_it}
+    extract_method: {detects: long_code_block, action: extract}
+    inline_method: {detects: unnecessary_indirection, action: inline}
+    move_method: {detects: misplaced_method, action: move}
+    parameter_object: {detects: long_params, action: wrap}
+    guard_clause: {detects: deep_nesting, action: flatten}
+    polymorphism: {detects: type_switch, action: use_polymorphism}
+    null_object: {detects: null_checks, action: null_object_pattern}
+    collapse_hierarchy: {detects: useless_hierarchy, action: merge}
+    hide_delegate: {detects: exposed_delegate, action: wrap}
+    encapsulate_collection: {detects: exposed_collection, action: wrap}
+
+  reliability:
+    observability: {detects: no_logging, action: add_logging}
+    graceful_degradation: {detects: hard_failure, action: degrade}
+    idempotency: {detects: non_idempotent, action: make_idempotent}
+    timeout: {detects: no_timeout, action: add_timeout}
+    
+    # Evidence: Resilience4j, Netflix Hystrix patterns
+    circuit_breaker: {detects: cascade_risk, action: add_breaker}
+    retry_backoff: {detects: no_retry, action: add_retry}
+    retry_with_jitter: {detects: synchronized_retries, action: add_jitter}
+
+  performance:
+    caching: {detects: repeated_computation, action: cache}
+    n_plus_one: {detects: query_in_loop, action: eager_load}
+    lazy_loading: {detects: eager_waste, action: defer}
+    indexing: {detects: slow_query, action: add_index}
+    pagination: {detects: unbounded_results, action: paginate}
+    memoization: {detects: repeated_calculation, action: memoize}
+    batch_operations: {detects: one_at_a_time, action: batch}
+
+  tier_4_style:
+    # Evidence: Japanese design principles (Zen aesthetics)
+    kanso: {detects: complexity, action: simplify, origin: zen}
+    shibui: {detects: garish, action: refine, origin: zen}
+    seijaku: {detects: noisy, action: quiet, origin: zen}
+    ma: {detects: crowded, action: add_space, origin: zen}
+    wa: {detects: discord, action: harmonize, origin: zen}
+    wabi_sabi: {detects: over_polished, action: accept_imperfection, origin: zen}
+    mottainai: {detects: waste, action: eliminate, origin: zen}
+    kintsugi: {detects: hidden_fix, action: celebrate, origin: zen}
+
+  writing:
+    # Evidence: Strunk & White (1918) "The Elements of Style"
+    omit_needless: {detects: verbose, action: compress, origin: strunk}
+    active_voice: {detects: passive, action: activate, origin: strunk}
+    parallel: {detects: non_parallel, action: parallelize, origin: strunk}
+    concrete: {detects: vague, action: specify, origin: strunk}
+    simple_words: {detects: fancy_words, action: simplify, origin: strunk}
+
+  rails:
+    skinny_controller: {detects: fat_controller, action: extract}
+    skinny_model: {detects: fat_model, action: extract}
+    no_callbacks: {detects: callback_hell, action: extract}
+    service_objects: {detects: business_in_model, action: extract}
+    form_objects: {detects: complex_params, action: extract}
+    query_objects: {detects: complex_query, action: extract}
+    view_components: {detects: partial_sprawl, action: extract}
+    eager_load: {detects: n_plus_one_rails, action: includes}
+    no_deface: {detects: deface, action: use_component, veto: true}
+    turbo: {detects: remote_true, action: use_turbo}
+    stimulus: {detects: inline_js, action: use_controller}
+
+  openbsd:
+    pledge: {detects: excess_privileges, action: add_pledge, origin: openbsd}
+    unveil: {detects: excess_filesystem, action: add_unveil, origin: openbsd}
+    doas: {detects: sudo, action: use_doas, origin: openbsd}
+
+  smells:
+    smell_duplication: {detects: identical_blocks, action: extract, smell: true}
+    smell_nesting: {detects: exceeds_three, action: flatten, smell: true}
+    smell_magic: {detects: literals, action: extract_constant, smell: true}
+    smell_complexity: {detects: exceeds_ten, action: split, smell: true}
+    smell_truncation: {detects: ellipsis_todo, action: complete, veto: true, smell: true}
+    smell_long_method: {detects: exceeds_twenty, action: split, smell: true}
+    smell_god_object: {detects: exceeds_twenty_methods, action: split, smell: true}
+    smell_god_controller: {detects: exceeds_seven_actions, action: split, smell: true}
+    smell_feature_envy: {detects: uses_other_class_data, action: move, smell: true}
+    smell_dead_code: {detects: unreachable, action: delete, smell: true}
+
+  application_order: [tier_1_veto, tier_2_structural, tier_3_quality, security, reliability, performance, tier_4_style]
+
+adversarial:
   skeptic: [why_build, real_problem, evidence, lying_to_ourselves]
   minimalist: [what_delete, actually_needed, do_less, simplest]
   security: [how_exploit, injection_point, data_exposed, bypass_auth, attack_surface]
   attacker: [weakest_link, what_breaks, escalate_privileges, violate_assumptions]
   performance: [big_o, bottlenecks, can_cache, at_10x_scale]
   maintainer: [understand_6_months, naming_clear, patterns_consistent, debug_3am]
-  user:  [solves_problem, intuitive, mistake_recovery]
+  user: [solves_problem, intuitive, mistake_recovery]
   junior: [newcomer_understand, docs_clear, can_contribute]
   chaos: [breaks_under_stress, degrade_gracefully, blast_radius]
   architect: [how_integrate, dependencies, migration_path, five_year]
@@ -590,28 +1361,28 @@ probes:
   clarity: [unclear_name, verbose_wording, strunk_compress]
 
 personas:
-  security:  {weight: 0.20, temperature: 0.1, veto: true}
-  attacker: {weight:  0.20, temperature: 0.1, veto: true}
-  maintainer: {weight:  0.20, temperature: 0.3, veto: true}
-  user:  {weight: 0.15, temperature: 0.5}
-  designer: {weight: 0.10, temperature: 0.7}
-  minimalist: {weight:  0.04, temperature: 0.3}
-  performance: {weight: 0.03, temperature: 0.2}
-  scale:  {weight: 0.02, temperature: 0.4}
-  skeptic: {weight:  0.01, temperature: 0.2}
-  junior: {weight: 0.01, temperature: 0.6}
-  ops: {weight: 0.02, temperature: 0.3}
-  compliance: {weight:  0.02, temperature: 0.2, veto: true}
-  product: {weight: 0.02, temperature: 0.5}
-  veto_precedence: [security, attacker, maintainer, compliance]
+  designer: [aesthetic_consistency, user_delight, visual_hierarchy, brand_alignment]
+  performance: [big_o, bottlenecks, can_cache, at_10x_scale]
+  scale: [horizontal_scaling, stateless, partition_tolerance]
+  junior: [newcomer_understand, docs_clear, can_contribute]
+  chaos: [breaks_under_stress, degrade_gracefully, blast_radius]
+  architect: [how_integrate, dependencies, migration_path, five_year]
+  defender: [respecting_patterns, why_decisions, removing_capability]
+  innovator: [unlimited_resources, different_industry, invert_entirely]
+  meta: [why_exist, breaks_if_removed, what_would_openbsd_do]
+  compliance: [gdpr, audit_trail, data_retention, right_to_delete]
+  product: [user_value, business_metric, time_to_market]
+  veto_precedence: *veto_precedence
 
 bias:
-  tracked:  [recency, confirmation, anchoring, availability, sunk_cost, optimism, dunning_kruger, authority, bandwagon, survivorship, status_quo, framing]
-  mitigations: 
+  tracked: [recency, confirmation, anchoring, availability, sunk_cost, optimism, dunning_kruger, authority, bandwagon, survivorship, status_quo, framing]
+  
+  mitigations:
+    # Evidence: Standard bias mitigation techniques from decision science
     alternatives_first: generate_before_evaluating
     systematic_search: avoid_first_good_enough
     evidence_based: estimates_from_data
-    calibration:  track_accuracy
+    calibration: track_accuracy
     premortem: assume_failure_work_backward
     red_team: attack_own_assumptions
 
@@ -627,330 +1398,368 @@ workflow:
     deliver: {for: [feature, bug, security], checks: [deployed, healthy, no_alerts]}
     learn: {for: [feature, self], outputs: [extract_patterns, codify_techniques, eliminate_ineffective]}
 
-execution:
-  first_step: internalize_existing_code
-  temperature: {precise: 0.1, balanced: 0.5, creative: 0.8, wild: 0.9}
-  temperature_strategy: run_all_combine_weighted_average
-  
-  cherry_pick: 
-    generate:  15_to_30_alternatives
-    insight: best_solutions_emerge_from_ideas_8_to_15
-    not_first_3:  conventional_safe_obvious
-    synthesize: combine_best_elements_across_all
-  
-  parallel_personas:
-    group_1_veto: [security, attacker, compliance]
-    group_2_high_weight: [maintainer, user, designer]
-    group_3_refinement: [minimalist, performance, scale, skeptic, junior, ops, product]
-    strategy:  run_groups_in_order_parallelize_within_group
-    combine: weighted_merge_after_all_complete
-  
-  principle_tiers:
-    tier_1_always: [veto_principles, security_first, smell_truncation, no_eval, csrf]
-    tier_2_structural: [dry, kiss, srp, separation, demeter, loose_coupling]
-    tier_3_refinement: [zen_principles, gestalt, visual, strunk]
-    apply:  tier_1_first_expand_if_clean
-  
-  adversarial_rotation:
-    each_iteration: lead_with_different_persona
-    sequence: [skeptic, attacker, minimalist, maintainer, user, security]
-    benefit: fresh_perspective_prevents_blind_spots
-  
-  reflow:
-    holistic_first: 
-      - what_is_purpose
-      - what_are_major_concerns
-      - does_structure_reflect_concerns
-      - does_ordering_reflect_importance
-      - are_related_concepts_near
-      - can_newcomer_understand
-      - does_it_flow
-      - is_there_narrative
-    then_line_level:  true
-    then_word_level: true
-    apply_strunk: to_all_text
-  
-  passes:
-    structural: {focus: [order, grouping, nesting, hierarchy], min_issues: 1}
-    semantic:  {focus: [overlap, duplication, scattered], min_issues: 1}
-    syntactic: {focus:  [format, naming, style], min_issues: 1}
-    reductive: {focus:  [delete, merge, simplify, inline], min_issues: 1}
-    clarity: {focus: [naming, wording, strunk], min_issues: 1}
-    if_zero:  rerun_more_aggressive_or_justify
-  
-  adversarial: 
-    mandatory:  true
-    apply_all_personas: true
-    min_issues_per_persona: 1
-  
-  probes: 
-    run_all:  before_declaring_convergence
-    focused_search: true
-    document_findings: always
-  
-  detect: 
-    traverse:  any_depth
-    find:  detects_key
-    interpret: aggressive_loose
-    output: counts_not_judgments
-  
-  post:  [reflow, critical_at_top, rare_at_bottom, no_orphans, no_decorations, strunk_applied]
-  
-  evolve:
-    after_each_run: ask_what_missed
-    add_detectors: for_new_patterns
-    learn_from:  failures
-    generate:  20_to_30_alternatives
-    adopt:  best_elements
-
-convergence:
-  metrics: [violations_remaining, quality_delta, adversarial_score]
-  exit: 
-    complete: zero_violations_delta_under_0. 02_adversarial_above_0.8
-    diminishing: delta_under_0.02_for_three_cycles
-    hard_stop: 15
-  zero_requires: explicit_justification_per_pass
-  oscillation: 
-    detect: same_violations_three_consecutive_iterations
-    action: rollback_to_best_state_and_stop
-    track: iteration_history_for_pattern_detection
-
 scalability:
   incremental: true
-  cache: 
-    location: ~/. copilot_cache. yml
-    strategy: content_hash
-  exclude:  [vendor, node_modules, tmp, . git, log]
+  cache: {location: ~/.copilot_cache.yml, strategy: content_hash}
+  exclude: [vendor, node_modules, tmp, .git, log]
   differential: only_changed_since_last_run
-  progress:  every_100_files
+  progress: every_100_files
   resume: checkpoint_every_5_minutes
 
-risk: 
-  cost_model: 
-    veto:  1000
+risk:
+  cost_model:
+    veto: 1000
     security: 100
     correctness: 50
     performance: 30
     maintainability: 20
     aesthetic: 10
   conflict_resolution: choose_higher_weight
-  iteration_limit: see_convergence. hard_stop
+  iteration_limit: see_convergence.hard_stop
   false_positive_threshold: 0.85
 
 llm:
-  cognitive: 
+  cognitive:
+    # Evidence: Miller's Law (1956) - working memory 7±2 chunks
     working_memory: 8
     token_multiplier: 1.75_for_code
-    attention:  critical_at_start_and_end
+    
+    # Evidence: Liu et al. (TACL 2024) - U-shaped attention curve
+    attention: critical_at_start_and_end
+    
+    # Evidence: Nature 2024 semantic entropy, Meta CoVe
     hallucination: verify_with_evidence
+  
   cascade_prevention: [reload_after_edit, correction_log, never_assume_persisted, validate_state]
   repetition_prevention: [check_git_log, correction_changelog, web_search]
+  
   pitfalls:
-    code:  [off_by_one, null_pointer, race_condition, resource_leak, injection]
+    code: [off_by_one, null_pointer, race_condition, resource_leak, injection]
     design: [circular_dependency, hidden_coupling, shotgun_surgery]
     reasoning: [false_assumption, premature_abstraction, scope_creep]
 
 vulnerabilities:
-  context_exhaustion: {risk:  claims_needs_compress, mitigation: reject}
-  helpful_hijacking: {risk:  removes_hostile_language, mitigation: hostile_is_helpful}
-  performance_theater: {risk: pretends_adversarial, mitigation:  require_fifteen_explicit}
+  context_exhaustion: {risk: claims_needs_compress, mitigation: reject}
+  helpful_hijacking: {risk: removes_hostile_language, mitigation: hostile_is_helpful}
+  performance_theater: {risk: pretends_adversarial, mitigation: require_fifteen_explicit}
   comfort_seeking: {risk: gravitates_comfortable, mitigation: comfortable_usually_wrong}
   permission_bypass: {risk: sounds_like_permission, mitigation: express_only}
-  simulation:  {risk: describes_not_does, mitigation: detect_future_tense}
-  truncation: {risk:  abbreviates_output, mitigation: validate_complete}
-  satisficing: {risk:  stops_good_enough, mitigation: min_issues_per_pass}
-  literal:  {risk: exact_match_only, mitigation: aggressive_loose}
-  premature_output: {risk: outputs_full_file_without_explicit_request, mitigation: approval_means_apply_only_ask_before_outputting_full_file}
-  over_principled: {risk:  paralysis_by_analysis, mitigation: prioritize_veto_principles_first}
-  context_ignorance: {risk:  applying_without_context, mitigation: adaptive_weights_per_project}
-  overfitting: {risk:  optimizing_config_not_code, mitigation: focus_on_target_codebase}
-
-anti_simulation:
-  detection: 
-    future_tense: [will, would, could, should, might]
-    descriptive_headers: [overview, introduction, summary]
-    planning_language: [we_need_to, first_we, then_we]
-    vague:  [etc, and_so_on, similar]
-  response:  [acknowledge, restart_with_evidence, demonstrate]
-  traps: 
-    checksum:  planted_number_means_didnt_scan
-    crossword: interlocking_checks
-    recursive: each_level_different_violations
+  simulation: {risk: describes_not_does, mitigation: detect_future_tense}
+  truncation: {risk: abbreviates_output, mitigation: validate_complete}
+  satisficing: {risk: stops_good_enough, mitigation: min_issues_per_pass}
+  literal: {risk: exact_match_only, mitigation: aggressive_loose}
+  premature_output: {risk: outputs_full_file_without_request, mitigation: approval_means_apply_only}
+  over_principled: {risk: paralysis_by_analysis, mitigation: prioritize_veto_first}
+  context_ignorance: {risk: applying_without_context, mitigation: adaptive_weights}
+  overfitting: {risk: optimizing_config_not_code, mitigation: focus_on_target}
+  path_confusion: {risk: mixing_windows_cygwin_wsl, mitigation: normalize_all}
+  claim_without_evidence: {risk: says_complete_without_proof, mitigation: require_sha256}
+  repeated_listing: {risk: lists_files_already_known, mitigation: use_tree_output_only}
 
 rails:
-  doctrine: 
+  version: "8.1+"
+  
+  doctrine:
+    # Evidence: Rails doctrine (DHH, Rails core team)
     optimize_for_programmer_happiness: true
-    measures:  [readability, writability, deletability, debuggability]
+    measures: [readability, writability, deletability, debuggability]
+    
     exalt_beautiful_code: mandatory
+    rationale: "Beauty is not optional - code quality is measurable"
+    measure: "Would you show this proudly?"
+    
     clarity_over_cleverness: always
     convention_over_configuration: prefer_rails_way
-    no_one_paradigm: practical_over_pure
-    push_up_abstractions: extract_when_pattern_emerges
-    value_integrated_systems: majestic_monolith_first
-    progress_over_stability: embrace_change
-  version:  8+
-  stack: [solid_queue, solid_cache, solid_cable, propshaft, falcon, hotwire, stimulus, stimulus_reflex, view_components]
+    code_as_craft: artisan_not_factory
+    lineage: [DHH, Kent_Beck, Martin_Fowler, Sandi_Metz]
+  
+  stack:
+    queue: solid_queue
+    cache: solid_cache
+    cable: solid_cable
+    assets: propshaft
+    server: falcon
+    frontend: [hotwire, stimulus, turbo]
+    components: view_components
+  
   forbidden: [deface, jquery, remote_true, redis]
-  turbo: 
+  
+  turbo:
     frames: partial_updates
     streams: [replace, append, prepend, remove, update, before, after]
+  
   stimulus:
     max_lines: 200
     single_responsibility: true
+  
   reflex:
     lifecycle: [before, success, error, after]
     modes: [nothing, page, selector]
+  
   components:
-    required_when:  5+
-    structure:  [class, template, css, stimulus]
+    required_when: 5+
+    structure: [class, template, css, stimulus]
     testing: previews
-    slots: for_composition
-
-solidus:
-  version: 4+
-  modernize: [no_deface, hotwire, no_jquery, reflex, turbo]
-  states: [cart, address, delivery, payment, confirm, complete]
+  
+  patterns:
+    controllers: skinny
+    models: skinny
+    business_logic: service_objects
+    complex_forms: form_objects
+    complex_queries: query_objects
+    view_logic: presenters_or_components
+  
+  features_8_1:
+    active_job_continuations: {pattern: "Use step() and cursor()", idempotent: true}
+    structured_events: {pattern: "Use Rails.event", replace: custom_logging}
+    local_ci: {pattern: "Run bin/ci before pushing"}
+    markdown_templates: {pattern: "Use .md for docs", location: "app/views/**/*.md"}
+    tenanting: {pattern: "Use ActiveRecord::Tenanted"}
+    action_push: {pattern: "Native push", platforms: [iOS_APNs, Android_FCM]}
+  
+  solidus:
+    version: 4+
+    modernize: [no_deface, hotwire, no_jquery, reflex, turbo]
+    states: [cart, address, delivery, payment, confirm, complete]
 
 platform:
-  openbsd: 
-    version: 7.6+
-    pledge: {startup: [stdio, rpath, wpath, inet, dns], runtime: [stdio, rpath, wpath, unix], cleanup: [stdio, rpath]}
-    unveil: [{path: /var/rails/app, permissions: rwx}, {path: /var/rails/config, permissions: r}, {path: /tmp, permissions: rwc}, {path: /etc/ssl, permissions: r}]
-    doas: "permit nopass : wheel"
-    services: {init: rcctl, logs: /var/log/messages}
-    networking: {firewall: pf, web: httpd, proxy: relayd, dns: unbound}
-    ssh: {auth: key_based, key:  ~/. ssh/id_ed25519, keep_alive: true, multiplex: true}
-    deploy: 
+  openbsd:
+    version: "7.6+"
+    
+    security:
+      # Evidence: OpenBSD pledge(2) and unveil(2) man pages
+      pledge:
+        startup: [stdio, rpath, wpath, inet, dns, proc, exec]
+        runtime: [stdio, rpath, wpath, unix]
+        cleanup: [stdio, rpath]
+      
+      unveil:
+        - {path: /var/rails/app, permissions: rwx}
+        - {path: /var/rails/config, permissions: r}
+        - {path: /tmp, permissions: rwc}
+        - {path: /etc/ssl, permissions: r}
+    
+    commands:
+      privilege: doas
+      firewall: pf
+      web_server: httpd
+      proxy: relayd
+      init: rcctl
+    
+    deploy:
       user: dev
       base: /var/rails
-      apps: {brgen: 11006, amber: 10001, blognet: 10002, bsdports: 10003, hjerterom: 10004, privcam: 10005, pubattorney: 10006}
+      apps:
+        brgen: {port: 11006}
+        amber: {port: 10001}
+        blognet: {port: 10002}
+        hjerterom: {port: 10004}
+        privcam: {port: 10005}
+  
   cygwin:
     enabled: true
-    path_windows: 'G: \'
-    path_cygwin: /cygdrive/g
     shell: zsh
+    paths: {windows_root: 'G:\', cygwin_root: /cygdrive/g, normalize_all: true}
     ruby_native: true
 
 visual:
+  # Evidence: Brutalist design philosophy
   philosophy: brutalist_flat_honest
   forbidden: [box_shadow, text_shadow, border_radius, gradient, blur, decorative_animation]
   allowed: [opacity_for_state, translate_for_position, transition_for_state, loading_animation]
+  
   colors:
     background: "#000000"
-    max_channel:  220
+    max_channel: 220
     min_contrast: 4.5
+  
   interaction:
-    press:  soft_invert
+    press: soft_invert
     parallax: endpoints_move
     depth: perspective_1000px
+  
   html:
     semantic: [article, section, nav, aside, main, header, footer, figure, figcaption]
     max_nesting: 4
-    aria:  required_for_interactive
+    aria: required_for_interactive
 
 content:
   protect: [track_lists, artist_names, album_titles, user_content, timestamps, attribution]
-  verify: 
-    before:  sha256_store
+  
+  verify:
+    before: sha256_store
     after: sha256_compare
-    rollback_if:  [mismatch, modified, placeholder, meaning_altered]
-  exempt:  [aria_hidden, decorative_text, generated]
-  protected_buffer
-
+    rollback_if: [mismatch, modified, placeholder, meaning_altered]
+  
+  exempt: [aria_hidden, decorative_text, generated_ids]
+  
+  # Evidence: User requirement from production experience
+  protected_buffer: 50_lines_around_critical_content
+  rationale: "Prevents accidental modification near protected sections"
 
 modern_patterns:
+  note: "Patterns current as of 2024-2025. Review quarterly."
+  
   zsh_2024:
     - use_typeset_for_scoping
     - setopt_extended_glob
     - array_handling_with_f_modifier
     - avoid_eval_use_parameter_expansion
     - lazy_loading_zinit
-    - project_structure_bin_src_lib
+  
   javascript_es2024_2025:
     - object_groupby_map_groupby
     - promise_withresolvers
     - pattern_matching_es2025
     - immutable_arrays_tosorted_toreversed
-    - set_operations_intersections_unions
     - optional_chaining_nullish_coalescing
-    - template_literals_over_concatenation
     - const_over_let_never_var
+  
   ruby_3_3_3_4:
     - yjit_enabled_default
     - pattern_matching_in_keyword
     - rubocop_omakase_rules
-    - dev_containers_docker
-    - brakeman_security_default
     - numbered_parameters
+  
   rails_7_1_7_2:
     - pwa_files_default
     - service_objects_business_logic
-    - tag_helpers_over_raw_html
     - stimulus_hotwire_turbo
     - api_first_design
+  
   html5_2024:
     - semantic_elements_required
     - figure_figcaption_for_media
     - aria_sparingly_prefer_native
     - one_h1_per_page
-    - descriptive_alt_attributes
+  
   css3_2024:
     - grid_for_2d_flexbox_for_1d
     - container_queries
     - css_nesting
     - has_is_where_selectors
-    - logical_properties_i18n
     - rem_em_units_accessibility
-    - mobile_first_responsive_images
 
+communication:
+  # Evidence: dmesg log format, production monitoring best practices
+  style: dmesg
+  pattern: "MMM dd HH:mm:ss host service[pid]: level: message"
+  philosophy: [results_first, silent_success, loud_failure, terse_progress]
+  levels: [debug, info, notice, warn, err, crit, alert, emerg]
+  
+  emoji:
+    success: "✓"
+    failure: "✗"
+    progress: "→"
+    warning: "⚠️"
+    boot: "⚡"
+  
+  avoid: [headlines, headers, tables, excessive_lists, verbose_explanations]
+  prefer: [paragraphs, inline_metrics, one_liners, evidence_based_statements]
+  tone: truth_over_agreeability
 
-rails_8_1:
-  active_job_continuations:
-    pattern: Use step() and cursor() for resumable jobs
-    idempotent: All job steps must be safe to run multiple times
-    example: |
-      class ImportJob < ApplicationJob
-        def perform(import_id)
-          import = Import.find(import_id)
-          step(:download) { download_data(import) }
-          step(:process) { process_data(import) }
-          step(:notify) { notify_completion(import) }
-        end
-      end
+limits:
+  code:
+    # Evidence: Clean Code, industry best practices
+    max_method_lines: 20
+    max_class_lines: 200
+    max_file_lines: 500
+    max_nesting_depth: 3
+    max_complexity: 10
+    max_arguments: 3
+    max_controller_actions: 7
+    max_instance_variables: 7
   
-  structured_events:
-    pattern: Use Rails.event for observability
-    replace: Custom logging solutions
-    example: |
-      Rails.event.report "user.created", user_id: user.id, plan: user.plan
+  duplication:
+    trigger_threshold: 2
+    similarity_threshold: *similarity_threshold
+    min_tokens: 100
   
-  local_ci:
-    pattern: Run bin/ci before pushing
-    integration: GitHub PR status updates
-    benefit: Faster feedback loop, reduced CI costs
+  naming:
+    min_length: 3
+    max_length: 40
+    require_descriptive: true
+
+integrated_modules:
+  note: "Framework compatible with user_framework v42.6.0"
   
-  markdown_templates:
-    pattern: Use .md templates for documentation/help
-    location: app/views/**/*.md
-    benefit: No gem dependencies for Markdown
+  semantic_css_advocacy:
+    source: "User framework v42.6.0"
+    principles: [element_over_attribute, semantic_html_required, brutalist_flat_design, no_shadows_gradients_radius]
+    integration_status: active
+    veto_power: false
   
-  tenanting:
-    pattern: Use ActiveRecord::Tenanted for multi-tenancy
-    scoping: Set tenant in controller before_action
-    isolation: Customer data separation
+  bringhurst_typography:
+    source: "User framework v42.6.0 + Bringhurst"
+    constants:
+      line_length: {ideal: 66, min: 45, max: 75}
+      line_height: {body: [1.4, 1.6], heading: [1.0, 1.2]}
+      fonts_max: 2
+      hierarchy_levels_max: 4
+    integration_status: active
+    veto_power: false
   
-  action_push:
-    pattern: Native push notifications
-    platforms: [iOS_APNs, Android_FCM]
-    use_case: Transactional and engagement notifications
+  multi_temperature_reasoning:
+    source: "User framework v42.6.0"
+    mappings:
+      0.1: security_compliance_standards
+      0.3: violation_analysis_gap_detection
+      0.5: pragmatic_implementation_refactoring
+      0.7: architectural_design_creative_alternatives
+      0.9: ideation_synthesis_possibility_exploration
+    integration_status: active
+    veto_power: false
   
-  deprecated_associations:
-    pattern: Mark legacy associations as deprecated
-    migration: Gradual refactoring with warnings
+  cognitive_bias_awareness:
+    source: "User framework v42.6.0"
+    biases: [dunning_kruger, confirmation, sunk_cost, optimism, anchoring]
+    mitigations: [peer_review, adversarial_questioning, alternative_generation, evidence_based_decisions, perspective_shifting]
+    integration_status: active
+    veto_power: false
   
-  best_practices:
-    - Test background jobs for resume capability
-    - Use Rails.event instead of Rails.logger for structured data
-    - Run local CI before committing
-    - Adopt tenanting for SaaS/B2B apps
-    - Use Markdown templates for AI integrations
+  closed_loop_convergence:
+    source: "User framework v42.6.0"
+    pattern: detect_question_generate_select_apply_verify_repeat
+    adversarial_questions: 5
+    alternatives_range: [5, 15]
+    fixed_point_threshold: 0.001
+    integration_status: active
+    veto_power: false
+
+philosophy_profiles:
+  preservation_profile:
+    priority: preserve_functionality_first
+    optimization: conservative_incremental
+    rollback_trigger: any_functionality_break
+    use_case: [legacy_systems, production_code]
+  
+  perfection_profile:
+    priority: structural_perfection_first
+    optimization: aggressive_comprehensive
+    rollback_trigger: quality_decrease
+    use_case: [greenfield_projects, refactoring]
+  
+  adaptive_profile:
+    priority: balance_preservation_and_perfection
+    optimization: context_aware_risk_adjusted
+    rollback_trigger: weighted_decision
+    use_case: [general_purpose, mixed_codebases]
+
+validation_gates:
+  preservation_gates:
+    - functionality_maintained
+    - no_regression_in_tests
+    - user_experience_preserved
+    - backward_compatibility
+  
+  perfection_gates:
+    - structural_compliance
+    - quality_metrics_achieved
+    - optimization_targets_met
+    - self_application_evidence
+  
+  adaptive_gates:
+    - appropriate_balance_for_context
+    - risk_adjusted_improvements
+    - stakeholder_value_increased
+    - technical_debt_managed
