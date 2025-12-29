@@ -52,23 +52,25 @@ done
 ALL_DOMAINS=(${(u)ALL_DOMAINS})
 # Status reporting - dmesg style
 status() {
-  printf '%s: %s %s\n' "$1" "$2" "$3"
+  printf '%s: %s %s
+' "$1" "$2" "$3"
 }
 spin() {
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
   local pid=$1
   local i=0
   while kill -0 $pid 2>/dev/null; do
-    printf '%s %s' "${chars:$((i++ % 10)):1}" "$2"
+    printf '%s %s' "${chars:$((  )):1}" "$2"
     sleep 0.1
   done
-  printf ''
+  printf ''
 }
 # Logging
 log() {
   typeset level="${1:-INFO}"
   shift
-  printf '%s: %s\n' "$level" "$*" | tee -a "$LOG_DIR/unified.log"
+  printf '%s: %s
+' "$level" "$*" | tee -a "$LOG_DIR/unified.log"
 }
 save_state() {
   cat > "${DEPLOY_BASE}/state.json" << EOF
@@ -160,8 +162,7 @@ setup_databases() {
   pkg_add -U node || return 1
   log "Databases ready"
 }
-# DNS with DNSSEC - orchestrator function
-setup_dns_dnssec() {
+# DNS with DNSSEC - orchestrator () {
   log "Configuring NSD with DNSSEC..."
   _stop_conflicting_services
   mkdir -p /var/nsd/zones/master /var/nsd/zones/keys
@@ -190,10 +191,12 @@ _generate_dnssec_keys() {
       cd /var/nsd/zones/keys
       # ZSK - ECDSA P-256 SHA-256
       zsk_base=$(ldns-keygen -a ECDSAP256SHA256 -b 256 "$domain")
-      printf '%s\n' "$zsk_base" > "$domain.zsk"
+      printf '%s
+' "$zsk_base" > "$domain.zsk"
       # KSK - ECDSA P-256 SHA-256
       ksk_base=$(ldns-keygen -k -a ECDSAP256SHA256 -b 256 "$domain")
-      printf '%s\n' "$ksk_base" > "$domain.ksk"
+      printf '%s
+' "$ksk_base" > "$domain.ksk"
     fi
   done
 }
@@ -203,20 +206,22 @@ _create_zone_files() {
     local app="${domain%%.*}"
     local subdomains="${APPS[${app}.subdomains]:-}"
     cat > "/var/nsd/zones/master/$domain.zone" << EOF
-\$ORIGIN $domain.
-\$TTL 24h
+$ORIGIN $domain.
+$TTL 24h
 @ 1h IN SOA ns.brgen.no. admin.brgen.no. ($(date +%Y%m%d)01 1h 15m 1w 3m)
 @ IN NS ns.brgen.no.
 @ IN NS ns.hyp.net.
 @ IN A $MAIN_IP
 www IN CNAME @
 @ IN CAA 0 issue "letsencrypt.org"
-$([[ "$domain" == "brgen.no" ]] && printf "ns IN A %s\n" "$MAIN_IP")
+$([[ "$domain" == "brgen.no" ]] && printf "ns IN A %s
+" "$MAIN_IP")
 EOF
     # Add subdomains if defined
     if [[ -n $subdomains ]]; then
       for sub in ${(s: :)subdomains}; do
-        printf '%s IN CNAME @\n' "$sub" >> "/var/nsd/zones/master/$domain.zone"
+        printf '%s IN CNAME @
+' "$sub" >> "/var/nsd/zones/master/$domain.zone"
       done
     fi
   done
@@ -230,7 +235,7 @@ _sign_zones() {
     # Pure zsh: generate salt using native random
     local salt=""
     for i in {1..16}; do
-      salt+="$(printf '%x' $((RANDOM % 16)))"
+      salt+="$(printf '%x' $((  )))"
     done
     ldns-signzone -n -p -s "$salt" "$domain.zone" "../keys/$zsk_base" "../keys/$ksk_base"
   done
@@ -269,7 +274,8 @@ extract_app_ports() {
   for key in ${(k)APPS}; do
     [[ $key == *.port ]] && app_ports+=(${APPS[$key]})
   done
-  printf '%s\n' "${(j:, :)app_ports}"
+  printf '%s
+' "${(j:, :)app_ports}"
 }
 generate_pf_config() {
   local port_list=$1
@@ -293,16 +299,16 @@ block in
 table <bruteforce> persist
 block quick from <bruteforce>
 # SSH: Max 15 concurrent connections, 5 attempts per 3 seconds
-pass in on \$ext_if inet proto tcp from any to \$ext_if port 22 \\
+pass in on $ext_if inet proto tcp from any to $ext_if port 22 \
   keep state (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 # DNS: Allow zone transfer to backup NS, public queries rate-limited
-pass in on \$ext_if inet proto { tcp, udp } from \$ext_if to \$domeneshop port 53 keep state
-pass in on \$ext_if inet proto { tcp, udp } from any to \$ext_if port 53 \\
+pass in on $ext_if inet proto { tcp, udp } from $ext_if to $domeneshop port 53 keep state
+pass in on $ext_if inet proto { tcp, udp } from any to $ext_if port 53 \
   keep state (max-src-conn 100, max-src-conn-rate 15/5, overload <bruteforce> flush global)
 # HTTP/HTTPS: Port 80 for ACME challenges, 443 for TLS
-pass in on \$ext_if inet proto tcp from any to \$ext_if port { 80, 443 } keep state
+pass in on $ext_if inet proto tcp from any to $ext_if port { 80, 443 } keep state
 # Rails app ports: Randomized for security obscurity
-pass in on \$ext_if inet proto tcp from any to \$ext_if port { $port_list } keep state
+pass in on $ext_if inet proto tcp from any to $ext_if port { $port_list } keep state
 # Relayd anchor: Dynamic rules added by relayd(8)
 anchor "relayd/*"
 EOF
@@ -407,37 +413,37 @@ generate_host_routing() {
   # Amber
   echo '  # Host-based routing'
   for domain in amberapp.com www.amberapp.com; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <amber>"
+    echo "  pass request header "Host" value "$domain" forward to <amber>"
   done
   echo ""
   # Blognet
   for domain in foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <blognet>"
+    echo "  pass request header "Host" value "$domain" forward to <blognet>"
   done
   echo ""
   # BSDPorts
   for domain in bsdports.org www.bsdports.org; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <bsdports>"
+    echo "  pass request header "Host" value "$domain" forward to <bsdports>"
   done
   echo ""
   # Hjerterom
   for domain in hjerterom.no www.hjerterom.no; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <hjerterom>"
+    echo "  pass request header "Host" value "$domain" forward to <hjerterom>"
   done
   echo ""
   # Privcam
   for domain in privcam.no www.privcam.no; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <privcam>"
+    echo "  pass request header "Host" value "$domain" forward to <privcam>"
   done
   echo ""
   # PubAttorney
   for domain in pub.attorney freehelp.legal; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <pubattorney>"
+    echo "  pass request header "Host" value "$domain" forward to <pubattorney>"
   done
   echo ""
   # Brgen (35+ domains)
   for domain in ${=APPS[brgen.domains]}; do
-    echo "  pass request header \"Host\" value \"$domain\" forward to <brgen>"
+    echo "  pass request header "Host" value "$domain" forward to <brgen>"
   done
   echo ""
 }
@@ -461,7 +467,7 @@ EOF
 generate_tls_keypairs() {
   echo "  # TLS keypairs"
   for domain in $ALL_DOMAINS; do
-    echo "  tls keypair \"$domain\""
+    echo "  tls keypair "$domain""
   done
 }
 generate_relay_definitions() {
@@ -490,8 +496,7 @@ apply_relayd_config() {
   rcctl check relayd && rcctl reload relayd || rcctl start relayd
 }
 # RAILS APPLICATION DEPLOYMENT
-# Deploy Rails application - orchestrator function
-deploy_rails_app() {
+# Deploy Rails application - orchestrator () {
   local app_port="$1"
   local app="${app_port%:*}"
   local port="${app_port#*:}"
@@ -659,14 +664,14 @@ setup_ptr_records() {
 '/}"
   local token6_raw=$(ftp -MVo- "$PTR6_API/token" 2>/dev/null)
 '/}"
-  [[ -z "$token4" ]] && warn "Failed to get IPv4 PTR token"
-  [[ -z "$token6" ]] && warn "Failed to get IPv6 PTR token"
+  [ - "" ] && warn "Failed to get IPv4 PTR token"
+  [ - "" ] && warn "Failed to get IPv6 PTR token"
   # Set PTR for primary nameserver
-  if [[ -n "$token4" ]]; then
+  if [ - "" ]; then
     log "INFO" "Setting IPv4 PTR to $PTR_HOSTNAME"
     ftp -MVo- "$PTR4_API/$token4/$PTR_HOSTNAME" 2>/dev/null || warn "IPv4 PTR failed"
   fi
-  if [[ -n "$token6" ]]; then
+  if [ - "" ]; then
     log "INFO" "Setting IPv6 PTR to $PTR_HOSTNAME"
     ftp -MVo- "$PTR6_API/$token6/$PTR_HOSTNAME" 2>/dev/null || warn "IPv6 PTR failed"
   fi
@@ -724,7 +729,7 @@ pre_point() {
     local port=${APPS[$key]}
     local domains=${APPS[${app}.domains]}
     deploy_rails_app "$app:$port"
-    app_count=$((app_count + 1))
+    app_count=$((  ))
   done
   save_state "pre_point_complete" 100 "$app_count"
   log "INFO" "Pre-point deployment complete"
