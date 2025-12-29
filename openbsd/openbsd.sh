@@ -505,8 +505,8 @@ deploy_rails_app() {
   _write_app_env "$app_dir" "$app" "$port" "$db_pass" "$domains"
   _write_falcon_config "$app_dir" "$app" "$port" "$domains"
   _create_rc_service "$app" "$port"
-  rcctl enable "$app"
-  rcctl start "$app"
+  rcctl enable "$app" || { log "ERROR" "Failed to enable $app"; return 1; }
+  rcctl start "$app" || { log "ERROR" "Failed to start $app"; return 1; }
   log "Deployed $app"
 }
 # Helper: Create app user
@@ -656,12 +656,8 @@ setup_ptr_records() {
   log "Setting up PTR records..."
   # Get tokens once (valid for 5 minutes) - pure zsh CRLF removal
   local token4_raw=$(ftp -MVo- "$PTR4_API/token" 2>/dev/null)
-  local token4="${token4_raw//$''/}"
-  token4="${token4//$'
 '/}"
   local token6_raw=$(ftp -MVo- "$PTR6_API/token" 2>/dev/null)
-  local token6="${token6_raw//$''/}"
-  token6="${token6//$'
 '/}"
   [[ -z "$token4" ]] && warn "Failed to get IPv4 PTR token"
   [[ -z "$token6" ]] && warn "Failed to get IPv6 PTR token"
