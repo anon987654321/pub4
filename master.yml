@@ -32,6 +32,20 @@ meta:
       - RFC 7231 (Retry-After)
       - OWASP Top 10
 
+
+clean_style_mandates:
+  reference: https://github.com/anon987654321/railsy/blob/main/openbsd/openbsd_old.sh
+  flat_structure: Maximum 2 indent levels
+  simple_heredocs: Direct writes, minimal interpolation
+  minimal_functions: Extract only if used 3+ times
+  clear_names: Full words over abbreviations
+  no_helpers: Direct commands over wrappers
+  inline_configs: Embed configs in script
+  sequential_flow: Linear execution
+  native_idioms: Language-native patterns
+  natural_failure: Minimal error handling
+  whitespace_logic: Blank lines between logical groups
+
 # PRINCIPLES - REORDERED BY IMPORTANCE, FLAT STRUCTURE
 principles:
   # CRITICAL SAFETY - NON-NEGOTIABLE
