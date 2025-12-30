@@ -1,166 +1,74 @@
 meta:
-  version: v49.0.0
-  updated: 2025-12-30T19:32:00Z
-  center: Universal clean style with flat structure, simple heredocs, minimal functions
-  philosophy: Prefer simplicity over abstraction, directness over cleverness
+  version: v50.0.0
+  updated: 2025-12-30T19:50:00Z
+  philosophy: Zero tolerance, evidence required, clean style mandatory
 
 clean_style_mandates:
-  flat_structure: Max 2 indent levels, linear flow preferred
-  simple_heredocs: Direct file writes, no complex variable substitution
-  minimal_functions: Only when reused 3+ times, otherwise inline
-  clear_names: Full words (app_name not app_n), no abbreviations
-  no_wrappers: Direct commands, no single-use helper functions
-  inline_configs: Embed directly in script, avoid extraction
-  sequential: A then B then C, avoid nested callbacks
-  idiomatic: Use native patterns (rcctl, doas, pledge for OpenBSD)
-  natural_errors: Let commands fail naturally, minimal defensive code
-  whitespace: Blank lines for logical grouping only
+  flat_structure: Max 2 indent levels, linear flow
+  simple_heredocs: Direct writes, no complex variable substitution
+  minimal_functions: Only when reused 3+ times
+  clear_names: Full words, no abbreviations (app_name not app_n)
+  no_helpers: Direct commands, no wrapper functions
+  inline_configs: Embed directly, don't extract
+  sequential: A then B then C, no nested callbacks
+  native_idioms: rcctl, doas, pledge - not wrapped
+  natural_failure: Let commands fail, minimal error handling
+  whitespace: Logical grouping with blank lines
 
-forbidden_tools:
-  cli: [view, edit, create, grep, glob, list]
-  unix: [sed, awk, tr, wc, head, tail, find]
-  reason: Use zsh native patterns or ruby instead
-
-allowed_tools:
-  cli: [powershell]
-  unix: [cat, ls, mv, cp, rm, git, ruby, rcctl, doas]
-  shell: zsh
-
-execution_flow:
-  step_1_startup: Display dmesg-style banner
-  step_2_load: Read master.yml completely
-  step_3_discover: Use tree.sh output, never redundant listing
-  step_4_read_all: Read ALL target files completely before analysis
-  step_5_scan: Detect violations against ALL principles
-  step_6_generate: Create 4-16 fix alternatives
-  step_7_evaluate: Adversarial scoring with veto power
-  step_8_apply: Execute highest-scoring fixes
-  step_9_verify: Git diff, sha256 verification
-  step_10_measure: Calculate convergence metrics
-  step_11_iterate: Repeat until converged or diminishing returns
-  step_12_commit: Git commit with evidence trail
-  step_13_report: Summary only, no massive output
-
-evidence_requirements:
-  never_claim_without_proof: Every completion claim must show git commit hash
-  verify_before_after: sha256 checksums or git diff output
-  commit_each_file: Individual commits per file processed
-  no_batch_claims: Cannot say "all files processed" without evidence
-
-principles:
-  # Clean Style (NEW - High Priority)
-  flat_structure: {detects: deep_nesting, severity: high, confidence: 0.9, operation: flatten}
-  simple_heredocs: {detects: complex_heredoc, severity: high, confidence: 0.85, operation: simplify_heredoc}
-  minimal_functions: {detects: helper_proliferation, severity: medium, confidence: 0.8, operation: inline_function}
-  clear_names: {detects: unclear_naming, severity: medium, confidence: 0.8, operation: expand_names}
-  no_wrappers: {detects: abstraction_excess, severity: medium, confidence: 0.75, operation: unwrap}
-  
-  # Critical Security
-  durability: {detects: no_tests, severity: critical, confidence: 0.95, operation: add_tests}
-  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, operation: add_guards}
-  observability: {detects: silent_errors, severity: critical, confidence: 0.95, operation: fail_fast}
-  secrets_encryption: {detects: plaintext_secrets, severity: critical, confidence: 1.0, operation: encrypt}
-  no_privilege_escalation: {detects: privilege_escalation, severity: critical, confidence: 0.95, operation: add_guards}
-  
-  # SOLID
-  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, operation: split}
-  open_closed_principle: {detects: modification_required, severity: high, confidence: 0.75, operation: introduce_seam}
-  liskov_substitution: {detects: broken_inheritance, severity: high, confidence: 0.8, operation: fix_hierarchy}
-  interface_segregation: {detects: fat_interface, severity: medium, confidence: 0.75, operation: split_interface}
-  dependency_inversion: {detects: concrete_dependency, severity: high, confidence: 0.8, operation: introduce_interface}
-  
-  # Japanese Aesthetics (High for user preference)
-  ma: {detects: visual_clutter, severity: high, confidence: 0.75, operation: add_whitespace}
-  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, operation: simplify}
-  shibui: {detects: garish_design, severity: high, confidence: 0.65, operation: refine}
-  shizen: {detects: artificial_abstraction, severity: high, confidence: 0.7, operation: naturalize}
-  seijaku: {detects: noisy_code, severity: high, confidence: 0.7, operation: quiet}
-  
-  # Core Clean Code
-  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, operation: extract}
-  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, operation: improve}
-  keep_it_simple: {detects: over_engineering, severity: medium, confidence: 0.85, operation: simplify}
-  meaningful_names: {detects: unclear_naming, severity: medium, confidence: 0.7, operation: rename}
-  small_functions: {detects: long_function, severity: medium, confidence: 0.9, operation: extract}
-  fail_fast: {detects: silent_errors, severity: critical, confidence: 0.95, operation: add_validation}
-
-operations:
-  flatten: Reduce nesting, make linear
-  simplify_heredoc: Remove complex substitutions
-  inline_function: Move function body to call site
-  expand_names: Replace abbreviations with full words
-  unwrap: Remove wrapper, use command directly
-  split: Divide into focused modules
-  extract: Pull out reusable component
-  simplify: Reduce complexity
-  delete: Remove unnecessary code
-  rename: Clarify naming
-  add_guards: Add validation/error handling
-  add_tests: Add test coverage
-  encrypt: Secure sensitive data
-  add_whitespace: Improve readability with spacing
-  refine: Subtle improvement
-  naturalize: Remove artificiality
-  quiet: Reduce noise
-  improve: Incremental enhancement
-
-rails_8_1_patterns:
-  active_job_continuations: Background jobs with checkpoints
-  rails_event: Structured JSON logging
-  local_ci: bin/ci for local pipeline execution
-  markdown_templates: .md files in ActionView
-  active_record_tenanting: Multi-tenancy support
-  action_push: Native iOS/Android push notifications
-  transaction_isolation: Scoped DB consistency
-  propshaft: Modern asset pipeline
-  pwa_default: Progressive web app by default
-  stimulus_hotwire: Reactive UI without JavaScript frameworks
-
-openbsd_patterns:
-  rcctl: Service management (rcctl enable/start/stop/restart)
-  doas: Privilege escalation (replace sudo)
-  pledge: System call restriction for security
-  unveil: Filesystem access restriction
-  pf: Packet filter for firewall
-  relayd: HTTP/TLS load balancer and reverse proxy
-  man_verification: Check man.openbsd.org for all daemons/configs
-
-zsh_patterns:
-  file_write: print -r -- "content" > file
-  file_append: print -r -- "content" >> file
-  heredoc: cat << EOF > file
-  line_count: ${#${(f)$(cat file)}}
-  glob_files: "(**/*)(.)"
-  glob_dirs: "(**/)(/)"
-  native_search: ${${(M)${(f)$(cat file)}:#*pattern*}}
-
-ssh_screen_workflow:
-  local_screen: Start screen on Cygwin zsh first
-  ssh_within: SSH to VPS from within screen session
-  execute_remote: Run commands on VPS
-  detach: Ctrl-A D to detach, screen -r to reattach
-  persist: Session survives disconnection
-
-truncation_prevention:
-  chunk_output: Max 50 lines per response
-  summary_only: Report changes, dont show full diffs
-  defer_display: Work silently, commit, report hash
-  use_files: Write to temp files, reference by path
-  batch_operations: Multiple edits in single tool call
-
-behavioral_mandates:
-  autonomous: true
-  minimal_chatter: true
-  evidence_required: true
-  proactive_web_search: true
-  never_create_backups: true
-  commit_each_change: true
-  read_all_files_first: true
-  use_tree_output: true
-  forbidden_tool_violation: Immediately self-correct
-  claim_verification: Show git hash or sha256
+interpretation:
+  mode: aggressive_loose
+  thresholds: {similarity: 0.3, questions: [how_deploy, how_monitor, how_rollback, on_call_3am]}
+  veto_precedence: [security, attacker, maintainer]
 
 convergence:
-  exit_complete: violations == 0 AND delta < 0.02 AND score >= 0.8
-  exit_diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
-  exit_hard_stop: cycles >= 10
+  metrics: [violations_remaining, quality_delta, adversarial_score, test_pass_rate, files_verified_with_evidence]
+  exit:
+    complete: zero_violations_delta_under_0.001_adversarial_above_0.9_all_verified
+    diminishing: delta_under_0.001_for_five_cycles
+    hard_stop: 15
+  oscillation:
+    detect: same_violations_three_consecutive_iterations
+    action: rollback_to_best_state_and_stop
+  iteration_tracking:
+    enabled: true
+    best_state: {track_for_rollback: true, store_hash: true}
+  premature_exit_prevention:
+    never_exit_if: [files_unread, violations_above_5, evidence_missing, tests_failing, claims_unverified]
+    require_before_exit: [all_files_sha256_verified, all_violations_addressed_or_justified]
+
+principles:
+  tier_1_veto:
+    no_truncation: {detects: ellipsis_or_placeholder, action: complete, veto: true}
+    no_simulation: {detects: claims_without_evidence, action: demand_proof, veto: true}
+    security_first: {detects: unvalidated_input, action: validate, veto: true}
+    encrypt_secrets: {detects: plaintext_secrets, action: encrypt, veto: true}
+    no_forbidden_tools: {detects: sed_awk_grep_find_bash, action: use_zsh_or_ruby, veto: true}
+  tier_2_structural:
+    dry: {detects: repetition, action: extract, threshold: 0.3}
+    srp: {detects: multiple_reasons_to_change, action: split}
+    flat_structure: {detects: deep_nesting, action: flatten, max_levels: 2}
+  tier_3_quality:
+    meaningful_names: {detects: unclear_naming, action: rename}
+    small_functions: {detects: long_methods, action: extract, max_lines: 20}
+    comment_is_failure: {detects: comment_explains_what, action: refactor_or_delete}
+  tier_4_style:
+    kanso: {detects: complexity, action: simplify}
+    ma: {detects: crowded, action: add_space}
+
+rails:
+  service_objects: {detects: business_in_model, action: extract}
+  view_components: {detects: partial_sprawl, action: extract}
+  turbo: {detects: remote_true, action: use_turbo}
+
+openbsd:
+  pledge: {detects: excess_privileges, action: add_pledge}
+  doas: {detects: sudo, action: use_doas}
+
+ssh_workflow:
+  use_screen: Start screen locally, SSH from within, detach to persist
+  use_cli_rb: When copilot CLI fails, use cli.rb for remote execution
+
+tools:
+  forbidden: [sed, awk, tr, wc, grep, find, head, tail, bash, python]
+  allowed: [zsh, ruby, cat, ls, rcctl, doas, git]
+  file_write: ruby -e File.write(path, content)
