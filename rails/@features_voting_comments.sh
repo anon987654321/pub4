@@ -407,3 +407,176 @@ setup_reddit_features() {
   add_reddit_routes
   log "Reddit features fully configured!"
 }
+
+
+# Social Sharing Helper
+cat > app/helpers/social_sharing_helper.rb <<"EOF"
+# Social Sharing Helper
+module SocialSharingHelper
+  def social_share_buttons(options = {})
+    url = options[:url] || request.original_url
+    title = options[:title] || content_for(:title) || "Check this out"
+    render partial: "shared/social_share", locals: { url: url, title: title }
+  end
+  def share_metadata(options = {})
+    content_for :head do
+      tag.meta(property: "og:url", content: options[:url]) +
+      tag.meta(property: "og:title", content: options[:title]) +
+      tag.meta(property: "og:description", content: options[:description]) +
+      tag.meta(property: "og:image", content: options[:image]) +
+      tag.meta(name: "twitter:card", content: "summary_large_image")
+    end
+  end
+end
+
+EOF
+
+# Review Model
+cat > app/models/review.rb <<"EOF"
+# Review Model
+class Review < ApplicationRecord
+  belongs_to :reviewable, polymorphic: true
+  belongs_to :user
+  acts_as_votable
+  validates :rating, presence: true, inclusion: { in: 1..5 }
+  validates :title, presence: true, length: { maximum: 100 }
+  validates :body, presence: true, length: { minimum: 20, maximum: 5000 }
+  validates :user_id, uniqueness: { scope: [:reviewable_type, :reviewable_id] }
+  scope :recent, -> { order(created_at: :desc) }
+  scope :top_rated, -> { order(rating: :desc) }
+  scope :verified, -> { where(verified_purchase: true) }
+  after_create :update_reviewable_stats
+  after_update :update_reviewable_stats
+  after_destroy :update_reviewable_stats
+  def helpful?
+    helpful_count.to_i > 0
+  end
+  def mark_helpful(user)
+    increment!(:helpful_count) if can_mark_helpful?(user)
+  end
+  private
+  def can_mark_helpful?(user)
+    user != self.user && !voted_by?(user)
+  end
+  def update_reviewable_stats
+    return unless reviewable.respond_to?(:update_review_stats)
+    reviewable.update_review_stats
+  end
+end
+
+EOF
+
+# Votable Concern
+cat > app/models/concerns/votable.rb <<"EOF"
+# Votable Concern
+# Include in any model that needs voting (posts, comments, products, etc.)
+module Votable
+  extend ActiveSupport::Concern
+  included do
+    acts_as_votable
+    has_many :reviews, as: :reviewable, dependent: :destroy
+    scope :top_voted, -> { order(cached_votes_score: :desc) }
+    scope :controversial, -> { where('cached_votes_up > 0 AND cached_votes_down > 0').order('cached_votes_up + cached_votes_down DESC') }
+  end
+  def vote_score
+    cached_votes_score
+  end
+  def upvote_percentage
+    return 0 if cached_votes_total.zero?
+    (cached_votes_up.to_f / cached_votes_total * 100).round
+  end
+  def average_rating
+    reviews.average(:rating)&.round(1) || 0
+  end
+  def review_count
+    reviews.count
+  end
+  def review_summary
+    {
+      average: average_rating,
+      count: review_count,
+      distribution: rating_distribution
+    }
+  end
+  def update_review_stats
+    update_columns(
+      average_rating: average_rating,
+      review_count: review_count
+    ) if respond_to?(:average_rating=)
+  end
+  private
+  def rating_distribution
+    reviews.group(:rating).count.transform_keys(&:to_i)
+  end
+end
+
+EOF
+
+# Social Share Controller
+cat > app/javascript/controllers/social_share_controller.js <<"EOF"
+// Social Share Stimulus Controller
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static values = { url: String, title: String, text: String }
+
+  connect() {
+    this.urlValue = this.urlValue || window.location.href
+    this.titleValue = this.titleValue || document.title
+  }
+
+  async share(event) {
+    const platform = event.currentTarget.dataset.platform
+    platform === "native" && navigator.share 
+      ? await this.shareNative() 
+      : this.sharePlatform(platform)
+  }
+
+  async shareNative() {
+    try {
+      await navigator.share({
+        title: this.titleValue,
+        text: this.textValue,
+        url: this.urlValue
+      })
+    } catch (error) {
+      if (error.name !== 'AbortError') console.error('Share failed:', error)
+    }
+  }
+
+  sharePlatform(platform) {
+    const url = encodeURIComponent(this.urlValue)
+    const title = encodeURIComponent(this.titleValue)
+    const urls = {
+      twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
+    }
+    if (urls[platform]) window.open(urls[platform], '_blank', 'width=600,height=400')
+  }
+
+  copyLink(event) {
+    navigator.clipboard.writeText(this.urlValue).then(() => {
+      const btn = event.currentTarget
+      const orig = btn.textContent
+      btn.textContent = "Copied!"
+      setTimeout(() => btn.textContent = orig, 2000)
+    })
+  }
+}
+
+EOF
+
+# Social Share Partial
+cat > app/views/shared/_social_share.html.erb <<"EOF"
+<div data-controller="social-share" 
+     data-social-share-url-value="<%= url %>"
+     data-social-share-title-value="<%= title %>"
+     class="social-share">
+  <button data-action="click->social-share#share" data-platform="twitter" class="share-btn share-twitter">𝕏</button>
+  <button data-action="click->social-share#share" data-platform="facebook" class="share-btn share-facebook">f</button>
+  <button data-action="click->social-share#share" data-platform="linkedin" class="share-btn share-linkedin">in</button>
+  <button data-action="click->social-share#copyLink" class="share-btn share-copy">🔗</button>
+</div>
+
+EOF
