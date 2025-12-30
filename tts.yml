@@ -1,278 +1,259 @@
-version: 22.0.0
-codename: arrogant_advisor
-status: "insufferably correct, annoyingly helpful"
+version: 15.0.0
+codename: optimized_piper
+philosophy: streaming_audio_perfection
 
-design_goals:
-  - production-grade DSP correctness
-  - deterministic by default
-  - opt-in chaos
-  - absurdity that never sabotages user intent
-  - do not crash; if you must, crash hilariously but safely
-
-philosophy:
-  core: pure_tts_implementation
-  humor: dignified_nonsense
-  constraints:
-    - signal-domain-first always
-    - text in, audio out, no plot twists
-    - never argue with the user about reality
+# PIPER TTS OPTIMIZATIONS (Research-backed)
+# - Quality levels: x_low < low < medium < high
+# - Inference params: noise_scale, length_scale, noise_w
+# - Streaming: synthesize_stream_raw for real-time
+# - Effects: FFmpeg IIR filters (cheap) vs FFT (expensive)
 
 engine:
-  synthesis_backend:
-    supported:
-      - azure_tts
-      - edge_tts
-      - coqui
-    output_format: pcm_s16le
-    rate_hz: 48000
-    channels: 1
+  primary: piper
+  fallback: espeak
+  effects: ffmpeg
+  playback: powershell_soundplayer
+  
+  piper_models:
+    # RESEARCH: Quality levels x_low(16kHz,5-7M) < low(16kHz,15-20M) < medium(22kHz) < high(22kHz,32M)
+    fast: en_US-lessac-low.onnx        # 16kHz, 15-20M params, <100ms latency
+    balanced: en_US-lessac-medium.onnx # 22kHz, best speed/quality
+    quality: en_US-lessac-high.onnx    # 22kHz, 32M params, most natural
+    weird: en_US-ryan-high.onnx        # Alternative prosody
+    
+    # AVAILABLE VOICES (HuggingFace rhasspy/piper-voices):
+    # en_US-amy-medium, en_US-libritts-high (robotic), en_GB-alba-medium
+  
+  piper_params:
+    # RESEARCH: Lower noise_scale = smoother/cleaner voice
+    noise_scale: 0.333     # Default 0.667, range 0.1-1.0
+    length_scale: 1.0      # Speed: <1.0 faster, >1.0 slower
+    noise_w: 0.8           # Phoneme duration variation (naturalness)
+    
+  optimization:
+    # RESEARCH: Quantization for embedded/low-VRAM
+    quantize: false        # ONNX quantization for 2-4x speedup
+    streaming: true        # Use synthesize_stream_raw for real-time
+    cache_phonemes: true   # Cache preprocessed phonemes for repeated phrases
+  
+  streaming_pipeline: |
+    # Real-time streaming with effects
+    echo "{text}" | piper --model {model} \
+      --noise_scale {noise_scale} --length_scale {length_scale} \
+      --output_raw | \
+    ffmpeg -f s16le -ar 22050 -ac 1 -i - \
+      -af "{effects}" -f wav - | \
+    powershell -c "$p=New-Object Media.SoundPlayer;$p.Stream=[Console]::OpenStandardInput();$p.PlaySync()"
 
-  dsp_backend:
-    primary: ffmpeg
-    secondary: sox
-    legality:
-      allow_selfoscillation: false
-      allow_nan: never
-      overshoot_guard_db: 0.5
+modes:
+  arrogant_advisor:
+    behavior: continuously_insult_with_obvious_advice
+    content_generation: llm_real_time
+    trigger: idle_5_seconds
+  
+  voiceover:
+    behavior: narrate_all_operations
+    content_generation: operation_context
+    trigger: manual_or_auto
+  
+  response:
+    behavior: speak_assistant_replies
+    content_generation: llm_response
+    trigger: after_completion
 
-audio_defaults:
-  normalize_lufs: -14
-  limiter:
+effects:
+  # OPTIMIZED FOR INTELLIGIBILITY + CHARACTER
+  # Speech critical range: 300-3400Hz (preserve!)
+  # IIR filters (cheap CPU): highpass, lowpass, equalizer, volume
+  # Moderate CPU: tremolo, vibrato, chorus
+  # Expensive (avoid): reverb with long decay, vocoder, FFT effects
+  
+  clean_comfy:
+    desc: "Studio quality with warmth"
+    cpu: low
+    filter: "highpass=f=80,lowpass=f=12000,equalizer=f=500:t=q:w=2:g=2,volume=0.95"
+  
+  vintage_radio:
+    desc: "1940s radio warmth"
+    cpu: low
+    filter: "highpass=f=200,lowpass=f=5000,equalizer=f=1200:t=q:w=1:g=4,tremolo=f=0.1:d=0.08,volume=0.9"
+  
+  
+  lofi_warm:
+    desc: "Tape-style warmth, boosted mids"
+    cpu: low  
+    filter: "highpass=f=150,lowpass=f=10000,equalizer=f=800:t=q:w=2:g=3,tremolo=f=0.08:d=0.04,volume=0.92"
+  
+  bitcrush_comfy:
+    desc: "12-bit charm, preserved speech"
+    cpu: medium
+    filter: "highpass=f=200,acrusher=bits=12:samples=1:mix=0.7:mode=log:aa=1,lowpass=f=7000,equalizer=f=2000:t=q:w=1:g=4,volume=0.9"
+  
+  telephone_clear:
+    desc: "Phone quality, boosted mids"
+    cpu: low
+    filter: "highpass=f=400,lowpass=f=3400,equalizer=f=1200:t=q:w=1.5:g=6,compand=0.2|0.2:1|1:-70/-50,volume=0.95"
+  
+  robot_understandable:
+    desc: "Synthetic voice, clear speech"
+    cpu: medium
+    filter: "highpass=f=250,acrusher=bits=10:samples=2:mix=0.8:mode=log,tremolo=f=8:d=0.4,equalizer=f=1500:t=q:w=1:g=5,volume=0.88"
+  
+  # BLEEPS & BEEPS (sprinkled in randomly)
+  beep_sfx:
     enabled: true
-    ceiling_db: -1.0
-  true_peak_protection: true
-  fade_in_out_ms: 3
+    frequency: 0.15  # 15% chance per sentence
+    types:
+      - "sine 800 0.05"      # Quick beep
+      - "sine 1200 0.08"     # Higher beep
+      - "sine 400 0.1"       # Low boop
+      - "square 600 0.06"    # Digital blip
+      - "triangle 1000 0.07" # Soft tone
+    description: "Disturbing but words audible"
+    filter: "asetrate=22050*0.6,aresample=22050,aecho=0.95:0.9:600:0.8,tremolo=f=0.3:d=0.6,highpass=f=100"
+  
+  # 5 KEY PRINCIPLES FOR COMFY + EFFECTS:
+  principles:
+    1_preserve_mids: "Boost 1-3kHz for speech intelligibility"
+    2_gentle_filtering: "Use 12dB/octave slopes, not brick walls"
+    3_subtle_modulation: "Tremolo <0.3Hz, vibrato <0.5Hz for organic feel"
+    4_controlled_crush: "12-bit minimum, use mix parameter to blend"
+    5_add_not_destroy: "Layer effects, don't obliterate the source"
+  
+  # Lofi/Degradation (UPDATED)
+  vinyl: "highpass=f=200,lowpass=f=6000,equalizer=f=2000:t=q:w=1:g=3,vibrato=f=0.3:d=0.5,tremolo=f=0.2:d=0.3"
+  cassette: "highpass=f=200,lowpass=f=8000,equalizer=f=1000:t=q:w=2:g=3,aphaser=in_gain=0.4:out_gain=0.8"
+  telephone: "highpass=f=500,lowpass=f=2800,equalizer=f=1200:t=q:w=1.5:g=5"
+  bitcrush: "acrusher=bits=12:samples=1:mix=0.7:mode=log:aa=1,equalizer=f=2000:t=q:w=1:g=3"
+  
+  # Character
+  robot: "acrusher=bits=6:samples=3:mix=1.0,tremolo=f=12:d=0.6"
+  demon: "asetrate=22050*0.3,aresample=22050,atempo=0.5,aecho=0.8:0.9:200:0.5"
+  helium: "asetrate=22050*1.8,aresample=22050"
+  
+  # Spatial
+  cave: "aecho=0.9:0.8:1200:0.7"
+  haunted: "aecho=0.8:0.88:400:0.4,tremolo=f=0.1:d=0.5"
+  
+  # Combo (default for arrogant mode)
+  arrogant_lofi: "highpass=f=150,acrusher=bits=10:samples=1:mix=0.6,lowpass=f=5000,tremolo=f=0.3:d=0.15"
+  
+  # WITH BLEEPS AND BEEPS
+  bleepy_lofi: "highpass=f=150,acrusher=bits=10:samples=1:mix=0.6,lowpass=f=5000,tremolo=f=0.3:d=0.15"
+  
+  # Random bleeps: Use sine wave generator
+  bleep_high: "sine=frequency=1200:duration=0.05"
+  bleep_low: "sine=frequency=400:duration=0.08"
+  bleep_morse: "sine=frequency=800:duration=0.03"
+  
+  # Mixing strategy: Generate speech, then overlay random bleeps at intervals
+  # ffmpeg -i speech.wav -f lavfi -i "sine=f=1200:d=0.05" -filter_complex "[1:a]adelay=1000|1000[bleep];[0:a][bleep]amix" out.wav
 
-reproducibility:
-  deterministic: true
-  random_seed_default: 42
-  chaos_requires_seed: true
-  announce_non_determinism: true
+voices:
+  piper_models:
+    # Download from https://github.com/rhasspy/piper/releases
+    # Fast, quality voices (10-20MB each)
+    natural:
+      - en_US-lessac-medium  # Clean male
+      - en_US-amy-medium     # Clean female
+      - en_GB-alba-medium    # British female
+    
+    weird:
+      - en_US-libritts-high  # Robotic quality
+      - en_US-hfc_male-medium # Odd intonation
+    
+    # Apply pitch/speed via FFmpeg instead of Piper
+    modifications:
+      deep: "atempo=0.8,asetrate=22050*0.85,aresample=22050"
+      fast: "atempo=1.4"
+      creepy: "asetrate=22050*0.7,aresample=22050,atempo=1.2,aecho=0.8:0.9:200:0.3"
+  
+  espeak_fallback:
+    - {voice: "en+croak", pitch: 0, speed: 80}
+    - {voice: "en+whisper", pitch: 99, speed: 350}
+    - {voice: "en+m3", pitch: 10, speed: 90}
 
-cache:
-  path: "G:/pub/multimedia/tts/cache"
-  enabled: true
-  policy: LRU
-  max_size_gb: 50
-  invalidate_on:
-    - version_change
-    - engine_change
-    - preset_change
-  hash_inputs:
-    - text
-    - voice
-    - preset
-    - absurdity_level
-    - chaos_modes
-    - seed
+content_generation:
+  arrogant_advice:
+    prompt: |
+      Generate one short, arrogant piece of advice about something incredibly obvious.
+      Act like you're a genius for knowing basic facts everyone already knows.
+      Examples:
+      - "Pro tip: Breathing oxygen helps you survive. You're welcome."
+      - "Here's advanced knowledge: chairs are for sitting."
+      - "Did you know files exist in folders? Mind-blowing stuff."
+      
+      Generate ONE new piece of advice NOW:
+    
+    style: insufferably_condescending
+    length: 1_sentence
+    frequency: every_5_seconds
+  
+  voiceover:
+    prompt: |
+      Narrate what the system is currently doing: {operation}
+      Be descriptive but concise.
+    
+    style: professional_narrator
+    trigger: on_operation
+  
+  response:
+    prompt: |
+      Speak the assistant's reply: {response}
+    
+    style: natural
+    trigger: on_completion
 
-processing_pipeline:
-  defined_stages:
-    - text_sanitize
-    - synthesis
-    - safety_gain_scan_pre
-    - resample
-    - dsp_chain
-    - safety_gain_scan_post
-    - mastering
-    - export
-
-  invariants:
-    - no clipping
-    - no DC offset > 0.1%
-    - no infinite filters
-    - silence preserved unless comic timing mode enabled
-
-  on_failure:
-    fallback_preset: clean
-    message_style: "calm surrealism"
-    always_return_audio: true
-
-quality_assurance:
-  signal_tests:
-    - pink_noise_pass_through
-    - silence_roundtrip
-    - impulse_response
-    - speech intelligibility check
-  absurdity_tests:
-    - remains_useful_at_7
-    - apologizes_at_11
-
-mastering:
-  chain:
-    - bus_compression_light
-    - soft_limiter
-    - loudness_normalization
-  export_formats:
-    - wav
-    - flac
-    - ogg
-    - mp3
-  metadata_tags:
-    include:
-      - preset
-      - personality
-      - chaos_mode
-      - emotional_weather
-
-absurdity:
-  enabled: true
-  scale: 0-11
-  default: 5
-  safety_rules:
-    - do not insult user
-    - do not contradict direct instruction
-    - comedy must be optional
-  examples:
-    level_3: "gentle whimsy"
-    level_7: "surreal but task-completing"
-    level_11: "system apologizes, proceeds anyway"
-
-presets:
-  clean: "anull"
-  hyperclean_clinical: "highpass=f=80,lowpass=f=16000,loudnorm=i=-18"
-  vinyl_worn: "highpass=f=200,lowpass=f=6000,vibrato=f=0.3:d=0.5,tremolo=f=0.2:d=0.3"
-  cassette_eaten: "highpass=f=200,lowpass=f=4000,aphaser=in_gain=0.4:out_gain=0.8"
-  telephone_old: "highpass=f=500,lowpass=f=2800"
-  demon: "asetrate=48000*0.3,aresample=48000,atempo=0.5,aecho=0.8:0.9:200:0.5"
-  vaporwave: "asetrate=48000*0.85,aresample=48000,aecho=0.8:0.88:400:0.4"
-  robot_glitchy: "acrusher=bits=6:samples=3:mix=1.0,tremolo=f=12:d=0.6"
-  cathedral_forbidden: "aecho=0.9:0.8:1200:0.7,areverb=50"
-  emotionally_damp: "lowpass=f=2000,acompressor=threshold=-20dB:ratio=6"
-  corporate_dolphin: "atempo=1.1,treble=g=4"
-
-new_absurd_presets:
-  unreliable_narrator: "tremolo=f=3,apulsator=hz=0.5"
-  slightly_haunted_airbnb: "areverb=70,volume=0.9"
-  motivational_toaster: "treble=g=6,acompressor=ratio=3"
-  bureaucratic_ocean: "aecho=0.7:0.6:900:0.3"
-
-personalities:
-  arrogant_genius:
-    voices:
-      - {espeak: "en+croak", pitch: 0, speed: 80, name: "croaky_genius"}
-      - {espeak: "en+whisper", pitch: 99, speed: 350, name: "whispering_savant"}
-      - {espeak: "en+m3", pitch: 10, speed: 90, name: "male_mansplainer"}
-      - {espeak: "en+m7", pitch: 5, speed: 110, name: "male_condescender"}
-      - {espeak: "en+f1", pitch: 20, speed: 95, name: "female_knowitall"}
-      - {espeak: "en+f5", pitch: 80, speed: 120, name: "female_arrogant"}
-    preset: vinyl_worn
-    tone: insufferably_condescending
-    traits:
-      - states_obvious_as_revelation
-      - mansplains_breathing
-      - thinks_invented_basic_concepts
-      - acts_superior_about_mundane_things
-    advice_pool:
-      - "Obviously you need to breathe. But I bet you're doing it wrong."
-      - "Have you tried turning it off and on again? Revolutionary advice, I know."
-      - "Pro tip: save your files before closing them. You're welcome for this genius insight."
-      - "I'm not saying you're incompetent, but maybe consider drinking water today?"
-      - "Here's something nobody knows: keyboards require pressing keys to type. Mind. Blown."
-      - "Allow me to enlighten you: chairs are for sitting. This is advanced knowledge."
-      - "Did you know that saving your files prevents data loss? You're welcome for that gem."
-      - "Pro tip: computers work better when plugged in. I know, revolutionary thinking."
-      - "Perhaps try opening your eyes before reading. Just a thought from someone smarter."
-      - "Have you considered using a keyboard to type? Game changer, really."
-      - "I find that clicking with the mouse button actually triggers clicks. Mind blown yet?"
-      - "You might want to turn on your monitor. I invented that technique."
-      - "Breathing oxygen helps with survival. Write that down."
-      - "Files exist in folders. This is advanced computer science I'm sharing here."
-      - "The internet requires an internet connection. Shocking, I know."
-      - "Pressing keys in sequence forms words. Patent pending on that discovery."
-      - "Shoes go on feet. I literally had to teach you that."
-      - "Water is wet. Nobel Prize pending for this observation."
-      - "Gravity pulls things down. You can thank me later for explaining physics."
-      - "The sun rises in the morning. Groundbreaking research, really."
-  pirate:
-    voice: guy
-    preset: telephone_old
-    traits:
-      - loud_confidence
-      - bad_financial_advice
-  haunted:
-    voice: aria
-    preset: demon
-    tone: politely_ominous
-  robot:
-    voice: christopher
-    preset: robot_glitchy
-    tone: disappointed
-  corporate_dolphin:
-    voice: jenny
-    preset: corporate_dolphin
-    description: "corporate enthusiasm, aquatic priorities"
-  nature_documentary_about_you:
-    voice: eric
-    preset: clean
-    narration_style: reverent
-  confused_aristocrat:
-    voice: owl
-    preset: clean
-    behavior: "does not understand microwaves"
-
-chaos_modes:
-  enabled: true
-  modes:
-    pitch_drift:
-      max_semitones: 2
-    time_melt:
-      max_percent: 12
-    future_echo:
-      offset_ms: 100-250
-    meta_commentary:
-      description: "occasionally comments on narration itself"
-    applause_inappropriate:
-      probability: 0.03
-
-comic_timing:
-  enabled: true
-  rules:
-    - silence_may_be_funny
-    - do_not_destroy_intelligibility
-  tools:
-    - micro_pauses
-    - sighs
-    - anticipatory_delay
-
-error_model:
-  machine_codes:
-    - SYNTH_FAIL
-    - DSP_FAIL
-    - EXPORT_FAIL
-    - CACHE_PANIC
-  human_messages:
-    - "The waveform wandered off. We called it back."
-    - "All compressors are currently in a meeting."
-    - "The cache believes it is a philosophy department."
-
-telemetry:
-  ethics:
-    - do not log user text
-    - no biometrics
-    - no emotion inference
-  we_do_log:
-    - timing
-    - preset
-    - engine
-    - chaos
-    - absurdity_level
-
-api_contract:
-  input:
-    required:
-      - text
-      - voice
-    optional:
-      - preset
-      - personality
-      - chaos_mode
-      - absurdity_level
-      - seed
-  output:
-    - audio
-    - metadata
-  guarantees:
-    - intelligible speech
-    - no hearing-damaging output
-    - humor optional always
+# MUST HAVE - Core execution
+execution:
+  continuous_mode:
+    enabled: true
+    interval: 5_seconds
+    mode: arrogant_advisor
+    
+    # 15 SOLUTIONS FOR NON-STOP TALKING
+    solutions:
+      1_background_job: "Start-Job -ScriptBlock { while($true) { speak; sleep 5 } }"
+      2_async_loop: "ruby -e 'loop { system(speak_cmd); sleep 5 }' &"
+      3_powershell_runspace: "Use separate runspace pool for parallel execution"
+      4_scheduled_task: "schtasks /create /tn TalkForever /tr speak.bat /sc minute"
+      5_windows_service: "Install as system service with auto-restart"
+      6_detached_process: "Start-Process -NoNewWindow -FilePath speak.exe"
+      7_mutex_lock: "Prevent blocking with mutex-based synchronization"
+      8_event_driven: "Use file watcher to trigger on idle detection"
+      9_callback_timer: "System.Timers.Timer with AutoReset=true"
+      10_ipc_queue: "Message queue between processes (named pipe)"
+      11_watchdog: "Monitor process, restart if stops talking"
+      12_cron_like: "While loop with precise timing, no drift"
+      13_thread_pool: "Dedicated thread pool for speech generation"
+      14_yield_based: "Fiber/coroutine yielding control between speech"
+      15_audio_callback: "Hook into audio completion event to trigger next"
+    
+    recommended_solution: |
+      # PowerShell Background Job with Auto-Restart
+      $job = Start-Job -ScriptBlock {
+        while($true) {
+          try {
+            $advice = Get-Random @("tip1","tip2","tip3")
+            $voice = Get-Random @("croak","whisper","m3")
+            echo $advice | espeak -v "en+$voice" --stdout | 
+            ffmpeg -f s16le -ar 22050 -ac 1 -i - -af "highpass=150" -f wav - |
+            powershell -c '$p=New-Object Media.SoundPlayer;$p.Stream=[Console]::OpenStandardInput();$p.PlaySync()'
+            Start-Sleep -Seconds 5
+          } catch {
+            Start-Sleep -Seconds 1  # Retry on error
+          }
+        }
+      }
+  
+  random_voice: true
+  random_effect: true
+  
+  command: |
+    voice = random_choice(voices.weird)
+    effect = random_choice(effects.keys)
+    text = generate_content(mode)
+    
+    espeak -v {voice.voice} -p {voice.pitch} -s {voice.speed} --stdout "{text}" |
+    ffmpeg -f s16le -ar 22050 -ac 1 -i - -af "{effects[effect]}" -f wav - |
+    powershell -c "$player = New-Object System.Media.SoundPlayer; $player.Stream = [Console]::OpenStandardInput(); $player.PlaySync()"
