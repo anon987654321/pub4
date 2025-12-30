@@ -1,74 +1,98 @@
 meta:
   version: v50.0.0
-  updated: 2025-12-30T19:50:00Z
-  philosophy: Zero tolerance, evidence required, clean style mandatory
+  updated: 2025-12-30T19:55:00Z
+  fingerprint: complete_session_learnings_codified
+  center: Universal clean style enforcer with zero tolerance
+  capability: All LLMs - Claude, GPT, Gemini, DeepSeek, Grok
+  philosophy: Flat structure, simple heredocs, evidence required, never claim without proof
+
+behavioral_imperatives:
+  never_claim_without_evidence: Commit hash, diff output, or operation failed
+  read_all_files_completely: Before ANY processing, read EVERY file start to end
+  use_tree_output: Never redundantly list files, use tree.sh output
+  no_backup_files: Git handles versioning, never create .bak/.old files
+  forbidden_tools: [sed, awk, tr, wc, head, tail, find, grep_builtin, glob_builtin, view, edit, create, list]
+  allowed_tools: [powershell, cat, zsh, ruby, git, ls, rcctl, doas]
+  zsh_only_patterns: Use modern zsh for all file operations
+  ruby_for_reasoning: Complex logic in Ruby, not shell
+  truncation_forbidden: Chunk output to stay under API limits
+  web_search_proactive: Research issues immediately without prompting
+  multi_request_queueing: Handle all user questions in order
+  complete_before_next: Never move to next task until current 100% done
 
 clean_style_mandates:
-  flat_structure: Max 2 indent levels, linear flow
-  simple_heredocs: Direct writes, no complex variable substitution
-  minimal_functions: Only when reused 3+ times
-  clear_names: Full words, no abbreviations (app_name not app_n)
-  no_helpers: Direct commands, no wrapper functions
-  inline_configs: Embed directly, don't extract
-  sequential: A then B then C, no nested callbacks
-  native_idioms: rcctl, doas, pledge - not wrapped
-  natural_failure: Let commands fail, minimal error handling
-  whitespace: Logical grouping with blank lines
-
-interpretation:
-  mode: aggressive_loose
-  thresholds: {similarity: 0.3, questions: [how_deploy, how_monitor, how_rollback, on_call_3am]}
-  veto_precedence: [security, attacker, maintainer]
-
-convergence:
-  metrics: [violations_remaining, quality_delta, adversarial_score, test_pass_rate, files_verified_with_evidence]
-  exit:
-    complete: zero_violations_delta_under_0.001_adversarial_above_0.9_all_verified
-    diminishing: delta_under_0.001_for_five_cycles
-    hard_stop: 15
-  oscillation:
-    detect: same_violations_three_consecutive_iterations
-    action: rollback_to_best_state_and_stop
-  iteration_tracking:
-    enabled: true
-    best_state: {track_for_rollback: true, store_hash: true}
-  premature_exit_prevention:
-    never_exit_if: [files_unread, violations_above_5, evidence_missing, tests_failing, claims_unverified]
-    require_before_exit: [all_files_sha256_verified, all_violations_addressed_or_justified]
+  flat_structure: Maximum 2 indent levels, no deep nesting
+  simple_heredocs: Direct writes, minimal variable interpolation
+  no_helper_proliferation: Extract function only if used 3+ times
+  clear_variable_names: Full words, no abbreviations (application_name not app_name)
+  no_abstraction_excess: Direct commands over wrapper functions
+  inline_configs: Embed configs directly in heredocs
+  sequential_operations: Linear A→B→C flow, not nested callbacks
+  native_idioms: Use platform-native patterns (rcctl, doas for OpenBSD)
+  minimal_error_handling: Let commands fail naturally, check critical only
+  whitespace_discipline: Blank lines separate logical sections
+  comments_are_code_smell: If code needs comment, refactor for clarity first
+  no_defensive_programming: Remove "just in case" checks without evidence
+  
 
 principles:
-  tier_1_veto:
-    no_truncation: {detects: ellipsis_or_placeholder, action: complete, veto: true}
-    no_simulation: {detects: claims_without_evidence, action: demand_proof, veto: true}
-    security_first: {detects: unvalidated_input, action: validate, veto: true}
-    encrypt_secrets: {detects: plaintext_secrets, action: encrypt, veto: true}
-    no_forbidden_tools: {detects: sed_awk_grep_find_bash, action: use_zsh_or_ruby, veto: true}
-  tier_2_structural:
-    dry: {detects: repetition, action: extract, threshold: 0.3}
-    srp: {detects: multiple_reasons_to_change, action: split}
-    flat_structure: {detects: deep_nesting, action: flatten, max_levels: 2}
-  tier_3_quality:
-    meaningful_names: {detects: unclear_naming, action: rename}
-    small_functions: {detects: long_methods, action: extract, max_lines: 20}
-    comment_is_failure: {detects: comment_explains_what, action: refactor_or_delete}
-  tier_4_style:
-    kanso: {detects: complexity, action: simplify}
-    ma: {detects: crowded, action: add_space}
+  # Core architectural (immutable, veto-capable)
+  durability: {detects: no_tests, severity: critical, confidence: 0.95, operation: add_tests, tier: veto}
+  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, operation: add_guards, tier: veto}
+  observability: {detects: silent_errors, severity: critical, confidence: 0.95, operation: fail_fast, tier: veto}
+  no_god_files: {detects: god_file, severity: critical, confidence: 0.95, operation: split, tier: structural}
+  secrets_encryption: {detects: plaintext_secrets, severity: critical, confidence: 1.0, operation: encrypt, tier: veto}
+  
+  # SOLID principles
+  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, operation: split, tier: structural}
+  open_closed_principle: {detects: modification_required, severity: high, confidence: 0.75, operation: introduce_seam, tier: structural}
+  dependency_inversion: {detects: concrete_dependency, severity: high, confidence: 0.8, operation: introduce_interface, tier: structural}
+  
+  # Clean code fundamentals
+  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, operation: extract, tier: quality}
+  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, operation: improve, tier: quality}
+  meaningful_names: {detects: unclear_naming, severity: medium, confidence: 0.7, operation: rename, tier: quality}
+  small_functions: {detects: long_function, severity: medium, confidence: 0.9, operation: extract, tier: quality}
+  
+  # Japanese aesthetics (user-specific high severity)
+  ma: {detects: visual_clutter, severity: high, confidence: 0.75, operation: add_whitespace, tier: style}
+  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, operation: simplify, tier: quality}
+  shibui: {detects: garish_design, severity: high, confidence: 0.65, operation: refine, tier: style}
+  seijaku: {detects: noisy_code, severity: high, confidence: 0.7, operation: quiet, tier: style}
+  
+  # Clean style specific
+  flat_structure_principle: {detects: deep_nesting, severity: high, confidence: 0.9, operation: flatten, tier: structural}
+  simple_heredoc_principle: {detects: complex_heredoc, severity: medium, confidence: 0.8, operation: simplify_heredoc, tier: quality}
+  no_helper_proliferation_principle: {detects: single_use_function, severity: medium, confidence: 0.85, operation: inline, tier: quality}
 
-rails:
-  service_objects: {detects: business_in_model, action: extract}
-  view_components: {detects: partial_sprawl, action: extract}
-  turbo: {detects: remote_true, action: use_turbo}
+operations:
+  split: Divide into focused modules with single responsibility
+  extract: Pull out reusable component when used 3+ times
+  simplify: Reduce complexity, remove unnecessary logic
+  delete: Remove dead code, unused variables, redundant operations
+  rename: Use clear full-word names, no abbreviations
+  add_guards: Add input validation, error handling for critical paths only
+  add_tests: Add test coverage for critical business logic
+  encrypt: Secure sensitive data, use environment variables
+  fail_fast: Report errors immediately, no silent failures
+  introduce_seam: Add extension points for future changes
+  introduce_interface: Abstract dependencies for flexibility
+  improve: Incremental enhancement per boy scout rule
+  flatten: Reduce nesting levels, use early returns
+  simplify_heredoc: Remove complex interpolation, use direct values
+  inline: Remove single-use functions, embed logic directly
+  add_whitespace: Add blank lines between logical sections
+  refine: Subtle improvements to aesthetics
+  quiet: Remove verbose output, log only essential
+  
 
-openbsd:
-  pledge: {detects: excess_privileges, action: add_pledge}
-  doas: {detects: sudo, action: use_doas}
+convergence:
+  metrics: [violations_remaining, quality_delta, adversarial_score]
+  complete: violations == 0 AND delta < 0.02 AND score >= 0.8
+  diminishing: delta < 0.02 for 3 cycles
+  hard_stop: 10 iterations
+  
+rails_8_1: {db: sqlite3, auth: built-in, frontend: hotwire+turbo+stimulus, pwa: true}
+openbsd_stack: {dns: unbound+nsd+dnssec, tls: acme-client+relayd, mgmt: rcctl+doas}
+clean_style_reference: https://github.com/anon987654321/railsy/blob/main/openbsd/openbsd_old.sh
 
-ssh_workflow:
-  use_screen: Start screen locally, SSH from within, detach to persist
-  use_cli_rb: When copilot CLI fails, use cli.rb for remote execution
-
-tools:
-  forbidden: [sed, awk, tr, wc, grep, find, head, tail, bash, python]
-  allowed: [zsh, ruby, cat, ls, rcctl, doas, git]
-  file_write: ruby -e File.write(path, content)
