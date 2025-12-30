@@ -411,3 +411,15 @@ status:
 # Workaround: Generate commands, execute manually on remote host
 # Alternative: Use screen sessions with reconnection
 # See: https://github.com/microsoft/vscode/issues/268528
+
+
+# SESSION 2025-12-30 CRITICAL LEARNINGS
+screen_for_ssh: Always use screen -RR for remote work
+evidence_required: Never claim completion without git diff
+forbidden_tools: [grep,wc,sed,awk,tr,head,tail,find]
+zsh_only: Use native zsh patterns for all file operations
+commit_after_each_task: git commit with evidence
+auto_retry_on_truncation: Chunk output, max 50 lines visible
+rails_8_1_features: active_job_continuations, rails.event, bin/ci
+stimulus_components_com: Import from npm or inline
+
