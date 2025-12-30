@@ -1,0 +1,1 @@
+Add-Type -AssemblyName presentationCore; $p=New-Object System.Windows.Media.MediaPlayer; $p.Open([Uri]::new('G:\pub\multimedia\tts\cache\proc_1767112943.mp3'));$p.Play();Start-Sleep 7;$p.Stop();$p.Close()

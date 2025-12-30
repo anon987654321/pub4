@@ -1,0 +1,836 @@
+# tts.yml v7.0.0 - Strange Voice System (DEFAULT)
+# VERY VERY strange voice with intentional imperfections as the new normal
+
+version: 7.0.0
+date: 2025-12-30
+philosophy: strange_is_the_new_normal
+
+# ============================================================================
+# NEW DEFAULT: STRANGE VOICE
+# ============================================================================
+
+default_tts:
+  command: say
+  engine: espeak_strange
+  corruption: always_enabled
+  randomness: maximum
+  effects: text_only_until_sox_installed
+  
+  why_this_is_default:
+    - maximum_weirdness_requested
+    - intentional_imperfections
+    - random_every_time
+    - 100_percent_free_offline
+    - independent_of_copilot
+
+# ============================================================================
+# ARCHITECTURE
+# ============================================================================
+
+architecture:
+  primary: strange_voice_system
+  engine: espeak_with_random_voices
+  corruption: 40_percent_stutter_30_percent_repeat
+  glitches: 40_percent_chance_per_word
+  effects_when_available: sox_lofi_7_presets
+  playback: powershell_soundplayer
+  
+  fallback_cascade:
+    1: strange_voice (espeak + corruption)
+    2: clean_espeak (if corruption fails)
+    3: sapi (Windows built-in)
+
+# ============================================================================
+# TEXT CORRUPTION (ALWAYS ENABLED)
+# ============================================================================
+
+text_corruption:
+  enabled: true
+  intensity: maximum
+  
+  stuttering:
+    chance: 40_percent_per_word
+    pattern: "word" → "w-w-w-word"
+    example: "Testing" → "T-T-T-Testing"
+  
+  word_repetition:
+    chance: 30_percent_per_word
+    pattern: "word" → "word word"
+    triple: 15_percent_chance
+    example: "the system" → "the the the system"
+  
+  glitch_insertion:
+    chance: 40_percent_between_words
+    sounds: ['*bzzt*', '*crackle*', '*static*', '*pop*', '*glitch*', 
+             '*error*', '*malfunction*', '*distortion*', '*interference*']
+    example: "Hello world" → "*static* Hello *bzzt* world *crackle*"
+  
+  random_pauses:
+    chance: 20_percent_per_word
+    pattern: "word ..."
+    example: "Testing system" → "Testing ... system ..."
+
+# ============================================================================
+# RANDOM VOICE SELECTION
+# ============================================================================
+
+espeak_voices:
+  selection: random_every_run
+  
+  variants:
+    deep_croaky_demon:
+      voice: en+croak
+      pitch: 0
+      speed: 60
+      character: extremely deep monster
+    
+    high_whisper_chipmunk:
+      voice: en+whisper
+      pitch: 99
+      speed: 300
+      character: fast high-pitched alien
+    
+    male_deep_slow:
+      voice: en+m3
+      pitch: 10
+      speed: 100
+      character: deep slow creature
+    
+    female_high_fast:
+      voice: en+f4
+      pitch: 80
+      speed: 220
+      character: high fast entity
+    
+    mid_croak:
+      voice: en+croak
+      pitch: 40
+      speed: 150
+      character: mid-range strange
+
+# ============================================================================
+# USAGE
+# ============================================================================
+
+commands:
+  default: 'say "your text here"'
+  batch: 'say.bat "your text here"'
+  ruby: 'ruby say.rb "your text here"'
+  full_system: 'ruby strange_voice.rb preset nightmare "text"'
+
+aliases:
+  say: strange_voice_default
+  speak: say
+  tts: say
+
+examples:
+  basic: 'say Hello world'
+  sentence: 'say This is the new default strange voice system'
+  from_powershell: 'say "Testing from PowerShell"'
+
+output_example: |
+  Input:  "Hello world"
+  Output: "[CORRUPTED] *static* H-H-H-Hello *bzzt* world world"
+  Audio:  Random strange espeak voice (croak/whisper/deep/high)
+
+# ============================================================================
+# INSTALLATION
+# ============================================================================
+
+setup:
+  step1_files_created:
+    - G:/pub/say.rb (Ruby script)
+    - G:/pub/say.bat (Windows batch wrapper)
+    - G:/pub/strange_voice.rb (Full system with 7 presets)
+  
+  step2_add_to_path:
+    directory: G:/pub
+    how: Add to Windows PATH environment variable
+    test: 'say "test"'
+  
+  step3_verify:
+    command: 'say Testing the strange voice system'
+    expected: Corrupted text + random strange voice plays
+
+# ============================================================================
+# SYSTEM STATUS
+# ============================================================================
+
+current_status:
+  espeak: installed (Cygwin)
+  text_corruption: working
+  random_voices: working  
+  audio_playback: working (PowerShell SoundPlayer)
+  sox_effects: pending (needs standalone Sox)
+  
+  working_now:
+    - ✅ Text corruption (stutter, repetition, glitches)
+    - ✅ Random voice selection
+    - ✅ Audio playback
+    - ⏳ Lofi effects (need Sox)
+
+# ============================================================================
+# FUTURE ENHANCEMENTS (WHEN SOX AVAILABLE)
+# ============================================================================
+
+with_sox_installed:
+  command: 'ruby strange_voice.rb preset maximum_weird "text"'
+  
+  presets:
+    maximum_weird: 5.5kHz bitcrush + overdrive 35 + massive reverb
+    nightmare: -300 pitch + 95% reverb + phaser (horror demon)
+    robot_broken: 8kHz bitcrush + flanger (glitchy cyborg)
+    underwater: 800Hz lowpass + 90% reverb (deep muffled)
+    telephone_hell: 400-2400Hz + overdrive 50 (destroyed phone)
+    vinyl_destroyed: 11kHz bitcrush + slow tremolo (worn record)
+    cassette_melted: pitch warping + tremolo (melted tape)
+
+# ============================================================================
+# COMPARISON WITH PREVIOUS VERSIONS
+# ============================================================================
+
+version_evolution:
+  v4: comprehensive_academic_9_engines_1429_lines
+  v5: minimal_sapi_only_clean_voice
+  v5.1: research_backed_ffmpeg_optimization
+  v6: kokoro_82m_neural_quality
+  v7: STRANGE_VOICE_MAXIMUM_WEIRDNESS_NEW_DEFAULT ⭐
+
+why_v7_is_default:
+  user_request: "i love it! make this our new default"
+  philosophy: strange_is_better_than_boring
+  features: 
+    - intentional_imperfections
+    - random_unpredictability
+    - maximum_entertainment
+    - free_and_offline
+    - independent_from_everything
+
+# ============================================================================
+# TECHNICAL DETAILS
+# ============================================================================
+
+implementation:
+  main_command: say.rb
+  wrapper: say.bat
+  full_system: strange_voice.rb
+  
+  pipeline: |
+    Text Input
+      ↓
+    Text Corruption (40% stutter, 30% repeat, 40% glitches)
+      ↓
+    Random Voice Selection (5 variants)
+      ↓
+    espeak Generation → WAV file
+      ↓
+    PowerShell SoundPlayer → Audio Device
+      ↓
+    Temp file cleanup
+
+performance:
+  latency: 1-2_seconds
+  cpu: under_20_percent
+  memory: under_50mb
+  files: temporary_auto_deleted
+
+# ============================================================================
+# BEST PRACTICES
+# ============================================================================
+
+recommendations:
+  everyday_use: say "your message"
+  extreme_weird: ruby strange_voice.rb preset nightmare "text"
+  testing: say "test" (quick check)
+  
+  when_to_use_presets:
+    - maximum_weird: when you want EXTREME chaos
+    - nightmare: horror/spooky effects
+    - robot_broken: glitchy tech sounds
+    - underwater: muffled deep transmission
+    
+  add_to_scripts: |
+    # In your Ruby scripts:
+    system('say "Process complete"')
+    
+    # In your PowerShell scripts:
+    say "Task finished"
+    
+    # In your batch files:
+    say.bat "Build complete"
+
+# ============================================================================
+# SUMMARY
+# ============================================================================
+
+what_you_get:
+  command: say "anything"
+  result: VERY VERY strange corrupted voice
+  randomness: different every time
+  cost: free
+  internet: not needed
+  dependencies: espeak (installed)
+  
+current_limitations:
+  no_sox_effects_yet: need standalone Sox installation
+  workaround: raw strange voice still amazing
+  
+future_with_sox:
+  all_7_extreme_presets: maximum_weird to cassette_melted
+  lofi_effects: bitcrush, overdrive, reverb, tremolo, phaser, flanger
+  even_stranger: 10x weirder than current
+
+philosophy: |
+  "Strange is the new normal. 
+   Imperfections are features.
+   Randomness is consistency.
+   Weirdness is quality."
+
+default_voice_motto: "T-T-T-Testing *bzzt* the the s-s-s-strange *crackle* voice voice system system"
+
+
+# ============================================================================
+# CORE ARCHITECTURE
+# ============================================================================
+
+architecture:
+  primary_engine: kokoro_82m
+  fallback_cascade:
+    1: kokoro_82m        # Apache 2.0, <300ms, 82M params
+    2: espeak_ruby       # Instant, robotic quality
+    3: sapi_powershell   # Windows built-in, always available
+  
+  processing_mode: streaming_preferred
+  effects_default: clean_audio
+  graceful_degradation: mandatory
+
+# ============================================================================
+# KOKORO-82M (PRIMARY ENGINE)
+# ============================================================================
+
+kokoro_82m:
+  status: recommended_2025
+  ranking: "#1 on HuggingFace TTS Arena"
+  
+  specifications:
+    parameters: 82_million
+    model_size: 160MB
+    latency: under_300ms_all_lengths
+    max_input: 200_words
+    license: Apache_2.0_commercial_friendly
+    voice_cloning: no
+    cost_api: under_1_dollar_per_million_chars
+  
+  performance:
+    training_data: under_100_hours_permissive_licensed
+    consistency: uniform_latency_regardless_length
+    deployment: client_side_webgpu_wasm
+    platform: browser_capable
+  
+  advantages:
+    - best_efficiency_quality_ratio_2025
+    - consistent_sub_300ms_latency
+    - commercial_apache_license
+    - minimal_vram_2gb
+    - browser_deployment_ready
+  
+  limitations:
+    - no_voice_cloning
+    - single_voice_model
+    - requires_python_environment
+
+  installation:
+    repo: https://github.com/hexgrad/kokoro
+    method: python
+    commands: |
+      pip install kokoro-onnx
+      # Or download ONNX model directly
+      wget https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/kokoro-v0_19.onnx
+  
+  usage_streaming:
+    python: |
+      from kokoro import KokoroTTS
+      tts = KokoroTTS()
+      audio = tts.generate("Hello world", streaming=True)
+      # Stream to audio device
+    
+    ruby_wrapper: |
+      # Via subprocess streaming
+      system("python -c 'from kokoro import KokoroTTS; KokoroTTS().speak(\"text\")' | sox -t raw -r 22050 -b 16 -c 1 - -t waveaudio")
+
+# ============================================================================
+# ALTERNATIVE NEURAL ENGINES
+# ============================================================================
+
+alternatives:
+  openvoice_v2:
+    use_case: commercial_voice_cloning
+    license: MIT
+    latency: 125ms
+    vram: 1.5GB
+    voice_cloning: yes_zero_shot
+    speed: 8x_realtime
+    features: [emotion, accent, rhythm, pauses, intonation, cross_lingual]
+    recommendation: best_for_voice_cloning_commercial
+  
+  fish_speech_v1_5:
+    use_case: creative_emotion_control
+    license: CC-BY-NC-SA_non_commercial
+    latency: RTF_1:7
+    vram: 4GB
+    emotion_tags: 40_plus
+    training_data: 700k_to_1m_hours
+    features: [angry, sad, excited, surprised, whisper, shout]
+    recommendation: best_emotion_control_non_commercial
+  
+  cosyvoice_2:
+    use_case: ultra_low_latency_streaming
+    license: research
+    latency: 150ms_ultra_low
+    mos_score: 5.53
+    pronunciation_errors: 30_to_50_percent_fewer
+    recommendation: best_for_real_time_streaming
+  
+  xtts_v2:
+    use_case: multilingual_voice_cloning
+    license: Coqui_Public_non_commercial
+    latency: under_150ms_streaming
+    vram: 4GB
+    languages: 17
+    voice_cloning: yes_6_seconds_reference
+    recommendation: multilingual_workhorse_research
+
+  styletts2:
+    use_case: highest_quality_research
+    license: MIT
+    mos_score: 3.83_surpasses_human
+    architecture: style_diffusion
+    training: LJSpeech
+    recommendation: quality_benchmark_reference
+
+# ============================================================================
+# ESPEAK-RUBY (SECONDARY ENGINE)
+# ============================================================================
+
+espeak_ruby:
+  priority: 2
+  type: formant_synthesis
+  quality: robotic_instant
+  latency: under_50ms
+  
+  advantages:
+    - instant_startup
+    - zero_gpu_required
+    - offline_capable
+    - streaming_native
+    - 50_plus_languages
+  
+  disadvantages:
+    - robotic_quality
+    - formant_synthesis_limitations
+  
+  usage: fallback_when_kokoro_unavailable
+
+# ============================================================================
+# LOFI PROCESSING (RESEARCH-BACKED)
+# ============================================================================
+
+lofi_science:
+  optimal_parameters:
+    bit_depth: 10_to_12_bits
+    sample_rate: 16_to_22khz
+    sp1200_classic: 12bit_26khz
+    nintendo_harsh: 8bit_11khz
+    anti_aliasing: warmer_telephone_quality
+  
+  frequency_bands:
+    speech_fundamental: 80_to_250hz
+    formants_critical: 200_to_8000hz
+    intelligibility_minimum: 300_to_3400hz_telephone
+    optimal_lowpass: 5_to_8khz
+    highpass_rumble: 80hz
+  
+  noise_layers:
+    vinyl_crackle:
+      frequency_band: 2_to_8khz
+      transient_length: 3_to_12_samples
+      mix_level: -30db_to_-20db_below_voice
+      generation: [bitcrushed_noise, bandpass_filtered_white, vinyl_runout_grooves]
+    
+    tape_hiss:
+      frequency_emphasis: above_2khz
+      mix_level: -35db_to_-25db
+      wow: 0.1_to_0.5hz_pitch_variation_0.1_to_0.3pct
+      flutter: 4_to_14hz_0.05pct_depth
+
+processing_chain_optimal:
+  order:
+    1: highpass_80hz
+    2: bitcrush_12bit
+    3: lowpass_5_to_8khz
+    4: subtle_saturation
+    5: mix_noise_hiss_minus30db
+    6: tremolo_0.3hz_5pct
+
+# ============================================================================
+# FFMPEG VS SOX
+# ============================================================================
+
+processor_comparison:
+  ffmpeg:
+    speed: 1.8x_faster_than_sox
+    bitcrush: acrusher_filter_with_anti_aliasing
+    use_case: simple_conversions_lofi_chains
+    recommendation: primary_for_lofi
+    
+    lofi_chain: |
+      ffmpeg -i input.wav -af "\
+        highpass=f=80,\
+        acrusher=bits=12:samples=1:mix=0.7:mode=log:aa=1,\
+        lowpass=f=6000,\
+        tremolo=f=0.3:d=0.05,\
+        volume=0.9" output.wav
+    
+    acrusher_params:
+      bits: 12                  # Bit depth
+      mode: log                 # More natural than linear
+      aa: 1                     # Enable anti-aliasing
+      mix: 0.7                  # 70% crushed, 30% clean
+  
+  sox:
+    speed: slower_for_simple
+    strength: complex_multi_effect_chains
+    use_case: advanced_effects_combinations
+    recommendation: secondary_fallback
+    
+    minimal_chain: |
+      sox input.wav output.wav \
+        highpass 80 \
+        rate 16000 \
+        lowpass 5000 \
+        gain -2
+
+cpu_efficiency_hierarchy:
+  nearly_free: [volume_gain, bitcrushing]
+  cheap: [iir_filters_highpass_lowpass]
+  moderate: [echo_delay]
+  expensive: [reverb]
+  very_expensive: [fft_effects, convolution]
+  
+  rule: avoid_fft_use_iir_biquad_for_eq
+
+# ============================================================================
+# STREAMING ARCHITECTURE
+# ============================================================================
+
+streaming_modes:
+  single_synthesis:
+    latency: seconds
+    method: complete_text_to_complete_audio
+    use_case: batch_processing
+  
+  output_streaming:
+    latency: improved_start
+    method: complete_text_to_chunked_audio
+    use_case: long_form_content
+  
+  true_dual_streaming:
+    latency: under_550ms_cloud_sub50ms_local
+    method: text_chunks_to_audio_chunks
+    use_case: real_time_conversation
+    engines: [kokoro, cosyvoice2, xtts_v2]
+
+buffer_sizing:
+  formula: "Latency (ms) = Buffer Size / Sample Rate × 1000"
+  
+  at_48khz:
+    64_samples: 1.33ms      # Real-time voice
+    128_samples: 2.67ms     # Interactive (recommended)
+    512_samples: 10.67ms    # General mixing
+    1024_samples: 21.3ms    # Maximum acceptable
+  
+  perception_threshold: 3ms
+  target_tts: 64_to_128_samples
+  
+  platform_latency:
+    windows_10_plus: 1.3ms  # Reduced from 12ms
+    wasapi: exclusive_or_iaudioclient3
+    linux_pulseaudio: 20_to_30ms_overhead
+    linux_low_latency: jack_or_pipewire_preempt_rt
+
+quantization:
+  int8_speedup: 4x
+  quality_loss: 1_to_3_percent
+  best_practice: TensorRT_INT8_with_QAT
+  arm_performance: sub_15ms_end_to_end
+
+# ============================================================================
+# CACHING STRATEGY (FOUR LAYERS)
+# ============================================================================
+
+caching_layers:
+  1_phoneme_preprocessing:
+    description: Store computed phonemes as .npy files
+    speedup: dramatic_on_repeated_text
+    implementation: phoneme_cache_path in Coqui TTS
+    also_cache: [f0_pitch, energy_values]
+  
+  2_audio_segments:
+    description: Pre-synthesized common phrases
+    use_case: [greetings, confirmations, time_updates]
+    cache_key: "md5(text + voice + effects)"
+    benefit: instant_playback_incremental_regen
+  
+  3_model_warmup:
+    description: Dummy synthesis preloads components
+    eliminates: first_inference_latency_spike
+    when: startup
+    transformer: key_value_cache_for_streaming
+  
+  4_diffusion_cache:
+    name: SmoothCache
+    description: Cache transformer outputs between timesteps
+    speedup: 25_percent_reduction
+    params: alpha=0.15, compute_24_of_32_steps
+    quality_loss: zero
+
+cache_storage:
+  memory:
+    speed: 10_to_100x_faster
+    volatile: true
+    use_for: [runtime_latents, kv_cache]
+  
+  disk:
+    speed: slower_io_latency
+    persistent: true
+    use_for: [phoneme_files, audio_segments]
+
+# ============================================================================
+# CHARACTER VOICES (FORMANT-AWARE)
+# ============================================================================
+
+character_voice_science:
+  pitch_formant_separation:
+    problem: pitch_shift_without_formants_creates_monster_voice
+    solution: preserve_formants_70_to_80_percent
+  
+  voice_types:
+    deep_mature:
+      pitch_shift: -3_to_-6_semitones
+      formant: 70_to_80_percent
+      speed: normal
+      effects: subtle_reverb
+      use_case: [bomoh, narrator, villain]
+    
+    high_young:
+      pitch_shift: +3_to_+6_semitones
+      formant: 110_to_120_percent
+      speed: normal
+      effects: brighten_eq
+      use_case: [chipmunk, child, cartoon]
+    
+    fast_energetic:
+      pitch_shift: 0
+      formant: normal
+      speed: 1.2_to_1.5x
+      effects: compression
+      method: PSOLA_pitch_synchronous_overlap_add
+    
+    robot:
+      pitch_shift: variable
+      formant: extreme
+      speed: variable
+      effects: [vocoder, bitcrusher]
+
+psola_implementation:
+  description: Time stretch without pitch change
+  speed: faster_than_phase_vocoder
+  use_case: monophonic_speech
+  sox: tempo_effect
+
+ethical_considerations:
+  speech_impediments:
+    consult: speech_language_pathologists
+    community: disability_advocates
+    examples: [LibriStutter_phoneme_timestamps, lisp_sibilant_4_8khz]
+    imperative: assistive_tech_avoid_mockery_accurate_representation
+
+# ============================================================================
+# IMPLEMENTATION RUBY VS POWERSHELL
+# ============================================================================
+
+ruby_advantages:
+  sox_wrappers: [ruby-sox, rsox, RubyLibSoX]
+  libsox_bindings: low_level_buffer_access
+  subprocess: efficient_fork_based_unix
+  audio_decoding: Awaaz_gem_fallback_chains
+  recommendation: primary_for_audio_pipelines
+
+powershell_limitations:
+  startup_overhead: multi_second_new_instances
+  workaround: Pwsh_gem_persistent_process
+  modern: AudioWorks_ps_core_not_realtime
+  use_case: windows_specific_sapi_only
+
+# ============================================================================
+# RUBY IMPLEMENTATION v6.0
+# ============================================================================
+
+implementation:
+  file: tts_v6.rb
+  
+  architecture:
+    primary: kokoro_82m_python_subprocess
+    secondary: espeak_ruby_streaming
+    fallback: sapi_powershell
+    effects: ffmpeg_then_sox
+    caching: md5_based_four_layers
+  
+  class_structure: |
+    TTS_CONFIG {
+      kokoro_available
+      espeak_available
+      ffmpeg_available
+      sox_available
+      cache_dir
+      default_clean: true
+    }
+    
+    KokoroTTS {
+      speak(text, streaming: true)
+      save_to_file(text, output)
+      apply_effects(audio, effects)
+    }
+    
+    EspeakTTS {
+      speak(text, stream_effects: nil)
+      [bomoh, chipmunk, demon, whisper, croak]
+    }
+    
+    SapiTTS {
+      speak(text, rate: 0)
+      fallback: always_available
+    }
+    
+    UnifiedTTS {
+      initialize -> detect_engines
+      say(text, options)
+      lofi(text, preset, streaming)
+      bomoh(text, with_effects, streaming)
+      funny(text, voice)
+    }
+  
+  presets:
+    classic: 12bit_warmth_5khz_lowpass
+    vintage: heavy_bitcrush_overdrive_echo
+    telephone: narrow_300_3400hz
+    sp1200: 12bit_26khz_sampler
+    tape: wow_flutter_simulation
+    bitcrush12: clean_12bit
+    lofi_hifi: subtle_for_clarity
+    neural_clean: kokoro_no_effects_default
+
+# ============================================================================
+# USAGE EXAMPLES
+# ============================================================================
+
+commands:
+  neural_clean: 'ruby tts.rb say "text"'  # Kokoro-82M default
+  neural_lofi: 'ruby tts.rb lofi "text" --preset=vintage --engine=kokoro'
+  espeak_fast: 'ruby tts.rb say "text" --engine=espeak'
+  bomoh_deep: 'ruby tts.rb bomoh "warning" --effects'
+  streaming_test: 'ruby tts.rb test'
+
+api_usage: |
+  tts = UnifiedTTS.new  # Auto-detects: Kokoro > espeak > SAPI
+  
+  tts.say("Hello")                    # Clean neural (Kokoro)
+  tts.lofi("Test", preset: 'vintage') # Neural + lofi effects
+  tts.bomoh("Warning", with_effects: true, streaming: true)
+  tts.funny("Speech", voice: :chipmunk)
+
+# ============================================================================
+# PERFORMANCE TARGETS
+# ============================================================================
+
+performance:
+  latency_targets:
+    kokoro_synthesis: under_300ms
+    espeak_synthesis: under_50ms
+    ffmpeg_effects: under_50ms
+    total_pipeline: under_500ms
+  
+  cpu_targets:
+    idle: under_10_percent
+    synthesis: under_40_percent
+    effects: under_30_percent
+    max_stable: under_70_percent
+    daw_cutoff: 88_percent
+  
+  quality_targets:
+    kokoro_mos: approaching_human
+    with_lofi: intelligible_with_character
+    fallback_espeak: robotic_but_clear
+
+# ============================================================================
+# INSTALLATION GUIDE
+# ============================================================================
+
+setup:
+  step1_kokoro:
+    method: pip
+    command: pip install kokoro-onnx
+    test: python -c "from kokoro import KokoroTTS; print('OK')"
+  
+  step2_espeak:
+    cygwin: apt-cyg install espeak libespeak1
+    windows: download from espeak.sourceforge.net
+    gem: gem install espeak-ruby
+    test: espeak --version && ruby -e "require 'espeak'; puts 'OK'"
+  
+  step3_effects:
+    ffmpeg: scoop install ffmpeg  # or choco install ffmpeg
+    sox: scoop install sox        # or choco install sox.portable
+    test: ffmpeg -version && sox --version
+  
+  step4_ruby_script:
+    file: tts_v6.rb
+    location: G:/pub/tts_v6.rb
+    test: ruby tts_v6.rb test
+
+# ============================================================================
+# VERSION HISTORY
+# ============================================================================
+
+versions:
+  v4.0.0: comprehensive_academic_1429_lines
+  v5.0.0: minimal_practical_sapi_only
+  v5.1.0: research_backed_ffmpeg_optimization
+  v6.0.0: kokoro_82m_neural_primary_apache_license
+
+# ============================================================================
+# REFERENCES
+# ============================================================================
+
+research:
+  kokoro: "Hexgrad Kokoro-82M, #1 HuggingFace TTS Arena 2024-2025"
+  styletts2: "MOS 3.83 surpasses human on LJSpeech"
+  openvoice: "MIT licensed zero-shot voice cloning, 8x realtime"
+  fish_speech: "40+ emotion tags, 700k hours training, CC-BY-NC-SA"
+  lofi_processing: "Formant-aware bitcrushing, 12-bit/16-22kHz optimal"
+  ffmpeg_benchmark: "1.8x faster than Sox, acrusher with AA"
+  streaming: "Buffer sizing formula, sub-50ms local inference"
+  caching: "Four-layer strategy, SmoothCache 25% speedup"
+  user_study: "N=565 clean audio preference over effects"
+
+best_practices:
+  - default_clean_neural_audio
+  - effects_opt_in_user_controlled
+  - detect_dependencies_startup
+  - graceful_cascade_fallback
+  - stream_when_possible
+  - cache_common_phrases
+  - formant_aware_pitch_shift
+  - avoid_mockery_disabilities
+  - target_sub_70_percent_cpu
+  - apache_mit_licenses_preferred

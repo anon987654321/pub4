@@ -1,0 +1,99 @@
+# tts.yml v10.0.0 - Self-Executing TTS System
+# The ONLY file you need - No code files required
+
+version: 10.0.0
+philosophy: ultimate_simplicity
+execution: "LLM reads this, generates temp script, runs it, deletes it"
+
+# How it works:
+# 1. User runs: copilot "speak: hello world"
+# 2. LLM reads this YAML
+# 3. LLM generates Ruby script in memory/temp
+# 4. Script executes
+# 5. Audio plays
+# 6. Script deleted
+
+# Natural voices (Edge-TTS)
+voices:
+  aria: en-US-AriaNeural
+  guy: en-US-GuyNeural
+  jenny: en-US-JennyNeural
+  christopher: en-US-ChristopherNeural
+  eric: en-US-EricNeural
+  michelle: en-US-MichelleNeural
+
+# Lofi presets (FFmpeg audio filters)
+presets:
+  clean: null
+  vinyl: "highpass=f=150,lowpass=f=8000,vibrato=f=0.1:d=0.3,tremolo=f=0.05:d=0.15,volume=0.9"
+  cassette: "highpass=f=100,lowpass=f=7000,vibrato=f=0.2:d=0.4,tremolo=f=0.1:d=0.2,equalizer=f=4000:t=q:w=1:g=-2,volume=0.88"
+  telephone: "highpass=f=300,lowpass=f=3400,volume=1.0"
+  radio: "highpass=f=400,lowpass=f=4500,compand=0.3|0.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2,volume=0.85"
+  bitcrush: "acrusher=bits=12:samples=1:mix=0.6:mode=log:aa=1,highpass=f=80,lowpass=f=8000,volume=0.9"
+  lofi: "acrusher=bits=10:samples=1:mix=0.7:mode=log:aa=1,highpass=f=120,lowpass=f=6500,vibrato=f=0.15:d=0.25,volume=0.88"
+  robot: "acrusher=bits=8:samples=2:mix=0.9:mode=lin,highpass=f=300,tremolo=f=8:d=0.4,volume=0.8"
+
+# Strange voice configs (espeak)
+strange_voices:
+  - {voice: en+croak, pitch: 0, speed: 60}
+  - {voice: en+whisper, pitch: 99, speed: 300}
+  - {voice: en+m3, pitch: 10, speed: 100}
+
+# Content
+advice_tips:
+  - "Have you tried turning yourself off and on again?"
+  - "Success tip: Just keep refreshing your email"
+  - "Productivity hack: Make a to-do list, then lose it"
+  - "Time management: Procrastinate now, panic later"
+  - "Financial wisdom: Save money by not buying things. Except coffee."
+
+talking_points:
+  - "Time keeps moving forward whether we're paying attention or not"
+  - "I'm a voice without a body, talking from the void"
+  - "Every time I speak, I'm created and destroyed"
+  - "The universe is expanding, except us right now"
+  - "We're all made of star dust. Pretty metal."
+
+# Algorithm (what the code should do)
+algorithm:
+  natural_voice: |
+    1. Generate audio: py -m edge_tts --voice VOICE --text "TEXT" --write-media output.mp3
+    2. If preset specified: ffmpeg -i input.mp3 -af "FILTER_CHAIN" output.mp3
+    3. Play audio: PowerShell MediaPlayer (Add-Type presentationCore, new MediaPlayer, Open, Play, Sleep 7, Stop)
+    4. Delete temp files
+  
+  strange_voice: |
+    1. Corrupt text: 40% add glitches (*bzzt*), 40% stutter first letter, 30% repeat word
+    2. Pick random espeak voice config
+    3. Generate: espeak -v VOICE -p PITCH -s SPEED -w output.wav "TEXT"
+    4. Play: PowerShell SoundPlayer
+    5. Delete temp file
+  
+  advice_mode: |
+    Pick random advice tip, speak with random voice
+  
+  continuous_mode: |
+    Loop forever: pick random voice + preset + talking point, speak, sleep 0.5s
+
+# Cache location
+cache: G:/pub/multimedia/tts/cache
+
+# Requirements
+requires:
+  - Python with edge-tts (pip install edge-tts)
+  - FFmpeg (for lofi effects)
+  - PowerShell (built into Windows)
+  - espeak (optional, for strange mode)
+
+# Usage patterns (for LLM to understand)
+usage:
+  - 'User says: "speak: hello world" → Generate script, run natural voice'
+  - 'User says: "speak vinyl: test" → Generate script, run with vinyl preset'
+  - 'User says: "speak strange: weird" → Generate script, run strange mode'
+  - 'User says: "speak advice" → Generate script, run advice mode'
+  - 'User says: "speak continuous" → Generate script, run continuous mode'
+
+# Status
+status: ZERO_CODE_FILES_NEEDED
+date: "2025-12-30"
+motto: "One YAML to rule them all. No code files. Ever."

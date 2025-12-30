@@ -1,0 +1,662 @@
+# master_mg_shoes.yml v1.0.0
+# SYRE™ Footwear Materials Discovery Framework
+# MatterGen Integration + Biomimetic Design + 3D Printing Workflow
+
+extends: master.yml
+
+meta:
+  version: 1.0.0
+  domain: footwear_materials_discovery
+  parent: master.yml v31.0.0
+  purpose: "Generate novel midsole/upper materials via MatterGen, validate through adversarial cascade, visualize lattice structures in Mittsu, export STL for multi-material 3D printing"
+  
+  business_context:
+    program: "SYRE™ Gratis Sko (1:1 donation model)"
+    requirements: [performance, sustainability, printability, cost_effectiveness]
+    technology_stack: "Multi-material 3D printing (Carbon DLS, HP MJF)"
+    design_philosophy: brutalist_functional_honest
+  
+  output_targets:
+    visualization: mittsu_opengl
+    export_format: [stl_binary, obj_with_mtl]
+    lattice_format: json_for_parametric_generation
+    material_specs: yaml_with_property_predictions
+
+materials:
+  domains:
+    midsole:
+      target_properties:
+        energy_return: {min: 0.80, max: 0.90, unit: ratio, priority: critical}
+        density: {min: 100, max: 200, unit: "g/dm³", priority: critical}
+        shore_hardness: {min: 45, max: 65, unit: shore_a, priority: high}
+        compression_set: {max: 15, unit: percent, priority: high}
+        tear_strength: {min: 80, unit: "N/mm", priority: medium}
+        abrasion_resistance: {min: 100000, unit: cycles, priority: medium}
+      
+      sustainability:
+        biodegradation_time: {max: 5, unit: years, priority: critical}
+        bio_content: {min: 0.40, unit: ratio, priority: high}
+        recyclability: {require: true, priority: high}
+        toxicity: {max: 0, standard: "REACH SVHC", priority: veto}
+      
+      printing:
+        technology: [carbon_dls, hp_mjf]
+        layer_height: {min: 0.08, max: 0.15, unit: mm}
+        build_speed: {min: 10, unit: "mm/hour"}
+        post_cure: {max: 120, unit: minutes}
+        support_material: {dissolvable: preferred}
+    
+    upper:
+      target_properties:
+        tensile_strength: {min: 15, max: 30, unit: MPa, priority: high}
+        elongation_at_break: {min: 300, max: 500, unit: percent, priority: medium}
+        breathability: {min: 2000, unit: "g/m²/24h", priority: high}
+        weight: {max: 150, unit: "g/m²", priority: high}
+      
+      sustainability:
+        bio_content: {min: 0.60, unit: ratio, priority: critical}
+        microplastic_shedding: {max: 0.01, unit: "mg/wash", priority: veto}
+      
+      printing:
+        technology: [fdm_tpu, sls_pa11]
+        mesh_density: {min: 5, max: 15, unit: "holes/cm²"}
+
+  mattergen:
+    api_endpoint: "http://materials-service.syre.local:8000"
+    model: "microsoft/mattergen-v1"
+    
+    constraints:
+      midsole_reinforcement:
+        composition_space:
+          allowed_elements: [Ca, P, O, Si, Mg, Zn, Al]
+          exclude_elements: [Pb, Cd, Hg, As, Cr_VI, Ba, radioactive]
+          max_atoms: 20
+          symmetry_preference: cubic_hexagonal
+        
+        property_targets:
+          bulk_modulus: {min: 30, max: 100, unit: GPa}
+          youngs_modulus: {min: 20, max: 80, unit: GPa}
+          formation_energy: {max: -0.5, unit: "eV/atom"}
+          band_gap: {min: 2.0, unit: eV}
+        
+        biocompatibility:
+          cytotoxicity: {require: ISO_10993, veto: true}
+          implant_grade: {prefer: true}
+          dissolution_rate: {max: 0.5, unit: "mg/cm²/day"}
+      
+      upper_fiber:
+        composition_space:
+          allowed_elements: [C, N, O, H, Ca, Si]
+          bio_derived: {require: true}
+          polymer_compatible: [PA11, PLA, PHA]
+    
+    generation:
+      n_candidates: 15
+      guidance_factor: 2.0
+      diffusion_steps: 1000
+      temperature: 0.8
+      random_seeds: [42, 137, 314, 271, 577, 853, 997, 1123, 1619, 2039, 2357, 2663, 3001, 3319, 3571]
+    
+    validation:
+      dft_engine: vasp_or_quantum_espresso
+      phonon_check: mandatory
+      synthesis_screening: icsd_precedent_or_thermodynamic_pathway
+
+biomimetics:
+  inspiration_sources:
+    spider_silk:
+      structure: coat_skin_core_hierarchy
+      key_features: [cylindrical_nanofibrils, beta_sheet_crystals, amorphous_matrix]
+      properties_to_mimic: [strength_to_weight, energy_dissipation, toughness]
+      adaptation: ceramic_reinforced_tpu_nanocomposite
+    
+    nacre:
+      structure: brick_and_mortar
+      key_features: [mineral_platelets, organic_interfaces, crack_deflection]
+      properties_to_mimic: [toughness, damage_tolerance]
+      adaptation: layered_composite_midsole
+    
+    bone:
+      structure: hierarchical_porosity
+      key_features: [trabecular_lattice, cortical_shell, osteon_channels]
+      properties_to_mimic: [strength_to_weight, energy_absorption, remodeling]
+      adaptation: parametric_lattice_midsole
+    
+    mantis_shrimp_dactyl:
+      structure: helicoidal_fiber_stacking
+      key_features: [bouligand_structure, impact_resistance, crack_arrest]
+      properties_to_mimic: [impact_absorption, fatigue_resistance]
+      adaptation: twisted_lattice_nodes
+
+lattice:
+  geometries:
+    truncated_cube:
+      strut_diameter: {min: 0.8, max: 2.0, unit: mm}
+      cell_size: {min: 3, max: 8, unit: mm}
+      relative_density: {min: 0.15, max: 0.35}
+      mechanical_efficiency: high
+    
+    kelvin:
+      cell_size: {min: 4, max: 10, unit: mm}
+      relative_density: {min: 0.10, max: 0.25}
+      isotropic: true
+    
+    gyroid:
+      wall_thickness: {min: 0.5, max: 1.5, unit: mm}
+      relative_density: {min: 0.20, max: 0.40}
+      surface_smoothness: high
+      energy_return: highest
+    
+    voronoi:
+      seed_count: {min: 50, max: 200, per: "100mm³"}
+      randomness: 0.7
+      organic_feel: true
+  
+  zoning:
+    heel_strike:
+      geometry: truncated_cube
+      density: 0.35
+      ceramic_reinforcement: nodes_and_critical_struts
+    
+    midfoot:
+      geometry: gyroid
+      density: 0.25
+      gradient: smooth_transition
+    
+    forefoot:
+      geometry: kelvin
+      density: 0.20
+      energy_return_priority: maximum
+  
+  parametric:
+    foot_mapping:
+      pressure_zones: [heel, lateral_midfoot, metatarsal_heads, hallux]
+      anthropometric_scaling: iso_7250_percentiles
+      customization_level: [standard, custom, bespoke]
+    
+    adaptation:
+      runner_weight: {range: [45, 120], unit: kg}
+      gait_pattern: [neutral, overpronation, supination]
+      terrain: [road, trail, track]
+
+visualization:
+  engine: mittsu
+  
+  mittsu:
+    version: "0.4.0+"
+    renderer: opengl
+    
+    scene:
+      background: 0x000000
+      fog: none
+      grid: {size: 200, divisions: 20, color: 0x222222}
+    
+    camera:
+      type: perspective
+      fov: 75.0
+      near: 0.1
+      far: 1000.0
+      position: {x: 150, y: 100, z: 150}
+      look_at: {x: 0, y: 0, z: 0}
+    
+    lighting:
+      ambient: {color: 0x404040, intensity: 0.4}
+      directional:
+        - {color: 0xffffff, intensity: 0.8, position: {x: 100, y: 200, z: 100}}
+        - {color: 0x8080ff, intensity: 0.3, position: {x: -100, y: 50, z: -100}}
+      hemisphere: {sky: 0xffffbb, ground: 0x080820, intensity: 0.5}
+    
+    materials:
+      lattice_struts:
+        type: mesh_phong
+        color: 0xe76b30
+        specular: 0x111111
+        shininess: 30
+        transparent: false
+      
+      ceramic_nodes:
+        type: mesh_standard
+        color: 0xdddddd
+        metalness: 0.1
+        roughness: 0.6
+      
+      polymer_matrix:
+        type: mesh_physical
+        color: 0x88aaff
+        transmission: 0.7
+        opacity: 0.3
+        roughness: 0.1
+    
+    controls:
+      type: orbit
+      enable_zoom: true
+      enable_pan: true
+      enable_rotate: true
+      zoom_speed: 1.0
+      rotation_speed: 0.5
+    
+    rendering:
+      antialias: true
+      shadow_map: {enabled: true, type: pcf_soft}
+      pixel_ratio: window.device_pixel_ratio
+      tone_mapping: aces_filmic
+  
+  babylon_web:
+    fallback: true
+    canvas_id: "syre-materials-canvas"
+    engine: webgl2
+    scene_optimizer: true
+
+export:
+  stl:
+    format: binary
+    units: millimeters
+    coordinate_system: right_handed_z_up
+    resolution: high
+    
+    validation:
+      manifold_check: mandatory
+      normal_consistency: mandatory
+      self_intersection: reject
+      degenerate_triangles: repair
+      minimum_wall_thickness: 0.8mm
+    
+    metadata:
+      include: [material_composition, lattice_parameters, property_predictions, generation_timestamp]
+  
+  gcode:
+    slicer: prusaslicer_or_cura
+    profiles:
+      carbon_dls:
+        layer_height: 0.1
+        print_speed: 50
+        infill: 100
+        supports: auto
+      
+      hp_mjf:
+        layer_height: 0.08
+        powder_refresh: 10
+        energy_density: 0.7
+  
+  material_datasheet:
+    format: yaml
+    include:
+      - mattergen_composition
+      - dft_validated_properties
+      - synthesis_pathway
+      - biocompatibility_assessment
+      - cost_estimate
+      - environmental_impact
+      - print_parameters
+
+workflow:
+  phases:
+    discover:
+      inputs: [user_requirements, anthropometric_data, gait_analysis]
+      process:
+        1: parse_requirements_to_constraints
+        2: invoke_mattergen_batch_generation
+        3: filter_by_element_safety
+        4: predict_composite_properties
+      outputs: [15_material_candidates]
+    
+    validate:
+      adversarial_cascade:
+        security:
+          checks: [toxicity_screen, microparticle_risk, allergen_identification]
+          veto: true
+        
+        reliability:
+          checks: [synthesis_feasibility, stability_prediction, degradation_pathway]
+          dft_validation: top_5_candidates
+          threshold: 0.90
+        
+        performance:
+          checks: [energy_return_model, durability_estimate, cost_analysis]
+          threshold: 0.85
+      
+      outputs: [3_validated_candidates]
+    
+    design:
+      lattice_generation:
+        method: parametric_from_pressure_map
+        geometry: select_by_zone
+        optimization: minimize_mass_maximize_energy_return
+        
+        tools:
+          ruby: mittsu_geometry_builder
+          fallback: openscad_script_generation
+      
+      composite_modeling:
+        ceramic_phase: mattergen_output
+        polymer_matrix: materials_database_selection
+        interface: cohesive_zone_model
+        
+        fea:
+          software: calculix_or_abaqus
+          loads: iso_20344_drop_test
+          mesh: 1mm_elements
+      
+      outputs: [parametric_cad_model, fea_results, lattice_json]
+    
+    visualize:
+      mittsu_scene:
+        1: load_lattice_geometry_from_json
+        2: apply_material_properties_to_mesh
+        3: add_ceramic_reinforcement_nodes
+        4: render_interactive_3d_view
+        5: enable_section_plane_cuts
+      
+      outputs: [interactive_window, rotation_animation_frames]
+    
+    export:
+      stl_generation:
+        1: convert_mittsu_geometry_to_triangle_mesh
+        2: validate_manifold_integrity
+        3: optimize_triangle_count
+        4: write_binary_stl_with_metadata
+      
+      material_spec:
+        format: master_mg_shoes_material_{id}.yml
+        include_evidence: [dft_calculation_files, phonon_dispersion_plots, synthesis_references]
+      
+      outputs: [stl_files, material_datasheets, print_instructions]
+    
+    iterate:
+      convergence:
+        metrics: [energy_return, sustainability_score, cost_per_pair, print_time]
+        pareto_optimization: true
+        max_iterations: 20
+      
+      on_failure:
+        rollback: best_validated_state
+        adjust: loosen_constraints_by_10_percent
+        escalate: after_3_failed_cycles
+
+ruby_integration:
+  services:
+    materials_orchestrator:
+      path: app/services/materials_orchestrator.rb
+      responsibilities:
+        - parse_user_requirements
+        - invoke_mattergen_api
+        - apply_adversarial_validation
+        - coordinate_lattice_generation
+        - trigger_visualization_export
+    
+    mittsu_visualizer:
+      path: app/services/mittsu_visualizer.rb
+      responsibilities:
+        - load_lattice_json
+        - construct_3d_scene
+        - apply_materials_and_lighting
+        - render_to_window
+        - export_animation_frames
+      
+      example: |
+        require 'mittsu'
+        
+        class MittsuVisualizer
+          def render_lattice(lattice_json:, output_path:)
+            scene = Mittsu::Scene.new
+            camera = Mittsu::PerspectiveCamera.new(75.0, ASPECT, 0.1, 1000.0)
+            renderer = Mittsu::OpenGLRenderer.new(width: 1920, height: 1080)
+            
+            # Load lattice geometry
+            lattice = LatticeMesh.from_json(lattice_json)
+            
+            # Create materials per master.yml brutalist principles
+            strut_material = Mittsu::MeshPhongMaterial.new(
+              color: 0xe76b30,  # terra_cotta
+              specular: 0x111111,
+              shininess: 30
+            )
+            
+            lattice.struts.each do |strut|
+              cylinder = create_cylinder_geometry(strut)
+              mesh = Mittsu::Mesh.new(cylinder, strut_material)
+              scene.add(mesh)
+            end
+            
+            # Add ceramic nodes
+            node_material = Mittsu::MeshStandardMaterial.new(
+              color: 0xdddddd,
+              metalness: 0.1,
+              roughness: 0.6
+            )
+            
+            lattice.nodes.each do |node|
+              if node.reinforced?
+                sphere = Mittsu::SphereGeometry.new(node.radius, 16, 16)
+                mesh = Mittsu::Mesh.new(sphere, node_material)
+                mesh.position.set(node.x, node.y, node.z)
+                scene.add(mesh)
+              end
+            end
+            
+            # Lighting per master.yml spec
+            ambient = Mittsu::AmbientLight.new(0x404040, 0.4)
+            scene.add(ambient)
+            
+            directional = Mittsu::DirectionalLight.new(0xffffff, 0.8)
+            directional.position.set(100, 200, 100)
+            scene.add(directional)
+            
+            # Render and export
+            camera.position.set(150, 100, 150)
+            camera.look_at(Mittsu::Vector3.new(0, 0, 0))
+            
+            renderer.render(scene, camera)
+            export_stl(scene, output_path)
+          end
+          
+          private
+          
+          def export_stl(scene, path)
+            triangles = []
+            
+            scene.children.each do |mesh|
+              next unless mesh.is_a?(Mittsu::Mesh)
+              
+              geometry = mesh.geometry
+              geometry.faces.each do |face|
+                v1 = geometry.vertices[face.a]
+                v2 = geometry.vertices[face.b]
+                v3 = geometry.vertices[face.c]
+                
+                triangles << {
+                  normal: face.normal,
+                  vertices: [v1, v2, v3]
+                }
+              end
+            end
+            
+            StlExporter.write_binary(triangles, path)
+          end
+        end
+    
+    stl_exporter:
+      path: app/services/stl_exporter.rb
+      format: binary_stl
+      
+      example: |
+        class StlExporter
+          HEADER_SIZE = 80
+          
+          def self.write_binary(triangles, path)
+            File.open(path, 'wb') do |file|
+              # Header (80 bytes)
+              header = "Generated by master_mg_shoes.yml v1.0.0"
+              file.write(header.ljust(HEADER_SIZE, "\x00"))
+              
+              # Triangle count (4 bytes, little-endian)
+              file.write([triangles.count].pack('V'))
+              
+              # Triangles
+              triangles.each do |tri|
+                # Normal (3 floats)
+                file.write([tri[:normal].x, tri[:normal].y, tri[:normal].z].pack('e3'))
+                
+                # Vertices (9 floats)
+                tri[:vertices].each do |v|
+                  file.write([v.x, v.y, v.z].pack('e3'))
+                end
+                
+                # Attribute byte count (2 bytes)
+                file.write([0].pack('v'))
+              end
+            end
+          end
+        end
+
+biomimetic_algorithms:
+  spider_silk_nanostructure:
+    ruby: |
+      def generate_nanofibrils(diameter_nm: 130, length_um: 50, density: 0.3)
+        fibrils = []
+        
+        # Coat-skin-core structure
+        core_diameter = diameter_nm * 0.6
+        skin_thickness = diameter_nm * 0.2
+        coat_thickness = diameter_nm * 0.2
+        
+        # Beta-sheet crystal regions (oriented along fibril axis)
+        crystal_spacing = 20  # nm
+        crystal_length = 10   # nm
+        
+        (length_um * 1000 / crystal_spacing).to_i.times do |i|
+          z_pos = i * crystal_spacing
+          
+          fibrils << {
+            type: :beta_sheet_crystal,
+            center: [0, 0, z_pos],
+            length: crystal_length,
+            diameter: core_diameter,
+            stiffness: :high
+          }
+        end
+        
+        fibrils
+      end
+  
+  nacre_brick_mortar:
+    ruby: |
+      def generate_platelet_structure(width_um: 5, thickness_nm: 500, overlap: 0.5)
+        platelets = []
+        layer_offset = width_um * (1 - overlap)
+        
+        # Mineral phase (aragonite-like ceramic from MatterGen)
+        mineral_composition = mattergen_output
+        
+        # Organic interface (polymer matrix)
+        interface_thickness = 30  # nm
+        
+        z = 0
+        layer = 0
+        
+        while z < target_height_um * 1000
+          x_offset = (layer % 2) * layer_offset / 2
+          
+          x = x_offset
+          while x < target_width_um
+            platelets << {
+              type: :mineral_platelet,
+              composition: mineral_composition,
+              position: [x, 0, z],
+              dimensions: [width_um, width_um, thickness_nm / 1000.0],
+              orientation: [0, 0, 1]
+            }
+            
+            platelets << {
+              type: :organic_interface,
+              thickness: interface_thickness / 1000.0,
+              position: [x, 0, z + thickness_nm / 1000.0],
+              shear_strength: :moderate
+            }
+            
+            x += width_um
+          end
+          
+          z += (thickness_nm + interface_thickness) / 1000.0
+          layer += 1
+        end
+        
+        platelets
+      end
+
+testing:
+  simulations:
+    mechanical:
+      software: calculix
+      tests:
+        - iso_20344_compression
+        - iso_20344_impact
+        - astm_d2240_hardness
+        - din_53516_abrasion
+      
+      boundary_conditions:
+        heel_strike: 
+          force: 2500  # N
+          contact_area: 20  # cm²
+          duration: 0.05  # seconds
+    
+    thermal:
+      software: openfoam
+      conditions:
+        cold: -20  # °C
+        normal: 20
+        hot: 50
+        wet: saturated_water
+    
+    biodegradation:
+      standard: iso_17088
+      conditions: [compost, soil, marine]
+      duration: 5  # years
+      measurement: mass_loss_co2_production
+
+cost:
+  ceramic_synthesis:
+    spark_plasma_sintering: {cost_per_kg: 200, time_hours: 4}
+    sol_gel: {cost_per_kg: 150, time_hours: 24}
+    hydrothermal: {cost_per_kg: 100, time_hours: 48}
+  
+  polymer_matrix:
+    pa11_bio: {cost_per_kg: 35}
+    tpu_bio: {cost_per_kg: 45}
+    pla: {cost_per_kg: 25}
+  
+  printing:
+    carbon_dls: {cost_per_part: 25, time_hours: 2}
+    hp_mjf: {cost_per_part: 18, time_hours: 8}
+  
+  target:
+    midsole_unit_cost: {max: 12, currency: USD}
+    upper_unit_cost: {max: 8, currency: USD}
+    total_shoe_cogs: {max: 35, currency: USD}
+
+documentation:
+  material_card:
+    format: markdown
+    sections:
+      - composition_and_structure
+      - predicted_properties_with_uncertainty
+      - synthesis_pathway
+      - print_parameters
+      - biomimetic_inspiration
+      - sustainability_metrics
+      - cost_breakdown
+      - dft_validation_results
+      - experimental_synthesis_status
+  
+  stl_naming:
+    pattern: "syre_midsole_{material_id}_{lattice_type}_{density}_{version}.stl"
+    example: "syre_midsole_mg2025001_gyroid_025_v1.stl"
+  
+  readme:
+    include:
+      - overview_of_discovery_process
+      - mattergen_parameters_used
+      - adversarial_validation_results
+      - visualization_instructions
+      - print_settings_recommendations
+      - testing_protocol_references
