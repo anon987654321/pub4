@@ -5,7 +5,6 @@ set -euo pipefail
 # Per: master.yml v100.0 - Rails 8 + Solid Stack
 # Constants
 readonly # SQLite3 requires no user config
-readonly DEFAULT_PG_HOST="localhost"
 readonly DEFAULT_THREAD_POOL=5  # Rails default per process  # Standard Rails connection pool size
 readonly TEMPLATE_DIR="${0:a:h}/templates"
 # Utility Functions
@@ -60,16 +59,10 @@ default: &default
 development:
   <<: *default
   database: ${app_name}_development
-  username: <%= ENV.fetch("POSTGRES_USER", "${DEFAULT_PG_USER}") %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
-  host: <%= ENV.fetch("POSTGRES_HOST", "${DEFAULT_PG_HOST}") %>
-test:
+      test:
   <<: *default
   database: ${app_name}_test
-  username: <%= ENV.fetch("POSTGRES_USER", "${DEFAULT_PG_USER}") %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
-  host: <%= ENV.fetch("POSTGRES_HOST", "${DEFAULT_PG_HOST}") %>
-production:
+      production:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
 EOF
@@ -77,21 +70,20 @@ EOF
 # Rails Framework
 setup_rails() {
   log "Setting up Rails framework components"
-  replace_puma_with_falcon
+  setup_thruster
   bundle install
   if [ ! -d "db" ]; then
     create_and_migrate_db
   fi
 }
-replace_puma_with_falcon() {
-  log "Replacing Puma with Falcon"
+setup_thruster() {
+  log "Setting up Thruster web server"
   bundle remove puma 2>/dev/null || true
-  install_gem "falcon"
-  install_gem "falcon-rails"
+  install_gem "thruster"
 }
 create_and_migrate_db() {
   log "Creating and migrating database"
-  bin/rails db:create db:migrate
+  bin/rails db:create db:migrate || { log "ERROR: Database setup failed"; return 1; }
 }
 # Redis (deprecated - use Solid Cable)
 setup_redis() {
@@ -136,5 +128,5 @@ setup_core() {
 }
 migrate_db() {
   log "Migrating database"
-  bin/rails db:create db:migrate
+  bin/rails db:create db:migrate || { log "ERROR: Database setup failed"; return 1; }
 }
