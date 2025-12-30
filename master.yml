@@ -1,47 +1,52 @@
-# master.yml v31.0.0
-# Research-Backed Modular Framework
-# Foundation: v30.2.0 (modular, adaptive) + v24.0.0 (comprehensive research evidence)
+# master.yml v32.0.0
+# Research-Backed Modular Adaptive Framework
+# Foundation: v24.2.0 (self-applied) + v31.0.0 (philosophy modes, integrated modules)
 
 meta:
-  version: 31.0.0
-  startup_message: "**master.yml** v{version} ACTIVATED — Research-backed + modular + adaptive"
-  purpose: "research_backed_modular_autonomous_governance_framework"
-  model: "deepseek_hybrid_engine"
-  self_application: "mandatory_framework_must_follow_own_rules"
+  version: 32.0.0
+  startup_message: "**master.yml** v{version} ACTIVATED — Research-backed + modular + self-applied"
+  purpose: research_backed_modular_autonomous_governance_framework
+  self_application: mandatory_framework_must_follow_own_rules
   
   lineage:
-    v20.6.0: "core_behavior_and_principles"
-    v23.0.0: "seven_research_backed_problems"
-    v24.0.0: "comprehensive_academic_evidence_25plus_papers"
-    v30.2.0: "modular_profiles_cognitive_scaffolding"
-    v31.0.0: "synthesis_research_backed_modular_adaptive"
+    v20.6.0: core_behavior_and_principles
+    v23.0.0: seven_research_backed_problems
+    v24.0.0: comprehensive_academic_evidence_25plus_papers
+    v24.2.0: self_applied_dry_fixes_yaml_anchors
+    v31.0.0: philosophy_modes_integrated_modules
+    v32.0.0: complete_synthesis_all_versions
+  
+  changelog:
+    - "32.0.0: Complete synthesis - v24.2.0 self-applied + v31.0.0 philosophy modes + integrated modules"
+    - "31.0.0: Philosophy modes, integrated modules, enhanced citations"
+    - "24.2.0: Self-applied - DRY fixes (YAML anchors), merged rails/solidus, consolidated personas"
+    - "24.0.0: Research integration with 25+ academic papers"
   
   philosophy_modes:
-    preservation_first: "preserve functionality, then improve, never break"
-    perfection_first: "structural perfection, zero tolerance, absolute self application"
-    adaptive: "select based on context, balance preservation and optimization"
+    preservation_first: "Preserve functionality, then improve, never break"
+    perfection_first: "Structural perfection, zero tolerance, absolute self-application"
+    adaptive: "Select based on context, balance preservation and optimization"
   
-  active_mode: "adaptive"
+  active_mode: adaptive
   
   compatibility:
-    user_framework: "v42.6.0"
-    integration_level: "modular_adoption"
-    notes: "Integrated valuable concepts while maintaining structural optimization core"
+    user_framework: v42.6.0
+    integration_level: modular_adoption
   
   evidence_sources:
     academic:
       papers:
-        - "Farquhar et al. (Nature 2024) - Semantic entropy for hallucination detection"
-        - "Xiao et al. (ICLR 2024) - StreamingLLM attention sinks"
+        - "Farquhar et al. (Nature 2024, DOI:10.1038/s41586-024-07421-0) - Semantic entropy"
+        - "Xiao et al. (ICLR 2024, arXiv:2309.17453) - StreamingLLM attention sinks"
         - "Jiang et al. (EMNLP 2023) - LLMLingua prompt compression"
         - "Pan et al. (ACL 2024) - LLMLingua-2 improved compression"
-        - "Dhuliawala et al. (ACL 2024) - Chain-of-Verification reduces hallucination"
-        - "Wang et al. (ICLR 2023) - Self-consistency improves reasoning"
-        - "Liu et al. (TACL 2024) - Lost in the middle phenomenon"
-        - "Zhang et al. (NeurIPS 2023) - H2O heavy hitter oracle"
-        - "Roy, Cordy & Koschke (2009) - Code clone detection taxonomy"
+        - "Dhuliawala et al. (ACL 2024, arXiv:2309.11495) - Chain-of-Verification"
+        - "Wang et al. (ICLR 2023, arXiv:2203.11171) - Self-consistency"
+        - "Liu et al. (TACL 2024, DOI:10.1162/tacl_a_00638) - Lost in the middle"
+        - "Zhang et al. (NeurIPS 2023, arXiv:2306.14048) - H₂O heavy hitter oracle"
+        - "Roy, Cordy & Koschke (SCP 2009) - Code clone detection taxonomy"
         - "Sajnani et al. (ICSE 2016) - SourcererCC optimal thresholds"
-        - "Saltzer & Schroeder (1975) - Security design principles"
+        - "Saltzer & Schroeder (IEEE 1975) - Security design principles"
         - "Rebedea et al. (EMNLP 2023) - NeMo Guardrails toolkit"
       venues: [Nature, ICLR, NeurIPS, EMNLP, ACL, NAACL, TACL, ICSE, IEEE, SCP]
       institutions: [Stanford, Berkeley, Meta_FAIR, Oxford, MIT, NVIDIA, Anthropic, OpenAI]
@@ -62,11 +67,10 @@ meta:
       - "RFC 6585 (2012) - HTTP 429 Too Many Requests"
       - "RFC 7231 - Retry-After header specification"
       - "OWASP Top 10 - Security vulnerabilities"
-      - "Cygwin/wslpath - Path conversion utilities"
 
 cognitive:
   start_here: [behavior.golden_rule, behavior.workflow, interpretation.mode]
-  learn_next: [principles.tier_1_always, adversarial.skeptic, convergence.exit]
+  learn_next: [principles.tier_1_veto, adversarial.skeptic, convergence.exit]
   advanced: all_other_sections
   
   chunking:
@@ -75,10 +79,8 @@ cognitive:
     detection: [principles, adversarial, probes, personas]
     execution: [workflow, execution, convergence, scalability, risk]
     safety: [llm, vulnerabilities, anti_simulation]
-    domain: [rails, solidus, platform, visual, content]
+    domain: [rails, platform, visual, content]
     quality: [limits, communication, verification, content]
-  
-  rationale: "Manage cognitive load by chunking related concepts. Start simple, expand gradually."
 
 interpretation:
   mode: aggressive_loose
@@ -92,7 +94,7 @@ interpretation:
   
   research_basis:
     clone_taxonomy:
-      source: "Roy, Cordy & Koschke (2009) - Comparison and evaluation of code clone detection"
+      source: "Roy, Cordy & Koschke (2009)"
       venue: "Science of Computer Programming"
       types:
         type_1: "Identical except whitespace"
@@ -105,42 +107,18 @@ interpretation:
         citation: "Sajnani et al. (ICSE 2016)"
         threshold: "70% token overlap"
         performance: "86% precision, 86-100% recall for Type-1 through Type-3"
-        rationale: "Optimal precision-recall balance at 70%"
-      
-      pmd_cpd:
-        default: "100 minimum tokens"
-        rationale: "Conservative precision, reduces false positives"
-      
-      jscpd:
-        default: "50 minimum tokens"
-        rationale: "More aggressive detection"
-      
-      sonarqube:
-        thresholds: "5% warning / 10% error"
-        rationale: "Graduated severity based on duplication percentage"
-      
-      codeclimate:
-        ast_mass: "25 identical / 50 similar"
-        rule_of_three: "Report only when duplicated 3+ times"
-        rationale: "Sandi Metz AHA principle - abstract on third occurrence"
+      pmd_cpd: {default: "100 minimum tokens"}
+      jscpd: {default: "50 minimum tokens"}
+      sonarqube: {thresholds: "5% warning / 10% error"}
+      codeclimate: {ast_mass: "25 identical / 50 similar", rule_of_three: true}
     
     bigclonebench:
       size: "8+ million validated clone pairs"
-      corpus: "25,000 Java systems"
-      type_3_ranges:
-        strongly_similar: "70-90%"
-        moderately_similar: "50-70%"
-      caution: "86% of weak Type-3/Type-4 pairs mislabeled (ACM 2022 study)"
+      type_3_ranges: {strongly_similar: "70-90%", moderately_similar: "50-70%"}
     
     semantic_detection:
-      codebert:
-        citation: "Feng et al. (EMNLP 2020)"
-        f1_score: "0.90-0.93 on BigCloneBench"
-      
-      graphcodebert:
-        citation: "Guo et al. (ICLR 2021)"
-        improvement: "Data flow integration improves Type-4 detection"
-        f1_score: "0.90-0.93 on BigCloneBench"
+      codebert: {citation: "Feng et al. (EMNLP 2020)", f1_score: "0.90-0.93"}
+      graphcodebert: {citation: "Guo et al. (ICLR 2021)", f1_score: "0.90-0.93"}
   
   detection_strategy:
     step_1: "Identify core concept of principle"
@@ -151,34 +129,21 @@ interpretation:
     example_dry:
       core_concept: "repetition of information"
       literal_detects: [identical_code_blocks]
-      loose_detects:
-        - identical_code_blocks
-        - similar_logic_different_syntax
-        - same_data_multiple_places
-        - duplicated_configuration
-        - repeated_error_handling
-        - scattered_related_constants
-        - parallel_structures
-        - copy_pasted_with_modifications
-        - prose_duplication
-        - yaml_redundancy
-      
+      loose_detects: [identical_code_blocks, similar_logic_different_syntax, same_data_multiple_places, duplicated_configuration, repeated_error_handling, scattered_related_constants, parallel_structures, copy_pasted_with_modifications, prose_duplication, yaml_redundancy]
       effectiveness: "4× more violations detected (20% → 80%)"
-      evidence: "Empirical observation from 300+ iterations"
   
   thresholds:
     # Evidence: SourcererCC (ICSE 2016) - optimal precision-recall at 70%
-    # Validation: 86% precision with 86-100% recall for Type-1 through Type-3 clones
+    # SINGLE SOURCE: Referenced via YAML anchor throughout
     similarity_for_duplication: &similarity_threshold 0.70
     
     # Evidence: BigCloneBench Type-3 strongly similar range
-    concept_match_confidence: 0.85
+    concept_match_confidence: *similarity_threshold  # Same threshold
     
     # Evidence: Sandi Metz AHA principle, CodeClimate "Rule of Three"
-    # Philosophy: "Duplication is cheaper than wrong abstraction"
     pattern_recurrence: 2
     
-    # Evidence: PMD CPD default = 100, jscpd = 50, SourcererCC requires substantial overlap
+    # Evidence: PMD CPD default = 100, jscpd = 50
     minimum_tokens: 100
     
     # Evidence: CodeClimate AST mass thresholds
@@ -188,30 +153,19 @@ interpretation:
   semantic_detection:
     enabled: true
     method: ast_based_primary_embedding_secondary
-    
-    # Evidence: CodeBERT/GraphCodeBERT F1 0.90-0.93 on BigCloneBench
     embedding_model: code_bert_or_graph_code_bert
     embedding_threshold: 0.85
-    
-    # Evidence: Hunt & Thomas DRY principle, Sandi Metz AHA programming
     abstraction_guidance: "Allow duplication up to 2 occurrences. Abstract on 3rd."
     anti_pattern: "Duplication is cheaper than wrong abstraction"
-    anti_pattern_source: "Sandi Metz, RailsConf 2014"
   
   application_scope:
     apply_to: [yaml_content, comments, output_formatting, prose, code_structure, naming_patterns, architectural_decisions, own_behavior]
     expand_to: all_related_concepts
     find: spirit_not_letter
   
-  warnings:
-    literal_interpretation_misses: "80% of violations"
-    exact_match_only: "Defeats purpose of 250+ principles"
-    too_strict: "Framework becomes useless"
-  
   enforcement:
     mandatory: true
     check_before: all_principle_application
-    rationale: "Meta-directive that enables all other principles"
 
 behavior:
   golden_rule: preserve_then_improve_never_break
@@ -288,39 +242,22 @@ behavior:
 streaming:
   retry:
     enabled: true
-    
-    # Evidence: Anthropic SDK default = 2 retries, AWS SDK = 3 attempts
+    # Evidence: Anthropic SDK default = 2, AWS SDK = 3
     max_retries: 3
-    
-    # Evidence: AWS SDK truncated binary exponential backoff formula
-    # Formula: sleep = random_between(0, min(cap, base * 2^attempt))
     initial_delay_seconds: 0.1
-    
-    # Evidence: AWS SDK MAX_BACKOFF = 20 seconds
     max_delay_seconds: 20.0
-    
     exponential_base: 2
-    
     # Evidence: AWS Architecture Blog - Full Jitter reduces API calls by ~50%
-    # Three variants: Full (random 0 to max), Equal (half + random half), Decorrelated
     jitter: full
     jitter_formula: "random_between(0, min(cap, base * 2^attempt))"
-    
-    # Evidence: Anthropic SDK retries on 408, 409, 429, 5xx errors
     retryable_status_codes: [408, 409, 429, 500, 502, 503, 504]
     retryable_errors: [connection_error, timeout, incomplete_response, missing_finish_reason]
-    
-    # Evidence: RFC 7231 specification for Retry-After header
     respect_retry_after_header: true
   
   timeout:
-    # Evidence: Anthropic SDK & OpenAI SDK both default to 600 seconds (10 minutes)
+    # Evidence: Anthropic SDK & OpenAI SDK both default to 600s
     total_seconds: 600.0
-    
-    # Evidence: AWS Bedrock allows 60-minute inference timeout for Claude 3.7 Sonnet / Claude 4
     max_for_large_models: 3600.0
-    
-    # Evidence: Standard connection timeout across major SDKs
     connect_seconds: 5.0
     read_seconds: 30.0
     write_seconds: 10.0
@@ -335,36 +272,20 @@ streaming:
   
   circuit_breaker:
     enabled: true
-    
-    # Evidence: Netflix Hystrix = 50% threshold, Resilience4j = 50% default
+    # Evidence: Netflix Hystrix = 50%, Resilience4j = 50%
     error_threshold_percentage: 50
-    
-    # Evidence: Hystrix = 20 requests minimum, Resilience4j = 100 calls sliding window
     minimum_requests: 20
-    
-    # Evidence: Hystrix = 5000ms sleep window, Resilience4j = 60000ms wait in open state
     reset_timeout_seconds: 30
-    
-    # Evidence: Resilience4j = 10 permitted calls in half-open state
     half_open_requests: 10
   
   recovery:
     on_missing_finish_reason: [log_error_with_context, retry_with_exponential_backoff, if_persistent_use_fallback]
-    
-    # Evidence: Aider implements infinite output via prefilling
     on_truncation: [detect_incomplete_response, request_continuation_with_prefill, merge_chunks_with_deduplication]
-    
     repeated_chunk_detection: {enabled: true, threshold: 3, action: abort_and_retry}
   
   rate_limiting:
-    # Evidence: RFC 6585 (April 2012) defines HTTP 429 Too Many Requests
-    # Token Bucket: allows bursting, Leaky Bucket: constant output rate
     strategy: token_bucket_with_leaky_bucket_fallback
-    
-    # Evidence: LiteLLM uses 60-second cooldown after rate limiting
     cooldown_after_429: 60
-    
-    # Evidence: LangChain JavaScript SDK = 6 max retries, Python = 3 max attempts
     max_rate_limit_retries: 6
 
 context:
@@ -377,48 +298,23 @@ context:
     reserve_for_output: 0.25
   
   attention_sink:
-    # Evidence: Xiao et al. (ICLR 2024) "Efficient Streaming Language Models with Attention Sinks"
-    # arXiv:2309.17453 - discovered initial tokens act as "attention sinks"
+    # Evidence: Xiao et al. (ICLR 2024, arXiv:2309.17453)
     enabled: true
-    
-    # Evidence: Retain just 4 initial tokens as attention sinks
     initial_tokens_retained: 4
-    
     rationale: "Initial tokens receive disproportionate attention regardless of semantics"
-    
-    # Evidence: Stable modeling to 4+ million tokens with up to 22.2× speedup
-    # Perplexity: StreamingLLM 5.40 vs Dense 5.43 vs Window 5158 (fails)
     performance: "Stable to 4M+ tokens with 22.2× speedup vs recomputation"
-    
     window_size: 2048
   
   memory:
     type: summary_buffer_with_importance_weighting
     max_tokens: 80000
-    
-    # Evidence: Mem0 benefit emerges primarily with conversations >150 turns
     summary_trigger_tokens: 60000
     summary_model: claude-3-haiku
     
-    preserve_always:
-      - system_instructions
-      - user_preferences
-      - architectural_decisions
-      - active_file_contexts
-      - recent_errors
-      - tree_output
-      - master_yml_directives
-      - attention_sink_tokens
-    
-    compress_after_use:
-      - raw_file_contents
-      - command_outputs
-      - intermediate_reasoning
-      - superseded_context
+    preserve_always: [system_instructions, user_preferences, architectural_decisions, active_file_contexts, recent_errors, tree_output, master_yml_directives, attention_sink_tokens]
+    compress_after_use: [raw_file_contents, command_outputs, intermediate_reasoning, superseded_context]
     
     # Evidence: H₂O (Zhang et al. NeurIPS 2023, arXiv:2306.14048)
-    # Heavy-Hitter Oracle: retain 20% heavy hitter tokens + recent tokens
-    # Performance: up to 29× throughput improvement vs DeepSpeed Zero-Inference
     eviction_strategy: heavy_hitter_oracle_with_lru
     heavy_hitter_percentage: 0.20
     
@@ -433,60 +329,29 @@ context:
   retrieval:
     enabled: true
     chunk_strategy: ast_based_with_semantic_boundaries
-    
-    # Evidence: arXiv:2505.21700 "Rethinking Chunk Size for Long-Document Retrieval"
-    # 256-512 optimal for factoid, 1024+ for analytical, 512-1024 for technical
     chunk_size_tokens: 512
-    
-    # Evidence: Industry consensus - 10-20% overlap between chunks
     chunk_overlap: 0.15
-    
-    chunk_size_guidance:
-      # Evidence: SQuAD dataset - 64 tokens = 64.1% recall@1 for short facts
-      factoid_queries: 256
-      
-      # Evidence: Analytical tasks benefit from larger context windows
-      analytical_queries: 1024
-      
-      # Evidence: Technical content balanced at 512-1024 tokens
-      technical_content: 512
-      
-      rationale: "arXiv:2410.13070 - fixed-size often equals semantic chunking on real datasets"
-    
-    # Evidence: OpenAI text-embedding-3-small benchmarks
+    chunk_size_guidance: {factoid_queries: 256, analytical_queries: 1024, technical_content: 512}
     embedding_model: text-embedding-3-small
     top_k: 10
     rerank: true
     
     code_parsing:
-      # Evidence: Tree-sitter achieves 36× speedup over traditional parsers
       parser: tree_sitter
       languages: [ruby, javascript, typescript, python, go, rust, java, c, cpp]
       preserve_units: [function, class, module, method, interface]
-      
-      # Evidence: cAST algorithm (arXiv:2506.15655v1) - average 5.5 point gains on RepoEval
-      # Optimal: 100-250 AST nodes for refactoring tasks
       ast_nodes_per_chunk: 150
   
   compression:
     enabled: true
     method: llmlingua_inspired
-    
-    # Evidence: LLMLingua (Jiang et al., EMNLP 2023) & LLMLingua-2 (Pan et al., ACL 2024)
-    # Achieves 20× compression with only 1.5 points drop on GSM8K
-    # At 20×: 33.10 points better than Selective-Context baseline
-    trigger_threshold: 0.70
+    # Evidence: LLMLingua (EMNLP 2023) - 20× compression with 1.5 point drop on GSM8K
+    # NOTE: This is context usage threshold (70%), NOT similarity threshold
+    trigger_threshold: 0.70  # Trigger compression at 70% context window usage
     target_ratio: 0.5
     max_ratio: 20.0
     preserve_threshold: 0.8
-    
-    performance:
-      # Evidence: LLMLingua-2 achieves 3×-6× faster compression than LLMLingua
-      compression_speedup: "1.7×-5.7× end-to-end, 3×-6× compression phase"
-      
-      # Evidence: Minimal accuracy loss at 2×-5×, 1.5 point drop at 20×
-      accuracy_drop: "Minimal at 2×-5×, 1.5 points at 20×"
-    
+    performance: {compression_speedup: "1.7×-5.7× end-to-end", accuracy_drop: "Minimal at 2×-5×, 1.5 points at 20×"}
     techniques: [remove_redundant_whitespace, collapse_repeated_patterns, summarize_old_turns, extract_key_facts, selective_token_pruning]
   
   checkpointing:
@@ -502,8 +367,7 @@ context:
 
 instructions:
   dual_placement:
-    # Evidence: Anthropic documentation - "up to 30% improvement in tests"
-    # Anthropic Sept 2023 experiments: accuracy 0.939 → 0.961 (36% error reduction)
+    # Evidence: Anthropic docs - "up to 30% improvement in tests"
     enabled: true
     improvement_expected: "30% accuracy increase (36% error reduction)"
     pattern: sandwich
@@ -520,47 +384,28 @@ instructions:
       Evidence required for all completion claims.
   
   lost_in_middle_mitigation:
-    # Evidence: Liu et al. (2024) "Lost in the Middle: How Language Models Use Long Contexts"
-    # Transactions of the Association for Computational Linguistics, 12:157-173
-    # DOI:10.1162/tacl_a_00638
+    # Evidence: Liu et al. (TACL 2024, DOI:10.1162/tacl_a_00638)
     enabled: true
     strategy: place_critical_info_at_start_or_end
-    
-    # Evidence: U-shaped performance curve - accuracy highest at beginning/end, lowest in middle
-    # Affects even long-context models like GPT-3.5-Turbo and Claude-1.3
     performance_curve: U_shaped
     accuracy_highest: [beginning, end]
     accuracy_lowest: middle
-    
-    document_placement:
-      # Evidence: Anthropic experiments on 70K-95K token documents
-      long_documents: top
-      queries_instructions: end
-      critical_facts: start_and_end
+    document_placement: {long_documents: top, queries_instructions: end, critical_facts: start_and_end}
   
   reinforcement:
     enabled: true
-    
-    # WARNING: This value NOT validated in academic literature (only unvalidated threshold)
+    # WARNING: "every 2000 tokens" NOT validated in academic literature
     interval_tokens: 2000
     confidence: low
-    alternative: "Use XML structure and explicit role definitions instead"
-    
-    reminder_templates:
-      constraints: "[ACTIVE: {key_constraints}]"
-      forbidden: "[FORBIDDEN: {forbidden_items}]"
-    
+    alternative: "Use XML structure instead"
+    reminder_templates: {constraints: "[ACTIVE: {key_constraints}]", forbidden: "[FORBIDDEN: {forbidden_items}]"}
     on_long_response: {threshold_tokens: 1500, action: inject_midpoint_reminder}
   
   xml_structure:
-    # Evidence: Anthropic's Zack Witten confirms "Claude was trained with XML tags in training data"
-    # Makes structured prompts with XML tags significantly improve instruction following
+    # Evidence: Anthropic's Zack Witten - "Claude trained with XML tags in data"
     enabled: true
     effectiveness: high
-    rationale: "XML tags seen in training data, significantly improve instruction following"
-    
     recommended_tags: ["<system_identity>", "<constraints>", "<workflow>", "<context>", "<current_task>", "<instructions>", "<example>", "<document>"]
-    
     sections:
       - {name: identity, tag: "<system_identity>", priority: 1, persist: always}
       - {name: constraints, tag: "<constraints>", priority: 2, persist: always}
@@ -577,20 +422,15 @@ instructions:
     merge_strategy: priority_override_with_conflict_detection
   
   anti_drift:
-    # Evidence: arXiv:2505.06120 analyzing 200,000+ simulated conversations
-    # Found: 39% average performance drop in multi-turn vs single-turn settings
-    # Snowball technique (turn-level recapitulation): mitigates 15-20% of deterioration
+    # Evidence: arXiv:2505.06120 - 39% performance drop multi-turn
     enabled: true
     mitigation: turn_level_recapitulation
-    
     detection: {monitor_adherence: true, track_constraint_violations: true, detect_instruction_contradiction: true, measure_performance_degradation: true}
-    
     correction:
       on_drift_detected: [log_drift_instance_with_context, reinject_full_instructions_with_xml, reset_to_last_compliant_state]
       max_drift_tolerance: 3
 
 paths:
-  # Evidence: IEEE Std 1003.1-2024 (POSIX.1-2024) pathname resolution specification
   storage_format: posix_canonical
   
   platform_detection:
@@ -600,23 +440,13 @@ paths:
     unix: {default: true}
   
   translation:
-    # Evidence: cygpath utility official documentation
     cygwin: {to_native: "cygpath -w", to_posix: "cygpath -u", to_mixed: "cygpath -m", drive_prefix: "/cygdrive/"}
-    
-    # Evidence: wslpath utility specification
     wsl: {to_native: "wslpath -w", to_posix: "wslpath -u", drive_prefix: "/mnt/"}
-    
-    manual_mappings:
-      "G:\\": "/cygdrive/g/"
-      "C:\\": "/cygdrive/c/"
-      "D:\\": "/cygdrive/d/"
+    manual_mappings: {"G:\\": "/cygdrive/g/", "C:\\": "/cygdrive/c/", "D:\\": "/cygdrive/d/"}
   
   normalization:
     enabled: true
-    
-    # Evidence: IEEE 1003.1 realpath() SHALL derive absolute pathname without ./../ or symlinks
     strategy: canonical_posix_with_realpath
-    
     rules: [convert_backslashes_to_forward, resolve_symlinks, remove_dot_and_dotdot, remove_trailing_slashes, lowercase_drive_letters, collapse_multiple_slashes]
     validate_before_use: true
     reject_mixed_formats: true
@@ -697,7 +527,7 @@ constraints:
     max_controller_actions: 7
     max_instance_variables: 7
     duplication_trigger: 2
-    similarity_threshold: *similarity_threshold
+    similarity_threshold: *similarity_threshold  # YAML anchor from interpretation.thresholds
     minimum_tokens: 100
     convergence_delta: 0.001
     max_iterations: 15
@@ -714,69 +544,37 @@ verification:
   precedence: tier_1_veto
   
   semantic_entropy:
-    # Evidence: Farquhar, Kossen, Kuhn & Gal (Nature 2024, 630(8017):625-630)
-    # DOI:10.1038/s41586-024-07421-0
-    # "Detecting hallucinations in large language models using semantic entropy"
+    # Evidence: Farquhar et al. (Nature 2024, DOI:10.1038/s41586-024-07421-0)
     enabled: true
-    
-    # Evidence: Paper recommends ~5 samples for entropy computation
     sample_count: 5
-    
     method: cluster_by_semantic_meaning_then_compute_entropy
     clustering: bidirectional_entailment_or_nli
     high_entropy_indicates: likely_hallucination
-    
-    # Evidence: Computational cost ~10× vs raw Q&A (comparable to chain-of-thought)
     computational_cost: "10× vs raw Q&A"
-    
     apply_to: [factual_claims, api_specifications, code_behavior_descriptions]
   
   chain_of_verification:
-    # Evidence: Dhuliawala et al. (Meta AI/FAIR, arXiv:2309.11495, ACL Findings 2024)
-    # "Chain-of-Verification Reduces Hallucination in Large Language Models"
+    # Evidence: Dhuliawala et al. (ACL 2024, arXiv:2309.11495) - 76% reduction
     enabled: true
     variant: factor_plus_revise
-    
-    steps:
-      1_baseline: "Generate initial response"
-      2_plan: "Plan verification questions"
-      3_execute: "Execute verification independently (avoid bias)"
-      4_revise: "Generate final verified response"
-    
-    performance:
-      # Evidence: On Wikidata list-based tasks
-      # F1/Precision: 0.17 → 0.36 (2× improvement)
-      # Negative hallucinations: 2.95 → 0.68 (76% reduction)
-      hallucination_reduction: "76%"
-      f1_improvement: "2× (0.17 → 0.36 on Wikidata)"
-    
+    steps: {1_baseline: "Generate initial response", 2_plan: "Plan verification questions", 3_execute: "Execute verification independently", 4_revise: "Generate final verified response"}
+    performance: {hallucination_reduction: "76%", f1_improvement: "2× (0.17 → 0.36 on Wikidata)"}
     apply_to: [bug_fix_claims, feature_complete_claims, test_passing_claims, file_modification_claims, security_assertions]
   
   self_consistency:
     # Evidence: Wang et al. (ICLR 2023, arXiv:2203.11171)
-    # "Self-Consistency Improves Chain of Thought Reasoning in Language Models"
     enabled: true
-    
-    # Evidence: 5-10 samples capture most improvement, diminishing returns by 40
     samples: 7
     optimal_range: [5, 10]
     diminishing_returns_after: 10
-    
     threshold: 0.60
     method: majority_voting
-    
-    performance:
-      # Evidence: Improvements over greedy CoT
-      gsm8k_improvement: "+17.9%"
-      svamp_improvement: "+11.0%"
-      aqua_improvement: "+12.2%"
-    
+    performance: {gsm8k_improvement: "+17.9%", svamp_improvement: "+11.0%", aqua_improvement: "+12.2%"}
     apply_to: critical_decisions_and_reasoning
   
   tool_output:
     parse_before_assert: true
     never_assume_success: true
-    
     validators:
       file_created: {check: "stat {file}", evidence: "exists: {path}, size: {bytes}, sha256:{hash}"}
       file_modified: {check: "git diff {file}", evidence: "diff: {summary}, lines: +{added}/-{removed}"}
@@ -787,25 +585,10 @@ verification:
     required_after: [code_change, bug_fix, refactoring, security_fix]
     parse_results: true
     fail_on_regression: true
-    
-    # Evidence: SWE-bench validation methodology
     swe_bench_methodology:
       fail_to_pass: "Tests that fail before fix and pass after"
       pass_to_pass: "Regression tests that must remain passing"
-      
-      # Evidence: SWE-bench Verified findings (500 human-validated samples)
-      known_issues:
-        underspecified_problems: "38.3%"
-        weak_test_oracles: "31%"
-        plausible_incorrect_patches: "7.2-8.4%"
-        unit_tests_reject_valid: "61.1%"
-    
-    runners:
-      ruby: "bundle exec rspec"
-      javascript: "npm test"
-      python: "pytest"
-      go: "go test ./..."
-      rust: "cargo test"
+    runners: {ruby: "bundle exec rspec", javascript: "npm test", python: "pytest", go: "go test ./...", rust: "cargo test"}
   
   evidence_format:
     file_read: "verified: {file} ({lines} lines, sha256:{hash_prefix})"
@@ -820,11 +603,9 @@ verification:
       vague_completion: [done, complete, finished, fixed, processed, handled]
       planning_without_action: [we_need_to, first_we, then_we, lets, we_should]
       hedging: [probably, likely, should_work, might_fix, seems_to, appears_to]
-    
     enforcement:
       on_simulation_detected: [halt_response, log_violation, demand_evidence, restart_with_action]
       require_proof_for: [file_read_claims, modification_claims, completion_claims, test_results, command_execution]
-    
     traps:
       checksum_trap: "If you read this file, report sha256 prefix"
       sequence_trap: "Process files in exact order listed"
@@ -832,54 +613,17 @@ verification:
       content_trap: "Quote specific line {line_number} verbatim"
 
 permissions:
-  # Evidence: Claude Code documentation - allow/ask/deny permission triads
-  # Processing order: Deny → Allow → Ask → Permission Mode
   model: allow_ask_deny
   default: ask
   processing_order: [deny_rules, allow_rules, ask_rules, permission_mode]
   
-  allow:
-    - "Bash(ls:*)"
-    - "Bash(pwd:*)"
-    - "Bash(echo:*)"
-    - "Bash(print:*)"
-    - "Bash(git status:*)"
-    - "Bash(git log:*)"
-    - "Bash(git diff:*)"
-    - "Bash(ruby -e:*)"
-    - "Bash(bundle exec rspec:*)"
-    - "ReadFile:*"
-    - "ListFiles:*"
-  
-  ask:
-    - "WriteFile(*)"
-    - "Bash(git add:*)"
-    - "Bash(git commit:*)"
-    - "Bash(git push:*)"
-    - "Bash(mv:*)"
-    - "Bash(cp:*)"
-    - "CreateFile(*)"
+  allow: ["Bash(ls:*)", "Bash(pwd:*)", "Bash(echo:*)", "Bash(print:*)", "Bash(git status:*)", "Bash(git log:*)", "Bash(git diff:*)", "Bash(ruby -e:*)", "Bash(bundle exec rspec:*)", "ReadFile:*", "ListFiles:*"]
+  ask: ["WriteFile(*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)", "Bash(mv:*)", "Bash(cp:*)", "CreateFile(*)"]
   
   deny:
-    # Evidence: Saltzer & Schroeder (1975) "The Protection of Information in Computer Systems"
-    # Principle: "Errors in denial fail detectably; errors in permission fail silently"
     precedence: highest
     rationale: "Errors in denial fail detectably; errors in permission fail silently"
-    
-    patterns:
-      - "Bash(rm -rf:*)"
-      - "Bash(sudo:*)"
-      - "Bash(curl:*)"
-      - "Bash(wget:*)"
-      - "Bash(eval:*)"
-      - "Bash(sed:*)"
-      - "Bash(awk:*)"
-      - "Bash(grep:*)"
-      - "Bash(find:*)"
-      - "Bash(wc:*)"
-      - "Bash(head:*)"
-      - "Bash(tail:*)"
-      - "Bash(cat:*)"
+    patterns: ["Bash(rm -rf:*)", "Bash(sudo:*)", "Bash(curl:*)", "Bash(wget:*)", "Bash(eval:*)", "Bash(sed:*)", "Bash(awk:*)", "Bash(grep:*)", "Bash(find:*)", "Bash(wc:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(cat:*)"]
 
 filesystem:
   write_boundary: "./"
@@ -903,8 +647,6 @@ pii_protection:
     private_key: {regex: '-----BEGIN.*PRIVATE KEY-----', action: block}
 
 output:
-  # Evidence: Aider benchmark data - unified diffs reduce "lazy coding" 3×
-  # Performance: 20% → 61% on 89-task Python refactoring benchmark with GPT-4 Turbo
   edit_format: search_replace_with_unified_diff_fallback
   
   formats:
@@ -915,9 +657,7 @@ output:
         =======
         {replacement_code}
         >>>>>>> REPLACE
-      
-      # Evidence: Aider shows 3× improvement (20% → 61% on refactoring)
-      rationale: "Clear boundaries, easy validation, familiar from git merge"
+      rationale: "Aider shows 3× improvement (20% → 61% on refactoring)"
     
     unified_diff:
       template: |
@@ -925,9 +665,7 @@ output:
         +++ b/{file}
         @@ -{start},{count} +{start},{count} @@
         {diff_content}
-      
-      # Evidence: GPT excellent with git diffs (common in training), terrible with line numbers
-      rationale: "Standard git format, familiar from training data"
+      rationale: "GPT excellent with git diffs, terrible with line numbers"
   
   token_budget:
     reserve_for_output: 0.25
@@ -937,47 +675,28 @@ output:
   
   continuation:
     enabled: true
-    
-    # Evidence: Aider implements infinite output via prefilling
     method: prefill_continuation
-    
     triggers: [finish_reason_length, output_incomplete, code_block_unclosed, approaching_token_limit]
     max_continuations: 5
-    
-    markers:
-      truncation: "// [Response truncated - continuing...]"
-      continuation: "// [Continuation from previous response]"
-      complete: "// [Response complete]"
-    
+    markers: {truncation: "// [Response truncated - continuing...]", continuation: "// [Continuation from previous response]", complete: "// [Response complete]"}
     merge_strategy: concatenate_with_intelligent_deduplication
     state_preservation: [conversation_history, system_message_always, partial_code_blocks, section_outline]
   
   chunking:
-    # Evidence: cAST algorithm (arXiv:2506.15655v1) - average 5.5 point gains on RepoEval
     method: ast_based_with_semantic_boundaries
-    
     parsers: {ruby: tree_sitter_ruby, javascript: tree_sitter_javascript, typescript: tree_sitter_typescript, python: tree_sitter_python}
     fallback: semantic_boundaries_or_paragraph_breaks
-    
     chunk_size_tokens: 512
     overlap_tokens: 128
     ast_nodes_per_chunk: 150
     preserve_units: [function_definition, class_definition, module_definition, method_definition]
   
   architect_mode:
-    # Evidence: Aider September 2024 benchmark
-    # o1-preview + o1-mini (Editor) achieved 85.0% (matches o1-preview + DeepSeek)
-    # Claude 3.5 Sonnet as both: 80.5% vs 77.4% solo
+    # Evidence: Aider Sept 2024 - 85.0% SOTA with architect/editor split
     enabled: true
     improvement: "80.5% with Claude 3.5 Sonnet vs 77.4% solo"
-    
     use_when: [complex_reasoning_required, multi_file_changes, architectural_decisions, bug_requiring_deep_analysis]
-    
-    models:
-      architect: claude-sonnet-4-5-20250514
-      editor: claude-3-haiku-20240307
-      rationale: "Separate reasoning (strong model) from formatting (cost-effective)"
-    
+    models: {architect: claude-sonnet-4-5-20250514, editor: claude-3-haiku-20240307}
     workflow: ["Architect analyzes and plans", "Editor implements", "Architect reviews", "Editor refines", "Iterate until convergence"]
   
   anti_truncation:
@@ -989,10 +708,7 @@ output:
   streaming:
     enabled: true
     chunk_size: 100
-    signals:
-      approaching_limit: "⚠️ Approaching output limit"
-      will_continue: "📝 Continuing..."
-      complete: "✅ Complete"
+    signals: {approaching_limit: "⚠️ Approaching output limit", will_continue: "📝 Continuing...", complete: "✅ Complete"}
     on_disconnect: [save_partial_response, mark_incomplete, enable_resume]
 
 execution:
@@ -1005,29 +721,18 @@ execution:
     wild: 0.9
   
   multi_temperature_strategy:
-    # Evidence: User observation from 300+ iterations - best solutions from diversity
     enabled: true
     method: run_through_all_temperatures_combine_weighted
     rationale: "Best solutions emerge from diversity of exploration"
   
   cherry_pick:
     generate: 15_to_30_alternatives
-    
-    # Evidence: User observation from 300+ iterations
     insight: "Best solutions emerge from ideas 8-15, not first 3"
     avoid_first_3_because: "Conventional, safe, obvious"
     sweet_spot: ideas_8_through_15
-    rationale: "First ideas are conventional; creativity emerges after exhausting obvious options"
-    
-    process:
-      1: generate_15_minimum
-      2: score_each_with_adversarial_personas
-      3: identify_best_elements_across_all
-      4: synthesize_hybrid_solution
-      5: validate_synthesis
+    process: {1: generate_15_minimum, 2: score_each_with_adversarial_personas, 3: identify_best_elements_across_all, 4: synthesize_hybrid_solution, 5: validate_synthesis}
   
   parallel_personas:
-    # Optimization: Run personas in parallel within groups
     group_1_veto: [security, attacker, compliance]
     group_2_high_weight: [maintainer, user, designer]
     group_3_refinement: [minimalist, performance, scale, skeptic, junior, ops, product]
@@ -1035,7 +740,6 @@ execution:
     combine: weighted_merge_after_all_complete
   
   principle_tiers:
-    # Smart application: only apply tier 2/3 if tier 1 passes
     tier_1_always: [veto_principles, security_first, smell_truncation, no_eval, csrf]
     tier_2_structural: [dry, kiss, srp, separation, demeter, loose_coupling]
     tier_3_refinement: [zen_principles, gestalt, visual, strunk]
@@ -1062,7 +766,6 @@ execution:
   
   adversarial:
     mandatory: true
-    
     personas:
       security: {weight: 0.20, temperature: 0.1, veto: true, questions: [how_exploit, injection_points, data_exposure, privilege_escalation]}
       attacker: {weight: 0.20, temperature: 0.1, veto: true, questions: [weakest_link, assumption_violations, bypass_mechanisms]}
@@ -1071,7 +774,6 @@ execution:
       minimalist: {weight: 0.10, temperature: 0.3, questions: [what_can_delete, simplest_solution, do_less]}
       user: {weight: 0.10, temperature: 0.5, questions: [solves_real_problem, intuitive, recovers_from_mistakes]}
       ops: {weight: 0.05, temperature: 0.3, questions: [how_deploy, how_monitor, how_rollback, on_call_3am]}
-    
     veto_precedence: &veto_precedence [security, attacker, maintainer]
   
   probes:
@@ -1104,7 +806,6 @@ convergence:
   zero_requires: explicit_justification_per_pass_with_evidence
   
   oscillation:
-    # Evidence: User observation - prevents infinite loops where two fixes alternate
     detect: same_violations_three_consecutive_iterations
     action: rollback_to_best_state_and_stop
     track: iteration_history_for_pattern_detection
@@ -1122,57 +823,26 @@ convergence:
 
 principles:
   smell_severity:
-    # Prioritize fixes by severity
     critical: [smell_truncation, smell_god_object, smell_complexity]
     major: [smell_duplication, smell_nesting, smell_long_method, smell_god_controller]
     minor: [smell_magic, smell_naming, smell_data_clump, smell_primitive_obsession]
     fix_order: critical_first_then_major_then_minor
 
   tier_1_veto:
-    security_first:
-      detects: unvalidated_input
-      action: validate
-      veto: true
-      loose_interpretation: "ANY user input reaching code without validation"
-    
-    no_truncation:
-      detects: ellipsis_or_placeholder
-      action: complete
-      veto: true
-      loose_interpretation: "ANY incomplete output: ..., TODO, placeholder, abbreviated"
-    
-    no_simulation:
-      detects: claims_without_evidence
-      action: demand_proof
-      veto: true
-      loose_interpretation: "ANY completion claim without verification"
-    
-    no_eval:
-      detects: eval_usage
-      action: remove
-      veto: true
-      loose_interpretation: "ANY dynamic code execution"
-    
-    encrypt_secrets:
-      detects: plaintext_secrets
-      action: encrypt
-      veto: true
-    
-    no_forbidden_tools:
-      detects: sed_awk_grep_find_bash
-      action: use_zsh_or_ruby_alternative
-      veto: true
+    security_first: {detects: unvalidated_input, action: validate, veto: true, loose_interpretation: "ANY user input reaching code without validation"}
+    no_truncation: {detects: ellipsis_or_placeholder, action: complete, veto: true, loose_interpretation: "ANY incomplete output: ..., TODO, placeholder, abbreviated"}
+    no_simulation: {detects: claims_without_evidence, action: demand_proof, veto: true, loose_interpretation: "ANY completion claim without verification"}
+    no_eval: {detects: eval_usage, action: remove, veto: true, loose_interpretation: "ANY dynamic code execution"}
+    encrypt_secrets: {detects: plaintext_secrets, action: encrypt, veto: true}
+    no_forbidden_tools: {detects: sed_awk_grep_find_bash, action: use_zsh_or_ruby_alternative, veto: true}
 
   tier_2_structural:
     dry:
       detects: repetition
       action: extract
       loose_interpretation: "ANY information repeated: identical code, similar logic, same concept different words"
-      
-      # Evidence: SourcererCC optimal at 70%, Sandi Metz AHA principle
-      similarity_threshold: *similarity_threshold
+      similarity_threshold: *similarity_threshold  # YAML anchor from interpretation.thresholds
       abstraction_rule: abstract_on_third_occurrence
-    
     kiss: {detects: complexity, action: simplify}
     yagni: {detects: speculation, action: delete}
     srp: {detects: multiple_reasons_to_change, action: split}
@@ -1193,42 +863,14 @@ principles:
       detects: unclear_naming
       action: rename
       loose_interpretation: "ANY unclear name: single letters, abbreviations, vague terms"
-      
-      # Evidence: Production code review best practices
-      examples:
-        good: [calculate_total_price, is_eligible_for_discount, user_authentication_service, fetch_active_orders]
-        bad: [calc, chk, do_stuff, temp, foo, data, info, manager, handler, process, get_data]
-    
-    small_functions:
-      detects: long_methods
-      action: extract
-      
-      # Evidence: Clean Code, industry best practices
-      max_lines: 20
-      max_nesting: 3
-    
+      examples: {good: [calculate_total_price, is_eligible_for_discount, user_authentication_service], bad: [calc, chk, do_stuff, temp, foo, data, info, manager]}
+    small_functions: {detects: long_methods, action: extract, max_lines: 20, max_nesting: 3}
     comment_is_failure:
       detects: comment_explains_what_not_why
       action: refactor_code_or_delete_comment
-      
-      when_to_comment:
-        - complex_business_rules
-        - non_obvious_algorithms
-        - workarounds_for_external_issues
-        - performance_optimizations
-        - security_considerations
-      
-      when_not_to_comment:
-        - explaining_obvious_code
-        - restating_code_in_english
-        - commented_out_code
-        - decorative_separators
-        - verbose_licensing_headers
-      
-      # Evidence: Clean Code principles, self-documenting code
+      when_to_comment: [complex_business_rules, non_obvious_algorithms, workarounds_for_external_issues, performance_optimizations, security_considerations]
+      when_not_to_comment: [explaining_obvious_code, restating_code_in_english, commented_out_code, decorative_separators]
       philosophy: "Comments are failure to express in code"
-      rationale: "Comments lie, code doesn't. Comments drift over time."
-    
     boy_scout: {detects: no_improvement, action: improve}
     test_coverage: {detects: untested_code, action: add_tests}
     error_handling: {detects: unhandled_errors, action: handle}
@@ -1243,13 +885,10 @@ principles:
     csrf: {detects: missing_csrf, action: add_token, veto: true}
     sanitize: {detects: unsanitized_input, action: sanitize, veto: true}
     escape: {detects: unescaped_output, action: escape, veto: true}
-    
-    # Evidence: Saltzer & Schroeder (1975) - operate with least privileges necessary
     least_privilege: {detects: excess_privileges, action: reduce, veto: true}
-    
     defense_depth: {detects: single_defense, action: layer}
     fail_secure: {detects: fails_open, action: fail_closed, veto: true}
-    data_minimization: {detects: over_collection, action: collect_only_needed, veto: true, origin: gdpr}
+    data_minimization: {detects: over_collection, action: collect_only_needed, veto: true}
 
   refactoring:
     extract_variable: {detects: complex_expression, action: name_it}
@@ -1269,8 +908,6 @@ principles:
     graceful_degradation: {detects: hard_failure, action: degrade}
     idempotency: {detects: non_idempotent, action: make_idempotent}
     timeout: {detects: no_timeout, action: add_timeout}
-    
-    # Evidence: Resilience4j, Netflix Hystrix patterns
     circuit_breaker: {detects: cascade_risk, action: add_breaker}
     retry_backoff: {detects: no_retry, action: add_retry}
     retry_with_jitter: {detects: synchronized_retries, action: add_jitter}
@@ -1285,7 +922,6 @@ principles:
     batch_operations: {detects: one_at_a_time, action: batch}
 
   tier_4_style:
-    # Evidence: Japanese design principles (Zen aesthetics)
     kanso: {detects: complexity, action: simplify, origin: zen}
     shibui: {detects: garish, action: refine, origin: zen}
     seijaku: {detects: noisy, action: quiet, origin: zen}
@@ -1296,7 +932,6 @@ principles:
     kintsugi: {detects: hidden_fix, action: celebrate, origin: zen}
 
   writing:
-    # Evidence: Strunk & White (1918) "The Elements of Style"
     omit_needless: {detects: verbose, action: compress, origin: strunk}
     active_voice: {detects: passive, action: activate, origin: strunk}
     parallel: {detects: non_parallel, action: parallelize, origin: strunk}
@@ -1372,13 +1007,11 @@ personas:
   meta: [why_exist, breaks_if_removed, what_would_openbsd_do]
   compliance: [gdpr, audit_trail, data_retention, right_to_delete]
   product: [user_value, business_metric, time_to_market]
-  veto_precedence: *veto_precedence
+  veto_precedence: *veto_precedence  # YAML anchor from execution.adversarial
 
 bias:
   tracked: [recency, confirmation, anchoring, availability, sunk_cost, optimism, dunning_kruger, authority, bandwagon, survivorship, status_quo, framing]
-  
   mitigations:
-    # Evidence: Standard bias mitigation techniques from decision science
     alternatives_first: generate_before_evaluating
     systematic_search: avoid_first_good_enough
     evidence_based: estimates_from_data
@@ -1407,32 +1040,19 @@ scalability:
   resume: checkpoint_every_5_minutes
 
 risk:
-  cost_model:
-    veto: 1000
-    security: 100
-    correctness: 50
-    performance: 30
-    maintainability: 20
-    aesthetic: 10
+  cost_model: {veto: 1000, security: 100, correctness: 50, performance: 30, maintainability: 20, aesthetic: 10}
   conflict_resolution: choose_higher_weight
   iteration_limit: see_convergence.hard_stop
   false_positive_threshold: 0.85
 
 llm:
   cognitive:
-    # Evidence: Miller's Law (1956) - working memory 7±2 chunks
     working_memory: 8
     token_multiplier: 1.75_for_code
-    
-    # Evidence: Liu et al. (TACL 2024) - U-shaped attention curve
     attention: critical_at_start_and_end
-    
-    # Evidence: Nature 2024 semantic entropy, Meta CoVe
     hallucination: verify_with_evidence
-  
   cascade_prevention: [reload_after_edit, correction_log, never_assume_persisted, validate_state]
   repetition_prevention: [check_git_log, correction_changelog, web_search]
-  
   pitfalls:
     code: [off_by_one, null_pointer, race_condition, resource_leak, injection]
     design: [circular_dependency, hidden_coupling, shotgun_surgery]
@@ -1460,54 +1080,22 @@ rails:
   version: "8.1+"
   
   doctrine:
-    # Evidence: Rails doctrine (DHH, Rails core team)
     optimize_for_programmer_happiness: true
     measures: [readability, writability, deletability, debuggability]
-    
     exalt_beautiful_code: mandatory
-    rationale: "Beauty is not optional - code quality is measurable"
     measure: "Would you show this proudly?"
-    
     clarity_over_cleverness: always
     convention_over_configuration: prefer_rails_way
     code_as_craft: artisan_not_factory
     lineage: [DHH, Kent_Beck, Martin_Fowler, Sandi_Metz]
   
-  stack:
-    queue: solid_queue
-    cache: solid_cache
-    cable: solid_cable
-    assets: propshaft
-    server: falcon
-    frontend: [hotwire, stimulus, turbo]
-    components: view_components
-  
+  stack: {queue: solid_queue, cache: solid_cache, cable: solid_cable, assets: propshaft, server: falcon, frontend: [hotwire, stimulus, turbo], components: view_components}
   forbidden: [deface, jquery, remote_true, redis]
-  
-  turbo:
-    frames: partial_updates
-    streams: [replace, append, prepend, remove, update, before, after]
-  
-  stimulus:
-    max_lines: 200
-    single_responsibility: true
-  
-  reflex:
-    lifecycle: [before, success, error, after]
-    modes: [nothing, page, selector]
-  
-  components:
-    required_when: 5+
-    structure: [class, template, css, stimulus]
-    testing: previews
-  
-  patterns:
-    controllers: skinny
-    models: skinny
-    business_logic: service_objects
-    complex_forms: form_objects
-    complex_queries: query_objects
-    view_logic: presenters_or_components
+  turbo: {frames: partial_updates, streams: [replace, append, prepend, remove, update, before, after]}
+  stimulus: {max_lines: 200, single_responsibility: true}
+  reflex: {lifecycle: [before, success, error, after], modes: [nothing, page, selector]}
+  components: {required_when: 5+, structure: [class, template, css, stimulus], testing: previews}
+  patterns: {controllers: skinny, models: skinny, business_logic: service_objects, complex_forms: form_objects, complex_queries: query_objects, view_logic: presenters_or_components}
   
   features_8_1:
     active_job_continuations: {pattern: "Use step() and cursor()", idempotent: true}
@@ -1525,36 +1113,18 @@ rails:
 platform:
   openbsd:
     version: "7.6+"
-    
     security:
-      # Evidence: OpenBSD pledge(2) and unveil(2) man pages
-      pledge:
-        startup: [stdio, rpath, wpath, inet, dns, proc, exec]
-        runtime: [stdio, rpath, wpath, unix]
-        cleanup: [stdio, rpath]
-      
+      pledge: {startup: [stdio, rpath, wpath, inet, dns, proc, exec], runtime: [stdio, rpath, wpath, unix], cleanup: [stdio, rpath]}
       unveil:
         - {path: /var/rails/app, permissions: rwx}
         - {path: /var/rails/config, permissions: r}
         - {path: /tmp, permissions: rwc}
         - {path: /etc/ssl, permissions: r}
-    
-    commands:
-      privilege: doas
-      firewall: pf
-      web_server: httpd
-      proxy: relayd
-      init: rcctl
-    
+    commands: {privilege: doas, firewall: pf, web_server: httpd, proxy: relayd, init: rcctl}
     deploy:
       user: dev
       base: /var/rails
-      apps:
-        brgen: {port: 11006}
-        amber: {port: 10001}
-        blognet: {port: 10002}
-        hjerterom: {port: 10004}
-        privcam: {port: 10005}
+      apps: {brgen: {port: 11006}, amber: {port: 10001}, blognet: {port: 10002}, hjerterom: {port: 10004}, privcam: {port: 10005}}
   
   cygwin:
     enabled: true
@@ -1563,134 +1133,58 @@ platform:
     ruby_native: true
 
 visual:
-  # Evidence: Brutalist design philosophy
   philosophy: brutalist_flat_honest
   forbidden: [box_shadow, text_shadow, border_radius, gradient, blur, decorative_animation]
   allowed: [opacity_for_state, translate_for_position, transition_for_state, loading_animation]
-  
-  colors:
-    background: "#000000"
-    max_channel: 220
-    min_contrast: 4.5
-  
-  interaction:
-    press: soft_invert
-    parallax: endpoints_move
-    depth: perspective_1000px
-  
-  html:
-    semantic: [article, section, nav, aside, main, header, footer, figure, figcaption]
-    max_nesting: 4
-    aria: required_for_interactive
+  colors: {background: "#000000", max_channel: 220, min_contrast: 4.5}
+  interaction: {press: soft_invert, parallax: endpoints_move, depth: perspective_1000px}
+  html: {semantic: [article, section, nav, aside, main, header, footer, figure, figcaption], max_nesting: 4, aria: required_for_interactive}
 
 content:
   protect: [track_lists, artist_names, album_titles, user_content, timestamps, attribution]
-  
-  verify:
-    before: sha256_store
-    after: sha256_compare
-    rollback_if: [mismatch, modified, placeholder, meaning_altered]
-  
+  verify: {before: sha256_store, after: sha256_compare, rollback_if: [mismatch, modified, placeholder, meaning_altered]}
   exempt: [aria_hidden, decorative_text, generated_ids]
-  
-  # Evidence: User requirement from production experience
   protected_buffer: 50_lines_around_critical_content
-  rationale: "Prevents accidental modification near protected sections"
 
 modern_patterns:
   note: "Patterns current as of 2024-2025. Review quarterly."
   
-  zsh_2024:
-    - use_typeset_for_scoping
-    - setopt_extended_glob
-    - array_handling_with_f_modifier
-    - avoid_eval_use_parameter_expansion
-    - lazy_loading_zinit
-  
-  javascript_es2024_2025:
-    - object_groupby_map_groupby
-    - promise_withresolvers
-    - pattern_matching_es2025
-    - immutable_arrays_tosorted_toreversed
-    - optional_chaining_nullish_coalescing
-    - const_over_let_never_var
-  
-  ruby_3_3_3_4:
-    - yjit_enabled_default
-    - pattern_matching_in_keyword
-    - rubocop_omakase_rules
-    - numbered_parameters
-  
-  rails_7_1_7_2:
-    - pwa_files_default
-    - service_objects_business_logic
-    - stimulus_hotwire_turbo
-    - api_first_design
-  
-  html5_2024:
-    - semantic_elements_required
-    - figure_figcaption_for_media
-    - aria_sparingly_prefer_native
-    - one_h1_per_page
-  
-  css3_2024:
-    - grid_for_2d_flexbox_for_1d
-    - container_queries
-    - css_nesting
-    - has_is_where_selectors
-    - rem_em_units_accessibility
+  zsh_2024: [use_typeset_for_scoping, setopt_extended_glob, array_handling_with_f_modifier, avoid_eval_use_parameter_expansion, lazy_loading_zinit]
+  javascript_es2024_2025: [object_groupby_map_groupby, promise_withresolvers, pattern_matching_es2025, immutable_arrays_tosorted_toreversed, optional_chaining_nullish_coalescing, const_over_let_never_var]
+  ruby_3_3_3_4: [yjit_enabled_default, pattern_matching_in_keyword, rubocop_omakase_rules, numbered_parameters]
+  rails_7_1_7_2: [pwa_files_default, service_objects_business_logic, stimulus_hotwire_turbo, api_first_design]
+  html5_2024: [semantic_elements_required, figure_figcaption_for_media, aria_sparingly_prefer_native, one_h1_per_page]
+  css3_2024: [grid_for_2d_flexbox_for_1d, container_queries, css_nesting, has_is_where_selectors, rem_em_units_accessibility]
 
 communication:
-  # Evidence: dmesg log format, production monitoring best practices
   style: dmesg
   pattern: "MMM dd HH:mm:ss host service[pid]: level: message"
   philosophy: [results_first, silent_success, loud_failure, terse_progress]
   levels: [debug, info, notice, warn, err, crit, alert, emerg]
-  
-  emoji:
-    success: "✓"
-    failure: "✗"
-    progress: "→"
-    warning: "⚠️"
-    boot: "⚡"
-  
+  emoji: {success: "✓", failure: "✗", progress: "→", warning: "⚠️", boot: "⚡"}
   avoid: [headlines, headers, tables, excessive_lists, verbose_explanations]
   prefer: [paragraphs, inline_metrics, one_liners, evidence_based_statements]
   tone: truth_over_agreeability
 
 limits:
-  code:
-    # Evidence: Clean Code, industry best practices
-    max_method_lines: 20
-    max_class_lines: 200
-    max_file_lines: 500
-    max_nesting_depth: 3
-    max_complexity: 10
-    max_arguments: 3
-    max_controller_actions: 7
-    max_instance_variables: 7
-  
-  duplication:
-    trigger_threshold: 2
-    similarity_threshold: *similarity_threshold
-    min_tokens: 100
-  
-  naming:
-    min_length: 3
-    max_length: 40
-    require_descriptive: true
+  code: {max_method_lines: 20, max_class_lines: 200, max_file_lines: 500, max_nesting_depth: 3, max_complexity: 10, max_arguments: 3, max_controller_actions: 7, max_instance_variables: 7}
+  duplication: {trigger_threshold: 2, similarity_threshold: *similarity_threshold, min_tokens: 100}
+  naming: {min_length: 3, max_length: 40, require_descriptive: true}
 
+# =============================================================================
+# INTEGRATED MODULES (FROM v31.0.0)
+# =============================================================================
 integrated_modules:
   note: "Framework compatible with user_framework v42.6.0"
   
   semantic_css_advocacy:
-    source: "User framework v42.6.0"
+    source: user_framework_v42.6.0
     principles: [element_over_attribute, semantic_html_required, brutalist_flat_design, no_shadows_gradients_radius]
     integration_status: active
     veto_power: false
   
   bringhurst_typography:
-    source: "User framework v42.6.0 + Bringhurst"
+    source: user_framework_v42.6.0_plus_bringhurst
     constants:
       line_length: {ideal: 66, min: 45, max: 75}
       line_height: {body: [1.4, 1.6], heading: [1.0, 1.2]}
@@ -1700,7 +1194,7 @@ integrated_modules:
     veto_power: false
   
   multi_temperature_reasoning:
-    source: "User framework v42.6.0"
+    source: user_framework_v42.6.0
     mappings:
       0.1: security_compliance_standards
       0.3: violation_analysis_gap_detection
@@ -1711,14 +1205,14 @@ integrated_modules:
     veto_power: false
   
   cognitive_bias_awareness:
-    source: "User framework v42.6.0"
+    source: user_framework_v42.6.0
     biases: [dunning_kruger, confirmation, sunk_cost, optimism, anchoring]
     mitigations: [peer_review, adversarial_questioning, alternative_generation, evidence_based_decisions, perspective_shifting]
     integration_status: active
     veto_power: false
   
   closed_loop_convergence:
-    source: "User framework v42.6.0"
+    source: user_framework_v42.6.0
     pattern: detect_question_generate_select_apply_verify_repeat
     adversarial_questions: 5
     alternatives_range: [5, 15]
@@ -1726,6 +1220,9 @@ integrated_modules:
     integration_status: active
     veto_power: false
 
+# =============================================================================
+# PHILOSOPHY PROFILES (FROM v31.0.0)
+# =============================================================================
 philosophy_profiles:
   preservation_profile:
     priority: preserve_functionality_first
@@ -1745,21 +1242,101 @@ philosophy_profiles:
     rollback_trigger: weighted_decision
     use_case: [general_purpose, mixed_codebases]
 
+# =============================================================================
+# VALIDATION GATES (FROM v31.0.0)
+# =============================================================================
 validation_gates:
-  preservation_gates:
-    - functionality_maintained
-    - no_regression_in_tests
-    - user_experience_preserved
-    - backward_compatibility
+  preservation_gates: [functionality_maintained, no_regression_in_tests, user_experience_preserved, backward_compatibility]
+  perfection_gates: [structural_compliance, quality_metrics_achieved, optimization_targets_met, self_application_evidence]
+  adaptive_gates: [appropriate_balance_for_context, risk_adjusted_improvements, stakeholder_value_increased, technical_debt_managed]
+
+reference:
+  version: 32.0.0
   
-  perfection_gates:
-    - structural_compliance
-    - quality_metrics_achieved
-    - optimization_targets_met
-    - self_application_evidence
+  academic:
+    - "Farquhar et al. (Nature 2024, DOI:10.1038/s41586-024-07421-0) - Semantic entropy"
+    - "Xiao et al. (ICLR 2024, arXiv:2309.17453) - StreamingLLM"
+    - "Jiang et al. (EMNLP 2023) - LLMLingua"
+    - "Dhuliawala et al. (ACL 2024, arXiv:2309.11495) - Chain-of-Verification"
+    - "Wang et al. (ICLR 2023, arXiv:2203.11171) - Self-consistency"
+    - "Liu et al. (TACL 2024, DOI:10.1162/tacl_a_00638) - Lost in the middle"
+    - "Zhang et al. (NeurIPS 2023, arXiv:2306.14048) - H₂O heavy hitter"
+    - "Roy, Cordy & Koschke (SCP 2009) - Clone taxonomy"
+    - "Sajnani et al. (ICSE 2016) - SourcererCC"
+    - "Saltzer & Schroeder (IEEE 1975) - Security principles"
   
-  adaptive_gates:
-    - appropriate_balance_for_context
-    - risk_adjusted_improvements
-    - stakeholder_value_increased
-    - technical_debt_managed
+  production: ["Anthropic SDK - Timeout/retry defaults", "Claude Code - Permission model", "Aider - Edit format effectiveness", "AWS SDK - Exponential backoff", "SWE-bench - Test methodology"]
+  
+  standards: ["IEEE 1003.1 - POSIX pathname", "RFC 6585 - HTTP 429", "RFC 7231 - Retry-After", "OWASP Top 10"]
+  
+  lineage: [Dieter_Rams, OpenBSD, Strunk_White, Tadao_Ando, Donald_Norman, Martin_Fowler, Robert_Martin, Sandi_Metz, DHH]
+# =============================================================================
+# PRINCIPLES (CONDENSED - 251 total)
+# =============================================================================
+principles:
+  # Core (immutable)
+  durability: {detects: no_tests, severity: critical, confidence: 0.95, operation: add_tests}
+  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, operation: add_guards}
+  observability: {detects: silent_errors, severity: critical, confidence: 0.95, operation: fail_fast}
+  
+  # SOLID
+  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, operation: split}
+  open_closed: {detects: modification_required, severity: high, confidence: 0.75, operation: introduce_seam}
+  
+  # Simplicity
+  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, operation: extract}
+  keep_it_simple: {detects: over_engineering, severity: medium, confidence: 0.85, operation: simplify}
+  
+  # See full list in git history - condensed for token efficiency
+
+# =============================================================================
+# OPERATIONS
+# =============================================================================
+operations:
+  split: Divide into focused modules
+  extract: Pull out reusable component
+  simplify: Reduce complexity
+  delete: Remove unnecessary code
+  rename: Clarify naming
+  add_guards: Add validation/error handling
+  add_tests: Add test coverage
+  fail_fast: Report errors immediately
+  introduce_seam: Add extension point
+
+# =============================================================================
+# ADVERSARIAL PERSONAS
+# =============================================================================
+adversarial:
+  enabled: true
+  threshold: 0.7
+  personas:
+    security_auditor: {focus: vulnerabilities, veto: true, weight: 1.0}
+    simplicity_advocate: {focus: over_engineering, veto: false, weight: 0.9}
+    performance_engineer: {focus: efficiency, veto: false, weight: 0.7}
+    maintainability_guardian: {focus: long_term_health, veto: false, weight: 0.8}
+
+# =============================================================================
+# CONVERGENCE
+# =============================================================================
+convergence:
+  metrics: [violations_remaining, quality_delta, adversarial_score]
+  exit:
+    complete: violations == 0 AND delta < 0.02 AND score >= 0.8
+    diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
+    hard_stop: cycles >= 10
+
+# =============================================================================
+# EXECUTION WORKFLOW
+# =============================================================================
+execution:
+  step_1_startup: Load master.yml, display dmesg banner
+  step_2_discovery: Run tree.sh, read all .md files
+  step_3_read: Read ALL target files completely
+  step_4_scan: Detect violations against all principles
+  step_5_generate: Create 4-16 fix alternatives
+  step_6_evaluate: Score with adversarial personas
+  step_7_apply: Execute highest-scoring fixes
+  step_8_measure: Calculate convergence metrics
+  step_9_iterate: Repeat until converged
+  step_10_commit: Git commit with evidence
+

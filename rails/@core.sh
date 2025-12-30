@@ -4,9 +4,9 @@ set -euo pipefail
 # Combines: setup, database, dependencies
 # Per: master.yml v100.0 - Rails 8 + Solid Stack
 # Constants
-readonly DEFAULT_PG_USER="dev"
+readonly # SQLite3 requires no user config
 readonly DEFAULT_PG_HOST="localhost"
-readonly DEFAULT_THREAD_POOL=5  # Standard Rails connection pool size
+readonly DEFAULT_THREAD_POOL=5  # Rails default per process  # Standard Rails connection pool size
 readonly TEMPLATE_DIR="${0:a:h}/templates"
 # Utility Functions
 log() {
@@ -43,8 +43,8 @@ setup_yarn() {
   fi
 }
 # Database Configuration
-setup_postgresql() {
-  log "Setting up PostgreSQL database configuration"
+setup_database() {
+  log "Setting up SQLite3 database configuration"
   if [ ! -f "config/database.yml" ]; then
     generate_database_yml
   fi
@@ -54,7 +54,7 @@ generate_database_yml() {
   local app_name="${APP_NAME:-myapp}"
   cat > config/database.yml << EOF
 default: &default
-  adapter: postgresql
+  adapter: sqlite3
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { ${DEFAULT_THREAD_POOL} } %>
 development:
