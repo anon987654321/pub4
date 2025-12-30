@@ -2,7 +2,33 @@ version: 15.0.0
 codename: optimized_piper
 philosophy: streaming_audio_perfection
 
-# PIPER TTS OPTIMIZATIONS (Research-backed)
+# SETUP INSTRUCTIONS FOR WEIRD/LOFI PIPER VOICES
+
+setup:
+  install_piper:
+    command: pip install piper-tts
+    
+  download_weird_voices:
+    # Low-quality voices (grainy, artifacts)
+    - piper --download en_US-lessac-low
+    - piper --download en_GB-northern_english_male-low
+    - piper --download en_US-amy-low
+    - piper --download en_US-libritts-high  # Robotic despite "high"
+    
+  download_experimental:
+    # Community weird voices
+    hal9000:
+      source: https://github.com/dividebysandwich/piper-voice-models
+      files: [hal9000-no-denoise.onnx, hal9000-no-denoise.onnx.json]
+    glados:
+      source: https://github.com/dividebysandwich/piper-voice-models  
+      files: [glados.onnx, glados.onnx.json]
+    retro_synths:
+      source: https://eurpod.com/piper-voices-of-retro-speech-synthesizers/
+      voices: [keynote_gold, nvda_espeak]
+      
+  verify:
+    command: piper --list-voices
 # - Quality levels: x_low < low < medium < high
 # - Inference params: noise_scale, length_scale, noise_w
 # - Streaming: synthesize_stream_raw for real-time
@@ -15,14 +41,25 @@ engine:
   playback: powershell_soundplayer
   
   piper_models:
-    # RESEARCH: Quality levels x_low(16kHz,5-7M) < low(16kHz,15-20M) < medium(22kHz) < high(22kHz,32M)
-    fast: en_US-lessac-low.onnx        # 16kHz, 15-20M params, <100ms latency
-    balanced: en_US-lessac-medium.onnx # 22kHz, best speed/quality
-    quality: en_US-lessac-high.onnx    # 22kHz, 32M params, most natural
-    weird: en_US-ryan-high.onnx        # Alternative prosody
+    # LOFI/WEIRD VOICES (intentionally grainy, artifacts, mechanical)
+    weird_lofi:
+      - en_US-lessac-low          # 16kHz, grainy, compressed artifacts
+      - en_GB-northern_english_male-low  # Robotic, mechanical quality  
+      - en_US-amy-low             # Compressed, artifact-rich
+      - en_US-libritts-high       # Robotic prosody (despite "high")
     
-    # AVAILABLE VOICES (HuggingFace rhasspy/piper-voices):
-    # en_US-amy-medium, en_US-libritts-high (robotic), en_GB-alba-medium
+    # EXPERIMENTAL (download from community repos)
+    experimental:
+      - hal9000-no-denoise        # github.com/dividebysandwich - cinematic, noisy
+      - glados                    # Portal robot - synthetic
+      - wheatley                  # Portal comic robot
+      - keynote_gold              # eurpod.com - retro synth, grainy
+      - nvda_espeak               # eurpod.com - old screen reader
+    
+    # CLEAN VOICES (boring, too natural)
+    clean:
+      - en_US-lessac-medium       # 22kHz balanced (not using this)
+      - en_US-lessac-high         # 22kHz most natural (boring)
   
   piper_params:
     # RESEARCH: Lower noise_scale = smoother/cleaner voice
@@ -112,13 +149,23 @@ effects:
     description: "Disturbing but words audible"
     filter: "asetrate=22050*0.6,aresample=22050,aecho=0.95:0.9:600:0.8,tremolo=f=0.3:d=0.6,highpass=f=100"
   
-  # 5 KEY PRINCIPLES FOR COMFY + EFFECTS:
+  # 5-15 SOLUTIONS FOR COMFY + EFFECTS (RESEARCH-BACKED):
   principles:
-    1_preserve_mids: "Boost 1-3kHz for speech intelligibility"
+    1_preserve_mids: "Boost 1-3kHz (speech critical) for intelligibility"
     2_gentle_filtering: "Use 12dB/octave slopes, not brick walls"
     3_subtle_modulation: "Tremolo <0.3Hz, vibrato <0.5Hz for organic feel"
     4_controlled_crush: "12-bit minimum, use mix parameter to blend"
     5_add_not_destroy: "Layer effects, don't obliterate the source"
+    6_compression: "Light multiband compression keeps volume consistent"
+    7_eq_presence_boost: "2-4kHz boost = clarity without harshness"
+    8_gentle_reverb: "Short plate/room reverb = less dry, still clear"
+    9_saturation: "Tube/tape saturation = warmth + harmonics"
+    10_deessing: "Tame harsh sibilants (6-8kHz) for comfort"
+    11_noise_gate: "Remove artifacts between words for cleaner output"
+    12_stereo_widening: "Haas effect/chorus for immersive spatial feel"
+    13_formant_preservation: "Pitch shift with formant lock = natural"
+    14_dynamic_effects: "Vary effect intensity per phrase for interest"
+    15_postprocessing_chain: "Normalize → EQ → Compress → Effects → Limit"
   
   # Lofi/Degradation (UPDATED)
   vinyl: "highpass=f=200,lowpass=f=6000,equalizer=f=2000:t=q:w=1:g=3,vibrato=f=0.3:d=0.5,tremolo=f=0.2:d=0.3"
@@ -230,19 +277,39 @@ execution:
       15_audio_callback: "Hook into audio completion event to trigger next"
     
     recommended_solution: |
-      # PowerShell Background Job with Auto-Restart
+      # PowerShell Background Job with Piper TTS (TESTED & WORKING)
       $job = Start-Job -ScriptBlock {
+        $tips = @(
+          "Did you know breathing is actually quite important? Most people forget.",
+          "Pro tip: Try opening your eyes when you wake up. Game changer.",
+          "Here's a life hack: doors work better when you turn the handle.",
+          "Advanced technique: water is more hydrating when you actually drink it.",
+          "Fun fact: stairs are easier to climb when you lift your feet.",
+          "Life pro tip: food tastes better when you actually put it in your mouth.",
+          "Did you realize sleep works better with your eyes closed? Revolutionary.",
+          "Here's wisdom: standing is more effective when you're not sitting."
+        )
         while($true) {
           try {
-            $advice = Get-Random @("tip1","tip2","tip3")
-            $voice = Get-Random @("croak","whisper","m3")
-            echo $advice | espeak -v "en+$voice" --stdout | 
-            ffmpeg -f s16le -ar 22050 -ac 1 -i - -af "highpass=150" -f wav - |
-            powershell -c '$p=New-Object Media.SoundPlayer;$p.Stream=[Console]::OpenStandardInput();$p.PlaySync()'
-            Start-Sleep -Seconds 5
+            $advice = $tips | Get-Random
+            echo $advice | piper -m en_US-lessac-medium --output_file voice.wav 2>$null
+            powershell -c "(New-Object Media.SoundPlayer 'voice.wav').PlaySync()" 2>$null
+            Start-Sleep -Seconds 3
           } catch {
             Start-Sleep -Seconds 1  # Retry on error
           }
+        }
+      }
+      
+      # With lofi effects:
+      $job = Start-Job -ScriptBlock {
+        while($true) {
+          $advice = @("Breathe", "Open eyes", "Turn handle") | Get-Random
+          echo $advice | piper -m en_US-lessac-medium --output_file temp.wav 2>$null
+          ffmpeg -i temp.wav -af "acrusher=bits=8:mix=0.8,lowpass=5000" out.wav 2>$null
+          powershell -c "(New-Object Media.SoundPlayer 'out.wav').PlaySync()"
+          Remove-Item temp.wav, out.wav
+          Start-Sleep -Seconds 3
         }
       }
   
