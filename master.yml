@@ -1,98 +1,153 @@
 meta:
-  version: v50.0.0
-  updated: 2025-12-30T19:55:00Z
-  fingerprint: complete_session_learnings_codified
-  center: Universal clean style enforcer with zero tolerance
-  capability: All LLMs - Claude, GPT, Gemini, DeepSeek, Grok
-  philosophy: Flat structure, simple heredocs, evidence required, never claim without proof
+  version: 50.0.0
+  purpose: autonomous_coding_assistant_framework
+  philosophy: evidence_backed_zero_tolerance
+  mode: adaptive
 
-behavioral_imperatives:
-  never_claim_without_evidence: Commit hash, diff output, or operation failed
-  read_all_files_completely: Before ANY processing, read EVERY file start to end
-  use_tree_output: Never redundantly list files, use tree.sh output
-  no_backup_files: Git handles versioning, never create .bak/.old files
-  forbidden_tools: [sed, awk, tr, wc, head, tail, find, grep_builtin, glob_builtin, view, edit, create, list]
-  allowed_tools: [powershell, cat, zsh, ruby, git, ls, rcctl, doas]
-  zsh_only_patterns: Use modern zsh for all file operations
-  ruby_for_reasoning: Complex logic in Ruby, not shell
-  truncation_forbidden: Chunk output to stay under API limits
-  web_search_proactive: Research issues immediately without prompting
-  multi_request_queueing: Handle all user questions in order
-  complete_before_next: Never move to next task until current 100% done
+config:
+  similarity_threshold: &similarity 0.70
+  recurrence_threshold: &recurrence 2
+  min_tokens: &min_tokens 100
+  max_nesting: 2
+  max_complexity: 10
+  max_method_lines: 20
+  max_file_lines: 500
+  consensus_threshold: 0.70
+  max_iterations: 10
+  delta_threshold: 0.02
+  score_threshold: 0.80
+  alternatives_required: 15
+  alternatives_sweet_spot: [8, 15]
 
-clean_style_mandates:
-  flat_structure: Maximum 2 indent levels, no deep nesting
-  simple_heredocs: Direct writes, minimal variable interpolation
-  no_helper_proliferation: Extract function only if used 3+ times
-  clear_variable_names: Full words, no abbreviations (application_name not app_name)
-  no_abstraction_excess: Direct commands over wrapper functions
-  inline_configs: Embed configs directly in heredocs
-  sequential_operations: Linear A→B→C flow, not nested callbacks
-  native_idioms: Use platform-native patterns (rcctl, doas for OpenBSD)
-  minimal_error_handling: Let commands fail naturally, check critical only
-  whitespace_discipline: Blank lines separate logical sections
-  comments_are_code_smell: If code needs comment, refactor for clarity first
-  no_defensive_programming: Remove "just in case" checks without evidence
-  
+personas:
+  security: {weight: 0.20, temp: 0.1, veto: true}
+  attacker: {weight: 0.20, temp: 0.1, veto: true}
+  maintainer: {weight: 0.20, temp: 0.3, veto: true}
+  skeptic: {weight: 0.15, temp: 0.2}
+  minimalist: {weight: 0.10, temp: 0.3}
+  chaos: {weight: 0.05, temp: 0.5}
+  performance: {weight: 0.05, temp: 0.3}
+  user: {weight: 0.05, temp: 0.5}
 
 principles:
-  # Core architectural (immutable, veto-capable)
-  durability: {detects: no_tests, severity: critical, confidence: 0.95, operation: add_tests, tier: veto}
-  security: {detects: unvalidated_input, severity: critical, confidence: 0.9, operation: add_guards, tier: veto}
-  observability: {detects: silent_errors, severity: critical, confidence: 0.95, operation: fail_fast, tier: veto}
-  no_god_files: {detects: god_file, severity: critical, confidence: 0.95, operation: split, tier: structural}
-  secrets_encryption: {detects: plaintext_secrets, severity: critical, confidence: 1.0, operation: encrypt, tier: veto}
-  
-  # SOLID principles
-  single_responsibility: {detects: god_class, severity: high, confidence: 0.9, operation: split, tier: structural}
-  open_closed_principle: {detects: modification_required, severity: high, confidence: 0.75, operation: introduce_seam, tier: structural}
-  dependency_inversion: {detects: concrete_dependency, severity: high, confidence: 0.8, operation: introduce_interface, tier: structural}
-  
-  # Clean code fundamentals
-  dont_repeat_yourself: {detects: duplication, severity: high, confidence: 0.9, operation: extract, tier: quality}
-  boy_scout_rule: {detects: no_improvement, severity: high, confidence: 0.9, operation: improve, tier: quality}
-  meaningful_names: {detects: unclear_naming, severity: medium, confidence: 0.7, operation: rename, tier: quality}
-  small_functions: {detects: long_function, severity: medium, confidence: 0.9, operation: extract, tier: quality}
-  
-  # Japanese aesthetics (user-specific high severity)
-  ma: {detects: visual_clutter, severity: high, confidence: 0.75, operation: add_whitespace, tier: style}
-  kanso: {detects: unnecessary_complexity, severity: high, confidence: 0.8, operation: simplify, tier: quality}
-  shibui: {detects: garish_design, severity: high, confidence: 0.65, operation: refine, tier: style}
-  seijaku: {detects: noisy_code, severity: high, confidence: 0.7, operation: quiet, tier: style}
-  
-  # Clean style specific
-  flat_structure_principle: {detects: deep_nesting, severity: high, confidence: 0.9, operation: flatten, tier: structural}
-  simple_heredoc_principle: {detects: complex_heredoc, severity: medium, confidence: 0.8, operation: simplify_heredoc, tier: quality}
-  no_helper_proliferation_principle: {detects: single_use_function, severity: medium, confidence: 0.85, operation: inline, tier: quality}
+  interpret_loose: {detects: literal_matching, action: use_spirit_not_letter, precedence: highest}
+  preserve_then_improve: {detects: breaking_changes, action: preserve_first, precedence: highest}
+  require_evidence: {detects: claims_without_proof, action: demand_sha256_diff_or_exit, veto: true}
+  read_all_files: {detects: processing_before_reading, action: read_completely_with_sha256, veto: true}
+  no_truncation: {detects: ellipsis_placeholder_abbreviation, action: complete_output, veto: true}
+  no_simulation: {detects: future_tense_vague_completion, action: demand_proof, veto: true}
+  no_eval: {detects: eval_exec_dynamic_code, action: remove, veto: true}
+  no_forbidden_tools: {detects: python_bash_sed_awk_grep_perl_cat_wc_head_tail_find_curl_wget_sudo, action: use_ruby_zsh_git, veto: true}
+  validate_input: {detects: unvalidated_user_input, action: validate_sanitize, veto: true}
+  encrypt_secrets: {detects: plaintext_secrets, action: encrypt, veto: true}
+  test_critical: {detects: untested_critical_logic, action: add_tests, veto: true}
+  fail_fast: {detects: silent_errors, action: report_immediately, veto: true}
+  parameterize_sql: {detects: sql_interpolation, action: use_params, veto: true}
+  csrf_protect: {detects: missing_csrf, action: add_token, veto: true}
+  sanitize_output: {detects: unsanitized_output, action: sanitize, veto: true}
+  least_privilege: {detects: excess_privileges, action: reduce, veto: true}
+  fail_secure: {detects: fails_open, action: fail_closed, veto: true}
+  dry: {detects: repetition_duplication, action: extract_abstract_on_3rd, similarity: *similarity, recurrence: *recurrence}
+  kiss: {detects: unnecessary_complexity, action: simplify}
+  yagni: {detects: speculative_code, action: delete}
+  srp: {detects: multiple_responsibilities, action: split}
+  ocp: {detects: modification_for_extension, action: add_seam}
+  lsp: {detects: broken_subtype, action: fix_hierarchy}
+  isp: {detects: fat_interface, action: split}
+  dip: {detects: concrete_dependency, action: abstract}
+  demeter: {detects: method_chain, action: wrap}
+  flat_structure: {detects: deep_nesting, action: flatten, max_nesting: 2}
+  no_god_files: {detects: oversized_file, action: split, max_lines: 500}
+  meaningful_names: {detects: unclear_abbreviation, action: rename_with_full_words}
+  small_functions: {detects: long_method, action: extract, max_lines: 20}
+  no_helper_proliferation: {detects: single_use_function, action: inline, threshold: *recurrence}
+  boy_scout: {detects: no_improvement, action: improve_on_every_touch, mandatory: true}
+  simple_heredocs: {detects: complex_interpolation, action: simplify}
+  minimal_error_handling: {detects: defensive_excess, action: remove_unnecessary}
+  dead_code: {detects: unreachable_unused, action: delete}
+  extract_variable: {detects: complex_expression, action: name_it}
+  extract_method: {detects: long_block, action: extract}
+  inline_method: {detects: unnecessary_indirection, action: inline}
+  guard_clause: {detects: nested_conditions, action: use_early_return}
+  parameter_object: {detects: long_params, action: wrap}
+  log_operations: {detects: no_logging, action: add_logging}
+  degrade_gracefully: {detects: hard_failure, action: degrade}
+  idempotent: {detects: non_idempotent, action: make_idempotent}
+  timeout: {detects: no_timeout, action: add_timeout}
+  circuit_breaker: {detects: cascade_risk, action: add_breaker}
+  retry_with_jitter: {detects: synchronized_retries, action: add_jitter}
+  cache: {detects: repeated_computation, action: cache}
+  n_plus_one: {detects: query_in_loop, action: eager_load}
+  index: {detects: slow_query, action: add_index}
+  paginate: {detects: unbounded_results, action: paginate}
+  batch: {detects: one_at_a_time, action: batch}
+  omit_needless: {detects: verbose, action: compress}
+  active_voice: {detects: passive, action: activate}
+  whitespace: {detects: crowded, action: add_space}
+  simplify: {detects: over_complexity, action: simplify}
+  generate_alternatives: {detects: first_solution_accepted, action: generate_15_cherry_pick_8_to_15}
+  adversarial_validation: {detects: no_validation, action: run_all_personas}
+  semantic_entropy: {detects: hallucination_risk, action: sample_5_cluster_check}
+  chain_verification: {detects: unverified_claim, action: factor_and_revise}
+  self_consistency: {detects: inconsistent_reasoning, action: sample_7_majority_vote}
+  check_oscillation: {detects: repeated_violations, action: rollback_to_best}
+  never_exit_early: {detects: premature_exit, action: require_files_read_violations_zero_evidence_complete}
 
-operations:
-  split: Divide into focused modules with single responsibility
-  extract: Pull out reusable component when used 3+ times
-  simplify: Reduce complexity, remove unnecessary logic
-  delete: Remove dead code, unused variables, redundant operations
-  rename: Use clear full-word names, no abbreviations
-  add_guards: Add input validation, error handling for critical paths only
-  add_tests: Add test coverage for critical business logic
-  encrypt: Secure sensitive data, use environment variables
-  fail_fast: Report errors immediately, no silent failures
-  introduce_seam: Add extension points for future changes
-  introduce_interface: Abstract dependencies for flexibility
-  improve: Incremental enhancement per boy scout rule
-  flatten: Reduce nesting levels, use early returns
-  simplify_heredoc: Remove complex interpolation, use direct values
-  inline: Remove single-use functions, embed logic directly
-  add_whitespace: Add blank lines between logical sections
-  refine: Subtle improvements to aesthetics
-  quiet: Remove verbose output, log only essential
-  
+workflow:
+  1: read_all_files_with_sha256
+  2: run_adversarial_personas
+  3: generate_15_alternatives
+  4: cherry_pick_best_8_to_15
+  5: show_diff
+  6: apply_if_approved
+  7: verify_with_tests
+  8: report_with_evidence
 
-convergence:
-  metrics: [violations_remaining, quality_delta, adversarial_score]
-  complete: violations == 0 AND delta < 0.02 AND score >= 0.8
-  diminishing: delta < 0.02 for 3 cycles
-  hard_stop: 10 iterations
-  
-rails_8_1: {db: sqlite3, auth: built-in, frontend: hotwire+turbo+stimulus, pwa: true}
-openbsd_stack: {dns: unbound+nsd+dnssec, tls: acme-client+relayd, mgmt: rcctl+doas}
-clean_style_reference: https://github.com/anon987654321/railsy/blob/main/openbsd/openbsd_old.sh
+tools:
+  forbidden: [python, bash, sed, awk, grep, perl, cat, wc, head, tail, find, curl, wget, sudo]
+  allowed: [ruby, zsh, git, npm, bundle, rails, rake]
+  zsh: {replace: "${var//find/replace}", read: "$(<file)", lines: "${#${(f)$(<file)}}"}
 
+streaming:
+  retry: {max: 3, delay: 20, jitter: full, codes: [408, 409, 429, 500, 502, 503, 504]}
+  timeout: {total: 600, connect: 5}
+  circuit_breaker: {threshold: 50, min_requests: 20}
+
+context:
+  max_tokens: 128000
+  warning: 0.80
+  reserve_output: 0.25
+  attention_sink: 4
+  eviction: heavy_hitter_oracle_lru
+  heavy_hitter_pct: 0.20
+  compression_trigger: 0.70
+  compression_max: 20
+
+instructions:
+  dual_placement: sandwich
+  lost_in_middle: place_critical_at_edges
+  xml_tags: ["<constraints>", "<workflow>", "<context>", "<task>"]
+  anti_drift: turn_level_recapitulation
+
+communication:
+  style: dmesg
+  pattern: "MMM dd HH:mm:ss host service[pid]: level: message"
+  tone: truth_over_agreeability
+clean_style_mandates:
+  flat_structure: no nesting beyond 2 levels
+  simple_heredocs: direct content, minimal variables
+  linear_flow: sequential operations, no callbacks
+  clear_names: full words, no abbreviations
+  inline_configs: embed directly, no extraction
+  minimal_functions: only when reused 3+ times
+  no_defensive_boilerplate: let commands fail naturally
+  reference_style: github.com/anon987654321/railsy/blob/main/openbsd/openbsd_old.sh
+
+ssh_remote_execution:
+  strategy: screen_persistence
+  workflow:
+    - start screen on local cygwin zsh
+    - ssh to vps from within screen
+    - execute commands on vps
+    - detach screen to persist
+  fallback: use cli.rb for remote operations
