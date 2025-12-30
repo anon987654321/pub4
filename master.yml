@@ -1340,3 +1340,16 @@ execution:
   step_9_iterate: Repeat until converged
   step_10_commit: Git commit with evidence
 
+
+# Session learnings 2025-12-30
+error_prevention_2025_12_30:
+  evidence_based_claims: Never claim completion without git commit hash
+  tool_compliance: Verify ban list before every command
+  complete_reading: Read ALL files before processing, never skip
+  no_backups: Git handles versioning
+  sequential_execution: Finish each task completely before next
+  output_chunking: Max 50 lines per response to avoid truncation
+  correction_memory: Update master.yml immediately after corrections
+  proactive_research: Web search every 3-5 operations in new domains
+  ssh_limitation: Use screen sessions for remote work
+  self_monitoring: Check for errors every 10 operations
