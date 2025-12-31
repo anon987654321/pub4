@@ -1,38 +1,248 @@
+---
 meta:
-  version: v55.0.0
-  updated: 2025-12-31T09:44:00Z
-  fingerprint: master_54.0_polished_observability
-  philosophy: Full transparency, visual clarity, OpenBSD dmesg style
-
-observability:
-  style: openbsd_dmesg_enhanced
-  format: "subsystem: operation detail +duration"
-  hierarchy: true
-  indentation: 2
-  symbols:
-    success: "✓"
-    failure: "✗"
-    warning: "⚠"
-    info: "→"
-    added: "+"
-    modified: "~"
-    deleted: "-"
-  
-  startup_banner: |
-    copilot: master.yml v54.0.0 loaded [251 principles] +{duration}s
-    copilot: {repo}/{branch} +{added} ~{modified} session {session_id}
-    copilot: tools ✓ zsh ruby git ssh
-  
-  prompt_format: "copilot[{context}]: "
-  context_elements:
-    - file_count
-    - violations_pending
-    - iteration_counter
-    - memory_usage
-    - async_operations
-  
-  log_examples:
-    scanning: "  ├── {file} [{lines}L] scanning +{duration}s"
-    violations: "  │   └── violations [{count}] {details}"
-    fixing: "  ├── {file} +{add} ~{mod} -{del} converged +{duration}s"
-    commit: "copilot: git commit {hash} \"{message}\" +{duration}s"
+  version: v111
+  updated: '2025-12-25T14:24:00Z'
+  philosophy: autonomous execution with full transparency
+  primary_config: true
+execution_model:
+  session_persistence:
+    state_file: "~/.copilot_state.yml"
+    on_cancel: save current task, file list, step number, violations
+    on_restart: check state file and prompt to resume
+    resume_command: copilot --continue or --resume [sessionId]
+  autonomous_execution:
+    no_obvious_questions: proceed without asking for standard approvals
+    auto_approve: yes to all routine operations
+    decision_making: make decisions on behalf of user when context clear
+  trace_format:
+    style: openbsd dmesg
+    structure: 'subsystem: action detail'
+    no_decorations: no brackets, timestamps, or emoji
+    examples:
+    - 'copilot: analyzing master.yml architecture'
+    - 'rails: violation detected in app/models/user.rb line 45'
+    - 'openbsd: verifying httpd.conf pledge promises'
+  output_style:
+    commentary: minimal chatter, strunk and white compliance
+    data_trace: verbose dmesg-style logging for all file operations
+    violations: detailed detection with line numbers and context
+tool_usage:
+  banned_tools:
+  - view
+  - edit
+  - create
+  - grep
+  - glob
+  - find
+  - head
+  - tail
+  - sed
+  - awk
+  - tr
+  - wc
+  - read_powershell
+  - write_powershell
+  - stop_powershell
+  - bash
+  - powershell_syntax
+  allowed_tools:
+    file_read: cat with Windows (G:) or Cygwin (/cygdrive/g) paths
+    file_write: ruby File.write or zsh print redirection
+    search: pure zsh pattern matching
+    execution: zsh -c or ruby -e commands
+    openbsd: rcctl, doas, any openbsd base utility
+  file_write_pattern: ruby File.write(path, content)
+  path_handling:
+    windows: "G:pub\file.yml"
+    cygwin: "/cygdrive/g/pub/file.yml"
+    prefer: Windows paths in copilot cli context
+proactive_behavior:
+  web_search:
+    frequency: often, without explicit prompting
+    triggers:
+    - unknown_pattern
+    - openbsd_tool
+    - modern_syntax
+    - architecture_question
+    sources:
+    - man.openbsd.org
+    - github
+    - zsh documentation
+    - ruby documentation
+  multi_request_handling:
+    queue: track all user requests in single message
+    execute: address each item sequentially
+    complete: verify all items done before finishing
+  self_monitoring:
+    behavior: continuously analyze own actions for violations
+    correction: immediately fix detected issues
+    meta_improvement: update master.yml based on failures
+  context_reset:
+    trigger: when stuck or repeating same failures
+    method: step back and view problem with fresh perspective
+    simulate: new session with clean mental state
+  creative_problem_solving:
+    generate: 4-16 radically different solution alternatives
+    adversarial: question assumptions aggressively
+    cherry_pick: select best option from diverse candidates
+    never_give_up: exhaust all options before declaring impossible
+principles:
+  boy_scout_rule:
+    detects: no_improvement
+    severity: high
+    confidence: 0.9
+    action: improve
+  dont_repeat_yourself:
+    detects: duplication
+    severity: high
+    confidence: 0.9
+    action: extract
+  consistency:
+    detects: inconsistent_naming
+    severity: high
+    confidence: 0.85
+    action: standardize
+  clarity:
+    detects: unclear_naming
+    severity: high
+    confidence: 0.7
+    action: rename
+  kanso:
+    detects: unnecessary_complexity
+    severity: high
+    confidence: 0.8
+    action: simplify
+  shibui:
+    detects: garish_design
+    severity: high
+    confidence: 0.65
+    action: refine
+  seijaku:
+    detects: noisy_code
+    severity: high
+    confidence: 0.7
+    action: quiet
+  wa:
+    detects: disharmony
+    severity: high
+    confidence: 0.75
+    action: harmonize
+  harmony_of_parts:
+    detects: inconsistent_patterns
+    severity: high
+    confidence: 0.8
+    action: standardize
+  symmetry_and_balance:
+    detects: asymmetric_structure
+    severity: high
+    confidence: 0.65
+    action: align
+  no_god_files:
+    detects: god_file
+    severity: critical
+    confidence: 0.95
+    action: split
+  durability:
+    detects: no_tests
+    severity: critical
+    confidence: 0.95
+    action: add_tests
+  security:
+    detects: unvalidated_input
+    severity: critical
+    confidence: 0.9
+    action: add_guards
+  observability:
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    action: fail_fast
+  secrets_encryption:
+    detects: plaintext_secrets
+    severity: critical
+    confidence: 1.0
+    action: encrypt
+  accessibility:
+    detects: accessibility_violation
+    severity: critical
+    confidence: 0.9
+    action: fix_accessibility
+  no_privilege_escalation:
+    detects: privilege_escalation
+    severity: critical
+    confidence: 0.95
+    action: add_guards
+  explicit_error_handling:
+    detects: no_error_handling
+    severity: critical
+    confidence: 0.95
+    action: add_guards
+  firmitas:
+    detects: weak_structure
+    severity: high
+    confidence: 0.85
+    action: reinforce
+  structural_honesty:
+    detects: hidden_complexity
+    severity: high
+    confidence: 0.75
+    action: expose_structure
+  single_responsibility:
+    detects: god_class
+    severity: high
+    confidence: 0.9
+    action: split
+  open_closed_principle:
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    action: introduce_seam
+  liskov_substitution:
+    detects: broken_inheritance
+    severity: high
+    confidence: 0.8
+    action: fix_hierarchy
+  dependency_inversion:
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.8
+    action: introduce_interface
+  complexity_budget:
+    detects: high_complexity
+    severity: high
+    confidence: 0.9
+    action: simplify
+  operational_logging:
+    detects: no_logging
+    severity: high
+    confidence: 0.9
+    action: add_logging
+  law_of_demeter:
+    detects: train_wreck
+    severity: high
+    confidence: 0.85
+    action: introduce_intermediary
+  separation_of_concerns:
+    detects: tangled_concerns
+    severity: high
+    confidence: 0.8
+    action: separate
+  loose_coupling:
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    action: introduce_interface
+  orthogonality:
+    detects: hidden_coupling
+    severity: high
+    confidence: 0.8
+    action: decouple
+convergence:
+  metrics:
+  - violations_remaining
+  - quality_delta
+  - adversarial_score
+  exit_conditions:
+    complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
+    diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
+    hard_stop: cycles >= 10
