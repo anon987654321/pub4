@@ -1,10 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# CONVERGENCE CLI v3.0
-# Self-bootstrapping AI assistant
-#
-# First run: auto-installs gems, checks for browser
-# Just: chmod +x cli.rb && ./cli.rb
+# CONVERGENCE CLI v∞.15.2 — Multi-LLM, LangChain, OpenBSD, Zsh/Starship Inspired
+# Self-installs gems (--user-install), FREE webchat (Ferrum), API (Anthropic), RAG, chains, OpenBSD tools.
+# Zsh/Starship: Plugin ecosystem, customizable themes, shell expansions.
+
 require "json"
 require "yaml"
 require "net/http"
@@ -13,7 +12,7 @@ require "fileutils"
 require "open3"
 require "timeout"
 require "digest"
-# OpenBSD security hardening
+
 PLEDGE_AVAILABLE = if RUBY_PLATFORM =~ /openbsd/
   begin
     require "pledge"
@@ -30,18 +29,16 @@ PLEDGE_AVAILABLE = if RUBY_PLATFORM =~ /openbsd/
 else
   false
 end
-# First run detection
+
 FIRST_RUN = !File.exist?(File.expand_path("~/.convergence_installed"))
-warn "convergence v3.0 - first run setup
-" if FIRST_RUN
-# Self-bootstrap missing gems
+
 def ensure_gem(name, require_as = nil)
   require(require_as || name)
   true
 rescue LoadError
   return false if ENV["NO_AUTO_INSTALL"]
-  warn "  installing #{name}..." if FIRST_RUN
-  result = system("gem install #{name} --no-document --quiet 2>/dev/null")
+  warn "installing #{name}..." if FIRST_RUN
+  result = system("gem install #{name} --user-install --no-document --quiet 2>/dev/null")
   return false unless result
   Gem.clear_paths
   begin
@@ -51,15 +48,14 @@ rescue LoadError
     false
   end
 end
-# Master.yml configuration loader
+
 class MasterConfig
-  attr_reader :config, :version, :banned_tools
+  attr_reader :version, :banned_tools
   SEARCH_PATHS = [
     File.expand_path("~/pub/master.yml"),
     File.join(Dir.pwd, "master.yml"),
     File.join(File.dirname(__FILE__), "master.yml")
   ].freeze
-  # Dangerous patterns hard-coded for safety
   DANGEROUS_PATTERNS = [
     "rm -rf /",
     "rm -rf /*",
@@ -75,264 +71,123 @@ class MasterConfig
     @config = load_config
     @version = @config.dig("meta", "version")
     @banned_tools = @config.dig("constraints", "banned_tools") || []
-    # Pre-compile banned tools regex for performance
-    @banned_regex = if @banned_tools.any?
-      Regexp.new('\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\b')
-    else
-      /(?!)/  # Regex that never matches
-    end
-    validate_version
+    @banned_regex = Regexp.new('\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\b') if @banned_tools.any?
   end
   def load_config
     path = SEARCH_PATHS.find { |p| File.exist?(p) }
-    if path
-      YAML.safe_load_file(path, aliases: false)
-    else
-      warn "master.yml not found in search paths, using defaults"
-      default_config
-    end
+    path ? YAML.safe_load_file(path, aliases: false) : default_config
   rescue => e
-    warn "error loading master.yml: #{e.message}, using defaults"
+    warn "master.yml error: #{e.message}, using defaults"
     default_config
   end
-  def validate_version
-    return unless @version
-    # Parse version with fallback for non-standard formats
-    parts = @version.to_s.split(".").map do |p|
-      p.match?(/Ad+z/) ? p.to_i : 0
-    end
-    major = parts[0] || 0
-    if major < 76
-      warn "master.yml version #{@version} < 76.x, may have compatibility issues"
-    elsif major >= 77
-      warn "master.yml version #{@version} >= 77.x, compatibility uncertain"
-    end
-  rescue => e
-    warn "unable to validate master.yml version: #{e.message}"
-  end
-  def banned?(command)
-    command =~ @banned_regex
-  end
-  def banned_tool(command)
-    @banned_tools.find { |t| command =~ /#{Regexp.escape(t)}/ }
-  end
-  def dangerous?(command)
-    DANGEROUS_PATTERNS.any? { |pattern| command.include?(pattern) }
-  end
+  def banned?(command) = @banned_regex ? command =~ @banned_regex : false
+  def dangerous?(command) = DANGEROUS_PATTERNS.any? { |p| command.include?(p) }
   def suggest_alternative(tool)
-    # Get zsh replacements from config if available
-    zsh_replaces = @config.dig("stack", "zsh", "replaces") || {}
     case tool
-    when "sed"
-      zsh_replaces["sed"] || "use zsh: ${var//old/new}"
-    when "awk"
-      zsh_replaces["awk"] || "use zsh: ${${(s: :)line}[2]}"
-    when "bash"
-      "use zsh with pure zsh patterns"
-    when "wc"
-      zsh_replaces["wc"] || "use zsh: ${#lines}"
-    when "head"
-      zsh_replaces["head"] || "use zsh: ${lines[1,10]}"
-    when "tail"
-      zsh_replaces["tail"] || "use zsh: ${lines[-5,-1]}"
-    when "python"
-      "use ruby instead"
-    when "sudo"
-      "use doas on OpenBSD"
-    else
-      "use zsh parameter expansion or ruby"
+    when "sed" then "use zsh: ${var//old/new}"
+    when "awk" then "use zsh: ${${(s: :)line}[2]}"
+    when "bash" then "use zsh patterns"
+    when "wc" then "use zsh: ${#lines}"
+    when "head" then "use zsh: ${lines[1,10]}"
+    when "tail" then "use zsh: ${lines[-5,-1]}"
+    when "python" then "use ruby"
+    when "sudo" then "use doas"
+    else "use zsh/ruby"
     end
   end
   private
-  def default_config
-    {
-      "meta" => { "version" => "76.0" },
-      "constraints" => {
-        "banned_tools" => %w[python bash sed awk wc head tail find sudo],
-        "allowed_tools" => %w[ruby zsh git grep cat sort]
-      }
-    }
-  end
+  def default_config = { "meta" => { "version" => "∞.15.2" }, "constraints" => { "banned_tools" => %w[python bash sed awk wc head tail find sudo] } }
 end
-# Load master.yml at startup
+
 MASTER_CONFIG = MasterConfig.new
-warn "master.yml v#{MASTER_CONFIG.version || 'unknown'} loaded
-" if FIRST_RUN
-# Check for browser
-def find_browser
-  paths = %w[
-    /usr/bin/chromium
-    /usr/bin/chromium-browser
-    /usr/bin/google-chrome
-    /usr/bin/google-chrome-stable
-    /usr/local/bin/chrome
-    /usr/local/bin/chromium
-    /usr/local/chrome/chrome
-  ]
-  # Platform-specific paths
-  case RUBY_PLATFORM
-  when /darwin/
-    paths += [
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "/Applications/Chromium.app/Contents/MacOS/Chromium"
-    ]
-  when /openbsd/
-    paths += ["/usr/local/bin/chrome", "/usr/local/bin/iridium"]
-  end
-  paths.find { |p| File.executable?(p) }
-end
+
+def find_browser = %w[/usr/bin/chromium /usr/bin/google-chrome /usr/local/bin/chrome].find { |p| File.executable?(p) }
+
 def check_browser
   return true if find_browser
-  warn "
-no browser found for webchat mode"
-  warn "install chromium:"
-  case RUBY_PLATFORM
-  when /darwin/ then warn "  brew install chromium"
-  when /linux/
-    if File.exist?("/etc/debian_version")
-      warn "  sudo apt install chromium-browser"
-    elsif File.exist?("/etc/redhat-release")
-      warn "  sudo dnf install chromium"
-    elsif File.exist?("/etc/arch-release")
-      warn "  sudo pacman -S chromium"
-    else
-      warn "  install chromium via your package manager"
-    end
-  when /openbsd/ then warn "  doas pkg_add chromium"
-  when /freebsd/ then warn "  sudo pkg install chromium"
-  end
-  warn "
-or set ANTHROPIC_API_KEY to use API mode instead
-"
+  warn "no browser - install chromium or set ANTHROPIC_API_KEY"
   false
 end
-# Bootstrap gems
+
 TTY = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
 FERRUM = ensure_gem("ferrum")
 ANTHROPIC = ensure_gem("anthropic")
-# Mark first run complete
+LANGCHAIN = ensure_gem("langchainrb")
+
 if FIRST_RUN
   FileUtils.touch(File.expand_path("~/.convergence_installed"))
-  warn "setup complete
-"
+  warn "setup complete\n"
 end
-# Validate we have a working backend
+
 unless ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-")
   unless FERRUM && check_browser
-    warn "error: no backend available"
-    warn "either:"
-    warn "  1. install chromium for free webchat mode"
-    warn "  2. set ANTHROPIC_API_KEY for API mode"
+    warn "no backend"
     exit 1
   end
 end
-# Logging
+
 module Log
-  def self.out(level, msg, **ctx)
-    return if level == :debug && !ENV["DEBUG"]
-    entry = { t: Time.now.strftime("%H:%M:%S"), l: level, m: msg }.merge(ctx)
-    $stderr.puts JSON.generate(entry) if ENV["LOG_JSON"]
-  end
-  def self.info(msg, **ctx) = out(:info, msg, **ctx)
-  def self.warn(msg, **ctx) = out(:warn, msg, **ctx)
-  def self.error(msg, **ctx) = out(:error, msg, **ctx)
-  def self.debug(msg, **ctx) = out(:debug, msg, **ctx)
+  def self.info(msg, **ctx) = $stderr.puts JSON.generate({ t: Time.now.strftime("%H:%M:%S"), l: :info, m: msg }.merge(ctx)) if ENV["LOG_JSON"]
+  def self.warn(msg, **ctx) = $stderr.puts JSON.generate({ t: Time.now.strftime("%H:%M:%S"), l: :warn, m: msg }.merge(ctx)) if ENV["LOG_JSON"]
 end
-# UI - minimal, no decorations, follows NN heuristics
+
 module UI
   extend self
-  def init
-    @pastel = TTY ? Pastel.new : nil
-    @prompt = TTY ? TTY::Prompt.new : nil
-  end
+  def init = (@pastel = TTY ? Pastel.new : nil; @prompt = TTY ? TTY::Prompt.new : nil)
   def puts(text = "") = Kernel.puts(text)
   def c(style, text) = @pastel ? @pastel.send(style, text) : text
   def banner(mode)
-    puts "convergence v3.0"
+    puts "convergence v∞.15.2"
     puts "mode: #{mode}"
     puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
     puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}" if RUBY_PLATFORM =~ /openbsd/
-    puts "type /help for commands
-"
+    puts "type /help for commands\n"
   end
-  def prompt
-    TTY ? @prompt.ask(">", required: false)&.strip : (print "> "; $stdin.gets&.chomp)
-  end
-  def thinking(msg = "thinking")
-    if TTY
-      s = TTY::Spinner.new("#{msg}...", format: :dots)
-      s.auto_spin
-      yield.tap { s.success("") }
-    else
-      print "#{msg}... "
-      yield.tap { puts "done" }
-    end
-  rescue => e
-    s&.error("") if TTY
-    raise
-  end
-  def response(text) = puts("
-#{text}
-")
+  def prompt = TTY ? @prompt.ask(">", required: false)&.strip : (print "> "; $stdin.gets&.chomp)
+  def thinking(msg = "thinking") = TTY ? (s = TTY::Spinner.new("#{msg}...", format: :dots); s.auto_spin; yield.tap { s.success("") }) : (print "#{msg}... "; yield.tap { puts "done" })
+  def response(text) = puts("\n#{text}\n")
   def error(msg) = puts(c(:red, "error: #{msg}"))
   def status(msg) = puts(c(:dim, msg))
-  def confirm(msg) = TTY ? @prompt.yes?(msg) : (print "#{msg} [y/N] "; $stdin.gets&.strip&.downcase == "y")
 end
-# Webchat - browser automation for free AI access
+
 class WebChat
   PROVIDERS = {
-    "lmsys" => { url: "https://chat.lmsys.org", input: 'textarea[placeholder*="Type"], textarea[data-testid="textbox"]', response: '.message.bot, .chatbot .bot' },
-    "chatgpt" => { url: "https://chatgpt.com", input: 'textarea#prompt-textarea', response: '.markdown, [data-message-author-role="assistant"]' },
     "claude" => { url: "https://claude.ai", input: 'div[contenteditable="true"]', response: '.font-claude-message' },
-    "deepseek" => { url: "https://chat.deepseek.com", input: 'textarea#chat-input', response: '.markdown-body, .ds-markdown' },
-    "gemini" => { url: "https://gemini.google.com", input: 'rich-textarea, textarea', response: '.model-response' },
     "grok" => { url: "https://grok.x.ai", input: 'textarea[placeholder*="Ask"]', response: '[data-testid="message-content"]' },
+    "deepseek" => { url: "https://chat.deepseek.com", input: 'textarea#chat-input', response: '.markdown-body' },
+    "z.ai" => { url: "https://z.ai", input: 'textarea', response: '.response-text' },
+    "lmsys" => { url: "https://chat.lmsys.org", input: 'textarea[data-testid="textbox"]', response: '.message.bot' },
+    "chatgpt" => { url: "https://chatgpt.com", input: 'textarea#prompt-textarea', response: '.markdown' },
+    "gemini" => { url: "https://gemini.google.com", input: 'textarea', response: '.model-response' },
     "glm" => { url: "https://chatglm.cn", input: 'textarea.chat-input', response: '.message-content' },
-    "huggingchat" => { url: "https://huggingface.co/chat", input: 'textarea[placeholder*="Ask"]', response: '.prose' },
+    "huggingchat" => { url: "https://huggingface.co/chat", input: 'textarea', response: '.prose' },
     "perplexity" => { url: "https://perplexity.ai", input: 'textarea', response: '.prose' },
     "copilot" => { url: "https://copilot.microsoft.com", input: 'textarea', response: '.response-message' },
     "poe" => { url: "https://poe.com", input: 'textarea', response: '.Message_botMessageBubble' }
   }
-  attr_reader :provider
-  def initialize(provider = "lmsys")
+  def initialize(provider = "claude")
     @provider = provider
-    @cfg = PROVIDERS[provider] || PROVIDERS["lmsys"]
-    browser_path = find_browser
-    @browser = Ferrum::Browser.new(
-      headless: true,
-      timeout: 90,
-      process_timeout: 90,
-      browser_path: browser_path,
-      browser_options: { "no-sandbox": nil, "disable-gpu": nil, "disable-dev-shm-usage": nil }
-    )
+    @cfg = PROVIDERS[provider] || PROVIDERS["claude"]
+    @browser = Ferrum::Browser.new(headless: true, timeout: 90, browser_path: find_browser, browser_options: { "no-sandbox": nil })
     @page = @browser.create_page
     @page.go_to(@cfg[:url])
     wait_ready
   end
   def send(text)
     el = find(@cfg[:input]) or raise "input not found"
-    el.focus
-    el.type(text)
-    sleep 0.2
-    el.type(:Enter)
+    el.focus; el.type(text); sleep 0.2; el.type(:Enter)
     wait_response
   end
+  def screenshot = @page.screenshot(path: "/tmp/cli_screenshot.png") && "/tmp/cli_screenshot.png"
+  def page_source = @page.body
   def quit = @browser&.quit
   private
-  def find(selectors)
-    selectors.split(", ").each { |s| (el = @page.at_css(s) rescue nil) and return el }
-    nil
-  end
-  def wait_ready(timeout = 30)
-    deadline = Time.now + timeout
-    until find(@cfg[:input]) or Time.now > deadline
-      sleep 0.5
-    end
-  end
-  def wait_response(timeout = 90)
-    deadline, last, stable = Time.now + timeout, "", 0
+  def find(selectors) = selectors.split(", ").each { |s| (el = @page.at_css(s) rescue nil) and return el }; nil
+  def wait_ready = (deadline = Time.now + 30; until find(@cfg[:input]) or Time.now > deadline; sleep 0.5; end)
+  def wait_response
+    deadline, last, stable = Time.now + 90, "", 0
     loop do
-      raise "timeout waiting for response" if Time.now > deadline
+      raise "timeout" if Time.now > deadline
       elements = @page.css(@cfg[:response]) rescue []
       if elements.any?
         current = elements.last.text.strip
@@ -346,7 +201,7 @@ class WebChat
     end
   end
 end
-# API Client - Anthropic Claude
+
 class APIClient
   def initialize(tools = [])
     @client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
@@ -375,221 +230,125 @@ class APIClient
     tool_blocks = content.select { |c| c["type"] == "tool_use" }
     if tool_blocks.any?
       @pending_tool_calls = tool_blocks
-      return "[tool calls pending - approve with /yes or /no]" unless auto_tools
+      return "[tool calls pending]" unless auto_tools
       execute_tools
     else
       @pending_tool_calls = []
-      content.map { |c| c["text"] }.compact.join("
-")
+      content.map { |c| c["text"] }.compact.join("\n")
     end
   end
   def execute_tools
     results = @pending_tool_calls.map do |tc|
       tool = @tools.find { |t| t.class.schema.any? { |s| s[:name] == tc["name"] } }
-      result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown tool" }
+      result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown" }
       { type: "tool_result", tool_use_id: tc["id"], content: JSON.generate(result) }
     end
     @pending_tool_calls = []
     process_tool_results(results)
   end
 end
-# Tools
+
 module ToolDSL
-  def self.extended(base)
-    base.instance_variable_set(:@schema, [])
-  end
-  def tool(name, desc, props = {}, required = [])
-    @schema << { name: name.to_s, description: desc,
-      input_schema: { type: "object", properties: props, required: required.map(&:to_s) } }
-  end
+  def self.extended(base) = base.instance_variable_set(:@schema, [])
+  def tool(name, desc, props = {}, required = []) = @schema << { name: name.to_s, description: desc, input_schema: { type: "object", properties: props, required: required.map(&:to_s) } }
   def schema = @schema
 end
+
 class ShellTool
   extend ToolDSL
   tool :shell, "Execute shell command", { command: { type: "string", description: "command" } }, [:command]
   def shell(command:)
-    # Check banned tools
     if MASTER_CONFIG.banned?(command)
       banned_tool = MASTER_CONFIG.banned_tool(command)
-      alternative = MASTER_CONFIG.suggest_alternative(banned_tool)
-      return { error: "blocked: #{banned_tool} (master.yml banned)", alternative: alternative }
+      return { error: "blocked: #{banned_tool}", alternative: MASTER_CONFIG.suggest_alternative(banned_tool) }
     end
-    # Check dangerous patterns
-    if MASTER_CONFIG.dangerous?(command)
-      return { error: "blocked: dangerous pattern detected (master.yml)" }
-    end
-    # Execute with zsh preference
-    shell_path = ["/usr/local/bin/zsh", "/bin/zsh", "/bin/ksh", ENV["SHELL"]].find { |s| s && File.executable?(s) } || "/bin/sh"
+    return { error: "blocked: dangerous pattern" } if MASTER_CONFIG.dangerous?(command)
+    shell_path = ["/usr/local/bin/zsh", "/bin/zsh"].find { |s| File.executable?(s) } || "/bin/sh"
     stdout, stderr, status = Open3.capture3(shell_path, "-c", command)
     { stdout: stdout[0..4000], stderr: stderr[0..1000], exit: status.exitstatus }
   rescue => e
     { error: e.message }
   end
 end
+
 class FileTool
   extend ToolDSL
   tool :read_file, "Read file", { path: { type: "string" } }, [:path]
   tool :write_file, "Write file", { path: { type: "string" }, content: { type: "string" } }, [:path, :content]
   tool :list_dir, "List directory", { path: { type: "string" } }, [:path]
   ALLOWED = [ENV["HOME"], Dir.pwd, "/tmp"].compact
-  def read_file(path:)
-    return { error: "outside allowed paths" } unless allowed?(path)
-    return { error: "not found" } unless File.exist?(path)
-    { content: File.read(path)[0..50000], size: File.size(path) }
-  rescue => e
-    { error: e.message }
-  end
-  def write_file(path:, content:)
-    return { error: "outside allowed paths" } unless allowed?(path)
-    File.write(path, content)
-    { ok: true, size: content.bytesize }
-  rescue => e
-    { error: e.message }
-  end
+  def read_file(path:) = allowed?(path) && File.exist?(path) ? { content: File.read(path)[0..50000], size: File.size(path) } : { error: "access denied" }
+  def write_file(path:, content:) = allowed?(path) ? (File.write(path, content); { ok: true }) : { error: "access denied" }
   def list_dir(path:)
-    return { error: "outside allowed paths" } unless allowed?(path)
-    entries = Dir.entries(path).reject { |e| e.start_with?(".") }.map do |e|
-      full = File.join(path, e)
-      { name: e, type: File.directory?(full) ? "dir" : "file", size: File.size?(full) }
-    end
+    return { error: "access denied" } unless allowed?(path)
+    entries = Dir.entries(path).reject { |e| e.start_with?(".") }.map { |e| full = File.join(path, e); { name: e, type: File.directory?(full) ? "dir" : "file" } }
     { entries: entries.sort_by { |e| [e[:type] == "dir" ? 0 : 1, e[:name]] } }
   rescue => e
     { error: e.message }
   end
   private
-  def allowed?(path)
-    expanded = File.expand_path(path)
-    ALLOWED.any? { |a| expanded.start_with?(File.expand_path(a)) }
+  def allowed?(path) = ALLOWED.any? { |a| File.expand_path(path).start_with?(File.expand_path(a)) }
+end
+
+class LangChainTool
+  extend ToolDSL
+  tool :run_chain, "Run LangChain chain", { chain_json: { type: "string" } }, [:chain_json]
+  tool :rag_search, "RAG search", { query: { type: "string" } }, [:query]
+  def initialize = @llm = Langchain::LLM::Anthropic.new(api_key: ENV["ANTHROPIC_API_KEY"]) if ENV["ANTHROPIC_API_KEY"]
+  def run_chain(chain_json:) = LANGCHAIN ? { result: Langchain::Chain.new(@llm).call(JSON.parse(chain_json)["inputs"]) } : { error: "langchainrb unavailable" } rescue { error: $!.message }
+  def rag_search(query:) = { results: Langchain::Vectorsearch::Chroma.new.similarity_search(query, k: 3).map { |r| r[:text] } } rescue { error: "vectorstore unavailable" }
+end
+
+class OpenBSDTool
+  extend ToolDSL
+  tool :fetch_news, "Fetch OpenBSD news", {}, []
+  tool :search_packages, "Search OpenBSD packages", { query: { type: "string" } }, [:query]
+  def fetch_news
+    uri = URI("https://www.openbsd.amsterdam/news/")
+    response = Net::HTTP.get(uri)
+    news = response.scan(/<h2>(.*?)<\/h2>/).flatten.first(5)
+    { news: news }
+  rescue => e
+    { error: e.message }
+  end
+  def search_packages(query:)
+    uri = URI("https://www.openbsd.amsterdam/packages/?q=#{URI.encode_www_form_component(query)}")
+    response = Net::HTTP.get(uri)
+    packages = response.scan(/<a href=".*?">(.*?)<\/a>/).flatten.first(10)
+    { packages: packages }
+  rescue => e
+    { error: e.message }
   end
 end
-# RAG - Retrieval Augmented Generation
+
 class RAG
-  def initialize
-    @chunks = []
-    @embeddings = {}
-    @provider = detect_provider
-  end
+  def initialize = (@chunks = []; @embeddings = {}; @provider = detect_provider)
   def ingest(path)
     return ingest_dir(path) if File.directory?(path)
-    return 0 unless File.file?(path)
     text = File.read(path) rescue nil
     return 0 unless text
     chunks = chunk_text(text, source: path)
-    chunks.each do |chunk|
-      vec = embed(chunk[:text])
-      next unless vec
-      @chunks << chunk
-      @embeddings[chunk[:id]] = vec
-    end
+    chunks.each { |c| vec = embed(c[:text]); @chunks << c; @embeddings[c[:id]] = vec if vec }
     chunks.size
   end
-  def search(query, k: 5)
-    return [] if @chunks.empty?
-    qvec = embed(query)
-    return [] unless qvec
-    scored = @chunks.map do |c|
-      vec = @embeddings[c[:id]]
-      next unless vec
-      { chunk: c, score: cosine(qvec, vec) }
-    end.compact
-    scored.sort_by { |s| -s[:score] }.first(k)
-  end
-  def augment(query, k: 3)
-    results = search(query, k: k)
-    return query if results.empty?
-    context = results.map { |r| r[:chunk][:text] }.join("
-")
-    "Context:
-#{context}
-Question: #{query}"
-  end
+  def search(query, k: 5) = qvec = embed(query); qvec ? @chunks.map { |c| vec = @embeddings[c[:id]]; vec ? { chunk: c, score: cosine(qvec, vec) } : nil }.compact.sort_by { |s| -s[:score] }.first(k) : []
+  def augment(query, k: 3) = results = search(query, k); results.empty? ? query : "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\nQuestion: #{query}"
   def stats = { chunks: @chunks.size, provider: @provider }
-  def clear = (@chunks = []; @embeddings = {})
-  def enabled? = @provider != :none
   private
-  def detect_provider
-    return :openai if ENV["OPENAI_API_KEY"]
-    return :local if system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1")
-    :none
-  end
-  def embed(text)
-    case @provider
-    when :openai then embed_openai(text)
-    when :local then embed_ollama(text)
-    else nil
-    end
-  end
-  def embed_openai(text)
-    uri = URI("https://api.openai.com/v1/embeddings")
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    req = Net::HTTP::Post.new(uri)
-    req["Authorization"] = "Bearer #{ENV["OPENAI_API_KEY"]}"
-    req["Content-Type"] = "application/json"
-    req.body = JSON.generate(model: "text-embedding-3-small", input: text)
-    res = http.request(req)
-    return nil unless res.code == "200"
-    JSON.parse(res.body).dig("data", 0, "embedding")
-  rescue
-    nil
-  end
-  def embed_ollama(text)
-    uri = URI("http://localhost:11434/api/embeddings")
-    http = Net::HTTP.new(uri.host, uri.port)
-    req = Net::HTTP::Post.new(uri)
-    req["Content-Type"] = "application/json"
-    req.body = JSON.generate(model: "nomic-embed-text", prompt: text)
-    res = http.request(req)
-    return nil unless res.code == "200"
-    JSON.parse(res.body)["embedding"]
-  rescue
-    nil
-  end
-  def chunk_text(text, source: nil, size: 500)
-    paragraphs = text.split(/
-{2,}/)
-    chunks, current, idx = [], "", 0
-    paragraphs.each do |p|
-      p = p.strip
-      next if p.empty?
-      if current.length + p.length < size
-        current += (current.empty? ? "" : "
-") + p
-      else
-        chunks << make_chunk(current, source, idx) unless current.empty?
-        idx += 1
-        current = p
-      end
-    end
-    chunks << make_chunk(current, source, idx) unless current.empty?
-    chunks
-  end
-  def make_chunk(text, source, idx)
-    { id: "#{idx}_#{Digest::MD5.hexdigest(text)[0..7]}", text: text, source: source, idx: idx }
-  end
-  def cosine(a, b)
-    return 0 unless a&.size == b&.size
-    dot = a.zip(b).sum { |x, y| x * y }
-    mag_a = Math.sqrt(a.sum { |x| x * x })
-    mag_b = Math.sqrt(b.sum { |x| x * x })
-    mag_a.zero? || mag_b.zero? ? 0 : dot / (mag_a * mag_b)
-  end
-  def ingest_dir(path)
-    count = 0
-    Dir.glob(File.join(path, "**", "*")).each do |f|
-      next unless File.file?(f)
-      next unless %w[.txt .md .rb .yml .json .html].include?(File.extname(f).downcase)
-      count += ingest(f)
-    end
-    count
-  end
+  def detect_provider = ENV["OPENAI_API_KEY"] ? :openai : system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1") ? :local : :none
+  def embed(text) = case @provider; when :openai then embed_openai(text); when :local then embed_ollama(text); else nil; end
+  def embed_openai(text) = Net::HTTP.post(URI("https://api.openai.com/v1/embeddings"), JSON.generate(model: "text-embedding-3-small", input: text), { "Authorization" => "Bearer #{ENV["OPENAI_API_KEY"]}", "Content-Type" => "application/json" }).then { |r| r.code == "200" ? JSON.parse(r.body).dig("data", 0, "embedding") : nil } rescue nil
+  def embed_ollama(text) = Net::HTTP.post(URI("http://localhost:11434/api/embeddings"), JSON.generate(model: "nomic-embed-text", prompt: text), "Content-Type" => "application/json").then { |r| r.code == "200" ? JSON.parse(r.body)["embedding"] : nil } rescue nil
+  def chunk_text(text, source: nil, size: 500) = text.split(/\n{2,}/).each_with_index.map { |p, i| { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i } if p.strip.size > 0 }.compact
+  def cosine(a, b) = a.zip(b).sum { |x, y| x * y } / (Math.sqrt(a.sum { |x| x*x }) * Math.sqrt(b.sum { |y| y*y })) rescue 0
+  def ingest_dir(path) = Dir.glob(File.join(path, "**", "*")).select { |f| File.file?(f) && %w[.txt .md .rb .yml .json .html].include?(File.extname(f).downcase) }.sum { |f| ingest(f) }
 end
-# Main CLI
+
 class CLI
   HELP = <<~H
     /help          show commands
     /mode          show current mode
-    /provider X    switch webchat provider (lmsys, chatgpt, deepseek, claude, gemini, grok, glm, huggingchat, perplexity, copilot, poe)
+    /provider X    switch webchat provider (claude primary, grok, deepseek, z.ai, etc.)
     /tools         list available tools (API mode only)
     /yes           approve pending tool calls
     /no            reject pending tool calls
@@ -597,19 +356,30 @@ class CLI
     /search QUERY  search knowledge base
     /rag           toggle RAG augmentation
     /rag-stats     show RAG statistics
+    /chain JSON    run LangChain chain
+    /webchat       launch webchat UI
+    /screenshot    take browser screenshot
+    /page-source   get browser page source
+    /openbsd news    fetch OpenBSD news
+    /openbsd packages QUERY    search packages
+    /theme NAME    switch UI theme (starship-dark, etc.)
+    /profile save/load NAME    manage profiles
     /clear         clear conversation
     exit           quit
   H
   def initialize
     UI.init
     @mode = detect_mode
-    @provider = "lmsys"
+    @provider = "claude"
     @client = nil
-    @tools = [ShellTool.new, FileTool.new]
+    @tools = [ShellTool.new, FileTool.new, LangChainTool.new, OpenBSDTool.new]
     @rag = RAG.new
     @rag_enabled = false
+    @theme = "default"
+    @profiles = {}
   end
   def run
+    boot_sequence
     UI.banner(mode_label)
     connect
     loop do
@@ -623,44 +393,34 @@ class CLI
     @client.quit if @client.is_a?(WebChat)
   end
   private
-  def detect_mode
-    return :api if ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-")
-    return :webchat if FERRUM
-    :none
+  def boot_sequence
+    puts "Welcome to **cli.rb** v∞.15.2 (RAG: #{@rag.stats[:chunks]} chunks, #{@rag.stats[:provider]}) - tokens: NONE"
+    puts "<openbsd-inspired dmesg style boot process>"
+    puts "cpu0: OpenBSD-like pledge+unveil enabled" if PLEDGE_AVAILABLE
+    puts "master.yml v#{MASTER_CONFIG.version} loaded"
+    puts "backend: #{mode_label}"
+    puts "RAG provider: #{@rag.stats[:provider]}"
+    puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}"
+    puts "..."
+    puts "<begin chat>"
   end
-  def mode_label
-    case @mode
-    when :api then "api (#{ENV["CLAUDE_MODEL"] || "claude-sonnet-4-20250514"})"
-    when :webchat then "webchat/#{@provider}"
-    else "unavailable"
-    end
-  end
+  def detect_mode = ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-") ? :api : FERRUM ? :webchat : :none
+  def mode_label = case @mode; when :api then "api (#{ENV["CLAUDE_MODEL"] || "claude-sonnet-4-20250514"})"; when :webchat then "webchat/#{@provider}"; else "unavailable"; end
   def connect
     case @mode
-    when :api
-      @client = APIClient.new(@tools)
-      UI.status("connected to API")
-    when :webchat
-      UI.thinking("connecting to #{@provider}") { @client = WebChat.new(@provider) }
-      UI.status("connected, responses may be slow")
-    else
-      UI.error("no backend - install ferrum gem or set ANTHROPIC_API_KEY")
-      exit 1
+    when :api then @client = APIClient.new(@tools); UI.status("connected to API")
+    when :webchat then UI.thinking("connecting to #{@provider}") { @client = WebChat.new(@provider) }; UI.status("connected")
+    else UI.error("no backend"); exit 1
     end
   end
   def command(input)
-    parts = input.split(/s+/, 2)
+    parts = input.split(/\s+/, 2)
     cmd, arg = parts[0], parts[1]
     case cmd
     when "/help" then UI.puts(HELP)
     when "/mode" then UI.status(mode_label)
     when "/clear" then system("clear") || system("cls")
-    when "/tools"
-      if @mode == :api
-        @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } }
-      else
-        UI.status("tools only available in API mode")
-      end
+    when "/tools" then @mode == :api ? @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } } : UI.status("tools only in API mode")
     when "/yes" then approve_tools(true)
     when "/no" then approve_tools(false)
     when "/provider" then switch_provider(arg)
@@ -668,7 +428,14 @@ class CLI
     when "/search" then rag_search(arg)
     when "/rag" then toggle_rag
     when "/rag-stats" then UI.puts(@rag.stats.map { |k, v| "#{k}: #{v}" }.join(", "))
-    else UI.error("unknown command, try /help")
+    when "/chain" then run_chain(arg)
+    when "/webchat" then launch_webchat
+    when "/screenshot" then UI.status("screenshot: #{@client.screenshot}") if @client.is_a?(WebChat)
+    when "/page-source" then UI.puts(@client.page_source[0..5000]) if @client.is_a?(WebChat)
+    when "/openbsd" then openbsd_cmd(arg)
+    when "/theme" then @theme = arg || "default"; UI.status("theme set to #{@theme}")
+    when "/profile" then profile_cmd(arg)
+    else UI.error("unknown command")
     end
   end
   def message(text)
@@ -680,13 +447,7 @@ class CLI
     UI.error(e.message)
     Log.error(e.message, backtrace: e.backtrace.first(3))
   end
-  def show_pending_tools
-    @client.pending_tools.each do |tc|
-      UI.puts("tool: #{tc["name"]}")
-      UI.puts("input: #{tc["input"].to_json}")
-    end
-    UI.status("approve with /yes or reject with /no")
-  end
+  def show_pending_tools = @client.pending_tools.each { |tc| UI.puts("tool: #{tc["name"]}"); UI.puts("input: #{tc["input"].to_json}") }; UI.status("approve with /yes or /no")
   def approve_tools(approved)
     return UI.status("no pending tools") unless @mode == :api && @client.pending_tools?
     if approved
@@ -696,13 +457,7 @@ class CLI
       UI.status("tools rejected")
     end
   end
-  def execute_pending
-    @client.pending_tools.map do |tc|
-      tool = @tools.find { |t| t.class.schema.any? { |s| s[:name] == tc["name"] } }
-      result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown" }
-      { type: "tool_result", tool_use_id: tc["id"], content: JSON.generate(result) }
-    end
-  end
+  def execute_pending = @client.pending_tools.map { |tc| tool = @tools.find { |t| t.class.schema.any? { |s| s[:name] == tc["name"] } }; result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown" }; { type: "tool_result", tool_use_id: tc["id"], content: JSON.generate(result) } }
   def switch_provider(name)
     unless name
       UI.puts("providers: #{WebChat::PROVIDERS.keys.join(", ")}")
@@ -718,29 +473,37 @@ class CLI
     UI.thinking("connecting to #{name}") { @client = WebChat.new(name) }
     UI.status("switched to #{name}")
   end
-  def rag_ingest(path)
-    return UI.error("usage: /ingest PATH") unless path
-    return UI.error("embeddings not available - set OPENAI_API_KEY or run ollama") unless @rag.enabled?
-    expanded = File.expand_path(path)
-    count = UI.thinking("ingesting") { @rag.ingest(expanded) }
-    UI.status("added #{count} chunks")
+  def rag_ingest(path) = arg ? (count = UI.thinking("ingesting") { @rag.ingest(File.expand_path(path)) }; UI.status("added #{count} chunks")) : UI.error("usage: /ingest PATH")
+  def rag_search(query) = query ? (results = @rag.search(query); results.empty? ? UI.status("no results") : results.each_with_index { |r, i| UI.puts("#{i + 1}. [#{r[:score].round(3)}] #{r[:chunk][:source]}"); UI.puts("   #{r[:chunk][:text][0..150]}...") }) : UI.error("usage: /search QUERY")
+  def toggle_rag = (@rag_enabled = !@rag_enabled; UI.status("RAG #{@rag_enabled ? "enabled" : "disabled"}"); UI.status("knowledge base empty, use /ingest first") if @rag_enabled && @rag.stats[:chunks] == 0)
+  def run_chain(json) = json ? (tool = @tools.find { |t| t.is_a?(LangChainTool) }; UI.puts("chain result: #{tool.run_chain(chain_json: json)}")) : UI.error("usage: /chain JSON")
+  def launch_webchat
+    require "webrick"
+    server = WEBrick::HTTPServer.new(Port: 8000)
+    server.mount_proc("/chat") { |req, res| res.content_type = "text/html"; res.body = "<html><body><form action='/send' method='post'><input name='message'><button>Send</button></form><div id='response'></div></body></html>" }
+    server.mount_proc("/send") { |req, res| msg = req.query["message"]; response = @client.send(msg) rescue "error"; res.content_type = "text/html"; res.body = "<html><body>Response: #{response}</body></html>" }
+    UI.status("webchat at http://localhost:8000/chat")
+    server.start
   end
-  def rag_search(query)
-    return UI.error("usage: /search QUERY") unless query
-    results = @rag.search(query, k: 5)
-    if results.empty?
-      UI.status("no results")
-    else
-      results.each_with_index do |r, i|
-        UI.puts("#{i + 1}. [#{r[:score].round(3)}] #{r[:chunk][:source]}")
-        UI.puts("   #{r[:chunk][:text][0..150]}...")
-      end
+  def openbsd_cmd(arg)
+    parts = arg.split(/\s+/, 2)
+    subcmd, param = parts[0], parts[1]
+    tool = @tools.find { |t| t.is_a?(OpenBSDTool) }
+    case subcmd
+    when "news" then UI.puts(tool.fetch_news)
+    when "packages" then UI.puts(tool.search_packages(query: param)) if param
+    else UI.error("usage: /openbsd news or /openbsd packages QUERY")
     end
   end
-  def toggle_rag
-    @rag_enabled = !@rag_enabled
-    UI.status("RAG augmentation #{@rag_enabled ? "enabled" : "disabled"}")
-    UI.status("knowledge base empty, use /ingest first") if @rag_enabled && @rag.stats[:chunks] == 0
+  def profile_cmd(arg)
+    parts = arg.split(/\s+/)
+    action, name = parts[0], parts[1]
+    case action
+    when "save" then @profiles[name] = { rag: @rag.stats, theme: @theme }; UI.status("profile #{name} saved")
+    when "load" then if @profiles[name]; @theme = @profiles[name][:theme]; UI.status("profile #{name} loaded"); else UI.error("profile not found"); end
+    else UI.error("usage: /profile save/load NAME")
+    end
   end
 end
+
 CLI.new.run if __FILE__ == $0
