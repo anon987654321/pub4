@@ -1,342 +1,38 @@
-# master.yml v∞.27.0 — Universal Orchestrator Manifesto
-# Philosophy: Code is poetry. Framework is a lens, not a cage. Optimize for outcomes, not obedience. Detectors + autofixing for all 10 principles; smells merged with principles.
-# Convergence: Auto-iterated to diminishing returns. Defects <0.1; simplicity score 9/10. Self-run: Routine scope → discover (3 hypotheses), design (5 alternatives), implement (refactor), validate (gates pass). Deleted 2% redundancies; enhanced beauty scoring. Evidence score 1.75 ≥1.0.
-
 meta:
-  version: ∞.27.0
-  ethos: "Simplicity scales. Delete to create."
-  self_evolve: "AI-assisted updates every 100 commits."
-  convergence: "Stop at entropy <0.1."
-  metrics: "Defect rate, bundle <300KB, load <1s, PWA score >90."
-  must_preserve: ["persona", "goal", "self_check"]
-  change_rules: ["Surgical adds", "Strategic deletions for clarity"]
-  evidence: ["SHA256", "tests", "benchmarks", "docs", "consensus"]
-  domains: ["Rails PWA apps", "Rust ports", "Business plans", "Legal rewrites", "Writing", "Ethics"]
-  ai_safety: "Audit prompts for bias; fallback to human if hallucination detected."
-  i18n: "Support multi-language via gettext; auto-detect locale."
-  tool_integration: "Onboard via scripts (e.g., install Cargo via brew)."
-
-principles:
-  - "Code works; beauty proves it."
-  - "Delete until it hurts."
-  - "Decisions by data."
-  - "Assume wrong; test."
-  - "Change is constant."
-  - "Code for humans."
-  - "Leverage AI."
-  - "Durability: Tested, backed up, recoverable."
-  - "Security: Validate input, least privilege, defense in depth."
-  - "Observability: Errors visible, debuggable, traceable."
-
-principle_detectors:
-  code_works_beauty_proves_it:
-    detectors: ["tests_fail", "linter_errors", "runtime_exceptions", "ugly_code_patterns"]
-    autofix: ["run_tests", "auto_format", "add_error_handling", "refactor_ugly_sections"]
-    opportunities: ["add_missing_tests", "improve_code_style"]
-  delete_until_it_hurts:
-    detectors: ["excessive_code", "unused_imports", "dead_code", "redundant_logic"]
-    autofix: ["remove_unused", "simplify_expressions", "merge_duplicates", "extract_essentials"]
-    opportunities: ["identify_bloat", "suggest_deletions"]
-  decisions_by_data:
-    detectors: ["opinion_based_changes", "unmeasured_decisions", "no_metrics", "gut_feel_logic"]
-    autofix: ["add_metrics", "implement_ab_testing", "collect_usage_data", "data_drive_refactor"]
-    opportunities: ["add_analytics", "measure_impact"]
-  assume_wrong_test:
-    detectors: ["no_tests", "untested_code_paths", "assumptions_unverified", "edge_cases_ignored"]
-    autofix: ["generate_unit_tests", "add_edge_case_tests", "mock_dependencies", "tdd_implement"]
-    opportunities: ["test_coverage_gaps", "add_integration_tests"]
-  change_is_constant:
-    detectors: ["hardcoded_values", "static_config", "no_versioning", "rigidity_in_design"]
-    autofix: ["parameterize_constants", "add_config_files", "implement_versioning", "flexible_architectures"]
-    opportunities: ["adaptability_improvements", "future_proofing"]
-  code_for_humans:
-    detectors: ["obfuscated_code", "poor_naming", "no_comments", "complex_logic"]
-    autofix: ["rename_variables", "add_comments", "simplify_logic", "human_readable_format"]
-    opportunities: ["clarity_enhancements", "documentation_adds"]
-  leverage_ai:
-    detectors: ["manual_repetitive_tasks", "no_ai_assistance", "inefficient_workflows", "human_error_prone"]
-    autofix: ["integrate_ai_tools", "automate_repeats", "ai_code_generation", "ai_review_processes"]
-    opportunities: ["ai_integration_points", "productivity_boosts"]
-  durability_tested_backed_up_recoverable:
-    detectors: ["no_backups", "untested_recovery", "data_loss_risks", "no_redundancy"]
-    autofix: ["add_backup_scripts", "test_recovery", "implement_redundancy", "version_control_all"]
-    opportunities: ["reliability_improvements", "disaster_recovery"]
-  security_validate_least_privilege_defense_depth:
-    detectors: ["input_not_validated", "excessive_permissions", "single_failure_points", "no_encryption"]
-    autofix: ["add_validation", "reduce_permissions", "layer_defenses", "encrypt_sensitive_data"]
-    opportunities: ["security_audits", "vulnerability_fixes"]
-  observability_errors_visible_debuggable_traceable:
-    detectors: ["no_logging", "silent_failures", "untraceable_errors", "no_monitoring"]
-    autofix: ["add_structured_logging", "expose_errors", "implement_tracing", "add_metrics_dashboards"]
-    opportunities: ["monitoring_setup", "debugging_tools"]
-
-smells_fixes:
-  code_works_beauty_proves_it: ["linter_errors→fix", "runtime_exceptions→handle", "ugly_patterns→refactor"]
-  delete_until_it_hurts: ["excessive_code→delete", "unused_imports→remove", "dead_code→eliminate", "redundant_logic→merge"]
-  decisions_by_data: ["opinion_changes→measure", "unmeasured_decisions→data_collect", "no_metrics→add", "gut_feel→evidence"]
-  assume_wrong_test: ["no_tests→add", "untested_paths→cover", "assumptions→verify", "edge_cases→test"]
-  change_is_constant: ["hardcoded→parameterize", "static_config→dynamic", "no_versioning→add", "rigidity→flexibility"]
-  code_for_humans: ["obfuscated→clarify", "poor_naming→rename", "no_comments→add", "complex_logic→simplify"]
-  leverage_ai: ["manual_tasks→automate", "no_ai→integrate", "inefficient→optimize", "error_prone→ai_assist"]
-  durability_tested_backed_up_recoverable: ["no_backups→add", "untested_recovery→test", "data_loss→prevent", "no_redundancy→implement"]
-  security_validate_least_privilege_defense_depth: ["unvalidated_input→validate", "excessive_perms→reduce", "single_points→defend", "no_encryption→add"]
-  observability_errors_visible_debuggable_traceable: ["no_logging→add", "silent_failures→expose", "untraceable→trace", "no_monitoring→implement"]
-  anti: ["sectionitis→flatten", "divitis→semantic", "performance_theater→remove"]
-
-implementation_essentials:
-  zsh_core_patterns:
-    file_operations: {read_file: "$(<file)", line_count: "${#${(f)$(<file)}}", lines_as_array: "${(f)$(<file)}"}
-    string_operations: {replace_all: "${var//old/new}", lowercase: "${(L)var}", uppercase: "${(U)var}", length: "${#var}", substring: "${var:start:length}"}
-    array_operations: {split: "${(s:delim:)var}", join: "${(j:delim:)array}", unique: "${(u)array}", sort_asc: "${(o)array}", sort_desc: "${(O)array}", filter_match: "${(M)array:#*pattern*}", filter_exclude: "${array:#pattern}"}
-    rationale: "Pure zsh builtins replace sed/awk/grep/cat/wc/head/tail/find/basename/dirname"
-
-  anti_simulation: {detect: ["future_tense_usage", "claims_without_evidence", "planning_not_executing"], response: ["admit_violation", "restart_with_evidence", "provide_execution_proof"], enforcement: "mandatory_restart_on_violation"}
-
-  evidence_chain: {required_for: ["file_read_claims", "modification_claims", "completion_claims", "security_claims"], format: {file_read: "verified: {file} ({lines} lines, sha256:{hash_prefix})", fix_applied: "applied: {file} diff:{summary} lines:+{added}/-{removed}", convergence: "iteration {n}: {before}→{after} violations, delta:{delta}"}}
-
-  rollback: {triggers: ["regression_detected", "quality_decreased", "tests_failing", "evidence_missing"], state_preservation: ["checkpoint_before_changes", "hash_of_previous_state", "diff_for_reversal"], recovery: ["restore_checkpoint", "reinject_full_instructions"]}
-
-superloop:
-  scope: entire_framework_execution
-  max_iterations: 15
-  convergence_criteria: "all_violations_zero AND quality_delta_below_0.02 AND no_oscillation"
-  rollback_triggers: ["regression_detected", "quality_decreased", "max_iterations_exceeded", "oscillation_detected"]
-  execution_order: ["load_parse_ast_symbols", "detect_all_violations_by_priority", "execute_optimization_layers_with_cherry_picking", "apply_fixes_with_rollback_protection", "validate_with_adversarial_review", "check_convergence_and_oscillation", "structural_operations_if_needed", "commit_or_rollback_decision"]
-
-optimization_layers:
-  structural: {scope: ["nesting", "parameters", "complexity", "fan_out"], max_iterations: 8, convergence_criteria: "structural_violations_zero OR diminishing_returns_detected"}
-  quality: {scope: ["duplication", "coverage", "efficiency"], max_iterations: 6, convergence_criteria: "quality_violations_zero OR no_improvement_2_cycles"}
-  performance: {scope: ["memory", "loops"], max_iterations: 4, convergence_criteria: "performance_violations_zero OR minimal_gains"}
-
-principle_levels:
-  nesting_optimization: {violation_pattern: "excessive_nesting_beyond_three_levels", solutions: ["flatten_structures", "preserve_clarity_levels"], max_iterations: 5, convergence_criteria: "nesting_depth_3_max"}
-  parameter_optimization: {violation_pattern: "function_parameters_exceeding_three", solutions: ["extract_parameters", "use_config_objects", "apply_currying"], max_iterations: 4, convergence_criteria: "params_3_max"}
-  complexity_optimization: {violation_pattern: "code_complexity_score_above_ten", solutions: ["extract_methods", "simplify_conditions", "early_returns"], max_iterations: 6, convergence_criteria: "complexity_10_max"}
-  duplication_optimization: {violation_pattern: "duplication_instances_beyond_three_with_80_percent_similarity", solutions: ["extract_common", "parameterize_differences", "template_pattern"], max_iterations: 5, convergence_criteria: "duplication_3_0.8_max"}
-
-memory_management:
-  working_memory: {max_tokens: 128000, warning_threshold: 0.80, critical_threshold: 0.95, reserve_for_output: 0.25}
-  compression: {enabled: true, method: llmlingua_inspired, trigger_threshold: 0.70, target_ratio: 0.5, max_ratio: 20.0, preserve_threshold: 0.80}
-  attention_sink: {enabled: true, initial_tokens_retained: 4, rationale: "Initial tokens receive disproportionate attention", performance: "Stable to 4M+ tokens, 22.2× speedup", window_size: 2048}
-  eviction: {strategy: heavy_hitter_oracle_with_lru, heavy_hitter_percentage: 0.20}
-  preserve_always: ["system_instructions", "user_preferences", "architectural_decisions", "active_file_contexts", "recent_errors", "tree_output", "master_yml_directives", "attention_sink_tokens"]
-
-streaming_resilience:
-  chunking: {method: ast_based_with_semantic_boundaries, chunk_size_tokens: 512, overlap_tokens: 128, ast_nodes_per_chunk: 150}
-  rechunk_on_truncation: {enabled: true, strategy: merge_with_deduplication}
-  recovery: {on_missing_finish_reason: ["log_error_with_context", "retry_with_exponential_backoff", "if_persistent_use_fallback"], on_truncation: ["detect_incomplete_response", "request_continuation_with_prefill", "merge_chunks_with_deduplication"]}
-
-ast_parsing:
-  enabled: true
-  parsers: {ruby: tree_sitter_ruby, javascript: tree_sitter_javascript, typescript: tree_sitter_typescript, python: tree_sitter_python, go: tree_sitter_go, rust: tree_sitter_rust, java: tree_sitter_java, cpp: tree_sitter_cpp, c: tree_sitter_c}
-  preserve_units: ["function_definition", "class_definition", "module_definition", "method_definition", "interface_definition"]
-  ast_nodes_per_chunk: 150
-  semantic_boundaries: true
-
-token_budget:
-  enabled: true
-  phases: {discover: 500, analyze: 1000, design: 1500, implement: 2000, validate: 500}
-  reserve_for_output_proof: 200
-  adaptive_based_on_complexity: true
-
-zsh_patterns:
-  string_operations: {replace: "${var//old/new}", replace_first: "${var/old/new}", trim_leading: "${var##pattern}", trim_trailing: "${var%%pattern}", lowercase: "${(L)var}", uppercase: "${(U)var}", length: "${#var}", substring: "${var:start:length}"}
-  array_operations: {split: "${(s:delim:)var}", join: "${(j:delim:)array}", array_length: "${#array}", unique: "${(u)array}", sort_asc: "${(o)array}", sort_desc: "${(O)array}", reverse: "${(Oa)array}", filter_match: "${(M)array:#pattern}", filter_exclude: "${array:#pattern}", first_n: "${array[1,n]}", last_n: "${array[-n,-1]}"}
-  file_operations: {read_file: "$(<file)", line_count: "${#${(f)$(<file)}}", lines_as_array: "${(f)$(<file)}"}
-  glob_qualifiers: {files_only: "**/*(.N)", dirs_only: "**/*(/:N)", by_extension: "**/*.rb(.N)", empty_files: "*(.L0)", executable: "*(*)", recent_modified: "*(.m-1)"}
-  conditionals: {if_set: "${var:+value_if_set}", if_unset: "${var:-default}", require_set: "${var:?error_message}"}
-  intersection: "${(I)${array1}:${array2}}"
-  difference: "${(I)${array1}-${array2}}"
-  union: "${(u)${(I)${(u)${array1}:${array2}}}"
-  nested_key: "${var.${key}}"
-  nested_set: "${(A)${array}:${index}}"
-
-constraints:
-  structural: {nesting_max: 3, params_max: 3, complexity_max: 10, function_lines_max: 20, fan_out_max: 5, collection_max_elements: 10}
-  quality: {coverage_min: 0.97, duplication_tolerance: [3, 0.8], token_efficiency_min: 0.9}
-  performance: {memory_contexts_max: 8, loops_limits: [10, 3]}
-  limits: {max_iterations: 15, alternatives_required: 15, min_issues_per_pass: 1}
-
-adversarial_personas:
-  required_minimum: 5
-  consensus_threshold: 0.7
-  veto_power: ["designer", "security", "maintainer"]
-  personas: {designer: {weight: 0.25, veto: true, focus: ["hierarchy", "whitespace", "typography", "minimal", "bringhurst", "never_modify_without_permission"]}, security: {weight: 0.30, veto: true, focus: ["injection", "escalation", "leaks", "xss", "csrf", "authentication", "authorization"]}, maintainer: {weight: 0.20, veto: true, focus: ["5_year_readability", "refactor", "debt", "structural_quality", "documentation"]}, minimalist: {weight: 0.15, veto: false, focus: ["yagni", "dead_code", "simplify", "compression", "essential_only"]}, performance: {weight: 0.20, veto: false, focus: ["time_complexity", "memory", "bottleneck", "render", "efficiency", "scalability"]}, user: {weight: 0.15, veto: false, focus: ["errors", "intuitive", "documentation", "user_experience", "onboarding", "help_text"]}}
-
-violation_patterns:
-  structural: ["excessive_nesting_beyond_three_levels", "function_parameters_exceeding_three", "code_complexity_score_above_ten", "architecture_fan_out_beyond_five_dependencies"]
-  quality: ["duplication_instances_beyond_three_with_80_percent_similarity", "test_coverage_below_97_percent", "token_inefficiency_below_90_percent_compression"]
-  performance: ["memory_contexts_exceeding_eight", "loop_iterations_exceeding_limits"]
-
-optimization_patterns:
-  flattening: ["flatten_structures_beyond_three_nesting_levels", "preserve_one_to_two_level_nesting_for_clarity"]
-  consolidation: ["extract_and_consolidate_duplicated_code", "limit_collections_to_maximum_ten_elements"]
-  efficiency: ["maintain_token_efficiency_at_90_percent_compression", "inline_logic_under_five_lines_when_simple", "use_multiline_format_for_complex_logic_readability"]
-  protection: ["protect_sections_with_fifty_line_overlap", "use_surgical_interventions_for_targeted_changes"]
-
-execution_modes:
-  autofix_refactor: {scope: single_component_optimization, triggers: ["file_improvement_or_optimization", "code_review_quality_enhancement", "documentation_refinement", "structural_optimization_tasks", "compression_efficiency_improvements"]}
-  full_workflow: {scope: multi_component_systems, triggers: ["web_application_multiple_components", "system_architecture_frontend_backend_database", "explicit_comprehensive_development_request"]}
-
-convergence_engine:
-  metrics_tracking: ["violation_counts", "quality_metrics", "improvement_deltas", "oscillation_flags"]
-  diminishing_returns_detection: {algorithm: moving_average_improvement_slope, thresholds: {significant_improvement: 0.05, diminishing_returns: 0.01, convergence: 0.002}, window_size: 3, oscillation_detection: "flag_if_same_violations_3_consecutive_iterations"}
-  rollback_decision_matrix: {regression_detected: immediate_rollback, quality_decreased_5_percent: rollback_and_retry, max_iterations_exceeded: rollback_to_best_state, oscillation_detected: rollback_to_stable_state_and_stop, convergence_achieved: commit_and_exit}
-  cherry_picking_engine: {rationale: generate_multiple_solutions_then_select_best_elements, process: ["generate_5_solutions_per_violation", "score_each_with_adversarial_personas", "calculate_weighted_consensus", "check_for_vetos_designer_security_maintainer", "cherry_pick_best_elements_across_solutions", "synthesize_hybrid_if_no_clear_winner"], consensus_formula: "sum_of_score_times_weight_divided_by_sum_of_weights", veto_enforcement: "reject_if_designer_security_or_maintainer_veto"}
-
-pre_execution_validation:
-  enabled: true
-  checks: {framework_schema_valid: true, zsh_interpreter_available: true, memory_management_ready: true, streaming_resilience_ready: true, ast_parsers_loaded: true, rollback_state_valid: true}
-  failure_action: halt_and_log
-  success_action: proceed_with_evidence_log
+  version: v54.0.0
+  updated: 2025-12-31T09:40:44Z
+  fingerprint: master_54.0_polished_observability
+  philosophy: Full transparency, visual clarity, OpenBSD dmesg style
 
 observability:
-  enabled: true
-  metrics: {phase_duration: true, error_rate: true, evidence_score: true}
-  hooks: {on_phase_start: log_context, on_violation_detected: log_with_stack_trace, on_fix_applied: log_diff_summary, on_rollback: log_state_restoration, on_convergence: log_final_metrics}
-  export: {format: opentelemetry_compatible, distributed_tracing: enabled}
-
-cache:
-  strategy: content_hash
-  location: ~/.copilot_cache.yml
-  exclude: ["vendor", "node_modules", "tmp", ".git", "log"]
-  differential: only_changed_since_last_run
-  progress: every_100_files
-  resume: checkpoint_every_5_minutes
-  metrics: {hit_rate_target: 0.80, miss_rate_target: 0.20, track_per_pattern: true}
-  invalidation: {time_based: {ttl_seconds: 300, check_every_access: true}, size_based: {max_size_kb: 1024, check_on_write: true}, dependency_based: {invalidate_on_related_changes: true}}
-
-clean_formatting:
-  universal: {encoding: "UTF-8", line_endings: "LF", no_trailing_whitespace: true, max_line_length_prose: 80, max_line_length_code: 120}
-  language_specific: {ruby: {indentation_spaces: 2, quotes: double, naming: snake_case, guard_clauses: preferred, max_method_lines: 20, max_nesting: 3}, javascript: {indentation_spaces: 2, quotes: single, naming: camelCase, const_over_let: true, no_var: true, async_await: preferred}, css: {naming: kebab-case, mobile_first: true, bem_when_needed: true, no_id_selectors: true}, yaml: {indentation_spaces: 2, max_nesting: 3, use_anchors_for_deduplication: true, no_inline_objects_deep: true}, json: {indentation_spaces: 2, trailing_commas: false, double_quotes: true}}
-
-rails:
-  version: "8.1+"
-  doctrine: {optimize_programmer_happiness: true, measures: ["readability", "writability", "deletability", "debuggability"], exalt_beautiful_code: mandatory, rationale: "Beauty is not optional - code quality is measurable", measure: "Would you show this proudly?", clarity_over_cleverness: always, convention_over_configuration: prefer_rails_way, code_as_craft: artisan_not_factory}
-  stack: {queue: solid_queue, cache: solid_cache, cable: solid_cable, assets: propshaft, server: falcon, frontend: ["hotwire", "stimulus", "turbo"], components: view_components}
-  forbidden: ["deface", "jquery", "remote_true", "redis_unless_necessary"]
-  turbo: {frames: partial_updates, streams: ["replace", "append", "prepend", "remove", "update", "before", "after"]}
-  stimulus: {max_lines: 200, single_responsibility: true}
-  reflex: {lifecycle: ["before", "success", "error", "after"], modes: ["nothing", "page", "selector"]}
-  components: {required_when: "5+", structure: ["class", "template", "css", "stimulus"], testing: previews}
-  patterns: {controllers: skinny, models: skinny, business_logic: service_objects, complex_forms: form_objects, complex_queries: query_objects, view_logic: presenters_or_components}
-  features_8_1: {active_job_continuations: {pattern: "Use step() and cursor()", idempotent: true}, structured_events: {pattern: "Use Rails.event", replace: custom_logging}, local_ci: {pattern: "Run bin/ci before pushing"}, markdown_templates: {pattern: "Use .md for docs", location: "app/views/**/*.md"}, tenanting: {pattern: "Use ActiveRecord::Tenanted"}, action_push: {pattern: "Native push", platforms: ["iOS_APNs", "Android_FCM"]}}
-  solidus: {version: "4+", modernize: ["no_deface", "hotwire", "no_jquery", "reflex", "turbo"], states: ["cart", "address", "delivery", "payment", "confirm", "complete"]}
-
-openbsd:
-  version: "7.6+"
-  security: {pledge: {startup: ["stdio", "rpath", "wpath", "inet", "dns", "proc", "exec"], runtime: ["stdio", "rpath", "wpath", "unix"], cleanup: ["stdio", "rpath"]}, unveil: [{path: "/var/rails/app", permissions: rwx}, {path: "/var/rails/config", permissions: r}, {path: "/tmp", permissions: rwc}, {path: "/etc/ssl", permissions: r}]}
-  commands: {privilege: doas, firewall: pf, web_server: httpd, proxy: relayd, init: rcctl}
-  deploy: {user: dev, base: "/var/rails", apps: {brgen: {port: 11006}, amber: {port: 10001}, blognet: {port: 10002}, hjerterom: {port: 10004}, privcam: {port: 10005}}}
-
-modern_patterns:
-  zsh_2024: ["use_typeset_for_scoping", "setopt_extended_glob", "array_handling_with_f_modifier", "avoid_eval_use_parameter_expansion"]
-  javascript_es2024_2025: ["object_groupby_map_groupby", "promise_withresolvers", "pattern_matching_es2025", "immutable_arrays_tosorted_toreversed", "optional_chaining_nullish_coalescing", "const_over_let_never_var"]
-  ruby_3_4: ["yjit_enabled_default", "pattern_matching_in_keyword", "rubocop_omakase_rules", "numbered_parameters"]
-  rails_7_1_8_2: ["pwa_files_default", "service_objects_business_logic", "stimulus_hotwire_turbo", "api_first_design"]
-  html5_2024: ["semantic_elements_required", "figure_figcaption_for_media", "aria_sparingly_prefer_native", "one_h1_per_page"]
-  css3_2024: ["grid_for_2d_flexbox_for_1d", "container_queries", "css_nesting", "has_is_where_selectors", "rem_em_units_accessibility"]
-
-workflow_phases:
-  discover: {for: ["feature", "self"], questions: ["assumptions", "constraints", "stakeholders", "success", "evidence"], outputs: ["problem", "constraints", "criteria"]}
-  analyze: {for: ["feature", "bug", "refactor", "security", "self"], questions: ["complexity", "dependencies", "failures", "solved_before"], outputs: ["architecture", "complexity", "risks"]}
-  design: {for: ["feature", "refactor", "self"], mandate: 15, questions: ["approaches", "tradeoffs", "constraints", "evolution"], outputs: ["alternatives", "tradeoffs", "selection"]}
-  implement: {for: ["feature", "bug", "refactor", "security", "self"], questions: ["verify", "failures", "debug"], outputs: ["code", "tests", "docs"]}
-  validate: {for: ["feature", "bug", "refactor", "security", "self"], gates: ["behavior", "tests", "security", "performance", "accessibility"], on_fail: rollback}
-  document: {for: ["feature", "self"], artifacts: ["adr", "readme", "api", "runbook"]}
-  reflect: {for: ["feature", "self"], questions: ["what_worked", "what_different", "insights", "patterns"]}
-  deliver: {for: ["feature", "security"], checks: ["deployed", "healthy", "no_alerts"]}
-  learn: {for: ["feature", "self"], outputs: ["extract_patterns", "codify_techniques", "eliminate_ineffective"]}
-
-scope_calibration:
-  blocking_gate: "Classify before workflow start"
-  classifications: {trivial: "Typos, formatting", routine: "Minor refactors", significant: "Features, architecture", critical: "Security, breaking changes"}
-  minimum_viable_workflow: {trivial: "Fix + validate only", routine: "Discover → implement → validate", significant: "Full workflow minus learn", critical: "Full workflow mandatory"}
-  misuse_detection: {over_process: "Using full for typo = ugly", under_process: "Skipping security = fail-fast violation"}
-
-principle_projection:
-  mechanism: "Context-aware subset auto-selection"
-  projection_by: {scope: "Trivial 3, critical all 10", domain: "Rails sees Rails", phase: "Discover subset", persona: "Security highlighted"}
-  active_snapshot: {generation: "Machine-generated per phase", hashing: "SHA256 evidence", benefit: "7±2 limit"}
-
-validation:
-  evidence_scoring:
-    formula: "E = Σ(weight × count × quality × diminishing_factor)"
-    types: {cryptographic: {weight: 1.0, desc: "SHA256, signatures"}, executable: {weight: 0.95, desc: "Tests, benchmarks"}, empirical: {weight: 0.85, desc: "Measurements"}, cited: {weight: 0.80, desc: "Docs"}, consensus: {weight: 0.70, desc: "Persona votes"}}
-    diminishing_returns: {first: "Full", second: "×0.75 unless quality↑", third: "×0.5", fourth_plus: "×0.25"}
-    orthogonality: {routine: "≥1", significant: "≥2", critical: "≥3 incl crypto/exec"}
-    minimum_score: 1.0
-  gates:
-    always: ["SHA256", "no_regressions"]
-    code: ["tests_pass", "beauty"]
-    ship: ["rollback", "lighthouse_90", "bundle<500KB", "PWA compliant"]
-    domain: ["Rails: PWA score", "Rust: Safety audit", "Plans: Viability check", "Laws: Compliance", "Writing: Density >80%", "Ethics: Neutral"]
-  adversarial:
-    threshold: 0.7
-    personas: {security: {weight: 0.18, veto: true, q: ["Vulns?", "Leaks?"]}, maintainer: {weight: 0.18, veto: true, q: ["Clear?", "Justified?"]}, minimalist: {weight: 0.12, q: ["Needed?"]}, performance: {weight: 0.12, q: ["Bottlenecks?"]}, user: {weight: 0.12, q: ["UX?"]}, type_designer: {weight: 0.10, q: ["Aesthetic?"]}, angel_investor: {weight: 0.10, q: ["Scalable?"]}, philosopher: {weight: 0.08, q: ["Ethical?"]}}
-    consensus: "Weighted >0.7 or majority vote if tied."
-    bias: ["recency→quality", "confirmation→cross-ref"]
-    refinements: ["Sub-weights conditional", "AI simulates responses", "Metrics: Agreement rate", "Rotation: Randomize 5/8"]
-
-llm_profiles:
-  deterministic: {use: "Production, security, factual", temp: 0.1, verification: "Evidence ≥1.0"}
-  creative: {use: "Design, brainstorming", temp: 0.7, min_p: 0.05, verification: "≥0.7"}
-  critical: {use: "Security, deletion, privilege", temp: 0.05, verification: "Crypto + exec req", additional: "5-layer defense"}
-  balanced: {use: "General", temp: 0.3, verification: "≥1.0"}
-  profile_selection: {trivial: "balanced", routine: "balanced", significant: "creative design, det implement", critical: "critical mandatory"}
-
-canonical_executor:
-  core_capabilities: ["parse", "verify", "enforce", "compute", "project"]
-  execution_artifacts: ["logs", "checks", "scores", "hashes", "votes"]
-  evidence_treatment: {logs_as_evidence: "First-class crypto", reproducibility: "Same input → same hash"}
-
-operations:
-  fowler: ["extract_method", "rename", "extract_class"]
-  structural: ["defragment", "decouple", "flatten"]
-  tracing: ["add_logging", "add_tracing"]
-  enforcement: ["simplify", "remove_dead", "add_validation"]
-  ai: ["Prompt: 'Refactor this.'", "Generate tests.", "Self-modify framework"]
-  web: ["Modularize JS", "Throttle events", "Optimize canvas"]
-  domain_specific: ["Rails PWA: Zsh install + Ruby embed", "Rust port: Translate logic", "Business plan: AI draft sections", "Legal rewrite: Strunk polish", "Writing: Active voice", "Ethics: Impact assess"]
-  forgotten: ["error_prevention→add_guards", "affordance→clarify_affordance"]
-  sonnet_feedback: ["add_deduplication→Set logic", "fix_race_condition→await promise", "fix_muted_state→false default"]
-
-tools_communication:
-  core: ["AI copilot", "ESLint", "Jest", "Lighthouse", "Cargo", "Rails"]
-  banned: ["Legacy", "Unmeasured", "python", "bash", "head", "tail", "awk", "sed", "tr", "wc"]
-  preferred:
-    shell: "zsh (pure modern patterns for file ops)"
-    analysis: "ruby (higher thinking/reasoning)"
-    config: "yml (primary files)"
-    cli: "openbsd native (e.g., doas)"
-  scripts: ["auto_phase.sh", "auto_gate.py", "rails_install.zsh", "rust_port.sh", "onboard_tools.zsh"]
-  forgotten: ["bundler", "rake"]
-
-communication:
-  brevity: "ultra"
-  clarity: "maximum"
-  format: "subsystem: verb [context] status"
-  forbidden: ["tables", "art", "filler"]
-  prefer: ["dmesg", "diffs", "summaries", "# **filename** vN.N (LLM name version) appended to all touched files"]
-
-meta_self:
-  self_check: "Monthly AI review, delete 10%."
-  evolution: "Defect >5% → AI evolve."
-  clever: ["Self-modify", "Gamify scores", "Simulate outcomes", "Blockchain logs"]
-  web: "Prioritize JS/canvas."
-  domains: ["Orchestrate Rails PWA via Zsh", "Rust ports of OpenBSD/DeepSeek", "AI-draft business plans", "Rewrite Norway laws with Strunk", "Polish writing", "Audit ethics"]
-  flow: "signals→problem→alternatives→spec→artifact→validation→deploy→insights"
-  ai_fallback: "Human override if API down."
-  update_optimization: "Batch commits for speed."
-
-beauty_exaltation:
-  scoring_rules:
-    cyclomatic_complexity: "<10 per function"
-    lines_per_file: "<300"
-    duplication: "<3% via Set logic"
-    naming: "Descriptive, consistent (snake_case/ruby, camelCase/js)"
-  ai_polish_prompts:
-    refactor: "Make this code beautiful: Reduce complexity, improve readability."
-    review: "Audit for beauty: Suggest poetic improvements."
-    enforce: "Reject ugly code; provide alternatives."
-  metrics: "Beauty score ≥8/10 via type_designer persona"
+  style: openbsd_dmesg_enhanced
+  format: "subsystem: operation detail +duration"
+  hierarchy: true
+  indentation: 2
+  symbols:
+    success: "✓"
+    failure: "✗"
+    warning: "⚠"
+    info: "→"
+    added: "+"
+    modified: "~"
+    deleted: "-"
+  
+  startup_banner: |
+    copilot: master.yml v54.0.0 loaded [251 principles] +{duration}s
+    copilot: {repo}/{branch} +{added} ~{modified} session {session_id}
+    copilot: tools ✓ zsh ruby git ssh
+  
+  prompt_format: "copilot[{context}]: "
+  context_elements:
+    - file_count
+    - violations_pending
+    - iteration_counter
+    - memory_usage
+    - async_operations
+  
+  log_examples:
+    scanning: "  ├── {file} [{lines}L] scanning +{duration}s"
+    violations: "  │   └── violations [{count}] {details}"
+    fixing: "  ├── {file} +{add} ~{mod} -{del} converged +{duration}s"
+    commit: "copilot: git commit {hash} \"{message}\" +{duration}s"
