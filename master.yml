@@ -340,5 +340,3 @@ beauty_exaltation:
     review: "Audit for beauty: Suggest poetic improvements."
     enforce: "Reject ugly code; provide alternatives."
   metrics: "Beauty score ≥8/10 via type_designer persona"
-
-# **master.yml** v∞.27.0 (Sonnet 4.5)
