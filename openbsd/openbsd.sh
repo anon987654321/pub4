@@ -6,7 +6,6 @@
 
 set -euo pipefail
 
-#!/usr/bin/env zsh
 # OpenBSD Infrastructure - Rails 8 + Solid Stack
 # Complete deployment: 40+ domains, 7 Rails apps, DNS+DNSSEC, TLS, PF, Relayd
 # Architecture: Internet → PF → Relayd (TLS) → Falcon → Rails 8
@@ -25,7 +24,11 @@ typeset -r APP_BASE="/home"
 typeset -r LOG_DIR="/var/log/rails"
 typeset -r BACKUP_DIR="${DEPLOY_BASE}/backups/$(date +%Y%m%d_%H%M%S)"
 [[ $EUID -eq 0 ]] && mkdir -p "$DEPLOY_BASE" "$LOG_DIR" "$BACKUP_DIR"
-# App configuration - randomized ports for security
+
+# App configuration - randomized ports for security obscurity
+# Port range: 29458-56381 (high ports, avoiding common services)
+# Randomization prevents automated port scanning attacks
+# Each app gets unique port to enable PF firewall rules per-app
 typeset -A APPS
 APPS[brgen.port]=37824
 APPS[brgen.domains]="brgen.no oshlo.no trndheim.no stvanger.no trmso.no reykjavk.is kobenhvn.dk stholm.se gteborg.se mlmoe.se hlsinki.fi lndon.uk mnchester.uk brmingham.uk edinbrgh.uk glasgw.uk lverpool.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch lchtenstein.li frankfrt.de mrseille.fr mlan.it lsbon.pt lsangeles.com newyrk.us chcago.us dtroit.us houstn.us dllas.us austn.us prtland.com mnneapolis.com"
@@ -114,7 +117,7 @@ setup_ruby_rails() {
   pkg_add -U ruby%3.3 || return 1
   typeset -a ruby_cmds=(ruby erb irb gem bundle rdoc ri rake)
   for cmd in $ruby_cmds; do
-    ln -sf "/usr/local/bin/${cmd}33" "/usr/local/bin/$cmd" 2>/dev/null || true
+    ln -sf "/usr/local/bin/${cmd}33" "/usr/local/bin/$cmd" 2>/dev/null
   done
   cat > /etc/gemrc << 'EOF'
 ---
@@ -124,7 +127,7 @@ install: --no-document
 update: --no-document
 EOF
   # Update RubyGems
-  gem update --system --no-document || true
+  gem update --system --no-document
   # Install essential gems
   _install_gem() { gem install "$1" --version "$2" --no-document || log "WARN: Failed $1"; }
   _install_gem bundler 2.5.0
@@ -532,7 +535,7 @@ _setup_app_directories() {
 _setup_app_database() {
   local app="$1"
   local db_pass=$(openssl rand -hex 16)
-  doas -u _postgresql psql -U postgres << SQL 2>/dev/null || true
+  doas -u _postgresql psql -U postgres << SQL
 DROP ROLE IF EXISTS ${app}_user;
 CREATE ROLE ${app}_user LOGIN PASSWORD '$db_pass';
 CREATE DATABASE ${app}_production OWNER ${app}_user;
