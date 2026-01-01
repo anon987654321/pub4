@@ -280,6 +280,14 @@
       BASE_RADIUS: 75,
       FOV: 250,
       SPEED: 0.75,
+      TIME_INCREMENT_FORWARD: 0.005,
+      TIME_INCREMENT_BACKWARD: -0.005,
+      BRIGHTNESS_FALLOFF: 2.2,
+      BRIGHTNESS_SCALE: 0.5,
+      AUDIO_ANALYSIS_BASS_RANGE: 0.2,
+      AUDIO_ANALYSIS_MID_RANGE: 0.6,
+      INTERNAL_SCALE_LOW_END: 0.6,
+      INTERNAL_SCALE_DEFAULT: 0.7,
       
       // Timeouts
       YT_LOAD_TIMEOUT_MS: 15000,
@@ -355,7 +363,10 @@
       try {
         const r = await fetch(url);
         if (r.ok) return await parser(r);
-      } catch {}
+        console.warn(`[fetch] ${url} returned ${r.status}`);
+      } catch (e) {
+        console.warn(`[fetch] ${url} failed:`, e.message);
+      }
       return null;
     };
     const detectMp3Playlist = async () => {
@@ -432,6 +443,11 @@
         } catch {}
       }
     };
+    /**
+     * UnifiedAudioEngine - Manages MP3 and YouTube playback with crossfading
+     * @class
+     * @param {Array} tracks - Array of track objects with src (MP3) or id (YouTube)
+     */
     class UnifiedAudioEngine {
       constructor(tracks) {
         this.started = false;
@@ -549,7 +565,11 @@
           try {
             const p = this.ytPlayers[k];
             p.loadVideoById({videoId: t.id, startSeconds: t.start || 0});
-            this._loadWatch = setTimeout(() => { console.warn('YT load timeout'); this.next({fast: true}); }, 15000);
+            this._loadWatch = setTimeout(() => { 
+              console.warn('YT load timeout'); 
+              this.updateUI('⚠️ YouTube load timeout - skipping');
+              this.next({fast: true}); 
+            }, CONFIG.YT_LOAD_TIMEOUT_MS);
             if (fadeIn) this._fadeYT(k, FADE_MS);
             else { p.setVolume(100); p.unMute(); }
           } catch (e) { console.warn('YT load error:', e); this.next({fast: true}); }
@@ -605,7 +625,9 @@
         if (this.analyser && this.dataArray) {
           try {
             this.analyser.getByteFrequencyData(this.dataArray);
-            const n = this.dataArray.length, n2 = n * 0.2 | 0, n6 = n * 0.6 | 0;
+            const n = this.dataArray.length;
+            const n2 = Math.floor(n * CONFIG.AUDIO_ANALYSIS_BASS_RANGE);
+            const n6 = Math.floor(n * CONFIG.AUDIO_ANALYSIS_MID_RANGE);
             let bass = 0, mid = 0, high = 0;
             for (let i = 0; i < n2; i++) bass += this.dataArray[i];
             for (let i = n2; i < n6; i++) mid += this.dataArray[i];
@@ -634,6 +656,11 @@
       }
       destroy() { clearInterval(this.t); }
     }
+    /**
+     * PixelTunnel - Renders animated warp tunnel effect with audio reactivity
+     * @class
+     * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
+     */
     class PixelTunnel {
       constructor(c) {
         this.ctx = c;
@@ -815,13 +842,13 @@
             const i = x + y * this.w;
             let brightness = y % 3 === 0 ? 0.6 : 1.0;
             const dist = Math.hypot(x - cx, y - cy);
-            brightness *= 1.0 - Math.pow(dist / maxDist, 2.2) * 0.5;
+            brightness *= 1.0 - Math.pow(dist / maxDist, CONFIG.BRIGHTNESS_FALLOFF) * CONFIG.BRIGHTNESS_SCALE;
             const r = (this.u32[i] & 255) * brightness | 0, g = ((this.u32[i] >> 8) & 255) * brightness | 0, b = ((this.u32[i] >> 16) & 255) * brightness | 0;
             this.u32[i] = this.pack32(r, g, b, 255);
           }
         }
         if (s) this.particles = this.particles.sort((a, b) => b[0].z - a[0].z);
-        this.time += (this.mouse.down ? -0.005 : 0.005) * m;
+        this.time += (this.mouse.down ? CONFIG.TIME_INCREMENT_BACKWARD : CONFIG.TIME_INCREMENT_FORWARD) * m;
         this.ctx.putImageData(this.imageData, 0, 0);
       }
     }
@@ -844,7 +871,9 @@
     const SCALE_MAX = Math.min(2, DPR) * (isLowEnd ? 0.9 : 1), SCALE_MIN = isLowEnd ? 0.4 : 0.5, TARGET_MS = 16.7;
     let ewma = TARGET_MS, lastScaleAdjust = 0, MIN_FRAME_MS = 16;
     const updateMinFrameInterval = () => MIN_FRAME_MS = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? 33 : 16;
-    const applyInternalScale = (b = isLowEnd ? 0.6 : 0.7) => INTERNAL_SCALE = Math.max(SCALE_MIN, Math.min(SCALE_MAX, b * Math.min(2, DPR)));
+    const applyInternalScale = (b = isLowEnd ? CONFIG.INTERNAL_SCALE_LOW_END : CONFIG.INTERNAL_SCALE_DEFAULT) => {
+      INTERNAL_SCALE = Math.max(SCALE_MIN, Math.min(SCALE_MAX, b * Math.min(2, DPR)));
+    };
     (() => {
       (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, 250); } catch {} })();
       new SimpleCarousel(document.getElementById("cityCarousel"));
