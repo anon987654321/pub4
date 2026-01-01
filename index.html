@@ -261,6 +261,10 @@
   <script>
     "use strict";
     
+    // Device and environment detection (must be defined first)
+    const DPR = window.devicePixelRatio || 1;
+    const IN_SANDBOX = window.location.protocol === 'file:' || !window.location.hostname;
+
     /**
      * Configuration Constants
      */
