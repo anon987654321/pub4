@@ -1,8 +1,65 @@
 meta:
-  version: "60.0.0"
+  version: "61.1.0"
   name: "universal_project_completion_framework"
-  edition: "ultimate_synthesis_polished"
+  edition: "operational_hardening"
   status: "production_ready"
+  last_updated: "2026-01-01T20:01:31Z"
+  
+  # Research-backed architectural constraints
+  architectural_limits:
+    nesting_depth: 3
+    rationale: "Transformers struggle with deep recursion, lack stack-like behavior"
+    research: "Liu et al. 2024 - lost-in-middle effect shows U-shaped recall"
+    
+  critical_placement:
+    description: "Place most critical principles in first 20% and last 20% of document"
+    rationale: "LLMs recall start/end best. Claude 2.1 dropped to 27% accuracy for middle content"
+    mechanism: "Causal attention + RoPE long-term decay favor boundary positions"
+    
+  context_efficiency:
+    lost_in_middle_threshold: "50% of context window"
+    effect: "Strongest degradation when input < 50% of max tokens"
+    mitigation: "Dual placement (sandwich), flat indexes, explicit repetition"
+  
+  breaking_changes_v61:
+    - "Phase 0 (Scope Clarification) now mandatory before Phase 1"
+    - "Phase 9 (Meta-Analysis) now mandatory after Phase 8"
+    - "P11 (Validate Before Done) requires evidence for all completions"
+  
+  context_management:
+    description: "LLM-specific attention optimization techniques"
+    purpose: "Combat lost-in-middle effect, optimize token placement"
+    research: "Liu et al. 2024, LinkedIn production systems, Constitutional AI configs"
+    
+    dual_placement:
+      technique: "Sandwich critical content (start + end of context)"
+      rationale: "LLMs attend best to start and end, not middle"
+      example: "Phase checklist: repeat at start AND end of long file"
+      evidence: "Claude 2.1 accuracy: start=high, middle=27%, end=high"
+      
+    lost_in_middle_mitigation:
+      problem: "LLMs miss info buried in middle of long context"
+      solution: "Place critical requirements/constraints at boundaries"
+      threshold: "Effect strongest when input < 50% context window"
+      
+    heavy_hitter_eviction:
+      description: "Evict repetitive context, keep novel information"
+      strategy: "Don't repeat full master.yml every turn, reference sections"
+      example: "Phase 1 checklist → reference 'see phase_1_discover', don't copy"
+      
+    yaml_defensive_patterns:
+      problem: "~10% reliability issues with LLM-generated YAML (LinkedIn production)"
+      failure_modes:
+        indentation_drift: "30-70% of YAML parsing failures"
+        unquoted_special_chars: "`:`, `#`, `@` cause breaks"
+        boolean_auto_conversion: "`yes/no` → `true/false`"
+      mitigation: "JSON Schema validation at parsing boundary"
+      
+    provider_quirks:
+      openai: "Supports strict JSON Schema (constrained decoding)"
+      anthropic: "XML tags work best (14-20% JSON failure rate)"
+      google: "Requires genai.protos.Schema class"
+      deepseek: "Occasionally returns empty, needs literal 'json' in prompt"
   
   # Self-checks the framework must pass
   self_checks:
@@ -11,6 +68,14 @@ meta:
     - "unnecessary_complexity"
     - "unclear_explanations"
     - "redundant_content"
+    
+  oscillation_detection:
+    enabled: true
+    threshold: 3
+    action: "rollback_to_best"
+    description: "After 3 repeated violations, rollback to best checkpoint"
+    prevents: "Infinite convergence loops, thrashing between solutions"
+    example: "CSS edit fails 3 times → rollback to working version"
 
 # === START HERE (15-MINUTE ORIENTATION) ===
 start_here:
@@ -1167,15 +1232,18 @@ verification:
   semantic_entropy:
     enabled: true
     samples: 10
+    threshold: 0.30
     purpose: "Detect hallucinated/unreliable outputs"
     method: "Generate multiple responses, measure semantic consistency"
-    research: "Farquhar Nature'24: 0.79 AUROC"
+    interpretation: "entropy > 0.30 = hallucination risk, ask user"
+    research: "Farquhar Nature'24: 0.79 AUROC hallucination detection"
   
   self_consistency:
     enabled: true
-    samples: 5
+    samples: 7
     threshold: 0.60
     purpose: "Improve accuracy through majority voting"
+    rationale: "Odd number prevents ties, 7 > 5 for reliability"
     research: "Wang ICLR'23: +17.9% on GSM8K"
   
   chain_of_verification:
@@ -1447,6 +1515,63 @@ tool_patterns:
     lesson: "Don't wrap FFmpeg in Ruby when PowerShell can call it directly"
     pattern: "zsh -c 'ffmpeg -i input.wav -filter output.wav'"
     benefit: "Simpler debug, fewer layers of indirection"
+
+# === NOTIFICATION SYSTEM ===
+notifications:
+  description: "Multi-channel notification system for async workflows"
+  purpose: "Alert user of completion, blocking issues, or critical milestones"
+  
+  channels:
+    windows_toast:
+      available: true
+      method: "PowerShell BurntToast module or native COM"
+      command: "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null; New-BurntToastNotification -Text 'Title' 'Message'"
+      use_for: "Local development, immediate feedback"
+      
+    email:
+      available: "if configured"
+      methods:
+        - "Send-MailMessage (requires SMTP config)"
+        - "gh api --method POST /repos/{owner}/{repo}/issues/{number}/comments"
+      use_for: "Long-running tasks, async completion"
+      
+    github:
+      available: true
+      methods:
+        - "gh issue comment {number} --body 'notification'"
+        - "gh pr comment {number} --body 'notification'"
+        - "gh api --method POST /repos/{owner}/{repo}/dispatches"
+      use_for: "CI/CD integration, PR notifications"
+      
+    sms:
+      available: "if configured"
+      services: ["Twilio", "AWS SNS", "MessageBird"]
+      note: "Requires API keys + external service"
+      use_for: "Critical production alerts only"
+  
+  triggers:
+    screen_completion:
+      when: "Phase 8 complete OR blocking veto"
+      channels: ["windows_toast", "github"]
+      message_template: "[screen:{name}] {status} - {summary}"
+      
+    blocking_issue:
+      when: "Veto triggered OR unresolved dependency"
+      channels: ["windows_toast", "email"]
+      severity: "high"
+      message_template: "🚨 [{screen}] BLOCKED: {reason}"
+      
+    milestone:
+      when: "User-defined checkpoint (e.g., Phase 3 complete)"
+      channels: ["windows_toast"]
+      message_template: "✅ [{screen}] Milestone: {name}"
+  
+  best_practices:
+    - "Default to windows_toast for local work (non-intrusive)"
+    - "Use GitHub comments for CI/CD workflows (audit trail)"
+    - "Reserve SMS for production-critical alerts only (cost + fatigue)"
+    - "Include deep-link to checkpoint file in notification body"
+    - "Rate-limit: max 1 notification per screen per 5 minutes"
 
 # === CONTEXT PRESERVATION ===
 session_metadata:
