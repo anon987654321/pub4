@@ -30,21 +30,24 @@ class SOSDilla
     {}
   end
   CONFIG = load_config
-  CHORD PROGRESSIONS (from shared config)
+  
+  # CHORD PROGRESSIONS (from shared config)
   def self.get_chords(artist, album, track = nil)
     chords = CONFIG.dig("chords", "#{artist}_#{album}")
     return chords[track] if track && chords&.dig(track)
     chords
   end
   DILLA_CHORDS = CONFIG.dig("chords") || {}
-    # TIMING PROFILES (from shared config)
-    DILLA_TIMING = CONFIG.dig("timing", "dilla_swing") || {
+  
+  # TIMING PROFILES (from shared config)
+  DILLA_TIMING_CONFIG = CONFIG.dig("timing", "dilla_swing") || {
     "sweet_spot" => [53, 56],
     "tempo_range" => [82, 92],
     "nudge_ms" => { "kick" => -8, "snare" => 12, "hihat" => -3 }
   }
-    # PLATFORM DETECTION
-    module Platform
+  
+  # PLATFORM DETECTION
+  module Platform
     def self.detect
       @platform ||= begin
         if ENV['PREFIX']&.include?('com.termux')
@@ -96,8 +99,9 @@ class SOSDilla
       end
     end
   end
-    # DUB PROGRESSIONS (from transcript: i-v tension, i-iv meditative)
-    DUB_PROGRESSIONS = {
+  
+  # DUB PROGRESSIONS (from transcript: i-v tension, i-iv meditative)
+  DUB_PROGRESSIONS = {
     "dub_meditative" => [
       { root: 0, chord: [0, 3, 7], name: "min", function: "i" },
       { root: 5, chord: [0, 3, 7], name: "min", function: "iv" }
@@ -114,8 +118,9 @@ class SOSDilla
       { root: 0, chord: [0, 3, 7, 10], name: "min7", function: "i" }
     ]
   }
-    # DUB DRUM PATTERNS (from transcript)
-    DUB_PATTERNS = {
+  
+  # DUB DRUM PATTERNS (from transcript)
+  DUB_PATTERNS = {
     one_drop: {
       name: "One-Drop",
       desc: "Strong hit on beat 3, reggae foundation",
@@ -149,8 +154,9 @@ class SOSDilla
       rimshot: [0, 0, 1, 0]
     }
   }
-    # TIMING PROFILES
-    DUB_TIMING = {
+  
+  # TIMING PROFILES
+  DUB_TIMING = {
     mechanized: { swing: 0.50, humanize_ms: 2,  desc: "Germanic precision" },
     roots:      { swing: 0.54, humanize_ms: 25, desc: "Laid back, behind beat" },
     hybrid:     { swing: 0.52, humanize_ms: 8,  desc: "Precision with soul" }
@@ -160,15 +166,17 @@ class SOSDilla
     micro: { kick: -0.008, snare: 0.012, hats: -0.003, bass: -0.005 },
     humanize: { velocity: 15, timing: 0.018 }
   }
-    # DELAY PRESETS (from transcript)
-    DUB_DELAYS = {
+  
+  # DELAY PRESETS (from transcript)
+  DUB_DELAYS = {
     echo_16th:    { time_ms: 125, feedback: 0.45 },
     echo_8th_dot: { time_ms: 375, feedback: 0.55 },
     rimshot:      { time_ms: 380, feedback: 0.50 },
     midside:      { time_ms: 188, feedback: 0.45 }
   }
-    # VINTAGE EQUIPMENT PROFILES
-    VINTAGE = {
+  
+  # VINTAGE EQUIPMENT PROFILES
+  VINTAGE = {
     king_tubby:      { reverb: 3.2, echo: 0.6, desc: "King Tubby Jamaica 1970s" },
     basic_channel:   { reverb: 6.0, echo: 0.55, desc: "Berlin minimal meets dub" },
     rhythm_and_sound:{ reverb: 4.5, echo: 0.58, desc: "Warmth with precision" },
@@ -176,8 +184,9 @@ class SOSDilla
     mpc3000:         { bits: 14, sat: 0.12, desc: "J Dilla MPC character" },
     sp1200:          { bits: 12, sat: 0.15, desc: "E-mu SP-1200 grit" }
   }
-    # FFMPEG PROCESSOR
-    class FFmpegProcessor
+  
+  # FFMPEG PROCESSOR
+  class FFmpegProcessor
     attr_reader :sample_rate
     def initialize(sample_rate: 48000)
       @sample_rate = sample_rate
@@ -243,8 +252,9 @@ class SOSDilla
       run(%Q[#{@ffmpeg} -y -i "#{input}" -af "loudnorm=I=-16:TP=#{target}" "#{output}"])
     end
   end
-    # MAIN CLASS
-    attr_reader :ffmpeg, :temp_dir, :output_dir
+  
+  # MAIN CLASS
+  attr_reader :ffmpeg, :temp_dir, :output_dir
   def initialize
     @temp_dir = Dir.mktmpdir("dilla_")
     @output_dir = File.join(Platform.home, "dilla_output")
@@ -387,8 +397,9 @@ class SOSDilla
   end
   def timestamp; Time.now.strftime("%Y%m%d_%H%M%S") end
   def cleanup; FileUtils.rm_rf(@temp_dir) end
-    # GEAR EMULATION - Vintage Sampler Character
-    GEAR_PROFILES = {
+  
+  # GEAR EMULATION - Vintage Sampler Character
+  GEAR_PROFILES = {
     sp1200: {
       name: "E-mu SP-1200",
       bits: 12, sample_rate: 26040, filter_hz: 12000,
@@ -435,8 +446,9 @@ class SOSDilla
       saturation: 2.0, analog_vcf: true, character: "extremely_lofi_harsh"
     }
   }
-    # RANDOM EFFECT CHAIN GENERATOR
-    module ChainGenerator
+  
+  # RANDOM EFFECT CHAIN GENERATOR
+  module ChainGenerator
     EFFECTS = {
       bitcrush:     { bits: [8, 10, 12, 14], weight: 0.8 },
       resample:     { rates: [8000, 11025, 22050, 26040, 32000], weight: 0.6 },
@@ -511,8 +523,9 @@ class SOSDilla
       chain.map { |e| "#{e[:type]}(#{e.except(:type).map { |k,v| "#{k}:#{v}" }.join(',')})" }.join(" → ")
     end
   end
-    # DFAM-STYLE ANALOG PERCUSSION SYNTHESIS
-    module DFAM
+  
+  # DFAM-STYLE ANALOG PERCUSSION SYNTHESIS
+  module DFAM
     PRESETS = {
       tribal_kick: {
         osc1: { wave: :sine, freq: 55, decay: 0.3 },
@@ -541,8 +554,9 @@ class SOSDilla
       }
     }
   end
-    # SONITEX STX-1260 STYLE PROCESSING
-    module Sonitex
+  
+  # SONITEX STX-1260 STYLE PROCESSING
+  module Sonitex
     def self.process(ffmpeg, input:, output:, preset: :vintage_vinyl)
       presets = {
         vintage_vinyl: {
@@ -591,8 +605,9 @@ class SOSDilla
       [temp1, temp2].each { |f| File.delete(f) if File.exist?(f) }
     end
   end
-    # NASTYVCS-STYLE CONSOLE PROCESSING
-    module NastyVCS
+  
+  # NASTYVCS-STYLE CONSOLE PROCESSING
+  module NastyVCS
     def self.process(ffmpeg, input:, output:, settings: {})
       cfg = {
         input_transformer: true,
@@ -614,8 +629,9 @@ class SOSDilla
       File.delete(temp) if File.exist?(temp)
     end
   end
-    # APPLY GEAR EMULATION
-    def apply_gear(input:, output:, gear: :sp1200)
+  
+  # APPLY GEAR EMULATION
+  def apply_gear(input:, output:, gear: :sp1200)
     profile = GEAR_PROFILES[gear] || GEAR_PROFILES[:sp1200]
     puts "🎛️  Applying #{profile[:name]} character..."
     resampled = apply_gear_resample(input, profile)
@@ -640,8 +656,9 @@ class SOSDilla
     @ffmpeg.lowpass(input: input, output: temp3, cutoff: profile[:filter_hz])
     temp3
   end
-    # GENERATE RANDOM LO-FI CHAIN
-    def generate_random_chain(input:, aesthetic: :authentic, seed: nil)
+  
+  # GENERATE RANDOM LO-FI CHAIN
+  def generate_random_chain(input:, aesthetic: :authentic, seed: nil)
     chain = ChainGenerator.generate(aesthetic: aesthetic, seed: seed)
     puts "🎲 Random chain (#{aesthetic}): #{ChainGenerator.to_s(chain)}"
     current = input
@@ -680,8 +697,9 @@ class SOSDilla
     end
     output
   end
-    # CLI
-    def self.main(args)
+  
+  # CLI
+  def self.main(args)
     return show_help if args.empty? || args.include?("--help")
     dilla = new
     begin

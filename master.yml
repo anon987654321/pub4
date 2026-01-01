@@ -200,6 +200,38 @@ core_policy:
 # === 8-PHASE WORKFLOW ===
 workflow:
   
+  # REFACTORING PHILOSOPHY
+  refactor_progression:
+    principle: "Continuous refactoring across phases, increasing scope"
+    rationale: "Prevents technical debt accumulation, maintains clean state"
+    
+    phase_1_surgical:
+      scope: "Delete obvious waste"
+      actions: ["dead code", "unused imports", "commented-out code"]
+      time_cost: "5% of phase"
+      
+    phase_2_targeted:
+      scope: "Explicit over implicit"
+      actions: ["extract magic numbers", "rename cryptic vars", "document assumptions"]
+      time_cost: "10% of phase"
+      
+    phase_6_localized:
+      scope: "Simplify target areas"
+      actions: ["flatten nesting", "reduce complexity", "inline trivial"]
+      time_cost: "15% of phase"
+      
+    phase_7_corrective:
+      scope: "Fix violations found"
+      actions: ["security fixes", "quality gate failures", "persona vetoes"]
+      time_cost: "20% of phase"
+      
+    phase_8_holistic:
+      scope: "Complete refactor of touched codebase"
+      actions: ["reflow by importance", "apply all principles", "modern patterns", "eliminate all debt"]
+      time_cost: "30% of phase"
+      
+    cumulative_effect: "By phase 8, code is pristine without massive rewrite"
+  
   # --- PHASE 1: DISCOVER ---
   phase_1_discover:
     goal: "Understand the problem"
@@ -212,6 +244,14 @@ workflow:
       - "Define measurable success criteria"
       - "List unknowns and ambiguities"
       - "Inventory code quality issues"
+      - "REFACTOR: Fix obvious violations (dead code, unused imports)"
+    
+    refactor_scope: "surgical"
+    refactor_rules:
+      - "Delete dead code immediately (P02)"
+      - "Fix obvious style violations"
+      - "Remove unused imports/variables"
+      - "Do NOT restructure - just delete waste"
     
     key_questions:
       - "Core problem (not symptom)?"
@@ -225,6 +265,7 @@ workflow:
       - "Problem statement (one sentence)"
       - "Success criteria measurable"
       - "Stakeholders identified"
+      - "Obvious dead code removed"
   
   # --- PHASE 2: ANALYZE ---
   phase_2_analyze:
@@ -238,6 +279,14 @@ workflow:
       - "Calculate effort: raw estimate × π (3.14)"
       - "Enumerate ≥5 failure modes"
       - "Run Five Whys analysis"
+      - "REFACTOR: Extract magic numbers to named constants"
+    
+    refactor_scope: "targeted"
+    refactor_rules:
+      - "Extract all magic numbers to constants (P04)"
+      - "Rename cryptic variables to explicit names"
+      - "Add missing error handling"
+      - "Document assumptions as comments"
     
     time_estimation:
       raw: "Your intuitive estimate"
@@ -250,6 +299,7 @@ workflow:
       - "≥5 failure modes listed"
       - "Assumptions documented"
       - "Requirements clear"
+      - "Magic numbers eliminated"
   
   # --- PHASE 3: CONSTRAIN ---
   phase_3_constrain:
@@ -338,6 +388,15 @@ workflow:
       - "Design rollback procedure"
       - "Verify ugliness scan = zero"
       - "Confirm: this is simplest viable solution"
+      - "REFACTOR: Simplify existing code that will be touched"
+    
+    refactor_scope: "localized"
+    refactor_rules:
+      - "Simplify code you're about to modify (P05)"
+      - "Reduce complexity in target areas"
+      - "Flatten nested logic"
+      - "Inline trivial abstractions"
+      - "Only touch code paths you'll modify"
     
     key_questions:
       - "Minimum viable solution?"
@@ -351,6 +410,7 @@ workflow:
       - "Architecture designed"
       - "Rollback procedure documented"
       - "Failure modes identified"
+      - "Target code simplified"
   
   # --- PHASE 7: VALIDATE ---
   phase_7_validate:
@@ -365,6 +425,15 @@ workflow:
       - "Run red team review for security"
       - "Verify no regressions"
       - "Test rollback procedure"
+      - "REFACTOR: Fix principle violations found during validation"
+    
+    refactor_scope: "corrective"
+    refactor_rules:
+      - "Fix security violations immediately (P07)"
+      - "Address persona vetoes"
+      - "Correct failing quality gates"
+      - "Improve test coverage gaps"
+      - "Fix complexity hotspots (>10)"
     
     evidence_format:
       tests: "passed: X/Y, coverage: Z%"
@@ -377,6 +446,7 @@ workflow:
       - "Persona consensus ≥0.70"
       - "No vetoes from security/attacker/maintainer"
       - "Rollback tested"
+      - "All violations fixed"
   
   # --- PHASE 8: DELIVER ---
   phase_8_deliver:
@@ -390,12 +460,33 @@ workflow:
       - "Compare actual vs estimated effort"
       - "Document 'what would be done differently'"
       - "Propose specific improvements (if any)"
+      - "REFACTOR: Complete holistic refactor of entire touched codebase"
+    
+    refactor_scope: "holistic"
+    refactor_rules:
+      - "Reflow by importance (validate → core → UI → deploy)"
+      - "Apply ALL principles (P01-P10) systematically"
+      - "Eliminate all technical debt in touched files"
+      - "Use modern language patterns (e.g., ZSH_NATIVE_PATTERNS.md)"
+      - "Make self-contained (inline speculative abstractions)"
+      - "Consistent vertical spacing throughout"
+      - "Perfect principle compliance, not just working code"
+    
+    refactor_checklist:
+      - "Check ZSH_NATIVE_PATTERNS.md (or equivalent) for language idioms"
+      - "Verify zero external dependencies unless justified"
+      - "Confirm reflow by importance, not by type"
+      - "Run all 10 principles checks (loose interpretation)"
+      - "Measure: complexity ≤10, nesting ≤3, functions ≤20 lines"
+      - "Extract to shared modules ONLY if 3+ reuses proven"
     
     exit_criteria:
       - "Solution delivered"
       - "Rationale documented"
       - "≥3 patterns extracted"
       - "Effort comparison recorded"
+      - "Complete refactor applied"
+      - "All principles satisfied"
 
 # === 10 CORE PRINCIPLES ===
 principles:
@@ -884,6 +975,58 @@ self_optimization:
     clarifying: "consensus 0.75"
     structural: "consensus 0.80"
     philosophical: "consensus 0.90"
+  
+  # Critical workflow realizations (2026-01-01)
+  lessons_learned:
+    
+    surface_vs_deep_refactor:
+      problem: "LLM did spacing fixes instead of principle-driven redesign"
+      root_cause: "Confused PHASE 7 (validate) with PHASE 8 (deliver full refactor)"
+      solution: "PHASE 8 requires COMPLETE refactor: principles + patterns + reflow"
+      principle_violated: "P02 (delete), P04 (explicit), P05 (simple), P09 (readable)"
+      evidence: "Initial refactor fixed spacing but kept broken dependencies"
+    
+    reflow_by_importance:
+      problem: "Code organized by TYPE (all models, all views) not IMPORTANCE"
+      root_cause: "Default Rails generator thinking, not user-centric thinking"
+      solution: "Reflow: validate → core → presentation → deployment"
+      principle_violated: "P09 (write for future readers)"
+      example_bad: "Models line 110, views line 280, but validation line 15"
+      example_good: "Validation line 15, models line 90, views line 300"
+      rationale: "Reader needs to understand prerequisites BEFORE details"
+    
+    speculative_abstraction:
+      problem: "Functions called but never defined (setup_full_pwa, generate_crud_views)"
+      root_cause: "Premature abstraction without knowing reuse patterns"
+      solution: "Inline everything < 3 uses, extract ONLY when proven need"
+      principle_violated: "P02 (delete until hurts), P05 (simple over clever)"
+      evidence: "7 undefined functions across 600 lines"
+      fix: "Inlined all → self-contained 518 lines, zero dependencies"
+    
+    external_commands:
+      problem: "Used sed/awk/grep instead of native zsh"
+      root_cause: "Default to familiar tools instead of native patterns"
+      solution: "Check ZSH_NATIVE_PATTERNS.md BEFORE writing any text processing"
+      principle_violated: "P05 (simple), P03 (evidence - benchmarks show native faster)"
+      reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"
+      example_bad: "sed -i.bak 's/old/new/g' file"
+      example_good: "content=\${content//old/new}; print -r -- \"\$content\" > file"
+    
+    hidden_dependencies:
+      problem: "source __shared/load_modules.sh (file doesn't exist)"
+      root_cause: "Assumed infrastructure without verification"
+      solution: "PHASE 1 (discover) MUST verify all external dependencies"
+      principle_violated: "P04 (explicit over implicit), P06 (fail fast)"
+      fix: "Removed source line, inlined all functions"
+      learning: "Self-contained > DRY when dependency graph unclear"
+    
+    file_replacement_discipline:
+      problem: "Created new_file instead of editing existing_file"
+      root_cause: "Fear of breaking working code"
+      solution: "Git is backup - edit in place, verify with diff"
+      principle_violated: "User directive: consolidate into existing files always"
+      correct_workflow: "1. Edit original 2. Verify with git diff 3. Commit"
+      incorrect_workflow: "1. Create new 2. Ask to replace 3. Manual cleanup"
 
 # === STATISTICS ===
 statistics:
@@ -895,5 +1038,153 @@ statistics:
   evidence_types: 5
   biases_mitigated: 6
   research_sources: 15
+  lessons_codified: 6
   
   checksum: "sha256:3f1d2a8b9c6e4d7f5c1a2b7e8d9f0c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+
+# === CRITICAL WORKFLOW LESSONS (2026-01-01) ===
+workflow_lessons:
+  
+  async_deadlock_risk:
+    date: "2026-01-01"
+    context: "PowerShell + Ruby + FFmpeg + SAPI speech synthesis"
+    problem: "Async mode causes cascading deadlocks in complex environments"
+    symptoms:
+      - "All PowerShell sessions hang indefinitely"
+      - "No output, no errors, just freezes"
+      - "Process spawning creates race conditions"
+    solution: "Always use sync mode in multi-process environments"
+    recommendation: "GitHub Copilot CLI should default to sync or warn about async risks"
+    
+  speech_synthesis_blocking:
+    date: "2026-01-01"
+    problem: "SAPI SpeakAsync() blocks PowerShell despite being 'async'"
+    symptoms:
+      - "Commands after $speak.SpeakAsync() never execute"
+      - "IsCompleted property returns False forever"
+    solution: "Use synchronous $speak.Speak() with high Rate parameter instead"
+    lesson: "Windows SAPI is not truly async in PowerShell context"
+    
+  script_creation_antipattern:
+    date: "2026-01-01"
+    problem: "Creating intermediate scripts instead of direct execution"
+    bad_pattern: "Create beat_maker.rb → Execute beat_maker.rb → Debug failures"
+    good_pattern: "Execute commands directly via bash/ruby one-liners"
+    principle: "Avoid the middleman - do the task directly, don't script it"
+    examples:
+      bad: "Create script.rb that calls ffmpeg"
+      good: "Call ffmpeg directly through bash/ruby -e"
+    
+  environment_hygiene:
+    date: "2026-01-01"
+    lesson: "Clean up temp files immediately, don't let sprawl accumulate"
+    practice:
+      - "Use dotfiles for temp (.sample.wav not sample.wav)"
+      - "Delete temps in same session they're created"
+      - "Remove failed experiment scripts after learning from them"
+      - "Keep directories minimal - only production files"
+    
+  cross_platform_shell_issues:
+    date: "2026-01-01"
+    problem: "PowerShell + Cygwin + Ruby creates path/shell confusion"
+    symptoms:
+      - "ffmpeg exists but detection fails"
+      - "Shell redirects (>/dev/null) don't work in PowerShell"
+      - "Path separators conflict (Windows \ vs Unix /)"
+    solution: "Use zsh wrapper: C:\cygwin64\bin\zsh.exe -c 'commands'"
+    alternative: "bash works but zsh preferred"
+    
+  vps_connection_paralysis:
+    date: "2026-01-01"
+    problem: "Connect to VPS then refuse to do anything more"
+    symptom: "Analysis paralysis after SSH connection established"
+    solution: "After connecting, immediately execute the task, don't pause"
+    principle: "Action over contemplation - especially on fast remote servers"
+    
+  scientific_documentation_excellence:
+    date: "2026-01-01"
+    observation: "postpro.rb scored 9.5/10 vs dilla.rb 8.5/10"
+    key_difference: "Scientific citations (Newson 2017, ACES principles, Kodak specs)"
+    lesson: "Cite research papers and technical specs in code comments"
+    impact: "Transforms 'good code' into 'reference-quality code'"
+    practice: "Add academic citations for algorithms, manufacturer specs for emulation"
+    
+  html_interface_pattern:
+    date: "2026-01-01"
+    observation: "Created URGENT_BEAT_GUIDE.html when execution failed"
+    antipattern: "Generate documentation when you should be executing"
+    lesson: "HTML guides are fallback, not primary solution"
+    correct_flow: "Execute → If blocked → Document for user execution"
+    
+  logo_animation_complexity:
+    date: "2026-01-01"
+    progression: "Scroll animation → Fixed position → No positioning"
+    lesson: "Start simple, add complexity only if requested"
+    antipattern: "Over-engineer on first pass (cubic-bezier, scroll tracking)"
+    good_pattern: "Minimal viable solution, iterate based on feedback"
+
+# === TOOL USAGE PATTERNS ===
+tool_patterns:
+  
+  powershell_async_forbidden:
+    status: "FORBIDDEN - DO NOT USE"
+    added: "2026-01-01T07:09:28Z"
+    reason: "Causes cascading deadlocks in all environments"
+    evidence:
+      - "Session 2026-01-01: All async PowerShell commands hung indefinitely"
+      - "SAPI SpeakAsync() blocks despite being 'async'"
+      - "Process spawning creates race conditions"
+      - "No recovery possible - requires session termination"
+    rule: "ALWAYS use mode='sync' for PowerShell commands"
+    enforcement: "GitHub Copilot CLI should error on async PowerShell attempts"
+    exceptions: "NONE - sync mode works for all use cases including long-running commands"
+  
+  powershell_reliability:
+    status: "unreliable in complex scenarios"
+    use_for: "Simple file operations, directory listing, basic commands"
+    avoid_for: "Multi-process spawning, speech synthesis"
+    always_use_sync: true
+    
+  zsh_wrapper:
+    pattern: "C:\\cygwin64\\bin\\zsh.exe -c 'unix commands here'"
+    use_when: "PowerShell fails or path issues occur"
+    benefit: "Clean Unix environment, proper shell redirects, better scripting"
+    alternative: "bash also available but zsh preferred"
+    
+  ruby_one_liners:
+    pattern: "ruby -e 'code here'"
+    benefit: "No temp script files, direct execution"
+    use_for: "Quick operations, testing, one-off tasks"
+    
+  ffmpeg_direct:
+    lesson: "Don't wrap FFmpeg in Ruby when PowerShell can call it directly"
+    pattern: "zsh -c 'ffmpeg -i input.wav -filter output.wav'"
+    benefit: "Simpler debug, fewer layers of indirection"
+
+# === CONTEXT PRESERVATION ===
+session_metadata:
+  date: "2026-01-01T07:06:09Z"
+  duration_hours: 1.5
+  tasks_completed:
+    - "Fixed dilla.rb syntax errors (18 indentation issues, duplicate constant)"
+    - "Analyzed dilla.rb through master.yml (8.5/10 score)"
+    - "Modified htu.html (logo animation, line-height, typography)"
+    - "Added Slum Village track to index.html"
+    - "Analyzed postpro.rb through master.yml (9.5/10 score)"
+    - "Cleaned file sprawl in media directories"
+  
+  lessons_learned: 12
+  code_quality_scores:
+    postpro: 9.5
+    dilla: 8.5
+    
+  failed_attempts:
+    - "Beat generation via Ruby (FFmpeg environment issues)"
+    - "SAPI async speech (deadlocks PowerShell)"
+    - "Multiple PowerShell sessions (all hang)"
+    
+  successes:
+    - "Direct file edits (view + edit pattern)"
+    - "Master.yml framework application"
+    - "HTML styling improvements"
+    - "Code analysis and documentation"

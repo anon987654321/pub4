@@ -325,6 +325,7 @@
       {artist: "Slum Village", title: "La La (Instrumental)", id: "EYJxxHQ7sX0"},
       {artist: "Slum Village", title: "Get It Together", id: "t6T-Q6HMbEo"},
       {artist: "Slum Village", title: "Fantastic", id: "a3ISYWWYgz8"},
+      {artist: "Slum Village", title: "Go Ladies (Remix)", id: "pJjt-pCSD1o", start: 477},
       {artist: "Flying Lotus", title: "me Yesterday//Corded", id: "8DgAhgmpXNA"},
       {artist: "Flying Lotus", title: "Camel", id: "fU9YRGLPDQ8"},
       {artist: "Flying Lotus", title: "Golden Diva", id: "iu4FVvR2QQs"},
@@ -649,6 +650,13 @@
         this.baseRadius = 75;
         this.time = 0;
         this.bassWobble = 0;
+        this.mouse = {x: 0, y: 0, down: false, active: false};
+        this.ori = {gamma: 0, beta: 0, alpha: 0, active: false};
+        this.accel = {x: 0, y: 0, z: 0, active: false};
+        this.touch = {startX: 0, startY: 0, deltaX: 0, deltaY: 0, active: false};
+        this.ringPxCull = 1;
+        this.tieRowStride = 2;
+        this.zStep = 10;
         this.stars = [];
         for (let i = 0; i < 80; i++) {
           this.stars.push({
@@ -852,15 +860,14 @@
       };
       resize();
       window.addEventListener("resize", resize);
-      let mouse = {x: 0, y: 0, down: false, active: false}, ori = {gamma: 0, beta: 0, alpha: 0, active: false}, accel = {x: 0, y: 0, z: 0, active: false}, touch = {startX: 0, startY: 0, deltaX: 0, deltaY: 0, active: false};
-      const handleMouse = (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; };
-      const handleMouseDown = (e) => { mouse.down = true; handleMouse(e); };
-      const handleMouseUp = () => { mouse.down = false; };
-      const handleOrientation = (e) => { ori.gamma = e.gamma || 0; ori.beta = e.beta || 0; ori.alpha = e.alpha || 0; ori.active = true; };
-      const handleMotion = (e) => { accel.x = e.accelerationIncludingGravity.x || 0; accel.y = e.accelerationIncludingGravity.y || 0; accel.z = e.accelerationIncludingGravity.z || 0; accel.active = true; };
-      const handleTouchStart = (e) => { touch.startX = e.touches[0].clientX; touch.startY = e.touches[0].clientY; touch.active = true; };
-      const handleTouchMove = (e) => { if (touch.active) { touch.deltaX = e.touches[0].clientX - touch.startX; touch.deltaY = e.touches[0].clientY - touch.startY; } };
-      const handleTouchEnd = () => { touch.active = false; touch.deltaX = 0; touch.deltaY = 0; };
+      const handleMouse = (e) => { tunnel.mouse.x = e.clientX; tunnel.mouse.y = e.clientY; tunnel.mouse.active = true; };
+      const handleMouseDown = (e) => { tunnel.mouse.down = true; handleMouse(e); };
+      const handleMouseUp = () => { tunnel.mouse.down = false; };
+      const handleOrientation = (e) => { tunnel.ori.gamma = e.gamma || 0; tunnel.ori.beta = e.beta || 0; tunnel.ori.alpha = e.alpha || 0; tunnel.ori.active = true; };
+      const handleMotion = (e) => { tunnel.accel.x = e.accelerationIncludingGravity.x || 0; tunnel.accel.y = e.accelerationIncludingGravity.y || 0; tunnel.accel.z = e.accelerationIncludingGravity.z || 0; tunnel.accel.active = true; };
+      const handleTouchStart = (e) => { tunnel.touch.startX = e.touches[0].clientX; tunnel.touch.startY = e.touches[0].clientY; tunnel.touch.active = true; };
+      const handleTouchMove = (e) => { if (tunnel.touch.active) { tunnel.touch.deltaX = e.touches[0].clientX - tunnel.touch.startX; tunnel.touch.deltaY = e.touches[0].clientY - tunnel.touch.startY; } };
+      const handleTouchEnd = () => { tunnel.touch.active = false; tunnel.touch.deltaX = 0; tunnel.touch.deltaY = 0; };
       canvas.addEventListener("mousemove", handleMouse);
       canvas.addEventListener("mousedown", handleMouseDown);
       canvas.addEventListener("mouseup", handleMouseUp);

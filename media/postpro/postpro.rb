@@ -262,6 +262,14 @@ def apply_camera_profile(image, profile)
   end
 end
 # Professional Color Science
+def base_tint(image, tint_color, intensity = 0.1)
+  # Apply a subtle color tint overlay
+  # tint_color can be array [R, G, B] or single RGB value
+  tint_rgb = tint_color.is_a?(Array) ? tint_color : [tint_color, tint_color, tint_color]
+  tint_layer = Vips::Image.black(image.width, image.height, bands: 3) + tint_rgb
+  # Blend using soft light or overlay effect
+  safe_cast(image * (1.0 - intensity * 0.5) + tint_layer * (intensity * 0.5 / 255.0))
+end
 def color_temp(image, kelvin, intensity = 1.0)
   factor = kelvin / 5500.0
   r_mult, g_mult, b_mult = if factor < 1.0

@@ -4,14 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sak 2025/2469 — Begjæring om gjenåpning</title>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
   <style>
     :root {
-      --text: #1a1a1a;
-      --gray: #555;
-      --rule: #ddd;
+      --text: #18181b;
+      --text-medium: #3f3f46;
+      --text-light: #71717a;
+      --rule: #e4e4e7;
+      --bg: #ffffff;
       --bg-light: #fafafa;
+      --accent: #0f172a;
     }
     
     * {
@@ -21,72 +26,107 @@
     }
     
     html {
-      font-size: 17px;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     body {
-      font-family: 'EB Garamond', Georgia, serif;
-      line-height: 1.55;
+      font-family: 'Lora', Georgia, serif;
+      line-height: 1.4;
       color: var(--text);
-      max-width: 36em;
+      max-width: 42rem;
       margin: 0 auto;
-      padding: 3rem 1.5rem;
+      padding: 4rem 2rem;
+      background: var(--bg);
     }
     
     h1 {
-      font-size: 1.6rem;
-      font-weight: 400;
-      margin-bottom: 0.15rem;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 2.5rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
     }
     
     h2 {
-      font-size: 1.05rem;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
       font-weight: 600;
-      margin: 2rem 0 0.6rem;
-      padding-bottom: 0.25rem;
-      border-bottom: 1px solid var(--rule);
+      letter-spacing: -0.01em;
+      padding-bottom: 0.5rem;
+      color: var(--accent);
+    }
+    
+    h2:first-of-type {
+      margin-top: 0;
     }
     
     p {
-      margin-bottom: 1.1rem;
+      margin-bottom: 1rem;
+      text-align: justify;
+      hyphens: auto;
     }
     
     strong {
       font-weight: 600;
+      color: var(--accent);
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 1rem 0;
-      font-size: 0.92rem;
+      margin: 1.5rem 0;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 0.9375rem;
+      line-height: 1.4;
     }
     
     td {
-      padding: 0.3rem 0;
+      padding: 0.625rem 0;
       border-bottom: 1px solid var(--rule);
+      vertical-align: top;
     }
     
     td:first-child {
-      width: 1.5rem;
-      color: var(--gray);
+      width: 2rem;
+      color: var(--text-light);
+      font-weight: 500;
+      padding-right: 1rem;
+    }
+    
+    td:last-child {
+      color: var(--text-medium);
     }
     
     footer {
-      margin-top: 2.5rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--rule);
-      font-size: 0.85rem;
-      color: var(--gray);
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--rule);
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      color: var(--text-light);
     }
     
     footer p {
-      margin: 0;
+      margin: 0.25rem 0;
+    }
+    
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    
+    footer a:hover {
+      opacity: 0.7;
     }
     
     footer a strong {
-      color: #003087;
-      font-weight: 700;
+      font-weight: 600;
     }
     
     .external-icon {
@@ -97,38 +137,49 @@
     }
     
     .meta {
-      font-size: 0.85rem;
-      color: var(--gray);
-      margin-bottom: 2rem;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 0.9375rem;
+      color: var(--text-light);
+      margin-bottom: 3rem;
+      line-height: 1.5;
     }
     
     .logo {
-      float: right;
-      width: 200px;
-      margin-left: 2rem;
-      margin-bottom: 1rem;
-      filter: grayscale(100%);
+      width: 90px;
+      height: 90px;
     }
     
-    header::after {
-      content: "";
-      display: table;
-      clear: both;
+    body {
+      position: relative;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    
+    section {
+      margin-bottom: 2.5rem;
+    }
+    
+    section > *:last-child {
+      margin-bottom: 0;
     }
     
     .carousel {
-      margin: 1.5rem 0;
+      margin: 2.5rem 0;
       width: 100%;
-      max-width: 600px;
       position: relative;
     }
     
     .swiper {
       width: 100%;
-      height: 400px;
-      border-radius: 4px;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--rule);
     }
     
     .swiper-wrapper {
@@ -148,27 +199,22 @@
     
     .swiper-slide img,
     .swiper-slide video {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      flex-shrink: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     
     .carousel-caption {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: transparent;
-      color: white;
-      padding: 1rem 1.5rem;
-      font-size: 0.9rem;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      color: var(--text-medium);
+      font-size: 0.875rem;
       line-height: 1.4;
-      z-index: 10;
-      pointer-events: none;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+      border: 1px solid var(--rule);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      font-weight: 500;
+      margin-top: -4px;
     }
     
     .swiper-pagination,
@@ -190,38 +236,64 @@
       }
       
       .swiper {
-        height: 300px;
+        aspect-ratio: 4 / 3;
       }
       
       .carousel-caption {
-        position: static;
-        background: none;
-        color: var(--text);
         padding: 0.5rem 0;
-        border-top: 1px solid var(--rule);
-        margin-top: 0.5rem;
       }
     }
     
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
+      html {
+        font-size: 15px;
+      }
+      
       body {
-        padding: 2rem 1rem;
+        padding: 2.5rem 1.5rem;
       }
       
       .logo {
-        float: none;
-        width: 100%;
-        max-width: 200px;
-        display: block;
-        margin: 0 auto 1rem;
+        width: 66px;
+        height: 66px;
       }
       
       h1 {
-        font-size: 1.4rem;
+        font-size: 1.75rem;
+      }
+      
+      .meta {
+        text-align: center;
+      }
+      
+      h2 {
+        font-size: 1.0625rem;
+      }
+      
+      p {
+        text-align: left;
       }
       
       .swiper {
         height: 300px;
+      }
+      
+      footer {
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 2rem 1.25rem;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .swiper {
+        aspect-ratio: 1 / 1;
       }
     }
   </style>
@@ -232,7 +304,7 @@
 
 <header>
   <h1>Begjæring om gjenåpning</h1>
-  <p class="meta"> Til Husleietvistutvalget · Sak 2025/2469 · 31. desember 2025</p>
+  <p class="meta">Til Husleietvistutvalget · Sak 2025/2469 · 31. desember 2025</p>
 </header>
 
 <section>
@@ -253,17 +325,17 @@
   <h2>Realitet</h2>
   <p><strong>Støy.</strong> Utleier hevder gjentatte brudd. Politi og brannvesen rykket ut flere ganger. Resultat: ingen tiltak. Hadde adferden vært alvorlig, ville myndighetene handlet. Utleier mangler bevis — ingen daterte klager, ingen rapporter.</p>
   <p><strong>Lydisolering.</strong> Støy kan skyldes byggets konstruksjon. Utleiers ansvar, jf. husleieloven §5-3.</p>
-  <p><strong>Vedlikehold.</strong> Utleier hevder forsømmelse. Mæhle sendte oppussingsforslag til utleier i april 2025. Utleier svarte aldri.</p>
-  
+  <p><strong>Vedlikehold.</strong> Utleier hevder forsømmelse. Mæhle, som arkitekt, sendte arkitektfaglig oppussingsforslag til utleier i april 2025 som bevis på god vilje og fagkunnskap. Utleier svarte aldri.</p>
+
   <div class="carousel">
     <div class="swiper">
       <div class="swiper-wrapper" id="carousel-slides">
         <!-- Slides will be dynamically generated -->
       </div>
     </div>
-    <div class="carousel-caption" id="carousel-caption">Fotodokumentasjon</div>
   </div>
-  
+  <div class="carousel-caption" id="carousel-caption">Fotodokumentasjon</div>
+
   <p><strong>Rimelighet.</strong> Mæhle er alenemor. Husleieloven §9-8: urimelig oppsigelse settes til side.</p>
 </section>
 
@@ -287,51 +359,22 @@
 </section>
 
 <footer>
-  Ragnhild Laupsa Mæhle · Nygårdsgaten 58, 5008 Bergen · trymmika@gmail.com
-</footer>
-
-<footer>
+  <p>Ragnhild Laupsa Mæhle · Nygårdsgaten 58, 5008 Bergen · trymmika@gmail.com</p>
   <p><a href="https://www.pub.attorney" target="_blank" aria-label="Besøk PubAttorney"><strong>www.pub.attorney</strong><svg class="external-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a> — Rettferdighet for Ola & Kari, med Norges beste AI.</p>
   <p>Opphavsrett © 2025 PubAttorney, Kanalveien 10, NO-5068 Bergen.</p>
 </footer>
-
-<!-- Background Audio -->
-<audio id="bgAudio" loop preload="auto">
-  <source src=".mp3/zaiton.mp3" type="audio/mpeg">
-</audio>
 
 <!-- Swiper JS -->
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
 <script>
-  // Background audio setup
-  const bgAudio = document.getElementById('bgAudio');
-  
-  // Auto-play on user interaction
-  const startAudio = () => {
-    bgAudio.volume = 0.3;
-    bgAudio.play().catch(e => console.log('Audio autoplay blocked:', e));
-    document.removeEventListener('click', startAudio);
-    document.removeEventListener('touchstart', startAudio);
-    document.removeEventListener('keydown', startAudio);
-  };
-  
-  // Try autoplay immediately
-  bgAudio.volume = 0.3;
-  bgAudio.play().catch(() => {
-    // If blocked, wait for user interaction
-    document.addEventListener('click', startAudio, { once: true });
-    document.addEventListener('touchstart', startAudio, { once: true });
-    document.addEventListener('keydown', startAudio, { once: true });
-  });
   
   // Media items with their types and captions
   const mediaItems = [
-    { src: '1.jpg', type: 'img', caption: 'Leilighet før leietaker flyttet inn — opprinnelig stand' },
-    { src: '2.jpg', type: 'img', caption: 'Oppussingsforslag sendt til utleier april 2025' },
-    { src: '3.jpg', type: 'img', caption: 'Dokumentert vedlikeholdsarbeid utført av leietaker' },
-    { src: '4.jpg', type: 'img', caption: 'Byggets lydisolering — utleiers ansvar jf. §5-3' },
-    { src: '5.mp4', type: 'video', caption: 'Video: Tilstand ved seneste inspeksjon' }
+    { src: '1.jpg', type: 'img', caption: 'Dokumentasjon: Arkitekt Laupsa Mæhle med autorisasjon' },
+    { src: '2.jpg', type: 'img', caption: 'Oppussingsforslag fremlagt for utleier i god tro' },
+    { src: '3.jpg', type: 'img', caption: 'Vedlikeholdsarbeid utført av leietaker med arkitektbakgrunn' },
+    { src: '4.jpg', type: 'img', caption: 'Arkitektfaglig vurdering: lydisolering er byggets konstruksjon' }
   ];
   
   // Shuffle array (Fisher-Yates algorithm)
