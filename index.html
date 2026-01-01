@@ -342,6 +342,7 @@
       {artist: "Flying Lotus", title: "Camel", id: "fU9YRGLPDQ8"},
       {artist: "Flying Lotus", title: "Golden Diva", id: "iu4FVvR2QQs"},
       {artist: "Slum Village", title: "Worlds Full of Sadness", id: "MU3nfxsz2XA"},
+      {artist: "Slum Village", title: "Can I Be Me", id: "Fo7WoYn_FEs"},
       {artist: "A. Mochi & Takaaki Itoh", title: "Sarria's Mind", id: "gFKArkiz8vU"},
       {artist: "Samiyam", title: "Rounded", id: "oeaY2h_cKsg"},
       {artist: "Chase Swayze", title: "Traffic", id: "bH-30pDoQdo"},
@@ -517,7 +518,7 @@
           this.audioContext.resume().catch((e) => { console.error('AudioContext resume failed:', e); });
         }
         const t = this.tracks[this.trackIndex];
-        t.src ? this._loadMP3(this.activeKey, t, {fadeIn: START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: START_FADE_IN});
+        t.src ? this._loadMP3(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN});
       }
       _loadMP3(k, t, {fadeIn} = {fadeIn: true}) {
         if (!t.src) return;
@@ -533,7 +534,7 @@
           p.onloadedmetadata = () => {
             const d = p.duration;
             if (d > 0) {
-              const m = Math.max(FADE_MS + 1000, d * 1000 - FADE_MS - 500);
+              const m = Math.max(CONFIG.FADE_MS + 1000, d * 1000 - CONFIG.FADE_MS - 500);
               clearTimeout(this._prefadeTimer);
               this._prefadeTimer = setTimeout(() => this.next({}), m);
             }
@@ -574,7 +575,7 @@
               this.updateUI('⚠️ YouTube load timeout - skipping');
               this.next({fast: true}); 
             }, CONFIG.YT_LOAD_TIMEOUT_MS);
-            if (fadeIn) this._fadeYT(k, FADE_MS);
+            if (fadeIn) this._fadeYT(k, CONFIG.FADE_MS);
             else { p.setVolume(100); p.unMute(); }
           } catch (e) { console.warn('YT load error:', e); this.next({fast: true}); }
         } else {
