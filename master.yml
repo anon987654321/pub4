@@ -739,6 +739,43 @@ principles:
     auto_fix: ["add_benchmarks", "collect_metrics", "verify_assumptions"]
     bad_example: "'It should be fast'"
     good_example: "Benchmarked: 1000 ops in 15ms ±2ms (n=100)"
+    
+    # Diagnostic escalation ladder (added 2026-01-01)
+    diagnostic_escalation:
+      philosophy: "Escalate from high-level to low-level when problems persist"
+      
+      level_1_syntax:
+        when: "ALWAYS first - before any code changes"
+        tools: ["zsh -n", "eslint", "rubocop", "python -m py_compile", "tsc --noEmit"]
+        example: "zsh -n script.sh catches parse errors in 0.1s"
+        cost_if_skipped: "2-3 hours debugging syntax"
+      
+      level_2_logic:
+        when: "Syntax valid but behavior wrong"
+        tools: ["unit tests", "type checkers", "static analyzers", "linters"]
+        example: "TypeScript catches type errors, tests catch logic bugs"
+        cost_if_skipped: "1-2 hours debugging runtime"
+      
+      level_3_history:
+        when: "Problem exists across multiple commits"
+        tools: ["git log --patch", "git bisect", "git blame"]
+        example: "git log --patch file.sh | grep pattern"
+        cost_if_skipped: "Hours manually checking out commits"
+      
+      level_4_binary:
+        when: "Persistent errors despite clean-looking code"
+        symptoms: ["weird_chars_in_editor", "copy_paste_changes_behavior", "no_visible_diff_but_broken", "validator_fails_on_correct_code"]
+        tools: ["hex_editor", "byte_analysis", "encoding_detector"]
+        example: "Found 0x01 SOH control char breaking zsh parser"
+        detection_powershell: "[System.IO.File]::ReadAllBytes('file') | Where-Object { $_ -lt 0x20 -and $_ -notin @(0x09,0x0A,0x0D) }"
+        cost_if_skipped: "Days debugging 'impossible' errors"
+      
+      level_5_reference:
+        when: "All local versions corrupted/broken"
+        tools: ["sister_repos", "forks", "upstream", "documentation_examples", "web_archive"]
+        example: "Found clean railsy/openbsd.sh when pub4 had corruption"
+        pattern: "Check sibling projects first, then canonical sources"
+        cost_if_skipped: "Rebuilding from scratch when clean version exists"
   
   # Principle 4: Explicit over implicit
   p04_explicit_over_implicit:
@@ -766,6 +803,35 @@ principles:
     auto_fix: ["add_validation", "raise_on_error", "log_failures"]
     bad_example: "Catch all, log nothing"
     good_example: "Validate input, raise with detail"
+    
+    # Encoding hygiene (added 2026-01-01)
+    encoding_hygiene:
+      problem: "Binary corruption breaks parsers, invisible in most editors"
+      
+      detection_symptoms:
+        - "Syntax validator fails on visually correct code"
+        - "Copy-paste changes behavior unexpectedly"
+        - "Characters render as ╔, ■, ▬ in some editors"
+        - "File works in one environment, breaks in another"
+      
+      prevention:
+        - "Use direct downloads (Invoke-WebRequest) over text manipulation (Set-Content)"
+        - "Always validate syntax after file operations"
+        - "Keep clean reference versions in separate repo"
+        - "Use UTF-8 without BOM for all code files"
+      
+      remediation:
+        strip_control_chars_powershell: |
+          $bytes = [System.IO.File]::ReadAllBytes('corrupted.sh')
+          $cleaned = $bytes | Where-Object { $_ -ge 0x20 -or $_ -in @(0x09,0x0A,0x0D) }
+          [System.IO.File]::WriteAllBytes('clean.sh', $cleaned)
+        
+        download_clean: |
+          Invoke-WebRequest -Uri $url -OutFile file.clean -UseBasicParsing
+          
+        validate_always: "language-validator file  # e.g., zsh -n, node -c"
+      
+      real_world_example: "openbsd.sh had 0x01 SOH byte before () in function declarations, breaking zsh parser across all commits. Solution: Downloaded clean version from sister repo (railsy)"
   
   # Principle 7: Security by default
   p07_security_by_default:
