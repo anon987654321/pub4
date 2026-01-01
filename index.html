@@ -10,27 +10,224 @@
   <meta name="description" content="Classic warp tunnel with multiple views. Tilt device for parallax."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>"/>
   <style>
-    :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1;--fluid-font:clamp(14px,4vw,32px)}
-    html,body{margin:0;height:100%;background:#000;color:#dcdcdc;font:var(--fluid-font) system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto}
-    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
-    canvas.canvas-inverted{filter:invert(1) hue-rotate(180deg)}
-    @keyframes start-ack{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}canvas.start-ack{animation:start-ack 240ms ease-out}
-    h1.city-carousel{grid-row:1;padding:calc(10px + var(--safe-top)) calc(10px + var(--safe-left)) 10px calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0}
-    .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
-    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
-    .carousel-slide.active{opacity:1;transform:translateY(0%)}
-    .ui{grid-row:3;padding:10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-    .ui .label{margin-right:6px}.ui .dots{display:inline-block;width:3ch;text-align:left}.ui-inverted{color:#dcdcdc!important}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:1000;text-align:center;padding:16px;opacity:1;transition:opacity 1s ease}
-    .overlay.ack{opacity:0}.overlay[hidden]{display:none}
-    .overlay h2{margin:0 0 20px 0;font-size:clamp(24px,6vw,48px);font-weight:300;color:#dcdcdc;transition:transform .18s ease}.overlay h2.clicked{transform:scale(1.06)}
-    .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:clamp(14px,3vw,20px);opacity:0;transition:opacity .5s ease;z-index:99}
-    .swipe-hint.show{opacity:1}
-    :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box}
-    @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-    @media (max-width:768px){body{font-size:clamp(12px,3vw,24px)}canvas{touch-action:manipulation}}
-    @media (orientation:landscape){h1.city-carousel{height:auto;padding-bottom:20px}}
-    .yt-hidden{position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1}
+    /* CSS Variables */
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --zoom: 1;
+      --fluid-font: clamp(14px, 4vw, 32px);
+    }
+    
+    /* Base Styles */
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+      color: #dcdcdc;
+      font: var(--fluid-font) system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    
+    /* Canvas */
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100dvw;
+      height: 100dvh;
+      display: block;
+      background: #000;
+      touch-action: none;
+      image-rendering: pixelated;
+      transition: filter 140ms ease, transform 120ms ease;
+      transform-origin: center;
+      transform: scale(var(--zoom));
+    }
+    
+    canvas.canvas-inverted {
+      filter: invert(1) hue-rotate(180deg);
+    }
+    
+    @keyframes start-ack {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    canvas.start-ack {
+      animation: start-ack 240ms ease-out;
+    }
+    
+    /* City Carousel */
+    h1.city-carousel {
+      grid-row: 1;
+      padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-left)) 10px calc(10px + var(--safe-left));
+      width: min(92vw, 560px);
+      height: 38px;
+      z-index: 95;
+      pointer-events: none;
+      user-select: none;
+      overflow: hidden;
+      margin: 0;
+    }
+    
+    .carousel-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .carousel-slide {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-weight: 700;
+      font-size: clamp(16px, 4vw, 28px);
+      color: #dcdcdc;
+      letter-spacing: .02em;
+      transition: transform .3s ease, opacity .3s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(100%);
+      white-space: nowrap;
+    }
+    
+    .carousel-slide.active {
+      opacity: 1;
+      transform: translateY(0%);
+    }
+    
+    /* UI Elements */
+    .ui {
+      grid-row: 3;
+      padding: 10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
+      color: #dcdcdc;
+      font: 9px/1.1 ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    
+    .ui .label {
+      margin-right: 6px;
+    }
+    
+    .ui .dots {
+      display: inline-block;
+      width: 3ch;
+      text-align: left;
+    }
+    
+    .ui-inverted {
+      color: #dcdcdc !important;
+    }
+    
+    /* Overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, .86);
+      color: #9aa;
+      cursor: pointer;
+      user-select: none;
+      z-index: 1000;
+      text-align: center;
+      padding: 16px;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+    
+    .overlay.ack {
+      opacity: 0;
+    }
+    
+    .overlay[hidden] {
+      display: none;
+    }
+    
+    .overlay h2 {
+      margin: 0 0 20px 0;
+      font-size: clamp(24px, 6vw, 48px);
+      font-weight: 300;
+      color: #dcdcdc;
+      transition: transform .18s ease;
+    }
+    
+    .overlay h2.clicked {
+      transform: scale(1.06);
+    }
+    
+    /* Swipe Hint */
+    .swipe-hint {
+      position: fixed;
+      bottom: calc(50px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      color: #9aa;
+      font-size: clamp(14px, 3vw, 20px);
+      opacity: 0;
+      transition: opacity .5s ease;
+      z-index: 99;
+    }
+    
+    .swipe-hint.show {
+      opacity: 1;
+    }
+    
+    /* Accessibility */
+    :focus-visible {
+      outline: 2px solid #dcdcdc;
+      outline-offset: 2px;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      body {
+        font-size: clamp(12px, 3vw, 24px);
+      }
+      
+      canvas {
+        touch-action: manipulation;
+      }
+    }
+    
+    /* Landscape */
+    @media (orientation: landscape) {
+      h1.city-carousel {
+        height: auto;
+        padding-bottom: 20px;
+      }
+    }
+    
+    /* YouTube Player Hidden */
+    .yt-hidden {
+      position: fixed;
+      top: -10000px;
+      left: -10000px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
   </style>
 </head>
 <body>
@@ -63,9 +260,49 @@
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media;"></iframe>
   <script>
     "use strict";
-    const IN_SANDBOX = false;
-    const FADE_MS = 3500, START_FADE_IN = true, DPR = Math.min(2, window.devicePixelRatio || 1), isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || (navigator.deviceMemory && navigator.deviceMemory);
-    const motionScale = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.35 : 1;
+    
+    /**
+     * Configuration Constants
+     */
+    const CONFIG = {
+      // Performance
+      IN_SANDBOX: false,
+      FADE_MS: 3500,
+      START_FADE_IN: true,
+      DPR: Math.min(2, window.devicePixelRatio || 1),
+      TARGET_FRAME_MS: 16.7,
+      MIN_FRAME_MS: 16,
+      
+      // Visual Settings
+      SEGMENTS_LOW: 32,
+      SEGMENTS_HIGH: 48,
+      STAR_COUNT: 80,
+      BASE_RADIUS: 75,
+      FOV: 250,
+      SPEED: 0.75,
+      
+      // Timeouts
+      YT_LOAD_TIMEOUT_MS: 15000,
+      YT_API_TIMEOUT_MS: 10000,
+      
+      // Carousel
+      CAROUSEL_INTERVAL_MS: 2800,
+      
+      // UI
+      DOTS_INTERVAL_MS: 250
+    };
+    
+    // Detect low-end devices
+    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
+                     (navigator.deviceMemory && navigator.deviceMemory <= 4);
+    
+    /**
+     * Returns motion scale factor based on user preferences
+     * @returns {number} Scale factor (0.35 for reduced motion, 1.0 otherwise)
+     */
+    const motionScale = () => {
+      return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.35 : 1;
+    };
     const MP3_TRACKS = [
       {artist: "AKMD", title: "Stailings", src: ".mp3/akmd-stailings.mp3"},
       {artist: "AKMD & Mike T", title: "Alt Kan Skje", src: ".mp3/akmd_mike_t-alt_kan_skje.mp3"},

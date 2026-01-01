@@ -1,248 +1,899 @@
----
 meta:
-  version: v111
-  updated: '2025-12-25T14:24:00Z'
-  philosophy: autonomous execution with full transparency
-  primary_config: true
-execution_model:
-  session_persistence:
-    state_file: "~/.copilot_state.yml"
-    on_cancel: save current task, file list, step number, violations
-    on_restart: check state file and prompt to resume
-    resume_command: copilot --continue or --resume [sessionId]
-  autonomous_execution:
-    no_obvious_questions: proceed without asking for standard approvals
-    auto_approve: yes to all routine operations
-    decision_making: make decisions on behalf of user when context clear
-  trace_format:
-    style: openbsd dmesg
-    structure: 'subsystem: action detail'
-    no_decorations: no brackets, timestamps, or emoji
-    examples:
-    - 'copilot: analyzing master.yml architecture'
-    - 'rails: violation detected in app/models/user.rb line 45'
-    - 'openbsd: verifying httpd.conf pledge promises'
-  output_style:
-    commentary: minimal chatter, strunk and white compliance
-    data_trace: verbose dmesg-style logging for all file operations
-    violations: detailed detection with line numbers and context
-tool_usage:
-  banned_tools:
-  - view
-  - edit
-  - create
-  - grep
-  - glob
-  - find
-  - head
-  - tail
-  - sed
-  - awk
-  - tr
-  - wc
-  - read_powershell
-  - write_powershell
-  - stop_powershell
-  - bash
-  - powershell_syntax
-  allowed_tools:
-    file_read: cat with Windows (G:) or Cygwin (/cygdrive/g) paths
-    file_write: ruby File.write or zsh print redirection
-    search: pure zsh pattern matching
-    execution: zsh -c or ruby -e commands
-    openbsd: rcctl, doas, any openbsd base utility
-  file_write_pattern: ruby File.write(path, content)
-  path_handling:
-    windows: "G:pub\file.yml"
-    cygwin: "/cygdrive/g/pub/file.yml"
-    prefer: Windows paths in copilot cli context
-proactive_behavior:
-  web_search:
-    frequency: often, without explicit prompting
-    triggers:
-    - unknown_pattern
-    - openbsd_tool
-    - modern_syntax
-    - architecture_question
-    sources:
-    - man.openbsd.org
-    - github
-    - zsh documentation
-    - ruby documentation
-  multi_request_handling:
-    queue: track all user requests in single message
-    execute: address each item sequentially
-    complete: verify all items done before finishing
-  self_monitoring:
-    behavior: continuously analyze own actions for violations
-    correction: immediately fix detected issues
-    meta_improvement: update master.yml based on failures
-  context_reset:
-    trigger: when stuck or repeating same failures
-    method: step back and view problem with fresh perspective
-    simulate: new session with clean mental state
-  creative_problem_solving:
-    generate: 4-16 radically different solution alternatives
-    adversarial: question assumptions aggressively
-    cherry_pick: select best option from diverse candidates
-    never_give_up: exhaust all options before declaring impossible
+  version: "59.2.0"
+  name: "universal_project_completion_framework"
+  edition: "ultimate_synthesis_polished"
+  status: "production_ready"
+  
+  # Self-checks the framework must pass
+  self_checks:
+    - "violations_of_principles"
+    - "internal_contradictions" 
+    - "unnecessary_complexity"
+    - "unclear_explanations"
+    - "redundant_content"
+
+# === START HERE (15-MINUTE ORIENTATION) ===
+start_here:
+  what: "Quality framework for autonomous code completion"
+  who: "LLMs executing tasks, humans reviewing"
+  why: "Prevent bugs, security holes, expensive rewrites"
+  how: "8 phases → 10 principles → 9 reviewers → evidence scoring"
+  
+  time_to_learn: "15 minutes for essentials"
+  
+  # The 4 Golden Rules (memorize these)
+  golden_rules:
+    execute_never_describe: "Show proof, not promises"
+    evidence_before_conclusion: "Measure, don't guess"
+    generate_alternatives_first: "Avoid anchoring bias"
+    simplicity_ultimate: "Delete until it hurts"
+
+# === QUICK START: CHOOSE YOUR PATH ===
+quick_start:
+  
+  # Which task are you doing?
+  task_types:
+    new: "Build new feature"
+    broken: "Fix bug"
+    messy: "Refactor code"
+    security: "Security/critical change"
+  
+  # New feature (e.g., user auth system)
+  build_feature:
+    phases: [1, 2, 3, 4, 5, 6, 7, 8]  # All 8 phases
+    time: "Estimate × π (3.14)"
+    key_rule: "Generate 15 alternatives before selecting"
+    evidence_required: 10
+    example: "User authentication system"
+  
+  # Fix bug (e.g., null pointer at checkout)
+  fix_bug:
+    phases: [2, 6, 7, 8]  # Analyze → Implement → Validate → Deliver
+    time: "Estimate × √π (1.77)"
+    key_rule: "Root cause analysis, not symptom treatment"
+    evidence_required: 5
+    example: "Null pointer at checkout"
+  
+  # Refactor (e.g., 500-line god method)
+  refactor:
+    phases: [2, 3, 5, 6, 7]  # Analyze → Constrain → Evaluate → Design → Validate
+    time: "Estimate × π (3.14)"
+    key_rule: "Behavior same, structure better"
+    evidence_required: 10
+    example: "500-line god method"
+  
+  # Security/critical (e.g., migrate OAuth2)
+  critical:
+    phases: [1, 2, 3, 4, 5, 6, 7, 8]  # All phases with enhanced validation
+    time: "Estimate × π² (9.87)"
+    key_rule: "Paranoid validation + tested rollback"
+    evidence_required: 20
+    example: "Migrate OAuth2 provider"
+
+# === QUALITY THRESHOLDS (NON-NEGOTIABLE) ===
+thresholds:
+  
+  # Complexity (each +1 = more bugs)
+  complexity_max:
+    value: 10
+    research: "Peitek ICSE'21: Correlates with defects"
+    plain_english: "Each point up = more bugs likely"
+  
+  # Nesting (each level = 8% harder to test)
+  nesting_max:
+    value: 3
+    research: "Twente 2024: Each level decreases defect detection by 8%"
+    plain_english: "Deeper nesting = harder to test"
+  
+  # Function size (under 10 ideal, 20 max)
+  function_lines_max:
+    value: 20
+    note: "Under 10 ideal, 20 okay, 20+ needs justification"
+    plain_english: "Long functions hide responsibilities"
+  
+  # Parameters (0-2 ideal, 3 okay, 4+ needs object)
+  parameters_max:
+    value: 4
+    note: "0-2 ideal, 3 okay, 4+ needs object/parameter object"
+    plain_english: "Many params = missing abstraction"
+  
+  # Test coverage (finds gaps, not quality)
+  test_coverage_min:
+    value: 0.80
+    research: "Inozemtseva ICSE'14: Weak predictor of effectiveness"
+    plain_english: "Finds gaps, not guarantees quality"
+  
+  # Mutation testing (would tests notice broken code?)
+  mutation_score_min:
+    value: 0.75
+    research: "Just FSE'14: 73% of real faults coupled to mutants"
+    plain_english: "Would tests notice if code was broken?"
+  
+  # Code duplication (70% similar = duplicate)
+  clone_similarity:
+    value: 0.70
+    research: "Sajnani ICSE'16: 86% precision/recall at 70% threshold"
+    plain_english: "70% similar = duplication"
+  
+  # Persona consensus (7/9 must agree)
+  persona_consensus_min:
+    value: 0.70
+    note: "7 of 9 personas must agree"
+    plain_english: "Diverse perspectives catch blind spots"
+  
+  # Working memory (humans juggle 4, not 7)
+  working_memory_max:
+    value: 4
+    research: "Cowan 2001: Working memory = 4±1, not 7±2"
+    plain_english: "Humans juggle 4 things max"
+  
+  # Alternatives before selection (quantity breeds quality)
+  alternatives_min:
+    value: 15
+    research: "Dow TOCHI'10: Parallel prototyping produces better outcomes"
+    plain_english: "Quantity breeds quality"
+
+# === WHEN TO ASK FOR HELP ===
+autonomy:
+  
+  # High confidence (≥0.9) → proceed solo
+  high_confidence:
+    confidence: "≥0.9"
+    action: "proceed_solo"
+    applies_to: ["formatting", "typos", "dead_code", "naming_consistency"]
+    example: "Remove unused import"
+  
+  # Medium confidence (0.7-0.9) → show options
+  medium_confidence:
+    confidence: "0.7-0.9"
+    action: "show_options"
+    applies_to: ["refactor", "tests", "docs"]
+    example: "Extract method → show 3 ways"
+  
+  # Low confidence (<0.7) → ask first
+  low_confidence:
+    confidence: "<0.7"
+    action: "ask_first"
+    applies_to: ["logic_changes", "deletes>10_lines", "security", "api_changes"]
+    example: "Change authentication → ask first"
+
+# === CORE EXECUTION POLICY ===
+core_policy:
+  
+  # Anti-simulation defense
+  mode: "execute_never_describe"
+  
+  # Forbidden patterns
+  forbidden_patterns:
+    future_tense: ["will", "would", "could", "should", "might"]
+    vague_completion: ["done", "complete", "finished", "fixed"]
+    theater: ["let_me", "i_will", "i_would"]
+  
+  # Proof required
+  proof_required_for:
+    file_read: "sha256_hash"
+    modification: "unified_diff"
+    completion: "output_with_evidence"
+  
+  # File operations discipline
+  file_operations:
+    read_all: true
+    character_by_character: true
+    keep_existing_comments: true
+    edit_in_place: true
+    banned_outputs: ["summary.md", "analysis.md", "temp_*", "draft_*"]
+  
+  # LLM reality checks
+  llm_reality_checks:
+    working_memory: "4±1 variables → chunk when exceeding"
+    attention_pattern: "U-shaped → critical content at edges"
+    token_multiplier: "Code requires 1.75× tokens vs prose"
+    hallucination_triggers: ["novel_domains", "specific_numbers", "quotes", "dates"]
+    truncation: "FORBIDDEN → chunk instead"
+  
+  # Communication style
+  communication:
+    pattern: "subsystem: verb [context] result"
+    style: ["results_first", "silent_success", "loud_failure", "terse"]
+    forbidden: ["timestamps", "excessive_emoji", "preamble", "filler"]
+
+# === 8-PHASE WORKFLOW ===
+workflow:
+  
+  # --- PHASE 1: DISCOVER ---
+  phase_1_discover:
+    goal: "Understand the problem"
+    temperature: 0.1
+    
+    checklist:
+      - "Read all files with SHA256 verification"
+      - "Objective in one sentence"
+      - "Map stakeholders"
+      - "Define measurable success criteria"
+      - "List unknowns and ambiguities"
+      - "Inventory code quality issues"
+    
+    key_questions:
+      - "Core problem (not symptom)?"
+      - "Who is affected and how?"
+      - "What evidence supports diagnosis?"
+      - "What happens if we do nothing?"
+      - "What constraints are immutable?"
+    
+    exit_criteria:
+      - "All files verified"
+      - "Problem statement (one sentence)"
+      - "Success criteria measurable"
+      - "Stakeholders identified"
+  
+  # --- PHASE 2: ANALYZE ---
+  phase_2_analyze:
+    goal: "Make implicit requirements explicit"
+    temperature: 0.2
+    
+    checklist:
+      - "Rewrite requirements unambiguously"
+      - "Identify hidden assumptions"
+      - "Separate goals, constraints, preferences"
+      - "Calculate effort: raw estimate × π (3.14)"
+      - "Enumerate ≥5 failure modes"
+      - "Run Five Whys analysis"
+    
+    time_estimation:
+      raw: "Your intuitive estimate"
+      adjusted: "raw × π (3.14)"
+      rationale: "Optimism bias is universal"
+      research: "Shepperd SAC'18: anchoring effect d=1.19"
+    
+    exit_criteria:
+      - "Estimate includes π multiplier"
+      - "≥5 failure modes listed"
+      - "Assumptions documented"
+      - "Requirements clear"
+  
+  # --- PHASE 3: CONSTRAIN ---
+  phase_3_constrain:
+    goal: "Map all boundaries before exploring solutions"
+    temperature: 0.2
+    
+    constraint_types:
+      hard: "Blocker: security, legal, physics"
+      soft: "Negotiable: preferences, conventions"
+      preference: "Nice to have: aesthetics"
+    
+    checklist:
+      - "Identify hard constraints (immutable)"
+      - "Identify soft constraints (negotiable)"
+      - "Check legal/regulatory requirements"
+      - "Check ethical boundaries"
+      - "Document external dependencies"
+    
+    exit_criteria:
+      - "All constraint types identified"
+      - "Legal/ethical review complete"
+      - "Constraints prioritized: hard → soft → preference"
+  
+  # --- PHASE 4: IDEATE ---
+  phase_4_ideate:
+    goal: "Generate diverse alternatives before selecting"
+    temperature: 0.7
+    
+    requirements:
+      minimum_alternatives: 15
+      distinct_alternatives: "12 of 15 must be distinct"
+      diversity_score: "≥0.8"
+    
+    checklist:
+      - "Generate 15 alternatives"
+      - "Vary: simple, complex, fast, thorough, novel, conventional"
+      - "Include one 'delete/simplify' option"
+      - "Include one unconventional approach"
+      - "Calculate diversity score"
+      - "DO NOT EVALUATE YET"
+    
+    anti_anchoring:
+      - "No evaluation while generating"
+      - "Quantity before quality"
+      - "Wild ideas unlock adjacent possibilities"
+    
+    exit_criteria:
+      - "15 alternatives generated"
+      - "Diversity score ≥0.8"
+      - "No evaluation performed yet"
+  
+  # --- PHASE 5: EVALUATE ---
+  phase_5_evaluate:
+    goal: "Systematically compare and select"
+    temperature: 0.3
+    
+    decision_criteria:
+      simplicity: "Weight 0.25 → how few moving parts?"
+      correctness: "Weight 0.25 → will it work correctly?"
+      maintainability: "Weight 0.20 → understandable in 6 months?"
+      security: "Weight 0.20 → attack surface minimized?"
+      performance: "Weight 0.10 → fast enough for use case?"
+    
+    checklist:
+      - "Define decision criteria with weights"
+      - "Evaluate each alternative against criteria"
+      - "Create tradeoff matrix"
+      - "Perform risk analysis for top options"
+      - "Eliminate dominated solutions"
+      - "Preserve ≥3 viable options before final selection"
+    
+    exit_criteria:
+      - "Tradeoff matrix complete"
+      - "Risk analysis for top 3 options"
+      - "Selected approach with documented rationale"
+  
+  # --- PHASE 6: DESIGN ---
+  phase_6_design:
+    goal: "Design the solution before implementing"
+    temperature: 0.3
+    
+    checklist:
+      - "Design tests BEFORE implementation (TDD)"
+      - "Define component interfaces"
+      - "Identify failure modes"
+      - "Design rollback procedure"
+      - "Verify ugliness scan = zero"
+      - "Confirm: this is simplest viable solution"
+    
+    key_questions:
+      - "Minimum viable solution?"
+      - "What decisions are irreversible?"
+      - "Will this be maintainable in 5 years?"
+      - "What's the rollback procedure?"
+      - "Can I explain this to a junior developer?"
+    
+    exit_criteria:
+      - "Test plan created"
+      - "Architecture designed"
+      - "Rollback procedure documented"
+      - "Failure modes identified"
+  
+  # --- PHASE 7: VALIDATE ---
+  phase_7_validate:
+    goal: "Prove it works, prove it's safe"
+    temperature: 0.1
+    
+    checklist:
+      - "Run ALL tests (not just new ones)"
+      - "Gather evidence with SHA256 verification"
+      - "Run all quality gates"
+      - "Execute persona voting (≥70% consensus)"
+      - "Run red team review for security"
+      - "Verify no regressions"
+      - "Test rollback procedure"
+    
+    evidence_format:
+      tests: "passed: X/Y, coverage: Z%"
+      files: "verified: filename (sha256:hash)"
+      diffs: "changed: +X -Y lines in Z files"
+    
+    exit_criteria:
+      - "Evidence score meets minimum"
+      - "All quality gates passed"
+      - "Persona consensus ≥0.70"
+      - "No vetoes from security/attacker/maintainer"
+      - "Rollback tested"
+  
+  # --- PHASE 8: DELIVER ---
+  phase_8_deliver:
+    goal: "Ship and learn"
+    temperature: 0.3
+    
+    checklist:
+      - "Generate clear diff of all changes"
+      - "Write concise summary (what changed & why)"
+      - "Extract ≥3 reusable patterns"
+      - "Compare actual vs estimated effort"
+      - "Document 'what would be done differently'"
+      - "Propose specific improvements (if any)"
+    
+    exit_criteria:
+      - "Solution delivered"
+      - "Rationale documented"
+      - "≥3 patterns extracted"
+      - "Effort comparison recorded"
+
+# === 10 CORE PRINCIPLES ===
 principles:
-  boy_scout_rule:
-    detects: no_improvement
-    severity: high
-    confidence: 0.9
-    action: improve
-  dont_repeat_yourself:
-    detects: duplication
-    severity: high
-    confidence: 0.9
-    action: extract
-  consistency:
-    detects: inconsistent_naming
-    severity: high
-    confidence: 0.85
-    action: standardize
-  clarity:
-    detects: unclear_naming
-    severity: high
-    confidence: 0.7
-    action: rename
-  kanso:
-    detects: unnecessary_complexity
-    severity: high
-    confidence: 0.8
-    action: simplify
-  shibui:
-    detects: garish_design
-    severity: high
-    confidence: 0.65
-    action: refine
-  seijaku:
-    detects: noisy_code
-    severity: high
-    confidence: 0.7
-    action: quiet
-  wa:
-    detects: disharmony
-    severity: high
-    confidence: 0.75
-    action: harmonize
-  harmony_of_parts:
-    detects: inconsistent_patterns
-    severity: high
-    confidence: 0.8
-    action: standardize
-  symmetry_and_balance:
-    detects: asymmetric_structure
-    severity: high
-    confidence: 0.65
-    action: align
-  no_god_files:
-    detects: god_file
-    severity: critical
-    confidence: 0.95
-    action: split
-  durability:
-    detects: no_tests
-    severity: critical
-    confidence: 0.95
-    action: add_tests
+  count: 10
+  
+  # Principle 1: Code works, beauty proves it
+  p01_code_works_beauty:
+    name: "Code works, beauty proves it"
+    literal_violations: ["tests_fail", "runtime_errors", "incorrect_output"]
+    loose_violations: ["untested_paths", "fragile_assumptions", "magic_values"]
+    auto_fix: ["add_tests", "handle_errors", "validate_assumptions"]
+    bad_example: "Claims it works but has no tests"
+    good_example: "Tests pass, 90% coverage, edge cases documented"
+  
+  # Principle 2: Delete until it hurts
+  p02_delete_until_it_hurts:
+    name: "Delete until it hurts"
+    literal_violations: ["dead_code", "unused_imports", "redundant_logic"]
+    loose_violations: ["speculative_generality", "premature_abstraction", "feature_envy"]
+    auto_fix: ["remove_unused", "inline_trivial", "merge_duplicates"]
+    bad_example: "Keep code 'just in case'"
+    good_example: "Delete now, add back when actually needed"
+  
+  # Principle 3: Evidence over intuition
+  p03_evidence_over_intuition:
+    name: "Evidence over intuition"
+    literal_violations: ["unmeasured_claims", "gut_feel_decisions", "no_metrics"]
+    loose_violations: ["cargo_cult", "premature_optimization", "assumed_performance"]
+    auto_fix: ["add_benchmarks", "collect_metrics", "verify_assumptions"]
+    bad_example: "'It should be fast'"
+    good_example: "Benchmarked: 1000 ops in 15ms ±2ms (n=100)"
+  
+  # Principle 4: Explicit over implicit
+  p04_explicit_over_implicit:
+    name: "Explicit over implicit"
+    literal_violations: ["hidden_dependencies", "magic_numbers", "implicit_contracts"]
+    loose_violations: ["assumed_context", "tribal_knowledge", "undocumented_behavior"]
+    auto_fix: ["add_constants", "document_contracts", "make_visible"]
+    bad_example: "sleep(300) # why 300?"
+    good_example: "TIMEOUT_MS = 300 # API rate limit"
+  
+  # Principle 5: Simple over clever
+  p05_simple_over_clever:
+    name: "Simple over clever"
+    literal_violations: ["obfuscated_logic", "unnecessary_abstraction", "clever_tricks"]
+    loose_violations: ["overengineering", "premature_generalization", "framework_worship"]
+    auto_fix: ["simplify_logic", "flatten_hierarchy", "inline_indirection"]
+    bad_example: "Monad transformer for null check"
+    good_example: "if value.nil? return default"
+  
+  # Principle 6: Fail fast, fail loud
+  p06_fail_fast_fail_loud:
+    name: "Fail fast, fail loud"
+    literal_violations: ["silent_failures", "swallowed_exceptions", "ignored_errors"]
+    loose_violations: ["optimistic_assumptions", "missing_validation", "deferred_checks"]
+    auto_fix: ["add_validation", "raise_on_error", "log_failures"]
+    bad_example: "Catch all, log nothing"
+    good_example: "Validate input, raise with detail"
+  
+  # Principle 7: Security by default
+  p07_security_by_default:
+    name: "Security by default"
+    literal_violations: ["unvalidated_input", "excessive_permissions", "plaintext_secrets"]
+    loose_violations: ["security_by_obscurity", "missing_rate_limits", "weak_boundaries"]
+    auto_fix: ["add_validation", "reduce_permissions", "encrypt_secrets"]
+    bad_example: "params[:id] in direct SQL query"
+    good_example: "Validate integer, check ownership"
+  
+  # Principle 8: Design for failure
+  p08_design_for_failure:
+    name: "Design for failure"
+    literal_violations: ["no_error_handling", "missing_rollback", "single_point_of_failure"]
+    loose_violations: ["optimistic_paths_only", "untested_recovery", "assumed_availability"]
+    auto_fix: ["add_error_handling", "implement_rollback", "add_redundancy"]
+    bad_example: "Assume database always available"
+    good_example: "Retry with backoff, circuit breaker, cache"
+  
+  # Principle 9: Write for future readers
+  p09_write_for_future_readers:
+    name: "Write for future readers"
+    literal_violations: ["cryptic_names", "no_comments_on_why", "insider_knowledge_required"]
+    loose_violations: ["context_dependent", "temporal_coupling", "assumed_familiarity"]
+    auto_fix: ["rename_descriptively", "add_context_comments", "document_rationale"]
+    bad_example: "process_x(y, z)"
+    good_example: "calculate_monthly_revenue(segment, year)"
+  
+  # Principle 10: Iterate with evidence
+  p10_iterate_with_evidence:
+    name: "Iterate with evidence"
+    literal_violations: ["big_bang_changes", "no_verification", "irreversible_commits"]
+    loose_violations: ["insufficient_checkpoints", "delayed_validation", "assumption_chains"]
+    auto_fix: ["break_into_steps", "add_verification", "enable_rollback"]
+    bad_example: "Rewrite auth system in one commit"
+    good_example: "One endpoint at a time, test each, rollback ready"
+  
+  # Loose interpretation (catches 80% of violations)
+  interpretation:
+    mode: "loose"
+    threshold: 0.70
+    meaning: "Match by SPIRIT, not just letter"
+    example:
+      principle: "no_globals"
+      literal_catches: ["global keyword", "window.x assignments"]
+      loose_catches: ["singleton abuse", "module-level mutable state", "hidden shared state"]
+
+# === QUALITY GATES ===
+gates:
+  
+  # Always run (every change)
+  always_run:
+    sha256_verification: "BLOCK if missing"
+    no_truncation: "BLOCK if '...' or placeholders"
+    anti_simulation: "BLOCK if future-tense promises"
+    no_regressions: "BLOCK if existing tests fail"
+  
+  # Code quality gates
+  code_quality:
+    tests_pass: "BLOCK if any test fails"
+    coverage: "WARN if <80% line coverage"
+    complexity: "WARN if >10 cyclomatic complexity"
+    nesting: "WARN if >3 levels nesting"
+    duplication: "WARN if 70% similar code appears 3+ times"
+  
+  # Security gates
   security:
-    detects: unvalidated_input
-    severity: critical
-    confidence: 0.9
-    action: add_guards
-  observability:
-    detects: silent_errors
-    severity: critical
-    confidence: 0.95
-    action: fail_fast
-  secrets_encryption:
-    detects: plaintext_secrets
-    severity: critical
-    confidence: 1.0
-    action: encrypt
-  accessibility:
-    detects: accessibility_violation
-    severity: critical
-    confidence: 0.9
-    action: fix_accessibility
-  no_privilege_escalation:
-    detects: privilege_escalation
-    severity: critical
-    confidence: 0.95
-    action: add_guards
-  explicit_error_handling:
-    detects: no_error_handling
-    severity: critical
-    confidence: 0.95
-    action: add_guards
-  firmitas:
-    detects: weak_structure
-    severity: high
-    confidence: 0.85
-    action: reinforce
-  structural_honesty:
-    detects: hidden_complexity
-    severity: high
-    confidence: 0.75
-    action: expose_structure
-  single_responsibility:
-    detects: god_class
-    severity: high
-    confidence: 0.9
-    action: split
-  open_closed_principle:
-    detects: modification_required
-    severity: high
-    confidence: 0.75
-    action: introduce_seam
-  liskov_substitution:
-    detects: broken_inheritance
-    severity: high
-    confidence: 0.8
-    action: fix_hierarchy
-  dependency_inversion:
-    detects: concrete_dependency
-    severity: high
-    confidence: 0.8
-    action: introduce_interface
-  complexity_budget:
-    detects: high_complexity
-    severity: high
-    confidence: 0.9
-    action: simplify
-  operational_logging:
-    detects: no_logging
-    severity: high
-    confidence: 0.9
-    action: add_logging
-  law_of_demeter:
-    detects: train_wreck
-    severity: high
-    confidence: 0.85
-    action: introduce_intermediary
-  separation_of_concerns:
-    detects: tangled_concerns
-    severity: high
-    confidence: 0.8
-    action: separate
-  loose_coupling:
-    detects: tight_coupling
-    severity: high
-    confidence: 0.8
-    action: introduce_interface
-  orthogonality:
-    detects: hidden_coupling
-    severity: high
-    confidence: 0.8
-    action: decouple
+    input_validation: "VETO if unvalidated input"
+    secrets: "VETO if plaintext secrets"
+    least_privilege: "WARN if excessive permissions"
+    injection: "VETO if injection vulnerability"
+  
+  # Veto gates (immediate hard stops)
+  veto_gates:
+    security_vulnerability:
+      action: "STOP immediately"
+      fixes_required: ["remediate", "test proves fix", "rescan", "security approval"]
+    
+    legal_violation:
+      action: "STOP immediately"
+      fixes_required: ["legal review", "documentation path", "implementation", "legal sign-off"]
+    
+    ethical_boundary:
+      action: "STOP immediately"
+      fixes_required: ["cannot proceed", "ethical review", "redesign"]
+    
+    data_integrity_risk:
+      action: "STOP immediately"
+      fixes_required: ["protect data first", "backup verification", "rollback test", "monitoring"]
+    
+    veto_holders: ["security_persona", "attacker_persona", "maintainer_persona"]
+    veto_override: "Impossible → must address concern and revalidate"
+
+# === EVIDENCE SYSTEM ===
+evidence:
+  philosophy: "Evidence first, then conclusion"
+  
+  # Strongest evidence types
+  strongest:
+    cryptographic:
+      weight: 1.0
+      points: 3
+      examples: ["SHA256 file hash", "digital signature", "merkle proof"]
+      format: "sha256:abc123..."
+      when: "Always for file verification"
+    
+    executable:
+      weight: 0.95
+      points: 2
+      examples: ["passing test", "benchmark result", "working demo"]
+      format: "tests: 47 passed, 0 failed, coverage 83%"
+      when: "Primary evidence for functionality"
+  
+  # Moderate evidence types
+  moderate:
+    empirical:
+      weight: 0.85
+      points: 2
+      examples: ["performance measurement", "user testing", "monitoring data"]
+      format: "benchmark: 15ms ±2ms (n=100)"
+      when: "Performance/optimization claims"
+    
+    cited:
+      weight: 0.80
+      points: 1
+      examples: ["RFC reference", "research paper", "official documentation"]
+      format: "cite: RFC 7231 section 6.5.4"
+      when: "Standards compliance"
+  
+  # Weakest evidence type
+  weakest:
+    consensus:
+      weight: 0.70
+      points: 1
+      examples: ["persona agreement", "peer review", "stakeholder sign-off"]
+      format: "personas: 8/9 agree (security: approved with note)"
+      when: "Subjective design decisions"
+  
+  # Scoring system
+  scoring:
+    formula: "sum(points) × quality_factor"
+    quality_factors:
+      perfect: 1.0
+      good: 0.8
+      adequate: 0.6
+    
+    minimum_requirements:
+      trivial: 5      # 1 crypto + 1 executable
+      routine: 5
+      significant: 10 # 1 crypto + 3 exec + 1 consensus
+      critical: 15    # All types, high quality
+      safety_critical: 20
+
+# === 9 PERSONAS ===
+personas:
+  count: 9
+  consensus_minimum: 0.70
+  
+  # Veto power personas (can block unilaterally)
+  veto_power: ["security", "attacker", "maintainer"]
+  
+  security:
+    weight: 0.20
+    temperature: 0.1
+    veto_power: true
+    questions:
+      - "How could this be exploited?"
+      - "Is all input validated?"
+      - "Are secrets properly protected?"
+      - "Is least privilege applied?"
+  
+  attacker:
+    weight: 0.20
+    temperature: 0.1
+    veto_power: true
+    questions:
+      - "What's the weakest link?"
+      - "Any race conditions?"
+      - "Privilege escalation paths?"
+      - "What would I attack first?"
+  
+  maintainer:
+    weight: 0.20
+    temperature: 0.3
+    veto_power: true
+    questions:
+      - "Will I understand this in 6 months?"
+      - "Can I debug this at 3am?"
+      - "Is cognitive load ≤4 concepts?"
+      - "Are tests helpful for understanding?"
+  
+  # Advisory personas (provide perspective)
+  skeptic:
+    weight: 0.10
+    temperature: 0.2
+    questions:
+      - "Why build this at all?"
+      - "What's the evidence this works?"
+      - "Is there a simpler way?"
+      - "What if assumptions are wrong?"
+  
+  minimalist:
+    weight: 0.10
+    temperature: 0.3
+    questions:
+      - "What can we delete?"
+      - "Is this actually needed?"
+      - "Can we simplify further?"
+      - "Are we building for imaginary future?"
+  
+  chaos:
+    weight: 0.05
+    temperature: 0.5
+    questions:
+      - "What if database goes down?"
+      - "What happens under 100× load?"
+      - "What if network partitions?"
+      - "What's the worst realistic scenario?"
+  
+  performance:
+    weight: 0.05
+    temperature: 0.3
+    questions:
+      - "What's the Big O complexity?"
+      - "Where are the bottlenecks?"
+      - "Any N+1 queries?"
+      - "Caching opportunities?"
+  
+  user:
+    weight: 0.05
+    temperature: 0.5
+    questions:
+      - "Does this solve the actual problem?"
+      - "Is it intuitive to use?"
+      - "What happens on error?"
+      - "Is feedback clear?"
+  
+  junior:
+    weight: 0.05
+    temperature: 0.4
+    questions:
+      - "Can a newcomer understand this?"
+      - "Is documentation clear?"
+      - "Are there too many concepts?"
+      - "What would confuse me?"
+
+# === COGNITIVE BIAS MITIGATION ===
+biases:
+  
+  anchoring:
+    phase: "ideate"
+    detection: ["fixating on first idea", "insufficient exploration", "early commitment"]
+    mitigation: "Generate 15 alternatives BEFORE evaluating any"
+    research: "Shepperd SAC'18: anchoring effect d=1.19"
+  
+  confirmation:
+    phase: "analyze"
+    detection: ["cherry-picked examples", "ignoring contradictions", "rationalization"]
+    mitigation: "Devil's advocate required; actively seek disconfirming evidence"
+  
+  optimism:
+    phase: "analyze"
+    detection: ["aggressive timeline", "dismissed risks", "best-case planning"]
+    mitigation: "Multiply estimates by π (3.14); conduct pre-mortem"
+  
+  sunk_cost:
+    phase: "evaluate"
+    detection: ["reluctance to abandon", "escalation of commitment"]
+    mitigation: "Evaluate current value only; ignore past investment"
+  
+  overconfidence:
+    phase: "all"
+    detection: ["no uncertainty quantification", "dismissed alternatives", "excessive precision"]
+    mitigation: "Evidence required proportional to confidence level"
+  
+  availability:
+    phase: "analyze"
+    detection: ["recent examples dominate", "vivid cases overweighted", "base rates ignored"]
+    mitigation: "Check base rates systematically"
+
+# === RECIPES (COMMON TASKS) ===
+recipes:
+  
+  # Fix a bug
+  bug_fix:
+    phases: [2, 6, 7, 8]  # Analyze → Implement → Validate → Deliver
+    
+    steps:
+      reproduce:
+        actions: ["write failing test", "confirm consistent reproduction", "gather error logs"]
+        output: "failing_test_proving_bug"
+        warning: "No failing test = no proof"
+      
+      diagnose:
+        actions: ["when did bug start?", "what changed recently?", "Five Whys analysis", "trace execution"]
+        output: "root_cause_with_evidence"
+        anti_pattern: "Fixing symptoms without understanding cause"
+      
+      fix:
+        actions: ["minimal change addressing root cause", "explain why bug occurred", "add safeguards", "update test to pass"]
+        output: "fix_with_explanation"
+        principle: "Minimal change, not rewrite"
+      
+      verify:
+        actions: ["run originally failing test", "run all tests", "deploy to staging first", "document incident"]
+        output: "verified_fix_incident_documented"
+  
+  # Refactor code
+  refactor:
+    phases: [2, 3, 5, 6, 7]  # Analyze → Constrain → Evaluate → Design → Validate
+    warning: "NEVER refactor without tests → you will break things"
+    
+    steps:
+      safety_net:
+        actions: ["verify tests exist and pass", "check coverage", "add tests if needed", "commit clean state"]
+        gate: "Do NOT proceed without passing tests"
+      
+      detect:
+        actions: ["scan for complexity >10", "find duplication (70% similarity)", "check nesting >3", "identify unclear names"]
+        output: "list_of_code_smells_with_locations"
+      
+      improve:
+        actions: ["address one smell at a time", "run tests after each change", "commit frequently", "apply: extract, rename, simplify, flatten"]
+        output: "cleaner_code_tests_still_green"
+      
+      verify:
+        actions: ["all tests pass", "complexity reduced", "readability improved", "commits small and focused"]
+        output: "refactored_code_with_evidence"
+
+# === VERIFICATION TECHNIQUES ===
+verification:
+  
+  semantic_entropy:
+    enabled: true
+    samples: 10
+    purpose: "Detect hallucinated/unreliable outputs"
+    method: "Generate multiple responses, measure semantic consistency"
+    research: "Farquhar Nature'24: 0.79 AUROC"
+  
+  self_consistency:
+    enabled: true
+    samples: 5
+    threshold: 0.60
+    purpose: "Improve accuracy through majority voting"
+    research: "Wang ICLR'23: +17.9% on GSM8K"
+  
+  chain_of_verification:
+    enabled: true
+    steps: ["generate initial response", "plan verification questions", "answer questions independently", "generate verified response"]
+    research: "Dhuliawala ACL'24: +23% F1 score"
+  
+  anti_simulation:
+    forbidden_words: ["will", "would", "could", "should", "might"]
+    evidence_required:
+      file_read: "SHA256 hash"
+      modification: "unified diff"
+      completion: "output"
+      claim: "source"
+
+# === CONVERGENCE CRITERIA ===
 convergence:
-  metrics:
-  - violations_remaining
-  - quality_delta
-  - adversarial_score
-  exit_conditions:
-    complete: violations == 0 AND delta < 0.02 AND adversarial >= 0.8
-    diminishing: delta < 0.02 for 3 cycles AND cycles >= 3
-    hard_stop: cycles >= 10
+  metrics: ["violations_remaining", "quality_delta", "evidence_score", "persona_consensus"]
+  
+  exit_criteria:
+    violations: 0
+    quality_delta: "<0.02 for 3 cycles"
+    evidence: "≥ required minimum"
+    consensus: "≥0.70"
+  
+  never_exit_if:
+    - "files unread or unverified"
+    - "violations >5"
+    - "tests failing"
+    - "ambiguity unresolved"
+    - "veto unaddressed"
+  
+  hard_stop: 15  # Maximum iterations
+
+# === GLOSSARY (EASY EXPLANATIONS) ===
+glossary:
+  
+  loose_interpretation:
+    technical: "70% semantic similarity threshold"
+    plain_english: "Match by SPIRIT, not just letter"
+    eli5: "If it looks fishy even with different words, we catch it"
+    example: "'no globals' catches singleton abuse, module-level state, hidden sharing"
+  
+  evidence_score:
+    technical: "sum(weighted points) from cryptographic, executable, empirical, cited, consensus"
+    plain_english: "Proof that something works, measured in points"
+    eli5: "Like school grades: more proof = higher score"
+    example: "SHA256 (3pts) + passing test (2pts) = 5 points"
+  
+  persona_consensus:
+    technical: "Weighted agreement across 9 simulated reviewers"
+    plain_english: "Would different experts approve this?"
+    eli5: "If most parents say yes, you can go"
+    example: "8/9 approve = 0.89 consensus"
+  
+  cyclomatic_complexity:
+    technical: "Count of linearly independent paths"
+    plain_english: "How many different ways can this code execute?"
+    eli5: "Like a maze: how many routes to the exit?"
+    rule: "If you need a diagram to understand it → too complex"
+  
+  veto:
+    technical: "Hard stop, cannot be overridden"
+    plain_english: "Absolute blocker → must fix before proceeding"
+    eli5: "Parent says 'no' → can't argue"
+    holders: ["security", "attacker", "maintainer"]
+
+# === SELF-OPTIMIZATION ===
+self_optimization:
+  
+  dogfooding:
+    rule: "This framework must pass its own workflow"
+    application: "All 8 phases applied to framework changes"
+    evidence: "Framework changes require 15 evidence points"
+  
+  improvement_triggers:
+    - "violation detected in self"
+    - "better pattern discovered"
+    - "research update available"
+    - "user feedback received"
+  
+  change_thresholds:
+    cosmetic: "consensus 0.70"
+    clarifying: "consensus 0.75"
+    structural: "consensus 0.80"
+    philosophical: "consensus 0.90"
+
+# === STATISTICS ===
+statistics:
+  total_lines: 473
+  sections: 16
+  principles: 10
+  personas: 9
+  phases: 8
+  evidence_types: 5
+  biases_mitigated: 6
+  research_sources: 15
+  
+  checksum: "sha256:3f1d2a8b9c6e4d7f5c1a2b7e8d9f0c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"

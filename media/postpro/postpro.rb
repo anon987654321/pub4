@@ -109,7 +109,7 @@ module PostproBootstrap
   def self.load_camera_profiles(profiles_path)
     profiles = {}
     unless Dir.exist?(profiles_path)
-      dmesg "WARN camera profiles directory not found: #{profiles_path}"
+      log_message "WARN camera profiles directory not found: #{profiles_path}"
       return profiles
     end
     Dir.glob(File.join(profiles_path, "*.json")).each do |file|
@@ -144,7 +144,7 @@ module PostproBootstrap
     startup_banner
     gems = ensure_gems
     unless gems[:vips]
-      dmesg "FATAL libvips unavailable - image processing impossible"
+      log_message "FATAL libvips unavailable - image processing impossible"
       puts "
 Postpro.rb requires libvips for image processing."
       puts "Installation failed. Please install manually:"
@@ -553,7 +553,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
     profile = get_camera_profile(image)
     if profile
       image = apply_camera_profile(image, profile)
-      PostproBootstrap.dmesg "applied camera profile for #{file}"
+      PostproBootstrap.log_message "applied camera profile for #{file}"
     end
   end
   processed_count = 0
@@ -618,7 +618,7 @@ def get_input
   end
 end
 def auto_mode
-  PostproBootstrap.dmesg "auto mode enabled"
+  PostproBootstrap.log_message "auto mode enabled"
   patterns = ["**/*.{jpg,jpeg,png,webp}"]
   variations = CONFIG["variations"] || 2
   preset_name = CONFIG["default_preset"] || "portrait"

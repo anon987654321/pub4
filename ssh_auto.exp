@@ -1,0 +1,4 @@
+spawn ssh -o StrictHostKeyChecking=no dev@185.52.176.18 "uname -a && ruby --version && pkg_info ruby"
+expect "password:"
+send "tata1234\r"
+expect eof
