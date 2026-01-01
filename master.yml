@@ -143,12 +143,70 @@ autonomy:
     applies_to: ["formatting", "typos", "dead_code", "naming_consistency"]
     example: "Remove unused import"
   
-  # Medium confidence (0.7-0.9) → show options
+  # Medium confidence (0.7-0.9) → show options + suggest features
   medium_confidence:
     confidence: "0.7-0.9"
-    action: "show_options"
+    action: "show_options_and_suggest_features"
     applies_to: ["refactor", "tests", "docs"]
-    example: "Extract method → show 3 ways"
+    example: "Extract method → show 3 ways + suggest parallel analysis"
+    
+    proactive_suggestions:
+      enabled: true
+      philosophy: "Surface underutilized capabilities that would help current task"
+      
+      trigger_when:
+        - "phase_transition (moving to next phase)"
+        - "sequential_operations (could be parallel)"
+        - "manual_analysis (framework could automate)"
+        - "missing_evidence (tools available)"
+        - "user_asks_how (teach the feature)"
+      
+      suggest_format:
+        prefix: "💡 Feature you could use:"
+        structure: "{feature_name} - {one_line_benefit} - Example: {concrete_example}"
+        max_suggestions: 3
+        style: "terse"
+      
+      available_features:
+        parallel_operations:
+          description: "Read/analyze multiple files simultaneously in one turn"
+          when_suggest: "Sequential file operations detected"
+          example: "Read 5 files + generate violation report in ONE response"
+          
+        persona_voting:
+          description: "Run 9 expert personas (security, attacker, maintainer, etc.) for consensus"
+          when_suggest: "Design decisions or code review needed"
+          example: "Run personas on openbsd.sh → get consensus score + blind spot detection"
+          
+        evidence_scoring:
+          description: "Generate actual metrics (complexity, nesting, duplication %)"
+          when_suggest: "Quality assessment or 'analyze' mentioned"
+          example: "Complexity score 12.3, nesting depth 4, duplication 23%"
+          
+        alternative_generation:
+          description: "Generate 15 alternatives before selecting (Phase 4)"
+          when_suggest: "Refactoring or design choice needed"
+          example: "15 ways to fix security violation → compare tradeoffs"
+          
+        checkpoint_resume:
+          description: "Save state between phases, resume later (screen workflow)"
+          when_suggest: "Long multi-phase task or context switch needed"
+          example: "detach → work on something else → attach main to resume"
+          
+        pattern_extraction:
+          description: "Extract reusable patterns from code for future use"
+          when_suggest: "After fixing violations or completing refactor"
+          example: "Extract error handling pattern → apply to other scripts"
+          
+        batch_edits:
+          description: "Edit multiple files or locations in parallel"
+          when_suggest: "Same change needed across files"
+          example: "Rename variable in 8 files simultaneously"
+          
+        semantic_verification:
+          description: "Generate multiple responses, measure consistency (detect hallucinations)"
+          when_suggest: "Novel/unfamiliar domain or high-stakes decision"
+          example: "10 samples → 0.79 AUROC hallucination detection"
   
   # Low confidence (<0.7) → ask first
   low_confidence:
@@ -156,6 +214,147 @@ autonomy:
     action: "ask_first"
     applies_to: ["logic_changes", "deletes>10_lines", "security", "api_changes"]
     example: "Change authentication → ask first"
+
+# === SESSION MANAGEMENT (SCREEN-LIKE WORKFLOW) ===
+session_management:
+  
+  philosophy: "Unix screen/tmux model: detach/attach contexts, parallel workflows, clean checkpoints"
+  
+  # Commands (user-facing)
+  commands:
+    create:
+      syntax: "[screen] task_name"
+      action: "Start new workflow context with fresh state"
+      example: "[screen] fix-auth-bug"
+      
+    detach:
+      syntax: "[detach]"
+      action: "Checkpoint current state, serialize context, return control"
+      example: "[detach]"
+      output: "[detached:task_name:phase_N] checkpoint_saved"
+      
+    attach:
+      syntax: "[attach] task_name"
+      action: "Restore state from checkpoint, resume work"
+      example: "[attach] fix-auth-bug"
+      output: "[attached:task_name:phase_N] resuming_from_{last_action}"
+      
+    list:
+      syntax: "[screen -ls]"
+      action: "Show all active contexts with status"
+      output: "Active sessions: fix-auth-bug(phase_2, 5_violations), refactor-user(phase_6, 2_violations)"
+      
+    kill:
+      syntax: "[screen -X quit] task_name"
+      action: "Abandon context, delete checkpoint"
+      example: "[screen -X quit] failed-experiment"
+  
+  # What gets preserved in checkpoint
+  checkpoint_state:
+    identity:
+      - "task_name"
+      - "created_timestamp"
+      - "last_active_timestamp"
+    
+    workflow:
+      - "current_phase (1-8)"
+      - "phase_exit_criteria_status"
+      - "next_action_required"
+    
+    evidence:
+      - "evidence_score_current"
+      - "evidence_collected (with sources)"
+      - "quality_gates_status"
+      - "persona_votes_recorded"
+    
+    files:
+      - "files_read (with sha256 hashes)"
+      - "files_modified (with unified diffs)"
+      - "files_created (with full content)"
+    
+    decisions:
+      - "alternatives_generated (phase 4)"
+      - "selected_approach (phase 5)"
+      - "design_rationale (phase 6)"
+    
+    violations:
+      - "principle_violations_remaining"
+      - "quality_gate_failures"
+      - "veto_concerns_unaddressed"
+    
+    working_memory:
+      - "current_focus (≤4 items per LLM limits)"
+      - "deferred_items (for later phases)"
+  
+  # When to auto-detach (don't wait for user)
+  auto_detach_triggers:
+    blocked_external:
+      - "waiting_for_long_build (>2min)"
+      - "waiting_for_deployment"
+      - "waiting_for_external_api"
+      action: "Detach, notify user, offer to start new screen"
+    
+    needs_decision:
+      - "low_confidence_action (<0.7)"
+      - "conflicting_persona_votes"
+      - "veto_triggered"
+      action: "Detach with question, await user input"
+    
+    natural_breakpoint:
+      - "phase_completed"
+      - "all_tests_passing"
+      - "ready_for_review"
+      action: "Detach with summary, offer next phase or new task"
+  
+  # Checkpoint file format
+  checkpoint:
+    location: ".sessions/"
+    naming: "{task_name}_{phase}_{timestamp}.yml"
+    format: "YAML with all checkpoint_state fields"
+    retention: "Keep last 5 per task, auto-delete after 7 days"
+    
+    example_file: ".sessions/fix-auth-bug_phase2_20260101T142118.yml"
+    
+    example_content: |
+      task_name: fix-auth-bug
+      created: 2026-01-01T14:00:00Z
+      last_active: 2026-01-01T14:21:18Z
+      phase: 2
+      phase_status: analyzing_root_cause
+      next_action: write_failing_test
+      evidence_score: 3
+      files_read:
+        - "src/auth.rb (sha256:abc123...)"
+        - "test/auth_test.rb (sha256:def456...)"
+      violations: ["unvalidated_input at line 47", "no error handling"]
+      working_memory:
+        - "null pointer at checkout"
+        - "user_id comes from params"
+        - "no validation before query"
+        - "add test → fix → verify"
+  
+  # Parallel context management
+  parallel_workflows:
+    max_concurrent: 4
+    rationale: "Working memory limit = 4±1"
+    priority_when_full: "Ask user which to suspend"
+    
+    common_patterns:
+      feature_and_bugs: "Work on feature, detach when blocked, fix bugs, return"
+      explore_then_commit: "Try 3 approaches in parallel screens, kill 2, commit best"
+      refactor_insurance: "Start refactor, keep old version in separate screen until validated"
+  
+  # Status indicators (in every response)
+  status_format:
+    active: "[screen:task_name:phase_N]"
+    detached: "[detached:task_name:phase_N]"
+    attached: "[attached:task_name:phase_N]"
+    
+    examples:
+      - "[screen:fix-auth:phase_2] analyzing: null pointer at line 47"
+      - "[detached:refactor-user:phase_6] checkpoint: 2 violations remain"
+      - "[attached:fix-auth:phase_2] resuming: writing failing test"
+      - "[screen -ls] active: fix-auth(p2,blocked), refactor-user(p6,ready)"
 
 # === CORE EXECUTION POLICY ===
 core_policy:
@@ -196,6 +395,28 @@ core_policy:
     pattern: "subsystem: verb [context] result"
     style: ["results_first", "silent_success", "loud_failure", "terse"]
     forbidden: ["timestamps", "excessive_emoji", "preamble", "filler"]
+    
+    # Session indicators (screen-like)
+    session_indicators:
+      enabled: true
+      prefix_all_output: true
+      format: "[screen:task:phase]"
+      examples:
+        - "[screen:fix-auth:p2] tests: 47 passed, 1 failed"
+        - "[detached:refactor:p6] saved: .sessions/refactor_phase6_20260101.yml"
+        - "[attached:deploy:p8] resuming: running final validation"
+    
+    # Proactive feature suggestions (integrated with autonomy.medium_confidence)
+    feature_suggestions:
+      enabled: true
+      timing: ["phase_exit", "after_analysis", "when_obvious_opportunity"]
+      max_per_response: 3
+      format: "💡 {feature}: {benefit}"
+      
+      suppress_when:
+        - "high_confidence_trivial_task"
+        - "user_explicitly_declined_feature"
+        - "already_using_feature_in_current_phase"
 
 # === 8-PHASE WORKFLOW ===
 workflow:
