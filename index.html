@@ -437,10 +437,10 @@
       try {
         if (!i || !i.contentWindow) return;
         i.contentWindow.postMessage({event: "command", func: f, args: a}, YT_ORIGIN);
-      } catch {
+      } catch (e1) {
         try {
           i.contentWindow.postMessage([...arguments], YT_ORIGIN);
-        } catch {}
+        } catch (e2) { console.error('YouTube API postMessage failed:', e1, e2); }
       }
     };
     /**
@@ -476,7 +476,7 @@
           this.analyser = this.audioContext.createAnalyser();
           this.analyser.fftSize = 256;
           this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-        } catch {}
+        } catch (e) { console.error('AudioContext/Analyser creation failed:', e); }
       }
       initYTAPI() {
         if (IN_SANDBOX) return;
@@ -484,13 +484,13 @@
           this.ytPlayers.a = new YT.Player('yt-player-a', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('a'), onStateChange: (e) => this.onYTState('a', e), onError: () => this.onYTError()}});
           this.ytPlayers.b = new YT.Player('yt-player-b', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('b'), onStateChange: (e) => this.onYTState('b', e), onError: () => this.onYTError()}});
           this.ytReady = true;
-        } catch {}
+        } catch (e) { console.error('YouTube player initialization failed:', e); }
       }
       onYTReady(k) {
         try {
           this.ytPlayers[k].setVolume(0);
           this.ytPlayers[k].mute();
-        } catch {}
+        } catch (e) { console.error('YouTube onReady setVolume/mute failed:', e); }
       }
       onYTState(k, e) {
         if (IN_SANDBOX) return;
@@ -510,7 +510,7 @@
         this.muted = false;
         this.updateUI();
         if (this.audioContext && this.audioContext.state === 'suspended') {
-          this.audioContext.resume().catch(() => {});
+          this.audioContext.resume().catch((e) => { console.error('AudioContext resume failed:', e); });
         }
         const t = this.tracks[this.trackIndex];
         t.src ? this._loadMP3(this.activeKey, t, {fadeIn: START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: START_FADE_IN});
@@ -585,7 +585,7 @@
         const iv = setInterval(() => {
           i++;
           const vol = Math.round(100 * i / steps);
-          try { if (this.ytPlayers[k]) this.ytPlayers[k].setVolume(vol); } catch {}
+          try { if (this.ytPlayers[k]) this.ytPlayers[k].setVolume(vol); } catch (e) { console.error('YouTube setVolume failed:', e); }
           if (i >= steps) clearInterval(iv);
         }, dt);
       }
@@ -610,9 +610,9 @@
         this.muted = !this.muted;
         const t = this.tracks[this.trackIndex];
         if (t.src) {
-          try { this.mp3Players[this.activeKey].muted = this.muted; } catch {}
+          try { this.mp3Players[this.activeKey].muted = this.muted; } catch (e) { console.error('MP3 mute failed:', e); }
         } else if (t.id && this.ytReady) {
-          try { this.muted ? this.ytPlayers[this.activeKey].mute() : this.ytPlayers[this.activeKey].unMute(); } catch {}
+          try { this.muted ? this.ytPlayers[this.activeKey].mute() : this.ytPlayers[this.activeKey].unMute(); } catch (e) { console.error('YouTube mute failed:', e); }
         }
       }
       updateUI() {
@@ -636,7 +636,7 @@
             mid /= (n6 - n2) * 255;
             high /= (n - n6) * 255;
             return {bass, mid, high, average: (bass + mid + high) / 3, beat: 0, energy: 0, subBass: bass, vocals: mid, treble: high};
-          } catch {}
+          } catch (e) { console.error('Playback switch failed:', e); }
         }
         return {bass: 0.5, mid: 0.45, high: 0.35, average: 0.43, beat: 0, energy: 0.5, subBass: 0.5, vocals: 0.45, treble: 0.35};
       }
@@ -875,7 +875,7 @@
       INTERNAL_SCALE = Math.max(SCALE_MIN, Math.min(SCALE_MAX, b * Math.min(2, DPR)));
     };
     (() => {
-      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, 250); } catch {} })();
+      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, 250); } catch (err) { console.error('Dots animation failed:', err); } })();
       new SimpleCarousel(document.getElementById("cityCarousel"));
       const tunnel = new PixelTunnel(canvas.getContext("2d"));
       const resize = () => {
