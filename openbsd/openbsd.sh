@@ -371,7 +371,7 @@ EOF
   # Get certificates for all domains (12 second delay between requests)
   for domain in $ALL_DOMAINS; do
     acme-client -v "$domain" || warn "Certificate failed for $domain"
-    sleep 12
+    sleep 12  # Rate limit: Let's Encrypt allows 5 certs/10s, 12s = safe margin
   done
   log "TLS configured"
 }
@@ -415,40 +415,26 @@ EOF
   echo ""
 }
 generate_host_routing() {
-  # Amber
+  # Helper: route multiple domains to a backend
+  _route() {
+    local backend="$1"; shift
+    for domain in "$@"; do
+      echo "  pass request header \"Host\" value \"$domain\" forward to <$backend>"
+    done
+    echo ""
+  }
+  
   echo '  # Host-based routing'
-  for domain in amberapp.com www.amberapp.com; do
-    echo "  pass request header "Host" value "$domain" forward to <amber>"
-  done
-  echo ""
-  # Blognet
-  for domain in foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no; do
-    echo "  pass request header "Host" value "$domain" forward to <blognet>"
-  done
-  echo ""
-  # BSDPorts
-  for domain in bsdports.org www.bsdports.org; do
-    echo "  pass request header "Host" value "$domain" forward to <bsdports>"
-  done
-  echo ""
-  # Hjerterom
-  for domain in hjerterom.no www.hjerterom.no; do
-    echo "  pass request header "Host" value "$domain" forward to <hjerterom>"
-  done
-  echo ""
-  # Privcam
-  for domain in privcam.no www.privcam.no; do
-    echo "  pass request header "Host" value "$domain" forward to <privcam>"
-  done
-  echo ""
-  # PubAttorney
-  for domain in pub.attorney freehelp.legal; do
-    echo "  pass request header "Host" value "$domain" forward to <pubattorney>"
-  done
-  echo ""
-  # Brgen (35+ domains)
+  _route amber amberapp.com www.amberapp.com
+  _route blognet foodielicio.us stacyspassion.com antibettingblog.com anticasinoblog.com antigamblingblog.com foball.no
+  _route bsdports bsdports.org www.bsdports.org
+  _route hjerterom hjerterom.no www.hjerterom.no
+  _route privcam privcam.no www.privcam.no
+  _route pubattorney pub.attorney freehelp.legal
+  
+  # Brgen has 35+ domains from APPS array
   for domain in ${=APPS[brgen.domains]}; do
-    echo "  pass request header "Host" value "$domain" forward to <brgen>"
+    echo "  pass request header \"Host\" value \"$domain\" forward to <brgen>"
   done
   echo ""
 }
