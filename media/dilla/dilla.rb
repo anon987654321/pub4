@@ -281,11 +281,11 @@ class SOSDilla
   end
   def generate_drums(duration)
     kick = temp_file("kick.wav")
-    @ffmpeg.tone(freq: 55, duration: 0.3, wave: :sine, output: kick, amp: 0.9)
-    @ffmpeg.lowpass(input: kick, output: kick, cutoff: 120)
+    @ffmpeg.tone(freq: AudioConstants::KICK_FREQ, duration: AudioConstants::KICK_DURATION, wave: :sine, output: kick, amp: 0.9)
+    @ffmpeg.lowpass(input: kick, output: kick, cutoff: AudioConstants::KICK_CUTOFF)
     hat = temp_file("hat.wav")
-    @ffmpeg.noise(duration: 0.05, output: hat, amp: 0.15)
-    @ffmpeg.highpass(input: hat, output: hat, cutoff: 8000)
+    @ffmpeg.noise(duration: AudioConstants::HAT_DURATION, output: hat, amp: 0.15)
+    @ffmpeg.highpass(input: hat, output: hat, cutoff: AudioConstants::HAT_CUTOFF)
     drums = temp_file("drums.wav")
     silence = temp_file("silence.wav")
     @ffmpeg.tone(freq: 1, duration: duration, wave: :sine, output: silence, amp: 0)
@@ -295,7 +295,7 @@ class SOSDilla
   def generate_bass(base_freq, duration)
     bass = temp_file("bass.wav")
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :sine, output: bass, amp: 0.7)
-    @ffmpeg.lowpass(input: bass, output: bass, cutoff: 200)
+    @ffmpeg.lowpass(input: bass, output: bass, cutoff: AudioConstants::BASS_CUTOFF)
     apply_dub_fx(bass, :bass)
   end
   def generate_chords(base_freq, duration)
@@ -310,7 +310,7 @@ class SOSDilla
       @ffmpeg.reverb(input: input, output: output, decay: 0.4, size: :spring)
       @ffmpeg.echo(input: output, output: output, delay_ms: 375, feedback: 0.35)
     when :bass
-      @ffmpeg.compress(input: input, output: output, threshold: -15, ratio: 4)
+      @ffmpeg.compress(input: input, output: output, threshold: AudioConstants::COMPRESS_THRESHOLD, ratio: AudioConstants::COMPRESS_RATIO)
     when :chords
       @ffmpeg.echo(input: input, output: output, delay_ms: 125, feedback: 0.4)
       @ffmpeg.reverb(input: output, output: output, decay: 0.5, size: :large)
@@ -329,7 +329,7 @@ class SOSDilla
       { freq: 60, gain: 2, q: 0.7 },
       { freq: 3000, gain: -1, q: 1.5 }
     ])
-    @ffmpeg.normalize(input: master_out, output: final)
+    @ffmpeg.normalize(input: master_out, output: final, target: AudioConstants::MASTER_TARGET)
     puts "✓ Generated: #{final}"
     final
   end
@@ -341,7 +341,7 @@ class SOSDilla
     @ffmpeg.tone(freq: base_freq, duration: duration, wave: :triangle, output: raw, amp: 0.5)
     processed = apply_dilla_chain(raw)
     final = File.join(@output_dir, "dilla_#{style}_#{key}_#{bpm}_#{timestamp}.wav")
-    @ffmpeg.compress(input: processed, output: final, threshold: -20, ratio: 4)
+    @ffmpeg.compress(input: processed, output: final, threshold: AudioConstants::COMPRESS_THRESHOLD, ratio: AudioConstants::COMPRESS_RATIO)
     puts "✓ Generated: #{final}"
     final
   end
@@ -389,6 +389,12 @@ class SOSDilla
     }.to_json
   end
   def note_freq(note, octave = 4)
+    unless note.to_s.match?(/^[A-G]#?$/i)
+      raise ArgumentError, "Invalid note: #{note}. Use A-G with optional #"
+    end
+    unless (0..8).cover?(octave)
+      raise ArgumentError, "Invalid octave: #{octave}. Use 0-8"
+    end
     semitones = { "C"=>0,"C#"=>1,"D"=>2,"D#"=>3,"E"=>4,"F"=>5,"F#"=>6,"G"=>7,"G#"=>8,"A"=>9,"A#"=>10,"B"=>11 }
     440.0 * (2.0 ** ((semitones[note].to_i - 9 + (octave - 4) * 12) / 12.0))
   end
@@ -698,58 +704,95 @@ class SOSDilla
     output
   end
   
+  # Audio Constants
+  module AudioConstants
+    KICK_FREQ = 55          # Hz, sub-bass kick
+    KICK_DURATION = 0.3     # seconds
+    KICK_CUTOFF = 120       # Hz, removes mud
+    BASS_CUTOFF = 200       # Hz, low-pass for bass
+    HAT_DURATION = 0.05     # seconds, tight hihat
+    HAT_CUTOFF = 8000       # Hz, high-pass for brightness
+    COMPRESS_THRESHOLD = -20 # dB
+    COMPRESS_RATIO = 4       # 4:1 compression
+    MASTER_TARGET = -1       # dB, mastering ceiling
+  end
+  
+  # CLI Command Handlers
+  def self.command_dub(args, dilla)
+    dilla.generate_dub(
+      pattern: (args[0] || "one_drop").to_sym,
+      progression: args[1] || "dub_meditative",
+      key: args[2] || "E",
+      bpm: (args[3] || "120").to_i
+    )
+  end
+  
+  def self.command_dilla(args, dilla)
+    dilla.generate_dilla(
+      style: args[0] || "donuts",
+      key: args[1] || "C",
+      bpm: (args[2] || "95").to_i
+    )
+  end
+  
+  def self.command_random(args, dilla)
+    aesthetic = (args[0] || "authentic").to_sym
+    seed = args[1] ? args[1].to_i : nil
+    test = dilla.send(:temp_file, "test_tone.wav")
+    dilla.instance_variable_get(:@ffmpeg).tone(output: test, freq: 440, duration: 4)
+    dilla.generate_random_chain(input: test, aesthetic: aesthetic, seed: seed)
+  end
+  
+  def self.command_gear(args, dilla)
+    gear = (args[0] || "sp1200").to_sym
+    input = args[1]
+    if input && File.exist?(input)
+      output = File.join(dilla.instance_variable_get(:@output_dir), "#{gear}_#{dilla.send(:timestamp)}.wav")
+      dilla.apply_gear(input: input, output: output, gear: gear)
+    else
+      puts "Usage: dilla.rb gear <sp1200|mpc3000|sp303|s950|...> <input.wav>"
+    end
+  end
+  
+  def self.command_master(args, dilla)
+    return unless args[0] && File.exist?(args[0])
+    dilla.master(input: args[0], era: (args[1] || "rhythm_and_sound").to_sym)
+  end
+  
+  def self.command_chords(args)
+    artist = args[0] || "dilla"
+    album = args[1] || "fantastic_vol2"
+    chords = get_chords(artist, album)
+    if chords
+      puts JSON.pretty_generate(chords)
+    else
+      puts "Available: dilla_fantastic_vol1, dilla_fantastic_vol2, dilla_donuts, flying_lotus_la, madlib"
+    end
+  end
+  
+  def self.command_list
+    puts "\nPATTERNS: #{DUB_PATTERNS.keys.join(', ')}"
+    puts "PROGRESSIONS: #{DUB_PROGRESSIONS.keys.join(', ')}"
+    puts "ERAS: #{VINTAGE.keys.join(', ')}"
+    puts "GEAR: #{GEAR_PROFILES.keys.join(', ')}"
+    puts "AESTHETICS: #{ChainGenerator::AESTHETICS.keys.join(', ')}"
+  end
+  
   # CLI
   def self.main(args)
     return show_help if args.empty? || args.include?("--help")
     dilla = new
     begin
       case args[0]
-      when "dub"
-        dilla.generate_dub(
-          pattern: (args[1] || "one_drop").to_sym,
-          progression: args[2] || "dub_meditative",
-          key: args[3] || "E",
-          bpm: (args[4] || "120").to_i
-        )
-      when "dilla"
-        dilla.generate_dilla(style: args[1] || "donuts", key: args[2] || "C", bpm: (args[3] || "95").to_i)
-      when "random"
-        aesthetic = (args[1] || "authentic").to_sym
-        seed = args[2] ? args[2].to_i : nil
-        # Generate a test tone first, then process
-        test = dilla.send(:temp, "test_tone.wav")
-        dilla.instance_variable_get(:@ffmpeg).tone(output: test, freq: 440, duration: 4)
-        dilla.generate_random_chain(input: test, aesthetic: aesthetic, seed: seed)
-      when "gear"
-        gear = (args[1] || "sp1200").to_sym
-        input = args[2]
-        if input && File.exist?(input)
-          output = File.join(dilla.instance_variable_get(:@output_dir), "#{gear}_#{dilla.send(:timestamp)}.wav")
-          dilla.apply_gear(input: input, output: output, gear: gear)
-        else
-          puts "Usage: dilla.rb gear <sp1200|mpc3000|sp303|s950|...> <input.wav>"
-        end
-      when "master"
-        dilla.master(input: args[1], era: (args[2] || "rhythm_and_sound").to_sym) if args[1] && File.exist?(args[1])
-      when "config"
-        puts dilla.export_config
-      when "chords"
-        artist = args[1] || "dilla"
-        album = args[2] || "fantastic_vol2"
-        chords = SOSDilla.get_chords(artist, album)
-        if chords
-          puts JSON.pretty_generate(chords)
-        else
-          puts "Available: dilla_fantastic_vol1, dilla_fantastic_vol2, dilla_donuts, flying_lotus_la, madlib"
-        end
-      when "list"
-        puts "\nPATTERNS: #{DUB_PATTERNS.keys.join(', ')}"
-        puts "PROGRESSIONS: #{DUB_PROGRESSIONS.keys.join(', ')}"
-        puts "ERAS: #{VINTAGE.keys.join(', ')}"
-        puts "GEAR: #{GEAR_PROFILES.keys.join(', ')}"
-        puts "AESTHETICS: #{ChainGenerator::AESTHETICS.keys.join(', ')}"
-      else
-        show_help
+      when "dub"    then command_dub(args[1..-1], dilla)
+      when "dilla"  then command_dilla(args[1..-1], dilla)
+      when "random" then command_random(args[1..-1], dilla)
+      when "gear"   then command_gear(args[1..-1], dilla)
+      when "master" then command_master(args[1..-1], dilla)
+      when "chords" then command_chords(args[1..-1])
+      when "list"   then command_list
+      when "config" then puts dilla.export_config
+      else show_help
       end
     ensure
       dilla.cleanup
