@@ -1,0 +1,24 @@
+task_name: main
+phase: 2
+status: COORDINATOR
+workflow_model: "GNU Screen/tmux"
+children:
+  - openbsd (infrastructure: DNS/TLS/PF/Relayd - lines 1-550)
+  - rails (Rails 8 deployment + database - lines 550-806)
+  - misc (audioviz, media, ragnhild - unrelated tasks)
+
+commands:
+  screen: "Create new named screen (e.g., 'screen openbsd')"
+  attach: "Resume existing screen (e.g., 'attach openbsd')"
+  detach: "Save checkpoint and return control to user"
+  screen -ls: "List all active screens with status"
+  
+clarification: |
+  'detach' is a COMMAND, not a screen
+  When you say 'detach', I:
+  1. Save current screen state to .sessions/{screen}_phase{N}_{timestamp}.yml
+  2. Report checkpoint location
+  3. Return control to you
+  4. You can then 'attach {screen}' or 'screen {newname}' to start fresh
+
+last_updated: 2026-01-01T15:12:15Z

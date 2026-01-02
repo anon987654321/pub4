@@ -1,0 +1,15 @@
+task_name: main
+phase: 2
+status: COORDINATOR_SPLIT_COMPLETE
+children:
+  - openbsd-infra (infrastructure: DNS/TLS/PF/Relayd)
+  - openbsd-rails (Rails 8 deployment + database)
+blocker_resolution: |
+  Split 806-line file into logical concerns
+  Each child screen addresses specific vetoes:
+  - openbsd-infra: Refactor generate_relayd_config (110 lines → ≤20)
+  - openbsd-rails: Add database password encryption, error propagation
+  
+  Main screen now coordinates, doesn't execute
+action: "Attach to openbsd-infra or openbsd-rails to work on specific violations"
+last_updated: 2026-01-01T14:55:30Z

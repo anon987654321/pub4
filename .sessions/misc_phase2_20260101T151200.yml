@@ -1,0 +1,13 @@
+task_name: misc
+created: 2026-01-01T15:12:00Z
+last_active: 2026-01-01T15:12:00Z
+phase: 2
+status: CONTAINER_FOR_MISCELLANEOUS_TASKS
+children:
+  - audioviz (index.html refactoring, Phase 8)
+  - media (dilla/postpro/repligen analysis, Phase 2)
+  - ragnhild (HTU letter revision, Phase 6 - paused)
+description: |
+  Container screen for unrelated tasks that don't fit openbsd/rails
+  Each child runs independently with own checkpoints
+autonomous: true

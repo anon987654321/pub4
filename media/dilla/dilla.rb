@@ -193,14 +193,33 @@ class SOSDilla
       @ffmpeg = find_ffmpeg
     end
     def find_ffmpeg
-      Platform.ffmpeg_paths.find { |p| system("#{p} -version >/dev/null 2>&1") } || 'ffmpeg'
+      Platform.ffmpeg_paths.each do |p|
+        begin
+          # Test if ffmpeg exists and is executable
+          output = `#{p} -version 2>&1`
+          return p if $?.success? && output.include?('ffmpeg version')
+        rescue => e
+          # Continue to next path
+        end
+      end
+      'ffmpeg' # Fallback
     end
     def available?
-      system("#{@ffmpeg} -version >/dev/null 2>&1")
+      begin
+        output = `#{@ffmpeg} -version 2>&1`
+        $?.success? && output.include?('ffmpeg version')
+      rescue => e
+        false
+      end
     end
     def run(cmd)
-      success = system(cmd + " >/dev/null 2>&1")
-      raise "FFmpeg command failed: #{cmd}" unless success
+      output = `#{cmd} 2>&1`
+      success = $?.success?
+      unless success
+        puts "❌ FFmpeg command failed: #{cmd}"
+        puts "   Output: #{output.split("\n").first(3).join("\n   ")}" if output && !output.empty?
+        raise "FFmpeg command failed"
+      end
       success
     end
     def tone(freq:, duration:, wave: :sine, output:, amp: 0.8)
@@ -264,10 +283,14 @@ class SOSDilla
   end
   def check_deps
     unless @ffmpeg.available?
-      puts "❌ FFmpeg not found! Install: #{Platform.install_hint}"
+      puts "❌ FFmpeg not found!"
+      puts "   Searched paths:"
+      Platform.ffmpeg_paths.each { |p| puts "   - #{p}" }
+      puts "\n   Install: #{Platform.install_hint}"
+      puts "   Or ensure ffmpeg is in your PATH"
       exit 1
     end
-    puts "✓ FFmpeg ready on #{Platform.detect}"
+    puts "✓ FFmpeg ready (#{@ffmpeg.instance_variable_get(:@ffmpeg)}) on #{Platform.detect}"
   end
   def generate_dub(pattern: :one_drop, progression: "dub_meditative", key: "E", bpm: 120, bars: 4)
     puts "🎚️  Generating: #{pattern} | #{progression} | #{key} | #{bpm}BPM"

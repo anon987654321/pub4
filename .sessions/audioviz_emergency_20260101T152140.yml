@@ -1,0 +1,10 @@
+task_name: audioviz
+last_active: 2026-01-01T15:21:40Z
+phase: emergency_revert
+status: reverted_to_working_version
+commit: e60c3f2
+action: |
+  Reverted index.html from 9e6f82c → 8999fd8
+  Reason: Overlay broken, no audio
+  Testing: Wait for GitHub Pages deploy
+  Next: If working, re-add Slum Village track + run Phase 2-8 from good baseline

@@ -1,0 +1,22 @@
+task_name: main
+phase: 2
+status: RESUMED_SPLITTING_INTO_OPENBSD_AND_RAILS
+blocker_status: |
+  Original blocker: 2 vetoes (maintainer + junior)
+  Issues: 90-line functions, cryptic names, 27 violations
+  
+  USER DECISION: Split analysis into two focused screens
+  
+split_plan:
+  openbsd_section:
+    focus: "openbsd.sh infrastructure script (806 lines)"
+    violations: "Shell scripting, networking, DNS/TLS/firewall config"
+    critical: "9 silent failures, plaintext secrets, no validation"
+    
+  rails_section:
+    focus: "Rails 8 deployment aspects within openbsd.sh"
+    violations: "Rails app generation, database setup, Falcon config"
+    critical: "Database password handling, app scaffolding"
+
+action: "Create two new screens: 'openbsd-infra' and 'openbsd-rails'"
+last_updated: 2026-01-01T14:54:45Z
