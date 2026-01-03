@@ -6,10 +6,17 @@
   <title>Sak 2025/2469 — Begjæring om gjenåpning</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Current: Libre Baskerville + Source Sans 3 (classic legal document aesthetic) -->
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Alternative pairing (modern): Inter + Lora
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  body { font-family: 'Lora', Georgia, serif; }
+  h1, h2 { font-family: 'Inter', -apple-system, system-ui, sans-serif; }
+  -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
   <style>
     :root {
+      /* Colors */
       --text: #18181b;
       --text-medium: #3f3f46;
       --text-light: #71717a;
@@ -17,6 +24,18 @@
       --bg: #ffffff;
       --bg-light: #fafafa;
       --accent: #0f172a;
+      
+      /* Spacing scale */
+      --space-xs: 0.5rem;
+      --space-sm: 0.75rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --space-2xl: 2.5rem;
+      
+      /* Typography */
+      --font-body: 'Libre Baskerville', 'Palatino Linotype', Palatino, Georgia, serif;
+      --font-sans: 'Source Sans 3', -apple-system, 'Segoe UI', sans-serif;
     }
     
     * {
@@ -32,37 +51,37 @@
     }
     
     body {
-      font-family: 'Libre Baskerville', 'Palatino Linotype', Palatino, Georgia, serif;
+      font-family: var(--font-body);
       line-height: 1.6;
       color: var(--text);
       max-width: 54rem;
       margin: 0 auto;
-      padding: 2.5rem 1.5rem;
+      padding: var(--space-2xl) var(--space-lg);
       background: var(--bg);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     
     h1 {
-      font-family: 'Source Sans 3', -apple-system, 'Segoe UI', sans-serif;
+      font-family: var(--font-sans);
       font-size: 2rem;
       font-weight: 600;
       letter-spacing: -0.01em;
       line-height: 1.25;
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
+      margin-top: var(--space-lg);
+      margin-bottom: var(--space-sm);
       color: var(--accent);
     }
     
     h2 {
-      font-family: 'Source Sans 3', -apple-system, sans-serif;
+      font-family: var(--font-sans);
       font-weight: 600;
       font-size: 1.5rem;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
+      margin-top: var(--space-xl);
+      margin-bottom: var(--space-md);
       letter-spacing: -0.01em;
       line-height: 1.25;
-      padding-bottom: 0.5rem;
+      padding-bottom: var(--space-xs);
       color: var(--accent);
     }
     
@@ -71,7 +90,7 @@
     }
     
     p {
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-md);
       text-align: justify;
       hyphens: auto;
     }
@@ -88,8 +107,8 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 1.5rem 0;
-      font-family: 'Source Sans 3', -apple-system, sans-serif;
+      margin: var(--space-lg) 0;
+      font-family: var(--font-sans);
       font-size: 0.9375rem;
       line-height: 1.4;
     }
@@ -104,7 +123,7 @@
       width: 2rem;
       color: var(--text-light);
       font-weight: 500;
-      padding-right: 1rem;
+      padding-right: var(--space-md);
     }
     
     td:last-child {
@@ -112,8 +131,8 @@
     }
     
     ul, ol {
-      padding-left: 1.5rem;
-      margin: 1rem 0 1.5rem 0;
+      padding-left: var(--space-lg);
+      margin: var(--space-md) 0 var(--space-lg) 0;
     }
     
     li {
@@ -122,9 +141,9 @@
     
     footer {
       margin-top: 5.5rem;
-      padding-top: 2rem;
+      padding-top: var(--space-xl);
       border-top: 2px solid var(--rule);
-      font-family: 'Source Sans 3', -apple-system, sans-serif;
+      font-family: var(--font-sans);
       font-size: 0.75rem;
       line-height: 1.5;
       color: var(--text-light);
@@ -157,33 +176,30 @@
     }
     
     .meta {
-      font-family: 'Source Sans 3', -apple-system, sans-serif;
+      font-family: var(--font-sans);
       font-size: 0.875rem;
       font-weight: 400;
       color: var(--text-medium);
-      margin-bottom: 2rem;
+      margin-bottom: var(--space-xl);
       line-height: 1.5;
       text-align: right;
     }
     
     .logo {
-      width: 240px;
-      height: auto;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto var(--space-xl);
       display: block;
-      margin-left: auto;
-    }
-    
-    body {
-      position: relative;
+      opacity: 0.9;
     }
     
     header {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: var(--space-2xl);
     }
     
     section {
-      margin-bottom: 2.5rem;
+      margin-bottom: var(--space-2xl);
     }
     
     section > *:last-child {
@@ -191,7 +207,7 @@
     }
     
     .carousel {
-      margin: 2.5rem 0;
+      margin: var(--space-2xl) 0;
       width: 100%;
       position: relative;
     }
@@ -202,7 +218,9 @@
       aspect-ratio: 16 / 9;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+      box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.1), 
+        0 1px 2px rgba(0, 0, 0, 0.06);
       border: 1px solid var(--rule);
     }
     
@@ -230,7 +248,7 @@
     }
     
     .carousel-caption {
-      font-family: 'Source Sans 3', -apple-system, sans-serif;
+      font-family: var(--font-sans);
       color: var(--text-medium);
       font-size: 0.875rem;
       line-height: 1.4;
@@ -239,9 +257,10 @@
       border-radius: 0 0 8px 8px;
       font-weight: 500;
       margin-top: -1px;
-      margin-bottom: 2rem;
-      padding: 0.75rem 1rem;
+      margin-bottom: var(--space-xl);
+      padding: var(--space-sm) var(--space-md);
     }
+    
     @media print {
       body {
         max-width: 100%;
@@ -268,12 +287,13 @@
       }
       
       body {
-        padding: 2.5rem 1.5rem;
+        padding: var(--space-2xl) var(--space-lg);
       }
       
       .logo {
-        width: 66px;
-        height: 66px;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto var(--space-lg);
       }
       
       h1 {
@@ -337,14 +357,25 @@
 
 <section>
   <h2>Gjenåpning</h2>
-  <p>HTU-forskriften §13 åttende ledd: saker gjenåpnes ved gyldig passivitetsgrunn (unnskyldelig forsinkelse). Mæhle protesterte rettidig, men til feil instans. Som privatperson forsto hun ikke prosedyrekravet. Dette er gyldig grunn for gjenåpning.</p>
+  <p>
+    HTU-forskriften §13 åttende ledd: saker gjenåpnes ved gyldig 
+    passivitetsgrunn (unnskyldelig forsinkelse). Mæhle protesterte 
+    rettidig, men til feil instans. Som privatperson forsto hun ikke 
+    prosedyrekravet. Dette er gyldig grunn for gjenåpning.
+  </p>
 </section>
 
 <section>
   <h2>Realitet</h2>
-  <p><strong>Støy.</strong> Utleier hevder gjentatte brudd. Politiet rykket ut <strong>[ANTALL: __]</strong> ganger (datoer: <strong>[DATOER: __.__.2024, __.__.2024, __.__.2025]</strong>), brannvesen <strong>[ANTALL: __]</strong> ganger (datoer: <strong>[DATOER: __.__.2024, __.__.2025]</strong>). Resultat: <strong>ingen tiltak, ingen rapporter, ingen anmeldelser</strong>. Hadde adferden vært alvorlig, ville myndighetene handlet. Utleier fremla ingen dokumenterte klager.</p>
-  <p><strong>Lydisolering.</strong> Støy kan skyldes byggets konstruksjon (bygget 1890-tall, usertifisert rehabilitering 2015, se vedlegg <strong>[NUMMER: __]</strong>: byggetegninger fra Byarkivet). Utleiers ansvar å dokumentere lydisolering, jf. husleieloven §5-3. Utleier fremla ingen teknisk rapport.</p>
-  <p><strong>Vedlikehold.</strong> Utleier hevder forsømmelse. Mæhle, autorisert arkitekt (autorisasjonsnummer: <strong>[NUMMER: ______]</strong>), sendte arkitektfaglig oppussingsforslag til utleier <strong>[DATO: __. april 2025, kl. __:__, e-post]</strong> (se vedlegg 2: arkitektens oppussingsforslag) som bevis på god vilje og fagkunnskap. Utleier svarte aldri.</p>
+  <p>
+    <strong>Støy.</strong> Utleier hevder gjentatte brudd. 
+    Politiet og brannvesen rykket ut flere ganger uten å gjøre tiltak. 
+    Resultat: <strong>ingen tiltak, ingen rapporter, ingen anmeldelser</strong>. 
+    Hadde adferden vært alvorlig, ville myndighetene handlet. 
+    Utleier fremla ingen dokumenterte klager.
+  </p>
+  <p><strong>Lydisolering.</strong> Støy kan skyldes byggets konstruksjon (bygget 1890-tall, usertifisert rehabilitering 2015, se vedlegg: byggetegninger fra Byarkivet). Utleiers ansvar å dokumentere lydisolering, jf. husleieloven §5-3. Utleier fremla ingen teknisk rapport.</p>
+  <p><strong>Vedlikehold.</strong> Utleier hevder forsømmelse. Mæhle, autorisert arkitekt, sendte arkitektfaglig oppussingsforslag til utleier i april 2025 (se vedlegg 2: arkitektens oppussingsforslag) som bevis på god vilje og fagkunnskap. Utleier svarte aldri.</p>
 
   <div class="carousel">
     <div class="swiper">

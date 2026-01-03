@@ -99,7 +99,6 @@ modes:
     trigger: after_completion
 
 effects:
-  # OPTIMIZED FOR INTELLIGIBILITY + CHARACTER
   # Speech critical range: 300-3400Hz (preserve!)
   # IIR filters (cheap CPU): highpass, lowpass, equalizer, volume
   # Moderate CPU: tremolo, vibrato, chorus
@@ -114,7 +113,6 @@ effects:
     desc: "1940s radio warmth"
     cpu: low
     filter: "highpass=f=200,lowpass=f=5000,equalizer=f=1200:t=q:w=1:g=4,tremolo=f=0.1:d=0.08,volume=0.9"
-  
   
   lofi_warm:
     desc: "Tape-style warmth, boosted mids"
@@ -141,10 +139,10 @@ effects:
     enabled: true
     frequency: 0.15  # 15% chance per sentence
     types:
-      - "sine 800 0.05"      # Quick beep
-      - "sine 1200 0.08"     # Higher beep
-      - "sine 400 0.1"       # Low boop
-      - "square 600 0.06"    # Digital blip
+      - "sine 800 0.05" # Quick beep
+      - "sine 1200 0.08" # Higher beep
+      - "sine 400 0.1" # Low boop
+      - "square 600 0.06" # Digital blip
       - "triangle 1000 0.07" # Soft tone
     description: "Disturbing but words audible"
     filter: "asetrate=22050*0.6,aresample=22050,aecho=0.95:0.9:600:0.8,tremolo=f=0.3:d=0.6,highpass=f=100"

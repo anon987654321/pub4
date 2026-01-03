@@ -1,9 +1,9 @@
 meta:
-  version: "61.1.0"
+  version: "61.2.0"
   name: "universal_project_completion_framework"
   edition: "operational_hardening"
   status: "production_ready"
-  last_updated: "2026-01-01T20:01:31Z"
+  last_updated: "2026-01-03T00:34:00Z"
   
   # Research-backed architectural constraints
   architectural_limits:
@@ -776,7 +776,7 @@ workflow:
 
 # === 10 CORE PRINCIPLES ===
 principles:
-  count: 10
+  count: 15
   
   # Principle 1: Code works, beauty proves it
   p01_code_works_beauty:
@@ -933,6 +933,87 @@ principles:
     auto_fix: ["break_into_steps", "add_verification", "enable_rollback"]
     bad_example: "Rewrite auth system in one commit"
     good_example: "One endpoint at a time, test each, rollback ready"
+  
+  # Principle 11: Validate before done (MANDATORY - P11)
+  p11_validate_before_done:
+    name: "Validate before done"
+    added: "2026-01-01"
+    mandatory: true
+    literal_violations: ["claim_without_proof", "future_tense_completion", "assume_success"]
+    loose_violations: ["untested_claim", "visual_only_verification", "partial_validation"]
+    auto_fix: ["run_validator", "show_output", "measure_result"]
+    bad_example: "Fixed the logo" (no evidence provided)
+    good_example: "Fixed logo: SHA256 abc123..., renders 180x180px per CSS"
+    enforcement: "BLOCK completion without evidence"
+  
+  # Principle 12: Fail fast, recover gracefully
+  p12_fail_fast_recover:
+    name: "Fail fast, recover gracefully"
+    added: "2026-01-03"
+    source: "G:/pub/sh analysis - 100% adoption across 20 scripts"
+    literal_violations: ["silent_failures", "continue_on_error", "no_error_logging"]
+    loose_violations: ["optimistic_flow_only", "missing_exit_codes", "unclear_failure_state"]
+    auto_fix: ["add_set_errexit", "log_error_location", "provide_recovery_steps"]
+    bad_example: "command || true  # ignore failures"
+    good_example: "command || { log 'ERROR: command failed at line $LINENO'; exit 1; }"
+    
+    shell_pattern:
+      header: "set -euo pipefail"
+      error_function: "error() { log 'ERROR: $*'; exit 1; }"
+      usage: "vssh 'command' || error 'Cannot connect to VPS'"
+  
+  # Principle 13: Idempotent by default
+  p13_idempotent_by_default:
+    name: "Idempotent by default"
+    added: "2026-01-03"
+    source: "backup.sh checksum pattern - skip unchanged work"
+    literal_violations: ["always_rerun", "no_state_check", "duplicate_work"]
+    loose_violations: ["expensive_redundancy", "missing_cache", "unconditional_operations"]
+    auto_fix: ["check_state_first", "track_checksums", "skip_unchanged"]
+    bad_example: "Always regenerate 10GB database dump"
+    good_example: "Checksum DB, skip if unchanged, log 'SKIPPED'"
+    
+    pattern:
+      check: "if [[ -f output && $(checksum input) == $cached_checksum ]]; then"
+      skip: "  log 'SKIPPED: no changes detected'; return 0"
+      execute: "fi; perform_expensive_operation"
+  
+  # Principle 14: Backup before modify
+  p14_backup_before_modify:
+    name: "Backup before modify"
+    added: "2026-01-03"
+    source: "replace.sh rollback pattern"
+    literal_violations: ["destructive_in_place", "no_backup", "irreversible_change"]
+    loose_violations: ["backup_too_late", "backup_not_tested", "manual_rollback_only"]
+    auto_fix: ["create_bak_file", "test_rollback", "automated_restore"]
+    bad_example: "sed -i 's/old/new/' file  # no backup"
+    good_example: "cp file file.bak && sed 's/old/new/' file || mv file.bak file"
+    
+    pattern:
+      backup: "cp $file $file.bak"
+      modify: "modify_operation $file"
+      verify: "if validate $file; then rm $file.bak; else mv $file.bak $file; fi"
+  
+  # Principle 15: Pure dependencies
+  p15_pure_dependencies:
+    name: "Pure dependencies (avoid external tools)"
+    added: "2026-01-03"
+    source: "zsh pure approach - 3-5x faster, no deps"
+    literal_violations: ["unnecessary_external_calls", "pipe_to_sed_awk", "shell_out_for_builtins"]
+    loose_violations: ["subprocess_overhead", "missing_portability", "tool_version_dependency"]
+    auto_fix: ["use_parameter_expansion", "use_language_builtins", "remove_pipes"]
+    bad_example: "echo $str | sed 's/old/new/g'"
+    good_example: "${str//old/new}  # pure zsh, 3x faster"
+    
+    evidence:
+      benchmark: "sed approach: 45ms, pure zsh: 15ms (n=1000)"
+      portability: "Works on any zsh >=5.0, sed varies by platform"
+      
+    examples:
+      replace: "${content//pattern/replacement}"
+      trim: "${line%%[[:space:]]#}"
+      split: "arr=(\"\${(@f)content}\")"  # split on newlines
+      glob: "**/*.rb(.N)"  # files only, nullglob
   
   # Loose interpretation (catches 80% of violations)
   interpretation:
@@ -1600,3 +1681,90 @@ session_metadata:
     - "Master.yml framework application"
     - "HTML styling improvements"
     - "Code analysis and documentation"
+
+# === SHELL SCRIPT TEMPLATE ===
+shell_script_template:
+  philosophy: "Codified from G:/pub/sh analysis - 20 production scripts"
+  adoption: "100% across codebase"
+  
+  minimal_template: |
+    #!/usr/bin/env zsh
+    set -euo pipefail
+    setopt nullglob extendedglob
+    
+    # Logging functions
+    log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
+    error() { log "ERROR: $*"; exit 1; }
+    
+    # Validation
+    [[ -d "$dir" ]] || error "Directory not found: $dir"
+    
+    # Main logic with state checks
+    # ...
+    
+    # Summary
+    log "Complete! Next steps: ..."
+  
+  deployment_template: |
+    #!/usr/bin/env zsh
+    set -euo pipefail
+    
+    readonly HOST="server.example.com"
+    readonly USER="deploy"
+    readonly SSH_KEY="/path/to/key"
+    
+    log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
+    error() { log "ERROR: $*"; exit 1; }
+    
+    # SSH wrapper
+    vssh() { 
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no \
+          -o ConnectTimeout=10 "${USER}@${HOST}" "$@"
+    }
+    
+    # Test connectivity
+    log "Testing connection..."
+    vssh 'uname -a' || error "Cannot connect"
+    
+    # Deploy
+    log "Deploying..."
+    vssh 'cd /app && ./deploy.sh' || error "Deploy failed"
+    
+    # Verify
+    log "Verifying..."
+    vssh 'systemctl status app' || log "WARN: Check status manually"
+    
+    log "Complete! Access: ssh -i $SSH_KEY $USER@$HOST"
+  
+  patterns:
+    fail_fast:
+      header: "set -euo pipefail"
+      meaning: "Exit on error, undefined var, pipe failure"
+      
+    pure_zsh:
+      globs: "**/*.rb(.N)  # files only, nullglob"
+      replace: "${content//old/new}  # vs sed"
+      arrays: "arr=(\"\${(@f)content}\")  # split lines"
+      
+    idempotency:
+      check_state: "if [[ -f output && $(checksum input) == $cached ]]; then"
+      skip_unchanged: "  log 'SKIPPED: no changes'; return 0"
+      
+    backup_restore:
+      backup: "cp $file $file.bak"
+      restore: "|| mv $file.bak $file"
+      cleanup: "&& rm $file.bak"
+    
+    ssh_wrapper:
+      definition: "vssh() { ssh -i $KEY $USER@$HOST \"$@\"; }"
+      usage: "vssh 'command' || error 'SSH failed'"
+      timeout: "-o ConnectTimeout=10"
+    
+    summary_report:
+      format: |
+        log "Complete!"
+        log ""
+        log "Next steps:"
+        log "  1. Check logs: tail -f /var/log/app.log"
+        log "  2. Verify status: systemctl status app"
+        log "  3. Access: ssh $USER@$HOST"
