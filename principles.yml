@@ -1,6 +1,6 @@
 # @title SYMBIOSIS Principles v0.6.0
-# @version 0.5.12
-# @desc 57 principles FLATTENED (single source of truth per principle)
+# @version 0.6.0
+# @desc 62 principles FLATTENED (single source of truth per principle)
 # @invariant All principles apply to framework itself
 
 version: "0.6.0"
@@ -52,6 +52,7 @@ CONTRAST: {tier: high, detect: contrast_scan, match: [low], fix: null, verify: c
 DENSITY: {tier: medium, detect: word_match, match: "@master.vocab.ban.filler", fix: delete_filler, verify: word_match, rule: "remove filler", action: fix, auto: true, why: "clarity"}
 HIERARCHY: {tier: medium, detect: position_scan, match: [buried], fix: reorder, verify: position_scan, rule: "important first", action: fix, auto: false, why: "readers scan top-down"}
 WORKING_MEMORY: {tier: medium, detect: count_scan, match: ">@master.t.concepts+3", fix: group, verify: count_scan, rule: "limit concepts", action: warn, auto: false, why: "cognitive limits"}
+MILLERS_LAW: {tier: medium, detect: count_scan, match: ">@master.t.cognitive_load+2", fix: chunk, verify: count_scan, rule: "7±2 items max", action: warn, auto: false, why: "working memory limits"}
 PRESERVE_FIRST: {tier: medium, detect: deletion_scan, match: [no_reason], fix: null, verify: deletion_scan, rule: "preserve before compress", action: halt, veto: false, why: "user work sacred"}
 COGNITIVE: {tier: medium, detect: option_scan, match: ">@master.t.options", fix: group, verify: option_scan, rule: "limit load", action: warn, auto: false, why: "comprehension"}
 ABSTRACTION: {tier: medium, detect: dep_scan, match: [concrete], fix: extract_iface, verify: dep_scan, rule: "prefer abstraction", action: flag, auto: false, why: "flexibility"}
@@ -92,4 +93,4 @@ personas:
   legal: {priority: 2, focus: [LEGAL_TYPOGRAPHY, ULTRA_MINIMALIST, COURT_LAYOUT]}
   rails: {priority: 2, focus: [SKINNY_CONTROLLER, SKINNY_MODEL, SERVICE_OBJECTS, STRONG_PARAMS]}
 
-integrity: {fingerprint: {v: "0.6.0", p: 62, i: 13}, canary: "SYMBIOSIS_PRINCIPLES_0.5.12"}
+integrity: {fingerprint: {v: "0.6.0", p: 63, i: 13}, canary: "SYMBIOSIS_PRINCIPLES_0.6.0"}

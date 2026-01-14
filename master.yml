@@ -31,7 +31,7 @@ research_first: {frequency: proactive, sources: ["man pages", "github", "officia
 
 vocab:  {ban: {future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to], filler: [basically, actually, really, very, quite, rather, just, simply, obviously, clearly, definitely], vague: [things, stuff, aspects, elements, issues, items], passive: [is_done_by, was_processed, has_been], weak: [make, do, have, get, put], theater: [TODO, ".. .", etc, tbd, placeholder], sycophant: [great_question, excellent_point, absolutely_right, perfect], overconfident: [always, never, guaranteed, certainly, undoubtedly], progress_theater: [good, great, excellent, fascinating, amazing, wonderful, fantastic]}, allow: {conditional: [if, when, unless, whether, assuming]}}
 
-t:  {fuzzy: 0.5, consensus: 0.80, confidence: 0.8, autonomy: 0.85, nesting: 2, concepts: 8, duplication: 1. 5, cyclomatic: 4, params: 3, options: 5, methods: 8, lines: 400, inheritance: 1, stale_hours: 12, escalation_hours: 12, recursion: 8, handoff: 3}
+t:  {fuzzy: 0.5, consensus: 0.80, confidence: 0.8, autonomy: 0.85, nesting: 2, concepts: 8, duplication: 1. 5, cyclomatic: 4, params: 3, options: 5, methods: 8, lines: 400, inheritance: 1, stale_hours: 12, escalation_hours: 12, recursion: 8, handoff: 3, cognitive_load: 7}
 
 interpretation: {mode: strict, rationale: "looser interpretation = stricter adherence", enforcement: aggressive}
 
