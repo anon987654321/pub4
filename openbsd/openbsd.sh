@@ -1259,7 +1259,7 @@ pki mail.pub.attorney key "/etc/ssl/private/smtp.key"
 
 listen on $BRGEN_IP port 25 tls pki mail.pub.attorney
 action "outbound" relay
-match from typeset for any action "outbound"
+match from local for any action "outbound"
 EOF
 
   smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
