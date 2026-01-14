@@ -51,15 +51,6 @@
       filter: invert(1) hue-rotate(180deg);
     }
     
-    @keyframes start-ack {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-    
-    canvas.start-ack {
-      animation: start-ack 240ms ease-out;
-    }
-    
     /* City Carousel */
     h1.city-carousel {
       grid-row: 1;
@@ -276,6 +267,8 @@
       DPR: Math.min(2, window.devicePixelRatio || 1),
       TARGET_FRAME_MS: 16.7,
       MIN_FRAME_MS: 16,
+      LOW_END_MEMORY_GB: 4,
+      LOW_END_CPU_CORES: 2,
       
       // Visual Settings
       SEGMENTS_LOW: 32,
@@ -292,6 +285,10 @@
       AUDIO_ANALYSIS_MID_RANGE: 0.6,
       INTERNAL_SCALE_LOW_END: 0.6,
       INTERNAL_SCALE_DEFAULT: 0.7,
+      SCANLINE_BRIGHTNESS_ODD: 0.6,
+      SCANLINE_BRIGHTNESS_EVEN: 1.0,
+      AUDIO_BASS_SMOOTHING: 0.92,
+      AUDIO_BASS_BLEND: 0.08,
       
       // Timeouts
       YT_LOAD_TIMEOUT_MS: 15000,
@@ -305,8 +302,8 @@
     };
     
     // Detect low-end devices
-    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
-                     (navigator.deviceMemory && navigator.deviceMemory <= 4);
+    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= CONFIG.LOW_END_CPU_CORES) || 
+                     (navigator.deviceMemory && navigator.deviceMemory <= CONFIG.LOW_END_MEMORY_GB);
     
     /**
      * Returns motion scale factor based on user preferences
@@ -370,7 +367,7 @@
         if (r.ok) return await parser(r);
         console.warn(`[fetch] ${url} returned ${r.status}`);
       } catch (e) {
-        console.warn(`[fetch] ${url} failed:`, e.message);
+        console.error(`[fetch] ${url} failed:`, e.message);
       }
       return null;
     };
@@ -445,7 +442,9 @@
       } catch (e1) {
         try {
           i.contentWindow.postMessage([...arguments], YT_ORIGIN);
-        } catch (e2) { console.error('YouTube API postMessage failed:', e1, e2); }
+        } catch (e2) { 
+          console.error('YouTube API postMessage failed:', e1, e2); 
+        }
       }
     };
     /**
@@ -481,7 +480,9 @@
           this.analyser = this.audioContext.createAnalyser();
           this.analyser.fftSize = 256;
           this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-        } catch (e) { console.error('AudioContext/Analyser creation failed:', e); }
+        } catch (e) { 
+          console.error('AudioContext/Analyser creation failed:', e); 
+        }
       }
       initYTAPI() {
         if (IN_SANDBOX) return;
@@ -489,13 +490,17 @@
           this.ytPlayers.a = new YT.Player('yt-player-a', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('a'), onStateChange: (e) => this.onYTState('a', e), onError: () => this.onYTError()}});
           this.ytPlayers.b = new YT.Player('yt-player-b', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('b'), onStateChange: (e) => this.onYTState('b', e), onError: () => this.onYTError()}});
           this.ytReady = true;
-        } catch (e) { console.error('YouTube player initialization failed:', e); }
+        } catch (e) { 
+          console.error('YouTube player initialization failed:', e); 
+        }
       }
       onYTReady(k) {
         try {
           this.ytPlayers[k].setVolume(0);
           this.ytPlayers[k].mute();
-        } catch (e) { console.error('YouTube onReady setVolume/mute failed:', e); }
+        } catch (e) { 
+          console.error('YouTube onReady setVolume/mute failed:', e); 
+        }
       }
       onYTState(k, e) {
         if (IN_SANDBOX) return;
@@ -515,7 +520,9 @@
         this.muted = false;
         this.updateUI();
         if (this.audioContext && this.audioContext.state === 'suspended') {
-          this.audioContext.resume().catch((e) => { console.error('AudioContext resume failed:', e); });
+          this.audioContext.resume().catch((e) => { 
+            console.error('AudioContext resume failed:', e); 
+          });
         }
         const t = this.tracks[this.trackIndex];
         t.src ? this._loadMP3(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN});
@@ -546,7 +553,9 @@
               this.analyser.connect(this.audioContext.destination);
               p._connected = true;
             }
-          } catch (e) { console.warn('AudioContext connection:', e); }
+          } catch (e) { 
+            console.error('AudioContext connection failed:', e); 
+          }
           p.play().catch((e) => {
             console.warn('MP3 play failed:', t.src, e);
             if (k === this.activeKey) setTimeout(() => this.next({fast: true}), 1000);
@@ -577,7 +586,10 @@
             }, CONFIG.YT_LOAD_TIMEOUT_MS);
             if (fadeIn) this._fadeYT(k, CONFIG.FADE_MS);
             else { p.setVolume(100); p.unMute(); }
-          } catch (e) { console.warn('YT load error:', e); this.next({fast: true}); }
+          } catch (e) { 
+            console.error('YT load error:', e); 
+            this.next({fast: true}); 
+          }
         } else {
           console.warn('YT not ready');
           this.next({fast: true});
@@ -641,7 +653,9 @@
             mid /= (n6 - n2) * 255;
             high /= (n - n6) * 255;
             return {bass, mid, high, average: (bass + mid + high) / 3, beat: 0, energy: 0, subBass: bass, vocals: mid, treble: high};
-          } catch (e) { console.error('Playback switch failed:', e); }
+          } catch (e) { 
+            console.error('Audio analyser data fetch failed:', e); 
+          }
         }
         return {bass: 0.5, mid: 0.45, high: 0.35, average: 0.43, beat: 0, energy: 0.5, subBass: 0.5, vocals: 0.45, treble: 0.35};
       }
@@ -690,7 +704,7 @@
         this.tieRowStride = 2;
         this.zStep = 10;
         this.stars = [];
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
           this.stars.push({
             x: (Math.random() - 0.5) * this.w * 2,
             y: (Math.random() - 0.5) * this.h * 2,
@@ -768,7 +782,7 @@
       }
       frame(a) {
         const m = motionScale();
-        this.bassWobble = (this.bassWobble || 0) * 0.92 + (a?.bass || 0) * (a?.beat || 0) * 0.08;
+        this.bassWobble = (this.bassWobble || 0) * CONFIG.AUDIO_BASS_SMOOTHING + (a?.bass || 0) * (a?.beat || 0) * CONFIG.AUDIO_BASS_BLEND;
         this.clearImageData();
         for (const star of this.stars) {
           star.z -= this.speed * 2 * m;
@@ -845,7 +859,7 @@
         for (let y = 0; y < this.h; y++) {
           for (let x = 0; x < this.w; x++) {
             const i = x + y * this.w;
-            let brightness = y % 3 === 0 ? 0.6 : 1.0;
+            let brightness = y % 3 === 0 ? CONFIG.SCANLINE_BRIGHTNESS_ODD : CONFIG.SCANLINE_BRIGHTNESS_EVEN;
             const dist = Math.hypot(x - cx, y - cy);
             brightness *= 1.0 - Math.pow(dist / maxDist, CONFIG.BRIGHTNESS_FALLOFF) * CONFIG.BRIGHTNESS_SCALE;
             const r = (this.u32[i] & 255) * brightness | 0, g = ((this.u32[i] >> 8) & 255) * brightness | 0, b = ((this.u32[i] >> 16) & 255) * brightness | 0;
@@ -880,8 +894,8 @@
       INTERNAL_SCALE = Math.max(SCALE_MIN, Math.min(SCALE_MAX, b * Math.min(2, DPR)));
     };
     (() => {
-      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, 250); } catch (err) { console.error('Dots animation failed:', err); } })();
-      new SimpleCarousel(document.getElementById("cityCarousel"));
+      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, CONFIG.DOTS_INTERVAL_MS); } catch (err) { console.error('Dots animation failed:', err); } })();
+      new SimpleCarousel(document.getElementById("cityCarousel"), CONFIG.CAROUSEL_INTERVAL_MS);
       const tunnel = new PixelTunnel(canvas.getContext("2d"));
       const resize = () => {
         const dpr = window.devicePixelRatio || 1;

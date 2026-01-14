@@ -1,0 +1,358 @@
+Open in app
+Sidebar menu
+Search
+Write
+Notifications
+
+your-mommas-favorite
+Towards AI
+Member-only story
+
+DSPy 3 + GEPA: The Most Advanced RAG Framework Yet — Auto Reasoning & Prompting
+Gao Dalie (高達烈)
+Gao Dalie (高達烈)
+11 min read
+·
+Dec 21, 2025
+--
+
+
+7
+
+
+
+
+
+Press enter or click to view image in full size
+
+Last week, OpenAI experienced a sudden surge in the middle of the night and went into a panic. GPT-5.2 has been released, and the global AI throne has changed hands once again.
+
+A major update in just about four months is unusual. The trigger was competitive pressure. Reuters reports that Altman released “code red” in early December to accelerate development, and that the background to this was responding to Google’s Gemini 3.
+
+OpenAI itself also positions it as “(rather than new features) we have improved performance in areas such as intelligence, code processing, and long-form text comprehension, and are particularly strong at creating spreadsheets, creating presentations, and other complex, multi-step tasks.
+
+In other words, GPT-5.2 is not a “major update,” but rather a refined version that enhances reliability, long-term context, tool execution, and output generation for practical applications. It’s safe to say that it’s not a new toy, but rather a work tool that’s become easier to use.
+
+In recent years, “agentic AI” has been performing a complex series of actions, with the LLM invoking tools, making inferences, and finally providing a final answer. To optimise these actions, the standard approach has been to use reinforcement learning (RL) to “learn good actions with rewards.” But the problem is-
+
+RL only provides a simple scalar reward, “whether the answer is correct or not,” making learning extremely inefficient.
+Additionally, fine-tuning a model requires extensive rollout and computational costs.
+Last year, I created a video about DSPy, and since then, it has made significant progress. At its core, DSPy treats language models as unique “devices,” similar to CPUs and GPUs used in deep learning.
+
+In DSPy, you only need to declare the required “Natural Language Signatures,” without worrying about the specific details of the Prompt implementation (in fact, after a year of practice, we found that worrying about those details is largely meaningless and doesn’t change the fact that LLM outputs are unstable).
+
+DSPy can be understood as follows: based on these signatures, DSPy can automatically generate, optimise, and fine-tune the Prompt, ultimately outputting results that meet expectations.
+
+The GEPA’s Idea: Encouraging LLMs to “Reflect on Their Own Failures Instead of using reinforcement learning, GEPA (Genetic-Pareto Prompt Optimizer) takes an approach whereby LLMs themselves analyze their own behavior in natural language and suggest how to improve next time. In other words, instead of tweaking the model’s parameters, we reflect on and evolve the “prompt” itself.
+
+So, let me give you a quick demo of a live chatbot to show you what I mean.
+
+I will prepare the SPACE_KNOWLEDGE. This technique is an alternative way to train the model that outperforms reinforcement learning, and asks a question about space: “ Which space telescope is most powerful?” If you look at how the chatbot generates the output,
+
+you’ll see that the agent uses Term Frequency Inverse Document Frequency to calculate term frequency (how often a word appears in a document and how rare that word is across all documents, then uses cosine similarity to find which chunks are genuinely similar to your question rather than just having random word matches. Once the top three most relevant chunks are retrieved
+
+Then the Agent uses confidence-based RAG uses chain-of-thought to generate an answer plus a confidence level so it can honestly tell you “I don’t have enough information” instead of hallucinating, while the multi-hop RAG takes it further by first extracting bullet-pointed facts from the context, then synthesizing those facts into a comprehensive answer — this two-step process is crucial for complex questions that need you to combine information from multiple sources because it prevents the AI Agent from getting confused or missing connections.
+
+Now here’s where GEPA comes in as a game-changer: instead of manually tweaking prompts or using older optimizers like MIPROv2, GEPA uses genetic algorithms. It combines good prompts to make better ones.
+
+It utilises Pareto optimisation to maintain multiple effective prompts, rather than just one. It also utilises reflection, which it learns from mistakes by reading text feedback and making corrections. Over time, this helps GEPA automatically generate increasingly better prompts.
+
+It builds a prompt evolution tree. Each new improvement grows like a branch on a tree. Every branch keeps what worked before and adds a few improvements. Step by step, the prompts get closer to the best instructions for The RAG task. and it does this 35 times more efficiently than MIPROv2 while generating prompts that are 9 times shorter yet perform 10% better.
+
+Before we start! 🦸🏻‍♀️
+If you like this topic and you want to support me:
+
+Clap my article 50 times; that will really help me out.👏
+Follow me on Medium and subscribe to get my latest article for Free🫶
+Join the family — Subscribe to the YouTube channel
+What makes GPT-5.2 stand out?
+Let’s start with the most shocking data. One of the tests used to measure AI performance is called “ARC-AGI-2.”
+
+This is a test that requires solving abstract puzzles at first sight (inspiration), and does not rely on “looking for answers in past data (cheating).” In other words, it’s a test that measures “innate intelligence,” and take a look at this score. where you can see GPT-5.1: 17.6%, Gemini 3 Pro: 31.1%, GPT-5.2: 52.9% (+35.3 points!)
+
+This increase is crazy. It’s more than triple the score of the previous version, 5.1. It’s nearly double the score of Gemini.
+
+If previous AIs were like “geniuses who memorised textbooks word for word,” then GPT-5.2 has evolved into “geniuses who can solve difficult problems they’ve never seen before with ingenuity.” The common AI phrase, “I can’t do it because I wasn’t taught,” is becoming a thing of the past.
+
+The next metric worth noting is “GDPval .” This test measures how well a person can perform “real-world tasks” such as research, planning, and decision-making. GPT-5.1: 38.8%, Gemini 3 Pro: 53.5%, GPT-5.2: 70.9% (+32.1 points!)
+
+Again, the results are overwhelming. In 5.1, the AI ​​was a “newbie intern waiting for instructions,” but in 5.2, it has been promoted to the “manager who makes plans and manages projects”
+
+class. Those who have complained that “AI is smart, but difficult to use at work” will be amazed by the “on-the-job capabilities” of 5.2.
+
+What makes GEPA Unique?
+The core concept of GEPA originates from the essence of human learning — reflection.
+
+It’s not just about adding more instructions, but rather, like an experienced mentor, it examines past attempts, analyzes successes and shortcomings, and then proposes better solutions.
+
+GEPA constructs a prompt evolution tree, allowing each optimization to grow like a branch, accumulating improvements and gradually approaching the optimal prompt.
+
+
+Unlike traditional reinforcement learning (RL), GEPA leverages the reflective capabilities of language models, combined with domain-specific textual feedback, rather than relying solely on a single scalar metric.
+
+This is akin to giving the model “X-ray vision,” enabling it to notice small details in the task and produce strong results in just a few steps.
+
+Let’s start coding :
+Let us now explore the process step by step and unravel the answer to how to use the DSPy 3, GEPA Optimiser and Agentic RAG. We will install the libraries that support the model. For this, we will do a pip install requirements.
+
+I would like to inform you that the code I shared here is only a part of my code. If you would like the full folder, you can find it on my Patreon. This code took me a considerable amount of time
+
+pip install requirements
+Term Frequency Inverse Document Frequency.
+So, I create a Term Frequency Inverse Document Frequency retriever to find the documents that best match a user’s question. First, it stores all the documents and breaks each one into simple lowercase words, removing punctuation so the text is clean and easy to compare.
+
+Next, it looks at all documents together and calculates how important each word is across the whole collection: words that appear in many documents become less important, while words that appear in only a few documents become more important.
+
+When a query comes in, it is cleaned and broken into words the same way, and each word is given a score based on how often it appears and how rare it is overall.
+
+The retriever then compares the query to every document by measuring how similar their word scores are, using a mathematical method that checks how closely they point in the same direction.
+
+Each document gets a similarity score, the documents are sorted from best match to worst, and finally, the top few most relevant documents are returned to the user.
+
+class TFIDFRetriever:
+    """
+    TF-IDF (Term Frequency - Inverse Document Frequency) retriever.
+    
+    This is smarter than simple keyword matching because:
+    - TF: Words that appear often in a document are important for that document
+    - IDF: Words that appear in many documents are less important overall
+    
+    Example: "the" appears everywhere (low IDF), but "astronaut" is specific (high IDF)
+    """
+    
+    def __init__(self, documents: list[str], k: int = 3):
+        self.documents = documents
+        self.k = k
+        self.doc_tokens = [self._tokenize(doc) for doc in documents]
+        self.idf = self._compute_idf()
+    
+    def _tokenize(self, text: str) -> list[str]:
+        """Convert text to lowercase tokens, removing punctuation."""
+        import re
+        text = text.lower()
+        tokens = re.findall(r'\b[a-z]+\b', text)
+        return tokens
+    
+    def _compute_idf(self) -> dict[str, float]:
+        """Compute IDF for all terms in the corpus."""
+        doc_count = len(self.documents)
+        term_doc_counts = Counter()
+        
+        for tokens in self.doc_tokens:
+            unique_tokens = set(tokens)
+            for token in unique_tokens:
+                term_doc_counts[token] += 1
+        
+        idf = {}
+        for term, count in term_doc_counts.items():
+            # Standard IDF formula with smoothing
+            idf[term] = math.log((doc_count + 1) / (count + 1)) + 1
+        
+        return idf
+    
+    def _compute_tfidf(self, tokens: list[str]) -> dict[str, float]:
+        """Compute TF-IDF vector for a list of tokens."""
+        tf = Counter(tokens)
+        tfidf = {}
+        for term, count in tf.items():
+            tfidf[term] = count * self.idf.get(term, 1.0)
+        return tfidf
+    
+    def _cosine_similarity(self, vec1: dict, vec2: dict) -> float:
+        """Compute cosine similarity between two sparse vectors."""
+        common_terms = set(vec1.keys()) & set(vec2.keys())
+        if not common_terms:
+            return 0.0
+        
+        dot_product = sum(vec1[t] * vec2[t] for t in common_terms)
+        norm1 = math.sqrt(sum(v ** 2 for v in vec1.values()))
+        norm2 = math.sqrt(sum(v ** 2 for v in vec2.values()))
+        
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        
+        return dot_product / (norm1 * norm2)
+    
+    def __call__(self, query: str) -> list[str]:
+        """Retrieve top-k documents most similar to the query."""
+        query_tokens = self._tokenize(query)
+        query_vec = self._compute_tfidf(query_tokens)
+        
+        scores = []
+        for i, doc_tokens in enumerate(self.doc_tokens):
+            doc_vec = self._compute_tfidf(doc_tokens)
+            score = self._cosine_similarity(query_vec, doc_vec)
+            scores.append((score, i, self.documents[i]))
+        
+        # Sort by score descending
+        scores.sort(key=lambda x: x[0], reverse=True)
+        
+        return [doc for score, idx, doc in scores[:self.k]]
+Retrieve Argumentation Generation :
+After that, I created two methods to answer questions using retrieval augmentation generation. In the first one, the Agent takes a question, looks up the most relevant documents, joins them into one context, and then generates an answer while also reporting how confident it is.
+
+It saves the documents it used, so you can later see where the answer came from. The second system is made for harder questions that need more thinking.
+
+It first retrieves documents the same way, then pulls out only the important facts related to the question, and finally combines those facts to create a clear answer.
+
+It also keeps both the retrieved documents and the extracted facts, so you can inspect each step and understand how the final answer was built.
+
+class RAGWithConfidence(dspy.Module):
+    """RAG that reports its confidence in the answer."""
+    
+    def __init__(self, retriever):
+        super().__init__()
+        self.retriever = retriever
+        self.generate = dspy.ChainOfThought(AnswerWithConfidence)
+    
+    def forward(self, question: str):
+        docs = self.retriever(question)
+        context = "\n\n".join(docs)
+        result = self.generate(context=context, question=question)
+        result.retrieved_docs = docs
+        return result
+
+
+class MultiHopRAG(dspy.Module):
+    """
+    Multi-hop RAG: Extract facts first, then synthesize an answer.
+    
+    This helps with complex questions that require combining information
+    from multiple sources.
+    """
+    
+    def __init__(self, retriever):
+        super().__init__()
+        self.retriever = retriever
+        self.extract = dspy.Predict(ExtractFacts)
+        self.synthesize = dspy.Predict(SynthesizeAnswer)
+    
+    def forward(self, question: str):
+        # Step 1: Retrieve
+        docs = self.retriever(question)
+        context = "\n\n".join(docs)
+        
+        # Step 2: Extract relevant facts
+        extraction = self.extract(context=context, question=question)
+        
+        # Step 3: Synthesize answer from facts
+        result = self.synthesize(facts=extraction.facts, question=question)
+        
+        # Attach intermediate results for inspection
+        result.retrieved_docs = docs
+        result.extracted_facts = extraction.facts
+        
+        return result
+Reflective Prompt Evolution :
+Then I use GEPA learns and improve answers step by step. First, the metric checks the model’s answer against the expected answer. If the answer matches exactly, it gives a full score.
+
+If the answer is only partly correct, it gives a lower score and explains what is missing. If the answer is wrong, it gives a low score and clear feedback about the mistake.
+
+This feedback is important because GEPA reads it and learns how to improve future prompts. The simple RAG module then works by taking a question, retrieving related documents, joining them into one context, and generating an answer from that context.
+
+GEPA uses the scores and feedback from the metric to automatically evolve better prompts for this RAG system over time.
+
+def gepa_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
+    """
+    GEPA metric function with feedback.
+    
+    GEPA is special because it can use textual feedback to guide evolution.
+    This function returns both a score AND feedback about what went wrong.
+    """
+    expected = gold.expected_answer.lower()
+    actual = pred.answer.lower() if hasattr(pred, 'answer') else ""
+    
+    # Check if the key information is in the answer
+    if expected in actual:
+        return 1.0  # Perfect match
+    
+    # Partial credit for relevant answers
+    expected_words = set(expected.split())
+    actual_words = set(actual.split())
+    overlap = len(expected_words & actual_words) / len(expected_words) if expected_words else 0
+    
+    if overlap > 0.5:
+        score = 0.7
+        feedback = f"Partially correct. Expected '{gold.expected_answer}' but got related content."
+    elif overlap > 0:
+        score = 0.3
+        feedback = f"Contains some relevant info but missing key details. Expected: '{gold.expected_answer}'"
+    else:
+        score = 0.0
+        feedback = f"Incorrect. Expected answer to contain '{gold.expected_answer}' but got: '{actual[:100]}...'"
+    
+    # Return score with feedback for GEPA's reflection
+    from dspy.teleprompt.gepa.gepa_utils import ScoreWithFeedback
+    return ScoreWithFeedback(score=score, feedback=feedback)
+
+
+class SimpleRAGForOptimization(dspy.Module):
+    """A simple RAG module that GEPA will optimize."""
+    
+    def __init__(self, retriever):
+        super().__init__()
+        self.retriever = retriever
+        self.generate = dspy.Predict("context, question -> answer")
+    
+    def forward(self, question: str):
+        docs = self.retriever(question)
+        context = "\n\n".join(docs)
+        return self.generate(context=context, question=question)
+My Thoughts :
+GPT-5.2 may not be a model that can do “magical new things,” but it is a model that can change “tasks that you were previously unsure about entrusting to AI” into “tasks that you can entrust with confidence. “
+
+While future challenges remain, such as multimodal support, real-time optimisation, and safety assurance, these also represent significant development opportunities.
+
+Beyond 2025, GEPA is expected to lead to innovative applications such as self-correcting AI systems, neural-symbolic integration, and meta-prompt engineering. GEPA will undoubtedly continue to play a central role in the future of prompt technology.
+
+🧙‍♂️ I am an AI Generative expert! If you want to collaborate on a project, drop an inquiry here or book a 1-on-1 Consulting Call With Me.
+
+DeepSeek-V3.2 + DocLing + Agentic RAG: Parse Any Document with Ease
+If you’ve been following open-source logical modelling, you know it's become a highly competitive field. Every few…
+pub.towardsai.net
+
+I Used a Graph To Automate Prompt Knowledge, and It Blew My Mind
+In this Story, I have a super quick tutorial showing you how to use Graph to automate the Prompt knowledge to build a…
+pub.towardsai.net
+
+No More Embeddings, Just Gemini File Search to Get Higher Accuracy
+Last week I heard bad news, and life hit me hard again. Moments like that remind me how fragile everything is — how one…
+pub.towardsai.net
+
+Artificial Intelligence
+Machine Learning
+Data Science
+Programming
+Technology
+--
+
+
+7
+
+
+
+
+Towards AI
+Published in Towards AI
+101K followers
+·
+Last published 3 hours ago
+Making AI accessible to 100K+ learners. Find the most practical, hands-on and comprehensive AI Engineering and AI for Work certifications at academy.towardsai.net - we have pathways for any experience level. Monthly cohorts still open — use COHORT10 for 10% off!
+
+
+Follow
+Gao Dalie (高達烈)
+Written by Gao Dalie (高達烈)
+9.2K followers
+·
+1 following
+NC State Uni (Research Assistant), Learn AI Agent, LLMs, RAG & Generative AI. See everything I have to offer at the link below: https://linktr.ee/GaoDalie_AI
+
+Responses (7)
+your-mommas-favorite
+your-mommas-favorite
+﻿
+
+Cancel
+Respond
+See all responses

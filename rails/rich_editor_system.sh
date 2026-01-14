@@ -1,7 +1,7 @@
 # Rich Text Editor System
 # Tiptap (Medium-style) + stimulus-lightbox integration
 add_rich_editor() {
-  local app_name="${1:-current_app}"
+  typeset app_name="${1:-current_app}"
   log "Adding Tiptap rich text editor to $app_name"
   install_tiptap_packages
   create_tiptap_controller

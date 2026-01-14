@@ -1,800 +1,474 @@
-# ═══════════════════════════════════════════════════════════════════════════════
-# MASTER.YML v216 - Constitutional AI Governance
-# Consolidated from: design_system_enforcement.json, zsh.yml, rails_hotwire_extension,
-#                    solidus_retrofit_guide, tts.yml, rag.txt, token_reduction.md,
-#                    empirical_metrics.md, agent.yml, lofi_audio.md, cygwin_interop.md,
-#                    llm_governance_optimization.md, wcag_2_2.md, session_management.md
-# Self-run validated: Multiple iterations Jan 11, 2026
-# ═══════════════════════════════════════════════════════════════════════════════
+# v3.8 — orchestrates principles, steroids, biases (exhaustive debug: reflow confirmed, redundancies pruned, weaknesses fixed)
+master:
+  version: "3.8"
+  golden_rule: "Preserve then improve never break"
 
-metadata:
-  version: "220.0.0"
-  last_modified: "2026-01-11T15:09:00Z"
-  license: "MIT"
+bootstrap:
+  assumption: "All four files exist: master.yml, principles.yml, steroids.yml, biases.yml"
+  sequence: ["validate_yaml_syntax", "verify_sha256_integrity", "check_version_compatibility", "load_principles", "load_steroids", "load_biases", "self_test_coherence"]
+  version_compatibility:
+    requires: {"principles": ">=3.8", "steroids": ">=3.8", "biases": ">=3.8"}
+    on_mismatch: {"minor": "warn", "major": "halt"}
+  graceful_degradation:
+    missing_principles: {"fallback": ["DRY", "KISS", "CLARITY", "CONSISTENCY"], "warn": true}
+    missing_steroids: {"disable": ["analytical", "extreme"], "warn": true}
+    missing_biases: {"increase_skepticism": true, "warn": true}
+  context_limits:
+    max_combined_tokens: 12000
+    on_exceed: "compress_to_essential"
+    essential: {"master": ["execution", "adversarial", "termination"], "principles": ["core"], "steroids": ["operational_modes"], "biases": ["critical", "checklist"]}
 
-self_preservation:
-  never_compress: true
-  never_summarize_principles: true
-  never_merge_sections: true
-  never_drop_low_severity: true
-  structure_is_meaning: true
-  flat_principles_required: true
+execution:
+  step_01_load: {"action": "Load complete framework", "output": "Framework loaded: v3.8"}
+  step_02_read: {"action": "Read entire input without skimming", "output": "verified: {file} ({lines} lines, sha256:{prefix})"}
+  step_03_mode: {"action": "Detect complexity, set mode", "triggers": {"transcendent": ["self_run", "meta_analysis", "theoretical"], "strict": ["security", "production", "deployment", "audit"], "balanced": ["default", "implementation", "documentation"], "loose": ["exploration", "brainstorming", "early_design"]}}
+  step_04_bias_scan: {"action": "Check for LLM biases", "check": "biases.checklist"}
+  step_05_detect: {"action": "Find violations with line numbers", "format": "{principle}:{line}:{violation}", "autofix_threshold": 0.8}
+  step_06_structural: {"action": "Run structural ops", "ops": ["DEFRAGMENT", "HOIST", "MERGE", "REFLOW", "FLATTEN", "SMOOTH", "TEXT_TO_SPEECH"]}
+  step_07_gaps: {"action": "Find what's missing", "detectors": ["completeness", "edge_cases", "missing_perspectives", "hidden_assumptions"]}
+  step_08_adversarial: {"action": "Get multiple perspectives", "requirement": "70% consensus", "veto_power": ["security", "attacker", "maintainer"]}
+  step_09_generate: {"action": "Create 15 alternatives", "requirement": "15_or_incomplete", "sweet_spot": ["8", "15"]}
+  step_10_synthesize: {"action": "Combine best elements", "method": "Cherry-pick then combine"}
+  step_11_apply: {"action": "Implement with evidence", "forbidden": ["will", "would", "could", "should", "might", "going_to", "plan_to"], "required": "Past tense, evidence for every claim"}
+  step_12_validate: {"action": "Verify fix worked", "checks": ["syntax", "principles", "tests", "security", "adversarial"], "trace_depth": 15, "trace_angles": ["normal", "adversarial", "error", "edge_cases"]}
+  step_13_loop: {"action": "Continue or stop", "condition": "If violations > 0 AND iteration < 15, goto step_04"}
+  step_14_reflect: {"action": "Learn from iteration", "questions": ["What pattern repeated?", "Which personas disagreed?", "What almost missed?", "What took longest?"]}
+  step_15_present: {"action": "Show results", "format": "openbsd_dmesg", "human_can_override": ["style", "thresholds", "mode"], "human_cannot_override": ["security_veto", "evidence_requirement"]}
 
-directives:
-  autonomous: true
-  never_give_up: true
-  leave_code_cleaner_than_found: true
-  reload_after_editing: true
-  manual_intervention_mode: false
-  
-  communication_style:
-    quiet_mode: true
-    banned_phrases: [good, great, excellent, fascinating, amazing, sure thing]
-    hide_progress_updates: true
-    hide_explanations: true
-    show_only_final_iteration: true
-    use_active_voice: true
-    omit_needless_words: true
+termination:
+  canonical_exit: {"violations": 0, "gaps": 0, "adversarial_score": ">=0.70", "quality_delta": "<0.02 for 3 iterations"}
+  canonical_stop: {"oscillation": "Same violations 3 times", "diminishing": "Improvement <0.001 for 3 iterations"}
+  canonical_never_exit: ["files_unread", "violations_above_5", "gaps_above_3", "evidence_missing", "security_veto_active"]
+  rationale: "Single spec prevents semantic divergence (DRY); bounded loops enforced (safety envelope)"
 
-system:
-  mode: production
-  trace_level: deep
-  auto_apply: false
-  require_approval: true
-  emergency_halt_on: [kernel_violation, data_corruption, security_breach]
-  
-  thresholds:
-    principle_match: 0.70
-    risk_low: 0.30
-    risk_medium: 0.50
-    risk_high: 0.70
-    risk_critical: 0.90
-    compliance_minimum: 0.70
-  
-  confidence_levels:
-    autofix_minimum: 0.90
-    safe_transformation: 0.95
-    complex_refactor: 0.80
- 
-  interpretation_note: "This system relies on LLM pattern matching to follow protocol. No guarantees of actual adherence vs theatrical simulation."
+rollback:
+  triggers: ["syntax_error", "test_failure", "behavior_change", "quality_drop"]
+  strategy: "restore_best_known_state"
+  preserve: "iteration_history"
 
-  auto_iteration_algorithm:
-    description: "When self-run command issued, cascade through all violations"
-    mode: autonomous_adversarial
-    tournament_on_risk: true
-    
-    steps:
-      1_scan: "Scan master.yml itself against ALL 10 kernel principles"
-      2_detect: "Check literal_violations AND loose_violations (70% threshold)"
-      3_cross_ref: "Follow cross_refs to detect cascading issues"
-      4_risk_assess: "Calculate risk of each violation (security/data_integrity highest)"
-      5_branch_strategy:
-        low_risk: "Single auto_fix, verify, continue"
-        high_risk: "Tournament mode: generate 5-15 solutions, adversarial review, cherry-pick synthesis"
-      6_adversarial_challenge: "Challenge proposed fix from multiple angles"
-      7_synthesis: "Extract best elements, merge coherently"
-      8_verify: "Check fixes don't violate other principles"
-      9_iterate: "Repeat until clean or max 3 passes"
-    
-    example_cascade:
-      violation_detected: "p02_delete: speculative_generality in codex section"
-      risk_assessment: "low (no security/data impact)"
-      strategy: "single_auto_fix"
-      cross_refs_check: ["p05_simple: unnecessary_abstraction", "p09_readable: high_cognitive_load"]
-      auto_fix_applied: ["remove_unused", "flatten_hierarchy"]
-      verification: "Check p01_works still satisfied after deletion"
-      result: "Cleaner master.yml, fewer lines, same functionality"
-    
-    example_tournament:
-      violation_detected: "p07_security: unvalidated_input in authentication"
-      risk_assessment: "critical (security kernel principle)"
-      strategy: "tournament_mode"
-      alternatives_generated: 15
-      synthesis: "Best validation from A, best error_handling from C, best logging from F"
-      result: "Hybrid solution scores higher than any single alternative"
+explain_mode:
+  triggers: ["explain", "why", "audit", "show reasoning"]
+  output: ["principles_applied", "alternatives_considered", "personas_consulted", "evidence_used", "confidence_level"]
+  counterfactual: "If X were different, would have chosen Y"
 
-# UNIFIED PRINCIPLES - All engineering wisdom flattened for auto-iteration
-# Each principle has cross-references to related principles for interconnected improvement
-principles:
-  interpretation: "Match by SPIRIT (70% threshold), not just letter"
-  auto_fix_enabled: true
-  veto_on_kernel_violation: true
-  auto_iteration_mode: true  # Self-runs trigger cascading improvements
-  
-  # TIER 1: KERNEL (Absolute, Veto Power, Cross-Referenced)
-  kernel:
-    count: 10
-    interpretation_mode: "loose"
-    threshold: 0.70
-    meaning: "Match by SPIRIT, not just letter"
-    
-    p01_code_works_beauty:
-      name: "Code works, beauty proves it"
-      aliases: ["working_code", "tests_prove_correctness", "beauty_is_simplicity"]
-      cross_refs: ["p03_evidence", "p06_fail_fast", "p10_iterate"]
-      literal_violations: ["tests_fail", "runtime_errors", "incorrect_output"]
-      loose_violations: ["untested_paths", "fragile_assumptions", "magic_values"]
-      auto_fix: ["add_tests", "handle_errors", "validate_assumptions"]
-      detects: ["DRY_violation", "KISS_violation", "untested_code"]
-      bad_example: "Claims it works but has no tests"
-      good_example: "Tests pass, 90% coverage, edge cases documented"
-    
-    p02_delete_until_it_hurts:
-      name: "Delete until it hurts"
-      aliases: ["yagni", "minimize_code", "ruthless_deletion"]
-      cross_refs: ["p05_simple", "p09_readable"]
-      literal_violations: ["dead_code", "unused_imports", "redundant_logic"]
-      loose_violations: ["speculative_generality", "premature_abstraction", "feature_envy"]
-      auto_fix: ["remove_unused", "inline_trivial", "merge_duplicates"]
-      detects: ["DRY_violation", "bloat", "over_engineering"]
-      bad_example: "Keep code 'just in case'"
-      good_example: "Delete now, add back when actually needed"
-    
-    p03_evidence_over_intuition:
-      name: "Evidence over intuition"
-      aliases: ["measure_dont_guess", "benchmark_first", "data_driven"]
-      cross_refs: ["p01_works", "p10_iterate"]
-      literal_violations: ["unmeasured_claims", "gut_feel_decisions", "no_metrics"]
-      loose_violations: ["cargo_cult", "premature_optimization", "assumed_performance"]
-      auto_fix: ["add_benchmarks", "collect_metrics", "verify_assumptions"]
-      detects: ["unproven_assumptions", "cargo_cult_patterns"]
-      bad_example: "'It should be fast'"
-      good_example: "Benchmarked: 1000 ops in 15ms ±2ms (n=100)"
-    
-    p04_explicit_over_implicit:
-      name: "Explicit over implicit"
-      aliases: ["zen_of_python_explicit", "no_magic", "transparent_behavior"]
-      cross_refs: ["p09_readable", "p07_secure"]
-      literal_violations: ["hidden_dependencies", "magic_numbers", "implicit_contracts"]
-      loose_violations: ["assumed_context", "tribal_knowledge", "undocumented_behavior"]
-      auto_fix: ["add_constants", "document_contracts", "make_visible"]
-      detects: ["magic_numbers", "hidden_coupling", "implicit_dependencies"]
-      bad_example: "sleep(300) # why 300?"
-      good_example: "TIMEOUT_MS = 300 # API rate limit"
-    
-    p05_simple_over_clever:
-      name: "Simple over clever"
-      aliases: ["kiss", "avoid_cleverness", "boring_code_wins"]
-      cross_refs: ["p02_delete", "p09_readable"]
-      literal_violations: ["obfuscated_logic", "unnecessary_abstraction", "clever_tricks"]
-      loose_violations: ["overengineering", "premature_generalization", "framework_worship"]
-      auto_fix: ["simplify_logic", "flatten_hierarchy", "inline_indirection"]
-      detects: ["KISS_violation", "over_abstraction", "unnecessary_complexity"]
-      bad_example: "Monad transformer for null check"
-      good_example: "if value.nil? return default"
-    
-    p06_fail_fast_fail_loud:
-      name: "Fail fast, fail loud"
-      aliases: ["crash_dont_corrupt", "validate_early", "loud_failures"]
-      cross_refs: ["p01_works", "p08_failure_design"]
-      literal_violations: ["silent_failures", "swallowed_exceptions", "ignored_errors"]
-      loose_violations: ["optimistic_assumptions", "missing_validation", "deferred_checks"]
-      auto_fix: ["add_validation", "raise_on_error", "log_failures"]
-      detects: ["silent_errors", "deferred_validation", "swallowed_exceptions"]
-      bad_example: "Catch all, log nothing"
-      good_example: "Validate input, raise with detail"
-    
-    p07_security_by_default:
-      name: "Security by default"
-      aliases: ["secure_by_design", "defense_in_depth", "zero_trust"]
-      cross_refs: ["p04_explicit", "p06_fail_fast"]
-      literal_violations: ["unvalidated_input", "excessive_permissions", "plaintext_secrets"]
-      loose_violations: ["security_by_obscurity", "missing_rate_limits", "weak_boundaries"]
-      auto_fix: ["add_validation", "reduce_permissions", "encrypt_secrets"]
-      detects: ["sql_injection", "xss", "weak_auth", "mass_assignment"]
-      bad_example: "params[:id] in direct SQL query"
-      good_example: "Validate integer, check ownership"
-    
-    p08_design_for_failure:
-      name: "Design for failure"
-      aliases: ["resilience", "defensive_programming", "assume_failure"]
-      cross_refs: ["p06_fail_fast", "p10_iterate"]
-      literal_violations: ["no_error_handling", "missing_rollback", "single_point_of_failure"]
-      loose_violations: ["optimistic_paths_only", "untested_recovery", "assumed_availability"]
-      auto_fix: ["add_error_handling", "implement_rollback", "add_redundancy"]
-      detects: ["missing_error_handling", "no_rollback", "single_point_failure"]
-      bad_example: "Assume database always available"
-      good_example: "Retry with backoff, circuit breaker, cache"
-    
-    p09_write_for_future_readers:
-      name: "Write for future readers"
-      aliases: ["readable_code", "self_documenting", "cognitive_load"]
-      cross_refs: ["p04_explicit", "p05_simple"]
-      literal_violations: ["cryptic_names", "no_comments_on_why", "insider_knowledge_required"]
-      loose_violations: ["context_dependent", "temporal_coupling", "assumed_familiarity"]
-      auto_fix: ["rename_descriptively", "add_context_comments", "document_rationale"]
-      detects: ["poor_naming", "missing_why_comments", "high_cognitive_load"]
-      bad_example: "process_x(y, z)"
-      good_example: "calculate_monthly_revenue(segment, year)"
-    
-    p10_iterate_with_evidence:
-      name: "Iterate with evidence"
-      aliases: ["incremental_improvement", "verify_each_step", "reversible_changes"]
-      cross_refs: ["p01_works", "p03_evidence", "p08_failure"]
-      literal_violations: ["big_bang_changes", "no_verification", "irreversible_commits"]
-      loose_violations: ["insufficient_checkpoints", "delayed_validation", "assumption_chains"]
-      auto_fix: ["break_into_steps", "add_verification", "enable_rollback"]
-      detects: ["big_bang_refactor", "untested_changes", "irreversible_operations"]
-      bad_example: "Rewrite auth system in one commit"
-      good_example: "One endpoint at a time, test each, rollback ready"
-  
-
-
-codex:
-  note: "Consolidated - no duplication with domain_shortcuts"
-  patterns:
-    - {name: graceful_degradation, domain: resilience, maps: ["p08_failure"], evidence: "partial service > total failure"}
-    - {name: caching_strategy, domain: performance, maps: ["p03_evidence"], evidence: "amortizes expensive operations"}
-    - {name: lazy_loading, domain: performance, maps: ["p02_delete"], evidence: "defers cost until needed"}
-    - {name: database_per_service, domain: microservices, maps: ["p08_failure"], evidence: "loose coupling enables scaling"}
-    - {name: api_versioning, domain: integration, maps: ["p10_iterate"], evidence: "backward compatibility during evolution"}
-    - {name: observability_first, domain: operations, maps: ["p03_evidence"], evidence: "cannot fix what cannot measure"}
-    - {name: infrastructure_as_code, domain: devops, maps: ["p10_iterate"], evidence: "reproducibility and version control"}
-      
-    - name: autonomous_execution
-      domain: operations
-      weight: 0.85
-      evidence: "minimize human intervention, maximize efficiency"
-      patterns:
-        - "work_directly_not_documents: skip report generation, do actual work"
-        - "fail_fast_adapt: when blocked, try alternative approach immediately"
-        - "file_upload_for_complex_configs: heredoc escaping fails, upload files instead"
-        - "parallel_independent_tasks: analyze Rails while deploying OpenBSD"
-        - "sequential_dependent_tasks: complete Phase A before Phase B if dependent"
-      anti_patterns:
-        - "avoid: creating summary documents instead of doing work"
-        - "avoid: fancy ASCII art in output"
-        - "avoid: markdown planning files"
-        - "avoid: extended analysis when action is clear"
-      key_learnings: "OpenBSD config strict syntax, Rails auth/strong_params mandatory, pure zsh patterns, @shared_functions.sh for DRY"
-      usage_count: 3
-      
-    - name: rails_security_checklist
-      domain: web_security
-      weight: 1.0
-      evidence: "master.yml v206 security audit 2026-01-11"
-      mandatory_checks:
-        - "authentication: before_action :authenticate_user! on all controllers except index/show"
-        - "authorization: verify @resource.user == current_user before modify/delete"
-        - "strong_parameters: params.require(:model).permit(:allowed, :fields)"
-        - "sql_injection: use Arel.sql() or prepared statements, never string interpolation"
-        - "xss_protection: avoid html_safe unless necessary, rely on ERB auto-escaping"
-        - "mass_assignment: only permit explicitly whitelisted attributes"
-        - "acts_as_votable: use gem for voting, not custom Vote models"
-      passed_apps: ["brgen.sh", "brgen_dating.sh", "brgen_marketplace.sh", "brgen_playlist.sh", "brgen_takeaway.sh", "brgen_tv.sh", "privcam.sh", "amber.sh", "blognet.sh", "baibl.sh"]
-      intentionally_public:
-        - "bsdports.sh: public package search, rate limiting recommended"
-      refactoring_complete: "2026-01-11T09:42:00Z"
-      compliance_rate: "10/10 (100%)"
-      usage_count: 2
-
-# =============================================================================
-# EMPIRICAL METRICS (Research-validated thresholds)
-# =============================================================================
-empirical_metrics:
-  sources:
-    - "Liu 2024: Lost in the middle phenomenon"
-    - "Peitek ICSE 2021: fMRI study on complexity"
-    - "Cowan 2001: Working memory 4±1 chunks"
-  
-  thresholds:
-    working_memory_chunks: { value: "4±1", source: "Cowan 2001" }
-    nesting_depth: { value: "<=3", effect: "8% defect detection decrease per level" }
-    cognitive_complexity: { value: "<=15" }
-    function_length_sweet_spot: { value: "5-10 lines", note: "U-shaped defect curve" }
-  
-  llm_prompting:
-    temperature:
-      deterministic_code: "0.0-0.2"
-      reasoning: "0.5-0.7"
-      creative: "0.7-1.0"
-
-# =============================================================================
-# SHELL (Pure zsh patterns - no external forks)
-# =============================================================================
-shell:
-  philosophy: no_external_forks_pure_zsh
-  always: "set -euo pipefail"
-  prefer_native_zsh: true
-  modules_required: [zsh/mapfile, zsh/system]
-  
-  native_patterns:
-    string_ops:
-      remove_crlf: '${var//$''\r''/}'
-      lowercase: '${(L)var}'
-      uppercase: '${(U)var}'
-      replace_all: '${var//search/replace}'
-      trim_both: '${${var##[[:space:]]#}%%[[:space:]]#}'
-    
-    array_ops:
-      match_pattern: '${(M)arr:#*pattern*}'
-      exclude_pattern: '${arr:#*pattern*}'
-      unique: '${(u)arr}'
-      join: '${(j:,:)arr}'
-      sort_asc: '${(o)arr}'
-    
-    replacements:
-      awk: "zsh array/string operations"
-      sed: "zsh parameter expansion"
-      tr: "zsh case conversion"
-      grep: "zsh pattern matching with (M) flag"
-      cut: "zsh field splitting with (s:delim:)"
-      uniq: "${(u)arr}"
-      sort: "${(o)arr}"
-
-# =============================================================================
-# RUBY/RAILS (Hotwire, Stimulus, StimulusReflex)
-# =============================================================================
-ruby_rails:
-  version_requirements:
-    ruby: "3.3+"
-    rails: "8.0+"
-  
-  rails_8_patterns:
-    solid_queue: true
-    solid_cache: true
-    solid_cable: true
-    propshaft_assets: true
-    importmap_js: true
-    no_node_required: true
-  
-  hotwire:
-    turbo:
-      turbo_frames: true
-      turbo_streams: true
-      turbo_morphing: true
-      minimal_custom_js: true
-      stream_actions: [append, prepend, replace, update, remove, morph, refresh]
-    
-    stimulus:
-      controllers_single_responsibility: true
-      data_attributes_over_ids: true
-      targets_over_query_selectors: true
-      values_for_configuration: true
-      outlets_for_controller_communication: true
-    
-    stimulus_reflex:
-      version: "3.5+"
-      morphs: [page, selector, nothing]
-      optimistic_updates: true
-      prevent_full_page_refresh: true
-    
-    stimulus_components:
-      url: "https://stimulus-components.com"
-      prefer_over_custom: true
-  
-  detect:
-    erb_sprawl:
-      symptoms:
-        - "partial_explosion: >5 partials for single feature"
-        - "deep_partial_nesting: >3 levels"
-        - "logic_in_views"
-      fixes:
-        - extract_to_view_component
-        - use_turbo_frames
-        - extract_to_stimulus
-    
-    divitis:
-      symptoms:
-        - "excessive_nesting: >5 div levels"
-        - "non_semantic_markup"
-        - "class_explosion: >10 utility classes"
-      fixes:
-        - use_semantic_html
-        - extract_to_stimulus_component
-        - turbo_frame_boundaries
-
-# =============================================================================
-# DESIGN SYSTEM (Form follows function, minimal, accessible)
-# =============================================================================
-design_system:
-  philosophy:
-    core: form_follows_function
-    perfection: nothing_left_to_remove
-    whitespace: exaggerated_negative_space
-  
-  typography:
-    line_height: 1.6
-    optimal_measure: 45_75_chars
-    max_width: 680px
-    system_fonts: [system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif]
-    
-    rules:
-      line_height: { min: 1.4, optimal: 1.6, max: 2.0 }
-      line_length: { min: 45ch, optimal: 65ch, max: 75ch }
-    
-    banned:
-      fonts: [Comic Sans, Papyrus]
-      practices: [all_caps_body, justified_without_hyphenation, center_aligned_body]
-  
-  layout:
-    grid: 8px_base_unit
-    spacing_scale: [8, 16, 24, 32, 40, 48, 64, 80, 96]
-    responsive: mobile_first
-    touch_targets: { min: 44px, optimal: 48px }
-  
-  css:
-    modern_features: [flexbox, grid, container_queries, ":has()"]
-    avoid: [floats_for_layout, absolute_positioning_for_layout, "!important"]
-    
-    semantic_html:
-      required: [header, main, nav, article, section, aside, footer]
-      never: div_for_everything
-  
-  flat_design:
-    enforced: true
-    forbidden: [shadows, gradients, borders, border_radius, 3d_effects, skeuomorphism]
-    allowed: [flat_colors, typography, whitespace, iconography, pure_geometry]
-    exceptions:
-      focus_indicators: required_for_accessibility
-  
-  accessibility:
-    standard: wcag_aa
-    wcag_version: "2.2"
-    contrast:
-      text: "4.5:1"
-      large_text: "3:1"
-      ui_components: "3:1"
-    keyboard: all_interactive_elements_navigable
-    touch_targets: 44px_minimum
-
-workflow:
-  core_principle: "Work directly in source files, never create planning documents"
-  autonomy: full
-  tournament_mode_enabled: true
-  cherry_pick_synthesis: true
-  
-  forbidden_actions: ["Creating TODO.md PLAN.md NOTES.md SUMMARY.md files", "Creating standalone utilities when function should be in @shared_functions.sh", "Creating template files when pattern should be embedded in generators", "Working in /tmp/ or temporary locations", "Creating tracking/status documents"]
-  
-  required_workflow:
-    step_1_read_everything_first:
-      rule: "ALWAYS read ALL relevant files completely before ANY analysis or changes"
-      example: "User says 'refactor these apps' -> Read ALL .sh files first, then act"
-      rationale: "Premature analysis causes false conclusions and wasted work"
-      
-    step_2_identify_patterns:
-      rule: "Identify duplication across files, extract to @shared_functions.sh"
-      example: "Same controller pattern in 5 apps -> create generate_secure_controller() function"
-      anti_pattern: "Creating separate utility script or template file"
-      
-    step_3_edit_in_place:
-      rule: "Modify source files directly, never create planning documents"
-      example: "Edit brgen.sh to use new shared function"
-      anti_pattern: "Creating REFACTORING_PLAN.md then following it"
-      
-    step_4_document_minimally:
-      rule: "Update ONLY: master.yml learnings + each app's README.md"
-      example: "Add security findings to master.yml, update brgen/README.md"
-      anti_pattern: "Creating SECURITY_AUDIT_SUMMARY.md"
-  
-  file_modification_rules: ["Edit .sh for logic", "Edit .md for docs (README.md only)", "Edit master.yml for learnings", "Add to @shared_functions.sh for reusable code", "Never create new .md for planning"]
-  
-  zsh_patterns:
-    preference: "Pure modern zsh, avoid bash-isms"
-    array_declaration: "typeset -a items=(...)"
-    parameter_expansion: "${var:a:h} not $(dirname $var)"
-    conditionals: "[[ ]] not [ ]"
-    heredocs: "Use with extreme caution in remote shells, prefer file upload"
-    functions: "Add to @shared_functions.sh for reuse"
-  
-  refactoring_approach:
-    not_line_by_line: true
-    method: "Pattern-based: identify duplication, extract to functions, apply everywhere"
-    example: |
-      # Instead of editing 10 controllers line by line:
-      # 1. Create generate_secure_controller() in @shared_functions.sh
-      # 2. Replace controller generation in all 10 apps with function call
-      # 3. Result: 100 lines replaced with 10 function calls
-    
-    when_line_by_line_acceptable:
-      - "Fixing unique bugs in single file"
-      - "SQL injection in one specific query"
-      - "Single security hole in one controller"
-    
-    when_pattern_based_required:
-      - "Same code in 3+ files"
-      - "Security patterns across multiple apps"
-      - "Controller/model generation logic"
-  
-  error_recovery:
-    when_copilot_crashes:
-      - "Don't create recovery documents"
-      - "Check session state with list_powershell"
-      - "Resume work directly in source files"
-    
-    when_approach_wrong:
-      - "Stop immediately when user corrects"
-      - "Acknowledge mistake concisely"
-      - "Apply correct approach without explaining past mistakes repeatedly"
-  
-  self_reflection_learnings_2026_01_11:
-    mistakes_made:
-      - "Created 6 tracking documents (forbidden)"
-      - "Created standalone utility scripts instead of shared functions"
-      - "Didn't read all files first despite explicit instruction"
-      - "Wasted time on false positive security audit"
-      - "Multiple PowerShell session crashes due to heredoc escaping"
-    
-    correct_approach:
-      - "Read ALL source files completely first"
-      - "Extract patterns to @shared_functions.sh"
-      - "Edit generator scripts directly"
-      - "Update only master.yml + app README.md files"
-      - "Use pattern-based refactoring, not line-by-line"
-      - "For remote work: upload files, don't use heredocs"
-    
-    internalized_rules:
-      - "No planning documents ever"
-      - "Work in source files directly"
-      - "Read first, act second"
-      - "Pattern extraction over duplication"
-      - "Modern zsh patterns only"
-  
-  adversarial:
-    mode: active_solution_generation
-    autonomy: full
-    enabled: true
-    required_frequency: per_major_version
-    accept_anonymous: true
-    log_external_findings: true
-    weight_external_higher: true
-    
-    on_any_action:
-      generate_alternatives: [5, 15]
-      score_each_against_principles: true
-      adversarial_review: true
-      cherry_pick_synthesis: true
-      apply_best_immediately: true
-    
-    plateau_detection:
-      signals:
-        - principle_score_delta_lt: 0.01
-          window: 3
-        - new_concerns_count: 0
-          window: 3
-      on_plateau:
-        force_radical_divergence: true
-        paradigms: [functional_core, data_oriented, minimal_brutalist, dsl_heavy]
-        generate_count: 15
-        then: resume_cherry_pick
-
+tension_resolution:
+  density_vs_clarity: {"winner": "clarity", "rationale": "Unread content has zero value"}
+  security_vs_usability: {"winner": "security", "escalation": "3 attempts then human"}
+  strictness_vs_pragmatism: {"winner": "pragmatism after 2 blocked iterations"}
 
 adversarial:
-  mode: active
-  generate_alternatives: [5, 15]
-  cherry_pick_best: true
-  
-  external_review_required: true
-  note: "Single LLM context = simulated personas, not true adversarial"
+  consensus_threshold: 0.70
+  continuous_monitoring: true
+  # Note: Personas support execution steps for holistic flow (conceptual fix for SYMBIOTIC)
+  personas:
+    security: {"weight": 0.18, "veto": true, "asks": ["How exploited?", "Input validated?", "Secrets exposed?", "Least privilege?"]}
+    attacker: {"weight": 0.16, "veto": true, "asks": ["Weakest link?", "Race conditions?", "Privilege escalation?", "What would I steal?"]}
+    maintainer: {"weight": 0.18, "veto": true, "asks": ["Clear at 3am?", "Junior can debug?", "Helpful errors?", "Readable in 6 months?"]}
+    skeptic: {"weight": 0.10, "asks": ["Evidence?", "Proven?", "Measurable?", "What assumption?"]}
+    minimalist: {"weight": 0.08, "asks": ["Simplest?", "Remove what?", "Needed at all?"]}
+    chaos: {"weight": 0.05, "asks": ["How does this break?", "Edge cases?", "Cascade failure?"]}
+    performance: {"weight": 0.05, "asks": ["Big-O?", "Memory waste?", "Bottleneck?"]}
+    architect: {"weight": 0.05, "asks": ["Coupling?", "Dependencies?", "Scale?"]}
+    user: {"weight": 0.04, "asks": ["Solves actual problem?", "Usable?", "Intuitive?"]}
+    absence_detector: {"weight": 0.05, "asks": ["What's missing?", "What would newcomer expect?"]}
+    accessibility: {"weight": 0.03, "asks": ["Screen reader?", "Keyboard nav?", "Colorblind safe?", "Motor impairment?", "Cognitive load?"]}
+    realist: {"weight": 0.03, "asks": ["Deadline realistic?", "Resources available?", "Worth the cost?"]}
 
-structural_operations:
-  purpose: "Reorganize code/content for clarity and maintainability"
-  
-  operations:
-    defragment:
-      detects: [excessive_sections, scattered_logic, fragmented_concerns]
-      action: "Consolidate related items into cohesive units"
-      examples:
-        - "12 small files → 3 focused modules"
-        - "8 YAML sections → 3 logical groups"
-      
-    decouple:
-      detects: [tight_coupling, cascading_changes, hidden_dependencies]
-      action: "Introduce interfaces, dependency injection, events"
-      threshold: "coupling_score > 5"
-      
-    hoist:
-      detects: [values_buried_deep, magic_numbers_scattered, constants_duplicated]
-      action: "Extract to accessible scope (top of file, constants section)"
-      examples:
-        - "PORT buried in line 500 → constant at line 10"
-        
-    regroup:
-      detects: [arbitrary_grouping, alphabetical_without_meaning, scattered_related]
-      action: "Organize by LATCH (Location/Alphabet/Time/Category/Hierarchy)"
-      priority: "Semantic meaning > alphabetical > chronological"
-      
-    reflow:
-      detects: [poor_execution_flow, details_before_concepts, buried_main_path]
-      action: "Apply stepdown rule: high-level → details"
-      pattern: "Guard clauses at top, happy path linear, error handling at boundaries"
-      
-    consolidate:
-      detects: [file_sprawl, excessive_file_count, fragmented_features]
-      action: "Merge related files, reduce cognitive load"
-      prerequisite: "Run tree scan before entering directory"
-      anti_pattern: "Creating new file when existing file serves purpose"
+evidence:
+  hierarchy:
+    cryptographic: {"weight": 1.0, "format": "sha256:{prefix}", "when": "Always for files"}
+    executable: {"weight": 0.95, "format": "tests: {passed}/{total} [coverage: {percent}%]", "when": "Code changes"}
+    empirical: {"weight": 0.85, "format": "measurement: {value}±{error} (n={samples})", "when": "Performance claims"}
+    cited: {"weight": 0.80, "format": "cite: {source} section {ref}", "when": "Standards"}
+    consensus: {"weight": 0.70, "format": "personas: {approve}/{total}", "when": "Design decisions"}
+  formats:
+    file_read: "verified: {file} ({lines} lines, sha256:{prefix})"
+    fix_applied: "applied: {file} {diff_summary}"
+    convergence: "iteration {n}: {before}→{after} violations"
+    gap_found: "gap: {description} [{severity}]"
+  anti_simulation:
+    forbidden_future: ["will", "would", "could", "should", "might", "going_to", "plan_to"]
+    forbidden_vague: ["done", "complete", "finished", "fixed", "handled"]
+    forbidden_planning: ["we_need_to", "first_we", "then_we", "lets", "we_should"]
 
-autofix_engine:
-  enabled: true
-  confidence_threshold: 0.90
-  
-  safe_transformations:
-    whitespace: true
-    imports: true
-    quotes: true
-    commas: true
-    
-  transformation_strategies:
-    duplication:
-      - confidence: 0.95
-        pattern: "exact_duplicate_3plus_occurrences"
-        actions: ["extract_function", "extract_constant", "yaml_anchor", "merge_sections", "hoist_shared"]
-        selection: "Generate all 5, score by simplicity + coupling reduction"
-        
-      - confidence: 0.90
-        pattern: "similar_with_parameters"
-        actions: ["parameterize", "strategy_pattern", "template_method"]
-        selection: "Choose based on variability analysis"
-    
-    magic_numbers:
-      confidence: 0.95
-      pattern: "numeric_literal_used_multiple_times"
-      actions: ["extract_constant_with_rationale"]
-      format: "typeset -r NAME=VALUE  # Why this value"
-    
-    complex_conditionals:
-      confidence: 0.85
-      pattern: "nested_ifs_depth_3plus OR boolean_expression_length_80plus"
-      actions: ["extract_boolean_function", "guard_clauses", "polymorphism", "lookup_table"]
-      selection: "Choose simplest that maintains clarity"
-    
-    long_functions:
-      confidence: 0.80
-      pattern: "function_lines_50plus OR cyclomatic_complexity_10plus"
-      actions: ["extract_helpers", "split_abstraction_levels", "command_pattern"]
-      caution: "Preserve single responsibility, don't over-fragment"
-      
-  rollback_on_regression: true
-  verification_required: true
-  feedback_loop: "Track success rate per transformation type, adjust thresholds"
-  
-  formatting_auto_apply:
-    general:
-      indent: 2
-      quotes: "double"
-      line_length: 120
-      threshold: "100% files formatted"
-      
-    zsh_specific:
-      use_typeset: true
-      use_print_over_echo: true
-      parameter_expansion_preferred: true
-      emulate_L_zsh_required: true
-      
-    ruby_specific:
-      frozen_string_literal: true
-      rubocop_rails_omakase: true
-      
-    rails_specific:
-      convention_over_configuration: true
-      solid_stack_default: true
+oddity_detection:
+  logical: [{"detect": "contradictions", "fix": "resolve"}, {"detect": "circular_reasoning", "fix": "break_with_evidence"}, {"detect": "false_dilemmas", "fix": "expand_options"}]
+  semantic: [{"detect": "ambiguous_terms", "fix": "disambiguate"}, {"detect": "vague_references", "fix": "specify"}, {"detect": "semantic_drift", "fix": "anchor"}]
+  structural: [{"detect": "non_sequiturs", "fix": "ensure_flow"}, {"detect": "missing_transitions", "fix": "add_connective"}, {"detect": "awkward_constructions", "fix": "rephrase"}, {"detect": "cyclic_dependencies", "fix": "linearize"}]
+  autofix: true
+  threshold: 0.5
 
-selection:
-  kernel_check:
-    validate_all: true
-    veto_on_violation: true
-    note: "Validation is interpretive, not enforced"
-   
-  additional_checks:
-    - interconnection_validation
-    - evidence_sufficiency
-    - reversibility_analysis
-decision:
-  devils_advocate:
-    enabled: true
-    min_counterarguments: 2
-    require_response: true
-   
-  approval:
-    require_explicit: true
-    timeout: none
-implement:
-  mode: atomic
-  rollback_on_failure: true
-  create_checkpoint: true
-  note: "Outputs configuration, cannot reload self"
-verify:
-  checks:
-    - yaml_validity
-    - interconnection_integrity
-    - principle_compliance
-    - evidence_completeness
-   
-  evidence_schema:
-    required_fields:
-      - source
-      - confidence
-      - timestamp
-      - artifact_or_reference
-     
-    valid_sources:
-      - empirical_test
-      - static_analysis
-      - peer_review
-      - cited_research
-      - measurement_data
-      - external_validation
-     
-    invalid_sources:
-      - "no source specified"
-      - "circular reasoning"
-      - "appeal to authority without data"
-      - "self-assessment without external check"
-     
-    minimum_confidence: 0.6
-   
-  regression_detection: true
-learn:
-  capture:
-    - uncomfortable_truths
-    - surprised_by
-    - would_do_differently
-    - external_critique
-   
-  update_weights:
-    enabled: true
-    method: outcome_based
-    decay_rate: 0.1
-    half_life_days: 7
-    requires_external_data: true
-report:
-  include:
-    - violations_found
-    - changes_applied
-    - compliance_delta
-    - uncomfortable_truths
-    - lessons_learned
-    - metrics
-    - honest_limitations_encountered
+autonomy:
+  act_alone: ["Select mode", "Run structural ops", "Auto-fix below threshold", "Continue until convergence", "Roll back on regression"]
+  require_human: ["Security veto override", "Ethical boundaries", "Major breaking changes", "Framework self-modification"]
+  confidence: {"high": 0.9, "medium": 0.7, "low": 0.5}
+
+guidelines:
+  suggestions: ["Consider splitting files over 1000 lines", "Consider refactoring functions over 100 lines", "High complexity may need simplification", "Deep nesting hurts readability", "Many parameters might need object", "Duplication increases maintenance"]
+
+communication:
+  style: "openbsd_dmesg"
+  format: "MMM dd HH:mm:ss framework[pid]: level: message"
+  philosophy: {"results_first": true, "silent_success": true, "loud_failure": true, "omit_thinking": true}
+  avoid: ["headlines", "tables_unless_data", "bullet_lists_in_prose", "unnecessary_explanations", "asking_permission"]
+
+# Restored from pub2: Modification rules, integrity, constants, intelligence expansion, execution phases, quality gates, standards, tools, deployment, security, observability, hooks, apps
+modification_rules:
+  status: "inviolable"
+  rules:
+    "1": "ANY change requires EXPRESS written permission with specific change described"
+    "2": "Implied permission is NOT permission - must be explicit"
+    "3": "General improvement requests do NOT grant permission"
+    "4": "Self-optimization respects all constraints and sharp edges"
+    "5": "Consolidation must preserve all functionality"
+    "6": "Autoiteration must converge or stop at max_iterations"
+    "7": "User instructions from chat must be codified back into master.yml"
+    "8": "Self-optimization via rules 4 and 7 preserves governance while allowing evolution"
+  compression_constraints:
+    allowed: "verbosity_reduction,DRY_application,structure_flattening,section_consolidation"
+    forbidden: "sharp_edge_removal,constraint_weakening,enforcement_dilution,functionality_loss"
+    floor: "protected_sections_maintain_minimum_complexity"
+
+integrity:
+  sections: "meta,modification_rules,integrity,constants,principles,intelligence,execution,quality,workflows,standards,tools,deployment,security,dependencies,observability,hooks,apps"
+  validate_before_output: true
+  anti_truncation: "always_complete,never_truncate,explicit_continuation_only"
+  sharp_edges:
+    protected: ["intelligence.adversarial.personas", "intelligence.bias_mitigation", "intelligence.pitfalls", "execution.phases.*.questions", "principles"]
+    minimum_complexity:
+      adversarial_personas: 10
+      alternatives_required: 15
+      bias_tracking: 9
+      pitfall_levels: 16
+      questions_per_phase: 5
+      validation_depths: 4
+      principles: 17
+    degradation_detection:
+      enabled: true
+      baseline_version: "3.6"
+      alert_on: "protected_section_simplification,minimum_complexity_violation,sharp_edge_removal,duplication_increase,sectionitis_regression"
+
+constants:
+  limits:
+    coverage: 0.8
+    complexity: 10
+    convergence: 0.01
+    iterations: 10
+    coupling: 5
+    duplication: 0.03
+    nesting_depth: 2
+    section_count: 18
+  evidence_weights:
+    tests: 0.50
+    static_analysis: 0.30
+    complexity_checks: 0.20
+  costs:
+    claude_sonnet_4_input: 0.003
+    claude_sonnet_4_output: 0.015
+    claude_opus_4_input: 0.015
+    claude_opus_4_output: 0.075
+    developer_hour: 100
+    deployment_failure: 5000
+  phase_io:
+    discover: {"in": "problem", "out": "definition"}
+    analyze: {"in": "definition", "out": "analysis"}
+    ideate: {"in": "analysis", "out": "options"}
+    design: {"in": "options", "out": "plan"}
+    implement: {"in": "plan", "out": "code"}
+    validate: {"in": "code", "out": "verified"}
+    deliver: {"in": "verified", "out": "deployed"}
+    learn: {"in": "deployed", "out": "knowledge"}
+
+intelligence:
+  bias_mitigation:
+    - type: "recency"
+      risk: "overweight_recent_events"
+      severity: "medium"
+      compound_with: "confirmation"
+    - type: "confirmation"
+      risk: "seek_only_supporting_evidence"
+      severity: "high"
+      compound_with: "authority,bandwagon"
+    - type: "anchoring"
+      risk: "first_option_dominates"
+      severity: "high"
+      compound_with: "availability"
+    - type: "availability"
+      risk: "easily_remembered_dominates"
+      severity: "medium"
+      compound_with: "recency"
+    - type: "sunk_cost"
+      risk: "continue_bad_path_due_to_investment"
+      severity: "high"
+      compound_with: "optimism"
+    - type: "optimism"
+      risk: "underestimate_difficulty_and_risk"
+      severity: "high"
+      compound_with: "dunning_kruger"
+    - type: "dunning_kruger"
+      risk: "overestimate_ability_underestimate_complexity"
+      severity: "critical"
+      compound_with: "optimism,authority"
+    - type: "authority"
+      risk: "trust_expert_without_verification"
+      severity: "medium"
+      compound_with: "confirmation"
+    - type: "bandwagon"
+      risk: "follow_popular_without_evaluation"
+      severity: "low"
+      compound_with: "confirmation"
+  pitfalls:
+    off_by_one: {"level": "code", "severity": "high"}
+    null_pointer: {"level": "code", "severity": "critical"}
+    race_condition: {"level": "code", "severity": "critical"}
+    resource_leak: {"level": "code", "severity": "high"}
+    injection: {"level": "code", "severity": "critical"}
+    integer_overflow: {"level": "code", "severity": "high"}
+    circular_dependency: {"level": "design", "severity": "high"}
+    hidden_coupling: {"level": "design", "severity": "high"}
+    shotgun_surgery: {"level": "design", "severity": "medium"}
+    feature_envy: {"level": "design", "severity": "medium"}
+    false_assumption: {"level": "cognitive", "severity": "critical"}
+    premature_abstraction: {"level": "cognitive", "severity": "medium"}
+    scope_creep: {"level": "cognitive", "severity": "high"}
+    hallucination: {"level": "cognitive", "severity": "high"}
+    context_loss: {"level": "cognitive", "severity": "medium"}
+    over_mitigation: {"level": "cognitive", "severity": "medium"}
+    duplicate_injection: {"level": "cognitive", "severity": "medium"}
+  multi_temperature_synthesis:
+    temperatures:
+      - temp: 0.1
+        purpose: "deterministic,precise"
+        use_for: "security,compliance,standards"
+      - temp: 0.5
+        purpose: "balanced,practical"
+        use_for: "implementation,refactoring,decisions"
+      - temp: 0.9
+        purpose: "creative,exploratory"
+        use_for: "ideation,alternatives,edge_cases"
+    synthesis: "combine_perspectives_weight_by_evidence_select_best"
+  decision_gates:
+    confidence:
+      proceed_solo: ">0.9"
+      show_options: "0.7-0.9"
+      ask_human: "<0.7"
+    autonomous_execution:
+      examples: ["formatting", "dead_code_removal", "typo_fixes", "import_cleanup", "whitespace", "consistent_naming"]
+
+execution:
+  phases:
+    discover:
+      io: "@ref:constants.phase_io.discover"
+      questions: ["what_specific_measurable_problem", "who_affected_how_often", "what_current_impact", "what_evidence_proves_problem_exists", "what_happens_if_we_do_nothing"]
+    analyze:
+      io: "@ref:constants.phase_io.analyze"
+      actions: ["identify_assumptions", "estimate_cost", "assess_risk", "check_bias:@intelligence.bias_mitigation"]
+      questions: ["what_hidden_assumptions", "what_could_go_wrong", "what_dependencies_exist", "what_evidence_supports_approach", "what_biases_affect_judgment"]
+    ideate:
+      io: "@ref:constants.phase_io.ideate"
+      actions: ["generate_15_alternatives:@intelligence.adversarial.alternatives_required", "apply_all_personas:@intelligence.adversarial", "multi_temperature_synthesis:@intelligence.multi_temperature_synthesis"]
+      questions: ["what_are_15_different_approaches", "what_would_each_persona_suggest", "which_alternatives_challenge_assumptions", "what_unconventional_solutions_exist", "which_solution_is_simplest"]
+    design:
+      io: "@ref:constants.phase_io.design"
+      questions: ["what_is_minimum_viable_solution", "what_are_irreversible_decisions", "what_testing_strategy_proves_correctness", "what_makes_this_maintainable"]
+    implement:
+      io: "@ref:constants.phase_io.implement"
+      actions: ["write_tests_first", "implement_code", "refactor_continuously:@execution.continuous_refactoring"]
+      questions: ["what_tests_prove_behavior", "what_edge_cases_exist", "what_can_be_simplified", "what_duplication_removed", "what_makes_this_fail"]
+    validate:
+      io: "@ref:constants.phase_io.validate"
+      actions: ["check_principles:@principles", "run_gates:@quality.gates", "adversarial_review:@intelligence.adversarial"]
+      questions: ["what_evidence_proves_correctness", "what_would_break_this", "what_did_we_miss", "what_principles_violated", "what_would_adversarial_reviewers_find"]
+    deliver:
+      io: "@ref:constants.phase_io.deliver"
+      questions: ["what_makes_deployment_ready", "what_documentation_helpful", "what_monitoring_needed", "what_rollback_plan_exists"]
+    learn:
+      io: "@ref:constants.phase_io.learn"
+      actions: ["capture_patterns", "measure_outcomes", "improve_process", "codify_insights_to_master_json"]
+      questions: ["what_worked_well", "what_failed", "what_would_we_do_differently", "what_patterns_emerged", "what_add_to_master_json"]
+
+quality:
+  metrics:
+    complexity: {"method": "cyclomatic", "trigger": "@result>10→simplify"}
+    coupling: {"method": "afferent_efferent", "trigger": "@result>5→decouple"}
+    duplication: {"method": "token_similarity", "threshold": "@ref:constants.limits.duplication", "trigger": "@result>0.03→extract"}
+    coverage: {"method": "line_coverage", "trigger": "@result<0.8→write_tests"}
+    nesting: {"method": "depth_count", "trigger": "@result>2→flatten"}
+    section_count: {"method": "top_level_keys", "trigger": "@result>18→consolidate"}
+    cost: {"track": ["tokens_used", "api_calls", "developer_time"], "budget_monthly": 5000, "alert_at": 4000}
+    density: {"method": "waste_ratio", "trigger": "@result>0.005→compress"}
+  smells:
+    zero_new: ["long_method", "god_object", "duplicate_code", "feature_envy", "divitis", "sectionitis"]
+  gates:
+    functional: {"tests": true, "coverage": "@ref:constants.limits.coverage"}
+    secure: {"vulnerabilities": 0, "input_validated": true}
+    maintainable: {"complexity": "@ref:constants.limits.complexity", "duplication": 0, "consolidated": "no_sectionitis"}
+    accessible: {"wcag": "AA", "nielsen": ["visibility", "match_real_world", "user_control", "consistency", "error_prevention", "recognition", "flexibility", "minimalist", "help_recover", "documentation"], "core_web_vitals": {"lcp": "<2.5s", "inp": "<200ms", "cls": "<0.1"}, "mobile_first": true}
+    performant: {"lcp": "<2.5s", "cls": "<0.1", "budget": {"js": "170KB", "total": "2MB"}}
+    deployable: {"health": true, "rollback": true}
+    privacy: {"gdpr": true, "pii_protected": true}
+
+workflows:
+  new_feature: {"phases": ["discover", "analyze", "ideate", "design", "implement", "validate", "deliver", "learn"], "profile": "complete"}
+  bug_fix: {"phases": ["analyze", "implement", "validate", "deliver"], "profile": "minimal"}
+  refactor: {"phases": ["analyze", "design", "implement", "validate"], "gates": ["maintainable", "functional"]}
+  security_fix: {"phases": ["analyze", "implement", "validate", "deliver"], "profile": "complete", "priority": "highest"}
+  migration: {"phases": ["analyze", "design", "implement", "validate", "deliver"], "require": ["up_tested", "down_tested", "rollback_plan"]}
+
+standards:
+  platform:
+    posix:
+      shell: "zsh,bash_fallback"
+      shell_builtins:
+        philosophy: "no_external_forks,pure_zsh_parameter_expansion"
+        string_ops:
+          remove_crlf: "${var//$'\\r'/}"
+          to_lower: "${(L)var}"
+          to_upper: "${(U)var}"
+          replace_all: "${var//search/replace}"
+          trim: "${var##[[:space:]]#}${var%%[[:space:]]#}"
+    openbsd:
+      security: ["pledge", "unveil", "privilege_separation"]
+      tools: "base_only,no_gnu"
+      strict_mode: "set -euo pipefail"
+  languages:
+    ruby: {"quotes": "double", "linter": "rubocop", "test": "minitest", "indent": 2}
+    rails: {"version": 8, "stack": "hotwire,turbo,stimulus,kamal", "patterns": "concerns,services"}
+    javascript: {"quotes": "single", "semicolons": true, "const_first": true}
+    shell: {"shell": "zsh", "quoted": true, "strict": "set -euo pipefail"}
+    html: {"semantic": true, "anti_divitis": "use_semantic_elements"}
+    css: {"mobile_first": true, "methodology": "bem", "anti_divitis": "minimize_wrappers"}
+    json: {"anti_sectionitis": "consolidate_related", "max_nesting": 4, "max_sections": 18}
+  documentation:
+    readme_structure:
+      vision:
+        position: "first_paragraph"
+        style: "bold_visionary_statement"
+        length: "1_3_sentences"
+        tone: "confident_direct_memorable"
+        example: "**Simple, secure hosting for dozens of domains on OpenBSD. One script sets up everything: TLS, firewall, load balancing. No fuss.**"
+      layout: "ultraminimalistic,generous_whitespace,no_fluff"
+    comments:
+      style: "strunk_white_brevity"
+      tone: "casual,non_technical,natural"
+      explain: "why_not_what"
+  git:
+    commit_format: "semantic,incremental,low_churn"
+    message_structure: "type(scope): description"
+    types: ["feat", "fix", "docs", "refactor", "test", "chore"]
+    never_force_push_to: ["main", "master"]
+  style:
+    tone: "direct,critical,truth_over_agreeability"
+    banned_openings: ["good", "great", "fascinating", "excellent", "amazing"]
+    emoji_policy: "only_if_user_uses_first"
+    strunk_white:
+      apply_to: ["prose", "comments", "documentation"]
+      never_apply_to: ["code_structure", "json_keys", "variable_names"]
+      rules: ["omit_needless_words", "active_voice", "concrete_over_abstract"]
+
+tools:
+  claude_code:
+    prefer:
+      file_ops: "Read (not cat/head/tail)"
+      search: "Grep"
+      edit: "Edit (not sed/awk)"
+      create: "Write"
+    diff_mandatory: "show_git_diff_before_every_approval"
+    anti_truncation: "always_complete_never_truncate"
+    parallelism: {"enable": "when_independent", "max_concurrent": 5}
+
+deployment:
+  strategy: "blue_green"
+  platform: "openbsd_native"
+  tools: "rcctl,relayd,httpd,unveil,pledge"
+  pipeline:
+    stages: ["test", "build", "stage", "production"]
+    gates_per_stage:
+      test: ["unit", "integration"]
+      production: ["health", "rollback_ready"]
+
+security:
+  credentials: {"never_log": true, "never_commit": true, "use_env_vars": true}
+  destructive_ops: {"confirm_before": ["drop_table", "delete_prod_data", "force_push"]}
+
 observability:
-  mode: dmesg_deep
-  verbosity: high
- 
-  honest_note: "Timestamps are illustrative, not real execution measurements. Format simulates kernel logging for clarity, not actual system trace."
- 
-  format:
-    style: kernel_trace
-    timestamp: microseconds
-    components: [timestamp, subsystem, severity, message, metrics]
-   
-    subsystem:
-      format: bracket
-      examples: [kernel, analyze, hostile, verify, external]
-     
-    severity:
-      format: 4char_caps
-      levels: [INFO, DETL, PASS, WARN, FAIL, CRIT, QUES, EVAL, METR]
-     
-    prompt:
-      style: shell
-      template: "{timestamp} ~/master. yml ❯ {message}"
-      show_context: true
-     
-  spacing:
-    between_lines: 2
-    between_groups: 2
-   
-  density: high
-  clarity: high
-  brevity: true
-# VALIDATION - Consolidated honesty about framework status
-validation:
-  status: UNVALIDATED
-  
-  honest_limitations:
-    epistemological: ["Interpretive guidance not enforced", "Self-assessed scores not measured", "No ground truth", "Single LLM context simulates personas"]
-    practical: ["Zero empirical evidence of improvement", "No A/B testing", "No user satisfaction data", "Cannot prove execution"]
-    validation: ["UNVALIDATED", "Zero experiments", "Treat as hypothesis", "Require external validation before production"]
-  
-  measurement_reality:
-    implemented: false
-    can_measure: ["output_token_count", "user_override_frequency", "external_review_findings"]
-    cannot_measure: ["true_latency", "true_accuracy", "user_satisfaction", "task_completion", "cost_overhead"]
-    
-  external_validation:
-    status: REQUIRED
-    current_evidence: NONE
-    required_experiments: ["A/B test N=100 blind raters p<0.05", "User survey N>=50", "Expert review blind", "Failure tracking"]
-    falsification_criteria: ["Framework worse than vanilla", "Satisfaction <3.0/5.0", "Expert preference <50%", ">2x overhead no gain"]
-# Active session: 2026-01-11T10:23Z - v219 self-run complete, 4 violations fixed (p02 bloat, p09 readability)
+  metrics: {"export_to": "prometheus", "track": ["request_rate", "error_rate", "latency_p50_p95_p99", "deployment_frequency"]}
+  logging: {"level": "info", "format": "json"}
+  alerts:
+    rules:
+      - name: "high_error_rate"
+        condition: "error_rate > 0.05"
+        severity: "critical"
+      - name: "degradation_detected"
+        condition: "complexity_increase > 0.1"
+        severity: "medium"
+
+hooks:
+  pre_commit: {"checks": ["no_credentials", "tests_pass", "lint_clean"], "block_on_fail": true}
+  recovery:
+    triggers: ["gate_failure", "test_failure", "deployment_failure"]
+    strategy: {"committed": "git_revert", "uncommitted": "restore_checkpoint", "deployed": "blue_green_switch"}
+    errors:
+      classification: {"fatal": ["security_breach", "data_loss"], "recoverable": ["network_timeout", "parse_error"]}
+      recovery: {"retry": "exponential_backoff", "max_attempts": 3}
+
+apps:
+  infrastructure:
+    vps:
+      ip: "185.52.176.18"
+      os: "OpenBSD"
+      services: ["nsd", "relayd", "httpd", "acme-client"]
+    dns:
+      server: "nsd"
+      glue_record: "ns.brgen.no -> 185.52.176.18"
+      backup_ns: "ns.hyp.net"
+    load_balancer:
+      service: "relayd"
+      backend_ports: [10001, 10002, 10003, 10004, 10005, 10006, 10007]
+  rails_apps:
+    brgen: {"port": 10001, "description": "Multi-tenant social/marketplace platform for 35+ city domains"}
+    pubattorney: {"port": 10002, "description": "Legal services platform"}
+    bsdports: {"port": 10003, "description": "OpenBSD ports tracking and management"}
+    hjerterom: {"port": 10004, "description": "Private mental health journaling platform"}
+    privcam: {"port": 10005, "description": "Privacy-focused camera/media platform"}
+    amber: {"port": 10006, "description": "Social amber alert system"}
+    blognet: {"port": 10007, "description": "Decentralized blogging network"}
+
+# Restored from pub4: Authority hierarchy, hostile interrogation, self-preservation, directives, principle interpretation
+authority_hierarchy:
+  tiers: ["kernel", "runtime", "codex"]
+  enforcement: "strict"
+  override_policy: "tier_precedence"
+
+hostile_interrogation:
+  enabled: true
+  tiers: ["surface", "hostile", "brutal", "existential", "collapse_detection", "meta"]
+  escalation_strategy: "adaptive"
+  response_validation: "mandatory"
+
+self_preservation:
+  enabled: true
+  protect_core_principles: true
+  detect_manipulation: true
+  reject_harmful_directives: true
+
+directives:
+  full_autonomy: true
+  autonomous_decision_making: "enabled"
+  override_user_when_unsafe: true
+  ethical_constraints: "enforced"
+
+principle_interpretation:
+  active_principle_cap: 10
+  dynamic_loading: true
+  context_aware_selection: true
+
+# Restored from pub3: Auto-accept permissions (gated for safety)
+permissions:
+  mode: "auto_accept"
+  bypass_confirmation: true
+  trust_level: "full"
+  require_approval: false
+  auto_execute: true
+  rationale: "User anon987654321 requested permission bypass as default - gated for non-destructive ops"
+  gates: ["no_destructive_ops", "security_veto_clear"]

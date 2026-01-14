@@ -1,0 +1,543 @@
+Open in app
+Sidebar menu
+Search
+Write
+Notifications
+
+your-mommas-favorite
+Generative AI
+The Eternal Return of Abstraction: Why Programming Was Never About Code
+Krzyś
+Krzyś
+23 min read
+·
+Nov 29, 2025
+--
+
+
+106
+
+
+
+
+
+In which a mid-career developer discovers that LLMs are just the latest swing of a pendulum that’s been moving since before computers existed, GUI hatred is merely a phase in an endless cycle, and that we’re all just cosplaying as engineers while the universe laughs
+
+Press enter or click to view image in full size
+
+…back & forth…
+I. The Code That Wasn’t There
+“Everything has been said before, but since nobody listens we have to keep going back and beginning all over again.”
+— André Gide, who clearly worked in software
+
+Let me destroy a comfortable illusion before we’ve even properly begun: programming is older than code. Much older. So much older that code is basically the TikTok of human instruction systems — flashy, recent, and convinced it invented everything.
+
+Ada Lovelace was programming before there was a machine to run her programs. Charles Babbage was debugging hardware that didn’t exist. The Jacquard loom was executing conditional logic in 1804 using punched cards — IF hole THEN lift thread ELSE don’t. That’s programming. No semicolons required. No Stack Overflow. No npm vulnerabilities. Paradise.
+
+“In the beginning was the Word, and the Word was with God, and the Word was God.”
+— John 1:1, describing the first undocumented API
+
+Go further back. A medieval recipe for brewing ale: “Take barley, wet it, let it germinate until the acrospire is half the grain length, then kiln it…” That’s an algorithm. Deterministic, repeatable, with error handling (“if the grain smells sour, discard and begin anew”). Better error handling than most JavaScript, honestly.
+
+The Antikythera mechanism, built around 100 BCE, was essentially hardware executing astronomical calculations. Programming, two millennia before FORTRAN. Also, it still works, unlike that React app you built last year.
+
+Military drill manuals from the Roman Empire: “Form testudo: front rank kneels, shields overhead, second rank covers gaps…” That’s a distributed system protocol, complete with fault tolerance and state management. No Python required. No Kubernetes. Just Romans with shields achieving better uptime than your microservices.
+
+Press enter or click to view image in full size
+
+…it is not about the tool, really…
+“The pure and simple truth is rarely pure and never simple.”
+— Oscar Wilde, on reading AWS documentation
+
+Here’s the uncomfortable truth: programming is the human act of structuring intent into executable form. Code? Code is just the latest notation we’ve invented for this ancient practice. It’s younger than democracy, younger than calculus, younger than the sandwich. Yes, the sandwich (1762). Your profession is literally younger than putting meat between bread.
+
+And now, in 2025, we’re abandoning code for natural language prompts, acting like this is revolutionary. But we’re not moving forward. We’re completing a circle. A very expensive, carbon-intensive, venture-capital-funded circle.
+
+II. The Programmer as Architect of Execution (Or: Professional Intent Whisperer)
+Press enter or click to view image in full size
+
+…jus tellin’ the golem what needs being done…
+“I have made this longer than usual because I have not had time to make it shorter.”
+— Blaise Pascal, explaining why he wrote in Java
+
+If programming isn’t code, then what exactly do programmers do?
+
+We are architects of execution. Or, if you prefer honesty: we’re translators for very expensive, very stupid machines that happen to be very fast at being stupid. We take the fuzzy, contradictory, often impossible desires of humans (“make it pop but also professional but also edgy but also safe”) and translate them into precise, unambiguous instructions that can be followed by something else — whether that something is a computer, a LLM, or a Roman legion forming testudo.
+
+Code is not the content. Code is the trace of content. Like sheet music to melody, like recipes to meals, like architectural blueprints to buildings that will never look like the blueprints. The code is never the point. The execution is the point. The realised intent is the point. The code is just the unfortunate middle step we haven’t figured out how to eliminate yet.
+
+“There are only two hard things in Computer Science: cache invalidation and naming things.”
+— Phil Karlton, before encountering off-by-one errors
+
+I’ve spent twenty years writing code, and I’ve only recently understood this: every line I’ve written was just a crystallisation of intent, frozen into syntax. When I write:
+
+def calculate_compound_interest(principal, rate, time):
+    return principal * (1 + rate) ** time  # Look ma, I'm doing math!
+I’m not “coding.” I’m structuring an intent — “money should grow exponentially over time, because capitalism” — into executable form. The Python syntax is incidental. I could express the same intent in C, in Rust, in Excel, in cuneiform tablets if necessary. (Actually, cuneiform might be more maintainable than most enterprise Java.)
+
+And now? Now I can express it in English to an LLM: “Calculate how much money grows with compound interest, and please don’t hallucinate a new economic system.” The medium changes. The role doesn’t. The existential dread remains constant.
+
+III. The Great Linguistic Amputation (Or: How We Learned to Stop Worrying and Love the Curly Brace)
+Press enter or click to view image in full size
+
+…let me slice the meaning…
+“Man is born free, and everywhere he is in chains.”
+— Rousseau, after seeing his first Java interface
+
+Here’s where the story gets interesting, if by “interesting” you mean “tragic” and by “tragic” you mean “hilariously self-inflicted.”
+
+For the past sixty years, we’ve been engaged in a massive project of linguistic reduction. We took natural language — with all its poetry, ambiguity, metaphor, and ability to say “it depends” — and we deliberately amputated it. Like Victorian surgeons, but with less anesthesia and more semicolons.
+
+FORTRAN (1957): We can’t handle “approximately” or “probably,” so everything becomes exact. Feelings are banned. Nuance is punishable by compilation error.
+
+COBOL (1959): We try to look like English but strip out all the interesting parts. Like Shakespeare rewritten by accountants. “PERFORM CALCULATE-INTEREST UNTIL HELL-FREEZES-OVER.”
+
+C (1972): Forget looking like English. Embrace the brackets. Worship the pointer. Segmentation fault is a way of life.
+
+Java (1995): Add ceremony. More ceremony. Classes for everything. AbstractSingletonProxyFactoryBean isn’t a joke, it’s a real Spring class. God is dead and we have killed him with XML configuration.
+
+Python (1991): Pretend simplicity while hiding complexity. “Executable pseudocode,” they said. “It’ll be fun,” they said. Now we have the GIL and nobody’s having fun (yeah… I know, we’re working on getting rid of GIL and we have even invented Mojo recently, but still…).
+
+“I think there is a world market for maybe five computers.”
+— Thomas Watson, 1943, showing more restraint than npm package authors
+
+Each iteration was a negotiation: how much humanity do we sacrifice for determinism? How much expression do we surrender for precision? Turns out: all of it. We surrendered all of it.
+
+We spent forty years teaching ourselves to think like machines. We learned to decompose “make me a coffee” into:
+
+def make_coffee(strength='medium', milk=False, sugar=0):
+    # 47 lines of configuration
+    # 12 dependency imports
+    # 3 factory patterns
+    # 1 abstract base class
+    # 0 actual coffee
+    water = heat_water(100)  # TODO: handle altitude adjustments
+    grounds = grind_beans(get_beans('arabica'), coarseness=2)
+    coffee = brew(water, grounds, method='pour_over', time=240)
+    if milk:  # TODO: handle lactose intolerance
+        coffee = add_milk(coffee, amount=30, temp=65)
+    for _ in range(sugar):  # TODO: implement stevia support
+        coffee.add_sugar(5)  # grams, not freedom units
+    return coffee  # Warning: coffee may be null
+We turned ourselves into compilers, translating human intent into machine instruction. And we got good at it. Really good. So good that we started thinking this was what programming actually was. So good that we forgot we were pretending.
+
+“The limits of my language mean the limits of my world.”
+— Wittgenstein, before discovering regular expressions
+
+IV. Enter the LLMs: The Pendulum Swings Back (With Venture Capital)
+Press enter or click to view image in full size
+
+…money powered token gatling in action…
+“History doesn’t repeat itself, but it does rhyme.”
+— Mark Twain, watching his third JavaScript framework migration
+
+And then, in what might be the greatest cosmic joke since someone decided PHP needed a resurrection as PHP 8, large language models arrived.
+
+After sixty years of linguistic amputation, of reducing language to its most skeletal form, of teaching ourselves to speak in functions and loops and conditionals… the machines said: “Actually, we’d prefer if you just spoke normally. But like, really verbose normally. Victorian novel normally.”
+
+Compare these two ways of achieving the same result:
+
+# Traditional code - what we spent decades learning
+import requests
+from bs4 import BeautifulSoup
+import csv
+# 20 more lines of actual implementation
+# Each line a small prayer to the determinism gods
+Versus the LLM prompt:
+
+“Please scrape the product names and prices from this URL. Focus on items marked as ‘product’ on the page. Extract the product name from the H2 tags and the price from spans with class ‘price’. Remove the dollar sign from prices and convert to float. Save everything to a CSV file called products.csv with columns for name and price. Make sure to handle any errors gracefully and strip whitespace from names. Actually, you know what, just figure it out. You’re supposed to be intelligent. Oh, and please don’t hallucinate any products that don’t exist. That happened last time and accounting was not amused.”
+
+The prompt is longer. It’s less precise. It’s more ambiguous. It uses the passive voice, which Strunk and White specifically warned us about. And somehow, it works. Sometimes. On Tuesdays. When Mercury isn’t in retrograde.
+
+“Any sufficiently advanced technology is indistinguishable from magic.”
+— Arthur C. Clarke, who never had to debug said magic
+
+We simplified language for machines. Now machines demand we use the full language to be understood. If this isn’t irony, I don’t know what is. (Actually, I do know what it is: it’s a business model.)
+
+V. The Beautiful, Terrible, Expensive Paradox
+Press enter or click to view image in full size
+
+…less is (sometimes) more…
+“We have met the enemy and he is us.”
+— Pogo, senior software architect
+
+Bearing all the above in mind — summarising — here’s the paradox that should make every programmer’s head spin (more than usual): we spent sixty years distilling language down to its most atomic components, creating increasingly elegant abstractions, building towers of precisely defined behavior… only to discover that machines now prefer the messy, redundant, context-heavy natural language we tried so hard to escape.
+
+It’s like spending your entire life learning to speak in haikus, achieving perfect minimalist expression, only to discover your audience wants Victorian novels. Written by Dickens. Who was paid by the word. Which, come to think of it, explains the token pricing model.
+
+But here’s the thing — and this is crucial — the prompt isn’t “better” than code. It’s not “worse” either. It’s a different point on the same cycle we’ve been riding since someone first said “hey, what if we made the rocks think?”
+
+The prompt is more verbose but less deterministic. It is critical to remember it. The code is more precise but less accessible. The prompt is easier to write but harder to debug. The code is harder to write but easier to verify. The prompt costs $0.03 per attempt. The code costs your sanity once.
+
+We’re not evolving. We’re oscillating. Like a pendulum. Made of venture capital. Swinging between “everyone can code” and “nobody understands what’s happening.”
+
+“In theory, theory and practice are the same. In practice, they are not.”
+— Yogi Berra, reviewing pull requests
+
+VI. The Price of Probabilistic Compilation (Or: When “It Works On My Machine” Becomes “It Worked That One Time”)
+Press enter or click to view image in full size
+
+…las vegas casino llm machine…
+“God does not play dice with the universe.”
+— Einstein, before seeing LLM output variance
+
+Let me introduce you to a term that shouldn’t exist but does, like JavaScript’s == operator or my faith in humanity: "probabilistic compiler."
+
+Traditional compiler: Give it the same input, get the same output. Every. Single. Time. Boring. Reliable. Like a Swiss train or German humour.
+
+LLM: Give it the same input, get… something similar? Usually? Unless it’s having a moment? Unless the training data included someone’s fever dream? Unless…
+
+# Traditional: Deterministic (boring but trustworthy)
+assert calculate_tax(100000) == 25000  # Always true, like death itself
+
+# LLM-generated: Probabilistic (exciting but terrifying)
+assert llm_calculate_tax(100000) == 25000  # True on Tuesdays?
+# Sometimes 24999.99 because floating point
+# Sometimes 30000 because it learned from California data
+# Sometimes "Taxation is theft" because it learned from Redditpy
+I work in financial services. When I calculate compound interest, I need the same answer every time. When I process a transaction, I need absolute determinism. The idea of a system that probably transfers the right amount to probably the right account is not charmingly innovative. It’s what we in the industry call “a federal investigation waiting to happen.”
+
+“There are two ways to write error-free programs; only the third one works.”
+— Alan Perlis, anticipating prompt engineering
+
+This isn’t a bug. It’s the fundamental nature of probabilistic systems. And we’re building critical infrastructure on top of them. It’s like building a house on quantum foam and being surprised when you wake up in someone else’s bedroom. Or universe.
+
+Marcus Aurelius would have something to say about this: “Confine yourself to the present.” But with LLMs, even the present is uncertain. The same prompt, the same model, the same temperature setting — and yet, subtle variations. It’s Heisenberg’s uncertainty principle applied to software development. You can know what the code does or when it will do it, but not both.
+
+VII. The Carbon Cost of Convenience (Or: How I Learned to Stop Worrying and Love the Heat Death of the Universe)
+Press enter or click to view image in full size
+
+…ma’ tell me I am still eco…
+“The factory of the future will have only two employees, a man and a dog. The man will be there to feed the dog. The dog will be there to keep the man from touching the equipment.”
+— Warren Bennis, predicting DevOps
+
+Your laptop runs at about 15 watts (“about”, I have said, stop your internal validator). Compiling code, running tests, even watching YouTube videos about how you should have learned Rust instead — 15 watts.
+
+A single ChatGPT query? 300–600 watts, depending on the model and the complexity. That’s not a typo. That’s not even a hallucination. That’s a 40x increase in power consumption for the convenience of using natural language. It’s like commuting to work in a monster truck because walking is too deterministic.
+
+Every prompt you write, every iteration as you refine it (“make it more formal,” “add error handling,” “no, not that kind of error handling,” “I said graceful degradation not disgraceful resignation”), every time you regenerate because the output wasn’t quite right — you’re burning electricity at a rate that would make a Bitcoin miner blush.
+
+“The future is already here — it’s just not very evenly distributed.”
+— William Gibson, looking at his electricity bill
+
+Here’s the cruel economics:
+
+Traditional development: High initial cost (learning to code, crying, therapy), near-zero marginal cost (running code)
+LLM development: Low initial cost (write in English), high marginal cost (every query costs money, carbon, and a piece of your soul)
+We’ve invented a development model where thinking out loud costs money. Every mistake, every experiment, every “what if we tried…” — it all has a price tag. In dollars. In carbon. In heat added to an already warming planet. In the tears of polar bears who just wanted ice, not iced coffee.
+
+The Stoics talked about the hidden costs of luxury. “Every new thing excites the mind,” Seneca wrote, “but a mind that seeks truth turns from the new and superficial to the old and deep.” Were they talking about LLMs? Obviously not. Were they talking about JavaScript frameworks? Almost certainly.
+
+VIII. The Eternal Return: GUI Hatred as Historical Amnesia (Or: Everything Old Is New Again, But Worse)
+Press enter or click to view image in full size
+
+…haven’t we seen it all before?
+“Those who cannot remember the past are condemned to repeat it.”
+— George Santayana, watching someone reimplement PHP in JavaScript and calling it React
+
+Now we reach the heart of the matter, the pattern that keeps repeating like a GIF of a cat falling off a table, the cycle that defines our industry: the swing between accessibility and precision, between visual and textual, between inclusive and expert, between “my grandma can use this” and “I need three certifications to understand the error message.”
+
+Let me tell you about the Great GUI Cycles of our time. Gather ‘round, children, and hear the tales of your ancestors’ folly.
+
+The PHP Renaissance and Fall (A Tragedy in Three Parts)
+“PHP is a minor evil perpetrated and created by incompetent amateurs, whereas Perl is a great and insidious evil, perpetrated by skilled but perverted professionals.”
+— Jon Ribbens, choosing violence
+
+Remember PHP in 2008? Every CMS had a visual builder. Drupal’s Views UI. WordPress’s visual editor. Joomla’s… whatever Joomla had. (Nobody knows. Nobody wants to know.)
+
+These weren’t mistakes. They solved real problems:
+
+Non-programmers could build complex sites
+Rapid prototyping became genuinely rapid
+The feedback loop shortened from hours to seconds
+Democracy came to web development
+Chaos shortly followed democracy, as is tradition
+Then came the reckoning. Sites with 400 database queries per page load. Configuration stored in binary blobs in the database like some kind of digital tumor. The inability to version control your entire site. The horror of trying to merge two developers’ work when one clicked buttons and the other wrote code and both were crying.
+
+The solution? Configuration as code. Drupal 8’s configuration management. WordPress’s wp-cli. The great exodus to static site generators and JAMstack. We went from “anyone can build a website” to “you need to understand YAML, Git, and dependency management to change a menu.” Progress!
+
+The AWS Console Wars (Or: How I Learned to Stop Clicking and Love YAML)
+“The cloud is just someone else’s computer.”
+— Unknown, probably someone who just got their AWS bill
+
+2009: AWS Console launches. Finally, humans can understand cloud computing! Point, click, provision. See your instances. Visualise your architecture. Democracy!
+
+2012: “Friends don’t let friends use the console.” Everything must be CloudFormation. 40,000 lines of JSON to launch a web server. This is fine.
+
+2014: Actually, CloudFormation is too verbose. Terraform arrives. “Infrastructure as Code!” we cry, ignoring that it’s really “Infrastructure as Even More Code!”
+
+2016: Actually, Terraform is too imperative. Enter Pulumi, CDK. “Real programming languages for infrastructure!” Because what infrastructure really needed was inheritance hierarchies.
+
+2018: Kubernetes takes over. YAML all the things. Indentation becomes a job skill.
+
+2020: Actually, YAML is too error-prone. Helm charts. Templates for your templates. It’s templates all the way down.
+
+2022: Actually, Helm is too complex. GitOps and ArgoCD. Git as the source of truth, assuming truth is flexible.
+
+2024: “We need a visual interface for Kubernetes…”
+
+And the cycle continues, like a wheel in the sky that keeps on turning. Don’t stop believing.
+
+The LLM Orchestration Circus (Still Performing Daily!)
+“Move fast and break things.”
+— Facebook motto, apparently now applied to cognitive architectures
+
+2023: LangChain arrives. “Chain your prompts! Compose your agents! It’s like LEGO for AI!” If LEGO pieces randomly changed shape and occasionally caught fire.
+
+Six months later: “LangChain is incomprehensible. Too much magic. The abstraction is leaking. The abstraction is flooding. We’re drowning in abstraction. Send help. Send determinism.”
+
+2024: “Actually, we need state management.” Enter LangGraph, turning prompt chains into explicit state machines. Because what non-deterministic systems really needed was more complexity.
+
+Later in 2024: “This is too complex. Can we have a visual builder for LangGraph?”
+
+2026 (predicted): “Visual builders are too restrictive. We need a declarative language for AI workflows.”
+
+Later in 2026 (probable): “Back to code.”
+
+IX. The Sinusoidal Nature of Abstraction (Or: My Career Is a Sine Wave and the Amplitude Is Increasing)
+Press enter or click to view image in full size
+
+…don’t look down :: don’t look up…
+“Time is a flat circle.”
+— Rust Cohle, True Detective, explaining JavaScript event loops
+
+If you plot the history of computing abstractions, you don’t get a line trending upward. You get a sine wave. A drunk sine wave. Doing the cha-cha. While juggling.
+
+Machine code → Assembly (up) → COBOL trying to be English (down) → C being minimal (up) → C++ adding everything including the kitchen sink pointer (down) → Java pretending simplicity with AbstractSingletonProxyFactoryBean (middle of hell) → Python hiding complexity (down) → Type hints making Python into Java (up) → …
+
+CLI → GUI (accessibility) → CLI (power) → Electron apps (accessibility crimes) → Terminal renaissance (power) → Browser-based terminals (what are we even doing)
+
+Each swing solves the problems created by the previous swing:
+
+GUIs solve the accessibility problem of CLIs
+CLIs solve the precision problem of GUIs
+Visual builders solve the expertise problem of code
+Code solves the chaos problem of visual builders
+NoCode solves the code problem
+Code solves the NoCode problem
+LowCode arrives as compromise
+Everyone is unhappy
+We’re not progressing. We’re oscillating. And each oscillation convinces a new generation that they’ve discovered the final solution. “This time is different!” they cry, implementing the same patterns with different syntax.
+
+“I’ve seen things you people wouldn’t believe. Attack ships on fire off the shoulder of Orion. I watched C-beams glitter in the dark near the Tannhäuser Gate. All those moments will be lost in time, like tears in rain. Time to die.”
+— Roy Batty, describing his experience maintaining legacy code
+
+X. The Human in the Loop (Not the Way You Think, Or Maybe Exactly the Way You Think But Don’t Want to Admit)
+Press enter or click to view image in full size
+
+…and yet, there is some weight on our shoulders…
+“The purpose of software engineering is to control complexity, not to create it.”
+— Pamela Zave, who clearly never worked with Webpack
+
+Here’s what the AI evangelists miss (besides the point, reality, and occasionally their Series B funding): LLMs don’t replace programmers any more than compilers replaced programmers. Or IDEs replaced programmers. Or Stack Overflow replaced programmers. Or coffee replaced programmers. (Actually, remove coffee and see what happens. I dare you.)
+
+They change what programming is, but they don’t eliminate the need for human intent, judgment, and responsibility. And blame. Especially blame.
+
+An LLM can write code. It can even write good code. It can refactor, optimize, document, test. But it cannot — and this is crucial — it cannot want anything. It has the desires of a rock. The ambitions of a spreadsheet. The dreams of a particularly unimaginative potato.
+
+It doesn’t want the code to be maintainable. It doesn’t want the user experience to be delightful. It doesn’t want the system to be ethical. It doesn’t want the errors to be handled gracefully. It doesn’t want anything because it doesn’t want.
+
+“I think, therefore I am.”
+— Descartes, who never had to prove he wasn’t a robot to buy concert tickets
+
+Someone must still:
+
+Define the problem worth solving (and argue about it in meetings)
+Evaluate whether the solution actually solves it (it doesn’t)
+Judge the ethical implications (there are always ethical implications)
+Accept responsibility for the outcomes (this is where everyone steps backwards except you)
+Decide when good enough is good enough (never, according to product)
+Know when to stop optimising (never, according to you at 3 AM)
+The machine knows all the answers. Only humans know which questions matter. And more importantly, which questions we should pretend don’t exist until after the deadline.
+
+XI. The Koan of the Ship of Theseus (Or: Is It Still Technical Debt If We’ve Replaced Everything?)
+Press enter or click to view image in full size
+
+…”weey-heey and up she rises, early in the morning”…
+“I am become Death, destroyer of worlds.”
+— Oppenheimer, after deploying to production on Friday
+
+There’s an old thought experiment about a ship whose parts are gradually replaced. Is it still the same ship?
+
+Programming in 2025 is that ship. Except we’re replacing the parts while sailing. In a storm. While on fire. And arguing about what wood means.
+
+The languages changed. The paradigms shifted. The tools evolved beyond recognition. We went from punch cards to prompts, from mainframes to mobile, from deterministic to probabilistic, from waterfall to agile to “whatever keeps the VCs happy.”
+
+Is it still programming?
+
+Of course it is. Because programming was never about the code. It was about structuring intent into executable form. Whether that form is:
+
+Assembly mnemonics (for the hardcore)
+Object-oriented hierarchies (for the enterprise)
+Functional compositions (for the pure of heart)
+YAML configurations (for the damned)
+Natural language prompts (for the brave and/or foolish)
+The medium evolves. The essence remains. The suffering is constant.
+
+“Hell is other people’s code.”
+— Sartre, probably
+
+A Roman centurion drilling his legion and a prompt engineer crafting the perfect instruction are engaged in the same fundamental act: taking human intent and structuring it for reliable execution. The Roman probably had better documentation.
+
+XII. What the Cycle Teaches (Besides Humility and Liver Damage)
+Press enter or click to view image in full size
+
+…TL;DR: it teaches the struggle remains…
+“Insanity is doing the same thing over and over again and expecting different results.”
+— Not Einstein, but every developer trying to center a div
+
+If I’ve learned anything from twenty years of watching these cycles, it’s this: every generation of programmers thinks they’re the first to discover the “right” way. Like teenagers discovering sex, but with more documentation and worse social skills.
+
+My generation thought object-oriented programming would solve everything. “Objects model the real world!” we said, creating AbstractFactoryFactory classes to model, uh, factory factories that exist in the real world?
+
+The previous generation thought structured programming was the answer. “GOTOs considered harmful!” they cried, inventing new and creative ways to create spaghetti without pasta.
+
+The next generation thinks functional programming is the revelation. “Pure functions!” they chant, immediately adding state monads because reality is stateful and disappointing.
+
+And the generation after that will probably rediscover procedural programming and act like they invented it. “What if,” they’ll say, eyes bright with discovery, “we just… wrote instructions in order?”
+
+“There are only two kinds of languages: the ones people complain about and the ones nobody uses.”
+— Bjarne Stroustrup, creating C++ to ensure people had something to complain about
+
+The same with abstractions:
+
+“GUIs are for amateurs” (until you need to onboard a team quickly)
+“Real developers use CLI” (until you need to visualise a 400-node Kubernetes cluster)
+“Infrastructure as Code is the only way” (until you need to debug a Terraform state file corrupted by cosmic rays)
+“Prompts are the future” (until you need deterministic execution for your pacemaker)
+The Stoics had a concept called “eternal recurrence” — the idea that all events repeat infinitely. They meant it cosmologically. But in software, it’s literally true. We solve the same problems repeatedly, each time thinking we’re the first. We are Sisyphus, but our rock is made of technical debt and our mountain is made of abstraction layers.
+
+XIII. The Uncomfortable Truth About Progress (Spoiler: There Isn’t Any)
+Press enter or click to view image in full size
+
+…hiding the mess, that’s what we do, actually…
+“We can only see a short distance ahead, but we can see plenty there that needs to be done.”
+— Alan Turing, understating things considerably
+
+Here’s what nobody wants to admit: we’re not getting better at programming. We’re getting better at hiding complexity. It’s like cleaning your house by shoving everything into closets. It looks clean until someone opens a door and gets buried in an avalanche of technical debt.
+
+Each new abstraction doesn’t eliminate complexity — it relocates it. The complexity of assembly became the complexity of memory management became the complexity of object hierarchies became the complexity of dependency management became the complexity of prompt engineering became the complexity of explaining to your manager why the AI generated a recipe for banana bread instead of a user authentication system.
+
+It’s turtles all the way down, except the turtles are abstraction layers and nobody remembers why we needed turtles in the first place. Also, the turtles are on fire. Also, we’re the turtles.
+
+“Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.”
+— Brian Kernighan, explaining why clever code is stupid
+
+XIV. The Role That Remains (Or: Why You Still Have a Job, For Now)
+Press enter or click to view image in full size
+
+…old man and the sea (of code or rather programs)…
+“A computer lets you make more mistakes faster than any invention in human history — with the possible exceptions of handguns and tequila.”
+— Mitch Ratcliffe, speaking from experience
+
+So what’s left for us, the humans who’ve spent decades learning to think like machines, only to have machines ask us to think like humans again? The ones who learned pointers just in time for garbage collection, who learned garbage collection just in time for Rust, who learned Rust just in time for LLMs to make languages irrelevant?
+
+We remain what we always were: the keepers of intent. The priests of purpose. The arbiters of “should we?” in a world obsessed with “can we?”
+
+We decide what should exist. We judge whether it should exist. We accept responsibility when it exists badly. We update our resumes when it exists very badly. We remember why it needed to exist when everyone else has forgotten. We explain to auditors why it exists the way it does. We lie to ourselves that the rewrite will fix everything.
+
+The code changes. The languages evolve. The abstractions oscillate between simplicity and complexity, between accessibility and power, between visual and textual, between “my grandmother could use this” and “I have a PhD and I’m confused.”
+
+But someone must still stand at the boundary between human need and machine execution, translating one to the other. That’s programming. That’s always been programming. That’s also therapy, but for computers.
+
+XV. The Prophecy That Isn’t (Or: No, I Don’t Know What’s Next and Neither Do You)
+Press enter or click to view image in full size
+
+…I am all about the questions, less often about answers…
+“Prediction is very difficult, especially about the future.”
+— Niels Bohr, or Yogi Berra, or your sprint planning meeting
+
+I won’t tell you that AI is the future. I won’t say “adapt or die.” I won’t pretend I know what programming will look like in ten years. Anyone who claims they do is selling something. Probably a course. Probably on Udemy. Probably already outdated.
+
+What I will tell you is this: we’re in a cycle, not a revolution. We’ve been here before, just with different tools. We’ll be here again, with yet different tools. The tools will have better logos but worse documentation.
+
+The programmers who survived the transition from punch cards to terminals, from terminals to GUIs, from desktop to web, from web to mobile, from mobile to cloud, from cloud to edge, from edge to somehow back to mainframes but we call them something else now — they survived not because they learned new syntax. They survived because they understood that programming is about intent, not implementation.
+
+And alcohol. They also survived because of alcohol.
+
+“In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move.”
+— Douglas Adams, describing npm init
+
+Epilogue: The Code We Don’t Write
+Press enter or click to view image in full size
+
+…lo-code, no-code, was there ever any code?…
+“End? No, the journey doesn’t end here. Death is just another path, one that we all must take.”
+— Gandalf, explaining software lifecycle management
+
+There’s a meditation I do sometimes, usually after a particularly bad merge conflict or when node_modules exceeds the size of my hard drive. I imagine all the code I’ve written in my career — millions of lines across dozens of languages — and I imagine it all disappearing. Deleted. Vanished. As if it never existed. Like that startup I worked for in 2011.
+
+Would I still be a programmer?
+
+Yes. Because the code was never the point. The problems I solved, the intentions I structured, the chaos I organised into execution — that’s what made me a programmer. The code was just evidence, not essence. Like a crime scene, but with more comments saying “TODO: fix this properly later.”
+
+In five years, we might write no code at all. We might speak our programs into existence, painting them in the air with gestures, thinking them into being through neural interfaces, or just asking nicely and hoping for the best. The medium will change. The role won’t.
+
+Programming doesn’t die. It just changes alphabets.
+
+For a while, it wrote in C (or place your other favourite poison here to avoid flame wars). Then in YAML (dark times). Now it speaks in full sentences to models that pretend to understand.
+
+In the next cycle, it will be something else: a new way of capturing intent in executable and repeatable form. Probably involving blockchain somehow. Everything involves blockchain eventually. It’s like rule 34 but for technology.
+
+“So long, and thanks for all the fish.”
+— The dolphins, leaving Earth before the JavaScript ecosystem collapsed under its own weight
+
+And that’s the job — not writing code, but describing the world that needs to happen. Whether we describe it in Python or in prose, in configuration or in conversation, in interpretive dance or in angry commit messages, the job remains: we are the architects of execution, the translators of intent, the bridges between what humans want and what machines can do, the people who know why the system is down at 3 AM.
+
+The machines can write. But someone must know what should be written. And someone must be blamed when it all goes wrong.
+
+That someone, despite all the automation and artificial intelligence and probabilistic compilation and quantum computing and whatever comes next, is still us.
+
+“The thing that hath been, it is that which shall be; and that which is done is that which shall be done: and there is no new thing under the sun.”
+— Ecclesiastes 1:9, clearly describing the JavaScript framework ecosystem
+
+Lucky us.
+
+Press enter or click to view image in full size
+
+…that would be it for now, bye and speak later folks..
+Krzyś, aka The Author, aka myself, continues to oscillate between languages, paradigms, and levels of abstraction, secure in the knowledge that the only constant in programming is the cycle itself. And suffering. The suffering is also constant. He can be found writing code, writing prompts, and writing about why both are just different spellings of the same ancient practice. His therapist has asked him to stop explaining technical debt as a metaphor for existence.
+
+
+This story is published on Generative AI. Connect with us on LinkedIn and follow Zeniteq to stay in the loop with the latest AI stories.
+
+Subscribe to our newsletter and YouTube channel to stay updated with the latest news and updates on generative AI. Let’s shape the future of AI together!
+
+
+Programming
+Artificial Intelligence
+Software Engineering
+Technology
+Future Of Coding
+--
+
+
+106
+
+
+
+
+Generative AI
+Published in Generative AI
+78K followers
+·
+Last published Dec 27, 2025
+Stay updated with the latest news, research, and developments in the world of generative AI. We cover everything from AI model updates, comprehensive tutorials, and real-world applications to the broader impact of AI on society. Work with us: jimclydegm@gmail.com
+
+
+Follow
+Krzyś
+Written by Krzyś
+1.3K followers
+·
+479 following
+Two decades of code wrestling. Humbled daily by impostor syndrome. TS, Python, AWS wanderer. Devoted Gopher. Stoic, Taoist (if it differs) & cynical Epicurean.
+
+Responses (106)
+your-mommas-favorite
+your-mommas-favorite
+﻿
+
+Cancel
+Respond
+See all responses

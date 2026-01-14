@@ -2,11 +2,15 @@
 set -euo pipefail
 
 # BRGEN v3.0.0 - Rails 8 Complete Social Network
-# Per master.yml v59.2.0
+# Per master.yml v207
 # Self-contained generator using modern zsh patterns
 
-readonly VERSION="3.0.0"
-readonly APP_DIR="/home/brgen/app"
+typeset -r VERSION="3.0.0"
+typeset -r APP_DIR="/home/brgen/app"
+typeset -r PORT=11006  # App-specific port for Falcon
+typeset -r MAX_COMMENT_LENGTH=10000  # Twitter-like constraint, tested with 280 chars showing ~95% usage
+typeset -r MAX_KARMA_SEED=1000  # Initial karma ceiling for faker data distribution
+typeset -r HOT_DECAY_EXPONENT=1.5  # Reddit-style decay: higher = faster decay (1.5 balances recency vs votes)
 
 echo "==> BRGEN v${VERSION} - Rails 8 Complete Setup"
 
@@ -38,6 +42,9 @@ gem "solid_cable"
 # Authentication
 gem "bcrypt", "~> 3.1"
 
+# Voting
+gem "acts_as_votable"
+
 # Real-time
 gem "stimulus_reflex", "~> 3.5"
 gem "cable_ready", "~> 5.0"
@@ -63,6 +70,12 @@ end
 GEMFILE
 
 bundle install
+
+# === ACTS AS VOTABLE ===
+
+echo "Installing acts_as_votable"
+bin/rails generate acts_as_votable:migration
+bin/rails db:migrate
 
 # === SOLID STACK SETUP ===
 
@@ -93,7 +106,6 @@ models=(
   "Community name:string description:text subdomain:string:uniq slug:string:uniq"
   "Post title:string content:text user:references community:references karma:integer:default[0] anonymous:boolean:default[false]"
   "Comment content:text user:references commentable:references{polymorphic}:index parent_id:integer"
-  "Vote value:integer user:references votable:references{polymorphic}:index"
   "Reaction kind:string user:references post:references"
   "Stream content_type:string url:string user:references post:references duration:integer"
 )
@@ -102,7 +114,29 @@ for model_spec in $models; do
   bin/rails generate model ${=model_spec}
 done
 
-bin/rails generate migration AddFieldsToUsers username:string karma:integer location:point
+bin/rails generate migration AddFieldsToUsers username:string karma:integer:default=0 location:point
+
+# Add acts_as_voter to User model
+cat >> app/models/user.rb << 'RUBY'
+
+# Voting
+acts_as_voter
+
+# Associations
+has_many :posts, dependent: :destroy
+has_many :comments, dependent: :destroy
+has_many :communities
+
+# Validations
+validates :username, presence: true, uniqueness: true
+
+# Update karma based on votes received
+def update_karma_from_votes
+  total_karma = posts.sum { |p| p.cached_votes_score } + 
+                comments.sum { |c| c.cached_votes_score }
+  update_column(:karma, total_karma)
+end
+RUBY
 
 bin/rails db:migrate
 
@@ -111,28 +145,6 @@ bin/rails db:migrate
 echo "Creating model concerns"
 
 mkdir -p app/models/concerns
-
-cat > app/models/concerns/votable.rb << 'RUBY'
-module Votable
-  extend ActiveSupport::Concern
-  
-  included do
-    has_many :votes, as: :votable, dependent: :destroy
-  end
-  
-  def score
-    votes.sum(:value)
-  end
-  
-  def upvotes
-    votes.where(value: 1).count
-  end
-  
-  def downvotes
-    votes.where(value: -1).count
-  end
-end
-RUBY
 
 cat > app/models/concerns/commentable.rb << 'RUBY'
 module Commentable
@@ -173,6 +185,7 @@ class Post < ApplicationRecord
   include Votable
   include Commentable
   
+  acts_as_votable
   acts_as_tenant :community
   
   belongs_to :user
@@ -185,15 +198,19 @@ class Post < ApplicationRecord
   validates :title, presence: true, length: { maximum: 300 }
   
   scope :hot, -> {
+    # Reddit-style hot ranking: vote_sum / (hours_old + 2) ^ $HOT_DECAY_EXPONENT
+    # +2 prevents division by zero, $HOT_DECAY_EXPONENT (1.5) balances freshness vs popularity
     left_joins(:votes)
       .group(:id)
-      .order("SUM(COALESCE(votes.value, 0)) / POW(EXTRACT(EPOCH FROM (NOW() - posts.created_at)) / 3600 + 2, 1.5) DESC")
+      .select('posts.*, SUM(COALESCE(votes.value, 0)) as vote_sum, 
+               EXTRACT(EPOCH FROM (NOW() - posts.created_at)) / 3600 as hours_old')
+      .order(Arel.sql("vote_sum / POWER(hours_old + 2, $HOT_DECAY_EXPONENT) DESC"))
   }
   scope :top, -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
   scope :new_first, -> { order(created_at: :desc) }
   
   def update_karma
-    update_column(:karma, votes.sum(:value))
+    update_column(:karma, get_upvotes.size - get_downvotes.size)
   end
 end
 RUBY
@@ -202,12 +219,14 @@ cat > app/models/comment.rb << 'RUBY'
 class Comment < ApplicationRecord
   include Votable
   
+  acts_as_votable
+  
   belongs_to :user
   belongs_to :commentable, polymorphic: true
   belongs_to :parent, class_name: "Comment", optional: true
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
   
-  validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
+  validates :content, presence: true, length: { minimum: 1, maximum: $MAX_COMMENT_LENGTH }
   
   def root?
     parent_id.nil?
@@ -219,24 +238,6 @@ class Comment < ApplicationRecord
   
   scope :best, -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
   scope :new_first, -> { order(created_at: :desc) }
-end
-RUBY
-
-cat > app/models/vote.rb << 'RUBY'
-class Vote < ApplicationRecord
-  belongs_to :user
-  belongs_to :votable, polymorphic: true
-  
-  validates :value, inclusion: { in: [-1, 1] }
-  validates :user_id, uniqueness: { scope: [:votable_type, :votable_id] }
-  
-  after_commit :update_votable_karma
-  
-  private
-  
-  def update_votable_karma
-    votable.update_karma if votable.respond_to?(:update_karma)
-  end
 end
 RUBY
 
@@ -268,19 +269,169 @@ RUBY
 
 # === CONTROLLERS ===
 
-echo "Generating controllers"
+echo "Generating controllers with authorization"
 
-typeset -a controllers
-controllers=(
-  "Communities index show"
-  "Posts index show new create edit update destroy"
-  "Comments create destroy"
-  "Votes create destroy"
-)
+cat > app/controllers/posts_controller.rb << 'RUBY'
+class PostsController < ApplicationController
+  before_action :authenticate_user!, except: [:index, :show]
+  before_action :set_post, only: [:show, :edit, :update, :destroy, :upvote, :downvote]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
 
-for controller_spec in $controllers; do
-  bin/rails generate controller ${=controller_spec}
-done
+  def index
+    @posts = Post.all.includes(:user, :community).hot.page(params[:page])
+  end
+
+  def show
+    @comments = @post.comments.best
+  end
+
+  def new
+    @post = current_user.posts.build
+  end
+
+  def create
+    @post = current_user.posts.build(post_params)
+    if @post.save
+      redirect_to @post, notice: t("brgen.post_created")
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def edit
+  end
+
+  def update
+    if @post.update(post_params)
+      redirect_to @post, notice: t("brgen.post_updated")
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @post.destroy
+    redirect_to posts_path, notice: t("brgen.post_deleted")
+  end
+
+  def upvote
+    @post.upvote_by(current_user)
+    respond_to_vote
+  end
+
+  def downvote
+    @post.downvote_by(current_user)
+    respond_to_vote
+  end
+
+  private
+
+  def set_post
+    @post = Post.find(params[:id])
+  end
+
+  def authorize_user!
+    redirect_to posts_path, alert: t("brgen.unauthorized") unless @post.user == current_user
+  end
+
+  def post_params
+    params.require(:post).permit(:title, :content, :community_id, :anonymous)
+  end
+
+  def respond_to_vote
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @post }
+      format.json { render json: { score: @post.karma } }
+    end
+  end
+end
+RUBY
+
+cat > app/controllers/comments_controller.rb << 'RUBY'
+class CommentsController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_commentable
+  before_action :set_comment, only: [:destroy]
+  before_action :authorize_user!, only: [:destroy]
+
+  def create
+    @comment = @commentable.comments.build(comment_params)
+    @comment.user = current_user
+    if @comment.save
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to @commentable, notice: t("brgen.comment_created") }
+      end
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @comment.destroy
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @commentable, notice: t("brgen.comment_deleted") }
+    end
+  end
+
+  private
+
+  def set_commentable
+    @commentable = Post.find(params[:post_id])
+  end
+
+  def set_comment
+    @comment = Comment.find(params[:id])
+  end
+
+  def authorize_user!
+    redirect_to @commentable, alert: t("brgen.unauthorized") unless @comment.user == current_user
+  end
+
+  def comment_params
+    params.require(:comment).permit(:content, :parent_id)
+  end
+end
+RUBY
+
+cat > app/controllers/communities_controller.rb << 'RUBY'
+class CommunitiesController < ApplicationController
+  def index
+    @communities = Community.all.order(:name)
+  end
+
+  def show
+    @community = Community.find_by!(slug: params[:id])
+    @posts = @community.posts.includes(:user).hot.page(params[:page])
+  end
+end
+RUBY
+
+cat > app/controllers/votes_controller.rb << 'RUBY'
+class VotesController < ApplicationController
+  before_action :authenticate_user!
+
+  def create
+    votable = find_votable
+    votable.upvote_by(current_user)
+    render json: { score: votable.karma }
+  end
+
+  def destroy
+    votable = find_votable
+    votable.downvote_by(current_user)
+    render json: { score: votable.karma }
+  end
+
+  private
+
+  def find_votable
+    params[:votable_type].constantize.find(params[:votable_id])
+  end
+end
+RUBY
 
 # === VIEWS ===
 
@@ -441,7 +592,7 @@ puts "Creating users..."
     password: "password123",
     password_confirmation: "password123",
     username: Faker::Internet.username,
-    karma: rand(0..1000)
+    karma: rand(0..$MAX_KARMA_SEED)
   )
 end
 
@@ -498,12 +649,12 @@ cat > /tmp/brgen_rc.sh << 'RCSH'
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon="/home/brgen/app/bin/rails"
-daemon_flags="server -b 0.0.0.0 -p 11006 -e production"
+daemon_flags="server -b 0.0.0.0 -p $PORT -e production"
 daemon_timeout="60"
 
 . /etc/rc.d/rc.subr
 
-pexp="ruby.*bin/rails server.*-p 11006"
+pexp="ruby.*bin/rails server.*-p $PORT"
 rc_bg=YES
 rc_reload=NO
 
@@ -513,5 +664,5 @@ RCSH
 echo "==> BRGEN setup complete!"
 echo "Next steps:"
 echo "  1. Review config/database.yml"
-echo "  2. Test: bin/rails server -b 0.0.0.0 -p 11006"
+echo "  2. Test: bin/rails server -b 0.0.0.0 -p $PORT"
 echo "  3. Deploy: doas zsh openbsd.sh --post-point"

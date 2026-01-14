@@ -14,6 +14,14 @@ command_exists "ruby"
 command_exists "node"
 command_exists "psql"
 # Redis optional - using Solid Cable for ActionCable (Rails 8 default)
+
+# Add authentication
+install_gem "devise"
+install_gem "devise-guests"
+bin/rails generate devise:install
+bin/rails generate devise User
+bin/rails db:migrate
+
 # Generate biblical text and analysis models
 bin/rails generate model Book title:string abbreviation:string testament:string chapter_count:integer
 bin/rails generate model Chapter book:references number:integer title:string verse_count:integer
@@ -34,6 +42,67 @@ bin/rails generate controller Books index show
 bin/rails generate controller Chapters index show
 bin/rails generate controller StudyTools index metrics translations
 bin/rails generate controller Home index about manifest product technology
+bin/rails generate controller UserStudies index show new create edit update destroy
+
+# UserStudies controller with authorization
+cat <<'USERSTUDIES_EOF' > app/controllers/user_studies_controller.rb
+class UserStudiesController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_user_study, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
+  def index
+    @pagy, @user_studies = pagy(current_user.user_studies.includes(:verse).order(created_at: :desc))
+  end
+  
+  def show
+  end
+  
+  def new
+    @user_study = current_user.user_studies.build
+  end
+  
+  def create
+    @user_study = current_user.user_studies.build(user_study_params)
+    if @user_study.save
+      redirect_to @user_study, notice: t("baibl.study_created")
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+  
+  def edit
+  end
+  
+  def update
+    if @user_study.update(user_study_params)
+      redirect_to @user_study, notice: t("baibl.study_updated")
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+  
+  def destroy
+    @user_study.destroy
+    redirect_to user_studies_path, notice: t("baibl.study_deleted")
+  end
+  
+  private
+  
+  def set_user_study
+    @user_study = UserStudy.find(params[:id])
+  end
+  
+  def authorize_user!
+    redirect_to user_studies_path, alert: t("baibl.unauthorized") unless @user_study.user == current_user
+  end
+  
+  def user_study_params
+    params.require(:user_study).permit(:verse_id, :notes, :rating)
+  end
+end
+USERSTUDIES_EOF
+
 # Set up Norwegian locale
 cat <<EOF > config/locales/nb.yml
 nb:
@@ -47,6 +116,12 @@ nb:
     support: "Støtte"
     loading: "Laster"
     searching: "Søker"
+    view: "Vis"
+    edit: "Rediger"
+    delete: "Slett"
+    save: "Lagre"
+    cancel: "Avbryt"
+    error: "feil"
   baibl:
     app_name: "BAIBL"
     tagline: "Den Mest Presise AI-Bibelen"
@@ -72,6 +147,32 @@ nb:
     compare_translations: "Sammenlign oversettelser"
     view_analysis: "Se analyse"
     copyright_notice: "© 2025 BAIBL. Alle rettigheter forbeholdt."
+    my_studies: "Mine studier"
+    new_study: "Ny studie"
+    no_studies: "Ingen studier ennå"
+    start_studying: "Start din første bibelstudiesøkt!"
+    bible_study: "Bibelstudie"
+    confirm_delete_study: "Slett denne studien?"
+    view_verse: "Vis vers"
+    baibl_translation: "BAIBL oversettelse"
+    kjv_translation: "KJV oversettelse"
+    aramaic_original: "Arameisk original"
+    my_notes: "Mine notater"
+    my_rating: "Min vurdering"
+    studied_on: "Studert den"
+    back_to_studies: "Tilbake til studier"
+    edit_study: "Rediger studie"
+    select_verse: "Velg vers"
+    select_verse_prompt: "Velg et bibelvers"
+    study_notes: "Studienotater"
+    notes_placeholder: "Skriv dine refleksjoner og innsikter..."
+    rating_optional: "Vurdering (valgfritt)"
+    no_rating: "Ingen vurdering"
+    prevented_save: "forhindret lagring"
+    study_created: "Studie opprettet"
+    study_updated: "Studie oppdatert"
+    study_deleted: "Studie slettet"
+    unauthorized: "Uautorisert"
 EOF
 # Configure Norwegian as default locale
 cat <<EOF >> config/application.rb
@@ -110,6 +211,7 @@ Rails.application.routes.draw do
       get :translations
     end
   end
+  resources :user_studies
   get "about", to: "home#about"
   get "manifest", to: "home#manifest"
   get "product", to: "home#product"
@@ -909,6 +1011,184 @@ log "   • LangChain + Weaviate for semantic search"
 log "   • Accuracy scoring and improvement tracking"
 log ""
 log "   Access: http://localhost:3003 for biblical text exploration"
+
+# === USER STUDIES VIEWS ===
+
+log "Creating UserStudies views"
+mkdir -p app/views/user_studies
+
+cat > app/views/user_studies/index.html.erb << 'USER_STUDIES_INDEX_EOF'
+<div class="kondo-page">
+  <div class="container">
+    <div class="page-header">
+      <h1><%= t('baibl.my_studies') %></h1>
+      <%= link_to t('baibl.new_study'), new_user_study_path, class: "btn btn-primary" %>
+    </div>
+    
+    <% if @user_studies.any? %>
+      <div class="studies-list">
+        <% @user_studies.each do |study| %>
+          <div class="study-card">
+            <h3><%= link_to study.verse.reference, user_study_path(study) %></h3>
+            <div class="study-preview">
+              <%= truncate(study.notes, length: 150) %>
+            </div>
+            <div class="study-meta">
+              <span class="rating">
+                <% if study.rating %>
+                  <%= '⭐' * study.rating %>
+                <% end %>
+              </span>
+              <span class="date"><%= study.created_at.strftime("%B %d, %Y") %></span>
+            </div>
+            <div class="study-actions">
+              <%= link_to t('shared.view'), user_study_path(study), class: "btn-link" %>
+              <%= link_to t('shared.edit'), edit_user_study_path(study), class: "btn-link" %>
+              <%= button_to t('shared.delete'), user_study_path(study), method: :delete,
+                  data: { confirm: t('baibl.confirm_delete_study') }, class: "btn-link danger" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <%= render partial: "shared/pagination", locals: { pagy: @pagy } if defined?(@pagy) %>
+    <% else %>
+      <div class="empty-state">
+        <h2><%= t('baibl.no_studies') %></h2>
+        <p><%= t('baibl.start_studying') %></p>
+        <%= link_to t('baibl.new_study'), new_user_study_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+USER_STUDIES_INDEX_EOF
+
+cat > app/views/user_studies/show.html.erb << 'USER_STUDIES_SHOW_EOF'
+<div class="kondo-page">
+  <div class="container">
+    <div class="study-detail">
+      <div class="study-header">
+        <h1><%= t('baibl.bible_study') %></h1>
+        <div class="study-actions">
+          <%= link_to t('shared.edit'), edit_user_study_path(@user_study), class: "btn btn-secondary" %>
+          <%= button_to t('shared.delete'), user_study_path(@user_study), method: :delete,
+              data: { confirm: t('baibl.confirm_delete_study') }, class: "btn btn-danger" %>
+        </div>
+      </div>
+      
+      <div class="verse-reference">
+        <h2><%= @user_study.verse.reference %></h2>
+        <%= link_to t('baibl.view_verse'), verse_path(@user_study.verse), class: "btn-link" %>
+      </div>
+      
+      <div class="verse-text">
+        <div class="translation-block">
+          <h3><%= t('baibl.baibl_translation') %></h3>
+          <p class="verse-content"><%= @user_study.verse.baibl_text %></p>
+        </div>
+        
+        <div class="translation-block">
+          <h3><%= t('baibl.kjv_translation') %></h3>
+          <p class="verse-content"><%= @user_study.verse.kjv_text %></p>
+        </div>
+        
+        <% if @user_study.verse.aramaic_text.present? %>
+          <div class="translation-block">
+            <h3><%= t('baibl.aramaic_original') %></h3>
+            <p class="verse-content aramaic"><%= @user_study.verse.aramaic_text %></p>
+          </div>
+        <% end %>
+      </div>
+      
+      <div class="study-notes">
+        <h3><%= t('baibl.my_notes') %></h3>
+        <%= simple_format(@user_study.notes) %>
+      </div>
+      
+      <% if @user_study.rating %>
+        <div class="study-rating">
+          <strong><%= t('baibl.my_rating') %>:</strong> 
+          <%= '⭐' * @user_study.rating %>
+        </div>
+      <% end %>
+      
+      <div class="study-timestamp">
+        <small><%= t('baibl.studied_on') %> <%= @user_study.created_at.strftime("%B %d, %Y at %I:%M %p") %></small>
+      </div>
+      
+      <div class="back-link">
+        <%= link_to "← #{t('baibl.back_to_studies')}", user_studies_path %>
+      </div>
+    </div>
+  </div>
+</div>
+USER_STUDIES_SHOW_EOF
+
+cat > app/views/user_studies/new.html.erb << 'USER_STUDIES_NEW_EOF'
+<div class="kondo-page">
+  <div class="container">
+    <h1><%= t('baibl.new_study') %></h1>
+    <%= render "form", user_study: @user_study %>
+    <%= link_to t('shared.cancel'), user_studies_path, class: "btn-link" %>
+  </div>
+</div>
+USER_STUDIES_NEW_EOF
+
+cat > app/views/user_studies/edit.html.erb << 'USER_STUDIES_EDIT_EOF'
+<div class="kondo-page">
+  <div class="container">
+    <h1><%= t('baibl.edit_study') %></h1>
+    <%= render "form", user_study: @user_study %>
+    <%= link_to t('shared.cancel'), user_study_path(@user_study), class: "btn-link" %>
+  </div>
+</div>
+USER_STUDIES_EDIT_EOF
+
+cat > app/views/user_studies/_form.html.erb << 'USER_STUDIES_FORM_EOF'
+<%= form_with(model: user_study, local: true, class: "study-form") do |f| %>
+  <% if user_study.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(user_study.errors.count, t('shared.error')) %> <%= t('baibl.prevented_save') %>:</h3>
+      <ul>
+        <% user_study.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :verse_id, t('baibl.select_verse') %>
+    <%= f.collection_select :verse_id, 
+        Verse.includes(:chapter, :book).order('books.title, chapters.number, verses.number').limit(100),
+        :id, 
+        ->(v) { "#{v.chapter.book.title} #{v.chapter.number}:#{v.number}" },
+        { prompt: t('baibl.select_verse_prompt') },
+        class: "form-select", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :notes, t('baibl.study_notes') %>
+    <%= f.text_area :notes, rows: 10, class: "form-control", 
+        placeholder: t('baibl.notes_placeholder'), required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :rating, t('baibl.rating_optional') %>
+    <%= f.select :rating, 
+        options_for_select((1..5).map { |i| ["#{'⭐' * i}", i] }, user_study.rating),
+        { include_blank: t('baibl.no_rating') },
+        class: "form-select" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit t('shared.save'), class: "btn btn-primary" %>
+    <%= link_to t('shared.cancel'), user_studies_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+USER_STUDIES_FORM_EOF
+
+log "UserStudies views completed"
+
 # Change Log:
 # - Aligned with master.json v6.5.0: Two-space indents, double quotes, heredocs, Strunk & White comments.
 # - Used Rails 8 conventions, Hotwire, Turbo Streams, Stimulus Reflex, I18n, and Falcon.

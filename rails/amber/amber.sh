@@ -92,7 +92,54 @@ end
 puts "Seeded #{Item.count} fashion items"
 SEEDS_EOF
 bin/rails generate model Item title:string category:string color:string size:string material:string brand:string price:decimal times_worn:integer purchase_date:date spark_joy:boolean user:references
-bin/rails generate model Outfit name:string description:text category:string season:string occasion:string user:references
+bin/rails generate model Outfit name:string description:text category:string season:string occasion:string likes_count:integer:default[0] user:references
+bin/rails generate model OutfitItem outfit:references item:references position:integer
+
+# Add models with associations
+cat > app/models/item.rb << 'RUBY'
+class Item < ApplicationRecord
+  belongs_to :user
+  has_many :outfit_items, dependent: :destroy
+  has_many :outfits, through: :outfit_items
+  
+  validates :title, presence: true
+  validates :category, presence: true
+  
+  scope :spark_joy, -> { where(spark_joy: true) }
+  scope :by_category, ->(cat) { where(category: cat) }
+end
+RUBY
+
+cat > app/models/outfit.rb << 'RUBY'
+class Outfit < ApplicationRecord
+  belongs_to :user
+  has_many :outfit_items, dependent: :destroy
+  has_many :items, through: :outfit_items
+  
+  validates :name, presence: true
+  
+  def likes_count
+    @likes_count ||= 0
+  end
+  
+  def increment_likes!
+    update(likes_count: (likes_count || 0) + 1)
+  end
+end
+RUBY
+
+cat > app/models/outfit_item.rb << 'RUBY'
+class OutfitItem < ApplicationRecord
+  belongs_to :outfit
+  belongs_to :item
+  
+  validates :outfit, presence: true
+  validates :item, presence: true
+end
+RUBY
+
+bin/rails db:migrate
+
 generate_all_stimulus_controllers
 # Use default CSS from bsdports template
 generate_default_css "$APP_NAME"
@@ -108,40 +155,131 @@ EOF
 # Items controller
 cat <<'EOF' > app/controllers/items_controller.rb
 class ItemsController < ApplicationController
+  before_action :authenticate_user!, except: [:index, :show]
   before_action :set_item, only: [:show, :edit, :update, :destroy, :spark_joy, :declutter]
+  before_action :authorize_user!, only: [:edit, :update, :destroy, :spark_joy, :declutter]
+  
   def index
-    @pagy, @items = pagy(Item.order(created_at: :desc))
+    @pagy, @items = pagy(current_user.items.order(created_at: :desc))
   end
+  
   def show
   end
+  
   def new
-    @item = Item.new
+    @item = current_user.items.build
   end
+  
   def create
-    @item = Item.new(item_params)
+    @item = current_user.items.build(item_params)
     if @item.save
       redirect_to items_path, notice: "Item added to wardrobe"
     else
       render :new, status: :unprocessable_entity
     end
   end
+  
+  def edit
+  end
+  
+  def update
+    if @item.update(item_params)
+      redirect_to @item, notice: "Item updated"
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+  
   def spark_joy
     @item.update(spark_joy: true)
     redirect_to items_path, notice: "✨ This item sparks joy!"
   end
+  
   def declutter
     @item.destroy
     redirect_to items_path, notice: "Item removed from wardrobe"
   end
+  
   private
+  
   def set_item
     @item = Item.find(params[:id])
   end
+  
+  def authorize_user!
+    redirect_to items_path, alert: "Unauthorized" unless @item.user == current_user
+  end
+  
   def item_params
     params.require(:item).permit(:title, :category, :color, :size, :material, :brand, :price, :times_worn, :purchase_date)
   end
 end
 EOF
+
+# Outfits controller
+cat <<'EOF' > app/controllers/outfits_controller.rb
+class OutfitsController < ApplicationController
+  before_action :authenticate_user!, except: [:index, :show]
+  before_action :set_outfit, only: [:show, :edit, :update, :destroy, :like]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
+  def index
+    @pagy, @outfits = pagy(current_user.outfits.order(created_at: :desc))
+  end
+  
+  def show
+  end
+  
+  def new
+    @outfit = current_user.outfits.build
+  end
+  
+  def create
+    @outfit = current_user.outfits.build(outfit_params)
+    if @outfit.save
+      redirect_to @outfit, notice: "Outfit created"
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+  
+  def edit
+  end
+  
+  def update
+    if @outfit.update(outfit_params)
+      redirect_to @outfit, notice: "Outfit updated"
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+  
+  def destroy
+    @outfit.destroy
+    redirect_to outfits_path, notice: "Outfit deleted"
+  end
+  
+  def like
+    @outfit.increment!(:likes_count)
+    redirect_to @outfit, notice: "Liked!"
+  end
+  
+  private
+  
+  def set_outfit
+    @outfit = Outfit.find(params[:id])
+  end
+  
+  def authorize_user!
+    redirect_to outfits_path, alert: "Unauthorized" unless @outfit.user == current_user
+  end
+  
+  def outfit_params
+    params.require(:outfit).permit(:name, :description, :category, :season, :occasion)
+  end
+end
+EOF
+
 # Home view
 cat <<'EOF' > app/views/home/index.html.erb
 <%= render "shared/header" %>
@@ -1275,5 +1413,196 @@ Tech stack:
 - pgvector for similarity search
 - Turbo Streams for real-time updates
 Helps girls organize wardrobes with joy and mindfulness.
+
+# === OUTFITS VIEWS ===
+
+log "Creating Outfits views"
+mkdir -p app/views/outfits
+
+cat > app/views/outfits/index.html.erb << 'OUTFITS_INDEX_EOF'
+<%= render "shared/header" %>
+<div class="container">
+  <div class="page-header">
+    <h1>My Outfits</h1>
+    <%= link_to "Create New Outfit", new_outfit_path, class: "btn btn-primary" %>
+  </div>
+  
+  <% if @outfits.any? %>
+    <div class="outfits-grid">
+      <% @outfits.each do |outfit| %>
+        <div class="outfit-card">
+          <div class="outfit-preview">
+            <%= link_to outfit_path(outfit) do %>
+              <h3><%= outfit.name %></h3>
+            <% end %>
+          </div>
+          <div class="outfit-details">
+            <p><%= truncate(outfit.description, length: 100) %></p>
+            <div class="outfit-meta">
+              <% if outfit.category %>
+                <span class="badge"><%= outfit.category %></span>
+              <% end %>
+              <% if outfit.season %>
+                <span class="badge"><%= outfit.season %></span>
+              <% end %>
+              <% if outfit.occasion %>
+                <span class="badge"><%= outfit.occasion %></span>
+              <% end %>
+            </div>
+            <div class="outfit-actions">
+              <%= link_to "View", outfit_path(outfit), class: "btn-link" %>
+              <%= link_to "Edit", edit_outfit_path(outfit), class: "btn-link" %>
+              <%= button_to "Delete", outfit_path(outfit), method: :delete, 
+                  data: { confirm: "Are you sure?" }, class: "btn-link danger" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <%= render partial: "shared/pagination", locals: { pagy: @pagy } if defined?(@pagy) %>
+  <% else %>
+    <div class="empty-state">
+      <h2>No outfits yet</h2>
+      <p>Create your first outfit combination!</p>
+      <%= link_to "Create Outfit", new_outfit_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+OUTFITS_INDEX_EOF
+
+cat > app/views/outfits/show.html.erb << 'OUTFITS_SHOW_EOF'
+<%= render "shared/header" %>
+<div class="container">
+  <div class="outfit-detail">
+    <div class="outfit-header">
+      <h1><%= @outfit.name %></h1>
+      <div class="outfit-actions">
+        <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn btn-secondary" %>
+        <%= button_to "Delete", outfit_path(@outfit), method: :delete, 
+            data: { confirm: "Delete this outfit?" }, class: "btn btn-danger" %>
+        <%= button_to "❤️ Like", like_outfit_path(@outfit), method: :post, class: "btn btn-icon" %>
+      </div>
+    </div>
+    
+    <div class="outfit-content">
+      <% if @outfit.description.present? %>
+        <div class="outfit-description">
+          <%= simple_format(@outfit.description) %>
+        </div>
+      <% end %>
+      
+      <div class="outfit-metadata">
+        <div class="meta-item">
+          <strong>Category:</strong> <%= @outfit.category || "Not specified" %>
+        </div>
+        <div class="meta-item">
+          <strong>Season:</strong> <%= @outfit.season || "All seasons" %>
+        </div>
+        <div class="meta-item">
+          <strong>Occasion:</strong> <%= @outfit.occasion || "Casual" %>
+        </div>
+        <% if @outfit.likes_count && @outfit.likes_count > 0 %>
+          <div class="meta-item">
+            <strong>Likes:</strong> <%= @outfit.likes_count %>
+          </div>
+        <% end %>
+      </div>
+      
+      <div class="outfit-items">
+        <h3>Items in this outfit</h3>
+        <% if @outfit.items.any? %>
+          <div class="items-grid">
+            <%= render partial: "items/item_card", collection: @outfit.items, as: :item %>
+          </div>
+        <% else %>
+          <p class="text-muted">No items added to this outfit yet.</p>
+        <% end %>
+      </div>
+    </div>
+    
+    <div class="back-link">
+      <%= link_to "← Back to Outfits", outfits_path %>
+    </div>
+  </div>
+</div>
+OUTFITS_SHOW_EOF
+
+cat > app/views/outfits/new.html.erb << 'OUTFITS_NEW_EOF'
+<%= render "shared/header" %>
+<div class="container">
+  <div class="form-page">
+    <h1>Create New Outfit</h1>
+    <%= render "form", outfit: @outfit %>
+    <%= link_to "Cancel", outfits_path, class: "btn-link" %>
+  </div>
+</div>
+OUTFITS_NEW_EOF
+
+cat > app/views/outfits/edit.html.erb << 'OUTFITS_EDIT_EOF'
+<%= render "shared/header" %>
+<div class="container">
+  <div class="form-page">
+    <h1>Edit Outfit</h1>
+    <%= render "form", outfit: @outfit %>
+    <%= link_to "Cancel", outfit_path(@outfit), class: "btn-link" %>
+  </div>
+</div>
+OUTFITS_EDIT_EOF
+
+cat > app/views/outfits/_form.html.erb << 'OUTFITS_FORM_EOF'
+<%= form_with(model: outfit, local: true, class: "outfit-form") do |f| %>
+  <% if outfit.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(outfit.errors.count, "error") %> prevented this outfit from being saved:</h3>
+      <ul>
+        <% outfit.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name, "Outfit Name" %>
+    <%= f.text_field :name, placeholder: "e.g., Summer Brunch Look", class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description, "Description" %>
+    <%= f.text_area :description, rows: 4, placeholder: "Describe this outfit combination...", class: "form-control" %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :category, "Category" %>
+      <%= f.select :category, 
+          options_for_select(['Casual', 'Formal', 'Business', 'Athletic', 'Evening', 'Weekend'], outfit.category),
+          { include_blank: "Select category" }, 
+          class: "form-select" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :season, "Season" %>
+      <%= f.select :season,
+          options_for_select(['Spring', 'Summer', 'Fall', 'Winter', 'All Season'], outfit.season),
+          { include_blank: "Select season" },
+          class: "form-select" %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :occasion, "Occasion" %>
+    <%= f.text_field :occasion, placeholder: "e.g., Brunch, Date night, Work meeting", class: "form-control" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit "Save Outfit", class: "btn btn-primary" %>
+    <%= link_to "Cancel", outfits_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+OUTFITS_FORM_EOF
+
+log "Outfits views completed"
+
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 Co-Authored-By: Claude <noreply@anthropic.com>"

@@ -96,14 +96,19 @@ cat > app/controllers/posts_controller.rb << 'RUBY'
 class PostsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
   def index
     @posts = Post.feed.page(params[:page])
   end
+  
   def show
   end
+  
   def new
     @post = current_user.posts.build
   end
+  
   def create
     @post = current_user.posts.build(post_params)
     if @post.save
@@ -112,8 +117,10 @@ class PostsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+  
   def edit
   end
+  
   def update
     if @post.update(post_params)
       redirect_to @post, notice: 'Post updated'
@@ -121,19 +128,176 @@ class PostsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
+  
   def destroy
     @post.destroy
     redirect_to posts_path, notice: 'Post deleted'
   end
+  
   private
+  
   def set_post
     @post = Post.find(params[:id])
   end
+  
+  def authorize_user!
+    redirect_to posts_path, alert: 'Unauthorized' unless @post.user == current_user || current_user&.admin?
+  end
+  
   def post_params
     params.require(:post).permit(:blog_id, :title, :content, :published_at)
   end
 end
 RUBY
+
+# Additional controllers
+cat > app/controllers/comments_controller.rb << 'RUBY'
+class CommentsController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_post
+  before_action :set_comment, only: [:destroy]
+  before_action :authorize_user!, only: [:destroy]
+  
+  def create
+    @comment = @post.comments.build(comment_params)
+    @comment.user = current_user
+    if @comment.save
+      redirect_to @post, notice: 'Comment added'
+    else
+      redirect_to @post, alert: 'Could not add comment'
+    end
+  end
+  
+  def destroy
+    @comment.destroy
+    redirect_to @post, notice: 'Comment deleted'
+  end
+  
+  private
+  
+  def set_post
+    @post = Post.find(params[:post_id])
+  end
+  
+  def set_comment
+    @comment = Comment.find(params[:id])
+  end
+  
+  def authorize_user!
+    redirect_to @post, alert: 'Unauthorized' unless @comment.user == current_user
+  end
+  
+  def comment_params
+    params.require(:comment).permit(:content)
+  end
+end
+RUBY
+
+cat > app/controllers/likes_controller.rb << 'RUBY'
+class LikesController < ApplicationController
+  before_action :authenticate_user!
+  
+  def create
+    @likeable = find_likeable
+    @like = @likeable.likes.build(user: current_user)
+    if @like.save
+      @likeable.calculate_engagement! if @likeable.respond_to?(:calculate_engagement!)
+      redirect_back fallback_location: root_path, notice: 'Liked'
+    else
+      redirect_back fallback_location: root_path, alert: 'Could not like'
+    end
+  end
+  
+  private
+  
+  def find_likeable
+    params[:likeable_type].constantize.find(params[:likeable_id])
+  end
+end
+RUBY
+
+cat > app/controllers/shares_controller.rb << 'RUBY'
+class SharesController < ApplicationController
+  before_action :authenticate_user!
+  
+  def create
+    @shareable = find_shareable
+    @share = @shareable.shares.build(user: current_user, platform: params[:platform])
+    if @share.save
+      @shareable.calculate_engagement! if @shareable.respond_to?(:calculate_engagement!)
+      redirect_back fallback_location: root_path, notice: 'Shared'
+    else
+      redirect_back fallback_location: root_path, alert: 'Could not share'
+    end
+  end
+  
+  private
+  
+  def find_shareable
+    params[:shareable_type].constantize.find(params[:shareable_id])
+  end
+end
+RUBY
+
+cat > app/controllers/blogs_controller.rb << 'RUBY'
+class BlogsController < ApplicationController
+  before_action :authenticate_user!, except: [:index, :show]
+  before_action :set_blog, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
+  def index
+    @blogs = Blog.all.order(created_at: :desc)
+  end
+  
+  def show
+    @posts = @blog.posts.where('published_at <= ?', Time.current).order(published_at: :desc)
+  end
+  
+  def new
+    @blog = current_user.blogs.build
+  end
+  
+  def create
+    @blog = current_user.blogs.build(blog_params)
+    if @blog.save
+      redirect_to @blog, notice: 'Blog created'
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+  
+  def edit
+  end
+  
+  def update
+    if @blog.update(blog_params)
+      redirect_to @blog, notice: 'Blog updated'
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+  
+  def destroy
+    @blog.destroy
+    redirect_to blogs_path, notice: 'Blog deleted'
+  end
+  
+  private
+  
+  def set_blog
+    @blog = Blog.find_by!(slug: params[:id]) || Blog.find(params[:id])
+  end
+  
+  def authorize_user!
+    redirect_to blogs_path, alert: 'Unauthorized' unless @blog.user == current_user
+  end
+  
+  def blog_params
+    params.require(:blog).permit(:title, :description)
+  end
+end
+RUBY
+
 # Modern CSS with container queries + typography
 cat > app/assets/stylesheets/application.scss << 'SCSS'
 @import url('https://fonts.googleapis.com/css2?family=Fugaz+One&family=Work+Sans:wght@300;400;600&display=swap');
@@ -210,21 +374,23 @@ cat > config/routes.rb << 'RUBY'
 Rails.application.routes.draw do
   devise_for :users
   root "feed#index"
+  
   resources :feed, only: [:index] do
     collection do
       get :trending
     end
   end
+  
   resources :blogs do
     resources :posts
   end
+  
   resources :posts do
     resources :comments, only: [:create, :destroy]
-    member do
-      post :like
-      post :share
-    end
   end
+  
+  resources :likes, only: [:create]
+  resources :shares, only: [:create]
 end
 RUBY
 # PWA manifest
@@ -278,4 +444,296 @@ self.addEventListener('fetch', event => {
   );
 });
 JS
+
+# === VIEWS ===
+
+log "Creating views"
+mkdir -p app/views/{posts,feed,shared,layouts}
+
+# Application layout
+cat > app/views/layouts/application.html.erb << 'LAYOUT_EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= content_for?(:title) ? yield(:title) + " - Blognet" : "Blognet - Multi-Blog Platform" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+  <%= render "shared/header" %>
+  <% if notice.present? %>
+    <div class="notice"><%= notice %></div>
+  <% end %>
+  <% if alert.present? %>
+    <div class="alert"><%= alert %></div>
+  <% end %>
+  <main>
+    <%= yield %>
+  </main>
+  <%= render "shared/footer" %>
+</body>
+</html>
+LAYOUT_EOF
+
+# Shared header
+cat > app/views/shared/_header.html.erb << 'HEADER_EOF'
+<header class="site-header">
+  <div class="container">
+    <%= link_to "Blognet", root_path, class: "logo" %>
+    <nav>
+      <%= link_to "Feed", feed_index_path, class: "nav-link" %>
+      <%= link_to "Trending", trending_feed_index_path, class: "nav-link" %>
+      <% if user_signed_in? %>
+        <%= link_to "My Posts", posts_path, class: "nav-link" %>
+        <%= link_to "New Post", new_post_path, class: "btn btn-primary" %>
+        <%= link_to "Sign Out", destroy_user_session_path, method: :delete, class: "nav-link" %>
+      <% else %>
+        <%= link_to "Sign In", new_user_session_path, class: "nav-link" %>
+        <%= link_to "Sign Up", new_user_registration_path, class: "btn btn-primary" %>
+      <% end %>
+    </nav>
+  </div>
+</header>
+HEADER_EOF
+
+# Shared footer
+cat > app/views/shared/_footer.html.erb << 'FOOTER_EOF'
+<footer class="site-footer">
+  <div class="container">
+    <p>&copy; <%= Time.current.year %> Blognet. Multi-blog platform with AI content generation.</p>
+  </div>
+</footer>
+FOOTER_EOF
+
+# Feed index
+cat > app/views/feed/index.html.erb << 'FEED_INDEX_EOF'
+<div class="container">
+  <h1>Feed</h1>
+  <div class="posts-feed">
+    <% @posts.each do |post| %>
+      <%= render "posts/post_card", post: post %>
+    <% end %>
+  </div>
+  <%= render "shared/pagination", pagy: @pagy if defined?(@pagy) %>
+</div>
+FEED_INDEX_EOF
+
+# Feed trending
+cat > app/views/feed/trending.html.erb << 'FEED_TRENDING_EOF'
+<div class="container">
+  <h1>Trending Posts</h1>
+  <div class="posts-feed">
+    <% @posts.each do |post| %>
+      <%= render "posts/post_card", post: post %>
+    <% end %>
+  </div>
+  <%= render "shared/pagination", pagy: @pagy if defined?(@pagy) %>
+</div>
+FEED_TRENDING_EOF
+
+# Posts index
+cat > app/views/posts/index.html.erb << 'POSTS_INDEX_EOF'
+<div class="container">
+  <div class="page-header">
+    <h1>My Posts</h1>
+    <%= link_to "New Post", new_post_path, class: "btn btn-primary" %>
+  </div>
+  <div class="posts-list">
+    <% @posts.each do |post| %>
+      <div class="post-item">
+        <h3><%= link_to post.title, post_path(post) %></h3>
+        <div class="post-meta">
+          <span>Blog: <%= post.blog.title %></span>
+          <span>Engagement: <%= post.engagement_score %></span>
+          <span>Published: <%= post.published_at&.strftime("%B %d, %Y") || "Draft" %></span>
+        </div>
+        <div class="post-actions">
+          <%= link_to "Edit", edit_post_path(post), class: "btn-link" %>
+          <%= button_to "Delete", post_path(post), method: :delete, 
+              data: { confirm: "Delete this post?" }, class: "btn-link danger" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+POSTS_INDEX_EOF
+
+# Posts show
+cat > app/views/posts/show.html.erb << 'POSTS_SHOW_EOF'
+<article class="post-detail">
+  <div class="container">
+    <header class="post-header">
+      <h1><%= @post.title %></h1>
+      <div class="post-meta">
+        <span class="author">By <%= @post.user.email %></span>
+        <span class="blog">in <%= link_to @post.blog.title, blog_path(@post.blog) %></span>
+        <span class="date"><%= @post.published_at&.strftime("%B %d, %Y") %></span>
+        <span class="engagement">💬 <%= @post.comments.count %> 👍 <%= @post.likes.count %> 🔗 <%= @post.shares.count %></span>
+      </div>
+    </header>
+    
+    <div class="post-content">
+      <%= simple_format(@post.content) %>
+    </div>
+    
+    <div class="post-actions">
+      <%= button_to "👍 Like", likes_path(likeable_type: "Post", likeable_id: @post.id), method: :post, class: "btn btn-icon" %>
+      <%= button_to "🔗 Share", shares_path(shareable_type: "Post", shareable_id: @post.id, platform: "twitter"), method: :post, class: "btn btn-icon" %>
+      <% if current_user == @post.user %>
+        <%= link_to "Edit", edit_post_path(@post), class: "btn btn-secondary" %>
+        <%= button_to "Delete", post_path(@post), method: :delete, 
+            data: { confirm: "Delete this post?" }, class: "btn btn-danger" %>
+      <% end %>
+    </div>
+    
+    <section class="comments">
+      <h2>Comments (<%= @post.comments.count %>)</h2>
+      <% if user_signed_in? %>
+        <%= render "comments/form", post: @post %>
+      <% else %>
+        <p><%= link_to "Sign in", new_user_session_path %> to comment</p>
+      <% end %>
+      
+      <div class="comments-list">
+        <% @post.comments.order(created_at: :desc).each do |comment| %>
+          <%= render "comments/comment", comment: comment %>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</article>
+POSTS_SHOW_EOF
+
+# Posts new
+cat > app/views/posts/new.html.erb << 'POSTS_NEW_EOF'
+<div class="container">
+  <h1>New Post</h1>
+  <%= render "form", post: @post %>
+</div>
+POSTS_NEW_EOF
+
+# Posts edit
+cat > app/views/posts/edit.html.erb << 'POSTS_EDIT_EOF'
+<div class="container">
+  <h1>Edit Post</h1>
+  <%= render "form", post: @post %>
+</div>
+POSTS_EDIT_EOF
+
+# Posts form
+cat > app/views/posts/_form.html.erb << 'POSTS_FORM_EOF'
+<%= form_with(model: post, local: true, class: "post-form") do |f| %>
+  <% if post.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(post.errors.count, "error") %> prevented this post from being saved:</h3>
+      <ul>
+        <% post.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :blog_id, "Blog" %>
+    <%= f.collection_select :blog_id, current_user.blogs, :id, :title, 
+        { prompt: "Select a blog" }, class: "form-select", required: true %>
+    <%= link_to "Create new blog", new_blog_path, class: "btn-link" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, class: "form-control", placeholder: "Enter post title", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :content %>
+    <%= f.text_area :content, rows: 15, class: "form-control", placeholder: "Write your post...", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :published_at, "Publish Date (leave blank for draft)" %>
+    <%= f.datetime_field :published_at, class: "form-control" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit "Save Post", class: "btn btn-primary" %>
+    <%= link_to "Cancel", posts_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+POSTS_FORM_EOF
+
+# Post card partial
+cat > app/views/posts/_post_card.html.erb << 'POST_CARD_EOF'
+<article class="post-card">
+  <header>
+    <h2><%= link_to post.title, post_path(post) %></h2>
+    <div class="post-meta">
+      <span class="author"><%= post.user.email %></span>
+      <span class="blog"><%= link_to post.blog.title, blog_path(post.blog) %></span>
+      <span class="date"><%= post.published_at&.strftime("%B %d, %Y") %></span>
+    </div>
+  </header>
+  <div class="post-excerpt">
+    <%= truncate(post.content, length: 200) %>
+  </div>
+  <footer>
+    <div class="post-stats">
+      <span>💬 <%= post.comments.count %></span>
+      <span>👍 <%= post.likes.count %></span>
+      <span>📈 <%= post.engagement_score %></span>
+      <% if post.trending_score > 0 %>
+        <span class="trending">🔥 Trending</span>
+      <% end %>
+    </div>
+    <%= link_to "Read more →", post_path(post), class: "read-more" %>
+  </footer>
+</article>
+POST_CARD_EOF
+
+# Comments partial
+mkdir -p app/views/comments
+cat > app/views/comments/_form.html.erb << 'COMMENT_FORM_EOF'
+<%= form_with(model: [post, Comment.new], local: true, class: "comment-form") do |f| %>
+  <div class="form-group">
+    <%= f.text_area :content, rows: 3, class: "form-control", 
+        placeholder: "Add a comment...", required: true %>
+  </div>
+  <%= f.submit "Post Comment", class: "btn btn-primary" %>
+<% end %>
+COMMENT_FORM_EOF
+
+cat > app/views/comments/_comment.html.erb << 'COMMENT_EOF'
+<div class="comment">
+  <div class="comment-author"><%= comment.user.email %></div>
+  <div class="comment-content"><%= simple_format(comment.content) %></div>
+  <div class="comment-meta">
+    <%= comment.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+    <% if current_user == comment.user %>
+      <%= button_to "Delete", comment_path(comment), method: :delete, 
+          data: { confirm: "Delete this comment?" }, class: "btn-link danger" %>
+    <% end %>
+  </div>
+</div>
+COMMENT_EOF
+
+# Pagination partial
+cat > app/views/shared/_pagination.html.erb << 'PAGINATION_EOF'
+<% if defined?(pagy) && pagy.pages > 1 %>
+  <nav class="pagination">
+    <% if pagy.prev %>
+      <%= link_to "← Previous", url_for(page: pagy.prev), class: "btn" %>
+    <% end %>
+    <span class="page-info">Page <%= pagy.page %> of <%= pagy.pages %></span>
+    <% if pagy.next %>
+      <%= link_to "Next →", url_for(page: pagy.next), class: "btn" %>
+    <% end %>
+  </nav>
+<% end %>
+PAGINATION_EOF
+
 log "✓ Blognet v${VERSION} complete: social feed + PWA + container queries + engagement scoring"

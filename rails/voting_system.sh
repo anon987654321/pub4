@@ -2,7 +2,7 @@
 # Universal voting and reviews for all Rails apps
 # Usage: add_voting_to_app app_name
 add_voting_system() {
-  local app_name="${1:-current_app}"
+  typeset app_name="${1:-current_app}"
   log "Adding voting system to $app_name"
   install_voting_gems
   generate_voting_models

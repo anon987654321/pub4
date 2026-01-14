@@ -1,0 +1,414 @@
+Open in app
+Sidebar menu
+Search
+Write
+Notifications
+
+your-mommas-favorite
+Bootcamp
+Forget Figma, AI is the new Design tool
+Precious Madubuike
+Precious Madubuike
+
+Follow
+10 min read
+·
+Nov 18, 2025
+430
+
+
+15
+
+
+
+
+
+Press enter or click to view image in full size
+Figma logo with code overlayed on it
+When I joined Booking.com back in 2019, coding wasn’t a nice-to-have for UX designers, it was required. You simply couldn’t get hired at Booking.com without it. At the time, that felt like an outlier, almost extreme.
+
+Six years later, it’s becoming the norm. Companies like Linear, Vercel, Cursor, and XAi have been quietly rewriting the designer job description and hiring “design engineers”. They want designers who can build and ship, not just push pixels.
+
+Now, this isn’t the tired debate about whether designers should code. That ship has sailed at the companies shipping the best products. AI has finally made possible what used to be an almost impossible skill to learn. Designers, and anyone can now build real software, not just mock it up.
+
+The next big shift in how we design and build products is here. We once designed software in Photoshop, a tool built for print. Then Figma arrived, a tool built for screens, and everything changed. Now the medium is shifting again. Screens aren’t the final product anymore. Working software is.
+
+This shift reveals something we don’t talk about enough: the bottleneck in our current workflow. If AI enables anyone to build, why do we still need to spend time designing in tools designed for static screens, that only results in mockups instead of the real thing?
+
+The Figma Bottleneck & the hidden cost of designing in static tools
+I love Figma. I once tweeted it’s one of the greatest inventions of our time, and I meant it. The performance, features like auto-layout, the real-time collaboration, along with Sketch before it revolutionised how we design and build software. Another revolution is upon us, except that this time it isn’t another design tool, it’s artificial intelligence.
+
+Let’s be honest about how product design actually goes:
+
+You spend days on Figma polishing a flow and screens, tweaking auto-layout settings, detaching components, nudging pixels, crafting components and variants. Essentially building a Rube Goldberg machine. You wire up some prototypes with half-baked interactions that never feel quite right. Users are presented with a scripted path with perfect conditions. They can’t actually search, they can’t really log in, they can’t experience what happens when the network is slow or when data fails to load.
+
+After user testing, you go back to Figma and refine. Then comes handoff; where the real pain starts. We’ve built entire workflows around them; design specs, developer mode, redlines, design tokens. And we act like if we document enough, if we annotate enough, if we make our Figma files organized enough, the translation will be seamless. It never is.
+
+Weeks later, you finally see it built. But the spacing is off, the interactions feel clunky, and there are dozens of edge cases you never considered because you were designing with perfect placeholder data. So you file tickets, wait for the next sprint, and by the time you’ve gone back and forth with engineers, you’ve spent weeks shipping something that you could have tested and refined in days if you’d just built it in the first place.
+
+These aren’t failures of documentation, they’re questions that static designs simply can’t answer, and neither is the problem Figma. The problem is treating static screens and half-baked prototypes as the end of the design process when they’re fundamentally incapable of answering the questions that matter most: Does this actually feel good to use? Do the interactions make sense? Does the flow break when users do unexpected things or when something unexpected happens?
+
+Static designs result in theoretical, time consuming documentation. Working software gives you truth.
+
+Ryo Lu, head of design at Cursor, put it simply: designing with code “lets us really interact with the app. It just feels a lot more real than some picture in Figma.”
+
+In a tweet, a designer by the handle @aydaoz tweeted: “I would pay 1k for Linear’s design system file. but probably its worth more.” Linear’s founding designer, @Griveau, replied: “Our files are pretty messy, honestly. We don’t follow a strict “design system”. We use Figma more as a sketch to build the final product in code.”
+
+AI as the New Design Tool
+If the past decade was about designing screens, perfecting pixels and mastering auto-layout, the next decade is about turning ideas into products instantly. I’ve designed and launched 3 products in the last 6 months without first designing them in Figma. Not because Figma got worse, but because AI made it unnecessary.
+
+Out with the old, in with the new
+Our workflow hasn’t caught up with the reality of what’s now possible. The conventional workflow of designing and building software looks like this:
+
+Research > Ideate > Design in Figma > Prototype > Review > Hand-off > Engineering > QA > Refinement > More QA > Final handoff > Deploy.
+
+Each arrow represents days or weeks. Each hand-off represents lost context and translation errors.
+
+The AI-enabled workflow looks like this:
+
+Research -> Build -> Test -> Refine -> Deploy.
+
+You’re not skipping steps, you’re collapsing them. The design and the product are the same thing. You’re not mocking up an interface and hoping it works, you’re building the interface and iterating on the real thing.
+
+Code as the new Canvas
+Design tools simulate products. AI just builds them. Figma simulates a button. Claude Code builds a button that actually works, with hover states, click handlers, loading states, error handling, and accessibility attributes.
+
+In 2025, the most powerful design tools aren’t visual editors, they are code-generating, context-aware AI agents that enable designers to move from static screen thinking to thinking in outcomes and systems. Tools like v0, Lovable, Replit, Cursor, and CLI ones like Claude and OpenAI’s Codex don’t generate mockups, they eliminate the need for mockups entirely.
+
+As mentioned earlier, this is the kind of shift that happened when tools like Figma replaced Photoshop. Photoshop was built for print; screens were an afterthought. Figma was built for screens; collaboration was native. The tool matched the medium, and suddenly everyone could work faster and better.
+
+Now code is the medium, and AI is making it as accessible as Figma made pixels.
+
+When your canvas is code, everything changes. Your prototypes aren’t approximations, they’re the real thing running on real devices. Your edge cases aren’t documented, they’re handled. Your interactions aren’t animated previews, they’re functional behavior. Your designs aren’t specifications, they’re deployable software.
+
+AI is making code the new design canvas.
+
+Designing with Code
+I know a lot of designers who are scared of code, and never want to look at it. Fear not! Designing in code means using code as your design medium the same way you currently use Figma as your design medium. You are still designing; thinking about users, solving problems, making things intuitive and delightful. The difference is what you are manipulating. In Figma, you manipulate vectors, frames and layers. With AI, you manipulate components, states, and behavior. The output just happens to be functional software instead of static images.
+
+What Actually Changes?
+You describe instead of draw
+In Figma, you express your intent by positioning rectangles and choosing colors. With AI, you express intent through conversation: “The form validation should be inline, not at the top. The loading state should show a skeleton of the content, not a spinner.” Both are design. One uses a visual editor, the other uses language.
+
+You work with real constraints.
+Figma lets you design impossible things. When you design in code, reality pushes back immediately. You can’t fake an API response, you either integrate the real API or mock it properly. And with code, you get to see how conditional logic, edge cases, and state changes impacts the UI and experience in ways Figma will never reveal.
+
+This friction is a feature, not a bug. It forces you to think through the hard parts while you’re designing, not weeks later during implementation.
+
+You iterate in minutes, not days.
+In Figma: make a change, export to prototype, share the link, wait for feedback, make another change, update the prototype, share again.
+
+With AI: make a change, refresh the browser, see it live. Make another change, refresh again. The feedback loop is so tight that you can try ten different approaches in the time it used to take to wire up one Figma prototype. Instead of spending hours nudging pixels, fixing frames, and dragging nodes, you have more time to test with users, discovering what actually works, and solving real-world problems.
+
+You ship the thing you designed.
+The most profound shift (in my opinion): when you’re done designing, you’re also done building. There’s no handoff where your carefully considered decisions get reinterpreted. If you spent an hour perfecting the timing of a micro-interaction, that exact timing goes to production. Your design decisions don’t get translated, they get deployed.
+
+The foundations of designing with code
+Designing with code doesn’t require becoming a developer. Designers don’t need to understand algorithms or data structures. Nor do they need to memorize syntax. If designers can figure out auto-layout, or wire up prototypes in Figma, they should be able to learn and understand a few fundamental concepts:
+
+HTML structure
+How content is organized (headers, paragraphs, lists, buttons). Think of it like Figma’s layer hierarchy — containers, inside containers, except semantic.
+
+CSS basics
+How things are styled (colors, sizes, spacing, layouts). This is the closest analog to what we already do in Figma.
+
+Component thinking
+The idea that interfaces are built from reusable pieces. Designers already think this way with Figma components.
+
+State
+The idea that interfaces change based on data (loading, error, success, empty).
+
+Tailwind utility classes
+A vocabulary for styling. Instead of dragging a spacing control in Figma, you write space-y-4. Instead of adjusting font size visually, you write text-lg. It’s different syntax for the same concepts.
+
+English or even your native language
+Designing with AI starts with something you already know how to use: language. English, or even your native language, is now you new toolbar. You describe what you want, the same way you explain a design to a teammate.
+
+You can learn these basics in a weekend on YouTube or from Google links. You won’t be an expert, but you’ll know enough to art-direct AI effectively. Like learning enough photography terminology to direct a photographer, you don’t need to be Tyler Mitchell, but you need to know what aperture means.
+
+The good news is that unlike Figma, AI is conversational. When you use a class wrong or misunderstand a concept, it corrects you conversationally. “Actually, space-y-4 controls vertical spacing between children. For padding inside an element, you want py-4.”
+
+The reality of designing with AI today
+Let’s be clear about what AI is good at today and where it falls short.
+
+AI excels at structure and functionality. It can build forms, handle routing, manage state, connect to APIs, implement validation logic, create responsive layouts. All the things that typically require an engineer.
+
+What AI still struggles with is the finer points of visual design. The spacing might be serviceable but not refined. The typography hierarchy might be functional but not polished. The colors work but don’t feel on-brand.
+
+This is where understanding the basics of HTML, CSS, and Tailwind becomes invaluable. You don’t need to write code from scratch, but knowing that space-y-6 controls vertical spacing, or that text-xl font-semibold adjusts text size and weight, lets you add that human touch that elevates AI slop into something intentional and beautiful.
+
+Mobile environments are still a step behind. AI tools today perform best in web contexts and are not yet deeply integrated with native app environments like Xcode or Android Studio. This doesn’t mean designers can’t prototype mobile experiences. You absolutely can, but for now, expect to work primarily with web-based or cross-platform frameworks.
+
+While designing with AI has it shortcoming today, AI is rapidly getting better, and designers who understand the fundamentals will always build better products than those who don’t.
+
+Where Figma Still Wins
+Let’s be clear: code isn’t better for everything.
+
+Early exploration
+When you’re trying ten wildly different directions in an hour, Figma is faster. It’s easier to sketch rough layouts, try different visual styles, and throw things away.
+
+Visual design system work
+Defining your color palette, typography scale, and component library is still more intuitive in a visual editor.
+
+Stakeholder alignment
+When you need to show twenty options to get buy-in, Figma is more efficient than building twenty working prototypes.
+
+Pure visual craft
+If you’re designing an illustration, an icon set, or marketing graphics, code isn’t the right tool.
+
+The shift isn’t from Figma to code. It’s from Figma as the end artifact to Figma as the ideation tool. Figma becomes the sketchbook, not the blueprint.
+
+The Mental Model Shift
+The hardest part isn’t learning new tools. It’s changing how you think about design.
+
+In the Figma mindset, design is about creating comprehensive documentation of your intent. You make screens for every state, annotate every interaction, specify every measurement. The goal is to communicate your vision perfectly so someone else can build it.
+
+In the code mindset, design is about directly shaping the thing itself. You’re not documenting a button, you’re building the button. You’re not specifying how a form should validate, you’re implementing the validation. The goal is to make the product good, not to make the documentation perfect.
+
+This requires trusting yourself in a new way. You can’t hide behind “that’s how it was in the design.” You can’t defer the hard decisions to implementation. You have to make it work.
+
+But here’s the payoff: when it does work, you know it works. Not theoretically, not hopefully, not if-engineering-builds-it-right. Actually, measurably, undeniably works.
+
+You become responsible for outcomes, not artifacts. And that’s where design was always supposed to be.
+
+In the next part (part 2) of this article, I’ll move from theory to practice, showing exactly how I design with code.
+
+We’ll explore the full workflow I use today: from setting up a dev environment to using Git, to working with AI tools like Claude CLI, and deploying live prototypes with Vercel or Replit.
+
+What you’ll need before we start
+Git + GitHub
+For version control and collaboration. If you don’t already have a GitHub account, sign up here and download the GitHub Desktop app. You’ll also need to install Git on your computer.
+
+Node.js + npm
+Node.js lets you run JavaScript outside the browser and is essential for most modern web projects. Installing Node also includes npm (Node Package Manager), which you’ll use to install frameworks, libraries, and dependencies. Download and install the latest version from the official site.
+
+VS Code or Cursor
+Your development workspace. Think of it as the new Figma, except there are no layers. I personally use VS Code with the Claude CLI extension.
+
+Claude CLI
+Your AI partner for designing and writing code. If you don’t yet have an account, sign up for a Claude account.
+
+Vercel or Replit
+A hosting platform that lets you deploy live products instantly, no servers to manage, no setup headaches. Create an account and you’ll be ready to publish your builds with one command.
+
+Tailwind CSS
+A utility-first CSS framework for clean, responsive design with minimal effort.
+
+That’s it. With this setup, you’ll be able to move from concept to a live, interactive prototype in under an hour.
+
+See you in part two
+
+Design
+Figma
+AI
+Generative Ai Tools
+Artificial Intelligence
+430
+
+
+15
+
+
+
+
+Bootcamp
+Published in Bootcamp
+103K followers
+·
+Last published 5 hours ago
+From idea to product, one lesson at a time. To submit your story: https://tinyurl.com/bootspub1
+
+
+Follow
+Precious Madubuike
+Written by Precious Madubuike
+1.2K followers
+·
+943 following
+Product Designer Partner for Early-Stage Startups and Founders. www.preciousm.co
+
+
+Follow
+Responses (15)
+your-mommas-favorite
+your-mommas-favorite
+﻿
+
+Cancel
+Respond
+Tolulope oyebola
+Tolulope oyebola
+
+Dec 3, 2025
+
+
+This is really insightful, thanks for sharing. 
+Anticipating for the part 2 ,
+
+ I want to know how you can create a prompt to give you a pixel perfect design that’s working.
+--
+
+Reply
+
+Masum Parvej
+Masum Parvej
+
+Nov 21, 2025
+
+
+The point about “designing with constraints” really stuck with me. Reality pushing back early actually sounds way healthier for product teams.
+--
+
+Reply
+
+Daniela Penati
+Daniela Penati
+
+Dec 1, 2025
+
+
+You got me intrigued--looking forward to your part two!
+--
+
+Reply
+
+See all responses
+More from Precious Madubuike and Bootcamp
+Article illustration depicting the business impact of design
+UX Collective
+In
+
+UX Collective
+
+by
+
+Precious Madubuike
+
+Realizing the business impact of design
+My goal for writing this article is to amplify the business value that design can have beyond product and UX. It’s an attempt to broaden…
+Jan 20, 2021
+
+The Attention Crisis Is Just a Distraction | The New Yorker.
+Bootcamp
+In
+
+Bootcamp
+
+by
+
+Kartscrut
+
+Why nobody can read anymore
+When curiosity fades, attention follows. And when attention fades, meaning does too.
+
+Oct 31, 2025
+
+My toolkit for 2025
+Bootcamp
+In
+
+Bootcamp
+
+by
+
+Thu Le
+
+My toolkit for 2025
+Here’s my 2025 toolkit for work and life. I’ve been doing these annual snapshots since 2019 (2023 and 2024 posts if you wanna follow), and…
+Dec 1, 2025
+
+The Role of a Designer in Early-Stage Startups.
+UX Collective
+In
+
+UX Collective
+
+by
+
+Precious Madubuike
+
+The Role of a Designer in Early-Stage Startups.
+It’s been over 6 months since I joined Helium (previously OneMedical). I’ve learned a lot within these times, giving my quota as a Designer…
+Nov 15, 2017
+
+See all from Precious Madubuike
+See all from Bootcamp
+Recommended from Medium
+The Best AI Tools for 2026
+Artificial Corner
+In
+
+Artificial Corner
+
+by
+
+The PyCoach
+
+The Best AI Tools for 2026
+If you’re going to learn a new AI tool, make sure it’s one of these
+
+Dec 1, 2025
+
+UX/UI Design in 2026: 7 Changes That Will Shape Everything We Build
+Aram Andreasyan
+Aram Andreasyan
+
+UX/UI Design in 2026: 7 Changes That Will Shape Everything We Build
+A clear look at where digital design is heading — and what designers need to rethink now.
+Dec 28, 2025
+
+How to Read One Book Per Week (Even if You Read Slowly)
+Scott H. Young
+Scott H. Young
+
+How to Read One Book Per Week (Even if You Read Slowly)
+Become the person who can easily ready 50+ books in a year
+
+Dec 10, 2025
+
+NotebookLM for Product Designers
+UX Planet
+In
+
+UX Planet
+
+by
+
+Nick Babich
+
+NotebookLM for Product Designers
+NotebookLM is one of the most interesting yet often overlooked free AI tools from Google. As the name suggests, NotebookLM is basically a…
+
+Dec 11, 2025
+
+UX Trend 2026 #1: The Rise of UX 3.0: Human-Centered AI + Ecosystem Thinking
+Bootcamp
+In
+
+Bootcamp
+
+by
+
+Mohan Kumar S
+
+UX Trend 2026 #1: The Rise of UX 3.0: Human-Centered AI + Ecosystem Thinking
+For years, UX has been evolving. UX 1.0 focused on usability, which meant making digital products functional and easy to navigate. UX 2.0…
+
+Sep 29, 2025
+
+Apple Just Fired the Designer Who Made iOS 26 Unreadable. Here’s What Truly Happened.
+Mac O’Clock
+In
+
+Mac O’Clock
+
+by
+
+Nov Tech
+
+Apple Just Fired the Designer Who Made iOS 26 Unreadable. Here’s What Truly Happened.
+Now he’s going to Meta, Stephen Lemay is taking over, and Apple employees are publicly celebrating. Here’s the full story.
+
+Dec 22, 2025
+
+See more recommendations

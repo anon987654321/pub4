@@ -46,15 +46,20 @@ cat <<EOF > app/controllers/restaurants_controller.rb
 class RestaurantsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_restaurant, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
   def index
     @pagy, @restaurants = pagy(Restaurant.all.order(rating: :desc)) unless @stimulus_reflex
   end
+  
   def show
     @menu_items = @restaurant.menu_items.order(:category, :name)
   end
+  
   def new
     @restaurant = current_user.restaurants.build
   end
+  
   def create
     @restaurant = current_user.restaurants.build(restaurant_params)
     if @restaurant.save
@@ -63,8 +68,10 @@ class RestaurantsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+  
   def edit
   end
+  
   def update
     if @restaurant.update(restaurant_params)
       redirect_to @restaurant, notice: t("takeaway.restaurant_updated")
@@ -72,14 +79,22 @@ class RestaurantsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
+  
   def destroy
     @restaurant.destroy
     redirect_to restaurants_url, notice: t("takeaway.restaurant_destroyed")
   end
+  
   private
+  
   def set_restaurant
     @restaurant = Restaurant.find(params[:id])
   end
+  
+  def authorize_user!
+    redirect_to restaurants_path, alert: t("takeaway.unauthorized") unless @restaurant.user == current_user || current_user&.admin?
+  end
+  
   def restaurant_params
     params.require(:restaurant).permit(:name, :location, :cuisine, :delivery_fee, :min_order, photos: [])
   end

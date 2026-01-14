@@ -46,18 +46,23 @@ end
 EOF
 cat <<EOF > app/controllers/shows_controller.rb
 class ShowsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
+  before_action :authenticate_user!, except: [:index, :show, :search, :by_genre]
   before_action :set_show, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_user!, only: [:edit, :update, :destroy]
+  
   def index
     @pagy, @shows = pagy(Show.all.order(release_date: :desc)) unless @stimulus_reflex
   end
+  
   def show
     @episodes = @show.episodes.order(:season_number, :episode_number)
     @viewing = current_user&.viewings&.find_by(show: @show)
   end
+  
   def new
     @show = current_user.shows.build
   end
+  
   def create
     @show = current_user.shows.build(show_params)
     if @show.save
@@ -66,8 +71,10 @@ class ShowsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+  
   def edit
   end
+  
   def update
     if @show.update(show_params)
       redirect_to @show, notice: t("tv.show_updated")
@@ -75,22 +82,32 @@ class ShowsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
+  
   def destroy
     @show.destroy
     redirect_to shows_url, notice: t("tv.show_destroyed")
   end
+  
   def search
     @pagy, @shows = pagy(Show.where("title ILIKE ? OR description ILIKE ?", "%#{params[:q]}%", "%#{params[:q]}%"))
     render :index
   end
+  
   def by_genre
     @pagy, @shows = pagy(Show.where(genre: params[:genre]).order(release_date: :desc))
     render :index
   end
+  
   private
+  
   def set_show
     @show = Show.find(params[:id])
   end
+  
+  def authorize_user!
+    redirect_to shows_path, alert: t("tv.unauthorized") unless @show.user == current_user || current_user&.admin?
+  end
+  
   def show_params
     params.require(:show).permit(:title, :genre, :description, :release_date, :duration, :trailer_url, :poster)
   end
