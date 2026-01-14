@@ -150,7 +150,9 @@ class MasterConfig
 
   def banned_tool(command)
     return nil unless @banned_regex && command =~ @banned_regex
-    @banned_tools.find { |tool| command =~ /\b#{Regexp.escape(tool)}\b/ }
+    # Use match to capture the actual matched tool from the regex groups
+    match = command.match(@banned_regex)
+    match ? match[1] : nil
   end
 
   def dangerous?(command) = DANGEROUS_PATTERNS.any? { |p| command.include?(p) }
