@@ -1,5 +1,8 @@
+#!/usr/bin/env zsh
 # Voting System Generator
 # Universal voting and reviews for all Rails apps
+
+set -euo pipefail
 
 # Usage: add_voting_to_app app_name
 

@@ -1,5 +1,8 @@
+#!/usr/bin/env zsh
 # Rich Text Editor System
 # Tiptap (Medium-style) + stimulus-lightbox integration
+
+set -euo pipefail
 
 add_rich_editor() {
 

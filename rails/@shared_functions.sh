@@ -1,11 +1,9 @@
 #!/usr/bin/env zsh
 # Shared functions for Rails app generators
-
 # Per master.yml v206 workflow: Extract duplication, DRY, modern zsh
 
-# Modern zsh: use parameter expansion, typeset, ((...)), [[...]]
+set -euo pipefail
 emulate -L zsh
-
 setopt extended_glob warn_create_global
 
 # Generate base application.scss with CSS variables

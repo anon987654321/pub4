@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # Modernize all .sh files to pure zsh patterns per master.yml v206
 
+set -euo pipefail
 emulate -L zsh
 setopt extended_glob
 
