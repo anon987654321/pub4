@@ -124,11 +124,11 @@ class MasterConfig
 
     @config = load_config
 
-    @version = @config.dig("meta", "version")
+    @version = @config["version"] || @config.dig("meta", "version")
 
     @banned_tools = @config.dig("constraints", "banned_tools") || []
 
-    @banned_regex = Regexp.new('\b(' + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ')\b') if @banned_tools.any?
+    @banned_regex = Regexp.new("\\b(" + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ")\\b") if @banned_tools.any?
 
   end
 
@@ -147,6 +147,11 @@ class MasterConfig
   end
 
   def banned?(command) = @banned_regex ? command =~ @banned_regex : false
+
+  def banned_tool(command)
+    return nil unless @banned_regex && command =~ @banned_regex
+    @banned_tools.find { |tool| command =~ /\b#{Regexp.escape(tool)}\b/ }
+  end
 
   def dangerous?(command) = DANGEROUS_PATTERNS.any? { |p| command.include?(p) }
 

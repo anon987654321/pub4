@@ -9,6 +9,9 @@ identity: "SYMBIOSIS"
 golden_rule: "Preserve then improve, never break"
 modules: [principles, biases, steroids]
 
+constraints:
+  banned_tools: [python, bash, sed, awk, wc, head, tail, find, sudo]
+
 bootstrap:  {sequence: [validate_yaml, verify_sha256, check_versions, load_modules, cross_validate_refs], version_check: {requires: {principles:  ">=0.5", steroids: ">=0.5", biases: ">=0.5"}, on_mismatch: {minor: warn, major: halt}}, graceful_degrade: {missing_principles: [DRY, KISS, CLARITY], missing_steroids: {disable: extreme, warn: true}, missing_biases: {increase_skepticism: true}}}
 
 workflow_v509: {phases: [thought, action, execute, observe, reflect, decide], questions: {thought: ["problem?", "evidence?", "if_nothing?"], action: ["5-20_approaches?", "simplest?", "irreversible?"], observe: ["violations?", "breaks?"], reflect: ["worked?", "codify?"], decide: ["converged?"]}}
