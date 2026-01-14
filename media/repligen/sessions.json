@@ -1,90 +1,179 @@
 {
   "sessions": [
+
     {
+
       "id": 1,
+
       "prompt": "cinematic portrait, golden hour sunset, ethereal beauty",
+
       "image_url": "https://replicate.delivery/xezq/K3QxGSy9Si49EJfW4vuKexOwtpkUV0eXTvbrCPYMNuei9RKXB/out-0.webp",
+
       "video_url": "https://replicate.delivery/xezq/mxupoJwQomKVGZWkrQIENS8uDSwFyNwVyToaqW0N56lUIpcF/000000.mp4",
+
       "local_file": "ra2_motion_20251212_232526.mp4",
+
       "vps_path": null,
+
       "status": "video_complete",
+
       "cost": null,
+
       "created_at": 1765578185,
+
       "updated_at": 1765578327
+
     },
+
     {
+
       "id": 2,
+
       "prompt": "stunning portrait with flowing hair, soft natural lighting, serene expression, photorealistic beauty",
+
       "image_url": "https://replicate.delivery/xezq/yt4UMAR2ONLbNNeXT2PeVSBHzPYctxhVqi5mjiJH8lCbukyVA/out-0.webp",
+
       "video_url": "https://replicate.delivery/xezq/hhuqi0rfrsSyJi8nazv68VK4mYa5pDGfXX8z9sNt1csnwkyVA/000000.mp4",
+
       "local_file": "ra2_motion_20251212_234146.mp4",
+
       "vps_path": null,
+
       "status": "video_complete",
+
       "cost": null,
+
       "created_at": 1765579146,
+
       "updated_at": 1765579308
+
     },
+
     {
+
       "id": 3,
+
       "prompt": "ethereal beauty portrait, magical golden hour, soft dreamy atmosphere, cinematic masterpiece",
+
       "image_url": "https://replicate.delivery/xezq/E9FpCArIJspHHBeM1tDdcTtYue23pF2hbzfdGoHB9YBMmJlrA/out-0.webp",
+
       "video_url": null,
+
       "local_file": null,
+
       "vps_path": null,
+
       "status": "video_pending",
+
       "cost": null,
+
       "created_at": 1765579433,
+
       "updated_at": 1765579463
+
     }
+
   ],
+
   "predictions": [
+
     {
+
       "id": "0vgh7x0ytxrmc0cv2jmtsh5zyc",
+
       "session_id": 1,
+
       "model": "ra2",
+
       "status": "succeeded",
+
       "output": "https://replicate.delivery/xezq/K3QxGSy9Si49EJfW4vuKexOwtpkUV0eXTvbrCPYMNuei9RKXB/out-0.webp",
+
       "created_at": 1765578186
+
     },
+
     {
+
       "id": "qwseyj2r6hrme0cv2jmt0mbvgr",
+
       "session_id": 1,
+
       "model": "svd",
+
       "status": "succeeded",
+
       "output": "https://replicate.delivery/xezq/mxupoJwQomKVGZWkrQIENS8uDSwFyNwVyToaqW0N56lUIpcF/000000.mp4",
+
       "created_at": 1765578201
+
     },
+
     {
+
       "id": "dzj45py8k5rme0cv2jvrcsrmcc",
+
       "session_id": 2,
+
       "model": "ra2",
+
       "status": "succeeded",
+
       "output": "https://replicate.delivery/xezq/yt4UMAR2ONLbNNeXT2PeVSBHzPYctxhVqi5mjiJH8lCbukyVA/out-0.webp",
+
       "created_at": 1765579147
+
     },
+
     {
+
       "id": "28yxr78q4srmc0cv2jwb18jk7r",
+
       "session_id": 2,
+
       "model": "svd",
+
       "status": "succeeded",
+
       "output": "https://replicate.delivery/xezq/hhuqi0rfrsSyJi8nazv68VK4mYa5pDGfXX8z9sNt1csnwkyVA/000000.mp4",
+
       "created_at": 1765579167
+
     },
+
     {
+
       "id": "6eadves9mdrma0cv2jy8021b2m",
+
       "session_id": 3,
+
       "model": "ra2",
+
       "status": "succeeded",
+
       "output": "https://replicate.delivery/xezq/E9FpCArIJspHHBeM1tDdcTtYue23pF2hbzfdGoHB9YBMmJlrA/out-0.webp",
+
       "created_at": 1765579434
+
     },
+
     {
+
       "id": "xt7802wx0nrm80cv2jy8nm7ag4",
+
       "session_id": 3,
+
       "model": "svd",
+
       "status": "processing",
+
       "output": null,
+
       "created_at": 1765579464
+
     }
+
   ]
+
 }
+

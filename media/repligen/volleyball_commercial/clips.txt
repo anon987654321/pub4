@@ -1,6 +1,11 @@
 file 'scene_1_ra2.mp4'
 file 'scene_2_nordic_blonde_1.mp4'
+
 file 'scene_3_team_huddle.mp4'
+
 file 'scene_4_ra2_serve.mp4'
+
 file 'scene_5_celebration.mp4'
+
 file 'scene_6_ra2_closeup.mp4'
+

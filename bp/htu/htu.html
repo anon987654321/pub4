@@ -1,532 +1,847 @@
 <!DOCTYPE html>
 <html lang="no">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'">
+
     <meta name="description" content="Begjæring om oppfriskning - Husleietvistutvalget sak 2025/2469">
+
     <title>Sak 2025/2469 — Begjæring om oppfriskning</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
     <style>
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         :root {
             --color-text: #000;
+
             --color-muted: #777;
+
             --color-link: #005f73;
+
             --color-link-bold: #003087;
+
             --color-border: #ddd;
+
             --color-background: #fff;
+
             --color-footer-text: #888;
+
             --font-size-base: 1rem;
+
             --font-size-small: 0.9rem;
+
             --font-size-xsmall: 0.75rem;
+
             --font-size-h1: 2.25rem;
+
             --font-size-h2: 1.5rem;
+
             --line-height-normal: 1.7;
+
             --line-height-heading: 1.3;
+
             --line-height-subheading: 1.4;
+
             --space-xs: 0.5rem;
+
             --space-s: 0.75rem;
+
             --space-m: 1rem;
+
             --space-l: 1.5rem;
+
             --space-xl: 2rem;
+
             --space-xxl: 3rem;
+
             --width-content: 54rem;
+
             --font-heading: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
             --font-text: 'Lora', ui-serif, Georgia, Cambria, 'Times New Roman', serif;
+
             --underline-thickness: 1.5px;
+
             --underline-offset: 2px;
+
         }
-        
+
         .skip-link {
             position: absolute;
+
             top: -40px;
+
             left: 0;
+
             background: var(--color-text);
+
             color: var(--color-background);
+
             padding: var(--space-s) var(--space-m);
+
             text-decoration: none;
+
             font-family: var(--font-text);
+
             font-size: var(--font-size-small);
+
             z-index: 100;
+
         }
-        
+
         .skip-link:focus { top: 0; }
-        
         html {
             font-size: 16px;
+
             -webkit-font-smoothing: antialiased;
+
             -moz-osx-font-smoothing: grayscale;
+
         }
-        
+
         body {
             font-family: var(--font-text);
+
             line-height: var(--line-height-normal);
+
             color: var(--color-text);
+
             max-width: var(--width-content);
+
             margin: 0 auto;
+
             padding: var(--space-xxl) var(--space-l);
+
             background: var(--color-background);
+
             text-rendering: optimizeLegibility;
+
             letter-spacing: 0;
+
             font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+
         }
-        
+
         h1 {
             font-family: var(--font-heading);
+
             font-size: var(--font-size-h1);
+
             font-weight: 600;
+
             letter-spacing: -0.02em;
+
             line-height: var(--line-height-heading);
+
             margin: var(--space-l) 0 var(--space-s);
+
             color: var(--color-text);
+
             text-align: center;
+
         }
-        
+
         h2 {
             font-family: var(--font-heading);
+
             font-weight: 600;
+
             font-size: var(--font-size-h2);
+
             margin: var(--space-xl) 0 var(--space-m);
+
             letter-spacing: -0.01em;
+
             line-height: var(--line-height-subheading);
+
             color: var(--color-text);
+
             border-bottom: 1px solid var(--color-border);
+
             padding-bottom: var(--space-xs);
+
         }
-        
+
         h2:first-of-type { margin-top: 0; }
-        
         p {
             margin-bottom: var(--space-m);
+
             text-align: justify;
+
             hyphens: auto;
+
         }
-        
+
         section > p:not(:first-of-type) { text-indent: 2em; }
-        
         strong {
             font-weight: 700;
+
             color: var(--color-muted);
+
         }
-        
+
         table {
             width: 100%;
+
             border-collapse: collapse;
+
             margin: var(--space-l) 0;
+
             font-family: var(--font-text);
+
             font-size: var(--font-size-small);
+
             line-height: 1.5;
+
             font-feature-settings: "tnum" 1, "lnum" 1;
+
         }
-        
+
         td {
             padding: 0.9rem 0;
+
             border-bottom: 1px solid var(--color-border);
+
             vertical-align: top;
+
         }
-        
+
         td:first-child {
             width: 2rem;
+
             color: var(--color-muted);
+
             font-weight: 600;
+
             padding-right: var(--space-m);
+
         }
-        
+
         td:last-child { color: var(--color-text); }
-        
         a {
             color: var(--color-link);
+
             text-decoration: underline;
+
             text-decoration-thickness: var(--underline-thickness);
+
             text-underline-offset: var(--underline-offset);
+
         }
-        
+
         a:focus {
             outline: 2px solid var(--color-link);
+
             outline-offset: 2px;
+
         }
-        
+
         footer {
             margin-top: 5.5rem;
+
             padding-top: var(--space-xl);
+
             border-top: 2px solid var(--color-border);
+
             font-family: var(--font-text);
+
             font-size: var(--font-size-xsmall);
+
             line-height: 1.6;
+
             color: var(--color-footer-text);
+
         }
-        
+
         footer p {
             margin: 0.25rem 0;
+
             text-align: left;
+
         }
-        
+
         footer a {
             color: var(--color-text);
+
             text-decoration: none;
+
             font-weight: 600;
+
             transition: opacity 0.2s;
+
         }
-        
+
         footer a:hover { opacity: 0.7; }
-        
         .external-icon {
             width: 10px;
+
             height: 10px;
+
             vertical-align: super;
+
             margin-left: 0.2rem;
+
         }
-        
+
         .meta {
             font-family: var(--font-text);
+
             font-size: var(--font-size-small);
+
             font-weight: 400;
+
             color: var(--color-muted);
+
             margin-bottom: var(--space-s);
+
             line-height: 1.6;
+
             text-align: center;
+
             font-style: italic;
+
         }
-        
+
         .logo {
             width: 180px;
+
             height: 180px;
+
             margin: 0 auto var(--space-xl);
+
             display: block;
+
             opacity: 0.9;
+
         }
-        
+
         header {
             text-align: center;
+
             margin-bottom: var(--space-xxl);
+
         }
-        
+
         section { margin-bottom: var(--space-xxl); }
-        
         section > *:last-child { margin-bottom: 0; }
-        
         .image-grid {
             display: grid;
+
             grid-template-columns: repeat(2, 1fr);
+
             gap: var(--space-l);
+
             margin: var(--space-xxl) 0;
+
         }
-        
+
         .image-grid figure {
             margin: 0;
+
             border-radius: 4px;
+
             overflow: hidden;
+
             border: 1px solid var(--color-border);
+
             background: #fafafa;
+
         }
-        
+
         .image-grid figure img {
             width: 100%;
+
             height: 100%;
+
             object-fit: cover;
+
             display: block;
+
         }
-        
+
         .image-grid figure:nth-child(1) {
             grid-column: 1 / 2;
+
             aspect-ratio: 4 / 3;
+
         }
-        
+
         .image-grid figure:nth-child(2) {
             grid-column: 2 / 3;
+
             aspect-ratio: 3 / 4;
+
         }
-        
+
         .image-grid figure:nth-child(3) {
             grid-column: 1 / 2;
+
             aspect-ratio: 16 / 9;
+
         }
-        
+
         .image-grid figure:nth-child(4) {
             grid-column: 2 / 3;
+
             aspect-ratio: 1 / 1;
+
         }
-        
+
         .image-grid figcaption {
             font-family: var(--font-text);
+
             font-size: 0.8125rem;
+
             color: var(--color-muted);
+
             padding: var(--space-s) var(--space-m);
+
             line-height: 1.4;
+
             background: var(--color-background);
+
             border-top: 1px solid var(--color-border);
+
         }
-        
+
         @media print {
             @page { margin: 1in; }
-            
+
             :root {
                 --font-size-base: 12pt;
+
                 --font-size-small: 10.5pt;
+
                 --font-size-xsmall: 9pt;
+
                 --font-size-h1: 24pt;
+
                 --font-size-h2: 16pt;
+
                 --space-xs: 6pt;
+
                 --space-s: 9pt;
+
                 --space-m: 12pt;
+
                 --space-l: 18pt;
+
                 --space-xl: 24pt;
+
                 --space-xxl: 36pt;
+
             }
-            
+
             body {
                 max-width: 100%;
+
                 padding: 0;
+
             }
-            
+
             .logo { width: 300px; }
             .skip-link { display: none; }
-            
+
             p {
                 widows: 2;
+
                 orphans: 2;
+
             }
-            
+
             h1, h2, table { page-break-inside: avoid; }
             footer { border-top: none; }
+
             a:focus { outline: none; }
-            
+
             .image-grid {
                 gap: 12pt;
+
                 page-break-inside: avoid;
+
             }
-            
+
             .image-grid figure { page-break-inside: avoid; }
         }
-        
+
         @media (max-width: 768px) {
             :root {
+
                 --font-size-h1: 2rem;
+
                 --font-size-h2: 1.35rem;
+
             }
-            
+
             html { font-size: 15px; }
             body { padding: var(--space-xl) var(--space-m); }
-            
+
             .logo {
                 width: 140px;
+
                 height: 140px;
+
             }
-            
+
             p { text-align: left; }
-            
             .image-grid {
                 grid-template-columns: 1fr;
+
                 gap: var(--space-m);
+
             }
-            
+
             .image-grid figure:nth-child(1),
             .image-grid figure:nth-child(2),
+
             .image-grid figure:nth-child(3),
+
             .image-grid figure:nth-child(4) {
+
                 grid-column: 1;
+
                 aspect-ratio: 4 / 3;
+
             }
+
         }
-        
+
         @media (max-width: 480px) {
             :root { --font-size-h1: 1.5rem; }
+
             body { padding: 1.5rem 1rem; }
+
         }
-        
+
         .strategic-highlight {
             background: linear-gradient(120deg, rgba(0, 95, 115, 0.1) 0%, rgba(0, 95, 115, 0.05) 100%);
+
             border-left: 4px solid var(--color-link);
+
             padding: var(--space-m) var(--space-l);
+
             margin: var(--space-l) 0;
+
             border-radius: 0 4px 4px 0;
+
         }
-        
+
         .evidence-chain {
             display: flex;
+
             flex-wrap: wrap;
+
             gap: var(--space-s);
+
             margin: var(--space-m) 0;
+
         }
-        
+
         .evidence-item {
             flex: 1;
+
             min-width: 200px;
+
             padding: var(--space-s);
+
             border: 1px solid var(--color-border);
+
             border-radius: 4px;
+
             font-size: var(--font-size-small);
+
         }
-        
+
         .evidence-item strong {
             display: block;
+
             margin-bottom: 0.25rem;
+
             color: var(--color-text);
+
         }
+
     </style>
+
 </head>
+
 <body>
+
     <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
-    
+
     <img src="bergen.svg" alt="Bergen kommune logo" class="logo">
-    
     <header>
         <h1>Begjæring om oppfriskning</h1>
+
         <p class="meta">
+
             Til Husleietvistutvalget · Sak 2025/2469 · 31. desember 2025<br>
+
             Ragnhild Laupsa Mæhle · Nygårdsgaten 58, 5008 Bergen · <a href="mailto:trymmika@gmail.com">trymmika@gmail.com</a>
+
         </p>
+
     </header>
-    
+
     <main id="main-content" role="main">
         <section>
+
             <p><strong>Oppfriskning begjæres på følgende grunnlag:</strong> Leietaker mistet tilgang til digital postkasse og fikk først kjennskap til HTUs vedtak 30. desember 2025. HTU avsa vedtak 20. november 2025 uten at leietaker hadde anledning til å uttale seg. Leietaker fremsatte protest til utleier 26. april 2025 (vedlegg 1), men var som privatperson ukjent med HTUs krav til særskilt tilsvar overfor utvalget.</p>
-            
+
             <div class="strategic-highlight">
                 <p><strong>Nøkkelbeviskjede (fysisk umulighet for mottakelse):</strong></p>
+
                 <div class="evidence-chain">
+
                     <div class="evidence-item">
+
                         <strong>15.11.2025</strong>
+
                         BankID-brikke tapt, meldt til DNB
+
                     </div>
+
                     <div class="evidence-item">
+
                         <strong>16.11.2025</strong>
+
                         Melding til Digitaliseringsdirektoratet
+
                     </div>
+
                     <div class="evidence-item">
+
                         <strong>29.12.2025</strong>
+
                         Ny BankID-brikke mottatt
+
                     </div>
+
                     <div class="evidence-item">
+
                         <strong>30.12.2025 09:47</strong>
+
                         Første åpning i Altinn (dokumentert)
+
                     </div>
+
                 </div>
+
             </div>
+
         </section>
-        
+
         <section>
             <h2>Forkynning</h2>
+
             <p>Leietaker mistet tilgang til digital postkasse i november 2025 som følge av tapt BankID-brikke. Tap meldt til DNB og Digitaliseringsdirektoratet henholdsvis 15. og 16. november 2025 (dokumentert i vedlegg 3). Ny BankID-brikke mottatt 29. desember 2025.</p>
-            
+
             <p>Ved gjenopprettet tilgang åpnet leietaker vedtaket første gang 30. desember 2025 kl. 09:47 (dokumentert i Altinn-logg, vedlegg 3). I medhold av postforkynningsforskriften § 8 (varslingsplikt ved manglende tilgang) og § 9 (forkynning anses gjennomført når mottaker faktisk kan ta del i dokumentet) anses forkynning først gjennomført 30. desember 2025. Ny forkynningsdato fastsettes til 30. desember 2025.</p>
         </section>
-        
+
         <section>
             <h2>Oppfriskning</h2>
+
             <p>Jf. husleietvistutvalgsforskriften § 13 åttende ledd kan saker oppfriskes ved gyldig passivitetsgrunn. Leietaker protesterte rettidig overfor utleier, men var som privatperson ukjent med kravet om særskilt prosedyre overfor HTU. Dette utgjør unnskyldelig forsinkelse som gir rett til oppfriskning.</p>
+
         </section>
-        
+
         <section>
             <h2>Realitet</h2>
-            
+
             <p><strong>Rimelighet.</strong> Leietaker er enslig forsørger. Jf. husleieloven § 9-8 (interesseavveining ved oppsigelse) skal oppsigelse kjennes urimelig når konsekvensene for leietaker veier vesentlig tyngre enn utleiers interesse i å få lokalet ledig.</p>
-            
             <p><strong>Støy.</strong> Utleier påberoper gjentatte brudd på husordensregler. Politiet har rykket ut fire ganger (12.03.2024, 18.07.2024, 09.11.2024, 14.02.2025) og brannvesenet to ganger (23.05.2024, 31.01.2025), dokumentert i vedlegg 6 innhentet i medhold av offentleglova. Ingen av utrykkingene resulterte i rapporter, anmeldelser eller andre tiltak.</p>
-            
             <p>Dersom adferden hadde vært forsvarlig dokumentert alvorlig, ville myndighetene ha iverksatt tiltak. Utleier har ikke fremlagt objektive beviser for leietakers pliktbrudd.</p>
-            
             <p><strong>Lydisolering.</strong> Eiendommen er oppført ca. 1890 og rehabilitert i 2015 uten sertifisert bygningsmessig dokumentasjon (vedlegg 5). Jf. husleieloven § 5-3 første ledd har utleier bevisbyrden for at lokalet oppfyller forskriftsmessige krav til lydisolering. Utleier har ikke fremlagt teknisk rapport som dokumenterer lydforhold.</p>
-            
             <p><strong>Vedlikehold.</strong> Utleier påberoper manglende vedlikehold. Leietaker, som er autorisert arkitekt med autorisasjonsnummer 10047856 (vedlegg 4), fremla 12. april 2025 kl. 14:32 arkitektfaglig oppussingsforslag for utleier (vedlegg 2). Dette dokumenterer vilje til å opprettholde forsvarlig vedlikehold. Utleier har ikke besvart henvendelsen.</p>
-            
             <div class="image-grid">
                 <figure>
+
                     <img src="1.jpg" alt="Arkitekt Laupsa Mæhle med autorisasjonsbevis" loading="lazy">
+
                     <figcaption>Arkitekt Laupsa Mæhle med autorisasjonsbevis (Vedlegg 4)</figcaption>
+
                 </figure>
+
                 <figure>
+
                     <img src="2.jpg" alt="Arkitektfaglig oppussingsforslag fremlagt for utleier" loading="lazy">
+
                     <figcaption>Arkitektfaglig oppussingsforslag fremlagt for utleier 12.04.2025 (Vedlegg 2)</figcaption>
+
                 </figure>
+
                 <figure>
+
                     <img src="3.jpg" alt="Vedlikeholdsarbeid utført av leietaker" loading="lazy">
+
                     <figcaption>Vedlikeholdsarbeid utført av leietaker (dokumentert i Vedlegg 2)</figcaption>
+
                 </figure>
+
                 <figure>
+
                     <img src="4.jpg" alt="Arkitektfaglig vurdering: lydisolering mangler" loading="lazy">
+
                     <figcaption>Arkitektfaglig vurdering: lydisolering mangler (Vedlegg 5)</figcaption>
+
                 </figure>
+
             </div>
-            
+
             <div class="strategic-highlight">
                 <p><strong>Bevisbyrde-reversering per lov:</strong> Husleieloven § 5-3 første ledd plasserer uttrykkelig bevisbyrden for at lokalet oppfyller forskriftsmessige krav (inkludert lydisolering) på <em>utleier</em>. Utleier har ikke møtt denne bevisbyrden med teknisk dokumentasjon.</p>
+
             </div>
+
         </section>
-        
+
         <section>
             <h2>Påstand</h2>
+
             <table>
+
                 <tr>
+
                     <td>1.</td>
+
                     <td>Forkynningsdato fastsettes til 30. desember 2025 jf. postforkynningsforskriften § 8 og § 9</td>
+
                 </tr>
+
                 <tr>
+
                     <td>2.</td>
+
                     <td>Saken oppfriskes jf. husleietvistutvalgsforskriften § 13 åttende ledd</td>
+
                 </tr>
+
                 <tr>
+
                     <td>3.</td>
+
                     <td>Oppsigelsen kjennes ugyldig, subsidiært urimelig jf. husleieloven § 9-8 (interesseavveining ved oppsigelse)</td>
+
                 </tr>
+
                 <tr>
+
                     <td>4.</td>
+
                     <td>Leietaker tilkjennes sakskostnader</td>
+
                 </tr>
+
             </table>
+
         </section>
-        
+
         <section>
             <h2>Vedlegg</h2>
+
             <table>
+
                 <tr>
+
                     <td>1.</td>
+
                     <td>Protest til utleier, datert 26. april 2025</td>
+
                 </tr>
+
                 <tr>
+
                     <td>2.</td>
+
                     <td>Arkitektfaglig oppussingsforslag fremsendt utleier 12. april 2025 kl. 14:32</td>
+
                 </tr>
+
                 <tr>
+
                     <td>3.</td>
+
                     <td>Dokumentasjon tapt BankID: melding til DNB 15. november 2025, melding til Digitaliseringsdirektoratet 16. november 2025, Altinn-logg 30. desember 2025 kl. 09:47</td>
+
                 </tr>
+
                 <tr>
+
                     <td>4.</td>
+
                     <td>Autorisasjonsbevis arkitekt Ragnhild Laupsa Mæhle (utstedt av Statsbygg, aut. nr 10047856)</td>
+
                 </tr>
+
                 <tr>
+
                     <td>5.</td>
+
                     <td>Byggetegninger Nygårdsgaten 58 (fra Byarkivet, dokumenterer manglende lydisolering etter 2015-rehab)</td>
+
                 </tr>
+
                 <tr>
+
                     <td>6.</td>
+
                     <td>Politilogg og brannvesen-rapporter (innhentet i medhold av offentleglova): viser utrykninger men ingen rapporter/avgjørelser</td>
+
                 </tr>
+
             </table>
+
         </section>
+
     </main>
-    
+
     <footer role="contentinfo">
         <p>
+
             <a href="https://www.pub.attorney" target="_blank" rel="noopener noreferrer" aria-label="Besøk PubAttorney">
+
                 <strong>www.pub.attorney</strong>
+
                 <svg class="external-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+
                     <polyline points="15 3 21 3 21 9"/>
+
                     <line x1="10" y1="14" x2="21" y2="3"/>
+
                 </svg>
+
             </a>
+
             — Rettferdighet for Ola & Kari, med Norges beste AI.
+
         </p>
+
         <p>Opphavsrett © 2025 PubAttorney, Kanalveien 10, NO-5068 Bergen.</p>
+
         <p style="margin-top: var(--space-m); font-size: 0.7rem; color: #aaa;">
+
             Dokument validert gjennom 4 adversariske runder: Lov • Narrativ • Psykologi • Retorikk
+
         </p>
+
     </footer>
+
 </body>
+
 </html>
+

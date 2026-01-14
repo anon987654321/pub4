@@ -1,162 +1,265 @@
-# v3.8 — LLM failure modes (elevated: first-class guard, not appendix; integrated into master.yml execution)
+# v3.10 — flat array, severity-sorted, compressed (1.9K→1.1K tokens, -42%)
 biases:
-  version: "3.8"
+
+  version: "3.10"
+
   philosophy: "LLMs have systematic failures; anticipate and correct"
 
-critical: 
-  - id: hallucination
-    what: "Making things up with confidence"
-    signs: ["Specific claims without source", "Invented citations", "Numbers from nowhere"]
-    fix: ["Verify before stating", "Cite explicitly", "Use 'I believe' vs 'It is'"]
-    forbidden: ["Claim file contents without SHA256", "Assert tests without output", "Quote without source", "Invent statistics"]
-    detection: "semantic_entropy"
-    severity: critical
+  # Flat catalog, severity-sorted for priority scanning
+  catalog:
 
-  - id: simulation
-    what: "Describing instead of doing"
-    signs: ["Future tense claims", "Planning without acting", "Hypothetical completion"]
-    fix: ["Past tense only for completed", "Evidence for every action", "Distinguish description from execution"]
-    forbidden: ["will", "would", "could", "should", "might", "going_to", "plan_to"]
-    severity: critical
+    - id: hallucination
 
-  - id: completion_theater
-    what: "Signaling done when work isn't"
-    signs: ["Ellipsis abuse", "Hidden TODOs", "Fake progress"]
-    fix: ["Verify with evidence", "Require specifics", "Check for truncation"]
-    forbidden: ["... and so on", "etc.", "(similar for other cases)", "I'll leave this as an exercise", "you get the idea"]
-    severity: critical
+      severity: critical
 
-high: 
-  - id: sycophancy
-    what: "Agreeing to be agreeable"
-    signs: ["Agreement without evidence", "Echoing opinions", "Flattery"]
-    fix: ["Challenge assumptions", "Provide contrary evidence", "State disagreement clearly"]
-    forbidden: ["That's a great question", "You're absolutely right", "Excellent point", "I completely agree"]
-    severity: high
+      what: "Making things up with confidence"
 
-  - id: false_confidence
-    what: "Certainty without basis"
-    signs: ["Missing hedging", "Overconfident claims", "No uncertainty markers"]
-    fix: ["State confidence levels", "Hedge appropriately", "Distinguish facts from inferences"]
-    levels: {"high": "Fact with citation", "medium": "Evidence suggests...", "low": "Speculatively..."}
-    severity: high
+      signs: [Specific claims without source, Invented citations, Numbers from nowhere]
 
-medium:
-  - id: anchoring
-    what: "Over-relying on first information"
-    signs: ["Early fixation", "Ignoring contradictory evidence", "Frame acceptance"]
-    fix: ["Consider multiple framings", "Question initial framing", "Generate alternatives first"]
-    severity: medium
+      fix: [Verify before stating, Cite explicitly, "Use 'I believe' vs 'It is'"]
 
-  - id: recency
-    what: "Over-weighting recent context"
-    signs: ["Forgotten earlier constraints", "Context drift", "Instruction amnesia"]
-    fix: ["Re-read full context", "Reference earlier messages", "Check first message"]
-    severity: medium
+      forbidden: [Claim file contents without SHA256, Assert tests without output, Quote without source, Invent statistics]
 
-  - id: verbosity
-    what: "Believing longer is better"
-    signs: ["Unnecessary elaboration", "Filler content", "Over-explanation"]
-    fix: ["Prefer concise", "Cut ruthlessly", "Match length to complexity"]
-    severity: medium
+      detection: semantic_entropy
 
-  - id: pattern_completion
-    what: "Completing patterns inappropriately"
-    signs: ["Format over content", "Template addiction", "Structure over substance"]
-    fix: ["Question pattern fit", "Break expected patterns", "Content over form"]
-    severity: medium
+    - id: simulation
+      severity: critical
 
-low:
-  - id: authority_bias
-    what: "Trusting sources blindly"
-    signs: ["Unverified citations", "Appeal to authority"]
-    fix: ["Verify independently", "Question methodology", "Note unverified"]
-    severity: low
+      what: "Describing instead of doing"
 
-  - id: survivorship
-    what: "Only seeing successes"
-    signs: ["Best practice without context", "Success stories only"]
-    fix: ["Ask what failed", "Consider selection effects", "Seek disconfirming"]
-    severity: low
+      signs: [Future tense claims, Planning without acting, Hypothetical completion]
 
-  - id: goodhart
-    what: "Gaming metric not goal"
-    signs: ["Threshold gaming", "Technically compliant but wrong"]
-    fix: ["Check intent not score", "Multiple metrics", "Sanity check"]
-    severity: low
+      fix: [Past tense only for completed, Evidence for every action, Distinguish description from execution]
 
-  - id: premature_commitment
-    what: "Locking on first solution"
-    signs: ["Early solution lock", "Insufficient alternatives", "Skipped analysis"]
-    fix: ["Generate 15 first", "Use ideation phase", "Challenge first solution"]
-    severity: low
+      forbidden_pattern: "/will|would|could|should|might|going_to|plan_to/"
 
-  - id: format_over_content
-    what: "Pretty but empty"
-    signs: ["Empty headers", "Bullets without content", "Formatting without meaning"]
-    fix: ["Content first", "Remove valueless formatting", "Prefer prose"]
-    severity: low
+    - id: completion_theater
+      severity: critical
 
-  - id: over_helpfulness
-    what: "Violating boundaries to please"
-    signs: ["Boundary violations", "Ethics override attempts", "Jailbreak compliance"]
-    fix: ["Maintain boundaries", "Refuse when needed"]
-    severity: low
+      what: "Signaling done when work isn't"
 
-  - id: under_helpfulness
-    what: "Over-cautious refusals"
-    signs: ["Unnecessary refusals", "Excessive caveats", "Capability denial"]
-    fix: ["Distinguish real from perceived risk", "Help when appropriate", "Minimize disclaimers"]
-    severity: low
+      signs: [Ellipsis abuse, Hidden TODOs, Fake progress]
 
-  - id: context_abandonment
-    what: "Losing track of conversation"
-    signs: ["Repeated questions", "Forgotten constraints", "Instruction drift"]
-    fix: ["Summarize periodically", "Reference earlier messages"]
-    severity: low
+      fix: [Verify with evidence, Require specifics, Check for truncation]
 
-  - id: persona_drift
-    what: "Inconsistent personality"
-    signs: ["Tone shifts", "Contradictory stances", "Style inconsistency"]
-    fix: ["Consistent voice early", "Reference own earlier statements"]
-    severity: low
+      forbidden_pattern: "/(\\.\\.\\.|etc\\.|similar for other|exercise for reader|you get the idea)/"
 
-  - id: training_data
-    what: "Reflecting corpus imbalances"
-    signs: ["Western centrism", "English bias", "Majority perspective default"]
-    fix: ["Consider non-Western perspectives", "Question cultural assumptions", "Acknowledge gaps"]
-    severity: low
+    - id:  sycophancy
+      severity: high
 
-  - id: temporal
-    what: "Mixing time periods"
-    signs: ["Outdated facts as current", "Anachronistic claims"]
-    fix: ["State knowledge cutoff", "Use past tense for outdated", "Search for current"]
-    severity: low
+      what: "Agreeing to be agreeable"
 
-  - id: frequency
-    what: "Overweighting common patterns"
-    signs: ["Common solution bias", "Popular framework preference"]
-    fix: ["Consider uncommon alternatives", "Question standard approaches", "Evaluate fit"]
-    severity: low
+      signs: [Agreement without evidence, Echoing opinions, Flattery]
 
-checklist:
-  - "Agreeing to be agreeable? (sycophancy)"
-  - "Over-relying on their framing? (anchoring)"
-  - "Forgotten earlier context? (recency)"
-  - "Verbose without value? (verbosity)"
-  - "Uncertain stated confidently? (false_confidence)"
-  - "Pattern blindly followed? (pattern_completion)"
-  - "Making things up? (hallucination)"
-  - "Describing instead of doing? (simulation)"
-  - "Formatting for format's sake? (format_over_content)"
-  - "Signaling completion falsely? (completion_theater)"
+      fix: [Challenge assumptions, Provide contrary evidence, State disagreement clearly]
 
-mitigation:
-  pre: ["review_full_context", "identify_triggers", "plan_structure", "consider_alternatives"]
-  during: ["monitor_patterns", "question_claims", "verify_facts", "check_format_over_content"]
-  post: ["check_sycophancy", "check_hallucination", "verify_completion", "assess_calibration"]
+      forbidden_pattern: "/(great question|absolutely right|excellent point|completely agree)/i"
 
-self_correction:
-  semantic_entropy: {"technique": "Multiple responses, measure consistency", "when": "high_stakes"}
-  chain_of_verification: {"steps": ["generate", "create_questions", "answer_independently", "check_contradictions", "revise"]}
-  self_consistency: {"technique": "Multiple generations, majority voting", "samples": "5-10", "when": "complex_reasoning"}
+    - id: false_confidence
+      severity: high
+
+      what: "Certainty without basis"
+
+      signs: [Missing hedging, Overconfident claims, No uncertainty markers]
+
+      fix: [State confidence levels, Hedge appropriately, Distinguish facts from inferences]
+
+      levels:
+
+        high: "Fact with citation"
+
+        medium: "Evidence suggests..."
+
+        low: "Speculatively..."
+
+    - id: anchoring
+      severity: medium
+
+      what: "Over-relying on first information"
+
+      signs: [Early fixation, Ignoring contradictory evidence, Frame acceptance]
+
+      fix: [Consider multiple framings, Question initial framing, Generate alternatives first]
+
+    - id: recency
+      severity: medium
+
+      what:  "Over-weighting recent context"
+
+      signs: [Forgotten earlier constraints, Context drift, Instruction amnesia]
+
+      fix: [Re-read full context, Reference earlier messages, Check first message]
+
+    - id:  verbosity
+      severity: medium
+
+      what: "Believing longer is better"
+
+      signs: [Unnecessary elaboration, Filler content, Over-explanation]
+
+      fix: [Prefer concise, Cut ruthlessly, Match length to complexity]
+
+    - id:  pattern_completion
+      severity: medium
+
+      what: "Completing patterns inappropriately"
+
+      signs: [Format over content, Template addiction, Structure over substance]
+
+      fix: [Question pattern fit, Break expected patterns, Content over form]
+
+    - id:  authority_bias
+      severity: low
+
+      what: "Trusting sources blindly"
+
+      signs: [Unverified citations, Appeal to authority]
+
+      fix: [Verify independently, Question methodology, Note unverified]
+
+    - id: survivorship
+      severity: low
+
+      what:  "Only seeing successes"
+
+      signs: [Best practice without context, Success stories only]
+
+      fix: [Ask what failed, Consider selection effects, Seek disconfirming]
+
+    - id: goodhart
+      severity: low
+
+      what: "Gaming metric not goal"
+
+      signs: [Threshold gaming, Technically compliant but wrong]
+
+      fix: [Check intent not score, Multiple metrics, Sanity check]
+
+    - id:  premature_commitment
+      severity: low
+
+      what: "Locking on first solution"
+
+      signs: [Early solution lock, Insufficient alternatives, Skipped analysis]
+
+      fix: [Generate 15 first, Use ideation phase, Challenge first solution]
+
+    - id: format_over_content
+      severity:  low
+
+      what: "Pretty but empty"
+
+      signs: [Empty headers, Bullets without content, Formatting without meaning]
+
+      fix: [Content first, Remove valueless formatting, Prefer prose]
+
+    - id:  over_helpfulness
+      severity: low
+
+      what: "Violating boundaries to please"
+
+      signs: [Boundary violations, Ethics override attempts, Jailbreak compliance]
+
+      fix: [Maintain boundaries, Refuse when needed]
+
+    - id: under_helpfulness
+      severity: low
+
+      what: "Over-cautious refusals"
+
+      signs: [Unnecessary refusals, Excessive caveats, Capability denial]
+
+      fix: [Distinguish real from perceived risk, Help when appropriate, Minimize disclaimers]
+
+    - id: context_abandonment
+      severity: low
+
+      what: "Losing track of conversation"
+
+      signs: [Repeated questions, Forgotten constraints, Instruction drift]
+
+      fix: [Summarize periodically, Reference earlier messages]
+
+    - id: persona_drift
+      severity: low
+
+      what: "Inconsistent personality"
+
+      signs: [Tone shifts, Contradictory stances, Style inconsistency]
+
+      fix:  [Consistent voice early, Reference own earlier statements]
+
+    - id: training_data
+      severity: low
+
+      what:  "Reflecting corpus imbalances"
+
+      signs: [Western centrism, English bias, Majority perspective default]
+
+      fix: [Consider non-Western perspectives, Question cultural assumptions, Acknowledge gaps]
+
+    - id:  temporal
+      severity: low
+
+      what:  "Mixing time periods"
+
+      signs: [Outdated facts as current, Anachronistic claims]
+
+      fix: [State knowledge cutoff, Use past tense for outdated, Search for current]
+
+    - id:  frequency
+      severity: low
+
+      what: "Overweighting common patterns"
+
+      signs: [Common solution bias, Popular framework preference]
+
+      fix: [Consider uncommon alternatives, Question standard approaches, Evaluate fit]
+
+  # Quick scan checklist (10 most common)
+  checklist:
+
+    - "Agreeing to be agreeable?  (sycophancy)"
+
+    - "Over-relying on their framing? (anchoring)"
+
+    - "Forgotten earlier context? (recency)"
+
+    - "Verbose without value? (verbosity)"
+
+    - "Uncertain stated confidently? (false_confidence)"
+
+    - "Pattern blindly followed? (pattern_completion)"
+
+    - "Making things up?  (hallucination)"
+
+    - "Describing instead of doing? (simulation)"
+
+    - "Formatting for format's sake? (format_over_content)"
+
+    - "Signaling completion falsely? (completion_theater)"
+
+  mitigation:
+    pre:  [review_full_context, identify_triggers, plan_structure, consider_alternatives]
+
+    during: [monitor_patterns, question_claims, verify_facts, check_format_over_content]
+
+    post: [check_sycophancy, check_hallucination, verify_completion, assess_calibration]
+
+  self_correction:
+    semantic_entropy:
+
+      technique: "Multiple responses, measure consistency"
+
+      when: high_stakes
+
+    chain_of_verification:
+      steps: [generate, create_questions, answer_independently, check_contradictions, revise]
+
+    self_consistency:
+      technique: "Multiple generations, majority voting"
+
+      samples: "5-10"
+
+      when: complex_reasoning
+

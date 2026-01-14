@@ -1,40 +1,64 @@
 [2026-01-11 07:53:27] [INFO] Starting Stage 1: DNS and Certificates
-
 quirks-7.103->7.103 (processing)|...[K[K
 quirks-7.103:updatedb-0p0->0p0 (processing)|...[K[K
+
 Reading update info for installed packages|**********                     | 33%[K[54G***********          | 67%[K[65G**********|100%[K[44GNo change in updatedb-0p0[K[K
+
 quirks-7.103->7.103 (processing)|...[K[K
+
 [Kquirks-7.103 signed on 2025-10-13T22:55:16Z
 
 quirks-7.103->7.103 (processing)|No change in quirks-7.103[K[K
 ldns-utils-1.8.4 (processing)|...[K[K
+
 ldns-utils-1.8.4:libldns-1.8.4->1.8.4 (processing)|...[K[K[52GNo change in libldns-1.[K
+
 ldns-utils-1.8.4 (processing)|...[K[K[31GNo change in ldns-utils-1.8.4[K[K
+
 ruby-3.3.5 (processing)|...[K[K
+
 [KCan't find ruby-3.3.5
 
 zap-1.3p0 (processing)|...[K[K[24GNo change in zap-1.3p0[K[K
 [KCouldn't install ruby-3.3.5
+
 [2026-01-11 07:53:50] [ERROR] Package installation failed. See /tmp/pkg_add.log
+
 [2026-01-11 07:54:21] [INFO] Starting Stage 1: DNS and Certificates
 
 quirks-7.103->7.103 (processing)|...[K[K
 quirks-7.103:updatedb-0p0->0p0 (processing)|...[K[K
+
 Reading update info for installed packages|**********                     | 33%[K[54G***********          | 67%[K[65G**********|100%[K[44GNo change in updatedb-0p0[K[K
+
 quirks-7.103->7.103 (processing)|...[K[K
+
 [Kquirks-7.103 signed on 2025-10-13T22:55:16Z
 
 quirks-7.103->7.103 (processing)|No change in quirks-7.103[K[K
 ldns-utils-1.8.4 (processing)|...[K[K
+
 ldns-utils-1.8.4:libldns-1.8.4->1.8.4 (processing)|...[K[K[52GNo change in libldns-1.[K
+
 ldns-utils-1.8.4 (processing)|...[K[K[31GNo change in ldns-utils-1.8.4[K[K
+
 ruby-3.3.7 (processing)|...[K[K
+
 ruby-3.3.7:libffi-3.4.7p1->3.4.7p1 (processing)|...[K[K[49GNo change in libffi-3.4.7p[K
+
 ruby-3.3.7:libyaml-0.2.5->0.2.5 (processing)|...[K[K[46GNo change in libyaml-0.2.5[K[K
+
 ruby-3.3.7:gmp-6.3.0->6.3.0 (processing)|...[K[K[42GNo change in gmp-6.3.0[K[K
+
 ruby-3.3.7 (processing)|...[K[K[25GNo change in ruby-3.3.7[K[K
+
 zap-1.3p0 (processing)|...[K[K[24GNo change in zap-1.3p0[K[K
+
 [Kpf disabled
+
 pf enabled
+
 [2026-01-11 07:54:35] [INFO] Backing up /var/nsd/zones/master to /var/backups/openbsd_setup/nsd-zones-1768114475.tar.gz
+
 transaction_log:3: read-only variable: status
+

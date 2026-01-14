@@ -18,15 +18,25 @@ doas zsh openbsd.sh --resume
 
 # The script will:
 # - Verify DNS propagation
+
 # - Configure production PF firewall
+
 # - Configure OpenSMTPD with proper TLS
+
 # - Prompt you to upload Rails apps
+
 # - Deploy apps with Falcon
+
 # - Configure relayd with TLS
+
 # - Start all services
 
 # After Stage 2, verify:
 rcctl ls started
+
 doas pfctl -sr
+
 dig @185.52.176.18 brgen.no SOA +short
+
 curl -I https://brgen.no
+

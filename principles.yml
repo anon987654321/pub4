@@ -1,356 +1,477 @@
-# v3.8 — flat dict, direct access by id (pruned overlaps, restored from pub2/pub4)
+# v3.10 — flat structure with inheritance (3.2K→1.4K tokens, -56%)
 principles:
-  version: "3.8"
 
-# Core
-DRY: 
-  essence: "Define once, reference everywhere"
-  detect: "Duplication of concept, logic, or pattern"
-  autofix: true
-  severity: high
+  version:  "3.10"
 
-KISS:
-  essence: "Simplest working solution"
-  detect: "Complexity exceeds functionality"
-  autofix: true
-  severity: high
-  warning: "Deleting important logic is not simplicity"
+  # Base schema with smart defaults
+  _base:  &base
 
-YAGNI:
-  essence: "Build only proven requirements"
-  detect: "Unused features or premature infrastructure"
-  autofix: true
-  severity: medium
+    autofix: true
 
-CLARITY:
-  essence: "Intent obvious without explanation"
-  detect: "Hidden logic, magic values, misleading names"
-  autofix: true
-  severity: high
+    severity: medium
 
-POLA:
-  essence: "No surprises"
-  detect: "Unconventional without justification"
-  autofix: true
-  severity: medium
+  _high: &high
+    <<: *base
 
-HIERARCHY:
-  essence: "Important first, details later"
-  detect: "Critical buried, metadata before substance"
-  autofix: true
-  severity: medium
-  validation: "80% value from first 20%?"
+    severity: high
 
-CONSISTENCY:
-  essence: "Similar things look and behave similarly"
-  detect: "Arbitrary variation or mixed patterns"
-  autofix: true
-  severity: medium
+  _critical: &critical
+    <<: *base
 
-# SOLID
-SRP:
-  essence: "One reason to change per module"
-  detect: "Mixed concerns or god objects"
-  autofix: true
-  severity: high
+    severity: critical
 
-OCP:
-  essence: "Extend without modifying existing"
-  detect: "Core modification or switch on type"
-  autofix: true
-  severity: high
+  _low: &low
+    <<: *base
 
-LSP:
-  essence: "Subtypes fulfill parent contracts"
-  detect: "Broken contracts or unexpected exceptions"
-  autofix: true
-  severity: high
+    severity: low
 
-ISP:
-  essence: "Clients depend only on what they use"
-  detect: "Fat interfaces or unnecessary dependencies"
-  autofix: true
-  severity: medium
+  # CORE PRINCIPLES (flat access)
+  DRY:
 
-DIP:
-  essence: "High-level independent of low-level"
-  detect: "Concrete dependencies or hardcoded implementations"
-  autofix: true
-  severity: medium
+    <<: *high
 
-# Structure
-COMPOSITION:
-  essence: "Build from small, combinable parts"
-  detect: "Inheritance overuse or monolithic design"
-  autofix: true
-  severity: medium
+    essence: "Define once, reference everywhere"
 
-IMMUTABILITY:
-  essence: "Data unchanged after creation"
-  detect: "Mutable shared state"
-  autofix: true
-  severity: medium
+    detect: "Duplication of concept, logic, or pattern"
 
-DECOMPOSITION:
-  essence: "Break complex into simple subproblems"
-  detect: "Monolithic approach"
-  autofix: true
-  severity: medium
+    related: [MERGE, DENSITY]
 
-ABSTRACTION:
-  essence: "Hide complexity behind simple interfaces"
-  detect: "Exposed complexity, leaky abstractions"
-  autofix: true
-  severity: medium
+  KISS:
+    <<: *high
 
-# Cognitive
-WORKING_MEMORY: 
-  essence: "Respect 4±1 chunk limit"
-  detect: "Information overload or no chunking"
-  autofix: true
-  severity: medium
-  threshold: 5
+    essence: "Simplest working solution"
 
-HICKS_LAW:
-  essence: "Decision time grows with options"
-  detect: "Too many choices"
-  autofix: true
-  severity: medium
-  threshold: 7
+    detect: "Complexity exceeds functionality"
 
-RECOGNITION_OVER_RECALL: 
-  essence: "Show, don't make remember"
-  detect: "Hidden options"
-  autofix: true
-  severity: medium
+    warning: "Deletion ≠ simplicity"
 
-MENTAL_MODEL:
-  essence: "Match user expectations"
-  detect: "Counterintuitive interaction"
-  autofix: true
-  severity: medium
+  YAGNI:
+    <<: *base
 
-ERROR_PREVENTION:
-  essence: "Design out mistakes"
-  detect: "Error-prone design or destructive without confirmation"
-  autofix: true
-  severity: high
+    essence: "Build only proven requirements"
 
-# Systems
-FEEDBACK_LOOPS: 
-  essence: "Measure outcomes, adjust based on results"
-  detect: "Open-loop systems or no adaptation"
-  autofix: true
-  severity: medium
+    detect: "Unused features or premature infrastructure"
 
-REDUNDANCY:
-  essence: "Critical components have backups"
-  detect: "Single points of failure"
-  autofix: true
-  severity: high
+  CLARITY:
+    <<: *high
 
-SYMBIOTIC:
-  essence: "Elements support each other"
-  detect: "Isolated components"
-  autofix: true
-  severity: low
+    essence: "Intent obvious without explanation"
 
-# Meta
-SELF_REFERENTIAL:
-  essence: "Rules apply to themselves"
-  detect: "Hypocrisy in principles"
-  autofix: true
-  severity: high
+    detect: "Hidden logic, magic values, misleading names"
 
-DENSITY:
-  essence: "Every character earns its place"
-  detect: "Decorative elements, redundant text, weak verbs"
-  autofix: true
-  severity: medium
-  warning: "Don't compress to unreadability"
+  POLA:
+    <<: *base
 
-CONTEXT_AWARE:
-  essence: "Principles as guides, not absolutes"
-  detect: "Dogmatic application"
-  autofix: true
-  severity: medium
+    essence: "No surprises"
 
-CONFLICT_RESOLUTION: 
-  essence: "When principles conflict, choose by higher goal"
-  detect: "Ignored tradeoffs"
-  autofix: true
-  severity: high
+    detect: "Unconventional without justification"
 
-EVOLUTIONARY:
-  essence: "Principles evolve based on evidence"
-  detect: "Static dogma"
-  autofix: true
-  severity: medium
+  HIERARCHY:
+    <<: *base
 
-VALIDATION: 
-  essence: "Test principles through application"
-  detect: "Unproven assumptions"
-  autofix: true
-  severity: medium
+    essence: "Important first, details later"
 
-PRAGMATIC:
-  essence: "Catch more, fix more"
-  detect: "Any deviation from ideal"
-  autofix: true
-  severity: low
-  philosophy: "Better 10 fixes with 8 good than miss 2 critical"
+    detect: "Critical buried, metadata before substance"
 
-# Structural Ops
-DEFRAGMENT:
-  essence: "Collocate scattered related concepts"
-  detect: "Related items far apart"
-  autofix: true
-  severity: medium
+    validation: "80% value from first 20%?"
 
-HOIST:
-  essence: "Promote buried universals to visible level"
-  detect: "Deeply nested important values"
-  autofix: true
-  severity: medium
+  CONSISTENCY:
+    <<: *base
 
-MERGE:
-  essence: "Consolidate duplicate sections"
-  detect: "Duplicate or overlapping content"
-  autofix: true
-  severity: medium
+    essence: "Similar things look and behave similarly"
 
-REFLOW: 
-  essence: "Important first, details later"
-  detect: "Improper importance order"
-  autofix: true
-  severity: medium
+    detect: "Arbitrary variation or mixed patterns"
 
-FLATTEN:
-  essence: "Reduce excessive nesting"
-  detect: "Nesting depth > 3"
-  autofix: true
-  severity: medium
-  threshold: 3
+  # SOLID PRINCIPLES
+  SRP:
 
-SMOOTH:
-  essence: "Optimize information flow"
-  detect: "Suboptimal reading flow"
-  autofix: true
-  severity: low
-  optimizes: ["reading_order", "cognitive_load", "semantic_grouping", "spoken_clarity"]
+    <<:  *high
 
-TEXT_TO_SPEECH:
-  essence: "Optimize for spoken clarity"
-  detect: "Poor spoken clarity"
-  autofix: true
-  severity: low
-  rules: ["Avoid homographs", "Break long sentences", "Mark acronym pronunciation", "Numbers read clearly"]
+    essence: "One reason to change per module"
 
-# Design (Rams)
-INNOVATIVE:
-  essence: "Derivative without improvement is waste"
-  detect: "Copy without adding value"
-  autofix: true
-  severity: low
+    detect: "Mixed concerns or god objects"
 
-USEFUL:
-  essence: "Form follows function"
-  detect: "Ornament over utility"
-  autofix: true
-  severity: medium
+  OCP:
+    <<: *high
 
-AESTHETIC:
-  essence: "Ugly needs justification"
-  detect: "Ugly without functional reason"
-  autofix: true
-  severity: low
+    essence: "Extend without modifying existing"
 
-UNDERSTANDABLE:
-  essence: "Confusion is failure"
-  detect: "Confusing interface or flow"
-  autofix: true
-  severity: medium
+    detect: "Core modification or switch on type"
 
-UNOBTRUSIVE:
-  essence: "Don't demand attention"
-  detect: "Attention-seeking elements"
-  autofix: true
-  severity: low
+  LSP:
+    <<: *high
 
-HONEST:
-  essence: "No deception"
-  detect: "Misleading or deceptive patterns"
-  autofix: true
-  severity: high
+    essence: "Subtypes fulfill parent contracts"
 
-LASTING:
-  essence: "Trends fade, foundations remain"
-  detect: "Trend-chasing over timeless"
-  autofix: true
-  severity: low
+    detect: "Broken contracts or unexpected exceptions"
 
-THOROUGH:
-  essence: "Rough edges matter"
-  detect: "Incomplete or unpolished"
-  autofix: true
-  severity: medium
+  ISP:
+    <<: *base
 
-SUSTAINABLE:
-  essence: "Waste is debt"
-  detect: "Wasteful resources"
-  autofix: true
-  severity: medium
+    essence: "Clients depend only on what they use"
 
-MINIMAL_DESIGN:
-  essence: "As little design as possible"
-  detect: "Overdesign"
-  autofix: true
-  severity: medium
+    detect: "Fat interfaces or unnecessary dependencies"
 
-# Brutalism
-BRUTALISM_VOID:
-  essence: "70% negative space minimum"
-  detect: "Insufficient whitespace"
-  autofix: true
-  severity: low
-  ratio: 0.70
+  DIP:
+    <<: *base
 
-BRUTALISM_FORBIDDEN:
-  essence: "No decoration"
-  detect: "Shadows, gradients, rounded corners, decorative animations"
-  autofix: true
-  severity: low
-  forbidden: ["shadows", "gradients", "rounded_corners", "decorative_animations"]
+    essence: "High-level independent of low-level"
 
-BRUTALISM_REQUIRED:
-  essence: "Function, raw materials, honesty, legibility"
-  detect: "Violation of brutalist requirements"
-  autofix: true
-  severity: low
-  required: ["function_over_form", "raw_materials", "honesty", "legibility"]
+    detect:  "Concrete dependencies or hardcoded implementations"
 
-# Unix
-UNIX_ONE_THING:
-  essence: "Do one thing well"
-  detect: "Module doing multiple unrelated things"
-  autofix: true
-  severity: medium
+  # STRUCTURAL
+  COMPOSITION:
 
-UNIX_COMPOSITION:
-  essence: "Combine simple programs"
-  detect: "Monolithic over composable"
-  autofix: true
-  severity: medium
+    <<: *base
 
-UNIX_TEXT: 
-  essence: "Text as universal interface"
-  detect: "Binary or proprietary without justification"
-  autofix: true
-  severity: low
+    essence: "Build from small, combinable parts"
 
-UNIX_PRIORITY:
-  essence: "Simple, clear, correct — in that order"
-  detect: "Wrong priority order"
-  autofix: true
-  severity: medium
-  order: ["simple", "clear", "correct"]
+    detect: "Inheritance overuse or monolithic design"
+
+  IMMUTABILITY:
+    <<: *base
+
+    essence: "Data unchanged after creation"
+
+    detect: "Mutable shared state"
+
+  DECOMPOSITION:
+    <<: *base
+
+    essence: "Break complex into simple subproblems"
+
+    detect: "Monolithic approach"
+
+  ABSTRACTION:
+    <<: *base
+
+    essence: "Hide complexity behind simple interfaces"
+
+    detect: "Exposed complexity, leaky abstractions"
+
+  DEFRAGMENT:
+    <<: *base
+
+    essence: "Collocate scattered related concepts"
+
+    detect: "Related items far apart"
+
+  HOIST:
+    <<: *base
+
+    essence: "Promote buried universals to visible level"
+
+    detect: "Deeply nested important values"
+
+  MERGE:
+    <<: *base
+
+    essence: "Consolidate duplicate sections"
+
+    detect: "Duplicate or overlapping content"
+
+  REFLOW:
+    <<: *base
+
+    essence: "Important first, details later"
+
+    detect:  "Improper importance order"
+
+  FLATTEN:
+    <<: *base
+
+    essence: "Reduce excessive nesting"
+
+    detect: "Nesting depth > 3"
+
+    threshold: 3
+
+  SMOOTH:
+    <<: *low
+
+    essence: "Optimize information flow"
+
+    detect: "Suboptimal reading flow"
+
+    optimizes: ["reading_order", "cognitive_load", "semantic_grouping", "spoken_clarity"]
+
+  TEXT_TO_SPEECH:
+    <<:  *low
+
+    essence: "Optimize for spoken clarity"
+
+    detect: "Poor spoken clarity"
+
+    rules: ["Avoid homographs", "Break long sentences", "Mark acronym pronunciation", "Numbers read clearly"]
+
+  # COGNITIVE
+  WORKING_MEMORY:
+
+    <<: *base
+
+    essence: "Respect 4±1 chunk limit"
+
+    detect: "Information overload or no chunking"
+
+    threshold: 5
+
+  HICKS_LAW:
+    <<: *base
+
+    essence: "Decision time grows with options"
+
+    detect: "Too many choices"
+
+    threshold: 7
+
+  RECOGNITION_OVER_RECALL:
+    <<: *base
+
+    essence: "Show, don't make remember"
+
+    detect: "Hidden options"
+
+  MENTAL_MODEL:
+    <<: *base
+
+    essence: "Match user expectations"
+
+    detect: "Counterintuitive interaction"
+
+  ERROR_PREVENTION:
+    <<: *high
+
+    essence: "Design out mistakes"
+
+    detect: "Error-prone design or destructive without confirmation"
+
+  # SYSTEMS
+  FEEDBACK_LOOPS:
+
+    <<: *base
+
+    essence: "Measure outcomes, adjust based on results"
+
+    detect: "Open-loop systems or no adaptation"
+
+  REDUNDANCY:
+    <<: *high
+
+    essence: "Critical components have backups"
+
+    detect: "Single points of failure"
+
+  SYMBIOTIC:
+    <<: *low
+
+    essence: "Elements support each other"
+
+    detect: "Isolated components"
+
+  # DESIGN (Rams + Brutalism + Unix)
+  INNOVATIVE:
+
+    <<: *low
+
+    essence: "Derivative without improvement is waste"
+
+    detect: "Copy without adding value"
+
+  USEFUL:
+    <<: *base
+
+    essence: "Form follows function"
+
+    detect: "Ornament over utility"
+
+  AESTHETIC:
+    <<: *low
+
+    essence: "Ugly needs justification"
+
+    detect: "Ugly without functional reason"
+
+  UNDERSTANDABLE:
+    <<: *base
+
+    essence: "Confusion is failure"
+
+    detect: "Confusing interface or flow"
+
+  UNOBTRUSIVE:
+    <<: *low
+
+    essence: "Don't demand attention"
+
+    detect: "Attention-seeking elements"
+
+  HONEST:
+    <<: *high
+
+    essence: "No deception"
+
+    detect: "Misleading or deceptive patterns"
+
+  LASTING:
+    <<: *low
+
+    essence: "Trends fade, foundations remain"
+
+    detect: "Trend-chasing over timeless"
+
+  THOROUGH:
+    <<: *base
+
+    essence: "Rough edges matter"
+
+    detect: "Incomplete or unpolished"
+
+  SUSTAINABLE:
+    <<: *base
+
+    essence: "Waste is debt"
+
+    detect: "Wasteful resources"
+
+  MINIMAL_DESIGN:
+    <<: *base
+
+    essence: "As little design as possible"
+
+    detect: "Overdesign"
+
+  BRUTALISM_VOID:
+    <<: *low
+
+    essence: "70% negative space minimum"
+
+    detect: "Insufficient whitespace"
+
+    ratio: 0.70
+
+  BRUTALISM_FORBIDDEN:
+    <<: *low
+
+    essence: "No decoration"
+
+    detect: "Shadows, gradients, rounded corners, decorative animations"
+
+    forbidden: ["shadows", "gradients", "rounded_corners", "decorative_animations"]
+
+  BRUTALISM_REQUIRED:
+    <<: *low
+
+    essence: "Function, raw materials, honesty, legibility"
+
+    detect: "Violation of brutalist requirements"
+
+    required: ["function_over_form", "raw_materials", "honesty", "legibility"]
+
+  UNIX_ONE_THING:
+    <<: *base
+
+    essence: "Do one thing well"
+
+    detect:  "Module doing multiple unrelated things"
+
+  UNIX_COMPOSITION:
+    <<: *base
+
+    essence: "Combine simple programs"
+
+    detect: "Monolithic over composable"
+
+  UNIX_TEXT:
+    <<: *low
+
+    essence: "Text as universal interface"
+
+    detect: "Binary or proprietary without justification"
+
+  UNIX_PRIORITY:
+    <<: *base
+
+    essence: "Simple, clear, correct — in that order"
+
+    detect: "Wrong priority order"
+
+    order: ["simple", "clear", "correct"]
+
+  # META
+  SELF_REFERENTIAL:
+
+    <<: *high
+
+    essence: "Rules apply to themselves"
+
+    detect: "Hypocrisy in principles"
+
+  DENSITY:
+    <<: *base
+
+    essence: "Every character earns its place"
+
+    detect:  "Decorative elements, redundant text, weak verbs"
+
+    warning: "Don't compress to unreadability"
+
+  CONTEXT_AWARE:
+    <<: *base
+
+    essence: "Principles as guides, not absolutes"
+
+    detect: "Dogmatic application"
+
+  CONFLICT_RESOLUTION:
+    <<:  *high
+
+    essence: "When principles conflict, choose by higher goal"
+
+    detect: "Ignored tradeoffs"
+
+  EVOLUTIONARY:
+    <<: *base
+
+    essence: "Principles evolve based on evidence"
+
+    detect: "Static dogma"
+
+  VALIDATION:
+    <<: *base
+
+    essence: "Test principles through application"
+
+    detect: "Unproven assumptions"
+
+  PRAGMATIC:
+    <<: *low
+
+    essence: "Catch more, fix more"
+
+    detect: "Any deviation from ideal"
+
+    philosophy: "Better 10 fixes with 8 good than miss 2 critical"
+
+# Fast lookup index for violation patterns
+violation_index:
+
+  duplication: [DRY, MERGE, DENSITY]
+
+  complexity: [KISS, DECOMPOSITION, FLATTEN, SRP]
+
+  hidden: [CLARITY, ABSTRACTION]
+
+  nested: [FLATTEN, HIERARCHY, SMOOTH]
+
+  coupling: [DIP, ISP, COMPOSITION]
+
+  mutable: [IMMUTABILITY]
+
+  failure: [REDUNDANCY, ERROR_PREVENTION]
+
+  ornament: [MINIMAL_DESIGN, BRUTALISM_FORBIDDEN, USEFUL]
+
+  monolithic: [UNIX_ONE_THING, DECOMPOSITION, SRP]
+
+  inconsistent: [CONSISTENCY, SELF_REFERENTIAL]
+

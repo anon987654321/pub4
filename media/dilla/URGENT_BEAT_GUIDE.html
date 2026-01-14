@@ -1,93 +1,137 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <title>Dilla Beat Assembly Guide - URGENT</title>
+
 <style>
+
 body { font-family: monospace; max-width: 900px; margin: 40px auto; background: #000; color: #0f0; padding: 20px; }
+
 h1 { color: #ff0; }
+
 h2 { color: #0ff; border-bottom: 2px solid #0ff; }
+
 code { background: #111; padding: 4px 8px; display: block; margin: 10px 0; border-left: 3px solid #f0f; }
+
 .step { background: #111; padding: 15px; margin: 20px 0; border: 1px solid #333; }
+
 .urgent { color: #f00; font-weight: bold; }
+
 </style>
+
 </head>
+
 <body>
 
 <h1>🔥 URGENT: Dilla Beat Assembly Tonight</h1>
-
 <div class="urgent">SYSTEM STATUS: PowerShell/FFmpeg hung - Using manual assembly workflow</div>
-
 <h2>Available Assets</h2>
 <ul>
+
 <li>✅ 808_bd_medium_r8_t1a.wav (kick drum - GoldBaby)</li>
+
 <li>✅ 808_sd_jd800_01.wav (snare drum - GoldBaby)</li>
+
 <li>✅ 808_hh_jd800.wav (hihat - GoldBaby)</li>
+
 <li>✅ R-Mårdalen R.aif (sample loop - 1.5MB)</li>
+
 <li>✅ dilla.rb (production system v2.1.0)</li>
+
 </ul>
 
 <h2>Step-by-Step: Build Beat NOW</h2>
-
 <div class="step">
 <h3>Step 1: Open CMD (not PowerShell - it's stuck)</h3>
+
 <code>cmd.exe
+
 cd /d G:\pub\media\dilla</code>
+
 </div>
 
 <div class="step">
 <h3>Step 2: Convert Sample (AIF → WAV)</h3>
+
 <code>C:\cygwin64\bin\ffmpeg.exe -i "R-Mårdalen R.aif" -ar 48000 -ac 2 sample.wav</code>
+
 <p>This creates sample.wav at 48kHz stereo</p>
+
 </div>
 
 <div class="step">
 <h3>Step 3: Apply SP-1200 Character to Sample (Dilla's sampler)</h3>
+
 <code>C:\cygwin64\bin\ffmpeg.exe -i sample.wav -af "acrusher=bits=12:mode=lin,volume=1.8,atanh,volume=0.555,lowpass=f=10000" sample_sp1200.wav</code>
+
 <p>Bitcrush to 12-bit + saturation + lowpass = SP-1200 grit</p>
+
 </div>
 
 <div class="step">
 <h3>Step 4: Create Drum Pattern (Dilla Swing)</h3>
+
 <p><strong>KICK PATTERN</strong> (beats 1 & 3, slightly behind):</p>
+
 <code>C:\cygwin64\bin\ffmpeg.exe -i 808_bd_medium_r8_t1a.wav -filter_complex "[0:a]aeval=val(0):duration=8[silence];[0:a]adelay=0|0[k1];[0:a]adelay=2520|2520[k2];[silence][k1][k2]amix=inputs=3:duration=longest" kick_pattern.wav</code>
+
 <p>BPM 95: Quarter note = 632ms. Bars 1,3 = 0ms, 2528ms. Add +8ms lag for swing.</p>
 
 <p><strong>SNARE PATTERN</strong> (beats 2 & 4, pushed forward):</p>
 <code>C:\cygwin64\bin\ffmpeg.exe -i 808_sd_jd800_01.wav -filter_complex "[0:a]aeval=val(0):duration=8[silence];[0:a]adelay=1252|1252[s1];[0:a]adelay=3772|3772[s2];[silence][s1][s2]amix=inputs=3:duration=longest" snare_pattern.wav</code>
+
 <p>Beats 2,4 = 1264ms, 3784ms. Subtract 12ms = Dilla forward push.</p>
 
 <p><strong>HIHAT PATTERN</strong> (16ths, slightly early):</p>
 <code>C:\cygwin64\bin\ffmpeg.exe -i 808_hh_jd800.wav -filter_complex "[0:a]aeval=val(0):duration=8[silence];[0:a]adelay=0|0[h1];[0:a]adelay=155|155[h2];[0:a]adelay=316|316[h3];[0:a]adelay=629|629[h4];[0:a]adelay=1261|1261[h5];[0:a]adelay=1416|1416[h6];[0:a]adelay=1577|1577[h7];[0:a]adelay=1890|1890[h8];[silence][h1][h2][h3][h4][h5][h6][h7][h8]amix=inputs=9:duration=longest:weights='1 0.7 0.5 0.7 1 0.7 0.5 0.7'" hihat_pattern.wav</code>
+
 <p>16th notes at 95 BPM = 158ms each. Subtract 3ms for Dilla hihat early timing. Vary volume.</p>
+
 </div>
 
 <div class="step">
 <h3>Step 5: Mix All Layers</h3>
+
 <code>C:\cygwin64\bin\ffmpeg.exe -i sample_sp1200.wav -i kick_pattern.wav -i snare_pattern.wav -i hihat_pattern.wav -filter_complex "[0:a]volume=0.6[sample];[1:a]volume=1.0[kick];[2:a]volume=0.85[snare];[3:a]volume=0.3[hh];[sample][kick][snare][hh]amix=inputs=4:duration=longest" beat_raw.wav</code>
+
 </div>
 
 <div class="step">
 <h3>Step 6: Master with MPC3000 Character</h3>
+
 <code>C:\cygwin64\bin\ffmpeg.exe -i beat_raw.wav -af "acrusher=bits=14:mode=lin,volume=1.2,atanh,volume=0.833,acompressor=threshold=-18dB:ratio=4:attack=5:release=50,equalizer=f=100:width_type=q:width=0.8:g=3,equalizer=f=8000:width_type=q:width=1.2:g=-2.5,loudnorm=I=-16:TP=-1" DILLA_BEAT_FINAL.wav</code>
+
 <p>14-bit + saturation + compression + Dilla EQ (boost bass 100Hz, cut highs 8kHz) + normalize</p>
+
 </div>
 
 <h2>🎹 Dilla Timing Reference</h2>
 <table border="1" cellpadding="10" style="border-collapse: collapse; color: #0f0;">
+
 <tr><th>BPM</th><th>Quarter Note</th><th>16th Note</th><th>Swing Amount</th></tr>
+
 <tr><td>95</td><td>632ms</td><td>158ms</td><td>54.2% (kick -8ms, snare +12ms, hh -3ms)</td></tr>
+
 </table>
 
 <h2>Alternative: Use dilla.rb CLI</h2>
 <p>If Ruby/FFmpeg get unstuck:</p>
+
 <code>ruby dilla.rb dilla donuts C 95
+
 ruby dilla.rb gear sp1200 "R-Mårdalen R.aif"
+
 ruby dilla.rb master output.wav mpc3000</code>
 
 <h2>🎚️ MPC3000 vs SP-1200 Settings</h2>
 <ul>
+
 <li><strong>SP-1200:</strong> 12-bit, 26kHz, drive 1.8, cutoff 10kHz (gritty/punchy)</li>
+
 <li><strong>MPC3000:</strong> 14-bit, 44kHz, drive 1.2, cutoff 18kHz (warm/precise) - Dilla's main sampler</li>
+
 </ul>
 
 <p style="margin-top: 40px; color: #ff0;">✅ FINAL OUTPUT: DILLA_BEAT_FINAL.wav</p>
@@ -95,3 +139,4 @@ ruby dilla.rb master output.wav mpc3000</code>
 
 </body>
 </html>
+
