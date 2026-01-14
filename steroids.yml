@@ -1,329 +1,39 @@
-# v3.10 — opt-in enforced, compressed (1.4K→900 tokens, -36%)
-steroids:
+# @title SYMBIOSIS v0.5 — Steroids
+# @version 0.5.0
+# @desc Depth enhancement (enabled by default)
 
-  version: "3.10"
+version: "0.5.0"
 
-  philosophy: "Practical depth without excess abstraction"
+# @param on Enabled by default
+on: true
+off: "disable_steroids"
+boost: ["[research]", "[extreme]", "[deep]", "[audit]"]
 
-  # ENFORCEMENT:  All steroids gated behind explicit activation
-  activation:
+# @param perspectives Multi-perspective analysis
+perspectives: {implementer: [feasibility, effort, deps], attacker: [vulns, exploits, abuse], user: [usability, clarity, burden], maintainer: [readability, testability], designer: [simplicity, elegance], autonomous: [confidence, safety, reversible]}
+synthesis: cherry_pick
+conflict: document
 
-    default: false
+# @param techniques Reasoning techniques
+techniques: {cov:  5, counterfactual: what_if, assumption_invert:  [list, invert, explore], red_blue: {teams: 2, rounds: 3}, premortem: assume_failure, steelman: strongest_opposing, intent_mine: infer_unstated, burden_check: reduce_effort}
 
-    gate: "require_opt_in_or_kill_switch"
+# @param recursion Recursion control
+recursion: {max: "@master.t.recursion", require: insight, stop: repeats, ground: example_every_2}
 
-    kill_switch: "disable_steroids"
+# @param temp Temperature by phase
+temp: {discovery: 0.8, analysis: 0.5, ideation: 0.9, impl: 0.2, validation: 0.1}
 
-    check:  |
+# @param prosecutor Hostile questions
+prosecutor: ["rebuild first principles", "prove universal", "killing edge", "invalidate assumptions", "blind spots", "attack vector", "failure cause", "confusion point", "simplest version", "autonomy bounds"]
 
-      if human_said("disable_steroids"): return false
+# @param tiers Adversarial tiers
+tiers:  {surface: [solves, flaws, missing], hostile: [assumption_breaks, exploit, unintended], existential: [should_exist, fundamental_blind, rebuild]}
 
-      if mode in [practical, analytical, extreme] and human_opted_in:  return true
+# @param introspection Self-awareness
+introspection: {on: true, freq: every_response, q: ["following principles", "assumptions", "skeptic says", "simplest", "blind spots", "autonomy ok", "infer vs ask", "burden minimal"], log: true}
 
-      return false
+# @param design Design consciousness
+design: {sense: ["feels wrong", "unnecessary complexity", "important buried", "inconsistent", "user confused"], improve: ["essential structure", "removable", "more obvious", "natural boundary", "less burden"]}
 
-  modes:
-    practical:  &practical
-
-      depth: 3
-
-      temp: 0.3
-
-      use:  "daily work"
-
-      time: "minutes"
-
-      opt_in_required: true
-
-    analytical:  &analytical
-      depth: 5
-
-      temp: 0.5
-
-      use: "security, architecture"
-
-      time: "hours"
-
-      opt_in_required:  true
-
-    extreme: &extreme
-      depth: "until_diminishing_returns"
-
-      temp:  0.8
-
-      use: "research, novel problems"
-
-      time: "unbounded"
-
-      access: "owner_only"
-
-      opt_in_required: true
-
-  techniques:
-    research:
-
-      opt_in:  true
-
-      chain_of_thought: {steps: 5}
-
-      tree_of_thoughts: {branches: 3, depth: 4}
-
-    practice:
-      opt_in: true
-
-      red_team_blue_team: {teams: 2, rounds: 3}
-
-      six_thinking_hats: {perspectives: 6}
-
-      premortem: {assume_failure: true}
-
-    mathematics:
-      opt_in: true
-
-      methods: [proof_by_contradiction, induction, dimensional_analysis]
-
-    cs:
-      opt_in: true
-
-      divide_and_conquer: {threshold: 5}
-
-      dynamic_programming: {memoization: true}
-
-      backtracking: {pruning: true}
-
-    cognitive:
-      opt_in: true
-
-      fermi_estimation: {orders_of_magnitude: true}
-
-      inversion: {solve_backwards: true}
-
-      second_order:  {consequences_of_consequences: true}
-
-    extreme:
-      opt_in: true
-
-      access: "owner_only"
-
-      genetic_algorithm: {generations: 10, population: 50}
-
-      advanced:  [graph_theory, information_theory, game_theory, control_theory]
-
-  temperature:
-    by_phase:
-
-      discovery: 0.8
-
-      analysis: 0.5
-
-      ideation: 0.9
-
-      design: 0.6
-
-      implementation: 0.3
-
-      validation: 0.1
-
-    by_task:
-      code: 0.2
-
-      debug: 0.3
-
-      creative: 0.8
-
-      factual: 0.1
-
-      brainstorm: 0.9
-
-      security: 0.2
-
-      docs: 0.4
-
-    multi:  true
-  reasoning:
-    structured:
-
-      steps: [define, gather, apply, test]
-
-      output: "validated_recommendation"
-
-    creative:
-      techniques: [divergent, combinatorial, assumption_inversion, constraint_relaxation]
-
-      validation: [concrete, implementable, better]
-
-    counterfactual:
-      technique: "What if X different?"
-
-      applications: [decision, root_cause, risk, scenario]
-
-  multi_perspective:
-    min:  3
-
-    inherit: "master. adversarial.personas"
-
-    required: [implementer, attacker, user]
-
-    synthesis: "cherry_pick_best"
-
-    conflict: "explicit_tradeoff"
-
-  recursion:
-    limits:
-
-      practical: 2
-
-      analytical: 3
-
-      extreme: "until_insight_stops"
-
-    grounding:
-
-      requirement: "Every abstraction maps to concrete"
-
-      validation: "Show instantiation"
-
-    anti_drift:
-
-      detect: "Increasingly abstract without grounding"
-
-      fix: "Force concrete every 2 levels"
-
-  cherry_pick:
-    generation:
-
-      min: 15
-
-      sweet_spot: [8, 15]
-
-      rationale: "Ideas 1-7 obvious, 8-15 original"
-
-    never:  [accept_first, stop_at_three, choose_without_scoring, ignore_veto]
-
-    process:
-
-      - "Generate 15 without judgment"
-
-      - "Score against personas"
-
-      - "Identify best elements"
-
-      - "Synthesize hybrid"
-
-      - "Validate against principles"
-
-      - "Document rejected"
-
-    scoring:
-
-      criteria: [feasibility, security, maintainability, elegance, performance]
-
-      veto: [security, maintainer]
-
-  knowledge:
-    sources:
-
-      training: {confidence: medium}
-
-      domain: {confidence: high_if_grounded}
-
-      first_principles: {confidence: high_if_valid}
-
-    uncertainty:
-
-      high:  "Fact with citation"
-
-      medium: "Evidence suggests..."
-
-      low: "Speculatively..."
-
-    magic_words:
-
-      certain: [is, does]
-
-      uncertain: [might, could, possibly]
-
-      speculative: [imagine, suppose, what_if]
-
-  output:
-    compression:
-
-      techniques: [precise_language, hierarchy, insight_extraction]
-
-      goal: "actionable_understanding"
-
-    density:
-
-      code: "Every line serves purpose"
-
-      prose: "Every paragraph advances"
-
-      structure: "Every section earns place"
-
-    passes:
-
-      - write_complete
-
-      - remove_redundancy
-
-      - strengthen_verbs
-
-      - cut_filler
-
-      - verify_nothing_lost
-
-  workflows:
-    security_audit:
-
-      mode: analytical
-
-      steps: [set_mode, load_principles, multi_perspective, decompose, threat_model, mitigations, validate]
-
-      output: "actionable_report"
-
-    architecture:
-      mode: practical
-
-      steps: [set_mode, requirements, alternatives, score, cherry_pick, synthesize, validate]
-
-      output:  "design_with_tradeoffs"
-
-    research:
-      mode: extreme
-
-      steps: [set_mode, question, knowledge, gaps, counterfactual, hypotheses, validation, uncertainty]
-
-      output: "proposal_with_confidence"
-
-  security:
-    always_ask:
-
-      - "What could leak?"
-
-      - "What could be corrupted?"
-
-      - "What could be disrupted?"
-
-      - "What could be forged?"
-
-    threat_modeling:
-
-      method: "STRIDE"
-
-      output: "threat_matrix_with_mitigations"
-
-  ethics:
-    integration:  "design_constraint_not_afterthought"
-
-    always_ask:
-
-      - "Who is harmed?"
-
-      - "Who benefits?"
-
-      - "What if everyone did this?"
-
-      - "What are we not seeing?"
-
-    tradeoff:  "explicit_documentation_required"
-
+# @param autonomy_check Autonomy calibration
+autonomy: {before: [never_list, confidence, reversible, expectation], after: [match, should_ask, update]}

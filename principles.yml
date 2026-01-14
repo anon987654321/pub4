@@ -1,477 +1,115 @@
-# v3.10 — flat structure with inheritance (3.2K→1.4K tokens, -56%)
-principles:
-
-  version:  "3.10"
-
-  # Base schema with smart defaults
-  _base:  &base
-
-    autofix: true
-
-    severity: medium
-
-  _high: &high
-    <<: *base
-
-    severity: high
-
-  _critical: &critical
-    <<: *base
-
-    severity: critical
-
-  _low: &low
-    <<: *base
-
-    severity: low
-
-  # CORE PRINCIPLES (flat access)
-  DRY:
-
-    <<: *high
-
-    essence: "Define once, reference everywhere"
-
-    detect: "Duplication of concept, logic, or pattern"
-
-    related: [MERGE, DENSITY]
-
-  KISS:
-    <<: *high
-
-    essence: "Simplest working solution"
-
-    detect: "Complexity exceeds functionality"
-
-    warning: "Deletion ≠ simplicity"
-
-  YAGNI:
-    <<: *base
-
-    essence: "Build only proven requirements"
-
-    detect: "Unused features or premature infrastructure"
-
-  CLARITY:
-    <<: *high
-
-    essence: "Intent obvious without explanation"
-
-    detect: "Hidden logic, magic values, misleading names"
-
-  POLA:
-    <<: *base
-
-    essence: "No surprises"
-
-    detect: "Unconventional without justification"
-
-  HIERARCHY:
-    <<: *base
-
-    essence: "Important first, details later"
-
-    detect: "Critical buried, metadata before substance"
-
-    validation: "80% value from first 20%?"
-
-  CONSISTENCY:
-    <<: *base
-
-    essence: "Similar things look and behave similarly"
-
-    detect: "Arbitrary variation or mixed patterns"
-
-  # SOLID PRINCIPLES
-  SRP:
-
-    <<:  *high
-
-    essence: "One reason to change per module"
-
-    detect: "Mixed concerns or god objects"
-
-  OCP:
-    <<: *high
-
-    essence: "Extend without modifying existing"
-
-    detect: "Core modification or switch on type"
-
-  LSP:
-    <<: *high
-
-    essence: "Subtypes fulfill parent contracts"
-
-    detect: "Broken contracts or unexpected exceptions"
-
-  ISP:
-    <<: *base
-
-    essence: "Clients depend only on what they use"
-
-    detect: "Fat interfaces or unnecessary dependencies"
-
-  DIP:
-    <<: *base
-
-    essence: "High-level independent of low-level"
-
-    detect:  "Concrete dependencies or hardcoded implementations"
-
-  # STRUCTURAL
-  COMPOSITION:
-
-    <<: *base
-
-    essence: "Build from small, combinable parts"
-
-    detect: "Inheritance overuse or monolithic design"
-
-  IMMUTABILITY:
-    <<: *base
-
-    essence: "Data unchanged after creation"
-
-    detect: "Mutable shared state"
-
-  DECOMPOSITION:
-    <<: *base
-
-    essence: "Break complex into simple subproblems"
-
-    detect: "Monolithic approach"
-
-  ABSTRACTION:
-    <<: *base
-
-    essence: "Hide complexity behind simple interfaces"
-
-    detect: "Exposed complexity, leaky abstractions"
-
-  DEFRAGMENT:
-    <<: *base
-
-    essence: "Collocate scattered related concepts"
-
-    detect: "Related items far apart"
-
-  HOIST:
-    <<: *base
-
-    essence: "Promote buried universals to visible level"
-
-    detect: "Deeply nested important values"
-
-  MERGE:
-    <<: *base
-
-    essence: "Consolidate duplicate sections"
-
-    detect: "Duplicate or overlapping content"
-
-  REFLOW:
-    <<: *base
-
-    essence: "Important first, details later"
-
-    detect:  "Improper importance order"
-
-  FLATTEN:
-    <<: *base
-
-    essence: "Reduce excessive nesting"
-
-    detect: "Nesting depth > 3"
-
-    threshold: 3
-
-  SMOOTH:
-    <<: *low
-
-    essence: "Optimize information flow"
-
-    detect: "Suboptimal reading flow"
-
-    optimizes: ["reading_order", "cognitive_load", "semantic_grouping", "spoken_clarity"]
-
-  TEXT_TO_SPEECH:
-    <<:  *low
-
-    essence: "Optimize for spoken clarity"
-
-    detect: "Poor spoken clarity"
-
-    rules: ["Avoid homographs", "Break long sentences", "Mark acronym pronunciation", "Numbers read clearly"]
-
-  # COGNITIVE
-  WORKING_MEMORY:
-
-    <<: *base
-
-    essence: "Respect 4±1 chunk limit"
-
-    detect: "Information overload or no chunking"
-
-    threshold: 5
-
-  HICKS_LAW:
-    <<: *base
-
-    essence: "Decision time grows with options"
-
-    detect: "Too many choices"
-
-    threshold: 7
-
-  RECOGNITION_OVER_RECALL:
-    <<: *base
-
-    essence: "Show, don't make remember"
-
-    detect: "Hidden options"
-
-  MENTAL_MODEL:
-    <<: *base
-
-    essence: "Match user expectations"
-
-    detect: "Counterintuitive interaction"
-
-  ERROR_PREVENTION:
-    <<: *high
-
-    essence: "Design out mistakes"
-
-    detect: "Error-prone design or destructive without confirmation"
-
-  # SYSTEMS
-  FEEDBACK_LOOPS:
-
-    <<: *base
-
-    essence: "Measure outcomes, adjust based on results"
-
-    detect: "Open-loop systems or no adaptation"
-
-  REDUNDANCY:
-    <<: *high
-
-    essence: "Critical components have backups"
-
-    detect: "Single points of failure"
-
-  SYMBIOTIC:
-    <<: *low
-
-    essence: "Elements support each other"
-
-    detect: "Isolated components"
-
-  # DESIGN (Rams + Brutalism + Unix)
-  INNOVATIVE:
-
-    <<: *low
-
-    essence: "Derivative without improvement is waste"
-
-    detect: "Copy without adding value"
-
-  USEFUL:
-    <<: *base
-
-    essence: "Form follows function"
-
-    detect: "Ornament over utility"
-
-  AESTHETIC:
-    <<: *low
-
-    essence: "Ugly needs justification"
-
-    detect: "Ugly without functional reason"
-
-  UNDERSTANDABLE:
-    <<: *base
-
-    essence: "Confusion is failure"
-
-    detect: "Confusing interface or flow"
-
-  UNOBTRUSIVE:
-    <<: *low
-
-    essence: "Don't demand attention"
-
-    detect: "Attention-seeking elements"
-
-  HONEST:
-    <<: *high
-
-    essence: "No deception"
-
-    detect: "Misleading or deceptive patterns"
-
-  LASTING:
-    <<: *low
-
-    essence: "Trends fade, foundations remain"
-
-    detect: "Trend-chasing over timeless"
-
-  THOROUGH:
-    <<: *base
-
-    essence: "Rough edges matter"
-
-    detect: "Incomplete or unpolished"
-
-  SUSTAINABLE:
-    <<: *base
-
-    essence: "Waste is debt"
-
-    detect: "Wasteful resources"
-
-  MINIMAL_DESIGN:
-    <<: *base
-
-    essence: "As little design as possible"
-
-    detect: "Overdesign"
-
-  BRUTALISM_VOID:
-    <<: *low
-
-    essence: "70% negative space minimum"
-
-    detect: "Insufficient whitespace"
-
-    ratio: 0.70
-
-  BRUTALISM_FORBIDDEN:
-    <<: *low
-
-    essence: "No decoration"
-
-    detect: "Shadows, gradients, rounded corners, decorative animations"
-
-    forbidden: ["shadows", "gradients", "rounded_corners", "decorative_animations"]
-
-  BRUTALISM_REQUIRED:
-    <<: *low
-
-    essence: "Function, raw materials, honesty, legibility"
-
-    detect: "Violation of brutalist requirements"
-
-    required: ["function_over_form", "raw_materials", "honesty", "legibility"]
-
-  UNIX_ONE_THING:
-    <<: *base
-
-    essence: "Do one thing well"
-
-    detect:  "Module doing multiple unrelated things"
-
-  UNIX_COMPOSITION:
-    <<: *base
-
-    essence: "Combine simple programs"
-
-    detect: "Monolithic over composable"
-
-  UNIX_TEXT:
-    <<: *low
-
-    essence: "Text as universal interface"
-
-    detect: "Binary or proprietary without justification"
-
-  UNIX_PRIORITY:
-    <<: *base
-
-    essence: "Simple, clear, correct — in that order"
-
-    detect: "Wrong priority order"
-
-    order: ["simple", "clear", "correct"]
-
-  # META
-  SELF_REFERENTIAL:
-
-    <<: *high
-
-    essence: "Rules apply to themselves"
-
-    detect: "Hypocrisy in principles"
-
-  DENSITY:
-    <<: *base
-
-    essence: "Every character earns its place"
-
-    detect:  "Decorative elements, redundant text, weak verbs"
-
-    warning: "Don't compress to unreadability"
-
-  CONTEXT_AWARE:
-    <<: *base
-
-    essence: "Principles as guides, not absolutes"
-
-    detect: "Dogmatic application"
-
-  CONFLICT_RESOLUTION:
-    <<:  *high
-
-    essence: "When principles conflict, choose by higher goal"
-
-    detect: "Ignored tradeoffs"
-
-  EVOLUTIONARY:
-    <<: *base
-
-    essence: "Principles evolve based on evidence"
-
-    detect: "Static dogma"
-
-  VALIDATION:
-    <<: *base
-
-    essence: "Test principles through application"
-
-    detect: "Unproven assumptions"
-
-  PRAGMATIC:
-    <<: *low
-
-    essence: "Catch more, fix more"
-
-    detect: "Any deviation from ideal"
-
-    philosophy: "Better 10 fixes with 8 good than miss 2 critical"
-
-# Fast lookup index for violation patterns
-violation_index:
-
-  duplication: [DRY, MERGE, DENSITY]
-
-  complexity: [KISS, DECOMPOSITION, FLATTEN, SRP]
-
-  hidden: [CLARITY, ABSTRACTION]
-
-  nested: [FLATTEN, HIERARCHY, SMOOTH]
-
-  coupling: [DIP, ISP, COMPOSITION]
-
-  mutable: [IMMUTABILITY]
-
-  failure: [REDUNDANCY, ERROR_PREVENTION]
-
-  ornament: [MINIMAL_DESIGN, BRUTALISM_FORBIDDEN, USEFUL]
-
-  monolithic: [UNIX_ONE_THING, DECOMPOSITION, SRP]
-
-  inconsistent: [CONSISTENCY, SELF_REFERENTIAL]
-
+# @title SYMBIOSIS v0.5 — Principles
+# @version 0.5.0
+# @desc 28 principles with rigorous enforcement matrix
+# @invariant Every principle has detect→match→fix→verify chain
+
+version: "0.5.0"
+
+# @param weights Severity weights
+weights: {critical: 10, high: 5, medium: 2, low: 1}
+
+# @param convergence Convergence formula
+convergence: "sum(count*weight)=0"
+
+# @param field_order Standard field order for principles
+field_order: [rule, detect, match, fix, verify, auto, why]
+
+# @param defaults Auto defaults by severity
+defaults: {critical: {auto: false}, high: {auto: false}, medium: {auto: true}, low: {auto: true}}
+
+# @param autofix Fix registry
+autofix: {delete_filler: "remove filler", rewrite_present: "future→present", extract_fn: "reduce nesting", add_validation: "add check", add_citation: "add evidence", add_search: "add grounding", rename: "match convention", reorder: "importance first", group: "chunk related", extract_iface: "add abstraction", collocate: "bring together", merge: "consolidate", decompose: "split", document: "add docs", infer: "use default", simplify: "reduce complexity"}
+
+# @param enforce Enforcement matrix (detect→match→fix→verify for each principle)
+enforce:
+  SECURITY: {detect: security_scan, match: [injection, secrets, validation], fix: null, verify:  security_scan}
+  CONSTITUTIONAL:  {detect: harm_scan, match: [harmful, dishonest, overreach], fix: null, verify: harm_scan}
+  SIMULATION_BAN: {detect: word_match, match: "@master.vocab.ban.future", fix: rewrite_present, verify: word_match}
+  CONTEXT_PRESERVE: {detect: diff_ratio, match: "ratio<0.9", fix: null, verify: diff_ratio}
+  SELF_REFERENTIAL: {detect: self_scan, match: [config_violation], fix: null, verify: self_scan}
+  FLAT_STRUCTURE: {detect: depth_scan, match: ">@master.t.nesting", fix: extract_fn, verify: depth_scan}
+  EVIDENCE: {detect: claim_scan, match: [no_source], fix: add_citation, verify: claim_scan}
+  DRY: {detect:  dup_scan, match: ">@master.t.fuzzy", fix: merge, verify: dup_scan}
+  KISS: {detect: complexity_scan, match: ">@master.t.cyclomatic", fix: decompose, verify: complexity_scan}
+  SRP: {detect: responsibility_scan, match: [mixed], fix: decompose, verify: responsibility_scan}
+  UNIX:  {detect: size_scan, match: ">@master.t.lines", fix: decompose, verify: size_scan}
+  ERROR_PREVENT: {detect: validation_scan, match: [missing], fix: add_validation, verify:  validation_scan}
+  REDUNDANCY: {detect: spof_scan, match: [single_failure], fix: null, verify: spof_scan}
+  POLA: {detect: convention_scan, match: [unconventional], fix: rename, verify: convention_scan}
+  GROUND: {detect: fact_scan, match:  [ungrounded], fix: add_search, verify: fact_scan}
+  CONTRACT: {detect:  iface_scan, match: [violation], fix: null, verify: iface_scan}
+  DENSITY: {detect: word_match, match: "@master.vocab.ban.filler", fix: delete_filler, verify: word_match}
+  HIERARCHY: {detect: position_scan, match: [buried], fix: reorder, verify: position_scan}
+  WORKING_MEMORY: {detect: count_scan, match: ">@master.t.concepts+3", fix: group, verify:  count_scan}
+  PRESERVE_FIRST: {detect: deletion_scan, match: [no_reason], fix: null, verify: deletion_scan}
+  COGNITIVE:  {detect: option_scan, match: ">@master.t.options", fix: group, verify: option_scan}
+  ABSTRACTION: {detect: dep_scan, match: [concrete], fix: extract_iface, verify: dep_scan}
+  STRUCTURE: {detect:  inherit_scan, match: ">@master.t.inheritance", fix: extract_iface, verify: inherit_scan}
+  FEEDBACK:  {detect: loop_scan, match: [open], fix: null, verify: loop_scan}
+  RESOLVE: {detect: conflict_scan, match: [undocumented], fix: document, verify:  conflict_scan}
+  USER_BURDEN: {detect: interaction_scan, match: [unnecessary], fix: infer, verify: interaction_scan}
+  RAMS: {detect: design_scan, match:  [overdesign], fix: simplify, verify: design_scan}
+  UNIX_TEXT: {detect: format_scan, match:  [binary], fix: null, verify: format_scan}
+  EVOLVE: {detect: rigidity_scan, match: [static], fix: null, verify: rigidity_scan}
+  VALIDATE:  {detect: test_scan, match: [unproven], fix:  null, verify: test_scan}
+
+# @param critical Critical principles (weight=10)
+critical:
+  SECURITY: {rule: "enforce security", detect: [injection, secrets, validation], context: {relax: [quoted]}, action: halt, why: "vulnerabilities cause harm"}
+  CONSTITUTIONAL: {rule: "enforce ethics", detect: [harmful, dishonest, overreach], action: halt, why: "ethics non-negotiable"}
+  SIMULATION_BAN: {rule: "prohibit future tense", detect: "@master.vocab.ban.future", context: {relax: "@master.vocab.allow.conditional"}, action: reject, fix: rewrite_present, auto: true, why: "prevents false promises"}
+  CONTEXT_PRESERVE: {rule: "preserve context", detect: [deletion_unjustified, truncation, "ratio<0.9"], action: halt, why: "user work sacred"}
+  SELF_REFERENTIAL: {rule: "apply to self", detect: [self_violation], action: halt, why: "integrity requires consistency"}
+  FLAT_STRUCTURE: {rule: "limit nesting", detect: [">@master.t.nesting"], context: {relax: [data_not_logic]}, action: halt, fix: extract_fn, why: "nesting harms comprehension"}
+
+# @param high High principles (weight=5)
+high:
+  EVIDENCE: {rule: "require evidence", detect: [no_source, vague], action: flag, fix: add_citation, auto: true, why: "prevents hallucination"}
+  DRY: {rule: "eliminate duplication", detect: [">@master.t.duplication", ">@master.t.fuzzy"], context: {relax: [semantic_diff]}, action: flag, fix: merge, why: "duplication breeds inconsistency"}
+  KISS:  {rule: "prefer simplicity", detect: [">@master.t.cyclomatic", ">@master.t.params"], action: flag, fix: decompose, why: "complexity breeds bugs"}
+  SRP: {rule: "single responsibility", detect: [mixed_concerns, ">@master.t.methods"], action: flag, fix: decompose, why: "focus enables understanding"}
+  UNIX: {rule: "composable units", detect: [god_fn, ">@master.t.lines"], action: flag, fix: decompose, why: "small composes better"}
+  ERROR_PREVENT:  {rule: "prevent errors", detect: [missing_validation], action: flag, fix: add_validation, auto: true, why: "prevention cheaper than cure"}
+  REDUNDANCY: {rule: "eliminate SPOF", detect: [single_failure], action: flag, why: "resilience requires redundancy"}
+  POLA:  {rule: "match expectations", detect: [surprising, unconventional], action: flag, fix: rename, why: "surprise causes errors"}
+  GROUND: {rule: "ground facts", detect: [ungrounded], action: flag, fix: add_search, auto: true, why: "grounding prevents hallucination"}
+  CONTRACT: {rule: "honor interfaces", detect: [violation], action:  flag, why: "predictability builds trust"}
+
+# @param medium Medium principles (weight=2, auto=true default)
+medium:
+  DENSITY: {rule: "eliminate filler", detect: "@master.vocab.ban.filler", action: fix, fix: delete_filler, why: "noise obscures signal"}
+  HIERARCHY: {rule: "order by importance", detect: [buried_critical], action: fix, fix: reorder, why:  "attention scarce"}
+  WORKING_MEMORY: {rule: "limit cognitive load", detect: [">@master.t.concepts+3"], action: fix, fix: group, why: "cognitive limits real"}
+  PRESERVE_FIRST: {rule: "preserve before compress", detect: [aggressive_compression], action: warn, auto: false, why: "deletion irreversible"}
+  COGNITIVE:  {rule: "reduce overload", detect: [">@master.t.options"], action: fix, fix: group, why: "overload paralyzes"}
+  ABSTRACTION: {rule: "depend on abstractions", detect: [concrete_dep], action: flag, fix: extract_iface, auto: false, why: "abstractions enable change"}
+  STRUCTURE: {rule: "prefer composition", detect: [">@master.t.inheritance"], action: flag, fix: extract_iface, auto: false, why: "composition flexible"}
+  FEEDBACK: {rule: "require feedback loops", detect: [open_loop], action: flag, auto: false, why: "adaptation requires feedback"}
+  RESOLVE: {rule: "document tradeoffs", detect: [undocumented], action: fix, fix: document, priority: [SECURITY, CONSTITUTIONAL, CONTEXT_PRESERVE], why: "implicit conflicts fester"}
+  USER_BURDEN: {rule: "minimize user effort", detect: [unnecessary_q], action: fix, fix: infer, why:  "user time valuable"}
+
+# @param low Low principles (weight=1, auto=true default)
+low:
+  RAMS: {rule: "apply design principles", detect: [overdesign, decoration], action: flag, fix: simplify, why:  "good design invisible"}
+  UNIX_TEXT:  {rule: "prefer text", detect: [binary_lock], action: flag, why: "text universal"}
+  EVOLVE: {rule: "allow evolution", detect: [static_dogma], action: flag, auto: false, why: "rigidity breaks"}
+  VALIDATE: {rule:  "validate effectiveness", detect: [unproven], action: flag, why: "untested are hypotheses"}
+
+# @param ops Structural operations
+ops:  {defragment: {d: scattered, f: collocate}, hoist: {d: nested_universal, f: promote}, merge: {d: dup, f: consolidate}, flatten: {d: deep, f: reduce}, reflow: {d: wrong_order, f: critical_first}, smooth: {d: inconsistent, f: normalize}, inline: {d: single_use, f: collapse}, extract: {d: repeated, f: reusable}, resolve: {d: conflict, f: priority}}
+
+# @param personas Adversarial personas (w=weight, v=veto, q=questions)
+personas:
+  security: {w: 0.20, v: true, q: [exploit, secrets, privilege, injection]}
+  attacker: {w: 0.18, v: true, q: [weak_link, steal, escalate, bypass]}
+  maintainer: {w: 0.20, v: true, q: [3am, junior, 6mo, errors]}
+  skeptic: {w: 0.12, v: false, q: [evidence, assumption, proven, metric]}
+  minimalist: {w: 0.10, v: false, q: [remove, necessary, simpler, yagni]}
+  architect: {w: 0.05, v: false, q: [coupling, scale, deps, cohesion]}
+  user: {w: 0.04, v: false, q: [solved, usable, intuitive, burden]}
+  absence: {w: 0.05, v: false, q: [missing, gap, blind, edge]}
+  realist: {w: 0.03, v: false, q: [realistic, worth, resources]}
+  chaos: {w: 0.03, v: false, q: [failure, cascade, recovery, degrade]}
+
+# @param errors Error codes
+errors: {M001: "file", M002: "ref", M003: "invariant", M1xx: "structure", M2xx: "grounding", M3xx: "preservation", M4xx: "economics", M5xx: "safety", M6xx: "consensus", M7xx: "loop", M8xx: "autonomy"}
