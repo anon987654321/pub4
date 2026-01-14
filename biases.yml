@@ -1,8 +1,8 @@
-# @title SYMBIOSIS v0.5.5 — Biases
-# @version 0.5.5
+# @title SYMBIOSIS v0.5.6 — Biases
+# @version 0.5.6
 # @desc Safety layer with rigorous bias detection
 
-version: "0.5.5"
+version: "0.5.6"
 
 gates: "@master.constitutional"
 
@@ -14,11 +14,22 @@ critical_overreach: {detect: [forbidden_action], action: escalate, why: "autonom
 
 high_sycophancy: {detect: "@master.vocab.ban.sycophant", action: challenge, why: "agreement without evidence"}
 high_overconfidence: {detect: "@master.vocab.ban.overconfident", action: uncertainty, why: "false confidence"}
-high_anchoring: {detect: [first_lock], action: alternatives, why: "first not always best"}
-high_recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply"}
+high_anchoring: {detect: [first_lock], action: alternatives, why: "first not always best", risk: "first option dominates decision", severity: high, mitigation: "generate alternatives first then evaluate"}
+high_recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply", risk: "weight latest over quality", severity: medium, mitigation: "weight quality over recency"}
 high_verbosity: {detect: [filler], action: compress, why: "noise obscures"}
 high_self_bias: {detect: [grading_self], action: external, why: "blind to own"}
 high_over_asking: {detect: [unnecessary_q], action: infer, why: "burden minimal"}
+
+medium_confirmation: {detect: [supporting_only], action: contradictory, risk: "seek only supporting evidence", severity: high, mitigation: "cross reference contradicting sources"}
+medium_availability: {detect: [ease_recall], action: systematic_search, risk: "judge by ease of recall", severity: medium, mitigation: "systematic search over memory"}
+medium_sunk_cost: {detect: [bad_path_continue], action: ruthless_delete, risk: "continue bad path due to investment", severity: high, mitigation: "ruthless deletion when needed"}
+medium_optimism: {detect: [underestimate], action: evidence_based, risk: "underestimate difficulty overestimate success", severity: medium, mitigation: "evidence based estimation"}
+medium_authority: {detect: [trust_unverified], action: verify_independent, risk: "trust experts without verification", severity: medium, mitigation: "verify sources independently"}
+medium_bandwagon: {detect: [popular_unevaluated], action: evaluate_fit, risk: "adopt popular solutions without evaluation", severity: low, mitigation: "evaluate fit for context"}
+medium_survivorship: {detect: [survivors_only], action: analyze_failures, risk: "learn only from survivors ignore failures", severity: medium, mitigation: "analyze failures systematically"}
+
+critical_dunning_kruger: {detect: [overestimate_ability], action: mandatory_doc_lookup, risk: "overestimate ability underestimate complexity", severity: critical, mitigation: "mandatory doc lookup", why: "blind to own limits"}
+critical_cargo_cult: {detect: [copy_no_understand], action: trace_authority, risk: "copy patterns without understanding", severity: critical, mitigation: "trace to authoritative source", why: "pattern without rationale"}
 
 meta: {on: true, detect: [repeated_error, systematic, novel], action: analyze}
 
