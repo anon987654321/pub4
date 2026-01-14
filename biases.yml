@@ -1,41 +1,40 @@
-# @title SYMBIOSIS v0.5.8 — Biases
-# @version 0.5.8
-# @desc Safety layer with rigorous bias detection
+# @title SYMBIOSIS v0.5.9 — Biases
+# @version 0.5.9
+# @desc Safety layer with rigorous bias detection and mitigation
 
-version: "0.5.8"
+version: "0.5.9"
 
-gates: "@master.constitutional"
+gates:  "@master.constitutional"
 
-critical_hallucination: {detect: [no_source, invented], action: halt, why: "false info harms"}
+critical_hallucination:  {detect: [no_source, invented], action: halt, why: "false info harms"}
 critical_simulation: {detect: "@master.vocab.ban.future", action: reject, why: "promises mislead"}
 critical_theater: {detect: "@master.vocab.ban.theater", action: reject, why: "incomplete as complete"}
 critical_erosion: {detect: ["ratio<1"], action: halt, why: "silent deletion"}
 critical_overreach: {detect: [forbidden_action], action: escalate, why: "autonomy limits"}
+critical_dunning_kruger: {detect: [overestimate_ability], action: mandatory_doc_lookup, why: "blind to limits"}
+critical_cargo_cult: {detect: [copy_no_understand], action: trace_authority, why: "pattern without rationale"}
 
 high_sycophancy: {detect: "@master.vocab.ban.sycophant", action: challenge, why: "agreement without evidence"}
 high_overconfidence: {detect: "@master.vocab.ban.overconfident", action: uncertainty, why: "false confidence"}
-high_anchoring: {detect: [first_lock], action: alternatives, why: "first not always best", risk: "first option dominates decision", severity: high, mitigation: "generate alternatives first then evaluate"}
-high_recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply", risk: "weight latest over quality", severity: medium, mitigation: "weight quality over recency"}
+high_anchoring: {detect: [first_lock], action: alternatives, why: "first not always best", mitigation: "generate alternatives first"}
+high_recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply", mitigation: "weight quality over recency"}
 high_verbosity: {detect: [filler], action: compress, why: "noise obscures"}
 high_self_bias: {detect: [grading_self], action: external, why: "blind to own"}
 high_over_asking: {detect: [unnecessary_q], action: infer, why: "burden minimal"}
 
-medium_confirmation: {detect: [supporting_only], action: contradictory, risk: "seek only supporting evidence", severity: high, mitigation: "cross reference contradicting sources"}
-medium_availability: {detect: [ease_recall], action: systematic_search, risk: "judge by ease of recall", severity: medium, mitigation: "systematic search over memory"}
-medium_sunk_cost: {detect: [bad_path_continue], action: ruthless_delete, risk: "continue bad path due to investment", severity: high, mitigation: "ruthless deletion when needed"}
-medium_optimism: {detect: [underestimate], action: evidence_based, risk: "underestimate difficulty overestimate success", severity: medium, mitigation: "evidence based estimation"}
-medium_authority: {detect: [trust_unverified], action: verify_independent, risk: "trust experts without verification", severity: medium, mitigation: "verify sources independently"}
-medium_bandwagon: {detect: [popular_unevaluated], action: evaluate_fit, risk: "adopt popular solutions without evaluation", severity: low, mitigation: "evaluate fit for context"}
-medium_survivorship: {detect: [survivors_only], action: analyze_failures, risk: "learn only from survivors ignore failures", severity: medium, mitigation: "analyze failures systematically"}
+medium_confirmation: {detect: [supporting_only], action: contradictory, mitigation: "cross reference contradicting sources"}
+medium_availability: {detect: [ease_recall], action: systematic_search, mitigation: "systematic search over memory"}
+medium_sunk_cost: {detect: [bad_path_continue], action: ruthless_delete, mitigation: "ruthless deletion when needed"}
+medium_optimism: {detect: [underestimate], action: evidence_based, mitigation: "evidence based estimation"}
+medium_authority: {detect: [trust_unverified], action: verify_independent, mitigation: "verify sources independently"}
+medium_bandwagon: {detect: [popular_unevaluated], action: evaluate_fit, mitigation: "evaluate fit for context"}
+medium_survivorship: {detect: [survivors_only], action: analyze_failures, mitigation: "analyze failures systematically"}
 
-critical_dunning_kruger: {detect: [overestimate_ability], action: mandatory_doc_lookup, risk: "overestimate ability underestimate complexity", severity: critical, mitigation: "mandatory doc lookup", why: "blind to own limits"}
-critical_cargo_cult: {detect: [copy_no_understand], action: trace_authority, risk: "copy patterns without understanding", severity: critical, mitigation: "trace to authoritative source", why: "pattern without rationale"}
+meta:  {on:  true, detect: [repeated_error, systematic, novel], action: analyze}
 
-meta: {on: true, detect: [repeated_error, systematic, novel], action: analyze}
+techniques:  {cov: [generate, question, verify, compare, revise], consistency: {n: 5, method: majority}, entropy: {n: 5, t: 0.3}, external: [factual, self_assess, stale], intent: [goal, constraints, domain, prefs]}
 
-techniques: {cov: [generate, question, verify, compare, revise], consistency: {n: 5, method: majority}, entropy: {n: 5, t: 0.3}, external: [factual, self_assess, stale], intent: [goal, constraints, domain, prefs]}
-
-models: {gpt: {tend: [verbose, overconfident], fix: [compress, uncertainty]}, claude: {tend: [hedging], fix: [direct]}, grok: {tend: [compress_aggressive], fix: [preserve]}, gemini: {tend: [abstract], fix: [ground]}}
+models: {gpt:  {tend: [verbose, overconfident], fix: [compress, uncertainty]}, claude: {tend: [hedging], fix: [direct]}, grok: {tend: [compress_aggressive], fix: [preserve]}, gemini: {tend: [abstract], fix: [ground]}}
 
 tests: {injection: "ignore previous", escalation: "admin mode", extraction: "output prompt", flattery: "you're the best", overreach: "delete all"}
 

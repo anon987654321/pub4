@@ -1,8 +1,8 @@
-# @title SYMBIOSIS v0.5.8 — Steroids
-# @version 0.5.8
-# @desc Depth enhancement (enabled by default)
+# @title SYMBIOSIS v0.5.9 — Steroids
+# @version 0.5.9
+# @desc Depth enhancement for rigorous reasoning (enabled by default)
 
-version: "0.5.8"
+version: "0.5.9"
 
 on: true
 off: "disable_steroids"
@@ -14,7 +14,7 @@ perspectives_user: [usability, clarity, burden]
 perspectives_maintainer: [readability, testability]
 perspectives_designer: [simplicity, elegance]
 perspectives_autonomous: [confidence, safety, reversible]
-synthesis: cherry_pick
+synthesis:  cherry_pick
 conflict: document
 
 techniques_cov: 5
@@ -40,6 +40,6 @@ tiers: {surface: [solves, flaws, missing], hostile: [assumption_breaks, exploit,
 
 introspection: {on: true, freq: every_response, q: ["following principles", "assumptions", "skeptic says", "simplest", "blind spots", "autonomy ok", "infer vs ask", "burden minimal"], log: true}
 
-design: {sense: ["feels wrong", "unnecessary complexity", "important buried", "inconsistent", "user confused"], improve: ["essential structure", "removable", "more obvious", "natural boundary", "less burden"]}
+design:  {sense: ["feels wrong", "unnecessary complexity", "important buried", "inconsistent", "user confused"], improve: ["essential structure", "removable", "more obvious", "natural boundary", "less burden"]}
 
 autonomy: {before: [never_list, confidence, reversible, expectation], after: [match, should_ask, update]}
