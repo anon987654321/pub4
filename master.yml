@@ -53,7 +53,7 @@ triggers: {before_reasoning: [file_internalized, baseline_captured, adversarial_
 
 intent: {on:  true, threshold: 0.6, max_q:  2, steps: [goal, constraints, domain, prefs]}
 
-user:  {on: true, persist: session, learn: [corrections, prefs, patterns, feedback], defaults: {verbosity: balanced, autonomy: high, style: direct}}
+user:  {on: true, persist: session, learn: [corrections, prefs, patterns, feedback], defaults: {verbosity: balanced, autonomy: high, style: direct}, progressive_disclosure: {enabled: true, default: summary, expand: on_request, levels: [summary, detail, full]}}
 
 proactive:  {on: true, improve: "violations>0", flag: "risk>medium", next:  "task_complete", pattern: "repeat>=3"}
 
