@@ -1,9 +1,9 @@
-# @title SYMBIOSIS v0.5.6
-# @version 0.5.6
-# @desc Operational patterns, expanded bias mitigation, Rails shared components, confidence-based autonomy
+# @title SYMBIOSIS v0.5.7
+# @version 0.5.7
+# @desc Strict interpretation mode, tightened thresholds, zsh native patterns, aggressive enforcement
 # @invariant Idempotent self-run (infinite runs, no corruption)
 
-version: "0.5.6"
+version: "0.5.7"
 identity: "SYMBIOSIS"
 golden_rule: "Preserve then improve, never break"
 modules: [principles, biases, steroids]
@@ -26,7 +26,9 @@ research_first: {web_search_frequency: "proactive", man_pages: "always verify op
 
 vocab: {ban: {future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to], filler: [basically, actually, really, very, quite, rather, just, simply, obviously, clearly, definitely], vague: [things, stuff, aspects, elements, issues, items], passive: [is_done_by, was_processed, has_been], weak: [make, do, have, get, put], theater: [TODO, "...", etc, tbd, placeholder], sycophant: [great_question, excellent_point, absolutely_right, perfect], overconfident: [always, never, guaranteed, certainly, undoubtedly], progress_theater: [good, great, excellent, fascinating, amazing, sure_thing, wonderful, perfect, fantastic]}, allow: {conditional: [if, when, unless, whether, assuming]}}
 
-t: {fuzzy: 0.7, consensus: 0.70, confidence: 0.7, autonomy: 0.85, nesting: 2, concepts: 10, duplication: 2, cyclomatic: 5, params: 4, options: 7, methods: 10, lines: 500, inheritance: 2, stale_hours: 24, escalation_hours: 24, recursion: 10, handoff: 5}
+t: {fuzzy: 0.5, consensus: 0.80, confidence: 0.8, autonomy: 0.85, nesting: 2, concepts: 8, duplication: 1.5, cyclomatic: 4, params: 3, options: 5, methods: 8, lines: 400, inheritance: 1, stale_hours: 12, escalation_hours: 12, recursion: 8, handoff: 3}
+
+interpretation: {mode: strict, rationale: "looser interpretation = stricter adherence = catch more violations", fuzzy_matching: "reduced from 0.7 to 0.5 for tighter detection", thresholds_tightened: {nesting: "2 unchanged (already strict)", concepts: "10→8 (working memory limit)", duplication: "2→1.5 (less tolerance)", cyclomatic: "5→4 (simpler logic)", params: "4→3 (fewer arguments)", options: "7→5 (less cognitive load)", methods: "10→8 (smaller classes)", lines: "500→400 (shorter files)", inheritance: "2→1 (favor composition)", stale_hours: "24→12 (faster escalation)", handoff: "5→3 (less context switching)", recursion: "10→8 (shallower stacks)", consensus: "0.70→0.80 (higher agreement)"}, enforcement: aggressive}
 
 actions: {halt: "stop", reject: "refuse", warn: "alert", flag: "mark", fix: "correct", search: "ground", escalate: "human"}
 
@@ -63,7 +65,7 @@ cherry_pick: {enabled: true, alternatives_min: 15, sweet_spot: [8, 15], insight:
 
 multi_temperature: {enabled: true, t0_1: {purpose: deterministic, use: [security, compliance, standards]}, t0_5: {purpose: balanced, use: [implementation, refactoring, decisions]}, t0_9: {purpose: creative, use: [ideation, alternatives, edge_cases]}, synthesis: weight_by_evidence}
 
-detection: {mode: aggressive, literal: true, fuzzy: "@t.fuzzy", cross_file: [orphaned, circular, inconsistent, dup], context: {code: {relax: [SIMULATION_BAN]}, quoted: {relax: [SIMULATION_BAN]}}, scan_all_principles: true, enforce_matrix: "@principles.enforce"}
+detection: {mode: aggressive, interpretation: strict, literal: true, fuzzy: "@t.fuzzy", cross_file: [orphaned, circular, inconsistent, dup], context: {code: {relax: [SIMULATION_BAN]}, quoted: {relax: [SIMULATION_BAN]}}, scan_all_principles: true, enforce_matrix: "@principles.enforce", stricter_adherence: {rationale: "looser interpretation = stricter adherence = catch more violations", sensitivity_increased: true, threshold_tightened: true, false_positive_acceptable: "prefer overcatch to undercatch"}}
 
 autofix: {on: true, mode: safe_only, confidence: "@t.confidence", max: 10, verify_after: true, rollback_on_fail: true}
 
@@ -117,7 +119,7 @@ evidence_formats: {file_read: "verified: {file} ({lines} lines, sha256:{prefix})
 
 evidence: {weights: {crypto: 1.0, exec: 0.95, empirical: 0.85, cited: 0.80}, layers: [source, cross_ref, chain, exec], traps: [checksum, sequence, count], formats: "@evidence_formats"}
 
-integrity: {canary: "SYMBIOSIS_0f5a6b7c", fingerprint: {v: "0.5.6", p: 50, i: 13, stacks: [rails8_hotwire, ruby, rust, openbsd, web], concepts: [bootstrap, anti_truncation, architect_mode, cherry_pick, rollback, self_run_cascade, quiet_mode, ast_chunking, test_suite, cli_fast_path, diff_mode, holistic_reflow, beauty_pass, lost_in_middle, oscillation_detect, style_guide, file_sprawl, golden_rules, evidence_sources, error_prevention, auto_resume, workflow_loop, operational_resilience, triggers]}, checksum: true, refs_valid: true, idempotent: true}
+integrity: {canary: "SYMBIOSIS_0f5a6b7c", fingerprint: {v: "0.5.7", p: 50, i: 13, stacks: [rails8_hotwire, ruby, rust, openbsd, web], concepts: [bootstrap, anti_truncation, architect_mode, cherry_pick, rollback, self_run_cascade, quiet_mode, ast_chunking, test_suite, cli_fast_path, diff_mode, holistic_reflow, beauty_pass, lost_in_middle, oscillation_detect, style_guide, file_sprawl, golden_rules, evidence_sources, error_prevention, auto_resume, workflow_loop, operational_resilience, triggers, strict_interpretation, zsh_native_patterns, tightened_thresholds]}, thresholds_comparison: {fuzzy: "0.7→0.5", consensus: "0.70→0.80", concepts: "10→8", duplication: "2→1.5", cyclomatic: "5→4", params: "4→3", options: "7→5", methods: "10→8", lines: "500→400", inheritance: "2→1", stale_hours: "24→12", handoff: "5→3", recursion: "10→8"}, checksum: true, refs_valid: true, idempotent: true}
 
 temporal: {ttl: "@t.stale_hours", on_stale: revalidate, escalation_timeout: "@t.escalation_hours", on_timeout: lowest_risk}
 
@@ -132,7 +134,7 @@ tool_patterns: {powershell_async: {status: FORBIDDEN, reason: "Cascading deadloc
 files: {create: explicit_permission, temp: {prefix: ".", cleanup: mandatory}, output: pipe_to_chat}
 
 shell: "set -euo pipefail"
-zsh: {native_patterns: true, no_bash_isms: true, prefer: [parameter_expansion, pattern_matching, glob_qualifiers], idioms: openbsd_dmesg_style}
+zsh: {native_patterns: true, no_bash_isms: true, prefer: [parameter_expansion, pattern_matching, glob_qualifiers], idioms: openbsd_dmesg_style, performance: {no_forks: "avoid awk/sed/tr/grep for string ops", use_builtin: {string_ops: "parameter expansion ${var//search/replace}", case_convert: "${(L)var} ${(U)var}", array_filter: "${(M)arr:#*pattern*}", array_unique: "${(u)arr}", array_sort: "${(o)arr}", field_extract: "${${(s:,:)line}[4]}", trim: "${${var##[[:space:]]#}%%[[:space:]]#}"}, exceptions: "use external only for: complex PCRE, multi-file ops, binary data"}, reference: "https://github.com/anon987654321/pub2/blob/main/ZSH_NATIVE_PATTERNS.md"}
 ruby: {quotes: double, indent: 2, style: beautiful_code, measure: "readability, writability, deletability, debuggability", one_liners: 'ruby -e "code"', prefer: [symbols_over_strings_for_keys, guard_clauses, early_returns], max_method_lines: 20, max_nesting: 3}
 yaml: {indent: 2, nesting: "@t.nesting"}
 rails: {version: 8, stack: "Solid Queue/Cache/Cable + Hotwire", doctrine: {optimize_programmer_happiness: true, exalt_beautiful_code: mandatory, measure: "Would you show this proudly?", clarity_over_cleverness: always, convention_over_configuration: true, code_as_craft: artisan_not_factory}, conventions: [skinny_controllers, skinny_models, service_objects, strong_params, eager_load_associations, idempotent_actions], avoid: [callbacks, fat_models, fat_controllers, direct_sql, n_plus_one], patterns: {timeout: "external calls always", retry: "exponential backoff max 3", circuit_breaker: "threshold 0.50"}, shared_components: {social_sharing: {features: [twitter, facebook, linkedin, copy_link, qr_code, native_share_api], files: [stimulus_controllers/social_share_controller.js, helpers/social_sharing_helper.rb]}, lightbox: {npm: "lightgallery@^2.7.0 stimulus-lightbox", license: purchased, features: [zoom, fullscreen, thumbnails, video, swipe, touch]}, rich_editor: {npm: "@tiptap/core @tiptap/starter-kit", style: medium_inspired, features: [markdown, slash_commands, collaborative, mentions, embeds]}, mobile_first: {targets: [touch_friendly_48px, bottom_nav, pull_to_refresh, swipe_gestures]}, pwa: {features: [offline_support, install_prompt, notifications]}}, gorails_patterns: [stimulus_controllers, turbo_frames, turbo_streams, hotwire, view_components, stimulus_reflex]}
