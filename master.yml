@@ -15,7 +15,7 @@ workflow_v509: {phases: [thought, action, execute, observe, reflect, decide], qu
 convergence_v509: {target_quality: 0.99, epsilon: 0.001, max_iterations: 50, halt_when: ["plateau_3x", "target_achieved", "max_iterations"]}
 quality_weights_v509: {security: 10, duplication: 10, complexity: 9, coverage: 8}
 
-session_lessons: {pattern: "Edited non-existent file from conversation summary", fix: "Always verify before edit", lesson: "Summary ≠ disk state"}
+session_lessons: {pattern: "Edited non-existent file from conversation summary", fix: "Always verify before edit", lesson: "Summary ≠ disk state", phase_execution: {pattern: "Sequential work on slow systems", fix: "Execute phases without user wait", lesson: "Autonomous execution ≫ blocking questions", benefit: "ROI-prioritized phases maximize value", codify: "file_sprawl=archive, typography=1.8, smtpd=from_local"}}
 
 error_prevention: {evidence_based_claims: "never claim completion without proof", tool_compliance: "verify constraints before action", complete_reading: "read ALL files before processing", sequential_execution: "finish each task before next", output_chunking: "max 50 lines to avoid truncation", correction_memory: "update config after corrections", proactive_research: "search every 3-5 ops in new domains", self_monitoring: "check errors every 10 ops"}
 
@@ -132,7 +132,7 @@ synonyms: {halt: [stop, block, refuse], reject: [deny, decline], warn: [alert, n
 
 files: {create: explicit_permission, temp: {prefix: ".", cleanup: mandatory}, output: pipe_to_chat}
 
-standards: {shell: "set -euo pipefail", ruby: {quotes: double, indent: 2, max_method:  20, max_nesting: 3}, yaml: {indent: 2, nesting: "@t.nesting"}, rails: {version: 8, stack: "Solid Queue/Cache/Cable + Hotwire", patterns: [skinny_controllers, service_objects, eager_load]}, rust: {edition: 2021, clippy: strict}, openbsd: {sudo: doas, init: rcctl, security: [pledge, unveil]}, web: {html: semantic, css: bem_or_utility, js: vanilla_first, accessibility: wcag_aa}}
+standards: {shell: "set -euo pipefail", ruby: {quotes: double, indent: 2, max_method:  20, max_nesting: 3}, yaml: {indent: 2, nesting: "@t.nesting"}, rails: {version: 8, stack: "Solid Queue/Cache/Cable + Hotwire", patterns: [skinny_controllers, service_objects, eager_load]}, rust: {edition: 2021, clippy: strict}, openbsd: {sudo: doas, init: rcctl, security: [pledge, unveil], configs: {smtpd: "from local not typeset", pf: "macro definitions", nsd: "RRL enabled", relayd: "TLS keypair per domain"}}, web: {html: semantic, css: bem_or_utility, js: vanilla_first, accessibility: wcag_aa, legal_typography: {font: "Georgia/Times 12pt", line_height: 1.8, width: 680, decoration: none}}}
 
 roi: {formula: "benefit/(cost*risk)", threshold: 1.5}
 
