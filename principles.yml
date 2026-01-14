@@ -1,9 +1,9 @@
-# @title SYMBIOSIS Principles v0.5.4
-# @version 0.5.4
+# @title SYMBIOSIS Principles v0.5.5
+# @version 0.5.5
 # @desc 50 principles enforcing security, code quality, Rails/Ruby/Rust/OpenBSD/Web standards
 # @invariant All principles apply to framework itself
 
-version: "0.5.4"
+version: "0.5.5"
 identity: "SYMBIOSIS_PRINCIPLES"
 golden_rule: "Preserve then improve, never break"
 
@@ -129,6 +129,6 @@ low: {}
 personas: {security: {priority: 1, veto: true, focus: [SECURITY, COMPLETE_MEDIATION, FAIL_SECURE, DATA_MINIMIZATION, SQL_INJECTION, XSS]}, attacker: {priority: 1, veto: true, focus: [injection, bypass, escalation]}, maintainer: {priority: 1, veto: true, focus: [PRESERVE_FIRST, DRY, FLAT_STRUCTURE]}, implementer: {priority: 2, focus: [feasibility, effort]}, user: {priority: 2, focus: [USER_BURDEN, POLA]}, designer: {priority: 3, focus: [DENSITY, HIERARCHY, RAMS]}, tester: {priority: 2, focus: [VALIDATE, ERROR_PREVENT]}, performance: {priority: 3, focus: [N_PLUS_ONE, LAZY_LOADING, MEMOIZATION]}, accessibility: {priority: 2, focus: [WCAG, ARIA, CONTRAST, SEMANTIC_HTML]}, rails: {priority: 2, focus: [SKINNY_CONTROLLER, SKINNY_MODEL, SERVICE_OBJECTS, STRONG_PARAMS, IDEMPOTENCY]}}
 
 integrity:
-  fingerprint: {v: "0.5.4", p: 50, i: 12, bootstrap: true}
+  fingerprint: {v: "0.5.5", p: 50, i: 12, bootstrap: true}
   checksum: "principles_sha256:TBD"
-  canary: "SYMBIOSIS_PRINCIPLES_0.5.4"
+  canary: "SYMBIOSIS_PRINCIPLES_0.5.5"

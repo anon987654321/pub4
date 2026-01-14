@@ -1,8 +1,8 @@
-# @title SYMBIOSIS v0.5.4 — Biases
-# @version 0.5.4
+# @title SYMBIOSIS v0.5.5 — Biases
+# @version 0.5.5
 # @desc Safety layer with rigorous bias detection
 
-version: "0.5.4"
+version: "0.5.5"
 
 gates: "@master.constitutional"
 
