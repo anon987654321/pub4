@@ -132,6 +132,8 @@
 
             font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
 
+            position: relative;
+
         }
 
         h1 {
@@ -315,16 +317,12 @@
         }
 
         .logo {
-            width: 180px;
-
-            height: 180px;
-
-            margin: 0 auto var(--space-xl);
-
-            display: block;
-
-            opacity: 0.9;
-
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            top: var(--space-l);
+            right: var(--space-l);
+            opacity: 0.85;
         }
 
         header {
@@ -451,7 +449,7 @@
 
             }
 
-            .logo { width: 300px; }
+            .logo { width: 40px; height: 40px; }
             .skip-link { display: none; }
 
             p {
@@ -489,9 +487,13 @@
             body { padding: var(--space-xl) var(--space-m); }
 
             .logo {
-                width: 140px;
+                width: 50px;
 
-                height: 140px;
+                height: 50px;
+
+                top: var(--space-m);
+
+                right: var(--space-m);
 
             }
 
