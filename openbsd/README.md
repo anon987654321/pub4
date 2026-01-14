@@ -6,71 +6,45 @@ Complete Rails 8 deployment for OpenBSD 7.7 with data integrity and security har
 This script automates the complete setup of an OpenBSD 7.7 server for hosting Rails applications with:
 - **DNS & DNSSEC**: Authoritative nameserver (NSD) with DNSSEC signing and DDoS mitigation (RRL)
 - **TLS Certificates**: Automated Let's Encrypt via acme-client
-
 - **Reverse Proxy**: relayd with TLS termination and load balancing
-
 - **Firewall**: PF with brute-force protection and rate limiting
-
 - **Email**: OpenSMTPD for outbound mail with TLS (local relay only)
-
 - **Rails Apps**: Falcon web server with per-app isolation
-
 - **Data Protection**: Automatic backups before destructive operations with transaction logging
 
 **Note:** Database services (PostgreSQL, Redis) removed per user request. Use SQLite or external database.
 ## Features
 ### Security Hardening
 - PF firewall with SSH rate-limiting and brute-force blocking
-
 - DNS Response Rate Limiting (RRL) to prevent DDoS amplification attacks
-
 - OpenSMTPD restricted to local relay only (prevents open relay abuse)
-
 - All services run as dedicated users with privilege separation
-
 - TLS 1.2+ only with strong ciphers (no TLS 1.0/1.1)
-
 - HSTS headers on all HTTPS responses
-
 - TLSA (DANE) records for certificate pinning
 
 ### Data Integrity
 - Automatic backups to `/var/backups/openbsd_setup` before destructive operations
-
 - Transaction logging to `/var/log/openbsd_transactions.log` for audit trail
-
 - Last 10 backups retained with automatic pruning
-
 - Rollback capability on failure
 
 ### DNS & DNSSEC
 - 95 domains across Nordic, European, and US regions
-
 - ECDSAP256SHA256 zone signing
-
 - Response Rate Limiting (RRL) with conservative defaults:
-
   - `rrl-size: 1000000` (1M cache entries)
-
   - `rrl-ratelimit: 200` (200 responses/sec per client)
-
   - `rrl-slip: 2` (1 in 2 truncated responses)
-
   - `rrl-whitelist-ratelimit: 2000` (2000 resp/sec for trusted)
-
 - Automatic TLSA record generation and updates
-
 - Secondary nameserver synchronization (ns.hyp.net)
 
 ### Rails Deployment
 - 3 applications: brgen, amber, bsdports
-
 - Per-app user isolation with bundler
-
 - Falcon async web server
-
 - Automatic port assignment (10000-60000)
-
 - Use SQLite for database or configure external database service
 
 ## Two-Stage Setup
