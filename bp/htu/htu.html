@@ -30,13 +30,11 @@
             --color-link-bold: #003087;
             --color-border: #ddd;
             --color-background: #fff;
-            --color-footer-text: #555;
+            --color-footer-text: #444;
             --font-size-base: 1rem;
             --font-size-small: 0.875rem;
             --font-size-xsmall: 0.8125rem;
-            --font-size-h1: 1.75rem;
-            --font-size-h2: 1.25rem;
-            --line-height-normal: 1.65;
+            --line-height-normal: 1.5;
             --line-height-heading: 1.2;
             --line-height-subheading: 1.35;
             --space-xs: 0.5rem;
@@ -54,18 +52,9 @@
 
         @media (min-width: 640px) {
             :root {
-                --font-size-h1: 2rem;
-                --font-size-h2: 1.4rem;
                 --space-l: 1.5rem;
                 --space-xl: 2rem;
                 --space-xxl: 3rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            :root {
-                --font-size-h1: 2.25rem;
-                --font-size-h2: 1.5rem;
             }
         }
 
@@ -123,27 +112,19 @@
 
         h1 {
             font-family: var(--font-heading);
-
-            font-size: var(--font-size-h1);
-
+            font-size: clamp(1.75rem, 4vw + 1rem, 2.5rem);
             font-weight: 600;
-
             letter-spacing: -0.02em;
-
             line-height: var(--line-height-heading);
-
             margin: var(--space-l) 0 var(--space-s);
-
             color: var(--color-text);
-
             text-align: center;
-
         }
 
         h2 {
             font-family: var(--font-heading);
             font-weight: 600;
-            font-size: var(--font-size-h2);
+            font-size: clamp(1.25rem, 2.5vw + 0.5rem, 1.625rem);
             margin: var(--space-xl) 0 var(--space-m);
             letter-spacing: -0.01em;
             line-height: var(--line-height-subheading);
