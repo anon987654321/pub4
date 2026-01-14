@@ -17,9 +17,9 @@
     <style>
         /* CSS Variables */
         :root {
-            --primary-color: #000000;
+            --primary-color: #1a1a1a;
             --background-color: #ffffff;
-            --text-color: #333333;
+            --text-color: #222;
             --font-family: 'Inter', sans-serif;
         }
         /* General Styles */
@@ -28,8 +28,7 @@
             font-family: var(--font-family);
             background-color: var(--background-color);
             color: var(--text-color);
-
-            line-height: 1.6;
+            line-height: 1.7;
             font-size: 16px;
             display: flex;
             flex-direction: column;
@@ -142,18 +141,26 @@
             max-width: 500px;
             margin: 2rem auto;
         }
-        /* Responsive adjustments for mobile */
+        /* Mobile-first: start with small screen defaults, enhance upwards */
+        .header-text {
+            font-size: 0.9rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+        }
+        .swiper {
+            height: 200px;
+        }
 
-        @media (max-width: 768px) {
-            .swiper {
-                height: 200px;
-            }
+        @media (min-width: 769px) {
             .header-text {
-
-                font-size: 0.9rem;
+                font-size: 1rem;
             }
             h2 {
-                font-size: 1.8rem;
+                font-size: 2.2rem;
+            }
+            .swiper {
+                height: 300px;
             }
         }
     </style>
