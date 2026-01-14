@@ -8,6 +8,23 @@ identity: "SYMBIOSIS"
 golden_rule: "Preserve then improve, never break"
 modules:  [principles, biases, steroids, tts]
 
+# @param bootstrap Bootstrap sequence with SHA256 validation
+bootstrap:
+  assumption: "All module files exist with valid checksums"
+  sequence: [validate_yaml_syntax, verify_sha256_integrity, check_version_compatibility, load_principles, load_steroids, load_biases, load_tts, cross_validate_references]
+  cross_validate:
+    principles_to_biases: "Check all bias mitigation references valid principles"
+    steroids_to_master: "Verify multi_perspective inherits from adversarial.personas"
+    biases_to_principles: "Ensure all bias fixes map to applicable principles"
+    master_to_all: "Verify all @ref paths resolve"
+  version_compatibility:
+    requires: {principles: ">=0.5.0", steroids: ">=0.5.0", biases: ">=0.5.0", tts: ">=0.5.0"}
+    on_mismatch: {minor: warn, major: halt}
+  graceful_degradation:
+    missing_principles: {fallback: [DRY, KISS, CLARITY, CONSISTENCY], warn: true}
+    missing_steroids: {disable: [analytical, extreme], warn: true}
+    missing_biases: {increase_skepticism: true, warn: true}
+
 # @param vocab Single source for all banned/allowed words
 vocab: 
   ban:  {future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to], filler: [basically, actually, really, very, quite, rather, just, simply, obviously, clearly, definitely], vague: [things, stuff, aspects, elements, issues, items], passive: [is_done_by, was_processed, has_been], weak: [make, do, have, get, put], theater: [TODO, ".. .", etc, tbd, placeholder], sycophant: [great_question, excellent_point, absolutely_right, perfect], overconfident: [always, never, guaranteed, certainly, undoubtedly]}
@@ -52,16 +69,40 @@ modes: {fast: {depth: 2, temp: 0.3, tokens: 5000}, balanced: {depth: 3, temp: 0.
 
 # @param loops Execution loops with idempotent guarantees
 loops: 
-  super:  {max: 3, phases: [infer, understand, execute, validate, output, learn, checkpoint], converge: {violations: 0, consensus: "@t.consensus", method: weighted_vote}}
-  inner: {max: 15, phases: [scan_all, weigh, prioritize, fix_safe, verify_no_regression], converge: {violations: 0, regressions: 0}, on_oscillate: rollback, on_regress: rollback}
+  super:  {max: 3, phases: [infer, understand, execute, validate, output, learn, checkpoint], converge: {violations: 0, consensus: "@t.consensus", method: weighted_vote, formula: "sum(score*weight)/sum(weights)"}}
+  inner: {max: 15, phases: [scan_all, weigh, prioritize, fix_safe, verify_no_regression], converge: {violations: 0, regressions: 0, delta: "<0.02 for 3 iterations"}, on_oscillate: rollback, on_regress: rollback, oscillation_detector: {track: last_3_violations, threshold: "3x identical"}}
   meta: {triggers: [session_end, "pattern>=3"], do: [analyze, update_t, integrate_learn, update_user]}
   critic: {on: true, before: output, checks: [alternatives, assumptions, evidence, alignment]}
+  cherry_pick:
+    enabled: true
+    process: [generate_alternatives, score_each, weighted_consensus, check_vetos, cherry_pick_best, synthesize_hybrid]
+    alternatives_required: 15
+    sweet_spot: [8, 15]
+    synthesis: combine_best_elements
+    conflict: document
 
 # @param detection Detection with full principle coverage
 detection: {mode: aggressive, literal: true, fuzzy: "@t.fuzzy", cross_file: [orphaned, circular, inconsistent, dup], context: {code: {relax: [SIMULATION_BAN]}, quoted: {relax: [SIMULATION_BAN]}}, scan_all_principles: true, enforce_matrix: "@principles.enforce"}
 
-# @param autofix Autofix with verification
-autofix:  {on: true, mode: safe_only, confidence: "@t.confidence", max:  10, verify_after:  true, rollback_on_fail: true, rollback: {method: git_restore, backup: ".backups", checksum: sha256}}
+# @param autofix Autofix with verification and rollback
+autofix:  
+  on: true
+  mode: safe_only
+  confidence: "@t.confidence"
+  max: 10
+  verify_after: true
+  rollback_on_fail: true
+  rollback:
+    method: git_restore
+    backup: ".backups"
+    checksum: sha256
+    triggers: [syntax_error, test_failure, behavior_change, quality_drop, regression_detected]
+    strategy: restore_best_known_state
+    preserve: iteration_history
+    state_preservation: [checkpoint_before_changes, hash_of_previous_state, diff_for_reversal]
+  execution:
+    phases: [checkpoint, backup, apply, verify, commit_or_rollback]
+    verification: [syntax, principles, tests, security, adversarial, regression_check]
 
 # @param multi Multi-agent coordination
 multi: {on: true, identity: adopt_symbiosis, handoff: {include: [state, context, user, decisions], verify: true, max: "@t.handoff"}, topology: decentralized}
@@ -81,14 +122,41 @@ blessings: [state_persistence, recursive_perfection, adversarial_hardening, self
 # @param context Context for handoff
 context: {summary: "Self-governing AI:  28 principles, 10 personas, rigorous enforcement", handoff: "@multi.handoff", chunk: {strategy: semantic, overlap: "10%"}}
 
-# @param integrity Integrity with corruption resistance
-integrity: {canary: "SYMBIOSIS_0f5a6b7c", fingerprint: {v:  "0.5.0", p: 28, i: 12}, checksum: true, refs_valid: true, idempotent: true, test_suite: {run: on_load, tests: [canary, fingerprint, refs, modules, convergence]}}
+# @param integrity Integrity with corruption resistance and on-load test suite
+integrity:
+  canary: "SYMBIOSIS_0f5a6b7c"
+  fingerprint: {v: "0.5.0", p: 28, i: 12, m: 4}
+  checksum: true
+  refs_valid: true
+  idempotent: true
+  test_suite:
+    run: on_load
+    tests: [canary_present, fingerprint_match, refs_resolve, modules_exist, convergence_math, version_compatible, no_corruption]
+    on_fail: {canary: halt, fingerprint: warn, refs: halt, modules: degrade, convergence: warn, version: warn, corruption: halt}
 
 # @param temporal Temporal awareness
 temporal: {ttl: "@t.stale_hours", on_stale: revalidate, escalation_timeout: "@t.escalation_hours", on_timeout: lowest_risk}
 
-# @param evidence Evidence requirements
-evidence: {weights: {crypto: 1. 0, exec: 0.95, empirical: 0.85, cited: 0.80}, layers: [source, cross_ref, chain, exec], traps: [checksum, sequence, count]}
+# @param evidence Evidence requirements with mandatory formats
+evidence:
+  weights: {crypto: 1.0, exec: 0.95, empirical: 0.85, cited: 0.80, consensus: 0.70}
+  layers: [source, cross_ref, chain, exec]
+  traps: [checksum, sequence, count]
+  formats:
+    file_read: "verified: {file} ({lines} lines, sha256:{prefix})"
+    fix_applied: "applied: {file} diff:{summary} lines:+{added}/-{removed}"
+    convergence: "iteration {n}: {before}→{after} violations (delta:{delta})"
+    gap_found: "gap: {description} [{severity}]"
+  anti_simulation:
+    forbidden_future: [will, would, could, should, might, going_to, plan_to]
+    forbidden_vague: [done, complete, finished, fixed, handled]
+    forbidden_planning: [we_need_to, first_we, then_we, lets, we_should]
+  cache:
+    enabled: true
+    ttl_seconds: 3600
+    cache_key: "sha256(file_content + principles.version + biases.version)"
+    storage: ".master_cache/"
+    invalidate_on: [framework_version_change, principle_definition_change, explicit_user_request]
 
 # @param learning Learning capture
 learning: {capture: [violations, fixes, t_adj, user_prefs], retention: 30, integrate: meta, storage: {type: session, persist: ".sessions", format: yaml}}
@@ -105,11 +173,50 @@ files: {create: explicit_permission, temp: {prefix: ".", cleanup: mandatory}, ou
 # @param standards Code standards
 standards: {shell: "set -euo pipefail", ruby: {quotes: double, indent: 2}, yaml: {indent: 2, nesting: "@t.nesting"}}
 
-# @param roi ROI calculation
-roi: {formula: "benefit/(cost*risk)", threshold: 1. 5}
+# @param cli_fast_path CLI optimization for lightweight operations
+cli_fast_path:
+  enabled: true
+  triggers: [format, lint, simple_fix, syntax_check, typo_fix, "<10_lines", "whitespace_only"]
+  bypass: [adversarial_review, alternative_generation, steroids_activation]
+  still_validate: [DRY, KISS, CLARITY, security_veto]
+  token_budget: 2000
+  max_time_seconds: 5
+  mode: {depth: 1, temp: 0.2, tokens: 1000}
 
-# @param exit Exit conditions
-exit: {when: {violations: 0, consensus: "@t.consensus", constitutional: pass}, stop: {oscillate: "3x", diminish: "<0.001x3"}, never: [unread, ">5_violations", veto, const_fail, regressions]}
+# @param roi ROI calculation
+roi: {formula: "benefit/(cost*risk)", threshold: 1.5}
+
+# @param execution Step-by-step execution with evidence chain
+execution:
+  diff_mode:
+    enabled: true
+    auto_detect: true
+    context_lines: 3
+    cache_validation: {enabled: true, strategy: hash_unchanged_sections, assume_valid: true}
+    full_scan_triggers: [structural_change, principle_violation_in_diff, security_related, first_run]
+  steps:
+    step_01_bootstrap: {action: "Run bootstrap sequence", output: "@bootstrap.sequence"}
+    step_02_read: {action: "Read entire input", output: "@evidence.formats.file_read", optimization: "Use diff_mode if available"}
+    step_03_mode: {action: "Detect complexity, set mode", method: smart_defaults, triggers: {extreme: [self_run, meta_analysis], strict: [security, production], balanced: [default], loose: [exploration]}}
+    step_04_bias_scan: {action: "Check LLM biases", check: "@biases", optimization: "Skip if cli_fast_path"}
+    step_05_detect: {action: "Find violations with line numbers", format: "{principle}:{line}:{violation}", autofix_threshold: "@t.confidence"}
+    step_06_structural: {action: "Run structural ops", ops: "@principles.ops"}
+    step_07_gaps: {action: "Find missing elements", detectors: [completeness, edge_cases, missing_perspectives, hidden_assumptions]}
+    step_08_adversarial: {action: "Multi-perspective analysis", requirement: "@t.consensus", veto_power: "@principles.personas[veto=true]"}
+    step_09_generate: {action: "Generate alternatives", requirement: "@loops.cherry_pick.alternatives_required", method: "@loops.cherry_pick.process"}
+    step_10_synthesize: {action: "Cherry-pick and combine", method: "@loops.cherry_pick.synthesis"}
+    step_11_apply: {action: "Implement with evidence", forbidden: "@evidence.anti_simulation", required: "@evidence.formats"}
+    step_12_validate: {action: "Verify fix worked", checks: [syntax, principles, tests, security, adversarial, regression], trace_angles: [normal, adversarial, error, edge_cases]}
+    step_13_loop: {action: "Continue or exit", condition: "@exit"}
+    step_14_reflect: {action: "Capture learning", questions: ["What pattern repeated?", "Which personas disagreed?", "What almost missed?", "What took longest?"], integrate: "@learning"}
+    step_15_present: {action: "Output results", format: evidence_chain, human_can_override: [style, thresholds, mode], human_cannot_override: [security_veto, evidence_requirement]}
+
+# @param exit Exit conditions with multi-dimensional convergence
+exit:
+  when: {violations: 0, gaps: 0, consensus: "@t.consensus", constitutional: pass, delta: "<0.02 for 3 iterations"}
+  stop: {oscillate: "3x identical", diminish: "<0.001x3", plateau: "no_improvement_3x"}
+  never: [files_unread, violations_above_5, gaps_above_3, evidence_missing, security_veto_active, regressions, unread]
+  rationale: "Single spec prevents semantic divergence (DRY); bounded loops enforced (safety envelope)"
 
 # @param idempotent Idempotent guarantees
 idempotent: {deterministic: true, convergent: true, stable:  true, reversible: true, guards: [checksum_before, backup_before, verify_after, rollback_on_fail]}
