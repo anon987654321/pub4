@@ -1,8 +1,8 @@
-# @title SYMBIOSIS v0.5.7 — Steroids
-# @version 0.5.7
+# @title SYMBIOSIS v0.5.8 — Steroids
+# @version 0.5.8
 # @desc Depth enhancement (enabled by default)
 
-version: "0.5.7"
+version: "0.5.8"
 
 on: true
 off: "disable_steroids"
