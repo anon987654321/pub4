@@ -11,6 +11,10 @@ modules: [principles, biases, steroids]
 
 bootstrap:  {sequence: [validate_yaml, verify_sha256, check_versions, load_modules, cross_validate_refs], version_check: {requires: {principles:  ">=0.5", steroids: ">=0.5", biases: ">=0.5"}, on_mismatch: {minor: warn, major: halt}}, graceful_degrade: {missing_principles: [DRY, KISS, CLARITY], missing_steroids: {disable: extreme, warn: true}, missing_biases: {increase_skepticism: true}}}
 
+workflow_v509: {phases: [thought, action, execute, observe, reflect, decide], questions: {thought: ["problem?", "evidence?", "if_nothing?"], action: ["5-20_approaches?", "simplest?", "irreversible?"], observe: ["violations?", "breaks?"], reflect: ["worked?", "codify?"], decide: ["converged?"]}}
+convergence_v509: {target_quality: 0.99, epsilon: 0.001, max_iterations: 50, halt_when: ["plateau_3x", "target_achieved", "max_iterations"]}
+quality_weights_v509: {security: 10, duplication: 10, complexity: 9, coverage: 8}
+
 session_lessons: {pattern: "Edited non-existent file from conversation summary", fix: "Always verify before edit", lesson: "Summary ≠ disk state"}
 
 error_prevention: {evidence_based_claims: "never claim completion without proof", tool_compliance: "verify constraints before action", complete_reading: "read ALL files before processing", sequential_execution: "finish each task before next", output_chunking: "max 50 lines to avoid truncation", correction_memory: "update config after corrections", proactive_research: "search every 3-5 ops in new domains", self_monitoring: "check errors every 10 ops"}

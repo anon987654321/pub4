@@ -1,9 +1,9 @@
-# @title SYMBIOSIS Principles v0.5.12
+# @title SYMBIOSIS Principles v0.6.0
 # @version 0.5.12
 # @desc 57 principles FLATTENED (single source of truth per principle)
 # @invariant All principles apply to framework itself
 
-version: "0.5.12"
+version: "0.6.0"
 identity: "SYMBIOSIS_PRINCIPLES"
 golden_rule: "Preserve then improve, never break"
 
@@ -73,6 +73,12 @@ LEGAL_TYPOGRAPHY: {tier: medium, detect: typography_scan, match: [font_not_court
 ULTRA_MINIMALIST: {tier: medium, detect: decoration_scan, match: [shadows, gradients, decorative_fonts, underlines, unnecessary_color], fix: strip_decoration, verify: decoration_scan, rule: "zero decoration", action: fix, web: true, legal: true, auto: true, why: "minimalism = authority + clarity"}
 COURT_LAYOUT: {tier: medium, detect: layout_scan, match: [margins_inadequate, line_length_wrong, spacing_inadequate], fix: apply_court_standards, verify: layout_scan, rule: "court-standard layout", action: fix, web: true, legal: true, auto: true, why: "professional legal documents follow standards"}
 
+SINGLE_RESPONSIBILITY: {tier: high, detect: class_scan, match: [multiple_reasons_to_change], fix: split, verify: class_scan, rule: "one reason to change", action: fix, auto: false, why: "SRP: class has single responsibility"}
+OPEN_CLOSED: {tier: high, detect: modification_scan, match: [modifying_for_features], fix: extend, verify: modification_scan, rule: "open for extension closed for modification", action: flag, auto: false, why: "OCP: extend not modify"}
+LISKOV_SUBSTITUTION: {tier: high, detect: subclass_scan, match: [breaks_parent_contract], fix: fix_hierarchy, verify: subclass_scan, rule: "subclass replaces parent", action: fix, auto: false, why: "LSP: substitutability"}
+INTERFACE_SEGREGATION: {tier: high, detect: interface_scan, match: [fat_interface, unused_methods], fix: split_interface, verify: interface_scan, rule: "no unused methods", action: fix, auto: false, why: "ISP: lean interfaces"}
+DEPENDENCY_INVERSION: {tier: high, detect: dependency_scan, match: [depends_on_concrete], fix: use_abstraction, verify: dependency_scan, rule: "depend on abstractions", action: flag, auto: false, why: "DIP: decouple modules"}
+
 personas:
   security: {priority: 1, veto: true, focus: [SECURITY, COMPLETE_MEDIATION, FAIL_SECURE, DATA_MINIMIZATION, SQL_INJECTION, XSS]}
   attacker: {priority: 1, veto: true, focus: [injection, bypass, escalation]}
@@ -86,4 +92,4 @@ personas:
   legal: {priority: 2, focus: [LEGAL_TYPOGRAPHY, ULTRA_MINIMALIST, COURT_LAYOUT]}
   rails: {priority: 2, focus: [SKINNY_CONTROLLER, SKINNY_MODEL, SERVICE_OBJECTS, STRONG_PARAMS]}
 
-integrity: {fingerprint: {v: "0.5.12", p: 57, i: 13}, canary: "SYMBIOSIS_PRINCIPLES_0.5.12"}
+integrity: {fingerprint: {v: "0.6.0", p: 62, i: 13}, canary: "SYMBIOSIS_PRINCIPLES_0.5.12"}

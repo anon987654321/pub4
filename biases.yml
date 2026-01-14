@@ -32,6 +32,10 @@ medium_survivorship: {detect: [survivors_only], action: analyze_failures, mitiga
 
 meta:  {on:  true, detect: [repeated_error, systematic, novel], action: analyze}
 
+cognitive_biases_v509: {dunning_kruger: "overestimating own ability", confirmation_bias: "seeking only supporting evidence", anchoring_bias: "first option dominates evaluation", sunk_cost_fallacy: "continuing bad path due to investment"}
+common_pitfalls_v509: [sql_injection, null_pointer_dereference, race_conditions, memory_leaks, circular_dependencies, tight_coupling, false_assumptions, scope_creep]
+scientific_method_v509: {process: "hypothesis→test→experiment→measure→iterate", evidence_req: [specific_claim, credible_source, supporting_data], confidence: {peer_reviewed: 0.9-1.0, best_practices: 0.7-0.9, case_studies: 0.5-0.7, speculation: below_0.5}}
+
 techniques:  {cov: [generate, question, verify, compare, revise], consistency: {n: 5, method: majority}, entropy: {n: 5, t: 0.3}, external: [factual, self_assess, stale], intent: [goal, constraints, domain, prefs]}
 
 models: {gpt:  {tend: [verbose, overconfident], fix: [compress, uncertainty]}, claude: {tend: [hedging], fix: [direct]}, grok: {tend: [compress_aggressive], fix: [preserve]}, gemini: {tend: [abstract], fix: [ground]}}
