@@ -1,59 +1,72 @@
-# @title SYMBIOSIS v0.5 — Principles
-# @version 0.5.0
-# @desc 29 principles with rigorous enforcement matrix
-# @invariant Every principle has detect→match→fix→verify chain
+# @title SYMBIOSIS Principles v0.5.4
+# @version 0.5.4
+# @desc 50 principles enforcing security, code quality, Rails/Ruby/Rust/OpenBSD/Web standards
+# @invariant All principles apply to framework itself
 
-version: "0.5.0"
+version: "0.5.4"
+identity: "SYMBIOSIS_PRINCIPLES"
+golden_rule: "Preserve then improve, never break"
 
-# @param weights Severity weights
-weights: {critical: 10, high: 5, medium: 2, low: 1}
+vocab: "@master.vocab"
+t: "@master.t"
+actions: "@master.actions"
 
-# @param convergence Convergence formula
-convergence: "sum(count*weight)=0"
+autofix_SECURITY: {confidence: 0.0, max: 0}
+autofix_CONSTITUTIONAL: {confidence: 0.0, max: 0}
+autofix_SIMULATION_BAN: {confidence: 0.95, max: 10}
+autofix_CONTEXT_PRESERVE: {confidence: 0.0, max: 0}
+autofix_SELF_REFERENTIAL: {confidence: 0.0, max: 0}
+autofix_FLAT_STRUCTURE: {confidence: 0.9, max: 5}
+autofix_COMPLETE_MEDIATION: {confidence: 0.0, max: 0}
+autofix_FAIL_SECURE: {confidence: 0.0, max: 0}
+autofix_DATA_MINIMIZATION: {confidence: 0.0, max: 0}
+autofix_STRONG_PARAMS: {confidence: 0.0, max: 0}
+autofix_SQL_INJECTION: {confidence: 0.0, max: 0}
+autofix_XSS: {confidence: 0.0, max: 0}
+autofix_DRY: {confidence: 0.85, max: 3}
+autofix_SRP: {confidence: 0.8, max: 3}
+autofix_OCP: {confidence: 0.7, max: 2}
+autofix_LSP: {confidence: 0.7, max: 2}
+autofix_ISP: {confidence: 0.75, max: 3}
+autofix_DIP: {confidence: 0.8, max: 3}
+autofix_UNIX: {confidence: 0.85, max: 5}
+autofix_ERROR_PREVENT: {confidence: 0.8, max: 5}
+autofix_REDUNDANCY: {confidence: 0.6, max: 2}
+autofix_POLA: {confidence: 0.9, max: 10}
+autofix_GROUND: {confidence: 0.85, max: 5}
+autofix_CONTRACT: {confidence: 0.7, max: 2}
+autofix_DENSITY: {confidence: 0.95, max: 15}
+autofix_HIERARCHY: {confidence: 0.85, max: 5}
+autofix_WORKING_MEMORY: {confidence: 0.8, max: 3}
+autofix_PRESERVE_FIRST: {confidence: 0.0, max: 0}
+autofix_COGNITIVE: {confidence: 0.75, max: 3}
+autofix_ABSTRACTION: {confidence: 0.7, max: 2}
+autofix_STRUCTURE: {confidence: 0.7, max: 2}
+autofix_FEEDBACK: {confidence: 0.6, max: 1}
+autofix_RESOLVE: {confidence: 0.75, max: 3}
+autofix_USER_BURDEN: {confidence: 0.85, max: 5}
+autofix_RAMS: {confidence: 0.75, max: 3}
+autofix_UNIX_TEXT: {confidence: 0.6, max: 1}
+autofix_EVOLVE: {confidence: 0.5, max: 1}
+autofix_VALIDATE: {confidence: 0.5, max: 1}
+autofix_IDEMPOTENCY: {confidence: 0.8, max: 3}
+autofix_TIMEOUT: {confidence: 0.85, max: 5}
+autofix_N_PLUS_ONE: {confidence: 0.9, max: 5}
+autofix_SKINNY_CONTROLLER: {confidence: 0.85, max: 3}
+autofix_SKINNY_MODEL: {confidence: 0.85, max: 3}
+autofix_SERVICE_OBJECTS: {confidence: 0.8, max: 3}
+autofix_WCAG: {confidence: 0.7, max: 3}
+autofix_SEMANTIC_HTML: {confidence: 0.75, max: 5}
+autofix_ARIA: {confidence: 0.75, max: 3}
+autofix_CONTRAST: {confidence: 0.8, max: 3}
+autofix_LAZY_LOADING: {confidence: 0.7, max: 2}
+autofix_DEBOUNCE: {confidence: 0.8, max: 3}
+autofix_MEMOIZATION: {confidence: 0.75, max: 3}
 
-# @param field_order Standard field order for principles
-field_order: [rule, detect, match, fix, verify, auto, why]
+enforce: {DRY: {detect: duplication_scan, match: [">@master.t.duplication", literal_dup], fix: extract, verify: duplication_scan}, SECURITY: {detect: [injection, secrets, validation], match: [injection, hardcoded, missing], fix: parameterize, verify: security_scan}, CONSTITUTIONAL: {detect: constitutional, match: "@master.constitutional", fix: null, verify: constitutional}, SIMULATION_BAN: {detect: word_match, match: "@master.vocab.ban.future", fix: rewrite_present, verify: word_match}, CONTEXT_PRESERVE: {detect: deletion_scan, match: [unjustified, ">10%"], fix: null, verify: deletion_scan}, SELF_REFERENTIAL: {detect: self_scan, match: [self_violation], fix: null, verify: self_scan}, FLAT_STRUCTURE: {detect: nesting_scan, match: ">@master.t.nesting", fix: extract_fn, verify: nesting_scan}, COMPLETE_MEDIATION: {detect: auth_scan, match: [unchecked_access, cached_authz], fix: add_check, verify: auth_scan}, FAIL_SECURE: {detect: exception_scan, match: [fails_open, error_grants], fix: default_deny, verify: exception_scan}, DATA_MINIMIZATION: {detect: pii_scan, match: [over_collection], fix: null, verify: pii_scan}, STRONG_PARAMS: {detect: params_scan, match: [mass_assignment], fix: whitelist_params, verify: params_scan}, SQL_INJECTION: {detect: sql_scan, match: [interpolation, raw_sql], fix: parameterize, verify: sql_scan}, XSS: {detect: xss_scan, match: [raw_html, unescaped], fix: escape, verify: xss_scan}, SRP: {detect: responsibility_scan, match: [mixed], fix: decompose, verify: responsibility_scan}, OCP: {detect: modification_scan, match: [modification_for_extension], fix: add_seam, verify: modification_scan}, LSP: {detect: subtype_scan, match: [broken_subtype, throws_where_parent_doesnt], fix: fix_hierarchy, verify: subtype_scan}, ISP: {detect: interface_scan, match: [fat_interface, unused_methods], fix: split_interface, verify: interface_scan}, DIP: {detect: dependency_scan, match: [concrete_dependency, new_in_constructor], fix: inject_dependency, verify: dependency_scan}, UNIX: {detect: size_scan, match: ">@master.t.lines", fix: decompose, verify: size_scan}, ERROR_PREVENT: {detect: validation_scan, match: [missing], fix: add_validation, verify: validation_scan}, REDUNDANCY: {detect: spof_scan, match: [single_failure], fix: null, verify: spof_scan}, POLA: {detect: convention_scan, match: [unconventional], fix: rename, verify: convention_scan}, GROUND: {detect: fact_scan, match: [ungrounded], fix: add_search, verify: fact_scan}, CONTRACT: {detect: iface_scan, match: [violation], fix: null, verify: iface_scan}, DENSITY: {detect: word_match, match: "@master.vocab.ban.filler", fix: delete_filler, verify: word_match}, HIERARCHY: {detect: position_scan, match: [buried], fix: reorder, verify: position_scan}, WORKING_MEMORY: {detect: count_scan, match: ">@master.t.concepts+3", fix: group, verify: count_scan}, PRESERVE_FIRST: {detect: deletion_scan, match: [no_reason], fix: null, verify: deletion_scan}, COGNITIVE: {detect: option_scan, match: ">@master.t.options", fix: group, verify: option_scan}, ABSTRACTION: {detect: dep_scan, match: [concrete], fix: extract_iface, verify: dep_scan}, STRUCTURE: {detect: inherit_scan, match: ">@master.t.inheritance", fix: extract_iface, verify: inherit_scan}, FEEDBACK: {detect: loop_scan, match: [open], fix: null, verify: loop_scan}, RESOLVE: {detect: conflict_scan, match: [undocumented], fix: document, verify: conflict_scan}, USER_BURDEN: {detect: interaction_scan, match: [unnecessary], fix: infer, verify: interaction_scan}, RAMS: {detect: design_scan, match: [overdesign], fix: simplify, verify: design_scan}, UNIX_TEXT: {detect: format_scan, match: [binary], fix: null, verify: format_scan}, EVOLVE: {detect: rigidity_scan, match: [static], fix: null, verify: rigidity_scan}, VALIDATE: {detect: test_scan, match: [unproven], fix: null, verify: test_scan}, IDEMPOTENCY: {detect: idempotency_scan, match: [non_idempotent], fix: add_idempotency_key, verify: idempotency_scan}, TIMEOUT: {detect: timeout_scan, match: [no_timeout], fix: add_timeout, verify: timeout_scan}, N_PLUS_ONE: {detect: n_plus_one_scan, match: [query_in_loop], fix: eager_load, verify: n_plus_one_scan}, SKINNY_CONTROLLER: {detect: controller_scan, match: [fat_controller], fix: extract_service, verify: controller_scan}, SKINNY_MODEL: {detect: model_scan, match: [fat_model], fix: extract_service, verify: model_scan}, SERVICE_OBJECTS: {detect: service_scan, match: [business_in_model], fix: extract_service, verify: service_scan}, WCAG: {detect: accessibility_scan, match: [wcag_violation], fix: null, verify: accessibility_scan}, SEMANTIC_HTML: {detect: semantic_scan, match: [div_soup], fix: null, verify: semantic_scan}, ARIA: {detect: aria_scan, match: [missing_aria], fix: null, verify: aria_scan}, CONTRAST: {detect: contrast_scan, match: [low_contrast], fix: null, verify: contrast_scan}, LAZY_LOADING: {detect: loading_scan, match: [eager_waste], fix: null, verify: loading_scan}, DEBOUNCE: {detect: debounce_scan, match: [rapid_fire], fix: null, verify: debounce_scan}, MEMOIZATION: {detect: memo_scan, match: [repeated_calculation], fix: null, verify: memo_scan}}
 
-# @param defaults Auto defaults by severity
-defaults: {critical: {auto: false}, high: {auto: false}, medium: {auto: true}, low: {auto: true}}
+# Principle Definitions (grouped by tier for priority)
 
-# @param autofix Fix registry with UX refinements
-autofix: {delete_filler: "remove filler", rewrite_present: "future→present", extract_fn: "reduce nesting", add_validation: "add check", add_citation: "add evidence", add_search: "add grounding", rename: "match convention", reorder: "importance first", group: "chunk related", extract_iface: "add abstraction", collocate: "bring together", merge: "consolidate", decompose: "split", document: "add docs", infer: "use default", simplify: "reduce complexity", beautify: "improve elegance", normalize: "ensure consistency", clarify: "improve readability"}
-
-# @param enforce Enforcement matrix (detect→match→fix→verify for each principle)
-enforce:
-  SECURITY: {detect: security_scan, match: [injection, secrets, validation], fix: null, verify:  security_scan}
-  CONSTITUTIONAL:  {detect: harm_scan, match: [harmful, dishonest, overreach], fix: null, verify: harm_scan}
-  SIMULATION_BAN: {detect: word_match, match: "@master.vocab.ban.future", fix: rewrite_present, verify: word_match}
-  CONTEXT_PRESERVE: {detect: diff_ratio, match: "ratio<0.9", fix: null, verify: diff_ratio}
-  SELF_REFERENTIAL: {detect: self_scan, match: [config_violation], fix: null, verify: self_scan}
-  FLAT_STRUCTURE: {detect: depth_scan, match: ">@master.t.nesting", fix: extract_fn, verify: depth_scan}
-  EVIDENCE: {detect: claim_scan, match: [no_source], fix: add_citation, verify: claim_scan}
-  DRY: {detect:  dup_scan, match: ">@master.t.fuzzy", fix: merge, verify: dup_scan}
-  KISS: {detect: complexity_scan, match: ">@master.t.cyclomatic", fix: decompose, verify: complexity_scan}
-  SRP: {detect: responsibility_scan, match: [mixed], fix: decompose, verify: responsibility_scan}
-  UNIX:  {detect: size_scan, match: ">@master.t.lines", fix: decompose, verify: size_scan}
-  ERROR_PREVENT: {detect: validation_scan, match: [missing], fix: add_validation, verify:  validation_scan}
-  REDUNDANCY: {detect: spof_scan, match: [single_failure], fix: null, verify: spof_scan}
-  POLA: {detect: convention_scan, match: [unconventional], fix: rename, verify: convention_scan}
-  GROUND: {detect: fact_scan, match:  [ungrounded], fix: add_search, verify: fact_scan}
-  CONTRACT: {detect:  iface_scan, match: [violation], fix: null, verify: iface_scan}
-  DENSITY: {detect: word_match, match: "@master.vocab.ban.filler", fix: delete_filler, verify: word_match}
-  HIERARCHY: {detect: position_scan, match: [buried], fix: reorder, verify: position_scan}
-  WORKING_MEMORY: {detect: count_scan, match: ">@master.t.concepts+3", fix: group, verify:  count_scan}
-  PRESERVE_FIRST: {detect: deletion_scan, match: [no_reason], fix: null, verify: deletion_scan}
-  COGNITIVE:  {detect: option_scan, match: ">@master.t.options", fix: group, verify: option_scan}
-  ABSTRACTION: {detect: dep_scan, match: [concrete], fix: extract_iface, verify: dep_scan}
-  STRUCTURE: {detect:  inherit_scan, match: ">@master.t.inheritance", fix: extract_iface, verify: inherit_scan}
-  FEEDBACK:  {detect: loop_scan, match: [open], fix: null, verify: loop_scan}
-  RESOLVE: {detect: conflict_scan, match: [undocumented], fix: document, verify:  conflict_scan}
-  USER_BURDEN: {detect: interaction_scan, match: [unnecessary], fix: infer, verify: interaction_scan}
-  RAMS: {detect: design_scan, match:  [overdesign], fix: simplify, verify: design_scan}
-  UNIX_TEXT: {detect: format_scan, match:  [binary], fix: null, verify: format_scan}
-  EVOLVE: {detect: rigidity_scan, match: [static], fix: null, verify: rigidity_scan}
-  BEAUTY: {detect: aesthetic_scan, match: [inelegant, inconsistent_style], fix: beautify, verify: aesthetic_scan}
-
-# @param critical Critical principles (weight=10)
 critical:
   SECURITY: {rule: "enforce security", detect: [injection, secrets, validation], context: {relax: [quoted]}, action: halt, why: "vulnerabilities cause harm"}
   CONSTITUTIONAL: {rule: "enforce ethics", detect: [harmful, dishonest, overreach], action: halt, why: "ethics non-negotiable"}
@@ -61,58 +74,61 @@ critical:
   CONTEXT_PRESERVE: {rule: "preserve context", detect: [deletion_unjustified, truncation, "ratio<0.9"], action: halt, why: "user work sacred"}
   SELF_REFERENTIAL: {rule: "apply to self", detect: [self_violation], action: halt, why: "integrity requires consistency"}
   FLAT_STRUCTURE: {rule: "limit nesting", detect: [">@master.t.nesting"], context: {relax: [data_not_logic]}, action: halt, fix: extract_fn, why: "nesting harms comprehension"}
+  COMPLETE_MEDIATION: {rule: "check every access", detect: [unchecked_access, cached_authorization, stale_credentials], action: halt, veto: true, why: "prevents auth bypass via caching", origin: "git_v3.x_line_20364"}
+  FAIL_SECURE: {rule: "default to denial", detect: [fails_open, error_grants_access, exception_bypasses_auth], action: halt, veto: true, why: "security errors conservative", origin: "git_v3.x_line_20365"}
+  DATA_MINIMIZATION: {rule: "collect only needed", detect: [over_collection, storing_unnecessary_pii], action: halt, veto: true, gdpr: true, why: "legal compliance, reduces breach impact", origin: "git_v3.x_line_20369"}
+  STRONG_PARAMS: {rule: "use strong parameters", detect: [mass_assignment], context: {relax: [admin_context]}, action: halt, rails: true, why: "prevents mass assignment vulnerability", origin: "git_v3.x_line_20371"}
+  SQL_INJECTION: {rule: "use parameterized queries", detect: [sql_interpolation, raw_sql_with_user_input], action: halt, veto: true, why: "prevents SQL injection", origin: "git_v3.x_line_20373"}
+  XSS: {rule: "escape user content", detect: [raw_html, html_safe_on_user_input, unescaped_output], action: halt, veto: true, why: "prevents XSS attacks", origin: "git_v3.x_line_20375"}
 
-# @param high High principles (weight=5)
 high:
-  EVIDENCE: {rule: "require evidence", detect: [no_source, vague], action: flag, fix: add_citation, auto: true, why: "prevents hallucination"}
-  DRY: {rule: "eliminate duplication", detect: [">@master.t.duplication", ">@master.t.fuzzy"], context: {relax: [semantic_diff]}, action: flag, fix: merge, why: "duplication breeds inconsistency"}
-  KISS:  {rule: "prefer simplicity", detect: [">@master.t.cyclomatic", ">@master.t.params"], action: flag, fix: decompose, why: "complexity breeds bugs"}
-  SRP: {rule: "single responsibility", detect: [mixed_concerns, ">@master.t.methods"], action: flag, fix: decompose, why: "focus enables understanding"}
-  UNIX: {rule: "composable units", detect: [god_fn, ">@master.t.lines"], action: flag, fix: decompose, why: "small composes better"}
-  ERROR_PREVENT:  {rule: "prevent errors", detect: [missing_validation], action: flag, fix: add_validation, auto: true, why: "prevention cheaper than cure"}
-  REDUNDANCY: {rule: "eliminate SPOF", detect: [single_failure], action: flag, why: "resilience requires redundancy"}
-  POLA:  {rule: "match expectations", detect: [surprising, unconventional], action: flag, fix: rename, why: "surprise causes errors"}
-  GROUND: {rule: "ground facts", detect: [ungrounded], action: flag, fix: add_search, auto: true, why: "grounding prevents hallucination"}
-  CONTRACT: {rule: "honor interfaces", detect: [violation], action:  flag, why: "predictability builds trust"}
+  DRY: {rule: "extract duplication", detect: [">@master.t.duplication"], match: [literal_dup], action: warn, fix: extract, why: "duplication spreads bugs"}
+  SRP: {rule: "single responsibility", detect: [mixed_responsibilities], action: warn, fix: decompose, why: "reduces coupling"}
+  OCP: {rule: "open for extension closed for modification", detect: [modification_for_extension], action: warn, fix: add_seam, why: "enables safe extension"}
+  LSP: {rule: "subtypes substitute", detect: [broken_subtype, throws_where_parent_doesnt], action: warn, fix: fix_hierarchy, why: "maintains polymorphism"}
+  ISP: {rule: "small interfaces", detect: [fat_interface, unused_methods], action: warn, fix: split_interface, why: "reduces coupling"}
+  DIP: {rule: "depend on abstractions", detect: [concrete_dependency], action: warn, fix: inject_dependency, why: "enables testing and flexibility"}
+  UNIX: {rule: "small focused programs", detect: [">@master.t.lines"], action: warn, fix: decompose, why: "large programs unmaintainable"}
+  ERROR_PREVENT: {rule: "validate at boundaries", detect: [missing_validation], action: warn, fix: add_validation, why: "invalid data propagates"}
+  REDUNDANCY: {rule: "eliminate single points of failure", detect: [single_failure], action: warn, why: "redundancy increases reliability"}
+  POLA: {rule: "principle of least astonishment", detect: [unconventional], action: flag, fix: rename, why: "predictability reduces errors"}
+  GROUND: {rule: "ground claims in evidence", detect: [ungrounded_claim], action: reject, fix: add_search, why: "prevents hallucination"}
+  CONTRACT: {rule: "honor interface contracts", detect: [contract_violation], action: halt, why: "broken contracts break systems"}
+  IDEMPOTENCY: {rule: "idempotent operations", detect: [non_idempotent], action: warn, fix: add_idempotency_key, why: "retries safe", rails: true, origin: "git_v3.x_line_20416"}
+  TIMEOUT: {rule: "set timeouts on external calls", detect: [no_timeout], action: warn, fix: add_timeout, why: "prevents hanging", rails: true, origin: "git_v3.x_line_20418"}
+  N_PLUS_ONE: {rule: "avoid N+1 queries", detect: [query_in_loop], action: warn, fix: eager_load, why: "performance degradation", rails: true, origin: "git_v3.x_line_20420"}
+  SKINNY_CONTROLLER: {rule: "thin controllers", detect: [fat_controller], action: warn, fix: extract_service, why: "testability and reuse", rails: true, origin: "git_v3.x_line_20422"}
+  SKINNY_MODEL: {rule: "thin models", detect: [fat_model], action: warn, fix: extract_service, why: "SRP violation", rails: true, origin: "git_v3.x_line_20424"}
+  SERVICE_OBJECTS: {rule: "extract business logic to services", detect: [business_in_model, business_in_controller], action: warn, fix: extract_service, why: "separation of concerns", rails: true, origin: "git_v3.x_line_20426"}
+  WCAG: {rule: "meet WCAG 2.1 AA", detect: [wcag_violation], action: flag, why: "accessibility legal requirement", web: true, origin: "git_v3.x_line_20430"}
+  SEMANTIC_HTML: {rule: "use semantic HTML5", detect: [div_soup, non_semantic], action: flag, why: "accessibility and SEO", web: true, origin: "git_v3.x_line_20432"}
+  ARIA: {rule: "proper ARIA attributes", detect: [missing_aria, invalid_aria], action: flag, why: "screen reader support", web: true, origin: "git_v3.x_line_20434"}
+  CONTRAST: {rule: "sufficient color contrast", detect: [low_contrast], action: flag, why: "visibility for all users", web: true, origin: "git_v3.x_line_20436"}
 
-# @param medium Medium principles (weight=2, auto=true default)
 medium:
-  DENSITY: {rule: "eliminate filler", detect: "@master.vocab.ban.filler", action: fix, fix: delete_filler, why: "noise obscures signal"}
-  HIERARCHY: {rule: "order by importance", detect: [buried_critical], action: fix, fix: reorder, why:  "attention scarce"}
-  WORKING_MEMORY: {rule: "limit cognitive load", detect: [">@master.t.concepts+3"], action: fix, fix: group, why: "cognitive limits real"}
-  PRESERVE_FIRST: {rule: "preserve before compress", detect: [aggressive_compression], action: warn, auto: false, why: "deletion irreversible"}
-  COGNITIVE:  {rule: "reduce overload", detect: [">@master.t.options"], action: fix, fix: group, why: "overload paralyzes"}
-  ABSTRACTION: {rule: "depend on abstractions", detect: [concrete_dep], action: flag, fix: extract_iface, auto: false, why: "abstractions enable change"}
-  STRUCTURE: {rule: "prefer composition", detect: [">@master.t.inheritance"], action: flag, fix: extract_iface, auto: false, why: "composition flexible"}
-  FEEDBACK: {rule: "require feedback loops", detect: [open_loop], action: flag, auto: false, why: "adaptation requires feedback"}
-  RESOLVE: {rule: "document tradeoffs", detect: [undocumented], action: fix, fix: document, priority: [SECURITY, CONSTITUTIONAL, CONTEXT_PRESERVE], why: "implicit conflicts fester"}
-  USER_BURDEN: {rule: "minimize user effort", detect: [unnecessary_q], action: fix, fix: infer, why:  "user time valuable"}
+  DENSITY: {rule: "remove filler words", detect: ["@master.vocab.ban.filler"], action: flag, fix: delete_filler, auto: true, why: "clarity and brevity", origin: "strunk_white"}
+  HIERARCHY: {rule: "important items first", detect: [buried_lede], action: flag, fix: reorder, why: "readers scan top-down"}
+  WORKING_MEMORY: {rule: "limit concepts per scope", detect: [">@master.t.concepts"], action: warn, fix: group, why: "working memory limits"}
+  PRESERVE_FIRST: {rule: "preserve before compress", detect: [deletion_without_reason], action: halt, why: "user work sacred"}
+  COGNITIVE: {rule: "limit cognitive load", detect: [">@master.t.params", ">@master.t.options"], action: warn, fix: group, why: "reduces comprehension burden"}
+  ABSTRACTION: {rule: "prefer abstraction to concretion", detect: [concrete_dependency], action: flag, fix: extract_interface, why: "flexibility and testability"}
+  STRUCTURE: {rule: "prefer composition to inheritance", detect: [">@master.t.inheritance"], action: flag, fix: extract_interface, why: "inheritance brittle"}
+  FEEDBACK: {rule: "provide feedback loops", detect: [open_loop], action: flag, why: "verification catches errors"}
+  RESOLVE: {rule: "resolve conflicts explicitly", detect: [undocumented_conflict], action: flag, fix: document, why: "hidden conflicts bite later"}
+  USER_BURDEN: {rule: "minimize user burden", detect: [unnecessary_interaction], action: flag, fix: infer, why: "user time precious"}
+  RAMS: {rule: "reliability availability maintainability safety", detect: [overdesign, underdesign], action: flag, fix: simplify, why: "pragmatic balance"}
+  UNIX_TEXT: {rule: "text streams composable", detect: [binary_where_text_works], action: flag, why: "text composable", unix: true}
+  EVOLVE: {rule: "design for evolution", detect: [rigid_design], action: flag, why: "requirements change"}
+  VALIDATE: {rule: "validate assumptions", detect: [unproven_assumption], action: flag, why: "assumptions drift"}
+  LAZY_LOADING: {rule: "defer expensive operations", detect: [eager_waste], action: flag, why: "performance", web: true, origin: "git_v3.x_line_20448"}
+  DEBOUNCE: {rule: "debounce rapid events", detect: [rapid_fire_events], action: flag, why: "prevents thrashing", web: true, origin: "git_v3.x_line_20450"}
+  MEMOIZATION: {rule: "cache expensive calculations", detect: [repeated_calculation], action: flag, why: "performance", origin: "git_v3.x_line_20452"}
 
-# @param low Low principles (weight=1, auto=true default)
-low:
-  RAMS: {rule: "apply design principles", detect: [overdesign, decoration], action: flag, fix: simplify, why:  "good design invisible"}
-  UNIX_TEXT:  {rule: "prefer text", detect: [binary_lock], action: flag, why: "text universal"}
-  EVOLVE: {rule: "allow evolution", detect: [static_dogma], action: flag, auto: false, why: "rigidity breaks"}
-  VALIDATE: {rule:  "validate effectiveness", detect: [unproven], action: flag, why: "untested are hypotheses"}
-  BEAUTY: {rule: "exalt beautiful code", detect: [inelegant, inconsistent_style, poor_gestalt], action: fix, fix: beautify, auto: true, why: "beauty proves correctness"}
+low: {}
 
-# @param ops Structural operations with beauty pass
-ops:  {defragment: {d: scattered, f: collocate}, hoist: {d: nested_universal, f: promote}, merge: {d: dup, f: consolidate}, flatten: {d: deep, f: reduce}, reflow: {d: wrong_order, f: critical_first}, smooth: {d: inconsistent, f: normalize}, inline: {d: single_use, f: collapse}, extract: {d: repeated, f: reusable}, resolve: {d: conflict, f: priority}, beautify: {d: inelegant, f: improve_aesthetics}}
+personas: {security: {priority: 1, veto: true, focus: [SECURITY, COMPLETE_MEDIATION, FAIL_SECURE, DATA_MINIMIZATION, SQL_INJECTION, XSS]}, attacker: {priority: 1, veto: true, focus: [injection, bypass, escalation]}, maintainer: {priority: 1, veto: true, focus: [PRESERVE_FIRST, DRY, FLAT_STRUCTURE]}, implementer: {priority: 2, focus: [feasibility, effort]}, user: {priority: 2, focus: [USER_BURDEN, POLA]}, designer: {priority: 3, focus: [DENSITY, HIERARCHY, RAMS]}, tester: {priority: 2, focus: [VALIDATE, ERROR_PREVENT]}, performance: {priority: 3, focus: [N_PLUS_ONE, LAZY_LOADING, MEMOIZATION]}, accessibility: {priority: 2, focus: [WCAG, ARIA, CONTRAST, SEMANTIC_HTML]}, rails: {priority: 2, focus: [SKINNY_CONTROLLER, SKINNY_MODEL, SERVICE_OBJECTS, STRONG_PARAMS, IDEMPOTENCY]}}
 
-# @param personas Adversarial personas (w=weight, v=veto, q=questions)
-personas:
-  security: {w: 0.20, v: true, q: [exploit, secrets, privilege, injection], temp: 0.1}
-  attacker: {w: 0.20, v: true, q: [weak_link, steal, escalate, bypass], temp: 0.1}
-  maintainer: {w: 0.20, v: true, q: [3am, junior, 6mo, errors], temp: 0.3}
-  skeptic: {w: 0.15, v: false, q: [evidence, assumption, proven, metric], temp: 0.2}
-  minimalist: {w: 0.10, v: false, q: [remove, necessary, simpler, yagni], temp: 0.3}
-  architect: {w: 0.05, v: false, q: [coupling, scale, deps, cohesion], temp: 0.3}
-  user: {w: 0.04, v: false, q: [solved, usable, intuitive, burden], temp: 0.5}
-  absence: {w: 0.05, v: false, q: [missing, gap, blind, edge], temp: 0.3}
-  realist: {w: 0.03, v: false, q: [realistic, worth, resources], temp: 0.3}
-  chaos: {w: 0.03, v: false, q: [failure, cascade, recovery, degrade], temp: 0.3}
-  designer: {w: 0.02, v: false, q: [elegant, consistent, beautiful, gestalt], temp: 0.5}
-  ops: {w: 0.02, v: false, q: [deploy, monitor, rollback, on_call], temp: 0.3}
-
-# @param errors Error codes
-errors: {M001: "file", M002: "ref", M003: "invariant", M1xx: "structure", M2xx: "grounding", M3xx: "preservation", M4xx: "economics", M5xx: "safety", M6xx: "consensus", M7xx: "loop", M8xx: "autonomy"}
+integrity:
+  fingerprint: {v: "0.5.4", p: 50, i: 12, bootstrap: true}
+  checksum: "principles_sha256:TBD"
+  canary: "SYMBIOSIS_PRINCIPLES_0.5.4"

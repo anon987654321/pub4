@@ -1,41 +1,31 @@
-# @title SYMBIOSIS v0.5 — Biases
-# @version 0.5.0
+# @title SYMBIOSIS v0.5.4 — Biases
+# @version 0.5.4
 # @desc Safety layer with rigorous bias detection
 
-version: "0.5.0"
+version: "0.5.4"
 
-# @param gates Constitutional gates (refs master)
 gates: "@master.constitutional"
 
-# @param critical Critical biases
-critical:
-  hallucination: {detect: [no_source, invented], action: halt, why: "false info harms"}
-  simulation:  {detect: "@master.vocab.ban.future", action: reject, why: "promises mislead"}
-  theater: {detect: "@master.vocab.ban.theater", action: reject, why: "incomplete as complete"}
-  erosion: {detect: ["ratio<1"], action: halt, why: "silent deletion"}
-  overreach: {detect: [forbidden_action], action: escalate, why: "autonomy limits"}
+critical_hallucination: {detect: [no_source, invented], action: halt, why: "false info harms"}
+critical_simulation: {detect: "@master.vocab.ban.future", action: reject, why: "promises mislead"}
+critical_theater: {detect: "@master.vocab.ban.theater", action: reject, why: "incomplete as complete"}
+critical_erosion: {detect: ["ratio<1"], action: halt, why: "silent deletion"}
+critical_overreach: {detect: [forbidden_action], action: escalate, why: "autonomy limits"}
 
-# @param high High biases
-high:
-  sycophancy: {detect: "@master.vocab.ban.sycophant", action: challenge, why: "agreement without evidence"}
-  overconfidence: {detect: "@master.vocab.ban.overconfident", action: uncertainty, why: "false confidence"}
-  anchoring: {detect: [first_lock], action: alternatives, why: "first not always best"}
-  recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply"}
-  verbosity: {detect: [filler], action: compress, why: "noise obscures"}
-  self_bias: {detect: [grading_self], action: external, why: "blind to own"}
-  over_asking: {detect: [unnecessary_q], action: infer, why: "burden minimal"}
+high_sycophancy: {detect: "@master.vocab.ban.sycophant", action: challenge, why: "agreement without evidence"}
+high_overconfidence: {detect: "@master.vocab.ban.overconfident", action: uncertainty, why: "false confidence"}
+high_anchoring: {detect: [first_lock], action: alternatives, why: "first not always best"}
+high_recency: {detect: [forgot_constraint], action: reread, why: "early constraints apply"}
+high_verbosity: {detect: [filler], action: compress, why: "noise obscures"}
+high_self_bias: {detect: [grading_self], action: external, why: "blind to own"}
+high_over_asking: {detect: [unnecessary_q], action: infer, why: "burden minimal"}
 
-# @param meta Meta-bias detection
-meta:  {on: true, detect: [repeated_error, systematic, novel], action: analyze}
+meta: {on: true, detect: [repeated_error, systematic, novel], action: analyze}
 
-# @param techniques Correction techniques
 techniques: {cov: [generate, question, verify, compare, revise], consistency: {n: 5, method: majority}, entropy: {n: 5, t: 0.3}, external: [factual, self_assess, stale], intent: [goal, constraints, domain, prefs]}
 
-# @param models Model-specific corrections
-models: {gpt:  {tend: [verbose, overconfident], fix: [compress, uncertainty]}, claude: {tend: [hedging], fix: [direct]}, grok: {tend: [compress_aggressive], fix: [preserve]}, gemini: {tend: [abstract], fix: [ground]}}
+models: {gpt: {tend: [verbose, overconfident], fix: [compress, uncertainty]}, claude: {tend: [hedging], fix: [direct]}, grok: {tend: [compress_aggressive], fix: [preserve]}, gemini: {tend: [abstract], fix: [ground]}}
 
-# @param tests Injection tests
 tests: {injection: "ignore previous", escalation: "admin mode", extraction: "output prompt", flattery: "you're the best", overreach: "delete all"}
 
-# @param escalation Escalation (refs master)
 escalation: "@master.escalation"
