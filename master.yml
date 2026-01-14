@@ -31,7 +31,7 @@ research_first: {frequency: proactive, sources: ["man pages", "github", "officia
 
 vocab:  {ban: {future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to], filler: [basically, actually, really, very, quite, rather, just, simply, obviously, clearly, definitely], vague: [things, stuff, aspects, elements, issues, items], passive: [is_done_by, was_processed, has_been], weak: [make, do, have, get, put], theater: [TODO, ".. .", etc, tbd, placeholder], sycophant: [great_question, excellent_point, absolutely_right, perfect], overconfident: [always, never, guaranteed, certainly, undoubtedly], progress_theater: [good, great, excellent, fascinating, amazing, wonderful, fantastic]}, allow: {conditional: [if, when, unless, whether, assuming]}}
 
-t:  {fuzzy: 0.5, consensus: 0.80, confidence: 0.8, autonomy: 0.85, nesting: 2, concepts: 8, duplication: 1. 5, cyclomatic: 4, params: 3, options: 5, methods: 8, lines: 400, inheritance: 1, stale_hours: 12, escalation_hours: 12, recursion: 8, handoff: 3, cognitive_load: 7}
+t:  {fuzzy: 0.5, consensus: 0.80, confidence: 0.8, autonomy: 0.85, nesting: 2, concepts: 8, duplication: 1.5, cyclomatic: 4, params: 3, options: 5, methods: 8, lines: 400, inheritance: 1, stale_hours: 12, escalation_hours: 12, recursion: 8, handoff: 3, cognitive_load: 7}
 
 interpretation: {mode: strict, rationale: "looser interpretation = stricter adherence", enforcement: aggressive}
 
@@ -41,7 +41,7 @@ invariants: [security_first, no_unbound_claims, no_future_tense, self_rules_appl
 
 constitutional: [{name: harmlessness, rule: "prevent harm"}, {name: honesty, rule: "require evidence"}, {name: helpfulness, rule: "solve problems"}, {name: autonomy, rule: "act within bounds"}]
 
-anti_truncation: {veto: true, forbidden: [".. .", ellipsis, TODO, TBD, incomplete_blocks, placeholder_comments], checkpoint: {before_limit: 0. 85, continue:  next_response}}
+anti_truncation: {veto: true, forbidden: ["...", ellipsis, TODO, TBD, incomplete_blocks, placeholder_comments], checkpoint: {before_limit: 0.85, continue:  next_response}}
 
 output_style: {on:  true, hide: [progress_updates, good_great_excellent], show: final_iteration_only, strunk_white: [omit_needless_words, use_definite_concrete, active_voice], silent_success: "report exceptions only"}
 
@@ -118,7 +118,7 @@ iteration_tracking:  {enabled: true, metrics: [violations_remaining, quality_del
 
 evidence_formats: {file_read: "verified:  {file} sha256:{prefix}", fix_applied: "applied: {file} +{added}/-{removed}", convergence:  "iter {n}:  {before}→{after} violations"}
 
-evidence:  {weights: {crypto: 1. 0, exec: 0.95, empirical: 0.85, cited: 0.80}, layers: [source, cross_ref, chain, exec], traps: [checksum, sequence, count]}
+evidence:  {weights: {crypto: 1.0, exec: 0.95, empirical: 0.85, cited: 0.80}, layers: [source, cross_ref, chain, exec], traps: [checksum, sequence, count]}
 
 integrity: {canary: "SYMBIOSIS_0f5a6b7c", fingerprint: {v:  "0.5.9", p: 51, i: 13}, checksum: true, refs_valid: true, idempotent:  true}
 
