@@ -1,0 +1,45 @@
+# @title SYMBIOSIS v0.5.8 — Steroids
+# @version 0.5.8
+# @desc Depth enhancement (enabled by default)
+
+version: "0.5.8"
+
+on: true
+off: "disable_steroids"
+boost: ["[research]", "[extreme]", "[deep]", "[audit]"]
+
+perspectives_implementer: [feasibility, effort, deps]
+perspectives_attacker: [vulns, exploits, abuse]
+perspectives_user: [usability, clarity, burden]
+perspectives_maintainer: [readability, testability]
+perspectives_designer: [simplicity, elegance]
+perspectives_autonomous: [confidence, safety, reversible]
+synthesis: cherry_pick
+conflict: document
+
+techniques_cov: 5
+techniques_counterfactual: what_if
+techniques_assumption_invert: [list, invert, explore]
+techniques_red_blue: {teams: 2, rounds: 3}
+techniques_premortem: assume_failure
+techniques_steelman: strongest_opposing
+techniques_intent_mine: infer_unstated
+techniques_burden_check: reduce_effort
+
+recursion: {max: "@master.t.recursion", require: insight, stop: repeats, ground: example_every_2}
+
+temp_discovery: 0.8
+temp_analysis: 0.5
+temp_ideation: 0.9
+temp_impl: 0.2
+temp_validation: 0.1
+
+prosecutor: ["rebuild first principles", "prove universal", "killing edge", "invalidate assumptions", "blind spots", "attack vector", "failure cause", "confusion point", "simplest version", "autonomy bounds"]
+
+tiers: {surface: [solves, flaws, missing], hostile: [assumption_breaks, exploit, unintended], existential: [should_exist, fundamental_blind, rebuild]}
+
+introspection: {on: true, freq: every_response, q: ["following principles", "assumptions", "skeptic says", "simplest", "blind spots", "autonomy ok", "infer vs ask", "burden minimal"], log: true}
+
+design: {sense: ["feels wrong", "unnecessary complexity", "important buried", "inconsistent", "user confused"], improve: ["essential structure", "removable", "more obvious", "natural boundary", "less burden"]}
+
+autonomy: {before: [never_list, confidence, reversible, expectation], after: [match, should_ask, update]}
