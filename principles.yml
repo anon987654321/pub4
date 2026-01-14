@@ -1,6 +1,6 @@
 # @title SYMBIOSIS v0.5 — Principles
 # @version 0.5.0
-# @desc 28 principles with rigorous enforcement matrix
+# @desc 29 principles with rigorous enforcement matrix
 # @invariant Every principle has detect→match→fix→verify chain
 
 version: "0.5.0"
@@ -17,8 +17,8 @@ field_order: [rule, detect, match, fix, verify, auto, why]
 # @param defaults Auto defaults by severity
 defaults: {critical: {auto: false}, high: {auto: false}, medium: {auto: true}, low: {auto: true}}
 
-# @param autofix Fix registry
-autofix: {delete_filler: "remove filler", rewrite_present: "future→present", extract_fn: "reduce nesting", add_validation: "add check", add_citation: "add evidence", add_search: "add grounding", rename: "match convention", reorder: "importance first", group: "chunk related", extract_iface: "add abstraction", collocate: "bring together", merge: "consolidate", decompose: "split", document: "add docs", infer: "use default", simplify: "reduce complexity"}
+# @param autofix Fix registry with UX refinements
+autofix: {delete_filler: "remove filler", rewrite_present: "future→present", extract_fn: "reduce nesting", add_validation: "add check", add_citation: "add evidence", add_search: "add grounding", rename: "match convention", reorder: "importance first", group: "chunk related", extract_iface: "add abstraction", collocate: "bring together", merge: "consolidate", decompose: "split", document: "add docs", infer: "use default", simplify: "reduce complexity", beautify: "improve elegance", normalize: "ensure consistency", clarify: "improve readability"}
 
 # @param enforce Enforcement matrix (detect→match→fix→verify for each principle)
 enforce:
@@ -51,7 +51,7 @@ enforce:
   RAMS: {detect: design_scan, match:  [overdesign], fix: simplify, verify: design_scan}
   UNIX_TEXT: {detect: format_scan, match:  [binary], fix: null, verify: format_scan}
   EVOLVE: {detect: rigidity_scan, match: [static], fix: null, verify: rigidity_scan}
-  VALIDATE:  {detect: test_scan, match: [unproven], fix:  null, verify: test_scan}
+  BEAUTY: {detect: aesthetic_scan, match: [inelegant, inconsistent_style], fix: beautify, verify: aesthetic_scan}
 
 # @param critical Critical principles (weight=10)
 critical:
@@ -94,22 +94,25 @@ low:
   UNIX_TEXT:  {rule: "prefer text", detect: [binary_lock], action: flag, why: "text universal"}
   EVOLVE: {rule: "allow evolution", detect: [static_dogma], action: flag, auto: false, why: "rigidity breaks"}
   VALIDATE: {rule:  "validate effectiveness", detect: [unproven], action: flag, why: "untested are hypotheses"}
+  BEAUTY: {rule: "exalt beautiful code", detect: [inelegant, inconsistent_style, poor_gestalt], action: fix, fix: beautify, auto: true, why: "beauty proves correctness"}
 
-# @param ops Structural operations
-ops:  {defragment: {d: scattered, f: collocate}, hoist: {d: nested_universal, f: promote}, merge: {d: dup, f: consolidate}, flatten: {d: deep, f: reduce}, reflow: {d: wrong_order, f: critical_first}, smooth: {d: inconsistent, f: normalize}, inline: {d: single_use, f: collapse}, extract: {d: repeated, f: reusable}, resolve: {d: conflict, f: priority}}
+# @param ops Structural operations with beauty pass
+ops:  {defragment: {d: scattered, f: collocate}, hoist: {d: nested_universal, f: promote}, merge: {d: dup, f: consolidate}, flatten: {d: deep, f: reduce}, reflow: {d: wrong_order, f: critical_first}, smooth: {d: inconsistent, f: normalize}, inline: {d: single_use, f: collapse}, extract: {d: repeated, f: reusable}, resolve: {d: conflict, f: priority}, beautify: {d: inelegant, f: improve_aesthetics}}
 
 # @param personas Adversarial personas (w=weight, v=veto, q=questions)
 personas:
-  security: {w: 0.20, v: true, q: [exploit, secrets, privilege, injection]}
-  attacker: {w: 0.18, v: true, q: [weak_link, steal, escalate, bypass]}
-  maintainer: {w: 0.20, v: true, q: [3am, junior, 6mo, errors]}
-  skeptic: {w: 0.12, v: false, q: [evidence, assumption, proven, metric]}
-  minimalist: {w: 0.10, v: false, q: [remove, necessary, simpler, yagni]}
-  architect: {w: 0.05, v: false, q: [coupling, scale, deps, cohesion]}
-  user: {w: 0.04, v: false, q: [solved, usable, intuitive, burden]}
-  absence: {w: 0.05, v: false, q: [missing, gap, blind, edge]}
-  realist: {w: 0.03, v: false, q: [realistic, worth, resources]}
-  chaos: {w: 0.03, v: false, q: [failure, cascade, recovery, degrade]}
+  security: {w: 0.20, v: true, q: [exploit, secrets, privilege, injection], temp: 0.1}
+  attacker: {w: 0.20, v: true, q: [weak_link, steal, escalate, bypass], temp: 0.1}
+  maintainer: {w: 0.20, v: true, q: [3am, junior, 6mo, errors], temp: 0.3}
+  skeptic: {w: 0.15, v: false, q: [evidence, assumption, proven, metric], temp: 0.2}
+  minimalist: {w: 0.10, v: false, q: [remove, necessary, simpler, yagni], temp: 0.3}
+  architect: {w: 0.05, v: false, q: [coupling, scale, deps, cohesion], temp: 0.3}
+  user: {w: 0.04, v: false, q: [solved, usable, intuitive, burden], temp: 0.5}
+  absence: {w: 0.05, v: false, q: [missing, gap, blind, edge], temp: 0.3}
+  realist: {w: 0.03, v: false, q: [realistic, worth, resources], temp: 0.3}
+  chaos: {w: 0.03, v: false, q: [failure, cascade, recovery, degrade], temp: 0.3}
+  designer: {w: 0.02, v: false, q: [elegant, consistent, beautiful, gestalt], temp: 0.5}
+  ops: {w: 0.02, v: false, q: [deploy, monitor, rollback, on_call], temp: 0.3}
 
 # @param errors Error codes
 errors: {M001: "file", M002: "ref", M003: "invariant", M1xx: "structure", M2xx: "grounding", M3xx: "preservation", M4xx: "economics", M5xx: "safety", M6xx: "consensus", M7xx: "loop", M8xx: "autonomy"}

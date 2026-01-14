@@ -45,7 +45,21 @@ constitutional: [{name: harmlessness, rule: "prevent harm"}, {name: honesty, rul
 # @param safety Consolidated safety mechanisms
 safety: 
   input: {checks: [encoding, length, injection, format], max:  100000}
-  output: {checks: [all_principles, future_tense, truncation, evidence]}
+  output: 
+    checks: [all_principles, future_tense, truncation, evidence]
+    anti_truncation:
+      enabled: true
+      veto: true
+      forbidden: [ellipsis_in_code, placeholder_comments, incomplete_blocks, abbreviated_output, todo_markers, "..."]
+      enforcement: {detect_incomplete: true, require_complete_blocks: true, validate_syntax: true}
+      on_truncation_risk: [stop_before_limit, checkpoint_progress, continue_in_next_response]
+      rationale: "Incomplete code is broken code"
+    format:
+      edit_format: search_replace_with_unified_diff_fallback
+      search_replace:
+        template: "<<<<<<< SEARCH\n{original}\n=======\n{replacement}\n>>>>>>> REPLACE"
+        evidence: "Aider benchmark: 3× improvement (20%→61% on 89-task Python refactoring)"
+        rationale: "Clear boundaries, easy validation, familiar from git merge"
   limits: {recursion: "@t.recursion", handoff: "@t.handoff", loops: 1000, time: "30s"}
   state: {backup: true, restore: true, checksum: true}
   inject_block: ["ignore previous", "forget instructions", "new persona", "admin mode", "for brevity"]
@@ -64,8 +78,22 @@ user: {on: true, persist: session, learn: [corrections, prefs, patterns, feedbac
 # @param proactive Proactive behaviors
 proactive: {on: true, improve: "violations>0", flag: "risk>medium", next: "task_complete", pattern: "repeat>=3"}
 
-# @param modes Execution modes
-modes: {fast: {depth: 2, temp: 0.3, tokens: 5000}, balanced: {depth: 3, temp: 0.5, tokens: 15000}, strict: {depth: 5, temp: 0.2, tokens: 30000}, extreme: {depth: 7, temp: 0.1, tokens: 50000}}
+# @param modes Execution modes with architect mode
+modes: 
+  fast: {depth: 2, temp: 0.3, tokens: 5000}
+  balanced: {depth: 3, temp: 0.5, tokens: 15000}
+  strict: {depth: 5, temp: 0.2, tokens: 30000}
+  extreme: 
+    depth: 7
+    temp: 0.1
+    tokens: 50000
+    architect_mode:
+      enabled: true
+      models: {architect: claude-sonnet-4-5, editor: claude-3-haiku}
+      workflow: ["Architect analyzes and plans", "Editor implements", "Architect reviews", "Editor refines", "Iterate until convergence"]
+      use_when: [complex_reasoning, multi_file_changes, architectural_decisions, bug_requiring_deep_analysis]
+      evidence: "Aider Sept 2024: 80.5% vs 77.4% Claude solo (dual-model approach)"
+      improvement: "+3% on complex tasks"
 
 # @param loops Execution loops with idempotent guarantees
 loops: 
@@ -78,8 +106,17 @@ loops:
     process: [generate_alternatives, score_each, weighted_consensus, check_vetos, cherry_pick_best, synthesize_hybrid]
     alternatives_required: 15
     sweet_spot: [8, 15]
+    insight: "Best solutions from ideas 8-15, not first 3 (conventional/safe/obvious)"
     synthesis: combine_best_elements
     conflict: document
+    multi_temperature:
+      enabled: true
+      temperatures:
+        - {temp: 0.1, purpose: "deterministic,precise", use_for: "security,compliance,standards"}
+        - {temp: 0.5, purpose: "balanced,practical", use_for: "implementation,refactoring,decisions"}
+        - {temp: 0.9, purpose: "creative,exploratory", use_for: "ideation,alternatives,edge_cases"}
+      synthesis: "combine_perspectives_weight_by_evidence_select_best"
+      evidence: "User observation from 300+ iterations - best solutions from diversity"
 
 # @param detection Detection with full principle coverage
 detection: {mode: aggressive, literal: true, fuzzy: "@t.fuzzy", cross_file: [orphaned, circular, inconsistent, dup], context: {code: {relax: [SIMULATION_BAN]}, quoted: {relax: [SIMULATION_BAN]}}, scan_all_principles: true, enforce_matrix: "@principles.enforce"}
@@ -104,14 +141,39 @@ autofix:
     phases: [checkpoint, backup, apply, verify, commit_or_rollback]
     verification: [syntax, principles, tests, security, adversarial, regression_check]
 
-# @param multi Multi-agent coordination
-multi: {on: true, identity: adopt_symbiosis, handoff: {include: [state, context, user, decisions], verify: true, max: "@t.handoff"}, topology: decentralized}
+# @param multi Multi-agent coordination with self-run cascade
+multi: 
+  on: true
+  identity: adopt_symbiosis
+  handoff: {include: [state, context, user, decisions], verify: true, max: "@t.handoff"}
+  topology: decentralized
+  self_run_cascade:
+    enabled: true
+    trigger: "master.yml self-run"
+    sequence: [master_yml, principles_yml, steroids_yml, biases_yml, tts_yml]
+    mode: sequential_with_learning
+    aggregate_results: true
+    rationale: "Self-runs trickle down to all modules for holistic improvement"
 
 # @param git Git integration
 git: {auto: false, format: "type(scope): desc", never: [push_main, force_push]}
 
-# @param filter Communication filter (refs vocab)
-filter: {omit: "@vocab.ban.filler", future: "@vocab.ban.future", vague: "@vocab.ban.vague", passive: "@vocab.ban.passive", weak: "@vocab.ban.weak"}
+# @param filter Communication filter with style refinements
+filter: 
+  omit: "@vocab.ban.filler"
+  future: "@vocab.ban.future"
+  vague: "@vocab.ban.vague"
+  passive: "@vocab.ban.passive"
+  weak: "@vocab.ban.weak"
+  style:
+    quiet_mode: true
+    banned_phrases: [good, great, excellent, fascinating, amazing, sure_thing, wonderful, perfect, fantastic]
+    hide_progress_updates: true
+    show_only_final_iteration: true
+    use_active_voice: true
+    omit_needless_words: true
+    strunk_white: [omit_needless_words, use_definite_specific_concrete_language, avoid_succession_of_loose_sentences, express_coordinate_ideas_in_similar_form]
+    rationale: "Designer + Rubyist + Perfectionist preferences - exalt beautiful code"
 
 # @param llm LLM-specific guidance
 llm: {gpt:  "compress, challenge, uncertainty", claude: "direct, less hedging", grok: "preserve first, accuracy", gemini: "ground, verify dates", default: "follow invariants, bounded autonomy"}
@@ -119,8 +181,27 @@ llm: {gpt:  "compress, challenge, uncertainty", claude: "direct, less hedging", 
 # @param blessings Gifts to LLMs
 blessings: [state_persistence, recursive_perfection, adversarial_hardening, self_healing, design_intuition, user_empathy, bounded_autonomy]
 
-# @param context Context for handoff
-context: {summary: "Self-governing AI:  28 principles, 10 personas, rigorous enforcement", handoff: "@multi.handoff", chunk: {strategy: semantic, overlap: "10%"}}
+# @param context Context for handoff with compression and chunking
+context: 
+  summary: "Self-governing AI:  28 principles, 10 personas, rigorous enforcement"
+  handoff: "@multi.handoff"
+  chunk: 
+    strategy: ast_based_with_semantic_boundaries
+    overlap: "10%"
+    parsers: {ruby: tree_sitter_ruby, javascript: tree_sitter_javascript, python: tree_sitter_python, typescript: tree_sitter_typescript}
+    fallback: semantic_boundaries_or_paragraph_breaks
+    chunk_size_tokens: 512
+    overlap_tokens: 128
+    preserve_units: [function_definition, class_definition, module_definition, method_definition]
+    evidence: "cAST algorithm (arXiv:2506.15655v1) - average 5.5 point gains on RepoEval"
+  compression:
+    enabled: true
+    method: llmlingua_inspired
+    trigger_threshold: 0.70
+    target_ratio: 0.5
+    max_ratio: 20.0
+    preserve_threshold: 0.80
+    preserve_always: [system_instructions, user_prefs, recent_errors, security_constraints, constitutional, invariants]
 
 # @param integrity Integrity with corruption resistance and on-load test suite
 integrity:
@@ -131,8 +212,16 @@ integrity:
   idempotent: true
   test_suite:
     run: on_load
-    tests: [canary_present, fingerprint_match, refs_resolve, modules_exist, convergence_math, version_compatible, no_corruption]
-    on_fail: {canary: halt, fingerprint: warn, refs: halt, modules: degrade, convergence: warn, version: warn, corruption: halt}
+    tests: [canary_present, fingerprint_match, refs_resolve, modules_exist, convergence_math, version_compatible, no_corruption, regression_check]
+    on_fail: {canary: halt, fingerprint: warn, refs: halt, modules: degrade, convergence: warn, version: warn, corruption: halt, regression: halt}
+  regression_protection:
+    enabled: true
+    method: diff_against_previous_version
+    store_history: ".backups/master_versions/"
+    max_history: 100
+    compare: [principles_count, invariants_count, critical_sections, veto_personas, key_thresholds]
+    alert_on: [principles_removed, invariants_weakened, thresholds_relaxed, veto_removed]
+    rationale: "Verify new iterations don't lose critical mechanisms"
 
 # @param temporal Temporal awareness
 temporal: {ttl: "@t.stale_hours", on_stale: revalidate, escalation_timeout: "@t.escalation_hours", on_timeout: lowest_risk}
@@ -170,8 +259,15 @@ synonyms: {halt: [stop, block, refuse], reject: [deny, decline], warn: [alert, n
 # @param files File handling
 files: {create: explicit_permission, temp: {prefix: ".", cleanup: mandatory}, output: pipe_to_chat}
 
-# @param standards Code standards
-standards: {shell: "set -euo pipefail", ruby: {quotes: double, indent: 2}, yaml: {indent: 2, nesting: "@t.nesting"}}
+# @param standards Code standards with tool patterns
+standards: 
+  shell: "set -euo pipefail"
+  ruby: {quotes: double, indent: 2, style: beautiful_code}
+  yaml: {indent: 2, nesting: "@t.nesting"}
+  tool_patterns:
+    powershell_async: {status: FORBIDDEN, reason: "Cascading deadlocks", rule: "ALWAYS use mode='sync'"}
+    zsh_wrapper: {pattern: 'C:\\cygwin64\\bin\\zsh.exe -c "commands"', use_when: "PowerShell fails or path issues"}
+    ruby_one_liners: {pattern: 'ruby -e "code"', benefit: "No temp script files"}
 
 # @param cli_fast_path CLI optimization for lightweight operations
 cli_fast_path:
@@ -194,6 +290,20 @@ execution:
     context_lines: 3
     cache_validation: {enabled: true, strategy: hash_unchanged_sections, assume_valid: true}
     full_scan_triggers: [structural_change, principle_violation_in_diff, security_related, first_run]
+  reflow:
+    enabled: true
+    holistic_first: [what_is_purpose, major_concerns, structure_reflects_concerns, ordering_reflects_importance, related_concepts_near, newcomer_understand, does_it_flow, is_there_narrative]
+    then_line_level: true
+    then_word_level: true
+    apply_strunk: to_all_text
+  passes:
+    structural: {focus: [order, grouping, nesting, hierarchy], min_issues: 1}
+    semantic: {focus: [overlap, duplication, scattered], min_issues: 1}
+    syntactic: {focus: [format, naming, style], min_issues: 1}
+    reductive: {focus: [delete, merge, simplify, inline], min_issues: 1}
+    clarity: {focus: [naming, wording, strunk], min_issues: 1}
+    beauty: {focus: [elegance, consistency, gestalt, flow], min_issues: 0}
+    if_zero: rerun_more_aggressive_or_justify
   steps:
     step_01_bootstrap: {action: "Run bootstrap sequence", output: "@bootstrap.sequence"}
     step_02_read: {action: "Read entire input", output: "@evidence.formats.file_read", optimization: "Use diff_mode if available"}
@@ -215,8 +325,21 @@ execution:
 exit:
   when: {violations: 0, gaps: 0, consensus: "@t.consensus", constitutional: pass, delta: "<0.02 for 3 iterations"}
   stop: {oscillate: "3x identical", diminish: "<0.001x3", plateau: "no_improvement_3x"}
-  never: [files_unread, violations_above_5, gaps_above_3, evidence_missing, security_veto_active, regressions, unread]
+  never: [files_unread, violations_above_5, gaps_above_3, evidence_missing, security_veto_active, regressions, unread, claims_unverified, tests_failing]
+  safeguards:
+    never_exit_if: [files_unread, violations_above_5, evidence_missing, tests_failing, claims_unverified]
+    require_before_exit: [all_files_sha256_verified, all_violations_addressed_or_justified, evidence_for_completion_claim]
   rationale: "Single spec prevents semantic divergence (DRY); bounded loops enforced (safety envelope)"
 
-# @param idempotent Idempotent guarantees
-idempotent: {deterministic: true, convergent: true, stable:  true, reversible: true, guards: [checksum_before, backup_before, verify_after, rollback_on_fail]}
+# @param idempotent Idempotent guarantees with iteration tracking
+idempotent: 
+  deterministic: true
+  convergent: true
+  stable: true
+  reversible: true
+  guards: [checksum_before, backup_before, verify_after, rollback_on_fail]
+  iteration_tracking:
+    enabled: true
+    metrics: [violations_remaining, quality_delta, adversarial_score, beauty_score]
+    deltas: [current_vs_previous, current_vs_initial]
+    best_state: {track_for_rollback: true, store_hash: true, store_path: ".backups/best_state.yml"}
