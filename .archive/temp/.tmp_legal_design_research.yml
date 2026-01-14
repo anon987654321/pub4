@@ -1,0 +1,105 @@
+# LEGAL DOCUMENT DESIGN RESEARCH
+# Codified from US/UK/European court standards + Figma best practices
+
+## COURT STANDARDS (US/UK/EU)
+
+typography:
+  fonts_approved:
+    us_courts: [Century, Times New Roman, Century Schoolbook, Garamond, Georgia]
+    us_supreme: Century (required)
+    uk_eu: [Times New Roman, Arial, Calibri]
+  
+  font_size:
+    body: 12pt (minimum, 14pt better for digital)
+    footnotes: 10pt
+  
+  line_spacing:
+    pleadings: double (allows annotations)
+    body: 1.5-2.0 for legal documents
+    footnotes: single
+  
+  layout:
+    page_size_us: 8.5x11in (Letter)
+    page_size_eu: A4 (210x297mm)
+    margins: 1in all sides (wider left for binding)
+    alignment: left-aligned (full justification optional)
+    max_line_length: 50-75 characters
+
+## FIGMA/DESIGN BEST PRACTICES
+
+minimalist_principles:
+  - limit_fonts: 2-3 maximum
+  - hierarchy: use size/weight, not decoration
+  - whitespace: generous padding, let content breathe
+  - color_limit: black, white, one accent
+  - no_decoration: no drop shadows, fancy fonts, distractions
+  
+typography_scale:
+  - modular_scale: 1.25 or 1.333
+  - line_height: 140-160% of font size
+  - max_line_length: 50-75 characters
+  - alignment: left (Western languages)
+  - contrast: dark grey (#222) not harsh black (#000)
+
+layout_techniques:
+  - grid: 2-4 columns for documents
+  - consistent: margins, gutters, spacing
+  - auto_layout: responsive to content changes
+  - components: reusable blocks (title, section)
+
+## BAD DESIGN (AVOID)
+
+typography_mistakes:
+  - decorative_fonts: Comic Sans, Papyrus, novelty fonts
+  - font_chaos: mixing multiple fonts/sizes randomly
+  - all_caps_abuse: feels like shouting
+  - harsh_black: #000 is too stark, use #222
+  
+layout_mistakes:
+  - crowded_pages: no whitespace, dense blocks
+  - disorganized: inconsistent numbering, bad hierarchy
+  - misaligned: broken grids, inconsistent margins
+  - frankendocument: pasted from multiple sources without harmonization
+  
+structural_mistakes:
+  - poor_hierarchy: unclear sections
+  - missing_essentials: dates, signatures, key clauses
+  - inconsistent_terms: "vendor" vs "supplier" for same entity
+  - no_testing: designed for author, not reader
+
+## ULTRA-MINIMALIST COURT STYLE
+
+characteristics:
+  - font: Century or Times New Roman, 12-14pt
+  - line_height: 1.8-2.0 (double spacing for annotations)
+  - margins: 1in all sides (25.4mm)
+  - max_width: 680px (66 chars, optimal)
+  - color: #222 text on #fff background
+  - emphasis: bold for headings, italics for case names (NO underline)
+  - spacing: generous between sections
+  - numbering: clear hierarchy (1., 1.1, 1.1.1)
+  - footer: minimal, page numbers + case reference
+  - no_decoration: absolutely none
+
+refinement_for_htu:
+  current_issues:
+    - Source Serif 4 might be too modern (Century more traditional)
+    - Line-height 1.75 adequate but 1.8-2.0 more court-standard
+    - Need clearer section numbering
+    - Headers could be simpler (less stylized)
+  
+  target_aesthetic:
+    - "US Supreme Court brief"
+    - "EU Court filing"
+    - "Norwegian court document (Lovdata style)"
+    - ultra-clean, no personality, pure function
+    - readability over beauty
+    - authority through restraint
+
+## PRINCIPLES TO ADD
+
+LEGAL_TYPOGRAPHY: {tier: medium, detect: typography_scan, match: [font_not_court_approved, line_spacing_below_1.5], fix: apply_court_standards, verify: typography_scan, rule: "court-approved typography", action: fix, web: true, auto: true, why: "legal credibility requires compliance"}
+
+ULTRA_MINIMALIST: {tier: medium, detect: decoration_scan, match: [shadows, gradients, decorative_fonts, unnecessary_color], fix: strip_decoration, verify: decoration_scan, rule: "remove all decoration", action: fix, web: true, auto: true, why: "minimalism = authority + clarity"}
+
+COURT_LAYOUT: {tier: medium, detect: layout_scan, match: [margins_wrong, line_length_wrong, spacing_inadequate], fix: apply_court_standards, verify: layout_scan, rule: "court-standard layout", action: fix, web: true, auto: true, why: "professional legal documents follow standards"}

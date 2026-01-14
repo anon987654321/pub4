@@ -1,0 +1,60 @@
+# EXCAVATION: master.json v509 → SYMBIOSIS v0.5.11
+# Systematic integration plan
+
+workflow_v509:
+  phases: [thought, action, execute, observe, reflect, decide]
+  convergence: {target_quality: 0.99, epsilon: 0.001, max_iterations: 50}
+  
+personas_v509:
+  - {name: skeptic, perspective: "questions whether we should build this at all"}
+  - {name: minimalist, perspective: "removes everything not absolutely essential"}
+  - {name: security_auditor, perspective: "assumes everything is potential attack vector"}
+  - {name: maintenance_engineer, perspective: "thinks about debugging this at 3am in production"}
+  - {name: junior_developer, perspective: "if they cannot understand it the code is too complex"}
+  - {name: senior_architect, perspective: "sees 5 year implications and technical debt accumulation"}
+  - {name: user_advocate, perspective: "focuses on actual user needs not technical elegance"}
+  - {name: chaos_engineer, perspective: "tries to break everything to find weaknesses"}
+
+temperature_v509:
+  - {temp: 0.1, purpose: "deterministic precise for security compliance and standards"}
+  - {temp: 0.5, purpose: "balanced practical for implementation refactoring and decisions"}
+  - {temp: 0.9, purpose: "creative exploratory for ideation alternatives and edge cases"}
+
+quality_weights_v509:
+  security_vulnerabilities: 10
+  code_duplication: 10
+  cyclomatic_complexity: 9
+  test_coverage: 8
+
+solid_principles_v509:
+  SRP: {name: single_responsibility_principle, trigger: "when class has multiple reasons to change split it"}
+  OCP: {name: open_closed_principle, trigger: "when modifying existing code for new features extend instead"}
+  LSP: {name: liskov_substitution_principle, trigger: "when subclass breaks parent contract fix the hierarchy"}
+  ISP: {name: interface_segregation_principle, trigger: "when interface is fat with unused methods split into smaller interfaces"}
+  DIP: {name: dependency_inversion_principle, trigger: "when depending on concrete implementations depend on abstractions instead"}
+
+integration_plan:
+  master_yml:
+    - ADD: workflow phases (6 phases)
+    - ADD: convergence algorithm (epsilon-based)
+    - UPDATE: evidence weights (align with v509)
+  
+  principles_yml:
+    - ADD: 5 SOLID principles as separate principles
+    - ADD: FAIL_FAST principle
+    - ADD: EXPLICIT_OVER_IMPLICIT principle
+    - UPDATE: Version 0.5.11 → 0.6.0 (62 principles)
+  
+  steroids_yml:
+    - EXPAND: personas (6 → 8, add skeptic + minimalist)
+    - UPDATE: temperature usage (align 0.1/0.5/0.9)
+  
+  biases_yml:
+    - ADD: cognitive_biases from v509
+    - ADD: common_pitfalls catalog
+
+roi_estimate:
+  workflow: "10x (systematic decision-making)"
+  personas: "5x (better adversarial review)"
+  solid: "3x (clearer architecture principles)"
+  total: "Foundational upgrade, benefits all future work"
