@@ -589,6 +589,10 @@ class OpenBSDTool
 end
 
 class JudgeSelector
+  # Default models for different backends
+  OLLAMA_MODEL = "llama3.2:3b"
+  ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
+
   def initialize
     @mode = "auto"
   end
@@ -601,7 +605,7 @@ class JudgeSelector
     # Filter out failed candidates
     valid_candidates = candidates.select { |c| c[:response] && !c[:response].empty? }
     
-    return fallback_select(valid_candidates) if valid_candidates.empty?
+    return "No valid responses received." if valid_candidates.empty?
     return valid_candidates.first[:response] if valid_candidates.size == 1
 
     judge_prompt = build_judge_prompt(user_query, valid_candidates)
@@ -642,7 +646,7 @@ class JudgeSelector
     return nil unless ollama_available?
     
     uri = URI("http://localhost:11434/api/generate")
-    payload = { model: "llama3.2:3b", prompt: prompt, stream: false }
+    payload = { model: OLLAMA_MODEL, prompt: prompt, stream: false }
     response = Timeout.timeout(30) do
       Net::HTTP.post(uri, JSON.generate(payload), "Content-Type" => "application/json")
     end
@@ -662,7 +666,7 @@ class JudgeSelector
     
     client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
     response = client.messages(
-      model: "claude-3-5-haiku-20241022",
+      model: ANTHROPIC_MODEL,
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt }]
     )
@@ -686,7 +690,7 @@ class JudgeSelector
   def try_provider_judge(prompt, provider_name, echo_manager)
     return nil unless echo_manager && WebChat::PROVIDERS[provider_name]
     
-    session = echo_manager.send(:get_or_create_session, provider_name)
+    session = echo_manager.get_judge_session(provider_name)
     response = Timeout.timeout(30) { session.send(prompt) }
     parse_judge_response(response)
   rescue
@@ -694,18 +698,31 @@ class JudgeSelector
   end
 
   def parse_judge_response(text)
-    # Try to extract JSON
-    json_match = text.match(/\{[^}]*"final_answer"[^}]*\}/m)
-    if json_match
-      data = JSON.parse(json_match[0])
+    # Try to parse as JSON first
+    begin
+      data = JSON.parse(text)
       return data["final_answer"] if data["final_answer"]
+    rescue JSON::ParserError
+      # Not valid JSON, try to extract JSON from text
     end
-    nil
-  rescue
+
+    # Try to extract JSON block from text
+    json_match = text.match(/\{[^{}]*"final_answer"[^{}]*\}/m)
+    if json_match
+      begin
+        data = JSON.parse(json_match[0])
+        return data["final_answer"] if data["final_answer"]
+      rescue JSON::ParserError
+        # Continue to fallback
+      end
+    end
+    
     nil
   end
 
   def fallback_select(candidates)
+    return "No valid responses received." if candidates.empty?
+    
     # Heuristic: prefer non-empty, longest, best latency
     best = candidates.max_by do |c|
       length_score = c[:response]&.length || 0
@@ -716,17 +733,27 @@ class JudgeSelector
   end
 
   def ollama_available?
-    system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1")
+    uri = URI("http://localhost:11434/api/tags")
+    response = Net::HTTP.get_response(uri)
+    response.code == "200"
+  rescue
+    false
   end
 end
 
 class EchoProviderManager
   attr_reader :providers, :health
 
+  # Health tracking constants
+  MAX_CONSECUTIVE_FAILURES = 10
+  FAILURE_THRESHOLD = 3
+  MIN_TIMEOUT = 10
+  DEFAULT_TIMEOUT = 45
+
   def initialize(provider_names = ["glm", "deepseek", "grok"])
     @providers = {}
     @health = {}
-    @timeout = 45
+    @timeout = DEFAULT_TIMEOUT
     provider_names.each { |name| add_provider(name) if WebChat::PROVIDERS[name] }
   end
 
@@ -749,7 +776,7 @@ class EchoProviderManager
   end
 
   def set_timeout(seconds)
-    @timeout = [seconds.to_i, 10].max
+    @timeout = [seconds.to_i, MIN_TIMEOUT].max
   end
 
   def query_all(text)
@@ -758,7 +785,7 @@ class EchoProviderManager
 
     if healthy.empty?
       # Try to re-enable all providers if all are disabled
-      @health.each { |name, h| h[:enabled] = true if h[:consecutive_failures] < 10 }
+      @health.each { |name, h| h[:enabled] = true if h[:consecutive_failures] < MAX_CONSECUTIVE_FAILURES }
       healthy = healthy_providers
     end
 
@@ -784,7 +811,7 @@ class EchoProviderManager
   end
 
   def healthy_providers
-    @health.select { |name, h| h[:enabled] && h[:consecutive_failures] < 3 }.keys
+    @health.select { |name, h| h[:enabled] && h[:consecutive_failures] < FAILURE_THRESHOLD }.keys
   end
 
   def status
@@ -798,6 +825,11 @@ class EchoProviderManager
   def close_all
     @providers.each { |_, session| session.quit rescue nil }
     @providers.clear
+  end
+
+  # Public method for judge to access sessions
+  def get_judge_session(provider_name)
+    get_or_create_session(provider_name)
   end
 
   private
@@ -822,7 +854,7 @@ class EchoProviderManager
     h[:last_error] = error_msg
     h[:consecutive_failures] += 1
     h[:total_queries] += 1
-    h[:enabled] = false if h[:consecutive_failures] >= 3
+    h[:enabled] = false if h[:consecutive_failures] >= FAILURE_THRESHOLD
   end
 end
 
