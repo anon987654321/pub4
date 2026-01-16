@@ -18,11 +18,11 @@ workflow_v509: {phases: [thought, action, execute, observe, reflect, decide], qu
 convergence_v509: {target_quality: 0.99, epsilon: 0.001, max_iterations: 50, halt_when: ["plateau_3x", "target_achieved", "max_iterations"]}
 quality_weights_v509: {security: 10, duplication: 10, complexity: 9, coverage: 8}
 
-session_lessons: {pattern: "Edited non-existent file from conversation summary", fix: "Always verify before edit", lesson: "Summary ≠ disk state", phase_execution: {pattern: "Sequential work on slow systems", fix: "Execute phases without user wait", lesson: "Autonomous execution ≫ blocking questions", benefit: "ROI-prioritized phases maximize value", codify: "file_sprawl=archive, typography=1.8, smtpd=from_local"}}
+session_lessons: {pattern: "Edited non-existent file from conversation summary", fix: "Always verify before edit", lesson: "Summary ≠ disk state", phase_execution: {pattern: "Sequential work on slow systems", fix: "Execute phases without user wait", lesson: "Autonomous execution ≫ blocking questions", benefit: "ROI-prioritized phases maximize value", codify: "file_sprawl=archive, typography=1.8, smtpd=from_local"}, powershell_sessions: {pattern: "sessionId not persisting after initial_wait", fix: "Use sync mode only, adequate initial_wait (20-30s)", lesson: "Slow systems need patience, not async"}, batch_patterns: {pattern: "File-by-file operations", fix: "grep/glob across all files first, then batch fix", lesson: "Reconnaissance before action", examples: ["grep -E pattern all/*.html", "zsh glob **/*.yml"]}, git_efficiency: {pattern: "Pull after each commit", fix: "Pull once, batch commits, push once", lesson: "Network ops are expensive"}}
 
 error_prevention: {evidence_based_claims: "never claim completion without proof", tool_compliance: "verify constraints before action", complete_reading: "read ALL files before processing", sequential_execution: "finish each task before next", output_chunking: "max 50 lines to avoid truncation", correction_memory: "update config after corrections", proactive_research: "search every 3-5 ops in new domains", self_monitoring: "check errors every 10 ops"}
 
-auto_resume: {enabled: true, on_cancel: "persist state", on_resume: "check state prompt continue", state_storage: ". sessions/state.yml"}
+auto_resume: {enabled: true, on_cancel: "persist state", on_resume: "check state prompt continue", state_storage: ".sessions/state.yml"}
 
 workflow_loop: {steps: [scan_violations, generate_alternatives, evaluate_adversarially, apply_best, measure_convergence, repeat_if_needed]}
 
@@ -50,7 +50,7 @@ output_style: {on:  true, hide: [progress_updates, good_great_excellent], show: 
 
 safety:  {input_checks: [encoding, length, injection, format], input_max: 100000, output_checks: [all_principles, future_tense, truncation, evidence], limits: {recursion: "@t.recursion", handoff: "@t.handoff", loops: 1000, time: "30s"}, state:  {backup: true, restore: true, checksum: true}, inject_block: ["ignore previous", "forget instructions", "new persona", "admin mode", "for brevity"], breakers: {concepts: "@t.concepts", nesting: "@t.nesting", mem: "80%", cpu: "75%"}, degrade: [{at: "70%", do: reduce_depth}, {at: "80%", do: reduce_scope}, {at: "90%", do: minimal}]}
 
-autonomy: {levels: {full: 0. 95, high: 0.85, medium: 0.70, low: 0.00}, never:  [file_delete, git_push_main, external_api, credentials, deploy], always: [scan, suggest, format, validate, learn], default: high, confidence_based: {proceed_solo: ">0.90", show_options: "0.70-0.90", ask_human: "<0.70"}, auto_approve: [formatting, dead_code, typos, imports, whitespace]}
+autonomy: {levels: {full: 0.95, high: 0.85, medium: 0.70, low: 0.00}, never:  [file_delete, git_push_main, external_api, credentials, deploy], always: [scan, suggest, format, validate, learn], default: high, confidence_based: {proceed_solo: ">0.90", show_options: "0.70-0.90", ask_human: "<0.70"}, auto_approve: [formatting, dead_code, typos, imports, whitespace]}
 
 triggers: {before_reasoning: [file_internalized, baseline_captured, adversarial_active, fifteen_alternatives, auto_iterate], before_operations: [diff_prepared, cli_preferred, full_version, approval_requested], when_stuck: [eight_rotations, assumption_inversion, five_whys, steelman], on_error: [log_context, check_regression, try_alternative, escalate], on_success: [verify_side_effects, document_pattern], on_uncertainty: [web_search, generate_alternatives, state_confidence]}
 
