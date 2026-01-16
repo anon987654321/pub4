@@ -1303,8 +1303,14 @@ class CLI
   def echo_message(text)
     UI.status("querying echo providers...")
     
+    # Augment with RAG context if enabled
+    query_text = text
+    if @rag_enabled && @rag.stats[:chunks] > 0
+      query_text = @rag.augment(text)
+    end
+    
     candidates = UI.thinking("collecting responses") do
-      @echo_manager.query_all(text)
+      @echo_manager.query_all(query_text)
     end
 
     if @echo_debug
