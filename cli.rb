@@ -588,6 +588,244 @@ class OpenBSDTool
 
 end
 
+class JudgeSelector
+  def initialize
+    @mode = "auto"
+  end
+
+  def set_mode(mode)
+    @mode = mode
+  end
+
+  def judge(user_query, candidates, echo_manager = nil)
+    # Filter out failed candidates
+    valid_candidates = candidates.select { |c| c[:response] && !c[:response].empty? }
+    
+    return fallback_select(valid_candidates) if valid_candidates.empty?
+    return valid_candidates.first[:response] if valid_candidates.size == 1
+
+    judge_prompt = build_judge_prompt(user_query, valid_candidates)
+
+    case @mode
+    when "auto"
+      # Try local → API → webchat fallback
+      result = try_local_judge(judge_prompt) || 
+               try_api_judge(judge_prompt) ||
+               try_webchat_judge(judge_prompt, echo_manager)
+      result || fallback_select(valid_candidates)
+    when "local"
+      try_local_judge(judge_prompt) || fallback_select(valid_candidates)
+    when "api"
+      try_api_judge(judge_prompt) || fallback_select(valid_candidates)
+    else
+      # Specific provider mode
+      try_provider_judge(judge_prompt, @mode, echo_manager) || fallback_select(valid_candidates)
+    end
+  end
+
+  private
+
+  def build_judge_prompt(query, candidates)
+    prompt = "You are a judge evaluating multiple AI responses to select the best answer.\n\n"
+    prompt += "User question: #{query}\n\n"
+    prompt += "Candidate answers:\n\n"
+    candidates.each_with_index do |c, i|
+      prompt += "Candidate #{i + 1} (#{c[:provider]}, latency: #{c[:latency]&.round(2)}s):\n"
+      prompt += "#{c[:response]}\n\n"
+    end
+    prompt += "Respond with JSON containing: {\"winner\": <number>, \"final_answer\": \"<synthesized or selected answer>\"}\n"
+    prompt += "Select the most accurate, complete, and helpful answer. You may synthesize elements from multiple candidates."
+    prompt
+  end
+
+  def try_local_judge(prompt)
+    return nil unless ollama_available?
+    
+    uri = URI("http://localhost:11434/api/generate")
+    payload = { model: "llama3.2:3b", prompt: prompt, stream: false }
+    response = Timeout.timeout(30) do
+      Net::HTTP.post(uri, JSON.generate(payload), "Content-Type" => "application/json")
+    end
+    
+    if response.code == "200"
+      text = JSON.parse(response.body)["response"]
+      parse_judge_response(text)
+    else
+      nil
+    end
+  rescue
+    nil
+  end
+
+  def try_api_judge(prompt)
+    return nil unless ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-")
+    
+    client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
+    response = client.messages(
+      model: "claude-3-5-haiku-20241022",
+      max_tokens: 4096,
+      messages: [{ role: "user", content: prompt }]
+    )
+    
+    text = response["content"].map { |c| c["text"] }.compact.join("\n")
+    parse_judge_response(text)
+  rescue
+    nil
+  end
+
+  def try_webchat_judge(prompt, echo_manager)
+    return nil unless echo_manager
+    
+    healthy = echo_manager.healthy_providers
+    return nil if healthy.empty?
+    
+    provider = healthy.first
+    try_provider_judge(prompt, provider, echo_manager)
+  end
+
+  def try_provider_judge(prompt, provider_name, echo_manager)
+    return nil unless echo_manager && WebChat::PROVIDERS[provider_name]
+    
+    session = echo_manager.send(:get_or_create_session, provider_name)
+    response = Timeout.timeout(30) { session.send(prompt) }
+    parse_judge_response(response)
+  rescue
+    nil
+  end
+
+  def parse_judge_response(text)
+    # Try to extract JSON
+    json_match = text.match(/\{[^}]*"final_answer"[^}]*\}/m)
+    if json_match
+      data = JSON.parse(json_match[0])
+      return data["final_answer"] if data["final_answer"]
+    end
+    nil
+  rescue
+    nil
+  end
+
+  def fallback_select(candidates)
+    # Heuristic: prefer non-empty, longest, best latency
+    best = candidates.max_by do |c|
+      length_score = c[:response]&.length || 0
+      latency_score = c[:latency] ? (1.0 / (c[:latency] + 0.1)) : 0
+      length_score * 0.7 + latency_score * 0.3
+    end
+    best ? best[:response] : "No valid responses received."
+  end
+
+  def ollama_available?
+    system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1")
+  end
+end
+
+class EchoProviderManager
+  attr_reader :providers, :health
+
+  def initialize(provider_names = ["glm", "deepseek", "grok"])
+    @providers = {}
+    @health = {}
+    @timeout = 45
+    provider_names.each { |name| add_provider(name) if WebChat::PROVIDERS[name] }
+  end
+
+  def add_provider(name)
+    return if @providers[name]
+    @health[name] = {
+      enabled: true,
+      last_ok_at: nil,
+      last_error: nil,
+      consecutive_failures: 0,
+      avg_latency: 0,
+      total_queries: 0
+    }
+  end
+
+  def remove_provider(name)
+    @providers[name]&.quit rescue nil
+    @providers.delete(name)
+    @health.delete(name)
+  end
+
+  def set_timeout(seconds)
+    @timeout = [seconds.to_i, 10].max
+  end
+
+  def query_all(text)
+    results = []
+    healthy = healthy_providers
+
+    if healthy.empty?
+      # Try to re-enable all providers if all are disabled
+      @health.each { |name, h| h[:enabled] = true if h[:consecutive_failures] < 10 }
+      healthy = healthy_providers
+    end
+
+    threads = healthy.map do |name|
+      Thread.new do
+        begin
+          start_time = Time.now
+          session = get_or_create_session(name)
+          response = Timeout.timeout(@timeout) { session.send(text) }
+          latency = Time.now - start_time
+          
+          update_health_success(name, latency)
+          { provider: name, response: response, latency: latency, error: nil }
+        rescue => e
+          update_health_failure(name, e.message)
+          { provider: name, response: nil, latency: nil, error: e.message }
+        end
+      end
+    end
+
+    threads.each { |t| results << t.value }
+    results
+  end
+
+  def healthy_providers
+    @health.select { |name, h| h[:enabled] && h[:consecutive_failures] < 3 }.keys
+  end
+
+  def status
+    @health.map do |name, h|
+      status_str = h[:enabled] ? (h[:consecutive_failures] > 0 ? "degraded" : "healthy") : "disabled"
+      latency_str = h[:avg_latency] > 0 ? "#{h[:avg_latency].round(2)}s" : "n/a"
+      "#{name}: #{status_str}, latency: #{latency_str}, queries: #{h[:total_queries]}, failures: #{h[:consecutive_failures]}"
+    end.join("\n")
+  end
+
+  def close_all
+    @providers.each { |_, session| session.quit rescue nil }
+    @providers.clear
+  end
+
+  private
+
+  def get_or_create_session(name)
+    unless @providers[name]
+      @providers[name] = WebChat.new(name)
+    end
+    @providers[name]
+  end
+
+  def update_health_success(name, latency)
+    h = @health[name]
+    h[:last_ok_at] = Time.now
+    h[:consecutive_failures] = 0
+    h[:total_queries] += 1
+    h[:avg_latency] = (h[:avg_latency] * (h[:total_queries] - 1) + latency) / h[:total_queries]
+  end
+
+  def update_health_failure(name, error_msg)
+    h = @health[name]
+    h[:last_error] = error_msg
+    h[:consecutive_failures] += 1
+    h[:total_queries] += 1
+    h[:enabled] = false if h[:consecutive_failures] >= 3
+  end
+end
+
 class RAG
   def initialize = (@chunks = []; @embeddings = {}; @provider = detect_provider)
 
@@ -646,6 +884,18 @@ class CLI
 
     /no            reject pending tool calls
 
+    /echo on|off           enable/disable echo chamber mode
+
+    /echo providers LIST   set echo providers (default: glm deepseek grok)
+
+    /echo timeout SECS     set per-provider timeout (default: 45)
+
+    /echo show             show provider health/status
+
+    /echo debug on|off     show all candidate responses
+
+    /judge MODE            set judge mode: auto|local|api|<provider> (default: auto)
+
     /ingest PATH   add files to knowledge base
 
     /search QUERY  search knowledge base
@@ -696,6 +946,14 @@ class CLI
 
     @profiles = {}
 
+    @echo_enabled = false
+
+    @echo_manager = nil
+
+    @echo_debug = false
+
+    @judge = JudgeSelector.new
+
   end
 
   def run
@@ -723,6 +981,8 @@ class CLI
   ensure
 
     @client.quit if @client.is_a?(WebChat)
+
+    @echo_manager&.close_all
 
   end
 
@@ -812,6 +1072,10 @@ class CLI
 
     when "/profile" then profile_cmd(arg)
 
+    when "/echo" then echo_cmd(arg)
+
+    when "/judge" then judge_cmd(arg)
+
     else UI.error("unknown command")
 
     end
@@ -822,11 +1086,15 @@ class CLI
 
     text = @rag.augment(text) if @rag_enabled && @rag.stats[:chunks] > 0
 
-    response = UI.thinking { @client.send(text) }
+    if @echo_enabled && @mode == :webchat
+      echo_message(text)
+    else
+      response = UI.thinking { @client.send(text) }
 
-    UI.response(response)
+      UI.response(response)
 
-    show_pending_tools if @mode == :api && @client.pending_tools?
+      show_pending_tools if @mode == :api && @client.pending_tools?
+    end
 
   rescue => e
 
@@ -948,6 +1216,116 @@ class CLI
 
     end
 
+  end
+
+  def echo_cmd(arg)
+    return UI.error("echo mode only works in webchat mode") unless @mode == :webchat
+
+    parts = arg.to_s.split(/\s+/)
+    subcmd = parts[0]
+
+    case subcmd
+    when "on"
+      @echo_enabled = true
+      @echo_manager ||= EchoProviderManager.new(["glm", "deepseek", "grok"])
+      UI.status("echo chamber enabled with providers: #{@echo_manager.healthy_providers.join(", ")}")
+    when "off"
+      @echo_enabled = false
+      @echo_manager&.close_all
+      @echo_manager = nil
+      UI.status("echo chamber disabled")
+    when "providers"
+      if parts.size > 1
+        provider_list = parts[1..-1]
+        invalid = provider_list.reject { |p| WebChat::PROVIDERS[p] }
+        if invalid.any?
+          UI.error("unknown providers: #{invalid.join(", ")}")
+        else
+          @echo_manager&.close_all
+          @echo_manager = EchoProviderManager.new(provider_list)
+          UI.status("echo providers set to: #{provider_list.join(", ")}")
+        end
+      else
+        UI.puts("available providers: #{WebChat::PROVIDERS.keys.join(", ")}")
+        UI.puts("current: #{@echo_manager&.healthy_providers&.join(", ") || "none"}")
+      end
+    when "timeout"
+      if parts[1]
+        timeout = parts[1].to_i
+        if timeout >= 10
+          @echo_manager ||= EchoProviderManager.new
+          @echo_manager.set_timeout(timeout)
+          UI.status("echo timeout set to #{timeout}s")
+        else
+          UI.error("timeout must be at least 10 seconds")
+        end
+      else
+        UI.error("usage: /echo timeout <seconds>")
+      end
+    when "show"
+      if @echo_manager
+        UI.puts(@echo_manager.status)
+      else
+        UI.status("echo chamber not initialized")
+      end
+    when "debug"
+      if parts[1] == "on"
+        @echo_debug = true
+        UI.status("echo debug enabled")
+      elsif parts[1] == "off"
+        @echo_debug = false
+        UI.status("echo debug disabled")
+      else
+        UI.error("usage: /echo debug on|off")
+      end
+    else
+      UI.error("usage: /echo on|off|providers|timeout|show|debug")
+    end
+  end
+
+  def judge_cmd(arg)
+    return UI.error("judge mode only works with echo chamber") unless @echo_enabled
+
+    mode = arg.to_s.strip
+    if mode.empty?
+      UI.error("usage: /judge auto|local|api|<provider>")
+    elsif mode == "auto" || mode == "local" || mode == "api"
+      @judge.set_mode(mode)
+      UI.status("judge mode set to: #{mode}")
+    elsif WebChat::PROVIDERS[mode]
+      @judge.set_mode(mode)
+      UI.status("judge mode set to provider: #{mode}")
+    else
+      UI.error("unknown judge mode: #{mode}")
+    end
+  end
+
+  def echo_message(text)
+    UI.status("querying echo providers...")
+    
+    candidates = UI.thinking("collecting responses") do
+      @echo_manager.query_all(text)
+    end
+
+    if @echo_debug
+      UI.puts("\n" + UI.c(:dim, "=== Candidate Responses ==="))
+      candidates.each do |c|
+        if c[:error]
+          UI.puts(UI.c(:red, "#{c[:provider]}: ERROR - #{c[:error]}"))
+        else
+          UI.puts(UI.c(:cyan, "#{c[:provider]} (#{c[:latency]&.round(2)}s):"))
+          UI.puts(c[:response][0..500] + (c[:response].length > 500 ? "..." : ""))
+          UI.puts("")
+        end
+      end
+      UI.puts(UI.c(:dim, "=== Judging ==="))
+    end
+
+    final_answer = UI.thinking("judging responses") do
+      @judge.judge(text, candidates, @echo_manager)
+    end
+
+    UI.response(final_answer)
   end
 
 end
