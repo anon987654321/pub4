@@ -34,20 +34,20 @@
             --font-size-base: 11pt;
             --font-size-small: 10pt;
             --font-size-xsmall: 9pt;
-            --line-height-normal: 1.8;
-            --line-height-heading: 1.4;
-            --line-height-subheading: 1.5;
+            --line-height-normal: 1.45;
+            --line-height-heading: 1.3;
+            --line-height-subheading: 1.4;
             --space-xs: 0.5rem;
             --space-s: 0.75rem;
             --space-m: 1rem;
             --space-l: 1.25rem;
             --space-xl: 1.75rem;
             --space-xxl: 2.5rem;
-            --width-content: 680px;
+            --width-content: 32em;
             --font-heading: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-            --font-text: 'Georgia, Times New Roman, serif;
-            --underline-thickness: 0;
-            --underline-offset: 0;
+            --font-text: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+            --underline-thickness: 1px;
+            --underline-offset: 0.15em;
         }
 
         @media (min-width: 640px) {
@@ -141,6 +141,15 @@
         }
 
         section > p:not(:first-of-type) { text-indent: 2em; }
+        section > p:first-of-type { text-indent: 0; }
+        
+        abbr, .smallcaps {
+            font-variant: small-caps;
+            font-feature-settings: "smcp" 1, "c2sc" 1;
+            letter-spacing: 0.05em;
+            text-transform: lowercase;
+        }
+        
         strong {
             font-weight: 700;
 
@@ -547,7 +556,7 @@
     <main id="main-content" role="main">
         <section>
 
-            <p><strong>Oppfriskning begjæres på følgende grunnlag:</strong> Leietaker mistet tilgang til digital postkasse og fikk først kjennskap til HTUs vedtak 30. desember 2025. HTU avsa vedtak 20. november 2025 uten at leietaker hadde anledning til å uttale seg. Leietaker fremsatte protest til utleier 26. april 2025 (vedlegg 1), men var som privatperson ukjent med HTUs krav til særskilt tilsvar overfor utvalget.</p>
+            <p><strong>Oppfriskning begjæres på følgende grunnlag:</strong> Leietaker mistet tilgang til digital postkasse og fikk først kjennskap til <abbr>HTU</abbr>s vedtak 30. desember 2025. <abbr>HTU</abbr> avsa vedtak 20. november 2025 uten at leietaker hadde anledning til å uttale seg. Leietaker fremsatte protest til utleier 26. april 2025 (vedlegg 1), men var som privatperson ukjent med <abbr>HTU</abbr>s krav til særskilt tilsvar overfor utvalget.</p>
 
             <div class="strategic-highlight">
                 <p><strong>Nøkkelbeviskjede (fysisk umulighet for mottakelse):</strong></p>
@@ -558,7 +567,7 @@
 
                         <strong>15.11.2025</strong>
 
-                        BankID-brikke tapt, meldt til DNB
+                        <abbr>BankID</abbr>-brikke tapt, meldt til <abbr>DNB</abbr>
 
                     </div>
 
@@ -582,7 +591,7 @@
 
                         <strong>30.12.2025 09:47</strong>
 
-                        Første åpning i Altinn (dokumentert)
+                        Første åpning i <abbr>Altinn</abbr> (dokumentert)
 
                     </div>
 
@@ -595,15 +604,15 @@
         <section>
             <h2>Forkynning</h2>
 
-            <p>Leietaker mistet tilgang til digital postkasse i november 2025 som følge av tapt BankID-brikke. Tap meldt til DNB og Digitaliseringsdirektoratet henholdsvis 15. og 16. november 2025 (dokumentert i vedlegg 3). Ny BankID-brikke mottatt 29. desember 2025.</p>
+            <p>Leietaker mistet tilgang til digital postkasse i november 2025 som følge av tapt <abbr>BankID</abbr>-brikke. Tap meldt til <abbr>DNB</abbr> og Digitaliseringsdirektoratet henholdsvis 15. og 16. november 2025 (dokumentert i vedlegg 3). Ny <abbr>BankID</abbr>-brikke mottatt 29. desember 2025.</p>
 
-            <p>Ved gjenopprettet tilgang åpnet leietaker vedtaket første gang 30. desember 2025 kl. 09:47 (dokumentert i Altinn-logg, vedlegg 3). I medhold av <a href="https://lovdata.no/for/2005-12-15-1522/§8" target="_blank" rel="noopener">postforkynningsforskriften § 8</a> (varslingsplikt ved manglende tilgang) og <a href="https://lovdata.no/for/2005-12-15-1522/§9" target="_blank" rel="noopener">§ 9</a> (forkynning anses gjennomført når mottaker faktisk kan ta del i dokumentet) anses forkynning først gjennomført 30. desember 2025. Ny forkynningsdato fastsettes til 30. desember 2025.</p>
+            <p>Ved gjenopprettet tilgang åpnet leietaker vedtaket første gang 30. desember 2025 kl. 09:47 (dokumentert i <abbr>Altinn</abbr>-logg, vedlegg 3). I medhold av <a href="https://lovdata.no/for/2005-12-15-1522/§8" target="_blank" rel="noopener">postforkynningsforskriften § 8</a> (varslingsplikt ved manglende tilgang) og <a href="https://lovdata.no/for/2005-12-15-1522/§9" target="_blank" rel="noopener">§ 9</a> (forkynning anses gjennomført når mottaker faktisk kan ta del i dokumentet) anses forkynning først gjennomført 30. desember 2025. Ny forkynningsdato fastsettes til 30. desember 2025.</p>
         </section>
 
         <section>
             <h2>Oppfriskning</h2>
 
-            <p>Jf. <a href="https://lovdata.no/for/2012-01-27-62/§13" target="_blank" rel="noopener">husleietvistutvalgsforskriften § 13 åttende ledd</a> kan saker oppfriskes ved gyldig passivitetsgrunn. Leietaker protesterte rettidig overfor utleier, men var som privatperson ukjent med kravet om særskilt prosedyre overfor HTU. Dette utgjør unnskyldelig forsinkelse som gir rett til oppfriskning.</p>
+            <p>Jf. <a href="https://lovdata.no/for/2012-01-27-62/§13" target="_blank" rel="noopener">husleietvistutvalgsforskriften § 13 åttende ledd</a> kan saker oppfriskes ved gyldig passivitetsgrunn. Leietaker protesterte rettidig overfor utleier, men var som privatperson ukjent med kravet om særskilt prosedyre overfor <abbr>HTU</abbr>. Dette utgjør unnskyldelig forsinkelse som gir rett til oppfriskning.</p>
 
         </section>
 
