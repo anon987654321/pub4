@@ -651,16 +651,8 @@
     const applyZoom=z=>{zoom=Math.max(.85,Math.min(1.25,z));document.documentElement.style.setProperty("--zoom",String(zoom))};
     const resetPinch=()=>{pinchStartDist=0;baseZoom=zoom};
     const startApp=async e=>{if(audio?.started)return;
-      // Ensure audio engine is initialized
       if(!audio)await audioInitPromise;
-      try{navigator.vibrate?.(12)}catch{}if(e)rippleAtEvent(e);document.getElementById("overlay").style.pointerEvents="none";document.getElementById("overlay").classList.add("ack");document.getElementById("start-title").classList.add("clicked");canvas.classList.add("start-ack");setupSensors();if(IN_SANDBOX){const u=document.getElementById("uiLabel");if(u)u.textContent="Visual-only (sandboxed)"}else{
-        // Start appropriate audio engine
-        if(audio instanceof Mp3AudioEngine){
-          audio.start();
-        }else{
-          loadYouTubeAPI();audio.start();
-        }
-      }setTimeout(()=>{document.getElementById("overlay").hidden=true;document.getElementById("overlay").classList.remove("ack");document.getElementById("start-title").classList.remove("clicked");canvas.classList.remove("start-ack");canvas.focus?.()},220)};
+      try{navigator.vibrate?.(12)}catch{}if(e)rippleAtEvent(e);document.getElementById("overlay").style.pointerEvents="none";document.getElementById("overlay").classList.add("ack");document.getElementById("start-title").classList.add("clicked");canvas.classList.add("start-ack");setupSensors();if(IN_SANDBOX){const u=document.getElementById("uiLabel");if(u)u.textContent="Visual-only (sandboxed)"}else{loadYouTubeAPI();audio.start()}setTimeout(()=>{document.getElementById("overlay").hidden=true;document.getElementById("overlay").classList.remove("ack");document.getElementById("start-title").classList.remove("clicked");canvas.classList.remove("start-ack");canvas.focus?.()},220)};
     const overlayEl=document.getElementById("overlay");
     overlayEl.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();startApp(e)});
     overlayEl.addEventListener("pointerdown",e=>{rippleAtEvent(e);try{navigator.vibrate?.(8)}catch{}},{passive:true});

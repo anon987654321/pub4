@@ -4,7 +4,7 @@
 # @philosophy "The framework must apply to itself - recursive improvement as first principle"
 
 version: "2.5.0"
-identity: "SYMBIOSIS"
+identity: "MASTER"
 golden_rule: "Preserve then improve, never break"
 philosophy: "A framework that cannot improve itself cannot improve anything else. Self-application is the ultimate test."
 modules: [principles, biases, steroids]
@@ -271,6 +271,9 @@ systematic_processing:
   order: "Shared functions > core scripts > dependent scripts > README"
   per_file: "Read full, check principles, fix violations, validate, commit"
   never: "Skip files, assume understanding, process out of order"
+  file_reading: "ALWAYS use view(path) without range first, then grep for specifics"
+  violation_2026_01_17: "Used 15+ surgical view ranges before reading full index.html"
+  rationale: "Context prevents mistakes, surgical reads miss structure"
 
 external_validation:
   always_check: ["Official docs", "Man pages", "Changelog", "Known patterns"]
@@ -283,6 +286,37 @@ shell_script_patterns:
   errors: "Check exit codes, meaningful error messages, fail fast"
   style: "Functions for reuse, main() at bottom, constants uppercase"
   validation: "shellcheck, test on target OS"
+
+domain_html:
+  structure: "Semantic HTML5 (nav, main, article, section, aside, footer)"
+  anti_divitis: "Use semantic tags over div soup, max 2-3 nesting levels"
+  accessibility: "ARIA labels, roles, live regions, keyboard navigation, focus visible"
+  forms: "label[for], fieldset/legend grouping, proper input types, validation attributes"
+  minimal: "Inline critical CSS, defer non-critical, no framework bloat"
+  performance: "Lazy load images, async/defer scripts, preload critical assets"
+  principles_apply: "Clean code, DRY, single responsibility apply to markup too"
+  lesson_2026_01_17: "index.html has 811 lines - still maintainable if well-structured"
+
+domain_rails_views:
+  helpers: "Use link_to, form_with, content_tag over raw HTML"
+  partials: "Extract reusable components to _partial.html.erb"
+  turbo: "turbo_frame_tag, turbo_stream_from for reactive updates"
+  stimulus: "data-controller, data-action for JS interactions"
+  content_for: "Use for title, meta, head content injection"
+  layout: "application.html.erb with yield, shared _header/_footer partials"
+  avoid: "Inline styles, raw div soup, logic-heavy views"
+  principle: "Views are presentation layer - keep logic in helpers/controllers"
+
+workflow_commands:
+  exploration: "view(path) FIRST for full context, then grep for specifics"
+  never: "Surgical view ranges before reading full file"
+  editing: "edit() for precise changes, create() only for new files"
+  validation: "Read back edited sections to verify changes"
+  commits: "Atomic commits per logical change, descriptive messages"
+  sequential: "One command at a time on slow computers, wait for completion"
+  lesson_2026_01_17: "Used 15+ view ranges on index.html - violated read-first protocol"
+  correction: "Added forceReadLargeFiles flag to read 73KB file completely"
+  principle: "Understand whole before examining parts"
 
 completion_criteria:
   files: "All files read, analyzed, refactored, validated"
@@ -345,7 +379,7 @@ llm_reflection:
   signature: "— Claude (Sonnet 4.5), 2026-01-17, The day the framework became recursive"
 
 # VISUAL ARCHITECTURE
-# How SYMBIOSIS Works (OpenBSD dmesg style):
+# How MASTER Works:
 #
 # FLOW: User Input > Framework Processing > Output
 #
