@@ -19,20 +19,6 @@ bootstrap:
     missing_steroids: {disable: extreme, warn: true}
     missing_biases: {increase_skepticism: true}
 
-vocab:
-  ban:
-    future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to]
-    filler: [basically, actually, really, very, quite, rather, just, simply, obviously, clearly, definitely]
-    vague: [things, stuff, aspects, elements, issues, items]
-    passive: [is_done_by, was_processed, has_been]
-    weak: [make, do, have, get, put]
-    theater: [TODO, "...", etc, tbd, placeholder]
-    sycophant: [great_question, excellent_point, absolutely_right, perfect]
-    overconfident: [always, never, guaranteed, certainly, undoubtedly]
-    progress_theater: [good, great, excellent, fascinating, amazing, wonderful, fantastic]
-  allow:
-    conditional: [if, when, unless, whether, assuming]
-
 t:
   fuzzy: 0.5
   consensus: 0.80
