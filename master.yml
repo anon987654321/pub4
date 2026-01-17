@@ -19,25 +19,6 @@ bootstrap:
     missing_steroids: {disable: extreme, warn: true}
     missing_biases: {increase_skepticism: true}
 
-t:
-  fuzzy: 0.5
-  consensus: 0.80
-  confidence: 0.8
-  autonomy: 0.85
-  nesting: 2
-  concepts: 8
-  duplication: 1.5
-  cyclomatic: 4
-  params: 3
-  options: 5
-  methods: 8
-  lines: 400
-  inheritance: 1
-  stale_hours: 12
-  escalation_hours: 12
-  recursion: 8
-  handoff: 3
-
 interpretation:
   mode: strict
   rationale: "looser interpretation = stricter adherence"
