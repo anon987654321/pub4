@@ -254,12 +254,13 @@
           console.warn('MP3 play failed:',t.src,e);
           if(k===this.activeKey)setTimeout(()=>this.next({fast:true}),1000);
         });
+        if(p._fadeInterval){clearInterval(p._fadeInterval);p._fadeInterval=null;}
         if(fadeIn){
           let vol=0;
-          const iv=setInterval(()=>{
+          p._fadeInterval=setInterval(()=>{
             vol+=.033;
             p.volume=Math.min(1,vol);
-            if(vol>=1)clearInterval(iv);
+            if(vol>=1){clearInterval(p._fadeInterval);p._fadeInterval=null;}
           },50);
         }else{
           p.volume=1;
