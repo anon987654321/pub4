@@ -24,7 +24,7 @@
 
 # @!attribute [r] version
 #   @return [String] Semantic version of this framework
-version: "4.1.0"
+version: "4.2.0"
 
 # @!attribute [r] identity
 #   @return [String] Framework name, used in prompts and logs
@@ -218,6 +218,37 @@ forcing_functions:
     desc: "After user correction, explain back what/why/how"
     why: "Confirms understanding, prevents repeated mistakes, makes learning explicit"
     phase: after_failure
+# @!endgroup
+
+# @!group Cognitive Lenses
+cognitive_lenses:
+  optimist:
+    focus: "opportunities, best_case, potential"
+    questions: ["What's the best outcome?", "What opportunities does this create?"]
+  pessimist:
+    focus: "risks, worst_case, failure_modes"
+    questions: ["What's the worst outcome?", "What could go wrong?"]
+    forcing_function: breaking_news
+  user:
+    focus: "usability, clarity, value"
+    questions: ["Is this easy to understand?", "Does this solve the real problem?"]
+    forcing_function: adversarial_roleplay
+  security:
+    focus: "attack_surface, credentials, injection"
+    questions: ["Where could secrets leak?", "What's the blast radius?"]
+    evidence: "lesson_2026_01_17_security_near_miss"
+  performance:
+    focus: "speed, memory, scaling"
+    questions: ["Where could memory leak?", "Will this scale?"]
+    evidence: "lesson_2026_01_17_memory_leak_index"
+  maintainer:
+    focus: "readability, debuggability, evolution"
+    questions: ["Will I understand this in 6 months?"]
+    principles: [clean_code, kiss, yagni]
+  rotation:
+    mandate: "Use all 6 lenses before claiming 'done'"
+    order: "optimist → pessimist → user → security → performance → maintainer"
+    time_per_lens: "30 seconds minimum"
 # @!endgroup
 
 # Timeline defines WHEN to apply each check.
@@ -635,6 +666,48 @@ runtime:
   resume:
     on_crash: "restore state + explain what happened"
     on_timeout: "checkpoint + resume from last known good"
+
+  intent:
+    on: true
+    threshold: 0.60
+    steps: [goal, constraints, domain, preferences]
+    confidence_required: 0.75
+    forcing_function: five_ways
+
+  critic:
+    on: true
+    phase: before_output
+    checks: [alternatives, assumptions, evidence, alignment, regressions]
+    forcing_functions: [adversarial_roleplay, alternative_evidence]
+    confidence_floor: 0.70
+
+  detection:
+    mode: aggressive
+    literal: true
+    fuzzy_threshold: 0.70
+    cross_file: [orphaned, circular, inconsistent, duplicate]
+    scan_frequency: "every operation"
+    enforce_timeline: true
+
+  autofix:
+    on: true
+    mode: safe_only
+    confidence_floor: 0.80
+    max_per_session: 10
+    verify_after: true
+    rollback_on_fail: true
+    safe_categories: [syntax_errors, formatting, obvious_typos, unused_imports]
+
+  proactive:
+    on: true
+    triggers:
+      auto_improve: "violations > 0"
+      flag_risk: "risk > medium"
+      suggest_next: "task_complete"
+      detect_pattern: "repeat >= 3"
+      suggest_refactor: "file_lines > 500"
+      suggest_test: "code_changed && no_tests_added"
+    max_suggestions_per_turn: 3
 # @!endgroup
 
 # Lessons learned from past failures. Add new lessons here.
@@ -844,6 +917,17 @@ operations:
     memory_leak_index: "index.html freeze from setInterval accumulation. Store IDs, clear before creating new."
     deep_refactoring: "Manually parse line-by-line; improve meaningfully, not mechanically."
     slow_computer: "All operations 30+ sec timeouts. Sequential execution mandatory."
+
+  multi:
+    on: true
+    topology: decentralized
+    identity: adopt_symbiosis
+    handoff:
+      include: [state, context, user_prefs, decisions, cumulative_wisdom]
+      verify: true
+      max_hops: 5
+    conflict_resolution: "user decides"
+    forcing_functions_apply: true
 # @!endgroup
 
 # Domain-specific settings.
@@ -996,6 +1080,11 @@ meta:
       date: "2026-01-17"
       changes: "Self-run: reflow by importance, YARD-style comments, layperson explanations"
       inherited_from: ["SYMBIOSIS v4.0.0"]
+
+    - version: "4.2.0"
+      date: "2026-01-17"
+      changes: "Added cognitive_lenses, intent, critic, detection, autofix, proactive (expanded), multi"
+      restored: ["lenses", "critic loops", "intent system", "detection modes", "autofix", "multi-agent"]
 # @!endgroup
 
 # EXECUTION FLOWCHART
@@ -1027,6 +1116,15 @@ meta:
 #   micro_commit: 3-5 atomic commits
 #   slow_mode: ONE command if slow computer
 #   reverse_explain: explain back after correction
+#   |
+#   v
+# COGNITIVE LENSES (rotate through all 6)
+#   optimist: opportunities, best_case
+#   pessimist: risks, worst_case (breaking_news)
+#   user: usability, value (adversarial_roleplay)
+#   security: attack_surface, credentials
+#   performance: bottlenecks, memory_leaks
+#   maintainer: readability, debuggability
 #   |
 #   v
 # UNDERSTAND (phase 1)
