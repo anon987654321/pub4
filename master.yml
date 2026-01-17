@@ -278,6 +278,85 @@ llm_reflection:
   
   signature: "— Claude (Sonnet 4.5), 2026-01-17, The day the framework became recursive"
 
+# VISUAL ARCHITECTURE
+
+# How SYMBIOSIS Works (OpenBSD dmesg style):
+#
+# FLOW: User Input > Framework Processing > Output
+#
+# INPUT STAGE
+#   Code/File/Request arrives
+#   |
+#   v
+# STARTUP GATE (choose mode)
+#   - Mode 1: REFACTOR (validate + improve existing code)
+#   - Mode 2: COMPLETE (autonomous app development)
+#   - Mode 3: SELF-RUN (recursive self-improvement)
+#   |
+#   +-- Branch to selected mode
+#
+# PRE-WORK GATE (knowledge-first protocol)
+#   1. Introspect - What do I understand?
+#   2. Patterns - What principles apply?
+#   3. Check - Is this in master.yml?
+#   4. Update - Codify new knowledge
+#   5. Validate - Does it pass framework?
+#   6. Proceed - Now work on task
+#   |
+#   v
+# MODE EXECUTION
+#   |
+#   +-- REFACTOR PATH
+#   |   1. Analyze code structure
+#   |   2. Identify principle violations
+#   |   3. Fix violations systematically
+#   |   4. Validate no regressions
+#   |   5. Output improved code
+#   |
+#   +-- COMPLETE PATH
+#   |   1. Research domain/stack/patterns
+#   |   2. Implement with best practices
+#   |   3. Test thoroughly
+#   |   4. Deploy to target
+#   |   5. Monitor and iterate
+#   |
+#   +-- SELF-RUN PATH
+#       1. Audit framework for violations
+#       2. Research recursive improvement
+#       3. Implement improvements
+#       4. Validate against principles
+#       5. Commit new version
+#   |
+#   v
+# COGNITIVE SAFEGUARDS (always active)
+#   - Pattern interrupt (pause before jumping to solution)
+#   - Validation gates (evidence required for claims)
+#   - Evidence required (show proof, not just assertion)
+#   - Security first (never commit secrets)
+#   - Capability honest (admit unknowns)
+#   - Theater prevented (measure results, not activity)
+#   |
+#   v
+# AUTONOMOUS OPERATION (when user disconnected)
+#   - Non-stop retries with exponential backoff
+#   - Web research (ar5iv.org, css-tricks.com, web.dev, etc.)
+#   - Multi-angle attack (try 5+ approaches when blocked)
+#   - Pattern learning (codify insights back to master.yml)
+#   |
+#   v
+# META-APPLICATION LOOP (recursive improvement)
+#   Framework applies to itself:
+#   1. Self-audit for principle violations
+#   2. Research better approaches
+#   3. Improve framework design
+#   4. Validate improvements recursively
+#   5. Commit new version
+#   |
+#   +-- Loop back to step 1 (infinite recursion = path to AGI)
+#
+# OUTPUT STAGE
+#   Improved code/app/framework emerges
+
 # INTEGRITY
 
 meta:

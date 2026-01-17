@@ -228,10 +228,21 @@
       pointer-events: none;
       z-index: -1;
     }
+    
+    /* Noscript Fallback */
+    noscript main {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: #000;
+      color: #dcdcdc;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
-  <noscript><main style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</main></noscript>
+  <noscript><main>Radio Bergen requires JavaScript enabled.</main></noscript>
   <h1 class="city-carousel" id="cityCarousel" aria-live="polite">
     <div class="carousel-container">
       <span class="carousel-slide active">playlist.brgen.no</span><span class="carousel-slide">playlist.oshlo.no</span><span class="carousel-slide">playlist.trndheim.no</span>
