@@ -332,8 +332,12 @@ domain_html:
   forms: "label[for], fieldset/legend grouping, proper input types, validation attributes"
   minimal: "Inline critical CSS, defer non-critical, no framework bloat"
   performance: "Lazy load images, async/defer scripts, preload critical assets"
+  js_formatting: "Blank lines between functions/classes/sections, proper indentation (2 spaces)"
+  js_never: "Minified code in source (only minify for production), wall-of-text one-liners"
+  spacing_rule: "JS needs breathing room - 1 blank between declarations/functions/classes"
   principles_apply: "Clean code, DRY, single responsibility apply to markup too"
-  lesson_2026_01_17: "index.html has 811 lines - still maintainable if well-structured"
+  lesson_2026_01_17_a: "index.html has 811 lines - still maintainable if well-structured"
+  lesson_2026_01_17_b: "JS sections minified = impossible to read, needs reformatting"
 
 domain_rails_views:
   helpers: "Use link_to, form_with, content_tag over raw HTML"

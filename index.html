@@ -60,10 +60,14 @@
     const IN_SANDBOX=false;
     const FADE_MS=3500,START_FADE_IN=true,DPR=Math.min(2,window.devicePixelRatio||1),isLowEnd=(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)||(navigator.deviceMemory&&navigator.deviceMemory<=2);
     let audio;
+
     (()=>{const e=document.getElementById("uiDots");if(!e)return;const s=[0,1,2,3,2,1];let i=0;const t=()=>{e.textContent=".".repeat(s[i]);i=(i+1)%s.length};t();try{clearInterval(window.__RB_DOTS_IV)}catch{}window.__RB_DOTS_IV=setInterval(t,600)})();
+
     const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
+
     class SimpleCarousel{constructor(e,i=2800){this.slides=Array.from(e.querySelectorAll(".carousel-slide"));this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),i)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}}
     new SimpleCarousel(document.getElementById("cityCarousel"));
+
     const MP3_TRACKS=[
       {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
       {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
@@ -97,6 +101,7 @@
       {artist:"Chase Swayze",title:"Underrated",id:"1jjFk2Vp5ok"},
       {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364}
     ];
+
     const loadYouTubeAPI=()=>{
       if(IN_SANDBOX||window.__YT_API_LOADED)return;
       window.__YT_API_LOADED=true;
@@ -113,8 +118,10 @@
         }
       },10000);
     };
+
     const YT_ORIGIN="https://www.youtube.com";
     const ytPost=(i,f,a=[])=>{if(IN_SANDBOX)return;try{if(!i||!i.contentWindow)return;i.contentWindow.postMessage({event:"command",func:f,args:a},YT_ORIGIN)}catch{try{i.contentWindow.postMessage({event:"command",func:f,args:a},"*")}catch{}}};
+
     class Mp3AudioEngine{
       constructor(tracks){
         this.started=false;this.muted=true;this.trackIndex=0;
@@ -335,6 +342,7 @@
         return{bass,mid,high,average,beat:this._beatEnv,energy:this.energyLevel,subBass,vocals,treble:high,flux};
       }
     }
+
     // ===== UNIFIED AUDIO ENGINE (MP3 + YouTube) =====
     class UnifiedAudioEngine{
       constructor(tracks){
@@ -440,15 +448,18 @@
       updateUI(){const u=document.getElementById('uiLabel');if(!u)return;const t=this.tracks[this.trackIndex];u.textContent=(t.artist?`${t.artist} - `:'')+t.title}
       data(){if(this.analyser&&this.dataArray){try{this.analyser.getByteFrequencyData(this.dataArray);const n=this.dataArray.length,n2=n*.2|0,n6=n*.6|0;let bass=0,mid=0,high=0;for(let i=0;i<n2;i++)bass+=this.dataArray[i];for(let i=n2;i<n6;i++)mid+=this.dataArray[i];for(let i=n6;i<n;i++)high+=this.dataArray[i];bass/=n2*255;mid/=(n6-n2)*255;high/=(n-n6)*255;const avg=(bass+mid+high)/3;this.beatPhase+=.08*motionScale();const beat=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(beat?.4:0)*.06;return{bass,mid,high,average:avg,beat:this._beatEnv,energy:this.energyLevel}}catch{}}const m=motionScale();this.beatPhase+=.08*m;const b=.5+.4*Math.sin(this.beatPhase*.8),i=.45+.35*Math.sin(this.beatPhase*1.2+.7),h=.35+.35*Math.sin(this.beatPhase*1.8+1.2),a=(b+i+h)/3,r=Math.sin(this.beatPhase)>.8?1:0;this._beatEnv=this._beatEnv*.94+(r?.4:0)*.06;return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel}}
     }
+
     const initAudioEngine=async()=>{
       const allTracks=[...MP3_TRACKS,...YOUTUBE_TRACKS];
       audio=new UnifiedAudioEngine(allTracks);
       console.log(`Unified: ${MP3_TRACKS.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
       return audio;
     };
+
     // Initialize audio engine immediately
     let audioInitPromise=initAudioEngine();
     window.onYouTubeIframeAPIReady=()=>audio?.initYTAPI?.();
+
     const canvas=document.getElementById("canvas"),uiEl=document.getElementById("ui");
     let INTERNAL_SCALE=1,w=0,h=0;
     const SCALE_MAX=Math.min(2,DPR)*(isLowEnd?.9:1),SCALE_MIN=isLowEnd?.4:.5,TARGET_MS=16.7;
