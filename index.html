@@ -332,13 +332,13 @@
           const v=Math.max(0,Math.min(1,a?.average??.45));
           const h=Math.max(0,Math.min(1,a?.high??.35));
           const d=i/Math.max(1,l-1);
-          // Blue/purple wireframe with audio-reactive hue shifts
-          const hueShift=Math.sin(this.time*0.3+d*Math.PI)*0.5+0.5; // oscillating hue
+          // Purple/magenta VGA synthwave aesthetic (8bit lofi)
+          const hueShift=Math.sin(this.time*0.3+d*Math.PI)*0.5+0.5;
           const beatPulse=(a?.beat||0)*80;
-          // Base: dark blue to cyan gradient with depth
-          const r=Math.round((30*h+beatPulse*0.8+hueShift*40)/16)*16;
-          const g=Math.round((60*v+d*30+beatPulse*0.3)/16)*16;
-          const u=Math.round((180+b*60+hueShift*20)/16)*16;
+          // Base: magenta/purple gradient with depth
+          const r=Math.round((200+beatPulse+d*40)/16)*16;
+          const g=Math.round((40*h)/16)*16;
+          const u=Math.round((180+d*50)/16)*16;
           return pack32(r,g,u,255);
         }
         init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
