@@ -348,15 +348,17 @@ domain_rails_views:
 workflow_commands:
   directory_entry: "tree.sh FIRST when entering new folder, pipe output to chat"
   file_reading: "view(path) FIRST for full context, then grep for specifics"
-  never: "Surgical view ranges before reading full file, cd without tree.sh"
+  browser_testing: "ALWAYS test HTML in actual browser before claiming complete"
+  never: "Surgical view ranges before reading full file, cd without tree.sh, skip browser testing"
   editing: "edit() for precise changes, create() only for new files"
   validation: "Read back edited sections to verify changes"
   commits: "Atomic commits per logical change, descriptive messages"
   sequential: "One command at a time on slow computers, wait for completion"
   lesson_2026_01_17_a: "Used 15+ view ranges on index.html - violated read-first"
   lesson_2026_01_17_b: "tree.sh gives directory structure context before file operations"
-  correction: "forceReadLargeFiles for 73KB+ files, tree.sh on directory entry"
-  principle: "Understand whole (directory/file) before examining parts"
+  lesson_2026_01_17_c: "Missing h1#cityCarousel caused runtime error - browser test would catch"
+  correction: "forceReadLargeFiles for 73KB+ files, tree.sh on directory entry, test in browser"
+  principle: "Understand whole (directory/file) before examining parts, validate in real environment"
 
 completion_criteria:
   files: "All files read, analyzed, refactored, validated"
