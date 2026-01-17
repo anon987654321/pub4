@@ -57,15 +57,62 @@
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
   <script>
     "use strict";
-    const IN_SANDBOX=false;
-    const FADE_MS=3500,START_FADE_IN=true,DPR=Math.min(2,window.devicePixelRatio||1),isLowEnd=(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)||(navigator.deviceMemory&&navigator.deviceMemory<=2);
+
+    // Environment & Performance Config
+    const IN_SANDBOX = false;
+    const FADE_MS = 3500;
+    const START_FADE_IN = true;
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
+                     (navigator.deviceMemory && navigator.deviceMemory <= 2);
+
     let audio;
 
-    (()=>{const e=document.getElementById("uiDots");if(!e)return;const s=[0,1,2,3,2,1];let i=0;const t=()=>{e.textContent=".".repeat(s[i]);i=(i+1)%s.length};t();try{clearInterval(window.__RB_DOTS_IV)}catch{}window.__RB_DOTS_IV=setInterval(t,600)})();
+    // Animated loading dots UI (". " → ".. " → "..." pattern)
+    (() => {
+      const dotsElement = document.getElementById("uiDots");
+      if (!dotsElement) return;
+      
+      const pattern = [0, 1, 2, 3, 2, 1];
+      let index = 0;
+      
+      const updateDots = () => {
+        dotsElement.textContent = ".".repeat(pattern[index]);
+        index = (index + 1) % pattern.length;
+      };
+      
+      updateDots();
+      try { clearInterval(window.__RB_DOTS_IV); } catch {}
+      window.__RB_DOTS_IV = setInterval(updateDots, 600);
+    })();
 
-    const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
+    // Motion scale: 0.35x if reduced-motion preference, else 1x
+    const motionScale = () => {
+      if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return 0.35;
+      }
+      return 1;
+    };
 
-    class SimpleCarousel{constructor(e,i=2800){this.slides=Array.from(e.querySelectorAll(".carousel-slide"));this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),i)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}}
+    // City name carousel (cycles through playlist.city.tld domains)
+    class SimpleCarousel {
+      constructor(element, intervalMs = 2800) {
+        this.slides = Array.from(element.querySelectorAll(".carousel-slide"));
+        this.currentIndex = 0;
+        this.slideCount = this.slides.length;
+        
+        if (this.slideCount > 1) {
+          this.timer = setInterval(() => this.next(), intervalMs);
+        }
+      }
+      
+      next() {
+        this.slides[this.currentIndex].classList.remove("active");
+        this.currentIndex = (this.currentIndex + 1) % this.slideCount;
+        this.slides[this.currentIndex].classList.add("active");
+      }
+    }
+
     new SimpleCarousel(document.getElementById("cityCarousel"));
 
     const MP3_TRACKS=[

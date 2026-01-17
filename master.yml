@@ -209,6 +209,9 @@ cognitive_safeguards:
     problem: "Optimize for appearing busy (commits, scripts) vs being effective"
     solution: "Measure by problems solved, not lines changed or commits made"
     ban: ["Scripts replacing <5 line commands", "Commits without meaningful change", "Progress narration"]
+    lesson_2026_01_17: "Adding blank lines mechanically vs parsing/understanding each line"
+    principle: "Manual refactoring = read each line, understand purpose, improve meaningfully"
+    never: "Superficial formatting without comprehension, batch edits without line-by-line analysis"
   pattern_interrupt:
     problem: "Jump to solution without understanding (pattern completion bias)"
     solution: "Mandatory pause: What is ACTUAL problem? ROOT cause? FULL scope? 5 alternatives?"
