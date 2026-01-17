@@ -266,6 +266,44 @@ domain_openbsd:
   dns: "nsd authoritative DNS, DNSSEC signing with ldns-signzone"
   validation_sources: ["man.openbsd.org", "openbsd.org/faq"]
 
+domain_norwegian:
+  translation_pairs: "Norwegian Bokmål ↔ English, Nynorsk awareness"
+  linguistic_similarity: "Germanic language family - Strunk & White principles apply to both"
+  strunk_white_universal: "Omit needless words, use active voice, be specific, avoid abstractions"
+  register: "Formal (legal/business) vs informal (marketing/web)"
+  terminology: "Preserve domain terms (juridisk → legal, forretningsplan → business plan)"
+  cultural_context: "Norwegian directness, lagom, janteloven implications"
+  numbers: "European format (10 000,50 not 10,000.50), dates (DD.MM.YYYY)"
+  names: "Preserve Norwegian characters (æ, ø, å), company suffixes (AS, ASA)"
+  validation: "Native speaker review, legal accuracy verification"
+  writing_quality: "Same standards for both languages - clarity, conciseness, precision"
+
+domain_legal:
+  structure: "Lov (act) → kapittel (chapter) → paragraf (section) → ledd (subsection)"
+  language: "Precise, unambiguous, shall/must distinction, defined terms in quotes"
+  citation: "Lov om X (LOV-YYYY-MM-DD-NNNN), § symbol for paragraf"
+  translation: "Legal terms have specific English equivalents (cannot improvise)"
+  contracts: "Whereas clauses, force majeure, severability, governing law"
+  letters: "Formal salutation, reference numbers, explicit action requests"
+  validation_sources: ["lovdata.no", "rettspraksis.no", "regjeringen.no"]
+
+domain_business:
+  plans: "Executive summary, market analysis, operations, financials, appendix"
+  norwegian_focus: "Emphasize sustainability, work-life balance, social responsibility"
+  financials: "NOK currency, Norwegian tax structure (25% corporate, MVA 25%)"
+  regulations: "Foretaksregisteret, Brønnøysundregistrene, industry-specific permits"
+  pitch_style: "Less aggressive than US, data-driven, collaborative tone"
+  validation: "Financial projections realistic for Norwegian market"
+
+domain_academic:
+  structure: "Abstract, introduction, theory, method, results, discussion, conclusion"
+  citation: "APA 7th, Harvard, Chicago - check journal requirements"
+  norwegian_institutions: "UiO, NTNU, UiB abbreviations accepted"
+  language: "Passive voice acceptable in method/results, active in discussion"
+  statistics: "Report effect sizes, confidence intervals, not just p-values"
+  translation: "Academic jargon has established equivalents (check field glossaries)"
+  validation_sources: ["universitetsforlaget.no", "idunn.no", "cristin.no"]
+
 systematic_processing:
   protocol: "Read all files first, map dependencies, process in order, validate each"
   order: "Shared functions > core scripts > dependent scripts > README"
