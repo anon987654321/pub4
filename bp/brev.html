@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html lang="nb">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Hjelp</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/css-doodle@0.38.2/css-doodle.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,opsz,wght@0,8..144,400..800;1,8..144,400..800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+
+    :root {
+
+      --bg: #fafafa;
+
+      --text: #1a1a1a;
+
+      --accent: #60569e;
+
+      --gray: #888;
+
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+
+      font-family: "EB Garamond", serif;
+
+      font-size: 1.125rem;
+
+      line-height: 1.7;
+
+      color: var(--text);
+
+      background: var(--bg);
+
+      padding: 3rem 2rem;
+
+      min-height: 100vh;
+
+      display: grid;
+
+      place-items: center;
+
+      text-align: center;
+
+    }
+
+    .container {
+
+      max-width: 640px;
+
+      display: grid;
+
+      gap: 4rem;
+
+    }
+
+    h1 {
+
+      font-size: clamp(2.5rem, 8vw, 4rem);
+
+      font-style: italic;
+
+      font-weight: 500;
+
+      line-height: 1.1;
+
+    }
+
+    p {
+
+      font-size: 1.25rem;
+
+      max-width: 56ch;
+
+      margin: 0 auto;
+
+    }
+
+    table {
+
+      width: 100%;
+
+      margin: 3rem auto;
+
+      background: #fff;
+
+      border-radius: 12px;
+
+      overflow: hidden;
+
+      box-shadow: 0 4px 30px rgba(0,0,0,.07);
+
+    }
+
+    td {
+
+      padding: 1rem 1.5rem;
+
+      border-bottom: 1px solid #eee;
+
+      text-align: left;
+
+    }
+
+    td:last-child {
+
+      text-align: right;
+
+      font-variant-numeric: oldstyle-nums;
+
+      font-feature-settings: "onum";
+
+      color: var(--accent);
+
+      font-weight: 600;
+
+    }
+
+    tfoot td:last-child {
+
+      font-size: 1.5rem;
+
+      font-weight: 700;
+
+      color: var(--text);
+
+      border-top: 3px solid var(--accent);
+
+    }
+
+    .account {
+
+      font-size: 2rem;
+
+      font-variant-numeric: oldstyle-nums;
+
+      font-feature-settings: "onum";
+
+      font-weight: 600;
+
+      margin: 3rem 0;
+
+    }
+
+    /* Den perfekte, raske 4-sløyfe dekorasjonen – øverst til høyre */
+
+    .crest {
+
+      position: fixed;
+
+      top: 2rem;
+
+      right: 2rem;
+
+      width: 140px;
+
+      height: 140px;
+
+      z-index: 10;
+
+      pointer-events: none;
+
+    }
+
+    @media (max-width:640px) {
+
+      .crest { width: 100px; height: 100px; top: 1.5rem; right: 1.5rem; }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <!-- 4 syltynne, super-raske sløyfer – silkemykt og dramatisk -->
+
+  <css-doodle class="crest">
+
+    :doodle { @grid:4x1 / 100%; background:transparent }
+
+    clip-path: @shape(
+
+      points:360; frame:24; turn:.5; scale:.08;
+
+      x:9*cos(10t)+cos(44t);
+
+      y:9*sin(10t)+sin(44t)
+
+    );
+
+    background:#000;
+
+    opacity:1;
+
+    @place-cell:center;
+
+    @size:calc(100% - @i()*1.1%);
+
+    animation: spin calc(0.22s + @i()*0.035s) linear infinite;
+
+    animation-direction: @pick(normal, reverse);
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  </css-doodle>
+
+  <div class="container">
+
+    <header>
+
+      <h1>Hjelp til å dekke<br>domene- og AI-regninger</h1>
+
+    </header>
+
+    <main>
+
+      <section>
+
+        <p>Jeg har utviklet en ny type lyd- og bildegenerator som vil revolusjonere våre film- og TV-opplevelser. Det den lager blir spredt ut til folk via neste-generasjons hyperlokale sosiale nettverk; én for hver storby i USA og Europa. Men, siden inntekter ikke forventes før flere måneder etter lansering, er jeg ute av stand til å dekke disse utgiftene selv.</p>
+
+      </section>
+
+      <section>
+
+        <table>
+
+          <tbody>
+
+            <tr><td>Domeneshop.no (7 domener)</td><td>4 053 kr</td></tr>
+
+            <tr><td>GitHub.com + kreditter</td><td>2 224 kr</td></tr>
+
+            <tr><td>Replicate.com + kreditter</td><td>3 359 kr</td></tr>
+
+            <tr><td>Grok.com + kreditter</td><td>2 041 kr</td></tr>
+
+            <tr><td>Mat og medisiner</td><td>5 000 kr</td></tr>
+
+          </tbody>
+
+          <tfoot>
+
+            <tr><td></td><td>16 677 kr</td></tr>
+
+          </tfoot>
+
+        </table>
+
+      </section>
+
+      <section>
+
+        <p class="account">Kontonr.: 3624.14.42270</p>
+
+      </section>
+
+    </main>
+
+    <footer style="font-size:.8rem;color:#666;margin-top:6rem">
+
+      <p>www.pub.healthcare — Universal free healthcare for all Americans.</p>
+
+      <p style="margin-top:.5rem">Opphavsrett © 2025 PubHealthcare, Kanalveien 10, NO-5068 Bergen.</p>
+
+    </footer>
+
+  </div>
+
+</body>
+
+</html>

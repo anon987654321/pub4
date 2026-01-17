@@ -1,0 +1,611 @@
+# BRINGHURST TYPOGRAPHIC PRINCIPLES
+# Codified from "The Elements of Typographic Style" 4th Edition
+# For integration into MASTER.yml governance framework
+
+typography:
+  version: "4.0"
+  authority: "bringhurst"
+  
+  meta_principles:
+    foundation: |
+      Typography exists to honor content. All typographic decisions must serve 
+      the reader and the text. When in doubt, choose clarity over cleverness.
+    
+    grand_design: |
+      Read the text before designing it. Understand its structure, rhythm, and 
+      purpose. Let the content inform every typographic choice.
+
+  ## CHAPTER 2: RHYTHM AND PROPORTION
+  
+  rhythm_proportion:
+    
+    # 2.1 HORIZONTAL MOTION
+    horizontal:
+      
+      measure:
+        rule: "Optimal line length is 45-75 characters (66 is ideal)"
+        implementation:
+          - css: "max-width: 33em" # at 12pt, ~66 chars
+          - check: "Count characters in typical line"
+          - exception: "Narrow columns (newspapers): 40-50 characters acceptable"
+        
+        rationale: |
+          Too-long lines tire the eye and make it hard to find the next line.
+          Too-short lines break the reading rhythm and waste space.
+      
+      word_spacing:
+        rule: "Word spaces should be 1/4em to 1/3em (optimum: 1/4em)"
+        implementation:
+          - css: "word-spacing: normal" # browser default is good
+          - check: "Visual inspection - should look 'invisible'"
+        
+        danger: "Avoid word spaces wider than 1/2em or narrower than 1/5em"
+      
+      letter_spacing:
+        rule: "Lowercase should not be letter-spaced (tracked) except for design effect"
+        implementation:
+          - css: "letter-spacing: normal"
+          - exception: "All caps: +0.05em to +0.15em"
+          - exception: "Small caps: +0.05em"
+        
+        capitals:
+          rule: "Add slight tracking to all-caps text"
+          css: "letter-spacing: 0.05em to 0.15em"
+        
+        small_caps:
+          rule: "Add slight tracking to small caps for optical balance"
+          css: "letter-spacing: 0.05em"
+    
+    # 2.2 VERTICAL MOTION
+    vertical:
+      
+      baseline_grid:
+        rule: "Establish and maintain a baseline grid for vertical rhythm"
+        implementation:
+          - define: "Choose base unit (6pt or 8pt for print, 4px or 6px for screen)"
+          - line_height: "Must be multiple of base unit"
+          - spacing: "All vertical spacing must align to grid"
+        
+        example:
+          base_unit: "6pt"
+          body_size: "12pt"
+          line_height: "24pt (4 × 6pt)"
+          section_spacing: "48pt (8 × 6pt)"
+      
+      leading:
+        rule: "Add 20% leading for body text (e.g., 10pt/12pt, 12pt/14.4pt)"
+        implementation:
+          - calculation: "line-height = font-size × 1.2 to 1.5"
+          - print: "1.2 is minimum, 1.4-1.5 optimal"
+          - screen: "1.5-1.6 recommended for readability"
+        
+        adjustments:
+          longer_lines: "Add more leading (up to 1.6)"
+          shorter_lines: "Can use less leading (down to 1.2)"
+          sans_serif: "Needs more leading than serif"
+          large_x_height: "Needs more leading"
+      
+      vertical_spacing:
+        rule: "Space paragraphs and headings based on baseline grid"
+        
+        paragraphs:
+          separation_method_1:
+            method: "Indent first line (2em), no space between"
+            implementation:
+              - "p + p { text-indent: 2em; margin-top: 0; }"
+          
+          separation_method_2:
+            method: "Space between (1 line), no indent"
+            implementation:
+              - "p + p { margin-top: 1.5em; text-indent: 0; }"
+          
+          first_paragraph:
+            rule: "Never indent first paragraph after heading"
+            implementation:
+              - "h1 + p, h2 + p { text-indent: 0; }"
+        
+        headings:
+          spacing:
+            rule: "More space before heading than after"
+            implementation:
+              - "h2 { margin-top: 3em; margin-bottom: 1em; }"
+            
+            rationale: "Heading belongs to text that follows, not precedes"
+  
+  ## CHAPTER 3: HARMONY AND COUNTERPOINT
+  
+  harmony_counterpoint:
+    
+    consistency:
+      rule: "Use as few different sizes, weights, and styles as needed"
+      implementation:
+        - "Maximum 3-4 font sizes in most documents"
+        - "Maximum 2 font families (one serif, one sans)"
+        - "Be consistent with spacing and alignment"
+      
+      hierarchy:
+        levels:
+          - level: 1
+            element: "h1"
+            size: "2.0-2.5 × body"
+            weight: "300-400 (light to regular)"
+            spacing: "Large space before (3-4 lines)"
+          
+          - level: 2
+            element: "h2"
+            size: "1.5-1.75 × body"
+            weight: "400-600 (regular to semibold)"
+            spacing: "3 lines before, 1 line after"
+          
+          - level: 3
+            element: "h3"
+            size: "1.25-1.33 × body"
+            weight: "600 (semibold)"
+            spacing: "2 lines before, 0.5 lines after"
+    
+    contrast:
+      rule: "Contrast should be obvious, never timid"
+      examples:
+        - "If using bold, make it noticeably bold (600+)"
+        - "If changing size, change by at least 20%"
+        - "If using italic, let it be clearly italic"
+      
+      danger: "Avoid weak contrast (e.g., 400 weight vs 450 weight)"
+    
+    optical_alignment:
+      rule: "Align to optical edge, not mathematical edge"
+      
+      hanging_punctuation:
+        rule: "Hang punctuation outside text block for optical alignment"
+        implementation:
+          - "Quotation marks should hang in left margin"
+          - "Periods, commas at line end can hang slightly"
+          - css: "text-indent: -0.5em on first line with quote"
+      
+      capitals:
+        rule: "Optically align capitals to lowercase, not baseline"
+        note: "In list with numbers/bullets, align baseline not cap-height"
+  
+  ## CHAPTER 4: STRUCTURAL FORMS AND DEVICES
+  
+  structural_forms:
+    
+    lists:
+      numbered:
+        alignment:
+          rule: "Right-align numbers for optical balance"
+          implementation: "text-align: right on number cell"
+        
+        punctuation:
+          rule: "Use periods after numbers, or omit punctuation entirely"
+          avoid: "Parentheses around numbers: (1) (2) (3)"
+      
+      bulleted:
+        rule: "Use proper bullet (•), not asterisk or hyphen"
+        indent: "Hang bullet in margin or use 2-3em indent"
+    
+    quotations:
+      block_quotes:
+        rule: "Indent block quotes, use smaller size or italic"
+        implementation:
+          - indent: "2-3em on left (and optionally right)"
+          - size: "90-95% of body size"
+          - leading: "Maintain same as body"
+      
+      inline_quotes:
+        rule: "Use proper typographic quotes, not straight quotes"
+        characters:
+          - opening_double: """ (U+201C)
+          - closing_double: """ (U+201D)
+          - opening_single: "'" (U+2018)
+          - closing_single: "'" (U+2019)
+    
+    captions:
+      rule: "Set captions smaller than body, with less leading"
+      implementation:
+        - size: "85-90% of body"
+        - leading: "80-90% of body leading"
+        - style: "May use italic or different weight"
+  
+  ## CHAPTER 5: ANALPHABETIC SYMBOLS
+  
+  punctuation:
+    
+    dashes:
+      hyphen:
+        character: "-" # (U+002D)
+        use: "Word breaks, compound words"
+      
+      en_dash:
+        character: "–" # (U+2013)
+        use: "Number ranges (1990–2000), compound adjectives"
+        spacing: "No spaces around"
+      
+      em_dash:
+        character: "—" # (U+2014)
+        use: "Breaks in thought, parenthetical statements"
+        spacing: "No spaces around (US), thin spaces (European)"
+    
+    ellipsis:
+      character: "…" # (U+2026)
+      rule: "Use single ellipsis character, not three periods"
+      spacing: "Normal word space before/after"
+    
+    numerals:
+      
+      oldstyle:
+        rule: "Use oldstyle (lowercase) numerals in running text"
+        implementation:
+          - css: "font-variant-numeric: oldstyle-nums"
+          - opentype: "font-feature-settings: 'onum'"
+      
+      lining:
+        rule: "Use lining (uppercase) numerals in tables, all-caps"
+        implementation:
+          - css: "font-variant-numeric: lining-nums"
+          - opentype: "font-feature-settings: 'lnum'"
+      
+      tabular:
+        rule: "Use tabular numerals in tables for alignment"
+        implementation:
+          - css: "font-variant-numeric: tabular-nums"
+          - opentype: "font-feature-settings: 'tnum'"
+    
+    small_caps:
+      rule: "Use real small caps, not scaled capitals"
+      implementation:
+        - css: "font-variant: small-caps"
+        - opentype: "font-feature-settings: 'smcp', 'c2sc'"
+        - tracking: "Add 0.05em letter-spacing"
+      
+      usage:
+        - "Acronyms in running text (HTML, CSS)"
+        - "A.M., P.M., A.D., B.C."
+        - "Beginning of chapters or sections"
+  
+  ## CHAPTER 6: CHOOSING AND COMBINING TYPE
+  
+  font_selection:
+    
+    principles:
+      - "Choose fonts that suit the content"
+      - "Choose fonts with complete character sets"
+      - "Choose fonts with proper weights and styles"
+      - "Limit to 1-2 font families per project"
+    
+    combinations:
+      rule: "Combine fonts with similar proportions but different voices"
+      
+      safe_combinations:
+        - "Serif for body + sans-serif for headings"
+        - "Old-style serif + geometric sans"
+        - "Same family, different weights"
+      
+      dangerous:
+        - "Two serif families"
+        - "Two sans-serif families"
+        - "Fonts with different x-heights"
+    
+    text_fonts:
+      characteristics:
+        - "Moderate x-height (not too large)"
+        - "Clear, open counters"
+        - "Good italic and bold weights"
+        - "Complete character set with ligatures"
+      
+      examples:
+        serif: ["Garamond", "Bembo", "Caslon", "Minion"]
+        sans: ["Gill Sans", "Frutiger", "Syntax", "Scala Sans"]
+    
+    display_fonts:
+      rule: "Display fonts for headings can be more decorative"
+      caution: "Must remain legible at large sizes"
+  
+  ## CHAPTER 7: HISTORICAL INTERLUDE
+  
+  historical_principles:
+    
+    respect_history:
+      rule: "Understand the historical context of typefaces"
+      note: |
+        Garamond (1540s) has different personality than
+        Helvetica (1957). Choose appropriately.
+    
+    anachronism:
+      avoid: "Using modern fonts for historical content"
+      exception: "When creating deliberate contrast"
+  
+  ## CHAPTER 8: SHAPING THE PAGE
+  
+  page_geometry:
+    
+    margins:
+      rule: "Inner margin smallest, outer larger, top larger, bottom largest"
+      ratio: "Classic ratio 2:3:4:6 (inner:top:outer:bottom)"
+      
+      modern_web:
+        rule: "Symmetrical margins acceptable for screen"
+        minimum: "2-3em on each side for comfortable reading"
+    
+    columns:
+      single:
+        rule: "Optimal for 45-75 characters per line"
+        max_width: "33em at typical reading size"
+      
+      multiple:
+        rule: "40-50 characters per column"
+        gutter: "2-3em between columns"
+    
+    grid:
+      rule: "Establish modular grid based on baseline"
+      implementation:
+        - "Define base unit"
+        - "Everything aligns to grid"
+        - "Maintain across all pages"
+  
+  ## CHAPTER 9: THE STATE OF THE ART
+  
+  technical_excellence:
+    
+    kerning:
+      rule: "Use font's built-in kerning"
+      implementation:
+        - css: "font-kerning: normal"
+        - opentype: "font-feature-settings: 'kern'"
+    
+    ligatures:
+      rule: "Enable common ligatures (fi, fl, ff, ffi, ffl)"
+      implementation:
+        - css: "font-variant-ligatures: common-ligatures"
+        - opentype: "font-feature-settings: 'liga', 'clig'"
+      
+      discretionary:
+        rule: "Use discretionary ligatures sparingly"
+        note: "ct, st ligatures can be beautiful but distracting"
+    
+    opentype_features:
+      enable_by_default:
+        - "kern" # Kerning
+        - "liga" # Common ligatures
+        - "clig" # Contextual ligatures
+        - "onum" # Oldstyle numerals for body text
+        - "pnum" # Proportional numerals for body text
+      
+      enable_contextually:
+        - "smcp" # Small caps
+        - "c2sc" # Caps to small caps
+        - "lnum" # Lining numerals (tables)
+        - "tnum" # Tabular numerals (tables)
+        - "case" # Case-sensitive forms
+        - "ss01" # Stylistic sets (if appropriate)
+    
+    hyphenation:
+      rule: "Enable hyphenation for justified text"
+      limits:
+        - "Minimum word length: 6 characters"
+        - "Minimum before break: 3 characters"
+        - "Minimum after break: 2 characters"
+        - "Maximum consecutive hyphens: 2"
+      
+      implementation:
+        - css: "hyphens: auto"
+        - "hyphenate-limit-chars: 6 3 2"
+        - "hyphenate-limit-lines: 2"
+    
+    widows_orphans:
+      rule: "Prevent single lines at top/bottom of columns"
+      implementation:
+        - css: "orphans: 3"
+        - css: "widows: 3"
+        - note: "Minimum 2, optimal 3"
+  
+  ## UNIVERSAL RULES (My Synthesis)
+  
+  universal_rules:
+    
+    honor_content:
+      rule: "Every typographic choice must serve the text and reader"
+      test: "Can I justify this decision based on readability or meaning?"
+    
+    consistency:
+      rule: "Be consistent unless inconsistency serves a purpose"
+      areas:
+        - "Spacing (vertical and horizontal)"
+        - "Alignment (left, right, center, justified)"
+        - "Font sizes and weights"
+        - "Punctuation style"
+    
+    clarity:
+      rule: "When in doubt, choose clarity over beauty"
+      note: "Beautiful typography that's hard to read has failed"
+    
+    restraint:
+      rule: "Use minimum means for maximum effect"
+      corollary: "Add only what serves the content"
+    
+    whitespace:
+      rule: "Whitespace is not empty space—it's active design element"
+      application:
+        - "Margins frame the text"
+        - "Line spacing creates reading rhythm"
+        - "Paragraph spacing shows structure"
+
+# VALIDATION CHECKLIST
+# Use this to verify typographic excellence
+
+validation:
+  
+  readability:
+    - question: "Is line length 45-75 characters?"
+      pass_if: "Yes"
+    
+    - question: "Is line height 1.2-1.6 × font size?"
+      pass_if: "Yes, and appropriate for line length"
+    
+    - question: "Can you read comfortably for 10 minutes?"
+      pass_if: "Yes, without eye strain"
+  
+  rhythm:
+    - question: "Does all vertical spacing align to baseline grid?"
+      pass_if: "Yes"
+    
+    - question: "Is paragraph separation consistent?"
+      pass_if: "Either indent OR space, not both"
+    
+    - question: "Do headings have more space before than after?"
+      pass_if: "Yes"
+  
+  hierarchy:
+    - question: "Can you identify structure at a glance?"
+      pass_if: "Yes, clear visual hierarchy"
+    
+    - question: "Are size differences obvious (20%+ change)?"
+      pass_if: "Yes"
+    
+    - question: "Are you using 4 or fewer type sizes?"
+      pass_if: "Yes"
+  
+  details:
+    - question: "Are you using real quotes (" ") not straight (\")?"
+      pass_if: "Yes"
+    
+    - question: "Are you using proper dashes (– —) not hyphens (-)?"
+      pass_if: "Yes"
+    
+    - question: "Are you using real ellipsis (…) not three dots (...)?"
+      pass_if: "Yes"
+    
+    - question: "Are ligatures enabled?"
+      pass_if: "Yes"
+    
+    - question: "Is kerning enabled?"
+      pass_if: "Yes"
+    
+    - question: "Are you using oldstyle numerals in body text?"
+      pass_if: "Yes, when available"
+  
+  overall:
+    - question: "Does typography serve content or distract from it?"
+      pass_if: "Serves content"
+    
+    - question: "Would Bringhurst approve?"
+      pass_if: "You feel confident saying yes"
+
+# COMMON MISTAKES TO AVOID
+
+anti_patterns:
+  
+  deadly_sins:
+    - sin: "Too many fonts"
+      rule: "Maximum 2 font families"
+    
+    - sin: "Bad line length"
+      rule: "45-75 characters per line"
+    
+    - sin: "Insufficient leading"
+      rule: "Minimum 1.2×, optimal 1.4-1.5×"
+    
+    - sin: "Using fake small caps"
+      rule: "Only use real small caps from font"
+    
+    - sin: "Straight quotes"
+      rule: "Always use curly quotes"
+    
+    - sin: "Double spaces after period"
+      rule: "Single space in digital typography"
+    
+    - sin: "Three dots instead of ellipsis"
+      rule: "Use … (U+2026)"
+    
+    - sin: "Hyphens for dashes"
+      rule: "Use en dash (–) and em dash (—)"
+    
+    - sin: "Ignoring baseline grid"
+      rule: "All spacing must align to grid"
+    
+    - sin: "Centered body text"
+      rule: "Left-align body text (or justify properly)"
+    
+    - sin: "Rivers in justified text"
+      rule: "Enable hyphenation, adjust word spacing"
+    
+    - sin: "Indenting first paragraph"
+      rule: "Never indent after heading"
+
+# IMPLEMENTATION GUIDE
+
+implementation:
+  
+  starting_point:
+    1: "Choose base font size (12pt print, 16px screen)"
+    2: "Calculate line height (1.4-1.5× base)"
+    3: "Set baseline unit (font-size × line-height / 4)"
+    4: "Define measure (66 characters at base size)"
+    5: "Create modular scale for sizes"
+    6: "Set spacing based on baseline grid"
+    7: "Enable OpenType features"
+    8: "Test readability"
+  
+  css_foundation:
+    example: |
+      :root {
+        --base-unit: 6pt;
+        --baseline: 24pt;
+        --measure: 33em;
+      }
+      
+      body {
+        font-size: 12pt;
+        line-height: var(--baseline);
+        max-width: var(--measure);
+        
+        /* OpenType features */
+        font-feature-settings: "kern" 1, "liga" 1, "clig" 1, "onum" 1, "pnum" 1;
+        font-variant-ligatures: common-ligatures;
+        font-variant-numeric: oldstyle-nums proportional-nums;
+        
+        /* Text rendering */
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        line-height: calc(var(--baseline) * 1.5);
+        font-variant-numeric: lining-nums;
+      }
+      
+      p + p {
+        text-indent: 2em;
+        margin-top: 0;
+      }
+      
+      h2 + p {
+        text-indent: 0;
+      }
+
+# FURTHER STUDY
+
+resources:
+  - book: "The Elements of Typographic Style"
+    author: "Robert Bringhurst"
+    edition: "4th Edition (2013)"
+    
+  - website: "Butterick's Practical Typography"
+    url: "https://practicaltypography.com"
+    
+  - website: "The Elements of Typographic Style Applied to the Web"
+    url: "http://webtypography.net"
+
+# VERSION HISTORY
+
+version_history:
+  - version: "1.0"
+    date: "2025-01-17"
+    changes: "Initial codification from Bringhurst 4th Edition"
+    
+  - note: |
+      This ruleset represents the distilled wisdom of Bringhurst's 
+      "Elements of Typographic Style" translated into actionable rules 
+      for modern digital and print typography. Use as constitutional 
+      document for all typographic decisions.

@@ -1,0 +1,1171 @@
+# CLEAN CODE + REFACTORING PRINCIPLES
+# Codified from Robert C. Martin's "Clean Code" and Martin Fowler's "Refactoring"
+# For integration into MASTER.yml governance framework
+
+code_excellence:
+  version: "1.0"
+  authorities: 
+    - "Robert C. Martin (Uncle Bob) - Clean Code"
+    - "Martin Fowler - Refactoring"
+  
+  meta_principles:
+    foundation: |
+      Code is read far more often than it is written. Every line must be
+      optimized for the reader, not the writer. Clean code does one thing well.
+    
+    boy_scout_rule: |
+      Always leave the code cleaner than you found it. Continuous improvement
+      over grand redesigns.
+    
+    refactoring_philosophy: |
+      Code must remain changeable. Refactor continuously to keep design fresh
+      and prevent rot. Bad code begets bad code.
+
+  ## CLEAN CODE PRINCIPLES
+
+  meaningful_names:
+    
+    intention_revealing:
+      rule: "Names should reveal intent without requiring comment"
+      
+      bad_examples:
+        - "int d; // elapsed time in days"
+        - "list1, list2, list3"
+        - "data, info, theData"
+      
+      good_examples:
+        - "elapsedTimeInDays"
+        - "activeUsers, pendingOrders, completedTasks"
+        - "customerRecords, transactionHistory"
+      
+      implementation:
+        - "Variable name should answer: why exists, what does, how used"
+        - "If name requires comment, name is wrong"
+        - "Avoid mental mapping (i, j, k only for tiny loops)"
+    
+    avoid_disinformation:
+      rule: "Don't use names that obscure meaning"
+      
+      avoid:
+        - "accountList (unless actually a List)"
+        - "Similar names that differ only subtly (XYZControllerForHandling vs XYZControllerForStorage)"
+        - "Lowercase L (l) or uppercase O (O) - look like 1 and 0"
+      
+      prefer:
+        - "accounts or accountGroup (if not List type)"
+        - "Meaningfully different names"
+        - "Clear, distinguishable characters"
+    
+    make_distinctions:
+      rule: "Don't add noise words or number-series"
+      
+      noise_words:
+        - "Variable in variable name (nameString vs name)"
+        - "Table in table name (CustomerTable vs Customer)"
+        - "Info, Data suffixes (customerInfo vs customer)"
+      
+      number_series:
+        - "a1, a2, a3 (use source, destination instead)"
+        - "copy1, copy2 (use original, working instead)"
+    
+    pronounceable:
+      rule: "Use pronounceable names for discussion"
+      
+      bad: "genymdhms (generation date, year, month, day, hour, minute, second)"
+      good: "generationTimestamp"
+      
+      rationale: "If you can't pronounce it, you can't discuss it intelligently"
+    
+    searchable:
+      rule: "Single-letter names and numeric constants aren't searchable"
+      
+      bad: "if (s == 4) // what is 4?"
+      good: "if (status == WORK_DAYS_PER_WEEK)"
+      
+      implementation:
+        - "Single letters only for local variables in short methods"
+        - "Name length should correspond to scope size"
+        - "Extract magic numbers to named constants"
+    
+    class_names:
+      rule: "Classes and objects should be nouns or noun phrases"
+      
+      good: "Customer, WikiPage, Account, AddressParser"
+      avoid: "Manager, Processor, Data, Info (too vague)"
+      never: "Verbs (Run, Process, Handle)"
+    
+    method_names:
+      rule: "Methods should be verbs or verb phrases"
+      
+      good: "postPayment, deletePage, save, calculateTotal"
+      accessors: "getName, setName, isActive (bean standard)"
+      
+      implementation:
+        - "Use javabean standard for getters/setters"
+        - "Boolean queries start with 'is', 'has', 'can'"
+        - "Commands are verbs (save, delete, update)"
+    
+    one_word_per_concept:
+      rule: "Pick one word for abstract concept and stick with it"
+      
+      inconsistent:
+        - "fetch, retrieve, get (all mean same thing - pick one)"
+        - "controller, manager, driver (all vague - pick one)"
+      
+      consistent:
+        - "get for all retrieval operations"
+        - "controller for all controllers"
+    
+    solution_domain_names:
+      rule: "Use computer science terms, algorithm names, pattern names"
+      
+      prefer: "AccountVisitor (pattern), JobQueue (CS term), Factory, Singleton"
+      rationale: "Readers are programmers - speak their language"
+    
+    problem_domain_names:
+      rule: "When no programmer term fits, use problem domain term"
+      
+      example: "In healthcare app: Patient, Diagnosis, Treatment"
+      rationale: "Readers can ask domain expert for clarification"
+
+  functions:
+    
+    small:
+      rule: "Functions should be small. Then smaller than that."
+      
+      target_size:
+        - "Ideal: 2-4 lines"
+        - "Maximum: 20 lines"
+        - "Absolutely never: > 100 lines"
+      
+      screen_test: "Entire function should fit on screen without scrolling"
+      
+      rationale: "Small functions are easier to understand, test, name"
+    
+    do_one_thing:
+      rule: "Functions should do one thing, do it well, do it only"
+      
+      test: "Can you extract another function with name that's not restatement?"
+      
+      bad_example: |
+        function saveUser() {
+          validateUser();
+          hashPassword();
+          writeToDatabase();
+          sendWelcomeEmail();
+          logAnalytics();
+        }
+      
+      good_example: |
+        function saveUser() {
+          prepareUserForSave();
+          persistUser();
+          notifyUser();
+        }
+      
+      implementation:
+        - "If function has sections (validate, process, save) it does multiple things"
+        - "Extract each section to named function"
+        - "Aim for single level of abstraction"
+    
+    one_level_abstraction:
+      rule: "All statements in function should be at same abstraction level"
+      
+      bad: |
+        function renderPage() {
+          html = "<html>";  // low level
+          includeHeader();   // high level
+          html += buffer;    // low level
+        }
+      
+      good: |
+        function renderPage() {
+          renderHeader();
+          renderBody();
+          renderFooter();
+        }
+      
+      stepdown_rule: "Read code from top to bottom like narrative"
+    
+    switch_statements:
+      rule: "Bury switch statements in low-level class, never repeat"
+      
+      problem: "Switch statements always do N things (violates SRP)"
+      
+      solution: "Use polymorphism via Abstract Factory"
+      
+      acceptable: "Single switch to create polymorphic objects"
+    
+    descriptive_names:
+      rule: "Long descriptive name better than short enigmatic"
+      
+      example: "testableHtmlForDiagram better than testDiag"
+      
+      implementation:
+        - "Don't be afraid of long names (15+ chars OK)"
+        - "Long name better than long comment"
+        - "Spend time choosing name - try several"
+        - "Be consistent with naming pattern"
+    
+    function_arguments:
+      rule: "Ideal: zero args. Next: one. Avoid: two. Special justification: three. Never: more"
+      
+      zero_arguments:
+        ideal: "Easiest to understand and test"
+        example: "user.save()"
+      
+      one_argument:
+        acceptable: "Transformation or query"
+        example: "parseUser(json), isValid(user)"
+      
+      two_arguments:
+        caution: "Harder to understand ordering"
+        example: "Point(x, y) - natural cohesion OK"
+      
+      three_plus:
+        avoid: "Very hard to test (combinatorial explosion)"
+        solution: "Wrap args in object"
+        
+        bad: "makeCircle(x, y, radius, color, filled)"
+        good: "makeCircle(circleConfig)"
+      
+      flag_arguments:
+        rule: "Never use flag arguments"
+        rationale: "Loudly proclaims function does more than one thing"
+        
+        bad: "render(true) // what does true mean?"
+        good: "renderForSuite(), renderForTest()"
+      
+      argument_objects:
+        rule: "If function needs 2+ args, wrap in object"
+        
+        before: "makeCircle(x, y, radius)"
+        after: "makeCircle(center, radius) or makeCircle(circleConfig)"
+      
+      argument_lists:
+        rule: "Variable args count as one arg if treated identically"
+        example: "String.format(format, ...args) // effectively dyadic"
+      
+      verbs_keywords:
+        rule: "Function and arg should form verb/noun pair"
+        
+        good: "write(name), writeField(name), assertEqual(expected, actual)"
+        encoding: "Encode arg names in function name for clarity"
+    
+    no_side_effects:
+      rule: "Function should not have hidden side effects"
+      
+      bad_example: |
+        function checkPassword(user, password) {
+          if (hash(password) == user.hash) {
+            Session.initialize();  // HIDDEN SIDE EFFECT!
+            return true;
+          }
+          return false;
+        }
+      
+      problem: "Name promises one thing (check), does another (initialize)"
+      solution: "checkPasswordAndInitializeSession or split into two functions"
+      
+      output_arguments:
+        rule: "Avoid output arguments - use return value or state change"
+        
+        bad: "appendFooter(report) // modifies report?"
+        good: "report.appendFooter() // clear it modifies report"
+    
+    command_query_separation:
+      rule: "Functions should either do something or answer something, not both"
+      
+      bad: |
+        if (set("username", "bob")) { ... }
+        // Does set mean 'set value' or 'check if already set'?
+      
+      good: |
+        if (attributeExists("username")) {
+          setAttribute("username", "bob");
+        }
+      
+      rationale: "Doing and answering leads to confusion"
+    
+    prefer_exceptions:
+      rule: "Use exceptions rather than error codes"
+      
+      error_codes: |
+        if (deletePage(page) == E_OK) {
+          if (registry.deleteReference(page.name) == E_OK) {
+            if (configKeys.deleteKey(page.name.makeKey()) == E_OK) {
+              logger.log("page deleted");
+            } else {
+              logger.log("configKey not deleted");
+            }
+          } else {
+            logger.log("reference not deleted");
+          }
+        }
+      
+      exceptions: |
+        try {
+          deletePage(page);
+          registry.deleteReference(page.name);
+          configKeys.deleteKey(page.name.makeKey());
+        } catch (Exception e) {
+          logger.log(e.getMessage());
+        }
+      
+      extract_try_catch:
+        rule: "Extract try/catch bodies to functions"
+        rationale: "Error handling is one thing, business logic is another"
+        
+        structure: |
+          function delete(page) {
+            try {
+              deletePageAndAllReferences(page);
+            } catch (Exception e) {
+              logError(e);
+            }
+          }
+    
+    dont_repeat_yourself:
+      rule: "Duplication is root of all evil in software"
+      
+      detection:
+        - "Copy-paste code"
+        - "Similar algorithms in different places"
+        - "Switch/case repeated in multiple functions"
+      
+      solutions:
+        - "Extract to function"
+        - "Use polymorphism"
+        - "Apply design patterns (Strategy, Template Method)"
+
+  comments:
+    
+    philosophy:
+      rule: "Comments are always failures. Explain yourself in code."
+      
+      truth: "Code is only truth. Comments lie (become outdated)."
+      goal: "Write code so clear that comments unnecessary."
+    
+    good_comments:
+      
+      legal:
+        use: "Copyright, license statements at file top"
+        example: "// Copyright (C) 2025 Company Inc."
+      
+      informative:
+        use: "Provide basic information when code can't"
+        example: "// format: hh:mm:ss EEE, MMM dd, yyyy"
+        better: "Extract to function: formatAsHourMinuteSecond()"
+      
+      explanation_intent:
+        use: "Explain why decision was made"
+        example: "// We're using thread for speed, accepting race condition risk"
+      
+      clarification:
+        use: "Translate obscure argument or return value"
+        caution: "Better to make code clear, but sometimes can't change library"
+      
+      warning:
+        use: "Warn of consequences"
+        example: "// Don't run this test unless you have 1+ hour"
+      
+      todo:
+        use: "Notes about future work"
+        example: "// TODO: Refactor to use new API when available"
+        warning: "Don't let TODOs accumulate - scan and act regularly"
+      
+      amplification:
+        use: "Amplify importance of something seemingly innocuous"
+        example: "// trim is critical - removes BOM character that breaks XML"
+      
+      javadocs_public_api:
+        use: "Document public APIs"
+        standard: "Follow javadoc/jsdoc conventions"
+    
+    bad_comments:
+      
+      mumbling:
+        avoid: "Commenting because you 'should'"
+        example: "// utility function"
+        problem: "Adds no value"
+      
+      redundant:
+        avoid: "Comment that says exactly what code says"
+        example: |
+          // Check if user is null
+          if (user == null) { ... }
+      
+      misleading:
+        avoid: "Subtle inaccuracies in comments"
+        problem: "Worse than no comment - actively harmful"
+      
+      mandated:
+        avoid: "Required comment for every function"
+        example: "Javadoc for private functions"
+        problem: "Clutter, noise, lies"
+      
+      journal:
+        avoid: "Change log in comments"
+        solution: "Use source control"
+      
+      noise:
+        avoid: "Restating the obvious"
+        examples:
+          - "// Constructor"
+          - "// Default constructor"
+          - "// Returns the day of month"
+      
+      position_markers:
+        avoid: "// ===== Actions ====="
+        rare_acceptable: "When very long file (but shouldn't have long files)"
+      
+      closing_brace:
+        avoid: "} // end if"
+        solution: "Shorten functions instead"
+      
+      attributions:
+        avoid: "// Added by Bob"
+        solution: "Use source control"
+      
+      commented_out_code:
+        rule: "NEVER COMMIT COMMENTED CODE"
+        rationale: "Others afraid to delete, accumulates like toxic waste"
+        solution: "Delete it. Source control remembers."
+      
+      html_comments:
+        avoid: "HTML in code comments"
+        problem: "Hard to read in editor"
+      
+      nonlocal:
+        avoid: "Comment describing distant code"
+        solution: "Comment should describe nearby code only"
+      
+      too_much:
+        avoid: "Essay-length comments"
+        solution: "If needs essay, code is too complex"
+      
+      inobvious:
+        avoid: "Comment that needs explanation"
+        problem: "If comment needs comment, code definitely needs refactoring"
+
+  formatting:
+    
+    purpose:
+      rule: "Code formatting is about communication"
+      priority: "Communication is professional developer's first order of business"
+    
+    vertical:
+      
+      size:
+        rule: "Small files easier to understand than large"
+        target: "200 lines average, 500 lines max"
+        
+        statistics: "Many good systems have 200-line average"
+      
+      newspaper_metaphor:
+        rule: "Source file should read like newspaper article"
+        
+        structure:
+          - "Top: headline (name + synopsis)"
+          - "First paragraph: high-level concepts/algorithms"
+          - "Details increase as you move down"
+          - "Low-level functions at bottom"
+      
+      vertical_openness:
+        rule: "Blank lines separate concepts"
+        
+        use_between:
+          - "Package declaration and imports"
+          - "Imports and class"
+          - "Methods"
+        
+        rationale: "Visual cue that new concept starts"
+      
+      vertical_density:
+        rule: "Related lines should appear dense"
+        
+        bad: |
+          private name;
+          
+          private age;
+          
+          private address;
+        
+        good: |
+          private name;
+          private age;
+          private address;
+      
+      vertical_distance:
+        rule: "Closely related concepts should be vertically close"
+        
+        variable_declarations:
+          rule: "Declare variables close to usage"
+          local: "At top of function"
+          loop: "In loop statement"
+        
+        instance_variables:
+          rule: "Declare at top of class (Java convention)"
+          rationale: "Everyone knows where to find them"
+        
+        dependent_functions:
+          rule: "Caller above callee if possible"
+          rationale: "Creates natural flow down source file"
+        
+        conceptual_affinity:
+          rule: "Group similar functions together"
+          reasons:
+            - "Direct dependency"
+            - "Similar operation"
+            - "Share common naming scheme"
+      
+      vertical_ordering:
+        rule: "Function call dependencies should point downward"
+        structure: "High-level → Medium-level → Low-level"
+    
+    horizontal:
+      
+      line_width:
+        rule: "Keep lines short"
+        target: "80-120 characters"
+        max: "Never exceed 120"
+        
+        rationale: "Don't force horizontal scrolling"
+      
+      horizontal_openness:
+        rule: "Use whitespace to associate/disassociate"
+        
+        assignment: "int level = 0; // spaces around ="
+        function: "f(a, b); // no space after ( or before )"
+        precedence: "b*b - 4*a*c // spacing shows precedence"
+      
+      horizontal_alignment:
+        rule: "Don't align variable declarations"
+        
+        avoid: |
+          private   Socket          socket;
+          private   InputStream     input;
+          private   OutputStream    output;
+        
+        prefer: |
+          private Socket socket;
+          private InputStream input;
+          private OutputStream output;
+        
+        rationale: "Alignment emphasizes wrong things"
+      
+      indentation:
+        rule: "Indentation reveals hierarchy"
+        
+        levels:
+          - "File level: no indent"
+          - "Class level: 1 indent"
+          - "Method level: 2 indents"
+          - "Block level: +1 indent per block"
+        
+        breaking:
+          rule: "Never break indentation rule, even for short statements"
+          
+          bad: "if (isEmpty()) return;"
+          good: |
+            if (isEmpty())
+              return;
+    
+    team_rules:
+      rule: "Every team should agree on single formatting standard"
+      
+      enforcement: "Use automated formatters (prettier, black, gofmt)"
+      priority: "Consistency > personal preference"
+
+  ## REFACTORING CATALOG
+
+  code_smells:
+    
+    bloaters:
+      
+      long_method:
+        smell: "Method longer than 10-20 lines"
+        refactoring: "Extract Method"
+        sign: "Need comment to explain what code does"
+      
+      large_class:
+        smell: "Class with too many instance variables/methods"
+        refactoring: "Extract Class, Extract Subclass"
+        sign: "Class name has multiple responsibilities"
+      
+      primitive_obsession:
+        smell: "Using primitives instead of small objects"
+        refactoring: "Replace Data Value with Object"
+        examples:
+          - "String for phone numbers (create PhoneNumber class)"
+          - "Integers for money (create Money class)"
+      
+      long_parameter_list:
+        smell: "More than 3-4 parameters"
+        refactoring: "Introduce Parameter Object, Preserve Whole Object"
+        sign: "Parameters are related but passed separately"
+      
+      data_clumps:
+        smell: "Same group of data appears together"
+        refactoring: "Extract Class"
+        example: "x, y coordinates → Point class"
+    
+    object_orientation_abusers:
+      
+      switch_statements:
+        smell: "Type code with switch/case"
+        refactoring: "Replace Conditional with Polymorphism"
+        sign: "Same switch appears in multiple places"
+      
+      temporary_field:
+        smell: "Instance variable only set in certain circumstances"
+        refactoring: "Extract Class"
+        sign: "Confusing - field sometimes empty"
+      
+      refused_bequest:
+        smell: "Subclass doesn't use inherited methods"
+        refactoring: "Replace Inheritance with Delegation"
+        sign: "Subclass is nothing like parent"
+    
+    change_preventers:
+      
+      divergent_change:
+        smell: "One class commonly changed in different ways for different reasons"
+        refactoring: "Extract Class"
+        sign: "Every new feature requires changing same class"
+      
+      shotgun_surgery:
+        smell: "Single change requires changes in many classes"
+        refactoring: "Move Method, Move Field"
+        sign: "Ripple effects across codebase"
+      
+      parallel_inheritance:
+        smell: "Adding subclass requires adding subclass in another hierarchy"
+        refactoring: "Move Method, Move Field"
+        sign: "Two parallel class hierarchies"
+    
+    dispensables:
+      
+      lazy_class:
+        smell: "Class doesn't do enough to justify existence"
+        refactoring: "Inline Class, Collapse Hierarchy"
+        sign: "Class created for future use that never came"
+      
+      speculative_generality:
+        smell: "Code designed for features that don't exist"
+        refactoring: "Remove it"
+        sign: "Only test uses it, or it's abstract but has one implementation"
+      
+      duplicate_code:
+        smell: "Same code in multiple places"
+        refactoring: "Extract Method, Pull Up Method"
+        sign: "Copy-paste coding"
+    
+    couplers:
+      
+      feature_envy:
+        smell: "Method more interested in other class than its own"
+        refactoring: "Move Method"
+        sign: "Method uses getters from another class extensively"
+      
+      inappropriate_intimacy:
+        smell: "Classes know too much about each other's internals"
+        refactoring: "Move Method, Extract Class"
+        sign: "Classes spend too much time in each other's private parts"
+      
+      message_chains:
+        smell: "a.getB().getC().getD().doSomething()"
+        refactoring: "Hide Delegate"
+        sign: "Law of Demeter violation"
+      
+      middle_man:
+        smell: "Class delegates everything to another class"
+        refactoring: "Remove Middle Man"
+        sign: "Half the methods are simple delegations"
+
+  refactoring_techniques:
+    
+    composing_methods:
+      
+      extract_method:
+        when: "Code fragment that can be grouped together"
+        
+        before: |
+          function printOwing() {
+            printBanner();
+            // print details
+            console.log("name: " + name);
+            console.log("amount: " + getOutstanding());
+          }
+        
+        after: |
+          function printOwing() {
+            printBanner();
+            printDetails(getOutstanding());
+          }
+          
+          function printDetails(outstanding) {
+            console.log("name: " + name);
+            console.log("amount: " + outstanding);
+          }
+      
+      inline_method:
+        when: "Method body as clear as its name"
+        
+        before: |
+          function getRating() {
+            return moreThanFiveLateDeliveries() ? 2 : 1;
+          }
+          function moreThanFiveLateDeliveries() {
+            return numberOfLateDeliveries > 5;
+          }
+        
+        after: |
+          function getRating() {
+            return numberOfLateDeliveries > 5 ? 2 : 1;
+          }
+      
+      extract_variable:
+        when: "Complex expression hard to understand"
+        
+        before: |
+          if (platform.toUpperCase().includes("MAC") &&
+              browser.toUpperCase().includes("IE") &&
+              wasInitialized() && resize > 0) {
+            // do something
+          }
+        
+        after: |
+          const isMacOs = platform.toUpperCase().includes("MAC");
+          const isIE = browser.toUpperCase().includes("IE");
+          const wasResized = resize > 0;
+          
+          if (isMacOs && isIE && wasInitialized() && wasResized) {
+            // do something
+          }
+      
+      inline_temp:
+        when: "Temp variable assigned once with simple expression"
+        
+        before: |
+          const basePrice = order.basePrice();
+          return basePrice > 1000;
+        
+        after: |
+          return order.basePrice() > 1000;
+      
+      replace_temp_with_query:
+        when: "Temp variable holds result of expression"
+        
+        before: |
+          const basePrice = quantity * itemPrice;
+          if (basePrice > 1000) {
+            return basePrice * 0.95;
+          } else {
+            return basePrice * 0.98;
+          }
+        
+        after: |
+          if (basePrice() > 1000) {
+            return basePrice() * 0.95;
+          } else {
+            return basePrice() * 0.98;
+          }
+          
+          function basePrice() {
+            return quantity * itemPrice;
+          }
+      
+      split_temporary_variable:
+        when: "Temp variable assigned more than once (except loop vars)"
+        
+        principle: "Each variable should have single responsibility"
+      
+      remove_assignments_to_parameters:
+        when: "Parameter assigned new value in method body"
+        
+        bad: |
+          function discount(inputVal, quantity) {
+            if (inputVal > 50) inputVal -= 2;
+            // ...
+          }
+        
+        good: |
+          function discount(inputVal, quantity) {
+            let result = inputVal;
+            if (result > 50) result -= 2;
+            // ...
+          }
+      
+      replace_method_with_method_object:
+        when: "Long method with lots of temps that prevent extraction"
+        
+        solution: "Turn method into its own class"
+    
+    moving_features:
+      
+      move_method:
+        when: "Method used more by another class"
+        how: "Create new method in other class, delegate or remove original"
+      
+      move_field:
+        when: "Field used more by another class"
+        how: "Create field in other class, redirect references"
+      
+      extract_class:
+        when: "Class doing work of two"
+        how: "Create new class, move relevant fields/methods"
+      
+      inline_class:
+        when: "Class not doing very much"
+        how: "Move features to another class, delete original"
+      
+      hide_delegate:
+        when: "Client calling delegate through server"
+        
+        before: "manager = john.department.manager"
+        after: "manager = john.getManager() // hiding department"
+      
+      remove_middle_man:
+        when: "Class doing too much delegation"
+        solution: "Get client to call delegate directly"
+    
+    organizing_data:
+      
+      self_encapsulate_field:
+        when: "Direct access to field but need more control"
+        
+        before: "this.quantity = newQuantity"
+        after: "this.setQuantity(newQuantity)"
+      
+      replace_data_value_with_object:
+        when: "Data item needs additional data or behavior"
+        
+        before: "String phoneNumber"
+        after: "PhoneNumber phoneNumber"
+      
+      replace_array_with_object:
+        when: "Array elements mean different things"
+        
+        before: "row[0], row[1], row[2]"
+        after: "performance.getWins(), performance.getLosses()"
+      
+      replace_magic_number_with_symbolic_constant:
+        when: "Literal number with special meaning"
+        
+        before: "if (speed > 60)"
+        after: "if (speed > SPEED_LIMIT)"
+      
+      encapsulate_field:
+        when: "Public field"
+        solution: "Make private, provide getters/setters"
+      
+      encapsulate_collection:
+        when: "Method returns collection"
+        solution: "Return read-only view, add/remove methods"
+      
+      replace_type_code_with_class:
+        when: "Class has type code not used for conditionals"
+        solution: "Replace with class"
+      
+      replace_type_code_with_subclasses:
+        when: "Type code affects class behavior"
+        solution: "Replace with subclasses"
+      
+      replace_type_code_with_state_strategy:
+        when: "Type code changes during object lifetime"
+        solution: "Replace with state object"
+    
+    simplifying_conditionals:
+      
+      decompose_conditional:
+        when: "Complicated conditional (if-then-else)"
+        
+        before: |
+          if (date.before(SUMMER_START) || date.after(SUMMER_END)) {
+            charge = quantity * winterRate + winterServiceCharge;
+          } else {
+            charge = quantity * summerRate;
+          }
+        
+        after: |
+          if (notSummer(date)) {
+            charge = winterCharge(quantity);
+          } else {
+            charge = summerCharge(quantity);
+          }
+      
+      consolidate_conditional_expression:
+        when: "Multiple conditionals with same result"
+        
+        before: |
+          if (age < 18) return 0;
+          if (income < 1000) return 0;
+          if (experience < 2) return 0;
+        
+        after: |
+          if (isNotEligible()) return 0;
+          
+          function isNotEligible() {
+            return age < 18 || income < 1000 || experience < 2;
+          }
+      
+      consolidate_duplicate_conditional:
+        when: "Same code in all branches"
+        
+        before: |
+          if (isSpecialDeal()) {
+            total = price * 0.95;
+            send();
+          } else {
+            total = price * 0.98;
+            send();
+          }
+        
+        after: |
+          if (isSpecialDeal()) {
+            total = price * 0.95;
+          } else {
+            total = price * 0.98;
+          }
+          send();
+      
+      remove_control_flag:
+        when: "Variable acting as control flag"
+        solution: "Use break, continue, or return"
+      
+      replace_nested_conditional_with_guard_clauses:
+        when: "Special case handling obscures normal flow"
+        
+        before: |
+          function getPayAmount() {
+            if (!isDead) {
+              if (!isSeparated) {
+                if (!isRetired) {
+                  return normalPay();
+                }
+              }
+            }
+            return 0;
+          }
+        
+        after: |
+          function getPayAmount() {
+            if (isDead) return 0;
+            if (isSeparated) return 0;
+            if (isRetired) return 0;
+            return normalPay();
+          }
+      
+      replace_conditional_with_polymorphism:
+        when: "Conditional based on type"
+        solution: "Move each branch to subclass method via override"
+      
+      introduce_null_object:
+        when: "Repeated checks for null"
+        solution: "Replace null with null object"
+      
+      introduce_assertion:
+        when: "Section of code assumes something about state"
+        solution: "Make assumption explicit with assertion"
+
+  testing:
+    
+    first_principles:
+      
+      fast:
+        rule: "Tests should run quickly"
+        rationale: "Slow tests won't be run frequently"
+      
+      independent:
+        rule: "Tests should not depend on each other"
+        rationale: "Should run in any order"
+      
+      repeatable:
+        rule: "Tests should run in any environment"
+        rationale: "No excuses for test failures"
+      
+      self_validating:
+        rule: "Tests should have boolean output (pass/fail)"
+        rationale: "No manual log inspection"
+      
+      timely:
+        rule: "Tests written just before production code"
+        rationale: "TDD - test first"
+    
+    clean_tests:
+      
+      readability:
+        rule: "Readability is key to clean tests"
+        
+        build_operate_check:
+          - "Build: Set up test data"
+          - "Operate: Execute operation"
+          - "Check: Verify results"
+      
+      one_assert_per_test:
+        rule: "Single assert per test (ideal)"
+        rationale: "Each test should test one concept"
+        
+        flexibility: "OK to have multiple asserts if testing single concept"
+      
+      single_concept:
+        rule: "Test single concept per test function"
+        rationale: "Don't merge unrelated assertions"
+      
+      test_names:
+        rule: "Test names should describe what they test"
+        format: "shouldDoXWhenY or givenXWhenYThenZ"
+
+# VALIDATION CHECKLIST
+
+validation:
+  
+  names:
+    - question: "Do names reveal intent?"
+      pass_if: "Can understand without comment"
+    
+    - question: "Can you pronounce names in discussion?"
+      pass_if: "Yes"
+    
+    - question: "Are you using one word per concept?"
+      pass_if: "get, fetch, retrieve not mixed"
+  
+  functions:
+    - question: "Are functions under 20 lines?"
+      pass_if: "Most under 10, none over 20"
+    
+    - question: "Do functions do one thing?"
+      pass_if: "Can't extract with non-restatement name"
+    
+    - question: "Are functions 0-2 arguments?"
+      pass_if: "Most zero, few with one, rare two"
+    
+    - question: "No flag arguments?"
+      pass_if: "Zero boolean flags"
+  
+  comments:
+    - question: "Are comments explaining why, not what?"
+      pass_if: "Code explains what, comments explain why"
+    
+    - question: "Zero commented-out code?"
+      pass_if: "Absolutely zero"
+    
+    - question: "Could code be clearer instead of commented?"
+      pass_if: "Comments only where code can't explain"
+  
+  formatting:
+    - question: "Files under 500 lines?"
+      pass_if: "Yes, most under 200"
+    
+    - question: "Lines under 120 characters?"
+      pass_if: "Yes, target 80-100"
+    
+    - question: "Consistent indentation and spacing?"
+      pass_if: "Automated formatter enforced"
+  
+  code_smells:
+    - question: "No duplicate code?"
+      pass_if: "DRY principle maintained"
+    
+    - question: "No long methods or classes?"
+      pass_if: "Everything appropriately sized"
+    
+    - question: "No inappropriate intimacy?"
+      pass_if: "Proper encapsulation"
+  
+  tests:
+    - question: "Tests follow FIRST principles?"
+      pass_if: "Fast, Independent, Repeatable, Self-validating, Timely"
+    
+    - question: "Test coverage above 80%?"
+      pass_if: "Yes"
+    
+    - question: "Tests are readable?"
+      pass_if: "Build-Operate-Check pattern"
+
+# ANTI-PATTERNS
+
+anti_patterns:
+  
+  naming_sins:
+    - "Single letter variables (except i, j in tiny loops)"
+    - "Number series (a1, a2, a3)"
+    - "Noise words (Manager, Processor, Data, Info)"
+    - "Inconsistent vocabulary (fetch/retrieve/get mixed)"
+  
+  function_sins:
+    - "Functions over 20 lines"
+    - "Functions with side effects"
+    - "Flag arguments"
+    - "Output arguments"
+    - "More than 2 parameters"
+  
+  comment_sins:
+    - "Commented-out code"
+    - "Redundant comments"
+    - "Misleading comments"
+    - "Journal comments"
+    - "Position markers"
+  
+  structure_sins:
+    - "God classes"
+    - "Long parameter lists"
+    - "Switch statements duplicated"
+    - "Primitive obsession"
+    - "Feature envy"
+  
+  general_sins:
+    - "Duplication"
+    - "Dead code"
+    - "Inconsistency"
+    - "Clutter"
+    - "Artificial coupling"
+
+# IMPLEMENTATION GUIDE
+
+implementation:
+  
+  boy_scout_rule:
+    principle: "Leave code cleaner than you found it"
+    
+    in_practice:
+      - "Improve one thing per commit"
+      - "Rename one unclear variable"
+      - "Extract one long method"
+      - "Add one missing test"
+    
+    accumulation: "Small improvements compound"
+  
+  refactoring_safely:
+    
+    prerequisites:
+      - "Good test coverage"
+      - "Small steps"
+      - "Run tests after each change"
+      - "Commit frequently"
+    
+    workflow:
+      1: "Identify smell"
+      2: "Write test if missing"
+      3: "Apply refactoring technique"
+      4: "Run tests"
+      5: "Commit"
+      6: "Repeat"
+  
+  code_review_focus:
+    
+    must_check:
+      - "Function length"
+      - "Parameter count"
+      - "Duplication"
+      - "Names clarity"
+      - "Test coverage"
+    
+    questions:
+      - "Can I understand this in 30 seconds?"
+      - "Would I want to maintain this?"
+      - "Are tests clear and sufficient?"
+
+version: "1.0"
+last_updated: "2025-01-17"

@@ -1,0 +1,974 @@
+# THE ELEMENTS OF STYLE
+# Codified from Strunk & White's classic guide to writing
+# For integration into MASTER.yml governance framework
+
+writing_excellence:
+  version: "1.0"
+  authorities:
+    - "William Strunk Jr."
+    - "E.B. White"
+  
+  meta_principles:
+    foundation: |
+      Vigorous writing is concise. A sentence should contain no unnecessary 
+      words, a paragraph no unnecessary sentences, for the same reason that a 
+      drawing should have no unnecessary lines and a machine no unnecessary parts.
+    
+    clarity_first: |
+      Make every word tell. Write with nouns and verbs. Prefer the specific 
+      to the general, the definite to the vague, the concrete to the abstract.
+
+  ## ELEMENTARY RULES OF USAGE
+
+  grammar_rules:
+    
+    possessive_singular:
+      rule: "Form possessive singular by adding 's"
+      
+      examples:
+        - "Charles's friend"
+        - "Burns's poems"
+        - "the witch's malice"
+      
+      exception: "Ancient proper names ending in -es or -is"
+      exceptions_examples:
+        - "Jesus' teachings"
+        - "Achilles' heel"
+        - "Moses' law"
+      
+      note: "This is the rule. Pronounce as written."
+    
+    series_comma:
+      rule: "In series, use comma before 'and' or 'or' (Oxford comma)"
+      
+      correct: "red, white, and blue"
+      incorrect: "red, white and blue"
+      
+      rationale: "Prevents ambiguity"
+      
+      example_ambiguity: |
+        Without: "I dedicate this to my parents, Ayn Rand and God"
+        With: "I dedicate this to my parents, Ayn Rand, and God"
+    
+    parenthetic_expressions:
+      rule: "Enclose parenthetic expressions between commas"
+      
+      examples:
+        - "The best way to see a country, unless you are pressed for time, is to travel on foot."
+        - "Marjorie's husband, Colonel Nelson, paid us a visit."
+      
+      restrictive_vs_nonrestrictive:
+        nonrestrictive: |
+          "The audience, which had at first been indifferent, became more interested."
+          (all audiences became interested)
+        
+        restrictive: |
+          "The audience that had at first been indifferent became more interested."
+          (only that particular audience became interested)
+      
+      abbreviations:
+        rule: "Use commas around Jr., Sr., etc."
+        example: "James Wright, Jr."
+    
+    independent_clauses:
+      rule: "Join independent clauses with comma and conjunction"
+      
+      correct: "The early records of the city have disappeared, and the story of its first years can no longer be reconstructed."
+      
+      alternatives:
+        semicolon: "The early records have disappeared; the story can no longer be reconstructed."
+        period: "The early records have disappeared. The story can no longer be reconstructed."
+        subordination: "As the early records have disappeared, the story can no longer be reconstructed."
+      
+      exception: "Short clauses may omit comma if no ambiguity"
+      exception_example: "The gate swung apart and the caller entered."
+    
+    avoid_comma_splice:
+      rule: "Do not join independent clauses with comma only"
+      
+      wrong: "It is nearly half past five, we cannot reach town before dark."
+      
+      fixes:
+        period: "It is nearly half past five. We cannot reach town before dark."
+        semicolon: "It is nearly half past five; we cannot reach town before dark."
+        conjunction: "It is nearly half past five, and we cannot reach town before dark."
+        subordination: "As it is nearly half past five, we cannot reach town before dark."
+    
+    participles:
+      rule: "Participial phrase at sentence start must refer to grammatical subject"
+      
+      wrong: "Walking slowly down the road, he was seen by me."
+      correct: "Walking slowly down the road, he passed by."
+      
+      wrong: "Being in a dilapidated condition, I was able to buy the house cheap."
+      correct: "Being in a dilapidated condition, the house was sold cheap."
+
+  ## ELEMENTARY PRINCIPLES OF COMPOSITION
+
+  composition_principles:
+    
+    paragraph_unity:
+      rule: "Make paragraph unit of composition - one paragraph to each topic"
+      
+      structure:
+        - "Begin each paragraph with topic sentence"
+        - "End with emphatic sentence"
+        - "Middle develops the topic"
+      
+      implementation:
+        - "Single sentence can be paragraph if it's topic"
+        - "In dialogue, each speech is paragraph"
+        - "In exposition, each step in argument is paragraph"
+      
+      exceptions:
+        - "Transitional paragraphs can be brief"
+        - "Emphasis paragraphs can be single sentence"
+    
+    active_voice:
+      rule: "Use active voice"
+      
+      weak_passive: "There were a great number of dead leaves lying on the ground."
+      strong_active: "Dead leaves covered the ground."
+      
+      weak_passive: "It was not long before she was very sorry that she had said what she had."
+      strong_active: "She soon repented her words."
+      
+      when_passive_acceptable:
+        - "Actor unknown or unimportant"
+        - "Emphasize action over actor"
+        - "Maintain consistent subject through paragraph"
+      
+      passive_examples:
+        - "The dramatists of the Restoration are little esteemed today." (actor unknown)
+        - "Modern readers have little esteem for the dramatists of the Restoration." (active alternative)
+    
+    positive_form:
+      rule: "Make definite assertions - use positive form"
+      
+      weak_negative: "He was not very often on time."
+      strong_positive: "He usually came late."
+      
+      weak_negative: "She did not think that studying Latin was much use."
+      strong_positive: "She thought the study of Latin useless."
+      
+      weak_negative: "The Taming of the Shrew is rather weak in spots. Shakespeare does not portray Katharine as a very admirable character."
+      strong_positive: "The women in The Taming of the Shrew are unattractive. Katharine is disagreeable, Bianca insignificant."
+      
+      exceptions:
+        - "Not un- forms useful for qualified statements"
+        - "Example: 'not unworthy' is less emphatic than 'worthy'"
+    
+    specific_concrete:
+      rule: "Use definite, specific, concrete language"
+      
+      vague: "A period of unfavorable weather set in."
+      specific: "It rained every day for a week."
+      
+      vague: "He showed satisfaction as he took possession of his well-earned reward."
+      specific: "He grinned as he pocketed the coin."
+      
+      principle: |
+        Prefer the specific to the general, the definite to the vague, 
+        the concrete to the abstract.
+      
+      application:
+        - "Don't say 'conditions': say rain, heat, frost"
+        - "Don't say 'facilities': say equipment, tools, labs"
+        - "Don't say 'transportation': say car, bus, train"
+    
+    omit_needless_words:
+      rule: "Omit needless words - FUNDAMENTAL RULE"
+      
+      wordy: "the question as to whether"
+      concise: "whether (the question whether)"
+      
+      wordy: "there is no doubt but that"
+      concise: "no doubt (doubtless)"
+      
+      wordy: "used for fuel purposes"
+      concise: "used for fuel"
+      
+      wordy: "he is a man who"
+      concise: "he"
+      
+      wordy: "in a hasty manner"
+      concise: "hastily"
+      
+      wordy: "this is a subject that"
+      concise: "this subject"
+      
+      wordy: "Her story is a strange one."
+      concise: "Her story is strange."
+      
+      wordy: "the reason why is that"
+      concise: "because"
+      
+      expressions_to_avoid:
+        - "the fact that" → omit or recast
+        - "owing to the fact that" → since, because
+        - "in spite of the fact that" → though, although
+        - "call your attention to the fact that" → remind you, notify you
+        - "I was unaware of the fact that" → I was unaware that, I did not know
+        - "the fact that he had not succeeded" → his failure
+        - "the fact that I had arrived" → my arrival
+      
+      who_is_which_was:
+        wordy: "His brother, who is a member of the same firm"
+        concise: "His brother, a member of the same firm"
+        
+        wordy: "Trafalgar, which was Nelson's last battle"
+        concise: "Trafalgar, Nelson's last battle"
+      
+      case_of:
+        wordy: "In many cases, the rooms were poorly ventilated."
+        concise: "Many of the rooms were poorly ventilated."
+      
+      principle: |
+        A sentence should contain no unnecessary words, a paragraph no 
+        unnecessary sentences. Not that the writer should make all sentences 
+        short, but that every word should tell.
+    
+    loose_sentences:
+      rule: "Avoid succession of loose sentences"
+      
+      loose: |
+        "The third concert of the subscription series was given last evening, 
+        and a large audience was in attendance. Mr. Edward Appleton was the 
+        soloist, and the Boston Symphony Orchestra furnished the instrumental 
+        music."
+      
+      better: |
+        "At the third concert of the subscription series, given last evening 
+        before a large audience, Mr. Edward Appleton was the soloist, and the 
+        Boston Symphony Orchestra furnished the instrumental music."
+      
+      definition: |
+        A loose sentence is one that states the main fact first, then adds 
+        explanatory or supplementary matter. While acceptable, succession 
+        creates monotony.
+      
+      solution: "Vary sentence structure - use periodic, balanced sentences"
+    
+    parallel_form:
+      rule: "Express parallel ideas in parallel form"
+      
+      correlatives:
+        - "both...and"
+        - "not only...but also"
+        - "either...or"
+        - "neither...nor"
+        - "first...second...third"
+        - "formerly...now"
+      
+      examples:
+        wrong: "Formerly, science was taught by the textbook method; now it is taught by the laboratory method."
+        right: "Formerly, science was taught by the textbook method; now, by the laboratory method."
+        
+        wrong: "The French, the Italians, Spanish, and Portuguese"
+        right: "The French, the Italians, the Spanish, and the Portuguese"
+      
+      articles_prepositions:
+        rule: "Repeat article or preposition for clarity"
+        
+        ambiguous: "the captain and the crew" (one person or two?)
+        clear_two: "the captain and the crew"
+        clear_one: "the captain and crew"
+    
+    related_words:
+      rule: "Keep related words together"
+      
+      confusing: "He noticed a large stain in the rug that was right in the center."
+      clear: "He noticed a large stain right in the center of the rug."
+      
+      confusing: "You can call your mother in London and tell her all about George's taking you out to dinner for just two dollars."
+      clear: "For just two dollars you can call your mother in London and tell her all about George's taking you out to dinner."
+      
+      subject_verb:
+        confusing: "Wordsworth, in the fifth book of The Excursion, gives a minute description of this church."
+        clear: "In the fifth book of The Excursion, Wordsworth gives a minute description of this church."
+      
+      relative_pronoun:
+        rule: "Place relative pronoun immediately after antecedent"
+        
+        confusing: "There was a look in his eye that boded mischief."
+        clear: "In his eye was a look that boded mischief."
+    
+    final_emphasis:
+      rule: "In summaries, place emphatic words at end"
+      
+      weak: "Humanity has hardly advanced in fortitude since that time, though it has advanced in many other ways."
+      strong: "Since that time, humanity has advanced in many ways, but it has hardly advanced in fortitude."
+      
+      weak: "This steel is principally used for making razors, because of its hardness."
+      strong: "Because of its hardness, this steel is principally used for making razors."
+      
+      principle: "Emphatic word of sentence is ordinarily last"
+
+  ## MATTERS OF FORM
+
+  form_rules:
+    
+    colloquialisms:
+      rule: "Avoid use in formal writing"
+      
+      avoid:
+        - "fix (for 'repair')"
+        - "job (for 'task')"
+        - "line (for 'occupation')"
+        - "cute (overused)"
+      
+      note: "Colloquialisms fine in speech, avoid in formal prose"
+    
+    exclamations:
+      rule: "Do not overuse exclamation points"
+      
+      principle: "Save for genuine exclamation"
+      
+      wrong: "It was a wonderful show!"
+      right: "It was a wonderful show."
+      right: "What a wonderful show!"
+    
+    headings:
+      rule: "Use headings sparingly in formal prose"
+      
+      acceptable: "Reports, technical writing"
+      avoid: "Literary essays, general exposition"
+    
+    hyphen:
+      rule: "Use hyphen to avoid ambiguity or aid readability"
+      
+      examples:
+        - "He recovered his health" vs "He re-covered the sofa"
+        - "small-business man" vs "small business man"
+      
+      suspended:
+        - "one-, three-, and five-year terms"
+    
+    quotations:
+      rule: "Set off formal quotations properly"
+      
+      formal: |
+        Preceded by colon, indented, no quotes:
+        
+          Aristotle says:
+            Whether the mind is in a particular place or not, is
+            a matter deserving our careful consideration.
+      
+      run_in: |
+        Introduced naturally, use quotes:
+        
+        Aristotle says, "Whether the mind is in a particular place or 
+        not, is a matter deserving our careful consideration."
+      
+      proverbial: |
+        Proverbial expressions and familiar phrases don't need quotes:
+        
+        These are the times that try men's souls.
+        (Don't quote if widely recognized)
+    
+    references:
+      rule: "Avoid unnecessary references to readers"
+      
+      weak: "The writer must bear in mind that..."
+      strong: "The writer must bear in mind..."
+      
+      weak: "In this connection it is interesting to recall that..."
+      strong: "It is interesting to recall that..."
+      
+      acceptable: "The reader will observe..."
+      
+      principle: "Don't address reader unnecessarily"
+
+  ## WORDS AND EXPRESSIONS COMMONLY MISUSED
+
+  usage_guide:
+    
+    aggravate:
+      correct_meaning: "to make worse"
+      misuse: "to annoy or irritate"
+      
+      right: "The condition was aggravated by neglect."
+      wrong: "He was aggravated by the delay."
+    
+    all_right:
+      correct: "all right"
+      wrong: "alright"
+      
+      note: "Alright is not acceptable in formal writing"
+    
+    alternate_alternative:
+      alternate: "occurring by turns"
+      alternative: "one of two or more choices"
+      
+      examples:
+        - "We met on alternate Thursdays."
+        - "The alternative to surrender is death."
+    
+    and_or:
+      rule: "Avoid this legalism"
+      
+      bad: "Take a car and/or bus"
+      better: "Take a car or bus or both"
+    
+    anticipate:
+      correct_meaning: "to foresee and prepare"
+      misuse: "to expect"
+      
+      right: "He anticipated the attack and prepared defenses."
+      wrong: "I anticipate he will arrive soon."
+    
+    anxious:
+      correct_meaning: "worried, uneasy"
+      misuse: "eager"
+      
+      right: "I am anxious about the exam results."
+      wrong: "I am anxious to see the show."
+    
+    anybody_everyone:
+      rule: "Use singular pronoun"
+      
+      wrong: "Everyone should bring their book."
+      right: "Everyone should bring his book."
+      alternative: "All should bring their books."
+    
+    as_good_or_better:
+      incomplete: "as good or better than"
+      complete: "as good as or better than"
+      
+      example: "My car is as good as or better than yours."
+    
+    case:
+      rule: "Often unnecessary"
+      
+      wordy: "In many cases, the rooms were dark."
+      concise: "Many rooms were dark."
+    
+    certainly:
+      rule: "Avoid overuse as intensive"
+      
+      weak: "It was certainly a fine show."
+      strong: "It was a fine show." or "It was a superb show."
+    
+    compare:
+      compare_to: "liken to something unlike"
+      compare_with: "examine for similarities/differences"
+      
+      examples:
+        - "I shall compare thee to a summer's day."
+        - "Compare the two reports and note differences."
+    
+    comprise:
+      meaning: "include, contain, consist of"
+      
+      right: "The United States comprises fifty states."
+      wrong: "The United States is comprised of fifty states."
+    
+    contact:
+      rule: "Vague - be specific"
+      
+      vague: "I will contact him."
+      specific: "I will call him." or "I will write to him."
+    
+    different_than:
+      wrong: "different than"
+      right: "different from"
+      
+      example: "This book is different from that one."
+    
+    disinterested:
+      correct_meaning: "impartial"
+      misuse: "uninterested"
+      
+      right: "A disinterested observer" (impartial)
+      wrong: "I am disinterested in sports" (should be "uninterested")
+    
+    due_to:
+      rule: "Use only as adjective phrase after noun"
+      
+      right: "His failure was due to negligence." (modifies 'failure')
+      wrong: "He failed due to negligence." (use 'because of')
+    
+    effect_affect:
+      affect: "verb - to influence"
+      effect: "noun - result (or verb - to bring about)"
+      
+      examples:
+        - "The rain affected our plans." (influenced)
+        - "The effect was dramatic." (result)
+        - "We will effect a change." (bring about)
+    
+    etc:
+      rule: "Avoid in formal writing - be specific"
+      
+      weak: "We need tools, materials, etc."
+      strong: "We need tools, materials, and equipment."
+      
+      never: "and etc." (redundant)
+    
+    fact:
+      rule: "Use sparingly"
+      
+      wordy: "the fact that I had arrived"
+      concise: "my arrival"
+    
+    factor:
+      rule: "Avoid as vague synonym for 'thing'"
+      
+      vague: "Speed was a factor in the accident."
+      specific: "Speed contributed to the accident."
+    
+    farther_further:
+      farther: "physical distance"
+      further: "abstract degree or time"
+      
+      examples:
+        - "We walked farther down the road."
+        - "We need further discussion."
+    
+    fewer_less:
+      fewer: "countable items"
+      less: "mass quantities"
+      
+      examples:
+        - "fewer people, fewer dollars"
+        - "less water, less money"
+    
+    finalize:
+      rule: "Bureaucratic jargon - avoid"
+      
+      bad: "finalize the report"
+      good: "complete the report"
+    
+    fix:
+      colloquial: "repair"
+      formal: "secure, fasten"
+      
+      informal: "I'll fix the car."
+      formal: "I'll repair the car."
+    
+    hopefully:
+      correct: "in a hopeful manner"
+      misuse: "I hope, it is hoped"
+      
+      right: "We waited hopefully for news."
+      wrong: "Hopefully, it won't rain."
+      better: "I hope it won't rain."
+    
+    however:
+      rule: "Avoid at start of sentence when meaning 'nevertheless'"
+      
+      weak: "However, I decided to go."
+      strong: "I decided, however, to go."
+      acceptable: "I decided to go anyway."
+    
+    imply_infer:
+      imply: "suggest (speaker's action)"
+      infer: "deduce (listener's action)"
+      
+      examples:
+        - "She implied that I was wrong."
+        - "I inferred from her words that she was angry."
+    
+    importantly:
+      wrong: "more importantly"
+      right: "more important"
+      
+      example: "More important, we must act now."
+    
+    in_terms_of:
+      rule: "Vague - often unnecessary"
+      
+      vague: "success in terms of money"
+      clear: "financial success"
+    
+    irregardless:
+      wrong: "irregardless"
+      right: "regardless"
+      
+      note: "Irregardless is not a word"
+    
+    its_its:
+      its: "possessive"
+      it's: "it is"
+      
+      right: "The dog wagged its tail."
+      right: "It's raining."
+    
+    lay_lie:
+      lay: "transitive - place something (lay, laid, laid)"
+      lie: "intransitive - recline (lie, lay, lain)"
+      
+      right: "Lay the book on the table." (place)
+      right: "I will lie down." (recline)
+      right: "Yesterday I laid the book there." (past of lay)
+      right: "Yesterday I lay down." (past of lie)
+    
+    like:
+      rule: "Like is preposition, not conjunction"
+      
+      wrong: "He acted like he owned the place."
+      right: "He acted as if he owned the place."
+      
+      right: "She sings like a bird." (preposition - comparing nouns)
+    
+    literally:
+      rule: "Use only for literal truth, not emphasis"
+      
+      wrong: "I literally died laughing."
+      right: "I laughed very hard."
+      
+      right: "The theater was literally filled to capacity."
+    
+    myself:
+      rule: "Use for emphasis or reflexive, not as substitute for 'I' or 'me'"
+      
+      wrong: "John and myself attended."
+      right: "John and I attended."
+      
+      right: "I did it myself." (emphasis)
+      right: "I injured myself." (reflexive)
+    
+    nature:
+      rule: "Avoid vague use"
+      
+      vague: "acts of a hostile nature"
+      clear: "hostile acts"
+    
+    none:
+      rule: "Takes singular verb when means 'no one' or 'not one'"
+      
+      right: "None of us is perfect."
+      acceptable: "None of them are here." (when emphasizing individuals)
+    
+    people_persons:
+      people: "general collective"
+      persons: "specific individuals"
+      
+      examples:
+        - "Many people attended."
+        - "Six persons were injured."
+    
+    possess:
+      rule: "Often pretentious - use 'have' or 'own'"
+      
+      pretentious: "He possesses great wealth."
+      simple: "He is very wealthy." or "He has great wealth."
+    
+    presently:
+      meaning: "soon, before long"
+      misuse: "at present, now"
+      
+      right: "He will arrive presently." (soon)
+      wrong: "He is presently in the office." (use "now" or "currently")
+    
+    secondly:
+      wrong: "firstly, secondly, thirdly"
+      right: "first, second, third"
+    
+    shall_will:
+      shall: "first person (I shall, we shall)"
+      will: "second/third person (you will, he will)"
+      
+      determination:
+        reversed: "I will, you shall, he shall" (expressing determination)
+    
+    so:
+      rule: "Avoid as intensive"
+      
+      weak: "It was so beautiful."
+      strong: "It was very beautiful." or "It was beautiful."
+    
+    split_infinitive:
+      rule: "Avoid unless clarity demands it"
+      
+      acceptable: "to really understand" (if emphasis needed)
+      better: "to understand thoroughly"
+    
+    student_body:
+      rule: "Avoid as pompous"
+      
+      pompous: "student body"
+      simple: "students"
+    
+    than_then:
+      than: "comparison"
+      then: "time"
+      
+      examples:
+        - "I am taller than you."
+        - "We will leave then."
+    
+    that_which:
+      that: "restrictive clause (no comma)"
+      which: "nonrestrictive clause (comma)"
+      
+      examples:
+        - "The book that I read was good." (specifies which book)
+        - "The book, which I read yesterday, was good." (additional info)
+    
+    the_fact_that:
+      rule: "Almost always unnecessary"
+      
+      wordy: "The fact that I had arrived"
+      concise: "My arrival"
+    
+    they:
+      rule: "Singular indefinite pronoun - must agree"
+      
+      wrong: "Everyone should bring their book."
+      right: "Everyone should bring his book."
+      modern: "Everyone should bring their book." (becoming accepted)
+    
+    very:
+      rule: "Use sparingly - strengthen verb instead"
+      
+      weak: "very tired"
+      strong: "exhausted"
+      
+      weak: "very hungry"
+      strong: "famished"
+    
+    while:
+      meaning: "during the time that"
+      misuse: "although, whereas"
+      
+      right: "While I was reading, he slept." (during)
+      wrong: "While I agree, I have reservations." (use "although")
+    
+    whose:
+      rule: "Acceptable for inanimate objects"
+      
+      acceptable: "The house whose roof was damaged..."
+      awkward: "The house the roof of which was damaged..."
+
+  ## AN APPROACH TO STYLE (E.B. White)
+
+  style_principles:
+    
+    place_yourself:
+      rule: "Place yourself in the background"
+      
+      principle: |
+        Write in a way that draws reader's attention to sense and 
+        substance, not to mood and temper of author.
+      
+      bad: "I think that..." (obviously you think it - you wrote it)
+      good: State it directly
+    
+    natural_style:
+      rule: "Write in a way that comes naturally"
+      
+      principle: |
+        Write with a smooth and direct approach, using words that 
+        come readily. Don't search thesaurus for impressive words.
+      
+      avoid: "Utilize" when "use" will do
+    
+    work_rewriting:
+      rule: "Work from whole to part - revise and rewrite"
+      
+      process:
+        - "Get it written first"
+        - "Then revise for clarity"
+        - "Then tighten and polish"
+      
+      principle: "Great writing is great rewriting"
+    
+    use_definite_language:
+      rule: "Use definite, specific, concrete language"
+      
+      vague: "nice weather"
+      specific: "clear sky, cool breeze"
+      
+      principle: "Specificity creates vivid images"
+    
+    omit_needless:
+      rule: "Omit needless words - the fundamental rule"
+      
+      principle: |
+        Make every word tell. Eliminate words that serve no purpose.
+      
+      test: "Can I remove this word without changing meaning?"
+    
+    avoid_qualifiers:
+      rule: "Avoid using qualifiers - rather, very, little, pretty"
+      
+      weak: "rather interesting"
+      strong: "interesting" or "fascinating"
+      
+      principle: "Qualifiers weaken statements"
+    
+    be_clear:
+      rule: "Clarity is paramount - avoid abstractions"
+      
+      abstract: "The situation is problematic."
+      concrete: "We face three obstacles: time, money, and expertise."
+    
+    ear_test:
+      rule: "Write for the ear - read aloud"
+      
+      principle: |
+        Good prose has rhythm. Read your work aloud to test flow.
+      
+      test: "Does it sound natural when read?"
+    
+    no_inject_opinion:
+      rule: "Do not inject opinion needlessly"
+      
+      bad: "Thankfully, we succeeded."
+      good: "We succeeded."
+      
+      exception: "When opinion is the topic"
+    
+    use_orthodox_spelling:
+      rule: "Use standard spelling"
+      
+      avoid: "thru, tho, nite"
+      use: "through, though, night"
+    
+    prefer_standard:
+      rule: "Prefer standard to offbeat"
+      
+      standard: "walked home"
+      offbeat: "ambulated domicileward"
+      
+      principle: "Clarity over creativity in word choice"
+
+# VALIDATION CHECKLIST
+
+validation:
+  
+  grammar:
+    - question: "Possessives formed correctly ('s)?"
+      pass_if: "Yes, including Charles's"
+    
+    - question: "Oxford comma used?"
+      pass_if: "Yes, consistently"
+    
+    - question: "No comma splices?"
+      pass_if: "Independent clauses properly joined"
+    
+    - question: "Participles refer to grammatical subject?"
+      pass_if: "Yes, no dangling modifiers"
+  
+  composition:
+    - question: "Each paragraph has single topic?"
+      pass_if: "Yes, unified paragraphs"
+    
+    - question: "Active voice predominates?"
+      pass_if: "Yes, passive only when justified"
+    
+    - question: "Positive form used?"
+      pass_if: "Definite assertions, not negatives"
+    
+    - question: "Language concrete and specific?"
+      pass_if: "No vague abstractions"
+    
+    - question: "No needless words?"
+      pass_if: "Every word serves purpose"
+  
+  usage:
+    - question: "Commonly confused words correct?"
+      pass_if: "affect/effect, fewer/less, etc."
+    
+    - question: "No colloquialisms in formal writing?"
+      pass_if: "Appropriate register maintained"
+    
+    - question: "Exclamation points rare?"
+      pass_if: "Only for genuine exclamations"
+  
+  style:
+    - question: "Author in background?"
+      pass_if: "Focus on content, not writer"
+    
+    - question: "Natural, not pretentious?"
+      pass_if: "No thesaurus abuse"
+    
+    - question: "Reads well aloud?"
+      pass_if: "Good rhythm and flow"
+
+# ANTI-PATTERNS
+
+anti_patterns:
+  
+  wordiness:
+    - "the fact that"
+    - "in order to" (use "to")
+    - "due to the fact that" (use "because")
+    - "at this point in time" (use "now")
+    - "in the event that" (use "if")
+  
+  vagueness:
+    - "very, rather, quite, pretty" (weak qualifiers)
+    - "thing, stuff, case, factor" (nonspecific)
+    - "interesting, nice, good" (vague praise)
+  
+  pretension:
+    - "utilize" (use "use")
+    - "finalize" (use "complete")
+    - "facilitate" (use "help")
+    - "implement" (use "do" or "carry out")
+  
+  common_errors:
+    - "alright" (use "all right")
+    - "irregardless" (use "regardless")
+    - "literally" (misused for emphasis)
+    - "different than" (use "different from")
+    - "comprised of" (use "comprises")
+
+# IMPLEMENTATION GUIDE
+
+implementation:
+  
+  writing_process:
+    
+    draft:
+      - "Write first draft quickly - get ideas down"
+      - "Don't edit while drafting"
+      - "Accept imperfection in first draft"
+    
+    revise:
+      - "Read entire piece"
+      - "Check structure and flow"
+      - "Move paragraphs if needed"
+      - "Add missing transitions"
+    
+    edit:
+      - "Apply Strunk rules sentence by sentence"
+      - "Remove needless words"
+      - "Replace vague with specific"
+      - "Check grammar and usage"
+    
+    polish:
+      - "Read aloud"
+      - "Check rhythm and sound"
+      - "Fine-tune word choice"
+      - "Final proofreading"
+  
+  self_editing_checklist:
+    
+    first_pass:
+      - "Check structure: does each paragraph have single topic?"
+      - "Check flow: do ideas connect logically?"
+      - "Check completeness: any gaps in argument?"
+    
+    second_pass:
+      - "Active voice where possible?"
+      - "Positive form used?"
+      - "Concrete, specific language?"
+      - "Parallel construction for parallel ideas?"
+    
+    third_pass:
+      - "Remove all needless words"
+      - "Check every 'that' - can it be deleted?"
+      - "Check every 'the fact that' - recast?"
+      - "Replace weak qualifiers (very, rather)"
+    
+    final_pass:
+      - "Grammar: commas, apostrophes correct?"
+      - "Usage: commonly confused words right?"
+      - "Spelling: standard orthography?"
+      - "Read aloud: does it sound natural?"
+
+version: "1.0"
+last_updated: "2025-01-17"
