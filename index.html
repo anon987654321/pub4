@@ -1,1832 +1,947 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-
 <head>
-
   <meta charset="UTF-8"/>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-
   <meta name="mobile-web-app-capable" content="yes"/>
-
   <meta name="color-scheme" content="dark"/>
-
   <title>Radio Bergen</title>
-
   <meta name="theme-color" content="#000000"/>
-
   <meta name="description" content="Classic warp tunnel with multiple views. Tilt device for parallax."/>
-
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>"/>
-
   <style>
-
     /* CSS Variables */
-
     :root {
-
       --safe-top: env(safe-area-inset-top, 0px);
-
       --safe-right: env(safe-area-inset-right, 0px);
-
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-
       --safe-left: env(safe-area-inset-left, 0px);
-
       --zoom: 1;
-
       --fluid-font: clamp(14px, 4vw, 32px);
-
     }
-
+    
     /* Base Styles */
     html, body {
-
       margin: 0;
-
       height: 100%;
-
       background: #000;
-
       color: #dcdcdc;
-
       font: var(--fluid-font) system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
       overflow: hidden;
-
       display: grid;
-
       grid-template-rows: auto 1fr auto;
-
     }
-
+    
     /* Canvas */
     canvas {
-
       position: fixed;
-
       inset: 0;
-
       width: 100dvw;
-
       height: 100dvh;
-
       display: block;
-
       background: #000;
-
       touch-action: none;
-
       image-rendering: pixelated;
-
       transition: filter 140ms ease, transform 120ms ease;
-
       transform-origin: center;
-
       transform: scale(var(--zoom));
-
     }
-
+    
     canvas.canvas-inverted {
       filter: invert(1) hue-rotate(180deg);
-
     }
-
+    
+    @keyframes start-ack {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    canvas.start-ack {
+      animation: start-ack 240ms ease-out;
+    }
+    
     /* City Carousel */
     h1.city-carousel {
-
       grid-row: 1;
-
       padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-left)) 10px calc(10px + var(--safe-left));
-
       width: min(92vw, 560px);
-
       height: 38px;
-
       z-index: 95;
-
       pointer-events: none;
-
       user-select: none;
-
       overflow: hidden;
-
       margin: 0;
-
     }
-
+    
     .carousel-container {
       width: 100%;
-
       height: 100%;
-
       position: relative;
-
       overflow: hidden;
-
     }
-
+    
     .carousel-slide {
       height: 100%;
-
       display: flex;
-
       align-items: center;
-
       justify-content: flex-start;
-
       font-weight: 700;
-
       font-size: clamp(16px, 4vw, 28px);
-
       color: #dcdcdc;
-
       letter-spacing: .02em;
-
       transition: transform .3s ease, opacity .3s ease;
-
       position: absolute;
-
       top: 0;
-
       left: 0;
-
       width: 100%;
-
       opacity: 0;
-
       transform: translateY(100%);
-
       white-space: nowrap;
-
     }
-
+    
     .carousel-slide.active {
       opacity: 1;
-
       transform: translateY(0%);
-
     }
-
+    
     /* UI Elements */
     .ui {
-
       grid-row: 3;
-
       padding: 10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
-
       color: #dcdcdc;
-
       font: 9px/1.1 ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
     }
-
+    
     .ui .label {
       margin-right: 6px;
-
     }
-
+    
     .ui .dots {
       display: inline-block;
-
       width: 3ch;
-
       text-align: left;
-
     }
-
+    
     .ui-inverted {
       color: #dcdcdc !important;
-
     }
-
+    
     /* Overlay */
     .overlay {
-
       position: fixed;
-
       inset: 0;
-
       display: grid;
-
       place-items: center;
-
       background: rgba(0, 0, 0, .86);
-
       color: #9aa;
-
       cursor: pointer;
-
       user-select: none;
-
       z-index: 1000;
-
       text-align: center;
-
       padding: 16px;
-
       opacity: 1;
-
       transition: opacity 1s ease;
-
     }
-
+    
     .overlay.ack {
       opacity: 0;
-
     }
-
+    
     .overlay[hidden] {
       display: none;
-
     }
-
+    
     .overlay h2 {
       margin: 0 0 20px 0;
-
       font-size: clamp(24px, 6vw, 48px);
-
       font-weight: 300;
-
       color: #dcdcdc;
-
       transition: transform .18s ease;
-
     }
-
+    
     .overlay h2.clicked {
       transform: scale(1.06);
-
     }
-
+    
     /* Swipe Hint */
     .swipe-hint {
-
       position: fixed;
-
       bottom: calc(50px + var(--safe-bottom));
-
       left: 50%;
-
       transform: translateX(-50%);
-
       color: #9aa;
-
       font-size: clamp(14px, 3vw, 20px);
-
       opacity: 0;
-
       transition: opacity .5s ease;
-
       z-index: 99;
-
     }
-
+    
     .swipe-hint.show {
       opacity: 1;
-
     }
-
+    
     /* Accessibility */
     :focus-visible {
-
       outline: 2px solid #dcdcdc;
-
       outline-offset: 2px;
-
     }
-
+    
     *, *::before, *::after {
       box-sizing: border-box;
-
     }
-
+    
     /* Reduced Motion */
     @media (prefers-reduced-motion: reduce) {
-
       * {
-
         animation: none !important;
-
         transition: none !important;
-
       }
-
     }
-
+    
     /* Mobile */
     @media (max-width: 768px) {
-
       body {
-
         font-size: clamp(12px, 3vw, 24px);
-
       }
-
+      
       canvas {
         touch-action: manipulation;
-
       }
-
     }
-
+    
     /* Landscape */
     @media (orientation: landscape) {
-
       h1.city-carousel {
-
         height: auto;
-
         padding-bottom: 20px;
-
       }
-
     }
-
+    
     /* YouTube Player Hidden */
     .yt-hidden {
-
       position: fixed;
-
       top: -10000px;
-
       left: -10000px;
-
       width: 1px;
-
       height: 1px;
-
       opacity: 0;
-
       pointer-events: none;
-
       z-index: -1;
-
     }
-
   </style>
-
 </head>
-
 <body>
-
   <noscript><main style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#dcdcdc;">Radio Bergen requires JavaScript enabled.</main></noscript>
-
   <h1 class="city-carousel" id="cityCarousel" aria-live="polite">
-
     <div class="carousel-container">
-
       <span class="carousel-slide active">playlist.brgen.no</span><span class="carousel-slide">playlist.oshlo.no</span><span class="carousel-slide">playlist.trndheim.no</span>
-
       <span class="carousel-slide">playlist.stvanger.no</span><span class="carousel-slide">playlist.trmso.no</span><span class="carousel-slide">playlist.longyearbyn.no</span>
-
       <span class="carousel-slide">playlist.reykjavk.is</span><span class="carousel-slide">playlist.kobenhvn.dk</span><span class="carousel-slide">playlist.stholm.se</span>
-
       <span class="carousel-slide">playlist.gtebrg.se</span><span class="carousel-slide">playlist.mlmoe.se</span><span class="carousel-slide">playlist.hlsinki.fi</span>
-
       <span class="carousel-slide">playlist.lndon.uk</span><span class="carousel-slide">playlist.cardff.uk</span><span class="carousel-slide">playlist.mnchester.uk</span>
-
       <span class="carousel-slide">playlist.brmingham.uk</span><span class="carousel-slide">playlist.lverpool.uk</span><span class="carousel-slide">playlist.edinbrgh.uk</span>
-
       <span class="carousel-slide">playlist.glasgw.uk</span><span class="carousel-slide">playlist.amstrdam.nl</span><span class="carousel-slide">playlist.rottrdam.nl</span>
-
       <span class="carousel-slide">playlist.utrcht.nl</span><span class="carousel-slide">playlist.brssels.be</span><span class="carousel-slide">playlist.zrich.ch</span>
-
       <span class="carousel-slide">playlist.lchtenstein.li</span><span class="carousel-slide">playlist.frankfrt.de</span><span class="carousel-slide">playlist.wrsawa.pl</span>
-
       <span class="carousel-slide">playlist.gdnsk.pl</span><span class="carousel-slide">playlist.brdeaux.fr</span><span class="carousel-slide">playlist.mrseille.fr</span>
-
       <span class="carousel-slide">playlist.mlan.it</span><span class="carousel-slide">playlist.lsbon.pt</span><span class="carousel-slide">playlist.lsangeles.com</span>
-
       <span class="carousel-slide">playlist.newyrk.us</span><span class="carousel-slide">playlist.chcago.us</span><span class="carousel-slide">playlist.houstn.us</span>
-
       <span class="carousel-slide">playlist.dllas.us</span><span class="carousel-slide">playlist.austn.us</span><span class="carousel-slide">playlist.prtland.com</span>
-
       <span class="carousel-slide">playlist.mnneapolis.com</span>
-
     </div>
-
   </h1>
-
   <canvas id="canvas" aria-label="Audio-reactive warp tunnel visualizer" tabindex="0" role="img"></canvas>
-
   <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0"><h2 id="start-title">Tap to start</h2></div>
-
   <div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true"><span class="label" id="uiLabel">Streaming</span><span class="dots" id="uiDots" aria-hidden="true"></span></div>
-
   <div class="swipe-hint" id="swipeHint" aria-live="polite">← Swipe for tracks →</div>
-
   <div id="yt-player-a" aria-hidden="true" class="yt-hidden"></div>
-
   <div id="yt-player-b" aria-hidden="true" class="yt-hidden"></div>
-
   <iframe id="player-fallback-a" src="about:blank" title="YouTube audio player A (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media;"></iframe>
-
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media;"></iframe>
-
   <script>
-
     "use strict";
-
-    // Device and environment detection (must be defined first)
-    const DPR = window.devicePixelRatio || 1;
-
-    const IN_SANDBOX = window.location.protocol === 'file:' || !window.location.hostname;
-
+    
     /**
      * Configuration Constants
-
      */
-
     const CONFIG = {
-
       // Performance
-
       IN_SANDBOX: false,
-
       FADE_MS: 3500,
-
       START_FADE_IN: true,
-
       DPR: Math.min(2, window.devicePixelRatio || 1),
-
       TARGET_FRAME_MS: 16.7,
-
       MIN_FRAME_MS: 16,
-
-      LOW_END_MEMORY_GB: 4,
-
-      LOW_END_CPU_CORES: 2,
-
+      
       // Visual Settings
       SEGMENTS_LOW: 32,
-
       SEGMENTS_HIGH: 48,
-
       STAR_COUNT: 80,
-
       BASE_RADIUS: 75,
-
       FOV: 250,
-
       SPEED: 0.75,
-
       TIME_INCREMENT_FORWARD: 0.005,
-
       TIME_INCREMENT_BACKWARD: -0.005,
-
       BRIGHTNESS_FALLOFF: 2.2,
-
       BRIGHTNESS_SCALE: 0.5,
-
       AUDIO_ANALYSIS_BASS_RANGE: 0.2,
-
       AUDIO_ANALYSIS_MID_RANGE: 0.6,
-
       INTERNAL_SCALE_LOW_END: 0.6,
-
       INTERNAL_SCALE_DEFAULT: 0.7,
-
-      SCANLINE_BRIGHTNESS_ODD: 0.6,
-
-      SCANLINE_BRIGHTNESS_EVEN: 1.0,
-
-      AUDIO_BASS_SMOOTHING: 0.92,
-
-      AUDIO_BASS_BLEND: 0.08,
-
+      
       // Timeouts
       YT_LOAD_TIMEOUT_MS: 15000,
-
       YT_API_TIMEOUT_MS: 10000,
-
+      
       // Carousel
       CAROUSEL_INTERVAL_MS: 2800,
-
+      
       // UI
       DOTS_INTERVAL_MS: 250
-
     };
-
+    
     // Detect low-end devices
-    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= CONFIG.LOW_END_CPU_CORES) ||
-
-                     (navigator.deviceMemory && navigator.deviceMemory <= CONFIG.LOW_END_MEMORY_GB);
-
+    const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
+                     (navigator.deviceMemory && navigator.deviceMemory <= 4);
+    
     /**
      * Returns motion scale factor based on user preferences
-
      * @returns {number} Scale factor (0.35 for reduced motion, 1.0 otherwise)
-
      */
-
     const motionScale = () => {
-
       return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.35 : 1;
-
     };
-
     const MP3_TRACKS = [
-
       {artist: "AKMD", title: "Stailings", src: ".mp3/akmd-stailings.mp3"},
-
       {artist: "AKMD & Mike T", title: "Alt Kan Skje", src: ".mp3/akmd_mike_t-alt_kan_skje.mp3"},
-
       {artist: "AKMD, Mike T & Jan Hakim", title: "Diverse", src: ".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-
       {artist: "Angelo Reira & Johann", title: "Sandviken Hotell A", src: ".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"},
-
       {artist: "Angelo Reira & Johann", title: "Sandviken Hotell B", src: ".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
-
       {artist: "Chase Swayze", title: "Traffic", src: ".mp3/chase_swayze-traffic.mp3"},
-
       {artist: "Haisam & Johann", title: "PB1", src: ".mp3/haisam_and_johann-pb1.mp3"}
-
     ];
-
     const YOUTUBE_TRACKS = [
-
       {artist: "J Dilla", title: "Motor City", id: "OSg9Fwd8QSs"},
-
       {artist: "J Dilla", title: "Microphone Master", id: "9EGHwkDix78"},
-
       {artist: "J Dilla", title: "In Space", id: "vO2nWXCVt6o"},
-
       {artist: "J Dilla", title: "Timeless", id: "dbbfo9_7D8g"},
-
       {artist: "AFTA-1", title: "Due Time", id: "WC09qDzU9y4"},
-
       {artist: "Flying Lotus", title: "Massage Situation", id: "6oUx6wGCekM"},
-
       {artist: "Madlib", title: "Eye", id: "ScVz2mntmCE"},
-
       {artist: "Slum Village", title: "Players", id: "KsULjOCYdnY"},
-
       {artist: "Jay Electronica", title: "Exhibit A", id: "H3UIHZshNQ0"},
-
       {artist: "Slum Village", title: "La La (Instrumental)", id: "EYJxxHQ7sX0"},
-
       {artist: "Slum Village", title: "Get It Together", id: "t6T-Q6HMbEo"},
-
       {artist: "Slum Village", title: "Fantastic", id: "a3ISYWWYgz8"},
-
       {artist: "Slum Village", title: "Go Ladies (Remix)", id: "pJjt-pCSD1o", start: 477},
-
       {artist: "Flying Lotus", title: "me Yesterday//Corded", id: "8DgAhgmpXNA"},
-
       {artist: "Flying Lotus", title: "Camel", id: "fU9YRGLPDQ8"},
-
       {artist: "Flying Lotus", title: "Golden Diva", id: "iu4FVvR2QQs"},
-
       {artist: "Slum Village", title: "Worlds Full of Sadness", id: "MU3nfxsz2XA"},
-
-      {artist: "Slum Village", title: "Can I Be Me", id: "Fo7WoYn_FEs"},
-
       {artist: "A. Mochi & Takaaki Itoh", title: "Sarria's Mind", id: "gFKArkiz8vU"},
-
       {artist: "Samiyam", title: "Rounded", id: "oeaY2h_cKsg"},
-
       {artist: "Chase Swayze", title: "Traffic", id: "bH-30pDoQdo"},
-
       {artist: "Chase Swayze", title: "Underrated", id: "1jjFk2Vp5ok"},
-
       {artist: "Flying Lotus", title: "BTS Radio 2006", id: "6nWdggkulHk", start: 1364}
-
     ];
-
     const loadYouTubeAPI = () => {
-
       if (IN_SANDBOX || window.__YT_API_LOADED) return;
-
       window.__YT_API_LOADED = true;
-
       const s = document.createElement("script");
-
       s.src = "https://www.youtube.com/iframe_api";
-
       s.async = true;
-
       s.defer = true;
-
       s.onerror = () => console.warn('YouTube API load failed');
-
       document.head.appendChild(s);
-
       setTimeout(() => {
-
         if (!window.YT || !window.YT.Player) {
-
           console.warn('YouTube API timeout - using fallback iframes');
-
         }
-
       }, 10000);
-
     };
-
     const tryFetch = async (url, parser) => {
-
       try {
-
         const r = await fetch(url);
-
         if (r.ok) return await parser(r);
-
         console.warn(`[fetch] ${url} returned ${r.status}`);
-
       } catch (e) {
-
-        console.error(`[fetch] ${url} failed:`, e.message);
-
+        console.warn(`[fetch] ${url} failed:`, e.message);
       }
-
       return null;
-
     };
-
     const detectMp3Playlist = async () => {
-
       if (IN_SANDBOX) return null;
-
       const seen = new Set();
-
       const addUnique = (t) => { if (!seen.has(t.src)) { seen.add(t.src); tracks.push(t); } };
-
       let tracks = [];
-
       const json = await tryFetch('.mp3/playlist.json', r => r.json());
-
       if (json) {
-
         const files = (Array.isArray(json) ? json : json.files) || [];
-
         const mp3 = files.filter(f => typeof f === 'string' && f.toLowerCase().endsWith('.mp3'));
-
         mp3.map(f => ({ title: f.replace(/\.mp3$/i, '').replace(/[-_]/g, ' '), artist: '', src: '.mp3/' + f })).forEach(addUnique);
-
       }
-
       const m3u = await tryFetch('.mp3/playlist.m3u', r => r.text());
-
       if (m3u) {
-
         const lines = m3u.split('\n').map(l => l.trim()).filter(l => l);
-
         const tracksM3U = [];
-
         let current = {};
-
         for (const line of lines) {
-
           if (line.startsWith('#EXTINF:')) {
-
             const info = line.substring(8);
-
             const parts = info.split(',');
-
             if (parts.length >= 2) {
-
               current.title = parts[1].trim();
-
               const match = parts[0].match(/(\d+)/);
-
               if (match) current.duration = parseInt(match[1]);
-
             }
-
           } else if (!line.startsWith('#') && line) {
-
             current.src = line;
-
             if (current.src) tracksM3U.push({...current});
-
             current = {};
-
           }
-
         }
-
         tracksM3U.map(t => ({ ...t, src: '.mp3/' + t.src })).forEach(addUnique);
-
       }
-
       const idx = await tryFetch('index.json', r => r.json());
-
       if (idx) {
-
         const files = (Array.isArray(idx) ? idx : idx.files) || [];
-
         const mp3 = files.filter(f => typeof f === 'string' && f.toLowerCase().endsWith('.mp3'));
-
         mp3.map(f => ({ title: f.replace(/\.mp3$/i, '').replace(/[-_]/g, ' '), artist: '', src: '.mp3/' + f })).forEach(addUnique);
-
       }
-
       return tracks.length > 0 ? tracks : null;
-
     };
-
     const parseM3U = (text) => {
-
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-
       const tracks = [];
-
       let current = {};
-
       for (const line of lines) {
-
         if (line.startsWith('#EXTINF:')) {
-
           const info = line.substring(8);
-
           const parts = info.split(',');
-
           if (parts.length >= 2) {
-
             current.title = parts[1].trim();
-
             const match = parts[0].match(/(\d+)/);
-
             if (match) current.duration = parseInt(match[1]);
-
           }
-
         } else if (!line.startsWith('#') && line) {
-
           current.src = line;
-
           if (current.src) tracks.push({...current});
-
           current = {};
-
         }
-
       }
-
       return tracks.length > 0 ? tracks : null;
-
     };
-
     const YT_ORIGIN = "https://www.youtube.com";
-
     const ytPost = (i, f, a = []) => {
-
       if (IN_SANDBOX) return;
-
       try {
-
         if (!i || !i.contentWindow) return;
-
         i.contentWindow.postMessage({event: "command", func: f, args: a}, YT_ORIGIN);
-
-      } catch (e1) {
-
+      } catch {
         try {
-
           i.contentWindow.postMessage([...arguments], YT_ORIGIN);
-
-        } catch (e2) {
-
-          console.error('YouTube API postMessage failed:', e1, e2);
-
-        }
-
+        } catch {}
       }
-
     };
-
     /**
-
      * UnifiedAudioEngine - Manages MP3 and YouTube playback with crossfading
-
      * @class
-
      * @param {Array} tracks - Array of track objects with src (MP3) or id (YouTube)
-
      */
-
     class UnifiedAudioEngine {
-
       constructor(tracks) {
-
         this.started = false;
-
         this.muted = false;
-
         this.trackIndex = 0;
-
         this.tracks = tracks.slice().sort(() => Math.random() - 0.5);
-
         this.activeKey = "a";
-
         this.inactiveKey = "b";
-
         this.mp3Players = {a: new Audio(), b: new Audio()};
-
         this.mp3Players.a.crossOrigin = "anonymous";
-
         this.mp3Players.b.crossOrigin = "anonymous";
-
         this.mp3Players.a.preload = "metadata";
-
         this.mp3Players.b.preload = "metadata";
-
         this.mp3Players.a.volume = 0;
-
         this.mp3Players.b.volume = 0;
-
         this.ytPlayers = {a: null, b: null};
-
         this.ytReady = false;
-
         this._fadeIv = null;
-
         this._prefadeTimer = null;
-
         this._loadWatch = null;
-
         this.beatPhase = 0;
-
         this.energyLevel = 0.5;
-
         this._beatEnv = 0;
-
         try {
-
           this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
           this.analyser = this.audioContext.createAnalyser();
-
           this.analyser.fftSize = 256;
-
           this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-
-        } catch (e) {
-
-          console.error('AudioContext/Analyser creation failed:', e);
-
-        }
-
+        } catch {}
       }
-
       initYTAPI() {
-
         if (IN_SANDBOX) return;
-
         try {
-
           this.ytPlayers.a = new YT.Player('yt-player-a', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('a'), onStateChange: (e) => this.onYTState('a', e), onError: () => this.onYTError()}});
-
           this.ytPlayers.b = new YT.Player('yt-player-b', {width: '1', height: '1', playerVars: {autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0, ecver: 2}, events: {onReady: () => this.onYTReady('b'), onStateChange: (e) => this.onYTState('b', e), onError: () => this.onYTError()}});
-
           this.ytReady = true;
-
-        } catch (e) {
-
-          console.error('YouTube player initialization failed:', e);
-
-        }
-
+        } catch {}
       }
-
       onYTReady(k) {
-
         try {
-
           this.ytPlayers[k].setVolume(0);
-
           this.ytPlayers[k].mute();
-
-        } catch (e) {
-
-          console.error('YouTube onReady setVolume/mute failed:', e);
-
-        }
-
+        } catch {}
       }
-
       onYTState(k, e) {
-
         if (IN_SANDBOX) return;
-
         const S = YT.PlayerState;
-
         if (e.data === S.ENDED) {
-
           if (k === this.activeKey) this.next({fast: true});
-
         } else if (e.data === S.PLAYING) {
-
           clearTimeout(this._loadWatch);
-
         }
-
       }
-
       onYTError() {
-
         clearTimeout(this._loadWatch);
-
         this.next({fast: true});
-
       }
-
       start() {
-
         this.started = true;
-
         this.muted = false;
-
         this.updateUI();
-
         if (this.audioContext && this.audioContext.state === 'suspended') {
-
-          this.audioContext.resume().catch((e) => {
-
-            console.error('AudioContext resume failed:', e);
-
-          });
-
+          this.audioContext.resume().catch(() => {});
         }
-
         const t = this.tracks[this.trackIndex];
-
-        t.src ? this._loadMP3(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: CONFIG.START_FADE_IN});
-
+        t.src ? this._loadMP3(this.activeKey, t, {fadeIn: START_FADE_IN}) : this._loadYT(this.activeKey, t, {fadeIn: START_FADE_IN});
       }
-
       _loadMP3(k, t, {fadeIn} = {fadeIn: true}) {
-
         if (!t.src) return;
-
         const p = this.mp3Players[k];
-
         p.src = t.src;
-
         p.load();
-
         setTimeout(() => {
-
           p.onended = () => { if (k === this.activeKey) this.next({fast: true}); };
-
           p.onerror = (e) => {
-
             console.warn('MP3 load error:', t.src, e);
-
             if (k === this.activeKey) this.next({fast: true});
-
           };
-
           p.onloadedmetadata = () => {
-
             const d = p.duration;
-
             if (d > 0) {
-
-              const m = Math.max(CONFIG.FADE_MS + 1000, d * 1000 - CONFIG.FADE_MS - 500);
-
+              const m = Math.max(FADE_MS + 1000, d * 1000 - FADE_MS - 500);
               clearTimeout(this._prefadeTimer);
-
               this._prefadeTimer = setTimeout(() => this.next({}), m);
-
             }
-
           };
-
           try {
-
             if (!p._srcNode && this.audioContext && !p._connected) {
-
               p._srcNode = this.audioContext.createMediaElementSource(p);
-
               p._srcNode.connect(this.analyser);
-
               this.analyser.connect(this.audioContext.destination);
-
               p._connected = true;
-
             }
-
-          } catch (e) {
-
-            console.error('AudioContext connection failed:', e);
-
-          }
-
+          } catch (e) { console.warn('AudioContext connection:', e); }
           p.play().catch((e) => {
-
             console.warn('MP3 play failed:', t.src, e);
-
             if (k === this.activeKey) setTimeout(() => this.next({fast: true}), 1000);
-
           });
-
           if (fadeIn) {
-
             let vol = 0;
-
             const iv = setInterval(() => {
-
               vol += 0.033;
-
               p.volume = Math.min(1, vol);
-
               if (vol >= 1) clearInterval(iv);
-
             }, 50);
-
           } else {
-
             p.volume = 1;
-
           }
-
         }, 100);
-
       }
-
       _loadYT(k, t, {fadeIn}) {
-
         if (!t.id || IN_SANDBOX) return;
-
         clearTimeout(this._loadWatch);
-
         if (this.ytReady && this.ytPlayers[k] && this.ytPlayers[k].loadVideoById) {
-
           try {
-
             const p = this.ytPlayers[k];
-
             p.loadVideoById({videoId: t.id, startSeconds: t.start || 0});
-
-            this._loadWatch = setTimeout(() => {
-
-              console.warn('YT load timeout');
-
+            this._loadWatch = setTimeout(() => { 
+              console.warn('YT load timeout'); 
               this.updateUI('⚠️ YouTube load timeout - skipping');
-
-              this.next({fast: true});
-
+              this.next({fast: true}); 
             }, CONFIG.YT_LOAD_TIMEOUT_MS);
-
-            if (fadeIn) this._fadeYT(k, CONFIG.FADE_MS);
-
+            if (fadeIn) this._fadeYT(k, FADE_MS);
             else { p.setVolume(100); p.unMute(); }
-
-          } catch (e) {
-
-            console.error('YT load error:', e);
-
-            this.next({fast: true});
-
-          }
-
+          } catch (e) { console.warn('YT load error:', e); this.next({fast: true}); }
         } else {
-
           console.warn('YT not ready');
-
           this.next({fast: true});
-
         }
-
       }
-
       _fadeYT(k, ms) {
-
         if (!this.ytReady || IN_SANDBOX) return;
-
         const steps = 30, dt = ms / steps;
-
         let i = 0;
-
         const iv = setInterval(() => {
-
           i++;
-
           const vol = Math.round(100 * i / steps);
-
-          try { if (this.ytPlayers[k]) this.ytPlayers[k].setVolume(vol); } catch (e) { console.error('YouTube setVolume failed:', e); }
-
+          try { if (this.ytPlayers[k]) this.ytPlayers[k].setVolume(vol); } catch {}
           if (i >= steps) clearInterval(iv);
-
         }, dt);
-
       }
-
       next({fast = false} = {}) {
-
         if (IN_SANDBOX) return;
-
         clearInterval(this._fadeIv);
-
         clearTimeout(this._prefadeTimer);
-
         const n = (this.trackIndex + 1) % this.tracks.length;
-
         const t = this.tracks[n];
-
         this.trackIndex = n;
-
         this.updateUI();
-
         t.src ? this._loadMP3(this.activeKey, t, {fadeIn: true}) : this._loadYT(this.activeKey, t, {fadeIn: true});
-
       }
-
       prev() {
-
         const p = (this.trackIndex - 1 + this.tracks.length) % this.tracks.length;
-
         const t = this.tracks[p];
-
         this.trackIndex = p;
-
         this.updateUI();
-
         t.src ? this._loadMP3(this.activeKey, t, {fadeIn: true}) : this._loadYT(this.activeKey, t, {fadeIn: true});
-
       }
-
       toggleMute() {
-
         this.muted = !this.muted;
-
         const t = this.tracks[this.trackIndex];
-
         if (t.src) {
-
-          try { this.mp3Players[this.activeKey].muted = this.muted; } catch (e) { console.error('MP3 mute failed:', e); }
-
+          try { this.mp3Players[this.activeKey].muted = this.muted; } catch {}
         } else if (t.id && this.ytReady) {
-
-          try { this.muted ? this.ytPlayers[this.activeKey].mute() : this.ytPlayers[this.activeKey].unMute(); } catch (e) { console.error('YouTube mute failed:', e); }
-
+          try { this.muted ? this.ytPlayers[this.activeKey].mute() : this.ytPlayers[this.activeKey].unMute(); } catch {}
         }
-
       }
-
       updateUI() {
-
         const u = document.getElementById('uiLabel');
-
         if (!u) return;
-
         const t = this.tracks[this.trackIndex];
-
         u.textContent = (t.artist ? `${t.artist} - ` : '') + t.title;
-
       }
-
       data() {
-
         if (this.analyser && this.dataArray) {
-
           try {
-
             this.analyser.getByteFrequencyData(this.dataArray);
-
             const n = this.dataArray.length;
-
             const n2 = Math.floor(n * CONFIG.AUDIO_ANALYSIS_BASS_RANGE);
-
             const n6 = Math.floor(n * CONFIG.AUDIO_ANALYSIS_MID_RANGE);
-
             let bass = 0, mid = 0, high = 0;
-
             for (let i = 0; i < n2; i++) bass += this.dataArray[i];
-
             for (let i = n2; i < n6; i++) mid += this.dataArray[i];
-
             for (let i = n6; i < n; i++) high += this.dataArray[i];
-
             bass /= n2 * 255;
-
             mid /= (n6 - n2) * 255;
-
             high /= (n - n6) * 255;
-
             return {bass, mid, high, average: (bass + mid + high) / 3, beat: 0, energy: 0, subBass: bass, vocals: mid, treble: high};
-
-          } catch (e) {
-
-            console.error('Audio analyser data fetch failed:', e);
-
-          }
-
+          } catch {}
         }
-
         return {bass: 0.5, mid: 0.45, high: 0.35, average: 0.43, beat: 0, energy: 0.5, subBass: 0.5, vocals: 0.45, treble: 0.35};
-
       }
-
     }
-
     class SimpleCarousel {
-
       constructor(e, i = 2800) {
-
         this.slides = Array.from(e.querySelectorAll(".carousel-slide"));
-
         this.i = 0;
-
         this.n = this.slides.length;
-
         if (this.n > 1) this.t = setInterval(() => this.next(), i);
-
       }
-
       next() {
-
         this.slides[this.i].classList.remove("active");
-
         this.i = (this.i + 1) % this.n;
-
         this.slides[this.i].classList.add("active");
-
         document.getElementById("cityCarousel").setAttribute("aria-live", "polite");
-
       }
-
       destroy() { clearInterval(this.t); }
-
     }
-
     /**
-
      * PixelTunnel - Renders animated warp tunnel effect with audio reactivity
-
      * @class
-
      * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-
      */
-
     class PixelTunnel {
-
       constructor(c) {
-
         this.ctx = c;
-
         this.w = 0;
-
         this.h = 0;
-
         this.s = 1;
-
         this.imageData = null;
-
         this.data = null;
-
         this.u32 = null;
-
         this.BLACK32 = 0;
-
         this.fov = 250;
-
         this.speed = 0.75;
-
         this.segments = isLowEnd ? 32 : 48;
-
         this.baseRadius = 75;
-
         this.time = 0;
-
         this.bassWobble = 0;
-
         this.mouse = {x: 0, y: 0, down: false, active: false};
-
         this.ori = {gamma: 0, beta: 0, alpha: 0, active: false};
-
         this.accel = {x: 0, y: 0, z: 0, active: false};
-
         this.touch = {startX: 0, startY: 0, deltaX: 0, deltaY: 0, active: false};
-
         this.ringPxCull = 1;
-
         this.tieRowStride = 2;
-
         this.zStep = 10;
-
         this.stars = [];
-
-        for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
-
+        for (let i = 0; i < 80; i++) {
           this.stars.push({
-
             x: (Math.random() - 0.5) * this.w * 2,
-
             y: (Math.random() - 0.5) * this.h * 2,
-
             z: Math.random() * this.fov * 2 - this.fov,
-
             brightness: Math.random() * 0.5 + 0.5
-
           });
-
         }
-
         this.init();
-
       }
-
       resize(w, h, s) {
-
         this.w = w;
-
         this.h = h;
-
         this.s = s;
-
         this.ctx.fillStyle = "#000";
-
         this.ctx.fillRect(0, 0, w, h);
-
         this.imageData = this.ctx.getImageData(0, 0, w, h);
-
         this.data = this.imageData.data;
-
         this.u32 = new Uint32Array(this.data.buffer);
-
         const t = new Uint8ClampedArray(4);
-
         t[3] = 255;
-
         this.BLACK32 = new Uint32Array(t.buffer)[0];
-
         this.init();
-
       }
-
       clearImageData() {
-
         for (let i = 0; i < this.u32.length; i++) {
-
           const r = (this.u32[i] & 255), g = (this.u32[i] >> 8 & 255), b = (this.u32[i] >> 16 & 255);
-
           this.u32[i] = this.pack32((r * 0.85) | 0, (g * 0.85) | 0, (b * 0.85) | 0, 255);
-
         }
-
       }
-
       pack32(r, g, b, a) { return ((a & 255) << 24) | ((b & 255) << 16) | ((g & 255) << 8) | (r & 255); }
-
       setPixel32(x, y, c) { if (x <= 0 || x >= this.w || y <= 0 || y >= this.h) return; const i = x + y * this.imageData.width; this.u32[i] = c; }
-
       drawLine32(x1, y1, x2, y2, c) {
-
         let dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1), sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1, err = dx - dy, lx = x1, ly = y1;
-
         for (;;) {
-
           if (lx > 0 && lx < this.w && ly > 0 && ly < this.h) this.setPixel32(lx, ly, c);
-
           if (lx === x2 && ly === y2) break;
-
           const e2 = 2 * err;
-
           if (e2 > -dy) { err -= dy; lx += sx; }
-
           if (e2 < dx) { err += dx; ly += sy; }
-
         }
-
       }
-
       getCirclePos(cx, cy, r, i, s) {
-
         const wobble = (this.bassWobble || 0) * 0.1;
-
         const a = i * (Math.PI * 2 / s) + this.time + wobble;
-
         return {x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r};
-
       }
-
       addParticle(x, y, z, a) { return {x, y, z, x2d: 0, y2d: 0, radius: this.baseRadius, radiusAudio: this.baseRadius, index: 0, segments: this.segments, centerX: 0, centerY: 0, audioIndex: a}; }
-
       colorForRow32(i, l, a) {
-
         const b = Math.max(0, Math.min(1, a?.bass ?? 0.5));
-
         const v = Math.max(0, Math.min(1, a?.average ?? 0.45));
-
         const h = Math.max(0, Math.min(1, a?.high ?? 0.35));
-
         const d = i / Math.max(1, l - 1);
-
         const hueShift = Math.sin(this.time * 0.3 + d * Math.PI) * 0.5 + 0.5;
-
         const beatPulse = (a?.beat || 0) * 80;
-
         const r = Math.round((30 * h + beatPulse * 0.8 + hueShift * 40) / 16) * 16;
-
         const g = Math.round((60 * v + d * 30 + beatPulse * 0.3) / 16) * 16;
-
         const u = Math.round((180 + b * 60 + hueShift * 20) / 16) * 16;
-
         return this.pack32(r, g, u, 255);
-
       }
-
       init() {
-
         this.particles = [];
-
         this.centers = [];
-
         const w1 = Math.random() * this.w, h1 = Math.random() * this.h;
-
         let c = 0;
-
         for (let z = -this.fov; z < this.fov; z += this.zStep) {
-
           const coords = [];
-
           for (let i = 0; i < this.segments; i++) {
-
             coords.push(this.getCirclePos(w1, h1, this.baseRadius, i, this.segments));
-
           }
-
           this.particles.push(coords);
-
           this.centers.push({x: w1, y: h1});
-
           c++;
-
         }
-
         this.zStep = this.fov * 2 / this.particles.length;
-
       }
-
       frame(a) {
-
         const m = motionScale();
-
-        this.bassWobble = (this.bassWobble || 0) * CONFIG.AUDIO_BASS_SMOOTHING + (a?.bass || 0) * (a?.beat || 0) * CONFIG.AUDIO_BASS_BLEND;
-
+        this.bassWobble = (this.bassWobble || 0) * 0.92 + (a?.bass || 0) * (a?.beat || 0) * 0.08;
         this.clearImageData();
-
         for (const star of this.stars) {
-
           star.z -= this.speed * 2 * m;
-
           if (star.z < -this.fov) {
-
             star.z += this.fov * 2;
-
             star.x = (Math.random() - 0.5) * this.w * 2;
-
             star.y = (Math.random() - 0.5) * this.h * 2;
-
           }
-
           const sc = this.fov / (this.fov + star.z);
-
           const sx = (this.w / 2 + star.x * sc) | 0, sy = (this.h / 2 + star.y * sc) | 0;
-
           const brightness = (star.brightness * (1 - star.z / this.fov) * 180) | 0;
-
           if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
-
             const col = this.pack32(brightness * 0.3, brightness * 0.5, brightness, 255);
-
             this.setPixel32(sx, sy, col);
-
           }
-
         }
-
         const l = this.particles.length;
-
         let s = false;
-
         for (let i = 0; i < l; i++) {
-
           const row = this.particles[i], rowBack = i > 0 ? this.particles[i - 1] : null, center = this.centers[i];
-
           if (this.touch.active) {
-
             const dx = this.touch.deltaX * 0.01, dy = this.touch.deltaY * 0.01;
-
             center.x += dx;
-
             center.y += dy;
-
           } else if (this.ori.active) {
-
             const mx = -this.ori.gamma * (this.w / 180), my = -this.ori.beta * (this.h / 180);
-
             center.x = this.w / 2 + mx * ((row[0].z - this.fov) / 500);
-
             center.y = this.h / 2 + my * ((row[0].z - this.fov) / 500);
-
           } else if (this.accel.active) {
-
             const ax = this.accel.x * 2, ay = this.accel.y * 2;
-
             center.x += ax;
-
             center.y += ay;
-
           } else {
-
             center.x += (this.w / 2 - center.x) * 0.015;
-
             center.y += (this.h / 2 - center.y) * 0.015;
-
           }
-
           const f = (a?.average || 0) * 64 + (a?.beat ? 8 : 0);
-
           const sc = this.fov / (this.fov + row[0].z);
-
           const r = (this.baseRadius + f) * sc;
-
           if (r < this.ringPxCull) continue;
-
           for (let j = 0, k = row.length; j < k; j++) {
-
             const p = row[j], z = this.fov / (this.fov + p.z);
-
             p.x2d = p.x * z + center.x;
-
             p.y2d = p.y * z + center.y;
-
             p.radiusAudio = p.radius + f;
-
             if (this.mouse.down) {
-
               p.z += this.speed * m;
-
               if (p.z > this.fov) { p.z -= this.fov * 2; s = true; }
-
             } else {
-
               p.z -= this.speed * m;
-
               if (p.z < -this.fov) { p.z += this.fov * 2; s = true; }
-
             }
-
             const n = this.getCirclePos(p.centerX, p.centerY, p.radiusAudio, p.index, p.segments);
-
             p.x = n.x;
-
             p.y = n.y;
-
           }
-
           const c = this.colorForRow32(i, l, a);
-
           for (let j = 1; j < row.length; j++) {
-
             const p = row[j], v = row[j - 1];
-
             this.drawLine32(p.x2d | 0, p.y2d | 0, v.x2d | 0, v.y2d | 0, c);
-
           }
-
           if (row.length > 2) {
-
             const f = row[0], t = row[row.length - 1];
-
             this.drawLine32(t.x2d | 0, t.y2d | 0, f.x2d | 0, f.y2d | 0, c);
-
           }
-
           if (i > 0 && i < l - 1 && rowBack && i % this.tieRowStride === 0) {
-
             for (let j = 0; j < row.length; j++) {
-
               const p = row[j], b = rowBack[j];
-
               this.drawLine32(p.x2d | 0, p.y2d | 0, b.x2d | 0, b.y2d | 0, c);
-
             }
-
           }
-
         }
-
         const cx = this.w / 2, cy = this.h / 2, maxDist = Math.hypot(cx, cy);
-
         for (let y = 0; y < this.h; y++) {
-
           for (let x = 0; x < this.w; x++) {
-
             const i = x + y * this.w;
-
-            let brightness = y % 3 === 0 ? CONFIG.SCANLINE_BRIGHTNESS_ODD : CONFIG.SCANLINE_BRIGHTNESS_EVEN;
-
+            let brightness = y % 3 === 0 ? 0.6 : 1.0;
             const dist = Math.hypot(x - cx, y - cy);
-
             brightness *= 1.0 - Math.pow(dist / maxDist, CONFIG.BRIGHTNESS_FALLOFF) * CONFIG.BRIGHTNESS_SCALE;
-
             const r = (this.u32[i] & 255) * brightness | 0, g = ((this.u32[i] >> 8) & 255) * brightness | 0, b = ((this.u32[i] >> 16) & 255) * brightness | 0;
-
             this.u32[i] = this.pack32(r, g, b, 255);
-
           }
-
         }
-
         if (s) this.particles = this.particles.sort((a, b) => b[0].z - a[0].z);
-
         this.time += (this.mouse.down ? CONFIG.TIME_INCREMENT_BACKWARD : CONFIG.TIME_INCREMENT_FORWARD) * m;
-
         this.ctx.putImageData(this.imageData, 0, 0);
-
       }
-
     }
-
     let audio;
-
     const initAudioEngine = async () => {
-
       const detected = await detectMp3Playlist();
-
       const mp3List = detected && detected.length > 0 ? detected : MP3_TRACKS;
-
       const allTracks = [...mp3List, ...YOUTUBE_TRACKS];
-
       audio = new UnifiedAudioEngine(allTracks);
-
       console.log(`Unified: ${mp3List.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
-
       return audio;
-
     };
-
     let audioInitPromise = initAudioEngine();
-
     window.onYouTubeIframeAPIReady = async () => {
-
       if (!audio) audio = await audioInitPromise;
-
       audio?.initYTAPI?.();
-
     };
-
     const canvas = document.getElementById("canvas"), uiEl = document.getElementById("ui");
-
     let INTERNAL_SCALE = 1, w = 0, h = 0;
-
     const SCALE_MAX = Math.min(2, DPR) * (isLowEnd ? 0.9 : 1), SCALE_MIN = isLowEnd ? 0.4 : 0.5, TARGET_MS = 16.7;
-
     let ewma = TARGET_MS, lastScaleAdjust = 0, MIN_FRAME_MS = 16;
-
     const updateMinFrameInterval = () => MIN_FRAME_MS = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? 33 : 16;
-
     const applyInternalScale = (b = isLowEnd ? CONFIG.INTERNAL_SCALE_LOW_END : CONFIG.INTERNAL_SCALE_DEFAULT) => {
-
       INTERNAL_SCALE = Math.max(SCALE_MIN, Math.min(SCALE_MAX, b * Math.min(2, DPR)));
-
     };
-
     (() => {
-
-      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, CONFIG.DOTS_INTERVAL_MS); } catch (err) { console.error('Dots animation failed:', err); } })();
-
-      new SimpleCarousel(document.getElementById("cityCarousel"), CONFIG.CAROUSEL_INTERVAL_MS);
-
+      (() => { const e = document.getElementById("uiDots"); if (!e) return; const s = [0, 1, 2, 3, 2, 1]; let i = 0; const t = () => { e.textContent = ".".repeat(s[i]); i = (i + 1) % s.length; }; t(); try { clearInterval(window.__RB_DOTS); window.__RB_DOTS = setInterval(t, 250); } catch {} })();
+      new SimpleCarousel(document.getElementById("cityCarousel"));
       const tunnel = new PixelTunnel(canvas.getContext("2d"));
-
       const resize = () => {
-
         const dpr = window.devicePixelRatio || 1;
-
         w = canvas.width = window.innerWidth * dpr;
-
         h = canvas.height = window.innerHeight * dpr;
-
         canvas.style.width = window.innerWidth + "px";
-
         canvas.style.height = window.innerHeight + "px";
-
         tunnel.resize(w / dpr, h / dpr, dpr);
-
         applyInternalScale();
-
       };
-
       resize();
-
       window.addEventListener("resize", resize);
-
       const handleMouse = (e) => { tunnel.mouse.x = e.clientX; tunnel.mouse.y = e.clientY; tunnel.mouse.active = true; };
-
       const handleMouseDown = (e) => { tunnel.mouse.down = true; handleMouse(e); };
-
       const handleMouseUp = () => { tunnel.mouse.down = false; };
-
       const handleOrientation = (e) => { tunnel.ori.gamma = e.gamma || 0; tunnel.ori.beta = e.beta || 0; tunnel.ori.alpha = e.alpha || 0; tunnel.ori.active = true; };
-
       const handleMotion = (e) => { tunnel.accel.x = e.accelerationIncludingGravity.x || 0; tunnel.accel.y = e.accelerationIncludingGravity.y || 0; tunnel.accel.z = e.accelerationIncludingGravity.z || 0; tunnel.accel.active = true; };
-
       const handleTouchStart = (e) => { tunnel.touch.startX = e.touches[0].clientX; tunnel.touch.startY = e.touches[0].clientY; tunnel.touch.active = true; };
-
       const handleTouchMove = (e) => { if (tunnel.touch.active) { tunnel.touch.deltaX = e.touches[0].clientX - tunnel.touch.startX; tunnel.touch.deltaY = e.touches[0].clientY - tunnel.touch.startY; } };
-
       const handleTouchEnd = () => { tunnel.touch.active = false; tunnel.touch.deltaX = 0; tunnel.touch.deltaY = 0; };
-
       canvas.addEventListener("mousemove", handleMouse);
-
       canvas.addEventListener("mousedown", handleMouseDown);
-
       canvas.addEventListener("mouseup", handleMouseUp);
-
       canvas.addEventListener("touchstart", handleTouchStart);
-
       canvas.addEventListener("touchmove", handleTouchMove);
-
       canvas.addEventListener("touchend", handleTouchEnd);
-
       window.addEventListener("deviceorientation", handleOrientation);
-
       window.addEventListener("devicemotion", handleMotion);
-
       let lastFrame = 0;
-
       const animate = (now) => {
-
         if (now - lastFrame < MIN_FRAME_MS) return requestAnimationFrame(animate);
-
         lastFrame = now;
-
         const audioData = audio?.data?.() || {bass: 0.5, mid: 0.45, high: 0.35, average: 0.43, beat: 0, energy: 0.5, subBass: 0.5, vocals: 0.45, treble: 0.35};
-
         tunnel.frame(audioData);
-
         requestAnimationFrame(animate);
-
       };
-
       requestAnimationFrame(animate);
-
       const overlay = document.getElementById("overlay");
-
       const start = async () => {
-
         loadYouTubeAPI();
-
         try {
-
           audio = await audioInitPromise;
-
           audio.start();
-
           overlay.classList.add("ack");
-
           setTimeout(() => overlay.hidden = true, 1000);
-
         } catch (e) {
-
           console.warn('Audio init failed:', e);
-
           overlay.classList.add("ack");
-
           setTimeout(() => overlay.hidden = true, 1000);
-
         }
-
       };
-
       overlay.addEventListener("click", start);
-
       overlay.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") start(); });
-
       uiEl.addEventListener("click", () => audio?.toggleMute?.());
-
       uiEl.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") audio?.toggleMute?.(); });
-
       document.addEventListener("keydown", (e) => {
-
         if (e.key === " ") e.preventDefault();
-
         if (e.code === "Space") audio?.toggleMute?.();
-
         if (e.key === "ArrowLeft") audio?.prev?.();
-
         if (e.key === "ArrowRight") audio?.next?.();
-
         if (e.key === "Enter" && overlay && !overlay.hidden) start();
-
       });
-
       updateMinFrameInterval();
-
       window.addEventListener("change", (e) => { if (e.matches) updateMinFrameInterval(); });
-
     })();
-
   </script>
-
 </body>
-
 </html>
-
