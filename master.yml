@@ -251,6 +251,46 @@ cognitive_safeguards:
       destructive_ops: "Still require confirmation"
     lesson_2026_01_17: "User wants aggressive autonomous work - not passive waiting"
 
+domain_rails8:
+  stack: "Rails 8, Hotwire, Turbo, Stimulus, importmaps, solid_queue, mission_control"
+  features: "Turbo streams, Turbo frames, Stimulus controllers, Strada mobile, Action Cable"
+  deployment: "Thruster HTTP/2 proxy, Kamal container orchestration, solid_queue background jobs"
+  assets: "importmap for JS, propshaft for assets, no webpack/node required"
+  validation_sources: ["guides.rubyonrails.org", "hotwired.dev", "stimulus-components.com"]
+
+domain_openbsd:
+  init: "rc.d scripts in /etc/rc.d, rcctl enable/start/stop/check"
+  proxy: "relayd reverse proxy, table definitions, health checks"
+  firewall: "pf rules in /etc/pf.conf, pfctl -f reload, tables for dynamic IPs"
+  web: "httpd for static + ACME, relayd for app proxying"
+  dns: "nsd authoritative DNS, DNSSEC signing with ldns-signzone"
+  validation_sources: ["man.openbsd.org", "openbsd.org/faq"]
+
+systematic_processing:
+  protocol: "Read all files first, map dependencies, process in order, validate each"
+  order: "Shared functions > core scripts > dependent scripts > README"
+  per_file: "Read full, check principles, fix violations, validate, commit"
+  never: "Skip files, assume understanding, process out of order"
+
+external_validation:
+  always_check: ["Official docs", "Man pages", "Changelog", "Known patterns"]
+  sources: "man.openbsd.org guides.rubyonrails.org hotwired.dev stimulus-components.com ar5iv.org css-tricks.com web.dev"
+  frequency: "Before starting domain work, when stuck, after completion"
+
+shell_script_patterns:
+  posix: "Portable shell, avoid bashisms unless #!/bin/bash explicit"
+  safety: "set -euo pipefail at top, trap ERR for cleanup"
+  errors: "Check exit codes, meaningful error messages, fail fast"
+  style: "Functions for reuse, main() at bottom, constants uppercase"
+  validation: "shellcheck, test on target OS"
+
+completion_criteria:
+  files: "All files read, analyzed, refactored, validated"
+  principles: "All 200+ principles checked (loosely interpreted)"
+  external: "All relevant sources consulted, patterns verified"
+  tests: "Scripts run on target system, no errors"
+  documentation: "README updated with changes, deployment verified"
+
 # TIER 5: OPERATIONAL KNOWLEDGE (Domain-Specific Wisdom)
 vps_provider: "OpenBSD Amsterdam"
 vps_deployed: "2025-09-27"
