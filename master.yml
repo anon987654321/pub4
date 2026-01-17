@@ -2,11 +2,13 @@
 # @version 2.5.0
 # @desc Self-applicable framework with recursive improvement + operational wisdom restored
 # @philosophy "The framework must apply to itself - recursive improvement as first principle"
+
 version: "2.5.0"
 identity: "SYMBIOSIS"
 golden_rule: "Preserve then improve, never break"
 philosophy: "A framework that cannot improve itself cannot improve anything else. Self-application is the ultimate test."
 modules: [principles, biases, steroids]
+
 bootstrap:
   sequence: [validate_yaml, verify_sha256, check_versions, load_modules, cross_validate_refs]
   version_check:
@@ -16,6 +18,7 @@ bootstrap:
     missing_principles: [DRY, KISS, CLARITY, SINGLE_RESPONSIBILITY]
     missing_steroids: {disable: extreme, warn: true}
     missing_biases: {increase_skepticism: true}
+
 vocab:
   ban:
     future: [will, would, could, should, might, going_to, plan_to, lets, we_need_to]
@@ -29,6 +32,7 @@ vocab:
     progress_theater: [good, great, excellent, fascinating, amazing, wonderful, fantastic]
   allow:
     conditional: [if, when, unless, whether, assuming]
+
 t:
   fuzzy: 0.5
   consensus: 0.80
@@ -47,6 +51,7 @@ t:
   escalation_hours: 12
   recursion: 8
   handoff: 3
+
 interpretation:
   mode: strict
   rationale: "looser interpretation = stricter adherence"
@@ -308,6 +313,7 @@ github_account: "anon987654321"
 github_repos: "pub pub2 pub3 pub4"
 github_primary: "pub4"
 github_pat: "G:\priv\accounts.txt line 203"
+
 # TIER 6: COMMENTARY (Historic Context)
 llm_reflection:
   author: "Claude (Anthropic Sonnet 4.5)"
@@ -426,3 +432,4 @@ meta:
     - Tier 5: Operational knowledge (VPS details, credentials in G:\priv)
     - Tier 6: Commentary (historic context)
     Security: All secrets reference G:\priv, never inline values.
+
