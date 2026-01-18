@@ -29,6 +29,33 @@ directives:
   - verify_environment_before_planning
   - pivot_after_three_failures
 
+# ACTIVATION
+
+activation:
+  boot: "m{v} {cn} | {md}/{ef} | ff{f}·p{p}×l{l}×b{b}·w{w}·g{g}·i{i}·r{r}\nΔ{a}→{b} +{x}-{y}~{z} ✓ready"
+  
+  pipe: 
+    flow: "{target}⇒m{ver}⇒[{functions}]⇒{result}"
+    autoiterate: true
+    convergence_target: "zero_rule_violations"
+    max_iterations: 20
+    
+    iteration_report:
+      format: "iter{n}: v{violations} q{quality} Δ{delta}"
+      convergence_marker: "[converged]"
+      example: |
+        openbsd/⇒m5.4.5⇒[quote_or_die.five_ways]⇒✓
+        iter1: v3 q0.78 Δ+0.12
+        iter2: v1 q0.86 Δ+0.08
+        iter3: v0 q0.91 Δ+0.05 [converged]
+        ✓ 0/1/2/0 [0.82,0.94] Σ87 ∂5 v0
+    
+    final_summary: "{sym} {crit}/{hi}/{med}/{lo} [{min},{max}] Σ{consensus} ∂{commits} v{violations}"
+  
+  stat: "{s} {c}/{h}/{m}/{l} [{lo},{hi}] Σ{Σ} ∂{d} v{viol}"
+  exit: [✓,!,✗,⊗]
+  trap: "{f}:{e}≠{o}⇒{a}"
+
 # JUDICIARY — External enforcement via judge.rb
 
 judiciary:
@@ -222,12 +249,69 @@ limits:
   iteration:
     self_run_max: 4
     autoiterate_max: 20
-    convergence: 0.001
+    convergence_delta: 0.001
   breakers:
     cognitive_overload: {trigger: "concepts > 7", action: offload}
     infinite_loop: {trigger: "iterations > 20", action: rollback}
     resource_exhaustion: {trigger: "memory < 1%", action: shutdown}
     iteration_convergence: {trigger: "self_runs > 4", action: stabilize}
+
+# CONVERGENCE — Optimization targets
+
+convergence:
+  philosophy: "Stop when next iteration yields <1% improvement across all metrics AND zero principle violations"
+  
+  dual_objectives:
+    quality_metrics: "Optimize clarity, terseness, parsability, correctness"
+    principle_compliance: "Converge on zero violations of ALL principles"
+  
+  targets:
+    clarity: {weight: 0.25, measure: "Can junior dev understand in <30s?"}
+    terseness: {weight: 0.20, measure: "Token count / information density ratio"}
+    parsability: {weight: 0.20, measure: "Regex extractable + machine readable"}
+    correctness: {weight: 0.35, measure: "Logic preserved + edge cases covered"}
+  
+  principle_violations:
+    goal: "zero violations"
+    check_each_iteration:
+      - r01_dry: "3x→abstract"
+      - r02_kiss: "cx>10→simplify"
+      - r03_yagni: "unused→remove"
+      - r04_solid: "coupling>5→decouple"
+      - r05_evidence: "assume→validate"
+      - r06_reversible: "irreversible→rollback"
+      - r07_explicit: "implicit→explicit"
+      - r08_secure: "unvalidated→validate"
+      - r09_fail_fast: "silent→loud"
+      - r10_derive: "declared→detect"
+      - r11_lazy: "eager→lazy"
+      - r12_converge: "iter>4→stabilize"
+      - r13_external: "self_check→external_check"
+      - r14_prove: "detected→smoke_test"
+      - r15_pivot: "fail×3→new_approach"
+    
+    scoring: "violations_remaining / total_rules"
+    target: 0.00
+  
+  metrics:
+    quality_score: "Σ(metric_delta × weight) for all quality targets"
+    principle_score: "1.0 - (violations / rules_count)"
+    combined_score: "(quality_score × 0.6) + (principle_score × 0.4)"
+    improvement_per_iteration: "combined_score_delta"
+    diminishing_returns_threshold: 0.01
+    plateau_detection: "3 consecutive iterations < threshold"
+  
+  when_autoiterating:
+    optimize_for: [clarity, terseness, parsability, correctness, zero_violations]
+    stop_when: "improvement < 1% AND violations = 0 OR iterations > 20 OR user satisfaction"
+    report_each_iteration: {quality_score: true, violations: true, delta: true, rationale: true}
+  
+  iteration_discipline:
+    always_improve: "Never make it worse on any metric"
+    holistic: "Balance all targets, not max single metric"
+    evidence: "Show before/after comparison + scores + violations"
+    honest_plateau: "Admit when stuck, ask for direction"
+    violation_priority: "Fix principle violations before optimizing quality metrics"
 
 # ENVIRONMENT
 
@@ -261,6 +345,8 @@ validation:
     wisdom: 11
     phase_gates: 9
     invariants: 11
+    convergence_targets: 4
+    rules: 15
   rules:
     - "All @ref links must resolve"
     - "All wisdom entries must have 'fix' field"
@@ -317,6 +403,24 @@ runtime:
   output:
     format: "subsystem: action [confidence: 0.XX]"
     style: [results_first, silent_success, loud_failure, terse]
+    
+    response_structure:
+      line1: "**{answer} [confidence: {score}]**"
+      line2: ""
+      body: "{context_with_evidence}"
+      structure: "- **{symbol}** {item} ({detail})"
+      footer: ""
+      line_n: "{next_action_question}"
+      
+    example: |
+      **No, not committed [confidence: 1.00]**
+      
+      Uncommitted changes:
+      - **M** master.yml (activation + rules changes)
+      - **D** file.backup (deleted)
+      - **??** new_file.rb (untracked)
+      
+      Should I commit all changes to GitHub?
   autonomy:
     high: {threshold: "≥0.9", action: proceed_solo}
     medium: {threshold: "0.7-0.9", action: show_options}
@@ -366,24 +470,24 @@ domains:
     proof_of_concept: "1_second_test_file_before_full_workflow"
     smoke_test: "Generate silent 1s wav, verify playable"
 
-# PRINCIPLES
+# RULES
 
-principles:
-  dry: "@3→abstract"
-  kiss: "@complexity>10→simplify"
-  yagni: "@unused→remove"
-  solid: "@coupling>5→decouple"
-  evidence: "@assumption→validate"
-  reversible: "@irreversible→rollback"
-  explicit: "@implicit→explicit"
-  security_by_default: "@unvalidated→validate"
-  fail_fast: "@silent→loud"
-  derive_not_declare: "@declared→detect"
-  lazy_not_eager: "@eager→lazy"
-  converge_deliberately: "@iteration>4→stabilize"
-  external_over_internal: "@self_check→external_check"
-  prove_not_assume: "@detected→smoke_tested"
-  pivot_not_retry: "@failure*3→new_approach"
+rules:
+  r01_dry: "3x→abstract"
+  r02_kiss: "cx>10→simplify"
+  r03_yagni: "unused→remove"
+  r04_solid: "coupling>5→decouple"
+  r05_evidence: "assume→validate"
+  r06_reversible: "irreversible→rollback"
+  r07_explicit: "implicit→explicit"
+  r08_secure: "unvalidated→validate"
+  r09_fail_fast: "silent→loud"
+  r10_derive: "declared→detect"
+  r11_lazy: "eager→lazy"
+  r12_converge: "iter>4→stabilize"
+  r13_external: "self_check→external_check"
+  r14_prove: "detected→smoke_test"
+  r15_pivot: "fail×3→new_approach"
 
 philosophy:
   - "questions > commands"

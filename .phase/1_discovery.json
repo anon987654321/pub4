@@ -1,0 +1,31 @@
+{
+  "target_manifest": {
+    "project": "media/dilla",
+    "version": "2.1.0",
+    "core_files": [
+      "dilla.rb (34KB, main system)",
+      "make_beat_now.rb (3.7KB, standalone)",
+      "dilla_config.json (30KB, configuration)",
+      "README.md (6.2KB, documentation)",
+      "test_dilla.sh (711B, validation)"
+    ],
+    "assets": [
+      "808_bd_medium_r8_t1a.wav (121KB)",
+      "808_sd_jd800_01.wav (9KB)",
+      "808_hh_jd800.wav (13KB)",
+      "R-Mårdalen R.aif (1.5MB)",
+      "Freeze Fikeraddis Nekatibeb - Old Ethio.wav (2.7MB)",
+      "FluidR3_GM.sf2 (6.6KB)"
+    ]
+  },
+  "quote_or_die": {
+    "dilla.rb": ["Line 1: #!/usr/bin/env ruby", "Line 32: class SOSDilla", "Line 34:   VERSION = \"2.1.0\""],
+    "README.md": ["Line 1: # SOS Dilla v2.1.0", "Line 54: ### Generate Dub Techno", "Line 269: ### Dilla Timing"]
+  },
+  "file_hashes": {
+    "dilla.rb": "34798_bytes",
+    "make_beat_now.rb": "3735_bytes",
+    "README.md": "6172_bytes"
+  },
+  "hypothesis": "Applied master.yml to media/dilla: Cleaned file sprawl by removing 4 redundant files + 3 backup files. System consolidated to 5 core files + 6 assets."
+}

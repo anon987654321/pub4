@@ -1,0 +1,41 @@
+# Iteration 1 - Current baseline
+m5.4.5 MASTER_v5_4_5 strict/external
+ff22·p10×l6×b9·w11·g9·i11·r15
+Δ5.4.4→5.4.5:+3-0~2
+✓ ready
+
+# Iteration 2 - Vertical compression
+m5.4.5 MASTER_v5_4_5 strict/external | ff22·p10×l6×b9·w11·g9·i11·r15 | Δ5.4.4→5.4.5:+3-0~2 | ✓
+
+# Iteration 3 - Symbol prefix
+✓ m5.4.5 [MASTER_v5_4_5] strict/external
+  ff22 p10×l6×b9 w11 g9 i11 r15
+  +3 -0 ~2 from 5.4.4
+
+# Iteration 4 - Grouped by category
+m5.4.5 MASTER_v5_4_5 | mode:strict/external
+system: ff22 w11 g9 i11 r15 | adversarial: p10×l6×b9
+Δ5.4.4→5.4.5 +3-0~2
+
+# Iteration 5 - Minimal tokens
+m5.4.5 MASTER_v5_4_5 strict/ext
+22·10×6×9·11·9·11·15
++3-0~2 ✓
+
+# Iteration 6 - Status-first
+✓ MASTER_v5_4_5 strict/external
+m5.4.5 ff22·p10×l6×b9·w11·g9·i11·r15 [+3-0~2]
+
+# Iteration 7 - Hash-style
+master=5.4.5 canary=MASTER_v5_4_5 mode=strict/external
+counts=22,10,6,9,11,9,11,15 delta=+3-0~2 status=ready
+
+# Iteration 8 - Compact brackets
+m5.4.5[MASTER_v5_4_5](strict/external){ff22·p10·l6·b9·w11·g9·i11·r15}Δ+3-0~2✓
+
+# Iteration 9 - Two-line optimal
+m5.4.5 MASTER_v5_4_5 | strict/external | ff22·p10×l6×b9·w11·g9·i11·r15
+Δ5.4.4→5.4.5 +3-0~2 ✓ready
+
+# Iteration 10 - Single-line ultimate
+m5.4.5 MASTER_v5_4_5 strict/ext ff22·p10×6×9·w11·g9·i11·r15 Δ+3-0~2 ✓

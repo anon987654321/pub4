@@ -156,7 +156,7 @@ class SOSDilla
 
       when :cygwin
 
-        %w[ffmpeg /usr/bin/ffmpeg /cygdrive/c/ffmpeg/bin/ffmpeg.exe]
+        %w[ffmpeg /usr/bin/ffmpeg /cygdrive/c/cygwin64/bin/ffmpeg.exe /cygdrive/c/ffmpeg/bin/ffmpeg.exe]
 
       when :openbsd
 
