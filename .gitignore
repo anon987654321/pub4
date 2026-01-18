@@ -1,3 +1,6 @@
+.backup
+.archive
+
 # Editor artifacts
 *.swp
 *.swo

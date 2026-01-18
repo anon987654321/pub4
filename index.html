@@ -15,7 +15,7 @@
     canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
     canvas.canvas-inverted{filter:invert(1) hue-rotate(180deg)}
     @keyframes start-ack{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}canvas.start-ack{animation:start-ack 240ms ease-out}
-    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0}
+    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
     .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
     .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
     .carousel-slide.active{opacity:1;transform:translateY(0%)}
@@ -146,7 +146,9 @@
       {artist:"Samiyam",title:"Rounded",id:"oeaY2h_cKsg"},
       {artist:"Chase Swayze",title:"Traffic",id:"bH-30pDoQdo"},
       {artist:"Chase Swayze",title:"Underrated",id:"1jjFk2Vp5ok"},
-      {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364}
+      {artist:"Flying Lotus",title:"BTS Radio 2006",id:"6nWdggkulHk",start:1364},
+      {artist:"kemt",title:"close to you",id:"8SQZtBRdSbE"},
+      {artist:"J Dilla",title:"Motor City 17",id:"OSg9Fwd8QSs"}
     ];
 
     const loadYouTubeAPI=()=>{
@@ -332,13 +334,12 @@
           const v=Math.max(0,Math.min(1,a?.average??.45));
           const h=Math.max(0,Math.min(1,a?.high??.35));
           const d=i/Math.max(1,l-1);
-          // Purple/magenta VGA synthwave aesthetic (8bit lofi)
           const hueShift=Math.sin(this.time*0.3+d*Math.PI)*0.5+0.5;
-          const beatPulse=(a?.beat||0)*80;
-          // Base: magenta/purple gradient with depth
-          const r=Math.round((200+beatPulse+d*40)/16)*16;
-          const g=Math.round((40*h)/16)*16;
-          const u=Math.round((180+d*50)/16)*16;
+          const beatPulse=(a?.beat||0)*30;
+          const noise=Math.random()*2-1;
+          const r=Math.round((120+beatPulse+d*40+noise)/8)*8;
+          const g=Math.round((30*h+noise)/8)*8;
+          const u=Math.round((110+d*40+noise)/8)*8;
           return pack32(r,g,u,255);
         }
         init(){this.particles=[];this.centers=[];const w1=Math.random()*this.w,h1=Math.random()*this.h;let c=0;for(let z=-this.fov;z<this.fov;z+=this.zStep){const coords=[];for(let i=0;i<this.segments;i++){const p=this.getCirclePos(0,0,this.baseRadius,i,this.segments);coords.push({x:p.x,y:p.y,index:i,radius:this.baseRadius,segments:this.segments,centerX:0,centerY:0})}const center={x:((this.w/2)-w1)*(c/15)+this.w/2,y:((this.h/2)-h1)*(c/15)+this.h/2};c++;this.centers.push(center);const row=[];let aIdx=8+Math.floor(Math.random()*1024);for(let i=0;i<coords.length;i++){const co=coords[i],p=this.addParticle(co.x,co.y,z,aIdx);p.index=co.index;p.radius=co.radius;p.radiusAudio=p.radius;p.segments=co.segments;p.centerX=co.centerX;p.centerY=co.centerY;row.push(p);aIdx+=i<coords.length/2?1:-1;if(aIdx>1024)aIdx=8;if(aIdx<8)aIdx=1024}this.particles.push(row)}}
@@ -368,11 +369,12 @@
           let s=false;
           for(let i=0;i<l;i++){
             const row=this.particles[i],rowBack=i>0?this.particles[i-1]:null,center=this.centers[i];
+            // Parallax moves OPPOSITE to mouse/tilt (reversed signs)
             if(this.mouse.active){
-              center.x=(this.w/2-this.mouse.x/this.s)*((row[0].z-this.fov)/500)+this.w/2;
-              center.y=(this.h/2-this.mouse.y/this.s)*((row[0].z-this.fov)/500)+this.h/2;
+              center.x=(this.w/2+this.mouse.x/this.s)*((row[0].z-this.fov)/500)+this.w/2;
+              center.y=(this.h/2+this.mouse.y/this.s)*((row[0].z-this.fov)/500)+this.h/2;
             }else if(this.ori.active){
-              const mx=-this.ori.gamma*(this.w/180),my=-this.ori.beta*(this.h/180);
+              const mx=this.ori.gamma*(this.w/180),my=this.ori.beta*(this.h/180);
               center.x=this.w/2+mx*((row[0].z-this.fov)/500);
               center.y=this.h/2+my*((row[0].z-this.fov)/500);
             }else{
@@ -380,7 +382,9 @@
               center.y+=(this.h/2-center.y)*.015;
             }
             const f=(a?.average||0)*64+(a?.beat?8:0);
-            const sc=this.fov/(this.fov+row[0].z);
+            // Bass-reactive FOV breathing
+            const fovDynamic=this.fov+(a?.bass||0)*50;
+            const sc=fovDynamic/(fovDynamic+row[0].z);
             const r=(this.baseRadius+f)*sc;
             if(r<this.ringPxCull)continue;
             for(let j=0,k=row.length;j<k;j++){
@@ -583,6 +587,10 @@
       try{
         const viz=window.vizRenderers?.[window.vizMode]||window.tunnelRenderer;
         viz?.frame?.(a);
+        // Mobile: haptic feedback on beat
+        if(a?.beat&&navigator.vibrate){
+          navigator.vibrate(8);
+        }
       }catch(e){
         window.tunnelRenderer?.frame(a);
       }
