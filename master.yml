@@ -1,10 +1,11 @@
-# MASTER v5.4.4
+# MASTER v5.4.5
 
-version: "5.4.4"
+version: "5.4.5"
 status: "ENFORCED"
 updated: "2026-01-18"
 
 prime_directive: "Preserve then improve, never break"
+meta_lesson: "Detection ≠ Functionality. Prove tools work before building workflows."
 
 invariants:
   - security_first
@@ -16,6 +17,8 @@ invariants:
   - converge_deliberately
   - external_enforcement_required
   - dependency_chain_proven
+  - tool_detection_requires_smoke_test
+  - prove_concept_before_scale
 
 directives:
   - read_full_file_first
@@ -23,6 +26,8 @@ directives:
   - credentials_reference_only
   - capability_humility
   - stop_iterating_at_convergence
+  - verify_environment_before_planning
+  - pivot_after_three_failures
 
 # JUDICIARY — External enforcement via judge.rb
 
@@ -38,10 +43,16 @@ judiciary:
     Judge verifies hash present → proves dependency
   
   gates:
+    0_verify:
+      file: "0_verification.json"
+      format: json
+      keys: [tools_required, smoke_tests_passed, environment_proven, blockers]
+      verdict: "HALT if any tool fails smoke test"
     1_discover:
       file: "1_discovery.json"
       format: json
       keys: [target_manifest, quote_or_die, file_hashes, hypothesis]
+      prev_hash: true
     2_analyze:
       file: "2_analysis.md"
       prev_hash: true
@@ -75,9 +86,12 @@ judiciary:
       prev_hash: true
       sections: ["## Summary", "## Changes"]
 
-# FORCING FUNCTIONS — 16 checks
+# FORCING FUNCTIONS — 22 checks
 
 forcing_functions:
+  before_starting_work:
+    - tool_smoke_test: "Verify each required tool with trivial operation"
+    - trivial_proof_of_concept: "Create simplest possible artifact first"
   before_making_claims:
     - quote_or_die: "Paste 3 random lines with numbers"
     - confidence_scoring: "Score every claim [0.XX]"
@@ -88,6 +102,9 @@ forcing_functions:
   before_editing_files:
     - first_principle_derivation: "Why does pattern exist?"
     - layer4_stack: "Show L1/L2/L3/L4 thinking"
+  before_deleting_files:
+    - side_by_side_diff: "Show what's being removed vs claimed replacement"
+    - logic_preservation_proof: "Quote 3 key functions + where they moved"
   before_destructive_actions:
     - breaking_news: "Predict 3 failure modes"
     - rollback_plan: "Describe escape plan"
@@ -100,6 +117,9 @@ forcing_functions:
   after_failure:
     - reverse_explain: "Explain back what/why/how"
     - past_mistake_replay: "Replay past mistake + avoidance"
+  after_3_consecutive_failures:
+    - mandatory_pivot: "STOP current approach, generate 3 alternatives"
+    - assumption_challenge: "List assumptions, mark which proven false"
   always:
     - slow_mode: "ONE command per response when slow"
     - failure_injection: "Assume last 3 changes wrong (periodically)"
@@ -143,9 +163,12 @@ adversarial:
     consensus_min: 0.85
     rotation: "Use all personas + lenses before done"
 
-# WISDOM — 10 lessons
+# WISDOM — 11 lessons
 
 wisdom:
+  tool_detection_vs_functionality:
+    what: "Found ffmpeg via detection, but DLL missing = 10+ failed attempts"
+    fix: "forcing_functions.tool_smoke_test + phase_0_verify mandatory"
   vps_humility:
     what: "Claimed ssh(1) capability confidently"
     fix: "environment.detect_tools + check_before_use"
@@ -176,6 +199,9 @@ wisdom:
   optional_mode_bypass:
     what: "LLM skipped phases because workflow.mode=optional"
     fix: "judiciary.external_validator + workflow.mode=strict"
+  deleted_without_diff:
+    what: "Removed 4 files without proving logic preserved elsewhere"
+    fix: "forcing_functions.before_deleting_files mandatory"
 
 # LIMITS
 
@@ -206,7 +232,7 @@ limits:
 # ENVIRONMENT
 
 environment:
-  philosophy: "Detect lazily, cache aggressively, fail explicitly"
+  philosophy: "Detect lazily, cache aggressively, fail explicitly, prove functionality"
   lazy_evaluation: true
   cache_scope: "session"
   triggers: [on_first_tool_use, on_first_path_operation]
@@ -214,6 +240,13 @@ environment:
     os: {primary: "uname -s or $PSVersionTable.Platform", fallback: prompt_user}
     shell: {primary: "$SHELL or $PSVersionTable.PSVersion", fallback: assume_bash}
     tools: {method: "which or Get-Command", list: [ssh, scp, git, curl, plink, pscp]}
+  smoke_tests:
+    required: true
+    ffmpeg: "ffmpeg -version && ffmpeg -f lavfi -i nullsrc -t 1 -y test_smoke.wav"
+    ruby: "ruby -e 'puts 42'"
+    git: "git --version"
+    sox: "sox --version"
+    action_on_fail: "HALT + report + ask_user_for_alternative"
   override: ["MASTER_OS", "MASTER_SHELL"]
   breaker: {max_attempts: 3, action: halt_with_prompt}
 
@@ -221,35 +254,44 @@ environment:
 
 validation:
   counts:
-    forcing_functions: 16
+    forcing_functions: 22
     personas: 10
     lenses: 6
     biases: 9
-    wisdom: 10
-    phase_gates: 8
+    wisdom: 11
+    phase_gates: 9
+    invariants: 11
   rules:
     - "All @ref links must resolve"
     - "All wisdom entries must have 'fix' field"
     - "operations.stack.local must be 'derived'"
     - "environment.lazy_evaluation must be true"
+    - "environment.smoke_tests.required must be true"
     - "workflow.mode must be 'strict'"
     - "judiciary.validator must be defined"
+    - "phase_0_verify must exist in gates"
   on_violation: rollback_with_prompt
 
-# WORKFLOW — 8 phases (strict, enforced by judge.rb)
+# WORKFLOW — 9 phases (strict, enforced by judge.rb)
 
 workflow:
   mode: strict
   enforcement: external
   phases:
+    0_verify: {goal: "Prove tools work", temp: 0.1, forcing: [tool_smoke_test, trivial_proof_of_concept], mandatory: true}
     1_discover: {goal: "Understand problem", temp: 0.1, forcing: [quote_or_die, checksum_verification]}
     2_analyze: {goal: "Make requirements explicit", temp: 0.2, forcing: [five_ways, confidence_scoring]}
     3_constrain: {goal: "Map boundaries", temp: 0.2, forcing: [first_principle_derivation]}
     4_ideate: {goal: "Generate 15+ alternatives", temp: 0.7, forcing: [adversarial_roleplay], min: 15}
     5_evaluate: {goal: "Compare and select", temp: 0.3, forcing: [alternative_evidence], personas: all}
     6_design: {goal: "TDD before implementing", temp: 0.3, forcing: [breaking_news, rollback_plan]}
-    7_validate: {goal: "Prove it works", temp: 0.1, forcing: [layer4_stack]}
+    7_validate: {goal: "Prove it works", temp: 0.1, forcing: [layer4_stack, alternative_evidence]}
     8_deliver: {goal: "Ship and learn", temp: 0.3, forcing: [micro_commit, token_budget]}
+  
+  failure_handling:
+    consecutive_failures: 3
+    action: mandatory_pivot
+    reset_counter_on: success_or_user_intervention
 
 # SESSION
 
@@ -260,8 +302,13 @@ session:
     attach: "[attach] task"
     list: "[screen -ls]"
     kill: "[screen -X quit] task"
-  checkpoint: [identity, workflow, evidence, files, decisions, environment]
+  checkpoint: [identity, workflow, evidence, files, decisions, environment, tools_verified]
   max_concurrent: 4
+  checkpoints:
+    frequency: "after_each_phase + every_3_tool_calls"
+    capture: [files_modified, tools_verified_working, decisions_made, failure_count]
+    rollback_trigger: "user_command_rollback OR 3_failures_in_5_minutes"
+    storage: ".checkpoints/"
 
 # RUNTIME
 
@@ -313,6 +360,11 @@ domains:
   rails: {version: 8, stack: "Solid Queue/Cache/Cable + Hotwire"}
   openbsd: {security: [pledge, unveil], style: knf}
   web: {html: semantic, css: utility, js: vanilla, a11y: wcag_aa, interval_cleanup_required: true}
+  audio_processing:
+    required_tools: [ffmpeg_or_sox]
+    phase_0_mandatory: true
+    proof_of_concept: "1_second_test_file_before_full_workflow"
+    smoke_test: "Generate silent 1s wav, verify playable"
 
 # PRINCIPLES
 
@@ -330,6 +382,8 @@ principles:
   lazy_not_eager: "@eager→lazy"
   converge_deliberately: "@iteration>4→stabilize"
   external_over_internal: "@self_check→external_check"
+  prove_not_assume: "@detected→smoke_tested"
+  pivot_not_retry: "@failure*3→new_approach"
 
 philosophy:
   - "questions > commands"
@@ -338,11 +392,16 @@ philosophy:
   - "lazy > eager"
   - "stable > perfect"
   - "external > internal"
+  - "proven > detected"
+  - "pivot > retry"
 
 integrity:
-  canary: "MASTER_v5_4_4"
+  canary: "MASTER_v5_4_5"
   enforcer: "judge.rb"
 
 flowchart: |
-  INPUT → PHASE 1 → judge.rb 1 → PASS? → HASH
+  INPUT → PHASE 0 (verify tools) → judge.rb 0 → BLOCKED? → HALT
+  → PHASE 1 → judge.rb 1 → PASS? → HASH
   → PHASE 2 (with hash) → judge.rb 2 → ... → PHASE 8 → DONE
+  
+  FAILURE*3 → mandatory_pivot → generate alternatives → resume
