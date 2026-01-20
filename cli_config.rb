@@ -32,10 +32,11 @@ module Convergence
     def load!
       return self unless File.exist?(CONFIG_PATH)
       
-      data = YAML.safe_load_file(CONFIG_PATH, aliases: false) rescue {}
+      data = YAML.safe_load_file(CONFIG_PATH, permitted_classes: [Symbol], aliases: false)
+      return self unless data.is_a?(Hash)
       
-      @mode = data["mode"]&.to_sym
-      @provider = data["provider"]&.to_sym
+      @mode = data["mode"]&.to_sym if data["mode"]
+      @provider = data["provider"]&.to_sym if data["provider"]
       @api_keys = data["api_keys"] || {}
       @model = data["model"]
       @preferences = (@preferences || {}).merge(data["preferences"] || {})
