@@ -4,6 +4,9 @@
 # CONVERGENCE CLI - RAG Component
 # Production RAG Pipeline with RRF fusion and reranking
 
+require "digest"
+require "set"
+
 module Convergence
   class RAGPipeline
     attr_reader :level, :stats

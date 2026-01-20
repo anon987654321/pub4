@@ -4,6 +4,12 @@
 # CONVERGENCE CLI - Tools Component
 # Enhanced Tool Execution System with sandboxing and callbacks
 
+require "open3"
+require "timeout"
+require "fileutils"
+require "digest"
+require "set"
+
 module Convergence
   # SandboxedFileTool mixin for secure file operations
   module SandboxedFileTool
@@ -161,21 +167,22 @@ module Convergence
 
       shell_path = find_shell
       
-      stdout, stderr, status = Open3.capture3(
-        shell_path, "-c", command,
-        timeout: timeout
-      )
-      
-      {
-        stdout: stdout[0..4000],
-        stderr: stderr[0..1000],
-        exit_code: status.exitstatus,
-        success: status.success?
-      }
-    rescue Timeout::Error
-      { error: "command timeout after #{timeout}s" }
-    rescue => e
-      { error: e.message }
+      begin
+        Timeout.timeout(timeout) do
+          stdout, stderr, status = Open3.capture3(shell_path, "-c", command)
+          
+          {
+            stdout: stdout[0..4000],
+            stderr: stderr[0..1000],
+            exit_code: status.exitstatus,
+            success: status.success?
+          }
+        end
+      rescue Timeout::Error
+        { error: "command timeout after #{timeout}s" }
+      rescue => e
+        { error: e.message }
+      end
     end
 
     private

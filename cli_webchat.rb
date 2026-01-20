@@ -4,6 +4,9 @@
 # CONVERGENCE CLI - WebChat Component
 # Universal Free LLM Browser Client with Ferrum stealth mode
 
+require "json"
+require "fileutils"
+
 module Convergence
   class WebChatClient
     PROVIDERS = {
