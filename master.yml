@@ -470,6 +470,150 @@ domains:
     proof_of_concept: "1_second_test_file_before_full_workflow"
     smoke_test: "Generate silent 1s wav, verify playable"
 
+# USABILITY — Nielsen Norman Group 10 Heuristics
+# Applied to CLI and all user-facing interfaces
+
+usability:
+  framework: "Nielsen Norman Group 10 Usability Heuristics"
+  reference: "https://www.nngroup.com/articles/ten-usability-heuristics/"
+  
+  heuristics:
+    h01_visibility:
+      name: "Visibility of System Status"
+      rule: "Always show current state in prompt/UI"
+      cli_implementation:
+        - "Prompt shows: mode, tokens, RAG status, access level"
+        - "Spinner during async operations"
+        - "Boot sequence shows loaded components"
+      violations:
+        - "Silent operations with no feedback"
+        - "Unknown state after action"
+      
+    h02_match_real_world:
+      name: "Match Between System and Real World"
+      rule: "Use familiar language and conventions"
+      cli_implementation:
+        - "Commands use natural verbs: /search, /help, /clear"
+        - "Error messages in plain English"
+        - "Avoid jargon: 'knowledge base' not 'vector store'"
+      violations:
+        - "Technical jargon without explanation"
+        - "Unfamiliar command patterns"
+      
+    h03_user_control:
+      name: "User Control and Freedom"
+      rule: "Provide undo, cancel, and escape routes"
+      cli_implementation:
+        - "/undo - Revert last exchange"
+        - "/clear - Reset conversation"
+        - "Ctrl+C - Cancel current operation"
+        - "/no - Reject pending tool calls"
+      violations:
+        - "Irreversible actions without confirmation"
+        - "No way to cancel long operations"
+      
+    h04_consistency:
+      name: "Consistency and Standards"
+      rule: "Same words/actions mean same things everywhere"
+      cli_implementation:
+        - "All commands start with /"
+        - "Consistent argument order: /command ARG"
+        - "Consistent output format: subsystem: action"
+      violations:
+        - "Mixed command styles"
+        - "Inconsistent terminology"
+      
+    h05_error_prevention:
+      name: "Error Prevention"
+      rule: "Prevent errors before they happen"
+      cli_implementation:
+        - "Confirm destructive operations"
+        - "Validate paths before operations"
+        - "Block dangerous command patterns"
+        - "Tiered permissions prevent accidents"
+      violations:
+        - "Allowing rm -rf / patterns"
+        - "No confirmation for deletes"
+      
+    h06_recognition:
+      name: "Recognition Rather Than Recall"
+      rule: "Show options, don't require memorization"
+      cli_implementation:
+        - "Tab completion for commands"
+        - "/help shows all commands"
+        - "/provider shows available providers"
+        - "Command aliases: /h = /help"
+      violations:
+        - "Requiring memorized command syntax"
+        - "No discovery mechanism"
+      
+    h07_flexibility:
+      name: "Flexibility and Efficiency of Use"
+      rule: "Accelerators for experts, guidance for novices"
+      cli_implementation:
+        - "Aliases: /h, /p, /s, /u, /q"
+        - "Auto-tool execution mode for experts"
+        - "Verbose mode for debugging"
+        - "Profiles for saving preferences"
+      violations:
+        - "One-size-fits-all interface"
+        - "No shortcuts for common actions"
+      
+    h08_aesthetic:
+      name: "Aesthetic and Minimalist Design"
+      rule: "Show only relevant information"
+      cli_implementation:
+        - "Terse output by default"
+        - "Hide progress unless --verbose"
+        - "No decorative ASCII art"
+        - "Silent success, loud failure"
+      violations:
+        - "Excessive emoji or decoration"
+        - "Verbose output for simple operations"
+      
+    h09_error_recovery:
+      name: "Help Users Recognize, Diagnose, and Recover from Errors"
+      rule: "Clear error messages with solutions"
+      cli_implementation:
+        - "Error messages include suggestions"
+        - "Show alternative commands on typo"
+        - "Explain why operation failed"
+        - "Provide recovery steps"
+      violations:
+        - "Cryptic error codes"
+        - "No suggested fix"
+      
+    h10_help:
+      name: "Help and Documentation"
+      rule: "Provide searchable, task-focused help"
+      cli_implementation:
+        - "/help shows command list"
+        - "/help <command> shows details"
+        - "Examples in help text"
+        - "Contextual tips during use"
+      violations:
+        - "No help system"
+        - "Help without examples"
+  
+  enforcement:
+    before_ui_changes:
+      - "Check against all 10 heuristics"
+      - "Score each heuristic 1-10"
+      - "Target: 7+ on each heuristic"
+    audit_frequency: "After each UI/CLI change"
+    
+  cli_score_targets:
+    h01_visibility: 8
+    h02_match_real_world: 7
+    h03_user_control: 8
+    h04_consistency: 9
+    h05_error_prevention: 9
+    h06_recognition: 7
+    h07_flexibility: 7
+    h08_aesthetic: 8
+    h09_error_recovery: 8
+    h10_help: 7
+
 # RULES
 
 rules:
