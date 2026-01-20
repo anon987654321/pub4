@@ -88,7 +88,7 @@ def apply_security_sandbox(level)
   config = Convergence::ACCESS_LEVELS[level]
   paths = config[:paths].is_a?(Proc) ? config[:paths].call : config[:paths]
   
-  # Build unveil hash
+  # Build unveil hash (path => permissions)
   unveil_paths = if paths == :all
     # Admin mode: unveil common paths with appropriate permissions
     {
@@ -108,8 +108,9 @@ def apply_security_sandbox(level)
     })
   end
   
-  # Apply unveil (locks filesystem access)
-  Pledge.unveil(unveil_paths)
+  # Apply unveil - call individually for each path as per jeremyevans/ruby-pledge API
+  unveil_paths.each { |path, perms| Pledge.unveil(path, perms) }
+  Pledge.unveil(nil, nil)  # Lock unveil
   
   # Apply pledge (restricts syscalls)
   promises = "stdio rpath wpath cpath inet dns proc exec tty"
@@ -372,6 +373,7 @@ class WebChat
         current = elements.last.text.strip
 
         if current == last && !current.empty?
+          # Strip common provider prefixes like "Model A:", "Model B:", "Response:" etc
           return current.sub(/^(Model [AB]?:?\s*|Response:?\s*)/i, "").strip if (stable += 1) >= 3
         else
           stable, last = 0, current
@@ -833,7 +835,8 @@ class CLI
                      end
     
     level_char = @access_level.to_s[0].upcase  # S/U/A
-    rag_indicator = @rag_enabled ? "📚" : ""
+    # Use ASCII fallback for better terminal compatibility
+    rag_indicator = @rag_enabled ? "*RAG" : ""
     tokens = @total_tokens.to_i > 0 ? " #{@total_tokens}t" : ""
     
     "[#{mode_indicator}#{tokens}#{rag_indicator}|#{level_char}] > "
