@@ -146,7 +146,7 @@ module Convergence
 
     def execute(command:, timeout: 30)
       # Check master config banned tools
-      if @master_config
+      if @master_config && @master_config.respond_to?(:banned?)
         if @master_config.banned?(command)
           banned_tool = @master_config.banned_tool(command)
           return {
@@ -155,7 +155,7 @@ module Convergence
           }
         end
 
-        if @master_config.dangerous?(command)
+        if @master_config.respond_to?(:dangerous?) && @master_config.dangerous?(command)
           return { error: "blocked: dangerous pattern detected" }
         end
       end
@@ -166,6 +166,7 @@ module Convergence
       end
 
       shell_path = find_shell
+      return { error: "no shell found" } unless shell_path && File.executable?(shell_path)
       
       begin
         Timeout.timeout(timeout) do
@@ -341,7 +342,9 @@ module Convergence
       
       # Search through files
       results = []
-      regex = Regexp.new(Regexp.escape(query), case_sensitive ? nil : Regexp::IGNORECASE)
+      
+      # Use simple string search for better performance
+      search_method = case_sensitive ? :include? : lambda { |text, q| text.downcase.include?(q.downcase) }
       
       files.each do |file|
         begin
@@ -349,7 +352,7 @@ module Convergence
           matches = []
           
           content.lines.each_with_index do |line, idx|
-            if line =~ regex
+            if case_sensitive ? line.include?(query) : line.downcase.include?(query.downcase)
               matches << {
                 line_number: idx + 1,
                 line: line.strip[0..200]  # Truncate long lines

@@ -169,7 +169,8 @@ module Convergence
       rescue LoadError
         return false if ENV["NO_AUTO_INSTALL"]
         
-        warn "Installing ferrum..." if defined?(FIRST_RUN) && FIRST_RUN
+        first_run = !File.exist?(File.expand_path("~/.convergence_installed"))
+        warn "Installing ferrum..." if first_run
         result = system("gem install ferrum --user-install --no-document --quiet 2>/dev/null")
         return false unless result
         
@@ -280,11 +281,11 @@ module Convergence
               return final_text
             end
           else
+            # Call streaming callback before updating last_text
+            block&.call(current_text) if !current_text.empty? && current_text != last_text
+            
             stable_count = 0
             last_text = current_text
-            
-            # Call streaming callback if provided
-            block&.call(current_text) if current_text != last_text
           end
         end
         

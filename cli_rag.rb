@@ -19,8 +19,8 @@ module Convergence
       @embeddings = {}
       @metadata = {}
       @config = default_config.merge(config)
-      @embedding_provider = detect_embedding_provider
-      @stats = { chunks: 0, embeddings: 0, provider: @embedding_provider, level: @level }
+      @embedding_provider = nil  # Lazy detection on first use
+      @stats = { chunks: 0, embeddings: 0, provider: :unknown, level: @level }
     end
 
     # === INDEXING PIPELINE ===
@@ -127,8 +127,16 @@ module Convergence
 
     def detect_embedding_provider
       return :openai if ENV["OPENAI_API_KEY"]
-      return :local if system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1")
-      :none
+      
+      # Check for local Ollama with timeout
+      begin
+        require "timeout"
+        Timeout.timeout(1) do
+          system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1")
+        end ? :local : :none
+      rescue Timeout::Error, LoadError
+        :none
+      end
     end
 
     def default_config
@@ -214,6 +222,12 @@ module Convergence
     end
 
     def embed(text)
+      # Lazy detection on first use
+      if @embedding_provider.nil?
+        @embedding_provider = detect_embedding_provider
+        @stats[:provider] = @embedding_provider
+      end
+      
       return nil if @embedding_provider == :none
 
       case @embedding_provider
