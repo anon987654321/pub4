@@ -179,8 +179,15 @@ module Convergence
       uri = URI("#{@config[:base_url]}/models/#{@model}:generateContent?key=#{@api_key}")
       headers = @config[:headers].call(@api_key)
       
-      # Convert messages to Gemini format
-      contents = @messages.map { |m| { role: m[:role] == "user" ? "user" : "model", parts: [{ text: m[:content] }] } }
+      # Convert messages to Gemini format with explicit role handling
+      contents = @messages.map do |m|
+        role = case m[:role]
+        when "user" then "user"
+        when "assistant" then "model"
+        else "user"  # fallback
+        end
+        { role: role, parts: [{ text: m[:content] }] }
+      end
       
       body = { contents: contents }
       
@@ -260,7 +267,16 @@ module Convergence
       response = http.request(request)
       
       unless response.is_a?(Net::HTTPSuccess)
-        raise "API error (#{response.code}): #{response.body}"
+        # Sanitize error message to avoid exposing sensitive data
+        error_code = response.code
+        error_msg = case error_code
+        when "401" then "Authentication failed"
+        when "403" then "Access forbidden"
+        when "429" then "Rate limit exceeded"
+        when "500", "502", "503" then "Server error"
+        else "Request failed"
+        end
+        raise "API error (#{error_code}): #{error_msg}"
       end
       
       json = JSON.parse(response.body)

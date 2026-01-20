@@ -51,8 +51,8 @@ module Convergence
       FileUtils.mkdir_p(CONFIG_DIR)
       
       data = {
-        "mode" => @mode.to_s,
-        "provider" => @provider.to_s,
+        "mode" => @mode ? @mode.to_s : nil,
+        "provider" => @provider ? @provider.to_s : nil,
         "api_keys" => @api_keys,
         "model" => @model,
         "preferences" => @preferences
@@ -71,7 +71,14 @@ module Convergence
 
     def reset
       File.delete(CONFIG_PATH) if File.exist?(CONFIG_PATH)
-      initialize
+      @mode = nil
+      @provider = nil
+      @api_keys = {}
+      @model = nil
+      @preferences = {
+        headless: true,
+        auto_rotate: true
+      }
       true
     rescue => e
       warn "Warning: Failed to reset config: #{e.message}"

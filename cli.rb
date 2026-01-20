@@ -275,9 +275,9 @@ module UI
       @prompt.yes?(prompt_text)
     else
       print "#{prompt_text}: "
-      answer = $stdin.gets&.chomp&.downcase
-      return default if answer.empty?
-      answer.start_with?("y")
+      answer = $stdin.gets&.chomp
+      return default if answer.nil? || answer.empty?
+      answer.downcase.start_with?("y")
     end
   end
 
@@ -732,7 +732,7 @@ class CLI
 
     @provider = @config.provider
 
-    @api_key = @config.api_key_for(@provider) if @provider
+    @api_key = @config.api_key_for(@provider) if @provider && @config.api_key_for(@provider)
 
     @model = @config.model
 
