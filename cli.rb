@@ -791,7 +791,6 @@ class CLI
     @tools = nil
     @rag = RAG.new
     @rag_enabled = false
-    @history = []  # For undo
   end
 
   def run
@@ -836,22 +835,6 @@ class CLI
   def detect_mode = ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-") ? :api : FERRUM ? :webchat : :none
 
   def mode_label = case @mode; when :api then "api (#{ENV["CLAUDE_MODEL"] || "claude-sonnet-4-20250514"})"; when :webchat then "webchat/#{@provider}"; else "unavailable"; end
-
-  # H1: Visibility - Enhanced prompt with status
-  def prompt_with_status
-    mode_indicator = case @mode
-                     when :api then "api"
-                     when :webchat then "web/#{@provider}"
-                     else "?"
-                     end
-    
-    level_char = @access_level.to_s[0].upcase  # S/U/A
-    # Use ASCII fallback for better terminal compatibility
-    rag_indicator = @rag_enabled ? "*RAG" : ""
-    tokens = @total_tokens.to_i > 0 ? " #{@total_tokens}t" : ""
-    
-    "[#{mode_indicator}#{tokens}#{rag_indicator}|#{level_char}] > "
-  end
 
   def connect
     # Initialize tools with current access level
