@@ -162,15 +162,17 @@ class MasterConfig
   ].freeze
 
   DANGEROUS_PATTERNS = [
-    "rm -rf /",
-    "rm -rf /*",
-    "rm -rf ~",
-    "rm -rf $HOME",
-    "> /etc/passwd",
-    "> /etc/shadow",
-    "> /etc/sudoers",
-    "| sh",
-    "| bash"
+    /rm\s+-rf\s+\/\s*$/,          # rm -rf / at end of command
+    /rm\s+-rf\s+\/\*\s*$/,        # rm -rf /* at end of command
+    /rm\s+-rf\s+~\s*$/,           # rm -rf ~ at end of command
+    /rm\s+-rf\s+\$HOME\s*$/,      # rm -rf $HOME at end of command
+    />\s*\/etc\/passwd\s*$/,      # > /etc/passwd at end
+    />\s*\/etc\/shadow\s*$/,      # > /etc/shadow at end
+    />\s*\/etc\/sudoers\s*$/,     # > /etc/sudoers at end
+    /\|\s*sh\s*$/,                # | sh at end of command
+    /\|\s*bash\s*$/,              # | bash at end of command
+    /curl.*\|\s*sh\s*$/,          # curl ... | sh pattern
+    /wget.*\|\s*sh\s*$/           # wget ... | sh pattern
   ].freeze
 
   def initialize
@@ -196,7 +198,7 @@ class MasterConfig
     match ? match[1] : nil
   end
 
-  def dangerous?(command) = DANGEROUS_PATTERNS.any? { |p| command.include?(p) }
+  def dangerous?(command) = DANGEROUS_PATTERNS.any? { |pattern| command =~ pattern }
 
   def suggest_alternative(tool)
     case tool
@@ -390,8 +392,6 @@ end
 # ============================================================================
 
 class APIClient
-  attr_reader :messages
-
   def initialize(tools = [])
     @client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
     @messages = []
@@ -413,6 +413,18 @@ class APIClient
   def pending_tools? = @pending_tool_calls.any?
 
   def pending_tools = @pending_tool_calls
+
+  # Undo the last exchange (removes last user message and assistant response)
+  def undo_last_exchange
+    return false if @messages.size < 2
+    
+    # Remove last two messages (user + assistant)
+    @messages.pop(2)
+    true
+  end
+
+  # Check if undo is available
+  def can_undo? = @messages.size >= 2
 
   private
 
@@ -780,7 +792,6 @@ class CLI
     @rag = RAG.new
     @rag_enabled = false
     @history = []  # For undo
-    @total_tokens = 0
   end
 
   def run
@@ -934,14 +945,17 @@ class CLI
       return
     end
 
-    if @client.messages.size < 2
+    unless @client.can_undo?
       UI.error("nothing to undo")
       return
     end
 
-    # Remove last user and assistant messages
-    @client.messages.pop(2)
-    UI.status("undid last exchange")
+    # Use the proper encapsulated method
+    if @client.undo_last_exchange
+      UI.status("undid last exchange")
+    else
+      UI.error("failed to undo")
+    end
   end
 
   def message(text)
