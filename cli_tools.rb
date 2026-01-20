@@ -343,9 +343,6 @@ module Convergence
       # Search through files
       results = []
       
-      # Use simple string search for better performance
-      search_method = case_sensitive ? :include? : lambda { |text, q| text.downcase.include?(q.downcase) }
-      
       files.each do |file|
         begin
           content = File.read(file)

@@ -121,7 +121,7 @@ output_format:
 
 comments:
   preservation: keep_all_yard_style_annotations
-  annotations: [@title, @note, @category, @version, @status]
+  annotations: ["@title", "@note", "@category", "@version", "@status"]
   purpose: documentation_clarity_not_decoration
 
 problem_solving:
@@ -139,11 +139,11 @@ beauty_standards:
 
 standards:
   # 68 rules in original structure, now slugified
-  naming: [9_rules_identical_slugified]
-  structure: [15_rules_identical_slugified]
-  behavior: [24_rules_identical_slugified]
-  testing: [9_rules_identical_slugified]
-  operations: [11_rules_identical_slugified]
+  naming: ["9_rules_identical_slugified"]
+  structure: ["15_rules_identical_slugified"]
+  behavior: ["24_rules_identical_slugified"]
+  testing: ["9_rules_identical_slugified"]
+  operations: ["11_rules_identical_slugified"]
 
 thresholds:
   size:

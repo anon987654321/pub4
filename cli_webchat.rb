@@ -194,11 +194,11 @@ module Convergence
         timeout: 90,
         browser_path: browser_path,
         browser_options: {
-          "no-sandbox": nil,
-          "disable-blink-features": "AutomationControlled",
-          "disable-dev-shm-usage": nil,
-          "disable-gpu": nil,
-          "window-size": "1920,1080"
+          "no-sandbox" => nil,
+          "disable-blink-features" => "AutomationControlled",
+          "disable-dev-shm-usage" => nil,
+          "disable-gpu" => nil,
+          "window-size" => "1920,1080"
         }
       }
 
@@ -215,6 +215,7 @@ module Convergence
 
     def find_browser_path
       paths = %w[
+        /usr/local/bin/chromium
         /usr/bin/chromium
         /usr/bin/google-chrome
         /usr/local/bin/chrome
