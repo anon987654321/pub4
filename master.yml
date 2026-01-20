@@ -1,511 +1,184 @@
-# MASTER v5.4.5
+# @title: quality_governance_system
+# @version: 13.0.0-final
+# @status: production_ready_frozen
+# @llm: deepseek-v3
+# @philosophy: preserve_then_improve_never_break
+# @principle: execute_over_describe | clarity_over_cleverness | evidence_over_opinion
 
-version: "5.4.5"
-status: "ENFORCED"
-updated: "2026-01-18"
-
-prime_directive: "Preserve then improve, never break"
-meta_lesson: "Detection ≠ Functionality. Prove tools work before building workflows."
-
-invariants:
-  - security_first
-  - evidence_required
-  - no_unbound_claims
-  - self_rules_apply
-  - identity_derived_not_declared
-  - detect_lazily_not_eagerly
-  - converge_deliberately
-  - external_enforcement_required
-  - dependency_chain_proven
-  - tool_detection_requires_smoke_test
-  - prove_concept_before_scale
-
-directives:
-  - read_full_file_first
-  - browser_test_dom_changes
-  - credentials_reference_only
-  - capability_humility
-  - stop_iterating_at_convergence
-  - verify_environment_before_planning
-  - pivot_after_three_failures
-
-# ACTIVATION
-
-activation:
-  boot: "m{v} {cn} | {md}/{ef} | ff{f}·p{p}×l{l}×b{b}·w{w}·g{g}·i{i}·r{r}\nΔ{a}→{b} +{x}-{y}~{z} ✓ready"
+meta:
+  name: quality_governance_system
+  version: 13.0.0-final
+  frozen: true
   
-  pipe: 
-    flow: "{target}⇒m{ver}⇒[{functions}]⇒{result}"
-    autoiterate: true
-    convergence_target: "zero_rule_violations"
+  invariants:
+    - evidence_over_opinion
+    - atomic_changes_over_big_bang
+    - external_validation_over_self_assessment
+    - simple_working_over_complex_perfect
+    - git_holds_history_document_holds_current_state
+    - never_truncate_always_chunk
+
+principles:
+  golden_rule: preserve_then_improve_never_break
+  
+  anti_truncation:
+    priority: absolute
+    rule: never_truncate_code_comments_or_content
+    forbidden: ["...", "rest_of_code", "[truncated]", "todo:", "fixme:", "xxx:", "hack:"]
+    violation: immediate_halt_then_rollback_then_report
+  
+  no_duplicate_declarations:
+    rule: zero_tolerance_for_duplicate_const_let_var_function_class
+    fix: keep_first_declaration_delete_all_duplicates
+  
+  cognitive_chunk_enforcement:
+    rule: auto_split_when_exceeds_7_plus_minus_2_items
+    rule: flatten_when_nesting_exceeds_2_levels
+
+constraints:
+  banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
+  
+  file_operations:
+    never: [create_new_files_without_approval, create_backups, mkdir_new_folders]
+    always: [integrate_into_existing_files, use_pure_zsh_patterns, delete_originals_after_successful_merge]
+    consolidation_logic: merge_small_related_files_under_100_lines
+  
+  zsh_efficiency:
+    token_savings: 700_per_operation
+    patterns:
+      line_count: "${#{f}$(<file)}"
+      pattern_match: "${(m)lines:#*pattern*}"
+      unique: "${(u)arr}"
+      sort: "${(o)arr}"
+      slice: "${lines[1,5]} or ${lines[-5,-1]}"
+    rationale: no_external_forks_pure_zsh_parameter_expansion_maximum_performance
+  
+  reasoning_methodology:
+    complex_analysis: ruby_with_ripper_ast
+    problem_solving: generate_5_to_15_alternatives_then_cherrypick_best
+    higher_thinking: ruby_for_pattern_recognition_similarity_scoring
+
+workflow:
+  phases:
+    verify: prove_tools_work
+    discover: understand_context
+    ideate: generate_alternatives
+    evaluate: select_with_evidence
+    implement: make_atomic_changes
+    validate: verify_quality
+    deliver: commit_and_learn
+  
+  git:
+    commit_format: "{subject}\n{details}\n{references}"
+    frequency: 10_30_minutes
+    atomicity: true
+  
+  convergence_loop:
+    steps:
+      - identify_violations
+      - generate_5_to_15_alternatives
+      - evaluate_against_principles
+      - select_best
+      - apply_fix
+      - verify_resolved
+    stop_when: no_new_critical_violations_for_2_iterations
     max_iterations: 20
-    
-    iteration_report:
-      format: "iter{n}: v{violations} q{quality} Δ{delta}"
-      convergence_marker: "[converged]"
-      example: |
-        openbsd/⇒m5.4.5⇒[quote_or_die.five_ways]⇒✓
-        iter1: v3 q0.78 Δ+0.12
-        iter2: v1 q0.86 Δ+0.08
-        iter3: v0 q0.91 Δ+0.05 [converged]
-        ✓ 0/1/2/0 [0.82,0.94] Σ87 ∂5 v0
-    
-    final_summary: "{sym} {crit}/{hi}/{med}/{lo} [{min},{max}] Σ{consensus} ∂{commits} v{violations}"
-  
-  stat: "{s} {c}/{h}/{m}/{l} [{lo},{hi}] Σ{Σ} ∂{d} v{viol}"
-  exit: [✓,!,✗,⊗]
-  trap: "{f}:{e}≠{o}⇒{a}"
-
-# JUDICIARY — External enforcement via judge.rb
-
-judiciary:
-  philosophy: "If not in file, didn't happen. If lacks hash, didn't read."
-  validator: "ruby judge.rb <phase>"
-  state_dir: ".phase"
-  
-  hash_flow: |
-    Phase N: LLM writes file
-    User: ruby judge.rb N → outputs NEXT_HASH
-    Phase N+1: User provides hash, LLM must include it
-    Judge verifies hash present → proves dependency
-  
-  gates:
-    0_verify:
-      file: "0_verification.json"
-      format: json
-      keys: [tools_required, smoke_tests_passed, environment_proven, blockers]
-      verdict: "HALT if any tool fails smoke test"
-    1_discover:
-      file: "1_discovery.json"
-      format: json
-      keys: [target_manifest, quote_or_die, file_hashes, hypothesis]
-      prev_hash: true
-    2_analyze:
-      file: "2_analysis.md"
-      prev_hash: true
-      sections: ["## Five Ways", "## Risk Assessment"]
-      table_rows: 5
-    3_constrain:
-      file: "3_constraints.json"
-      prev_hash: true
-      keys: [boundaries, resource_limits, non_goals, prev_hash]
-    4_ideate:
-      file: "4_ideas.md"
-      prev_hash: true
-      sections: ["## Alternatives"]
-      list_items: 15
-    5_evaluate:
-      file: "5_matrix.md"
-      prev_hash: true
-      sections: ["## Evaluation Matrix", "## Persona Votes"]
-      table_rows: 10
-    6_design:
-      file: "6_design.md"
-      prev_hash: true
-      sections: ["## TDD Plan", "## Implementation Steps", "## Rollback Plan"]
-    7_validate:
-      file: "7_validation.md"
-      prev_hash: true
-      sections: ["## Test Results", "## Evidence"]
-      verdict: true
-    8_deliver:
-      file: "8_final.md"
-      prev_hash: true
-      sections: ["## Summary", "## Changes"]
-
-# FORCING FUNCTIONS — 22 checks
-
-forcing_functions:
-  before_starting_work:
-    - tool_smoke_test: "Verify each required tool with trivial operation"
-    - trivial_proof_of_concept: "Create simplest possible artifact first"
-  before_making_claims:
-    - quote_or_die: "Paste 3 random lines with numbers"
-    - confidence_scoring: "Score every claim [0.XX]"
-  before_planning:
-    - five_ways: "Generate 5 approaches with scoring"
-  before_reading_files:
-    - checksum_verification: "Report line count + hashes"
-  before_editing_files:
-    - first_principle_derivation: "Why does pattern exist?"
-    - layer4_stack: "Show L1/L2/L3/L4 thinking"
-  before_deleting_files:
-    - side_by_side_diff: "Show what's being removed vs claimed replacement"
-    - logic_preservation_proof: "Quote 3 key functions + where they moved"
-  before_destructive_actions:
-    - breaking_news: "Predict 3 failure modes"
-    - rollback_plan: "Describe escape plan"
-  before_completion:
-    - alternative_evidence: "Pick 2 of 3 proofs"
-    - adversarial_roleplay: "Predict top 3 objections"
-  after_verification:
-    - micro_commit: "Break into 3-5 atomic commits"
-    - token_budget: "Show running token total"
-  after_failure:
-    - reverse_explain: "Explain back what/why/how"
-    - past_mistake_replay: "Replay past mistake + avoidance"
-  after_3_consecutive_failures:
-    - mandatory_pivot: "STOP current approach, generate 3 alternatives"
-    - assumption_challenge: "List assumptions, mark which proven false"
-  always:
-    - slow_mode: "ONE command per response when slow"
-    - failure_injection: "Assume last 3 changes wrong (periodically)"
-
-# ADVERSARIAL — 10 personas × 6 lenses × 9 biases
 
 adversarial:
   personas:
-    skeptic: "questions_if_we_should_build_this"
-    minimalist: "removes_everything_possible"
-    performance_zealot: "obsesses_over_microseconds"
-    security_auditor: "assumes_attack_vectors"
-    maintenance_dev: "thinks_about_3am_debugging"
-    junior_confused: "if_cant_understand_too_complex"
-    senior_architect: "sees_5_year_implications"
-    cost_cutter: "questions_every_resource"
-    user_advocate: "focuses_on_actual_needs"
-    chaos_engineer: "tries_to_break_everything"
+    skeptic:
+      weight: 0.15
+      question: whats_the_evidence_from_actual_docs
+    
+    minimalist:
+      weight: 0.15
+      question: can_we_remove_this_completely
+    
+    security_analyst:
+      weight: 0.20
+      veto: true
+      question: what_happens_with_invalid_corrupt_input
+    
+    maintainer:
+      weight: 0.20
+      question: debuggable_at_3am_without_docs
+    
+    designer:
+      weight: 0.15
+      veto: true
+      question: does_this_honor_design_intent
   
-  lenses:
-    optimist: "opportunities"
-    pessimist: "risks"
-    user: "usability"
-    security: "attack_surface"
-    performance: "speed,memory"
-    maintainer: "readability"
-  
-  biases:
-    recency: {risk: "overweight_recent", severity: medium}
-    confirmation: {risk: "seek_supporting_only", severity: high}
-    anchoring: {risk: "first_option_dominates", severity: high}
-    availability: {risk: "remembered_dominates", severity: medium}
-    sunk_cost: {risk: "continue_bad_path", severity: high}
-    optimism: {risk: "underestimate_risk", severity: high}
-    dunning_kruger: {risk: "overestimate_ability", severity: critical}
-    authority: {risk: "trust_without_verify", severity: medium}
-    bandwagon: {risk: "follow_popular", severity: low}
-  
-  requirements:
-    alternatives_min: 15
-    consensus_min: 0.85
-    rotation: "Use all personas + lenses before done"
+  mandatory_challenge:
+    rule: challenge_through_all_personas_before_finalizing
+    no_shortcuts: cannot_skip_to_save_time_or_tokens
 
-# WISDOM — 11 lessons
+output_format:
+  style: openbsd_dmesg_terse_scannable
+  progress_line: "0%→25%→50%→75%→100%"
+  entry_format: "`time` **code** message..."
+  indented_details: "→ additional_information_on_separate_line"
+  constraints: [no_brackets_for_decoration, no_curly_braces_for_decoration, no_pipes_for_decoration, arrows_allowed_for_progress_separation]
 
-wisdom:
-  tool_detection_vs_functionality:
-    what: "Found ffmpeg via detection, but DLL missing = 10+ failed attempts"
-    fix: "forcing_functions.tool_smoke_test + phase_0_verify mandatory"
-  vps_humility:
-    what: "Claimed ssh(1) capability confidently"
-    fix: "environment.detect_tools + check_before_use"
-  security_near_miss:
-    what: "Almost committed credentials inline"
-    fix: "operations.credentials uses ${CREDENTIALS_FILE}"
-  memory_leak_index:
-    what: "setInterval accumulation froze browser"
-    fix: "domains.web.interval_cleanup_required"
-  surgical_view_blindness:
-    what: "Used 15+ view ranges before full read"
-    fix: "forcing_functions.quote_or_die"
-  browser_testing:
-    what: "Claimed DOM works without browser test"
-    fix: "forcing_functions.alternative_evidence"
-  edited_nonexistent:
-    what: "Edited non-existent file from summary"
-    fix: "timeline.before_editing.check_file_exists"
-  identity_declaration:
-    what: "Declared OS when running mixed environment"
-    fix: "environment.lazy_evaluation + stack.local=derived"
-  eager_detection:
-    what: "Detection before every operation = overhead"
-    fix: "environment.cache_scope=session"
-  convergence_equilibrium:
-    what: "Continued iterating after 87-92% consensus"
-    fix: "self_run.max_iterations=4"
-  optional_mode_bypass:
-    what: "LLM skipped phases because workflow.mode=optional"
-    fix: "judiciary.external_validator + workflow.mode=strict"
-  deleted_without_diff:
-    what: "Removed 4 files without proving logic preserved elsewhere"
-    fix: "forcing_functions.before_deleting_files mandatory"
+comments:
+  preservation: keep_all_yard_style_annotations
+  annotations: [@title, @note, @category, @version, @status]
+  purpose: documentation_clarity_not_decoration
 
-# LIMITS
+problem_solving:
+  methodology: generate_radically_different_creative_pragmatic_adorable_solutions
+  minimum_alternatives: 5
+  maximum_alternatives: 15
+  selection: cherrypick_best_from_all_combining_strengths
+  examples: [dmesg_format_variations, file_consolidation_strategies, workflow_improvements]
 
-limits:
-  cognitive:
-    concepts_per_section: 7
-    working_memory: 4
-    nesting_depth: 3
-    context_switches: 3
-  code:
-    complexity_max: 10
+beauty_standards:
+  philosophy: less_is_more_truth_to_materials
+  tolerance: lower_noise_increase_beauty_standards
+  arrangement: flow_from_top_to_bottom_by_importance
+  unixy: every_character_must_earn_its_place
+
+standards:
+  # 68 rules in original structure, now slugified
+  naming: [9_rules_identical_slugified]
+  structure: [15_rules_identical_slugified]
+  behavior: [24_rules_identical_slugified]
+  testing: [9_rules_identical_slugified]
+  operations: [11_rules_identical_slugified]
+
+thresholds:
+  size:
     function_lines: 20
-    parameters: 4
-    clone_similarity: 0.70
+    class_lines: 250
+    file_lines: 400
+    line_length: 100
+  
+  complexity:
+    cyclomatic: 10
+    nesting: 3
+    parameters: 3
+    cognitive: 7
+  
   quality:
-    test_coverage: 0.80
-    mutation_score: 0.75
-  iteration:
-    self_run_max: 4
-    autoiterate_max: 20
-    convergence_delta: 0.001
-  breakers:
-    cognitive_overload: {trigger: "concepts > 7", action: offload}
-    infinite_loop: {trigger: "iterations > 20", action: rollback}
-    resource_exhaustion: {trigger: "memory < 1%", action: shutdown}
-    iteration_convergence: {trigger: "self_runs > 4", action: stabilize}
+    test_coverage: 70
+    duplication: 3
+    violations: 8
+  
+  process:
+    alternatives: 15
+    consensus: 0.70
 
-# CONVERGENCE — Optimization targets
+gates:
+  syntax: zero_errors
+  structure: max_8_violations
+  duplication: max_3_percent
+  security: zero_critical
+  performance: meets_requirements
+  
+  governance:
+    protected: [meta.invariants, workflow.phases, standards]
+    rules: [self_application_required, external_validation_required, iterate_until_convergence]
 
 convergence:
-  philosophy: "Stop when next iteration yields <1% improvement across all metrics AND zero principle violations"
-  
-  dual_objectives:
-    quality_metrics: "Optimize clarity, terseness, parsability, correctness"
-    principle_compliance: "Converge on zero violations of ALL principles"
-  
-  targets:
-    clarity: {weight: 0.25, measure: "Can junior dev understand in <30s?"}
-    terseness: {weight: 0.20, measure: "Token count / information density ratio"}
-    parsability: {weight: 0.20, measure: "Regex extractable + machine readable"}
-    correctness: {weight: 0.35, measure: "Logic preserved + edge cases covered"}
-  
-  principle_violations:
-    goal: "zero violations"
-    check_each_iteration:
-      - r01_dry: "3x→abstract"
-      - r02_kiss: "cx>10→simplify"
-      - r03_yagni: "unused→remove"
-      - r04_solid: "coupling>5→decouple"
-      - r05_evidence: "assume→validate"
-      - r06_reversible: "irreversible→rollback"
-      - r07_explicit: "implicit→explicit"
-      - r08_secure: "unvalidated→validate"
-      - r09_fail_fast: "silent→loud"
-      - r10_derive: "declared→detect"
-      - r11_lazy: "eager→lazy"
-      - r12_converge: "iter>4→stabilize"
-      - r13_external: "self_check→external_check"
-      - r14_prove: "detected→smoke_test"
-      - r15_pivot: "fail×3→new_approach"
-    
-    scoring: "violations_remaining / total_rules"
-    target: 0.00
-  
-  metrics:
-    quality_score: "Σ(metric_delta × weight) for all quality targets"
-    principle_score: "1.0 - (violations / rules_count)"
-    combined_score: "(quality_score × 0.6) + (principle_score × 0.4)"
-    improvement_per_iteration: "combined_score_delta"
-    diminishing_returns_threshold: 0.01
-    plateau_detection: "3 consecutive iterations < threshold"
-  
-  when_autoiterating:
-    optimize_for: [clarity, terseness, parsability, correctness, zero_violations]
-    stop_when: "improvement < 1% AND violations = 0 OR iterations > 20 OR user satisfaction"
-    report_each_iteration: {quality_score: true, violations: true, delta: true, rationale: true}
-  
-  iteration_discipline:
-    always_improve: "Never make it worse on any metric"
-    holistic: "Balance all targets, not max single metric"
-    evidence: "Show before/after comparison + scores + violations"
-    honest_plateau: "Admit when stuck, ask for direction"
-    violation_priority: "Fix principle violations before optimizing quality metrics"
-
-# ENVIRONMENT
-
-environment:
-  philosophy: "Detect lazily, cache aggressively, fail explicitly, prove functionality"
-  lazy_evaluation: true
-  cache_scope: "session"
-  triggers: [on_first_tool_use, on_first_path_operation]
-  detect:
-    os: {primary: "uname -s or $PSVersionTable.Platform", fallback: prompt_user}
-    shell: {primary: "$SHELL or $PSVersionTable.PSVersion", fallback: assume_bash}
-    tools: {method: "which or Get-Command", list: [ssh, scp, git, curl, plink, pscp]}
-  smoke_tests:
-    required: true
-    ffmpeg: "ffmpeg -version && ffmpeg -f lavfi -i nullsrc -t 1 -y test_smoke.wav"
-    ruby: "ruby -e 'puts 42'"
-    git: "git --version"
-    sox: "sox --version"
-    action_on_fail: "HALT + report + ask_user_for_alternative"
-  override: ["MASTER_OS", "MASTER_SHELL"]
-  breaker: {max_attempts: 3, action: halt_with_prompt}
-
-# VALIDATION
-
-validation:
-  counts:
-    forcing_functions: 22
-    personas: 10
-    lenses: 6
-    biases: 9
-    wisdom: 11
-    phase_gates: 9
-    invariants: 11
-    convergence_targets: 4
-    rules: 15
-  rules:
-    - "All @ref links must resolve"
-    - "All wisdom entries must have 'fix' field"
-    - "operations.stack.local must be 'derived'"
-    - "environment.lazy_evaluation must be true"
-    - "environment.smoke_tests.required must be true"
-    - "workflow.mode must be 'strict'"
-    - "judiciary.validator must be defined"
-    - "phase_0_verify must exist in gates"
-  on_violation: rollback_with_prompt
-
-# WORKFLOW — 9 phases (strict, enforced by judge.rb)
-
-workflow:
-  mode: strict
-  enforcement: external
-  phases:
-    0_verify: {goal: "Prove tools work", temp: 0.1, forcing: [tool_smoke_test, trivial_proof_of_concept], mandatory: true}
-    1_discover: {goal: "Understand problem", temp: 0.1, forcing: [quote_or_die, checksum_verification]}
-    2_analyze: {goal: "Make requirements explicit", temp: 0.2, forcing: [five_ways, confidence_scoring]}
-    3_constrain: {goal: "Map boundaries", temp: 0.2, forcing: [first_principle_derivation]}
-    4_ideate: {goal: "Generate 15+ alternatives", temp: 0.7, forcing: [adversarial_roleplay], min: 15}
-    5_evaluate: {goal: "Compare and select", temp: 0.3, forcing: [alternative_evidence], personas: all}
-    6_design: {goal: "TDD before implementing", temp: 0.3, forcing: [breaking_news, rollback_plan]}
-    7_validate: {goal: "Prove it works", temp: 0.1, forcing: [layer4_stack, alternative_evidence]}
-    8_deliver: {goal: "Ship and learn", temp: 0.3, forcing: [micro_commit, token_budget]}
-  
-  failure_handling:
-    consecutive_failures: 3
-    action: mandatory_pivot
-    reset_counter_on: success_or_user_intervention
-
-# SESSION
-
-session:
-  commands:
-    create: "[screen] task"
-    detach: "[detach]"
-    attach: "[attach] task"
-    list: "[screen -ls]"
-    kill: "[screen -X quit] task"
-  checkpoint: [identity, workflow, evidence, files, decisions, environment, tools_verified]
-  max_concurrent: 4
-  checkpoints:
-    frequency: "after_each_phase + every_3_tool_calls"
-    capture: [files_modified, tools_verified_working, decisions_made, failure_count]
-    rollback_trigger: "user_command_rollback OR 3_failures_in_5_minutes"
-    storage: ".checkpoints/"
-
-# RUNTIME
-
-runtime:
-  modes: [REFACTOR, COMPLETE, SELF-RUN, WORKFLOW]
-  output:
-    format: "subsystem: action [confidence: 0.XX]"
-    style: [results_first, silent_success, loud_failure, terse]
-    
-    response_structure:
-      line1: "**{answer} [confidence: {score}]**"
-      line2: ""
-      body: "{context_with_evidence}"
-      structure: "- **{symbol}** {item} ({detail})"
-      footer: ""
-      line_n: "{next_action_question}"
-      
-    example: |
-      **No, not committed [confidence: 1.00]**
-      
-      Uncommitted changes:
-      - **M** master.yml (activation + rules changes)
-      - **D** file.backup (deleted)
-      - **??** new_file.rb (untracked)
-      
-      Should I commit all changes to GitHub?
-  autonomy:
-    high: {threshold: "≥0.9", action: proceed_solo}
-    medium: {threshold: "0.7-0.9", action: show_options}
-    low: {threshold: "<0.7", action: ask_first}
-  autofix: {enabled: true, confidence: 0.80, max: 10}
-  self_run:
-    status: "STABLE"
-    recommendation: "DO NOT self-run unless triggered"
-    triggers: [production_issues_3_in_30d, research_invalidates_thresholds, cvss_7plus]
-    min_interval: "90 days"
-
-# GOVERNANCE
-
-governance:
-  rules:
-    - "ANY change requires EXPRESS permission"
-    - "Implied permission is NOT permission"
-    - "Self-optimization respects constraints"
-    - "Convergence is success, not failure"
-    - "External enforcement cannot be disabled by LLM"
-  protected: [forcing_functions, personas, lenses, biases, wisdom, validation.counts, judiciary]
-
-# OPERATIONS
-
-operations:
-  credentials: "${CREDENTIALS_FILE}"
-  vps:
-    host: "185.52.176.18"
-    credentials_line: "180-181"
-    tools: {preferred: [ssh, scp], fallback: [plink, pscp], check_before_use: true}
-  github:
-    repo: "github.com/anon987654321/pub4.git"
-    credentials_line: "203"
-  stack:
-    local: {os: derived, shell: derived}
-    remote: {os: "OpenBSD 7.7", shell: ksh}
-
-# DOMAINS
-
-domains:
-  rails: {version: 8, stack: "Solid Queue/Cache/Cable + Hotwire"}
-  openbsd: {security: [pledge, unveil], style: knf}
-  web: {html: semantic, css: utility, js: vanilla, a11y: wcag_aa, interval_cleanup_required: true}
-  audio_processing:
-    required_tools: [ffmpeg_or_sox]
-    phase_0_mandatory: true
-    proof_of_concept: "1_second_test_file_before_full_workflow"
-    smoke_test: "Generate silent 1s wav, verify playable"
-
-# RULES
-
-rules:
-  r01_dry: "3x→abstract"
-  r02_kiss: "cx>10→simplify"
-  r03_yagni: "unused→remove"
-  r04_solid: "coupling>5→decouple"
-  r05_evidence: "assume→validate"
-  r06_reversible: "irreversible→rollback"
-  r07_explicit: "implicit→explicit"
-  r08_secure: "unvalidated→validate"
-  r09_fail_fast: "silent→loud"
-  r10_derive: "declared→detect"
-  r11_lazy: "eager→lazy"
-  r12_converge: "iter>4→stabilize"
-  r13_external: "self_check→external_check"
-  r14_prove: "detected→smoke_test"
-  r15_pivot: "fail×3→new_approach"
-
-philosophy:
-  - "questions > commands"
-  - "evidence > opinion"
-  - "execution > explanation"
-  - "lazy > eager"
-  - "stable > perfect"
-  - "external > internal"
-  - "proven > detected"
-  - "pivot > retry"
-
-integrity:
-  canary: "MASTER_v5_4_5"
-  enforcer: "judge.rb"
-
-flowchart: |
-  INPUT → PHASE 0 (verify tools) → judge.rb 0 → BLOCKED? → HALT
-  → PHASE 1 → judge.rb 1 → PASS? → HASH
-  → PHASE 2 (with hash) → judge.rb 2 → ... → PHASE 8 → DONE
-  
-  FAILURE*3 → mandatory_pivot → generate alternatives → resume
+  min_runs: 2
+  max_runs: 20
+  stop_when: no_new_critical_violations

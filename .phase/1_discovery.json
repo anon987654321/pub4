@@ -1,31 +1,26 @@
 {
+  "phase": 1,
+  "prev_hash": "520d0ecc",
   "target_manifest": {
-    "project": "media/dilla",
-    "version": "2.1.0",
-    "core_files": [
-      "dilla.rb (34KB, main system)",
-      "make_beat_now.rb (3.7KB, standalone)",
-      "dilla_config.json (30KB, configuration)",
-      "README.md (6.2KB, documentation)",
-      "test_dilla.sh (711B, validation)"
+    "file": "index.html",
+    "lines": 645,
+    "purpose": "Audio-reactive warp tunnel visualizer for Radio Bergen",
+    "changes_made": [
+      "Bass-reactive FOV (line 384-385)",
+      "Reversed parallax mouse/tilt (lines 372-377)",
+      "Beat haptics mobile (line 590-593)",
+      "Added 2 tracks: kemt, J Dilla Motor City 17 (lines 150-151)"
     ],
-    "assets": [
-      "808_bd_medium_r8_t1a.wav (121KB)",
-      "808_sd_jd800_01.wav (9KB)",
-      "808_hh_jd800.wav (13KB)",
-      "R-Mårdalen R.aif (1.5MB)",
-      "Freeze Fikeraddis Nekatibeb - Old Ethio.wav (2.7MB)",
-      "FluidR3_GM.sf2 (6.6KB)"
-    ]
+    "status": "uncommitted"
   },
   "quote_or_die": {
-    "dilla.rb": ["Line 1: #!/usr/bin/env ruby", "Line 32: class SOSDilla", "Line 34:   VERSION = \"2.1.0\""],
-    "README.md": ["Line 1: # SOS Dilla v2.1.0", "Line 54: ### Generate Dub Techno", "Line 269: ### Dilla Timing"]
+    "line_18": "h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}",
+    "line_384": "const fovDynamic=this.fov+(a?.bass||0)*50;",
+    "line_590": "if(a?.beat&&navigator.vibrate){navigator.vibrate(8)}"
   },
   "file_hashes": {
-    "dilla.rb": "34798_bytes",
-    "make_beat_now.rb": "3735_bytes",
-    "README.md": "6172_bytes"
+    "index.html": "modified (uncommitted)",
+    "master.yml": "v5.4.5"
   },
-  "hypothesis": "Applied master.yml to media/dilla: Cleaned file sprawl by removing 4 redundant files + 3 backup files. System consolidated to 5 core files + 6 assets."
+  "hypothesis": "Bass-reactive FOV + reversed parallax + beat haptics will enhance immersion and mobile UX without breaking existing functionality. CORS requires GitHub Pages for browser testing."
 }
