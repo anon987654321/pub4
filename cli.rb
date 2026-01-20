@@ -924,9 +924,6 @@ class CLI
       @client = APIClient.new(@tools)
     end
     
-    # Reapply security sandbox
-    apply_security_sandbox(@access_level)
-    
     UI.status("access level changed to: #{@access_level}")
   end
 
