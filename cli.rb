@@ -373,16 +373,7 @@ class WebChat
         current = elements.last.text.strip
 
         if current == last && !current.empty?
-          # Strip common provider prefixes from response text:
-          # - "Model A:", "Model B:", "Model :" - For comparison providers (lmsys)
-          # - "Response:" - For generic providers
-          # Regex breakdown: ^(Model [AB]?:?\s*|Response:?\s*)
-          #   ^ = start of line
-          #   Model [AB]? = "Model" optionally followed by "A" or "B"
-          #   :? = optional colon
-          #   \s* = optional whitespace
-          #   | = OR
-          #   Response:?\s* = "Response" with optional colon and whitespace
+          # Strip provider prefixes (Model A/B:, Model :, Response:) from response text
           return current.sub(/^(Model [AB]?:?\s*|Response:?\s*)/i, "").strip if (stable += 1) >= 3
         else
           stable, last = 0, current
