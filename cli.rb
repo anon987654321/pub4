@@ -22,6 +22,8 @@ require "timeout"
 
 require "digest"
 
+require "io/console"
+
 PLEDGE_AVAILABLE = if RUBY_PLATFORM =~ /openbsd/
   begin
 
@@ -241,11 +243,12 @@ module UI
 
   def c(style, text) = @pastel ? @pastel.send(style, text) : text
 
-  def banner(mode)
+  def banner(mode = nil)
+    puts "\n#{c(:bold, "╔═══════════════════════════════════════╗")}"
+    puts "#{c(:bold, "║")}   #{c(:cyan, "CONVERGENCE CLI")} #{c(:bright_yellow, "v∞.15.2")}        #{c(:bold, "║")}"
+    puts "#{c(:bold, "╚═══════════════════════════════════════╝")}\n"
 
-    puts "convergence v∞.15.2"
-
-    puts "mode: #{mode}"
+    puts "mode: #{mode}" if mode
 
     puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
 
@@ -265,6 +268,40 @@ module UI
 
   def status(msg) = puts(c(:dim, msg))
 
+  def ask_yes_no(question, default: true)
+    prompt_text = default ? "#{question} [Y/n]" : "#{question} [y/N]"
+    
+    if TTY && @prompt
+      @prompt.yes?(prompt_text)
+    else
+      print "#{prompt_text}: "
+      answer = $stdin.gets&.chomp
+      return default if answer.nil? || answer.empty?
+      answer.downcase.start_with?("y")
+    end
+  end
+
+  def ask_choice(question, choices)
+    if TTY && @prompt
+      @prompt.select(question, choices)
+    else
+      puts question
+      choices.each_with_index { |choice, i| puts "  #{i + 1}. #{choice}" }
+      print "Enter number (1-#{choices.size}): "
+      idx = $stdin.gets&.chomp&.to_i
+      return nil if idx < 1 || idx > choices.size
+      choices[idx - 1]
+    end
+  end
+
+  def ask_secret(prompt_text)
+    if TTY && @prompt
+      @prompt.mask(prompt_text)
+    else
+      print "#{prompt_text}: "
+      $stdin.noecho(&:gets).chomp.tap { puts }
+    end
+  end
 end
 
 class WebChat
@@ -638,7 +675,13 @@ class CLI
 
     /mode          show current mode
 
-    /provider X    switch webchat provider (claude primary, grok, deepseek, z.ai, etc.)
+    /provider [X]  switch provider (webchat or API provider)
+
+    /model [X]     switch model (API mode only)
+
+    /key           update API key
+
+    /reset         clear saved preferences and restart setup
 
     /tools         list available tools (API mode only)
 
@@ -679,10 +722,19 @@ class CLI
   def initialize
 
     UI.init
+    
+    # Load configuration module
+    require_relative "cli_config"
 
-    @mode = detect_mode
+    @config = Convergence::Config.load
 
-    @provider = "claude"
+    @mode = @config.mode
+
+    @provider = @config.provider
+
+    @api_key = @config.api_key_for(@provider) if @provider && @config.api_key_for(@provider)
+
+    @model = @config.model
 
     @client = nil
 
@@ -700,11 +752,16 @@ class CLI
 
   def run
 
+    # Run interactive setup if not configured
+    unless @config.configured?
+      interactive_setup
+    end
+
     boot_sequence
 
     UI.banner(mode_label)
 
-    connect
+    setup_client
 
     loop do
 
@@ -722,11 +779,108 @@ class CLI
 
   ensure
 
-    @client.quit if @client.is_a?(WebChat)
+    @client.quit if @client&.respond_to?(:quit)
 
   end
 
   private
+
+  def interactive_setup
+    UI.banner
+
+    UI.puts "\nWelcome! Let's set up your CLI.\n\n"
+
+    # Ask about FREE mode
+    free_mode = UI.ask_yes_no("Enable FREE mode? (browser automation with free LLM providers)", default: true)
+
+    if free_mode
+      @mode = :webchat
+      @provider = select_webchat_provider
+    else
+      @mode = :api
+      @provider = select_api_provider
+      @api_key = prompt_api_key(@provider)
+    end
+
+    # Save preferences
+    @config.mode = @mode
+    @config.provider = @provider
+    @config.set_api_key(@provider, @api_key) if @api_key
+    @config.save
+
+    UI.status("\nConfiguration saved to ~/.convergence/config.yml")
+    UI.puts ""
+  end
+
+  def select_webchat_provider
+    # Load webchat module
+    require_relative "cli_webchat"
+    
+    providers = Convergence::WebChatClient::PROVIDERS.keys.map(&:to_s)
+    
+    UI.puts "\nAvailable FREE providers (browser automation):"
+    providers.each { |p| UI.puts "  • #{p}" }
+    UI.puts ""
+    
+    choice = UI.ask_choice("Select provider:", providers)
+    
+    (choice || providers.first).to_sym
+  end
+
+  def select_api_provider
+    # Load API module
+    require_relative "cli_api"
+    
+    providers = Convergence::APIClient::PROVIDERS.keys.map(&:to_s)
+    
+    UI.puts "\nAvailable API providers:"
+    providers.each { |p| UI.puts "  • #{p}" }
+    UI.puts ""
+    
+    choice = UI.ask_choice("Select provider:", providers)
+    
+    (choice || "openrouter").to_sym
+  end
+
+  def prompt_api_key(provider)
+    UI.puts "\nYou'll need an API key for #{provider}."
+    
+    case provider.to_sym
+    when :openrouter
+      UI.puts "Get your key at: https://openrouter.ai/keys"
+    when :openai
+      UI.puts "Get your key at: https://platform.openai.com/api-keys"
+    when :anthropic
+      UI.puts "Get your key at: https://console.anthropic.com/settings/keys"
+    when :gemini
+      UI.puts "Get your key at: https://makersuite.google.com/app/apikey"
+    when :deepseek
+      UI.puts "Get your key at: https://platform.deepseek.com/api_keys"
+    end
+    
+    UI.puts ""
+    UI.ask_secret("Enter API key")
+  end
+
+  def setup_client
+    case @mode
+    when :webchat
+      require_relative "cli_webchat"
+      @client = Convergence::WebChatClient.new(initial_provider: @provider)
+    when :api
+      require_relative "cli_api"
+      @client = Convergence::APIClient.new(
+        provider: @provider,
+        api_key: @api_key,
+        model: @model
+      )
+    else
+      # Fallback to auto-detection for backward compatibility
+      @mode = detect_mode
+      @provider = @mode == :api ? :anthropic : :duckduckgo
+      setup_client
+    end
+  end
 
   def boot_sequence
 
@@ -752,20 +906,16 @@ class CLI
 
   def detect_mode = ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-") ? :api : FERRUM ? :webchat : :none
 
-  def mode_label = case @mode; when :api then "api (#{ENV["CLAUDE_MODEL"] || "claude-sonnet-4-20250514"})"; when :webchat then "webchat/#{@provider}"; else "unavailable"; end
-
-  def connect
-
+  def mode_label
     case @mode
-
-    when :api then @client = APIClient.new(@tools); UI.status("connected to API")
-
-    when :webchat then UI.thinking("connecting to #{@provider}") { @client = WebChat.new(@provider) }; UI.status("connected")
-
-    else UI.error("no backend"); exit 1
-
+    when :api
+      model_name = @model || @client&.model || "unknown"
+      "api/#{@provider}/#{model_name}"
+    when :webchat
+      "webchat/#{@provider}"
+    else
+      "unavailable"
     end
-
   end
 
   def command(input)
@@ -778,17 +928,23 @@ class CLI
 
     when "/help" then UI.puts(HELP)
 
-    when "/mode" then UI.status(mode_label)
+    when "/mode" then show_mode
 
     when "/clear" then system("clear") || system("cls")
+
+    when "/provider" then switch_provider(arg)
+
+    when "/model" then switch_model(arg)
+
+    when "/key" then update_api_key
+
+    when "/reset" then reset_config
 
     when "/tools" then @mode == :api ? @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } } : UI.status("tools only in API mode")
 
     when "/yes" then approve_tools(true)
 
     when "/no" then approve_tools(false)
-
-    when "/provider" then switch_provider(arg)
 
     when "/ingest" then rag_ingest(arg)
 
@@ -802,9 +958,9 @@ class CLI
 
     when "/webchat" then launch_webchat
 
-    when "/screenshot" then UI.status("screenshot: #{@client.screenshot}") if @client.is_a?(WebChat)
+    when "/screenshot" then UI.status("screenshot: #{@client.screenshot}") if @client&.respond_to?(:screenshot)
 
-    when "/page-source" then UI.puts(@client.page_source[0..5000]) if @client.is_a?(WebChat)
+    when "/page-source" then UI.puts(@client.page_source[0..5000]) if @client&.respond_to?(:page_source)
 
     when "/openbsd" then openbsd_cmd(arg)
 
@@ -818,21 +974,97 @@ class CLI
 
   end
 
+  def show_mode
+    UI.puts "\n#{UI.c(:bold, "Current Configuration:")}"
+    UI.puts "  Mode: #{UI.c(:cyan, @mode.to_s)}"
+    UI.puts "  Provider: #{UI.c(:cyan, @provider.to_s)}"
+    
+    if @mode == :api
+      UI.puts "  Model: #{UI.c(:cyan, @model || @client&.model || "default")}"
+      
+      if @client&.respond_to?(:usage_stats)
+        stats = @client.usage_stats
+        UI.puts "  Usage: #{stats[:total_tokens]} tokens (#{stats[:prompt_tokens]} prompt, #{stats[:completion_tokens]} completion)"
+      end
+    end
+    
+    UI.puts ""
+  end
+
+  def update_api_key
+    unless @mode == :api
+      UI.error("API keys only applicable in API mode")
+      return
+    end
+
+    new_key = prompt_api_key(@provider)
+    
+    if new_key && !new_key.empty?
+      @api_key = new_key
+      @config.set_api_key(@provider, new_key)
+      @config.save
+      
+      # Reconnect with new key
+      setup_client
+      
+      UI.status("API key updated and saved")
+    else
+      UI.error("API key cannot be empty")
+    end
+  end
+
+  def reset_config
+    UI.puts "\n#{UI.c(:yellow, "Warning:")} This will clear all saved preferences."
+    
+    if UI.ask_yes_no("Are you sure?", default: false)
+      @config.reset
+      UI.status("Configuration reset. Restart the CLI to set up again.")
+      exit 0
+    else
+      UI.status("Reset cancelled")
+    end
+  end
+
   def message(text)
 
     text = @rag.augment(text) if @rag_enabled && @rag.stats[:chunks] > 0
 
-    response = UI.thinking { @client.send(text) }
+    response = UI.thinking do
+      case @mode
+      when :api
+        # API client supports streaming
+        if @client.respond_to?(:send)
+          accumulated = ""
+          @client.send(text) do |chunk|
+            print chunk
+            accumulated << chunk
+          end
+          puts "" unless accumulated.empty?
+          accumulated
+        else
+          @client.send(text)
+        end
+      when :webchat
+        # WebChat client
+        if @client.respond_to?(:send_message)
+          @client.send_message(text)
+        else
+          @client.send(text)
+        end
+      else
+        "Error: No client available"
+      end
+    end
 
-    UI.response(response)
+    UI.response(response) unless response.nil? || response.empty?
 
-    show_pending_tools if @mode == :api && @client.pending_tools?
+    show_pending_tools if @mode == :api && @client&.respond_to?(:pending_tools?) && @client.pending_tools?
 
   rescue => e
 
     UI.error(e.message)
 
-    Log.error(e.message, backtrace: e.backtrace.first(3))
+    Log.error(e.message, backtrace: e.backtrace.first(3)) if defined?(Log)
 
   end
 
@@ -840,7 +1072,7 @@ class CLI
 
   def approve_tools(approved)
 
-    return UI.status("no pending tools") unless @mode == :api && @client.pending_tools?
+    return UI.status("no pending tools") unless @mode == :api && @client&.respond_to?(:pending_tools?) && @client.pending_tools?
 
     if approved
 
@@ -860,32 +1092,108 @@ class CLI
 
   def switch_provider(name)
 
-    unless name
-
-      UI.puts("providers: #{WebChat::PROVIDERS.keys.join(", ")}")
-
+    if name.nil? || name.empty?
+      case @mode
+      when :webchat
+        require_relative "cli_webchat"
+        providers = Convergence::WebChatClient::PROVIDERS.keys
+        UI.puts("Available webchat providers:")
+        providers.each { |p| UI.puts("  • #{p}") }
+      when :api
+        require_relative "cli_api"
+        providers = Convergence::APIClient::PROVIDERS.keys
+        UI.puts("Available API providers:")
+        providers.each { |p| UI.puts("  • #{p}") }
+      else
+        UI.error("No mode configured")
+      end
       return
-
     end
 
-    unless WebChat::PROVIDERS[name]
+    case @mode
+    when :webchat
+      require_relative "cli_webchat"
+      
+      unless Convergence::WebChatClient::PROVIDERS.key?(name.to_sym)
+        UI.error("unknown provider: #{name}")
+        return
+      end
 
-      UI.error("unknown provider: #{name}")
+      @client&.quit if @client&.respond_to?(:quit)
 
-      return
+      @provider = name.to_sym
 
+      UI.thinking("connecting to #{name}") do
+        @client = Convergence::WebChatClient.new(initial_provider: @provider)
+      end
+
+      @config.provider = @provider
+      @config.save
+
+      UI.status("switched to #{name}")
+
+    when :api
+      require_relative "cli_api"
+      
+      unless Convergence::APIClient::PROVIDERS.key?(name.to_sym)
+        UI.error("unknown provider: #{name}")
+        return
+      end
+
+      @provider = name.to_sym
+      @api_key = @config.api_key_for(@provider)
+
+      unless @api_key
+        @api_key = prompt_api_key(@provider)
+        @config.set_api_key(@provider, @api_key)
+      end
+
+      @client = Convergence::APIClient.new(
+        provider: @provider,
+        api_key: @api_key,
+        model: @model
+      )
+
+      @config.provider = @provider
+      @config.save
+
+      UI.status("switched to #{@provider}")
+
+    else
+      UI.error("provider switching not available in current mode")
     end
 
-    return UI.status("provider switching only in webchat mode") unless @mode == :webchat
+  rescue => e
+    UI.error("Failed to switch provider: #{e.message}")
+  end
 
-    @client&.quit
+  def switch_model(name)
+    unless @mode == :api
+      UI.error("model switching only available in API mode")
+      return
+    end
 
-    @provider = name
+    unless @client&.respond_to?(:models)
+      UI.error("current client doesn't support model switching")
+      return
+    end
 
-    UI.thinking("connecting to #{name}") { @client = WebChat.new(name) }
+    if name.nil? || name.empty?
+      UI.puts("Available models for #{@provider}:")
+      @client.models.each { |short, full| UI.puts("  • #{short} (#{full})") }
+      return
+    end
 
-    UI.status("switched to #{name}")
-
+    if @client.switch_model(name)
+      @model = @client.model
+      @config.model = @model
+      @config.save
+      UI.status("switched to model: #{@model}")
+    else
+      UI.error("unknown model: #{name}")
+      UI.puts("Available models:")
+      @client.models.each { |short, full| UI.puts("  • #{short} (#{full})") }
+    end
   end
 
   def rag_ingest(path) = arg ? (count = UI.thinking("ingesting") { @rag.ingest(File.expand_path(path)) }; UI.status("added #{count} chunks")) : UI.error("usage: /ingest PATH")
