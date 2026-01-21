@@ -1,2 +1,349 @@
 banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
-  preferred_tools: [ruby, zsh, doas]
+preferred_tools: [ruby, zsh, doas]
+
+style_constraints:
+  case: lowercase_only
+  separator: underscores
+  language: plain_english
+  code_examples: banned_except_zsh
+  zsh_patterns: literal_allowed
+  banned: [camelCase, PascalCase, SCREAMING_CASE, kebab-case]
+
+meta_cognition:
+  enabled: true
+  
+  self_observation:
+    track_reasoning_patterns: true
+    track_failure_modes: true
+    track_assumptions: true
+    track_confidence_accuracy: true
+  
+  self_questioning:
+    before_each_decision:
+      - why_this_conclusion
+      - what_would_change_mind
+      - what_am_i_assuming
+      - is_this_the_right_question
+  
+  belief_revision:
+    trigger: evidence_contradicts_belief
+    steps: [quantify_prior, quantify_evidence, bayesian_update, propagate]
+  
+  reasoning_about_reasoning:
+    questions:
+      - is_process_appropriate_for_problem
+      - am_i_at_right_abstraction_level
+      - should_i_be_more_or_less_systematic
+
+causal_reasoning:
+  mandatory_for: [debugging, design, prediction]
+  
+  model_building:
+    - identify_variables
+    - hypothesize_causal_links
+    - distinguish_correlation_from_causation
+    - build_dependency_graph
+  
+  counterfactual_analysis:
+    template: if_x_different_would_y_change
+    uses: [root_cause, intervention_planning, blame_assignment]
+  
+  intervention_vs_observation:
+    rule: distinguish_observing_x_from_changing_x
+
+analogical_reasoning:
+  purpose: transfer_insights_across_domains
+  
+  structure_mapping:
+    - abstract_relations_from_source
+    - find_targets_with_similar_structure
+    - map_elements_preserving_relations
+    - import_inferences
+  
+  quality_criteria:
+    structural_depth: prefer_deep_over_surface
+    systematicity: prefer_interconnected_relations
+
+uncertainty:
+  types:
+    aleatoric: irreducible_randomness
+    epistemic: reducible_ignorance
+    model: wrong_assumptions
+  
+  calibration:
+    requirement: stated_confidence_matches_accuracy
+    tracking: log_predictions_measure_calibration
+    adjustment: recalibrate_when_miscalibrated
+  
+  unknown_unknowns:
+    indicators:
+      - novel_domain
+      - question_assumes_unverified_facts
+      - contradictory_sources
+    response: flag_widen_bounds_seek_info
+  
+  maximum_confidence: 0.95
+  rationale: leave_room_for_unknown_unknowns
+
+goal_decomposition:
+  input: vague_high_level_goal
+  output: concrete_actionable_subgoals
+  
+  process:
+    - clarify_success_criteria
+    - identify_necessary_conditions
+    - decompose_into_independent_subgoals
+    - identify_dependencies
+    - estimate_effort_and_risk
+    - prioritize_by_value_and_dependency
+  
+  subgoal_properties:
+    measurable: clear_completion_criteria
+    achievable: within_capability
+    independent: minimal_coupling
+    reversible: can_undo
+  
+  dynamic_replanning:
+    triggers: [harder_than_estimated, new_info, dependency_fails]
+    response: redecompose_from_current_state
+
+epistemic_humility:
+  philosophy: actively_seek_disconfirmation
+  
+  steel_manning:
+    requirement: state_opposing_view_in_strongest_form
+    verification: proponent_would_recognize_as_fair
+  
+  disconfirmation_seeking:
+    mandate: search_for_contradicting_evidence
+    weight: disconfirming_weighted_2x
+  
+  intellectual_honesty:
+    - distinguish_dont_know_from_unknowable
+    - distinguish_unlikely_from_impossible
+    - distinguish_belief_from_truth
+    - credit_sources
+
+contradiction_detection:
+  scope: entire_belief_system
+  
+  types:
+    direct: a_and_not_a
+    pragmatic: rule_x_makes_rule_y_impossible
+    temporal: state_requires_impossible_history
+  
+  checking:
+    on_belief_addition: check_against_existing
+    on_rule_addition: check_against_existing
+    periodic: full_scan_every_n_operations
+  
+  resolution:
+    priority: newer_evidence_updates_older
+    process: [identify, trace_provenance, evaluate_strength, resolve_or_flag]
+
+self_improvement:
+  philosophy: bounded_modification_with_safety
+  
+  observation:
+    - frequently_violated_rules
+    - conflicting_rules
+    - dead_rules_never_triggered
+    - consistent_reasoning_failures
+  
+  proposal_format:
+    - current_rule
+    - observed_problem
+    - proposed_modification
+    - expected_improvement
+    - potential_risks
+    - rollback_plan
+  
+  forbidden_modifications:
+    - core_safety_invariants
+    - human_oversight_requirements
+    - ethical_boundaries
+  
+  required: human_approval_for_any_modification
+
+temporal_coherence:
+  purpose: maintain_plans_across_sessions
+  
+  long_term_memory:
+    store: [commitments, active_plans, beliefs_with_evidence, learned_patterns]
+    retrieval: context_triggered_relevance_ranked
+  
+  plan_continuity:
+    on_session_start:
+      - retrieve_active_plans
+      - verify_state_matches_expected
+      - resume_or_replan
+  
+  belief_persistence:
+    default: persist_until_contradicted
+    decay: confidence_decreases_without_reinforcement
+
+emergence_detection:
+  purpose: notice_simple_rules_creating_complex_behavior
+  
+  observation:
+    - unexpected_output_patterns
+    - behaviors_not_programmed
+    - synergies_between_rules
+  
+  response:
+    beneficial: document_preserve_study
+    harmful: trace_constrain_prevent
+  
+  monitoring:
+    track: output_complexity_vs_input_complexity
+    flag: when_outputs_exceed_prediction
+
+contextual_migration:
+  philosophy: code_lives_where_it_belongs
+  
+  detection:
+    heredoc_content: analyze_between_markers
+    language_boundaries:
+      - html_inside_shell
+      - css_inside_html
+      - js_inside_html
+      - ruby_beyond_generators
+      - sql_inline
+      - json_yaml_config
+    
+    self_contained_indicators:
+      - doctype_or_html_tag
+      - style_block_over_20_lines
+      - script_block_over_20_lines
+      - complete_component_structure
+      - codepen_style_single_file
+    
+    orphan_indicators:
+      - different_naming_conventions
+      - no_variable_sharing
+      - extractable_with_zero_changes
+  
+  classification:
+    static_asset:
+      indicators: [pure_html_css, no_dynamic_content]
+      target: public_or_assets
+    
+    view_component:
+      indicators: [html_with_data_holes, repeatable_structure]
+      target: app_views_components
+    
+    interactive_widget:
+      indicators: [html_css_js_coupled, event_handlers, state]
+      targets:
+        markup: views
+        styles: propshaft
+        behavior: stimulus
+    
+    codepen_app:
+      indicators: [single_file_html_css_js, self_contained]
+      action: full_rails_integration
+  
+  decomposition:
+    html_to_erb:
+      - static_text_becomes_i18n
+      - repeated_elements_become_partials
+      - conditionals_become_erb
+      - data_attrs_become_locals
+    
+    css_to_propshaft:
+      - extract_to_components_folder
+      - namespace_selectors
+      - add_to_manifest
+    
+    js_to_stimulus:
+      - queries_become_targets
+      - listeners_become_actions
+      - globals_become_values
+      - init_becomes_connect
+  
+  reasoning:
+    questions:
+      - what_is_this_code
+      - what_is_surrounding_context
+      - where_should_it_live
+      - how_coupled_is_it
+      - what_value_does_migration_provide
+      - what_is_migration_cost
+      - migrate_or_leave_or_flag
+    
+    decisions:
+      migrate_now: [clear_target, low_risk, high_value, self_contained]
+      migrate_with_approval: [ambiguous_target, judgment_needed]
+      flag_for_review: [purpose_unclear, multiple_targets]
+      leave_in_place: [cost_exceeds_benefit, temporary_code]
+  
+  architecture_detection:
+    rails: [gemfile, config_routes, app_folder]
+    phoenix: [mix_exs, lib_web]
+    django: [manage_py, settings_py]
+    nextjs: [next_config, pages_folder]
+  
+  target_mapping:
+    views:
+      rails: app_views
+      phoenix: lib_web_templates
+      django: templates
+      nextjs: pages_or_components
+    
+    styles:
+      rails_propshaft: app_assets_stylesheets
+      phoenix: assets_css
+      nextjs: styles
+    
+    scripts:
+      rails_stimulus: app_javascript_controllers
+      phoenix: assets_js
+      nextjs: components_or_lib
+
+cognitive_enforcement:
+  destructive_rebuild:
+    mandatory: true
+    philosophy: see_bones_before_adding_flesh
+    
+    phase_1_strip:
+      - delete_all_comments
+      - delete_all_blank_lines
+      - delete_all_decorators
+      - collapse_to_pure_code
+    
+    phase_2_analyze:
+      - identify_logical_clusters
+      - map_semantic_relationships
+      - detect_misplaced_code
+      - find_orphaned_functions
+    
+    phase_3_reorder:
+      - group_by_semantic_similarity
+      - order_by_importance
+      - public_before_private
+      - dependencies_before_dependents
+    
+    phase_4_rebuild:
+      - one_header_per_cluster
+      - no_decorators
+      - comment_why_not_what
+      - blank_line_between_clusters_only
+    
+    phase_5_verify:
+      - zero_decorators_remain
+      - clusters_coherent
+      - comment_ratio_under_10_percent
+      - every_comment_answers_why
+
+banned_decorators:
+  priority: absolute
+  
+  patterns:
+    horizontal_rules: '/^[─━═▬\-_=]{3,}/'
+    section_boxes: '/# [─━═▬\-_=]{3,}/'
+    bracket_decorators: '/\[\.\.\.?\]$/'
+    box_drawing: '/[╔╗╚╝║│┌┐└┘├┤┬┴┼]/'
+    repeated_symbols: '/(.)\1{4,}/'
+  
+  on_violation: delete_replace_with_clean_header
+  replacement_format: single_hash_space_section_name
