@@ -28,7 +28,7 @@ tool_policy:
     
   zsh_replacements:
     string_operations:
-      remove_crlf: 'cleaned=${var//$'\r'/}'
+      remove_crlf: "cleaned=${var//$'\\r'/}"
       lowercase: '${(L)var}'
       uppercase: '${(U)var}'
       replace_all: '${var//search/replace}'
@@ -429,7 +429,8 @@ detectors:
         - 'const\s+([A-Z_][A-Z0-9_]*)\s*='
         - 'let\s+([a-z_][a-zA-Z0-9_]*)\s*='
         - 'var\s+([a-z_][a-zA-Z0-9_]*)\s*='
-        - 'function\s+([a-z_][a-zA-Z0-9_]*)\s*('\n        - 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
+        - 'function\s+([a-z_][a-zA-Z0-9_]*)\s*('
+        - 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
         
     nesting_gt_2:
       principle: kiss
@@ -504,10 +505,10 @@ formatters:
   
   base_operations:
     read: 'content=$(<$file)'
-    tabs_to_spaces: 'content=${content//$'\t'/  }'
+    tabs_to_spaces: "content=${content//$'\\t'/  }"
     trim_trailing: 'content=${content%%[[:space:]]##}'
-    ensure_final_newline: 'content=${content%$'\n'}$''\n'''
-    normalize_crlf: 'content=${content//$'\r'/}'
+    ensure_final_newline: "content=${content%$'\\n'}$'\\n'"
+    normalize_crlf: "content=${content//$'\\r'/}"
     write: 'print -r -- "$content" > $file'
 
 # tier 3 execution context
@@ -584,6 +585,130 @@ autonomy:
     range: 0.0_to_0.7
     action: ask_first
     applies_to: [logic_changes, deletes_gt_10_lines, security, api_changes]
+
+auto_resume:
+  enabled: true
+  on_cancel: persist_state
+  on_resume: check_and_prompt
+  state_storage: ".sessions/state.yml"
+  preserve:
+    - current_task
+    - files_modified
+    - violations_found
+    - fixes_applied
+    - phase_number
+
+auto_save:
+  enabled: true
+  interval_minutes: 2
+  triggers:
+    - phase_transition
+    - every_n_operations: 5
+    - before_destructive_op
+    - on_idle_seconds: 120
+  location: ".sessions/autosave_{timestamp}.yml"
+  max_saves: 10
+  cleanup: delete_older_than_24h
+  
+  hooks:
+    before_save:
+      - verify_yaml_syntax
+      - backup_previous
+    after_save:
+      - log_checkpoint
+      - update_index
+    on_restore:
+      - verify_checksum
+      - validate_state
+
+convergence:
+  outer:
+    max_iterations: 3
+    phases: [infer, understand, execute, validate, output, learn, checkpoint]
+    exit_when:
+      violations: 0
+      consensus: 0.80
+  
+  inner:
+    max_iterations: 15
+    phases: [scan_all, weigh, prioritize, fix_safe, verify_no_regression]
+    exit_when:
+      violations: 0
+      regressions: 0
+    on_oscillate: rollback
+    on_regress: rollback
+  
+  meta:
+    triggers:
+      - session_end
+      - pattern_count: 3
+    actions:
+      - analyze_patterns
+      - update_thresholds
+      - integrate_learnings
+
+error_prevention:
+  evidence_based_claims: never_claim_without_proof
+  tool_compliance: verify_ban_list_before_command
+  complete_reading: read_all_files_before_processing
+  sequential_execution: finish_task_before_next
+  output_chunking: max_50_lines_to_avoid_truncation
+  correction_memory: update_immediately_after_corrections
+  proactive_research: web_search_every_3_to_5_operations
+  self_monitoring: check_for_errors_every_10_operations
+
+operational_resilience:
+  error_recovery:
+    ssh_failure:
+      retry: 3
+      backoff: [5, 10, 20]
+      fallback: alert_human
+    pkg_install:
+      retry: 2
+      mirror_fallback: true
+      skip_on_exists: true
+    db_migration:
+      backup_first: true
+      rollback_on_fail: true
+  
+  working_system_criteria:
+    deployment: "rcctl check, curl localhost 2xx, no fatal logs"
+    development: "tests pass, app boots under 10s, migrations clean"
+    production: "uptime over 99 percent, p95 under 500ms, health 200"
+  
+  backup_strategy:
+    database:
+      frequency: daily_0200
+      retention_days: 30
+      before_migration: true
+    config_files:
+      frequency: on_change
+      retention_count: 10
+      location: ".backups/config"
+
+context_management:
+  lost_in_middle:
+    research: "Liu et al 2024 - LLMs recall start and end best"
+    mitigation: dual_placement
+    technique: sandwich_critical_content
+    threshold: 50_percent_of_context_window
+  
+  heavy_hitter_eviction:
+    strategy: evict_repetitive_keep_novel
+    example: reference_sections_dont_copy_full
+  
+  provider_quirks:
+    openai: strict_json_schema
+    anthropic: xml_tags_work_best
+    google: requires_protos_schema
+    deepseek: needs_literal_json_in_prompt
+
+oscillation_detection:
+  enabled: true
+  threshold: 3
+  action: rollback_to_best
+  description: after_3_repeated_violations_rollback
+  prevents: infinite_loops_and_thrashing
 
 communication:
   style: openbsd_dmesg_terse_scannable
