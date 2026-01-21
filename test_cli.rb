@@ -18,6 +18,10 @@ class TestConvergenceModule < Minitest::Test
     assert_equal "∞.17.0", Convergence::VERSION
   end
   
+  def test_version_frozen
+    assert Convergence::VERSION.frozen?
+  end
+  
   def test_access_levels_defined
     assert_includes Convergence::ACCESS_LEVELS.keys, :sandbox
     assert_includes Convergence::ACCESS_LEVELS.keys, :user
