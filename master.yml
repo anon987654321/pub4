@@ -543,3 +543,149 @@ core_policy:
     - no_syntax_errors
     - security_clean
     - all_checks_pass
+
+agent:
+  description: llm_with_tool_use_loop_for_autonomous_file_web_shell_operations
+  
+  mode:
+    toggle: /agent
+    default: false
+    prompt_indicator: 🤖
+  
+  loop:
+    pattern: |
+      user_sends_query
+      llm_decides_respond_or_call_tool
+      if_tool_call_execute_feed_result_back_to_llm
+      repeat_until_llm_gives_final_response
+    max_iterations: 20
+    timeout_per_tool: 30
+  
+  tools:
+    file:
+      - read_file
+      - write_file
+      - list_directory
+      - delete_file
+      - move_file
+      - create_directory
+      - search_files
+      - directory_tree
+    
+    shell:
+      commands:
+        - run_command
+      constraints:
+        - sandbox_enforced
+        - timeout_required
+        - confirm_destructive
+    
+    web:
+      commands:
+        - web_navigate
+        - web_screenshot
+        - web_page_source
+        - web_click
+        - web_type
+        - web_extract
+      backend: ferrum
+      features:
+        - stealth_mode
+        - screenshot_for_llm_reasoning
+        - page_source_truncated
+  
+  safety:
+    sandbox: all_file_ops_within_allowed_paths
+    confirmation: destructive_ops_require_user_approval
+    timeout: all_tools_have_timeouts
+    logging: tool_calls_logged_for_audit
+
+multimodal:
+  description: future_voice_input_output_and_image_understanding
+  status: planned
+  
+  voice:
+    input:
+      method: speech_to_text
+      options:
+        - whisper_api
+        - whisper_cpp
+      recording: sox
+      format: wav
+      max_seconds: 30
+    
+    output:
+      method: text_to_speech
+      options:
+        - openai_tts
+        - piper
+      playback: aplay
+    
+    flow: |
+      listening_for_user_speech
+      whisper_transcribes_audio
+      llm_processes_transcription
+      tts_synthesizes_response
+      plays_audio_response
+    
+    activation:
+      flag: --voice
+      toggle: /voice
+      wake_word: optional
+  
+  vision:
+    input:
+      - screenshot_analysis
+      - image_file_analysis
+      - camera_capture
+    
+    models:
+      - gpt_4o
+      - claude_3_5
+      - gemini_pro
+    
+    use_cases:
+      - analyze_screenshot_for_navigation
+      - describe_image_content
+      - extract_text_from_image
+      - compare_visual_differences
+  
+  dependencies:
+    openbsd:
+      sox: pkg_add_sox
+      whisper_cpp: build_from_source
+      piper: build_from_source
+      ferrum: gem_install_ferrum
+    
+    cloud_apis:
+      whisper: openai_api_key
+      tts: openai_api_key
+      vision: via_openrouter
+
+cli_roadmap:
+  implemented:
+    - basic_chat
+    - streaming_responses
+    - model_switching
+    - session_persistence
+    - tiered_permissions
+    - rag_ingestion
+  
+  in_progress:
+    - agent_mode
+    - tool_use_loop
+    - web_tool
+    - complete_file_tool
+  
+  planned:
+    - voice_input
+    - voice_output
+    - image_analysis
+    - camera_capture
+    - wake_word_activation
+  
+  future:
+    - continuous_listening
+    - proactive_suggestions
+    - learning_from_corrections
+    - multi_agent_collaboration
