@@ -364,7 +364,7 @@ class SessionManager
   def load(name)
     path = File.join(SESSION_DIR, "#{name}.yml")
     return nil unless File.exist?(path)
-    YAML.safe_load_file(path, aliases: false)
+    YAML.safe_load_file(path, permitted_classes: [Symbol, Time], aliases: false)
   end
 
   def list
