@@ -543,3 +543,98 @@ core_policy:
     - no_syntax_errors
     - security_clean
     - all_checks_pass
+
+file_discipline:
+  description: "Prevent accumulation of temporary/report files in project folders"
+  
+  principles:
+    - single_purpose_folders: "Each folder has defined allowed files"
+    - no_report_accumulation: "Reports are temporary, not committed"
+    - consolidate_or_delete: "Merge useful content into main files, delete the rest"
+  
+  folder_rules:
+    openbsd:
+      allowed_files:
+        - openbsd.sh      # Main deployment script
+        - README.md       # Documentation
+      forbidden_patterns:
+        - "*_old.sh"      # No legacy versions
+        - "*_backup.*"    # No backups in repo
+        - "*.log"         # No logs
+        - "*REPORT*.md"   # No report files
+        - "*STATUS*.md"   # No status files
+        - "*SUMMARY*.md"  # No summary files
+        - "deploy.sh"     # Commands belong in README
+        - "*.txt"         # No loose text files
+    
+    rails:
+      allowed_files:
+        - "*.sh"          # Generator scripts
+        - README.md       # Documentation
+      forbidden_patterns:
+        - "*.log"
+        - "*.tmp"
+        - "*_old.*"
+  
+  enforcement:
+    on_commit: "Reject commits adding forbidden patterns"
+    on_review: "Flag new files not in allowed list"
+    cleanup_action: "Delete forbidden files, merge content to allowed files"
+  
+  rationale:
+    - "Prevents folder bloat from AI-generated reports"
+    - "Forces consolidation of knowledge into canonical files"
+    - "Keeps repository clean and navigable"
+    - "Single source of truth per topic"
+
+openbsd_deployment:
+  version: "7.7+"
+  
+  architecture:
+    firewall: pf
+    dns: nsd_with_dnssec
+    http: httpd_for_acme
+    proxy: relayd_tls
+    apps: falcon_rails
+  
+  security:
+    rrl:
+      enabled: true
+      ratelimit: 200
+      slip: 2
+    ssh:
+      max_conn: 15
+      rate: "5/3"
+      bruteforce_table: true
+    smtp:
+      mode: local_relay_only
+  
+  data_integrity:
+    backups:
+      location: /var/backups/openbsd_setup
+      retention: 10
+      trigger: before_destructive_ops
+    transaction_log: /var/log/openbsd_transactions.log
+  
+  domains:
+    count: 95
+    dnssec: ECDSAP256SHA256
+    subdomains_per_city: 6
+  
+  stages:
+    stage_1:
+      - packages
+      - nsd_dnssec
+      - acme_certs
+      - tlsa_records
+    stage_2:
+      - pf_production
+      - smtpd
+      - rails_apps
+      - relayd_tls
+  
+  folder_structure:
+    openbsd:
+      - openbsd.sh
+      - README.md
+    # Nothing else allowed

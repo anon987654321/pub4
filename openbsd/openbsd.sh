@@ -85,7 +85,7 @@ backup_directory() {
 
     transaction_log "BACKUP" "$target_dir" "START"
 
-    if tar -czf "$backup_file" -C "${$target_dir:h}" "${$target_dir:t}" 2>/dev/null; then
+    if tar -czf "$backup_file" -C "${target_dir:h}" "${target_dir:t}" 2>/dev/null; then
 
       transaction_log "BACKUP" "$target_dir" "SUCCESS" "$backup_file"
 
@@ -511,7 +511,7 @@ sign_zone() {
   typeset zsk=/var/nsd/zones/master/K$domain.+013+zsk.key ksk=/var/nsd/zones/master/K$domain.+013+ksk.key
 
   [[ -f $zsk && -f $ksk ]] || { log ERROR "ZSK or KSK missing for $domain"; exit 1 }
-  ldns-signzone -n -p -s ${$(head -c 16 /dev/random | sha1):-} "$zonefile" "$zsk" "$ksk"
+  ldns-signzone -n -p -s $(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q) "$zonefile" "$zsk" "$ksk"
 
   if ! nsd-checkzone "$domain" "$signed_zonefile"; then
 
@@ -548,7 +548,7 @@ stage_1() {
   }
 
   # Check pf status
-  if /usr/bin/grep -q "pf=NO" /etc/rc.conf.typeset 2>/dev/null; then
+  if /usr/bin/grep -q "pf=NO" /etc/rc.conf.local 2>/dev/null; then
 
     log WARN "pf disabled in rc.conf.local"
 
@@ -735,7 +735,7 @@ EOF
 
     typeset signed_zonefile=/var/nsd/zones/master/$domain.zone.signed
 
-    typeset salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 | cut -d' ' -f1)
+    typeset salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q)
 
     ldns-signzone -n -p -s "$salt" "$zonefile" "$zsk" "$ksk"
 
@@ -919,7 +919,7 @@ EOF
   # Issue certificates
   for domain_entry in $ALL_DOMAINS; do
 
-    typeset domain=${domain_entry[(ws:*:)1]}
+    typeset domain=${domain_entry%%:*}
 
     typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
 
