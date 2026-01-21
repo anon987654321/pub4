@@ -202,7 +202,7 @@ def check_browser
 
 end
 
-TTY = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
+TTY_AVAILABLE = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
 FERRUM = ensure_gem("ferrum")
 
 ANTHROPIC = ensure_gem("anthropic")
@@ -237,7 +237,7 @@ end
 module UI
   extend self
 
-  def init = (@pastel = TTY ? Pastel.new : nil; @prompt = TTY ? TTY::Prompt.new : nil)
+  def init = (@pastel = TTY_AVAILABLE ? Pastel.new : nil; @prompt = TTY_AVAILABLE ? TTY::Prompt.new : nil)
 
   def puts(text = "") = Kernel.puts(text)
 
@@ -644,9 +644,54 @@ class RAG
 
   end
 
-  def search(query, k: 5) = qvec = embed(query); qvec ? @chunks.map { |c| vec = @embeddings[c[:id]]; vec ? { chunk: c, score: cosine(qvec, vec) } : nil }.compact.sort_by { |s| -s[:score] }.first(k) : []
+  def search(query, k: 5)
+    qvec = embed(query)
+    return [] unless qvec
+    
+    @chunks.map { |c| 
+      vec = @embeddings[c[:id]]
+      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
+    }.compact.sort_by { |s| -s[:score] }.first(k)
+  end
 
-  def augment(query, k: 3) = results = search(query, k); results.empty? ? query : "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\nQuestion: #{query}"
+  def search_with_rrf(query, k: 5, rrf_k: 60)
+    qvec = embed(query)
+    return [] unless qvec
+    
+    semantic_results = @chunks.map { |c| 
+      vec = @embeddings[c[:id]]
+      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
+    }.compact.sort_by { |s| -s[:score] }
+    
+    keyword_results = @chunks.select { |c| 
+      c[:text].downcase.include?(query.downcase)
+    }.map { |c| { chunk: c, score: 1.0 } }
+    
+    rrf_scores = {}
+    semantic_results.each_with_index do |result, rank|
+      chunk_id = result[:chunk][:id]
+      rrf_scores[chunk_id] ||= 0
+      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
+    end
+    
+    keyword_results.each_with_index do |result, rank|
+      chunk_id = result[:chunk][:id]
+      rrf_scores[chunk_id] ||= 0
+      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
+    end
+    
+    @chunks.select { |c| rrf_scores[c[:id]] }
+      .map { |c| { chunk: c, score: rrf_scores[c[:id]] } }
+      .sort_by { |s| -s[:score] }
+      .first(k)
+  end
+
+  def augment(query, k: 3)
+    results = search(query, k: k)
+    return query if results.empty?
+    
+    "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\n\nQuestion: #{query}"
+  end
 
   def stats = { chunks: @chunks.size, provider: @provider }
 
@@ -656,11 +701,42 @@ class RAG
 
   def embed(text) = case @provider; when :openai then embed_openai(text); when :local then embed_ollama(text); else nil; end
 
-  def embed_openai(text) = Net::HTTP.post(URI("https://api.openai.com/v1/embeddings"), JSON.generate(model: "text-embedding-3-small", input: text), { "Authorization" => "Bearer #{ENV["OPENAI_API_KEY"]}", "Content-Type" => "application/json" }).then { |r| r.code == "200" ? JSON.parse(r.body).dig("data", 0, "embedding") : nil } rescue nil
+  def embed_openai(text)
+    uri = URI("https://api.openai.com/v1/embeddings")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    
+    request = Net::HTTP::Post.new(uri)
+    request["Authorization"] = "Bearer #{ENV["OPENAI_API_KEY"]}"
+    request["Content-Type"] = "application/json"
+    request.body = JSON.generate(model: "text-embedding-3-small", input: text)
+    
+    response = http.request(request)
+    response.code == "200" ? JSON.parse(response.body).dig("data", 0, "embedding") : nil
+  rescue => e
+    nil
+  end
 
-  def embed_ollama(text) = Net::HTTP.post(URI("http://localhost:11434/api/embeddings"), JSON.generate(model: "nomic-embed-text", prompt: text), "Content-Type" => "application/json").then { |r| r.code == "200" ? JSON.parse(r.body)["embedding"] : nil } rescue nil
+  def embed_ollama(text)
+    uri = URI("http://localhost:11434/api/embeddings")
+    http = Net::HTTP.new(uri.host, uri.port)
+    
+    request = Net::HTTP::Post.new(uri)
+    request["Content-Type"] = "application/json"
+    request.body = JSON.generate(model: "nomic-embed-text", prompt: text)
+    
+    response = http.request(request)
+    response.code == "200" ? JSON.parse(response.body)["embedding"] : nil
+  rescue => e
+    nil
+  end
 
-  def chunk_text(text, source: nil, size: 500) = text.split(/\n{2,}/).each_with_index.map { |p, i| { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i } if p.strip.size > 0 }.compact
+  def chunk_text(text, source: nil, size: 500)
+    text.split(/\n{2,}/).each_with_index.map { |p, i| 
+      next if p.strip.size == 0
+      { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i }
+    }.compact
+  end
 
   def cosine(a, b) = a.zip(b).sum { |x, y| x * y } / (Math.sqrt(a.sum { |x| x*x }) * Math.sqrt(b.sum { |y| y*y })) rescue 0
 
@@ -669,9 +745,45 @@ class RAG
 end
 
 class CLI
+
+  ACCESS_LEVELS = {
+    sandbox: { 
+      paths: -> { [Dir.pwd, "/tmp"] }, 
+      confirm_writes: true,
+      description: "Restricted to current directory and /tmp"
+    },
+    user: { 
+      paths: -> { [ENV["HOME"], Dir.pwd, "/tmp"] }, 
+      confirm_writes: false,
+      description: "Access to home directory, current directory, and /tmp"
+    },
+    admin: { 
+      paths: -> { :all }, 
+      allow_root: true, 
+      confirm_writes: true,
+      description: "Full system access with confirmation"
+    }
+  }.freeze
+
+  COMMAND_ALIASES = {
+    "/h" => "/help",
+    "/?" => "/help",
+    "/p" => "/provider",
+    "/m" => "/model",
+    "/k" => "/key",
+    "/t" => "/tools",
+    "/i" => "/ingest",
+    "/s" => "/search",
+    "/r" => "/rag",
+    "/c" => "/clear",
+    "/u" => "/undo",
+    "/q" => "exit"
+  }.freeze
+
   HELP = <<~H
 
     /help          show commands
+    /help COMMAND  show detailed help for a command
 
     /mode          show current mode
 
@@ -682,12 +794,16 @@ class CLI
     /key           update API key
 
     /reset         clear saved preferences and restart setup
+    
+    /level [X]     switch access level (sandbox/user/admin)
 
     /tools         list available tools (API mode only)
 
     /yes           approve pending tool calls
 
     /no            reject pending tool calls
+    
+    /undo          undo last API message (API mode only)
 
     /ingest PATH   add files to knowledge base
 
@@ -716,6 +832,8 @@ class CLI
     /clear         clear conversation
 
     exit           quit
+    
+    Aliases: /h=/help, /p=/provider, /m=/model, /k=/key, /t=/tools, /i=/ingest, /s=/search, /r=/rag, /c=/clear, /u=/undo, /q=exit
 
   H
 
@@ -737,6 +855,8 @@ class CLI
     @model = @config.model
 
     @client = nil
+    
+    @access_level = :user
 
     @tools = [ShellTool.new, FileTool.new, LangChainTool.new, OpenBSDTool.new]
 
@@ -747,6 +867,10 @@ class CLI
     @theme = "default"
 
     @profiles = {}
+    
+    @conversation_history = []
+    
+    apply_access_level
 
   end
 
@@ -923,10 +1047,17 @@ class CLI
     parts = input.split(/\s+/, 2)
 
     cmd, arg = parts[0], parts[1]
+    
+    cmd = COMMAND_ALIASES[cmd] || cmd
 
     case cmd
 
-    when "/help" then UI.puts(HELP)
+    when "/help" 
+      if arg
+        show_contextual_help(arg)
+      else
+        UI.puts(HELP)
+      end
 
     when "/mode" then show_mode
 
@@ -939,6 +1070,10 @@ class CLI
     when "/key" then update_api_key
 
     when "/reset" then reset_config
+    
+    when "/level" then switch_access_level(arg)
+    
+    when "/undo" then undo_last_message
 
     when "/tools" then @mode == :api ? @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } } : UI.status("tools only in API mode")
 
@@ -1028,11 +1163,12 @@ class CLI
   def message(text)
 
     text = @rag.augment(text) if @rag_enabled && @rag.stats[:chunks] > 0
+    
+    @conversation_history << text if @mode == :api
 
     response = UI.thinking do
       case @mode
       when :api
-        # API client supports streaming
         if @client.respond_to?(:send)
           accumulated = ""
           @client.send(text) do |chunk|
@@ -1045,11 +1181,12 @@ class CLI
           @client.send(text)
         end
       when :webchat
-        # WebChat client
         if @client.respond_to?(:send_message)
-          @client.send_message(text)
+          @client.send_message(text) do |chunk|
+            print chunk
+          end
         else
-          @client.send(text)
+          @client.send_message(text)
         end
       else
         "Error: No client available"
@@ -1256,6 +1393,100 @@ class CLI
 
     end
 
+  end
+
+  def apply_access_level
+    return unless RUBY_PLATFORM =~ /openbsd/
+    return unless PLEDGE_AVAILABLE
+    
+    level_config = ACCESS_LEVELS[@access_level]
+    paths = level_config[:paths].call
+    
+    begin
+      if paths == :all
+        Pledge.unveil(ENV["HOME"], "rwc")
+        Pledge.unveil("/tmp", "rwc")
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/usr", "rx")
+        Pledge.unveil("/etc", "r")
+      else
+        paths.each do |path|
+          Pledge.unveil(path, "rwc")
+        end
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/etc/ssl", "r")
+      end
+      
+      Pledge.unveil(nil, nil)
+      Pledge.pledge("stdio rpath wpath cpath inet dns proc exec prot_exec", nil)
+    rescue => e
+      warn "Warning: Failed to apply pledge/unveil: #{e.message}"
+    end
+  end
+
+  def switch_access_level(level_name)
+    level = level_name&.to_sym
+    
+    unless ACCESS_LEVELS.key?(level)
+      UI.error("Unknown access level. Available: #{ACCESS_LEVELS.keys.join(", ")}")
+      return
+    end
+    
+    @access_level = level
+    UI.status("Access level set to #{level}: #{ACCESS_LEVELS[level][:description]}")
+    
+    if RUBY_PLATFORM =~ /openbsd/
+      UI.status("Restart required to apply OpenBSD pledge/unveil changes")
+    end
+  end
+
+  def show_contextual_help(topic)
+    case topic
+    when "provider"
+      UI.puts "\n#{UI.c(:bold, "Provider Help:")}"
+      UI.puts "Available providers:"
+      UI.puts "  Webchat: #{Convergence::WebChatClient::PROVIDERS.keys.join(", ")}"
+      UI.puts "  API: #{Convergence::APIClient::PROVIDERS.keys.join(", ")}"
+    when "model"
+      UI.puts "\n#{UI.c(:bold, "Model Help:")}"
+      if @mode == :api && @client
+        models = @client.models
+        UI.puts "Available models for #{@provider}:"
+        models.each { |k, v| UI.puts("  #{k} => #{v}") }
+      else
+        UI.puts "Model selection only available in API mode"
+      end
+    when "level"
+      UI.puts "\n#{UI.c(:bold, "Access Level Help:")}"
+      ACCESS_LEVELS.each do |name, config|
+        UI.puts "  #{name}: #{config[:description]}"
+      end
+    else
+      UI.puts(HELP)
+    end
+  end
+
+  def undo_last_message
+    unless @mode == :api
+      UI.error("Undo only available in API mode")
+      return
+    end
+    
+    unless @client&.respond_to?(:clear_history)
+      UI.error("Client doesn't support undo")
+      return
+    end
+    
+    if @conversation_history.empty?
+      UI.status("No messages to undo")
+      return
+    end
+    
+    @conversation_history.pop
+    @client.clear_history
+    @conversation_history.each { |msg| @client.send(msg) }
+    
+    UI.status("Last message undone")
   end
 
 end
