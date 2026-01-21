@@ -129,7 +129,8 @@ class SessionManagerTest < Minitest::Test
     assert_equal true, loaded["test"]
     
     # Cleanup
-    File.delete(File.join(SessionManager::SESSION_DIR, "test_session.yml")) rescue nil
+    session_file = File.join(SessionManager::SESSION_DIR, "test_session.yml")
+    File.delete(session_file) if File.exist?(session_file)
   end
 
   def test_list_sessions
