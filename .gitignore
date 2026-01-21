@@ -29,3 +29,15 @@ vendor/bundle/
 /tmp/*
 !/log/.keep
 !/tmp/.keep
+
+# Prevent report accumulation (file_discipline)
+*REPORT*.md
+*STATUS*.md
+*SUMMARY*.md
+*COMPLETE*.md
+*GUIDE*.md
+
+# Prevent cruft accumulation
+*.TXT
+*.patch
+*.diff
