@@ -1,0 +1,8 @@
+# Default owner
+* @anon987654321
+
+# Ruby files
+*.rb @anon987654321
+
+# Governance
+master.yml @anon987654321

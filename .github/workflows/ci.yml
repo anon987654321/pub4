@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      
+      - name: Run tests
+        run: |
+          if [ -f test_cli.rb ]; then
+            ruby test_cli.rb
+          fi
+      
+      - name: Syntax check Ruby files
+        run: |
+          for f in *.rb; do
+            ruby -c "$f" || exit 1
+          done
+      
+      - name: Validate YAML files
+        run: |
+          for f in *.yml *.yaml; do
+            ruby -ryaml -e "YAML.safe_load_file('$f')" || exit 1
+          done
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for banned patterns
+        run: |
+          # Check for truncation markers
+          if grep -r '\[\.\.\.\]' --include="*.rb" --include="*.yml"; then
+            echo "ERROR: Found [...] truncation markers"
+            exit 1
+          fi
+          
+          # Check for banned tools in scripts
+          if grep -rE '\b(python|bash|sudo)\b' --include="*.sh"; then
+            echo "WARNING: Found banned tools (python/bash/sudo)"
+          fi
+
+  secrets:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for exposed secrets
+        run: |
+          # Check for API keys
+          if grep -rE '(api[_-]?key|secret|password)\s*[:=]\s*["\047][^"\047]{10,}' --include="*.rb" --include="*.yml" --include="*.sh"; then
+            echo "ERROR: Possible exposed secrets"
+            exit 1
+          fi
