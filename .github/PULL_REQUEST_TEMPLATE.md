@@ -10,7 +10,7 @@
 ## Testing
 
 <!-- How was this tested? -->
-- [ ] Ran `ruby test_cli.rb`
+- [ ] Ran `ruby cli_test.rb`
 - [ ] Syntax validated (`ruby -c *.rb`)
 - [ ] YAML validated
 
