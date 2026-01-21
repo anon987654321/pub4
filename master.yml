@@ -1,6 +1,6 @@
 # master.yml
 # quality governance system for llm assisted development
-# version 15.0.0
+# version 15.0.1
 #
 # reflow order: critical first, reference last
 # research: liu et al 2024 - llms recall start and end best, middle 27%
@@ -429,7 +429,8 @@ detectors:
         - 'const\s+([A-Z_][A-Z0-9_]*)\s*='
         - 'let\s+([a-z_][a-zA-Z0-9_]*)\s*='
         - 'var\s+([a-z_][a-zA-Z0-9_]*)\s*='
-        - 'function\s+([a-z_][a-zA-Z0-9_]*)\s*('\n        - 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
+        - 'function\s+([a-z_][a-zA-Z0-9_]*)\s*\('
+        - 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
         
     nesting_gt_2:
       principle: kiss
@@ -735,8 +736,8 @@ validation:
     process: internalize_check_structure_verify_principles_test_on_samples_converge
 
 quality_metrics:
-  version: 15.0.0
-  lines: 650
+  version: 15.0.1
+  lines: 748
   root_sections: 18
   nesting_maximum: 3
   duplication_ratio: 0.00
