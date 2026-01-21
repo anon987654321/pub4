@@ -416,7 +416,7 @@ autonomy:
     batch_operations: true
     proceed_on_pending: true
     close_stale_prs: true
-    merge_ready_prs: false
+    merge_ready_prs: false  # requires_explicit_approval
     create_followup_prs: true
     auto_fix_lint: true
     report_style: terse
@@ -445,5 +445,6 @@ core_policy:
     
     batch_format: |
       completed_n_actions:
-      - action1: result
-      - action2: result
+      - format_files: 12_files_formatted
+      - fix_typos: 3_typos_corrected
+      - remove_dead_code: 2_functions_removed
