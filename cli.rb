@@ -644,9 +644,54 @@ class RAG
 
   end
 
-  def search(query, k: 5) = qvec = embed(query); qvec ? @chunks.map { |c| vec = @embeddings[c[:id]]; vec ? { chunk: c, score: cosine(qvec, vec) } : nil }.compact.sort_by { |s| -s[:score] }.first(k) : []
+  def search(query, k: 5)
+    qvec = embed(query)
+    return [] unless qvec
+    
+    @chunks.map { |c| 
+      vec = @embeddings[c[:id]]
+      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
+    }.compact.sort_by { |s| -s[:score] }.first(k)
+  end
 
-  def augment(query, k: 3) = results = search(query, k); results.empty? ? query : "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\nQuestion: #{query}"
+  def search_with_rrf(query, k: 5, rrf_k: 60)
+    qvec = embed(query)
+    return [] unless qvec
+    
+    semantic_results = @chunks.map { |c| 
+      vec = @embeddings[c[:id]]
+      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
+    }.compact.sort_by { |s| -s[:score] }
+    
+    keyword_results = @chunks.select { |c| 
+      c[:text].downcase.include?(query.downcase)
+    }.map { |c| { chunk: c, score: 1.0 } }
+    
+    rrf_scores = {}
+    semantic_results.each_with_index do |result, rank|
+      chunk_id = result[:chunk][:id]
+      rrf_scores[chunk_id] ||= 0
+      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
+    end
+    
+    keyword_results.each_with_index do |result, rank|
+      chunk_id = result[:chunk][:id]
+      rrf_scores[chunk_id] ||= 0
+      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
+    end
+    
+    @chunks.select { |c| rrf_scores[c[:id]] }
+      .map { |c| { chunk: c, score: rrf_scores[c[:id]] } }
+      .sort_by { |s| -s[:score] }
+      .first(k)
+  end
+
+  def augment(query, k: 3)
+    results = search(query, k: k)
+    return query if results.empty?
+    
+    "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\n\nQuestion: #{query}"
+  end
 
   def stats = { chunks: @chunks.size, provider: @provider }
 
@@ -656,11 +701,42 @@ class RAG
 
   def embed(text) = case @provider; when :openai then embed_openai(text); when :local then embed_ollama(text); else nil; end
 
-  def embed_openai(text) = Net::HTTP.post(URI("https://api.openai.com/v1/embeddings"), JSON.generate(model: "text-embedding-3-small", input: text), { "Authorization" => "Bearer #{ENV["OPENAI_API_KEY"]}", "Content-Type" => "application/json" }).then { |r| r.code == "200" ? JSON.parse(r.body).dig("data", 0, "embedding") : nil } rescue nil
+  def embed_openai(text)
+    uri = URI("https://api.openai.com/v1/embeddings")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    
+    request = Net::HTTP::Post.new(uri)
+    request["Authorization"] = "Bearer #{ENV["OPENAI_API_KEY"]}"
+    request["Content-Type"] = "application/json"
+    request.body = JSON.generate(model: "text-embedding-3-small", input: text)
+    
+    response = http.request(request)
+    response.code == "200" ? JSON.parse(response.body).dig("data", 0, "embedding") : nil
+  rescue => e
+    nil
+  end
 
-  def embed_ollama(text) = Net::HTTP.post(URI("http://localhost:11434/api/embeddings"), JSON.generate(model: "nomic-embed-text", prompt: text), "Content-Type" => "application/json").then { |r| r.code == "200" ? JSON.parse(r.body)["embedding"] : nil } rescue nil
+  def embed_ollama(text)
+    uri = URI("http://localhost:11434/api/embeddings")
+    http = Net::HTTP.new(uri.host, uri.port)
+    
+    request = Net::HTTP::Post.new(uri)
+    request["Content-Type"] = "application/json"
+    request.body = JSON.generate(model: "nomic-embed-text", prompt: text)
+    
+    response = http.request(request)
+    response.code == "200" ? JSON.parse(response.body)["embedding"] : nil
+  rescue => e
+    nil
+  end
 
-  def chunk_text(text, source: nil, size: 500) = text.split(/\n{2,}/).each_with_index.map { |p, i| { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i } if p.strip.size > 0 }.compact
+  def chunk_text(text, source: nil, size: 500)
+    text.split(/\n{2,}/).each_with_index.map { |p, i| 
+      next if p.strip.size == 0
+      { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i }
+    }.compact
+  end
 
   def cosine(a, b) = a.zip(b).sum { |x, y| x * y } / (Math.sqrt(a.sum { |x| x*x }) * Math.sqrt(b.sum { |y| y*y })) rescue 0
 
@@ -1032,7 +1108,6 @@ class CLI
     response = UI.thinking do
       case @mode
       when :api
-        # API client supports streaming
         if @client.respond_to?(:send)
           accumulated = ""
           @client.send(text) do |chunk|
@@ -1045,11 +1120,12 @@ class CLI
           @client.send(text)
         end
       when :webchat
-        # WebChat client
         if @client.respond_to?(:send_message)
-          @client.send_message(text)
+          @client.send_message(text) do |chunk|
+            print chunk
+          end
         else
-          @client.send(text)
+          @client.send_message(text)
         end
       else
         "Error: No client available"

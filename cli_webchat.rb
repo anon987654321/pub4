@@ -215,6 +215,7 @@ module Convergence
 
     def find_browser_path
       paths = %w[
+        /usr/local/bin/chromium
         /usr/bin/chromium
         /usr/bin/google-chrome
         /usr/local/bin/chrome
