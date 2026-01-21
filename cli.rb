@@ -17,15 +17,18 @@ require "readline"
 require "pathname"
 
 # OpenBSD pledge/unveil support (deferred to runtime)
-PLEDGE_AVAILABLE = if RUBY_PLATFORM.include?("openbsd")
+PLEDGE_AVAILABLE = false
+UNVEIL_AVAILABLE = false
+
+if RUBY_PLATFORM.include?("openbsd")
   begin
     require "pledge"
-    true
+    # Check what's actually available
+    PLEDGE_AVAILABLE = Pledge.respond_to?(:pledge)
+    UNVEIL_AVAILABLE = Pledge.respond_to?(:unveil)
   rescue LoadError
-    false
+    # Gem not installed, continue without pledge
   end
-else
-  false
 end
 
 module Convergence
@@ -65,26 +68,43 @@ def apply_pledge(level = :user)
   return unless PLEDGE_AVAILABLE
   
   config = Convergence::ACCESS_LEVELS[level]
-  promises = "stdio rpath wpath cpath inet dns proc exec fattr"
-  promises += " prot_exec" if config[:allow_root]
   
-  Pledge.pledge(promises)
-  
-  paths = config[:paths].call
-  if paths == :all
-    Pledge.unveil(ENV["HOME"], "rwc")
-    Pledge.unveil("/tmp", "rwc")
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc", "r")
-    Pledge.unveil("/var", "rwc")
-  else
-    paths.each { |p| Pledge.unveil(p, "rwc") }
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc/ssl", "r")
+  # Apply unveil first (if available) - must be done before pledge
+  if UNVEIL_AVAILABLE
+    begin
+      paths = config[:paths].call
+      if paths == :all
+        Pledge.unveil(ENV["HOME"], "rwc")
+        Pledge.unveil("/tmp", "rwc")
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/etc", "r")
+        Pledge.unveil("/var", "rwc")
+      else
+        paths.each { |p| Pledge.unveil(p, "rwc") if File.exist?(p) }
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/etc/ssl", "r")
+      end
+      # Lock unveil - no more unveil calls after this
+      Pledge.unveil(nil, nil)
+    rescue => e
+      warn "unveil: #{e.message}" if ENV["DEBUG"]
+    end
   end
-  Pledge.unveil(nil, nil)
-rescue => e
-  warn "pledge: #{e.message}"
+  
+  # Apply pledge promises - include tty for terminal input
+  begin
+    promises = "stdio rpath wpath cpath inet dns tty"
+    promises += " proc exec" if config[:allow_root]
+    
+    # Try two-argument form first (newer API), fall back to one-argument
+    if Pledge.method(:pledge).arity == 2 || Pledge.method(:pledge).arity == -1
+      Pledge.pledge(promises, nil)
+    else
+      Pledge.pledge(promises)
+    end
+  rescue => e
+    warn "pledge: #{e.message}" if ENV["DEBUG"]
+  end
 end
 
 # MasterConfig with preferred_tools
@@ -811,7 +831,13 @@ class CLI
   def banner
     puts "CONVERGENCE CLI #{Convergence::VERSION}"
     puts "Master: #{@master.version} | Level: #{@config.access_level}"
-    puts "Security: #{PLEDGE_AVAILABLE ? 'pledge+unveil' : 'standard'}"
+    
+    security = case
+    when PLEDGE_AVAILABLE && UNVEIL_AVAILABLE then "pledge+unveil"
+    when PLEDGE_AVAILABLE then "pledge"
+    else "standard"
+    end
+    puts "Security: #{security}"
     puts "Type /help for commands\n\n"
   end
   
@@ -972,7 +998,16 @@ class CLI
   
   def prompt_secret(prompt)
     print prompt
-    $stdin.tty? ? $stdin.noecho(&:gets).chomp.tap { puts } : $stdin.gets.chomp
+    if $stdin.tty?
+      begin
+        $stdin.noecho(&:gets).chomp.tap { puts }
+      rescue Errno::ENOTTY, IOError
+        # Fallback if noecho fails (e.g., under pledge)
+        $stdin.gets.chomp
+      end
+    else
+      $stdin.gets.chomp
+    end
   end
 end
 
