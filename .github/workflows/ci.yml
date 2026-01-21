@@ -27,13 +27,17 @@ jobs:
       
       - name: Syntax check Ruby files
         run: |
+          shopt -s nullglob
           for f in *.rb; do
+            [ -f "$f" ] || continue
             ruby -c "$f" || exit 1
           done
       
       - name: Validate YAML files
         run: |
+          shopt -s nullglob
           for f in *.yml *.yaml; do
+            [ -f "$f" ] || continue
             ruby -ryaml -e "YAML.safe_load_file('$f')" || exit 1
           done
 
