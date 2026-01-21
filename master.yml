@@ -383,3 +383,49 @@ banned_decorators:
   
   on_violation: delete_replace_with_clean_header
   replacement_format: single_hash_space_section_name
+
+cli_ux:
+  welcome_screen:
+    style: openbsd_login
+    description: authentic_unix_login_prompt_feel
+    template: |
+      OpenBSD/amd64 ({hostname}) ({tty})
+
+      login: convergence
+      Last login: {timestamp} on {tty}
+    
+    components:
+      hostname: dynamic_from_system
+      tty: dynamic_from_tty_command
+      timestamp: last_run_or_current_time
+    
+    rationale:
+      - authentic_unix_feel
+      - familiar_to_openbsd_users
+      - no_decorative_elements
+      - information_dense
+
+  prompt:
+    format: "convergence@{model}$ "
+    examples:
+      - "convergence@deepseek-r1$ "
+      - "convergence@claude-3.5$ "
+      - "convergence@gpt-4o$ "
+    updates_on: model_change
+    
+    admin_format: "convergence@{model}# "
+    rationale: model_visibility_in_prompt_hash_for_admin_like_root
+
+  principles:
+    - silent_success: no_output_on_successful_operations
+    - errors_after_banner: never_print_errors_before_welcome_screen
+    - graceful_degradation: fallback_never_crash
+    - no_core_dumps: catch_all_exceptions_recover_gracefully
+    - terse_output: minimal_words_maximum_information
+
+  rejected_styles:
+    - decorative_boxes: violates_brutalist_principles
+    - ascii_art: unnecessary_decoration
+    - emoji: not_unix_like
+    - color_gradients: terminal_compatibility_issues
+    - loading_spinners: prefer_instant_or_silent
