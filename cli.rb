@@ -14,6 +14,7 @@ require "timeout"
 require "digest"
 require "io/console"
 require "readline"
+require "pathname"
 
 # OpenBSD pledge/unveil support (deferred to runtime)
 PLEDGE_AVAILABLE = if RUBY_PLATFORM.include?("openbsd")
@@ -530,9 +531,9 @@ class FileTool
     # Pattern must be within sandbox
     base = File.expand_path(@base_path)
     matches = Dir.glob(File.join(base, pattern))
-    # Filter to ensure all results are within base path
-    matches.select { |m| File.expand_path(m).start_with?(base) }
-           .map { |m| m.sub("#{base}/", "") }
+    # Filter to ensure all results are within base path and return relative paths
+    matches.select { |m| File.expand_path(m).start_with?(base + "/") || File.expand_path(m) == base }
+           .map { |m| Pathname.new(m).relative_path_from(Pathname.new(base)).to_s }
   rescue => e
     { error: e.message }
   end
@@ -614,7 +615,8 @@ class WebTool
   def screenshot
     return { error: "no page" } unless @page
     require "tmpdir"
-    path = File.join(Dir.tmpdir, "screenshot_#{Time.now.to_i}.png")
+    require "securerandom"
+    path = File.join(Dir.tmpdir, "screenshot_#{SecureRandom.hex(8)}.png")
     @page.screenshot(path: path)
     { path: path }
   rescue => e
@@ -623,7 +625,8 @@ class WebTool
   
   def page_source
     return { error: "no page" } unless @page
-    { html: @page.body[0..MAX_HTML_LENGTH] }  # Truncate for LLM context
+    # Truncate for LLM context - may cut in middle of tags but LLM can handle it
+    { html: @page.body[0..MAX_HTML_LENGTH] }
   rescue => e
     { error: e.message }
   end
@@ -652,6 +655,7 @@ class WebTool
   def extract(selector:)
     return { error: "no page" } unless @page
     elements = @page.css(selector)
+    # Truncate inner HTML for context - may cut mid-tag but acceptable for extraction
     elements.map { |e| { text: e.text, html: e.inner_html[0..MAX_INNER_HTML_LENGTH] } }
   rescue => e
     { error: e.message }
