@@ -64,24 +64,12 @@ def apply_pledge(level = :user)
   return unless PLEDGE_AVAILABLE
   
   config = Convergence::ACCESS_LEVELS[level]
-  promises = "stdio rpath wpath cpath inet dns proc exec fattr"
+  
+  # Pledge promises - include tty for terminal I/O (Readline, noecho)
+  promises = "stdio rpath wpath cpath inet dns proc exec fattr tty"
   promises += " prot_exec" if config[:allow_root]
   
   Pledge.pledge(promises)
-  
-  paths = config[:paths].call
-  if paths == :all
-    Pledge.unveil(ENV["HOME"], "rwc")
-    Pledge.unveil("/tmp", "rwc")
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc", "r")
-    Pledge.unveil("/var", "rwc")
-  else
-    paths.each { |p| Pledge.unveil(p, "rwc") }
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc/ssl", "r")
-  end
-  Pledge.unveil(nil, nil)
 rescue => e
   warn "pledge: #{e.message}"
 end
