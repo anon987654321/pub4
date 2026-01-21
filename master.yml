@@ -1,2 +1,4 @@
-banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
+meta:
+  version: "∞.16.0"
+constraints:
   preferred_tools: [ruby, zsh, doas]
