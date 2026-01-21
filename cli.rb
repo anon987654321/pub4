@@ -67,7 +67,7 @@ def apply_pledge(level = :user)
   promises = "stdio rpath wpath cpath inet dns proc exec fattr"
   promises += " prot_exec" if config[:allow_root]
   
-  Pledge.pledge(promises)
+  Pledge.pledge(promises, nil)
   
   paths = config[:paths].call
   if paths == :all
@@ -216,7 +216,7 @@ class APIClient
     @messages = []
   end
   
-  def send(message, &block)
+  def chat(message, &block)
     @messages << { role: "user", content: message }
     uri = URI("#{@config[:base_url]}/chat/completions")
     headers = {
@@ -300,7 +300,7 @@ end
 
 # Directory processor
 class DirectoryProcessor
-  EXTENSIONS = %w[.rb .sh .yml .yaml .js .ts .py .md .txt].freeze
+  EXTENSIONS = %w[.rb .sh .yml .yaml .js .ts .py .md .txt .json].freeze
   
   def initialize(path, master_config)
     @path = File.expand_path(path)
@@ -627,7 +627,7 @@ class CLI
   
   def message(input)
     print "\n"
-    @client.send(input) { |chunk| print chunk; $stdout.flush }
+    @client.chat(input) { |chunk| print chunk; $stdout.flush }
     print "\n\n"
   rescue => e
     puts "Error: #{e.message}"
