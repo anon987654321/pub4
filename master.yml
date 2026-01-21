@@ -80,12 +80,12 @@ cognitive_enforcement:
     description: "Explicit regex patterns for forbidden decorative elements"
     
     patterns:
-      horizontal_rules: '/^[─━═▬\-_=]{3,}/'
-      section_boxes: '/# [─━═▬\-_=]{3,}.*[─━═▬\-_=]{3,}/'
-      bracket_decorators: '/\[\.\.\.\]|\[…\]|\[\s*\]$/'
-      ascii_art: '/[╔╗╚╝║│┌┐└┘├┤┬┴┼]/'
-      repeated_symbols: '/(.) \1{4,}/'
-      emoji_decoration: '/[\x{1F300}-\x{1F9FF}]/'
+      horizontal_rules: '^[─━═▬\-_=]{3,}'
+      section_boxes: '# [─━═▬\-_=]{3,}.*[─━═▬\-_=]{3,}'
+      bracket_decorators: '\[\.\.\.\]|\[…\]|\[\s*\]$'
+      ascii_art: '[╔╗╚╝║│┌┐└┘├┤┬┴┼]'
+      repeated_symbols: '(.) \\1{4,}'
+      emoji_decoration: '[\x{1F300}-\x{1F9FF}]'
     
     enforcement:
       level: "ZERO_TOLERANCE"
@@ -146,6 +146,10 @@ cognitive_enforcement:
 
   adversarial_audit:
     description: "Expanded persona review with veto powers"
+    
+    veto_precedence:
+      rule: "Security takes precedence over literalism in veto conflicts"
+      rationale: "Security vulnerabilities are more critical than style violations"
     
     personas:
       literalist:
