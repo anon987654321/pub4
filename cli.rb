@@ -202,7 +202,7 @@ def check_browser
 
 end
 
-TTY = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
+TTY_AVAILABLE = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
 FERRUM = ensure_gem("ferrum")
 
 ANTHROPIC = ensure_gem("anthropic")
@@ -237,7 +237,7 @@ end
 module UI
   extend self
 
-  def init = (@pastel = TTY ? Pastel.new : nil; @prompt = TTY ? TTY::Prompt.new : nil)
+  def init = (@pastel = TTY_AVAILABLE ? Pastel.new : nil; @prompt = TTY_AVAILABLE ? TTY::Prompt.new : nil)
 
   def puts(text = "") = Kernel.puts(text)
 
