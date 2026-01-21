@@ -1,0 +1,18 @@
+# stack_preferences.yml
+# environment-specific tool preferences
+# not universal governance - specific to this codebase
+
+operating_system: openbsd
+
+preferred_tools:
+  shell: zsh
+  scripting: ruby
+  privilege_escalation: doas
+  service_management: rcctl
+
+tool_rationale:
+  zsh_over_bash: user_preference_and_openbsd_default
+  ruby_over_python: rails_codebase_consistency
+  doas_over_sudo: openbsd_native
+
+note: these_are_preferences_not_universal_rules

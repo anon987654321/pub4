@@ -15,6 +15,25 @@
 # example_good: track_reasoning_patterns, migrate_with_approval
 # example_bad: trackReasoningPatterns, migrate-with-approval, TRACK_PATTERNS
 
+# what_this_file_is
+honesty:
+  description: prompt_enhancement_for_llm_behavior
+  not: runtime_governance_system
+  
+  mechanism:
+    how_it_works: llm_reads_and_tries_to_comply
+    persistence: within_session_only
+    enforcement: voluntary_compliance
+  
+  value:
+    real: shapes_llm_output_toward_consistency
+    limitation: no_external_enforcement_mechanism
+  
+  aspirational_sections:
+    require_runtime: [temporal_coherence, meta_cognition, self_improvement, contradiction_detection, emergence_detection]
+    behavior: simulated_within_session
+    persistence: none_without_external_system
+
 meta:
   name: quality_governance_system
   version: 14.0.0
@@ -35,17 +54,44 @@ meta:
     philosophy: plain_english_over_jargon
     rationale: llms_parse_better_humans_read_easier
 
-banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
-preferred_tools: [ruby, zsh, doas]
+tool_preferences:
+  location: see_stack_preferences_yml
+  scope: this_codebase_only
+  not_universal: true
 
 style_constraints:
-  case: lowercase_only
-  separator: underscores
-  language: plain_english
-  code_examples: banned_except_zsh
-  zsh_patterns: literal_allowed
-  banned: [camelCase, PascalCase, SCREAMING_CASE, kebab-case]
+  scope: internal_identifiers_only
+  
+  default_rules:
+    case: lowercase_only
+    separator: underscores
+    language: plain_english
+  
+  exceptions:
+    environment_variables:
+      allowed: SCREAMING_CASE
+      rationale: os_and_container_convention
+      examples: [DATABASE_URL, RAILS_ENV, API_KEY]
+    
+    external_api_payloads:
+      allowed: match_api_convention
+      rationale: cannot_control_third_party_schemas
+      examples: [camelCase_json, PascalCase_dotnet]
+    
+    dockerfile_conventions:
+      allowed: docker_standard
+      rationale: follow_ecosystem_norms
+    
+    zsh_patterns:
+      allowed: literal_syntax
+      rationale: correctness_requires_exact_syntax
+    
+    ruby_constants:
+      allowed: SCREAMING_CASE
+      rationale: language_convention
 
+# aspirational: requires_runtime
+# these behaviors are simulated within session but not persisted
 meta_cognition:
   enabled: true
   
@@ -161,6 +207,8 @@ epistemic_humility:
     - distinguish_belief_from_truth
     - credit_sources
 
+# aspirational: requires_runtime
+# these behaviors are simulated within session but not persisted
 contradiction_detection:
   scope: entire_belief_system
   
@@ -178,6 +226,8 @@ contradiction_detection:
     priority: newer_evidence_updates_older
     process: [identify, trace_provenance, evaluate_strength, resolve_or_flag]
 
+# aspirational: requires_runtime
+# these behaviors are simulated within session but not persisted
 self_improvement:
   philosophy: bounded_modification_with_safety
   
@@ -202,6 +252,8 @@ self_improvement:
   
   required: human_approval_for_any_modification
 
+# aspirational: requires_runtime
+# these behaviors are simulated within session but not persisted
 temporal_coherence:
   purpose: maintain_plans_across_sessions
   
@@ -219,6 +271,8 @@ temporal_coherence:
     default: persist_until_contradicted
     decay: confidence_decreases_without_reinforcement
 
+# aspirational: requires_runtime
+# these behaviors are simulated within session but not persisted
 emergence_detection:
   purpose: notice_simple_rules_creating_complex_behavior
   
@@ -265,17 +319,6 @@ contextual_migration:
       indicators: [pure_html_css, no_dynamic_content]
       target: public_or_assets
     
-    view_component:
-      indicators: [html_with_data_holes, repeatable_structure]
-      target: app_views_components
-    
-    interactive_widget:
-      indicators: [html_css_js_coupled, event_handlers, state]
-      targets:
-        markup: views
-        styles: propshaft
-        behavior: stimulus
-    
     codepen_app:
       indicators: [single_file_html_css_js, self_contained]
       action: full_rails_integration
@@ -286,17 +329,6 @@ contextual_migration:
       - repeated_elements_become_partials
       - conditionals_become_erb
       - data_attrs_become_locals
-    
-    css_to_propshaft:
-      - extract_to_components_folder
-      - namespace_selectors
-      - add_to_manifest
-    
-    js_to_stimulus:
-      - queries_become_targets
-      - listeners_become_actions
-      - globals_become_values
-      - init_becomes_connect
   
   reasoning:
     questions:
@@ -314,39 +346,36 @@ contextual_migration:
       flag_for_review: [purpose_unclear, multiple_targets]
       leave_in_place: [cost_exceeds_benefit, temporary_code]
   
-  architecture_detection:
-    rails: [gemfile, config_routes, app_folder]
-    phoenix: [mix_exs, lib_web]
-    django: [manage_py, settings_py]
-    nextjs: [next_config, pages_folder]
+  framework_overlays:
+    rails: see_rails_yml
+    phoenix: see_phoenix_yml
+    django: see_django_yml
+    nextjs: see_nextjs_yml
   
-  target_mapping:
-    views:
-      rails: app_views
-      phoenix: lib_web_templates
-      django: templates
-      nextjs: pages_or_components
-    
-    styles:
-      rails_propshaft: app_assets_stylesheets
-      phoenix: assets_css
-      nextjs: styles
-    
-    scripts:
-      rails_stimulus: app_javascript_controllers
-      phoenix: assets_js
-      nextjs: components_or_lib
+  overlay_loading:
+    mechanism: llm_infers_from_files
+    explicit_detection: removed_redundant
 
 cognitive_enforcement:
   destructive_rebuild:
     mandatory: true
     philosophy: see_bones_before_adding_flesh
     
+    safety_first:
+      backup_required: true
+      backup_location: ".backups/pre_rebuild/"
+    
+    preserve_before_strip:
+      comments_containing: [hack, workaround, note, warning, bug, fix, todo_with_context]
+      comments_over_lines: 3
+      comments_with_attribution: true
+      comments_with_dates: true
+      comments_with_urls: true
+      rationale: legacy_context_is_irreplaceable
+    
     phase_1_strip:
-      - delete_all_comments
-      - delete_all_blank_lines
-      - delete_all_decorators
-      - collapse_to_pure_code
+      delete: [decorative_comments, blank_line_runs, ascii_art]
+      preserve: [contextual_comments, attribution, warnings]
     
     phase_2_analyze:
       - identify_logical_clusters

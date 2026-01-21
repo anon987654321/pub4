@@ -1,0 +1,38 @@
+# rails.yml
+# framework-specific configuration for rails projects
+# loaded as overlay when rails detected
+
+framework: rails
+
+target_mapping:
+  views: app_views
+  styles: app_assets_stylesheets
+  scripts: app_javascript_controllers
+
+contextual_migration:
+  view_component:
+    indicators: [html_with_data_holes, repeatable_structure]
+    target: app_views_components
+  
+  interactive_widget:
+    indicators: [html_css_js_coupled, event_handlers, state]
+    targets:
+      markup: views
+      styles: propshaft
+      behavior: stimulus
+  
+  css_to_propshaft:
+    - extract_to_components_folder
+    - namespace_selectors
+    - add_to_manifest
+  
+  js_to_stimulus:
+    - queries_become_targets
+    - listeners_become_actions
+    - globals_become_values
+    - init_becomes_connect
+
+stack_references:
+  frontend: hotwire
+  job_queue: solid_queue
+  deployment: kamal
