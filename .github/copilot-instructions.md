@@ -18,7 +18,7 @@ Before making any changes or suggestions, please:
    - Uncertainty calibration and epistemic humility
    - Goal decomposition for complex tasks
 4. **Respect banned decorators** - No horizontal rules, section boxes, bracket decorators, or box-drawing characters
-5. **Use preferred tools**: Ruby and zsh (avoid Python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo)
+5. **Use preferred tools**: Ruby, zsh, and doas (avoid Python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo)
 6. **Follow contextual migration rules** when organizing code across files
 
 For the complete ruleset, refer to `master.yml` in the repository root.
