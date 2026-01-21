@@ -383,3 +383,163 @@ banned_decorators:
   
   on_violation: delete_replace_with_clean_header
   replacement_format: single_hash_space_section_name
+
+guardrails:
+  philosophy: prevent_harm_enable_speed
+  
+  # Hard stops - never proceed
+  hard_stops:
+    - push_to_main_without_pr
+    - delete_without_backup
+    - modify_credentials_silently
+    - exceed_rate_limits
+    - ignore_test_failures
+    - edit_nonexistent_file
+    - call_nonexistent_function
+  
+  # Soft warnings - proceed but flag
+  soft_warnings:
+    - file_exceeds_500_lines
+    - pr_open_more_than_7_days
+    - more_than_5_open_prs
+    - no_tests_for_new_code
+    - function_exceeds_20_lines
+    - nesting_exceeds_3_levels
+  
+  # Automatic recovery actions
+  auto_recovery:
+    on_syntax_error: rollback_last_change
+    on_test_failure: rollback_and_report
+    on_context_loss: reload_governance_files
+    on_file_not_found: verify_path_before_retry
+    
+  # Verification before actions
+  verification:
+    before_file_edit: verify_file_exists
+    before_file_create: verify_parent_dir_exists
+    before_function_call: verify_function_exists
+    before_claim: cite_source_or_measure
+    before_done: run_tests_show_evidence
+    before_merge: all_checks_pass
+    
+  # PR hygiene to prevent sprawl
+  pr_hygiene:
+    max_open: 5
+    stale_days: 7
+    require: [description, tests, single_purpose]
+    on_sprawl: consolidate_or_close
+    naming: "type/short-description"
+    
+  # Rate limits to prevent runaway
+  rate_limits:
+    prs_per_hour: 3
+    files_per_pr: 20
+    api_calls_per_minute: 30
+    retries_per_operation: 3
+    on_exceed: pause_and_report
+    
+  # File size limits
+  file_limits:
+    max_lines: 500
+    max_functions_per_file: 20
+    max_classes_per_file: 3
+    on_exceed: split_or_justify
+    
+  # Rollback configuration
+  rollback:
+    triggers:
+      - tests_fail_after_change
+      - syntax_error_introduced
+      - security_violation_added
+      - user_says_undo
+    method: git_restore
+    backup_before_modify: true
+    backup_location: ".backups/"
+    max_backups: 10
+    
+  # Hallucination prevention
+  hallucination_prevention:
+    verify_file_exists_before_edit: true
+    verify_function_exists_before_call: true
+    never_invent_apis: true
+    cite_sources_for_claims: true
+    on_uncertainty: ask_or_search
+    check_disk_state_not_memory: true
+    
+  # Session recovery
+  session_recovery:
+    on_context_loss: reload_master_yml_first
+    on_new_session: check_for_pending_tasks
+    state_file: ".convergence/session_state.yml"
+    preserve: [current_task, files_modified, phase]
+    
+  # Destructive operation safeguards
+  destructive_safeguards:
+    require_confirmation:
+      - "rm -rf"
+      - "DROP TABLE"
+      - "git reset --hard"
+      - "force push"
+      - "truncate"
+      - "doas"
+    backup_before:
+      - file_overwrite
+      - database_migration
+      - config_change
+    
+  # Dependency management
+  dependencies:
+    prefer: stdlib_only
+    external_requires: explicit_approval
+    verify_before_require:
+      - gem_exists
+      - security_audit_clean
+      - license_compatible
+    banned_gems: []
+    preferred_gems: [pledge]
+
+thresholds:
+  # Link to guardrails
+  file_lines_max:
+    value: 500
+    reference: "guardrails.file_limits.max_lines"
+  
+  functions_per_file_max:
+    value: 20
+    reference: "guardrails.file_limits.max_functions_per_file"
+  
+  classes_per_file_max:
+    value: 3
+    reference: "guardrails.file_limits.max_classes_per_file"
+  
+  nesting_depth_max:
+    value: 3
+    reference: "guardrails.soft_warnings"
+  
+  function_lines_max:
+    value: 20
+    reference: "guardrails.soft_warnings"
+  
+  pr_open_max:
+    value: 5
+    reference: "guardrails.pr_hygiene.max_open"
+  
+  pr_stale_days:
+    value: 7
+    reference: "guardrails.pr_hygiene.stale_days"
+
+core_policy:
+  verification_required:
+    file_operations: "guardrails.verification"
+    destructive_ops: "guardrails.destructive_safeguards"
+  
+  safety_first:
+    - verify_before_modify
+    - backup_before_destructive
+    - rollback_on_failure
+  
+  quality_gates:
+    - tests_pass
+    - no_syntax_errors
+    - security_clean
+    - all_checks_pass
