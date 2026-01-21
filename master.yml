@@ -383,3 +383,67 @@ banned_decorators:
   
   on_violation: delete_replace_with_clean_header
   replacement_format: single_hash_space_section_name
+
+autonomy:
+  user_preference:
+    default: high
+    levels:
+      low: ask_before_every_action
+      medium: ask_for_destructive_security_actions_only
+      high: proceed_without_asking_report_results
+      maximum: batch_operations_minimal_reporting
+    
+    session_command: /autonomy [low|medium|high|maximum]
+    persistence: session
+  
+  always_ask:
+    - git_push_to_main_master
+    - delete_more_than_10_files
+    - modify_credentials_or_secrets
+    - deploy_to_production
+    - run_commands_as_root_doas
+  
+  never_ask:
+    - formatting_changes
+    - typo_fixes
+    - dead_code_removal
+    - closing_stale_prs
+    - running_tests
+    - reading_files
+    - creating_prs
+  
+  high_autonomy:
+    batch_operations: true
+    proceed_on_pending: true
+    close_stale_prs: true
+    merge_ready_prs: false
+    create_followup_prs: true
+    auto_fix_lint: true
+    report_style: terse
+    
+  thresholds:
+    low:
+      proceed_solo: 0.99
+      ask_first: 0.50
+    medium:
+      proceed_solo: 0.90
+      ask_first: 0.70
+    high:
+      proceed_solo: 0.80
+      ask_first: 0.50
+    maximum:
+      proceed_solo: 0.70
+      ask_first: 0.30
+
+core_policy:
+  communication:
+    reporting:
+      low: verbose_explain_reasoning
+      medium: normal_summarize_actions
+      high: terse_results_only
+      maximum: silent_success_loud_failure
+    
+    batch_format: |
+      completed_n_actions:
+      - action1: result
+      - action2: result
