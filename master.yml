@@ -861,8 +861,8 @@ validation:
 
 quality_metrics:
   version: 15.0.0
-  lines: 650
-  root_sections: 18
+  lines: 872
+  root_sections: 26
   nesting_maximum: 3
   duplication_ratio: 0.00
   clarity_score: 1.00
