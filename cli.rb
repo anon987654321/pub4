@@ -134,9 +134,31 @@ class APIClient
       name: "OpenRouter",
       base_url: "https://openrouter.ai/api/v1",
       models: {
+        # DeepSeek (cheap & fast)
         "deepseek-r1" => "deepseek/deepseek-r1",
+        "deepseek-v3" => "deepseek/deepseek-chat",
+        
+        # Anthropic Claude
         "claude-3.5" => "anthropic/claude-3.5-sonnet",
-        "gpt-4o" => "openai/gpt-4o"
+        "claude-3-opus" => "anthropic/claude-3-opus",
+        "claude-3-haiku" => "anthropic/claude-3-haiku",
+        
+        # OpenAI
+        "gpt-4o" => "openai/gpt-4o",
+        "gpt-4o-mini" => "openai/gpt-4o-mini",
+        "gpt-4-turbo" => "openai/gpt-4-turbo",
+        
+        # Meta Llama
+        "llama-3.1-70b" => "meta-llama/llama-3.1-70b-instruct",
+        "llama-3.1-8b" => "meta-llama/llama-3.1-8b-instruct",
+        
+        # Google
+        "gemini-pro" => "google/gemini-pro",
+        "gemini-2.0" => "google/gemini-2.0-flash-exp",
+        
+        # Mistral
+        "mistral-large" => "mistralai/mistral-large-latest",
+        "mixtral-8x7b" => "mistralai/mixtral-8x7b-instruct"
       },
       default_model: "deepseek/deepseek-r1"
     }
@@ -323,6 +345,8 @@ class FileTool
     return { error: "file not found" } unless File.exist?(safe_path)
     content = File.read(safe_path)
     { content: content[0..50000], size: File.size(safe_path) }
+  rescue SecurityError => e
+    { error: e.message }
   rescue => e
     { error: "failed to read file: #{e.message}" }
   end
@@ -332,6 +356,8 @@ class FileTool
     FileUtils.mkdir_p(File.dirname(safe_path))
     File.write(safe_path, content)
     { success: true, path: path }
+  rescue SecurityError => e
+    { error: e.message }
   rescue => e
     { error: "failed to write file: #{e.message}" }
   end
@@ -549,7 +575,11 @@ class CLI
   def switch_model(model)
     unless model
       puts "Current model: #{@config.model}"
-      puts "Available: deepseek-r1, claude-3.5, gpt-4o"
+      puts "\nAvailable models:"
+      APIClient::PROVIDERS[:openrouter][:models].each do |short, full|
+        marker = full == @config.model ? "→ " : "  "
+        puts "#{marker}#{short.ljust(16)} (#{full})"
+      end
       return
     end
     @config.model = APIClient::PROVIDERS[:openrouter][:models][model] || model
