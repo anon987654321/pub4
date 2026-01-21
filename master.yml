@@ -35,7 +35,6 @@ meta:
     philosophy: plain_english_over_jargon
     rationale: llms_parse_better_humans_read_easier
 
-banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
 preferred_tools: [ruby, zsh, doas]
 
 style_constraints:
