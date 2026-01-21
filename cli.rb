@@ -14,6 +14,7 @@ require "timeout"
 require "digest"
 require "io/console"
 require "readline"
+require "pathname"
 
 # OpenBSD pledge/unveil support (deferred to runtime)
 PLEDGE_AVAILABLE = if RUBY_PLATFORM.include?("openbsd")
@@ -176,6 +177,30 @@ end
 
 # OpenRouter API client with expanded models
 class APIClient
+  # Tool schemas for OpenRouter function calling
+  TOOL_SCHEMAS = [
+    # File tools
+    { type: "function", function: { name: "read_file", description: "Read file contents", parameters: { type: "object", properties: { path: { type: "string", description: "File path to read" } }, required: ["path"] } } },
+    { type: "function", function: { name: "write_file", description: "Write content to file", parameters: { type: "object", properties: { path: { type: "string", description: "File path to write" }, content: { type: "string", description: "Content to write" } }, required: ["path", "content"] } } },
+    { type: "function", function: { name: "list_directory", description: "List directory contents", parameters: { type: "object", properties: { path: { type: "string", description: "Directory path to list" } }, required: ["path"] } } },
+    { type: "function", function: { name: "delete_file", description: "Delete a file", parameters: { type: "object", properties: { path: { type: "string", description: "File path to delete" } }, required: ["path"] } } },
+    { type: "function", function: { name: "move_file", description: "Move/rename file", parameters: { type: "object", properties: { from: { type: "string", description: "Source path" }, to: { type: "string", description: "Destination path" } }, required: ["from", "to"] } } },
+    { type: "function", function: { name: "create_directory", description: "Create directory", parameters: { type: "object", properties: { path: { type: "string", description: "Directory path to create" } }, required: ["path"] } } },
+    { type: "function", function: { name: "search_files", description: "Search files by glob pattern", parameters: { type: "object", properties: { pattern: { type: "string", description: "Glob pattern (e.g., '**/*.rb')" } }, required: ["pattern"] } } },
+    { type: "function", function: { name: "directory_tree", description: "Get directory tree", parameters: { type: "object", properties: { path: { type: "string", description: "Directory path" }, depth: { type: "integer", description: "Tree depth (default: 3)" } }, required: ["path"] } } },
+    
+    # Shell
+    { type: "function", function: { name: "run_command", description: "Execute shell command", parameters: { type: "object", properties: { command: { type: "string", description: "Command to execute" }, timeout: { type: "integer", description: "Timeout in seconds (default: 30)" } }, required: ["command"] } } },
+    
+    # Web
+    { type: "function", function: { name: "web_navigate", description: "Navigate browser to URL", parameters: { type: "object", properties: { url: { type: "string", description: "URL to navigate to" } }, required: ["url"] } } },
+    { type: "function", function: { name: "web_screenshot", description: "Take screenshot of current page", parameters: { type: "object", properties: {} } } },
+    { type: "function", function: { name: "web_page_source", description: "Get HTML source of current page", parameters: { type: "object", properties: {} } } },
+    { type: "function", function: { name: "web_click", description: "Click element by CSS selector", parameters: { type: "object", properties: { selector: { type: "string", description: "CSS selector" } }, required: ["selector"] } } },
+    { type: "function", function: { name: "web_type", description: "Type text into element", parameters: { type: "object", properties: { selector: { type: "string", description: "CSS selector" }, text: { type: "string", description: "Text to type" } }, required: ["selector", "text"] } } },
+    { type: "function", function: { name: "web_extract", description: "Extract text from elements", parameters: { type: "object", properties: { selector: { type: "string", description: "CSS selector" } }, required: ["selector"] } } }
+  ].freeze
+  
   PROVIDERS = {
     openrouter: {
       name: "OpenRouter",
@@ -234,6 +259,26 @@ class APIClient
     end
   end
   
+  def chat_with_tools(message, executor:)
+    @messages << { role: "user", content: message }
+    
+    loop do
+      response = call_api_with_tools(TOOL_SCHEMAS)
+      
+      if response[:tool_calls]
+        # Execute tools and feed results back
+        response[:tool_calls].each do |tc|
+          result = executor.execute(tc[:name], tc[:arguments])
+          puts "  → #{tc[:name]}(#{tc[:arguments].map { |k, v| "#{k}: #{v}" }.join(", ")})"
+          @messages << { role: "tool", tool_call_id: tc[:id], name: tc[:name], content: JSON.generate(result) }
+        end
+      else
+        # Final response
+        return response[:content]
+      end
+    end
+  end
+  
   def clear_history = @messages = []
   def get_history = @messages
   def set_history(msgs) = @messages = msgs || []
@@ -250,6 +295,50 @@ class APIClient
   end
   
   private
+  
+  def call_api_with_tools(tools)
+    uri = URI("#{@config[:base_url]}/chat/completions")
+    headers = {
+      "Authorization" => "Bearer #{@api_key}",
+      "HTTP-Referer" => "https://github.com/anon987654321/pub4",
+      "X-Title" => "Convergence CLI",
+      "Content-Type" => "application/json"
+    }
+    body = { model: @model, messages: @messages, tools: tools, stream: false }
+    
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.read_timeout = 120
+    request = Net::HTTP::Post.new(uri)
+    headers.each { |k, v| request[k] = v }
+    request.body = JSON.generate(body)
+    response = http.request(request)
+    raise "API error (#{response.code})" unless response.is_a?(Net::HTTPSuccess)
+    
+    data = JSON.parse(response.body)
+    choice = data.dig("choices", 0)
+    message = choice.dig("message")
+    
+    if message["tool_calls"]
+      # Parse tool calls
+      tool_calls = message["tool_calls"].map do |tc|
+        {
+          id: tc["id"],
+          name: tc.dig("function", "name"),
+          arguments: JSON.parse(tc.dig("function", "arguments"))
+        }
+      end
+      @messages << { role: "assistant", tool_calls: message["tool_calls"] }
+      { tool_calls: tool_calls }
+    else
+      # Regular response
+      content = message["content"]
+      @messages << { role: "assistant", content: content }
+      { content: content }
+    end
+  rescue => e
+    { content: "API Error: #{e.message}" }
+  end
   
   def send_streaming(uri, headers, body)
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
@@ -389,6 +478,77 @@ class FileTool
     { error: e.message }
   end
   
+  def list(path:)
+    safe = enforce_sandbox!(path)
+    return { error: "not found" } unless File.exist?(safe)
+    return { error: "not a directory" } unless File.directory?(safe)
+    entries = Dir.entries(safe).reject { |e| e.start_with?(".") }
+    entries.map do |e|
+      full = File.join(safe, e)
+      size = File.size(full) rescue 0
+      { name: e, type: File.directory?(full) ? "dir" : "file", size: size }
+    end
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def delete(path:)
+    safe = enforce_sandbox!(path)
+    return { error: "not found" } unless File.exist?(safe)
+    File.delete(safe)
+    { success: true }
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def move(from:, to:)
+    safe_from = enforce_sandbox!(from)
+    safe_to = enforce_sandbox!(to)
+    return { error: "source not found" } unless File.exist?(safe_from)
+    FileUtils.mv(safe_from, safe_to)
+    { success: true }
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def mkdir(path:)
+    safe = enforce_sandbox!(path)
+    FileUtils.mkdir_p(safe)
+    { success: true }
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def glob(pattern:)
+    # Pattern must be within sandbox
+    base = File.expand_path(@base_path)
+    matches = Dir.glob(File.join(base, pattern))
+    # Filter to ensure all results are within base path and return relative paths
+    matches.select { |m| File.expand_path(m).start_with?(base + "/") || File.expand_path(m) == base }
+           .map { |m| Pathname.new(m).relative_path_from(Pathname.new(base)).to_s }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def tree(path:, depth: 3)
+    safe = enforce_sandbox!(path)
+    return { error: "not found" } unless File.exist?(safe)
+    return { error: "not a directory" } unless File.directory?(safe)
+    build_tree(safe, depth)
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
   private
   
   def enforce_sandbox!(filepath)
@@ -397,6 +557,157 @@ class FileTool
     return expanded if paths == :all
     raise SecurityError, "outside sandbox" unless paths.any? { |p| expanded.start_with?(p) }
     expanded
+  end
+  
+  def build_tree(path, depth, level = 0)
+    return [] if depth <= 0
+    entries = Dir.entries(path).reject { |e| e.start_with?(".") }.sort
+    entries.map do |e|
+      full = File.join(path, e)
+      if File.directory?(full)
+        { name: e, type: "dir", children: build_tree(full, depth - 1, level + 1) }
+      else
+        { name: e, type: "file", size: File.size(full) }
+      end
+    end
+  end
+end
+
+# Web tool with Ferrum browser automation
+class WebTool
+  MAX_HTML_LENGTH = 50000
+  MAX_INNER_HTML_LENGTH = 1000
+  
+  def initialize
+    @browser = nil
+    @page = nil
+  end
+  
+  def ensure_browser
+    return if @browser
+    require "ferrum"
+    @browser = Ferrum::Browser.new(
+      headless: true,
+      timeout: 60,
+      browser_options: {
+        "no-sandbox" => nil,
+        "disable-blink-features" => "AutomationControlled"
+      }
+    )
+    # Stealth mode
+    @browser.evaluate_on_new_document(<<~JS)
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    JS
+  rescue LoadError
+    nil
+  end
+  
+  def navigate(url:)
+    ensure_browser
+    return { error: "browser unavailable" } unless @browser
+    @page = @browser.create_page
+    @page.go_to(url)
+    { success: true, title: @page.title, url: @page.url }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def screenshot
+    return { error: "no page" } unless @page
+    require "tmpdir"
+    require "securerandom"
+    path = File.join(Dir.tmpdir, "screenshot_#{SecureRandom.hex(8)}.png")
+    @page.screenshot(path: path)
+    { path: path }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def page_source
+    return { error: "no page" } unless @page
+    # Truncate for LLM context - may cut in middle of tags but LLM can handle it
+    { html: @page.body[0..MAX_HTML_LENGTH] }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def click(selector:)
+    return { error: "no page" } unless @page
+    el = @page.at_css(selector)
+    return { error: "element not found" } unless el
+    el.click
+    { success: true }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def type(selector:, text:)
+    return { error: "no page" } unless @page
+    el = @page.at_css(selector)
+    return { error: "element not found" } unless el
+    el.focus
+    el.type(text)
+    { success: true }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def extract(selector:)
+    return { error: "no page" } unless @page
+    elements = @page.css(selector)
+    # Truncate inner HTML for context - may cut mid-tag but acceptable for extraction
+    elements.map { |e| { text: e.text, html: e.inner_html[0..MAX_INNER_HTML_LENGTH] } }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def close
+    @browser&.quit
+    @browser = nil
+    @page = nil
+  rescue => e
+    { error: e.message }
+  end
+end
+
+# Tool executor for dispatching tool calls
+class ToolExecutor
+  def initialize(file_tool:, shell_tool:, web_tool:)
+    @file_tool = file_tool
+    @shell_tool = shell_tool
+    @web_tool = web_tool
+  end
+  
+  def execute(name, arguments)
+    args = arguments.transform_keys(&:to_sym)
+    
+    case name
+    # File operations
+    when "read_file" then @file_tool.read(**args)
+    when "write_file" then @file_tool.write(**args)
+    when "list_directory" then @file_tool.list(**args)
+    when "delete_file" then @file_tool.delete(**args)
+    when "move_file" then @file_tool.move(**args)
+    when "create_directory" then @file_tool.mkdir(**args)
+    when "search_files" then @file_tool.glob(**args)
+    when "directory_tree" then @file_tool.tree(**args)
+    
+    # Shell
+    when "run_command" then @shell_tool.execute(**args)
+    
+    # Web
+    when "web_navigate" then @web_tool.navigate(**args)
+    when "web_screenshot" then @web_tool.screenshot
+    when "web_page_source" then @web_tool.page_source
+    when "web_click" then @web_tool.click(**args)
+    when "web_type" then @web_tool.type(**args)
+    when "web_extract" then @web_tool.extract(**args)
+    
+    else
+      { error: "unknown tool: #{name}" }
+    end
+  rescue => e
+    { error: e.message }
   end
 end
 
@@ -450,6 +761,7 @@ class CLI
     Commands:
     /help              - Show this help
     /level [sandbox|user|admin] - View/switch access level
+    /agent             - Toggle agent mode (LLM can use tools)
     /process PATH      - Process directory through master.yml
     /screen NAME       - Create named session
     /detach            - Save and detach
@@ -471,12 +783,16 @@ class CLI
     @session_mgr = SessionManager.new
     @rag = RAG.new
     @running = false
+    @agent_mode = false
+    @web_tool = WebTool.new
+    @tool_executor = nil
   end
   
   def run
     apply_pledge(@config.access_level)
     banner
     setup_client
+    setup_tools
     @running = true
     
     while @running
@@ -485,6 +801,9 @@ class CLI
       next if input.empty?
       input.start_with?("/") ? command(input) : message(input)
     end
+    
+    # Cleanup
+    @web_tool.close
   end
   
   private
@@ -511,6 +830,12 @@ class CLI
     @client = APIClient.new(provider: @config.provider, api_key: @config.api_key, model: @config.model)
   end
   
+  def setup_tools
+    file_tool = FileTool.new(base_path: Dir.pwd, access_level: @config.access_level)
+    shell_tool = ShellTool.new(access_level: @config.access_level, master_config: @master)
+    @tool_executor = ToolExecutor.new(file_tool: file_tool, shell_tool: shell_tool, web_tool: @web_tool)
+  end
+  
   def command(input)
     parts = input.split(" ", 2)
     cmd, arg = parts[0], parts[1]
@@ -518,6 +843,7 @@ class CLI
     case cmd
     when "/help" then puts HELP
     when "/level" then arg ? switch_level(arg) : show_level
+    when "/agent" then toggle_agent_mode
     when "/process" then process_dir(arg)
     when "/screen" then save_session(arg)
     when "/detach" then puts "Session saved"
@@ -532,6 +858,12 @@ class CLI
     when "/quit", "/exit" then @running = false
     else puts "Unknown: #{cmd}"
     end
+  end
+  
+  def toggle_agent_mode
+    @agent_mode = !@agent_mode
+    puts "Agent mode: #{@agent_mode ? 'ON' : 'OFF'}"
+    puts "  Tools: file, shell, web" if @agent_mode
   end
   
   def show_level
@@ -627,7 +959,12 @@ class CLI
   
   def message(input)
     print "\n"
-    @client.send(input) { |chunk| print chunk; $stdout.flush }
+    if @agent_mode
+      response = @client.chat_with_tools(input, executor: @tool_executor)
+      puts response
+    else
+      @client.send(input) { |chunk| print chunk; $stdout.flush }
+    end
     print "\n\n"
   rescue => e
     puts "Error: #{e.message}"

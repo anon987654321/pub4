@@ -240,6 +240,90 @@ class TestFileTool < Minitest::Test
     assert result[:error]
     assert_match(/sandbox/, result[:error])
   end
+  
+  def test_list_directory
+    FileUtils.mkdir_p(File.join(@tmpdir, "subdir"))
+    File.write(File.join(@tmpdir, "file1.txt"), "content")
+    File.write(File.join(@tmpdir, "file2.txt"), "content")
+    
+    result = @tool.list(path: @tmpdir)
+    assert_kind_of Array, result
+    assert_equal 3, result.size
+    
+    names = result.map { |e| e[:name] }
+    assert_includes names, "subdir"
+    assert_includes names, "file1.txt"
+    assert_includes names, "file2.txt"
+    
+    dir_entry = result.find { |e| e[:name] == "subdir" }
+    assert_equal "dir", dir_entry[:type]
+    
+    file_entry = result.find { |e| e[:name] == "file1.txt" }
+    assert_equal "file", file_entry[:type]
+  end
+  
+  def test_delete_file
+    path = File.join(@tmpdir, "test.txt")
+    File.write(path, "content")
+    assert File.exist?(path)
+    
+    result = @tool.delete(path: path)
+    assert result[:success]
+    refute File.exist?(path)
+  end
+  
+  def test_delete_nonexistent
+    result = @tool.delete(path: File.join(@tmpdir, "missing.txt"))
+    assert result[:error]
+  end
+  
+  def test_move_file
+    from = File.join(@tmpdir, "source.txt")
+    to = File.join(@tmpdir, "dest.txt")
+    File.write(from, "content")
+    
+    result = @tool.move(from: from, to: to)
+    assert result[:success]
+    refute File.exist?(from)
+    assert File.exist?(to)
+    assert_equal "content", File.read(to)
+  end
+  
+  def test_mkdir
+    path = File.join(@tmpdir, "newdir", "nested")
+    result = @tool.mkdir(path: path)
+    assert result[:success]
+    assert File.directory?(path)
+  end
+  
+  def test_glob
+    File.write(File.join(@tmpdir, "test.rb"), "ruby")
+    File.write(File.join(@tmpdir, "test.txt"), "text")
+    FileUtils.mkdir_p(File.join(@tmpdir, "subdir"))
+    File.write(File.join(@tmpdir, "subdir", "nested.rb"), "ruby")
+    
+    result = @tool.glob(pattern: "**/*.rb")
+    assert_kind_of Array, result
+    assert_includes result, "test.rb"
+    assert_includes result, "subdir/nested.rb"
+    refute_includes result, "test.txt"
+  end
+  
+  def test_tree
+    FileUtils.mkdir_p(File.join(@tmpdir, "dir1", "subdir"))
+    File.write(File.join(@tmpdir, "file1.txt"), "content")
+    File.write(File.join(@tmpdir, "dir1", "file2.txt"), "content")
+    
+    result = @tool.tree(path: @tmpdir, depth: 2)
+    assert_kind_of Array, result
+    
+    dir_entry = result.find { |e| e[:name] == "dir1" }
+    assert_equal "dir", dir_entry[:type]
+    assert_kind_of Array, dir_entry[:children]
+    
+    file_entry = result.find { |e| e[:name] == "file1.txt" }
+    assert_equal "file", file_entry[:type]
+  end
 end
 
 class TestShellTool < Minitest::Test
@@ -362,5 +446,111 @@ class TestConvergenceModule < Minitest::Test
   
   def test_access_levels_frozen
     assert Convergence::ACCESS_LEVELS.frozen?
+  end
+end
+
+class TestWebTool < Minitest::Test
+  def setup
+    @tool = WebTool.new
+  end
+  
+  def teardown
+    @tool.close
+  end
+  
+  def test_initialization
+    assert_nil @tool.instance_variable_get(:@browser)
+    assert_nil @tool.instance_variable_get(:@page)
+  end
+  
+  def test_navigate_without_ferrum
+    # Should return error if Ferrum is not available
+    result = @tool.navigate(url: "https://example.com")
+    assert result[:error] || result[:success]
+  end
+  
+  def test_screenshot_without_page
+    result = @tool.screenshot
+    assert result[:error]
+    assert_match(/no page/, result[:error])
+  end
+  
+  def test_page_source_without_page
+    result = @tool.page_source
+    assert result[:error]
+    assert_match(/no page/, result[:error])
+  end
+  
+  def test_click_without_page
+    result = @tool.click(selector: "button")
+    assert result[:error]
+    assert_match(/no page/, result[:error])
+  end
+  
+  def test_type_without_page
+    result = @tool.type(selector: "input", text: "test")
+    assert result[:error]
+    assert_match(/no page/, result[:error])
+  end
+  
+  def test_extract_without_page
+    result = @tool.extract(selector: ".class")
+    assert result[:error]
+    assert_match(/no page/, result[:error])
+  end
+end
+
+class TestToolExecutor < Minitest::Test
+  def setup
+    @tmpdir = Dir.mktmpdir
+    @file_tool = FileTool.new(base_path: @tmpdir, access_level: :sandbox)
+    @shell_tool = ShellTool.new(access_level: :user, master_config: MasterConfig.new)
+    @web_tool = WebTool.new
+    @executor = ToolExecutor.new(file_tool: @file_tool, shell_tool: @shell_tool, web_tool: @web_tool)
+  end
+  
+  def teardown
+    FileUtils.rm_rf(@tmpdir)
+    @web_tool.close
+  end
+  
+  def test_execute_read_file
+    path = File.join(@tmpdir, "test.txt")
+    File.write(path, "content")
+    result = @executor.execute("read_file", { "path" => path })
+    assert_equal "content", result[:content]
+  end
+  
+  def test_execute_write_file
+    path = File.join(@tmpdir, "new.txt")
+    result = @executor.execute("write_file", { "path" => path, "content" => "test" })
+    assert result[:success]
+    assert_equal "test", File.read(path)
+  end
+  
+  def test_execute_list_directory
+    File.write(File.join(@tmpdir, "file.txt"), "content")
+    result = @executor.execute("list_directory", { "path" => @tmpdir })
+    assert_kind_of Array, result
+    assert result.any? { |e| e[:name] == "file.txt" }
+  end
+  
+  def test_execute_run_command
+    result = @executor.execute("run_command", { "command" => "echo test" })
+    assert result[:success]
+    assert_match(/test/, result[:stdout])
+  end
+  
+  def test_execute_unknown_tool
+    result = @executor.execute("unknown_tool", {})
+    assert result[:error]
+    assert_match(/unknown tool/, result[:error])
+  end
+  
+  def test_execute_with_string_keys
+    path = File.join(@tmpdir, "test.txt")
+    File.write(path, "content")
+    result = @executor.execute("read_file", { "path" => path })
+    assert_equal "content", result[:content]
   end
 end
