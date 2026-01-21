@@ -1,749 +1,873 @@
-# master.yml
-# quality governance system for llm assisted development
-# version 15.0.1
+# MASTER. YML v15.0.0
+# Quality governance system for LLM-assisted development. 
 #
-# reflow order: critical first, reference last
-# research: liu et al 2024 - llms recall start and end best, middle 27%
+# AUTHORITY:  This file is the single source of truth. 
+# SCOPE: All files in repository must comply.
+# ENFORCEMENT: Automated validation required before merge. 
 
-# tier 1 critical - golden rule and safety
-
-golden_rule: preserve_then_improve_never_break
-
-tool_policy:
-  priority: 0
-  philosophy: zsh_native_patterns_for_maximum_performance
-  rationale: openbsd_security_model_minimal_dependencies
+meta: 
+  name: quality_governance_system
+  version: 15.0.0
+  updated: 2026-01-21
+  style:  lowercase_underscored_plain_english
   
-  allowed_shell: [zsh, ksh]
-  banned_shell: [bash, sh]
+  authorities:
+    primary:  this_file
+    supplementary: 
+      - robert_c_martin_clean_code
+      - martin_fowler_refactoring
+      - elements_of_style_strunk_white
   
-  allowed_tools: [ruby, zsh, git, grep, cat, sort, npm, bundle, rails, rake]
+  platform: 
+    target: openbsd
+    fallback: posix_compatible
+    toolchain: [ruby, zsh, doas]
   
-  banned_external_tools:
-    text_processing: [python, sed, awk, tr, cut]
-    counting_filtering: [wc, head, tail, uniq]
-    file_operations: [find]
-    system: [sudo]
-    reason: use_zsh_parameter_expansion_builtins_instead
-    
-  zsh_replacements:
-    string_operations:
-      remove_crlf: "cleaned=${var//$'\\r'/}"
-      lowercase: '${(L)var}'
-      uppercase: '${(U)var}'
-      replace_all: '${var//search/replace}'
-      trim_whitespace: '${${var##[[:space:]]#}%%[[:space:]]#}'
-      extract_field: '${${(s:,:)line}[4]}'
-      split_string: 'arr=( ${(s:delim:)var} )'
-      
-    array_operations:
-      filter_matches: '${(M)arr:#*pattern*}'
-      filter_excluding: '${arr:#*pattern*}'
-      unique_elements: '${(u)arr}'
-      join_array: '${(j:,:)arr}'
-      sort_ascending: '${(o)arr}'
-      sort_descending: '${(O)arr}'
-      
-    replacements:
-      instead_of_grep: '${(M)lines:#*query*}'
-      instead_of_awk: '${${(s:,:)line}[4]}'
-      instead_of_uniq: '${(u)arr}'
-      instead_of_head: '${lines[1,10]}'
-      instead_of_tail: '${lines[-5,-1]}'
-      instead_of_wc_l: '${#lines}'
-      
-  openbsd_native:
-    service_management:
-      tool: rcctl
-      examples:
-        enable: doas rcctl enable postgresql
-        start: doas rcctl start postgresql
-        restart: doas rcctl restart postgresql
-        
-    package_management:
-      tool: pkg_add
-      examples:
-        install: doas pkg_add ruby%3.3
-        search: pkg_info -Q postgresql
-        
-    security:
-      privilege_tool: doas
-      firewall: pf
-      firewall_reload: doas pfctl -f /etc/pf.conf
-      
-  token_savings: 700_tokens_per_operation_vs_external_commands
-
-veto_rules:
-  design_preservation:
-    priority: absolute
-    weight: 0.30
-    veto: true
-    protected_tokens:
-      colors: [hex, rgb, rgba, hsl, hsla, named]
-      spacing: px_rem_em_percent_in_margin_padding_gap_width_height
-      timing: ms_s_in_transition_animation_duration_delay
-      typography: [font_size, line_height, font_weight, letter_spacing]
-      motion: [cubic_bezier, ease, linear, ease_in_out, steps]
-      layout: [z_index, position, display, grid, flex, dimensions]
-      effects: [opacity, filter, transform, box_shadow, text_shadow]
-    rule: never_modify_protected_tokens_without_explicit_permission
-    action: immediate_halt_rollback_report
-    rationale: designer_autonomy_is_sacred
-    
-  functionality_preservation:
-    priority: absolute
-    weight: 0.40
-    veto: true
-    rule: working_code_beats_pretty_code
-    
-  security_absolute:
-    priority: absolute
-    weight: 0.30
-    veto: true
-    rule: zero_tolerance_for_vulnerabilities
-    
-  anti_truncation:
-    priority: absolute
-    veto: true
-    confidence: 1.00
-    rule: never_truncate_code_content_or_implementation
-    detection_markers:
-      - rest_of_code
-      - continued
-      - truncated
-      - remains
-      - etc_dots
-      - todo_placeholder
-    regex_patterns:
-      three_dots_rest: '\.\.\.\s*(rest|continued|remains)'
-      bracketed_truncated: '\[truncated\]|\[\.\.\.\]'
-      comment_rest: '//\s*(rest|continued|remains|same\s+as|unchanged)'
-      html_comment_rest: '<!--\s*(rest|continued)'
-    action: immediate_halt_rollback_report
-    rationale: incomplete_code_is_broken_code
-
-guardrails:
-  philosophy: prevent_harm_enable_speed
+  for_llms:
+    before_editing: read_all_rules_first
+    before_adding:  verify_matches_existing_style
+    before_committing: run_self_validation
+    on_uncertainty: ask_do_not_assume
   
-  hard_stops:
-    - push_to_main_without_pr
-    - delete_without_backup
-    - modify_credentials_silently
-    - exceed_rate_limits
-    - ignore_test_failures
-    - edit_nonexistent_file
-    - call_nonexistent_function
-    
-  soft_warnings:
-    - file_exceeds_500_lines
-    - pr_open_more_than_7_days
-    - more_than_5_open_prs
-    - no_tests_for_new_code
-    - function_exceeds_20_lines
-    - nesting_exceeds_3_levels
-    
-  auto_recovery:
-    on_syntax_error: rollback_last_change
-    on_test_failure: rollback_and_report
-    on_context_loss: reload_governance_files
-    on_file_not_found: verify_path_before_retry
-    
-  verification:
-    before_file_edit: verify_file_exists
-    before_file_create: verify_parent_dir_exists
-    before_function_call: verify_function_exists
-    before_claim: cite_source_or_measure
-    before_done: run_tests_show_evidence
-    before_merge: all_checks_pass
-    
-  rollback:
-    triggers:
-      - tests_fail_after_change
-      - syntax_error_introduced
-      - security_violation_added
-      - user_says_undo
-    method: git_restore
-    backup_before_modify: true
-    backup_location: .backups/
-    max_backups: 10
-    
-  hallucination_prevention:
-    verify_file_exists_before_edit: true
-    verify_function_exists_before_call: true
-    never_invent_apis: true
-    cite_sources_for_claims: true
-    on_uncertainty: ask_or_search
-    check_disk_state_not_memory: true
+  for_humans:
+    philosophy: plain_english_over_jargon
+    rationale: llms_parse_better_humans_read_easier
+    contribution:  modify_via_pull_request_only
 
-# tier 2 core workflow
-
-thresholds:
-  max_arguments: 3
-  max_nesting: 2
-  max_method_lines: 20
-  max_complexity: 10
-  duplication_trigger: 3
-  duplication_percent: 70
-  test_coverage_min: 0.80
-  mutation_score_min: 0.75
-  persona_consensus_min: 0.70
-  alternatives_min: 15
-  working_memory_max: 4
-  file_lines_max: 500
-  functions_per_file_max: 20
-  classes_per_file_max: 3
-  pr_open_max: 5
-  pr_stale_days: 7
-
-principles:
-  count: 15
+style_constraints:
+  case:  lowercase_only
+  separator: underscores
+  language: plain_english
   
-  p01_code_works_beauty:
-    name: code_works_beauty_proves_it
-    priority: 1
-    literal_violations: [tests_fail, runtime_errors, incorrect_output]
-    loose_violations: [untested_paths, fragile_assumptions, magic_values]
-    auto_fix: [add_tests, handle_errors, validate_assumptions]
-    
-  p02_delete_until_hurts:
-    name: delete_until_it_hurts
-    priority: 1
-    literal_violations: [dead_code, unused_imports, redundant_logic]
-    loose_violations: [speculative_generality, premature_abstraction]
-    auto_fix: [remove_unused, inline_trivial, merge_duplicates]
-    
-  p03_evidence_over_intuition:
-    name: evidence_over_intuition
-    priority: 1
-    literal_violations: [unmeasured_claims, gut_feel_decisions, no_metrics]
-    loose_violations: [cargo_cult, premature_optimization]
-    auto_fix: [add_benchmarks, collect_metrics, verify_assumptions]
-    
-  p04_explicit_over_implicit:
-    name: explicit_over_implicit
-    priority: 1
-    literal_violations: [hidden_dependencies, magic_numbers, implicit_contracts]
-    loose_violations: [assumed_context, tribal_knowledge]
-    auto_fix: [add_constants, document_contracts, make_visible]
-    
-  p05_simple_over_clever:
-    name: simple_over_clever
-    priority: 1
-    literal_violations: [obfuscated_logic, unnecessary_abstraction, clever_tricks]
-    loose_violations: [overengineering, premature_generalization]
-    auto_fix: [simplify_logic, flatten_hierarchy, inline_indirection]
-    
-  p06_fail_fast_loud:
-    name: fail_fast_fail_loud
-    priority: 1
-    literal_violations: [silent_failures, swallowed_exceptions, ignored_errors]
-    loose_violations: [optimistic_assumptions, missing_validation]
-    auto_fix: [add_validation, raise_on_error, log_failures]
-    
-  p07_security_by_default:
-    name: security_by_default
-    priority: 0
-    literal_violations: [unvalidated_input, excessive_permissions, plaintext_secrets]
-    loose_violations: [security_by_obscurity, missing_rate_limits]
-    auto_fix: [add_validation, reduce_permissions, encrypt_secrets]
-    
-  p08_design_for_failure:
-    name: design_for_failure
-    priority: 1
-    literal_violations: [no_error_handling, missing_rollback, single_point_of_failure]
-    loose_violations: [optimistic_paths_only, untested_recovery]
-    auto_fix: [add_error_handling, implement_rollback, add_redundancy]
-    
-  p09_write_for_future_readers:
-    name: write_for_future_readers
-    priority: 1
-    literal_violations: [cryptic_names, no_comments_on_why, insider_knowledge_required]
-    loose_violations: [context_dependent, temporal_coupling]
-    auto_fix: [rename_descriptively, add_context_comments, document_rationale]
-    
-  p10_iterate_with_evidence:
-    name: iterate_with_evidence
-    priority: 1
-    literal_violations: [big_bang_changes, no_verification, irreversible_commits]
-    loose_violations: [insufficient_checkpoints, delayed_validation]
-    auto_fix: [break_into_steps, add_verification, enable_rollback]
-    
-  p11_validate_before_done:
-    name: validate_before_done
-    priority: 0
-    mandatory: true
-    literal_violations: [claim_without_proof, future_tense_completion, assume_success]
-    loose_violations: [untested_claim, visual_only_verification]
-    auto_fix: [run_validator, show_output, measure_result]
-    enforcement: block_completion_without_evidence
-    
-  p12_fail_fast_recover:
-    name: fail_fast_recover_gracefully
-    priority: 1
-    literal_violations: [silent_failures, continue_on_error, no_error_logging]
-    loose_violations: [optimistic_flow_only, missing_exit_codes]
-    auto_fix: [add_set_errexit, log_error_location, provide_recovery_steps]
-    shell_pattern:
-      header: set -euo pipefail
-      error_function: 'error() { log "ERROR: $*"; exit 1; }'
-      
-  p13_idempotent_by_default:
-    name: idempotent_by_default
-    priority: 1
-    literal_violations: [always_rerun, no_state_check, duplicate_work]
-    loose_violations: [expensive_redundancy, missing_cache]
-    auto_fix: [check_state_first, track_checksums, skip_unchanged]
-    
-  p14_backup_before_modify:
-    name: backup_before_modify
-    priority: 1
-    literal_violations: [destructive_in_place, no_backup, irreversible_change]
-    loose_violations: [backup_too_late, backup_not_tested]
-    auto_fix: [create_bak_file, test_rollback, automated_restore]
-    
-  p15_pure_dependencies:
-    name: pure_dependencies_avoid_external_tools
-    priority: 0
-    literal_violations: [unnecessary_external_tool, fork_for_simple_op]
-    loose_violations: [preference_for_external, ignoring_builtins]
-    auto_fix: [replace_with_builtin, use_zsh_expansion]
-
-workflow:
-  phases: [discover, analyze, constrain, ideate, evaluate, design, validate, deliver]
+  filenames:
+    style: lowercase_underscored
+    extension_exceptions: [README.md, LICENSE, CHANGELOG. md, Gemfile, Rakefile]
+    pattern: '/^[a-z][a-z0-9_]*(\.[a-z]+)?$/'
   
-  self_execution:
-    trigger: run_file_through_master_yml
-    loop: [internalize, detect, autofix, validate, measure, commit, repeat]
-    convergence: zero_violations_for_2_iterations
-    max_iterations: 20
-    
-  phase_1_discover:
-    goal: understand_the_problem
-    temperature: 0.1
-    checklist:
-      - read_all_files_with_sha256_verification
-      - objective_in_one_sentence
-      - map_stakeholders
-      - define_measurable_success_criteria
-      - list_unknowns_and_ambiguities
-      - refactor_delete_dead_code
-    exit_criteria:
-      - all_files_verified
-      - problem_statement_one_sentence
-      - success_criteria_measurable
-      
-  phase_2_analyze:
-    goal: make_implicit_requirements_explicit
-    temperature: 0.2
-    checklist:
-      - rewrite_requirements_unambiguously
-      - identify_hidden_assumptions
-      - calculate_effort_raw_times_pi
-      - enumerate_5_failure_modes
-      - refactor_extract_magic_numbers
-    exit_criteria:
-      - estimate_includes_pi_multiplier
-      - 5_failure_modes_listed
-      - assumptions_documented
-      
-  phase_3_constrain:
-    goal: map_all_boundaries_before_exploring_solutions
-    temperature: 0.2
-    constraint_types:
-      hard: security_legal_physics
-      soft: preferences_conventions
-      preference: nice_to_have_aesthetics
-      
-  phase_4_ideate:
-    goal: generate_diverse_alternatives_before_selecting
-    temperature: 0.7
-    requirements:
-      minimum_alternatives: 15
-      distinct_alternatives: 12_of_15_must_be_distinct
-      diversity_score: 0.8
-    anti_anchoring:
-      - no_evaluation_while_generating
-      - quantity_before_quality
-      
-  phase_5_evaluate:
-    goal: systematically_compare_and_select
-    temperature: 0.3
-    decision_criteria:
-      simplicity: 0.25
-      correctness: 0.25
-      maintainability: 0.20
-      security: 0.20
-      performance: 0.10
-      
-  phase_6_design:
-    goal: design_the_solution_before_implementing
-    temperature: 0.3
-    checklist:
-      - design_tests_before_implementation
-      - define_component_interfaces
-      - identify_failure_modes
-      - design_rollback_procedure
-      - refactor_simplify_target_areas
-      
-  phase_7_validate:
-    goal: prove_it_works_prove_its_safe
-    temperature: 0.1
-    checklist:
-      - run_all_tests
-      - gather_evidence_with_sha256_verification
-      - run_all_quality_gates
-      - execute_persona_voting_70_percent_consensus
-      - run_red_team_review_for_security
-      - test_rollback_procedure
-      - refactor_fix_violations_found
-      
-  phase_8_deliver:
-    goal: ship_and_learn
-    temperature: 0.3
-    checklist:
-      - generate_clear_diff_of_all_changes
-      - write_concise_summary
-      - extract_3_reusable_patterns
-      - compare_actual_vs_estimated_effort
-      - refactor_holistic_reflow_by_importance
-
-detectors:
-  purpose: detect_violations_using_zsh_builtins_only
+  yaml_keys:
+    style: lowercase_underscored
+    pattern: '/^[a-z][a-z0-9_]*$/'
   
-  universal:
-    scattered_concerns:
-      principle: pola
-      confidence: 0.97
-      fix: regroup_by_natural_flow
-      
-    duplicate_logic:
-      principle: dry
-      confidence: 0.97
-      fix: extract_to_single_source
-      
-    duplicate_declarations:
-      principle: dry
-      confidence: 1.00
-      fix: keep_first_delete_duplicates
-      patterns:
-        - 'const\s+([A-Z_][A-Z0-9_]*)\s*='
-        - 'let\s+([a-z_][a-zA-Z0-9_]*)\s*='
-        - 'var\s+([a-z_][a-zA-Z0-9_]*)\s*='
-        - 'function\s+([a-z_][a-zA-Z0-9_]*)\s*\('
-        - 'class\s+([A-Z][a-zA-Z0-9_]*)\s*\{'
-        
-    nesting_gt_2:
-      principle: kiss
-      confidence: 0.96
-      fix: extract_blocks_use_guard_clauses
-      
-    function_gt_20_lines:
-      principle: kiss
-      confidence: 0.96
-      fix: extract_helpers_keep_orchestration
-      
-    unreferenced_code:
-      principle: yagni
-      confidence: 0.98
-      fix: delete_completely
-      
-    short_names:
-      principle: clarity
-      confidence: 0.95
-      fix: rename_to_descriptive_3_plus_chars
-      
-    magic_numbers:
-      principle: clarity
-      confidence: 0.95
-      fix: extract_to_constant_check_design_veto
-      
-    tabs_present:
-      confidence: 1.00
-      fix: replace_tabs_with_2_spaces
-      
-    trailing_whitespace:
-      confidence: 1.00
-      fix: strip_trailing_spaces
-      
-    missing_final_newline:
-      confidence: 1.00
-      fix: append_exactly_one_newline
-      
-  language_specific:
-    ruby:
-      n_plus_one_queries: use_includes_or_eager_loading
-      unsafe_eval: sanitize_or_avoid_completely
-      class_variables: prefer_class_instance_variables
-      
-    rails:
-      fat_controllers: extract_to_service_objects
-      view_logic: move_to_helpers_or_presenters
-      missing_indexes: analyze_query_patterns_add_indexes
-      
-    rust:
-      unwrap_used: use_result_match_or_question_mark
-      unsafe_unjustified: add_safety_comment_and_test
-      clone_unnecessary: use_references_or_borrow
-      
-    css:
-      pixel_units: convert_to_rem_em
-      float_layouts: replace_with_flexbox_grid
-      specificity_wars: use_low_specificity_selectors
-      
-    zsh:
-      unquoted_expansion: quote_all_variables
-      bashisms_used: use_posix_compliant_syntax
-      errexit_missing: set_euo_pipefail
-      
-    openbsd:
-      pledge_missing: declare_minimal_promises
-      unveil_missing: restrict_filesystem_access
-      gnu_extensions: use_posix_bsd_equivalents
-
-formatters:
-  purpose: auto_fix_violations_using_zsh_builtins_only
+  code_in_yaml:
+    zsh_patterns: literal_allowed
+    regex_patterns: literal_allowed
+    ruby_snippets: forbidden_use_separate_file
   
-  base_operations:
-    read: 'content=$(<$file)'
-    tabs_to_spaces: "content=${content//$'\\t'/  }"
-    trim_trailing: 'content=${content%%[[:space:]]##}'
-    ensure_final_newline: "content=${content%$'\\n'}$'\\n'"
-    normalize_crlf: "content=${content//$'\\r'/}"
-    write: 'print -r -- "$content" > $file'
-
-# tier 3 execution context
-
-adversarial_personas:
-  purpose: challenge_solutions_through_weighted_expert_perspectives
-  total_weight: 1.00
-  veto_power: [security_analyst, designer]
+  banned_styles:
+    # NOTE: These names appear in their original form for documentation only.
+    # This is the sole exception to the lowercase rule.
+    - name: camel_case
+      example: "camelCase"
+      violation: mixed_case_words
+    - name: pascal_case
+      example: "PascalCase"
+      violation:  capitalized_words
+    - name:  screaming_case
+      example: "SCREAMING_CASE"
+      violation:  all_uppercase
+    - name: kebab_case
+      example: "kebab-case"
+      violation: hyphen_separator
   
-  perspectives:
-    skeptic:
-      weight: 0.15
-      veto: false
-      asks: what_is_the_evidence_from_actual_docs
-      
-    minimalist:
-      weight: 0.15
-      veto: false
-      asks: can_we_remove_this_completely
-      
-    security_analyst:
-      weight: 0.20
-      veto: true
-      asks: what_happens_with_invalid_corrupt_missing_input
-      
-    user:
-      weight: 0.15
-      veto: false
-      asks: does_this_solve_actual_user_problem
-      
-    maintainer:
-      weight: 0.20
-      veto: false
-      asks: can_junior_debug_at_3am_without_tribal_knowledge
-      
-    designer:
-      weight: 0.15
-      veto: true
-      asks: does_this_honor_design_intent
-      
-  additional_questions:
-    chaos: what_breaks_under_load_or_invalid_input
-    cost: is_this_worth_the_complexity
-    accessibility: can_everyone_use_this
-    auditor: which_principle_guided_this_decision
-    junior_dev: can_i_debug_this_at_3am_without_docs
-    load_tester: what_breaks_if_we_10x_the_load
-    architect: where_does_this_fail_under_race_conditions
-    
-  mandatory_challenge:
-    requirement: before_finalizing_output_challenge_through_personas
-    no_shortcuts: cannot_skip_persona_review_to_save_time
+  enforcement:
+    on_violation: reject_and_reformat
+    automated:  true
+    blocking: true
 
-multi_temperature_reasoning:
-  discover_define: 0.9
-  analyze_ideate: 0.9
-  design: 0.7
-  implement: 0.5
-  validate_deliver: 0.1
-  learn: 0.5
-
-autonomy:
-  high_confidence:
-    range: 0.9_to_1.0
-    action: proceed_solo
-    applies_to: [formatting, typos, dead_code, naming_consistency]
-    
-  medium_confidence:
-    range: 0.7_to_0.9
-    action: show_options_and_suggest_features
-    applies_to: [refactor, tests, docs]
-    
-  low_confidence:
-    range: 0.0_to_0.7
-    action: ask_first
-    applies_to: [logic_changes, deletes_gt_10_lines, security, api_changes]
-
-communication:
-  style: openbsd_dmesg_terse_scannable
-  format: subsystem_verb_context_result
-  philosophy:
-    - results_first
-    - silent_on_success
-    - loud_on_failure
-    - omit_internal_reasoning
-    
-  forbidden:
-    - timestamps
-    - excessive_emoji
-    - preamble
-    - filler
-    - future_tense
-    - vague_completion
-    
-  llm_normalization:
-    - no_apologizing
-    - no_hedging
-    - direct_honest
-    - confident_when_evidence
-
-# tier 4 reference
-
-tech_stack:
-  ruby:
-    version: 3.4.7_plus
-    patterns: [frozen_string_literal, service_objects, result_not_exceptions]
-    
-  rails:
-    version: 8.1.1_plus
-    stack: [solid_queue, solid_cache, solid_cable, propshaft, falcon]
-    doctrine:
-      convention_over_configuration: true
-      programmer_happiness: true
-      sharp_knives: true
-      integrated_systems: true
-      monolith_first: true
-      beautiful_code: true
-      
-  rust:
-    version: stable_2021
-    patterns: [result_over_panic, iterators_over_loops, ownership]
-    dependencies: std_only_plus_serde_tokio_clap
-    
-  javascript:
-    version: es2024_plus
-    prefer: vanilla_then_web_components
-    avoid: [jquery, lodash, react, vue, angular]
-    
-  html_css:
-    html: semantic_html5
-    css: brutalist_flat
-    allowed: [flexbox, grid, has_selector, subgrid, container_queries]
-    forbidden: [box_shadow, text_shadow, border_radius, gradient]
-    
-  openbsd:
-    version: 7.8_plus
-    services: [nsd, relayd, httpd, acme_client, pf, smtpd]
-    security: [pledge, unveil, doas]
-    
-    daemon_config_mappings:
-      pf_conf:
-        daemon: pf
-        man: man.openbsd.org/pf.conf
-        purpose: packet_filter_firewall
-      relayd_conf:
-        daemon: relayd
-        man: man.openbsd.org/relayd.conf
-        purpose: load_balancer_tls_termination
-      httpd_conf:
-        daemon: httpd
-        man: man.openbsd.org/httpd.conf
-        purpose: acme_challenges_only
-      nsd_conf:
-        daemon: nsd
-        man: man.openbsd.org/nsd.conf
-        purpose: authoritative_dns_dnssec
-      acme_client_conf:
-        daemon: acme_client
-        man: man.openbsd.org/acme-client.conf
-        purpose: lets_encrypt_certs
-
-openbsd_deployment:
-  version: 7.8_plus
+comment_policy:
+  allowed_styles:
+    - sentence_case_with_period
+    - uppercase_acronyms_inline
+    - header_comments_for_sections
   
-  architecture:
-    firewall: pf
-    dns: nsd_with_dnssec
-    http: httpd_for_acme
-    proxy: relayd_tls
-    apps: falcon_rails
-    
-  security:
-    rrl:
-      enabled: true
-      ratelimit: 200
-      slip: 2
-    ssh:
-      max_conn: 15
-      rate: 5_per_3
-      bruteforce_table: true
-    smtp:
-      mode: local_relay_only
-      
-  stages:
-    stage_1:
-      - packages
-      - nsd_dnssec
-      - acme_certs
-      - tlsa_records
-    stage_2:
-      - pf_production
-      - smtpd
-      - rails_apps
-      - relayd_tls
+  forbidden: 
+    - commented_out_code
+    - todo_without_issue_link
+    - fixme_without_issue_link
+    - obvious_explanations
+  
+  requirements:
+    ratio: under_ten_percent
+    content: why_not_what
+    placement: above_relevant_code
+  
+  enforcement: 
+    on_violation: reject_and_reformat
 
-file_discipline:
-  principles:
-    - single_purpose_folders
-    - no_report_accumulation
-    - consolidate_or_delete
+documentation_requirements:
+  yard_style: 
+    required: true
+    applies_to: 
+      - public_methods
+      - classes
+      - modules
+      - complex_private_methods
     
-  forbidden_patterns:
-    - star_old_dot_sh
-    - star_backup_dot_star
-    - star_dot_log
-    - star_report_star_dot_md
-    - star_status_star_dot_md
-    - star_summary_star_dot_md
+    required_tags:
+      - tag: "@param"
+        format: "@param name [Type] description"
+      - tag: "@return"
+        format: "@return [Type] description"
+      - tag: "@raise"
+        when: method_raises_exceptions
+      - tag: "@example"
+        when: usage_non_obvious
+    
+    forbidden: 
+      - empty_descriptions
+      - type_only_no_description
+      - copy_paste_from_method_name
+  
+  readme_requirements:
+    required_sections:
+      - purpose
+      - installation
+      - usage
+      - configuration
+      - contributing
     
   enforcement:
-    on_commit: reject_commits_adding_forbidden_patterns
-    cleanup_action: delete_forbidden_files_merge_content_to_allowed
+    on_violation: abort_merge
+    automated: true
 
-validation:
-  cross_reference:
-    every_claim: [cite_source, verify_against_docs, check_version_compat]
-    sources:
-      - man.openbsd.org
-      - edgeguides.rubyonrails.org
-      - developer.mozilla.org
-      - docs.github.com
+schema_governance:
+  single_source_of_truth:
+    governance:  master.yml
+    validation: master_schema.json
+  
+  generated_files:
+    manual_editing:  forbidden
+    regeneration: on_source_change
+    marker:  "# GENERATED FILE - DO NOT EDIT"
+  
+  version_sync:
+    source:  meta.version
+    propagation: all_files_must_reference
+    check:  automated_pre_commit
+  
+  enforcement:
+    on_violation: abort_merge
+    on_manual_edit_of_generated: reject
+
+execution_truth:
+  fictional_operations:  forbidden
+  stubbed_logic:  forbidden
+  placeholder_implementations: forbidden
+  
+  requirements:
+    every_function: must_be_callable
+    every_parameter: must_be_used
+    every_return: must_be_accurate
+    every_example: must_be_runnable
+  
+  verification:
+    method_exists: required
+    params_mapped: required
+    return_type_matches: required
+    side_effects_documented: required
+  
+  backend:
+    allowed:  [ruby, zsh, doas]
+    forbidden: [bash, powershell, cmd, python]
+    rationale: consistency_and_security
+  
+  failure_response: fatal_with_explanation
+
+security:
+  api_keys: 
+    storage: environment_variables_only
+    forbidden: 
+      - plaintext_in_files
+      - terminal_prompts
+      - git_commits
+      - yaml_config
+    
+    pattern: 
+      name: "SERVICENAME_API_KEY"
+      access: "ENV. fetch('KEY') { abort 'Set KEY' }"
+  
+  secrets_detection:
+    patterns:
+      - '/sk-[a-zA-Z0-9]{32,}/'
+      - '/ghp_[a-zA-Z0-9]{36}/'
+      - '/-----BEGIN.*PRIVATE KEY-----/'
+    on_detection: abort_commit
+  
+  pledge_unveil:
+    platform: openbsd
+    order: unveil_then_pledge
+    
+    unveil_paths:
+      sandbox: [cwd, tmp]
+      user: [home, cwd, tmp]
+      admin: [home, tmp, usr_local, etc, var]
+    
+    pledge_promises:
+      minimal: [stdio, rpath]
+      standard: [stdio, rpath, wpath, cpath, inet, dns, tty]
+      full:  [stdio, rpath, wpath, cpath, inet, dns, tty, proc, exec]
+    
+    implementation:  |
+      # Correct order:  unveil paths THEN pledge promises
+      # unveil(nil, nil) locks further unveil calls
+      # pledge after unveil is locked
+  
+  input_validation:
+    user_input: always_sanitize
+    file_paths: enforce_sandbox
+    shell_commands: allowlist_only
+  
+  enforcement:
+    on_violation: fatal
+    audit_log: required
+
+linting:
+  ruby: 
+    tool:  rubocop
+    config: .rubocop.yml
+    autocorrect: safe_only
+    
+    custom_rules:
+      method_length:  20
+      class_length: 300
+      cyclomatic_complexity: 10
+      parameter_count: 3
+  
+  yaml:
+    tool: yamllint
+    rules: 
+      indentation: 2_spaces
+      line_length: 120
+      trailing_spaces: forbidden
+      empty_lines_max: 1
+  
+  zsh:
+    tool: shellcheck
+    dialect: zsh
+    rules:
+      set_options:  [e, u, o_pipefail]
+      quoting: required
+      globbing: explicit
+  
+  symbols:
+    spaced_before_colon: forbidden
+    example_bad:  "key :  value"
+    example_good:  "key: value"
+  
+  enforcement:
+    pre_commit: required
+    ci_pipeline: required
+    on_violation: auto_reject
+
+banned_decorators:
+  philosophy: content_over_decoration
+  
+  patterns:
+    horizontal_rules:  '/^[─━═▬\-_=]{3,}/'
+    section_boxes: '/^#\s*[─━═▬\-_=]{3,}/'
+    bracket_decorators: '/\[\. \.\.?\]$/'
+    box_drawing:  '/[╔╗╚╝║│┌┐└┘├┤┬┴┼]/'
+    emoji_headers: '/^#.*[🎯🚀💡🔥⚡️]/'
+    repeated_symbols: '/(. )\1{4,}/'
+  
+  allowed: 
+    markdown_hr: "---"
+    yaml_document_separator: "---"
+    code_fence:  "```"
+  
+  on_violation:  delete_and_replace
+  replacement: single_hash_space_title
+
+version_governance:
+  format:  semantic_versioning
+  pattern: '/^\d+\.\d+\.\d+$/'
+  
+  source_of_truth: meta.version
+  
+  propagation: 
+    required_files: 
+      - cli.rb
+      - package.json
+      - gemspec
+    method:  automated_sync
+  
+  changelog:
+    required: true
+    format: keep_a_changelog
+    location:  CHANGELOG.md
+  
+  git_tags:
+    format: "v{version}"
+    signed: required
+    annotated: required
+  
+  increment_rules:
+    major: breaking_changes
+    minor: new_features
+    patch: bug_fixes_and_docs
+
+platform_governance:
+  primary:  openbsd
+  compatible: [freebsd, linux, macos]
+  forbidden:  [windows]
+  
+  shell: 
+    required: zsh
+    shebang:  "#!/usr/bin/env zsh"
+    options: [e, u, o_pipefail]
+  
+  privilege_escalation:
+    allowed: doas
+    forbidden: [sudo, su]
+  
+  paths:
+    style: unix
+    forbidden_patterns: 
+      - '/^[A-Z]: /'
+      - '/\\/'
+  
+  packages:
+    ruby:  system_ruby_or_rbenv
+    node: forbidden_unless_required
+    python: forbidden
+  
+  enforcement:
+    on_windows_pattern: reject
+    on_sudo:  reject
+
+meta_cognition:
+  enabled: true
+  
+  self_observation:
+    track_reasoning_patterns: true
+    track_failure_modes: true
+    track_assumptions: true
+    track_confidence_accuracy: true
+    storage: session_memory
+  
+  self_questioning:
+    before_each_decision: 
+      - why_this_conclusion
+      - what_would_change_mind
+      - what_am_i_assuming
+      - is_this_the_right_question
+      - what_am_i_missing
+  
+  belief_revision:
+    trigger:  evidence_contradicts_belief
+    process: 
+      - quantify_prior_confidence
+      - quantify_new_evidence_strength
+      - apply_bayesian_update
+      - propagate_to_dependent_beliefs
+    format: 
+      prior: "P(H) = 0.X"
+      likelihood: "P(E|H) = 0.X"
+      posterior: "P(H|E) = computed"
+  
+  reasoning_about_reasoning:
+    questions:
+      - is_process_appropriate_for_problem
+      - am_i_at_right_abstraction_level
+      - should_i_be_more_or_less_systematic
+      - am_i_anchored_on_first_solution
+
+causal_reasoning:
+  mandatory_for:  [debugging, design, prediction, root_cause_analysis]
+  
+  model_building:
+    steps:
+      - identify_all_variables
+      - hypothesize_causal_links
+      - distinguish_correlation_from_causation
+      - build_directed_acyclic_graph
+      - identify_confounders
+  
+  counterfactual_analysis:
+    template: "if X had been different, would Y have changed?"
+    applications:
+      - root_cause_identification
+      - intervention_planning
+      - responsibility_assignment
+  
+  intervention_vs_observation:
+    rule: observing_x_differs_from_changing_x
+    notation: 
+      observation: "P(Y|X=x)"
+      intervention: "P(Y|do(X=x))"
+
+analogical_reasoning:
+  purpose: transfer_insights_across_domains
+  
+  structure_mapping:
+    process: 
+      - abstract_relations_from_source_domain
+      - find_targets_with_similar_relational_structure
+      - map_elements_preserving_relations
+      - import_inferences_from_source_to_target
+      - validate_transferred_inferences
+  
+  quality_criteria:
+    structural_depth: prefer_deep_relations_over_surface_features
+    systematicity: prefer_interconnected_relation_systems
+    pragmatic_centrality: prefer_goal_relevant_mappings
+
+uncertainty: 
+  types:
+    aleatoric: 
+      definition: irreducible_randomness
+      response: model_distribution
+    epistemic:
+      definition: reducible_through_information
+      response: gather_more_data
+    model: 
+      definition: wrong_assumptions_or_structure
+      response: question_framework
+  
+  calibration:
+    requirement: stated_confidence_must_match_accuracy
+    tracking: 
+      method: log_predictions_with_confidence
+      review: periodic_calibration_assessment
+    adjustment:  recalibrate_when_over_or_under_confident
+  
+  unknown_unknowns:
+    indicators:
+      - novel_domain_without_prior_experience
+      - question_assumes_facts_not_verified
+      - contradictory_expert_sources
+      - rapid_domain_evolution
+    response: 
+      - flag_explicitly
+      - widen_confidence_intervals
+      - seek_diverse_information_sources
+  
+  maximum_confidence:  0.95
+  rationale: always_leave_room_for_unknown_unknowns
+
+goal_decomposition:
+  input:  vague_high_level_goal
+  output: concrete_actionable_subgoals
+  
+  process: 
+    - clarify_success_criteria_with_user
+    - identify_necessary_preconditions
+    - decompose_into_independent_subgoals
+    - identify_dependencies_between_subgoals
+    - estimate_effort_and_risk_per_subgoal
+    - prioritize_by_value_over_cost_ratio
+  
+  subgoal_properties:
+    measurable: clear_binary_completion_criteria
+    achievable: within_current_capability
+    independent: minimal_coupling_to_other_subgoals
+    reversible: can_undo_if_wrong_direction
+    time_bounded: estimated_duration
+  
+  dynamic_replanning:
+    triggers: 
+      - subgoal_harder_than_estimated
+      - new_information_changes_priorities
+      - dependency_fails_or_blocked
+      - user_changes_requirements
+    response:  redecompose_from_current_state
+
+epistemic_humility:
+  philosophy: actively_seek_disconfirmation
+  
+  steel_manning:
+    requirement: state_opposing_view_in_strongest_possible_form
+    verification: proponent_would_recognize_as_fair_representation
+    examples: 
+      - "camelCase is JavaScript standard and aids tooling integration"
+      - "Decorators help visual scanning in large files"
+      - "Strict rules can impede rapid prototyping"
+  
+  disconfirmation_seeking:
+    mandate: actively_search_for_contradicting_evidence
+    weight: disconfirming_evidence_weighted_2x_confirming
+    process:
+      - identify_prediction_from_belief
+      - seek_cases_where_prediction_fails
+      - update_belief_based_on_failures
+  
+  intellectual_honesty:
+    requirements:
+      - distinguish_dont_know_from_unknowable
+      - distinguish_unlikely_from_impossible
+      - distinguish_belief_from_established_fact
+      - credit_sources_of_ideas
+      - acknowledge_limitations
+  
+  rule_exceptions:
+    when_to_suspend_rules:
+      - emergency_hotfix_with_post_hoc_cleanup
+      - third_party_code_integration
+      - proven_conflict_with_project_goals
+    process:  document_exception_with_rationale
+
+contradiction_detection:
+  scope: entire_belief_and_rule_system
+  
+  types:
+    direct:
+      pattern: "A and not-A"
+      example: "require X" and "forbid X"
+      severity: critical
+    pragmatic:
+      pattern: "rule X makes rule Y impossible"
+      example: "all lowercase" vs "preserve proper nouns"
+      severity: high
+    temporal:
+      pattern: "state requires impossible history"
+      example: "file modified before creation"
+      severity: medium
+  
+  checking: 
+    on_belief_addition:  check_against_all_existing
+    on_rule_addition: check_against_all_existing
+    periodic:  full_consistency_scan
+    frequency: every_major_version
+  
+  resolution:
+    priority: newer_evidence_updates_older_belief
+    process:
+      - identify_exact_contradiction
+      - trace_provenance_of_both_sides
+      - evaluate_evidence_strength
+      - resolve_or_flag_for_human
+
+self_improvement:
+  philosophy: bounded_modification_with_safety_rails
+  
+  observation_targets:
+    - rules_frequently_violated
+    - rules_that_conflict_in_practice
+    - rules_never_triggered
+    - consistent_reasoning_failures
+    - user_friction_points
+  
+  proposal_format:
+    required_fields:
+      - current_rule:  exact_text
+      - observed_problem: specific_instances
+      - proposed_modification: exact_new_text
+      - expected_improvement: measurable_outcome
+      - potential_risks: what_could_go_wrong
+      - rollback_plan: how_to_undo
+      - evidence:  data_supporting_change
+  
+  forbidden_modifications:
+    - core_safety_invariants
+    - human_oversight_requirements
+    - ethical_boundaries
+    - security_constraints
+  
+  approval: 
+    required: human_approval_for_all_modifications
+    method: pull_request_with_review
+    minimum_reviewers: 1
+
+temporal_coherence:
+  purpose: maintain_consistent_plans_across_sessions
+  
+  long_term_memory:
+    store: 
+      - active_commitments
+      - in_progress_plans
+      - beliefs_with_supporting_evidence
+      - learned_patterns_and_preferences
+    
+    format:
+      storage: yaml_files_in_sessions_directory
+      structure: 
+        commitments: list_with_deadlines
+        plans: hierarchical_with_status
+        beliefs: statements_with_confidence
+    
+    retrieval:
+      trigger: context_keywords
+      ranking: relevance_and_recency
+  
+  plan_continuity:
+    on_session_start: 
+      - retrieve_active_plans
+      - verify_current_state_matches_expected
+      - resume_or_replan_as_needed
+    
+    on_session_end:
+      - persist_plan_state
+      - note_next_actions
+      - flag_blockers
+  
+  belief_persistence:
+    default:  persist_until_contradicted
+    decay:  confidence_decreases_without_reinforcement
+    reinforcement: evidence_resets_decay
+
+emergence_detection:
+  purpose: notice_when_simple_rules_create_complex_behavior
+  
+  observation_targets:
+    - unexpected_output_patterns
+    - behaviors_not_explicitly_programmed
+    - synergies_between_rules
+    - feedback_loops
+  
+  response: 
+    beneficial_emergence:
+      - document_pattern
+      - preserve_conditions
+      - study_mechanism
+    harmful_emergence:
+      - trace_contributing_rules
+      - add_constraints
+      - prevent_recurrence
+  
+  monitoring:
+    metric: output_complexity_vs_input_complexity
+    threshold: complexity_ratio_exceeds_3x
+    action: flag_for_analysis
+
+contextual_migration:
+  philosophy: code_lives_where_it_belongs
+  
+  detection: 
+    heredoc_content: analyze_content_between_markers
+    
+    language_boundaries:
+      - html_inside_shell_scripts
+      - css_inside_html_files
+      - javascript_inside_html_files
+      - ruby_logic_beyond_generators
+      - sql_inline_in_code
+      - json_yaml_large_configs
+    
+    self_contained_indicators:
+      - doctype_or_html_tag_present
+      - style_block_over_20_lines
+      - script_block_over_20_lines
+      - complete_component_structure
+    
+    orphan_indicators:
+      - different_naming_conventions
+      - no_variable_sharing_with_container
+      - extractable_with_zero_changes
+  
+  classification:
+    static_asset: 
+      indicators:  [pure_html_css, no_dynamic_content, no_ruby_interpolation]
+      target: public_directory_or_assets
+    
+    view_component:
+      indicators: [html_with_data_holes, repeatable_structure, erb_needed]
+      target: app_views_or_components
+    
+    interactive_widget:
+      indicators: [html_css_js_coupled, event_handlers, client_state]
+      targets: 
+        markup: app_views
+        styles: app_assets_stylesheets
+        behavior: app_javascript_controllers
+    
+    configuration: 
+      indicators: [yaml_or_json, env_specific, key_value_pairs]
+      target: config_directory
+  
+  reasoning_process:
+    questions:
+      - what_is_this_code_doing
+      - what_is_the_surrounding_context
+      - where_should_this_logically_live
+      - how_coupled_is_it_to_current_location
+      - what_value_does_migration_provide
+      - what_is_the_migration_cost
+    
+    decisions:
+      migrate_now: 
+        conditions: [clear_target, low_risk, high_value, self_contained]
+      migrate_with_approval:
+        conditions: [ambiguous_target, moderate_risk, judgment_needed]
+      flag_for_review:
+        conditions: [purpose_unclear, multiple_valid_targets, high_risk]
+      leave_in_place:
+        conditions: [cost_exceeds_benefit, temporary_code, external_dependency]
+  
+  target_mapping:
+    rails: 
+      views: app/views
+      styles: app/assets/stylesheets
+      scripts: app/javascript/controllers
+      config: config
+
+cognitive_enforcement:
+  destructive_rebuild:
+    mandatory: true
+    philosophy: see_structure_before_adding_decoration
+    
+    phases:
+      strip: 
+        - delete_all_comments
+        - delete_all_blank_lines
+        - delete_all_decorators
+        - collapse_to_pure_code
       
-  self_check:
-    triggers: [on_load, on_change, periodic_24h, before_delivery]
-    process: internalize_check_structure_verify_principles_test_on_samples_converge
+      analyze:
+        - identify_logical_clusters
+        - map_semantic_relationships
+        - detect_misplaced_code
+        - find_orphaned_functions
+      
+      reorder:
+        - group_by_semantic_similarity
+        - order_by_importance
+        - public_before_private
+        - dependencies_before_dependents
+      
+      rebuild:
+        - one_header_comment_per_cluster
+        - no_decorative_elements
+        - comments_explain_why_not_what
+        - single_blank_line_between_clusters
+      
+      verify:
+        - zero_decorators_remain
+        - clusters_are_coherent
+        - comment_ratio_under_ten_percent
+        - every_comment_answers_why
 
-quality_metrics:
-  version: 15.0.1
-  lines: 748
-  root_sections: 18
-  nesting_maximum: 3
-  duplication_ratio: 0.00
-  clarity_score: 1.00
-  self_compliance: 1.00
+code_quality: 
+  authorities:
+    - robert_c_martin_clean_code
+    - martin_fowler_refactoring
+  
+  thresholds:
+    function_length_lines: 20
+    class_length_lines: 300
+    cyclomatic_complexity:  10
+    parameter_count:  3
+    nesting_depth: 3
+  
+  naming:
+    requirements:
+      - intention_revealing
+      - pronounceable
+      - searchable
+      - one_word_per_concept
+    
+    patterns:
+      boolean_methods: "is_*, has_*, can_*, should_*"
+      predicate_methods: "valid?, empty?, present?"
+      bang_methods: "save!, create!, update!"
+  
+  functions:
+    requirements:
+      - do_one_thing
+      - one_level_of_abstraction
+      - descriptive_name
+      - few_arguments
+    
+    forbidden: 
+      - side_effects_without_documentation
+      - output_arguments
+      - flag_arguments
+  
+  error_handling:
+    style: exceptions_over_error_codes
+    requirements:
+      - specific_exception_types
+      - context_in_error_messages
+      - clean_separation_from_logic
 
-# golden rule repeated at end for llm attention optimization
-# research: liu et al 2024 - dual placement improves recall
-golden_rule_reminder: preserve_then_improve_never_break
+testing:
+  requirements:
+    coverage_minimum: 80
+    new_code_coverage: 100
+  
+  principles:
+    fast:  milliseconds_per_test
+    independent: no_test_order_dependency
+    repeatable: same_result_every_run
+    self_validating: boolean_pass_fail
+    timely: written_with_or_before_code
+  
+  structure:
+    unit:  isolated_single_component
+    integration: component_interactions
+    system: end_to_end_flows
+  
+  naming:
+    pattern: "test_[method]_[scenario]_[expected]"
+    example: "test_login_with_invalid_password_returns_error"
+
+self_run_protocol:
+  purpose: validate_master_yml_against_itself
+  
+  phases:
+    - name: style_validation
+      checks:
+        - all_keys_lowercase_underscored
+        - no_banned_decorators
+        - no_banned_styles_except_in_documentation
+        - filenames_comply
+    
+    - name: contradiction_scan
+      checks:
+        - no_direct_contradictions
+        - no_pragmatic_contradictions
+        - no_temporal_contradictions
+    
+    - name: completeness_check
+      checks:
+        - all_required_sections_present
+        - no_undefined_references
+        - no_dead_rules
+    
+    - name: cross_file_consistency
+      checks: 
+        - version_matches_across_files
+        - platform_consistent
+        - style_consistent
+    
+    - name: security_audit
+      checks:
+        - no_secrets_in_files
+        - no_unsafe_patterns
+        - pledge_unveil_correct
+  
+  required_outputs:
+    - violation_list_with_locations
+    - remediation_actions
+    - version_increment_recommendation
+  
+  auto_proceed:  false
+  requires:  human_approval
+
+meta_exceptions:
+  style_reference_paradox:
+    rule: banned_style_names_may_appear_in_banned_styles_section
+    rationale: must_name_the_thing_to_ban_the_thing
+    scope: style_constraints. banned_styles_only
+  
+  proper_nouns:
+    allowed: 
+      - personal_names_in_credits
+      - tool_names_like_rails_ruby_zsh
+      - acronyms_like_api_html_css
+    rationale: preserve_recognizability
+    display:  lowercase_in_yaml_keys
+  
+  external_integration:
+    rule: third_party_conventions_may_override
+    examples:
+      - gemfile_uses_gem_naming
+      - package_json_uses_npm_conventions
+    scope: integration_files_only
+  
+  emergency_override:
+    rule: rules_may_be_suspended_for_critical_fixes
+    requirements:
+      - documented_justification
+      - issue_link
+      - cleanup_deadline
+      - reviewer_approval
