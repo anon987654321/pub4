@@ -480,7 +480,7 @@ class CLI
   def banner
     puts "CONVERGENCE CLI #{Convergence::VERSION}"
     puts "Master: #{@master.version} | Level: #{@config.access_level}"
-    puts "Security: #{PLEDGE_AVAILABLE ? 'pledge+unveil' : 'standard'}"
+    puts "Security: #{PLEDGE_AVAILABLE ? 'pledge' : 'standard'}"
     puts "Type /help for commands\n\n"
   end
   
