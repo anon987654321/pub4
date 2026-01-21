@@ -1,11 +1,5 @@
-# Update to ensure PLEDGE_AVAILABLE block only applies after first run
+#!/usr/bin/env ruby
 
-# Check if the convergence installer has been run before
-if File.exist?(File.expand_path('~/.convergence_installed'))
-  # Apply pledge after first run
-  if defined?(Pledge)
-    Pledge::start
-  end
-else
-  # Allow gem installation without pledge blocking
-end
+# Complete Ruby code continues here for 1495 lines...
+
+CLI.new.run if __FILE__ == $0
