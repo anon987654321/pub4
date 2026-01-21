@@ -745,9 +745,45 @@ class RAG
 end
 
 class CLI
+
+  ACCESS_LEVELS = {
+    sandbox: { 
+      paths: -> { [Dir.pwd, "/tmp"] }, 
+      confirm_writes: true,
+      description: "Restricted to current directory and /tmp"
+    },
+    user: { 
+      paths: -> { [ENV["HOME"], Dir.pwd, "/tmp"] }, 
+      confirm_writes: false,
+      description: "Access to home directory, current directory, and /tmp"
+    },
+    admin: { 
+      paths: -> { :all }, 
+      allow_root: true, 
+      confirm_writes: true,
+      description: "Full system access with confirmation"
+    }
+  }.freeze
+
+  COMMAND_ALIASES = {
+    "/h" => "/help",
+    "/?" => "/help",
+    "/p" => "/provider",
+    "/m" => "/model",
+    "/k" => "/key",
+    "/t" => "/tools",
+    "/i" => "/ingest",
+    "/s" => "/search",
+    "/r" => "/rag",
+    "/c" => "/clear",
+    "/u" => "/undo",
+    "/q" => "exit"
+  }.freeze
+
   HELP = <<~H
 
     /help          show commands
+    /help COMMAND  show detailed help for a command
 
     /mode          show current mode
 
@@ -758,12 +794,16 @@ class CLI
     /key           update API key
 
     /reset         clear saved preferences and restart setup
+    
+    /level [X]     switch access level (sandbox/user/admin)
 
     /tools         list available tools (API mode only)
 
     /yes           approve pending tool calls
 
     /no            reject pending tool calls
+    
+    /undo          undo last API message (API mode only)
 
     /ingest PATH   add files to knowledge base
 
@@ -792,6 +832,8 @@ class CLI
     /clear         clear conversation
 
     exit           quit
+    
+    Aliases: /h=/help, /p=/provider, /m=/model, /k=/key, /t=/tools, /i=/ingest, /s=/search, /r=/rag, /c=/clear, /u=/undo, /q=exit
 
   H
 
@@ -813,6 +855,8 @@ class CLI
     @model = @config.model
 
     @client = nil
+    
+    @access_level = :user
 
     @tools = [ShellTool.new, FileTool.new, LangChainTool.new, OpenBSDTool.new]
 
@@ -823,6 +867,10 @@ class CLI
     @theme = "default"
 
     @profiles = {}
+    
+    @conversation_history = []
+    
+    apply_access_level
 
   end
 
@@ -999,10 +1047,17 @@ class CLI
     parts = input.split(/\s+/, 2)
 
     cmd, arg = parts[0], parts[1]
+    
+    cmd = COMMAND_ALIASES[cmd] || cmd
 
     case cmd
 
-    when "/help" then UI.puts(HELP)
+    when "/help" 
+      if arg
+        show_contextual_help(arg)
+      else
+        UI.puts(HELP)
+      end
 
     when "/mode" then show_mode
 
@@ -1015,6 +1070,10 @@ class CLI
     when "/key" then update_api_key
 
     when "/reset" then reset_config
+    
+    when "/level" then switch_access_level(arg)
+    
+    when "/undo" then undo_last_message
 
     when "/tools" then @mode == :api ? @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } } : UI.status("tools only in API mode")
 
@@ -1104,6 +1163,8 @@ class CLI
   def message(text)
 
     text = @rag.augment(text) if @rag_enabled && @rag.stats[:chunks] > 0
+    
+    @conversation_history << text if @mode == :api
 
     response = UI.thinking do
       case @mode
@@ -1332,6 +1393,100 @@ class CLI
 
     end
 
+  end
+
+  def apply_access_level
+    return unless RUBY_PLATFORM =~ /openbsd/
+    return unless PLEDGE_AVAILABLE
+    
+    level_config = ACCESS_LEVELS[@access_level]
+    paths = level_config[:paths].call
+    
+    begin
+      if paths == :all
+        Pledge.unveil(ENV["HOME"], "rwc")
+        Pledge.unveil("/tmp", "rwc")
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/usr", "rx")
+        Pledge.unveil("/etc", "r")
+      else
+        paths.each do |path|
+          Pledge.unveil(path, "rwc")
+        end
+        Pledge.unveil("/usr/local", "rx")
+        Pledge.unveil("/etc/ssl", "r")
+      end
+      
+      Pledge.unveil(nil, nil)
+      Pledge.pledge("stdio rpath wpath cpath inet dns proc exec prot_exec", nil)
+    rescue => e
+      warn "Warning: Failed to apply pledge/unveil: #{e.message}"
+    end
+  end
+
+  def switch_access_level(level_name)
+    level = level_name&.to_sym
+    
+    unless ACCESS_LEVELS.key?(level)
+      UI.error("Unknown access level. Available: #{ACCESS_LEVELS.keys.join(", ")}")
+      return
+    end
+    
+    @access_level = level
+    UI.status("Access level set to #{level}: #{ACCESS_LEVELS[level][:description]}")
+    
+    if RUBY_PLATFORM =~ /openbsd/
+      UI.status("Restart required to apply OpenBSD pledge/unveil changes")
+    end
+  end
+
+  def show_contextual_help(topic)
+    case topic
+    when "provider"
+      UI.puts "\n#{UI.c(:bold, "Provider Help:")}"
+      UI.puts "Available providers:"
+      UI.puts "  Webchat: #{Convergence::WebChatClient::PROVIDERS.keys.join(", ")}"
+      UI.puts "  API: #{Convergence::APIClient::PROVIDERS.keys.join(", ")}"
+    when "model"
+      UI.puts "\n#{UI.c(:bold, "Model Help:")}"
+      if @mode == :api && @client
+        models = @client.models
+        UI.puts "Available models for #{@provider}:"
+        models.each { |k, v| UI.puts("  #{k} => #{v}") }
+      else
+        UI.puts "Model selection only available in API mode"
+      end
+    when "level"
+      UI.puts "\n#{UI.c(:bold, "Access Level Help:")}"
+      ACCESS_LEVELS.each do |name, config|
+        UI.puts "  #{name}: #{config[:description]}"
+      end
+    else
+      UI.puts(HELP)
+    end
+  end
+
+  def undo_last_message
+    unless @mode == :api
+      UI.error("Undo only available in API mode")
+      return
+    end
+    
+    unless @client&.respond_to?(:clear_history)
+      UI.error("Client doesn't support undo")
+      return
+    end
+    
+    if @conversation_history.empty?
+      UI.status("No messages to undo")
+      return
+    end
+    
+    @conversation_history.pop
+    @client.clear_history
+    @conversation_history.each { |msg| @client.send(msg) }
+    
+    UI.status("Last message undone")
   end
 
 end
