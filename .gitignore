@@ -31,13 +31,15 @@ vendor/bundle/
 !/tmp/.keep
 
 # Prevent report accumulation (file_discipline)
-*REPORT*.md
-*STATUS*.md
-*SUMMARY*.md
-*COMPLETE*.md
-*GUIDE*.md
+*_REPORT.md
+*_STATUS.md
+*_SUMMARY.md
+IMPLEMENTATION_*.md
+INTERACTIVE_*.md
+CLI_*_README.md
 
 # Prevent cruft accumulation
-*.TXT
+UT*.TXT
+TEMP_*.md
 *.patch
 *.diff
