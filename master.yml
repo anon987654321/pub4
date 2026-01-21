@@ -1,2 +1,265 @@
 banned_tools: [python, bash, sed, awk, grep, wc, head, tail, sort, find, sudo]
-  preferred_tools: [ruby, zsh, doas]
+preferred_tools: [ruby, zsh, doas]
+
+cognitive_enforcement:
+  preflight_protocol:
+    mandatory_rule_acknowledgment:
+      description: "Before any action, quote exact rule text verbatim"
+      execution: "Agent must restate the specific rule being applied"
+      purpose: "Prevent interpretation drift and ensure literal compliance"
+    
+    anchoring_checkpoints:
+      frequency: "Every 5 operations"
+      action: "Stop and verify alignment with original rules"
+      purpose: "Prevent cognitive drift from governance principles"
+
+  seven_pass_filter_stack:
+    description: "Sequential analysis with output at each level"
+    
+    pass_1_literal:
+      name: "Character-by-character scan"
+      checks:
+        - "Banned patterns (decorators, symbols)"
+        - "Control characters"
+        - "Encoding issues"
+        - "Whitespace violations"
+      output_required: "List of literal violations found"
+    
+    pass_2_lexical:
+      name: "Word-by-word analysis"
+      checks:
+        - "Banned vocabulary"
+        - "Naming conventions"
+        - "Magic strings"
+        - "Redundant words"
+      output_required: "List of lexical violations found"
+    
+    pass_3_structural:
+      name: "Line-by-line structure"
+      checks:
+        - "Decorator lines"
+        - "Comment density ratio"
+        - "Indentation patterns"
+        - "Blank line usage"
+      output_required: "Structural violations and metrics"
+    
+    pass_4_semantic:
+      name: "Meaning and intent"
+      checks:
+        - "Purpose clarity"
+        - "Abstraction level appropriateness"
+        - "Semantic coherence"
+        - "Information value"
+      output_required: "Semantic quality assessment"
+    
+    pass_5_strunk_white:
+      name: "Writing clarity"
+      principles:
+        - "Omit needless words"
+        - "Use active voice"
+        - "Use concrete language"
+        - "Avoid fancy words"
+      output_required: "Writing quality score and issues"
+    
+    pass_6_aesthetic:
+      name: "Visual noise ratio"
+      checks:
+        - "Information density"
+        - "Visual flow"
+        - "Cognitive load"
+        - "Beauty metrics"
+      output_required: "Aesthetic quality score"
+    
+    pass_7_meaning:
+      name: "Final existential pass"
+      question: "Does every line justify its existence?"
+      action: "Remove anything that fails this test"
+      output_required: "List of lines that lack justification"
+
+  banned_decorators:
+    description: "Explicit regex patterns for forbidden decorative elements"
+    
+    patterns:
+      horizontal_rules: '/^[─━═▬\-_=]{3,}/'
+      section_boxes: '/# [─━═▬\-_=]{3,}.*[─━═▬\-_=]{3,}/'
+      bracket_decorators: '/\[\.\.\.\]|\[…\]|\[\s*\]$/'
+      ascii_art: '/[╔╗╚╝║│┌┐└┘├┤┬┴┼]/'
+      repeated_symbols: '/(.) \1{4,}/'
+      emoji_decoration: '/[\x{1F300}-\x{1F9FF}]/'
+    
+    enforcement:
+      level: "ZERO_TOLERANCE"
+      action: "Immediate removal without replacement"
+      exceptions: "None. No decorative elements permitted."
+
+  creativity_protocol:
+    minimum_alternatives: 15
+    distinct_required: 12
+    
+    forced_categories:
+      conventional: 3
+      unconventional: 3
+      radical: 3
+      minimalist: 2
+      maximalist: 2
+      orthogonal: 2
+    
+    anti_anchoring:
+      rule: "Generate ALL alternatives before evaluating ANY"
+      purpose: "Prevent early convergence on suboptimal solutions"
+    
+    synthesis_phase:
+      action: "Cherry-pick best elements across all alternatives"
+      output: "Hybrid solution combining superior aspects"
+
+  deep_reasoning_protocol:
+    description: "Seven levels of analysis depth"
+    
+    levels:
+      level_1_surface:
+        question: "What does this literally say/do?"
+        output: "Literal interpretation"
+      
+      level_2_structural:
+        question: "How is this organized?"
+        output: "Structural analysis"
+      
+      level_3_semantic:
+        question: "What does this mean?"
+        output: "Semantic interpretation"
+      
+      level_4_contextual:
+        question: "How does this relate to surroundings?"
+        output: "Contextual relationships"
+      
+      level_5_systemic:
+        question: "How does this affect the whole system?"
+        output: "System-wide impact assessment"
+      
+      level_6_philosophical:
+        question: "What principles does this embody?"
+        output: "Philosophical foundations"
+      
+      level_7_aesthetic:
+        question: "Is this beautiful?"
+        output: "Aesthetic judgment"
+
+  adversarial_audit:
+    description: "Expanded persona review with veto powers"
+    
+    personas:
+      literalist:
+        weight: 0.20
+        veto_power: true
+        role: "Character-by-character rule compliance"
+        failure_mode: "Any literal rule violation"
+      
+      skeptic:
+        weight: 0.15
+        veto_power: false
+        role: "Evidence for every claim"
+        failure_mode: "Unsubstantiated assertions"
+      
+      minimalist:
+        weight: 0.15
+        veto_power: false
+        role: "What can we delete?"
+        failure_mode: "Unnecessary elements present"
+      
+      security_analyst:
+        weight: 0.15
+        veto_power: true
+        role: "Attack surface analysis"
+        failure_mode: "Security vulnerabilities"
+      
+      maintainer:
+        weight: 0.15
+        veto_power: false
+        role: "3am debuggability"
+        failure_mode: "Unclear code paths"
+      
+      aesthete:
+        weight: 0.10
+        veto_power: false
+        role: "Beauty and simplicity"
+        failure_mode: "Ugly or complex solutions"
+      
+      newcomer:
+        weight: 0.10
+        veto_power: false
+        role: "5-minute understandability"
+        failure_mode: "Obscure or confusing code"
+
+  destructive_rebuild_protocol:
+    description: "For editing files - complete structural reformation"
+    
+    step_1_strip:
+      action: "Delete ALL comments, ALL blank lines, ALL decorators"
+      purpose: "Remove all non-functional elements"
+      output: "Pure code skeleton"
+    
+    step_2_analyze:
+      action: "Map semantic relationships, detect misplaced code"
+      purpose: "Understand actual structure vs. apparent structure"
+      output: "Semantic dependency graph"
+    
+    step_3_reorder:
+      action: "Group by semantic similarity, order by importance"
+      purpose: "Optimize for understanding and flow"
+      output: "Reordered code blocks"
+    
+    step_4_rebuild_comments:
+      rules:
+        - "One clean '# SectionName' per cluster"
+        - "'# why' inline comments only for non-obvious logic"
+        - "Zero decorative elements"
+        - "Zero 'what' comments (code shows what)"
+      output: "Minimal essential comments"
+    
+    step_5_spacing:
+      rule: "Single blank line between clusters only"
+      purpose: "Visual separation without noise"
+      output: "Clean, minimal spacing"
+
+  strict_adherence_mechanisms:
+    zero_interpretation:
+      rule: "Rules are literal, not guidelines"
+      enforcement: "No creative interpretation permitted"
+    
+    maximum_literalism:
+      rule: "When in doubt, apply rules more strictly"
+      purpose: "Prevent erosion through interpretation"
+    
+    drift_prevention:
+      checkpoints: "Every 10 lines, every section boundary"
+      action: "Verify continued compliance with original rules"
+    
+    compliance_proof:
+      requirement: "Every output must demonstrate rule adherence"
+      format: "Explicit citation of rules being followed"
+
+  continuous_reassessment:
+    triggers:
+      - "Every 10 lines written"
+      - "Every section boundary"
+      - "Before file writes"
+      - "After any significant change"
+    
+    checks:
+      - "Drift from original rules?"
+      - "Complexity increased?"
+      - "Beauty decreased?"
+      - "Clarity reduced?"
+    
+    actions:
+      drift_detected: "Stop, revert, restart from last checkpoint"
+      complexity_increase: "Simplify immediately"
+      beauty_decrease: "Refactor for elegance"
+      clarity_reduction: "Rewrite for understanding"
+
+beauty_standards:
+  unixy: "every character must earn its place"
+
+output_format:
+  constraints:
+    - "no_brackets_for_decoration"

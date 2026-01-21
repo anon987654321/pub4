@@ -8,9 +8,7 @@ require "json"
 require "time"
 require "fileutils"
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Bootstrap & Configuration
-# ──────────────────────────────────────────────────────────────────────────────
+# Bootstrap
 BOOTSTRAP = PostproBootstrap.run
 $logger = Logger.new("postpro.log", "daily", level: Logger::DEBUG)
 $cli_logger = Logger.new($stdout, level: Logger::INFO)
@@ -22,9 +20,7 @@ REPLIGEN_PRESENT = File.exist?("repligen.rb")
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Film Stock Database: Emotional Parameters
-# ──────────────────────────────────────────────────────────────────────────────
+# Film Stock Database
 STOCKS = {
   kodak_portra:       { grain: 15, gamma: 0.65, toe: 0.10, shoulder: 0.88, lift: 0.05 },
   kodak_vision3_50d:  { grain: 8,  gamma: 0.63, toe: 0.08, shoulder: 0.92, lift: 0.02 },
@@ -35,9 +31,7 @@ STOCKS = {
   print_3510:         { contrast: 1.05, saturation: 1.0 }
 }.freeze
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Core Math & Physics Models
-# ──────────────────────────────────────────────────────────────────────────────
+# Core Math
 def to_linear(img) = img.gamma(gamma: 2.2)
 def to_gamma(img)  = img.gamma(gamma: 1/2.2)
 def lum(img)       = img.colourspace("grey16").cast("float") / 65535.0
@@ -89,9 +83,7 @@ def simplex2d(x, y)
   n - n.floor
 end
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Emotional Preset System: Curated Psychological Profiles
-# ──────────────────────────────────────────────────────────────────────────────
+# Emotional Presets
 EMOTIONAL_PRESETS = {
   portrait: {
     steps: [
@@ -144,9 +136,7 @@ def apply_emotional_preset(image, preset_name: :portrait)
   result
 end
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Original FX Library (Formatted for consistency)
-# ──────────────────────────────────────────────────────────────────────────────
+# Effects Library
 def apply_vintage_lens(image, lens_type: "zeiss", intensity: 0.7)
   case lens_type
   when "zeiss"
@@ -199,9 +189,7 @@ def shadow_lift(image, lift=0.15, preserve_blacks=true)
   image.linear([1.0, 1.0, 1.0], [lift_rgb * 255 * lift])
 end
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Main Application Flow
-# ──────────────────────────────────────────────────────────────────────────────
+# Main Processing
 def process_file(file, variations, preset_name=nil, recipe_data=nil, random_effects=nil, mode="professional")
   image = load_image(file)
   return 0 unless image
@@ -243,9 +231,7 @@ def process_file(file, variations, preset_name=nil, recipe_data=nil, random_effe
   processed_count
 end
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CLI & Execution
-# ──────────────────────────────────────────────────────────────────────────────
+# CLI
 def auto_launch
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))
     input = auto_mode
