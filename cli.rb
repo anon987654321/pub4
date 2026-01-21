@@ -1,1494 +1,642 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# CONVERGENCE CLI v∞.15.2 — Multi-LLM, LangChain, OpenBSD, Zsh/Starship Inspired
-
-# Self-installs gems (--user-install), FREE webchat (Ferrum), API (Anthropic), RAG, chains, OpenBSD tools.
-
-# Zsh/Starship: Plugin ecosystem, customizable themes, shell expansions.
+# CONVERGENCE CLI v∞.17.0 - Hybrid API-first LLM client for OpenBSD
+# Single-file design with OpenRouter API, tiered permissions, screen sessions
 
 require "json"
 require "yaml"
-
 require "net/http"
-
 require "uri"
-
 require "fileutils"
-
 require "open3"
-
 require "timeout"
-
 require "digest"
-
 require "io/console"
+require "readline"
 
-PLEDGE_AVAILABLE = if RUBY_PLATFORM =~ /openbsd/
+# OpenBSD pledge/unveil support (deferred to runtime)
+PLEDGE_AVAILABLE = if RUBY_PLATFORM.include?("openbsd")
   begin
-
     require "pledge"
-
-    Pledge.pledge("stdio rpath wpath cpath inet dns proc exec prot_exec", nil) rescue nil
-
-    Pledge.unveil(ENV["HOME"], "rwc") rescue nil
-
-    Pledge.unveil("/tmp", "rwc") rescue nil
-
-    Pledge.unveil("/usr/local", "rx") rescue nil
-
-    Pledge.unveil("/etc/ssl", "r") rescue nil
-
-    Pledge.unveil(nil, nil) rescue nil
-
     true
-
   rescue LoadError
-
     false
-
   end
-
 else
-
   false
-
 end
 
-FIRST_RUN = !File.exist?(File.expand_path("~/.convergence_installed"))
-def ensure_gem(name, require_as = nil)
-  require(require_as || name)
-
-  true
-
-rescue LoadError
-
-  return false if ENV["NO_AUTO_INSTALL"]
-
-  warn "installing #{name}..." if FIRST_RUN
-
-  result = system("gem install #{name} --user-install --no-document --quiet 2>/dev/null")
-
-  return false unless result
-
-  Gem.clear_paths
-
-  begin
-
-    require(require_as || name)
-
-    true
-
-  rescue LoadError
-
-    false
-
-  end
-
-end
-
-class MasterConfig
-  attr_reader :version, :banned_tools
-
-  SEARCH_PATHS = [
-
-    File.expand_path("~/pub/master.yml"),
-
-    File.join(Dir.pwd, "master.yml"),
-
-    File.join(File.dirname(__FILE__), "master.yml")
-
-  ].freeze
-
-  DANGEROUS_PATTERNS = [
-
-    "rm -rf /",
-
-    "rm -rf /*",
-
-    "rm -rf ~",
-
-    "rm -rf $HOME",
-
-    "> /etc/passwd",
-
-    "> /etc/shadow",
-
-    "> /etc/sudoers",
-
-    "| sh",
-
-    "| bash"
-
-  ].freeze
-
-  def initialize
-
-    @config = load_config
-
-    @version = @config["version"] || @config.dig("meta", "version")
-
-    @banned_tools = @config.dig("constraints", "banned_tools") || []
-
-    @banned_regex = Regexp.new("\\b(" + @banned_tools.map { |t| Regexp.escape(t) }.join('|') + ")\\b") if @banned_tools.any?
-
-  end
-
-  def load_config
-
-    path = SEARCH_PATHS.find { |p| File.exist?(p) }
-
-    path ? YAML.safe_load_file(path, aliases: false) : default_config
-
-  rescue => e
-
-    warn "master.yml error: #{e.message}, using defaults"
-
-    default_config
-
-  end
-
-  def banned?(command) = @banned_regex ? command =~ @banned_regex : false
-
-  def banned_tool(command)
-    return nil unless @banned_regex && command =~ @banned_regex
-    # Use match to capture the actual matched tool from the regex groups
-    match = command.match(@banned_regex)
-    match ? match[1] : nil
-  end
-
-  def dangerous?(command) = DANGEROUS_PATTERNS.any? { |p| command.include?(p) }
-
-  def suggest_alternative(tool)
-
-    case tool
-
-    when "sed" then "use zsh: ${var//old/new}"
-
-    when "awk" then "use zsh: ${${(s: :)line}[2]}"
-
-    when "bash" then "use zsh patterns"
-
-    when "wc" then "use zsh: ${#lines}"
-
-    when "head" then "use zsh: ${lines[1,10]}"
-
-    when "tail" then "use zsh: ${lines[-5,-1]}"
-
-    when "python" then "use ruby"
-
-    when "sudo" then "use doas"
-
-    else "use zsh/ruby"
-
-    end
-
-  end
-
-  private
-
-  def default_config = { "meta" => { "version" => "∞.15.2" }, "constraints" => { "banned_tools" => %w[python bash sed awk wc head tail find sudo] } }
-
-end
-
-MASTER_CONFIG = MasterConfig.new
-def find_browser = %w[/usr/bin/chromium /usr/bin/google-chrome /usr/local/bin/chrome].find { |p| File.executable?(p) }
-def check_browser
-  return true if find_browser
-
-  warn "no browser - install chromium or set ANTHROPIC_API_KEY"
-
-  false
-
-end
-
-TTY_AVAILABLE = ensure_gem("tty-prompt") && ensure_gem("tty-spinner") && ensure_gem("pastel")
-FERRUM = ensure_gem("ferrum")
-
-ANTHROPIC = ensure_gem("anthropic")
-
-LANGCHAIN = ensure_gem("langchainrb")
-
-if FIRST_RUN
-  FileUtils.touch(File.expand_path("~/.convergence_installed"))
-
-  warn "setup complete\n"
-
-end
-
-unless ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-")
-  unless FERRUM && check_browser
-
-    warn "no backend"
-
-    exit 1
-
-  end
-
-end
-
-module Log
-  def self.info(msg, **ctx) = $stderr.puts JSON.generate({ t: Time.now.strftime("%H:%M:%S"), l: :info, m: msg }.merge(ctx)) if ENV["LOG_JSON"]
-
-  def self.warn(msg, **ctx) = $stderr.puts JSON.generate({ t: Time.now.strftime("%H:%M:%S"), l: :warn, m: msg }.merge(ctx)) if ENV["LOG_JSON"]
-
-end
-
-module UI
-  extend self
-
-  def init = (@pastel = TTY_AVAILABLE ? Pastel.new : nil; @prompt = TTY_AVAILABLE ? TTY::Prompt.new : nil)
-
-  def puts(text = "") = Kernel.puts(text)
-
-  def c(style, text) = @pastel ? @pastel.send(style, text) : text
-
-  def banner(mode = nil)
-    puts "\n#{c(:bold, "╔═══════════════════════════════════════╗")}"
-    puts "#{c(:bold, "║")}   #{c(:cyan, "CONVERGENCE CLI")} #{c(:bright_yellow, "v∞.15.2")}        #{c(:bold, "║")}"
-    puts "#{c(:bold, "╚═══════════════════════════════════════╝")}\n"
-
-    puts "mode: #{mode}" if mode
-
-    puts "master.yml: v#{MASTER_CONFIG.version}" if MASTER_CONFIG.version
-
-    puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}" if RUBY_PLATFORM =~ /openbsd/
-
-    puts "type /help for commands\n"
-
-  end
-
-  def prompt = TTY ? @prompt.ask(">", required: false)&.strip : (print "> "; $stdin.gets&.chomp)
-
-  def thinking(msg = "thinking") = TTY ? (s = TTY::Spinner.new("#{msg}...", format: :dots); s.auto_spin; yield.tap { s.success("") }) : (print "#{msg}... "; yield.tap { puts "done" })
-
-  def response(text) = puts("\n#{text}\n")
-
-  def error(msg) = puts(c(:red, "error: #{msg}"))
-
-  def status(msg) = puts(c(:dim, msg))
-
-  def ask_yes_no(question, default: true)
-    prompt_text = default ? "#{question} [Y/n]" : "#{question} [y/N]"
-    
-    if TTY && @prompt
-      @prompt.yes?(prompt_text)
-    else
-      print "#{prompt_text}: "
-      answer = $stdin.gets&.chomp
-      return default if answer.nil? || answer.empty?
-      answer.downcase.start_with?("y")
-    end
-  end
-
-  def ask_choice(question, choices)
-    if TTY && @prompt
-      @prompt.select(question, choices)
-    else
-      puts question
-      choices.each_with_index { |choice, i| puts "  #{i + 1}. #{choice}" }
-      print "Enter number (1-#{choices.size}): "
-      idx = $stdin.gets&.chomp&.to_i
-      return nil if idx < 1 || idx > choices.size
-      choices[idx - 1]
-    end
-  end
-
-  def ask_secret(prompt_text)
-    if TTY && @prompt
-      @prompt.mask(prompt_text)
-    else
-      print "#{prompt_text}: "
-      $stdin.noecho(&:gets).chomp.tap { puts }
-    end
-  end
-end
-
-class WebChat
-  PROVIDERS = {
-
-    "claude" => { url: "https://claude.ai", input: 'div[contenteditable="true"]', response: '.font-claude-message' },
-
-    "grok" => { url: "https://grok.x.ai", input: 'textarea[placeholder*="Ask"]', response: '[data-testid="message-content"]' },
-
-    "deepseek" => { url: "https://chat.deepseek.com", input: 'textarea#chat-input', response: '.markdown-body' },
-
-    "z.ai" => { url: "https://z.ai", input: 'textarea', response: '.response-text' },
-
-    "lmsys" => { url: "https://chat.lmsys.org", input: 'textarea[data-testid="textbox"]', response: '.message.bot' },
-
-    "chatgpt" => { url: "https://chatgpt.com", input: 'textarea#prompt-textarea', response: '.markdown' },
-
-    "gemini" => { url: "https://gemini.google.com", input: 'textarea', response: '.model-response' },
-
-    "glm" => { url: "https://chatglm.cn", input: 'textarea.chat-input', response: '.message-content' },
-
-    "huggingchat" => { url: "https://huggingface.co/chat", input: 'textarea', response: '.prose' },
-
-    "perplexity" => { url: "https://perplexity.ai", input: 'textarea', response: '.prose' },
-
-    "copilot" => { url: "https://copilot.microsoft.com", input: 'textarea', response: '.response-message' },
-
-    "poe" => { url: "https://poe.com", input: 'textarea', response: '.Message_botMessageBubble' }
-
-  }
-
-  def initialize(provider = "claude")
-
-    @provider = provider
-
-    @cfg = PROVIDERS[provider] || PROVIDERS["claude"]
-
-    @browser = Ferrum::Browser.new(headless: true, timeout: 90, browser_path: find_browser, browser_options: { "no-sandbox": nil })
-
-    @page = @browser.create_page
-
-    @page.go_to(@cfg[:url])
-
-    wait_ready
-
-  end
-
-  def send(text)
-
-    el = find(@cfg[:input]) or raise "input not found"
-
-    el.focus; el.type(text); sleep 0.2; el.type(:Enter)
-
-    wait_response
-
-  end
-
-  def screenshot = @page.screenshot(path: "/tmp/cli_screenshot.png") && "/tmp/cli_screenshot.png"
-
-  def page_source = @page.body
-
-  def quit = @browser&.quit
-
-  private
-
-  def find(selectors) = selectors.split(", ").each { |s| (el = @page.at_css(s) rescue nil) and return el }; nil
-
-  def wait_ready = (deadline = Time.now + 30; until find(@cfg[:input]) or Time.now > deadline; sleep 0.5; end)
-
-  def wait_response
-
-    deadline, last, stable = Time.now + 90, "", 0
-
-    loop do
-
-      raise "timeout" if Time.now > deadline
-
-      elements = @page.css(@cfg[:response]) rescue []
-
-      if elements.any?
-
-        current = elements.last.text.strip
-
-        if current == last && !current.empty?
-
-          return current.sub(/^(Model [AB]?:?s*|Response:?s*)/i, "").strip if (stable += 1) >= 3
-
-        else
-
-          stable, last = 0, current
-
-        end
-
-      end
-
-      sleep 1
-
-    end
-
-  end
-
-end
-
-class APIClient
-  def initialize(tools = [])
-
-    @client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
-
-    @messages = []
-
-    @tools = tools
-
-    @model = ENV["CLAUDE_MODEL"] || "claude-sonnet-4-20250514"
-
-    @pending_tool_calls = []
-
-  end
-
-  def send(text, auto_tools: false)
-
-    @messages << { role: "user", content: text }
-
-    call_api(auto_tools)
-
-  end
-
-  def process_tool_results(results)
-
-    @messages << { role: "user", content: results }
-
-    call_api(false)
-
-  end
-
-  def pending_tools? = @pending_tool_calls.any?
-
-  def pending_tools = @pending_tool_calls
-
-  private
-
-  def call_api(auto_tools)
-
-    params = { model: @model, max_tokens: 8192, messages: @messages }
-
-    params[:tools] = @tools.flat_map { |t| t.class.schema } if @tools.any?
-
-    response = @client.messages(**params)
-
-    content = response["content"]
-
-    @messages << { role: "assistant", content: content }
-
-    tool_blocks = content.select { |c| c["type"] == "tool_use" }
-
-    if tool_blocks.any?
-
-      @pending_tool_calls = tool_blocks
-
-      return "[tool calls pending]" unless auto_tools
-
-      execute_tools
-
-    else
-
-      @pending_tool_calls = []
-
-      content.map { |c| c["text"] }.compact.join("\n")
-
-    end
-
-  end
-
-  def execute_tools
-
-    results = @pending_tool_calls.map do |tc|
-
-      tool = @tools.find { |t| t.class.schema.any? { |s| s[:name] == tc["name"] } }
-
-      result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown" }
-
-      { type: "tool_result", tool_use_id: tc["id"], content: JSON.generate(result) }
-
-    end
-
-    @pending_tool_calls = []
-
-    process_tool_results(results)
-
-  end
-
-end
-
-module ToolDSL
-  def self.extended(base) = base.instance_variable_set(:@schema, [])
-
-  def tool(name, desc, props = {}, required = []) = @schema << { name: name.to_s, description: desc, input_schema: { type: "object", properties: props, required: required.map(&:to_s) } }
-
-  def schema = @schema
-
-end
-
-class ShellTool
-  extend ToolDSL
-
-  tool :shell, "Execute shell command", { command: { type: "string", description: "command" } }, [:command]
-
-  def shell(command:)
-
-    if MASTER_CONFIG.banned?(command)
-
-      banned_tool = MASTER_CONFIG.banned_tool(command)
-
-      return { error: "blocked: #{banned_tool}", alternative: MASTER_CONFIG.suggest_alternative(banned_tool) }
-
-    end
-
-    return { error: "blocked: dangerous pattern" } if MASTER_CONFIG.dangerous?(command)
-
-    shell_path = ["/usr/local/bin/zsh", "/bin/zsh"].find { |s| File.executable?(s) } || "/bin/sh"
-
-    stdout, stderr, status = Open3.capture3(shell_path, "-c", command)
-
-    { stdout: stdout[0..4000], stderr: stderr[0..1000], exit: status.exitstatus }
-
-  rescue => e
-
-    { error: e.message }
-
-  end
-
-end
-
-class FileTool
-  extend ToolDSL
-
-  tool :read_file, "Read file", { path: { type: "string" } }, [:path]
-
-  tool :write_file, "Write file", { path: { type: "string" }, content: { type: "string" } }, [:path, :content]
-
-  tool :list_dir, "List directory", { path: { type: "string" } }, [:path]
-
-  ALLOWED = [ENV["HOME"], Dir.pwd, "/tmp"].compact
-
-  def read_file(path:) = allowed?(path) && File.exist?(path) ? { content: File.read(path)[0..50000], size: File.size(path) } : { error: "access denied" }
-
-  def write_file(path:, content:) = allowed?(path) ? (File.write(path, content); { ok: true }) : { error: "access denied" }
-
-  def list_dir(path:)
-
-    return { error: "access denied" } unless allowed?(path)
-
-    entries = Dir.entries(path).reject { |e| e.start_with?(".") }.map { |e| full = File.join(path, e); { name: e, type: File.directory?(full) ? "dir" : "file" } }
-
-    { entries: entries.sort_by { |e| [e[:type] == "dir" ? 0 : 1, e[:name]] } }
-
-  rescue => e
-
-    { error: e.message }
-
-  end
-
-  private
-
-  def allowed?(path) = ALLOWED.any? { |a| File.expand_path(path).start_with?(File.expand_path(a)) }
-
-end
-
-class LangChainTool
-  extend ToolDSL
-
-  tool :run_chain, "Run LangChain chain", { chain_json: { type: "string" } }, [:chain_json]
-
-  tool :rag_search, "RAG search", { query: { type: "string" } }, [:query]
-
-  def initialize = @llm = Langchain::LLM::Anthropic.new(api_key: ENV["ANTHROPIC_API_KEY"]) if ENV["ANTHROPIC_API_KEY"]
-
-  def run_chain(chain_json:) = LANGCHAIN ? { result: Langchain::Chain.new(@llm).call(JSON.parse(chain_json)["inputs"]) } : { error: "langchainrb unavailable" } rescue { error: $!.message }
-
-  def rag_search(query:) = { results: Langchain::Vectorsearch::Chroma.new.similarity_search(query, k: 3).map { |r| r[:text] } } rescue { error: "vectorstore unavailable" }
-
-end
-
-class OpenBSDTool
-  extend ToolDSL
-
-  tool :fetch_news, "Fetch OpenBSD news", {}, []
-
-  tool :search_packages, "Search OpenBSD packages", { query: { type: "string" } }, [:query]
-
-  def fetch_news
-
-    uri = URI("https://www.openbsd.amsterdam/news/")
-
-    response = Net::HTTP.get(uri)
-
-    news = response.scan(/<h2>(.*?)<\/h2>/).flatten.first(5)
-
-    { news: news }
-
-  rescue => e
-
-    { error: e.message }
-
-  end
-
-  def search_packages(query:)
-
-    uri = URI("https://www.openbsd.amsterdam/packages/?q=#{URI.encode_www_form_component(query)}")
-
-    response = Net::HTTP.get(uri)
-
-    packages = response.scan(/<a href=".*?">(.*?)<\/a>/).flatten.first(10)
-
-    { packages: packages }
-
-  rescue => e
-
-    { error: e.message }
-
-  end
-
-end
-
-class RAG
-  def initialize = (@chunks = []; @embeddings = {}; @provider = detect_provider)
-
-  def ingest(path)
-
-    return ingest_dir(path) if File.directory?(path)
-
-    text = File.read(path) rescue nil
-
-    return 0 unless text
-
-    chunks = chunk_text(text, source: path)
-
-    chunks.each { |c| vec = embed(c[:text]); @chunks << c; @embeddings[c[:id]] = vec if vec }
-
-    chunks.size
-
-  end
-
-  def search(query, k: 5)
-    qvec = embed(query)
-    return [] unless qvec
-    
-    @chunks.map { |c| 
-      vec = @embeddings[c[:id]]
-      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
-    }.compact.sort_by { |s| -s[:score] }.first(k)
-  end
-
-  def search_with_rrf(query, k: 5, rrf_k: 60)
-    qvec = embed(query)
-    return [] unless qvec
-    
-    semantic_results = @chunks.map { |c| 
-      vec = @embeddings[c[:id]]
-      vec ? { chunk: c, score: cosine(qvec, vec) } : nil 
-    }.compact.sort_by { |s| -s[:score] }
-    
-    keyword_results = @chunks.select { |c| 
-      c[:text].downcase.include?(query.downcase)
-    }.map { |c| { chunk: c, score: 1.0 } }
-    
-    rrf_scores = {}
-    semantic_results.each_with_index do |result, rank|
-      chunk_id = result[:chunk][:id]
-      rrf_scores[chunk_id] ||= 0
-      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
-    end
-    
-    keyword_results.each_with_index do |result, rank|
-      chunk_id = result[:chunk][:id]
-      rrf_scores[chunk_id] ||= 0
-      rrf_scores[chunk_id] += 1.0 / (rrf_k + rank + 1)
-    end
-    
-    @chunks.select { |c| rrf_scores[c[:id]] }
-      .map { |c| { chunk: c, score: rrf_scores[c[:id]] } }
-      .sort_by { |s| -s[:score] }
-      .first(k)
-  end
-
-  def augment(query, k: 3)
-    results = search(query, k: k)
-    return query if results.empty?
-    
-    "Context:\n#{results.map { |r| r[:chunk][:text] }.join("\n")}\n\nQuestion: #{query}"
-  end
-
-  def stats = { chunks: @chunks.size, provider: @provider }
-
-  private
-
-  def detect_provider = ENV["OPENAI_API_KEY"] ? :openai : system("curl -s http://localhost:11434/api/tags > /dev/null 2>&1") ? :local : :none
-
-  def embed(text) = case @provider; when :openai then embed_openai(text); when :local then embed_ollama(text); else nil; end
-
-  def embed_openai(text)
-    uri = URI("https://api.openai.com/v1/embeddings")
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    
-    request = Net::HTTP::Post.new(uri)
-    request["Authorization"] = "Bearer #{ENV["OPENAI_API_KEY"]}"
-    request["Content-Type"] = "application/json"
-    request.body = JSON.generate(model: "text-embedding-3-small", input: text)
-    
-    response = http.request(request)
-    response.code == "200" ? JSON.parse(response.body).dig("data", 0, "embedding") : nil
-  rescue => e
-    nil
-  end
-
-  def embed_ollama(text)
-    uri = URI("http://localhost:11434/api/embeddings")
-    http = Net::HTTP.new(uri.host, uri.port)
-    
-    request = Net::HTTP::Post.new(uri)
-    request["Content-Type"] = "application/json"
-    request.body = JSON.generate(model: "nomic-embed-text", prompt: text)
-    
-    response = http.request(request)
-    response.code == "200" ? JSON.parse(response.body)["embedding"] : nil
-  rescue => e
-    nil
-  end
-
-  def chunk_text(text, source: nil, size: 500)
-    text.split(/\n{2,}/).each_with_index.map { |p, i| 
-      next if p.strip.size == 0
-      { id: "#{i}_#{Digest::MD5.hexdigest(p)[0..7]}", text: p.strip, source: source, idx: i }
-    }.compact
-  end
-
-  def cosine(a, b) = a.zip(b).sum { |x, y| x * y } / (Math.sqrt(a.sum { |x| x*x }) * Math.sqrt(b.sum { |y| y*y })) rescue 0
-
-  def ingest_dir(path) = Dir.glob(File.join(path, "**", "*")).select { |f| File.file?(f) && %w[.txt .md .rb .yml .json .html].include?(File.extname(f).downcase) }.sum { |f| ingest(f) }
-
-end
-
-class CLI
-
+module Convergence
+  VERSION = "∞.17.0".freeze
+  
+  # Tiered permission system
   ACCESS_LEVELS = {
-    sandbox: { 
-      paths: -> { [Dir.pwd, "/tmp"] }, 
+    sandbox: {
+      name: "Sandbox",
+      paths: -> { [Dir.pwd, "/tmp"] },
+      allow_root: false,
       confirm_writes: true,
-      description: "Restricted to current directory and /tmp"
+      confirm_deletes: true,
+      description: "Project directory only, confirmations required"
     },
-    user: { 
-      paths: -> { [ENV["HOME"], Dir.pwd, "/tmp"] }, 
+    user: {
+      name: "User",
+      paths: -> { [ENV["HOME"], Dir.pwd, "/tmp"] },
+      allow_root: false,
       confirm_writes: false,
-      description: "Access to home directory, current directory, and /tmp"
+      confirm_deletes: true,
+      description: "Home directory access, no root"
     },
-    admin: { 
-      paths: -> { :all }, 
-      allow_root: true, 
+    admin: {
+      name: "Admin",
+      paths: -> { :all },
+      allow_root: true,  # Via doas only
       confirm_writes: true,
-      description: "Full system access with confirmation"
+      confirm_deletes: true,
+      confirm_root: true,
+      description: "Full access with doas, all destructive ops require confirmation"
     }
   }.freeze
-
-  COMMAND_ALIASES = {
-    "/h" => "/help",
-    "/?" => "/help",
-    "/p" => "/provider",
-    "/m" => "/model",
-    "/k" => "/key",
-    "/t" => "/tools",
-    "/i" => "/ingest",
-    "/s" => "/search",
-    "/r" => "/rag",
-    "/c" => "/clear",
-    "/u" => "/undo",
-    "/q" => "exit"
-  }.freeze
-
-  HELP = <<~H
-
-    /help          show commands
-    /help COMMAND  show detailed help for a command
-
-    /mode          show current mode
-
-    /provider [X]  switch provider (webchat or API provider)
-
-    /model [X]     switch model (API mode only)
-
-    /key           update API key
-
-    /reset         clear saved preferences and restart setup
-    
-    /level [X]     switch access level (sandbox/user/admin)
-
-    /tools         list available tools (API mode only)
-
-    /yes           approve pending tool calls
-
-    /no            reject pending tool calls
-    
-    /undo          undo last API message (API mode only)
-
-    /ingest PATH   add files to knowledge base
-
-    /search QUERY  search knowledge base
-
-    /rag           toggle RAG augmentation
-
-    /rag-stats     show RAG statistics
-
-    /chain JSON    run LangChain chain
-
-    /webchat       launch webchat UI
-
-    /screenshot    take browser screenshot
-
-    /page-source   get browser page source
-
-    /openbsd news    fetch OpenBSD news
-
-    /openbsd packages QUERY    search packages
-
-    /theme NAME    switch UI theme (starship-dark, etc.)
-
-    /profile save/load NAME    manage profiles
-
-    /clear         clear conversation
-
-    exit           quit
-    
-    Aliases: /h=/help, /p=/provider, /m=/model, /k=/key, /t=/tools, /i=/ingest, /s=/search, /r=/rag, /c=/clear, /u=/undo, /q=exit
-
-  H
-
-  def initialize
-
-    UI.init
-    
-    # Load configuration module
-    require_relative "cli_config"
-
-    @config = Convergence::Config.load
-
-    @mode = @config.mode
-
-    @provider = @config.provider
-
-    @api_key = @config.api_key_for(@provider) if @provider && @config.api_key_for(@provider)
-
-    @model = @config.model
-
-    @client = nil
-    
-    @access_level = :user
-
-    @tools = [ShellTool.new, FileTool.new, LangChainTool.new, OpenBSDTool.new]
-
-    @rag = RAG.new
-
-    @rag_enabled = false
-
-    @theme = "default"
-
-    @profiles = {}
-    
-    @conversation_history = []
-    
-    apply_access_level
-
-  end
-
-  def run
-
-    # Run interactive setup if not configured
-    unless @config.configured?
-      interactive_setup
-    end
-
-    boot_sequence
-
-    UI.banner(mode_label)
-
-    setup_client
-
-    loop do
-
-      input = UI.prompt
-
-      break if input.nil? || input =~ /^(exit|quit|bye)$/i
-
-      next if input.strip.empty?
-
-      input.start_with?("/") ? command(input) : message(input)
-
-    end
-
-    UI.status("session ended")
-
-  ensure
-
-    @client.quit if @client&.respond_to?(:quit)
-
-  end
-
-  private
-
-  def interactive_setup
-    UI.banner
-
-    UI.puts "\nWelcome! Let's set up your CLI.\n\n"
-
-    # Ask about FREE mode
-    free_mode = UI.ask_yes_no("Enable FREE mode? (browser automation with free LLM providers)", default: true)
-
-    if free_mode
-      @mode = :webchat
-      @provider = select_webchat_provider
-    else
-      @mode = :api
-      @provider = select_api_provider
-      @api_key = prompt_api_key(@provider)
-    end
-
-    # Save preferences
-    @config.mode = @mode
-    @config.provider = @provider
-    @config.set_api_key(@provider, @api_key) if @api_key
-    @config.save
-
-    UI.status("\nConfiguration saved to ~/.convergence/config.yml")
-    UI.puts ""
-  end
-
-  def select_webchat_provider
-    # Load webchat module
-    require_relative "cli_webchat"
-    
-    providers = Convergence::WebChatClient::PROVIDERS.keys.map(&:to_s)
-    
-    UI.puts "\nAvailable FREE providers (browser automation):"
-    providers.each { |p| UI.puts "  • #{p}" }
-    UI.puts ""
-    
-    choice = UI.ask_choice("Select provider:", providers)
-    
-    (choice || providers.first).to_sym
-  end
-
-  def select_api_provider
-    # Load API module
-    require_relative "cli_api"
-    
-    providers = Convergence::APIClient::PROVIDERS.keys.map(&:to_s)
-    
-    UI.puts "\nAvailable API providers:"
-    providers.each { |p| UI.puts "  • #{p}" }
-    UI.puts ""
-    
-    choice = UI.ask_choice("Select provider:", providers)
-    
-    (choice || "openrouter").to_sym
-  end
-
-  def prompt_api_key(provider)
-    UI.puts "\nYou'll need an API key for #{provider}."
-    
-    case provider.to_sym
-    when :openrouter
-      UI.puts "Get your key at: https://openrouter.ai/keys"
-    when :openai
-      UI.puts "Get your key at: https://platform.openai.com/api-keys"
-    when :anthropic
-      UI.puts "Get your key at: https://console.anthropic.com/settings/keys"
-    when :gemini
-      UI.puts "Get your key at: https://makersuite.google.com/app/apikey"
-    when :deepseek
-      UI.puts "Get your key at: https://platform.deepseek.com/api_keys"
-    end
-    
-    UI.puts ""
-    UI.ask_secret("Enter API key")
-  end
-
-  def setup_client
-    case @mode
-    when :webchat
-      require_relative "cli_webchat"
-      @client = Convergence::WebChatClient.new(initial_provider: @provider)
-    when :api
-      require_relative "cli_api"
-      @client = Convergence::APIClient.new(
-        provider: @provider,
-        api_key: @api_key,
-        model: @model
-      )
-    else
-      # Fallback to auto-detection for backward compatibility
-      @mode = detect_mode
-      @provider = @mode == :api ? :anthropic : :duckduckgo
-      setup_client
-    end
-  end
-
-  def boot_sequence
-
-    puts "Welcome to **cli.rb** v∞.15.2 (RAG: #{@rag.stats[:chunks]} chunks, #{@rag.stats[:provider]}) - tokens: NONE"
-
-    puts "<openbsd-inspired dmesg style boot process>"
-
-    puts "cpu0: OpenBSD-like pledge+unveil enabled" if PLEDGE_AVAILABLE
-
-    puts "master.yml v#{MASTER_CONFIG.version} loaded"
-
-    puts "backend: #{mode_label}"
-
-    puts "RAG provider: #{@rag.stats[:provider]}"
-
-    puts "security: #{PLEDGE_AVAILABLE ? "pledge+unveil" : "standard"}"
-
-    puts "..."
-
-    puts "<begin chat>"
-
-  end
-
-  def detect_mode = ANTHROPIC && ENV["ANTHROPIC_API_KEY"]&.start_with?("sk-ant-") ? :api : FERRUM ? :webchat : :none
-
-  def mode_label
-    case @mode
-    when :api
-      model_name = @model || @client&.model || "unknown"
-      "api/#{@provider}/#{model_name}"
-    when :webchat
-      "webchat/#{@provider}"
-    else
-      "unavailable"
-    end
-  end
-
-  def command(input)
-
-    parts = input.split(/\s+/, 2)
-
-    cmd, arg = parts[0], parts[1]
-    
-    cmd = COMMAND_ALIASES[cmd] || cmd
-
-    case cmd
-
-    when "/help" 
-      if arg
-        show_contextual_help(arg)
-      else
-        UI.puts(HELP)
-      end
-
-    when "/mode" then show_mode
-
-    when "/clear" then system("clear") || system("cls")
-
-    when "/provider" then switch_provider(arg)
-
-    when "/model" then switch_model(arg)
-
-    when "/key" then update_api_key
-
-    when "/reset" then reset_config
-    
-    when "/level" then switch_access_level(arg)
-    
-    when "/undo" then undo_last_message
-
-    when "/tools" then @mode == :api ? @tools.each { |t| t.class.schema.each { |s| UI.puts("#{s[:name]}: #{s[:description]}") } } : UI.status("tools only in API mode")
-
-    when "/yes" then approve_tools(true)
-
-    when "/no" then approve_tools(false)
-
-    when "/ingest" then rag_ingest(arg)
-
-    when "/search" then rag_search(arg)
-
-    when "/rag" then toggle_rag
-
-    when "/rag-stats" then UI.puts(@rag.stats.map { |k, v| "#{k}: #{v}" }.join(", "))
-
-    when "/chain" then run_chain(arg)
-
-    when "/webchat" then launch_webchat
-
-    when "/screenshot" then UI.status("screenshot: #{@client.screenshot}") if @client&.respond_to?(:screenshot)
-
-    when "/page-source" then UI.puts(@client.page_source[0..5000]) if @client&.respond_to?(:page_source)
-
-    when "/openbsd" then openbsd_cmd(arg)
-
-    when "/theme" then @theme = arg || "default"; UI.status("theme set to #{@theme}")
-
-    when "/profile" then profile_cmd(arg)
-
-    else UI.error("unknown command")
-
-    end
-
-  end
-
-  def show_mode
-    UI.puts "\n#{UI.c(:bold, "Current Configuration:")}"
-    UI.puts "  Mode: #{UI.c(:cyan, @mode.to_s)}"
-    UI.puts "  Provider: #{UI.c(:cyan, @provider.to_s)}"
-    
-    if @mode == :api
-      UI.puts "  Model: #{UI.c(:cyan, @model || @client&.model || "default")}"
-      
-      if @client&.respond_to?(:usage_stats)
-        stats = @client.usage_stats
-        UI.puts "  Usage: #{stats[:total_tokens]} tokens (#{stats[:prompt_tokens]} prompt, #{stats[:completion_tokens]} completion)"
-      end
-    end
-    
-    UI.puts ""
-  end
-
-  def update_api_key
-    unless @mode == :api
-      UI.error("API keys only applicable in API mode")
-      return
-    end
-
-    new_key = prompt_api_key(@provider)
-    
-    if new_key && !new_key.empty?
-      @api_key = new_key
-      @config.set_api_key(@provider, new_key)
-      @config.save
-      
-      # Reconnect with new key
-      setup_client
-      
-      UI.status("API key updated and saved")
-    else
-      UI.error("API key cannot be empty")
-    end
-  end
-
-  def reset_config
-    UI.puts "\n#{UI.c(:yellow, "Warning:")} This will clear all saved preferences."
-    
-    if UI.ask_yes_no("Are you sure?", default: false)
-      @config.reset
-      UI.status("Configuration reset. Restart the CLI to set up again.")
-      exit 0
-    else
-      UI.status("Reset cancelled")
-    end
-  end
-
-  def message(text)
-
-    text = @rag.augment(text) if @rag_enabled && @rag.stats[:chunks] > 0
-    
-    @conversation_history << text if @mode == :api
-
-    response = UI.thinking do
-      case @mode
-      when :api
-        if @client.respond_to?(:send)
-          accumulated = ""
-          @client.send(text) do |chunk|
-            print chunk
-            accumulated << chunk
-          end
-          puts "" unless accumulated.empty?
-          accumulated
-        else
-          @client.send(text)
-        end
-      when :webchat
-        if @client.respond_to?(:send_message)
-          @client.send_message(text) do |chunk|
-            print chunk
-          end
-        else
-          @client.send_message(text)
-        end
-      else
-        "Error: No client available"
-      end
-    end
-
-    UI.response(response) unless response.nil? || response.empty?
-
-    show_pending_tools if @mode == :api && @client&.respond_to?(:pending_tools?) && @client.pending_tools?
-
-  rescue => e
-
-    UI.error(e.message)
-
-    Log.error(e.message, backtrace: e.backtrace.first(3)) if defined?(Log)
-
-  end
-
-  def show_pending_tools = @client.pending_tools.each { |tc| UI.puts("tool: #{tc["name"]}"); UI.puts("input: #{tc["input"].to_json}") }; UI.status("approve with /yes or /no")
-
-  def approve_tools(approved)
-
-    return UI.status("no pending tools") unless @mode == :api && @client&.respond_to?(:pending_tools?) && @client.pending_tools?
-
-    if approved
-
-      response = UI.thinking("executing") { @client.process_tool_results(execute_pending) }
-
-      UI.response(response)
-
-    else
-
-      UI.status("tools rejected")
-
-    end
-
-  end
-
-  def execute_pending = @client.pending_tools.map { |tc| tool = @tools.find { |t| t.class.schema.any? { |s| s[:name] == tc["name"] } }; result = tool ? tool.send(tc["name"], **tc["input"].transform_keys(&:to_sym)) : { error: "unknown" }; { type: "tool_result", tool_use_id: tc["id"], content: JSON.generate(result) } }
-
-  def switch_provider(name)
-
-    if name.nil? || name.empty?
-      case @mode
-      when :webchat
-        require_relative "cli_webchat"
-        providers = Convergence::WebChatClient::PROVIDERS.keys
-        UI.puts("Available webchat providers:")
-        providers.each { |p| UI.puts("  • #{p}") }
-      when :api
-        require_relative "cli_api"
-        providers = Convergence::APIClient::PROVIDERS.keys
-        UI.puts("Available API providers:")
-        providers.each { |p| UI.puts("  • #{p}") }
-      else
-        UI.error("No mode configured")
-      end
-      return
-    end
-
-    case @mode
-    when :webchat
-      require_relative "cli_webchat"
-      
-      unless Convergence::WebChatClient::PROVIDERS.key?(name.to_sym)
-        UI.error("unknown provider: #{name}")
-        return
-      end
-
-      @client&.quit if @client&.respond_to?(:quit)
-
-      @provider = name.to_sym
-
-      UI.thinking("connecting to #{name}") do
-        @client = Convergence::WebChatClient.new(initial_provider: @provider)
-      end
-
-      @config.provider = @provider
-      @config.save
-
-      UI.status("switched to #{name}")
-
-    when :api
-      require_relative "cli_api"
-      
-      unless Convergence::APIClient::PROVIDERS.key?(name.to_sym)
-        UI.error("unknown provider: #{name}")
-        return
-      end
-
-      @provider = name.to_sym
-      @api_key = @config.api_key_for(@provider)
-
-      unless @api_key
-        @api_key = prompt_api_key(@provider)
-        @config.set_api_key(@provider, @api_key)
-      end
-
-      @client = Convergence::APIClient.new(
-        provider: @provider,
-        api_key: @api_key,
-        model: @model
-      )
-
-      @config.provider = @provider
-      @config.save
-
-      UI.status("switched to #{@provider}")
-
-    else
-      UI.error("provider switching not available in current mode")
-    end
-
-  rescue => e
-    UI.error("Failed to switch provider: #{e.message}")
-  end
-
-  def switch_model(name)
-    unless @mode == :api
-      UI.error("model switching only available in API mode")
-      return
-    end
-
-    unless @client&.respond_to?(:models)
-      UI.error("current client doesn't support model switching")
-      return
-    end
-
-    if name.nil? || name.empty?
-      UI.puts("Available models for #{@provider}:")
-      @client.models.each { |short, full| UI.puts("  • #{short} (#{full})") }
-      return
-    end
-
-    if @client.switch_model(name)
-      @model = @client.model
-      @config.model = @model
-      @config.save
-      UI.status("switched to model: #{@model}")
-    else
-      UI.error("unknown model: #{name}")
-      UI.puts("Available models:")
-      @client.models.each { |short, full| UI.puts("  • #{short} (#{full})") }
-    end
-  end
-
-  def rag_ingest(path) = arg ? (count = UI.thinking("ingesting") { @rag.ingest(File.expand_path(path)) }; UI.status("added #{count} chunks")) : UI.error("usage: /ingest PATH")
-
-  def rag_search(query) = query ? (results = @rag.search(query); results.empty? ? UI.status("no results") : results.each_with_index { |r, i| UI.puts("#{i + 1}. [#{r[:score].round(3)}] #{r[:chunk][:source]}"); UI.puts("   #{r[:chunk][:text][0..150]}...") }) : UI.error("usage: /search QUERY")
-
-  def toggle_rag = (@rag_enabled = !@rag_enabled; UI.status("RAG #{@rag_enabled ? "enabled" : "disabled"}"); UI.status("knowledge base empty, use /ingest first") if @rag_enabled && @rag.stats[:chunks] == 0)
-
-  def run_chain(json) = json ? (tool = @tools.find { |t| t.is_a?(LangChainTool) }; UI.puts("chain result: #{tool.run_chain(chain_json: json)}")) : UI.error("usage: /chain JSON")
-
-  def launch_webchat
-
-    require "webrick"
-
-    server = WEBrick::HTTPServer.new(Port: 8000)
-
-    server.mount_proc("/chat") { |req, res| res.content_type = "text/html"; res.body = "<html><body><form action='/send' method='post'><input name='message'><button>Send</button></form><div id='response'></div></body></html>" }
-
-    server.mount_proc("/send") { |req, res| msg = req.query["message"]; response = @client.send(msg) rescue "error"; res.content_type = "text/html"; res.body = "<html><body>Response: #{response}</body></html>" }
-
-    UI.status("webchat at http://localhost:8000/chat")
-
-    server.start
-
-  end
-
-  def openbsd_cmd(arg)
-
-    parts = arg.split(/\s+/, 2)
-
-    subcmd, param = parts[0], parts[1]
-
-    tool = @tools.find { |t| t.is_a?(OpenBSDTool) }
-
-    case subcmd
-
-    when "news" then UI.puts(tool.fetch_news)
-
-    when "packages" then UI.puts(tool.search_packages(query: param)) if param
-
-    else UI.error("usage: /openbsd news or /openbsd packages QUERY")
-
-    end
-
-  end
-
-  def profile_cmd(arg)
-
-    parts = arg.split(/\s+/)
-
-    action, name = parts[0], parts[1]
-
-    case action
-
-    when "save" then @profiles[name] = { rag: @rag.stats, theme: @theme }; UI.status("profile #{name} saved")
-
-    when "load" then if @profiles[name]; @theme = @profiles[name][:theme]; UI.status("profile #{name} loaded"); else UI.error("profile not found"); end
-
-    else UI.error("usage: /profile save/load NAME")
-
-    end
-
-  end
-
-  def apply_access_level
-    return unless RUBY_PLATFORM =~ /openbsd/
-    return unless PLEDGE_AVAILABLE
-    
-    level_config = ACCESS_LEVELS[@access_level]
-    paths = level_config[:paths].call
-    
-    begin
-      if paths == :all
-        Pledge.unveil(ENV["HOME"], "rwc")
-        Pledge.unveil("/tmp", "rwc")
-        Pledge.unveil("/usr/local", "rx")
-        Pledge.unveil("/usr", "rx")
-        Pledge.unveil("/etc", "r")
-      else
-        paths.each do |path|
-          Pledge.unveil(path, "rwc")
-        end
-        Pledge.unveil("/usr/local", "rx")
-        Pledge.unveil("/etc/ssl", "r")
-      end
-      
-      Pledge.unveil(nil, nil)
-      Pledge.pledge("stdio rpath wpath cpath inet dns proc exec prot_exec", nil)
-    rescue => e
-      warn "Warning: Failed to apply pledge/unveil: #{e.message}"
-    end
-  end
-
-  def switch_access_level(level_name)
-    level = level_name&.to_sym
-    
-    unless ACCESS_LEVELS.key?(level)
-      UI.error("Unknown access level. Available: #{ACCESS_LEVELS.keys.join(", ")}")
-      return
-    end
-    
-    @access_level = level
-    UI.status("Access level set to #{level}: #{ACCESS_LEVELS[level][:description]}")
-    
-    if RUBY_PLATFORM =~ /openbsd/
-      UI.status("Restart required to apply OpenBSD pledge/unveil changes")
-    end
-  end
-
-  def show_contextual_help(topic)
-    case topic
-    when "provider"
-      UI.puts "\n#{UI.c(:bold, "Provider Help:")}"
-      UI.puts "Available providers:"
-      UI.puts "  Webchat: #{Convergence::WebChatClient::PROVIDERS.keys.join(", ")}"
-      UI.puts "  API: #{Convergence::APIClient::PROVIDERS.keys.join(", ")}"
-    when "model"
-      UI.puts "\n#{UI.c(:bold, "Model Help:")}"
-      if @mode == :api && @client
-        models = @client.models
-        UI.puts "Available models for #{@provider}:"
-        models.each { |k, v| UI.puts("  #{k} => #{v}") }
-      else
-        UI.puts "Model selection only available in API mode"
-      end
-    when "level"
-      UI.puts "\n#{UI.c(:bold, "Access Level Help:")}"
-      ACCESS_LEVELS.each do |name, config|
-        UI.puts "  #{name}: #{config[:description]}"
-      end
-    else
-      UI.puts(HELP)
-    end
-  end
-
-  def undo_last_message
-    unless @mode == :api
-      UI.error("Undo only available in API mode")
-      return
-    end
-    
-    unless @client&.respond_to?(:clear_history)
-      UI.error("Client doesn't support undo")
-      return
-    end
-    
-    if @conversation_history.empty?
-      UI.status("No messages to undo")
-      return
-    end
-    
-    @conversation_history.pop
-    @client.clear_history
-    @conversation_history.each { |msg| @client.send(msg) }
-    
-    UI.status("Last message undone")
-  end
-
 end
 
-CLI.new.run if __FILE__ == $0
+def apply_pledge(level = :user)
+  return unless PLEDGE_AVAILABLE
+  
+  config = Convergence::ACCESS_LEVELS[level]
+  promises = "stdio rpath wpath cpath inet dns proc exec fattr"
+  promises += " prot_exec" if config[:allow_root]
+  
+  Pledge.pledge(promises)
+  
+  paths = config[:paths].call
+  if paths == :all
+    Pledge.unveil(ENV["HOME"], "rwc")
+    Pledge.unveil("/tmp", "rwc")
+    Pledge.unveil("/usr/local", "rx")
+    Pledge.unveil("/etc", "r")
+    Pledge.unveil("/var", "rwc")
+  else
+    paths.each { |p| Pledge.unveil(p, "rwc") }
+    Pledge.unveil("/usr/local", "rx")
+    Pledge.unveil("/etc/ssl", "r")
+  end
+  Pledge.unveil(nil, nil)
+rescue => e
+  warn "pledge: #{e.message}"
+end
+
+# MasterConfig with preferred_tools
+class MasterConfig
+  attr_reader :version, :preferred_tools
+  
+  SEARCH_PATHS = [
+    File.expand_path("~/pub/master.yml"),
+    File.join(Dir.pwd, "master.yml"),
+    File.join(File.dirname(__FILE__), "master.yml")
+  ].freeze
+  
+  def initialize
+    @config = load_config
+    @version = @config.dig("meta", "version")
+    @preferred_tools = @config.dig("meta", "preferred_tools") || 
+                       @config.dig("constraints", "preferred_tools") || 
+                       %w[ruby zsh doas]
+  end
+  
+  def preferred?(command)
+    @preferred_tools.any? { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
+  end
+  
+  private
+  
+  def load_config
+    path = SEARCH_PATHS.find { |p| File.exist?(p) }
+    path ? YAML.safe_load_file(path, aliases: false) : default_config
+  rescue => e
+    warn "master.yml: #{e.message}"
+    default_config
+  end
+  
+  def default_config
+    { "meta" => { "version" => Convergence::VERSION, "preferred_tools" => %w[ruby zsh doas] } }
+  end
+end
+
+# Config persistence
+class Config
+  CONFIG_DIR = File.expand_path("~/.convergence").freeze
+  CONFIG_PATH = File.join(CONFIG_DIR, "config.yml").freeze
+  
+  attr_accessor :provider, :api_key, :model, :access_level
+  
+  def self.load
+    new.tap(&:load!)
+  end
+  
+  def initialize
+    @provider = :openrouter
+    @api_key = nil
+    @model = nil
+    @access_level = :user
+  end
+  
+  def load!
+    return self unless File.exist?(CONFIG_PATH)
+    data = YAML.safe_load_file(CONFIG_PATH, permitted_classes: [Symbol], aliases: false)
+    return self unless data.is_a?(Hash)
+    @provider = data["provider"]&.to_sym if data["provider"]
+    @api_key = data["api_key"]
+    @model = data["model"]
+    @access_level = data["access_level"]&.to_sym || :user
+    self
+  rescue => e
+    warn "config load: #{e.message}"
+    self
+  end
+  
+  def save
+    FileUtils.mkdir_p(CONFIG_DIR)
+    data = {
+      "provider" => @provider&.to_s,
+      "api_key" => @api_key,
+      "model" => @model,
+      "access_level" => @access_level&.to_s
+    }
+    File.write(CONFIG_PATH, YAML.dump(data))
+    File.chmod(0600, CONFIG_PATH)
+  rescue => e
+    warn "config save: #{e.message}"
+  end
+  
+  def configured?
+    @provider && @api_key
+  end
+end
+
+# OpenRouter API client with expanded models
+class APIClient
+  PROVIDERS = {
+    openrouter: {
+      name: "OpenRouter",
+      base_url: "https://openrouter.ai/api/v1",
+      models: {
+        # DeepSeek
+        "deepseek-r1" => "deepseek/deepseek-r1",
+        "deepseek-v3" => "deepseek/deepseek-chat",
+        # Anthropic
+        "claude-3.5" => "anthropic/claude-3.5-sonnet",
+        "claude-3-opus" => "anthropic/claude-3-opus",
+        "claude-3-haiku" => "anthropic/claude-3-haiku",
+        # OpenAI
+        "gpt-4o" => "openai/gpt-4o",
+        "gpt-4o-mini" => "openai/gpt-4o-mini",
+        "gpt-4-turbo" => "openai/gpt-4-turbo",
+        # Meta Llama
+        "llama-3.1-70b" => "meta-llama/llama-3.1-70b-instruct",
+        "llama-3.1-8b" => "meta-llama/llama-3.1-8b-instruct",
+        # Google
+        "gemini-pro" => "google/gemini-pro",
+        "gemini-2.0" => "google/gemini-2.0-flash-exp",
+        # Mistral
+        "mistral-large" => "mistralai/mistral-large-latest",
+        "mixtral-8x7b" => "mistralai/mixtral-8x7b-instruct"
+      },
+      default_model: "deepseek/deepseek-r1"
+    }
+  }.freeze
+  
+  attr_reader :provider, :model
+  
+  def initialize(provider:, api_key:, model: nil)
+    @provider = provider.to_sym
+    @api_key = api_key
+    @config = PROVIDERS[@provider] or raise "Unknown provider: #{provider}"
+    @model = model || @config[:default_model]
+    @messages = []
+  end
+  
+  def send(message, &block)
+    @messages << { role: "user", content: message }
+    uri = URI("#{@config[:base_url]}/chat/completions")
+    headers = {
+      "Authorization" => "Bearer #{@api_key}",
+      "HTTP-Referer" => "https://github.com/anon987654321/pub4",
+      "X-Title" => "Convergence CLI",
+      "Content-Type" => "application/json"
+    }
+    body = { model: @model, messages: @messages, stream: block_given? }
+    
+    if block_given?
+      send_streaming(uri, headers, body, &block)
+    else
+      send_non_streaming(uri, headers, body)
+    end
+  end
+  
+  def clear_history = @messages = []
+  def get_history = @messages
+  def set_history(msgs) = @messages = msgs || []
+  def models = @config[:models]
+  
+  def switch_model(name)
+    resolved = @config[:models][name] || name
+    if @config[:models].values.include?(resolved)
+      @model = resolved
+      true
+    else
+      false
+    end
+  end
+  
+  private
+  
+  def send_streaming(uri, headers, body)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+      request = Net::HTTP::Post.new(uri)
+      headers.each { |k, v| request[k] = v }
+      request.body = JSON.generate(body)
+      accumulated = ""
+      http.request(request) do |response|
+        raise "API error (#{response.code})" unless response.is_a?(Net::HTTPSuccess)
+        response.read_body do |chunk|
+          chunk.each_line do |line|
+            next if line.strip.empty? || !line.start_with?("data: ")
+            data = line[6..-1].strip
+            next if data == "[DONE]"
+            begin
+              delta = JSON.parse(data).dig("choices", 0, "delta", "content")
+              if delta
+                accumulated << delta
+                yield delta
+              end
+            rescue JSON::ParserError; end
+          end
+        end
+      end
+      @messages << { role: "assistant", content: accumulated }
+      accumulated
+    end
+  rescue => e
+    "API Error: #{e.message}"
+  end
+  
+  def send_non_streaming(uri, headers, body)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.read_timeout = 60
+    request = Net::HTTP::Post.new(uri)
+    headers.each { |k, v| request[k] = v }
+    request.body = JSON.generate(body)
+    response = http.request(request)
+    raise "API error (#{response.code})" unless response.is_a?(Net::HTTPSuccess)
+    content = JSON.parse(response.body).dig("choices", 0, "message", "content")
+    @messages << { role: "assistant", content: content }
+    content
+  rescue => e
+    "API Error: #{e.message}"
+  end
+end
+
+# Directory processor
+class DirectoryProcessor
+  EXTENSIONS = %w[.rb .sh .yml .yaml .js .ts .py .md .txt].freeze
+  
+  def initialize(path, master_config)
+    @path = File.expand_path(path)
+    @config = master_config
+  end
+  
+  def process
+    files = Dir.glob(File.join(@path, "**", "*"))
+      .select { |f| File.file?(f) && EXTENSIONS.include?(File.extname(f).downcase) }
+    files.each do |file|
+      result = analyze(file)
+      yield result if block_given?
+    end
+  end
+  
+  private
+  
+  def analyze(path)
+    content = File.read(path)
+    {
+      path: path,
+      lines: content.lines.count,
+      uses_preferred: @config.preferred_tools.any? { |t| content.include?(t) }
+    }
+  end
+end
+
+# Shell tool with permission checks
+class ShellTool
+  def initialize(access_level:, master_config:)
+    @level = access_level
+    @config = Convergence::ACCESS_LEVELS[@level]
+    @master_config = master_config
+  end
+  
+  def execute(command:, timeout: 30)
+    return { error: "command requires confirmation" } if needs_confirmation?(command)
+    
+    shell = ["/usr/local/bin/zsh", "/bin/zsh", "/bin/sh"].find { |s| File.executable?(s) }
+    return { error: "no shell" } unless shell
+    
+    Timeout.timeout(timeout) do
+      stdout, stderr, status = Open3.capture3(shell, "-c", command)
+      { stdout: stdout[0..4000], stderr: stderr[0..1000], exit_code: status.exitstatus, success: status.success? }
+    end
+  rescue Timeout::Error
+    { error: "timeout" }
+  rescue => e
+    { error: e.message }
+  end
+  
+  private
+  
+  def needs_confirmation?(cmd)
+    (@config[:confirm_writes] && cmd =~ /\b(rm|mv|cp|chmod|chown)\b/) ||
+    (@config[:confirm_root] && cmd.include?("doas"))
+  end
+end
+
+# File tool with sandbox
+class FileTool
+  def initialize(base_path:, access_level:)
+    @base_path = File.expand_path(base_path)
+    @level = access_level
+    @config = Convergence::ACCESS_LEVELS[@level]
+  end
+  
+  def read(path:)
+    safe = enforce_sandbox!(path)
+    return { error: "not found" } unless File.exist?(safe)
+    { content: File.read(safe)[0..50000], size: File.size(safe) }
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  def write(path:, content:)
+    safe = enforce_sandbox!(path)
+    FileUtils.mkdir_p(File.dirname(safe))
+    File.write(safe, content)
+    { success: true }
+  rescue SecurityError => e
+    { error: e.message }
+  rescue => e
+    { error: e.message }
+  end
+  
+  private
+  
+  def enforce_sandbox!(filepath)
+    expanded = File.expand_path(filepath)
+    paths = @config[:paths].call
+    return expanded if paths == :all
+    raise SecurityError, "outside sandbox" unless paths.any? { |p| expanded.start_with?(p) }
+    expanded
+  end
+end
+
+# Session manager
+class SessionManager
+  SESSION_DIR = File.expand_path("~/.convergence/sessions").freeze
+  
+  def initialize = FileUtils.mkdir_p(SESSION_DIR)
+  
+  def save(name, state)
+    File.write(File.join(SESSION_DIR, "#{name}.yml"), YAML.dump(state))
+  end
+  
+  def load(name)
+    path = File.join(SESSION_DIR, "#{name}.yml")
+    File.exist?(path) ? YAML.safe_load_file(path, permitted_classes: [Symbol, Time, Hash, Array], aliases: false) : nil
+  end
+  
+  def list = Dir.glob(File.join(SESSION_DIR, "*.yml")).map { |f| File.basename(f, ".yml") }
+end
+
+# Simple RAG (optional, no external dependencies)
+class RAG
+  def initialize = (@chunks = [])
+  
+  def ingest(path)
+    return 0 unless File.exist?(path)
+    text = File.read(path)
+    new_chunks = text.split(/\n{2,}/).reject(&:empty?).map.with_index do |p, i|
+      { id: Digest::MD5.hexdigest(p)[0..7], text: p.strip, source: path }
+    end
+    @chunks.concat(new_chunks)
+    new_chunks.size
+  end
+  
+  def search(query, k: 3)
+    return [] if @chunks.empty?
+    # Simple keyword match (no embeddings required)
+    terms = query.downcase.split
+    @chunks.map { |c| { chunk: c, score: terms.count { |t| c[:text].downcase.include?(t) } } }
+           .sort_by { |r| -r[:score] }
+           .first(k)
+  end
+  
+  def stats = { chunks: @chunks.size }
+end
+
+# Main CLI
+class CLI
+  HELP = <<~H
+    Commands:
+    /help              - Show this help
+    /level [sandbox|user|admin] - View/switch access level
+    /process PATH      - Process directory through master.yml
+    /screen NAME       - Create named session
+    /detach            - Save and detach
+    /attach NAME       - Restore session
+    /sessions          - List sessions
+    /model [name]      - View/switch model
+    /models            - List available models
+    /key               - Update API key
+    /ingest PATH       - Add to knowledge base
+    /search QUERY      - Search knowledge base
+    /clear             - Clear history
+    /quit              - Exit
+  H
+  
+  def initialize
+    @config = Config.load
+    @master = MasterConfig.new
+    @client = nil
+    @session_mgr = SessionManager.new
+    @rag = RAG.new
+    @running = false
+  end
+  
+  def run
+    apply_pledge(@config.access_level)
+    banner
+    setup_client
+    @running = true
+    
+    while @running
+      input = Readline.readline(prompt_text, true)&.strip
+      break if input.nil?
+      next if input.empty?
+      input.start_with?("/") ? command(input) : message(input)
+    end
+  end
+  
+  private
+  
+  def banner
+    puts "CONVERGENCE CLI #{Convergence::VERSION}"
+    puts "Master: #{@master.version} | Level: #{@config.access_level}"
+    puts "Security: #{PLEDGE_AVAILABLE ? 'pledge+unveil' : 'standard'}"
+    puts "Type /help for commands\n\n"
+  end
+  
+  def prompt_text
+    level = @config.access_level.to_s[0].upcase
+    "[#{level}]> "
+  end
+  
+  def setup_client
+    unless @config.configured?
+      @config.api_key = ENV["OPENROUTER_API_KEY"] || prompt_secret("OpenRouter API key: ")
+      @config.provider = :openrouter
+      @config.model = "deepseek/deepseek-r1"
+      @config.save
+    end
+    @client = APIClient.new(provider: @config.provider, api_key: @config.api_key, model: @config.model)
+  end
+  
+  def command(input)
+    parts = input.split(" ", 2)
+    cmd, arg = parts[0], parts[1]
+    
+    case cmd
+    when "/help" then puts HELP
+    when "/level" then arg ? switch_level(arg) : show_level
+    when "/process" then process_dir(arg)
+    when "/screen" then save_session(arg)
+    when "/detach" then puts "Session saved"
+    when "/attach" then load_session(arg)
+    when "/sessions" then list_sessions
+    when "/model" then arg ? switch_model(arg) : show_model
+    when "/models" then list_models
+    when "/key" then update_key
+    when "/ingest" then ingest(arg)
+    when "/search" then search(arg)
+    when "/clear" then @client.clear_history; puts "Cleared"
+    when "/quit", "/exit" then @running = false
+    else puts "Unknown: #{cmd}"
+    end
+  end
+  
+  def show_level
+    puts "Current: #{@config.access_level}"
+    Convergence::ACCESS_LEVELS.each { |k, v| puts "  #{k}: #{v[:description]}" }
+  end
+  
+  def switch_level(level)
+    sym = level.to_sym
+    unless Convergence::ACCESS_LEVELS.key?(sym)
+      puts "Unknown level: #{level}"
+      return
+    end
+    if sym == :admin
+      print "Admin mode grants full access. Continue? [y/N]: "
+      return unless $stdin.gets&.strip&.downcase == "y"
+    end
+    @config.access_level = sym
+    @config.save
+    apply_pledge(sym)
+    puts "Switched to #{sym}"
+  end
+  
+  def process_dir(path)
+    return puts "Usage: /process PATH" unless path
+    return puts "Not found: #{path}" unless Dir.exist?(path)
+    puts "Processing #{path}..."
+    DirectoryProcessor.new(path, @master).process do |r|
+      mark = r[:uses_preferred] ? "✓" : "✗"
+      puts "#{mark} #{r[:path]} (#{r[:lines]} lines)"
+    end
+  end
+  
+  def save_session(name)
+    return puts "Usage: /screen NAME" unless name
+    @session_mgr.save(name, { history: @client.get_history, created: Time.now.to_i })
+    puts "Session '#{name}' saved"
+  end
+  
+  def load_session(name)
+    return puts "Usage: /attach NAME" unless name
+    state = @session_mgr.load(name)
+    return puts "Not found: #{name}" unless state
+    @client.set_history(state["history"])
+    puts "Attached: #{name}"
+  end
+  
+  def list_sessions
+    sessions = @session_mgr.list
+    sessions.empty? ? puts("No sessions") : sessions.each { |s| puts "  #{s}" }
+  end
+  
+  def show_model
+    puts "Current: #{@config.model}"
+  end
+  
+  def list_models
+    puts "Available models:"
+    @client.models.each do |short, full|
+      mark = full == @config.model ? "→" : " "
+      puts "#{mark} #{short.ljust(16)} (#{full})"
+    end
+  end
+  
+  def switch_model(name)
+    if @client.switch_model(name)
+      @config.model = @client.model
+      @config.save
+      puts "Switched: #{@config.model}"
+    else
+      puts "Unknown model: #{name}"
+    end
+  end
+  
+  def update_key
+    @config.api_key = prompt_secret("New API key: ")
+    @config.save
+    setup_client
+    puts "Key updated"
+  end
+  
+  def ingest(path)
+    return puts "Usage: /ingest PATH" unless path
+    count = @rag.ingest(File.expand_path(path))
+    puts "Ingested #{count} chunks (total: #{@rag.stats[:chunks]})"
+  end
+  
+  def search(query)
+    return puts "Usage: /search QUERY" unless query
+    results = @rag.search(query)
+    results.empty? ? puts("No results") : results.each { |r| puts "#{r[:chunk][:source]}: #{r[:chunk][:text][0..100]}..." }
+  end
+  
+  def message(input)
+    print "\n"
+    @client.send(input) { |chunk| print chunk; $stdout.flush }
+    print "\n\n"
+  rescue => e
+    puts "Error: #{e.message}"
+  end
+  
+  def prompt_secret(prompt)
+    print prompt
+    $stdin.tty? ? $stdin.noecho(&:gets).chomp.tap { puts } : $stdin.gets.chomp
+  end
+end
+
+CLI.new.run if __FILE__ == $PROGRAM_NAME
