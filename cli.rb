@@ -28,6 +28,7 @@ end
 
 def apply_pledge
   return unless PLEDGE_AVAILABLE
+  # exec and proc needed for shell tool execution
   Pledge.pledge("stdio rpath wpath cpath inet dns proc exec fattr")
   Pledge.unveil(ENV["HOME"], "rwc")
   Pledge.unveil("/tmp", "rwc")
@@ -55,7 +56,7 @@ class MasterConfig
   end
 
   def preferred?(command)
-    @preferred_tools.any? { |t| command.include?(t) }
+    @preferred_tools.any? { |t| command =~ /\b#{Regexp.escape(t)}\b/ }
   end
 
   private
@@ -174,6 +175,14 @@ class APIClient
 
   def clear_history
     @messages = []
+  end
+
+  def get_history
+    @messages
+  end
+
+  def set_history(messages)
+    @messages = messages || []
   end
 
   private
@@ -495,7 +504,7 @@ class CLI
     end
     state = {
       created_at: Time.now.to_i,
-      history: @client.instance_variable_get(:@messages)
+      history: @client.get_history
     }
     @session_mgr.save(name, state)
     puts "Screen session '#{name}' created"
@@ -515,7 +524,7 @@ class CLI
       puts "Session not found: #{name}"
       return
     end
-    @client.instance_variable_set(:@messages, state["history"] || [])
+    @client.set_history(state["history"] || [])
     puts "Attached to session '#{name}'"
   end
 
