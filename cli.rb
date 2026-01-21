@@ -528,9 +528,11 @@ class FileTool
   
   def glob(pattern:)
     # Pattern must be within sandbox
-    base = @base_path
+    base = File.expand_path(@base_path)
     matches = Dir.glob(File.join(base, pattern))
-    matches.map { |m| m.sub("#{base}/", "") }
+    # Filter to ensure all results are within base path
+    matches.select { |m| File.expand_path(m).start_with?(base) }
+           .map { |m| m.sub("#{base}/", "") }
   rescue => e
     { error: e.message }
   end
@@ -572,6 +574,9 @@ end
 
 # Web tool with Ferrum browser automation
 class WebTool
+  MAX_HTML_LENGTH = 50000
+  MAX_INNER_HTML_LENGTH = 1000
+  
   def initialize
     @browser = nil
     @page = nil
@@ -608,7 +613,8 @@ class WebTool
   
   def screenshot
     return { error: "no page" } unless @page
-    path = "/tmp/screenshot_#{Time.now.to_i}.png"
+    require "tmpdir"
+    path = File.join(Dir.tmpdir, "screenshot_#{Time.now.to_i}.png")
     @page.screenshot(path: path)
     { path: path }
   rescue => e
@@ -617,7 +623,7 @@ class WebTool
   
   def page_source
     return { error: "no page" } unless @page
-    { html: @page.body[0..50000] }  # Truncate for LLM context
+    { html: @page.body[0..MAX_HTML_LENGTH] }  # Truncate for LLM context
   rescue => e
     { error: e.message }
   end
@@ -646,7 +652,7 @@ class WebTool
   def extract(selector:)
     return { error: "no page" } unless @page
     elements = @page.css(selector)
-    elements.map { |e| { text: e.text, html: e.inner_html[0..1000] } }
+    elements.map { |e| { text: e.text, html: e.inner_html[0..MAX_INNER_HTML_LENGTH] } }
   rescue => e
     { error: e.message }
   end
