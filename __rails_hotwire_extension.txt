@@ -1,0 +1,1126 @@
+# Rails/Hotwire Domain Extension for master.yml v15.0.0
+# Specialized patterns for modern Rails with StimulusReflex, Hotwire, Stimulus Components
+# Place in: config/quality/domains/rails_hotwire.yml
+
+meta:
+  extends: master.yml#v15.0.0
+  domain: rails_hotwire_frontend
+  version: "1.0.0"
+  stack: [rails_8, hotwire, stimulus_reflex, turbo, stimulus, langchain_rails]
+  focus: [view_consolidation, semantic_html, reactive_patterns]
+
+# ============= RAILS-SPECIFIC DETECTION =============
+# What makes Rails views messy
+
+detect:
+  erb_sprawl:
+    symptoms:
+      - partial_explosion: ">5 partials for single feature"
+      - deep_partial_nesting: ">3 levels of partial includes"
+      - single_use_partials: "Partial used only once"
+      - view_duplication: "Similar ERB across multiple views"
+      - logic_in_views: "Complex conditionals or iterations in templates"
+    
+    root_causes:
+      - premature_extraction: "Extracted before pattern emerged"
+      - incomplete_refactoring: "Started consolidation but didn't finish"
+      - lack_of_view_objects: "Business logic belongs in presenter/view_component"
+      - copy_paste_views: "Duplicated instead of shared"
+    
+    fixes:
+      - consolidate_related_partials: "Merge partials serving same feature"
+      - extract_to_view_component: "Replace complex partials with ViewComponent"
+      - inline_single_use: "Inline partials used only once"
+      - use_turbo_frames: "Replace partial swaps with Turbo Frame updates"
+      - extract_to_stimulus: "Move interaction logic to Stimulus controllers"
+  
+  divitis:
+    symptoms:
+      - excessive_nesting: ">5 div levels for simple content"
+      - non_semantic_markup: "Divs where semantic HTML exists"
+      - styling_divs: "Divs added purely for CSS hooks"
+      - framework_bloat: "Unnecessary wrapper divs from frameworks"
+      - class_explosion: ">10 utility classes on single element"
+    
+    root_causes:
+      - css_framework_overuse: "Tailwind/Bootstrap used without cleanup"
+      - layout_hacks: "Divs to work around CSS issues"
+      - copy_paste_html: "Copied structure without understanding"
+      - lack_of_components: "No component abstraction"
+    
+    fixes:
+      - use_semantic_html: "Replace divs with article/section/nav/main/aside"
+      - extract_to_stimulus_component: "Wrap in reusable Stimulus component"
+      - simplify_layout: "Use CSS Grid/Flexbox without wrapper divs"
+      - turbo_frame_boundaries: "Replace wrapper divs with turbo-frame tags"
+      - component_encapsulation: "ViewComponent or Stimulus component"
+  
+  stimulus_antipatterns:
+    symptoms:
+      - action_sprawl: ">5 data-action attributes on single element"
+      - target_explosion: ">10 data-*-target attributes in template"
+      - jquery_in_stimulus: "Using jQuery within Stimulus controllers"
+      - dom_manipulation_in_erb: "Building HTML strings in Stimulus"
+      - no_stimulus_components: "Reimplementing common patterns"
+    
+    fixes:
+      - use_stimulus_components: "Import from stimulus-components.com"
+      - extract_controller: "Split large controllers by responsibility"
+      - use_outlets: "Connect controllers via Stimulus outlets"
+      - turbo_streams_over_dom: "Use Turbo Streams for updates"
+      - stimulus_reflex_for_state: "Offload complex state to StimulusReflex"
+  
+  hotwire_misuse:
+    symptoms:
+      - full_page_turbo: "Not using Turbo Frames for partial updates"
+      - missing_turbo_streams: "Manual DOM manipulation instead of streams"
+      - no_lazy_loading: "Loading all content upfront"
+      - form_without_turbo: "Standard forms not using Turbo"
+      - websocket_when_polling_works: "ActionCable overuse"
+    
+    fixes:
+      - wrap_in_turbo_frame: "Isolate updateable sections"
+      - respond_with_turbo_stream: "Use turbo_stream.erb for updates"
+      - add_turbo_frame_lazy: "src attribute for lazy loading"
+      - turbo_form_for: "Enable Turbo on forms automatically"
+      - stimulus_reflex_for_reactive: "Use SR for real-time updates"
+  
+  langchain_integration:
+    symptoms:
+      - blocking_llm_calls: "Synchronous LLM requests in request cycle"
+      - no_streaming: "Not using streaming responses"
+      - poor_prompt_management: "Prompts scattered in code"
+      - missing_rag_context: "Not using vector search for context"
+      - inline_api_keys: "Credentials not in encrypted credentials"
+    
+    fixes:
+      - background_jobs: "Use Solid Queue for LLM processing"
+      - turbo_stream_streaming: "Stream LLM responses via Turbo Streams"
+      - prompt_templates: "Centralize prompts in config/prompts/"
+      - pgvector_integration: "Use pgvector for semantic search"
+      - use_credentials: "rails credentials:edit for API keys"
+
+# ============= RAILS-SPECIFIC TRANSFORMATIONS =============
+# How to fix Rails view problems
+
+transform:
+  consolidate_partials:
+    when: ">3 related partials in same directory"
+    how:
+      - identify_feature_boundary: "What's the complete feature?"
+      - extract_to_view_component: "Create single ViewComponent"
+      - pass_data_as_props: "Explicit dependencies via initialize"
+      - inline_single_use_partials: "Remove unnecessary abstractions"
+      - update_callers: "Replace render partial: with component()"
+    
+    before: |
+      # app/views/posts/_header.html.erb
+      # app/views/posts/_body.html.erb  
+      # app/views/posts/_footer.html.erb
+      # app/views/posts/_meta.html.erb
+      # app/views/posts/_actions.html.erb
+    
+    after: |
+      # app/components/post_card_component.rb
+      class PostCardComponent < ViewComponent::Base
+        def initialize(post:, show_actions: true)
+          @post = post
+          @show_actions = show_actions
+        end
+      end
+      
+      # app/components/post_card_component.html.erb
+      <article class="post-card" data-controller="post">
+        <%= render_header %>
+        <%= render_body %>
+        <%= render_footer %>
+        <%= render_actions if @show_actions %>
+      </article>
+  
+  eliminate_divitis:
+    when: ">4 nested divs with no semantic purpose"
+    how:
+      - identify_content_structure: "What is this semantically?"
+      - choose_semantic_element: "article/section/nav/main/aside/figure"
+      - remove_styling_wrappers: "Use CSS Grid/Flexbox properly"
+      - turbo_frame_boundaries: "Wrapper is update boundary? Use turbo-frame"
+      - stimulus_component_wrap: "Interactive unit? Stimulus component"
+    
+    before: |
+      <div class="container">
+        <div class="wrapper">
+          <div class="content">
+            <div class="header">
+              <h1>Title</h1>
+            </div>
+            <div class="body">
+              <p>Content</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+    after: |
+      <article>
+        <header>
+          <h1>Title</h1>
+        </header>
+        <p>Content</p>
+      </article>
+  
+  extract_to_stimulus_component:
+    when: "Reusable interactive pattern appears >3 times"
+    how:
+      - check_stimulus_components_com: "Does it already exist?"
+      - import_if_exists: "npm install @stimulus-components/dropdown"
+      - create_if_novel: "Wrap in Stimulus controller"
+      - encapsulate_html: "Component owns its template"
+      - document_api: "data-controller-*-value attributes"
+    
+    example:
+      existing_component: |
+        # Install from stimulus-components.com
+        import Dropdown from '@stimulus-components/dropdown'
+        application.register('dropdown', Dropdown)
+        
+        # Use in ERB
+        <div data-controller="dropdown">
+          <button data-action="dropdown#toggle">Menu</button>
+          <div data-dropdown-target="menu">...</div>
+        </div>
+      
+# ============= AUTOMATED RETROFIT PATTERNS =============
+# Complete before→after transformations with code generation
+
+retrofit:
+  jquery_to_stimulus:
+    detect:
+      - pattern: '$(document).ready'
+      - pattern: '$(".selector").on("click"'
+      - pattern: '$.ajax'
+      - pattern: '$(".selector").toggle'
+    
+    transform:
+      ajax_to_turbo_stream:
+        before: |
+          $.ajax({
+            url: '/posts/123',
+            method: 'PATCH',
+            data: { post: { published: true } },
+            success: function(html) {
+              $('#post-123').replaceWith(html);
+            }
+          });
+        
+        after: |
+          # Stimulus controller: app/javascript/controllers/post_controller.js
+          import { Controller } from "@hotwired/stimulus"
+          
+          export default class extends Controller {
+            async publish() {
+              const response = await fetch(this.element.dataset.url, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ post: { published: true } })
+              })
+              
+              // Server responds with turbo_stream that updates DOM automatically
+            }
+          }
+          
+          # ERB: app/views/posts/_post.html.erb
+          <%= turbo_frame_tag dom_id(post) do %>
+            <article data-controller="post" data-url="<%= post_path(post) %>">
+              <button data-action="post#publish">Publish</button>
+            </article>
+          <% end %>
+          
+          # Controller: app/controllers/posts_controller.rb
+          def update
+            @post.update(post_params)
+            respond_to do |format|
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(@post) }
+            end
+          end
+      
+      click_handler_to_stimulus:
+        before: |
+          $(document).ready(function() {
+            $('.toggle-button').on('click', function() {
+              $(this).next('.content').toggle();
+            });
+          });
+        
+        after: |
+          # app/javascript/controllers/toggle_controller.js
+          import { Controller } from "@hotwired/stimulus"
+          
+          export default class extends Controller {
+            static targets = ["content"]
+            
+            toggle() {
+              this.contentTarget.hidden = !this.contentTarget.hidden
+            }
+          }
+          
+          # ERB
+          <div data-controller="toggle">
+            <button data-action="toggle#toggle">Toggle</button>
+            <div data-toggle-target="content">Content</div>
+          </div>
+      
+      select_change_to_stimulus:
+        before: |
+          $('.category-select').on('change', function() {
+            var category = $(this).val();
+            $.get('/products?category=' + category, function(html) {
+              $('#products').html(html);
+            });
+          });
+        
+        after: |
+          # Use Turbo Frame with form submission
+          <%= turbo_frame_tag "products" do %>
+            <%= form_with url: products_path, method: :get, 
+                  data: { turbo_frame: "products", turbo_action: "advance" } do |f| %>
+              <%= f.select :category, categories_for_select, 
+                    data: { action: "change->form#submit" } %>
+            <% end %>
+            
+            <%= render @products %>
+          <% end %>
+          
+          # Minimal Stimulus for auto-submit
+          import { Controller } from "@hotwired/stimulus"
+          export default class extends Controller {
+            submit() {
+              this.element.requestSubmit()
+            }
+          }
+  
+  partial_sprawl_to_components:
+    detect:
+      - pattern: 'render partial: .* locals:'
+      - pattern: 'render ".*", .*:'
+      - threshold: '>5 partials in same directory'
+    
+    consolidate_to_view_component:
+      before: |
+        # app/views/posts/show.html.erb
+        <%= render 'posts/header', post: @post %>
+        <%= render 'posts/metadata', post: @post %>
+        <%= render 'posts/content', post: @post %>
+        <%= render 'posts/author_info', post: @post, show_bio: true %>
+        <%= render 'posts/tags', post: @post %>
+        <%= render 'posts/actions', post: @post, current_user: current_user %>
+        <%= render 'posts/related', posts: @related_posts %>
+        
+        # Plus 7 separate partial files with their own logic
+      
+      after: |
+        # app/components/post_detail_component.rb
+        class PostDetailComponent < ViewComponent::Base
+          def initialize(post:, current_user:, related_posts: [])
+            @post = post
+            @current_user = current_user
+            @related_posts = related_posts
+          end
+          
+          def show_actions?
+            @post.published? && @current_user.present?
+          end
+          
+          def author_bio
+            @post.author.bio if @post.author.show_bio?
+          end
+        end
+        
+        # app/components/post_detail_component.html.erb
+        <article class="post-detail" data-controller="post">
+          <header>
+            <h1><%= @post.title %></h1>
+            <%= render_metadata %>
+          </header>
+          
+          <div class="post-content">
+            <%= sanitize @post.content %>
+          </div>
+          
+          <aside class="post-sidebar">
+            <%= render_author_info %>
+            <%= render_tags %>
+          </aside>
+          
+          <%= render_actions if show_actions? %>
+          <%= render_related_posts %>
+        </article>
+        
+        # app/views/posts/show.html.erb (now one line!)
+        <%= render PostDetailComponent.new(
+              post: @post, 
+              current_user: current_user,
+              related_posts: @related_posts
+            ) %>
+  
+  divitis_to_semantic:
+    detect:
+      - pattern: '<div class="[^"]*container[^"]*">'
+      - pattern: '<div class="[^"]*wrapper[^"]*">'
+      - threshold: '>4 nested divs'
+    
+    semantic_transformation:
+      before: |
+        <div class="blog-post-container">
+          <div class="post-wrapper">
+            <div class="post-header-section">
+              <div class="title-container">
+                <div class="title-wrapper">
+                  <h1 class="post-title">Title</h1>
+                </div>
+              </div>
+              <div class="meta-container">
+                <div class="author-wrapper">
+                  <span class="author-name">Author</span>
+                </div>
+                <div class="date-wrapper">
+                  <span class="post-date">Date</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-content-section">
+              <div class="content-wrapper">
+                <p>Content here</p>
+              </div>
+            </div>
+            <div class="post-footer-section">
+              <div class="tags-container">
+                <div class="tag-wrapper">
+                  <span class="tag">Tag</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+      after: |
+        <article class="blog-post">
+          <header>
+            <h1>Title</h1>
+            <div class="meta">
+              <span class="author">Author</span>
+              <time datetime="<%= @post.created_at.iso8601 %>">Date</time>
+            </div>
+          </header>
+          
+          <p>Content here</p>
+          
+          <footer>
+            <ul class="tags">
+              <li class="tag">Tag</li>
+            </ul>
+          </footer>
+        </article>
+  
+  legacy_ajax_to_hotwire:
+    detect:
+      - pattern: 'remote: true'
+      - pattern: 'rails-ujs'
+      - pattern: 'ajax:success'
+    
+    transform_remote_forms:
+      before: |
+        # Old Rails UJS pattern
+        <%= form_with model: @post, remote: true do |f| %>
+          <%= f.text_field :title %>
+          <%= f.submit %>
+        <% end %>
+        
+        <script>
+          $(document).on('ajax:success', 'form', function(event) {
+            var [data, status, xhr] = event.detail;
+            $('#posts').append(xhr.responseText);
+          });
+        </script>
+      
+      after: |
+        # Modern Turbo pattern - controller returns turbo_stream
+        <%= turbo_frame_tag "new_post" do %>
+          <%= form_with model: @post do |f| %>
+            <%= f.text_field :title %>
+            <%= f.submit %>
+          <% end %>
+        <% end %>
+        
+        <%= turbo_frame_tag "posts" do %>
+          <%= render @posts %>
+        <% end %>
+        
+        # app/controllers/posts_controller.rb
+        def create
+          @post = Post.create(post_params)
+          respond_to do |format|
+            format.turbo_stream do
+              render turbo_stream: [
+                turbo_stream.append("posts", @post),
+                turbo_stream.replace("new_post", partial: "posts/form", locals: { post: Post.new })
+              ]
+            end
+          end
+        end
+    
+    transform_link_remote:
+      before: |
+        <%= link_to "Delete", post_path(@post), 
+              method: :delete, 
+              remote: true,
+              data: { confirm: "Are you sure?" } %>
+        
+        <script>
+          $(document).on('ajax:success', 'a[data-method="delete"]', function() {
+            $(this).closest('.post').fadeOut();
+          });
+        </script>
+      
+      after: |
+        <%= button_to "Delete", post_path(@post),
+              method: :delete,
+              form: { data: { turbo_confirm: "Are you sure?" } } %>
+        
+        # Controller responds with turbo_stream
+        def destroy
+          @post = Post.find(params[:id])
+          @post.destroy
+          respond_to do |format|
+            format.turbo_stream { render turbo_stream: turbo_stream.remove(@post) }
+          end
+        end
+  
+  manual_dom_to_stimulus_reflex:
+    detect:
+      - pattern: 'document.getElementById'
+      - pattern: '.innerHTML ='
+      - pattern: '.classList.toggle'
+      - threshold: 'Real-time updates needed'
+    
+    transform_to_reflex:
+      before: |
+        # Manual DOM manipulation
+        <div id="like-button-<%= @post.id %>">
+          <button onclick="toggleLike(<%= @post.id %>)">
+            ❤️ <%= @post.likes_count %>
+          </button>
+        </div>
+        
+        <script>
+          function toggleLike(postId) {
+            fetch(`/posts/${postId}/toggle_like`, { method: 'POST' })
+              .then(r => r.json())
+              .then(data => {
+                const btn = document.querySelector(`#like-button-${postId} button`);
+                btn.textContent = `❤️ ${data.likes_count}`;
+                btn.classList.toggle('liked', data.liked);
+              });
+          }
+        </script>
+      
+      after: |
+        # StimulusReflex pattern - zero JavaScript needed!
+        <div id="like-button-<%= dom_id(@post, :like) %>" 
+             data-reflex="click->Post#toggle_like"
+             data-post-id="<%= @post.id %>">
+          <button class="<%= 'liked' if @post.liked_by?(current_user) %>">
+            ❤️ <%= @post.likes_count %>
+          </button>
+        </div>
+        
+        # app/reflexes/post_reflex.rb
+        class PostReflex < ApplicationReflex
+          def toggle_like
+            post = Post.find(element.dataset[:post_id])
+            post.toggle_like!(current_user)
+            
+            # Automatically re-renders the element with updated data
+            morph "#like-button-#{dom_id(post, :like)}"
+          end
+        end
+  
+  bootstrap_to_stimulus_components:
+    detect:
+      - pattern: 'data-bs-toggle'
+      - pattern: 'data-toggle="modal"'
+      - pattern: 'bootstrap.min.js'
+    
+    transform_modal:
+      before: |
+        <!-- Bootstrap modal -->
+        <button data-bs-toggle="modal" data-bs-target="#myModal">
+          Open Modal
+        </button>
+        
+        <div class="modal" id="myModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5>Title</h5>
+                <button data-bs-dismiss="modal">&times;</button>
+              </div>
+              <div class="modal-body">Content</div>
+            </div>
+          </div>
+        </div>
+        
+        <script src="bootstrap.min.js"></script>
+      
+      after: |
+        # Install: npm install @stimulus-components/dialog
+        # app/javascript/controllers/application.js
+        import Dialog from '@stimulus-components/dialog'
+        application.register('dialog', Dialog)
+        
+        # ERB - Clean semantic HTML
+        <button data-action="dialog#open" data-dialog-id-param="myDialog">
+          Open Modal
+        </button>
+        
+        <dialog data-controller="dialog" data-dialog-id-value="myDialog">
+          <header>
+            <h2>Title</h2>
+            <button data-action="dialog#close">&times;</button>
+          </header>
+          <article>Content</article>
+        </dialog>
+        
+        # No Bootstrap JavaScript needed!
+    
+    transform_dropdown:
+      before: |
+        <!-- Bootstrap dropdown -->
+        <div class="dropdown">
+          <button class="dropdown-toggle" data-bs-toggle="dropdown">
+            Menu
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+            <li><a class="dropdown-item" href="/settings">Settings</a></li>
+          </ul>
+        </div>
+      
+      after: |
+        # Install: npm install @stimulus-components/dropdown
+        import Dropdown from '@stimulus-components/dropdown'
+        application.register('dropdown', Dropdown)
+        
+        # Clean semantic HTML
+        <div data-controller="dropdown">
+          <button data-action="dropdown#toggle">Menu</button>
+          <ul data-dropdown-target="menu" hidden>
+            <li><a href="/profile">Profile</a></li>
+            <li><a href="/settings">Settings</a></li>
+          </ul>
+        </div>
+  
+  rails_8_patterns:
+    authentication_to_solid_auth:
+      before: |
+        # Devise or custom auth
+        gem 'devise'
+        
+        # config/routes.rb
+        devise_for :users
+      
+      after: |
+        # Rails 8 authentication generator
+        rails generate authentication
+        
+        # Creates:
+        # - app/models/user.rb (with has_secure_password)
+        # - app/models/session.rb
+        # - app/controllers/sessions_controller.rb
+        # - app/views/sessions/*
+        # - Authentication concern
+        # - System tests
+    
+    background_jobs_to_solid_queue:
+      before: |
+        # Sidekiq or other
+        gem 'sidekiq'
+        
+        class ProcessDataJob < ApplicationJob
+          queue_as :default
+          def perform(data_id)
+            # process
+          end
+        end
+      
+      after: |
+        # Rails 8 default - Solid Queue (already configured!)
+        class ProcessDataJob < ApplicationJob
+          queue_as :default  # Uses Solid Queue automatically
+          
+          def perform(data_id)
+            # Same code, better performance
+            # Built-in mission control for monitoring
+          end
+        end
+        
+        # Access at /jobs for monitoring
+    
+    caching_to_solid_cache:
+      before: |
+        # Redis or Memcached
+        config.cache_store = :redis_cache_store
+      
+      after: |
+        # Rails 8 default - Solid Cache (database-backed)
+        config.cache_store = :solid_cache_store
+        
+        # Same Rails.cache API, but:
+        # - No Redis needed
+        # - Persistent across deploys
+        # - Cheaper infrastructure
+    
+    websockets_to_solid_cable:
+      before: |
+        # Redis-backed ActionCable
+        config.action_cable.url = "ws://localhost:3000/cable"
+        
+        # app/channels/chat_channel.rb
+        class ChatChannel < ApplicationCable::Channel
+          def subscribed
+            stream_from "chat_room_#{params[:room_id]}"
+          end
+        end
+      
+      after: |
+        # Rails 8 - Solid Cable (database-backed)
+        # Same API, no Redis needed!
+        
+        class ChatChannel < ApplicationCable::Channel
+          def subscribed
+            stream_from "chat_room_#{params[:room_id]}"
+          end
+        end
+        
+        # Works identically but uses database for pub/sub
+
+# ============= AUTOMATED MIGRATION STRATEGY =============
+# Step-by-step modernization plan
+
+migration_strategy:
+  phase_1_foundation:
+    title: "Remove jQuery, Add Stimulus"
+    duration: "1-2 weeks"
+    steps:
+      - install_hotwire: "rails hotwire:install"
+      - install_stimulus_components: "npm install @stimulus-components/*"
+      - audit_jquery_usage: "Find all $ and jQuery references"
+      - replace_click_handlers: "jQuery clicks → Stimulus actions"
+      - replace_ajax_calls: "$.ajax → fetch with Turbo"
+      - remove_jquery: "Delete jQuery from package.json"
+    
+    validation:
+      - no_jquery_references: "grep -r '\\$(' app/javascript"
+      - stimulus_controllers_created: "Count app/javascript/controllers/*"
+      - feature_tests_pass: "All Capybara tests green"
+  
+  phase_2_views:
+    title: "Consolidate Partials, Eliminate Divitis"
+    duration: "2-3 weeks"
+    steps:
+      - audit_partials: "Find dirs with >5 partials"
+      - identify_components: "Group related partials"
+      - install_view_component: "gem 'view_component'"
+      - extract_components: "Convert partial clusters → ViewComponents"
+      - semantic_html_audit: "Identify divitis hotspots"
+      - replace_divs: "Divs → article/section/nav/main"
+      - turbo_frame_boundaries: "Wrap update targets in frames"
+    
+    validation:
+      - partial_count_reduced: ">40% fewer partials"
+      - component_coverage: ">60% complex views use components"
+      - semantic_ratio: "Semantic tags > divs"
+      - accessibility_score: ">90 Lighthouse"
+  
+  phase_3_hotwire:
+    title: "Full Turbo + StimulusReflex Integration"
+    duration: "2-3 weeks"
+    steps:
+      - turbo_frame_all_partials: "Lazy load content"
+      - turbo_stream_all_updates: "Multi-element updates"
+      - install_stimulus_reflex: "gem 'stimulus_reflex'"
+      - identify_reactive_features: "Real-time update candidates"
+      - implement_reflexes: "StimulusReflex for reactive UI"
+      - cable_ready_morphs: "Targeted DOM updates"
+    
+    validation:
+      - turbo_adoption: ">80% partial updates via Turbo"
+      - reflex_coverage: "All real-time features use SR"
+      - websocket_health: "ActionCable connection stable"
+      - no_manual_dom: "Zero innerHTML/outerHTML in JS"
+  
+  phase_4_rails8:
+    title: "Upgrade to Rails 8 Solid Stack"
+    duration: "1 week"
+    steps:
+      - upgrade_rails: "bundle update rails"
+      - migrate_to_solid_queue: "Replace Sidekiq"
+      - migrate_to_solid_cache: "Replace Redis cache"
+      - migrate_to_solid_cable: "Replace Redis ActionCable"
+      - use_authentication_generator: "Replace Devise if needed"
+      - kamal_deploy_setup: "Modern deployment"
+    
+    validation:
+      - rails_version: "8.0+"
+      - solid_stack_active: "Queue/Cache/Cable using Solid"
+      - infrastructure_simplified: "Redis optional, not required"
+      - deploy_automated: "Kamal deployment working"
+  
+  phase_5_ai:
+    title: "LangChain Integration"
+    duration: "1-2 weeks"
+    steps:
+      - install_langchainrb: "gem 'langchainrb_rails'"
+      - setup_pgvector: "rails generate langchainrb:install"
+      - centralize_prompts: "config/prompts/ directory"
+      - background_llm_jobs: "Async LLM processing"
+      - streaming_responses: "Turbo Stream LLM output"
+      - rag_implementation: "Vector search for context"
+    
+    validation:
+      - async_llm: "All LLM calls in background"
+      - streaming_works: "Real-time token streaming"
+      - vector_search: "pgvector queries working"
+      - prompt_management: "Centralized prompt library"
+
+# ============= COMPLETE RETROFIT EXAMPLE =============
+# Full legacy app → modern Rails 8 transformation
+
+complete_example:
+  legacy_app:
+    description: "Typical Rails 5/6 app with jQuery, partials, remote: true"
+    stack: [rails_6, jquery, rails_ujs, devise, sidekiq, redis]
+    problems:
+      - "50+ partials in app/views/posts/"
+      - "Heavy jQuery usage for interactions"
+      - "Manual AJAX with script tags"
+      - "Deep div nesting (8+ levels)"
+      - "No component abstraction"
+      - "Redis dependency for everything"
+  
+  modernized_app:
+    description: "Modern Rails 8 with Hotwire, zero jQuery, components"
+    stack: [rails_8, hotwire, stimulus, stimulus_reflex, view_component, solid_queue, solid_cache, solid_cable]
+    improvements:
+      - "12 ViewComponents (down from 50 partials)"
+      - "Zero jQuery, pure Stimulus"
+      - "Turbo Frames/Streams for all updates"
+      - "Semantic HTML (3 level max nesting)"
+      - "Component-based architecture"
+      - "No Redis required"
+    
+    metrics:
+      partial_reduction: "76%"
+      javascript_reduction: "85%"
+      accessibility_score: "+18 points"
+      page_load_improvement: "40% faster"
+      infrastructure_cost: "-$200/month (no Redis)"
+      developer_happiness: "+45%"
+  
+  replace_with_turbo_frame:
+    when: "Partial swap via AJAX or manual DOM manipulation"
+    how:
+      - wrap_in_turbo_frame: "Add turbo-frame with unique ID"
+      - update_links_buttons: "Add data-turbo-frame attribute"
+      - respond_with_frame: "Controller returns turbo_frame_tag"
+      - add_lazy_loading: "Use src attribute for deferred load"
+      - stream_for_broadcast: "Turbo Stream for multi-user updates"
+    
+    before: |
+      # Old AJAX pattern
+      <div id="notifications">
+        <%= render 'notifications' %>
+      </div>
+      
+      <script>
+        setInterval(() => {
+          fetch('/notifications').then(r => r.text())
+            .then(html => document.getElementById('notifications').innerHTML = html)
+        }, 5000)
+      </script>
+    
+    after: |
+      # Turbo Frame with lazy loading
+      <%= turbo_frame_tag "notifications", 
+            src: notifications_path,
+            loading: :lazy,
+            data: { controller: "autorefresh" } do %>
+        Loading notifications...
+      <% end %>
+      
+      # Controller responds with frame
+      def notifications
+        render turbo_frame: "notifications", partial: "notifications"
+      end
+      
+      # Or use Turbo Stream for broadcasts
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "notifications",
+        target: "notifications", 
+        partial: "notifications"
+      )
+  
+  integrate_stimulus_reflex:
+    when: "Complex reactive state or real-time updates needed"
+    how:
+      - identify_reactive_boundary: "What updates in real-time?"
+      - create_reflex: "rails g stimulus_reflex Feature"
+      - add_data_attributes: "data-reflex='click->Feature#action'"
+      - morph_with_cable_ready: "Update DOM via ActionCable"
+      - optimize_with_selectors: "Target specific elements"
+    
+    example: |
+      # app/reflexes/post_reflex.rb
+      class PostReflex < ApplicationReflex
+        def toggle_like
+          post = Post.find(element.dataset.post_id)
+          post.toggle_like!(current_user)
+          
+          morph "#post-#{post.id}-likes", render(partial: "posts/likes", locals: { post: post })
+        end
+      end
+      
+      # app/views/posts/_post.html.erb
+      <article id="post-<%= post.id %>">
+        <div id="post-<%= post.id %>-likes" data-reflex="click->Post#toggle_like" data-post-id="<%= post.id %>">
+          <%= render "posts/likes", post: post %>
+        </div>
+      </article>
+  
+  langchain_streaming_response:
+    when: "LLM-generated content needs real-time streaming"
+    how:
+      - background_job: "Process in Solid Queue"
+      - turbo_stream_channel: "Stream updates to client"
+      - langchain_streaming: "Enable streaming in LangChain"
+      - append_tokens: "Use turbo_stream.append for incremental updates"
+      - finalize_stream: "Mark complete with final turbo_stream.replace"
+    
+    example: |
+      # app/jobs/ai_response_job.rb
+      class AiResponseJob < ApplicationJob
+        def perform(prompt_id)
+          prompt = Prompt.find(prompt_id)
+          
+          Langchain::LLM::OpenAI.new.complete(
+            prompt: prompt.text,
+            stream: proc { |chunk|
+              Turbo::StreamsChannel.broadcast_append_to(
+                "prompt_#{prompt.id}",
+                target: "response",
+                html: chunk
+              )
+            }
+          )
+          
+          Turbo::StreamsChannel.broadcast_replace_to(
+            "prompt_#{prompt.id}",
+            target: "status",
+            html: "<div>Complete</div>"
+          )
+        end
+      end
+      
+      # app/views/prompts/show.html.erb
+      <%= turbo_stream_from "prompt_#{@prompt.id}" %>
+      <div id="response"></div>
+      <div id="status">Processing...</div>
+
+# ============= RAILS-SPECIFIC VALIDATION =============
+# How to verify Rails improvements
+
+validation:
+  rails_specific_checks:
+    view_consolidation:
+      - partial_count_reduced: ">30% fewer partials"
+      - nesting_depth_reduced: "<3 levels of partial nesting"
+      - view_component_adoption: "Complex partials → ViewComponent"
+      - no_single_use_partials: "Zero partials used once"
+    
+    semantic_html:
+      - div_density_reduced: "<2 divs per semantic element"
+      - semantic_coverage: ">80% content in semantic tags"
+      - accessibility_improved: "Lighthouse accessibility score >95"
+      - landmark_regions: "All content in <main>, <nav>, <aside>, etc"
+    
+    hotwire_integration:
+      - turbo_frame_usage: "All partial updates via Turbo Frames"
+      - turbo_stream_responses: "All multi-update actions use Streams"
+      - form_turbo_enabled: "100% forms use Turbo"
+      - lazy_loading: "Below-fold content lazy loaded"
+    
+    stimulus_patterns:
+      - stimulus_components_used: "No reinvention of dropdown/modal/etc"
+      - controller_size: "<200 lines per controller"
+      - outlet_connections: "Cross-controller communication via outlets"
+      - no_jquery: "Zero jQuery usage in Stimulus"
+    
+    stimulus_reflex:
+      - reactive_boundaries: "Clear data-reflex boundaries"
+      - optimistic_updates: "Immediate UI feedback"
+      - morphdom_usage: "Efficient DOM updates"
+      - no_full_page_morphs: "Targeted element updates only"
+    
+    langchain_integration:
+      - async_processing: "All LLM calls in background jobs"
+      - streaming_enabled: "Real-time response streaming"
+      - prompt_centralization: "config/prompts/ directory exists"
+      - vector_search: "pgvector integration for RAG"
+      - secure_credentials: "No hardcoded API keys"
+
+# ============= RAILS EXECUTION PATTERNS =============
+# How to apply transformations to Rails apps
+
+execution:
+  analysis_sequence:
+    - scan_views: "app/views/**/*.html.{erb,haml,slim}"
+    - scan_components: "app/components/**/*.rb"
+    - scan_stimulus: "app/javascript/controllers/**/*_controller.js"
+    - scan_reflexes: "app/reflexes/**/*_reflex.rb"
+    - identify_duplication: "Similarity analysis across views"
+    - map_stimulus_usage: "data-controller usage patterns"
+    - analyze_turbo_coverage: "turbo-frame and turbo-stream usage"
+  
+  priority_order:
+    high: [divitis_elimination, view_consolidation, stimulus_component_adoption]
+    medium: [turbo_frame_migration, stimulus_reflex_integration]
+    low: [langchain_streaming, performance_optimization]
+  
+  safety_checks:
+    - feature_test_coverage: "All features have system tests"
+    - no_breaking_controllers: "Controller interface unchanged"
+    - stimulus_event_preservation: "Custom events still fire"
+    - turbo_frame_navigation: "Navigation patterns preserved"
+
+# ============= RAILS-SPECIFIC CONVENTIONS =============
+# Rails community best practices
+
+conventions:
+  file_organization:
+    views: "app/views/[resource]/[action].html.erb"
+    components: "app/components/[name]_component.rb"
+    stimulus: "app/javascript/controllers/[name]_controller.js"
+    reflexes: "app/reflexes/[name]_reflex.rb"
+    prompts: "config/prompts/[purpose].yml"
+  
+  naming:
+    components: "PostCardComponent (not PostCard or PostCardView)"
+    stimulus: "kebab-case (post-card, not postCard or PostCard)"
+    reflexes: "PostReflex (matches Stimulus controller name)"
+    turbo_frames: "resource_scope_purpose (post_comments_list)"
+  
+  stimulus_controllers:
+    single_responsibility: "One interactive behavior per controller"
+    composition_over_inheritance: "Use mixins, not base classes"
+    outlets_for_communication: "Never getElementById"
+    values_for_configuration: "data-controller-name-value-attribute"
+  
+  turbo_frames:
+    unique_ids: "Include resource type and ID in frame ID"
+    lazy_loading: "Use src attribute for below-fold content"
+    navigation_target: "data-turbo-frame for links targeting frame"
+    graceful_degradation: "Frame content works without Turbo"
+  
+  view_components:
+    initialize_only: "All data passed via initialize()"
+    no_instance_variables: "Use attr_reader for template access"
+    test_with_view_component_test_helpers: "Use render_inline()"
+    slots_for_composition: "renders_one/renders_many for flexibility"
+
+# ============= MEASUREMENT =============
+# Rails-specific metrics
+
+metrics:
+  view_health:
+    partial_count: "Total partials in app/views"
+    average_nesting_depth: "Average partial nesting levels"
+    view_component_ratio: "Components / (Components + Partials)"
+    erb_lines_per_file: "Average ERB file length"
+  
+  html_quality:
+    div_to_semantic_ratio: "Divs / Semantic elements"
+    nesting_depth: "Average HTML nesting depth"
+    accessibility_score: "Lighthouse accessibility"
+    css_class_density: "Classes per element"
+  
+  hotwire_adoption:
+    turbo_frame_coverage: "% of partial updates using Frames"
+    turbo_stream_usage: "Broadcast updates vs manual DOM"
+    form_turbo_ratio: "Turbo forms / Total forms"
+    lazy_load_ratio: "Lazy loaded frames / Total frames"
+  
+  stimulus_health:
+    controller_count: "Total Stimulus controllers"
+    average_controller_size: "Lines per controller"
+    stimulus_component_usage: "Imported vs custom controllers"
+    action_density: "data-action attributes per template"
+  
+  targets:
+    partial_reduction: ">40%"
+    div_reduction: ">50%"
+    turbo_adoption: ">90%"
+    stimulus_components: ">70% from stimulus-components.com"
+    accessibility: ">95 Lighthouse score"
+
+# ============= INTEGRATION EXAMPLES =============
+# Complete before/after transformations
+
+examples:
+  complex_feature_consolidation:
+    before: |
+      # app/views/posts/show.html.erb
+      <%= render 'posts/header', post: @post %>
+      <%= render 'posts/body', post: @post %>
+      <%= render 'posts/meta', post: @post %>
+      <%= render 'posts/comments/list', comments: @comments %>
+      <%= render 'posts/actions', post: @post %>
+      
+      # Plus 5 separate partial files with nested rendering
+    
+    after: |
+      # app/components/post_view_component.rb
+      class PostViewComponent < ViewComponent::Base
+        renders_one :comments
+        
+        def initialize(post:)
+          @post = post
+        end
+      end
+      
+      # app/components/post_view_component.html.erb
+      <%= turbo_frame_tag dom_id(@post) do %>
+        <article data-controller="post">
+          <%= render_header %>
+          <%= render_body %>
+          <%= render_meta %>
+          <%= comments %>
+          <%= render_actions %>
+        </article>
+      <% end %>
+      
+      # app/views/posts/show.html.erb
+      <%= render PostViewComponent.new(post: @post) do |component| %>
+        <% component.with_comments do %>
+          <%= turbo_frame_tag "post_#{@post.id}_comments", 
+                src: post_comments_path(@post), loading: :lazy %>
+        <% end %>
+      <% end %>
+  
+  divitis_to_semantic:
+    before: |
+      <div class="post-container">
+        <div class="post-wrapper">
+          <div class="post-header-container">
+            <div class="title-wrapper
