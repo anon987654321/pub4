@@ -28,7 +28,7 @@ tool_policy:
     
   zsh_replacements:
     string_operations:
-      remove_crlf: 'cleaned=${var//$'\r'/}'
+      remove_crlf: "cleaned=${var//$'\\r'/}"
       lowercase: '${(L)var}'
       uppercase: '${(U)var}'
       replace_all: '${var//search/replace}'
@@ -505,10 +505,10 @@ formatters:
   
   base_operations:
     read: 'content=$(<$file)'
-    tabs_to_spaces: 'content=${content//$'\t'/  }'
+    tabs_to_spaces: "content=${content//$'\\t'/  }"
     trim_trailing: 'content=${content%%[[:space:]]##}'
-    ensure_final_newline: 'content=${content%$'\n'}$''\n'''
-    normalize_crlf: 'content=${content//$'\r'/}'
+    ensure_final_newline: "content=${content%$'\\n'}$'\\n'"
+    normalize_crlf: "content=${content//$'\\r'/}"
     write: 'print -r -- "$content" > $file'
 
 # tier 3 execution context
