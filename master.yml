@@ -85,7 +85,7 @@ cognitive_enforcement:
       bracket_decorators: '\[\.\.\.\]|\[…\]|\[\s*\]$'
       ascii_art: '[╔╗╚╝║│┌┐└┘├┤┬┴┼]'
       repeated_symbols: '(.) \\1{4,}'
-      emoji_decoration: '[\x{1F300}-\x{1F9FF}]'
+      emoji_decoration: '[\u{1F300}-\u{1F9FF}]'
     
     enforcement:
       level: "ZERO_TOLERANCE"
