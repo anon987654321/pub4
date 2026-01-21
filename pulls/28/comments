@@ -1,0 +1,47 @@
+## Additional Request: Add Top-of-File Style Header
+
+Please also add this header block at the very top of `master.yml` (before any YAML content):
+
+```yaml
+# master.yml
+# quality governance system for llm-assisted development
+# 
+# CRITICAL: READ BEFORE MODIFYING
+# 
+# style_rules (enforced):
+#   - lowercase_only (no camelCase, PascalCase, SCREAMING_CASE)
+#   - underscores_between_words (no kebab-case, no spaces)
+#   - plain_english (descriptive phrases, not code)
+#   - no_code_examples (except zsh patterns which require literal syntax)
+#   - every_addition_must_match_existing_style
+#
+# violation_response: reject_and_reformat
+#
+# example_good: track_reasoning_patterns, migrate_with_approval
+# example_bad: trackReasoningPatterns, migrate-with-approval, TRACK_PATTERNS
+```\n
+And update the `meta` section to include:
+
+```yaml
+meta:
+  name: quality_governance_system
+  version: 14.0.0
+  style: lowercase_underscored_plain_english
+  style_enforcement: absolute
+  
+  read_this_first:
+    rule: all_content_lowercase_underscored
+    exceptions: [zsh_patterns]
+    on_violation: reject_reformat_before_merge
+    
+  for_llms:
+    before_editing: read_style_rules_above
+    before_adding: verify_matches_existing_format
+    before_committing: scan_for_style_violations
+    
+  for_humans:
+    philosophy: plain_english_over_jargon
+    rationale: llms_parse_better_humans_read_easier
+```
+
+This exploits the "lost in middle" effect by placing critical style constraints at the very top where LLMs attend best.
