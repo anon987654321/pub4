@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# CONVERGENCE CLI v∞.17.0 - Hybrid API-first LLM client for OpenBSD
+# CLI.RB v17.0 - Hybrid API-first LLM client for OpenBSD
 # Single-file design with OpenRouter API, tiered permissions, screen sessions
 
 require "json"
@@ -74,13 +74,13 @@ def apply_pledge(level = :user)
   if paths == :all
     Pledge.unveil(ENV["HOME"], "rwc")
     Pledge.unveil("/tmp", "rwc")
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc", "r")
-    Pledge.unveil("/var", "rwc")
+    ["/usr/local", "/usr", "/bin"].each { |p| Pledge.unveil(p, "rx") if File.directory?(p) }
+    ["/etc", "/etc/ssl"].each { |p| Pledge.unveil(p, "r") if File.directory?(p) }
+    Pledge.unveil("/var", "rwc") if File.directory?("/var")
   else
     paths.each { |p| Pledge.unveil(p, "rwc") }
-    Pledge.unveil("/usr/local", "rx")
-    Pledge.unveil("/etc/ssl", "r")
+    ["/usr/local", "/usr", "/bin"].each { |p| Pledge.unveil(p, "rx") if File.directory?(p) }
+    Pledge.unveil("/etc/ssl", "r") if File.directory?("/etc/ssl")
   end
   Pledge.unveil(nil, nil)
 rescue => e
@@ -428,7 +428,7 @@ class ShellTool
   def execute(command:, timeout: 30)
     return { error: "command requires confirmation" } if needs_confirmation?(command)
     
-    shell = ["/usr/local/bin/zsh", "/bin/zsh", "/bin/sh"].find { |s| File.executable?(s) }
+    shell = find_shell
     return { error: "no shell" } unless shell
     
     Timeout.timeout(timeout) do
@@ -442,7 +442,14 @@ class ShellTool
   end
   
   private
-  
+
+  def find_shell
+    user_shell = ENV["SHELL"]
+    return user_shell if user_shell && File.executable?(user_shell)
+    
+    ["/usr/local/bin/zsh", "/usr/bin/zsh", "/bin/zsh", "/usr/local/bin/bash", "/usr/bin/bash", "/bin/bash", "/bin/sh"].find { |s| File.executable?(s) }
+  end
+
   def needs_confirmation?(cmd)
     (@config[:confirm_writes] && cmd =~ /\b(rm|mv|cp|chmod|chown)\b/) ||
     (@config[:confirm_root] && cmd.include?("doas"))
