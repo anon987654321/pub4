@@ -111,6 +111,12 @@ documentation_requirements:
         when: method_raises_exceptions
       - tag: "@example"
         when: usage_non_obvious
+      - tag: "@yield"
+        when: method_accepts_block
+      - tag: "@yieldparam"
+        when: block_has_parameters
+      - tag: "@yieldreturn"
+        when: block_returns_value
     
     forbidden:
       - empty_descriptions
@@ -745,3 +751,12 @@ meta_exceptions:
       - issue_link
       - cleanup_deadline
       - reviewer_approval
+  
+  ruby_language_conventions:
+    rule: ruby_class_names_must_use_pascal_case_constants_must_use_screaming_case
+    rationale: ruby_syntax_requires_these_conventions
+    scope: ruby_code_only
+    exceptions:
+      - class_names: PascalCase
+      - constants: SCREAMING_CASE
+    display: documented_in_rule_exceptions
