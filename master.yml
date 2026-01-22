@@ -168,7 +168,6 @@ execution_truth:
   
   backend:
     allowed:  [ruby, zsh, doas]
-    forbidden: [bash, powershell, cmd, python]
     rationale: consistency_and_security
   
   failure_response: fatal_with_explanation
@@ -176,12 +175,6 @@ execution_truth:
 security:
   api_keys: 
     storage: environment_variables_only
-    forbidden: 
-      - plaintext_in_files
-      - terminal_prompts
-      - git_commits
-      - yaml_config
-    
     pattern: 
       name: "SERVICENAME_API_KEY"
       access: "ENV. fetch('KEY') { abort 'Set KEY' }"
@@ -871,3 +864,4 @@ meta_exceptions:
       - issue_link
       - cleanup_deadline
       - reviewer_approval
+
