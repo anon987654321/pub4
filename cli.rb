@@ -229,6 +229,30 @@ module Convergence
   }.freeze
 end
 
+# OpenBSD FFI bindings for pledge and unveil system calls.
+# Defines native system call bindings when FFI is available.
+module OpenBSDSecurity
+  # Only load FFI bindings if FFI is available
+  # This allows the module to exist without FFI while avoiding load-time errors
+  def self.load_ffi_bindings
+    require 'ffi'
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+    
+    # Bind to unveil(2) system call for filesystem access control
+    # @param path [String] path to restrict or nil to lock
+    # @param permissions [String] permission string or nil
+    # @return [Integer] 0 on success, -1 on error
+    attach_function :unveil, [:string, :string], :int
+    
+    # Bind to pledge(2) system call for system call restriction
+    # @param promises [String] promises string
+    # @param execpromises [String] exec promises or nil
+    # @return [Integer] 0 on success, -1 on error
+    attach_function :pledge, [:string, :string], :int
+  end
+end
+
 # Applies OpenBSD pledge/unveil security restrictions to limit system access.
 # Uses FFI to call native OpenBSD system calls when available, falls back gracefully.
 # This implementation follows execution_truth requirements by being actually callable.
@@ -240,24 +264,7 @@ def apply_openbsd_security(level = :user)
   # Attempt to use FFI for native OpenBSD system calls
   # This avoids fictional operations by using actual system interfaces
   begin
-    require 'ffi'
-    
-    module OpenBSDSecurity
-      extend FFI::Library
-      ffi_lib FFI::Library::LIBC
-      
-      # Bind to unveil(2) system call for filesystem access control
-      # @param path [String] path to restrict or nil to lock
-      # @param permissions [String] permission string or nil
-      # @return [Integer] 0 on success, -1 on error
-      attach_function :unveil, [:string, :string], :int
-      
-      # Bind to pledge(2) system call for system call restriction
-      # @param promises [String] promises string
-      # @param execpromises [String] exec promises or nil
-      # @return [Integer] 0 on success, -1 on error
-      attach_function :pledge, [:string, :string], :int
-    end
+    OpenBSDSecurity.load_ffi_bindings
     
     config = Convergence::ACCESS_LEVELS[level]
     paths = config[:paths].call
