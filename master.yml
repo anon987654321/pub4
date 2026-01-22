@@ -760,3 +760,147 @@ meta_exceptions:
       - class_names: PascalCase
       - constants: SCREAMING_CASE
     display: documented_in_rule_exceptions
+
+error_handling:
+  philosophy: fail_fast_with_context
+  
+  retry_policy:
+    default_attempts: 3
+    backoff_strategy: exponential
+    max_backoff_seconds: 30
+    retryable_errors:
+      - network_timeout
+      - temporarily_unavailable
+      - rate_limit_exceeded
+  
+  escalation:
+    levels:
+      warning: log_to_stderr
+      error: log_with_backtrace
+      fatal: abort_with_error_code
+    context_required:
+      - operation_name
+      - input_parameters
+      - system_state
+  
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    timeout_seconds: 60
+    half_open_max_requests: 3
+  
+  graceful_degradation:
+    required_features: must_work_or_fatal
+    optional_features: log_warning_and_continue
+    examples:
+      - pledge_unveil: optional_security_enhancement
+      - syntax_highlighting: optional_display_feature
+
+observability:
+  logging:
+    format: json_lines
+    destination: stderr
+    level_default: info
+    level_debug_env: DEBUG
+    
+    required_fields:
+      - timestamp_iso8601
+      - level
+      - message
+      - context
+    
+    forbidden:
+      - secrets_in_logs
+      - full_request_bodies_by_default
+      - user_passwords
+  
+  audit_trail:
+    enabled: true
+    format: json_lines
+    destination: ./logs/audit.jsonl
+    rotation: daily
+    retention_days: 90
+    
+    events_to_log:
+      - security_violations
+      - privilege_escalations
+      - file_access_outside_sandbox
+      - api_authentication_attempts
+      - configuration_changes
+  
+  metrics:
+    collection: optional
+    format: prometheus_compatible
+    endpoints:
+      - operation_latency
+      - error_rate
+      - resource_usage
+  
+  health_checks:
+    endpoint: /health
+    include:
+      - disk_space_available
+      - memory_available
+      - dependency_connectivity
+
+dependency_management:
+  philosophy: minimal_dependencies_maximum_security
+  
+  version_pinning:
+    gemfile: pessimistic_operator
+    example: "gem 'rails', '~> 7.0.0'"
+    rationale: allow_patch_updates_only
+  
+  security_updates:
+    response_time_critical: 24_hours
+    response_time_high: 1_week
+    response_time_medium: 1_month
+    automated_alerts: required
+  
+  audit:
+    frequency: weekly
+    tools:
+      - bundler_audit
+      - ruby_advisory_db
+    on_vulnerability: create_issue_and_alert
+  
+  approval:
+    new_dependencies: require_review
+    major_updates: require_review_and_testing
+    security_patches: auto_approve_after_ci
+  
+  forbidden_dependencies:
+    - name: gems_with_native_extensions
+      rationale: portability_and_security
+      exceptions: ffi_for_openbsd_only
+    - name: abandoned_gems
+      definition: no_updates_in_2_years
+      action: find_alternative
+
+deployment:
+  strategy: blue_green_with_fast_rollback
+  
+  environments:
+    development:
+      auto_deploy: on_commit_to_main
+      security_level: relaxed
+    staging:
+      auto_deploy: on_tag_creation
+      security_level: production_equivalent
+    production:
+      auto_deploy: false
+      approval_required: true
+      security_level: maximum
+  
+  rollback:
+    time_to_rollback_sla: 5_minutes
+    testing: test_rollback_quarterly
+    triggers:
+      error_rate_increase: 10_percent
+      latency_increase: 2x_baseline
+      manual_decision: always_available
+  
+  health_checks:
+    post_deploy: required
+    smoke_tests: required
+    canary_duration: 5_minutes
