@@ -308,13 +308,25 @@ class APIClient
     request = Net::HTTP::Post.new(uri)
     headers.each { |k, v| request[k] = v }
     request.body = JSON.generate(body)
+    
+    puts "[DEBUG] Sending request to #{uri}" if ENV["DEBUG"]
     response = http.request(request)
     
-    raise "API error (#{response.code})" unless response.is_a?(Net::HTTPSuccess)
+    unless response.is_a?(Net::HTTPSuccess)
+      error_msg = "Error: API returned #{response.code}"
+      puts "[DEBUG] #{error_msg}: #{response.body[0..200]}" if ENV["DEBUG"]
+      @messages << { role: "assistant", content: error_msg }
+      return error_msg
+    end
     
     content = JSON.parse(response.body).dig("choices", 0, "message", "content") || ""
     @messages << { role: "assistant", content: content }
     content
+  rescue => e
+    error_msg = "Error: #{e.class.name} - #{e.message}"
+    puts "[DEBUG] #{error_msg}" if ENV["DEBUG"]
+    @messages << { role: "assistant", content: error_msg }
+    error_msg
   end
 end
 
@@ -474,6 +486,7 @@ class CLI
     "/save [name]" => "Save session",
     "/load [name]" => "Load session",
     "/sessions" => "List sessions",
+    "/debug" => "Toggle debug output",
     "/clear" => "Clear history",
     "/quit" => "Exit"
   }.freeze
@@ -519,9 +532,12 @@ class CLI
       @config.save
     end
     
+    puts "[DEBUG] Initializing client with model: #{@config.model}" if ENV["DEBUG"]
     @client = APIClient.new(api_key: @config.api_key, model: @config.model)
+    puts "[DEBUG] Client ready" if ENV["DEBUG"]
   rescue => e
     puts "Warning: #{e.message}"
+    puts e.backtrace.first(5) if ENV["DEBUG"]
     exit 1
   end
   
@@ -551,6 +567,7 @@ class CLI
     when "/save" then save_session(arg)
     when "/load" then load_session(arg)
     when "/sessions" then list_sessions
+    when "/debug" then toggle_debug
     when "/clear" then @client.clear_history; puts "History cleared"
     when "/quit", "/exit" then @running = false
     else puts "Unknown command. Type /help"
@@ -566,12 +583,14 @@ class CLI
       response = @client.chat_with_tools(input, executor: @tool_executor)
       puts response
     else
-      @client.send(input) { |chunk| print chunk; $stdout.flush }
+      result = @client.send(input) { |chunk| print chunk; $stdout.flush }
+      puts result if result && result.start_with?("Error:")
     end
     
     print "\n\n"
   rescue => e
     puts "\nError: #{e.message}\n\n"
+    puts e.backtrace.first(5) if ENV["DEBUG"]
   end
   
   def show_help
@@ -583,6 +602,16 @@ class CLI
   def toggle_agent
     @agent_mode = !@agent_mode
     puts "Agent mode: #{@agent_mode ? 'ON' : 'OFF'}"
+  end
+  
+  def toggle_debug
+    if ENV["DEBUG"]
+      ENV.delete("DEBUG")
+      puts "Debug mode: OFF"
+    else
+      ENV["DEBUG"] = "1"
+      puts "Debug mode: ON"
+    end
   end
   
   def show_level
