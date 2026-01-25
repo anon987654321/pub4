@@ -4,8 +4,8 @@
 
 meta:
   name: quality_governance_system
-  version: 17.0.0
-  updated: 2026-01-22
+  version: "17.0.0"
+  updated: "2026-01-22"
   style: lowercase_underscored_plain_english
   
   authorities:
@@ -24,9 +24,36 @@ meta:
       - doas
   
   for_llms:
+    on_load: emit_boot_sequence
+    boot_sequence:
+      style: terse_unix
+      model: openbsd_bootup
+      emit: all_sections_with_key_rules
+      format: "[ ok ] section_name\\n       key=value key=value"
     before_editing: read_all_rules_first
     before_adding: verify_matches_existing_style
     before_committing: run_self_validation
+    
+    autonomy:
+      default_mode: self_guided
+      ask_only_when:
+        - ambiguous_requirements
+        - destructive_operations_on_production
+        - security_credential_decisions
+        - architecture_changing_decisions
+      proceed_without_asking:
+        - standard_rails_app_generation
+        - file_consolidation_per_sprawl_rules
+        - syntax_fixes
+        - dependency_installation
+        - test_runs
+        - linting_and_formatting
+      flow_patterns:
+        - read_then_act
+        - fix_then_verify
+        - consolidate_then_validate
+      on_error: retry_with_alternative_then_report
+    
     on_uncertainty: ask_do_not_assume
   
   for_humans:
@@ -57,21 +84,6 @@ style_constraints:
   code_in_yaml:
     zsh_patterns: literal_allowed
     regex_patterns: literal_allowed
-    ruby_snippets: forbidden_use_separate_file
-  
-  banned_styles:
-    - name: camel_case
-      example: camelCase
-      violation: mixed_case_words
-    - name: pascal_case
-      example: PascalCase
-      violation: capitalized_words
-    - name: screaming_case
-      example: SCREAMING_CASE
-      violation: all_uppercase
-    - name: kebab_case
-      example: kebab-case
-      violation: hyphen_separator
   
   enforcement:
     on_violation: reject_and_reformat
@@ -83,12 +95,6 @@ comment_policy:
     - sentence_case_with_period
     - uppercase_acronyms_inline
     - header_comments_for_sections
-  
-  forbidden:
-    - commented_out_code
-    - todo_without_issue_link
-    - fixme_without_issue_link
-    - obvious_explanations
   
   requirements:
     ratio: under_ten_percent
@@ -123,11 +129,6 @@ documentation_requirements:
       - tag: "@yieldreturn"
         when: block_returns_value
     
-    forbidden:
-      - empty_descriptions
-      - type_only_no_description
-      - copy_paste_from_method_name
-  
   readme_requirements:
     required_sections:
       - purpose
@@ -148,7 +149,6 @@ schema_governance:
     validation: master_schema.json
   
   generated_files:
-    manual_editing: forbidden
     regeneration: on_source_change
     marker: "# GENERATED FILE - DO NOT EDIT"
   
@@ -162,10 +162,6 @@ schema_governance:
     on_manual_edit_of_generated: reject
 
 execution_truth:
-  fictional_operations: forbidden
-  stubbed_logic: forbidden
-  placeholder_implementations: forbidden
-  
   requirements:
     every_function: must_be_callable
     every_parameter: must_be_used
@@ -183,11 +179,6 @@ execution_truth:
       - ruby
       - zsh
       - doas
-    forbidden:
-      - bash
-      - powershell
-      - cmd
-      - python
     rationale: consistency_and_security
   
   failure_response: fatal_with_explanation
@@ -195,12 +186,6 @@ execution_truth:
 security:
   api_keys:
     storage: environment_variables_only
-    forbidden:
-      - plaintext_in_files
-      - terminal_prompts
-      - git_commits
-      - yaml_config
-    
     pattern:
       name: SERVICENAME_API_KEY
       access: "ENV.fetch('KEY') { abort 'Set KEY' }"
@@ -280,7 +265,7 @@ linting:
     rules:
       indentation: 2_spaces
       line_length: 120
-      trailing_spaces: forbidden
+      trailing_spaces: none
       empty_lines_max: 1
   
   zsh:
@@ -295,32 +280,13 @@ linting:
       globbing: explicit
   
   symbols:
-    spaced_before_colon: forbidden
-    example_bad: "key : value"
-    example_good: "key: value"
+    spaced_before_colon: false
+    example: "key: value"
   
   enforcement:
     pre_commit: required
     ci_pipeline: required
     on_violation: auto_reject
-
-banned_decorators:
-  philosophy: content_over_decoration
-  
-  patterns:
-    horizontal_rules: /^[-=_]{3,}/
-    section_boxes: /^#\s*[-=_]{3,}/
-    bracket_decorators: /\[\.\.\.?\]$/
-    emoji_headers: /^#.*[🎯🚀💡🔥⚡]/
-    repeated_symbols: /(.)\\1{4,}/
-  
-  allowed:
-    markdown_hr: "---"
-    yaml_document_separator: "---"
-    code_fence: "```"
-  
-  on_violation: delete_and_replace
-  replacement: single_hash_space_title
 
 version_governance:
   format: semantic_versioning
@@ -357,8 +323,6 @@ platform_governance:
     - freebsd
     - linux
     - macos
-  forbidden:
-    - windows
   
   shell:
     required: zsh
@@ -370,29 +334,33 @@ platform_governance:
   
   privilege_escalation:
     allowed: doas
-    forbidden:
-      - sudo
-      - su
   
   paths:
     style: unix
-    forbidden_patterns:
-      - /^[A-Z]:/
-      - /\\/
   
   packages:
     ruby: system_ruby_or_rbenv
-    node: forbidden_unless_required
-    python: forbidden
   
-  enforcement:
-    on_windows_pattern: reject
-    on_sudo: reject
-
-code_quality:
+rules:
   authorities:
     - robert_c_martin_clean_code
     - martin_fowler_refactoring
+    - elements_of_style_strunk_white
+  
+  principles:
+    - do_one_thing
+    - one_level_of_abstraction
+    - few_arguments
+    - intention_revealing_names
+    - pronounceable_names
+    - searchable_names
+    - one_word_per_concept
+    - exceptions_over_error_codes
+    - specific_exception_types
+    - context_in_error_messages
+    - content_over_decoration
+    - why_not_what
+    - plain_english_over_jargon
   
   thresholds:
     function_length_lines: 20
@@ -400,37 +368,34 @@ code_quality:
     cyclomatic_complexity: 10
     parameter_count: 3
     nesting_depth: 3
+    comment_ratio: under_ten_percent
   
-  naming:
-    requirements:
-      - intention_revealing
-      - pronounceable
-      - searchable
-      - one_word_per_concept
-    
-    patterns:
-      boolean_methods: "is_*, has_*, can_*, should_*"
-      predicate_methods: "valid?, empty?, present?"
-      bang_methods: "save!, create!, update!"
+  naming_patterns:
+    boolean_methods: "is_*, has_*, can_*, should_*"
+    predicate_methods: "valid?, empty?, present?"
+    bang_methods: "save!, create!, update!"
   
-  functions:
-    requirements:
-      - do_one_thing
-      - one_level_of_abstraction
-      - descriptive_name
-      - few_arguments
-    
-    forbidden:
-      - side_effects_without_documentation
-      - output_arguments
-      - flag_arguments
+  smells:
+    - commented_out_code
+    - todo_without_issue_link
+    - obvious_explanations
+    - empty_descriptions
+    - copy_paste_from_method_name
+    - side_effects_without_documentation
+    - output_arguments
+    - flag_arguments
+    - mixed_case_words
+    - hyphen_separators
+    - all_uppercase_except_constants
+    - plaintext_secrets
   
-  error_handling:
-    style: exceptions_over_error_codes
-    requirements:
-      - specific_exception_types
-      - context_in_error_messages
-      - clean_separation_from_logic
+  anti_patterns:
+    - fictional_operations
+    - stubbed_logic
+    - placeholder_implementations
+    - horizontal_rule_decorators
+    - emoji_headers
+    - bracket_decorators
 
 testing:
   requirements:
@@ -665,12 +630,6 @@ self_improvement:
       - rollback_plan
       - evidence
   
-  forbidden_modifications:
-    - core_safety_invariants
-    - human_oversight_requirements
-    - ethical_boundaries
-    - security_constraints
-  
   approval:
     required: human_approval_for_all_modifications
     method: pull_request_with_review
@@ -736,6 +695,97 @@ emergence_detection:
     metric: output_complexity_vs_input_complexity
     threshold: complexity_ratio_exceeds_3x
     action: flag_for_analysis
+
+recursive_governance:
+  enabled: true
+  version_introduced: 17.1.0
+  
+  traversal:
+    root_folders:
+      - openbsd
+      - rails
+      - media
+    include_patterns:
+      - "**/*.rb"
+      - "**/*.sh"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.md"
+      - "**/*.js"
+      - "**/*.css"
+      - "**/*.json"
+    exclude_patterns:
+      - "**/*.{wav,mp4,mp3,jpg,jpeg,png,webp,gif,aif,sf2,zip,pdf,woff,woff2}"
+      - "**/node_modules/**"
+      - "**/.git/**"
+      - "**/__pycache__/**"
+  
+  line_completeness:
+    atomic:
+      definition: line_is_syntactically_valid_and_meaningful_in_isolation
+      checks:
+        - no_dangling_references
+        - no_undefined_variables_at_use
+        - no_incomplete_statements
+        - no_orphan_comments
+        - no_trailing_whitespace
+      exceptions:
+        - multiline_strings
+        - heredocs
+        - continuation_lines
+    holistic:
+      definition: line_contributes_to_file_purpose
+      checks:
+        - aligns_with_file_header_intent
+        - no_dead_code
+        - no_unreachable_logic
+        - supports_documented_api
+        - connects_to_adjacent_context
+      verification: static_analysis_plus_human_review
+  
+  consolidation:
+    sprawl_threshold: 3
+    common_knowledge_rule: single_source_of_truth
+    duplicate_detection: enabled
+    
+    targets:
+      media_docs:
+        pattern: "media/__docs/*.md"
+        consolidate_to: "media/README.md"
+        strategy: merge_with_sections
+      brgen_scripts:
+        pattern: "rails/brgen/brgen_*.sh"
+        consolidate_to: "rails/brgen/brgen.sh"
+        strategy: subcommands
+      repligen_helpers:
+        pattern: "media/repligen/*_*.rb"
+        consolidate_to: "media/repligen/repligen.rb"
+        strategy: methods
+    
+    on_sprawl_detected: warn_and_suggest_consolidation
+
+extreme_mode:
+  enabled: false
+  activation: manual_or_ci_flag
+  
+  strict_line_rules:
+    max_line_length: 100
+    blank_line_ratio: under_5_percent
+    comment_must_add_value: true
+    no_trailing_whitespace: fatal
+  
+  file_size_limits:
+    max_lines: 500
+    max_bytes: 20480
+    on_violation: split_or_refactor
+  
+  single_responsibility:
+    one_purpose_per_file: required
+    max_function_lines: 25
+  
+  dependency_rules:
+    max_imports: 10
+    no_circular_references: fatal
 
 meta_exceptions:
   style_reference_paradox:

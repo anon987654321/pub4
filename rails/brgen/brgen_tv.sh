@@ -57,37 +57,11 @@ bundle add video_info
 
 bundle install
 
-cat <<EOF > app/reflexes/shows_infinite_scroll_reflex.rb
-
-class ShowsInfiniteScrollReflex < InfiniteScrollReflex
-
-  def load_more
-
-    @pagy, @collection = pagy(Show.all.order(release_date: :desc), page: page)
-
-    super
-
-  end
-
-end
-
-EOF
-
-cat <<EOF > app/reflexes/episodes_infinite_scroll_reflex.rb
-
-class EpisodesInfiniteScrollReflex < InfiniteScrollReflex
-
-  def load_more
-
-    @pagy, @collection = pagy(Episode.where(show: current_show).order(:season_number, :episode_number), page: page)
-
-    super
-
-  end
-
-end
-
-EOF
+# Use shared infinite scroll generators
+generate_base_infinite_scroll_reflex
+generate_infinite_scroll_reflex "Show" "Show.all.order(release_date: :desc)"
+generate_infinite_scroll_reflex "Episode" "Episode.where(show: current_show).order(:season_number, :episode_number)"
+generate_infinite_scroll_controller
 
 cat <<EOF > app/controllers/shows_controller.rb
 

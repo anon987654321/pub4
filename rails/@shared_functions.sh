@@ -423,3 +423,256 @@ GEMS
 
 }
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADDITIONAL SHARED FUNCTIONS - Extracted from app generators per master.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Check if command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1 || { log "ERROR: $1 not found"; exit 1; }
+}
+
+# Install gem idempotently
+install_gem() {
+  typeset gem_name="$1"
+  grep -q "gem \"${gem_name}\"" Gemfile || {
+    print "gem \"${gem_name}\"" >> Gemfile
+    bundle install
+  }
+}
+
+# Setup full Rails 8 app with Solid Stack
+setup_full_app() {
+  typeset app_name="$1"
+  typeset app_dir="${BASE_DIR:-/home/dev/rails}/${app_name}"
+  
+  [[ -d "$app_dir" ]] || mkdir -p "$app_dir"
+  cd "$app_dir"
+  
+  if [[ ! -f "config/application.rb" ]]; then
+    log "Creating Rails 8 application: $app_name"
+    rails new . --database=postgresql --skip-git --css=tailwind --javascript=esbuild
+  fi
+  
+  # Add Solid Stack if not present
+  grep -q "solid_queue" Gemfile || cat >> Gemfile << 'SOLIDGEMS'
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
+SOLIDGEMS
+  
+  bundle install
+  bin/rails generate solid_queue:install 2>/dev/null || true
+  bin/rails generate solid_cache:install 2>/dev/null || true
+  bin/rails generate solid_cable:install 2>/dev/null || true
+}
+
+# Generate InfiniteScrollReflex for any model
+# Usage: generate_infinite_scroll_reflex "Post" "Post.all.order(created_at: :desc)"
+generate_infinite_scroll_reflex() {
+  typeset model_name="$1"
+  typeset query="$2"
+  typeset reflex_name="${model_name:l}s"
+  typeset class_name="${(C)model_name}sInfiniteScrollReflex"
+  
+  mkdir -p app/reflexes
+  cat > "app/reflexes/${reflex_name}_infinite_scroll_reflex.rb" << RUBY
+class ${class_name} < InfiniteScrollReflex
+  def load_more
+    @pagy, @collection = pagy(${query}, page: page)
+    super
+  end
+end
+RUBY
+}
+
+# Generate base InfiniteScrollReflex (parent class)
+generate_base_infinite_scroll_reflex() {
+  mkdir -p app/reflexes
+  cat > app/reflexes/infinite_scroll_reflex.rb << 'RUBY'
+class InfiniteScrollReflex < ApplicationReflex
+  def load_more
+    morph "#items", render(partial: "shared/items", locals: { items: @collection, pagy: @pagy })
+  end
+
+  private
+
+  def page
+    element.dataset[:page].to_i
+  end
+end
+RUBY
+}
+
+# Generate infinite scroll Stimulus controller
+generate_infinite_scroll_controller() {
+  mkdir -p app/javascript/controllers
+  cat > app/javascript/controllers/infinite_scroll_controller.js << 'JS'
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static values = { page: { type: Number, default: 1 }, loading: { type: Boolean, default: false } }
+
+  connect() {
+    this.observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !this.loadingValue) this.loadMore()
+    }, { threshold: 0.1 })
+    this.observer.observe(this.element.querySelector("[data-sentinel]") || this.element.lastElementChild)
+  }
+
+  disconnect() {
+    this.observer?.disconnect()
+  }
+
+  async loadMore() {
+    this.loadingValue = true
+    this.pageValue++
+    this.stimulate(`${this.element.dataset.reflex}#load_more`, { page: this.pageValue })
+    this.loadingValue = false
+  }
+}
+JS
+}
+
+# Generate VoteReflex for votable models
+generate_vote_reflex() {
+  mkdir -p app/reflexes
+  cat > app/reflexes/vote_reflex.rb << 'RUBY'
+class VoteReflex < ApplicationReflex
+  def upvote
+    votable = find_votable
+    votable.upvote_by(current_user || guest_user)
+    update_vote_display(votable)
+  end
+
+  def downvote
+    votable = find_votable
+    votable.downvote_by(current_user || guest_user)
+    update_vote_display(votable)
+  end
+
+  def unvote
+    votable = find_votable
+    votable.unvote_by(current_user || guest_user)
+    update_vote_display(votable)
+  end
+
+  private
+
+  def find_votable
+    element.dataset["votable_type"].constantize.find(element.dataset["votable_id"])
+  end
+
+  def update_vote_display(votable)
+    cable_ready
+      .morph(selector: "#vote-#{votable.class.name.downcase}-#{votable.id}", 
+             html: render(partial: "shared/vote", locals: { votable: votable }))
+      .broadcast
+  end
+
+  def guest_user
+    User.find_or_create_by(email: "guest@example.com") { |u| u.password = SecureRandom.hex(16) }
+  end
+end
+RUBY
+}
+
+# Generate ChatReflex for real-time messaging
+generate_chat_reflex() {
+  mkdir -p app/reflexes
+  cat > app/reflexes/chat_reflex.rb << 'RUBY'
+class ChatReflex < ApplicationReflex
+  def send_message
+    message = Message.create!(
+      content: element.dataset["content"],
+      user: current_user || guest_user,
+      receiver_id: element.dataset["receiver_id"],
+      anonymous: element.dataset["anonymous"] == "true"
+    )
+    
+    cable_ready
+      .append(selector: "#messages", html: render(partial: "messages/message", locals: { message: message }))
+      .broadcast_to([current_user, message.receiver].sort_by(&:id))
+  end
+
+  private
+
+  def guest_user
+    User.find_or_create_by(email: "guest@example.com") { |u| u.password = SecureRandom.hex(16) }
+  end
+end
+RUBY
+}
+
+# Generate shared vote partial
+generate_vote_partial() {
+  mkdir -p app/views/shared
+  cat > app/views/shared/_vote.html.erb << 'ERB'
+<div id="vote-<%= votable.class.name.downcase %>-<%= votable.id %>" 
+     data-controller="vote" 
+     data-vote-type-value="<%= votable.class.name.tableize %>" 
+     data-vote-id-value="<%= votable.id %>">
+  <button data-action="vote#vote" data-vote-action-param="upvote" data-vote-target="upvote">▲</button>
+  <span data-vote-target="score"><%= votable.cached_votes_score %></span>
+  <button data-action="vote#vote" data-vote-action-param="downvote" data-vote-target="downvote">▼</button>
+</div>
+ERB
+}
+
+# Generate Turbo Stream templates for a resource
+# Usage: generate_turbo_views "posts" "post"
+generate_turbo_views() {
+  typeset plural="$1"
+  typeset singular="$2"
+  
+  mkdir -p "app/views/${plural}"
+  
+  cat > "app/views/${plural}/create.turbo_stream.erb" << ERB
+<%= turbo_stream.prepend "${plural}", partial: "${plural}/${singular}", locals: { ${singular}: @${singular} } %>
+<%= turbo_stream.update "new_${singular}_form", partial: "${plural}/form", locals: { ${singular}: ${singular^}.new } %>
+ERB
+
+  cat > "app/views/${plural}/update.turbo_stream.erb" << ERB
+<%= turbo_stream.replace @${singular} %>
+ERB
+
+  cat > "app/views/${plural}/destroy.turbo_stream.erb" << ERB
+<%= turbo_stream.remove @${singular} %>
+ERB
+}
+
+# Generate search controller with live search
+generate_search_controller() {
+  mkdir -p app/javascript/controllers
+  cat > app/javascript/controllers/search_controller.js << 'JS'
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["input", "results"]
+  static values = { url: String, debounce: { type: Number, default: 300 } }
+
+  connect() {
+    this.timeout = null
+  }
+
+  search() {
+    clearTimeout(this.timeout)
+    this.timeout = setTimeout(() => this.performSearch(), this.debounceValue)
+  }
+
+  async performSearch() {
+    const query = this.inputTarget.value.trim()
+    if (query.length < 2) { this.resultsTarget.innerHTML = ""; return }
+    
+    const response = await fetch(`${this.urlValue}?q=${encodeURIComponent(query)}`, {
+      headers: { "Accept": "text/vnd.turbo-stream.html" }
+    })
+    
+    if (response.ok) {
+      this.resultsTarget.innerHTML = await response.text()
+    }
+  }
+}
+JS
+}
+

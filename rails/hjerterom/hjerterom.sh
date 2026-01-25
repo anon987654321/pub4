@@ -17,36 +17,6 @@ readonly APP_PORT=$((10000 + RANDOM % 10000))
 
 source "${SCRIPT_DIR}/@shared_functions.sh"
 
-main() {
-
-  check_app_exists "$APP_NAME" "app/models/food_donation.rb" && exit 0
-
-  log "Starting Hjerterom setup"
-
-  setup_environment
-
-  setup_full_app "$APP_NAME"
-
-  install_dependencies
-
-  generate_models
-
-  setup_initializers
-
-  generate_controllers
-
-  generate_views
-
-  configure_routes
-
-  setup_authentication
-
-  finalize_setup
-
-  log "Hjerterom setup complete"
-
-}
-
 setup_environment() {
 
   command_exists "ruby"
@@ -112,16 +82,6 @@ generate_controllers() {
   write_giveaways_controller
 
 }
-
-main "$@"
-
-install_gem "chartkick"
-
-bin/rails generate model Distribution location:string schedule:datetime capacity:integer lat:decimal lng:decimal
-
-bin/rails generate model Giveaway title:string description:text quantity:integer pickup_time:datetime location:string lat:decimal lng:decimal user:references status:string anonymous:boolean
-
-bin/rails generate migration AddVippsToUsers vipps_id:string citizenship_status:string claim_count:integer
 
 write_ahoy_initializer() {
 
@@ -190,12 +150,6 @@ end
 EOF
 
 }
-
-  end
-
-end
-
-EOF
 
 cat <<EOF > app/controllers/home_controller.rb
 
@@ -2010,4 +1964,26 @@ log "   A platform for community mutual aid and resource sharing"
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
 # - Finalized for unprivileged user on OpenBSD 7.5.
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN ENTRY POINT - Must be at end of file after all function definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+main() {
+  check_app_exists "$APP_NAME" "app/models/food_donation.rb" && exit 0
+  log "Starting Hjerterom setup"
+  setup_environment
+  setup_full_app "$APP_NAME"
+  install_dependencies
+  generate_models
+  setup_initializers
+  generate_controllers
+  generate_views
+  configure_routes
+  setup_authentication
+  finalize_setup
+  log "Hjerterom setup complete"
+}
+
+main "$@"
 

@@ -25,6 +25,8 @@ class Repligen
 
     "video" => "Generate image + video (10s with best available model)",
 
+    "catwalk" => "Generate runway/catwalk video with fashion presets",
+
     "lora" => "Train custom LoRA from photos in __lora/{subject}/",
 
     "enhance" => "Enhance training photos (remove bg, sharpen, upscale)",
@@ -39,6 +41,21 @@ class Repligen
 
     "help" => "Show this help"
 
+  }
+
+  CATWALK_STYLES = {
+    "haute_couture" => "haute couture evening gown, elegant luxury fashion",
+    "designer_suit" => "designer business suit, professional power look",
+    "avant_garde" => "avant-garde fashion, bold experimental design",
+    "streetwear" => "luxury streetwear, high-end casual style",
+    "red_carpet" => "red carpet glamour, celebrity fashion"
+  }
+
+  CATWALK_LIGHTING = {
+    "runway" => "dramatic runway spotlight with soft bokeh background",
+    "golden" => "golden hour natural light, warm tones",
+    "studio" => "professional studio fashion lighting",
+    "cinematic" => "cinematic blue hour lighting with rim light"
   }
 
   def initialize
@@ -531,6 +548,51 @@ After training, use with:"
 
     puts "  ruby repligen.rb generate '#{subject.upcase} woman as athlete, cinematic portrait'"
 
+  end
+
+  def generate_catwalk(subject, style: "haute_couture", lighting: "runway", audio_path: nil)
+    style_desc = CATWALK_STYLES[style] || style
+    light_desc = CATWALK_LIGHTING[lighting] || lighting
+
+    prompt = "#{subject} walking confidently down fashion runway, #{style_desc}, " \
+             "professional supermodel pose, full body shot, #{light_desc}, " \
+             "elegant powerful stride, high-end fashion photography, vogue magazine quality, " \
+             "sharp focus on model, bokeh background, cinematic composition, 16:9 aspect ratio"
+
+    puts "\n🌟 CATWALK GENERATOR"
+    puts "=" * 70
+    puts "Subject: #{subject}"
+    puts "Style: #{style}"
+    puts "Lighting: #{lighting}"
+    puts "=" * 70
+
+    img_url = generate_image(prompt)
+    return unless img_url
+
+    img_file = File.join(@out, "catwalk_#{Time.now.strftime("%Y%m%d_%H%M%S")}.webp")
+    download(img_url, img_file)
+
+    motion_prompt = "Model walking forward on runway with confident stride, " \
+                    "smooth catwalk motion, professional model walk, " \
+                    "elegant movement, camera slowly tracking forward"
+
+    vid_url = generate_video(img_url, motion_prompt, model: :hailuo)
+    return unless vid_url
+
+    vid_file = File.join(@out, "catwalk_#{Time.now.strftime("%Y%m%d_%H%M%S")}.mp4")
+    download(vid_url, vid_file)
+
+    if audio_path && File.exist?(audio_path)
+      final_file = vid_file.gsub(".mp4", "_audio.mp4")
+      system("ffmpeg -i \"#{vid_file}\" -i \"#{audio_path}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{final_file}\" -y 2>&1")
+      puts "✓ Audio added: #{final_file}" if File.exist?(final_file)
+    end
+
+    puts "\n" + "=" * 70
+    puts "✨ CATWALK COMPLETE!"
+    puts "=" * 70
+    puts "📸 Image: #{img_file}"
+    puts "🎬 Video: #{vid_file}"
   end
 
   def execute_chain(prompt = nil)
@@ -1091,6 +1153,18 @@ Advanced cinematography techniques applied:"
 
       enhance_training_photos(subject)
 
+    when "catwalk", "cw"
+
+      subject = args[1] || "beautiful blonde woman"
+
+      style = args[2] || "haute_couture"
+
+      lighting = args[3] || "runway"
+
+      audio = args[4]
+
+      generate_catwalk(subject, style: style, lighting: lighting, audio_path: audio)
+
     when "lora", "l"
 
       subject = args[1] || "me2"
@@ -1173,6 +1247,8 @@ Examples:"
 
     puts "  ruby repligen.rb video 'Norwegian athlete serves volleyball at sunset beach'"
 
+    puts "  ruby repligen.rb catwalk 'ME2 blonde model' haute_couture runway"
+
     puts "  ruby repligen.rb chain 'cinematic portrait with dramatic lighting'"
 
     puts "  ruby repligen.rb enhance me2"
@@ -1184,6 +1260,12 @@ Examples:"
     puts "  ruby repligen.rb index"
 
     puts "  ruby repligen.rb search 'video generation'"
+
+    puts "
+
+Catwalk styles: #{CATWALK_STYLES.keys.join(', ')}"
+
+    puts "Catwalk lighting: #{CATWALK_LIGHTING.keys.join(', ')}"
 
     puts "
 

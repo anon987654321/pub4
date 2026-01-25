@@ -19,18 +19,15 @@ source "${SCRIPT_DIR}/@shared_functions.sh"
 
 check_app_exists "$APP_NAME" "app/models/blog.rb" && exit 0
 
+setup_full_app "$APP_NAME"
+
+cat >> Gemfile << 'GEMFILE'
 gem "solid_queue"
-
 gem "solid_cache"
-
 gem "solid_cable"
-
 gem "propshaft"
-
 gem "turbo-rails"
-
 gem "stimulus-rails"
-
 gem "devise"
 
 gem "devise-guests"

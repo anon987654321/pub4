@@ -53,37 +53,11 @@ bundle add redis
 
 bundle install
 
-cat <<EOF > app/reflexes/restaurants_infinite_scroll_reflex.rb
-
-class RestaurantsInfiniteScrollReflex < InfiniteScrollReflex
-
-  def load_more
-
-    @pagy, @collection = pagy(Restaurant.all.order(rating: :desc), page: page)
-
-    super
-
-  end
-
-end
-
-EOF
-
-cat <<EOF > app/reflexes/orders_infinite_scroll_reflex.rb
-
-class OrdersInfiniteScrollReflex < InfiniteScrollReflex
-
-  def load_more
-
-    @pagy, @collection = pagy(Order.where(customer: current_user).order(created_at: :desc), page: page)
-
-    super
-
-  end
-
-end
-
-EOF
+# Use shared infinite scroll generators
+generate_base_infinite_scroll_reflex
+generate_infinite_scroll_reflex "Restaurant" "Restaurant.all.order(rating: :desc)"
+generate_infinite_scroll_reflex "Order" "Order.where(customer: current_user).order(created_at: :desc)"
+generate_infinite_scroll_controller
 
 cat <<EOF > app/controllers/restaurants_controller.rb
 
