@@ -354,12 +354,12 @@ RSpec.describe "Master CLI" do
     end
   end
 
-  describe CLI do
-    let(:cli) { CLI.new }
+  describe MasterCLI do
+    let(:cli) { MasterCLI.new }
 
     describe "#initialize" do
-      it "creates CLI instance" do
-        expect(cli).to be_instance_of(CLI)
+      it "creates MasterCLI instance" do
+        expect(cli).to be_instance_of(MasterCLI)
       end
 
       it "loads configuration" do
@@ -465,10 +465,10 @@ RSpec.describe "Master CLI" do
   end
 
   describe "Integration tests" do
-    let(:cli) { CLI.new }
+    let(:cli) { MasterCLI.new }
 
-    it "CLI can be instantiated and configured" do
-      expect(cli).to be_instance_of(CLI)
+    it "MasterCLI can be instantiated and configured" do
+      expect(cli).to be_instance_of(MasterCLI)
       config = cli.instance_variable_get(:@config)
       expect(config.model).to be_a(String)
       expect(config.access_level).to be_a(Symbol)

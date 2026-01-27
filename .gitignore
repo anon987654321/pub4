@@ -33,3 +33,4 @@ vendor/bundle/
 # Test coverage
 coverage/
 .coverage
+reports/
