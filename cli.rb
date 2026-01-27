@@ -14,6 +14,7 @@ require "timeout"
 require "io/console"
 require "readline"
 require "pathname"
+require "time"
 
 VERSION = "17.1.0"
 OPENBSD = RUBY_PLATFORM.include?("openbsd")
@@ -30,30 +31,31 @@ class Governance
   end
   
   def calculate_weights(files: [])
-    weights = {
-      correctness: 0.0,
-      maintainability: 0.0,
-      security: 0.0,
-      performance: 0.0,
-      consistency: 0.0
-    }
+    return { correctness: 0.0, maintainability: 0.0, security: 0.0, performance: 0.0, consistency: 0.0 } if files.empty?
     
-    return weights if files.empty?
-    
-    files.each do |file|
+    scores = files.map do |file|
       next unless File.exist?(file)
       content = File.read(file)
       
-      weights[:correctness] += calculate_correctness_score(content)
-      weights[:maintainability] += calculate_maintainability_score(content)
-      weights[:security] += calculate_security_score(content)
-      weights[:performance] += calculate_performance_score(content)
-      weights[:consistency] += calculate_consistency_score(content)
-    end
+      {
+        correctness: calculate_correctness_score(content),
+        maintainability: calculate_maintainability_score(content),
+        security: calculate_security_score(content),
+        performance: calculate_performance_score(content),
+        consistency: calculate_consistency_score(content)
+      }
+    end.compact
     
-    total = files.size.to_f
-    weights.transform_values! { |v| (v / total * 100).round(2) }
-    weights
+    return { correctness: 0.0, maintainability: 0.0, security: 0.0, performance: 0.0, consistency: 0.0 } if scores.empty?
+    
+    total = scores.size.to_f
+    {
+      correctness: (scores.sum { |s| s[:correctness] } / total).round(2),
+      maintainability: (scores.sum { |s| s[:maintainability] } / total).round(2),
+      security: (scores.sum { |s| s[:security] } / total).round(2),
+      performance: (scores.sum { |s| s[:performance] } / total).round(2),
+      consistency: (scores.sum { |s| s[:consistency] } / total).round(2)
+    }
   end
   
   def export_json
@@ -424,7 +426,7 @@ class CLI
   def switch_level(str)
     return puts "Usage: /level [sandbox|user|admin]" unless str
     sym = str.to_sym
-    return puts "Invalid level. Use: sandbox, user, or admin" unless %i[sandbox user admin].include?(sym)
+    return puts "Invalid level" unless %i[sandbox user admin].include?(sym)
 
     @config.access_level = sym
     @config.save
@@ -492,7 +494,6 @@ class CLI
       OpenBSD Security:   #{OpenBSDSecurity.available ? "✓ Available" : "✗ Unavailable"}
       Ruby Version:       #{RUBY_VERSION}
     VERSION_INFO
-  end
   end
 end
 

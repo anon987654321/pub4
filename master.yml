@@ -98,16 +98,16 @@ meta:
     
     command_mapping:
       natural_language:
-        - "show me the config" → file_tool.read("config.yml")
-        - "run the tests" → shell_tool.execute("rspec")
-        - "switch to sandbox mode" → config.access_level = :sandbox
+        "show me the config": "file_tool.read('config.yml')"
+        "run the tests": "shell_tool.execute('rspec')"
+        "switch to sandbox mode": "config.access_level = :sandbox"
       
       intent_categories:
-        - read_intent: maps_to_file_or_shell_read_operations
-        - write_intent: maps_to_file_write_with_confirmation
-        - execute_intent: maps_to_shell_execution_with_timeout
-        - configure_intent: maps_to_config_updates
-        - query_intent: maps_to_llm_knowledge_or_documentation
+        read_intent: maps_to_file_or_shell_read_operations
+        write_intent: maps_to_file_write_with_confirmation
+        execute_intent: maps_to_shell_execution_with_timeout
+        configure_intent: maps_to_config_updates
+        query_intent: maps_to_llm_knowledge_or_documentation
     
     safety:
       always_confirm:
