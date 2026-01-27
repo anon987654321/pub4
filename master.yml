@@ -8,6 +8,76 @@ meta:
   updated: "2026-01-22"
   style: lowercase_underscored_plain_english
   
+  constants:
+    max_function_lines: 20
+    max_class_lines: 300
+    max_complexity: 10
+    max_parameters: 3
+    max_nesting: 3
+    min_coverage: 80
+    comment_ratio_max: 0.10
+    
+    default_model: "deepseek/deepseek-r1"
+    config_file_permissions: "0600"
+    
+    violation_severities:
+      critical: 10
+      high: 7
+      medium: 5
+      low: 3
+      info: 1
+  
+  calculate_weights:
+    purpose: "Prioritize decisions using weighted scoring of multiple factors"
+    
+    algorithm:
+      name: "weighted_sum_with_thresholds"
+      formula: "score = sum(factor_value * factor_weight)"
+      threshold_check: "score >= minimum_acceptable_score"
+    
+    factors:
+      speed:
+        weight: 0.30
+        rationale: "Fast implementation and execution"
+        scale: 1_to_10
+      
+      safety:
+        weight: 0.40
+        rationale: "Low risk of bugs or security issues"
+        scale: 1_to_10
+      
+      maintainability:
+        weight: 0.20
+        rationale: "Easy to understand and modify"
+        scale: 1_to_10
+      
+      aesthetics:
+        weight: 0.10
+        rationale: "Code elegance and UX quality"
+        scale: 1_to_10
+    
+    usage_example: |
+      Option A: Cached database query
+        speed: 9 * 0.30 = 2.7
+        safety: 7 * 0.40 = 2.8
+        maintainability: 8 * 0.20 = 1.6
+        aesthetics: 6 * 0.10 = 0.6
+        total: 7.7
+      
+      Option B: Direct database query
+        speed: 5 * 0.30 = 1.5
+        safety: 10 * 0.40 = 4.0
+        maintainability: 9 * 0.20 = 1.8
+        aesthetics: 8 * 0.10 = 0.8
+        total: 8.1
+      
+      Decision: Choose Option B (higher total score)
+    
+    customization:
+      adjust_weights: "Modify weights based on project priorities"
+      add_factors: "Include project-specific concerns"
+      change_scale: "Use different scoring ranges if needed"
+  
   authorities:
     primary: this_file
     supplementary:
@@ -30,6 +100,13 @@ meta:
       model: openbsd_bootup
       emit: all_sections_with_key_rules
       format: "[ ok ] section_name\\n       key=value key=value"
+      example: |
+        [ ok ] style_constraints
+               case=lowercase separator=underscores enforcement=blocking
+        [ ok ] security
+               api_keys=env_only secrets_detection=abort pledge_unveil=enabled
+        [ ok ] linting
+               ruby=rubocop yaml=yamllint zsh=shellcheck
     before_editing: read_all_rules_first
     before_adding: verify_matches_existing_style
     before_committing: run_self_validation
@@ -53,8 +130,47 @@ meta:
         - fix_then_verify
         - consolidate_then_validate
       on_error: retry_with_alternative_then_report
+      
+      examples:
+        self_guided_flow: |
+          1. Read master.yml and understand governance rules
+          2. Scan codebase for violations
+          3. Fix violations automatically where safe
+          4. Run tests to verify fixes
+          5. Report results with metrics
+        
+        ask_for_guidance: |
+          User: "Should I migrate to a new authentication system?"
+          LLM: "This is an architecture-changing decision. Let me analyze:
+                - Current: Session-based auth
+                - Proposed: JWT tokens
+                - Impact: All API endpoints, mobile apps, frontend
+                Recommendation: I need your decision on this."
     
     on_uncertainty: ask_do_not_assume
+    
+    chat_codification:
+      purpose: "Preserve insights from LLM conversations into governance"
+      trigger: "After meaningful architectural or pattern discussions"
+      process:
+        - identify_reusable_pattern
+        - extract_principle_or_rule
+        - propose_addition_to_master_yml
+        - document_rationale_and_examples
+        - submit_via_pull_request
+      examples:
+        from_discussion: |
+          Conversation:
+          User: "Why do we prefer composition over inheritance?"
+          LLM: "Because inheritance creates tight coupling..."
+          
+          Codification:
+          Add to axioms:
+            composition_over_inheritance:
+              statement: "Favor object composition over class inheritance"
+              implication: "Prefer 'has-a' over 'is-a' relationships"
+              rationale: "Reduces coupling, increases flexibility"
+              source: "Gang of Four, Design Patterns"
   
   for_humans:
     philosophy: plain_english_over_jargon
@@ -259,6 +375,30 @@ linting:
       class_length: 300
       cyclomatic_complexity: 10
       parameter_count: 3
+    
+    examples:
+      violation: |
+        def process_order(user, product, quantity, coupon, shipping, gift_wrap, notes)
+          # Too many parameters (7 > 3)
+        end
+      
+      fix: |
+        def process_order(order_params)
+          # Single parameter encapsulating all order data
+          user = order_params[:user]
+          product = order_params[:product]
+          # ...
+        end
+      
+      running: |
+        # Check code
+        rubocop path/to/file.rb
+        
+        # Auto-fix safe issues
+        rubocop -a path/to/file.rb
+        
+        # Check entire project
+        rubocop
   
   yaml:
     tool: yamllint
@@ -267,6 +407,19 @@ linting:
       line_length: 120
       trailing_spaces: none
       empty_lines_max: 1
+    
+    examples:
+      violation: |
+        key:   value    # trailing spaces
+          nested:value  # inconsistent indentation
+      
+      fix: |
+        key: value
+          nested: value
+      
+      running: |
+        yamllint path/to/file.yml
+        yamllint -c .yamllint.yml .
   
   zsh:
     tool: shellcheck
@@ -278,6 +431,24 @@ linting:
         - o_pipefail
       quoting: required
       globbing: explicit
+    
+    examples:
+      violation: |
+        #!/bin/zsh
+        # Missing set options
+        # Unquoted variable
+        echo $USER_INPUT
+      
+      fix: |
+        #!/usr/bin/env zsh
+        set -euo pipefail
+        
+        # Quoted to prevent word splitting
+        echo "$USER_INPUT"
+      
+      running: |
+        shellcheck script.sh
+        shellcheck -s zsh script.sh
   
   symbols:
     spaced_before_colon: false
@@ -316,6 +487,136 @@ version_governance:
     major: breaking_changes
     minor: new_features
     patch: bug_fixes_and_docs
+
+json_export:
+  purpose: "Enable machine-readable export of governance rules and metrics"
+  
+  export_command:
+    tool: ruby
+    script: "./cli.rb export --format json"
+    output: governance_export.json
+  
+  exportable_sections:
+    - meta
+    - style_constraints
+    - rules
+    - axioms
+    - thresholds
+    - testing
+    - security
+    - defect_catalog
+  
+  export_format:
+    version: "1.0"
+    schema:
+      type: object
+      required:
+        - export_metadata
+        - governance_version
+        - sections
+      properties:
+        export_metadata:
+          timestamp: iso8601
+          exporter_version: semver
+          format_version: semver
+        governance_version: string
+        sections: object
+  
+  use_cases:
+    ci_integration: "Import rules into CI/CD pipeline validators"
+    documentation_generation: "Generate HTML/Markdown docs from JSON"
+    metrics_dashboard: "Feed governance compliance metrics to dashboards"
+    cross_project_analysis: "Compare governance rules across projects"
+    llm_context_injection: "Provide structured governance to LLM assistants"
+  
+  examples:
+    basic_export: |
+      {
+        "export_metadata": {
+          "timestamp": "2026-01-27T23:48:00Z",
+          "exporter_version": "17.1.0",
+          "format_version": "1.0"
+        },
+        "governance_version": "17.0.0",
+        "sections": {
+          "meta": {...},
+          "rules": {...}
+        }
+      }
+
+migration_logic:
+  purpose: "Manage breaking changes and version upgrades in governance schema"
+  
+  migration_strategy:
+    approach: forward_only
+    storage: .migrations/
+    naming: "YYYYMMDDHHMMSS_description.rb"
+    execution: sequential_by_timestamp
+  
+  version_compatibility:
+    current: "17.0.0"
+    minimum_supported: "16.0.0"
+    deprecation_policy: "2 major versions backward"
+  
+  migration_types:
+    schema_changes:
+      description: "Changes to master.yml structure"
+      requires: migration_script
+      example: "Adding new top-level section"
+    
+    rule_additions:
+      description: "New rules added to existing sections"
+      requires: documentation_only
+      example: "Adding new linting rule"
+    
+    rule_removals:
+      description: "Deprecating or removing existing rules"
+      requires: deprecation_warning
+      grace_period: one_major_version
+    
+    threshold_changes:
+      description: "Changes to numeric thresholds"
+      requires: impact_analysis
+      example: "Reducing function_length_lines from 20 to 15"
+  
+  migration_procedure:
+    steps:
+      - read_current_version_from_meta
+      - identify_required_migrations
+      - validate_migration_chain_completeness
+      - backup_current_state
+      - execute_migrations_sequentially
+      - update_version_in_meta
+      - run_validation_suite
+      - commit_if_successful_rollback_if_failed
+  
+  rollback_capability:
+    enabled: true
+    method: git_revert_or_restore_backup
+    validation: run_tests_after_rollback
+  
+  migration_examples:
+    v16_to_v17:
+      changes:
+        - "Added cognitive_reasoning section"
+        - "Added epistemic_humility section"
+        - "Added recursive_governance section"
+        - "Renamed comment_policy.ratio to comment_policy.requirements.ratio"
+      migration_steps:
+        - "Add new sections with default values"
+        - "Rename nested keys with path preservation"
+        - "Validate against new schema"
+      breaking_changes: "Keys moved to nested paths require update in consuming code"
+    
+    v17_to_v18_hypothetical:
+      changes:
+        - "Split rules into separate files"
+        - "Introduce plugin system"
+      migration_steps:
+        - "Extract rules sections to rules/*.yml"
+        - "Update references to use import syntax"
+        - "Add plugin manifest"
+      breaking_changes: "Consumers must support multi-file governance"
 
 platform_governance:
   primary: openbsd
@@ -362,6 +663,61 @@ rules:
     - why_not_what
     - plain_english_over_jargon
   
+  verbose_principles:
+    do_one_thing:
+      description: "Functions should do one thing, do it well, and do it only"
+      rationale: "Single responsibility makes code easier to name, test, and reuse"
+      violation_example: "A save_user() function that validates, saves, sends email, and logs"
+      correct_example: "Separate functions: validate_user(), save_user(), send_welcome_email(), log_action()"
+    
+    one_level_of_abstraction:
+      description: "All statements in a function should operate at the same level of abstraction"
+      rationale: "Mixing high-level concepts with low-level details confuses readers"
+      violation_example: "Function mixing HTTP parsing with business logic and SQL queries"
+      correct_example: "Separate layers: parse_request(), apply_business_rules(), persist_to_database()"
+    
+    few_arguments:
+      description: "Functions should have no more than 3 arguments; prefer 0-2"
+      rationale: "More arguments increase cognitive load and testing complexity exponentially"
+      violation_example: "create_user(name, email, password, role, department, manager, status)"
+      correct_example: "create_user(user_params) where user_params is a structured object"
+    
+    intention_revealing_names:
+      description: "Names should reveal intent without requiring comments or context"
+      rationale: "Code is read far more often than written; clarity reduces cognitive overhead"
+      violation_example: "d = 86400  # seconds in day"
+      correct_example: "seconds_per_day = 86400"
+    
+    pronounceable_names:
+      description: "Use names that can be spoken aloud in conversation"
+      rationale: "Enables effective verbal communication about code"
+      violation_example: "genymdhms (generation timestamp year month day hour minute second)"
+      correct_example: "generation_timestamp"
+    
+    searchable_names:
+      description: "Avoid single-letter names except for loop counters in tiny scopes"
+      rationale: "Enables effective code search and navigation"
+      violation_example: "e = calculate_energy()"
+      correct_example: "total_energy = calculate_energy()"
+    
+    one_word_per_concept:
+      description: "Pick one word for each abstract concept and stick with it"
+      rationale: "Consistency reduces mental mapping overhead"
+      violation_example: "fetch_user(), retrieve_account(), get_customer() all meaning the same thing"
+      correct_example: "get_user(), get_account(), get_customer() (consistent verb)"
+    
+    exceptions_over_error_codes:
+      description: "Use exceptions for error conditions, not return codes or flags"
+      rationale: "Exceptions separate error handling from happy path logic"
+      violation_example: "result = save(); if result == -1 then handle_error()"
+      correct_example: "begin save(); rescue SaveError => e then handle_error(e)"
+    
+    content_over_decoration:
+      description: "Emphasize actual information over visual decoration"
+      rationale: "Decoration adds noise without semantic value"
+      violation_example: "# ========== USER MANAGEMENT =========="
+      correct_example: "# User management or simply use good function names"
+  
   thresholds:
     function_length_lines: 20
     class_length_lines: 300
@@ -396,6 +752,175 @@ rules:
     - horizontal_rule_decorators
     - emoji_headers
     - bracket_decorators
+
+axioms:
+  foundational_truths:
+    code_is_read_more_than_written:
+      statement: "Code is read 10x more often than it is written"
+      implication: "Optimize for readability over writeability"
+      source: "Robert C. Martin, Clean Code"
+    
+    premature_optimization_is_evil:
+      statement: "Premature optimization is the root of all evil"
+      implication: "Make it work, make it right, then make it fast"
+      source: "Donald Knuth"
+    
+    simple_is_better_than_complex:
+      statement: "Simple is better than complex; complex is better than complicated"
+      implication: "Favor straightforward solutions over clever ones"
+      source: "Zen of Python, PEP 20"
+    
+    duplication_is_evil:
+      statement: "Don't Repeat Yourself (DRY)"
+      implication: "Every piece of knowledge should have a single, unambiguous representation"
+      source: "Andy Hunt and Dave Thomas, The Pragmatic Programmer"
+    
+    fail_fast:
+      statement: "Fail fast and fail loudly"
+      implication: "Detect and report errors at the earliest possible point"
+      source: "Jim Shore"
+    
+    convention_over_configuration:
+      statement: "Convention over configuration"
+      implication: "Reduce decisions by adopting sensible defaults"
+      source: "Ruby on Rails philosophy"
+    
+    separation_of_concerns:
+      statement: "Different concerns should be addressed in different parts of the system"
+      implication: "Each module should have one reason to change"
+      source: "Edsger Dijkstra"
+    
+    law_of_demeter:
+      statement: "Only talk to your immediate friends"
+      implication: "object.friend.method() is acceptable; object.friend.friend.method() is not"
+      source: "Lieberherr and Holland"
+    
+    yagni:
+      statement: "You Aren't Gonna Need It"
+      implication: "Don't add functionality until it's necessary"
+      source: "Extreme Programming"
+    
+    principle_of_least_astonishment:
+      statement: "Behavior should match expectations"
+      implication: "Don't surprise users or other developers"
+      source: "General software engineering wisdom"
+
+defect_catalog:
+  purpose: "Common defects, their symptoms, root causes, and fixes"
+  
+  memory_leaks:
+    symptoms:
+      - "Growing memory usage over time"
+      - "Eventually crashes with out of memory errors"
+      - "Slow degradation of performance"
+    root_causes:
+      - "Unclosed file handles or database connections"
+      - "Event listeners not removed"
+      - "Circular references in object graphs"
+      - "Caching without eviction policy"
+    detection:
+      - "Memory profilers (e.g., Ruby's memory_profiler gem)"
+      - "Monitor heap size over time"
+      - "Use tools like valgrind or heaptrack"
+    fixes:
+      - "Explicitly close resources in ensure blocks"
+      - "Use weak references for caches"
+      - "Implement proper cleanup in destructors"
+      - "Set up periodic garbage collection"
+  
+  race_conditions:
+    symptoms:
+      - "Intermittent failures that disappear when debugging"
+      - "Different results on different runs with same input"
+      - "Data corruption or inconsistent state"
+    root_causes:
+      - "Shared mutable state without synchronization"
+      - "Check-then-act sequences without atomicity"
+      - "Multiple threads accessing same resource"
+    detection:
+      - "Thread sanitizers (e.g., ThreadSanitizer)"
+      - "Stress testing with high concurrency"
+      - "Code review for shared state access patterns"
+    fixes:
+      - "Use mutexes or locks around critical sections"
+      - "Prefer immutable data structures"
+      - "Use atomic operations or transactions"
+      - "Apply message passing instead of shared memory"
+  
+  sql_injection:
+    symptoms:
+      - "Unauthorized data access"
+      - "Data corruption or deletion"
+      - "Security audit failures"
+    root_causes:
+      - "Concatenating user input into SQL queries"
+      - "Not using parameterized queries"
+      - "Insufficient input validation"
+    detection:
+      - "Static analysis tools (e.g., Brakeman for Rails)"
+      - "Security scanning tools"
+      - "Code review of database query construction"
+    fixes:
+      - "Always use parameterized queries or prepared statements"
+      - "Use ORM query builders instead of raw SQL"
+      - "Validate and sanitize all user inputs"
+      - "Apply principle of least privilege for database access"
+  
+  null_pointer_exceptions:
+    symptoms:
+      - "Runtime crashes with null/nil errors"
+      - "Unexpected program termination"
+    root_causes:
+      - "Not checking for nil before accessing methods or properties"
+      - "Uninitialized variables"
+      - "Methods returning nil unexpectedly"
+    detection:
+      - "Static type checkers (e.g., Sorbet for Ruby)"
+      - "Linters with null safety rules"
+      - "Runtime error monitoring"
+    fixes:
+      - "Use safe navigation operators (e.g., &. in Ruby)"
+      - "Implement nil checks before access"
+      - "Return null objects or default values instead of nil"
+      - "Use optional types in languages that support them"
+  
+  off_by_one_errors:
+    symptoms:
+      - "Array index out of bounds errors"
+      - "Loops that execute one too few or too many times"
+      - "Incorrect range calculations"
+    root_causes:
+      - "Confusion between 0-based and 1-based indexing"
+      - "Incorrect loop conditions (< vs <=)"
+      - "Fence-post errors in range calculations"
+    detection:
+      - "Unit tests with boundary conditions"
+      - "Code review focusing on loop bounds"
+      - "Fuzz testing with edge cases"
+    fixes:
+      - "Use inclusive ranges (0..n) consistently"
+      - "Test with minimum, maximum, and empty collections"
+      - "Use language idioms like .each instead of manual indexing"
+      - "Write explicit tests for boundary conditions"
+  
+  resource_exhaustion:
+    symptoms:
+      - "Running out of file descriptors"
+      - "Database connection pool exhaustion"
+      - "Too many open sockets"
+    root_causes:
+      - "Not closing resources after use"
+      - "Unbounded growth of resource consumption"
+      - "Missing connection pooling or limiting"
+    detection:
+      - "Resource monitoring tools"
+      - "Load testing under sustained load"
+      - "System metrics (open files, connections, etc.)"
+    fixes:
+      - "Use connection pooling with limits"
+      - "Implement resource cleanup in ensure/finally blocks"
+      - "Set timeouts on long-running operations"
+      - "Use circuit breakers for external services"
 
 testing:
   requirements:
