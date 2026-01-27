@@ -29,3 +29,7 @@ vendor/bundle/
 /tmp/*
 !/log/.keep
 !/tmp/.keep
+
+# Test coverage
+coverage/
+.coverage
