@@ -58,8 +58,33 @@ chmod +x cli.rb
 # Available commands:
 /help              # Show help information
 /level [mode]      # Set access level: sandbox, user, or admin
+/export [format]   # Export governance rules to JSON
 /quit              # Exit the application
 ```
+
+#### JSON Export
+
+Export governance rules and configuration to JSON format:
+
+```bash
+> /export json
+Exported governance to governance_export_20260127_235306.json
+```
+
+The exported JSON includes:
+- Metadata (timestamp, version, format)
+- All governance sections (meta, rules, axioms, etc.)
+- Style constraints and thresholds
+- Security policies
+- Testing requirements
+- Defect catalog
+
+Use cases for JSON export:
+- CI/CD pipeline integration
+- Documentation generation
+- Metrics dashboard feeds
+- Cross-project governance analysis
+- LLM context injection
 
 #### Access Levels
 
@@ -85,10 +110,14 @@ chmod +x cli.rb
 Commands:
   /help              Show this help
   /level [mode]      Set access: sandbox, user, admin
+  /export [format]   Export governance (json)
   /quit              Exit
 
 > /level sandbox
 Level → sandbox
+
+> /export json
+Exported governance to governance_export_20260127_235306.json
 
 > /quit
 ```
@@ -134,6 +163,24 @@ export OPENROUTER_API_KEY="your-api-key-here"
    - Tool orchestration
    - Configuration management
 
+6. **DecisionSupport Module**
+   - Weighted scoring for decision prioritization
+   - Calculate scores based on multiple factors
+   - Select best option from alternatives
+   - Supports customizable weights and factors
+
+7. **UIHandler Class**
+   - Decoupled UI presentation layer
+   - Consistent message formatting
+   - Separate from business logic
+   - Easy to test and modify
+
+8. **GovernanceExporter Class**
+   - Export governance rules to JSON
+   - Machine-readable format
+   - Includes all governance sections
+   - Versioned export format
+
 #### Security Model
 
 ```
@@ -166,6 +213,9 @@ ruby test_cli.rb
 # Run with RSpec directly
 rspec test_cli.rb --format documentation
 
+# Test new features specifically
+ruby test_new_features.rb
+
 # Check coverage report
 # Coverage report will be generated in ./coverage/index.html
 ```
@@ -179,6 +229,46 @@ The test suite includes:
 - Error handling tests
 - Edge case validation
 - Minimum 80% code coverage requirement
+- Tests for DecisionSupport module
+- Tests for JSON export functionality
+- Tests for UIHandler class
+
+### 🎯 Decision Support
+
+The DecisionSupport module provides weighted scoring for prioritizing options:
+
+```ruby
+require_relative 'cli'
+
+# Define options with their scores across multiple factors
+options = {
+  'Option A' => { speed: 9, safety: 7, maintainability: 8, aesthetics: 6 },
+  'Option B' => { speed: 5, safety: 10, maintainability: 9, aesthetics: 8 }
+}
+
+# Define weights for each factor (should sum to 1.0)
+weights = { speed: 0.3, safety: 0.4, maintainability: 0.2, aesthetics: 0.1 }
+
+# Calculate weighted scores
+scores = DecisionSupport.calculate_weights(options, weights)
+# => {"Option A"=>7.7, "Option B"=>8.1}
+
+# Or select the best option automatically
+best_name, best_score, all_scores = DecisionSupport.select_best(options, weights)
+# => ["Option B", 8.1, {"Option A"=>7.7, "Option B"=>8.1}]
+```
+
+This follows the `calculate_weights` algorithm defined in `master.yml`:
+- Multiply each factor value by its weight
+- Sum the weighted values
+- Compare scores to select the best option
+
+Common use cases:
+- Architecture decision records
+- Technology selection
+- Feature prioritization
+- Risk assessment
+- Performance vs. safety tradeoffs
 
 ### 📝 Configuration
 
@@ -214,7 +304,7 @@ admin:   stdio rpath wpath cpath inet dns tty proc exec fattr
 
 ### 🎓 Governance Principles
 
-Convergence enforces these authoritative principles:
+Convergence enforces these authoritative principles with comprehensive explanations in `master.yml`:
 
 #### Clean Code (Robert C. Martin)
 - Functions do one thing
@@ -227,6 +317,53 @@ Convergence enforces these authoritative principles:
 - Extract methods for clarity
 - Simplify conditional expressions
 - Replace magic numbers with constants
+
+#### Verbose Principles Section
+
+The `master.yml` now includes detailed explanations for each principle:
+- **Description**: What the principle means
+- **Rationale**: Why it matters
+- **Violation Example**: What not to do
+- **Correct Example**: What to do instead
+
+Example:
+```yaml
+few_arguments:
+  description: "Functions should have no more than 3 arguments; prefer 0-2"
+  rationale: "More arguments increase cognitive load and testing complexity exponentially"
+  violation_example: "create_user(name, email, password, role, department, manager, status)"
+  correct_example: "create_user(user_params) where user_params is a structured object"
+```
+
+#### Axioms Section
+
+Foundational truths that guide all decisions:
+- Code is read 10x more than written
+- Premature optimization is evil
+- Simple is better than complex
+- DRY (Don't Repeat Yourself)
+- Fail fast and fail loudly
+- Convention over configuration
+- Separation of concerns
+- Law of Demeter
+- YAGNI (You Aren't Gonna Need It)
+- Principle of least astonishment
+
+#### Defect Catalog
+
+Common defects with symptoms, root causes, detection methods, and fixes:
+- Memory leaks
+- Race conditions
+- SQL injection
+- Null pointer exceptions
+- Off-by-one errors
+- Resource exhaustion
+
+Each entry includes:
+- Symptoms (what you observe)
+- Root causes (why it happens)
+- Detection methods (how to find it)
+- Fixes (how to resolve it)
 
 #### Quality Thresholds
 - Function length: ≤20 lines
@@ -248,6 +385,19 @@ Convergence enforces these authoritative principles:
 All governance rules are defined in `master.yml`:
 - Style constraints (lowercase_underscored)
 - Security policies
+- Linting rules (with examples)
+- Testing requirements
+- Platform governance
+- Cognitive reasoning patterns
+- **New**: Verbose principles with explanations
+- **New**: Axioms section with foundational truths
+- **New**: Defect catalog with common issues
+- **New**: JSON export configuration
+- **New**: Migration logic for version upgrades
+- **New**: Calculate weights for decision support
+- **New**: Chat codification for preserving insights
+- **New**: Hoisted constants for easy reference
+- **New**: Expanded examples throughout
 - Linting rules
 - Testing requirements
 - Platform governance
