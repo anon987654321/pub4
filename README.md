@@ -1,4 +1,4 @@
-# Convergence CLI v0.1
+# Convergence CLI v17.1.0
 
 ## Constitutional AI Governance Tool for Ruby Codebases
 
@@ -348,6 +348,6 @@ This codebase has achieved convergence to unified quality principles:
 
 ---
 
-**Convergence CLI v0.1** - Constitutional AI for Ruby Code Quality
+**Convergence CLI v17.1.0** - Constitutional AI for Ruby Code Quality
 
 *Preserve intent. Improve safety. Maintain architecture. Converge to excellence.*

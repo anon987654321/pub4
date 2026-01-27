@@ -19,6 +19,11 @@ require "fileutils"
 require "tmpdir"
 require_relative "cli"
 
+# Helper method to check zsh availability
+def zsh_available?
+  File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+end
+
 RSpec.describe "Convergence CLI" do
   describe "VERSION" do
     it "matches expected version" do
@@ -165,7 +170,7 @@ RSpec.describe "Convergence CLI" do
       end
 
       # Skip zsh-dependent tests if zsh is not installed
-      if File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+      if zsh_available?
         context "when zsh is available" do
           it "executes simple commands" do
             result = shell.execute(command: "echo 'test'")
@@ -471,7 +476,7 @@ RSpec.describe "Convergence CLI" do
 
     it "ShellTool can execute safe commands" do
       shell = ShellTool.new
-      if File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+      if zsh_available?
         result = shell.execute(command: "echo test")
         expect(result).to have_key(:success)
       else
@@ -508,7 +513,7 @@ RSpec.describe "Convergence CLI" do
     describe "Command injection prevention" do
       let(:shell) { ShellTool.new }
 
-      if File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+      if zsh_available?
         it "safely handles commands with special characters" do
           result = shell.execute(command: "echo 'test; ls'")
           expect(result[:success]).to be true
@@ -551,7 +556,7 @@ RSpec.describe "Convergence CLI" do
         expect(result).to have_key(:error)
       end
 
-      if File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+      if zsh_available?
         it "handles command timeouts" do
           result = shell.execute(command: "sleep 5", timeout: 1)
           expect(result).to have_key(:error)
@@ -585,7 +590,7 @@ RSpec.describe "Convergence CLI" do
       let(:shell) { ShellTool.new }
       let(:file_tool) { FileTool.new(base_path: Dir.tmpdir, access_level: :admin) }
 
-      if File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+      if zsh_available?
         it "handles empty command" do
           result = shell.execute(command: "")
           expect(result).to have_key(:stdout)
