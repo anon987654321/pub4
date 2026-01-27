@@ -24,7 +24,7 @@ def zsh_available?
   File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
 end
 
-RSpec.describe "Convergence CLI" do
+RSpec.describe "Master CLI" do
   describe "VERSION" do
     it "matches expected version" do
       expect(VERSION).to eq("17.1.0")

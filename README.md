@@ -1,12 +1,12 @@
-# Convergence CLI v17.1.0
+# Master CLI v17.1.0
 
 ## Constitutional AI Governance Tool for Ruby Codebases
 
-Convergence is a command-line interface tool that applies constitutional AI principles to enforce Ruby code quality through iterative scanning, evidence-based scoring, and automated remediation. It preserves intent while improving safety, maintainability, and architecture.
+Master is a command-line interface tool that applies constitutional AI principles to enforce Ruby code quality through iterative scanning, evidence-based scoring, and automated remediation. It preserves intent while improving safety, maintainability, and architecture.
 
 ### 🎯 Purpose
 
-Convergence enforces code quality through:
+Master enforces code quality through:
 - **AST-based defect scanning**: Deep structural analysis of Ruby code
 - **Evidence-based scoring**: Quantitative quality metrics
 - **Batch improvements**: Automated remediation of common issues
@@ -182,7 +182,7 @@ The test suite includes:
 
 ### 📝 Configuration
 
-Configuration is stored in `~/.convergence/config.yml`:
+Configuration is stored in `~/.master/config.yml`:
 
 ```yaml
 model: deepseek/deepseek-r1
@@ -201,7 +201,7 @@ access_level: user
 
 #### OpenBSD Integration
 
-On OpenBSD systems, Convergence automatically enables:
+On OpenBSD systems, Master automatically enables:
 - `pledge()`: Restricts system calls to minimal required set
 - `unveil()`: Limits file system visibility to approved paths
 
@@ -214,7 +214,7 @@ admin:   stdio rpath wpath cpath inet dns tty proc exec fattr
 
 ### 🎓 Governance Principles
 
-Convergence enforces these authoritative principles:
+Master enforces these authoritative principles:
 
 #### Clean Code (Robert C. Martin)
 - Functions do one thing
@@ -263,7 +263,7 @@ All governance rules are defined in `master.yml`:
 
 ### 📊 Quality Metrics
 
-Convergence measures and enforces:
+Master measures and enforces:
 
 | Metric | Threshold | Status |
 |--------|-----------|--------|
@@ -299,7 +299,7 @@ gem install simplecov
 **3. Permission denied on config file**
 ```bash
 # Fix permissions
-chmod 600 ~/.convergence/config.yml
+chmod 600 ~/.master/config.yml
 ```
 
 **4. OpenBSD security features unavailable**
@@ -348,6 +348,6 @@ This codebase has achieved convergence to unified quality principles:
 
 ---
 
-**Convergence CLI v17.1.0** - Constitutional AI for Ruby Code Quality
+**Master CLI v17.1.0** - Constitutional AI for Ruby Code Quality
 
 *Preserve intent. Improve safety. Maintain architecture. Converge to excellence.*
