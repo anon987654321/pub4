@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed from "Convergence" to "Master" throughout codebase
 - Updated meta.name to "master" in master.yml
 - Renamed CLI references and class names from Convergence to Master
+- Changed "converged" status to "compliant" for consistency
+- Updated "convergence_threshold" to "compliance_threshold"
+- Changed config path from ~/.convergence to ~/.master
 
 ### Added
 - **Critical Opportunities**:

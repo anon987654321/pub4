@@ -96,13 +96,16 @@ class Config
     File.chmod(0o600, PATH)
   end
   
-  def calculate_weights(defects)
-    weights = { critical: 10.0, high: 5.0, medium: 2.0, low: 0.5 }
-    defects.sum { |d| weights[d[:severity]] * d[:count] }
-  end
-  
   def to_h
     { "model" => model, "access_level" => access_level.to_s }
+  end
+  
+  # Calculate weighted quality score from defects
+  # @param defects [Array<Hash>] Array of defect hashes with :severity and :count keys
+  # @return [Float] Weighted score
+  def self.calculate_weights(defects)
+    weights = { critical: 10.0, high: 5.0, medium: 2.0, low: 0.5 }
+    defects.sum { |d| weights[d[:severity]] * d[:count] }
   end
 end
 
@@ -318,21 +321,26 @@ class MasterCLI
   def export_data(type)
     return puts "Usage: /export [metrics|defects|compliance]" unless type
     
+    # Note: These are placeholder values for demonstration
+    # In production, these would come from actual code analysis
     case type
     when "metrics"
       result = @exporter.export_quality_metrics({
+        note: "placeholder_values",
         coverage: 0.95,
         complexity: 8.2,
         violations: 0
       })
     when "defects"
       result = @exporter.export_defect_summary({
+        note: "placeholder_values",
         total: 0,
         by_severity: { critical: 0, high: 0, medium: 0, low: 0 }
       })
     when "compliance"
       result = @exporter.export_governance_compliance({
-        status: "converged",
+        note: "placeholder_values",
+        status: "compliant",
         rules_passed: 100,
         rules_failed: 0
       })
@@ -350,13 +358,17 @@ class MasterCLI
   def run_migration(version)
     return puts "Usage: /migrate [version]" unless version
     
-    config_data = @config.to_h rescue {}
-    result = @migrator.migrate_from(version, config_data)
-    
-    if result[:success]
-      puts "Migrated from #{version} to #{result[:version]}"
-    else
-      puts "Migration failed: #{result[:error]}"
+    begin
+      config_data = @config.to_h
+      result = @migrator.migrate_from(version, config_data)
+      
+      if result[:success]
+        puts "Migrated from #{version} to #{result[:version]}"
+      else
+        puts "Migration failed: #{result[:error]}"
+      end
+    rescue StandardError => e
+      puts "Migration error: #{e.message}"
     end
   end
 end

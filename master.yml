@@ -177,7 +177,7 @@ expanded_output_examples:
   validation_report:
     example: |
       {
-        "status": "converged",
+        "status": "compliant",
         "violations": 0,
         "metrics": {
           "coverage": 0.95,
@@ -730,7 +730,7 @@ defect_catalog:
       medium: 2.0
       low: 0.5
     calculation: sum_of_weighted_violations
-    convergence_threshold: 0.0
+    compliance_threshold: 0.0
 
 governance:
   purpose: self_regulation_and_quality_enforcement
@@ -745,7 +745,7 @@ governance:
         score += weight * defect.count
       end
       score
-    usage: measure_convergence_progress
+    usage: measure_quality_progress
   
   validation:
     pre_commit:
