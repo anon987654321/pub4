@@ -19,7 +19,7 @@ require "time"
 VERSION = "17.1.0"
 OPENBSD = RUBY_PLATFORM.include?("openbsd")
 
-# Constants hoisted for easy reference
+# Constants hoisted for easy reference and maintainability
 MAX_STDOUT_SIZE = 10_000
 MAX_STDERR_SIZE = 4000
 MAX_FILE_SIZE = 100_000

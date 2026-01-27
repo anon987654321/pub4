@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Migration logic**: Section for managing version upgrades
 - **Calculate weights**: Algorithm for prioritizing options based on multiple factors
 - **Chat codification**: Process for preserving LLM conversation insights
-- **Hoisted constants**: TOP_LEVEL constants for easier reference and maintenance
+- **Hoisted constants**: Top-level constants for easier reference and maintenance
 - **Expanded examples**: Throughout master.yml (linting, boot_sequence, autonomy)
 - **test_new_features.rb**: Test suite for new functionality
 

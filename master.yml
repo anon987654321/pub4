@@ -69,7 +69,7 @@ meta:
         safety: 10 * 0.40 = 4.0
         maintainability: 9 * 0.20 = 1.8
         aesthetics: 8 * 0.10 = 0.8
-        total: 8.1
+        total: 8.3
       
       Decision: Choose Option B (higher total score)
     
@@ -533,7 +533,7 @@ json_export:
     basic_export: |
       {
         "export_metadata": {
-          "timestamp": "2026-01-27T23:48:00Z",
+          "timestamp": "YYYY-MM-DDTHH:MM:SSZ",
           "exporter_version": "17.1.0",
           "format_version": "1.0"
         },

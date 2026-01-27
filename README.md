@@ -68,7 +68,7 @@ Export governance rules and configuration to JSON format:
 
 ```bash
 > /export json
-Exported governance to governance_export_20260127_235306.json
+Exported governance to governance_export_YYYYMMDD_HHMMSS.json
 ```
 
 The exported JSON includes:
@@ -117,7 +117,7 @@ Commands:
 Level → sandbox
 
 > /export json
-Exported governance to governance_export_20260127_235306.json
+Exported governance to governance_export_YYYYMMDD_HHMMSS.json
 
 > /quit
 ```
@@ -398,10 +398,6 @@ All governance rules are defined in `master.yml`:
 - **New**: Chat codification for preserving insights
 - **New**: Hoisted constants for easy reference
 - **New**: Expanded examples throughout
-- Linting rules
-- Testing requirements
-- Platform governance
-- Cognitive reasoning patterns
 
 #### Contributing
 
