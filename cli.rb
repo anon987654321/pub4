@@ -106,15 +106,31 @@ class Governance
     lines = content.lines
     score = 100.0
     score -= 10 if lines.size > 300
-    score -= 5 if content.match?(/def\s+\w+.*\n(?:.*\n){20,}end/)
+    
+    method_length = 0
+    in_method = false
+    lines.each do |line|
+      if line.match?(/^\s*def\s+\w+/)
+        in_method = true
+        method_length = 1
+      elsif line.match?(/^\s*end\s*$/) && in_method
+        score -= 5 if method_length > 20
+        in_method = false
+        method_length = 0
+      elsif in_method
+        method_length += 1
+      end
+    end
+    
     score -= 10 if content.scan(/def\s+\w+\(([^)]*)\)/).any? { |m| m[0].split(",").size > 3 }
     [score, 0].max
   end
   
   def calculate_security_score(content)
     score = 100.0
-    score -= 50 if content.match?(/password\s*=\s*['"][^'"]+['"]/)
-    score -= 50 if content.match?(/api_key\s*=\s*['"][^'"]+['"]/)
+    score -= 50 if content.match?(/password\s*=\s*['"][^'"]{1,}['"]/) && !content.match?(/password\s*=\s*['"]['"]/)
+    score -= 50 if content.match?(/api_key\s*=\s*['"][^'"]{1,}['"]/) && !content.match?(/api_key\s*=\s*['"]['"]/)
+    score -= 50 if content.match?(/sk-[a-zA-Z0-9]{32,}/) || content.match?(/ghp_[a-zA-Z0-9]{36}/)
     score -= 20 if content.match?(/eval\(/)
     score -= 20 if content.match?(/system\(/)
     [score, 0].max
@@ -146,6 +162,7 @@ class Migration
     when ["1.0.0", "2.0.0"]
       migrate_v1_to_v2(data)
     else
+      warn "Unknown migration path: #{from_version} -> #{to_version}" if ENV["DEBUG"]
       data
     end
   end
@@ -256,19 +273,6 @@ class Config
       access_level: access_level,
       schema_version: CONFIG_SCHEMA_VERSION
     }.to_json(*args)
-  end
-  
-  def export_json
-    JSON.pretty_generate(
-      version: VERSION,
-      config: {
-        model: model,
-        access_level: access_level,
-        schema_version: CONFIG_SCHEMA_VERSION,
-        config_path: PATH
-      },
-      timestamp: Time.now.iso8601
-    )
   end
 end
 
@@ -435,6 +439,20 @@ class CLI
   end
   
   def export_json(file)
+    if file && !file.start_with?("/tmp/")
+      expanded = File.expand_path(file)
+      allowed = case @config.access_level
+                when :sandbox then [Dir.pwd, "/tmp"]
+                when :user    then [ENV.fetch("HOME", "/tmp"), Dir.pwd, "/tmp"]
+                else               nil
+                end
+      
+      unless allowed.nil? || allowed.any? { |p| expanded.start_with?("#{p}/") || expanded == p }
+        puts "✗ Export denied: path outside allowed directories"
+        return
+      end
+    end
+    
     data = {
       version: VERSION,
       governance_version: GOVERNANCE_VERSION,
