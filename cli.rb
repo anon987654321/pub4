@@ -6,7 +6,7 @@
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
-# MASTER.YML v1.5.0
+# MASTER.YML v1.6.0
 # Code governance agent with chat-first UX
 # Inspired by: Claude Code, Aider, OpenCode
 
@@ -17,6 +17,24 @@ require "optparse"
 require "digest"
 require "net/http"
 require "uri"
+
+# Optional: Ferrum for web browsing (gem install ferrum)
+FERRUM_AVAILABLE = begin
+  require "ferrum"
+  true
+rescue LoadError
+  false
+end
+
+# Optional: Falcon for async web server (gem install falcon)
+FALCON_AVAILABLE = begin
+  require "async"
+  require "async/http/server"
+  require "async/http/endpoint"
+  true
+rescue LoadError
+  false
+end
 
 # ANSI colors (disabled if terminal doesn't support)
 module C
@@ -1397,6 +1415,137 @@ module Voice
   end
 end
 
+# Web - Headless browser for web browsing via Ferrum
+module Web
+  class << self
+    def init
+      @browser = nil
+      @available = FERRUM_AVAILABLE && chrome_available?
+    end
+    
+    def available?
+      @available
+    end
+    
+    def chrome_available?
+      # Check for Chrome/Chromium
+      %w[chromium chrome google-chrome chromium-browser].any? do |cmd|
+        system("which #{cmd} > /dev/null 2>&1")
+      end
+    end
+    
+    def browser
+      return nil unless @available
+      @browser ||= Ferrum::Browser.new(
+        headless: true,
+        timeout: 30,
+        browser_options: { "no-sandbox": nil }  # For running as non-root
+      )
+    end
+    
+    # Fetch a URL and return text content
+    def fetch(url)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        page = browser.create_page
+        page.go_to(url)
+        
+        # Wait for page to load
+        sleep 1
+        
+        # Extract content
+        title = page.at_css("title")&.text || ""
+        
+        # Get main content, preferring article/main tags
+        content = page.at_css("article, main, .content, #content, body")&.text || ""
+        
+        # Clean up whitespace
+        content = content.gsub(/\s+/, " ").strip[0..8000]
+        
+        page.close
+        
+        { title: title, content: content, url: url }
+      rescue => e
+        { error: e.message, url: url }
+      end
+    end
+    
+    # Take a screenshot
+    def screenshot(url, path: nil)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        page = browser.create_page
+        page.go_to(url)
+        sleep 2
+        
+        path ||= "/tmp/screenshot_#{Time.now.to_i}.png"
+        page.screenshot(path: path, full: true)
+        page.close
+        
+        { path: path, url: url }
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Execute JavaScript on a page
+    def evaluate(url, script)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        page = browser.create_page
+        page.go_to(url)
+        sleep 1
+        result = page.evaluate(script)
+        page.close
+        { result: result }
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Search (uses DuckDuckGo lite)
+    def search(query)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        page = browser.create_page
+        page.go_to("https://lite.duckduckgo.com/lite/")
+        
+        input = page.at_css("input[name='q']")
+        input.focus.type(query)
+        page.at_css("input[type='submit']").click
+        
+        sleep 2
+        
+        results = page.css(".result-link").map do |link|
+          { title: link.text.strip, url: link.attribute("href") }
+        end.first(5)
+        
+        page.close
+        { query: query, results: results }
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    def quit
+      @browser&.quit
+      @browser = nil
+    end
+    
+    def status
+      if @available
+        "ferrum:ok chrome:#{chrome_available? ? 'ok' : 'no'}"
+      else
+        "ferrum:no"
+      end
+    end
+  end
+end
+
 # Violation - Represents a single violation
 class Violation
   attr_reader :file, :line, :rule, :law, :severity, :details, :message
@@ -1842,6 +1991,7 @@ class CLI
     InlineSuggestions.init(@config)
     OpenRouterChat.init(@config)
     Voice.init(@config)
+    Web.init
     
     # Ensure directories exist
     StateManager.pre_work_snapshot if @config.dig("integration", "pre_work_snapshot")
@@ -1915,6 +2065,8 @@ export OPENROUTER_API_KEY="#{key}""
       "clear" => method(:cmd_clear_chat),
       "voice" => method(:cmd_voice),
       "listen" => method(:cmd_listen),
+      "browse" => method(:cmd_browse),
+      "search" => method(:cmd_search),
       "model" => method(:cmd_model),
       "reload" => method(:cmd_reload),
       "save" => method(:cmd_save),
@@ -2295,6 +2447,8 @@ iteration #{iter}/#{max_iter}"
         /reload          Reload master.yml
         /voice           Toggle voice on/off
         /listen          Voice input mode
+        /browse <url>    Fetch web page via Ferrum
+        /search <query>  Search DuckDuckGo
         /clear           Clear chat history
         /help            Show this
         /quit            Exit
@@ -2398,6 +2552,68 @@ iteration #{iter}/#{max_iter}"
       chat_with_llm(text)
     else
       puts "No speech detected"
+    end
+  end
+
+  def cmd_browse(*args)
+    unless Web.available?
+      puts C.r("Ferrum not available. Install: gem install ferrum")
+      puts C.d("Also requires Chrome/Chromium in PATH")
+      return
+    end
+    
+    url = args.join(" ")
+    if url.empty?
+      puts "Usage: /browse <url>"
+      puts C.d("Web: #{Web.status}")
+      return
+    end
+    
+    # Add https if no protocol
+    url = "https://#{url}" unless url.match?(%r{^https?://})
+    
+    puts C.d("Fetching #{url}...")
+    result = Web.fetch(url)
+    
+    if result[:error]
+      puts C.r("Error: #{result[:error]}")
+    else
+      puts C.b(result[:title])
+      puts result[:content][0..2000]
+      puts C.d("...truncated") if result[:content].length > 2000
+      
+      # Add to conversation context
+      @conversation << {
+        role: "user",
+        content: "I just browsed #{url}. Here's the content:\n\nTitle: #{result[:title]}\n\n#{result[:content][0..4000]}"
+      }
+      puts C.d("Added to context")
+    end
+  end
+
+  def cmd_search(*args)
+    unless Web.available?
+      puts C.r("Ferrum not available. Install: gem install ferrum")
+      return
+    end
+    
+    query = args.join(" ")
+    if query.empty?
+      puts "Usage: /search <query>"
+      return
+    end
+    
+    puts C.d("Searching: #{query}...")
+    result = Web.search(query)
+    
+    if result[:error]
+      puts C.r("Error: #{result[:error]}")
+    else
+      puts C.b("Results for: #{query}")
+      result[:results].each_with_index do |r, i|
+        puts "#{i + 1}. #{r[:title]}"
+        puts C.d("   #{r[:url]}")
+      end
     end
   end
 

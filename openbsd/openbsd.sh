@@ -1229,17 +1229,17 @@ table <bruteforce> persist
 
 block quick from <bruteforce>
 
-pass out quick on $ext_if all
+pass out quick on \$ext_if all
 
-pass in on $ext_if inet proto tcp to $ext_if port 22 keep state \
+pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
 
   (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 
-pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53 log
+pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
 
-pass in on $ext_if inet proto tcp to $brgen_ip port { 80, 443 } log
+pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443, 8787 } log
 
-pass out on $ext_if inet proto tcp to any port 25
+pass out on \$ext_if inet proto tcp to any port 25
 
 EOF
 
