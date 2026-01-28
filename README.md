@@ -100,10 +100,7 @@ Level → sandbox
 > /quiet
 Quiet mode: on
 
-> /codify - Add feature X
-- Fix bug Y
-- Update docs
-
+> /codify $'- Add feature X\n- Fix bug Y\n- Update docs'
 --- Generated YAML ---
 (YAML output with structured wishlist items)
 --- End YAML ---
@@ -117,22 +114,30 @@ Saved to: .sessions/wishlist_20260128_001234.yml
 Automatically convert wishlist items into structured YAML format:
 
 ```bash
-# Multi-line input in interactive mode
-> /codify - Add authentication
+# Option 1: Prepare content in a file (recommended)
+$ cat > wishlist.txt << EOF
+- Add authentication
 - Implement caching
 - Add logging
+EOF
 
-# Or numbered lists
-> /codify 1. Feature A
-2. Feature B
-3. Feature C
+# Then use command substitution
+> /codify $(cat wishlist.txt)
 
-# Auto-detection of wishlist patterns
+# Option 2: Use shell $'...' syntax for newlines (bash/zsh)
+> /codify $'- Add authentication\n- Implement caching\n- Add logging'
+
+# Option 3: Compact single-line format (less readable)
+> /codify - First item  * Second item  1. Third item
+
+# Auto-detection of wishlist patterns in messages
 > implement these features: add tests, improve docs, fix bugs
 [Auto-detected wishlist - use /codify to process]
 ```
 
 The codified wishlists are saved to `.sessions/` directory for tracking and auditing.
+
+**Note**: In interactive mode, `/codify` processes text provided on the same command line. For multi-line wishlist items, use file input or shell expansion syntax.
 
 #### LLM Integration
 
