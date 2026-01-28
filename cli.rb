@@ -1213,27 +1213,36 @@ CONTEXT FILES:
 end
 
 # Voice - TTS and STT for voice interaction
+# Falls back to browser Web Speech API if native tools unavailable
+require "webrick"
+require "socket"
+require "json"
+
 module Voice
   PIPER_MODEL = "en_US-lessac-low"  # Lofi grainy voice
   WHISPER_MODEL = "base.en"
+  WEB_PORT = 8787
   
   class << self
     def init(config)
       @config = config
       @enabled = false
+      @queue = Queue.new
+      @server = nil
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
                        system("which whisper-cpp > /dev/null 2>&1")
       @sox_available = system("which sox > /dev/null 2>&1") ||
                        system("which rec > /dev/null 2>&1")
+      @web_tts = !@tts_available  # Use browser TTS if no native
     end
     
     def available?
-      @tts_available || @stt_available
+      @tts_available || @stt_available || @web_tts
     end
     
     def tts_available?
-      @tts_available
+      @tts_available || @web_tts
     end
     
     def stt_available?
@@ -1257,28 +1266,98 @@ module Voice
       @enabled = false
     end
     
-    # Text-to-speech via Piper
+    # Text-to-speech via Piper or browser Web Speech API
     def speak(text)
-      return unless @enabled && @tts_available
+      return unless @enabled && tts_available?
       return if text.nil? || text.strip.empty?
       
       # Clean text for speech
       clean = text.gsub(/```.*?```/m, "code block omitted")
-                  .gsub(/[.*?](.*?)/, "")  # Remove markdown links
+                  .gsub(/\[.*?\]\(.*?\)/, "")  # Remove markdown links
                   .gsub(/[#*_`]/, "")           # Remove markdown formatting
                   .strip
       
       return if clean.empty?
       
-      # Stream through Piper with lofi effects
-      Thread.new do
-        IO.popen([
-          "sh", "-c",
-          "echo #{clean.shellescape} | piper --model #{PIPER_MODEL} --output_raw 2>/dev/null | " \
-          "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af 'highpass=f=200,lowpass=f=5000' -f wav - 2>/dev/null | " \
-          "play -q - 2>/dev/null || aplay -q - 2>/dev/null"
-        ]) { |p| p.read }
+      if @tts_available
+        # Stream through Piper with lofi effects
+        Thread.new do
+          IO.popen([
+            "sh", "-c",
+            "echo #{clean.shellescape} | piper --model #{PIPER_MODEL} --output_raw 2>/dev/null | " \
+            "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af 'highpass=f=200,lowpass=f=5000' -f wav - 2>/dev/null | " \
+            "play -q - 2>/dev/null || aplay -q - 2>/dev/null"
+          ]) { |p| p.read }
+        end
+      elsif @web_tts
+        # Queue for browser TTS
+        start_web_server unless @server
+        @queue << clean
       end
+    end
+    
+    # Start WEBrick server for browser TTS
+    def start_web_server
+      return if @server
+      
+      ip = local_ip
+      @server = Thread.new do
+        server = WEBrick::HTTPServer.new(
+          Port: WEB_PORT,
+          BindAddress: "0.0.0.0",
+          Logger: WEBrick::Log.new("/dev/null"),
+          AccessLog: []
+        )
+        
+        # Main page with Web Speech API
+        server.mount_proc "/" do |req, res|
+          res.content_type = "text/html"
+          res.body = <<~HTML
+            <!DOCTYPE html>
+            <html><head><title>CLI Voice</title></head>
+            <body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
+              <h1>CLI Voice Server</h1>
+              <div id="status">Waiting...</div>
+              <div id="text" style="margin:1em 0;padding:1em;border:1px solid #0f0"></div>
+              <script>
+                const status = document.getElementById('status');
+                const textDiv = document.getElementById('text');
+                const synth = window.speechSynthesis;
+                
+                function poll() {
+                  fetch('/poll').then(r => r.json()).then(data => {
+                    if (data.text) {
+                      status.textContent = 'Speaking...';
+                      textDiv.textContent = data.text;
+                      const utter = new SpeechSynthesisUtterance(data.text);
+                      utter.rate = 0.9;
+                      utter.onend = () => { status.textContent = 'Ready'; };
+                      synth.speak(utter);
+                    }
+                    setTimeout(poll, 500);
+                  }).catch(() => setTimeout(poll, 1000));
+                }
+                poll();
+              </script>
+            </body></html>
+          HTML
+        end
+        
+        # Poll endpoint
+        server.mount_proc "/poll" do |req, res|
+          res.content_type = "application/json"
+          text = @queue.empty? ? nil : @queue.pop(true) rescue nil
+          res.body = { text: text }.to_json
+        end
+        
+        server.start
+      end
+      
+      puts C.d("Voice server: http://#{ip}:#{WEB_PORT}")
+    end
+    
+    def local_ip
+      Socket.ip_address_list.find { |a| a.ipv4? && !a.ipv4_loopback? }&.ip_address || "127.0.0.1"
     end
     
     # Speech-to-text via Whisper
@@ -1304,10 +1383,16 @@ module Voice
     
     def status
       parts = []
-      parts << "tts:#{@tts_available ? 'ok' : 'no'}"
+      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'web' : 'no')}"
       parts << "stt:#{stt_available? ? 'ok' : 'no'}"
       parts << (@enabled ? "on" : "off")
+      parts << "port:#{WEB_PORT}" if @web_tts && @server
       parts.join(" ")
+    end
+    
+    def stop_server
+      @server&.kill
+      @server = nil
     end
   end
 end
