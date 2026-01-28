@@ -1144,6 +1144,10 @@ module OpenRouterChat
       true
     end
     
+    def add_context(name, content)
+      @context_files << { path: "[#{name}]", content: content }
+    end
+    
     def clear_context_files
       @context_files = []
     end
@@ -1208,8 +1212,7 @@ module OpenRouterChat
     private
     
     def build_system_prompt(config)
-      laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("
-")
+      laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
       
       # Get tree context if available
       tree = ""
@@ -1223,6 +1226,23 @@ module OpenRouterChat
         
         FILES:
         #{tree}
+        
+        TOOLS AVAILABLE:
+        - ```zsh``` blocks execute shell commands
+        - ```ruby``` blocks execute Ruby code
+        - /browse <url> fetches web pages (you can ask user to run this)
+        - /search <query> searches DuckDuckGo
+        
+        AUTONOMOUS RESEARCH:
+        Before answering technical questions, CHECK LATEST DOCS:
+        - Ruby: https://docs.ruby-lang.org/en/master/NEWS_md.html
+        - Rails: https://rubyonrails.org/blog (or github releases)
+        - OpenBSD: https://man.openbsd.org/<topic>
+        - Papers: https://ar5iv.org/search?query=<topic> (arXiv HTML)
+        - General: use /search to find current info
+        
+        If you need to verify current syntax, versions, or best practices,
+        tell the user: "Let me check the latest docs" then provide a /browse command.
         
         RULES:
         - ONE shell command per response, wrapped in ```zsh```
@@ -1491,11 +1511,14 @@ module Voice
   end
 end
 
-# Web - Headless browser for web browsing via Ferrum
+# Web - Autonomous web agent via Ferrum
+# Supports persistent browsing sessions, screenshots for LLM reasoning,
+# and structured page extraction for navigation
 module Web
   class << self
     def init
       @browser = nil
+      @page = nil  # Persistent page for session
       @available = FERRUM_AVAILABLE && chrome_available?
     end
     
@@ -1504,7 +1527,6 @@ module Web
     end
     
     def chrome_available?
-      # Check for Chrome/Chromium
       %w[chromium chrome google-chrome chromium-browser].any? do |cmd|
         system("which #{cmd} > /dev/null 2>&1")
       end
@@ -1515,106 +1537,236 @@ module Web
       @browser ||= Ferrum::Browser.new(
         headless: true,
         timeout: 30,
-        browser_options: { "no-sandbox": nil }  # For running as non-root
+        window_size: [1280, 800],
+        browser_options: { "no-sandbox": nil }
       )
     end
     
-    # Fetch a URL and return text content
-    def fetch(url)
+    # Get or create persistent page
+    def page
+      return nil unless @available
+      @page ||= browser.create_page
+    end
+    
+    # Navigate to URL and return structured page info for LLM
+    def goto(url)
       return { error: "Ferrum not available" } unless @available
       
       begin
-        page = browser.create_page
+        url = "https://#{url}" unless url.match?(%r{^https?://})
         page.go_to(url)
+        sleep 2
         
-        # Wait for page to load
-        sleep 1
-        
-        # Extract content
-        title = page.at_css("title")&.text || ""
-        
-        # Get main content, preferring article/main tags
-        content = page.at_css("article, main, .content, #content, body")&.text || ""
-        
-        # Clean up whitespace
-        content = content.gsub(/\s+/, " ").strip[0..8000]
-        
-        page.close
-        
-        { title: title, content: content, url: url }
+        extract_page_info
       rescue => e
         { error: e.message, url: url }
       end
     end
     
-    # Take a screenshot
-    def screenshot(url, path: nil)
+    # Extract structured page info for LLM reasoning
+    def extract_page_info
+      title = page.at_css("title")&.text || ""
+      url = page.current_url
+      
+      # Get all clickable links with indices
+      links = page.css("a[href]").map.with_index do |el, i|
+        text = el.text.strip[0..60]
+        href = el.attribute("href")
+        next nil if text.empty? || href.nil? || href.start_with?("#", "javascript:")
+        { id: i, text: text, href: href }
+      end.compact.first(30)
+      
+      # Get all form inputs
+      inputs = page.css("input, textarea, select").map.with_index do |el, i|
+        {
+          id: i,
+          type: el.attribute("type") || el.tag_name,
+          name: el.attribute("name"),
+          placeholder: el.attribute("placeholder")
+        }
+      end.first(15)
+      
+      # Get buttons
+      buttons = page.css("button, input[type='submit']").map.with_index do |el, i|
+        { id: i, text: el.text.strip[0..30] || el.attribute("value") }
+      end.compact.first(10)
+      
+      # Get main text content (truncated)
+      content = page.at_css("article, main, .content, #content, body")&.text || ""
+      content = content.gsub(/\s+/, " ").strip[0..4000]
+      
+      {
+        url: url,
+        title: title,
+        content: content,
+        links: links,
+        inputs: inputs,
+        buttons: buttons
+      }
+    end
+    
+    # Take screenshot and return base64 for LLM vision (if supported)
+    def screenshot_base64
       return { error: "Ferrum not available" } unless @available
       
       begin
-        page = browser.create_page
-        page.go_to(url)
-        sleep 2
-        
-        path ||= "/tmp/screenshot_#{Time.now.to_i}.png"
-        page.screenshot(path: path, full: true)
-        page.close
-        
-        { path: path, url: url }
+        data = page.screenshot(format: :png, encoding: :base64)
+        { base64: data, url: page.current_url }
       rescue => e
         { error: e.message }
       end
     end
     
-    # Execute JavaScript on a page
-    def evaluate(url, script)
+    # Save screenshot to file
+    def screenshot(path: nil)
       return { error: "Ferrum not available" } unless @available
       
       begin
-        page = browser.create_page
-        page.go_to(url)
-        sleep 1
+        path ||= "/tmp/screenshot_#{Time.now.to_i}.png"
+        page.screenshot(path: path, full: true)
+        { path: path, url: page.current_url }
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Click a link by index (from extract_page_info)
+    def click(index)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        links = page.css("a[href]").to_a
+        if index < links.length
+          links[index].click
+          sleep 2
+          extract_page_info
+        else
+          { error: "Link index #{index} out of range" }
+        end
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Type into input by index
+    def type(index, text)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        inputs = page.css("input, textarea").to_a
+        if index < inputs.length
+          inputs[index].focus.type(text)
+          { success: true, typed: text }
+        else
+          { error: "Input index #{index} out of range" }
+        end
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Submit form (press enter or click submit)
+    def submit
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
+        btn = page.at_css("input[type='submit'], button[type='submit'], button")
+        if btn
+          btn.click
+        else
+          page.keyboard.type(:Enter)
+        end
+        sleep 2
+        extract_page_info
+      rescue => e
+        { error: e.message }
+      end
+    end
+    
+    # Go back
+    def back
+      return { error: "Ferrum not available" } unless @available
+      page.back
+      sleep 1
+      extract_page_info
+    end
+    
+    # Execute JavaScript
+    def evaluate(script)
+      return { error: "Ferrum not available" } unless @available
+      
+      begin
         result = page.evaluate(script)
-        page.close
         { result: result }
       rescue => e
         { error: e.message }
       end
     end
     
-    # Search (uses DuckDuckGo lite)
+    # Convenience: fetch URL and return text only
+    def fetch(url)
+      result = goto(url)
+      return result if result[:error]
+      
+      { title: result[:title], content: result[:content], url: result[:url] }
+    end
+    
+    # Search DuckDuckGo
     def search(query)
       return { error: "Ferrum not available" } unless @available
       
       begin
-        page = browser.create_page
-        page.go_to("https://lite.duckduckgo.com/lite/")
+        goto("https://lite.duckduckgo.com/lite/")
+        type(0, query)
+        submit
         
-        input = page.at_css("input[name='q']")
-        input.focus.type(query)
-        page.at_css("input[type='submit']").click
-        
-        sleep 2
-        
-        results = page.css(".result-link").map do |link|
+        results = page.css(".result-link, a.result-link").map do |link|
           { title: link.text.strip, url: link.attribute("href") }
         end.first(5)
         
-        page.close
+        # Fallback: get all links if .result-link not found
+        if results.empty?
+          results = page.css("a[href^='http']").map do |link|
+            text = link.text.strip
+            next nil if text.empty? || text.length < 5
+            { title: text[0..80], url: link.attribute("href") }
+          end.compact.first(10)
+        end
+        
         { query: query, results: results }
       rescue => e
         { error: e.message }
       end
     end
     
+    # Research: check changelogs/docs before answering
+    def research(topic, sources: nil)
+      sources ||= [
+        "https://docs.ruby-lang.org/en/master/NEWS_md.html",
+        "https://ar5iv.org/search?query=#{URI.encode_www_form_component(topic)}",
+        "https://man.openbsd.org/#{topic}"
+      ]
+      
+      results = []
+      sources.each do |url|
+        data = fetch(url)
+        next if data[:error]
+        results << { source: url, title: data[:title], excerpt: data[:content][0..500] }
+      end
+      
+      results
+    end
+    
     def quit
+      @page&.close
+      @page = nil
       @browser&.quit
       @browser = nil
     end
     
     def status
       if @available
-        "ferrum:ok chrome:#{chrome_available? ? 'ok' : 'no'}"
+        "ferrum:ok chrome:#{chrome_available? ? 'ok' : 'no'} page:#{@page ? 'active' : 'none'}"
       else
         "ferrum:no"
       end
@@ -2682,30 +2834,67 @@ iteration #{iter}/#{max_iter}"
     
     url = args.join(" ")
     if url.empty?
-      puts "Usage: /browse <url>"
+      puts "Usage: /browse <url> | /browse click <n> | /browse back"
       puts C.d("Web: #{Web.status}")
       return
     end
     
-    # Add https if no protocol
-    url = "https://#{url}" unless url.match?(%r{^https?://})
-    
-    puts C.d("Fetching #{url}...")
-    result = Web.fetch(url)
+    # Handle navigation commands
+    case args[0]
+    when "click"
+      index = args[1].to_i
+      puts C.d("Clicking link #{index}...")
+      result = Web.click(index)
+    when "back"
+      result = Web.back
+    when "screenshot"
+      result = Web.screenshot
+      if result[:path]
+        puts "Screenshot: #{result[:path]}"
+        return
+      end
+    when "type"
+      index = args[1].to_i
+      text = args[2..].join(" ")
+      result = Web.type(index, text)
+      puts result[:success] ? "Typed: #{text}" : C.r(result[:error])
+      return
+    when "submit"
+      result = Web.submit
+    else
+      # Regular URL navigation
+      url = args.join(" ")
+      url = "https://#{url}" unless url.match?(%r{^https?://})
+      puts C.d("Fetching #{url}...")
+      result = Web.goto(url)
+    end
     
     if result[:error]
       puts C.r("Error: #{result[:error]}")
     else
       puts C.b(result[:title])
-      puts result[:content][0..2000]
-      puts C.d("...truncated") if result[:content].length > 2000
+      puts result[:content][0..1500]
+      puts C.d("...truncated") if result[:content].to_s.length > 1500
       
-      # Add to conversation context
-      @conversation << {
-        role: "user",
-        content: "I just browsed #{url}. Here's the content:\n\nTitle: #{result[:title]}\n\n#{result[:content][0..4000]}"
-      }
-      puts C.d("Added to context")
+      # Show clickable links
+      if result[:links]&.any?
+        puts ""
+        puts C.d("Links (use /browse click <n>):")
+        result[:links].first(10).each do |link|
+          puts C.d("  [#{link[:id]}] #{link[:text]}")
+        end
+      end
+      
+      # Add structured info to conversation for LLM reasoning
+      context = "Browsed: #{result[:url]}\nTitle: #{result[:title]}\n\n"
+      context += "Content:\n#{result[:content][0..3000]}\n\n"
+      if result[:links]&.any?
+        context += "Clickable links:\n"
+        result[:links].first(15).each { |l| context += "[#{l[:id]}] #{l[:text]} -> #{l[:href]}\n" }
+      end
+      
+      OpenRouterChat.add_context("web_page", context)
+      puts C.d("Added to LLM context")
     end
   end
 
