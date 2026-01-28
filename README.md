@@ -95,7 +95,7 @@ Commands:
   /quit              Exit
 
 > /level sandbox
-Level → sandbox
+✓ Access level changed to: sandbox
 
 > /quiet
 Quiet mode: on

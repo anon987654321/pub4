@@ -527,6 +527,11 @@ class CLI
       puts "Example: export OPENROUTER_API_KEY='your-key-here'"
       return
     end
+    
+    if auto_detect_wishlist(msg)
+      log "[Auto-detected wishlist - use /codify to process]"
+    end
+    
     @ui.show_info("[LLM integration pending - will support natural language code operations]")
   end
 
