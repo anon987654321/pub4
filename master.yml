@@ -593,3 +593,96 @@ inline_suggestions:
   format: "  → {action}: {code}"
   max_per_violation: 3
   include_examples: true
+
+# USABILITY (Nielsen Norman Group 10 Heuristics)
+# Reference: https://www.nngroup.com/articles/ten-usability-heuristics/
+usability:
+  h1_visibility:
+    name: "Visibility of system status"
+    principle: "Keep users informed through timely feedback"
+    applies_to: [progress_indicators, status_messages, thinking_dots]
+    examples:
+      - "show [3] turn count in prompt"
+      - "show ... while waiting for LLM"
+      - "show ✓/✗ for pass/fail"
+  
+  h2_match_real_world:
+    name: "Match between system and real world"
+    principle: "Use familiar language, follow real-world conventions"
+    applies_to: [terminology, metaphors, logical_order]
+    examples:
+      - "scan not analyze_codebase"
+      - "fix not apply_remediation"
+      - "laws before registry (priority order)"
+  
+  h3_user_control:
+    name: "User control and freedom"
+    principle: "Support undo, redo, and easy exit"
+    applies_to: [escape_hatches, undo, clear_history]
+    examples:
+      - "Ctrl+C exits cleanly"
+      - "/clear resets conversation"
+      - "git restore after failed fix"
+  
+  h4_consistency:
+    name: "Consistency and standards"
+    principle: "Follow platform conventions, be internally consistent"
+    applies_to: [command_syntax, output_format, terminology]
+    examples:
+      - "/command for all commands"
+      - "lowercase everywhere"
+      - "file: count (breakdown) format"
+  
+  h5_error_prevention:
+    name: "Error prevention"
+    principle: "Eliminate error-prone conditions before they occur"
+    applies_to: [validation, confirmation, constraints]
+    examples:
+      - "check file exists before scan"
+      - "skip method defs in ruby eval"
+      - "graceful degradation without parser gem"
+  
+  h6_recognition:
+    name: "Recognition rather than recall"
+    principle: "Minimize memory load with visible options"
+    applies_to: [suggestions, help_text, command_completion]
+    examples:
+      - "suggest similar commands on typo"
+      - "/help shows all commands"
+      - "inline fix suggestions"
+  
+  h7_flexibility:
+    name: "Flexibility and efficiency of use"
+    principle: "Accelerators for experts, simple for novices"
+    applies_to: [shortcuts, defaults, power_features]
+    examples:
+      - "plain text → chat (default)"
+      - "/scan file (explicit)"
+      - "--veto-only for CI scripts"
+  
+  h8_aesthetic:
+    name: "Aesthetic and minimalist design"
+    principle: "No irrelevant or rarely needed information"
+    applies_to: [output_density, noise_reduction, focus]
+    examples:
+      - "single-line banner"
+      - "hide timing unless slow"
+      - "quiet by default in pipes"
+  
+  h9_error_recovery:
+    name: "Help users recognize, diagnose, recover from errors"
+    principle: "Express errors in plain language with solutions"
+    applies_to: [error_messages, hints, recovery_paths]
+    examples:
+      - "error: OPENROUTER_API_KEY not set"
+      - "hint: check API key or try again"
+      - "did you mean: /scan?"
+  
+  h10_help:
+    name: "Help and documentation"
+    principle: "Easy to search, focused on user tasks"
+    applies_to: [help_command, examples, contextual_hints]
+    examples:
+      - "/help shows task-oriented list"
+      - "examples in registry rules"
+      - "ready. type to chat, /help for commands"

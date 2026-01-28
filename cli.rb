@@ -1484,11 +1484,17 @@ class CLI
   def run
     parse_options
     
-    # Show banner
-    puts "convergence #{@config['version']}"
-    puts "laws: #{@config['laws'].size}"
-    puts "personas: #{@config['personas'].size}" if @config['personas']
-    puts "registry: #{@config['registry'].size}"
+    # H8: Aesthetic minimalist design - compact single-line banner
+    model_name = OpenRouterChat.available? ? "sonnet" : "offline"
+    puts "convergence #{@config['version']} [#{model_name}]"
+    
+    # H1: Visibility of system status - show ready state
+    if OpenRouterChat.available?
+      puts "ready. type to chat, /help for commands"
+    else
+      puts "note: set OPENROUTER_API_KEY for chat"
+      puts "commands only. /help for list"
+    end
     puts
 
     # Check for --veto-only flag
@@ -1497,6 +1503,7 @@ class CLI
       veto_violations = results.values.flatten.select(&:veto?)
       
       if veto_violations.any?
+        # H9: Help recognize/recover from errors - specific count
         puts "✗ #{veto_violations.size} veto violations"
         exit 1
       else
@@ -1573,23 +1580,20 @@ class CLI
   end
 
   def repl
-    # Check OpenRouter availability
-    unless OpenRouterChat.available?
-      puts "note: OPENROUTER_API_KEY not set, chat disabled"
-      puts "      use /commands only, or set key and restart"
-      puts
-    end
-    
     while @running
-      print "> "
+      # H1: Visibility - show conversation count if active
+      turns = OpenRouterChat.conversation_length
+      prompt = turns > 0 ? "[#{turns}] > " : "> "
+      print prompt
+      
       input = gets
       break unless input
       
       input = input.strip.force_encoding("UTF-8")
       next if input.empty?
       
-      # /command → run command
-      # anything else → chat with LLM
+      # H3: User control - Ctrl+C handled, /clear to reset
+      # H7: Flexibility - / prefix for commands, plain text for chat
       if input.start_with?("/")
         parts = input[1..].split(/\s+/)
         command = parts[0].downcase
@@ -1598,22 +1602,36 @@ class CLI
         if @commands.key?(command)
           @commands[command].call(*args)
         else
-          puts "unknown: /#{command} (try /help)"
+          # H6: Recognition - suggest similar commands
+          similar = @commands.keys.select { |c| c.start_with?(command[0]) }
+          if similar.any?
+            puts "unknown: /#{command}. did you mean: #{similar.map { |c| "/#{c}" }.join(', ')}?"
+          else
+            puts "unknown: /#{command} (/help for list)"
+          end
         end
       else
-        # Chat mode - send to LLM
         chat_with_llm(input)
       end
     end
+  rescue Interrupt
+    # H3: User control - clean exit on Ctrl+C
+    puts "\n[interrupted]"
   end
   
   def chat_with_llm(message)
     unless OpenRouterChat.available?
-      puts "error: OPENROUTER_API_KEY not set"
+      # H9: Clear error with recovery path
+      puts "chat unavailable: set OPENROUTER_API_KEY and restart"
       return
     end
     
+    # H1: Visibility - show thinking indicator
+    print "..."
+    $stdout.flush
+    
     result = OpenRouterChat.chat(message)
+    print "\r   \r" # Clear thinking indicator
     
     if result.success?
       response = result.value
@@ -1625,7 +1643,10 @@ class CLI
         puts response
       end
     else
+      # H9: Specific error with context
       puts "error: #{result.error}"
+      puts "hint: check API key or try again"
+    end
     end
     
     puts
