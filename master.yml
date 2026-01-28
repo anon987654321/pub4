@@ -1,5 +1,5 @@
-version: "1.4.1"
-name: convergence
+version: "1.5.0"
+name: master.yml
 golden: "preserve_improve_never_break"
 
 # SIX UNIVERSAL LAWS (hierarchical priority for violations)
@@ -686,3 +686,89 @@ usability:
       - "/help shows task-oriented list"
       - "examples in registry rules"
       - "ready. type to chat, /help for commands"
+
+# STYLE GUIDE (CLI output and UX patterns)
+# Research: GitHub Copilot CLI, Claude Code, Aider, OpenCode
+style:
+  voice:
+    tone: "concise, direct, LA vernacular vibes"
+    writing: "Strunk & White - omit needless words"
+    casing: "Proper case for user-facing strings"
+    commit_messages: "Proper case, imperative mood"
+  
+  prompt:
+    default: "❯"  # starship-style
+    with_context: "[n] ❯"  # show turn count
+    colors:
+      success: green
+      error: red
+      warning: yellow
+      dim: gray
+  
+  ansi:
+    module: "C"
+    methods:
+      g: "green (success, ready)"
+      r: "red (error, failure)"
+      y: "yellow (warning, pending)"
+      d: "dim/gray (metadata, hints)"
+      b: "bold (emphasis)"
+  
+  output:
+    banner: "single line, no ASCII art"
+    errors: "Error: message + Hint: recovery"
+    status: "● ready / ○ pending / ✗ failed"
+    commands: "→ command (before execution)"
+    diffs: "+n -n (after file changes)"
+  
+  patterns:
+    chat_first: "plain text → LLM, /prefix → commands"
+    auto_execute: "```shell``` blocks run automatically"
+    feedback_loop: "output fed back to LLM"
+    git_auto_commit: "commit after successful edits"
+
+# VOICE MODULE (TTS/STT)
+voice:
+  tts:
+    engine: piper
+    model: "en_US-lessac-low"  # lofi grainy
+    effects: "highpass=f=200,lowpass=f=5000"
+    fallback: espeak
+  
+  stt:
+    engine: whisper
+    model: "base.en"
+    recorder: sox/rec
+    duration: 5
+    silence_detection: true
+  
+  commands:
+    toggle: "/voice"
+    listen: "/listen [seconds]"
+  
+  availability:
+    openbsd: "unavailable (no ports)"
+    linux: "piper + whisper + sox"
+    cygwin: "piper + whisper + sox"
+
+# INSPIRATION (CLI tools studied)
+inspiration:
+  github_copilot_cli:
+    learned: "ghcs/ghce aliases, shell history, execute confirmation"
+    url: "github.com/github/gh-copilot"
+  
+  claude_code:
+    learned: "/commands, /bug feedback, minimal banner, gif demo"
+    url: "github.com/anthropics/claude-code"
+  
+  aider:
+    learned: "git auto-commits, repo map, colored diffs, context prompt"
+    url: "github.com/paul-gauthier/aider"
+  
+  opencode:
+    learned: "Tab switch agents (build/plan), @agent mentions, TUI panels"
+    url: "github.com/sst/opencode"
+  
+  starship:
+    learned: "❯ prompt, minimal, context-aware segments"
+    url: "starship.rs"

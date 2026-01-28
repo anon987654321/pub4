@@ -6,9 +6,9 @@
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
-# CONVERGENCE v1.4.1
-# Constitutional AI governance framework
-# with workflow enhancements for LLM memory and systematic convergence
+# MASTER.YML v1.5.0
+# Code governance agent with chat-first UX
+# Inspired by: Claude Code, Aider, OpenCode
 
 require "yaml"
 require "json"
@@ -17,6 +17,15 @@ require "optparse"
 require "digest"
 require "net/http"
 require "uri"
+
+# ANSI colors (no gem dependency)
+module C
+  def self.g(s) "\e[32m#{s}\e[0m" end  # green
+  def self.r(s) "\e[31m#{s}\e[0m" end  # red
+  def self.y(s) "\e[33m#{s}\e[0m" end  # yellow
+  def self.d(s) "\e[90m#{s}\e[0m" end  # dim
+  def self.b(s) "\e[1m#{s}\e[0m" end   # bold
+end
 
 # Graceful AST/RuboCop dependency handling
 begin
@@ -1660,34 +1669,33 @@ class CLI
 
   def ensure_api_key
     if OpenRouterChat.available?
-      puts "Sonnet 4.5 ready"
-      puts "Type to chat, /help for commands"
+      puts C.g("● Sonnet 4.5 ready")
+      puts C.d("Type to chat, /help for commands")
     else
-      puts "No API key detected"
-      print "Paste OPENROUTER_API_KEY (or Enter to skip): "
+      puts C.y("○ No API key")
+      print "Paste OPENROUTER_API_KEY (Enter to skip): "
       key = gets&.strip
       
       if key && !key.empty?
         ENV["OPENROUTER_API_KEY"] = key
-        OpenRouterChat.init(@config)  # Re-init with new key
+        OpenRouterChat.init(@config)
         
         if OpenRouterChat.available?
-          puts "Key accepted, Sonnet 4.5 ready"
+          puts C.g("● Key accepted")
           
-          # Offer to save to zshrc
           print "Save to ~/.zshrc? [y/N]: "
           save = gets&.strip&.downcase
           if save == "y"
             File.open(File.expand_path("~/.zshrc"), "a") do |f|
               f.puts "\nexport OPENROUTER_API_KEY=\"#{key}\""
             end
-            puts "Saved to ~/.zshrc"
+            puts C.d("Saved")
           end
         else
-          puts "Key set, but check failed"
+          puts C.y("Key set, check failed")
         end
       else
-        puts "Running in offline mode (commands only)"
+        puts C.d("Offline mode")
       end
     end
     puts
@@ -1717,9 +1725,8 @@ class CLI
 
   def repl
     while @running
-      # H1: Visibility - show conversation count if active
       turns = OpenRouterChat.conversation_length
-      prompt = turns > 0 ? "[#{turns}] > " : "> "
+      prompt = turns > 0 ? C.d("[#{turns}] ") + "❯ " : "❯ "
       print prompt
       
       input = gets
