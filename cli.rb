@@ -1483,20 +1483,9 @@ class CLI
 
   def run
     parse_options
+    display_banner
+    ensure_api_key
     
-    # H8: Aesthetic minimalist design - compact single-line banner
-    model_name = OpenRouterChat.available? ? "sonnet" : "offline"
-    puts "convergence #{@config['version']} [#{model_name}]"
-    
-    # H1: Visibility of system status - show ready state
-    if OpenRouterChat.available?
-      puts "ready. type to chat, /help for commands"
-    else
-      puts "note: set OPENROUTER_API_KEY for chat"
-      puts "commands only. /help for list"
-    end
-    puts
-
     # Check for --veto-only flag
     if @veto_only
       results = @scanner.scan_recursive
@@ -1557,6 +1546,50 @@ class CLI
       opts.on("--veto-only", "Check veto violations only (exit 0/1)") { @veto_only = true }
       opts.on("-h", "--help", "Show help") { puts opts; exit }
     end.parse!
+  end
+
+  def display_banner
+    # OpenBSD-inspired minimal banner
+    puts "┌─────────────────────────────────────┐"
+    puts "│  convergence #{@config['version'].ljust(24)}│"
+    puts "│  code governance • chat-first cli   │"
+    puts "└─────────────────────────────────────┘"
+    puts
+  end
+
+  def ensure_api_key
+    if OpenRouterChat.available?
+      puts "• sonnet 4.5 ready"
+      puts "• type to chat, /help for commands"
+    else
+      puts "• no API key detected"
+      print "• paste OPENROUTER_API_KEY (or Enter to skip): "
+      key = gets&.strip
+      
+      if key && !key.empty?
+        ENV["OPENROUTER_API_KEY"] = key
+        OpenRouterChat.init(@config)  # Re-init with new key
+        
+        if OpenRouterChat.available?
+          puts "• key accepted, sonnet 4.5 ready"
+          
+          # Offer to save to profile
+          print "• save to ~/.profile? [y/N]: "
+          save = gets&.strip&.downcase
+          if save == "y"
+            File.open(File.expand_path("~/.profile"), "a") do |f|
+              f.puts "\nexport OPENROUTER_API_KEY=\"#{key}\""
+            end
+            puts "• saved to ~/.profile"
+          end
+        else
+          puts "• key set, but check failed"
+        end
+      else
+        puts "• running in offline mode (commands only)"
+      end
+    end
+    puts
   end
 
   def build_commands
