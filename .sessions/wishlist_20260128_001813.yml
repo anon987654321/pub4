@@ -1,8 +1,0 @@
----
-wishlist_codification:
-  generated_at: '20260128_001813'
-  items:
-  - id: 1
-    description: Feature A\n- Feature B\n- Feature C
-    status: pending
-    priority: normal
