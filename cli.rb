@@ -1647,9 +1647,6 @@ class CLI
       puts "error: #{result.error}"
       puts "hint: check API key or try again"
     end
-    end
-    
-    puts
   end
   
   def handle_tool_response(response)
