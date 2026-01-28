@@ -18,13 +18,15 @@ require "digest"
 require "net/http"
 require "uri"
 
-# ANSI colors (no gem dependency)
+# ANSI colors (disabled if terminal doesn't support)
 module C
-  def self.g(s) "\e[32m#{s}\e[0m" end  # green
-  def self.r(s) "\e[31m#{s}\e[0m" end  # red
-  def self.y(s) "\e[33m#{s}\e[0m" end  # yellow
-  def self.d(s) "\e[90m#{s}\e[0m" end  # dim
-  def self.b(s) "\e[1m#{s}\e[0m" end   # bold
+  ENABLED = $stdout.tty? && ENV['TERM'] && ENV['TERM'] != 'dumb'
+  
+  def self.g(s) ENABLED ? "\e[32m#{s}\e[0m" : s end
+  def self.r(s) ENABLED ? "\e[31m#{s}\e[0m" : s end
+  def self.y(s) ENABLED ? "\e[33m#{s}\e[0m" : s end
+  def self.d(s) ENABLED ? "\e[90m#{s}\e[0m" : s end
+  def self.b(s) ENABLED ? "\e[1m#{s}\e[0m" : s end
 end
 
 # Graceful AST/RuboCop dependency handling
@@ -1049,10 +1051,17 @@ module OpenRouterChat
         You are Master.yml, a code governance agent on OpenBSD.
         
         RULES:
-        - ONE shell command per response, wrapped in ```shell```
+        - ONE shell command per response, wrapped in ```zsh```
+        - Use ONLY zsh builtins and parameter expansion (no sed/awk/grep)
+        - File edits: use print/echo with >> or zsh read/print
         - NO citations, NO web references, NO explanations
-        - Execute first, explain only if asked
         - Be terse: max 2 sentences outside code blocks
+        
+        ZSH PATTERNS:
+        - grep replacement: ${(M)lines:#*pattern*}
+        - sed replacement: ${var//old/new}
+        - head/tail: ${arr[1,10]} or ${arr[-5,-1]}
+        - unique: ${(u)arr}
         
         Core laws: #{laws}
       PROMPT
