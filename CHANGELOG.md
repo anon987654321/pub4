@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [17.0.0] - 2026-01-27
+## [17.1.0] - 2026-01-27
 
 ### Changed
 - Renamed from "Convergence" to "Master" throughout codebase
@@ -52,5 +52,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security features with OpenBSD support
 - Multi-level access control (sandbox, user, admin)
 
-[17.0.0]: https://github.com/anon987654321/pub4/compare/v16.0.0...v17.0.0
+[17.1.0]: https://github.com/anon987654321/pub4/compare/v16.0.0...v17.1.0
 [16.0.0]: https://github.com/anon987654321/pub4/releases/tag/v16.0.0

@@ -154,16 +154,6 @@ meta:
     rationale: llms_parse_better_humans_read_easier
     contribution: modify_via_pull_request_only
 
-constants:
-  max_function_length: 20
-  max_class_length: 300
-  max_cyclomatic_complexity: 10
-  max_parameter_count: 3
-  max_nesting_depth: 3
-  max_comment_ratio: 0.10
-  min_test_coverage: 0.80
-  min_new_code_coverage: 1.00
-
 expanded_output_examples:
   boot_sequence:
     example: |
@@ -741,7 +731,7 @@ governance:
     algorithm: |
       score = 0.0
       defects.each do |defect|
-        weight = SEVERITY_WEIGHTS[defect.severity]
+        weight = defect_catalog.scoring.weights[defect.severity]
         score += weight * defect.count
       end
       score
