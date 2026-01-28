@@ -18,7 +18,83 @@ require "digest"
 require "net/http"
 require "uri"
 
-# Optional: Ferrum for web browsing (gem install ferrum)
+# Auto-install missing dependencies
+module DependencyManager
+  GEMS = {
+    "ferrum" => { pkg: "chromium", desc: "web browsing" },
+    "async" => { desc: "async I/O" },
+    "falcon" => { desc: "fast web server" }
+  }
+  
+  PACKAGES = {
+    "chromium" => "chromium",
+    "piper" => "piper",      # TTS
+    "whisper" => "whisper",  # STT
+    "sox" => "sox"           # Audio recording
+  }
+  
+  class << self
+    def openbsd?
+      RUBY_PLATFORM.include?("openbsd") || File.exist?("/bsd")
+    end
+    
+    def install_gem(name)
+      puts "Installing gem: #{name}..."
+      system("gem install #{name} --no-document") || 
+        system("gem install --user-install #{name} --no-document")
+    end
+    
+    def install_package(name)
+      return false unless openbsd?
+      pkg = PACKAGES[name] || name
+      puts "Installing package: #{pkg}..."
+      # Try doas first, fall back to pkg_add if already root
+      system("doas pkg_add -I #{pkg} 2>/dev/null") ||
+        system("pkg_add -I #{pkg} 2>/dev/null")
+    end
+    
+    def ensure_gem(name)
+      require name
+      true
+    rescue LoadError
+      if install_gem(name)
+        begin
+          require name
+          true
+        rescue LoadError
+          false
+        end
+      else
+        false
+      end
+    end
+    
+    def ensure_package(name)
+      return true if system("which #{name} > /dev/null 2>&1")
+      install_package(name)
+    end
+    
+    def setup_all
+      # Install core gems that are missing
+      GEMS.each do |gem, info|
+        begin
+          require gem
+        rescue LoadError
+          if $stdout.tty?
+            puts "Optional: #{gem} (#{info[:desc]}) not found"
+            install_gem(gem)
+            install_package(info[:pkg]) if info[:pkg] && openbsd?
+          end
+        end
+      end
+    end
+  end
+end
+
+# Run dependency check on load
+DependencyManager.setup_all if $stdout.tty? && ENV["SKIP_DEPS"] != "1"
+
+# Optional: Ferrum for web browsing
 FERRUM_AVAILABLE = begin
   require "ferrum"
   true
@@ -26,7 +102,7 @@ rescue LoadError
   false
 end
 
-# Optional: Falcon for async web server (gem install falcon)
+# Optional: Falcon for async web server
 FALCON_AVAILABLE = begin
   require "async"
   require "async/http/server"
@@ -2074,6 +2150,7 @@ export OPENROUTER_API_KEY="#{key}""
       "add" => method(:cmd_add),
       "undo" => method(:cmd_undo),
       "cost" => method(:cmd_cost),
+      "deps" => method(:cmd_deps),
       "install-hook" => method(:cmd_install_hook),
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
@@ -2444,6 +2521,7 @@ iteration #{iter}/#{max_iter}"
         /restore [file]  Restore session
         /undo            Revert last file change
         /cost            Show token/cost usage
+        /deps [install]  Show/install dependencies
         /reload          Reload master.yml
         /voice           Toggle voice on/off
         /listen          Voice input mode
@@ -2527,6 +2605,46 @@ iteration #{iter}/#{max_iter}"
     puts "Tokens: #{OpenRouterChat.total_tokens}"
     puts "Cost: $#{'%.4f' % OpenRouterChat.total_cost}"
     puts "Last: $#{'%.6f' % OpenRouterChat.last_cost}"
+  end
+  
+  def cmd_deps(*args)
+    puts C.b("Dependency Status:")
+    puts ""
+    
+    # Gems
+    puts "Gems:"
+    DependencyManager::GEMS.each do |gem, info|
+      available = begin
+        require gem
+        C.g("ok")
+      rescue LoadError
+        C.r("missing")
+      end
+      puts "  #{gem}: #{available} (#{info[:desc]})"
+    end
+    
+    puts ""
+    puts "Packages:"
+    DependencyManager::PACKAGES.each do |name, pkg|
+      available = system("which #{name} > /dev/null 2>&1") ? C.g("ok") : C.r("missing")
+      puts "  #{name}: #{available}"
+    end
+    
+    puts ""
+    puts "Modules:"
+    puts "  Ferrum: #{FERRUM_AVAILABLE ? C.g('ok') : C.r('no')}"
+    puts "  Falcon: #{FALCON_AVAILABLE ? C.g('ok') : C.r('no')}"
+    puts "  Voice: #{Voice.status}"
+    puts "  Web: #{Web.status}"
+    
+    if args.include?("install")
+      puts ""
+      puts C.b("Installing missing dependencies...")
+      DependencyManager.setup_all
+    else
+      puts ""
+      puts C.d("Run /deps install to install missing")
+    end
   end
   
   def cmd_voice(*args)
