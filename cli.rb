@@ -1087,6 +1087,106 @@ module OpenRouterChat
   end
 end
 
+# Voice - TTS and STT for voice interaction
+module Voice
+  PIPER_MODEL = "en_US-lessac-low"  # Lofi grainy voice
+  WHISPER_MODEL = "base.en"
+  
+  class << self
+    def init(config)
+      @config = config
+      @enabled = false
+      @tts_available = system("which piper > /dev/null 2>&1")
+      @stt_available = system("which whisper > /dev/null 2>&1") || 
+                       system("which whisper-cpp > /dev/null 2>&1")
+      @sox_available = system("which sox > /dev/null 2>&1") ||
+                       system("which rec > /dev/null 2>&1")
+    end
+    
+    def available?
+      @tts_available || @stt_available
+    end
+    
+    def tts_available?
+      @tts_available
+    end
+    
+    def stt_available?
+      @stt_available && @sox_available
+    end
+    
+    def enabled?
+      @enabled
+    end
+    
+    def toggle
+      @enabled = !@enabled
+      @enabled
+    end
+    
+    def enable
+      @enabled = true
+    end
+    
+    def disable
+      @enabled = false
+    end
+    
+    # Text-to-speech via Piper
+    def speak(text)
+      return unless @enabled && @tts_available
+      return if text.nil? || text.strip.empty?
+      
+      # Clean text for speech
+      clean = text.gsub(/```.*?```/m, "code block omitted")
+                  .gsub(/\[.*?\]\(.*?\)/, "")  # Remove markdown links
+                  .gsub(/[#*_`]/, "")           # Remove markdown formatting
+                  .strip
+      
+      return if clean.empty?
+      
+      # Stream through Piper with lofi effects
+      Thread.new do
+        IO.popen([
+          "sh", "-c",
+          "echo #{clean.shellescape} | piper --model #{PIPER_MODEL} --output_raw 2>/dev/null | " \
+          "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af 'highpass=f=200,lowpass=f=5000' -f wav - 2>/dev/null | " \
+          "play -q - 2>/dev/null || aplay -q - 2>/dev/null"
+        ]) { |p| p.read }
+      end
+    end
+    
+    # Speech-to-text via Whisper
+    def listen(duration: 5)
+      return nil unless @enabled && stt_available?
+      
+      # Record audio with sox/rec
+      tmpfile = "/tmp/voice_input_#{$$}.wav"
+      
+      puts "[listening #{duration}s...]"
+      system("rec -q #{tmpfile} rate 16k silence 1 0.1 1% 1 2.0 3% trim 0 #{duration} 2>/dev/null")
+      
+      return nil unless File.exist?(tmpfile) && File.size(tmpfile) > 1000
+      
+      # Transcribe with Whisper
+      result = `whisper #{tmpfile} --model #{WHISPER_MODEL} --output_format txt 2>/dev/null`.strip
+      result = `whisper-cpp -m #{WHISPER_MODEL} -f #{tmpfile} 2>/dev/null`.strip if result.empty?
+      
+      File.delete(tmpfile) if File.exist?(tmpfile)
+      
+      result.empty? ? nil : result
+    end
+    
+    def status
+      parts = []
+      parts << "tts:#{@tts_available ? 'ok' : 'no'}"
+      parts << "stt:#{stt_available? ? 'ok' : 'no'}"
+      parts << (@enabled ? "on" : "off")
+      parts.join(" ")
+    end
+  end
+end
+
 # Violation - Represents a single violation
 class Violation
   attr_reader :file, :line, :rule, :law, :severity, :details, :message
@@ -1531,6 +1631,7 @@ class CLI
     Dashboard.init(@config)
     InlineSuggestions.init(@config)
     OpenRouterChat.init(@config)
+    Voice.init(@config)
     
     # Ensure directories exist
     StateManager.pre_work_snapshot if @config.dig("integration", "pre_work_snapshot")
@@ -1602,6 +1703,8 @@ class CLI
       "status" => method(:cmd_status),
       "chat" => method(:cmd_chat),
       "clear" => method(:cmd_clear_chat),
+      "voice" => method(:cmd_voice),
+      "listen" => method(:cmd_listen),
       "install-hook" => method(:cmd_install_hook),
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
@@ -1654,20 +1757,21 @@ class CLI
   
   def chat_with_llm(message)
     unless OpenRouterChat.available?
-      # H9: Clear error with recovery path
-      puts "chat unavailable: set OPENROUTER_API_KEY and restart"
+      puts "Chat unavailable: set OPENROUTER_API_KEY and restart"
       return
     end
     
-    # H1: Visibility - show thinking indicator
     print "..."
     $stdout.flush
     
     result = OpenRouterChat.chat(message)
-    print "\r   \r" # Clear thinking indicator
+    print "\r   \r"
     
     if result.success?
       response = result.value
+      
+      # Speak response if voice enabled
+      Voice.speak(response)
       
       # Check for tool calls in response
       if response.include?("```shell") || response.include?("```zsh") || response.include?("```ruby")
@@ -1676,9 +1780,8 @@ class CLI
         puts response
       end
     else
-      # H9: Specific error with context
-      puts "error: #{result.error}"
-      puts "hint: check API key or try again"
+      puts "Error: #{result.error}"
+      puts "Hint: check API key or try again"
     end
   end
   
@@ -1911,15 +2014,17 @@ class CLI
       Just type to chat with the AI.
       
       Commands (prefix with /):
-        /scan <file>     scan single file
-        /recursive       scan all files
-        /fix <file>      auto-fix with RuboCop
-        /converge <file> iterative fix loop
-        /dogfood         scan master.yml and cli.rb
-        /status          show dashboard
-        /clear           clear chat history
-        /help            show this
-        /quit            exit
+        /scan <file>     Scan single file
+        /recursive       Scan all files
+        /fix <file>      Auto-fix with RuboCop
+        /converge <file> Iterative fix loop
+        /dogfood         Scan master.yml and cli.rb
+        /status          Show dashboard
+        /voice           Toggle voice on/off
+        /listen          Voice input mode
+        /clear           Clear chat history
+        /help            Show this
+        /quit            Exit
     HELP
   end
   
@@ -1930,7 +2035,33 @@ class CLI
   
   def cmd_clear_chat(*args)
     OpenRouterChat.clear_conversation
-    puts "chat history cleared"
+    puts "Chat history cleared"
+  end
+  
+  def cmd_voice(*args)
+    if Voice.available?
+      enabled = Voice.toggle
+      puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.status})"
+    else
+      puts "Voice unavailable: install piper, whisper, sox"
+    end
+  end
+  
+  def cmd_listen(*args)
+    unless Voice.stt_available?
+      puts "Listen unavailable: install whisper and sox"
+      return
+    end
+    
+    Voice.enable unless Voice.enabled?
+    
+    text = Voice.listen(duration: args[0]&.to_i || 5)
+    if text && !text.empty?
+      puts "You said: #{text}"
+      chat_with_llm(text)
+    else
+      puts "No speech detected"
+    end
   end
 
   def cmd_exit(*args)
