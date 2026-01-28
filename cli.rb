@@ -263,12 +263,13 @@ class CLI
     items = extract_wishlist_items(text)
     return log "No wishlist items found" if items.empty?
     
-    yaml_output = codify_to_yaml(items)
+    timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+    yaml_output = codify_to_yaml(items, timestamp)
     log "\n--- Generated YAML ---"
     log yaml_output
     log "--- End YAML ---\n"
     
-    save_codification(yaml_output)
+    save_codification(yaml_output, timestamp)
   end
   
   def extract_wishlist_items(text)
@@ -284,8 +285,7 @@ class CLI
     items
   end
   
-  def codify_to_yaml(items)
-    timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+  def codify_to_yaml(items, timestamp = Time.now.strftime("%Y%m%d_%H%M%S"))
     output = {
       "wishlist_codification" => {
         "generated_at" => timestamp,
@@ -302,12 +302,12 @@ class CLI
     YAML.dump(output)
   end
   
-  def save_codification(yaml_content)
+  def save_codification(yaml_content, timestamp = Time.now.strftime("%Y%m%d_%H%M%S"))
     dir = ".sessions"
     
     begin
       FileUtils.mkdir_p(dir)
-      filename = "#{dir}/wishlist_#{Time.now.strftime('%Y%m%d_%H%M%S')}.yml"
+      filename = "#{dir}/wishlist_#{timestamp}.yml"
       File.write(filename, yaml_content)
       log "Saved to: #{filename}"
     rescue => e

@@ -397,12 +397,12 @@ RSpec.describe "Convergence CLI" do
 
     describe "command handling" do
       before do
-        allow(cli).to receive(:puts)
+        allow(cli).to receive(:log)
       end
 
       describe "help command" do
         it "displays help text" do
-          expect(cli).to receive(:puts).with(anything).at_least(:once)
+          expect(cli).to receive(:log).with(anything).at_least(:once)
           cli.send(:handle_cmd, "help")
         end
       end
@@ -427,12 +427,12 @@ RSpec.describe "Convergence CLI" do
         end
 
         it "rejects invalid levels" do
-          expect(cli).to receive(:puts).with("Invalid level")
+          expect(cli).to receive(:log).with("Invalid level")
           cli.send(:handle_cmd, "level invalid")
         end
 
         it "shows usage without argument" do
-          expect(cli).to receive(:puts).with(/Usage/)
+          expect(cli).to receive(:log).with(/Usage/)
           cli.send(:handle_cmd, "level")
         end
       end
@@ -445,7 +445,7 @@ RSpec.describe "Convergence CLI" do
 
       describe "unknown command" do
         it "reports unknown command" do
-          expect(cli).to receive(:puts).with(/Unknown/)
+          expect(cli).to receive(:log).with(/Unknown/)
           cli.send(:handle_cmd, "unknown")
         end
       end

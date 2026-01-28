@@ -100,7 +100,10 @@ Level → sandbox
 > /quiet
 Quiet mode: on
 
-> /codify "- Add feature X\n- Fix bug Y\n- Update docs"
+> /codify - Add feature X
+- Fix bug Y
+- Update docs
+
 --- Generated YAML ---
 (YAML output with structured wishlist items)
 --- End YAML ---
@@ -114,9 +117,17 @@ Saved to: .sessions/wishlist_20260128_001234.yml
 Automatically convert wishlist items into structured YAML format:
 
 ```bash
-> /codify "1. Add authentication\n2. Implement caching\n3. Add logging"
+# Multi-line input in interactive mode
+> /codify - Add authentication
+- Implement caching
+- Add logging
 
-# Or use natural language
+# Or numbered lists
+> /codify 1. Feature A
+2. Feature B
+3. Feature C
+
+# Auto-detection of wishlist patterns
 > implement these features: add tests, improve docs, fix bugs
 [Auto-detected wishlist - use /codify to process]
 ```
