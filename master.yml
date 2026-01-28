@@ -78,6 +78,19 @@ meta:
       add_factors: "Include project-specific concerns"
       change_scale: "Use different scoring ranges if needed"
   
+  audit_log:
+    enabled: true
+    storage: .sessions
+    format: yaml
+    fields:
+      - timestamp
+      - session_id
+      - file_count
+      - coupling_score
+      - violation_count
+      - improvement_delta
+    frequency: per_session
+  
   authorities:
     primary: this_file
     supplementary:
