@@ -6,7 +6,7 @@
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
-# CONVERGENCE v1.4.0
+# CONVERGENCE v1.4.1
 # Constitutional AI governance framework
 # with workflow enhancements for LLM memory and systematic convergence
 
@@ -15,6 +15,8 @@ require "json"
 require "fileutils"
 require "optparse"
 require "digest"
+require "net/http"
+require "uri"
 
 # Graceful AST/RuboCop dependency handling
 begin
@@ -985,6 +987,103 @@ module InlineSuggestions
   end
 end
 
+# OpenRouterChat - Chat with LLMs via OpenRouter API
+module OpenRouterChat
+  ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+  DEFAULT_MODEL = "anthropic/claude-sonnet-4"
+  
+  class << self
+    def init(config)
+      @config = config
+      @api_key = ENV["OPENROUTER_API_KEY"]
+      @model = config.dig("chat", "model") || DEFAULT_MODEL
+      @conversation = []
+      @system_prompt = build_system_prompt(config)
+    end
+    
+    def available?
+      !@api_key.nil? && !@api_key.empty?
+    end
+    
+    def chat(message)
+      return Result.failure("OPENROUTER_API_KEY not set") unless available?
+      
+      @conversation << { role: "user", content: message }
+      
+      response = send_request
+      
+      if response[:error]
+        Result.failure(response[:error])
+      else
+        assistant_message = response[:content]
+        @conversation << { role: "assistant", content: assistant_message }
+        Result.success(assistant_message)
+      end
+    end
+    
+    def clear_conversation
+      @conversation = []
+      Logger.info("conversation cleared")
+    end
+    
+    def conversation_length
+      @conversation.size
+    end
+    
+    private
+    
+    def build_system_prompt(config)
+      laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
+      
+      <<~PROMPT
+        You are Convergence, a code review assistant following these laws (in priority order):
+        #{laws}
+        
+        You help improve code quality through pattern detection and systematic fixes.
+        Be concise. Use past tense for completed actions. Provide evidence for claims.
+        When suggesting fixes, show before/after code.
+      PROMPT
+    end
+    
+    def send_request
+      uri = URI.parse(ENDPOINT)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.read_timeout = 60
+      
+      request = Net::HTTP::Post.new(uri.path)
+      request["Authorization"] = "Bearer #{@api_key}"
+      request["Content-Type"] = "application/json"
+      request["HTTP-Referer"] = "https://github.com/anon987654321/pub4"
+      request["X-Title"] = "Convergence CLI"
+      
+      messages = [{ role: "system", content: @system_prompt }] + @conversation
+      
+      request.body = JSON.generate({
+        model: @model,
+        messages: messages,
+        max_tokens: 4096,
+        temperature: 0.7
+      })
+      
+      response = http.request(request)
+      body = JSON.parse(response.body)
+      
+      if response.code.to_i == 200
+        content = body.dig("choices", 0, "message", "content")
+        usage = body["usage"] || {}
+        Logger.debug("tokens: #{usage['total_tokens']}")
+        { content: content }
+      else
+        error = body.dig("error", "message") || "HTTP #{response.code}"
+        { error: error }
+      end
+    rescue => e
+      { error: e.message }
+    end
+  end
+end
+
 # Violation - Represents a single violation
 class Violation
   attr_reader :file, :line, :rule, :law, :severity, :details, :message
@@ -1432,6 +1531,7 @@ class CLI
     CleanIntegration.init(@config)
     Dashboard.init(@config)
     InlineSuggestions.init(@config)
+    OpenRouterChat.init(@config)
     
     # Ensure directories exist
     StateManager.pre_work_snapshot if @config.dig("integration", "pre_work_snapshot")
@@ -1460,6 +1560,8 @@ class CLI
       "converge" => method(:cmd_converge),
       "dogfood" => method(:cmd_dogfood),
       "status" => method(:cmd_status),
+      "chat" => method(:cmd_chat),
+      "clear" => method(:cmd_clear_chat),
       "install-hook" => method(:cmd_install_hook),
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
@@ -1471,23 +1573,83 @@ class CLI
   end
 
   def repl
+    # Check OpenRouter availability
+    unless OpenRouterChat.available?
+      puts "note: OPENROUTER_API_KEY not set, chat disabled"
+      puts "      use /commands only, or set key and restart"
+      puts
+    end
+    
     while @running
       print "> "
       input = gets
       break unless input
       
-      input = input.strip
+      input = input.strip.force_encoding("UTF-8")
       next if input.empty?
       
-      parts = input.split(/\s+/)
-      command = parts[0].sub(/^\//, '').downcase
-      args = parts[1..]
-      
-      if @commands.key?(command)
-        @commands[command].call(*args)
+      # /command → run command
+      # anything else → chat with LLM
+      if input.start_with?("/")
+        parts = input[1..].split(/\s+/)
+        command = parts[0].downcase
+        args = parts[1..]
+        
+        if @commands.key?(command)
+          @commands[command].call(*args)
+        else
+          puts "unknown: /#{command} (try /help)"
+        end
       else
-        puts "Unknown command: #{command}"
-        puts "Type 'help' for available commands"
+        # Chat mode - send to LLM
+        chat_with_llm(input)
+      end
+    end
+  end
+  
+  def chat_with_llm(message)
+    unless OpenRouterChat.available?
+      puts "error: OPENROUTER_API_KEY not set"
+      return
+    end
+    
+    result = OpenRouterChat.chat(message)
+    
+    if result.success?
+      response = result.value
+      
+      # Check for tool calls in response
+      if response.include?("```shell") || response.include?("```zsh")
+        handle_tool_response(response)
+      else
+        puts response
+      end
+    else
+      puts "error: #{result.error}"
+    end
+    
+    puts
+  end
+  
+  def handle_tool_response(response)
+    # Extract and optionally execute shell commands
+    puts response
+    
+    # Find shell blocks
+    response.scan(/```(?:shell|zsh|bash)\n(.*?)```/m) do |match|
+      command = match[0].strip
+      next if command.empty?
+      
+      print "\nexecute? [y/N] "
+      answer = gets&.strip&.downcase
+      
+      if answer == "y"
+        puts "→ #{command}"
+        output = `#{command} 2>&1`
+        puts output
+        
+        # Feed result back to LLM
+        OpenRouterChat.chat("Command output:\n```\n#{output}\n```")
       end
     end
   end
@@ -1686,21 +1848,29 @@ class CLI
 
   def cmd_help(*args)
     puts <<~HELP
-      Available commands:
+      Just type to chat with the AI.
       
-      /scan <file>           - Scan single file
-      /recursive             - Scan all files from cwd
-      /fix <file>            - Auto-fix with RuboCop (safe)
-      /converge <file>       - Iterative fix loop
-      /dogfood               - Scan master.yml and cli.rb
-      /status                - Show convergence dashboard
-      /install-hook          - Install git pre-commit hook
-      /uninstall-hook        - Remove git pre-commit hook
-      /journal [count]       - Show recent refactorings
-      /patterns              - Show learned patterns
-      /help                  - Show this help
-      /exit or /quit         - Exit
+      Commands (prefix with /):
+        /scan <file>     scan single file
+        /recursive       scan all files
+        /fix <file>      auto-fix with RuboCop
+        /converge <file> iterative fix loop
+        /dogfood         scan master.yml and cli.rb
+        /status          show dashboard
+        /clear           clear chat history
+        /help            show this
+        /quit            exit
     HELP
+  end
+  
+  def cmd_chat(*args)
+    message = args.join(" ")
+    chat_with_llm(message) unless message.empty?
+  end
+  
+  def cmd_clear_chat(*args)
+    OpenRouterChat.clear_conversation
+    puts "chat history cleared"
   end
 
   def cmd_exit(*args)
