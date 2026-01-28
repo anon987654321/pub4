@@ -1047,8 +1047,18 @@ module OpenRouterChat
     def build_system_prompt(config)
       laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
       
+      # Get tree context if available
+      tree = ""
+      if File.exist?(".convergence_tree.txt")
+        tree = File.read(".convergence_tree.txt", encoding: "UTF-8").lines.first(50).join
+      end
+      
       <<~PROMPT
         You are Master.yml, a code governance agent on OpenBSD.
+        Current directory: #{Dir.pwd}
+        
+        FILES:
+        #{tree}
         
         RULES:
         - ONE shell command per response, wrapped in ```zsh```
