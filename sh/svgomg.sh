@@ -38,4 +38,3 @@ for svg in "$dir"/**/*.svg(.N); do
   fi
 
 done
-

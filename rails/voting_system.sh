@@ -741,4 +741,3 @@ export -f create_voting_helpers add_voting_routes create_voting_stimulus
 export -f write_vote_buttons_partial write_review_form_partial write_voting_css
 
 export -f setup_votable_concern update_models_with_voting
-

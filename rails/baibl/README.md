@@ -34,4 +34,3 @@ cd /home/dev/rails
 
 ---
 **Deepen Your Faith**
-

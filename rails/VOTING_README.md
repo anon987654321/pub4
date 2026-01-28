@@ -88,4 +88,3 @@ it "can be voted on" do
 end
 
 ```
-

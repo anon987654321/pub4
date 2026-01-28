@@ -130,4 +130,3 @@ v13.0.0 - Consolidated single-file architecture with:
 - Local model indexing and search
 
 - SQLite database for model discovery
-

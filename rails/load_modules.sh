@@ -10,4 +10,3 @@ SCRIPT_DIR="${0:a:h}"
 # Load the consolidated shared functions
 
 source "${SCRIPT_DIR}/@shared_functions.sh"
-

@@ -440,7 +440,9 @@ class SOSDilla
 
         puts "❌ FFmpeg command failed: #{cmd}"
 
-        puts "   Output: #{output.split("\n").first(3).join("\n   ")}" if output && !output.empty?
+        puts "   Output: #{output.split("
+").first(3).join("
+   ")}" if output && !output.empty?
 
         raise "FFmpeg command failed"
 
@@ -718,7 +720,8 @@ class SOSDilla
 
       Platform.ffmpeg_paths.each { |p| puts "   - #{p}" }
 
-      puts "\n   Install: #{Platform.install_hint}"
+      puts "
+   Install: #{Platform.install_hint}"
 
       puts "   Or ensure ffmpeg is in your PATH"
 
@@ -1695,7 +1698,8 @@ class SOSDilla
   end
 
   def self.command_list
-    puts "\nPATTERNS: #{DUB_PATTERNS.keys.join(', ')}"
+    puts "
+PATTERNS: #{DUB_PATTERNS.keys.join(', ')}"
 
     puts "PROGRESSIONS: #{DUB_PROGRESSIONS.keys.join(', ')}"
 
@@ -1787,4 +1791,3 @@ class SOSDilla
 end
 
 SOSDilla.main(ARGV) if __FILE__ == $PROGRAM_NAME
-

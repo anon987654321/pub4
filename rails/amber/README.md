@@ -54,4 +54,3 @@ cd /home/dev/rails
 Visit http://localhost:42189 to get started.
 ---
 **Style Made Simple**
-

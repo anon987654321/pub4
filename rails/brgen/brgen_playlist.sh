@@ -1846,4 +1846,3 @@ log "   See G:/pub/README-VISUALIZER.md for full documentation"
 # - Added visualizer link to playlist show pages for immersive playback experience
 
 # - Visualizer features: 8 modes, physics-based motion, psychedelic effects, 6 themes, MP3 playback
-

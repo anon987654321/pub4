@@ -327,7 +327,7 @@ export default class extends Controller {
   async vote(event) {
     const action = event.params.action
 
-    const response = await fetch(\`/\${this.typeValue}/\${this.idValue}/\${action}\`, {
+    const response = await fetch(`/${this.typeValue}/${this.idValue}/${action}`, {
 
       method: action === 'unvote' ? 'DELETE' : 'POST',
 
@@ -435,8 +435,8 @@ command_exists() {
 # Install gem idempotently
 install_gem() {
   typeset gem_name="$1"
-  grep -q "gem \"${gem_name}\"" Gemfile || {
-    print "gem \"${gem_name}\"" >> Gemfile
+  grep -q "gem "${gem_name}"" Gemfile || {
+    print "gem "${gem_name}"" >> Gemfile
     bundle install
   }
 }
@@ -675,4 +675,3 @@ export default class extends Controller {
 }
 JS
 }
-

@@ -180,4 +180,3 @@ All modules comply with master.yml v74.2.0:
 - `/home/runner/work/pub4/pub4/openbsd/openbsd.sh` - OpenBSD infrastructure deployment
 
 - Parent directory - Individual Rails application generators
-

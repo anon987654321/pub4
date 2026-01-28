@@ -497,4 +497,3 @@ execution:
     ffmpeg -f s16le -ar 22050 -ac 1 -i - -af "{effects[effect]}" -f wav - |
 
     powershell -c "$player = New-Object System.Media.SoundPlayer; $player.Stream = [Console]::OpenStandardInput(); $player.PlaySync()"
-

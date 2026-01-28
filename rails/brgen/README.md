@@ -88,4 +88,3 @@ For detailed setup, configuration, deployment, and troubleshooting:
 See the full documentation at `/docs/brgen/` or visit https://brgen.no/docs
 ---
 **Built with ❤️ in Bergen, Norway**
-

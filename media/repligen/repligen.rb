@@ -559,7 +559,8 @@ After training, use with:"
              "elegant powerful stride, high-end fashion photography, vogue magazine quality, " \
              "sharp focus on model, bokeh background, cinematic composition, 16:9 aspect ratio"
 
-    puts "\n🌟 CATWALK GENERATOR"
+    puts "
+🌟 CATWALK GENERATOR"
     puts "=" * 70
     puts "Subject: #{subject}"
     puts "Style: #{style}"
@@ -584,11 +585,12 @@ After training, use with:"
 
     if audio_path && File.exist?(audio_path)
       final_file = vid_file.gsub(".mp4", "_audio.mp4")
-      system("ffmpeg -i \"#{vid_file}\" -i \"#{audio_path}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{final_file}\" -y 2>&1")
+      system("ffmpeg -i "#{vid_file}" -i "#{audio_path}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "#{final_file}" -y 2>&1")
       puts "✓ Audio added: #{final_file}" if File.exist?(final_file)
     end
 
-    puts "\n" + "=" * 70
+    puts "
+" + "=" * 70
     puts "✨ CATWALK COMPLETE!"
     puts "=" * 70
     puts "📸 Image: #{img_file}"
@@ -1290,4 +1292,3 @@ if __FILE__ == $0
   Repligen.new.run(ARGV)
 
 end
-

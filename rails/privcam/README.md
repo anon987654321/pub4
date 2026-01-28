@@ -837,4 +837,3 @@ secure_url = privacy_service.create_secure_link(video, {
 ---
 
 *Built with Rails 8, client-side encryption, and privacy-first principles for OpenBSD 7.5*
-

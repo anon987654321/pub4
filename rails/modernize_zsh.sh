@@ -11,18 +11,19 @@ for file in $files; do
   print "Processing: $file"
 
   # Replace local → typeset
-  sed -i 's/\blocal /typeset /g' "$file"
+  sed -i 's/local /typeset /g' "$file"
 
   # Replace ${var,,} → ${var:l}  (bash lowercase to zsh)
-  sed -i 's/\${\([^}]*\),,}/\${\1:l}/g' "$file"
+  sed -i 's/${([^}]*),,}/${:l}/g' "$file"
 
   # Replace ${var^^} → ${var:u}  (bash uppercase to zsh)
-  sed -i 's/\${\([^}]*\)\^\^}/\${\1:u}/g' "$file"
+  sed -i 's/${([^}]*)^^}/${:u}/g' "$file"
 
   # Replace ${var^} → ${(C)var}  (bash capitalize to zsh)
-  sed -i 's/\${\([^}]*\)\^}/\${(C)\1}/g' "$file"
+  sed -i 's/${([^}]*)^}/${(C)}/g' "$file"
 
   print "  ✓ Modernized"
 done
 
-print "\nDone: ${#files} files processed"
+print "
+Done: ${#files} files processed"

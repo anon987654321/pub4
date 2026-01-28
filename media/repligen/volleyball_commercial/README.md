@@ -123,4 +123,3 @@ ffmpeg -f concat -safe 0 -i clips.txt -c copy norway_volleyball_LA2028.mp4
 - Add inspirational music soundtrack
 
 - Color grade further if needed via postpro.rb on OpenBSD VPS
-

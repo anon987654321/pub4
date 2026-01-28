@@ -175,7 +175,7 @@ validate_ip() {
 
   typeset ip=$1
 
-  [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
+  [[ $ip =~ ^([0-9]{1,3}.){3}[0-9]{1,3}$ ]] || return 1
 
   typeset IFS=.
 
@@ -347,7 +347,7 @@ generate_random_port() {
 
     port=$((RANDOM % 50000 + 10000))
 
-    (( ! $(/usr/bin/netstat -an | /usr/bin/grep -c "\.$port ") )) && echo $port && break
+    (( ! $(/usr/bin/netstat -an | /usr/bin/grep -c ".$port ") )) && echo $port && break
 
   done
 
@@ -580,9 +580,9 @@ brgen_ip="$BRGEN_IP"
 hyp_ip="$HYP_IP"
 
 set skip on lo
-pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53
+pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53
 
-pass out on \$ext_if inet proto udp to \$hyp_ip port 53
+pass out on $ext_if inet proto udp to $hyp_ip port 53
 
 EOF
 
@@ -680,9 +680,9 @@ EOF
 
     cat > /var/nsd/zones/master/$domain.zone <<EOF
 
-\$ORIGIN $domain.
+$ORIGIN $domain.
 
-\$TTL 3600
+$TTL 3600
 
 @ IN SOA ns.brgen.no. hostmaster.$domain. (
 
@@ -808,7 +808,7 @@ EOF
 brgen_ip="$BRGEN_IP"
 
 server "acme" {
-  listen on \$brgen_ip port 80
+  listen on $brgen_ip port 80
 
   location "/.well-known/acme-challenge/*" {
 
@@ -820,7 +820,7 @@ server "acme" {
 
   location "*" {
 
-    block return 301 "https://\$HTTP_HOST\$REQUEST_URI"
+    block return 301 "https://$HTTP_HOST$REQUEST_URI"
 
   }
 
@@ -1154,7 +1154,7 @@ EOF
 
 table <$app> { $LOCALHOST port $port }
 relay $app {
-  listen on \$ext_if port 443 tls
+  listen on $ext_if port 443 tls
 
   protocol https
 
@@ -1215,7 +1215,7 @@ hyp_ip="$HYP_IP"
 set skip on lo
 set block-policy return
 
-set loginterface \$ext_if
+set loginterface $ext_if
 
 set reassemble yes
 
@@ -1229,17 +1229,17 @@ table <bruteforce> persist
 
 block quick from <bruteforce>
 
-pass out quick on \$ext_if all
+pass out quick on $ext_if all
 
-pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
+pass in on $ext_if inet proto tcp to $ext_if port 22 keep state \
 
   (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
 
-pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
+pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53 log
 
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443 } log
+pass in on $ext_if inet proto tcp to $brgen_ip port { 80, 443 } log
 
-pass out on \$ext_if inet proto tcp to any port 25
+pass out on $ext_if inet proto tcp to any port 25
 
 EOF
 
@@ -1326,13 +1326,13 @@ rc_start() {
 
   export RAILS_ENV=production
 
-  export PATH=\${HOME}/.gem/ruby/3.3/bin:\$PATH
+  export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
 
-  \${rcexec} "falcon serve -b tcp://$LOCALHOST:$port"
+  ${rcexec} "falcon serve -b tcp://$LOCALHOST:$port"
 
 }
 
-rc_cmd \$1
+rc_cmd $1
 EOF
 
     chmod 755 /etc/rc.d/$app
@@ -1366,7 +1366,8 @@ main() {
 
   if [[ $arg1 = --help ]]; then
 
-    print -r -- "Sets up OpenBSD 7.7 for Rails with DNSSEC and minimal OpenSMTPD.\nUsage: doas zsh openbsd.sh [--help | --resume]"
+    print -r -- "Sets up OpenBSD 7.7 for Rails with DNSSEC and minimal OpenSMTPD.
+Usage: doas zsh openbsd.sh [--help | --resume]"
 
     exit 0
 

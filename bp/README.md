@@ -23,4 +23,3 @@ ruby generate.rb
 - Responsive mobile-first design
 
 - Self-contained HTML output
-

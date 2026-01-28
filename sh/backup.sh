@@ -92,4 +92,3 @@ for folder in ${(k)new_checksums}; do
   print "$folder ${new_checksums[$folder]}"
 
 done > "$checksum_file"
-

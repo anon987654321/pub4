@@ -100,7 +100,9 @@ Commands:
 > /quiet
 Quiet mode: on
 
-> /codify $'- Add feature X\n- Fix bug Y\n- Update docs'
+> /codify $'- Add feature X
+- Fix bug Y
+- Update docs'
 --- Generated YAML ---
 (YAML output with structured wishlist items)
 --- End YAML ---
@@ -125,7 +127,9 @@ EOF
 > /codify $(cat wishlist.txt)
 
 # Option 2: Use shell $'...' syntax for newlines (bash/zsh)
-> /codify $'- Add authentication\n- Implement caching\n- Add logging'
+> /codify $'- Add authentication
+- Implement caching
+- Add logging'
 
 # Option 3: Compact single-line format (less readable)
 > /codify - First item  * Second item  1. Third item

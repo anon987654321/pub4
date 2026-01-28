@@ -739,4 +739,3 @@ EOF
 export -f add_rich_editor install_tiptap_packages create_tiptap_controller
 
 export -f create_editor_styles setup_lightbox_integration write_editor_partial
-

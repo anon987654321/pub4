@@ -42,4 +42,3 @@ cd /home/dev/rails
 
 ---
 **One Platform, Many Voices**
-

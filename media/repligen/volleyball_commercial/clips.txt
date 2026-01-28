@@ -8,4 +8,3 @@ file 'scene_4_ra2_serve.mp4'
 file 'scene_5_celebration.mp4'
 
 file 'scene_6_ra2_closeup.mp4'
-

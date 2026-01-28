@@ -99,7 +99,7 @@ daemon_flags="-C config/puma.rb -p $PORT"
 
 . /etc/rc.d/rc.subr
 
-rc_cmd \$1
+rc_cmd $1
 EOF
 
 # Configure Puma for production

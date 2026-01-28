@@ -132,4 +132,3 @@ for file in "$folder"/**/*(.N); do
   fi
 
 done
-

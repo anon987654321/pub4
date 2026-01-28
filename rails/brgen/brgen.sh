@@ -810,7 +810,9 @@ Community.all.each do |community|
 
       title: Faker::Lorem.sentence(word_count: 5),
 
-      content: Faker::Lorem.paragraphs(number: 3).join("\n\n"),
+      content: Faker::Lorem.paragraphs(number: 3).join("
+
+"),
 
       user: User.all.sample,
 
@@ -900,4 +902,3 @@ echo "  1. Review config/database.yml"
 echo "  2. Test: bin/rails server -b 0.0.0.0 -p $PORT"
 
 echo "  3. Deploy: doas zsh openbsd.sh --post-point"
-

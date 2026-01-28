@@ -32,7 +32,8 @@ def test_decision_support
 end
 
 def test_governance_exporter
-  puts "\nTesting GovernanceExporter..."
+  puts "
+Testing GovernanceExporter..."
   
   exporter = GovernanceExporter.new
   json_output = exporter.export_to_json
@@ -54,7 +55,8 @@ def test_governance_exporter
 end
 
 def test_ui_handler
-  puts "\nTesting UIHandler..."
+  puts "
+Testing UIHandler..."
   
   ui = UIHandler.new
   
@@ -72,7 +74,8 @@ def test_ui_handler
 end
 
 def test_constants
-  puts "\nTesting hoisted constants..."
+  puts "
+Testing hoisted constants..."
   
   raise "VERSION not defined" unless defined?(VERSION)
   raise "MAX_STDOUT_SIZE not defined" unless defined?(MAX_STDOUT_SIZE)
@@ -94,14 +97,17 @@ begin
   test_governance_exporter
   test_ui_handler
   
-  puts "\n" + "=" * 60
+  puts "
+" + "=" * 60
   puts "✓ All tests passed!"
   puts "=" * 60
   exit 0
 rescue => e
-  puts "\n" + "=" * 60
+  puts "
+" + "=" * 60
   puts "✗ Test failed: #{e.message}"
-  puts e.backtrace.first(5).join("\n")
+  puts e.backtrace.first(5).join("
+")
   puts "=" * 60
   exit 1
 end

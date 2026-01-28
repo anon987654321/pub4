@@ -232,7 +232,7 @@ class Beat
       "volume=0.6"
     ].join(",")
 
-    ffmpeg("-i \"#{sample}\" -af \"#{chain}\" \"#{out}\"")
+    ffmpeg("-i "#{sample}" -af "#{chain}" "#{out}"")
     out
   end
 
@@ -279,7 +279,7 @@ class Beat
     return nil if kick_delays.empty?
 
     # generate bass tone
-    ffmpeg("-f lavfi -i \"sine=f=#{freq}:d=#{@duration}:r=48000\" -af \"lowpass=f=200,volume=0.6\" \"#{out}\"")
+    ffmpeg("-f lavfi -i "sine=f=#{freq}:d=#{@duration}:r=48000" -af "lowpass=f=200,volume=0.6" "#{out}"")
     out
   end
 
@@ -309,7 +309,7 @@ class Beat
 
     filter = "#{inputs.join(';')};#{mix_refs}amix=inputs=#{delays.length}:duration=longest,volume=#{volume}"
 
-    ffmpeg("-i \"#{sample}\" -filter_complex \"#{filter}\" \"#{output}\"")
+    ffmpeg("-i "#{sample}" -filter_complex "#{filter}" "#{output}"")
   end
 
   def mix_layers(*layers)
@@ -322,10 +322,10 @@ class Beat
     if layers.length == 1
       FileUtils.cp(layers.first, out)
     else
-      inputs = layers.map { |f| "-i \"#{f}\"" }.join(" ")
+      inputs = layers.map { |f| "-i "#{f}"" }.join(" ")
       refs = layers.each_with_index.map { |_, i| "[#{i}:a]" }.join
       filter = "#{refs}amix=inputs=#{layers.length}:duration=longest"
-      ffmpeg("#{inputs} -filter_complex \"#{filter}\" \"#{out}\"")
+      ffmpeg("#{inputs} -filter_complex "#{filter}" "#{out}"")
     end
 
     out
@@ -344,7 +344,7 @@ class Beat
       "loudnorm=I=-16:TP=-1"
     ].join(",")
 
-    ffmpeg("-i \"#{input}\" -af \"#{chain}\" \"#{output}\"")
+    ffmpeg("-i "#{input}" -af "#{chain}" "#{output}"")
   end
 
   def find_kit_sample(type)
@@ -505,12 +505,12 @@ if __FILE__ == $PROGRAM_NAME
 
   ARGV.each do |arg|
     case arg
-    when /^--bpm=(\d+)$/      then opts[:bpm] = $1.to_i
-    when /^--bars=(\d+)$/     then opts[:bars] = $1.to_i
+    when /^--bpm=(d+)$/      then opts[:bpm] = $1.to_i
+    when /^--bars=(d+)$/     then opts[:bars] = $1.to_i
     when /^--key=([A-G]#?)$/i then opts[:key] = $1.upcase
-    when /^--pattern=(\w+)$/  then opts[:pattern] = $1.to_sym
-    when /^--gear=(\w+)$/     then opts[:gear] = $1.to_sym
-    when /^--kit=(\w+)$/      then opts[:kit] = $1.to_sym
+    when /^--pattern=(w+)$/  then opts[:pattern] = $1.to_sym
+    when /^--gear=(w+)$/     then opts[:gear] = $1.to_sym
+    when /^--kit=(w+)$/      then opts[:kit] = $1.to_sym
     when /^--sample=(.+)$/    then opts[:sample] = $1
     when /^--output=(.+)$/    then opts[:output] = $1
     when /^--help$/
@@ -551,7 +551,7 @@ if __FILE__ == $PROGRAM_NAME
     when /^random$/i
       Beat.random
       exit 0
-    when /\.als$/i
+    when /.als$/i
       Beat.from_als(arg)
       exit 0
     end

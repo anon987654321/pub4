@@ -2283,4 +2283,3 @@ log "UserStudies views completed"
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
 # - Finalized for unprivileged user on OpenBSD 7.5.
-
