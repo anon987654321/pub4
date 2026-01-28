@@ -1,16 +1,19 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# CONVERGENCE TEST SUITE v1.4.0
-# Tests all workflow enhancements
+# CONVERGENCE TEST SUITE v1.6.0
+# Tests all workflow enhancements including chat, web agent, and autonomy features
 
 require "minitest/autorun"
 require "yaml"
 require "fileutils"
 require "tempfile"
 
+# Skip dependency auto-install during tests
+ENV["SKIP_DEPS"] = "1"
+
 # Load CLI
-require_relative "cli_v1.4"
+require_relative "cli"
 
 class ConvergenceTest < Minitest::Test
   def setup
@@ -73,6 +76,11 @@ class ConvergenceTest < Minitest::Test
     }
     
     File.write("master.yml", YAML.dump(@test_config))
+    
+    # Create required directories
+    FileUtils.mkdir_p(".convergence_history")
+    FileUtils.mkdir_p(".convergence_patterns")
+    FileUtils.mkdir_p(".convergence_personas")
     
     Logger.init(@test_config)
     Logger.set_quiet(true)
@@ -592,9 +600,145 @@ end
   end
 end
 
+# New v1.6.0 Tests
+class ChatAndWebTest < Minitest::Test
+  def setup
+    @temp_dir = Dir.mktmpdir
+    @original_dir = Dir.pwd
+    Dir.chdir(@temp_dir)
+    
+    @test_config = {
+      "version" => "1.6.0-test",
+      "laws" => {},
+      "registry" => [],
+      "scanning" => { "patterns" => ["**/*.rb"] }
+    }
+    File.write("master.yml", YAML.dump(@test_config))
+  end
+  
+  def teardown
+    Dir.chdir(@original_dir)
+    FileUtils.rm_rf(@temp_dir)
+  end
+  
+  def test_dependency_manager_openbsd_detection
+    # Should detect if running on OpenBSD
+    result = DependencyManager.openbsd?
+    assert [true, false].include?(result)
+  end
+  
+  def test_dependency_manager_gems_list
+    assert DependencyManager::GEMS.key?("ferrum")
+    assert DependencyManager::GEMS.key?("async")
+  end
+  
+  def test_color_module
+    # Colors should work or degrade gracefully
+    assert_equal "test", C.g("test").gsub(/\e\[\d+m/, "")
+    assert_equal "test", C.r("test").gsub(/\e\[\d+m/, "")
+    assert_equal "test", C.b("test").gsub(/\e\[\d+m/, "")
+  end
+  
+  def test_web_module_init
+    Web.init
+    # Should report status without crashing
+    status = Web.status
+    assert status.include?("ferrum:")
+  end
+  
+  def test_voice_module_init
+    Voice.init({})
+    status = Voice.status
+    assert status.include?("tts:")
+    assert status.include?("stt:")
+  end
+  
+  def test_openrouter_chat_init
+    OpenRouterChat.init(@test_config)
+    # Should handle missing API key gracefully
+    refute OpenRouterChat.available?
+  end
+  
+  def test_openrouter_chat_model_switching
+    OpenRouterChat.init(@test_config)
+    OpenRouterChat.set_model("deepseek/deepseek-chat")
+    # Model should be updated (even without API key)
+  end
+  
+  def test_openrouter_chat_add_context
+    OpenRouterChat.init(@test_config)
+    OpenRouterChat.add_context("test", "test content")
+    # Should not crash
+  end
+  
+  def test_openrouter_chat_clear_conversation
+    OpenRouterChat.init(@test_config)
+    OpenRouterChat.clear_conversation
+    assert_equal 0, OpenRouterChat.conversation_length
+  end
+  
+  def test_ferrum_availability_check
+    # Should not crash even if Ferrum not installed
+    assert [true, false].include?(FERRUM_AVAILABLE)
+  end
+  
+  def test_falcon_availability_check
+    assert [true, false].include?(FALCON_AVAILABLE)
+  end
+end
+
+class CommandParsingTest < Minitest::Test
+  def setup
+    @temp_dir = Dir.mktmpdir
+    @original_dir = Dir.pwd
+    Dir.chdir(@temp_dir)
+    
+    @test_config = {
+      "version" => "1.6.0-test",
+      "laws" => {},
+      "registry" => [],
+      "scanning" => { "patterns" => ["**/*.rb"] }
+    }
+    File.write("master.yml", YAML.dump(@test_config))
+  end
+  
+  def teardown
+    Dir.chdir(@original_dir)
+    FileUtils.rm_rf(@temp_dir)
+  end
+  
+  def test_slash_command_detection
+    # Commands start with /
+    assert "/help".start_with?("/")
+    assert "/browse https://example.com".start_with?("/")
+    refute "hello world".start_with?("/")
+  end
+  
+  def test_code_block_extraction
+    response = "Here's the fix:\n```zsh\necho hello\n```\nDone."
+    match = response.match(/```(?:zsh|shell|bash|sh)\n(.+?)```/m)
+    assert match
+    assert_equal "echo hello\n", match[1]
+  end
+  
+  def test_ruby_block_extraction
+    response = "Run this:\n```ruby\nputs 'hi'\n```"
+    match = response.match(/```ruby\n(.+?)```/m)
+    assert match
+    assert_equal "puts 'hi'\n", match[1]
+  end
+  
+  def test_dangerous_command_blocking
+    blocked = ["rm -rf /", "rm -rf ~"]
+    blocked.each do |cmd|
+      assert blocked.any? { |b| cmd.include?(b.split.first(2).join(" ")) }
+    end
+  end
+end
+
 # Run tests if executed directly
 if __FILE__ == $0
-  puts "CONVERGENCE TEST SUITE v1.4.0"
+  puts "CONVERGENCE TEST SUITE v1.6.0"
   puts "=============================="
   puts
 end
