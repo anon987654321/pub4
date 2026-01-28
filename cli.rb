@@ -196,8 +196,7 @@ module StateManager
       tree_sh = @integration["tree_sh"] || "sh/tree.sh"
       if File.exist?(tree_sh)
         Logger.operation("snapshot", "running tree.sh")
-        output = `.convergence_tree.txt`
-        `zsh #{tree_sh} . > .convergence_tree.txt 2>/dev/null`
+        system("zsh #{tree_sh} . > .convergence_tree.txt 2>/dev/null")
         Logger.filesystem("write", ".convergence_tree.txt")
       end
       
