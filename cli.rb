@@ -738,25 +738,19 @@ module DependencyAnalyzer
     def generate_dot(dependencies)
       output_file = @config.dig("priority", "dependency_graph_output") || ".convergence_deps.dot"
       
-      dot = "digraph dependencies {
-"
-      dot += "  rankdir=LR;
-"
-      dot += "  node [shape=box];
-
-"
+      dot = "digraph dependencies {\n"
+      dot += "  rankdir=LR;\n"
+      dot += "  node [shape=box];\n\n"
       
       dependencies.each do |file, deps|
         short_name = File.basename(file, '.*')
         deps.each do |dep|
           dep_short = File.basename(dep, '.*')
-          dot += "  "#{short_name}" -> "#{dep_short}";
-"
+          dot += "  \"#{short_name}\" -> \"#{dep_short}\";\n"
         end
       end
       
-      dot += "}
-"
+      dot += "}\n"
       
       File.write(output_file, dot)
       Logger.filesystem("write", output_file)
@@ -1901,7 +1895,7 @@ export OPENROUTER_API_KEY="#{key}""
     
     # npm-style spinner
     spinner = Thread.new do
-      frames = %w[| / - \]
+      frames = ['|', '/', '-', '\\']
       i = 0
       loop do
         print "#{frames[i % 4]} "
