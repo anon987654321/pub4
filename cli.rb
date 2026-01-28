@@ -21,6 +21,14 @@ OPENBSD = RUBY_PLATFORM.include?("openbsd")
 GOVERNANCE_VERSION = "17.0.0"
 CONFIG_SCHEMA_VERSION = "2.0.0"
 
+# Constants hoisted for easy reference and maintainability
+MAX_STDOUT_SIZE = 10_000
+MAX_STDERR_SIZE = 4000
+MAX_FILE_SIZE = 100_000
+DEFAULT_TIMEOUT = 30
+DEFAULT_MODEL = "deepseek/deepseek-r1"
+CONFIG_FILE_PERMISSIONS = 0o600
+
 # Governance enforcement engine
 class Governance
   attr_reader :master_yml, :metrics
@@ -175,6 +183,21 @@ class Migration
   end
 end
 
+# Decision support module - calculate weighted scores
+module DecisionSupport
+  def self.calculate_weights(options, weights)
+    options.transform_values do |factors|
+      factors.sum { |factor, value| value * (weights[factor] || 0) }.round(2)
+    end
+  end
+
+  def self.select_best(options, weights)
+    scores = calculate_weights(options, weights)
+    best = scores.max_by { |_name, score| score }
+    [best[0], best[1], scores]
+  end
+end
+
 # OpenBSD FFI security module - loaded conditionally
 module OpenBSDSecurity
   @available = false
@@ -236,7 +259,7 @@ class Config
 
   def self.load
     cfg = new
-    cfg.model = "deepseek/deepseek-r1"
+    cfg.model = DEFAULT_MODEL
     cfg.access_level = :user
 
     if File.exist?(PATH)
@@ -264,7 +287,7 @@ class Config
       "access_level" => access_level.to_s
     }
     File.write(PATH, YAML.dump(data))
-    File.chmod(0o600, PATH)
+    File.chmod(CONFIG_FILE_PERMISSIONS, PATH)
   end
   
   def to_json(*args)
@@ -289,8 +312,8 @@ class ShellTool
     Timeout.timeout(timeout) do
       stdout, stderr, status = Open3.capture3(shell, "-c", prefix + command)
       {
-        stdout: stdout[0..10_000],
-        stderr: stderr[0..4000],
+        stdout: stdout[0..MAX_STDOUT_SIZE],
+        stderr: stderr[0..MAX_STDERR_SIZE],
         exit_code: status.exitstatus,
         success: status.success?
       }
@@ -312,7 +335,7 @@ class FileTool
   def read(path:)
     safe = enforce!(path)
     return { error: "not found" } unless File.exist?(safe)
-    { content: File.read(safe)[0..100_000], size: File.size(safe), path: safe }
+    { content: File.read(safe)[0..MAX_FILE_SIZE], size: File.size(safe), path: safe }
   rescue => e
     { error: e.message }
   end
@@ -341,65 +364,21 @@ class FileTool
   end
 end
 
-# Main CLI
-class CLI
-  def initialize
-    @config = Config.load
-    @governance = Governance.new
-    OpenBSDSecurity.apply(@config.access_level)
-    @tools = setup_tools
-  end
-
-  def run
-    puts "Convergence v#{VERSION} – #{@config.access_level} level"
+# UI Handler - decoupled from business logic
+class UIHandler
+  def show_welcome(version, level)
+    puts "Convergence v#{version} – #{level} level"
     puts "Type /help for commands or message for LLM chat"
     puts
+  end
 
-    loop do
-      input = Readline.readline("> ", true)&.strip
-      break unless input
-      next if input.empty?
-      input.start_with?("/") ? handle_cmd(input[1..]) : handle_msg(input)
-    end
-  rescue Interrupt
+  def show_goodbye
     puts "\nGoodbye"
   end
 
-  private
-
-  def setup_tools
-    [
-      ShellTool.new,
-      FileTool.new(base_path: Dir.pwd, access_level: @config.access_level)
-    ]
-  end
-
-  def handle_cmd(cmd)
-    parts = cmd.strip.split(/\s+/, 2)
-    case parts[0]
-    when "help"    then show_help
-    when "level"   then switch_level(parts[1])
-    when "export"  then export_json(parts[1])
-    when "weights" then show_weights
-    when "version" then show_version
-    when "quit"    then exit
-    else puts "Unknown command: /#{parts[0]} (try /help)"
-    end
-  end
-
-  def handle_msg(msg)
-    key = ENV["OPENROUTER_API_KEY"]
-    unless key
-      puts "⚠ Set OPENROUTER_API_KEY environment variable to enable LLM chat"
-      puts "Example: export OPENROUTER_API_KEY='your-key-here'"
-      return
-    end
-    puts "[LLM integration pending - will support natural language code operations]"
-  end
-
-  def show_help
+  def show_help(version)
     puts <<~HELP
-      Convergence CLI v#{VERSION} - Constitutional AI Governance Tool
+      Convergence CLI v#{version} - Constitutional AI Governance Tool
       
       Commands:
         /help                 Show this help message
@@ -427,18 +406,132 @@ class CLI
     HELP
   end
 
+  def show_error(message)
+    puts "✗ #{message}"
+  end
+
+  def show_info(message)
+    puts message
+  end
+
+  def show_success(message)
+    puts "✓ #{message}"
+  end
+end
+
+# Governance exporter for JSON output
+class GovernanceExporter
+  MASTER_FILE = "master.yml"
+
+  def export_to_json
+    data = load_governance
+    export_structure = build_export_structure(data)
+    JSON.pretty_generate(export_structure)
+  end
+
+  private
+
+  def load_governance
+    return {} unless File.exist?(MASTER_FILE)
+    YAML.safe_load_file(MASTER_FILE)
+  rescue => e
+    warn "Failed to load governance: #{e.message}" if ENV["DEBUG"]
+    {}
+  end
+
+  def build_export_structure(data)
+    {
+      export_metadata: {
+        timestamp: Time.now.utc.iso8601,
+        exporter_version: VERSION,
+        format_version: "1.0"
+      },
+      governance_version: data.dig("meta", "version") || "unknown",
+      sections: {
+        meta: data["meta"],
+        style_constraints: data["style_constraints"],
+        rules: data["rules"],
+        axioms: data["axioms"],
+        thresholds: extract_thresholds(data),
+        testing: data["testing"],
+        security: data["security"],
+        defect_catalog: data["defect_catalog"]
+      }
+    }
+  end
+
+  def extract_thresholds(data)
+    data.dig("rules", "thresholds") || {}
+  end
+end
+
+# Main CLI
+class CLI
+  def initialize
+    @config = Config.load
+    @governance = Governance.new
+    OpenBSDSecurity.apply(@config.access_level)
+    @tools = setup_tools
+    @ui = UIHandler.new
+  end
+
+  def run
+    @ui.show_welcome(VERSION, @config.access_level)
+
+    loop do
+      input = Readline.readline("> ", true)&.strip
+      break unless input
+      next if input.empty?
+      input.start_with?("/") ? handle_cmd(input[1..]) : handle_msg(input)
+    end
+  rescue Interrupt
+    @ui.show_goodbye
+  end
+
+  private
+
+  def setup_tools
+    [
+      ShellTool.new,
+      FileTool.new(base_path: Dir.pwd, access_level: @config.access_level)
+    ]
+  end
+
+  def handle_cmd(cmd)
+    parts = cmd.strip.split(/\s+/, 2)
+    case parts[0]
+    when "help"    then @ui.show_help(VERSION)
+    when "level"   then switch_level(parts[1])
+    when "export"  then export_governance(parts[1])
+    when "weights" then show_weights
+    when "version" then show_version
+    when "quit"    then exit
+    else @ui.show_error("Unknown command: /#{parts[0]} (try /help)")
+    end
+  end
+
+  def handle_msg(msg)
+    key = ENV["OPENROUTER_API_KEY"]
+    unless key
+      puts "⚠ Set OPENROUTER_API_KEY environment variable to enable LLM chat"
+      puts "Example: export OPENROUTER_API_KEY='your-key-here'"
+      return
+    end
+    @ui.show_info("[LLM integration pending - will support natural language code operations]")
+  end
+
   def switch_level(str)
-    return puts "Usage: /level [sandbox|user|admin]" unless str
+    return @ui.show_error("Usage: /level [sandbox|user|admin]") unless str
     sym = str.to_sym
-    return puts "Invalid level" unless %i[sandbox user admin].include?(sym)
+    return @ui.show_error("Invalid level") unless %i[sandbox user admin].include?(sym)
 
     @config.access_level = sym
     @config.save
     OpenBSDSecurity.apply(sym)
-    puts "✓ Access level changed to: #{sym}"
+    @ui.show_success("Access level changed to: #{sym}")
   end
   
-  def export_json(file)
+  def export_governance(file)
     if file && !file.start_with?("/tmp/")
       expanded = File.expand_path(file)
       allowed = case @config.access_level
@@ -448,12 +541,15 @@ class CLI
                 end
       
       unless allowed.nil? || allowed.any? { |p| expanded.start_with?("#{p}/") || expanded == p }
-        puts "✗ Export denied: path outside allowed directories"
+        @ui.show_error("Export denied: path outside allowed directories")
         return
       end
     end
     
-    data = {
+    exporter = GovernanceExporter.new
+    governance_data = exporter.export_to_json
+    
+    combined_data = {
       version: VERSION,
       governance_version: GOVERNANCE_VERSION,
       timestamp: Time.now.iso8601,
@@ -461,19 +557,19 @@ class CLI
         model: @config.model,
         access_level: @config.access_level
       },
-      governance: @governance.export_json
+      governance: JSON.parse(governance_data)
     }
     
-    json = JSON.pretty_generate(data)
+    json = JSON.pretty_generate(combined_data)
     
     if file
       File.write(file, json)
-      puts "✓ Exported governance state to: #{file}"
+      @ui.show_success("Exported governance state to: #{file}")
     else
       puts json
     end
   rescue => e
-    puts "✗ Export failed: #{e.message}"
+    @ui.show_error("Export failed: #{e.message}")
   end
   
   def show_weights
@@ -499,7 +595,7 @@ class CLI
     status = avg >= 90 ? "✓ Excellent" : avg >= 70 ? "⚠ Good" : "✗ Needs Improvement"
     puts "Overall: #{avg.round(2)}% (#{status})"
   rescue => e
-    puts "✗ Analysis failed: #{e.message}"
+    @ui.show_error("Analysis failed: #{e.message}")
   end
   
   def show_version

@@ -17,6 +17,9 @@ Thumbs.db
 *.bak
 *.old
 
+# Generated exports
+governance_export_*.json
+
 # Node modules
 node_modules/
 
