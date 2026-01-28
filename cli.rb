@@ -1778,11 +1778,21 @@ class CLI
       return
     end
     
-    print "..."
-    $stdout.flush
+    # npm-style spinner
+    spinner = Thread.new do
+      frames = %w[| / - \\]
+      i = 0
+      loop do
+        print "\r#{frames[i % 4]} "
+        $stdout.flush
+        sleep 0.1
+        i += 1
+      end
+    end
     
     result = OpenRouterChat.chat(message)
-    print "\r   \r"
+    spinner.kill
+    print "\r  \r"
     
     if result.success?
       response = result.value
@@ -1810,7 +1820,7 @@ class CLI
       command = match[0].strip
       next if command.empty?
       
-      puts "\n→ #{command}"
+      puts "\n$ #{command}"
       output = `#{command} 2>&1`
       puts output unless output.empty?
       
@@ -1824,7 +1834,7 @@ class CLI
       next if code.empty?
       next if code.include?("def ") # Skip method definitions (examples)
       
-      puts "\n→ ruby: #{code.lines.first.strip}..."
+      puts "\n$ ruby: #{code.lines.first.strip}..."
       begin
         result = eval(code)
         puts result.inspect if result
