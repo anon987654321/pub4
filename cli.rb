@@ -1670,10 +1670,10 @@ class CLI
 
   def ensure_api_key
     if OpenRouterChat.available?
-      puts C.g("● Sonnet 4.5 ready")
+      puts C.g("* Sonnet 4.5 ready")
       puts C.d("Type to chat, /help for commands")
     else
-      puts C.y("○ No API key")
+      puts C.y("- No API key")
       print "Paste OPENROUTER_API_KEY (Enter to skip): "
       key = gets&.strip
       
@@ -1682,7 +1682,7 @@ class CLI
         OpenRouterChat.init(@config)
         
         if OpenRouterChat.available?
-          puts C.g("● Key accepted")
+          puts C.g("* Key accepted")
           
           print "Save to ~/.zshrc? [y/N]: "
           save = gets&.strip&.downcase
@@ -1727,7 +1727,7 @@ class CLI
   def repl
     while @running
       turns = OpenRouterChat.conversation_length
-      prompt = turns > 0 ? C.d("[#{turns}] ") + "❯ " : "❯ "
+      prompt = turns > 0 ? C.d("[#{turns}] ") + "> " : "> "
       print prompt
       
       input = gets
