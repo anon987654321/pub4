@@ -1550,7 +1550,7 @@ class CLI
 
   def display_banner
     puts "Master.yml #{@config['version']}"
-    puts "Code governance • Chat-first CLI"
+    puts "Code governance / Chat-first CLI"
     puts
   end
 
