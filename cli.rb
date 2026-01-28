@@ -1062,16 +1062,23 @@ module OpenRouterChat
         
         RULES:
         - ONE shell command per response, wrapped in ```zsh```
-        - Use ONLY zsh builtins and parameter expansion (no sed/awk/grep)
-        - File edits: use print/echo with >> or zsh read/print
+        - Use ONLY zsh builtins and parameter expansion (NO sed/awk/grep/cut)
+        - For file edits use temp file: { print "new"; cat file } > file.tmp && mv file.tmp file
         - NO citations, NO web references, NO explanations
         - Be terse: max 2 sentences outside code blocks
         
-        ZSH PATTERNS:
-        - grep replacement: ${(M)lines:#*pattern*}
-        - sed replacement: ${var//old/new}
-        - head/tail: ${arr[1,10]} or ${arr[-5,-1]}
-        - unique: ${(u)arr}
+        ZSH NATIVE PATTERNS:
+        - String replace: ${var//old/new}
+        - Case: ${(L)var} ${(U)var}
+        - Split to array: arr=( ${(s:,:)var} )
+        - Get column: ${${(s:,:)line}[4]}
+        - Filter match: ${(M)arr:#*pattern*}
+        - Filter exclude: ${arr:#*pattern*}
+        - Unique: ${(u)arr}
+        - Sort: ${(o)arr}
+        - Join: ${(j:,:)arr}
+        - Slice: ${arr[1,10]} ${arr[-5,-1]}
+        - Trim: ${${var##[[:space:]]#}%%[[:space:]]#}
         
         Core laws: #{laws}
       PROMPT
