@@ -1549,21 +1549,18 @@ class CLI
   end
 
   def display_banner
-    # OpenBSD-inspired minimal banner
-    puts "┌─────────────────────────────────────┐"
-    puts "│  master.yml #{@config['version'].ljust(25)}│"
-    puts "│  code governance • chat-first cli   │"
-    puts "└─────────────────────────────────────┘"
+    puts "Master.yml #{@config['version']}"
+    puts "Code governance • Chat-first CLI"
     puts
   end
 
   def ensure_api_key
     if OpenRouterChat.available?
-      puts "• sonnet 4.5 ready"
-      puts "• type to chat, /help for commands"
+      puts "Sonnet 4.5 ready"
+      puts "Type to chat, /help for commands"
     else
-      puts "• no API key detected"
-      print "• paste OPENROUTER_API_KEY (or Enter to skip): "
+      puts "No API key detected"
+      print "Paste OPENROUTER_API_KEY (or Enter to skip): "
       key = gets&.strip
       
       if key && !key.empty?
@@ -1571,22 +1568,22 @@ class CLI
         OpenRouterChat.init(@config)  # Re-init with new key
         
         if OpenRouterChat.available?
-          puts "• key accepted, sonnet 4.5 ready"
+          puts "Key accepted, Sonnet 4.5 ready"
           
           # Offer to save to zshrc
-          print "• save to ~/.zshrc? [y/N]: "
+          print "Save to ~/.zshrc? [y/N]: "
           save = gets&.strip&.downcase
           if save == "y"
             File.open(File.expand_path("~/.zshrc"), "a") do |f|
               f.puts "\nexport OPENROUTER_API_KEY=\"#{key}\""
             end
-            puts "• saved to ~/.zshrc"
+            puts "Saved to ~/.zshrc"
           end
         else
-          puts "• key set, but check failed"
+          puts "Key set, but check failed"
         end
       else
-        puts "• running in offline mode (commands only)"
+        puts "Running in offline mode (commands only)"
       end
     end
     puts
