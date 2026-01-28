@@ -1551,7 +1551,7 @@ class CLI
   def display_banner
     # OpenBSD-inspired minimal banner
     puts "┌─────────────────────────────────────┐"
-    puts "│  convergence #{@config['version'].ljust(24)}│"
+    puts "│  master.yml #{@config['version'].ljust(25)}│"
     puts "│  code governance • chat-first cli   │"
     puts "└─────────────────────────────────────┘"
     puts
@@ -1573,14 +1573,14 @@ class CLI
         if OpenRouterChat.available?
           puts "• key accepted, sonnet 4.5 ready"
           
-          # Offer to save to profile
-          print "• save to ~/.profile? [y/N]: "
+          # Offer to save to zshrc
+          print "• save to ~/.zshrc? [y/N]: "
           save = gets&.strip&.downcase
           if save == "y"
-            File.open(File.expand_path("~/.profile"), "a") do |f|
+            File.open(File.expand_path("~/.zshrc"), "a") do |f|
               f.puts "\nexport OPENROUTER_API_KEY=\"#{key}\""
             end
-            puts "• saved to ~/.profile"
+            puts "• saved to ~/.zshrc"
           end
         else
           puts "• key set, but check failed"
