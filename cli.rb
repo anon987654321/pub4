@@ -1024,7 +1024,8 @@ module OpenRouterChat
       if response[:error]
         Result.failure(response[:error])
       else
-        assistant_message = response[:content]
+        # Strip non-ASCII chars that don't render on OpenBSD
+        assistant_message = response[:content].gsub(/[^\x00-\x7F]/, '')
         @conversation << { role: "assistant", content: assistant_message }
         Result.success(assistant_message)
       end
