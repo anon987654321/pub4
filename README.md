@@ -55,9 +55,14 @@ chmod +x cli.rb
 # Start the CLI
 ./cli.rb
 
+# Start in quiet mode (suppress logs)
+QUIET=true ./cli.rb
+
 # Available commands:
 /help              # Show help information
 /level [mode]      # Set access level: sandbox, user, or admin
+/quiet             # Toggle quiet mode (suppress logs)
+/codify [text]     # Auto-codify wishlist items to YAML
 /quit              # Exit the application
 ```
 
@@ -85,13 +90,38 @@ chmod +x cli.rb
 Commands:
   /help              Show this help
   /level [mode]      Set access: sandbox, user, admin
+  /quiet             Toggle quiet mode (suppress logs)
+  /codify [text]     Auto-codify wishlist items to YAML
   /quit              Exit
 
 > /level sandbox
 Level → sandbox
 
+> /quiet
+Quiet mode: on
+
+> /codify "- Add feature X\n- Fix bug Y\n- Update docs"
+--- Generated YAML ---
+(YAML output with structured wishlist items)
+--- End YAML ---
+Saved to: .sessions/wishlist_20260128_001234.yml
+
 > /quit
 ```
+
+#### Wishlist Codification
+
+Automatically convert wishlist items into structured YAML format:
+
+```bash
+> /codify "1. Add authentication\n2. Implement caching\n3. Add logging"
+
+# Or use natural language
+> implement these features: add tests, improve docs, fix bugs
+[Auto-detected wishlist - use /codify to process]
+```
+
+The codified wishlists are saved to `.sessions/` directory for tracking and auditing.
 
 #### LLM Integration
 
@@ -240,6 +270,13 @@ Convergence enforces these authoritative principles:
 - Boolean methods: `is_*`, `has_*`, `can_*`, `should_*`
 - Predicate methods: `valid?`, `empty?`, `present?`
 - Destructive methods: `save!`, `create!`, `update!`
+
+#### Self-Audit & Metrics
+- **Audit Log**: Automatic session logging to `.sessions/`
+- **File Count**: Tracks repository size and complexity
+- **Coupling Score**: Analyzes dependencies (0-100 scale, warning at 70+)
+- **Cross-Reference Detection**: Validates `@ref` patterns for orphaned references
+- **Unified Rules**: Self-audit summary runs periodic evaluations
 
 ### 🛠️ Development
 
