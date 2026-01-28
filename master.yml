@@ -176,6 +176,68 @@ meta:
     philosophy: plain_english_over_jargon
     rationale: llms_parse_better_humans_read_easier
     contribution: modify_via_pull_request_only
+  
+  chat_codification:
+    purpose: bridge_natural_language_to_code_operations
+    
+    interaction:
+      mode_awareness:
+        sandbox:
+          allowed: read_cwd_tmp_only
+          blocked: system_modification_network_access
+          rationale: maximum_safety_for_untrusted_operations
+        user:
+          allowed: read_write_home_cwd_tmp
+          blocked: system_wide_changes
+          rationale: personal_development_with_safety_boundaries
+        admin:
+          allowed: full_system_access_with_audit
+          blocked: none_but_logged
+          rationale: trusted_operations_with_accountability
+      
+      prompt_injection_decoupling:
+        strategy: separate_user_intent_from_tool_parameters
+        validation:
+          - parse_user_message_for_command_intent
+          - extract_parameters_into_structured_format
+          - validate_parameters_against_schema
+          - execute_with_validated_data_only
+        rationale: prevent_malicious_input_from_manipulating_system_calls
+      
+      conversation_flow:
+        - receive_natural_language_input
+        - classify_intent_using_llm
+        - map_to_tool_function
+        - request_confirmation_if_destructive
+        - execute_and_report_result
+        - maintain_context_across_turns
+    
+    command_mapping:
+      natural_language:
+        "show me the config": "file_tool.read('config.yml')"
+        "run the tests": "shell_tool.execute('rspec')"
+        "switch to sandbox mode": "config.access_level = :sandbox"
+      
+      intent_categories:
+        read_intent: maps_to_file_or_shell_read_operations
+        write_intent: maps_to_file_write_with_confirmation
+        execute_intent: maps_to_shell_execution_with_timeout
+        configure_intent: maps_to_config_updates
+        query_intent: maps_to_llm_knowledge_or_documentation
+    
+    safety:
+      always_confirm:
+        - file_deletion
+        - system_modification
+        - credential_operations
+        - network_requests_to_external_apis
+      
+      never_execute:
+        - commands_with_rm_rf_without_sandbox
+        - sql_injection_patterns
+        - shell_injection_attempts
+        - credential_exfiltration_attempts
+
 
 style_constraints:
   case: lowercase_only
@@ -642,26 +704,178 @@ platform_governance:
   packages:
     ruby: system_ruby_or_rbenv
   
+axioms:
+  purpose: fundamental_truths_that_underpin_all_governance
+  
+  foundation:
+    - name: correctness_precedes_performance
+      statement: code_must_work_before_it_can_be_optimized
+      rationale: broken_fast_code_is_worse_than_slow_correct_code
+    
+    - name: simplicity_reduces_defects
+      statement: simpler_code_has_fewer_bugs_and_is_easier_to_verify
+      rationale: complexity_is_the_breeding_ground_for_errors
+    
+    - name: explicitness_beats_implicitness
+      statement: obvious_code_is_maintainable_code
+      rationale: future_developers_must_understand_intent_not_guess
+    
+    - name: consistency_enables_automation
+      statement: uniform_patterns_allow_tools_to_assist_humans
+      rationale: inconsistency_breaks_linters_formatters_and_migration_scripts
+    
+    - name: constraints_increase_freedom
+      statement: good_guardrails_prevent_bad_decisions
+      rationale: fewer_choices_means_less_cognitive_load_and_faster_progress
+  
+  meta_axioms:
+    - name: axioms_can_conflict
+      statement: real_world_tradeoffs_require_judgment
+      resolution: explicit_priority_ordering_or_human_decision
+    
+    - name: axioms_evolve
+      statement: fundamental_truths_update_with_new_evidence
+      process: proposal_review_approval_as_per_self_improvement_section
+  
 rules:
+  unified_rules:
+    purpose: consolidated_quality_enforcement_across_all_domains
+    scope: applies_to_ruby_zsh_yaml_markdown_json_css_js
+    
+    core_mandate: every_line_must_justify_its_existence
+    
+    categories:
+      correctness:
+        description: code_must_execute_without_error_and_produce_expected_output
+        rules:
+          - every_function_must_be_callable
+          - every_parameter_must_be_used
+          - every_return_must_match_signature
+          - every_example_must_be_runnable
+          - no_unreachable_code
+          - no_undefined_references
+      
+      maintainability:
+        description: future_humans_must_understand_and_modify_safely
+        rules:
+          - functions_do_one_thing_only
+          - names_reveal_intent_without_comments
+          - abstractions_match_problem_domain
+          - dependencies_point_in_one_direction
+          - changes_propagate_predictably
+          - tests_document_expected_behavior
+      
+      security:
+        description: prevent_unauthorized_access_injection_and_data_leakage
+        rules:
+          - no_plaintext_secrets_in_code_or_config
+          - validate_all_external_input
+          - escape_all_user_content_in_output
+          - restrict_file_access_to_sandbox
+          - use_pledge_unveil_where_available
+          - audit_log_privileged_operations
+      
+      performance:
+        description: optimize_after_correctness_and_only_when_measured
+        rules:
+          - profile_before_optimizing
+          - avoid_premature_optimization
+          - cache_expensive_computations
+          - prefer_algorithms_with_better_complexity
+          - avoid_unnecessary_allocations
+      
+      consistency:
+        description: uniform_style_enables_tools_and_reduces_cognitive_load
+        rules:
+          - follow_language_idioms
+          - match_existing_patterns_in_codebase
+          - use_standard_library_when_available
+          - apply_same_naming_conventions_everywhere
+          - maintain_consistent_abstraction_levels
+  
   authorities:
     - robert_c_martin_clean_code
     - martin_fowler_refactoring
     - elements_of_style_strunk_white
   
   principles:
-    - do_one_thing
-    - one_level_of_abstraction
-    - few_arguments
-    - intention_revealing_names
-    - pronounceable_names
-    - searchable_names
-    - one_word_per_concept
-    - exceptions_over_error_codes
-    - specific_exception_types
-    - context_in_error_messages
-    - content_over_decoration
-    - why_not_what
-    - plain_english_over_jargon
+    - name: do_one_thing
+      description: functions_should_perform_a_single_well_defined_task
+      rationale: single_responsibility_makes_functions_easier_to_name_test_and_reuse
+      violation_example: function_that_validates_formats_and_saves_data
+      compliant_example: separate_validate_format_save_functions
+    
+    - name: one_level_of_abstraction
+      description: all_statements_in_a_function_should_operate_at_the_same_conceptual_level
+      rationale: mixing_high_and_low_level_details_obscures_the_algorithms_intent
+      violation_example: mixing_http_parsing_with_raw_socket_operations
+      compliant_example: parse_http_calls_read_socket_internally
+    
+    - name: few_arguments
+      description: functions_should_accept_three_or_fewer_parameters
+      rationale: more_arguments_increase_complexity_and_testing_combinations
+      violation_example: "create_user(name, email, age, address, phone, country, zip)"
+      compliant_example: "create_user(user_data) # user_data contains all fields"
+    
+    - name: intention_revealing_names
+      description: names_should_clearly_communicate_purpose_without_requiring_comments
+      rationale: self_documenting_code_reduces_maintenance_burden
+      violation_example: "d = 86400 # seconds in day"
+      compliant_example: "seconds_per_day = 86400"
+    
+    - name: pronounceable_names
+      description: names_should_be_speakable_in_conversation
+      rationale: team_communication_requires_names_that_can_be_discussed_verbally
+      violation_example: "gen_ymdhms"
+      compliant_example: "generate_timestamp"
+    
+    - name: searchable_names
+      description: names_should_be_unique_enough_to_find_with_grep
+      rationale: single_letter_variables_and_magic_numbers_are_impossible_to_search
+      violation_example: "for i in 1..7"
+      compliant_example: "for day_of_week in 1..days_per_week"
+    
+    - name: one_word_per_concept
+      description: use_consistent_terminology_throughout_codebase
+      rationale: synonyms_create_confusion_about_whether_concepts_differ
+      violation_example: using_fetch_retrieve_get_obtain_for_same_operation
+      compliant_example: consistently_use_fetch_for_all_data_retrieval
+    
+    - name: exceptions_over_error_codes
+      description: raise_exceptions_instead_of_returning_status_codes
+      rationale: exceptions_cannot_be_silently_ignored_and_separate_happy_path_from_error_handling
+      violation_example: "return -1 # error code"
+      compliant_example: "raise ArgumentError, 'invalid input'"
+    
+    - name: specific_exception_types
+      description: create_and_raise_custom_exception_classes_for_domain_errors
+      rationale: specific_types_enable_targeted_rescue_and_clearer_error_contracts
+      violation_example: "raise StandardError, 'user not found'"
+      compliant_example: "raise UserNotFoundError, user_id"
+    
+    - name: context_in_error_messages
+      description: error_messages_must_include_relevant_values_and_state
+      rationale: debugging_requires_understanding_what_values_caused_failure
+      violation_example: "raise 'invalid input'"
+      compliant_example: "raise ArgumentError, \"age #{age} must be 0-120\""
+    
+    - name: content_over_decoration
+      description: avoid_decorative_elements_like_ascii_art_borders_and_excessive_spacing
+      rationale: visual_noise_obscures_meaningful_content
+      violation_example: "# ============== SECTION =============="
+      compliant_example: "# Section"
+    
+    - name: why_not_what
+      description: comments_should_explain_rationale_not_restate_code
+      rationale: code_itself_shows_what_only_human_context_explains_why
+      violation_example: "# increment counter\ncounter += 1"
+      compliant_example: "# track retries for exponential backoff\ncounter += 1"
+    
+    - name: plain_english_over_jargon
+      description: prefer_common_words_over_technical_jargon_when_clarity_is_equivalent
+      rationale: broader_audience_can_understand_maintain_and_contribute
+      violation_example: "defenestrate_the_ephemeral_singleton"
+      compliant_example: "remove_temporary_instance"
   
   verbose_principles:
     do_one_thing:
@@ -752,6 +966,130 @@ rules:
     - horizontal_rule_decorators
     - emoji_headers
     - bracket_decorators
+  
+  defect_catalog:
+    purpose: structured_registry_of_code_quality_violations_with_remediation
+    
+    god_object:
+      description: class_with_too_many_responsibilities
+      detection:
+        - class_length_exceeds_300_lines
+        - public_methods_exceed_20
+        - collaborates_with_more_than_10_classes
+      severity: high
+      remediation:
+        - extract_cohesive_groups_of_methods_to_new_classes
+        - apply_single_responsibility_principle
+        - use_delegation_instead_of_inheritance
+      example: "User class that handles authentication, validation, database, email, logging"
+    
+    long_method:
+      description: method_that_does_too_much
+      detection:
+        - method_length_exceeds_20_lines
+        - cyclomatic_complexity_exceeds_10
+        - multiple_levels_of_nesting
+      severity: medium
+      remediation:
+        - extract_method_for_each_conceptual_step
+        - replace_loop_with_collection_method
+        - decompose_conditional_logic
+      example: "save method that validates, formats, writes, logs, notifies"
+    
+    feature_envy:
+      description: method_uses_another_objects_data_more_than_its_own
+      detection:
+        - multiple_calls_to_same_external_object
+        - few_or_no_references_to_self
+      severity: medium
+      remediation:
+        - move_method_to_envied_class
+        - extract_method_and_pass_specific_data
+      example: "calculate_total in Order repeatedly accesses LineItem fields"
+    
+    primitive_obsession:
+      description: using_primitives_instead_of_domain_objects
+      detection:
+        - string_or_int_used_for_domain_concept
+        - validation_scattered_across_codebase
+        - type_checking_with_pattern_matching
+      severity: medium
+      remediation:
+        - create_value_object_for_concept
+        - encapsulate_validation_in_object
+        - use_type_system_for_enforcement
+      example: "using String for email instead of Email class with validation"
+    
+    data_clump:
+      description: same_group_of_fields_appearing_together_repeatedly
+      detection:
+        - same_3_plus_parameters_in_multiple_methods
+        - same_fields_in_multiple_classes
+      severity: low
+      remediation:
+        - extract_class_for_grouped_data
+        - introduce_parameter_object
+      example: "street, city, state, zip appearing in many method signatures"
+    
+    duplicate_code:
+      description: identical_or_very_similar_code_in_multiple_places
+      detection:
+        - exact_string_match_across_files
+        - similar_ast_structure_with_different_names
+      severity: high
+      remediation:
+        - extract_method
+        - use_template_method_pattern
+        - apply_strategy_pattern
+      example: "same validation logic in controller and model"
+    
+    shotgun_surgery:
+      description: single_change_requires_editing_many_classes
+      detection:
+        - grep_shows_same_pattern_in_10_plus_files
+        - adding_feature_touches_unrelated_modules
+      severity: high
+      remediation:
+        - consolidate_scattered_responsibility
+        - introduce_mediator_or_facade
+        - move_behavior_to_single_location
+      example: "changing commission rate requires editing 12 files"
+    
+    inappropriate_intimacy:
+      description: classes_know_too_much_about_each_others_internals
+      detection:
+        - accessing_private_fields_of_another_class
+        - bidirectional_dependencies
+        - protected_methods_only_called_by_one_class
+      severity: medium
+      remediation:
+        - move_method_or_field
+        - hide_delegate
+        - replace_bidirectional_with_unidirectional
+      example: "Order directly manipulates Customer internal state"
+    
+    magic_numbers:
+      description: unexplained_numeric_or_string_literals
+      detection:
+        - numeric_literal_not_0_1_minus_1
+        - string_literal_used_as_key_or_status
+      severity: low
+      remediation:
+        - extract_to_named_constant
+        - use_enum_or_symbol
+      example: "if status == 3 # should be STATUS_ACTIVE = 3"
+    
+    dead_code:
+      description: code_that_is_never_executed
+      detection:
+        - unused_methods_or_classes
+        - unreachable_branches
+        - commented_out_code_blocks
+      severity: low
+      remediation:
+        - delete_completely
+        - archive_in_version_control_if_needed
+      example: "method defined but never called anywhere in codebase"
 
 axioms:
   foundational_truths:
