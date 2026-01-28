@@ -162,9 +162,41 @@ class SOSDilla
 
         %w[ffmpeg /usr/local/bin/ffmpeg]
 
+      when :windows
+
+        %w[ffmpeg ffmpeg.exe C:/cygwin64/bin/ffmpeg.exe C:/ffmpeg/bin/ffmpeg.exe]
+
       else
 
-        %w[ffmpeg /usr/bin/ffmpeg /usr/local/bin/ffmpeg]
+        %w[ffmpeg /usr/bin/ffmpeg /usr/local/bin/ffmpeg C:/cygwin64/bin/ffmpeg.exe]
+
+      end
+
+    end
+
+    def self.fluidsynth_paths
+
+      case detect
+
+      when :termux
+
+        %w[fluidsynth /data/data/com.termux/files/usr/bin/fluidsynth]
+
+      when :cygwin
+
+        %w[fluidsynth /usr/bin/fluidsynth /cygdrive/c/cygwin64/bin/fluidsynth.exe]
+
+      when :openbsd
+
+        %w[fluidsynth /usr/local/bin/fluidsynth]
+
+      when :windows
+
+        %w[fluidsynth fluidsynth.exe C:/cygwin64/bin/fluidsynth.exe]
+
+      else
+
+        %w[fluidsynth /usr/bin/fluidsynth /usr/local/bin/fluidsynth C:/cygwin64/bin/fluidsynth.exe]
 
       end
 
@@ -516,8 +548,149 @@ class SOSDilla
 
   end
 
+  # FLUIDSYNTH PROCESSOR for ambient pads and melodic synthesis
+  class FluidSynthProcessor
+
+    SOUNDFONT_PATHS = [
+      File.join(File.dirname(__FILE__), "FluidR3_GM.sf2"),
+      "G:/pub/media/dilla/FluidR3_GM.sf2",
+      "/usr/share/sounds/sf2/FluidR3_GM.sf2",
+      "/usr/local/share/sounds/sf2/FluidR3_GM.sf2"
+    ].freeze
+
+    # GM patch numbers for ambient sounds
+    PATCHES = {
+      pad_warm:      89,  # Pad 2 (warm)
+      pad_polysynth: 90,  # Pad 3 (polysynth)
+      pad_choir:     91,  # Pad 4 (choir)
+      pad_bowed:     92,  # Pad 5 (bowed)
+      pad_metallic:  93,  # Pad 6 (metallic)
+      pad_halo:      94,  # Pad 7 (halo)
+      pad_sweep:     95,  # Pad 8 (sweep)
+      strings:       49,  # String Ensemble 1
+      atmosphere:    99,  # FX 4 (atmosphere)
+      synth_bass:    38,  # Synth Bass 1
+      electric_piano: 5   # Electric Piano 2
+    }.freeze
+
+    attr_reader :soundfont
+
+    def initialize
+      @fluidsynth = find_fluidsynth
+      @soundfont = find_soundfont
+    end
+
+    def find_fluidsynth
+      Platform.fluidsynth_paths.each do |p|
+        begin
+          output = `#{p} --version 2>&1`
+          return p if $?.success? && output.include?('FluidSynth')
+        rescue
+        end
+      end
+      'fluidsynth'
+    end
+
+    def find_soundfont
+      SOUNDFONT_PATHS.each { |sf| return sf if File.exist?(sf) }
+      nil
+    end
+
+    def available?
+      begin
+        output = `#{@fluidsynth} --version 2>&1`
+        $?.success? && output.include?('FluidSynth') && @soundfont
+      rescue
+        false
+      end
+    end
+
+    # Generate ambient pad from MIDI notes
+    def pad(notes:, duration:, output:, patch: :pad_warm, velocity: 80, reverb: 0.6, chorus: 0.4)
+      return false unless available?
+      
+      midi_file = Tempfile.new(['pad', '.mid'])
+      wav_file = Tempfile.new(['pad', '.wav'])
+      
+      begin
+        # Create simple MIDI for the chord
+        write_midi(midi_file.path, notes, duration, PATCHES[patch] || 89, velocity)
+        
+        # Render with FluidSynth
+        cmd = %Q[#{@fluidsynth} -ni -g 1.0 -R #{reverb > 0 ? 1 : 0} -C #{chorus > 0 ? 1 : 0} "#{@soundfont}" "#{midi_file.path}" -F "#{output}" -r 48000]
+        system(cmd)
+        
+        File.exist?(output) && File.size(output) > 0
+      ensure
+        midi_file.close
+        midi_file.unlink
+      end
+    end
+
+    # Generate drone/atmosphere
+    def drone(root:, duration:, output:, patch: :atmosphere)
+      notes = [root, root + 7, root + 12]  # Root, fifth, octave
+      pad(notes: notes, duration: duration, output: output, patch: patch, velocity: 60, reverb: 0.8)
+    end
+
+    # Write simple MIDI file
+    def write_midi(path, notes, duration_sec, program, velocity)
+      # Simple MIDI format 0 writer
+      ticks_per_beat = 480
+      tempo = 500000  # 120 BPM microseconds per beat
+      duration_ticks = (duration_sec * 2 * ticks_per_beat).to_i
+
+      track_data = []
+      # Program change
+      track_data << [0, 0xC0, program]
+      # Note ons
+      notes.each_with_index do |note, i|
+        track_data << [i == 0 ? 0 : 0, 0x90, note, velocity]
+      end
+      # Note offs
+      notes.each_with_index do |note, i|
+        track_data << [i == 0 ? duration_ticks : 0, 0x80, note, 0]
+      end
+
+      File.open(path, 'wb') do |f|
+        # Header
+        f.write("MThd")
+        f.write([6, 0, 1, ticks_per_beat].pack('NnnN')[0,10])
+        f.write([6].pack('N'))
+        f.write([0, 1, ticks_per_beat].pack('nnn'))
+        
+        # Build track
+        track = []
+        # Tempo meta event
+        track += [0, 0xFF, 0x51, 3, (tempo >> 16) & 0xFF, (tempo >> 8) & 0xFF, tempo & 0xFF]
+        
+        track_data.each do |delta, *bytes|
+          track += encode_varlen(delta)
+          track += bytes
+        end
+        track += [0, 0xFF, 0x2F, 0]  # End of track
+        
+        f.write("MTrk")
+        f.write([track.length].pack('N'))
+        f.write(track.pack('C*'))
+      end
+    end
+
+    def encode_varlen(value)
+      return [0] if value == 0
+      bytes = []
+      bytes.unshift(value & 0x7F)
+      value >>= 7
+      while value > 0
+        bytes.unshift((value & 0x7F) | 0x80)
+        value >>= 7
+      end
+      bytes
+    end
+  end
+
   # MAIN CLASS
-  attr_reader :ffmpeg, :temp_dir, :output_dir
+  attr_reader :ffmpeg, :fluidsynth, :temp_dir, :output_dir
 
   def initialize
 
@@ -528,6 +701,8 @@ class SOSDilla
     FileUtils.mkdir_p(@output_dir)
 
     @ffmpeg = FFmpegProcessor.new
+
+    @fluidsynth = FluidSynthProcessor.new
 
     check_deps
 
@@ -552,6 +727,12 @@ class SOSDilla
     end
 
     puts "✓ FFmpeg ready (#{@ffmpeg.instance_variable_get(:@ffmpeg)}) on #{Platform.detect}"
+
+    if @fluidsynth.available?
+      puts "✓ FluidSynth ready with #{File.basename(@fluidsynth.soundfont)}"
+    else
+      puts "⚠ FluidSynth not available - using FFmpeg synthesis only"
+    end
 
   end
 

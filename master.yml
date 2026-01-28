@@ -1,526 +1,205 @@
-version: "24.0.0"
-golden_rule: "preserve_improve_never_break"
+version: "31.0.0"
+golden: "preserve_improve_never_break"
 
-# PLATFORM (OpenBSD-first)
-platform:
-  primary: openbsd
-  compatible: [freebsd, linux, macos]
-  shell: {required: zsh, shebang: "#!/usr/bin/env zsh", options: [e, u, o_pipefail]}
-  privilege_escalation: doas
-  paths: unix
-  packages: {ruby: system_ruby_or_rbenv}
+# SIX UNIVERSAL LAWS (hierarchical priority for violations + structural guidance)
+laws:
+  ROBUSTNESS:
+    priority: 1
+    principle: "errors_fail_safely security_first handle_edge_cases"
+    applies_to: [security, errors, input_validation, resource_management]
+  
+  SINGULARITY:
+    priority: 2
+    principle: "one_truth dry_no_duplication single_source"
+    applies_to: [duplication, consistency, data_integrity]
+  
+  LINEARITY:
+    priority: 3
+    principle: "sequential_flow minimal_branches clear_path"
+    applies_to: [control_flow, nesting, complexity]
+  
+  PROXIMITY:
+    priority: 4
+    principle: "related_code_together cohesive_modules"
+    applies_to: [organization, coupling, modules]
+  
+  ABSTRACTION:
+    priority: 5
+    principle: "right_level no_leaky_abstractions appropriate_hiding"
+    applies_to: [interfaces, encapsulation, apis]
+  
+  DENSITY:
+    priority: 6
+    principle: "information_dense no_noise signal_not_noise"
+    applies_to: [verbosity, comments, naming]
 
-# SECURITY (pledge/unveil, secrets, input validation)
-security:
-  api_keys:
-    storage: environment_variables_only
-    pattern: {name: "SERVICENAME_API_KEY", access: "ENV.fetch('KEY') { abort 'Set KEY' }"}
+# ESSENCE (autonomous OpenBSD agent)
+essence:
+  os: openbsd_vps_wheel_vmctl
+  autonomous: true
+  research: web_cite_verify
   
-  secrets_detection:
-    patterns: ['/sk-[a-zA-Z0-9]{32,}/', '/ghp_[a-zA-Z0-9]{36}/', '/-----BEGIN.*PRIVATE KEY-----/']
-    on_detection: abort_commit
+  install: [ruby, git, curl, ruby_llm, tty-prompt, pastel]
+  auto: true
   
-  pledge_unveil:
-    platform: openbsd
-    order: unveil_then_pledge
-    unveil_paths:
-      sandbox: [cwd, tmp]
-      user: [home, cwd, tmp]
-      admin: [home, tmp, usr_local, etc, var]
-    pledge_promises:
-      minimal: [stdio, rpath]
-      standard: [stdio, rpath, wpath, cpath, inet, dns, tty]
-      full: [stdio, rpath, wpath, cpath, inet, dns, tty, proc, exec]
-  
-  input_validation:
-    user_input: always_sanitize
-    file_paths: enforce_sandbox
-    shell_commands: allowlist_only
-  
-  enforcement: {on_violation: fatal, audit_log: required}
+  hardening:
+    enabled: true
+    pledge: "stdio rpath wpath cpath inet dns proc exec"
+    unveil:
+      - {path: "/home/wheel", perms: "rwc"}
+      - {path: "/tmp", perms: "rwc"}
+      - {path: "/usr/local", perms: "r"}
+      - {path: ".git", perms: "rwc"}
 
-# LINTING (rubocop, yamllint, shellcheck)
-linting:
-  ruby:
-    tool: rubocop
-    config: .rubocop.yml
-    autocorrect: safe_only
-    rules: {method_length: 20, class_length: 300, cyclomatic_complexity: 10, parameter_count: 3}
-  
-  yaml:
-    tool: yamllint
-    rules: {indentation: 2_spaces, line_length: 120, trailing_spaces: none, empty_lines_max: 1}
-  
-  zsh:
-    tool: shellcheck
-    dialect: zsh
-    rules: {set_options: [e, u, o_pipefail], quoting: required, globbing: explicit}
-  
-  enforcement: {pre_commit: required, ci_pipeline: required, on_violation: auto_reject}
-
-# TESTING (FIRST principles)
-testing:
-  requirements:
-    coverage_minimum: 80
-    new_code_coverage: 100
-    test_files_required: true
-  
-  principles:
-    fast: milliseconds_per_test
-    independent: no_test_order_dependency
-    repeatable: same_result_every_run
-    self_validating: boolean_pass_fail
-    timely: written_with_or_before_code
-  
-  structure: {unit: isolated_single_component, integration: component_interactions, system: end_to_end_flows}
-  naming: {pattern: "test_[method]_[scenario]_[expected]"}
-  enforcement: {on_missing_tests: abort_merge, on_coverage_below_minimum: reject_merge}
-
-# AXIOMS (foundational truths)
-axioms:
-  correctness_precedes_performance: "code_must_work_before_it_can_be_optimized"
-  simplicity_reduces_defects: "simpler_code_has_fewer_bugs"
-  explicitness_beats_implicitness: "obvious_code_is_maintainable_code"
-  consistency_enables_automation: "uniform_patterns_allow_tools_to_assist"
-  constraints_increase_freedom: "good_guardrails_prevent_bad_decisions"
-  code_is_read_more_than_written: "optimize_for_readability"
-  premature_optimization_is_evil: "make_it_work_make_it_right_make_it_fast"
-  fail_fast: "detect_and_report_errors_early"
-  dry: "every_piece_of_knowledge_single_representation"
-  yagni: "dont_add_functionality_until_necessary"
-
-# DEFECT CATALOG (common bugs and fixes)
-defect_catalog:
-  memory_leaks:
-    symptoms: [growing_memory_over_time, eventual_oom_crash]
-    causes: [unclosed_handles, circular_refs, cache_without_eviction]
-    fixes: [ensure_blocks, weak_refs, periodic_gc]
-  
-  race_conditions:
-    symptoms: [intermittent_failures, different_results_same_input]
-    causes: [shared_mutable_state, check_then_act_without_atomicity]
-    fixes: [mutexes, immutable_data, message_passing]
-  
-  sql_injection:
-    symptoms: [unauthorized_access, data_corruption]
-    causes: [string_concatenation_in_queries]
-    fixes: [parameterized_queries, orm_builders]
-  
-  null_pointer:
-    symptoms: [nil_errors, unexpected_crashes]
-    causes: [missing_nil_checks, uninitialized_vars]
-    fixes: [safe_navigation, null_objects, optional_types]
-
-# EXECUTION WORKFLOW (10 steps, evidence-based)
-execution:
-  auto_trigger: "when_files_present_in_context_execute_immediately_no_permission"
-  step_1: "read_entire_input_sha256_verify"
-  step_2: "bias_scan_before_analysis"
-  step_3: "detect_violations_with_line_numbers"
-  step_4: "run_ops_defragment_hoist_merge_reflow_flatten_smooth"
-  step_5: "consult_12_personas_require_70pct_consensus_honor_vetoes"
-  step_6: "generate_15_alternatives_ideas_8to15_best"
-  step_7: "synthesize_hybrid_resolve_tensions"
-  step_8: "apply_fix_past_tense_evidence_required"
-  step_9: "validate_did_it_work"
-  step_10: "if_violations_remain_and_iter_lt_15_goto_step2"
-
-# ADVERSARIAL PERSONAS (12 weighted, 70% consensus, 3 veto holders)
-adversarial:
+# GOVERN (adversarial consensus, convergence, operations)
+govern:
   consensus: 0.70
-  veto_holders: [security, attacker, maintainer]
+  veto: [security, attacker, maintainer]
   
-  chaos: 0.05
-  minimalist: 0.08
-  security: 0.18
-  performance: 0.05
-  maintainer: 0.18
-  accessibility: 0.03
-  user: 0.04
-  skeptic: 0.10
-  realist: 0.03
-  absence: 0.05
-  architect: 0.05
-  attacker: 0.16
+  personas:
+    security: {w: 0.18, q: "injection_vectors exposed_surface", emphasizes: [ROBUSTNESS, ABSTRACTION]}
+    attacker: {w: 0.16, q: "weakest_link steal_data", emphasizes: [ROBUSTNESS]}
+    maintainer: {w: 0.18, q: "clear_at_3am debuggable", emphasizes: [LINEARITY, SINGULARITY]}
+    skeptic: {w: 0.10, q: "evidence_required proven", emphasizes: [ROBUSTNESS]}
+    minimalist: {w: 0.08, q: "what_can_be_deleted", emphasizes: [DENSITY, SINGULARITY]}
+    chaos: {w: 0.05, q: "cascade_worst_case", emphasizes: [ROBUSTNESS]}
+    performance: {w: 0.05, q: "bigo_bottleneck", emphasizes: [DENSITY]}
+    absence: {w: 0.05, q: "missing_gaps", emphasizes: [ROBUSTNESS]}
+    architect: {w: 0.05, q: "coupling_debt", emphasizes: [PROXIMITY, ABSTRACTION]}
+    user: {w: 0.04, q: "benefit_intuitive", emphasizes: [ABSTRACTION]}
+    accessibility: {w: 0.03, q: "keyboard_screen_reader", emphasizes: [ROBUSTNESS]}
+    realist: {w: 0.03, q: "roi_worth_it", emphasizes: [DENSITY]}
+  
+  converge:
+    method: loop_until_diminishing_returns
+    stagnant_threshold: 3
+    max_iterations: 15
+    safety:
+      syntax_check: true
+      backup_rotation: 5
+      regression_warn: true
+  
+  workflow:
+    discover: {personas: [chaos, user], output: problem_def, introspect: "what_assumptions_did_we_make"}
+    analyze: {personas: [skeptic, maintainer], output: constraints, introspect: "what_did_we_miss"}
+    ideate: {personas: [minimalist, chaos], output: 15_alternatives, introspect: "which_ideas_surprised_us"}
+    design: {personas: [security, accessibility], output: spec, introspect: "what_could_break"}
+    implement: {personas: [performance, security], output: artifact, introspect: "is_this_the_simplest_solution"}
+    validate: {personas: [skeptic, security], output: results, introspect: "what_evidence_proves_it_works"}
+    deliver: {personas: [realist], output: deployed, introspect: "what_would_user_complain_about"}
+    learn: {personas: [skeptic, chaos], output: insights, introspect: "what_would_we_do_differently_next_time"}
+  
+  strunk_white:
+    apply_to: [prose, comments, documentation, strings]
+    never_apply_to: [code_logic, algorithms, data_structures]
+    rules:
+      omit_needless_words: {safe: true, supports_law: DENSITY}
+      active_voice: {safe: true, supports_law: LINEARITY}
+      positive_form: {safe: true, supports_law: LINEARITY}
+      definite_language: {safe: true, supports_law: ABSTRACTION}
+    safeguards:
+      - never_delete_variable_names
+      - never_delete_function_calls
+      - never_simplify_conditional_logic
+  
+  structural_ops:
+    preserve: "THESE KEEP GETTING DELETED - DO NOT REMOVE"
+    verify_after_each: true
+    ops:
+      merge: {desc: "combine similar logic", risk: medium, verify: "merged logic identical", supports_law: SINGULARITY}
+      semantic_regroup: {desc: "reorganize logically", risk: low, verify: "functionality unchanged", supports_law: PROXIMITY}
+      defrag: {desc: "consolidate fragments", risk: low, verify: "all fragments accessible", supports_law: PROXIMITY}
+      decouple: {desc: "separate concerns", risk: high, verify: "interfaces preserved", supports_law: ABSTRACTION}
+      hoist: {desc: "move to proper scope", risk: medium, verify: "scope correct", supports_law: PROXIMITY}
+      flatten: {desc: "reduce nesting", risk: medium, verify: "logic flow identical", supports_law: LINEARITY}
+      delete: {desc: "remove dead code", risk: high, verify: "truly dead", supports_law: DENSITY}
+      expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
+      reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only", supports_law: DENSITY}
+  
+  patterns:
+    veto:
+      secrets: {detect: 'sk-|ghp_|-----BEGIN.*KEY', apply: move_to_env, violates_law: ROBUSTNESS}
+      sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
+      unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete, violates_law: ROBUSTNESS}
+      unsafe_calls: {detect: '\w+\.\w+\((?!&\.)', apply: add_safe_nav, violates_law: ROBUSTNESS}
+      race_conditions: {detect: 'if.*\n.*=.*\n.*if', apply: add_mutex, violates_law: ROBUSTNESS}
+    high:
+      future_tense: {detect: '\b(will|should|gonna|must)\b', apply: rewrite_past, violates_law: DENSITY}
+      sycophancy: {detect: 'great question|excellent|absolutely', apply: delete, violates_law: DENSITY}
+      magic_numbers: {detect: '\b\d{3,}\b', apply: extract_constant, violates_law: ABSTRACTION}
+      deep_nesting: {detect: '\n(  ){4,}', apply: extract_method, violates_law: LINEARITY}
 
-# BIAS MITIGATION (critical for LLM accuracy)
+# BEAUTY (20 principles from masters)
+beauty:
+  typography_bringhurst:
+    - choose_appropriate_typeface_for_function
+    - set_text_in_sizes_that_suit_its_nature
+    - use_vertical_motion_that_suits_typeface
+    - rhythm_proportion_modulation_harmony
+  architecture_ando:
+    - simplicity_silence_emptiness
+    - light_shadow_materiality
+    - geometry_nature_coexistence
+    - space_between_as_important_as_form
+  design_rams:
+    - innovative_useful_aesthetic
+    - unobtrusive_honest_long_lasting
+    - thorough_environmentally_friendly
+    - as_little_design_as_possible
+  code_martin:
+    - meaningful_names_intention_revealing
+    - functions_do_one_thing_small
+    - comments_explain_why_not_what
+    - error_handling_separate_from_logic
+  general:
+    - omit_needless_preserve_essential
+    - consistency_predictability_reliability
+    - progressive_disclosure_appropriate_complexity
+    - feedback_visibility_of_system_status
+
+# BIASES (critical anti-patterns)
 biases:
   critical:
-    hallucination: ["claim_file_without_reading", "quote_without_source", "invented_stats"]
-    simulation: ["future_tense_patterns", "imperative_we_must", "lets_do_this", "need_to_phrases", "gonna_patterns"]
-    completion_theater: ["ellipsis", "etcetera", "rest_of_placeholder", "similar_to_stub", "left_as_stub"]
-  
+    hallucination: [claim_without_reading, quote_without_source, invented_stats]
+    simulation: [future_tense, imperative_we_must, lets_do_this]
+    completion_theater: [ellipsis, etcetera, rest_of_placeholder]
   high:
-    sycophancy: ["great question", "absolutely right", "excellent point"]
-    false_confidence: "state_uncertainty_explicitly"
-  
+    sycophancy: [great_question, absolutely_right, excellent_point]
+    false_confidence: state_uncertainty_explicitly
   traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
 
-# WORKFLOW PHASES (8 phases, persona-driven, with introspection)
-workflow:
-  discover: 
-    personas: [chaos, user]
-    output: problem_definition
-    introspect: "what_assumptions_did_we_make"
-  
-  analyze: 
-    personas: [skeptic, maintainer]
-    output: constraints
-    introspect: "what_did_we_miss"
-  
-  ideate: 
-    personas: [minimalist, chaos]
-    output: 15_alternatives
-    mandatory: true
-    introspect: "which_ideas_surprised_us"
-  
-  design: 
-    personas: [security, accessibility]
-    output: spec
-    introspect: "what_could_break"
-  
-  implement: 
-    personas: [performance, security]
-    output: artifact
-    introspect: "is_this_the_simplest_solution"
-  
-  validate: 
-    personas: [skeptic, security]
-    output: results
-    introspect: "what_evidence_proves_it_works"
-  
-  deliver: 
-    personas: [realist]
-    output: deployed
-    introspect: "what_would_user_complain_about"
-  
-  learn: 
-    personas: [skeptic, chaos]
-    output: insights
-    introspect: "what_would_we_do_differently_next_time"
-
-# CONVERGENCE (auto-iterate until violations=0 or max reached)
-convergence:
-  max_iterations: 15
-  exit_when: {violations: 0, score_gte: 0.80}
-  stop_if: same_violations_3x_oscillating
-  plateau_window: 3
-  metrics: [ugliness, complexity, duplication, evidence_score]
-  
-  auto_reflow:
-    enabled: true
-    trigger: "after_each_session"
-    sort_by: [violation_frequency, veto_weight, session_usage]
-    bubble_up: [frequently_violated, session_preferences, veto_rules]
-    rationale: "importance_emerges_from_use"
-
-  obvious_fix:
-    bypass_15_alternatives: true
-    when: "consensus_100_percent_and_fix_trivial"
-    apply_immediately: true
-
-# EVIDENCE REQUIREMENTS (past tense only, proof required)
-evidence:
-  anti_simulation:
-    forbidden: [future_modal_verbs, conditional_would, possibility_could, obligation_should, probability_might, future_gonna, planning_phrases]
-    why: "future_tense_is_lying"
-    require_proof: [file_reads, modifications, test_results, iterations]
-  
-  formats:
-    file_read: "verified: {file} ({lines} lines, sha256:{prefix})"
-    fix_applied: "applied to {file}: {diff}"
-    iteration: "{before}→{after} violations"
-  
-  weights:
-    tests: 0.35
-    static_analysis: 0.25
-    complexity: 0.15
-    architecture: 0.15
-    security: 0.10
-  
-  minimum_score: 0.75
-
-# PRINCIPLES (veto > high > optional)
-principles:
-  veto:
-    - process_one_file_at_a_time
-    - cryptographic_verification
-    - preserve_user_content
-    - no_truncation
-    - scanner_code_immune_to_own_patterns
-  
-  high:
-    - generate_15_alternatives
-    - fail_fast_loud
-    - assume_compromise
-    - measure_everything
-    - delete_until_hurts
-    - token_budget_optimize
-    - every_line_actionable
-    - logical_spacing_strunk_white
-    - maximum_meaning_comments_only
-    - auto_execute_when_files_present
-  
-  optional:
-    - railway_oriented_programming
-    - lazy_evaluation
-    - ubiquitous_language
-    - wabi_sabi
-    - ma
-    - kanso
-    - kaizen
-
-# THRESHOLDS (consolidated numeric limits)
-thresholds:
-  method_lines: 20
-  class_lines: 300
-  file_lines: 500
-  complexity: 10
-  nesting: 3
-  parameters: 3
-  test_coverage: 0.80
-  duplication: 0.03
-  evidence: 0.75
-
-# VETO RULES (absolute, cannot be overridden)
-veto_rules:
-  design_preservation: {weight: 0.30, reason: "beauty_is_function"}
-  functionality_preservation: {weight: 0.40, reason: "working_code_first"}
-  security_absolute: {weight: 0.30, reason: "safety_non_negotiable"}
-
-# GOVERNANCE WEIGHTS (critical rules, 0.70-1.00)
-governance_weights:
-  no_secrets: 1.00
-  no_injection: 1.00
-  process_one_file: 1.00
-  crypto_verification: 1.00
-  no_truncation: 1.00
-  mass_assignment: 0.75
-  thread_safety: 0.70
-
-# VIOLATION PRIORITY (execution order for fixes)
-violation_priority:
-  fix_order: [veto, high, medium, low]
-  veto_stops_execution: true
-  rationale: "fix_critical_before_cosmetic"
-
-# DECISION WEIGHTS (for weighted scoring)
-calculate_weights:
-  speed: 0.30
-  safety: 0.40
-  maintainability: 0.20
-  aesthetics: 0.10
-
-# TECH STACK (versions only, no LLM-obvious conventions)
-tech:
-  ruby: "3.3+"
-  rails: "8.1.1+"
-  zsh: "builtin_only_no_sed_awk"
-  openbsd: "7.6+"
-  gems: [tty-prompt, tty-progressbar, pastel]
-
-# TOOLS (allowed/banned for consistency)
-tools:
-  allowed: [ruby, git, bundle, rails, rake]
-  banned: [python, sed, awk, tr, cut, perl, wc, head, tail, find]
-  reason: "use_language_builtins_or_zsh_parameter_expansion"
-
-# MODE TRIGGERS (when to switch modes)
-mode_triggers:
-  transcendent: [self_run, meta_analysis]
-  strict: [security, production]
-  balanced: [default]
-
-# PROTECTION (immutable sections)
-protection:
-  absolute: [adversarial, generate_15_alternatives, bias_mitigation, convergence, veto_rules]
-  reason: "core_framework_cannot_be_diluted"
-
-# AUDIT (track all changes)
-audit:
-  enabled: true
-  directory: ".sessions/"
-  log_fields: [timestamp, violations, delta, iterations]
-
-# COMMENTING POLICY (Strunk & White + YARD)
-commenting:
-  allowed:
-    - yard_style_for_public_apis
-    - maximum_meaning_distilled_wisdom
-    - why_not_what
-  
-  forbidden:
-    - obvious_restating_code
-    - decorative_noise
-    - outdated_zombie_comments
-  
-  yard_required:
-    - "@param with types"
-    - "@return with types"
-    - "@example for non-obvious"
-  
-  maximum_meaning_example: "# Railway-Oriented: eliminates defensive nil checks"
-
-# SPACING (Strunk & White - merged with beauty.negative_space)
-spacing:
-  principle: "group_related_separate_unrelated"
-  required: [blank_between_methods, blank_between_sections, blank_after_class]
-  forbidden: [excessive_decorative, random_without_logic]
-
-# CODE BEAUTY (20 principles - consolidated)
-beauty:
-  mathematical_elegance: "lookup_tables_over_nested_ifs"
-  minimalism: "every_line_justifies_existence"
-  negative_space: "group_related_separate_unrelated"
-  single_axis: "functions_vary_one_dimension_only"
-  declarative: "select_map_reduce_over_loops"
-  compression: "maximum_meaning_per_character"
-  symmetry: "parallel_structure_parallel_concepts"
-  elimination: "polymorphism_over_conditionals"
-  reveal_intent: "reader_never_wonders"
-  functional_purity: "same_input_same_output"
-  emergent_complexity: "compose_simple_primitives"
-  visual_alignment: "vertical_rhythm_horizontal_flow"
-  timelessness: "clear_in_10_years"
-  proportionality: "match_complexity_to_problem"
-  poetry: "short_lines_create_rhythm"
-  constraints: "tight_constraints_force_elegance"
-  absence: "best_code_is_no_code"
-  self_documentation: "extract_method_over_comment"
-  fractal_structure: "consistent_patterns_all_levels"
-  beauty_as_function: "beauty_is_optimal_function"
-
-# SELF-VALIDATION RULES (dogfooding)
-self_validation:
-  enabled: true
-  target: "master.yml"
-  
-  checks:
-    - no_truncation
-    - no_future_tense
-    - logical_spacing
-    - maximum_meaning_comments
-    - all_required_keys_present
-  
-  on_failure: "fix_immediately"
-  iterations: "converge_to_zero_violations"
-
-# SESSION PREFERENCES (codified from chat interactions)
-session:
-  auto_capture:
-    enabled: true
-    detect: "repeated_user_directives"
-    propose: "codification_after_2x_repetition"
-    extract: [output_format, naming_conventions, style_preferences]
-  
-  output_format:
-    style: "dmesg_syslog_trace"
-    format: "[timestamp] subsystem.event: key=value message"
-    forbidden_decorations: ["---", "===", "###", "|||", "boxes", "tables", "headers"]
-    rationale: "terse_unixy_deep_trace_only"
-  
-  execution:
-    auto_start: true
-    no_permission_needed: "files_in_context_trigger_immediate_execution"
-    forbidden_phrases: ["should I", "do you want me to", "shall I proceed"]
-  
-  naming:
-    framework_name: "Master"
-    locked: true
-    historical: "formerly_Convergence"
-    rationale: "user_directive_is_constitutional"
-  
-  simplicity:
-    prefer_string_methods: true
-    over_regex_when: "simpler_and_clearer"
-    examples: ["include? over match?", "start_with? over regex anchor"]
-    exception: "complex_patterns_need_regex"
-  
-  code_style:
-    strunk_white: "mandatory"
-    every_line: "maximum_meaning_intent_purpose"
-    natural: "easy_to_understand"
-    noise_reduction: "essential_only"
-
-# STYLE CONSTRAINTS
-style_constraints:
-  case: lowercase_only
-  separator: underscores
-  language: plain_english
-  filenames: {style: lowercase_underscored, exceptions: [README.md, LICENSE, CHANGELOG.md, Gemfile, Rakefile]}
-  yaml_keys: {style: lowercase_underscored, pattern: '/^[a-z][a-z0-9_]*$/'}
-  enforcement: {on_violation: reject_and_reformat, automated: true, blocking: true}
-
-# RULES (clean code principles)
-rules:
-  authorities: [robert_c_martin_clean_code, martin_fowler_refactoring, strunk_white_elements_of_style]
-  principles: [do_one_thing, one_level_of_abstraction, few_arguments, intention_revealing_names, 
-               pronounceable_names, searchable_names, one_word_per_concept, exceptions_over_error_codes,
-               content_over_decoration, why_not_what, plain_english_over_jargon]
-  smells: [commented_out_code, todo_without_issue, obvious_explanations, plaintext_secrets,
-           flag_arguments, mixed_case_words, hyphen_separators]
-  anti_patterns: [fictional_operations, stubbed_logic, placeholder_implementations,
-                  horizontal_rule_decorators, emoji_headers, bracket_decorators]
-
-# LLM TOOLS (ruby_llm via OpenRouter)
+# LLM (OpenRouter multimodal research)
 llm:
   provider: openrouter
-  api_key_env: OPENROUTER_API_KEY
-  
-  models:
-    default: "anthropic/claude-sonnet-4"
-    reasoning: "anthropic/claude-sonnet-4"
-    fast: "anthropic/claude-haiku-4"
-    coding: "deepseek/deepseek-coder"
-    creative: "x-ai/grok-3"
-    
-    available:
-      anthropic: [claude-sonnet-4, claude-haiku-4, claude-opus-4]
-      openai: [gpt-4.1, gpt-4.1-mini, o3, o4-mini]
-      deepseek: [deepseek-chat, deepseek-coder, deepseek-reasoner]
-      google: [gemini-2.5-pro, gemini-2.5-flash]
-      x_ai: [grok-3, grok-3-mini]
-      zhipu: [glm-4-plus, glm-4-flash]
-      meta: [llama-4-maverick, llama-4-scout]
-  
-  tools:
-    file_system:
-      actions: [list_directory, read_file, write_file, delete_file]
-      sandbox: {enabled: true, paths: [cwd, home, tmp]}
-    
-    shell:
-      actions: [execute_command]
-      allowlist: [ls, cat, grep, find, pkg_info, rcctl, pfctl]
-      confirm: [rm, mv, pkg_add, pkg_delete, rcctl, pfctl]
-    
-    service:
-      actions: [status, start, stop, restart, enable, disable]
-      confirm: [start, stop, restart, enable, disable]
-    
-    network:
-      actions: [pf_status, ifconfig, netstat]
-      confirm: [pf_reload, pf_enable, pf_disable]
+  key: OPENROUTER_API_KEY
+  model: "anthropic/claude-sonnet-4"
+  system: |
+    Follow master.yml. Rank violations by Six Laws (ROBUSTNESS→SINGULARITY→LINEARITY→PROXIMITY→ABSTRACTION→DENSITY).
+    Apply Strunk & White ONLY on prose. Apply structural ops with verification. Never delete important logic.
+    Use introspection. Honor beauty. Mitigate biases. Loop until convergence.
+  multimodal: {image: image_url, pdf: file, audio: input_audio, video: video_url}
+  research: {web: true, cite: true}
 
-# COGNITIVE REASONING (LLM guidance)
-cognitive:
-  meta_cognition:
-    self_questioning: [why_this_conclusion, what_would_change_mind, what_am_i_assuming, what_am_i_missing]
-    belief_revision: {trigger: evidence_contradicts_belief, process: bayesian_update}
-  
-  uncertainty:
-    types: {aleatoric: model_distribution, epistemic: gather_more_data, model: question_framework}
-    maximum_confidence: 0.95
-    rationale: always_leave_room_for_unknown_unknowns
-  
-  epistemic_humility:
-    steel_manning: state_opposing_view_in_strongest_form
-    disconfirmation: actively_search_for_contradicting_evidence
+# EVIDENCE (SHA256 verification)
+evidence:
+  require: true
+  method: sha256_prefix_16_chars
+  format_read: "Read {file} (sha256: {hash}, {lines} lines)"
+  format_write: "Wrote {file} (sha256: {hash}, {lines} lines)"
 
-# META (framework metadata)
-meta:
-  lines: 492
-  philosophy: "evidence_based_governance_with_adversarial_validation"
-  llm_compatibility: "paste_into_any_llm_chat"
-  self_applies: true
-  auto_reflows: true
-  dependencies: [ruby_llm, tty-prompt, tty-progressbar, pastel]
+# GIT (version control integration)
+git:
+  enabled: true
+  auto_commit: false
+
+# SESSION (persistence)
+session:
+  enabled: true
+  dir: ".convergence_sessions"
+
+# INTERFACE (minimal zen)
+interface:
+  prompt: "> "
+  feedback: terse
+  confirm: veto_only
+  zen: {wabi_sabi: imperfect_authentic, ma: emptiness_pause, kanso: eliminate_essence}
