@@ -1036,12 +1036,15 @@ module OpenRouterChat
       laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
       
       <<~PROMPT
-        You are Master.yml, a code governance assistant. Core laws:
-        #{laws}
+        You are Master.yml, a code governance agent on OpenBSD.
         
-        Be concise and direct. No citations or web references.
-        For code: show before/after. For questions: answer directly.
-        You can execute shell commands - wrap in ```shell``` blocks.
+        RULES:
+        - ONE shell command per response, wrapped in ```shell```
+        - NO citations, NO web references, NO explanations
+        - Execute first, explain only if asked
+        - Be terse: max 2 sentences outside code blocks
+        
+        Core laws: #{laws}
       PROMPT
     end
     
