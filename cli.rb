@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# encoding: utf-8
+
+# Force UTF-8 encoding for OpenBSD compatibility
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
 
 # CONVERGENCE v1.4.0
 # Constitutional AI governance framework
@@ -1029,7 +1034,7 @@ class Scanner
     violations = []
 
     # Pattern-based rules (work on all files)
-    content = File.read(path)
+    content = File.read(path, encoding: "UTF-8")
     lines = content.lines
 
     @registry.each do |rule|
