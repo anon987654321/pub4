@@ -1619,7 +1619,7 @@ class CLI
       response = result.value
       
       # Check for tool calls in response
-      if response.include?("```shell") || response.include?("```zsh")
+      if response.include?("```shell") || response.include?("```zsh") || response.include?("```ruby")
         handle_tool_response(response)
       else
         puts response
@@ -1632,24 +1632,33 @@ class CLI
   end
   
   def handle_tool_response(response)
-    # Extract and optionally execute shell commands
     puts response
     
-    # Find shell blocks
+    # Auto-execute shell/zsh blocks
     response.scan(/```(?:shell|zsh|bash)\n(.*?)```/m) do |match|
       command = match[0].strip
       next if command.empty?
       
-      print "\nexecute? [y/N] "
-      answer = gets&.strip&.downcase
+      puts "\n→ #{command}"
+      output = `#{command} 2>&1`
+      puts output unless output.empty?
       
-      if answer == "y"
-        puts "→ #{command}"
-        output = `#{command} 2>&1`
-        puts output
-        
-        # Feed result back to LLM
-        OpenRouterChat.chat("Command output:\n```\n#{output}\n```")
+      # Feed result back to LLM for continuous operation
+      OpenRouterChat.chat("Executed. Output:\n```\n#{output}\n```") unless output.strip.empty?
+    end
+    
+    # Auto-execute ruby blocks
+    response.scan(/```ruby\n(.*?)```/m) do |match|
+      code = match[0].strip
+      next if code.empty?
+      next if code.include?("def ") # Skip method definitions (examples)
+      
+      puts "\n→ ruby: #{code.lines.first.strip}..."
+      begin
+        result = eval(code)
+        puts result.inspect if result
+      rescue => e
+        puts "error: #{e.message}"
       end
     end
   end
