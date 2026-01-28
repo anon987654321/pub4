@@ -391,6 +391,10 @@ class UIHandler
                               • Example: /export report.json
         /weights              Calculate quality weights for current directory
                               • Analyzes code correctness, maintainability, security
+        /codify <text>        Auto-codify wishlist items to YAML
+                              • Extracts bullet/numbered lists
+                              • Saves to .sessions/wishlist_*.yml
+        /quiet                Toggle quiet mode (suppress logs)
         /version              Show version and governance information
         /quit                 Exit the application
       
@@ -398,6 +402,7 @@ class UIHandler
         > /level sandbox       # Switch to sandbox mode
         > /export out.json     # Export governance report
         > /weights             # Show quality metrics
+        > /codify "- Add feature X\\n- Fix bug Y"  # Codify wishlist
       
       Natural Language (requires OPENROUTER_API_KEY):
         > show me the config
@@ -467,7 +472,10 @@ end
 
 # Main CLI
 class CLI
-  def initialize
+  attr_reader :quiet
+  
+  def initialize(quiet: false)
+    @quiet = quiet
     @config = Config.load
     @governance = Governance.new
     OpenBSDSecurity.apply(@config.access_level)
@@ -505,6 +513,8 @@ class CLI
     when "export"  then export_governance(parts[1])
     when "weights" then show_weights
     when "version" then show_version
+    when "quiet"   then toggle_quiet
+    when "codify"  then chat_codification(parts[1])
     when "quit"    then exit
     else @ui.show_error("Unknown command: /#{parts[0]} (try /help)")
     end
@@ -517,6 +527,11 @@ class CLI
       puts "Example: export OPENROUTER_API_KEY='your-key-here'"
       return
     end
+    
+    if auto_detect_wishlist(msg)
+      log "[Auto-detected wishlist - use /codify to process]"
+    end
+    
     @ui.show_info("[LLM integration pending - will support natural language code operations]")
   end
 
@@ -609,6 +624,77 @@ class CLI
       Ruby Version:       #{RUBY_VERSION}
     VERSION_INFO
   end
+  
+  def log(msg)
+    puts msg unless @quiet
+  end
+  
+  def toggle_quiet
+    @quiet = !@quiet
+    puts "Quiet mode: #{@quiet ? 'on' : 'off'}"
+  end
+  
+  def auto_detect_wishlist(msg)
+    msg.match?(/wishlist|todo|implement|add.*feature/i)
+  end
+  
+  def chat_codification(text)
+    return log "Usage: /codify <text>" unless text
+    
+    items = extract_wishlist_items(text)
+    return log "No wishlist items found" if items.empty?
+    
+    timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+    yaml_output = codify_to_yaml(items, timestamp)
+    log "\n--- Generated YAML ---"
+    log yaml_output
+    log "--- End YAML ---\n"
+    
+    save_codification(yaml_output, timestamp)
+  end
+  
+  def extract_wishlist_items(text)
+    items = []
+    # Match bullet points: - item or * item
+    text.scan(/^[-*]\s+(.+)$/).each do |match|
+      items << match[0].strip if match[0]
+    end
+    # Match numbered lists: 1. item
+    text.scan(/^\d+\.\s+(.+)$/).each do |match|
+      items << match[0].strip if match[0]
+    end
+    items
+  end
+  
+  def codify_to_yaml(items, timestamp = Time.now.strftime("%Y%m%d_%H%M%S"))
+    output = {
+      "wishlist_codification" => {
+        "generated_at" => timestamp,
+        "items" => items.map.with_index(1) do |item, idx|
+          {
+            "id" => idx,
+            "description" => item,
+            "status" => "pending",
+            "priority" => "normal"
+          }
+        end
+      }
+    }
+    YAML.dump(output)
+  end
+  
+  def save_codification(yaml_content, timestamp = Time.now.strftime("%Y%m%d_%H%M%S"))
+    dir = ".sessions"
+    
+    begin
+      FileUtils.mkdir_p(dir)
+      filename = "#{dir}/wishlist_#{timestamp}.yml"
+      File.write(filename, yaml_content)
+      log "Saved to: #{filename}"
+    rescue => e
+      log "Error saving: #{e.message}"
+    end
+  end
 end
 
-CLI.new.run if __FILE__ == $0
+CLI.new(quiet: ENV["QUIET"] == "true").run if __FILE__ == $0
