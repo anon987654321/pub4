@@ -22,11 +22,11 @@ require "uri"
 module C
   ENABLED = $stdout.tty? && ENV['TERM'] && ENV['TERM'] != 'dumb'
   
-  def self.g(s) ENABLED ? "\e[32m#{s}\e[0m" : s end
-  def self.r(s) ENABLED ? "\e[31m#{s}\e[0m" : s end
-  def self.y(s) ENABLED ? "\e[33m#{s}\e[0m" : s end
-  def self.d(s) ENABLED ? "\e[90m#{s}\e[0m" : s end
-  def self.b(s) ENABLED ? "\e[1m#{s}\e[0m" : s end
+  def self.g(s) ENABLED ? "[32m#{s}[0m" : s end
+  def self.r(s) ENABLED ? "[31m#{s}[0m" : s end
+  def self.y(s) ENABLED ? "[33m#{s}[0m" : s end
+  def self.d(s) ENABLED ? "[90m#{s}[0m" : s end
+  def self.b(s) ENABLED ? "[1m#{s}[0m" : s end
 end
 
 # Graceful AST/RuboCop dependency handling
@@ -255,10 +255,12 @@ module StateManager
         - Veto Count: #{progress[:veto]} #{progress[:veto].zero? ? '✓' : '✗'}
         
         ## Blockers
-        #{progress[:blockers].empty? ? '- None' : progress[:blockers].map { |b| "- #{b}" }.join("\n")}
+        #{progress[:blockers].empty? ? '- None' : progress[:blockers].map { |b| "- #{b}" }.join("
+")}
         
         ## Next Steps
-        #{progress[:next_steps].map { |s| "- #{s}" }.join("\n")}
+        #{progress[:next_steps].map { |s| "- #{s}" }.join("
+")}
       CTX
       
       File.write(".convergence_context.md", context)
@@ -330,7 +332,9 @@ module ViolationTracker
       recurring = analyze_recurrence(file)
       return nil if recurring.empty?
       
-      "⚠ Recurring violations detected:\n" + recurring.map { |k, v| "  #{k}: #{v}x" }.join("\n")
+      "⚠ Recurring violations detected:
+" + recurring.map { |k, v| "  #{k}: #{v}x" }.join("
+")
     end
   end
 end
@@ -351,15 +355,21 @@ module ContextInjector
       content = File.read(file)
       
       # Remove old header
-      content.sub!(/^# CONVERGENCE:.*?\n(?:# LAST_SCAN:.*?\n)?(?:# PERSONAS:.*?\n)?/, '')
+      content.sub!(/^# CONVERGENCE:.*?
+(?:# LAST_SCAN:.*?
+)?(?:# PERSONAS:.*?
+)?/, '')
       
       # Build new header
       breakdown = violations.group_by(&:law).transform_values(&:count)
       breakdown_str = breakdown.map { |l, c| "#{l}:#{c}" }.join(' ')
       
-      header = "# CONVERGENCE: #{violations.size} violations (#{breakdown_str})\n"
-      header += "# LAST_SCAN: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
-      header += "# PERSONAS: #{personas.join(' ')}\n" unless personas.empty?
+      header = "# CONVERGENCE: #{violations.size} violations (#{breakdown_str})
+"
+      header += "# LAST_SCAN: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}
+"
+      header += "# PERSONAS: #{personas.join(' ')}
+" unless personas.empty?
       
       # Inject at top (after shebang if present)
       if content.start_with?('#!')
@@ -378,7 +388,10 @@ module ContextInjector
       return unless File.exist?(file)
       
       content = File.read(file)
-      content.sub!(/^# CONVERGENCE:.*?\n(?:# LAST_SCAN:.*?\n)?(?:# PERSONAS:.*?\n)?/, '')
+      content.sub!(/^# CONVERGENCE:.*?
+(?:# LAST_SCAN:.*?
+)?(?:# PERSONAS:.*?
+)?/, '')
       File.write(file, content)
       Logger.debug("removed header: #{file}")
     end
@@ -460,7 +473,7 @@ module RefactoringJournal
       return [] unless File.exist?(@journal_file)
       
       content = File.read(@journal_file)
-      entries = content.split(/^---\s*$/).reject(&:empty?)
+      entries = content.split(/^---s*$/).reject(&:empty?)
       entries.last(count)
     end
   end
@@ -688,7 +701,7 @@ module DependencyAnalyzer
         next unless file.end_with?('.rb')
         
         content = File.read(file) rescue next
-        requires = content.scan(/^require(?:_relative)?\s+['"]([^'"]+)['"]/).flatten
+        requires = content.scan(/^require(?:_relative)?s+['"]([^'"]+)['"]/).flatten
         
         dependencies[file] = requires.map { |r| resolve_require(r, file) }.compact
       end
@@ -725,19 +738,25 @@ module DependencyAnalyzer
     def generate_dot(dependencies)
       output_file = @config.dig("priority", "dependency_graph_output") || ".convergence_deps.dot"
       
-      dot = "digraph dependencies {\n"
-      dot += "  rankdir=LR;\n"
-      dot += "  node [shape=box];\n\n"
+      dot = "digraph dependencies {
+"
+      dot += "  rankdir=LR;
+"
+      dot += "  node [shape=box];
+
+"
       
       dependencies.each do |file, deps|
         short_name = File.basename(file, '.*')
         deps.each do |dep|
           dep_short = File.basename(dep, '.*')
-          dot += "  \"#{short_name}\" -> \"#{dep_short}\";\n"
+          dot += "  "#{short_name}" -> "#{dep_short}";
+"
         end
       end
       
-      dot += "}\n"
+      dot += "}
+"
       
       File.write(output_file, dot)
       Logger.filesystem("write", output_file)
@@ -972,7 +991,7 @@ module InlineSuggestions
         suggestions << format_suggestion("EXTRACT", "extract_#{violation.details.downcase}_logic")
         suggestions << format_suggestion("SPLIT", "into smaller methods")
       when "too_many_params"
-        param_count = violation.details[/\d+/].to_i
+        param_count = violation.details[/d+/].to_i
         suggestions << format_suggestion("OBJECT", "replace #{param_count} params with options hash")
         suggestions << format_suggestion("BUILDER", "use builder pattern")
       when "deep_nesting"
@@ -993,7 +1012,7 @@ module InlineSuggestions
     end
 
     def extract_number(details)
-      details[/\d+/] || "VALUE"
+      details[/d+/] || "VALUE"
     end
   end
 end
@@ -1004,37 +1023,79 @@ module OpenRouterChat
   DEFAULT_MODEL = "anthropic/claude-sonnet-4"
   
   class << self
+    attr_reader :total_cost, :total_tokens
+    
     def init(config)
       @config = config
       @api_key = ENV["OPENROUTER_API_KEY"]
       @model = config.dig("chat", "model") || DEFAULT_MODEL
       @conversation = []
+      @context_files = []
       @system_prompt = build_system_prompt(config)
+      @total_cost = 0.0
+      @total_tokens = 0
+      @last_cost = 0.0
     end
     
     def available?
       !@api_key.nil? && !@api_key.empty?
     end
     
-    def chat(message)
+    def set_model(model)
+      @model = model
+    end
+    
+    def current_model
+      @model
+    end
+    
+    def add_context_file(path)
+      return false unless File.exist?(path)
+      content = File.read(path, encoding: "UTF-8")
+      @context_files << { path: path, content: content }
+      true
+    end
+    
+    def clear_context_files
+      @context_files = []
+    end
+    
+    def chat(message, retries: 3)
       return Result.failure("OPENROUTER_API_KEY not set") unless available?
       
       @conversation << { role: "user", content: message }
       
-      response = send_request
+      response = nil
+      retries.times do |i|
+        response = send_request
+        break unless response[:error]&.include?("timeout") || response[:error]&.include?("rate")
+        sleep(2 ** i)  # exponential backoff
+      end
       
       if response[:error]
         Result.failure(response[:error])
       else
+        # Track cost from response
+        if response[:usage]
+          @total_tokens += response[:usage][:total_tokens] || 0
+          @last_cost = response[:usage][:cost] || 0.0
+          @total_cost += @last_cost
+        end
+        
         # Strip non-ASCII chars that don't render on OpenBSD
-        assistant_message = response[:content].gsub(/[^\x00-\x7F]/, '')
+        assistant_message = response[:content].gsub(/[^ -]/, '')
         @conversation << { role: "assistant", content: assistant_message }
         Result.success(assistant_message)
       end
     end
     
+    def last_cost
+      @last_cost
+    end
+    
     def clear_conversation
       @conversation = []
+      @context_files = []
       Logger.info("conversation cleared")
     end
     
@@ -1042,10 +1103,25 @@ module OpenRouterChat
       @conversation.size
     end
     
+    def save_session(path)
+      data = { model: @model, conversation: @conversation, context_files: @context_files.map { |f| f[:path] } }
+      File.write(path, data.to_yaml)
+    end
+    
+    def restore_session(path)
+      return false unless File.exist?(path)
+      data = YAML.load_file(path)
+      @model = data[:model] || @model
+      @conversation = data[:conversation] || []
+      (data[:context_files] || []).each { |p| add_context_file(p) }
+      true
+    end
+    
     private
     
     def build_system_prompt(config)
-      laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
+      laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("
+")
       
       # Get tree context if available
       tree = ""
@@ -1094,9 +1170,19 @@ module OpenRouterChat
       request["Authorization"] = "Bearer #{@api_key}"
       request["Content-Type"] = "application/json"
       request["HTTP-Referer"] = "https://github.com/anon987654321/pub4"
-      request["X-Title"] = "Convergence CLI"
+      request["X-Title"] = "Master.yml CLI"
       
-      messages = [{ role: "system", content: @system_prompt }] + @conversation
+      # Build context from added files
+      context = @context_files.map { |f| "--- #{f[:path]} ---
+#{f[:content]}" }.join("
+
+")
+      system_with_context = context.empty? ? @system_prompt : "#{@system_prompt}
+
+CONTEXT FILES:
+#{context}"
+      
+      messages = [{ role: "system", content: system_with_context }] + @conversation
       
       request.body = JSON.generate({
         model: @model,
@@ -1111,8 +1197,17 @@ module OpenRouterChat
       if response.code.to_i == 200
         content = body.dig("choices", 0, "message", "content")
         usage = body["usage"] || {}
-        Logger.debug("tokens: #{usage['total_tokens']}")
-        { content: content }
+        
+        # Extract cost from OpenRouter response
+        cost = 0.0
+        if usage["cost"]
+          cost = usage["cost"].to_f
+        elsif usage["total_tokens"]
+          # Estimate if not provided (~$0.003/1k for sonnet)
+          cost = (usage["total_tokens"].to_f / 1000) * 0.003
+        end
+        
+        { content: content, usage: { total_tokens: usage["total_tokens"], cost: cost } }
       else
         error = body.dig("error", "message") || "HTTP #{response.code}"
         { error: error }
@@ -1175,7 +1270,7 @@ module Voice
       
       # Clean text for speech
       clean = text.gsub(/```.*?```/m, "code block omitted")
-                  .gsub(/\[.*?\]\(.*?\)/, "")  # Remove markdown links
+                  .gsub(/[.*?](.*?)/, "")  # Remove markdown links
                   .gsub(/[#*_`]/, "")           # Remove markdown formatting
                   .strip
       
@@ -1339,7 +1434,7 @@ class Scanner
   private
 
   def skip_for_file_type?(rule, path)
-    if rule["yaml_only"] && !path.match?(/\.ya?ml$/)
+    if rule["yaml_only"] && !path.match?(/.ya?ml$/)
       true
     elsif rule["ruby_only"] && !path.end_with?('.rb')
       true
@@ -1714,7 +1809,8 @@ class CLI
           save = gets&.strip&.downcase
           if save == "y"
             File.open(File.expand_path("~/.zshrc"), "a") do |f|
-              f.puts "\nexport OPENROUTER_API_KEY=\"#{key}\""
+              f.puts "
+export OPENROUTER_API_KEY="#{key}""
             end
             puts C.d("Saved")
           end
@@ -1740,6 +1836,13 @@ class CLI
       "clear" => method(:cmd_clear_chat),
       "voice" => method(:cmd_voice),
       "listen" => method(:cmd_listen),
+      "model" => method(:cmd_model),
+      "reload" => method(:cmd_reload),
+      "save" => method(:cmd_save),
+      "restore" => method(:cmd_restore),
+      "add" => method(:cmd_add),
+      "undo" => method(:cmd_undo),
+      "cost" => method(:cmd_cost),
       "install-hook" => method(:cmd_install_hook),
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
@@ -1765,7 +1868,7 @@ class CLI
       # H3: User control - Ctrl+C handled, /clear to reset
       # H7: Flexibility - / prefix for commands, plain text for chat
       if input.start_with?("/")
-        parts = input[1..].split(/\s+/)
+        parts = input[1..].split(/s+/)
         command = parts[0].downcase
         args = parts[1..]
         
@@ -1786,7 +1889,8 @@ class CLI
     end
   rescue Interrupt
     # H3: User control - clean exit on Ctrl+C
-    puts "\n[interrupted]"
+    puts "
+[interrupted]"
   end
   
   def chat_with_llm(message)
@@ -1797,10 +1901,10 @@ class CLI
     
     # npm-style spinner
     spinner = Thread.new do
-      frames = %w[| / - \\]
+      frames = %w[| / - \]
       i = 0
       loop do
-        print "\r#{frames[i % 4]} "
+        print "#{frames[i % 4]} "
         $stdout.flush
         sleep 0.1
         i += 1
@@ -1809,7 +1913,7 @@ class CLI
     
     result = OpenRouterChat.chat(message)
     spinner.kill
-    print "\r  \r"
+    print "  "
     
     if result.success?
       response = result.value
@@ -1832,31 +1936,66 @@ class CLI
   def handle_tool_response(response)
     puts response
     
+    files_modified = []
+    
     # Auto-execute shell/zsh blocks
-    response.scan(/```(?:shell|zsh|bash)\n(.*?)```/m) do |match|
+    response.scan(/```(?:shell|zsh|bash)
+(.*?)```/m) do |match|
       command = match[0].strip
       next if command.empty?
       
-      puts "\n$ #{command}"
+      puts "
+$ #{command}"
       output = `#{command} 2>&1`
+      exit_code = $?.exitstatus
       puts output unless output.empty?
       
-      # Feed result back to LLM for continuous operation
-      OpenRouterChat.chat("Executed. Output:\n```\n#{output}\n```") unless output.strip.empty?
+      # Track file modifications for git commit
+      if command.include?(">") || command.include?("mv ")
+        files_modified << command.split.last
+      end
+      
+      # Error context: send failure back to LLM for fix
+      if exit_code != 0
+        OpenRouterChat.chat("Command failed (exit #{exit_code}):
+```
+#{output}
+```
+Fix it.")
+      elsif output.strip.present?
+        OpenRouterChat.chat("Executed. Output:
+```
+#{output}
+```")
+      end
     end
     
     # Auto-execute ruby blocks
-    response.scan(/```ruby\n(.*?)```/m) do |match|
+    response.scan(/```ruby
+(.*?)```/m) do |match|
       code = match[0].strip
       next if code.empty?
       next if code.include?("def ") # Skip method definitions (examples)
       
-      puts "\n$ ruby: #{code.lines.first.strip}..."
+      puts "
+$ ruby: #{code.lines.first.strip}..."
       begin
         result = eval(code)
         puts result.inspect if result
       rescue => e
         puts "error: #{e.message}"
+        OpenRouterChat.chat("Ruby error: #{e.message}
+Fix it.")
+      end
+    end
+    
+    # Git auto-commit after successful file modifications
+    if files_modified.any?
+      changed = `git diff --name-only 2>/dev/null`.strip
+      if !changed.empty?
+        msg = "Auto: #{files_modified.first(3).join(', ')}"
+        system("git add -A && git commit -m '#{msg}' > /dev/null 2>&1")
+        puts C.d("[committed: #{msg}]")
       end
     end
   end
@@ -1936,7 +2075,8 @@ class CLI
     
     loop do
       iter += 1
-      puts "\niteration #{iter}/#{max_iter}"
+      puts "
+iteration #{iter}/#{max_iter}"
       
       # Auto-fix
       if @config.dig("convergence", "auto_fix", "enabled")
@@ -2013,7 +2153,9 @@ class CLI
     if entries.empty?
       puts "No journal entries"
     else
-      puts "Last #{entries.size} refactorings:\n\n"
+      puts "Last #{entries.size} refactorings:
+
+"
       entries.each { |e| puts e }
     end
   end
@@ -2033,7 +2175,8 @@ class CLI
       return
     end
     
-    puts "Learned patterns:\n"
+    puts "Learned patterns:
+"
     
     pattern_files.each do |file|
       patterns = YAML.load_file(file) rescue []
@@ -2064,6 +2207,13 @@ class CLI
         /converge <file> Iterative fix loop
         /dogfood         Scan master.yml and cli.rb
         /status          Show dashboard
+        /model [name]    Switch model (e.g. deepseek)
+        /add <file>      Add file to context
+        /save [file]     Save session
+        /restore [file]  Restore session
+        /undo            Revert last file change
+        /cost            Show token/cost usage
+        /reload          Reload master.yml
         /voice           Toggle voice on/off
         /listen          Voice input mode
         /clear           Clear chat history
@@ -2080,6 +2230,70 @@ class CLI
   def cmd_clear_chat(*args)
     OpenRouterChat.clear_conversation
     puts "Chat history cleared"
+  end
+  
+  def cmd_model(*args)
+    if args.empty?
+      puts "Current: #{OpenRouterChat.current_model}"
+      puts "Examples: anthropic/claude-sonnet-4, deepseek/deepseek-chat, openai/gpt-4o"
+    else
+      model = args[0]
+      model = "anthropic/claude-sonnet-4" if model == "sonnet"
+      model = "deepseek/deepseek-chat" if model == "deepseek"
+      model = "openai/gpt-4o" if model == "gpt4"
+      OpenRouterChat.set_model(model)
+      puts "Model: #{model}"
+    end
+  end
+  
+  def cmd_reload(*args)
+    @config = load_config
+    OpenRouterChat.init(@config)
+    puts "Config reloaded"
+  end
+  
+  def cmd_save(*args)
+    path = args[0] || ".convergence_session.yml"
+    OpenRouterChat.save_session(path)
+    puts "Session saved: #{path}"
+  end
+  
+  def cmd_restore(*args)
+    path = args[0] || ".convergence_session.yml"
+    if OpenRouterChat.restore_session(path)
+      puts "Session restored: #{path}"
+    else
+      puts "Session not found: #{path}"
+    end
+  end
+  
+  def cmd_add(*args)
+    if args.empty?
+      puts "Usage: /add <file>"
+      return
+    end
+    
+    path = args[0]
+    if OpenRouterChat.add_context_file(path)
+      puts "Added to context: #{path}"
+    else
+      puts "File not found: #{path}"
+    end
+  end
+  
+  def cmd_undo(*args)
+    result = `git checkout HEAD~1 -- . 2>&1`
+    if $?.success?
+      puts "Reverted last change"
+    else
+      puts "Undo failed: #{result}"
+    end
+  end
+  
+  def cmd_cost(*args)
+    puts "Tokens: #{OpenRouterChat.total_tokens}"
+    puts "Cost: $#{'%.4f' % OpenRouterChat.total_cost}"
+    puts "Last: $#{'%.6f' % OpenRouterChat.last_cost}"
   end
   
   def cmd_voice(*args)

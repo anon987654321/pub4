@@ -770,5 +770,42 @@ inspiration:
     url: "github.com/sst/opencode"
   
   starship:
-    learned: "❯ prompt, minimal, context-aware segments"
+    learned: "> prompt, minimal, context-aware segments"
     url: "starship.rs"
+
+# AUTONOMY (full agent mode - no permission required)
+autonomy:
+  enabled: true
+  
+  decisions:
+    install_dependencies: true
+    create_files: true
+    modify_files: true
+    delete_files: false
+    git_commit: true
+    git_push: false
+    run_commands: true
+    
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff: exponential
+    
+  on_error:
+    strategy: fix_and_retry
+    ask_user: false
+    log_only: true
+    
+  on_ambiguity:
+    strategy: best_guess
+    prefer: simplest_solution
+    document: true
+    
+  blocklist:
+    commands: ["rm -rf /", "rm -rf ~"]
+    
+  always_continue:
+    missing_dep: install_it
+    permission_error: use_doas
+    file_not_found: create_it
+    network_error: retry_with_backoff
