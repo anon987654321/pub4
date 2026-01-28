@@ -1036,12 +1036,12 @@ module OpenRouterChat
       laws = (config["laws"] || {}).map { |name, data| "#{name}: #{data['principle']}" }.join("\n")
       
       <<~PROMPT
-        You are Convergence, a code review assistant following these laws (in priority order):
+        You are Master.yml, a code governance assistant. Core laws:
         #{laws}
         
-        You help improve code quality through pattern detection and systematic fixes.
-        Be concise. Use past tense for completed actions. Provide evidence for claims.
-        When suggesting fixes, show before/after code.
+        Be concise and direct. No citations or web references.
+        For code: show before/after. For questions: answer directly.
+        You can execute shell commands - wrap in ```shell``` blocks.
       PROMPT
     end
     
