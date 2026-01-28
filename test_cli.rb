@@ -17,11 +17,22 @@ end
 require "rspec"
 require "fileutils"
 require "tmpdir"
+require "stringio"
 require_relative "cli"
 
 # Helper method to check zsh availability
 def zsh_available?
   File.executable?("/usr/local/bin/zsh") || File.executable?("/bin/zsh")
+end
+
+# Helper method to capture stdout
+def capture_stdout
+  original_stdout = $stdout
+  $stdout = StringIO.new
+  yield
+  $stdout.string
+ensure
+  $stdout = original_stdout
 end
 
 RSpec.describe "Convergence CLI" do
@@ -373,6 +384,15 @@ RSpec.describe "Convergence CLI" do
         expect(tools[0]).to be_instance_of(ShellTool)
         expect(tools[1]).to be_instance_of(FileTool)
       end
+      
+      it "initializes with quiet mode disabled by default" do
+        expect(cli.quiet).to be false
+      end
+      
+      it "can initialize with quiet mode enabled" do
+        quiet_cli = CLI.new(quiet: true)
+        expect(quiet_cli.quiet).to be true
+      end
     end
 
     describe "command handling" do
@@ -429,11 +449,93 @@ RSpec.describe "Convergence CLI" do
           cli.send(:handle_cmd, "unknown")
         end
       end
+      
+      describe "quiet command" do
+        # Don't stub puts for quiet tests - we need to verify output
+        before do
+          RSpec::Mocks.space.proxy_for(cli).reset
+        end
+        
+        it "toggles quiet mode" do
+          expect(cli.quiet).to be false
+          expect { cli.send(:handle_cmd, "quiet") }.to output(/Quiet mode: on/).to_stdout
+          expect(cli.quiet).to be true
+        end
+        
+        it "can toggle quiet mode on and off" do
+          output1 = capture_stdout { cli.send(:handle_cmd, "quiet") }
+          expect(output1).to match(/on/)
+          expect(cli.quiet).to be true
+          
+          output2 = capture_stdout { cli.send(:handle_cmd, "quiet") }
+          expect(output2).to match(/off/)
+          expect(cli.quiet).to be false
+        end
+      end
+      
+      describe "codify command" do
+        before do
+          allow(cli).to receive(:log)
+        end
+        
+        it "shows usage without argument" do
+          expect(cli).to receive(:log).with(/Usage/)
+          cli.send(:handle_cmd, "codify")
+        end
+        
+        it "extracts wishlist items from bullet points" do
+          text = "- Add feature A\n- Fix bug B\n- Update docs"
+          items = cli.send(:extract_wishlist_items, text)
+          expect(items.length).to eq(3)
+          expect(items[0]).to eq("Add feature A")
+        end
+        
+        it "extracts wishlist items from numbered list" do
+          text = "1. First item\n2. Second item"
+          items = cli.send(:extract_wishlist_items, text)
+          expect(items.length).to eq(2)
+          expect(items[0]).to eq("First item")
+        end
+        
+        it "generates YAML from wishlist items" do
+          items = ["Feature A", "Feature B"]
+          yaml = cli.send(:codify_to_yaml, items)
+          expect(yaml).to include("wishlist_codification")
+          expect(yaml).to include("Feature A")
+          expect(yaml).to include("Feature B")
+        end
+        
+        it "saves codification to file" do
+          allow(FileUtils).to receive(:mkdir_p)
+          allow(File).to receive(:write)
+          expect(File).to receive(:write).with(/wishlist_/, anything)
+          cli.send(:save_codification, "test: yaml")
+        end
+        
+        it "handles save errors gracefully" do
+          expect(cli).to receive(:log).with(/Error saving/)
+          allow(FileUtils).to receive(:mkdir_p).and_raise(StandardError.new("test error"))
+          cli.send(:save_codification, "test: yaml")
+        end
+        
+        it "processes full codify command" do
+          allow(FileUtils).to receive(:mkdir_p)
+          allow(File).to receive(:write)
+          expect(cli).to receive(:log).with(/Generated YAML/)
+          expect(cli).to receive(:log).with(/Saved to:/)
+          cli.send(:chat_codification, "- Item 1\n- Item 2")
+        end
+        
+        it "handles codify with no items found" do
+          expect(cli).to receive(:log).with(/No wishlist items/)
+          cli.send(:chat_codification, "just some random text")
+        end
+      end
     end
 
     describe "message handling" do
       before do
-        allow(cli).to receive(:puts)
+        allow(cli).to receive(:log)
       end
 
       context "without API key" do
@@ -442,7 +544,7 @@ RSpec.describe "Convergence CLI" do
         end
 
         it "prompts for API key" do
-          expect(cli).to receive(:puts).with(/OPENROUTER_API_KEY/)
+          expect(cli).to receive(:log).with(/OPENROUTER_API_KEY/)
           cli.send(:handle_msg, "test message")
         end
       end
@@ -457,8 +559,21 @@ RSpec.describe "Convergence CLI" do
         end
 
         it "acknowledges LLM integration pending" do
-          expect(cli).to receive(:puts).with(/LLM integration pending/)
+          expect(cli).to receive(:log).with(/LLM integration pending/)
           cli.send(:handle_msg, "test message")
+        end
+        
+        it "auto-detects wishlist items" do
+          expect(cli).to receive(:log).with(/Auto-detected wishlist/)
+          expect(cli).to receive(:log).with(/LLM integration pending/)
+          cli.send(:handle_msg, "wishlist: add new feature")
+        end
+        
+        it "detects various wishlist keywords" do
+          expect(cli.send(:auto_detect_wishlist, "todo list items")).to be true
+          expect(cli.send(:auto_detect_wishlist, "implement new feature")).to be true
+          expect(cli.send(:auto_detect_wishlist, "add feature X")).to be true
+          expect(cli.send(:auto_detect_wishlist, "regular message")).to be false
         end
       end
     end

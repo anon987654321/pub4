@@ -164,15 +164,18 @@ end
 
 # Main CLI
 class CLI
-  def initialize
+  attr_reader :quiet
+  
+  def initialize(quiet: false)
+    @quiet = quiet
     @config = Config.load
     OpenBSDSecurity.apply(@config.access_level)
     @tools = setup_tools
   end
 
   def run
-    puts "Convergence v#{VERSION} – #{@config.access_level} level"
-    puts "Type /help or message"
+    log "Convergence v#{VERSION} – #{@config.access_level} level"
+    log "Type /help or message"
 
     loop do
       input = Readline.readline("> ", true)&.strip
@@ -181,10 +184,14 @@ class CLI
       input.start_with?("/") ? handle_cmd(input[1..]) : handle_msg(input)
     end
   rescue Interrupt
-    puts "\nGoodbye"
+    log "\nGoodbye"
   end
 
   private
+  
+  def log(msg)
+    puts msg unless @quiet
+  end
 
   def setup_tools
     [
@@ -196,41 +203,117 @@ class CLI
   def handle_cmd(cmd)
     parts = cmd.strip.split(/\s+/, 2)
     case parts[0]
-    when "help"  then show_help
-    when "level" then switch_level(parts[1])
-    when "quit"  then exit
-    else puts "Unknown: /#{parts[0]}"
+    when "help"   then show_help
+    when "level"  then switch_level(parts[1])
+    when "quiet"  then toggle_quiet
+    when "codify" then chat_codification(parts[1])
+    when "quit"   then exit
+    else log "Unknown: /#{parts[0]}"
     end
   end
 
   def handle_msg(msg)
     key = ENV["OPENROUTER_API_KEY"]
     unless key
-      puts "Set OPENROUTER_API_KEY to chat with LLM"
+      log "Set OPENROUTER_API_KEY to chat with LLM"
       return
     end
-    puts "[LLM integration pending]"
+    
+    if auto_detect_wishlist(msg)
+      log "[Auto-detected wishlist - use /codify to process]"
+    end
+    
+    log "[LLM integration pending]"
   end
 
   def show_help
-    puts <<~HELP
+    log <<~HELP
       Commands:
         /help              Show this help
         /level [mode]      Set access: sandbox, user, admin
+        /quiet             Toggle quiet mode (suppress logs)
+        /codify [text]     Auto-codify wishlist items to YAML
         /quit              Exit
     HELP
   end
 
   def switch_level(str)
-    return puts "Usage: /level [sandbox|user|admin]" unless str
+    return log "Usage: /level [sandbox|user|admin]" unless str
     sym = str.to_sym
-    return puts "Invalid level" unless %i[sandbox user admin].include?(sym)
+    return log "Invalid level" unless %i[sandbox user admin].include?(sym)
 
     @config.access_level = sym
     @config.save
     OpenBSDSecurity.apply(sym)
-    puts "Level → #{sym}"
+    log "Level → #{sym}"
+  end
+  
+  def toggle_quiet
+    @quiet = !@quiet
+    puts "Quiet mode: #{@quiet ? 'on' : 'off'}"
+  end
+  
+  def auto_detect_wishlist(msg)
+    msg.match?(/wishlist|todo|implement|add.*feature/i)
+  end
+  
+  def chat_codification(text)
+    return log "Usage: /codify <text>" unless text
+    
+    items = extract_wishlist_items(text)
+    return log "No wishlist items found" if items.empty?
+    
+    yaml_output = codify_to_yaml(items)
+    log "\n--- Generated YAML ---"
+    log yaml_output
+    log "--- End YAML ---\n"
+    
+    save_codification(yaml_output)
+  end
+  
+  def extract_wishlist_items(text)
+    items = []
+    # Match bullet points: - item or * item
+    text.scan(/^[-*]\s+(.+)$/).each do |match|
+      items << match[0].strip if match[0]
+    end
+    # Match numbered lists: 1. item
+    text.scan(/^\d+\.\s+(.+)$/).each do |match|
+      items << match[0].strip if match[0]
+    end
+    items
+  end
+  
+  def codify_to_yaml(items)
+    timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+    output = {
+      "wishlist_codification" => {
+        "generated_at" => timestamp,
+        "items" => items.map.with_index(1) do |item, idx|
+          {
+            "id" => idx,
+            "description" => item,
+            "status" => "pending",
+            "priority" => "normal"
+          }
+        end
+      }
+    }
+    YAML.dump(output)
+  end
+  
+  def save_codification(yaml_content)
+    dir = ".sessions"
+    
+    begin
+      FileUtils.mkdir_p(dir)
+      filename = "#{dir}/wishlist_#{Time.now.strftime('%Y%m%d_%H%M%S')}.yml"
+      File.write(filename, yaml_content)
+      log "Saved to: #{filename}"
+    rescue => e
+      log "Error saving: #{e.message}"
+    end
   end
 end
 
-CLI.new.run if __FILE__ == $0
+CLI.new(quiet: ENV["QUIET"] == "true").run if __FILE__ == $0

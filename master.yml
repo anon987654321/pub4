@@ -8,6 +8,19 @@ meta:
   updated: "2026-01-22"
   style: lowercase_underscored_plain_english
   
+  audit_log:
+    enabled: true
+    storage: .sessions
+    format: yaml
+    fields:
+      - timestamp
+      - session_id
+      - file_count
+      - coupling_score
+      - violation_count
+      - improvement_delta
+    frequency: per_session
+  
   authorities:
     primary: this_file
     supplementary:
@@ -396,6 +409,24 @@ rules:
     - horizontal_rule_decorators
     - emoji_headers
     - bracket_decorators
+  
+  unified_rules:
+    self_audit_summary:
+      rule: periodic_self_evaluation
+      detect:
+        - violation_count
+        - redundancy_scan
+        - contradiction_check
+        - unused_refs
+      metrics:
+        - file_count
+        - coupling_score
+        - complexity_trends
+      frequency: per_session
+      action: warn_if_worsens
+      log_to: meta.audit_log
+      verify: compare_previous_metrics
+      why: framework_must_audit_itself_to_evolve
 
 testing:
   requirements:
@@ -763,6 +794,48 @@ recursive_governance:
         strategy: methods
     
     on_sprawl_detected: warn_and_suggest_consolidation
+  
+  cross_ref_detection:
+    enabled: true
+    pattern: /@[a-z_]+\.[a-z_.]+/
+    scan_files:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.rb"
+    detect_unused: true
+    on_orphan_ref: warn
+    verification: trace_to_source
+
+big_picture:
+  repo_metrics:
+    enabled: true
+    file_count:
+      pattern: "**/*.{rb,yml,yaml,sh,md,js,css}"
+      exclude:
+        - node_modules
+        - .git
+        - coverage
+        - .archive
+        - .backups
+      threshold_warning: 1000
+    coupling_score:
+      method: dependency_analysis
+      detect:
+        - require_statements
+        - yaml_cross_refs
+        - module_includes
+      scale: 0_to_100
+      threshold_warning: 70
+      why: high_coupling_reduces_maintainability
+    complexity_aggregate:
+      sources:
+        - cyclomatic_complexity
+        - nesting_depth
+        - file_length
+      calculation: weighted_average
+      threshold: acceptable_below_60
+    frequency: per_commit
+    log_to: meta.audit_log
 
 extreme_mode:
   enabled: false
