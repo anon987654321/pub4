@@ -1,205 +1,595 @@
-version: "31.0.0"
+version: "1.4.0"
+name: convergence
 golden: "preserve_improve_never_break"
 
-# SIX UNIVERSAL LAWS (hierarchical priority for violations + structural guidance)
+# SIX UNIVERSAL LAWS (hierarchical priority for violations)
+# Research basis: Zakeri-Nasrabadi et al. (2023), "A systematic literature review on code smells datasets"
+# Pattern-based detection with predefined thresholds remains state-of-the-art
 laws:
-  ROBUSTNESS:
+  robustness:
     priority: 1
     principle: "errors_fail_safely security_first handle_edge_cases"
     applies_to: [security, errors, input_validation, resource_management]
+    rationale: "Security vulnerabilities cause actual harm"
   
-  SINGULARITY:
+  singularity:
     priority: 2
     principle: "one_truth dry_no_duplication single_source"
     applies_to: [duplication, consistency, data_integrity]
+    rationale: "Duplication causes maintenance hell"
   
-  LINEARITY:
+  linearity:
     priority: 3
     principle: "sequential_flow minimal_branches clear_path"
     applies_to: [control_flow, nesting, complexity]
+    rationale: "Complexity makes code unmaintainable"
   
-  PROXIMITY:
+  proximity:
     priority: 4
     principle: "related_code_together cohesive_modules"
     applies_to: [organization, coupling, modules]
+    rationale: "Organization affects findability"
   
-  ABSTRACTION:
+  abstraction:
     priority: 5
     principle: "right_level no_leaky_abstractions appropriate_hiding"
     applies_to: [interfaces, encapsulation, apis]
+    rationale: "Affects interface quality"
   
-  DENSITY:
+  density:
     priority: 6
     principle: "information_dense no_noise signal_not_noise"
     applies_to: [verbosity, comments, naming]
+    rationale: "Aesthetic, not functional"
 
-# ESSENCE (autonomous OpenBSD agent)
-essence:
-  os: openbsd_vps_wheel_vmctl
-  autonomous: true
-  research: web_cite_verify
+# REGISTRY (pattern-based violation detection)
+# Each rule maps to a Law and has priority ordering
+registry:
+  - name: secrets
+    priority: 1
+    law: robustness
+    severity: veto
+    pattern: 'sk-|ghp_|-----BEGIN.*KEY|api[_-]?key\s*=\s*["'']'
+    action: "move to environment variables"
+    example: 'api_key = "sk-abc123"'
   
-  install: [ruby, git, curl, ruby_llm, tty-prompt, pastel]
-  auto: true
+  - name: sql_injection
+    priority: 2
+    law: robustness
+    severity: veto
+    pattern: 'execute|query.*#\{|WHERE.*#\{'
+    action: "use parameterized queries"
+    example: 'query("SELECT * FROM users WHERE id = #{id}")'
   
-  hardening:
-    enabled: true
-    pledge: "stdio rpath wpath cpath inet dns proc exec"
-    unveil:
-      - {path: "/home/wheel", perms: "rwc"}
-      - {path: "/tmp", perms: "rwc"}
-      - {path: "/usr/local", perms: "r"}
-      - {path: ".git", perms: "rwc"}
+  - name: unfinished_work
+    priority: 3
+    law: robustness
+    severity: veto
+    pattern: 'TODO|FIXME|XXX|HACK|\.\.\.'
+    action: "complete or document with ticket"
+    example: "# TODO: fix this later"
+  
+  - name: unsafe_calls
+    priority: 4
+    law: robustness
+    severity: veto
+    pattern: '(?<!ENV\[|@|&\.)[a-z_]+\.[a-z_]+\('
+    action: "add safe navigation or guard clause"
+    example: "user.profile.name (should be user&.profile&.name)"
+  
+  - name: cryptic_one_liners
+    priority: 5
+    law: linearity
+    severity: high
+    pattern: '\{.*\|.*\|.*\[.*\].*\}'
+    action: "expand to multiple lines for clarity"
+    example: "{|x| x.map{|y| y[0]}}"
+  
+  - name: deep_nesting
+    priority: 6
+    law: linearity
+    severity: high
+    pattern: '\n(  ){4,}'
+    action: "flatten with guard clauses or extraction"
+    example: "8+ spaces of indentation"
+  
+  - name: magic_numbers
+    priority: 7
+    law: abstraction
+    severity: high
+    pattern: '\b\d{3,}\b'
+    action: "extract to named constant"
+    example: "if count > 1000"
+  
+  - name: verbose_prose
+    priority: 8
+    law: density
+    severity: medium
+    pattern: 'obviously|clearly|simply|just|very|really|basically'
+    action: "remove filler words"
+    example: "This obviously works"
+  
+  - name: future_tense
+    priority: 9
+    law: density
+    severity: low
+    pattern: '\b(will|should|gonna|must)\b'
+    action: "use present tense or past tense"
+    example: "This will do X (should: This does X)"
+  
+  # AST-AWARE RULES (require parser gem)
+  - name: long_method
+    priority: 10
+    law: linearity
+    severity: high
+    ast: true
+    threshold: 20
+    action: "extract to smaller methods"
+    example: "def process... (50 lines)"
+  
+  - name: high_complexity
+    priority: 11
+    law: linearity
+    severity: high
+    ast: true
+    threshold: 10
+    action: "simplify control flow"
+    example: "cyclomatic complexity > 10"
+  
+  - name: too_many_params
+    priority: 12
+    law: abstraction
+    severity: high
+    ast: true
+    threshold: 3
+    action: "use parameter object"
+    example: "def method(a, b, c, d, e)"
+  
+  - name: duplicate_code
+    priority: 13
+    law: singularity
+    severity: high
+    ast: true
+    threshold: 6
+    action: "extract to shared method"
+    example: "identical 6+ line blocks"
+  
+  - name: god_class
+    priority: 14
+    law: proximity
+    severity: high
+    ast: true
+    threshold: 300
+    action: "split into cohesive modules"
+    example: "class with 300+ lines"
+  
+  - name: feature_envy
+    priority: 15
+    law: proximity
+    severity: medium
+    ast: true
+    action: "move method to target class"
+    example: "method calls other class repeatedly"
 
-# GOVERN (adversarial consensus, convergence, operations)
-govern:
-  consensus: 0.70
-  veto: [security, attacker, maintainer]
+# PERSONAS (weighted adversarial reviewers with Law emphasis)
+# Each persona emphasizes specific Laws they care most about
+personas:
+  security:
+    weight: 0.18
+    emphasizes: [robustness, abstraction]
+    questions: ["injection_vectors?", "exposed_surface?"]
+    veto: true
   
-  personas:
-    security: {w: 0.18, q: "injection_vectors exposed_surface", emphasizes: [ROBUSTNESS, ABSTRACTION]}
-    attacker: {w: 0.16, q: "weakest_link steal_data", emphasizes: [ROBUSTNESS]}
-    maintainer: {w: 0.18, q: "clear_at_3am debuggable", emphasizes: [LINEARITY, SINGULARITY]}
-    skeptic: {w: 0.10, q: "evidence_required proven", emphasizes: [ROBUSTNESS]}
-    minimalist: {w: 0.08, q: "what_can_be_deleted", emphasizes: [DENSITY, SINGULARITY]}
-    chaos: {w: 0.05, q: "cascade_worst_case", emphasizes: [ROBUSTNESS]}
-    performance: {w: 0.05, q: "bigo_bottleneck", emphasizes: [DENSITY]}
-    absence: {w: 0.05, q: "missing_gaps", emphasizes: [ROBUSTNESS]}
-    architect: {w: 0.05, q: "coupling_debt", emphasizes: [PROXIMITY, ABSTRACTION]}
-    user: {w: 0.04, q: "benefit_intuitive", emphasizes: [ABSTRACTION]}
-    accessibility: {w: 0.03, q: "keyboard_screen_reader", emphasizes: [ROBUSTNESS]}
-    realist: {w: 0.03, q: "roi_worth_it", emphasizes: [DENSITY]}
+  attacker:
+    weight: 0.16
+    emphasizes: [robustness]
+    questions: ["weakest_link?", "how_to_steal_data?"]
+    veto: true
   
-  converge:
-    method: loop_until_diminishing_returns
-    stagnant_threshold: 3
-    max_iterations: 15
-    safety:
-      syntax_check: true
-      backup_rotation: 5
-      regression_warn: true
+  maintainer:
+    weight: 0.18
+    emphasizes: [linearity, singularity]
+    questions: ["clear_at_3am?", "debuggable?"]
+    veto: true
   
-  workflow:
-    discover: {personas: [chaos, user], output: problem_def, introspect: "what_assumptions_did_we_make"}
-    analyze: {personas: [skeptic, maintainer], output: constraints, introspect: "what_did_we_miss"}
-    ideate: {personas: [minimalist, chaos], output: 15_alternatives, introspect: "which_ideas_surprised_us"}
-    design: {personas: [security, accessibility], output: spec, introspect: "what_could_break"}
-    implement: {personas: [performance, security], output: artifact, introspect: "is_this_the_simplest_solution"}
-    validate: {personas: [skeptic, security], output: results, introspect: "what_evidence_proves_it_works"}
-    deliver: {personas: [realist], output: deployed, introspect: "what_would_user_complain_about"}
-    learn: {personas: [skeptic, chaos], output: insights, introspect: "what_would_we_do_differently_next_time"}
+  skeptic:
+    weight: 0.10
+    emphasizes: [robustness]
+    questions: ["evidence_required?", "proven?"]
   
-  strunk_white:
-    apply_to: [prose, comments, documentation, strings]
-    never_apply_to: [code_logic, algorithms, data_structures]
-    rules:
-      omit_needless_words: {safe: true, supports_law: DENSITY}
-      active_voice: {safe: true, supports_law: LINEARITY}
-      positive_form: {safe: true, supports_law: LINEARITY}
-      definite_language: {safe: true, supports_law: ABSTRACTION}
-    safeguards:
-      - never_delete_variable_names
-      - never_delete_function_calls
-      - never_simplify_conditional_logic
+  minimalist:
+    weight: 0.08
+    emphasizes: [density, singularity]
+    questions: ["what_can_be_deleted?", "what_is_needed?"]
   
-  structural_ops:
-    preserve: "THESE KEEP GETTING DELETED - DO NOT REMOVE"
-    verify_after_each: true
-    ops:
-      merge: {desc: "combine similar logic", risk: medium, verify: "merged logic identical", supports_law: SINGULARITY}
-      semantic_regroup: {desc: "reorganize logically", risk: low, verify: "functionality unchanged", supports_law: PROXIMITY}
-      defrag: {desc: "consolidate fragments", risk: low, verify: "all fragments accessible", supports_law: PROXIMITY}
-      decouple: {desc: "separate concerns", risk: high, verify: "interfaces preserved", supports_law: ABSTRACTION}
-      hoist: {desc: "move to proper scope", risk: medium, verify: "scope correct", supports_law: PROXIMITY}
-      flatten: {desc: "reduce nesting", risk: medium, verify: "logic flow identical", supports_law: LINEARITY}
-      delete: {desc: "remove dead code", risk: high, verify: "truly dead", supports_law: DENSITY}
-      expand: {desc: "extract for clarity", risk: low, verify: "extracted correctly", supports_law: ABSTRACTION}
-      reduce_noise: {desc: "clean messy lines", risk: low, verify: "formatting only", supports_law: DENSITY}
+  chaos:
+    weight: 0.05
+    emphasizes: [robustness]
+    questions: ["cascade_failure?", "worst_case?"]
   
-  patterns:
-    veto:
-      secrets: {detect: 'sk-|ghp_|-----BEGIN.*KEY', apply: move_to_env, violates_law: ROBUSTNESS}
-      sql_injection: {detect: 'execute|query.*#\{', apply: parameterize, violates_law: ROBUSTNESS}
-      unfinished: {detect: '\.\.\.|TODO|FIXME|pending', apply: complete, violates_law: ROBUSTNESS}
-      unsafe_calls: {detect: '\w+\.\w+\((?!&\.)', apply: add_safe_nav, violates_law: ROBUSTNESS}
-      race_conditions: {detect: 'if.*\n.*=.*\n.*if', apply: add_mutex, violates_law: ROBUSTNESS}
-    high:
-      future_tense: {detect: '\b(will|should|gonna|must)\b', apply: rewrite_past, violates_law: DENSITY}
-      sycophancy: {detect: 'great question|excellent|absolutely', apply: delete, violates_law: DENSITY}
-      magic_numbers: {detect: '\b\d{3,}\b', apply: extract_constant, violates_law: ABSTRACTION}
-      deep_nesting: {detect: '\n(  ){4,}', apply: extract_method, violates_law: LINEARITY}
+  performance:
+    weight: 0.05
+    emphasizes: [density]
+    questions: ["big_o?", "bottleneck?"]
+  
+  absence:
+    weight: 0.05
+    emphasizes: [robustness]
+    questions: ["what_is_missing?", "what_gaps?"]
+  
+  architect:
+    weight: 0.05
+    emphasizes: [proximity, abstraction]
+    questions: ["coupling?", "technical_debt?"]
+  
+  user:
+    weight: 0.04
+    emphasizes: [abstraction]
+    questions: ["user_benefit?", "intuitive?"]
+  
+  accessibility:
+    weight: 0.03
+    emphasizes: [robustness]
+    questions: ["keyboard_nav?", "screen_reader?"]
+  
+  realist:
+    weight: 0.03
+    emphasizes: [density]
+    questions: ["roi?", "worth_it?"]
 
-# BEAUTY (20 principles from masters)
-beauty:
-  typography_bringhurst:
-    - choose_appropriate_typeface_for_function
-    - set_text_in_sizes_that_suit_its_nature
-    - use_vertical_motion_that_suits_typeface
-    - rhythm_proportion_modulation_harmony
-  architecture_ando:
-    - simplicity_silence_emptiness
-    - light_shadow_materiality
-    - geometry_nature_coexistence
-    - space_between_as_important_as_form
-  design_rams:
-    - innovative_useful_aesthetic
-    - unobtrusive_honest_long_lasting
-    - thorough_environmentally_friendly
-    - as_little_design_as_possible
-  code_martin:
-    - meaningful_names_intention_revealing
-    - functions_do_one_thing_small
-    - comments_explain_why_not_what
-    - error_handling_separate_from_logic
-  general:
-    - omit_needless_preserve_essential
-    - consistency_predictability_reliability
-    - progressive_disclosure_appropriate_complexity
-    - feedback_visibility_of_system_status
-
-# BIASES (critical anti-patterns)
-biases:
-  critical:
-    hallucination: [claim_without_reading, quote_without_source, invented_stats]
-    simulation: [future_tense, imperative_we_must, lets_do_this]
-    completion_theater: [ellipsis, etcetera, rest_of_placeholder]
-  high:
-    sycophancy: [great_question, absolutely_right, excellent_point]
-    false_confidence: state_uncertainty_explicitly
-  traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
-
-# LLM (OpenRouter multimodal research)
-llm:
-  provider: openrouter
-  key: OPENROUTER_API_KEY
-  model: "anthropic/claude-sonnet-4"
-  system: |
-    Follow master.yml. Rank violations by Six Laws (ROBUSTNESS→SINGULARITY→LINEARITY→PROXIMITY→ABSTRACTION→DENSITY).
-    Apply Strunk & White ONLY on prose. Apply structural ops with verification. Never delete important logic.
-    Use introspection. Honor beauty. Mitigate biases. Loop until convergence.
-  multimodal: {image: image_url, pdf: file, audio: input_audio, video: video_url}
-  research: {web: true, cite: true}
-
-# EVIDENCE (SHA256 verification)
+# EVIDENCE (SHA256 verification for auditability)
+# Symmetric logging for both read and write operations
 evidence:
-  require: true
+  enabled: true
   method: sha256_prefix_16_chars
-  format_read: "Read {file} (sha256: {hash}, {lines} lines)"
-  format_write: "Wrote {file} (sha256: {hash}, {lines} lines)"
+  format: "{action} {file} (sha256: {hash}, {lines} lines)"
+  log_reads: true
+  log_writes: true
 
-# GIT (version control integration)
-git:
+# PHILOSOPHY (design principles we follow)
+# Unix Philosophy: Doug McIlroy (1978)
+# Railway-Oriented Programming: Scott Wlaschin (2013)
+# KISS: Eric S. Raymond (2003)
+philosophy:
+  unix:
+    - "do_one_thing_well"
+    - "compose_with_others"
+    - "text_streams_universal_interface"
+  
+  rop:
+    - "explicit_success_failure_paths"
+    - "minimal_result_monad"
+    - "railway_composition"
+  
+  kiss:
+    - "simplicity_over_complexity"
+    - "pure_functions_no_state"
+    - "data_over_code"
+
+# UX (OpenBSD dmesg-inspired, Unix-friendly output)
+# Research: Jeremy Evans "Polished Ruby Programming" (2021)
+# Starship.rs minimal prompt philosophy
+ux:
+  format: dmesg
+  style: minimal
+  timestamps: true
+  colors: false
+  unicode: false
+  
+  indicators:
+    success: "✓"
+    failure: "✗"
+    processing: "→"
+    warning: "⚠"
+    question: "?"
+    info: "i"
+  
+  prefixes:
+    operation: "→"
+    result: "←"
+    state: "state"
+    filesystem: "fs"
+    validation: "val"
+    metric: "metric"
+    config: "cfg"
+    comparison: "cmp"
+    loop: "loop"
+  
+  timing:
+    enabled: true
+    format: ms
+    threshold_warn: 1000
+  
+  output:
+    stream: true
+    buffer: line
+    pipe_friendly: true
+  
+  abbreviations:
+    home: "~"
+    current_dir: basename
+    max_path_length: 60
+
+# PLATFORM (portable: OpenBSD primary, Cygwin/Linux/macOS compatible)
+platform:
+  primary: openbsd
+  compatible: [cygwin, freebsd, linux, macos]
+  shell:
+    required: zsh
+    fallback: sh
+    detection: "system('zsh -c exit') rescue false"
+  paths:
+    windows: 'C:\cygwin64\bin\zsh.exe'
+    unix: /bin/zsh
+  privilege: {openbsd: doas, linux: sudo, macos: sudo}
+
+# ENVIRONMENT (dev machine config)
+environment:
+  windows:
+    shell: 'C:\cygwin64\bin\zsh.exe'
+    ruby: 'C:\cygwin64\bin\ruby.exe'
+    home: 'G:\'
+  ssh:
+    keys: ["~/priv/passwd/id_ed25519", "~/priv/passwd/id_rsa"]
+    timeout: 10
+
+# DEPLOYMENT (VPS configuration)
+deployment:
+  vps:
+    ip: "185.52.176.18"
+    user: dev
+    backup_ns: "194.63.248.53"
+    deploy_base: "/var/rails"
+    app_base: "/home"
+  apps:
+    brgen: {port: 11006, domains: "brgen.no oshlo.no trndheim.no"}
+    amber: {port: 10001, domains: "amberapp.com"}
+    blognet: {port: 10002, domains: "foodielicio.us stacyspassion.com"}
+    bsdports: {port: 10003, domains: "bsdports.org"}
+    hjerterom: {port: 10004, domains: "hjerterom.no"}
+    privcam: {port: 10005, domains: "privcam.no"}
+    pubattorney: {port: 10006, domains: "pub.attorney freehelp.legal"}
+
+# TECH STACK
+tech:
+  ruby: "3.3+"
+  rails: "8.1+"
+  zsh: "5.9+"
+  openbsd: "7.6+"
+  stack: "Solid Queue/Cache/Cable + Hotwire + Falcon"
+  gems:
+    required: [parser, rubocop, rubocop-performance]
+    optional: [rubocop-rails, rubocop-rspec]
+  analysis:
+    methods: [pattern, ast, rubocop]
+
+# TOOLS (allowed/banned)
+tools:
+  allowed: [ruby, zsh, git, bundle, rails, rake, doas, rcctl, pkg_add, cat]
+  banned: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
+  rationale: "zsh parameter expansion replaces unix text tools"
+
+# ZSH NATIVE PATTERNS (zero-fork performance)
+zsh_patterns:
+  string:
+    lowercase: '${(L)var}'
+    uppercase: '${(U)var}'
+    replace_all: '${var//search/replace}'
+    trim: '${${var##[[:space:]]#}%%[[:space:]]#}'
+  array:
+    filter: '${(M)arr:#*pattern*}'
+    exclude: '${arr:#*pattern*}'
+    unique: '${(u)arr}'
+    sort: '${(o)arr}'
+    join: '${(j:,:)arr}'
+  file:
+    read: '${(<file)}'
+    glob: '**/*.rb(N.)'
+    glob_dirs: '**/*(N/)'
+  field:
+    split: '${(s:,:)var}'
+    nth: '${${(s:,:)line}[4]}'
+
+# THRESHOLDS
+thresholds:
+  method_lines: 20
+  class_lines: 300
+  file_lines: 500
+  complexity: 10
+  nesting: 3
+  parameters: 3
+  test_coverage: 0.80
+  consensus: 0.70
+
+# CONVERGENCE
+convergence:
+  max_iterations: 15
+  exit_when: {violations: 0, consensus_gte: 0.70}
+  stop_if: "same_violations_3x"
+  auto_fix:
+    enabled: true
+    methods: [rubocop_safe, pattern_replace]
+    rubocop_cops: [Layout, Style/FrozenStringLiteralComment]
+  inline_suggestions:
+    enabled: true
+    max_per_violation: 3
+    format: "  → {action}: {code}"
+    include_rationale: true
+
+# LEARNING (pattern extraction from fixes)
+learning:
   enabled: true
-  auto_commit: false
+  capture_fixes: true
+  min_samples: 10
+  confidence_threshold: 0.85
+  auto_apply: false
+  suggestions_only: true
 
-# SESSION (persistence)
-session:
+# DASHBOARD (status overview)
+dashboard:
   enabled: true
-  dir: ".convergence_sessions"
+  format: box
+  show:
+    - total_files
+    - converged_files
+    - remaining_files
+    - veto_count
+    - high_severity_count
+    - law_breakdown
+    - progress_percent
+    - blockers
 
-# INTERFACE (minimal zen)
-interface:
-  prompt: "> "
-  feedback: terse
-  confirm: veto_only
-  zen: {wabi_sabi: imperfect_authentic, ma: emptiness_pause, kanso: eliminate_essence}
+# SCANNING
+scanning:
+  recursive: true
+  from_cwd: true
+  patterns: ["**/*.rb", "**/*.yml", "**/*.yaml"]
+  exclude: ["vendor/**/*", "node_modules/**/*", ".git/**/*", "tmp/**/*"]
+  parallel: false
+  max_files: 1000
+  auto_clean: true
+  clean_script: "sh/clean.sh"
+
+# WORKFLOW (state machine for systematic convergence)
+workflow:
+  enabled: true
+  states: [clean, scan, analyze, fix, validate, commit]
+  state_file: ".convergence_workflow"
+  checkpoints: true
+  resume_on_interrupt: true
+  
+# TRACKING (memory across sessions)
+tracking:
+  violations:
+    enabled: true
+    history_dir: ".convergence_history"
+    format: jsonl
+    retention_days: 90
+  patterns:
+    enabled: true
+    library_dir: ".convergence_patterns"
+    min_occurrences: 10
+    auto_generate_rules: true
+  context:
+    enabled: true
+    header_injection: true
+    progressive_file: ".convergence_context.md"
+    update_on_scan: true
+  personas:
+    enabled: true
+    journal_dir: ".convergence_personas"
+    append_only: true
+  refactoring:
+    enabled: true
+    journal_file: ".convergence_journal.md"
+    append_only: true
+
+# INTEGRATION
+integration:
+  tree_sh: "sh/tree.sh"
+  clean_sh: "sh/clean.sh"
+  pre_work_snapshot: true
+  commit_hooks:
+    enabled: true
+    pre_commit: true
+    veto_only: true
+    auto_install: false
+  
+# PRIORITY (intelligent file ordering)
+priority:
+  rules:
+    - veto_count_desc
+    - dependency_order
+    - recent_changes_first
+    - size_asc
+  dependency_analysis: true
+  dependency_graph_output: ".convergence_deps.dot"
+  priority_rules:
+    - veto_count_desc
+    - dependency_order
+    - recent_changes_first
+  auto_clean: true
+  clean_script: "sh/clean.sh"
+  pre_scan_hooks: ["tree.sh"]
+
+# CONVERGENCE STATE (.convergence_* files)
+state:
+  enabled: true
+  directory: ".convergence"
+  files:
+    tree: "tree.txt"
+    state: "state.yml"
+    history: "history/"
+    context: "context.md"
+    workflow: "workflow.state"
+    deps: "deps.dot"
+    personas: "personas/"
+    journal: "journal.md"
+    patterns: "patterns/"
+  retention:
+    history_days: 90
+    journal_entries: 1000
+    pattern_threshold: 10
+
+# WORKFLOW STATE MACHINE
+workflow:
+  states: [clean, scan, analyze, fix, validate, commit]
+  checkpoints: true
+  auto_resume: true
+  current_state_file: ".convergence/workflow.state"
+  transitions:
+    clean: [scan]
+    scan: [analyze, clean]
+    analyze: [fix, scan]
+    fix: [validate, analyze]
+    validate: [commit, fix]
+    commit: [clean]
+
+# CONTEXT INJECTION
+context_headers:
+  enabled: true
+  format: "# CONVERGENCE: {count} violations ({breakdown})"
+  include:
+    - violation_count
+    - law_breakdown
+    - persona_list
+    - last_scan_timestamp
+  refresh_on_scan: true
+
+# EXECUTION
+execution:
+  steps:
+    - "read_entire_input_sha256_verify"
+    - "detect_violations_with_line_numbers"
+    - "consult_personas_require_consensus"
+    - "generate_alternatives"
+    - "apply_fix_past_tense_evidence"
+    - "validate_no_regression"
+    - "iterate_if_violations_remain"
+
+# LEARNING MODE
+learning:
+  enabled: true
+  capture_patterns: true
+  min_occurrences: 10
+  auto_generate_rules: true
+  confidence_threshold: 0.85
+  pattern_library: ".convergence/patterns/"
+
+# COMMIT HOOKS
+commit_hooks:
+  enabled: true
+  pre_commit:
+    run: "convergence /recursive --veto-only"
+    enforce_zero_veto: true
+    allow_bypass: false
+  post_commit:
+    snapshot: true
+    journal_entry: true
+
+# INLINE SUGGESTIONS
+inline_suggestions:
+  enabled: true
+  format: "  → {action}: {code}"
+  max_per_violation: 3
+  include_examples: true
