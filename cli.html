@@ -183,9 +183,18 @@ h1 {
   letter-spacing: -0.02em;
   z-index: 1000;
   outline: none;
+  border: none;
+  background: transparent;
   min-width: 100px;
   padding: 8px 12px;
   cursor: text;
+  -webkit-user-modify: read-write-plaintext-only;
+}
+
+h1:focus {
+  outline: none;
+  border: none;
+  background: transparent;
 }
 
 h1:empty::before {
