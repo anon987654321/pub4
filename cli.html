@@ -2192,11 +2192,28 @@ const Pads = {
       ['C#3', 'E3', 'G#3'],          // C#m
       ['G#3', 'B3', 'D#4'],          // G#m
       ['B3', 'D#4', 'F#4']           // B
+    ],
+    
+    // ============================================
+    // DONUTS (2006) - Time: The Donut of the Heart
+    // Samples Motherlode "When I Die"
+    // Dbmaj9 → Cm9 → Fm9 → Bbm9 @ 72 BPM
+    // ============================================
+    dilla_time_donut: [
+      // Dbmaj9: Db (root) + Ab-C-Eb-F (5-7-9-3) - silky Dilla voicing
+      ['Db2', 'Ab3', 'C4', 'Eb4', 'F4'],
+      // Cm9: C (root) + Bb-Eb-G-D (b7-b3-5-9)
+      ['C2', 'Bb3', 'Eb4', 'G4', 'D5'],
+      // Fm9: F (root) + Eb-Ab-C-G (b7-b3-5-9)
+      ['F2', 'Eb3', 'Ab3', 'C4', 'G4'],
+      // Bbm9: Bb (root) + Ab-Db-F-C (b7-b3-5-9)
+      ['Bb1', 'Ab3', 'Db4', 'F4', 'C5']
     ]
   },
   
   // Curated Dilla playlist for continuous play
   dillaPlaylist: [
+    { name: 'dilla_time_donut', tempo: 72, loops: 4 },  // Lead with Donuts
     { name: 'dilla_players', tempo: 94, loops: 3 },
     { name: 'dilla_fall_in_love', tempo: 92, loops: 3 },
     { name: 'dilla_get_dis_money', tempo: 88, loops: 2 },
