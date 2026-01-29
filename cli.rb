@@ -2861,6 +2861,7 @@ export OPENROUTER_API_KEY="#{key}""
       "save" => method(:cmd_save),
       "restore" => method(:cmd_restore),
       "add" => method(:cmd_add),
+      "load" => method(:cmd_load),
       "undo" => method(:cmd_undo),
       "cost" => method(:cmd_cost),
       "deps" => method(:cmd_deps),
@@ -2971,7 +2972,14 @@ export OPENROUTER_API_KEY="#{key}""
           end
         end
       else
-        chat_with_llm(input)
+        # Check if first word is a known command (allow commands without /)
+        parts = input.split(/\s+/)
+        first_word = parts[0]&.downcase
+        if first_word && @commands.key?(first_word)
+          @commands[first_word].call(*parts[1..])
+        else
+          chat_with_llm(input)
+        end
       end
     end
   rescue Interrupt
