@@ -2237,30 +2237,39 @@ const Pads = {
     // Start audio context first (required before creating effects)
     await Tone.start();
     
-    // Rhodes/Wurli style electric piano pads - soft, not harsh
-    // Layer 1: Gentle sub (quieter)
+    // DuoSynth for rich, dual-oscillator warmth (Dilla's sampled Rhodes vibe)
+    this.synth = new Tone.PolySynth(Tone.DuoSynth, {
+      vibratoAmount: 0.3,
+      vibratoRate: 0.4,
+      harmonicity: 1.5,
+      voice0: {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 2, decay: 1, sustain: 0.8, release: 4 },
+        filterEnvelope: { attack: 2, decay: 1, sustain: 0.5, release: 4, baseFrequency: 200, octaves: 3 }
+      },
+      voice1: {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 2.5, decay: 1, sustain: 0.7, release: 4.5 },
+        filterEnvelope: { attack: 2, decay: 1, sustain: 0.5, release: 4, baseFrequency: 400, octaves: 2 }
+      }
+    }).toDestination();
+    
+    // Gentle sub layer
     this.subBass = new Tone.Synth({
       oscillator: { type: 'sine' },
       envelope: { attack: 0.8, decay: 1, sustain: 0.6, release: 4 }
     }).toDestination();
-    this.subBass.volume.value = -18;  // Much quieter sub
+    this.subBass.volume.value = -20;
     
-    // Layer 2: Soft FM electric piano (Rhodes-like)
-    this.synth = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3,
-      modulationIndex: 1,  // Low mod = soft bell-like tone
+    // Shimmer layer (very quiet)
+    this.airPad = new Tone.PolySynth(Tone.AMSynth, {
+      harmonicity: 0.5,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.8, decay: 1.5, sustain: 0.5, release: 4 },
-      modulation: { type: 'sine' },
-      modulationEnvelope: { attack: 0.5, decay: 0.5, sustain: 0.3, release: 3 }
+      envelope: { attack: 3, decay: 1, sustain: 0.5, release: 6 },
+      modulation: { type: 'triangle' },
+      modulationEnvelope: { attack: 4, decay: 2, sustain: 0.3, release: 6 }
     }).toDestination();
-    
-    // Layer 3: Airy shimmer (very quiet)
-    this.airPad = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 2, decay: 2, sustain: 0.3, release: 6 }
-    }).toDestination();
-    this.airPad.volume.value = -24;  // Very subtle
+    this.airPad.volume.value = -26;
     
     // Lush reverb
     this.reverb = new Tone.Reverb({
@@ -2269,18 +2278,18 @@ const Pads = {
       preDelay: 0.2
     }).toDestination();
     
-    // Gentle chorus
+    // Slow chorus for width
     this.chorus = new Tone.Chorus({
-      frequency: 0.3,
+      frequency: 0.4,
       delayTime: 4,
-      depth: 0.4,
-      wet: 0.3
+      depth: 0.5,
+      wet: 0.35
     }).connect(this.reverb).start();
     
-    // Soft delay
+    // Delay
     this.delay = new Tone.FeedbackDelay({
       delayTime: '4n.',
-      feedback: 0.25,
+      feedback: 0.2,
       wet: 0.15
     }).connect(this.reverb);
     
@@ -2289,8 +2298,8 @@ const Pads = {
     this.synth.connect(this.delay);
     this.airPad.connect(this.reverb);
     
-    // Overall volume - quiet ambient
-    this.synth.volume.value = -14;
+    // Volume
+    this.synth.volume.value = -12;
     
     await this.reverb.generate();
     console.log('[Pads] 🎹 Low End Theory pad synth ready');
