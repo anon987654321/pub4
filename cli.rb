@@ -1797,6 +1797,8 @@ module Voice
       settings = ELEVENLABS_SETTINGS[@current_persona] || ELEVENLABS_SETTINGS["default"]
       model = @elevenlabs_model || "eleven_turbo_v2_5"
       
+      puts C.d("[ElevenLabs] Persona: #{@current_persona}, Voice: #{voice_id[0..8]}...")
+      
       uri = URI("https://api.elevenlabs.io/v1/text-to-speech/#{voice_id}")
       
       body = {
@@ -1823,6 +1825,8 @@ module Voice
       response = http.request(request)
       
       if response.code == "200"
+        puts C.g("[ElevenLabs] Got audio (#{response.body.bytesize} bytes)")
+        
         # Save to temp file
         @audio_file = "/tmp/ares_audio_#{$$}.mp3"
         
@@ -1841,6 +1845,7 @@ module Voice
         @audio_ready = true
         
         # PLAY the audio locally (OpenBSD: aucat, ffplay, mpv fallback)
+        puts C.d("[ElevenLabs] Playing #{@audio_file}...")
         Thread.new do
           system("ffplay -nodisp -autoexit #{@audio_file.shellescape} 2>/dev/null || " \
                  "mpv --no-video #{@audio_file.shellescape} 2>/dev/null || " \
@@ -1850,11 +1855,13 @@ module Voice
         
         true
       else
+        puts C.r("[ElevenLabs] API error: #{response.code} - #{response.body[0..100]}")
         # Fallback to browser TTS on error
         @queue << text if @web_tts
         false
       end
     rescue => e
+      puts C.r("[ElevenLabs] Exception: #{e.message}")
       # Silent fail, queue for browser
       @queue << text if @web_tts
       false
@@ -2905,7 +2912,14 @@ export OPENROUTER_API_KEY="#{key}""
       "sync" => method(:cmd_sync),
       "help" => method(:cmd_help),
       "exit" => method(:cmd_exit),
-      "quit" => method(:cmd_exit)
+      "quit" => method(:cmd_exit),
+      # P0 Copilot-style commands
+      "view" => method(:cmd_view),
+      "edit" => method(:cmd_edit),
+      "grep" => method(:cmd_grep),
+      "create" => method(:cmd_create),
+      "diff" => method(:cmd_diff),
+      "todo" => method(:cmd_todo)
     }
   end
 
@@ -3589,6 +3603,191 @@ iteration #{iter}/#{max_iter}"
         puts "Unknown persona: #{name}"
         puts "Available: #{Voice.available_personas.join(', ')}, random"
       end
+    end
+  end
+  
+  # ============================================
+  # P0 COPILOT-STYLE COMMANDS (pure zsh patterns)
+  # ============================================
+  
+  # /view <file> [start] [end] - View file with line numbers
+  def cmd_view(*args)
+    return puts "Usage: /view <file> [start_line] [end_line]" if args.empty?
+    
+    file = File.expand_path(args[0])
+    unless File.exist?(file)
+      puts "File not found: #{file}"
+      return
+    end
+    
+    lines = File.readlines(file, encoding: "UTF-8")
+    start_line = (args[1]&.to_i || 1) - 1
+    end_line = (args[2]&.to_i || lines.length) - 1
+    
+    start_line = [0, start_line].max
+    end_line = [lines.length - 1, end_line].min
+    
+    width = (end_line + 1).to_s.length
+    
+    (start_line..end_line).each do |i|
+      puts "#{(i + 1).to_s.rjust(width)}. #{lines[i]}"
+    end
+    
+    puts C.d("#{file} (#{lines.length} lines)")
+  end
+  
+  # /edit <file> <line> <old> <new> - Replace text at line
+  def cmd_edit(*args)
+    if args.length < 4
+      puts "Usage: /edit <file> <line_num> <old_text> <new_text>"
+      puts "  or:  /edit <file> to open in \$EDITOR"
+      
+      if args.length == 1 && File.exist?(args[0])
+        editor = ENV["EDITOR"] || "vi"
+        system("#{editor} #{args[0].shellescape}")
+      end
+      return
+    end
+    
+    file = File.expand_path(args[0])
+    line_num = args[1].to_i
+    old_text = args[2]
+    new_text = args[3]
+    
+    unless File.exist?(file)
+      puts "File not found: #{file}"
+      return
+    end
+    
+    lines = File.readlines(file, encoding: "UTF-8")
+    
+    if line_num < 1 || line_num > lines.length
+      puts "Line #{line_num} out of range (1-#{lines.length})"
+      return
+    end
+    
+    line = lines[line_num - 1]
+    unless line.include?(old_text)
+      puts "Text not found on line #{line_num}: #{old_text}"
+      return
+    end
+    
+    lines[line_num - 1] = line.sub(old_text, new_text)
+    File.write(file, lines.join, encoding: "UTF-8")
+    
+    puts C.g("Edited line #{line_num}:")
+    puts "  - #{line.strip}"
+    puts "  + #{lines[line_num - 1].strip}"
+  end
+  
+  # /grep <pattern> [path] - Search files for pattern (pure zsh)
+  def cmd_grep(*args)
+    return puts "Usage: /grep <pattern> [path]" if args.empty?
+    
+    pattern = args[0]
+    path = args[1] || "."
+    
+    # Use zsh globbing: **/* for recursive
+    # Pure zsh: no grep command, use Ruby's native search
+    results = []
+    
+    Dir.glob(File.join(path, "**/*")).each do |file|
+      next unless File.file?(file)
+      next if file.include?(".git/")
+      next if File.binary?(file) rescue true
+      
+      begin
+        File.readlines(file, encoding: "UTF-8").each_with_index do |line, i|
+          if line.include?(pattern) || line.match?(Regexp.new(pattern, Regexp::IGNORECASE))
+            results << { file: file, line: i + 1, content: line.strip }
+          end
+        end
+      rescue
+        # Skip unreadable files
+      end
+    end
+    
+    if results.empty?
+      puts "No matches for: #{pattern}"
+    else
+      results.first(50).each do |r|
+        puts "#{C.d(r[:file])}:#{C.g(r[:line].to_s)} #{r[:content][0..100]}"
+      end
+      puts C.d("#{results.length} matches#{results.length > 50 ? ' (showing first 50)' : ''}")
+    end
+  end
+  
+  # /create <file> - Create new file
+  def cmd_create(*args)
+    return puts "Usage: /create <file>" if args.empty?
+    
+    file = File.expand_path(args[0])
+    
+    if File.exist?(file)
+      puts "File already exists: #{file}"
+      return
+    end
+    
+    # Create parent directories if needed
+    dir = File.dirname(file)
+    FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+    
+    # If content provided via heredoc style, use it
+    if args.length > 1
+      content = args[1..].join(" ")
+      File.write(file, content + "\n", encoding: "UTF-8")
+      puts C.g("Created: #{file} (#{content.length} bytes)")
+    else
+      # Open in editor for content
+      File.write(file, "", encoding: "UTF-8")
+      editor = ENV["EDITOR"] || "vi"
+      system("#{editor} #{file.shellescape}")
+      puts C.g("Created: #{file}")
+    end
+  end
+  
+  # /diff [file] - Show uncommitted changes
+  def cmd_diff(*args)
+    if args.empty?
+      output = `git --no-pager diff --stat 2>/dev/null`
+      if output.strip.empty?
+        puts "No uncommitted changes"
+      else
+        puts output
+      end
+    else
+      output = `git --no-pager diff #{args[0].shellescape} 2>/dev/null`
+      puts output.empty? ? "No changes in #{args[0]}" : output
+    end
+  end
+  
+  # /todo - Simple task tracking
+  @todos = []
+  def cmd_todo(*args)
+    @todos ||= []
+    
+    if args.empty?
+      if @todos.empty?
+        puts "No tasks. Add with: /todo add <task>"
+      else
+        @todos.each_with_index do |task, i|
+          status = task[:done] ? C.g("[x]") : "[ ]"
+          puts "#{i + 1}. #{status} #{task[:text]}"
+        end
+      end
+    elsif args[0] == "add"
+      text = args[1..].join(" ")
+      @todos << { text: text, done: false }
+      puts C.g("Added: #{text}")
+    elsif args[0] == "done"
+      idx = args[1].to_i - 1
+      if idx >= 0 && idx < @todos.length
+        @todos[idx][:done] = true
+        puts C.g("Done: #{@todos[idx][:text]}")
+      end
+    elsif args[0] == "clear"
+      @todos = []
+      puts "Tasks cleared"
     end
   end
   
