@@ -1314,7 +1314,8 @@ module OpenRouterChat
         path = args["path"] || "."
         glob = args["glob"] || "*"
         begin
-          output = `grep -rn --include='#{glob}' '#{pattern}' #{path} 2>&1 | head -50`
+          # Use Shellwords to escape pattern/glob to prevent injection
+          output = `grep -rn --include=#{glob.shellescape} #{pattern.shellescape} #{path.shellescape} 2>&1 | head -50`
           { success: true, matches: output }
         rescue => e
           { success: false, error: e.message }
