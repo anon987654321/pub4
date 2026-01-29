@@ -9,15 +9,44 @@ config:
 
 # TRACE OUTPUT CONFIG
 # Controls verbosity of analysis output
+# Style: dmesg-like kernel log format for full observability
 trace:
   enabled: true
   verbosity: deep  # minimal | standard | deep | exhaustive
+  
+  # dmesg-style output format
+  # Example: [    0.060100] singularity: FOUND fetch() calls at lines 1761, 1933
+  dmesg_format:
+    enabled: true
+    timestamp_style: kernel    # kernel = [    0.000000], iso = 2024-01-29T08:30:28
+    component_prefix: true     # law name before message (e.g., "singularity:")
+    action_verbs:              # Standardized action vocabulary
+      - FOUND                  # Detection
+      - SEARCH                 # Looking for pattern
+      - ANALYSIS               # Reasoning about finding
+      - VIOLATION              # Confirmed violation with ID
+      - DECISION               # Choice made (fix/skip/defer)
+      - EDIT                   # File modification
+      - PASS                   # Check passed
+      - SKIP                   # Intentionally skipped
+      - APPLY                  # Fix applied
+      - REVALIDATE             # Re-checking after fix
+    
+    violation_id_format: "[{LAW}-{NNN}]"  # e.g., [DENSITY-001], [ROBUST-002]
+    
+    section_headers:
+      enabled: true
+      style: box               # box = ======, line = ------
+      template: |
+        ================================================================================
+        ITERATION {N}: {LAW} (Priority {P}) - {DESCRIPTION}
+        ================================================================================
   
   output_format:
     show_file_path: true
     show_line_number: true
     show_column: true
-    show_context_lines: 3  # Lines before/after match
+    show_context_lines: 3      # Lines before/after match
     show_matched_text: true
     show_pattern_used: true
     show_fix_suggestion: true
@@ -44,6 +73,16 @@ trace:
     include_laws: all          # or list: [robustness, singularity]
     exclude_patterns: []       # Patterns to skip
     focus_files: []            # Empty = all files
+  
+  # Autofix trace requirements
+  autofix_trace:
+    log_each_search: true      # Log every grep/pattern search
+    log_each_finding: true     # Log every match found
+    log_analysis: true         # Log reasoning about findings
+    log_decisions: true        # Log fix/skip decisions with rationale
+    log_edits: true            # Log exact old_str/new_str changes
+    log_validation: true       # Log post-fix validation results
+    summary_at_end: true       # Print final summary with counts
 
 # SIX UNIVERSAL LAWS (hierarchical priority for violations)
 # Research basis: Zakeri-Nasrabadi et al. (2023), "A systematic literature review on code smells datasets"
@@ -1278,6 +1317,43 @@ execution:
     - "validate_no_regression"
     - "iterate_until_diminishing_returns"
   
+  # AUTOFIX LOOP - iterates until zero violations
+  autofix_loop:
+    enabled: true
+    max_iterations: 20
+    stop_when: "zero_violations"
+    
+    # Process each law in priority order
+    law_sequence:
+      - robustness    # Priority 1: security, errors
+      - singularity   # Priority 2: DRY, duplication
+      - linearity     # Priority 3: complexity, nesting
+      - proximity     # Priority 4: cohesion
+      - abstraction   # Priority 5: magic numbers
+      - density       # Priority 6: dead code, cruft
+    
+    # For each law, run both search types
+    search_types:
+      literal:
+        description: "Exact pattern/lexical matching"
+        methods:
+          - regex_pattern_match
+          - ast_node_match
+          - token_sequence_match
+      conceptual:
+        description: "Semantic/meaning-based detection"
+        methods:
+          - similar_logic_different_syntax
+          - same_purpose_different_implementation
+          - equivalent_algorithms
+          - copy_paste_with_modifications
+    
+    # Autofix behavior
+    fix_mode: immediate     # immediate | batch | confirm
+    fix_order: severity_desc
+    revalidate_after_fix: true
+    rollback_on_regression: true
+  
   identify_missing_logic:
     description: "Find gaps, incomplete features, unhandled cases"
     actions:
@@ -1299,6 +1375,29 @@ execution:
       - "re-run violation detection"
       - "measure improvement delta"
       - "stop if diminishing returns"
+
+# SINGULARITY (DRY) - Enhanced search specification
+singularity_detection:
+  literal_search:
+    description: "Find exact duplicate code"
+    min_tokens: 10
+    min_lines: 3
+    ignore_whitespace: true
+    ignore_comments: true
+    ignore_variable_names: false
+  
+  conceptual_search:
+    description: "Find semantically equivalent code"
+    patterns:
+      - same_algorithm_different_names
+      - similar_loop_structures
+      - equivalent_conditionals
+      - parallel_data_transformations
+      - repeated_api_call_patterns
+      - duplicate_error_handling
+      - similar_dom_manipulation
+      - repeated_style_application
+    similarity_threshold: 0.75
 
 # LEARNING MODE
 learning:

@@ -14,80 +14,15 @@
 /* ============================================
    CUSTOM PROPERTIES
    ============================================ */
-@property --s1 { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-@property --s2 { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-@property --s3 { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-@property --rotation { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-
-@property --mesh-x-0 { syntax: "<percentage>"; inherits: false; initial-value: 85%; }
-@property --mesh-y-0 { syntax: "<percentage>"; inherits: false; initial-value: 80%; }
-@property --mesh-c-0 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 92%, 1); }
-@property --mesh-s-start-0 { syntax: "<percentage>"; inherits: false; initial-value: 9%; }
-@property --mesh-s-end-0 { syntax: "<percentage>"; inherits: false; initial-value: 55%; }
-
-@property --mesh-x-1 { syntax: "<percentage>"; inherits: false; initial-value: 60%; }
-@property --mesh-y-1 { syntax: "<percentage>"; inherits: false; initial-value: 24%; }
-@property --mesh-c-1 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 88%, 1); }
-@property --mesh-s-start-1 { syntax: "<percentage>"; inherits: false; initial-value: 5%; }
-@property --mesh-s-end-1 { syntax: "<percentage>"; inherits: false; initial-value: 72%; }
-
-@property --mesh-x-2 { syntax: "<percentage>"; inherits: false; initial-value: 13%; }
-@property --mesh-y-2 { syntax: "<percentage>"; inherits: false; initial-value: 82%; }
-@property --mesh-c-2 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 85%, 0.6); }
-@property --mesh-s-start-2 { syntax: "<percentage>"; inherits: false; initial-value: 5%; }
-@property --mesh-s-end-2 { syntax: "<percentage>"; inherits: false; initial-value: 52%; }
-
-@property --mesh-x-3 { syntax: "<percentage>"; inherits: false; initial-value: 24%; }
-@property --mesh-y-3 { syntax: "<percentage>"; inherits: false; initial-value: 7%; }
-@property --mesh-c-3 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 90%, 1); }
-@property --mesh-s-start-3 { syntax: "<percentage>"; inherits: false; initial-value: 13%; }
-@property --mesh-s-end-3 { syntax: "<percentage>"; inherits: false; initial-value: 68%; }
-
 /* ============================================
    KEYFRAMES
    ============================================ */
-@keyframes s1 { to { --s1: 360deg; } }
-@keyframes s2 { to { --s2: 360deg; } }
-@keyframes s3 { to { --s3: 360deg; } }
-@keyframes rotation { to { --rotation: 360deg; } }
-
-@keyframes mesh-gradient {
-  0% {
-    --mesh-x-0: 85%; --mesh-y-0: 80%;
-    --mesh-c-1: hsla(0, 0%, 88%, 1);
-    --mesh-x-1: 60%; --mesh-y-1: 24%;
-    --mesh-x-2: 13%; --mesh-y-2: 82%;
-    --mesh-x-3: 24%; --mesh-y-3: 7%;
-  }
-  100% {
-    --mesh-x-0: 31%; --mesh-y-0: 94%;
-    --mesh-c-1: hsla(0, 0%, 90%, 1);
-    --mesh-x-1: 2%; --mesh-y-1: 25%;
-    --mesh-x-2: 98%; --mesh-y-2: 20%;
-    --mesh-x-3: 95%; --mesh-y-3: 92%;
-  }
-}
-
 @keyframes breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
 
-@keyframes core-pulse {
-  0%, 100% { 
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% { 
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.2);
-  }
-}
 
-@keyframes quantum-shimmer {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
-}
 
 /* === DIMENSIONAL KEYFRAMES === */
 @keyframes dimensional-shift {
@@ -123,11 +58,6 @@
     opacity: 0.06;
     transform: translate(-50%, -50%) scale(1.2);
   }
-}
-
-@keyframes inner-glow {
-  0%, 100% { opacity: 0.1; }
-  50% { opacity: 0.25; }
 }
 
 @keyframes grain-jitter {
@@ -305,50 +235,6 @@ h1:empty::before {
 /* ============================================
    INTELLIGENCE FEATURES
    ============================================ */
-.subsurface {
-  position: absolute;
-  inset: 10%;
-  background: radial-gradient(
-    circle at 40% 40%,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(240, 240, 240, 0.08) 30%,
-    transparent 60%
-  );
-  border-radius: 50%;
-  filter: blur(40px);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.core-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30%;
-  height: 30%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 70%);
-  border-radius: 50%;
-  animation: core-pulse 2s ease-in-out infinite;
-  filter: blur(20px);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.quantum-shimmer {
-  position: absolute;
-  inset: -20%;
-  background: radial-gradient(
-    circle,
-    transparent 40%,
-    rgba(245, 245, 245, 0.04) 50%,
-    transparent 60%
-  );
-  animation: quantum-shimmer 3s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 6;
-}
-
 /* ============================================
    DIMENSIONAL / DMT REALM EFFECTS
    ============================================ */
@@ -382,25 +268,6 @@ h1:empty::before {
   animation: dimensional-shift 20s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
-}
-
-.inner-light {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 50%;
-  height: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    circle,
-    rgba(147, 112, 219, 0.2) 0%,
-    rgba(102, 126, 234, 0.1) 40%,
-    transparent 70%
-  );
-  animation: inner-glow 6s ease-in-out infinite;
-  filter: blur(30px);
-  pointer-events: none;
-  z-index: 3;
 }
 
 .presence-ring {
@@ -446,11 +313,6 @@ h1:empty::before {
   pointer-events: none;
 }
 
-/* Thinking state indicator */
-.blob-wrapper.thinking .core-pulse {
-  animation: core-pulse 0.8s ease-in-out infinite;
-}
-
 /* Speaking state - more active */
 .blob-wrapper.speaking {
   animation: breathe 2s ease-in-out infinite;
@@ -474,42 +336,6 @@ h1:empty::before {
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
-/* Fresnel rim glow */
-.fresnel-rim {
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: inset 0 0 40px rgba(120, 100, 200, 0.25);
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-/* Proximity glow ring */
-.proximity-glow {
-  position: absolute;
-  inset: -15%;
-  border-radius: 50%;
-  background: radial-gradient(circle, transparent 40%, rgba(120, 100, 200, 0.08) 60%, transparent 80%);
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
-  pointer-events: none;
-}
-
-/* Pupil/core that dilates */
-.pupil-core {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 15%;
-  height: 15%;
-  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(140,120,200,0.5) 50%, transparent 100%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.15s ease-out, height 0.15s ease-out;
-  pointer-events: none;
-}
-
 /* Afterimage trail container */
 .afterimage {
   position: absolute;
@@ -518,51 +344,6 @@ h1:empty::before {
   opacity: 0.3;
   filter: blur(5px);
   background: rgba(102, 126, 234, 0.2);
-}
-
-/* Dimensional flicker overlay */
-.dimensional-flicker {
-  position: absolute;
-  inset: 0;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-}
-
-/* Bioluminescent veins (SVG pattern) */
-.vein-network {
-  position: absolute;
-  inset: 5%;
-  border-radius: 50%;
-  opacity: 0.15;
-  pointer-events: none;
-  background: 
-    radial-gradient(circle at 30% 40%, rgba(140,120,200,0.3) 0%, transparent 15%),
-    radial-gradient(circle at 70% 60%, rgba(160,130,210,0.3) 0%, transparent 15%),
-    radial-gradient(circle at 50% 80%, rgba(120,100,190,0.25) 0%, transparent 20%);
-  animation: vein-pulse 4s ease-in-out infinite;
-}
-
-@keyframes vein-pulse {
-  0%, 100% { opacity: 0.08; }
-  50% { opacity: 0.2; }
-}
-
-/* Internal currents */
-.internal-current {
-  position: absolute;
-  inset: 10%;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent, rgba(140,120,200,0.08), transparent, rgba(160,130,210,0.08), transparent);
-  animation: current-flow 12s linear infinite;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-@keyframes current-flow {
-  to { transform: rotate(360deg); }
 }
 
 /* Membrane ripple effect */
@@ -594,17 +375,6 @@ h1:empty::before {
 @keyframes caustic-shimmer {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.7; }
-}
-
-/* Heat distortion (subtle) */
-.heat-distortion {
-  position: absolute;
-  inset: -30%;
-  border-radius: 50%;
-  background: transparent;
-  backdrop-filter: blur(0.5px);
-  pointer-events: none;
-  opacity: 0.3;
 }
 
 /* ============================================
@@ -664,56 +434,6 @@ h1:empty::before {
       </feComponentTransfer>
     </filter>
 
-    <filter id="edge-displacement">
-      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2"/>
-      <feDisplacementMap in="SourceGraphic" scale="40"/>
-    </filter>
-
-    <filter id="glow" x="-150%" y="-150%" width="400%" height="400%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="60" result="blurred"/>
-      <feComponentTransfer in="blurred" result="brighterGlow">
-        <feFuncA type="linear" slope="1.2"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode in="brighterGlow"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-
-    <filter id="chromatic-aberration">
-      <feOffset in="SourceGraphic" dx="3" dy="0" result="r"/>
-      <feOffset in="SourceGraphic" dx="-3" dy="0" result="b"/>
-      <feComponentTransfer in="r" result="r-channel">
-        <feFuncR type="identity"/>
-        <feFuncG type="discrete" tableValues="0"/>
-        <feFuncB type="discrete" tableValues="0"/>
-      </feComponentTransfer>
-      <feComponentTransfer in="b" result="b-channel">
-        <feFuncR type="discrete" tableValues="0"/>
-        <feFuncG type="discrete" tableValues="0"/>
-        <feFuncB type="identity"/>
-      </feComponentTransfer>
-      <feBlend in="r-channel" in2="b-channel" mode="screen" result="rb"/>
-      <feComponentTransfer in="SourceGraphic" result="g-channel">
-        <feFuncR type="discrete" tableValues="0"/>
-        <feFuncG type="identity"/>
-        <feFuncB type="discrete" tableValues="0"/>
-      </feComponentTransfer>
-      <feBlend in="rb" in2="g-channel" mode="screen"/>
-    </filter>
-
-    <filter id="color-grade">
-      <feColorMatrix type="matrix" values="
-        1.2  0.1  0.15 0  -0.1
-        0.1  0.9  0.1  0   0
-        0.15 0.1  1.1  0   0
-        0    0    0    1   0"/>
-      <feComponentTransfer>
-        <feFuncR type="gamma" amplitude="1.15" exponent="1.1"/>
-        <feFuncG type="gamma" amplitude="0.9" exponent="0.95"/>
-        <feFuncB type="gamma" amplitude="1.05" exponent="1.0"/>
-      </feComponentTransfer>
-    </filter>
   </defs>
 </svg>
 
@@ -1823,9 +1543,6 @@ function drawLighting() {
 // DEPTH EFFECTS
 // ============================================
 const orbShadow = document.querySelector('.orb-shadow');
-const proximityGlowEl = document.querySelector('.proximity-glow');
-const pupilCore = document.querySelector('.pupil-core');
-const dimensionalFlicker = document.querySelector('.dimensional-flicker');
 const afterimageContainer = document.getElementById('afterimageContainer');
 
 let lastOrbX = 0, lastOrbY = 0;
@@ -1837,11 +1554,6 @@ function updateDepthEffects(time) {
     const shadowScale = 0.8 + breathingScale * 0.2 + smoothedEnergy * 0.3;
     orbShadow.style.transform = `translateX(-50%) scaleX(${shadowScale}) scaleY(${shadowScale * 0.5})`;
     orbShadow.style.opacity = 0.25 + smoothedEnergy * 0.15;
-  }
-  
-  // Proximity glow
-  if (proximityGlowEl) {
-    proximityGlowEl.style.opacity = proximityGlow * 0.4;
   }
   
   // Pupil dilation based on audio energy
@@ -1905,19 +1617,6 @@ function createMembraneRipple() {
   `;
   blobWrapper.appendChild(ripple);
   setTimeout(() => ripple.remove(), 1000);
-}
-
-// ============================================
-// GLITCH EFFECT
-// ============================================
-function triggerGlitch() {
-  const glitchOverlay = document.querySelector('.glitch-overlay');
-  if (glitchOverlay) {
-    glitchOverlay.style.animation = 'none';
-    setTimeout(() => {
-      glitchOverlay.style.animation = 'glitch 0.3s ease-out';
-    }, 10);
-  }
 }
 
 // ============================================
@@ -1991,26 +1690,6 @@ function animate(time) {
   // Draw lighting effects (specular, rim, shadow)
   drawLighting();
   
-  // Draw astral particles - DISABLED for flat aesthetic
-  // updateAstralParticles(time);
-  // drawAstralParticles();
-  
-  // Audio-reactive subsurface scattering
-  const subsurface = document.querySelector('.subsurface');
-  if (subsurface) {
-    const intensity = 0.12 + smoothedEnergy * 0.5;
-    subsurface.style.opacity = intensity;
-  }
-  
-  // Core pulse intensity
-  const corePulse = document.querySelector('.core-pulse');
-  if (corePulse && beatDetected) {
-    corePulse.style.opacity = 1;
-    setTimeout(() => {
-      if (corePulse) corePulse.style.opacity = 0.6;
-    }, 100);
-  }
-  
   // Draw tentacles
   drawTentacles();
   
@@ -2028,10 +1707,6 @@ function animate(time) {
 // INITIALIZATION
 // ============================================
 initAstralParticles();
-
-window.addEventListener('resize', () => {
-  // Nothing to resize anymore
-});
 
 // Keyboard shortcut - spacebar to toggle listening
 document.addEventListener('keydown', (e) => {
@@ -2063,19 +1738,6 @@ document.body.addEventListener('click', async (e) => {
     }
   }
 }, { once: false });
-
-// Update quantum shimmer based on audio energy
-function updateQuantumShimmer() {
-  const shimmer = document.querySelector('.quantum-shimmer');
-  if (shimmer && smoothedEnergy) {
-    const intensity = 0.1 + smoothedEnergy * 0.5;
-    shimmer.style.opacity = intensity;
-    shimmer.style.transform = `scale(${1 + smoothedEnergy * 0.2})`;
-  }
-  requestAnimationFrame(updateQuantumShimmer);
-}
-
-updateQuantumShimmer();
 
 // ============================================
 // ARES - Click orb to speak
@@ -2233,14 +1895,14 @@ const Ares = {
     setUIState('listening');
     document.body.style.cursor = 'crosshair';
     if (typeof depth !== 'undefined') depth = 0.8;
-    try { this.recognition.start(); } catch(e) {}
+    try { this.recognition.start(); } catch(e) { /* expected if already started */ }
   },
   
   stopListening() {
     if (!this.recognition) return;
     this.isListening = false;
     setUIState('idle');
-    try { this.recognition.stop(); } catch(e) {}
+    try { this.recognition.stop(); } catch(e) { /* expected if already stopped */ }
   },
   
   send(message) {
@@ -2348,13 +2010,6 @@ const Ares = {
   setPersona(name) {
     this.currentPersona = name;
     console.log('Persona:', name, this.voiceProfiles[name] || this.voiceProfiles.default);
-  },
-  
-  randomPersona() {
-    const personas = Object.keys(this.voiceProfiles).filter(p => p !== 'default');
-    const pick = personas[Math.floor(Math.random() * personas.length)];
-    this.setPersona(pick);
-    return pick;
   }
 };
 

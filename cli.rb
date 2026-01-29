@@ -3140,7 +3140,8 @@ export OPENROUTER_API_KEY="#{key}""
       "diff" => method(:cmd_diff),
       "todo" => method(:cmd_todo),
       "checkpoint" => method(:cmd_checkpoint),
-      "checkpoints" => method(:cmd_restore_checkpoint)
+      "checkpoints" => method(:cmd_restore_checkpoint),
+      "trace" => method(:cmd_trace)
     }
   end
 
@@ -3649,6 +3650,7 @@ iteration #{iter}/#{max_iter}"
         
         /browse <url>    Fetch web page via Ferrum
         /search <query>  Search DuckDuckGo
+        /trace <file>    dmesg-style violation scan
         /clear           Clear chat history
         /help            Show this
         /quit            Exit
@@ -4365,6 +4367,59 @@ iteration #{iter}/#{max_iter}"
       blockers: blockers,
       next_steps: next_steps
     }
+  end
+
+  # /trace <file> - Run dmesg-style code analysis with full observability
+  # Delegates to trace.sh for pure zsh implementation
+  def cmd_trace(*args)
+    if args.empty?
+      puts "Usage: /trace <file> [law]"
+      puts "  Run dmesg-style violation scan with full trace output"
+      puts "  Laws: robustness, singularity, linearity, proximity, abstraction, density"
+      return
+    end
+    
+    file = File.expand_path(args[0])
+    focus_law = args[1] || "all"
+    
+    unless File.exist?(file)
+      puts C.r("File not found: #{file}")
+      return
+    end
+    
+    # Prefer zsh script if available (pure modern zsh pattern)
+    script_dir = File.dirname(__FILE__)
+    trace_script = File.join(script_dir, "trace.sh")
+    
+    if File.exist?(trace_script)
+      system("zsh", trace_script, file, focus_law)
+    else
+      # Fallback: inline trace
+      puts C.y("trace.sh not found, using inline scanner")
+      trace_inline(file, focus_law)
+    end
+  end
+  
+  def trace_inline(file, focus_law)
+    content = File.read(file, encoding: "UTF-8")
+    lines = content.lines
+    
+    puts "=" * 80
+    puts "AUTOFIX TRACE v1.0 - #{File.basename(file)}"
+    puts "=" * 80
+    puts "[    0.000000] autofix: file: #{file} (#{lines.length} lines)"
+    
+    # Simplified inline scan
+    violations = 0
+    lines.each_with_index do |line, idx|
+      if line =~ /console\.log|debugger|TODO|FIXME|HACK/
+        violations += 1
+        puts "[    0.%06d] density: line #{idx + 1}: #{line.strip[0..50]}" % violations
+      end
+    end
+    
+    puts "=" * 80
+    puts "Total: #{violations} violations"
   end
 end
 
