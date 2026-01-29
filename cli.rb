@@ -1263,6 +1263,14 @@ module OpenRouterChat
       @model || DEFAULT_MODEL
     end
     
+    def set_persona_prompt(prompt)
+      @persona_prompt = prompt
+    end
+    
+    def clear_persona
+      @persona_prompt = nil
+    end
+    
     private
     
     def build_system_prompt(config)
@@ -1335,14 +1343,11 @@ module OpenRouterChat
       request["X-Title"] = "Master.yml CLI"
       
       # Build context from added files
-      context = @context_files.map { |f| "--- #{f[:path]} ---
-#{f[:content]}" }.join("
-
-")
-      system_with_context = context.empty? ? @system_prompt : "#{@system_prompt}
-
-CONTEXT FILES:
-#{context}"
+      context = @context_files.map { |f| "--- #{f[:path]} ---\n#{f[:content]}" }.join("\n\n")
+      
+      # Use persona prompt if set, otherwise default system prompt
+      base_prompt = @persona_prompt || @system_prompt
+      system_with_context = context.empty? ? base_prompt : "#{base_prompt}\n\nCONTEXT FILES:\n#{context}"
       
       messages = [{ role: "system", content: system_with_context }] + @conversation
       
@@ -1350,7 +1355,7 @@ CONTEXT FILES:
         model: @model,
         messages: messages,
         max_tokens: 4096,
-        temperature: 0.7
+        temperature: @persona_prompt ? 0.9 : 0.7  # Higher temp for persona
       })
       
       response = http.request(request)
@@ -1387,52 +1392,82 @@ require "socket"
 require "json"
 
 module Voice
-  # Wheatley from Portal 2 - bumbling, fast-talking, socially awkward humor
-  # Download: https://huggingface.co/davet2001/wheatley1
-  # Fallback: en_US-lessac-medium for a generic but clear voice
-  PIPER_MODEL = ENV.fetch("PIPER_MODEL", "wheatley1")
-  PIPER_FALLBACK = "en_US-lessac-medium"
   WHISPER_MODEL = "base.en"
   WEB_PORT = 8787
   
-  # Speech rate: 0.8 = slower/awkward pauses, 1.2 = nervous fast-talking
-  SPEECH_RATE = ENV.fetch("PIPER_RATE", "1.1").to_f
+  # Default voice settings (overridden by persona)
+  DEFAULT_MODEL = "en_US-lessac-medium"
+  DEFAULT_RATE = 1.0
   
   class << self
+    attr_reader :current_persona
+    
     def init(config)
       @config = config
       @enabled = false
       @queue = Queue.new
       @server = nil
-      @model = find_piper_model
+      @personas = config.dig("voice_personas") || {}
+      @current_persona = "default"
+      apply_persona("default")
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
                        system("which whisper-cpp > /dev/null 2>&1")
       @sox_available = system("which sox > /dev/null 2>&1") ||
                        system("which rec > /dev/null 2>&1")
-      @web_tts = !@tts_available  # Use browser TTS if no native
+      @web_tts = !@tts_available
     end
     
-    def find_piper_model
-      # Check for Wheatley or other quirky models first
+    def set_persona(name)
+      name = name.to_s.downcase
+      if @personas.key?(name)
+        apply_persona(name)
+        @current_persona = name
+        true
+      else
+        false
+      end
+    end
+    
+    def apply_persona(name)
+      persona = @personas[name] || {}
+      @model = find_voice_model(persona["voice_model"] || DEFAULT_MODEL)
+      @speech_rate = persona["speech_rate"]&.to_f || DEFAULT_RATE
+      @pitch = persona["pitch"]&.to_f || 1.0
+      @persona_prompt = persona["system_prompt"]
+    end
+    
+    def persona_prompt
+      @persona_prompt
+    end
+    
+    def available_personas
+      @personas.keys
+    end
+    
+    def find_voice_model(preferred)
       model_dirs = [
         File.expand_path("~/.local/share/piper-voices"),
         "/usr/share/piper-voices",
         "/usr/local/share/piper-voices"
       ]
       
-      # Try primary model
+      # Try preferred model
       model_dirs.each do |dir|
-        path = File.join(dir, "#{PIPER_MODEL}.onnx")
-        return PIPER_MODEL if File.exist?(path)
+        path = File.join(dir, "#{preferred}.onnx")
+        return preferred if File.exist?(path)
       end
       
-      # Fall back to lessac
-      PIPER_FALLBACK
+      # Fall back to default
+      DEFAULT_MODEL
     end
     
     def model_name
-      @model || PIPER_MODEL
+      @model || DEFAULT_MODEL
+    end
+    
+    def speech_rate
+      @speech_rate || DEFAULT_RATE
     end
     
     def available?
@@ -1477,14 +1512,15 @@ module Voice
       
       return if clean.empty?
       
+      rate = @speech_rate || DEFAULT_RATE
+      
       if @tts_available
-        # Stream through Piper with quirky voice and configurable rate
-        # Rate >1.0 = nervous fast-talking, <1.0 = awkward pauses
+        # Stream through Piper with persona voice and rate
         Thread.new do
           IO.popen([
             "sh", "-c",
-            "echo #{clean.shellescape} | piper --model #{@model} --length_scale #{1.0/SPEECH_RATE} --output_raw 2>/dev/null | " \
-            "ffplay -nodisp -autoexit -af 'atempo=#{SPEECH_RATE}' -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
+            "echo #{clean.shellescape} | piper --model #{@model} --length_scale #{1.0/rate} --output_raw 2>/dev/null | " \
+            "ffplay -nodisp -autoexit -af 'atempo=#{rate}' -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
             "play -q -t raw -r 22050 -e signed -b 16 -c 1 - 2>/dev/null || aplay -q -f S16_LE -r 22050 -c 1 - 2>/dev/null"
           ]) { |p| p.read }
         end
@@ -1496,7 +1532,7 @@ module Voice
     end
     
     # Download Wheatley or other quirky voice models
-    def self.install_voice(name = "wheatley1")
+    def install_voice(name = "wheatley1")
       voice_dir = File.expand_path("~/.local/share/piper-voices")
       FileUtils.mkdir_p(voice_dir)
       
@@ -2416,6 +2452,7 @@ export OPENROUTER_API_KEY="#{key}""
       "chat" => method(:cmd_chat),
       "clear" => method(:cmd_clear_chat),
       "voice" => method(:cmd_voice),
+      "persona" => method(:cmd_persona),
       "listen" => method(:cmd_listen),
       "browse" => method(:cmd_browse),
       "search" => method(:cmd_search),
@@ -2993,7 +3030,8 @@ iteration #{iter}/#{max_iter}"
     if args.empty?
       if Voice.available?
         enabled = Voice.toggle
-        puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.model_name}, rate #{Voice::SPEECH_RATE})"
+        puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.model_name}, rate #{Voice.speech_rate})"
+        puts "Persona: #{Voice.current_persona}" if enabled
       else
         puts "Voice unavailable: install piper, whisper, sox"
         puts "  /voice install wheatley1  - Quirky Portal 2 voice"
@@ -3008,6 +3046,26 @@ iteration #{iter}/#{max_iter}"
       puts "Set PIPER_RATE=#{rate} in env for persistent change"
     else
       puts "Unknown: /voice #{args[0]}"
+    end
+  end
+  
+  def cmd_persona(*args)
+    if args.empty?
+      puts "Current: #{Voice.current_persona}"
+      puts "Available: #{Voice.available_personas.join(', ')}"
+    else
+      name = args[0].downcase
+      if Voice.set_persona(name)
+        # Also update the system prompt for chat
+        if Voice.persona_prompt
+          OpenRouterChat.set_persona_prompt(Voice.persona_prompt)
+        end
+        Voice.enable
+        puts "Persona: #{name} (voice enabled)"
+      else
+        puts "Unknown persona: #{name}"
+        puts "Available: #{Voice.available_personas.join(', ')}"
+      end
     end
   end
   
