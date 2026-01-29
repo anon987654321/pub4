@@ -2237,8 +2237,12 @@ const Pads = {
     // Start audio context first (required before creating effects)
     await Tone.start();
     
+    // Master limiter to prevent clipping
+    this.limiter = new Tone.Limiter(-3).toDestination();
+    
     // DuoSynth for rich, dual-oscillator warmth (Dilla's sampled Rhodes vibe)
     this.synth = new Tone.PolySynth(Tone.DuoSynth, {
+      maxPolyphony: 8,
       vibratoAmount: 0.3,
       vibratoRate: 0.4,
       harmonicity: 1.5,
@@ -2252,31 +2256,32 @@ const Pads = {
         envelope: { attack: 2.5, decay: 1, sustain: 0.7, release: 4.5 },
         filterEnvelope: { attack: 2, decay: 1, sustain: 0.5, release: 4, baseFrequency: 400, octaves: 2 }
       }
-    }).toDestination();
+    }).connect(this.limiter);
     
     // Gentle sub layer
     this.subBass = new Tone.Synth({
       oscillator: { type: 'sine' },
       envelope: { attack: 0.8, decay: 1, sustain: 0.6, release: 4 }
-    }).toDestination();
-    this.subBass.volume.value = -20;
+    }).connect(this.limiter);
+    this.subBass.volume.value = -24;
     
     // Shimmer layer (very quiet)
     this.airPad = new Tone.PolySynth(Tone.AMSynth, {
+      maxPolyphony: 4,
       harmonicity: 0.5,
       oscillator: { type: 'sine' },
       envelope: { attack: 3, decay: 1, sustain: 0.5, release: 6 },
       modulation: { type: 'triangle' },
       modulationEnvelope: { attack: 4, decay: 2, sustain: 0.3, release: 6 }
-    }).toDestination();
-    this.airPad.volume.value = -26;
+    }).connect(this.limiter);
+    this.airPad.volume.value = -28;
     
-    // Lush reverb
+    // Lush reverb (through limiter)
     this.reverb = new Tone.Reverb({
       decay: 8,
       wet: 0.5,
       preDelay: 0.2
-    }).toDestination();
+    }).connect(this.limiter);
     
     // Slow chorus for width
     this.chorus = new Tone.Chorus({
@@ -2298,11 +2303,11 @@ const Pads = {
     this.synth.connect(this.delay);
     this.airPad.connect(this.reverb);
     
-    // Volume
-    this.synth.volume.value = -12;
+    // Volume - quieter to leave room for drums
+    this.synth.volume.value = -18;
     
     await this.reverb.generate();
-    console.log('[Pads] 🎹 Low End Theory pad synth ready');
+    console.log('[Pads] 🎹 Pad synth ready (limited, -18dB)');
   },
   
   loadToneJS() {
@@ -2441,7 +2446,11 @@ const Pads = {
     };
     
     Tone.Transport.scheduleOnce(playChordInner, '+0.1');
-    Tone.Transport.start();
+    
+    // Only start Transport if not already running
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.start();
+    }
   },
   
   // Lo-fi effects chain (Dilla/Madlib style)
@@ -2646,7 +2655,11 @@ const Drums = {
     openHatSeq.start(0);
     
     this.patterns = [kickSeq, snareSeq, hatSeq, openHatSeq];
-    Tone.Transport.start();
+    
+    // Only start Transport if not already running
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.start();
+    }
     
     console.log(`[Drums] ▶ Playing @ ${tempo} BPM`);
   },
