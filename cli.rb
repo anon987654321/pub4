@@ -1798,7 +1798,10 @@ module Voice
             }, body]
           when "/poll"
             text = @queue.empty? ? nil : @queue.pop(true) rescue nil
-            body = Protocol::HTTP::Body::Buffered.wrap({ text: text }.to_json)
+            body = Protocol::HTTP::Body::Buffered.wrap({ 
+              text: text, 
+              persona: Voice.current_persona 
+            }.to_json)
             Protocol::HTTP::Response[200, {"content-type" => "application/json", "cache-control" => "no-store"}, body]
           when "/chat"
             # Handle chat messages via POST

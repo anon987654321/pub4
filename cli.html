@@ -1408,18 +1408,40 @@ const Ares = {
   
   findVoice() {
     const load = () => {
-      const voices = this.synthesis.getVoices();
+      this.allVoices = this.synthesis.getVoices();
       // Prefer warm, natural-sounding voices
       const prefer = ['Samantha', 'Karen', 'Evan', 'Tom', 'Google US English Male', 'Microsoft Guy', 'Reed'];
       for (const n of prefer) {
-        const v = voices.find(v => v.name.includes(n));
+        const v = this.allVoices.find(v => v.name.includes(n));
         if (v) { this.voice = v; return; }
       }
-      this.voice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      this.voice = this.allVoices.find(v => v.lang === 'en-US') || this.allVoices.find(v => v.lang.startsWith('en')) || this.allVoices[0];
     };
     if (this.synthesis.getVoices().length) load();
     else this.synthesis.onvoiceschanged = load;
   },
+  
+  // Voice profiles for browser TTS (pitch, rate combos to simulate different characters)
+  voiceProfiles: {
+    ares: { pitch: 0.65, rate: 0.75 },           // Deep, slow
+    glitch: { pitch: 1.3, rate: 1.4 },           // High, fast, erratic
+    noir: { pitch: 0.7, rate: 0.8 },             // Low, deliberate
+    cosmic_barista: { pitch: 1.1, rate: 1.15 },  // Upbeat, breezy
+    victorian_ghost: { pitch: 0.85, rate: 0.8 }, // Formal, measured
+    chaos_gremlin: { pitch: 1.4, rate: 1.5 },    // Manic, high
+    sleepy_sage: { pitch: 0.6, rate: 0.6 },      // Very low, very slow
+    anxious_guru: { pitch: 1.1, rate: 1.3 },     // Tense, rushed
+    depressed_coach: { pitch: 0.75, rate: 0.7 }, // Flat, slow
+    southern_alien: { pitch: 1.15, rate: 0.95 }, // Sweet, deliberate
+    dragon_librarian: { pitch: 0.5, rate: 0.85 },// Very deep, grumbly
+    upside_down: { pitch: 1.2, rate: 1.1 },      // Strained
+    enthusiastic_mortician: { pitch: 1.1, rate: 1.25 }, // Chipper
+    jazz_robot: { pitch: 0.9, rate: 1.0 },       // Smooth
+    vampire_teacher: { pitch: 0.7, rate: 0.75 }, // Transylvanian slow
+    default: { pitch: 1.0, rate: 1.0 }
+  },
+  
+  currentPersona: 'ares',
   
   startListening() {
     if (!this.recognition || this.isListening) return;
@@ -1455,7 +1477,11 @@ const Ares = {
     fetch('/poll')
       .then(r => r.json())
       .then(data => {
-        // Only speak if new text and not already speaking
+        // Update persona if server sent one
+        if (data.persona && data.persona !== this.currentPersona) {
+          this.setPersona(data.persona);
+        }
+        // Speak if new text
         if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) {
           this.speak(data.text);
         }
@@ -1474,10 +1500,13 @@ const Ares = {
     const clean = text.replace(/```[\s\S]*?```/g, '').replace(/\*[^*]+\*/g, '').replace(/[#_`]/g, '').slice(0, 800);
     this.lastSpoken = text;
     
+    // Get voice profile for current persona
+    const profile = this.voiceProfiles[this.currentPersona] || this.voiceProfiles.default;
+    
     const u = new SpeechSynthesisUtterance(clean);
     u.voice = this.voice;
-    u.rate = 0.75;
-    u.pitch = 0.65;
+    u.rate = profile.rate;
+    u.pitch = profile.pitch;
     
     u.onstart = () => { 
       this.isSpeaking = true; 
@@ -1488,6 +1517,18 @@ const Ares = {
     };
     
     this.synthesis.speak(u);
+  },
+  
+  setPersona(name) {
+    this.currentPersona = name;
+    console.log('Persona:', name, this.voiceProfiles[name] || this.voiceProfiles.default);
+  },
+  
+  randomPersona() {
+    const personas = Object.keys(this.voiceProfiles).filter(p => p !== 'default');
+    const pick = personas[Math.floor(Math.random() * personas.length)];
+    this.setPersona(pick);
+    return pick;
   }
 };
 
