@@ -1754,13 +1754,29 @@ const Ares = {
   firstClick: true,
   lastSpoken: null,
   
+  pollRetryDelay: 1000,
+  maxPollRetry: 30000,
+  
   init() {
     this.setupSpeechRecognition();
     this.findVoice();
     this.setupClickToSpeak();
     this.setupTextInput();
     // Only poll if server is running (skip for standalone HTML)
-    fetch('/poll').then(() => this.pollForTTS()).catch(() => {});
+    this.startPolling();
+  },
+  
+  startPolling() {
+    fetch('/poll', { signal: AbortSignal.timeout(5000) })
+      .then(() => {
+        this.pollRetryDelay = 1000; // Reset on success
+        this.pollForTTS();
+      })
+      .catch(() => {
+        // Server not available, retry with backoff (silent)
+        this.pollRetryDelay = Math.min(this.pollRetryDelay * 1.5, this.maxPollRetry);
+        setTimeout(() => this.startPolling(), this.pollRetryDelay);
+      });
   },
   
   setupClickToSpeak() {
@@ -1932,9 +1948,10 @@ const Ares = {
   },
   
   pollForTTS() {
-    fetch('/poll')
+    fetch('/poll', { signal: AbortSignal.timeout(10000) })
       .then(r => r.json())
       .then(data => {
+        this.pollRetryDelay = 1000; // Reset on success
         // Update persona if server sent one
         if (data.persona && data.persona !== this.currentPersona) {
           this.setPersona(data.persona);
@@ -1949,7 +1966,11 @@ const Ares = {
         }
         setTimeout(() => this.pollForTTS(), 1000);
       })
-      .catch(() => setTimeout(() => this.pollForTTS(), 3000));
+      .catch(() => {
+        // Retry with exponential backoff (silent)
+        this.pollRetryDelay = Math.min(this.pollRetryDelay * 1.5, this.maxPollRetry);
+        setTimeout(() => this.pollForTTS(), this.pollRetryDelay);
+      });
   },
   
   // Play audio from server (ElevenLabs)
@@ -2704,6 +2725,27 @@ document.addEventListener('click', async () => {
     padsStarted = false; // Allow retry
   }
 }, { once: false }); // not once - allow retry on error
+
+// AudioContext recovery on network/visibility changes
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && typeof Tone !== 'undefined') {
+    if (Tone.context.state === 'suspended' || Tone.context.state === 'interrupted') {
+      console.log('[Audio] Resuming AudioContext after visibility change...');
+      await Tone.context.resume();
+      if (Tone.Transport.state !== 'started' && Pads.isPlaying) {
+        Tone.Transport.start();
+      }
+    }
+  }
+});
+
+// Also try to recover on online event
+window.addEventListener('online', async () => {
+  if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+    console.log('[Audio] Network restored, resuming AudioContext...');
+    await Tone.context.resume();
+  }
+});
 
 // ============================================
 // QUICK START
