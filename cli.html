@@ -2014,6 +2014,210 @@ const Ares = {
 };
 
 Ares.init();
+
+// ============================================
+// LUSH PAD SYNTH (Tone.js)
+// ============================================
+// Chord progressions with rich, atmospheric pads
+
+const Pads = {
+  synth: null,
+  reverb: null,
+  delay: null,
+  isPlaying: false,
+  currentProgression: 0,
+  
+  // Common emotional chord progressions
+  progressions: {
+    // Dreamy/Ethereal - Cmaj7 → Fmaj7 → Am7 → G
+    dreamy: [
+      ['C4', 'E4', 'G4', 'B4'],
+      ['F3', 'A3', 'C4', 'E4'],
+      ['A3', 'C4', 'E4', 'G4'],
+      ['G3', 'B3', 'D4', 'F4']
+    ],
+    // Melancholic - Am → F → C → G
+    melancholic: [
+      ['A3', 'C4', 'E4'],
+      ['F3', 'A3', 'C4'],
+      ['C3', 'E3', 'G3'],
+      ['G3', 'B3', 'D4']
+    ],
+    // Hopeful/Ascending - C → G → Am → Em → F → C → F → G
+    hopeful: [
+      ['C3', 'E3', 'G3', 'C4'],
+      ['G3', 'B3', 'D4', 'G4'],
+      ['A3', 'C4', 'E4'],
+      ['E3', 'G3', 'B3'],
+      ['F3', 'A3', 'C4'],
+      ['C3', 'E3', 'G3'],
+      ['F3', 'A3', 'C4'],
+      ['G3', 'B3', 'D4']
+    ],
+    // Mysterious/Tense - Dm → Bb → Gm → A7
+    mysterious: [
+      ['D3', 'F3', 'A3', 'D4'],
+      ['Bb2', 'D3', 'F3', 'Bb3'],
+      ['G3', 'Bb3', 'D4'],
+      ['A3', 'C#4', 'E4', 'G4']
+    ],
+    // Cosmic/Ambient - Fmaj9 → Cmaj9 → Am9 → Em9
+    cosmic: [
+      ['F2', 'A2', 'C3', 'E3', 'G3'],
+      ['C2', 'E2', 'G2', 'B2', 'D3'],
+      ['A2', 'C3', 'E3', 'G3', 'B3'],
+      ['E2', 'G2', 'B2', 'D3', 'F#3']
+    ],
+    // Lo-fi chill - Dm7 → G7 → Cmaj7 → Am7
+    lofi: [
+      ['D3', 'F3', 'A3', 'C4'],
+      ['G3', 'B3', 'D4', 'F4'],
+      ['C3', 'E3', 'G3', 'B3'],
+      ['A3', 'C4', 'E4', 'G4']
+    ]
+  },
+  
+  async init() {
+    // Load Tone.js from CDN if not present
+    if (typeof Tone === 'undefined') {
+      await this.loadToneJS();
+    }
+    
+    // Create lush pad synth with multiple oscillators
+    this.synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: {
+        type: 'fatsawtooth',
+        count: 3,
+        spread: 30
+      },
+      envelope: {
+        attack: 2,      // Slow attack for pad feel
+        decay: 1,
+        sustain: 0.8,
+        release: 4      // Long release for lush tails
+      }
+    }).toDestination();
+    
+    // Add reverb for space
+    this.reverb = new Tone.Reverb({
+      decay: 8,
+      wet: 0.6,
+      preDelay: 0.2
+    }).toDestination();
+    
+    // Add delay for depth
+    this.delay = new Tone.FeedbackDelay({
+      delayTime: '8n.',
+      feedback: 0.3,
+      wet: 0.2
+    }).toDestination();
+    
+    // Chain effects
+    this.synth.connect(this.reverb);
+    this.synth.connect(this.delay);
+    
+    // Lower volume for ambient background
+    this.synth.volume.value = -12;
+    
+    await this.reverb.generate();
+    console.log('[Pads] Tone.js initialized with lush pad synth');
+  },
+  
+  loadToneJS() {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  },
+  
+  // Play a single chord
+  playChord(notes, duration = '2n') {
+    if (!this.synth) return;
+    this.synth.triggerAttackRelease(notes, duration);
+  },
+  
+  // Play a progression (loops)
+  async play(name = 'dreamy', tempo = 60, loop = true) {
+    if (!this.synth) await this.init();
+    
+    const prog = this.progressions[name];
+    if (!prog) {
+      console.warn('[Pads] Unknown progression:', name);
+      return;
+    }
+    
+    await Tone.start();
+    Tone.Transport.bpm.value = tempo;
+    
+    this.isPlaying = true;
+    this.currentProgression = 0;
+    
+    const chordDuration = '1m'; // 1 measure per chord
+    
+    // Schedule chord changes
+    const playNext = (time) => {
+      if (!this.isPlaying) return;
+      
+      const chord = prog[this.currentProgression % prog.length];
+      this.synth.triggerAttackRelease(chord, chordDuration, time);
+      this.currentProgression++;
+      
+      if (loop || this.currentProgression < prog.length) {
+        Tone.Transport.scheduleOnce(playNext, '+1m');
+      }
+    };
+    
+    Tone.Transport.scheduleOnce(playNext, '+0.1');
+    Tone.Transport.start();
+    
+    console.log(`[Pads] Playing "${name}" at ${tempo} BPM`);
+  },
+  
+  stop() {
+    this.isPlaying = false;
+    if (this.synth) {
+      this.synth.releaseAll();
+    }
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    console.log('[Pads] Stopped');
+  },
+  
+  // Change synth character
+  setType(type) {
+    if (!this.synth) return;
+    const types = {
+      warm: { type: 'fatsawtooth', count: 3, spread: 30 },
+      glass: { type: 'sine', partialCount: 8 },
+      strings: { type: 'fatsquare', count: 2, spread: 20 },
+      organ: { type: 'triangle', partialCount: 4 },
+      digital: { type: 'pulse', width: 0.3 }
+    };
+    if (types[type]) {
+      this.synth.set({ oscillator: types[type] });
+      console.log(`[Pads] Synth type: ${type}`);
+    }
+  },
+  
+  // List available progressions
+  list() {
+    return Object.keys(this.progressions);
+  }
+};
+
+// Expose globally
+window.Pads = Pads;
+
+// Usage:
+// Pads.play('dreamy')      - Start dreamy progression
+// Pads.play('cosmic', 45)  - Slow cosmic pads
+// Pads.play('lofi', 75)    - Lo-fi chill
+// Pads.stop()              - Stop
+// Pads.setType('glass')    - Change synth character
+// Pads.list()              - Show all progressions
 </script>
 
 </body>
