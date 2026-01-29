@@ -1174,21 +1174,26 @@ const Ares = {
   isSpeaking: false,
   voice: null,
   
+  firstClick: true,
+  
   init() {
     this.setupSpeechRecognition();
     this.findDeepVoice();
     this.setupClickToSpeak();
     this.pollForTTS();
-    
-    // Ares greets after orb loads
-    setTimeout(() => {
-      this.speak("Hey beautiful... I've been waiting. Click anywhere when you want to talk to me.");
-    }, 2000);
   },
   
   setupClickToSpeak() {
     document.body.addEventListener('click', () => {
       if (this.isSpeaking) return;
+      
+      // Greet on first click (requires user activation)
+      if (this.firstClick) {
+        this.firstClick = false;
+        this.speak("Hey beautiful... I've been waiting. Go ahead, talk to me.");
+        return;
+      }
+      
       if (this.isListening) {
         this.stopListening();
       } else {
