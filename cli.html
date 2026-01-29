@@ -2328,8 +2328,25 @@ const Pads = {
     // Volume - quieter to leave room for drums
     this.synth.volume.value = -18;
     
+    // Debug meter to track audio levels
+    this.meter = new Tone.Meter({ smoothing: 0.8 });
+    this.limiter.connect(this.meter);
+    
+    // Log meter levels periodically
+    this.meterInterval = setInterval(() => {
+      const level = this.meter.getValue();
+      if (level > -6) {
+        console.warn(`[Pads] ⚠️ HIGH LEVEL: ${level.toFixed(1)} dB`);
+      }
+      if (level > -1) {
+        console.error(`[Pads] 🔴 CLIPPING: ${level.toFixed(1)} dB - stopping...`);
+        // Auto-reduce volume on clip
+        this.synth.volume.value -= 3;
+      }
+    }, 500);
+    
     await this.reverb.generate();
-    console.log('[Pads] 🎹 Pad synth ready (limited, -18dB)');
+    console.log('[Pads] 🎹 Pad synth ready (limited, -18dB, metered)');
   },
   
   loadToneJS() {
@@ -2345,17 +2362,18 @@ const Pads = {
   // Play a single chord on all layers (with optional time for scheduling)
   playChord(notes, duration = '2n', time) {
     if (!this.synth) return;
-    // Main pad (detuned saws + chorus)
+    
+    // Release any held notes first to prevent voice buildup
+    this.synth.releaseAll(time);
+    if (this.airPad) this.airPad.releaseAll(time);
+    
+    // Main pad 
     this.synth.triggerAttackRelease(notes, duration, time);
-    // Sub bass - play root note an octave down
-    if (this.subBass && notes.length > 0) {
-      const root = notes[0].replace(/\d/, n => Math.max(1, parseInt(n) - 1));
-      this.subBass.triggerAttackRelease(root, duration, time);
-    }
-    // Air pad - play top notes an octave up
-    if (this.airPad) {
-      const highNotes = notes.slice(-2).map(n => n.replace(/\d/, m => parseInt(m) + 1));
-      this.airPad.triggerAttackRelease(highNotes, duration, time);
+    
+    // Air pad - play top notes an octave up (reduced notes)
+    if (this.airPad && notes.length > 1) {
+      const highNote = notes[notes.length - 1].replace(/\d/, m => parseInt(m) + 1);
+      this.airPad.triggerAttackRelease([highNote], duration, time);
     }
   },
   
