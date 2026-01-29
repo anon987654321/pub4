@@ -2485,6 +2485,17 @@ const Pads = {
 // Expose globally
 window.Pads = Pads;
 
+// Auto-start Dilla pads on first user interaction (required for Web Audio)
+let padsStarted = false;
+document.addEventListener('click', async () => {
+  if (padsStarted) return;
+  padsStarted = true;
+  await Pads.init();
+  await Pads.addLofi();
+  Pads.playDilla();
+  console.log('[Pads] 🎹 Auto-started J Dilla playlist with lo-fi FX');
+}, { once: true });
+
 // ============================================
 // QUICK START
 // ============================================
