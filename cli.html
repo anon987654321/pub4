@@ -2325,28 +2325,25 @@ const Pads = {
     this.synth.connect(this.delay);
     this.airPad.connect(this.reverb);
     
-    // Volume - quieter to leave room for drums
-    this.synth.volume.value = -18;
+    // Volume - much quieter, target -12dB headroom
+    this.synth.volume.value = -24;
+    this.airPad.volume.value = -30;
     
     // Debug meter to track audio levels
     this.meter = new Tone.Meter({ smoothing: 0.8 });
     this.limiter.connect(this.meter);
     
-    // Log meter levels periodically
+    // Log meter levels periodically (only warnings, not every frame)
     this.meterInterval = setInterval(() => {
       const level = this.meter.getValue();
-      if (level > -6) {
-        console.warn(`[Pads] ⚠️ HIGH LEVEL: ${level.toFixed(1)} dB`);
+      if (level > -3) {
+        console.warn(`[Pads] ⚠️ HOT: ${level.toFixed(1)} dB - reducing...`);
+        this.synth.volume.value -= 2;
       }
-      if (level > -1) {
-        console.error(`[Pads] 🔴 CLIPPING: ${level.toFixed(1)} dB - stopping...`);
-        // Auto-reduce volume on clip
-        this.synth.volume.value -= 3;
-      }
-    }, 500);
+    }, 1000);
     
     await this.reverb.generate();
-    console.log('[Pads] 🎹 Pad synth ready (limited, -18dB, metered)');
+    console.log('[Pads] 🎹 Pad synth ready (-24dB, metered)');
   },
   
   loadToneJS() {
@@ -2624,7 +2621,7 @@ const Drums = {
       oscillator: { type: 'sine' },
       envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.8 }
     }).connect(this.kickFilter);
-    this.kick.volume.value = -12;
+    this.kick.volume.value = -18;
     
     // Snare - noise + filter for body
     this.snareFilter = new Tone.Filter(9000, 'lowpass').toDestination();
@@ -2632,7 +2629,7 @@ const Drums = {
       noise: { type: 'white' },
       envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 }
     }).connect(this.snareFilter);
-    this.snare.volume.value = -8;
+    this.snare.volume.value = -14;
     
     // Closed hi-hat - very short, bright
     this.hatFilter = new Tone.Filter(12000, 'highpass').toDestination();
@@ -2640,14 +2637,14 @@ const Drums = {
       noise: { type: 'white' },
       envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.01 }
     }).connect(this.hatFilter);
-    this.closedHat.volume.value = -14;
+    this.closedHat.volume.value = -20;
     
     // Open hi-hat - longer decay
     this.openHat = new Tone.NoiseSynth({
       noise: { type: 'white' },
       envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 }
     }).connect(this.hatFilter);
-    this.openHat.volume.value = -16;
+    this.openHat.volume.value = -22;
     
     // Set global swing for Dilla feel
     Tone.Transport.swing = 0.3;         // 30% swing
@@ -2685,7 +2682,7 @@ const Drums = {
     // Hats: 16ths with velocity groove (ghost notes)
     const hatSeq = new Tone.Sequence((time, vel) => {
       if (!this.isPlaying) return;
-      this.closedHat.volume.value = -14 + (vel * 4);
+      this.closedHat.volume.value = -20 + (vel * 4);
       this.closedHat.triggerAttackRelease('32n', time);
     }, [1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.4, 1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.3], '16n');
     hatSeq.humanize = '10ms';
