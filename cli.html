@@ -89,6 +89,47 @@
   50% { opacity: 0.6; transform: scale(1.1); }
 }
 
+/* === DIMENSIONAL KEYFRAMES === */
+@keyframes dimensional-shift {
+  0%, 100% { 
+    filter: hue-rotate(0deg);
+    opacity: 0.08;
+  }
+  25% { 
+    filter: hue-rotate(-15deg);
+    opacity: 0.12;
+  }
+  50% { 
+    filter: hue-rotate(-30deg);
+    opacity: 0.15;
+  }
+  75% { 
+    filter: hue-rotate(-15deg);
+    opacity: 0.12;
+  }
+}
+
+@keyframes sacred-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes presence-pulse {
+  0%, 100% { 
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% { 
+    opacity: 0.06;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+@keyframes inner-glow {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.25; }
+}
+
 @keyframes grain-jitter {
   0%, 100% { transform: translate(1px, 6px); }
   10% { transform: translate(-8px, 14px); }
@@ -314,6 +355,113 @@ h1 {
 }
 
 /* ============================================
+   DIMENSIONAL / DMT REALM EFFECTS
+   ============================================ */
+.sacred-geometry {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 140%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='none' stroke='%23667eea' stroke-width='0.3' opacity='0.3'/%3E%3Ccircle cx='100' cy='100' r='60' fill='none' stroke='%23764ba2' stroke-width='0.3' opacity='0.25'/%3E%3Ccircle cx='100' cy='100' r='40' fill='none' stroke='%23667eea' stroke-width='0.3' opacity='0.2'/%3E%3Cpath d='M100 20 L170 145 L30 145 Z' fill='none' stroke='%236B7FD7' stroke-width='0.2' opacity='0.15'/%3E%3Cpath d='M100 180 L30 55 L170 55 Z' fill='none' stroke='%236B7FD7' stroke-width='0.2' opacity='0.15'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: sacred-rotate 120s linear infinite;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}
+
+.dimensional-aura {
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(102, 126, 234, 0.08) 0%,
+    rgba(118, 75, 162, 0.05) 30%,
+    rgba(102, 126, 234, 0.03) 50%,
+    transparent 70%
+  );
+  animation: dimensional-shift 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.inner-light {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(147, 112, 219, 0.2) 0%,
+    rgba(102, 126, 234, 0.1) 40%,
+    transparent 70%
+  );
+  animation: inner-glow 6s ease-in-out infinite;
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.presence-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 50%;
+  animation: presence-pulse 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle iridescent shimmer on the blob surface */
+.blob::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 20%,
+    rgba(102, 126, 234, 0.04) 40%,
+    rgba(147, 112, 219, 0.06) 50%,
+    rgba(102, 126, 234, 0.04) 60%,
+    transparent 80%
+  );
+  border-radius: inherit;
+  animation: dimensional-shift 15s ease-in-out infinite reverse;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Listening state indicator */
+.blob-wrapper.listening::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  border: 2px solid rgba(102, 126, 234, 0.4);
+  border-radius: 50%;
+  animation: presence-pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Thinking state indicator */
+.blob-wrapper.thinking .core-pulse {
+  animation: core-pulse 0.8s ease-in-out infinite;
+}
+
+/* Speaking state - more active */
+.blob-wrapper.speaking {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+/* ============================================
    ANALOG EFFECTS
    ============================================ */
 .grain-overlay {
@@ -441,8 +589,12 @@ h1 {
 <!-- Stage -->
 <div class="stage">
   <div class="tracking-wrapper">
-    <div class="blob-wrapper">
+    <div class="blob-wrapper" id="blobWrapper">
+      <div class="dimensional-aura"></div>
+      <div class="sacred-geometry"></div>
+      <div class="presence-ring"></div>
       <div class="blob blob-shape">
+        <div class="inner-light"></div>
         <div class="subsurface"></div>
         <div class="core-pulse"></div>
         <div class="quantum-shimmer"></div>
@@ -451,8 +603,11 @@ h1 {
   </div>
 </div>
 
-<!-- Effects canvas -->
+<!-- Effects canvas for astral particles -->
 <canvas id="effects-canvas"></canvas>
+
+<!-- Status indicators -->
+<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:Inter,sans-serif; font-size:12px; color:rgba(102,126,234,0.6); z-index:1000; pointer-events:none;"></div>
 
 <!-- Fullscreen Effects -->
 <div class="grain-overlay"></div>
@@ -691,6 +846,90 @@ let ripples = [];
 // TENTACLE STATE
 // ============================================
 let tentacles = [];
+
+// ============================================
+// ASTRAL PARTICLE STATE
+// ============================================
+let astralParticles = [];
+const MAX_ASTRAL_PARTICLES = 40;
+
+function initAstralParticles() {
+  for (let i = 0; i < MAX_ASTRAL_PARTICLES; i++) {
+    astralParticles.push(createAstralParticle());
+  }
+}
+
+function createAstralParticle() {
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 0.3 + Math.random() * 0.7; // 30-100% of orb radius
+  return {
+    angle: angle,
+    distance: distance,
+    speed: 0.0002 + Math.random() * 0.0003,
+    size: 0.5 + Math.random() * 2,
+    alpha: 0.1 + Math.random() * 0.3,
+    phase: Math.random() * Math.PI * 2,
+    pulseSpeed: 0.001 + Math.random() * 0.002,
+    layer: Math.floor(Math.random() * 3), // 0=inner, 1=mid, 2=outer
+    hue: 220 + Math.random() * 40 // Blue to violet range
+  };
+}
+
+function updateAstralParticles(time) {
+  astralParticles.forEach(p => {
+    p.angle += p.speed * (1 + smoothedEnergy * 2);
+    p.phase += p.pulseSpeed;
+    // Pulse alpha
+    p.currentAlpha = p.alpha * (0.5 + 0.5 * Math.sin(p.phase));
+  });
+}
+
+function drawAstralParticles() {
+  const centerX = window.innerWidth / 2 + orbX;
+  const centerY = window.innerHeight / 2 + orbY;
+  const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.28;
+  
+  astralParticles.forEach(p => {
+    const layerOffset = [0.5, 0.8, 1.2][p.layer];
+    const x = centerX + Math.cos(p.angle) * blobSize * p.distance * layerOffset;
+    const y = centerY + Math.sin(p.angle) * blobSize * p.distance * layerOffset;
+    
+    // Draw particle with glow
+    const gradient = effectsCtx.createRadialGradient(x, y, 0, x, y, p.size * 3);
+    gradient.addColorStop(0, `hsla(${p.hue}, 70%, 70%, ${p.currentAlpha})`);
+    gradient.addColorStop(0.5, `hsla(${p.hue}, 60%, 50%, ${p.currentAlpha * 0.3})`);
+    gradient.addColorStop(1, `hsla(${p.hue}, 50%, 30%, 0)`);
+    
+    effectsCtx.fillStyle = gradient;
+    effectsCtx.beginPath();
+    effectsCtx.arc(x, y, p.size * 3, 0, Math.PI * 2);
+    effectsCtx.fill();
+    
+    // Bright core
+    effectsCtx.fillStyle = `hsla(${p.hue}, 80%, 90%, ${p.currentAlpha * 0.8})`;
+    effectsCtx.beginPath();
+    effectsCtx.arc(x, y, p.size * 0.5, 0, Math.PI * 2);
+    effectsCtx.fill();
+  });
+}
+
+// ============================================
+// UI STATE
+// ============================================
+let uiState = 'idle'; // idle, listening, thinking, speaking
+const blobWrapperEl = document.getElementById('blobWrapper');
+const statusIndicator = document.getElementById('statusIndicator');
+
+function setUIState(state) {
+  uiState = state;
+  blobWrapperEl.classList.remove('listening', 'thinking', 'speaking');
+  if (state !== 'idle') {
+    blobWrapperEl.classList.add(state);
+  }
+  // Update status indicator
+  const icons = { idle: '', listening: '◉ listening', thinking: '◎ thinking', speaking: '◈ speaking' };
+  statusIndicator.textContent = icons[state] || '';
+}
 
 // ============================================
 // VISUAL STATE
@@ -1233,13 +1472,18 @@ function animate(time) {
   blob.style.setProperty('--mid-deform', midDeform.toFixed(3));
   blob.style.setProperty('--treble-deform', trebleDeform.toFixed(3));
   
-  // Apply color shifts
-  const hue = colorHueShift;
+  // Apply color shifts - add subtle blue/violet tint
+  const hue = colorHueShift - 10; // Shift toward blue
   const sat = colorSatShift * 100;
   blob.style.filter = `hue-rotate(${hue}deg) saturate(${1 + sat}%)`;
   
   // Draw lighting effects (specular, rim, shadow)
   drawLighting();
+  
+  // Draw astral particles
+  updateAstralParticles(time);
+  drawAstralParticles();
+  
   // Audio-reactive subsurface scattering
   const subsurface = document.querySelector('.subsurface');
   if (subsurface) {
@@ -1272,8 +1516,22 @@ function animate(time) {
 // ============================================
 // INITIALIZATION
 // ============================================
+initAstralParticles();
+
 window.addEventListener('resize', () => {
   // Nothing to resize anymore
+});
+
+// Keyboard shortcut - spacebar to toggle listening
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    if (Ares.isListening) {
+      Ares.stopListening();
+    } else {
+      Ares.startListening();
+    }
+  }
 });
 
 // Start animation loop
@@ -1358,6 +1616,7 @@ const Ares = {
       if (this.isSpeaking) {
         this.synthesis.cancel();
         this.isSpeaking = false;
+        setUIState('idle');
       }
       
       // First click just activates audio context, then start listening
@@ -1384,12 +1643,19 @@ const Ares = {
     
     this.recognition.onresult = (e) => {
       const text = e.results[0][0].transcript;
+      setUIState('thinking');
       this.send(text);
     };
     
     this.recognition.onend = () => {
       this.isListening = false;
+      if (uiState === 'listening') setUIState('idle');
       document.body.style.cursor = 'pointer';
+    };
+    
+    this.recognition.onerror = () => {
+      this.isListening = false;
+      setUIState('idle');
     };
   },
   
@@ -1398,6 +1664,7 @@ const Ares = {
     if (!input) return;
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && input.value.trim()) {
+        setUIState('thinking');
         this.send(input.value.trim());
         input.value = '';
       }
@@ -1446,6 +1713,7 @@ const Ares = {
   startListening() {
     if (!this.recognition || this.isListening) return;
     this.isListening = true;
+    setUIState('listening');
     document.body.style.cursor = 'crosshair';
     if (typeof depth !== 'undefined') depth = 0.8;
     try { this.recognition.start(); } catch(e) {}
@@ -1453,6 +1721,8 @@ const Ares = {
   
   stopListening() {
     if (!this.recognition) return;
+    this.isListening = false;
+    setUIState('idle');
     try { this.recognition.stop(); } catch(e) {}
   },
   
@@ -1510,10 +1780,12 @@ const Ares = {
     
     u.onstart = () => { 
       this.isSpeaking = true; 
+      setUIState('speaking');
       if (typeof depth !== 'undefined') depth = 0.7;
     };
     u.onend = () => { 
       this.isSpeaking = false; 
+      setUIState('idle');
     };
     
     this.synthesis.speak(u);
