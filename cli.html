@@ -2552,9 +2552,12 @@ window.Pads = Pads;
 const Drums = {
   kick: null,
   snare: null,
-  hat: null,
+  closedHat: null,
+  openHat: null,
+  snareFilter: null,
+  hatFilter: null,
   isPlaying: false,
-  swingAmount: 0.02,  // Dilla's drunk timing
+  patterns: [],
   
   async init() {
     if (typeof Tone === 'undefined') {
@@ -2562,90 +2565,104 @@ const Drums = {
     }
     await Tone.start();
     
-    // MPC-style kick (808)
+    // 808 Kick - deep sub with pitch sweep
     this.kick = new Tone.MembraneSynth({
-      pitchDecay: 0.05,
-      octaves: 6,
+      pitchDecay: 0.4,    // Long pitch drop for 808 boom
+      octaves: 5,         // Deep sweep
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+      envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 1.4 }
     }).toDestination();
-    this.kick.volume.value = -4;
+    this.kick.volume.value = -6;
     
-    // Lo-fi snare
+    // Snare - noise + filter for body
+    this.snareFilter = new Tone.Filter(9000, 'lowpass').toDestination();
     this.snare = new Tone.NoiseSynth({
       noise: { type: 'white' },
-      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 }
-    }).toDestination();
-    this.snare.volume.value = -10;
+      envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 }
+    }).connect(this.snareFilter);
+    this.snare.volume.value = -8;
     
-    // Closed hat
-    this.hat = new Tone.MetalSynth({
-      frequency: 250,
-      envelope: { attack: 0.001, decay: 0.05, release: 0.01 },
-      harmonicity: 5.1,
-      modulationIndex: 32,
-      resonance: 4000,
-      octaves: 1.5
-    }).toDestination();
-    this.hat.volume.value = -18;
+    // Closed hi-hat - very short, bright
+    this.hatFilter = new Tone.Filter(12000, 'highpass').toDestination();
+    this.closedHat = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.01 }
+    }).connect(this.hatFilter);
+    this.closedHat.volume.value = -14;
     
-    console.log('[Drums] 🥁 MPC drums ready');
+    // Open hi-hat - longer decay
+    this.openHat = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 }
+    }).connect(this.hatFilter);
+    this.openHat.volume.value = -16;
+    
+    // Set global swing for Dilla feel
+    Tone.Transport.swing = 0.3;         // 30% swing
+    Tone.Transport.swingSubdivision = '16n';
+    
+    console.log('[Drums] 🥁 808 kit ready (swing: 30%)');
   },
   
-  // Add Dilla swing - slightly late/early hits
-  swing(time) {
-    return time + (Math.random() - 0.5) * this.swingAmount;
-  },
-  
-  // Classic boom-bap pattern
+  // Boom-bap pattern
   async play(tempo = 90) {
     if (!this.kick) await this.init();
     
+    this.stop(); // Clear any existing patterns
     this.isPlaying = true;
     Tone.Transport.bpm.value = tempo;
     
-    // Kick pattern: 1, 2-and, 3-and-a
-    const kickPattern = new Tone.Sequence((time, note) => {
-      if (!this.isPlaying) return;
-      this.kick.triggerAttackRelease(note, '8n', this.swing(time));
-    }, ['C1', null, null, 'C1', null, null, 'C1', null, null, 'C1', null, null, 'C1', null, null, null], '16n');
+    // Kick: 1, 1-and-a, 3
+    const kickSeq = new Tone.Sequence((time, note) => {
+      if (!this.isPlaying || !note) return;
+      this.kick.triggerAttackRelease(note, '8n', time);
+    }, ['C1', null, null, 'C1', null, null, null, null, 'C1', null, null, null, null, null, null, null], '16n');
+    kickSeq.humanize = '20ms';
     
-    // Snare on 2 and 4 (with slight drag)
-    const snarePattern = new Tone.Sequence((time, hit) => {
+    // Snare: 2 and 4
+    const snareSeq = new Tone.Sequence((time, hit) => {
       if (!this.isPlaying || !hit) return;
-      this.snare.triggerAttackRelease(this.swing(time) + 0.01); // Slightly behind
+      this.snare.triggerAttackRelease('8n', time);
     }, [null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null], '16n');
+    snareSeq.humanize = '15ms';
     
-    // Hats - 16th groove with ghost notes
-    const hatPattern = new Tone.Sequence((time, vel) => {
+    // Hats: 16ths with velocity groove (ghost notes)
+    const hatSeq = new Tone.Sequence((time, vel) => {
       if (!this.isPlaying) return;
-      this.hat.volume.value = -18 + (vel * 6);
-      this.hat.triggerAttackRelease('16n', this.swing(time));
-    }, [1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3], '16n');
+      this.closedHat.volume.value = -14 + (vel * 4);
+      this.closedHat.triggerAttackRelease('32n', time);
+    }, [1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.4, 1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.3], '16n');
+    hatSeq.humanize = '10ms';
     
-    kickPattern.start(0);
-    snarePattern.start(0);
-    hatPattern.start(0);
+    // Open hat on some upbeats
+    const openHatSeq = new Tone.Sequence((time, hit) => {
+      if (!this.isPlaying || !hit) return;
+      this.openHat.triggerAttackRelease('8n', time);
+    }, [null, null, null, null, null, null, null, 1, null, null, null, null, null, null, null, 1], '16n');
     
-    this.patterns = [kickPattern, snarePattern, hatPattern];
+    kickSeq.start(0);
+    snareSeq.start(0);
+    hatSeq.start(0);
+    openHatSeq.start(0);
+    
+    this.patterns = [kickSeq, snareSeq, hatSeq, openHatSeq];
     Tone.Transport.start();
     
-    console.log(`[Drums] ▶ Playing @ ${tempo} BPM with Dilla swing`);
+    console.log(`[Drums] ▶ Playing @ ${tempo} BPM`);
   },
   
   stop() {
     this.isPlaying = false;
-    if (this.patterns) {
-      this.patterns.forEach(p => p.stop());
-    }
+    this.patterns.forEach(p => { p.stop(); p.dispose(); });
+    this.patterns = [];
     Tone.Transport.stop();
     console.log('[Drums] Stopped');
   },
   
-  // Adjust swing amount (0 = straight, 0.05 = very drunk)
+  // Adjust Transport swing (0-1)
   setSwing(amount) {
-    this.swingAmount = Math.max(0, Math.min(0.05, amount));
-    console.log(`[Drums] Swing: ${this.swingAmount}`);
+    Tone.Transport.swing = Math.max(0, Math.min(1, amount));
+    console.log(`[Drums] Swing: ${Tone.Transport.swing}`);
   }
 };
 
