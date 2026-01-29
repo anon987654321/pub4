@@ -1563,7 +1563,9 @@ module Voice
       apply_persona("ares")  # Start as Ares
       
       # Check TTS engines in priority order: ElevenLabs > Piper > Browser
-      @elevenlabs_key = ENV["ELEVENLABS_API_KEY"]
+      # Try master.yml config first, then env var
+      @elevenlabs_key = @personas.dig("config", "elevenlabs_api_key") || ENV["ELEVENLABS_API_KEY"]
+      @elevenlabs_model = @personas.dig("config", "elevenlabs_model") || "eleven_turbo_v2_5"
       @elevenlabs_available = !@elevenlabs_key.nil? && !@elevenlabs_key.empty?
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
@@ -1573,7 +1575,7 @@ module Voice
       @web_tts = !@tts_available && !@elevenlabs_available
       
       if @elevenlabs_available
-        puts C.d("TTS: ElevenLabs")
+        puts C.d("TTS: ElevenLabs (#{@elevenlabs_model})")
       elsif @tts_available
         puts C.d("TTS: Piper")
       else

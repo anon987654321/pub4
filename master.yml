@@ -2,6 +2,11 @@ version: "1.5.0"
 name: master.yml
 golden: "preserve_improve_never_break"
 
+# CONFIG (API keys should be in environment variables, not here)
+config:
+  elevenlabs_model: "eleven_turbo_v2_5"  # Fast, good quality
+  tts_priority: ["elevenlabs", "piper", "browser"]  # Fallback chain
+
 # SIX UNIVERSAL LAWS (hierarchical priority for violations)
 # Research basis: Zakeri-Nasrabadi et al. (2023), "A systematic literature review on code smells datasets"
 # Pattern-based detection with predefined thresholds remains state-of-the-art
