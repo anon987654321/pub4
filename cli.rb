@@ -6,6 +6,12 @@
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
+# Add user gem path for OpenBSD (gems installed with --user-install)
+user_gem_dir = File.expand_path("~/.local/share/gem/ruby/#{RUBY_VERSION[0..2]}/gems")
+if Dir.exist?(user_gem_dir)
+  Dir.glob("#{user_gem_dir}/*/lib").each { |path| $LOAD_PATH.unshift(path) }
+end
+
 # MASTER.YML v1.6.0
 # Code governance agent with chat-first UX
 # Inspired by: Claude Code, Aider, OpenCode
@@ -23,7 +29,8 @@ module DependencyManager
   GEMS = {
     "ferrum" => { pkg: "chromium", desc: "web browsing" },
     "async" => { desc: "async I/O" },
-    "falcon" => { desc: "fast web server" }
+    "falcon" => { desc: "fast web server (Rails 8 default)" },
+    "protocol-http" => { desc: "HTTP protocol support" }
   }
   
   PACKAGES = {
@@ -1328,7 +1335,7 @@ end
 
 # Voice - TTS and STT for voice interaction
 # Falls back to browser Web Speech API if native tools unavailable
-require "webrick"
+# Uses Falcon async server (Rails 8 default)
 require "socket"
 require "json"
 
@@ -1410,64 +1417,68 @@ module Voice
       end
     end
     
-    # Start WEBrick server for browser TTS
+    # Start Falcon async server for browser TTS
     def start_web_server
       return if @server
+      return unless FALCON_AVAILABLE
       
       ip = local_ip
       @server = Thread.new do
-        server = WEBrick::HTTPServer.new(
-          Port: WEB_PORT,
-          BindAddress: "0.0.0.0",
-          Logger: WEBrick::Log.new("/dev/null"),
-          AccessLog: []
-        )
+        require "async"
+        require "async/http/server"
+        require "async/http/endpoint"
+        require "protocol/http/body/buffered"
         
-        # Main page with Web Speech API
-        server.mount_proc "/" do |req, res|
-          res.content_type = "text/html"
-          res.body = <<~HTML
-            <!DOCTYPE html>
-            <html><head><title>CLI Voice</title></head>
-            <body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
-              <h1>CLI Voice Server</h1>
-              <div id="status">Waiting...</div>
-              <div id="text" style="margin:1em 0;padding:1em;border:1px solid #0f0"></div>
-              <script>
-                const status = document.getElementById('status');
-                const textDiv = document.getElementById('text');
-                const synth = window.speechSynthesis;
-                
-                function poll() {
-                  fetch('/poll').then(r => r.json()).then(data => {
-                    if (data.text) {
-                      status.textContent = 'Speaking...';
-                      textDiv.textContent = data.text;
-                      const utter = new SpeechSynthesisUtterance(data.text);
-                      utter.rate = 0.9;
-                      utter.onend = () => { status.textContent = 'Ready'; };
-                      synth.speak(utter);
-                    }
-                    setTimeout(poll, 500);
-                  }).catch(() => setTimeout(poll, 1000));
-                }
-                poll();
-              </script>
-            </body></html>
-          HTML
+        endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{WEB_PORT}")
+        
+        app = proc do |request|
+          path = request.path
+          
+          if path == "/poll"
+            text = @queue.empty? ? nil : @queue.pop(true) rescue nil
+            body = Protocol::HTTP::Body::Buffered.wrap({ text: text }.to_json)
+            Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+          else
+            html = <<~HTML
+              <!DOCTYPE html>
+              <html><head><title>CLI Voice</title></head>
+              <body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
+                <h1>CLI Voice Server</h1>
+                <div id="status">Waiting...</div>
+                <div id="text" style="margin:1em 0;padding:1em;border:1px solid #0f0"></div>
+                <script>
+                  const status = document.getElementById('status');
+                  const textDiv = document.getElementById('text');
+                  const synth = window.speechSynthesis;
+                  function poll() {
+                    fetch('/poll').then(r => r.json()).then(data => {
+                      if (data.text) {
+                        status.textContent = 'Speaking...';
+                        textDiv.textContent = data.text;
+                        const utter = new SpeechSynthesisUtterance(data.text);
+                        utter.rate = 0.9;
+                        utter.onend = () => { status.textContent = 'Ready'; };
+                        synth.speak(utter);
+                      }
+                      setTimeout(poll, 500);
+                    }).catch(() => setTimeout(poll, 1000));
+                  }
+                  poll();
+                </script>
+              </body></html>
+            HTML
+            body = Protocol::HTTP::Body::Buffered.wrap(html)
+            Protocol::HTTP::Response[200, {"content-type" => "text/html"}, body]
+          end
         end
         
-        # Poll endpoint
-        server.mount_proc "/poll" do |req, res|
-          res.content_type = "application/json"
-          text = @queue.empty? ? nil : @queue.pop(true) rescue nil
-          res.body = { text: text }.to_json
+        Async do
+          server = Async::HTTP::Server.new(app, endpoint)
+          server.run
         end
-        
-        server.start
       end
       
-      puts C.d("Voice server: http://#{ip}:#{WEB_PORT}")
+      puts C.d("Voice server (Falcon): http://#{ip}:#{WEB_PORT}")
     end
     
     def local_ip
@@ -1497,7 +1508,7 @@ module Voice
     
     def status
       parts = []
-      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'web' : 'no')}"
+      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'falcon' : 'no')}"
       parts << "stt:#{stt_available? ? 'ok' : 'no'}"
       parts << (@enabled ? "on" : "off")
       parts << "port:#{WEB_PORT}" if @web_tts && @server
