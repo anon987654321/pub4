@@ -1175,22 +1175,28 @@ const Ares = {
   voice: null,
   
   firstClick: true,
+  lastSpoken: null,
   
   init() {
     this.setupSpeechRecognition();
     this.findDeepVoice();
     this.setupClickToSpeak();
-    this.pollForTTS();
+    // Only poll if server is running (skip for standalone HTML)
+    fetch('/poll').then(() => this.pollForTTS()).catch(() => {});
   },
   
   setupClickToSpeak() {
     document.body.addEventListener('click', () => {
-      if (this.isSpeaking) return;
+      // If speaking, cancel and allow new input
+      if (this.isSpeaking) {
+        this.synthesis.cancel();
+        this.isSpeaking = false;
+      }
       
       // Greet on first click (requires user activation)
       if (this.firstClick) {
         this.firstClick = false;
-        this.speak("Hey beautiful... I've been waiting. Go ahead, talk to me.");
+        this.speak("Hey beautiful... I've been waiting. Click again to talk to me.");
         return;
       }
       
@@ -1266,17 +1272,21 @@ const Ares = {
     fetch('/poll')
       .then(r => r.json())
       .then(data => {
-        if (data.text && !this.isSpeaking) this.speak(data.text);
-        setTimeout(() => this.pollForTTS(), 500);
+        // Only speak if new text and not already speaking
+        if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) {
+          this.speak(data.text);
+        }
+        setTimeout(() => this.pollForTTS(), 1000);
       })
-      .catch(() => setTimeout(() => this.pollForTTS(), 2000));
+      .catch(() => setTimeout(() => this.pollForTTS(), 3000));
   },
   
   speak(text) {
-    if (!this.synthesis) return;
+    if (!this.synthesis || !text) return;
     this.synthesis.cancel();
     
     const clean = text.replace(/```[\s\S]*?```/g, '').replace(/\*[^*]+\*/g, '').replace(/[#_`]/g, '').slice(0, 800);
+    this.lastSpoken = text;
     
     const u = new SpeechSynthesisUtterance(clean);
     u.voice = this.voice;
