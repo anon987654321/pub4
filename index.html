@@ -119,7 +119,7 @@
       {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
       {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
       {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"},
+      // {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"}, // file missing
       {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
       {artist:"Chase Swayze",title:"Traffic",src:".mp3/chase_swayze-traffic.mp3"},
       {artist:"Haisam & Johann",title:"PB1",src:".mp3/haisam_and_johann-pb1.mp3"},
@@ -204,13 +204,14 @@
           this.compressor.connect(this.audioContext.destination);
         }catch{}
       }
-      initYTAPI(){if(IN_SANDBOX)return;try{this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}});this.ytReady=true}catch{}}
+      initYTAPI(){if(IN_SANDBOX)return;try{this._ytReadyCount=0;this.ytPlayers.a=new YT.Player('yt-player-a',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('a'),onStateChange:e=>this.onYTState('a',e),onError:()=>this.onYTError('a')}});this.ytPlayers.b=new YT.Player('yt-player-b',{width:'1',height:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1},events:{onReady:()=>this.onYTReady('b'),onStateChange:e=>this.onYTState('b',e),onError:()=>this.onYTError('b')}})}catch{}}
       onYTReady(k){
         try{
           this.ytPlayers[k].setVolume(0);
           this.ytPlayers[k].mute();
+          this._ytReadyCount=(this._ytReadyCount||0)+1;
+          if(this._ytReadyCount>=2)this.ytReady=true;
         }catch{}
-        // Don't auto-load video on ready - only load when explicitly called
       }
       onYTState(k,e){if(IN_SANDBOX)return;const S=YT.PlayerState;if(e.data===S.ENDED){if(k===this.activeKey)this.next({fast:true})}else if(e.data===S.PLAYING){clearTimeout(this._loadWatch);try{const p=this.ytPlayers[k];const s=()=>{const d=p.getDuration?p.getDuration()||0:0;if(d>0){const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);clearTimeout(this._prefadeTimer);this._prefadeTimer=setTimeout(()=>this.next({}),m)}};s();setTimeout(s,500)}catch{}}}
       onYTError(){clearTimeout(this._loadWatch);this.next({fast:true})}
@@ -268,7 +269,7 @@
           p.volume=1;
         }
       }
-      _loadYT(k,t,{fadeIn}){if(!t.id||IN_SANDBOX)return;clearTimeout(this._loadWatch);if(this.ytReady&&this.ytPlayers[k]&&this.ytPlayers[k].loadVideoById){try{const p=this.ytPlayers[k];p.loadVideoById({videoId:t.id,startSeconds:t.start||0,suggestedQuality:'tiny'});p.unMute();if(fadeIn)this._fadeYT(k,FADE_MS);this._loadWatch=setTimeout(()=>{try{const n=p.getCurrentTime?p.getCurrentTime():0;if(n<.1)this.next({fast:true})}catch{this.next({fast:true})}},4000)}catch{}}else{const f=document.getElementById('player-fallback-'+k);if(!f)return;const s=`https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=1&enablejsapi=1${t.start?`&start=${t.start}`:''}`;f.src=s;f.onload=()=>{ytPost(f,'playVideo',[]);if(fadeIn){ytPost(f,'setVolume',[0]);ytPost(f,'unMute',[]);this._fadeYT(k,FADE_MS)}else{ytPost(f,'setVolume',[100]);ytPost(f,'unMute',[])}};this._loadWatch=setTimeout(()=>this.next({fast:true}),5000)}}
+      _loadYT(k,t,{fadeIn}){if(!t.id||IN_SANDBOX)return;clearTimeout(this._loadWatch);if(this.ytReady&&this.ytPlayers[k]&&this.ytPlayers[k].loadVideoById){try{const p=this.ytPlayers[k];p.loadVideoById({videoId:t.id,startSeconds:t.start||0,suggestedQuality:'tiny'});p.unMute();if(fadeIn)this._fadeYT(k,FADE_MS);else p.setVolume(100);this._loadWatch=setTimeout(()=>{try{const n=p.getCurrentTime?p.getCurrentTime():0;if(n<.1)this.next({fast:true})}catch{this.next({fast:true})}},4000)}catch{}}else{const f=document.getElementById('player-fallback-'+k);if(!f)return;const s=`https://www.youtube.com/embed/${t.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&mute=0&enablejsapi=1${t.start?`&start=${t.start}`:''}`;f.src=s;f.onload=()=>{ytPost(f,'playVideo',[]);ytPost(f,'unMute',[]);if(fadeIn){ytPost(f,'setVolume',[0]);this._fadeYT(k,FADE_MS)}else{ytPost(f,'setVolume',[100])}};this._loadWatch=setTimeout(()=>this.next({fast:true}),5000)}}
       _fadeYT(k,ms){if(!this.ytReady||IN_SANDBOX)return;const steps=30,dt=ms/steps;let i=0;const iv=setInterval(()=>{i++;const vol=Math.round(100*i/steps);try{if(this.ytPlayers[k])this.ytPlayers[k].setVolume(vol);else ytPost(document.getElementById('player-fallback-'+k),'setVolume',[vol])}catch{}if(i>=steps)clearInterval(iv)},dt)}
       next({fast=false}={}){if(IN_SANDBOX)return;clearInterval(this._fadeIv);clearTimeout(this._prefadeTimer);const n=(this.trackIndex+1)%this.tracks.length,t=this.tracks[n],cur=this.tracks[this.trackIndex],f=this.activeKey,o=this.inactiveKey;if(cur.src&&this.mp3Players[f]){try{this.mp3Players[f].pause();this.mp3Players[f].volume=0}catch{}}if(cur.id&&this.ytReady){try{if(this.ytPlayers[f])this.ytPlayers[f].stopVideo()}catch{}}if(t.src){this._loadMP3(o,t,{fadeIn:false});setTimeout(()=>{this._crossfadeMP3(f,o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500)}else{this._loadYT(o,t,{fadeIn:false});setTimeout(()=>{if(this.ytReady)this._fadeYT(o,fast?1200:FADE_MS);this.trackIndex=n;this.updateUI()},fast?200:500);this.activeKey=o;this.inactiveKey=f}}
       _crossfadeMP3(from,to,ms){const steps=30,dt=ms/steps;let i=0;clearInterval(this._fadeIv);this._fadeIv=setInterval(()=>{i++;const t=i/steps;try{this.mp3Players[from].volume=Math.max(0,1-t)}catch{}try{this.mp3Players[to].volume=Math.min(1,t)}catch{}if(i>=steps){clearInterval(this._fadeIv);this.activeKey=to;this.inactiveKey=from}},dt)}

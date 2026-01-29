@@ -215,18 +215,31 @@ h1 {
   filter: url(#edge-displacement) url(#glow);
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
+  perspective: 800px;
 }
 
 .blob {
   position: relative;
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   background: #000;
   background-image:
+    /* Spherical highlight (top-left) */
+    radial-gradient(ellipse 40% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 60%),
+    /* Spherical shadow (bottom-right) */
+    radial-gradient(ellipse 60% 60% at 70% 75%, rgba(0,0,0,0.5) 0%, transparent 70%),
+    /* Rim light */
+    radial-gradient(circle at 50% 50%, transparent 45%, rgba(255,255,255,0.08) 48%, transparent 52%),
+    /* Mesh gradient layers */
     radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
     radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
     radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
     radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
+  box-shadow: 
+    inset -20px -20px 60px rgba(0,0,0,0.6),
+    inset 15px 15px 40px rgba(255,255,255,0.1),
+    0 0 80px rgba(100,100,120,0.3);
   
   --depth: 0.3;
   --bass-deform: 0;
@@ -289,6 +302,18 @@ h1 {
 
   clip-path: circle(50%);
   transform: scale(calc(0.5 + var(--depth) * 0.5));
+}
+
+/* Tunnel canvas inside orb */
+.orb-tunnel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 @supports (clip-path: shape(from 0% 0%, move to 100% 100%)) {
@@ -730,6 +755,8 @@ h1 {
       <div class="sacred-geometry"></div>
       <div class="presence-ring"></div>
       <div class="blob blob-shape">
+        <!-- Tunnel canvas inside the orb -->
+        <canvas id="orbTunnel" class="orb-tunnel"></canvas>
         <div class="inner-light"></div>
         <div class="subsurface"></div>
         <div class="core-pulse"></div>
@@ -869,6 +896,115 @@ const CONFIG = {
 };
 
 // ============================================
+// ORB TUNNEL RENDERER (from index.html)
+// ============================================
+const orbTunnelCanvas = document.getElementById('orbTunnel');
+const orbTunnelCtx = orbTunnelCanvas?.getContext('2d', { alpha: true });
+
+class OrbTunnel {
+  constructor(ctx) {
+    this.ctx = ctx;
+    this.w = 0;
+    this.h = 0;
+    this.fov = 150;
+    this.speed = 0.5;
+    this.segments = 24;
+    this.baseRadius = 40;
+    this.zStep = 8;
+    this.particles = [];
+    this.time = 0;
+  }
+  
+  resize(w, h) {
+    this.w = w;
+    this.h = h;
+    this.init();
+  }
+  
+  init() {
+    this.particles = [];
+    for (let z = -this.fov; z < this.fov; z += this.zStep) {
+      const row = [];
+      for (let i = 0; i < this.segments; i++) {
+        const a = (i * Math.PI * 2) / this.segments;
+        row.push({ x: Math.cos(a) * this.baseRadius, y: Math.sin(a) * this.baseRadius, z });
+      }
+      this.particles.push(row);
+    }
+  }
+  
+  frame(audioData) {
+    if (!this.ctx || this.w === 0) return;
+    
+    const bass = audioData?.bass || 0.5;
+    const beat = audioData?.beat || 0;
+    
+    this.ctx.clearRect(0, 0, this.w, this.h);
+    
+    // Sort by depth
+    this.particles.sort((a, b) => b[0].z - a[0].z);
+    
+    for (let i = 0; i < this.particles.length; i++) {
+      const row = this.particles[i];
+      const d = i / this.particles.length;
+      
+      // Color based on depth and audio
+      const r = Math.round(80 + d * 60 + beat * 40);
+      const g = Math.round(60 + d * 40);
+      const b = Math.round(120 + d * 80);
+      const alpha = 0.3 + d * 0.5;
+      
+      this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      this.ctx.lineWidth = 1 + d;
+      this.ctx.beginPath();
+      
+      for (let j = 0; j < row.length; j++) {
+        const p = row[j];
+        
+        // Move toward camera
+        p.z -= this.speed * (1 + bass * 0.5);
+        if (p.z < -this.fov) p.z += this.fov * 2;
+        
+        // Rotate over time
+        const a = (j * Math.PI * 2) / this.segments + this.time;
+        const radiusMod = this.baseRadius * (1 + beat * 0.2);
+        p.x = Math.cos(a) * radiusMod;
+        p.y = Math.sin(a) * radiusMod;
+        
+        // Project to 2D
+        const scale = this.fov / (this.fov + p.z);
+        const x2d = this.w / 2 + p.x * scale;
+        const y2d = this.h / 2 + p.y * scale;
+        
+        if (j === 0) this.ctx.moveTo(x2d, y2d);
+        else this.ctx.lineTo(x2d, y2d);
+      }
+      
+      this.ctx.closePath();
+      this.ctx.stroke();
+    }
+    
+    this.time += 0.02;
+  }
+}
+
+let orbTunnel = null;
+if (orbTunnelCtx) {
+  orbTunnel = new OrbTunnel(orbTunnelCtx);
+}
+
+function resizeOrbTunnel() {
+  if (orbTunnelCanvas && orbTunnel) {
+    const rect = orbTunnelCanvas.parentElement?.getBoundingClientRect();
+    if (rect) {
+      orbTunnelCanvas.width = rect.width;
+      orbTunnelCanvas.height = rect.height;
+      orbTunnel.resize(rect.width, rect.height);
+    }
+  }
+}
+
+// ============================================
 // ELEMENTS
 // ============================================
 const blob = document.querySelector('.blob');
@@ -884,7 +1020,8 @@ function resizeCanvas() {
   effectsCanvas.height = window.innerHeight;
 }
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+resizeOrbTunnel();
+window.addEventListener('resize', () => { resizeCanvas(); resizeOrbTunnel(); });
 
 // ============================================
 // DRAWING FUNCTIONS
@@ -1699,6 +1836,11 @@ function triggerGlitch() {
 function animate(time) {
   // Clear canvas
   effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+  
+  // Update orb tunnel with audio data
+  if (orbTunnel) {
+    orbTunnel.frame({ bass: smoothedEnergy, beat: beatDetected ? 1 : 0, average: depth });
+  }
   
   // Core updates
   updateMouseTracking();
