@@ -2617,7 +2617,11 @@ const Drums = {
   async play(tempo = 90) {
     if (!this.kick) await this.init();
     
-    this.stop(); // Clear any existing patterns
+    // Clear existing patterns without stopping Transport
+    this.isPlaying = false;
+    this.patterns.forEach(p => { p.stop(); p.dispose(); });
+    this.patterns = [];
+    
     this.isPlaying = true;
     Tone.Transport.bpm.value = tempo;
     
@@ -2668,7 +2672,7 @@ const Drums = {
     this.isPlaying = false;
     this.patterns.forEach(p => { p.stop(); p.dispose(); });
     this.patterns = [];
-    Tone.Transport.stop();
+    // Don't stop Transport - Pads may still be using it
     console.log('[Drums] Stopped');
   },
   
