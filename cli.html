@@ -182,19 +182,24 @@ h1 {
   color: #fff;
   letter-spacing: -0.02em;
   z-index: 1000;
-  outline: none;
-  border: none;
-  background: transparent;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
   min-width: 100px;
   padding: 8px 12px;
   cursor: text;
   -webkit-user-modify: read-write-plaintext-only;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  caret-color: #fff;
 }
 
-h1:focus {
-  outline: none;
-  border: none;
-  background: transparent;
+h1:focus, h1:active, h1:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 h1:empty::before {
@@ -223,8 +228,9 @@ h1:empty::before {
 }
 
 .tracking-wrapper {
-  transition: transform 0.15s ease-out;
-  transform-style: preserve-3d;
+  /* No 3D transforms - keep orb flat facing forward */
+  transform: none !important;
+  transform-style: flat;
 }
 
 .blob-wrapper {
@@ -233,6 +239,7 @@ h1:empty::before {
   filter: none;
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
+  transform: none !important;
 }
 
 .blob {
@@ -241,7 +248,8 @@ h1:empty::before {
   height: 100%;
   border-radius: 50%;
   background: #fff;
-  /* No animations, no transforms, pure flat */
+  transform: none !important;
+  /* Pure flat white circle - no 3D */
 }
 
 .blob-shape {
@@ -2154,8 +2162,8 @@ const Ares = {
         if (text && text !== defaultText) {
           setUIState('thinking');
           this.send(text);
-          input.innerText = defaultText;
-          input.blur();
+          input.innerText = '';  // Clear, don't restore default
+          // Don't blur - placeholder will show via CSS :empty
         }
       }
     });
