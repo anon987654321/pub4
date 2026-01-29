@@ -1761,62 +1761,64 @@ module Voice
       end
     end
     
-    # ElevenLabs TTS via API
+    # ElevenLabs TTS via API - saves to file for browser streaming
     def speak_elevenlabs(text)
-      Thread.new do
-        voice_id = ELEVENLABS_VOICES[@current_persona] || ELEVENLABS_VOICES["default"]
-        settings = ELEVENLABS_SETTINGS[@current_persona] || ELEVENLABS_SETTINGS["default"]
+      voice_id = ELEVENLABS_VOICES[@current_persona] || ELEVENLABS_VOICES["default"]
+      settings = ELEVENLABS_SETTINGS[@current_persona] || ELEVENLABS_SETTINGS["default"]
+      model = @elevenlabs_model || "eleven_turbo_v2_5"
+      
+      uri = URI("https://api.elevenlabs.io/v1/text-to-speech/#{voice_id}")
+      
+      body = {
+        text: text,
+        model_id: model,
+        voice_settings: {
+          stability: settings[:stability],
+          similarity_boost: settings[:similarity],
+          style: settings[:style],
+          use_speaker_boost: true
+        }
+      }.to_json
+      
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.read_timeout = 30
+      
+      request = Net::HTTP::Post.new(uri)
+      request["xi-api-key"] = @elevenlabs_key
+      request["Content-Type"] = "application/json"
+      request["Accept"] = "audio/mpeg"
+      request.body = body
+      
+      response = http.request(request)
+      
+      if response.code == "200"
+        # Save to temp file for browser to fetch
+        @audio_file = "/tmp/ares_audio_#{$$}.mp3"
         
-        uri = URI("https://api.elevenlabs.io/v1/text-to-speech/#{voice_id}")
-        
-        body = {
-          text: text,
-          model_id: "eleven_monolingual_v1",
-          voice_settings: {
-            stability: settings[:stability],
-            similarity_boost: settings[:similarity],
-            style: settings[:style],
-            use_speaker_boost: true
-          }
-        }.to_json
-        
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.read_timeout = 30
-        
-        request = Net::HTTP::Post.new(uri)
-        request["xi-api-key"] = @elevenlabs_key
-        request["Content-Type"] = "application/json"
-        request["Accept"] = "audio/mpeg"
-        request.body = body
-        
-        response = http.request(request)
-        
-        if response.code == "200"
-          # Save to temp file and play with ffmpeg effects
-          tmpfile = "/tmp/elevenlabs_#{$$}_#{rand(10000)}.mp3"
-          File.binwrite(tmpfile, response.body)
-          
-          # Apply analog effects if not clean
-          effect_chain = AUDIO_EFFECTS[@current_effect] || []
-          if effect_chain.is_a?(Array) && effect_chain.any?
-            ffmpeg_fx = effect_chain.join(",")
-            system("ffplay -nodisp -autoexit -af '#{ffmpeg_fx}' #{tmpfile.shellescape} 2>/dev/null || " \
-                   "play -q #{tmpfile.shellescape} 2>/dev/null")
-          else
-            system("ffplay -nodisp -autoexit #{tmpfile.shellescape} 2>/dev/null || " \
-                   "play -q #{tmpfile.shellescape} 2>/dev/null")
-          end
-          
-          File.delete(tmpfile) if File.exist?(tmpfile)
+        # Apply analog effects if set
+        effect_chain = AUDIO_EFFECTS[@current_effect] || []
+        if effect_chain.is_a?(Array) && effect_chain.any?
+          raw_file = "/tmp/ares_raw_#{$$}.mp3"
+          File.binwrite(raw_file, response.body)
+          ffmpeg_fx = effect_chain.join(",")
+          system("ffmpeg -y -i #{raw_file.shellescape} -af '#{ffmpeg_fx}' #{@audio_file.shellescape} 2>/dev/null")
+          File.delete(raw_file) if File.exist?(raw_file)
         else
-          # Fallback to browser TTS on error
-          @queue << text if @web_tts
+          File.binwrite(@audio_file, response.body)
         end
-      rescue => e
-        # Silent fail, queue for browser
+        
+        @audio_ready = true
+        true
+      else
+        # Fallback to browser TTS on error
         @queue << text if @web_tts
+        false
       end
+    rescue => e
+      # Silent fail, queue for browser
+      @queue << text if @web_tts
+      false
     end
     
     # Piper TTS with FFmpeg effects
@@ -1912,12 +1914,31 @@ module Voice
               "expires" => "0"
             }, body]
           when "/poll"
+            # Check for queued text OR ready audio
             text = @queue.empty? ? nil : @queue.pop(true) rescue nil
+            audio_url = nil
+            if @audio_ready && @audio_file && File.exist?(@audio_file)
+              audio_url = "/audio?t=#{Time.now.to_i}"
+              @audio_ready = false
+            end
             body = Protocol::HTTP::Body::Buffered.wrap({ 
               text: text, 
+              audio: audio_url,
               persona: Voice.current_persona 
             }.to_json)
             Protocol::HTTP::Response[200, {"content-type" => "application/json", "cache-control" => "no-store"}, body]
+          when /^\/audio/
+            # Serve ElevenLabs audio file
+            if @audio_file && File.exist?(@audio_file)
+              audio_data = File.binread(@audio_file)
+              body = Protocol::HTTP::Body::Buffered.wrap(audio_data)
+              Protocol::HTTP::Response[200, {
+                "content-type" => "audio/mpeg",
+                "cache-control" => "no-store"
+              }, body]
+            else
+              Protocol::HTTP::Response[404, {}, nil]
+            end
           when "/chat"
             # Handle chat messages via POST
             if request.method == "POST"
@@ -1927,8 +1948,19 @@ module Voice
               if message && OpenRouterChat.available?
                 result = OpenRouterChat.chat(message)
                 response = result.success? ? result.value : result.error
-                # Response goes directly to client, no queue (avoid double-speak)
-                body = Protocol::HTTP::Body::Buffered.wrap({ response: response }.to_json)
+                
+                # Generate ElevenLabs audio if available
+                audio_url = nil
+                if @elevenlabs_available && response && !response.empty?
+                  if speak_elevenlabs(response)
+                    audio_url = "/audio?t=#{Time.now.to_i}"
+                  end
+                end
+                
+                body = Protocol::HTTP::Body::Buffered.wrap({ 
+                  response: response,
+                  audio: audio_url
+                }.to_json)
                 Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
               else
                 body = Protocol::HTTP::Body::Buffered.wrap({ error: "unavailable" }.to_json)

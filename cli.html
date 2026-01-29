@@ -462,6 +462,159 @@ h1 {
 }
 
 /* ============================================
+   PIXELATED DEPTH EFFECTS
+   ============================================ */
+
+/* Breathing shadow beneath orb */
+.orb-shadow {
+  position: absolute;
+  bottom: -20%;
+  left: 50%;
+  width: 80%;
+  height: 20%;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+  transform: translateX(-50%);
+  filter: blur(10px);
+  pointer-events: none;
+  transition: transform 0.3s steps(4), opacity 0.3s steps(4);
+}
+
+/* Fresnel rim glow */
+.fresnel-rim {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 30px rgba(102, 126, 234, 0.3);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Proximity glow ring */
+.proximity-glow {
+  position: absolute;
+  inset: -15%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 40%, rgba(102, 126, 234, 0.1) 60%, transparent 80%);
+  opacity: 0;
+  transition: opacity 0.2s steps(3);
+  pointer-events: none;
+}
+
+/* Pupil/core that dilates */
+.pupil-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15%;
+  height: 15%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(102,126,234,0.6) 50%, transparent 100%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.1s steps(3), height 0.1s steps(3);
+  pointer-events: none;
+}
+
+/* Afterimage trail container */
+.afterimage {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.3;
+  filter: blur(5px);
+  background: rgba(102, 126, 234, 0.2);
+}
+
+/* Dimensional flicker overlay */
+.dimensional-flicker {
+  position: absolute;
+  inset: 0;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Bioluminescent veins (SVG pattern) */
+.vein-network {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  background: 
+    radial-gradient(circle at 30% 40%, rgba(102,126,234,0.4) 0%, transparent 15%),
+    radial-gradient(circle at 70% 60%, rgba(147,112,219,0.4) 0%, transparent 15%),
+    radial-gradient(circle at 50% 80%, rgba(102,126,234,0.3) 0%, transparent 20%);
+  animation: vein-pulse 3s ease-in-out infinite steps(6);
+}
+
+@keyframes vein-pulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.25; }
+}
+
+/* Internal currents */
+.internal-current {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(102,126,234,0.1), transparent, rgba(147,112,219,0.1), transparent);
+  animation: current-flow 8s linear infinite steps(16);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes current-flow {
+  to { transform: rotate(360deg); }
+}
+
+/* Membrane ripple effect */
+.membrane-ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(102,126,234,0.3);
+  pointer-events: none;
+  animation: membrane-expand 1s ease-out forwards steps(8);
+}
+
+@keyframes membrane-expand {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* Caustic light pattern on "floor" */
+.caustics {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: 
+    radial-gradient(ellipse at 45% 100%, rgba(102,126,234,0.05) 0%, transparent 30%),
+    radial-gradient(ellipse at 55% 100%, rgba(147,112,219,0.05) 0%, transparent 25%);
+  pointer-events: none;
+  animation: caustic-shimmer 4s ease-in-out infinite steps(8);
+}
+
+@keyframes caustic-shimmer {
+  0%, 100% { opacity: 0.3; transform: scaleX(1); }
+  50% { opacity: 0.5; transform: scaleX(1.05); }
+}
+
+/* Heat distortion (subtle) */
+.heat-distortion {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: transparent;
+  backdrop-filter: blur(0.5px);
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* ============================================
    ANALOG EFFECTS
    ============================================ */
 .grain-overlay {
@@ -598,16 +751,34 @@ h1 {
         <div class="subsurface"></div>
         <div class="core-pulse"></div>
         <div class="quantum-shimmer"></div>
+        <!-- Depth effect layers -->
+        <div class="internal-current"></div>
+        <div class="vein-network"></div>
+        <div class="pupil-core"></div>
+        <div class="fresnel-rim"></div>
+        <div class="dimensional-flicker"></div>
       </div>
+      <!-- Heat distortion around blob -->
+      <div class="heat-distortion"></div>
+      <!-- Proximity glow -->
+      <div class="proximity-glow"></div>
     </div>
+    <!-- Shadow beneath -->
+    <div class="orb-shadow"></div>
   </div>
 </div>
+
+<!-- Caustic light on floor -->
+<div class="caustics"></div>
 
 <!-- Effects canvas for astral particles -->
 <canvas id="effects-canvas"></canvas>
 
+<!-- Afterimage container -->
+<div id="afterimageContainer" style="position:fixed; inset:0; pointer-events:none; z-index:1;"></div>
+
 <!-- Status indicators -->
-<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:Inter,sans-serif; font-size:12px; color:rgba(102,126,234,0.6); z-index:1000; pointer-events:none;"></div>
+<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:14px; color:rgba(102,126,234,0.8); z-index:1000; pointer-events:none;"></div>
 
 <!-- Fullscreen Effects -->
 <div class="grain-overlay"></div>
@@ -618,7 +789,7 @@ h1 {
 
 <!-- Text input for typing to Ares -->
 <input type="text" id="aresInput" placeholder="" 
-  style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 40px); max-width:400px; padding:14px 20px; border:1px solid rgba(102,126,234,0.2); background:transparent; color:rgba(255,255,255,0.8); border-radius:25px; font-size:16px; outline:none; z-index:1000; will-change:transform; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:border-color 0.3s, color 0.3s; -webkit-appearance:none;">
+  style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 40px); max-width:400px; padding:14px 20px; border:none; background:transparent; color:rgba(255,255,255,0.8); border-radius:25px; font-size:16px; outline:none; z-index:1000; will-change:transform; -webkit-tap-highlight-color:transparent; touch-action:manipulation; -webkit-appearance:none;">
 
 <!-- Audio element for visualization (no autoplay) -->
 <audio id="audioPlayer" style="display: none;" crossorigin="anonymous"></audio>
@@ -636,8 +807,11 @@ const CONFIG = {
   energySmoothing: 0.3,
   depthSmoothing: 0.5,
   depthDecay: 0.92,
-  mouseTrackingStrength: 0.08,
+  mouseTrackingStrength: 0.25,  // Increased for more response
   geometryMorphSpeed: 0.0001,
+  
+  // Pixelation
+  pixelSteps: 8,  // Quantize movements to N steps
   
   // Autonomous wandering
   wanderSpeed: 0.0005,
@@ -974,18 +1148,55 @@ document.addEventListener('mousemove', (e) => {
   targetRotateY = (mouseX - centerX) * CONFIG.mouseTrackingStrength;
   targetRotateX = (centerY - mouseY) * CONFIG.mouseTrackingStrength;
   
+  // Pressure response - orb leans toward mouse
+  const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
+  const maxDist = Math.hypot(centerX, centerY);
+  pressureX = ((mouseX - centerX) / maxDist) * 15;
+  pressureY = ((mouseY - centerY) / maxDist) * 15;
+  proximityGlow = 1 - (dist / maxDist);
+  
   // Track interaction for self-modifying geometry
   interactionCount = Math.min(interactionCount + 0.01, 10);
 });
+
+// Gyroscope for phone parallax
+let gyroX = 0, gyroY = 0;
+if (window.DeviceOrientationEvent) {
+  window.addEventListener('deviceorientation', (e) => {
+    if (e.gamma !== null && e.beta !== null) {
+      // gamma: left/right tilt (-90 to 90), beta: front/back tilt (-180 to 180)
+      gyroX = e.gamma * 0.3;  // Scale down
+      gyroY = (e.beta - 45) * 0.3;  // Center around 45° (holding phone)
+      targetRotateY = pixelize(gyroX, 2);
+      targetRotateX = pixelize(-gyroY, 2);
+    }
+  });
+}
+
+// Pixelization helper - quantize values to stepped increments
+function pixelize(value, steps) {
+  return Math.round(value / steps) * steps;
+}
+
+// Depth state
+let pressureX = 0, pressureY = 0;
+let proximityGlow = 0;
+let pupilSize = 1;
+let flickerPhase = 0;
+let afterimages = [];
 
 function updateMouseTracking() {
   currentRotateX += (targetRotateX - currentRotateX) * 0.1;
   currentRotateY += (targetRotateY - currentRotateY) * 0.1;
   
+  // Pixelize the rotation for stepped feel
+  const pRotateX = pixelize(currentRotateX, 0.5);
+  const pRotateY = pixelize(currentRotateY, 0.5);
+  
   trackingWrapper.style.transform = `
     perspective(1000px) 
-    rotateX(${currentRotateX}deg) 
-    rotateY(${currentRotateY}deg)
+    rotateX(${pRotateX}deg) 
+    rotateY(${pRotateY}deg)
   `;
 }
 
@@ -1410,6 +1621,98 @@ function drawLighting() {
 }
 
 // ============================================
+// DEPTH EFFECTS
+// ============================================
+const orbShadow = document.querySelector('.orb-shadow');
+const proximityGlowEl = document.querySelector('.proximity-glow');
+const pupilCore = document.querySelector('.pupil-core');
+const dimensionalFlicker = document.querySelector('.dimensional-flicker');
+const afterimageContainer = document.getElementById('afterimageContainer');
+
+let lastOrbX = 0, lastOrbY = 0;
+let membraneRippleTimer = 0;
+
+function updateDepthEffects(time) {
+  // Breathing shadow
+  if (orbShadow) {
+    const shadowScale = 0.8 + breathingScale * 0.2 + smoothedEnergy * 0.3;
+    const pScale = pixelize(shadowScale, 0.05);
+    orbShadow.style.transform = `translateX(-50%) scaleX(${pScale}) scaleY(${pScale * 0.5})`;
+    orbShadow.style.opacity = 0.3 + smoothedEnergy * 0.2;
+  }
+  
+  // Proximity glow
+  if (proximityGlowEl) {
+    const pGlow = pixelize(proximityGlow, 0.1);
+    proximityGlowEl.style.opacity = pGlow * 0.5;
+  }
+  
+  // Pupil dilation based on audio energy
+  if (pupilCore) {
+    pupilSize = 15 - smoothedEnergy * 10; // Contracts with sound
+    const pSize = pixelize(Math.max(5, pupilSize), 1);
+    pupilCore.style.width = pSize + '%';
+    pupilCore.style.height = pSize + '%';
+  }
+  
+  // Dimensional flicker (random glitch)
+  flickerPhase += 0.01;
+  if (dimensionalFlicker && Math.random() < 0.002) {
+    dimensionalFlicker.style.opacity = 0.3;
+    setTimeout(() => { dimensionalFlicker.style.opacity = 0; }, 50);
+  }
+  
+  // Pressure response (lean toward mouse)
+  const pPressureX = pixelize(pressureX, 2);
+  const pPressureY = pixelize(pressureY, 2);
+  blobWrapper.style.marginLeft = pPressureX + 'px';
+  blobWrapper.style.marginTop = pPressureY + 'px';
+  
+  // Afterimage trail when moving fast
+  const velocity = Math.hypot(orbX - lastOrbX, orbY - lastOrbY);
+  if (velocity > 2 && afterimageContainer) {
+    createAfterimage(orbX, orbY);
+  }
+  lastOrbX = orbX;
+  lastOrbY = orbY;
+  
+  // Membrane ripples on beat
+  membraneRippleTimer++;
+  if (beatDetected && membraneRippleTimer > 10) {
+    createMembraneRipple();
+    membraneRippleTimer = 0;
+  }
+}
+
+function createAfterimage(x, y) {
+  const afterimage = document.createElement('div');
+  afterimage.className = 'afterimage';
+  const size = Math.min(window.innerWidth, window.innerHeight) * 0.25;
+  afterimage.style.cssText = `
+    left: ${window.innerWidth/2 + x - size/2}px;
+    top: ${window.innerHeight/2 + y - size/2}px;
+    width: ${size}px;
+    height: ${size}px;
+  `;
+  afterimageContainer.appendChild(afterimage);
+  setTimeout(() => afterimage.remove(), 300);
+}
+
+function createMembraneRipple() {
+  const ripple = document.createElement('div');
+  ripple.className = 'membrane-ripple';
+  const size = Math.min(window.innerWidth, window.innerHeight) * 0.3;
+  ripple.style.cssText = `
+    left: 50%;
+    top: 50%;
+    width: ${size}px;
+    height: ${size}px;
+  `;
+  blobWrapper.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 1000);
+}
+
+// ============================================
 // GLITCH EFFECT
 // ============================================
 function triggerGlitch() {
@@ -1452,6 +1755,9 @@ function animate(time) {
   updateIdleSway(time);
   updateLighting(time);
   updateAttention();
+  
+  // Pixelated depth effects
+  updateDepthEffects(time);
   
   // Combine all position offsets
   const finalX = orbX + convulsionX + jitterOffsetX + idleSwayX + attentionOffsetX;
@@ -1739,7 +2045,16 @@ const Ares = {
       keepalive: true
     })
       .then(r => r.json())
-      .then(data => { if (data.response) this.speak(data.response); })
+      .then(data => { 
+        if (data.response) {
+          // If server provided audio URL, play that instead of browser TTS
+          if (data.audio) {
+            this.playServerAudio(data.audio, data.response);
+          } else {
+            this.speak(data.response);
+          }
+        }
+      })
       .catch(() => this.speak("Connection issues... but I'm still thinking about you."));
   },
   
@@ -1751,13 +2066,43 @@ const Ares = {
         if (data.persona && data.persona !== this.currentPersona) {
           this.setPersona(data.persona);
         }
-        // Speak if new text
-        if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) {
+        // Play server audio if available
+        if (data.audio && !this.isSpeaking) {
+          this.playServerAudio(data.audio, data.text);
+        }
+        // Fallback to browser TTS if text but no audio
+        else if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) {
           this.speak(data.text);
         }
         setTimeout(() => this.pollForTTS(), 1000);
       })
       .catch(() => setTimeout(() => this.pollForTTS(), 3000));
+  },
+  
+  // Play audio from server (ElevenLabs)
+  playServerAudio(url, text) {
+    this.lastSpoken = text;
+    
+    // Trigger anticipation animation
+    if (typeof triggerAnticipation === 'function') triggerAnticipation();
+    
+    const audio = new Audio(url);
+    audio.onplay = () => {
+      this.isSpeaking = true;
+      setUIState('speaking');
+      if (typeof depth !== 'undefined') depth = 0.7;
+    };
+    audio.onended = () => {
+      this.isSpeaking = false;
+      setUIState('idle');
+    };
+    audio.onerror = () => {
+      // Fallback to browser TTS
+      if (text) this.speak(text);
+    };
+    audio.play().catch(() => {
+      if (text) this.speak(text);
+    });
   },
   
   speak(text) {
