@@ -223,83 +223,61 @@ h1 {
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  overflow: hidden;
   
-  /* Cosmic transparent sphere */
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(180, 200, 255, 0.15) 0%,
-    rgba(100, 120, 200, 0.08) 20%,
-    rgba(40, 50, 80, 0.05) 40%,
-    rgba(10, 15, 30, 0.4) 70%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  /* 8-bit retro palette - limited colors, hard edges */
+  background: 
+    /* Core color - deep purple/blue */
+    radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0f0f1a 100%);
   
-  /* Layered cosmic effects */
+  /* Layered 8-bit shading - hard color bands like old games */
   background-image:
-    /* Core glow - nebula center */
-    radial-gradient(ellipse 30% 30% at 50% 50%, rgba(150,180,255,0.3) 0%, transparent 50%),
-    /* Primary highlight - star reflection */
-    radial-gradient(ellipse 25% 25% at 25% 25%, rgba(255,255,255,0.4) 0%, transparent 50%),
-    /* Secondary highlight - atmospheric scatter */
-    radial-gradient(ellipse 15% 15% at 35% 30%, rgba(200,220,255,0.5) 0%, transparent 40%),
-    /* Chromatic aberration - edge prismatic */
-    radial-gradient(circle at 50% 50%, transparent 40%, rgba(255,100,150,0.1) 45%, transparent 48%),
-    radial-gradient(circle at 50% 50%, transparent 42%, rgba(100,200,255,0.1) 47%, transparent 50%),
-    /* Deep space rim */
-    radial-gradient(circle at 50% 50%, transparent 44%, rgba(80,100,180,0.15) 48%, rgba(40,50,100,0.3) 50%),
-    /* Mesh gradient layers - internal nebula currents */
+    /* Specular - single bright pixel cluster */
+    radial-gradient(circle at 30% 30%, #ffffff 0%, #ffffff 8%, transparent 8%),
+    /* Secondary highlight */
+    radial-gradient(circle at 35% 35%, #c0c0ff 0%, #c0c0ff 5%, transparent 5%),
+    /* Light band 1 */
+    radial-gradient(circle at 40% 40%, #8080c0 0%, #8080c0 25%, transparent 25%),
+    /* Light band 2 */
+    radial-gradient(circle at 45% 45%, #4040a0 0%, #4040a0 40%, transparent 40%),
+    /* Mid tone */
+    radial-gradient(circle at 50% 50%, #202060 0%, #202060 55%, transparent 55%),
+    /* Shadow band */
+    radial-gradient(circle at 50% 50%, #101040 0%, #101040 70%, transparent 70%),
+    /* Edge - darkest */
+    radial-gradient(circle at 50% 50%, #080820 0%, #080820 85%, #040410 100%),
+    /* Mesh gradient layers - keep internal motion */
     radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
     radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
     radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
     radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
   
-  /* 3D sphere shadows - creates depth */
+  /* Hard pixel edge - no soft shadows */
   box-shadow: 
-    /* Inner shadow - sphere curvature */
-    inset -30px -30px 80px rgba(0,0,0,0.7),
-    inset 20px 20px 60px rgba(150,180,255,0.15),
-    inset 0 0 100px rgba(80,100,150,0.2),
-    /* Outer glow - cosmic aura */
-    0 0 60px rgba(100,140,200,0.3),
-    0 0 120px rgba(80,100,180,0.2),
-    0 0 200px rgba(60,80,150,0.1);
+    inset -4px -4px 0 #000010,
+    inset 4px 4px 0 rgba(128,128,200,0.3),
+    0 0 0 2px #202040,
+    0 0 20px rgba(64,64,128,0.5);
+  
+  /* Pixelated rendering */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   
   --depth: 0.3;
   --bass-deform: 0;
   --mid-deform: 0;
   --treble-deform: 0;
-  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate, cosmic-pulse 8s ease-in-out infinite;
+  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate, retro-flicker 0.1s steps(2) infinite;
   
-  /* 3D sphere transform - perspective depth */
+  /* Slight 3D tilt */
   transform-style: preserve-3d;
-  transform: perspective(800px) rotateX(10deg) rotateY(-8deg);
-  
-  /* Glass-like transparency */
-  backdrop-filter: blur(2px);
+  transform: perspective(800px) rotateX(5deg) rotateY(-5deg);
 }
 
-/* Cosmic pulse animation */
-@keyframes cosmic-pulse {
-  0%, 100% { 
-    filter: brightness(1) saturate(1);
-    box-shadow: 
-      inset -30px -30px 80px rgba(0,0,0,0.7),
-      inset 20px 20px 60px rgba(150,180,255,0.15),
-      inset 0 0 100px rgba(80,100,150,0.2),
-      0 0 60px rgba(100,140,200,0.3),
-      0 0 120px rgba(80,100,180,0.2),
-      0 0 200px rgba(60,80,150,0.1);
-  }
-  50% { 
-    filter: brightness(1.1) saturate(1.15);
-    box-shadow: 
-      inset -30px -30px 80px rgba(0,0,0,0.6),
-      inset 20px 20px 60px rgba(180,200,255,0.2),
-      inset 0 0 120px rgba(100,130,180,0.25),
-      0 0 80px rgba(120,160,220,0.4),
-      0 0 150px rgba(100,130,200,0.25),
-      0 0 250px rgba(80,100,170,0.15);
-  }
+/* 8-bit flicker animation */
+@keyframes retro-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.97; }
 }
 
 .blob-shape {
@@ -979,8 +957,8 @@ class StarField {
     this.w = 0;
     this.h = 0;
     this.stars = [];
-    this.numStars = 200;
-    this.speed = 0.3;
+    this.numStars = 80; // Fewer stars for 8-bit feel
+    this.speed = 0.5;
   }
   
   resize(w, h) {
@@ -996,20 +974,14 @@ class StarField {
         x: (Math.random() - 0.5) * this.w * 3,
         y: (Math.random() - 0.5) * this.h * 3,
         z: Math.random() * 1000,
-        size: Math.random() * 1.5 + 0.5,
         color: this.randomStarColor()
       });
     }
   }
   
   randomStarColor() {
-    const colors = [
-      'rgba(255,255,255,0.9)',
-      'rgba(200,220,255,0.8)',
-      'rgba(255,200,180,0.7)',
-      'rgba(180,200,255,0.8)',
-      'rgba(255,240,200,0.7)'
-    ];
+    // 8-bit palette - limited colors
+    const colors = ['#ffffff', '#c0c0ff', '#8080ff', '#c0ffff', '#ffffc0'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
   
@@ -1022,6 +994,9 @@ class StarField {
     const cx = this.w / 2;
     const cy = this.h / 2;
     
+    // Disable anti-aliasing for pixel look
+    this.ctx.imageSmoothingEnabled = false;
+    
     for (const star of this.stars) {
       // Move toward viewer
       star.z -= this.speed * (1 + bass * 2);
@@ -1033,24 +1008,16 @@ class StarField {
       
       // Project to 2D
       const scale = 300 / star.z;
-      const sx = cx + star.x * scale;
-      const sy = cy + star.y * scale;
+      const sx = Math.floor(cx + star.x * scale);
+      const sy = Math.floor(cy + star.y * scale);
       
-      // Size and brightness based on depth
+      // Size based on depth - 1-3 pixels only (8-bit style)
       const depth = 1 - star.z / 1000;
-      const size = star.size * scale * 0.5;
-      const alpha = depth * 0.8 + 0.2;
+      const size = Math.max(1, Math.floor(depth * 3));
       
-      // Draw star with glow
-      const gradient = this.ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 2);
-      gradient.addColorStop(0, star.color);
-      gradient.addColorStop(0.5, star.color.replace(/[\d.]+\)$/, (alpha * 0.5) + ')'));
-      gradient.addColorStop(1, 'transparent');
-      
-      this.ctx.fillStyle = gradient;
-      this.ctx.beginPath();
-      this.ctx.arc(sx, sy, size * 2, 0, Math.PI * 2);
-      this.ctx.fill();
+      // Draw as hard pixel rectangles - no gradients
+      this.ctx.fillStyle = star.color;
+      this.ctx.fillRect(sx, sy, size, size);
     }
   }
 }
