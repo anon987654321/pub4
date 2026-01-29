@@ -3045,9 +3045,9 @@ iteration #{iter}/#{max_iter}"
     
     puts C.d("Adding port #{port} to pf.conf...")
     
-    # Read current config
-    content = File.read(pf_conf) rescue nil
-    unless content
+    # Read current config via doas
+    content = `doas cat #{pf_conf} 2>/dev/null`
+    if content.empty?
       puts C.r("Cannot read #{pf_conf}")
       return
     end
@@ -3055,17 +3055,25 @@ iteration #{iter}/#{max_iter}"
     # Add port to existing rule or create new one
     if content.include?("port { 80, 443 }")
       new_content = content.gsub("port { 80, 443 }", "port { 80, 443, #{port} }")
-    elsif content.include?("port { 80, 443, ")
-      # Already has extra ports, add this one
-      new_content = content.gsub(/port \{ 80, 443, ([^}]+)\}/, "port { 80, 443, \\1, #{port} }")
+    elsif content.include?("port { 80, 443,")
+      # Already has extra ports, add this one if not present
+      if content.include?(port.to_s)
+        puts C.g("Port #{port} already in pf.conf")
+        return
+      end
+      new_content = content.gsub(/port \{ 80, 443,/, "port { 80, 443, #{port},")
     else
       puts C.y("Could not find port rule to modify")
       puts "Add manually: pass in on $ext_if inet proto tcp to $ip port #{port}"
       return
     end
     
-    # Write and reload
-    result = `echo #{new_content.shellescape} | doas tee #{pf_conf} > /dev/null && doas pfctl -f #{pf_conf} 2>&1`
+    # Write via temp file and reload
+    tmp = "/tmp/pf.conf.#{$$}"
+    File.write(tmp, new_content)
+    result = `doas cp #{tmp} #{pf_conf} && doas pfctl -f #{pf_conf} 2>&1`
+    File.delete(tmp) rescue nil
+    
     if $?.success?
       puts C.g("Port #{port} opened, pf reloaded")
     else
