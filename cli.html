@@ -225,59 +225,50 @@ h1 {
   border-radius: 50%;
   overflow: hidden;
   
-  /* 8-bit retro palette - limited colors, hard edges */
-  background: 
-    /* Core color - deep purple/blue */
-    radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0f0f1a 100%);
+  /* 8-bit sphere with 3D depth bands */
+  background: #0a0a18;
   
-  /* Layered 8-bit shading - hard color bands like old games */
+  /* Concentric 8-bit shading bands - offset for 3D illusion */
   background-image:
-    /* Specular - single bright pixel cluster */
-    radial-gradient(circle at 30% 30%, #ffffff 0%, #ffffff 8%, transparent 8%),
-    /* Secondary highlight */
-    radial-gradient(circle at 35% 35%, #c0c0ff 0%, #c0c0ff 5%, transparent 5%),
-    /* Light band 1 */
-    radial-gradient(circle at 40% 40%, #8080c0 0%, #8080c0 25%, transparent 25%),
-    /* Light band 2 */
-    radial-gradient(circle at 45% 45%, #4040a0 0%, #4040a0 40%, transparent 40%),
-    /* Mid tone */
-    radial-gradient(circle at 50% 50%, #202060 0%, #202060 55%, transparent 55%),
-    /* Shadow band */
-    radial-gradient(circle at 50% 50%, #101040 0%, #101040 70%, transparent 70%),
-    /* Edge - darkest */
-    radial-gradient(circle at 50% 50%, #080820 0%, #080820 85%, #040410 100%),
-    /* Mesh gradient layers - keep internal motion */
+    /* Specular highlight - bright point */
+    radial-gradient(circle at 32% 28%, #ffffff 0%, #ffffff 4%, transparent 4%),
+    /* Inner highlight glow */
+    radial-gradient(ellipse 35% 35% at 35% 32%, #a0a0ff 0%, transparent 100%),
+    /* Light hemisphere - upper left lit */
+    radial-gradient(ellipse 80% 80% at 40% 35%, #6060a0 0%, #4040a0 30%, transparent 60%),
+    /* Core mid-tone */
+    radial-gradient(ellipse 100% 100% at 50% 50%, #303080 0%, #202060 50%, transparent 80%),
+    /* Shadow hemisphere - lower right dark */
+    radial-gradient(ellipse 100% 100% at 65% 65%, #101040 20%, #080820 60%, #040410 100%),
+    /* Mesh gradient layers */
     radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
     radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
     radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
     radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
   
-  /* Hard pixel edge - no soft shadows */
+  /* 3D sphere shadows - key for depth perception */
   box-shadow: 
-    inset -4px -4px 0 #000010,
-    inset 4px 4px 0 rgba(128,128,200,0.3),
-    0 0 0 2px #202040,
-    0 0 20px rgba(64,64,128,0.5);
+    /* Terminator shadow - hemisphere boundary */
+    inset -15px -15px 30px #000008,
+    inset -30px -30px 60px rgba(0,0,0,0.5),
+    /* Lit side inner glow */
+    inset 10px 10px 25px rgba(100,100,180,0.2),
+    /* Outer glow - atmosphere */
+    0 0 30px rgba(60,60,120,0.4),
+    0 0 60px rgba(40,40,100,0.2);
   
-  /* Pixelated rendering */
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  /* Retro rendering */
+  image-rendering: auto;
   
   --depth: 0.3;
   --bass-deform: 0;
   --mid-deform: 0;
   --treble-deform: 0;
-  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate, retro-flicker 0.1s steps(2) infinite;
+  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate;
   
-  /* Slight 3D tilt */
+  /* Perspective creates 3D depth */
   transform-style: preserve-3d;
-  transform: perspective(800px) rotateX(5deg) rotateY(-5deg);
-}
-
-/* 8-bit flicker animation */
-@keyframes retro-flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.97; }
+  transform: perspective(600px) rotateX(12deg) rotateY(-10deg);
 }
 
 .blob-shape {

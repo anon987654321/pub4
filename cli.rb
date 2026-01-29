@@ -1767,6 +1767,7 @@ module Voice
     
     # Text-to-speech: ElevenLabs > Piper > Browser
     def speak(text)
+      puts C.d("[Voice] speak() called, enabled=#{@enabled}, tts=#{tts_available?}")
       return unless @enabled && tts_available?
       return if text.nil? || text.strip.empty?
       
