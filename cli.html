@@ -185,13 +185,7 @@ h1 {
   outline: none;
   min-width: 100px;
   padding: 8px 12px;
-  border-radius: 8px;
-  transition: background 0.2s;
   cursor: text;
-}
-
-h1:focus {
-  background: rgba(255,255,255,0.1);
 }
 
 h1:empty::before {
@@ -2237,32 +2231,36 @@ const Ares = {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        const text = input.textContent.trim();
+        const text = input.innerText.trim();
         if (text && text !== defaultText) {
           setUIState('thinking');
           this.send(text);
-          input.textContent = defaultText;
+          input.innerText = defaultText;
           input.blur();
         }
       }
     });
     
-    // Clear default text on focus
+    // Clear default text immediately on click/focus
+    input.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (input.innerText.trim() === defaultText) {
+        input.innerText = '';
+      }
+    });
+    
     input.addEventListener('focus', () => {
-      if (input.textContent.trim() === defaultText) {
-        input.textContent = '';
+      if (input.innerText.trim() === defaultText) {
+        input.innerText = '';
       }
     });
     
     // Restore default text if empty on blur
     input.addEventListener('blur', () => {
-      if (!input.textContent.trim()) {
-        input.textContent = defaultText;
+      if (!input.innerText.trim()) {
+        input.innerText = defaultText;
       }
     });
-    
-    // Prevent click-to-speak when typing
-    input.addEventListener('click', (e) => e.stopPropagation());
   },
   
   findVoice() {
@@ -2319,9 +2317,7 @@ const Ares = {
   },
   
   send(message) {
-    // Instant visual feedback
-    const input = document.getElementById('aresInput');
-    if (input) input.style.background = 'rgba(0,170,255,0.1)';
+    // Visual feedback via depth
     if (typeof depth !== 'undefined') depth = 0.6;
     
     fetch('/chat', {
