@@ -2808,6 +2808,7 @@ export OPENROUTER_API_KEY="#{key}""
       "search" => method(:cmd_search),
       "model" => method(:cmd_model),
       "reload" => method(:cmd_reload),
+      "update" => method(:cmd_update),
       "save" => method(:cmd_save),
       "restore" => method(:cmd_restore),
       "add" => method(:cmd_add),
@@ -3252,6 +3253,7 @@ iteration #{iter}/#{max_iter}"
         /cost            Show token/cost usage
         /deps [install]  Show/install dependencies
         /reload          Reload master.yml
+        /update          Git pull + restart
         
         Voice:
         /voice           Toggle voice on/off
@@ -3301,6 +3303,29 @@ iteration #{iter}/#{max_iter}"
     @config = load_config
     OpenRouterChat.init(@config)
     puts "Config reloaded"
+  end
+  
+  def cmd_update(*args)
+    puts "Pulling latest..."
+    Dir.chdir(File.dirname(__FILE__)) do
+      result = `git reset --hard origin/main 2>&1`
+      puts result unless result.empty?
+      result = `git pull 2>&1`
+      puts result
+      
+      if $?.success?
+        puts "Restarting..."
+        Voice.stop_server rescue nil
+        # Save readline history before restart
+        File.open(HISTORY_FILE, "w") do |f|
+          Readline::HISTORY.each { |line| f.puts(line) }
+        end rescue nil
+        # Exec replaces current process with new one
+        exec("ruby", __FILE__, *ARGV)
+      else
+        puts "Pull failed, not restarting"
+      end
+    end
   end
   
   def cmd_save(*args)
