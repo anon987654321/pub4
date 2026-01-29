@@ -2311,24 +2311,21 @@ const Pads = {
     });
   },
   
-  // Play a single chord on all layers
-  playChord(notes, duration = '2n') {
+  // Play a single chord on all layers (with optional time for scheduling)
+  playChord(notes, duration = '2n', time) {
     if (!this.synth) return;
     // Main pad (detuned saws + chorus)
-    this.synth.triggerAttackRelease(notes, duration);
+    this.synth.triggerAttackRelease(notes, duration, time);
     // Sub bass - play root note an octave down
     if (this.subBass && notes.length > 0) {
       const root = notes[0].replace(/\d/, n => Math.max(1, parseInt(n) - 1));
-      this.subBass.triggerAttackRelease(root, duration);
-      console.log('[Pads] SUB:', root);
+      this.subBass.triggerAttackRelease(root, duration, time);
     }
     // Air pad - play top notes an octave up
     if (this.airPad) {
       const highNotes = notes.slice(-2).map(n => n.replace(/\d/, m => parseInt(m) + 1));
-      this.airPad.triggerAttackRelease(highNotes, duration);
-      console.log('[Pads] AIR:', highNotes.join(','));
+      this.airPad.triggerAttackRelease(highNotes, duration, time);
     }
-    console.log('[Pads] MID:', notes.join(','));
   },
   
   // Play a progression (loops)
@@ -2423,8 +2420,9 @@ const Pads = {
       if (!this.isPlaying) return;
       
       const chord = prog[chordIndex % prog.length];
-      // Play all layers
-      this.playChord(chord, '1m');
+      // Play all layers with proper timing
+      this.playChord(chord, '1m', time);
+      console.log(`[Pads] Chord ${chordIndex + 1}/${totalChords}:`, chord[0]);
       chordIndex++;
       
       if (chordIndex < totalChords) {
