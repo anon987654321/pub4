@@ -223,42 +223,14 @@ h1 {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  overflow: hidden;
   
-  /* 8-bit sphere with 3D depth bands */
-  background: #0a0a18;
-  
-  /* Concentric 8-bit shading bands - offset for 3D illusion */
+  /* Original white/gray mesh gradient */
+  background: #000;
   background-image:
-    /* Specular highlight - bright point */
-    radial-gradient(circle at 32% 28%, #ffffff 0%, #ffffff 4%, transparent 4%),
-    /* Inner highlight glow */
-    radial-gradient(ellipse 35% 35% at 35% 32%, #a0a0ff 0%, transparent 100%),
-    /* Light hemisphere - upper left lit */
-    radial-gradient(ellipse 80% 80% at 40% 35%, #6060a0 0%, #4040a0 30%, transparent 60%),
-    /* Core mid-tone */
-    radial-gradient(ellipse 100% 100% at 50% 50%, #303080 0%, #202060 50%, transparent 80%),
-    /* Shadow hemisphere - lower right dark */
-    radial-gradient(ellipse 100% 100% at 65% 65%, #101040 20%, #080820 60%, #040410 100%),
-    /* Mesh gradient layers */
     radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
     radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
     radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
     radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
-  
-  /* 3D sphere shadows - key for depth perception */
-  box-shadow: 
-    /* Terminator shadow - hemisphere boundary */
-    inset -15px -15px 30px #000008,
-    inset -30px -30px 60px rgba(0,0,0,0.5),
-    /* Lit side inner glow */
-    inset 10px 10px 25px rgba(100,100,180,0.2),
-    /* Outer glow - atmosphere */
-    0 0 30px rgba(60,60,120,0.4),
-    0 0 60px rgba(40,40,100,0.2);
-  
-  /* Retro rendering */
-  image-rendering: auto;
   
   --depth: 0.3;
   --bass-deform: 0;
@@ -266,9 +238,13 @@ h1 {
   --treble-deform: 0;
   animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate;
   
-  /* Perspective creates 3D depth */
+  /* Strong parallax 3D transform */
   transform-style: preserve-3d;
-  transform: perspective(600px) rotateX(12deg) rotateY(-10deg);
+  transform: perspective(400px) rotateX(calc(var(--parallax-y, 0) * 25deg)) rotateY(calc(var(--parallax-x, 0) * 25deg));
+  transition: transform 0.1s ease-out;
+  
+  /* Pixelated 8-bit rendering */
+  image-rendering: pixelated;
 }
 
 .blob-shape {
@@ -829,7 +805,16 @@ h1 {
 <div id="afterimageContainer" style="position:fixed; inset:0; pointer-events:none; z-index:1;"></div>
 
 <!-- Status indicators -->
-<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:14px; color:rgba(102,126,234,0.8); z-index:1000; pointer-events:none;"></div>
+<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:24px; color:rgba(255,255,255,0.9); z-index:1000; pointer-events:none;">
+  <style>
+    .mic-icon { opacity: 0.5; transition: opacity 0.2s; }
+    .mic-icon.mic-active { opacity: 1; animation: pulse-mic 1s ease-in-out infinite; }
+    .spinner { color: #fff; }
+    .speaking-icon { animation: pulse-speak 0.5s ease-in-out infinite; }
+    @keyframes pulse-mic { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    @keyframes pulse-speak { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  </style>
+</div>
 
 <!-- Fullscreen Effects (flat only) -->
 <div class="grain-overlay"></div>
@@ -1347,15 +1332,42 @@ let uiState = 'idle'; // idle, listening, thinking, speaking
 const blobWrapperEl = document.getElementById('blobWrapper');
 const statusIndicator = document.getElementById('statusIndicator');
 
+// Ora-style braille spinner frames
+const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+let spinnerIndex = 0;
+let spinnerInterval = null;
+
 function setUIState(state) {
   uiState = state;
   blobWrapperEl.classList.remove('listening', 'thinking', 'speaking');
   if (state !== 'idle') {
     blobWrapperEl.classList.add(state);
   }
-  // Update status indicator
-  const icons = { idle: '', listening: '◉ listening', thinking: '◎ thinking', speaking: '◈ speaking' };
-  statusIndicator.textContent = icons[state] || '';
+  
+  // Clear existing spinner
+  if (spinnerInterval) {
+    clearInterval(spinnerInterval);
+    spinnerInterval = null;
+  }
+  
+  // Update status indicator with ora-style spinner + mic icon
+  if (state === 'idle') {
+    statusIndicator.innerHTML = '<span class="mic-icon">🎤</span>';
+  } else if (state === 'listening') {
+    statusIndicator.innerHTML = '<span class="mic-icon mic-active">🎤</span>';
+    // Animate spinner
+    spinnerInterval = setInterval(() => {
+      spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
+      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span> <span class="mic-icon mic-active">🎤</span>`;
+    }, 80);
+  } else if (state === 'thinking') {
+    spinnerInterval = setInterval(() => {
+      spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
+      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span>`;
+    }, 80);
+  } else if (state === 'speaking') {
+    statusIndicator.innerHTML = '<span class="speaking-icon">🔊</span>';
+  }
 }
 
 // ============================================
@@ -1400,6 +1412,12 @@ document.addEventListener('mousemove', (e) => {
   
   targetRotateY = (mouseX - centerX) * CONFIG.mouseTrackingStrength;
   targetRotateX = (centerY - mouseY) * CONFIG.mouseTrackingStrength;
+  
+  // Parallax for 3D orb rotation
+  const parallaxX = (mouseX - centerX) / centerX; // -1 to 1
+  const parallaxY = (mouseY - centerY) / centerY; // -1 to 1
+  document.querySelector('.blob')?.style.setProperty('--parallax-x', parallaxX);
+  document.querySelector('.blob')?.style.setProperty('--parallax-y', parallaxY);
   
   // Pressure response - orb leans toward mouse
   const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
