@@ -1360,11 +1360,9 @@ const Ares = {
         this.isSpeaking = false;
       }
       
-      // Greet on first click (requires user activation)
+      // First click just activates audio context, then start listening
       if (this.firstClick) {
         this.firstClick = false;
-        this.speak("Hey... I was hoping you'd show up.");
-        return;
       }
       
       if (this.isListening) {
