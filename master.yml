@@ -66,6 +66,19 @@ efficiency:
     description: "Use && to chain related shell commands"
     anti_pattern: "Separate tool calls for cd, then build, then test"
     correct_pattern: "cd dir && npm run build && npm test"
+  
+  zsh_native:
+    principle: "pure_zsh_no_external"
+    description: "Use zsh builtins instead of sed/awk/grep/cut"
+    patterns:
+      string_replace: '${var//old/new}'
+      file_content: '$(<file)'
+      glob_files: '**/*(.N)'
+      glob_dirs: '**/*(/:N)'
+      pattern_match: '[[ $content == *pattern* ]]'
+      strip_prefix: '${var#prefix}'
+      strip_suffix: '${var%suffix}'
+    reference: "sh/replace.sh, sh/hack.sh"
 
 # REGISTRY (pattern-based violation detection)
 # Each rule maps to a Law and has priority ordering
@@ -1090,11 +1103,34 @@ execution:
   steps:
     - "read_entire_input_sha256_verify"
     - "detect_violations_with_line_numbers"
+    - "identify_missing_logic"
     - "consult_personas_require_consensus"
     - "generate_alternatives"
     - "apply_fix_past_tense_evidence"
     - "validate_no_regression"
-    - "iterate_if_violations_remain"
+    - "iterate_until_diminishing_returns"
+  
+  identify_missing_logic:
+    description: "Find gaps, incomplete features, unhandled cases"
+    actions:
+      - "scan for TODO/FIXME/HACK comments"
+      - "check for empty function bodies"
+      - "find catch blocks that only log/ignore"
+      - "detect missing error handling paths"
+      - "identify incomplete switch/case coverage"
+    output: "list of gaps to flesh out"
+  
+  iterate_until_diminishing_returns:
+    description: "Auto-iterate refinement until value drops"
+    max_iterations: 5
+    stop_conditions:
+      - "no new violations found"
+      - "only cosmetic changes remain"
+      - "iteration produces <10% improvement"
+    actions:
+      - "re-run violation detection"
+      - "measure improvement delta"
+      - "stop if diminishing returns"
 
 # LEARNING MODE
 learning:

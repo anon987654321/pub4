@@ -2232,6 +2232,17 @@ module Voice
             else
               Protocol::HTTP::Response[405, {}, nil]
             end
+          when "/tools"
+            # Toggle tools on/off via POST
+            if request.method == "POST"
+              enabled = OpenRouterChat.toggle_tools
+              body = Protocol::HTTP::Body::Buffered.wrap({ tools_enabled: enabled }.to_json)
+              Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+            else
+              # GET returns current status
+              body = Protocol::HTTP::Body::Buffered.wrap({ tools_enabled: OpenRouterChat.tools_enabled? }.to_json)
+              Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+            end
           else
             Protocol::HTTP::Response[404, {}, nil]
           end
