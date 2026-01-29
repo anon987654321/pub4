@@ -1361,15 +1361,20 @@ function setUIState(state) {
     spinnerInterval = null;
   }
   
-  // Update status indicator with ora-style spinner + mic icon
+  // Flat icons (SVG-style unicode)
+  const micIcon = '◯';      // Flat circle for mic
+  const micActiveIcon = '●'; // Filled circle when active
+  const speakIcon = '◐';    // Half-filled for speaking
+  
+  // Update status indicator with ora-style spinner + flat icons
   if (state === 'idle') {
-    statusIndicator.innerHTML = '<span class="mic-icon">🎤</span>';
+    statusIndicator.innerHTML = `<span class="mic-icon">${micIcon}</span>`;
   } else if (state === 'listening') {
-    statusIndicator.innerHTML = '<span class="mic-icon mic-active">🎤</span>';
+    statusIndicator.innerHTML = `<span class="mic-icon mic-active">${micActiveIcon}</span>`;
     // Animate spinner
     spinnerInterval = setInterval(() => {
       spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span> <span class="mic-icon mic-active">🎤</span>`;
+      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span> <span class="mic-icon mic-active">${micActiveIcon}</span>`;
     }, 80);
   } else if (state === 'thinking') {
     spinnerInterval = setInterval(() => {
@@ -1377,7 +1382,7 @@ function setUIState(state) {
       statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span>`;
     }, 80);
   } else if (state === 'speaking') {
-    statusIndicator.innerHTML = '<span class="speaking-icon">🔊</span>';
+    statusIndicator.innerHTML = `<span class="speaking-icon">${speakIcon}</span>`;
   }
 }
 
