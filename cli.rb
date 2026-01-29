@@ -1399,8 +1399,124 @@ module Voice
   DEFAULT_MODEL = "en_US-lessac-medium"
   DEFAULT_RATE = 1.0
   
+  # Audio degradation presets (FFmpeg filter chains)
+  # VHS, tape, vinyl, radio, transmission effects
+  AUDIO_EFFECTS = {
+    "clean" => "",  # No degradation
+    "warm" => [
+      "lowpass=f=8000",
+      "highpass=f=80",
+      "equalizer=f=200:t=q:w=1:g=3",
+      "acompressor=threshold=-20dB:ratio=4:attack=5:release=50"
+    ],
+    "vhs" => [
+      "lowpass=f=6000",                           # VHS frequency loss
+      "highpass=f=100",                           # Rumble
+      "aecho=0.8:0.7:15:0.5",                     # Tape echo/smear
+      "tremolo=f=0.5:d=0.3",                      # Wow from bad tracking
+      "equalizer=f=1000:t=q:w=2:g=-4",            # Hollow midrange
+      "volume=0.9"
+    ],
+    "vhs_heavy" => [
+      "lowpass=f=4000",                           # Heavy frequency loss
+      "highpass=f=150",                           # More rumble
+      "aecho=0.8:0.6:20:0.6",                     # More smear
+      "tremolo=f=1.5:d=0.4",                      # Warped tracking
+      "chorus=0.5:0.9:50:0.4:0.25:2",             # Tape flutter
+      "equalizer=f=800:t=q:w=3:g=-6",             # Very hollow
+      "anoisesrc=d=0.001:c=pink:a=0.02[n];[0][n]amix=inputs=2:duration=first",  # Tape hiss
+      "volume=0.8"
+    ],
+    "vinyl" => [
+      "lowpass=f=12000",                          # Vinyl rolloff
+      "highpass=f=40",                            # Rumble from turntable
+      "equalizer=f=100:t=q:w=1:g=4",              # Warm bass boost
+      "equalizer=f=8000:t=q:w=1:g=-3",            # High rolloff
+      "tremolo=f=0.1:d=0.1",                      # Subtle wow
+      "volume=1.1"
+    ],
+    "vinyl_crackle" => [
+      "lowpass=f=10000",
+      "highpass=f=50",
+      "equalizer=f=100:t=q:w=1:g=5",
+      "equalizer=f=3000:t=q:w=2:g=2",             # Presence boost
+      "tremolo=f=0.08:d=0.15",                    # Slow wow
+      "volume=1.0"
+      # Note: real crackle would need external sample or noise gen
+    ],
+    "radio" => [
+      "lowpass=f=5000",                           # AM radio bandwidth
+      "highpass=f=300",                           # No bass on AM
+      "acompressor=threshold=-15dB:ratio=8:attack=1:release=100",  # Heavy compression
+      "equalizer=f=1500:t=q:w=2:g=4",             # Nasal midrange
+      "volume=1.4"
+    ],
+    "shortwave" => [
+      "lowpass=f=3500",                           # Narrower bandwidth
+      "highpass=f=400",                           # Very thin
+      "acompressor=threshold=-10dB:ratio=10:attack=1:release=50",
+      "tremolo=f=3:d=0.3",                        # Signal flutter
+      "equalizer=f=1200:t=q:w=3:g=6",             # Very nasal
+      "volume=1.2"
+    ],
+    "transmission" => [
+      "lowpass=f=4000",                           # Military radio
+      "highpass=f=500",                           # Very narrow
+      "acompressor=threshold=-8dB:ratio=12:attack=0.5:release=30",  # Crushed
+      "aphaser=type=t:speed=0.5:decay=0.3",       # Phase distortion
+      "volume=1.3"
+    ],
+    "phone" => [
+      "lowpass=f=3400",                           # Phone bandwidth
+      "highpass=f=300",
+      "acompressor=threshold=-12dB:ratio=6:attack=2:release=80",
+      "equalizer=f=2000:t=q:w=2:g=3",
+      "volume=1.2"
+    ],
+    "cassette" => [
+      "lowpass=f=10000",                          # Cassette rolloff
+      "highpass=f=60",
+      "aecho=0.8:0.5:8:0.4",                      # Head smear
+      "tremolo=f=0.3:d=0.15",                     # Wow
+      "chorus=0.7:0.9:25:0.4:0.3:2",              # Flutter
+      "equalizer=f=150:t=q:w=1:g=2",              # Warm bass
+      "volume=0.95"
+    ],
+    "lo-fi" => [
+      "lowpass=f=6000",
+      "aresample=8000",                           # Downsample
+      "aresample=22050",                          # Upsample (aliasing)
+      "equalizer=f=400:t=q:w=2:g=3",
+      "volume=1.0"
+    ],
+    "underwater" => [
+      "lowpass=f=800",                            # Heavy muffling
+      "highpass=f=100",
+      "aphaser=type=t:speed=0.3:decay=0.6",
+      "aecho=0.8:0.8:100:0.5",                    # Reverb
+      "chorus=0.6:0.9:75:0.5:0.4:3",
+      "volume=0.7"
+    ],
+    "ghostly" => [
+      "lowpass=f=5000",
+      "highpass=f=200",
+      "aecho=0.8:0.9:100:0.7|0.8:0.85:200:0.5",   # Multi-delay reverb
+      "aphaser=type=t:speed=0.2:decay=0.7",
+      "tremolo=f=0.5:d=0.4",
+      "volume=0.6"
+    ],
+    "broken" => [
+      "lowpass=f=3000",
+      "highpass=f=200",
+      "tremolo=f=5:d=0.6",                        # Rapid flutter
+      "chorus=0.3:0.9:20:0.7:0.5:4",              # Pitch instability
+      "aphaser=type=t:speed=2:decay=0.5",
+      "volume=0.8"
+    ]
+  }.freeze
+  
   class << self
-    attr_reader :current_persona
+    attr_reader :current_persona, :current_effect
     
     def init(config)
       @config = config
@@ -1409,6 +1525,8 @@ module Voice
       @server = nil
       @personas = config.dig("voice_personas") || {}
       @current_persona = "ares"
+      @current_effect = "warm"  # Default analog warmth
+      @random_mode = false
       apply_persona("ares")  # Start as Ares
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
@@ -1423,6 +1541,17 @@ module Voice
     
     def set_persona(name)
       name = name.to_s.downcase
+      
+      # Handle special modes
+      if name == "random"
+        @random_mode = true
+        pick = random_persona
+        apply_persona(pick)
+        @current_persona = pick
+        return pick
+      end
+      
+      @random_mode = false
       if @personas.key?(name)
         apply_persona(name)
         @current_persona = name
@@ -1430,6 +1559,44 @@ module Voice
       else
         false
       end
+    end
+    
+    def random_persona
+      # Exclude 'default' and 'ares' from random for max chaos
+      chaotic = @personas.keys - ["default", "ares"]
+      chaotic.sample || "ares"
+    end
+    
+    def random_mode?
+      @random_mode
+    end
+    
+    # Set audio degradation effect
+    def set_effect(name)
+      name = name.to_s.downcase
+      if name == "random"
+        @random_effect_mode = true
+        @current_effect = random_effect
+        return @current_effect
+      end
+      
+      @random_effect_mode = false
+      if AUDIO_EFFECTS.key?(name)
+        @current_effect = name
+        true
+      else
+        false
+      end
+    end
+    
+    def random_effect
+      # Exclude 'clean' from random for max chaos
+      chaotic = AUDIO_EFFECTS.keys - ["clean"]
+      chaotic.sample || "warm"
+    end
+    
+    def available_effects
+      AUDIO_EFFECTS.keys
     end
     
     def apply_persona(name)
@@ -1515,23 +1682,35 @@ module Voice
       
       return if clean.empty?
       
+      # Random mode: pick new persona each utterance
+      if @random_mode
+        pick = random_persona
+        apply_persona(pick)
+        @current_persona = pick
+      end
+      
+      # Random effect mode: pick new effect each utterance
+      if @random_effect_mode
+        @current_effect = random_effect
+      end
+      
       rate = @speech_rate || DEFAULT_RATE
       pitch_shift = @pitch || 1.0
       
       if @tts_available
         # Piper → FFmpeg analog chain → playback
-        # Analog warmth: saturation + lowpass + slight pitch shift for depth
+        # Build effect chain from preset + pitch/rate adjustments
         Thread.new do
-          ffmpeg_analog = [
+          base_effects = [
             "asetrate=22050*#{pitch_shift}",      # Pitch shift
-            "atempo=#{rate/pitch_shift}",         # Compensate tempo
-            "lowpass=f=8000",                     # Warm rolloff
-            "highpass=f=80",                      # Remove rumble
-            "acompressor=threshold=-20dB:ratio=4:attack=5:release=50",  # Punch
-            "equalizer=f=200:t=q:w=1:g=3",        # Add warmth
-            "equalizer=f=3000:t=q:w=1:g=-2",      # Reduce harshness
-            "volume=1.3"                          # Boost
-          ].join(",")
+            "atempo=#{rate/pitch_shift}"          # Compensate tempo
+          ]
+          
+          # Add degradation effect
+          effect_chain = AUDIO_EFFECTS[@current_effect] || AUDIO_EFFECTS["warm"]
+          effect_filters = effect_chain.is_a?(Array) ? effect_chain : []
+          
+          ffmpeg_analog = (base_effects + effect_filters + ["volume=1.3"]).join(",")
           
           IO.popen([
             "sh", "-c",
@@ -1542,9 +1721,9 @@ module Voice
           ]) { |p| p.read }
         end
       elsif @web_tts
-        # Queue for browser TTS
+        # Queue for browser TTS (includes effect name for web processing)
         start_web_server unless @server
-        @queue << clean
+        @queue << { text: clean, effect: @current_effect, persona: @current_persona }
       end
     end
     
@@ -1694,10 +1873,10 @@ module Voice
     
     def status
       parts = []
-      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'falcon' : 'no')}"
-      parts << "stt:#{stt_available? ? 'ok' : 'no'}"
+      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'web' : 'no')}"
       parts << (@enabled ? "on" : "off")
-      parts << "port:#{WEB_PORT}" if @web_tts && @server
+      parts << "persona:#{@random_mode ? 'random' : @current_persona}"
+      parts << "fx:#{@random_effect_mode ? 'random' : @current_effect}"
       parts.join(" ")
     end
     
@@ -2944,8 +3123,19 @@ iteration #{iter}/#{max_iter}"
         /cost            Show token/cost usage
         /deps [install]  Show/install dependencies
         /reload          Reload master.yml
+        
+        Voice:
         /voice           Toggle voice on/off
+        /voice random    Random persona + effect each message
+        /voice fx <name> Set audio effect
+        /voice status    Show voice settings
+        /persona <name>  Switch persona (or 'random')
         /listen          Voice input mode
+        
+        Effects: clean, warm, vhs, vhs_heavy, vinyl, vinyl_crackle,
+                 radio, shortwave, transmission, phone, cassette,
+                 lo-fi, underwater, ghostly, broken
+        
         /browse <url>    Fetch web page via Ferrum
         /search <query>  Search DuckDuckGo
         /clear           Clear chat history
@@ -3073,7 +3263,8 @@ iteration #{iter}/#{max_iter}"
       if Voice.available?
         enabled = Voice.toggle
         puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.model_name}, rate #{Voice.speech_rate})"
-        puts "Persona: #{Voice.current_persona}" if enabled
+        puts "Persona: #{Voice.random_mode? ? 'random' : Voice.current_persona}" if enabled
+        puts "Effect: #{Voice.current_effect}" if enabled
       else
         puts "Voice unavailable: install piper, whisper, sox"
         puts "  /voice install wheatley1  - Quirky Portal 2 voice"
@@ -3086,15 +3277,46 @@ iteration #{iter}/#{max_iter}"
     elsif args[0] == "rate"
       rate = args[1]&.to_f || 1.0
       puts "Set PIPER_RATE=#{rate} in env for persistent change"
+    elsif args[0] == "random"
+      pick = Voice.set_persona("random")
+      Voice.set_effect("random")
+      Voice.enable
+      OpenRouterChat.set_persona_prompt(Voice.persona_prompt) if Voice.persona_prompt
+      puts "Random mode: persona + effect shuffle each message"
+      puts "First up: #{pick} with #{Voice.current_effect} effect"
+    elsif args[0] == "fx" || args[0] == "effect"
+      if args[1].nil?
+        puts "Current effect: #{Voice.current_effect}"
+        puts "Available: #{Voice.available_effects.join(', ')}"
+      elsif args[1] == "random"
+        Voice.set_effect("random")
+        puts "Effect: random (shuffles each message)"
+      elsif Voice.set_effect(args[1])
+        puts "Effect: #{args[1]}"
+      else
+        puts "Unknown effect: #{args[1]}"
+        puts "Available: #{Voice.available_effects.join(', ')}"
+      end
+    elsif args[0] == "status"
+      puts Voice.status
     else
       puts "Unknown: /voice #{args[0]}"
+      puts "  /voice           - Toggle on/off"
+      puts "  /voice random    - Random persona + effect each message"
+      puts "  /voice fx <name> - Set audio effect (vhs, vinyl, radio...)"
+      puts "  /voice status    - Show current settings"
     end
   end
-  
+
   def cmd_persona(*args)
     if args.empty?
-      puts "Current: #{Voice.current_persona}"
-      puts "Available: #{Voice.available_personas.join(', ')}"
+      puts "Current: #{Voice.random_mode? ? 'random' : Voice.current_persona}"
+      puts "Available: #{Voice.available_personas.join(', ')}, random"
+    elsif args[0] == "random"
+      pick = Voice.set_persona("random")
+      OpenRouterChat.set_persona_prompt(Voice.persona_prompt) if Voice.persona_prompt
+      Voice.enable
+      puts "Persona: random mode (first: #{pick})"
     else
       name = args[0].downcase
       if Voice.set_persona(name)
@@ -3106,7 +3328,7 @@ iteration #{iter}/#{max_iter}"
         puts "Persona: #{name} (voice enabled)"
       else
         puts "Unknown persona: #{name}"
-        puts "Available: #{Voice.available_personas.join(', ')}"
+        puts "Available: #{Voice.available_personas.join(', ')}, random"
       end
     end
   end
