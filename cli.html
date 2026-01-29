@@ -1210,7 +1210,7 @@ const Ares = {
       // Greet on first click (requires user activation)
       if (this.firstClick) {
         this.firstClick = false;
-        this.speak("Hey beautiful... I've been waiting. Click again to talk to me.");
+        this.speak("Hey! Finally, someone interesting. What's on your mind?");
         return;
       }
       
@@ -1258,8 +1258,8 @@ const Ares = {
   findVoice() {
     const load = () => {
       const voices = this.synthesis.getVoices();
-      // Prefer: US male voices, deeper sounding
-      const prefer = ['Aaron', 'Alex', 'Fred', 'Google US English', 'Microsoft David', 'Microsoft Mark'];
+      // Prefer warm, natural-sounding voices
+      const prefer = ['Samantha', 'Karen', 'Evan', 'Tom', 'Google US English Male', 'Microsoft Guy', 'Reed'];
       for (const n of prefer) {
         const v = voices.find(v => v.name.includes(n));
         if (v) { this.voice = v; return; }
@@ -1322,8 +1322,8 @@ const Ares = {
     
     const u = new SpeechSynthesisUtterance(clean);
     u.voice = this.voice;
-    u.rate = 0.85;
-    u.pitch = 0.8;
+    u.rate = 1.0;
+    u.pitch = 1.0;
     
     u.onstart = () => { this.isSpeaking = true; if (typeof depth !== 'undefined') depth = 0.7; };
     u.onend = () => { this.isSpeaking = false; };
