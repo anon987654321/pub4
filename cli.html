@@ -2237,56 +2237,51 @@ const Pads = {
     // Start audio context first (required before creating effects)
     await Tone.start();
     
-    // Create lush pad synth - Low End Theory style
-    // Layer 1: Deep sub bass
+    // Rhodes/Wurli style electric piano pads - soft, not harsh
+    // Layer 1: Gentle sub (quieter)
     this.subBass = new Tone.Synth({
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.5, decay: 0.5, sustain: 1, release: 3 }
+      envelope: { attack: 0.8, decay: 1, sustain: 0.6, release: 4 }
     }).toDestination();
-    this.subBass.volume.value = -6;
+    this.subBass.volume.value = -18;  // Much quieter sub
     
-    // Layer 2: Warm mid pad (detuned saws)
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'fatsawtooth',
-        count: 5,        // More oscillators for thickness
-        spread: 40       // More detune for warmth
-      },
-      envelope: {
-        attack: 1.5,     // Slower attack
-        decay: 2,
-        sustain: 0.7,
-        release: 5       // Longer release for lush tails
-      }
+    // Layer 2: Soft FM electric piano (Rhodes-like)
+    this.synth = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 3,
+      modulationIndex: 1,  // Low mod = soft bell-like tone
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.8, decay: 1.5, sustain: 0.5, release: 4 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.5, decay: 0.5, sustain: 0.3, release: 3 }
     }).toDestination();
     
-    // Layer 3: Airy top (triangle harmonics)
+    // Layer 3: Airy shimmer (very quiet)
     this.airPad = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle8' },
-      envelope: { attack: 3, decay: 1, sustain: 0.4, release: 6 }
+      oscillator: { type: 'sine' },
+      envelope: { attack: 2, decay: 2, sustain: 0.3, release: 6 }
     }).toDestination();
-    this.airPad.volume.value = -18;
+    this.airPad.volume.value = -24;  // Very subtle
     
-    // Add lush reverb
+    // Lush reverb
     this.reverb = new Tone.Reverb({
-      decay: 12,         // Longer decay
-      wet: 0.7,          // More wet
-      preDelay: 0.3
+      decay: 8,
+      wet: 0.5,
+      preDelay: 0.2
     }).toDestination();
     
-    // Add stereo chorus for width
+    // Gentle chorus
     this.chorus = new Tone.Chorus({
-      frequency: 0.5,
-      delayTime: 3.5,
-      depth: 0.7,
-      wet: 0.5
+      frequency: 0.3,
+      delayTime: 4,
+      depth: 0.4,
+      wet: 0.3
     }).connect(this.reverb).start();
     
-    // Add delay for depth
+    // Soft delay
     this.delay = new Tone.FeedbackDelay({
       delayTime: '4n.',
-      feedback: 0.4,
-      wet: 0.25
+      feedback: 0.25,
+      wet: 0.15
     }).connect(this.reverb);
     
     // Chain effects
@@ -2294,8 +2289,8 @@ const Pads = {
     this.synth.connect(this.delay);
     this.airPad.connect(this.reverb);
     
-    // Overall volume
-    this.synth.volume.value = -10;
+    // Overall volume - quiet ambient
+    this.synth.volume.value = -14;
     
     await this.reverb.generate();
     console.log('[Pads] 🎹 Low End Theory pad synth ready');
