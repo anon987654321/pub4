@@ -230,7 +230,6 @@ h1:empty::before {
 .blob-wrapper {
   width: 60vmin;
   height: 60vmin;
-  /* No filters - completely flat */
   filter: none;
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
@@ -241,74 +240,14 @@ h1:empty::before {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  
-  /* FLAT SOLID WHITE - no gradients, no shading */
   background: #fff;
-  
-  --depth: 0.3;
-  --bass-deform: 0;
-  --mid-deform: 0;
-  --treble-deform: 0;
-  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite;
-  
-  /* 2D flat - no transforms */
-  transform: none;
+  /* No animations, no transforms, pure flat */
 }
 
 .blob-shape {
-  --angle0: 0deg; --p1-0: 0deg; --p2-0: 0deg; --p3-0: 0deg;
-  --angle1: 51.43deg; --p1-1: 137.5deg; --p2-1: 222.5deg; --p3-1: 360.1deg;
-  --angle2: 102.86deg; --p1-2: 275deg; --p2-2: 85deg; --p3-2: 80.2deg;
-  --angle3: 154.29deg; --p1-3: 52.5deg; --p2-3: 307.5deg; --p3-3: 200.3deg;
-  --angle4: 205.71deg; --p1-4: 190deg; --p2-4: 170deg; --p3-4: 320.4deg;
-  --angle5: 257.14deg; --p1-5: 327.5deg; --p2-5: 32.5deg; --p3-5: 80.5deg;
-  --angle6: 308.57deg; --p1-6: 105deg; --p2-6: 255deg; --p3-6: 200.6deg;
-
-  --rand0: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-0)) + 0.3 * sin(var(--s2) + var(--p2-0)) + 0.2 * sin(var(--s3) + var(--p3-0))));
-  --d0: calc(50 * (1 - var(--depth)) + 50 * var(--rand0) * var(--depth));
-  --x0: calc((50 + var(--d0) * cos(var(--rotation) + var(--angle0))) * 1%);
-  --y0: calc((50 + var(--d0) * sin(var(--rotation) + var(--angle0))) * 1%);
-
-  --rand1: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-1)) + 0.3 * sin(var(--s2) + var(--p2-1)) + 0.2 * sin(var(--s3) + var(--p3-1))));
-  --d1: calc(50 * (1 - var(--depth)) + 50 * var(--rand1) * var(--depth));
-  --x1: calc((50 + var(--d1) * cos(var(--rotation) + var(--angle1))) * 1%);
-  --y1: calc((50 + var(--d1) * sin(var(--rotation) + var(--angle1))) * 1%);
-
-  --rand2: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-2)) + 0.3 * sin(var(--s2) + var(--p2-2)) + 0.2 * sin(var(--s3) + var(--p3-2))));
-  --d2: calc(50 * (1 - var(--depth)) + 50 * var(--rand2) * var(--depth));
-  --x2: calc((50 + var(--d2) * cos(var(--rotation) + var(--angle2))) * 1%);
-  --y2: calc((50 + var(--d2) * sin(var(--rotation) + var(--angle2))) * 1%);
-
-  --rand3: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-3)) + 0.3 * sin(var(--s2) + var(--p2-3)) + 0.2 * sin(var(--s3) + var(--p3-3))));
-  --d3: calc(50 * (1 - var(--depth)) + 50 * var(--rand3) * var(--depth));
-  --x3: calc((50 + var(--d3) * cos(var(--rotation) + var(--angle3))) * 1%);
-  --y3: calc((50 + var(--d3) * sin(var(--rotation) + var(--angle3))) * 1%);
-
-  --rand4: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-4)) + 0.3 * sin(var(--s2) + var(--p2-4)) + 0.2 * sin(var(--s3) + var(--p3-4))));
-  --d4: calc(50 * (1 - var(--depth)) + 50 * var(--rand4) * var(--depth));
-  --x4: calc((50 + var(--d4) * cos(var(--rotation) + var(--angle4))) * 1%);
-  --y4: calc((50 + var(--d4) * sin(var(--rotation) + var(--angle4))) * 1%);
-
-  --rand5: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-5)) + 0.3 * sin(var(--s2) + var(--p2-5)) + 0.2 * sin(var(--s3) + var(--p3-5))));
-  --d5: calc(50 * (1 - var(--depth)) + 50 * var(--rand5) * var(--depth));
-  --x5: calc((50 + var(--d5) * cos(var(--rotation) + var(--angle5))) * 1%);
-  --y5: calc((50 + var(--d5) * sin(var(--rotation) + var(--angle5))) * 1%);
-
-  --rand6: calc(0.5 + 0.5 * (0.5 * sin(var(--s1) + var(--p1-6)) + 0.3 * sin(var(--s2) + var(--p2-6)) + 0.2 * sin(var(--s3) + var(--p3-6))));
-  --d6: calc(50 * (1 - var(--depth)) + 50 * var(--rand6) * var(--depth));
-  --x6: calc((50 + var(--d6) * cos(var(--rotation) + var(--angle6))) * 1%);
-  --y6: calc((50 + var(--d6) * sin(var(--rotation) + var(--angle6))) * 1%);
-
-  --mx0: calc((var(--x0) + var(--x1)) / 2); --my0: calc((var(--y0) + var(--y1)) / 2);
-  --mx1: calc((var(--x1) + var(--x2)) / 2); --my1: calc((var(--y1) + var(--y2)) / 2);
-  --mx2: calc((var(--x2) + var(--x3)) / 2); --my2: calc((var(--y2) + var(--y3)) / 2);
-  --mx3: calc((var(--x3) + var(--x4)) / 2); --my3: calc((var(--y3) + var(--y4)) / 2);
-  --mx4: calc((var(--x4) + var(--x5)) / 2); --my4: calc((var(--y4) + var(--y5)) / 2);
-  --mx5: calc((var(--x5) + var(--x6)) / 2); --my5: calc((var(--y5) + var(--y6)) / 2);
-  --mx6: calc((var(--x6) + var(--x0)) / 2); --my6: calc((var(--y6) + var(--y0)) / 2);
-
+  /* Override - just a circle */
   clip-path: circle(50%);
-  transform: scale(calc(0.5 + var(--depth) * 0.5));
+  transform: none;
 }
 
 /* Tunnel canvas inside orb */
