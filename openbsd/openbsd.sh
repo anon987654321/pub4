@@ -207,6 +207,11 @@ ALL_APPS=(
 
 )
 
+# Non-Rails services (name:subdomain.domain:port)
+SERVICES=(
+  ai:ai.brgen.no:8787
+)
+
 # Domain list for DNS
 ALL_DOMAINS=(
 
@@ -1168,22 +1173,32 @@ EOF
 
   done
 
-  # AI CLI relay (ai.brgen.no -> port 8787)
-  cat >> /etc/relayd.conf <<EOF
+  # Non-Rails services (from SERVICES array: name:fqdn:port)
+  for svc_entry in $SERVICES; do
+    typeset svc_name=${svc_entry%%:*}
+    typeset svc_rest=${svc_entry#*:}
+    typeset svc_fqdn=${svc_rest%%:*}
+    typeset svc_port=${svc_rest##*:}
+    typeset svc_keypair=${svc_fqdn#*.}  # Extract base domain (brgen.no from ai.brgen.no)
 
-table <ai> { 127.0.0.1 port 8787 }
-relay ai {
-  listen on $ext_if port 443 tls
+    cat >> /etc/relayd.conf <<EOF
+
+table <$svc_name> { 127.0.0.1 port $svc_port }
+relay $svc_name {
+  listen on \$ext_if port 443 tls
 
   protocol https
 
-  tls keypair brgen.no
+  tls keypair $svc_keypair
 
-  forward to <ai> check tcp
+  forward to <$svc_name> check tcp
 
 }
 
 EOF
+
+    log INFO "Added service relay: $svc_name ($svc_fqdn -> port $svc_port)"
+  done
 
   # Test relayd configuration before starting
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
@@ -1364,11 +1379,45 @@ EOF
 
   done
 
+  # Setup non-Rails services (from SERVICES array)
+  for svc_entry in $SERVICES; do
+    typeset svc_name=${svc_entry%%:*}
+    typeset svc_rest=${svc_entry#*:}
+    typeset svc_fqdn=${svc_rest%%:*}
+    typeset svc_port=${svc_rest##*:}
+
+    log INFO "Setting up service: $svc_name on port $svc_port"
+
+    # Create rc.d script for CLI service
+    cat > /etc/rc.d/$svc_name <<EOF
+#!/bin/ksh
+# rc.d for $svc_name (rc.d(8))
+daemon_user="dev"
+. /etc/rc.d/rc.subr
+rc_start() {
+  cd /home/dev/pub || return 1
+  export PATH=/home/dev/.gem/ruby/3.4/bin:\$PATH
+  export ELEVENLABS_API_KEY=\$(cat /home/dev/.elevenlabs_key 2>/dev/null)
+  \${rcexec} "ruby cli.rb >> /var/log/${svc_name}.log 2>&1 &"
+}
+rc_stop() {
+  pkill -f "ruby cli.rb" || true
+}
+rc_cmd \$1
+EOF
+
+    chmod 755 /etc/rc.d/$svc_name
+    /usr/sbin/rcctl enable $svc_name
+    /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
+
+    log INFO "Service $svc_name configured"
+  done
+
   # Configure and start relayd now that APP_PORTS is populated
   configure_relayd
 
   print -r -- stage_2_complete > $STATE_FILE
-  log INFO "Stage 2 complete. Setup complete. Test: 'curl https://brgen.no', 'curl https://amberapp.com', 'curl https://bsdports.org'."
+  log INFO "Stage 2 complete. Setup complete. Test: 'curl https://brgen.no', 'curl https://ai.brgen.no'."
 
   exit 0
 

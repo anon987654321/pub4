@@ -4194,6 +4194,8 @@ if __FILE__ == $0
       else
         puts "\n⚠ Crashed (#{crash_count}/#{MAX_CRASHES}): #{e.message}"
         puts "   Auto-restarting in 2s... (Ctrl+C to exit)"
+        # Kill any lingering process on our port before restart
+        `fuser -k #{WEB_PORT}/tcp 2>/dev/null` rescue nil
         sleep 2
       end
     end
