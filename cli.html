@@ -2074,8 +2074,140 @@ const Pads = {
       ['G3', 'B3', 'D4', 'F4'],
       ['C3', 'E3', 'G3', 'B3'],
       ['A3', 'C4', 'E4', 'G4']
+    ],
+    
+    // ============================================
+    // J DILLA - FANTASTIC VOL. 1 & 2
+    // Neo-soul hip-hop harmonic blueprint
+    // ============================================
+    
+    // Players (Vol 1 & 2) - Ebm7 → Abm7 → Fm7 → Bbm7 @ 94 BPM
+    // Sample: "Clair" by The Singers Unlimited (1974)
+    dilla_players: [
+      ['Eb3', 'Gb3', 'Bb3', 'Db4'],  // Ebm7
+      ['Ab3', 'Cb4', 'Eb4', 'Gb4'],  // Abm7 (Cb = B)
+      ['F3', 'Ab3', 'C4', 'Eb4'],    // Fm7
+      ['Bb3', 'Db4', 'F4', 'Ab4']    // Bbm7
+    ],
+    
+    // Look of Love (Remix) - Bm7 → Cmaj7 → Em7
+    // Sample: Minnie Riperton "Inside My Love" (1975)
+    dilla_look_of_love: [
+      ['B3', 'D4', 'F#4', 'A4'],     // Bm7
+      ['C3', 'E3', 'G3', 'B3'],      // Cmaj7
+      ['E3', 'G3', 'B3', 'D4']       // Em7
+    ],
+    
+    // 5 Ela (Remix) - Dm9 → Em7 → C#m7
+    // Sample: Patrice Rushen "Remind Me" (1982)
+    // Dual-tonal: D minor + A major simultaneously
+    dilla_5ela: [
+      ['D3', 'F3', 'A3', 'C4', 'E4'], // Dm9
+      ['E3', 'G3', 'B3', 'D4'],       // Em7
+      ['C#3', 'E3', 'G#3', 'B3']      // C#m7
+    ],
+    
+    // Give This Nigga - Cm7 → Fm7 → F7 (Eb major)
+    // Sample: Zapp "Heartbreaker" (1983)
+    dilla_give: [
+      ['C3', 'Eb3', 'G3', 'Bb3'],    // Cm7
+      ['F3', 'Ab3', 'C4', 'Eb4'],    // Fm7
+      ['F3', 'A3', 'C4', 'Eb4']      // F7
+    ],
+    
+    // Fall in Love - Bbm → Ab → Fm7 → Fm (F minor) @ 92 BPM
+    // Sample: Gap Mangione "Diana in the Autumn Wind" (1968)
+    dilla_fall_in_love: [
+      ['Bb3', 'Db4', 'F4'],          // Bbm
+      ['Ab3', 'C4', 'Eb4'],          // Ab
+      ['F3', 'Ab3', 'C4', 'Eb4'],    // Fm7
+      ['F3', 'Ab3', 'C4']            // Fm
+    ],
+    
+    // Climax (Girl Shit) - C#m7 → Emaj7 → D#7 → C#m @ 96 BPM
+    dilla_climax: [
+      ['C#3', 'E3', 'G#3', 'B3'],    // C#m7
+      ['E3', 'G#3', 'B3', 'D#4'],    // Emaj7
+      ['D#3', 'F##3', 'A#3', 'C#4'], // D#7 (F## = G)
+      ['C#3', 'E3', 'G#3']           // C#m
+    ],
+    
+    // 2U 4U - Am7 → Em7 → Bm7 → F#m7 @ 95 BPM
+    // Sample: D'Angelo "Jonz In My Bonz"
+    // Descending minor 7th sequence
+    dilla_2u4u: [
+      ['A3', 'C4', 'E4', 'G4'],      // Am7
+      ['E3', 'G3', 'B3', 'D4'],      // Em7
+      ['B3', 'D4', 'F#4', 'A4'],     // Bm7
+      ['F#3', 'A3', 'C#4', 'E4']     // F#m7
+    ],
+    
+    // Hold Tight (ft. Q-Tip) - C → Db → G → F → Bb @ 97 BPM
+    // Sample: Cannonball Adderley "Experience in E"
+    dilla_hold_tight: [
+      ['C3', 'E3', 'G3'],            // C
+      ['Db3', 'F3', 'Ab3'],          // Db
+      ['G3', 'B3', 'D4'],            // G
+      ['F3', 'A3', 'C4'],            // F
+      ['Bb3', 'D4', 'F4']            // Bb
+    ],
+    
+    // Conant Gardens - D → Em → G @ 94 BPM
+    // 8 samples including Little Beaver "A Tribute To Wes"
+    dilla_conant: [
+      ['D3', 'F#3', 'A3'],           // D
+      ['E3', 'G3', 'B3'],            // Em
+      ['G3', 'B3', 'D4']             // G
+    ],
+    
+    // Intro (Vol 2) - Dm7 → F → G → C @ 93 BPM
+    dilla_intro: [
+      ['D3', 'F3', 'A3', 'C4'],      // Dm7
+      ['F3', 'A3', 'C4'],            // F
+      ['G3', 'B3', 'D4'],            // G
+      ['C3', 'E3', 'G3']             // C
+    ],
+    
+    // Get Dis Money - Complex 7-bar loop over E pedal @ ~88 BPM
+    // Sample: Herbie Hancock "Come Running to Me" (1978)
+    // Slowed 4 semitones, bass tuned 50 cents sharp
+    dilla_get_dis_money: [
+      ['E2', 'D3', 'F#3', 'A3'],     // D/E (E9sus4)
+      ['E2', 'Db3', 'F3', 'Ab3'],    // Db/E (ambiguous)
+      ['E2', 'C3', 'E3', 'G3'],      // C/E
+      ['E2', 'B2', 'D3', 'F#3'],     // Bm/E (like E9 no 3rd)
+      ['E2', 'Bb2', 'Db3', 'F3'],    // Bbm/E (ambiguous)
+      ['E2', 'A2', 'C3', 'E3'],      // Am/E
+      ['E2', 'D3', 'F#3', 'A3']      // Return to D/E
+    ],
+    
+    // Go Ladies - G# → C# → E → F# → C#m → G#m → B @ 95 BPM
+    dilla_go_ladies: [
+      ['G#3', 'B#3', 'D#4'],         // G# (B# = C)
+      ['C#3', 'E#3', 'G#3'],         // C# (E# = F)
+      ['E3', 'G#3', 'B3'],           // E
+      ['F#3', 'A#3', 'C#4'],         // F#
+      ['C#3', 'E3', 'G#3'],          // C#m
+      ['G#3', 'B3', 'D#4'],          // G#m
+      ['B3', 'D#4', 'F#4']           // B
     ]
   },
+  
+  // Curated Dilla playlist for continuous play
+  dillaPlaylist: [
+    { name: 'dilla_players', tempo: 94, loops: 3 },
+    { name: 'dilla_fall_in_love', tempo: 92, loops: 3 },
+    { name: 'dilla_get_dis_money', tempo: 88, loops: 2 },
+    { name: 'dilla_2u4u', tempo: 95, loops: 3 },
+    { name: 'dilla_look_of_love', tempo: 90, loops: 3 },
+    { name: 'dilla_5ela', tempo: 92, loops: 2 },
+    { name: 'dilla_climax', tempo: 96, loops: 2 },
+    { name: 'dilla_hold_tight', tempo: 97, loops: 2 },
+    { name: 'dilla_conant', tempo: 94, loops: 3 },
+    { name: 'dilla_intro', tempo: 93, loops: 2 },
+    { name: 'dilla_give', tempo: 90, loops: 2 },
+    { name: 'dilla_go_ladies', tempo: 95, loops: 2 }
+  ],
   
   async init() {
     // Load Tone.js from CDN if not present
@@ -2178,12 +2310,144 @@ const Pads = {
   
   stop() {
     this.isPlaying = false;
+    this.playlistIndex = -1;
     if (this.synth) {
       this.synth.releaseAll();
     }
     Tone.Transport.stop();
     Tone.Transport.cancel();
     console.log('[Pads] Stopped');
+  },
+  
+  // Play the full Dilla playlist - each progression loops 2-3x then advances
+  async playDilla() {
+    if (!this.synth) await this.init();
+    await Tone.start();
+    
+    this.isPlaying = true;
+    this.playlistIndex = 0;
+    
+    console.log('[Pads] 🎹 J Dilla Fantastic Vol 1 & 2 - Starting playlist...');
+    this.playNextInPlaylist();
+  },
+  
+  playNextInPlaylist() {
+    if (!this.isPlaying || this.playlistIndex >= this.dillaPlaylist.length) {
+      if (this.isPlaying) {
+        console.log('[Pads] 🎹 Playlist complete - looping...');
+        this.playlistIndex = 0;
+      } else {
+        return;
+      }
+    }
+    
+    const item = this.dillaPlaylist[this.playlistIndex];
+    const prog = this.progressions[item.name];
+    if (!prog) {
+      this.playlistIndex++;
+      this.playNextInPlaylist();
+      return;
+    }
+    
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    Tone.Transport.bpm.value = item.tempo;
+    
+    const totalChords = prog.length * item.loops;
+    let chordIndex = 0;
+    
+    const trackName = item.name.replace('dilla_', '').replace(/_/g, ' ');
+    console.log(`[Pads] ▶ "${trackName}" @ ${item.tempo} BPM (${item.loops}x)`);
+    
+    const playChord = (time) => {
+      if (!this.isPlaying) return;
+      
+      const chord = prog[chordIndex % prog.length];
+      this.synth.triggerAttackRelease(chord, '1m', time);
+      chordIndex++;
+      
+      if (chordIndex < totalChords) {
+        Tone.Transport.scheduleOnce(playChord, '+1m');
+      } else {
+        // Move to next in playlist
+        Tone.Transport.scheduleOnce(() => {
+          this.playlistIndex++;
+          this.playNextInPlaylist();
+        }, '+1m');
+      }
+    };
+    
+    Tone.Transport.scheduleOnce(playChord, '+0.1');
+    Tone.Transport.start();
+  },
+  
+  // Lo-fi effects chain (Dilla/Madlib style)
+  async addLofi() {
+    if (!this.synth) await this.init();
+    
+    // Disconnect existing
+    this.synth.disconnect();
+    
+    // Bit crusher (SP-1200 style - 12-bit, 26kHz)
+    this.bitcrusher = new Tone.BitCrusher(4).toDestination();
+    
+    // Chebyshev waveshaper for warm saturation
+    this.saturation = new Tone.Chebyshev(50).toDestination();
+    
+    // Vibrato for tape wobble/wow
+    this.wobble = new Tone.Vibrato({
+      frequency: 0.5,  // Slow wobble
+      depth: 0.1       // Subtle
+    }).toDestination();
+    
+    // AutoFilter for vinyl frequency roll-off
+    this.filter = new Tone.AutoFilter({
+      frequency: 0.08,
+      baseFrequency: 200,
+      octaves: 2
+    }).toDestination().start();
+    
+    // Reconnect chain: synth → wobble → saturation → filter → reverb
+    this.synth.chain(this.wobble, this.saturation, this.filter, this.reverb);
+    
+    // Lower bit crusher mix (parallel)
+    this.synth.connect(this.bitcrusher);
+    this.bitcrusher.wet.value = 0.15;
+    
+    console.log('[Pads] 📼 Lo-fi mode: tape wobble + saturation + bit crush');
+  },
+  
+  // Vinyl crackle noise layer
+  async addVinyl() {
+    if (this.vinylNoise) return;
+    
+    if (typeof Tone === 'undefined') await this.loadToneJS();
+    
+    // Create filtered noise for vinyl crackle
+    this.vinylNoise = new Tone.Noise('brown').start();
+    const vinylFilter = new Tone.Filter(800, 'highpass');
+    const vinylGain = new Tone.Gain(0.03).toDestination(); // Very quiet
+    
+    // Random amplitude modulation for crackle effect
+    const crackleLFO = new Tone.LFO({
+      frequency: 8,
+      min: 0,
+      max: 0.05
+    }).start();
+    
+    this.vinylNoise.chain(vinylFilter, vinylGain);
+    crackleLFO.connect(vinylGain.gain);
+    
+    console.log('[Pads] 💿 Vinyl crackle added');
+  },
+  
+  removeVinyl() {
+    if (this.vinylNoise) {
+      this.vinylNoise.stop();
+      this.vinylNoise.dispose();
+      this.vinylNoise = null;
+      console.log('[Pads] Vinyl removed');
+    }
   },
   
   // Change synth character
@@ -2194,7 +2458,10 @@ const Pads = {
       glass: { type: 'sine', partialCount: 8 },
       strings: { type: 'fatsquare', count: 2, spread: 20 },
       organ: { type: 'triangle', partialCount: 4 },
-      digital: { type: 'pulse', width: 0.3 }
+      digital: { type: 'pulse', width: 0.3 },
+      // Dilla-style Rhodes/Wurli
+      rhodes: { type: 'sine', partialCount: 4 },
+      wurli: { type: 'triangle', partialCount: 3 }
     };
     if (types[type]) {
       this.synth.set({ oscillator: types[type] });
@@ -2205,19 +2472,32 @@ const Pads = {
   // List available progressions
   list() {
     return Object.keys(this.progressions);
+  },
+  
+  // List just Dilla progressions
+  listDilla() {
+    return Object.keys(this.progressions).filter(k => k.startsWith('dilla_'));
   }
 };
 
 // Expose globally
 window.Pads = Pads;
 
-// Usage:
-// Pads.play('dreamy')      - Start dreamy progression
-// Pads.play('cosmic', 45)  - Slow cosmic pads
-// Pads.play('lofi', 75)    - Lo-fi chill
-// Pads.stop()              - Stop
-// Pads.setType('glass')    - Change synth character
-// Pads.list()              - Show all progressions
+// ============================================
+// QUICK START
+// ============================================
+// Pads.playDilla()         - Play all Dilla progressions (loops 2-3x each)
+// Pads.addLofi()           - Add tape wobble + saturation + bitcrush
+// Pads.addVinyl()          - Add vinyl crackle
+// Pads.stop()              - Stop everything
+//
+// Individual progressions:
+// Pads.play('dilla_players', 94)
+// Pads.play('dilla_fall_in_love', 92)
+// Pads.play('dilla_get_dis_money', 88)
+//
+// Synth types: warm, glass, strings, organ, digital, rhodes, wurli
+// Pads.setType('rhodes')
 </script>
 
 </body>
