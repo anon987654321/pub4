@@ -3263,22 +3263,19 @@ export OPENROUTER_API_KEY="#{key}""
     
     # npm-style spinner
     spinner = Thread.new do
-      frames = ['|', '/', '-', '\\']
+      frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
       i = 0
       loop do
-        print "
-#{frames[i % 4]} "
+        print "\r#{frames[i % frames.length]} "
         $stdout.flush
-        sleep 0.1
+        sleep 0.08
         i += 1
       end
     end
     
     result = OpenRouterChat.chat(message)
     spinner.kill
-    print "
-  
-"
+    print "\r  \r"
     
     if result.success?
       response = result.value

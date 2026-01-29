@@ -2490,11 +2490,19 @@ let padsStarted = false;
 document.addEventListener('click', async () => {
   if (padsStarted) return;
   padsStarted = true;
-  await Pads.init();
-  await Pads.addLofi();
-  Pads.playDilla();
-  console.log('[Pads] 🎹 Auto-started J Dilla playlist with lo-fi FX');
-}, { once: true });
+  try {
+    console.log('[Pads] First click detected, initializing...');
+    await Pads.init();
+    console.log('[Pads] Synth initialized');
+    await Pads.addLofi();
+    console.log('[Pads] Lo-fi FX added');
+    Pads.playDilla();
+    console.log('[Pads] 🎹 Auto-started J Dilla playlist with lo-fi FX');
+  } catch (e) {
+    console.error('[Pads] Failed to start:', e);
+    padsStarted = false; // Allow retry
+  }
+}, { once: false }); // not once - allow retry on error
 
 // ============================================
 // QUICK START
