@@ -1283,7 +1283,12 @@ module OpenRouterChat
       when "list_dir"
         path = args["path"] || "."
         if Dir.exist?(path)
-          entries = Dir.entries(path).reject { |e| e.start_with?(".") }.sort
+          # Recursive, ignore dotfiles, temp, vendor, node_modules, etc.
+          ignore = %w[. .. .git .bundle vendor node_modules tmp temp cache log __pycache__ .cache .npm]
+          entries = Dir.glob("#{path}/**/*", File::FNM_DOTMATCH).reject do |f|
+            parts = f.split("/")
+            parts.any? { |p| ignore.include?(p) || p.start_with?(".") }
+          end.map { |f| File.directory?(f) ? "#{f}/" : f }.sort.first(500)
           { success: true, entries: entries }
         else
           { success: false, error: "Directory not found: #{path}" }
