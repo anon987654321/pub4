@@ -3,78 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<title>Pads</title>
+<title>Dilla Pads</title>
 <style>
 *{margin:0;padding:0}
 body{background:#000;color:#fff;font:14px monospace;padding:10px}
-button{background:none;border:1px solid #333;color:#fff;padding:5px 10px;margin:5px;cursor:pointer;font:inherit}
+button{background:none;border:1px solid #333;color:#fff;padding:6px 12px;margin:5px;cursor:pointer;font:inherit}
 button:hover{border-color:#fff}
 button.on{border-color:#fff;background:#222}
-#log{margin-top:20px;opacity:.5;white-space:pre-wrap;max-height:70vh;overflow-y:auto}
+#log{margin-top:20px;opacity:.55;white-space:pre-wrap;max-height:70vh;overflow-y:auto}
 </style>
 </head>
 <body>
+
 <button id="play">play</button>
 <button id="stop">stop</button>
 <div id="log"></div>
+
 <script>
-const log=t=>{const l=document.getElementById('log');l.textContent+=t+'\n';l.scrollTop=l.scrollHeight;};
+const log=t=>{
+  const l=document.getElementById('log');
+  l.textContent+=t+'\n';
+  l.scrollTop=l.scrollHeight;
+};
+
 const Pads={
-  syn:null,playing:false,idx:0,
+  syn:null,hp:null,rev:null,
+  playing:false,idx:0,
+
   progs:{
-    time_donut:[['Db2','Ab3','C4','Eb4','F4'],['C2','Bb3','Eb4','G4','D5'],['F2','Eb3','Ab3','C4','G4'],['Bb1','Ab3','Db4','F4','C5']],
-    players:[['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4','Gb4'],['F3','Ab3','C4','Eb4'],['Bb3','Db4','F4','Ab4']],
-    fall:[['Bb3','Db4','F4'],['Ab3','C4','Eb4'],['F3','Ab3','C4','Eb4'],['F3','Ab3','C4']],
-    money:[['E2','D3','F#3','A3'],['E2','Db3','F3','Ab3'],['E2','C3','E3','G3'],['E2','B2','D3','F#3'],['E2','Bb2','Db3','F3'],['E2','A2','C3','E3'],['E2','D3','F#3','A3']],
-    descend:[['A3','C4','E4','G4'],['E3','G3','B3','D4'],['B3','D4','F#4','A4'],['F#3','A3','C#4','E4']],
-    look:[['B3','D4','F#4','A4'],['C3','E3','G3','B3'],['E3','G3','B3','D4']],
-    ela:[['D3','F3','A3','C4','E4'],['E3','G3','B3','D4'],['C#3','E3','G#3','B3']],
-    climax:[['C#3','E3','G#3','B3'],['E3','G#3','B3','D#4'],['D#3','G3','A#3','C#4'],['C#3','E3','G#3']],
-    hold:[['C3','E3','G3'],['Db3','F3','Ab3'],['G3','B3','D4'],['F3','A3','C4'],['Bb3','D4','F4']],
-    conant:[['D3','F#3','A3'],['E3','G3','B3'],['G3','B3','D4']],
-    intro:[['D3','F3','A3','C4'],['F3','A3','C4'],['G3','B3','D4'],['C3','E3','G3']],
-    give:[['C3','Eb3','G3','Bb3'],['F3','Ab3','C4','Eb4'],['F3','A3','C4','Eb4']],
-    ladies:[['G#3','C4','D#4'],['C#3','F3','G#3'],['E3','G#3','B3'],['F#3','A#3','C#4'],['C#3','E3','G#3'],['G#3','B3','D#4'],['B3','D#4','F#4']]
+    time_donut:[['Db2','Ab3','C4','Eb4','F4'],['C2','Bb3','Eb4','G4'],['F2','Ab3','C4','G4']],
+    players:[['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4'],['F3','Ab3','C4','Eb4']],
+    fall:[['Bb3','Db4','F4'],['Ab3','C4','Eb4'],['F3','Ab3','C4']],
+    money:[['E2','D3','F#3','A3'],['E2','C3','E3','G3'],['E2','Bb2','Db3','F3']],
+    descend:[['A3','C4','E4','G4'],['E3','G3','B3','D4'],['F#3','A3','C#4']],
+    look:[['B3','D4','F#4'],['C3','E3','G3','B3'],['E3','G3','B3']],
+    ela:[['D3','F3','A3','C4'],['E3','G3','B3'],['C#3','E3','G#3']],
+    climax:[['C#3','E3','G#3','B3'],['E3','G#3','B3'],['D#3','G3','A#3']],
+    hold:[['C3','E3','G3'],['Db3','F3','Ab3'],['F3','A3','C4']],
+    intro:[['D3','F3','A3'],['F3','A3','C4'],['C3','E3','G3']],
+    ladies:[['G#3','C4','D#4'],['E3','G#3','B3'],['C#3','E3','G#3']]
   },
+
   list:[
-    {n:'time_donut',t:72,l:4},{n:'players',t:94,l:3},{n:'fall',t:92,l:3},{n:'money',t:88,l:2},
-    {n:'descend',t:95,l:3},{n:'look',t:90,l:3},{n:'ela',t:92,l:2},{n:'climax',t:96,l:2},
-    {n:'hold',t:97,l:2},{n:'conant',t:94,l:3},{n:'intro',t:93,l:2},{n:'give',t:90,l:2},{n:'ladies',t:95,l:2}
+    {n:'time_donut',t:72},
+    {n:'players',t:94},
+    {n:'fall',t:92},
+    {n:'money',t:88},
+    {n:'descend',t:95},
+    {n:'look',t:90},
+    {n:'ela',t:92},
+    {n:'climax',t:96},
+    {n:'hold',t:97},
+    {n:'intro',t:93},
+    {n:'ladies',t:95}
   ],
+
   async init(){
-    if(typeof Tone==='undefined'){await new Promise((r,j)=>{const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';s.onload=r;s.onerror=j;document.head.appendChild(s);});}
+    if(typeof Tone==='undefined'){
+      await new Promise((r,j)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';
+        s.onload=r; s.onerror=j;
+        document.head.appendChild(s);
+      });
+    }
+
     await Tone.start();
-    this.syn=new Tone.PolySynth(Tone.DuoSynth,{maxPolyphony:4,voice:{vibratoAmount:0.2,vibratoRate:0.3,harmonicity:1.5,
-      voice0:{oscillator:{type:'triangle'},envelope:{attack:1.5,decay:0.8,sustain:0.5,release:2}},
-      voice1:{oscillator:{type:'sine'},envelope:{attack:2,decay:0.8,sustain:0.4,release:2}}}}).toDestination();
-    this.syn.volume.value=-12;
-    this.rev=new Tone.Reverb({decay:2,wet:0.2}).toDestination();this.syn.connect(this.rev);this.rev.generate();
-    log('pads ready (DuoSynth + reverb)');
+
+    this.syn=new Tone.PolySynth(Tone.DuoSynth,{
+      maxPolyphony:8,
+      voice:{
+        vibratoAmount:0.15,
+        vibratoRate:0.25,
+        harmonicity:1.4,
+        voice0:{
+          oscillator:{type:'triangle'},
+          envelope:{attack:1.1,decay:0.6,sustain:0.45,release:1.5}
+        },
+        voice1:{
+          oscillator:{type:'sine'},
+          envelope:{attack:1.4,decay:0.6,sustain:0.35,release:1.5}
+        }
+      }
+    });
+
+    this.hp=new Tone.Filter(180,'highpass');
+    this.rev=new Tone.Reverb({decay:2.2,wet:0.18});
+    this.rev.generate();
+
+    this.syn.chain(this.hp,this.rev,Tone.Destination);
+    this.syn.volume.value=-13;
+
+    Tone.Transport.swing=0.15;
+    Tone.Transport.swingSubdivision='8n';
+
+    log('pads ready (DuoSynth → HPF → Reverb)');
   },
-  async play(){if(!this.syn)await this.init();this.playing=true;this.idx=0;this.next();},
+
+  async play(){
+    if(!this.syn) await this.init();
+    this.playing=true;
+    this.idx=0;
+    this.next();
+  },
+
   next(){
-    if(!this.playing||this.idx>=this.list.length){if(this.playing){this.idx=0;}else return;}
-    const item=this.list[this.idx],prog=this.progs[item.n];
-    Tone.Transport.stop();Tone.Transport.cancel();Tone.Transport.bpm.value=item.t;
-    let ci=0;const total=prog.length*item.l;
-    log(item.n+' @'+item.t+'bpm');
-    const go=time=>{if(!this.playing)return;this.syn.releaseAll(time-0.05);
-      this.syn.triggerAttackRelease(prog[ci%prog.length],'1m',time);ci++;
-      if(ci<total)Tone.Transport.scheduleOnce(go,'+1m');
-      else Tone.Transport.scheduleOnce(()=>{this.idx++;this.next();},'+1m');};
+    if(!this.playing) return;
+    if(this.idx>=this.list.length) this.idx=0;
+
+    const item=this.list[this.idx];
+    const prog=this.progs[item.n];
+    const bpm=item.t;
+
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    Tone.Transport.bpm.value=bpm;
+
+    let ci=0;
+    const total=Math.floor(prog.length*(0.8+Math.random()*0.6));
+
+    log(item.n+' @ '+bpm+'bpm');
+
+    const go=time=>{
+      if(!this.playing) return;
+
+      this.syn.releaseAll(time-0.05);
+
+      const chord=prog[ci%prog.length];
+      const vel=0.6+Math.random()*0.3;
+
+      this.syn.triggerAttackRelease(
+        chord,
+        '1m',
+        time,
+        vel
+      );
+
+      ci++;
+      if(ci<total){
+        Tone.Transport.scheduleOnce(go,'+1m');
+      }else{
+        Tone.Transport.scheduleOnce(()=>{
+          this.idx++;
+          this.next();
+        },'+1m');
+      }
+    };
+
     Tone.Transport.scheduleOnce(go,'+0.1');
-    if(Tone.Transport.state!=='started')Tone.Transport.start();
+    if(Tone.Transport.state!=='started') Tone.Transport.start();
   },
+
   stop(){
     this.playing=false;
-    if(this.syn)try{this.syn.releaseAll();}catch(e){}
-    setTimeout(()=>{try{Tone.Transport.stop();Tone.Transport.cancel();}catch(e){}},50);
+    try{this.syn.releaseAll();}catch(e){}
+    setTimeout(()=>{
+      try{
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+      }catch(e){}
+    },50);
     log('stopped');
   }
 };
-document.getElementById('play').onclick=async()=>{await Pads.play();document.getElementById('play').classList.add('on');};
-document.getElementById('stop').onclick=()=>{Pads.stop();document.querySelectorAll('button').forEach(b=>b.classList.remove('on'));};
+
+document.getElementById('play').onclick=async()=>{
+  await Pads.play();
+  document.getElementById('play').classList.add('on');
+};
+
+document.getElementById('stop').onclick=()=>{
+  Pads.stop();
+  document.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+};
 </script>
 </body>
 </html>
