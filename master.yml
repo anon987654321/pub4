@@ -145,8 +145,13 @@ efficiency:
     correct_pattern: "cd dir && npm run build && npm test"
   
   zsh_native:
-    principle: "pure_zsh_no_external"
-    description: "Use zsh builtins instead of sed/awk/grep/cut"
+    principle: "pure_zsh_no_external_scripts"
+    description: "Use inline zsh patterns, never create new scripts"
+    rules:
+      - "Never create a new .sh/.zsh file to do something you can do inline"
+      - "Use system('zsh -c \"...\"') or backticks for shell commands"
+      - "Chain with && for sequential, ; for parallel-safe"
+      - "Prefer grep/awk/sed one-liners over Ruby file parsing"
     patterns:
       string_replace: '${var//old/new}'
       file_content: '$(<file)'
@@ -155,6 +160,15 @@ efficiency:
       pattern_match: '[[ $content == *pattern* ]]'
       strip_prefix: '${var#prefix}'
       strip_suffix: '${var%suffix}'
+      line_count: 'wc -l < file'
+      grep_with_line: 'grep -n "pattern" file'
+      awk_dedup: "awk '!seen[$0]++' file"
+      find_deep: 'grep -rn "pattern" dir/'
+    anti_patterns:
+      - pattern: "File.new('script.sh').write"
+        why: "Creates external dependency - do inline"
+      - pattern: "system('bash script.sh')"
+        why: "Prefer inline: system('zsh -c \"commands\"')"
     reference: "sh/replace.sh, sh/hack.sh"
 
 # REGISTRY (pattern-based violation detection)

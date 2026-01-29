@@ -4369,57 +4369,106 @@ iteration #{iter}/#{max_iter}"
     }
   end
 
-  # /trace <file> - Run dmesg-style code analysis with full observability
-  # Delegates to trace.sh for pure zsh implementation
+  # /trace <file> [law] - dmesg-style code analysis with full observability
+  # Uses inline zsh patterns via system() - no external scripts
   def cmd_trace(*args)
     if args.empty?
       puts "Usage: /trace <file> [law]"
-      puts "  Run dmesg-style violation scan with full trace output"
       puts "  Laws: robustness, singularity, linearity, proximity, abstraction, density"
       return
     end
     
     file = File.expand_path(args[0])
-    focus_law = args[1] || "all"
+    law = args[1]&.downcase || "all"
     
     unless File.exist?(file)
       puts C.r("File not found: #{file}")
       return
     end
     
-    # Prefer zsh script if available (pure modern zsh pattern)
-    script_dir = File.dirname(__FILE__)
-    trace_script = File.join(script_dir, "trace.sh")
+    esc_file = file.shellescape
+    lines = `wc -l < #{esc_file}`.strip
+    bytes = `wc -c < #{esc_file}`.strip
     
-    if File.exist?(trace_script)
-      system("zsh", trace_script, file, focus_law)
-    else
-      # Fallback: inline trace
-      puts C.y("trace.sh not found, using inline scanner")
-      trace_inline(file, focus_law)
-    end
-  end
-  
-  def trace_inline(file, focus_law)
-    content = File.read(file, encoding: "UTF-8")
-    lines = content.lines
-    
+    # dmesg header
     puts "=" * 80
     puts "AUTOFIX TRACE v1.0 - #{File.basename(file)}"
     puts "=" * 80
-    puts "[    0.000000] autofix: file: #{file} (#{lines.length} lines)"
+    trace_log(0.000000, "autofix", "file: #{file} (#{lines} lines, #{bytes} bytes)")
     
-    # Simplified inline scan
-    violations = 0
-    lines.each_with_index do |line, idx|
-      if line =~ /console\.log|debugger|TODO|FIXME|HACK/
-        violations += 1
-        puts "[    0.%06d] density: line #{idx + 1}: #{line.strip[0..50]}" % violations
+    ts = 0.01
+    total = 0
+    
+    laws = law == "all" ? %w[robustness singularity linearity abstraction density] : [law]
+    
+    laws.each_with_index do |l, idx|
+      puts ""
+      puts "=" * 80
+      puts "ITERATION #{idx + 1}: #{l.upcase}"
+      puts "=" * 80
+      
+      count = trace_law(l, file, ts)
+      total += count
+      ts += 0.01
+    end
+    
+    puts ""
+    puts "=" * 80
+    puts "Total: #{total} violations"
+  end
+  
+  def trace_log(ts, component, msg)
+    puts "[%12.6f] %s: %s" % [ts, component, msg]
+  end
+  
+  def trace_law(law, file, ts)
+    esc = file.shellescape
+    count = 0
+    
+    # Pure zsh/grep patterns - no scripts, just inline commands
+    patterns = case law
+    when "robustness"
+      [
+        ["catch\\s*([^)]*)\\s*{\\s*}", "empty catch block"],
+        ["rescue\\s*$", "bare rescue"],
+        ["\\beval\\s*\\(", "dangerous eval()"]
+      ]
+    when "singularity"
+      # Use awk for duplicate detection
+      dups = `awk 'length>30 && !/^[[:space:]]*(#|\\/\\/)/ { gsub(/[0-9]+/,"N"); if(seen[$0]) print NR": dup of "seen[$0]; else seen[$0]=NR }' #{esc} 2>/dev/null`.lines
+      dups.each do |d|
+        trace_log(ts, law, "VIOLATION [SING-#{format('%03d', count += 1)}] #{d.strip}")
+      end
+      return count
+    when "linearity"
+      # Deep nesting (16+ spaces)
+      deep = `grep -n '^.\\{16,\\}' #{esc} 2>/dev/null | grep -E '^[0-9]+:\\s{16,}(if|for|while)'`.lines
+      deep.each do |d|
+        trace_log(ts, law, "VIOLATION [LINEAR-#{format('%03d', count += 1)}] deep nesting at line #{d.split(':').first}")
+      end
+      return count.zero? ? (trace_log(ts, law, "PASS"); 0) : count
+    when "abstraction"
+      [["[^a-zA-Z0-9_][0-9]\\{4,\\}[^a-zA-Z0-9_]", "magic number"]]
+    when "density"
+      [
+        ["console\\.log\\s*\\(", "debug console.log"],
+        ["^\\s*debugger", "debugger statement"],
+        ["\\/\\/\\s*\\(TODO\\|FIXME\\|HACK\\)", "cruft marker"]
+      ]
+    else
+      []
+    end
+    
+    patterns&.each do |pat, desc|
+      matches = `grep -n '#{pat}' #{esc} 2>/dev/null`.lines
+      matches.each do |m|
+        line_num = m.split(':').first
+        trace_log(ts, law, "VIOLATION [#{law.upcase[0..4]}-#{format('%03d', count += 1)}] #{desc} at line #{line_num}")
       end
     end
     
-    puts "=" * 80
-    puts "Total: #{violations} violations"
+    trace_log(ts, law, "PASS") if count.zero?
+    count
   end
 end
 
