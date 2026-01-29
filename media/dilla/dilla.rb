@@ -36,27 +36,16 @@ class SOSDilla
   CONFIG_FILE = File.join(File.dirname(__FILE__), "dilla_config.json")
 
   # Load shared config
-
   def self.load_config
-
     if File.exist?(CONFIG_FILE)
-
-      JSON.parse(File.read(CONFIG_FILE))
-
+      JSON.parse(File.read(CONFIG_FILE, encoding: "UTF-8"))
     else
-
-      puts "⚠️  Config not found at #{CONFIG_FILE}, using defaults"
-
+      puts "Config not found at #{CONFIG_FILE}, using defaults"
       {}
-
     end
-
   rescue JSON::ParserError => e
-
-    puts "⚠️  Config parse error: #{e.message}"
-
+    puts "Config parse error: #{e.message}"
     {}
-
   end
 
   CONFIG = load_config
