@@ -1444,14 +1444,12 @@ let flickerPhase = 0;
 let afterimages = [];
 
 function updateMouseTracking() {
+  // Flat orb - no rotation, just track position for other effects
   currentRotateX += (targetRotateX - currentRotateX) * 0.08;
   currentRotateY += (targetRotateY - currentRotateY) * 0.08;
   
-  trackingWrapper.style.transform = `
-    perspective(1000px) 
-    rotateX(${currentRotateX}deg) 
-    rotateY(${currentRotateY}deg)
-  `;
+  // No 3D rotation - keep orb flat
+  trackingWrapper.style.transform = 'none';
 }
 
 // ============================================
