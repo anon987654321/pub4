@@ -1404,12 +1404,12 @@ module Voice
     
     def init(config)
       @config = config
-      @enabled = false
+      @enabled = true  # Auto-enable voice
       @queue = Queue.new
       @server = nil
       @personas = config.dig("voice_personas") || {}
-      @current_persona = "default"
-      apply_persona("default")
+      @current_persona = "ares"
+      apply_persona("ares")  # Start as Ares
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
                        system("which whisper-cpp > /dev/null 2>&1")
@@ -2403,6 +2403,11 @@ class CLI
     OpenRouterChat.init(@config)
     Voice.init(@config)
     Web.init
+    
+    # Auto-set Ares persona for chat
+    if Voice.persona_prompt
+      OpenRouterChat.set_persona_prompt(Voice.persona_prompt)
+    end
     
     # Ensure directories exist
     StateManager.pre_work_snapshot if @config.dig("integration", "pre_work_snapshot")

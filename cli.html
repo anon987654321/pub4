@@ -452,9 +452,8 @@ h1 {
 <div class="color-grade"></div>
 <div class="light-leak"></div>
 
-<audio id="audioPlayer" style="display: none;" crossorigin="anonymous" loop>
-  <source src="https://dn720707.ca.archive.org/0/items/alices_adventures_1005_librivox/wonderland_01_carroll_64kb.mp3" type="audio/mpeg">
-</audio>
+<!-- Audio element for visualization (no autoplay) -->
+<audio id="audioPlayer" style="display: none;" crossorigin="anonymous"></audio>
 
 <script>
 // ============================================
@@ -1195,15 +1194,7 @@ updateQuantumShimmer();
     const style = document.createElement('style');
     style.textContent = `
       #voice-ui {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
+        display: none; /* Hidden - pure visualizer mode */
       }
       #chat-history {
         max-height: 200px;
