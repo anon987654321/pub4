@@ -145,31 +145,54 @@ efficiency:
     correct_pattern: "cd dir && npm run build && npm test"
   
   zsh_native:
-    principle: "pure_zsh_no_external_scripts"
-    description: "Use inline zsh patterns, never create new scripts"
+    # CRITICAL: Read this first before creating any shell script
+    principle: "NEVER_CREATE_SCRIPTS"
+    severity: veto  # Violation = immediate rejection
+    
+    # WHY: Scripts create external dependencies, fragment logic, require
+    # maintenance. Inline commands are self-contained, readable, portable.
+    
     rules:
-      - "Never create a new .sh/.zsh file to do something you can do inline"
-      - "Use system('zsh -c \"...\"') or backticks for shell commands"
-      - "Chain with && for sequential, ; for parallel-safe"
-      - "Prefer grep/awk/sed one-liners over Ruby file parsing"
-    patterns:
+      - "STOP: Do NOT create .sh/.zsh/.bash files"
+      - "DO: Use inline shell via system(), backticks, or Open3"
+      - "DO: Chain commands with && (sequential) or ; (parallel-safe)"
+      - "DO: Use grep/awk/sed one-liners instead of Ruby file parsing"
+      - "EXCEPTION: Only modify EXISTING scripts (replace.sh, hack.sh, openbsd.sh)"
+    
+    # When you think "I should create a script for this":
+    wrong_instinct: "Let me create trace.sh to handle this..."
+    correct_instinct: "Let me use `grep -n 'pattern' file` inline"
+    
+    # Examples of what TO DO:
+    inline_examples:
+      count_lines: "`wc -l < #{file.shellescape}`"
+      find_pattern: "`grep -n 'TODO' #{file.shellescape}`"
+      check_syntax: "system('ruby -c #{file.shellescape}')"
+      run_and_capture: "result = `zsh -c 'cd dir && command'`"
+      parallel_grep: "`grep -rn 'pattern' . --include='*.rb'`"
+    
+    # Examples of what NOT to do:
+    anti_patterns:
+      - wrong: "create_file('helper.sh', script_content)"
+        right: "system('zsh -c \"#{commands}\"')"
+      - wrong: "File.write('trace.sh', '#!/bin/zsh...')"
+        right: "`grep -n 'pattern' file | awk '{print}'`"
+      - wrong: "def generate_script; ... end"
+        right: "inline the logic directly"
+    
+    # Modern zsh builtins (prefer over external tools):
+    builtins:
       string_replace: '${var//old/new}'
       file_content: '$(<file)'
-      glob_files: '**/*(.N)'
+      glob_files: '**/*(.N)'       # N = nullglob
       glob_dirs: '**/*(/:N)'
-      pattern_match: '[[ $content == *pattern* ]]'
+      pattern_match: '[[ $x == *pattern* ]]'
       strip_prefix: '${var#prefix}'
       strip_suffix: '${var%suffix}'
-      line_count: 'wc -l < file'
-      grep_with_line: 'grep -n "pattern" file'
-      awk_dedup: "awk '!seen[$0]++' file"
-      find_deep: 'grep -rn "pattern" dir/'
-    anti_patterns:
-      - pattern: "File.new('script.sh').write"
-        why: "Creates external dependency - do inline"
-      - pattern: "system('bash script.sh')"
-        why: "Prefer inline: system('zsh -c \"commands\"')"
-    reference: "sh/replace.sh, sh/hack.sh"
+      lowercase: '${var:l}'
+      uppercase: '${var:u}'
+      array_join: '${(j:,:)array}'
+      split_lines: '${(f)content}'
 
 # REGISTRY (pattern-based violation detection)
 # Each rule maps to a Law and has priority ordering
