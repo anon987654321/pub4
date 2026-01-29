@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Organic AI Orb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <style>
 /* ============================================
    CUSTOM PROPERTIES
@@ -121,11 +124,13 @@ h1 {
   top: 20px;
   left: 20px;
   margin: 0;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
+  font-style: normal;
   color: #fff;
-  letter-spacing: 0.1px;
+  letter-spacing: -0.02em;
   z-index: 1000;
 }
 
@@ -1159,24 +1164,10 @@ function updateQuantumShimmer() {
 }
 
 updateQuantumShimmer();
+</script>
 
-// ============================================
-// VOICE ASSISTANT
-// ============================================
-const VoiceAssistant = {
-  ws: null,
-  recognition: null,
-  synthesis: window.speechSynthesis,
-  isListening: false,
-  isSpeaking: false,
-  quirkyVoice: null,
-  
-  init() {
-    this.createUI();
-    this.setupWebSocket();
-    this.setupSpeechRecognition();
-    this.findQuirkyVoice();
-  },
+</body>
+</html>
   
   createUI() {
     const ui = document.createElement('div');
