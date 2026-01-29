@@ -74,16 +74,13 @@ module DependencyManager
     end
     
     def install_gem(name)
-      puts "Installing gem: #{name}..."
-      system("gem install #{name} --no-document") || 
-        system("gem install --user-install #{name} --no-document")
+      system("gem install #{name} --quiet --no-document 2>/dev/null") || 
+        system("gem install --user-install #{name} --quiet --no-document 2>/dev/null")
     end
     
     def install_package(name)
       return false unless openbsd?
       pkg = PACKAGES[name] || name
-      puts "Installing package: #{pkg}..."
-      # Try doas first, fall back to pkg_add if already root
       system("doas pkg_add -I #{pkg} 2>/dev/null") ||
         system("pkg_add -I #{pkg} 2>/dev/null")
     end
@@ -110,13 +107,12 @@ module DependencyManager
     end
     
     def setup_all
-      # Install core gems that are missing
+      # Install core gems that are missing (silently)
       GEMS.each do |gem, info|
         begin
           require gem
         rescue LoadError
           if $stdout.tty?
-            puts "Optional: #{gem} (#{info[:desc]}) not found"
             install_gem(gem)
             install_package(info[:pkg]) if info[:pkg] && openbsd?
           end
@@ -1799,16 +1795,18 @@ module Voice
                        system("which rec > /dev/null 2>&1")
       @web_tts = !@tts_available && !@elevenlabs_available
       
-      if @elevenlabs_available
-        puts C.d("TTS: ElevenLabs (#{@elevenlabs_model})")
-      elsif @tts_available
-        puts C.d("TTS: Piper")
-      else
-        puts C.d("TTS: Browser (Web Speech API)")
-      end
-      
-      # Auto-start web server for UI
+      # Auto-start web server for UI (silently)
       start_web_server if FALCON_AVAILABLE
+    end
+    
+    def tts_info
+      if @elevenlabs_available
+        "ElevenLabs"
+      elsif @tts_available
+        "Piper"
+      else
+        "Browser"
+      end
     end
     
     def audio_file
@@ -2263,7 +2261,11 @@ module Voice
         end
       end
       
-      puts C.d("UI: http://#{ip}:#{WEB_PORT}")
+      @ui_url = "http://#{ip}:#{WEB_PORT}"
+    end
+    
+    def ui_url
+      @ui_url
     end
     
     def local_ip
@@ -3052,7 +3054,10 @@ class CLI
 
   def display_banner
     puts "Master.yml #{@config['version']}"
-    puts "Code governance / Chat-first CLI"
+    info = []
+    info << "TTS: #{Voice.tts_info}" if Voice.respond_to?(:tts_info)
+    info << "UI: #{Voice.ui_url}" if Voice.respond_to?(:ui_url) && Voice.ui_url
+    puts info.join(" | ") unless info.empty?
     puts
   end
 

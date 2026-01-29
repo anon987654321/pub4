@@ -19,22 +19,38 @@ button.on{border-color:#fff;background:#222}
 <button id="stop">stop</button>
 <div id="log"></div>
 <script>
-const log=t=>document.getElementById('log').textContent+=t+'\n';
+const log=t=>{const l=document.getElementById('log');l.textContent+=t+'\n';l.scrollTop=l.scrollHeight;};
 const Pads={
   syn:null,playing:false,idx:0,
+  // Neo-soul voicings - extended 9ths with open spacing
   progs:{
-    a:[['Db2','Ab3','C4','Eb4'],['C2','Bb3','Eb4','G4'],['F2','Eb3','Ab3','C4'],['Bb1','Ab3','Db4','F4']],
-    b:[['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4','Gb4'],['F3','Ab3','C4','Eb4'],['Bb3','Db4','F4','Ab4']],
-    c:[['A3','C4','E4','G4'],['E3','G3','B3','D4'],['B3','D4','F#4','A4'],['F#3','A3','C#4','E4']]
+    time_donut:[['Db2','Ab3','C4','Eb4','F4'],['C2','Bb3','Eb4','G4','D5'],['F2','Eb3','Ab3','C4','G4'],['Bb1','Ab3','Db4','F4','C5']],
+    players:[['Eb3','Gb3','Bb3','Db4'],['Ab3','B3','Eb4','Gb4'],['F3','Ab3','C4','Eb4'],['Bb3','Db4','F4','Ab4']],
+    fall:[['Bb3','Db4','F4'],['Ab3','C4','Eb4'],['F3','Ab3','C4','Eb4'],['F3','Ab3','C4']],
+    money:[['E2','D3','F#3','A3'],['E2','Db3','F3','Ab3'],['E2','C3','E3','G3'],['E2','B2','D3','F#3'],['E2','Bb2','Db3','F3'],['E2','A2','C3','E3'],['E2','D3','F#3','A3']],
+    descend:[['A3','C4','E4','G4'],['E3','G3','B3','D4'],['B3','D4','F#4','A4'],['F#3','A3','C#4','E4']],
+    look:[['B3','D4','F#4','A4'],['C3','E3','G3','B3'],['E3','G3','B3','D4']],
+    ela:[['D3','F3','A3','C4','E4'],['E3','G3','B3','D4'],['C#3','E3','G#3','B3']],
+    climax:[['C#3','E3','G#3','B3'],['E3','G#3','B3','D#4'],['D#3','G3','A#3','C#4'],['C#3','E3','G#3']],
+    hold:[['C3','E3','G3'],['Db3','F3','Ab3'],['G3','B3','D4'],['F3','A3','C4'],['Bb3','D4','F4']],
+    conant:[['D3','F#3','A3'],['E3','G3','B3'],['G3','B3','D4']],
+    intro:[['D3','F3','A3','C4'],['F3','A3','C4'],['G3','B3','D4'],['C3','E3','G3']],
+    give:[['C3','Eb3','G3','Bb3'],['F3','Ab3','C4','Eb4'],['F3','A3','C4','Eb4']],
+    ladies:[['G#3','C4','D#4'],['C#3','F3','G#3'],['E3','G#3','B3'],['F#3','A#3','C#4'],['C#3','E3','G#3'],['G#3','B3','D#4'],['B3','D#4','F#4']]
   },
-  list:[{n:'a',t:72,l:4},{n:'b',t:94,l:3},{n:'c',t:95,l:3}],
+  list:[
+    {n:'time_donut',t:72,l:4},{n:'players',t:94,l:3},{n:'fall',t:92,l:3},{n:'money',t:88,l:2},
+    {n:'descend',t:95,l:3},{n:'look',t:90,l:3},{n:'ela',t:92,l:2},{n:'climax',t:96,l:2},
+    {n:'hold',t:97,l:2},{n:'conant',t:94,l:3},{n:'intro',t:93,l:2},{n:'give',t:90,l:2},{n:'ladies',t:95,l:2}
+  ],
   async init(){
     if(typeof Tone==='undefined'){await new Promise((r,j)=>{const s=document.createElement('script');
       s.src='https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';s.onload=r;s.onerror=j;document.head.appendChild(s);});}
     await Tone.start();
-    this.syn=new Tone.PolySynth(Tone.Synth,{maxPolyphony:4,oscillator:{type:'triangle'},envelope:{attack:1,decay:0.5,sustain:0.4,release:2}}).toDestination();
+    this.syn=new Tone.PolySynth(Tone.DuoSynth,{maxPolyphony:4,voice:{vibratoAmount:0.2,vibratoRate:0.3,harmonicity:1.5,voice0:{oscillator:{type:'triangle'},envelope:{attack:1.5,decay:0.8,sustain:0.5,release:2}},voice1:{oscillator:{type:'sine'},envelope:{attack:2,decay:0.8,sustain:0.4,release:2}}}}).toDestination();
     this.syn.volume.value=-12;
-    log('pads ready');
+    this.rev=new Tone.Reverb({decay:2,wet:0.2}).toDestination();this.syn.connect(this.rev);this.rev.generate();
+    log('pads ready (DuoSynth)');
   },
   async play(){
     if(!this.syn)await this.init();
