@@ -636,12 +636,28 @@ h1 {
   pointer-events: none;
 }
 
-.chromatic {
+/* Psychedelic animated gradient background */
+.psychedelic-bg {
   position: fixed;
   inset: 0;
-  opacity: 1;
-  filter: url(#chromatic-aberration);
-  pointer-events: none;
+  background: linear-gradient(
+    45deg,
+    rgba(15, 10, 30, 1) 0%,
+    rgba(25, 15, 45, 1) 25%,
+    rgba(20, 12, 35, 1) 50%,
+    rgba(30, 18, 50, 1) 75%,
+    rgba(15, 10, 30, 1) 100%
+  );
+  background-size: 400% 400%;
+  animation: psychedelic-shift 20s ease-in-out infinite steps(30);
+  z-index: -2;
+}
+
+@keyframes psychedelic-shift {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 100% 50%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
 }
 
 .light-leak {
@@ -672,6 +688,9 @@ h1 {
 </style>
 </head>
 <body>
+
+<!-- Psychedelic background -->
+<div class="psychedelic-bg"></div>
 
 <h1>Johann sin AI</h1>
 
@@ -780,11 +799,9 @@ h1 {
 <!-- Status indicators -->
 <div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:14px; color:rgba(102,126,234,0.8); z-index:1000; pointer-events:none;"></div>
 
-<!-- Fullscreen Effects -->
+<!-- Fullscreen Effects (flat only) -->
 <div class="grain-overlay"></div>
-<div class="chromatic"></div>
 <div class="vignette"></div>
-<div class="color-grade"></div>
 <div class="light-leak"></div>
 
 <!-- Text input for typing to Ares -->
@@ -1786,9 +1803,9 @@ function animate(time) {
   // Draw lighting effects (specular, rim, shadow)
   drawLighting();
   
-  // Draw astral particles
-  updateAstralParticles(time);
-  drawAstralParticles();
+  // Draw astral particles - DISABLED for flat aesthetic
+  // updateAstralParticles(time);
+  // drawAstralParticles();
   
   // Audio-reactive subsurface scattering
   const subsurface = document.querySelector('.subsurface');

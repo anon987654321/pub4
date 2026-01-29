@@ -1560,6 +1560,8 @@ module Voice
       @current_persona = "ares"
       @current_effect = "warm"  # Default analog warmth
       @random_mode = false
+      @audio_file = nil
+      @audio_ready = false
       apply_persona("ares")  # Start as Ares
       
       # Check TTS engines in priority order: ElevenLabs > Piper > Browser
@@ -1584,6 +1586,18 @@ module Voice
       
       # Auto-start web server for UI
       start_web_server if FALCON_AVAILABLE
+    end
+    
+    def audio_file
+      @audio_file
+    end
+    
+    def audio_ready?
+      @audio_ready
+    end
+    
+    def clear_audio
+      @audio_ready = false
     end
     
     def elevenlabs_available?
@@ -1917,9 +1931,9 @@ module Voice
             # Check for queued text OR ready audio
             text = @queue.empty? ? nil : @queue.pop(true) rescue nil
             audio_url = nil
-            if @audio_ready && @audio_file && File.exist?(@audio_file)
+            if Voice.audio_ready? && Voice.audio_file && File.exist?(Voice.audio_file)
               audio_url = "/audio?t=#{Time.now.to_i}"
-              @audio_ready = false
+              Voice.clear_audio
             end
             body = Protocol::HTTP::Body::Buffered.wrap({ 
               text: text, 
@@ -1929,8 +1943,9 @@ module Voice
             Protocol::HTTP::Response[200, {"content-type" => "application/json", "cache-control" => "no-store"}, body]
           when /^\/audio/
             # Serve ElevenLabs audio file
-            if @audio_file && File.exist?(@audio_file)
-              audio_data = File.binread(@audio_file)
+            if Voice.audio_file && File.exist?(Voice.audio_file)
+              audio_data = File.binread(Voice.audio_file)
+              Voice.clear_audio
               body = Protocol::HTTP::Body::Buffered.wrap(audio_data)
               Protocol::HTTP::Response[200, {
                 "content-type" => "audio/mpeg",
@@ -1951,8 +1966,8 @@ module Voice
                 
                 # Generate ElevenLabs audio if available
                 audio_url = nil
-                if @elevenlabs_available && response && !response.empty?
-                  if speak_elevenlabs(response)
+                if Voice.elevenlabs_available? && response && !response.empty?
+                  if Voice.speak_elevenlabs(response)
                     audio_url = "/audio?t=#{Time.now.to_i}"
                   end
                 end
