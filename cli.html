@@ -242,27 +242,17 @@ h1:empty::before {
   height: 100%;
   border-radius: 50%;
   
-  /* Original white/gray mesh gradient */
-  background: #000;
-  background-image:
-    radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
-    radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
-    radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
-    radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
+  /* 2D flat white circle - no 3D shading */
+  background: radial-gradient(circle at 50% 50%, #fff 0%, #e0e0e0 70%, #ccc 100%);
   
   --depth: 0.3;
   --bass-deform: 0;
   --mid-deform: 0;
   --treble-deform: 0;
-  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate;
+  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite;
   
-  /* Strong parallax 3D transform */
-  transform-style: preserve-3d;
-  transform: perspective(400px) rotateX(calc(var(--parallax-y, 0) * 25deg)) rotateY(calc(var(--parallax-x, 0) * 25deg));
-  transition: transform 0.1s ease-out;
-  
-  /* Pixelated 8-bit rendering */
-  image-rendering: pixelated;
+  /* 2D flat - no perspective transforms */
+  transform: none;
 }
 
 .blob-shape {
@@ -1365,9 +1355,9 @@ function setUIState(state) {
   }
   
   // Flat icons (SVG-style unicode)
-  const micIcon = '◯';      // Flat circle for mic
-  const micActiveIcon = '●'; // Filled circle when active
-  const speakIcon = '◐';    // Half-filled for speaking
+  const micIcon = '–';       // Simple dash for idle
+  const micActiveIcon = '•';  // Simple dot when active  
+  const speakIcon = '—';      // Em dash for speaking
   
   // Update status indicator with ora-style spinner + flat icons
   if (state === 'idle') {
