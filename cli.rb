@@ -1243,6 +1243,14 @@ module OpenRouterChat
       true
     end
     
+    def export_conversation
+      @conversation.dup
+    end
+    
+    def import_conversation(conv)
+      @conversation = conv || []
+    end
+    
     private
     
     def build_system_prompt(config)
@@ -3110,6 +3118,55 @@ iteration #{iter}/#{max_iter}"
   def cmd_exit(*args)
     puts "✓ convergence complete"
     @running = false
+  end
+  
+  def cmd_export(*args)
+    path = args[0] || "convergence_export.json"
+    data = {
+      version: "1.7",
+      timestamp: Time.now.iso8601,
+      conversation: OpenRouterChat.export_conversation,
+      model: OpenRouterChat.current_model,
+      cost: OpenRouterChat.total_cost
+    }
+    File.write(path, JSON.pretty_generate(data))
+    puts "Exported to #{path}"
+  end
+  
+  def cmd_import(*args)
+    path = args[0] || "convergence_export.json"
+    unless File.exist?(path)
+      puts C.r("File not found: #{path}")
+      return
+    end
+    
+    data = JSON.parse(File.read(path))
+    OpenRouterChat.import_conversation(data["conversation"])
+    puts "Imported #{data["conversation"]&.size || 0} messages from #{path}"
+  end
+  
+  def cmd_sync(*args)
+    puts C.d("Syncing...")
+    
+    # Push local changes
+    push_result = `git push 2>&1`
+    if $?.success?
+      puts C.g("Pushed to origin")
+    else
+      puts C.r("Push failed: #{push_result}")
+      return
+    end
+    
+    # Pull on VPS via SSH (if configured)
+    vps = ENV["VPS_HOST"] || "dev@vps"
+    vps_path = ENV["VPS_PATH"] || "~/pub"
+    
+    ssh_result = `ssh #{vps} "cd #{vps_path} && git pull" 2>&1`
+    if $?.success?
+      puts C.g("VPS synced")
+    else
+      puts C.y("VPS sync skipped: #{ssh_result.lines.first}")
+    end
   end
 
   def display_violations(file, violations)
