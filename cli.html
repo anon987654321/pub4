@@ -215,24 +215,30 @@ h1 {
   filter: url(#edge-displacement) url(#glow);
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
+  transform-style: preserve-3d;
 }
 
 .blob {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #000;
-  background-image:
-    radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
-    radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
-    radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
-    radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
+  /* 3D sphere effect - lit from top-left */
+  background: 
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,0.15) 0%, transparent 40%),
+    radial-gradient(circle at 65% 75%, rgba(0,0,0,0.4) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(80,60,140,0.9) 0%, rgba(40,30,80,1) 50%, rgba(15,10,35,1) 100%);
+  background-blend-mode: overlay, multiply, normal;
+  box-shadow: 
+    inset -20px -20px 60px rgba(0,0,0,0.5),
+    inset 15px 15px 40px rgba(140,120,200,0.2),
+    0 0 80px rgba(100,80,180,0.3),
+    0 20px 40px rgba(0,0,0,0.4);
   
   --depth: 0.3;
   --bass-deform: 0;
   --mid-deform: 0;
   --treble-deform: 0;
-  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite, mesh-gradient 10s linear infinite alternate;
+  animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite;
 }
 
 .blob-shape {

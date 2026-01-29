@@ -2808,6 +2808,12 @@ class CLI
   def ensure_api_key
     if OpenRouterChat.available?
       puts C.g("* Sonnet 4.5 ready")
+      # Auto-load core files into context
+      %w[master.yml cli.rb].each do |f|
+        path = File.expand_path(f, __dir__)
+        OpenRouterChat.add_context_file(path) if File.exist?(path)
+      end
+      puts C.d("Context: master.yml, cli.rb loaded")
       puts C.d("Type to chat, /help for commands")
     else
       puts C.y("- No API key")
