@@ -1347,7 +1347,20 @@ module OpenRouterChat
       
       # Use persona prompt if set, otherwise default system prompt
       base_prompt = @persona_prompt || @system_prompt
-      system_with_context = context.empty? ? base_prompt : "#{base_prompt}\n\nCONTEXT FILES:\n#{context}"
+      
+      # Add context analysis instruction when files are loaded
+      context_instruction = ""
+      unless context.empty?
+        context_instruction = <<~INST
+          
+          IMPORTANT: Files have been loaded into your context below.
+          When asked about code, bugs, or features - ANALYZE THESE FILES FIRST.
+          Do NOT search the web for generic solutions. Read the actual code provided.
+          If asked to "find" or "fix" something, look in the CONTEXT FILES below.
+        INST
+      end
+      
+      system_with_context = context.empty? ? base_prompt : "#{base_prompt}#{context_instruction}\n\nCONTEXT FILES:\n#{context}"
       
       messages = [{ role: "system", content: system_with_context }] + @conversation
       
