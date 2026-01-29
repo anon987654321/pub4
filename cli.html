@@ -230,10 +230,10 @@ h1:empty::before {
 .blob-wrapper {
   width: 60vmin;
   height: 60vmin;
-  filter: url(#edge-displacement) url(#glow);
+  /* No filters - completely flat */
+  filter: none;
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
-  perspective: 800px;
 }
 
 .blob {
@@ -242,8 +242,8 @@ h1:empty::before {
   height: 100%;
   border-radius: 50%;
   
-  /* 2D flat white circle - no 3D shading */
-  background: radial-gradient(circle at 50% 50%, #fff 0%, #e0e0e0 70%, #ccc 100%);
+  /* FLAT SOLID WHITE - no gradients, no shading */
+  background: #fff;
   
   --depth: 0.3;
   --bass-deform: 0;
@@ -251,7 +251,7 @@ h1:empty::before {
   --treble-deform: 0;
   animation: s1 7s linear infinite, s2 11s linear infinite, s3 13s linear infinite;
   
-  /* 2D flat - no perspective transforms */
+  /* 2D flat - no transforms */
   transform: none;
 }
 
@@ -778,25 +778,8 @@ h1:empty::before {
       <div class="sacred-geometry"></div>
       <div class="presence-ring"></div>
       <div class="blob blob-shape">
-        <!-- Star field - deep space background -->
-        <canvas id="starField" class="star-field"></canvas>
-        <!-- Tunnel canvas inside the orb -->
-        <canvas id="orbTunnel" class="orb-tunnel"></canvas>
-        <div class="inner-light"></div>
-        <div class="subsurface"></div>
-        <div class="core-pulse"></div>
-        <div class="quantum-shimmer"></div>
-        <!-- Depth effect layers -->
-        <div class="internal-current"></div>
-        <div class="vein-network"></div>
-        <div class="pupil-core"></div>
-        <div class="fresnel-rim"></div>
-        <div class="dimensional-flicker"></div>
+        <!-- Flat white circle - no effects -->
       </div>
-      <!-- Heat distortion around blob -->
-      <div class="heat-distortion"></div>
-      <!-- Proximity glow -->
-      <div class="proximity-glow"></div>
     </div>
     <!-- Shadow beneath -->
     <div class="orb-shadow"></div>
