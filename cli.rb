@@ -1251,6 +1251,18 @@ module OpenRouterChat
       @conversation = conv || []
     end
     
+    def token_estimate
+      # Rough estimate: ~4 chars per token
+      total_chars = @conversation.sum { |m| m[:content].to_s.length }
+      total_chars += @system_prompt.to_s.length
+      total_chars += @context_files.sum { |f| f[:content].to_s.length }
+      (total_chars / 4.0).to_i
+    end
+    
+    def model_name
+      @model || DEFAULT_MODEL
+    end
+    
     private
     
     def build_system_prompt(config)
