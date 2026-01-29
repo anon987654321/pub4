@@ -1570,12 +1570,15 @@ module Voice
       @queue = Queue.new
       @server = nil
       @personas = config.dig("voice_personas") || {}
-      @current_persona = "ares"
+      @random_mode = true  # Start in random mode
       @current_effect = "warm"  # Default analog warmth
-      @random_mode = false
       @audio_file = nil
       @audio_ready = false
-      apply_persona("ares")  # Start as Ares
+      
+      # Pick random chaotic persona on startup
+      pick = random_persona
+      @current_persona = pick
+      apply_persona(pick)
       
       # Check TTS engines in priority order: ElevenLabs > Piper > Browser
       # Try master.yml config first, then env var
@@ -1820,7 +1823,7 @@ module Voice
       response = http.request(request)
       
       if response.code == "200"
-        # Save to temp file for browser to fetch
+        # Save to temp file
         @audio_file = "/tmp/ares_audio_#{$$}.mp3"
         
         # Apply analog effects if set
@@ -1836,6 +1839,15 @@ module Voice
         end
         
         @audio_ready = true
+        
+        # PLAY the audio locally (OpenBSD: aucat, ffplay, mpv fallback)
+        Thread.new do
+          system("ffplay -nodisp -autoexit #{@audio_file.shellescape} 2>/dev/null || " \
+                 "mpv --no-video #{@audio_file.shellescape} 2>/dev/null || " \
+                 "aucat -i #{@audio_file.shellescape} 2>/dev/null || " \
+                 "play #{@audio_file.shellescape} 2>/dev/null")
+        end
+        
         true
       else
         # Fallback to browser TTS on error
