@@ -2464,7 +2464,6 @@ export OPENROUTER_API_KEY="#{key}""
       "undo" => method(:cmd_undo),
       "cost" => method(:cmd_cost),
       "deps" => method(:cmd_deps),
-      "pf" => method(:cmd_pf),
       "install-hook" => method(:cmd_install_hook),
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
@@ -3024,60 +3023,6 @@ iteration #{iter}/#{max_iter}"
     else
       puts ""
       puts C.d("Run /deps install to install missing")
-    end
-  end
-  
-  def cmd_pf(*args)
-    unless RUBY_PLATFORM.include?("openbsd")
-      puts C.y("pf only available on OpenBSD")
-      return
-    end
-    
-    port = args[0]&.to_i || 8787
-    pf_conf = "/etc/pf.conf"
-    
-    # Check current rules
-    current = `doas pfctl -sr 2>/dev/null`
-    if current.include?(port.to_s)
-      puts C.g("Port #{port} already open in pf")
-      return
-    end
-    
-    puts C.d("Adding port #{port} to pf.conf...")
-    
-    # Read current config via doas
-    content = `doas cat #{pf_conf} 2>/dev/null`
-    if content.empty?
-      puts C.r("Cannot read #{pf_conf}")
-      return
-    end
-    
-    # Add port to existing rule or create new one
-    if content.include?("port { 80, 443 }")
-      new_content = content.gsub("port { 80, 443 }", "port { 80, 443, #{port} }")
-    elsif content.include?("port { 80, 443,")
-      # Already has extra ports, add this one if not present
-      if content.include?(port.to_s)
-        puts C.g("Port #{port} already in pf.conf")
-        return
-      end
-      new_content = content.gsub(/port \{ 80, 443,/, "port { 80, 443, #{port},")
-    else
-      puts C.y("Could not find port rule to modify")
-      puts "Add manually: pass in on $ext_if inet proto tcp to $ip port #{port}"
-      return
-    end
-    
-    # Write via temp file and reload
-    tmp = "/tmp/pf.conf.#{$$}"
-    File.write(tmp, new_content)
-    result = `doas cp #{tmp} #{pf_conf} && doas pfctl -f #{pf_conf} 2>&1`
-    File.delete(tmp) rescue nil
-    
-    if $?.success?
-      puts C.g("Port #{port} opened, pf reloaded")
-    else
-      puts C.r("Failed: #{result}")
     end
   end
   
