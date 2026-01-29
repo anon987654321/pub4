@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J Dilla Beats - Tone.js</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+h1 { font-size: 1.5rem; margin-bottom: 1rem; color: #fff; }
+.controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+button {
+  background: #222;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+button:hover { background: #333; border-color: #666; }
+button:active { transform: scale(0.98); }
+button.active { background: #4a9eff; border-color: #4a9eff; }
+.meter {
+  width: 300px;
+  height: 20px;
+  background: #111;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0f0, #ff0, #f00);
+  width: 0%;
+  transition: width 0.1s;
+}
+.log {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+  max-width: 600px;
+  height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+.log-entry { margin: 0.25rem 0; }
+.log-entry.warn { color: #ffa500; }
+.log-entry.error { color: #ff4444; }
+</style>
+</head>
+<body>
+
+<h1>🎹 J Dilla - Fantastic Vol 1 & 2</h1>
+
+<div class="meter"><div class="meter-fill" id="meter"></div></div>
+
+<div class="controls">
+  <button id="btnPlay">▶ Play Dilla</button>
+  <button id="btnDrums">🥁 Drums</button>
+  <button id="btnLofi">📼 Lo-fi</button>
+  <button id="btnVinyl">💿 Vinyl</button>
+  <button id="btnStop">⏹ Stop</button>
+</div>
+
+<div class="log" id="log"></div>
+
+<script>
+// Logging
+const logEl = document.getElementById('log');
+const origLog = console.log;
+const origWarn = console.warn;
+console.log = (...args) => {
+  origLog(...args);
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.textContent = args.join(' ');
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+};
+console.warn = (...args) => {
+  origWarn(...args);
+  const div = document.createElement('div');
+  div.className = 'log-entry warn';
+  div.textContent = args.join(' ');
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+};
+</script>
+
+<script>
+// ============================================
+// LUSH PAD SYNTH (Tone.js)
+// ============================================
+const Pads = {
+  synth: null,
+  reverb: null,
+  isPlaying: false,
+  currentProgression: 0,
+  
+  progressions: {
+    dreamy: [
+      ['C4', 'E4', 'G4', 'B4'],
+      ['F3', 'A3', 'C4', 'E4'],
+      ['A3', 'C4', 'E4', 'G4'],
+      ['G3', 'B3', 'D4', 'F4']
+    ],
+    lofi: [
+      ['D3', 'F3', 'A3', 'C4'],
+      ['G3', 'B3', 'D4', 'F4'],
+      ['C3', 'E3', 'G3', 'B3'],
+      ['A3', 'C4', 'E4', 'G4']
+    ],
+    
+    // J DILLA - FANTASTIC VOL. 1 & 2
+    dilla_players: [
+      ['Eb3', 'Gb3', 'Bb3', 'Db4'],
+      ['Ab3', 'B3', 'Eb4', 'Gb4'],
+      ['F3', 'Ab3', 'C4', 'Eb4'],
+      ['Bb3', 'Db4', 'F4', 'Ab4']
+    ],
+    dilla_fall_in_love: [
+      ['Bb3', 'Db4', 'F4'],
+      ['Ab3', 'C4', 'Eb4'],
+      ['F3', 'Ab3', 'C4', 'Eb4'],
+      ['F3', 'Ab3', 'C4']
+    ],
+    dilla_get_dis_money: [
+      ['E2', 'D3', 'F#3', 'A3'],
+      ['E2', 'Db3', 'F3', 'Ab3'],
+      ['E2', 'C3', 'E3', 'G3'],
+      ['E2', 'B2', 'D3', 'F#3'],
+      ['E2', 'Bb2', 'Db3', 'F3'],
+      ['E2', 'A2', 'C3', 'E3'],
+      ['E2', 'D3', 'F#3', 'A3']
+    ],
+    dilla_time_donut: [
+      ['Db2', 'Ab3', 'C4', 'Eb4', 'F4'],
+      ['C2', 'Bb3', 'Eb4', 'G4', 'D5'],
+      ['F2', 'Eb3', 'Ab3', 'C4', 'G4'],
+      ['Bb1', 'Ab3', 'Db4', 'F4', 'C5']
+    ],
+    dilla_2u4u: [
+      ['A3', 'C4', 'E4', 'G4'],
+      ['E3', 'G3', 'B3', 'D4'],
+      ['B3', 'D4', 'F#4', 'A4'],
+      ['F#3', 'A3', 'C#4', 'E4']
+    ]
+  },
+  
+  dillaPlaylist: [
+    { name: 'dilla_time_donut', tempo: 72, loops: 4 },
+    { name: 'dilla_players', tempo: 94, loops: 3 },
+    { name: 'dilla_fall_in_love', tempo: 92, loops: 3 },
+    { name: 'dilla_get_dis_money', tempo: 88, loops: 2 },
+    { name: 'dilla_2u4u', tempo: 95, loops: 3 }
+  ],
+  
+  async init() {
+    if (typeof Tone === 'undefined') {
+      await this.loadToneJS();
+    }
+    
+    await Tone.start();
+    
+    // Meters
+    this.meters = {
+      postSynth: new Tone.Meter({ smoothing: 0.8 }),
+      postMaster: new Tone.Meter({ smoothing: 0.8 })
+    };
+    
+    // Wet/dry buses
+    this.dryBus = new Tone.Gain(0.7);
+    this.wetBus = new Tone.Gain(0.3);
+    this.mixBus = new Tone.Gain(1);
+    this.dryBus.connect(this.mixBus);
+    this.wetBus.connect(this.mixBus);
+    
+    // EQ + compression
+    this.eq3 = new Tone.EQ3({ low: -2, mid: -4, high: -1, lowFrequency: 200, highFrequency: 2000 });
+    this.midComp = new Tone.Compressor({ threshold: -20, ratio: 6, attack: 0.01, release: 0.15 });
+    
+    // Master chain
+    this.masterGain = new Tone.Gain(0.35);
+    this.compressor = new Tone.Compressor({ threshold: -18, ratio: 4, attack: 0.02, release: 0.2 });
+    this.limiter = new Tone.Limiter(-6);
+    
+    this.mixBus.connect(this.eq3);
+    this.eq3.connect(this.midComp);
+    this.midComp.connect(this.masterGain);
+    this.masterGain.connect(this.compressor);
+    this.compressor.connect(this.limiter);
+    this.limiter.toDestination();
+    this.limiter.connect(this.meters.postMaster);
+    
+    // Highpass
+    this.highpass = new Tone.Filter(120, 'highpass').connect(this.dryBus);
+    
+    // Per-voice limiter
+    this.synthLimiter = new Tone.Limiter(-12);
+    this.synthLimiter.connect(this.highpass);
+    this.synthLimiter.connect(this.meters.postSynth);
+    
+    // Synth
+    this.synth = new Tone.PolySynth(Tone.DuoSynth, {
+      maxPolyphony: 4,
+      voice: {
+        vibratoAmount: 0.2,
+        vibratoRate: 0.3,
+        harmonicity: 1.5,
+        voice0: {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 1.5, decay: 0.8, sustain: 0.5, release: 2 },
+          filterEnvelope: { attack: 1.5, decay: 0.8, sustain: 0.4, release: 2, baseFrequency: 200, octaves: 2 }
+        },
+        voice1: {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 2, decay: 0.8, sustain: 0.4, release: 2 },
+          filterEnvelope: { attack: 1.5, decay: 0.8, sustain: 0.4, release: 2, baseFrequency: 400, octaves: 1.5 }
+        }
+      }
+    });
+    this.synth.connect(this.synthLimiter);
+    this.synth.volume.value = -18;
+    
+    // Reverb
+    this.reverb = new Tone.Reverb({ decay: 2.5, wet: 1, preDelay: 0.08 });
+    this.reverbSend = new Tone.Gain(0.12);
+    this.reverbSend.connect(this.reverb);
+    this.reverb.connect(this.wetBus);
+    this.synth.connect(this.reverbSend);
+    
+    // Chorus
+    this.chorus = new Tone.Chorus({ frequency: 0.3, delayTime: 3, depth: 0.25, wet: 1 }).start();
+    this.chorusSend = new Tone.Gain(0.08);
+    this.chorusSend.connect(this.chorus);
+    this.chorus.connect(this.wetBus);
+    this.synth.connect(this.chorusSend);
+    
+    // Peak monitoring
+    this.peakHoldWindow = [];
+    this.effectsBypassActive = false;
+    this.originalSendLevels = { reverb: 0.12, chorus: 0.08 };
+    
+    this.meterInterval = setInterval(() => {
+      const level = this.meters.postMaster.getValue();
+      this.peakHoldWindow.push(level);
+      if (this.peakHoldWindow.length > 5) this.peakHoldWindow.shift();
+      const peak = Math.max(...this.peakHoldWindow);
+      
+      // Update visual meter
+      const pct = Math.min(100, Math.max(0, (level + 60) * 1.67));
+      document.getElementById('meter').style.width = pct + '%';
+      
+      if (peak > -6) {
+        this.masterGain.gain.value *= 0.9;
+        console.warn(`[Pads] Peak ${peak.toFixed(1)}dB - reducing master`);
+      }
+      
+      if (level > -3 && !this.effectsBypassActive) {
+        console.warn(`[Pads] OVERLOAD - bypassing effects`);
+        this.reverbSend.gain.value = 0;
+        this.chorusSend.gain.value = 0;
+        this.effectsBypassActive = true;
+      } else if (level < -9 && this.effectsBypassActive) {
+        console.log(`[Pads] Levels safe - restoring effects`);
+        this.reverbSend.gain.value = this.originalSendLevels.reverb;
+        this.chorusSend.gain.value = this.originalSendLevels.chorus;
+        this.effectsBypassActive = false;
+      }
+    }, 100);
+    
+    await this.reverb.generate();
+    console.log('[Pads] 🎹 Ready');
+  },
+  
+  loadToneJS() {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  },
+  
+  playChord(notes, duration = '2n', time) {
+    if (!this.synth) return;
+    const releaseTime = time ? time - 0.05 : Tone.now();
+    this.synth.releaseAll(releaseTime);
+    this.synth.triggerAttackRelease(notes, duration, time);
+  },
+  
+  async playDilla() {
+    if (!this.synth) await this.init();
+    await Tone.start();
+    
+    this.isPlaying = true;
+    this.playlistIndex = 0;
+    
+    console.log('[Pads] 🎹 Starting Dilla playlist...');
+    this.playNextInPlaylist();
+  },
+  
+  playNextInPlaylist() {
+    if (!this.isPlaying || this.playlistIndex >= this.dillaPlaylist.length) {
+      if (this.isPlaying) {
+        console.log('[Pads] Playlist complete - looping...');
+        this.playlistIndex = 0;
+      } else {
+        return;
+      }
+    }
+    
+    const item = this.dillaPlaylist[this.playlistIndex];
+    const prog = this.progressions[item.name];
+    if (!prog) {
+      this.playlistIndex++;
+      this.playNextInPlaylist();
+      return;
+    }
+    
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    Tone.Transport.bpm.value = item.tempo;
+    
+    const totalChords = prog.length * item.loops;
+    let chordIndex = 0;
+    
+    const trackName = item.name.replace('dilla_', '').replace(/_/g, ' ');
+    console.log(`[Pads] ▶ "${trackName}" @ ${item.tempo} BPM`);
+    
+    const playChordInner = (time) => {
+      if (!this.isPlaying) return;
+      
+      const chord = prog[chordIndex % prog.length];
+      this.playChord(chord, '1m', time);
+      chordIndex++;
+      
+      if (chordIndex < totalChords) {
+        Tone.Transport.scheduleOnce(playChordInner, '+1m');
+      } else {
+        Tone.Transport.scheduleOnce(() => {
+          this.playlistIndex++;
+          this.playNextInPlaylist();
+        }, '+1m');
+      }
+    };
+    
+    Tone.Transport.scheduleOnce(playChordInner, '+0.1');
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.start();
+    }
+  },
+  
+  stop() {
+    this.isPlaying = false;
+    this.playlistIndex = -1;
+    if (this.synth) this.synth.releaseAll();
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    console.log('[Pads] Stopped');
+  },
+  
+  async addLofi() {
+    if (!this.synth) await this.init();
+    
+    this.wobble = new Tone.Vibrato({ frequency: 0.5, depth: 0.1 });
+    this.saturation = new Tone.Chebyshev(50);
+    
+    this.synth.disconnect(this.synthLimiter);
+    this.synth.chain(this.wobble, this.saturation, this.synthLimiter);
+    
+    console.log('[Pads] 📼 Lo-fi mode active');
+  },
+  
+  async addVinyl() {
+    if (this.vinylNoise) return;
+    if (typeof Tone === 'undefined') await this.loadToneJS();
+    
+    this.vinylNoise = new Tone.Noise('brown').start();
+    const vinylFilter = new Tone.Filter(800, 'highpass');
+    const vinylGain = new Tone.Gain(0.03).toDestination();
+    
+    this.vinylNoise.chain(vinylFilter, vinylGain);
+    console.log('[Pads] 💿 Vinyl crackle added');
+  },
+  
+  removeVinyl() {
+    if (this.vinylNoise) {
+      this.vinylNoise.stop();
+      this.vinylNoise.dispose();
+      this.vinylNoise = null;
+      console.log('[Pads] Vinyl removed');
+    }
+  }
+};
+
+// ============================================
+// DILLA DRUMS
+// ============================================
+const Drums = {
+  kick: null,
+  snare: null,
+  closedHat: null,
+  openHat: null,
+  isPlaying: false,
+  patterns: [],
+  
+  async init() {
+    if (typeof Tone === 'undefined') {
+      await Pads.loadToneJS();
+    }
+    await Tone.start();
+    
+    const drumDest = Pads.dryBus || Pads.masterGain || Tone.Destination;
+    
+    this.drumLimiter = new Tone.Limiter(-10);
+    this.drumLimiter.connect(drumDest);
+    
+    this.kickFilter = new Tone.Filter(65, 'highpass').connect(this.drumLimiter);
+    this.kick = new Tone.MembraneSynth({
+      pitchDecay: 0.12,
+      octaves: 2,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.4 }
+    }).connect(this.kickFilter);
+    this.kick.volume.value = -22;
+    
+    this.snareFilter = new Tone.Filter(7000, 'lowpass').connect(this.drumLimiter);
+    this.snare = new Tone.NoiseSynth({
+      noise: { type: 'pink' },
+      envelope: { attack: 0.003, decay: 0.1, sustain: 0, release: 0.06 }
+    }).connect(this.snareFilter);
+    this.snare.volume.value = -20;
+    
+    this.hatFilter = new Tone.Filter(9000, 'highpass').connect(this.drumLimiter);
+    this.closedHat = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.02, sustain: 0, release: 0.01 }
+    }).connect(this.hatFilter);
+    this.closedHat.volume.value = -26;
+    
+    this.openHat = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.06 }
+    }).connect(this.hatFilter);
+    this.openHat.volume.value = -28;
+    
+    Tone.Transport.swing = 0.22;
+    Tone.Transport.swingSubdivision = '16n';
+    
+    console.log('[Drums] 🥁 Ready');
+  },
+  
+  async play(tempo = 90) {
+    if (!this.kick) await this.init();
+    
+    this.isPlaying = false;
+    this.patterns.forEach(p => { p.stop(); p.dispose(); });
+    this.patterns = [];
+    
+    this.isPlaying = true;
+    Tone.Transport.bpm.value = tempo;
+    
+    const kickSeq = new Tone.Sequence((time, note) => {
+      if (!this.isPlaying || !note) return;
+      this.kick.triggerAttackRelease(note, '8n', time);
+    }, ['C1', null, null, 'C1', null, null, null, null, 'C1', null, null, null, null, null, null, null], '16n');
+    kickSeq.humanize = '20ms';
+    
+    const snareSeq = new Tone.Sequence((time, hit) => {
+      if (!this.isPlaying || !hit) return;
+      this.snare.triggerAttackRelease('8n', time);
+    }, [null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null], '16n');
+    snareSeq.humanize = '15ms';
+    
+    const hatSeq = new Tone.Sequence((time, vel) => {
+      if (!this.isPlaying) return;
+      this.closedHat.volume.value = -26 + (vel * 4);
+      this.closedHat.triggerAttackRelease('32n', time);
+    }, [1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.4, 1, 0.3, 0.6, 0.3, 0.9, 0.3, 0.5, 0.3], '16n');
+    hatSeq.humanize = '10ms';
+    
+    kickSeq.start(0);
+    snareSeq.start(0);
+    hatSeq.start(0);
+    
+    this.patterns = [kickSeq, snareSeq, hatSeq];
+    
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.start();
+    }
+    
+    console.log(`[Drums] ▶ Playing @ ${tempo} BPM`);
+  },
+  
+  stop() {
+    this.isPlaying = false;
+    this.patterns.forEach(p => { p.stop(); p.dispose(); });
+    this.patterns = [];
+    console.log('[Drums] Stopped');
+  }
+};
+
+// UI
+document.getElementById('btnPlay').onclick = async () => {
+  await Pads.playDilla();
+  document.getElementById('btnPlay').classList.add('active');
+};
+
+document.getElementById('btnDrums').onclick = async () => {
+  const btn = document.getElementById('btnDrums');
+  if (Drums.isPlaying) {
+    Drums.stop();
+    btn.classList.remove('active');
+  } else {
+    await Drums.play(Pads.dillaPlaylist[Pads.playlistIndex || 0]?.tempo || 90);
+    btn.classList.add('active');
+  }
+};
+
+document.getElementById('btnLofi').onclick = async () => {
+  await Pads.addLofi();
+  document.getElementById('btnLofi').classList.add('active');
+};
+
+document.getElementById('btnVinyl').onclick = async () => {
+  const btn = document.getElementById('btnVinyl');
+  if (Pads.vinylNoise) {
+    Pads.removeVinyl();
+    btn.classList.remove('active');
+  } else {
+    await Pads.addVinyl();
+    btn.classList.add('active');
+  }
+};
+
+document.getElementById('btnStop').onclick = () => {
+  Pads.stop();
+  Drums.stop();
+  document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+};
+</script>
+
+</body>
+</html>
