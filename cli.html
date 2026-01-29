@@ -1,208 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width">
 <title>Ares</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  width: 100vw;
-  height: 100vh;
-  background: #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
-}
-#input {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  color: #fff;
-  font-size: 16px;
-  background: none;
-  border: none;
-  outline: none;
-  min-width: 200px;
-}
-#input::placeholder { color: rgba(255,255,255,0.3); }
-.orb {
-  width: 50vmin;
-  height: 50vmin;
-  background: #fff;
-  border-radius: 50%;
-}
-.orb.listening { animation: pulse 1s ease-in-out infinite; }
-.orb.speaking { animation: pulse 0.5s ease-in-out infinite; }
-@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-#status {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  color: rgba(255,255,255,0.5);
-  font-size: 12px;
-}
+*{margin:0;padding:0}
+body{background:#000;color:#fff;font:14px monospace}
+#i{position:fixed;top:10px;left:10px;background:none;border:none;color:#fff;font:inherit;outline:none}
+#o{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:40vmin;height:40vmin;background:#fff;border-radius:50%}
+#s{position:fixed;top:10px;right:10px;opacity:.5}
 </style>
 </head>
 <body>
-<input id="input" type="text" placeholder="Type here..." autofocus>
-<div class="orb" id="orb"></div>
-<div id="status"></div>
+<input id="i" placeholder="...">
+<div id="o"></div>
+<div id="s"></div>
 <script>
-let uiState = 'idle';
-function setUIState(state) {
-  uiState = state;
-  const orb = document.getElementById('orb');
-  const status = document.getElementById('status');
-  orb.className = 'orb ' + state;
-  status.textContent = state === 'idle' ? '' : state;
-}
-
-const Ares = {
-  recognition: null,
-  synthesis: window.speechSynthesis,
-  isListening: false,
-  isSpeaking: false,
-  voice: null,
-  lastSpoken: null,
-  pollRetryDelay: 1000,
-  maxPollRetry: 30000,
-  currentPersona: 'ares',
-  
-  voiceProfiles: {
-    ares: { pitch: 0.65, rate: 0.75 },
-    glitch: { pitch: 1.3, rate: 1.4 },
-    noir: { pitch: 0.7, rate: 0.8 },
-    cosmic_barista: { pitch: 1.1, rate: 1.15 },
-    default: { pitch: 1.0, rate: 1.0 }
+const o=document.getElementById('o'),s=document.getElementById('s'),i=document.getElementById('i');
+let state='idle';
+function set(st){state=st;s.textContent=st==='idle'?'':st;}
+const A={
+  syn:speechSynthesis,rec:null,voice:null,speaking:false,listening:false,last:null,
+  init(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(SR){this.rec=new SR();this.rec.continuous=false;this.rec.lang='en-US';
+      this.rec.onresult=e=>{set('...');this.send(e.results[0][0].transcript);};
+      this.rec.onend=()=>{this.listening=false;if(state==='listening')set('idle');};
+    }
+    const v=()=>{this.voice=this.syn.getVoices().find(v=>v.lang.startsWith('en'))||this.syn.getVoices()[0];};
+    this.syn.getVoices().length?v():this.syn.onvoiceschanged=v;
+    i.onkeydown=e=>{if(e.key==='Enter'&&i.value.trim()){set('...');this.send(i.value.trim());i.value='';}};
+    i.onclick=e=>e.stopPropagation();
+    document.body.onclick=()=>{if(this.speaking){this.syn.cancel();this.speaking=false;set('idle');}
+      else if(this.listening){this.rec.stop();this.listening=false;set('idle');}
+      else if(this.rec){this.listening=true;set('listening');this.rec.start();}};
+    this.poll();
   },
-  
-  init() {
-    this.setupSpeechRecognition();
-    this.findVoice();
-    this.setupInput();
-    this.setupClickToSpeak();
-    this.startPolling();
-  },
-  
-  startPolling() {
-    fetch('/poll', { signal: AbortSignal.timeout(5000) })
-      .then(() => { this.pollRetryDelay = 1000; this.pollForTTS(); })
-      .catch(() => {
-        this.pollRetryDelay = Math.min(this.pollRetryDelay * 1.5, this.maxPollRetry);
-        setTimeout(() => this.startPolling(), this.pollRetryDelay);
-      });
-  },
-  
-  pollForTTS() {
-    fetch('/poll', { signal: AbortSignal.timeout(10000) })
-      .then(r => r.json())
-      .then(data => {
-        this.pollRetryDelay = 1000;
-        if (data.persona) this.currentPersona = data.persona;
-        if (data.audio && !this.isSpeaking) this.playServerAudio(data.audio, data.text);
-        else if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) this.speak(data.text);
-        setTimeout(() => this.pollForTTS(), 1000);
-      })
-      .catch(() => {
-        this.pollRetryDelay = Math.min(this.pollRetryDelay * 1.5, this.maxPollRetry);
-        setTimeout(() => this.pollForTTS(), this.pollRetryDelay);
-      });
-  },
-  
-  setupInput() {
-    const input = document.getElementById('input');
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        setUIState('thinking');
-        this.send(input.value.trim());
-        input.value = '';
-      }
-    });
-    input.addEventListener('click', e => e.stopPropagation());
-  },
-  
-  setupClickToSpeak() {
-    document.body.addEventListener('click', () => {
-      if (this.isSpeaking) { this.synthesis.cancel(); this.isSpeaking = false; setUIState('idle'); }
-      else if (this.isListening) this.stopListening();
-      else this.startListening();
-    });
-  },
-  
-  setupSpeechRecognition() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    this.recognition = new SR();
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
-    this.recognition.lang = 'en-US';
-    this.recognition.onresult = e => { setUIState('thinking'); this.send(e.results[0][0].transcript); };
-    this.recognition.onend = () => { this.isListening = false; if (uiState === 'listening') setUIState('idle'); };
-    this.recognition.onerror = () => { this.isListening = false; setUIState('idle'); };
-  },
-  
-  findVoice() {
-    const load = () => {
-      const voices = this.synthesis.getVoices();
-      this.voice = voices.find(v => v.lang === 'en-US') || voices[0];
-    };
-    if (this.synthesis.getVoices().length) load();
-    else this.synthesis.onvoiceschanged = load;
-  },
-  
-  startListening() {
-    if (!this.recognition || this.isListening) return;
-    this.isListening = true;
-    setUIState('listening');
-    try { this.recognition.start(); } catch(e) {}
-  },
-  
-  stopListening() {
-    if (!this.recognition) return;
-    this.isListening = false;
-    setUIState('idle');
-    try { this.recognition.stop(); } catch(e) {}
-  },
-  
-  send(message) {
-    fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) })
-      .then(r => r.json())
-      .then(data => {
-        if (data.audio) this.playServerAudio(data.audio, data.response);
-        else if (data.response) this.speak(data.response);
-      })
-      .catch(() => this.speak("Connection lost."));
-  },
-  
-  playServerAudio(url, text) {
-    this.lastSpoken = text;
-    const audio = new Audio(url);
-    audio.onplay = () => { this.isSpeaking = true; setUIState('speaking'); };
-    audio.onended = () => { this.isSpeaking = false; setUIState('idle'); };
-    audio.onerror = () => { if (text) this.speak(text); };
-    audio.play().catch(() => { if (text) this.speak(text); });
-  },
-  
-  speak(text) {
-    if (!this.synthesis || !text) return;
-    this.synthesis.cancel();
-    const clean = text.replace(/`[\s\S]*?`/g, '').replace(/[#_*]/g, '').slice(0, 500);
-    this.lastSpoken = text;
-    const profile = this.voiceProfiles[this.currentPersona] || this.voiceProfiles.default;
-    const u = new SpeechSynthesisUtterance(clean);
-    u.voice = this.voice;
-    u.rate = profile.rate;
-    u.pitch = profile.pitch;
-    u.onstart = () => { this.isSpeaking = true; setUIState('speaking'); };
-    u.onend = () => { this.isSpeaking = false; setUIState('idle'); };
-    this.synthesis.speak(u);
-  }
+  poll(){fetch('/poll',{signal:AbortSignal.timeout(10000)}).then(r=>r.json()).then(d=>{
+    if(d.audio&&!this.speaking)this.play(d.audio,d.text);
+    else if(d.text&&d.text!==this.last&&!this.speaking)this.speak(d.text);
+    setTimeout(()=>this.poll(),1000);}).catch(()=>setTimeout(()=>this.poll(),3000));},
+  send(m){fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
+    .then(r=>r.json()).then(d=>{if(d.audio)this.play(d.audio,d.response);else if(d.response)this.speak(d.response);})
+    .catch(()=>this.speak('...'));},
+  play(url,txt){this.last=txt;const a=new Audio(url);a.onplay=()=>{this.speaking=true;set('speaking');};
+    a.onended=()=>{this.speaking=false;set('idle');};a.onerror=()=>{if(txt)this.speak(txt);};a.play().catch(()=>{if(txt)this.speak(txt);});},
+  speak(t){if(!t)return;this.syn.cancel();this.last=t;const u=new SpeechSynthesisUtterance(t.replace(/[#_*]/g,'').slice(0,500));
+    u.voice=this.voice;u.onstart=()=>{this.speaking=true;set('speaking');};u.onend=()=>{this.speaking=false;set('idle');};this.syn.speak(u);}
 };
-
-Ares.init();
+A.init();
 </script>
 </body>
 </html>
