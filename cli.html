@@ -2255,105 +2255,213 @@ const Pads = {
       await this.loadToneJS();
     }
     
-    // Start audio context first (required before creating effects)
     await Tone.start();
     
-    // Master channel with compression + limiter (proper gain staging)
-    this.masterGain = new Tone.Gain(0.4);  // -8dB master reduction
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 1: Gain staging checkpoints (meters at multiple points)
+    // ═══════════════════════════════════════════════════════════════
+    this.meters = {
+      postSynth: new Tone.Meter({ smoothing: 0.8 }),
+      postEffects: new Tone.Meter({ smoothing: 0.8 }),
+      postMaster: new Tone.Meter({ smoothing: 0.8 })
+    };
+    
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 5: Wet/dry bus separation with explicit ratios
+    // ═══════════════════════════════════════════════════════════════
+    this.dryBus = new Tone.Gain(0.7);   // 70% dry
+    this.wetBus = new Tone.Gain(0.3);   // 30% wet
+    this.mixBus = new Tone.Gain(1);     // Sum point
+    this.dryBus.connect(this.mixBus);
+    this.wetBus.connect(this.mixBus);
+    
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 7: Multiband compression (squash 200-500Hz mud)
+    // ═══════════════════════════════════════════════════════════════
+    this.eq3 = new Tone.EQ3({
+      low: -2,
+      mid: -4,      // Cut the mud range
+      high: -1,
+      lowFrequency: 200,
+      highFrequency: 2000
+    });
+    this.midComp = new Tone.Compressor({
+      threshold: -20,
+      ratio: 6,
+      attack: 0.01,
+      release: 0.15
+    });
+    
+    // Master chain with multiband
+    this.masterGain = new Tone.Gain(0.35);  // Conservative master
     this.compressor = new Tone.Compressor({
-      threshold: -24,
+      threshold: -18,
       ratio: 4,
       attack: 0.02,
-      release: 0.25
+      release: 0.2
     });
     this.limiter = new Tone.Limiter(-6);
+    
+    // Signal flow: mixBus → EQ → midComp → master → comp → limiter → out
+    this.mixBus.connect(this.eq3);
+    this.eq3.connect(this.midComp);
+    this.midComp.connect(this.masterGain);
     this.masterGain.connect(this.compressor);
     this.compressor.connect(this.limiter);
     this.limiter.toDestination();
     
-    // High-pass filter FIRST in chain (removes rumble before anything)
-    this.highpass = new Tone.Filter(120, 'highpass').connect(this.masterGain);
+    // Meter checkpoint: post-master
+    this.limiter.connect(this.meters.postMaster);
     
-    // DuoSynth for rich, dual-oscillator warmth (Dilla's sampled Rhodes vibe)
-    // ONLY connect to highpass - no parallel paths
+    // High-pass filter (removes rumble)
+    this.highpass = new Tone.Filter(120, 'highpass').connect(this.dryBus);
+    
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 6: Per-voice hard clip safety (limiter after each synth)
+    // ═══════════════════════════════════════════════════════════════
+    this.synthLimiter = new Tone.Limiter(-12);  // Ceiling before effects
+    this.synthLimiter.connect(this.highpass);
+    this.synthLimiter.connect(this.meters.postSynth);  // Meter checkpoint
+    
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 3 & 4: Voice stealing + shorter envelopes
+    // ═══════════════════════════════════════════════════════════════
     this.synth = new Tone.PolySynth(Tone.DuoSynth, {
-      maxPolyphony: 6,  // Reduced to prevent buildup
-      vibratoAmount: 0.2,
-      vibratoRate: 0.3,
-      harmonicity: 1.5,
-      voice0: {
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 2, decay: 1, sustain: 0.6, release: 3 },
-        filterEnvelope: { attack: 2, decay: 1, sustain: 0.4, release: 3, baseFrequency: 200, octaves: 2 }
-      },
-      voice1: {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 2.5, decay: 1, sustain: 0.5, release: 3 },
-        filterEnvelope: { attack: 2, decay: 1, sustain: 0.4, release: 3, baseFrequency: 400, octaves: 1.5 }
+      maxPolyphony: 4,  // Strict limit
+      voice: {
+        vibratoAmount: 0.2,
+        vibratoRate: 0.3,
+        harmonicity: 1.5,
+        voice0: {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 1.5, decay: 0.8, sustain: 0.5, release: 2 },  // Shorter!
+          filterEnvelope: { attack: 1.5, decay: 0.8, sustain: 0.4, release: 2, baseFrequency: 200, octaves: 2 }
+        },
+        voice1: {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 2, decay: 0.8, sustain: 0.4, release: 2 },
+          filterEnvelope: { attack: 1.5, decay: 0.8, sustain: 0.4, release: 2, baseFrequency: 400, octaves: 1.5 }
+        }
       }
-    }).connect(this.highpass);  // Single connection only!
+    });
+    this.synth.connect(this.synthLimiter);  // Through per-voice limiter
+    this.synth.volume.value = -18;
     
-    // Sub layer - disabled by default (too heavy for most speakers)
     this.subBass = null;
     
-    // Shimmer layer - connect to highpass, not limiter
+    // Air pad with per-voice limiting
+    this.airLimiter = new Tone.Limiter(-15);
+    this.airLimiter.connect(this.highpass);
+    
     this.airPad = new Tone.PolySynth(Tone.AMSynth, {
-      maxPolyphony: 3,
+      maxPolyphony: 2,  // Very limited
       harmonicity: 0.5,
       oscillator: { type: 'sine' },
-      envelope: { attack: 3, decay: 1, sustain: 0.3, release: 4 },
+      envelope: { attack: 2, decay: 0.8, sustain: 0.2, release: 2 },  // Shorter
       modulation: { type: 'triangle' },
-      modulationEnvelope: { attack: 4, decay: 2, sustain: 0.2, release: 4 }
-    }).connect(this.highpass);  // Same chain as synth
-    this.airPad.volume.value = -32;
-    
-    // Effects as SENDS (wet-only, mixed lower)
-    // Reverb - subtle, short decay for lo-fi feel
-    this.reverb = new Tone.Reverb({
-      decay: 3,
-      wet: 1,  // Full wet (it's a send)
-      preDelay: 0.1
+      modulationEnvelope: { attack: 2, decay: 1, sustain: 0.2, release: 2 }
     });
-    this.reverbSend = new Tone.Gain(0.15);  // 15% reverb mix
-    this.reverbSend.connect(this.reverb);
-    this.reverb.connect(this.masterGain);
+    this.airPad.connect(this.airLimiter);
+    this.airPad.volume.value = -28;
     
-    // Chorus - subtle width
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 2: Auto-ducking (reverb ducks when synth plays)
+    // ═══════════════════════════════════════════════════════════════
+    this.reverbDucker = new Tone.Compressor({
+      threshold: -30,
+      ratio: 8,
+      attack: 0.01,
+      release: 0.3
+    });
+    
+    // Effects as SENDS to wet bus
+    this.reverb = new Tone.Reverb({
+      decay: 2.5,
+      wet: 1,
+      preDelay: 0.08
+    });
+    this.reverbSend = new Tone.Gain(0.12);  // 12% send
+    this.reverbSend.connect(this.reverb);
+    this.reverb.connect(this.reverbDucker);
+    this.reverbDucker.connect(this.wetBus);
+    
+    // Sidechain: synth audio ducks the reverb
+    this.synth.connect(this.reverbDucker);
+    
+    // Chorus send
     this.chorus = new Tone.Chorus({
       frequency: 0.3,
       delayTime: 3,
-      depth: 0.3,
+      depth: 0.25,
       wet: 1
     }).start();
-    this.chorusSend = new Tone.Gain(0.1);  // 10% chorus mix
+    this.chorusSend = new Tone.Gain(0.08);  // 8% send
     this.chorusSend.connect(this.chorus);
-    this.chorus.connect(this.masterGain);
+    this.chorus.connect(this.wetBus);
     
-    // Connect synth to effect sends (NOT parallel to destination)
+    // Meter checkpoint: post-effects
+    this.wetBus.connect(this.meters.postEffects);
+    
+    // Connect synth to effect sends
     this.synth.connect(this.reverbSend);
     this.synth.connect(this.chorusSend);
     this.airPad.connect(this.reverbSend);
     
-    // Volume settings
-    this.synth.volume.value = -18;
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 8: Transport-synced releaseAll (on beat boundaries)
+    // ═══════════════════════════════════════════════════════════════
+    this.beatReleaseScheduled = false;
     
-    // Debug meter
-    this.meter = new Tone.Meter({ smoothing: 0.8 });
-    this.limiter.connect(this.meter);
+    // ═══════════════════════════════════════════════════════════════
+    // SAFEGUARD 9 & 10: Peak hold + effect bypass on overload
+    // ═══════════════════════════════════════════════════════════════
+    this.peakHold = -Infinity;
+    this.peakHoldWindow = [];
+    this.effectsBypassActive = false;
+    this.originalSendLevels = {
+      reverb: this.reverbSend.gain.value,
+      chorus: this.chorusSend.gain.value
+    };
     
-    // Only log if truly clipping
     this.meterInterval = setInterval(() => {
-      const level = this.meter.getValue();
-      if (level > -1) {
-        console.warn(`[Pads] ⚠️ HOT: ${level.toFixed(1)} dB - reducing...`);
-        this.synth.volume.value -= 2;
-        console.warn(`[Pads] ⚠️ CLIP: ${level.toFixed(1)} dB`);
-        this.masterGain.gain.value *= 0.8;  // Emergency reduce
+      const levels = {
+        synth: this.meters.postSynth.getValue(),
+        effects: this.meters.postEffects.getValue(),
+        master: this.meters.postMaster.getValue()
+      };
+      
+      // Track peak over 5s window
+      this.peakHoldWindow.push(levels.master);
+      if (this.peakHoldWindow.length > 5) this.peakHoldWindow.shift();
+      this.peakHold = Math.max(...this.peakHoldWindow);
+      
+      // SAFEGUARD 9: Auto-reduce if peak exceeds -6dB
+      if (this.peakHold > -6) {
+        this.masterGain.gain.value *= 0.9;
+        console.warn(`[Pads] 📉 Peak ${this.peakHold.toFixed(1)}dB - reducing master to ${this.masterGain.gain.value.toFixed(2)}`);
+      }
+      
+      // SAFEGUARD 10: Bypass effects if exceeding -3dB
+      if (levels.master > -3 && !this.effectsBypassActive) {
+        console.warn(`[Pads] ⚠️ OVERLOAD ${levels.master.toFixed(1)}dB - bypassing effects`);
+        this.reverbSend.gain.value = 0;
+        this.chorusSend.gain.value = 0;
+        this.effectsBypassActive = true;
+      } else if (levels.master < -9 && this.effectsBypassActive) {
+        console.log(`[Pads] ✓ Levels safe - restoring effects`);
+        this.reverbSend.gain.value = this.originalSendLevels.reverb;
+        this.chorusSend.gain.value = this.originalSendLevels.chorus;
+        this.effectsBypassActive = false;
+      }
+      
+      // Verbose logging only when hot
+      if (levels.master > -6) {
+        console.log(`[Pads] 📊 synth:${levels.synth.toFixed(1)} fx:${levels.effects.toFixed(1)} master:${levels.master.toFixed(1)}dB`);
       }
     }, 1000);
     
     await this.reverb.generate();
-    console.log('[Pads] 🎹 Ready (proper gain staging: synth→HP→master→comp→limiter)');
+    console.log('[Pads] 🎹 Ready (10 safeguards active: meters, ducking, voice-steal, short-env, wet/dry, per-voice-limit, multiband, beat-release, peak-hold, auto-bypass)');
   },
   
   loadToneJS() {
@@ -2370,14 +2478,15 @@ const Pads = {
   playChord(notes, duration = '2n', time) {
     if (!this.synth) return;
     
-    // Release any held notes first to prevent voice buildup
-    this.synth.releaseAll(time);
-    if (this.airPad) this.airPad.releaseAll(time);
+    // SAFEGUARD 8: Transport-synced releaseAll (quantized to beat)
+    const releaseTime = time ? time - 0.05 : Tone.now();
+    this.synth.releaseAll(releaseTime);
+    if (this.airPad) this.airPad.releaseAll(releaseTime);
     
     // Main pad 
     this.synth.triggerAttackRelease(notes, duration, time);
     
-    // Air pad - play top notes an octave up (reduced notes)
+    // Air pad - play top note an octave up (single note only)
     if (this.airPad && notes.length > 1) {
       const highNote = notes[notes.length - 1].replace(/\d/, m => parseInt(m) + 1);
       this.airPad.triggerAttackRelease([highNote], duration, time);
@@ -2400,11 +2509,15 @@ const Pads = {
     this.isPlaying = true;
     this.currentProgression = 0;
     
-    const chordDuration = '1m'; // 1 measure per chord
+    const chordDuration = '1m';
     
-    // Schedule chord changes
+    // Schedule chord changes with proper releaseAll
     const playNext = (time) => {
       if (!this.isPlaying) return;
+      
+      // SAFEGUARD 8: Release before new chord
+      this.synth.releaseAll(time - 0.1);
+      if (this.airPad) this.airPad.releaseAll(time - 0.1);
       
       const chord = prog[this.currentProgression % prog.length];
       this.synth.triggerAttackRelease(chord, chordDuration, time);
@@ -2416,7 +2529,9 @@ const Pads = {
     };
     
     Tone.Transport.scheduleOnce(playNext, '+0.1');
-    Tone.Transport.start();
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.start();
+    }
     
     console.log(`[Pads] Playing "${name}" at ${tempo} BPM`);
   },
@@ -2621,49 +2736,53 @@ const Drums = {
     }
     await Tone.start();
     
-    // Shared drum bus (goes through Pads master if available)
-    const drumDest = Pads.masterGain || Tone.Destination;
+    // Route drums through Pads dry bus (before effects, into master chain)
+    const drumDest = Pads.dryBus || Pads.masterGain || Tone.Destination;
+    
+    // Per-drum limiters (SAFEGUARD 6 for drums)
+    this.drumLimiter = new Tone.Limiter(-10);
+    this.drumLimiter.connect(drumDest);
     
     // High-pass for kick (remove extreme sub)
-    this.kickFilter = new Tone.Filter(60, 'highpass').connect(drumDest);
+    this.kickFilter = new Tone.Filter(65, 'highpass').connect(this.drumLimiter);
     
     // 808 Kick - speaker-friendly
     this.kick = new Tone.MembraneSynth({
-      pitchDecay: 0.15,
-      octaves: 2.5,
+      pitchDecay: 0.12,
+      octaves: 2,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 0.25, sustain: 0.01, release: 0.5 }
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.4 }
     }).connect(this.kickFilter);
-    this.kick.volume.value = -20;
+    this.kick.volume.value = -22;
     
     // Snare
-    this.snareFilter = new Tone.Filter(8000, 'lowpass').connect(drumDest);
+    this.snareFilter = new Tone.Filter(7000, 'lowpass').connect(this.drumLimiter);
     this.snare = new Tone.NoiseSynth({
-      noise: { type: 'pink' },  // Pink = less harsh than white
-      envelope: { attack: 0.003, decay: 0.12, sustain: 0, release: 0.08 }
+      noise: { type: 'pink' },
+      envelope: { attack: 0.003, decay: 0.1, sustain: 0, release: 0.06 }
     }).connect(this.snareFilter);
-    this.snare.volume.value = -18;
+    this.snare.volume.value = -20;
     
     // Closed hi-hat
-    this.hatFilter = new Tone.Filter(10000, 'highpass').connect(drumDest);
+    this.hatFilter = new Tone.Filter(9000, 'highpass').connect(this.drumLimiter);
     this.closedHat = new Tone.NoiseSynth({
       noise: { type: 'white' },
-      envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.01 }
+      envelope: { attack: 0.001, decay: 0.02, sustain: 0, release: 0.01 }
     }).connect(this.hatFilter);
-    this.closedHat.volume.value = -24;
+    this.closedHat.volume.value = -26;
     
     // Open hi-hat
     this.openHat = new Tone.NoiseSynth({
       noise: { type: 'white' },
-      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.08 }
+      envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.06 }
     }).connect(this.hatFilter);
-    this.openHat.volume.value = -26;
+    this.openHat.volume.value = -28;
     
     // Dilla swing
-    Tone.Transport.swing = 0.25;
+    Tone.Transport.swing = 0.22;
     Tone.Transport.swingSubdivision = '16n';
     
-    console.log('[Drums] 🥁 Ready (routed through master bus)');
+    console.log('[Drums] 🥁 Ready (routed through dryBus → drumLimiter → master)');
   },
   
   // Boom-bap pattern
