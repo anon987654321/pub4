@@ -2294,18 +2294,21 @@ const Pads = {
   // Play a single chord on all layers
   playChord(notes, duration = '2n') {
     if (!this.synth) return;
-    // Main pad
+    // Main pad (detuned saws + chorus)
     this.synth.triggerAttackRelease(notes, duration);
     // Sub bass - play root note an octave down
     if (this.subBass && notes.length > 0) {
       const root = notes[0].replace(/\d/, n => Math.max(1, parseInt(n) - 1));
       this.subBass.triggerAttackRelease(root, duration);
+      console.log('[Pads] SUB:', root);
     }
     // Air pad - play top notes an octave up
     if (this.airPad) {
       const highNotes = notes.slice(-2).map(n => n.replace(/\d/, m => parseInt(m) + 1));
       this.airPad.triggerAttackRelease(highNotes, duration);
+      console.log('[Pads] AIR:', highNotes.join(','));
     }
+    console.log('[Pads] MID:', notes.join(','));
   },
   
   // Play a progression (loops)
