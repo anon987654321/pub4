@@ -3813,8 +3813,40 @@ iteration #{iter}/#{max_iter}"
   end
 end
 
-# Main execution
+# Main execution with crash recovery
 if __FILE__ == $0
-  cli = CLI.new
-  cli.run
+  MAX_CRASHES = 3
+  crash_count = 0
+  crash_log = File.expand_path("~/.cli_crashes.log")
+  
+  loop do
+    begin
+      cli = CLI.new
+      cli.run
+      break  # Clean exit
+    rescue Interrupt
+      puts "\n[interrupted]"
+      break
+    rescue => e
+      crash_count += 1
+      
+      # Log the crash
+      File.open(crash_log, "a") do |f|
+        f.puts "#{Time.now.iso8601} | #{e.class}: #{e.message}"
+        f.puts "  #{e.backtrace&.first(5)&.join("\n  ")}"
+        f.puts
+      end
+      
+      if crash_count >= MAX_CRASHES
+        puts "\n❌ Crashed #{crash_count}x - giving up"
+        puts "   Error: #{e.class}: #{e.message}"
+        puts "   Log: #{crash_log}"
+        exit 1
+      else
+        puts "\n⚠ Crashed (#{crash_count}/#{MAX_CRASHES}): #{e.message}"
+        puts "   Auto-restarting in 2s... (Ctrl+C to exit)"
+        sleep 2
+      end
+    end
+  end
 end
