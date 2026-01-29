@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Organic AI Orb</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,11 +115,17 @@
 body {
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport for mobile */
   overflow: hidden;
   background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
 }
 
 h1 {
@@ -451,6 +460,10 @@ h1 {
 <div class="vignette"></div>
 <div class="color-grade"></div>
 <div class="light-leak"></div>
+
+<!-- Text input for typing to Ares -->
+<input type="text" id="aresInput" placeholder="Type to Ares..." 
+  style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 40px); max-width:400px; padding:14px 20px; border:1px solid #666; background:#111; color:#fff; border-radius:25px; font-size:16px; outline:none; z-index:1000; will-change:transform; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:border-color 0.1s; -webkit-appearance:none;">
 
 <!-- Audio element for visualization (no autoplay) -->
 <audio id="audioPlayer" style="display: none;" crossorigin="anonymous"></audio>
@@ -1179,8 +1192,9 @@ const Ares = {
   
   init() {
     this.setupSpeechRecognition();
-    this.findDeepVoice();
+    this.findVoice();
     this.setupClickToSpeak();
+    this.setupTextInput();
     // Only poll if server is running (skip for standalone HTML)
     fetch('/poll').then(() => this.pollForTTS()).catch(() => {});
   },
@@ -1228,15 +1242,29 @@ const Ares = {
     };
   },
   
-  findDeepVoice() {
+  setupTextInput() {
+    const input = document.getElementById('aresInput');
+    if (!input) return;
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        this.send(input.value.trim());
+        input.value = '';
+      }
+    });
+    // Prevent click-to-speak when typing
+    input.addEventListener('click', (e) => e.stopPropagation());
+  },
+  
+  findVoice() {
     const load = () => {
       const voices = this.synthesis.getVoices();
-      const prefer = ['Daniel', 'James', 'Google UK English Male', 'Thomas'];
+      // Prefer: US male voices, deeper sounding
+      const prefer = ['Aaron', 'Alex', 'Fred', 'Google US English', 'Microsoft David', 'Microsoft Mark'];
       for (const n of prefer) {
         const v = voices.find(v => v.name.includes(n));
         if (v) { this.voice = v; return; }
       }
-      this.voice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+      this.voice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en')) || voices[0];
     };
     if (this.synthesis.getVoices().length) load();
     else this.synthesis.onvoiceschanged = load;
@@ -1256,12 +1284,16 @@ const Ares = {
   },
   
   send(message) {
+    // Instant visual feedback
+    const input = document.getElementById('aresInput');
+    if (input) input.style.borderColor = '#0af';
     if (typeof depth !== 'undefined') depth = 0.6;
     
     fetch('/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }),
+      keepalive: true
     })
       .then(r => r.json())
       .then(data => { if (data.response) this.speak(data.response); })
