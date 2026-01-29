@@ -57,6 +57,8 @@
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
   <script>
     "use strict";
+    const DEBUG=false;
+    const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
 
     // Environment & Performance Config
     const IN_SANDBOX = false;
@@ -282,7 +284,7 @@
     const initAudioEngine=async()=>{
       const allTracks=[...MP3_TRACKS,...YOUTUBE_TRACKS];
       audio=new UnifiedAudioEngine(allTracks);
-      console.log(`Unified: ${MP3_TRACKS.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
+      if(DEBUG)console.log(`Unified: ${MP3_TRACKS.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
       return audio;
     };
 
@@ -297,7 +299,6 @@
     const updateMinFrameInterval=()=>MIN_FRAME_MS=typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?33:16;
     const applyInternalScale=(b=isLowEnd?.6:.7)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
     (()=>{
-      const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
       class PixelTunnel{
         constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15;this.stars=[]}
         resize(w,h,s){
@@ -512,13 +513,13 @@
     canvas.addEventListener("touchend",e=>{e.preventDefault();if(e.touches.length<2)resetPinch();if(e.touches.length===0){mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)}if(audio?.started&&!IN_SANDBOX){const t=e.changedTouches[0],r=canvas.getBoundingClientRect(),endX=t.clientX-r.left,endY=t.clientY-r.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}else{const s=document.getElementById("swipeHint");s.textContent="Warp Tunnel";s.classList.add("show");setTimeout(()=>s.classList.remove("show"),1400)}try{navigator.vibrate?.(10)}catch{}}else{const n=performance.now();if(n-lastTapTime<doubleTapMs)toggleFullscreen();lastTapTime=n}}},{passive:false});
     canvas.addEventListener("touchcancel",()=>{resetPinch();mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},{passive:true});
     window.vizSpeed=1.0;window.vizIntensity=1.0;window.psychedelicMode=0;
-    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
+    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];if(DEBUG)console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
     let pageHidden=document.hidden;
     document.addEventListener("visibilitychange",()=>{
       pageHidden=document.hidden;
       if(pageHidden&&audio?.started){
         // Pause intensive operations when hidden
-        console.log("Page hidden - reduced activity");
+        if(DEBUG)console.log("Page hidden - reduced activity");
       }
     });
     let lastFrameT=performance.now(),lastRenderT=lastFrameT;
@@ -604,7 +605,6 @@
     // ===== VISUALIZER ENHANCEMENTS (PIXEL-BASED) =====
     (function(){
     'use strict';
-    const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
     const TAU=Math.PI*2,HALF_PI=Math.PI/2,THIRD_PI=Math.PI/3,PHI=1.618033988749895;
     const makeRotation=(cx,cy,angle)=>{const c=Math.cos(angle),s=Math.sin(angle);return{x:(x,y)=>cx+(x-cx)*c-(y-cy)*s,y:(x,y)=>cy+(x-cx)*s+(y-cy)*c};};
     const atmosphericHue=(depth,baseHue)=>baseHue+(1-depth)*30;
@@ -631,7 +631,7 @@
     // Helper: Initialize pixel buffer for visualizers
     const initBuffer=(ctx,w,h)=>{const imageData=ctx.getImageData(0,0,w,h);const u32=new Uint32Array(imageData.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;const BLACK32=new Uint32Array(t.buffer)[0];return{imageData,u32,BLACK32}};
     // VIZ 1: INFINITY GRID - Dense square tunnel grid with beat pops & rotation
-    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: X=psychedelic, ↑↓=speed, []=intensity');}
+    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();if(DEBUG){console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: X=psychedelic, ↑↓=speed, []=intensity');}}
     if(window.tunnelRenderer){init();}else{const check=setInterval(()=>{if(window.tunnelRenderer){clearInterval(check);setTimeout(init,100);}},100);}
     })();
   </script>

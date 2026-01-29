@@ -7,6 +7,44 @@ config:
   elevenlabs_model: "eleven_turbo_v2_5"  # Fast, good quality
   tts_priority: ["elevenlabs", "piper", "browser"]  # Fallback chain
 
+# TRACE OUTPUT CONFIG
+# Controls verbosity of analysis output
+trace:
+  enabled: true
+  verbosity: deep  # minimal | standard | deep | exhaustive
+  
+  output_format:
+    show_file_path: true
+    show_line_number: true
+    show_column: true
+    show_context_lines: 3  # Lines before/after match
+    show_matched_text: true
+    show_pattern_used: true
+    show_fix_suggestion: true
+    show_severity_badge: true
+    show_law_reference: true
+  
+  deep_trace:
+    # For each violation, show:
+    trace_call_path: true      # How we got here
+    trace_related_code: true   # Other occurrences of same pattern
+    trace_dependencies: true   # What depends on this code
+    trace_history: true        # Git blame / recent changes
+    trace_test_coverage: true  # Is this code tested?
+  
+  exhaustive_trace:
+    # Additional for exhaustive mode:
+    ast_dump: true             # Show AST node structure
+    symbol_table: true         # All symbols in scope
+    data_flow: true            # Where values come from/go
+    control_flow_graph: true   # CFG for complex functions
+  
+  filters:
+    min_severity: info         # info | low | medium | high | veto
+    include_laws: all          # or list: [robustness, singularity]
+    exclude_patterns: []       # Patterns to skip
+    focus_files: []            # Empty = all files
+
 # SIX UNIVERSAL LAWS (hierarchical priority for violations)
 # Research basis: Zakeri-Nasrabadi et al. (2023), "A systematic literature review on code smells datasets"
 # Pattern-based detection with predefined thresholds remains state-of-the-art

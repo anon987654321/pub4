@@ -693,7 +693,8 @@ module LearningEngine
     def load_patterns(file)
       return [] unless File.exist?(file)
       YAML.load_file(file) || []
-    rescue
+    rescue StandardError => e
+      Logger.debug("Failed to load patterns from #{file}: #{e.message}") if defined?(Logger)
       []
     end
   end
@@ -713,7 +714,8 @@ module WorkflowStateMachine
     def current_state
       return "clean" unless File.exist?(@state_file)
       File.read(@state_file).strip
-    rescue
+    rescue StandardError => e
+      Logger.debug("Failed to read state file: #{e.message}") if defined?(Logger)
       "clean"
     end
 
@@ -747,7 +749,8 @@ module WorkflowStateMachine
       data = YAML.load_file(checkpoint_file)
       Logger.info("restored checkpoint: #{data['state']} @ #{data['timestamp']}")
       data
-    rescue
+    rescue StandardError => e
+      Logger.debug("Failed to restore checkpoint: #{e.message}") if defined?(Logger)
       nil
     end
   end
@@ -1145,6 +1148,11 @@ module OpenRouterChat
   ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
   DEFAULT_MODEL = "anthropic/claude-sonnet-4"
   
+  # Size limits for tool outputs
+  MAX_FILE_CONTENT_SIZE = 50000
+  MAX_COMMAND_OUTPUT_SIZE = 20000
+  DEFAULT_MAX_TOKENS = 4096
+  
   class << self
     attr_reader :total_cost, :total_tokens
     
@@ -1266,7 +1274,7 @@ module OpenRouterChat
         path = args["path"]
         if File.exist?(path)
           content = File.read(path, encoding: "UTF-8")
-          { success: true, content: content[0..50000] }  # Limit size
+          { success: true, content: content[0..MAX_FILE_CONTENT_SIZE] }
         else
           { success: false, error: "File not found: #{path}" }
         end
@@ -1305,7 +1313,7 @@ module OpenRouterChat
         command = args["command"]
         begin
           output = `#{command} 2>&1`
-          { success: $?.success?, output: output[0..20000], exit_code: $?.exitstatus }
+          { success: $?.success?, output: output[0..MAX_COMMAND_OUTPUT_SIZE], exit_code: $?.exitstatus }
         rescue => e
           { success: false, error: e.message }
         end
@@ -1560,7 +1568,7 @@ module OpenRouterChat
       payload = {
         model: @model,
         messages: messages,
-        max_tokens: 4096,
+        max_tokens: DEFAULT_MAX_TOKENS,
         temperature: @persona_prompt ? 0.9 : 0.7
       }
       
