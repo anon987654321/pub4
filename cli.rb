@@ -3273,6 +3273,8 @@ iteration #{iter}/#{max_iter}"
       Just type to chat with the AI.
       
       Commands (prefix with /):
+        /load [file]     Load files into context (default: master.yml + cli.rb)
+        /add <file>      Add single file to context
         /scan <file>     Scan single file
         /recursive       Scan all files
         /fix <file>      Auto-fix with RuboCop
@@ -3385,9 +3387,24 @@ iteration #{iter}/#{max_iter}"
     
     path = args[0]
     if OpenRouterChat.add_context_file(path)
-      puts "Added to context: #{path}"
+      puts "Added: #{path}"
     else
-      puts "File not found: #{path}"
+      puts "Not found: #{path}"
+    end
+  end
+  
+  # Alias for /add - load files into context
+  def cmd_load(*args)
+    if args.empty?
+      # Default: load master.yml and cli.rb
+      %w[master.yml cli.rb].each do |f|
+        path = File.expand_path(f, __dir__)
+        if OpenRouterChat.add_context_file(path)
+          puts "Loaded: #{f}"
+        end
+      end
+    else
+      cmd_add(*args)
     end
   end
   
