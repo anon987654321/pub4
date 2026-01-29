@@ -69,7 +69,15 @@ const Drums={
     if(Tone.Transport.state!=='started')Tone.Transport.start();
     log('drums @'+tempo+'bpm');
   },
-  stop(){this.playing=false;this.pats.forEach(p=>{p.stop();p.dispose();});this.pats=[];Tone.Transport.stop();log('stopped');}
+  stop(){
+    this.playing=false;
+    // Stop and dispose sequences before transport
+    this.pats.forEach(p=>{try{p.stop(0);p.dispose();}catch(e){}});
+    this.pats=[];
+    // Small delay before stopping transport
+    setTimeout(()=>{try{Tone.Transport.stop();Tone.Transport.cancel();}catch(e){}},50);
+    log('stopped');
+  }
 };
 const bpmSlider=document.getElementById('bpm'),bpmVal=document.getElementById('bpmVal');
 bpmSlider.oninput=()=>{bpmVal.textContent=bpmSlider.value;if(Drums.playing)Tone.Transport.bpm.value=+bpmSlider.value;};

@@ -66,7 +66,12 @@ const Pads={
     Tone.Transport.scheduleOnce(go,'+0.1');
     if(Tone.Transport.state!=='started')Tone.Transport.start();
   },
-  stop(){this.playing=false;if(this.syn)this.syn.releaseAll();Tone.Transport.stop();Tone.Transport.cancel();log('stopped');}
+  stop(){
+    this.playing=false;
+    if(this.syn)try{this.syn.releaseAll();}catch(e){}
+    setTimeout(()=>{try{Tone.Transport.stop();Tone.Transport.cancel();}catch(e){}},50);
+    log('stopped');
+  }
 };
 document.getElementById('play').onclick=async()=>{await Pads.play();document.getElementById('play').classList.add('on');};
 document.getElementById('stop').onclick=()=>{Pads.stop();document.querySelectorAll('button').forEach(b=>b.classList.remove('on'));};
