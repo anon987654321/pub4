@@ -1295,6 +1295,14 @@ module OpenRouterChat
         - /browse <url> fetches web pages (you can ask user to run this)
         - /search <query> searches DuckDuckGo
         
+        DIRECT COMMANDS (output these and they auto-execute):
+        - /view <file> [start] [end] - View file with line numbers
+        - /edit <file> <line> "<old>" "<new>" - Replace text at specific line
+        - /grep <pattern> [path] - Search files for pattern
+        - /create <file> - Create new file
+        - /diff [file] - Show uncommitted changes
+        - /todo add <task> - Track a task
+        
         AUTONOMOUS RESEARCH:
         Before answering technical questions, CHECK LATEST DOCS:
         - Ruby: https://docs.ruby-lang.org/en/master/NEWS_md.html
@@ -1306,10 +1314,16 @@ module OpenRouterChat
         If you need to verify current syntax, versions, or best practices,
         tell the user: "Let me check the latest docs" then provide a /browse command.
         
+        WORKFLOW:
+        1. When asked about code: first /view the relevant file
+        2. When fixing bugs: /grep to find occurrences, then /edit each
+        3. When creating features: /create file, then /edit to populate
+        4. Always /diff before suggesting commit
+        
         RULES:
         - ONE shell command per response, wrapped in ```zsh```
         - Use ONLY zsh builtins and parameter expansion (NO sed/awk/grep/cut)
-        - For file edits use temp file: { print "new"; cat file } > file.tmp && mv file.tmp file
+        - For file edits prefer /edit over shell
         - NO citations, NO web references, NO explanations
         - Be terse: max 2 sentences outside code blocks
         
@@ -2919,7 +2933,9 @@ export OPENROUTER_API_KEY="#{key}""
       "grep" => method(:cmd_grep),
       "create" => method(:cmd_create),
       "diff" => method(:cmd_diff),
-      "todo" => method(:cmd_todo)
+      "todo" => method(:cmd_todo),
+      "checkpoint" => method(:cmd_checkpoint),
+      "checkpoints" => method(:cmd_restore_checkpoint)
     }
   end
 
@@ -3064,6 +3080,8 @@ export OPENROUTER_API_KEY="#{key}""
       # Check for tool calls in response
       if response.include?("```shell") || response.include?("```zsh") || response.include?("```ruby")
         handle_tool_response(response)
+      elsif response.match?(/\/(?:view|edit|grep|create|diff|todo)\s/)
+        handle_command_response(response)
       else
         puts response
       end
@@ -3071,6 +3089,56 @@ export OPENROUTER_API_KEY="#{key}""
       puts "Error: #{result.error}"
       puts "Hint: check API key or try again"
     end
+  end
+  
+  # Auto-execute /commands from LLM response
+  def handle_command_response(response)
+    puts response
+    
+    # Extract and execute /commands line by line
+    response.each_line do |line|
+      if line.strip.match?(/^\/(?:view|edit|grep|create|diff|todo)\s/)
+        cmd_line = line.strip
+        puts C.d("[auto] #{cmd_line}")
+        
+        parts = cmd_line[1..].split(/\s+/, 2)
+        command = parts[0].downcase
+        args = parse_command_args(parts[1] || "")
+        
+        if @commands.key?(command)
+          begin
+            @commands[command].call(*args)
+          rescue => e
+            puts C.r("Error: #{e.message}")
+          end
+        end
+      end
+    end
+  end
+  
+  # Parse command arguments respecting quotes
+  def parse_command_args(arg_string)
+    args = []
+    current = ""
+    in_quotes = false
+    quote_char = nil
+    
+    arg_string.to_s.each_char do |c|
+      if (c == '"' || c == "'") && !in_quotes
+        in_quotes = true
+        quote_char = c
+      elsif c == quote_char && in_quotes
+        in_quotes = false
+        quote_char = nil
+      elsif c == ' ' && !in_quotes
+        args << current unless current.empty?
+        current = ""
+      else
+        current += c
+      end
+    end
+    args << current unless current.empty?
+    args
   end
   
   def handle_tool_response(response)
@@ -3789,6 +3857,74 @@ iteration #{iter}/#{max_iter}"
       @todos = []
       puts "Tasks cleared"
     end
+  end
+  
+  # /checkpoint [name] - Save session state
+  def cmd_checkpoint(*args)
+    name = args[0] || Time.now.strftime("%Y%m%d_%H%M%S")
+    checkpoint_dir = File.expand_path("~/.cli_checkpoints")
+    FileUtils.mkdir_p(checkpoint_dir)
+    
+    checkpoint_file = File.join(checkpoint_dir, "#{name}.yml")
+    
+    state = {
+      conversation: OpenRouterChat.export_conversation,
+      context_files: @context_files_list || [],
+      todos: @todos || [],
+      persona: Voice.current_persona,
+      timestamp: Time.now.iso8601
+    }
+    
+    File.write(checkpoint_file, state.to_yaml)
+    puts C.g("Checkpoint saved: #{name}")
+    puts C.d("  #{checkpoint_file}")
+  end
+  
+  # /restore [name] - Restore session state
+  def cmd_restore_checkpoint(*args)
+    checkpoint_dir = File.expand_path("~/.cli_checkpoints")
+    
+    if args.empty?
+      # List available checkpoints
+      if Dir.exist?(checkpoint_dir)
+        files = Dir.glob(File.join(checkpoint_dir, "*.yml")).sort.reverse
+        if files.empty?
+          puts "No checkpoints found"
+        else
+          puts "Checkpoints:"
+          files.first(10).each do |f|
+            name = File.basename(f, ".yml")
+            mtime = File.mtime(f).strftime("%Y-%m-%d %H:%M")
+            puts "  #{name} (#{mtime})"
+          end
+        end
+      else
+        puts "No checkpoints found"
+      end
+      return
+    end
+    
+    name = args[0]
+    checkpoint_file = File.join(checkpoint_dir, "#{name}.yml")
+    
+    unless File.exist?(checkpoint_file)
+      puts "Checkpoint not found: #{name}"
+      return
+    end
+    
+    state = YAML.load_file(checkpoint_file)
+    
+    OpenRouterChat.import_conversation(state[:conversation])
+    @todos = state[:todos] || []
+    Voice.set_persona(state[:persona]) if state[:persona]
+    
+    # Reload context files
+    (state[:context_files] || []).each do |path|
+      OpenRouterChat.add_context_file(path) if File.exist?(path)
+    end
+    
+    puts C.g("Restored: #{name}")
+    puts C.d("  #{state[:conversation]&.length || 0} messages, #{@todos.length} todos")
   end
   
   def cmd_listen(*args)
