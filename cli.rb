@@ -1416,6 +1416,9 @@ module Voice
       @sox_available = system("which sox > /dev/null 2>&1") ||
                        system("which rec > /dev/null 2>&1")
       @web_tts = !@tts_available
+      
+      # Auto-start web server for UI
+      start_web_server if FALCON_AVAILABLE
     end
     
     def set_persona(name)
@@ -1572,6 +1575,8 @@ module Voice
       return unless FALCON_AVAILABLE
       
       ip = local_ip
+      cli_html_path = File.expand_path("cli.html", __dir__)
+      
       @server = Thread.new do
         require "async"
         require "async/http/server"
@@ -1583,41 +1588,59 @@ module Voice
         app = proc do |request|
           path = request.path
           
-          if path == "/poll"
+          case path
+          when "/", "/cli.html"
+            # Serve cli.html
+            if File.exist?(cli_html_path)
+              html = File.read(cli_html_path, encoding: "UTF-8")
+            else
+              html = "<h1>cli.html not found</h1>"
+            end
+            body = Protocol::HTTP::Body::Buffered.wrap(html)
+            Protocol::HTTP::Response[200, {"content-type" => "text/html"}, body]
+          when "/poll"
             text = @queue.empty? ? nil : @queue.pop(true) rescue nil
             body = Protocol::HTTP::Body::Buffered.wrap({ text: text }.to_json)
             Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+          when "/chat"
+            # Handle chat messages via POST
+            if request.method == "POST"
+              input = request.body&.read.to_s
+              data = JSON.parse(input) rescue {}
+              message = data["message"]
+              if message && OpenRouterChat.available?
+                result = OpenRouterChat.chat(message)
+                response = result.success? ? result.value : result.error
+                # Queue for TTS if voice enabled
+                @queue << response if @enabled
+                body = Protocol::HTTP::Body::Buffered.wrap({ response: response }.to_json)
+                Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+              else
+                body = Protocol::HTTP::Body::Buffered.wrap({ error: "unavailable" }.to_json)
+                Protocol::HTTP::Response[503, {"content-type" => "application/json"}, body]
+              end
+            else
+              Protocol::HTTP::Response[405, {}, nil]
+            end
+          when "/persona"
+            # Switch persona via POST
+            if request.method == "POST"
+              input = request.body&.read.to_s
+              data = JSON.parse(input) rescue {}
+              name = data["name"]
+              if name && Voice.set_persona(name)
+                OpenRouterChat.set_persona_prompt(Voice.persona_prompt) if Voice.persona_prompt
+                body = Protocol::HTTP::Body::Buffered.wrap({ ok: true, persona: name }.to_json)
+                Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+              else
+                body = Protocol::HTTP::Body::Buffered.wrap({ error: "unknown persona" }.to_json)
+                Protocol::HTTP::Response[400, {"content-type" => "application/json"}, body]
+              end
+            else
+              Protocol::HTTP::Response[405, {}, nil]
+            end
           else
-            html = <<~HTML
-              <!DOCTYPE html>
-              <html><head><title>CLI Voice</title></head>
-              <body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
-                <h1>CLI Voice Server</h1>
-                <div id="status">Waiting...</div>
-                <div id="text" style="margin:1em 0;padding:1em;border:1px solid #0f0"></div>
-                <script>
-                  const status = document.getElementById('status');
-                  const textDiv = document.getElementById('text');
-                  const synth = window.speechSynthesis;
-                  function poll() {
-                    fetch('/poll').then(r => r.json()).then(data => {
-                      if (data.text) {
-                        status.textContent = 'Speaking...';
-                        textDiv.textContent = data.text;
-                        const utter = new SpeechSynthesisUtterance(data.text);
-                        utter.rate = 0.9;
-                        utter.onend = () => { status.textContent = 'Ready'; };
-                        synth.speak(utter);
-                      }
-                      setTimeout(poll, 500);
-                    }).catch(() => setTimeout(poll, 1000));
-                  }
-                  poll();
-                </script>
-              </body></html>
-            HTML
-            body = Protocol::HTTP::Body::Buffered.wrap(html)
-            Protocol::HTTP::Response[200, {"content-type" => "text/html"}, body]
+            Protocol::HTTP::Response[404, {}, nil]
           end
         end
         
@@ -1627,7 +1650,7 @@ module Voice
         end
       end
       
-      puts C.d("Voice server (Falcon): http://#{ip}:#{WEB_PORT}")
+      puts C.d("UI: http://#{ip}:#{WEB_PORT}")
     end
     
     def local_ip

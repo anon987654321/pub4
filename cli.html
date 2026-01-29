@@ -1279,40 +1279,21 @@ updateQuantumShimmer();
   },
   
   setupWebSocket() {
-    const host = window.location.hostname || 'localhost';
-    const wsUrl = `ws://${host}:8787/ws`;
-    
-    this.setStatus('Connecting...');
-    
-    try {
-      this.ws = new WebSocket(wsUrl);
-      
-      this.ws.onopen = () => {
-        this.setStatus('Connected');
-        setTimeout(() => this.setStatus(''), 2000);
-      };
-      
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'response') {
-          this.addMessage('assistant', data.content);
-          this.speak(data.content);
-        } else if (data.type === 'tts') {
+    // Using HTTP polling instead of WebSocket
+    this.setStatus('Ready');
+    this.pollForTTS();
+  },
+  
+  pollForTTS() {
+    fetch('/poll')
+      .then(r => r.json())
+      .then(data => {
+        if (data.text) {
           this.speak(data.text);
         }
-      };
-      
-      this.ws.onclose = () => {
-        this.setStatus('Disconnected - click to reconnect');
-        setTimeout(() => this.setupWebSocket(), 5000);
-      };
-      
-      this.ws.onerror = () => {
-        this.setStatus('Offline mode');
-      };
-    } catch (e) {
-      this.setStatus('Offline mode');
-    }
+        setTimeout(() => this.pollForTTS(), 500);
+      })
+      .catch(() => setTimeout(() => this.pollForTTS(), 2000));
   },
   
   setupSpeechRecognition() {
@@ -1403,14 +1384,26 @@ updateQuantumShimmer();
   
   send(message) {
     this.addMessage('user', message);
+    this.setStatus('Thinking...');
     
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'chat', content: message }));
-      this.setStatus('Thinking...');
-    } else {
-      // Offline: speak back a quirky response
-      this.speak("Hmm, I seem to be offline. Awkward. Try again in a moment?");
-    }
+    fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: message })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.response) {
+          this.addMessage('assistant', data.response);
+          this.speak(data.response);
+        } else if (data.error) {
+          this.setStatus('Error: ' + data.error);
+        }
+      })
+      .catch(e => {
+        this.setStatus('Offline');
+        this.speak("Hmm, I seem to be offline. Awkward.");
+      });
   },
   
   addMessage(role, content) {
