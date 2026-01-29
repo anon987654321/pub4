@@ -25,6 +25,7 @@ require "net/http"
 require "uri"
 require "readline"
 require "timeout"
+require "shellwords"
 
 # History file for readline
 HISTORY_FILE = File.expand_path("~/.convergence_history")
