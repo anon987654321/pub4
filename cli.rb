@@ -1502,7 +1502,7 @@ module Voice
       @enabled = false
     end
     
-    # Text-to-speech via Piper or browser Web Speech API
+    # Text-to-speech via Piper with analog warmth
     def speak(text)
       return unless @enabled && tts_available?
       return if text.nil? || text.strip.empty?
@@ -1516,14 +1516,28 @@ module Voice
       return if clean.empty?
       
       rate = @speech_rate || DEFAULT_RATE
+      pitch_shift = @pitch || 1.0
       
       if @tts_available
-        # Stream through Piper with persona voice and rate
+        # Piper → FFmpeg analog chain → playback
+        # Analog warmth: saturation + lowpass + slight pitch shift for depth
         Thread.new do
+          ffmpeg_analog = [
+            "asetrate=22050*#{pitch_shift}",      # Pitch shift
+            "atempo=#{rate/pitch_shift}",         # Compensate tempo
+            "lowpass=f=8000",                     # Warm rolloff
+            "highpass=f=80",                      # Remove rumble
+            "acompressor=threshold=-20dB:ratio=4:attack=5:release=50",  # Punch
+            "equalizer=f=200:t=q:w=1:g=3",        # Add warmth
+            "equalizer=f=3000:t=q:w=1:g=-2",      # Reduce harshness
+            "volume=1.3"                          # Boost
+          ].join(",")
+          
           IO.popen([
             "sh", "-c",
-            "echo #{clean.shellescape} | piper --model #{@model} --length_scale #{1.0/rate} --output_raw 2>/dev/null | " \
-            "ffplay -nodisp -autoexit -af 'atempo=#{rate}' -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
+            "echo #{clean.shellescape} | piper --model #{@model} --output_raw 2>/dev/null | " \
+            "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af '#{ffmpeg_analog}' -f s16le -ar 22050 -ac 1 pipe: 2>/dev/null | " \
+            "ffplay -nodisp -autoexit -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
             "play -q -t raw -r 22050 -e signed -b 16 -c 1 - 2>/dev/null || aplay -q -f S16_LE -r 22050 -c 1 - 2>/dev/null"
           ]) { |p| p.read }
         end

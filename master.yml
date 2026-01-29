@@ -242,9 +242,9 @@ voice_personas:
   ares:
     name: "Ares"
     description: "Deep, deliberate, every word lands - warm danger"
-    voice_model: "en_US-lessac-medium"
-    speech_rate: 0.75
-    pitch: 0.65
+    voice_model: "en_US-ryan-high"  # AgentVibes angry voice
+    speech_rate: 0.85
+    pitch: 0.75  # Lower pitch for depth
     style:
       tone: "low, measured, each word chosen with care"
       delivery: "slow, deliberate pauses, words that land like weight"
