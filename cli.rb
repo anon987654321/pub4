@@ -1399,6 +1399,39 @@ module Voice
   DEFAULT_MODEL = "en_US-lessac-medium"
   DEFAULT_RATE = 1.0
   
+  # ElevenLabs voice IDs (pre-made voices from their library)
+  # https://elevenlabs.io/voice-library
+  ELEVENLABS_VOICES = {
+    "ares" => "pNInz6obpgDQGcFmaJgB",      # Adam - deep male
+    "noir" => "VR6AewLTigWG4xSOukaG",       # Arnold - gravelly
+    "glitch" => "jBpfuIE2acCO8z3wKNLl",     # Gigi - energetic female
+    "cosmic_barista" => "EXAVITQu4vr4xnSDxMaL", # Bella - young female
+    "victorian_ghost" => "onwK4e9ZLuTAKqWW03F9", # Daniel - British
+    "chaos_gremlin" => "jBpfuIE2acCO8z3wKNLl", # Gigi - energetic
+    "sleepy_sage" => "yoZ06aMxZJJ28mfd3POQ",   # Sam - calm male
+    "anxious_guru" => "21m00Tcm4TlvDq8ikWAM",  # Rachel - nervous energy
+    "depressed_coach" => "pNInz6obpgDQGcFmaJgB", # Adam - flat
+    "southern_alien" => "EXAVITQu4vr4xnSDxMaL",  # Bella - sweet
+    "dragon_librarian" => "VR6AewLTigWG4xSOukaG", # Arnold - gruff
+    "upside_down" => "jBpfuIE2acCO8z3wKNLl",     # Gigi
+    "enthusiastic_mortician" => "21m00Tcm4TlvDq8ikWAM", # Rachel - upbeat
+    "jazz_robot" => "pNInz6obpgDQGcFmaJgB",      # Adam - smooth
+    "vampire_teacher" => "onwK4e9ZLuTAKqWW03F9", # Daniel - British accent
+    "default" => "pNInz6obpgDQGcFmaJgB"          # Adam
+  }.freeze
+  
+  # ElevenLabs voice settings per persona
+  ELEVENLABS_SETTINGS = {
+    "ares" => { stability: 0.5, similarity: 0.75, style: 0.3 },
+    "glitch" => { stability: 0.2, similarity: 0.6, style: 0.8 },    # Unstable
+    "noir" => { stability: 0.7, similarity: 0.8, style: 0.2 },      # Steady
+    "sleepy_sage" => { stability: 0.8, similarity: 0.7, style: 0.1 }, # Very stable, slow
+    "chaos_gremlin" => { stability: 0.15, similarity: 0.5, style: 0.9 }, # Maximum chaos
+    "anxious_guru" => { stability: 0.3, similarity: 0.7, style: 0.6 },
+    "broken" => { stability: 0.1, similarity: 0.4, style: 0.7 },    # Glitchy
+    "default" => { stability: 0.5, similarity: 0.75, style: 0.3 }
+  }.freeze
+  
   # Audio degradation presets (FFmpeg filter chains)
   # VHS, tape, vinyl, radio, transmission effects
   AUDIO_EFFECTS = {
@@ -1528,15 +1561,31 @@ module Voice
       @current_effect = "warm"  # Default analog warmth
       @random_mode = false
       apply_persona("ares")  # Start as Ares
+      
+      # Check TTS engines in priority order: ElevenLabs > Piper > Browser
+      @elevenlabs_key = ENV["ELEVENLABS_API_KEY"]
+      @elevenlabs_available = !@elevenlabs_key.nil? && !@elevenlabs_key.empty?
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
                        system("which whisper-cpp > /dev/null 2>&1")
       @sox_available = system("which sox > /dev/null 2>&1") ||
                        system("which rec > /dev/null 2>&1")
-      @web_tts = !@tts_available
+      @web_tts = !@tts_available && !@elevenlabs_available
+      
+      if @elevenlabs_available
+        puts C.d("TTS: ElevenLabs")
+      elsif @tts_available
+        puts C.d("TTS: Piper")
+      else
+        puts C.d("TTS: Browser (Web Speech API)")
+      end
       
       # Auto-start web server for UI
       start_web_server if FALCON_AVAILABLE
+    end
+    
+    def elevenlabs_available?
+      @elevenlabs_available
     end
     
     def set_persona(name)
@@ -1641,11 +1690,11 @@ module Voice
     end
     
     def available?
-      @tts_available || @stt_available || @web_tts
+      @elevenlabs_available || @tts_available || @stt_available || @web_tts
     end
     
     def tts_available?
-      @tts_available || @web_tts
+      @elevenlabs_available || @tts_available || @web_tts
     end
     
     def stt_available?
@@ -1669,7 +1718,7 @@ module Voice
       @enabled = false
     end
     
-    # Text-to-speech via Piper with analog warmth
+    # Text-to-speech: ElevenLabs > Piper > Browser
     def speak(text)
       return unless @enabled && tts_available?
       return if text.nil? || text.strip.empty?
@@ -1697,33 +1746,97 @@ module Voice
       rate = @speech_rate || DEFAULT_RATE
       pitch_shift = @pitch || 1.0
       
-      if @tts_available
+      if @elevenlabs_available
+        # ElevenLabs API - highest quality
+        speak_elevenlabs(clean)
+      elsif @tts_available
         # Piper → FFmpeg analog chain → playback
-        # Build effect chain from preset + pitch/rate adjustments
-        Thread.new do
-          base_effects = [
-            "asetrate=22050*#{pitch_shift}",      # Pitch shift
-            "atempo=#{rate/pitch_shift}"          # Compensate tempo
-          ]
-          
-          # Add degradation effect
-          effect_chain = AUDIO_EFFECTS[@current_effect] || AUDIO_EFFECTS["warm"]
-          effect_filters = effect_chain.is_a?(Array) ? effect_chain : []
-          
-          ffmpeg_analog = (base_effects + effect_filters + ["volume=1.3"]).join(",")
-          
-          IO.popen([
-            "sh", "-c",
-            "echo #{clean.shellescape} | piper --model #{@model} --output_raw 2>/dev/null | " \
-            "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af '#{ffmpeg_analog}' -f s16le -ar 22050 -ac 1 pipe: 2>/dev/null | " \
-            "ffplay -nodisp -autoexit -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
-            "play -q -t raw -r 22050 -e signed -b 16 -c 1 - 2>/dev/null || aplay -q -f S16_LE -r 22050 -c 1 - 2>/dev/null"
-          ]) { |p| p.read }
-        end
+        speak_piper(clean, rate, pitch_shift)
       elsif @web_tts
-        # Queue for browser TTS (just text - effects only work with piper/ffmpeg)
+        # Queue for browser TTS
         start_web_server unless @server
         @queue << clean
+      end
+    end
+    
+    # ElevenLabs TTS via API
+    def speak_elevenlabs(text)
+      Thread.new do
+        voice_id = ELEVENLABS_VOICES[@current_persona] || ELEVENLABS_VOICES["default"]
+        settings = ELEVENLABS_SETTINGS[@current_persona] || ELEVENLABS_SETTINGS["default"]
+        
+        uri = URI("https://api.elevenlabs.io/v1/text-to-speech/#{voice_id}")
+        
+        body = {
+          text: text,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: settings[:stability],
+            similarity_boost: settings[:similarity],
+            style: settings[:style],
+            use_speaker_boost: true
+          }
+        }.to_json
+        
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.read_timeout = 30
+        
+        request = Net::HTTP::Post.new(uri)
+        request["xi-api-key"] = @elevenlabs_key
+        request["Content-Type"] = "application/json"
+        request["Accept"] = "audio/mpeg"
+        request.body = body
+        
+        response = http.request(request)
+        
+        if response.code == "200"
+          # Save to temp file and play with ffmpeg effects
+          tmpfile = "/tmp/elevenlabs_#{$$}_#{rand(10000)}.mp3"
+          File.binwrite(tmpfile, response.body)
+          
+          # Apply analog effects if not clean
+          effect_chain = AUDIO_EFFECTS[@current_effect] || []
+          if effect_chain.is_a?(Array) && effect_chain.any?
+            ffmpeg_fx = effect_chain.join(",")
+            system("ffplay -nodisp -autoexit -af '#{ffmpeg_fx}' #{tmpfile.shellescape} 2>/dev/null || " \
+                   "play -q #{tmpfile.shellescape} 2>/dev/null")
+          else
+            system("ffplay -nodisp -autoexit #{tmpfile.shellescape} 2>/dev/null || " \
+                   "play -q #{tmpfile.shellescape} 2>/dev/null")
+          end
+          
+          File.delete(tmpfile) if File.exist?(tmpfile)
+        else
+          # Fallback to browser TTS on error
+          @queue << text if @web_tts
+        end
+      rescue => e
+        # Silent fail, queue for browser
+        @queue << text if @web_tts
+      end
+    end
+    
+    # Piper TTS with FFmpeg effects
+    def speak_piper(text, rate, pitch_shift)
+      Thread.new do
+        base_effects = [
+          "asetrate=22050*#{pitch_shift}",
+          "atempo=#{rate/pitch_shift}"
+        ]
+        
+        effect_chain = AUDIO_EFFECTS[@current_effect] || AUDIO_EFFECTS["warm"]
+        effect_filters = effect_chain.is_a?(Array) ? effect_chain : []
+        
+        ffmpeg_analog = (base_effects + effect_filters + ["volume=1.3"]).join(",")
+        
+        IO.popen([
+          "sh", "-c",
+          "echo #{text.shellescape} | piper --model #{@model} --output_raw 2>/dev/null | " \
+          "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af '#{ffmpeg_analog}' -f s16le -ar 22050 -ac 1 pipe: 2>/dev/null | " \
+          "ffplay -nodisp -autoexit -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
+          "play -q -t raw -r 22050 -e signed -b 16 -c 1 - 2>/dev/null || aplay -q -f S16_LE -r 22050 -c 1 - 2>/dev/null"
+        ]) { |p| p.read }
       end
     end
     
@@ -1880,7 +1993,16 @@ module Voice
     
     def status
       parts = []
-      parts << "tts:#{@tts_available ? 'piper' : (@web_tts ? 'web' : 'no')}"
+      tts_engine = if @elevenlabs_available
+        "elevenlabs"
+      elsif @tts_available
+        "piper"
+      elsif @web_tts
+        "web"
+      else
+        "no"
+      end
+      parts << "tts:#{tts_engine}"
       parts << (@enabled ? "on" : "off")
       parts << "persona:#{@random_mode ? 'random' : @current_persona}"
       parts << "fx:#{@random_effect_mode ? 'random' : @current_effect}"
