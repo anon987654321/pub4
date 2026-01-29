@@ -210,7 +210,7 @@ ALL_APPS=(
 # Domain list for DNS
 ALL_DOMAINS=(
 
-  brgen.no:markedsplass,playlist,dating,tv,takeaway,maps
+  brgen.no:markedsplass,playlist,dating,tv,takeaway,maps,ai
 
   longyearbyn.no:markedsplass,playlist,dating,tv,takeaway,maps
 
@@ -1167,6 +1167,23 @@ relay $app {
 EOF
 
   done
+
+  # AI CLI relay (ai.brgen.no -> port 8787)
+  cat >> /etc/relayd.conf <<EOF
+
+table <ai> { 127.0.0.1 port 8787 }
+relay ai {
+  listen on $ext_if port 443 tls
+
+  protocol https
+
+  tls keypair brgen.no
+
+  forward to <ai> check tcp
+
+}
+
+EOF
 
   # Test relayd configuration before starting
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
