@@ -1721,9 +1721,9 @@ module Voice
           ]) { |p| p.read }
         end
       elsif @web_tts
-        # Queue for browser TTS (includes effect name for web processing)
+        # Queue for browser TTS (just text - effects only work with piper/ffmpeg)
         start_web_server unless @server
-        @queue << { text: clean, effect: @current_effect, persona: @current_persona }
+        @queue << clean
       end
     end
     
@@ -1804,8 +1804,7 @@ module Voice
               if message && OpenRouterChat.available?
                 result = OpenRouterChat.chat(message)
                 response = result.success? ? result.value : result.error
-                # Queue for TTS if voice enabled
-                @queue << response if @enabled
+                # Response goes directly to client, no queue (avoid double-speak)
                 body = Protocol::HTTP::Body::Buffered.wrap({ response: response }.to_json)
                 Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
               else
