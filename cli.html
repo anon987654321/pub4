@@ -2234,6 +2234,9 @@ const Pads = {
       await this.loadToneJS();
     }
     
+    // Start audio context first (required before creating effects)
+    await Tone.start();
+    
     // Create lush pad synth - Low End Theory style
     // Layer 1: Deep sub bass
     this.subBass = new Tone.Synth({
@@ -2541,7 +2544,112 @@ const Pads = {
 // Expose globally
 window.Pads = Pads;
 
-// Auto-start Dilla pads on first user interaction (required for Web Audio)
+// ============================================
+// DILLA DRUMS - MPC-style with drunk timing
+// ============================================
+const Drums = {
+  kick: null,
+  snare: null,
+  hat: null,
+  isPlaying: false,
+  swingAmount: 0.02,  // Dilla's drunk timing
+  
+  async init() {
+    if (typeof Tone === 'undefined') {
+      await Pads.loadToneJS();
+    }
+    await Tone.start();
+    
+    // MPC-style kick (808)
+    this.kick = new Tone.MembraneSynth({
+      pitchDecay: 0.05,
+      octaves: 6,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+    }).toDestination();
+    this.kick.volume.value = -4;
+    
+    // Lo-fi snare
+    this.snare = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 }
+    }).toDestination();
+    this.snare.volume.value = -10;
+    
+    // Closed hat
+    this.hat = new Tone.MetalSynth({
+      frequency: 250,
+      envelope: { attack: 0.001, decay: 0.05, release: 0.01 },
+      harmonicity: 5.1,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1.5
+    }).toDestination();
+    this.hat.volume.value = -18;
+    
+    console.log('[Drums] 🥁 MPC drums ready');
+  },
+  
+  // Add Dilla swing - slightly late/early hits
+  swing(time) {
+    return time + (Math.random() - 0.5) * this.swingAmount;
+  },
+  
+  // Classic boom-bap pattern
+  async play(tempo = 90) {
+    if (!this.kick) await this.init();
+    
+    this.isPlaying = true;
+    Tone.Transport.bpm.value = tempo;
+    
+    // Kick pattern: 1, 2-and, 3-and-a
+    const kickPattern = new Tone.Sequence((time, note) => {
+      if (!this.isPlaying) return;
+      this.kick.triggerAttackRelease(note, '8n', this.swing(time));
+    }, ['C1', null, null, 'C1', null, null, 'C1', null, null, 'C1', null, null, 'C1', null, null, null], '16n');
+    
+    // Snare on 2 and 4 (with slight drag)
+    const snarePattern = new Tone.Sequence((time, hit) => {
+      if (!this.isPlaying || !hit) return;
+      this.snare.triggerAttackRelease(this.swing(time) + 0.01); // Slightly behind
+    }, [null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null], '16n');
+    
+    // Hats - 16th groove with ghost notes
+    const hatPattern = new Tone.Sequence((time, vel) => {
+      if (!this.isPlaying) return;
+      this.hat.volume.value = -18 + (vel * 6);
+      this.hat.triggerAttackRelease('16n', this.swing(time));
+    }, [1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3, 1, 0.3, 0.5, 0.3], '16n');
+    
+    kickPattern.start(0);
+    snarePattern.start(0);
+    hatPattern.start(0);
+    
+    this.patterns = [kickPattern, snarePattern, hatPattern];
+    Tone.Transport.start();
+    
+    console.log(`[Drums] ▶ Playing @ ${tempo} BPM with Dilla swing`);
+  },
+  
+  stop() {
+    this.isPlaying = false;
+    if (this.patterns) {
+      this.patterns.forEach(p => p.stop());
+    }
+    Tone.Transport.stop();
+    console.log('[Drums] Stopped');
+  },
+  
+  // Adjust swing amount (0 = straight, 0.05 = very drunk)
+  setSwing(amount) {
+    this.swingAmount = Math.max(0, Math.min(0.05, amount));
+    console.log(`[Drums] Swing: ${this.swingAmount}`);
+  }
+};
+
+window.Drums = Drums;
+
+// Auto-start Dilla pads + drums on first user interaction
 let padsStarted = false;
 document.addEventListener('click', async () => {
   if (padsStarted) return;
@@ -2549,10 +2657,12 @@ document.addEventListener('click', async () => {
   try {
     console.log('[Pads] First click detected, initializing...');
     await Pads.init();
-    console.log('[Pads] Synth initialized');
+    await Drums.init();
+    console.log('[Pads] Synth + Drums initialized');
     // await Pads.addLofi(); // Disabled: requires HTTPS for AudioWorklet
     Pads.playDilla();
-    console.log('[Pads] 🎹 Auto-started J Dilla playlist');
+    Drums.play(Pads.dillaPlaylist[0].tempo);
+    console.log('[Pads] 🎹🥁 Auto-started J Dilla playlist with drums');
   } catch (e) {
     console.error('[Pads] Failed to start:', e);
     padsStarted = false; // Allow retry
