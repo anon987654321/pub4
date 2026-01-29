@@ -21,25 +21,25 @@
 
 @property --mesh-x-0 { syntax: "<percentage>"; inherits: false; initial-value: 85%; }
 @property --mesh-y-0 { syntax: "<percentage>"; inherits: false; initial-value: 80%; }
-@property --mesh-c-0 { syntax: "<color>"; inherits: false; initial-value: hsla(250, 40%, 25%, 1); }
+@property --mesh-c-0 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 92%, 1); }
 @property --mesh-s-start-0 { syntax: "<percentage>"; inherits: false; initial-value: 9%; }
 @property --mesh-s-end-0 { syntax: "<percentage>"; inherits: false; initial-value: 55%; }
 
 @property --mesh-x-1 { syntax: "<percentage>"; inherits: false; initial-value: 60%; }
 @property --mesh-y-1 { syntax: "<percentage>"; inherits: false; initial-value: 24%; }
-@property --mesh-c-1 { syntax: "<color>"; inherits: false; initial-value: hsla(270, 35%, 30%, 1); }
+@property --mesh-c-1 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 88%, 1); }
 @property --mesh-s-start-1 { syntax: "<percentage>"; inherits: false; initial-value: 5%; }
 @property --mesh-s-end-1 { syntax: "<percentage>"; inherits: false; initial-value: 72%; }
 
 @property --mesh-x-2 { syntax: "<percentage>"; inherits: false; initial-value: 13%; }
 @property --mesh-y-2 { syntax: "<percentage>"; inherits: false; initial-value: 82%; }
-@property --mesh-c-2 { syntax: "<color>"; inherits: false; initial-value: hsla(230, 30%, 20%, 0.8); }
+@property --mesh-c-2 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 85%, 0.6); }
 @property --mesh-s-start-2 { syntax: "<percentage>"; inherits: false; initial-value: 5%; }
 @property --mesh-s-end-2 { syntax: "<percentage>"; inherits: false; initial-value: 52%; }
 
 @property --mesh-x-3 { syntax: "<percentage>"; inherits: false; initial-value: 24%; }
 @property --mesh-y-3 { syntax: "<percentage>"; inherits: false; initial-value: 7%; }
-@property --mesh-c-3 { syntax: "<color>"; inherits: false; initial-value: hsla(260, 45%, 35%, 1); }
+@property --mesh-c-3 { syntax: "<color>"; inherits: false; initial-value: hsla(0, 0%, 90%, 1); }
 @property --mesh-s-start-3 { syntax: "<percentage>"; inherits: false; initial-value: 13%; }
 @property --mesh-s-end-3 { syntax: "<percentage>"; inherits: false; initial-value: 68%; }
 
@@ -54,14 +54,14 @@
 @keyframes mesh-gradient {
   0% {
     --mesh-x-0: 85%; --mesh-y-0: 80%;
-    --mesh-c-1: hsla(270, 35%, 30%, 1);
+    --mesh-c-1: hsla(0, 0%, 88%, 1);
     --mesh-x-1: 60%; --mesh-y-1: 24%;
     --mesh-x-2: 13%; --mesh-y-2: 82%;
     --mesh-x-3: 24%; --mesh-y-3: 7%;
   }
   100% {
     --mesh-x-0: 31%; --mesh-y-0: 94%;
-    --mesh-c-1: hsla(250, 40%, 35%, 1);
+    --mesh-c-1: hsla(0, 0%, 90%, 1);
     --mesh-x-1: 2%; --mesh-y-1: 25%;
     --mesh-x-2: 98%; --mesh-y-2: 20%;
     --mesh-x-3: 95%; --mesh-y-3: 92%;
@@ -158,7 +158,7 @@ body {
   height: 100vh;
   height: 100dvh; /* Dynamic viewport for mobile */
   overflow: hidden;
-  background: linear-gradient(135deg, #0a0a12 0%, #12101a 50%, #0a0a12 100%);
+  background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -215,23 +215,18 @@ h1 {
   filter: url(#edge-displacement) url(#glow);
   animation: breathe 4s ease-in-out infinite;
   transform-origin: center center;
-  transform-style: preserve-3d;
 }
 
 .blob {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #0a0812;
+  background: #000;
   background-image:
     radial-gradient(circle at var(--mesh-x-0) var(--mesh-y-0), var(--mesh-c-0) var(--mesh-s-start-0), transparent var(--mesh-s-end-0)),
     radial-gradient(circle at var(--mesh-x-1) var(--mesh-y-1), var(--mesh-c-1) var(--mesh-s-start-1), transparent var(--mesh-s-end-1)),
     radial-gradient(circle at var(--mesh-x-2) var(--mesh-y-2), var(--mesh-c-2) var(--mesh-s-start-2), transparent var(--mesh-s-end-2)),
-    radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3)),
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 40%);
-  box-shadow: 
-    inset 0 0 60px rgba(100,80,160,0.2),
-    0 0 80px rgba(80,60,140,0.25);
+    radial-gradient(circle at var(--mesh-x-3) var(--mesh-y-3), var(--mesh-c-3) var(--mesh-s-start-3), transparent var(--mesh-s-end-3));
   
   --depth: 0.3;
   --bass-deform: 0;
@@ -639,22 +634,13 @@ h1 {
   pointer-events: none;
 }
 
-/* Subtle ambient glow */
-.ambient-glow {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 50%, rgba(100, 80, 180, 0.08) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: -1;
-}
-
 .light-leak {
   position: fixed;
   top: -10%;
   right: -10%;
   width: 40%;
   height: 40%;
-  background: radial-gradient(ellipse at top right, rgba(140, 120, 200, 0.06), transparent 70%);
+  background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.08), transparent 70%);
   animation: light-leak 12s ease-in-out infinite;
   pointer-events: none;
   mix-blend-mode: screen;
@@ -669,9 +655,6 @@ h1 {
 </style>
 </head>
 <body>
-
-<!-- Ambient glow -->
-<div class="ambient-glow"></div>
 
 <h1>Johann sin AI</h1>
 
