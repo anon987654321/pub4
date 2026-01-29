@@ -1148,6 +1148,83 @@ module OpenRouterChat
   class << self
     attr_reader :total_cost, :total_tokens
     
+    # Tool definitions for Claude
+    TOOLS = [
+      {
+        type: "function",
+        function: {
+          name: "read_file",
+          description: "Read contents of a file",
+          parameters: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Absolute or relative file path" }
+            },
+            required: ["path"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "write_file",
+          description: "Write content to a file (creates or overwrites)",
+          parameters: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "File path to write" },
+              content: { type: "string", description: "Content to write" }
+            },
+            required: ["path", "content"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "list_dir",
+          description: "List files in a directory",
+          parameters: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Directory path (default: current)" }
+            },
+            required: []
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "run_command",
+          description: "Execute a shell command and return output",
+          parameters: {
+            type: "object",
+            properties: {
+              command: { type: "string", description: "Shell command to execute" }
+            },
+            required: ["command"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_files",
+          description: "Search for pattern in files (grep)",
+          parameters: {
+            type: "object",
+            properties: {
+              pattern: { type: "string", description: "Regex pattern to search" },
+              path: { type: "string", description: "Directory to search (default: .)" },
+              glob: { type: "string", description: "File glob pattern (default: *)" }
+            },
+            required: ["pattern"]
+          }
+        }
+      }
+    ].freeze
+    
     def init(config)
       @config = config
       @api_key = ENV["OPENROUTER_API_KEY"]
@@ -1158,6 +1235,7 @@ module OpenRouterChat
       @total_cost = 0.0
       @total_tokens = 0
       @last_cost = 0.0
+      @tools_enabled = true
     end
     
     def available?
@@ -1170,6 +1248,67 @@ module OpenRouterChat
     
     def current_model
       @model
+    end
+    
+    def toggle_tools
+      @tools_enabled = !@tools_enabled
+      @tools_enabled
+    end
+    
+    def tools_enabled?
+      @tools_enabled
+    end
+    
+    # Execute a tool call from Claude
+    def execute_tool(name, args)
+      case name
+      when "read_file"
+        path = args["path"]
+        if File.exist?(path)
+          content = File.read(path, encoding: "UTF-8")
+          { success: true, content: content[0..50000] }  # Limit size
+        else
+          { success: false, error: "File not found: #{path}" }
+        end
+      when "write_file"
+        path = args["path"]
+        content = args["content"]
+        begin
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, content)
+          { success: true, message: "Wrote #{content.bytesize} bytes to #{path}" }
+        rescue => e
+          { success: false, error: e.message }
+        end
+      when "list_dir"
+        path = args["path"] || "."
+        if Dir.exist?(path)
+          entries = Dir.entries(path).reject { |e| e.start_with?(".") }.sort
+          { success: true, entries: entries }
+        else
+          { success: false, error: "Directory not found: #{path}" }
+        end
+      when "run_command"
+        command = args["command"]
+        begin
+          output = `#{command} 2>&1`
+          { success: $?.success?, output: output[0..20000], exit_code: $?.exitstatus }
+        rescue => e
+          { success: false, error: e.message }
+        end
+      when "search_files"
+        pattern = args["pattern"]
+        path = args["path"] || "."
+        glob = args["glob"] || "*"
+        begin
+          output = `grep -rn --include='#{glob}' '#{pattern}' #{path} 2>&1 | head -50`
+          { success: true, matches: output }
+        rescue => e
+          { success: false, error: e.message }
+        end
+      else
+        { success: false, error: "Unknown tool: #{name}" }
+      end
     end
     
     def add_context_file(path)
@@ -1189,33 +1328,58 @@ module OpenRouterChat
     
     def chat(message, retries: 3)
       return Result.failure("OPENROUTER_API_KEY not set") unless available?
-      
+
       @conversation << { role: "user", content: message }
-      
-      response = nil
-      retries.times do |i|
-        response = send_request
-        break unless response[:error]&.include?("timeout") || response[:error]&.include?("rate")
-        sleep(2 ** i)  # exponential backoff
-      end
-      
-      if response[:error]
-        Result.failure(response[:error])
-      else
-        # Track cost from response
+
+      # Tool execution loop
+      max_tool_rounds = 10
+      tool_round = 0
+      final_content = ""
+
+      loop do
+        response = nil
+        retries.times do |i|
+          response = send_request
+          break unless response[:error]&.include?("timeout") || response[:error]&.include?("rate")
+          sleep(2 ** i)
+        end
+
+        return Result.failure(response[:error]) if response[:error]
+
         if response[:usage]
           @total_tokens += response[:usage][:total_tokens] || 0
           @last_cost = response[:usage][:cost] || 0.0
           @total_cost += @last_cost
         end
-        
-        # Strip non-ASCII chars that don't render on OpenBSD
-        assistant_message = response[:content].gsub(/[^ -]/, '')
-        @conversation << { role: "assistant", content: assistant_message }
-        Result.success(assistant_message)
+
+        if response[:tool_calls] && !response[:tool_calls].empty? && @tools_enabled
+          tool_round += 1
+          break if tool_round > max_tool_rounds
+
+          @conversation << { role: "assistant", content: response[:content], tool_calls: response[:tool_calls] }
+
+          response[:tool_calls].each do |tc|
+            func = tc["function"]
+            name = func["name"]
+            args = JSON.parse(func["arguments"]) rescue {}
+
+            puts C.d("[Tool] #{name}(#{args.map { |k,v| "#{k}=#{v.to_s[0..30]}" }.join(", ")})")
+            result = execute_tool(name, args)
+            puts C.d("[Tool] -> #{result[:success] ? 'OK' : 'FAIL'}")
+
+            @conversation << { role: "tool", tool_call_id: tc["id"], content: JSON.generate(result) }
+          end
+          next
+        end
+
+        final_content = response[:content] || ""
+        break
       end
+
+      assistant_message = final_content.to_s.gsub(/[^ -~]/, '')
+      @conversation << { role: "assistant", content: assistant_message }
+      Result.success(assistant_message)
     end
-    
     def last_cost
       @last_cost
     end
@@ -1379,18 +1543,25 @@ module OpenRouterChat
       
       messages = [{ role: "system", content: system_with_context }] + @conversation
       
-      request.body = JSON.generate({
+      payload = {
         model: @model,
         messages: messages,
         max_tokens: 4096,
-        temperature: @persona_prompt ? 0.9 : 0.7  # Higher temp for persona
-      })
+        temperature: @persona_prompt ? 0.9 : 0.7
+      }
+      
+      # Add tools if enabled
+      payload[:tools] = TOOLS if @tools_enabled
+      
+      request.body = JSON.generate(payload)
       
       response = http.request(request)
       body = JSON.parse(response.body)
       
       if response.code.to_i == 200
-        content = body.dig("choices", 0, "message", "content")
+        message = body.dig("choices", 0, "message")
+        content = message["content"]
+        tool_calls = message["tool_calls"]
         usage = body["usage"] || {}
         
         # Extract cost from OpenRouter response
@@ -1398,11 +1569,10 @@ module OpenRouterChat
         if usage["cost"]
           cost = usage["cost"].to_f
         elsif usage["total_tokens"]
-          # Estimate if not provided (~$0.003/1k for sonnet)
           cost = (usage["total_tokens"].to_f / 1000) * 0.003
         end
         
-        { content: content, usage: { total_tokens: usage["total_tokens"], cost: cost } }
+        { content: content, tool_calls: tool_calls, usage: { total_tokens: usage["total_tokens"], cost: cost } }
       else
         error = body.dig("error", "message") || "HTTP #{response.code}"
         { error: error }
@@ -3062,7 +3232,8 @@ export OPENROUTER_API_KEY="#{key}""
       frames = ['|', '/', '-', '\\']
       i = 0
       loop do
-        print "#{frames[i % 4]} "
+        print "
+#{frames[i % 4]} "
         $stdout.flush
         sleep 0.1
         i += 1
@@ -3071,7 +3242,9 @@ export OPENROUTER_API_KEY="#{key}""
     
     result = OpenRouterChat.chat(message)
     spinner.kill
-    print "  "
+    print "
+  
+"
     
     if result.success?
       response = result.value
