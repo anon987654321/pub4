@@ -47,6 +47,26 @@ laws:
     applies_to: [verbosity, comments, naming]
     rationale: "Aesthetic, not functional"
 
+# EFFICIENCY PATTERNS (learned optimizations for CLI/agent behavior)
+efficiency:
+  file_reading:
+    principle: "read_once_grep_never"
+    description: "Load full file into context once, then work from memory. Avoid repeated grep/search calls."
+    anti_pattern: "Multiple grep calls to same file to find different sections"
+    correct_pattern: "Single view/cat of file, then reference from context"
+  
+  parallel_operations:
+    principle: "batch_independent_calls"
+    description: "Make all independent tool calls in single response"
+    anti_pattern: "Sequential calls that could run in parallel"
+    correct_pattern: "Multiple view/grep calls in one response when files are independent"
+  
+  command_chaining:
+    principle: "chain_dependent_commands"
+    description: "Use && to chain related shell commands"
+    anti_pattern: "Separate tool calls for cd, then build, then test"
+    correct_pattern: "cd dir && npm run build && npm test"
+
 # REGISTRY (pattern-based violation detection)
 # Each rule maps to a Law and has priority ordering
 registry:
