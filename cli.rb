@@ -12,7 +12,7 @@ if Dir.exist?(user_gem_dir)
   Dir.glob("#{user_gem_dir}/*/lib").each { |path| $LOAD_PATH.unshift(path) }
 end
 
-# MASTER.YML v1.6.0
+# MASTER.YML v1.7.0
 # Code governance agent with chat-first UX
 # Inspired by: Claude Code, Aider, OpenCode
 
@@ -23,6 +23,33 @@ require "optparse"
 require "digest"
 require "net/http"
 require "uri"
+require "readline"
+require "timeout"
+
+# History file for readline
+HISTORY_FILE = File.expand_path("~/.convergence_history")
+
+# Model aliases for quick switching
+MODEL_ALIASES = {
+  "fast" => "deepseek/deepseek-chat",
+  "smart" => "anthropic/claude-sonnet-4",
+  "opus" => "anthropic/claude-opus-4",
+  "cheap" => "deepseek/deepseek-chat",
+  "gpt" => "openai/gpt-4o",
+  "local" => "ollama/llama3"
+}.freeze
+
+# Command aliases
+COMMAND_ALIASES = {
+  "s" => "scan",
+  "f" => "fix",
+  "c" => "converge",
+  "h" => "help",
+  "q" => "quit",
+  "m" => "model",
+  "b" => "browse",
+  "?" => "help"
+}.freeze
 
 # Auto-install missing dependencies
 module DependencyManager
@@ -1340,9 +1367,16 @@ require "socket"
 require "json"
 
 module Voice
-  PIPER_MODEL = "en_US-lessac-low"  # Lofi grainy voice
+  # Wheatley from Portal 2 - bumbling, fast-talking, socially awkward humor
+  # Download: https://huggingface.co/davet2001/wheatley1
+  # Fallback: en_US-lessac-medium for a generic but clear voice
+  PIPER_MODEL = ENV.fetch("PIPER_MODEL", "wheatley1")
+  PIPER_FALLBACK = "en_US-lessac-medium"
   WHISPER_MODEL = "base.en"
   WEB_PORT = 8787
+  
+  # Speech rate: 0.8 = slower/awkward pauses, 1.2 = nervous fast-talking
+  SPEECH_RATE = ENV.fetch("PIPER_RATE", "1.1").to_f
   
   class << self
     def init(config)
@@ -1350,12 +1384,35 @@ module Voice
       @enabled = false
       @queue = Queue.new
       @server = nil
+      @model = find_piper_model
       @tts_available = system("which piper > /dev/null 2>&1")
       @stt_available = system("which whisper > /dev/null 2>&1") || 
                        system("which whisper-cpp > /dev/null 2>&1")
       @sox_available = system("which sox > /dev/null 2>&1") ||
                        system("which rec > /dev/null 2>&1")
       @web_tts = !@tts_available  # Use browser TTS if no native
+    end
+    
+    def find_piper_model
+      # Check for Wheatley or other quirky models first
+      model_dirs = [
+        File.expand_path("~/.local/share/piper-voices"),
+        "/usr/share/piper-voices",
+        "/usr/local/share/piper-voices"
+      ]
+      
+      # Try primary model
+      model_dirs.each do |dir|
+        path = File.join(dir, "#{PIPER_MODEL}.onnx")
+        return PIPER_MODEL if File.exist?(path)
+      end
+      
+      # Fall back to lessac
+      PIPER_FALLBACK
+    end
+    
+    def model_name
+      @model || PIPER_MODEL
     end
     
     def available?
@@ -1401,13 +1458,14 @@ module Voice
       return if clean.empty?
       
       if @tts_available
-        # Stream through Piper with lofi effects
+        # Stream through Piper with quirky voice and configurable rate
+        # Rate >1.0 = nervous fast-talking, <1.0 = awkward pauses
         Thread.new do
           IO.popen([
             "sh", "-c",
-            "echo #{clean.shellescape} | piper --model #{PIPER_MODEL} --output_raw 2>/dev/null | " \
-            "ffmpeg -f s16le -ar 22050 -ac 1 -i - -af 'highpass=f=200,lowpass=f=5000' -f wav - 2>/dev/null | " \
-            "play -q - 2>/dev/null || aplay -q - 2>/dev/null"
+            "echo #{clean.shellescape} | piper --model #{@model} --length_scale #{1.0/SPEECH_RATE} --output_raw 2>/dev/null | " \
+            "ffplay -nodisp -autoexit -af 'atempo=#{SPEECH_RATE}' -f s16le -ar 22050 -ac 1 -i - 2>/dev/null || " \
+            "play -q -t raw -r 22050 -e signed -b 16 -c 1 - 2>/dev/null || aplay -q -f S16_LE -r 22050 -c 1 - 2>/dev/null"
           ]) { |p| p.read }
         end
       elsif @web_tts
@@ -1415,6 +1473,41 @@ module Voice
         start_web_server unless @server
         @queue << clean
       end
+    end
+    
+    # Download Wheatley or other quirky voice models
+    def self.install_voice(name = "wheatley1")
+      voice_dir = File.expand_path("~/.local/share/piper-voices")
+      FileUtils.mkdir_p(voice_dir)
+      
+      models = {
+        "wheatley1" => "https://huggingface.co/davet2001/wheatley1/resolve/main/wheatley1.onnx",
+        "glados" => "https://huggingface.co/csukuangfj/vits-piper-en_US-glados-high/resolve/main/en_US-glados-high.onnx",
+        "kronk" => "https://huggingface.co/russdill/kronk/resolve/main/kronk.onnx"
+      }
+      
+      url = models[name]
+      return puts "Unknown voice: #{name}. Available: #{models.keys.join(', ')}" unless url
+      
+      onnx_path = File.join(voice_dir, "#{name}.onnx")
+      json_path = File.join(voice_dir, "#{name}.onnx.json")
+      
+      if File.exist?(onnx_path)
+        puts "Voice #{name} already installed"
+        return true
+      end
+      
+      puts "Downloading #{name} voice model..."
+      system("curl -L -o #{onnx_path.shellescape} #{url.shellescape}")
+      
+      # Create minimal config JSON if needed
+      File.write(json_path, JSON.generate({
+        "audio" => {"sample_rate" => 22050},
+        "espeak" => {"voice" => "en-us"}
+      })) unless File.exist?(json_path)
+      
+      puts "Installed: #{name}"
+      true
     end
     
     # Start Falcon async server for browser TTS
@@ -2318,30 +2411,96 @@ export OPENROUTER_API_KEY="#{key}""
       "uninstall-hook" => method(:cmd_uninstall_hook),
       "journal" => method(:cmd_journal),
       "patterns" => method(:cmd_patterns),
+      "export" => method(:cmd_export),
+      "import" => method(:cmd_import),
+      "sync" => method(:cmd_sync),
       "help" => method(:cmd_help),
       "exit" => method(:cmd_exit),
       "quit" => method(:cmd_exit)
     }
   end
 
+  def setup_readline
+    # Load history
+    if File.exist?(HISTORY_FILE)
+      File.readlines(HISTORY_FILE).each { |line| Readline::HISTORY << line.chomp }
+    end
+    
+    # Tab completion for commands and files
+    Readline.completion_proc = proc do |input|
+      if input.start_with?("/")
+        # Complete commands
+        cmd = input[1..]
+        matches = @commands.keys.select { |c| c.start_with?(cmd) }
+        matches += COMMAND_ALIASES.keys.select { |c| c.start_with?(cmd) }
+        matches.map { |c| "/#{c}" }
+      else
+        # Complete file paths
+        Dir.glob("#{input}*").first(20)
+      end
+    end
+  end
+  
+  def save_history
+    File.open(HISTORY_FILE, "w") do |f|
+      Readline::HISTORY.to_a.last(1000).each { |line| f.puts line }
+    end
+  rescue => e
+    # Silent fail on history save
+  end
+  
+  def build_prompt
+    parts = []
+    turns = OpenRouterChat.conversation_length
+    tokens = OpenRouterChat.token_estimate
+    model_short = OpenRouterChat.model_name.split("/").last.split("-").first(2).join("-") rescue "?"
+    
+    parts << C.d("[#{turns}]") if turns > 0
+    parts << C.d("[#{model_short}]")
+    parts << C.y("[#{(tokens/1000.0).round(1)}k]") if tokens > 1000
+    parts << "> "
+    parts.join(" ")
+  end
+
   def repl
+    setup_readline
+    
     while @running
-      turns = OpenRouterChat.conversation_length
-      prompt = turns > 0 ? C.d("[#{turns}] ") + "> " : "> "
-      print prompt
+      prompt = build_prompt
       
-      input = gets
+      begin
+        input = Readline.readline(prompt, true)
+      rescue Interrupt
+        puts ""
+        next
+      end
+      
       break unless input
+      
+      # Remove empty/duplicate from history
+      Readline::HISTORY.pop if input.strip.empty? || 
+        (Readline::HISTORY.length > 1 && Readline::HISTORY[-2] == input)
       
       input = input.strip.force_encoding("UTF-8")
       next if input.empty?
       
+      # Multi-line input with backslash
+      while input.end_with?("\\")
+        input = input[0..-2] + "\n"
+        continuation = Readline.readline("... ", false)
+        break unless continuation
+        input += continuation
+      end
+      
       # H3: User control - Ctrl+C handled, /clear to reset
       # H7: Flexibility - / prefix for commands, plain text for chat
       if input.start_with?("/")
-        parts = input[1..].split(/s+/)
+        parts = input[1..].split(/\s+/)
         command = parts[0].downcase
         args = parts[1..]
+        
+        # Resolve aliases
+        command = COMMAND_ALIASES[command] || command
         
         if @commands.key?(command)
           @commands[command].call(*args)
@@ -2811,11 +2970,24 @@ iteration #{iter}/#{max_iter}"
   end
   
   def cmd_voice(*args)
-    if Voice.available?
-      enabled = Voice.toggle
-      puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.status})"
+    if args.empty?
+      if Voice.available?
+        enabled = Voice.toggle
+        puts "Voice #{enabled ? 'on' : 'off'} (#{Voice.model_name}, rate #{Voice::SPEECH_RATE})"
+      else
+        puts "Voice unavailable: install piper, whisper, sox"
+        puts "  /voice install wheatley1  - Quirky Portal 2 voice"
+        puts "  /voice install glados     - Deadpan sarcastic"
+        puts "  /voice install kronk      - Lovable awkward"
+      end
+    elsif args[0] == "install"
+      voice = args[1] || "wheatley1"
+      Voice.install_voice(voice)
+    elsif args[0] == "rate"
+      rate = args[1]&.to_f || 1.0
+      puts "Set PIPER_RATE=#{rate} in env for persistent change"
     else
-      puts "Voice unavailable: install piper, whisper, sox"
+      puts "Unknown: /voice #{args[0]}"
     end
   end
   
