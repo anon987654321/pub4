@@ -182,6 +182,21 @@ h1 {
   color: #fff;
   letter-spacing: -0.02em;
   z-index: 1000;
+  outline: none;
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  cursor: text;
+}
+
+h1:focus {
+  background: rgba(255,255,255,0.1);
+}
+
+h1:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(255,255,255,0.4);
 }
 
 /* ============================================
@@ -696,7 +711,7 @@ h1 {
 </head>
 <body>
 
-<h1>Johann sin AI</h1>
+<h1 id="aresInput" contenteditable="true" data-placeholder="Johann sin AI">Johann sin AI</h1>
 
 <!-- SVG Filters -->
 <svg width="0" height="0" style="position: absolute;">
@@ -805,12 +820,12 @@ h1 {
 <div id="afterimageContainer" style="position:fixed; inset:0; pointer-events:none; z-index:1;"></div>
 
 <!-- Status indicators -->
-<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:24px; color:rgba(255,255,255,0.9); z-index:1000; pointer-events:none;">
+<div id="statusIndicator" style="position:fixed; top:20px; right:20px; font-family:'Courier New',monospace; font-size:16px; color:rgba(255,255,255,0.9); z-index:1000; pointer-events:none;">
   <style>
-    .mic-icon { opacity: 0.5; transition: opacity 0.2s; }
+    .mic-icon { opacity: 0.5; transition: opacity 0.2s; font-size: 14px; }
     .mic-icon.mic-active { opacity: 1; animation: pulse-mic 1s ease-in-out infinite; }
-    .spinner { color: #fff; }
-    .speaking-icon { animation: pulse-speak 0.5s ease-in-out infinite; }
+    .spinner { color: rgba(255,255,255,0.7); font-size: 12px; }
+    .speaking-icon { font-size: 14px; animation: pulse-speak 0.5s ease-in-out infinite; }
     @keyframes pulse-mic { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     @keyframes pulse-speak { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
   </style>
@@ -820,10 +835,6 @@ h1 {
 <div class="grain-overlay"></div>
 <div class="vignette"></div>
 <div class="light-leak"></div>
-
-<!-- Text input for typing to Ares -->
-<input type="text" id="aresInput" placeholder="" 
-  style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 40px); max-width:400px; padding:14px 20px; border:none; background:transparent; color:rgba(255,255,255,0.8); border-radius:25px; font-size:16px; outline:none; z-index:1000; will-change:transform; -webkit-tap-highlight-color:transparent; touch-action:manipulation; -webkit-appearance:none;">
 
 <!-- Audio element for visualization (no autoplay) -->
 <audio id="audioPlayer" style="display: none;" crossorigin="anonymous"></audio>
@@ -2214,13 +2225,37 @@ const Ares = {
   setupTextInput() {
     const input = document.getElementById('aresInput');
     if (!input) return;
+    
+    const defaultText = input.dataset.placeholder || 'Johann sin AI';
+    
+    // Handle Enter key to send message
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        setUIState('thinking');
-        this.send(input.value.trim());
-        input.value = '';
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const text = input.textContent.trim();
+        if (text && text !== defaultText) {
+          setUIState('thinking');
+          this.send(text);
+          input.textContent = defaultText;
+          input.blur();
+        }
       }
     });
+    
+    // Clear default text on focus
+    input.addEventListener('focus', () => {
+      if (input.textContent.trim() === defaultText) {
+        input.textContent = '';
+      }
+    });
+    
+    // Restore default text if empty on blur
+    input.addEventListener('blur', () => {
+      if (!input.textContent.trim()) {
+        input.textContent = defaultText;
+      }
+    });
+    
     // Prevent click-to-speak when typing
     input.addEventListener('click', (e) => e.stopPropagation());
   },
@@ -2281,7 +2316,7 @@ const Ares = {
   send(message) {
     // Instant visual feedback
     const input = document.getElementById('aresInput');
-    if (input) input.style.borderColor = '#0af';
+    if (input) input.style.background = 'rgba(0,170,255,0.1)';
     if (typeof depth !== 'undefined') depth = 0.6;
     
     fetch('/chat', {
