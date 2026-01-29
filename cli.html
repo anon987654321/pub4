@@ -526,7 +526,36 @@ const CONFIG = {
   gravityRadius: 250,
   gravityStrength: 0.8,
   escapeSpeed: 1.5,
-  escapeVelocity: 2
+  escapeVelocity: 2,
+  
+  // === NEW: 3D LIFE ENHANCEMENTS ===
+  // Breathing
+  breathingCycle: 4000,      // 4 second breath cycle
+  breathingMin: 0.97,
+  breathingMax: 1.03,
+  
+  // Parallax layers
+  parallaxStrength: 0.15,    // Inner particles move slower
+  
+  // Micro-jitter
+  jitterAmount: 1.5,         // Pixels of random jitter
+  jitterSpeed: 0.05,
+  
+  // Idle sway
+  idleSwayAmount: 8,         // Pixels of gentle drift
+  idleSwaySpeed: 0.0008,
+  
+  // Light source
+  lightAngleSpeed: 0.0003,   // Slow rotation of fake light
+  rimLightIntensity: 0.15,
+  specularIntensity: 0.2,
+  
+  // Audio anticipation
+  anticipationShrink: 0.95,
+  anticipationDuration: 150,
+  
+  // Attention (look toward mouse)
+  attentionStrength: 0.03
 };
 
 // ============================================
@@ -671,6 +700,20 @@ let colorSatShift = 0;
 let convulsionX = 0;
 let convulsionY = 0;
 let aggressiveScale = 1;
+
+// === NEW: 3D LIFE STATE ===
+let breathingPhase = 0;
+let breathingScale = 1;
+let jitterOffsetX = 0;
+let jitterOffsetY = 0;
+let idleSwayX = 0;
+let idleSwayY = 0;
+let idleSwayPhase = Math.random() * Math.PI * 2;
+let lightAngle = 0;
+let isAnticipating = false;
+let anticipationScale = 1;
+let attentionOffsetX = 0;
+let attentionOffsetY = 0;
 
 // ============================================
 // MOUSE TRACKING
@@ -1030,6 +1073,104 @@ function updateGravity() {
 }
 
 // ============================================
+// 3D LIFE ENHANCEMENTS
+// ============================================
+
+// 11. BREATHING RHYTHM - Slow organic scale pulse
+function updateBreathing(time) {
+  breathingPhase = (time % CONFIG.breathingCycle) / CONFIG.breathingCycle;
+  const breath = Math.sin(breathingPhase * Math.PI * 2);
+  breathingScale = CONFIG.breathingMin + (breath + 1) * 0.5 * (CONFIG.breathingMax - CONFIG.breathingMin);
+}
+
+// 12. MICRO-JITTER - Tiny random position offsets for organic feel
+function updateJitter(time) {
+  const jitterPhase = time * CONFIG.jitterSpeed;
+  jitterOffsetX = (Math.sin(jitterPhase * 7.3) + Math.sin(jitterPhase * 11.7)) * CONFIG.jitterAmount * 0.5;
+  jitterOffsetY = (Math.cos(jitterPhase * 8.9) + Math.cos(jitterPhase * 13.1)) * CONFIG.jitterAmount * 0.5;
+}
+
+// 13. IDLE SWAY - Gentle floating motion when not active
+function updateIdleSway(time) {
+  idleSwayPhase += CONFIG.idleSwaySpeed;
+  // Figure-8 pattern for organic movement
+  idleSwayX = Math.sin(idleSwayPhase) * Math.cos(idleSwayPhase * 0.5) * CONFIG.idleSwayAmount;
+  idleSwayY = Math.sin(idleSwayPhase * 0.7) * CONFIG.idleSwayAmount * 0.6;
+}
+
+// 14. LIGHT SOURCE - Rotating specular highlight and rim light
+function updateLighting(time) {
+  lightAngle += CONFIG.lightAngleSpeed;
+}
+
+// 15. AUDIO ANTICIPATION - Slight shrink before speaking
+function triggerAnticipation() {
+  if (isAnticipating) return;
+  isAnticipating = true;
+  anticipationScale = CONFIG.anticipationShrink;
+  setTimeout(() => {
+    isAnticipating = false;
+    anticipationScale = 1.05; // Slight expand after
+    setTimeout(() => { anticipationScale = 1; }, 200);
+  }, CONFIG.anticipationDuration);
+}
+
+// 16. ATTENTION - Subtle lean toward mouse
+function updateAttention() {
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const dx = mouseX - centerX;
+  const dy = mouseY - centerY;
+  
+  attentionOffsetX += (dx * CONFIG.attentionStrength - attentionOffsetX) * 0.05;
+  attentionOffsetY += (dy * CONFIG.attentionStrength - attentionOffsetY) * 0.05;
+}
+
+// Draw lighting effects on canvas
+function drawLighting() {
+  const centerX = window.innerWidth / 2 + orbX;
+  const centerY = window.innerHeight / 2 + orbY;
+  const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.28;
+  
+  // Specular highlight (bright spot that rotates)
+  const specX = centerX + Math.cos(lightAngle) * blobSize * 0.3;
+  const specY = centerY + Math.sin(lightAngle) * blobSize * 0.3;
+  const specGradient = effectsCtx.createRadialGradient(specX, specY, 0, specX, specY, blobSize * 0.4);
+  specGradient.addColorStop(0, `rgba(255, 255, 255, ${CONFIG.specularIntensity})`);
+  specGradient.addColorStop(0.5, `rgba(255, 255, 255, ${CONFIG.specularIntensity * 0.3})`);
+  specGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  effectsCtx.fillStyle = specGradient;
+  effectsCtx.beginPath();
+  effectsCtx.arc(centerX, centerY, blobSize * 1.1, 0, Math.PI * 2);
+  effectsCtx.fill();
+  
+  // Rim lighting (edge glow opposite to light)
+  const rimAngle = lightAngle + Math.PI;
+  const rimX = centerX + Math.cos(rimAngle) * blobSize * 0.85;
+  const rimY = centerY + Math.sin(rimAngle) * blobSize * 0.85;
+  const rimGradient = effectsCtx.createRadialGradient(rimX, rimY, 0, rimX, rimY, blobSize * 0.5);
+  rimGradient.addColorStop(0, `rgba(200, 220, 255, ${CONFIG.rimLightIntensity})`);
+  rimGradient.addColorStop(1, 'rgba(200, 220, 255, 0)');
+  effectsCtx.fillStyle = rimGradient;
+  effectsCtx.beginPath();
+  effectsCtx.arc(rimX, rimY, blobSize * 0.5, 0, Math.PI * 2);
+  effectsCtx.fill();
+  
+  // Shadow gradient (dark region opposite light)
+  const shadowAngle = lightAngle + Math.PI;
+  const shadowX = centerX + Math.cos(shadowAngle) * blobSize * 0.2;
+  const shadowY = centerY + Math.sin(shadowAngle) * blobSize * 0.2;
+  const shadowGradient = effectsCtx.createRadialGradient(shadowX, shadowY, 0, centerX, centerY, blobSize);
+  shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.08)');
+  shadowGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.03)');
+  shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  effectsCtx.fillStyle = shadowGradient;
+  effectsCtx.beginPath();
+  effectsCtx.arc(centerX, centerY, blobSize, 0, Math.PI * 2);
+  effectsCtx.fill();
+}
+
+// ============================================
 // GLITCH EFFECT
 // ============================================
 function triggerGlitch() {
@@ -1066,11 +1207,21 @@ function animate(time) {
   updateConvulsions();
   updateGravity();
   
-  // Apply position (wandering + startle + convulsions + gravity)
-  const finalX = orbX + convulsionX;
-  const finalY = orbY + convulsionY;
+  // 3D Life enhancements
+  updateBreathing(time);
+  updateJitter(time);
+  updateIdleSway(time);
+  updateLighting(time);
+  updateAttention();
   
-  blobWrapper.style.transform = `translate(${finalX}px, ${finalY}px) scale(${aggressiveScale})`;
+  // Combine all position offsets
+  const finalX = orbX + convulsionX + jitterOffsetX + idleSwayX + attentionOffsetX;
+  const finalY = orbY + convulsionY + jitterOffsetY + idleSwayY + attentionOffsetY;
+  
+  // Combine all scale factors
+  const finalScale = aggressiveScale * breathingScale * anticipationScale;
+  
+  blobWrapper.style.transform = `translate(${finalX}px, ${finalY}px) scale(${finalScale})`;
   
   // Apply spin rotation
   const spinTransform = `rotate(${spinData.angle}rad) rotateX(${spinData.wobbleX}deg) rotateY(${spinData.wobbleY}deg)`;
@@ -1087,6 +1238,8 @@ function animate(time) {
   const sat = colorSatShift * 100;
   blob.style.filter = `hue-rotate(${hue}deg) saturate(${1 + sat}%)`;
   
+  // Draw lighting effects (specular, rim, shadow)
+  drawLighting();
   // Audio-reactive subsurface scattering
   const subsurface = document.querySelector('.subsurface');
   if (subsurface) {
@@ -1317,6 +1470,9 @@ const Ares = {
     if (!this.synthesis || !text) return;
     this.synthesis.cancel();
     
+    // Trigger anticipation animation before speaking
+    if (typeof triggerAnticipation === 'function') triggerAnticipation();
+    
     const clean = text.replace(/```[\s\S]*?```/g, '').replace(/\*[^*]+\*/g, '').replace(/[#_`]/g, '').slice(0, 800);
     this.lastSpoken = text;
     
@@ -1325,8 +1481,13 @@ const Ares = {
     u.rate = 0.75;
     u.pitch = 0.65;
     
-    u.onstart = () => { this.isSpeaking = true; if (typeof depth !== 'undefined') depth = 0.7; };
-    u.onend = () => { this.isSpeaking = false; };
+    u.onstart = () => { 
+      this.isSpeaking = true; 
+      if (typeof depth !== 'undefined') depth = 0.7;
+    };
+    u.onend = () => { 
+      this.isSpeaking = false; 
+    };
     
     this.synthesis.speak(u);
   }
