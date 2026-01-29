@@ -2217,44 +2217,68 @@ const Pads = {
       await this.loadToneJS();
     }
     
-    // Create lush pad synth with multiple oscillators
+    // Create lush pad synth - Low End Theory style
+    // Layer 1: Deep sub bass
+    this.subBass = new Tone.Synth({
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.5, decay: 0.5, sustain: 1, release: 3 }
+    }).toDestination();
+    this.subBass.volume.value = -6;
+    
+    // Layer 2: Warm mid pad (detuned saws)
     this.synth = new Tone.PolySynth(Tone.Synth, {
       oscillator: {
         type: 'fatsawtooth',
-        count: 3,
-        spread: 30
+        count: 5,        // More oscillators for thickness
+        spread: 40       // More detune for warmth
       },
       envelope: {
-        attack: 2,      // Slow attack for pad feel
-        decay: 1,
-        sustain: 0.8,
-        release: 4      // Long release for lush tails
+        attack: 1.5,     // Slower attack
+        decay: 2,
+        sustain: 0.7,
+        release: 5       // Longer release for lush tails
       }
     }).toDestination();
     
-    // Add reverb for space
-    this.reverb = new Tone.Reverb({
-      decay: 8,
-      wet: 0.6,
-      preDelay: 0.2
+    // Layer 3: Airy top (triangle harmonics)
+    this.airPad = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle8' },
+      envelope: { attack: 3, decay: 1, sustain: 0.4, release: 6 }
     }).toDestination();
+    this.airPad.volume.value = -18;
+    
+    // Add lush reverb
+    this.reverb = new Tone.Reverb({
+      decay: 12,         // Longer decay
+      wet: 0.7,          // More wet
+      preDelay: 0.3
+    }).toDestination();
+    
+    // Add stereo chorus for width
+    this.chorus = new Tone.Chorus({
+      frequency: 0.5,
+      delayTime: 3.5,
+      depth: 0.7,
+      wet: 0.5
+    }).connect(this.reverb).start();
     
     // Add delay for depth
     this.delay = new Tone.FeedbackDelay({
-      delayTime: '8n.',
-      feedback: 0.3,
-      wet: 0.2
-    }).toDestination();
+      delayTime: '4n.',
+      feedback: 0.4,
+      wet: 0.25
+    }).connect(this.reverb);
     
     // Chain effects
-    this.synth.connect(this.reverb);
+    this.synth.connect(this.chorus);
     this.synth.connect(this.delay);
+    this.airPad.connect(this.reverb);
     
-    // Lower volume for ambient background
-    this.synth.volume.value = -12;
+    // Overall volume
+    this.synth.volume.value = -10;
     
     await this.reverb.generate();
-    console.log('[Pads] Tone.js initialized with lush pad synth');
+    console.log('[Pads] 🎹 Low End Theory pad synth ready');
   },
   
   loadToneJS() {
@@ -2267,10 +2291,21 @@ const Pads = {
     });
   },
   
-  // Play a single chord
+  // Play a single chord on all layers
   playChord(notes, duration = '2n') {
     if (!this.synth) return;
+    // Main pad
     this.synth.triggerAttackRelease(notes, duration);
+    // Sub bass - play root note an octave down
+    if (this.subBass && notes.length > 0) {
+      const root = notes[0].replace(/\d/, n => Math.max(1, parseInt(n) - 1));
+      this.subBass.triggerAttackRelease(root, duration);
+    }
+    // Air pad - play top notes an octave up
+    if (this.airPad) {
+      const highNotes = notes.slice(-2).map(n => n.replace(/\d/, m => parseInt(m) + 1));
+      this.airPad.triggerAttackRelease(highNotes, duration);
+    }
   },
   
   // Play a progression (loops)
@@ -2361,15 +2396,16 @@ const Pads = {
     const trackName = item.name.replace('dilla_', '').replace(/_/g, ' ');
     console.log(`[Pads] ▶ "${trackName}" @ ${item.tempo} BPM (${item.loops}x)`);
     
-    const playChord = (time) => {
+    const playChordInner = (time) => {
       if (!this.isPlaying) return;
       
       const chord = prog[chordIndex % prog.length];
-      this.synth.triggerAttackRelease(chord, '1m', time);
+      // Play all layers
+      this.playChord(chord, '1m');
       chordIndex++;
       
       if (chordIndex < totalChords) {
-        Tone.Transport.scheduleOnce(playChord, '+1m');
+        Tone.Transport.scheduleOnce(playChordInner, '+1m');
       } else {
         // Move to next in playlist
         Tone.Transport.scheduleOnce(() => {
@@ -2379,7 +2415,7 @@ const Pads = {
       }
     };
     
-    Tone.Transport.scheduleOnce(playChord, '+0.1');
+    Tone.Transport.scheduleOnce(playChordInner, '+0.1');
     Tone.Transport.start();
   },
   
@@ -2494,10 +2530,9 @@ document.addEventListener('click', async () => {
     console.log('[Pads] First click detected, initializing...');
     await Pads.init();
     console.log('[Pads] Synth initialized');
-    await Pads.addLofi();
-    console.log('[Pads] Lo-fi FX added');
+    // await Pads.addLofi(); // Disabled: requires HTTPS for AudioWorklet
     Pads.playDilla();
-    console.log('[Pads] 🎹 Auto-started J Dilla playlist with lo-fi FX');
+    console.log('[Pads] 🎹 Auto-started J Dilla playlist');
   } catch (e) {
     console.error('[Pads] Failed to start:', e);
     padsStarted = false; // Allow retry
