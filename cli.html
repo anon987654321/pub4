@@ -2279,12 +2279,12 @@ const Pads = {
       }
     }).connect(this.limiter);
     
-    // Gentle sub layer
-    this.subBass = new Tone.Synth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.8, decay: 1, sustain: 0.6, release: 4 }
-    }).connect(this.limiter);
-    this.subBass.volume.value = -24;
+    // High-pass filter to remove sub-bass rumble (speaker-friendly)
+    this.highpass = new Tone.Filter(120, 'highpass').connect(this.limiter);
+    
+    // Sub layer - disabled by default (too heavy for most speakers)
+    // this.subBass = new Tone.Synth({...}).connect(this.limiter);
+    this.subBass = null; // Disabled - uncomment above for subs
     
     // Shimmer layer (very quiet)
     this.airPad = new Tone.PolySynth(Tone.AMSynth, {
@@ -2319,7 +2319,8 @@ const Pads = {
       wet: 0.15
     }).connect(this.reverb);
     
-    // Chain effects
+    // Chain effects through highpass
+    this.synth.connect(this.highpass);
     this.synth.connect(this.chorus);
     this.synth.connect(this.delay);
     this.airPad.connect(this.reverb);
@@ -2595,14 +2596,17 @@ const Drums = {
     }
     await Tone.start();
     
-    // 808 Kick - deep sub with pitch sweep
+    // High-pass for kick (remove extreme sub)
+    this.kickFilter = new Tone.Filter(60, 'highpass').toDestination();
+    
+    // 808 Kick - reduced sub, speaker-friendly
     this.kick = new Tone.MembraneSynth({
-      pitchDecay: 0.4,    // Long pitch drop for 808 boom
-      octaves: 5,         // Deep sweep
+      pitchDecay: 0.2,    // Shorter pitch drop
+      octaves: 3,         // Less deep sweep
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 1.4 }
-    }).toDestination();
-    this.kick.volume.value = -6;
+      envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.8 }
+    }).connect(this.kickFilter);
+    this.kick.volume.value = -12;
     
     // Snare - noise + filter for body
     this.snareFilter = new Tone.Filter(9000, 'lowpass').toDestination();
