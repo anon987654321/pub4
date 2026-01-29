@@ -1283,12 +1283,20 @@ module OpenRouterChat
       when "list_dir"
         path = args["path"] || "."
         if Dir.exist?(path)
-          # Recursive, ignore dotfiles, temp, vendor, node_modules, etc.
-          ignore = %w[. .. .git .bundle vendor node_modules tmp temp cache log __pycache__ .cache .npm]
-          entries = Dir.glob("#{path}/**/*", File::FNM_DOTMATCH).reject do |f|
-            parts = f.split("/")
-            parts.any? { |p| ignore.include?(p) || p.start_with?(".") }
-          end.map { |f| File.directory?(f) ? "#{f}/" : f }.sort.first(500)
+          # Match tree.sh: dirs first with /, then files, skip dotfiles
+          path = path.chomp("/")
+          dirs = []
+          files = []
+          Dir.glob("#{path}/**/*").each do |f|
+            # Skip if any component is a dotfile/dotfolder
+            next if f.split("/").any? { |p| p.start_with?(".") }
+            if File.directory?(f)
+              dirs << "#{f}/"
+            else
+              files << f
+            end
+          end
+          entries = (dirs.sort + files.sort).first(500)
           { success: true, entries: entries }
         else
           { success: false, error: "Directory not found: #{path}" }
