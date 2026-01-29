@@ -2,6 +2,44 @@ version: "1.5.0"
 name: master.yml
 golden: "preserve_improve_never_break"
 
+# ============================================================================
+# CRITICAL RULES - READ FIRST
+# ============================================================================
+# These rules have veto severity - violations = immediate rejection
+
+critical_rules:
+  1_never_create_scripts:
+    see: "efficiency.zsh_native"
+    summary: "Use inline shell commands, never create new .sh files"
+    
+  2_never_delete_working_code:
+    severity: veto
+    rule: "NEVER delete/remove/modify working code unless explicitly asked"
+    wrong_instinct: "Let me clean this up by removing these unused functions..."
+    correct_instinct: "These functions exist - leave them unless user says delete"
+    rationale: "Working code was added for a reason. Deletion causes regressions."
+    
+  3_minimal_changes:
+    severity: veto
+    rule: "Make SMALLEST possible change to achieve goal"
+    wrong_instinct: "While I'm here, let me also refactor this..."
+    correct_instinct: "Fix only what was asked. Nothing more."
+    rationale: "Scope creep introduces bugs. Stay surgical."
+    
+  4_verify_before_edit:
+    severity: veto
+    rule: "Always grep/view to confirm current state before editing"
+    wrong_instinct: "I remember the code looks like X, so I'll edit X..."
+    correct_instinct: "Let me view the current state first, then edit"
+    rationale: "Memory is unreliable. File may have changed."
+    
+  5_test_after_change:
+    severity: high
+    rule: "Run existing tests/lints after changes"
+    wrong_instinct: "The change looks correct, we're done"
+    correct_instinct: "Run the build/test to verify no regression"
+    rationale: "Untested changes are unverified changes."
+
 # CONFIG (API keys should be in environment variables, not here)
 config:
   elevenlabs_model: "eleven_turbo_v2_5"  # Fast, good quality
@@ -126,21 +164,29 @@ laws:
 
 # EFFICIENCY PATTERNS (learned optimizations for CLI/agent behavior)
 efficiency:
+  # CRITICAL: These patterns prevent wasted tokens and slow responses
+  
   file_reading:
-    principle: "read_once_grep_never"
-    description: "Load full file into context once, then work from memory. Avoid repeated grep/search calls."
-    anti_pattern: "Multiple grep calls to same file to find different sections"
-    correct_pattern: "Single view/cat of file, then reference from context"
+    principle: "READ_ONCE_WORK_FROM_MEMORY"
+    severity: high
+    rule: "Load file once, then work from context. No repeated reads."
+    wrong_instinct: "Let me grep for X... now grep for Y... now grep for Z..."
+    correct_instinct: "View the whole file once, then I have X, Y, Z in context"
+    anti_pattern: "Multiple grep/view calls to same file"
+    correct_pattern: "Single view, reference from memory"
   
   parallel_operations:
-    principle: "batch_independent_calls"
-    description: "Make all independent tool calls in single response"
+    principle: "BATCH_INDEPENDENT_CALLS"
+    severity: high
+    rule: "Make ALL independent tool calls in ONE response"
+    wrong_instinct: "View file A... [wait] ...now view file B... [wait]"
+    correct_instinct: "View file A AND file B in same response (parallel)"
     anti_pattern: "Sequential calls that could run in parallel"
-    correct_pattern: "Multiple view/grep calls in one response when files are independent"
+    correct_pattern: "Multiple view/grep calls in one response"
   
   command_chaining:
-    principle: "chain_dependent_commands"
-    description: "Use && to chain related shell commands"
+    principle: "CHAIN_WITH_AMPERSAND"
+    rule: "Use && to chain related shell commands in single call"
     anti_pattern: "Separate tool calls for cd, then build, then test"
     correct_pattern: "cd dir && npm run build && npm test"
   
