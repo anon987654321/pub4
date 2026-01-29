@@ -209,6 +209,136 @@ registry:
     action: "move method to target class"
     example: "method calls other class repeatedly"
 
+# DEBUGGING & GAP DETECTION
+# Advanced patterns for finding cruft, inconsistencies, and gaps
+debugging:
+  dead_code:
+    description: "Find unreachable code, unused variables, orphaned functions"
+    patterns:
+      unused_variable: '^\s*(?:let|const|var)\s+(\w+)\s*=' # then check if $1 used
+      unreachable_after_return: 'return\s+[^;]+;\s*\n\s*[^}]'
+      empty_function: 'def \w+.*\n\s*end|function\s*\(\)\s*\{\s*\}'
+    actions: ["delete or implement"]
+  
+  inconsistency_scan:
+    description: "Naming style mismatches, indentation, quote styles"
+    patterns:
+      mixed_case: '(camelCase.*snake_case|snake_case.*camelCase)'
+      mixed_quotes: "\"[^\"]+\".*'[^']+'|'[^']+'.*\"[^\"]+\""
+      mixed_indent: '^\t.*\n^ {2}|^ {2}.*\n^\t'
+    actions: ["standardize to project style"]
+  
+  cruft_patterns:
+    description: "Commented code, debug statements, empty handlers"
+    patterns:
+      commented_code: '^#\s*(def |class |if |while |for |function)'
+      debug_left: 'console\.log|puts |p |pp |binding\.pry|debugger'
+      empty_rescue: 'rescue\s*\n\s*(end|next|return nil)'
+      empty_catch: 'catch\s*\([^)]*\)\s*\{\s*\}'
+    actions: ["remove or convert to proper logging"]
+  
+  orphan_detection:
+    description: "CSS without HTML, functions never called, unused imports"
+    patterns:
+      unused_import: '^import .* from|^require '  # cross-ref with usage
+      css_orphan: '\.[a-z-]+\s*\{'  # cross-ref with HTML classes
+    actions: ["remove if truly orphaned"]
+  
+  semantic_drift:
+    description: "Names that don't match behavior"
+    patterns:
+      getter_that_sets: 'def get_.*\n.*(@\w+\s*=|save|write|update)'
+      is_that_mutates: 'def is_.*\n.*(@\w+\s*=|save|write)'
+    actions: ["rename to reflect actual behavior"]
+  
+  version_mismatch:
+    description: "Outdated deps, deprecated APIs"
+    check_sources:
+      - "Gemfile.lock vs rubygems.org"
+      - "package-lock.json vs npm registry"
+    deprecated_patterns:
+      ruby: 'URI\.escape|File\.exists\?|Dir\.exists\?'
+      js: '\.substr\(|document\.write|__proto__'
+    actions: ["update to modern alternatives"]
+  
+  edge_case_gaps:
+    description: "Missing null checks, unhandled states"
+    patterns:
+      missing_nil_check: '\w+\.\w+\.\w+[^&]'  # triple chain without &.
+      unhandled_promise: '\.then\([^)]+\)\s*[^.]'  # no .catch
+      empty_array_risk: '\[0\]|\\.first[^(]'  # index without guard
+    actions: ["add guards or handle edge cases"]
+
+# PRE-WORK RESEARCH
+# Ensure docs are fetched before modifying code
+research:
+  pre_work:
+    description: "Fetch latest docs before coding"
+    triggers:
+      - "touching gem/package not in context"
+      - "modifying API integration"
+      - "upgrading dependency version"
+    sources:
+      ruby: "https://docs.ruby-lang.org/en/master/"
+      rails: "https://api.rubyonrails.org/"
+      openbsd: "https://man.openbsd.org/"
+      npm: "https://docs.npmjs.com/"
+    action: "auto-fetch relevant section before edit"
+  
+  changelog_check:
+    description: "Review changelogs before updates"
+    sources:
+      gem: "https://rubygems.org/gems/{name}/versions/{version}"
+      npm: "https://www.npmjs.com/package/{name}?activeTab=versions"
+      github: "https://github.com/{owner}/{repo}/releases"
+    action: "summarize breaking changes"
+  
+  breaking_change_scan:
+    description: "Detect upgrade risks"
+    patterns:
+      major_bump: 'version.*([0-9]+)\.[0-9]+.*->.*([0-9]+)\.'  # compare $1 vs $2
+    action: "warn if major version differs, fetch migration guide"
+  
+  api_version_verify:
+    description: "Confirm external APIs haven't changed"
+    check_before:
+      - "calling third-party API"
+      - "parsing external response"
+    action: "fetch current API schema/docs"
+  
+  deprecation_warnings:
+    description: "Cross-reference with deprecation notices"
+    sources:
+      ruby: "https://docs.ruby-lang.org/en/master/NEWS_md.html"
+      node: "https://nodejs.org/en/docs/guides/buffer-constructor-deprecation"
+    action: "flag deprecated usage with migration path"
+
+# CONSISTENCY & POLISH
+polish:
+  style_fingerprint:
+    description: "Learn and enforce project style"
+    learn_from:
+      - "most common patterns in codebase"
+      - "existing naming conventions"
+      - "indentation and spacing"
+    flag: "deviations from learned style"
+  
+  comment_rot:
+    description: "Comments that contradict code"
+    detection:
+      - "comment says X, code does Y"
+      - "outdated function description"
+      - "wrong parameter names in docstring"
+    action: "update or remove stale comments"
+  
+  test_coverage_gaps:
+    description: "Complex logic without tests"
+    risk_indicators:
+      - "cyclomatic complexity > 5"
+      - "multiple conditionals"
+      - "error handling paths"
+    action: "flag for test coverage"
+
 # PERSONAS (weighted adversarial reviewers with Law emphasis)
 # Each persona emphasizes specific Laws they care most about
 personas:
