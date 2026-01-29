@@ -1783,18 +1783,23 @@ module Voice
           
           case path
           when "/", "/cli.html"
-            # Serve cli.html
+            # Serve cli.html with no-cache headers
             if File.exist?(cli_html_path)
               html = File.read(cli_html_path, encoding: "UTF-8")
             else
               html = "<h1>cli.html not found</h1>"
             end
             body = Protocol::HTTP::Body::Buffered.wrap(html)
-            Protocol::HTTP::Response[200, {"content-type" => "text/html"}, body]
+            Protocol::HTTP::Response[200, {
+              "content-type" => "text/html",
+              "cache-control" => "no-cache, no-store, must-revalidate",
+              "pragma" => "no-cache",
+              "expires" => "0"
+            }, body]
           when "/poll"
             text = @queue.empty? ? nil : @queue.pop(true) rescue nil
             body = Protocol::HTTP::Body::Buffered.wrap({ text: text }.to_json)
-            Protocol::HTTP::Response[200, {"content-type" => "application/json"}, body]
+            Protocol::HTTP::Response[200, {"content-type" => "application/json", "cache-control" => "no-store"}, body]
           when "/chat"
             # Handle chat messages via POST
             if request.method == "POST"
