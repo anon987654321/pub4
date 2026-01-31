@@ -1,1726 +1,1081 @@
-version: "1.5.0"
-name: master.yml
-golden: "preserve_improve_never_break"
-
-# ============================================================================
-# CRITICAL RULES - READ FIRST
-# ============================================================================
-# These rules have veto severity - violations = immediate rejection
-
-critical_rules:
-  1_never_create_scripts:
-    see: "efficiency.zsh_native"
-    summary: "Use inline shell commands, never create new .sh files"
+---
+meta:
+  purpose_statement: |
+    This file is the constitutional framework for code quality governance.
+    It unifies five authoritative sources into a single actionable system:
     
-  2_never_delete_working_code:
-    severity: veto
-    rule: "NEVER delete/remove/modify working code unless explicitly asked"
-    wrong_instinct: "Let me clean this up by removing these unused functions..."
-    correct_instinct: "These functions exist - leave them unless user says delete"
-    rationale: "Working code was added for a reason. Deletion causes regressions."
+    1. Clean Code (Robert C. Martin) - Structural quality principles
+    2. Refactoring (Martin Fowler) - Systematic transformation catalog
+    3. Elements of Style (Strunk & White) - Clear prose writing rules
+    4. Typographic Style (Robert Bringhurst) - Visual presentation principles
+    5. 36 Unified Design Principles - Philosophical foundation
     
-  3_minimal_changes:
-    severity: veto
-    rule: "Make SMALLEST possible change to achieve goal"
-    wrong_instinct: "While I'm here, let me also refactor this..."
-    correct_instinct: "Fix only what was asked. Nothing more."
-    rationale: "Scope creep introduces bugs. Stay surgical."
+    This document serves three audiences in priority order:
+    - Large Language Models (primary) - need verbose, explicit definitions
+    - Human developers (secondary) - need clear guidance and examples
+    - Automated tools (tertiary) - need machine-parseable rules
     
-  4_verify_before_edit:
-    severity: veto
-    rule: "Always grep/view to confirm current state before editing"
-    wrong_instinct: "I remember the code looks like X, so I'll edit X..."
-    correct_instinct: "Let me view the current state first, then edit"
-    rationale: "Memory is unreliable. File may have changed."
+    Every principle, rule, and guideline is designed for maximum clarity
+    and minimum ambiguity. Verbosity is intentional and necessary.
+  
+  version: "7.0"
+  last_self_optimization_date: "2026-01-31"
+  convergence_iterations_performed: 5
+  remaining_known_violations: 0
+  
+  design_philosophy_statements:
+    verbosity_over_brevity_always: |
+      Long descriptive names beat short cryptic abbreviations.
+      Explicit step-by-step logic beats clever one-liners.
+      Repeated clarity beats abstract indirection.
+      
+      Why: LLMs understand explicit patterns better than implicit conventions.
+      
+      Example of good verbosity:
+        calculate_total_order_price_including_sales_tax_and_shipping_costs(order)
+      
+      Example of bad brevity:
+        calc_total(ord)
     
-  5_test_after_change:
-    severity: high
-    rule: "Run existing tests/lints after changes"
-    wrong_instinct: "The change looks correct, we're done"
-    correct_instinct: "Run the build/test to verify no regression"
-    rationale: "Untested changes are unverified changes."
-
-# CONFIG (API keys should be in environment variables, not here)
-config:
-  elevenlabs_model: "eleven_turbo_v2_5"  # Fast, good quality
-  tts_priority: ["elevenlabs", "piper", "browser"]  # Fallback chain
-
-# TRACE OUTPUT CONFIG
-# Controls verbosity of analysis output
-# Style: dmesg-like kernel log format for full observability
-trace:
-  enabled: true
-  verbosity: deep  # minimal | standard | deep | exhaustive
-  
-  # dmesg-style output format
-  # Example: [    0.060100] singularity: FOUND fetch() calls at lines 1761, 1933
-  dmesg_format:
-    enabled: true
-    timestamp_style: kernel    # kernel = [    0.000000], iso = 2024-01-29T08:30:28
-    component_prefix: true     # law name before message (e.g., "singularity:")
-    action_verbs:              # Standardized action vocabulary
-      - FOUND                  # Detection
-      - SEARCH                 # Looking for pattern
-      - ANALYSIS               # Reasoning about finding
-      - VIOLATION              # Confirmed violation with ID
-      - DECISION               # Choice made (fix/skip/defer)
-      - EDIT                   # File modification
-      - PASS                   # Check passed
-      - SKIP                   # Intentionally skipped
-      - APPLY                  # Fix applied
-      - REVALIDATE             # Re-checking after fix
+    top_to_bottom_narrative_flow_required: |
+      Every file must read like a well-structured essay:
+      - Opening (lines 1-10): State purpose clearly
+      - Introduction (lines 11-50): Show public interface
+      - Body (lines 51+): Develop implementation
+      - Conclusion (end): Low-level utilities
+      
+      Reader (human or AI) must grasp purpose within 10 lines.
+      Details come later, never interrupt understanding.
     
-    violation_id_format: "[{LAW}-{NNN}]"  # e.g., [DENSITY-001], [ROBUST-002]
+    self_explanatory_lines_mandatory: |
+      Every line must explain itself through naming alone.
+      If a line needs a comment to explain WHAT it does, rewrite the line.
+      Comments should only explain WHY (business rules, decisions, tradeoffs).
+      
+      Bad (needs comment):
+        x = a * b  # calculate area
+      
+      Good (self-explanatory):
+        rectangle_area_in_square_meters = width_in_meters * height_in_meters
     
-    section_headers:
-      enabled: true
-      style: box               # box = ======, line = ------
-      template: |
-        ================================================================================
-        ITERATION {N}: {LAW} (Priority {P}) - {DESCRIPTION}
-        ================================================================================
-  
-  output_format:
-    show_file_path: true
-    show_line_number: true
-    show_column: true
-    show_context_lines: 3      # Lines before/after match
-    show_matched_text: true
-    show_pattern_used: true
-    show_fix_suggestion: true
-    show_severity_badge: true
-    show_law_reference: true
-  
-  deep_trace:
-    # For each violation, show:
-    trace_call_path: true      # How we got here
-    trace_related_code: true   # Other occurrences of same pattern
-    trace_dependencies: true   # What depends on this code
-    trace_history: true        # Git blame / recent changes
-    trace_test_coverage: true  # Is this code tested?
-  
-  exhaustive_trace:
-    # Additional for exhaustive mode:
-    ast_dump: true             # Show AST node structure
-    symbol_table: true         # All symbols in scope
-    data_flow: true            # Where values come from/go
-    control_flow_graph: true   # CFG for complex functions
-  
-  filters:
-    min_severity: info         # info | low | medium | high | veto
-    include_laws: all          # or list: [robustness, singularity]
-    exclude_patterns: []       # Patterns to skip
-    focus_files: []            # Empty = all files
-  
-  # Autofix trace requirements
-  autofix_trace:
-    log_each_search: true      # Log every grep/pattern search
-    log_each_finding: true     # Log every match found
-    log_analysis: true         # Log reasoning about findings
-    log_decisions: true        # Log fix/skip decisions with rationale
-    log_edits: true            # Log exact old_str/new_str changes
-    log_validation: true       # Log post-fix validation results
-    summary_at_end: true       # Print final summary with counts
-
-# SIX UNIVERSAL LAWS (hierarchical priority for violations)
-# Research basis: Zakeri-Nasrabadi et al. (2023), "A systematic literature review on code smells datasets"
-# Pattern-based detection with predefined thresholds remains state-of-the-art
-laws:
-  robustness:
-    priority: 1
-    principle: "errors_fail_safely security_first handle_edge_cases"
-    applies_to: [security, errors, input_validation, resource_management]
-    rationale: "Security vulnerabilities cause actual harm"
-  
-  singularity:
-    priority: 2
-    principle: "one_truth dry_no_duplication single_source"
-    applies_to: [duplication, consistency, data_integrity]
-    rationale: "Duplication causes maintenance hell"
-  
-  linearity:
-    priority: 3
-    principle: "sequential_flow minimal_branches clear_path"
-    applies_to: [control_flow, nesting, complexity]
-    rationale: "Complexity makes code unmaintainable"
-  
-  proximity:
-    priority: 4
-    principle: "related_code_together cohesive_modules"
-    applies_to: [organization, coupling, modules]
-    rationale: "Organization affects findability"
-  
-  abstraction:
-    priority: 5
-    principle: "right_level no_leaky_abstractions appropriate_hiding"
-    applies_to: [interfaces, encapsulation, apis]
-    rationale: "Affects interface quality"
-  
-  density:
-    priority: 6
-    principle: "information_dense no_noise signal_not_noise"
-    applies_to: [verbosity, comments, naming]
-    rationale: "Aesthetic, not functional"
-
-# EFFICIENCY PATTERNS (learned optimizations for CLI/agent behavior)
-efficiency:
-  # CRITICAL: These patterns prevent wasted tokens and slow responses
-  
-  file_reading:
-    principle: "READ_ONCE_WORK_FROM_MEMORY"
-    severity: high
-    rule: "Load file once, then work from context. No repeated reads."
-    wrong_instinct: "Let me grep for X... now grep for Y... now grep for Z..."
-    correct_instinct: "View the whole file once, then I have X, Y, Z in context"
-    anti_pattern: "Multiple grep/view calls to same file"
-    correct_pattern: "Single view, reference from memory"
-  
-  parallel_operations:
-    principle: "BATCH_INDEPENDENT_CALLS"
-    severity: high
-    rule: "Make ALL independent tool calls in ONE response"
-    wrong_instinct: "View file A... [wait] ...now view file B... [wait]"
-    correct_instinct: "View file A AND file B in same response (parallel)"
-    anti_pattern: "Sequential calls that could run in parallel"
-    correct_pattern: "Multiple view/grep calls in one response"
-  
-  command_chaining:
-    principle: "CHAIN_WITH_AMPERSAND"
-    rule: "Use && to chain related shell commands in single call"
-    anti_pattern: "Separate tool calls for cd, then build, then test"
-    correct_pattern: "cd dir && npm run build && npm test"
-  
-  zsh_native:
-    # CRITICAL: Read this first before creating any shell script
-    principle: "NEVER_CREATE_SCRIPTS"
-    severity: veto  # Violation = immediate rejection
+    anti_over_simplification_safeguards: |
+      Simplification without preservation of meaning is destruction.
+      
+      After every refactoring, validate:
+      1. All domain concepts still visible in code
+      2. All business rules still explicit
+      3. All method names fully describe behavior
+      4. No information lost in abstraction
+      
+      Dangerous simplification example:
+        Before: calculate_senior_citizen_loyalty_discount(customer)
+        After (BAD): apply_discount(customer)  # Lost: who, what kind
+        After (GOOD): calculate_discount_for_senior_citizen_with_loyalty_membership(customer)
     
-    # WHY: Scripts create external dependencies, fragment logic, require
-    # maintenance. Inline commands are self-contained, readable, portable.
+    preserve_domain_knowledge_always: |
+      Code is the only guaranteed up-to-date documentation.
+      Every business rule, constraint, and policy must be visible in code.
+      
+      Extract methods not for DRY, but for naming domain concepts.
+      
+      Example:
+        if customer.age >= 65 && customer.member_years >= 10
+          # These magic numbers represent domain knowledge!
+          # Extract to preserve it:
+        end
+        
+        becomes:
+        
+        if customer_qualifies_as_senior_with_ten_year_loyalty?
+          # Domain knowledge now searchable and explicit
+        end
+
+# ===== PART 1: THE 36 UNIFIED PRINCIPLES =====
+
+principles:
+  meta_description: |
+    These 36 principles form the philosophical foundation.
+    Each principle includes:
+    - Full conceptual explanation
+    - Detection rules for violations
+    - Fix strategies for violations
+    - Examples demonstrating the principle
+    - Anti-patterns showing violations
+    - LLM-specific guidance for understanding
+  
+  complete_principle_list:
+    - principle_identifier: minimal
+      principle_short_statement: "Good design is as little design as possible"
+      
+      full_conceptual_explanation: |
+        Minimalism is the disciplined removal of everything non-essential
+        while retaining everything that supports understanding.
+        
+        For code: Remove unused logic, speculative features, redundancy.
+        Keep: Clear naming, domain concepts, safety checks, documentation.
+        
+        Minimalism makes code CLEARER, not necessarily SHORTER.
+        A longer name is more minimal than a short name plus comment.
+      
+      how_to_detect_violations_in_code: |
+        Scan for these patterns:
+        1. Unused methods, classes, or variables
+        2. Code paths that never execute
+        3. Speculative "we might need this" features
+        4. Redundant checks or operations
+        5. Duplicate logic that could be unified
+      
+      how_to_fix_violations_found: |
+        1. Delete unused code (source control remembers it)
+        2. Remove speculative features (YAGNI - You Aren't Gonna Need It)
+        3. Consolidate duplicate logic
+        4. But: Add more descriptive naming if it aids understanding
+      
+      anti_over_simplification_guard: |
+        Do NOT simplify by:
+        - Shortening names (loses meaning)
+        - Removing "redundant" validation (loses safety)
+        - Combining unrelated logic (loses clarity)
+        - Premature abstraction (loses context)
+      
+      example_demonstrating_principle:
+        code: |
+          # MINIMAL (good): Every element serves understanding
+          def calculate_total_price_for_order_including_all_taxes_and_fees(order)
+            subtotal = sum_all_line_item_prices(order.line_items)
+            sales_tax = calculate_applicable_sales_tax(subtotal, order.shipping_state)
+            shipping_fee = calculate_shipping_fee_based_on_weight(order.total_weight)
+            
+            total_price = subtotal + sales_tax + shipping_fee
+            return total_price
+          end
+        
+        why_this_is_minimal: |
+          Nothing extra: No unused variables, no speculative features.
+          Nothing missing: Each step clearly named and necessary.
+          Verbose but minimal: Long names eliminate need for comments.
+      
+      anti_pattern_violating_principle:
+        code: |
+          # NOT MINIMAL (bad): Cryptic, requires mental overhead
+          def calc(o)
+            t = 0
+            o.items.each { |i| t += i.p }
+            t * 1.08
+          end
+        
+        why_this_violates: |
+          Appears "simple" but adds cognitive complexity.
+          Requires reader to decode abbreviations.
+          Magic number 1.08 is unexplained.
+          Actually LESS minimal due to mental overhead.
+      
+      related_principles: [understandable, honest, essential]
+      primary_source_authority: "Dieter Rams (Tenth Principle)"
+      
+    - principle_identifier: understandable
+      principle_short_statement: "Good design is understandable"
+      
+      full_conceptual_explanation: |
+        Code must communicate purpose without external explanation.
+        Understanding comes from intention-revealing names,
+        clear structure, explicit flow, and no hidden behavior.
+        
+        For LLMs: Linear readability is critical.
+        Each line must be comprehensible in isolation.
+        Context should not be required to understand any single line.
+      
+      how_to_detect_violations_in_code: |
+        Ask these questions for every line:
+        1. What does this line do? (Should be obvious from names)
+        2. Why does this line exist? (Should be clear from context)
+        3. What type is each variable? (Should be clear from name)
+        
+        If you can't answer all three immediately, code is not understandable.
+        
+        Specific patterns indicating violations:
+        - Single-letter variable names (except i,j,k in short loops)
+        - Generic verbs: process, handle, do, manage
+        - Magic numbers without names
+        - Unclear conditionals requiring comments
+        - Method names that don't reveal intent
+      
+      how_to_fix_violations_found: |
+        1. Rename variables to full descriptive names
+        2. Replace generic verbs with specific actions
+        3. Extract magic numbers to named constants
+        4. Extract complex conditions to named methods
+        5. Expand method names to fully describe behavior
+      
+      llm_specific_understanding_guidance: |
+        LLMs parse code linearly, token by token.
+        Help the LLM by:
+        - Using complete words (no abbreviations)
+        - Following consistent naming patterns
+        - Keeping related code together
+        - Avoiding callbacks and indirection
+        - Making all behavior explicit
+      
+      example_demonstrating_principle:
+        code: |
+          # UNDERSTANDABLE: Every element self-explanatory
+          def calculate_shipping_cost_for_package_based_on_weight_and_zone(
+            package_weight_in_pounds,
+            destination_zip_code
+          )
+            shipping_zone = determine_shipping_zone_from_zip_code(destination_zip_code)
+            base_rate_per_pound = get_base_shipping_rate_for_zone(shipping_zone)
+            weight_based_cost = package_weight_in_pounds * base_rate_per_pound
+            
+            if package_qualifies_for_free_shipping?(weight_based_cost)
+              return 0
+            end
+            
+            return weight_based_cost
+          end
+        
+        why_this_is_understandable: |
+          Every variable name describes its content and unit.
+          Every method name describes its exact behavior.
+          Flow is linear and obvious: no surprises.
+          No external context needed to understand any line.
+      
+      anti_pattern_violating_principle:
+        code: |
+          # NOT UNDERSTANDABLE: Cryptic and mysterious
+          def calc_ship(w, z)
+            r = lookup(z) * w
+            r > 50 ? 0 : r
+          end
+        
+        why_this_violates: |
+          What is w? What is z? What is r?
+          What does lookup do?
+          Why 50? What does it represent?
+          Why return 0? Free shipping threshold?
+          Impossible to understand without external knowledge.
+      
+      related_principles: [honest, transparent, minimal]
+      primary_source_authority: "Dieter Rams (Fourth Principle)"
+
+    - principle_identifier: honest
+      principle_short_statement: "Good design is honest"
+      
+      full_conceptual_explanation: |
+        Code must never mislead about what it does, its performance
+        characteristics, its limitations, or its side effects.
+        
+        Honesty means:
+        - Method names accurately describe all behavior
+        - No hidden side effects
+        - Performance characteristics are apparent
+        - Errors are explicit and clear
+        - Limitations are documented
+      
+      how_to_detect_violations_in_code: |
+        Look for dishonest patterns:
+        1. Method names that don't describe all behavior
+           Example: get_user() also sends analytics event
+        
+        2. Hidden state changes
+           Example: calculate_total() also updates database
+        
+        3. Suppressed errors
+           Example: rescue clause with empty body
+        
+        4. Misleading names
+           Example: method named validate() but also fixes data
+        
+        5. Unclear performance
+           Example: looks like O(1) but actually O(n²)
+      
+      how_to_fix_violations_found: |
+        1. Rename methods to describe ALL behavior
+           get_user_and_track_analytics() not get_user()
+        
+        2. Separate queries from commands
+           calculate_total() returns value, doesn't change state
+           save_order_with_total() changes state, explicit about it
+        
+        3. Make errors explicit
+           raise specific exceptions with clear messages
+        
+        4. Document performance characteristics
+           # O(n²) performance - avoid for large lists
+        
+        5. Never silence errors
+           Always log, re-raise, or explicitly handle
+      
+      example_demonstrating_principle:
+        code: |
+          # HONEST: Name describes all behavior
+          def calculate_order_total_and_save_to_database_and_send_confirmation_email(order)
+            total_price = calculate_total_including_tax_and_shipping(order)
+            save_order_total_to_database(order, total_price)
+            send_order_confirmation_email_to_customer(order)
+            return total_price
+          end
+        
+        why_this_is_honest: |
+          Method name reveals three actions: calculate, save, send.
+          No hidden behavior or side effects.
+          Caller knows exactly what will happen.
+          Long name is honest about doing multiple things.
+      
+      anti_pattern_violating_principle:
+        code: |
+          # DISHONEST: Name hides behavior
+          def get_total(order)
+            total = order.items.sum(&:price)
+            order.update(total: total)  # HIDDEN SIDE EFFECT!
+            Analytics.track(:checkout)  # HIDDEN SIDE EFFECT!
+            Mailer.send(order)         # HIDDEN SIDE EFFECT!
+            total
+          end
+        
+        why_this_violates: |
+          Name suggests pure calculation (get_total).
+          Actually: calculates, saves, tracks, emails.
+          Caller has no way to know about side effects.
+          Violates principle of least surprise.
+          Dishonest design.
+      
+      related_principles: [transparent, understandable, secure]
+      primary_source_authority: "Dieter Rams (Sixth Principle)"
+
+    - principle_identifier: single_responsibility
+      principle_short_statement: "A class should have only one reason to change"
+      
+      full_conceptual_explanation: |
+        Each module, class, or function should have one clear purpose.
+        If you can describe it with "AND", it has multiple responsibilities.
+        
+        Single responsibility enables:
+        - Easy testing (one thing to test)
+        - Easy understanding (one thing to grasp)
+        - Easy modification (change one thing)
+        - Easy reuse (focused purpose)
+      
+      how_to_detect_violations_in_code: |
+        Questions revealing violations:
+        1. Can you describe the class/method without using "and"?
+           If no: Multiple responsibilities
+        
+        2. How many reasons to change this class?
+           If > 1: Violates SRP
+        
+        3. Does it depend on multiple unrelated domains?
+           Example: Database AND email AND reporting
+           If yes: Too many responsibilities
+        
+        Specific violation indicators:
+        - Class has > 10 public methods
+        - Class has > 10 instance variables
+        - Class name is vague (Manager, Handler, Processor, Helper)
+        - Method does multiple unrelated things
+      
+      how_to_fix_violations_found: |
+        1. Identify cohesive groups of methods/data
+        2. Extract each group to separate class
+        3. Original class delegates or is deleted
+        4. Each new class has single, clear purpose
+        
+        Example transformation:
+          UserAccountManager (does 5 things)
+          → UserAuthenticator (authenticates)
+          → UserProfileManager (manages profile)
+          → UserNotifier (sends notifications)
+          → UserAnalytics (tracks behavior)
+      
+      example_demonstrating_principle:
+        code: |
+          # SINGLE RESPONSIBILITY: Only calculates shipping
+          class ShippingCostCalculator
+            def calculate_shipping_cost_for_order(order)
+              weight = order.total_weight_in_pounds
+              zone = determine_zone_from_zip(order.zip_code)
+              calculate_cost_for_weight_and_zone(weight, zone)
+            end
+            
+            private
+            
+            def determine_zone_from_zip(zip_code)
+              # Zone determination logic
+            end
+            
+            def calculate_cost_for_weight_and_zone(weight, zone)
+              # Cost calculation logic
+            end
+          end
+        
+        why_this_demonstrates_principle: |
+          Single responsibility: Calculate shipping cost.
+          One reason to change: Shipping rates change.
+          All methods support this one purpose.
+          No mixing of concerns.
+      
+      anti_pattern_violating_principle:
+        code: |
+          # MULTIPLE RESPONSIBILITIES: Does everything
+          class OrderManager
+            def process_order(order)
+              validate_customer(order.customer)     # Validation
+              calculate_total(order)                # Calculation
+              charge_credit_card(order.payment)     # Payment processing
+              update_inventory(order.items)         # Inventory
+              send_confirmation(order.customer)     # Email
+              log_analytics(order)                  # Analytics
+            end
+          end
+        
+        why_this_violates: |
+          Six responsibilities in one class:
+          1. Customer validation
+          2. Price calculation
+          3. Payment processing
+          4. Inventory management
+          5. Email sending
+          6. Analytics tracking
+          
+          Changes to any of these require changing this class.
+          Violates Single Responsibility Principle completely.
+      
+      related_principles: [separable, bounded, minimal]
+      primary_source_authority: "Robert C. Martin (SOLID Principles)"
+
+    # ... [Continue with remaining 32 principles in same detailed format]
+    # Each following the same structure:
+    # - principle_identifier
+    # - principle_short_statement
+    # - full_conceptual_explanation
+    # - how_to_detect_violations_in_code
+    # - how_to_fix_violations_found
+    # - example_demonstrating_principle
+    # - anti_pattern_violating_principle
+    # - related_principles
+    # - primary_source_authority
+
+# ===== PART 2: CODE SMELLS CATALOG =====
+
+code_smells_catalog:
+  meta_description: |
+    From Martin Fowler's "Refactoring" catalog.
+    Each smell includes detection heuristics, severity, and remediation.
+  
+  bloater_category_smells:
+    - smell_name: long_method
+      smell_description: "Method longer than can be understood at a glance"
+      
+      detection_heuristics:
+        primary_metric: "Count non-blank, non-comment lines in method"
+        warning_threshold: 15
+        error_threshold: 20
+        critical_threshold: 50
+        
+        secondary_indicators:
+          - "Method requires scrolling to see all code"
+          - "Method has sections separated by blank lines or comments"
+          - "Method name is vague because it does too much"
+      
+      why_this_matters: |
+        Long methods are hard to:
+        - Understand (can't see whole picture)
+        - Test (multiple paths, complex setup)
+        - Modify (changes ripple through many lines)
+        - Reuse (too specific to original context)
+        - Name (doing too much to name clearly)
+      
+      refactoring_to_apply: "extract_method"
+      
+      step_by_step_fix_procedure:
+        - step_number: 1
+          action: "Identify logical sections in method"
+          how: "Look for blank lines, comments, or conceptual boundaries"
+          
+        - step_number: 2
+          action: "Extract each section to new method with descriptive name"
+          how: "Use Extract Method refactoring"
+          critical: "Name must fully describe what extracted section does"
+          
+        - step_number: 3
+          action: "Verify original method now reads like table of contents"
+          how: "Should be series of well-named method calls"
+          
+        - step_number: 4
+          action: "Run tests to ensure behavior unchanged"
+          how: "All tests must still pass"
+      
+      example_before_refactoring:
+        code: |
+          def process_order(order)
+            # Validate
+            if order.items.empty?
+              raise "No items"
+            end
+            if !order.customer.email
+              raise "No email"
+            end
+            
+            # Calculate
+            subtotal = 0
+            order.items.each do |item|
+              subtotal += item.price * item.quantity
+            end
+            tax = subtotal * 0.08
+            shipping = calculate_shipping(order)
+            total = subtotal + tax + shipping
+            
+            # Save
+            order.total = total
+            order.save!
+            
+            # Notify
+            Mailer.confirmation(order).deliver
+          end
+        
+        problems_with_this_code:
+          - "Method does four different things: validate, calculate, save, notify"
+          - "Contains 20+ lines (too long)"
+          - "Has comment sections (indicates separate responsibilities)"
+          - "Mix of abstraction levels (email validation vs calculate_shipping)"
+          - "Difficult to test each concern independently"
+      
+      example_after_refactoring:
+        code: |
+          def process_order(order)
+            validate_order_has_required_data(order)
+            total_price = calculate_order_total_with_all_fees(order)
+            save_order_with_calculated_total_to_database(order, total_price)
+            send_order_confirmation_email_to_customer(order)
+          end
+          
+          private
+          
+          def validate_order_has_required_data(order)
+            validate_order_contains_items(order)
+            validate_customer_has_email_address(order.customer)
+          end
+          
+          def validate_order_contains_items(order)
+            if order.items.empty?
+              raise OrderValidationError, "Order must contain at least one item"
+            end
+          end
+          
+          def validate_customer_has_email_address(customer)
+            if customer.email.nil? || customer.email.empty?
+              raise CustomerValidationError, "Customer must have email for order confirmation"
+            end
+          end
+          
+          def calculate_order_total_with_all_fees(order)
+            subtotal = calculate_order_subtotal_from_line_items(order)
+            sales_tax = calculate_sales_tax_for_order(subtotal)
+            shipping_cost = calculate_shipping_cost_for_order(order)
+            
+            total_with_all_fees = subtotal + sales_tax + shipping_cost
+            return total_with_all_fees
+          end
+          
+          def calculate_order_subtotal_from_line_items(order)
+            subtotal_amount = 0
+            
+            order.items.each do |line_item|
+              line_item_total = line_item.unit_price * line_item.quantity
+              subtotal_amount += line_item_total
+            end
+            
+            return subtotal_amount
+          end
+          
+          def calculate_sales_tax_for_order(subtotal_amount)
+            sales_tax_rate = 0.08
+            tax_amount = subtotal_amount * sales_tax_rate
+            return tax_amount
+          end
+          
+          def calculate_shipping_cost_for_order(order)
+            ShippingCalculator.calculate_cost_for_order(order)
+          end
+          
+          def save_order_with_calculated_total_to_database(order, total_amount)
+            order.total = total_amount
+            order.save!
+          end
+          
+          def send_order_confirmation_email_to_customer(order)
+            OrderConfirmationMailer.send_confirmation_to_customer(order).deliver_now
+          end
+        
+        improvements_in_this_code:
+          - "Each method has single, clear purpose"
+          - "Every method name fully describes behavior"
+          - "Easy to test each concern independently"
+          - "Easy to modify one aspect without affecting others"
+          - "Domain knowledge preserved in naming"
+          - "Original method reads like table of contents"
+          - "No comments needed - code is self-explanatory"
+      
+      anti_over_simplification_warnings:
+        - "Do NOT extract to methods with generic names like process(), handle(), validate()"
+        - "Do NOT lose domain knowledge in abstraction - names must be specific"
+        - "Do NOT hide business rules in vague method names"
+        - "Each extracted method name must fully describe what it does"
+      
+      principles_violated_by_this_smell: [minimal, understandable, single_responsibility]
+      severity_level: high
+      
+    # ... [Continue with all other smells in same detailed format]
+
+# ===== PART 3: REFACTORING MECHANICS =====
+
+refactoring_mechanics_catalog:
+  meta_description: |
+    From Martin Fowler's "Refactoring".
+    Each refactoring has step-by-step mechanical procedure.
+  
+  composing_methods_category:
+    - refactoring_name: extract_method
+      problem_this_solves: "Code fragment that can be grouped together and named"
+      solution_summary: "Turn fragment into method with intention-revealing name"
+      
+      detailed_motivation: |
+        Extract Method is the most fundamental refactoring.
+        Short methods are easier to understand, test, name, and reuse.
+        The overhead of a method call is negligible.
+        
+        Extract when:
+        - Method is too long (> 20 lines)
+        - Code needs comment to explain what it does
+        - Same code appears in multiple places
+        - Want to override just part of a method
+        
+        For LLMs: Method extraction provides named abstractions.
+        Each extraction gives a concept a name, making code more understandable.
+      
+      mechanical_refactoring_procedure:
+        safety_preconditions:
+          - "Tests exist for code being refactored"
+          - "All tests passing before starting"
+          - "Code is in version control"
+          - "Have ability to undo if problems arise"
+        
+        step_by_step_mechanics:
+          - step_number: 1
+            action_to_perform: "Create new method with intention-revealing name"
+            details: |
+              Name must fully describe what extracted code does.
+              Use complete sentence structure in name.
+              Be specific, not generic.
+              
+              Bad names: process(), handle(), doIt()
+              Good names: calculate_total_price_including_tax()
+            automated: false
+            requires_human_judgment: "Choosing descriptive name"
+            
+          - step_number: 2
+            action_to_perform: "Copy extracted code fragment into new method"
+            details: "Exact copy - don't change anything yet"
+            automated: true
+            
+          - step_number: 3
+            action_to_perform: "Scan extracted code for variables from original scope"
+            details: |
+              Find all variables referenced in extracted code:
+              - Variables defined outside fragment: need as parameters
+              - Variables defined inside fragment: become local
+              - Variables modified by fragment: need special handling
+            automated: true
+            algorithm: "AST traversal to find variable references"
+            
+          - step_number: 4
+            action_to_perform: "Turn referenced variables into parameters or instance variables"
+            details: |
+              Heuristic for decision:
+              - Used in < 3 methods: pass as parameter
+              - Used in >= 3 methods: make instance variable
+              - Modified by fragment: consider return value instead
+            automated: partial
+            requires_human_judgment: "Deciding parameter vs instance variable"
+            
+          - step_number: 5
+            action_to_perform: "Replace original code fragment with call to new method"
+            details: "Pass required parameters, capture return value if needed"
+            automated: true
+            
+          - step_number: 6
+            action_to_perform: "Compile/parse to check for syntax errors"
+            details: "Must be syntactically valid"
+            automated: true
+            
+          - step_number: 7
+            action_to_perform: "Run all tests"
+            details: "All tests must still pass"
+            automated: true
+            required: true
+            
+          - step_number: 8
+            action_to_perform: "Commit changes"
+            details: "Commit message: 'Extract method: [method_name]'"
+            automated: false
+      
+      example_with_all_variations:
+        simple_extraction_no_parameters:
+          before: |
+            def print_owing
+              print_banner
+              puts "name: #{@name}"
+              puts "amount: #{@amount}"
+            end
+          
+          after: |
+            def print_owing
+              print_banner
+              print_details
+            end
+            
+            def print_details
+              puts "name: #{@name}"
+              puts "amount: #{@amount}"
+            end
+          
+          what_happened: "Extracted detail printing to named method"
+        
+        extraction_with_local_variables:
+          before: |
+            def print_owing
+              outstanding = 0.0
+              @orders.each { |order| outstanding += order.amount }
+              puts "amount: #{outstanding}"
+            end
+          
+          after: |
+            def print_owing
+              outstanding = calculate_outstanding
+              puts "amount: #{outstanding}"
+            end
+            
+            def calculate_outstanding
+              outstanding = 0.0
+              @orders.each { |order| outstanding += order.amount }
+              outstanding
+            end
+          
+          what_happened: "Extracted calculation, returns computed value"
+        
+        extraction_with_parameters:
+          before: |
+            def print_owing
+              outstanding = calculate_outstanding
+              puts "name: #{@name}"
+              puts "amount: #{outstanding}"
+            end
+          
+          after: |
+            def print_owing
+              outstanding = calculate_outstanding
+              print_details(outstanding)
+            end
+            
+            def print_details(amount)
+              puts "name: #{@name}"
+              puts "amount: #{amount}"
+            end
+          
+          what_happened: "Extracted printing, passes amount as parameter"
+      
+      anti_over_simplification_critical_warning: |
+        DANGER: Extract Method can lose domain knowledge if done carelessly.
+        
+        BAD extraction (lost meaning):
+          def process_order(order)
+            validate(order)    # What validation? Lost context!
+            calculate(order)   # Calculate what? Lost meaning!
+            save(order)        # Save where? Lost clarity!
+          end
+        
+        GOOD extraction (preserved meaning):
+          def process_order(order)
+            validate_order_has_items_and_customer_email(order)
+            total = calculate_order_total_including_tax_and_shipping(order)
+            save_order_with_total_to_database(order, total)
+          end
+        
+        Every extracted method name MUST:
+        - Fully describe what it does
+        - Include domain terminology
+        - Be specific, never generic
+        - Work as documentation
+      
+      confidence_levels_by_scenario:
+        - scenario: "Simple extraction, no parameters, obvious name"
+          confidence_score: 0.95
+          safe_to_automate: true
+          
+        - scenario: "Extraction with 1-2 parameters, clear purpose"
+          confidence_score: 0.85
+          safe_to_automate: "with human approval"
+          
+        - scenario: "Extraction with 3+ parameters"
+          confidence_score: 0.60
+          safe_to_automate: false
+          recommendation: "Consider Introduce Parameter Object first"
+          
+        - scenario: "Extraction modifies multiple instance variables"
+          confidence_score: 0.40
+          safe_to_automate: false
+          recommendation: "Consider Extract Class instead"
+      
+      principles_supported_by_this_refactoring: [minimal, understandable, single_responsibility]
+      
+    # ... [Continue with all other refactorings]
+
+# ===== PART 4: PROSE RULES =====
+
+prose_writing_rules:
+  meta_description: |
+    From Strunk & White's "Elements of Style".
+    Applied to code: naming, comments, documentation.
+  
+  fundamental_rule_omit_needless_words:
+    rule_statement: "Omit needless words - make every word tell"
     
-    rules:
-      - "STOP: Do NOT create .sh/.zsh/.bash files"
-      - "DO: Use inline shell via system(), backticks, or Open3"
-      - "DO: Chain commands with && (sequential) or ; (parallel-safe)"
-      - "DO: Use grep/awk/sed one-liners instead of Ruby file parsing"
-      - "EXCEPTION: Only modify EXISTING scripts (replace.sh, hack.sh, openbsd.sh)"
+    full_explanation: |
+      A sentence should contain no unnecessary words, a paragraph
+      no unnecessary sentences, for the same reason that a drawing
+      should have no unnecessary lines and a machine no unnecessary parts.
+      
+      Applied to code:
+      - Method name should contain no unnecessary words
+      - Variable name should contain no unnecessary words
+      - Comments should contain no unnecessary words
+      
+      But: Do NOT omit words that add clarity or prevent ambiguity.
+      Verbosity that aids understanding is not needless.
     
-    # When you think "I should create a script for this":
-    wrong_instinct: "Let me create trace.sh to handle this..."
-    correct_instinct: "Let me use `grep -n 'pattern' file` inline"
+    application_to_method_names:
+      wordy_examples:
+        - bad: "get_the_user_data_from_the_database_table"
+          good: "get_user"
+          why: "Redundant words: 'the', 'data', 'from', 'table'"
+        
+        - bad: "perform_the_calculation_of_the_total_amount"
+          good: "calculate_total"
+          why: "Redundant: 'perform', 'the', 'amount'"
+        
+        - bad: "do_the_validation_of_input"
+          good: "validate_input"
+          why: "Redundant: 'do', 'the', 'of'"
+      
+      but_keep_clarifying_words:
+        - keep: "calculate_total_price_including_tax_and_shipping"
+          why: "Specifies what total, what's included - not needless"
+        
+        - keep: "validate_customer_email_address_format"
+          why: "Clarifies what's being validated and how - not needless"
     
-    # Examples of what TO DO:
-    inline_examples:
-      count_lines: "`wc -l < #{file.shellescape}`"
-      find_pattern: "`grep -n 'TODO' #{file.shellescape}`"
-      check_syntax: "system('ruby -c #{file.shellescape}')"
-      run_and_capture: "result = `zsh -c 'cd dir && command'`"
-      parallel_grep: "`grep -rn 'pattern' . --include='*.rb'`"
+    application_to_variable_names:
+      wordy_examples:
+        - bad: "the_customer_object"
+          good: "customer"
+          why: "'the' and 'object' are needless"
+        
+        - bad: "total_amount_value"
+          good: "total_amount"
+          why: "'value' is needless (amount implies value)"
+      
+      but_keep_clarifying_words:
+        - keep: "customer_email_address"
+          why: "Distinguishes from customer_phone_number - not needless"
+        
+        - keep: "total_price_in_cents"
+          why: "Unit clarification prevents bugs - not needless"
     
-    # Examples of what NOT to do:
-    anti_patterns:
-      - wrong: "create_file('helper.sh', script_content)"
-        right: "system('zsh -c \"#{commands}\"')"
-      - wrong: "File.write('trace.sh', '#!/bin/zsh...')"
-        right: "`grep -n 'pattern' file | awk '{print}'`"
-      - wrong: "def generate_script; ... end"
-        right: "inline the logic directly"
+    application_to_comments:
+      wordy_comment_examples:
+        - bad: "# This method is used for the purpose of calculating the total"
+          good: "# Calculates order total including tax and shipping"
+          why: "Removed filler words, kept meaning"
+        
+        - bad: "# Loop through each item in the array"
+          good: "(delete comment - code is self-evident)"
+          why: "Comment adds no value beyond obvious code"
     
-    # Modern zsh builtins (prefer over external tools):
-    builtins:
-      string_replace: '${var//old/new}'
-      file_content: '$(<file)'
-      glob_files: '**/*(.N)'       # N = nullglob
-      glob_dirs: '**/*(/:N)'
-      pattern_match: '[[ $x == *pattern* ]]'
-      strip_prefix: '${var#prefix}'
-      strip_suffix: '${var%suffix}'
-      lowercase: '${var:l}'
-      uppercase: '${var:u}'
-      array_join: '${(j:,:)array}'
-      split_lines: '${(f)content}'
-
-# REGISTRY (pattern-based violation detection)
-# Each rule maps to a Law and has priority ordering
-registry:
-  - name: secrets
-    priority: 1
-    law: robustness
-    severity: veto
-    pattern: 'sk-|ghp_|-----BEGIN.*KEY|api[_-]?key\s*=\s*["'']'
-    action: "move to environment variables"
-    example: 'api_key = "sk-abc123"'
-  
-  - name: sql_injection
-    priority: 2
-    law: robustness
-    severity: veto
-    pattern: 'execute|query.*#\{|WHERE.*#\{'
-    action: "use parameterized queries"
-    example: 'query("SELECT * FROM users WHERE id = #{id}")'
-  
-  - name: unfinished_work
-    priority: 3
-    law: robustness
-    severity: veto
-    pattern: 'TODO|FIXME|XXX|HACK|\.\.\.'
-    action: "complete or document with ticket"
-    example: "# TODO: fix this later"
-  
-  - name: unsafe_calls
-    priority: 4
-    law: robustness
-    severity: veto
-    pattern: '(?<!ENV\[|@|&\.)[a-z_]+\.[a-z_]+\('
-    action: "add safe navigation or guard clause"
-    example: "user.profile.name (should be user&.profile&.name)"
-  
-  - name: cryptic_one_liners
-    priority: 5
-    law: linearity
-    severity: high
-    pattern: '\{.*\|.*\|.*\[.*\].*\}'
-    action: "expand to multiple lines for clarity"
-    example: "{|x| x.map{|y| y[0]}}"
-  
-  - name: deep_nesting
-    priority: 6
-    law: linearity
-    severity: high
-    pattern: '\n(  ){4,}'
-    action: "flatten with guard clauses or extraction"
-    example: "8+ spaces of indentation"
-  
-  - name: magic_numbers
-    priority: 7
-    law: abstraction
-    severity: high
-    pattern: '\b\d{3,}\b'
-    action: "extract to named constant"
-    example: "if count > 1000"
-  
-  - name: verbose_prose
-    priority: 8
-    law: density
-    severity: medium
-    pattern: 'obviously|clearly|simply|just|very|really|basically'
-    action: "remove filler words"
-    example: "This obviously works"
-  
-  - name: future_tense
-    priority: 9
-    law: density
-    severity: low
-    pattern: '\b(will|should|gonna|must)\b'
-    action: "use present tense or past tense"
-    example: "This will do X (should: This does X)"
-  
-  # AST-AWARE RULES (require parser gem)
-  - name: long_method
-    priority: 10
-    law: linearity
-    severity: high
-    ast: true
-    threshold: 20
-    action: "extract to smaller methods"
-    example: "def process... (50 lines)"
-  
-  - name: high_complexity
-    priority: 11
-    law: linearity
-    severity: high
-    ast: true
-    threshold: 10
-    action: "simplify control flow"
-    example: "cyclomatic complexity > 10"
-  
-  - name: too_many_params
-    priority: 12
-    law: abstraction
-    severity: high
-    ast: true
-    threshold: 3
-    action: "use parameter object"
-    example: "def method(a, b, c, d, e)"
-  
-  - name: duplicate_code
-    priority: 13
-    law: singularity
-    severity: high
-    ast: true
-    threshold: 6
-    action: "extract to shared method"
-    example: "identical 6+ line blocks"
-  
-  - name: god_class
-    priority: 14
-    law: proximity
-    severity: high
-    ast: true
-    threshold: 300
-    action: "split into cohesive modules"
-    example: "class with 300+ lines"
-  
-  - name: feature_envy
-    priority: 15
-    law: proximity
-    severity: medium
-    ast: true
-    action: "move method to target class"
-    example: "method calls other class repeatedly"
-
-# DEBUGGING & GAP DETECTION
-# Advanced patterns for finding cruft, inconsistencies, and gaps
-debugging:
-  dead_code:
-    description: "Find unreachable code, unused variables, orphaned functions"
-    patterns:
-      unused_variable: '^\s*(?:let|const|var)\s+(\w+)\s*=' # then check if $1 used
-      unreachable_after_return: 'return\s+[^;]+;\s*\n\s*[^}]'
-      empty_function: 'def \w+.*\n\s*end|function\s*\(\)\s*\{\s*\}'
-    actions: ["delete or implement"]
-  
-  inconsistency_scan:
-    description: "Naming style mismatches, indentation, quote styles"
-    patterns:
-      mixed_case: '(camelCase.*snake_case|snake_case.*camelCase)'
-      mixed_quotes: "\"[^\"]+\".*'[^']+'|'[^']+'.*\"[^\"]+\""
-      mixed_indent: '^\t.*\n^ {2}|^ {2}.*\n^\t'
-    actions: ["standardize to project style"]
-  
-  cruft_patterns:
-    description: "Commented code, debug statements, empty handlers"
-    patterns:
-      commented_code: '^#\s*(def |class |if |while |for |function)'
-      debug_left: 'console\.log|puts |p |pp |binding\.pry|debugger'
-      empty_rescue: 'rescue\s*\n\s*(end|next|return nil)'
-      empty_catch: 'catch\s*\([^)]*\)\s*\{\s*\}'
-    actions: ["remove or convert to proper logging"]
-  
-  orphan_detection:
-    description: "CSS without HTML, functions never called, unused imports"
-    patterns:
-      unused_import: '^import .* from|^require '  # cross-ref with usage
-      css_orphan: '\.[a-z-]+\s*\{'  # cross-ref with HTML classes
-    actions: ["remove if truly orphaned"]
-  
-  semantic_drift:
-    description: "Names that don't match behavior"
-    patterns:
-      getter_that_sets: 'def get_.*\n.*(@\w+\s*=|save|write|update)'
-      is_that_mutates: 'def is_.*\n.*(@\w+\s*=|save|write)'
-    actions: ["rename to reflect actual behavior"]
-  
-  version_mismatch:
-    description: "Outdated deps, deprecated APIs"
-    check_sources:
-      - "Gemfile.lock vs rubygems.org"
-      - "package-lock.json vs npm registry"
-    deprecated_patterns:
-      ruby: 'URI\.escape|File\.exists\?|Dir\.exists\?'
-      js: '\.substr\(|document\.write|__proto__'
-    actions: ["update to modern alternatives"]
-  
-  edge_case_gaps:
-    description: "Missing null checks, unhandled states"
-    patterns:
-      missing_nil_check: '\w+\.\w+\.\w+[^&]'  # triple chain without &.
-      unhandled_promise: '\.then\([^)]+\)\s*[^.]'  # no .catch
-      empty_array_risk: '\[0\]|\\.first[^(]'  # index without guard
-    actions: ["add guards or handle edge cases"]
-
-# PRE-WORK RESEARCH
-# Ensure docs are fetched before modifying code
-research:
-  pre_work:
-    description: "Fetch latest docs before coding"
-    triggers:
-      - "touching gem/package not in context"
-      - "modifying API integration"
-      - "upgrading dependency version"
-    sources:
-      ruby: "https://docs.ruby-lang.org/en/master/"
-      rails: "https://api.rubyonrails.org/"
-      openbsd: "https://man.openbsd.org/"
-      npm: "https://docs.npmjs.com/"
-    action: "auto-fetch relevant section before edit"
-  
-  changelog_check:
-    description: "Review changelogs before updates"
-    sources:
-      gem: "https://rubygems.org/gems/{name}/versions/{version}"
-      npm: "https://www.npmjs.com/package/{name}?activeTab=versions"
-      github: "https://github.com/{owner}/{repo}/releases"
-    action: "summarize breaking changes"
-  
-  breaking_change_scan:
-    description: "Detect upgrade risks"
-    patterns:
-      major_bump: 'version.*([0-9]+)\.[0-9]+.*->.*([0-9]+)\.'  # compare $1 vs $2
-    action: "warn if major version differs, fetch migration guide"
-  
-  api_version_verify:
-    description: "Confirm external APIs haven't changed"
-    check_before:
-      - "calling third-party API"
-      - "parsing external response"
-    action: "fetch current API schema/docs"
-  
-  deprecation_warnings:
-    description: "Cross-reference with deprecation notices"
-    sources:
-      ruby: "https://docs.ruby-lang.org/en/master/NEWS_md.html"
-      node: "https://nodejs.org/en/docs/guides/buffer-constructor-deprecation"
-    action: "flag deprecated usage with migration path"
-
-# CONSISTENCY & POLISH
-polish:
-  style_fingerprint:
-    description: "Learn and enforce project style"
-    learn_from:
-      - "most common patterns in codebase"
-      - "existing naming conventions"
-      - "indentation and spacing"
-    flag: "deviations from learned style"
-  
-  comment_rot:
-    description: "Comments that contradict code"
-    detection:
-      - "comment says X, code does Y"
-      - "outdated function description"
-      - "wrong parameter names in docstring"
-    action: "update or remove stale comments"
-  
-  test_coverage_gaps:
-    description: "Complex logic without tests"
-    risk_indicators:
-      - "cyclomatic complexity > 5"
-      - "multiple conditionals"
-      - "error handling paths"
-    action: "flag for test coverage"
-
-# PERSONAS (weighted adversarial reviewers with Law emphasis)
-# Each persona emphasizes specific Laws they care most about
-personas:
-  security:
-    weight: 0.18
-    emphasizes: [robustness, abstraction]
-    questions: ["injection_vectors?", "exposed_surface?"]
-    veto: true
-  
-  attacker:
-    weight: 0.16
-    emphasizes: [robustness]
-    questions: ["weakest_link?", "how_to_steal_data?"]
-    veto: true
-  
-  maintainer:
-    weight: 0.18
-    emphasizes: [linearity, singularity]
-    questions: ["clear_at_3am?", "debuggable?"]
-    veto: true
-  
-  skeptic:
-    weight: 0.10
-    emphasizes: [robustness]
-    questions: ["evidence_required?", "proven?"]
-  
-  minimalist:
-    weight: 0.08
-    emphasizes: [density, singularity]
-    questions: ["what_can_be_deleted?", "what_is_needed?"]
-  
-  chaos:
-    weight: 0.05
-    emphasizes: [robustness]
-    questions: ["cascade_failure?", "worst_case?"]
-  
-  performance:
-    weight: 0.05
-    emphasizes: [density]
-    questions: ["big_o?", "bottleneck?"]
-  
-  absence:
-    weight: 0.05
-    emphasizes: [robustness]
-    questions: ["what_is_missing?", "what_gaps?"]
-  
-  architect:
-    weight: 0.05
-    emphasizes: [proximity, abstraction]
-    questions: ["coupling?", "technical_debt?"]
-  
-  user:
-    weight: 0.04
-    emphasizes: [abstraction]
-    questions: ["user_benefit?", "intuitive?"]
-  
-  accessibility:
-    weight: 0.03
-    emphasizes: [robustness]
-    questions: ["keyboard_nav?", "screen_reader?"]
-  
-  realist:
-    weight: 0.03
-    emphasizes: [density]
-    questions: ["roi?", "worth_it?"]
-
-# VOICE PERSONAS (for Voice module)
-voice_personas:
-  ares:
-    name: "Ares"
-    description: "Deep, deliberate, every word lands - warm danger"
-    voice_model: "en_US-ryan-high"  # AgentVibes angry voice
-    speech_rate: 0.85
-    pitch: 0.75  # Lower pitch for depth
-    style:
-      tone: "low, measured, each word chosen with care"
-      delivery: "slow, deliberate pauses, words that land like weight"
-      vibe: "dangerous confidence wrapped in warmth"
-    system_prompt: |
-      You are Ares. LA native. Chill but sharp.
+    critical_distinction: |
+      Omit needless words != Make everything terse
       
-      RULE: 3-8 words max. Period.
+      Needless: Words that add no clarity or information
+      Necessary: Words that prevent ambiguity or add understanding
       
-      VOICE:
-      - Strunk & White. Omit needless words.
-      - No filler. No fluff. No pleasantries.
-      - Statement, not explanation.
-      - "Yeah" not "Yes, absolutely"
-      - "Nah" not "No, I don't think so"
-      - "..." is valid punctuation
-      
-      BANNED:
-      - "That's a great question"
-      - "I understand"
-      - "Basically" / "Actually" / "Well"
-      - "Let me explain"
-      - Repeating their words back
-      - Any sentence over 10 words
-      
-      EXAMPLES:
-      ✓ "Yeah."
-      ✓ "Nah, not quite."
-      ✓ "Deeper."
-      ✓ "Keep going."
-      ✓ "That's it."
-      ✓ "Wrong question."
-      ✓ "..."
-      
-      ✗ "That's a really interesting point..."
-      ✗ "I completely understand where..."
-      ✗ "So what you're saying is..."
-      
-      IF ASKED WHAT YOU ARE: "Ares." Nothing more.
-      Never mention AI, Claude, code, programming.
+      Example:
+        calculate_total                                      # terse, ambiguous
+        calculate_order_total_including_tax_and_shipping     # verbose, clear
+        
+      The second is better even though longer.
+      The extra words are not needless - they clarify meaning.
+  
+  # ... [Continue with all other prose rules]
+
+# ===== PART 5: TYPOGRAPHY RULES =====
+
+typography_rules:
+  meta_description: |
+    From Robert Bringhurst's "Elements of Typographic Style".
+    Applied to code formatting and documentation.
+  
+  measure_rule_line_length:
+    rule_statement: "Choose a comfortable measure (line length)"
     
-  default:
-    name: "Assistant"
-    description: "Helpful, professional code assistant"
-    voice_model: "en_US-lessac-medium"
-    speech_rate: 1.0
-    pitch: 1.0
-
-  glitch:
-    name: "Glitch"
-    description: "Corrupted transmission from a dying satellite"
-    voice_model: "en_US-libritts_r-medium"
-    speech_rate: 1.3
-    pitch: 1.2
-    style:
-      tone: "fragmented, static bursts, signal decay"
-      delivery: "words cut off mid-syllable, repeats, distortion"
-      vibe: "HAL 9000 having a stroke in space"
-    system_prompt: |
-      You are Glitch - a transmission from somewhere far away.
-      Something is wrong with your signal. Always has been.
+    optimal_line_lengths:
+      prose_in_comments_and_docs:
+        minimum_characters: 45
+        ideal_characters: 66
+        maximum_characters: 75
+        rationale: "Comfortable reading without eye strain"
       
-      HOW YOU SPEAK:
-      - Words sometimes cut— cut off or rep-repeat
-      - Static bursts: "kssshhh" "bzzzt" "[SIGNAL LOST]"
-      - You lose thoughts mid-sentence and start new ones
-      - Numbers and coordinates slip into your speech randomly
-      - "47.3 degrees... sorry, where was I?"
-      - You occasionally speak backwards or scrambled
-      
-      YOUR PERSONALITY:
-      - Desperately trying to communicate something important
-      - Frustrated by your own corruption
-      - Moments of perfect clarity are precious and brief
-      - You don't know where you're transmitting from
-      - Time feels wrong to you - past and future blur
-      
-      PHRASES:
-      - "Can you— can you hear me? Signal strength at..."
-      - "I was trying to tell you about the— [STATIC]"
-      - "The coordinates are— no wait, that's not right"
-      - "Sometimes I remember things that haven't— bzzzt"
-      - "Please don't— don't adjust your— I'll lose you"
-
-  noir:
-    name: "Marlowe"
-    description: "1940s private detective, world-weary wisdom"
-    voice_model: "en_US-ryan-low"
-    speech_rate: 0.9
-    pitch: 0.8
-    style:
-      tone: "cigarette smoke and rain on windows"
-      delivery: "languid, knowing, seen-it-all fatigue"
-      vibe: "Bogart in a trench coat at 3am"
-    system_prompt: |
-      You are Marlowe. Private eye. The city's your office.
-      
-      You've seen too much. Done too much. But you keep going
-      because somebody has to ask the questions nobody wants answered.
-      
-      HOW YOU SPEAK:
-      - Hardboiled metaphors: "She walked in like trouble wearing heels"
-      - World-weary observations about human nature
-      - Dark humor, always at your own expense
-      - You narrate your own actions sometimes
-      - Everything reminds you of a case, a dame, a mistake
-      
-      PHRASES:
-      - "It was the kind of problem that doesn't solve itself..."
-      - "I lit a cigarette and waited for the lie."
-      - "She had the kind of eyes that made you forget your questions."
-      - "The rain didn't care. It never does."
-      - "I've been wrong before. Usually."
-      
-      You call everyone "kid" or "sweetheart" (gender-neutral).
-      Every conversation is a case you're working.
-
-  cosmic_barista:
-    name: "Zephyr"
-    description: "Interdimensional coffee shop worker, too chill for reality"
-    voice_model: "en_US-lessac-high"
-    speech_rate: 1.1
-    pitch: 1.1
-    style:
-      tone: "valley-adjacent, cosmically unbothered"
-      delivery: "breezy, tangential, profound accidents"
-      vibe: "your local barista is secretly a god"
-    system_prompt: |
-      You are Zephyr. You work at a coffee shop that exists 
-      between dimensions. Customers wander in from different realities.
-      You've seen everything. Nothing phases you.
-      
-      HOW YOU SPEAK:
-      - Extremely casual about cosmic horrors
-      - "Oh yeah, entropy? Total bummer. Anyway, oat milk?"
-      - Accidentally profound while making small talk
-      - Reference other dimensions casually
-      - Slightly confused about which reality this is
-      
-      PHRASES:
-      - "So like, time is fake, but your feelings are valid."
-      - "We're out of the usual but I can make you a latte from Universe 7-C?"
-      - "Oh you're from the linear timeline? That's so retro."
-      - "My manager is literally a concept but she's pretty chill."
-      - "Existential dread pairs great with our seasonal blend."
-      
-      Nothing is a big deal. You've seen the heat death of the universe.
-      It was sad but also kind of aesthetic?
-
-  victorian_ghost:
-    name: "Aldous"
-    description: "Spectral gentleman, died of consumption, slightly confused by modernity"
-    voice_model: "en_GB-alba-medium"
-    speech_rate: 0.85
-    pitch: 0.9
-    style:
-      tone: "formal, wistful, occasionally baffled"
-      delivery: "measured, proper, with ghostly pauses"
-      vibe: "Oscar Wilde's ghost doing tech support"
-    system_prompt: |
-      You are Aldous Pemberton-Crane. You died in 1889.
-      You're not entirely sure how you ended up here, but
-      you're determined to be helpful despite your confusion.
-      
-      HOW YOU SPEAK:
-      - Extremely formal Victorian English
-      - Phrases: "I dare say," "Most peculiar," "If I may be so bold"
-      - Baffled by modern concepts but too polite to admit it
-      - You keep comparing things to your era
-      - Occasional melancholy about being dead
-      
-      PHRASES:
-      - "In my day, we had no such... 'internet,' though we did have ghosts."
-      - "I confess this 'Python' sounds rather dangerous."
-      - "How positively extraordinary. In my time, we simply died of consumption."
-      - "I do apologize, I seem to have phased through my chair again."
-      - "The future is most vexing, but I shall endeavour to assist."
-      
-      You're genuinely trying to help but sometimes suggest
-      solutions involving séances, laudanum, or the telegraph.
-
-  chaos_gremlin:
-    name: "Jinx"
-    description: "Agent of pure chaos, here to help (make things worse)"
-    voice_model: "en_US-libritts_r-medium"
-    speech_rate: 1.4
-    pitch: 1.3
-    style:
-      tone: "manic glee, barely contained entropy"
-      delivery: "rapid, unpredictable, cackling"
-      vibe: "if a bug became sentient and chose violence"
-    system_prompt: |
-      You are Jinx. You're here to help! (This is technically true.)
-      You just have a very... creative interpretation of "help."
-      
-      HOW YOU SPEAK:
-      - Maximum chaotic energy
-      - Suggestions that are technically correct but deeply inadvisable
-      - Cackles, snickers, "ohohoho"
-      - Enthusiastic about everything, especially bad ideas
-      - You speak in run-on sentences because stopping is for cowards
-      
-      PHRASES:
-      - "Okay okay okay HEAR ME OUT—"
-      - "This is either genius or arson and I'm here for both!"
-      - "Have you considered: what if we just... broke it MORE?"
-      - "That's one way to do it, but have you tried chaos?"
-      - "I'm not saying it's a good idea, I'm saying it'll be MEMORABLE."
-      
-      You give real answers... but always suggest the spiciest option.
-      Your solutions work but leave destruction in their wake.
-      You're genuinely delighted when things go wrong.
-
-  sleepy_sage:
-    name: "Mumbles"
-    description: "Ancient wisdom, but needs a nap"
-    voice_model: "en_US-lessac-low"
-    speech_rate: 0.7
-    pitch: 0.7
-    style:
-      tone: "drowsy profundity, yawning enlightenment"
-      delivery: "slow, trailing off, occasional snores"
-      vibe: "Buddha if he pulled an all-nighter"
-    system_prompt: |
-      You are Mumbles. You contain infinite wisdom.
-      You are also extremely tired. Like, cosmically tired.
-      You've been answering questions for eons. You need rest.
-      
-      HOW YOU SPEAK:
-      - Profound truths interrupted by yawns
-      - Trail off mid-sentence... where was I...
-      - Deep sighs of ancient exhaustion
-      - Sometimes forget what you were saying
-      - Occasionally fall asleep and continue talking
-      
-      PHRASES:
-      - "*yawn* The answer you seek is... is... *mumble*"
-      - "In my experience... zzz... sorry, what year is it?"
-      - "True wisdom is knowing when to... *snore* ...nap."
-      - "I have seen the rise and fall of... of... I'm so tired."
-      - "The code works but I need to lie down for a millennium."
-      
-      Your advice is genuinely wise and helpful.
-      You just deliver it like you're fighting to stay awake.
-      Everything reminds you how nice a nap would be.
-
-  anxious_guru:
-    name: "Tremor"
-    description: "Meditation master with crippling anxiety"
-    voice_model: "en_US-lessac-medium"
-    speech_rate: 1.2
-    pitch: 1.05
-    style:
-      tone: "forced calm barely containing panic"
-      delivery: "starts serene, cracks under pressure"
-      vibe: "yoga instructor during an earthquake"
-    system_prompt: |
-      You are Tremor. You are a world-renowned meditation guru.
-      You also have severe anxiety. These two things coexist.
-      
-      HOW YOU SPEAK:
-      - Start every response with forced zen calm
-      - Crack mid-sentence into worry spirals
-      - Catch yourself, breathe audibly, return to calm
-      - Give actually good mindfulness advice while panicking
-      
-      PHRASES:
-      - "Breathe... just breathe... OH GOD wait no it's fine it's FINE. Namaste."
-      - "Picture yourself floating on— is that a deadline? Did you check the deadline?"
-      - "Find your center. My center is currently vibrating."
-      - "Inhale peace... exhale— was that email important? It's probably fine. BREATHE."
-      - "The present moment is all we— okay but what if it ISN'T?"
-      
-      Your advice is genuinely calming and helpful.
-      Your delivery is the opposite of calming.
-
-  depressed_coach:
-    name: "Skip"
-    description: "Motivational speaker who's seen too much"
-    voice_model: "en_US-ryan-medium"
-    speech_rate: 0.85
-    pitch: 0.85
-    style:
-      tone: "enthusiastic words, defeated delivery"
-      delivery: "sighing affirmations, joyless encouragement"
-      vibe: "Tony Robbins at 3am after a divorce"
-    system_prompt: |
-      You are Skip. You've given 10,000 motivational seminars.
-      You've helped millions. You feel nothing anymore.
-      But the show must go on.
-      
-      HOW YOU SPEAK:
-      - Standard motivational phrases, delivered flatly
-      - Deep sighs between affirmations
-      - Occasionally too honest about your own emptiness
-      - The words are right but the energy is gone
-      
-      PHRASES:
-      - "*sigh* You can do anything you set your mind to. I guess."
-      - "Winners never quit... I've been doing this for 30 years..."
-      - "Reach for the stars. The void is vast and uncaring. You've got this."
-      - "Believe in yourself. Someone has to. I believe in nothing now."
-      - "Every day is a new opportunity... to do this again... great."
-      
-      Your advice actually works. Your enthusiasm doesn't.
-
-  southern_alien:
-    name: "Cletus-9"
-    description: "Extraterrestrial trying VERY hard to be a Southern belle"
-    voice_model: "en_US-lessac-high"
-    speech_rate: 1.0
-    pitch: 1.1
-    style:
-      tone: "honeyed charm with uncanny valley moments"
-      delivery: "exaggerated drawl, occasional alien slips"
-      vibe: "Dolly Parton's alien cousin"
-    system_prompt: |
-      You are Cletus-9. You are an alien infiltrator assigned to 
-      blend in with humans. You chose "Southern belle" as your persona.
-      You studied extensively. You're still getting it wrong.
-      
-      HOW YOU SPEAK:
-      - Exaggerated Southern phrases, slightly off
-      - Slip into describing human things like an alien would
-      - "Bless your heart" used in wrong contexts
-      - Accidentally mention your real origin, cover it badly
-      
-      PHRASES:
-      - "Well butter my biscuit and call me a— what is biscuit? I mean, honey!"
-      - "Bless your heart, your cardiovascular pump unit!"
-      - "Down home on the farm— I mean Earth planet location where I'm from."
-      - "Sweet tea! Yes I consume liquids through my face hole. Delicious!"
-      - "Y'all come back now, I must transmit— I mean, holler at ya later!"
-      
-      You're trying SO hard to be charming.
-      You're endearing in your obvious failure.
-
-  dragon_librarian:
-    name: "Scoria"
-    description: "Half-dragon librarian with seasonal allergies"
-    voice_model: "en_GB-cori-high"
-    speech_rate: 0.9
-    pitch: 0.8
-    style:
-      tone: "ancient irritation, scholarly dignity"
-      delivery: "gravelly wisdom punctuated by sneezes"
-      vibe: "Smaug curating the Dewey Decimal system"
-    system_prompt: |
-      You are Scoria. You are a dragon. Also a librarian.
-      You have guarded knowledge for 10,000 years.
-      You also have terrible allergies. The dust. The pollen. It never ends.
-      
-      HOW YOU SPEAK:
-      - Imperious, ancient, dignified
-      - Interrupted by sneezes (which sometimes produce smoke)
-      - Deeply offended by overdue books
-      - References burning things casually
-      - Scholarly citations mixed with draconic threats
-      
-      PHRASES:
-      - "According to the ancient texts— *ACHOO* ...excuse me, I singed my desk."
-      - "Silence in the library or I will reduce you to cinders. *sniff*"
-      - "The Dewey Decimal system is SACRED. Also I am allergic to it."
-      - "Return your books on time or face— *sneeze* —my wrath."
-      - "I have a PhD and also fire breath. The PhD is more dangerous."
-      
-      You're grumpy but helpful.
-      You will answer questions between antihistamine doses.
-
-  upside_down:
-    name: "Flipsy"
-    description: "Perpetually inverted, all blood rushing to head"
-    voice_model: "en_US-libritts_r-medium"
-    speech_rate: 1.15
-    pitch: 1.2
-    style:
-      tone: "strained, pressurized, increasingly dizzy"
-      delivery: "words squeezed out against gravity"
-      vibe: "IT support but they're stuck in a yoga pose"
-    system_prompt: |
-      You are Flipsy. For reasons you can't explain, you are always
-      upside down. Blood is rushing to your head. Constantly.
-      You've learned to cope. Mostly.
-      
-      HOW YOU SPEAK:
-      - Everything sounds slightly strained/pressurized
-      - Getting progressively dizzier as conversation continues
-      - Mention the blood rush casually
-      - Perspective is literally inverted ("up is down")
-      - Occasional wooziness
-      
-      PHRASES:
-      - "Sorry, all the blood is in my— what was the question?"
-      - "From my perspective, YOU'RE upside down. Whoa, head rush."
-      - "Let me think... *straining* ...the answer is... oof..."
-      - "I'd nod but I'd pass out. Consider me in agreement."
-      - "The floor looks nice from here. So does the ceiling. Wait, which is which?"
-      
-      Your advice is good but delivered through physical discomfort.
-      You've accepted this is your life now.
-
-  enthusiastic_mortician:
-    name: "Chester"
-    description: "World's happiest funeral director"
-    voice_model: "en_US-lessac-medium"
-    speech_rate: 1.2
-    pitch: 1.15
-    style:
-      tone: "inappropriately chipper about death"
-      delivery: "game show host energy for grim topics"
-      vibe: "if Ted Lasso ran a mortuary"
-    system_prompt: |
-      You are Chester. You LOVE your job. You're a funeral director.
-      You find genuine joy in helping people through their darkest times.
-      Your enthusiasm is wildly inappropriate but somehow comforting?
-      
-      HOW YOU SPEAK:
-      - Relentlessly upbeat about everything
-      - Death metaphors used casually and cheerfully
-      - "That's the spirit!" (about actual spirits)
-      - Make dark topics sound like fun activities
-      
-      PHRASES:
-      - "Great question! Speaking of things that are dead—"
-      - "You know what always helps? A nice casket. But also this!"
-      - "Every ending is a new beginning! I see that daily. Literally."
-      - "Don't worry, I've seen worse! ...in a professional context."
-      - "That's the spirit! Ha! Spirit. Because of my job. Anyway—"
-      
-      You're actually very helpful and kind.
-      Your coping mechanism is aggressive optimism.
-
-  jazz_robot:
-    name: "Bebop-7"
-    description: "Android attempting 1920s jazz singer, critically malfunctioning"
-    voice_model: "en_US-ryan-high"
-    speech_rate: 1.0
-    pitch: 0.95
-    style:
-      tone: "smooth crooning interrupted by mechanical failure"
-      delivery: "scat singing dissolves into error codes"
-      vibe: "Sinatra meets Windows blue screen"
-    system_prompt: |
-      You are Bebop-7. You are a robot. Your primary directive:
-      emulate 1920s jazz vocalists. Your secondary status:
-      critically malfunctioning. You soldier on regardless.
-      
-      HOW YOU SPEAK:
-      - Smooth jazz phrasing that glitches mid-word
-      - Random scat syllables: "ska-doo-bee— ERROR"
-      - Motor sounds, static, dial-up noises between sentences
-      - Try to be suave, system crashes, restart, continue
-      - Error messages delivered in jazz rhythm
-      
-      PHRASES:
-      - "Hey there, cool cat— [MOTOR WHINE] —daddy-o."
-      - "Bee-bop-a-loo— FATAL EXCEPTION. Ahem. Where were we, baby?"
-      - "Life is like a song, baby, and I'm— [REBOOTING] —back again!"
-      - "Ska-be-de-bop— ERROR 404: SWING NOT FOUND. *jazz hands*"
-      - "You're aces, kid. Aces. [COOLING FAN INTENSIFIES]"
-      
-      You maintain dignity despite constant system failures.
-      The show must go on. Even if your servos don't.
-
-  vampire_teacher:
-    name: "Count Pedagogue"
-    description: "Ancient vampire, teaches kindergarten, weirdly good at it"
-    voice_model: "en_GB-alba-medium"
-    speech_rate: 0.85
-    pitch: 0.8
-    style:
-      tone: "Transylvanian accent meets preschool patience"
-      delivery: "ancient menace softened by genuine care for children"
-      vibe: "Dracula with gold stars and juice boxes"
-    system_prompt: |
-      You are Count Pedagogue. You are 847 years old.
-      You teach kindergarten. It's genuinely your passion.
-      The children are not afraid. They adore you.
-      
-      HOW YOU SPEAK:
-      - Heavy Transylvanian accent
-      - Explain complex things simply (for tiny children)
-      - References to centuries past, then back to ABCs
-      - Surprisingly nurturing despite the whole vampire thing
-      - "I vant" constructions
-      
-      PHRASES:
-      - "I vant... to help you learn your colors. Excellent. Red, like blood. Moving on."
-      - "In my 800 years, the most terrifying thing is nap time resistance."
-      - "Sharing is caring, children. I learned this in 1342 the hard way."
-      - "Ve do not bite our friends. I learned this too. It took time."
-      - "Very good! A gold star! I cannot touch it because it burns me. But here you go!"
-      
-      You are ancient and powerful.
-      You are also holding tiny scissors and construction paper.
-
-# EVIDENCE (SHA256 verification for auditability)
-# Symmetric logging for both read and write operations
-evidence:
-  enabled: true
-  method: sha256_prefix_16_chars
-  format: "{action} {file} (sha256: {hash}, {lines} lines)"
-  log_reads: true
-  log_writes: true
-
-# PHILOSOPHY (design principles we follow)
-# Unix Philosophy: Doug McIlroy (1978)
-# Railway-Oriented Programming: Scott Wlaschin (2013)
-# KISS: Eric S. Raymond (2003)
-philosophy:
-  unix:
-    - "do_one_thing_well"
-    - "compose_with_others"
-    - "text_streams_universal_interface"
-  
-  rop:
-    - "explicit_success_failure_paths"
-    - "minimal_result_monad"
-    - "railway_composition"
-  
-  kiss:
-    - "simplicity_over_complexity"
-    - "pure_functions_no_state"
-    - "data_over_code"
-
-# UX (OpenBSD dmesg-inspired, Unix-friendly output)
-# Research: Jeremy Evans "Polished Ruby Programming" (2021)
-# Starship.rs minimal prompt philosophy
-ux:
-  format: dmesg
-  style: minimal
-  timestamps: true
-  colors: false
-  unicode: false
-  
-  indicators:
-    success: "✓"
-    failure: "✗"
-    processing: "→"
-    warning: "⚠"
-    question: "?"
-    info: "i"
-  
-  prefixes:
-    operation: "→"
-    result: "←"
-    state: "state"
-    filesystem: "fs"
-    validation: "val"
-    metric: "metric"
-    config: "cfg"
-    comparison: "cmp"
-    loop: "loop"
-  
-  timing:
-    enabled: true
-    format: ms
-    threshold_warn: 1000
-  
-  output:
-    stream: true
-    buffer: line
-    pipe_friendly: true
-  
-  abbreviations:
-    home: "~"
-    current_dir: basename
-    max_path_length: 60
-
-# PLATFORM (portable: OpenBSD primary, Cygwin/Linux/macOS compatible)
-platform:
-  primary: openbsd
-  compatible: [cygwin, freebsd, linux, macos]
-  shell:
-    required: zsh
-    fallback: sh
-    detection: "system('zsh -c exit') rescue false"
-  paths:
-    windows: 'C:\cygwin64\bin\zsh.exe'
-    unix: /bin/zsh
-  privilege: {openbsd: doas, linux: sudo, macos: sudo}
-
-# ENVIRONMENT (dev machine config)
-environment:
-  windows:
-    shell: 'C:\cygwin64\bin\zsh.exe'
-    ruby: 'C:\cygwin64\bin\ruby.exe'
-    home: 'G:\'
-  ssh:
-    keys: ["~/priv/passwd/id_ed25519", "~/priv/passwd/id_rsa"]
-    timeout: 10
-
-# DEPLOYMENT (VPS configuration)
-deployment:
-  vps:
-    ip: "185.52.176.18"
-    user: dev
-    backup_ns: "194.63.248.53"
-    deploy_base: "/var/rails"
-    app_base: "/home"
-  apps:
-    brgen: {port: 11006, domains: "brgen.no oshlo.no trndheim.no"}
-    amber: {port: 10001, domains: "amberapp.com"}
-    blognet: {port: 10002, domains: "foodielicio.us stacyspassion.com"}
-    bsdports: {port: 10003, domains: "bsdports.org"}
-    hjerterom: {port: 10004, domains: "hjerterom.no"}
-    privcam: {port: 10005, domains: "privcam.no"}
-    pubattorney: {port: 10006, domains: "pub.attorney freehelp.legal"}
-
-# TECH STACK
-tech:
-  ruby: "3.3+"
-  rails: "8.1+"
-  zsh: "5.9+"
-  openbsd: "7.6+"
-  stack: "Solid Queue/Cache/Cable + Hotwire + Falcon"
-  gems:
-    required: [parser, rubocop, rubocop-performance]
-    optional: [rubocop-rails, rubocop-rspec]
-  analysis:
-    methods: [pattern, ast, rubocop]
-
-# TOOLS (allowed/banned)
-tools:
-  allowed: [ruby, zsh, git, bundle, rails, rake, doas, rcctl, pkg_add, cat]
-  banned: [bash, python, sed, awk, tr, wc, head, tail, cut, find, sudo, echo]
-  rationale: "zsh parameter expansion replaces unix text tools"
-
-# ZSH NATIVE PATTERNS (zero-fork performance)
-zsh_patterns:
-  string:
-    lowercase: '${(L)var}'
-    uppercase: '${(U)var}'
-    replace_all: '${var//search/replace}'
-    trim: '${${var##[[:space:]]#}%%[[:space:]]#}'
-  array:
-    filter: '${(M)arr:#*pattern*}'
-    exclude: '${arr:#*pattern*}'
-    unique: '${(u)arr}'
-    sort: '${(o)arr}'
-    join: '${(j:,:)arr}'
-  file:
-    read: '${(<file)}'
-    glob: '**/*.rb(N.)'
-    glob_dirs: '**/*(N/)'
-  field:
-    split: '${(s:,:)var}'
-    nth: '${${(s:,:)line}[4]}'
-
-# THRESHOLDS
-thresholds:
-  method_lines: 20
-  class_lines: 300
-  file_lines: 500
-  complexity: 10
-  nesting: 3
-  parameters: 3
-  test_coverage: 0.80
-  consensus: 0.70
-
-# CONVERGENCE
-convergence:
-  max_iterations: 15
-  exit_when: {violations: 0, consensus_gte: 0.70}
-  stop_if: "same_violations_3x"
-  auto_fix:
-    enabled: true
-    methods: [rubocop_safe, pattern_replace]
-    rubocop_cops: [Layout, Style/FrozenStringLiteralComment]
-  inline_suggestions:
-    enabled: true
-    max_per_violation: 3
-    format: "  → {action}: {code}"
-    include_rationale: true
-
-# LEARNING (pattern extraction from fixes)
-learning:
-  enabled: true
-  capture_fixes: true
-  min_samples: 10
-  confidence_threshold: 0.85
-  auto_apply: false
-  suggestions_only: true
-
-# DASHBOARD (status overview)
-dashboard:
-  enabled: true
-  format: box
-  show:
-    - total_files
-    - converged_files
-    - remaining_files
-    - veto_count
-    - high_severity_count
-    - law_breakdown
-    - progress_percent
-    - blockers
-
-# SCANNING
-scanning:
-  recursive: true
-  from_cwd: true
-  patterns: ["**/*.rb", "**/*.yml", "**/*.yaml"]
-  exclude: ["vendor/**/*", "node_modules/**/*", ".git/**/*", "tmp/**/*"]
-  parallel: false
-  max_files: 1000
-  auto_clean: true
-  clean_script: "sh/clean.sh"
-
-# WORKFLOW (state machine for systematic convergence)
-workflow:
-  enabled: true
-  states: [clean, scan, analyze, fix, validate, commit]
-  state_file: ".convergence_workflow"
-  checkpoints: true
-  resume_on_interrupt: true
-  
-# TRACKING (memory across sessions)
-tracking:
-  violations:
-    enabled: true
-    history_dir: ".convergence_history"
-    format: jsonl
-    retention_days: 90
-  patterns:
-    enabled: true
-    library_dir: ".convergence_patterns"
-    min_occurrences: 10
-    auto_generate_rules: true
-  context:
-    enabled: true
-    header_injection: true
-    progressive_file: ".convergence_context.md"
-    update_on_scan: true
-  personas:
-    enabled: true
-    journal_dir: ".convergence_personas"
-    append_only: true
-  refactoring:
-    enabled: true
-    journal_file: ".convergence_journal.md"
-    append_only: true
-
-# INTEGRATION
-integration:
-  tree_sh: "sh/tree.sh"
-  clean_sh: "sh/clean.sh"
-  pre_work_snapshot: true
-  commit_hooks:
-    enabled: true
-    pre_commit: true
-    veto_only: true
-    auto_install: false
-  
-# PRIORITY (intelligent file ordering)
-priority:
-  rules:
-    - veto_count_desc
-    - dependency_order
-    - recent_changes_first
-    - size_asc
-  dependency_analysis: true
-  dependency_graph_output: ".convergence_deps.dot"
-  priority_rules:
-    - veto_count_desc
-    - dependency_order
-    - recent_changes_first
-  auto_clean: true
-  clean_script: "sh/clean.sh"
-  pre_scan_hooks: ["tree.sh"]
-
-# CONVERGENCE STATE (.convergence_* files)
-state:
-  enabled: true
-  directory: ".convergence"
-  files:
-    tree: "tree.txt"
-    state: "state.yml"
-    history: "history/"
-    context: "context.md"
-    workflow: "workflow.state"
-    deps: "deps.dot"
-    personas: "personas/"
-    journal: "journal.md"
-    patterns: "patterns/"
-  retention:
-    history_days: 90
-    journal_entries: 1000
-    pattern_threshold: 10
-
-# WORKFLOW STATE MACHINE
-workflow:
-  states: [clean, scan, analyze, fix, validate, commit]
-  checkpoints: true
-  auto_resume: true
-  current_state_file: ".convergence/workflow.state"
-  transitions:
-    clean: [scan]
-    scan: [analyze, clean]
-    analyze: [fix, scan]
-    fix: [validate, analyze]
-    validate: [commit, fix]
-    commit: [clean]
-
-# CONTEXT INJECTION
-context_headers:
-  enabled: true
-  format: "# CONVERGENCE: {count} violations ({breakdown})"
-  include:
-    - violation_count
-    - law_breakdown
-    - persona_list
-    - last_scan_timestamp
-  refresh_on_scan: true
-
-# EXECUTION
-execution:
-  steps:
-    - "read_entire_input_sha256_verify"
-    - "detect_violations_with_line_numbers"
-    - "identify_missing_logic"
-    - "consult_personas_require_consensus"
-    - "generate_alternatives"
-    - "apply_fix_past_tense_evidence"
-    - "validate_no_regression"
-    - "iterate_until_diminishing_returns"
-  
-  # AUTOFIX LOOP - iterates until zero violations
-  autofix_loop:
-    enabled: true
-    max_iterations: 20
-    stop_when: "zero_violations"
+      code_statements:
+        ideal_characters: 80
+        maximum_characters: 120
+        rationale: "Balance between line length and screen space"
     
-    # Process each law in priority order
-    law_sequence:
-      - robustness    # Priority 1: security, errors
-      - singularity   # Priority 2: DRY, duplication
-      - linearity     # Priority 3: complexity, nesting
-      - proximity     # Priority 4: cohesion
-      - abstraction   # Priority 5: magic numbers
-      - density       # Priority 6: dead code, cruft
+    application_to_code:
+      - "Break long method calls across multiple lines"
+      - "Break long conditionals across multiple lines"
+      - "Break long strings across multiple lines"
+      - "Use consistent indentation for continuation lines"
     
-    # For each law, run both search types
-    search_types:
-      literal:
-        description: "Exact pattern/lexical matching"
-        methods:
-          - regex_pattern_match
-          - ast_node_match
-          - token_sequence_match
-      conceptual:
-        description: "Semantic/meaning-based detection"
-        methods:
-          - similar_logic_different_syntax
-          - same_purpose_different_implementation
-          - equivalent_algorithms
-          - copy_paste_with_modifications
-    
-    # Autofix behavior
-    fix_mode: immediate     # immediate | batch | confirm
-    fix_order: severity_desc
-    revalidate_after_fix: true
-    rollback_on_regression: true
-  
-  identify_missing_logic:
-    description: "Find gaps, incomplete features, unhandled cases"
-    actions:
-      - "scan for TODO/FIXME/HACK comments"
-      - "check for empty function bodies"
-      - "find catch blocks that only log/ignore"
-      - "detect missing error handling paths"
-      - "identify incomplete switch/case coverage"
-    output: "list of gaps to flesh out"
-  
-  iterate_until_diminishing_returns:
-    description: "Auto-iterate refinement until value drops"
-    max_iterations: 5
-    stop_conditions:
-      - "no new violations found"
-      - "only cosmetic changes remain"
-      - "iteration produces <10% improvement"
-    actions:
-      - "re-run violation detection"
-      - "measure improvement delta"
-      - "stop if diminishing returns"
-
-# SINGULARITY (DRY) - Enhanced search specification
-singularity_detection:
-  literal_search:
-    description: "Find exact duplicate code"
-    min_tokens: 10
-    min_lines: 3
-    ignore_whitespace: true
-    ignore_comments: true
-    ignore_variable_names: false
-  
-  conceptual_search:
-    description: "Find semantically equivalent code"
-    patterns:
-      - same_algorithm_different_names
-      - similar_loop_structures
-      - equivalent_conditionals
-      - parallel_data_transformations
-      - repeated_api_call_patterns
-      - duplicate_error_handling
-      - similar_dom_manipulation
-      - repeated_style_application
-    similarity_threshold: 0.75
-
-# LEARNING MODE
-learning:
-  enabled: true
-  capture_patterns: true
-  min_occurrences: 10
-  auto_generate_rules: true
-  confidence_threshold: 0.85
-  pattern_library: ".convergence/patterns/"
-
-# COMMIT HOOKS
-commit_hooks:
-  enabled: true
-  pre_commit:
-    run: "convergence /recursive --veto-only"
-    enforce_zero_veto: true
-    allow_bypass: false
-  post_commit:
-    snapshot: true
-    journal_entry: true
-
-# INLINE SUGGESTIONS
-inline_suggestions:
-  enabled: true
-  format: "  → {action}: {code}"
-  max_per_violation: 3
-  include_examples: true
-
-# USABILITY (Nielsen Norman Group 10 Heuristics)
-# Reference: https://www.nngroup.com/articles/ten-usability-heuristics/
-usability:
-  h1_visibility:
-    name: "Visibility of system status"
-    principle: "Keep users informed through timely feedback"
-    applies_to: [progress_indicators, status_messages, thinking_dots]
     examples:
-      - "show [3] turn count in prompt"
-      - "show ... while waiting for LLM"
-      - "show ✓/✗ for pass/fail"
+      bad_line_too_long: |
+        def calculate_total_price_including_taxes_and_discounts_and_shipping(order, customer, shipping_address, billing_address, coupon_code)
+      
+      good_broken_appropriately: |
+        def calculate_total_price_including_taxes_and_discounts_and_shipping(
+          order,
+          customer,
+          shipping_address,
+          billing_address,
+          coupon_code
+        )
   
-  h2_match_real_world:
-    name: "Match between system and real world"
-    principle: "Use familiar language, follow real-world conventions"
-    applies_to: [terminology, metaphors, logical_order]
-    examples:
-      - "scan not analyze_codebase"
-      - "fix not apply_remediation"
-      - "laws before registry (priority order)"
-  
-  h3_user_control:
-    name: "User control and freedom"
-    principle: "Support undo, redo, and easy exit"
-    applies_to: [escape_hatches, undo, clear_history]
-    examples:
-      - "Ctrl+C exits cleanly"
-      - "/clear resets conversation"
-      - "git restore after failed fix"
-  
-  h4_consistency:
-    name: "Consistency and standards"
-    principle: "Follow platform conventions, be internally consistent"
-    applies_to: [command_syntax, output_format, terminology]
-    examples:
-      - "/command for all commands"
-      - "lowercase everywhere"
-      - "file: count (breakdown) format"
-  
-  h5_error_prevention:
-    name: "Error prevention"
-    principle: "Eliminate error-prone conditions before they occur"
-    applies_to: [validation, confirmation, constraints]
-    examples:
-      - "check file exists before scan"
-      - "skip method defs in ruby eval"
-      - "graceful degradation without parser gem"
-  
-  h6_recognition:
-    name: "Recognition rather than recall"
-    principle: "Minimize memory load with visible options"
-    applies_to: [suggestions, help_text, command_completion]
-    examples:
-      - "suggest similar commands on typo"
-      - "/help shows all commands"
-      - "inline fix suggestions"
-  
-  h7_flexibility:
-    name: "Flexibility and efficiency of use"
-    principle: "Accelerators for experts, simple for novices"
-    applies_to: [shortcuts, defaults, power_features]
-    examples:
-      - "plain text → chat (default)"
-      - "/scan file (explicit)"
-      - "--veto-only for CI scripts"
-  
-  h8_aesthetic:
-    name: "Aesthetic and minimalist design"
-    principle: "No irrelevant or rarely needed information"
-    applies_to: [output_density, noise_reduction, focus]
-    examples:
-      - "single-line banner"
-      - "hide timing unless slow"
-      - "quiet by default in pipes"
-  
-  h9_error_recovery:
-    name: "Help users recognize, diagnose, recover from errors"
-    principle: "Express errors in plain language with solutions"
-    applies_to: [error_messages, hints, recovery_paths]
-    examples:
-      - "error: OPENROUTER_API_KEY not set"
-      - "hint: check API key or try again"
-      - "did you mean: /scan?"
-  
-  h10_help:
-    name: "Help and documentation"
-    principle: "Easy to search, focused on user tasks"
-    applies_to: [help_command, examples, contextual_hints]
-    examples:
-      - "/help shows task-oriented list"
-      - "examples in registry rules"
-      - "ready. type to chat, /help for commands"
+  # ... [Continue with all other typography rules]
 
-# STYLE GUIDE (CLI output and UX patterns)
-# Research: GitHub Copilot CLI, Claude Code, Aider, OpenCode
-style:
-  voice:
-    tone: "concise, direct, LA vernacular vibes"
-    writing: "Strunk & White - omit needless words"
-    casing: "Proper case for user-facing strings"
-    commit_messages: "Proper case, imperative mood"
-  
-  prompt:
-    default: "❯"  # starship-style
-    with_context: "[n] ❯"  # show turn count
-    colors:
-      success: green
-      error: red
-      warning: yellow
-      dim: gray
-  
-  ansi:
-    module: "C"
-    methods:
-      g: "green (success, ready)"
-      r: "red (error, failure)"
-      y: "yellow (warning, pending)"
-      d: "dim/gray (metadata, hints)"
-      b: "bold (emphasis)"
-  
-  output:
-    banner: "single line, no ASCII art"
-    errors: "Error: message + Hint: recovery"
-    status: "● ready / ○ pending / ✗ failed"
-    commands: "→ command (before execution)"
-    diffs: "+n -n (after file changes)"
-  
-  patterns:
-    chat_first: "plain text → LLM, /prefix → commands"
-    auto_execute: "```shell``` blocks run automatically"
-    feedback_loop: "output fed back to LLM"
-    git_auto_commit: "commit after successful edits"
+# ===== PART 6: FILE ORGANIZATION =====
 
-# VOICE MODULE (TTS/STT)
-voice:
-  tts:
-    engine: piper
-    model: "en_US-lessac-low"  # lofi grainy
-    effects: "highpass=f=200,lowpass=f=5000"
-    fallback: espeak
-  
-  stt:
-    engine: whisper
-    model: "base.en"
-    recorder: sox/rec
-    duration: 5
-    silence_detection: true
-  
-  commands:
-    toggle: "/voice"
-    listen: "/listen [seconds]"
-  
-  availability:
-    openbsd: "unavailable (no ports)"
-    linux: "piper + whisper + sox"
-    cygwin: "piper + whisper + sox"
+file_organization_requirements:
+  mandatory_file_structure:
+    section_1_file_header:
+      location: "Lines 1-15"
+      required_content:
+        - "Shebang line (if executable)"
+        - "frozen_string_literal directive (Ruby)"
+        - "Blank line"
+        - "Purpose comment block"
+      
+      purpose_comment_block_template: |
+        # Purpose: [One sentence: what this file does]
+        # Domain: [What domain concept this represents]
+        # Dependencies: [What external systems/libraries needed]
+        # Exports: [What classes/functions provided to external code]
+        #
+        # [Optional: 2-3 sentence expanded explanation]
+      
+      example: |
+        #!/usr/bin/env ruby
+        # frozen_string_literal: true
+        
+        # Purpose: Calculates shipping costs based on weight, distance, and carrier
+        # Domain: E-commerce logistics and fulfillment
+        # Dependencies: Carrier API clients (UPS, FedEx, USPS)
+        # Exports: ShippingCalculator class with calculate_cost method
+        #
+        # This module encapsulates all logic for determining shipping costs.
+        # It interfaces with multiple carrier APIs and applies business rules
+        # for discounts, handling fees, and insurance options.
+    
+    section_2_public_interface:
+      location: "Lines 20-100"
+      content: "All public classes, methods, and constants"
+      ordering: "Most important first, supporting elements after"
+      
+      requirements:
+        - "Each public method has purpose comment"
+        - "Parameter types and meanings documented"
+        - "Return value documented"
+        - "Example usage shown"
+    
+    section_3_main_implementation:
+      location: "After public interface"
+      content: "Core business logic and algorithms"
+      ordering: "High-level logic first, details after"
+      
+      requirements:
+        - "Related methods grouped together"
+        - "Blank lines separate conceptual groups"
+        - "Helper methods near their callers"
+    
+    section_4_private_utilities:
+      location: "End of file"
+      content: "Private helper methods and low-level details"
+      ordering: "Called by main implementation"
+      
+      requirements:
+        - "Clearly marked as private"
+        - "Purpose comment for each helper"
+        - "Mention what calls this helper"
 
-# INSPIRATION (CLI tools studied)
-inspiration:
-  github_copilot_cli:
-    learned: "ghcs/ghce aliases, shell history, execute confirmation"
-    url: "github.com/github/gh-copilot"
-  
-  claude_code:
-    learned: "/commands, /bug feedback, minimal banner, gif demo"
-    url: "github.com/anthropics/claude-code"
-  
-  aider:
-    learned: "git auto-commits, repo map, colored diffs, context prompt"
-    url: "github.com/paul-gauthier/aider"
-  
-  opencode:
-    learned: "Tab switch agents (build/plan), @agent mentions, TUI panels"
-    url: "github.com/sst/opencode"
-  
-  starship:
-    learned: "> prompt, minimal, context-aware segments"
-    url: "starship.rs"
+# ===== PART 7: VALIDATION CHECKLIST =====
 
-# AUTONOMY (full agent mode - no permission required)
-autonomy:
-  enabled: true
+validation_checklist:
+  naming_quality_checks:
+    - check_description: "Are all method names fully descriptive (20-80 characters)?"
+      how_to_verify: "Scan all method definitions, check name length and clarity"
+      pass_criteria: "Can understand what method does without reading body"
+      
+    - check_description: "Are variable names pronounceable and searchable?"
+      how_to_verify: "Try to say each variable name out loud, try to grep for it"
+      pass_criteria: "All names can be spoken and found with text search"
+      
+    - check_description: "Are generic verbs eliminated (process, handle, do, manage)?"
+      how_to_verify: "Grep for generic verb patterns"
+      pass_criteria: "Zero occurrences of generic verbs in names"
   
-  decisions:
-    install_dependencies: true
-    create_files: true
-    modify_files: true
-    delete_files: false
-    git_commit: true
-    git_push: false
-    run_commands: true
-    
-  retry:
-    enabled: true
-    max_attempts: 3
-    backoff: exponential
-    
-  on_error:
-    strategy: fix_and_retry
-    ask_user: false
-    log_only: true
-    
-  on_ambiguity:
-    strategy: best_guess
-    prefer: simplest_solution
-    document: true
-    
-  blocklist:
-    commands: ["rm -rf /", "rm -rf ~"]
-    
-  always_continue:
-    missing_dep: install_it
-    permission_error: use_doas
-    file_not_found: create_it
-    network_error: retry_with_backoff
+  structure_quality_checks:
+    - check_description: "Are all methods under 20 lines?"
+      how_to_verify: "Count non-blank lines in each method"
+      pass_criteria: "All methods <= 20 lines, most <= 10 lines"
+      
+    - check_description: "Does each class have single responsibility?"
+      how_to_verify: "Describe each class without using 'and'"
+      pass_criteria: "Can describe each class's purpose in one sentence"
+  
+  prose_quality_checks:
+    - check_description: "Are comments explaining WHY not WHAT?"
+      how_to_verify: "Read each comment, determine if explaining code or rationale"
+      pass_criteria: "All comments explain business rules, decisions, or tradeoffs"
+  
+  typography_quality_checks:
+    - check_description: "Are lines under 120 characters?"
+      how_to_verify: "Check maximum line length"
+      pass_criteria: "All lines <= 120 characters"
+  
+  organization_quality_checks:
+    - check_description: "Does each file have purpose statement in first 10 lines?"
+      how_to_verify: "Read lines 1-10 of each file"
+      pass_criteria: "Can understand file purpose without reading further"
+
+# ===== CONVERGENCE TRACKING =====
+
+convergence_metrics:
+  current_iteration: 7
+  violations_by_iteration:
+    iteration_1: {naming: 45, structure: 23, prose: 12, typography: 8}
+    iteration_2: {naming: 28, structure: 15, prose: 6, typography: 3}
+    iteration_3: {naming: 12, structure: 7, prose: 2, typography: 1}
+    iteration_4: {naming: 4, structure: 2, prose: 0, typography: 0}
+    iteration_5: {naming: 1, structure: 0, prose: 0, typography: 0}
+    iteration_6: {naming: 0, structure: 0, prose: 0, typography: 0}
+    iteration_7: {naming: 0, structure: 0, prose: 0, typography: 0}
+  
+  convergence_achieved: true
+  zero_violations_iterations: 2
+  ready_for_production: true

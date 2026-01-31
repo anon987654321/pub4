@@ -785,10 +785,11 @@ const trackingWrapper = document.querySelector('.tracking-wrapper');
 const blobWrapper = document.querySelector('.blob-wrapper');
 const audio = document.getElementById('audioPlayer');
 const effectsCanvas = document.getElementById('effects-canvas');
-const effectsCtx = effectsCanvas.getContext('2d');
+const effectsCtx = effectsCanvas?.getContext('2d');
 
 // Setup canvas
 function resizeCanvas() {
+  if (!effectsCanvas) return;
   effectsCanvas.width = window.innerWidth;
   effectsCanvas.height = window.innerHeight;
 }
@@ -801,6 +802,7 @@ window.addEventListener('resize', () => { resizeCanvas(); resizeOrbTunnel(); res
 // DRAWING FUNCTIONS
 // ============================================
 function drawTentacles() {
+  if (!effectsCtx) return;
   const centerX = window.innerWidth / 2 + orbX;
   const centerY = window.innerHeight / 2 + orbY;
   const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.3;
@@ -831,6 +833,7 @@ function drawTentacles() {
 }
 
 function drawRipples() {
+  if (!effectsCtx) return;
   const centerX = window.innerWidth / 2 + orbX;
   const centerY = window.innerHeight / 2 + orbY;
   const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.3;
@@ -951,6 +954,7 @@ function updateAstralParticles(time) {
 }
 
 function drawAstralParticles() {
+  if (!effectsCtx) return;
   const centerX = window.innerWidth / 2 + orbX;
   const centerY = window.innerHeight / 2 + orbY;
   const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.28;
@@ -993,9 +997,11 @@ let spinnerInterval = null;
 
 function setUIState(state) {
   uiState = state;
-  blobWrapperEl.classList.remove('listening', 'thinking', 'speaking');
-  if (state !== 'idle') {
-    blobWrapperEl.classList.add(state);
+  if (blobWrapperEl) {
+    blobWrapperEl.classList.remove('listening', 'thinking', 'speaking');
+    if (state !== 'idle') {
+      blobWrapperEl.classList.add(state);
+    }
   }
   
   // Clear existing spinner
@@ -1010,6 +1016,8 @@ function setUIState(state) {
   const speakIcon = '—';      // Em dash for speaking
   
   // Update status indicator with ora-style spinner + flat icons
+  if (!statusIndicator) return;
+  
   if (state === 'idle') {
     statusIndicator.innerHTML = `<span class="mic-icon">${micIcon}</span>`;
   } else if (state === 'listening') {
@@ -1017,12 +1025,12 @@ function setUIState(state) {
     // Animate spinner
     spinnerInterval = setInterval(() => {
       spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span> <span class="mic-icon mic-active">${micActiveIcon}</span>`;
+      if (statusIndicator) statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span> <span class="mic-icon mic-active">${micActiveIcon}</span>`;
     }, 80);
   } else if (state === 'thinking') {
     spinnerInterval = setInterval(() => {
       spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-      statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span>`;
+      if (statusIndicator) statusIndicator.innerHTML = `<span class="spinner">${spinnerFrames[spinnerIndex]}</span>`;
     }, 80);
   } else if (state === 'speaking') {
     statusIndicator.innerHTML = `<span class="speaking-icon">${speakIcon}</span>`;
@@ -1116,7 +1124,7 @@ function updateMouseTracking() {
   currentRotateY += (targetRotateY - currentRotateY) * 0.08;
   
   // No 3D rotation - keep orb flat
-  trackingWrapper.style.transform = 'none';
+  if (trackingWrapper) trackingWrapper.style.transform = 'none';
 }
 
 // ============================================
@@ -1126,6 +1134,7 @@ let geometryMorphState = 0;
 let interactionCount = 0;
 
 function updateGeometry() {
+  if (!blob) return;
   geometryMorphState += CONFIG.geometryMorphSpeed * (1 + interactionCount * 0.1);
   
   // Gradually modify blob shape based on interaction
@@ -1249,7 +1258,7 @@ function updateDepth() {
   
   depth = CONFIG.baseDepth + (depth - CONFIG.baseDepth) * CONFIG.depthDecay;
   smoothedDepth += (depth - smoothedDepth) * CONFIG.depthSmoothing;
-  blob.style.setProperty('--depth', smoothedDepth.toFixed(3));
+  if (blob) blob.style.setProperty('--depth', smoothedDepth.toFixed(3));
 }
 
 // ============================================
@@ -1365,7 +1374,7 @@ function updateAggressivePulse() {
   aggressiveScale += diff * (0.1 + attackTime * 0.3);
   
   // Apply to breathing animation
-  blob.style.setProperty('animation-duration', `${4 - attackTime * 2}s`);
+  if (blob) blob.style.setProperty('animation-duration', `${4 - attackTime * 2}s`);
 }
 
 // 7. TENTACLES
@@ -1497,6 +1506,7 @@ function updateAttention() {
 
 // Draw lighting effects on canvas
 function drawLighting() {
+  if (!effectsCtx) return;
   const centerX = window.innerWidth / 2 + orbX;
   const centerY = window.innerHeight / 2 + orbY;
   const blobSize = Math.min(window.innerWidth, window.innerHeight) * 0.28;
@@ -1574,8 +1584,10 @@ function updateDepthEffects(time) {
   }
   
   // Pressure response (lean toward mouse) - smooth
-  blobWrapper.style.marginLeft = (pressureX * 0.5) + 'px';
-  blobWrapper.style.marginTop = (pressureY * 0.5) + 'px';
+  if (blobWrapper) {
+    blobWrapper.style.marginLeft = (pressureX * 0.5) + 'px';
+    blobWrapper.style.marginTop = (pressureY * 0.5) + 'px';
+  }
   
   // Afterimage trail when moving fast
   const velocity = Math.hypot(orbX - lastOrbX, orbY - lastOrbY);
@@ -1626,7 +1638,9 @@ function createMembraneRipple() {
 // ============================================
 function animate(time) {
   // Clear canvas
-  effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+  if (effectsCtx && effectsCanvas) {
+    effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+  }
   
   // Update star field (deep space background)
   if (starField) {
@@ -1672,22 +1686,23 @@ function animate(time) {
   // Combine all scale factors
   const finalScale = aggressiveScale * breathingScale * anticipationScale;
   
-  blobWrapper.style.transform = `translate(${finalX}px, ${finalY}px) scale(${finalScale})`;
+  if (blobWrapper) blobWrapper.style.transform = `translate(${finalX}px, ${finalY}px) scale(${finalScale})`;
   
   // Apply spin rotation
   const spinTransform = `rotate(${spinData.angle}rad) rotateX(${spinData.wobbleX}deg) rotateY(${spinData.wobbleY}deg)`;
-  blob.style.transform = spinTransform;
-  
-  // Apply asymmetric deformation to shape
-  // We'll use CSS variables that affect the blob shape
-  blob.style.setProperty('--bass-deform', bassDeform.toFixed(3));
-  blob.style.setProperty('--mid-deform', midDeform.toFixed(3));
-  blob.style.setProperty('--treble-deform', trebleDeform.toFixed(3));
-  
-  // Apply color shifts - add subtle blue/violet tint
-  const hue = colorHueShift - 10; // Shift toward blue
-  const sat = colorSatShift * 100;
-  blob.style.filter = `hue-rotate(${hue}deg) saturate(${1 + sat}%)`;
+  if (blob) {
+    blob.style.transform = spinTransform;
+    
+    // Apply asymmetric deformation to shape
+    blob.style.setProperty('--bass-deform', bassDeform.toFixed(3));
+    blob.style.setProperty('--mid-deform', midDeform.toFixed(3));
+    blob.style.setProperty('--treble-deform', trebleDeform.toFixed(3));
+    
+    // Apply color shifts - add subtle blue/violet tint
+    const hue = colorHueShift - 10; // Shift toward blue
+    const sat = colorSatShift * 100;
+    blob.style.filter = `hue-rotate(${hue}deg) saturate(${1 + sat}%)`;
+  }
   
   // Draw lighting effects (specular, rim, shadow)
   drawLighting();
@@ -1756,6 +1771,7 @@ const Ares = {
   
   pollRetryDelay: 1000,
   maxPollRetry: 30000,
+  pollActive: false,
   
   init() {
     this.setupSpeechRecognition();
@@ -1764,12 +1780,23 @@ const Ares = {
     this.setupTextInput();
     // Only poll if server is running (skip for standalone HTML)
     this.startPolling();
+    
+    // Circuit breaker: pause polling when tab hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.pollActive = false;
+      } else if (!this.pollActive) {
+        this.pollActive = true;
+        this.pollForTTS();
+      }
+    });
   },
   
   startPolling() {
     fetch('/poll', { signal: AbortSignal.timeout(5000) })
       .then(() => {
         this.pollRetryDelay = 1000; // Reset on success
+        this.pollActive = true;
         this.pollForTTS();
       })
       .catch(() => {
@@ -1948,9 +1975,13 @@ const Ares = {
   },
   
   pollForTTS() {
+    // Circuit breaker: stop if inactive or tab hidden
+    if (!this.pollActive || document.hidden) return;
+    
     fetch('/poll', { signal: AbortSignal.timeout(10000) })
       .then(r => r.json())
       .then(data => {
+        if (!this.pollActive) return; // Check again after async
         this.pollRetryDelay = 1000; // Reset on success
         // Update persona if server sent one
         if (data.persona && data.persona !== this.currentPersona) {
@@ -1964,12 +1995,13 @@ const Ares = {
         else if (data.text && data.text !== this.lastSpoken && !this.isSpeaking) {
           this.speak(data.text);
         }
-        setTimeout(() => this.pollForTTS(), 1000);
+        if (this.pollActive) setTimeout(() => this.pollForTTS(), 1000);
       })
       .catch(() => {
+        if (!this.pollActive) return;
         // Retry with exponential backoff (silent)
         this.pollRetryDelay = Math.min(this.pollRetryDelay * 1.5, this.maxPollRetry);
-        setTimeout(() => this.pollForTTS(), this.pollRetryDelay);
+        if (this.pollActive) setTimeout(() => this.pollForTTS(), this.pollRetryDelay);
       });
   },
   
