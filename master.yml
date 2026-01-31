@@ -1249,14 +1249,6 @@ convergence:
     include_rationale: true
 
 # LEARNING (pattern extraction from fixes)
-learning:
-  enabled: true
-  capture_fixes: true
-  min_samples: 10
-  confidence_threshold: 0.85
-  auto_apply: false
-  suggestions_only: true
-
 # DASHBOARD (status overview)
 dashboard:
   enabled: true
@@ -1283,13 +1275,6 @@ scanning:
   clean_script: "sh/clean.sh"
 
 # WORKFLOW (state machine for systematic convergence)
-workflow:
-  enabled: true
-  states: [clean, scan, analyze, fix, validate, commit]
-  state_file: ".convergence_workflow"
-  checkpoints: true
-  resume_on_interrupt: true
-  
 # TRACKING (memory across sessions)
 tracking:
   violations:
@@ -1336,10 +1321,6 @@ priority:
     - size_asc
   dependency_analysis: true
   dependency_graph_output: ".convergence_deps.dot"
-  priority_rules:
-    - veto_count_desc
-    - dependency_order
-    - recent_changes_first
   auto_clean: true
   clean_script: "sh/clean.sh"
   pre_scan_hooks: ["tree.sh"]
