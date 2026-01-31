@@ -53,6 +53,18 @@ COMMAND_ALIASES = {
   "?" => "help"
 }.freeze
 
+# Dangerous shell command patterns to block
+DANGEROUS_COMMANDS = [
+  /rm\s+-rf\s+[~\/]/,        # rm -rf ~ or rm -rf /
+  /:\(\)\s*\{/,               # Fork bomb
+  />\s*\/dev\/sd[a-z]/,       # Write to disk devices
+  /dd\s+if=/,                 # dd operations (can be destructive)
+  /mkfs\./,                   # Format operations
+  /fdisk/,                    # Disk partitioning
+  /\.ssh\/authorized_keys/,   # SSH key manipulation
+  /sudo\s+(rm|dd|mkfs|fdisk)/ # Sudo with dangerous commands
+].freeze
+
 # Auto-install missing dependencies
 module DependencyManager
   GEMS = {
@@ -3180,6 +3192,46 @@ export OPENROUTER_API_KEY="#{key}""
     # Silent fail on history save
   end
   
+  def command_safe?(command)
+    # Check against dangerous command patterns
+    DANGEROUS_COMMANDS.each do |pattern|
+      if command.match?(pattern)
+        puts C.r("✗ Blocked dangerous command pattern: #{pattern.inspect}")
+        return false
+      end
+    end
+    true
+  end
+  
+  def ruby_code_safe?(code)
+    # Block dangerous Ruby patterns
+    dangerous_patterns = [
+      /system\(/,           # System calls
+      /exec\(/,             # Exec calls
+      /`[^`]+`/,            # Backtick commands
+      /%x\[/,               # %x[] command execution
+      /File\.delete/,       # File deletion
+      /FileUtils\.rm/,      # Recursive removal
+      /eval\(/,             # Nested eval
+      /instance_eval/,      # Instance eval
+      /class_eval/,         # Class eval
+      /send\(/,             # Dynamic method calls
+      /const_set/,          # Constant manipulation
+      /remove_const/,       # Constant removal
+      /require\s+['"]net/,  # Network access
+      /TCPSocket/,          # Direct socket access
+      /UDPSocket/           # UDP socket access
+    ]
+    
+    dangerous_patterns.each do |pattern|
+      if code.match?(pattern)
+        puts C.r("✗ Blocked dangerous Ruby pattern: #{pattern.inspect}")
+        return false
+      end
+    end
+    true
+  end
+  
   def build_prompt
     parts = []
     turns = OpenRouterChat.conversation_length
@@ -3364,6 +3416,12 @@ export OPENROUTER_API_KEY="#{key}""
       command = match[0].strip
       next if command.empty?
       
+      # Safety check
+      unless command_safe?(command)
+        OpenRouterChat.chat("That command is blocked for safety. Please suggest a safer alternative.")
+        next
+      end
+      
       puts "
 $ #{command}"
       output = `#{command} 2>&1`
@@ -3396,6 +3454,12 @@ Fix it.")
       code = match[0].strip
       next if code.empty?
       next if code.include?("def ") # Skip method definitions (examples)
+      
+      # Safety check
+      unless ruby_code_safe?(code)
+        OpenRouterChat.chat("That Ruby code contains dangerous patterns. Please suggest a safer alternative.")
+        next
+      end
       
       puts "
 $ ruby: #{code.lines.first.strip}..."
