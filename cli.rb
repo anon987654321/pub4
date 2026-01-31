@@ -3407,20 +3407,20 @@ export OPENROUTER_API_KEY="#{key}""
   
   def handle_tool_response(response)
     puts response
-    
+    files_modified = execute_shell_blocks(response)
+    execute_ruby_blocks(response)
+    auto_commit_changes(files_modified) if files_modified.any?
+  end
+  
+  private
+  
+  def execute_shell_blocks(response)
     files_modified = []
-    
-    # Auto-execute shell/zsh blocks
     response.scan(/```(?:shell|zsh|bash)
 (.*?)```/m) do |match|
       command = match[0].strip
       next if command.empty?
-      
-      # Safety check
-      unless command_safe?(command)
-        OpenRouterChat.chat("That command is blocked for safety. Please suggest a safer alternative.")
-        next
-      end
+      next unless command_safe?(command)
       
       puts "
 $ #{command}"
@@ -3428,61 +3428,68 @@ $ #{command}"
       exit_code = $?.exitstatus
       puts output unless output.empty?
       
-      # Track file modifications for git commit
-      if command.include?(">") || command.include?("mv ")
-        files_modified << command.split.last
-      end
-      
-      # Error context: send failure back to LLM for fix
-      if exit_code != 0
-        OpenRouterChat.chat("Command failed (exit #{exit_code}):
+      track_file_modifications(command, files_modified)
+      handle_command_result(exit_code, output)
+    end
+    files_modified
+  end
+  
+  def track_file_modifications(command, files_modified)
+    if command.include?(">") || command.include?("mv ")
+      files_modified << command.split.last
+    end
+  end
+  
+  def handle_command_result(exit_code, output)
+    if exit_code != 0
+      OpenRouterChat.chat("Command failed (exit #{exit_code}):
 ```
 #{output}
 ```
 Fix it.")
-      elsif output.strip.present?
-        OpenRouterChat.chat("Executed. Output:
+    elsif output.strip.present?
+      OpenRouterChat.chat("Executed. Output:
 ```
 #{output}
 ```")
-      end
     end
-    
-    # Auto-execute ruby blocks
+  end
+  
+  def execute_ruby_blocks(response)
     response.scan(/```ruby
 (.*?)```/m) do |match|
       code = match[0].strip
       next if code.empty?
-      next if code.include?("def ") # Skip method definitions (examples)
+      next if code.include?("def ")
+      next unless ruby_code_safe?(code)
       
-      # Safety check
-      unless ruby_code_safe?(code)
-        OpenRouterChat.chat("That Ruby code contains dangerous patterns. Please suggest a safer alternative.")
-        next
-      end
-      
-      puts "
-$ ruby: #{code.lines.first.strip}..."
-      begin
-        result = eval(code)
-        puts result.inspect if result
-      rescue => e
-        puts "error: #{e.message}"
-        OpenRouterChat.chat("Ruby error: #{e.message}
-Fix it.")
-      end
-    end
-    
-    # Git auto-commit after successful file modifications
-    if files_modified.any?
-      changed = `git diff --name-only 2>/dev/null`.strip
-      if !changed.empty?
-        msg = "Auto: #{files_modified.first(3).join(', ')}"
-        system("git add -A && git commit -m '#{msg}' > /dev/null 2>&1")
-        puts C.d("[committed: #{msg}]")
-      end
+      execute_ruby_code(code)
     end
   end
+  
+  def execute_ruby_code(code)
+    puts "
+$ ruby: #{code.lines.first.strip}..."
+    begin
+      result = eval(code)
+      puts result.inspect if result
+    rescue => e
+      puts "error: #{e.message}"
+      OpenRouterChat.chat("Ruby error: #{e.message}
+Fix it.")
+    end
+  end
+  
+  def auto_commit_changes(files_modified)
+    changed = `git diff --name-only 2>/dev/null`.strip
+    return if changed.empty?
+    
+    msg = "Auto: #{files_modified.first(3).join(', ')}"
+    system("git add -A && git commit -m '#{msg}' > /dev/null 2>&1")
+    puts C.d("[committed: #{msg}]")
+  end
+  
+  public
 
   def cmd_scan(*args)
     file = args[0]
