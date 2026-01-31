@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Okai Dilla Machine</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,7 +28,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: v
 .display-time { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 12px; }
 .display-status { font-size: 10px; color: var(--dim); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
 .led { width: 6px; height: 6px; background: var(--light); border-radius: 50%; transition: all 0.2s; }
-.led.on { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.led.on { background: var(--green); }
 .transport { display: flex; gap: 6px; margin-top: 8px; }
 .transport button { padding: 8px 16px; border: none; background: var(--accent); color: var(--text); font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 3px; transition: all 0.15s; }
 .transport button:hover { background: #ddd; }
@@ -49,17 +50,19 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: v
 .pad sub { font-size: 7px; color: var(--dim); margin-top: 1px; font-weight: 400; }
 .pad.on { outline: 2px solid var(--blue); outline-offset: -2px; }
 .pad.dim { opacity: 0.3; }
+/* Instrument pads: dimmed when not .on */
+#drums-on:not(.on), #bass-on:not(.on), #keys-on:not(.on), #pads-on:not(.on) { opacity: 0.4; }
 /* Pad glow animation on trigger */
 .pad.triggered { animation: pad-glow 0.15s ease-out; }
 @keyframes pad-glow { 
-  0% { transform: scale(1.08); box-shadow: 0 0 20px currentColor; } 
-  100% { transform: scale(1); box-shadow: none; } 
+  0% { transform: scale(1.08); outline: 2px solid currentColor; } 
+  100% { transform: scale(1); outline: none; } 
 }
 .pad.blue { background: var(--blue); color: #fff; } .pad.blue sub { color: #fff9; }
 .pad.yellow { background: var(--yellow); color: #000; } .pad.yellow sub { color: #0006; }
 .pad.cyan { background: var(--cyan); color: #fff; } .pad.cyan sub { color: #fff9; }
 .pad.magenta { background: var(--magenta); color: #fff; } .pad.magenta sub { color: #fff9; }
-.pad.cyan.on, .pad.magenta.on { box-shadow: 0 0 12px currentColor; }
+.pad.cyan.on, .pad.magenta.on { outline: 2px solid #fff; outline-offset: -2px; }
 .pad.green { background: var(--green); color: #fff; } .pad.green sub { color: #fff9; }
 .pad.grey { background: #bbb; color: #333; } .pad.grey sub { color: #666; }
 .pad.dark { background: #666; color: #fff; } .pad.dark sub { color: #ccc; }
@@ -90,14 +93,14 @@ option { background: #fff; }
 .fx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
 .fx-btn { padding: 8px 4px; background: var(--accent); border: none; font-size: 9px; font-weight: 600; cursor: pointer; border-radius: 3px; transition: all 0.15s; text-transform: uppercase; color: var(--text); }
 .fx-btn:hover { background: #ddd; }
-.fx-btn.active { background: var(--cyan); color: #fff; box-shadow: 0 0 8px rgba(6,182,212,0.4); }
-.fx-btn.active.magenta { background: var(--magenta); box-shadow: 0 0 8px rgba(217,70,239,0.4); }
-.fx-btn.active.yellow { background: var(--yellow); color: #000; box-shadow: 0 0 8px rgba(234,179,8,0.4); }
-.fx-btn.active.green { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+.fx-btn.active { background: var(--cyan); color: #fff; outline: 2px solid #fff; outline-offset: -2px; }
+.fx-btn.active.magenta { background: var(--magenta); }
+.fx-btn.active.yellow { background: var(--yellow); color: #000; }
+.fx-btn.active.green { background: var(--green); }
 /* Mood buttons - Non-musician friendly (KISS) */
 .mood-btn { padding: 6px 10px; background: var(--accent); border: none; font-size: 11px; cursor: pointer; border-radius: 4px; transition: all 0.15s; }
 .mood-btn:hover { background: #ddd; transform: scale(1.02); }
-.mood-btn.active { background: var(--magenta); color: #fff; box-shadow: 0 0 8px rgba(217,70,239,0.4); }
+.mood-btn.active { background: var(--magenta); color: #fff; outline: 2px solid #fff; outline-offset: -2px; }
 .fx-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
 .fx-row label { font-size: 9px; color: var(--dim); min-width: 60px; text-transform: uppercase; }
 .fx-row input[type=range] { flex: 1; }
@@ -110,8 +113,8 @@ option { background: #fff; }
 /* FX Status indicator (H1: Visibility of system status) */
 .fx-status { display: inline-flex; gap: 3px; margin-left: 8px; }
 .fx-status .fx-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--light); transition: all 0.2s; }
-.fx-status .fx-dot.on { background: var(--cyan); box-shadow: 0 0 4px rgba(6,182,212,0.6); }
-.fx-status .fx-dot.on.magenta { background: var(--magenta); box-shadow: 0 0 4px rgba(217,70,239,0.6); }
+.fx-status .fx-dot.on { background: var(--cyan); }
+.fx-status .fx-dot.on.magenta { background: var(--magenta); }
 
 /* Tooltips (H6: Recognition rather than recall) */
 [title] { position: relative; }
@@ -133,6 +136,16 @@ option { background: #fff; }
 
 /* Help text (H10: Help and documentation) */
 .fx-help { font-size: 8px; color: var(--dim); margin-bottom: 8px; font-style: italic; }
+
+/* Keyboard focus (WCAG 2.1 AA – keyboard navigability) */
+button:focus-visible,
+select:focus-visible,
+input[type=range]:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.pad:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; }
+
+/* Audio level meter */
+.meter-wrap { flex: 1; max-width: 60px; height: 6px; background: #ddd; border-radius: 2px; overflow: hidden; margin-left: auto; }
+.meter-bar { width: 0%; height: 100%; background: var(--green); transition: width 0.05s; }
 </style>
 </head>
 <body>
@@ -157,16 +170,16 @@ option { background: #fff; }
         <span class="fx-dot" id="fx-dot-entrain"></span>
       </div>
       <!-- Audio level meter -->
-      <div id="meter-wrap" style="flex:1; max-width:60px; height:6px; background:#ddd; border-radius:2px; overflow:hidden; margin-left:auto;">
-        <div id="meter" style="width:0%; height:100%; background:#22c55e; transition:width 0.05s;"></div>
+      <div class="meter-wrap">
+        <div class="meter-bar" id="meter"></div>
       </div>
     </div>
     <div class="transport">
-      <button class="play" id="play">Play</button>
-      <button class="stop" id="stop">Stop</button>
+      <button class="play" id="play" aria-label="Play">Play</button>
+      <button class="stop" id="stop" aria-label="Stop">Stop</button>
       <div style="display:flex; align-items:center; gap:6px; margin-left:12px; background:var(--accent); padding:4px 10px; border-radius:6px;">
         <span style="font-size:11px; font-weight:600; color:var(--blue);">BPM</span>
-        <input type="range" id="bpm" min="70" max="110" value="88" style="width:70px;">
+        <input type="range" id="bpm" min="70" max="110" value="88" aria-label="BPM" style="width:70px;">
         <span id="bpm-val" style="font-size:14px; font-weight:700; color:var(--blue); font-family:monospace; min-width:28px;">88</span>
       </div>
       <div style="display:flex; align-items:center; gap:4px;">
@@ -188,24 +201,24 @@ option { background: #fff; }
         <div class="panel-title">Lo-Fi</div>
         <div class="slider-row">
           <div class="slider-label"><span>Vinyl</span><span id="vinyl-val">25%</span></div>
-          <input type="range" id="lofi-vinyl" min="0" max="100" value="25">
+          <input type="range" id="lofi-vinyl" min="0" max="100" value="25" aria-label="Vinyl noise amount">
         </div>
         <div class="slider-row">
           <div class="slider-label"><span>Saturation</span><span id="sat-val">15%</span></div>
-          <input type="range" id="lofi-sat" min="0" max="100" value="15">
+          <input type="range" id="lofi-sat" min="0" max="100" value="15" aria-label="Saturation amount">
         </div>
         <div class="slider-row">
           <div class="slider-label"><span>Rolloff</span><span id="rolloff-val">12kHz</span></div>
-          <input type="range" id="lofi-rolloff" min="4000" max="16000" value="12000">
+          <input type="range" id="lofi-rolloff" min="4000" max="16000" value="12000" aria-label="High-frequency rolloff">
         </div>
         <!-- BitCrusher (SP-404 style) -->
         <div class="slider-row">
           <div class="slider-label"><span>Bits</span><span id="bits-val">16</span></div>
-          <input type="range" id="lofi-bits" min="4" max="16" value="16" title="BitCrusher - lower = grittier (like MPC60's 12-bit)">
+          <input type="range" id="lofi-bits" min="4" max="16" value="16" aria-label="Bit depth" title="BitCrusher - lower = grittier (like MPC60's 12-bit)">
         </div>
         <div class="slider-row">
           <div class="slider-label"><span>Crush</span><span id="crush-val">0%</span></div>
-          <input type="range" id="lofi-crush" min="0" max="100" value="0" title="Sample rate reduction - adds aliasing">
+          <input type="range" id="lofi-crush" min="0" max="100" value="0" aria-label="Sample rate crush amount" title="Sample rate reduction - adds aliasing">
         </div>
       </div>
     </div>
@@ -214,25 +227,25 @@ option { background: #fff; }
     <div class="panel">
       <div class="pads">
         <!-- Row 1: Instrument Toggles (drums ON by default, others OFF) -->
-        <div class="pad blue on" id="drums-on">Drums<sub>808</sub></div>
-        <div class="pad grey" id="bass-on">Bass<sub>Moog</sub></div>
-        <div class="pad yellow" id="keys-on">Keys<sub>Rhodes</sub></div>
-        <div class="pad dark" id="pads-on">Pads<sub>Shimmer</sub></div>
+        <div class="pad blue on" id="drums-on" tabindex="0" role="button" aria-label="Toggle drums">Drums<sub>808</sub></div>
+        <div class="pad grey" id="bass-on" tabindex="0" role="button" aria-label="Toggle bass">Bass<sub>Moog</sub></div>
+        <div class="pad yellow" id="keys-on" tabindex="0" role="button" aria-label="Toggle keys">Keys<sub>Rhodes</sub></div>
+        <div class="pad dark" id="pads-on" tabindex="0" role="button" aria-label="Toggle pads">Pads<sub>Shimmer</sub></div>
         <!-- Row 2: Primary FX (most used) -->
-        <div class="pad cyan" id="pad-drunk">Drunk<sub>Timing</sub></div>
-        <div class="pad cyan" id="pad-stutter">Stutter<sub>Scatter</sub></div>
-        <div class="pad cyan" id="pad-arp">Arp<sub>Pattern</sub></div>
-        <div class="pad cyan" id="pad-filtlfo">Filter<sub>LFO</sub></div>
+        <div class="pad cyan" id="pad-drunk" tabindex="0" role="button" aria-label="Toggle Drunk timing">Drunk<sub>Timing</sub></div>
+        <div class="pad cyan" id="pad-stutter" tabindex="0" role="button" aria-label="Toggle Stutter">Stutter<sub>Scatter</sub></div>
+        <div class="pad cyan" id="pad-arp" tabindex="0" role="button" aria-label="Toggle Arpeggiator">Arp<sub>Pattern</sub></div>
+        <div class="pad cyan" id="pad-filtlfo" tabindex="0" role="button" aria-label="Toggle Filter LFO">Filter<sub>LFO</sub></div>
         <!-- Row 3: Atmosphere FX -->
-        <div class="pad magenta" id="pad-tapedelay">Tape<sub>Delay</sub></div>
-        <div class="pad magenta" id="pad-binaural">Binaural<sub>Spatial</sub></div>
-        <div class="pad magenta" id="pad-lofi">Lo-Fi+<sub>Vinyl</sub></div>
-        <div class="pad magenta" id="pad-entrain">Entrain<sub>Brain</sub></div>
+        <div class="pad magenta" id="pad-tapedelay" tabindex="0" role="button" aria-label="Toggle Tape Delay">Tape<sub>Delay</sub></div>
+        <div class="pad magenta" id="pad-binaural" tabindex="0" role="button" aria-label="Toggle Binaural">Binaural<sub>Spatial</sub></div>
+        <div class="pad magenta" id="pad-lofi" tabindex="0" role="button" aria-label="Toggle Lo-Fi">Lo-Fi+<sub>Vinyl</sub></div>
+        <div class="pad magenta" id="pad-entrain" tabindex="0" role="button" aria-label="Toggle Entrainment">Entrain<sub>Brain</sub></div>
         <!-- Row 4: Preset Combos (H4: Consistent - all set full vibe) -->
-        <div class="pad green" data-preset="dilla" title="Full Dilla vibe: boom-bap + donut chords">Dilla<sub>Preset</sub></div>
-        <div class="pad green" data-preset="soul" title="Neo-soul vibe: shuffle + D'Angelo chords">Soul<sub>Preset</sub></div>
-        <div class="pad green" data-preset="techno" title="Industrial vibe: pounding + chromatic">Techno<sub>Preset</sub></div>
-        <div class="pad green" data-preset="detroit" title="Detroit house: theo-swing + quartal">Detroit<sub>Preset</sub></div>
+        <div class="pad green" data-preset="dilla" tabindex="0" role="button" aria-label="Dilla preset" title="Full Dilla vibe: boom-bap + donut chords">Dilla<sub>Preset</sub></div>
+        <div class="pad green" data-preset="soul" tabindex="0" role="button" aria-label="Soul preset" title="Neo-soul vibe: shuffle + D'Angelo chords">Soul<sub>Preset</sub></div>
+        <div class="pad green" data-preset="techno" tabindex="0" role="button" aria-label="Techno preset" title="Industrial vibe: pounding + chromatic">Techno<sub>Preset</sub></div>
+        <div class="pad green" data-preset="detroit" tabindex="0" role="button" aria-label="Detroit preset" title="Detroit house: theo-swing + quartal">Detroit<sub>Preset</sub></div>
       </div>
     </div>
 
@@ -1763,7 +1776,7 @@ async function play() {
     
     Tone.Transport.start();
     playing = true;
-    updateDisplay('▶ Playing @ ' + Tone.Transport.bpm.value + ' BPM', true);
+    updateDisplay('Playing @ ' + Tone.Transport.bpm.value + ' BPM', true);
     log('Transport started: ' + Tone.Transport.state);
     
     // Log sequence states immediately after start
@@ -1800,7 +1813,7 @@ async function play() {
       Tone.Transport.start();
     }
     
-    updateDisplay('▶ ' + Tone.Transport.bpm.value + ' BPM', true);
+    updateDisplay(Tone.Transport.bpm.value + ' BPM', true);
   }, 250);  // Check 4x per second
   
   // DEBUG: Comprehensive audio monitoring every 2 seconds
@@ -1842,13 +1855,13 @@ async function play() {
     // Detect silence - if level is very low (below -60 dB) and synths should be playing
     // Note: analyser.getValue() returns dB values (0 = max, -Infinity = silence)
     if (typeof audioLevelDb === 'number' && audioLevelDb < -60 && triggerCounts.kick > 5) {
-      log('⚠️ SILENT! Audio level near zero but triggers active');
+      log('SILENT: Audio level near zero but triggers active');
       console.warn('POSSIBLE AUDIO DEATH - level:', audioLevelDb.toFixed(1), 'dB, triggers:', triggerCounts);
     }
     
     // Detect if triggers stopped
     if (kickAge > 3000 && drumOn() && playing) {
-      log('⚠️ KICK STALLED - no triggers for ' + (kickAge/1000).toFixed(1) + 's');
+      log('KICK STALLED - no triggers for ' + (kickAge/1000).toFixed(1) + 's');
     }
   }, 2000);
 }
@@ -1864,7 +1877,7 @@ function stop() {
   clearInterval(keepAliveInterval);
   clearInterval(audioDebugInterval);
   document.getElementById('time').textContent = '00:00:00';
-  updateDisplay('■ Stopped — Press PLAY', false);
+  updateDisplay('Stopped — Press Play or Space', false);
   log('Stopped');
   console.log('Final trigger counts:', triggerCounts);
 }
@@ -1900,7 +1913,7 @@ document.addEventListener('keydown', e => {
     document.getElementById('key-pat').value = previousState.keys;
     document.getElementById('pad-prog').value = previousState.pads;
     restartIfPlaying();
-    updateDisplay('↩ Undo', true);
+    updateDisplay('Undo', true);
     log('Undo: restored previous patterns');
     previousState = null; // Only one level of undo
   }
@@ -1925,7 +1938,7 @@ document.getElementById('randomize').onclick = () => {
     if (!el.classList.contains('on')) el.classList.add('on');
   });
   restartIfPlaying();
-  updateDisplay('🎲 Randomized! (Ctrl+Z to undo)', true);
+  updateDisplay('Randomized (Ctrl+Z to undo)', true);
   log('Randomized all patterns');
 };
 
@@ -1954,7 +1967,7 @@ document.getElementById('reset').onclick = () => {
   Object.keys(fxState).forEach(fx => { if (fxState[fx]) toggleFX(fx); });
   Object.keys(synthFXState).forEach(fx => { if (synthFXState[fx]) document.querySelector('[data-synthfx="' + fx + '"]')?.click(); });
   restartIfPlaying();
-  updateDisplay('↺ Reset to defaults (Ctrl+Z to undo)', true);
+  updateDisplay('Reset to defaults (Ctrl+Z to undo)', true);
   log('Reset to defaults');
 };
 
@@ -1969,7 +1982,7 @@ document.getElementById('export').onclick = async () => {
     } catch(e) { log('Recorder init failed: ' + e); return; }
   }
   
-  updateDisplay('🔴 Recording 10s...', true);
+  updateDisplay('Recording 10s...', true);
   log('Starting 10-second recording...');
   
   recorder.start();
@@ -1984,7 +1997,7 @@ document.getElementById('export').onclick = async () => {
     a.download = 'okai-dilla-' + Date.now() + '.webm';
     a.click();
     URL.revokeObjectURL(url);
-    updateDisplay('💾 Exported!', true);
+    updateDisplay('Exported!', true);
     log('Audio exported as WebM');
     if (!wasPlaying) stop();
   }, 10000);
@@ -1992,10 +2005,12 @@ document.getElementById('export').onclick = async () => {
 
 // Instrument pad toggles (MPC style)
 ['drums-on','bass-on','keys-on','pads-on'].forEach(id => {
-  document.getElementById(id).onclick = e => {
-    e.currentTarget.classList.toggle('on');
-    e.currentTarget.classList.toggle('dim');
+  const el = document.getElementById(id);
+  const handler = () => {
+    el.classList.toggle('on');
   };
+  el.onclick = handler;
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
 });
 
 // Preset pads - H4 Consistency: all set BOTH drums + keys for full vibe
@@ -2006,7 +2021,7 @@ const presetConfigs = {
   detroit: { drums: 'theo-swing', keys: 'quartal', pads: 'quartalm' }
 };
 document.querySelectorAll('[data-preset]').forEach(pad => {
-  pad.onclick = () => {
+  const handler = () => {
     const preset = presetConfigs[pad.dataset.preset];
     if (!preset) return;
     document.getElementById('drums-pat').value = preset.drums;
@@ -2021,6 +2036,8 @@ document.querySelectorAll('[data-preset]').forEach(pad => {
     log('Preset: ' + pad.dataset.preset + ' (' + preset.drums + ' / ' + preset.keys + ')');
     flashPad(pad.id || pad.dataset.preset);
   };
+  pad.onclick = handler;
+  pad.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
 });
 
 // NON-MUSICIAN FRIENDLY: Mood presets with emotional descriptions
@@ -2033,7 +2050,13 @@ const moodConfigs = {
   jazzy: { drums: 'theo-jazz', keys: 'chillhop', pads: 'jazz', bpm: 85, fx: ['tapedelay', 'lofi'] }
 };
 document.querySelectorAll('[data-mood]').forEach(btn => {
-  btn.onclick = () => {
+  const handler = () => {
+    // H3 User Control: clicking active mood deactivates it
+    if (btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      updateDisplay('■ Mood cleared', playing);
+      return;
+    }
     document.querySelectorAll('[data-mood]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const mood = moodConfigs[btn.dataset.mood];
@@ -2053,9 +2076,11 @@ document.querySelectorAll('[data-mood]').forEach(btn => {
     FX_LIST.forEach(fx => { if (fxState[fx]) toggleFX(fx); });
     mood.fx.forEach(fx => { if (!fxState[fx]) toggleFX(fx); });
     restartIfPlaying();
-    updateDisplay('🎭 Mood: ' + btn.dataset.mood, true);
+    updateDisplay('Mood: ' + btn.dataset.mood, true);
     log('Mood: ' + btn.dataset.mood + ' (Ctrl+Z to undo)');
   };
+  btn.onclick = handler;
+  btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
 });
 
 // Helper: slider with synced display(s)
@@ -2175,10 +2200,12 @@ bindRadioGroup('[data-arpoct]', btn => {
 FX_LIST.forEach(fx => {
   const pad = document.getElementById('pad-' + fx);
   if (pad) {
-    pad.onclick = () => {
+    const handler = () => {
       toggleFX(fx);
       pad.classList.toggle('on', fxState[fx]);
     };
+    pad.onclick = handler;
+    pad.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
   }
 });
 
@@ -2325,14 +2352,14 @@ bindSlider('entrain-freq', ['entrain-freq-val'], v => v + ' Hz', v => {
 
 // ============= ONBOARDING & HELP MODALS =============
 
-// Show onboarding on first visit
-const hasSeenOnboarding = localStorage.getItem('dillaMachineOnboarded');
+// Show onboarding on first load this session
+let hasSeenOnboarding = false;
 if (!hasSeenOnboarding) {
   document.getElementById('onboard-modal').style.display = 'flex';
 }
 document.getElementById('onboard-close').onclick = () => {
   document.getElementById('onboard-modal').style.display = 'none';
-  localStorage.setItem('dillaMachineOnboarded', 'true');
+  hasSeenOnboarding = true;
   togglePlay(); // Auto-start after onboarding
 };
 
