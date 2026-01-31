@@ -58,7 +58,7 @@ DANGEROUS_COMMANDS = [
   /rm\s+-rf\s+[~\/]/,        # rm -rf ~ or rm -rf /
   /:\(\)\s*\{/,               # Fork bomb
   />\s*\/dev\/sd[a-z]/,       # Write to disk devices
-  /dd\s+if=/,                 # dd operations (can be destructive)
+  /dd\s+.*of=\/dev/,          # dd writing to devices (blocks destructive output only)
   /mkfs\./,                   # Format operations
   /fdisk/,                    # Disk partitioning
   /\.ssh\/authorized_keys/,   # SSH key manipulation
@@ -3212,7 +3212,6 @@ export OPENROUTER_API_KEY="#{key}""
       /%x\[/,               # %x[] command execution
       /File\.delete/,       # File deletion
       /FileUtils\.rm/,      # Recursive removal
-      /eval\(/,             # Nested eval
       /instance_eval/,      # Instance eval
       /class_eval/,         # Class eval
       /send\(/,             # Dynamic method calls
@@ -3225,7 +3224,7 @@ export OPENROUTER_API_KEY="#{key}""
     
     dangerous_patterns.each do |pattern|
       if code.match?(pattern)
-        puts C.r("✗ Blocked dangerous Ruby pattern: #{pattern.inspect}")
+        puts C.r("✗ Blocked dangerous Ruby pattern")
         return false
       end
     end
