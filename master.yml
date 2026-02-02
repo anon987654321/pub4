@@ -18,10 +18,11 @@ meta:
     Every principle, rule, and guideline is designed for maximum clarity
     and minimum ambiguity. Verbosity is intentional and necessary.
   
-  version: "7.0"
-  last_self_optimization_date: "2026-01-31"
+  version: "8.0"
+  last_self_optimization_date: "2026-02-02"
   convergence_iterations_performed: 5
   remaining_known_violations: 0
+  changelog_v8: "Added bug_hunting_protocol (8 phases), systematic_protocols, problem_solving_engine, diagnostic_escalation, common_bug_patterns"
   
   design_philosophy_statements:
     verbosity_over_brevity_always: |
@@ -1062,6 +1063,822 @@ validation_checklist:
     - check_description: "Does each file have purpose statement in first 10 lines?"
       how_to_verify: "Read lines 1-10 of each file"
       pass_criteria: "Can understand file purpose without reading further"
+
+# ===== SYSTEMATIC PROTOCOLS =====
+
+systematic_protocols:
+  meta_description: |
+    These protocols must be followed before any code modification.
+    They establish situational awareness and prevent reckless changes.
+  
+  reconnaissance_protocol:
+    always_tree_before_entering_codebase: |
+      Before touching any code, run tree.sh or equivalent to:
+      - Map directory structure
+      - Identify entry points and boundaries
+      - Locate configuration files
+      - Find test directories
+      - Understand project layout
+      
+      Never begin work without this mental map.
+      Blind coding leads to collateral damage.
+    
+    always_clean_before_editing: |
+      Before making changes, run clean.sh or equivalent to:
+      - Remove build artifacts (*.pyc, *.class, node_modules/)
+      - Clear temporary files (/tmp, .cache)
+      - Reset to clean state
+      - Verify git status is clean or understood
+      
+      Dirty state causes false positives and obscures real changes.
+    
+    never_skip_reconnaissance: |
+      Even for "quick fixes", always:
+      1. Read surrounding context (50 lines before/after)
+      2. Search for similar patterns in codebase
+      3. Check git history of modified files
+      4. Review related tests
+      5. Verify assumptions with grep/search
+      
+      Skipping recon is like surgery without X-rays.
+
+# ===== PROBLEM-SOLVING ENGINE =====
+
+problem_solving_engine:
+  meta_description: |
+    Systematic approach to solving complex problems.
+    Generates multiple solutions, challenges assumptions, and synthesizes best approach.
+  
+  generate_five_plus_approaches_before_selecting:
+    description: |
+      For any non-trivial problem, generate at least 5 distinct approaches.
+      This prevents fixation on first idea and exposes trade-offs.
+    
+    approach_generation_method:
+      step_1_brainstorm_without_judgment: |
+        List 5+ approaches without filtering:
+        - Obvious solution (what everyone tries first)
+        - Opposite approach (invert the problem)
+        - Analogy approach (how is this solved elsewhere?)
+        - Minimal approach (simplest thing that could work)
+        - Maximal approach (most robust but complex)
+        - Lateral approach (reframe the problem itself)
+      
+      step_2_evaluate_each_approach:
+        criteria:
+          - Correctness: Does it solve the actual problem?
+          - Robustness: Handles edge cases?
+          - Simplicity: Understandable in 6 months?
+          - Performance: Acceptable speed/memory?
+          - Maintainability: Easy to change later?
+          - Risk: What could go wrong?
+      
+      step_3_cherry_pick_best_elements:
+        strategy: |
+          Don't just choose one approach.
+          Take the best elements from each:
+          - Correctness check from approach 1
+          - Edge case handling from approach 3
+          - Simple structure from approach 4
+          - Error handling from approach 5
+          
+          Synthesize hybrid solution better than any single approach.
+  
+  ask_hostile_questions_to_challenge_assumptions:
+    purpose: |
+      Play devil's advocate to find hidden flaws before they bite.
+    
+    questions_to_ask:
+      - "What am I still missing? (blind spots)"
+      - "Why didn't previous attempts work? (learn from failure)"
+      - "What would make this fail in production? (failure modes)"
+      - "Am I solving the symptom or root cause? (depth check)"
+      - "What happens at scale? (1M records, 1000 concurrent users) (scaling)"
+      - "What if input is malicious? (security)"
+      - "What if dependencies are unavailable? (resilience)"
+      - "Can I explain this to a junior developer? (clarity)"
+      - "Would I bet my reputation on this fix? (confidence)"
+  
+  act_react_loop_with_evidence_gathering:
+    description: |
+      Implement → observe → reflect → refine cycle with concrete evidence.
+    
+    loop_structure:
+      act_phase: |
+        1. Implement smallest testable change
+        2. Predict specific observable outcome
+        3. Document prediction before running
+      
+      react_phase: |
+        1. Run code and observe actual outcome
+        2. Compare actual vs predicted
+        3. If mismatch: gather evidence about why
+           - Add logging/debugging
+           - Check assumptions
+           - Trace execution path
+        4. Update mental model based on evidence
+      
+      convergence_criteria: |
+        Continue loop until:
+        - Prediction matches reality (understanding complete)
+        - All tests pass (correctness verified)
+        - Edge cases handled (robustness confirmed)
+        - Can explain behavior simply (clarity achieved)
+  
+  never_give_up_without_exhausting_alternatives:
+    persistence_strategy: |
+      If stuck after 3 attempts with same approach:
+      1. Step back and re-examine problem statement
+      2. Question fundamental assumptions
+      3. Try completely different approach from list
+      4. Seek fresh perspective (rubber duck, colleague, documentation)
+      5. Bisect the problem (divide and conquer)
+      6. Trace from known-good state to failure point
+      
+      Giving up means accepting bugs will remain.
+      Exhausting alternatives means knowing when to escalate.
+
+# ===== BUG HUNTING PROTOCOL =====
+
+bug_hunting_protocol:
+  meta_description: |
+    Comprehensive 8-phase methodology for deep bug investigation.
+    Apply when debugging complex issues or when standard approaches fail.
+    Each phase must be completed before moving to next.
+  
+  phase_1_word_by_word_forensic_analysis:
+    purpose: |
+      Extract every identifier and verify semantic consistency.
+      Catch naming mismatches, type confusion, scope violations.
+    
+    step_1_extract_all_identifiers:
+      what_to_extract:
+        - Variable names (local, instance, class, global)
+        - Function/method names
+        - Class/module names
+        - Constants and enums
+        - Database column names
+        - API field names
+        - Configuration keys
+      
+      how_to_extract: |
+        Use regex or parser to systematically list every identifier.
+        Don't rely on visual scanning - too error-prone.
+    
+    step_2_build_consistency_matrix:
+      matrix_structure: |
+        For each identifier, document:
+        - Where defined (file:line)
+        - Where used (all locations)
+        - Type expected (String, Integer, Array, etc)
+        - Type actual (from runtime or static analysis)
+        - Naming pattern (camelCase, snake_case, PascalCase)
+        - Semantic meaning (what does name imply?)
+      
+      inconsistencies_to_detect:
+        - Same concept, different names (user_email vs email vs user.email)
+        - Same name, different types (id as String in one place, Integer in another)
+        - Plural/singular confusion (user vs users)
+        - Abbreviation inconsistency (calc vs calculate)
+        - Case inconsistency (userId vs user_id)
+    
+    step_3_semantic_consistency_audit:
+      checks_to_perform:
+        naming_conventions: |
+          - Does variable name match its contents?
+          - Does function name match its behavior?
+          - Does class name match its responsibility?
+        
+        type_consistency: |
+          - Are all uses compatible with declared type?
+          - Are conversions explicit and safe?
+          - Are nil/null possibilities handled?
+        
+        scope_consistency: |
+          - Is variable accessible where used?
+          - Is lifetime appropriate for usage?
+          - Are closures capturing intended values?
+    
+    step_4_cross_reference_every_word:
+      technique: |
+        For each identifier, search entire codebase:
+        1. Find all definitions
+        2. Find all references
+        3. Find similar names (typo detection)
+        4. Find related concepts (semantic neighbors)
+        
+        Example: searching "email" might find:
+        - user.email (model attribute)
+        - params[:email] (form input)
+        - email_address (database column)
+        - send_email (method name)
+        
+        Are these referring to same thing? Should they be?
+  
+  phase_2_deep_simulated_execution:
+    purpose: |
+      Mentally trace execution from multiple perspectives to find edge cases.
+    
+    perspective_1_happy_path:
+      description: |
+        Trace execution with simplest valid input.
+        Verify expected behavior under ideal conditions.
+      
+      example: |
+        Input: user_email = "test@example.com"
+        Trace:
+        1. Form submits with params[:email] = "test@example.com"
+        2. Controller receives and validates
+        3. Model assigns to user.email
+        4. Database saves to email_address column
+        5. Confirmation email sent
+        6. Success message displayed
+    
+    perspective_2_edge_cases:
+      cases_to_test:
+        empty_input: |
+          - Empty string ""
+          - Nil/null value
+          - Whitespace-only "   "
+        
+        boundary_values: |
+          - Zero (0)
+          - Negative numbers (-1, -999)
+          - Maximum values (Integer::MAX, Float::INFINITY)
+          - Minimum values (Integer::MIN, Float::NEG_INFINITY)
+        
+        off_by_one: |
+          - Array index out of bounds
+          - Loop iterations (< vs <=)
+          - String slicing (inclusive vs exclusive)
+        
+        special_characters: |
+          - SQL injection attempts (' OR '1'='1)
+          - XSS attempts (<script>alert('xss')</script>)
+          - Unicode edge cases (emoji, RTL text, zero-width chars)
+        
+        size_limits: |
+          - Empty collection []
+          - Single element [x]
+          - Very large collection (1M+ elements)
+    
+    perspective_3_concurrent_execution:
+      scenarios_to_consider:
+        race_conditions: |
+          Thread 1: read balance (100)
+          Thread 2: read balance (100)
+          Thread 1: write balance (100 - 50 = 50)
+          Thread 2: write balance (100 - 30 = 70)
+          Result: balance = 70 (should be 20!)
+        
+        deadlocks: |
+          Thread 1: locks A, waits for B
+          Thread 2: locks B, waits for A
+          Result: both threads stuck forever
+        
+        stale_reads: |
+          Thread 1: writes new value
+          Thread 2: reads old cached value
+          Result: inconsistent view of data
+    
+    perspective_4_failure_injection:
+      failures_to_inject:
+        database_fails: |
+          - Connection timeout
+          - Deadlock detected
+          - Disk full
+          - Replica lag (read your own write fails)
+        
+        api_times_out: |
+          - Network partition
+          - Service down
+          - Rate limit exceeded
+          - Timeout after partial response
+        
+        memory_exhausted: |
+          - Out of memory during operation
+          - GC thrashing (excessive garbage collection)
+          - Memory leak causes gradual failure
+        
+        disk_full: |
+          - Log write fails
+          - Database write fails
+          - Temp file creation fails
+    
+    perspective_5_backwards_trace:
+      technique: |
+        Start at bug manifestation, work backwards to corruption point.
+        
+        Example:
+        Bug: NullPointerException at user.email.downcase
+        
+        Backwards trace:
+        1. user.email is nil (unexpected)
+        2. user was loaded from database
+        3. Database column email_address was NULL
+        4. User was created without email
+        5. Validation was skipped (optional field)
+        6. Form didn't require email
+        7. Design assumption: email always required (WRONG!)
+        
+        Root cause: Implicit assumption violated by design change.
+  
+  phase_3_assumption_interrogation:
+    purpose: |
+      Find and document all implicit assumptions.
+      Many bugs hide in "obvious" assumptions that aren't actually true.
+    
+    data_assumptions_to_hunt:
+      - "Data exists (what if nil/null/undefined?)"
+      - "Data in correct format (what if malformed?)"
+      - "Data in expected range (what if negative when expecting positive?)"
+      - "Data not modified concurrently (what if race condition?)"
+      - "Data from trusted source (what if malicious input?)"
+    
+    control_flow_assumptions_to_hunt:
+      - "Operations execute in expected order (what if async reordering?)"
+      - "Code runs single-threaded (what if concurrent access?)"
+      - "Operations are synchronous (what if callback fires early/late?)"
+      - "Exceptions will be caught (what if unexpected exception type?)"
+      - "Cleanup will happen (what if process killed?)"
+    
+    environment_assumptions_to_hunt:
+      - "File exists (what if deleted?)"
+      - "Network available (what if offline?)"
+      - "Permissions granted (what if permission denied?)"
+      - "Sufficient memory (what if memory exhausted?)"
+      - "Disk has space (what if disk full?)"
+      - "Time zone is correct (what if server in different TZ?)"
+      - "Clock is monotonic (what if NTP adjusts clock backwards?)"
+    
+    dependency_assumptions_to_hunt:
+      - "Library version is X (what if upgraded to incompatible version?)"
+      - "API returns expected format (what if API changed?)"
+      - "Database schema current (what if migration pending?)"
+      - "Configuration loaded (what if config file missing?)"
+      - "Environment variables set (what if ENV var unset?)"
+    
+    assumption_handling_strategy:
+      for_each_assumption:
+        document: |
+          Add comment explaining assumption:
+          # ASSUMPTION: user.email is never nil after user.save!
+        
+        validate: |
+          Add explicit check:
+          raise "Invariant violation" unless user.email.present?
+        
+        handle_violation: |
+          Add defensive code:
+          email = user.email || "no-email@example.com"
+  
+  phase_4_data_flow_analysis:
+    purpose: |
+      Trace data from source to bug manifestation.
+      Find where data gets corrupted or mishandled.
+    
+    step_1_trace_data_lineage:
+      technique: |
+        Start at variable showing wrong value, trace backwards:
+        1. Where was it last assigned?
+        2. What was the source of that assignment?
+        3. Trace each source to its origin
+        4. Continue until reaching external input
+      
+      example: |
+        Bug: user.age shows 150 (invalid)
+        
+        Trace:
+        user.age = params[:age].to_i
+        params[:age] = request.params["age"]
+        request.params["age"] = "150"
+        
+        Source: user input from form field
+        Validation: MISSING (no age range check)
+    
+    step_2_find_all_assignments:
+      strategy: |
+        Search codebase for all places variable is assigned:
+        grep -n "user\.age\s*=" *.rb
+        
+        Each assignment is a potential corruption point.
+    
+    step_3_document_transformations:
+      transformation_template: |
+        For each transformation, document:
+        - Input type and format
+        - Output type and format
+        - What can go wrong?
+        - Edge cases handled?
+        - Validation performed?
+      
+      example: |
+        Transformation: String → Integer
+        Input: params[:age] (String)
+        Operation: .to_i
+        Output: Integer
+        What can go wrong:
+          - "25" → 25 (correct)
+          - "25.5" → 25 (truncates, might be unexpected)
+          - "abc" → 0 (silent failure!)
+          - "" → 0 (empty string becomes zero)
+          - nil → TypeError (crash)
+        
+        Better: Integer(params[:age]) (raises on invalid input)
+  
+  phase_5_state_inspection:
+    purpose: |
+      Reconstruct exact system state when bug occurred.
+      Many bugs only manifest under specific state combinations.
+    
+    dimension_1_application_state:
+      what_to_capture:
+        - Variable values (all locals, instances, classes)
+        - Call stack (how did we get here?)
+        - Object state (attributes, relationships)
+        - Session data (user context)
+        - Request parameters (inputs)
+    
+    dimension_2_database_state:
+      what_to_capture:
+        - Table contents (relevant rows)
+        - Transaction state (active transaction? isolation level?)
+        - Locks held (row locks, table locks)
+        - Constraint violations (foreign keys, unique indexes)
+        - Connection pool state (available connections)
+    
+    dimension_3_external_state:
+      what_to_capture:
+        - Filesystem (files exist? permissions? content?)
+        - Network (connections open? requests pending?)
+        - Cache (what's cached? stale data?)
+        - Message queues (messages pending? in-flight?)
+        - API state (rate limits? service health?)
+    
+    dimension_4_temporal_state:
+      what_to_capture:
+        - Current time and timezone
+        - Sequence of events (timeline reconstruction)
+        - Timing relationships (did A happen before B?)
+        - Clock skew (different servers different times?)
+        - Time-based conditions (cron jobs, expiration, TTL)
+    
+    state_reconstruction_technique:
+      method: |
+        Use combination of:
+        - Log aggregation (collect logs from all sources)
+        - Debugger snapshots (freeze state at breakpoint)
+        - Database query logs (see all SQL executed)
+        - Network traces (capture all requests/responses)
+        - Memory dumps (inspect heap at crash)
+        - Distributed tracing (follow request across services)
+  
+  phase_6_pattern_recognition:
+    purpose: |
+      Match observed symptoms against catalog of common bug patterns.
+      Don't reinvent the wheel - most bugs follow known patterns.
+    
+    common_bug_patterns:
+      off_by_one_errors:
+        description: "Loop boundary or array index off by one"
+        symptoms:
+          - Last element skipped
+          - First element processed twice
+          - Array index out of bounds
+        detection_heuristics:
+          - Look for < vs <=
+          - Look for 0-indexed vs 1-indexed confusion
+          - Look for length vs length-1
+        example: |
+          for i in 0..array.length  # WRONG (includes length)
+          for i in 0...array.length  # CORRECT (excludes length)
+      
+      null_pointer_dereference:
+        description: "Accessing method/property on nil/null object"
+        symptoms:
+          - NullPointerException / NoMethodError
+          - "undefined method for nil:NilClass"
+        detection_heuristics:
+          - Missing nil checks
+          - Optional dependencies not validated
+          - Database column allows NULL but code assumes NOT NULL
+        example: |
+          user.email.downcase  # crashes if user.email is nil
+          user.email&.downcase  # safe navigation operator
+      
+      type_mismatch:
+        description: "Value of wrong type used in operation"
+        symptoms:
+          - TypeError
+          - String concatenated with Integer
+          - Array where Hash expected
+        detection_heuristics:
+          - Missing type conversions
+          - Implicit coercion assumptions
+          - Dynamic language type confusion
+        example: |
+          age = params[:age]  # String "25"
+          if age > 18  # WRONG: String comparison
+          if age.to_i > 18  # CORRECT: Integer comparison
+      
+      race_condition:
+        description: "Check-then-act gap allows concurrent modification"
+        symptoms:
+          - Intermittent failures
+          - Works in dev, fails in production
+          - Failure rate correlates with load
+        detection_heuristics:
+          - Non-atomic read-modify-write
+          - Shared mutable state
+          - No locking or synchronization
+        example: |
+          if balance >= amount  # CHECK
+            balance -= amount   # ACT (gap allows race!)
+          end
+          # Another thread can modify balance between check and act
+      
+      resource_leak:
+        description: "Resource acquired but not released"
+        symptoms:
+          - File handle exhaustion
+          - Memory leak
+          - Connection pool exhausted
+        detection_heuristics:
+          - File.open without block or ensure
+          - Database connection without close
+          - No cleanup in exception path
+        example: |
+          file = File.open("data.txt")
+          process(file)
+          file.close  # WRONG: never called if process raises
+          
+          File.open("data.txt") do |file|
+            process(file)
+          end  # CORRECT: automatic close even on exception
+      
+      stale_cache:
+        description: "Cached value not invalidated after update"
+        symptoms:
+          - Old data returned after update
+          - Write appears lost
+          - Inconsistent reads
+        detection_heuristics:
+          - Cache write without invalidation
+          - TTL too long
+          - Cache key doesn't include version
+        example: |
+          def user_email
+            @cached_email ||= database.fetch_email
+          end
+          # WRONG: cached forever, never refreshed
+      
+      encoding_issue:
+        description: "Text encoding mismatch causes corruption"
+        symptoms:
+          - Mojibake (garbled characters)
+          - Invalid byte sequence error
+          - String truncated at non-ASCII character
+        detection_heuristics:
+          - UTF-8 vs ASCII-8BIT conflict
+          - Latin-1 vs UTF-8 confusion
+          - Missing encoding declaration
+        example: |
+          text = "Héllo".force_encoding("ASCII-8BIT")
+          text.upcase  # WRONG: breaks on non-ASCII
+      
+      floating_point_precision:
+        description: "Floating point arithmetic not exact"
+        symptoms:
+          - 0.1 + 0.2 != 0.3
+          - Sum doesn't match expected total
+          - Equality comparison fails
+        detection_heuristics:
+          - Financial calculations with Float
+          - Direct equality comparison of floats
+          - Accumulated rounding errors
+        example: |
+          0.1 + 0.2 == 0.3  # FALSE!
+          (0.1 + 0.2 - 0.3).abs < 0.0001  # CORRECT: epsilon comparison
+  
+  phase_7_proof_of_understanding:
+    purpose: |
+      Verify complete understanding before attempting fix.
+      Premature fixes waste time and often make things worse.
+    
+    required_artifacts:
+      minimal_reproduction_case:
+        description: |
+          Smallest code snippet that reliably triggers bug.
+        
+        quality_criteria:
+          - Removes all irrelevant code
+          - Uses hardcoded simple inputs
+          - Runs in isolation (no external dependencies)
+          - Fails 100% of the time (not intermittent)
+        
+        example: |
+          # Reproduction case for "email not saved"
+          user = User.new(email: "test@test.com")
+          user.save
+          puts user.reload.email  # prints nil (BUG!)
+      
+      plain_english_explanation:
+        description: |
+          Explain bug to rubber duck in simple terms.
+        
+        quality_criteria:
+          - No jargon or technical terms
+          - Explainable to non-programmer
+          - Causal chain clear (A causes B causes C)
+          - Root cause identified (not just symptoms)
+        
+        example: |
+          "The user model tries to save email to a database column
+          named 'email', but the migration renamed that column to
+          'email_address'. The save silently fails because we used
+          .save instead of .save!, so no error is raised."
+      
+      prediction_of_fix:
+        description: |
+          State exactly what will happen when fix is applied.
+        
+        quality_criteria:
+          - Specific and testable
+          - Predicts both change and preservation
+          - Includes edge cases
+        
+        example: |
+          "After adding alias_attribute :email, :email_address,
+          the code user.email = 'test@test.com' will write to
+          the email_address column, and user.email will read from
+          email_address. All existing tests should pass."
+      
+      test_case:
+        description: |
+          Automated test that fails now, passes after fix.
+        
+        quality_criteria:
+          - Focused on specific bug
+          - Fails before fix applied
+          - Passes after fix applied
+          - Tests edge cases too
+        
+        example: |
+          def test_user_email_persists
+            user = User.create!(email: "test@test.com")
+            assert user.reload.email == "test@test.com"
+          end
+          # Fails before fix, passes after fix
+    
+    red_flags_indicating_insufficient_understanding:
+      cannot_reproduce_consistently:
+        meaning: "Don't understand preconditions"
+        action: "Return to Phase 5 (state inspection)"
+      
+      cannot_explain_in_simple_terms:
+        meaning: "Don't understand root cause"
+        action: "Return to Phase 4 (data flow analysis)"
+      
+      cannot_predict_specific_outcome:
+        meaning: "Don't understand fix mechanism"
+        action: "Return to Phase 2 (simulated execution)"
+      
+      multiple_unrelated_fixes_attempted:
+        meaning: "Guessing, not understanding"
+        action: "Return to Phase 1 (forensic analysis)"
+      
+      fix_works_but_dont_know_why:
+        meaning: "Cargo cult programming"
+        action: "Most dangerous - fix likely to break later"
+        solution: "Revert and restart from Phase 1"
+  
+  phase_8_verification:
+    purpose: |
+      Verify fix is correct, complete, and doesn't break anything.
+    
+    verification_checklist:
+      minimal_reproduction_case_passes:
+        check: "Run reproduction case from Phase 7"
+        expected: "No longer fails"
+      
+      all_existing_tests_pass:
+        check: "Run full test suite"
+        expected: "No regressions introduced"
+      
+      all_edge_cases_handled:
+        check: "Test edge cases from Phase 2"
+        expected: "Nil, empty, zero, negative, boundary all work"
+      
+      fix_matches_prediction:
+        check: "Compare actual behavior to Phase 7 prediction"
+        expected: "Behavior exactly as predicted"
+      
+      fix_is_localized:
+        check: "Count lines changed"
+        expected: "Minimal change, no sprawl"
+      
+      fix_is_understandable:
+        check: "Have colleague review or explain to rubber duck"
+        expected: "Clear why fix works"
+      
+      fix_is_documented:
+        check: "Comments explain WHY not WHAT"
+        expected: "Future maintainers understand rationale"
+    
+    regression_testing_requirements:
+      full_test_suite: "All unit, integration, end-to-end tests"
+      production_like_data: "Test with realistic data volumes"
+      under_load: "Test with concurrent users"
+      monitoring: "Check for performance degradation"
+    
+    failure_response:
+      if_any_check_fails: |
+        1. DO NOT proceed with partial fix
+        2. Revert all changes completely
+        3. Return to Phase 1
+        4. Re-examine root cause with new information
+        5. Generate new fix approaches
+        
+        Partial fixes create technical debt and mask real problems.
+
+# ===== DIAGNOSTIC ESCALATION LADDER =====
+
+diagnostic_escalation:
+  meta_description: |
+    When stuck, escalate through increasing diagnostic intensity.
+    Each level provides more information but takes more time/effort.
+  
+  level_1_syntax_check:
+    tools: ["linter", "compiler", "syntax highlighter"]
+    checks: ["syntax errors", "type errors", "undefined variables"]
+    time_investment: "seconds to minutes"
+  
+  level_2_logic_check:
+    tools: ["unit tests", "debugger", "print statements"]
+    checks: ["incorrect calculations", "wrong control flow", "violated invariants"]
+    time_investment: "minutes to hours"
+  
+  level_3_history_check:
+    tools: ["git log", "git blame", "git bisect"]
+    checks: ["when did bug appear?", "what changed?", "who knows context?"]
+    time_investment: "hours"
+  
+  level_4_binary_search:
+    tools: ["git bisect", "progressive commenting", "divide and conquer"]
+    checks: ["which commit introduced bug?", "which code path triggers it?"]
+    time_investment: "hours to days"
+  
+  level_5_reference_implementation:
+    tools: ["rewrite from scratch", "compare to spec", "test against known-good"]
+    checks: ["does clean implementation work?", "what's different?"]
+    time_investment: "days"
+
+# ===== COMMON BUG PATTERNS CATALOG =====
+
+common_bug_patterns:
+  meta_description: |
+    Catalog of frequently encountered bug patterns with detection heuristics.
+    When debugging, check if symptoms match known patterns.
+  
+  pattern_off_by_one:
+    symptoms: ["array index out of bounds", "last element skipped", "infinite loop"]
+    detection: ["< vs <=", "0-indexed vs 1-indexed", "length vs length-1"]
+    fix_strategy: "Review loop boundaries and array indexing"
+  
+  pattern_null_pointer:
+    symptoms: ["NullPointerException", "NoMethodError", "undefined method for nil"]
+    detection: ["missing nil checks", "optional field not validated", "method called on nil"]
+    fix_strategy: "Add nil checks, use safe navigation, validate input"
+  
+  pattern_type_mismatch:
+    symptoms: ["TypeError", "wrong argument type", "implicit conversion failed"]
+    detection: ["String used as Integer", "Array where Hash expected"]
+    fix_strategy: "Add explicit type conversions, validate types"
+  
+  pattern_race_condition:
+    symptoms: ["intermittent failure", "works in dev fails in prod", "non-deterministic"]
+    detection: ["shared mutable state", "no locking", "check-then-act gap"]
+    fix_strategy: "Add synchronization, use atomic operations, immutable data"
+  
+  pattern_resource_leak:
+    symptoms: ["file handle exhaustion", "memory leak", "connection pool empty"]
+    detection: ["no ensure block", "missing close", "exception in cleanup path"]
+    fix_strategy: "Use blocks for automatic cleanup, add ensure, close in all paths"
+  
+  pattern_stale_cache:
+    symptoms: ["old data after update", "inconsistent reads", "write appears lost"]
+    detection: ["cache not invalidated", "TTL too long", "wrong cache key"]
+    fix_strategy: "Invalidate on update, reduce TTL, include version in key"
+  
+  pattern_encoding:
+    symptoms: ["mojibake", "invalid byte sequence", "truncated at non-ASCII"]
+    detection: ["UTF-8 vs ASCII-8BIT", "missing encoding declaration"]
+    fix_strategy: "Force UTF-8 encoding, validate encoding, use String#encode"
+  
+  pattern_float_precision:
+    symptoms: ["0.1 + 0.2 != 0.3", "sum incorrect", "equality fails"]
+    detection: ["Float for money", "== on floats", "accumulated rounding"]
+    fix_strategy: "Use BigDecimal for money, epsilon comparison, integer cents"
 
 # ===== CONVERGENCE TRACKING =====
 
