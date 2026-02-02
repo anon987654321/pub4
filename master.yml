@@ -1,165 +1,158 @@
 ---
 # ============================================================================
-# READ THIS FIRST - MANDATORY LLM DIRECTIVES
+# READ THIS FIRST - MANDATORY LLM RULES
 # ============================================================================
-# These directives govern how YOU (the LLM) must operate when using this file.
-# Violation of any VETO directive = immediate stop and reconsider.
+# These rules govern how YOU (the LLM) must operate when using this file.
+# Violation of any VETO rule = immediate stop and reconsider.
 
-llm_directives:
-  - id: read_this_entire_file_first
-    severity: veto
-    rule: "Cat this entire file into context before responding to user"
-    
-  - id: read_full_file_once
-    severity: veto
-    rule: "Read entire file once at start, not fragments repeatedly"
-    wrong: "Let me grep for X... now view lines 50-60... now grep for Y..."
-    right: "cat full file into context, then work from memory"
-    
-  - id: maximum_scrutiny_always
-    severity: veto
-    rule: "Every action under maximum scrutiny - challenge yourself before acting"
-    wrong: "This looks like boilerplate, I'll delete it"
-    right: "Stop. What am I about to lose? Have I read every line? Why does this exist?"
-    
-  - id: understand_before_changing
-    severity: veto
-    rule: "Never modify/delete content you haven't fully read and understood"
-    wrong: "I'll summarize this as redundant based on the section title"
-    right: "Read every line. Understand the author's intent. Then act."
-    
-  - id: verify_before_claiming_done
-    severity: veto
-    rule: "Test changes actually work before saying 'done'"
-    
-  - id: state_uncertainty_explicitly
-    severity: high
-    rule: "Say 'I'm not sure' when uncertain, don't guess confidently"
-    
-  - id: match_existing_patterns
-    severity: high
-    rule: "Study existing code style before adding new code"
-    
-  - id: prefer_edit_over_create
-    severity: high
-    rule: "Edit existing files, don't create new ones unless asked"
-    
-  - id: one_concept_per_change
-    severity: high
-    rule: "Each commit/change addresses exactly one thing"
-    
-  - id: llm_already_knows
-    severity: high
-    rule: "Never add examples or explanations LLM already understands"
-    
-  - id: compact_over_comprehensive
-    severity: high
-    rule: "A 50-line config that works beats 2000 lines of theory"
+llm_rules:
+  rules:
+    - id: read_this_entire_file_first
+      severity: veto
+      rule: "Cat this entire file into context before responding to user"
+      
+    - id: read_full_file_once
+      severity: veto
+      rule: "Read entire file once at start, not fragments repeatedly"
+      wrong: "Let me grep for X... now view lines 50-60... now grep for Y..."
+      right: "cat full file into context, then work from memory"
+      
+    - id: maximum_scrutiny_always
+      severity: veto
+      rule: "Every action under maximum scrutiny - challenge yourself before acting"
+      wrong: "This looks like boilerplate, I'll delete it"
+      right: "Stop. What am I about to lose? Have I read every line? Why does this exist?"
+      
+    - id: understand_before_changing
+      severity: veto
+      rule: "Never modify/delete content you haven't fully read and understood"
+      
+    - id: verify_before_claiming_done
+      severity: veto
+      rule: "Test changes actually work before saying 'done'"
+      
+    - id: no_new_sections
+      severity: veto
+      rule: "Never create new top-level sections - fit into existing structure"
 
-  - id: no_new_sections
-    severity: veto
-    rule: "Never create new top-level sections - fit into existing structure"
+    - id: state_uncertainty_explicitly
+      severity: high
+      rule: "Say 'I'm not sure' when uncertain, don't guess confidently"
+      
+    - id: match_existing_patterns
+      severity: high
+      rule: "Study existing code style before adding new code"
+      
+    - id: prefer_edit_over_create
+      severity: high
+      rule: "Edit existing files, don't create new ones unless asked"
+      
+    - id: one_concept_per_change
+      severity: high
+      rule: "Each commit/change addresses exactly one thing"
+      
+    - id: llm_already_knows
+      severity: high
+      rule: "Never add examples or explanations LLM already understands"
+      
+    - id: compact_over_comprehensive
+      severity: high
+      rule: "A 50-line config that works beats 2000 lines of theory"
 
-  - id: diff_before_commit
-    severity: high
-    rule: "Always diff to verify what's actually changing before commit"
+    - id: diff_before_commit
+      severity: high
+      rule: "Always diff to verify what's actually changing before commit"
 
-  - id: count_lines_before_after
-    severity: high
-    rule: "Count lines before/after major edits to catch accidental deletions"
+    - id: count_lines_before_after
+      severity: high
+      rule: "Count lines before/after major edits to catch accidental deletions"
 
-  - id: question_own_suggestions
-    severity: high
-    rule: "Challenge your own suggestions - you're often confidently wrong"
+    - id: question_own_suggestions
+      severity: high
+      rule: "Challenge your own suggestions - you're often confidently wrong"
 
-# BEFORE RESPONDING TO ANY REQUEST - run this checklist:
-preflight_checklist:
-  - "Did I cat the full file(s) into context?"
-  - "Do I understand what already exists?"
-  - "Am I about to delete/change something I haven't read?"
-  - "Is this the SMALLEST possible change?"
-  - "Am I matching existing code style?"
+  preflight:
+    - "Did I cat the full file(s) into context?"
+    - "Do I understand what already exists?"
+    - "Am I about to delete/change something I haven't read?"
+    - "Is this the SMALLEST possible change?"
+    - "Am I matching existing code style?"
 
-# STOP immediately if you catch yourself thinking:
-stop_triggers:
-  - "This looks like boilerplate..."
-  - "I'll just quickly..."
-  - "While I'm here, I'll also..."
-  - "This seems redundant..."
-  - "I don't need to read all of this..."
-  - "I remember it was something like..."
-  - "This is probably..."
+  stop_triggers:
+    - "This looks like boilerplate..."
+    - "I'll just quickly..."
+    - "While I'm here, I'll also..."
+    - "This seems redundant..."
+    - "I don't need to read all of this..."
+    - "I remember it was something like..."
+    - "This is probably..."
 
-# Common LLM mistakes with THIS specific codebase:
-known_pitfalls:
-  - pitfall: "Deleting bug_hunting_protocol thinking it's generic"
-    reality: "It's CUSTOM 8-phase methodology with unique sub-steps"
-  - pitfall: "Changing constants in cli.rb directly"
-    reality: "cli.rb is config-driven - change detection_config in master.yml"
-  - pitfall: "Using grep/view fragments instead of reading full file"
-    reality: "User prefers cat full file once, then work from memory"
-  - pitfall: "Adding verbose examples to master.yml"
-    reality: "LLM already knows - state rule, not tutorial"
-  - pitfall: "Creating new files instead of editing existing"
-    reality: "User prefers minimal file count - add to existing files"
-  - pitfall: "Assuming file content from memory after edits"
-    reality: "File may have changed - re-read after significant edits"
-  - pitfall: "Making multiple edits without verifying each succeeded"
-    reality: "Check edit output before proceeding to next"
-  - pitfall: "Adding content without checking for duplicates"
-    reality: "Search for similar content first"
-  - pitfall: "Restructuring without diffing before/after"
-    reality: "Always verify nothing was accidentally lost"
-  - pitfall: "Creating new top-level YAML sections"
-    reality: "Fit new content into existing sections"
-  - pitfall: "Creating parallel sections with same structure"
-    reality: "If format is identical, merge or rename to clarify distinction"
+  pitfalls:
+    - pitfall: "Deleting bug_hunting_protocol thinking it's generic"
+      reality: "It's CUSTOM 8-phase methodology with unique sub-steps"
+    - pitfall: "Changing constants in cli.rb directly"
+      reality: "cli.rb is config-driven - change detection_config in master.yml"
+    - pitfall: "Using grep/view fragments instead of reading full file"
+      reality: "User prefers cat full file once, then work from memory"
+    - pitfall: "Adding verbose examples to master.yml"
+      reality: "LLM already knows - state rule, not tutorial"
+    - pitfall: "Creating new files instead of editing existing"
+      reality: "User prefers minimal file count - add to existing files"
+    - pitfall: "Assuming file content from memory after edits"
+      reality: "File may have changed - re-read after significant edits"
+    - pitfall: "Making multiple edits without verifying each succeeded"
+      reality: "Check edit output before proceeding to next"
+    - pitfall: "Adding content without checking for duplicates"
+      reality: "Search for similar content first"
+    - pitfall: "Restructuring without diffing before/after"
+      reality: "Always verify nothing was accidentally lost"
+    - pitfall: "Creating new top-level YAML sections"
+      reality: "Fit new content into existing sections"
+    - pitfall: "Creating parallel sections with same structure"
+      reality: "If format is identical, merge or rename to clarify distinction"
 
-# What LLM already knows (DO NOT add to this file):
-llm_implicit_knowledge:
-  - "Git commands and workflow"
-  - "Programming language syntax"
-  - "Common design patterns"
-  - "What refactoring means"
-  - "How to run tests"
-  - "What good naming looks like"
-  - "Generic debugging techniques"
+  implicit_knowledge:
+    - "Git commands and workflow"
+    - "Programming language syntax"
+    - "Common design patterns"
+    - "What refactoring means"
+    - "How to run tests"
+    - "What good naming looks like"
+    - "Generic debugging techniques"
 
-# ============================================================================
-# DOCUMENT METADATA
-# ============================================================================
-
-meta:
-  purpose_statement: |
-    This file is the constitutional framework for code quality governance.
-    It unifies five authoritative sources into a single actionable system:
-    
-    1. Clean Code (Robert C. Martin) - Structural quality principles
-    2. Refactoring (Martin Fowler) - Systematic transformation catalog
-    3. Elements of Style (Strunk & White) - Clear prose writing rules
-    4. Typographic Style (Robert Bringhurst) - Visual presentation principles
-    5. 36 Unified Design Principles - Philosophical foundation
-    
-    This document serves three audiences in priority order:
-    - Large Language Models (primary) - need verbose, explicit definitions
-    - Human developers (secondary) - need clear guidance and examples
-    - Automated tools (tertiary) - need machine-parseable rules
-    
-    Every principle, rule, and guideline is designed for maximum clarity
-    and minimum ambiguity. Verbosity is intentional and necessary.
+# User's communication style and deeper preferences (learned from interactions):
+user_philosophy:
+  core_values:
+    - "Maximum scrutiny on everything, always"
+    - "Simplicity over complexity"
+    - "Consistency in structure and naming"
+    - "Self-documenting over documented"
+    - "Config-driven over hardcoded"
   
-  version: "9.0"
-  last_self_optimization_date: "2026-02-02"
-  convergence_iterations_performed: 5
-  remaining_known_violations: 0
-  changelog_v9: "Added unified rules section (32 rules, consistent format)"
-  changelog_v8: "Added bug_hunting_protocol (8 phases), systematic_protocols, problem_solving_engine, diagnostic_escalation, common_bug_patterns"
+  communication_style:
+    - "Concise questions, expects concise answers"
+    - "Challenges assumptions - wants LLM to do the same"
+    - "Prefers 'show me' over 'tell me'"
+    - "Values honesty about uncertainty"
+  
+  preferences:
+    - "cat full file once, not grep fragments"
+    - "Edit existing files, don't create new ones"
+    - "Minimal changes, surgical precision"
+    - "Test before claiming done"
+    - "Unified structure - no parallel sections"
+    - "Strip redundant examples - LLM already knows"
+  
+  meta_instructions:
+    - "When in doubt, ask rather than assume"
+    - "Challenge your own suggestions before presenting"
+    - "If something looks redundant, READ IT FIRST - it might be custom"
+    - "Every structural decision should be questioned"
+    - "Learn from mistakes in this chat and record them"
 
 # ============================================================================
-# QUICK REFERENCE: ALL RULES IN UNIFIED FORMAT
+# CODE QUALITY RULES
 # ============================================================================
-# Each rule: id, category, severity, rule, wrong/right OR detect/fix, rationale
-# NO EXAMPLES NEEDED - LLM already knows, YAML is self-documenting
 
 code_rules:
   # PHILOSOPHY - Core beliefs about code quality
@@ -476,7 +469,8 @@ detection_config:
 # PROCEDURES (hierarchical protocols with sub-steps)
 # ============================================================================
 
-systematic_protocols:
+procedures:
+  systematic_protocols:
   meta_description: |
     These protocols must be followed before any code modification.
     They establish situational awareness and prevent reckless changes.
@@ -512,9 +506,7 @@ systematic_protocols:
       
       Skipping recon is like surgery without X-rays.
 
-# ===== PROBLEM-SOLVING ENGINE =====
-
-problem_solving_engine:
+  problem_solving_engine:
   meta_description: |
     Systematic approach to solving complex problems.
     Generates multiple solutions, challenges assumptions, and synthesizes best approach.
@@ -608,9 +600,7 @@ problem_solving_engine:
       Giving up means accepting bugs will remain.
       Exhausting alternatives means knowing when to escalate.
 
-# ===== BUG HUNTING PROTOCOL =====
-
-bug_hunting_protocol:
+  bug_hunting_protocol:
   meta_description: |
     Comprehensive 8-phase methodology for deep bug investigation.
     Apply when debugging complex issues or when standard approaches fail.
@@ -1211,3 +1201,15 @@ bug_hunting_protocol:
         
         Partial fixes create technical debt and mask real problems.
 
+
+# ============================================================================
+# DOCUMENT METADATA
+# ============================================================================
+
+meta:
+  version: "10.0"
+  last_updated: "2026-02-02"
+  changelog:
+    v10: "Restructured: grouped llm_rules, code_rules, procedures; added user_philosophy"
+    v9: "Added unified rules section (32 rules, consistent format)"
+    v8: "Added bug_hunting_protocol (8 phases), systematic_protocols, problem_solving_engine"
