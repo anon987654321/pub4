@@ -82,8 +82,8 @@ end
 
 # Validate master.yml has required structure
 REQUIRED_MASTER_CONFIGURATION_SECTIONS = [
-  "llm_operating_rules",
-  "rules",
+  "llm_directives",
+  "code_rules",
   "detection_config",
   "systematic_protocols",
   "problem_solving_engine",
@@ -197,9 +197,9 @@ class Pipeline
     puts "UNIVERSAL CODE QUALITY ANALYSIS"
     puts ("=" * 80)
     puts "\nAnalyzing #{number_of_units_to_analyze} code unit(s)..."
-    llm_rules = MASTER_CONFIGURATION.dig('llm_operating_rules')&.size || 0
-    code_rules = MASTER_CONFIGURATION.dig('rules')&.size || 0
-    puts "Checking against: #{llm_rules} LLM rules + #{code_rules} code rules"
+    llm_directives = MASTER_CONFIGURATION.dig('llm_directives')&.size || 0
+    code_rules = MASTER_CONFIGURATION.dig('code_rules')&.size || 0
+    puts "Checking against: #{llm_directives} LLM directives + #{code_rules} code rules"
   end
   
   def self.display_fixes_applied_successfully_message

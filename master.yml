@@ -1,11 +1,11 @@
 ---
 # ============================================================================
-# READ THIS FIRST - MANDATORY LLM OPERATING RULES
+# READ THIS FIRST - MANDATORY LLM DIRECTIVES
 # ============================================================================
-# These rules govern how YOU (the LLM) must operate when using this file.
-# Violation of any VETO rule = immediate stop and reconsider.
+# These directives govern how YOU (the LLM) must operate when using this file.
+# Violation of any VETO directive = immediate stop and reconsider.
 
-llm_operating_rules:
+llm_directives:
   - id: read_this_entire_file_first
     severity: veto
     rule: "Cat this entire file into context before responding to user"
@@ -112,6 +112,8 @@ known_pitfalls:
     reality: "Always verify nothing was accidentally lost"
   - pitfall: "Creating new top-level YAML sections"
     reality: "Fit new content into existing sections"
+  - pitfall: "Creating parallel sections with same structure"
+    reality: "If format is identical, merge or rename to clarify distinction"
 
 # What LLM already knows (DO NOT add to this file):
 llm_implicit_knowledge:
@@ -159,7 +161,7 @@ meta:
 # Each rule: id, category, severity, rule, wrong/right OR detect/fix, rationale
 # NO EXAMPLES NEEDED - LLM already knows, YAML is self-documenting
 
-rules:
+code_rules:
   # PHILOSOPHY - Core beliefs about code quality
   - id: verbosity_over_brevity
     category: philosophy
