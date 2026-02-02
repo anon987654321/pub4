@@ -43,6 +43,8 @@ require "yaml"
 require "json"
 require "fileutils"
 require "set"
+require "date"
+require "time"
 
 # ===== MASTER CONFIGURATION LOADING =====
 
@@ -1355,7 +1357,7 @@ end
 class BugHuntingAnalyzer
   def self.analyze_code_unit_for_potential_bugs(code_unit)
     bug_hunting_report = {
-      file_path: code_unit.source_file_path || "inline",
+      file_path: code_unit.file_system_path_if_from_file || "inline",
       phases_completed: [],
       findings: {}
     }
@@ -1892,7 +1894,7 @@ class VerificationChecklist
     
     checklist << {
       description: "Pattern matches identified or ruled out",
-      passed: bug_hunting_report[:findings][:bug_patterns].present?
+      passed: !bug_hunting_report[:findings][:bug_patterns].nil?
     }
     
     all_passed = checklist.all? { |check| check[:passed] }

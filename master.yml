@@ -1149,15 +1149,15 @@ problem_solving_engine:
       Play devil's advocate to find hidden flaws before they bite.
     
     questions_to_ask:
-      - "What am I still missing?" (blind spots)
-      - "Why didn't previous attempts work?" (learn from failure)
-      - "What would make this fail in production?" (failure modes)
-      - "Am I solving the symptom or root cause?" (depth check)
-      - "What happens at scale? (1M records, 1000 concurrent users)" (scaling)
-      - "What if input is malicious?" (security)
-      - "What if dependencies are unavailable?" (resilience)
-      - "Can I explain this to a junior developer?" (clarity)
-      - "Would I bet my reputation on this fix?" (confidence)
+      - "What am I still missing? (blind spots)"
+      - "Why didn't previous attempts work? (learn from failure)"
+      - "What would make this fail in production? (failure modes)"
+      - "Am I solving the symptom or root cause? (depth check)"
+      - "What happens at scale? (1M records, 1000 concurrent users) (scaling)"
+      - "What if input is malicious? (security)"
+      - "What if dependencies are unavailable? (resilience)"
+      - "Can I explain this to a junior developer? (clarity)"
+      - "Would I bet my reputation on this fix? (confidence)"
   
   act_react_loop_with_evidence_gathering:
     description: |
@@ -1389,34 +1389,34 @@ bug_hunting_protocol:
       Many bugs hide in "obvious" assumptions that aren't actually true.
     
     data_assumptions_to_hunt:
-      - "Data exists" (what if nil/null/undefined?)
-      - "Data in correct format" (what if malformed?)
-      - "Data in expected range" (what if negative when expecting positive?)
-      - "Data not modified concurrently" (what if race condition?)
-      - "Data from trusted source" (what if malicious input?)
+      - "Data exists (what if nil/null/undefined?)"
+      - "Data in correct format (what if malformed?)"
+      - "Data in expected range (what if negative when expecting positive?)"
+      - "Data not modified concurrently (what if race condition?)"
+      - "Data from trusted source (what if malicious input?)"
     
     control_flow_assumptions_to_hunt:
-      - "Operations execute in expected order" (what if async reordering?)
-      - "Code runs single-threaded" (what if concurrent access?)
-      - "Operations are synchronous" (what if callback fires early/late?)
-      - "Exceptions will be caught" (what if unexpected exception type?)
-      - "Cleanup will happen" (what if process killed?)
+      - "Operations execute in expected order (what if async reordering?)"
+      - "Code runs single-threaded (what if concurrent access?)"
+      - "Operations are synchronous (what if callback fires early/late?)"
+      - "Exceptions will be caught (what if unexpected exception type?)"
+      - "Cleanup will happen (what if process killed?)"
     
     environment_assumptions_to_hunt:
-      - "File exists" (what if deleted?)
-      - "Network available" (what if offline?)
-      - "Permissions granted" (what if permission denied?)
-      - "Sufficient memory" (what if memory exhausted?)
-      - "Disk has space" (what if disk full?)
-      - "Time zone is correct" (what if server in different TZ?)
-      - "Clock is monotonic" (what if NTP adjusts clock backwards?)
+      - "File exists (what if deleted?)"
+      - "Network available (what if offline?)"
+      - "Permissions granted (what if permission denied?)"
+      - "Sufficient memory (what if memory exhausted?)"
+      - "Disk has space (what if disk full?)"
+      - "Time zone is correct (what if server in different TZ?)"
+      - "Clock is monotonic (what if NTP adjusts clock backwards?)"
     
     dependency_assumptions_to_hunt:
-      - "Library version is X" (what if upgraded to incompatible version?)
-      - "API returns expected format" (what if API changed?)
-      - "Database schema current" (what if migration pending?)
-      - "Configuration loaded" (what if config file missing?)
-      - "Environment variables set" (what if ENV var unset?)
+      - "Library version is X (what if upgraded to incompatible version?)"
+      - "API returns expected format (what if API changed?)"
+      - "Database schema current (what if migration pending?)"
+      - "Configuration loaded (what if config file missing?)"
+      - "Environment variables set (what if ENV var unset?)"
     
     assumption_handling_strategy:
       for_each_assumption:
