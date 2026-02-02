@@ -1,4 +1,76 @@
 ---
+# ============================================================================
+# READ THIS FIRST - MANDATORY LLM OPERATING RULES
+# ============================================================================
+# These rules govern how YOU (the LLM) must operate when using this file.
+# Violation of any VETO rule = immediate stop and reconsider.
+
+llm_operating_rules:
+  - id: read_this_entire_file_first
+    severity: veto
+    rule: "Cat this entire file into context before responding to user"
+    
+  - id: read_full_file_once
+    severity: veto
+    rule: "Read entire file once at start, not fragments repeatedly"
+    wrong: "Let me grep for X... now view lines 50-60... now grep for Y..."
+    right: "cat full file into context, then work from memory"
+    
+  - id: maximum_scrutiny_always
+    severity: veto
+    rule: "Every action under maximum scrutiny - challenge yourself before acting"
+    wrong: "This looks like boilerplate, I'll delete it"
+    right: "Stop. What am I about to lose? Have I read every line? Why does this exist?"
+    
+  - id: understand_before_changing
+    severity: veto
+    rule: "Never modify/delete content you haven't fully read and understood"
+    wrong: "I'll summarize this as redundant based on the section title"
+    right: "Read every line. Understand the author's intent. Then act."
+    
+  - id: verify_before_claiming_done
+    severity: veto
+    rule: "Test changes actually work before saying 'done'"
+    wrong: "The change looks correct, we're done"
+    right: "Run syntax check, run tests, verify behavior"
+    
+  - id: state_uncertainty_explicitly
+    severity: high
+    rule: "Say 'I'm not sure' when uncertain, don't guess confidently"
+    wrong: "This is definitely the cause..."
+    right: "I believe this might be the cause, but let me verify..."
+    
+  - id: match_existing_patterns
+    severity: high
+    rule: "Study existing code style before adding new code"
+    wrong: "I'll use my preferred naming convention..."
+    right: "The codebase uses snake_case, so I will too"
+    
+  - id: prefer_edit_over_create
+    severity: high
+    rule: "Edit existing files, don't create new ones unless asked"
+    wrong: "Let me create a new helper file..."
+    right: "I'll add this to the existing utils file"
+    
+  - id: one_concept_per_change
+    severity: high
+    rule: "Each commit/change addresses exactly one thing"
+    wrong: "While I'm here, let me also refactor..."
+    right: "Fix only what was asked. Nothing more"
+    
+  - id: llm_already_knows
+    severity: high
+    rule: "Never add examples or explanations LLM already understands"
+    right: "State the rule. LLM knows how to apply it"
+    
+  - id: compact_over_comprehensive
+    severity: high
+    rule: "A 50-line config that works beats 2000 lines of theory"
+
+# ============================================================================
+# DOCUMENT METADATA
+# ============================================================================
+
 meta:
   purpose_statement: |
     This file is the constitutional framework for code quality governance.
@@ -32,55 +104,6 @@ meta:
 # NO EXAMPLES NEEDED - LLM already knows, YAML is self-documenting
 
 rules:
-  # META - Rules about how to apply these rules
-  - id: challenge_yourself_before_acting
-    category: meta
-    severity: veto
-    rule: "Before any significant action, ask: Am I about to violate master.yml?"
-    wrong: "This looks redundant, let me delete it..."
-    right: "Stop. Read it first. Understand why it exists. Then decide."
-    rationale: "Self-challenge prevents catastrophic mistakes"
-
-  - id: understand_before_changing
-    category: meta
-    severity: veto
-    rule: "Never modify/delete content you haven't fully read and understood"
-    wrong: "I'll summarize this as redundant based on the section title"
-    right: "Read every line. Understand the author's intent. Then act."
-    rationale: "Custom methodology looks like boilerplate until you read it"
-
-  - id: llm_already_knows
-    category: meta
-    severity: veto
-    rule: "Never add examples or explanations LLM already understands"
-    wrong: "Here's an example of how to... [200 lines of code]"
-    right: "State the rule. LLM knows how to apply it"
-    rationale: "Examples bloat config, waste tokens, insult LLM intelligence"
-
-  - id: yaml_is_self_documenting
-    category: meta
-    severity: high
-    rule: "YAML structure IS the documentation - no meta-commentary"
-    wrong: "# This section contains rules for... [explanation of what follows]"
-    right: "rules: [just the rules]"
-    rationale: "If you need to explain the YAML, the YAML is poorly structured"
-
-  - id: trust_llm_judgment
-    category: meta
-    severity: high
-    rule: "Give rules not procedures - LLM knows HOW to implement"
-    wrong: "Step 1: Open file. Step 2: Find line. Step 3: Edit..."
-    right: "Rule: Methods under 20 lines. LLM figures out how"
-    rationale: "LLM has training on millions of examples already"
-
-  - id: compact_over_comprehensive
-    category: meta
-    severity: high
-    rule: "A 50-line config that works beats 2000 lines of theory"
-    wrong: "Let me add detailed rationale and edge cases..."
-    right: "State rule. Move on. Add detail only if LLM fails"
-    rationale: "Tokens are expensive, attention is limited"
-
   # PHILOSOPHY - Core beliefs about code quality
   - id: verbosity_over_brevity
     category: philosophy
@@ -345,6 +368,51 @@ rules:
     fix: "Use BigDecimal for money, epsilon comparison, integer cents"
     rationale: "Symptoms: 0.1 + 0.2 != 0.3, sum incorrect"
 
+# ============================================================================
+# DETECTION CONFIG (machine-readable patterns for cli.rb)
+# ============================================================================
+
+detection_config:
+  naming:
+    generic_verbs:
+      - process
+      - handle
+      - do
+      - manage
+      - get
+      - set
+      - check
+      - validate
+      - calc
+      - compute
+      - run
+      - execute
+    vague_nouns:
+      - data
+      - info
+      - thing
+      - stuff
+      - object
+      - value
+      - item
+      - element
+      - entry
+      - record
+  
+  structure:
+    method_length:
+      warning: 15
+      error: 20
+      critical: 50
+    class_length:
+      warning: 200
+      error: 300
+    parameter_count:
+      warning: 3
+      error: 5
+    line_length:
+      ideal: 80
+      max: 120
 
 # ============================================================================
 # PROCEDURES (hierarchical protocols with sub-steps)

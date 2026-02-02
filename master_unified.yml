@@ -1,0 +1,304 @@
+---
+# MASTER.YML v9.0 - Unified Rules Format
+# All rules, principles, and philosophies in one consistent structure
+# Each rule: id, category, severity, rule, wrong/right OR detect/fix, rationale
+
+meta:
+  version: "9.0"
+  format: "unified_rules"
+  last_updated: "2026-02-02"
+  sources:
+    - "Clean Code (Robert C. Martin)"
+    - "Refactoring (Martin Fowler)"
+    - "Elements of Style (Strunk & White)"
+    - "Typographic Style (Robert Bringhurst)"
+    - "Dieter Rams 10 Principles"
+
+rules:
+  # ============================================================================
+  # PHILOSOPHY - Core beliefs about code quality
+  # ============================================================================
+  
+  - id: verbosity_over_brevity
+    category: philosophy
+    severity: high
+    rule: "Long descriptive names beat short cryptic abbreviations"
+    wrong: "calc_total(ord)"
+    right: "calculate_total_order_price_including_tax(order)"
+    rationale: "LLMs understand explicit patterns better than implicit conventions"
+
+  - id: top_to_bottom_narrative
+    category: philosophy
+    severity: high
+    rule: "Every file must read like a well-structured essay"
+    wrong: "Private helpers at top, public interface buried below"
+    right: "Purpose (1-10), Interface (11-50), Implementation (51+), Utilities (end)"
+    rationale: "Reader must grasp purpose within 10 lines"
+
+  - id: self_explanatory_lines
+    category: philosophy
+    severity: high
+    rule: "Every line must explain itself through naming alone"
+    wrong: "x = a * b  # calculate area"
+    right: "rectangle_area = width_meters * height_meters"
+    rationale: "Comments for WHY, not WHAT"
+
+  - id: anti_over_simplification
+    category: philosophy
+    severity: veto
+    rule: "Simplification without preserving meaning is destruction"
+    wrong: "apply_discount(customer)  # simplified from senior_citizen_loyalty_discount"
+    right: "calculate_discount_for_senior_citizen_with_loyalty(customer)"
+    rationale: "Never lose domain knowledge in abstraction"
+
+  - id: preserve_domain_knowledge
+    category: philosophy
+    severity: high
+    rule: "Every business rule must be visible in code"
+    wrong: "if customer.age >= 65 && customer.years >= 10"
+    right: "if customer_qualifies_as_senior_with_ten_year_loyalty?"
+    rationale: "Code is the only guaranteed up-to-date documentation"
+
+  # ============================================================================
+  # CRITICAL - Veto-level rules, violations = immediate rejection
+  # ============================================================================
+
+  - id: never_delete_working_code
+    category: critical
+    severity: veto
+    rule: "Never delete/modify working code unless explicitly asked"
+    wrong: "Let me clean up these unused functions..."
+    right: "These functions exist - leave them unless user says delete"
+    rationale: "Working code was added for a reason. Deletion causes regressions"
+
+  - id: minimal_changes
+    category: critical
+    severity: veto
+    rule: "Make SMALLEST possible change to achieve goal"
+    wrong: "While I'm here, let me also refactor this..."
+    right: "Fix only what was asked. Nothing more"
+    rationale: "Scope creep introduces bugs. Stay surgical"
+
+  - id: verify_before_edit
+    category: critical
+    severity: veto
+    rule: "Always grep/view to confirm current state before editing"
+    wrong: "I remember the code looks like X, so I'll edit X..."
+    right: "Let me view the current state first, then edit"
+    rationale: "Memory is unreliable. File may have changed"
+
+  - id: test_after_change
+    category: critical
+    severity: high
+    rule: "Run existing tests/lints after changes"
+    wrong: "The change looks correct, we're done"
+    right: "Run the build/test to verify no regression"
+    rationale: "Untested changes are unverified changes"
+
+  - id: never_create_scripts
+    category: critical
+    severity: veto
+    rule: "Use inline shell commands, never create new .sh files"
+    wrong: "Let me create helper.sh for this..."
+    right: "system('zsh -c \"commands\"') or backticks inline"
+    rationale: "Scripts fragment logic and create maintenance burden"
+
+  # ============================================================================
+  # PRINCIPLE - Design principles from Clean Code and Dieter Rams
+  # ============================================================================
+
+  - id: minimal
+    category: principle
+    severity: high
+    rule: "Good design is as little design as possible"
+    detect: "Unused methods, speculative features, duplicate logic"
+    fix: "Delete unused code, consolidate duplicates, remove YAGNI"
+    rationale: "Minimalism makes code CLEARER, not necessarily SHORTER"
+
+  - id: understandable
+    category: principle
+    severity: high
+    rule: "Code must communicate purpose without external explanation"
+    detect: "Single-letter vars, generic verbs (process/handle/do), magic numbers"
+    fix: "Rename to descriptive names, extract constants, expand method names"
+    rationale: "Each line must be comprehensible in isolation"
+
+  - id: honest
+    category: principle
+    severity: high
+    rule: "Code must never mislead about what it does"
+    detect: "get_user() that also tracks analytics, hidden side effects"
+    fix: "Rename to describe ALL behavior, separate queries from commands"
+    rationale: "No hidden side effects, no misleading names"
+
+  - id: single_responsibility
+    category: principle
+    severity: high
+    rule: "A class should have only one reason to change"
+    detect: "Class has >10 methods, name contains Manager/Handler/Processor"
+    fix: "Split into focused classes with single purpose each"
+    rationale: "Enables easy testing, understanding, modification"
+
+  # ============================================================================
+  # NAMING - Rules for identifiers
+  # ============================================================================
+
+  - id: method_names_descriptive
+    category: naming
+    severity: high
+    rule: "Method names must be 20-80 characters, fully describing behavior"
+    wrong: "calc(), process(), handle(), do_it()"
+    right: "calculate_shipping_cost_for_order_based_on_weight_and_zone()"
+    rationale: "Can understand what method does without reading body"
+
+  - id: no_generic_verbs
+    category: naming
+    severity: high
+    rule: "Never use generic verbs: process, handle, do, manage, execute"
+    wrong: "process_order(), handle_request(), manage_users()"
+    right: "validate_and_save_order(), route_http_request(), authenticate_user()"
+    rationale: "Generic verbs hide actual behavior"
+
+  - id: variable_names_pronounceable
+    category: naming
+    severity: medium
+    rule: "Variable names must be pronounceable and searchable"
+    wrong: "usr, cnt, tmp, val, idx"
+    right: "user, count, temporary_file, value, index"
+    rationale: "Can be spoken and found with text search"
+
+  - id: omit_needless_words
+    category: naming
+    severity: medium
+    rule: "Omit needless words, but keep clarifying words"
+    wrong: "get_the_user_data_from_the_database_table()"
+    right: "get_user() OR get_user_with_orders() if distinction needed"
+    rationale: "Needless words add noise; clarifying words prevent ambiguity"
+
+  # ============================================================================
+  # STRUCTURE - Code organization rules
+  # ============================================================================
+
+  - id: methods_under_20_lines
+    category: structure
+    severity: high
+    rule: "All methods must be under 20 lines (most under 10)"
+    detect: "Count non-blank lines in each method"
+    fix: "Extract logical sections into named methods"
+    rationale: "Long methods are hard to understand, test, and modify"
+
+  - id: file_purpose_in_10_lines
+    category: structure
+    severity: high
+    rule: "File purpose must be clear within first 10 lines"
+    wrong: "Imports for 50 lines, then code starts"
+    right: "Purpose comment block at top, then imports, then code"
+    rationale: "Reader should understand file without scrolling"
+
+  - id: line_length_max_120
+    category: structure
+    severity: medium
+    rule: "Lines must be under 120 characters (ideal: 80)"
+    wrong: "def calculate_total_price_including_taxes_and_discounts_and_shipping(order, customer, shipping_address, billing_address, coupon_code)"
+    right: "Break parameters across multiple lines with consistent indentation"
+    rationale: "Comfortable reading without horizontal scrolling"
+
+  # ============================================================================
+  # COMMENTS - Documentation rules
+  # ============================================================================
+
+  - id: comments_explain_why
+    category: comments
+    severity: high
+    rule: "Comments must explain WHY, not WHAT"
+    wrong: "# Loop through items  OR  # Add tax to total"
+    right: "# Business rule: Orders over $100 get free shipping"
+    rationale: "Code shows WHAT; comments should add context"
+
+  # ============================================================================
+  # PROTOCOL - Systematic procedures
+  # ============================================================================
+
+  - id: recon_before_coding
+    category: protocol
+    severity: high
+    rule: "Always map directory structure before touching code"
+    wrong: "Jump straight into editing files"
+    right: "Run tree, identify entry points, locate config, understand layout"
+    rationale: "Blind coding leads to collateral damage"
+
+  - id: clean_before_editing
+    category: protocol
+    severity: medium
+    rule: "Remove build artifacts before making changes"
+    wrong: "Edit files with stale build cache present"
+    right: "Clear temp files, verify git status is clean or understood"
+    rationale: "Dirty state causes false positives"
+
+  - id: generate_five_approaches
+    category: protocol
+    severity: medium
+    rule: "Generate 5+ approaches before selecting for non-trivial problems"
+    wrong: "Implement the first solution that comes to mind"
+    right: "Brainstorm: obvious, opposite, analogy, minimal, maximal, lateral"
+    rationale: "Prevents fixation on first idea, exposes trade-offs"
+
+  # ============================================================================
+  # BUG PATTERNS - Known failure modes
+  # ============================================================================
+
+  - id: pattern_off_by_one
+    category: bug_pattern
+    severity: info
+    rule: "Check loop boundaries for off-by-one errors"
+    detect: "< vs <=, 0-indexed vs 1-indexed, length vs length-1"
+    fix: "Review loop boundaries and array indexing"
+    rationale: "Symptoms: array index out of bounds, last element skipped"
+
+  - id: pattern_null_pointer
+    category: bug_pattern
+    severity: info
+    rule: "Check for nil/null before method calls"
+    detect: "Missing nil checks, optional field not validated"
+    fix: "Add nil checks, use safe navigation, validate input"
+    rationale: "Symptoms: NullPointerException, NoMethodError on nil"
+
+  - id: pattern_type_mismatch
+    category: bug_pattern
+    severity: info
+    rule: "Verify types match at boundaries"
+    detect: "String used as Integer, Array where Hash expected"
+    fix: "Add explicit type conversions, validate types"
+    rationale: "Symptoms: TypeError, wrong argument type"
+
+  - id: pattern_race_condition
+    category: bug_pattern
+    severity: info
+    rule: "Check for shared mutable state in concurrent code"
+    detect: "Shared mutable state, no locking, check-then-act gap"
+    fix: "Add synchronization, use atomic operations, immutable data"
+    rationale: "Symptoms: intermittent failure, non-deterministic"
+
+  - id: pattern_resource_leak
+    category: bug_pattern
+    severity: info
+    rule: "Ensure resources are closed in all code paths"
+    detect: "No ensure block, missing close, exception in cleanup path"
+    fix: "Use blocks for automatic cleanup, add ensure clause"
+    rationale: "Symptoms: file handle exhaustion, memory leak"
+
+  - id: pattern_encoding
+    category: bug_pattern
+    severity: info
+    rule: "Force UTF-8 encoding at boundaries"
+    detect: "UTF-8 vs ASCII-8BIT mismatch, missing encoding declaration"
+    fix: "Force UTF-8 encoding, validate encoding, use String#encode"
+    rationale: "Symptoms: mojibake, invalid byte sequence"
+
+  - id: pattern_float_precision
+    category: bug_pattern
+    severity: info
+    rule: "Never use Float for money or exact comparisons"
+    detect: "Float for money, == on floats, accumulated rounding"
+    fix: "Use BigDecimal for money, epsilon comparison, integer cents"
+    rationale: "Symptoms: 0.1 + 0.2 != 0.3, sum incorrect"

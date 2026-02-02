@@ -82,11 +82,12 @@ end
 
 # Validate master.yml has required structure
 REQUIRED_MASTER_CONFIGURATION_SECTIONS = [
-  "principles",
-  "code_smells_catalog",
-  "refactoring_mechanics_catalog",
-  "prose_writing_rules",
-  "file_organization_requirements"
+  "llm_operating_rules",
+  "rules",
+  "detection_config",
+  "systematic_protocols",
+  "problem_solving_engine",
+  "bug_hunting_protocol"
 ].freeze
 
 REQUIRED_MASTER_CONFIGURATION_SECTIONS.each do |required_section_name|
@@ -196,7 +197,9 @@ class Pipeline
     puts "UNIVERSAL CODE QUALITY ANALYSIS"
     puts ("=" * 80)
     puts "\nAnalyzing #{number_of_units_to_analyze} code unit(s)..."
-    puts "Checking against: #{MASTER_CONFIGURATION.dig('principles', 'complete_principle_list').size} principles"
+    llm_rules = MASTER_CONFIGURATION.dig('llm_operating_rules')&.size || 0
+    code_rules = MASTER_CONFIGURATION.dig('rules')&.size || 0
+    puts "Checking against: #{llm_rules} LLM rules + #{code_rules} code rules"
   end
   
   def self.display_fixes_applied_successfully_message
@@ -623,16 +626,15 @@ end
 # Philosophy: Names are compressed prose - must follow prose rules
 
 class NamingQualityAnalyzer
-  GENERIC_VERBS_TO_AVOID = %w[
-    process handle do manage
-    get set check validate
-    calc compute run execute
-  ].freeze
+  def self.generic_verbs_to_avoid
+    MASTER_CONFIGURATION.dig('detection_config', 'naming', 'generic_verbs') || 
+      %w[process handle do manage get set check validate calc compute run execute]
+  end
   
-  VAGUE_NOUNS_TO_AVOID = %w[
-    data info thing stuff object
-    value item element entry record
-  ].freeze
+  def self.vague_nouns_to_avoid
+    MASTER_CONFIGURATION.dig('detection_config', 'naming', 'vague_nouns') ||
+      %w[data info thing stuff object value item element entry record]
+  end
   
   def self.find_all_naming_violations_in_code_unit(code_unit)
     violations = []
@@ -647,7 +649,7 @@ class NamingQualityAnalyzer
   def self.find_generic_verb_usage_violations(code_unit)
     generic_verbs_found_in_code = []
     
-    GENERIC_VERBS_TO_AVOID.each do |generic_verb|
+    generic_verbs_to_avoid.each do |generic_verb|
       pattern_to_find_verb = /\b#{Regexp.escape(generic_verb)}\b/i
       
       if code_unit.original_source_code_content.match?(pattern_to_find_verb)
@@ -691,7 +693,7 @@ class NamingQualityAnalyzer
   def self.find_vague_noun_usage_violations(code_unit)
     vague_nouns_found_in_code = []
     
-    VAGUE_NOUNS_TO_AVOID.each do |vague_noun|
+    vague_nouns_to_avoid.each do |vague_noun|
       pattern_to_find_noun = /\b#{Regexp.escape(vague_noun)}\b/i
       
       if code_unit.original_source_code_content.match?(pattern_to_find_noun)
@@ -724,15 +726,20 @@ end
 # Philosophy: Small, focused units are easier to understand and test
 
 class StructuralQualityAnalyzer
-  METHOD_LENGTH_WARNING_THRESHOLD = 15
-  METHOD_LENGTH_ERROR_THRESHOLD = 20
-  METHOD_LENGTH_CRITICAL_THRESHOLD = 50
+  def self.method_length_thresholds
+    cfg = MASTER_CONFIGURATION.dig('detection_config', 'structure', 'method_length') || {}
+    { warning: cfg['warning'] || 15, error: cfg['error'] || 20, critical: cfg['critical'] || 50 }
+  end
   
-  CLASS_LENGTH_WARNING_THRESHOLD = 200
-  CLASS_LENGTH_ERROR_THRESHOLD = 300
+  def self.class_length_thresholds
+    cfg = MASTER_CONFIGURATION.dig('detection_config', 'structure', 'class_length') || {}
+    { warning: cfg['warning'] || 200, error: cfg['error'] || 300 }
+  end
   
-  PARAMETER_COUNT_WARNING_THRESHOLD = 3
-  PARAMETER_COUNT_ERROR_THRESHOLD = 5
+  def self.parameter_count_thresholds
+    cfg = MASTER_CONFIGURATION.dig('detection_config', 'structure', 'parameter_count') || {}
+    { warning: cfg['warning'] || 3, error: cfg['error'] || 5 }
+  end
   
   def self.find_all_structure_violations_in_code_unit(code_unit)
     violations = []
@@ -752,7 +759,7 @@ class StructuralQualityAnalyzer
     )
     
     long_methods = method_definitions_with_line_counts.select do |method_info|
-      method_info[:line_count] > METHOD_LENGTH_ERROR_THRESHOLD
+      method_info[:line_count] > method_length_thresholds[:error]
     end
     
     long_methods.map do |long_method_info|
@@ -763,8 +770,8 @@ class StructuralQualityAnalyzer
         severity_level: severity,
         method_name: long_method_info[:name],
         actual_line_count: long_method_info[:line_count],
-        threshold_exceeded: METHOD_LENGTH_ERROR_THRESHOLD,
-        description: "Method '#{long_method_info[:name]}' is #{long_method_info[:line_count]} lines (max: #{METHOD_LENGTH_ERROR_THRESHOLD})",
+        threshold_exceeded: method_length_thresholds[:error],
+        description: "Method '#{long_method_info[:name]}' is #{long_method_info[:line_count]} lines (max: #{method_length_thresholds[:error]})",
         rationale: "Long methods are hard to understand, test, and modify (Clean Code)",
         how_to_fix: "Apply Extract Method refactoring to break into smaller methods",
         refactoring_technique: "extract_method",
@@ -792,9 +799,10 @@ class StructuralQualityAnalyzer
   end
   
   def self.determine_severity_for_method_length(line_count)
-    return :critical if line_count >= METHOD_LENGTH_CRITICAL_THRESHOLD
-    return :high if line_count >= METHOD_LENGTH_ERROR_THRESHOLD
-    return :medium if line_count >= METHOD_LENGTH_WARNING_THRESHOLD
+    thresholds = method_length_thresholds
+    return :critical if line_count >= thresholds[:critical]
+    return :high if line_count >= thresholds[:error]
+    return :medium if line_count >= thresholds[:warning]
     :low
   end
   
@@ -806,7 +814,7 @@ class StructuralQualityAnalyzer
     )
     
     large_classes = class_definitions_with_line_counts.select do |class_info|
-      class_info[:line_count] > CLASS_LENGTH_ERROR_THRESHOLD
+      class_info[:line_count] > class_length_thresholds[:error]
     end
     
     large_classes.map do |large_class_info|
@@ -815,8 +823,8 @@ class StructuralQualityAnalyzer
         severity_level: :high,
         class_name: large_class_info[:name],
         actual_line_count: large_class_info[:line_count],
-        threshold_exceeded: CLASS_LENGTH_ERROR_THRESHOLD,
-        description: "Class '#{large_class_info[:name]}' is #{large_class_info[:line_count]} lines (max: #{CLASS_LENGTH_ERROR_THRESHOLD})",
+        threshold_exceeded: class_length_thresholds[:error],
+        description: "Class '#{large_class_info[:name]}' is #{large_class_info[:line_count]} lines (max: #{class_length_thresholds[:error]})",
         rationale: "Large classes likely have multiple responsibilities (Clean Code)",
         how_to_fix: "Apply Extract Class refactoring to separate concerns",
         refactoring_technique: "extract_class",
@@ -853,14 +861,14 @@ class StructuralQualityAnalyzer
     code_unit.original_source_code_content.scan(method_pattern) do |method_name, parameters_string|
       parameter_count = count_parameters_in_parameter_string(parameters_string)
       
-      if parameter_count > PARAMETER_COUNT_ERROR_THRESHOLD
+      if parameter_count > parameter_count_thresholds[:error]
         violations << {
           violation_type: :too_many_parameters,
           severity_level: :high,
           method_name: method_name,
           parameter_count: parameter_count,
-          threshold: PARAMETER_COUNT_ERROR_THRESHOLD,
-          description: "Method '#{method_name}' has #{parameter_count} parameters (max: #{PARAMETER_COUNT_ERROR_THRESHOLD})",
+          threshold: parameter_count_thresholds[:error],
+          description: "Method '#{method_name}' has #{parameter_count} parameters (max: #{parameter_count_thresholds[:error]})",
           rationale: "Many parameters make methods hard to call and understand (Clean Code)",
           how_to_fix: "Apply Introduce Parameter Object refactoring",
           refactoring_technique: "introduce_parameter_object",
