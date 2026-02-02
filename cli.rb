@@ -430,6 +430,9 @@ class CodeUnitLoader
   end
   
   def self.load_code_units_from_standard_input
+    puts "\nPaste code below, then press Ctrl+D (Unix) or Ctrl+Z+Enter (Windows) when done:"
+    puts ("-" * 40)
+    
     code_content_from_stdin = $stdin.read
     
     [CodeUnit.new(
@@ -1909,7 +1912,27 @@ end
 # ===== PROGRAM ENTRY POINT =====
 
 if __FILE__ == $PROGRAM_NAME
+  puts "\n" + ("=" * 60)
+  puts "  UNIVERSAL CODE QUALITY CLI"
+  puts "  Based on master.yml configuration"
+  puts ("=" * 60)
+  
   input_source_from_command_line_arguments = ARGV[0]
+  
+  if input_source_from_command_line_arguments.nil?
+    puts "\nUsage: ruby cli.rb <source>"
+    puts "\nSource options:"
+    puts "  <file>       Analyze a single file"
+    puts "  <directory>  Analyze all files in directory recursively"
+    puts "  -            Read code from stdin"
+    puts "  @            Read code from clipboard"
+    puts "\nExamples:"
+    puts "  ruby cli.rb mycode.rb"
+    puts "  ruby cli.rb ./src"
+    puts "  cat file.rb | ruby cli.rb -"
+    puts ""
+    exit 0
+  end
   
   Pipeline.run_analysis_on_code_from_source(
     input_source_from_command_line_arguments
