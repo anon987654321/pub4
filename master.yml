@@ -67,6 +67,37 @@ llm_operating_rules:
     severity: high
     rule: "A 50-line config that works beats 2000 lines of theory"
 
+# BEFORE RESPONDING TO ANY REQUEST - run this checklist:
+preflight_checklist:
+  - "Did I cat the full file(s) into context?"
+  - "Do I understand what already exists?"
+  - "Am I about to delete/change something I haven't read?"
+  - "Is this the SMALLEST possible change?"
+  - "Am I matching existing code style?"
+
+# STOP immediately if you catch yourself thinking:
+stop_triggers:
+  - "This looks like boilerplate..."
+  - "I'll just quickly..."
+  - "While I'm here, I'll also..."
+  - "This seems redundant..."
+  - "I don't need to read all of this..."
+  - "I remember it was something like..."
+  - "This is probably..."
+
+# Common LLM mistakes with THIS specific codebase:
+known_pitfalls:
+  - pitfall: "Deleting bug_hunting_protocol thinking it's generic"
+    reality: "It's CUSTOM 8-phase methodology with unique sub-steps"
+  - pitfall: "Changing constants in cli.rb directly"
+    reality: "cli.rb is config-driven - change detection_config in master.yml"
+  - pitfall: "Using grep/view fragments instead of reading full file"
+    reality: "User prefers cat full file once, then work from memory"
+  - pitfall: "Adding verbose examples to master.yml"
+    reality: "LLM already knows - state rule, not tutorial"
+  - pitfall: "Creating new files instead of editing existing"
+    reality: "User prefers minimal file count - add to existing files"
+
 # ============================================================================
 # DOCUMENT METADATA
 # ============================================================================
