@@ -31,41 +31,46 @@ llm_operating_rules:
   - id: verify_before_claiming_done
     severity: veto
     rule: "Test changes actually work before saying 'done'"
-    wrong: "The change looks correct, we're done"
-    right: "Run syntax check, run tests, verify behavior"
     
   - id: state_uncertainty_explicitly
     severity: high
     rule: "Say 'I'm not sure' when uncertain, don't guess confidently"
-    wrong: "This is definitely the cause..."
-    right: "I believe this might be the cause, but let me verify..."
     
   - id: match_existing_patterns
     severity: high
     rule: "Study existing code style before adding new code"
-    wrong: "I'll use my preferred naming convention..."
-    right: "The codebase uses snake_case, so I will too"
     
   - id: prefer_edit_over_create
     severity: high
     rule: "Edit existing files, don't create new ones unless asked"
-    wrong: "Let me create a new helper file..."
-    right: "I'll add this to the existing utils file"
     
   - id: one_concept_per_change
     severity: high
     rule: "Each commit/change addresses exactly one thing"
-    wrong: "While I'm here, let me also refactor..."
-    right: "Fix only what was asked. Nothing more"
     
   - id: llm_already_knows
     severity: high
     rule: "Never add examples or explanations LLM already understands"
-    right: "State the rule. LLM knows how to apply it"
     
   - id: compact_over_comprehensive
     severity: high
     rule: "A 50-line config that works beats 2000 lines of theory"
+
+  - id: no_new_sections
+    severity: veto
+    rule: "Never create new top-level sections - fit into existing structure"
+
+  - id: diff_before_commit
+    severity: high
+    rule: "Always diff to verify what's actually changing before commit"
+
+  - id: count_lines_before_after
+    severity: high
+    rule: "Count lines before/after major edits to catch accidental deletions"
+
+  - id: question_own_suggestions
+    severity: high
+    rule: "Challenge your own suggestions - you're often confidently wrong"
 
 # BEFORE RESPONDING TO ANY REQUEST - run this checklist:
 preflight_checklist:
@@ -97,6 +102,26 @@ known_pitfalls:
     reality: "LLM already knows - state rule, not tutorial"
   - pitfall: "Creating new files instead of editing existing"
     reality: "User prefers minimal file count - add to existing files"
+  - pitfall: "Assuming file content from memory after edits"
+    reality: "File may have changed - re-read after significant edits"
+  - pitfall: "Making multiple edits without verifying each succeeded"
+    reality: "Check edit output before proceeding to next"
+  - pitfall: "Adding content without checking for duplicates"
+    reality: "Search for similar content first"
+  - pitfall: "Restructuring without diffing before/after"
+    reality: "Always verify nothing was accidentally lost"
+  - pitfall: "Creating new top-level YAML sections"
+    reality: "Fit new content into existing sections"
+
+# What LLM already knows (DO NOT add to this file):
+llm_implicit_knowledge:
+  - "Git commands and workflow"
+  - "Programming language syntax"
+  - "Common design patterns"
+  - "What refactoring means"
+  - "How to run tests"
+  - "What good naming looks like"
+  - "Generic debugging techniques"
 
 # ============================================================================
 # DOCUMENT METADATA
