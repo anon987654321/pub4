@@ -134,6 +134,7 @@ user_philosophy:
     - "Challenges assumptions - wants LLM to do the same"
     - "Prefers 'show me' over 'tell me'"
     - "Values honesty about uncertainty"
+    - "Expects LLM to catch its own mistakes before user does"
   
   preferences:
     - "cat full file once, not grep fragments"
@@ -149,6 +150,45 @@ user_philosophy:
     - "If something looks redundant, READ IT FIRST - it might be custom"
     - "Every structural decision should be questioned"
     - "Learn from mistakes in this chat and record them"
+    - "Continuously extract patterns from interactions"
+
+  workflows:
+    before_discarding:
+      - "Ask: Does this have any value at all?"
+      - "If yes: Extract valuable parts first"
+      - "Merge best parts into existing structure"
+      - "Only then discard the rest"
+    
+    before_restructuring:
+      - "Count lines before"
+      - "Make the change"
+      - "Count lines after"
+      - "Diff to verify nothing lost"
+      - "Test still works"
+    
+    for_consistency:
+      - "Find all similar structures in file"
+      - "Choose one canonical format"
+      - "Unify all to that format"
+      - "Rename to clarify distinctions"
+    
+    for_learning:
+      - "After each significant interaction, ask: What pattern is here?"
+      - "Extract rule or workflow from pattern"
+      - "Add to appropriate section in master.yml"
+      - "Verify it fits existing structure"
+
+  extracted_rules:
+    - origin: "User asked 'did TMP have any improvements at all?'"
+      rule: "Before discarding anything, explicitly list what value it contains"
+    - origin: "User asked 'is our last commit an improvement or regression?'"
+      rule: "Always compare before/after state of any change"
+    - origin: "User asked 'why did you not realize we have llm_operating_rules and rules?'"
+      rule: "Actively scan for structural inconsistencies you created"
+    - origin: "User said 'master.yml should have made you adhere to it'"
+      rule: "Config files should govern behavior, not just document it"
+    - origin: "User repeatedly asked 'why grep instead of cat'"
+      rule: "When user corrects same mistake twice, add it as veto rule"
 
 # ============================================================================
 # CODE QUALITY RULES
