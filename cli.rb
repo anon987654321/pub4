@@ -2769,6 +2769,7 @@ module Dmesg
   def self.yellow = color_enabled? ? "\e[33m" : ""
   def self.red = color_enabled? ? "\e[31m" : ""
   def self.cyan = color_enabled? ? "\e[36m" : ""
+  def self.magenta = color_enabled? ? "\e[35m" : ""
   def self.reset = color_enabled? ? "\e[0m" : ""
   def self.tty? = $stdout.respond_to?(:tty?) && $stdout.tty?
 
@@ -3143,7 +3144,7 @@ class WebServer
   end
   
   def url
-    host = ENV["HOST"] || `hostname`.strip rescue "localhost"
+    host = ENV["HOST"] || ENV["HOSTNAME"] || "brgen.no"
     "http://#{host}:#{@port}"
   end
   
@@ -6341,8 +6342,31 @@ class CLI
     []
   end
 
+  def build_prompt
+    parts = []
+    
+    # Directory (abbreviated like starship)
+    dir = Dir.pwd.split('/').last || Dir.pwd
+    parts << "#{Dmesg.cyan}#{dir}#{Dmesg.reset}"
+    
+    # Git branch if in repo
+    if File.exist?(".git") || File.exist?("../.git")
+      branch = `git branch --show-current 2>/dev/null`.strip rescue ""
+      parts << "#{Dmesg.magenta}#{branch}#{Dmesg.reset}" unless branch.empty?
+    end
+    
+    # LLM status indicator
+    if @tiered&.enabled?
+      parts << "#{Dmesg.green}●#{Dmesg.reset}"
+    else
+      parts << "#{Dmesg.red}○#{Dmesg.reset}"
+    end
+    
+    "#{parts.join(' ')} #{Dmesg.yellow}❯#{Dmesg.reset} "
+  end
+
   def read_input
-    prompt = "#{Dmesg.green}>#{Dmesg.reset} "
+    prompt = build_prompt
     if READLINE_AVAILABLE
       Readline.readline(prompt, true)&.strip
     else
