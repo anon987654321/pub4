@@ -2706,55 +2706,35 @@ module Dmesg
       return
     end
 
-    # OpenBSD dmesg style boot
-    puts "Constitutional AI #{VERSION} (GENERIC) ##{build_number}: #{Time.now.strftime('%a %b %e %H:%M:%S %Z %Y')}"
-    puts "real mem = #{memory_info}"
-    puts "avail principles = #{principle_count}"
-    puts "cpu0: Ruby #{RUBY_VERSION}, #{RUBY_PLATFORM}"
-    puts "llm0 at cpu0: #{llm_status}"
-    puts "tiered0 at llm0: #{model_count}"
-    puts "root on #{Dir.pwd}"
+    # OpenBSD dmesg style boot - clean, informative
+    puts "Constitutional AI #{VERSION} ##{build_number}: #{Time.now.strftime('%b %e %H:%M:%S')}"
+    puts "master.yml: #{principle_count} principles loaded"
+    puts "llm0: #{llm_status}"
+    puts "tiers: #{tier_list}"
+    puts "root: #{File.basename(Dir.pwd)}/"
   end
 
   def self.build_number
-    # Use git commit count or fallback
-    count = `git rev-list --count HEAD 2>/dev/null`.strip
-    count.empty? ? "1" : count
+    `git rev-list --count HEAD 2>/dev/null`.strip.then { |c| c.empty? ? "1" : c }
   rescue
     "1"
   end
 
-  def self.memory_info
-    begin
-      if RUBY_PLATFORM =~ /openbsd|linux/
-        mem = `sysctl -n hw.physmem 2>/dev/null`.strip.to_i
-        return "#{mem / 1024 / 1024}MB" if mem > 0
-      end
-      "#{(GC.stat[:heap_allocated_pages] * 16 * 1024) / 1024}KB heap"
-    rescue
-      "unknown"
-    end
+  def self.tier_list
+    content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol])
+    tiers = yaml.dig("llm", "tiers")&.keys || []
+    tiers.join(" | ")
+  rescue
+    "fast | medium | strong"
   end
 
   def self.principle_count
-    begin
-      content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
-      yaml = YAML.safe_load(content, permitted_classes: [Symbol])
-      yaml["principles"]&.size || 32
-    rescue
-      32
-    end
-  end
-
-  def self.model_count
-    begin
-      content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
-      yaml = YAML.safe_load(content, permitted_classes: [Symbol])
-      tiers = yaml.dig("llm", "tiers")&.keys || []
-      "#{tiers.size} tiers (#{tiers.join(', ')})"
-    rescue
-      "3 tiers (fast, medium, strong)"
-    end
+    content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol])
+    yaml["principles"]&.size || 32
+  rescue
+    32
   end
 
   def self.llm_status
