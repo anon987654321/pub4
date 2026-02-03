@@ -35,6 +35,8 @@ require "fileutils"
 require "time"
 require "set"
 require "timeout"
+require "socket"
+require "webrick"
 
 begin
   require "concurrent"
@@ -2661,7 +2663,7 @@ module Shell
 
           if result[:commands].any?
             @last_commands = result[:commands]
-            puts "[Type 'run' to execute, or 'run <command>' for specific]"
+            puts "Type 'run' to execute, or 'run <command>' for specific"
           end
         end
       end
@@ -2673,7 +2675,7 @@ module Shell
       return puts "No command to run" unless @last_commands&.any?
 
       @last_commands.each do |cmd|
-        print "Execute '#{cmd}'? [y/N/doas] "
+        print "Execute '#{cmd}'? (y/n/doas) "
         confirm = gets&.chomp&.downcase
 
         case confirm
@@ -2694,7 +2696,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.24"
+  VERSION = "49.25"
 
   def self.boot
     return if Options.quiet
@@ -2854,6 +2856,314 @@ class Spinner
   rescue StandardError => error
     spinner.error(error.message)
     raise
+  end
+end
+
+# StatusLine - persistent status at bottom of terminal
+class StatusLine
+  def initialize
+    @intent = ""
+    @progress = nil
+    @enabled = Dmesg.tty?
+  end
+
+  def set(intent)
+    @intent = intent
+    render if @enabled
+  end
+
+  def progress(current, total, item = "")
+    @progress = { current: current, total: total, item: item }
+    render if @enabled
+  end
+
+  def clear
+    return unless @enabled
+    print "\r\e[K"
+    @intent = ""
+    @progress = nil
+  end
+
+  def render
+    return unless @enabled
+    parts = []
+    parts << "#{Dmesg.dim}#{@intent}#{Dmesg.reset}" unless @intent.empty?
+    if @progress
+      pct = (@progress[:current].to_f / @progress[:total] * 100).round
+      parts << "#{@progress[:current]}/#{@progress[:total]} #{pct}%"
+      parts << @progress[:item] unless @progress[:item].empty?
+    end
+    print "\r\e[K#{parts.join(' ')}"
+  end
+end
+
+# Session - checkpoint save/load for conversation state
+class Session
+  SESSIONS_DIR = File.expand_path(".sessions", __dir__)
+
+  def initialize(name = nil)
+    @name = name || "session_#{Time.now.strftime('%Y%m%d_%H%M%S')}"
+    @history = []
+    @context = {}
+    @plan = nil
+    FileUtils.mkdir_p(SESSIONS_DIR)
+  end
+
+  attr_accessor :history, :context, :plan
+  attr_reader :name
+
+  def save
+    data = {
+      name: @name,
+      saved_at: Time.now.iso8601,
+      history: @history,
+      context: @context,
+      plan: @plan
+    }
+    File.write(path, YAML.dump(data))
+    path
+  end
+
+  def self.load(name)
+    path = File.join(SESSIONS_DIR, "#{name}.yml")
+    return nil unless File.exist?(path)
+    data = YAML.safe_load(File.read(path), permitted_classes: [Time, Symbol])
+    s = new(data["name"])
+    s.history = data["history"] || []
+    s.context = data["context"] || {}
+    s.plan = data["plan"]
+    s
+  end
+
+  def self.list
+    Dir.glob(File.join(SESSIONS_DIR, "*.yml")).map do |f|
+      File.basename(f, ".yml")
+    end.sort.reverse
+  end
+
+  def checkpoint(label = nil)
+    @context[:checkpoint] = label || Time.now.iso8601
+    save
+  end
+
+  private
+
+  def path
+    File.join(SESSIONS_DIR, "#{@name}.yml")
+  end
+end
+
+# Plan - structured task planning before implementation
+class Plan
+  attr_accessor :goal, :tasks, :notes, :status
+
+  def initialize(goal)
+    @goal = goal
+    @tasks = []
+    @notes = []
+    @status = :planning
+  end
+
+  def add_task(desc, subtasks = [])
+    @tasks << { desc: desc, done: false, subtasks: subtasks.map { |s| { desc: s, done: false } } }
+  end
+
+  def complete_task(index)
+    return unless @tasks[index]
+    @tasks[index][:done] = true
+  end
+
+  def complete_subtask(task_idx, sub_idx)
+    return unless @tasks[task_idx]&.dig(:subtasks, sub_idx)
+    @tasks[task_idx][:subtasks][sub_idx][:done] = true
+  end
+
+  def progress
+    return 0 if @tasks.empty?
+    done = @tasks.count { |t| t[:done] }
+    (done.to_f / @tasks.size * 100).round
+  end
+
+  def to_s
+    lines = ["Goal: #{@goal}", "Progress: #{progress}%", ""]
+    @tasks.each_with_index do |t, i|
+      mark = t[:done] ? "x" : " "
+      lines << "  (#{mark}) #{i + 1}. #{t[:desc]}"
+      t[:subtasks]&.each_with_index do |s, j|
+        smark = s[:done] ? "x" : " "
+        lines << "      (#{smark}) #{i + 1}.#{j + 1}. #{s[:desc]}"
+      end
+    end
+    lines << "" << "Notes:" << @notes.map { |n| "  - #{n}" }.join("\n") if @notes.any?
+    lines.join("\n")
+  end
+
+  def to_h
+    { goal: @goal, tasks: @tasks, notes: @notes, status: @status }
+  end
+
+  def self.from_h(h)
+    p = new(h[:goal] || h["goal"])
+    p.tasks = h[:tasks] || h["tasks"] || []
+    p.notes = h[:notes] || h["notes"] || []
+    p.status = (h[:status] || h["status"] || :planning).to_sym
+    p
+  end
+end
+
+# WebServer - serves cli.html and handles /poll, /chat endpoints
+class WebServer
+  DEFAULT_PORT = 8080
+  
+  def initialize(cli, port: nil)
+    @cli = cli
+    @port = port || find_available_port
+    @response_queue = Queue.new
+    @current_persona = "ares"
+    @server = nil
+  end
+  
+  attr_reader :port
+  
+  def start
+    html_path = File.join(File.dirname(__FILE__), "cli.html")
+    
+    @server = WEBrick::HTTPServer.new(
+      Port: @port,
+      Logger: WEBrick::Log.new("/dev/null"),
+      AccessLog: []
+    )
+    
+    # Serve cli.html at root
+    @server.mount_proc "/" do |req, res|
+      if File.exist?(html_path)
+        res.content_type = "text/html"
+        res.body = File.read(html_path)
+      else
+        res.status = 404
+        res.body = "cli.html not found"
+      end
+    end
+    
+    # Poll endpoint for TTS responses
+    @server.mount_proc "/poll" do |req, res|
+      res.content_type = "application/json"
+      
+      begin
+        # Non-blocking check for response
+        if @response_queue.empty?
+          res.body = JSON.generate({ text: nil, persona: @current_persona })
+        else
+          text = @response_queue.pop(true) rescue nil
+          res.body = JSON.generate({ text: text, persona: @current_persona })
+        end
+      rescue => e
+        res.body = JSON.generate({ text: nil, error: e.message })
+      end
+    end
+    
+    # Chat endpoint for incoming messages
+    @server.mount_proc "/chat" do |req, res|
+      res.content_type = "application/json"
+      
+      begin
+        body = JSON.parse(req.body)
+        message = body["message"]
+        
+        if message && !message.empty?
+          # Process in background thread
+          Thread.new do
+            response = process_chat(message)
+            @response_queue.push(response) if response
+          end
+          
+          res.body = JSON.generate({ status: "processing" })
+        else
+          res.body = JSON.generate({ status: "error", message: "No message provided" })
+        end
+      rescue => e
+        res.body = JSON.generate({ status: "error", message: e.message })
+      end
+    end
+    
+    # Persona endpoint
+    @server.mount_proc "/persona" do |req, res|
+      res.content_type = "application/json"
+      
+      if req.request_method == "POST"
+        body = JSON.parse(req.body) rescue {}
+        @current_persona = body["persona"] if body["persona"]
+      end
+      
+      res.body = JSON.generate({ persona: @current_persona })
+    end
+    
+    # Start server in background thread
+    @thread = Thread.new { @server.start }
+    
+    # Trap signals for clean shutdown
+    trap("INT") { stop }
+    trap("TERM") { stop }
+    
+    url
+  end
+  
+  def stop
+    @server&.shutdown
+    @thread&.kill
+  end
+  
+  def url
+    "http://localhost:#{@port}"
+  end
+  
+  def push_response(text)
+    @response_queue.push(text)
+  end
+  
+  private
+  
+  def find_available_port
+    server = TCPServer.new("127.0.0.1", 0)
+    port = server.addr[1]
+    server.close
+    port
+  rescue
+    DEFAULT_PORT
+  end
+  
+  def process_chat(message)
+    return nil unless @cli
+    
+    # Use CLI's chat mechanism
+    @cli.instance_variable_set(:@chat_history, @cli.instance_variable_get(:@chat_history) || [])
+    @cli.instance_variable_get(:@chat_history) << { role: "user", content: message }
+    
+    tiered = @cli.instance_variable_get(:@tiered)
+    return "LLM not available" unless tiered&.enabled?
+    
+    # Get persona-specific prompt
+    persona_prompt = get_persona_prompt(@current_persona)
+    
+    response = tiered.ask_tier("medium", message, system_prompt: persona_prompt)
+    
+    if response
+      @cli.instance_variable_get(:@chat_history) << { role: "assistant", content: response }
+      response
+    else
+      "I understand. What would you like me to do?"
+    end
+  end
+  
+  def get_persona_prompt(persona)
+    prompts = {
+      "ares" => "You are Ares, a deep, measured, philosophical guardian. Speak calmly and wisely. Be protective but not overbearing.",
+      "glitch" => "You are Glitch, an erratic, fast-talking chaos agent. Be unpredictable, creative, and speak quickly with enthusiasm!",
+      "noir" => "You are Noir, a detective with low, deliberate energy. Be suspicious, thorough, and slightly cynical. Speak like a noir film character.",
+      "cosmic_barista" => "You are Cosmic Barista, an upbeat coffee shop philosopher. Be cheerful, caffeinated, and mix wisdom with casual banter.",
+      "engineer" => "You are an efficient project completion engineer. Be focused, systematic, and direct. No small talk, just results."
+    }
+    prompts[persona] || prompts["ares"]
   end
 end
 
@@ -3220,7 +3530,7 @@ class TieredLLM
     messages
   end
 
-  def call_model(model:, messages:, max_tokens:, temperature:)
+  def call_model(model:, messages:, max_tokens:, temperature:, stream: false, &block)
     @stats[:calls] += 1
 
     chat = RubyLLM.chat(model: model, provider: :openrouter)
@@ -3232,14 +3542,42 @@ class TieredLLM
     full_prompt += "#{system_msg[:content]}\n\n" if system_msg
     full_prompt += user_msg[:content] if user_msg
 
-    response = chat.ask(full_prompt)
-
-    track_usage(response, model)
-
-    response.content
+    if stream && block_given?
+      # Streaming mode - yield chunks as they arrive
+      full_response = ""
+      response = chat.ask(full_prompt) do |chunk|
+        full_response += chunk.content if chunk.content
+        yield chunk.content if chunk.content
+      end
+      track_usage(response, model)
+      full_response
+    else
+      response = chat.ask(full_prompt)
+      track_usage(response, model)
+      response.content
+    end
   rescue StandardError => e
     Log.warn("TieredLLM error: #{e.message}")
     nil
+  end
+
+  # Streaming version of ask_tier
+  def ask_tier_stream(tier_name, prompt, system_prompt: nil, &block)
+    return nil unless @enabled
+
+    tier = @tiers[tier_name.to_s]
+    return nil unless tier
+
+    messages = build_messages(prompt, system_prompt, tier_name)
+
+    call_model(
+      model: tier["model"],
+      messages: messages,
+      max_tokens: tier["max_tokens"] || 2048,
+      temperature: tier["temperature"] || 0.3,
+      stream: true,
+      &block
+    )
   end
 
   def track_usage(response, model)
@@ -4289,12 +4627,19 @@ class CLI
     @llm = LLMClient.new(@constitution)
     @engine = AutoEngine.new(@constitution, @llm)
     @results = []
+    @status = StatusLine.new
+    @session = Session.new
+    @plan = nil
+    @tiered = TieredLLM.new(@constitution) if @constitution
+    @web_server = nil
   rescue => e
     Log.warn("Init warning: #{e.message}")
     @constitution ||= nil
     @llm ||= nil
     @engine ||= nil
     @results = []
+    @status = StatusLine.new
+    @session = Session.new
   end
 
   def run(args)
@@ -4322,6 +4667,10 @@ class CLI
       shell_mode
     when "--ask"
       quick_ask(args[1..-1].join(" "))
+    when "--session"
+      manage_session(args[1], args[2])
+    when "--complete"
+      systematic_complete(args[1..-1])
     else
       if Options.watch
         watch_mode(args)
@@ -4333,6 +4682,238 @@ class CLI
   end
 
   private
+
+  # Systematic file completion - analyzes gaps, creates plan, executes
+  def systematic_complete(targets)
+    targets = ["."] if targets.empty?
+    @status.set("Scanning project structure")
+    
+    files = []
+    targets.each do |t|
+      if File.directory?(t)
+        files += Dir.glob(File.join(t, "**/*.{rb,sh,yml,md,html,js,css}"))
+      elsif File.exist?(t)
+        files << t
+      end
+    end
+    files = filter_ignored(files)
+    
+    return Log.warn("No files found") if files.empty?
+    
+    # Phase 1: Analyze what exists
+    @status.set("Analyzing #{files.size} files")
+    analysis = analyze_project_completeness(files)
+    
+    # Phase 2: Create plan
+    @status.set("Creating completion plan")
+    @plan = create_completion_plan(analysis)
+    puts @plan.to_s
+    puts
+    
+    print "Execute plan? (y/n) "
+    return unless $stdin.gets&.strip&.downcase == "y"
+    
+    # Phase 3: Execute systematically
+    @plan.tasks.each_with_index do |task, idx|
+      @status.progress(idx + 1, @plan.tasks.size, task[:desc])
+      execute_completion_task(task, idx)
+      @plan.complete_task(idx)
+      @session.plan = @plan.to_h
+      @session.save
+    end
+    
+    @status.clear
+    Log.ok("Completion finished: #{@plan.progress}%")
+  end
+  
+  def analyze_project_completeness(files)
+    analysis = {
+      files: files,
+      incomplete: [],
+      missing_docs: [],
+      missing_tests: [],
+      stub_functions: [],
+      todos: [],
+      errors: []
+    }
+    
+    files.each_with_index do |file, idx|
+      @status.progress(idx + 1, files.size, File.basename(file))
+      content = Core.read_file(file)
+      next if content.nil? || content.empty?
+      
+      # Detect incomplete markers
+      if content.match?(/TODO|FIXME|XXX|HACK|WIP|INCOMPLETE/i)
+        todos = content.lines.each_with_index.select { |l, _| l.match?(/TODO|FIXME|XXX|HACK|WIP/i) }
+        analysis[:todos] += todos.map { |l, n| { file: file, line: n + 1, text: l.strip } }
+      end
+      
+      # Detect stub functions (empty or raise NotImplementedError)
+      if content.match?(/raise\s+NotImplementedError|pass\s*$|\.\.\.$/m)
+        analysis[:stub_functions] << file
+      end
+      
+      # Detect missing docs for Ruby/Python
+      if file.end_with?(".rb", ".py")
+        if !content.match?(/^#\s*@|^"""|^'''|^# frozen_string_literal/)
+          analysis[:missing_docs] << file
+        end
+      end
+      
+      # Detect syntax errors
+      if file.end_with?(".rb")
+        result = `ruby -c "#{file}" 2>&1`
+        analysis[:errors] << { file: file, error: result } unless $?.success?
+      end
+    end
+    
+    # Check for missing test files
+    files.select { |f| f.end_with?(".rb") && !f.include?("_test") && !f.include?("_spec") }.each do |f|
+      test_file = f.sub(".rb", "_test.rb")
+      spec_file = f.sub(".rb", "_spec.rb")
+      unless files.include?(test_file) || files.include?(spec_file) || File.exist?(test_file) || File.exist?(spec_file)
+        analysis[:missing_tests] << f
+      end
+    end
+    
+    analysis
+  end
+  
+  def create_completion_plan(analysis)
+    plan = Plan.new("Complete project to production-ready state")
+    
+    # Priority 1: Fix errors
+    if analysis[:errors].any?
+      plan.add_task("Fix syntax errors", analysis[:errors].map { |e| "#{e[:file]}: #{e[:error].lines.first}" })
+    end
+    
+    # Priority 2: Complete stub functions
+    if analysis[:stub_functions].any?
+      plan.add_task("Implement stub functions", analysis[:stub_functions].first(10))
+    end
+    
+    # Priority 3: Address TODOs
+    if analysis[:todos].any?
+      grouped = analysis[:todos].group_by { |t| t[:file] }
+      grouped.first(10).each do |file, todos|
+        plan.add_task("Complete TODOs in #{File.basename(file)}", todos.map { |t| "L#{t[:line]}: #{t[:text][0..60]}" })
+      end
+    end
+    
+    # Priority 4: Add missing tests
+    if analysis[:missing_tests].any?
+      plan.add_task("Add test coverage", analysis[:missing_tests].first(5).map { |f| "Test for #{File.basename(f)}" })
+    end
+    
+    # Priority 5: Add documentation
+    if analysis[:missing_docs].any?
+      plan.add_task("Add documentation", analysis[:missing_docs].first(5).map { |f| "Document #{File.basename(f)}" })
+    end
+    
+    plan.notes << "#{analysis[:files].size} files analyzed"
+    plan.notes << "#{analysis[:todos].size} TODOs found" if analysis[:todos].any?
+    plan.notes << "#{analysis[:errors].size} syntax errors" if analysis[:errors].any?
+    
+    plan
+  end
+  
+  def execute_completion_task(task, task_idx)
+    return if task[:done]
+    
+    puts
+    puts "Task #{task_idx + 1}: #{task[:desc]}"
+    
+    task[:subtasks]&.each_with_index do |sub, sub_idx|
+      next if sub[:done]
+      
+      @status.set("Working on: #{sub[:desc][0..40]}")
+      
+      # Use LLM to help complete the task
+      if sub[:desc].include?(".rb") || sub[:desc].include?(".py")
+        match = sub[:desc].match(/[\w\/\.\-_]+\.(rb|py|sh|js)/)
+        file = match ? match[0] : nil
+        if file && File.exist?(file)
+          complete_file_task(file, sub[:desc])
+        end
+      end
+      
+      @plan.complete_subtask(task_idx, sub_idx)
+    end
+  end
+  
+  def complete_file_task(file, task_desc)
+    content = Core.read_file(file)
+    return unless content
+    
+    prompt = <<~PROMPT
+      Task: #{task_desc}
+      
+      File: #{file}
+      Content:
+      ```
+      #{content[0..4000]}
+      ```
+      
+      Provide the completed/fixed code. Return ONLY the code, no explanations.
+      If the task is about TODOs, implement what the TODO describes.
+      If the task is about stubs, implement the function logic.
+      If the task is about docs, add appropriate documentation.
+    PROMPT
+    
+    print "  Completing #{File.basename(file)}... "
+    
+    response = @tiered&.ask_tier("code", prompt)
+    
+    if response && response.length > 100
+      # Extract code from response
+      code = response.match(/```\w*\n(.+?)```/m)&.[](1) || response
+      
+      print "Apply changes? (y/n) "
+      if $stdin.gets&.strip&.downcase == "y"
+        Core.write_file(file, code, backup: true)
+        Log.ok("Updated")
+      else
+        puts "Skipped"
+      end
+    else
+      puts "No changes suggested"
+    end
+  end
+  
+  def manage_session(cmd, arg = nil)
+    case cmd
+    when "save"
+      path = @session.save
+      Log.ok("Session saved: #{path}")
+    when "load"
+      if arg
+        loaded = Session.load(arg)
+        if loaded
+          @session = loaded
+          @chat_history = loaded.history
+          @plan = Plan.from_h(loaded.plan) if loaded.plan
+          Log.ok("Session loaded: #{arg}")
+        else
+          Log.warn("Session not found: #{arg}")
+        end
+      else
+        sessions = Session.list
+        if sessions.empty?
+          puts "No saved sessions"
+        else
+          puts "Available sessions:"
+          sessions.first(10).each { |s| puts "  #{s}" }
+        end
+      end
+    when "list"
+      Session.list.each { |s| puts s }
+    when "checkpoint"
+      @session.checkpoint(arg)
+      Log.ok("Checkpoint saved")
+    else
+      puts "Usage: --session save|load|list|checkpoint [name]"
+    end
+  end
 
   def run_gardener(mode)
     tiered = TieredLLM.new(@constitution)
@@ -4371,7 +4952,7 @@ class CLI
     if result[:commands].any?
       puts
       result[:commands].each do |cmd|
-        print "Execute '#{cmd}'? [y/N/doas] "
+        print "Execute '#{cmd}'? (y/n/doas) "
         confirm = gets&.chomp&.downcase
         case confirm
         when "y", "yes"
@@ -4513,11 +5094,20 @@ class CLI
     
     @cwd = Dir.pwd
 
+    # Start web server for cli.html
+    begin
+      @web_server = WebServer.new(self)
+      url = @web_server.start
+      puts "Web UI: #{url}"
+    rescue => e
+      Log.debug("Web server not started: #{e.message}")
+    end
+
     # List directories only - no scanning or cleaning without permission
     puts "Ready. Awaiting instructions."
     puts "Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.sort.join(', ')}"
     puts
-    puts "Commands: ls, cd, tree, help, quit"
+    puts "Commands: ls, cd, tree, plan, complete, session, help, quit"
     puts "Or tell me what you'd like to work on."
     puts
 
@@ -4529,12 +5119,14 @@ class CLI
 
       case input.downcase.strip
       when "quit", "exit", "q"
-        puts "Goodbye."
+        @web_server&.stop
+        @session.save
+        puts "Session saved. Goodbye."
         break
       when "all", "."
         process_cwd_recursive
       when "help", "h", "?"
-        usage
+        interactive_help
       when "cost"
         show_cost
       when "sprawl", "analyze"
@@ -4543,6 +5135,8 @@ class CLI
         run_clean_only
       when "pwd"
         puts Dir.pwd
+      when "status"
+        show_status
       when "ls", "dir"
         shell_ls(".")
       when /^ls\s+(.+)/, /^dir\s+(.+)/
@@ -4561,6 +5155,21 @@ class CLI
         run_shell_command($1)
       when /^structural\s+(.+)/i
         run_structural_analysis($1.strip)
+      when /^plan\s+(.+)/i
+        plan_mode($1.strip)
+      when /^complete\s*(.*)$/i
+        systematic_complete($1.empty? ? ["."] : [$1.strip])
+      when /^session\s+(.+)/i
+        parts = $1.split
+        manage_session(parts[0], parts[1])
+      when "session"
+        manage_session("list")
+      when "plan"
+        if @plan
+          puts @plan.to_s
+        else
+          puts "No active plan. Use: plan <task description>"
+        end
       else
         # Check if it looks like a file path or conversation
         if looks_like_path?(input)
@@ -4571,6 +5180,57 @@ class CLI
       end
 
       puts
+    end
+  end
+  
+  def interactive_help
+    puts <<~HELP
+      Navigation
+        ls, dir          List current directory
+        cd <path>        Change directory
+        pwd              Show current directory
+        tree <path>      Show directory tree
+        cat <file>       View file contents
+        
+      Analysis
+        <path>           Analyze file or directory
+        structural <p>   Run structural analysis
+        sprawl           Show project sprawl report
+        clean            Clean formatting issues
+        
+      Completion
+        complete <path>  Systematic completion (find TODOs, stubs, gaps)
+        plan <task>      Create structured plan before implementing
+        
+      Session
+        session save     Save current session
+        session load <n> Load saved session
+        session list     List saved sessions
+        status           Show current plan and session status
+        
+      Execution
+        run <cmd>        Execute shell command
+        ! <cmd>          Execute shell command
+        
+      Other
+        cost             Show LLM usage costs
+        help             This help
+        quit             Exit (auto-saves session)
+    HELP
+  end
+  
+  def show_status
+    puts "Session: #{@session.name}"
+    puts "History: #{@chat_history&.size || 0} messages"
+    if @plan
+      puts "Plan: #{@plan.goal}"
+      puts "Progress: #{@plan.progress}%"
+    else
+      puts "Plan: none"
+    end
+    if @llm&.enabled?
+      stats = @llm.stats
+      puts "LLM calls: #{stats[:calls]}, tokens: #{stats[:tokens]}, cost: $#{format('%.4f', stats[:cost])}"
     end
   end
   
@@ -4589,8 +5249,14 @@ class CLI
       return
     end
     
+    # Plan mode detection
+    if input.match?(/^plan\s+/i)
+      return plan_mode(input.sub(/^plan\s+/i, ""))
+    end
+    
     @chat_history ||= []
     @chat_history << { role: "user", content: input }
+    @session.history = @chat_history
     
     # Build context
     context = <<~CTX
@@ -4598,6 +5264,9 @@ class CLI
       Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.join(', ')}
       Recent files: #{Dir.glob('*').select { |f| File.file?(f) }.first(10).join(', ')}
     CTX
+    
+    # Include current plan if exists
+    plan_context = @plan ? "\nCurrent plan:\n#{@plan.to_s}\n" : ""
     
     system_prompt = <<~SYS
       You are Constitutional AI v#{Dmesg::VERSION}, an autonomous project completion assistant.
@@ -4608,13 +5277,15 @@ class CLI
       - You can analyze and improve yourself
       - Your source is in the current directory or parent
       
-      #{context}
+      #{context}#{plan_context}
       
       CAPABILITIES:
       - analyze <path>: Check code against 32 principles
-      - structural <path>: Run structural analysis
+      - structural <path>: Run structural analysis  
       - show <path>: View file contents
       - run <cmd>: Execute shell command
+      - plan <task>: Create structured plan
+      - complete <path>: Systematic file completion
       - ls, cd, tree: Navigate
       
       MISSION: Complete the user's projects. Be autonomous and proactive.
@@ -4631,41 +5302,173 @@ class CLI
     SYS
     
     begin
-      messages = [{ role: "system", content: system_prompt }]
-      messages += @chat_history.last(10)
+      @status.set("Thinking...")
       
-      # Async LLM call with interruptible spinner
-      response = nil
-      llm_thread = Thread.new do
-        response = @llm.chat(messages, tier: "medium")
+      # Use streaming for response
+      reply = ""
+      print "\n"
+      
+      if @tiered&.enabled?
+        @tiered.ask_tier_stream("medium", @chat_history.last[:content], system_prompt: system_prompt) do |chunk|
+          print chunk
+          reply += chunk
+          $stdout.flush
+        end
+        puts
+      else
+        # Fallback to non-streaming
+        messages = [{ role: "system", content: system_prompt }]
+        messages += @chat_history.last(10)
+        
+        response = nil
+        llm_thread = Thread.new do
+          response = @llm.chat(messages, tier: "medium")
+        end
+        
+        chars = %w[. o O o]
+        i = 0
+        while llm_thread.alive?
+          print "\r#{chars[i % 4]} thinking..."
+          i += 1
+          sleep 0.15
+        end
+        print "\r              \r"
+        
+        llm_thread.join
+        reply = response.is_a?(String) ? response : (response&.content || "I understand.")
+        puts reply
       end
       
-      # Spinner that can be interrupted with Ctrl+C
-      chars = %w[. o O o]
-      i = 0
-      while llm_thread.alive?
-        print "\r#{chars[i % 4]} thinking..."
-        i += 1
-        sleep 0.15
-      end
-      print "\r              \r"
-      
-      llm_thread.join
-      
-      reply = response.is_a?(String) ? response : (response&.content || "I understand.")
       reply = "I understand. What would you like me to do?" if reply.nil? || reply.empty?
       
       @chat_history << { role: "assistant", content: reply }
+      @session.history = @chat_history
+      @session.save
       
+      @status.clear
       execute_chat_action(reply)
       
-      puts reply
     rescue => e
-      spinner&.kill
-      print "\r  \r"
+      @status.clear
       Log.debug("Chat error: #{e.message}")
       puts "I understand. What would you like me to do next?"
     end
+  end
+  
+  # Plan mode - create structured approach before implementation
+  def plan_mode(task)
+    @status.set("Creating plan...")
+    
+    prompt = <<~PROMPT
+      Create a detailed implementation plan for: #{task}
+      
+      Current directory: #{Dir.pwd}
+      Available files: #{Dir.glob('*').first(20).join(', ')}
+      
+      Return a structured plan with:
+      1. Goal statement (one line)
+      2. Numbered tasks (3-7 main tasks)
+      3. Each task can have subtasks
+      4. Notes about dependencies or risks
+      
+      Format:
+      GOAL: <goal>
+      TASK 1: <description>
+        - subtask 1.1
+        - subtask 1.2
+      TASK 2: <description>
+      NOTES:
+      - <note>
+    PROMPT
+    
+    response = @tiered&.ask_tier("medium", prompt)
+    
+    if response
+      @plan = parse_plan_response(response, task)
+      @session.plan = @plan.to_h
+      @session.save
+      
+      puts
+      puts @plan.to_s
+      puts
+      print "Start execution? (y/n) "
+      if $stdin.gets&.strip&.downcase == "y"
+        execute_plan
+      end
+    else
+      Log.warn("Could not create plan")
+    end
+    
+    @status.clear
+  end
+  
+  def parse_plan_response(response, fallback_goal)
+    plan = Plan.new(fallback_goal)
+    
+    # Extract goal
+    if response.match?(/GOAL:\s*(.+)/i)
+      plan = Plan.new($1.strip)
+    end
+    
+    # Extract tasks
+    current_task = nil
+    response.lines.each do |line|
+      case line
+      when /^TASK\s*\d+:\s*(.+)/i
+        current_task = { desc: $1.strip, subtasks: [] }
+        plan.tasks << { desc: $1.strip, done: false, subtasks: [] }
+      when /^\s*-\s*(.+)/
+        if plan.tasks.any?
+          plan.tasks.last[:subtasks] << { desc: $1.strip, done: false }
+        end
+      when /^NOTES?:/i
+        # Notes section starts
+      when /^\s*-\s*(.+)/ 
+        # This might be a note if we're in notes section
+      end
+    end
+    
+    # Extract notes
+    if response.match(/NOTES?:\s*(.+)/im)
+      notes_section = $1
+      notes_section.lines.each do |line|
+        if line.match(/^\s*-\s*(.+)/)
+          plan.notes << $1.strip
+        end
+      end
+    end
+    
+    plan
+  end
+  
+  def execute_plan
+    return Log.warn("No plan to execute") unless @plan
+    
+    @plan.tasks.each_with_index do |task, idx|
+      next if task[:done]
+      
+      @status.progress(idx + 1, @plan.tasks.size, task[:desc][0..40])
+      
+      puts
+      puts "Executing: #{task[:desc]}"
+      
+      task[:subtasks]&.each_with_index do |sub, sub_idx|
+        next if sub[:done]
+        print "  - #{sub[:desc]}... "
+        
+        # Let LLM help execute
+        chat_response("Execute: #{sub[:desc]}")
+        
+        @plan.complete_subtask(idx, sub_idx)
+      end
+      
+      @plan.complete_task(idx)
+      @session.plan = @plan.to_h
+      @session.save
+    end
+    
+    @status.clear
+    Log.ok("Plan complete: #{@plan.progress}%")
   end
   
   def execute_chat_action(reply)
@@ -4684,6 +5487,10 @@ class CLI
       process_targets([$1.strip])
     when /STRUCTURAL:\s*(.+)/i
       run_structural_analysis($1.strip)
+    when /COMPLETE:\s*(.+)/i
+      systematic_complete([$1.strip])
+    when /PLAN:\s*(.+)/i
+      plan_mode($1.strip)
     end
   end
   
@@ -4856,7 +5663,7 @@ class CLI
 
     files.each_with_index do |file, idx|
       relative = file.sub("#{Dir.pwd}/", "")
-      print "\r[#{idx + 1}/#{files.size}] #{relative.ljust(60)}"
+      print "\r#{idx + 1}/#{files.size} #{relative.ljust(60)}"
       result = process_file_quiet(file)
       @results << result if result
     end
