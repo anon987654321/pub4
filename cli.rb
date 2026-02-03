@@ -540,12 +540,106 @@ module Core
       end.uniq
     end
   end
+  
+  # Pure Ruby equivalent of tree.sh - list dirs then files
+  module TreeWalk
+    def self.print_tree(dir = ".")
+      dir = dir.chomp("/")
+      entries = []
+      
+      # Directories first (with trailing slash)
+      Dir.glob(File.join(dir, "**", "*")).each do |path|
+        next if File.basename(path).start_with?(".")
+        
+        if File.directory?(path)
+          entries << "#{path}/"
+        end
+      end
+      
+      # Files second
+      Dir.glob(File.join(dir, "**", "*")).each do |path|
+        next if File.basename(path).start_with?(".")
+        next unless File.file?(path)
+        
+        entries << path
+      end
+      
+      entries
+    end
+    
+    def self.display(dir = ".")
+      print_tree(dir).each { |e| puts e }
+    end
+  end
+  
+  # Pure Ruby equivalent of clean.sh - normalize text files
+  module FileCleaner
+    def self.clean(file_path)
+      return unless File.file?(file_path)
+      return unless text_file?(file_path)
+      
+      content = File.read(file_path, encoding: "UTF-8")
+      original = content.dup
+      
+      # Remove carriage returns
+      content = content.gsub("\r", "")
+      
+      # Process lines
+      lines = content.split("\n", -1)
+      cleaned = []
+      prev_blank = false
+      
+      lines.each do |line|
+        # Trim trailing whitespace
+        line = line.rstrip
+        
+        if line.empty?
+          # Only add blank if previous wasn't blank
+          unless prev_blank
+            cleaned << ""
+            prev_blank = true
+          end
+        else
+          cleaned << line
+          prev_blank = false
+        end
+      end
+      
+      # Remove trailing blank lines
+      cleaned.pop while cleaned.last&.empty?
+      
+      result = cleaned.join("\n") + "\n"
+      
+      if result != original
+        File.write(file_path, result)
+        true
+      else
+        false
+      end
+    end
+    
+    def self.text_file?(path)
+      # Check by extension
+      text_exts = %w[.rb .yml .yaml .md .txt .sh .js .ts .jsx .tsx .css .html .json .xml .sql .py .go .rs .c .h .cpp .hpp]
+      ext = File.extname(path).downcase
+      text_exts.include?(ext)
+    end
+    
+    def self.clean_dir(dir)
+      cleaned = 0
+      Dir.glob(File.join(dir, "**", "*")).each do |path|
+        next unless File.file?(path)
+        cleaned += 1 if clean(path)
+      end
+      cleaned
+    end
+  end
 end
 
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "47.3"
+  VERSION = "47.4"
   
   def self.boot
     unless Options.quiet
@@ -1466,6 +1560,15 @@ class CLI
   end
   
   def process_targets(targets)
+    # Tree: show directory structure before entering
+    targets.each do |t|
+      if File.directory?(t)
+        Log.info("📁 Entering: #{t}") unless Options.quiet
+        Core::TreeWalk.print_tree(t).first(20).each { |e| puts "  #{e}" } unless Options.quiet
+        puts "  ..." if Core::TreeWalk.print_tree(t).size > 20 && !Options.quiet
+      end
+    end
+    
     files = expand_targets(targets)
     
     if files.empty?
@@ -1660,6 +1763,11 @@ class CLI
     unless File.exist?(file_path)
       Log.error("File not found: #{file_path}") unless Options.quiet
       return nil
+    end
+    
+    # Clean: normalize file before analysis (CRLF, trailing whitespace, blank lines)
+    if Core::FileCleaner.clean(file_path)
+      Log.info("🧹 Cleaned: #{file_path}") unless Options.quiet
     end
     
     language = detect_language(file_path)
