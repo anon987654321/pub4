@@ -1,7 +1,8 @@
 ---
-version: "46.1"
+version: "47.6"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
+symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
 
 meta:
   approach: "LLM-native detection, zero regex patterns, sensible defaults"
@@ -33,7 +34,7 @@ principles:
     evidence: "Reader can understand without running code"
     auto_fixable: true
     llm_strategies: [rename, extract_method, add_comments, simplify]
-  
+
   simplicity:
     id: 2
     tier: axiom
@@ -49,7 +50,7 @@ principles:
     evidence: "No unused abstractions, direct solution"
     auto_fixable: true
     llm_strategies: [inline, remove_abstraction, expand_chain]
-  
+
   evolution:
     id: 3
     tier: axiom
@@ -64,7 +65,7 @@ principles:
     evidence: "Git history shows incremental changes"
     auto_fixable: false
     llm_strategies: [suggest_incremental_path]
-  
+
   explicit:
     id: 4
     tier: axiom
@@ -80,7 +81,7 @@ principles:
     evidence: "All behavior traceable from reading code"
     auto_fixable: true
     llm_strategies: [make_explicit, inline_magic]
-  
+
   scientific:
     id: 5
     tier: axiom
@@ -95,7 +96,7 @@ principles:
     evidence: "Benchmarks, tests, profiling data"
     auto_fixable: false
     llm_strategies: [suggest_measurement]
-  
+
   divide:
     id: 6
     tier: axiom
@@ -110,7 +111,7 @@ principles:
     evidence: "Dependency graph is DAG, modules independent"
     auto_fixable: true
     llm_strategies: [extract_module, break_coupling]
-  
+
   rubber_duck:
     id: 7
     tier: axiom
@@ -124,7 +125,7 @@ principles:
     evidence: "Can explain code in plain English"
     auto_fixable: false
     llm_strategies: [request_explanation]
-  
+
   blame_self:
     id: 8
     tier: axiom
@@ -138,7 +139,7 @@ principles:
     evidence: "Reproduced in minimal example"
     auto_fixable: false
     llm_strategies: [suggest_minimal_reproduction]
-  
+
   git_bisect:
     id: 9
     tier: axiom
@@ -153,7 +154,7 @@ principles:
     evidence: "Every commit builds and passes tests"
     auto_fixable: false
     llm_strategies: [suggest_bisect]
-  
+
   read_source:
     id: 10
     tier: axiom
@@ -167,7 +168,7 @@ principles:
     evidence: "Verified behavior in source"
     auto_fixable: false
     llm_strategies: [point_to_source]
-  
+
   srp:
     id: 11
     tier: solid
@@ -183,7 +184,7 @@ principles:
     evidence: "Class/method has one clear purpose"
     auto_fixable: true
     llm_strategies: [extract_class, extract_method]
-  
+
   ocp:
     id: 12
     tier: solid
@@ -197,7 +198,7 @@ principles:
     evidence: "New feature added without changing existing code"
     auto_fixable: true
     llm_strategies: [introduce_polymorphism, strategy_pattern]
-  
+
   lsp:
     id: 13
     tier: solid
@@ -212,7 +213,7 @@ principles:
     evidence: "Subtype works wherever parent works"
     auto_fixable: false
     llm_strategies: [suggest_interface_fix]
-  
+
   isp:
     id: 14
     tier: solid
@@ -226,7 +227,7 @@ principles:
     evidence: "Every interface method is used by all implementers"
     auto_fixable: true
     llm_strategies: [split_interface]
-  
+
   dip:
     id: 15
     tier: solid
@@ -241,7 +242,7 @@ principles:
     evidence: "Dependencies injected, not instantiated"
     auto_fixable: true
     llm_strategies: [inject_dependency, introduce_interface]
-  
+
   dry:
     id: 16
     tier: coding
@@ -258,7 +259,7 @@ principles:
     llm_strategies: [extract_method, extract_constant]
     caveat: "Rule of Three: duplicate twice, abstract third time"
     conflicts_with: [17, 18]
-  
+
   wet:
     id: 17
     tier: coding
@@ -274,7 +275,7 @@ principles:
     auto_fixable: false
     llm_strategies: [suggest_wait]
     overrides: [16]
-  
+
   aha:
     id: 18
     tier: coding
@@ -289,7 +290,7 @@ principles:
     auto_fixable: false
     llm_strategies: [suggest_simplification]
     overrides: [16]
-  
+
   names:
     id: 19
     tier: clean_code
@@ -307,7 +308,7 @@ principles:
     evidence: "Names reveal intent without comments"
     auto_fixable: true
     llm_strategies: [rename_variable, rename_method, rename_class]
-  
+
   small_functions:
     id: 20
     tier: clean_code
@@ -322,7 +323,7 @@ principles:
     evidence: "Function does one thing at one abstraction level"
     auto_fixable: true
     llm_strategies: [extract_method, inline_method]
-  
+
   arguments:
     id: 21
     tier: clean_code
@@ -336,7 +337,7 @@ principles:
     evidence: "Arguments fit on one line, all required"
     auto_fixable: true
     llm_strategies: [introduce_parameter_object, extract_class]
-  
+
   cqs:
     id: 22
     tier: clean_code
@@ -350,7 +351,7 @@ principles:
     evidence: "Methods either mutate or return, not both"
     auto_fixable: true
     llm_strategies: [split_command_query]
-  
+
   no_side_effects:
     id: 23
     tier: clean_code
@@ -365,7 +366,7 @@ principles:
     evidence: "All side effects documented or absent"
     auto_fixable: false
     llm_strategies: [document_side_effect, remove_side_effect]
-  
+
   progressive_disclosure:
     id: 24
     tier: ui
@@ -379,7 +380,7 @@ principles:
     evidence: "Default output is minimal, --verbose for details"
     auto_fixable: false
     llm_strategies: [suggest_default_output]
-  
+
   real_time_feedback:
     id: 25
     tier: ui
@@ -394,7 +395,7 @@ principles:
     evidence: "Progress shown, operations time-bounded"
     auto_fixable: false
     llm_strategies: [add_progress_indicator]
-  
+
   cost_transparency:
     id: 26
     tier: llm
@@ -409,7 +410,7 @@ principles:
     evidence: "Every LLM call shows tokens and cost"
     auto_fixable: false
     llm_strategies: [add_cost_tracking]
-  
+
   fail_gracefully:
     id: 27
     tier: llm
@@ -423,7 +424,7 @@ principles:
     evidence: "Tool works without API key, degrades gracefully"
     auto_fixable: false
     llm_strategies: [add_fallback_mode]
-  
+
   cache_aggressively:
     id: 28
     tier: llm
@@ -437,7 +438,7 @@ principles:
     evidence: "Cached tokens shown in output"
     auto_fixable: false
     llm_strategies: [enable_caching]
-  
+
   idempotent:
     id: 29
     tier: operations
@@ -451,7 +452,7 @@ principles:
     evidence: "Same input always produces same output"
     auto_fixable: false
     llm_strategies: [make_idempotent]
-  
+
   unix_philosophy:
     id: 30
     tier: design
@@ -467,7 +468,7 @@ principles:
     evidence: "Tool composable with pipes, follows Unix conventions"
     auto_fixable: false
     llm_strategies: [suggest_unix_pattern]
-  
+
   functional_core:
     id: 31
     tier: architecture
@@ -483,7 +484,7 @@ principles:
     evidence: "Same input → same output, no side effects in core"
     auto_fixable: true
     llm_strategies: [extract_pure_function, move_io_to_shell]
-  
+
   safe_refactoring:
     id: 32
     tier: operations
@@ -509,12 +510,12 @@ style:
     frozen_literal: required
     implicit_return: preferred
     blocks: "do/end for multi-line, {} for single-line"
-  
+
   comments:
     explain_why_not_what: true
     no_ascii_art: true
     update_with_code: true
-  
+
   structure:
     max_method_lines: 10
     max_class_lines: 100
@@ -527,37 +528,37 @@ phases:
     goal: "Understand actual need"
     output: "Problem statement with success criteria"
     gates: [no_vague_words, audience_identified, success_measurable]
-  
+
   analyze:
     id: 2
     goal: "Break into components"
     output: "Component diagram with dependencies"
     gates: [components_distinct, dependencies_acyclic, failure_modes_documented]
-  
+
   ideate:
     id: 3
     goal: "Generate 15+ alternatives"
     output: "List of approaches with trade-offs"
     gates: [count_gte_15, distinct_approaches, trade_offs_documented]
-  
+
   design:
     id: 4
     goal: "Specific architecture"
     output: "Interface definitions and error handling"
     gates: [interfaces_explicit, errors_documented, test_strategy_defined]
-  
+
   implement:
     id: 5
     goal: "Execute with zero violations"
     output: "Working code at 100/100 score"
     gates: [tests_pass, zero_violations, docs_updated]
-  
+
   validate:
     id: 6
     goal: "Prove with evidence"
     output: "Test results, benchmarks, edge cases"
     gates: [zero_test_failures, edge_cases_covered, evidence_collected]
-  
+
   deliver:
     id: 7
     goal: "Ship with monitoring"
@@ -566,15 +567,47 @@ phases:
 
 # LLM CONFIGURATION
 llm:
+  # Tiered pipeline: cheap → medium → strong (60-80% cost savings)
+  tiers:
+    fast:
+      model: "qwen/qwen2.5-coder-32b-instruct"
+      temperature: 0.2
+      max_tokens: 2048
+      cost_weight: 1.0
+      use_for: [detection, smell_scan]
+    medium:
+      model: "anthropic/claude-3.5-sonnet"
+      temperature: 0.4
+      max_tokens: 4096
+      cost_weight: 5.0
+      use_for: [explanation, refactoring]
+    strong:
+      model: "anthropic/claude-opus-4"
+      temperature: 0.1
+      max_tokens: 8192
+      cost_weight: 20.0
+      use_for: [validation, judgment, gardening]
+
+  default_tier_sequence: [fast, medium, strong]
+
+  # Prompt caching (75-90% savings on repeated system prompts)
+  prompt_caching:
+    enabled: true
+    default_ttl: "1h"
+    breakpoints:
+      - system_prompt
+      - principles_summary
+      - recent_violations
+
   detection:
     enabled: true
-    model: "anthropic/claude-3.5-sonnet"
+    model: "qwen/qwen2.5-coder-32b-instruct"
     fallback_models:
-      - "openai/gpt-4o"
+      - "anthropic/claude-3.5-sonnet"
       - "google/gemini-2.0-flash-exp:free"
     prompt: |
       You are a code quality expert. Analyze this code against 32 principles.
-      
+
       For each violation, return JSON:
       {
         "principle_id": 19,
@@ -586,13 +619,13 @@ llm:
         "suggested_fix": "Rename to 'user_preferences' based on usage",
         "auto_fixable": true
       }
-      
+
       Severities: veto (blocks), high (critical), medium (important), low (nice to have)
-      
+
       Return empty array [] if no violations found.
-      
+
       CRITICAL: Return valid JSON only, no markdown, no explanation.
-  
+
   refactoring:
     enabled: true
     model: "anthropic/claude-3.5-sonnet"
@@ -604,17 +637,26 @@ llm:
       extract_class: {max_tokens: 5000, temperature: 0.1}
       flatten_nesting: {max_tokens: 2000, temperature: 0.2}
       simplify_condition: {max_tokens: 1000, temperature: 0.2}
-  
+
   phase_validation:
     enabled: true
     model: "anthropic/claude-opus-4"
     fallback_models:
       - "anthropic/claude-3.5-sonnet"
-  
+
   consensus:
     enabled: false
     models: ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "google/gemini-2.0-flash-exp:free"]
     required_agreement: 2
+
+# LEARNED SMELLS (self-improving constitution)
+learned_smells: []
+# Example entry added by gardener:
+# - id: learned_001
+#   trigger_smell: "unsafe_eval_in_migration"
+#   priority: 9
+#   description: "Avoid eval() in migrations"
+#   source_iteration: "file.rb iteration 4"
 
 # SAFETY CONFIGURATION
 safety:
@@ -626,7 +668,7 @@ safety:
     check_special_files: true
     allow_symlinks: false
     binary_extensions: [".png", ".jpg", ".gif", ".mp4", ".pdf", ".so", ".dylib", ".o", ".a"]
-  
+
   cost_protection:
     max_per_file: 1.00
     max_per_session: 10.00
@@ -634,7 +676,7 @@ safety:
     chunk_large_files: true
     chunk_size_lines: 500
     chunk_overlap_lines: 50
-  
+
   convergence:
     max_iterations: 10
     detect_loops: true
@@ -642,28 +684,28 @@ safety:
     max_total_violations: 10_000
     max_history_size: 10
     require_improvement: true
-  
+
   fix_validation:
     enabled: true
     check_priority_inversion: true
     check_new_violations: true
     max_new_violations: 0
-  
+
   concurrency:
     file_locking: true
     lock_timeout: 30
     stale_lock_age: 300
     lock_dir: ".constitutional_locks"
-  
+
   transactions:
     enabled: true
     rollback_on_error: true
     atomic_operations: true
-  
+
   yaml_safety:
     max_constitution_size: 10_485_760
     load_timeout: 5
-  
+
   memory:
     max_violation_objects: 100_000
     gc_every_n_iterations: 5
@@ -688,14 +730,14 @@ conflicts:
   strategy: "highest_priority_wins"
   prompt_user: false
   log_all: true
-  
+
   rules:
     - condition: "dry conflicts with wet or aha"
       resolution: "favor wet/aha if fewer than 3 duplications"
-    
+
     - condition: "clarity conflicts with simplicity"
       resolution: "favor clarity (same priority, but clarity is axiom)"
-    
+
     - condition: "fix introduces higher priority violation"
       resolution: "reject fix"
 
@@ -707,23 +749,23 @@ language_detection:
     ruby:
       extensions: [".rb", ".rake", ".gemspec"]
       indicators: ["#!/usr/bin/env ruby", "class ", "module ", "def ", "require "]
-    
+
     python:
       extensions: [".py"]
       indicators: ["#!/usr/bin/env python", "def ", "class ", "import "]
-    
+
     javascript:
       extensions: [".js", ".jsx", ".ts", ".tsx"]
       indicators: ["function ", "const ", "let ", "var ", "import "]
-    
+
     markdown:
       extensions: [".md", ".markdown"]
       indicators: ["# ", "## ", "```"]
-    
+
     yaml:
       extensions: [".yml", ".yaml"]
       indicators: ["---", "key: value"]
-    
+
     shell:
       extensions: [".sh", ".bash", ".zsh"]
       indicators: ["#!/bin/bash", "#!/bin/sh", "if [", "for "]
@@ -734,77 +776,77 @@ refinements:
     old: "50+ regex patterns in YAML"
     new: "Single LLM reasoning call"
     benefit: "Catches nuanced violations, zero maintenance"
-  
+
   section_duplication:
     old: "Same rule in constitution, principles, and implementation"
     new: "Flat principle registry, reference by ID"
     benefit: "DRY, single source of truth"
-  
+
   user_workflow:
     old: "User runs 3+ commands manually"
     new: "Single command does everything"
     benefit: "Zero cognitive load, sensible defaults"
-  
+
   edge_case_handling:
     old: "Basic error checking"
     new: "15 edge cases handled: hallucination, cost explosion, infinite loops, conflicts, binary files, permissions, symlinks, concurrent access, network interruption, priority inversion, memory exhaustion, YAML bombs, circular references"
     benefit: "Production-ready, battle-tested"
-  
+
   language_detection:
     old: "Extension-only detection"
     new: "Ask user first, fallback to content analysis"
     benefit: "Accurate, handles edge cases (no extension, wrong extension, polyglot)"
-  
+
   llm_fallback:
     old: "Single model, fail on error"
     new: "Multi-model RAG with graceful degradation"
     benefit: "High availability, cost optimization"
-  
+
   cost_tracking:
     old: "Per-call tracking"
     new: "Per-file and per-session limits with warnings"
     benefit: "Budget protection, no surprises"
-  
+
   convergence_detection:
     old: "Fixed iterations"
     new: "Loop detection, oscillation detection, improvement tracking"
     benefit: "Faster convergence, catches stuck states"
-  
+
   fix_validation:
     old: "Apply fix blindly"
     new: "Validate fix doesn't introduce worse violations"
     benefit: "Priority-aware, prevents regressions"
-  
+
   file_safety:
     old: "Assume regular file"
     new: "Check binary, permissions, special files, symlinks"
     benefit: "Safe operations, no surprises"
-  
+
   concurrency:
     old: "No locking"
     new: "File locking with stale detection"
     benefit: "Safe concurrent use"
-  
+
   transactions:
     old: "Partial updates on failure"
     new: "Atomic operations with automatic rollback"
     benefit: "Consistent state always"
-  
+
   memory_management:
     old: "Unlimited history"
     new: "Bounded history, periodic GC"
     benefit: "Handles large files without OOM"
-  
+
   yaml_safety:
     old: "Unrestricted YAML load"
     new: "Size limit, timeout, bomb detection"
     benefit: "Prevents DoS attacks"
-  
+
   principle_priority:
     old: "No priority system"
     new: "10-point priority scale with conflict resolution"
     benefit: "Clear decision making, no ambiguity"
-  
+
   separation_of_concerns:
     old: "Logic mixed in YAML and code"
     new: "master.yml (rules/principles/workflows) + cli.rb (thin enforcer)"
