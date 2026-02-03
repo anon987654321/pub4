@@ -2654,7 +2654,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.63"
+  VERSION = "49.64"
 
   def self.boot
     return if Options.quiet
@@ -4641,37 +4641,17 @@ end
 
 class LanguageAsker
   def self.ask(file_path, constitution)
-    puts
-    puts "Language Detection"
-    puts "=" * 50
-    puts
-    puts "File: #{file_path}"
-    puts "Extension: #{File.extname(file_path)}"
-    puts
-    puts "What language is this file?"
-    puts
-
+    puts "lang? #{File.basename(file_path)}"
     supported = constitution.language_detection["supported"]
-
-    supported.each_with_index do |(lang, _config), index|
-      puts "  #{index + 1}. #{lang}"
+    supported.each_with_index do |(lang, _), i|
+      puts "  #{i + 1}. #{lang}"
     end
-
-    puts "  #{supported.size + 1}. Other (skip analysis)"
-    puts
-    print "Select (1-#{supported.size + 1}): "
-
+    print "> "
     input = $stdin.gets&.strip&.to_i
-
     if input >= 1 && input <= supported.size
-      lang_name = supported.keys[input - 1]
-      puts
-      Log.ok("Language set to: #{lang_name}")
-      return lang_name
+      supported.keys[input - 1]
     else
-      puts
-      Log.warn("Skipping analysis")
-      return "unknown"
+      "unknown"
     end
   end
 end
@@ -5207,7 +5187,7 @@ class CLI
       when "quit", "exit", "q"
         @web_server&.stop
         @session.save
-        puts "Session saved. Goodbye."
+        puts "saved"
         break
       when "all", "."
         process_cwd_recursive
@@ -5217,14 +5197,9 @@ class CLI
         show_cost
       when "trace"
         ENV["TRACE"] = ENV["TRACE"] ? nil : "1"
-        puts ENV["TRACE"] ? "trace on" : "trace off"
+        puts ENV["TRACE"] ? "on" : "off"
       when "debug", "llm"
-        puts "LLM_AVAILABLE: #{LLM_AVAILABLE}"
-        puts "OPENROUTER_API_KEY: #{ENV['OPENROUTER_API_KEY'] ? 'set (' + ENV['OPENROUTER_API_KEY'][0..7] + '...)' : 'NOT SET'}"
-        puts "@llm: #{@llm ? 'initialized' : 'nil'}"
-        puts "@llm.enabled?: #{@llm&.enabled? || false}"
-        puts "@tiered: #{@tiered ? 'initialized' : 'nil'}"
-        puts "@tiered.enabled?: #{@tiered&.enabled? || false}"
+        puts "llm: #{@llm&.enabled? ? 'ok' : 'no'} key: #{ENV['OPENROUTER_API_KEY'] ? 'set' : 'no'}"
       when "sprawl", "analyze"
         show_sprawl_report
       when "clean"
@@ -5767,52 +5742,23 @@ class CLI
   
   def interactive_help
     puts <<~HELP
-      Navigation
-        ls, dir          List current directory
-        cd <path>        Change directory
-        pwd              Show current directory
-        tree <path>      Show directory tree
-        cat <file>       View file contents
-        
-      Analysis
-        <path>           Analyze file or directory
-        structural <p>   Run structural analysis
-        sprawl           Show project sprawl report
-        clean            Clean formatting issues
-        
-      Completion
-        complete <path>  Systematic completion (find TODOs, stubs, gaps)
-        plan <task>      Create structured plan before implementing
-        
-      Session
-        session save     Save current session
-        session load <n> Load saved session
-        session list     List saved sessions
-        status           Show current plan and session status
-        
-      Execution
-        run <cmd>        Execute shell command
-        ! <cmd>          Execute shell command
-        
-      Other
-        cost             Show LLM usage costs
-        help             This help
-        quit             Exit (auto-saves session)
+      ls cd pwd tree cat    navigation
+      <path>                analyze
+      sprawl clean          project
+      plan complete         tasks
+      session save/load     state
+      run ! <cmd>           shell
+      cost trace status     info
+      quit                  exit
     HELP
   end
   
   def show_status
-    puts "Session: #{@session.name}"
-    puts "History: #{@chat_history&.size || 0} messages"
-    if @plan
-      puts "Plan: #{@plan.goal}"
-      puts "Progress: #{@plan.progress}%"
-    else
-      puts "Plan: none"
-    end
+    puts "session: #{@session.name} msgs: #{@chat_history&.size || 0}"
+    puts "plan: #{@plan ? "#{@plan.goal} #{@plan.progress}%" : 'none'}"
     if @llm&.enabled?
-      stats = @llm.stats
-      puts "LLM calls: #{stats[:calls]}, tokens: #{stats[:tokens]}, cost: $#{format('%.4f', stats[:cost])}"
+      s = @llm.stats
+      puts "llm: #{s[:calls]}c #{s[:tokens]}t $#{format('%.4f', s[:cost])}"
     end
   end
   
@@ -6247,52 +6193,26 @@ class CLI
     when /find\s+(.+)/i, /where.*is\s+(.+)/i
       pattern = $1.strip
       matches = Dir.glob("**/#{pattern}*").first(20)
-      matches.any? ? matches.each { |m| puts m } : puts("No matches for: #{pattern}")
+      matches.any? ? matches.each { |m| puts m } : puts("no match")
     else
-      Log.info("I understand: ls, cd, pwd, cat, tree, all, help, cost, sprawl, quit")
-      Log.info("Or enter a file/directory path to analyze")
+      puts "commands: ls cd cat tree all sprawl cost trace quit"
     end
   end
 
   def show_sprawl_report
-    Log.info("Analyzing project structure...")
     report = Core::ProjectAnalyzer.analyze(".")
-
-    puts "\n=== Sprawl Report ==="
-    puts "Files: #{report[:file_count]}"
-
-    if report[:sprawl].any?
-      puts "\nSprawl Issues:"
-      report[:sprawl].each do |issue|
-        puts "  #{issue[:type]}: #{issue[:message] || issue[:count]} items"
-      end
-    end
-
-    if report[:duplicates].any?
-      puts "\nDuplicates Found: #{report[:duplicates].size}"
-      report[:duplicates].first(5).each { |d| puts "  #{d[:duplicate]} ≈ #{d[:original]}" }
-    end
-
-    if report[:fragmentation].any?
-      puts "\nFragmentation:"
-      report[:fragmentation].each { |f| puts "  #{f[:message]}" }
-    end
-
-    if report[:consolidation_opportunities].any?
-      puts "\nConsolidation Opportunities:"
-      report[:consolidation_opportunities].each do |c|
-        puts "  #{c[:action]}: #{c[:reason]} → #{c[:target]}"
-      end
-    end
+    puts "files: #{report[:file_count]}"
+    report[:sprawl].each { |i| puts "  #{i[:type]}: #{i[:count]}" } if report[:sprawl].any?
+    report[:duplicates].first(3).each { |d| puts "  dup: #{d[:duplicate]}" } if report[:duplicates].any?
+    report[:fragmentation].each { |f| puts "  frag: #{f[:message]}" } if report[:fragmentation].any?
   end
 
   def run_clean_only
     cleaned = Core::ProjectAnalyzer.clean(".", dry_run: Options.dry_run)
     if cleaned.any?
-      puts "Cleaned #{cleaned.size} files"
-      cleaned.each { |c| puts "  #{c[:path]}" } if cleaned.size <= 10
+      puts "cleaned: #{cleaned.size}"
     else
-      puts "All files already clean"
+      puts "clean"
     end
   end
 
@@ -6524,50 +6444,14 @@ class CLI
   end
 
   def show_cost
-    puts
-    puts "#{Dmesg.bold}LLM Cost Report#{Dmesg.reset}"
-    puts
-
-    # Current session
     if @llm.enabled?
-      stats = @llm.stats
-      puts "Session:"
-      puts "  Calls:  #{stats[:calls]}"
-      puts "  Tokens: #{stats[:tokens]}"
-      puts "  Cost:   $#{format("%.4f", stats[:cost])}"
-      puts
+      s = @llm.stats
+      puts "session: #{s[:calls]}c #{s[:tokens]}t $#{format("%.4f", s[:cost])}"
     end
-
-    # Daily breakdown (last 7 days)
     daily = Core::CostTracker.daily_totals(7)
-    if daily.any?
-      puts "Daily (last 7 days):"
-      daily.each do |date, data|
-        puts "  #{date}: #{data[:calls]} calls, #{data[:tokens]} tokens, $#{format("%.4f", data[:cost])}"
-      end
-      puts
-    end
-
-    # Model breakdown
-    by_model = Core::CostTracker.model_breakdown(7)
-    if by_model.any?
-      puts "By Model (last 7 days):"
-      by_model.first(5).each do |model, data|
-        short_name = model.split("/").last
-        puts "  #{short_name}: #{data[:calls]} calls, $#{format("%.4f", data[:cost])}"
-      end
-      puts
-    end
-
-    # Total spending
+    daily.each { |d, x| puts "  #{d}: #{x[:calls]}c $#{format("%.4f", x[:cost])}" } if daily.any?
     total = Core::CostTracker.total_spending
-    if total[:calls] > 0
-      puts "All Time:"
-      puts "  Total calls:  #{total[:calls]}"
-      puts "  Total tokens: #{total[:tokens]}"
-      puts "  Total cost:   $#{format("%.4f", total[:cost])}"
-      puts
-    end
+    puts "total: #{total[:calls]}c $#{format("%.4f", total[:cost])}" if total[:calls] > 0
   end
 
   def rollback(file_path)
