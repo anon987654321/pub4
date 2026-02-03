@@ -3980,15 +3980,19 @@ class LLMClient
       code, file_path, @constitution.active_principles, config["prompt"]
     )[:prompt]
 
-    response = Spinner.run("Analyzing with AI (fast)") do
-      call_llm_with_fallback(
-        model: fast_model,
-        fallback_models: config["fallback_models"],
-        messages: build_cached_messages(system: DETECTION_SYSTEM_PROMPT, user: prompt),
-        max_tokens: fast_max_tokens
-      )
-    end
+    # Show which file we're analyzing
+    short_path = file_path.sub(Dir.pwd + "/", "").sub(Dir.pwd + "\\", "")
+    print "#{Dmesg.dim}scan#{Dmesg.reset} #{short_path} "
+    $stdout.flush
 
+    response = call_llm_with_fallback(
+      model: fast_model,
+      fallback_models: config["fallback_models"],
+      messages: build_cached_messages(system: DETECTION_SYSTEM_PROMPT, user: prompt),
+      max_tokens: fast_max_tokens
+    )
+
+    puts "#{Dmesg.green}ok#{Dmesg.reset}"
     Core::LLMDetector.parse_violations(response.dig("choices", 0, "message", "content"))
   end
 
@@ -4601,41 +4605,30 @@ class AutoEngine
   def show_final_report(file_path)
     violations = scan_with_llm(file_path)
     analysis = Core::ScoreCalculator.analyze(violations)
+    
+    short_path = file_path.sub(Dir.pwd + "/", "").sub(Dir.pwd + "\\", "")
 
     if violations.empty?
-      Log.ok("Score 100/100 - Zero violations")
+      puts "  #{Dmesg.green}100/100#{Dmesg.reset}"
     else
-      Log.warn("Score #{analysis[:score]}/100 (#{analysis[:total]} violations)")
-
+      puts "  #{Dmesg.yellow}#{analysis[:score]}/100#{Dmesg.reset} (#{analysis[:total]} issues)"
       violations.first(5).each do |v|
-        Log.error("Line #{v["line"]}: #{v["explanation"]}")
+        puts "    #{Dmesg.dim}:#{v["line"]}#{Dmesg.reset} #{v["explanation"][0..60]}"
       end
-
-      if violations.size > 5
-        Log.info("... and #{violations.size - 5} more violations")
-      end
+      puts "    #{Dmesg.dim}... +#{violations.size - 5} more#{Dmesg.reset}" if violations.size > 5
     end
 
     # Git history comparison
     if Core::GitHistory.available?
       comparison = Core::GitHistory.compare_with_history(file_path, violations)
       if comparison && comparison[:history].any?
-        trend_icon = case comparison[:trend]
-          when :perfect then Dmesg.icon(:up)
-          when :tracking then Dmesg.icon(:chart)
-          else Dmesg.icon(:list)
-        end
-        Log.info("#{trend_icon} Git: #{comparison[:history].size} commits tracked")
+        puts "  #{Dmesg.dim}git: #{comparison[:history].size} commits#{Dmesg.reset}"
       end
     end
 
     if @llm.enabled?
       stats = @llm.stats
-      Log.dmesg("session", "complete", "", {
-        llm_calls: stats[:calls],
-        tokens: stats[:tokens],
-        cost: format("$%.4f", stats[:cost])
-      })
+      puts "  #{Dmesg.dim}llm: #{stats[:calls]} calls, #{stats[:tokens]}t, #{format("$%.2f", stats[:cost])}#{Dmesg.reset}"
     end
   end
 end
