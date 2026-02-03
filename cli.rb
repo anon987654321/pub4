@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.18"
+  VERSION = "49.19"
 
   def self.boot
     return if Options.quiet
@@ -4621,7 +4621,22 @@ class CLI
       messages = [{ role: "system", content: system_prompt }]
       messages += @chat_history.last(10)
       
+      # Show spinner while waiting
+      spinner = Thread.new do
+        chars = %w[| / - \\]
+        i = 0
+        loop do
+          print "\r#{chars[i % 4]} "
+          i += 1
+          sleep 0.1
+        end
+      end
+      
       response = @llm.chat(messages, tier: "medium")
+      
+      spinner.kill
+      print "\r  \r"  # Clear spinner
+      
       reply = response.is_a?(String) ? response : (response&.content || "I understand.")
       reply = "I understand. What would you like me to do?" if reply.nil? || reply.empty?
       
@@ -4631,6 +4646,8 @@ class CLI
       
       puts reply
     rescue => e
+      spinner&.kill
+      print "\r  \r"
       Log.debug("Chat error: #{e.message}")
       puts "I understand. What would you like me to do next?"
     end
