@@ -2698,7 +2698,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.13"
+  VERSION = "49.14"
 
   def self.boot
     return if Options.quiet
@@ -4284,6 +4284,12 @@ class CLI
     @llm = LLMClient.new(@constitution)
     @engine = AutoEngine.new(@constitution, @llm)
     @results = []
+  rescue => e
+    Log.warn("Init warning: #{e.message}")
+    @constitution ||= nil
+    @llm ||= nil
+    @engine ||= nil
+    @results = []
   end
 
   def run(args)
@@ -4500,14 +4506,19 @@ class CLI
   def interactive_mode
     puts
     
-    @cwd = Dir.pwd  # Track current directory for cd
+    @cwd = Dir.pwd
 
-    # Pre-scan: tree + clean before analysis
-    prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
-    files = prescan_result[:files].reject { |f| f.end_with?("/") }
-
-    puts "Found #{files.size} files in #{Dir.pwd}"
-    puts "Cleaned #{prescan_result[:cleaned_count]} files" if prescan_result[:cleaned_count] > 0
+    # Pre-scan with error handling
+    begin
+      prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
+      files = prescan_result[:files].reject { |f| f.end_with?("/") }
+      puts "Found #{files.size} files in #{Dir.pwd}"
+      puts "Cleaned #{prescan_result[:cleaned_count]} files" if prescan_result[:cleaned_count] > 0
+    rescue => e
+      Log.warn("Prescan failed: #{e.message}")
+      files = []
+    end
+    
     puts
     puts "Commands: all, help, cost, sprawl, ls, cd, pwd, quit"
     puts "Or enter: file path, directory, glob, or natural language"
@@ -4970,7 +4981,11 @@ if __FILE__ == $PROGRAM_NAME
     end
   rescue StandardError => error
     Log.error("Fatal: #{error.message}") unless Options.quiet
-    Log.debug(error.backtrace.join("\n")) if ENV["VERBOSE"]
+    if ENV["VERBOSE"]
+      Log.debug(error.backtrace.first(10).join("\n"))
+    else
+      Log.info("Run with VERBOSE=1 for stack trace")
+    end
     exit 2
   end
 end
