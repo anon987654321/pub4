@@ -39,8 +39,49 @@ class Repligen
 
     "search" => "Search indexed models",
 
+    "wild" => "Wild chain: random multi-model pipeline for unique outputs",
+
     "help" => "Show this help"
 
+  }
+
+  # Wild Chain Mode: Random model combinations for experimental outputs
+  WILD_CHAIN = {
+    image_gen: [
+      { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
+      { model: "black-forest-labs/flux-dev", name: "Flux Dev" },
+      { model: "stability-ai/sdxl", name: "SDXL" },
+      { model: "ideogram-ai/ideogram-v2", name: "Ideogram V2" },
+      { model: "recraft-ai/recraft-v3", name: "Recraft V3" }
+    ],
+    video_gen: [
+      { model: "minimax/video-01", name: "Hailuo 2.3" },
+      { model: "kwaivgi/kling-v2.5-turbo-pro", name: "Kling 2.5" },
+      { model: "luma/ray-2", name: "Luma Ray 2" },
+      { model: "wan-video/wan-2.5-i2v", name: "WAN 2.5" },
+      { model: "openai/sora-2", name: "Sora 2" }
+    ],
+    enhance: [
+      { model: "nightmareai/real-esrgan", name: "Real-ESRGAN 4x" },
+      { model: "tencentarc/gfpgan", name: "GFPGAN Face" },
+      { model: "sczhou/codeformer", name: "CodeFormer" },
+      { model: "lucataco/clarity-upscaler", name: "Clarity 4x" }
+    ],
+    style: [
+      { model: "adirik/depth-anything-v2", name: "Depth Map" },
+      { model: "jagilley/controlnet-canny", name: "Canny Edge" },
+      { model: "lucataco/remove-bg", name: "Remove BG" },
+      { model: "fofr/face-to-many", name: "Face Style" }
+    ],
+    colorgrade: [
+      { model: "cjwbw/bigcolor", name: "BigColor" },
+      { model: "piddnad/ddcolor", name: "DDColor" }
+    ],
+    audio: [
+      { model: "meta/musicgen", name: "MusicGen" },
+      { model: "suno-ai/bark", name: "Bark TTS" },
+      { model: "openai/whisper", name: "Whisper STT" }
+    ]
   }
 
   CATWALK_STYLES = {
@@ -705,6 +746,168 @@ After training, use with:"
 
   end
 
+  # ─────────────────────────────────────────────────────────────────────
+  # WILD CHAIN MODE: Random multi-model pipeline for experimental outputs
+  # ─────────────────────────────────────────────────────────────────────
+  def wild_chain(prompt, steps: 5, seed: nil)
+    seed ||= rand(1_000_000)
+    srand(seed)
+    
+    puts "\n🎲 WILD CHAIN MODE"
+    puts "="*70
+    puts "Prompt: #{prompt}"
+    puts "Steps: #{steps}"
+    puts "Seed: #{seed} (use same seed to reproduce)"
+    puts "="*70
+    
+    # Build random pipeline
+    pipeline = build_wild_pipeline(steps)
+    
+    puts "\n📋 Generated Pipeline:"
+    pipeline.each_with_index do |step, i|
+      puts "  [#{i+1}] #{step[:category]} → #{step[:model][:name]}"
+    end
+    puts "="*70
+    
+    # Execute pipeline
+    current_result = nil
+    artifacts = []
+    
+    pipeline.each_with_index do |step, i|
+      puts "\n[#{i+1}/#{steps}] #{step[:category].upcase}: #{step[:model][:name]}"
+      
+      result = execute_wild_step(step, prompt, current_result, i)
+      
+      if result
+        current_result = result
+        artifact = save_wild_artifact(result, step, i)
+        artifacts << artifact if artifact
+        puts "  ✓ Output: #{File.basename(artifact)}" if artifact
+      else
+        puts "  ✗ Step failed, continuing with previous result..."
+      end
+      
+      sleep 2
+    end
+    
+    # Summary
+    puts "\n" + "="*70
+    puts "🎲 WILD CHAIN COMPLETE!"
+    puts "="*70
+    puts "Seed: #{seed}"
+    puts "Artifacts: #{artifacts.length}"
+    artifacts.each { |a| puts "  📁 #{File.basename(a)}" }
+    puts "\nReproduce: ruby repligen.rb wild '#{prompt}' --seed=#{seed}"
+    puts "="*70
+    
+    { seed: seed, artifacts: artifacts, pipeline: pipeline.map { |s| s[:model][:name] } }
+  end
+  
+  def build_wild_pipeline(steps)
+    pipeline = []
+    last_category = nil
+    
+    # First step is always image generation
+    pipeline << { category: :image_gen, model: WILD_CHAIN[:image_gen].sample }
+    
+    # Remaining steps follow logical flow
+    (steps - 1).times do
+      # Weight categories based on what makes sense
+      weights = {
+        enhance: last_category == :image_gen ? 3 : 1,
+        style: last_category == :image_gen ? 2 : 1,
+        video_gen: last_category != :video_gen ? 4 : 0,
+        colorgrade: last_category == :image_gen ? 2 : 0,
+        audio: last_category == :video_gen ? 3 : 0
+      }
+      
+      # Build weighted selection
+      pool = []
+      weights.each do |cat, weight|
+        next if weight == 0 || WILD_CHAIN[cat].nil?
+        weight.times { pool << cat }
+      end
+      
+      category = pool.sample || :enhance
+      model = WILD_CHAIN[category].sample
+      pipeline << { category: category, model: model }
+      last_category = category
+    end
+    
+    pipeline
+  end
+  
+  def execute_wild_step(step, prompt, previous_result, step_index)
+    case step[:category]
+    when :image_gen
+      generate_image(prompt)
+    when :video_gen
+      return nil unless previous_result
+      generate_video(previous_result, prompt, model: infer_video_model(step[:model][:model]))
+    when :enhance, :style, :colorgrade
+      return nil unless previous_result
+      apply_model(step[:model][:model], previous_result, prompt)
+    when :audio
+      generate_audio(prompt, step[:model][:model])
+    else
+      previous_result
+    end
+  end
+  
+  def infer_video_model(model_path)
+    case model_path
+    when /kling/ then :kling
+    when /sora/ then :sora
+    when /wan/ then :wan
+    when /luma/ then :luma
+    else :hailuo
+    end
+  end
+  
+  def apply_model(model_path, input_url, prompt)
+    puts "  ⚙️ Applying #{model_path}..."
+    
+    res = api(:post, "/models/#{model_path}/predictions", {
+      input: {
+        image: input_url,
+        prompt: prompt
+      }.compact
+    })
+    
+    return nil unless res
+    wait_for_completion(JSON.parse(res.body)["id"], File.basename(model_path))
+  end
+  
+  def generate_audio(prompt, model_path)
+    puts "  🎵 Generating audio..."
+    
+    res = api(:post, "/models/#{model_path}/predictions", {
+      input: {
+        prompt: prompt[0..200],
+        duration: 10
+      }
+    })
+    
+    return nil unless res
+    wait_for_completion(JSON.parse(res.body)["id"], "Audio")
+  end
+  
+  def save_wild_artifact(result, step, index)
+    return nil unless result
+    
+    ext = case step[:category]
+          when :video_gen then ".mp4"
+          when :audio then ".wav"
+          else ".webp"
+          end
+    
+    filename = File.join(@out, "wild_#{Time.now.strftime("%Y%m%d_%H%M%S")}_#{index+1}_#{step[:model][:name].downcase.gsub(/\s+/, '_')}#{ext}")
+    download(result, filename)
+    filename
+  rescue
+    nil
+  end
+
   def setup_database
 
     require "sqlite3"
@@ -1188,6 +1391,31 @@ Advanced cinematography techniques applied:"
       prompt = args[1..-1].join(" ")
 
       execute_chain(prompt.empty? ? nil : prompt)
+
+    when "wild", "w"
+
+      # Parse args: wild 'prompt' --steps=N --seed=N
+      prompt_parts = []
+      steps = 5
+      seed = nil
+      
+      args[1..-1].each do |arg|
+        if arg =~ /^--steps=(\d+)$/
+          steps = $1.to_i.clamp(2, 10)
+        elsif arg =~ /^--seed=(\d+)$/
+          seed = $1.to_i
+        else
+          prompt_parts << arg
+        end
+      end
+      
+      prompt = prompt_parts.join(" ")
+      if prompt.empty?
+        puts "Usage: repligen.rb wild 'your creative prompt' [--steps=5] [--seed=12345]"
+        return
+      end
+      
+      wild_chain(prompt, steps: steps, seed: seed)
 
     when "index", "i"
 

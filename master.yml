@@ -620,28 +620,34 @@ phases:
 # Model failover: Automatic fallback with 5min cooldown on rate limits
 # =============================================================================
 llm:
-  # Tiered pipeline: cheap → medium → strong
+  # Tiered pipeline: cheap → code-fast → medium → strong
   tiers:
     fast:
-      model: "anthropic/claude-sonnet-4.5"
+      model: "deepseek-ai/deepseek-r1"
       temperature: 0.2
       max_tokens: 2048
-      cost_weight: 1.0
-      use_for: [detection, smell_scan]
+      cost_weight: 0.5
+      use_for: [detection, smell_scan, syntax_check]
+    code:
+      model: "x-ai/grok-code-fast-1"
+      temperature: 0.3
+      max_tokens: 4096
+      cost_weight: 0.8
+      use_for: [code_generation, refactoring, bug_fixing]
     medium:
       model: "anthropic/claude-sonnet-4.5"
       temperature: 0.4
       max_tokens: 4096
       cost_weight: 5.0
-      use_for: [explanation, refactoring]
+      use_for: [explanation, creative, complex_refactoring]
     strong:
       model: "anthropic/claude-opus-4.5"
       temperature: 0.1
       max_tokens: 8192
       cost_weight: 20.0
-      use_for: [validation, judgment, gardening]
+      use_for: [validation, judgment, gardening, architecture]
 
-  default_tier_sequence: [fast, medium, strong]
+  default_tier_sequence: [fast, code, medium, strong]
 
   # Model failover with cooldowns
   failover:
@@ -660,12 +666,11 @@ llm:
 
   detection:
     enabled: true
-    model: "anthropic/claude-sonnet-4.5"
+    model: "x-ai/grok-code-fast-1"
     fallback_models:
       - "deepseek-ai/deepseek-r1"
+      - "anthropic/claude-sonnet-4.5"
       - "google/gemini-2.0-flash-exp:free"
-      - "openai/gpt-4o"
-      - "xai/grok-2"
     prompt: |
       TASK: Analyze code against 32 coding principles. Return JSON array of violations.
 
@@ -696,10 +701,10 @@ llm:
 
   refactoring:
     enabled: true
-    model: "anthropic/claude-sonnet-4.5"
+    model: "x-ai/grok-code-fast-1"
     fallback_models:
+      - "anthropic/claude-sonnet-4.5"
       - "deepseek-ai/deepseek-r1"
-      - "openai/gpt-4o"
     strategies:
       extract_method: {max_tokens: 3000, temperature: 0.2}
       rename_variable: {max_tokens: 500, temperature: 0.3}

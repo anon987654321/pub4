@@ -613,12 +613,13 @@ module Core
   module CostEstimator
     # Cost rates per 1M tokens by tier
     RATES = {
-      fast: { input: 0.5, output: 2.0 },       # DeepSeek, Gemini Flash
-      medium: { input: 3.0, output: 15.0 },    # Claude Sonnet 4.5
-      strong: { input: 15.0, output: 75.0 },   # Claude Opus 4.5
-      gpt4: { input: 2.5, output: 10.0 },      # GPT-4o
-      deepseek: { input: 0.55, output: 2.19 }, # DeepSeek R1
-      grok: { input: 5.0, output: 15.0 },      # Grok 2
+      fast: { input: 0.5, output: 2.0 },           # Gemini Flash
+      deepseek: { input: 0.55, output: 2.19 },     # DeepSeek R1
+      grok_code: { input: 0.20, output: 1.50 },    # Grok Code Fast 1 (super cheap!)
+      grok: { input: 5.0, output: 15.0 },          # Grok 2
+      medium: { input: 3.0, output: 15.0 },        # Claude Sonnet 4.5
+      strong: { input: 15.0, output: 75.0 },       # Claude Opus 4.5
+      gpt4: { input: 2.5, output: 10.0 },          # GPT-4o
       default: { input: 1.0, output: 3.0 }
     }.freeze
 
@@ -637,6 +638,7 @@ module Core
     # @return [Hash] {input:, output:} rates per 1M tokens
     def self.rate_for(model)
       case model
+      when /grok-code-fast/i then RATES[:grok_code]
       when /deepseek/i then RATES[:deepseek]
       when /grok/i then RATES[:grok]
       when /gemini.*flash|gemma/i then RATES[:fast]
@@ -1240,10 +1242,250 @@ module Core
   end
 end
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPLICATE MODULE: Generative AI Model Orchestration
+# ═══════════════════════════════════════════════════════════════════════════════
+module Replicate
+  API_BASE = "https://api.replicate.com/v1"
+  MODEL_DB = File.join(Dir.home, ".constitutional", "replicate_models.db")
+  
+  # Model categories for wild chain
+  WILD_CHAIN = {
+    image_gen: %w[
+      black-forest-labs/flux-pro
+      black-forest-labs/flux-2-klein-9b
+      stability-ai/sdxl
+      ideogram-ai/ideogram-v2
+      recraft-ai/recraft-v3
+    ],
+    video_gen: %w[
+      minimax/video-01
+      kwaivgi/kling-v2.6
+      luma/ray-2
+      wan-video/wan-2.5-i2v
+      bytedance/seedance-1.5-pro
+    ],
+    enhance: %w[
+      nightmareai/real-esrgan
+      tencentarc/gfpgan
+      sczhou/codeformer
+      lucataco/clarity-upscaler
+    ],
+    style: %w[
+      adirik/depth-anything-v2
+      jagilley/controlnet-canny
+      lucataco/remove-bg
+    ],
+    audio: %w[
+      meta/musicgen
+      suno-ai/bark
+      qwen/qwen3-tts
+    ]
+  }.freeze
+
+  class Client
+    def initialize
+      @token = ENV["REPLICATE_API_TOKEN"]
+      @enabled = !@token.nil? && !@token.empty?
+    end
+    
+    def enabled?
+      @enabled
+    end
+    
+    def api(method, path, body = nil)
+      return nil unless @enabled
+      
+      uri = URI("#{API_BASE}#{path}")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      
+      req = method == :get ? Net::HTTP::Get.new(uri) : Net::HTTP::Post.new(uri)
+      req["Authorization"] = "Token #{@token}"
+      req["Content-Type"] = "application/json"
+      req.body = body.to_json if body
+      
+      http.request(req)
+    rescue StandardError => e
+      Log.error("Replicate API error: #{e.message}")
+      nil
+    end
+    
+    def wait_for(id, name, timeout: 300)
+      start = Time.now
+      loop do
+        sleep 3
+        res = api(:get, "/predictions/#{id}")
+        return nil unless res
+        
+        data = JSON.parse(res.body)
+        case data["status"]
+        when "succeeded"
+          return data["output"].is_a?(Array) ? data["output"][0] : data["output"]
+        when "failed"
+          Log.error("#{name} failed: #{data['error']}")
+          return nil
+        end
+        
+        return nil if Time.now - start > timeout
+      end
+    end
+    
+    def run_model(model, input)
+      res = api(:post, "/models/#{model}/predictions", { input: input })
+      return nil unless res
+      
+      data = JSON.parse(res.body)
+      wait_for(data["id"], model)
+    end
+    
+    def generate_image(prompt, model: "black-forest-labs/flux-pro")
+      Log.info("Generating image: #{prompt[0..50]}...")
+      run_model(model, {
+        prompt: prompt,
+        aspect_ratio: "16:9",
+        output_format: "webp"
+      })
+    end
+    
+    def generate_video(image_url, prompt, model: "minimax/video-01")
+      Log.info("Generating video...")
+      run_model(model, {
+        prompt: prompt,
+        first_frame_image: image_url,
+        prompt_optimizer: true
+      })
+    end
+    
+    def wild_chain(prompt, steps: 5, seed: nil)
+      seed ||= rand(1_000_000)
+      srand(seed)
+      
+      Log.info("Wild chain: #{steps} steps, seed #{seed}")
+      
+      pipeline = build_pipeline(steps)
+      result = nil
+      artifacts = []
+      
+      pipeline.each_with_index do |step, i|
+        Log.info("[#{i+1}/#{steps}] #{step[:category]} → #{step[:model]}")
+        
+        case step[:category]
+        when :image_gen
+          result = generate_image(prompt, model: step[:model])
+        when :video_gen
+          result = generate_video(result, prompt, model: step[:model]) if result
+        when :enhance, :style
+          result = run_model(step[:model], { image: result }) if result
+        when :audio
+          result = run_model(step[:model], { prompt: prompt[0..200] })
+        end
+        
+        artifacts << { step: i, model: step[:model], result: result } if result
+      end
+      
+      { seed: seed, artifacts: artifacts }
+    end
+    
+    private
+    
+    def build_pipeline(steps)
+      pipeline = [{ category: :image_gen, model: WILD_CHAIN[:image_gen].sample }]
+      
+      (steps - 1).times do
+        cat = [:video_gen, :enhance, :style, :audio].sample
+        model = WILD_CHAIN[cat]&.sample
+        pipeline << { category: cat, model: model } if model
+      end
+      
+      pipeline
+    end
+  end
+  
+  # Model indexer for 50k+ Replicate models
+  module Index
+    def self.init_db
+      require "sqlite3"
+      FileUtils.mkdir_p(File.dirname(MODEL_DB))
+      
+      db = SQLite3::Database.new(MODEL_DB)
+      db.execute <<-SQL
+        CREATE TABLE IF NOT EXISTS models (
+          id TEXT PRIMARY KEY,
+          owner TEXT,
+          name TEXT,
+          description TEXT,
+          run_count INTEGER,
+          category TEXT,
+          indexed_at INTEGER
+        )
+      SQL
+      db.execute <<-SQL
+        CREATE TABLE IF NOT EXISTS collections (
+          slug TEXT PRIMARY KEY,
+          name TEXT,
+          model_count INTEGER
+        )
+      SQL
+      db
+    end
+    
+    def self.index_all(client)
+      db = init_db
+      
+      Log.info("Indexing Replicate models...")
+      res = client.api(:get, "/collections")
+      return unless res
+      
+      collections = JSON.parse(res.body)["results"] || []
+      total = 0
+      
+      collections.each do |coll|
+        Log.info("  #{coll['name']}...")
+        
+        res = client.api(:get, "/collections/#{coll['slug']}")
+        next unless res
+        
+        models = JSON.parse(res.body)["models"] || []
+        models.each do |m|
+          db.execute(
+            "INSERT OR REPLACE INTO models VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ["#{m['owner']}/#{m['name']}", m["owner"], m["name"],
+             m["description"], m["run_count"] || 0, coll["slug"], Time.now.to_i]
+          )
+        end
+        
+        total += models.size
+        sleep 1
+      end
+      
+      Log.ok("Indexed #{total} models from #{collections.size} collections")
+    end
+    
+    def self.search(query, limit: 20)
+      db = init_db
+      db.execute(
+        "SELECT id, description, category, run_count FROM models 
+         WHERE id LIKE ? OR description LIKE ? 
+         ORDER BY run_count DESC LIMIT ?",
+        ["%#{query}%", "%#{query}%", limit]
+      )
+    end
+    
+    def self.top_by_category(category, limit: 10)
+      db = init_db
+      db.execute(
+        "SELECT id, run_count FROM models WHERE category = ? ORDER BY run_count DESC LIMIT ?",
+        [category, limit]
+      )
+    end
+  end
+end
+
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.1"
+  VERSION = "49.2"
 
   def self.boot
     return if Options.quiet
