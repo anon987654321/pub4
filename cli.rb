@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.16"
+  VERSION = "49.17"
 
   def self.boot
     return if Options.quiet
@@ -2704,13 +2704,10 @@ module Dmesg
       return
     end
 
-    # OpenBSD dmesg-style boot message
-    puts "master.yml LLM OS #{VERSION} (GENERIC) #1: #{Time.now.strftime('%a %b %e %H:%M:%S %Z %Y')}"
-    puts "    llm@master.yml:/principles/compile/GENERIC"
-    puts "real principles = #{principle_count}"
-    puts "avail models = #{model_count}"
-    puts "llm0 at mainbus0: #{llm_status}"
-    puts "ruby0 at cpu0: Ruby #{RUBY_VERSION}, #{RUBY_PLATFORM}"
+    # Clean boot message
+    puts "#{green}Constitutional AI#{reset} #{VERSION}"
+    puts "Principles: #{principle_count} | Models: #{model_count}"
+    puts "LLM: #{llm_status} | Ruby: #{RUBY_VERSION} (#{RUBY_PLATFORM.split('-').last})"
     puts
   end
 
@@ -3539,6 +3536,18 @@ class LLMClient
 
   def set_current_file(path)
     @current_file = path
+  end
+  
+  # Chat with message history (for conversational mode)
+  def chat(messages, tier: "medium")
+    return nil unless @enabled
+    @tiered&.ask_tier(tier, messages.last[:content], system_prompt: messages.first[:content])
+  end
+  
+  # Simple query (backwards compatible)
+  def query(prompt, tier: "fast")
+    return nil unless @enabled
+    @tiered&.ask_tier(tier, prompt)
   end
 
   DETECTION_SYSTEM_PROMPT = <<~PROMPT.strip
@@ -4576,27 +4585,83 @@ class CLI
       return
     end
     
-    # Use the shell assistant for conversation
-    context = "User is in directory: #{Dir.pwd}\n"
-    context += "Available folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.join(', ')}\n"
+    @chat_history ||= []
+    @chat_history << { role: "user", content: input }
     
-    prompt = <<~PROMPT
-      You are a protective coding assistant (bodyguard personality). Be brief and helpful.
+    # Build context
+    context = <<~CTX
+      Current directory: #{Dir.pwd}
+      Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.join(', ')}
+      Recent files: #{Dir.glob('*').select { |f| File.file?(f) }.first(10).join(', ')}
+    CTX
+    
+    system_prompt = <<~SYS
+      You are Constitutional AI, a protective coding assistant. Personality: vigilant bodyguard.
+      
       #{context}
       
-      User says: #{input}
+      Capabilities:
+      - Analyze code for violations (say: "analyze <path>")
+      - Read files (say: "show <path>")  
+      - Edit files (say: "edit <path>: <instruction>")
+      - Run structural analysis (say: "structural <path>")
+      - Navigate (ls, cd, tree commands)
       
-      Respond concisely. If they're asking about files/folders, help them navigate.
-      If they're giving instructions, acknowledge and wait for specifics.
-      If unclear, ask a clarifying question.
-    PROMPT
+      Rules:
+      - Be brief and direct (Strunk & White style)
+      - Never modify without explicit permission
+      - Ask clarifying questions when uncertain
+      - Remember conversation context
+      
+      Respond to the user. If they give an instruction you can execute, do it.
+      If they ask to edit a file, output the exact changes needed.
+    SYS
     
     begin
-      response = @llm.query(prompt, tier: "fast")
-      puts response&.content || "I understand. What would you like me to do?"
+      messages = [{ role: "system", content: system_prompt }]
+      messages += @chat_history.last(10)  # Keep last 10 messages for context
+      
+      response = @llm.chat(messages, tier: "medium")
+      reply = response&.content || "I understand. What would you like me to do?"
+      
+      @chat_history << { role: "assistant", content: reply }
+      
+      # Check if response contains an action to execute
+      execute_chat_action(reply)
+      
+      puts reply
     rescue => e
       Log.debug("Chat error: #{e.message}")
       puts "I understand. What would you like me to do next?"
+    end
+  end
+  
+  def execute_chat_action(reply)
+    # Auto-execute if the AI suggests a specific action
+    case reply
+    when /```edit:([^\n]+)\n(.*?)```/m
+      file, content = $1.strip, $2
+      if File.exist?(file)
+        print "Apply edit to #{file}? [y/N] "
+        if $stdin.gets&.strip&.downcase == 'y'
+          Core.write_file(file, content, backup: true)
+          Log.ok("Updated #{file}")
+        end
+      end
+    when /ANALYZE:\s*(.+)/i
+      process_targets([$1.strip])
+    when /STRUCTURAL:\s*(.+)/i
+      run_structural_analysis($1.strip)
+    end
+  end
+  
+  def run_structural_analysis(path)
+    Log.info("Running structural analysis on #{path}...")
+    issues = Core::StructuralAnalyzer.full_analysis(path, @constitution)
+    if issues.empty?
+      Log.ok("No structural issues found")
+    else
+      Core::StructuralAnalyzer.report(issues)
     end
   end
   
@@ -4803,7 +4868,7 @@ class CLI
   end
 
   def read_input
-    prompt = "#{Dmesg.cyan}os#{Dmesg.reset}> "
+    prompt = "#{Dmesg.green}›#{Dmesg.reset} "
     if READLINE_AVAILABLE
       Readline.readline(prompt, true)&.strip
     else
