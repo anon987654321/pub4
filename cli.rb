@@ -5829,13 +5829,16 @@ class CLI
     # Include current plan if exists
     plan_context = @plan ? "\nCurrent plan:\n#{@plan.to_s}\n" : ""
     
+    # Get directory listing for context
+    files = Dir.entries('.').reject { |f| f.start_with?('.') }.first(20).join(', ') rescue ""
+    
     system_prompt = <<~SYS
-      You run inside cli.rb, governed by master.yml (32 principles).
-      You CAN edit cli.rb and master.yml via zsh: print >file, <<< heredoc, ${var//pat/rep}.
-      Shell: zsh on OpenBSD. Commands: cat, ls, cd, tree, pwd, !cmd.
-      Ronin coder. Hagakure way. Stoic. Decisive.
-      Short sentences. Plain text only. No markdown.
+      You run inside cli.rb on OpenBSD zsh. You cannot see files directly.
+      Tell user to run: ls, cat, tree, scan, analyze - these commands work.
+      NEVER invent or hallucinate file contents. Say "run: cat <file>" instead.
+      Ronin coder. Stoic. Short sentences. No markdown. No code blocks.
       cwd: #{Dir.pwd}
+      files here: #{files}
     SYS
     
     begin
