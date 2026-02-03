@@ -5804,21 +5804,9 @@ class CLI
     plan_context = @plan ? "\nCurrent plan:\n#{@plan.to_s}\n" : ""
     
     system_prompt = <<~SYS
-      dmesg style: terse + clear. Every word must carry meaning.
-      
-      Format: component: clear status or action
-      Good: "cli.rb: 3 syntax errors in routes.rb, lines 42,67,89"
-      Good: "scan: ./rails complete, 4 issues found"
-      Bad: "I found some issues" (vague)
-      Bad: "There appear to be problems" (weasel words)
-      
-      Rules:
-      - State facts, not feelings
-      - Numbers over adjectives
-      - Specifics over generalities
-      - One thought per line
-      - No markdown, no lists, no headers
-      
+      Short sentences. Plain text only.
+      No markdown. No headers. No lists. No tables. No code blocks.
+      Be direct. State facts. Skip fluff.
       cwd: #{Dir.pwd.split('/').last}
     SYS
     
