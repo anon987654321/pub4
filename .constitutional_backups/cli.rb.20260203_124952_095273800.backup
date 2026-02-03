@@ -350,7 +350,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "47.0"
+  VERSION = "46.1"
   
   def self.boot
     puts "#{bold}Constitutional AI #{VERSION}#{reset}"
@@ -1179,7 +1179,7 @@ class CLI
   
   def run(args)
     if args.empty?
-      interactive_mode
+      usage
       return
     end
     
@@ -1193,61 +1193,25 @@ class CLI
     when "--rollback"
       rollback(args[1])
     else
-      process_file(args.first)
+      file_path = args.first
+      
+      unless File.exist?(file_path)
+        Log.error("File not found: #{file_path}")
+        exit 1
+      end
+      
+      language = detect_language(file_path)
+      
+      result = @engine.process(file_path, language)
+      
+      unless result.ok?
+        Log.error(result.error)
+        exit 1
+      end
     end
   end
   
   private
-  
-  def interactive_mode
-    puts
-    puts "Interactive Mode - Enter file path or command"
-    puts "Commands: help, cost, quit"
-    puts
-    
-    loop do
-      print "constitutional> "
-      input = $stdin.gets&.strip
-      
-      break if input.nil? || input.empty? && $stdin.eof?
-      next if input.empty?
-      
-      case input.downcase
-      when "quit", "exit", "q"
-        puts "Goodbye."
-        break
-      when "help", "h", "?"
-        usage
-      when "cost"
-        show_cost
-      when /^rollback\s+(.+)/
-        rollback($1)
-      else
-        if File.exist?(input)
-          process_file(input)
-        else
-          Log.error("File not found: #{input}")
-        end
-      end
-      
-      puts
-    end
-  end
-  
-  def process_file(file_path)
-    unless File.exist?(file_path)
-      Log.error("File not found: #{file_path}")
-      return
-    end
-    
-    language = detect_language(file_path)
-    
-    result = @engine.process(file_path, language)
-    
-    unless result.ok?
-      Log.error(result.error)
-    end
-  end
   
   def detect_language(file_path)
     config = @constitution.language_detection
