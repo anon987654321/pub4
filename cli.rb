@@ -5233,7 +5233,9 @@ class CLI
     @autopilot = true
     @stuck_count = 0
     iteration = 0
-    max_iterations = 500  # High limit - runs until done
+    max_iterations = 500
+    last_issue_count = nil
+    plateau_count = 0
     
     trap("INT") { @autopilot = false; puts "\nStopped." }
     
@@ -5258,6 +5260,21 @@ class CLI
           next
         end
       end
+      
+      # Diminishing returns detection
+      if last_issue_count && total_issues >= last_issue_count
+        plateau_count += 1
+        if plateau_count >= 5
+          Log.warn("Diminishing returns (#{total_issues} issues, no progress in 5 iterations)")
+          print "Continue? (y/n) "
+          answer = $stdin.gets&.strip&.downcase
+          break unless answer == 'y'
+          plateau_count = 0
+        end
+      else
+        plateau_count = 0
+      end
+      last_issue_count = total_issues
       
       # Brief status
       puts "#{iteration}: #{total_issues} remaining" if iteration % 5 == 1
@@ -5284,7 +5301,6 @@ class CLI
             @stuck_count = 0
           else
             Log.warn("Stuck. Moving to next issue.")
-            # Skip this issue, try next
             rotate_issues(analysis)
           end
         end
