@@ -234,11 +234,32 @@ end
 # =============================================================================
 
 module Core
+  # Constants
+  FILE_SCAN_LIMIT = 50
+  LARGE_SCAN_LIMIT = 100
+  CODE_EXTENSIONS = "*.{rb,py,js,ts}"
+  CONFIG_EXTENSIONS = "*.{yml,yaml,json}"
+  ALL_EXTENSIONS = "*.{rb,py,js,ts,yml,yaml,json,sh}"
+  
   # Safe UTF-8 file reading - always handles bad encoding
   def self.read_file(path)
     File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
-  rescue => e
+  rescue
     ""
+  end
+  
+  # Read file with binary mode for cleaning
+  def self.read_file_binary(path)
+    File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace, mode: "rb")
+  rescue
+    ""
+  end
+  
+  # Glob files with standard exclusions
+  def self.glob_files(root_dir, pattern = CODE_EXTENSIONS, limit: FILE_SCAN_LIMIT)
+    Dir.glob(File.join(root_dir, "**", pattern))
+       .reject { |f| f.include?("node_modules") || f.include?("vendor") || f.include?(".git") }
+       .first(limit)
   end
 
   # Safe file writing with backup option
@@ -1753,7 +1774,146 @@ module Core
       issues
     end
     
-    # Full structural + cross-ref + simulation analysis
+    # Micro-refinement detection
+    def self.detect_micro_refinements(root_dir)
+      issues = []
+      
+      Core.glob_files(root_dir, Core::CODE_EXTENSIONS).each do |f|
+        content = Core.read_file(f)
+        next if content.empty?
+        lines = content.lines
+        
+        # Long methods (>25 lines)
+        method_lines = 0
+        method_start = nil
+        lines.each_with_index do |line, i|
+          if line.match?(/^\s*(def |function |async function |const \w+ = )/)
+            method_start = i + 1
+            method_lines = 0
+          elsif line.match?(/^\s*end\s*$/) || (method_start && line.match?(/^}\s*$/))
+            if method_lines > 25
+              issues << { file: f, type: :refinement, check: :long_method,
+                          message: "Method at line #{method_start}: #{method_lines} lines" }
+            end
+            method_start = nil
+          elsif method_start
+            method_lines += 1
+          end
+        end
+        
+        # Magic numbers
+        content.scan(/[^a-zA-Z_](\d{2,})[^a-zA-Z_\d]/).each do |match|
+          num = match[0].to_i
+          next if [10, 60, 100, 1000, 1024].include?(num) # common acceptable values
+          issues << { file: f, type: :refinement, check: :magic_number,
+                      message: "Magic number: #{num}" } if issues.count { |i| i[:check] == :magic_number } < 5
+        end
+        
+        # Bare rescue
+        if content.match?(/rescue\s*($|#)/) || content.match?(/rescue\s+=>/)
+          issues << { file: f, type: :refinement, check: :bare_rescue,
+                      message: "Bare rescue without exception type" }
+        end
+        
+        # Hardcoded paths
+        content.scan(%r{["'](/(?:usr|etc|home|var|tmp)/[^"']+)["']}).each do |match|
+          issues << { file: f, type: :refinement, check: :hardcoded_path,
+                      message: "Hardcoded path: #{match[0][0..40]}" } if issues.count { |i| i[:check] == :hardcoded_path } < 3
+        end
+        
+        # Duplicate code patterns (simple: same 3+ line block)
+        line_hashes = {}
+        lines.each_cons(3).with_index do |block, i|
+          hash = block.map(&:strip).join.hash
+          if line_hashes[hash]
+            issues << { file: f, type: :refinement, check: :duplicate_pattern,
+                        message: "Lines #{line_hashes[hash]+1} and #{i+1} are similar" }
+            break # only report first duplicate
+          end
+          line_hashes[hash] = i
+        end
+        
+        # Inconsistent naming (mixed camelCase and snake_case)
+        camel = content.scan(/\b[a-z]+[A-Z][a-zA-Z]+\b/).uniq
+        snake = content.scan(/\b[a-z]+_[a-z]+\b/).uniq
+        if camel.size > 3 && snake.size > 3
+          issues << { file: f, type: :refinement, check: :inconsistent_naming,
+                      message: "Mixed naming: #{camel.size} camelCase, #{snake.size} snake_case" }
+        end
+      end
+      
+      issues.first(30)
+    end
+    
+    # Cross-file DRY violation detection
+    def self.detect_cross_file_dry(root_dir)
+      issues = []
+      files = Core.glob_files(root_dir, Core::CODE_EXTENSIONS, limit: Core::LARGE_SCAN_LIMIT)
+      
+      # Collect patterns across all files
+      call_patterns = Hash.new { |h, k| h[k] = [] }
+      block_hashes = Hash.new { |h, k| h[k] = [] }
+      constants_used = Hash.new { |h, k| h[k] = [] }
+      
+      files.each do |f|
+        content = Core.read_file(f)
+        next if content.empty?
+        lines = content.lines
+        
+        # Track function call patterns (method calls with specific args)
+        content.scan(/(File\.(?:read|write|open)\([^)]{20,}\))/).each do |match|
+          call_patterns[match[0].gsub(/["'][^"']+["']/, '...')] << f
+        end
+        content.scan(/(Dir\.glob\([^)]+\))/).each do |match|
+          call_patterns[match[0].gsub(/["'][^"']+["']/, '...')] << f
+        end
+        
+        # Track 5-line blocks
+        lines.each_cons(5).with_index do |block, i|
+          normalized = block.map { |l| l.strip.gsub(/\s+/, ' ') }.join("\n")
+          next if normalized.length < 50
+          block_hashes[normalized.hash] << { file: f, line: i + 1 }
+        end
+        
+        # Track magic numbers
+        content.scan(/\b(\d{2,4})\b/).each do |match|
+          num = match[0]
+          next if %w[10 100 1000 1024 2048 4096].include?(num)
+          constants_used[num] << f
+        end
+      end
+      
+      # Report duplicate call patterns
+      call_patterns.each do |pattern, occurrences|
+        if occurrences.uniq.size >= 3
+          issues << { type: :cross_file_dry, check: :duplicate_function_calls,
+                      message: "#{pattern[0..50]}... in #{occurrences.uniq.size} files",
+                      files: occurrences.uniq.first(3) }
+        end
+      end
+      
+      # Report duplicate blocks
+      block_hashes.each do |hash, occurrences|
+        if occurrences.size >= 2 && occurrences.map { |o| o[:file] }.uniq.size >= 2
+          issues << { type: :cross_file_dry, check: :copy_paste_blocks,
+                      message: "5-line block duplicated",
+                      files: occurrences.map { |o| "#{o[:file]}:#{o[:line]}" }.first(3) }
+        end
+      end
+      
+      # Report magic numbers spread across files
+      constants_used.each do |num, occurrences|
+        if occurrences.uniq.size >= 3
+          issues << { type: :cross_file_dry, check: :magic_number_spread,
+                      message: "Magic number #{num} in #{occurrences.uniq.size} files",
+                      files: occurrences.uniq.first(3) }
+        end
+      end
+      
+      issues.first(20)
+    end
+    
+    # Full analysis including cross-file DRY
     def self.full_analysis(root_dir, constitution)
       all_issues = []
       all_issues.concat(analyze(root_dir, constitution))
@@ -1761,6 +1921,8 @@ module Core
       all_issues.concat(detect_cyclic_dependencies(root_dir))
       all_issues.concat(cross_reference(root_dir))
       all_issues.concat(simulate_edge_cases(root_dir))
+      all_issues.concat(detect_micro_refinements(root_dir))
+      all_issues.concat(detect_cross_file_dry(root_dir))
       all_issues
     end
   end
@@ -2536,7 +2698,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.12"
+  VERSION = "49.13"
 
   def self.boot
     return if Options.quiet

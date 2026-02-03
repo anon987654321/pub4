@@ -355,6 +355,94 @@ structural_analysis:
       - smell: "magic_numbers"
         fix: "Named constants with meaning"
 
+  # Micro-refinements: Automated code quality checks
+  # Run as part of every analysis cycle
+  micro_refinements:
+    checks:
+      - check: "duplicate_patterns"
+        detect: "Same code block appears 2+ times"
+        fix: "Extract to shared method or constant"
+      - check: "inconsistent_naming"
+        detect: "Mixed camelCase/snake_case in same file"
+        fix: "Standardize to language convention"
+      - check: "magic_values"
+        detect: "Hardcoded numbers/strings without explanation"
+        fix: "Extract to named constant"
+      - check: "dead_code"
+        detect: "Unused variables, unreachable branches"
+        fix: "Remove or document why kept"
+      - check: "long_methods"
+        detect: "Method > 25 lines"
+        fix: "Split into focused submethods"
+      - check: "bare_rescue"
+        detect: "rescue without specific exception type"
+        fix: "Specify exception class"
+      - check: "hardcoded_paths"
+        detect: "Absolute paths in source"
+        fix: "Use config, ENV, or relative paths"
+      - check: "missing_error_handling"
+        detect: "IO/network without rescue"
+        fix: "Add appropriate error handling"
+      - check: "inconsistent_hash_syntax"
+        detect: "Mixed :key and 'key' in same context"
+        fix: "Standardize to one style"
+      - check: "redundant_conditionals"
+        detect: "if x then true else false"
+        fix: "Simplify to just x"
+      - check: "god_method"
+        detect: "Method with multiple responsibilities"
+        fix: "Split by concern"
+      - check: "repeated_interpolation"
+        detect: "Same string pattern built multiple times"
+        fix: "Extract to method or template"
+      - check: "missing_guard_clauses"
+        detect: "Deep nesting that could early-return"
+        fix: "Add guard clause at top"
+      - check: "stale_comments"
+        detect: "Comments that don't match code"
+        fix: "Update or remove"
+      - check: "unused_imports"
+        detect: "require/import without usage"
+        fix: "Remove unused dependencies"
+    
+    # Cross-file DRY violations
+    cross_file_dry:
+      - check: "duplicate_function_calls"
+        detect: "Same function call pattern (e.g., File.read with options) in 3+ places"
+        fix: "Extract to shared helper method"
+        example: "File.read(f, encoding: 'UTF-8', invalid: :replace) → Core.read_file(f)"
+      - check: "duplicate_glob_patterns"
+        detect: "Same Dir.glob pattern in multiple files/methods"
+        fix: "Extract to Core.glob_files helper"
+      - check: "magic_number_spread"
+        detect: "Same magic number (e.g., 50, 100) across files"
+        fix: "Extract to shared constant (FILE_SCAN_LIMIT)"
+      - check: "copy_paste_blocks"
+        detect: "5+ line blocks identical across files"
+        fix: "Extract to module or shared method"
+      - check: "parallel_hierarchies"
+        detect: "Similar class/module structures in different files"
+        fix: "Merge or create shared base"
+      - check: "scattered_config"
+        detect: "Same config keys defined in multiple places"
+        fix: "Consolidate to single source of truth"
+      - check: "repeated_error_handling"
+        detect: "Same rescue pattern in multiple places"
+        fix: "Extract to error handling wrapper"
+    
+    # When to run
+    triggers:
+      - "During prescan phase"
+      - "After each file analysis"
+      - "Before commit (if git hook enabled)"
+      - "On demand with --refinements flag"
+    
+    # Output format
+    report:
+      group_by: "check type"
+      priority: "by fix difficulty (easy first)"
+      limit: 30
+
   # Meta-analysis: Questions to ask during every session
   # These extract reusable patterns and prevent knowledge loss
   meta_analysis:
