@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.17"
+  VERSION = "49.18"
 
   def self.boot
     return if Options.quiet
@@ -4619,14 +4619,14 @@ class CLI
     
     begin
       messages = [{ role: "system", content: system_prompt }]
-      messages += @chat_history.last(10)  # Keep last 10 messages for context
+      messages += @chat_history.last(10)
       
       response = @llm.chat(messages, tier: "medium")
-      reply = response&.content || "I understand. What would you like me to do?"
+      reply = response.is_a?(String) ? response : (response&.content || "I understand.")
+      reply = "I understand. What would you like me to do?" if reply.nil? || reply.empty?
       
       @chat_history << { role: "assistant", content: reply }
       
-      # Check if response contains an action to execute
       execute_chat_action(reply)
       
       puts reply
