@@ -2709,7 +2709,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.60"
+  VERSION = "49.61"
 
   def self.boot
     return if Options.quiet
@@ -5177,13 +5177,6 @@ class CLI
     @last_action = Time.now
     start_time = Time.now
 
-    # Ask about trace mode unless already set
-    unless ENV["TRACE"]
-      print "trace? [y/N] "
-      answer = $stdin.gets&.strip&.downcase
-      ENV["TRACE"] = "1" if answer == "y"
-    end
-
     # Start web server for cli.html
     web_url = nil
     begin
@@ -5224,6 +5217,9 @@ class CLI
         interactive_help
       when "cost"
         show_cost
+      when "trace"
+        ENV["TRACE"] = ENV["TRACE"] ? nil : "1"
+        puts ENV["TRACE"] ? "trace on" : "trace off"
       when "debug", "llm"
         puts "LLM_AVAILABLE: #{LLM_AVAILABLE}"
         puts "OPENROUTER_API_KEY: #{ENV['OPENROUTER_API_KEY'] ? 'set (' + ENV['OPENROUTER_API_KEY'][0..7] + '...)' : 'NOT SET'}"
@@ -5859,13 +5855,19 @@ class CLI
     # Get directory listing for context
     files = Dir.entries('.').reject { |f| f.start_with?('.') }.first(20).join(', ') rescue ""
     
+    # Trace context for LLM
+    trace_info = ENV["TRACE"] ? " TRACE=on" : ""
+    
     system_prompt = <<~SYS
       You run inside cli.rb on OpenBSD vmctl sandbox. All actions are safe.
       You can: ls, cat, tree, scan, analyze, !cmd (shell). No limits apply.
       NEVER hallucinate file contents. Say "run: cat <file>" to see files.
+      BE HONEST. If you don't know, say "I don't know" or "I need more context".
+      Don't guess. Don't make up answers. Ask clarifying questions if needed.
       Ronin coder. Stoic. Short sentences. No markdown. No code blocks.
-      cwd: #{Dir.pwd}
+      cwd: #{Dir.pwd}#{trace_info}
       files: #{files}
+      #{plan_context}
     SYS
     
     begin
