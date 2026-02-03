@@ -3559,6 +3559,8 @@ class TieredLLM
   def call_model(model:, messages:, max_tokens:, temperature:, stream: false, &block)
     @stats[:calls] += 1
 
+    puts "[DEBUG call_model] model=#{model} stream=#{stream}" if ENV["DEBUG"]
+
     chat = RubyLLM.chat(model: model, provider: :openrouter)
 
     user_msg = messages.find { |m| m[:role] == "user" }
@@ -3568,30 +3570,41 @@ class TieredLLM
     full_prompt += "#{system_msg[:content]}\n\n" if system_msg
     full_prompt += user_msg[:content] if user_msg
 
+    puts "[DEBUG call_model] prompt_len=#{full_prompt.length} calling chat.ask..." if ENV["DEBUG"]
+
     if stream && block_given?
       # Streaming mode - yield chunks as they arrive
       full_response = ""
+      chunk_count = 0
       response = chat.ask(full_prompt) do |chunk|
-        full_response += chunk.content if chunk.content
-        yield chunk.content if chunk.content
+        chunk_count += 1
+        if chunk.content
+          full_response += chunk.content
+          yield chunk.content
+        end
       end
+      puts "[DEBUG call_model] stream done, chunks=#{chunk_count} response_len=#{full_response.length}" if ENV["DEBUG"]
       track_usage(response, model)
       full_response
     else
       response = chat.ask(full_prompt)
+      puts "[DEBUG call_model] non-stream done, response=#{response.class}" if ENV["DEBUG"]
       track_usage(response, model)
       response.content
     end
   rescue StandardError => e
+    puts "[DEBUG call_model] ERROR: #{e.class}: #{e.message}" if ENV["DEBUG"]
     Log.warn("TieredLLM error: #{e.message}")
     nil
   end
 
   # Streaming version of ask_tier
   def ask_tier_stream(tier_name, prompt, system_prompt: nil, &block)
+    puts "[DEBUG ask_tier_stream] tier=#{tier_name} enabled=#{@enabled}" if ENV["DEBUG"]
     return nil unless @enabled
 
     tier = @tiers[tier_name.to_s]
+    puts "[DEBUG ask_tier_stream] tier config: #{tier.inspect}" if ENV["DEBUG"]
     return nil unless tier
 
     messages = build_messages(prompt, system_prompt, tier_name)
