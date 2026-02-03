@@ -1,5 +1,5 @@
 ---
-version: "47.4"
+version: "47.5"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
@@ -567,11 +567,43 @@ phases:
 
 # LLM CONFIGURATION
 llm:
+  # Tiered pipeline: cheap → medium → strong (60-80% cost savings)
+  tiers:
+    fast:
+      model: "qwen/qwen2.5-coder-32b-instruct"
+      temperature: 0.2
+      max_tokens: 2048
+      cost_weight: 1.0
+      use_for: [detection, smell_scan]
+    medium:
+      model: "anthropic/claude-3.5-sonnet"
+      temperature: 0.4
+      max_tokens: 4096
+      cost_weight: 5.0
+      use_for: [explanation, refactoring]
+    strong:
+      model: "anthropic/claude-opus-4"
+      temperature: 0.1
+      max_tokens: 8192
+      cost_weight: 20.0
+      use_for: [validation, judgment, gardening]
+  
+  default_tier_sequence: [fast, medium, strong]
+  
+  # Prompt caching (75-90% savings on repeated system prompts)
+  prompt_caching:
+    enabled: true
+    default_ttl: "1h"
+    breakpoints:
+      - system_prompt
+      - principles_summary
+      - recent_violations
+  
   detection:
     enabled: true
-    model: "anthropic/claude-3.5-sonnet"
+    model: "qwen/qwen2.5-coder-32b-instruct"
     fallback_models:
-      - "openai/gpt-4o"
+      - "anthropic/claude-3.5-sonnet"
       - "google/gemini-2.0-flash-exp:free"
     prompt: |
       You are a code quality expert. Analyze this code against 32 principles.
@@ -616,6 +648,15 @@ llm:
     enabled: false
     models: ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "google/gemini-2.0-flash-exp:free"]
     required_agreement: 2
+
+# LEARNED SMELLS (self-improving constitution)
+learned_smells: []
+# Example entry added by gardener:
+# - id: learned_001
+#   trigger_smell: "unsafe_eval_in_migration"
+#   priority: 9
+#   description: "Avoid eval() in migrations"
+#   source_iteration: "file.rb iteration 4"
 
 # SAFETY CONFIGURATION
 safety:
