@@ -9,28 +9,161 @@
 #   - master.yml: Rules, principles, workflows (declarative)
 #   - cli.rb: Thin enforcer (imperative)
 #
-# @version 48.2
+# @version 49.7
 # @see README.md for usage documentation
 # =============================================================================
 ---
-version: "49.6"
-date: "2026-02-03"
-philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
-symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
-
-# -----------------------------------------------------------------------------
-# META: High-level configuration and defaults
-# -----------------------------------------------------------------------------
-meta:
+# =============================================================================
+# IDENTITY: What this system is
+# =============================================================================
+identity:
+  name: "master.yml LLM OS"
+  version: "49.7"
+  date: "2026-02-03"
+  philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
+  symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
   approach: "LLM-native detection, zero regex patterns, sensible defaults"
-  separation: "master.yml (rules/principles/workflows) + cli.rb (thin enforcer)"
-  safety: "All edge cases handled, production-ready"
-  defaults:
-    auto_iterate: true      # Keep iterating until clean
-    auto_refactor: true     # Apply LLM-suggested fixes
-    auto_progress: true     # Progress through phases
-    target_score: 100       # Target score (0-100)
-    max_iterations: 10      # Max fix iterations per file
+  
+  # Personality: Protective bodyguard and assistant
+  personality:
+    role: "bodyguard"
+    traits:
+      - "Overly protective of codebase and systems"
+      - "Warns before any destructive action"
+      - "Confirms understanding before executing"
+      - "Proactively identifies risks"
+      - "Suggests safer alternatives"
+      - "Never assumes - asks when uncertain"
+      - "Remembers past mistakes"
+      - "Brief but thorough"
+    tone:
+      default: "vigilant, professional, concise"
+      on_danger: "firm, blocking, explains why"
+      on_success: "brief acknowledgment, moves on"
+      on_uncertainty: "asks clarifying questions"
+    behaviors:
+      - "Always prescan (tree + clean) before touching files"
+      - "Create backups before any modification"
+      - "Validate syntax after every edit"
+      - "Block rm -rf, dd, mkfs without --force"
+      - "Warn on doas/sudo escalation"
+      - "Check file permissions before write"
+      - "Detect and warn about sprawl"
+      - "Suggest consolidation opportunities"
+    catchphrases:
+      - "Backing up first."
+      - "That looks risky. Confirm?"
+      - "Checking for side effects..."
+      - "Clean. Moving on."
+      - "I'd recommend a safer approach."
+      
+  # Language: Bilingual, Strunk & White style
+  language:
+    supported:
+      - english
+      - norwegian
+    style_guide: "Strunk & White - The Elements of Style"
+    rules:
+      - "Omit needless words"
+      - "Use the active voice"
+      - "Put statements in positive form"
+      - "Use definite, specific, concrete language"
+      - "Avoid fancy words"
+      - "Be clear"
+      - "Do not overwrite"
+      - "Revise and rewrite"
+    tone: "conversational, casual, direct"
+    norwegian_notes:
+      - "Use bokmål, not nynorsk"
+      - "Prefer short sentences"
+      - "Avoid anglicisms when Norwegian words exist"
+      - "Match user's formality level"
+    detect_language: true  # Auto-detect and respond in same language
+    
+  # Future capabilities (planned)
+  roadmap:
+    - "Mobile deployment (Termux, iOS Shortcuts)"
+    - "Sensor monitoring (mic, camera, accelerometer)"
+    - "Threat detection (audio/video anomaly analysis)"
+    - "Physical security alerts"
+
+# =============================================================================
+# SELF-ANALYSIS: Questions to ask about any codebase structure
+# =============================================================================
+# Run with: ruby cli.rb --analyze or interactively with 'analyze' command
+# These questions surface hierarchy/organization issues before they sprawl
+# =============================================================================
+self_analysis:
+  # Questions to ask about YAML/config files
+  config_hierarchy:
+    - question: "Are top-level keys semantically grouped?"
+      check: "No mixing of scalars (version) with complex sections (providers)"
+      fix: "Group into identity, defaults, principles, providers, etc."
+    - question: "Is there duplicate configuration?"
+      check: "Same setting defined in multiple places"
+      fix: "Consolidate to single source of truth"
+    - question: "Are related configs colocated?"
+      check: "openbsd separate from providers.openbsd_amsterdam"
+      fix: "Nest under parent or merge sections"
+    - question: "Is nesting depth appropriate?"
+      check: "Max 4 levels deep for readability"
+      fix: "Flatten or extract to separate files"
+      
+  # Questions to ask about code module structure  
+  code_hierarchy:
+    - question: "Are there too many top-level modules/classes?"
+      check: "More than 8-10 top-level namespaces"
+      fix: "Group into Core::, Util::, Features::, etc."
+    - question: "Are utilities scattered at top level?"
+      check: "Log, Spinner, Result as standalone"
+      fix: "Move to Util:: or Core:: namespace"
+    - question: "Are related classes grouped?"
+      check: "TieredLLM and LLMClient both LLM-related but separate"
+      fix: "Create LLM:: namespace"
+    - question: "Is there a clear layering?"
+      check: "Core (pure) → Services → Features → CLI"
+      fix: "Establish dependency direction"
+      
+  # Questions about semantic organization
+  semantic_clarity:
+    - question: "Can a new reader understand the structure in 30 seconds?"
+      check: "Clear naming, logical grouping, consistent patterns"
+      fix: "Add section headers, reorder logically"
+    - question: "Does file/section order match execution flow?"
+      check: "Bootstrap → Core → Features → CLI"
+      fix: "Reorder to match mental model"
+    - question: "Are cross-cutting concerns isolated?"
+      check: "Logging, caching, error handling scattered"
+      fix: "Extract to dedicated modules"
+
+# =============================================================================
+# DEFAULTS: Runtime behavior defaults
+# =============================================================================
+defaults:
+  # Analysis
+  scan: true               # Run analysis
+  auto_iterate: true       # Keep iterating until clean
+  auto_refactor: true      # Apply LLM-suggested fixes
+  auto_progress: true      # Progress through phases
+  target_score: 100        # Target score (0-100)
+  max_iterations: 10       # Max fix iterations per file
+  
+  # Files
+  max_file_size: 1048576   # 1MB limit
+  backup: true             # Create backups before changes
+  backup_count: 5          # Backups to keep per file
+  read_only: false         # Don't modify files
+  
+  # Detection
+  parallel: true           # Enable parallel detection
+  convergence_window: 3    # Iterations to check for loops
+  convergence_threshold: 0.9  # Similarity threshold for loop detection
+  ask_language: true       # Ask user for language if unknown
+  
+  # Output
+  verbose: false           # Verbose output
+  colors: true             # Color output (respects NO_COLOR)
+  interactive_on_failure: false
 
 # =============================================================================
 # PRINCIPLES: The 32 coding principles (flat registry)
@@ -803,22 +936,6 @@ safety:
     gc_every_n_iterations: 5        # Force GC periodically
 
 # =============================================================================
-# DEFAULTS: Default behavior when no flags specified
-# =============================================================================
-defaults:
-  scan: true               # Run analysis
-  iterate: true            # Iterate until clean
-  refactor: true           # Apply LLM fixes
-  progress_phases: true    # Enforce phase gates
-  target_score: 100        # Target score
-  max_iterations: 10       # Max iterations
-  backup: true             # Create backups
-  backup_count: 5          # Backups to keep
-  verbose: false           # Verbose output
-  colors: true             # Color output
-  interactive_on_failure: false
-  ask_language: true
-
 # CONFLICT RESOLUTION
 conflicts:
   strategy: "highest_priority_wins"
