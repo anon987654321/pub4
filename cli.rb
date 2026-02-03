@@ -1542,61 +1542,61 @@ class LLMClient
     @enabled
   end
 
+  DETECTION_SYSTEM_PROMPT = <<~PROMPT.strip
+    You are a code quality analyzer. Your task:
+    1. Scan code against 32 coding principles
+    2. Return ONLY a valid JSON array of violations
+    3. Each violation: {"principle_id": N, "line": N, "severity": "high|medium|low", "smell": "name", "explanation": "why", "auto_fixable": bool}
+    4. Return [] if no violations found
+    5. NO markdown, NO explanation text, ONLY JSON
+  PROMPT
+
+  LARGE_FILE_TOKEN_THRESHOLD = 10_000
+
   def detect_violations(code, file_path)
-    return [] unless @enabled
-
-    config = @constitution.llm_config["detection"]
-    return [] unless config && config["enabled"]
-
-    estimate = Core::TokenEstimator.warn_if_expensive(code, 10_000)
-
-    if estimate[:warning]
-      Log.warn("Large file: ~#{estimate[:tokens]} tokens estimated")
-
-      if should_chunk?(code)
-        return detect_chunked(code, file_path, config)
-      end
-    end
+    return [] unless detection_enabled?
+    return detect_chunked(code, file_path) if should_chunk?(code)
 
     check_cost_limit("file")
+    run_detection(code, file_path)
+  rescue StandardError => e
+    Log.warn("LLM detection failed: #{e.message}")
+    []
+  end
 
-    detection_request = Core::LLMDetector.detect_violations(
-      code,
-      file_path,
-      @constitution.principles,
-      config["prompt"]
-    )
+  def detection_enabled?
+    return false unless @enabled
 
-    # Use fast tier model for detection (much cheaper)
-    tiers = @constitution.llm_config["tiers"]
-    fast_model = tiers&.dig("fast", "model") || config["model"]
+    config = @constitution.llm_config["detection"]
+    config && config["enabled"]
+  end
 
-    system_prompt = <<~PROMPT.strip
-      You are a code quality analyzer. Your task:
-      1. Scan code against 32 coding principles
-      2. Return ONLY a valid JSON array of violations
-      3. Each violation: {"principle_id": N, "line": N, "severity": "high|medium|low", "smell": "name", "explanation": "why", "auto_fixable": bool}
-      4. Return [] if no violations found
-      5. NO markdown, NO explanation text, ONLY JSON
-    PROMPT
+  def run_detection(code, file_path)
+    config = @constitution.llm_config["detection"]
+    prompt = Core::LLMDetector.detect_violations(
+      code, file_path, @constitution.principles, config["prompt"]
+    )[:prompt]
 
     response = Spinner.run("Analyzing with AI (fast)") do
       call_llm_with_fallback(
         model: fast_model,
         fallback_models: config["fallback_models"],
-        messages: build_cached_messages(
-          system: system_prompt,
-          user: detection_request[:prompt]
-        ),
-        max_tokens: tiers&.dig("fast", "max_tokens") || 2048
+        messages: build_cached_messages(system: DETECTION_SYSTEM_PROMPT, user: prompt),
+        max_tokens: fast_max_tokens
       )
     end
 
-    content = response.dig("choices", 0, "message", "content")
-    Core::LLMDetector.parse_violations(content)
-  rescue StandardError => error
-    Log.warn("LLM detection failed: #{error.message}")
-    []
+    Core::LLMDetector.parse_violations(response.dig("choices", 0, "message", "content"))
+  end
+
+  def fast_model
+    tiers = @constitution.llm_config["tiers"]
+    config = @constitution.llm_config["detection"]
+    tiers&.dig("fast", "model") || config["model"]
+  end
+
+  def fast_max_tokens
+    @constitution.llm_config.dig("tiers", "fast", "max_tokens") || 2048
   end
 
   def refactor_violation(violation, code)
@@ -1757,11 +1757,16 @@ class LLMClient
   end
 
   def should_chunk?(code)
-    config = @constitution.safety["cost_protection"]
-    config["chunk_large_files"] && code.lines.size > config["chunk_size_lines"]
+    estimate = Core::TokenEstimator.warn_if_expensive(code, LARGE_FILE_TOKEN_THRESHOLD)
+    if estimate[:warning]
+      Log.warn("Large file: ~#{estimate[:tokens]} tokens estimated")
+    end
+
+    chunk_config = @constitution.safety["cost_protection"]
+    chunk_config["chunk_large_files"] && code.lines.size > chunk_config["chunk_size_lines"]
   end
 
-  def detect_chunked(code, file_path, config)
+  def detect_chunked(code, file_path)
     chunk_config = @constitution.safety["cost_protection"]
     chunk_size = chunk_config["chunk_size_lines"]
     overlap = chunk_config["chunk_overlap_lines"]
@@ -1775,7 +1780,7 @@ class LLMClient
 
       Log.info("Processing chunk #{start_idx + 1}-#{end_idx} of #{lines.size}")
 
-      chunk_violations = detect_violations_single(chunk, file_path, config)
+      chunk_violations = run_detection(chunk, file_path)
 
       chunk_violations.each do |v|
         v["line"] = (v["line"] || 0) + start_idx
@@ -1787,26 +1792,23 @@ class LLMClient
     violations.uniq { |v| [v["line"], v["principle_id"]] }
   end
 
-  def detect_violations_single(code, file_path, config)
-    detection_request = Core::LLMDetector.detect_violations(
-      code,
-      file_path,
-      @constitution.principles,
-      config["prompt"]
-    )
+  def detect_violations_single(code, file_path)
+    config = @constitution.llm_config["detection"]
+    prompt = Core::LLMDetector.detect_violations(
+      code, file_path, @constitution.principles, config["prompt"]
+    )[:prompt]
 
     response = call_llm_with_fallback(
       model: config["model"],
       fallback_models: config["fallback_models"],
       messages: [
-        { role: "system", content: "You are a code quality expert. Return JSON array of violations." },
-        { role: "user", content: detection_request[:prompt] }
+        { role: "system", content: DETECTION_SYSTEM_PROMPT },
+        { role: "user", content: prompt }
       ],
       max_tokens: 4000
     )
 
-    content = response.dig("choices", 0, "message", "content")
-    Core::LLMDetector.parse_violations(content)
+    Core::LLMDetector.parse_violations(response.dig("choices", 0, "message", "content"))
   end
 
   def build_refactor_prompt(violation, code)
@@ -1903,47 +1905,63 @@ class AutoEngine
 
     max.times do |iteration|
       violations = scan_with_llm(file_path)
+      history = update_history(history, iteration, violations)
 
-      history << {iteration: iteration + 1, violations: violations}
-
-      if history.size > @safety["convergence"]["max_history_size"]
-        history.shift
-      end
-
-      total_seen = history.sum { |h| h[:violations].size }
-
-      if total_seen > @safety["convergence"]["max_total_violations"]
-        return Result.err("Too many violations (#{total_seen}). File too complex.")
-      end
-
-      if violations.empty?
-        Log.ok("Zero violations after #{iteration + 1} iteration(s)") unless Options.quiet
-        return Result.ok(true)
-      end
+      return Result.err("Too many violations. File too complex.") if too_many_violations?(history)
+      return Result.ok(true) if converged?(violations, iteration)
 
       Log.info("Iteration #{iteration + 1}: #{violations.size} violations")
 
-      if Core::ConvergenceDetector.detect_loop(history)
-        Log.warn("Convergence loop detected (stuck)") unless Options.quiet
-        return Result.ok(false)
-      end
-
-      if Core::ConvergenceDetector.detect_oscillation(history)
-        Log.warn("Oscillation detected (alternating states)") unless Options.quiet
-        return Result.ok(false)
-      end
-
-      if history.size >= 3 && !Core::ConvergenceDetector.improving?(history)
-        Log.warn("No improvement detected") unless Options.quiet
-        return Result.ok(false)
-      end
+      stuck = check_convergence_issues(history)
+      return Result.ok(false) if stuck
 
       break if read_only
-
-      GC.start if (iteration + 1) % @safety["memory"]["gc_every_n_iterations"] == 0
+      maybe_gc(iteration)
     end
 
     Result.ok(true)
+  end
+
+  def update_history(history, iteration, violations)
+    history << {iteration: iteration + 1, violations: violations}
+    max_size = @safety["convergence"]["max_history_size"]
+    history.size > max_size ? history.drop(1) : history
+  end
+
+  def too_many_violations?(history)
+    total = history.sum { |h| h[:violations].size }
+    total > @safety["convergence"]["max_total_violations"]
+  end
+
+  def converged?(violations, iteration)
+    return false unless violations.empty?
+
+    Log.ok("Zero violations after #{iteration + 1} iteration(s)") unless Options.quiet
+    true
+  end
+
+  def check_convergence_issues(history)
+    if Core::ConvergenceDetector.detect_loop(history)
+      Log.warn("Convergence loop detected (stuck)") unless Options.quiet
+      return true
+    end
+
+    if Core::ConvergenceDetector.detect_oscillation(history)
+      Log.warn("Oscillation detected (alternating states)") unless Options.quiet
+      return true
+    end
+
+    if history.size >= 3 && !Core::ConvergenceDetector.improving?(history)
+      Log.warn("No improvement detected") unless Options.quiet
+      return true
+    end
+
+    false
+  end
+
+  def maybe_gc(iteration)
+    interval = @safety["memory"]["gc_every_n_iterations"]
+    GC.start if (iteration + 1) % interval == 0
   end
 
   def refactor_remaining(file_path)
