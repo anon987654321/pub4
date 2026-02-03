@@ -828,9 +828,13 @@ module Core
       FileUtils.mkdir_p(CACHE_DIR) unless Dir.exist?(CACHE_DIR)
     end
 
+    # Semantic key: strip whitespace/comments for cache key
     def self.key_for(file_path, content)
       require "digest"
-      Digest::SHA256.hexdigest("#{file_path}:#{content}")[0, 16]
+      # Normalize: remove blank lines, trailing whitespace, standardize line endings
+      normalized = content.gsub(/\r\n/, "\n").gsub(/[ \t]+$/, "").gsub(/\n{3,}/, "\n\n").strip
+      ext = File.extname(file_path)
+      Digest::SHA256.hexdigest("#{ext}:#{normalized}")[0, 16]
     end
 
     def self.get(file_path, content)
@@ -5057,19 +5061,44 @@ class CLI
     end
 
     files = expand_targets(targets)
+    
+    # Auto git-changed filter if in git repo and many files
+    if files.size > 10 && File.exist?(".git") && !Options.force
+      changed = `git diff --name-only HEAD 2>/dev/null`.split("\n").map { |f| File.expand_path(f) }
+      staged = `git diff --cached --name-only 2>/dev/null`.split("\n").map { |f| File.expand_path(f) }
+      git_files = (changed + staged).uniq & files
+      if git_files.any? && git_files.size < files.size
+        puts "#{Dmesg.dim}git: #{git_files.size}/#{files.size} changed#{Dmesg.reset}"
+        files = git_files
+      end
+    end
 
     if files.empty?
       Log.error("No files found") unless Options.quiet
       return
     end
 
-    files.each_with_index do |file, idx|
-      Log.info("Processing #{idx + 1}/#{files.size}: #{file}") unless Options.quiet
-      result = process_file(file)
-      @results << result if result
+    # Parallel processing if enabled and multiple files
+    if Options.parallel && files.size > 1 && CONCURRENT_AVAILABLE
+      process_files_parallel(files)
+    else
+      files.each_with_index do |file, idx|
+        result = process_file(file)
+        @results << result if result
+      end
     end
 
     show_summary(files.size) unless Options.quiet || Options.json
+  end
+  
+  def process_files_parallel(files)
+    pool = Concurrent::FixedThreadPool.new([4, files.size].min)
+    futures = files.map do |file|
+      Concurrent::Future.execute(executor: pool) { process_file(file) }
+    end
+    futures.each { |f| @results << f.value if f.value }
+    pool.shutdown
+    pool.wait_for_termination
   end
 
   def expand_targets(targets)
