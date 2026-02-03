@@ -13,7 +13,7 @@
 # @see README.md for usage documentation
 # =============================================================================
 ---
-version: "49.3"
+version: "49.6"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
@@ -945,6 +945,122 @@ language_detection:
       extensions: [".zsh"]
       indicators: ["#!/usr/bin/env zsh", "#!/bin/zsh", "setopt ", "zmodload ", "typeset -a", "autoload "]
       embedded_languages: ["ruby"]
+
+# =============================================================================
+# OPENBSD: Config file mappings and validation rules
+# =============================================================================
+openbsd:
+  man_base_url: "https://man.openbsd.org"
+  cache_ttl: 86400  # 24 hours
+  
+  # Map config files to their parent daemons and man pages
+  configs:
+    pf.conf:
+      daemon: pf
+      man: pf.conf.5
+      required_patterns:
+        - "set skip on lo"
+      forbidden_patterns: []
+      warnings:
+        - pattern: "pass all"
+          message: "Overly permissive: 'pass all' bypasses filtering"
+    
+    nsd.conf:
+      daemon: nsd
+      man: nsd.conf.5
+      tutorials:
+        - "https://www.openbsdhandbook.com/nsd/"
+        - "https://virtualinfra.online/post/openbsd-nsd-dnssec/"
+        - "https://man.openbsd.org/nsd.conf.5"
+      required_patterns:
+        - "server:"
+        - "zone:"
+      warnings:
+        - pattern: "rrl-size"
+          absent_message: "Missing RRL config - add 'rrl-size: 1000000' for DDoS protection"
+        - pattern: "rrl-ratelimit"
+          absent_message: "Missing RRL ratelimit - add 'rrl-ratelimit: 200' (responses/sec per IP)"
+        - pattern: "hide-version"
+          absent_message: "Consider 'hide-version: yes' to hide NSD version"
+        - pattern: "ip-address"
+          absent_message: "Missing 'ip-address:' - NSD should bind to specific IP, not all interfaces"
+      dnssec_requirements:
+        - "Use ldns-keygen for ZSK (ECDSAP256SHA256) and KSK"
+        - "Sign zones with ldns-signzone"
+        - "Reference .signed zonefile in nsd.conf"
+        - "Generate DS record with ldns-key2ds and submit to registrar"
+        - "Rebuild with nsd-control rebuild after signing"
+      best_practices:
+        - "chown -R _nsd:_nsd /var/nsd"
+        - "chmod -R 755 /var/nsd"
+        - "Use nsd-control-setup to generate control keys"
+        - "Rotate ZSK more frequently than KSK"
+        - "Use ECDSAP256SHA256 algorithm for modern compatibility"
+    
+    httpd.conf:
+      daemon: httpd
+      man: httpd.conf.5
+      required_patterns:
+        - "server"
+    
+    smtpd.conf:
+      daemon: smtpd
+      man: smtpd.conf.5
+      required_patterns:
+        - "listen on"
+        - "action"
+        - "match"
+      warnings:
+        - pattern: "match from any"
+          message: "Open relay risk: 'match from any' allows external relay"
+        - pattern: "pki"
+          absent_message: "Missing PKI directive (TLS not configured)"
+    
+    relayd.conf:
+      daemon: relayd
+      man: relayd.conf.5
+      required_patterns:
+        - "relay"
+      warnings:
+        - pattern: "tls keypair"
+          absent_message: "Missing TLS keypair directive"
+    
+    acme-client.conf:
+      daemon: acme-client
+      man: acme-client.conf.5
+      required_patterns:
+        - "authority"
+        - "domain"
+    
+    doas.conf:
+      daemon: doas
+      man: doas.conf.5
+      required_patterns:
+        - "permit"
+      warnings:
+        - pattern: "nopass"
+          message: "nopass allows passwordless privilege escalation"
+    
+    sshd_config:
+      daemon: sshd
+      man: sshd_config.5
+      warnings:
+        - pattern: "PermitRootLogin yes"
+          message: "Security risk: root login enabled"
+        - pattern: "PasswordAuthentication yes"
+          message: "Consider disabling password auth for key-only access"
+    
+    ntpd.conf:
+      daemon: ntpd
+      man: ntpd.conf.5
+      required_patterns:
+        - "server"
+    
+    unbound.conf:
+      daemon: unbound
+      man: unbound.conf.5
+      required_patterns:
+        - "server:"
 
 # =============================================================================
 # REFINEMENTS: Evolution from v1 to v48

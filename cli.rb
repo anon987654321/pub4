@@ -5,7 +5,7 @@
 # master.yml LLM OS - LLM-powered code quality analysis
 #
 # @author master.yml LLM OS
-# @version 49.3
+# @version 49.5
 # @see https://github.com/constitutional-ai/cli
 #
 # This file implements the CLI for master.yml LLM OS, a tool that analyzes
@@ -200,6 +200,8 @@ module Options
   @parallel = true
   @profile = nil
   @force = false
+  @fix = false
+  @dry_run = false
 
   class << self
     # @!attribute [rw] quiet
@@ -218,7 +220,11 @@ module Options
     #   @return [String, nil] Active principle profile name
     # @!attribute [rw] force
     #   @return [Boolean] Force dangerous operations
-    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile, :force
+    # @!attribute [rw] fix
+    #   @return [Boolean] Enable in-place fixing of violations
+    # @!attribute [rw] dry_run
+    #   @return [Boolean] Show what would be fixed without changing files
+    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile, :force, :fix, :dry_run
   end
 end
 
@@ -228,6 +234,21 @@ end
 # =============================================================================
 
 module Core
+  # Safe UTF-8 file reading with fallback
+  def self.read_file(path)
+    File.read(path, encoding: "UTF-8")
+  rescue Encoding::InvalidByteSequenceError
+    File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  end
+  
+  # Safe file writing with backup option
+  def self.write_file(path, content, backup: false)
+    if backup && File.exist?(path)
+      FileUtils.cp(path, "#{path}.bak.#{Time.now.to_i}")
+    end
+    File.write(path, content)
+  end
+
   # Modular skill system for extensible analysis pipelines
   #
   # Skills are loaded from ~/.constitutional/skills/ or ./skills/
@@ -1103,6 +1124,531 @@ module Core
     end
   end
 
+  # Project-level analysis for codebase awareness and sprawl reduction
+  # Detects fragmented logic, temp files, and consolidation opportunities
+  # Implements tree.sh and clean.sh patterns in pure Ruby
+  module ProjectAnalyzer
+    # Tree scan (equivalent to sh/tree.sh) - pure Ruby glob
+    # Returns sorted list: directories first (with /), then files
+    def self.tree(root_dir)
+      root = root_dir.chomp("/")
+      entries = []
+      
+      # Directories first
+      Dir.glob(File.join(root, "**", "*")).each do |path|
+        next if path.include?("/.") || File.basename(path).start_with?(".")
+        next if skip_dir?(path)
+        entries << "#{path}/" if File.directory?(path)
+      end
+      
+      # Then files
+      Dir.glob(File.join(root, "**", "*")).each do |path|
+        next if path.include?("/.") || File.basename(path).start_with?(".")
+        next if skip_dir?(path)
+        entries << path if File.file?(path)
+      end
+      
+      entries.sort
+    end
+    
+    def self.skip_dir?(path)
+      %w[node_modules vendor .git __pycache__ .bundle tmp cache].any? { |d| path.include?("/#{d}/") || path.end_with?("/#{d}") }
+    end
+    
+    # Clean files (equivalent to sh/clean.sh) - before editing
+    # Removes: CRLF, trailing whitespace, consecutive blank lines
+    def self.clean(root_dir, dry_run: false)
+      cleaned = []
+      tree(root_dir).each do |path|
+        next if path.end_with?("/") # skip directories
+        next unless text_file?(path)
+        
+        result = clean_file(path, dry_run: dry_run)
+        cleaned << result if result[:changed]
+      end
+      cleaned
+    end
+    
+    def self.text_file?(path)
+      # Check by extension
+      text_exts = %w[.rb .py .js .ts .sh .zsh .yml .yaml .json .md .txt .html .css .erb .haml .slim .rake .gemspec .conf]
+      return true if text_exts.include?(File.extname(path).downcase)
+      
+      # Check first bytes for binary
+      begin
+        bytes = File.binread(path, 512)
+        return false if bytes.include?("\x00") # binary file
+        true
+      rescue
+        false
+      end
+    end
+    
+    def self.clean_file(path, dry_run: false)
+      original = File.read(path, encoding: "UTF-8", mode: "rb")
+      cleaned = original.dup
+      
+      # Remove CRLF → LF
+      cleaned.gsub!("\r\n", "\n")
+      cleaned.gsub!("\r", "")
+      
+      # Trim trailing whitespace from each line
+      lines = cleaned.split("\n", -1)
+      lines = lines.map { |line| line.rstrip }
+      
+      # Reduce consecutive blank lines to single
+      result = []
+      prev_blank = false
+      lines.each do |line|
+        if line.empty?
+          unless prev_blank
+            result << line
+            prev_blank = true
+          end
+        else
+          result << line
+          prev_blank = false
+        end
+      end
+      
+      # Ensure single trailing newline
+      cleaned = result.join("\n").rstrip + "\n"
+      
+      changed = cleaned != original
+      
+      if changed && !dry_run
+        File.write(path, cleaned)
+        Log.info("Cleaned: #{path}")
+      end
+      
+      { path: path, changed: changed, original_size: original.bytesize, cleaned_size: cleaned.bytesize }
+    end
+    
+    # Pre-scan phase: tree + clean before any analysis
+    def self.prescan(root_dir, dry_run: false)
+      Log.info("Pre-scanning: #{root_dir}")
+      
+      files = tree(root_dir)
+      Log.info("Found #{files.count { |f| !f.end_with?('/') }} files in #{files.count { |f| f.end_with?('/') }} directories")
+      
+      unless dry_run
+        cleaned = clean(root_dir, dry_run: dry_run)
+        Log.info("Cleaned #{cleaned.size} files") if cleaned.any?
+      end
+      
+      { files: files, cleaned_count: dry_run ? 0 : cleaned&.size || 0 }
+    end
+    
+    # Analyze entire project structure for sprawl and fragmentation
+    def self.analyze(root_dir, config = {})
+      files = collect_files(root_dir)
+      {
+        root: root_dir,
+        file_count: files.size,
+        sprawl: detect_sprawl(files, config),
+        duplicates: find_duplicates(files),
+        fragmentation: detect_fragmentation(files, config),
+        consolidation_opportunities: suggest_consolidations(files, config)
+      }
+    end
+    
+    def self.collect_files(root_dir)
+      patterns = %w[**/*.rb **/*.py **/*.js **/*.ts **/*.sh **/*.yml **/*.yaml]
+      files = []
+      patterns.each do |pattern|
+        Dir.glob(File.join(root_dir, pattern)).each do |f|
+          next if f.include?("node_modules") || f.include?("vendor") || f.include?(".git")
+          files << { path: f, size: File.size(f), lines: File.readlines(f, encoding: "UTF-8").size rescue 0 }
+        end
+      end
+      files
+    end
+    
+    # Detect file sprawl: too many small files, temp files, scattered logic
+    def self.detect_sprawl(files, config)
+      sprawl = []
+      
+      # Temp files that should be cleaned up
+      temp_patterns = config.dig("sprawl", "temp_patterns") || %w[.tmp .bak .swp ~$ .orig .cache]
+      temp_files = files.select { |f| temp_patterns.any? { |p| f[:path].include?(p) } }
+      sprawl << { type: :temp_files, files: temp_files.map { |f| f[:path] }, count: temp_files.size } if temp_files.any?
+      
+      # Very small files (< 20 lines) that might consolidate
+      tiny_threshold = config.dig("sprawl", "tiny_threshold") || 20
+      tiny_files = files.select { |f| f[:lines] > 0 && f[:lines] < tiny_threshold }
+      if tiny_files.size > 5
+        sprawl << { type: :tiny_files, files: tiny_files.map { |f| f[:path] }, count: tiny_files.size,
+                    message: "#{tiny_files.size} tiny files (<#{tiny_threshold} lines) - consider consolidating" }
+      end
+      
+      # Too many files in one directory (horizontal sprawl)
+      dir_counts = files.group_by { |f| File.dirname(f[:path]) }
+      crowded_dirs = dir_counts.select { |_, v| v.size > 15 }
+      crowded_dirs.each do |dir, dir_files|
+        sprawl << { type: :crowded_dir, path: dir, count: dir_files.size,
+                    message: "#{dir_files.size} files in #{dir} - consider subdirectories" }
+      end
+      
+      # Deep nesting (vertical sprawl)
+      deep_files = files.select { |f| f[:path].split(File::SEPARATOR).size > 8 }
+      if deep_files.any?
+        sprawl << { type: :deep_nesting, files: deep_files.map { |f| f[:path] }, count: deep_files.size,
+                    message: "#{deep_files.size} deeply nested files (>8 levels)" }
+      end
+      
+      sprawl
+    end
+    
+    # Find duplicate or near-duplicate code
+    def self.find_duplicates(files)
+      duplicates = []
+      
+      # Hash first 500 chars of each file to find exact duplicates
+      hashes = {}
+      files.each do |f|
+        next if f[:size] < 100
+        content = File.read(f[:path], encoding: "UTF-8")[0, 500] rescue next
+        hash = content.hash
+        if hashes[hash]
+          duplicates << { original: hashes[hash], duplicate: f[:path] }
+        else
+          hashes[hash] = f[:path]
+        end
+      end
+      
+      duplicates
+    end
+    
+    # Detect fragmented logic across files
+    def self.detect_fragmentation(files, config)
+      fragmentation = []
+      
+      # Group by semantic purpose (helpers, utils, lib, services, etc.)
+      semantic_groups = {}
+      files.each do |f|
+        basename = File.basename(f[:path], ".*")
+        # Detect common patterns
+        group = case basename
+                when /helper|util|common|shared/ then :utilities
+                when /service|client|api/ then :services
+                when /model|entity|record/ then :models
+                when /controller|handler|action/ then :controllers
+                when /view|template|partial/ then :views
+                when /test|spec|_test$/ then :tests
+                when /config|setting/ then :config
+                else :other
+                end
+        (semantic_groups[group] ||= []) << f[:path]
+      end
+      
+      # Flag scattered utilities (same semantic type in different directories)
+      semantic_groups.each do |group, group_files|
+        next if group == :other || group_files.size < 2
+        dirs = group_files.map { |f| File.dirname(f) }.uniq
+        if dirs.size > 2
+          fragmentation << { 
+            type: :scattered_semantic_group, 
+            group: group, 
+            directories: dirs,
+            files: group_files,
+            message: "#{group} logic scattered across #{dirs.size} directories"
+          }
+        end
+      end
+      
+      fragmentation
+    end
+    
+    # Suggest consolidation opportunities
+    def self.suggest_consolidations(files, config)
+      suggestions = []
+      
+      # Multiple helper files → single helpers.rb
+      helper_files = files.select { |f| f[:path] =~ /helper/ }
+      if helper_files.size > 3
+        suggestions << {
+          action: :merge,
+          files: helper_files.map { |f| f[:path] },
+          target: "lib/helpers.rb",
+          reason: "Consolidate #{helper_files.size} helper files"
+        }
+      end
+      
+      # Multiple config files → single config dir
+      config_files = files.select { |f| f[:path] =~ /config|settings/ && f[:path] !~ /^config\// }
+      if config_files.size > 2
+        suggestions << {
+          action: :move,
+          files: config_files.map { |f| f[:path] },
+          target: "config/",
+          reason: "Move #{config_files.size} config files to config/"
+        }
+      end
+      
+      suggestions
+    end
+    
+    # Apply consolidation (with user confirmation)
+    def self.apply_consolidation(suggestion, dry_run: false)
+      case suggestion[:action]
+      when :merge
+        return { status: :dry_run, message: "Would merge #{suggestion[:files].size} files into #{suggestion[:target]}" } if dry_run
+        merge_files(suggestion[:files], suggestion[:target])
+      when :move
+        return { status: :dry_run, message: "Would move #{suggestion[:files].size} files to #{suggestion[:target]}" } if dry_run
+        move_files(suggestion[:files], suggestion[:target])
+      when :delete
+        return { status: :dry_run, message: "Would delete #{suggestion[:files].size} files" } if dry_run
+        delete_files(suggestion[:files])
+      end
+    end
+    
+    def self.merge_files(sources, target)
+      combined = sources.map do |f|
+        "# === From: #{f} ===\n" + File.read(f, encoding: "UTF-8")
+      end.join("\n\n")
+      
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, combined)
+      sources.each { |f| FileUtils.mv(f, "#{f}.merged.bak") }
+      { status: :merged, target: target, sources: sources }
+    end
+    
+    def self.move_files(sources, target_dir)
+      FileUtils.mkdir_p(target_dir)
+      sources.each { |f| FileUtils.mv(f, File.join(target_dir, File.basename(f))) }
+      { status: :moved, target: target_dir, count: sources.size }
+    end
+    
+    def self.delete_files(files)
+      files.each { |f| FileUtils.rm(f) }
+      { status: :deleted, count: files.size }
+    end
+  end
+
+  # OpenBSD config file extraction and man page lookup
+  # Reads config mappings from master.yml openbsd section
+  module OpenBSDConfig
+    CACHE_DIR = File.join(Dir.home, ".constitutional", "man_cache")
+    
+    # Extract all embedded configs from a shell script
+    def self.extract_configs(code, config_map)
+      configs = []
+      return configs unless config_map
+      
+      # Match: cat > /path/to/file <<EOF ... EOF
+      code.scan(/cat\s*>\s*([^\s<]+)\s*<<[-~]?['"]?(\w+)['"]?\n(.*?)\n\2/m) do |path, marker, content|
+        config_name = File.basename(path)
+        if config_map[config_name]
+          cfg = config_map[config_name]
+          configs << {
+            path: path,
+            name: config_name,
+            content: content,
+            daemon: cfg["daemon"],
+            man_page: cfg["man"]
+          }
+        end
+      end
+      
+      # Match: cat >> /path/to/file <<EOF (append)
+      code.scan(/cat\s*>>\s*([^\s<]+)\s*<<[-~]?['"]?(\w+)['"]?\n(.*?)\n\2/m) do |path, marker, content|
+        config_name = File.basename(path)
+        if config_map[config_name]
+          cfg = config_map[config_name]
+          configs << {
+            path: path,
+            name: config_name,
+            content: content,
+            daemon: cfg["daemon"],
+            man_page: cfg["man"],
+            append: true
+          }
+        end
+      end
+      
+      configs
+    end
+    
+    # Fetch man page from man.openbsd.org
+    def self.fetch_man_page(man_page, base_url, cache_ttl = 86400)
+      FileUtils.mkdir_p(CACHE_DIR)
+      cache_file = File.join(CACHE_DIR, "#{man_page}.txt")
+      
+      # Return cached if fresh
+      if File.exist?(cache_file)
+        age = Time.now - File.mtime(cache_file)
+        return File.read(cache_file) if age < cache_ttl
+      end
+      
+      url = "#{base_url}/#{man_page}"
+      
+      begin
+        require "net/http"
+        require "uri"
+        
+        uri = URI.parse(url)
+        response = Net::HTTP.get_response(uri)
+        
+        if response.is_a?(Net::HTTPSuccess)
+          # Strip HTML, keep text
+          content = response.body
+            .gsub(/<script[^>]*>.*?<\/script>/mi, "")
+            .gsub(/<style[^>]*>.*?<\/style>/mi, "")
+            .gsub(/<[^>]+>/, " ")
+            .gsub(/&nbsp;/, " ")
+            .gsub(/&lt;/, "<")
+            .gsub(/&gt;/, ">")
+            .gsub(/&amp;/, "&")
+            .gsub(/\s+/, " ")
+            .strip
+          
+          File.write(cache_file, content)
+          content
+        else
+          nil
+        end
+      rescue StandardError => e
+        Log.warn("Failed to fetch #{url}: #{e.message}") if defined?(Log)
+        nil
+      end
+    end
+    
+    # Validate config against rules from master.yml
+    def self.validate_config(config_name, content, config_rules)
+      return { valid: true, warnings: [] } unless config_rules
+      
+      rules = config_rules[config_name]
+      return { valid: true, warnings: [] } unless rules
+      
+      warnings = []
+      
+      # Check required patterns
+      (rules["required_patterns"] || []).each do |pattern|
+        unless content.include?(pattern)
+          warnings << "Missing required: '#{pattern}'"
+        end
+      end
+      
+      # Check warning patterns
+      (rules["warnings"] || []).each do |w|
+        if w["pattern"]
+          if w["absent_message"] && !content.include?(w["pattern"])
+            warnings << w["absent_message"]
+          elsif w["message"] && content.include?(w["pattern"])
+            warnings << w["message"]
+          end
+        end
+      end
+      
+      # Check forbidden patterns
+      (rules["forbidden_patterns"] || []).each do |pattern|
+        if content.include?(pattern)
+          warnings << "Forbidden pattern found: '#{pattern}'"
+        end
+      end
+      
+      { valid: warnings.empty?, warnings: warnings }
+    end
+    
+    # Fix a config in-place within the source shell script
+    # Returns the modified source code with the heredoc content replaced
+    def self.fix_config_in_source(source_code, config_path, old_content, new_content)
+      # Escape special regex characters in the content
+      escaped_old = Regexp.escape(old_content)
+      
+      # Match the heredoc pattern with this specific content
+      # cat > /path/to/file <<EOF\n...\nEOF
+      pattern = /(cat\s*>+\s*#{Regexp.escape(config_path)}\s*<<[-~]?['"]?(\w+)['"]?\n)#{escaped_old}(\n\2)/m
+      
+      if source_code.match?(pattern)
+        source_code.gsub(pattern, "\\1#{new_content}\\3")
+      else
+        source_code  # Return unchanged if pattern not found
+      end
+    end
+    
+    # Apply all fixes to source file
+    def self.apply_fixes_to_source(file_path, fixes)
+      return if fixes.empty?
+      
+      source = File.read(file_path, encoding: "UTF-8")
+      modified = source.dup
+      
+      fixes.each do |fix|
+        modified = fix_config_in_source(
+          modified,
+          fix[:path],
+          fix[:old_content],
+          fix[:new_content]
+        )
+      end
+      
+      if modified != source
+        File.write(file_path, modified)
+        true
+      else
+        false
+      end
+    end
+    
+    # Get config summary for LLM context (in memory, not extracted to disk)
+    def self.config_context(configs, base_url, cache_ttl)
+      context = []
+      
+      configs.each do |cfg|
+        man_content = fetch_man_page(cfg[:man_page], base_url, cache_ttl)
+        summary = man_content ? man_content[0..2000] : "Man page unavailable"
+        
+        context << {
+          config: cfg[:name],
+          daemon: cfg[:daemon],
+          path: cfg[:path],
+          man_url: "#{base_url}/#{cfg[:man_page]}",
+          man_summary: summary,
+          content_preview: cfg[:content][0..500],
+          full_content: cfg[:content]  # Keep full content in memory for fixes
+        }
+      end
+      
+      context
+    end
+    
+    # Generate fix using LLM with man page context
+    def self.generate_fix(config, warnings, man_summary, llm)
+      return nil unless llm&.enabled?
+      
+      prompt = <<~PROMPT
+        You are an OpenBSD system administrator expert.
+        
+        Config file: #{config[:name]} (for #{config[:daemon]} daemon)
+        Man page: #{config[:man_url]}
+        
+        Current config content:
+        ```
+        #{config[:content]}
+        ```
+        
+        Issues found:
+        #{warnings.map { |w| "- #{w}" }.join("\n")}
+        
+        Man page reference (excerpt):
+        #{man_summary[0..1500]}
+        
+        Fix the config to resolve the issues. Return ONLY the fixed config content, no explanation.
+        Keep the same format and structure, just fix the issues.
+      PROMPT
+      
+      begin
+        response = llm.ask_tier("code", [{ role: "user", content: prompt }])
+        response.to_s.strip.gsub(/^```\w*\n?/, "").gsub(/\n?```$/, "")
+      rescue StandardError => e
+        Log.warn("LLM fix generation failed: #{e.message}") if defined?(Log)
+        nil
+      end
+    end
+  end
+
   module GitHistory
     def self.available?
       system("git rev-parse --git-dir > /dev/null 2>&1")
@@ -1233,65 +1779,20 @@ module Core
   end
 
   # Pure Ruby equivalent of clean.sh - normalize text files
+  # Delegates to ProjectAnalyzer.clean_file for DRY
   module FileCleaner
     def self.clean(file_path)
-      return unless File.file?(file_path)
-      return unless text_file?(file_path)
-
-      content = File.read(file_path, encoding: "UTF-8")
-      original = content.dup
-
-      # Remove carriage returns
-      content = content.gsub("\r", "")
-
-      # Process lines
-      lines = content.split("\n", -1)
-      cleaned = []
-      prev_blank = false
-
-      lines.each do |line|
-        # Trim trailing whitespace
-        line = line.rstrip
-
-        if line.empty?
-          # Only add blank if previous wasn't blank
-          unless prev_blank
-            cleaned << ""
-            prev_blank = true
-          end
-        else
-          cleaned << line
-          prev_blank = false
-        end
-      end
-
-      # Remove trailing blank lines
-      cleaned.pop while cleaned.last&.empty?
-
-      result = cleaned.join("\n") + "\n"
-
-      if result != original
-        File.write(file_path, result)
-        true
-      else
-        false
-      end
+      return false unless File.file?(file_path)
+      result = ProjectAnalyzer.clean_file(file_path, dry_run: false)
+      result[:changed]
     end
 
     def self.text_file?(path)
-      # Check by extension
-      text_exts = %w[.rb .yml .yaml .md .txt .sh .js .ts .jsx .tsx .css .html .json .xml .sql .py .go .rs .c .h .cpp .hpp]
-      ext = File.extname(path).downcase
-      text_exts.include?(ext)
+      ProjectAnalyzer.text_file?(path)
     end
 
     def self.clean_dir(dir)
-      cleaned = 0
-      Dir.glob(File.join(dir, "**", "*")).each do |path|
-        next unless File.file?(path)
-        cleaned += 1 if clean(path)
-      end
-      cleaned
+      ProjectAnalyzer.clean(dir, dry_run: false).size
     end
   end
 end
@@ -1683,7 +2184,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.3"
+  VERSION = "49.6"
 
   def self.boot
     return if Options.quiet
@@ -2877,6 +3378,71 @@ class AutoEngine
     backup = Rollback.save(file_path) unless read_only
 
     Log.info("Auto-processing #{file_path} (#{language})")
+    
+    # For shell/zsh scripts, extract and analyze embedded configs
+    if %w[shell zsh].include?(language)
+      code = File.read(file_path, encoding: "UTF-8")
+      openbsd_cfg = @constitution.raw.dig("openbsd") || {}
+      config_map = openbsd_cfg["configs"] || {}
+      base_url = openbsd_cfg["man_base_url"] || "https://man.openbsd.org"
+      cache_ttl = openbsd_cfg["cache_ttl"] || 86400
+      
+      configs = Core::OpenBSDConfig.extract_configs(code, config_map)
+      
+      if configs.any?
+        Log.info("Found #{configs.size} embedded OpenBSD configs (in memory):")
+        
+        fixes_to_apply = []
+        
+        configs.each do |cfg|
+          Log.info("  • #{cfg[:name]} → #{cfg[:daemon]} (man: #{cfg[:man_page]})")
+          
+          # Fetch man page for this config
+          man_content = Core::OpenBSDConfig.fetch_man_page(cfg[:man_page], base_url, cache_ttl)
+          Log.info("    ↳ Fetched #{base_url}/#{cfg[:man_page]}") if man_content
+          
+          # Validate against rules from master.yml
+          validation = Core::OpenBSDConfig.validate_config(cfg[:name], cfg[:content], config_map)
+          
+          if validation[:warnings].any?
+            validation[:warnings].each { |w| Log.warn("    #{w}") }
+            
+            # Generate fix using LLM with man page context
+            unless read_only
+              man_summary = man_content || "Man page not available"
+              fixed_content = Core::OpenBSDConfig.generate_fix(cfg, validation[:warnings], man_summary, @llm)
+              
+              if fixed_content && fixed_content != cfg[:content]
+                fixes_to_apply << {
+                  path: cfg[:path],
+                  name: cfg[:name],
+                  old_content: cfg[:content],
+                  new_content: fixed_content
+                }
+                Log.ok("    Generated fix for #{cfg[:name]}")
+              end
+            end
+          else
+            Log.ok("    No issues found")
+          end
+        end
+        
+        # Apply all fixes directly to source file
+        if fixes_to_apply.any? && !read_only
+          puts
+          Log.info("Applying #{fixes_to_apply.size} fixes to #{file_path}...")
+          
+          if Core::OpenBSDConfig.apply_fixes_to_source(file_path, fixes_to_apply)
+            Log.ok("Fixed #{fixes_to_apply.size} embedded configs in place")
+          else
+            Log.warn("No changes applied (patterns not matched)")
+          end
+        end
+        
+        puts
+        @openbsd_context = Core::OpenBSDConfig.config_context(configs, base_url, cache_ttl)
+      end
+    end
 
     result = nil
 
@@ -2995,8 +3561,10 @@ class AutoEngine
       end
     end
     
-    # Generate fix (would call LLM to propose changes)
-    proposed_fix = original_code # placeholder - would be LLM-generated fix
+    # Generate fix using LLM
+    proposed_fix = generate_fix_for_violations(file_path, original_code, auto_fixable)
+    
+    return Result.ok(false) if proposed_fix.nil? || proposed_fix == original_code
     
     # Reflection Critic: validate before applying
     if @critic
@@ -3018,12 +3586,79 @@ class AutoEngine
       Log.info("Critic approved (confidence: #{(confidence * 100).round}%)") unless Options.quiet
     end
     
-    # Apply fix and remember success
+    # Apply fix in-place
+    apply_fix_in_place(file_path, original_code, proposed_fix)
+    
+    # Remember success
     auto_fixable.each do |v|
       @memory.remember(file_path, v, true, true)
     end
 
     Result.ok(true)
+  end
+  
+  def generate_fix_for_violations(file_path, code, violations)
+    return code if violations.empty?
+    
+    violation_list = violations.map { |v| 
+      "Line #{v['line']}: #{v['smell']} - #{v['message']}" 
+    }.join("\n")
+    
+    prompt = <<~PROMPT
+      Fix these violations in the code. Return ONLY the fixed code, no explanations.
+      
+      File: #{File.basename(file_path)}
+      
+      Violations to fix:
+      #{violation_list}
+      
+      Current code:
+      ```
+      #{code}
+      ```
+      
+      Return the complete fixed code:
+    PROMPT
+    
+    begin
+      response = @llm.call_llm_with_fallback(prompt, tier: :code)
+      extract_code_from_response(response)
+    rescue => e
+      Log.warn("Fix generation failed: #{e.message}")
+      nil
+    end
+  end
+  
+  def extract_code_from_response(response)
+    return nil unless response
+    
+    content = response.content rescue response.to_s
+    
+    # Extract code from markdown code blocks
+    if content =~ /```(?:\w+)?\n(.*?)```/m
+      return $1.strip
+    end
+    
+    # If no code block, return as-is (might be raw code)
+    content.strip
+  end
+  
+  def apply_fix_in_place(file_path, original, fixed)
+    return false if fixed.nil? || fixed.empty? || fixed == original
+    
+    # Create backup before modifying
+    backup_path = "#{file_path}.bak.#{Time.now.to_i}"
+    File.write(backup_path, original)
+    Log.info("Backup: #{backup_path}")
+    
+    # Write fixed code
+    File.write(file_path, fixed)
+    Log.ok("Fixed in-place: #{file_path}")
+    
+    true
+  rescue => e
+    Log.error("Failed to apply fix: #{e.message}")
+    false
   end
 
   def scan_with_llm(file_path)
@@ -3347,10 +3982,15 @@ class CLI
 
   def interactive_mode
     puts
-    files = find_files_in_dir(".")
+    
+    # Pre-scan: tree + clean before analysis
+    prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
+    files = prescan_result[:files].reject { |f| f.end_with?("/") }
+    
     puts "Found #{files.size} files in #{Dir.pwd}"
+    puts "Cleaned #{prescan_result[:cleaned_count]} files" if prescan_result[:cleaned_count] > 0
     puts
-    puts "Commands: all (process all), help, cost, quit"
+    puts "Commands: all (process all), help, cost, sprawl, quit"
     puts "Or enter: file path, directory, or glob pattern"
     puts
 
@@ -3370,6 +4010,10 @@ class CLI
         usage
       when "cost"
         show_cost
+      when "sprawl", "analyze"
+        show_sprawl_report
+      when "clean"
+        run_clean_only
       when /^rollback\s+(.+)/
         rollback($1)
       else
@@ -3379,9 +4023,53 @@ class CLI
       puts
     end
   end
+  
+  def show_sprawl_report
+    Log.info("Analyzing project structure...")
+    report = Core::ProjectAnalyzer.analyze(".")
+    
+    puts "\n=== Sprawl Report ==="
+    puts "Files: #{report[:file_count]}"
+    
+    if report[:sprawl].any?
+      puts "\nSprawl Issues:"
+      report[:sprawl].each do |issue|
+        puts "  #{issue[:type]}: #{issue[:message] || issue[:count]} items"
+      end
+    end
+    
+    if report[:duplicates].any?
+      puts "\nDuplicates Found: #{report[:duplicates].size}"
+      report[:duplicates].first(5).each { |d| puts "  #{d[:duplicate]} ≈ #{d[:original]}" }
+    end
+    
+    if report[:fragmentation].any?
+      puts "\nFragmentation:"
+      report[:fragmentation].each { |f| puts "  #{f[:message]}" }
+    end
+    
+    if report[:consolidation_opportunities].any?
+      puts "\nConsolidation Opportunities:"
+      report[:consolidation_opportunities].each do |c|
+        puts "  #{c[:action]}: #{c[:reason]} → #{c[:target]}"
+      end
+    end
+  end
+  
+  def run_clean_only
+    cleaned = Core::ProjectAnalyzer.clean(".", dry_run: Options.dry_run)
+    if cleaned.any?
+      puts "Cleaned #{cleaned.size} files"
+      cleaned.each { |c| puts "  #{c[:path]}" } if cleaned.size <= 10
+    else
+      puts "All files already clean"
+    end
+  end
 
   def process_cwd_recursive
-    files = find_files_in_dir(".")
+    # Pre-scan first (tree + clean)
+    prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
+    files = prescan_result[:files].reject { |f| f.end_with?("/") }
     files = filter_ignored(files)
 
     if files.empty?
@@ -3538,7 +4226,11 @@ class CLI
     puts "  --no-parallel   Disable parallel smell detection"
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
-    puts "  --force, -f     Allow dangerous shell commands"
+    puts "  --force         Allow dangerous shell commands"
+    puts
+    puts "Fixing & Refactoring:"
+    puts "  --fix, -f       Enable in-place fixing of violations"
+    puts "  --dry-run, -n   Show what would be fixed (no changes)"
     puts
     puts "Shell Mode (sysadmin assistant):"
     puts "  --shell, -s     Interactive shell assistant"
@@ -3555,6 +4247,8 @@ class CLI
     puts
     puts "Interactive commands:"
     puts "  all             Process all files in cwd"
+    puts "  sprawl          Show codebase sprawl report"
+    puts "  clean           Clean all text files (CRLF, whitespace)"
     puts "  cost            Show LLM usage"
     puts "  quit            Exit"
     puts
@@ -3564,8 +4258,8 @@ class CLI
     puts
     puts "Examples:"
     puts "  ruby cli.rb                     # Interactive mode"
-    puts "  ruby cli.rb .                   # Process current dir"
-    puts "  ruby cli.rb src/ --json         # JSON output for CI"
+    puts "  ruby cli.rb . --fix             # Process and fix in-place"
+    puts "  ruby cli.rb src/ --fix --dry-run # Preview fixes"
     puts "  ruby cli.rb --quick .           # Fast scan with 5 core principles"
     puts "  ruby cli.rb --shell             # Sysadmin assistant"
     puts "  ruby cli.rb --ask 'check disk'  # Quick question"
@@ -3644,6 +4338,8 @@ if __FILE__ == $PROGRAM_NAME
   Options.json = ARGV.include?("--json")
   Options.watch = ARGV.include?("--watch") || ARGV.include?("-w")
   Options.no_cache = ARGV.include?("--no-cache")
+  Options.fix = ARGV.include?("--fix") || ARGV.include?("-f")
+  Options.dry_run = ARGV.include?("--dry-run") || ARGV.include?("-n")
 
   Dmesg.boot
 

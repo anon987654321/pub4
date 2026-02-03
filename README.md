@@ -1,4 +1,4 @@
-# master.yml LLM OS v49.3
+# master.yml LLM OS v49.6
 
 LLM-powered code quality analysis against 32 coding principles.
 
@@ -7,6 +7,7 @@ LLM-powered code quality analysis against 32 coding principles.
 ```bash
 export OPENROUTER_API_KEY="your-key"
 ruby cli.rb .                    # analyze everything
+ruby cli.rb . --fix              # analyze and fix in-place
 ruby cli.rb --quick .            # fast scan (5 core principles)
 ruby cli.rb --watch .            # watch mode
 ruby cli.rb --garden-full        # self-improve constitution
@@ -17,6 +18,9 @@ ruby cli.rb --garden-full        # self-improve constitution
 | Feature | Description |
 |---------|-------------|
 | **4-Tier Pipeline** | DeepSeek (cheap) → Grok Code Fast (code) → Sonnet (reasoning) → Opus (validation) |
+| **In-Place Fixing** | `--fix` applies LLM-generated fixes directly to source |
+| **Project Prescan** | Tree + clean (CRLF, whitespace) before analysis |
+| **Sprawl Detection** | Finds fragmented logic, tiny files, deep nesting |
 | **Grok Code Fast 1** | $0.20/$1.50 per 1M tokens for detection/refactoring |
 | **Replicate Module** | 50k+ generative models, wild chain mode |
 | **Progressive Disclosure** | Compact principle summaries for 60% token savings |
@@ -31,6 +35,7 @@ ruby cli.rb --garden-full        # self-improve constitution
 | **Skill System** | Modular skills in `~/.constitutional/skills/` |
 | **Gardener** | `--garden` / `--garden-full` self-improves |
 | **Watch Mode** | `--watch` auto-reanalyze on save |
+| **OpenBSD Support** | Config extraction, man page lookup, in-place heredoc fixing |
 | **NO_COLOR Support** | Respects terminal preferences |
 
 ## Commands
@@ -41,6 +46,10 @@ ruby cli.rb file.rb              # single file
 ruby cli.rb src/                 # directory (recursive)
 ruby cli.rb **/*.rb              # glob pattern
 ruby cli.rb .                    # current directory
+
+# Fixing
+ruby cli.rb . --fix              # analyze and fix in-place
+ruby cli.rb . --fix --dry-run    # preview fixes (no changes)
 
 # Output modes
 ruby cli.rb --json .             # JSON output for CI/CD
