@@ -47,8 +47,29 @@ module Bootstrap
   end
 
   def self.install_gem(name)
-    system("gem install #{name} --no-document --quiet") || 
+    # Use --user-install on OpenBSD/Unix when system dir not writable
+    user_flag = writable_gem_dir? ? "" : "--user-install"
+    system("gem install #{name} --no-document #{user_flag}") || 
       warn("Failed to install #{name}")
+  end
+  
+  def self.writable_gem_dir?
+    File.writable?(Gem.default_dir)
+  rescue StandardError
+    false
+  end
+  
+  def self.ensure_gem_path
+    return if writable_gem_dir?
+    
+    # Add user gem bin to PATH if not present
+    user_bin = File.join(Gem.user_dir, "bin")
+    return if ENV["PATH"].to_s.include?(user_bin)
+    
+    ENV["PATH"] = "#{user_bin}:#{ENV['PATH']}"
+    
+    # Suggest adding to shell rc
+    puts "Add to ~/.zshrc: export PATH=\"#{user_bin}:$PATH\""
   end
 
   def self.install_openbsd_deps(gem_names)
@@ -71,6 +92,7 @@ module Bootstrap
   end
 end
 
+Bootstrap.ensure_gem_path
 Bootstrap.run if ARGV.none? { |a| a == "--no-bootstrap" }
 
 # Optional gems (now should be available)
@@ -834,10 +856,9 @@ class LLMClient
   private
   
   def setup
-    @client = RubyLLM::Client.new(
-      provider: :openrouter,
-      api_key: ENV["OPENROUTER_API_KEY"]
-    )
+    RubyLLM.configure do |config|
+      config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
+    end
   end
   
   def call_llm_with_fallback(model:, fallback_models:, messages:, max_tokens:)
@@ -852,7 +873,7 @@ class LLMClient
         )
       rescue StandardError => error
         if index < models.size - 1
-          Log.warn("Model #{current_model} failed, trying fallback...")
+          Log.warn("Model #{current_model} failed, trying fallback...") unless Options.quiet
         else
           raise error
         end
@@ -863,23 +884,33 @@ class LLMClient
   def call_llm(model:, messages:, max_tokens:)
     @call_count += 1
     
-    response = @client.chat(
-      model: model,
-      messages: messages,
-      max_tokens: max_tokens
-    )
+    chat = RubyLLM.chat(model: model, provider: :openrouter)
+    
+    # Build conversation from messages
+    user_msg = messages.find { |m| m[:role] == "user" }
+    system_msg = messages.find { |m| m[:role] == "system" }
+    
+    prompt = ""
+    prompt += "#{system_msg[:content]}\n\n" if system_msg
+    prompt += user_msg[:content] if user_msg
+    
+    response = chat.ask(prompt)
     
     track_usage(response, model)
     
-    response
+    # Return in expected format
+    {
+      "choices" => [{"message" => {"content" => response.content}}],
+      "usage" => {
+        "prompt_tokens" => response.input_tokens || 0,
+        "completion_tokens" => response.output_tokens || 0
+      }
+    }
   end
   
   def track_usage(response, model)
-    usage = response["usage"] || {}
-    
-    prompt = usage["prompt_tokens"] || 0
-    completion = usage["completion_tokens"] || 0
-    cached = usage.dig("prompt_tokens_details", "cached_tokens") || 0
+    prompt = response.input_tokens || 0
+    completion = response.output_tokens || 0
     total = prompt + completion
     
     @total_tokens += total
@@ -888,11 +919,12 @@ class LLMClient
     @total_cost += cost
     @session_cost += cost
     
-    Log.dmesg("llm", model.split("/").last, "completed", {
-      tokens: total,
-      cached: cached,
-      cost: format("$%.4f", cost)
-    })
+    unless Options.quiet
+      Log.dmesg("llm", model.split("/").last, "completed", {
+        tokens: total,
+        cost: format("$%.4f", cost)
+      })
+    end
   end
   
   def estimate_cost(model, prompt, completion)
