@@ -5135,15 +5135,7 @@ class CLI
     puts "Folders: #{folders.join(', ')}" if folders.any?
     puts
     
-    # Ask what to work on
-    print "Target? "
-    target = $stdin.gets&.strip
-    
-    if target && !target.empty? && target != "q"
-      autopilot_mode(target)
-    end
-    
-    # After autopilot, enter manual mode
+    # Main loop
     loop do
       input = read_input
 
