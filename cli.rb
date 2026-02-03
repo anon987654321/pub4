@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.20"
+  VERSION = "49.21"
 
   def self.boot
     return if Options.quiet
@@ -4908,7 +4908,7 @@ class CLI
   end
 
   def read_input
-    prompt = "#{Dmesg.green}›#{Dmesg.reset} "
+    prompt = "#{Dmesg.green}>#{Dmesg.reset} "
     if READLINE_AVAILABLE
       Readline.readline(prompt, true)&.strip
     else
