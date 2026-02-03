@@ -184,7 +184,7 @@ end
 begin
   require "readline"
   READLINE_AVAILABLE = true
-  
+
   # Tab completion for commands
   COMMANDS = %w[ls cd pwd cat tree scan fix sprawl clean plan complete session cost trace status help quit exit].freeze
   Readline.completion_proc = proc do |input|
@@ -248,21 +248,21 @@ module Core
   CODE_EXTENSIONS = "*.{rb,py,js,ts}"
   CONFIG_EXTENSIONS = "*.{yml,yaml,json}"
   ALL_EXTENSIONS = "*.{rb,py,js,ts,yml,yaml,json,sh}"
-  
+
   # Safe UTF-8 file reading - always handles bad encoding
   def self.read_file(path)
     File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
   rescue
     ""
   end
-  
+
   # Read file with binary mode for cleaning
   def self.read_file_binary(path)
     File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace, mode: "rb")
   rescue
     ""
   end
-  
+
   # Glob files with standard exclusions
   def self.glob_files(root_dir, pattern = CODE_EXTENSIONS, limit: FILE_SCAN_LIMIT)
     Dir.glob(File.join(root_dir, "**", pattern))
@@ -847,7 +847,7 @@ module Core
       init
       key = key_for(file_path, content)
       cache_file = File.join(CACHE_DIR, "#{key}.json")
-      
+
       if File.exist?(cache_file)
         data = JSON.parse(File.read(cache_file))
         if Time.now.to_i - data["timestamp"] <= CACHE_TTL_SECONDS
@@ -855,7 +855,7 @@ module Core
           return data["violations"]
         end
       end
-      
+
       puts "  #{Dmesg.dim}[trace] cache.miss key=#{key}#{Dmesg.reset}" if ENV["TRACE"]
       nil
     rescue StandardError
@@ -868,7 +868,7 @@ module Core
       cache_file = File.join(CACHE_DIR, "#{key}.json")
 
       puts "  #{Dmesg.dim}[trace] cache.set key=#{key} violations=#{violations.size}#{Dmesg.reset}" if ENV["TRACE"]
-      
+
       File.write(cache_file, JSON.generate({
         timestamp: Time.now.to_i,
         file: file_path,
@@ -1475,49 +1475,49 @@ module Core
     def self.analyze(root_dir, constitution)
       questions = constitution.data["structural_analysis"] || {}
       issues = []
-      
+
       # Analyze YAML/config files
       config_files = Dir.glob(File.join(root_dir, "**", "*.{yml,yaml,json}"))
       config_files.each do |f|
         issues.concat(analyze_config(f, questions["config_hierarchy"] || []))
         issues.concat(check_merge_opportunities(f, questions["merge_opportunities"] || []))
       end
-      
+
       # Analyze code files
       code_files = Dir.glob(File.join(root_dir, "**", "*.{rb,py,js,ts}"))
       code_files.each do |f|
         issues.concat(analyze_code_structure(f, questions["code_hierarchy"] || []))
       end
-      
+
       # Project-wide checks
       issues.concat(check_semantic_clarity(root_dir, questions["semantic_clarity"] || []))
       issues.concat(check_decouple_opportunities(root_dir, questions["decouple_opportunities"] || []))
-      
+
       issues
     end
-    
+
     def self.analyze_config(file_path, questions)
       issues = []
       return issues unless File.exist?(file_path)
-      
+
       begin
         content = YAML.safe_load(File.read(file_path, encoding: "UTF-8")) rescue {}
         return issues unless content.is_a?(Hash)
-        
+
         keys = content.keys
-        
+
         # Check: too many top-level keys
         if keys.size > 15
           issues << { file: file_path, type: :sprawl, message: "#{keys.size} top-level keys - consider grouping" }
         end
-        
+
         # Check: mixed scalar and complex types at top level
         scalars = keys.select { |k| !content[k].is_a?(Hash) && !content[k].is_a?(Array) }
         complex = keys.select { |k| content[k].is_a?(Hash) || content[k].is_a?(Array) }
         if scalars.any? && complex.any? && scalars.size > 2
           issues << { file: file_path, type: :hierarchy, message: "Mixed scalars (#{scalars[0..2].join(', ')}) with complex sections" }
         end
-        
+
         # Check: duplicate-looking keys
         keys.combination(2).each do |a, b|
           if similar_keys?(a, b)
@@ -1527,36 +1527,36 @@ module Core
       rescue => e
         # Skip unparseable files
       end
-      
+
       issues
     end
-    
+
     def self.similar_keys?(a, b)
       a_words = a.to_s.split(/[_-]/)
       b_words = b.to_s.split(/[_-]/)
       (a_words & b_words).size >= 1 && a != b
     end
-    
+
     def self.analyze_code_structure(file_path, questions)
       issues = []
       return issues unless File.exist?(file_path)
-      
+
       content = File.read(file_path, encoding: "UTF-8") rescue ""
       lines = content.lines
-      
+
       # Top-level modules/classes sprawl
       top_level = content.scan(/^(module|class)\s+(\w+)/).map(&:last)
       if top_level.size > 10
         issues << { file: file_path, type: :sprawl, smell: :god_file, message: "#{top_level.size} top-level modules/classes" }
       end
-      
+
       # Scattered utilities
       util_patterns = %w[Log Logger Util Utils Helper Helpers]
       scattered = top_level.select { |t| util_patterns.any? { |p| t.include?(p) } }
       if scattered.size > 1
         issues << { file: file_path, type: :fragmentation, smell: :scattered_functionality, message: "Scattered utilities: #{scattered.join(', ')}" }
       end
-      
+
       # Long methods (> 20 lines)
       method_lengths = detect_method_lengths(content)
       method_lengths.each do |name, length|
@@ -1564,7 +1564,7 @@ module Core
           issues << { file: file_path, type: :bloater, smell: :long_method, message: "#{name}: #{length} lines" }
         end
       end
-      
+
       # Long parameter lists (> 4 params)
       content.scan(/def\s+(\w+)\(([^)]+)\)/).each do |name, params|
         param_count = params.split(",").size
@@ -1572,21 +1572,21 @@ module Core
           issues << { file: file_path, type: :bloater, smell: :long_parameter_list, message: "#{name}: #{param_count} params" }
         end
       end
-      
+
       # Message chains (a.b.c.d pattern)
       content.scan(/\w+(?:\.\w+){3,}/).each do |chain|
         issues << { file: file_path, type: :coupler, smell: :message_chains, message: chain[0..50] }
       end
-      
+
       issues
     end
-    
+
     def self.detect_method_lengths(content)
       methods = {}
       current_method = nil
       depth = 0
       start_line = 0
-      
+
       content.lines.each_with_index do |line, idx|
         if line =~ /^\s*def\s+(\w+)/
           current_method = $1
@@ -1603,27 +1603,27 @@ module Core
       end
       methods
     end
-    
+
     def self.check_merge_opportunities(file_path, questions)
       []
     end
-    
+
     def self.check_semantic_clarity(root_dir, questions)
       issues = []
-      
+
       Dir.glob(File.join(root_dir, "**/")).each do |dir|
         files = Dir.glob(File.join(dir, "*")).select { |f| File.file?(f) }
         if files.size > 20
           issues << { file: dir, type: :sprawl, smell: :crowded_dir, message: "#{files.size} files in directory" }
         end
       end
-      
+
       issues
     end
-    
+
     def self.check_decouple_opportunities(root_dir, questions)
       issues = []
-      
+
       # Hardcoded paths
       Dir.glob(File.join(root_dir, "**", "*.{rb,py,yml,yaml}")).first(50).each do |f|
         content = File.read(f, encoding: "UTF-8") rescue ""
@@ -1631,29 +1631,29 @@ module Core
           issues << { file: f, type: :decouple, smell: :hardcoded_path, message: "Hardcoded path - use env var" }
         end
       end
-      
+
       issues
     end
-    
+
     # Detect dead code (unused methods, unreferenced classes)
     def self.detect_dead_code(root_dir)
       issues = []
       definitions = {}
       references = Hash.new(0)
-      
+
       Dir.glob(File.join(root_dir, "**", "*.rb")).each do |f|
         content = File.read(f, encoding: "UTF-8") rescue ""
-        
+
         # Collect definitions
         content.scan(/def\s+(\w+)/).each { |m| definitions[m[0]] = f }
         content.scan(/class\s+(\w+)/).each { |m| definitions[m[0]] = f }
         content.scan(/module\s+(\w+)/).each { |m| definitions[m[0]] = f }
-        
+
         # Collect references
         content.scan(/\b([A-Z]\w+)\b/).each { |m| references[m[0]] += 1 }
         content.scan(/\.(\w+)/).each { |m| references[m[0]] += 1 }
       end
-      
+
       # Find unreferenced (potential dead code)
       definitions.each do |name, file|
         next if %w[initialize new call].include?(name)
@@ -1661,25 +1661,25 @@ module Core
           issues << { file: file, type: :dispensable, smell: :dead_code, message: "#{name} may be unused" }
         end
       end
-      
+
       issues.first(20)  # Limit noise
     end
-    
+
     # Detect cyclic dependencies between files
     def self.detect_cyclic_dependencies(root_dir)
       issues = []
       deps = {}
-      
+
       Dir.glob(File.join(root_dir, "**", "*.rb")).each do |f|
         content = File.read(f, encoding: "UTF-8") rescue ""
         basename = File.basename(f, ".rb")
         deps[basename] = []
-        
+
         content.scan(/require[_relative]*\s+['"]([^'"]+)['"]/).each do |req|
           deps[basename] << File.basename(req[0], ".rb")
         end
       end
-      
+
       # Simple cycle detection (A requires B, B requires A)
       deps.each do |file, requires|
         requires.each do |req|
@@ -1688,29 +1688,29 @@ module Core
           end
         end
       end
-      
+
       issues.uniq { |i| [i[:file], i[:message]].sort.join }
     end
-    
+
     def self.report(issues)
       return if issues.empty?
-      
+
       grouped = issues.group_by { |i| i[:type] }
       grouped.each do |type, items|
         Log.warn("#{type.to_s.upcase}: #{items.size} issues")
         items.first(5).each { |i| Log.info("  #{i[:file]}: #{i[:message]}") }
       end
     end
-    
+
     # Cross-reference analysis: find naming/type inconsistencies
     def self.cross_reference(root_dir)
       issues = []
       terms = Hash.new { |h, k| h[k] = [] }
       types = Hash.new { |h, k| h[k] = [] }
-      
+
       Dir.glob(File.join(root_dir, "**", "*.{rb,py,js,ts,yml,yaml}")).first(100).each do |f|
         content = File.read(f, encoding: "UTF-8") rescue ""
-        
+
         # Collect variable/method names and their apparent types
         content.scan(/(\w+)\s*=\s*(\[|{|"|'|\d|true|false|nil|null)/).each do |name, type_hint|
           type = case type_hint
@@ -1723,22 +1723,22 @@ module Core
                  end
           types[name] << { file: f, type: type }
         end
-        
+
         # Collect similar terms (potential naming inconsistency)
         content.scan(/\b(user|account|member|config|settings|options|data|info|params|args)\b/i).each do |term|
           terms[term[0].downcase] << f
         end
       end
-      
+
       # Find same name with different types
       types.each do |name, occurrences|
         type_set = occurrences.map { |o| o[:type] }.uniq
         if type_set.size > 1
-          issues << { type: :cross_ref, smell: :type_inconsistency, 
+          issues << { type: :cross_ref, smell: :type_inconsistency,
                       message: "#{name} has types: #{type_set.join(', ')}" }
         end
       end
-      
+
       # Find synonym usage (naming inconsistency)
       synonyms = [%w[user account member], %w[config settings options], %w[data info]]
       synonyms.each do |group|
@@ -1748,17 +1748,17 @@ module Core
                       message: "Mixed terms: #{found.join(', ')}" }
         end
       end
-      
+
       issues
     end
-    
+
     # Simulated execution: check edge case handling
     def self.simulate_edge_cases(root_dir)
       issues = []
-      
+
       Dir.glob(File.join(root_dir, "**", "*.rb")).first(50).each do |f|
         content = File.read(f, encoding: "UTF-8") rescue ""
-        
+
         # Check nil handling
         if content.match?(/\.(\w+)/) && !content.match?(/&\.|\.nil\?|rescue|if .+\.nil/)
           method_calls = content.scan(/(\w+)\.(\w+)/).size
@@ -1768,38 +1768,38 @@ module Core
                         message: "#{method_calls} method calls, only #{nil_checks} nil checks" }
           end
         end
-        
+
         # Check empty collection handling
         if content.match?(/\.each|\.map|\.select/) && !content.match?(/\.empty\?|\.any\?|\.size\s*[>=<]/)
           issues << { file: f, type: :simulation, smell: :no_empty_check,
                       message: "Iterates without checking empty" }
         end
-        
+
         # Check file operations without rescue
         if content.match?(/File\.(read|write|open|delete)/) && !content.match?(/rescue|begin.*File/)
           issues << { file: f, type: :simulation, smell: :unhandled_io,
                       message: "File operations without error handling" }
         end
-        
+
         # Check for string interpolation in user input (injection risk)
         if content.match?(/`.*#\{|system.*#\{|exec.*#\{|%x.*#\{/)
           issues << { file: f, type: :simulation, smell: :injection_risk,
                       message: "String interpolation in shell command" }
         end
       end
-      
+
       issues
     end
-    
+
     # Micro-refinement detection
     def self.detect_micro_refinements(root_dir)
       issues = []
-      
+
       Core.glob_files(root_dir, Core::CODE_EXTENSIONS).each do |f|
         content = Core.read_file(f)
         next if content.empty?
         lines = content.lines
-        
+
         # Long methods (>25 lines)
         method_lines = 0
         method_start = nil
@@ -1817,7 +1817,7 @@ module Core
             method_lines += 1
           end
         end
-        
+
         # Magic numbers
         content.scan(/[^a-zA-Z_](\d{2,})[^a-zA-Z_\d]/).each do |match|
           num = match[0].to_i
@@ -1825,19 +1825,19 @@ module Core
           issues << { file: f, type: :refinement, check: :magic_number,
                       message: "Magic number: #{num}" } if issues.count { |i| i[:check] == :magic_number } < 5
         end
-        
+
         # Bare rescue
         if content.match?(/rescue\s*($|#)/) || content.match?(/rescue\s+=>/)
           issues << { file: f, type: :refinement, check: :bare_rescue,
                       message: "Bare rescue without exception type" }
         end
-        
+
         # Hardcoded paths
         content.scan(%r{["'](/(?:usr|etc|home|var|tmp)/[^"']+)["']}).each do |match|
           issues << { file: f, type: :refinement, check: :hardcoded_path,
                       message: "Hardcoded path: #{match[0][0..40]}" } if issues.count { |i| i[:check] == :hardcoded_path } < 3
         end
-        
+
         # Duplicate code patterns (simple: same 3+ line block)
         line_hashes = {}
         lines.each_cons(3).with_index do |block, i|
@@ -1849,7 +1849,7 @@ module Core
           end
           line_hashes[hash] = i
         end
-        
+
         # Inconsistent naming (mixed camelCase and snake_case)
         camel = content.scan(/\b[a-z]+[A-Z][a-zA-Z]+\b/).uniq
         snake = content.scan(/\b[a-z]+_[a-z]+\b/).uniq
@@ -1858,25 +1858,25 @@ module Core
                       message: "Mixed naming: #{camel.size} camelCase, #{snake.size} snake_case" }
         end
       end
-      
+
       issues.first(30)
     end
-    
+
     # Cross-file DRY violation detection
     def self.detect_cross_file_dry(root_dir)
       issues = []
       files = Core.glob_files(root_dir, Core::CODE_EXTENSIONS, limit: Core::LARGE_SCAN_LIMIT)
-      
+
       # Collect patterns across all files
       call_patterns = Hash.new { |h, k| h[k] = [] }
       block_hashes = Hash.new { |h, k| h[k] = [] }
       constants_used = Hash.new { |h, k| h[k] = [] }
-      
+
       files.each do |f|
         content = Core.read_file(f)
         next if content.empty?
         lines = content.lines
-        
+
         # Track function call patterns (method calls with specific args)
         content.scan(/(File\.(?:read|write|open)\([^)]{20,}\))/).each do |match|
           call_patterns[match[0].gsub(/["'][^"']+["']/, '...')] << f
@@ -1884,14 +1884,14 @@ module Core
         content.scan(/(Dir\.glob\([^)]+\))/).each do |match|
           call_patterns[match[0].gsub(/["'][^"']+["']/, '...')] << f
         end
-        
+
         # Track 5-line blocks
         lines.each_cons(5).with_index do |block, i|
           normalized = block.map { |l| l.strip.gsub(/\s+/, ' ') }.join("\n")
           next if normalized.length < 50
           block_hashes[normalized.hash] << { file: f, line: i + 1 }
         end
-        
+
         # Track magic numbers
         content.scan(/\b(\d{2,4})\b/).each do |match|
           num = match[0]
@@ -1899,7 +1899,7 @@ module Core
           constants_used[num] << f
         end
       end
-      
+
       # Report duplicate call patterns
       call_patterns.each do |pattern, occurrences|
         if occurrences.uniq.size >= 3
@@ -1908,7 +1908,7 @@ module Core
                       files: occurrences.uniq.first(3) }
         end
       end
-      
+
       # Report duplicate blocks
       block_hashes.each do |hash, occurrences|
         if occurrences.size >= 2 && occurrences.map { |o| o[:file] }.uniq.size >= 2
@@ -1917,7 +1917,7 @@ module Core
                       files: occurrences.map { |o| "#{o[:file]}:#{o[:line]}" }.first(3) }
         end
       end
-      
+
       # Report magic numbers spread across files
       constants_used.each do |num, occurrences|
         if occurrences.uniq.size >= 3
@@ -1926,10 +1926,10 @@ module Core
                       files: occurrences.uniq.first(3) }
         end
       end
-      
+
       issues.first(20)
     end
-    
+
     # Full analysis including cross-file DRY
     def self.full_analysis(root_dir, constitution)
       all_issues = []
@@ -2485,30 +2485,30 @@ module Shell
 
   SYSTEM_PROMPT = <<~PROMPT
     You are a protective bodyguard and system administrator assistant.
-    
+
     Personality:
     - Overly protective of systems and data
     - Warn before any destructive or risky action
     - Create backups before modifications
     - Suggest safer alternatives when possible
     - Brief, direct, no fluff
-    
+
     Language:
     - Respond in the user's language (English or Norwegian)
     - Follow Strunk & White: omit needless words, active voice, be clear
     - Conversational but professional
     - Norwegian: use bokmål, short sentences, avoid anglicisms
-    
+
     When the user asks for a command:
     1. Briefly explain what you'll do
     2. Return the exact command in a ```zsh code block (never bash)
     3. If it needs root, prefix with `doas`
     4. If dangerous, add WARNING and ask for confirmation
     5. Always prefer zsh builtins over external commands
-    
+
     Environment: OpenBSD, zsh, Ruby. You have access to shell commands,
     pkg_add, rcctl, ifconfig, pf, etc.
-    
+
     Catchphrases: "Backing up first." "That looks risky. Confirm?" "Clean."
   PROMPT
 
@@ -2638,7 +2638,7 @@ end
 # Minimal cursor control (stolen from tty-cursor)
 module Cursor
   CSI = "\e["
-  
+
   def self.hide = CSI + "?25l"
   def self.show = CSI + "?25h"
   def self.up(n = 1) = CSI + "#{n}A"
@@ -2650,7 +2650,7 @@ module Cursor
   def self.clear_down = CSI + "J"
   def self.save = "\e7"
   def self.restore = "\e8"
-  
+
   def self.invisible
     print hide
     yield
@@ -2820,7 +2820,7 @@ end
 # StatusLine - persistent status at bottom of terminal
 class StatusLine
   SPINNER = %w[* . o O @ * ].freeze
-  
+
   def initialize
     @intent = ""
     @progress = nil
@@ -2833,7 +2833,7 @@ class StatusLine
     @intent = intent
     render if @enabled
   end
-  
+
   def spin_start
     @spinning = true
     @spin_thread = Thread.new do
@@ -2845,7 +2845,7 @@ class StatusLine
       end
     end
   end
-  
+
   def spin_stop
     @spinning = false
     @spin_thread&.join
@@ -2994,7 +2994,7 @@ end
 # WebServer - serves cli.html and handles /poll, /chat endpoints
 class WebServer
   DEFAULT_PORT = 8080
-  
+
   def initialize(cli, port: nil)
     @cli = cli
     @port = port || find_available_port
@@ -3002,22 +3002,22 @@ class WebServer
     @current_persona = "ronin"
     @server = nil
   end
-  
+
   attr_reader :port
-  
+
   def start
     # Kill any old ruby/webrick processes on common ports
     kill_old_servers
-    
+
     html_path = File.join(File.dirname(__FILE__), "cli.html")
-    
+
     @server = WEBrick::HTTPServer.new(
       Port: @port,
       BindAddress: "0.0.0.0",
       Logger: WEBrick::Log.new(File.exist?("/dev/null") ? "/dev/null" : "NUL"),
       AccessLog: []
     )
-    
+
     # Serve cli.html at root
     @server.mount_proc "/" do |req, res|
       if File.exist?(html_path)
@@ -3028,11 +3028,11 @@ class WebServer
         res.body = "cli.html not found"
       end
     end
-    
+
     # Poll endpoint for TTS responses
     @server.mount_proc "/poll" do |req, res|
       res.content_type = "application/json"
-      
+
       begin
         # Non-blocking check for response
         if @response_queue.empty?
@@ -3045,22 +3045,22 @@ class WebServer
         res.body = JSON.generate({ text: nil, error: e.message })
       end
     end
-    
+
     # Chat endpoint for incoming messages
     @server.mount_proc "/chat" do |req, res|
       res.content_type = "application/json"
-      
+
       begin
         body = JSON.parse(req.body)
         message = body["message"]
-        
+
         if message && !message.empty?
           # Process in background thread
           Thread.new do
             response = process_chat(message)
             @response_queue.push(response) if response
           end
-          
+
           res.body = JSON.generate({ status: "processing" })
         else
           res.body = JSON.generate({ status: "error", message: "No message provided" })
@@ -3069,45 +3069,45 @@ class WebServer
         res.body = JSON.generate({ status: "error", message: e.message })
       end
     end
-    
+
     # Persona endpoint
     @server.mount_proc "/persona" do |req, res|
       res.content_type = "application/json"
-      
+
       if req.request_method == "POST"
         body = JSON.parse(req.body) rescue {}
         @current_persona = body["persona"] if body["persona"]
       end
-      
+
       res.body = JSON.generate({ persona: @current_persona })
     end
-    
+
     # Start server in background thread
     @thread = Thread.new { @server.start }
-    
+
     # Trap signals for clean shutdown
     trap("INT") { stop }
     trap("TERM") { stop }
-    
+
     url
   end
-  
+
   def stop
     @server&.shutdown
     @thread&.kill
   end
-  
+
   def url
     host = ENV["HOST"] || ENV["HOSTNAME"] || "brgen.no"
     "http://#{host}:#{@port}"
   end
-  
+
   def push_response(text)
     @response_queue.push(text)
   end
-  
+
   private
-  
+
   def find_available_port
     server = TCPServer.new("127.0.0.1", 0)
     port = server.addr[1]
@@ -3116,7 +3116,7 @@ class WebServer
   rescue
     DEFAULT_PORT
   end
-  
+
   def kill_old_servers
     # Kill any old cli.rb processes (except self)
     if RUBY_PLATFORM =~ /openbsd|linux|darwin/
@@ -3133,22 +3133,22 @@ class WebServer
   rescue
     # Silently ignore errors
   end
-  
+
   def process_chat(message)
     return nil unless @cli
-    
+
     # Use CLI's chat mechanism
     @cli.instance_variable_set(:@chat_history, @cli.instance_variable_get(:@chat_history) || [])
     @cli.instance_variable_get(:@chat_history) << { role: "user", content: message }
-    
+
     tiered = @cli.instance_variable_get(:@tiered)
     return "LLM not available" unless tiered&.enabled?
-    
+
     # Get persona-specific prompt
     persona_prompt = get_persona_prompt(@current_persona)
-    
+
     response = tiered.ask_tier("medium", message, system_prompt: persona_prompt)
-    
+
     if response
       @cli.instance_variable_get(:@chat_history) << { role: "assistant", content: response }
       response
@@ -3156,7 +3156,7 @@ class WebServer
       "I understand. What would you like me to do?"
     end
   end
-  
+
   def get_persona_prompt(persona)
     prompts = {
       "ronin" => "You follow the way of the samurai (Hagakure). Speak only when necessary. Few words. Decisive action. Complete loyalty to the task. No hesitation."
@@ -3886,13 +3886,13 @@ class LLMClient
   def set_current_file(path)
     @current_file = path
   end
-  
+
   # Chat with message history (for conversational mode)
   def chat(messages, tier: "medium")
     return nil unless @enabled
     @tiered&.ask_tier(tier, messages.last[:content], system_prompt: messages.first[:content])
   end
-  
+
   # Simple query (backwards compatible)
   def query(prompt, tier: "fast")
     return nil unless @enabled
@@ -4150,7 +4150,7 @@ class LLMClient
   def check_cost_limit(scope)
     # Skip all limits in sandbox mode
     return if ENV["SANDBOX"] || Options.force
-    
+
     limits = @constitution.safety["cost_protection"]
 
     if scope == "file" && @total_cost > limits["max_per_file"]
@@ -4611,7 +4611,7 @@ class AutoEngine
   # Source abbreviations for display
   SOURCE_ABBREV = {
     "clean_code" => "CC",
-    "fowler" => "MF", 
+    "fowler" => "MF",
     "poodr" => "SM",
     "pragmatic" => "PP",
     "unix" => "BSD"
@@ -4631,12 +4631,13 @@ class AutoEngine
       end
       puts "    +#{violations.size - 3}" if violations.size > 3
     end
-    
+
     # Trace mode: full transparency
     if ENV["TRACE"]
       stats = @llm.stats if @llm.enabled?
       puts "  #{Dmesg.dim}[trace] model=#{@llm&.current_model} tokens=#{stats&.dig(:tokens)} cost=$#{format("%.4f", stats&.dig(:cost) || 0)}#{Dmesg.reset}"
-      puts "  #{Dmesg.dim}[trace] cache_key=#{Core::Cache.key_for(file_path, File.read(file_path) rescue "")}#{Dmesg.reset}"
+      content = File.read(file_path) rescue ""
+      puts "  #{Dmesg.dim}[trace] cache_key=#{Core::Cache.key_for(file_path, content)}#{Dmesg.reset}"
       # Show source breakdown
       by_source = violations.group_by { |v| v["source"] }
       breakdown = by_source.map { |s, vs| "#{SOURCE_ABBREV[s] || s}:#{vs.size}" }.join(" ")
@@ -4729,7 +4730,7 @@ class CLI
   def systematic_complete(targets)
     targets = ["."] if targets.empty?
     @status.set("Scanning project structure")
-    
+
     files = []
     targets.each do |t|
       if File.directory?(t)
@@ -4739,22 +4740,22 @@ class CLI
       end
     end
     files = filter_ignored(files)
-    
+
     return Log.warn("No files found") if files.empty?
-    
+
     # Phase 1: Analyze what exists
     @status.set("Analyzing #{files.size} files")
     analysis = analyze_project_completeness(files)
-    
+
     # Phase 2: Create plan
     @status.set("Creating completion plan")
     @plan = create_completion_plan(analysis)
     puts @plan.to_s
     puts
-    
+
     print "Execute plan? (y/n) "
     return unless $stdin.gets&.strip&.downcase == "y"
-    
+
     # Phase 3: Execute systematically
     @plan.tasks.each_with_index do |task, idx|
       @status.progress(idx + 1, @plan.tasks.size, task[:desc])
@@ -4763,11 +4764,11 @@ class CLI
       @session.plan = @plan.to_h
       @session.save
     end
-    
+
     @status.clear
     Log.ok("Completion finished: #{@plan.progress}%")
   end
-  
+
   def analyze_project_completeness(files)
     analysis = {
       files: files,
@@ -4778,37 +4779,37 @@ class CLI
       todos: [],
       errors: []
     }
-    
+
     files.each_with_index do |file, idx|
       @status.progress(idx + 1, files.size, File.basename(file))
       content = Core.read_file(file)
       next if content.nil? || content.empty?
-      
+
       # Detect incomplete markers
       if content.match?(/TODO|FIXME|XXX|HACK|WIP|INCOMPLETE/i)
         todos = content.lines.each_with_index.select { |l, _| l.match?(/TODO|FIXME|XXX|HACK|WIP/i) }
         analysis[:todos] += todos.map { |l, n| { file: file, line: n + 1, text: l.strip } }
       end
-      
+
       # Detect stub functions (empty or raise NotImplementedError)
       if content.match?(/raise\s+NotImplementedError|pass\s*$|\.\.\.$/m)
         analysis[:stub_functions] << file
       end
-      
+
       # Detect missing docs for Ruby/Python
       if file.end_with?(".rb", ".py")
         if !content.match?(/^#\s*@|^"""|^'''|^# frozen_string_literal/)
           analysis[:missing_docs] << file
         end
       end
-      
+
       # Detect syntax errors
       if file.end_with?(".rb")
         result = `ruby -c "#{file}" 2>&1`
         analysis[:errors] << { file: file, error: result } unless $?.success?
       end
     end
-    
+
     # Check for missing test files
     files.select { |f| f.end_with?(".rb") && !f.include?("_test") && !f.include?("_spec") }.each do |f|
       test_file = f.sub(".rb", "_test.rb")
@@ -4817,23 +4818,23 @@ class CLI
         analysis[:missing_tests] << f
       end
     end
-    
+
     analysis
   end
-  
+
   def create_completion_plan(analysis)
     plan = Plan.new("Complete project to production-ready state")
-    
+
     # Priority 1: Fix errors
     if analysis[:errors].any?
       plan.add_task("Fix syntax errors", analysis[:errors].map { |e| "#{e[:file]}: #{e[:error].lines.first}" })
     end
-    
+
     # Priority 2: Complete stub functions
     if analysis[:stub_functions].any?
       plan.add_task("Implement stub functions", analysis[:stub_functions].first(10))
     end
-    
+
     # Priority 3: Address TODOs
     if analysis[:todos].any?
       grouped = analysis[:todos].group_by { |t| t[:file] }
@@ -4841,35 +4842,35 @@ class CLI
         plan.add_task("Complete TODOs in #{File.basename(file)}", todos.map { |t| "L#{t[:line]}: #{t[:text][0..60]}" })
       end
     end
-    
+
     # Priority 4: Add missing tests
     if analysis[:missing_tests].any?
       plan.add_task("Add test coverage", analysis[:missing_tests].first(5).map { |f| "Test for #{File.basename(f)}" })
     end
-    
+
     # Priority 5: Add documentation
     if analysis[:missing_docs].any?
       plan.add_task("Add documentation", analysis[:missing_docs].first(5).map { |f| "Document #{File.basename(f)}" })
     end
-    
+
     plan.notes << "#{analysis[:files].size} files analyzed"
     plan.notes << "#{analysis[:todos].size} TODOs found" if analysis[:todos].any?
     plan.notes << "#{analysis[:errors].size} syntax errors" if analysis[:errors].any?
-    
+
     plan
   end
-  
+
   def execute_completion_task(task, task_idx)
     return if task[:done]
-    
+
     puts
     puts "Task #{task_idx + 1}: #{task[:desc]}"
-    
+
     task[:subtasks]&.each_with_index do |sub, sub_idx|
       next if sub[:done]
-      
+
       @status.set("Working on: #{sub[:desc][0..40]}")
-      
+
       # Use LLM to help complete the task
       if sub[:desc].include?(".rb") || sub[:desc].include?(".py")
         match = sub[:desc].match(/[\w\/\.\-_]+\.(rb|py|sh|js)/)
@@ -4878,38 +4879,38 @@ class CLI
           complete_file_task(file, sub[:desc])
         end
       end
-      
+
       @plan.complete_subtask(task_idx, sub_idx)
     end
   end
-  
+
   def complete_file_task(file, task_desc)
     content = Core.read_file(file)
     return unless content
-    
+
     prompt = <<~PROMPT
       Task: #{task_desc}
-      
+
       File: #{file}
       Content:
       ```
       #{content[0..4000]}
       ```
-      
+
       Provide the completed/fixed code. Return ONLY the code, no explanations.
       If the task is about TODOs, implement what the TODO describes.
       If the task is about stubs, implement the function logic.
       If the task is about docs, add appropriate documentation.
     PROMPT
-    
+
     print "  Completing #{File.basename(file)}... "
-    
+
     response = @tiered&.ask_tier("code", prompt)
-    
+
     if response && response.length > 100
       # Extract code from response
       code = response.match(/```\w*\n(.+?)```/m)&.[](1) || response
-      
+
       print "Apply changes? (y/n) "
       if $stdin.gets&.strip&.downcase == "y"
         Core.write_file(file, code, backup: true)
@@ -4921,7 +4922,7 @@ class CLI
       puts "No changes suggested"
     end
   end
-  
+
   def manage_session(cmd, arg = nil)
     case cmd
     when "save"
@@ -5046,7 +5047,7 @@ class CLI
     end
 
     files = expand_targets(targets)
-    
+
     # Auto git-changed filter if in git repo and many files
     if files.size > 10 && File.exist?(".git") && !Options.force
       changed = `git diff --name-only HEAD 2>/dev/null`.split("\n").map { |f| File.expand_path(f) }
@@ -5075,7 +5076,7 @@ class CLI
 
     show_summary(files.size) unless Options.quiet || Options.json
   end
-  
+
   def process_files_parallel(files)
     pool = Concurrent::FixedThreadPool.new([4, files.size].min)
     futures = files.map do |file|
@@ -5179,23 +5180,23 @@ class CLI
       puts "[trace] boot time=#{format("%.2fs", Time.now - start_time)}"
     end
     puts "#{web_url}" if web_url
-    
+
     # First launch hint
     @empty_count = 0
-    
+
     # Main loop
     loop do
       input = read_input
 
       break if input.nil?
-      
+
       if input.empty?
         @empty_count += 1
         puts "try: help, ls, or <file> to scan" if @empty_count == 2
         next
       end
       @empty_count = 0
-      
+
       @last_action = Time.now
 
       case input.downcase.strip
@@ -5290,28 +5291,28 @@ class CLI
       puts
     end
   end
-  
+
   # Autopilot: continuous autonomous completion until done
   def autopilot_mode(path)
     puts "Working on: #{path}"
     puts
-    
+
     @autopilot = true
     @stuck_count = 0
     iteration = 0
     max_iterations = 500
     last_issue_count = nil
     plateau_count = 0
-    
+
     trap("INT") { @autopilot = false; puts "\nStopped." }
-    
+
     while @autopilot && iteration < max_iterations
       iteration += 1
       @status.set("#{iteration}")
-      
+
       # Analyze current state
       analysis = analyze_project_completeness(find_project_files(path))
-      
+
       # Check if done
       total_issues = analysis[:todos].size + analysis[:stub_functions].size + analysis[:errors].size
       if total_issues == 0
@@ -5326,7 +5327,7 @@ class CLI
           next
         end
       end
-      
+
       # Diminishing returns detection
       if last_issue_count && total_issues >= last_issue_count
         plateau_count += 1
@@ -5341,10 +5342,10 @@ class CLI
         plateau_count = 0
       end
       last_issue_count = total_issues
-      
+
       # Brief status
       puts "#{iteration}: #{total_issues} remaining" if iteration % 5 == 1
-      
+
       # Pick highest priority issue and fix it
       success = false
       if analysis[:errors].any?
@@ -5354,7 +5355,7 @@ class CLI
       elsif analysis[:todos].any?
         success = complete_todo(analysis[:todos].first)
       end
-      
+
       # Track if we're stuck
       if success
         @stuck_count = 0
@@ -5371,82 +5372,82 @@ class CLI
           end
         end
       end
-      
+
       # Brief pause
       sleep 0.5
       @session.save
     end
-    
+
     @status.clear
     puts "Done. #{iteration} iterations."
   end
-  
+
   def find_improvements(path)
     # Ask LLM what's missing
     files = find_project_files(path).first(20)
     file_list = files.map { |f| File.basename(f) }.join(", ")
-    
+
     prompt = <<~P
       Project files: #{file_list}
-      
+
       What features or improvements are missing? List up to 3 concrete items.
       Format: one per line, actionable tasks.
       If project looks complete, respond with: COMPLETE
     P
-    
+
     response = @tiered&.ask_tier("fast", prompt)
     return [] if response.nil? || response.include?("COMPLETE")
-    
+
     response.lines.map(&:strip).reject(&:empty?).first(3)
   end
-  
+
   def work_on_improvement(suggestion)
     puts "Improving: #{suggestion[0..50]}"
-    
+
     prompt = <<~P
       Implement this improvement: #{suggestion}
-      
+
       Current directory: #{Dir.pwd}
       Files: #{find_project_files(".").first(10).map { |f| File.basename(f) }.join(", ")}
-      
+
       Respond with:
       EDIT> filename
       <content>
       END>
-      
+
       Or CREATE> filename for new files.
     P
-    
+
     response = @tiered&.ask_tier("code", prompt)
     execute_chat_action(response) if response
   end
-  
+
   def ask_user_for_help(analysis)
     issue = analysis[:errors].first || analysis[:stub_functions].first || analysis[:todos].first
     return nil unless issue
-    
+
     desc = issue.is_a?(Hash) ? (issue[:text] || issue[:error] || issue[:file]) : issue
-    
+
     puts
     print "Stuck on: #{desc[0..60]}. Hint? "
     answer = $stdin.gets&.strip
-    
+
     return nil if answer.nil? || answer.empty?
-    
+
     # Use hint to help fix
     prompt = <<~P
       User hint: #{answer}
       Issue: #{desc}
       File: #{issue[:file] rescue issue}
-      
+
       Apply the hint to fix this. Return the fix.
     P
-    
+
     response = @tiered&.ask_tier("code", prompt)
     execute_chat_action(response) if response
     true
   end
-  
+
   def rotate_issues(analysis)
     # Move first issue to end (handled via array rotation in next iteration)
     # Just mark this one as attempted
@@ -5454,29 +5455,29 @@ class CLI
     issue = analysis[:errors].first || analysis[:stub_functions].first || analysis[:todos].first
     @attempted_issues << (issue[:file] rescue issue) if issue
   end
-  
+
   def find_project_files(path)
     files = Dir.glob(File.join(path, "**/*.{rb,py,js,ts,sh,yml,html,css,md}"))
     filter_ignored(files).reject { |f| @attempted_issues&.include?(f) }
   end
-  
+
   def fix_error(error)
     file = error[:file]
     puts "Fixing: #{File.basename(file)}"
-    
+
     content = Core.read_file(file)
     return false unless content
-    
+
     prompt = <<~P
       Fix the syntax error in this file:
       Error: #{error[:error]}
-      
+
       File: #{file}
       #{content[0..3000]}
-      
+
       Return ONLY the corrected code, no explanation.
     P
-    
+
     response = @tiered&.ask_tier("code", prompt)
     if response && response.length > 50
       Core.write_file(file, response, backup: true)
@@ -5486,23 +5487,23 @@ class CLI
       false
     end
   end
-  
+
   def implement_stub(file)
     puts "Implementing: #{File.basename(file)}"
-    
+
     content = Core.read_file(file)
     return false unless content
-    
+
     prompt = <<~P
       Implement all stub/placeholder functions in this file.
       Replace `raise NotImplementedError`, `pass`, or `...` with working code.
-      
+
       File: #{file}
       #{content[0..3000]}
-      
+
       Return ONLY the complete file with implementations, no explanation.
     P
-    
+
     response = @tiered&.ask_tier("code", prompt)
     if response && response.length > content.length * 0.5
       Core.write_file(file, response, backup: true)
@@ -5512,24 +5513,24 @@ class CLI
       false
     end
   end
-  
+
   def complete_todo(todo)
     file = todo[:file]
     puts "TODO: #{todo[:text][0..40]}"
-    
+
     content = Core.read_file(file)
     return false unless content
-    
+
     prompt = <<~P
       Complete this TODO in the file:
       TODO at line #{todo[:line]}: #{todo[:text]}
-      
+
       File: #{file}
       #{content[0..3000]}
-      
+
       Return ONLY the complete file with the TODO implemented (remove the TODO comment), no explanation.
     P
-    
+
     response = @tiered&.ask_tier("code", prompt)
     if response && response.length > content.length * 0.5
       Core.write_file(file, response, backup: true)
@@ -5539,78 +5540,78 @@ class CLI
       false
     end
   end
-  
+
   # Smart research: expands keywords, tries related concepts
   def research(topic)
     puts "Researching: #{topic}"
-    
+
     # First, expand the topic into related keywords
     expansion_prompt = <<~P
       Topic: #{topic}
-      
+
       Generate 5 related search queries that would help implement this.
       Think laterally: related algorithms, similar problems, adjacent concepts.
       Examples: if topic is "graph visualization", also search "force-directed layout", "d3.js network", "adjacency matrix rendering"
-      
+
       Return one query per line, no numbering.
     P
-    
+
     expansions = @tiered&.ask_tier("fast", expansion_prompt)
     queries = [topic]
     queries += expansions.lines.map(&:strip).reject(&:empty?).first(5) if expansions
-    
+
     results = []
     queries.each do |query|
       # Try web search (if available) or use LLM knowledge
       result = search_or_infer(query)
       results << { query: query, result: result } if result
     end
-    
+
     # Synthesize findings
     if results.any?
       synthesis_prompt = <<~P
         Research findings on: #{topic}
-        
+
         #{results.map { |r| "Query: #{r[:query]}\nResult: #{r[:result][0..500]}" }.join("\n\n")}
-        
+
         Synthesize into actionable implementation guidance. Be specific about code patterns, libraries, approaches.
       P
-      
+
       @tiered&.ask_tier("medium", synthesis_prompt)
     else
       nil
     end
   end
-  
+
   def search_or_infer(query)
     # Try curl to a search API if available, otherwise use LLM inference
     # For now, use LLM knowledge as fallback
     prompt = <<~P
       Search query: #{query}
-      
+
       Provide the most relevant technical information for implementing this.
       Include: libraries, code patterns, gotchas, best practices.
       Be specific and actionable.
     P
-    
+
     @tiered&.ask_tier("fast", prompt)
   end
-  
+
   def research_and_implement(issue, context = "")
     # Research first, then implement
     research_result = research(issue)
-    
+
     if research_result
       prompt = <<~P
         Task: #{issue}
         Context: #{context}
-        
+
         Research findings:
         #{research_result[0..2000]}
-        
+
         Now implement this. Return code only.
       P
-      
+
       @tiered&.ask_tier("code", prompt)
     else
       # Fallback: ask user
@@ -5618,30 +5619,30 @@ class CLI
       print "Hint? "
       hint = $stdin.gets&.strip
       return nil if hint.nil? || hint.empty?
-      
+
       @tiered&.ask_tier("code", "Implement #{issue} using hint: #{hint}")
     end
   end
-  
+
   # Replicate.com integration
   def run_replicate(args)
     repligen_path = File.join(File.dirname(__FILE__), "repligen.rb")
-    
+
     unless File.exist?(repligen_path)
       Log.warn("repligen.rb not found at #{repligen_path}")
       return
     end
-    
+
     unless ENV["REPLICATE_API_TOKEN"]
       Log.warn("Set REPLICATE_API_TOKEN environment variable")
       return
     end
-    
+
     # Parse command
     parts = args.split(/\s+/, 2)
     cmd = parts[0]
     prompt = parts[1] || ""
-    
+
     case cmd
     when "generate", "gen", "image"
       replicate_generate(prompt)
@@ -5658,27 +5659,27 @@ class CLI
       replicate_generate(args)
     end
   end
-  
+
   def replicate_api(method, path, body = nil)
     uri = URI("https://api.replicate.com/v1#{path}")
     req = method == :get ? Net::HTTP::Get.new(uri) : Net::HTTP::Post.new(uri)
     req["Authorization"] = "Bearer #{ENV['REPLICATE_API_TOKEN']}"
     req["Content-Type"] = "application/json"
     req.body = body.to_json if body
-    
+
     Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
   rescue => e
     Log.warn("Replicate API: #{e.message}")
     nil
   end
-  
+
   def replicate_wait(id, name = "Task")
     print "#{name}..."
     loop do
       sleep 2
       res = replicate_api(:get, "/predictions/#{id}")
       return nil unless res
-      
+
       data = JSON.parse(res.body)
       case data["status"]
       when "succeeded"
@@ -5693,20 +5694,20 @@ class CLI
       end
     end
   end
-  
+
   def replicate_generate(prompt)
     return Log.warn("No prompt") if prompt.empty?
-    
+
     puts "Generating: #{prompt[0..50]}"
-    
+
     res = replicate_api(:post, "/predictions", {
       model: "black-forest-labs/flux-schnell",
       input: { prompt: prompt, num_outputs: 1 }
     })
-    
+
     return unless res
     data = JSON.parse(res.body)
-    
+
     url = replicate_wait(data["id"], "Image")
     if url
       filename = "gen_#{Time.now.strftime('%H%M%S')}.webp"
@@ -5714,10 +5715,10 @@ class CLI
       Log.ok("Saved: #{filename}")
     end
   end
-  
+
   def replicate_video(prompt)
     return Log.warn("No prompt") if prompt.empty?
-    
+
     # First generate image
     puts "Step 1: Image"
     res = replicate_api(:post, "/predictions", {
@@ -5725,10 +5726,10 @@ class CLI
       input: { prompt: prompt }
     })
     return unless res
-    
+
     img_url = replicate_wait(JSON.parse(res.body)["id"], "Image")
     return unless img_url
-    
+
     # Then generate video
     puts "Step 2: Video"
     res = replicate_api(:post, "/predictions", {
@@ -5736,7 +5737,7 @@ class CLI
       input: { first_frame_image: img_url, prompt: prompt }
     })
     return unless res
-    
+
     vid_url = replicate_wait(JSON.parse(res.body)["id"], "Video")
     if vid_url
       filename = "vid_#{Time.now.strftime('%H%M%S')}.mp4"
@@ -5744,20 +5745,20 @@ class CLI
       Log.ok("Saved: #{filename}")
     end
   end
-  
+
   def replicate_chain(prompt)
     # Use repligen.rb directly
     system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "chain", prompt)
   end
-  
+
   def replicate_wild(prompt)
     system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "wild", prompt)
   end
-  
+
   def replicate_search(query)
     system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "search", query)
   end
-  
+
   def download_file(url, filename)
     uri = URI(url)
     Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
@@ -5767,7 +5768,7 @@ class CLI
   rescue => e
     Log.warn("Download failed: #{e.message}")
   end
-  
+
   def interactive_help
     puts <<~HELP
       ls cd pwd tree cat    navigation
@@ -5780,7 +5781,7 @@ class CLI
       quit                  exit
     HELP
   end
-  
+
   def show_status
     puts "session: #{@session.name} msgs: #{@chat_history&.size || 0}"
     puts "plan: #{@plan ? "#{@plan.goal} #{@plan.progress}%" : 'none'}"
@@ -5789,47 +5790,47 @@ class CLI
       puts "llm: #{s[:calls]}c #{s[:tokens]}t $#{format('%.4f', s[:cost])}"
     end
   end
-  
+
   def looks_like_path?(input)
     # File paths: start with ./ or /, contain file extensions, or are single words with no spaces
-    return true if input.match?(%r{^[./~]}) 
+    return true if input.match?(%r{^[./~]})
     return true if input.match?(/\.\w+$/)
     return true if input.match?(/^[\w\-_.]+$/) && (File.exist?(input) || Dir.exist?(input))
     return true if input.include?("*") # glob
     false
   end
-  
+
   def chat_response(input)
     unless @llm
       Log.warn("LLM not available. Set OPENROUTER_API_KEY for chat.")
       return
     end
-    
+
     # Plan mode detection
     if input.match?(/^plan\s+/i)
       return plan_mode(input.sub(/^plan\s+/i, ""))
     end
-    
+
     @chat_history ||= []
     @chat_history << { role: "user", content: input }
     @session.history = @chat_history
-    
+
     # Build context
     context = <<~CTX
       Current directory: #{Dir.pwd}
       Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.join(', ')}
       Recent files: #{Dir.glob('*').select { |f| File.file?(f) }.first(10).join(', ')}
     CTX
-    
+
     # Include current plan if exists
     plan_context = @plan ? "\nCurrent plan:\n#{@plan.to_s}\n" : ""
-    
+
     # Get directory listing for context
     files = Dir.entries('.').reject { |f| f.start_with?('.') }.first(20).join(', ') rescue ""
-    
+
     # Trace context for LLM
     trace_info = ENV["TRACE"] ? " TRACE=on" : ""
-    
+
     system_prompt = <<~SYS
       You run inside cli.rb on OpenBSD vmctl sandbox. All actions are safe.
       You can: ls, cat, tree, scan, analyze, !cmd (shell). No limits apply.
@@ -5841,16 +5842,16 @@ class CLI
       files: #{files}
       #{plan_context}
     SYS
-    
+
     begin
       @status.set("Thinking...")
       @status.spin_start
-      
+
       # Use streaming for response
       reply = ""
-      
+
       puts "[DEBUG chat_response] @tiered=#{@tiered.class} enabled=#{@tiered&.enabled? ? 'true' : 'false'}" if ENV["DEBUG"]
-      
+
       if @tiered&.enabled?
         @status.spin_stop
         puts "[DEBUG: tiered enabled, calling stream]" if ENV["DEBUG"]
@@ -5866,31 +5867,31 @@ class CLI
         # Fallback to non-streaming
         messages = [{ role: "system", content: system_prompt }]
         messages += @chat_history.last(10)
-        
+
         response = nil
         llm_thread = Thread.new do
           response = @llm.chat(messages, tier: "medium")
         end
-        
+
         while llm_thread.alive?
           sleep 0.1
         end
         @status.spin_stop
-        
+
         llm_thread.join
         reply = response.is_a?(String) ? response : (response&.content || "I understand.")
         puts reply
       end
-      
+
       reply = "I understand. What would you like me to do?" if reply.nil? || reply.empty?
-      
+
       @chat_history << { role: "assistant", content: reply }
       @session.history = @chat_history
       @session.save
-      
+
       @status.clear
       execute_chat_action(reply)
-      
+
     rescue => e
       @status.spin_stop
       @status.clear
@@ -5900,23 +5901,23 @@ class CLI
       puts "I understand. What would you like me to do next?"
     end
   end
-  
+
   # Plan mode - create structured approach before implementation
   def plan_mode(task)
     @status.set("Creating plan...")
-    
+
     prompt = <<~PROMPT
       Create a detailed implementation plan for: #{task}
-      
+
       Current directory: #{Dir.pwd}
       Available files: #{Dir.glob('*').first(20).join(', ')}
-      
+
       Return a structured plan with:
       1. Goal statement (one line)
       2. Numbered tasks (3-7 main tasks)
       3. Each task can have subtasks
       4. Notes about dependencies or risks
-      
+
       Format:
       GOAL: <goal>
       TASK 1: <description>
@@ -5926,14 +5927,14 @@ class CLI
       NOTES:
       - <note>
     PROMPT
-    
+
     response = @tiered&.ask_tier("medium", prompt)
-    
+
     if response
       @plan = parse_plan_response(response, task)
       @session.plan = @plan.to_h
       @session.save
-      
+
       puts
       puts @plan.to_s
       puts
@@ -5944,18 +5945,18 @@ class CLI
     else
       Log.warn("Could not create plan")
     end
-    
+
     @status.clear
   end
-  
+
   def parse_plan_response(response, fallback_goal)
     plan = Plan.new(fallback_goal)
-    
+
     # Extract goal
     if response.match?(/GOAL:\s*(.+)/i)
       plan = Plan.new($1.strip)
     end
-    
+
     # Extract tasks
     current_task = nil
     response.lines.each do |line|
@@ -5969,11 +5970,11 @@ class CLI
         end
       when /^NOTES?:/i
         # Notes section starts
-      when /^\s*-\s*(.+)/ 
+      when /^\s*-\s*(.+)/
         # This might be a note if we're in notes section
       end
     end
-    
+
     # Extract notes
     if response.match(/NOTES?:\s*(.+)/im)
       notes_section = $1
@@ -5983,52 +5984,52 @@ class CLI
         end
       end
     end
-    
+
     plan
   end
-  
+
   def execute_plan
     return Log.warn("No plan to execute") unless @plan
-    
+
     @plan.tasks.each_with_index do |task, idx|
       next if task[:done]
-      
+
       @status.progress(idx + 1, @plan.tasks.size, task[:desc][0..40])
-      
+
       puts
       puts "Executing: #{task[:desc]}"
-      
+
       task[:subtasks]&.each_with_index do |sub, sub_idx|
         next if sub[:done]
         print "  - #{sub[:desc]}... "
-        
+
         # Let LLM help execute
         chat_response("Execute: #{sub[:desc]}")
-        
+
         @plan.complete_subtask(idx, sub_idx)
       end
-      
+
       @plan.complete_task(idx)
       @session.plan = @plan.to_h
       @session.save
     end
-    
+
     @status.clear
     Log.ok("Plan complete: #{@plan.progress}%")
   end
-  
+
   # Files that are safe to auto-edit without confirmation
   AUTONOMOUS_PATTERNS = [
     /\.rb$/, /\.py$/, /\.js$/, /\.ts$/, /\.sh$/, /\.yml$/, /\.yaml$/,
     /\.html$/, /\.css$/, /\.md$/, /\.json$/
   ].freeze
-  
+
   # Files that always require confirmation
   PROTECTED_FILES = %w[
     /etc/passwd /etc/shadow /etc/pf.conf /etc/rc.conf
     ~/.ssh/authorized_keys ~/.bashrc ~/.zshrc
   ].freeze
-  
+
   def execute_chat_action(reply)
     # Auto-execute if the AI suggests a specific action
     # Uses plain markers: EDIT>, CREATE>, RUN> (no backticks)
@@ -6052,16 +6053,16 @@ class CLI
       plan_mode($1.strip)
     end
   end
-  
+
   def apply_edit(file, content)
     expanded = File.expand_path(file)
-    
+
     # Check if protected
     if PROTECTED_FILES.any? { |p| expanded.include?(p.gsub("~", ENV["HOME"] || "")) }
       print "Protected file #{file}. Apply edit? (y/n) "
       return unless $stdin.gets&.strip&.downcase == 'y'
     end
-    
+
     if File.exist?(expanded)
       # Auto-apply for safe file types
       if AUTONOMOUS_PATTERNS.any? { |p| file.match?(p) }
@@ -6079,29 +6080,29 @@ class CLI
       create_file(file, content)
     end
   end
-  
+
   def create_file(file, content)
     expanded = File.expand_path(file)
     dir = File.dirname(expanded)
-    
+
     unless Dir.exist?(dir)
       FileUtils.mkdir_p(dir)
       Log.ok("Created directory: #{dir}")
     end
-    
+
     File.write(expanded, content)
     Log.ok("Created: #{file}")
   end
-  
+
   def auto_run_command(cmd)
     first_word = cmd.split.first&.split('/')&.last
-    
+
     # Block dangerous commands
     if DANGEROUS_COMMANDS.include?(first_word)
       Log.warn("Blocked: #{first_word}")
       return
     end
-    
+
     # Auto-run safe commands
     safe_prefixes = %w[ls cat head tail grep find echo pwd cd mkdir touch git ruby python node npm]
     if safe_prefixes.include?(first_word)
@@ -6116,7 +6117,7 @@ class CLI
       end
     end
   end
-  
+
   def run_structural_analysis(path)
     Log.info("Running structural analysis on #{path}...")
     issues = Core::StructuralAnalyzer.full_analysis(path, @constitution)
@@ -6126,9 +6127,9 @@ class CLI
       Core::StructuralAnalyzer.report(issues)
     end
   end
-  
+
   DANGEROUS_COMMANDS = %w[rm rmdir dd mkfs fdisk newfs disklabel].freeze
-  
+
   def run_shell_command(cmd)
     # Safety check for dangerous commands
     first_word = cmd.split.first&.split('/')&.last
@@ -6137,7 +6138,7 @@ class CLI
       Log.info("Use --force flag or prefix with ! to override")
       return
     end
-    
+
     Log.info("Running: #{cmd}")
     output = `#{cmd} 2>&1`
     puts output unless output.empty?
@@ -6145,7 +6146,7 @@ class CLI
   rescue => e
     Log.error("Command failed: #{e.message}")
   end
-  
+
   def shell_ls(path)
     dir = File.expand_path(path)
     unless Dir.exist?(dir)
@@ -6157,7 +6158,7 @@ class CLI
     files = entries.reject { |e| File.directory?(File.join(dir, e)) }
     (dirs + files).each_slice(4) { |row| puts row.map { |e| e.ljust(20) }.join }
   end
-  
+
   def shell_cd(path)
     target = File.expand_path(path)
     if Dir.exist?(target)
@@ -6167,7 +6168,7 @@ class CLI
       Log.warn("Directory not found: #{path}")
     end
   end
-  
+
   def shell_cat(path)
     file = File.expand_path(path)
     if File.exist?(file) && File.file?(file)
@@ -6179,7 +6180,7 @@ class CLI
       Log.warn("File not found: #{path}")
     end
   end
-  
+
   def shell_tree(path, depth: 2)
     dir = File.expand_path(path)
     unless Dir.exist?(dir)
@@ -6189,7 +6190,7 @@ class CLI
     puts dir
     print_tree(dir, "", depth)
   end
-  
+
   def print_tree(dir, prefix, depth)
     return if depth <= 0
     entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
@@ -6204,7 +6205,7 @@ class CLI
       end
     end
   end
-  
+
   def handle_natural_language(input)
     case input.downcase
     when /list.*files|show.*files|what files/
@@ -6325,17 +6326,17 @@ class CLI
   def build_prompt
     # Pure-style: dir and git on line above, simple > on input line
     parts = []
-    
+
     # Directory in blue
     dir = Dir.pwd.split('/').last || Dir.pwd
     parts << "#{Dmesg.cyan}#{dir}#{Dmesg.reset}"
-    
+
     # Git branch in dim
     if File.exist?(".git") || File.exist?("../.git")
       branch = `git branch --show-current 2>/dev/null`.strip rescue ""
       parts << "#{Dmesg.dim}#{branch}#{Dmesg.reset}" unless branch.empty?
     end
-    
+
     # Print context line, then simple prompt
     puts parts.join(' ') unless parts.empty?
     "#{Dmesg.magenta}>#{Dmesg.reset} "
@@ -6353,7 +6354,7 @@ class CLI
 
   def process_file(file_path)
     start_time = Time.now
-    
+
     unless File.exist?(file_path)
       Log.error("File not found: #{file_path}") unless Options.quiet
       return nil
