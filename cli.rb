@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.21"
+  VERSION = "49.22"
 
   def self.boot
     return if Options.quiet
@@ -2706,8 +2706,8 @@ module Dmesg
 
     # Clean boot message
     puts "#{green}Constitutional AI#{reset} #{VERSION}"
-    puts "Principles: #{principle_count} | Models: #{model_count}"
-    puts "LLM: #{llm_status} | Ruby: #{RUBY_VERSION} (#{RUBY_PLATFORM.split('-').last})"
+    puts "#{principle_count} principles, #{model_count}"
+    puts "LLM #{llm_status}, Ruby #{RUBY_VERSION}"
     puts
   end
 
@@ -2822,7 +2822,7 @@ end
 class Spinner
   def initialize(message)
     @message = message
-    @spinner = SPINNER_AVAILABLE ? TTY::Spinner.new("[:spinner] #{message}") : nil
+    @spinner = SPINNER_AVAILABLE ? TTY::Spinner.new(":spinner #{message}", format: :dots) : nil
   end
 
   def auto_spin
@@ -4627,7 +4627,7 @@ class CLI
       
       # Show spinner while waiting
       spinner = Thread.new do
-        chars = %w[| / - \\]
+        chars = %w[. o O o]
         i = 0
         loop do
           print "\r#{chars[i % 4]} "
@@ -4663,7 +4663,7 @@ class CLI
     when /```edit:([^\n]+)\n(.*?)```/m
       file, content = $1.strip, $2
       if File.exist?(file)
-        print "Apply edit to #{file}? [y/N] "
+        print "Apply edit to #{file}? (y/n) "
         if $stdin.gets&.strip&.downcase == 'y'
           Core.write_file(file, content, backup: true)
           Log.ok("Updated #{file}")
