@@ -5842,6 +5842,8 @@ class CLI
       reply = ""
       print "\n"
       
+      puts "[DEBUG chat_response] @tiered=#{@tiered.class} enabled=#{@tiered&.enabled?}" if ENV["DEBUG"]
+      
       if @tiered&.enabled?
         puts "[DEBUG: tiered enabled, calling stream]" if ENV["DEBUG"]
         @tiered.ask_tier_stream("medium", @chat_history.last[:content], system_prompt: system_prompt) do |chunk|
@@ -5887,6 +5889,8 @@ class CLI
       
     rescue => e
       @status.clear
+      puts "[DEBUG chat_response ERROR] #{e.class}: #{e.message}" if ENV["DEBUG"]
+      puts "[DEBUG backtrace] #{e.backtrace.first(5).join("\n")}" if ENV["DEBUG"]
       Log.debug("Chat error: #{e.message}")
       puts "I understand. What would you like me to do next?"
     end
