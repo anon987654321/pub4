@@ -938,7 +938,13 @@ language_detection:
 
     shell:
       extensions: [".sh", ".bash", ".zsh"]
-      indicators: ["#!/bin/bash", "#!/bin/sh", "if [", "for "]
+      indicators: ["#!/bin/bash", "#!/bin/sh", "#!/usr/bin/env zsh", "#!/bin/zsh", "if [", "for ", "typeset ", "setopt "]
+      embedded_languages: ["ruby", "python"]  # heredocs may contain other languages
+
+    zsh:
+      extensions: [".zsh"]
+      indicators: ["#!/usr/bin/env zsh", "#!/bin/zsh", "setopt ", "zmodload ", "typeset -a", "autoload "]
+      embedded_languages: ["ruby"]
 
 # =============================================================================
 # REFINEMENTS: Evolution from v1 to v48

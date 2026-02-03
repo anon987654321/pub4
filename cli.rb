@@ -57,12 +57,17 @@ module Bootstrap
   GEMS = {
     "ruby_llm" => "ruby_llm",
     "tty-spinner" => "tty-spinner",
-    "concurrent-ruby" => "concurrent-ruby"
+    "tty-prompt" => "tty-prompt",
+    "tty-table" => "tty-table",
+    "tty-progressbar" => "tty-progressbar",
+    "concurrent-ruby" => "concurrent-ruby",
+    "falcon" => "falcon"
   }.freeze
 
   # @return [Hash<String, Array<String>>] OpenBSD packages needed for gems
   OPENBSD_DEPS = {
-    "ruby_llm" => []
+    "ruby_llm" => [],
+    "falcon" => []
   }.freeze
 
   # Install missing gems and re-execute the script
@@ -194,6 +199,7 @@ module Options
   @no_cache = false
   @parallel = true
   @profile = nil
+  @force = false
 
   class << self
     # @!attribute [rw] quiet
@@ -210,7 +216,9 @@ module Options
     #   @return [Boolean] Enable parallel smell detection
     # @!attribute [rw] profile
     #   @return [String, nil] Active principle profile name
-    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile
+    # @!attribute [rw] force
+    #   @return [Boolean] Force dangerous operations
+    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile, :force
   end
 end
 
@@ -1021,15 +1029,46 @@ module Core
   end
 
   module LanguageDetector
+    # Extensions that should auto-detect without asking
+    AUTO_DETECT = %w[.rb .py .js .ts .jsx .tsx .sh .bash .zsh .yml .yaml .md].freeze
+    
     def self.detect_with_fallback(file_path, code, supported_languages)
+      ext = File.extname(file_path).downcase
+      
+      # Auto-detect for common extensions
+      if AUTO_DETECT.include?(ext)
+        lang = detect_by_extension(file_path, supported_languages)
+        return lang if lang != "unknown"
+      end
+      
+      # Check shebang first
+      if code.start_with?("#!")
+        shebang_lang = detect_by_shebang(code, supported_languages)
+        return shebang_lang if shebang_lang != "unknown"
+      end
+
       ext_language = detect_by_extension(file_path, supported_languages)
       return ext_language if ext_language != "unknown"
 
       detect_by_content(code, supported_languages)
     end
+    
+    def self.detect_by_shebang(code, supported_languages)
+      first_line = code.lines.first&.strip || ""
+      return "unknown" unless first_line.start_with?("#!")
+      
+      case first_line
+      when /ruby/ then "ruby"
+      when /python/ then "python"
+      when /node|nodejs/ then "javascript"
+      when /zsh/ then "zsh"
+      when /bash|sh/ then "shell"
+      else "unknown"
+      end
+    end
 
     def self.detect_by_extension(file_path, supported_languages)
-      ext = File.extname(file_path)
+      ext = File.extname(file_path).downcase
 
       supported_languages.each do |lang_name, lang_config|
         extensions = lang_config["extensions"] || []
@@ -1049,6 +1088,18 @@ module Core
       end
 
       "unknown"
+    end
+    
+    # Detect if shell script has embedded Ruby/Python heredocs
+    def self.detect_embedded(code, primary_lang)
+      return [] unless %w[shell zsh].include?(primary_lang)
+      
+      embedded = []
+      # Ruby heredocs: <<-'RUBY' or <<~RUBY or cat <<EOF with ruby code
+      embedded << "ruby" if code.match?(/<<[-~]?['"]?(RUBY|ruby|RB)['"]?/) || 
+                            code.match?(/ruby\s*<</)
+      embedded << "python" if code.match?(/<<[-~]?['"]?(PYTHON|python|PY)['"]?/)
+      embedded
     end
   end
 
@@ -1485,6 +1536,150 @@ module Replicate
   end
 end
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SHELL MODULE: Natural Language System Administration
+# ═══════════════════════════════════════════════════════════════════════════════
+module Shell
+  DANGEROUS_COMMANDS = %w[rm rf rmdir mkfs dd format fdisk newfs disklabel].freeze
+  PRIVILEGE_COMMANDS = %w[doas sudo su].freeze
+  
+  SYSTEM_PROMPT = <<~PROMPT
+    You are a helpful system administrator assistant running on OpenBSD.
+    The user can ask you questions or request shell commands.
+    
+    When the user asks for a command:
+    1. Explain what you'll do (briefly)
+    2. Return the exact command in a ```sh code block
+    3. If it needs root, prefix with `doas`
+    4. If dangerous (rm -rf, fdisk, etc.), add a WARNING and ask for confirmation
+    
+    You have access to: shell commands, package management (pkg_add), 
+    service control (rcctl), network tools (ifconfig, route, pf), etc.
+    
+    Be concise. OpenBSD style.
+  PROMPT
+  
+  class Assistant
+    def initialize(constitution)
+      @constitution = constitution
+      @history = []
+      @tiered = TieredLLM.new(constitution)
+    end
+    
+    def chat(user_input)
+      @history << { role: "user", content: user_input }
+      
+      messages = [{ role: "system", content: SYSTEM_PROMPT }] + @history.last(10)
+      
+      response = @tiered.ask_tier("medium", messages)
+      assistant_reply = response.to_s
+      
+      @history << { role: "assistant", content: assistant_reply }
+      
+      # Extract and offer to execute commands
+      commands = extract_commands(assistant_reply)
+      
+      { reply: assistant_reply, commands: commands }
+    end
+    
+    def execute(cmd, use_doas: false)
+      full_cmd = use_doas ? "doas #{cmd}" : cmd
+      
+      # Safety check
+      if dangerous?(cmd)
+        return { error: "Dangerous command blocked. Use --force to override." }
+      end
+      
+      Log.info("Executing: #{full_cmd}")
+      
+      output = `#{full_cmd} 2>&1`
+      status = $?.exitstatus
+      
+      {
+        command: full_cmd,
+        output: output,
+        exit_code: status,
+        success: status == 0
+      }
+    end
+    
+    private
+    
+    def extract_commands(text)
+      # Extract shell commands from ```sh blocks
+      text.scan(/```(?:sh|bash|shell)?\n(.+?)```/m).flatten
+    end
+    
+    def dangerous?(cmd)
+      DANGEROUS_COMMANDS.any? { |d| cmd.include?(d) } && !Options.force
+    end
+  end
+  
+  class REPL
+    def initialize(constitution)
+      @assistant = Assistant.new(constitution)
+      @running = true
+    end
+    
+    def run
+      puts "Shell Assistant (type 'exit' to quit, 'run' to execute last command)"
+      puts
+      
+      while @running
+        print "shell> "
+        input = gets&.chomp
+        break if input.nil?
+        
+        case input.downcase
+        when "exit", "quit", "q"
+          @running = false
+        when "run", "!"
+          execute_last_command
+        when /^run\s+(.+)/
+          @assistant.execute($1)
+        when /^doas\s+(.+)/
+          result = @assistant.execute($1, use_doas: true)
+          puts result[:output]
+        when ""
+          next
+        else
+          result = @assistant.chat(input)
+          puts
+          puts result[:reply]
+          puts
+          
+          if result[:commands].any?
+            @last_commands = result[:commands]
+            puts "[Type 'run' to execute, or 'run <command>' for specific]"
+          end
+        end
+      end
+    end
+    
+    private
+    
+    def execute_last_command
+      return puts "No command to run" unless @last_commands&.any?
+      
+      @last_commands.each do |cmd|
+        print "Execute '#{cmd}'? [y/N/doas] "
+        confirm = gets&.chomp&.downcase
+        
+        case confirm
+        when "y", "yes"
+          result = @assistant.execute(cmd)
+          puts result[:output]
+        when "doas", "d"
+          result = @assistant.execute(cmd, use_doas: true)
+          puts result[:output]
+        else
+          puts "Skipped"
+        end
+      end
+    end
+  end
+end
+
 # IMPERATIVE SHELL
 
 module Dmesg
@@ -1570,7 +1765,9 @@ module Dmesg
     tree: ["[tree]", "\u{1F333}"],
     up: ["^", "\u{1F4C8}"],
     chart: ["~", "\u{1F4CA}"],
-    list: ["-", "\u{1F4CB}"]
+    list: ["-", "\u{1F4CB}"],
+    shell: ["$", "\u{1F41A}"],
+    chat: [">", "\u{1F4AC}"]
   }.freeze
 
   def self.icon(name)
@@ -2958,6 +3155,10 @@ class CLI
       run_gardener(:quick)
     when "--garden-full"
       run_gardener(:full)
+    when "--shell", "-s", "--chat"
+      shell_mode
+    when "--ask"
+      quick_ask(args[1..-1].join(" "))
     else
       if Options.watch
         watch_mode(args)
@@ -2989,6 +3190,38 @@ class CLI
     puts "Review and manually apply to master.yml if appropriate."
   end
 
+  def shell_mode
+    puts "#{Dmesg.icon(:shell)} Starting Shell Assistant..."
+    puts "Natural language sysadmin for OpenBSD. Type 'help' for commands."
+    puts
+    Shell::REPL.new(@constitution).run
+  end
+
+  def quick_ask(question)
+    return puts "Usage: ruby cli.rb --ask 'your question'" if question.empty?
+    
+    assistant = Shell::Assistant.new(@constitution)
+    result = assistant.chat(question)
+    
+    puts result[:reply]
+    
+    if result[:commands].any?
+      puts
+      result[:commands].each do |cmd|
+        print "Execute '#{cmd}'? [y/N/doas] "
+        confirm = gets&.chomp&.downcase
+        case confirm
+        when "y", "yes"
+          exec_result = assistant.execute(cmd)
+          puts exec_result[:output]
+        when "doas", "d"
+          exec_result = assistant.execute(cmd, use_doas: true)
+          puts exec_result[:output]
+        end
+      end
+    end
+  end
+
   def parse_flags!(args)
     Options.quiet = args.delete("--quiet") || args.delete("-q")
     Options.json = args.delete("--json")
@@ -2996,6 +3229,7 @@ class CLI
     Options.watch = args.delete("--watch") || args.delete("-w")
     Options.no_cache = args.delete("--no-cache")
     Options.parallel = !args.delete("--no-parallel")
+    Options.force = args.delete("--force") || args.delete("-f")
 
     # Profile handling
     if args.delete("--quick")
@@ -3257,18 +3491,27 @@ class CLI
 
   def detect_language(file_path)
     config = @constitution.language_detection
-
-    # In quiet/json mode, auto-detect without asking
-    if !Options.quiet && !Options.json && config["strategy"] == "ask_user_first" && @constitution.defaults["ask_language"]
-      return LanguageAsker.ask(file_path, @constitution)
-    end
-
     code = File.read(file_path, encoding: "UTF-8")
-    Core::LanguageDetector.detect_with_fallback(
+    
+    # First try auto-detection
+    detected = Core::LanguageDetector.detect_with_fallback(
       file_path,
       code,
       config["supported"]
     )
+    
+    # If auto-detected a known language, use it without asking
+    return detected if detected != "unknown"
+
+    # In quiet/json mode, return unknown without asking
+    return "unknown" if Options.quiet || Options.json
+    
+    # Only ask if strategy requires it AND we couldn't auto-detect
+    if config["strategy"] == "ask_user_first" && @constitution.defaults["ask_language"]
+      return LanguageAsker.ask(file_path, @constitution)
+    end
+
+    "unknown"
   end
 
   def usage
@@ -3295,6 +3538,12 @@ class CLI
     puts "  --no-parallel   Disable parallel smell detection"
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
+    puts "  --force, -f     Allow dangerous shell commands"
+    puts
+    puts "Shell Mode (sysadmin assistant):"
+    puts "  --shell, -s     Interactive shell assistant"
+    puts "  --chat          Same as --shell"
+    puts "  --ask 'query'   One-shot question (with command execution)"
     puts
     puts "Profiles (principle filtering):"
     puts "  --quick         Fast scan with core principles only (5 principles)"
@@ -3318,7 +3567,8 @@ class CLI
     puts "  ruby cli.rb .                   # Process current dir"
     puts "  ruby cli.rb src/ --json         # JSON output for CI"
     puts "  ruby cli.rb --quick .           # Fast scan with 5 core principles"
-    puts "  ruby cli.rb --profile critical  # Critical issues only"
+    puts "  ruby cli.rb --shell             # Sysadmin assistant"
+    puts "  ruby cli.rb --ask 'check disk'  # Quick question"
     puts "  ruby cli.rb --garden-full       # Self-improve constitution"
   end
 
