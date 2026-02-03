@@ -5159,6 +5159,13 @@ class CLI
         interactive_help
       when "cost"
         show_cost
+      when "debug", "llm"
+        puts "LLM_AVAILABLE: #{LLM_AVAILABLE}"
+        puts "OPENROUTER_API_KEY: #{ENV['OPENROUTER_API_KEY'] ? 'set (' + ENV['OPENROUTER_API_KEY'][0..7] + '...)' : 'NOT SET'}"
+        puts "@llm: #{@llm ? 'initialized' : 'nil'}"
+        puts "@llm.enabled?: #{@llm&.enabled? || false}"
+        puts "@tiered: #{@tiered ? 'initialized' : 'nil'}"
+        puts "@tiered.enabled?: #{@tiered&.enabled? || false}"
       when "sprawl", "analyze"
         show_sprawl_report
       when "clean"
