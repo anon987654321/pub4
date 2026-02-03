@@ -62,14 +62,24 @@ module Bootstrap
   def self.ensure_gem_path
     return if writable_gem_dir?
     
-    # Add user gem bin to PATH if not present
     user_bin = File.join(Gem.user_dir, "bin")
-    return if ENV["PATH"].to_s.include?(user_bin)
     
-    ENV["PATH"] = "#{user_bin}:#{ENV['PATH']}"
+    # Add to current session
+    unless ENV["PATH"].to_s.include?(user_bin)
+      ENV["PATH"] = "#{user_bin}:#{ENV['PATH']}"
+    end
     
-    # Suggest adding to shell rc
-    puts "Add to ~/.zshrc: export PATH=\"#{user_bin}:$PATH\""
+    # Auto-add to .zshrc if not present
+    zshrc = File.expand_path("~/.zshrc")
+    export_line = "export PATH=\"#{user_bin}:$PATH\""
+    
+    if File.exist?(zshrc)
+      content = File.read(zshrc)
+      unless content.include?(user_bin)
+        File.open(zshrc, "a") { |f| f.puts "\n# Added by constitutional cli.rb\n#{export_line}" }
+        puts "Added gem path to ~/.zshrc"
+      end
+    end
   end
 
   def self.install_openbsd_deps(gem_names)
@@ -385,12 +395,69 @@ module Core
       "unknown"
     end
   end
+  
+  module GitHistory
+    def self.available?
+      system("git rev-parse --git-dir > /dev/null 2>&1")
+    end
+    
+    def self.recent_commits(count = 3)
+      return [] unless available?
+      
+      `git log --oneline -#{count} 2>/dev/null`.split("\n").map do |line|
+        sha, *msg = line.split(" ")
+        {sha: sha, message: msg.join(" ")}
+      end
+    end
+    
+    def self.file_at_commit(file_path, sha)
+      return nil unless available?
+      
+      content = `git show #{sha}:#{file_path} 2>/dev/null`
+      $?.success? ? content : nil
+    end
+    
+    def self.compare_with_history(file_path, current_violations, commits: 3)
+      return nil unless available?
+      
+      history = []
+      
+      recent_commits(commits).each do |commit|
+        old_content = file_at_commit(file_path, commit[:sha])
+        next unless old_content
+        
+        history << {
+          sha: commit[:sha],
+          message: commit[:message],
+          had_content: true
+        }
+      end
+      
+      {
+        current_violations: current_violations.size,
+        history: history,
+        trend: calculate_trend(current_violations.size, history)
+      }
+    end
+    
+    def self.calculate_trend(current_count, history)
+      return :unknown if history.empty?
+      
+      if current_count == 0
+        :perfect
+      elsif history.size >= 2
+        :tracking
+      else
+        :baseline
+      end
+    end
+  end
 end
 
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "47.1"
+  VERSION = "47.2"
   
   def self.boot
     unless Options.quiet
@@ -1177,6 +1244,19 @@ class AutoEngine
       
       if violations.size > 5
         Log.info("... and #{violations.size - 5} more violations")
+      end
+    end
+    
+    # Git history comparison
+    if Core::GitHistory.available?
+      comparison = Core::GitHistory.compare_with_history(file_path, violations)
+      if comparison && comparison[:history].any?
+        trend_icon = case comparison[:trend]
+          when :perfect then "📈"
+          when :tracking then "📊"
+          else "📋"
+        end
+        Log.info("#{trend_icon} Git: #{comparison[:history].size} commits tracked")
       end
     end
     
