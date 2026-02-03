@@ -5145,6 +5145,9 @@ class CLI
       break if input.nil?
       next if input.empty?
       
+      # Debug: show exactly what was received
+      puts "[input: '#{input}' len=#{input.length}]" if ENV["DEBUG"]
+      
       @last_action = Time.now
 
       case input.downcase.strip
