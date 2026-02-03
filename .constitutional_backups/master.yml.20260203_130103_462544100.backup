@@ -1,7 +1,8 @@
 ---
-version: "46.1"
+version: "47.1"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
+symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
 
 meta:
   approach: "LLM-native detection, zero regex patterns, sensible defaults"

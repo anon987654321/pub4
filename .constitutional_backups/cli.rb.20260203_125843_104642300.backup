@@ -88,6 +88,24 @@ rescue LoadError
   SPINNER_AVAILABLE = false
 end
 
+begin
+  require "readline"
+  READLINE_AVAILABLE = true
+rescue LoadError
+  READLINE_AVAILABLE = false
+end
+
+# Global options
+module Options
+  @quiet = false
+  @json = false
+  @git_changed = false
+  
+  class << self
+    attr_accessor :quiet, :json, :git_changed
+  end
+end
+
 # FUNCTIONAL CORE
 # All business logic as pure functions
 
@@ -350,44 +368,52 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "46.1"
+  VERSION = "47.1"
   
   def self.boot
-    puts "#{bold}Constitutional AI #{VERSION}#{reset}"
-    puts "Battle-tested: 15 edge cases handled, production-ready"
-    puts
-    probe_devices
-    puts
-    puts "#{green}constitutional: ready#{reset}"
-    puts
+    unless Options.quiet
+      puts "#{bold}Constitutional AI #{VERSION}#{reset}"
+      puts "cli.rb ⟷ master.yml (symbiotic pair)"
+      puts
+      probe_devices
+      puts
+      puts "#{green}constitutional: ready#{reset}"
+      puts
+    end
   end
   
   def self.bold = tty? ? "\e[1m" : ""
   def self.green = tty? ? "\e[32m" : ""
+  def self.red = tty? ? "\e[31m" : ""
   def self.reset = tty? ? "\e[0m" : ""
   def self.tty? = $stdout.respond_to?(:tty?) && $stdout.tty?
   
   def self.probe_devices
     msg("cpu", "Ruby", RUBY_VERSION, RUBY_PLATFORM)
-    msg("constitution", "master.yml", detect_constitution)
+    msg("symbiosis", "cli.rb+master.yml", constitution_status)
     msg("detection", "llm-native", detection_status)
-    msg("patterns", "regex-free", "zero maintenance")
+    msg("scope", "recursive", "cwd → all supported files")
     msg("safety", "hardened", "15 edge cases handled")
-    msg("defaults", "auto-everything", "iterate + refactor + progress")
     msg("llm", "multi-model-rag", llm_status)
-    msg("rollback", "transactional", "atomic operations")
   end
   
   def self.msg(device, model, *details)
     puts format("%-22s %s", "#{device}(#{model})", details.join(" "))
   end
   
-  def self.detect_constitution
-    File.exist?("master.yml") ? "loaded" : "missing"
+  def self.constitution_status
+    cli_ok = File.exist?(__FILE__)
+    yml_ok = File.exist?(File.expand_path("master.yml", __dir__)) || File.exist?("master.yml")
+    
+    if cli_ok && yml_ok
+      "paired"
+    else
+      "#{red}BROKEN#{reset} (missing #{yml_ok ? 'cli.rb' : 'master.yml'})"
+    end
   end
   
   def self.detection_status
-    LLM_AVAILABLE && ENV["OPENROUTER_API_KEY"] ? "reasoning mode" : "degraded (needs LLM)"
+    LLM_AVAILABLE && ENV["OPENROUTER_API_KEY"] ? "reasoning mode" : "degraded (no LLM)"
   end
   
   def self.llm_status
@@ -1175,43 +1201,248 @@ class CLI
     @constitution = Constitution.load
     @llm = LLMClient.new(@constitution)
     @engine = AutoEngine.new(@constitution, @llm)
+    @results = []
   end
   
   def run(args)
+    parse_flags!(args)
+    
     if args.empty?
-      usage
+      interactive_mode
       return
     end
     
     case args.first
     when "--help", "-h"
-      usage
+      usage unless Options.quiet
     when "--version", "-v"
-      puts "Constitutional AI v#{Dmesg::VERSION}"
+      puts "Constitutional AI v#{Dmesg::VERSION}" unless Options.quiet
     when "--cost"
       show_cost
     when "--rollback"
       rollback(args[1])
     else
-      file_path = args.first
-      
-      unless File.exist?(file_path)
-        Log.error("File not found: #{file_path}")
-        exit 1
-      end
-      
-      language = detect_language(file_path)
-      
-      result = @engine.process(file_path, language)
-      
-      unless result.ok?
-        Log.error(result.error)
-        exit 1
-      end
+      process_targets(args)
+      output_results if Options.json
     end
   end
   
   private
+  
+  def parse_flags!(args)
+    Options.quiet = args.delete("--quiet") || args.delete("-q")
+    Options.json = args.delete("--json")
+    Options.git_changed = args.delete("--git-changed") || args.delete("-g")
+  end
+  
+  def process_targets(targets)
+    files = expand_targets(targets)
+    
+    if files.empty?
+      Log.error("No files found") unless Options.quiet
+      return
+    end
+    
+    files.each_with_index do |file, idx|
+      Log.info("Processing #{idx + 1}/#{files.size}: #{file}") unless Options.quiet
+      result = process_file(file)
+      @results << result if result
+    end
+    
+    show_summary(files.size) unless Options.quiet || Options.json
+  end
+  
+  def expand_targets(targets)
+    files = []
+    
+    targets.each do |target|
+      if File.directory?(target)
+        files.concat(find_files_in_dir(target))
+      elsif target.include?("*")
+        files.concat(Dir.glob(target))
+      elsif File.exist?(target)
+        files << target
+      end
+    end
+    
+    files = filter_git_changed(files) if Options.git_changed
+    files.uniq.select { |f| supported_file?(f) }
+  end
+  
+  def find_files_in_dir(dir)
+    extensions = @constitution.language_detection["supported"].values.flat_map { |v| v["extensions"] }
+    extensions.flat_map { |ext| Dir.glob(File.join(dir, "**", "*#{ext}")) }
+  end
+  
+  def filter_git_changed(files)
+    changed = `git diff --name-only HEAD 2>/dev/null`.split("\n")
+    staged = `git diff --cached --name-only 2>/dev/null`.split("\n")
+    git_files = (changed + staged).map { |f| File.expand_path(f) }
+    
+    files.select { |f| git_files.include?(File.expand_path(f)) }
+  end
+  
+  def supported_file?(file)
+    ext = File.extname(file)
+    supported = @constitution.language_detection["supported"]
+    supported.values.any? { |v| (v["extensions"] || []).include?(ext) }
+  end
+  
+  def show_summary(total)
+    passed = @results.count { |r| r[:score] == 100 }
+    puts
+    Log.ok("Processed #{total} files: #{passed}/#{total} at 100/100")
+  end
+  
+  def output_results
+    puts JSON.pretty_generate({
+      version: Dmesg::VERSION,
+      files: @results,
+      summary: {
+        total: @results.size,
+        passed: @results.count { |r| r[:score] == 100 },
+        failed: @results.count { |r| r[:score] < 100 }
+      }
+    })
+  end
+  
+  def interactive_mode
+    puts
+    files = find_files_in_dir(".")
+    puts "Found #{files.size} files in #{Dir.pwd}"
+    puts
+    puts "Commands: all (process all), help, cost, quit"
+    puts "Or enter: file path, directory, or glob pattern"
+    puts
+    
+    loop do
+      input = read_input
+      
+      break if input.nil?
+      next if input.empty?
+      
+      case input.downcase
+      when "quit", "exit", "q"
+        puts "Goodbye."
+        break
+      when "all", "."
+        process_cwd_recursive
+      when "help", "h", "?"
+        usage
+      when "cost"
+        show_cost
+      when /^rollback\s+(.+)/
+        rollback($1)
+      else
+        process_targets([input])
+      end
+      
+      puts
+    end
+  end
+  
+  def process_cwd_recursive
+    files = find_files_in_dir(".")
+    files = filter_ignored(files)
+    
+    if files.empty?
+      Log.warn("No supported files found")
+      return
+    end
+    
+    Log.info("Processing #{files.size} files...")
+    puts
+    
+    files.each_with_index do |file, idx|
+      relative = file.sub("#{Dir.pwd}/", "")
+      print "\r[#{idx + 1}/#{files.size}] #{relative.ljust(60)}"
+      result = process_file_quiet(file)
+      @results << result if result
+    end
+    
+    puts
+    show_summary(files.size)
+  end
+  
+  def process_file_quiet(file_path)
+    return nil unless File.exist?(file_path)
+    
+    language = detect_language_auto(file_path)
+    return nil if language == "unknown"
+    
+    result = @engine.process(file_path, language)
+    
+    {
+      file: file_path,
+      language: language,
+      score: result.ok? ? 100 : 0,
+      error: result.ok? ? nil : result.error
+    }
+  rescue StandardError => e
+    {file: file_path, score: 0, error: e.message}
+  end
+  
+  def detect_language_auto(file_path)
+    code = File.read(file_path, encoding: "UTF-8")
+    Core::LanguageDetector.detect_with_fallback(
+      file_path,
+      code,
+      @constitution.language_detection["supported"]
+    )
+  rescue StandardError
+    "unknown"
+  end
+  
+  def filter_ignored(files)
+    ignore_patterns = [
+      %r{/\.git/}, %r{/node_modules/}, %r{/vendor/}, %r{/tmp/},
+      %r{/\.bundle/}, %r{/coverage/}, %r{/dist/}, %r{/build/},
+      %r{\.min\.js$}, %r{\.min\.css$}, %r{\.map$},
+      %r{/\.constitutional_backups/}, %r{/\.constitutional_locks/}
+    ]
+    
+    gitignore = parse_gitignore
+    
+    files.reject do |f|
+      ignore_patterns.any? { |p| f.match?(p) } ||
+        gitignore.any? { |p| File.fnmatch?(p, f, File::FNM_PATHNAME) }
+    end
+  end
+  
+  def parse_gitignore
+    return [] unless File.exist?(".gitignore")
+    
+    File.readlines(".gitignore").map(&:strip).reject { |l| l.empty? || l.start_with?("#") }
+  rescue StandardError
+    []
+  end
+  
+  def read_input
+    if READLINE_AVAILABLE
+      Readline.readline("constitutional> ", true)&.strip
+    else
+      print "constitutional> "
+      $stdin.gets&.strip
+    end
+  end
+  
+  def process_file(file_path)
+    unless File.exist?(file_path)
+      Log.error("File not found: #{file_path}") unless Options.quiet
+      return nil
+    end
+    
+    language = detect_language(file_path)
+    
+    result = @engine.process(file_path, language)
+    
+    if result.ok?
+      {file: file_path, language: language, score: 100, error: nil}
+    else
+      Log.error(result.error) unless Options.quiet
+      {file: file_path, language: language, score: 0, error: result.error}
+    end
+  end
   
   def detect_language(file_path)
     config = @constitution.language_detection
@@ -1231,38 +1462,39 @@ class CLI
   def usage
     puts "Constitutional AI v#{Dmesg::VERSION}"
     puts
-    puts "Usage: ruby cli.rb <file>"
+    puts "Usage: ruby cli.rb [options] [file|dir|glob]"
     puts
-    puts "Automatically:"
-    puts "  1. Asks language (or detects)"
-    puts "  2. Iterates to zero violations"
-    puts "  3. AI-powered refactoring"
-    puts "  4. 7-phase quality validation"
-    puts "  5. Creates backups (rollback with --rollback)"
+    puts "No args = interactive mode with recursive scan from cwd"
     puts
-    puts "Safety:"
-    puts "  - File locking (concurrent safe)"
-    puts "  - Transactional (atomic rollback)"
-    puts "  - Cost limits (per-file and session)"
-    puts "  - Binary file detection"
-    puts "  - Permission checks"
-    puts "  - Convergence detection"
-    puts "  - Priority-aware fixes"
+    puts "Targets:"
+    puts "  file.rb         Single file"
+    puts "  src/            Directory (recursive)"
+    puts "  **/*.rb         Glob pattern"
+    puts "  .               Current directory"
     puts
     puts "Options:"
     puts "  --help, -h      Show this help"
     puts "  --version, -v   Show version"
+    puts "  --quiet, -q     Minimal output (exit code only)"
+    puts "  --json          JSON output for CI/CD"
+    puts "  --git-changed   Only analyze git-modified files"
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
+    puts
+    puts "Interactive commands:"
+    puts "  all             Process all files in cwd"
+    puts "  cost            Show LLM usage"
+    puts "  quit            Exit"
     puts
     puts "Environment:"
     puts "  OPENROUTER_API_KEY   Required for AI features"
     puts "  VERBOSE=1            Show detailed logs"
     puts
     puts "Examples:"
-    puts "  ruby cli.rb app.rb              # Auto-process"
-    puts "  ruby cli.rb cli.rb              # Self-validate"
-    puts "  ruby cli.rb app.rb --rollback   # Undo changes"
+    puts "  ruby cli.rb                     # Interactive mode"
+    puts "  ruby cli.rb .                   # Process current dir"
+    puts "  ruby cli.rb src/ --json         # JSON output for CI"
+    puts "  ruby cli.rb --git-changed       # Only changed files"
   end
   
   def show_cost

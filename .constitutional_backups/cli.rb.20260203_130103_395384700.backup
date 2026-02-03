@@ -1030,6 +1030,7 @@ class AutoEngine
     backup = Rollback.save(file_path) unless read_only
     
     Log.info("Auto-processing #{file_path} (#{language})")
+    puts
     
     result = nil
     

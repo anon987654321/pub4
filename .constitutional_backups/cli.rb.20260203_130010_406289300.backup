@@ -1030,6 +1030,7 @@ class AutoEngine
     backup = Rollback.save(file_path) unless read_only
     
     Log.info("Auto-processing #{file_path} (#{language})")
+    puts
     
     result = nil
     
@@ -1044,11 +1045,10 @@ class AutoEngine
         return result unless result.ok?
       end
       
-      unless Options.quiet
-        Log.ok("Auto-processing complete")
-        puts
-        show_final_report(file_path)
-      end
+      Log.ok("Auto-processing complete")
+      puts
+      
+      show_final_report(file_path)
       
       Result.ok(true)
     rescue StandardError => error
@@ -1082,24 +1082,24 @@ class AutoEngine
       end
       
       if violations.empty?
-        Log.ok("Zero violations after #{iteration + 1} iteration(s)") unless Options.quiet
+        Log.ok("Zero violations after #{iteration + 1} iteration(s)")
         return Result.ok(true)
       end
       
       Log.info("Iteration #{iteration + 1}: #{violations.size} violations")
       
       if Core::ConvergenceDetector.detect_loop(history)
-        Log.warn("Convergence loop detected (stuck)") unless Options.quiet
+        Log.warn("Convergence loop detected (stuck)")
         return Result.ok(false)
       end
       
       if Core::ConvergenceDetector.detect_oscillation(history)
-        Log.warn("Oscillation detected (alternating states)") unless Options.quiet
+        Log.warn("Oscillation detected (alternating states)")
         return Result.ok(false)
       end
       
       if history.size >= 3 && !Core::ConvergenceDetector.improving?(history)
-        Log.warn("No improvement detected") unless Options.quiet
+        Log.warn("No improvement detected")
         return Result.ok(false)
       end
       
