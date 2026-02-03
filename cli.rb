@@ -234,11 +234,11 @@ end
 # =============================================================================
 
 module Core
-  # Safe UTF-8 file reading with fallback
+  # Safe UTF-8 file reading - always handles bad encoding
   def self.read_file(path)
-    File.read(path, encoding: "UTF-8")
-  rescue Encoding::InvalidByteSequenceError
     File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  rescue => e
+    ""
   end
 
   # Safe file writing with backup option
@@ -1185,7 +1185,7 @@ module Core
     end
 
     def self.clean_file(path, dry_run: false)
-      original = File.read(path, encoding: "UTF-8", mode: "rb")
+      original = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace, mode: "rb")
       cleaned = original.dup
 
       # Remove CRLF → LF
@@ -1259,7 +1259,7 @@ module Core
         Dir.glob(File.join(root_dir, pattern)).each do |f|
           next if f.include?("node_modules") || f.include?("vendor") || f.include?(".git")
           line_count = begin
-            File.readlines(f, encoding: "UTF-8").size
+            File.read(f, encoding: "UTF-8", invalid: :replace, undef: :replace).lines.size
           rescue
             0
           end
@@ -1312,7 +1312,7 @@ module Core
       hashes = {}
       files.each do |f|
         next if f[:size] < 100
-        content = File.read(f[:path], encoding: "UTF-8")[0, 500] rescue next
+        content = File.read(f[:path], encoding: "UTF-8", invalid: :replace, undef: :replace)[0, 500] rescue next
         hash = content.hash
         if hashes[hash]
           duplicates << { original: hashes[hash], duplicate: f[:path] }
@@ -1410,7 +1410,7 @@ module Core
 
     def self.merge_files(sources, target)
       combined = sources.map do |f|
-        "# === From: #{f} ===\n" + File.read(f, encoding: "UTF-8")
+        "# From: #{f}\n" + File.read(f, encoding: "UTF-8", invalid: :replace, undef: :replace)
       end.join("\n\n")
 
       FileUtils.mkdir_p(File.dirname(target))
@@ -2536,7 +2536,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.11"
+  VERSION = "49.12"
 
   def self.boot
     return if Options.quiet
