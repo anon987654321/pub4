@@ -5508,15 +5508,16 @@ class CLI
   
   def execute_chat_action(reply)
     # Auto-execute if the AI suggests a specific action
+    # Uses plain markers: EDIT>, CREATE>, RUN> (no backticks)
     case reply
-    when /```edit:([^\n]+)\n(.*?)```/m
+    when /EDIT>\s*([^\n]+)\n(.*?)END>/m
       file, content = $1.strip, $2
       apply_edit(file, content)
-    when /```create:([^\n]+)\n(.*?)```/m
+    when /CREATE>\s*([^\n]+)\n(.*?)END>/m
       file, content = $1.strip, $2
       create_file(file, content)
-    when /```run:([^\n]+)```/m, /```sh\n(.+?)```/m
-      cmd = $1.strip
+    when /RUN>\s*(.+)/i
+      cmd = $1.strip.sub(/END>.*$/m, "").strip
       auto_run_command(cmd)
     when /ANALYZE:\s*(.+)/i
       process_targets([$1.strip])
