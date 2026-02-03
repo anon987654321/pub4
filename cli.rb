@@ -132,9 +132,11 @@ module Options
   @quiet = false
   @json = false
   @git_changed = false
+  @watch = false
+  @no_cache = false
   
   class << self
-    attr_accessor :quiet, :json, :git_changed
+    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache
   end
 end
 
@@ -288,6 +290,51 @@ module Core
       else
         {warning: false, tokens: estimated}
       end
+    end
+  end
+  
+  module Cache
+    CACHE_DIR = File.join(Dir.home, ".cache", "constitutional")
+    
+    def self.init
+      FileUtils.mkdir_p(CACHE_DIR) unless Dir.exist?(CACHE_DIR)
+    end
+    
+    def self.key_for(file_path, content)
+      require "digest"
+      Digest::SHA256.hexdigest("#{file_path}:#{content}")[0, 16]
+    end
+    
+    def self.get(file_path, content)
+      init
+      cache_file = File.join(CACHE_DIR, "#{key_for(file_path, content)}.json")
+      return nil unless File.exist?(cache_file)
+      
+      data = JSON.parse(File.read(cache_file))
+      # Cache valid for 24 hours
+      return nil if Time.now.to_i - data["timestamp"] > 86400
+      
+      data["violations"]
+    rescue StandardError
+      nil
+    end
+    
+    def self.set(file_path, content, violations)
+      init
+      cache_file = File.join(CACHE_DIR, "#{key_for(file_path, content)}.json")
+      
+      File.write(cache_file, JSON.generate({
+        timestamp: Time.now.to_i,
+        file: file_path,
+        violations: violations
+      }))
+    rescue StandardError
+      nil
+    end
+    
+    def self.clear
+      FileUtils.rm_rf(CACHE_DIR)
+      init
     end
   end
   
@@ -452,12 +499,53 @@ module Core
       end
     end
   end
+  
+  module FileWatcher
+    def self.watch(paths, interval: 1.0, &block)
+      mtimes = {}
+      
+      # Initial scan
+      expand_paths(paths).each do |path|
+        mtimes[path] = File.mtime(path) rescue nil
+      end
+      
+      puts "Watching #{mtimes.size} files (Ctrl+C to stop)..."
+      
+      loop do
+        sleep interval
+        
+        expand_paths(paths).each do |path|
+          current_mtime = File.mtime(path) rescue nil
+          next unless current_mtime
+          
+          if mtimes[path] != current_mtime
+            mtimes[path] = current_mtime
+            yield(path)
+          end
+        end
+      end
+    rescue Interrupt
+      puts "\nWatch stopped."
+    end
+    
+    def self.expand_paths(paths)
+      paths.flat_map do |p|
+        if File.directory?(p)
+          Dir.glob(File.join(p, "**", "*")).select { |f| File.file?(f) }
+        elsif p.include?("*")
+          Dir.glob(p).select { |f| File.file?(f) }
+        else
+          [p]
+        end
+      end.uniq
+    end
+  end
 end
 
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "47.2"
+  VERSION = "47.3"
   
   def self.boot
     unless Options.quiet
@@ -1226,7 +1314,22 @@ class AutoEngine
   
   def scan_with_llm(file_path)
     code = File.read(file_path, encoding: "UTF-8")
-    @llm.detect_violations(code, file_path)
+    
+    # Check cache first (unless --no-cache)
+    unless Options.no_cache
+      cached = Core::Cache.get(file_path, code)
+      if cached
+        Log.info("(cached)") unless Options.quiet
+        return cached
+      end
+    end
+    
+    violations = @llm.detect_violations(code, file_path)
+    
+    # Store in cache
+    Core::Cache.set(file_path, code, violations) unless Options.no_cache
+    
+    violations
   end
   
   def show_final_report(file_path)
@@ -1334,8 +1437,12 @@ class CLI
     when "--rollback"
       rollback(args[1])
     else
-      process_targets(args)
-      output_results if Options.json
+      if Options.watch
+        watch_mode(args)
+      else
+        process_targets(args)
+        output_results if Options.json
+      end
     end
   end
   
@@ -1345,6 +1452,17 @@ class CLI
     Options.quiet = args.delete("--quiet") || args.delete("-q")
     Options.json = args.delete("--json")
     Options.git_changed = args.delete("--git-changed") || args.delete("-g")
+    Options.watch = args.delete("--watch") || args.delete("-w")
+    Options.no_cache = args.delete("--no-cache")
+  end
+  
+  def watch_mode(targets)
+    files = expand_targets(targets)
+    
+    Core::FileWatcher.watch(files) do |changed_file|
+      Log.info("Changed: #{changed_file}")
+      process_file(changed_file)
+    end
   end
   
   def process_targets(targets)
@@ -1591,6 +1709,8 @@ class CLI
     puts "  --quiet, -q     Minimal output (exit code only)"
     puts "  --json          JSON output for CI/CD"
     puts "  --git-changed   Only analyze git-modified files"
+    puts "  --watch, -w     Watch mode: re-analyze on file change"
+    puts "  --no-cache      Skip cache, always query LLM"
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
     puts
@@ -1649,6 +1769,8 @@ if __FILE__ == $PROGRAM_NAME
   # Parse flags early for quiet mode
   Options.quiet = ARGV.include?("--quiet") || ARGV.include?("-q")
   Options.json = ARGV.include?("--json")
+  Options.watch = ARGV.include?("--watch") || ARGV.include?("-w")
+  Options.no_cache = ARGV.include?("--no-cache")
   
   Dmesg.boot
   

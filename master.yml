@@ -1,5 +1,5 @@
 ---
-version: "47.2"
+version: "47.3"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
