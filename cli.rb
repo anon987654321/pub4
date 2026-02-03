@@ -1239,19 +1239,51 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.0"
+  VERSION = "49.1"
 
   def self.boot
     return if Options.quiet
 
     if ENV["CONSTITUTIONAL_MINIMAL"]
-      puts "#{green}constitutional #{VERSION}#{reset}"
+      puts "#{green}master.yml #{VERSION}#{reset}"
       return
     end
 
-    puts "#{bold}master.yml LLM OS #{VERSION}#{reset}"
-    puts "#{dim}#{status_line}#{reset}"
+    # OpenBSD dmesg-style boot message
+    puts "master.yml LLM OS #{VERSION} (GENERIC) #1: #{Time.now.strftime('%a %b %e %H:%M:%S %Z %Y')}"
+    puts "    llm@master.yml:/principles/compile/GENERIC"
+    puts "real principles = #{principle_count}"
+    puts "avail models = #{model_count}"
+    puts "llm0 at mainbus0: #{llm_status}"
+    puts "ruby0 at cpu0: Ruby #{RUBY_VERSION}, #{RUBY_PLATFORM}"
     puts
+  end
+
+  def self.principle_count
+    begin
+      yaml = YAML.load_file(File.expand_path("master.yml", __dir__), permitted_classes: [Symbol])
+      yaml["principles"]&.size || 32
+    rescue
+      32
+    end
+  end
+
+  def self.model_count
+    begin
+      yaml = YAML.load_file(File.expand_path("master.yml", __dir__), permitted_classes: [Symbol])
+      tiers = yaml.dig("llm", "tiers")&.keys || []
+      "#{tiers.size} tiers (#{tiers.join(', ')})"
+    rescue
+      "3 tiers (fast, medium, strong)"
+    end
+  end
+
+  def self.llm_status
+    if llm_ready?
+      "#{green}ready#{reset} with fallbacks"
+    else
+      "#{yellow}offline#{reset} - set OPENROUTER_API_KEY"
+    end
   end
 
   def self.status_line
@@ -2941,7 +2973,7 @@ class CLI
   end
 
   def read_input
-    prompt = "#{Dmesg.cyan}c#{Dmesg.reset} "
+    prompt = "#{Dmesg.cyan}os#{Dmesg.reset}> "
     if READLINE_AVAILABLE
       Readline.readline(prompt, true)&.strip
     else

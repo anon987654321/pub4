@@ -1,4 +1,4 @@
-# master.yml LLM OS v49.0
+# master.yml LLM OS v49.1
 
 LLM-powered code quality analysis against 32 coding principles.
 

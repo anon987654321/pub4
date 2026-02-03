@@ -13,7 +13,7 @@
 # @see README.md for usage documentation
 # =============================================================================
 ---
-version: "49.0"
+version: "49.1"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
