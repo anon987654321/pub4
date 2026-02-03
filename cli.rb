@@ -2864,15 +2864,37 @@ end
 
 # StatusLine - persistent status at bottom of terminal
 class StatusLine
+  SPINNER = %w[* . o O @ * ].freeze
+  
   def initialize
     @intent = ""
     @progress = nil
     @enabled = Dmesg.tty?
+    @spin_idx = 0
+    @spinning = false
   end
 
   def set(intent)
     @intent = intent
     render if @enabled
+  end
+  
+  def spin_start
+    @spinning = true
+    @spin_thread = Thread.new do
+      while @spinning
+        @spin_idx = (@spin_idx + 1) % SPINNER.size
+        print "\r#{SPINNER[@spin_idx]} #{@intent}"
+        $stdout.flush
+        sleep 0.1
+      end
+    end
+  end
+  
+  def spin_stop
+    @spinning = false
+    @spin_thread&.join
+    print "\r\e[K"
   end
 
   def progress(current, total, item = "")
@@ -5815,14 +5837,15 @@ class CLI
     
     begin
       @status.set("Thinking...")
+      @status.spin_start
       
       # Use streaming for response
       reply = ""
-      print "\n"
       
       puts "[DEBUG chat_response] @tiered=#{@tiered.class} enabled=#{@tiered&.enabled? ? 'true' : 'false'}" if ENV["DEBUG"]
       
       if @tiered&.enabled?
+        @status.spin_stop
         puts "[DEBUG: tiered enabled, calling stream]" if ENV["DEBUG"]
         @tiered.ask_tier_stream("medium", @chat_history.last[:content], system_prompt: system_prompt) do |chunk|
           print chunk
@@ -5842,14 +5865,10 @@ class CLI
           response = @llm.chat(messages, tier: "medium")
         end
         
-        chars = %w[. o O o]
-        i = 0
         while llm_thread.alive?
-          print "\r#{chars[i % 4]} thinking..."
-          i += 1
-          sleep 0.15
+          sleep 0.1
         end
-        print "\r              \r"
+        @status.spin_stop
         
         llm_thread.join
         reply = response.is_a?(String) ? response : (response&.content || "I understand.")
@@ -5866,6 +5885,7 @@ class CLI
       execute_chat_action(reply)
       
     rescue => e
+      @status.spin_stop
       @status.clear
       puts "[DEBUG chat_response ERROR] #{e.class}: #{e.message}" if ENV["DEBUG"]
       puts "[DEBUG backtrace] #{e.backtrace.first(5).join("\n")}" if ENV["DEBUG"]
