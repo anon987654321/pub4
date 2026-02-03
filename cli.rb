@@ -184,6 +184,12 @@ end
 begin
   require "readline"
   READLINE_AVAILABLE = true
+  
+  # Tab completion for commands
+  COMMANDS = %w[ls cd pwd cat tree scan fix sprawl clean plan complete session cost trace status help quit exit].freeze
+  Readline.completion_proc = proc do |input|
+    COMMANDS.grep(/^#{Regexp.escape(input)}/)
+  end
 rescue LoadError
   READLINE_AVAILABLE = false
 end
@@ -2654,7 +2660,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.64"
+  VERSION = "49.65"
 
   def self.boot
     return if Options.quiet
@@ -5174,12 +5180,21 @@ class CLI
     end
     puts "#{web_url}" if web_url
     
+    # First launch hint
+    @empty_count = 0
+    
     # Main loop
     loop do
       input = read_input
 
       break if input.nil?
-      next if input.empty?
+      
+      if input.empty?
+        @empty_count += 1
+        puts "try: help, ls, or <file> to scan" if @empty_count == 2
+        next
+      end
+      @empty_count = 0
       
       @last_action = Time.now
 
@@ -5218,12 +5233,25 @@ class CLI
         shell_cat($1)
       when /^tree\s*(.*)$/
         shell_tree($1.empty? ? "." : $1)
-      when /^rollback\s+(.+)/
+      when /^rollback\s+(.+)/, /^undo\s+(.+)/
         rollback($1)
-      when /^(scan|check|analyze|process|fix)\s+(.+)/i
-        # Handle multiple files separated by "and", ",", or spaces
+      when "undo"
+        if @last_modified_file
+          rollback(@last_modified_file)
+        else
+          puts "nothing to undo"
+        end
+      when /^(scan|check|analyze|process)\s+(.+)/i
         files = $2.split(/\s+and\s+|\s*,\s*|\s+/).map(&:strip).reject(&:empty?)
         process_targets(files)
+      when /^fix\s+(.+)/i
+        files = $1.split(/\s+and\s+|\s*,\s*|\s+/).map(&:strip).reject(&:empty?)
+        print "apply fixes to #{files.size} file(s)? [y/N] "
+        if $stdin.gets&.strip&.downcase == "y"
+          process_targets(files, auto_fix: true)
+        else
+          puts "cancelled"
+        end
       when /^run\s+(.+)/i, /^exec\s+(.+)/i, /^!\s*(.+)/
         run_shell_command($1)
       when /^structural\s+(.+)/i
