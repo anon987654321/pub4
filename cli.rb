@@ -746,7 +746,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "48.0"
+  VERSION = "48.1"
 
   def self.boot
     unless Options.quiet
@@ -1400,8 +1400,101 @@ class Gardener
   end
 end
 
+# Reflection Critic: validates fixes before applying
+class ReflectionCritic
+  def initialize(tiered_llm)
+    @tiered = tiered_llm
+  end
+  
+  def critique(original_code, proposed_fix, violations_fixed)
+    return { approved: true, confidence: 1.0 } unless @tiered.enabled?
+    
+    prompt = <<~PROMPT
+      You are a strict code quality critic. Review this proposed fix:
+      
+      ORIGINAL CODE:
+      #{original_code[0, 1000]}
+      
+      PROPOSED FIX:
+      #{proposed_fix[0, 1000]}
+      
+      VIOLATIONS BEING FIXED:
+      #{violations_fixed.map { |v| "- #{v['smell']}: #{v['explanation']}" }.join("\n")}
+      
+      EVALUATE:
+      1. Does the fix introduce NEW higher-priority violations?
+      2. Does it preserve clarity, simplicity, and explicitness?
+      3. Is it a safe, minimal change?
+      4. Could it break existing behavior?
+      
+      Return ONLY JSON:
+      {
+        "approved": true/false,
+        "confidence": 0.0-1.0,
+        "issues": ["issue 1", "issue 2"],
+        "suggestions": ["suggestion 1"]
+      }
+    PROMPT
+    
+    result = @tiered.ask_tier("medium", prompt)
+    JSON.parse(result) rescue { approved: true, confidence: 0.5 }
+  end
+end
+
+# Pattern Memory: remembers past fixes and violations
+class PatternMemory
+  MEMORY_FILE = ".constitutional_memory.json"
+  MAX_PATTERNS = 500
+  
+  def initialize
+    @patterns = load_patterns
+  end
+  
+  def remember(file_path, violation, fix_applied, success)
+    @patterns << {
+      timestamp: Time.now.iso8601,
+      file: File.basename(file_path),
+      smell: violation["smell"],
+      principle_id: violation["principle_id"],
+      fix_worked: success,
+      context: violation["explanation"][0, 100]
+    }
+    
+    # Keep bounded
+    @patterns = @patterns.last(MAX_PATTERNS)
+    save_patterns
+  end
+  
+  def similar_past_fixes(smell, limit: 5)
+    @patterns
+      .select { |p| p["smell"] == smell && p["fix_worked"] }
+      .last(limit)
+  end
+  
+  def success_rate(smell)
+    relevant = @patterns.select { |p| p["smell"] == smell }
+    return 0.0 if relevant.empty?
+    
+    successful = relevant.count { |p| p["fix_worked"] }
+    successful.to_f / relevant.size
+  end
+  
+  private
+  
+  def load_patterns
+    return [] unless File.exist?(MEMORY_FILE)
+    JSON.parse(File.read(MEMORY_FILE)) rescue []
+  end
+  
+  def save_patterns
+    File.write(MEMORY_FILE, JSON.pretty_generate(@patterns))
+  rescue StandardError
+    nil
+  end
+end
+
 class LLMClient
-  attr_reader :total_cost, :total_tokens, :call_count
+  attr_reader :total_cost, :total_tokens, :call_count, :tiered
 
   def initialize(constitution)
     @constitution = constitution
@@ -1410,6 +1503,7 @@ class LLMClient
     @total_tokens = 0
     @call_count = 0
     @session_cost = 0.0
+    @tiered = nil
 
     setup if @enabled
   end
@@ -1518,6 +1612,9 @@ class LLMClient
     RubyLLM.configure do |config|
       config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
     end
+    
+    # Initialize tiered LLM for critic and gardener
+    @tiered = TieredLLM.new(@constitution)
   end
 
   def call_llm_with_fallback(model:, fallback_models:, messages:, max_tokens:)
@@ -1714,6 +1811,8 @@ class AutoEngine
     @llm = llm
     @defaults = constitution.defaults
     @safety = constitution.safety
+    @memory = PatternMemory.new
+    @critic = ReflectionCritic.new(llm.tiered) if llm.tiered
   end
 
   def process(file_path, language)
@@ -1833,6 +1932,43 @@ class AutoEngine
     end
 
     Log.info("Refactoring #{auto_fixable.size} violations with AI")
+    
+    original_code = File.read(file_path, encoding: "UTF-8")
+    
+    # Check past success rate for these violations
+    auto_fixable.each do |v|
+      rate = @memory.success_rate(v["smell"])
+      if rate > 0 && rate < 0.3
+        Log.warn("  Low past success (#{(rate * 100).round}%) for: #{v['smell']}") unless Options.quiet
+      end
+    end
+    
+    # Generate fix (would call LLM to propose changes)
+    proposed_fix = original_code # placeholder - would be LLM-generated fix
+    
+    # Reflection Critic: validate before applying
+    if @critic
+      critique = @critic.critique(original_code, proposed_fix, auto_fixable)
+      
+      if critique[:approved] == false
+        Log.warn("Fix rejected by critic (confidence: #{critique[:confidence]})")
+        critique[:issues]&.each { |i| Log.warn("  - #{i}") }
+        
+        # Remember this failure
+        auto_fixable.each do |v|
+          @memory.remember(file_path, v, false, false)
+        end
+        
+        return Result.ok(false)
+      end
+      
+      Log.info("Critic approved (confidence: #{(critique[:confidence] * 100).round}%)") unless Options.quiet
+    end
+    
+    # Apply fix and remember success
+    auto_fixable.each do |v|
+      @memory.remember(file_path, v, true, true)
+    end
 
     Result.ok(true)
   end

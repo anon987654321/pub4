@@ -1,4 +1,4 @@
-# Constitutional AI v47.6 – The Code Janitor That Roasts You 🤖💅
+# Constitutional AI v48.1 – The Code Janitor That Roasts You 🤖💅
 
 Your code is a beautiful disaster. This tool quietly makes it better.
 
@@ -11,13 +11,15 @@ ruby cli.rb --watch .            # watch mode
 ruby cli.rb --garden-full        # self-improve constitution
 ```
 
-## v47.6 Features
+## v48.1 Features
 
 | Feature | Description |
 |---------|-------------|
 | **Tiered Pipeline** | Fast (Qwen) → Medium (Sonnet) → Strong (Opus) = 60-80% savings |
 | **Prompt Caching** | System prompts cached 1h = 75-90% savings |
 | **Parallel Detectors** | 8-12 concurrent cheap scans |
+| **Reflection Critic** | Validates fixes before applying (avoids regressions) |
+| **Pattern Memory** | Remembers fix success rates (`.constitutional_memory.json`) |
 | **Gardener** | `--garden` / `--garden-full` self-improves constitution |
 | **History Tracking** | `.constitutional_history.json` for painful cases |
 | **Watch Mode** | `--watch` auto-reanalyze on save |
@@ -43,6 +45,7 @@ ruby cli.rb --rollback file.rb   # restore backup
 - 💰 Cost protection ($1/file, $10/session)
 - 🔄 Convergence detection (stops loops)
 - ⚖️ Priority-aware (won't make things worse)
+- 🧠 Reflection critic (rejects risky fixes)
 
 ## Cross-Platform
 
@@ -58,6 +61,7 @@ Core (pure functions):
 
 Shell (IO/state):
   Constitution, LLMClient, TieredLLM, ParallelDetector, Gardener
+  ReflectionCritic, PatternMemory
 ```
 
 ## 32 Principles
