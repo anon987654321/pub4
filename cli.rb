@@ -3019,18 +3019,21 @@ class WebServer
     @cli = cli
     @port = port || find_available_port
     @response_queue = Queue.new
-    @current_persona = "ares"
+    @current_persona = "ronin"
     @server = nil
   end
   
   attr_reader :port
   
   def start
+    # Kill any old ruby/webrick processes on common ports
+    kill_old_servers
+    
     html_path = File.join(File.dirname(__FILE__), "cli.html")
     
     @server = WEBrick::HTTPServer.new(
       Port: @port,
-      Logger: WEBrick::Log.new("/dev/null"),
+      Logger: WEBrick::Log.new(File.exist?("/dev/null") ? "/dev/null" : "NUL"),
       AccessLog: []
     )
     
@@ -3130,6 +3133,30 @@ class WebServer
     port
   rescue
     DEFAULT_PORT
+  end
+  
+  def kill_old_servers
+    # Find and kill old cli.rb/webrick processes on ports 8080-8099
+    if RUBY_PLATFORM =~ /openbsd|linux|darwin/
+      # Unix: use fuser or lsof
+      (8080..8099).each do |p|
+        pid = `fuser #{p}/tcp 2>/dev/null`.strip.split.last
+        if pid && pid =~ /^\d+$/ && pid.to_i != Process.pid
+          Process.kill("TERM", pid.to_i) rescue nil
+        end
+      end
+    elsif RUBY_PLATFORM =~ /mingw|mswin/
+      # Windows: use netstat
+      output = `netstat -ano 2>NUL | findstr :808`
+      output.lines.each do |line|
+        if line =~ /:808\d\s.*LISTENING\s+(\d+)/
+          pid = $1.to_i
+          `taskkill /PID #{pid} /F 2>NUL` if pid > 0 && pid != Process.pid
+        end
+      end
+    end
+  rescue
+    # Silently ignore errors
   end
   
   def process_chat(message)
@@ -5467,18 +5494,30 @@ class CLI
     Log.ok("Plan complete: #{@plan.progress}%")
   end
   
+  # Files that are safe to auto-edit without confirmation
+  AUTONOMOUS_PATTERNS = [
+    /\.rb$/, /\.py$/, /\.js$/, /\.ts$/, /\.sh$/, /\.yml$/, /\.yaml$/,
+    /\.html$/, /\.css$/, /\.md$/, /\.json$/
+  ].freeze
+  
+  # Files that always require confirmation
+  PROTECTED_FILES = %w[
+    /etc/passwd /etc/shadow /etc/pf.conf /etc/rc.conf
+    ~/.ssh/authorized_keys ~/.bashrc ~/.zshrc
+  ].freeze
+  
   def execute_chat_action(reply)
     # Auto-execute if the AI suggests a specific action
     case reply
     when /```edit:([^\n]+)\n(.*?)```/m
       file, content = $1.strip, $2
-      if File.exist?(file)
-        print "Apply edit to #{file}? (y/n) "
-        if $stdin.gets&.strip&.downcase == 'y'
-          Core.write_file(file, content, backup: true)
-          Log.ok("Updated #{file}")
-        end
-      end
+      apply_edit(file, content)
+    when /```create:([^\n]+)\n(.*?)```/m
+      file, content = $1.strip, $2
+      create_file(file, content)
+    when /```run:([^\n]+)```/m, /```sh\n(.+?)```/m
+      cmd = $1.strip
+      auto_run_command(cmd)
     when /ANALYZE:\s*(.+)/i
       process_targets([$1.strip])
     when /STRUCTURAL:\s*(.+)/i
@@ -5487,6 +5526,70 @@ class CLI
       systematic_complete([$1.strip])
     when /PLAN:\s*(.+)/i
       plan_mode($1.strip)
+    end
+  end
+  
+  def apply_edit(file, content)
+    expanded = File.expand_path(file)
+    
+    # Check if protected
+    if PROTECTED_FILES.any? { |p| expanded.include?(p.gsub("~", ENV["HOME"] || "")) }
+      print "Protected file #{file}. Apply edit? (y/n) "
+      return unless $stdin.gets&.strip&.downcase == 'y'
+    end
+    
+    if File.exist?(expanded)
+      # Auto-apply for safe file types
+      if AUTONOMOUS_PATTERNS.any? { |p| file.match?(p) }
+        Core.write_file(expanded, content, backup: true)
+        Log.ok("Applied: #{file}")
+      else
+        print "Apply edit to #{file}? (y/n) "
+        if $stdin.gets&.strip&.downcase == 'y'
+          Core.write_file(expanded, content, backup: true)
+          Log.ok("Updated #{file}")
+        end
+      end
+    else
+      # File doesn't exist - create it
+      create_file(file, content)
+    end
+  end
+  
+  def create_file(file, content)
+    expanded = File.expand_path(file)
+    dir = File.dirname(expanded)
+    
+    unless Dir.exist?(dir)
+      FileUtils.mkdir_p(dir)
+      Log.ok("Created directory: #{dir}")
+    end
+    
+    File.write(expanded, content)
+    Log.ok("Created: #{file}")
+  end
+  
+  def auto_run_command(cmd)
+    first_word = cmd.split.first&.split('/')&.last
+    
+    # Block dangerous commands
+    if DANGEROUS_COMMANDS.include?(first_word)
+      Log.warn("Blocked: #{first_word}")
+      return
+    end
+    
+    # Auto-run safe commands
+    safe_prefixes = %w[ls cat head tail grep find echo pwd cd mkdir touch git ruby python node npm]
+    if safe_prefixes.include?(first_word)
+      Log.info("Running: #{cmd}")
+      output = `#{cmd} 2>&1`
+      puts output unless output.empty?
+    else
+      print "Run '#{cmd}'? (y/n) "
+      if $stdin.gets&.strip&.downcase == 'y'
+        output = `#{cmd} 2>&1`
+        puts output unless output.empty?
+      end
     end
   end
   
