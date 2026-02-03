@@ -2536,7 +2536,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.9"
+  VERSION = "49.10"
 
   def self.boot
     return if Options.quiet
@@ -4334,6 +4334,8 @@ class CLI
 
   def interactive_mode
     puts
+    
+    @cwd = Dir.pwd  # Track current directory for cd
 
     # Pre-scan: tree + clean before analysis
     prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
@@ -4342,8 +4344,8 @@ class CLI
     puts "Found #{files.size} files in #{Dir.pwd}"
     puts "Cleaned #{prescan_result[:cleaned_count]} files" if prescan_result[:cleaned_count] > 0
     puts
-    puts "Commands: all (process all), help, cost, sprawl, quit"
-    puts "Or enter: file path, directory, or glob pattern"
+    puts "Commands: all, help, cost, sprawl, ls, cd, pwd, quit"
+    puts "Or enter: file path, directory, glob, or natural language"
     puts
 
     loop do
@@ -4352,7 +4354,7 @@ class CLI
       break if input.nil?
       next if input.empty?
 
-      case input.downcase
+      case input.downcase.strip
       when "quit", "exit", "q"
         puts "Goodbye."
         break
@@ -4366,13 +4368,111 @@ class CLI
         show_sprawl_report
       when "clean"
         run_clean_only
+      when "pwd"
+        puts Dir.pwd
+      when "ls", "dir"
+        shell_ls(".")
+      when /^ls\s+(.+)/, /^dir\s+(.+)/
+        shell_ls($1)
+      when /^cd\s+(.+)/
+        shell_cd($1)
+      when /^cat\s+(.+)/, /^view\s+(.+)/, /^show\s+(.+)/
+        shell_cat($1)
+      when /^tree\s*(.*)$/
+        shell_tree($1.empty? ? "." : $1)
       when /^rollback\s+(.+)/
         rollback($1)
+      when /^(scan|check|analyze|process|fix)\s+(.+)/i
+        process_targets([$2])
+      when /^(what|how|why|where|list|find|show me|display)/i
+        handle_natural_language(input)
       else
         process_targets([input])
       end
 
       puts
+    end
+  end
+  
+  def shell_ls(path)
+    dir = File.expand_path(path)
+    unless Dir.exist?(dir)
+      Log.warn("Directory not found: #{path}")
+      return
+    end
+    entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
+    dirs = entries.select { |e| File.directory?(File.join(dir, e)) }.map { |d| "#{d}/" }
+    files = entries.reject { |e| File.directory?(File.join(dir, e)) }
+    (dirs + files).each_slice(4) { |row| puts row.map { |e| e.ljust(20) }.join }
+  end
+  
+  def shell_cd(path)
+    target = File.expand_path(path)
+    if Dir.exist?(target)
+      Dir.chdir(target)
+      puts "→ #{Dir.pwd}"
+    else
+      Log.warn("Directory not found: #{path}")
+    end
+  end
+  
+  def shell_cat(path)
+    file = File.expand_path(path)
+    if File.exist?(file) && File.file?(file)
+      content = File.read(file, encoding: "UTF-8") rescue ""
+      lines = content.lines
+      lines.first(50).each_with_index { |line, i| puts "#{(i+1).to_s.rjust(4)}  #{line}" }
+      puts "... (#{lines.size - 50} more lines)" if lines.size > 50
+    else
+      Log.warn("File not found: #{path}")
+    end
+  end
+  
+  def shell_tree(path, depth: 2)
+    dir = File.expand_path(path)
+    unless Dir.exist?(dir)
+      Log.warn("Directory not found: #{path}")
+      return
+    end
+    puts dir
+    print_tree(dir, "", depth)
+  end
+  
+  def print_tree(dir, prefix, depth)
+    return if depth <= 0
+    entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
+    entries.each_with_index do |entry, i|
+      path = File.join(dir, entry)
+      is_last = (i == entries.size - 1)
+      connector = is_last ? "└── " : "├── "
+      puts "#{prefix}#{connector}#{entry}#{File.directory?(path) ? '/' : ''}"
+      if File.directory?(path)
+        new_prefix = prefix + (is_last ? "    " : "│   ")
+        print_tree(path, new_prefix, depth - 1)
+      end
+    end
+  end
+  
+  def handle_natural_language(input)
+    case input.downcase
+    when /list.*files|show.*files|what files/
+      shell_ls(".")
+    when /where am i|current dir|pwd/
+      puts Dir.pwd
+    when /show.*structure|project.*structure|tree/
+      shell_tree(".", depth: 3)
+    when /what.*can|help|commands/
+      usage
+    when /how.*many.*files/
+      count = Dir.glob("**/*").count { |f| File.file?(f) }
+      puts "#{count} files in #{Dir.pwd}"
+    when /find\s+(.+)/i, /where.*is\s+(.+)/i
+      pattern = $1.strip
+      matches = Dir.glob("**/#{pattern}*").first(20)
+      matches.any? ? matches.each { |m| puts m } : puts("No matches for: #{pattern}")
+    else
+      Log.info("I understand: ls, cd, pwd, cat, tree, all, help, cost, sprawl, quit")
+      Log.info("Or enter a file/directory path to analyze")
     end
   end
 
