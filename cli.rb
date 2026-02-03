@@ -613,11 +613,13 @@ module Core
   module CostEstimator
     # Cost rates per 1M tokens by tier
     RATES = {
-      fast: { input: 0.1, output: 0.3 },      # Qwen, Gemma, etc
-      medium: { input: 3.0, output: 15.0 },   # Claude Sonnet
-      strong: { input: 15.0, output: 75.0 },  # Claude Opus
-      gpt4: { input: 2.5, output: 10.0 },     # GPT-4o
-      default: { input: 0.5, output: 1.5 }
+      fast: { input: 0.5, output: 2.0 },       # DeepSeek, Gemini Flash
+      medium: { input: 3.0, output: 15.0 },    # Claude Sonnet 4.5
+      strong: { input: 15.0, output: 75.0 },   # Claude Opus 4.5
+      gpt4: { input: 2.5, output: 10.0 },      # GPT-4o
+      deepseek: { input: 0.55, output: 2.19 }, # DeepSeek R1
+      grok: { input: 5.0, output: 15.0 },      # Grok 2
+      default: { input: 1.0, output: 3.0 }
     }.freeze
 
     # Estimate cost for an LLM call
@@ -635,9 +637,11 @@ module Core
     # @return [Hash] {input:, output:} rates per 1M tokens
     def self.rate_for(model)
       case model
-      when /qwen|gemma|hermes/i then RATES[:fast]
-      when /claude-3.5-sonnet/i then RATES[:medium]
-      when /claude-opus|claude-4/i then RATES[:strong]
+      when /deepseek/i then RATES[:deepseek]
+      when /grok/i then RATES[:grok]
+      when /gemini.*flash|gemma/i then RATES[:fast]
+      when /claude-sonnet|claude-3\.5/i then RATES[:medium]
+      when /claude-opus/i then RATES[:strong]
       when /gpt-4/i then RATES[:gpt4]
       else RATES[:default]
       end
