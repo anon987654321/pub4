@@ -2709,7 +2709,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.59"
+  VERSION = "49.60"
 
   def self.boot
     return if Options.quiet
@@ -5176,6 +5176,13 @@ class CLI
     @cwd = Dir.pwd
     @last_action = Time.now
     start_time = Time.now
+
+    # Ask about trace mode unless already set
+    unless ENV["TRACE"]
+      print "trace? [y/N] "
+      answer = $stdin.gets&.strip&.downcase
+      ENV["TRACE"] = "1" if answer == "y"
+    end
 
     # Start web server for cli.html
     web_url = nil
