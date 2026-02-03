@@ -234,19 +234,19 @@ module Core
 
       case File.extname(skill[:executable])
       when ".rb"
-        # Load Ruby skill with isolated context
-        skill_code = File.read(skill[:executable])
-        skill_config = skill[:config]
+        # Load Ruby skill in isolated module (safer than eval in main binding)
+        skill_module = Module.new do
+          @skill_config = skill
+          @context = context
 
-        # Execute in a binding with SKILL_CONFIG available
-        binding.local_variable_set(:SKILL_CONFIG, skill)
-        binding.local_variable_set(:context, context)
+          def self.skill_config = @skill_config
+          def self.context = @context
+        end
 
-        eval(skill_code, binding, skill[:executable])
+        skill_module.module_eval(File.read(skill[:executable]), skill[:executable], 1)
 
-        # Call main function if defined
-        if respond_to?(:execute_skill_main, true)
-          execute_skill_main(context)
+        if skill_module.respond_to?(:execute)
+          skill_module.execute(context)
         end
       else
         Log.debug("Unsupported skill type: #{skill[:executable]}")
@@ -401,6 +401,32 @@ module Core
         {warning: true, tokens: estimated}
       else
         {warning: false, tokens: estimated}
+      end
+    end
+  end
+
+  module CostEstimator
+    # Unified cost estimation for all LLM calls
+    RATES = {
+      fast: { input: 0.1, output: 0.3 },      # Qwen, Gemma, etc
+      medium: { input: 3.0, output: 15.0 },   # Claude Sonnet
+      strong: { input: 15.0, output: 75.0 },  # Claude Opus
+      gpt4: { input: 2.5, output: 10.0 },     # GPT-4o
+      default: { input: 0.5, output: 1.5 }
+    }.freeze
+
+    def self.estimate(model, prompt_tokens, completion_tokens)
+      rate = rate_for(model)
+      (prompt_tokens * rate[:input] / 1_000_000) + (completion_tokens * rate[:output] / 1_000_000)
+    end
+
+    def self.rate_for(model)
+      case model
+      when /qwen|gemma|hermes/i then RATES[:fast]
+      when /claude-3.5-sonnet/i then RATES[:medium]
+      when /claude-opus|claude-4/i then RATES[:strong]
+      when /gpt-4/i then RATES[:gpt4]
+      else RATES[:default]
       end
     end
   end
@@ -1043,42 +1069,44 @@ module FileValidator
 end
 
 module FileLock
+  RETRY_INTERVAL = 0.5
+
   def self.acquire(file_path, config)
     return nil unless config["file_locking"]
 
-    lock_dir = config["lock_dir"]
-    FileUtils.mkdir_p(lock_dir)
-
-    lock_file = File.join(lock_dir, "#{File.basename(file_path)}.lock")
-    timeout = config["lock_timeout"]
-    stale_age = config["stale_lock_age"]
-
-    start = Time.now
+    lock_file = prepare_lock_path(file_path, config["lock_dir"])
+    deadline = Time.now + config["lock_timeout"]
 
     loop do
-      begin
-        File.open(lock_file, File::CREAT | File::EXCL | File::WRONLY) do |f|
-          f.write("#{Process.pid}\n#{Time.now}\n")
-        end
+      return lock_file if try_create_lock(lock_file)
+      return nil if Time.now > deadline
 
-        return lock_file
-      rescue Errno::EEXIST
-        if File.exist?(lock_file)
-          age = Time.now - File.mtime(lock_file)
-
-          if age > stale_age
-            File.delete(lock_file)
-            next
-          end
-        end
-
-        if Time.now - start > timeout
-          return nil
-        end
-
-        sleep 0.5
-      end
+      remove_stale_lock(lock_file, config["stale_lock_age"])
+      sleep RETRY_INTERVAL
     end
+  end
+
+  def self.prepare_lock_path(file_path, lock_dir)
+    FileUtils.mkdir_p(lock_dir)
+    File.join(lock_dir, "#{File.basename(file_path)}.lock")
+  end
+
+  def self.try_create_lock(lock_file)
+    File.open(lock_file, File::CREAT | File::EXCL | File::WRONLY) do |f|
+      f.write("#{Process.pid}\n#{Time.now}\n")
+    end
+    true
+  rescue Errno::EEXIST
+    false
+  end
+
+  def self.remove_stale_lock(lock_file, stale_age)
+    return unless File.exist?(lock_file)
+    return unless Time.now - File.mtime(lock_file) > stale_age
+
+    File.delete(lock_file)
+  rescue Errno::ENOENT
+    # Already removed
   end
 
   def self.release(lock_file)
@@ -1247,18 +1275,7 @@ class TieredLLM
   end
 
   def estimate_cost(model, prompt, completion)
-    case model
-    when /qwen|gemma|hermes/i
-      (prompt * 0.1 / 1_000_000) + (completion * 0.3 / 1_000_000)  # ~10x cheaper
-    when /claude-3.5-sonnet/i
-      (prompt * 3.0 / 1_000_000) + (completion * 15.0 / 1_000_000)
-    when /claude-opus/i
-      (prompt * 15.0 / 1_000_000) + (completion * 75.0 / 1_000_000)
-    when /gpt-4o/i
-      (prompt * 2.5 / 1_000_000) + (completion * 10.0 / 1_000_000)
-    else
-      (prompt * 0.5 / 1_000_000) + (completion * 1.5 / 1_000_000)
-    end
+    Core::CostEstimator.estimate(model, prompt, completion)
   end
 end
 
@@ -1697,13 +1714,7 @@ class LLMClient
   end
 
   def estimate_cost(model, prompt, completion)
-    if model.include?("claude")
-      (prompt * 3.0 / 1_000_000) + (completion * 15.0 / 1_000_000)
-    elsif model.include?("gpt")
-      (prompt * 2.5 / 1_000_000) + (completion * 10.0 / 1_000_000)
-    else
-      (prompt * 0.5 / 1_000_000) + (completion * 1.5 / 1_000_000)
-    end
+    Core::CostEstimator.estimate(model, prompt, completion)
   end
 
   def check_cost_limit(scope)
