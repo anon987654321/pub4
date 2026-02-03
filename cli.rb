@@ -6343,26 +6343,22 @@ class CLI
   end
 
   def build_prompt
+    # Pure-style: dir and git on line above, simple > on input line
     parts = []
     
-    # Directory
+    # Directory in blue
     dir = Dir.pwd.split('/').last || Dir.pwd
     parts << "#{Dmesg.cyan}#{dir}#{Dmesg.reset}"
     
-    # Git branch if in repo
+    # Git branch in dim
     if File.exist?(".git") || File.exist?("../.git")
       branch = `git branch --show-current 2>/dev/null`.strip rescue ""
-      parts << "#{Dmesg.magenta}#{branch}#{Dmesg.reset}" unless branch.empty?
+      parts << "#{Dmesg.dim}#{branch}#{Dmesg.reset}" unless branch.empty?
     end
     
-    # LLM status - ASCII safe for screen
-    if @tiered&.enabled?
-      parts << "#{Dmesg.green}*#{Dmesg.reset}"
-    else
-      parts << "#{Dmesg.red}o#{Dmesg.reset}"
-    end
-    
-    "#{parts.join(' ')} #{Dmesg.yellow}>#{Dmesg.reset} "
+    # Print context line, then simple prompt
+    puts parts.join(' ') unless parts.empty?
+    "#{Dmesg.magenta}>#{Dmesg.reset} "
   end
 
   def read_input
