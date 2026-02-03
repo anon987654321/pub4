@@ -3164,22 +3164,15 @@ class WebServer
   end
   
   def kill_old_servers
-    # Find and kill old cli.rb/webrick processes on ports 8080-8099
+    # Kill any old cli.rb processes (except self)
     if RUBY_PLATFORM =~ /openbsd|linux|darwin/
-      # Unix: use fuser or lsof
-      (8080..8099).each do |p|
-        pid = `fuser #{p}/tcp 2>/dev/null`.strip.split.last
-        if pid && pid =~ /^\d+$/ && pid.to_i != Process.pid
-          Process.kill("TERM", pid.to_i) rescue nil
-        end
-      end
-    elsif RUBY_PLATFORM =~ /mingw|mswin/
-      # Windows: use netstat
-      output = `netstat -ano 2>NUL | findstr :808`
-      output.lines.each do |line|
-        if line =~ /:808\d\s.*LISTENING\s+(\d+)/
-          pid = $1.to_i
-          `taskkill /PID #{pid} /F 2>NUL` if pid > 0 && pid != Process.pid
+      # Find all ruby processes running cli.rb
+      pids = `pgrep -f "ruby.*cli.rb" 2>/dev/null`.strip.split("\n")
+      pids.each do |pid|
+        pid = pid.strip.to_i
+        if pid > 0 && pid != Process.pid
+          Process.kill("TERM", pid) rescue nil
+          sleep 0.1
         end
       end
     end
