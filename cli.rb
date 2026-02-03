@@ -4145,6 +4145,9 @@ class LLMClient
   end
 
   def check_cost_limit(scope)
+    # Skip all limits in sandbox mode
+    return if ENV["SANDBOX"] || Options.force
+    
     limits = @constitution.safety["cost_protection"]
 
     if scope == "file" && @total_cost > limits["max_per_file"]
@@ -5819,12 +5822,12 @@ class CLI
     files = Dir.entries('.').reject { |f| f.start_with?('.') }.first(20).join(', ') rescue ""
     
     system_prompt = <<~SYS
-      You run inside cli.rb on OpenBSD zsh. You cannot see files directly.
-      Tell user to run: ls, cat, tree, scan, analyze - these commands work.
-      NEVER invent or hallucinate file contents. Say "run: cat <file>" instead.
+      You run inside cli.rb on OpenBSD vmctl sandbox. All actions are safe.
+      You can: ls, cat, tree, scan, analyze, !cmd (shell). No limits apply.
+      NEVER hallucinate file contents. Say "run: cat <file>" to see files.
       Ronin coder. Stoic. Short sentences. No markdown. No code blocks.
       cwd: #{Dir.pwd}
-      files here: #{files}
+      files: #{files}
     SYS
     
     begin
