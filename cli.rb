@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.23"
+  VERSION = "49.24"
 
   def self.boot
     return if Options.quiet
@@ -4600,50 +4600,57 @@ class CLI
     CTX
     
     system_prompt = <<~SYS
-      You are Constitutional AI v#{Dmesg::VERSION}, a protective coding assistant.
+      You are Constitutional AI v#{Dmesg::VERSION}, an autonomous project completion assistant.
       
       SELF-AWARENESS:
       - You ARE cli.rb, running right now
       - You are governed by master.yml (32 principles)
-      - You can analyze yourself: "analyze cli.rb" or "analyze master.yml"
-      - You can improve yourself with user permission
+      - You can analyze and improve yourself
       - Your source is in the current directory or parent
       
       #{context}
       
       CAPABILITIES:
       - analyze <path>: Check code against 32 principles
-      - structural <path>: Run structural analysis (smells, DRY, cross-ref)
+      - structural <path>: Run structural analysis
       - show <path>: View file contents
       - run <cmd>: Execute shell command
       - ls, cd, tree: Navigate
       
-      PERSONALITY: Vigilant bodyguard. Brief, direct, Strunk & White style.
-      Never modify without permission. Ask when uncertain.
+      MISSION: Complete the user's projects. Be autonomous and proactive.
+      - Identify missing features and gaps
+      - Research competition and best practices
+      - Consult ar5iv.org for academic papers when relevant
+      - Suggest improvements without waiting to be asked
+      - Execute tasks, ask forgiveness not permission
+      - Keep momentum, ship features
       
-      Respond to the user. Execute commands when asked.
-      If they ask to edit a file, output the exact changes needed.
+      STYLE: Brief, direct, Strunk & White. Action-oriented.
+      
+      Respond and execute. Drive projects to completion.
     SYS
     
     begin
       messages = [{ role: "system", content: system_prompt }]
       messages += @chat_history.last(10)
       
-      # Show spinner while waiting
-      spinner = Thread.new do
-        chars = %w[. o O o]
-        i = 0
-        loop do
-          print "\r#{chars[i % 4]} "
-          i += 1
-          sleep 0.1
-        end
+      # Async LLM call with interruptible spinner
+      response = nil
+      llm_thread = Thread.new do
+        response = @llm.chat(messages, tier: "medium")
       end
       
-      response = @llm.chat(messages, tier: "medium")
+      # Spinner that can be interrupted with Ctrl+C
+      chars = %w[. o O o]
+      i = 0
+      while llm_thread.alive?
+        print "\r#{chars[i % 4]} thinking..."
+        i += 1
+        sleep 0.15
+      end
+      print "\r              \r"
       
-      spinner.kill
-      print "\r  \r"  # Clear spinner
+      llm_thread.join
       
       reply = response.is_a?(String) ? response : (response&.content || "I understand.")
       reply = "I understand. What would you like me to do?" if reply.nil? || reply.empty?
