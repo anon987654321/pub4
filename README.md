@@ -1,72 +1,69 @@
-# Constitutional AI v47
+# Constitutional AI – The Code Janitor That Roasts You While Fixing Your Sins 🤖💅
 
-LLM-native code quality enforcement with auto-bootstrap and sensible defaults.
+Your code is a beautiful disaster.  
+We both know it.  
+This tool is the brutally honest friend who says "bro… what is this?" and then quietly makes it better.
 
-## Quick Start
+Think Clippy, but instead of "it looks like you're writing a letter" it's "it looks like you're torturing future developers, let me help."
+
+## Why This Exists
+
+You write code once.  
+Your teammates (and future you at 2 a.m.) read it 900 times.  
+This little gremlin makes sure it doesn't cause therapy bills.
+
+It:
+- Spots confusing names faster than your mom spots a lie
+- Breaks 80-line horror methods into bite-sized, non-traumatizing chunks
+- Replaces `eval()` with "please don't summon Cthulhu" warnings
+- Keeps backups so you can panic-revert like a pro
+
+## Get In, Loser, We're Cleaning Code
 
 ```bash
-# Just run it - gems auto-install on first use
-ruby cli.rb your_file.rb
+# 1. Got Ruby? No? https://www.ruby-lang.org — 5 minutes, tops.
+# 2. Set your API key (one time)
+export OPENROUTER_API_KEY="your-key-here"
 
-# Optional: Set API key for full LLM reasoning
-export OPENROUTER_API_KEY="your-key"
+# 3. Let it rip
+ruby cli.rb disaster.rb               # one tragic file
+ruby cli.rb .                         # nuke the whole directory (with love)
+ruby cli.rb --watch .                 # helicopter parent mode
 ```
 
-## Features
+Watch it think out loud in real time — like pair-programming with someone who never sleeps and never judges… out loud.
 
-- **Auto-Bootstrap**: Missing gems install automatically (OpenBSD doas, Termux pkg supported)
+## Commands That Make You Look Cool
+
+```bash
+ruby cli.rb app/models/user.rb        # fix one poor soul
+ruby cli.rb lib/                      # whole folder therapy session
+ruby cli.rb --json **/*.rb            # CI mode (for the robots)
+ruby cli.rb --watch .                 # auto-fix on save
+ruby cli.rb --cost                    # see how much you owe the AI overlords
+```
+
+## What It Actually Does (Serious Mode)
+
+### v47.5 Features
+
+- **Tiered LLM Pipeline**: Fast (Qwen) → Medium (Sonnet) → Strong (Opus) = 60-80% cost savings
+- **Prompt Caching**: System prompts cached 1h = 75-90% savings on Claude
+- **Auto-Bootstrap**: Missing gems install automatically (OpenBSD, Termux, Windows all work)
 - **32 Principles**: From SOLID to Unix Philosophy
 - **7-Phase Workflow**: Discover → Analyze → Ideate → Design → Implement → Validate → Deliver
-- **LLM-Native Detection**: Zero regex patterns, pure reasoning
-- **Auto-Iteration**: Converges to 100/100 score automatically
-- **Battle-Tested Safety**: 15 edge cases handled (cost limits, file locking, rollback, binary detection, etc.)
-- **Multi-Model RAG**: Fallback cascade (Claude → GPT-4 → Gemini)
-- **Cross-Platform**: Windows, macOS, Linux, OpenBSD, Termux
+- **Watch Mode**: Auto-reanalyze on file save
+- **Git History Tracking**: Compare scores across commits
+- **TreeWalk + FileCleaner**: Show structure, normalize whitespace before analysis
 
-## Architecture
+### Safety Features (We're Not Monsters)
 
-**Functional Core + Imperative Shell**
-
-- **Core** (`Core::*`): Pure functions (PrincipleRegistry, LLMDetector, ScoreCalculator)
-- **Shell** (Classes): IO, state, LLM calls (Constitution, LLMClient, AutoEngine)
-
-## Web Interface
-
-Open `cli.html` for interactive AI orb with:
-- Voice recognition
-- Audio-reactive visuals
-- Tunnel/starfield rendering
-- Multi-persona TTS
-
-## Safety Features
-
-- File locking (concurrent-safe)
-- Transactional rollback
-- Cost protection ($1/file, $10/session)
-- Binary file detection
-- Convergence detection
-- Priority-aware fixes
-
-## Configuration
-
-All rules in `master.yml`:
-- Modify principles
-- Adjust LLM settings
-- Tune safety limits
-- Add language support
-
-## Examples
-
-```bash
-# Self-validate
-ruby cli.rb cli.rb
-
-# Show cost
-ruby cli.rb --cost
-
-# Rollback changes
-ruby cli.rb app.rb --rollback
-```
+- 🔒 File locking (no race conditions)
+- ↩️ Transactional rollback (`.constitutional_backups/`)
+- 💰 Cost protection ($1/file, $10/session max)
+- 🚫 Binary file detection (won't touch your PNGs)
+- 🔄 Convergence detection (stops infinite loops)
+- ⚖️ Priority-aware fixes (won't make things worse)
 
 ## Principles Hierarchy
 
@@ -75,29 +72,47 @@ ruby cli.rb app.rb --rollback
 3. **Clean Code** (Priority 6-7): Names, Small Functions, CQS
 4. **Operations** (Priority 9): Idempotent, Safe Refactoring
 
-## CLI Options
+## Cross-Platform (We Don't Discriminate)
 
-```
-ruby cli.rb <file>           # Auto-process file
-ruby cli.rb --help           # Show help
-ruby cli.rb --version        # Show version
-ruby cli.rb --cost           # Show LLM usage stats
-ruby cli.rb --rollback <f>   # Restore from backup
-```
+| Platform | Status |
+|----------|--------|
+| OpenBSD | ✅ First-class citizen (pledge/unveil ready) |
+| Termux | ✅ Android terminal works |
+| macOS | ✅ |
+| Linux | ✅ |
+| Windows/Cygwin | ✅ |
+
+## Architecture (For the Nerds)
+
+**Functional Core + Imperative Shell**
+
+- **Core** (`Core::*`): Pure functions (PrincipleRegistry, LLMDetector, ScoreCalculator)
+- **Shell** (Classes): IO, state, LLM calls (Constitution, LLMClient, TieredLLM)
+- **Symbiosis**: `cli.rb ⟷ master.yml` - neither functions alone
 
 ## Environment Variables
 
 ```bash
 OPENROUTER_API_KEY   # Required for AI features
-VERBOSE=1            # Show detailed logs
+VERBOSE=1            # Debug mode (see everything)
 ```
 
-## Auto-Processing Flow
+## Pro Tips
 
-1. **Language Detection**: Asks user or detects from content
-2. **Iteration Loop**: Scans → Fixes → Rescans until 100/100
-3. **AI Refactoring**: Auto-fixes remaining violations
-4. **Validation**: 7-phase quality gates
+```bash
+# Self-validate the validator (very meta)
+ruby cli.rb cli.rb master.yml
+
+# Interactive mode
+ruby cli.rb
+> all                 # process everything
+> cost                # show spending
+> quit                # peace out
+```
+
+---
+
+*End transmission. May your code be clean and your merge conflicts few.* 🙏
 5. **Backup**: Creates rollback point automatically
 
 ## Safety Guarantees

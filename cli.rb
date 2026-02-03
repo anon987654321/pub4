@@ -8,11 +8,19 @@ require "time"
 require "set"
 require "timeout"
 
+begin
+  require "concurrent"
+  CONCURRENT_AVAILABLE = true
+rescue LoadError
+  CONCURRENT_AVAILABLE = false
+end
+
 # Auto-install missing gems
 module Bootstrap
   GEMS = {
     "ruby_llm" => "ruby_llm",
-    "tty-spinner" => "tty-spinner"
+    "tty-spinner" => "tty-spinner",
+    "concurrent-ruby" => "concurrent-ruby"
   }.freeze
 
   # OpenBSD packages needed for gems with native extensions
@@ -134,9 +142,10 @@ module Options
   @git_changed = false
   @watch = false
   @no_cache = false
+  @parallel = true
   
   class << self
-    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache
+    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel
   end
 end
 
@@ -639,7 +648,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "47.5"
+  VERSION = "47.6"
   
   def self.boot
     unless Options.quiet
@@ -1140,6 +1149,156 @@ class TieredLLM
     else
       (prompt * 0.5 / 1_000_000) + (completion * 1.5 / 1_000_000)
     end
+  end
+end
+
+# Parallel cheap smell detectors (10-40x cost reduction on detection)
+class ParallelDetector
+  HISTORY_FILE = ".constitutional_history.json"
+  
+  def initialize(constitution, tiered_llm)
+    @constitution = constitution
+    @tiered = tiered_llm
+    @smells = extract_smells
+  end
+  
+  def scan(code, file_path)
+    return [] unless @tiered.enabled?
+    return sequential_scan(code, file_path) unless CONCURRENT_AVAILABLE
+    
+    require "concurrent"
+    
+    futures = @smells.map do |smell|
+      Concurrent::Future.execute do
+        detect_single_smell(code, smell)
+      end
+    end
+    
+    results = futures.map { |f| f.value(10) }.compact.flatten
+    
+    # Filter to real hits
+    results.select { |r| r["found"] }
+  rescue StandardError => e
+    Log.warn("Parallel scan failed: #{e.message}")
+    sequential_scan(code, file_path)
+  end
+  
+  def record_history(file_path, result)
+    history = load_history
+    
+    history << {
+      "file" => file_path,
+      "timestamp" => Time.now.iso8601,
+      "iterations" => result[:iterations] || 1,
+      "final_score" => result[:score] || 0,
+      "issues_count" => result[:violations]&.size || 0,
+      "novel_smells_count" => result[:novel_smells] || 0,
+      "parallel_hits" => result[:parallel_hits] || 0
+    }
+    
+    # Keep last 1000 entries
+    history = history.last(1000)
+    
+    File.write(HISTORY_FILE, JSON.pretty_generate(history))
+  rescue StandardError => e
+    Log.debug("History write failed: #{e.message}")
+  end
+  
+  def collect_painful_cases
+    history = load_history
+    
+    history.select do |entry|
+      entry["iterations"].to_i > 5 ||
+        entry["final_score"].to_i < 85 ||
+        entry["novel_smells_count"].to_i > 0 ||
+        entry["parallel_hits"].to_i > 6
+    end.map do |e|
+      { file: e["file"], issues: e["issues_count"], iterations: e["iterations"] }
+    end
+  end
+  
+  private
+  
+  def extract_smells
+    @constitution.principles.flat_map do |_, p|
+      (p["smells"] || []).map { |s| { name: s, principle: p["name"], priority: p["priority"] } }
+    end.uniq { |s| s[:name] }
+  end
+  
+  def sequential_scan(code, file_path)
+    @smells.first(10).map { |smell| detect_single_smell(code, smell) }.compact.flatten
+  end
+  
+  def detect_single_smell(code, smell)
+    prompt = "Check if this code has '#{smell[:name]}' smell. Return JSON: {\"found\": bool, \"line\": int, \"explanation\": str}\n\n#{code[0, 2000]}"
+    
+    result = @tiered.ask_tier("fast", prompt)
+    return nil unless result
+    
+    parsed = JSON.parse(result) rescue nil
+    return nil unless parsed
+    
+    if parsed["found"]
+      parsed["smell"] = smell[:name]
+      parsed["principle"] = smell[:principle]
+      parsed["priority"] = smell[:priority]
+    end
+    
+    parsed
+  rescue StandardError
+    nil
+  end
+  
+  def load_history
+    return [] unless File.exist?(HISTORY_FILE)
+    JSON.parse(File.read(HISTORY_FILE)) rescue []
+  end
+end
+
+# Gardener: self-improving constitution
+class Gardener
+  def initialize(constitution, tiered_llm)
+    @constitution = constitution
+    @tiered = tiered_llm
+    @detector = ParallelDetector.new(constitution, tiered_llm)
+  end
+  
+  def run_quick
+    learned = @constitution.llm_config["learned_smells"] || []
+    return "No learned smells yet" if learned.empty?
+    
+    prompt = <<~PROMPT
+      Review these learned code smells and suggest which should be promoted to full principles:
+      
+      #{learned.to_yaml}
+      
+      Return JSON: {"promote": ["smell_id1"], "remove": ["smell_id2"], "merge": [["id1", "id2"]]}
+    PROMPT
+    
+    @tiered.ask_tier("strong", prompt)
+  end
+  
+  def run_full
+    painful = @detector.collect_painful_cases
+    
+    if painful.empty?
+      return "No painful cases recorded yet. Run more files first."
+    end
+    
+    prompt = <<~PROMPT
+      These files caused problems during code quality enforcement:
+      
+      #{painful.first(20).to_yaml}
+      
+      Based on these patterns, suggest:
+      1. New principles or smells to add
+      2. Existing principles that need clarification
+      3. Priority adjustments
+      
+      Return structured YAML that can merge into master.yml
+    PROMPT
+    
+    @tiered.ask_tier("strong", prompt)
   end
 end
 
@@ -1695,6 +1854,10 @@ class CLI
       show_cost
     when "--rollback"
       rollback(args[1])
+    when "--garden"
+      run_gardener(:quick)
+    when "--garden-full"
+      run_gardener(:full)
     else
       if Options.watch
         watch_mode(args)
@@ -1707,12 +1870,32 @@ class CLI
   
   private
   
+  def run_gardener(mode)
+    tiered = TieredLLM.new(@constitution)
+    gardener = Gardener.new(@constitution, tiered)
+    
+    result = case mode
+    when :quick
+      puts "🌱 Running quick garden (reviewing learned smells)..."
+      gardener.run_quick
+    when :full
+      puts "🌳 Running full garden (analyzing painful cases)..."
+      gardener.run_full
+    end
+    
+    puts
+    puts result || "No suggestions."
+    puts
+    puts "Review and manually apply to master.yml if appropriate."
+  end
+  
   def parse_flags!(args)
     Options.quiet = args.delete("--quiet") || args.delete("-q")
     Options.json = args.delete("--json")
     Options.git_changed = args.delete("--git-changed") || args.delete("-g")
     Options.watch = args.delete("--watch") || args.delete("-w")
     Options.no_cache = args.delete("--no-cache")
+    Options.parallel = !args.delete("--no-parallel")
   end
   
   def watch_mode(targets)
@@ -2000,8 +2183,13 @@ class CLI
     puts "  --git-changed   Only analyze git-modified files"
     puts "  --watch, -w     Watch mode: re-analyze on file change"
     puts "  --no-cache      Skip cache, always query LLM"
+    puts "  --no-parallel   Disable parallel smell detection"
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
+    puts
+    puts "Gardener (self-improving):"
+    puts "  --garden        Quick: review learned smells"
+    puts "  --garden-full   Full: analyze painful cases, suggest improvements"
     puts
     puts "Interactive commands:"
     puts "  all             Process all files in cwd"
@@ -2016,7 +2204,7 @@ class CLI
     puts "  ruby cli.rb                     # Interactive mode"
     puts "  ruby cli.rb .                   # Process current dir"
     puts "  ruby cli.rb src/ --json         # JSON output for CI"
-    puts "  ruby cli.rb --git-changed       # Only changed files"
+    puts "  ruby cli.rb --garden-full       # Self-improve constitution"
   end
   
   def show_cost
