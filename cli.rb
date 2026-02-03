@@ -3526,6 +3526,27 @@ class TieredLLM
     results
   end
 
+  # Streaming version of ask_tier
+  def ask_tier_stream(tier_name, prompt, system_prompt: nil, &block)
+    puts "[DEBUG ask_tier_stream] tier=#{tier_name} enabled=#{@enabled}" if ENV["DEBUG"]
+    return nil unless @enabled
+
+    tier = @tiers[tier_name.to_s]
+    puts "[DEBUG ask_tier_stream] tier config: #{tier.inspect}" if ENV["DEBUG"]
+    return nil unless tier
+
+    messages = build_messages(prompt, system_prompt, tier_name)
+
+    call_model(
+      model: tier["model"],
+      messages: messages,
+      max_tokens: tier["max_tokens"] || 2048,
+      temperature: tier["temperature"] || 0.3,
+      stream: true,
+      &block
+    )
+  end
+
   private
 
   def setup
@@ -3596,27 +3617,6 @@ class TieredLLM
     puts "[DEBUG call_model] ERROR: #{e.class}: #{e.message}" if ENV["DEBUG"]
     Log.warn("TieredLLM error: #{e.message}")
     nil
-  end
-
-  # Streaming version of ask_tier
-  def ask_tier_stream(tier_name, prompt, system_prompt: nil, &block)
-    puts "[DEBUG ask_tier_stream] tier=#{tier_name} enabled=#{@enabled}" if ENV["DEBUG"]
-    return nil unless @enabled
-
-    tier = @tiers[tier_name.to_s]
-    puts "[DEBUG ask_tier_stream] tier config: #{tier.inspect}" if ENV["DEBUG"]
-    return nil unless tier
-
-    messages = build_messages(prompt, system_prompt, tier_name)
-
-    call_model(
-      model: tier["model"],
-      messages: messages,
-      max_tokens: tier["max_tokens"] || 2048,
-      temperature: tier["temperature"] || 0.3,
-      stream: true,
-      &block
-    )
   end
 
   def track_usage(response, model)
