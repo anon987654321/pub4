@@ -2698,7 +2698,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.14"
+  VERSION = "49.15"
 
   def self.boot
     return if Options.quiet
@@ -4552,7 +4552,7 @@ class CLI
         shell_ls($1)
       when /^cd\s+(.+)/
         shell_cd($1)
-      when /^cat\s+(.+)/, /^view\s+(.+)/, /^show\s+(.+)/
+      when /^cat\s+(.+)/, /^view\s+(.+)/
         shell_cat($1)
       when /^tree\s*(.*)$/
         shell_tree($1.empty? ? "." : $1)
@@ -4560,13 +4560,55 @@ class CLI
         rollback($1)
       when /^(scan|check|analyze|process|fix)\s+(.+)/i
         process_targets([$2])
-      when /^(what|how|why|where|list|find|show me|display)/i
-        handle_natural_language(input)
       else
-        process_targets([input])
+        # Check if it looks like a file path or conversation
+        if looks_like_path?(input)
+          process_targets([input])
+        else
+          chat_response(input)
+        end
       end
 
       puts
+    end
+  end
+  
+  def looks_like_path?(input)
+    # File paths: start with ./ or /, contain file extensions, or are single words with no spaces
+    return true if input.match?(%r{^[./~]}) 
+    return true if input.match?(/\.\w+$/)
+    return true if input.match?(/^[\w\-_.]+$/) && (File.exist?(input) || Dir.exist?(input))
+    return true if input.include?("*") # glob
+    false
+  end
+  
+  def chat_response(input)
+    unless @llm
+      Log.warn("LLM not available. Set OPENROUTER_API_KEY for chat.")
+      return
+    end
+    
+    # Use the shell assistant for conversation
+    context = "User is in directory: #{Dir.pwd}\n"
+    context += "Available folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.join(', ')}\n"
+    
+    prompt = <<~PROMPT
+      You are a protective coding assistant (bodyguard personality). Be brief and helpful.
+      #{context}
+      
+      User says: #{input}
+      
+      Respond concisely. If they're asking about files/folders, help them navigate.
+      If they're giving instructions, acknowledge and wait for specifics.
+      If unclear, ask a clarifying question.
+    PROMPT
+    
+    begin
+      response = @llm.query(prompt, tier: "fast")
+      puts response&.content || "I understand. What would you like me to do?"
+    rescue => e
+      Log.debug("Chat error: #{e.message}")
+      puts "I understand. What would you like me to do next?"
     end
   end
   
