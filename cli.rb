@@ -2660,7 +2660,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.65"
+  VERSION = "49.66"
 
   def self.boot
     return if Options.quiet
@@ -2836,12 +2836,13 @@ class StatusLine
 
   def spin_start
     @spinning = true
+    print Cursor.hide
     @spin_thread = Thread.new do
       while @spinning
         @spin_idx = (@spin_idx + 1) % SPINNER.size
-        print "\r#{SPINNER[@spin_idx]} #{@intent}"
+        print Cursor.clear_line + "#{SPINNER[@spin_idx]} #{@intent}"
         $stdout.flush
-        sleep 0.1
+        sleep 0.15
       end
     end
   end
@@ -2849,7 +2850,8 @@ class StatusLine
   def spin_stop
     @spinning = false
     @spin_thread&.join
-    print "\r\e[K"
+    print Cursor.clear_line + Cursor.show
+    $stdout.flush
   end
 
   def progress(current, total, item = "")
@@ -2859,7 +2861,7 @@ class StatusLine
 
   def clear
     return unless @enabled
-    print "\r\e[K"
+    print Cursor.clear_line
     @intent = ""
     @progress = nil
   end
@@ -5192,7 +5194,7 @@ class CLI
 
       if input.empty?
         @empty_count += 1
-        puts "try: help, ls, or <file> to scan" if @empty_count == 2
+        puts "try: help, ls, <file>, or rep img <prompt>" if @empty_count == 2
         next
       end
       @empty_count = 0
@@ -5626,15 +5628,8 @@ class CLI
 
   # Replicate.com integration
   def run_replicate(args)
-    repligen_path = File.join(File.dirname(__FILE__), "repligen.rb")
-
-    unless File.exist?(repligen_path)
-      Log.warn("repligen.rb not found at #{repligen_path}")
-      return
-    end
-
     unless ENV["REPLICATE_API_TOKEN"]
-      Log.warn("Set REPLICATE_API_TOKEN environment variable")
+      Log.warn("set REPLICATE_API_TOKEN")
       return
     end
 
@@ -5644,19 +5639,28 @@ class CLI
     prompt = parts[1] || ""
 
     case cmd
-    when "generate", "gen", "image"
+    when "img", "image", "gen"
       replicate_generate(prompt)
-    when "video", "vid"
+    when "vid", "video"
       replicate_video(prompt)
+    when "audio", "music", "sound"
+      replicate_audio(prompt)
+    when "tts", "speech", "say"
+      replicate_tts(prompt)
     when "chain"
       replicate_chain(prompt)
     when "wild"
       replicate_wild(prompt)
     when "search"
       replicate_search(prompt)
+    when "help", "?"
+      puts "rep img <prompt>   image"
+      puts "rep vid <prompt>   video"
+      puts "rep audio <prompt> music"
+      puts "rep tts <text>     speech"
+      puts "rep wild <prompt>  random chain"
     else
-      # Default: generate image
-      replicate_generate(args)
+      puts "try: rep img, vid, audio, tts, wild"
     end
   end
 
@@ -5759,6 +5763,16 @@ class CLI
     system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "search", query)
   end
 
+  def replicate_audio(prompt)
+    return Log.warn("no prompt") if prompt.empty?
+    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "audio", prompt)
+  end
+
+  def replicate_tts(text)
+    return Log.warn("no text") if text.empty?
+    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "tts", text)
+  end
+
   def download_file(url, filename)
     uri = URI(url)
     Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
@@ -5773,6 +5787,11 @@ class CLI
     puts <<~HELP
       ls cd pwd tree cat    navigation
       <path>                analyze
+      rep img <prompt>      image generation
+      rep vid <prompt>      video generation
+      rep audio <prompt>    music/sound
+      rep tts <text>        text-to-speech
+      rep wild <prompt> N   N random effects chain
       sprawl clean          project
       plan complete         tasks
       session save/load     state
