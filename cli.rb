@@ -2694,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.19"
+  VERSION = "49.20"
 
   def self.boot
     return if Options.quiet
@@ -4557,6 +4557,10 @@ class CLI
         rollback($1)
       when /^(scan|check|analyze|process|fix)\s+(.+)/i
         process_targets([$2])
+      when /^run\s+(.+)/i, /^exec\s+(.+)/i, /^!\s*(.+)/
+        run_shell_command($1)
+      when /^structural\s+(.+)/i
+        run_structural_analysis($1.strip)
       else
         # Check if it looks like a file path or conversation
         if looks_like_path?(input)
@@ -4680,6 +4684,25 @@ class CLI
     else
       Core::StructuralAnalyzer.report(issues)
     end
+  end
+  
+  DANGEROUS_COMMANDS = %w[rm rmdir dd mkfs fdisk newfs disklabel].freeze
+  
+  def run_shell_command(cmd)
+    # Safety check for dangerous commands
+    first_word = cmd.split.first&.split('/')&.last
+    if DANGEROUS_COMMANDS.include?(first_word) && !Options.force
+      Log.warn("Blocked dangerous command: #{first_word}")
+      Log.info("Use --force flag or prefix with ! to override")
+      return
+    end
+    
+    Log.info("Running: #{cmd}")
+    output = `#{cmd} 2>&1`
+    puts output unless output.empty?
+    Log.ok("Exit: #{$?.exitstatus}") if $?.exitstatus != 0
+  rescue => e
+    Log.error("Command failed: #{e.message}")
   end
   
   def shell_ls(path)
