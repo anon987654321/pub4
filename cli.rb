@@ -3036,6 +3036,7 @@ class WebServer
     
     @server = WEBrick::HTTPServer.new(
       Port: @port,
+      BindAddress: "0.0.0.0",
       Logger: WEBrick::Log.new(File.exist?("/dev/null") ? "/dev/null" : "NUL"),
       AccessLog: []
     )
@@ -3528,7 +3529,7 @@ class TieredLLM
 
   # Streaming version of ask_tier
   def ask_tier_stream(tier_name, prompt, system_prompt: nil, &block)
-    puts "[DEBUG ask_tier_stream] tier=#{tier_name} enabled=#{@enabled}" if ENV["DEBUG"]
+    puts "[DEBUG ask_tier_stream] tier=#{tier_name} enabled=#{@enabled ? 'true' : 'false'}" if ENV["DEBUG"]
     return nil unless @enabled
 
     tier = @tiers[tier_name.to_s]
@@ -5842,7 +5843,7 @@ class CLI
       reply = ""
       print "\n"
       
-      puts "[DEBUG chat_response] @tiered=#{@tiered.class} enabled=#{@tiered&.enabled?}" if ENV["DEBUG"]
+      puts "[DEBUG chat_response] @tiered=#{@tiered.class} enabled=#{@tiered&.enabled? ? 'true' : 'false'}" if ENV["DEBUG"]
       
       if @tiered&.enabled?
         puts "[DEBUG: tiered enabled, calling stream]" if ENV["DEBUG"]
