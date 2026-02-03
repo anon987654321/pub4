@@ -148,9 +148,10 @@ module Options
   @watch = false
   @no_cache = false
   @parallel = true
+  @profile = nil
 
   class << self
-    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel
+    attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile
   end
 end
 
@@ -278,6 +279,25 @@ module Core
 
     def self.max_priority(principles)
       principles.values.map { |p| p["priority"] || 0 }.max || 0
+    end
+
+    # Filter principles by profile
+    def self.filter_by_profile(principles, profile_config, groups)
+      return principles if profile_config.nil? || profile_config["allow"]&.include?("*")
+
+      allowed_ids = Set.new
+      allow_list = profile_config["allow"] || []
+
+      allow_list.each do |item|
+        if item.start_with?("group:")
+          group_ids = groups[item] || []
+          allowed_ids.merge(group_ids)
+        elsif item.is_a?(Integer)
+          allowed_ids.add(item)
+        end
+      end
+
+      principles.select { |_key, p| allowed_ids.include?(p["id"]) }
     end
 
     def self.validate_no_cycles(principles)
@@ -431,6 +451,100 @@ module Core
     end
   end
 
+  # Cross-session cost tracking with JSONL persistence
+  module CostTracker
+    COST_FILE = ".constitutional_costs.jsonl"
+
+    def self.record(model, tokens, cost, file_path = nil)
+      entry = {
+        timestamp: Time.now.iso8601,
+        date: Time.now.strftime("%Y-%m-%d"),
+        model: model,
+        tokens: tokens,
+        cost: cost,
+        file: file_path
+      }
+
+      File.open(COST_FILE, "a") { |f| f.puts(JSON.generate(entry)) }
+    rescue StandardError => e
+      Log.debug("Cost tracking write failed: #{e.message}")
+    end
+
+    def self.daily_totals(days = 7)
+      entries = load_entries
+      cutoff = (Date.today - days).to_s
+
+      by_date = Hash.new { |h, k| h[k] = { tokens: 0, cost: 0.0, calls: 0 } }
+
+      entries.each do |entry|
+        date = entry["date"]
+        next if date < cutoff
+
+        by_date[date][:tokens] += entry["tokens"] || 0
+        by_date[date][:cost] += entry["cost"] || 0
+        by_date[date][:calls] += 1
+      end
+
+      by_date.sort.to_h
+    end
+
+    def self.model_breakdown(days = 7)
+      entries = load_entries
+      cutoff = (Date.today - days).to_s
+
+      by_model = Hash.new { |h, k| h[k] = { tokens: 0, cost: 0.0, calls: 0 } }
+
+      entries.each do |entry|
+        next if entry["date"] < cutoff
+
+        model = entry["model"] || "unknown"
+        by_model[model][:tokens] += entry["tokens"] || 0
+        by_model[model][:cost] += entry["cost"] || 0
+        by_model[model][:calls] += 1
+      end
+
+      by_model.sort_by { |_, v| -v[:cost] }.to_h
+    end
+
+    def self.total_spending(days = nil)
+      entries = load_entries
+
+      if days
+        cutoff = (Date.today - days).to_s
+        entries = entries.select { |e| e["date"] >= cutoff }
+      end
+
+      {
+        tokens: entries.sum { |e| e["tokens"] || 0 },
+        cost: entries.sum { |e| e["cost"] || 0 },
+        calls: entries.size
+      }
+    end
+
+    def self.load_entries
+      return [] unless File.exist?(COST_FILE)
+
+      File.readlines(COST_FILE).map do |line|
+        JSON.parse(line.strip) rescue nil
+      end.compact
+    rescue StandardError
+      []
+    end
+
+    def self.clear_old(keep_days = 30)
+      entries = load_entries
+      cutoff = (Date.today - keep_days).to_s
+
+      kept = entries.select { |e| e["date"] >= cutoff }
+
+      File.open(COST_FILE, "w") do |f|
+        kept.each { |e| f.puts(JSON.generate(e)) }
+      end
+
+      entries.size - kept.size
+    end
+  end
+
   module Cache
     CACHE_DIR = File.join(Dir.home, ".cache", "constitutional")
     CACHE_TTL_SECONDS = 24 * 60 * 60
@@ -546,6 +660,140 @@ module Core
         principle = Core::PrincipleRegistry.find_by_id(principles, v["principle_id"])
         principle ? principle["priority"] : 0
       end.max || 0
+    end
+  end
+
+  # Event hook system for extensibility
+  module Hooks
+    EVENTS = %i[
+      before_scan after_scan
+      before_fix after_fix
+      violation_found fix_applied fix_rejected
+      iteration_start iteration_end
+      cost_threshold file_start file_end
+      convergence_stuck gardener_run
+    ].freeze
+
+    @handlers = Hash.new { |h, k| h[k] = [] }
+    @mutex = Mutex.new
+
+    def self.register(event, name: nil, &block)
+      raise ArgumentError, "Unknown event: #{event}" unless EVENTS.include?(event)
+
+      @mutex.synchronize do
+        @handlers[event] << { block: block, name: name }
+      end
+    end
+
+    def self.trigger(event, context = {})
+      return unless EVENTS.include?(event)
+
+      handlers = @mutex.synchronize { @handlers[event].dup }
+
+      handlers.each do |handler|
+        begin
+          handler[:block].call(context)
+        rescue StandardError => e
+          Log.debug("Hook #{handler[:name] || event} failed: #{e.message}")
+        end
+      end
+    end
+
+    def self.clear(event = nil)
+      @mutex.synchronize do
+        if event
+          @handlers[event] = []
+        else
+          @handlers.clear
+        end
+      end
+    end
+
+    def self.registered
+      @mutex.synchronize do
+        @handlers.transform_values(&:size)
+      end
+    end
+
+    # Load hooks from constitution config
+    def self.load_from_config(hooks_config)
+      return unless hooks_config.is_a?(Hash)
+
+      hooks_config.each do |event_name, actions|
+        event = event_name.to_s.sub(/^on_/, "").to_sym
+        next unless EVENTS.include?(event)
+
+        actions.each do |action_config|
+          register_action(event, action_config)
+        end
+      end
+    end
+
+    def self.register_action(event, config)
+      case config["action"]
+      when "log"
+        register(event, name: "log_#{event}") do |ctx|
+          log_entry = { event: event, timestamp: Time.now.iso8601 }.merge(ctx)
+          path = config["path"] || ".constitutional_events.jsonl"
+          File.open(path, "a") { |f| f.puts(JSON.generate(log_entry)) }
+        end
+      when "warn"
+        register(event, name: "warn_#{event}") do |ctx|
+          Log.warn(config["message"] || "Hook: #{event}")
+        end
+      when "pause"
+        register(event, name: "pause_#{event}") do |ctx|
+          puts config["message"] || "Paused at #{event}. Press Enter to continue..."
+          $stdin.gets
+        end
+      end
+    end
+  end
+
+  module ModelCooldown
+    @cooldowns = {}
+    @mutex = Mutex.new
+
+    DEFAULT_COOLDOWN = 300  # 5 minutes
+
+    def self.in_cooldown?(model)
+      @mutex.synchronize do
+        return false unless @cooldowns[model]
+        if Time.now < @cooldowns[model]
+          true
+        else
+          @cooldowns.delete(model)
+          false
+        end
+      end
+    end
+
+    def self.set_cooldown(model, seconds = DEFAULT_COOLDOWN)
+      @mutex.synchronize do
+        @cooldowns[model] = Time.now + seconds
+      end
+    end
+
+    def self.time_remaining(model)
+      @mutex.synchronize do
+        return 0 unless @cooldowns[model]
+        remaining = @cooldowns[model] - Time.now
+        remaining > 0 ? remaining.ceil : 0
+      end
+    end
+
+    def self.next_available(models)
+      models.find { |m| !in_cooldown?(m) } || models.first
+    end
+
+    def self.clear
+      @mutex.synchronize { @cooldowns.clear }
+    end
+
+    def self.status
+      @mutex.synchronize do
+        @cooldowns.transform_values { |t| (t - Time.now).ceil }
+      end
     end
   end
 
@@ -929,7 +1177,7 @@ class Result
 end
 
 class Constitution
-  attr_reader :raw, :principles, :phases, :defaults, :llm_config, :style, :safety, :conflicts, :language_detection
+  attr_reader :raw, :principles, :phases, :defaults, :llm_config, :style, :safety, :conflicts, :language_detection, :profiles, :principle_groups, :active_profile, :hooks_config
 
   MAX_SIZE = 10 * 1024 * 1024
   LOAD_TIMEOUT = 5
@@ -969,8 +1217,32 @@ class Constitution
     @safety = yaml["safety"] || {}
     @conflicts = yaml["conflicts"] || {}
     @language_detection = yaml["language_detection"] || {}
+    @profiles = yaml["profiles"] || {}
+    @principle_groups = yaml["principle_groups"] || {}
+    @hooks_config = yaml["hooks"] || {}
+    @active_profile = nil
 
     validate_principles
+    load_hooks
+  end
+
+  def set_profile(profile_name)
+    return unless profile_name
+
+    if profile_name == "full" || @profiles[profile_name]
+      @active_profile = profile_name
+      Log.info("Using profile: #{profile_name}") unless Options.quiet
+    else
+      Log.warn("Unknown profile '#{profile_name}', using full")
+      @active_profile = "full"
+    end
+  end
+
+  def active_principles
+    return @principles unless @active_profile && @active_profile != "full"
+
+    profile_config = @profiles[@active_profile]
+    Core::PrincipleRegistry.filter_by_profile(@principles, profile_config, @principle_groups)
   end
 
   private
@@ -1052,8 +1324,10 @@ module FileValidator
 
     content = File.read(file_path, 512, encoding: "BINARY")
 
-    null_count = content.count("\x00")
-    if null_count > 0
+    # Handle empty or nil content
+    return {valid: true} if content.nil? || content.empty?
+
+    if content.count("\x00") > 0
       return {valid: false, reason: "Contains null bytes (binary)"}
     end
 
@@ -1348,7 +1622,7 @@ class ParallelDetector
   private
 
   def extract_smells
-    @constitution.principles.flat_map do |_, p|
+    @constitution.active_principles.flat_map do |_, p|
       (p["smells"] || []).map { |s| { name: s, principle: p["name"], priority: p["priority"] } }
     end.uniq { |s| s[:name] }
   end
@@ -1467,7 +1741,18 @@ class ReflectionCritic
     PROMPT
     
     result = @tiered.ask_tier("medium", prompt)
-    JSON.parse(result) rescue { approved: true, confidence: 0.5 }
+    return { "approved" => true, "confidence" => 0.5 } unless result
+
+    parsed = JSON.parse(result)
+    # Ensure consistent string keys
+    {
+      "approved" => parsed["approved"] != false,
+      "confidence" => parsed["confidence"] || 0.5,
+      "issues" => parsed["issues"] || [],
+      "suggestions" => parsed["suggestions"] || []
+    }
+  rescue JSON::ParserError, TypeError
+    { "approved" => true, "confidence" => 0.5 }
   end
 end
 
@@ -1482,29 +1767,28 @@ class PatternMemory
   
   def remember(file_path, violation, fix_applied, success)
     @patterns << {
-      timestamp: Time.now.iso8601,
-      file: File.basename(file_path),
-      smell: violation["smell"],
-      principle_id: violation["principle_id"],
-      fix_worked: success,
-      context: violation["explanation"][0, 100]
+      "timestamp" => Time.now.iso8601,
+      "file" => File.basename(file_path),
+      "smell" => violation["smell"],
+      "principle_id" => violation["principle_id"],
+      "fix_worked" => success,
+      "context" => (violation["explanation"] || "")[0, 100]
     }
-    
-    # Keep bounded
+
     @patterns = @patterns.last(MAX_PATTERNS)
     save_patterns
   end
-  
+
   def similar_past_fixes(smell, limit: 5)
     @patterns
       .select { |p| p["smell"] == smell && p["fix_worked"] }
       .last(limit)
   end
-  
+
   def success_rate(smell)
     relevant = @patterns.select { |p| p["smell"] == smell }
     return 0.0 if relevant.empty?
-    
+
     successful = relevant.count { |p| p["fix_worked"] }
     successful.to_f / relevant.size
   end
@@ -1534,12 +1818,17 @@ class LLMClient
     @call_count = 0
     @session_cost = 0.0
     @tiered = nil
+    @current_file = nil
 
     setup if @enabled
   end
 
   def enabled?
     @enabled
+  end
+
+  def set_current_file(path)
+    @current_file = path
   end
 
   DETECTION_SYSTEM_PROMPT = <<~PROMPT.strip
@@ -1574,7 +1863,7 @@ class LLMClient
   def run_detection(code, file_path)
     config = @constitution.llm_config["detection"]
     prompt = Core::LLMDetector.detect_violations(
-      code, file_path, @constitution.principles, config["prompt"]
+      code, file_path, @constitution.active_principles, config["prompt"]
     )[:prompt]
 
     response = Spinner.run("Analyzing with AI (fast)") do
@@ -1650,7 +1939,16 @@ class LLMClient
   def call_llm_with_fallback(model:, fallback_models:, messages:, max_tokens:)
     models = [model] + (fallback_models || [])
 
-    models.each_with_index do |current_model, index|
+    # Filter out models in cooldown, but keep at least one
+    available = models.reject { |m| Core::ModelCooldown.in_cooldown?(m) }
+    available = [models.first] if available.empty?
+
+    if available.size < models.size
+      skipped = models - available
+      Log.debug("Skipping cooled-down models: #{skipped.join(', ')}") if ENV["VERBOSE"]
+    end
+
+    available.each_with_index do |current_model, index|
       begin
         return call_llm(
           model: current_model,
@@ -1658,7 +1956,14 @@ class LLMClient
           max_tokens: max_tokens
         )
       rescue StandardError => error
-        if index < models.size - 1
+        # Set cooldown on rate limit errors
+        if error.message =~ /rate.?limit|429|too.?many.?requests/i
+          cooldown_config = @constitution.llm_config.dig("failover", "cooldown_seconds") || 300
+          Core::ModelCooldown.set_cooldown(current_model, cooldown_config)
+          Log.warn("Rate limited: #{current_model} (cooldown #{cooldown_config}s)") unless Options.quiet
+        end
+
+        if index < available.size - 1
           Log.warn("Model #{current_model} failed, trying fallback...") unless Options.quiet
         else
           raise error
@@ -1704,6 +2009,9 @@ class LLMClient
     cost = estimate_cost(model, prompt, completion)
     @total_cost += cost
     @session_cost += cost
+
+    # Persist to cross-session tracking
+    Core::CostTracker.record(model, total, cost, @current_file)
 
     unless Options.quiet
       Log.dmesg("llm", model.split("/").last, "completed", {
@@ -1795,7 +2103,7 @@ class LLMClient
   def detect_violations_single(code, file_path)
     config = @constitution.llm_config["detection"]
     prompt = Core::LLMDetector.detect_violations(
-      code, file_path, @constitution.principles, config["prompt"]
+      code, file_path, @constitution.active_principles, config["prompt"]
     )[:prompt]
 
     response = call_llm_with_fallback(
@@ -1813,7 +2121,7 @@ class LLMClient
 
   def build_refactor_prompt(violation, code)
     principle_id = violation["principle_id"]
-    principle = Core::PrincipleRegistry.find_by_id(@constitution.principles, principle_id)
+    principle = Core::PrincipleRegistry.find_by_id(@constitution.active_principles, principle_id)
 
     prompt = "Fix this violation:\n\n"
     prompt += "Violation: #{violation["explanation"]}\n"
@@ -1991,20 +2299,20 @@ class AutoEngine
     # Reflection Critic: validate before applying
     if @critic
       critique = @critic.critique(original_code, proposed_fix, auto_fixable)
-      confidence = critique[:confidence] || 0.5
-      
-      if critique[:approved] == false
+      confidence = critique["confidence"] || 0.5
+
+      if critique["approved"] == false
         Log.warn("Fix rejected by critic (confidence: #{(confidence * 100).round}%)")
-        critique[:issues]&.each { |i| Log.warn("  - #{i}") }
-        
+        (critique["issues"] || []).each { |i| Log.warn("  - #{i}") }
+
         # Remember this failure
         auto_fixable.each do |v|
           @memory.remember(file_path, v, false, false)
         end
-        
+
         return Result.ok(false)
       end
-      
+
       Log.info("Critic approved (confidence: #{(confidence * 100).round}%)") unless Options.quiet
     end
     
@@ -2118,6 +2426,7 @@ end
 class CLI
   def initialize
     @constitution = Constitution.load
+    @constitution.set_profile(Options.profile)
     @llm = LLMClient.new(@constitution)
     @engine = AutoEngine.new(@constitution, @llm)
     @results = []
@@ -2182,6 +2491,14 @@ class CLI
     Options.watch = args.delete("--watch") || args.delete("-w")
     Options.no_cache = args.delete("--no-cache")
     Options.parallel = !args.delete("--no-parallel")
+
+    # Profile handling
+    if args.delete("--quick")
+      Options.profile = "quick"
+    elsif (idx = args.index("--profile"))
+      Options.profile = args.delete_at(idx + 1)
+      args.delete_at(idx)
+    end
   end
 
   def watch_mode(targets)
@@ -2474,6 +2791,10 @@ class CLI
     puts "  --cost          Show LLM usage stats"
     puts "  --rollback <f>  Restore from backup"
     puts
+    puts "Profiles (principle filtering):"
+    puts "  --quick         Fast scan with core principles only (5 principles)"
+    puts "  --profile NAME  Use named profile (quick, full, axioms_only, solid_focus, critical)"
+    puts
     puts "Gardener (self-improving):"
     puts "  --garden        Quick: review learned smells"
     puts "  --garden-full   Full: analyze painful cases, suggest improvements"
@@ -2491,23 +2812,56 @@ class CLI
     puts "  ruby cli.rb                     # Interactive mode"
     puts "  ruby cli.rb .                   # Process current dir"
     puts "  ruby cli.rb src/ --json         # JSON output for CI"
+    puts "  ruby cli.rb --quick .           # Fast scan with 5 core principles"
+    puts "  ruby cli.rb --profile critical  # Critical issues only"
     puts "  ruby cli.rb --garden-full       # Self-improve constitution"
   end
 
   def show_cost
-    unless @llm.enabled?
-      Log.info("LLM not enabled")
-      return
+    puts
+    puts "#{Dmesg.bold}LLM Cost Report#{Dmesg.reset}"
+    puts
+
+    # Current session
+    if @llm.enabled?
+      stats = @llm.stats
+      puts "Session:"
+      puts "  Calls:  #{stats[:calls]}"
+      puts "  Tokens: #{stats[:tokens]}"
+      puts "  Cost:   $#{format("%.4f", stats[:cost])}"
+      puts
     end
 
-    stats = @llm.stats
+    # Daily breakdown (last 7 days)
+    daily = Core::CostTracker.daily_totals(7)
+    if daily.any?
+      puts "Daily (last 7 days):"
+      daily.each do |date, data|
+        puts "  #{date}: #{data[:calls]} calls, #{data[:tokens]} tokens, $#{format("%.4f", data[:cost])}"
+      end
+      puts
+    end
 
-    puts
-    puts "LLM Usage:"
-    puts "  Calls:  #{stats[:calls]}"
-    puts "  Tokens: #{stats[:tokens]}"
-    puts "  Cost:   $#{format("%.4f", stats[:cost])}"
-    puts
+    # Model breakdown
+    by_model = Core::CostTracker.model_breakdown(7)
+    if by_model.any?
+      puts "By Model (last 7 days):"
+      by_model.first(5).each do |model, data|
+        short_name = model.split("/").last
+        puts "  #{short_name}: #{data[:calls]} calls, $#{format("%.4f", data[:cost])}"
+      end
+      puts
+    end
+
+    # Total spending
+    total = Core::CostTracker.total_spending
+    if total[:calls] > 0
+      puts "All Time:"
+      puts "  Total calls:  #{total[:calls]}"
+      puts "  Total tokens: #{total[:tokens]}"
+      puts "  Total cost:   $#{format("%.4f", total[:cost])}"
+      puts
+    end
   end
 
   def rollback(file_path)

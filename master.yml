@@ -590,6 +590,12 @@ llm:
 
   default_tier_sequence: [fast, medium, strong]
 
+  # Model failover with cooldowns
+  failover:
+    cooldown_seconds: 300
+    max_retries_per_model: 2
+    backoff_strategy: "exponential"
+
   # Prompt caching (75-90% savings on repeated system prompts)
   prompt_caching:
     enabled: true
@@ -747,6 +753,52 @@ conflicts:
 
     - condition: "fix introduces higher priority violation"
       resolution: "reject fix"
+
+# PRINCIPLE GROUPS (for quick/focused scans)
+principle_groups:
+  "group:axioms": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  "group:solid": [11, 12, 13, 14, 15]
+  "group:coding": [16, 17, 18]
+  "group:clean_code": [19, 20, 21, 22, 23]
+  "group:ui": [24, 25]
+  "group:llm": [26, 27, 28]
+  "group:operations": [29, 32]
+  "group:design": [30]
+  "group:architecture": [31]
+  "group:quick": [1, 2, 11, 19, 20]
+  "group:critical": [1, 2, 4, 11, 23, 29, 32]
+
+# PROFILES (principle filtering)
+profiles:
+  quick:
+    description: "Fast scan with core principles only"
+    allow: ["group:quick"]
+  full:
+    description: "All 32 principles"
+    allow: ["*"]
+  axioms_only:
+    description: "Axioms tier only (foundational)"
+    allow: ["group:axioms"]
+  solid_focus:
+    description: "SOLID principles focus"
+    allow: ["group:axioms", "group:solid"]
+  critical:
+    description: "Critical issues only (security, stability)"
+    allow: ["group:critical"]
+
+default_profile: "full"
+
+# HOOKS (event-driven extensibility)
+hooks:
+  on_violation_found:
+    - action: "log"
+      path: ".constitutional_violations.jsonl"
+  on_cost_threshold:
+    - action: "warn"
+      message: "Cost limit approaching"
+  # on_convergence_stuck:
+  #   - action: "pause"
+  #     message: "Convergence stuck. Review and press Enter..."
 
 # LANGUAGE DETECTION
 language_detection:
