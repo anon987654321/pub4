@@ -5129,8 +5129,21 @@ class CLI
     puts
     puts "#{Dir.pwd.split('/').last || Dir.pwd}"
     puts web_url if web_url
+    
+    # Show what's available
+    folders = Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.sort
+    puts "Folders: #{folders.join(', ')}" if folders.any?
     puts
-
+    
+    # Ask what to work on
+    print "Target? "
+    target = $stdin.gets&.strip
+    
+    if target && !target.empty? && target != "q"
+      autopilot_mode(target)
+    end
+    
+    # After autopilot, enter manual mode
     loop do
       input = read_input
 
@@ -5183,6 +5196,11 @@ class CLI
         systematic_complete($1.empty? ? ["."] : [$1.strip])
       when /^autopilot\s*(.*)$/i, /^auto\s*(.*)$/i
         autopilot_mode($1.empty? ? "." : $1.strip)
+      when /^replicate\s+(.+)/i, /^rep\s+(.+)/i
+        run_replicate($1.strip)
+      when /^research\s+(.+)/i
+        result = research($1.strip)
+        puts result if result
       when /^session\s+(.+)/i
         parts = $1.split
         manage_session(parts[0], parts[1])
@@ -5209,61 +5227,163 @@ class CLI
   
   # Autopilot: continuous autonomous completion until done
   def autopilot_mode(path)
-    puts "Autopilot engaged. Ctrl+C to stop."
+    puts "Working on: #{path}"
     puts
     
     @autopilot = true
+    @stuck_count = 0
     iteration = 0
-    max_iterations = 50  # Safety limit
+    max_iterations = 500  # High limit - runs until done
     
-    trap("INT") { @autopilot = false; puts "\nAutopilot disengaged." }
+    trap("INT") { @autopilot = false; puts "\nStopped." }
     
     while @autopilot && iteration < max_iterations
       iteration += 1
-      @status.set("Autopilot iteration #{iteration}")
+      @status.set("#{iteration}")
       
       # Analyze current state
       analysis = analyze_project_completeness(find_project_files(path))
       
       # Check if done
-      if analysis[:todos].empty? && analysis[:stub_functions].empty? && analysis[:errors].empty?
-        Log.ok("Project appears complete.")
-        break
+      total_issues = analysis[:todos].size + analysis[:stub_functions].size + analysis[:errors].size
+      if total_issues == 0
+        # Look for missing features or improvements
+        suggestions = find_improvements(path)
+        if suggestions.empty?
+          Log.ok("Complete.")
+          break
+        else
+          # Work on improvements
+          work_on_improvement(suggestions.first)
+          next
+        end
       end
       
-      # Report what we're doing
-      puts "Iteration #{iteration}: #{analysis[:todos].size} TODOs, #{analysis[:errors].size} errors, #{analysis[:stub_functions].size} stubs"
+      # Brief status
+      puts "#{iteration}: #{total_issues} remaining" if iteration % 5 == 1
       
       # Pick highest priority issue and fix it
+      success = false
       if analysis[:errors].any?
-        fix_error(analysis[:errors].first)
+        success = fix_error(analysis[:errors].first)
       elsif analysis[:stub_functions].any?
-        implement_stub(analysis[:stub_functions].first)
+        success = implement_stub(analysis[:stub_functions].first)
       elsif analysis[:todos].any?
-        complete_todo(analysis[:todos].first)
+        success = complete_todo(analysis[:todos].first)
       end
       
-      # Brief pause to allow interrupt
-      sleep 1
+      # Track if we're stuck
+      if success
+        @stuck_count = 0
+      else
+        @stuck_count += 1
+        if @stuck_count >= 3
+          # Ask user for help
+          answer = ask_user_for_help(analysis)
+          if answer
+            @stuck_count = 0
+          else
+            Log.warn("Stuck. Moving to next issue.")
+            # Skip this issue, try next
+            rotate_issues(analysis)
+          end
+        end
+      end
       
+      # Brief pause
+      sleep 0.5
       @session.save
     end
     
     @status.clear
-    Log.ok("Autopilot complete. #{iteration} iterations.")
+    puts "Done. #{iteration} iterations."
+  end
+  
+  def find_improvements(path)
+    # Ask LLM what's missing
+    files = find_project_files(path).first(20)
+    file_list = files.map { |f| File.basename(f) }.join(", ")
+    
+    prompt = <<~P
+      Project files: #{file_list}
+      
+      What features or improvements are missing? List up to 3 concrete items.
+      Format: one per line, actionable tasks.
+      If project looks complete, respond with: COMPLETE
+    P
+    
+    response = @tiered&.ask_tier("fast", prompt)
+    return [] if response.nil? || response.include?("COMPLETE")
+    
+    response.lines.map(&:strip).reject(&:empty?).first(3)
+  end
+  
+  def work_on_improvement(suggestion)
+    puts "Improving: #{suggestion[0..50]}"
+    
+    prompt = <<~P
+      Implement this improvement: #{suggestion}
+      
+      Current directory: #{Dir.pwd}
+      Files: #{find_project_files(".").first(10).map { |f| File.basename(f) }.join(", ")}
+      
+      Respond with:
+      EDIT> filename
+      <content>
+      END>
+      
+      Or CREATE> filename for new files.
+    P
+    
+    response = @tiered&.ask_tier("code", prompt)
+    execute_chat_action(response) if response
+  end
+  
+  def ask_user_for_help(analysis)
+    issue = analysis[:errors].first || analysis[:stub_functions].first || analysis[:todos].first
+    return nil unless issue
+    
+    desc = issue.is_a?(Hash) ? (issue[:text] || issue[:error] || issue[:file]) : issue
+    
+    puts
+    print "Stuck on: #{desc[0..60]}. Hint? "
+    answer = $stdin.gets&.strip
+    
+    return nil if answer.nil? || answer.empty?
+    
+    # Use hint to help fix
+    prompt = <<~P
+      User hint: #{answer}
+      Issue: #{desc}
+      File: #{issue[:file] rescue issue}
+      
+      Apply the hint to fix this. Return the fix.
+    P
+    
+    response = @tiered&.ask_tier("code", prompt)
+    execute_chat_action(response) if response
+    true
+  end
+  
+  def rotate_issues(analysis)
+    # Move first issue to end (handled via array rotation in next iteration)
+    # Just mark this one as attempted
+    @attempted_issues ||= Set.new
+    issue = analysis[:errors].first || analysis[:stub_functions].first || analysis[:todos].first
+    @attempted_issues << (issue[:file] rescue issue) if issue
   end
   
   def find_project_files(path)
     files = Dir.glob(File.join(path, "**/*.{rb,py,js,ts,sh,yml,html,css,md}"))
-    filter_ignored(files)
+    filter_ignored(files).reject { |f| @attempted_issues&.include?(f) }
   end
   
   def fix_error(error)
     file = error[:file]
-    puts "Fixing: #{file}"
+    puts "Fixing: #{File.basename(file)}"
     
     content = Core.read_file(file)
-    return unless content
+    return false unless content
     
     prompt = <<~P
       Fix the syntax error in this file:
@@ -5278,15 +5398,18 @@ class CLI
     response = @tiered&.ask_tier("code", prompt)
     if response && response.length > 50
       Core.write_file(file, response, backup: true)
-      Log.ok("Fixed: #{file}")
+      Log.ok("Fixed")
+      true
+    else
+      false
     end
   end
   
   def implement_stub(file)
-    puts "Implementing: #{file}"
+    puts "Implementing: #{File.basename(file)}"
     
     content = Core.read_file(file)
-    return unless content
+    return false unless content
     
     prompt = <<~P
       Implement all stub/placeholder functions in this file.
@@ -5299,18 +5422,21 @@ class CLI
     P
     
     response = @tiered&.ask_tier("code", prompt)
-    if response && response.length > content.length * 0.8
+    if response && response.length > content.length * 0.5
       Core.write_file(file, response, backup: true)
-      Log.ok("Implemented: #{file}")
+      Log.ok("Implemented")
+      true
+    else
+      false
     end
   end
   
   def complete_todo(todo)
     file = todo[:file]
-    puts "Completing TODO: #{todo[:text][0..50]}"
+    puts "TODO: #{todo[:text][0..40]}"
     
     content = Core.read_file(file)
-    return unless content
+    return false unless content
     
     prompt = <<~P
       Complete this TODO in the file:
@@ -5325,8 +5451,239 @@ class CLI
     response = @tiered&.ask_tier("code", prompt)
     if response && response.length > content.length * 0.5
       Core.write_file(file, response, backup: true)
-      Log.ok("Completed: #{todo[:text][0..40]}")
+      Log.ok("Done")
+      true
+    else
+      false
     end
+  end
+  
+  # Smart research: expands keywords, tries related concepts
+  def research(topic)
+    puts "Researching: #{topic}"
+    
+    # First, expand the topic into related keywords
+    expansion_prompt = <<~P
+      Topic: #{topic}
+      
+      Generate 5 related search queries that would help implement this.
+      Think laterally: related algorithms, similar problems, adjacent concepts.
+      Examples: if topic is "graph visualization", also search "force-directed layout", "d3.js network", "adjacency matrix rendering"
+      
+      Return one query per line, no numbering.
+    P
+    
+    expansions = @tiered&.ask_tier("fast", expansion_prompt)
+    queries = [topic]
+    queries += expansions.lines.map(&:strip).reject(&:empty?).first(5) if expansions
+    
+    results = []
+    queries.each do |query|
+      # Try web search (if available) or use LLM knowledge
+      result = search_or_infer(query)
+      results << { query: query, result: result } if result
+    end
+    
+    # Synthesize findings
+    if results.any?
+      synthesis_prompt = <<~P
+        Research findings on: #{topic}
+        
+        #{results.map { |r| "Query: #{r[:query]}\nResult: #{r[:result][0..500]}" }.join("\n\n")}
+        
+        Synthesize into actionable implementation guidance. Be specific about code patterns, libraries, approaches.
+      P
+      
+      @tiered&.ask_tier("medium", synthesis_prompt)
+    else
+      nil
+    end
+  end
+  
+  def search_or_infer(query)
+    # Try curl to a search API if available, otherwise use LLM inference
+    # For now, use LLM knowledge as fallback
+    prompt = <<~P
+      Search query: #{query}
+      
+      Provide the most relevant technical information for implementing this.
+      Include: libraries, code patterns, gotchas, best practices.
+      Be specific and actionable.
+    P
+    
+    @tiered&.ask_tier("fast", prompt)
+  end
+  
+  def research_and_implement(issue, context = "")
+    # Research first, then implement
+    research_result = research(issue)
+    
+    if research_result
+      prompt = <<~P
+        Task: #{issue}
+        Context: #{context}
+        
+        Research findings:
+        #{research_result[0..2000]}
+        
+        Now implement this. Return code only.
+      P
+      
+      @tiered&.ask_tier("code", prompt)
+    else
+      # Fallback: ask user
+      puts "No research results. Need help with: #{issue[0..50]}"
+      print "Hint? "
+      hint = $stdin.gets&.strip
+      return nil if hint.nil? || hint.empty?
+      
+      @tiered&.ask_tier("code", "Implement #{issue} using hint: #{hint}")
+    end
+  end
+  
+  # Replicate.com integration
+  def run_replicate(args)
+    repligen_path = File.join(File.dirname(__FILE__), "repligen.rb")
+    
+    unless File.exist?(repligen_path)
+      Log.warn("repligen.rb not found at #{repligen_path}")
+      return
+    end
+    
+    unless ENV["REPLICATE_API_TOKEN"]
+      Log.warn("Set REPLICATE_API_TOKEN environment variable")
+      return
+    end
+    
+    # Parse command
+    parts = args.split(/\s+/, 2)
+    cmd = parts[0]
+    prompt = parts[1] || ""
+    
+    case cmd
+    when "generate", "gen", "image"
+      replicate_generate(prompt)
+    when "video", "vid"
+      replicate_video(prompt)
+    when "chain"
+      replicate_chain(prompt)
+    when "wild"
+      replicate_wild(prompt)
+    when "search"
+      replicate_search(prompt)
+    else
+      # Default: generate image
+      replicate_generate(args)
+    end
+  end
+  
+  def replicate_api(method, path, body = nil)
+    uri = URI("https://api.replicate.com/v1#{path}")
+    req = method == :get ? Net::HTTP::Get.new(uri) : Net::HTTP::Post.new(uri)
+    req["Authorization"] = "Bearer #{ENV['REPLICATE_API_TOKEN']}"
+    req["Content-Type"] = "application/json"
+    req.body = body.to_json if body
+    
+    Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+  rescue => e
+    Log.warn("Replicate API: #{e.message}")
+    nil
+  end
+  
+  def replicate_wait(id, name = "Task")
+    print "#{name}..."
+    loop do
+      sleep 2
+      res = replicate_api(:get, "/predictions/#{id}")
+      return nil unless res
+      
+      data = JSON.parse(res.body)
+      case data["status"]
+      when "succeeded"
+        puts " done"
+        output = data["output"]
+        return output.is_a?(Array) ? output.first : output
+      when "failed"
+        puts " failed: #{data['error']}"
+        return nil
+      else
+        print "."
+      end
+    end
+  end
+  
+  def replicate_generate(prompt)
+    return Log.warn("No prompt") if prompt.empty?
+    
+    puts "Generating: #{prompt[0..50]}"
+    
+    res = replicate_api(:post, "/predictions", {
+      model: "black-forest-labs/flux-schnell",
+      input: { prompt: prompt, num_outputs: 1 }
+    })
+    
+    return unless res
+    data = JSON.parse(res.body)
+    
+    url = replicate_wait(data["id"], "Image")
+    if url
+      filename = "gen_#{Time.now.strftime('%H%M%S')}.webp"
+      download_file(url, filename)
+      Log.ok("Saved: #{filename}")
+    end
+  end
+  
+  def replicate_video(prompt)
+    return Log.warn("No prompt") if prompt.empty?
+    
+    # First generate image
+    puts "Step 1: Image"
+    res = replicate_api(:post, "/predictions", {
+      model: "black-forest-labs/flux-schnell",
+      input: { prompt: prompt }
+    })
+    return unless res
+    
+    img_url = replicate_wait(JSON.parse(res.body)["id"], "Image")
+    return unless img_url
+    
+    # Then generate video
+    puts "Step 2: Video"
+    res = replicate_api(:post, "/predictions", {
+      model: "minimax/video-01",
+      input: { first_frame_image: img_url, prompt: prompt }
+    })
+    return unless res
+    
+    vid_url = replicate_wait(JSON.parse(res.body)["id"], "Video")
+    if vid_url
+      filename = "vid_#{Time.now.strftime('%H%M%S')}.mp4"
+      download_file(vid_url, filename)
+      Log.ok("Saved: #{filename}")
+    end
+  end
+  
+  def replicate_chain(prompt)
+    # Use repligen.rb directly
+    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "chain", prompt)
+  end
+  
+  def replicate_wild(prompt)
+    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "wild", prompt)
+  end
+  
+  def replicate_search(query)
+    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "search", query)
+  end
+  
+  def download_file(url, filename)
+    uri = URI(url)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      resp = http.get(uri.request_uri)
+      File.binwrite(filename, resp.body)
+    end
+  rescue => e
+    Log.warn("Download failed: #{e.message}")
   end
   
   def interactive_help
