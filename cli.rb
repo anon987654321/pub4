@@ -2536,7 +2536,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.10"
+  VERSION = "49.11"
 
   def self.boot
     return if Options.quiet
@@ -2558,7 +2558,8 @@ module Dmesg
 
   def self.principle_count
     begin
-      yaml = YAML.load_file(File.expand_path("master.yml", __dir__), permitted_classes: [Symbol])
+      content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+      yaml = YAML.safe_load(content, permitted_classes: [Symbol])
       yaml["principles"]&.size || 32
     rescue
       32
@@ -2567,7 +2568,8 @@ module Dmesg
 
   def self.model_count
     begin
-      yaml = YAML.load_file(File.expand_path("master.yml", __dir__), permitted_classes: [Symbol])
+      content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+      yaml = YAML.safe_load(content, permitted_classes: [Symbol])
       tiers = yaml.dig("llm", "tiers")&.keys || []
       "#{tiers.size} tiers (#{tiers.join(', ')})"
     rescue
@@ -2740,7 +2742,8 @@ class Constitution
       yaml = nil
       begin
         Timeout.timeout(LOAD_TIMEOUT) do
-          yaml = YAML.load_file(full, permitted_classes: [Symbol])
+          content = File.read(full, encoding: "UTF-8", invalid: :replace, undef: :replace)
+          yaml = YAML.safe_load(content, permitted_classes: [Symbol])
         end
       rescue Timeout::Error
         raise "Constitution loading timed out (YAML bomb?)"
@@ -3987,7 +3990,7 @@ class AutoEngine
     content = response.content rescue response.to_s
 
     # Extract code from markdown code blocks
-    if content =~ /```(?:\w+)?\n(.*?)```/m
+    if content =~ /```\w*\n(.*?)```/m
       return $1.strip
     end
 
