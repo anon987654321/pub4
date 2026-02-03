@@ -5,7 +5,7 @@
 # master.yml LLM OS - LLM-powered code quality analysis
 #
 # @author master.yml LLM OS
-# @version 48.2
+# @version 49.2
 # @see https://github.com/constitutional-ai/cli
 #
 # This file implements the CLI for master.yml LLM OS, a tool that analyzes

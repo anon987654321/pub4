@@ -1,4 +1,4 @@
-# master.yml LLM OS v49.1
+# master.yml LLM OS v49.2
 
 LLM-powered code quality analysis against 32 coding principles.
 
@@ -16,7 +16,9 @@ ruby cli.rb --garden-full        # self-improve constitution
 
 | Feature | Description |
 |---------|-------------|
-| **Tiered Pipeline** | Fast (Qwen) → Medium (Sonnet) → Strong (Claude Opus 4) |
+| **4-Tier Pipeline** | DeepSeek (cheap) → Grok Code Fast (code) → Sonnet (reasoning) → Opus (validation) |
+| **Grok Code Fast 1** | $0.20/$1.50 per 1M tokens for detection/refactoring |
+| **Replicate Module** | 50k+ generative models, wild chain mode |
 | **Progressive Disclosure** | Compact principle summaries for 60% token savings |
 | **Prompt Caching** | System prompts cached 1h (75-90% savings) |
 | **Parallel Detectors** | Concurrent smell scans |
@@ -63,6 +65,11 @@ ruby cli.rb --cost               # show LLM spending (daily/weekly)
 ruby cli.rb --rollback file.rb   # restore from backup
 ruby cli.rb --help               # show help
 ruby cli.rb --version            # show version
+
+# Replicate (generative AI)
+ruby cli.rb --replicate "a cyberpunk city"  # image generation
+ruby cli.rb --wild 5 --seed 42              # wild chain (5 random models)
+ruby cli.rb --index-models                  # index 50k Replicate models
 ```
 
 ## Profiles
