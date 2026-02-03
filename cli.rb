@@ -5145,9 +5145,6 @@ class CLI
       break if input.nil?
       next if input.empty?
       
-      # Debug: show exactly what was received
-      puts "[input: '#{input}' len=#{input.length}]" if ENV["DEBUG"]
-      
       @last_action = Time.now
 
       case input.downcase.strip
@@ -5833,13 +5830,16 @@ class CLI
       print "\n"
       
       if @tiered&.enabled?
+        puts "[DEBUG: tiered enabled, calling stream]" if ENV["DEBUG"]
         @tiered.ask_tier_stream("medium", @chat_history.last[:content], system_prompt: system_prompt) do |chunk|
           print chunk
           reply += chunk
           $stdout.flush
         end
         puts
+        puts "[DEBUG: stream done, reply len=#{reply.length}]" if ENV["DEBUG"]
       else
+        puts "[DEBUG: tiered NOT enabled, using fallback]" if ENV["DEBUG"]
         # Fallback to non-streaming
         messages = [{ role: "system", content: system_prompt }]
         messages += @chat_history.last(10)
