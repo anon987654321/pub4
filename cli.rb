@@ -1431,6 +1431,340 @@ module Core
     end
   end
 
+  # Structural analysis for any codebase (merge, decouple, hierarchy)
+  # Uses questions from master.yml structural_analysis section
+  module StructuralAnalyzer
+    def self.analyze(root_dir, constitution)
+      questions = constitution.data["structural_analysis"] || {}
+      issues = []
+      
+      # Analyze YAML/config files
+      config_files = Dir.glob(File.join(root_dir, "**", "*.{yml,yaml,json}"))
+      config_files.each do |f|
+        issues.concat(analyze_config(f, questions["config_hierarchy"] || []))
+        issues.concat(check_merge_opportunities(f, questions["merge_opportunities"] || []))
+      end
+      
+      # Analyze code files
+      code_files = Dir.glob(File.join(root_dir, "**", "*.{rb,py,js,ts}"))
+      code_files.each do |f|
+        issues.concat(analyze_code_structure(f, questions["code_hierarchy"] || []))
+      end
+      
+      # Project-wide checks
+      issues.concat(check_semantic_clarity(root_dir, questions["semantic_clarity"] || []))
+      issues.concat(check_decouple_opportunities(root_dir, questions["decouple_opportunities"] || []))
+      
+      issues
+    end
+    
+    def self.analyze_config(file_path, questions)
+      issues = []
+      return issues unless File.exist?(file_path)
+      
+      begin
+        content = YAML.safe_load(File.read(file_path, encoding: "UTF-8")) rescue {}
+        return issues unless content.is_a?(Hash)
+        
+        keys = content.keys
+        
+        # Check: too many top-level keys
+        if keys.size > 15
+          issues << { file: file_path, type: :sprawl, message: "#{keys.size} top-level keys - consider grouping" }
+        end
+        
+        # Check: mixed scalar and complex types at top level
+        scalars = keys.select { |k| !content[k].is_a?(Hash) && !content[k].is_a?(Array) }
+        complex = keys.select { |k| content[k].is_a?(Hash) || content[k].is_a?(Array) }
+        if scalars.any? && complex.any? && scalars.size > 2
+          issues << { file: file_path, type: :hierarchy, message: "Mixed scalars (#{scalars[0..2].join(', ')}) with complex sections" }
+        end
+        
+        # Check: duplicate-looking keys
+        keys.combination(2).each do |a, b|
+          if similar_keys?(a, b)
+            issues << { file: file_path, type: :merge, message: "Possibly overlapping: #{a} and #{b}" }
+          end
+        end
+      rescue => e
+        # Skip unparseable files
+      end
+      
+      issues
+    end
+    
+    def self.similar_keys?(a, b)
+      a_words = a.to_s.split(/[_-]/)
+      b_words = b.to_s.split(/[_-]/)
+      (a_words & b_words).size >= 1 && a != b
+    end
+    
+    def self.analyze_code_structure(file_path, questions)
+      issues = []
+      return issues unless File.exist?(file_path)
+      
+      content = File.read(file_path, encoding: "UTF-8") rescue ""
+      lines = content.lines
+      
+      # Top-level modules/classes sprawl
+      top_level = content.scan(/^(module|class)\s+(\w+)/).map(&:last)
+      if top_level.size > 10
+        issues << { file: file_path, type: :sprawl, smell: :god_file, message: "#{top_level.size} top-level modules/classes" }
+      end
+      
+      # Scattered utilities
+      util_patterns = %w[Log Logger Util Utils Helper Helpers]
+      scattered = top_level.select { |t| util_patterns.any? { |p| t.include?(p) } }
+      if scattered.size > 1
+        issues << { file: file_path, type: :fragmentation, smell: :scattered_functionality, message: "Scattered utilities: #{scattered.join(', ')}" }
+      end
+      
+      # Long methods (> 20 lines)
+      method_lengths = detect_method_lengths(content)
+      method_lengths.each do |name, length|
+        if length > 20
+          issues << { file: file_path, type: :bloater, smell: :long_method, message: "#{name}: #{length} lines" }
+        end
+      end
+      
+      # Long parameter lists (> 4 params)
+      content.scan(/def\s+(\w+)\(([^)]+)\)/).each do |name, params|
+        param_count = params.split(",").size
+        if param_count > 4
+          issues << { file: file_path, type: :bloater, smell: :long_parameter_list, message: "#{name}: #{param_count} params" }
+        end
+      end
+      
+      # Message chains (a.b.c.d pattern)
+      content.scan(/\w+(?:\.\w+){3,}/).each do |chain|
+        issues << { file: file_path, type: :coupler, smell: :message_chains, message: chain[0..50] }
+      end
+      
+      issues
+    end
+    
+    def self.detect_method_lengths(content)
+      methods = {}
+      current_method = nil
+      depth = 0
+      start_line = 0
+      
+      content.lines.each_with_index do |line, idx|
+        if line =~ /^\s*def\s+(\w+)/
+          current_method = $1
+          start_line = idx
+          depth = 1
+        elsif current_method
+          depth += 1 if line =~ /\b(do|if|unless|case|while|until|for|begin|class|module|def)\b/
+          depth -= 1 if line =~ /\bend\b/
+          if depth <= 0
+            methods[current_method] = idx - start_line
+            current_method = nil
+          end
+        end
+      end
+      methods
+    end
+    
+    def self.check_merge_opportunities(file_path, questions)
+      []
+    end
+    
+    def self.check_semantic_clarity(root_dir, questions)
+      issues = []
+      
+      Dir.glob(File.join(root_dir, "**/")).each do |dir|
+        files = Dir.glob(File.join(dir, "*")).select { |f| File.file?(f) }
+        if files.size > 20
+          issues << { file: dir, type: :sprawl, smell: :crowded_dir, message: "#{files.size} files in directory" }
+        end
+      end
+      
+      issues
+    end
+    
+    def self.check_decouple_opportunities(root_dir, questions)
+      issues = []
+      
+      # Hardcoded paths
+      Dir.glob(File.join(root_dir, "**", "*.{rb,py,yml,yaml}")).first(50).each do |f|
+        content = File.read(f, encoding: "UTF-8") rescue ""
+        if content.match?(/[A-Z]:\\|\/home\/\w+|\/Users\/\w+/)
+          issues << { file: f, type: :decouple, smell: :hardcoded_path, message: "Hardcoded path - use env var" }
+        end
+      end
+      
+      issues
+    end
+    
+    # Detect dead code (unused methods, unreferenced classes)
+    def self.detect_dead_code(root_dir)
+      issues = []
+      definitions = {}
+      references = Hash.new(0)
+      
+      Dir.glob(File.join(root_dir, "**", "*.rb")).each do |f|
+        content = File.read(f, encoding: "UTF-8") rescue ""
+        
+        # Collect definitions
+        content.scan(/def\s+(\w+)/).each { |m| definitions[m[0]] = f }
+        content.scan(/class\s+(\w+)/).each { |m| definitions[m[0]] = f }
+        content.scan(/module\s+(\w+)/).each { |m| definitions[m[0]] = f }
+        
+        # Collect references
+        content.scan(/\b([A-Z]\w+)\b/).each { |m| references[m[0]] += 1 }
+        content.scan(/\.(\w+)/).each { |m| references[m[0]] += 1 }
+      end
+      
+      # Find unreferenced (potential dead code)
+      definitions.each do |name, file|
+        next if %w[initialize new call].include?(name)
+        if references[name] <= 1
+          issues << { file: file, type: :dispensable, smell: :dead_code, message: "#{name} may be unused" }
+        end
+      end
+      
+      issues.first(20)  # Limit noise
+    end
+    
+    # Detect cyclic dependencies between files
+    def self.detect_cyclic_dependencies(root_dir)
+      issues = []
+      deps = {}
+      
+      Dir.glob(File.join(root_dir, "**", "*.rb")).each do |f|
+        content = File.read(f, encoding: "UTF-8") rescue ""
+        basename = File.basename(f, ".rb")
+        deps[basename] = []
+        
+        content.scan(/require[_relative]*\s+['"]([^'"]+)['"]/).each do |req|
+          deps[basename] << File.basename(req[0], ".rb")
+        end
+      end
+      
+      # Simple cycle detection (A requires B, B requires A)
+      deps.each do |file, requires|
+        requires.each do |req|
+          if deps[req]&.include?(file)
+            issues << { file: file, type: :architecture, smell: :cyclic_dependency, message: "#{file} ↔ #{req}" }
+          end
+        end
+      end
+      
+      issues.uniq { |i| [i[:file], i[:message]].sort.join }
+    end
+    
+    def self.report(issues)
+      return if issues.empty?
+      
+      grouped = issues.group_by { |i| i[:type] }
+      grouped.each do |type, items|
+        Log.warn("#{type.to_s.upcase}: #{items.size} issues")
+        items.first(5).each { |i| Log.info("  #{i[:file]}: #{i[:message]}") }
+      end
+    end
+    
+    # Cross-reference analysis: find naming/type inconsistencies
+    def self.cross_reference(root_dir)
+      issues = []
+      terms = Hash.new { |h, k| h[k] = [] }
+      types = Hash.new { |h, k| h[k] = [] }
+      
+      Dir.glob(File.join(root_dir, "**", "*.{rb,py,js,ts,yml,yaml}")).first(100).each do |f|
+        content = File.read(f, encoding: "UTF-8") rescue ""
+        
+        # Collect variable/method names and their apparent types
+        content.scan(/(\w+)\s*=\s*(\[|{|"|'|\d|true|false|nil|null)/).each do |name, type_hint|
+          type = case type_hint
+                 when "[" then :array
+                 when "{" then :hash
+                 when '"', "'" then :string
+                 when /\d/ then :number
+                 when "true", "false" then :boolean
+                 else :nil
+                 end
+          types[name] << { file: f, type: type }
+        end
+        
+        # Collect similar terms (potential naming inconsistency)
+        content.scan(/\b(user|account|member|config|settings|options|data|info|params|args)\b/i).each do |term|
+          terms[term[0].downcase] << f
+        end
+      end
+      
+      # Find same name with different types
+      types.each do |name, occurrences|
+        type_set = occurrences.map { |o| o[:type] }.uniq
+        if type_set.size > 1
+          issues << { type: :cross_ref, smell: :type_inconsistency, 
+                      message: "#{name} has types: #{type_set.join(', ')}" }
+        end
+      end
+      
+      # Find synonym usage (naming inconsistency)
+      synonyms = [%w[user account member], %w[config settings options], %w[data info]]
+      synonyms.each do |group|
+        found = group.select { |t| terms[t].any? }
+        if found.size > 1
+          issues << { type: :cross_ref, smell: :naming_inconsistency,
+                      message: "Mixed terms: #{found.join(', ')}" }
+        end
+      end
+      
+      issues
+    end
+    
+    # Simulated execution: check edge case handling
+    def self.simulate_edge_cases(root_dir)
+      issues = []
+      
+      Dir.glob(File.join(root_dir, "**", "*.rb")).first(50).each do |f|
+        content = File.read(f, encoding: "UTF-8") rescue ""
+        
+        # Check nil handling
+        if content.match?(/\.(\w+)/) && !content.match?(/&\.|\.nil\?|rescue|if .+\.nil/)
+          method_calls = content.scan(/(\w+)\.(\w+)/).size
+          nil_checks = content.scan(/&\.|\.nil\?|unless.*nil|if.*nil/).size
+          if method_calls > 10 && nil_checks < method_calls / 5
+            issues << { file: f, type: :simulation, smell: :missing_nil_checks,
+                        message: "#{method_calls} method calls, only #{nil_checks} nil checks" }
+          end
+        end
+        
+        # Check empty collection handling
+        if content.match?(/\.each|\.map|\.select/) && !content.match?(/\.empty\?|\.any\?|\.size\s*[>=<]/)
+          issues << { file: f, type: :simulation, smell: :no_empty_check,
+                      message: "Iterates without checking empty" }
+        end
+        
+        # Check file operations without rescue
+        if content.match?(/File\.(read|write|open|delete)/) && !content.match?(/rescue|begin.*File/)
+          issues << { file: f, type: :simulation, smell: :unhandled_io,
+                      message: "File operations without error handling" }
+        end
+        
+        # Check for string interpolation in user input (injection risk)
+        if content.match?(/`.*#\{|system.*#\{|exec.*#\{|%x.*#\{/)
+          issues << { file: f, type: :simulation, smell: :injection_risk,
+                      message: "String interpolation in shell command" }
+        end
+      end
+      
+      issues
+    end
+    
+    # Full structural + cross-ref + simulation analysis
+    def self.full_analysis(root_dir, constitution)
+      all_issues = []
+      all_issues.concat(analyze(root_dir, constitution))
+      all_issues.concat(detect_dead_code(root_dir))
+      all_issues.concat(detect_cyclic_dependencies(root_dir))
+      all_issues.concat(cross_reference(root_dir))
+      all_issues.concat(simulate_edge_cases(root_dir))
+      all_issues
+    end
+  end
+
   # OpenBSD config file extraction and man page lookup
   # Reads config mappings from master.yml openbsd section
   module OpenBSDConfig
@@ -2202,7 +2536,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.6"
+  VERSION = "49.8"
 
   def self.boot
     return if Options.quiet

@@ -1,6 +1,4 @@
-# =============================================================================
 # master.yml LLM OS - Master Configuration
-# =============================================================================
 #
 # This file defines the 32 coding principles, LLM configuration, safety
 # settings, and extensibility hooks for the LLM OS.
@@ -11,11 +9,8 @@
 #
 # @version 49.7
 # @see README.md for usage documentation
-# =============================================================================
 ---
-# =============================================================================
 # IDENTITY: What this system is
-# =============================================================================
 identity:
   name: "master.yml LLM OS"
   version: "49.7"
@@ -87,13 +82,10 @@ identity:
     - "Threat detection (audio/video anomaly analysis)"
     - "Physical security alerts"
 
-# =============================================================================
-# SELF-ANALYSIS: Questions to ask about any codebase structure
-# =============================================================================
-# Run with: ruby cli.rb --analyze or interactively with 'analyze' command
-# These questions surface hierarchy/organization issues before they sprawl
-# =============================================================================
-self_analysis:
+# STRUCTURAL ANALYSIS: Questions to ask about any codebase
+# Applied to all projects equally (self or external repos)
+# These surface hierarchy/organization issues before they sprawl
+structural_analysis:
   # Questions to ask about YAML/config files
   config_hierarchy:
     - question: "Are top-level keys semantically grouped?"
@@ -109,7 +101,6 @@ self_analysis:
       check: "Max 4 levels deep for readability"
       fix: "Flatten or extract to separate files"
       
-  # Questions to ask about code module structure  
   code_hierarchy:
     - question: "Are there too many top-level modules/classes?"
       check: "More than 8-10 top-level namespaces"
@@ -124,7 +115,6 @@ self_analysis:
       check: "Core (pure) → Services → Features → CLI"
       fix: "Establish dependency direction"
       
-  # Questions about semantic organization
   semantic_clarity:
     - question: "Can a new reader understand the structure in 30 seconds?"
       check: "Clear naming, logical grouping, consistent patterns"
@@ -135,10 +125,219 @@ self_analysis:
     - question: "Are cross-cutting concerns isolated?"
       check: "Logging, caching, error handling scattered"
       fix: "Extract to dedicated modules"
+      
+  merge_opportunities:
+    - question: "Are there overlapping sections?"
+      check: "identity.language vs language_detection, openbsd vs providers.openbsd_amsterdam"
+      fix: "Merge into single authoritative section"
+    - question: "Are there near-duplicate settings?"
+      check: "defaults.ask_language vs identity.language.detect_language"
+      fix: "Remove duplicate, reference single source"
+    - question: "Can related sections be nested?"
+      check: "conflicts could nest under safety"
+      fix: "safety.conflicts instead of top-level conflicts"
+    - question: "Are there orphan sections?"
+      check: "Sections with only 1-2 items that belong elsewhere"
+      fix: "Merge into parent or related section"
+      
+  decouple_opportunities:
+    - question: "Are there god objects/sections?"
+      check: "Single section with 20+ keys doing multiple things"
+      fix: "Split into focused subsections"
+    - question: "Are there hidden dependencies?"
+      check: "Section A references Section B internals"
+      fix: "Make dependencies explicit or extract shared config"
+    - question: "Can config be environment-specific?"
+      check: "Hardcoded paths like G:/priv/passwd"
+      fix: "Move to env vars or separate local.yml"
 
-# =============================================================================
+  # Fowler code smells (bloaters)
+  bloaters:
+    - smell: "long_method"
+      check: "Method > 20 lines or > 5 levels of nesting"
+      fix: "Extract method, decompose conditional"
+    - smell: "god_class"
+      check: "Class > 300 lines or > 10 methods or > 5 responsibilities"
+      fix: "Extract class, single responsibility"
+    - smell: "primitive_obsession"
+      check: "Overuse of strings/ints for domain concepts"
+      fix: "Introduce value objects"
+    - smell: "long_parameter_list"
+      check: "Method with > 4 parameters"
+      fix: "Introduce parameter object"
+    - smell: "data_clumps"
+      check: "Same group of variables passed together repeatedly"
+      fix: "Extract into struct/class"
+
+  # Coupling issues
+  couplers:
+    - smell: "feature_envy"
+      check: "Method uses another class more than its own"
+      fix: "Move method to the class it envies"
+    - smell: "inappropriate_intimacy"
+      check: "Classes access each other's private parts"
+      fix: "Move methods, extract class, hide delegate"
+    - smell: "message_chains"
+      check: "a.b.c.d.method() - train wreck"
+      fix: "Hide delegate, extract method"
+    - smell: "middle_man"
+      check: "Class delegates almost everything"
+      fix: "Remove middle man, inline"
+
+  # Change preventers
+  change_preventers:
+    - smell: "divergent_change"
+      check: "One class changed for multiple different reasons"
+      fix: "Extract class per responsibility"
+    - smell: "shotgun_surgery"
+      check: "One change requires editing many files"
+      fix: "Move method, inline class, consolidate"
+    - smell: "parallel_inheritance"
+      check: "Subclass in A requires subclass in B"
+      fix: "Merge hierarchies"
+
+  # Dispensables
+  dispensables:
+    - smell: "dead_code"
+      check: "Unreachable or unused code"
+      fix: "Delete it"
+    - smell: "lazy_class"
+      check: "Class does too little to justify existence"
+      fix: "Inline class, merge with another"
+    - smell: "speculative_generality"
+      check: "Code for future use that never comes"
+      fix: "Collapse hierarchy, inline, remove"
+    - smell: "duplicate_code"
+      check: "Same structure in multiple places"
+      fix: "Extract method/class, pull up"
+
+  # Architecture smells
+  architecture:
+    - smell: "cyclic_dependency"
+      check: "A depends on B depends on A"
+      fix: "Dependency inversion, extract interface"
+    - smell: "hub_dependency"
+      check: "One module everyone depends on"
+      fix: "Split hub, introduce facades"
+    - smell: "ambiguous_interface"
+      check: "Interface with unclear contract"
+      fix: "Rename, document, or redesign"
+    - smell: "scattered_functionality"
+      check: "Related logic spread across many files"
+      fix: "Colocate, create module"
+
+  # Cross-reference analysis (semantic consistency)
+  cross_reference:
+    - check: "naming_consistency"
+      description: "Same concept named differently across files"
+      examples: ["user vs account vs member", "config vs settings vs options"]
+      fix: "Standardize naming, create glossary"
+    - check: "type_consistency"
+      description: "Same field with different types"
+      examples: ["id as string vs integer", "date as string vs Date"]
+      fix: "Normalize types, add type annotations"
+    - check: "null_handling"
+      description: "Inconsistent nil/null checks"
+      examples: ["Some methods check nil, others assume non-nil"]
+      fix: "Establish null contract, use optionals"
+    - check: "error_handling"
+      description: "Inconsistent exception patterns"
+      examples: ["Some raise, some return nil, some log"]
+      fix: "Standardize error strategy"
+    - check: "api_symmetry"
+      description: "Asymmetric create/update/delete patterns"
+      examples: ["create returns object, update returns bool"]
+      fix: "Make APIs consistent"
+
+  # Simulated execution (edge case discovery)
+  simulated_execution:
+    - scenario: "empty_input"
+      cases: ["nil", "empty string", "empty array", "empty hash", "0", "false"]
+      check: "Does code handle gracefully or crash?"
+    - scenario: "boundary_values"
+      cases: ["max int", "min int", "very long string", "unicode", "special chars"]
+      check: "Buffer overflows, truncation, encoding issues"
+    - scenario: "concurrent_access"
+      cases: ["simultaneous reads", "read during write", "double write"]
+      check: "Race conditions, deadlocks, data corruption"
+    - scenario: "resource_exhaustion"
+      cases: ["out of memory", "disk full", "too many open files", "network timeout"]
+      check: "Graceful degradation or crash?"
+    - scenario: "permission_denied"
+      cases: ["read-only file", "no execute", "wrong owner", "SELinux/pledge"]
+      check: "Proper error messages, no security leaks"
+    - scenario: "malformed_input"
+      cases: ["invalid JSON", "truncated file", "wrong encoding", "injection attempts"]
+      check: "Validation, sanitization, safe failure"
+    - scenario: "state_transitions"
+      cases: ["out-of-order calls", "double init", "use after close", "reentrant calls"]
+      check: "State machine integrity"
+
+  # Code aesthetics (Japanese + Western principles)
+  aesthetics:
+    # Japanese Zen principles
+    japanese:
+      - principle: "kanso"
+        kanji: "簡素"
+        meaning: "Simplicity, elimination of clutter"
+        code: "Short functions, minimal dependencies, no decorative complexity"
+      - principle: "shibui"
+        kanji: "渋い"
+        meaning: "Subtle, unobtrusive beauty with hidden depth"
+        code: "Discoverable APIs, layered abstractions, quiet elegance"
+      - principle: "wabi_sabi"
+        kanji: "侘寂"
+        meaning: "Beauty in imperfection and impermanence"
+        code: "Embrace iteration, honest solutions over clever tricks"
+      - principle: "ma"
+        kanji: "間"
+        meaning: "Negative space, intentional emptiness"
+        code: "Generous whitespace, room for future growth, clear separation"
+      - principle: "fukinsei"
+        kanji: "不均整"
+        meaning: "Asymmetry, controlled irregularity"
+        code: "Flexibility over rigid structure, natural flow"
+      - principle: "shizen"
+        kanji: "自然"
+        meaning: "Naturalness, absence of pretense"
+        code: "Code that reads like intent, no forced patterns"
+      - principle: "yugen"
+        kanji: "幽玄"
+        meaning: "Profound depth, mystery beneath surface"
+        code: "Simple interface hiding sophisticated implementation"
+        
+    # Western principles
+    western:
+      - principle: "less_is_more"
+        origin: "Mies van der Rohe"
+        code: "Every line must earn its place"
+      - principle: "form_follows_function"
+        origin: "Louis Sullivan"
+        code: "Structure emerges from purpose, not decoration"
+      - principle: "proportional_harmony"
+        origin: "Golden ratio, classical architecture"
+        code: "Balanced abstractions, consistent granularity"
+      - principle: "progressive_disclosure"
+        origin: "UX design"
+        code: "Common cases simple, advanced cases possible"
+      - principle: "orthogonality"
+        origin: "Unix philosophy"
+        code: "Independent concerns, composable parts"
+        
+    # Universal smells (anti-aesthetics)
+    anti_patterns:
+      - smell: "clever_code"
+        fix: "Readable over impressive"
+      - smell: "decoration"
+        fix: "Remove ASCII art, excessive comments"
+      - smell: "inconsistent_style"
+        fix: "One formatting style throughout"
+      - smell: "over_abstraction"
+        fix: "Abstractions should reduce complexity, not add"
+      - smell: "magic_numbers"
+        fix: "Named constants with meaning"
+
 # DEFAULTS: Runtime behavior defaults
-# =============================================================================
 defaults:
   # Analysis
   scan: true               # Run analysis
@@ -165,9 +364,7 @@ defaults:
   colors: true             # Color output (respects NO_COLOR)
   interactive_on_failure: false
 
-# =============================================================================
 # PRINCIPLES: The 32 coding principles (flat registry)
-# =============================================================================
 #
 # Each principle has:
 #   - id: Unique numeric identifier (1-32)
@@ -184,7 +381,6 @@ defaults:
 # Progressive Disclosure:
 #   Level 1 (detection): id, name, priority, smells (~50 tokens)
 #   Level 2 (refactoring): rule, why, evidence, strategies (~150 tokens)
-# =============================================================================
 principles:
   # ---------------------------------------------------------------------------
   # AXIOMS (Priority 10): Foundational principles
@@ -692,13 +888,10 @@ style:
     max_class_lines: 100
     max_nesting_depth: 4
 
-# =============================================================================
 # PHASES: 7-phase development workflow
-# =============================================================================
 #
 # Each phase has gates that must pass before proceeding.
 # Use with --progress-phases to enforce phase gates.
-# =============================================================================
 phases:
   discover:
     id: 1
@@ -742,16 +935,13 @@ phases:
     output: "Deployed code with dashboards"
     gates: [deployed, monitoring_configured, rollback_tested]
 
-# =============================================================================
 # LLM: Model configuration and cost optimization
-# =============================================================================
 #
 # Tiered pipeline: Fast (cheap) → Medium → Strong (expensive)
 # Progressive escalation saves 60-80% on LLM costs.
 #
 # Prompt caching: System prompts cached for 1h (75-90% savings on repeats)
 # Model failover: Automatic fallback with 5min cooldown on rate limits
-# =============================================================================
 llm:
   # Tiered pipeline: cheap → code-fast → medium → strong (Feb 2026 models)
   tiers:
@@ -858,13 +1048,10 @@ llm:
     models: ["anthropic/claude-sonnet-4.5", "z-ai/glm-4.7", "moonshotai/kimi-k2.5"]
     required_agreement: 2
 
-# =============================================================================
 # LEARNED SMELLS: Self-improving constitution
-# =============================================================================
 #
 # The gardener (--garden-full) analyzes painful cases and suggests new smells.
 # Approved smells are added here and become part of future analysis.
-# =============================================================================
 learned_smells: []
 # Example entry added by gardener:
 # - id: learned_001
@@ -873,9 +1060,7 @@ learned_smells: []
 #   description: "Avoid eval() in migrations"
 #   source_iteration: "file.rb iteration 4"
 
-# =============================================================================
 # SAFETY: Protection against runaway costs, infinite loops, and data loss
-# =============================================================================
 safety:
   # File validation before processing
   file_validation:
@@ -935,7 +1120,6 @@ safety:
     max_violation_objects: 100_000  # Max violations in memory
     gc_every_n_iterations: 5        # Force GC periodically
 
-# =============================================================================
 # CONFLICT RESOLUTION
 conflicts:
   strategy: "highest_priority_wins"
@@ -953,13 +1137,10 @@ conflicts:
       resolution: "reject fix"
 
 # PRINCIPLE GROUPS (for quick/focused scans)
-# =============================================================================
 # PRINCIPLE GROUPS: Logical groupings of principles
-# =============================================================================
 #
 # Groups allow profile-based filtering. Reference with "group:name".
 # Example: --profile quick uses only group:quick principles.
-# =============================================================================
 principle_groups:
   "group:axioms": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]      # Foundational (tier: axiom)
   "group:solid": [11, 12, 13, 14, 15]                  # SOLID principles
@@ -973,15 +1154,12 @@ principle_groups:
   "group:quick": [1, 2, 11, 19, 20]                    # Fast scan (core only)
   "group:critical": [1, 2, 4, 11, 23, 29, 32]          # Critical issues (security, stability)
 
-# =============================================================================
 # PROFILES: Pre-defined principle sets
-# =============================================================================
 #
 # Usage: cli.rb --profile quick myfile.rb
 #        cli.rb --quick (shorthand for --profile quick)
 #
 # Saves 60-80% on analysis time for quick scans.
-# =============================================================================
 profiles:
   quick:
     description: "Fast scan with core principles only"
@@ -1001,9 +1179,7 @@ profiles:
 
 default_profile: "full"
 
-# =============================================================================
 # HOOKS: Event-driven extensibility
-# =============================================================================
 #
 # Available events:
 #   before_scan, after_scan, before_fix, after_fix, violation_found,
@@ -1014,7 +1190,6 @@ default_profile: "full"
 #   - log: Append to JSONL file (path: "file.jsonl")
 #   - warn: Print warning (message: "text")
 #   - pause: Pause and wait for Enter (message: "text")
-# =============================================================================
 hooks:
   on_violation_found:
     - action: "log"
@@ -1026,9 +1201,7 @@ hooks:
   #   - action: "pause"
   #     message: "Convergence stuck. Review and press Enter..."
 
-# =============================================================================
 # LANGUAGE DETECTION: File type identification
-# =============================================================================
 language_detection:
   strategy: "ask_user_first"       # ask_user_first | auto
   fallback: "content_analysis"     # content_analysis | extension_only
@@ -1063,9 +1236,7 @@ language_detection:
       indicators: ["#!/usr/bin/env zsh", "#!/bin/zsh", "setopt ", "zmodload ", "typeset -a", "autoload "]
       embedded_languages: ["ruby"]
 
-# =============================================================================
 # OPENBSD: Config file mappings and validation rules
-# =============================================================================
 openbsd:
   man_base_url: "https://man.openbsd.org"
   cache_ttl: 86400  # 24 hours
@@ -1179,12 +1350,9 @@ openbsd:
       required_patterns:
         - "server:"
 
-# =============================================================================
 # PROVIDERS: LLM and Infrastructure Provider Integrations
-# =============================================================================
 # Each provider (OpenRouter, Replicate, OpenBSD Amsterdam, Claude, etc.)
 # gets its own section with relevant configs.
-# =============================================================================
 providers:
   # ---------------------------------------------------------------------------
   # OpenRouter: Multi-model LLM API gateway
@@ -1311,14 +1479,10 @@ providers:
       reboot: "doas reboot"
       console: "ssh dev@185.52.176.18 -t 'cu -l /dev/tty00'"
 
-
-# =============================================================================
 # REFINEMENTS: Evolution from v1 to v48
-# =============================================================================
 #
 # Documents the micro-refinements made over 48 versions.
 # Each refinement shows old behavior, new behavior, and benefit.
-# =============================================================================
 refinements:
   pattern_detection:
     old: "50+ regex patterns in YAML"
