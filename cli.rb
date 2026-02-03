@@ -5225,7 +5225,9 @@ class CLI
       when /^rollback\s+(.+)/
         rollback($1)
       when /^(scan|check|analyze|process|fix)\s+(.+)/i
-        process_targets([$2])
+        # Handle multiple files separated by "and", ",", or spaces
+        files = $2.split(/\s+and\s+|\s*,\s*|\s+/).map(&:strip).reject(&:empty?)
+        process_targets(files)
       when /^run\s+(.+)/i, /^exec\s+(.+)/i, /^!\s*(.+)/
         run_shell_command($1)
       when /^structural\s+(.+)/i
