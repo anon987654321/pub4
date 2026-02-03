@@ -1,17 +1,15 @@
 {
-  "env": {
-    "MASTER_CONFIG_PATH": "G:/pub/master.rb",
-    "ENFORCE_MASTER_JSON": "true"
-  },
+  "master_yml": "G:/pub/master.yml",
+  "executor": "G:/pub/cli.rb",
+  "auto_load": true,
   "permissions": {
     "allow": [
-      "Bash(ruby -e:*)",
-      "Bash(~/Ruby33/bin/ruby.exe:*)",
-      "Bash(cmd.exe /c where sox.exe)",
-      "Bash(C:/Ruby33/bin/ruby.exe dilla.rb --help)"
+      "Zsh(*)",
+      "Bash(ruby:*)",
+      "Bash(git:*)"
     ],
     "deny": [],
-    "ask": [],
-    "defaultMode": "bypassPermissions"
-  }
+    "ask": []
+  },
+  "comment": "Per master.yml v49.6 - see claude_integration section"
 }

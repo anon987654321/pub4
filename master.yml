@@ -952,7 +952,7 @@ language_detection:
 openbsd:
   man_base_url: "https://man.openbsd.org"
   cache_ttl: 86400  # 24 hours
-  
+
   # Map config files to their parent daemons and man pages
   configs:
     pf.conf:
@@ -964,7 +964,7 @@ openbsd:
       warnings:
         - pattern: "pass all"
           message: "Overly permissive: 'pass all' bypasses filtering"
-    
+
     nsd.conf:
       daemon: nsd
       man: nsd.conf.5
@@ -996,13 +996,13 @@ openbsd:
         - "Use nsd-control-setup to generate control keys"
         - "Rotate ZSK more frequently than KSK"
         - "Use ECDSAP256SHA256 algorithm for modern compatibility"
-    
+
     httpd.conf:
       daemon: httpd
       man: httpd.conf.5
       required_patterns:
         - "server"
-    
+
     smtpd.conf:
       daemon: smtpd
       man: smtpd.conf.5
@@ -1015,7 +1015,7 @@ openbsd:
           message: "Open relay risk: 'match from any' allows external relay"
         - pattern: "pki"
           absent_message: "Missing PKI directive (TLS not configured)"
-    
+
     relayd.conf:
       daemon: relayd
       man: relayd.conf.5
@@ -1024,14 +1024,14 @@ openbsd:
       warnings:
         - pattern: "tls keypair"
           absent_message: "Missing TLS keypair directive"
-    
+
     acme-client.conf:
       daemon: acme-client
       man: acme-client.conf.5
       required_patterns:
         - "authority"
         - "domain"
-    
+
     doas.conf:
       daemon: doas
       man: doas.conf.5
@@ -1040,7 +1040,7 @@ openbsd:
       warnings:
         - pattern: "nopass"
           message: "nopass allows passwordless privilege escalation"
-    
+
     sshd_config:
       daemon: sshd
       man: sshd_config.5
@@ -1049,18 +1049,151 @@ openbsd:
           message: "Security risk: root login enabled"
         - pattern: "PasswordAuthentication yes"
           message: "Consider disabling password auth for key-only access"
-    
+
     ntpd.conf:
       daemon: ntpd
       man: ntpd.conf.5
       required_patterns:
         - "server"
-    
+
     unbound.conf:
       daemon: unbound
       man: unbound.conf.5
       required_patterns:
         - "server:"
+
+# =============================================================================
+# PROVIDERS: LLM and Infrastructure Provider Integrations
+# =============================================================================
+# Each provider (OpenRouter, Replicate, OpenBSD Amsterdam, Claude, etc.)
+# gets its own section with relevant configs.
+# =============================================================================
+providers:
+  # ---------------------------------------------------------------------------
+  # OpenRouter: Multi-model LLM API gateway
+  # ---------------------------------------------------------------------------
+  openrouter:
+    enabled: true
+    base_url: "https://openrouter.ai/api/v1"
+    env_key: "OPENROUTER_API_KEY"
+    features:
+      - tool_calling
+      - streaming
+      - prompt_caching
+    docs: "https://openrouter.ai/docs"
+    
+  # ---------------------------------------------------------------------------
+  # Replicate: Generative AI models (50k+ models)
+  # ---------------------------------------------------------------------------
+  replicate:
+    enabled: true
+    base_url: "https://api.replicate.com/v1"
+    env_key: "REPLICATE_API_TOKEN"
+    explore_url: "https://replicate.com/explore"
+    docs: "https://replicate.com/docs"
+    features:
+      - image_generation
+      - video_generation
+      - audio_generation
+      - wild_chain
+      - model_indexing
+      - lora_training
+    # Featured models (Feb 2026)
+    featured_models:
+      image:
+        - "black-forest-labs/flux-2-klein-4b"      # Sub-second, 4 steps distilled
+        - "black-forest-labs/flux-2-klein-9b"      # Higher quality variant
+        - "google/nano-banana-pro"                  # Google SOTA image gen/edit
+        - "openai/gpt-image-1.5"                    # OpenAI latest
+        - "prunaai/z-image-turbo"                   # 6B params, super fast
+        - "qwen/qwen-image-edit-2511"               # Image editing
+        - "sourceful/riverflow-2.0-pro"             # Agentic, font control
+      video:
+        - "kwaivgi/kling-v2.6"                      # Top-tier i2v, native audio
+        - "google/veo-3.1-fast"                     # High-fidelity, context-aware audio
+        - "bytedance/seedance-1.5-pro"              # ByteDance video
+        - "lightricks/ltx-2-distilled"              # Fast video
+        - "pixverse/pixverse-v5.6"                  # PixVerse latest
+      audio:
+        - "qwen/qwen3-tts"                          # Voice, Clone, Design modes
+      llm:
+        - "moonshotai/kimi-k2.5"                    # Vision+text, thinking, multi-agent
+        - "google/gemini-3-flash"                   # Speed + intelligence + grounding
+    collections:
+      - "text-classification"
+      - "vision-models"
+      - "flux-fine-tunes"
+      - "qwen-image-fine-tunes"
+      - "utilities"
+    
+  # ---------------------------------------------------------------------------
+  # Claude/Copilot: GitHub Copilot CLI and Claude Code CLI
+  # ---------------------------------------------------------------------------
+  claude:
+    enabled: true
+    executor: "cli.rb"
+    constitution: "master.yml"
+    auto_load: true
+    shell:
+      preferred: "zsh"
+      fallback: null  # no bash fallback
+      mandate_file_tools: true
+    permissions:
+      allow:
+        - "zsh:*"
+        - "ruby:*"
+        - "git:*"
+        - "ssh:*"
+      deny:
+        - "rm -rf:*"
+        - "dd:*"
+        - "mkfs:*"
+        - "bash:*"
+      ask:
+        - "reboot"
+        - "shutdown"
+        - "doas"
+    style:
+      brevity: "extreme"
+      anti_sprawl: true
+      prescan: true
+      
+  # ---------------------------------------------------------------------------
+  # OpenBSD Amsterdam: VPS hosting on vmm(4)/vmd(8)
+  # ---------------------------------------------------------------------------
+  openbsd_amsterdam:
+    enabled: true
+    host: "185.52.176.18"
+    user: "dev"
+    key_path: "G:/priv/passwd/openbsd_key"
+    os: "OpenBSD 7.8-release"
+    provider_url: "https://openbsd.amsterdam"
+    docs:
+      - "https://openbsd.amsterdam/setup.html"
+      - "https://www.openbsdhandbook.com/"
+      - "https://man.openbsd.org/"
+    features:
+      console: "vmctl(8) + cu(1)"
+      backup: "10G included"
+      ipv6: "/64 dedicated"
+      ptr: "https://openbsd.amsterdam/ptr.html"
+    building_blocks:
+      - "vmm(4)/vmd(8)"
+      - "dhcpd(8)"
+      - "doas(1)"
+      - "unbound(8)"
+      - "autoinstall(8)"
+      - "httpd(8)"
+      - "pf(4)"
+    sysctl_tuning:
+      - "net.inet.ip.forwarding=1"
+      - "net.inet6.ip6.forwarding=1"
+      - "net.inet.ip.arpq.maxlen=256"
+    maintenance:
+      update: "syspatch && pkg_add -u"
+      reboot: "doas reboot"
+      console: "ssh dev@185.52.176.18 -t 'cu -l /dev/tty00'"
+
 
 # =============================================================================
 # REFINEMENTS: Evolution from v1 to v48
