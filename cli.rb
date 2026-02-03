@@ -839,21 +839,30 @@ module Core
 
     def self.get(file_path, content)
       init
-      cache_file = File.join(CACHE_DIR, "#{key_for(file_path, content)}.json")
-      return nil unless File.exist?(cache_file)
-
-      data = JSON.parse(File.read(cache_file))
-      return nil if Time.now.to_i - data["timestamp"] > CACHE_TTL_SECONDS
-
-      data["violations"]
+      key = key_for(file_path, content)
+      cache_file = File.join(CACHE_DIR, "#{key}.json")
+      
+      if File.exist?(cache_file)
+        data = JSON.parse(File.read(cache_file))
+        if Time.now.to_i - data["timestamp"] <= CACHE_TTL_SECONDS
+          puts "  #{Dmesg.dim}[trace] cache.hit key=#{key}#{Dmesg.reset}" if ENV["TRACE"]
+          return data["violations"]
+        end
+      end
+      
+      puts "  #{Dmesg.dim}[trace] cache.miss key=#{key}#{Dmesg.reset}" if ENV["TRACE"]
+      nil
     rescue StandardError
       nil
     end
 
     def self.set(file_path, content, violations)
       init
-      cache_file = File.join(CACHE_DIR, "#{key_for(file_path, content)}.json")
+      key = key_for(file_path, content)
+      cache_file = File.join(CACHE_DIR, "#{key}.json")
 
+      puts "  #{Dmesg.dim}[trace] cache.set key=#{key} violations=#{violations.size}#{Dmesg.reset}" if ENV["TRACE"]
+      
       File.write(cache_file, JSON.generate({
         timestamp: Time.now.to_i,
         file: file_path,
@@ -2700,22 +2709,12 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.37"
+  VERSION = "49.59"
 
   def self.boot
     return if Options.quiet
-
-    if ENV["CONSTITUTIONAL_MINIMAL"]
-      puts "master.yml #{VERSION}"
-      return
-    end
-
-    # OpenBSD dmesg style boot - clean, informative
-    puts "Constitutional AI #{VERSION} ##{build_number}: #{Time.now.strftime('%b %e %H:%M:%S')}"
-    puts "master.yml: #{principle_count} principles loaded"
-    puts "llm0: #{llm_status}"
-    puts "tiers: #{tier_list}"
-    puts "root: #{File.basename(Dir.pwd)}/"
+    # Single line boot - Unix minimal
+    puts "#{VERSION} #{principle_count}p #{llm_status} #{File.basename(Dir.pwd)}/"
   end
 
   def self.build_number
@@ -4097,6 +4096,11 @@ class LLMClient
 
   def call_llm(model:, messages:, max_tokens:)
     @call_count += 1
+    start_time = Time.now
+
+    if ENV["TRACE"]
+      puts "  #{Dmesg.dim}[trace] llm.call model=#{model.split('/').last} max_tokens=#{max_tokens}#{Dmesg.reset}"
+    end
 
     chat = RubyLLM.chat(model: model, provider: :openrouter)
 
@@ -4109,6 +4113,11 @@ class LLMClient
     prompt += user_msg[:content] if user_msg
 
     response = chat.ask(prompt)
+    elapsed = Time.now - start_time
+
+    if ENV["TRACE"]
+      puts "  #{Dmesg.dim}[trace] llm.done in=#{response.input_tokens} out=#{response.output_tokens} time=#{format("%.1fs", elapsed)}#{Dmesg.reset}"
+    end
 
     track_usage(response, model)
 
@@ -4612,30 +4621,22 @@ class AutoEngine
   def show_final_report(file_path)
     violations = scan_with_llm(file_path)
     analysis = Core::ScoreCalculator.analyze(violations)
-    
-    short_path = file_path.sub(Dir.pwd + "/", "").sub(Dir.pwd + "\\", "")
 
     if violations.empty?
-      puts "  #{Dmesg.green}100/100#{Dmesg.reset}"
+      puts "  #{Dmesg.green}ok#{Dmesg.reset}"
     else
-      puts "  #{Dmesg.yellow}#{analysis[:score]}/100#{Dmesg.reset} (#{analysis[:total]} issues)"
-      violations.first(5).each do |v|
-        puts "    #{Dmesg.dim}:#{v["line"]}#{Dmesg.reset} #{v["explanation"][0..60]}"
+      puts "  #{Dmesg.yellow}#{analysis[:score]}/100#{Dmesg.reset} (#{analysis[:total]})"
+      violations.first(3).each do |v|
+        puts "    :#{v["line"]} #{v["explanation"][0..50]}"
       end
-      puts "    #{Dmesg.dim}... +#{violations.size - 5} more#{Dmesg.reset}" if violations.size > 5
+      puts "    +#{violations.size - 3}" if violations.size > 3
     end
-
-    # Git history comparison
-    if Core::GitHistory.available?
-      comparison = Core::GitHistory.compare_with_history(file_path, violations)
-      if comparison && comparison[:history].any?
-        puts "  #{Dmesg.dim}git: #{comparison[:history].size} commits#{Dmesg.reset}"
-      end
-    end
-
-    if @llm.enabled?
-      stats = @llm.stats
-      puts "  #{Dmesg.dim}llm: #{stats[:calls]} calls, #{stats[:tokens]}t, #{format("$%.2f", stats[:cost])}#{Dmesg.reset}"
+    
+    # Trace mode: full transparency
+    if ENV["TRACE"]
+      stats = @llm.stats if @llm.enabled?
+      puts "  #{Dmesg.dim}[trace] model=#{@llm&.current_model} tokens=#{stats&.dig(:tokens)} cost=$#{format("%.4f", stats&.dig(:cost) || 0)}#{Dmesg.reset}"
+      puts "  #{Dmesg.dim}[trace] cache_key=#{Core::Cache.key_for(file_path, File.read(file_path) rescue "")}#{Dmesg.reset}"
     end
   end
 end
@@ -5174,6 +5175,7 @@ class CLI
   def interactive_mode
     @cwd = Dir.pwd
     @last_action = Time.now
+    start_time = Time.now
 
     # Start web server for cli.html
     web_url = nil
@@ -5181,18 +5183,18 @@ class CLI
       @web_server = WebServer.new(self)
       web_url = @web_server.start
     rescue => e
-      Log.debug("Web server: #{e.message}")
+      puts "  [trace] web.fail #{e.message}" if ENV["TRACE"]
     end
 
-    # Minimal boot - Ghost Dog style
-    puts
-    puts "#{Dir.pwd.split('/').last || Dir.pwd}"
-    puts web_url if web_url
-    
-    # Show what's available
-    folders = Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.sort
-    puts "Folders: #{folders.join(', ')}" if folders.any?
-    puts
+    # Boot output
+    if ENV["TRACE"]
+      puts "[trace] boot cwd=#{@cwd}"
+      puts "[trace] boot constitution=#{@constitution&.principles&.size}p"
+      puts "[trace] boot llm=#{@llm&.enabled? ? 'ready' : 'disabled'}"
+      puts "[trace] boot tiers=#{@constitution&.models&.keys&.join('|')}"
+      puts "[trace] boot time=#{format("%.2fs", Time.now - start_time)}"
+    end
+    puts "#{web_url}" if web_url
     
     # Main loop
     loop do
@@ -6395,19 +6397,27 @@ class CLI
   end
 
   def process_file(file_path)
+    start_time = Time.now
+    
     unless File.exist?(file_path)
       Log.error("File not found: #{file_path}") unless Options.quiet
       return nil
     end
 
+    size = File.size(file_path)
+    puts "  [trace] file.start path=#{file_path} size=#{size}" if ENV["TRACE"]
+
     # Clean: normalize file before analysis (CRLF, trailing whitespace, blank lines)
     if Core::FileCleaner.clean(file_path)
-      Log.info("#{Dmesg.icon(:clean)} Cleaned: #{file_path}") unless Options.quiet
+      puts "  [trace] file.cleaned path=#{file_path}" if ENV["TRACE"]
     end
 
     language = detect_language(file_path)
+    puts "  [trace] file.lang=#{language}" if ENV["TRACE"]
 
     result = @engine.process(file_path, language)
+    elapsed = Time.now - start_time
+    puts "  [trace] file.done time=#{format("%.2fs", elapsed)}" if ENV["TRACE"]
 
     if result.ok?
       {file: file_path, language: language, score: 100, error: nil}
