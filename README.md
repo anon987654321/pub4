@@ -1,6 +1,6 @@
-# Constitutional AI v48.1 – The Code Janitor That Roasts You 🤖💅
+# Constitutional AI v48.2
 
-Your code is a beautiful disaster. This tool quietly makes it better.
+LLM-powered code quality analysis against 32 coding principles.
 
 ## Quick Start
 
@@ -11,19 +11,18 @@ ruby cli.rb --watch .            # watch mode
 ruby cli.rb --garden-full        # self-improve constitution
 ```
 
-## v48.1 Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Tiered Pipeline** | Fast (Qwen) → Medium (Sonnet) → Strong (Opus) = 60-80% savings |
-| **Prompt Caching** | System prompts cached 1h = 75-90% savings |
-| **Parallel Detectors** | 8-12 concurrent cheap scans |
-| **Reflection Critic** | Validates fixes before applying (avoids regressions) |
-| **Pattern Memory** | Remembers fix success rates (`.constitutional_memory.json`) |
-| **Gardener** | `--garden` / `--garden-full` self-improves constitution |
-| **History Tracking** | `.constitutional_history.json` for painful cases |
+| **Tiered Pipeline** | Fast (Qwen) → Medium (Sonnet) → Strong (Claude Opus 4) |
+| **Prompt Caching** | System prompts cached 1h |
+| **Parallel Detectors** | Concurrent smell scans |
+| **Reflection Critic** | Validates fixes before applying |
+| **Pattern Memory** | Remembers fix success rates |
+| **Gardener** | `--garden` / `--garden-full` self-improves |
 | **Watch Mode** | `--watch` auto-reanalyze on save |
-| **Auto-Bootstrap** | Gems install automatically |
+| **NO_COLOR Support** | Respects terminal preferences |
 
 ## Commands
 
@@ -74,10 +73,30 @@ Shell (IO/state):
 ## Environment
 
 ```bash
-OPENROUTER_API_KEY   # required for AI
-VERBOSE=1            # debug mode
+OPENROUTER_API_KEY       # required for AI
+VERBOSE=1                # debug mode
+NO_COLOR=1               # disable colors
+CONSTITUTIONAL_MINIMAL=1 # minimal boot output
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success (100/100 score) |
+| 1 | Violations found |
+| 2 | Fatal error |
+
+## Starship Integration
+
+Add to `~/.config/starship.toml`:
+
+```toml
+[custom.constitutional]
+command = "ruby cli.rb --quiet . && echo ok || echo fail"
+when = "test -f cli.rb"
 ```
 
 ---
 
-*May your code be clean and your merge conflicts few.* 🙏
+*May your code be clean and your merge conflicts few.*

@@ -2510,7 +2510,13 @@ if __FILE__ == $PROGRAM_NAME
   Dmesg.boot
 
   begin
-    CLI.new.run(ARGV)
+    cli = CLI.new
+    cli.run(ARGV)
+
+    # Exit 1 if any files had violations
+    if cli.instance_variable_get(:@results)&.any? { |r| r[:score] < 100 }
+      exit 1
+    end
   rescue StandardError => error
     Log.error("Fatal: #{error.message}") unless Options.quiet
     Log.debug(error.backtrace.join("\n")) if ENV["VERBOSE"]
