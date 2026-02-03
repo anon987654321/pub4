@@ -6345,7 +6345,7 @@ class CLI
   def build_prompt
     parts = []
     
-    # Directory (abbreviated like starship)
+    # Directory
     dir = Dir.pwd.split('/').last || Dir.pwd
     parts << "#{Dmesg.cyan}#{dir}#{Dmesg.reset}"
     
@@ -6355,14 +6355,14 @@ class CLI
       parts << "#{Dmesg.magenta}#{branch}#{Dmesg.reset}" unless branch.empty?
     end
     
-    # LLM status indicator
+    # LLM status - ASCII safe for screen
     if @tiered&.enabled?
-      parts << "#{Dmesg.green}●#{Dmesg.reset}"
+      parts << "#{Dmesg.green}*#{Dmesg.reset}"
     else
-      parts << "#{Dmesg.red}○#{Dmesg.reset}"
+      parts << "#{Dmesg.red}o#{Dmesg.reset}"
     end
     
-    "#{parts.join(' ')} #{Dmesg.yellow}❯#{Dmesg.reset} "
+    "#{parts.join(' ')} #{Dmesg.yellow}>#{Dmesg.reset} "
   end
 
   def read_input
