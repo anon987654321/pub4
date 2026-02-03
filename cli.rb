@@ -5,7 +5,7 @@
 # master.yml LLM OS - LLM-powered code quality analysis
 #
 # @author master.yml LLM OS
-# @version 49.2
+# @version 49.3
 # @see https://github.com/constitutional-ai/cli
 #
 # This file implements the CLI for master.yml LLM OS, a tool that analyzes
@@ -612,14 +612,16 @@ module Core
   # Rates are per 1M tokens (input/output)
   module CostEstimator
     # Cost rates per 1M tokens by tier
+    # Feb 2026 pricing (per 1M tokens)
     RATES = {
-      fast: { input: 0.5, output: 2.0 },           # Gemini Flash
-      deepseek: { input: 0.55, output: 2.19 },     # DeepSeek R1
-      grok_code: { input: 0.20, output: 1.50 },    # Grok Code Fast 1 (super cheap!)
-      grok: { input: 5.0, output: 15.0 },          # Grok 2
-      medium: { input: 3.0, output: 15.0 },        # Claude Sonnet 4.5
-      strong: { input: 15.0, output: 75.0 },       # Claude Opus 4.5
-      gpt4: { input: 2.5, output: 10.0 },          # GPT-4o
+      deepseek_v3: { input: 0.14, output: 0.28 },   # DeepSeek V3.2 (cheapest!)
+      grok_code: { input: 0.20, output: 1.50 },     # Grok Code Fast 1
+      glm: { input: 0.30, output: 0.60 },           # GLM-4.7
+      gemini_flash: { input: 0.10, output: 0.40 },  # Gemini 3 Flash Preview
+      kimi: { input: 0.50, output: 1.50 },          # Kimi K2.5
+      medium: { input: 3.0, output: 15.0 },         # Claude Sonnet 4.5
+      strong: { input: 15.0, output: 75.0 },        # Claude Opus 4.5
+      grok: { input: 5.0, output: 15.0 },           # Grok 2
       default: { input: 1.0, output: 3.0 }
     }.freeze
 
@@ -639,12 +641,13 @@ module Core
     def self.rate_for(model)
       case model
       when /grok-code-fast/i then RATES[:grok_code]
-      when /deepseek/i then RATES[:deepseek]
-      when /grok/i then RATES[:grok]
-      when /gemini.*flash|gemma/i then RATES[:fast]
+      when /deepseek-v3|deepseek\/deepseek-v/i then RATES[:deepseek_v3]
+      when /glm/i then RATES[:glm]
+      when /kimi/i then RATES[:kimi]
+      when /gemini.*flash|gemini-3/i then RATES[:gemini_flash]
       when /claude-sonnet|claude-3\.5/i then RATES[:medium]
       when /claude-opus/i then RATES[:strong]
-      when /gpt-4/i then RATES[:gpt4]
+      when /grok/i then RATES[:grok]
       else RATES[:default]
       end
     end
@@ -1485,7 +1488,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.2"
+  VERSION = "49.3"
 
   def self.boot
     return if Options.quiet

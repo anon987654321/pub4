@@ -13,7 +13,7 @@
 # @see README.md for usage documentation
 # =============================================================================
 ---
-version: "49.2"
+version: "49.3"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
@@ -620,19 +620,19 @@ phases:
 # Model failover: Automatic fallback with 5min cooldown on rate limits
 # =============================================================================
 llm:
-  # Tiered pipeline: cheap → code-fast → medium → strong
+  # Tiered pipeline: cheap → code-fast → medium → strong (Feb 2026 models)
   tiers:
     fast:
-      model: "deepseek/deepseek-r1"
+      model: "deepseek/deepseek-v3.2"
       temperature: 0.2
       max_tokens: 2048
-      cost_weight: 0.5
+      cost_weight: 0.3
       use_for: [detection, smell_scan, syntax_check]
     code:
       model: "x-ai/grok-code-fast-1"
       temperature: 0.3
       max_tokens: 4096
-      cost_weight: 0.8
+      cost_weight: 0.5
       use_for: [code_generation, refactoring, bug_fixing]
     medium:
       model: "anthropic/claude-sonnet-4.5"
@@ -668,9 +668,9 @@ llm:
     enabled: true
     model: "x-ai/grok-code-fast-1"
     fallback_models:
-      - "deepseek/deepseek-r1"
-      - "anthropic/claude-sonnet-4.5"
-      - "google/gemini-2.0-flash-exp:free"
+      - "deepseek/deepseek-v3.2"
+      - "z-ai/glm-4.7"
+      - "google/gemini-3-flash-preview"
     prompt: |
       TASK: Analyze code against 32 coding principles. Return JSON array of violations.
 
@@ -703,8 +703,8 @@ llm:
     enabled: true
     model: "x-ai/grok-code-fast-1"
     fallback_models:
-      - "anthropic/claude-sonnet-4.5"
-      - "deepseek/deepseek-r1"
+      - "z-ai/glm-4.7"
+      - "deepseek/deepseek-v3.2"
     strategies:
       extract_method: {max_tokens: 3000, temperature: 0.2}
       rename_variable: {max_tokens: 500, temperature: 0.3}
@@ -722,7 +722,7 @@ llm:
   # Multi-model consensus (disabled by default - expensive)
   consensus:
     enabled: false
-    models: ["anthropic/claude-sonnet-4.5", "deepseek/deepseek-r1", "openai/gpt-4o"]
+    models: ["anthropic/claude-sonnet-4.5", "z-ai/glm-4.7", "moonshotai/kimi-k2.5"]
     required_agreement: 2
 
 # =============================================================================
