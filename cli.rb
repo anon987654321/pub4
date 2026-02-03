@@ -5113,25 +5113,22 @@ class CLI
   end
 
   def interactive_mode
-    puts
-    
     @cwd = Dir.pwd
+    @last_action = Time.now
 
     # Start web server for cli.html
+    web_url = nil
     begin
       @web_server = WebServer.new(self)
-      url = @web_server.start
-      puts "Web UI: #{url}"
+      web_url = @web_server.start
     rescue => e
-      Log.debug("Web server not started: #{e.message}")
+      Log.debug("Web server: #{e.message}")
     end
 
-    # List directories only - no scanning or cleaning without permission
-    puts "Ready. Awaiting instructions."
-    puts "Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.sort.join(', ')}"
+    # Minimal boot - Ghost Dog style
     puts
-    puts "Commands: ls, cd, tree, plan, complete, session, help, quit"
-    puts "Or tell me what you'd like to work on."
+    puts "#{Dir.pwd.split('/').last || Dir.pwd}"
+    puts web_url if web_url
     puts
 
     loop do
@@ -5139,6 +5136,8 @@ class CLI
 
       break if input.nil?
       next if input.empty?
+      
+      @last_action = Time.now
 
       case input.downcase.strip
       when "quit", "exit", "q"
@@ -5182,6 +5181,8 @@ class CLI
         plan_mode($1.strip)
       when /^complete\s*(.*)$/i
         systematic_complete($1.empty? ? ["."] : [$1.strip])
+      when /^autopilot\s*(.*)$/i, /^auto\s*(.*)$/i
+        autopilot_mode($1.empty? ? "." : $1.strip)
       when /^session\s+(.+)/i
         parts = $1.split
         manage_session(parts[0], parts[1])
@@ -5203,6 +5204,128 @@ class CLI
       end
 
       puts
+    end
+  end
+  
+  # Autopilot: continuous autonomous completion until done
+  def autopilot_mode(path)
+    puts "Autopilot engaged. Ctrl+C to stop."
+    puts
+    
+    @autopilot = true
+    iteration = 0
+    max_iterations = 50  # Safety limit
+    
+    trap("INT") { @autopilot = false; puts "\nAutopilot disengaged." }
+    
+    while @autopilot && iteration < max_iterations
+      iteration += 1
+      @status.set("Autopilot iteration #{iteration}")
+      
+      # Analyze current state
+      analysis = analyze_project_completeness(find_project_files(path))
+      
+      # Check if done
+      if analysis[:todos].empty? && analysis[:stub_functions].empty? && analysis[:errors].empty?
+        Log.ok("Project appears complete.")
+        break
+      end
+      
+      # Report what we're doing
+      puts "Iteration #{iteration}: #{analysis[:todos].size} TODOs, #{analysis[:errors].size} errors, #{analysis[:stub_functions].size} stubs"
+      
+      # Pick highest priority issue and fix it
+      if analysis[:errors].any?
+        fix_error(analysis[:errors].first)
+      elsif analysis[:stub_functions].any?
+        implement_stub(analysis[:stub_functions].first)
+      elsif analysis[:todos].any?
+        complete_todo(analysis[:todos].first)
+      end
+      
+      # Brief pause to allow interrupt
+      sleep 1
+      
+      @session.save
+    end
+    
+    @status.clear
+    Log.ok("Autopilot complete. #{iteration} iterations.")
+  end
+  
+  def find_project_files(path)
+    files = Dir.glob(File.join(path, "**/*.{rb,py,js,ts,sh,yml,html,css,md}"))
+    filter_ignored(files)
+  end
+  
+  def fix_error(error)
+    file = error[:file]
+    puts "Fixing: #{file}"
+    
+    content = Core.read_file(file)
+    return unless content
+    
+    prompt = <<~P
+      Fix the syntax error in this file:
+      Error: #{error[:error]}
+      
+      File: #{file}
+      #{content[0..3000]}
+      
+      Return ONLY the corrected code, no explanation.
+    P
+    
+    response = @tiered&.ask_tier("code", prompt)
+    if response && response.length > 50
+      Core.write_file(file, response, backup: true)
+      Log.ok("Fixed: #{file}")
+    end
+  end
+  
+  def implement_stub(file)
+    puts "Implementing: #{file}"
+    
+    content = Core.read_file(file)
+    return unless content
+    
+    prompt = <<~P
+      Implement all stub/placeholder functions in this file.
+      Replace `raise NotImplementedError`, `pass`, or `...` with working code.
+      
+      File: #{file}
+      #{content[0..3000]}
+      
+      Return ONLY the complete file with implementations, no explanation.
+    P
+    
+    response = @tiered&.ask_tier("code", prompt)
+    if response && response.length > content.length * 0.8
+      Core.write_file(file, response, backup: true)
+      Log.ok("Implemented: #{file}")
+    end
+  end
+  
+  def complete_todo(todo)
+    file = todo[:file]
+    puts "Completing TODO: #{todo[:text][0..50]}"
+    
+    content = Core.read_file(file)
+    return unless content
+    
+    prompt = <<~P
+      Complete this TODO in the file:
+      TODO at line #{todo[:line]}: #{todo[:text]}
+      
+      File: #{file}
+      #{content[0..3000]}
+      
+      Return ONLY the complete file with the TODO implemented (remove the TODO comment), no explanation.
+    P
+    
+    response = @tiered&.ask_tier("code", prompt)
+    if response && response.length > content.length * 0.5
+      Core.write_file(file, response, backup: true)
+      Log.ok("Completed: #{todo[:text][0..40]}")
     end
   end
   
