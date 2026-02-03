@@ -2468,85 +2468,6 @@ module Replicate
       pipeline
     end
   end
-
-  # Model indexer for 50k+ Replicate models
-  module Index
-    def self.init_db
-      require "sqlite3"
-      FileUtils.mkdir_p(File.dirname(MODEL_DB))
-
-      db = SQLite3::Database.new(MODEL_DB)
-      db.execute <<-SQL
-        CREATE TABLE IF NOT EXISTS models (
-          id TEXT PRIMARY KEY,
-          owner TEXT,
-          name TEXT,
-          description TEXT,
-          run_count INTEGER,
-          category TEXT,
-          indexed_at INTEGER
-        )
-      SQL
-      db.execute <<-SQL
-        CREATE TABLE IF NOT EXISTS collections (
-          slug TEXT PRIMARY KEY,
-          name TEXT,
-          model_count INTEGER
-        )
-      SQL
-      db
-    end
-
-    def self.index_all(client)
-      db = init_db
-
-      Log.info("Indexing Replicate models...")
-      res = client.api(:get, "/collections")
-      return unless res
-
-      collections = JSON.parse(res.body)["results"] || []
-      total = 0
-
-      collections.each do |coll|
-        Log.info("  #{coll['name']}...")
-
-        res = client.api(:get, "/collections/#{coll['slug']}")
-        next unless res
-
-        models = JSON.parse(res.body)["models"] || []
-        models.each do |m|
-          db.execute(
-            "INSERT OR REPLACE INTO models VALUES (?, ?, ?, ?, ?, ?, ?)",
-            ["#{m['owner']}/#{m['name']}", m["owner"], m["name"],
-             m["description"], m["run_count"] || 0, coll["slug"], Time.now.to_i]
-          )
-        end
-
-        total += models.size
-        sleep 1
-      end
-
-      Log.ok("Indexed #{total} models from #{collections.size} collections")
-    end
-
-    def self.search(query, limit: 20)
-      db = init_db
-      db.execute(
-        "SELECT id, description, category, run_count FROM models
-         WHERE id LIKE ? OR description LIKE ?
-         ORDER BY run_count DESC LIMIT ?",
-        ["%#{query}%", "%#{query}%", limit]
-      )
-    end
-
-    def self.top_by_category(category, limit: 10)
-      db = init_db
-      db.execute(
-        "SELECT id, run_count FROM models WHERE category = ? ORDER BY run_count DESC LIMIT ?",
-        [category, limit]
-      )
-    end
-  end
 end
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2708,8 +2629,32 @@ end
 
 # IMPERATIVE SHELL
 
+# Minimal cursor control (stolen from tty-cursor)
+module Cursor
+  CSI = "\e["
+  
+  def self.hide = CSI + "?25l"
+  def self.show = CSI + "?25h"
+  def self.up(n = 1) = CSI + "#{n}A"
+  def self.down(n = 1) = CSI + "#{n}B"
+  def self.forward(n = 1) = CSI + "#{n}C"
+  def self.back(n = 1) = CSI + "#{n}D"
+  def self.col(n = 1) = CSI + "#{n}G"
+  def self.clear_line = CSI + "2K" + col(1)
+  def self.clear_down = CSI + "J"
+  def self.save = "\e7"
+  def self.restore = "\e8"
+  
+  def self.invisible
+    print hide
+    yield
+  ensure
+    print show
+  end
+end
+
 module Dmesg
-  VERSION = "49.61"
+  VERSION = "49.63"
 
   def self.boot
     return if Options.quiet
@@ -3948,13 +3893,52 @@ class LLMClient
     @tiered&.ask_tier(tier, prompt)
   end
 
+  # Book-based code quality checks
+  # Sources: Clean Code, Refactoring, POODR, Pragmatic Programmer, Unix Philosophy
   DETECTION_SYSTEM_PROMPT = <<~PROMPT.strip
-    You are a code quality analyzer. Your task:
-    1. Scan code against 32 coding principles
-    2. Return ONLY a valid JSON array of violations
-    3. Each violation: {"principle_id": N, "line": N, "severity": "high|medium|low", "smell": "name", "explanation": "why", "auto_fixable": bool}
-    4. Return [] if no violations found
-    5. NO markdown, NO explanation text, ONLY JSON
+    You are a code quality analyzer trained on these authoritative sources:
+
+    CLEAN CODE (Robert C. Martin):
+    - Functions should do one thing, do it well, do it only
+    - Functions should be small (< 20 lines ideal)
+    - No side effects - function does what name says, nothing more
+    - Command/Query separation - either do something OR answer something
+    - DRY - Don't Repeat Yourself
+    - Boy Scout Rule - leave code cleaner than you found it
+
+    REFACTORING (Martin Fowler):
+    - Bloaters: long method, god class, primitive obsession, long param list
+    - Couplers: feature envy, inappropriate intimacy, message chains
+    - Dispensables: dead code, lazy class, speculative generality
+    - Change preventers: divergent change, shotgun surgery
+
+    POODR (Sandi Metz):
+    - Single Responsibility: class has one reason to change
+    - Depend on abstractions, not concretions
+    - Prefer composition over inheritance
+    - Duck typing over type checking
+    - Sandi Metz rules: 100 lines/class, 5 lines/method, 4 params max, 1 object passed to controller
+
+    PRAGMATIC PROGRAMMER (Hunt & Thomas):
+    - Don't live with broken windows
+    - Be a catalyst for change
+    - Make it easy to reuse
+    - Eliminate effects between unrelated things (orthogonality)
+    - No duplicate knowledge (DRY)
+
+    UNIX PHILOSOPHY (OpenBSD):
+    - Do one thing well
+    - Expect output to become input
+    - Fail early, fail loudly
+    - Worse is better - simple beats perfect
+    - Security by default
+
+    TASK:
+    1. Scan code against these principles
+    2. Return ONLY valid JSON array of violations
+    3. Each: {"principle_id": N, "line": N, "severity": "high|medium|low", "smell": "name", "explanation": "why", "source": "clean_code|fowler|poodr|pragmatic|unix", "auto_fixable": bool}
+    4. Return [] if no violations
+    5. NO markdown, ONLY JSON
   PROMPT
 
   LARGE_FILE_TOKEN_THRESHOLD = 10_000
@@ -4618,6 +4602,15 @@ class AutoEngine
     violations
   end
 
+  # Source abbreviations for display
+  SOURCE_ABBREV = {
+    "clean_code" => "CC",
+    "fowler" => "MF", 
+    "poodr" => "SM",
+    "pragmatic" => "PP",
+    "unix" => "BSD"
+  }.freeze
+
   def show_final_report(file_path)
     violations = scan_with_llm(file_path)
     analysis = Core::ScoreCalculator.analyze(violations)
@@ -4627,7 +4620,8 @@ class AutoEngine
     else
       puts "  #{Dmesg.yellow}#{analysis[:score]}/100#{Dmesg.reset} (#{analysis[:total]})"
       violations.first(3).each do |v|
-        puts "    :#{v["line"]} #{v["explanation"][0..50]}"
+        src = SOURCE_ABBREV[v["source"]] || "?"
+        puts "    #{Dmesg.dim}[#{src}]#{Dmesg.reset} :#{v["line"]} #{v["explanation"][0..45]}"
       end
       puts "    +#{violations.size - 3}" if violations.size > 3
     end
@@ -4637,6 +4631,10 @@ class AutoEngine
       stats = @llm.stats if @llm.enabled?
       puts "  #{Dmesg.dim}[trace] model=#{@llm&.current_model} tokens=#{stats&.dig(:tokens)} cost=$#{format("%.4f", stats&.dig(:cost) || 0)}#{Dmesg.reset}"
       puts "  #{Dmesg.dim}[trace] cache_key=#{Core::Cache.key_for(file_path, File.read(file_path) rescue "")}#{Dmesg.reset}"
+      # Show source breakdown
+      by_source = violations.group_by { |v| v["source"] }
+      breakdown = by_source.map { |s, vs| "#{SOURCE_ABBREV[s] || s}:#{vs.size}" }.join(" ")
+      puts "  #{Dmesg.dim}[trace] sources: #{breakdown}#{Dmesg.reset}" unless breakdown.empty?
     end
   end
 end
