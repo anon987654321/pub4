@@ -337,6 +337,37 @@ structural_analysis:
       - smell: "magic_numbers"
         fix: "Named constants with meaning"
 
+  # Meta-analysis: Questions to ask during every session
+  # These extract reusable patterns and prevent knowledge loss
+  meta_analysis:
+    session_capture:
+      - question: "What new techniques were discovered?"
+        action: "Add to structural_analysis or principles"
+      - question: "What patterns kept recurring?"
+        action: "Codify as detection rules in cli.rb"
+      - question: "What questions yielded good results?"
+        action: "Add to hierarchy questions for reuse"
+      - question: "What manual steps could be automated?"
+        action: "Add to cli.rb as new command or check"
+      - question: "What external tools/APIs were useful?"
+        action: "Add to providers section"
+        
+    improvement_prompts:
+      - "Any merge opportunities of similar or overlapping sections?"
+      - "Any defrag or decouple or reflow opportunities?"
+      - "Cross-reference word by word for consistency flaws"
+      - "Simulate execution from various angles and edge cases"
+      - "Does the hierarchy need clearer definition?"
+      - "Are there orphan concepts not yet codified?"
+      
+    self_evolution:
+      - trigger: "After every significant refactor"
+        action: "Run cli.rb on itself with --fix"
+      - trigger: "After adding new detection"
+        action: "Test on 3+ real codebases"
+      - trigger: "After session with good outcomes"
+        action: "Ask: what made this work? Codify it."
+
 # DEFAULTS: Runtime behavior defaults
 defaults:
   # Analysis
