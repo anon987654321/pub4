@@ -1245,19 +1245,15 @@ module Core
       { path: path, changed: changed, original_size: original.bytesize, cleaned_size: cleaned.bytesize }
     end
 
-    # Pre-scan phase: tree + clean before any analysis
-    def self.prescan(root_dir, dry_run: false)
+    # Pre-scan phase: tree only (no cleaning without explicit permission)
+    def self.prescan(root_dir, dry_run: true)
       Log.info("Pre-scanning: #{root_dir}")
 
       files = tree(root_dir)
       Log.info("Found #{files.count { |f| !f.end_with?('/') }} files in #{files.count { |f| f.end_with?('/') }} directories")
 
-      unless dry_run
-        cleaned = clean(root_dir, dry_run: dry_run)
-        Log.info("Cleaned #{cleaned.size} files") if cleaned.any?
-      end
-
-      { files: files, cleaned_count: dry_run ? 0 : cleaned&.size || 0 }
+      # Never auto-clean - bodyguard asks first
+      { files: files, cleaned_count: 0 }
     end
 
     # Analyze entire project structure for sprawl and fragmentation
@@ -2698,7 +2694,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.15"
+  VERSION = "49.16"
 
   def self.boot
     return if Options.quiet
@@ -4508,20 +4504,12 @@ class CLI
     
     @cwd = Dir.pwd
 
-    # Pre-scan with error handling
-    begin
-      prescan_result = Core::ProjectAnalyzer.prescan(".", dry_run: Options.dry_run)
-      files = prescan_result[:files].reject { |f| f.end_with?("/") }
-      puts "Found #{files.size} files in #{Dir.pwd}"
-      puts "Cleaned #{prescan_result[:cleaned_count]} files" if prescan_result[:cleaned_count] > 0
-    rescue => e
-      Log.warn("Prescan failed: #{e.message}")
-      files = []
-    end
-    
+    # List directories only - no scanning or cleaning without permission
+    puts "Ready. Awaiting instructions."
+    puts "Folders: #{Dir.entries('.').select { |e| File.directory?(e) && !e.start_with?('.') }.sort.join(', ')}"
     puts
-    puts "Commands: all, help, cost, sprawl, ls, cd, pwd, quit"
-    puts "Or enter: file path, directory, glob, or natural language"
+    puts "Commands: ls, cd, tree, help, quit"
+    puts "Or tell me what you'd like to work on."
     puts
 
     loop do
