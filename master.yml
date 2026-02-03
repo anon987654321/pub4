@@ -623,7 +623,7 @@ llm:
   # Tiered pipeline: cheap → code-fast → medium → strong
   tiers:
     fast:
-      model: "deepseek-ai/deepseek-r1"
+      model: "deepseek/deepseek-r1"
       temperature: 0.2
       max_tokens: 2048
       cost_weight: 0.5
@@ -668,7 +668,7 @@ llm:
     enabled: true
     model: "x-ai/grok-code-fast-1"
     fallback_models:
-      - "deepseek-ai/deepseek-r1"
+      - "deepseek/deepseek-r1"
       - "anthropic/claude-sonnet-4.5"
       - "google/gemini-2.0-flash-exp:free"
     prompt: |
@@ -704,7 +704,7 @@ llm:
     model: "x-ai/grok-code-fast-1"
     fallback_models:
       - "anthropic/claude-sonnet-4.5"
-      - "deepseek-ai/deepseek-r1"
+      - "deepseek/deepseek-r1"
     strategies:
       extract_method: {max_tokens: 3000, temperature: 0.2}
       rename_variable: {max_tokens: 500, temperature: 0.3}
@@ -722,7 +722,7 @@ llm:
   # Multi-model consensus (disabled by default - expensive)
   consensus:
     enabled: false
-    models: ["anthropic/claude-sonnet-4.5", "deepseek-ai/deepseek-r1", "openai/gpt-4o"]
+    models: ["anthropic/claude-sonnet-4.5", "deepseek/deepseek-r1", "openai/gpt-4o"]
     required_agreement: 2
 
 # =============================================================================

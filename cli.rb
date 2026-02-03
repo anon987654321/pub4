@@ -2375,9 +2375,10 @@ class LLMClient
   end
 
   def fast_model
-    tiers = @constitution.llm_config["tiers"]
     config = @constitution.llm_config["detection"]
-    tiers&.dig("fast", "model") || config["model"]
+    tiers = @constitution.llm_config["tiers"]
+    # Prefer detection.model, then fall back to fast tier
+    config&.dig("model") || tiers&.dig("fast", "model")
   end
 
   def fast_max_tokens
