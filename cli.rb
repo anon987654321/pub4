@@ -3121,7 +3121,8 @@ class WebServer
   end
   
   def url
-    "http://localhost:#{@port}"
+    host = ENV["HOST"] || `hostname`.strip rescue "localhost"
+    "http://#{host}:#{@port}"
   end
   
   def push_response(text)
