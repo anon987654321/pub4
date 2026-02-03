@@ -407,6 +407,7 @@ module Core
 
   module Cache
     CACHE_DIR = File.join(Dir.home, ".cache", "constitutional")
+    CACHE_TTL_SECONDS = 24 * 60 * 60
 
     def self.init
       FileUtils.mkdir_p(CACHE_DIR) unless Dir.exist?(CACHE_DIR)
@@ -423,8 +424,7 @@ module Core
       return nil unless File.exist?(cache_file)
 
       data = JSON.parse(File.read(cache_file))
-      # Cache valid for 24 hours
-      return nil if Time.now.to_i - data["timestamp"] > 86400
+      return nil if Time.now.to_i - data["timestamp"] > CACHE_TTL_SECONDS
 
       data["violations"]
     rescue StandardError
@@ -751,88 +751,95 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "48.1"
+  VERSION = "48.2"
 
   def self.boot
-    unless Options.quiet
-      puts "#{bold}Constitutional AI #{VERSION}#{reset}"
-      puts "cli.rb ⟷ master.yml (symbiotic pair)"
-      puts
-      probe_devices
-      puts
-      puts "#{green}constitutional: ready#{reset}"
-      puts
+    return if Options.quiet
+
+    if ENV["CONSTITUTIONAL_MINIMAL"]
+      puts "#{green}constitutional #{VERSION}#{reset}"
+      return
     end
+
+    puts "#{bold}Constitutional AI #{VERSION}#{reset}"
+    puts "#{dim}#{status_line}#{reset}"
+    puts
   end
 
-  def self.bold = tty? ? "\e[1m" : ""
-  def self.green = tty? ? "\e[32m" : ""
-  def self.red = tty? ? "\e[31m" : ""
-  def self.reset = tty? ? "\e[0m" : ""
+  def self.status_line
+    parts = []
+    parts << (llm_ready? ? "llm:#{green}ok#{reset}" : "llm:#{yellow}off#{reset}")
+    parts << "ruby:#{RUBY_VERSION}"
+    parts.join(" | ")
+  end
+
+  def self.llm_ready?
+    LLM_AVAILABLE && ENV["OPENROUTER_API_KEY"]
+  end
+
+  # Respect NO_COLOR (https://no-color.org/) and TERM=dumb
+  def self.color_enabled?
+    return false if ENV["NO_COLOR"]
+    return false if ENV["TERM"] == "dumb"
+    tty?
+  end
+
+  def self.bold = color_enabled? ? "\e[1m" : ""
+  def self.dim = color_enabled? ? "\e[2m" : ""
+  def self.green = color_enabled? ? "\e[32m" : ""
+  def self.yellow = color_enabled? ? "\e[33m" : ""
+  def self.red = color_enabled? ? "\e[31m" : ""
+  def self.cyan = color_enabled? ? "\e[36m" : ""
+  def self.reset = color_enabled? ? "\e[0m" : ""
   def self.tty? = $stdout.respond_to?(:tty?) && $stdout.tty?
 
-  def self.probe_devices
-    msg("cpu", "Ruby", RUBY_VERSION, RUBY_PLATFORM)
-    msg("symbiosis", "cli.rb+master.yml", constitution_status)
-    msg("detection", "llm-native", detection_status)
-    msg("scope", "recursive", "cwd → all supported files")
-    msg("safety", "hardened", "15 edge cases handled")
-    msg("llm", "multi-model-rag", llm_status)
-  end
+  # Safe emoji output - fallback to ASCII on dumb terminals
+  EMOJI = {
+    folder: ["[dir]", "\u{1F4C1}"],
+    clean: ["[clean]", "\u{1F9F9}"],
+    garden: ["[garden]", "\u{1F331}"],
+    tree: ["[tree]", "\u{1F333}"],
+    up: ["^", "\u{1F4C8}"],
+    chart: ["~", "\u{1F4CA}"],
+    list: ["-", "\u{1F4CB}"]
+  }.freeze
 
-  def self.msg(device, model, *details)
-    puts format("%-22s %s", "#{device}(#{model})", details.join(" "))
-  end
-
-  def self.constitution_status
-    cli_ok = File.exist?(__FILE__)
-    yml_ok = File.exist?(File.expand_path("master.yml", __dir__)) || File.exist?("master.yml")
-
-    if cli_ok && yml_ok
-      "paired"
-    else
-      "#{red}BROKEN#{reset} (missing #{yml_ok ? 'cli.rb' : 'master.yml'})"
-    end
-  end
-
-  def self.detection_status
-    LLM_AVAILABLE && ENV["OPENROUTER_API_KEY"] ? "reasoning mode" : "degraded (no LLM)"
-  end
-
-  def self.llm_status
-    return "not installed (gem install ruby_llm)" unless LLM_AVAILABLE
-    return "no api key (set OPENROUTER_API_KEY)" unless ENV["OPENROUTER_API_KEY"]
-
-    "ready with fallbacks"
+  def self.icon(name)
+    return EMOJI[name]&.first || name.to_s if ENV["NO_COLOR"] || ENV["TERM"] == "dumb"
+    EMOJI[name]&.last || name.to_s
   end
 end
 
 module Log
-  @start = Time.now
   VERBOSE = ENV["VERBOSE"]
 
   def self.dmesg(subsystem, action, result = "", metrics = {})
-    parts = ["#{subsystem}: #{action}"]
+    parts = ["#{Dmesg.dim}#{subsystem}#{Dmesg.reset} #{action}"]
     parts << result unless result.empty?
     parts << format_metrics(metrics) unless metrics.empty?
     puts parts.join(" ")
   end
 
   def self.format_metrics(metrics)
-    metrics.map { |k, v| "#{k}=#{v}" }.join(" ")
+    "#{Dmesg.dim}#{metrics.map { |k, v| "#{k}=#{v}" }.join(" ")}#{Dmesg.reset}"
   end
 
   def self.log(level, message)
-    timestamp = Time.now.strftime("%H:%M:%S")
-    puts "[#{timestamp}] #{level.to_s.upcase.ljust(6)} #{message}"
+    prefix = case level
+    when :ok then "#{Dmesg.green}ok#{Dmesg.reset}"
+    when :error then "#{Dmesg.red}err#{Dmesg.reset}"
+    when :warn then "#{Dmesg.yellow}warn#{Dmesg.reset}"
+    else "#{Dmesg.dim}#{level}#{Dmesg.reset}"
+    end
+    puts "#{prefix} #{message}"
   end
 
   def self.phase(msg) = log(:phase, msg)
-  def self.veto(msg) = log(:veto, "❌ #{msg}")
-  def self.error(msg) = log(:error, "✗ #{msg}")
-  def self.warn(msg) = log(:warn, "⚠ #{msg}")
+  def self.veto(msg) = log(:error, msg)
+  def self.error(msg) = log(:error, msg)
+  def self.warn(msg) = log(:warn, msg)
   def self.info(msg) = VERBOSE ? log(:info, msg) : nil
-  def self.ok(msg) = log(:ok, "✓ #{msg}")
+  def self.ok(msg) = log(:ok, msg)
   def self.debug(msg) = VERBOSE ? log(:debug, msg) : nil
 end
 
@@ -1258,6 +1265,8 @@ end
 # Parallel cheap smell detectors (10-40x cost reduction on detection)
 class ParallelDetector
   HISTORY_FILE = ".constitutional_history.json"
+  MAX_HISTORY_ENTRIES = 1000
+  MAX_CODE_PREVIEW = 2000
 
   def initialize(constitution, tiered_llm)
     @constitution = constitution
@@ -1299,8 +1308,7 @@ class ParallelDetector
       "parallel_hits" => result[:parallel_hits] || 0
     }
 
-    # Keep last 1000 entries
-    history = history.last(1000)
+    history = history.last(MAX_HISTORY_ENTRIES)
 
     File.write(HISTORY_FILE, JSON.pretty_generate(history))
   rescue StandardError => e
@@ -1333,7 +1341,7 @@ class ParallelDetector
   end
 
   def detect_single_smell(code, smell)
-    prompt = "Check if this code has '#{smell[:name]}' smell. Return JSON: {\"found\": bool, \"line\": int, \"explanation\": str}\n\n#{code[0, 2000]}"
+    prompt = "Check if this code has '#{smell[:name]}' smell. Return JSON: {\"found\": bool, \"line\": int, \"explanation\": str}\n\n#{code[0, MAX_CODE_PREVIEW]}"
 
     result = @tiered.ask_tier("fast", prompt)
     return nil unless result
@@ -1954,9 +1962,10 @@ class AutoEngine
     # Reflection Critic: validate before applying
     if @critic
       critique = @critic.critique(original_code, proposed_fix, auto_fixable)
+      confidence = critique[:confidence] || 0.5
       
       if critique[:approved] == false
-        Log.warn("Fix rejected by critic (confidence: #{critique[:confidence]})")
+        Log.warn("Fix rejected by critic (confidence: #{(confidence * 100).round}%)")
         critique[:issues]&.each { |i| Log.warn("  - #{i}") }
         
         # Remember this failure
@@ -1967,7 +1976,7 @@ class AutoEngine
         return Result.ok(false)
       end
       
-      Log.info("Critic approved (confidence: #{(critique[:confidence] * 100).round}%)") unless Options.quiet
+      Log.info("Critic approved (confidence: #{(confidence * 100).round}%)") unless Options.quiet
     end
     
     # Apply fix and remember success
@@ -2003,7 +2012,7 @@ class AutoEngine
     analysis = Core::ScoreCalculator.analyze(violations)
 
     if violations.empty?
-      Log.ok("✓ Score 100/100 - Zero violations")
+      Log.ok("Score 100/100 - Zero violations")
     else
       Log.warn("Score #{analysis[:score]}/100 (#{analysis[:total]} violations)")
 
@@ -2021,9 +2030,9 @@ class AutoEngine
       comparison = Core::GitHistory.compare_with_history(file_path, violations)
       if comparison && comparison[:history].any?
         trend_icon = case comparison[:trend]
-          when :perfect then "📈"
-          when :tracking then "📊"
-          else "📋"
+          when :perfect then Dmesg.icon(:up)
+          when :tracking then Dmesg.icon(:chart)
+          else Dmesg.icon(:list)
         end
         Log.info("#{trend_icon} Git: #{comparison[:history].size} commits tracked")
       end
@@ -2124,10 +2133,10 @@ class CLI
 
     result = case mode
     when :quick
-      puts "🌱 Running quick garden (reviewing learned smells)..."
+      puts "#{Dmesg.icon(:garden)} Running quick garden (reviewing learned smells)..."
       gardener.run_quick
     when :full
-      puts "🌳 Running full garden (analyzing painful cases)..."
+      puts "#{Dmesg.icon(:tree)} Running full garden (analyzing painful cases)..."
       gardener.run_full
     end
 
@@ -2159,7 +2168,7 @@ class CLI
     # Tree: show directory structure before entering
     targets.each do |t|
       if File.directory?(t)
-        Log.info("📁 Entering: #{t}") unless Options.quiet
+        Log.info("#{Dmesg.icon(:folder)} Entering: #{t}") unless Options.quiet
         Core::TreeWalk.print_tree(t).first(20).each { |e| puts "  #{e}" } unless Options.quiet
         puts "  ..." if Core::TreeWalk.print_tree(t).size > 20 && !Options.quiet
       end
@@ -2363,10 +2372,11 @@ class CLI
   end
 
   def read_input
+    prompt = "#{Dmesg.cyan}c#{Dmesg.reset} "
     if READLINE_AVAILABLE
-      Readline.readline("constitutional> ", true)&.strip
+      Readline.readline(prompt, true)&.strip
     else
-      print "constitutional> "
+      print prompt
       $stdin.gets&.strip
     end
   end
@@ -2379,7 +2389,7 @@ class CLI
 
     # Clean: normalize file before analysis (CRLF, trailing whitespace, blank lines)
     if Core::FileCleaner.clean(file_path)
-      Log.info("🧹 Cleaned: #{file_path}") unless Options.quiet
+      Log.info("#{Dmesg.icon(:clean)} Cleaned: #{file_path}") unless Options.quiet
     end
 
     language = detect_language(file_path)
