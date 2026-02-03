@@ -2536,7 +2536,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "49.8"
+  VERSION = "49.9"
 
   def self.boot
     return if Options.quiet

@@ -1,19 +1,37 @@
 # master.yml LLM OS - Master Configuration
 #
-# This file defines the 32 coding principles, LLM configuration, safety
-# settings, and extensibility hooks for the LLM OS.
+# Constitutional AI: 32 principles, LLM config, safety, extensibility
 #
-# Architecture: Symbiotic pair with cli.rb
-#   - master.yml: Rules, principles, workflows (declarative)
-#   - cli.rb: Thin enforcer (imperative)
+# Architecture: Symbiotic pair
+#   master.yml: Rules, principles, workflows (declarative)
+#   cli.rb: Thin enforcer (imperative)
 #
-# @version 49.7
-# @see README.md for usage documentation
+# Section order (by importance):
+#   1. IDENTITY - What this system is
+#   2. STRUCTURAL ANALYSIS - Code quality questions
+#   3. DEFAULTS - Runtime behavior
+#   4. PRINCIPLES - The 32 coding principles (core)
+#   5. STYLE - Formatting preferences
+#   6. PHASES - 7-phase workflow
+#   7. LLM - Model configuration
+#   8. LEARNED SMELLS - Self-improving rules
+#   9. SAFETY - Protection settings
+#   10. CONFLICTS - Resolution rules
+#   11. PRINCIPLE GROUPS - Logical groupings
+#   12. PROFILES - Pre-defined scans
+#   13. HOOKS - Event extensibility
+#   14. LANGUAGE DETECTION - File types
+#   15. OPENBSD - Platform config
+#   16. PROVIDERS - LLM/infra integrations
+#   17. REFINEMENTS - Version history
+#
+# @version 49.9
+# @see README.md
 ---
 # IDENTITY: What this system is
 identity:
   name: "master.yml LLM OS"
-  version: "49.7"
+  version: "49.9"
   date: "2026-02-03"
   philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
   symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
