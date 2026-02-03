@@ -1,23 +1,61 @@
+# =============================================================================
+# master.yml LLM OS - Master Configuration
+# =============================================================================
+#
+# This file defines the 32 coding principles, LLM configuration, safety
+# settings, and extensibility hooks for the LLM OS.
+#
+# Architecture: Symbiotic pair with cli.rb
+#   - master.yml: Rules, principles, workflows (declarative)
+#   - cli.rb: Thin enforcer (imperative)
+#
+# @version 48.2
+# @see README.md for usage documentation
+# =============================================================================
 ---
-version: "48.2"
+version: "49.0"
 date: "2026-02-03"
 philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
 symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
 
+# -----------------------------------------------------------------------------
+# META: High-level configuration and defaults
+# -----------------------------------------------------------------------------
 meta:
   approach: "LLM-native detection, zero regex patterns, sensible defaults"
   separation: "master.yml (rules/principles/workflows) + cli.rb (thin enforcer)"
   safety: "All edge cases handled, production-ready"
   defaults:
-    auto_iterate: true
-    auto_refactor: true
-    auto_progress: true
-    target_score: 100
-    max_iterations: 10
+    auto_iterate: true      # Keep iterating until clean
+    auto_refactor: true     # Apply LLM-suggested fixes
+    auto_progress: true     # Progress through phases
+    target_score: 100       # Target score (0-100)
+    max_iterations: 10      # Max fix iterations per file
 
-# FLAT PRINCIPLE REGISTRY
-# Single source of truth, no duplication
+# =============================================================================
+# PRINCIPLES: The 32 coding principles (flat registry)
+# =============================================================================
+#
+# Each principle has:
+#   - id: Unique numeric identifier (1-32)
+#   - tier: Category (axiom, solid, coding, clean_code, ui, llm, operations, design, architecture)
+#   - priority: 1-10 (10 = highest, blocks release)
+#   - name: Human-readable name
+#   - rule: One-sentence rule
+#   - why: Justification
+#   - smells: List of code smells this principle detects
+#   - evidence: How to verify compliance
+#   - auto_fixable: Whether LLM can auto-fix violations
+#   - llm_strategies: Refactoring strategies for fixes
+#
+# Progressive Disclosure:
+#   Level 1 (detection): id, name, priority, smells (~50 tokens)
+#   Level 2 (refactoring): rule, why, evidence, strategies (~150 tokens)
+# =============================================================================
 principles:
+  # ---------------------------------------------------------------------------
+  # AXIOMS (Priority 10): Foundational principles
+  # ---------------------------------------------------------------------------
   clarity:
     id: 1
     tier: axiom
@@ -521,7 +559,13 @@ style:
     max_class_lines: 100
     max_nesting_depth: 4
 
-# 7 PHASES
+# =============================================================================
+# PHASES: 7-phase development workflow
+# =============================================================================
+#
+# Each phase has gates that must pass before proceeding.
+# Use with --progress-phases to enforce phase gates.
+# =============================================================================
 phases:
   discover:
     id: 1
@@ -565,9 +609,18 @@ phases:
     output: "Deployed code with dashboards"
     gates: [deployed, monitoring_configured, rollback_tested]
 
-# LLM CONFIGURATION
+# =============================================================================
+# LLM: Model configuration and cost optimization
+# =============================================================================
+#
+# Tiered pipeline: Fast (cheap) → Medium → Strong (expensive)
+# Progressive escalation saves 60-80% on LLM costs.
+#
+# Prompt caching: System prompts cached for 1h (75-90% savings on repeats)
+# Model failover: Automatic fallback with 5min cooldown on rate limits
+# =============================================================================
 llm:
-  # Tiered pipeline: cheap → medium → strong (60-80% cost savings)
+  # Tiered pipeline: cheap → medium → strong
   tiers:
     fast:
       model: "qwen/qwen2.5-coder-32b-instruct"
@@ -613,7 +666,7 @@ llm:
       - "google/gemini-2.0-flash-exp:free"
     prompt: |
       TASK: Analyze code against 32 coding principles. Return JSON array of violations.
-      
+
       OUTPUT FORMAT (strict JSON, no markdown):
       [
         {
@@ -626,13 +679,13 @@ llm:
           "auto_fixable": true
         }
       ]
-      
+
       SEVERITY LEVELS:
       - veto: blocks release (security, crashes)
       - high: must fix (bugs, major clarity issues)
       - medium: should fix (code smells, maintainability)
       - low: nice to have (style, minor improvements)
-      
+
       RULES:
       - Return [] if code is clean
       - Return ONLY valid JSON array
@@ -657,12 +710,19 @@ llm:
     fallback_models:
       - "anthropic/claude-3.5-sonnet"
 
+  # Multi-model consensus (disabled by default - expensive)
   consensus:
     enabled: false
     models: ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "google/gemini-2.0-flash-exp:free"]
     required_agreement: 2
 
-# LEARNED SMELLS (self-improving constitution)
+# =============================================================================
+# LEARNED SMELLS: Self-improving constitution
+# =============================================================================
+#
+# The gardener (--garden-full) analyzes painful cases and suggests new smells.
+# Approved smells are added here and become part of future analysis.
+# =============================================================================
 learned_smells: []
 # Example entry added by gardener:
 # - id: learned_001
@@ -671,70 +731,82 @@ learned_smells: []
 #   description: "Avoid eval() in migrations"
 #   source_iteration: "file.rb iteration 4"
 
-# SAFETY CONFIGURATION
+# =============================================================================
+# SAFETY: Protection against runaway costs, infinite loops, and data loss
+# =============================================================================
 safety:
+  # File validation before processing
   file_validation:
-    max_size_bytes: 10_485_760
-    max_lines: 10_000
-    check_binary: true
-    check_permissions: true
-    check_special_files: true
-    allow_symlinks: false
+    max_size_bytes: 10_485_760   # 10MB max
+    max_lines: 10_000            # 10k lines max
+    check_binary: true           # Reject binary files
+    check_permissions: true      # Check read/write permissions
+    check_special_files: true    # Reject devices, sockets, etc.
+    allow_symlinks: false        # Reject symlinks (security)
     binary_extensions: [".png", ".jpg", ".gif", ".mp4", ".pdf", ".so", ".dylib", ".o", ".a"]
 
+  # LLM cost protection
   cost_protection:
-    max_per_file: 1.00
-    max_per_session: 10.00
-    warn_at: 0.50
-    chunk_large_files: true
-    chunk_size_lines: 500
-    chunk_overlap_lines: 50
+    max_per_file: 1.00           # $1 max per file
+    max_per_session: 10.00       # $10 max per session
+    warn_at: 0.50                # Warn at $0.50
+    chunk_large_files: true      # Split large files into chunks
+    chunk_size_lines: 500        # Lines per chunk
+    chunk_overlap_lines: 50      # Overlap between chunks
 
+  # Convergence detection (prevent infinite loops)
   convergence:
-    max_iterations: 10
-    detect_loops: true
-    detect_oscillation: true
-    max_total_violations: 10_000
-    max_history_size: 10
-    require_improvement: true
+    max_iterations: 10           # Max fix iterations
+    detect_loops: true           # Detect stuck states
+    detect_oscillation: true     # Detect A→B→A→B patterns
+    max_total_violations: 10_000 # Abort if too many violations
+    max_history_size: 10         # History buffer size
+    require_improvement: true    # Stop if not improving
 
+  # Fix validation (prevent regressions)
   fix_validation:
     enabled: true
-    check_priority_inversion: true
-    check_new_violations: true
-    max_new_violations: 0
+    check_priority_inversion: true  # Reject if introduces higher-priority violation
+    check_new_violations: true      # Check for new violations
+    max_new_violations: 0           # Allow zero new violations
 
+  # Concurrent access protection
   concurrency:
-    file_locking: true
-    lock_timeout: 30
-    stale_lock_age: 300
+    file_locking: true           # Enable file locks
+    lock_timeout: 30             # Seconds to wait for lock
+    stale_lock_age: 300          # Seconds before lock considered stale
     lock_dir: ".constitutional_locks"
 
+  # Transactional operations
   transactions:
     enabled: true
-    rollback_on_error: true
-    atomic_operations: true
+    rollback_on_error: true      # Rollback on failure
+    atomic_operations: true      # All-or-nothing writes
 
+  # YAML safety (prevent YAML bombs)
   yaml_safety:
-    max_constitution_size: 10_485_760
-    load_timeout: 5
+    max_constitution_size: 10_485_760  # 10MB max
+    load_timeout: 5                    # Seconds timeout
 
+  # Memory management
   memory:
-    max_violation_objects: 100_000
-    gc_every_n_iterations: 5
+    max_violation_objects: 100_000  # Max violations in memory
+    gc_every_n_iterations: 5        # Force GC periodically
 
-# DEFAULTS
+# =============================================================================
+# DEFAULTS: Default behavior when no flags specified
+# =============================================================================
 defaults:
-  scan: true
-  iterate: true
-  refactor: true
-  progress_phases: true
-  target_score: 100
-  max_iterations: 10
-  backup: true
-  backup_count: 5
-  verbose: false
-  colors: true
+  scan: true               # Run analysis
+  iterate: true            # Iterate until clean
+  refactor: true           # Apply LLM fixes
+  progress_phases: true    # Enforce phase gates
+  target_score: 100        # Target score
+  max_iterations: 10       # Max iterations
+  backup: true             # Create backups
+  backup_count: 5          # Backups to keep
+  verbose: false           # Verbose output
+  colors: true             # Color output
   interactive_on_failure: false
   ask_language: true
 
@@ -755,20 +827,35 @@ conflicts:
       resolution: "reject fix"
 
 # PRINCIPLE GROUPS (for quick/focused scans)
+# =============================================================================
+# PRINCIPLE GROUPS: Logical groupings of principles
+# =============================================================================
+#
+# Groups allow profile-based filtering. Reference with "group:name".
+# Example: --profile quick uses only group:quick principles.
+# =============================================================================
 principle_groups:
-  "group:axioms": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-  "group:solid": [11, 12, 13, 14, 15]
-  "group:coding": [16, 17, 18]
-  "group:clean_code": [19, 20, 21, 22, 23]
-  "group:ui": [24, 25]
-  "group:llm": [26, 27, 28]
-  "group:operations": [29, 32]
-  "group:design": [30]
-  "group:architecture": [31]
-  "group:quick": [1, 2, 11, 19, 20]
-  "group:critical": [1, 2, 4, 11, 23, 29, 32]
+  "group:axioms": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]      # Foundational (tier: axiom)
+  "group:solid": [11, 12, 13, 14, 15]                  # SOLID principles
+  "group:coding": [16, 17, 18]                         # Coding practices
+  "group:clean_code": [19, 20, 21, 22, 23]             # Clean Code principles
+  "group:ui": [24, 25]                                 # UI/UX guidelines
+  "group:llm": [26, 27, 28]                            # LLM-specific practices
+  "group:operations": [29, 32]                         # Operational concerns
+  "group:design": [30]                                 # Design patterns
+  "group:architecture": [31]                           # Architecture principles
+  "group:quick": [1, 2, 11, 19, 20]                    # Fast scan (core only)
+  "group:critical": [1, 2, 4, 11, 23, 29, 32]          # Critical issues (security, stability)
 
-# PROFILES (principle filtering)
+# =============================================================================
+# PROFILES: Pre-defined principle sets
+# =============================================================================
+#
+# Usage: cli.rb --profile quick myfile.rb
+#        cli.rb --quick (shorthand for --profile quick)
+#
+# Saves 60-80% on analysis time for quick scans.
+# =============================================================================
 profiles:
   quick:
     description: "Fast scan with core principles only"
@@ -788,7 +875,20 @@ profiles:
 
 default_profile: "full"
 
-# HOOKS (event-driven extensibility)
+# =============================================================================
+# HOOKS: Event-driven extensibility
+# =============================================================================
+#
+# Available events:
+#   before_scan, after_scan, before_fix, after_fix, violation_found,
+#   fix_applied, fix_rejected, convergence_achieved, convergence_stuck,
+#   cost_threshold, iteration_complete, profile_activated, model_cooldown
+#
+# Action types:
+#   - log: Append to JSONL file (path: "file.jsonl")
+#   - warn: Print warning (message: "text")
+#   - pause: Pause and wait for Enter (message: "text")
+# =============================================================================
 hooks:
   on_violation_found:
     - action: "log"
@@ -800,10 +900,12 @@ hooks:
   #   - action: "pause"
   #     message: "Convergence stuck. Review and press Enter..."
 
-# LANGUAGE DETECTION
+# =============================================================================
+# LANGUAGE DETECTION: File type identification
+# =============================================================================
 language_detection:
-  strategy: "ask_user_first"
-  fallback: "content_analysis"
+  strategy: "ask_user_first"       # ask_user_first | auto
+  fallback: "content_analysis"     # content_analysis | extension_only
   supported:
     ruby:
       extensions: [".rb", ".rake", ".gemspec"]
@@ -829,7 +931,13 @@ language_detection:
       extensions: [".sh", ".bash", ".zsh"]
       indicators: ["#!/bin/bash", "#!/bin/sh", "if [", "for "]
 
-# MICRO-REFINEMENTS
+# =============================================================================
+# REFINEMENTS: Evolution from v1 to v48
+# =============================================================================
+#
+# Documents the micro-refinements made over 48 versions.
+# Each refinement shows old behavior, new behavior, and benefit.
+# =============================================================================
 refinements:
   pattern_detection:
     old: "50+ regex patterns in YAML"

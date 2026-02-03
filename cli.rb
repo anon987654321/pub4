@@ -2,6 +2,29 @@
 # frozen_string_literal: true
 # encoding: UTF-8
 
+# master.yml LLM OS - LLM-powered code quality analysis
+#
+# @author master.yml LLM OS
+# @version 48.2
+# @see https://github.com/constitutional-ai/cli
+#
+# This file implements the CLI for master.yml LLM OS, a tool that analyzes
+# code against 32 coding principles using LLM reasoning. It works in symbiosis
+# with master.yml which defines the principles, phases, and configuration.
+#
+# Architecture: Functional Core, Imperative Shell
+# - Core module: Pure functions (no side effects)
+# - Shell classes: IO operations and state management
+#
+# @example Basic usage
+#   ruby cli.rb file.rb           # Analyze single file
+#   ruby cli.rb src/              # Analyze directory
+#   ruby cli.rb --quick .         # Fast scan with 5 core principles
+#   ruby cli.rb --watch .         # Watch mode
+#
+# @example CI/CD usage
+#   ruby cli.rb --json --quiet .  # JSON output, exit code only
+
 # Force UTF-8 on all platforms
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
@@ -20,38 +43,47 @@ rescue LoadError
   CONCURRENT_AVAILABLE = false
 end
 
-# Auto-install missing gems
+# Auto-install missing gems and configure gem paths
+#
+# Handles cross-platform gem installation including:
+# - OpenBSD with pkg_add dependencies
+# - Termux on Android
+# - User-install when system gems not writable
+#
+# @example
+#   Bootstrap.run  # Install missing gems and re-exec
 module Bootstrap
+  # @return [Hash<String, String>] Gem name to package name mapping
   GEMS = {
     "ruby_llm" => "ruby_llm",
     "tty-spinner" => "tty-spinner",
     "concurrent-ruby" => "concurrent-ruby"
   }.freeze
 
-  # OpenBSD packages needed for gems with native extensions
+  # @return [Hash<String, Array<String>>] OpenBSD packages needed for gems
   OPENBSD_DEPS = {
-    "ruby_llm" => []  # pure ruby, no deps
+    "ruby_llm" => []
   }.freeze
 
+  # Install missing gems and re-execute the script
+  # @return [void]
   def self.run
     missing = GEMS.select { |gem_name, _| !gem_installed?(gem_name) }
     return if missing.empty?
 
     puts "Installing missing gems: #{missing.keys.join(', ')}..."
 
-    # Install OS deps first on OpenBSD
-    if platform == :openbsd
-      install_openbsd_deps(missing.keys)
-    end
+    install_openbsd_deps(missing.keys) if platform == :openbsd
 
-    missing.each do |gem_name, pkg_name|
-      install_gem(pkg_name)
-    end
+    missing.each { |_, pkg_name| install_gem(pkg_name) }
 
     puts "Gems installed. Reloading..."
     exec("ruby", $PROGRAM_NAME, *ARGV)
   end
 
+  # Check if a gem is installed
+  # @param name [String] Gem name
+  # @return [Boolean]
   def self.gem_installed?(name)
     Gem::Specification.find_by_name(name)
     true
@@ -59,30 +91,34 @@ module Bootstrap
     false
   end
 
+  # Install a gem, using --user-install if system dir not writable
+  # @param name [String] Package name
+  # @return [Boolean] Success status
   def self.install_gem(name)
-    # Use --user-install on OpenBSD/Unix when system dir not writable
     user_flag = writable_gem_dir? ? "" : "--user-install"
     system("gem install #{name} --no-document #{user_flag}") ||
       warn("Failed to install #{name}")
   end
 
+  # Check if system gem directory is writable
+  # @return [Boolean]
   def self.writable_gem_dir?
     File.writable?(Gem.default_dir)
   rescue StandardError
     false
   end
 
+  # Ensure user gem bin directory is in PATH
+  # @return [void]
   def self.ensure_gem_path
     return if writable_gem_dir?
 
     user_bin = File.join(Gem.user_dir, "bin")
 
-    # Add to current session
     unless ENV["PATH"].to_s.include?(user_bin)
       ENV["PATH"] = "#{user_bin}:#{ENV['PATH']}"
     end
 
-    # Auto-add to .zshrc if not present
     zshrc = File.expand_path("~/.zshrc")
     export_line = "export PATH=\"#{user_bin}:$PATH\""
 
@@ -95,6 +131,9 @@ module Bootstrap
     end
   end
 
+  # Install OpenBSD package dependencies for gems
+  # @param gem_names [Array<String>] List of gem names
+  # @return [void]
   def self.install_openbsd_deps(gem_names)
     deps = gem_names.flat_map { |g| OPENBSD_DEPS[g] || [] }.uniq
     return if deps.empty?
@@ -103,6 +142,8 @@ module Bootstrap
     system("doas pkg_add -I #{deps.join(' ')}")
   end
 
+  # Detect current platform
+  # @return [Symbol] One of :openbsd, :termux, :linux, :macos, :windows, :unknown
   def self.platform
     case RUBY_PLATFORM
     when /openbsd/ then :openbsd
@@ -118,7 +159,7 @@ end
 Bootstrap.ensure_gem_path
 Bootstrap.run if ARGV.none? { |a| a == "--no-bootstrap" }
 
-# Optional gems (now should be available)
+# Optional gems (now should be available after bootstrap)
 begin
   require "ruby_llm"
   LLM_AVAILABLE = true
@@ -140,7 +181,11 @@ rescue LoadError
   READLINE_AVAILABLE = false
 end
 
-# Global options
+# Global CLI options (mutable state)
+#
+# @example
+#   Options.quiet = true
+#   Options.profile = "quick"
 module Options
   @quiet = false
   @json = false
@@ -151,23 +196,52 @@ module Options
   @profile = nil
 
   class << self
+    # @!attribute [rw] quiet
+    #   @return [Boolean] Minimal output mode
+    # @!attribute [rw] json
+    #   @return [Boolean] JSON output for CI/CD
+    # @!attribute [rw] git_changed
+    #   @return [Boolean] Only analyze git-modified files
+    # @!attribute [rw] watch
+    #   @return [Boolean] Watch mode enabled
+    # @!attribute [rw] no_cache
+    #   @return [Boolean] Skip cache, always query LLM
+    # @!attribute [rw] parallel
+    #   @return [Boolean] Enable parallel smell detection
+    # @!attribute [rw] profile
+    #   @return [String, nil] Active principle profile name
     attr_accessor :quiet, :json, :git_changed, :watch, :no_cache, :parallel, :profile
   end
 end
 
+# =============================================================================
 # FUNCTIONAL CORE
-# All business logic as pure functions
+# All business logic as pure functions (no side effects, no IO)
+# =============================================================================
 
 module Core
-  # Skill loader for modular skills system
+  # Modular skill system for extensible analysis pipelines
+  #
+  # Skills are loaded from ~/.constitutional/skills/ or ./skills/
+  # Each skill has a SKILL.yml manifest and an executable (.rb, .py, .sh)
+  #
+  # @example SKILL.yml
+  #   name: "My Skill"
+  #   version: "1.0"
+  #   priority: 50
+  #   stages: [pre-scan, detection]
   module SkillLoader
+    # @return [Array<String>] Directories to search for skills
     SKILLS_DIRS = [
       File.join(Dir.home, ".constitutional", "skills"),
       File.expand_path("skills", __dir__)
     ].freeze
 
+    # @return [Array<String>] Valid pipeline stages
     STAGES = %w[pre-scan detection refactor validate post-process gardening].freeze
 
+    # Discover all available skills from skill directories
+    # @return [Array<Hash>] List of skill configurations sorted by priority
     def self.discover
       skills = []
 
@@ -188,6 +262,10 @@ module Core
       skills.sort_by { |s| s[:priority] || 50 }
     end
 
+    # Load a single skill from its SKILL.yml file
+    # @param skill_file [String] Path to SKILL.yml
+    # @param skill_path [String] Directory containing the skill
+    # @return [Hash, nil] Skill configuration or nil on error
     def self.load_skill(skill_file, skill_path)
       config = YAML.safe_load(File.read(skill_file), permitted_classes: [Symbol])
 
@@ -208,6 +286,9 @@ module Core
       nil
     end
 
+    # Find the executable file for a skill
+    # @param skill_path [String] Skill directory
+    # @return [String, nil] Path to executable or nil
     def self.find_executable(skill_path)
       %w[.rb .py .sh].each do |ext|
         candidates = Dir.glob(File.join(skill_path, "*#{ext}"))
@@ -216,6 +297,11 @@ module Core
       nil
     end
 
+    # Execute all skills for a given pipeline stage
+    # @param stage [String] Pipeline stage name
+    # @param context [Hash] Execution context
+    # @param skills [Array<Hash>] Available skills
+    # @return [Hash] Updated context
     def self.execute_stage(stage, context, skills)
       stage_skills = skills.select { |s| s[:stages].include?(stage) }
 
@@ -223,19 +309,21 @@ module Core
         next unless skill[:executable]
 
         Log.info("Running skill: #{skill[:name]} (#{stage})") unless Options.quiet
-
         execute_skill(skill, context)
       end
 
       context
     end
 
+    # Execute a single skill
+    # @param skill [Hash] Skill configuration
+    # @param context [Hash] Execution context
+    # @return [void]
     def self.execute_skill(skill, context)
       return unless skill[:executable]
 
       case File.extname(skill[:executable])
       when ".rb"
-        # Load Ruby skill in isolated module (safer than eval in main binding)
         skill_module = Module.new do
           @skill_config = skill
           @context = context
@@ -245,10 +333,7 @@ module Core
         end
 
         skill_module.module_eval(File.read(skill[:executable]), skill[:executable], 1)
-
-        if skill_module.respond_to?(:execute)
-          skill_module.execute(context)
-        end
+        skill_module.execute(context) if skill_module.respond_to?(:execute)
       else
         Log.debug("Unsupported skill type: #{skill[:executable]}")
       end
@@ -257,15 +342,30 @@ module Core
     end
   end
 
+  # Registry for principle lookup, filtering, and validation
+  #
+  # Principles are the core rules that code is analyzed against.
+  # Each principle has an id, name, priority, smells, and fix strategies.
   module PrincipleRegistry
+    # Load principles from constitution
+    # @param constitution [Hash] Raw YAML constitution
+    # @return [Hash] Principles hash
     def self.load(constitution)
       constitution["principles"] || {}
     end
 
+    # Find a principle by its numeric ID
+    # @param principles [Hash] All principles
+    # @param id [Integer] Principle ID
+    # @return [Hash, nil] Principle or nil
     def self.find_by_id(principles, id)
       principles.find { |_key, p| p["id"] == id }&.last
     end
 
+    # Find all principles that detect a given smell
+    # @param principles [Hash] All principles
+    # @param smell [String] Smell name
+    # @return [Array<Hash>] Matching principles
     def self.find_by_smell(principles, smell)
       principles.select do |_key, principle|
         smells = principle["smells"] || []
@@ -273,15 +373,25 @@ module Core
       end.values
     end
 
+    # Get all auto-fixable principles
+    # @param principles [Hash] All principles
+    # @return [Array<Hash>] Auto-fixable principles
     def self.auto_fixable(principles)
       principles.select { |_key, p| p["auto_fixable"] }.values
     end
 
+    # Get maximum priority across all principles
+    # @param principles [Hash] All principles
+    # @return [Integer] Maximum priority value
     def self.max_priority(principles)
       principles.values.map { |p| p["priority"] || 0 }.max || 0
     end
 
     # Filter principles by profile
+    # @param principles [Hash] All principles
+    # @param profile_config [Hash] Profile configuration with 'allow' list
+    # @param groups [Hash] Group mappings (e.g., "group:axioms" => [1,2,3])
+    # @return [Hash] Filtered principles matching the profile
     def self.filter_by_profile(principles, profile_config, groups)
       return principles if profile_config.nil? || profile_config["allow"]&.include?("*")
 
@@ -300,6 +410,9 @@ module Core
       principles.select { |_key, p| allowed_ids.include?(p["id"]) }
     end
 
+    # Validate that principles have no circular references
+    # @param principles [Hash] All principles
+    # @return [Hash] {valid: Boolean, reason: String?}
     def self.validate_no_cycles(principles)
       principles.each do |key, principle|
         visited = Set.new
@@ -315,6 +428,11 @@ module Core
       {valid: true}
     end
 
+    # Check for circular references in principle conflicts
+    # @param principle [Hash] Current principle
+    # @param all_principles [Hash] All principles
+    # @param visited [Set] Already visited principle IDs
+    # @return [Boolean] True if cycle detected
     def self.has_cycle?(principle, all_principles, visited)
       return true if visited.include?(principle["id"])
 
@@ -331,9 +449,24 @@ module Core
     end
   end
 
+  # LLM-based code smell detection
+  #
+  # Uses progressive disclosure:
+  #   Level 1: Compact summary for detection (~50 tokens/principle)
+  #   Level 2: Full details for refactoring (~150 tokens/principle)
+  #
+  # @see build_compact_summary for Level 1
+  # @see build_full_details for Level 2
   module LLMDetector
+    # Build detection prompt for LLM analysis
+    # @param code [String] Source code to analyze
+    # @param file_path [String] Path to the file
+    # @param principles [Hash] Active principles
+    # @param prompt_template [String] Template with {principles} placeholder
+    # @return [Hash] {prompt: String, file_path: String}
     def self.detect_violations(code, file_path, principles, prompt_template)
-      principle_summary = build_principle_summary(principles)
+      # Use compact summary for initial detection (60% token savings)
+      principle_summary = build_compact_summary(principles)
 
       prompt = prompt_template.gsub("{principles}", principle_summary)
       prompt += "\n\nCode to analyze:\n```ruby\n#{code}\n```"
@@ -344,23 +477,52 @@ module Core
       }
     end
 
-    def self.build_principle_summary(principles)
+    # Level 1: Compact summary (~50 tokens per principle vs ~150 full)
+    # Used for initial detection - just enough for LLM to identify violations
+    # @param principles [Hash] All principles
+    # @return [String] Compact summary text
+    def self.build_compact_summary(principles)
       lines = []
 
       principles.each do |key, principle|
         id = principle["id"]
         name = principle["name"]
-        rule = principle["rule"]
         priority = principle["priority"] || 5
-        smells = (principle["smells"] || []).join(", ")
+        smells = (principle["smells"] || []).first(5).join(", ")
 
-        lines << "#{id}. #{name} (Priority #{priority}): #{rule}"
-        lines << "   Smells: #{smells}" if smells && !smells.empty?
+        lines << "#{id}. #{name} (P#{priority}): #{smells}"
       end
 
       lines.join("\n")
     end
 
+    # Level 2: Full details - loaded only when violation found
+    # Used for refactoring context
+    # @param principle [Hash] Single principle
+    # @return [String] Full principle details
+    def self.build_full_details(principle)
+      return "" unless principle
+
+      parts = []
+      parts << "Principle: #{principle['name']}"
+      parts << "Rule: #{principle['rule']}" if principle["rule"]
+      parts << "Why: #{principle['why']}" if principle["why"]
+      parts << "Evidence: #{principle['evidence']}" if principle["evidence"]
+      parts << "Strategies: #{principle['llm_strategies']&.join(', ')}" if principle["llm_strategies"]
+
+      parts.join("\n")
+    end
+
+    # Legacy full summary (for backward compatibility)
+    # @param principles [Hash] All principles
+    # @return [String] Compact summary (calls build_compact_summary)
+    def self.build_principle_summary(principles)
+      build_compact_summary(principles)
+    end
+
+    # Parse LLM JSON response into violations array
+    # @param json_response [String] Raw JSON from LLM
+    # @return [Array<Hash>] Parsed violations or empty array on error
     def self.parse_violations(json_response)
       cleaned = json_response.strip
       cleaned = cleaned.gsub(/^```json\n/, "").gsub(/\n```$/, "")
@@ -372,16 +534,26 @@ module Core
     end
   end
 
+  # Score calculation based on violations
+  #
+  # Formula: score = 100 - (violations * 5 * severity_weight)
+  # Clamped to [0, 100]
   module ScoreCalculator
     POINTS_PER_VIOLATION = 5
     MAX_SCORE = 100
     MIN_SCORE = 0
 
+    # Calculate score from violation count
+    # @param violations [Array<Hash>] Detected violations
+    # @return [Integer] Score 0-100
     def self.calculate(violations)
       raw = MAX_SCORE - (violations.size * POINTS_PER_VIOLATION)
       raw < MIN_SCORE ? MIN_SCORE : raw
     end
 
+    # Detailed analysis with severity breakdown
+    # @param violations [Array<Hash>] Detected violations
+    # @return [Hash] {total:, by_severity:, vetos:, auto_fixable:, score:}
     def self.analyze(violations)
       by_severity = {}
       vetos = 0
@@ -406,7 +578,13 @@ module Core
     end
   end
 
+  # Token estimation for LLM cost prediction
+  #
+  # Uses ~4 chars/token for ASCII, ~1 char/token for Unicode
   module TokenEstimator
+    # Estimate token count for text
+    # @param text [String] Input text
+    # @return [Integer] Estimated token count
     def self.estimate(text)
       ascii_chars = text.scan(/[[:ascii:]]/).size
       non_ascii_chars = text.size - ascii_chars
@@ -414,6 +592,10 @@ module Core
       ((ascii_chars / 4.0) + (non_ascii_chars * 1.0)).ceil
     end
 
+    # Check if text exceeds token threshold
+    # @param text [String] Input text
+    # @param threshold [Integer] Token threshold
+    # @return [Hash] {warning: Boolean, tokens: Integer}
     def self.warn_if_expensive(text, threshold)
       estimated = estimate(text)
 
@@ -425,8 +607,11 @@ module Core
     end
   end
 
+  # LLM cost estimation by model tier
+  #
+  # Rates are per 1M tokens (input/output)
   module CostEstimator
-    # Unified cost estimation for all LLM calls
+    # Cost rates per 1M tokens by tier
     RATES = {
       fast: { input: 0.1, output: 0.3 },      # Qwen, Gemma, etc
       medium: { input: 3.0, output: 15.0 },   # Claude Sonnet
@@ -435,11 +620,19 @@ module Core
       default: { input: 0.5, output: 1.5 }
     }.freeze
 
+    # Estimate cost for an LLM call
+    # @param model [String] Model name
+    # @param prompt_tokens [Integer] Input tokens
+    # @param completion_tokens [Integer] Output tokens
+    # @return [Float] Estimated cost in USD
     def self.estimate(model, prompt_tokens, completion_tokens)
       rate = rate_for(model)
       (prompt_tokens * rate[:input] / 1_000_000) + (completion_tokens * rate[:output] / 1_000_000)
     end
 
+    # Get rate for model by pattern matching
+    # @param model [String] Model name
+    # @return [Hash] {input:, output:} rates per 1M tokens
     def self.rate_for(model)
       case model
       when /qwen|gemma|hermes/i then RATES[:fast]
@@ -452,9 +645,21 @@ module Core
   end
 
   # Cross-session cost tracking with JSONL persistence
+  #
+  # Records all LLM calls to .constitutional_costs.jsonl for:
+  # - Daily spending reports
+  # - Model breakdown analysis
+  # - Budget enforcement
+  #
+  # @see CostEstimator for cost calculation
   module CostTracker
     COST_FILE = ".constitutional_costs.jsonl"
 
+    # Record an LLM call
+    # @param model [String] Model name
+    # @param tokens [Integer] Total tokens used
+    # @param cost [Float] Cost in USD
+    # @param file_path [String, nil] File being analyzed
     def self.record(model, tokens, cost, file_path = nil)
       entry = {
         timestamp: Time.now.iso8601,
@@ -470,6 +675,9 @@ module Core
       Log.debug("Cost tracking write failed: #{e.message}")
     end
 
+    # Get daily cost totals
+    # @param days [Integer] Number of days to look back
+    # @return [Hash] {date => {tokens:, cost:, calls:}}
     def self.daily_totals(days = 7)
       entries = load_entries
       cutoff = (Date.today - days).to_s
@@ -488,6 +696,9 @@ module Core
       by_date.sort.to_h
     end
 
+    # Get cost breakdown by model
+    # @param days [Integer] Number of days to look back
+    # @return [Hash] {model => {tokens:, cost:, calls:}}
     def self.model_breakdown(days = 7)
       entries = load_entries
       cutoff = (Date.today - days).to_s
@@ -506,6 +717,9 @@ module Core
       by_model.sort_by { |_, v| -v[:cost] }.to_h
     end
 
+    # Get total spending
+    # @param days [Integer, nil] Days to look back (nil = all time)
+    # @return [Float] Total cost in USD
     def self.total_spending(days = nil)
       entries = load_entries
 
@@ -1025,7 +1239,7 @@ end
 # IMPERATIVE SHELL
 
 module Dmesg
-  VERSION = "48.2"
+  VERSION = "49.0"
 
   def self.boot
     return if Options.quiet
@@ -1035,7 +1249,7 @@ module Dmesg
       return
     end
 
-    puts "#{bold}Constitutional AI #{VERSION}#{reset}"
+    puts "#{bold}master.yml LLM OS #{VERSION}#{reset}"
     puts "#{dim}#{status_line}#{reset}"
     puts
   end
@@ -1253,6 +1467,10 @@ class Constitution
     unless result[:valid]
       Log.warn("Constitution warning: #{result[:reason]}")
     end
+  end
+
+  def load_hooks
+    Core::Hooks.load_from_config(@hooks_config)
   end
 end
 
@@ -2125,7 +2343,12 @@ class LLMClient
 
     prompt = "Fix this violation:\n\n"
     prompt += "Violation: #{violation["explanation"]}\n"
-    prompt += "Principle: #{principle["name"]} - #{principle["rule"]}\n\n" if principle
+
+    # Use full principle details (Level 2) for refactoring context
+    if principle
+      prompt += "\n#{Core::LLMDetector.build_full_details(principle)}\n\n"
+    end
+
     prompt += "Suggested fix: #{violation["suggested_fix"]}\n\n"
     prompt += "Code:\n```ruby\n#{code}\n```\n\n"
     prompt += "Requirements:\n"
@@ -2444,7 +2667,7 @@ class CLI
     when "--help", "-h"
       usage unless Options.quiet
     when "--version", "-v"
-      puts "Constitutional AI v#{Dmesg::VERSION}" unless Options.quiet
+      puts "master.yml LLM OS v#{Dmesg::VERSION}" unless Options.quiet
     when "--cost"
       show_cost
     when "--rollback"
@@ -2767,7 +2990,7 @@ class CLI
   end
 
   def usage
-    puts "Constitutional AI v#{Dmesg::VERSION}"
+    puts "master.yml LLM OS v#{Dmesg::VERSION}"
     puts
     puts "Usage: ruby cli.rb [options] [file|dir|glob]"
     puts
