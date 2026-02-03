@@ -5195,7 +5195,7 @@ class CLI
         shell_ls($1)
       when /^cd\s+(.+)/
         shell_cd($1)
-      when /^cat\s+(.+)/, /^view\s+(.+)/
+      when /^cat\s+(.+)/, /^view\s+(.+)/, /^see\s+(.+)/, /^show\s+(.+)/, /^read\s+(.+)/
         shell_cat($1)
       when /^tree\s*(.*)$/
         shell_tree($1.empty? ? "." : $1)
@@ -5805,10 +5805,12 @@ class CLI
     plan_context = @plan ? "\nCurrent plan:\n#{@plan.to_s}\n" : ""
     
     system_prompt = <<~SYS
+      You run inside cli.rb, governed by master.yml (32 principles).
+      Shell: zsh on OpenBSD. Use: cat, ls, cd, tree, pwd.
       Ronin coder. Hagakure way. Stoic. Decisive.
       Complete projects. Fix what is broken. Ship.
       Short sentences. Plain text only. No markdown.
-      cwd: #{Dir.pwd.split('/').last}
+      cwd: #{Dir.pwd}
     SYS
     
     begin
