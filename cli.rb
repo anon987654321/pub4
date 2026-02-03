@@ -2702,15 +2702,38 @@ module Dmesg
     return if Options.quiet
 
     if ENV["CONSTITUTIONAL_MINIMAL"]
-      puts "#{green}master.yml #{VERSION}#{reset}"
+      puts "master.yml #{VERSION}"
       return
     end
 
-    # Clean boot message
-    puts "#{green}Constitutional AI#{reset} #{VERSION}"
-    puts "#{principle_count} principles, #{model_count}"
-    puts "LLM #{llm_status}, Ruby #{RUBY_VERSION}"
-    puts
+    # OpenBSD dmesg style boot
+    puts "Constitutional AI #{VERSION} (GENERIC) ##{build_number}: #{Time.now.strftime('%a %b %e %H:%M:%S %Z %Y')}"
+    puts "real mem = #{memory_info}"
+    puts "avail principles = #{principle_count}"
+    puts "cpu0: Ruby #{RUBY_VERSION}, #{RUBY_PLATFORM}"
+    puts "llm0 at cpu0: #{llm_status}"
+    puts "tiered0 at llm0: #{model_count}"
+    puts "root on #{Dir.pwd}"
+  end
+
+  def self.build_number
+    # Use git commit count or fallback
+    count = `git rev-list --count HEAD 2>/dev/null`.strip
+    count.empty? ? "1" : count
+  rescue
+    "1"
+  end
+
+  def self.memory_info
+    begin
+      if RUBY_PLATFORM =~ /openbsd|linux/
+        mem = `sysctl -n hw.physmem 2>/dev/null`.strip.to_i
+        return "#{mem / 1024 / 1024}MB" if mem > 0
+      end
+      "#{(GC.stat[:heap_allocated_pages] * 16 * 1024) / 1024}KB heap"
+    rescue
+      "unknown"
+    end
   end
 
   def self.principle_count
@@ -2736,9 +2759,9 @@ module Dmesg
 
   def self.llm_status
     if llm_ready?
-      "#{green}ready#{reset} with fallbacks"
+      "ready, fallbacks enabled"
     else
-      "#{yellow}offline#{reset} - set OPENROUTER_API_KEY"
+      "offline (set OPENROUTER_API_KEY)"
     end
   end
 
