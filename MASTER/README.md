@@ -1,6 +1,22 @@
-# MASTER v50.5
+# MASTER v50.8
 
-Constitutional AI code quality enforcer. Principles as files.
+Constitutional AI code quality enforcer with advanced memory, automation, and self-improvement.
+
+## ✨ New in v50.8
+
+**8 Advanced Features:**
+1. 🧠 **Git-Backed Memory** - Long-term decision tracking with pattern learning
+2. ⚡ **Smart Pre-Commit Hooks** - Fast cached analysis (<100ms for commits)
+3. 🎤 **Voice-to-Code Interface** - Hands-free analysis via voice commands
+4. 🧪 **Automatic Test Generation** - Generate RSpec tests from violations
+5. 📊 **Knowledge Graph** - Visualize violations and relationships
+6. ⚖️ **Conflict Resolution** - Smart handling when principles contradict
+7. 🤖 **Principle Agents** - Specialized refactoring agents (DRY, SRP, KISS, Perf)
+8. 🔄 **Meta-Evolution** - MASTER improves its own code
+
+**See [FEATURES_v50.8.md](FEATURES_v50.8.md) for complete documentation.**
+
+---
 
 ## Install
 
@@ -23,10 +39,19 @@ MASTER/
 │   ├── smells.rb             # Fowler smell detection
 │   ├── openbsd.rb            # OpenBSD config analysis
 │   ├── cli.rb                # REPL
-│   └── principles/           # 32 principles as markdown
+│   ├── principles/           # 32 principles as markdown
+│   ├── memory/               # NEW: Git-backed memory
+│   ├── git/                  # NEW: Smart hooks
+│   ├── voice/                # NEW: Voice interface
+│   ├── test_gen/             # NEW: Test generation
+│   ├── graph/                # NEW: Knowledge graph
+│   ├── conflicts/            # NEW: Conflict resolution
+│   ├── agents/               # NEW: Principle agents
+│   └── evolution/            # NEW: Meta-evolution
 └── var/
     ├── cache/                # LLM response cache
-    └── sessions/             # Session memory
+    ├── sessions/             # Session memory
+    └── evolution.yml         # Self-improvement tracking
 ```
 
 ## Commands
@@ -43,6 +68,16 @@ evolve            Self-optimize MASTER
 ask <prompt>      Send prompt to LLM
 cost              Show session cost
 persona           Show current persona
+
+# New in v50.8
+memory <cmd>      Git-backed memory (search, patterns, sync)
+hooks <cmd>       Smart pre-commit hooks (install, test, uninstall)
+voice             Voice-to-code interface
+graph [--output]  Generate knowledge graph
+agent <type>      Run principle agents (dry, solid_srp, kiss, perf)
+meta-evolve       Self-improvement for MASTER
+test-coverage     Show test coverage by principle
+
 quit              Exit
 <anything>        Chat with LLM
 ```
