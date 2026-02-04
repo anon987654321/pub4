@@ -39,6 +39,7 @@ module Master
       when "help", "?" then show_help
       when "principles", "p" then show_principles
       when "scan", "s" then scan_files(args)
+      when "analyze", "az" then analyze_files(args)
       when "cd" then change_dir(args.first)
       when "ls" then list_dir(args.first || ".")
       when "pwd" then puts @cwd
@@ -63,19 +64,20 @@ module Master
     def show_help
       puts <<~HELP
         Commands:
-          help, ?          Show this help
-          principles, p    List loaded principles
-          scan, s <file>   Scan file for issues
-          ask, a <prompt>  Send prompt to LLM
-          cost, $          Show session cost
-          serve            Start HTTP API server
-          compress         Compress session memory
-          cd <dir>         Change directory
-          ls [dir]         List directory
-          pwd              Print working directory
-          version, v       Show version
-          quit, q          Exit
-          <anything else>  Chat with LLM
+          help, ?           Show this help
+          principles, p     List loaded principles
+          scan, s <path>    Scan file for basic issues
+          analyze, az <path> LLM analysis of file/dir
+          ask, a <prompt>   Send prompt to LLM
+          cost, $           Show session cost
+          serve             Start HTTP API server
+          compress          Compress session memory
+          cd <dir>          Change directory
+          ls [dir]          List directory
+          pwd               Print working directory
+          version, v        Show version
+          quit, q           Exit
+          <anything else>   Chat with LLM
       HELP
     end
 
@@ -107,6 +109,84 @@ module Master
       return puts "Usage: ask <prompt>" if prompt.empty?
       result = @llm.ask(prompt)
       puts result.ok? ? result.value : "err: #{result.error}"
+      puts "\n[#{@llm.cost_summary}]" if result.ok?
+    end
+
+    def analyze_files(paths)
+      return puts "Usage: analyze <path>" if paths.empty?
+      
+      paths.each do |path|
+        full = File.expand_path(path, @cwd)
+        
+        if Dir.exist?(full)
+          # Directory - list files and summarize
+          files = Dir.glob("#{full}/**/*").select { |f| File.file?(f) }
+          puts "proc0: #{full} (directory, #{files.size} files)"
+          
+          summary = files.first(20).map do |f|
+            ext = File.extname(f)
+            lines = File.read(f, encoding: "UTF-8").lines.size rescue 0
+            "  #{File.basename(f)} (#{lines} lines)"
+          end.join("\n")
+          
+          prompt = <<~PROMPT
+            Analyze this directory structure and provide insights:
+            
+            Directory: #{full}
+            Files (#{files.size} total, showing first 20):
+            #{summary}
+            
+            Provide:
+            1. What this directory/project appears to be
+            2. Key files to examine
+            3. Potential issues or improvements
+          PROMPT
+        elsif File.exist?(full)
+          # Single file
+          content = File.read(full, encoding: "UTF-8")
+          lines = content.lines.size
+          bytes = content.bytesize
+          ext = File.extname(full).downcase
+          lang = { ".rb" => "ruby", ".py" => "python", ".js" => "javascript",
+                   ".ts" => "typescript", ".go" => "go", ".rs" => "rust",
+                   ".sh" => "shell", ".yml" => "yaml", ".yaml" => "yaml" }[ext] || "text"
+          
+          puts "proc0: #{full} (#{lang}, #{lines} lines, #{bytes} bytes)"
+          
+          # Truncate if too large
+          if content.size > 50000
+            content = content[0..50000] + "\n\n[TRUNCATED - file too large]"
+          end
+          
+          principles_list = @principles.first(10).map(&:name).join(", ")
+          
+          prompt = <<~PROMPT
+            Analyze this #{lang} file against these principles: #{principles_list}
+            
+            File: #{File.basename(full)}
+            ```#{lang}
+            #{content}
+            ```
+            
+            Provide:
+            1. Summary of what this file does
+            2. Principle violations found (with line numbers)
+            3. Specific improvement suggestions
+            4. Overall quality assessment (1-10)
+          PROMPT
+        else
+          puts "err: not found: #{path}"
+          next
+        end
+        
+        result = @llm.ask(prompt, tier: :code)
+        if result.ok?
+          puts result.value
+          puts "\n[#{@llm.cost_summary}]"
+        else
+          puts "err: #{result.error}"
+        end
+      end
     end
 
     def change_dir(path)
