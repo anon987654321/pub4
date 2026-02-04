@@ -8,13 +8,13 @@ require "fileutils"
 module Master
   class LLM
     TIERS = {
-      fast:    { model: "google/gemini-2.0-flash-001", cost_per_1k: 0.0001 },
-      code:    { model: "x-ai/grok-3-mini-beta", cost_per_1k: 0.0005 },
-      medium:  { model: "anthropic/claude-sonnet-4", cost_per_1k: 0.003 },
+      fast:    { model: "deepseek/deepseek-chat", cost_per_1k: 0.00014 },
+      code:    { model: "deepseek/deepseek-coder", cost_per_1k: 0.00014 },
+      medium:  { model: "deepseek/deepseek-chat", cost_per_1k: 0.00014 },
       strong:  { model: "anthropic/claude-sonnet-4-5-20250514", cost_per_1k: 0.003 },
       premium: { model: "anthropic/claude-opus-4", cost_per_1k: 0.015 }
     }.freeze
-    DEFAULT_TIER = :strong
+    DEFAULT_TIER = :medium
 
     attr_reader :total_cost, :total_tokens
 
