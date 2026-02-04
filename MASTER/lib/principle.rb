@@ -26,5 +26,16 @@ module Master
     end
 
     def to_s = "[#{@id.to_s.rjust(3, '0')}] #{@name}"
+
+    def to_h
+      {
+        id: @id,
+        name: @name,
+        tier: @tier,
+        priority: @priority,
+        smells: @smells,
+        auto_fixable: @auto_fixable
+      }
+    end
   end
 end

@@ -1,4 +1,4 @@
-# MASTER v50.0
+# MASTER v50.1
 
 Constitutional AI code quality enforcer. Principles as files.
 
@@ -6,7 +6,7 @@ Constitutional AI code quality enforcer. Principles as files.
 
 ```bash
 cd MASTER
-chmod +x bin/cli
+chmod +x bin/cli bin/serve
 export OPENROUTER_API_KEY=your_key
 ./bin/cli
 ```
@@ -15,7 +15,9 @@ export OPENROUTER_API_KEY=your_key
 
 ```
 MASTER/
-├── bin/cli                    # Entry point
+├── bin/
+│   ├── cli                   # REPL entry point
+│   └── serve                 # HTTP API server
 ├── lib/
 │   ├── master.rb             # Loader
 │   ├── result.rb             # Ok/Err monad
@@ -24,16 +26,15 @@ MASTER/
 │   ├── boot.rb               # Dmesg-style boot
 │   ├── llm.rb                # OpenRouter client (4 tiers)
 │   ├── engine.rb             # Scan/detect
+│   ├── memory.rb             # Session memory compression
+│   ├── server.rb             # Falcon/WEBrick HTTP API
 │   ├── cli.rb                # REPL
-│   ├── providers/            # LLM provider configs
-│   ├── vendor/               # Vendored dependencies
 │   └── principles/           # 32 principles + meta
-│       ├── 01-kiss.md
-│       ├── 02-dry.md
-│       ├── ...
-│       ├── 32-cache-aggressively.md
-│       ├── meta-principles.md
-│       └── deprecated/
+├── var/
+│   └── sessions/             # Session memory storage
+├── Gemfile
+├── Makefile
+└── README.md
 ```
 
 ## Commands
@@ -43,12 +44,40 @@ help, ?          Show help
 principles, p    List loaded principles
 scan, s <file>   Scan file for issues
 ask, a <prompt>  Send prompt to LLM
+serve            Start HTTP API server
+compress         Compress session memory
 cd <dir>         Change directory
 ls [dir]         List directory
 pwd              Print working directory
 version, v       Show version
 quit, q          Exit
 <anything else>  Chat with LLM
+```
+
+## HTTP API
+
+Start server: `./bin/serve` or from CLI: `serve`
+
+```
+GET  /              → { name, version, status }
+GET  /health        → { status, principles }
+GET  /principles    → { principles: [...] }
+POST /scan          → { path: "file.rb" } → issues
+POST /ask           → { prompt: "...", tier: "fast" } → response
+```
+
+## Session Memory
+
+MASTER remembers across sessions:
+- Records all interactions
+- Compresses with LLM at session end
+- Injects context into next session
+
+```bash
+# Compress current session
+compress
+
+# Sessions stored in var/sessions/
 ```
 
 ## Principles (Fame Order)

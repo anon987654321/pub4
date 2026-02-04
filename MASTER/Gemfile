@@ -15,7 +15,14 @@ gem "rouge", "~> 4.2"         # Syntax highlighting (pure Ruby)
 gem "pastel", "~> 0.8"        # Terminal colors (256 support)
 
 # -----------------------------------------------------------------------------
-# Tier 2: Should Add (next iteration)
+# Tier 2: Web API (Falcon)
+# -----------------------------------------------------------------------------
+gem "falcon", "~> 0.47"       # Async HTTP/2 server
+gem "async", "~> 2.6"         # Fiber-based async
+gem "protocol-http", "~> 0.26" # HTTP protocol support
+
+# -----------------------------------------------------------------------------
+# Tier 3: Should Add (next iteration)
 # -----------------------------------------------------------------------------
 gem "tty-markdown", "~> 0.7"  # Render LLM markdown responses
 gem "tty-table", "~> 0.12"    # Table formatting
@@ -23,7 +30,7 @@ gem "parallel", "~> 1.24"     # Multi-core file scanning
 gem "http", "~> 5.1"          # Modern HTTP client (vs Net::HTTP)
 
 # -----------------------------------------------------------------------------
-# Tier 3: Nice to Have (if needed)
+# Tier 4: Nice to Have (if needed)
 # -----------------------------------------------------------------------------
 # gem "oj", "~> 3.16"           # Fast JSON (if bottleneck)
 # gem "mustache", "~> 1.1"      # Prompt templates

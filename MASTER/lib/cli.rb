@@ -8,9 +8,14 @@ module Master
       @llm = LLM.new
       @engine = Engine.new(principles: @principles, llm: @llm)
       @cwd = Dir.pwd
+      @session = Memory::Session.new
     end
 
     def run
+      # Inject previous session context if available
+      context = Memory::Session.load_latest_context
+      puts "boot> memory: previous session loaded" unless context.empty?
+      
       loop do
         parent = File.basename(File.dirname(@cwd))
         parent = File.basename(@cwd) if parent == "." || parent.empty?
@@ -20,6 +25,9 @@ module Master
         next if line.empty?
         handle(line)
       end
+      
+      # Save session on exit
+      @session.save
     end
 
     private
@@ -36,7 +44,10 @@ module Master
       when "pwd" then puts @cwd
       when "version", "v" then puts "master #{Master::VERSION}"
       when "ask", "a" then ask_llm(args.join(" "))
+      when "serve" then start_server
+      when "compress" then compress_session
       else
+        @session&.record(:chat, { input: input })
         puts "Working directory: #{@cwd}\n\n"
         result = @llm.ask(input)
         if result.ok?
@@ -54,6 +65,8 @@ module Master
           principles, p    List loaded principles
           scan, s <file>   Scan file for issues
           ask, a <prompt>  Send prompt to LLM
+          serve            Start HTTP API server
+          compress         Compress session memory
           cd <dir>         Change directory
           ls [dir]         List directory
           pwd              Print working directory
@@ -115,6 +128,21 @@ module Master
       end
     rescue => e
       puts "err: #{e.message}"
+    end
+
+    def start_server
+      puts "Starting HTTP server..."
+      Server.start
+    end
+
+    def compress_session
+      puts "Compressing session..."
+      result = @session.compress!
+      if result
+        puts "Session compressed (#{@session.events.size} events)"
+      else
+        puts "No events to compress"
+      end
     end
   end
 end
