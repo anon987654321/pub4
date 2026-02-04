@@ -1585,13 +1585,14 @@ module Dmesg
   VERSION = "49.75"
   def self.boot
     return if Options.quiet
-    t = Time.now.strftime("%a %b %e %H:%M:%S %Z %Y")
-    puts "master.yml #{VERSION} (GENERIC) ##{build_number}: #{t}"
-    puts "cpu0: #{primary_model}"
-    puts "llm0: #{tier_count} tiers, fallback enabled" if llm_ready?
-    puts "llm0: offline (set OPENROUTER_API_KEY)" unless llm_ready?
-    puts "mem0: #{principle_count} principles loaded"
-    puts "root: #{Dir.pwd}"
+    puts ">> master.yml #{VERSION}"
+    if llm_ready?
+      puts "boot> llm0: #{primary_model} (#{tier_count} tiers)"
+    else
+      puts "boot> llm0: offline (set OPENROUTER_API_KEY)"
+    end
+    puts "boot> const0: #{principle_count} principles armed"
+    puts "boot> root: #{Dir.pwd}"
   end
   def self.primary_model
     content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
