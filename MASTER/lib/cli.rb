@@ -44,6 +44,7 @@ module Master
       when "openbsd", "bsd" then openbsd_check(args)
       when "fix", "f" then fix_file(args.first)
       when "evolve" then evolve_self
+      when "web", "w" then browse_web(args)
       when "cd" then change_dir(args.first)
       when "ls" then list_dir(args.first || ".")
       when "pwd" then puts @cwd
@@ -78,6 +79,7 @@ module Master
           openbsd, bsd <sh> Analyze shell script configs
           fix, f <path>     LLM fix file (with confirmation)
           evolve            Self-optimize MASTER code
+          web, w <url>      Browse URL with headless Chrome
           ask, a <prompt>   Send prompt to LLM
           cost, $           Show session cost
           clean [days]      Purge cache/sessions older than N days (default: 7)
@@ -402,6 +404,24 @@ module Master
         else
           puts "bsd0: found #{results.size} config(s) with issues"
         end
+      end
+    end
+
+    def browse_web(args)
+      return puts "Usage: web <url> [question]" if args.empty?
+      
+      url = args.shift
+      url = "https://#{url}" unless url.start_with?("http")
+      question = args.join(" ") if args.any?
+      
+      puts "web0: loading #{url}"
+      
+      result = Web.analyze(url, @llm, question)
+      if result.ok?
+        puts result.value
+        puts "\n[#{@llm.cost_summary}]"
+      else
+        puts "err: #{result.error}"
       end
     end
 

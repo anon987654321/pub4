@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  VERSION = "50.6"
+  VERSION = "50.7"
   ROOT = File.expand_path("..", __dir__)
   
   # Default persona: ultra-brief, ultra-clear (Strunk & White)
@@ -28,5 +28,6 @@ require_relative "engine"
 require_relative "memory"
 require_relative "smells"
 require_relative "openbsd"
+require_relative "web"
 require_relative "server"
 require_relative "cli"

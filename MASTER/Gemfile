@@ -28,6 +28,7 @@ gem "tty-markdown", "~> 0.7"  # Render LLM markdown responses
 gem "tty-table", "~> 0.12"    # Table formatting
 gem "parallel", "~> 1.24"     # Multi-core file scanning
 gem "http", "~> 5.1"          # Modern HTTP client (vs Net::HTTP)
+gem "ferrum", "~> 0.15"       # Headless Chrome for web browsing
 
 # -----------------------------------------------------------------------------
 # Tier 4: Nice to Have (if needed)
