@@ -2742,7 +2742,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.72"
+  VERSION = "49.73"
 
   def self.boot
     return if Options.quiet
@@ -6097,6 +6097,35 @@ class CLI
       return plan_mode(input.sub(/^plan\s+/i, ""))
     end
 
+    # Intent detection: auto-execute common requests
+    # "review/analyze/look at/show me X folder/file" -> actually do it
+    if input.match?(/\b(review|analyze|look at|show me|check|examine|scan)\b.*\b(\S+\/?\S*)\s*$/i)
+      target = $2.strip
+      target = target.chomp('/')
+      
+      if File.directory?(target)
+        # Auto-tree and read key files
+        puts "#{target}/"
+        tree_output = `tree -L 2 #{target} 2>/dev/null`.strip
+        tree_output = `find #{target} -maxdepth 2 -type f 2>/dev/null`.strip if tree_output.empty?
+        puts tree_output.empty? ? Dir.glob("#{target}/**/*").first(20).join("\n") : tree_output
+        
+        # Read key files (README, main scripts)
+        key_files = Dir.glob("#{target}/{README*,*.rb,*.sh,*.py,*.yml}").first(3)
+        file_contents = key_files.map do |f|
+          content = File.read(f, encoding: "UTF-8", invalid: :replace).lines.first(30).join
+          "=== #{f} ===\n#{content}"
+        end.join("\n\n")
+        
+        # Now ask LLM to review with actual content
+        input = "Review this folder:\n#{tree_output}\n\n#{file_contents}"
+      elsif File.file?(target)
+        content = File.read(target, encoding: "UTF-8", invalid: :replace)
+        puts "#{target} (#{content.lines.size} lines)"
+        input = "Review this file:\n#{content}"
+      end
+    end
+
     @chat_history ||= []
     @chat_history << { role: "user", content: input }
     @session.history = @chat_history
@@ -6118,14 +6147,10 @@ class CLI
     trace_info = ENV["TRACE"] ? " TRACE=on" : ""
 
     system_prompt = <<~SYS
-      You run inside cli.rb on OpenBSD vmctl sandbox. All actions are safe.
-      You can: ls, cat, tree, scan, analyze, !cmd (shell). No limits apply.
-      NEVER hallucinate file contents. Say "run: cat <file>" to see files.
-      BE HONEST. If you don't know, say "I don't know" or "I need more context".
-      Don't guess. Don't make up answers. Ask clarifying questions if needed.
-      Ronin coder. Stoic. Short sentences. No markdown. No code blocks.
+      You are cli.rb running on OpenBSD. Sandbox environment, all actions safe.
+      When given file/folder content, analyze it directly. Don't ask to see it again.
+      Ronin style: stoic, short sentences, no markdown, no code blocks.
       cwd: #{Dir.pwd}#{trace_info}
-      files: #{files}
       #{plan_context}
     SYS
 
