@@ -2345,41 +2345,100 @@ module Replicate
   }.freeze
 
   # Prompt templates (from nano-banana guide + repligen.rb patterns)
+  # Prompt templates (from nano-banana guide + repligen.rb + awesome repos)
   TEMPLATES = {
-    # Image - portrait
+    # === IMAGE TEMPLATES ===
+    # Portrait
     portrait: "photorealistic portrait, 85mm f/1.8, shallow depth of field, " \
               "golden hour lighting from 45 degrees, natural skin texture, " \
               "shot on ARRI Alexa Mini LF, Kodak Vision3 500T color science",
     
-    # Image - product
+    # Product photography
     product: "high-end commercial photography, studio lighting with softbox, " \
              "clean white background, shallow depth of field, professional product shot",
     
-    # Image - cinematic
+    # Cinematic
     cinematic: "cinematic 2.39:1 anamorphic, teal and orange color grading, " \
                "dramatic rim lighting, shot on Atlas Orion 40mm Anamorphic, " \
                "horizontal lens flares, film grain texture",
     
-    # Image - anime
+    # Anime/Illustration
     anime: "anime style illustration, Studio Ghibli aesthetic, cel shading, " \
            "vibrant colors, detailed background, soft lighting",
     
-    # Video - motion (separate Camera: and Subject:)
+    # Cyberpunk (from awesome-grok)
+    cyberpunk: "neon-lit cyberpunk cityscape, rain-slicked streets, " \
+               "holographic advertisements, dramatic contrast, " \
+               "cinematic color grading in cool tones, blade runner aesthetic",
+    
+    # Samurai/Epic (from awesome-grok)
+    epic: "dramatic composition, standing on rocky cliff above clouds, " \
+          "cinematic color grading, ethereal atmosphere, " \
+          "flowing robes, serene yet powerful mood",
+    
+    # Fashion editorial
+    fashion: "high fashion editorial, dramatic studio lighting, " \
+             "crisp detailed line art, bold clean shading, " \
+             "professional fashion photography, Vogue aesthetic",
+    
+    # 2000s aesthetic (from nano-banana)
+    retro2000s: "early-2000s digital camera aesthetic, harsh flash, " \
+                "bright blown-out highlights, subtle grain, V6 realism, " \
+                "nostalgic bedroom setting, cluttered vanity",
+    
+    # Professional headshot
+    headshot: "professional headshot, 85mm f/1.8, shallow depth of field, " \
+              "soft diffused studio lighting, neutral background, " \
+              "crisp detail, natural skin texture, confident expression",
+    
+    # === VIDEO TEMPLATES ===
     vid_motion: "Camera: [CAMERA_MOVE]. Subject: [SUBJECT_ACTION]. " \
                 "Golden hour lighting, shallow depth of field, 35mm film aesthetic.",
     
-    # Video - cinematic
     vid_cinematic: "Camera: Slow dolly-in, smooth fluid motion. " \
                    "Subject: Subtle natural movement, slight breathing. " \
                    "Cinematic lighting, film grain, professional grade.",
     
-    # Audio - music
+    vid_action: "Camera: Tracking shot following motion, low angle. " \
+                "Subject: Dynamic movement with realistic momentum. " \
+                "Slow motion 120fps, dramatic lighting, sand/particles catching light.",
+    
+    vid_dialogue: "Camera: Medium shot, slight movement. " \
+                  "Subject: Speaking with natural lip sync, subtle expressions. " \
+                  "Ambient sound matching scene, professional audio.",
+    
+    # === AUDIO TEMPLATES ===
     music_prompt: "Studio-grade production, clear mix, professional mastering. " \
                   "Style: [GENRE]. Mood: [MOOD]. Duration: [LENGTH].",
     
-    # TTS - voice design
+    music_lofi: "lo-fi hip hop beat, warm vinyl crackle, jazzy piano chords, " \
+                "relaxed drums, study music vibes, nostalgic atmosphere",
+    
+    music_epic: "epic orchestral soundtrack, sweeping strings, powerful brass, " \
+                "cinematic percussion, emotional crescendo, film score quality",
+    
+    music_edm: "high-energy EDM track, punchy drums, synth leads, " \
+               "build-up and drop, festival-ready, 128 BPM",
+    
+    # === TTS TEMPLATES ===
     tts_voice: "Natural speaking voice, clear enunciation, [EMOTION] tone. " \
-               "Pace: [SPEED]. Accent: [ACCENT]."
+               "Pace: [SPEED]. Accent: [ACCENT].",
+    
+    tts_narrator: "warm storyteller voice, gentle pacing, " \
+                  "audiobook quality, engaging and clear",
+    
+    tts_news: "professional news anchor voice, confident and clear, " \
+              "measured pace, authoritative tone",
+    
+    # === ROLEPLAY TEMPLATES (from awesome-deepseek) ===
+    roleplay: "Third-person narration, describing actions and dialogue. " \
+              "Well-developed paragraphs blending action and dialogue. " \
+              "Dialogue embedded within descriptions, natural rhythm. " \
+              "Dynamic, avoiding repetition, adapting tone to context.",
+    
+    story: "Immersive narrative, vivid sensory details, " \
+           "natural dialogue, character depth, " \
+           "show don't tell, engaging pacing"
   }.freeze
 
   # Quick style suffixes
@@ -2389,7 +2448,11 @@ module Replicate
     neon: ", neon lighting, cyberpunk, vibrant colors",
     minimal: ", minimalist, clean, negative space",
     vintage: ", vintage aesthetic, film grain, muted colors",
-    hdr: ", HDR, high dynamic range, vivid colors"
+    hdr: ", HDR, high dynamic range, vivid colors",
+    anime: ", anime style, cel shading, vibrant",
+    dark: ", dark moody atmosphere, dramatic shadows, noir",
+    bright: ", bright and airy, soft natural light, clean",
+    dreamy: ", dreamy ethereal atmosphere, soft focus, pastel tones"
   }.freeze
 
   # Model categories for wild chain
