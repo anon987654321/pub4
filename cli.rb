@@ -1703,6 +1703,10 @@ module Log
   def self.info(msg) = VERBOSE ? log(:info, msg) : nil
   def self.ok(msg) = log(:ok, msg)
   def self.debug(msg) = VERBOSE ? log(:debug, msg) : nil
+  def self.dmesg(subsys, unit, status, meta = {})
+    parts = meta.map { |k, v| "#{k}=#{v}" }.join(" ")
+    puts "#{subsys}0: #{unit} #{status}#{parts.empty? ? '' : " (#{parts})"}"
+  end
 end
 class Spinner
   def initialize(message)
@@ -2943,26 +2947,39 @@ class AutoEngine
   private
   def process_with_transaction(file_path, language, read_only)
     backup = Rollback.save(file_path) unless read_only
-    Log.info("Auto-processing #{file_path} (#{language})")
+    file_size = File.size(file_path) rescue 0
+    line_count = File.read(file_path, encoding: "UTF-8").lines.size rescue 0
+    puts "proc0: #{file_path} (#{language}, #{line_count} lines, #{file_size} bytes)"
     if %w[shell zsh].include?(language)
       code = File.read(file_path, encoding: "UTF-8")
       openbsd_cfg = @constitution.raw.dig("openbsd") || {}
       config_map = openbsd_cfg["configs"] || {}
       base_url = openbsd_cfg["man_base_url"] || "https://man.openbsd.org"
       cache_ttl = openbsd_cfg["cache_ttl"] || 86400
+      t0 = Time.now
       configs = Core::OpenBSDConfig.extract_configs(code, config_map)
       if configs.any?
-        Log.info("Found #{configs.size} embedded OpenBSD configs (in memory):")
+        puts "conf0: extracted #{configs.size} embedded configs in #{((Time.now - t0) * 1000).to_i}ms"
         fixes_to_apply = []
-        configs.each do |cfg|
-          Log.info("  • #{cfg[:name]} → #{cfg[:daemon]} (man: #{cfg[:man_page]})")
+        configs.each_with_index do |cfg, idx|
+          cfg_lines = cfg[:content].lines.size
+          puts "conf#{idx + 1}: #{cfg[:name]} at #{cfg[:path]} (#{cfg_lines} lines)"
+          puts "  daemon: #{cfg[:daemon]}, man: #{cfg[:man_page]}"
+          t1 = Time.now
           man_content = Core::OpenBSDConfig.fetch_man_page(cfg[:man_page], base_url, cache_ttl)
-          Log.info("    ↳ Fetched #{base_url}/#{cfg[:man_page]}") if man_content
+          if man_content
+            puts "  man0: fetched #{base_url}/#{cfg[:man_page]} (#{man_content.size} bytes, #{((Time.now - t1) * 1000).to_i}ms)"
+          else
+            puts "  man0: #{cfg[:man_page]} not available"
+          end
           validation = Core::OpenBSDConfig.validate_config(cfg[:name], cfg[:content], config_map)
           if validation[:warnings].any?
-            validation[:warnings].each { |w| Log.warn("    #{w}") }
+            validation[:warnings].each_with_index do |w, wi|
+              puts "  warn#{wi}: #{w}"
+            end
             unless read_only
               man_summary = man_content || "Man page not available"
+              t2 = Time.now
               fixed_content = Core::OpenBSDConfig.generate_fix(cfg, validation[:warnings], man_summary, @llm)
               if fixed_content && fixed_content != cfg[:content]
                 fixes_to_apply << {
@@ -2971,22 +2988,24 @@ class AutoEngine
                   old_content: cfg[:content],
                   new_content: fixed_content
                 }
-                Log.ok("    Generated fix for #{cfg[:name]}")
+                delta = fixed_content.lines.size - cfg_lines
+                puts "  fix0: generated in #{((Time.now - t2) * 1000).to_i}ms (#{delta >= 0 ? '+' : ''}#{delta} lines)"
                 puts "#{Dmesg.dim}    - #{cfg[:content].lines.first&.strip&.slice(0, 60)}#{Dmesg.reset}"
                 puts "#{Dmesg.green}    + #{fixed_content.lines.first&.strip&.slice(0, 60)}#{Dmesg.reset}"
               end
             end
           else
-            Log.ok("    No issues found")
+            puts "  valid: no issues"
           end
         end
         if fixes_to_apply.any? && !read_only
           puts
-          Log.info("Applying #{fixes_to_apply.size} fixes to #{file_path}...")
+          puts "apply0: #{fixes_to_apply.size} fixes to #{file_path}"
           if Core::OpenBSDConfig.apply_fixes_to_source(file_path, fixes_to_apply)
-            Log.ok("Fixed #{fixes_to_apply.size} embedded configs in place")
+            new_size = File.size(file_path) rescue 0
+            puts "apply0: done (#{file_size} -> #{new_size} bytes)"
           else
-            Log.warn("No changes applied (patterns not matched)")
+            puts "apply0: no patterns matched"
           end
         end
         puts
@@ -3505,6 +3524,7 @@ class CLI
     end
   end
   def process_targets(targets)
+    @results = [] # Clear results for new scan
     targets.each do |t|
       if File.directory?(t)
         Log.info("#{Dmesg.icon(:folder)} Entering: #{t}") unless Options.quiet
