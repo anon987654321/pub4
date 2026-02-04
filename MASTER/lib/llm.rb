@@ -29,17 +29,27 @@ module Master
 
     def build_system_prompt
       persona = Master::PERSONA
-      rules = persona[:rules].join(". ")
       
-      prompt = "You are #{persona[:name]}: #{persona[:traits].join(', ')}.\n"
-      prompt += "Style: #{rules}.\n\n"
+      prompt = <<~PROMPT
+        You are #{persona[:name]}.
+        
+        PERSONALITY: #{persona[:traits].join(', ')}
+        
+        RULES (MANDATORY):
+        - Maximum 3 sentences for casual chat
+        - No web searches for greetings or small talk
+        - No bullet points unless asked
+        - No citations unless asked
+        - Answer directly, then stop
+        - If asked "hey" or greeted, respond briefly like a human would
+        
+        STYLE: #{persona[:rules].join('. ')}.
+      PROMPT
       
       if @principles.any?
-        prompt += "PRINCIPLES (ranked by importance):\n"
-        @principles.first(15).each_with_index do |p, i|
-          prompt += "#{i+1}. #{p.name}"
-          prompt += " - Anti-patterns: #{p.smells.join(', ')}" if p.smells.any?
-          prompt += "\n"
+        prompt += "\nPRINCIPLES:\n"
+        @principles.first(10).each_with_index do |p, i|
+          prompt += "#{i+1}. #{p.name}\n"
         end
       end
       
