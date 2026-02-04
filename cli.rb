@@ -2724,7 +2724,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.68"
+  VERSION = "49.69"
 
   def self.boot
     return if Options.quiet
@@ -5715,27 +5715,53 @@ class CLI
       replicate_chain(prompt)
     when "wild"
       replicate_wild(prompt)
-    when "search"
-      replicate_search(prompt)
+    when "find", "search", "?"
+      replicate_find(prompt)
+    when "top", "popular", "hot"
+      replicate_top(prompt)
+    when "pick"
+      replicate_pick
     when "styles"
       puts "Styles: #{Replicate::STYLES.keys.join(', ')}"
-      puts "Usage: rep img +photo cyberpunk city"
+      puts "Usage: rep img +film woman in cafe"
     when "templates"
-      puts "Templates:"
-      Replicate::TEMPLATES.each { |k, v| puts "  #{k}: #{v[0..60]}..." }
-    when "help", "?"
-      puts "rep img <prompt>     image (nano-banana-pro)"
-      puts "rep vid <prompt>     video (veo-3.1 w/ audio)"
-      puts "rep audio <prompt>   music (elevenlabs)"
-      puts "rep tts <text>       speech (qwen3-tts)"
-      puts "rep wild <prompt>    random chain"
-      puts "rep styles           list +style suffixes"
-      puts "rep templates        list @template prefixes"
-      puts "@portrait @product @cinematic @anime  templates"
-      puts "+photo +film +neon +minimal +vintage  styles"
+      puts "Templates: #{Replicate::TEMPLATES.keys.join(', ')}"
+      puts "Usage: rep img @portrait woman with red hair"
+    when "help"
+      replicate_help
     else
-      puts "try: rep img, vid, audio, tts, wild, styles"
+      # Default: show quick help
+      puts "rep img|vid|audio|tts <prompt>  generate"
+      puts "rep find <query>                search models"
+      puts "rep top [img|vid|audio]         popular models"
+      puts "rep pick                        interactive picker"
+      puts "rep help                        full help"
     end
+  end
+
+  def replicate_help
+    puts <<~HELP
+      GENERATE
+        rep img <prompt>   image (nano-banana-pro)
+        rep vid <prompt>   video (veo-3.1 w/ audio)
+        rep audio <prompt> music (elevenlabs)
+        rep tts <text>     speech (qwen3-tts)
+        rep wild <prompt>  random model chain
+      
+      DISCOVER
+        rep find <query>   search 50k+ models
+        rep top [category] popular by category
+        rep pick           interactive model picker
+      
+      MODIFIERS
+        @portrait @product @cinematic @anime   templates
+        +photo +film +neon +minimal +vintage   styles
+      
+      EXAMPLE
+        rep img @portrait woman +film
+        rep find upscale
+        rep top vid
+    HELP
   end
 
   def replicate_api(method, path, body = nil)
@@ -5847,8 +5873,83 @@ class CLI
     system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "wild", prompt)
   end
 
-  def replicate_search(query)
-    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "search", query)
+  def replicate_find(query)
+    return puts("usage: rep find <query>") if query.empty?
+    
+    puts "Searching: #{query}..."
+    res = replicate_api(:get, "/models?query=#{URI.encode_www_form_component(query)}")
+    return unless res
+    
+    data = JSON.parse(res.body)
+    models = data["results"] || []
+    
+    if models.empty?
+      puts "No models found for '#{query}'"
+      return
+    end
+    
+    puts "Found #{models.size} models:\n"
+    models.first(10).each_with_index do |m, i|
+      runs = m["run_count"] ? "#{(m['run_count']/1000.0).round(1)}K runs" : ""
+      puts "  #{i+1}. #{m['owner']}/#{m['name']}"
+      puts "     #{m['description']&.slice(0,60)}..."
+      puts "     #{runs}" unless runs.empty?
+    end
+    puts "\nUse model: rep img --model=owner/name <prompt>"
+  end
+
+  def replicate_top(category = "")
+    # Show curated top models by category
+    categories = {
+      "img" => [:img, :img_fast, :img_edit, :img_openai],
+      "vid" => [:vid, :vid_pro, :vid_physics],
+      "audio" => [:music, :tts],
+      "llm" => [:llm, :llm_agent]
+    }
+    
+    if category.empty?
+      puts "Top models by category:\n"
+      categories.each do |cat, keys|
+        puts "  #{cat}:"
+        keys.each do |k|
+          puts "    #{k}: #{Replicate::MODELS[k]}"
+        end
+      end
+      puts "\nUsage: rep top img"
+    else
+      keys = categories[category] || categories["img"]
+      puts "Top #{category} models:\n"
+      keys.each do |k|
+        puts "  #{k}: #{Replicate::MODELS[k]}"
+      end
+    end
+  end
+
+  def replicate_pick
+    puts "Pick a category:"
+    cats = %w[img vid audio tts wild]
+    cats.each_with_index { |c, i| puts "  #{i+1}. #{c}" }
+    
+    print "> "
+    choice = $stdin.gets&.strip
+    return if choice.nil? || choice.empty?
+    
+    idx = choice.to_i - 1
+    cat = cats[idx] if idx >= 0 && idx < cats.size
+    cat ||= choice  # allow typing name directly
+    
+    print "Prompt: "
+    prompt = $stdin.gets&.strip
+    return if prompt.nil? || prompt.empty?
+    
+    case cat
+    when "img" then replicate_generate(prompt)
+    when "vid" then replicate_video(prompt)
+    when "audio" then replicate_audio(prompt)
+    when "tts" then replicate_tts(prompt)
+    when "wild" then replicate_wild(prompt)
+    else puts "Unknown: #{cat}"
+    end
   end
 
   def replicate_audio(prompt)
