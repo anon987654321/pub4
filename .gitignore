@@ -36,3 +36,8 @@ vendor/bundle/
 # Test coverage
 coverage/
 .coverage
+
+# MASTER specific
+.master_memory/
+.master_backups/
+var/

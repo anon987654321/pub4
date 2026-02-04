@@ -40,6 +40,13 @@ gem "ferrum", "~> 0.15"       # Headless Chrome for web browsing
 # gem "msgpack", "~> 1.7"       # Binary serialization
 
 # -----------------------------------------------------------------------------
+# New Features: Git Memory, Test Gen, Voice (v50.8)
+# -----------------------------------------------------------------------------
+gem "parser", "~> 3.3"        # Ruby AST parsing for test generation
+# gem "ruby-audio", "~> 1.6"    # Audio recording (optional, requires system deps)
+# gem "rugged", "~> 1.7"        # Git library (optional, can use system git)
+
+# -----------------------------------------------------------------------------
 # Development & Testing
 # -----------------------------------------------------------------------------
 group :development, :test do

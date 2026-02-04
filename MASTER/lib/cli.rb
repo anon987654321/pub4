@@ -9,6 +9,8 @@ module Master
       @engine = Engine.new(principles: @principles, llm: @llm)
       @cwd = Dir.pwd
       @session = Memory::Session.new
+      @git_memory = Memory::GitBacked.new
+      @smart_hooks = Git::SmartHooks.new
     end
 
     def run
@@ -55,6 +57,14 @@ module Master
       when "clean" then clean_cache(args.first&.to_i || 7)
       when "cost", "$" then puts @llm.cost_summary
       when "persona" then puts "#{PERSONA[:name]}: #{PERSONA[:traits].join(', ')}"
+      # New commands
+      when "memory" then handle_memory(args)
+      when "hooks" then handle_hooks(args)
+      when "voice" then handle_voice(args)
+      when "graph" then handle_graph(args)
+      when "agent" then handle_agent(args)
+      when "meta-evolve" then handle_meta_evolve(args)
+      when "test-coverage" then handle_test_coverage
       else
         @session&.record(:chat, { input: input })
         puts "Working directory: #{@cwd}\n\n"
@@ -91,6 +101,16 @@ module Master
           smells, sm <path> Detect code smells (Fowler)
           version, v        Show version
           web, w <url>      Browse URL with headless Chrome
+          
+        New Features (v50.8):
+          memory <cmd>      Git-backed memory (search, patterns, sync)
+          hooks <cmd>       Smart pre-commit hooks (install, test, uninstall)
+          voice             Voice-to-code interface
+          graph [--output]  Generate knowledge graph
+          agent <type>      Run principle-specific agents (dry, solid_srp, kiss, perf)
+          meta-evolve       Self-improvement: MASTER analyzes own code
+          test-coverage     Show test coverage for violations
+          
           <anything else>   Chat with LLM
       HELP
     end
@@ -471,6 +491,241 @@ module Master
         File.write(path, content)
         puts "clean0: sanitized #{File.basename(path)}"
       end
+    end
+
+    # New command handlers for v50.8 features
+
+    def handle_memory(args)
+      subcommand = args.shift
+      
+      case subcommand&.downcase
+      when "search"
+        query = args.join(" ")
+        return puts "Usage: memory search <query>" if query.empty?
+        
+        results = @git_memory.search_similar_violations(principle: query)
+        
+        if results.empty?
+          puts "No matching memories found"
+        else
+          puts "Found #{results.size} similar decisions:"
+          results.each_with_index do |entry, i|
+            puts "\n[#{i+1}] #{entry['timestamp']}"
+            puts "  File: #{entry['file']}"
+            puts "  Violation: #{entry.dig('violation', 'principle')}"
+            puts "  Decision: #{entry['decision']}"
+          end
+        end
+        
+      when "patterns"
+        patterns = @git_memory.get_user_patterns
+        
+        if patterns.empty?
+          puts "No patterns recorded yet"
+        else
+          puts "User decision patterns:"
+          patterns.each do |principle, stats|
+            total = stats.values.sum
+            puts "\n#{principle}:"
+            puts "  Fixed: #{stats[:fixed]} (#{percent(stats[:fixed], total)}%)"
+            puts "  Ignored: #{stats[:ignored]} (#{percent(stats[:ignored], total)}%)"
+            puts "  Deferred: #{stats[:deferred]} (#{percent(stats[:deferred], total)}%)"
+          end
+        end
+        
+      when "sync"
+        result = @git_memory.sync_with_remote
+        puts result ? "Memory synced with remote" : "Sync failed"
+        
+      else
+        puts "Usage: memory <search|patterns|sync>"
+      end
+    end
+
+    def handle_hooks(args)
+      subcommand = args.shift
+      
+      case subcommand&.downcase
+      when "install"
+        result = @smart_hooks.install
+        puts result.ok? ? result.value[:message] : "Error: #{result.error}"
+        
+      when "uninstall"
+        result = @smart_hooks.uninstall
+        puts result.ok? ? result.value[:message] : "Error: #{result.error}"
+        
+      when "test"
+        result = @smart_hooks.test
+        if result.ok?
+          puts "Hook test completed:"
+          puts "  Files: #{result.value[:files]}"
+          puts "  Violations: #{result.value[:violations]}"
+          puts "  Cached: #{result.value[:cached]}"
+        else
+          puts "Error: #{result.error}"
+        end
+        
+      else
+        puts "Usage: hooks <install|uninstall|test>"
+      end
+    end
+
+    def handle_voice(args)
+      interface = Voice::Interface.new(llm: @llm)
+      
+      if args.include?("--transcribe")
+        file_index = args.index("--transcribe") + 1
+        audio_file = args[file_index]
+        
+        if audio_file && File.exist?(audio_file)
+          result = interface.transcribe_audio(audio_file)
+          puts result.ok? ? result.value[:text] : "Error: #{result.error}"
+        else
+          puts "Error: Audio file not found"
+        end
+      else
+        interface.start_session
+      end
+    end
+
+    def handle_graph(args)
+      output_file = nil
+      
+      if args.include?("--output")
+        output_index = args.index("--output") + 1
+        output_file = args[output_index] || "var/graph.json"
+      end
+      
+      # Build graph from current analysis state
+      graph = Graph::Knowledge.new
+      
+      puts "Generating knowledge graph..."
+      
+      # Scan current directory for Ruby files
+      ruby_files = Dir.glob("#{@cwd}/**/*.rb").select { |f| File.file?(f) }
+      
+      analysis_results = {}
+      ruby_files.first(20).each do |file|
+        result = @engine.scan(file)
+        if result.ok?
+          issues = result.value[:issues] || []
+          score = [100 - (issues.size * 5), 0].max
+          analysis_results[file] = { violations: issues, score: score }
+        end
+      end
+      
+      graph.build_from_analysis(analysis_results)
+      
+      if output_file
+        FileUtils.mkdir_p(File.dirname(output_file))
+        File.write(output_file, graph.to_json)
+        puts "Graph saved to: #{output_file}"
+      else
+        puts "\nGraph metrics:"
+        metrics = graph.calculate_metrics
+        metrics.each { |k, v| puts "  #{k}: #{v}" }
+      end
+    end
+
+    def handle_agent(args)
+      agent_type = args.shift
+      paths = args
+      
+      case agent_type&.downcase
+      when "dry"
+        agent = Agents::PrincipleAgents::DRYAgent.new(llm: @llm)
+        files = expand_paths(paths)
+        agent.run(files)
+        
+      when "solid_srp", "srp"
+        agent = Agents::PrincipleAgents::SOLIDSRPAgent.new(llm: @llm)
+        files = expand_paths(paths)
+        agent.run(files)
+        
+      when "kiss"
+        agent = Agents::PrincipleAgents::KISSAgent.new(llm: @llm)
+        files = expand_paths(paths)
+        agent.run(files)
+        
+      when "perf", "performance"
+        agent = Agents::PrincipleAgents::PerformanceAgent.new(llm: @llm)
+        files = expand_paths(paths)
+        agent.run(files)
+        
+      when "list"
+        puts "Available agents:"
+        puts "  dry         - PRINCIPLE_DRY: Extract duplicate code"
+        puts "  solid_srp   - SOLID_SRP: Split god classes"
+        puts "  kiss        - PRINCIPLE_KISS: Simplify complex methods"
+        puts "  performance - PRINCIPLE_PERFORMANCE: Fix N+1 queries"
+        
+      when "--all"
+        puts "Running all agents..."
+        files = expand_paths(paths)
+        
+        [
+          Agents::PrincipleAgents::DRYAgent,
+          Agents::PrincipleAgents::SOLIDSRPAgent,
+          Agents::PrincipleAgents::KISSAgent,
+          Agents::PrincipleAgents::PerformanceAgent
+        ].each do |agent_class|
+          puts "\n" + "=" * 60
+          agent = agent_class.new(llm: @llm)
+          agent.run(files)
+        end
+        
+      else
+        puts "Usage: agent <dry|solid_srp|kiss|performance|list|--all> [paths]"
+      end
+    end
+
+    def handle_meta_evolve(args)
+      auto_merge = args.include?("--auto-merge")
+      
+      meta = Evolution::Meta.new(llm: @llm)
+      result = meta.evolve(auto_merge: auto_merge)
+      
+      if result.ok?
+        puts result.value[:message]
+      else
+        puts "Error: #{result.error}"
+      end
+    end
+
+    def handle_test_coverage
+      generator = TestGen::RSpecGenerator.new(llm: @llm)
+      coverage = generator.test_coverage
+      
+      if coverage.empty?
+        puts "No test coverage data found"
+      else
+        puts "Test coverage by principle:"
+        coverage.each do |principle, spec_files|
+          puts "\n#{principle}:"
+          spec_files.each { |f| puts "  - #{f}" }
+        end
+      end
+    end
+
+    def expand_paths(paths)
+      return ["."] if paths.empty?
+      
+      paths.flat_map do |path|
+        full = File.expand_path(path, @cwd)
+        
+        if Dir.exist?(full)
+          Dir.glob("#{full}/**/*.rb").select { |f| File.file?(f) }
+        elsif File.exist?(full)
+          [full]
+        else
+          []
+        end
+      end
+    end
+
+    def percent(value, total)
+      return 0 if total.zero?
+      ((value.to_f / total) * 100).round(1)
     end
   end
 end
