@@ -40,6 +40,9 @@ module Master
       when "principles", "p" then show_principles
       when "scan", "s" then scan_files(args)
       when "analyze", "az" then analyze_files(args)
+      when "review" then review_with_crew(args)
+      when "workflow", "wf" then execute_workflow(args.join(" "))
+      when "optimize" then optimize_costs
       when "smells", "sm" then smell_check(args)
       when "openbsd", "bsd" then openbsd_check(args)
       when "fix", "f" then fix_file(args.first)
@@ -74,6 +77,9 @@ module Master
           principles, p     List loaded principles
           scan, s <path>    Scan file for basic issues
           analyze, az <path> LLM analysis of file/dir
+          review <path> --crew  Multi-agent code review (parallel)
+          workflow, wf "<task>"  Execute natural language workflow
+          optimize costs    Analyze and optimize LLM cost usage
           smells, sm <path> Detect code smells (Fowler)
           openbsd, bsd <sh> Analyze shell script configs
           fix, f <path>     LLM fix file (with confirmation)
@@ -468,6 +474,95 @@ module Master
         File.write(path, content)
         puts "clean0: sanitized #{File.basename(path)}"
       end
+    end
+
+    def review_with_crew(args)
+      return puts "Usage: review <path> [--crew]" if args.empty?
+      
+      path = args.first
+      use_crew = args.include?("--crew")
+      
+      return puts "err: crew mode not specified" unless use_crew
+      
+      full = File.expand_path(path, @cwd)
+      return puts "err: not found: #{path}" unless File.exist?(full)
+      
+      code = File.read(full, encoding: "UTF-8")
+      puts "🔍 Starting multi-agent review of #{File.basename(full)} (#{code.lines.size} lines)"
+      puts
+      
+      crew = Agents::ReviewCrew.new(llm: @llm, principles: @principles)
+      
+      results = crew.review(code, full) do |agent_name, status, count = nil|
+        case status
+        when :started
+          puts "  ▶ #{agent_name}: analyzing..."
+        when :completed
+          puts "  ✓ #{agent_name}: found #{count} findings"
+        end
+      end
+      
+      # Display summary
+      puts "\n" + "=" * 60
+      puts "📊 REVIEW SUMMARY"
+      puts "=" * 60
+      
+      summary = results[:summary]
+      puts "Total findings: #{summary[:total_findings]}"
+      puts "By severity: #{summary[:by_severity].inspect}"
+      puts "Duration: #{sprintf('%.2f', summary[:total_duration])}s"
+      puts
+      
+      # Display synthesis
+      if results[:synthesis]
+        puts "🎯 META-REVIEW"
+        puts "-" * 60
+        puts results[:synthesis]
+        puts
+      end
+      
+      # Display cost
+      puts "[#{@llm.cost_summary}]"
+    end
+
+    def execute_workflow(task_description)
+      return puts "Usage: workflow \"<task description>\"" if task_description.empty?
+      
+      workflow = Workflow::Engine.new(llm: @llm, principles: @principles)
+      results = workflow.execute(task_description)
+      
+      puts "\n" + "=" * 60
+      if results[:success]
+        puts "✓ Workflow completed successfully"
+      else
+        puts "✗ Workflow failed"
+      end
+      puts "=" * 60
+      
+      puts "\n[#{@llm.cost_summary}]"
+    end
+
+    def optimize_costs
+      puts "💰 Cost Optimization Analysis"
+      puts "=" * 60
+      puts "Current session cost: #{@llm.cost_summary}"
+      puts
+      
+      optimizer = Optimizer::CostAware.new(llm: @llm)
+      results = optimizer.optimize_llm_usage
+      
+      if results[:success]
+        applied = results[:applied]
+        if applied&.any?
+          total_savings = applied.sum { |opt| opt[:projected_savings] }
+          puts "\n✓ Applied #{applied.size} optimizations"
+          puts "  Projected savings: $#{sprintf('%.4f', total_savings)}"
+        end
+      else
+        puts "✗ Optimization failed"
+      end
+      
+      puts "\n[#{@llm.cost_summary}]"
     end
   end
 end

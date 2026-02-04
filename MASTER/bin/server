@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+# Load .env if available
+begin
+  require "dotenv/load"
+rescue LoadError
+  # dotenv not installed, use system ENV
+end
+
+require "master"
+require "falcon/command/serve"
+
+# Initialize MASTER
+Master::Boot.run
+
+# Start Falcon server
+puts ">> Starting Falcon web server..."
+puts ">> Listening on http://127.0.0.1:8080"
+puts ">> Press Ctrl+C to stop"
+
+exec "falcon serve -b http://127.0.0.1:8080 -c config.ru"
