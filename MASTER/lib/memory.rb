@@ -5,7 +5,9 @@ require "fileutils"
 module Master
   module Memory
     class Session
-      SESSIONS_DIR = File.join(Master::ROOT, "var", "sessions")
+      def self.sessions_dir
+        @sessions_dir ||= File.join(Master::ROOT, "var", "sessions")
+      end
 
       attr_reader :session_id, :events
 
@@ -13,11 +15,17 @@ module Master
         @session_id = session_id || Time.now.to_i.to_s
         @events = []
         @compressed = nil
-        FileUtils.mkdir_p(SESSIONS_DIR)
+        begin
+          FileUtils.mkdir_p(self.class.sessions_dir)
+        rescue Errno::ENOENT, Errno::EACCES => e
+          # Can't create sessions dir (sandbox restriction) - memory disabled
+          @disabled = true
+        end
       end
 
       # Record every interaction
       def record(event_type, data)
+        return if @disabled
         @events << {
           timestamp: Time.now.iso8601,
           type: event_type.to_s,
@@ -63,7 +71,8 @@ module Master
 
       # Save full session
       def save
-        path = File.join(SESSIONS_DIR, "#{@session_id}.json")
+        return if @disabled
+        path = File.join(self.class.sessions_dir, "#{@session_id}.json")
         File.write(path, {
           session_id: @session_id,
           events: @events,
@@ -73,7 +82,7 @@ module Master
 
       # Load previous session
       def self.load(session_id)
-        path = File.join(SESSIONS_DIR, "#{session_id}.json")
+        path = File.join(sessions_dir, "#{session_id}.json")
         return nil unless File.exist?(path)
 
         data = JSON.parse(File.read(path))
@@ -84,11 +93,14 @@ module Master
 
       # Load most recent compressed session
       def self.load_latest_context
-        files = Dir.glob(File.join(SESSIONS_DIR, "*.compressed.json")).sort.last
+        return "" unless Dir.exist?(sessions_dir)
+        files = Dir.glob(File.join(sessions_dir, "*.compressed.json")).sort.last
         return "" unless files
 
         data = JSON.parse(File.read(files))
         data["compressed"] || ""
+      rescue
+        ""
       end
 
       private
@@ -104,7 +116,8 @@ module Master
       end
 
       def save_compressed
-        path = File.join(SESSIONS_DIR, "#{@session_id}.compressed.json")
+        return if @disabled
+        path = File.join(self.class.sessions_dir, "#{@session_id}.compressed.json")
         File.write(path, {
           session_id: @session_id,
           compressed: @compressed,
