@@ -1585,12 +1585,20 @@ module Dmesg
   VERSION = "49.75"
   def self.boot
     return if Options.quiet
-    t = Time.now.strftime("%b %d %H:%M:%S")
-    puts "master.yml #{VERSION}: #{t}"
-    puts "constitution: #{principle_count} principles"
-    puts "llm: #{llm_status}"
-    puts "tiers: #{tier_list}"
-    puts ""
+    t = Time.now.strftime("%a %b %e %H:%M:%S %Z %Y")
+    puts "master.yml #{VERSION} (GENERIC) ##{build_number}: #{t}"
+    puts "cpu0: #{primary_model}"
+    puts "llm0: #{tier_count} tiers, fallback enabled" if llm_ready?
+    puts "llm0: offline (set OPENROUTER_API_KEY)" unless llm_ready?
+    puts "mem0: #{principle_count} principles loaded"
+    puts "root: #{Dir.pwd}"
+  end
+  def self.primary_model
+    content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol])
+    yaml.dig("llm", "tiers", "fast", "models")&.first || "openrouter/auto"
+  rescue
+    "openrouter/auto"
   end
   def self.tier_count
     content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
