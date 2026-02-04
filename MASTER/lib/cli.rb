@@ -45,6 +45,10 @@ module Master
       when "fix", "f" then fix_file(args.first)
       when "evolve" then evolve_self
       when "web", "w" then browse_web(args)
+      when "image", "img" then generate_image(args.join(" "))
+      when "describe" then describe_image(args.first, args[1..].join(" "))
+      when "persona" then switch_persona(args.first)
+      when "personas" then list_personas
       when "cd" then change_dir(args.first)
       when "ls" then list_dir(args.first || ".")
       when "pwd" then puts @cwd
@@ -54,7 +58,6 @@ module Master
       when "compress" then compress_session
       when "clean" then clean_cache(args.first&.to_i || 7)
       when "cost", "$" then puts @llm.cost_summary
-      when "persona" then puts "#{PERSONA[:name]}: #{PERSONA[:traits].join(', ')}"
       else
         @session&.record(:chat, { input: input })
         puts "Working directory: #{@cwd}\n\n"
@@ -77,12 +80,15 @@ module Master
           clean [days]      Purge old cache/sessions (default: 7)
           compress          Compress session memory
           cost, $           Show session cost
+          describe <img>    Describe image with LLM vision
           evolve            Self-optimize MASTER code
           fix, f <path>     LLM fix file (with confirmation)
           help, ?           Show this help
+          image <prompt>    Generate image via Replicate
           ls [dir]          List directory
           openbsd, bsd <sh> Analyze shell script configs
-          persona           Show current persona
+          persona <name>    Switch persona (lawyer, hacker, etc.)
+          personas          List available personas
           principles, p     List loaded principles
           pwd               Print working directory
           quit, q           Exit
@@ -470,6 +476,54 @@ module Master
       if content != original
         File.write(path, content)
         puts "clean0: sanitized #{File.basename(path)}"
+      end
+    end
+
+    def switch_persona(name)
+      return list_personas unless name
+      result = @llm.switch_persona(name)
+      if result.ok?
+        puts "persona0: #{result.value}"
+      else
+        puts "err: #{result.error}"
+        list_personas
+      end
+    end
+
+    def list_personas
+      puts "Available personas:"
+      Persona.load_all.each do |p|
+        marker = p.name == @llm.persona&.name ? "*" : " "
+        puts "  #{marker} #{p.name}: #{p.traits.join(', ')}"
+      end
+    end
+
+    def generate_image(prompt)
+      return puts "Usage: image <prompt>" if prompt.empty?
+      return puts "err: Set REPLICATE_API_TOKEN" unless Replicate.available?
+      
+      puts "image0: generating..."
+      result = Replicate.generate_image(prompt)
+      if result.ok?
+        puts "image0: saved to #{result.value}"
+      else
+        puts "err: #{result.error}"
+      end
+    end
+
+    def describe_image(path, question = nil)
+      return puts "Usage: describe <image> [question]" unless path
+      full = File.expand_path(path, @cwd)
+      return puts "err: not found: #{path}" unless File.exist?(full)
+      return puts "err: Set REPLICATE_API_TOKEN" unless Replicate.available?
+      
+      question ||= "What is in this image?"
+      puts "vision0: analyzing..."
+      result = Replicate.describe_image(full, question: question)
+      if result.ok?
+        puts result.value
+      else
+        puts "err: #{result.error}"
       end
     end
   end

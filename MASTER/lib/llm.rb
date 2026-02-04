@@ -15,27 +15,34 @@ module Master
       premium: { model: "anthropic/claude-opus-4", cost_per_1k: 0.015 }
     }.freeze
     DEFAULT_TIER = :medium
+    MAX_RETRIES = 3
+    RETRY_DELAYS = [1, 2, 4].freeze  # Exponential backoff
 
     attr_reader :total_cost, :total_tokens
+    attr_accessor :persona
 
-    def initialize(principles: [])
+    def initialize(principles: [], persona: nil)
       @api_key = ENV["OPENROUTER_API_KEY"]
       @base_uri = URI("https://openrouter.ai/api/v1/chat/completions")
       @total_cost = 0.0
       @total_tokens = 0
       @cache_dir = File.join(Master::ROOT, "var", "cache")
       @principles = principles
+      @persona = persona || Persona.load("default")
       @system_prompt = build_system_prompt
       FileUtils.mkdir_p(@cache_dir) rescue nil
     end
 
     def build_system_prompt
-      persona = Master::PERSONA
+      prompt = ""
       
-      prompt = <<~PROMPT
-        You are #{persona[:name]}.
-        
-        PERSONALITY: #{persona[:traits].join(', ')}
+      if @persona
+        prompt = @persona.to_prompt + "\n"
+      else
+        prompt = "PERSONA: default\nTRAITS: direct, concise, clear\n"
+      end
+      
+      prompt += <<~RULES
         
         RESPONSE RULES:
         - Greetings/small talk: 1-2 sentences, no research needed
@@ -43,9 +50,7 @@ module Master
         - Technical questions: be thorough but concise
         - No bullet points unless the answer has multiple items
         - Omit preamble, get to the point
-        
-        STYLE: #{persona[:rules].join('. ')}.
-      PROMPT
+      RULES
       
       if @principles.any?
         prompt += "\nPRINCIPLES:\n"
@@ -55,6 +60,14 @@ module Master
       end
       
       prompt
+    end
+
+    def switch_persona(name)
+      new_persona = Persona.load(name)
+      return Result.err("Persona not found: #{name}") unless new_persona
+      @persona = new_persona
+      @system_prompt = build_system_prompt
+      Result.ok("Switched to #{name}")
     end
 
     def ask(prompt, tier: DEFAULT_TIER, max_tokens: 2048, cache: true)
@@ -69,6 +82,31 @@ module Master
         return Result.ok(cached) if cached
       end
       
+      # Retry with exponential backoff
+      last_error = nil
+      MAX_RETRIES.times do |attempt|
+        result = do_request(prompt, model, max_tokens, tier_config)
+        return result if result.ok?
+        
+        last_error = result.error
+        
+        # Don't retry on auth errors
+        break if last_error.include?("auth") || last_error.include?("key")
+        
+        # Wait before retry
+        sleep(RETRY_DELAYS[attempt] || 4) if attempt < MAX_RETRIES - 1
+      end
+      
+      Result.err(last_error || "Max retries exceeded")
+    end
+
+    def cost_summary
+      "$#{'%.4f' % @total_cost} (#{@total_tokens} tokens)"
+    end
+
+    private
+
+    def do_request(prompt, model, max_tokens, tier_config)
       messages = []
       messages << { role: "system", content: @system_prompt } if @system_prompt
       messages << { role: "user", content: prompt }
@@ -99,7 +137,7 @@ module Master
         @total_cost += cost
         
         # Cache response
-        cache_set(prompt, model, content) if cache
+        cache_set(prompt, model, content)
         
         Result.ok(content)
       else
@@ -109,12 +147,6 @@ module Master
       Result.err(e.message)
     end
 
-    def cost_summary
-      "$#{'%.4f' % @total_cost} (#{@total_tokens} tokens)"
-    end
-
-    private
-
     def cache_key(prompt, model)
       Digest::SHA256.hexdigest("#{model}:#{prompt}")[0..15]
     end
@@ -123,7 +155,6 @@ module Master
       path = File.join(@cache_dir, cache_key(prompt, model))
       return nil unless File.exist?(path)
       data = JSON.parse(File.read(path))
-      # Cache valid for 24 hours
       return nil if Time.now.to_i - data["ts"] > 86400
       data["response"]
     rescue
@@ -134,7 +165,7 @@ module Master
       path = File.join(@cache_dir, cache_key(prompt, model))
       File.write(path, { ts: Time.now.to_i, response: response }.to_json)
     rescue
-      # Ignore cache write failures
+      nil
     end
   end
 end
