@@ -1,6 +1,16 @@
-# MASTER v50.5
+# MASTER v50.6
 
 Constitutional AI code quality enforcer. Principles as files.
+
+## 🆕 What's New in v50.6
+
+- **Falcon Web Server** with real-time streaming (SSE)
+- **Multi-Agent Review Crew** for parallel code analysis
+- **Natural Language Workflow Engine** 
+- **Session Memory Compression** with learning
+- **Cost-Aware Optimizer** for LLM usage
+
+👉 **See [FEATURES.md](FEATURES.md) for complete documentation**
 
 ## Install
 
@@ -8,18 +18,29 @@ Constitutional AI code quality enforcer. Principles as files.
 cd MASTER
 bundle install
 export OPENROUTER_API_KEY=your_key
-ruby bin/cli
+ruby bin/cli        # Start CLI
+# or
+ruby bin/server     # Start web server
 ```
 
 ## Structure
 
 ```
 MASTER/
-├── bin/cli                   # REPL entry point
+├── bin/
+│   ├── cli                   # REPL entry point
+│   └── server                # NEW: Web server launcher
+├── config.ru                 # NEW: Rack config
+├── public/                   # NEW: Static files
 ├── lib/
 │   ├── master.rb             # Loader + persona
+│   ├── app.rb                # NEW: Rack application
 │   ├── principle.rb          # Principle parser
 │   ├── llm.rb                # OpenRouter (4 tiers)
+│   ├── agents/               # NEW: Multi-agent system
+│   ├── workflow/             # NEW: Workflow engine
+│   ├── memory/               # NEW: Compressed sessions
+│   ├── optimizer/            # NEW: Cost optimizer
 │   ├── smells.rb             # Fowler smell detection
 │   ├── openbsd.rb            # OpenBSD config analysis
 │   ├── cli.rb                # REPL
@@ -36,15 +57,29 @@ help              Show help
 principles        List loaded principles
 scan <file>       Basic file checks
 analyze <file>    LLM analysis
+review <file> --crew  NEW: Multi-agent review (parallel)
+workflow "<task>" NEW: Execute natural language workflow
+optimize costs    NEW: Analyze and optimize LLM costs
 smells <file>     Detect code smells (Fowler)
 openbsd <script>  Analyze embedded OpenBSD configs
 fix <file>        LLM fix with confirmation
 evolve            Self-optimize MASTER
 ask <prompt>      Send prompt to LLM
 cost              Show session cost
+compress          NEW: Compress session memory
 persona           Show current persona
 quit              Exit
 <anything>        Chat with LLM
+```
+
+## Web Server Endpoints
+
+```bash
+GET  /health      # Health check with uptime
+POST /analyze     # Code analysis
+POST /chat        # LLM chat with SSE streaming
+GET  /principles  # List all principles
+GET  /            # Static files from public/
 ```
 
 ## Principles
