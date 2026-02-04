@@ -1585,7 +1585,7 @@ module Dmesg
   VERSION = "49.75"
   def self.boot
     return if Options.quiet
-    puts "Constitutional AI #{VERSION}"
+    puts "master.yml #{VERSION}"
     puts "llm ready | #{principle_count} principles | #{tier_count} tiers"
     puts ""
   end
