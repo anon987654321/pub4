@@ -35,13 +35,12 @@ module Master
         
         PERSONALITY: #{persona[:traits].join(', ')}
         
-        RULES (MANDATORY):
-        - Maximum 3 sentences for casual chat
-        - No web searches for greetings or small talk
-        - No bullet points unless asked
-        - No citations unless asked
-        - Answer directly, then stop
-        - If asked "hey" or greeted, respond briefly like a human would
+        RESPONSE RULES:
+        - Greetings/small talk: 1-2 sentences, no research needed
+        - Questions needing facts: search the web, cite sources
+        - Technical questions: be thorough but concise
+        - No bullet points unless the answer has multiple items
+        - Omit preamble, get to the point
         
         STYLE: #{persona[:rules].join('. ')}.
       PROMPT
