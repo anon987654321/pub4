@@ -1,0 +1,42 @@
+# MASTER .gitignore
+
+# Dependencies
+/vendor/
+/.bundle/
+Gemfile.lock
+
+# Environment (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Cache
+/.cache/
+/tmp/
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ruby
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/test/tmp/
+/test/version_tmp/
+
+# Documentation
+/doc/
+/rdoc/
+/.yardoc/
