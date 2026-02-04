@@ -1141,6 +1141,16 @@ module Core
         nil
       end
     end
+    PATTERN_EXPLANATIONS = {
+      "server:" => "nsd/unbound needs server block for daemon config",
+      "zone:" => "nsd requires zone definitions for DNS hosting",
+      "authority" => "acme-client needs authority for Let's Encrypt",
+      "domain" => "acme-client needs domain for cert requests",
+      "set skip on lo" => "pf should skip filtering on loopback",
+      "listen on" => "smtpd needs listen directive for mail",
+      "relay" => "relayd needs relay block for proxying",
+      "permit" => "doas needs permit rules for sudo-like access"
+    }.freeze
     def self.validate_config(config_name, content, config_rules)
       return { valid: true, warnings: [] } unless config_rules
       rules = config_rules[config_name]
@@ -1148,7 +1158,10 @@ module Core
       warnings = []
       (rules["required_patterns"] || []).each do |pattern|
         unless content.include?(pattern)
-          warnings << "Missing required: '#{pattern}'"
+          explanation = PATTERN_EXPLANATIONS[pattern]
+          msg = "Missing required: '#{pattern}'"
+          msg += " (#{explanation})" if explanation
+          warnings << msg
         end
       end
       (rules["warnings"] || []).each do |w|
