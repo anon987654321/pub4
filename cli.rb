@@ -2066,7 +2066,7 @@ class Constitution
     end
   end
   def load_hooks
-    Core::Hooks.load_from_config(@hooks_config)
+    # Hooks loaded from master.yml (optional)
   end
 end
 module FileValidator
