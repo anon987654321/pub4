@@ -325,21 +325,16 @@ module Master
       end
     end
 
-    def show_tree(dir, prefix = "", depth = 0)
+    def show_tree(dir, depth = 0)
       return if depth > 3
       entries = Dir.entries(dir).reject { |e| e.start_with?(".") || %w[node_modules vendor bundle __pycache__].include?(e) }.sort
       
-      entries.each_with_index do |entry, idx|
+      entries.each do |entry|
         path = File.join(dir, entry)
-        is_last = idx == entries.size - 1
-        connector = is_last ? "`-- " : "|-- "
-        
         if File.directory?(path)
-          puts "#{prefix}#{connector}#{entry}/"
-          new_prefix = prefix + (is_last ? "    " : "|   ")
-          show_tree(path, new_prefix, depth + 1)
+          show_tree(path, depth + 1)
         else
-          puts "#{prefix}#{connector}#{entry}"
+          puts path
         end
       end
     end
