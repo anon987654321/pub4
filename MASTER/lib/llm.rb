@@ -8,11 +8,13 @@ require "fileutils"
 module Master
   class LLM
     TIERS = {
-      fast:   { model: "google/gemini-2.0-flash-001", cost_per_1k: 0.0001 },
-      code:   { model: "x-ai/grok-3-mini-beta", cost_per_1k: 0.0005 },
-      medium: { model: "anthropic/claude-sonnet-4", cost_per_1k: 0.003 },
-      strong: { model: "anthropic/claude-opus-4", cost_per_1k: 0.015 }
+      fast:    { model: "google/gemini-2.0-flash-001", cost_per_1k: 0.0001 },
+      code:    { model: "x-ai/grok-3-mini-beta", cost_per_1k: 0.0005 },
+      medium:  { model: "anthropic/claude-sonnet-4", cost_per_1k: 0.003 },
+      strong:  { model: "anthropic/claude-sonnet-4-5-20250514", cost_per_1k: 0.003 },
+      premium: { model: "anthropic/claude-opus-4", cost_per_1k: 0.015 }
     }.freeze
+    DEFAULT_TIER = :strong
 
     attr_reader :total_cost, :total_tokens
 
@@ -55,10 +57,10 @@ module Master
       prompt
     end
 
-    def ask(prompt, tier: :fast, max_tokens: 2048, cache: true)
+    def ask(prompt, tier: DEFAULT_TIER, max_tokens: 2048, cache: true)
       return Result.err("No API key") unless @api_key
       
-      tier_config = TIERS[tier] || TIERS[:fast]
+      tier_config = TIERS[tier] || TIERS[DEFAULT_TIER]
       model = tier_config[:model]
       
       # Check cache first

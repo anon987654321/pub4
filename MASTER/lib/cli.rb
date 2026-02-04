@@ -71,26 +71,26 @@ module Master
     def show_help
       puts <<~HELP
         Commands:
-          help, ?           Show this help
-          principles, p     List loaded principles
-          scan, s <path>    Scan file for basic issues
           analyze, az <path> LLM analysis of file/dir
-          smells, sm <path> Detect code smells (Fowler)
-          openbsd, bsd <sh> Analyze shell script configs
-          fix, f <path>     LLM fix file (with confirmation)
-          evolve            Self-optimize MASTER code
-          web, w <url>      Browse URL with headless Chrome
           ask, a <prompt>   Send prompt to LLM
-          cost, $           Show session cost
-          clean [days]      Purge cache/sessions older than N days (default: 7)
-          persona           Show current persona
-          serve             Start HTTP API server
-          compress          Compress session memory
           cd <dir>          Change directory
+          clean [days]      Purge old cache/sessions (default: 7)
+          compress          Compress session memory
+          cost, $           Show session cost
+          evolve            Self-optimize MASTER code
+          fix, f <path>     LLM fix file (with confirmation)
+          help, ?           Show this help
           ls [dir]          List directory
+          openbsd, bsd <sh> Analyze shell script configs
+          persona           Show current persona
+          principles, p     List loaded principles
           pwd               Print working directory
-          version, v        Show version
           quit, q           Exit
+          scan, s <path>    Scan file for basic issues
+          serve             Start HTTP API server
+          smells, sm <path> Detect code smells (Fowler)
+          version, v        Show version
+          web, w <url>      Browse URL with headless Chrome
           <anything else>   Chat with LLM
       HELP
     end
@@ -429,34 +429,17 @@ module Master
       cutoff = Time.now - (days * 86400)
       cleaned = 0
       
-      # Clean cache
-      cache_dir = File.join(Master::ROOT, "var", "cache")
-      if Dir.exist?(cache_dir)
-        Dir.glob("#{cache_dir}/*").each do |f|
-          next unless File.file?(f)
-          if File.mtime(f) < cutoff
-            File.delete(f)
-            cleaned += 1
-          end
-        end
-      end
+      # Directories to clean
+      dirs = [
+        File.join(Master::ROOT, "var", "cache"),
+        File.join(Master::ROOT, "var", "sessions"),
+        File.join(Master::ROOT, "var", "cache", "man"),
+        File.join(Master::ROOT, "var", "screenshots")
+      ]
       
-      # Clean sessions
-      sessions_dir = File.join(Master::ROOT, "var", "sessions")
-      if Dir.exist?(sessions_dir)
-        Dir.glob("#{sessions_dir}/*").each do |f|
-          next unless File.file?(f)
-          if File.mtime(f) < cutoff
-            File.delete(f)
-            cleaned += 1
-          end
-        end
-      end
-      
-      # Clean man page cache
-      man_dir = File.join(Master::ROOT, "var", "cache", "man")
-      if Dir.exist?(man_dir)
-        Dir.glob("#{man_dir}/*").each do |f|
+      dirs.each do |dir|
+        next unless Dir.exist?(dir)
+        Dir.glob("#{dir}/*").each do |f|
           next unless File.file?(f)
           if File.mtime(f) < cutoff
             File.delete(f)
