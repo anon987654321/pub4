@@ -2344,6 +2344,54 @@ module Replicate
     llm_agent: "moonshotai/kimi-k2.5"        # vision + multi-agent
   }.freeze
 
+  # Prompt templates (from nano-banana guide + repligen.rb patterns)
+  TEMPLATES = {
+    # Image - portrait
+    portrait: "photorealistic portrait, 85mm f/1.8, shallow depth of field, " \
+              "golden hour lighting from 45 degrees, natural skin texture, " \
+              "shot on ARRI Alexa Mini LF, Kodak Vision3 500T color science",
+    
+    # Image - product
+    product: "high-end commercial photography, studio lighting with softbox, " \
+             "clean white background, shallow depth of field, professional product shot",
+    
+    # Image - cinematic
+    cinematic: "cinematic 2.39:1 anamorphic, teal and orange color grading, " \
+               "dramatic rim lighting, shot on Atlas Orion 40mm Anamorphic, " \
+               "horizontal lens flares, film grain texture",
+    
+    # Image - anime
+    anime: "anime style illustration, Studio Ghibli aesthetic, cel shading, " \
+           "vibrant colors, detailed background, soft lighting",
+    
+    # Video - motion (separate Camera: and Subject:)
+    vid_motion: "Camera: [CAMERA_MOVE]. Subject: [SUBJECT_ACTION]. " \
+                "Golden hour lighting, shallow depth of field, 35mm film aesthetic.",
+    
+    # Video - cinematic
+    vid_cinematic: "Camera: Slow dolly-in, smooth fluid motion. " \
+                   "Subject: Subtle natural movement, slight breathing. " \
+                   "Cinematic lighting, film grain, professional grade.",
+    
+    # Audio - music
+    music_prompt: "Studio-grade production, clear mix, professional mastering. " \
+                  "Style: [GENRE]. Mood: [MOOD]. Duration: [LENGTH].",
+    
+    # TTS - voice design
+    tts_voice: "Natural speaking voice, clear enunciation, [EMOTION] tone. " \
+               "Pace: [SPEED]. Accent: [ACCENT]."
+  }.freeze
+
+  # Quick style suffixes
+  STYLES = {
+    photo: ", photorealistic, 8K, ultra-detailed",
+    film: ", 35mm film grain, Kodak Portra 400, nostalgic",
+    neon: ", neon lighting, cyberpunk, vibrant colors",
+    minimal: ", minimalist, clean, negative space",
+    vintage: ", vintage aesthetic, film grain, muted colors",
+    hdr: ", HDR, high dynamic range, vivid colors"
+  }.freeze
+
   # Model categories for wild chain
   WILD_CHAIN = {
     image_gen: %w[
@@ -2676,7 +2724,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.67"
+  VERSION = "49.68"
 
   def self.boot
     return if Options.quiet
@@ -5669,14 +5717,24 @@ class CLI
       replicate_wild(prompt)
     when "search"
       replicate_search(prompt)
+    when "styles"
+      puts "Styles: #{Replicate::STYLES.keys.join(', ')}"
+      puts "Usage: rep img +photo cyberpunk city"
+    when "templates"
+      puts "Templates:"
+      Replicate::TEMPLATES.each { |k, v| puts "  #{k}: #{v[0..60]}..." }
     when "help", "?"
-      puts "rep img <prompt>   image"
-      puts "rep vid <prompt>   video"
-      puts "rep audio <prompt> music"
-      puts "rep tts <text>     speech"
-      puts "rep wild <prompt>  random chain"
+      puts "rep img <prompt>     image (nano-banana-pro)"
+      puts "rep vid <prompt>     video (veo-3.1 w/ audio)"
+      puts "rep audio <prompt>   music (elevenlabs)"
+      puts "rep tts <text>       speech (qwen3-tts)"
+      puts "rep wild <prompt>    random chain"
+      puts "rep styles           list +style suffixes"
+      puts "rep templates        list @template prefixes"
+      puts "@portrait @product @cinematic @anime  templates"
+      puts "+photo +film +neon +minimal +vintage  styles"
     else
-      puts "try: rep img, vid, audio, tts, wild"
+      puts "try: rep img, vid, audio, tts, wild, styles"
     end
   end
 
@@ -5718,11 +5776,13 @@ class CLI
   def replicate_generate(prompt)
     return Log.warn("No prompt") if prompt.empty?
 
-    puts "Generating: #{prompt[0..50]}"
+    # Apply style suffix if +style present
+    final_prompt = apply_replicate_styles(prompt)
+    puts "Generating: #{final_prompt[0..60]}..."
 
     res = replicate_api(:post, "/predictions", {
-      model: "black-forest-labs/flux-schnell",
-      input: { prompt: prompt, num_outputs: 1 }
+      model: Replicate::MODELS[:img],
+      input: { prompt: final_prompt, num_outputs: 1 }
     })
 
     return unless res
@@ -5739,22 +5799,13 @@ class CLI
   def replicate_video(prompt)
     return Log.warn("No prompt") if prompt.empty?
 
-    # First generate image
-    puts "Step 1: Image"
-    res = replicate_api(:post, "/predictions", {
-      model: "black-forest-labs/flux-schnell",
-      input: { prompt: prompt }
-    })
-    return unless res
+    final_prompt = apply_replicate_styles(prompt)
 
-    img_url = replicate_wait(JSON.parse(res.body)["id"], "Image")
-    return unless img_url
-
-    # Then generate video
-    puts "Step 2: Video"
+    # Veo 3.1 generates video with audio directly from text
+    puts "Generating video+audio: #{final_prompt[0..50]}..."
     res = replicate_api(:post, "/predictions", {
-      model: "minimax/video-01",
-      input: { first_frame_image: img_url, prompt: prompt }
+      model: Replicate::MODELS[:vid],
+      input: { prompt: final_prompt, duration: 5, aspect_ratio: "16:9" }
     })
     return unless res
 
@@ -5764,6 +5815,27 @@ class CLI
       download_file(vid_url, filename)
       Log.ok("Saved: #{filename}")
     end
+  end
+
+  def apply_replicate_styles(prompt)
+    result = prompt.dup
+    
+    # Apply @template prefix (e.g., @portrait, @cinematic)
+    Replicate::TEMPLATES.each do |key, template|
+      if result.include?("@#{key}")
+        result.gsub!("@#{key}", "")
+        result = "#{result.strip}, #{template}"
+      end
+    end
+    
+    # Apply +style suffix (e.g., +photo, +film)
+    Replicate::STYLES.each do |key, suffix|
+      if result.include?("+#{key}")
+        result.gsub!("+#{key}", "")
+        result += suffix
+      end
+    end
+    result.strip
   end
 
   def replicate_chain(prompt)
@@ -5781,12 +5853,38 @@ class CLI
 
   def replicate_audio(prompt)
     return Log.warn("no prompt") if prompt.empty?
-    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "audio", prompt)
+
+    puts "Generating music: #{prompt[0..50]}..."
+    res = replicate_api(:post, "/predictions", {
+      model: Replicate::MODELS[:music],
+      input: { prompt: prompt, duration: 30 }
+    })
+    return unless res
+
+    url = replicate_wait(JSON.parse(res.body)["id"], "Music")
+    if url
+      filename = "music_#{Time.now.strftime('%H%M%S')}.mp3"
+      download_file(url, filename)
+      Log.ok("Saved: #{filename}")
+    end
   end
 
   def replicate_tts(text)
     return Log.warn("no text") if text.empty?
-    system("ruby", File.join(File.dirname(__FILE__), "repligen.rb"), "tts", text)
+
+    puts "Generating speech: #{text[0..50]}..."
+    res = replicate_api(:post, "/predictions", {
+      model: Replicate::MODELS[:tts],
+      input: { text: text }
+    })
+    return unless res
+
+    url = replicate_wait(JSON.parse(res.body)["id"], "Speech")
+    if url
+      filename = "speech_#{Time.now.strftime('%H%M%S')}.wav"
+      download_file(url, filename)
+      Log.ok("Saved: #{filename}")
+    end
   end
 
   def download_file(url, filename)
