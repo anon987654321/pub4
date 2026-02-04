@@ -1585,15 +1585,16 @@ module Dmesg
   VERSION = "49.75"
   def self.boot
     return if Options.quiet
-    t = Time.now.strftime("%b %d %H:%M:%S")
-    puts "Constitutional AI #{VERSION} ##{build_number}: #{t}"
-    puts "constitution: #{principle_count} principles loaded"
-    puts "llm: #{llm_status}"
-    puts "tiers: #{tier_list}"
-    puts "root: #{File.basename(Dir.pwd)}/"
+    puts "Constitutional AI #{VERSION}"
+    puts "llm ready | #{principle_count} principles | #{tier_count} tiers"
     puts ""
-    puts "commands: gen, rep, mode, agent, scrape, plan"
-    puts "agents:   snap, whatsapp, tiktok, insta, openclaw"
+  end
+  def self.tier_count
+    content = File.read(File.expand_path("master.yml", __dir__), encoding: "UTF-8", invalid: :replace, undef: :replace)
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol])
+    yaml.dig("llm", "tiers")&.keys&.size || 4
+  rescue
+    4
   end
   def self.build_number
     `git rev-list --count HEAD 2>/dev/null`.strip.then { |c| c.empty? ? "1" : c }
@@ -4864,8 +4865,7 @@ class CLI
       branch = `git branch --show-current 2>/dev/null`.strip rescue ""
       parts << "#{Dmesg.dim}#{branch}#{Dmesg.reset}" unless branch.empty?
     end
-    puts parts.join(' ') unless parts.empty?
-    "#{Dmesg.magenta}>#{Dmesg.reset} "
+    "#{parts.join(' ')} #{Dmesg.magenta}>#{Dmesg.reset} "
   end
   def read_input
     prompt = build_prompt
