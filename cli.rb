@@ -5,7 +5,7 @@
 # master.yml LLM OS - LLM-powered code quality analysis
 #
 # @author master.yml LLM OS
-# @version 49.5
+# @version 49.75
 # @see https://github.com/constitutional-ai/cli
 #
 # This file implements the CLI for master.yml LLM OS, a tool that analyzes
@@ -2904,7 +2904,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.74"
+  VERSION = "49.75"
 
   def self.boot
     return if Options.quiet
@@ -2915,6 +2915,9 @@ module Dmesg
     puts "llm: #{llm_status}"
     puts "tiers: #{tier_list}"
     puts "root: #{File.basename(Dir.pwd)}/"
+    puts ""
+    puts "commands: gen, rep, mode, agent, scrape, plan"
+    puts "agents:   snap, whatsapp, tiktok, insta, openclaw"
   end
 
   def self.build_number
@@ -5590,6 +5593,10 @@ class CLI
         show_learnings
       when /^scrape\s+(.+)/i
         scrape_url($1.strip)
+      when /^agent\s+(\w+)\s*(.*)/i, /^(snap|whatsapp|tiktok|insta|openclaw)\s*(.*)/i
+        launch_agent($1.downcase, $2.strip)
+      when "agents"
+        list_agents
       when "ls", "dir"
         shell_ls(".")
       when /^ls\s+(.+)/, /^dir\s+(.+)/
@@ -6334,17 +6341,13 @@ class CLI
       gen html|css|rb|sh    generate minimalist code
       rep img <prompt>      image generation
       rep vid <prompt>      video generation
-      rep audio <prompt>    music/sound
-      rep tts <text>        text-to-speech
-      rep wild <prompt> N   N random effects chain
-      mode <name>           switch persona (ronin/lawyer/hacker/etc)
-      scrape <url>          fetch webpage content
+      snap|whatsapp|insta   social agents
+      openclaw              universal chatbot
+      mode <name>           switch persona
+      scrape <url>          fetch webpage
       learn <pattern>       record improvement
-      sprawl clean          project
       plan complete         tasks
-      session save/load     state
       run ! <cmd>           shell
-      cost trace status     info
       quit                  exit
     HELP
   end
@@ -6423,6 +6426,95 @@ class CLI
     
     # Store for LLM context
     @last_scrape = result
+  end
+
+  # Social media agents and chatbots
+  AGENTS = {
+    "snap" => {
+      name: "Snapchat Agent",
+      description: "Engagement bot for Snapchat",
+      persona: "casual, fun, emoji-friendly, Gen-Z voice",
+      actions: %w[dm story react add_friend]
+    },
+    "whatsapp" => {
+      name: "WhatsApp Agent", 
+      description: "Business messaging automation",
+      persona: "helpful, professional, multilingual",
+      actions: %w[message broadcast template catalog]
+    },
+    "tiktok" => {
+      name: "TikTok Agent",
+      description: "Content and engagement automation",
+      persona: "trendy, viral-aware, hashtag-savvy",
+      actions: %w[post duet comment follow trend]
+    },
+    "insta" => {
+      name: "Instagram Agent",
+      description: "Feed and DM automation",
+      persona: "aesthetic, influencer-style, visual-first",
+      actions: %w[post story reel dm engage]
+    },
+    "openclaw" => {
+      name: "OpenClaw",
+      description: "Universal AI chatbot framework",
+      persona: "adaptive, context-aware, platform-agnostic",
+      actions: %w[chat respond learn adapt]
+    }
+  }.freeze
+
+  def launch_agent(agent_name, args = "")
+    agent = AGENTS[agent_name]
+    
+    unless agent
+      puts "Unknown agent: #{agent_name}"
+      list_agents
+      return
+    end
+    
+    puts "#{agent[:name]} starting..."
+    puts "Persona: #{agent[:persona]}"
+    puts "Actions: #{agent[:actions].join(', ')}"
+    
+    if args.empty?
+      # Interactive mode
+      puts "\nEnter message (or 'exit'):"
+      loop do
+        print "#{agent_name}> "
+        input = $stdin.gets&.strip
+        break if input.nil? || input == "exit"
+        
+        response = agent_respond(agent_name, input, agent[:persona])
+        puts response
+      end
+    else
+      # Single message mode
+      puts agent_respond(agent_name, args, agent[:persona])
+    end
+  end
+
+  def agent_respond(agent_name, message, persona)
+    return "LLM required for agent responses" unless @tiered&.enabled?
+    
+    prompt = <<~PROMPT
+      You are the #{agent_name} social media agent.
+      Persona: #{persona}
+      
+      Respond to this user message in character:
+      "#{message}"
+      
+      Keep response under 280 chars. No hashtags unless asked.
+    PROMPT
+    
+    @tiered.ask_tier("fast", prompt) || "..."
+  end
+
+  def list_agents
+    puts "Available agents:"
+    AGENTS.each do |key, agent|
+      puts "  #{key.ljust(10)} #{agent[:description]}"
+    end
+    puts "\nLaunch: agent <name> [message]"
+    puts "        snap hello world"
   end
 
   def generate_file(type, name = nil)

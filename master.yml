@@ -31,7 +31,7 @@
 # IDENTITY: What this system is
 identity:
   name: "master.yml LLM OS"
-  version: "49.72"
+  version: "49.75"
   date: "2026-02-04"
   philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
   symbiosis: "cli.rb ⟷ master.yml - neither functions alone"

@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Organic AI Orb</title>
+<script src="https://unpkg.com/css-doodle@0.40.5/css-doodle.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -353,7 +354,23 @@ h1:empty::before {
       <div class="sacred-geometry"></div>
       <div class="presence-ring"></div>
       <div class="blob blob-shape">
-        <!-- Flat white circle - no effects -->
+        <!-- CSS-doodle generative pattern -->
+        <css-doodle>
+          :doodle {
+            @grid: 12x12;
+            @size: 100%;
+            overflow: hidden;
+            border-radius: 50%;
+          }
+          background: @pick(transparent, rgba(255,255,255,0.03));
+          transform: scale(@rand(0.8, 1.2));
+          animation: cell-breathe @rand(4s, 8s) ease-in-out infinite;
+          animation-delay: @rand(-5s, 0s);
+          @keyframes cell-breathe {
+            0%, 100% { opacity: 0.02; }
+            50% { opacity: @rand(0.05, 0.12); }
+          }
+        </css-doodle>
       </div>
     </div>
     <!-- Shadow beneath -->
