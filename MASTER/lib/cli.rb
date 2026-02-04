@@ -327,7 +327,8 @@ module Master
 
     def show_tree(dir, depth = 0)
       return if depth > 3
-      entries = Dir.entries(dir).reject { |e| e.start_with?(".") || %w[node_modules vendor bundle __pycache__].include?(e) }.sort
+      skip = %w[node_modules vendor bundle __pycache__ tmp temp cache .git .svn .hg]
+      entries = Dir.entries(dir).reject { |e| e.start_with?(".") || skip.include?(e) }.sort
       
       entries.each do |entry|
         path = File.join(dir, entry)
