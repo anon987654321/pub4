@@ -206,6 +206,9 @@ module Master
       full = File.expand_path(path, @cwd)
       return puts "err: not found: #{path}" unless File.exist?(full)
       
+      # Clean file before processing
+      clean_file(full)
+      
       content = File.read(full, encoding: "UTF-8")
       ext = File.extname(full).downcase
       lang = { ".rb" => "ruby", ".py" => "python", ".js" => "javascript",
@@ -314,9 +317,36 @@ module Master
         @cwd = new_dir
         Dir.chdir(@cwd)
         puts @cwd
+        
+        # Show tree if entering a directory with code files
+        show_tree(@cwd) if has_code_files?(@cwd)
       else
         puts "err: not a directory: #{path}"
       end
+    end
+
+    def show_tree(dir, prefix = "", depth = 0)
+      return if depth > 3
+      entries = Dir.entries(dir).reject { |e| e.start_with?(".") || %w[node_modules vendor bundle __pycache__].include?(e) }.sort
+      
+      entries.each_with_index do |entry, idx|
+        path = File.join(dir, entry)
+        is_last = idx == entries.size - 1
+        connector = is_last ? "└── " : "├── "
+        
+        if File.directory?(path)
+          puts "#{prefix}#{connector}#{entry}/"
+          new_prefix = prefix + (is_last ? "    " : "│   ")
+          show_tree(path, new_prefix, depth + 1)
+        else
+          puts "#{prefix}#{connector}#{entry}"
+        end
+      end
+    end
+
+    def has_code_files?(dir)
+      Dir.glob("#{dir}/*.{rb,py,js,ts,go,rs,sh,yml}").any? ||
+      Dir.glob("#{dir}/*/*.{rb,py,js,ts,go,rs,sh,yml}").any?
     end
 
     def list_dir(path)
@@ -420,6 +450,28 @@ module Master
       end
       
       puts "clean0: removed #{cleaned} files older than #{days} days"
+    end
+
+    def clean_file(path)
+      content = File.read(path, encoding: "UTF-8")
+      original = content.dup
+      
+      # CRLF → LF
+      content.gsub!("\r\n", "\n")
+      
+      # Trailing whitespace
+      content.gsub!(/[ \t]+$/, "")
+      
+      # Multiple blank lines → single
+      content.gsub!(/\n{3,}/, "\n\n")
+      
+      # Ensure final newline
+      content << "\n" unless content.end_with?("\n")
+      
+      if content != original
+        File.write(path, content)
+        puts "clean0: sanitized #{File.basename(path)}"
+      end
     end
   end
 end
