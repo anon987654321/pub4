@@ -1585,8 +1585,11 @@ module Dmesg
   VERSION = "49.75"
   def self.boot
     return if Options.quiet
-    puts "master.yml #{VERSION}"
-    puts "llm ready | #{principle_count} principles | #{tier_count} tiers"
+    t = Time.now.strftime("%b %d %H:%M:%S")
+    puts "master.yml #{VERSION}: #{t}"
+    puts "constitution: #{principle_count} principles"
+    puts "llm: #{llm_status}"
+    puts "tiers: #{tier_list}"
     puts ""
   end
   def self.tier_count
@@ -2595,6 +2598,14 @@ class LLMClient
   end
   def set_current_file(path)
     @current_file = path
+  end
+  def ask_tier(tier, prompt_or_messages, system_prompt: nil)
+    return nil unless @enabled
+    if prompt_or_messages.is_a?(Array)
+      @tiered&.ask_tier(tier, prompt_or_messages.last[:content], system_prompt: system_prompt || prompt_or_messages.first[:content])
+    else
+      @tiered&.ask_tier(tier, prompt_or_messages, system_prompt: system_prompt)
+    end
   end
   def chat(messages, tier: "medium")
     return nil unless @enabled
