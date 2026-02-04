@@ -2322,36 +2322,52 @@ module Replicate
   API_BASE = "https://api.replicate.com/v1"
   MODEL_DB = File.join(Dir.home, ".constitutional", "replicate_models.db")
 
+  # Default models by category (from replicate.com/explore 2026)
+  MODELS = {
+    # Image generation
+    img: "google/nano-banana-pro",           # 11.7M runs, state of art
+    img_fast: "black-forest-labs/flux-2-klein-4b", # sub-second
+    img_edit: "bytedance/seedream-4.5",      # 2.6M runs
+    img_openai: "openai/gpt-image-1.5",      # best prompt adherence
+    
+    # Video generation  
+    vid: "google/veo-3.1-fast",              # 354K runs, audio included
+    vid_pro: "kwaivgi/kling-v2.6",           # 92K runs, cinematic
+    vid_physics: "pixverse/pixverse-v5.6",   # realistic physics
+    
+    # Audio/Music
+    music: "elevenlabs/music",               # song from prompt
+    tts: "qwen/qwen3-tts",                   # 15.9K runs, clone/design
+    
+    # LLM
+    llm: "google/gemini-3-flash",            # 99K runs, fast
+    llm_agent: "moonshotai/kimi-k2.5"        # vision + multi-agent
+  }.freeze
+
   # Model categories for wild chain
   WILD_CHAIN = {
     image_gen: %w[
-      black-forest-labs/flux-pro
-      black-forest-labs/flux-2-klein-9b
-      stability-ai/sdxl
-      ideogram-ai/ideogram-v2
-      recraft-ai/recraft-v3
+      google/nano-banana-pro
+      black-forest-labs/flux-2-klein-4b
+      bytedance/seedream-4.5
+      openai/gpt-image-1.5
     ],
     video_gen: %w[
-      minimax/video-01
+      google/veo-3.1-fast
       kwaivgi/kling-v2.6
-      luma/ray-2
-      wan-video/wan-2.5-i2v
-      bytedance/seedance-1.5-pro
+      pixverse/pixverse-v5.6
     ],
     enhance: %w[
       nightmareai/real-esrgan
       tencentarc/gfpgan
-      sczhou/codeformer
       lucataco/clarity-upscaler
     ],
     style: %w[
       adirik/depth-anything-v2
-      jagilley/controlnet-canny
       lucataco/remove-bg
     ],
     audio: %w[
-      meta/musicgen
-      suno-ai/bark
+      elevenlabs/music
       qwen/qwen3-tts
     ]
   }.freeze
@@ -2660,7 +2676,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.66"
+  VERSION = "49.67"
 
   def self.boot
     return if Options.quiet
