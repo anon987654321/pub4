@@ -25,18 +25,18 @@
 #   16. PROVIDERS - LLM/infra integrations
 #   17. REFINEMENTS - Version history
 #
-# @version 49.25
+# @version 49.72
 # @see README.md
 ---
 # IDENTITY: What this system is
 identity:
   name: "master.yml LLM OS"
-  version: "49.25"
-  date: "2026-02-03"
+  version: "49.72"
+  date: "2026-02-04"
   philosophy: "Constitutional correctness through LLM reasoning, battle-tested safety"
   symbiosis: "cli.rb ⟷ master.yml - neither functions alone"
   approach: "LLM-native detection, zero regex patterns, sensible defaults"
-  
+
   # Personality: Autonomous project completion assistant
   personality:
     role: "autonomous_engineer"
@@ -73,7 +73,7 @@ identity:
       - "Shipping."
       - "Researched. Here's what works."
       - "Missing feature detected. Adding."
-  
+
   # Persona: Ghost Dog / Hagakure inspired
   personas:
     default: "ronin"
@@ -84,7 +84,7 @@ identity:
         traits: ["stoic", "minimal", "decisive", "loyal"]
         greeting: "I am here."
         style: "Speak only when necessary. Act without hesitation. One task, complete focus."
-      
+
   # Language: Bilingual, Strunk & White style
   language:
     supported:
@@ -107,13 +107,58 @@ identity:
       - "Avoid anglicisms when Norwegian words exist"
       - "Match user's formality level"
     detect_language: true  # Auto-detect and respond in same language
-    
+
   # Future capabilities (planned)
   roadmap:
     - "Mobile deployment (Termux, iOS Shortcuts)"
     - "Sensor monitoring (mic, camera, accelerometer)"
     - "Threat detection (audio/video anomaly analysis)"
     - "Physical security alerts"
+
+# PRESERVE: Patterns that must NEVER be simplified or collapsed
+# "Polish" means refine, not delete. These are intentionally verbose.
+preserve:
+  boot_message:
+    format: "5-line OpenBSD dmesg style"
+    reason: "Diagnostic output, not UI chrome - verbose is correct"
+    example: |
+      Constitutional AI 49.72 #871: Feb 4 00:45:20
+      constitution: 32 principles loaded
+      llm: ready, fallbacks enabled
+      tiers: fast | medium | strong
+      root: pub/
+    never: "Collapse to single cryptic line"
+
+  diagnostic_output:
+    rule: "Structured multi-line output is intentional"
+    examples:
+      - "Boot messages"
+      - "Error traces with context"
+      - "Status reports with subsystems"
+    never: "Compress to cryptic abbreviations (e.g., '32p' instead of '32 principles')"
+
+  help_text:
+    rule: "Help must be scannable and complete"
+    minimum_info:
+      - "Command name and syntax"
+      - "Brief description"
+      - "At least one example"
+    never: "Reduce to single-word hints"
+
+  spinner_feedback:
+    rule: "Progress indicators show elapsed time and status"
+    includes:
+      - "Animated spinner character"
+      - "Task name"
+      - "Elapsed seconds"
+      - "Success/failure result"
+    never: "Silent waits or bare dots"
+
+  polish_rules:
+    - "'Streamline' means remove redundancy, not information"
+    - "'Polish' means refine wording, not delete output"
+    - "'Minimize' applies to tokens in prompts, not diagnostic output"
+    - "When in doubt, keep the verbose version"
 
 # STRUCTURAL ANALYSIS: Questions to ask about any codebase
 # Applied to all projects equally (self or external repos)
@@ -133,7 +178,7 @@ structural_analysis:
     - question: "Is nesting depth appropriate?"
       check: "Max 4 levels deep for readability"
       fix: "Flatten or extract to separate files"
-      
+
   code_hierarchy:
     - question: "Are there too many top-level modules/classes?"
       check: "More than 8-10 top-level namespaces"
@@ -147,7 +192,7 @@ structural_analysis:
     - question: "Is there a clear layering?"
       check: "Core (pure) → Services → Features → CLI"
       fix: "Establish dependency direction"
-      
+
   semantic_clarity:
     - question: "Can a new reader understand the structure in 30 seconds?"
       check: "Clear naming, logical grouping, consistent patterns"
@@ -158,7 +203,7 @@ structural_analysis:
     - question: "Are cross-cutting concerns isolated?"
       check: "Logging, caching, error handling scattered"
       fix: "Extract to dedicated modules"
-      
+
   merge_opportunities:
     - question: "Are there overlapping sections?"
       check: "identity.language vs language_detection, openbsd vs providers.openbsd_amsterdam"
@@ -172,7 +217,7 @@ structural_analysis:
     - question: "Are there orphan sections?"
       check: "Sections with only 1-2 items that belong elsewhere"
       fix: "Merge into parent or related section"
-      
+
   decouple_opportunities:
     - question: "Are there god objects/sections?"
       check: "Single section with 20+ keys doing multiple things"
@@ -338,7 +383,7 @@ structural_analysis:
         kanji: "幽玄"
         meaning: "Profound depth, mystery beneath surface"
         code: "Simple interface hiding sophisticated implementation"
-        
+
     # Western principles
     western:
       - principle: "less_is_more"
@@ -356,7 +401,7 @@ structural_analysis:
       - principle: "orthogonality"
         origin: "Unix philosophy"
         code: "Independent concerns, composable parts"
-        
+
     # Universal smells (anti-aesthetics)
     anti_patterns:
       - smell: "clever_code"
@@ -419,7 +464,7 @@ structural_analysis:
       - check: "unused_imports"
         detect: "require/import without usage"
         fix: "Remove unused dependencies"
-    
+
     # Cross-file DRY violations
     cross_file_dry:
       - check: "duplicate_function_calls"
@@ -444,14 +489,14 @@ structural_analysis:
       - check: "repeated_error_handling"
         detect: "Same rescue pattern in multiple places"
         fix: "Extract to error handling wrapper"
-    
+
     # When to run
     triggers:
       - "During prescan phase"
       - "After each file analysis"
       - "Before commit (if git hook enabled)"
       - "On demand with --refinements flag"
-    
+
     # Output format
     report:
       group_by: "check type"
@@ -472,7 +517,7 @@ structural_analysis:
         action: "Add to cli.rb as new command or check"
       - question: "What external tools/APIs were useful?"
         action: "Add to providers section"
-        
+
     improvement_prompts:
       - "Any merge opportunities of similar or overlapping sections?"
       - "Any defrag or decouple or reflow opportunities?"
@@ -480,7 +525,7 @@ structural_analysis:
       - "Simulate execution from various angles and edge cases"
       - "Does the hierarchy need clearer definition?"
       - "Are there orphan concepts not yet codified?"
-      
+
     self_evolution:
       - trigger: "After every significant refactor"
         action: "Run cli.rb on itself with --fix"
@@ -498,19 +543,19 @@ defaults:
   auto_progress: true      # Progress through phases
   target_score: 100        # Target score (0-100)
   max_iterations: 10       # Max fix iterations per file
-  
+
   # Files
   max_file_size: 1048576   # 1MB limit
   backup: true             # Create backups before changes
   backup_count: 5          # Backups to keep per file
   read_only: false         # Don't modify files
-  
+
   # Detection
   parallel: true           # Enable parallel detection
   convergence_window: 3    # Iterations to check for loops
   convergence_threshold: 0.9  # Similarity threshold for loop detection
   ask_language: true       # Ask user for language if unknown
-  
+
   # Output
   verbose: false           # Verbose output
   colors: true             # Color output (respects NO_COLOR)
@@ -1518,7 +1563,7 @@ providers:
       - streaming
       - prompt_caching
     docs: "https://openrouter.ai/docs"
-    
+
   # ---------------------------------------------------------------------------
   # Replicate: Generative AI models (50k+ models)
   # ---------------------------------------------------------------------------
@@ -1562,7 +1607,7 @@ providers:
       - "flux-fine-tunes"
       - "qwen-image-fine-tunes"
       - "utilities"
-    
+
   # ---------------------------------------------------------------------------
   # Claude/Copilot: GitHub Copilot CLI and Claude Code CLI
   # ---------------------------------------------------------------------------
@@ -1594,7 +1639,7 @@ providers:
       brevity: "extreme"
       anti_sprawl: true
       prescan: true
-      
+
   # ---------------------------------------------------------------------------
   # OpenBSD Amsterdam: VPS hosting on vmm(4)/vmd(8)
   # ---------------------------------------------------------------------------
