@@ -40,6 +40,8 @@ module Master
       when "principles", "p" then show_principles
       when "scan", "s" then scan_files(args)
       when "analyze", "az" then analyze_files(args)
+      when "smells", "sm" then smell_check(args)
+      when "openbsd", "bsd" then openbsd_check(args)
       when "fix", "f" then fix_file(args.first)
       when "evolve" then evolve_self
       when "cd" then change_dir(args.first)
@@ -50,6 +52,7 @@ module Master
       when "serve" then start_server
       when "compress" then compress_session
       when "cost", "$" then puts @llm.cost_summary
+      when "persona" then puts "#{PERSONA[:name]}: #{PERSONA[:traits].join(', ')}"
       else
         @session&.record(:chat, { input: input })
         puts "Working directory: #{@cwd}\n\n"
@@ -70,10 +73,13 @@ module Master
           principles, p     List loaded principles
           scan, s <path>    Scan file for basic issues
           analyze, az <path> LLM analysis of file/dir
+          smells, sm <path> Detect code smells (Fowler)
+          openbsd, bsd <sh> Analyze shell script configs
           fix, f <path>     LLM fix file (with confirmation)
           evolve            Self-optimize MASTER code
           ask, a <prompt>   Send prompt to LLM
           cost, $           Show session cost
+          persona           Show current persona
           serve             Start HTTP API server
           compress          Compress session memory
           cd <dir>          Change directory
@@ -335,6 +341,39 @@ module Master
         puts "Session compressed (#{@session.events.size} events)"
       else
         puts "No events to compress"
+      end
+    end
+
+    def smell_check(paths)
+      return puts "Usage: smells <path>" if paths.empty?
+      
+      paths.each do |path|
+        full = File.expand_path(path, @cwd)
+        return puts "err: not found: #{path}" unless File.exist?(full)
+        
+        code = File.read(full, encoding: "UTF-8")
+        puts "smell0: analyzing #{File.basename(full)} (#{code.lines.size} lines)"
+        
+        results = Smells.analyze(code, full)
+        puts Smells.report(results)
+      end
+    end
+
+    def openbsd_check(paths)
+      return puts "Usage: openbsd <shell-script.sh>" if paths.empty?
+      
+      paths.each do |path|
+        full = File.expand_path(path, @cwd)
+        return puts "err: not found: #{path}" unless File.exist?(full)
+        
+        puts "bsd0: scanning #{File.basename(full)} for embedded configs"
+        results = OpenBSD.analyze_shell_file(full, @llm)
+        
+        if results.empty?
+          puts "bsd0: no OpenBSD configs found"
+        else
+          puts "bsd0: found #{results.size} config(s) with issues"
+        end
       end
     end
   end
