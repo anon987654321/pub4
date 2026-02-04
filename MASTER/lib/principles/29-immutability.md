@@ -4,5 +4,16 @@
 
 tier: functional
 priority: 29
-smells: [mutable_shared_state, defensive_copies_needed]
 auto_fixable: false
+
+## Anti-patterns (violations)
+
+### mutable_shared_state
+- **Smell**: Multiple threads/functions modify same object
+- **Example**: Global config hash modified at runtime
+- **Fix**: Freeze objects, use thread-local copies
+
+### defensive_copies_needed
+- **Smell**: Must copy data to prevent corruption
+- **Example**: `arr.dup` everywhere to avoid mutation
+- **Fix**: Use frozen/immutable data structures by default

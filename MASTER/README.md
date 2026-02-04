@@ -1,126 +1,77 @@
-# MASTER v50.1
+# MASTER v50.5
 
 Constitutional AI code quality enforcer. Principles as files.
 
-## Quick Start
+## Install
 
 ```bash
 cd MASTER
-chmod +x bin/cli bin/serve
+bundle install
 export OPENROUTER_API_KEY=your_key
-./bin/cli
+ruby bin/cli
 ```
 
 ## Structure
 
 ```
 MASTER/
-├── bin/
-│   ├── cli                   # REPL entry point
-│   └── serve                 # HTTP API server
+├── bin/cli                   # REPL entry point
 ├── lib/
-│   ├── master.rb             # Loader
-│   ├── result.rb             # Ok/Err monad
+│   ├── master.rb             # Loader + persona
 │   ├── principle.rb          # Principle parser
-│   ├── sandbox.rb            # OpenBSD pledge/unveil
-│   ├── boot.rb               # Dmesg-style boot
-│   ├── llm.rb                # OpenRouter client (4 tiers)
-│   ├── engine.rb             # Scan/detect
-│   ├── memory.rb             # Session memory compression
-│   ├── server.rb             # Falcon/WEBrick HTTP API
+│   ├── llm.rb                # OpenRouter (4 tiers)
+│   ├── smells.rb             # Fowler smell detection
+│   ├── openbsd.rb            # OpenBSD config analysis
 │   ├── cli.rb                # REPL
-│   └── principles/           # 32 principles + meta
-├── var/
-│   └── sessions/             # Session memory storage
-├── Gemfile
-├── Makefile
-└── README.md
+│   └── principles/           # 32 principles as markdown
+└── var/
+    ├── cache/                # LLM response cache
+    └── sessions/             # Session memory
 ```
 
 ## Commands
 
 ```
-help, ?          Show help
-principles, p    List loaded principles
-scan, s <file>   Scan file for issues
-ask, a <prompt>  Send prompt to LLM
-serve            Start HTTP API server
-compress         Compress session memory
-cd <dir>         Change directory
-ls [dir]         List directory
-pwd              Print working directory
-version, v       Show version
-quit, q          Exit
-<anything else>  Chat with LLM
+help              Show help
+principles        List loaded principles
+scan <file>       Basic file checks
+analyze <file>    LLM analysis
+smells <file>     Detect code smells (Fowler)
+openbsd <script>  Analyze embedded OpenBSD configs
+fix <file>        LLM fix with confirmation
+evolve            Self-optimize MASTER
+ask <prompt>      Send prompt to LLM
+cost              Show session cost
+persona           Show current persona
+quit              Exit
+<anything>        Chat with LLM
 ```
 
-## HTTP API
+## Principles
 
-Start server: `./bin/serve` or from CLI: `serve`
+Each principle file defines:
+- Description and tier
+- Anti-patterns (the violations)
+- For each anti-pattern: smell, example, fix
 
+Example (`01-kiss.md`):
+```markdown
+# KISS (Keep It Simple, Stupid)
+
+### over_engineering
+- **Smell**: Building for hypothetical requirements
+- **Example**: Abstract factory for single implementation
+- **Fix**: Delete abstractions until it hurts
 ```
-GET  /              → { name, version, status }
-GET  /health        → { status, principles }
-GET  /principles    → { principles: [...] }
-POST /scan          → { path: "file.rb" } → issues
-POST /ask           → { prompt: "...", tier: "fast" } → response
-```
-
-## Session Memory
-
-MASTER remembers across sessions:
-- Records all interactions
-- Compresses with LLM at session end
-- Injects context into next session
-
-```bash
-# Compress current session
-compress
-
-# Sessions stored in var/sessions/
-```
-
-## Principles (Fame Order)
-
-1. **KISS** - Keep It Simple, Stupid
-2. **DRY** - Don't Repeat Yourself
-3. **YAGNI** - You Aren't Gonna Need It
-4. **Separation of Concerns**
-5-9. **SOLID** - S, O, L, I, D
-10. **Law of Demeter**
-11. **Composition Over Inheritance**
-12. **Fail Fast**
-13. **Principle of Least Astonishment**
-14. **Command-Query Separation**
-15. **Boy Scout Rule**
-16. **Unix Philosophy**
-17. **Functional Core, Imperative Shell**
-18. **Idempotent Operations**
-19. **Defensive Programming**
-20. **Graceful Degradation**
-21. **Explicit Over Implicit**
-22. **Convention Over Configuration**
-23. **Progressive Disclosure**
-24. **Real-Time Feedback**
-25. **Meaningful Names**
-26. **Small Functions**
-27. **Few Arguments**
-28. **No Side Effects**
-29. **Immutability**
-30. **Pure Functions**
-31. **Cost Transparency** (LLM-specific)
-32. **Cache Aggressively** (LLM-specific)
 
 ## LLM Tiers
 
-- **fast**: gemini-2.0-flash (cheap, quick)
-- **code**: grok-3-mini-beta (code-focused)
-- **medium**: claude-sonnet-4 (balanced)
-- **strong**: claude-opus-4 (highest quality)
-
-## OpenBSD
-
-On OpenBSD, sandbox.rb uses pledge/unveil via Fiddle for security.
+| Tier | Model | Use Case |
+|------|-------|----------|
+| fast | gemini-2.0-flash | Quick queries |
+| code | grok-3-mini-beta | Code analysis |
+| medium | claude-sonnet-4 | Balanced |
+| strong | claude-opus-4 | Complex tasks |
 
 ## License
 
