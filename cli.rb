@@ -2742,12 +2742,17 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.71"
+  VERSION = "49.72"
 
   def self.boot
     return if Options.quiet
-    # Single line boot - Unix minimal
-    puts "#{VERSION} #{principle_count}p #{llm_status} #{File.basename(Dir.pwd)}/"
+    # OpenBSD dmesg-style boot
+    t = Time.now.strftime("%b %d %H:%M:%S")
+    puts "Constitutional AI #{VERSION} ##{build_number}: #{t}"
+    puts "constitution: #{principle_count} principles loaded"
+    puts "llm: #{llm_status}"
+    puts "tiers: #{tier_list}"
+    puts "root: #{File.basename(Dir.pwd)}/"
   end
 
   def self.build_number
