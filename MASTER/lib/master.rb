@@ -2,7 +2,7 @@
 require "singleton"
 
 module Master
-  VERSION = "50.2"
+  VERSION = "50.3"
   ROOT = File.expand_path("..", __dir__)
 end
 
