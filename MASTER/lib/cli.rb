@@ -332,11 +332,11 @@ module Master
       entries.each_with_index do |entry, idx|
         path = File.join(dir, entry)
         is_last = idx == entries.size - 1
-        connector = is_last ? "└── " : "├── "
+        connector = is_last ? "`-- " : "|-- "
         
         if File.directory?(path)
           puts "#{prefix}#{connector}#{entry}/"
-          new_prefix = prefix + (is_last ? "    " : "│   ")
+          new_prefix = prefix + (is_last ? "    " : "|   ")
           show_tree(path, new_prefix, depth + 1)
         else
           puts "#{prefix}#{connector}#{entry}"
