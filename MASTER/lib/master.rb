@@ -1,8 +1,7 @@
 # frozen_string_literal: true
-require "singleton"
 
 module Master
-  VERSION = "50.5"
+  VERSION = "50.6"
   ROOT = File.expand_path("..", __dir__)
   
   # Default persona: ultra-brief, ultra-clear (Strunk & White)
