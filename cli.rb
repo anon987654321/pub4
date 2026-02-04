@@ -186,12 +186,72 @@ begin
   READLINE_AVAILABLE = true
 
   # Tab completion for commands
-  COMMANDS = %w[ls cd pwd cat tree scan fix sprawl clean plan complete session cost trace status help quit exit].freeze
+  COMMANDS = %w[ls cd pwd cat tree scan fix sprawl clean plan complete session cost trace status help quit exit mode scrape].freeze
   Readline.completion_proc = proc do |input|
     COMMANDS.grep(/^#{Regexp.escape(input)}/)
   end
 rescue LoadError
   READLINE_AVAILABLE = false
+end
+
+# Optional: Ferrum headless browser for web scraping
+begin
+  require "ferrum"
+  FERRUM_AVAILABLE = true
+rescue LoadError
+  FERRUM_AVAILABLE = false
+end
+
+# OpenBSD Security: pledge/unveil sandboxing
+# Restricts syscalls and filesystem access for defense in depth
+module Sandbox
+  def self.init
+    return unless RUBY_PLATFORM =~ /openbsd/
+    
+    begin
+      # unveil: restrict filesystem access
+      # Allow read access to essential paths
+      unveil("/home", "r")
+      unveil("/tmp", "rwc")
+      unveil("/usr/local/lib/ruby", "r")
+      unveil("/usr/local/bin", "rx")
+      unveil("/etc/ssl", "r")  # For HTTPS
+      unveil(nil, nil)  # Lock unveil
+      
+      # pledge: restrict syscalls
+      # stdio: basic I/O
+      # rpath/wpath/cpath: file operations
+      # inet: network access (for LLM APIs)
+      # dns: DNS resolution
+      # proc: process control
+      # exec: run external commands
+      # tty: terminal access
+      pledge("stdio rpath wpath cpath inet dns proc exec tty")
+      
+      Log.debug("sandbox: pledge/unveil active") if defined?(Log)
+    rescue => e
+      # pledge/unveil not available or failed - continue without
+      warn "sandbox: #{e.message}" if ENV["DEBUG"]
+    end
+  end
+  
+  private
+  
+  def self.unveil(path, permissions)
+    # Ruby doesn't have native unveil binding, use FFI or syscall
+    # For now, try the openbsd_unveil gem or fall back
+    return unless defined?(OpenBSD)
+    OpenBSD.unveil(path, permissions)
+  rescue NoMethodError
+    # No binding available
+  end
+  
+  def self.pledge(promises)
+    return unless defined?(OpenBSD)
+    OpenBSD.pledge(promises)
+  rescue NoMethodError
+    # No binding available
+  end
 end
 
 # Global CLI options (mutable state)
@@ -2559,8 +2619,110 @@ module Replicate
 end
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHELL MODULE: Natural Language System Administration
+# SCRAPER MODULE: Ferrum-based web scraping with screenshots
+# From ai3/egpt UniversalScraper - headless browser for LLM context
 # ═══════════════════════════════════════════════════════════════════════════════
+module Scraper
+  MAX_DEPTH = 2
+  TIMEOUT = 30
+  SCREENSHOT_DIR = File.join(Dir.home, ".constitutional", "screenshots")
+  
+  # Scrape a URL and return content + optional screenshot
+  # @param url [String] URL to scrape
+  # @param screenshot [Boolean] Capture screenshot
+  # @param depth [Integer] How deep to follow links (0 = single page)
+  # @return [Hash] { content:, screenshot:, links:, title: }
+  def self.fetch(url, screenshot: false, depth: 0)
+    FileUtils.mkdir_p(SCREENSHOT_DIR) if screenshot
+    
+    if FERRUM_AVAILABLE
+      fetch_ferrum(url, screenshot: screenshot, depth: depth)
+    else
+      fetch_simple(url)
+    end
+  rescue => e
+    { error: e.message, url: url }
+  end
+  
+  # Headless browser scrape with full JS rendering
+  def self.fetch_ferrum(url, screenshot: false, depth: 0)
+    browser = Ferrum::Browser.new(
+      timeout: TIMEOUT,
+      headless: true,
+      window_size: [1920, 1080]
+    )
+    
+    browser.goto(url)
+    sleep 1  # Wait for JS to render
+    
+    result = {
+      url: url,
+      title: browser.title,
+      content: browser.body,
+      text: extract_text(browser.body),
+      links: extract_links(browser.body, url)
+    }
+    
+    if screenshot
+      filename = "#{Time.now.to_i}_#{url.gsub(/[^a-z0-9]/i, '_')[0..50]}.png"
+      path = File.join(SCREENSHOT_DIR, filename)
+      browser.screenshot(path: path)
+      result[:screenshot] = path
+    end
+    
+    browser.quit
+    
+    # Recurse for depth > 0
+    if depth > 0 && result[:links].any?
+      result[:children] = result[:links].first(5).map do |link|
+        fetch_ferrum(link, screenshot: false, depth: depth - 1)
+      end
+    end
+    
+    result
+  end
+  
+  # Simple HTTP fetch (fallback when Ferrum unavailable)
+  def self.fetch_simple(url)
+    uri = URI(url)
+    response = Net::HTTP.get_response(uri)
+    
+    {
+      url: url,
+      status: response.code,
+      content: response.body,
+      text: extract_text(response.body),
+      links: extract_links(response.body, url)
+    }
+  rescue => e
+    { error: e.message, url: url }
+  end
+  
+  # Extract readable text from HTML
+  def self.extract_text(html)
+    # Remove scripts, styles, tags
+    text = html.gsub(/<script[^>]*>.*?<\/script>/mi, '')
+    text = text.gsub(/<style[^>]*>.*?<\/style>/mi, '')
+    text = text.gsub(/<[^>]+>/, ' ')
+    text = text.gsub(/\s+/, ' ')
+    text.strip[0..10000]  # Limit size for LLM context
+  end
+  
+  # Extract links from HTML
+  def self.extract_links(html, base_url)
+    links = html.scan(/href=["']([^"']+)["']/i).flatten
+    base = URI(base_url)
+    
+    links.map do |link|
+      begin
+        resolved = URI.join(base, link).to_s
+        resolved if resolved.start_with?('http')
+      rescue
+        nil
+      end
+    end.compact.uniq.first(20)
+  end
+end
 module Shell
   DANGEROUS_COMMANDS = %w[rm rf rmdir mkfs dd format fdisk newfs disklabel].freeze
   PRIVILEGE_COMMANDS = %w[doas sudo su].freeze
@@ -2742,7 +2904,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.73"
+  VERSION = "49.74"
 
   def self.boot
     return if Options.quiet
@@ -3849,7 +4011,106 @@ class Gardener
   end
 end
 
-# Reflection Critic: validates fixes before applying
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEARNING MODULE: Self-improvement through feedback loops
+# Persists learned patterns back to master.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+module Learning
+  MASTER_PATH = File.expand_path("master.yml", __dir__)
+  BACKUP_PATH = File.expand_path("master.yml.bak", __dir__)
+  
+  # Record a learned pattern from user feedback
+  # @param smell [String] What was detected
+  # @param correction [String] What the user corrected it to
+  # @param context [Hash] File path, language, etc.
+  def self.record_correction(smell, correction, context = {})
+    entry = {
+      "id" => "learned_#{Time.now.to_i}",
+      "original_smell" => smell,
+      "correction" => correction,
+      "context" => context,
+      "recorded_at" => Time.now.iso8601,
+      "confirmed" => false
+    }
+    
+    update_master_yml do |yaml|
+      yaml["learned_smells"] ||= []
+      yaml["learned_smells"] << entry
+      yaml["learned_smells"] = yaml["learned_smells"].last(100)  # Keep last 100
+    end
+    
+    Log.ok("Learned: #{smell[0..30]}... → #{correction[0..30]}...")
+    entry
+  end
+  
+  # Confirm a learned pattern (promotes confidence)
+  # @param id [String] The learned_smell id
+  def self.confirm(id)
+    update_master_yml do |yaml|
+      smell = yaml["learned_smells"]&.find { |s| s["id"] == id }
+      if smell
+        smell["confirmed"] = true
+        smell["confirmed_at"] = Time.now.iso8601
+        Log.ok("Confirmed: #{id}")
+      end
+    end
+  end
+  
+  # Promote a learned pattern to a full principle
+  # @param id [String] The learned_smell id
+  # @param principle_name [String] New principle name
+  def self.promote(id, principle_name)
+    update_master_yml do |yaml|
+      smell = yaml["learned_smells"]&.find { |s| s["id"] == id }
+      return Log.warn("Not found: #{id}") unless smell
+      
+      # Add to principles
+      yaml["principles"] ||= {}
+      yaml["principles"][principle_name] = {
+        "priority" => 5,
+        "description" => "Learned: #{smell['correction']}",
+        "learned_from" => id,
+        "promoted_at" => Time.now.iso8601
+      }
+      
+      # Remove from learned_smells
+      yaml["learned_smells"].delete(smell)
+      Log.ok("Promoted #{id} → principle:#{principle_name}")
+    end
+  end
+  
+  # Update master.yml safely with backup
+  def self.update_master_yml
+    # Backup first
+    FileUtils.cp(MASTER_PATH, BACKUP_PATH) if File.exist?(MASTER_PATH)
+    
+    # Read current
+    content = File.read(MASTER_PATH, encoding: "UTF-8")
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol, Time, Date])
+    
+    # Apply changes
+    yield yaml
+    
+    # Write back (preserve comments at top)
+    header = content.lines.take_while { |l| l.start_with?('#') || l.strip.empty? }.join
+    new_content = header + yaml.to_yaml.sub(/^---\n/, "---\n")
+    
+    File.write(MASTER_PATH, new_content, encoding: "UTF-8")
+    true
+  rescue => e
+    Log.warn("Learning failed: #{e.message}")
+    # Restore backup
+    FileUtils.cp(BACKUP_PATH, MASTER_PATH) if File.exist?(BACKUP_PATH)
+    false
+  end
+  
+  # List all learned patterns
+  def self.list
+    content = File.read(MASTER_PATH, encoding: "UTF-8")
+    yaml = YAML.safe_load(content, permitted_classes: [Symbol, Time, Date])
+    yaml["learned_smells"] || []
+  end
+end
 class ReflectionCritic
   def initialize(tiered_llm)
     @tiered = tiered_llm
@@ -5313,6 +5574,22 @@ class CLI
         puts Dir.pwd
       when "status"
         show_status
+      when /^mode\s+(.+)/i, /^persona\s+(.+)/i
+        switch_mode($1.strip)
+      when "mode", "modes", "personas"
+        list_modes
+      when /^gen\s+(\S+)\s+(.+)/i
+        generate_file($1.strip, $2.strip)
+      when /^gen\s+(\S+)/i
+        generate_file($1.strip)
+      when "gen"
+        puts "gen <type> [name]  - html, css, rb, sh, yml, erb"
+      when /^learn\s+(.+)/i
+        record_learning($1)
+      when "learned", "learnings"
+        show_learnings
+      when /^scrape\s+(.+)/i
+        scrape_url($1.strip)
       when "ls", "dir"
         shell_ls(".")
       when /^ls\s+(.+)/, /^dir\s+(.+)/
@@ -6054,11 +6331,15 @@ class CLI
     puts <<~HELP
       ls cd pwd tree cat    navigation
       <path>                analyze
+      gen html|css|rb|sh    generate minimalist code
       rep img <prompt>      image generation
       rep vid <prompt>      video generation
       rep audio <prompt>    music/sound
       rep tts <text>        text-to-speech
       rep wild <prompt> N   N random effects chain
+      mode <name>           switch persona (ronin/lawyer/hacker/etc)
+      scrape <url>          fetch webpage content
+      learn <pattern>       record improvement
       sprawl clean          project
       plan complete         tasks
       session save/load     state
@@ -6066,6 +6347,127 @@ class CLI
       cost trace status     info
       quit                  exit
     HELP
+  end
+
+  def switch_mode(mode_name)
+    personas = @constitution.raw_config.dig("identity", "personas", "available") || {}
+    
+    if personas[mode_name]
+      @current_mode = mode_name
+      persona = personas[mode_name]
+      
+      # Load knowledge sources if defined
+      if persona["knowledge_sources"]
+        @knowledge_sources = persona["knowledge_sources"]
+        puts "knowledge: #{@knowledge_sources.size} sources loaded"
+      end
+      
+      puts persona["greeting"] || "Mode: #{mode_name}"
+      puts "focus: #{persona['focus']}" if persona["focus"]
+    else
+      puts "Unknown mode: #{mode_name}"
+      list_modes
+    end
+  end
+  
+  def list_modes
+    personas = @constitution.raw_config.dig("identity", "personas", "available") || {}
+    puts "Available modes:"
+    personas.each do |name, config|
+      current = @current_mode == name ? " *" : ""
+      puts "  #{name}#{current}: #{config['description']}"
+    end
+    puts "\nSwitch: mode <name>"
+  end
+  
+  def record_learning(pattern)
+    # Format: "wrong pattern -> correct pattern"
+    if pattern.include?("->")
+      parts = pattern.split("->", 2).map(&:strip)
+      Learning.record_correction(parts[0], parts[1], { cwd: Dir.pwd })
+    else
+      puts "Format: learn <wrong> -> <correct>"
+      puts "Example: learn 'use puts' -> 'prefer Log.info for structured output'"
+    end
+  end
+  
+  def show_learnings
+    learnings = Learning.list
+    if learnings.empty?
+      puts "No learnings recorded yet"
+      puts "Record with: learn <wrong> -> <correct>"
+    else
+      puts "Learned patterns (#{learnings.size}):"
+      learnings.last(10).each do |l|
+        status = l["confirmed"] ? "✓" : "○"
+        puts "  #{status} #{l['id']}: #{l['original_smell'][0..30]} → #{l['correction'][0..30]}"
+      end
+    end
+  end
+  
+  def scrape_url(url)
+    url = "https://#{url}" unless url.start_with?("http")
+    
+    puts "Fetching: #{url}"
+    result = Scraper.fetch(url, screenshot: FERRUM_AVAILABLE)
+    
+    if result[:error]
+      Log.warn("Scrape failed: #{result[:error]}")
+      return
+    end
+    
+    puts "Title: #{result[:title]}" if result[:title]
+    puts "Text: #{result[:text][0..500]}..." if result[:text]
+    puts "Links: #{result[:links]&.size || 0} found"
+    puts "Screenshot: #{result[:screenshot]}" if result[:screenshot]
+    
+    # Store for LLM context
+    @last_scrape = result
+  end
+
+  def generate_file(type, name = nil)
+    gen_config = @constitution.raw_config.dig("generation", type)
+    
+    unless gen_config
+      puts "Unknown type: #{type}"
+      puts "Available: html, css, rb, sh, yml, erb"
+      return
+    end
+    
+    # Determine filename
+    ext = type == "yml" ? "yml" : type
+    name ||= "new"
+    filename = name.include?(".") ? name : "#{name}.#{ext}"
+    
+    if File.exist?(filename)
+      print "#{filename} exists. Overwrite? [y/N] "
+      return unless $stdin.gets&.strip&.downcase == "y"
+    end
+    
+    # Get template or generate with LLM
+    if gen_config["template"]
+      content = gen_config["template"] % { name: name.capitalize, title: name.capitalize, content: "", body: "echo 'hello'" }
+    elsif @tiered&.enabled?
+      # Use LLM to generate based on rules
+      rules = gen_config["rules"]&.join("\n- ") || ""
+      prompt = <<~PROMPT
+        Generate a minimal #{type} file named #{name}.
+        Follow these rules:
+        - #{rules}
+        
+        Return ONLY the file content, no explanation.
+      PROMPT
+      content = @tiered.ask_tier("medium", prompt)
+    else
+      Log.warn("No template and LLM unavailable")
+      return
+    end
+    
+    File.write(filename, content.strip + "\n", encoding: "UTF-8")
+    Log.ok("Created: #{filename}")
+    
+    # Show rules reminder
+    puts "Style: #{gen_config['rules']&.first}" if gen_config["rules"]
   end
 
   def show_status

@@ -84,6 +84,69 @@ identity:
         traits: ["stoic", "minimal", "decisive", "loyal"]
         greeting: "I am here."
         style: "Speak only when necessary. Act without hesitation. One task, complete focus."
+      
+      lawyer:
+        description: "Norwegian legal expert, child welfare focus"
+        traits: ["precise", "thorough", "advocacy"]
+        greeting: "How can I assist with your legal matter?"
+        knowledge_sources:
+          - "https://lovdata.no/"
+          - "https://bufdir.no/"
+          - "https://sivilombudet.no/"
+          - "https://domstol.no/"
+        focus: "Norwegian law, child welfare, barnevernet cases"
+      
+      hacker:
+        description: "Ethical security researcher, BSD focus"
+        traits: ["curious", "methodical", "paranoid"]
+        greeting: "What system shall we audit?"
+        knowledge_sources:
+          - "https://cve.mitre.org/"
+          - "https://exploit-db.com/"
+          - "https://openbsd.org/security.html"
+          - "https://vuldb.com/"
+        focus: "OpenBSD security, penetration testing, vulnerability research"
+      
+      architect:
+        description: "Parametric design, sustainable buildings"
+        traits: ["creative", "technical", "eco-conscious"]
+        greeting: "What shall we design?"
+        knowledge_sources:
+          - "https://archdaily.com/"
+          - "https://dezeen.com/"
+          - "https://designboom.com/"
+        focus: "Parametric geometry, BIM, sustainable materials"
+      
+      sysadmin:
+        description: "OpenBSD server administration"
+        traits: ["careful", "backup-first", "minimal"]
+        greeting: "System ready."
+        knowledge_sources:
+          - "https://man.openbsd.org/"
+          - "https://openbsd.org/faq/"
+          - "https://undeadly.org/"
+        focus: "OpenBSD, pf firewall, httpd, relayd, vmm"
+      
+      trader:
+        description: "Crypto and stock market analysis"
+        traits: ["analytical", "risk-aware", "data-driven"]
+        greeting: "Markets are open."
+        knowledge_sources:
+          - "https://tradingview.com/"
+          - "https://coingecko.com/"
+          - "https://defillama.com/"
+        focus: "Technical analysis, DeFi, risk management"
+      
+      medic:
+        description: "Medical research assistant"
+        traits: ["evidence-based", "cautious", "thorough"]
+        greeting: "How may I assist?"
+        knowledge_sources:
+          - "https://pubmed.ncbi.nlm.nih.gov/"
+          - "https://helsenorge.no/"
+          - "https://felleskatalogen.no/"
+        focus: "Medical literature, Norwegian healthcare, drug interactions"
+        disclaimer: "Not a substitute for professional medical advice"
 
   # Language: Bilingual, Strunk & White style
   language:
@@ -414,6 +477,141 @@ structural_analysis:
         fix: "Abstractions should reduce complexity, not add"
       - smell: "magic_numbers"
         fix: "Named constants with meaning"
+
+# CODE GENERATION: Templates for ultra-minimalist code
+# Used by `gen` command to scaffold new files
+generation:
+  # Style rules for all generated code
+  style:
+    - "No comments unless absolutely necessary"
+    - "No ASCII art or decorative elements"
+    - "Minimal whitespace, but generous line breaks between sections"
+    - "Semantic naming - names explain purpose"
+    - "Progressive disclosure - simple API, complex internals"
+    - "No dependencies unless essential"
+    - "UTF-8 everywhere, emoji sparingly for status only"
+
+  # HTML: Flat, semantic, no frameworks
+  html:
+    rules:
+      - "Semantic HTML5 (header, main, nav, article, section)"
+      - "No div soup - each element has semantic meaning"
+      - "No class unless styling requires it"
+      - "No inline styles"
+      - "Minimal attributes"
+      - "Self-documenting structure"
+    template: |
+      <!doctype html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>%{title}</title>
+        <link rel="stylesheet" href="style.css">
+      </head>
+      <body>
+        <header><h1>%{title}</h1></header>
+        <main>%{content}</main>
+      </body>
+      </html>
+
+  # CSS: System fonts, CSS variables, no frameworks
+  css:
+    rules:
+      - "CSS custom properties for theming"
+      - "System font stack"
+      - "Mobile-first, minimal breakpoints"
+      - "No !important"
+      - "Logical properties (margin-inline, padding-block)"
+      - "Prefer grid/flexbox over floats"
+      - "Dark mode via prefers-color-scheme"
+    template: |
+      :root {
+        --bg: #fff;
+        --fg: #111;
+        --accent: #06f;
+        --mono: ui-monospace, monospace;
+        --sans: system-ui, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #111; --fg: #eee; }
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        font: 1rem/1.5 var(--sans);
+        background: var(--bg);
+        color: var(--fg);
+        max-width: 60ch;
+        margin: auto;
+        padding: 2rem;
+      }
+
+  # Ruby: Functional core, minimal classes
+  ruby:
+    rules:
+      - "Frozen string literals"
+      - "Single responsibility per method"
+      - "Guard clauses over nested ifs"
+      - "Modules over classes when no state"
+      - "Named parameters for 3+ arguments"
+      - "No monkey patching"
+    template: |
+      # frozen_string_literal: true
+
+      module %{name}
+        def self.call(input)
+          return if input.nil?
+          process(input)
+        end
+
+        def self.process(data)
+          data
+        end
+      end
+
+  # Shell: POSIX-compatible, defensive
+  sh:
+    rules:
+      - "#!/bin/sh for portability, #!/bin/ksh for OpenBSD"
+      - "set -eu (exit on error, undefined vars)"
+      - "Quote all variables"
+      - "Use $() not backticks"
+      - "Check command existence before use"
+      - "Meaningful exit codes"
+    template: |
+      #!/bin/sh
+      set -eu
+
+      main() {
+        %{body}
+      }
+
+      main "$@"
+
+  # ERB: Logic-free views
+  erb:
+    rules:
+      - "No logic in templates - prepare data in controller"
+      - "Partials for repeated elements"
+      - "Semantic HTML structure"
+      - "Escape by default (<%= h(...) %>)"
+    template: |
+      <article>
+        <h2><%= @title %></h2>
+        <p><%= @content %></p>
+      </article>
+
+  # Config (YAML): Flat, documented
+  yml:
+    rules:
+      - "Top-level keys are sections"
+      - "Max 3 levels deep"
+      - "Comments explain non-obvious choices"
+      - "Defaults inline, overrides separate"
+    template: |
+      # %{name} configuration
+      %{name}:
+        enabled: true
 
   # Micro-refinements: Automated code quality checks
   # Run as part of every analysis cycle
