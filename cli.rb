@@ -2344,115 +2344,70 @@ module Replicate
     llm_agent: "moonshotai/kimi-k2.5"        # vision + multi-agent
   }.freeze
 
-  # Prompt templates (from nano-banana guide + repligen.rb patterns)
   # Prompt templates (from nano-banana guide + repligen.rb + awesome repos)
   TEMPLATES = {
-    # === IMAGE TEMPLATES ===
-    # Portrait
-    portrait: "photorealistic portrait, 85mm f/1.8, shallow depth of field, " \
-              "golden hour lighting from 45 degrees, natural skin texture, " \
-              "shot on ARRI Alexa Mini LF, Kodak Vision3 500T color science",
+    # === IMAGE ===
+    portrait:   "photorealistic portrait, 85mm f/1.8, shallow DOF, golden hour 45°, " \
+                "natural skin texture, ARRI Alexa Mini LF, Kodak Vision3 500T",
+    headshot:   "professional headshot, 85mm f/1.8, soft diffused studio lighting, " \
+                "neutral background, crisp detail, confident expression",
+    product:    "commercial product photography, studio softbox lighting, " \
+                "clean white background, shallow DOF, professional",
+    cinematic:  "cinematic 2.39:1 anamorphic, teal/orange grading, dramatic rim light, " \
+                "Atlas Orion 40mm, lens flares, film grain",
+    anime:      "anime illustration, Studio Ghibli aesthetic, cel shading, " \
+                "vibrant colors, detailed background, soft lighting",
+    cyberpunk:  "neon cyberpunk cityscape, rain-slicked streets, holographic ads, " \
+                "dramatic contrast, cool tones, blade runner aesthetic",
+    epic:       "dramatic composition, rocky cliff above clouds, ethereal atmosphere, " \
+                "flowing robes, cinematic grading, serene power",
+    fashion:    "high fashion editorial, dramatic studio lighting, bold shading, " \
+                "crisp details, Vogue aesthetic",
+    retro:      "early-2000s digital aesthetic, harsh flash, blown highlights, " \
+                "subtle grain, nostalgic, V6 realism",
+    minimal:    "minimalist composition, clean lines, negative space, " \
+                "muted tones, elegant simplicity",
     
-    # Product photography
-    product: "high-end commercial photography, studio lighting with softbox, " \
-             "clean white background, shallow depth of field, professional product shot",
+    # === VIDEO ===
+    vid_slow:   "Camera: Slow dolly-in, smooth motion. Subject: Subtle movement, " \
+                "natural breathing. Cinematic lighting, film grain.",
+    vid_action: "Camera: Tracking shot, low angle. Subject: Dynamic movement, " \
+                "realistic momentum. Slow-mo 120fps, dramatic light.",
+    vid_orbit:  "Camera: Smooth 270° orbital. Subject: Centered, micro-movements. " \
+                "Golden hour, shallow DOF, documentary style.",
+    vid_talk:   "Camera: Medium shot, slight sway. Subject: Speaking, lip sync, " \
+                "natural expressions. Ambient audio matching scene.",
     
-    # Cinematic
-    cinematic: "cinematic 2.39:1 anamorphic, teal and orange color grading, " \
-               "dramatic rim lighting, shot on Atlas Orion 40mm Anamorphic, " \
-               "horizontal lens flares, film grain texture",
+    # === AUDIO ===
+    lofi:       "lo-fi hip hop, warm vinyl crackle, jazzy piano, relaxed drums, " \
+                "study vibes, nostalgic atmosphere",
+    epic_music: "epic orchestral, sweeping strings, powerful brass, " \
+                "cinematic percussion, emotional crescendo",
+    edm:        "high-energy EDM, punchy drums, synth leads, build-up and drop, " \
+                "festival-ready, 128 BPM",
+    ambient:    "ambient soundscape, ethereal pads, gentle textures, " \
+                "meditation quality, peaceful atmosphere",
     
-    # Anime/Illustration
-    anime: "anime style illustration, Studio Ghibli aesthetic, cel shading, " \
-           "vibrant colors, detailed background, soft lighting",
-    
-    # Cyberpunk (from awesome-grok)
-    cyberpunk: "neon-lit cyberpunk cityscape, rain-slicked streets, " \
-               "holographic advertisements, dramatic contrast, " \
-               "cinematic color grading in cool tones, blade runner aesthetic",
-    
-    # Samurai/Epic (from awesome-grok)
-    epic: "dramatic composition, standing on rocky cliff above clouds, " \
-          "cinematic color grading, ethereal atmosphere, " \
-          "flowing robes, serene yet powerful mood",
-    
-    # Fashion editorial
-    fashion: "high fashion editorial, dramatic studio lighting, " \
-             "crisp detailed line art, bold clean shading, " \
-             "professional fashion photography, Vogue aesthetic",
-    
-    # 2000s aesthetic (from nano-banana)
-    retro2000s: "early-2000s digital camera aesthetic, harsh flash, " \
-                "bright blown-out highlights, subtle grain, V6 realism, " \
-                "nostalgic bedroom setting, cluttered vanity",
-    
-    # Professional headshot
-    headshot: "professional headshot, 85mm f/1.8, shallow depth of field, " \
-              "soft diffused studio lighting, neutral background, " \
-              "crisp detail, natural skin texture, confident expression",
-    
-    # === VIDEO TEMPLATES ===
-    vid_motion: "Camera: [CAMERA_MOVE]. Subject: [SUBJECT_ACTION]. " \
-                "Golden hour lighting, shallow depth of field, 35mm film aesthetic.",
-    
-    vid_cinematic: "Camera: Slow dolly-in, smooth fluid motion. " \
-                   "Subject: Subtle natural movement, slight breathing. " \
-                   "Cinematic lighting, film grain, professional grade.",
-    
-    vid_action: "Camera: Tracking shot following motion, low angle. " \
-                "Subject: Dynamic movement with realistic momentum. " \
-                "Slow motion 120fps, dramatic lighting, sand/particles catching light.",
-    
-    vid_dialogue: "Camera: Medium shot, slight movement. " \
-                  "Subject: Speaking with natural lip sync, subtle expressions. " \
-                  "Ambient sound matching scene, professional audio.",
-    
-    # === AUDIO TEMPLATES ===
-    music_prompt: "Studio-grade production, clear mix, professional mastering. " \
-                  "Style: [GENRE]. Mood: [MOOD]. Duration: [LENGTH].",
-    
-    music_lofi: "lo-fi hip hop beat, warm vinyl crackle, jazzy piano chords, " \
-                "relaxed drums, study music vibes, nostalgic atmosphere",
-    
-    music_epic: "epic orchestral soundtrack, sweeping strings, powerful brass, " \
-                "cinematic percussion, emotional crescendo, film score quality",
-    
-    music_edm: "high-energy EDM track, punchy drums, synth leads, " \
-               "build-up and drop, festival-ready, 128 BPM",
-    
-    # === TTS TEMPLATES ===
-    tts_voice: "Natural speaking voice, clear enunciation, [EMOTION] tone. " \
-               "Pace: [SPEED]. Accent: [ACCENT].",
-    
-    tts_narrator: "warm storyteller voice, gentle pacing, " \
-                  "audiobook quality, engaging and clear",
-    
-    tts_news: "professional news anchor voice, confident and clear, " \
-              "measured pace, authoritative tone",
-    
-    # === ROLEPLAY TEMPLATES (from awesome-deepseek) ===
-    roleplay: "Third-person narration, describing actions and dialogue. " \
-              "Well-developed paragraphs blending action and dialogue. " \
-              "Dialogue embedded within descriptions, natural rhythm. " \
-              "Dynamic, avoiding repetition, adapting tone to context.",
-    
-    story: "Immersive narrative, vivid sensory details, " \
-           "natural dialogue, character depth, " \
-           "show don't tell, engaging pacing"
+    # === TTS ===
+    narrator:   "warm storyteller voice, gentle pacing, audiobook quality, engaging",
+    news:       "professional news anchor, confident, measured pace, authoritative",
+    casual:     "friendly conversational voice, natural rhythm, approachable tone"
   }.freeze
 
-  # Quick style suffixes
+  # Quick style suffixes (+style appends to prompt)
   STYLES = {
-    photo: ", photorealistic, 8K, ultra-detailed",
-    film: ", 35mm film grain, Kodak Portra 400, nostalgic",
-    neon: ", neon lighting, cyberpunk, vibrant colors",
+    photo:   ", photorealistic, 8K, ultra-detailed",
+    film:    ", 35mm film grain, Kodak Portra 400, nostalgic",
+    neon:    ", neon lighting, cyberpunk, vibrant colors",
     minimal: ", minimalist, clean, negative space",
     vintage: ", vintage aesthetic, film grain, muted colors",
-    hdr: ", HDR, high dynamic range, vivid colors",
-    anime: ", anime style, cel shading, vibrant",
-    dark: ", dark moody atmosphere, dramatic shadows, noir",
-    bright: ", bright and airy, soft natural light, clean",
-    dreamy: ", dreamy ethereal atmosphere, soft focus, pastel tones"
+    hdr:     ", HDR, high dynamic range, vivid colors",
+    anime:   ", anime style, cel shading, vibrant",
+    dark:    ", dark moody, dramatic shadows, noir",
+    bright:  ", bright and airy, soft natural light",
+    dreamy:  ", ethereal atmosphere, soft focus, pastels",
+    sharp:   ", ultra-sharp, crisp details, high clarity",
+    soft:    ", soft focus, gentle blur, romantic"
   }.freeze
 
   # Model categories for wild chain
@@ -2787,7 +2742,7 @@ module Cursor
 end
 
 module Dmesg
-  VERSION = "49.69"
+  VERSION = "49.71"
 
   def self.boot
     return if Options.quiet
@@ -5793,37 +5748,44 @@ class CLI
     when "help"
       replicate_help
     else
-      # Default: show quick help
-      puts "rep img|vid|audio|tts <prompt>  generate"
-      puts "rep find <query>                search models"
-      puts "rep top [img|vid|audio]         popular models"
-      puts "rep pick                        interactive picker"
-      puts "rep help                        full help"
+      # Default: show compact help
+      puts "rep img|vid|audio|tts <prompt>   generate content"
+      puts "rep find|top|pick                discover models"
+      puts "rep styles|templates             list modifiers"
+      puts "rep help                         full reference"
     end
   end
 
   def replicate_help
     puts <<~HELP
-      GENERATE
-        rep img <prompt>   image (nano-banana-pro)
-        rep vid <prompt>   video (veo-3.1 w/ audio)
-        rep audio <prompt> music (elevenlabs)
-        rep tts <text>     speech (qwen3-tts)
-        rep wild <prompt>  random model chain
-      
-      DISCOVER
-        rep find <query>   search 50k+ models
-        rep top [category] popular by category
-        rep pick           interactive model picker
-      
-      MODIFIERS
-        @portrait @product @cinematic @anime   templates
-        +photo +film +neon +minimal +vintage   styles
-      
-      EXAMPLE
-        rep img @portrait woman +film
-        rep find upscale
-        rep top vid
+      ╭─ GENERATE ────────────────────────────────────╮
+      │ rep img <prompt>    image (nano-banana-pro)   │
+      │ rep vid <prompt>    video+audio (veo-3.1)     │
+      │ rep audio <prompt>  music (elevenlabs)        │
+      │ rep tts <text>      speech (qwen3-tts)        │
+      │ rep wild <prompt>   random model chain        │
+      ╰───────────────────────────────────────────────╯
+      ╭─ DISCOVER ────────────────────────────────────╮
+      │ rep find <query>    search 50k+ models        │
+      │ rep top [category]  popular by category       │
+      │ rep pick            interactive picker        │
+      ╰───────────────────────────────────────────────╯
+      ╭─ TEMPLATES (@) ───────────────────────────────╮
+      │ @portrait @headshot @product @cinematic       │
+      │ @anime @cyberpunk @epic @fashion @retro       │
+      │ @vid_slow @vid_action @vid_orbit @vid_talk    │
+      │ @lofi @epic_music @edm @ambient               │
+      │ @narrator @news @casual                       │
+      ╰───────────────────────────────────────────────╯
+      ╭─ STYLES (+) ──────────────────────────────────╮
+      │ +photo +film +neon +minimal +vintage +hdr     │
+      │ +anime +dark +bright +dreamy +sharp +soft     │
+      ╰───────────────────────────────────────────────╯
+      Examples:
+        rep img @portrait woman with red hair +film
+        rep vid @vid_slow ocean waves at sunset
+        rep audio @lofi rainy night study session
+        rep tts @narrator Once upon a time...
     HELP
   end
 
@@ -5840,24 +5802,42 @@ class CLI
     nil
   end
 
-  def replicate_wait(id, name = "Task")
-    print "#{name}..."
+  def replicate_wait(id, name = "Task", timeout: 300)
+    Cursor.hide
+    spin_chars = %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏]
+    start = Time.now
+    i = 0
+    
     loop do
       sleep 2
       res = replicate_api(:get, "/predictions/#{id}")
-      return nil unless res
+      unless res
+        Cursor.show
+        return nil
+      end
 
       data = JSON.parse(res.body)
+      elapsed = (Time.now - start).to_i
+      
       case data["status"]
       when "succeeded"
-        puts " done"
+        print "\r#{name} ✓ (#{elapsed}s)      \n"
+        Cursor.show
         output = data["output"]
         return output.is_a?(Array) ? output.first : output
       when "failed"
-        puts " failed: #{data['error']}"
+        print "\r#{name} ✗ #{data['error']&.slice(0,40)}      \n"
+        Cursor.show
         return nil
       else
-        print "."
+        print "\r#{spin_chars[i % spin_chars.size]} #{name}... #{elapsed}s"
+        i += 1
+      end
+      
+      if Time.now - start > timeout
+        print "\r#{name} timeout      \n"
+        Cursor.show
+        return nil
       end
     end
   end
@@ -5865,9 +5845,8 @@ class CLI
   def replicate_generate(prompt)
     return Log.warn("No prompt") if prompt.empty?
 
-    # Apply style suffix if +style present
     final_prompt = apply_replicate_styles(prompt)
-    puts "Generating: #{final_prompt[0..60]}..."
+    puts "🖼 #{final_prompt[0..60]}..."
 
     res = replicate_api(:post, "/predictions", {
       model: Replicate::MODELS[:img],
@@ -5877,7 +5856,7 @@ class CLI
     return unless res
     data = JSON.parse(res.body)
 
-    url = replicate_wait(data["id"], "Image")
+    url = replicate_wait(data["id"], "Image", timeout: 60)
     if url
       filename = "gen_#{Time.now.strftime('%H%M%S')}.webp"
       download_file(url, filename)
@@ -5889,16 +5868,15 @@ class CLI
     return Log.warn("No prompt") if prompt.empty?
 
     final_prompt = apply_replicate_styles(prompt)
-
-    # Veo 3.1 generates video with audio directly from text
-    puts "Generating video+audio: #{final_prompt[0..50]}..."
+    puts "🎬 #{final_prompt[0..50]}..."
+    
     res = replicate_api(:post, "/predictions", {
       model: Replicate::MODELS[:vid],
       input: { prompt: final_prompt, duration: 5, aspect_ratio: "16:9" }
     })
     return unless res
 
-    vid_url = replicate_wait(JSON.parse(res.body)["id"], "Video")
+    vid_url = replicate_wait(JSON.parse(res.body)["id"], "Video", timeout: 180)
     if vid_url
       filename = "vid_#{Time.now.strftime('%H%M%S')}.mp4"
       download_file(vid_url, filename)
@@ -5937,9 +5915,9 @@ class CLI
   end
 
   def replicate_find(query)
-    return puts("usage: rep find <query>") if query.empty?
+    return puts("Usage: rep find <query>") if query.empty?
     
-    puts "Searching: #{query}..."
+    puts "Searching: #{query}"
     res = replicate_api(:get, "/models?query=#{URI.encode_www_form_component(query)}")
     return unless res
     
@@ -5947,85 +5925,89 @@ class CLI
     models = data["results"] || []
     
     if models.empty?
-      puts "No models found for '#{query}'"
+      puts "No models found"
       return
     end
     
-    puts "Found #{models.size} models:\n"
-    models.first(10).each_with_index do |m, i|
-      runs = m["run_count"] ? "#{(m['run_count']/1000.0).round(1)}K runs" : ""
-      puts "  #{i+1}. #{m['owner']}/#{m['name']}"
-      puts "     #{m['description']&.slice(0,60)}..."
-      puts "     #{runs}" unless runs.empty?
+    puts ""
+    models.first(8).each_with_index do |m, i|
+      runs = m["run_count"] ? "#{(m['run_count']/1000.0).round(1)}K" : "-"
+      name = "#{m['owner']}/#{m['name']}"
+      desc = m['description']&.slice(0,45) || ""
+      printf "  %d. %-35s %6s  %s\n", i+1, name, runs, desc
     end
-    puts "\nUse model: rep img --model=owner/name <prompt>"
+    puts "\n  Use: rep img --model=owner/name <prompt>"
   end
 
   def replicate_top(category = "")
-    # Show curated top models by category
-    categories = {
-      "img" => [:img, :img_fast, :img_edit, :img_openai],
-      "vid" => [:vid, :vid_pro, :vid_physics],
-      "audio" => [:music, :tts],
-      "llm" => [:llm, :llm_agent]
+    models = {
+      "img"   => { img: "nano-banana-pro", img_fast: "flux-2-klein", img_edit: "seedream-4.5" },
+      "vid"   => { vid: "veo-3.1-fast", vid_pro: "kling-v2.6", vid_physics: "pixverse-v5.6" },
+      "audio" => { music: "elevenlabs/music", tts: "qwen/qwen3-tts" },
+      "llm"   => { llm: "gemini-3-flash", agent: "kimi-k2.5" }
     }
     
-    if category.empty?
-      puts "Top models by category:\n"
-      categories.each do |cat, keys|
+    if category.empty? || !models[category]
+      puts "Top models:"
+      models.each do |cat, items|
         puts "  #{cat}:"
-        keys.each do |k|
-          puts "    #{k}: #{Replicate::MODELS[k]}"
-        end
+        items.each { |k, v| puts "    #{k}: #{v}" }
       end
-      puts "\nUsage: rep top img"
+      puts "\n  rep top img|vid|audio|llm"
     else
-      keys = categories[category] || categories["img"]
-      puts "Top #{category} models:\n"
-      keys.each do |k|
-        puts "  #{k}: #{Replicate::MODELS[k]}"
-      end
+      puts "#{category}:"
+      models[category].each { |k, v| puts "  #{k}: #{Replicate::MODELS[k]}" }
     end
   end
 
   def replicate_pick
-    puts "Pick a category:"
-    cats = %w[img vid audio tts wild]
-    cats.each_with_index { |c, i| puts "  #{i+1}. #{c}" }
+    cats = { 
+      "1" => ["img", "🖼  Image"],
+      "2" => ["vid", "🎬 Video"],
+      "3" => ["audio", "🎵 Music"],
+      "4" => ["tts", "🗣  Speech"],
+      "5" => ["wild", "🎲 Chain"]
+    }
     
+    puts "Select:"
+    cats.each { |k, v| puts "  #{k}. #{v[1]}" }
     print "> "
+    
     choice = $stdin.gets&.strip
     return if choice.nil? || choice.empty?
     
-    idx = choice.to_i - 1
-    cat = cats[idx] if idx >= 0 && idx < cats.size
-    cat ||= choice  # allow typing name directly
+    cat_info = cats[choice]
+    unless cat_info
+      puts "Pick 1-5"
+      return
+    end
     
     print "Prompt: "
     prompt = $stdin.gets&.strip
     return if prompt.nil? || prompt.empty?
     
-    case cat
-    when "img" then replicate_generate(prompt)
-    when "vid" then replicate_video(prompt)
+    case cat_info[0]
+    when "img"   then replicate_generate(prompt)
+    when "vid"   then replicate_video(prompt)
     when "audio" then replicate_audio(prompt)
-    when "tts" then replicate_tts(prompt)
-    when "wild" then replicate_wild(prompt)
-    else puts "Unknown: #{cat}"
+    when "tts"   then replicate_tts(prompt)
+    when "wild"  then replicate_wild(prompt)
     end
   end
 
   def replicate_audio(prompt)
     return Log.warn("no prompt") if prompt.empty?
-
-    puts "Generating music: #{prompt[0..50]}..."
+    
+    final_prompt = apply_replicate_styles(prompt)
+    puts "🎵 #{final_prompt[0..50]}..."
+    
     res = replicate_api(:post, "/predictions", {
       model: Replicate::MODELS[:music],
-      input: { prompt: prompt, duration: 30 }
+      input: { prompt: final_prompt, duration: 30 }
     })
     return unless res
 
-    url = replicate_wait(JSON.parse(res.body)["id"], "Music")
+    url = replicate_wait(JSON.parse(res.body)["id"], "Music", timeout: 120)
     if url
       filename = "music_#{Time.now.strftime('%H%M%S')}.mp3"
       download_file(url, filename)
@@ -6035,15 +6017,17 @@ class CLI
 
   def replicate_tts(text)
     return Log.warn("no text") if text.empty?
-
-    puts "Generating speech: #{text[0..50]}..."
+    
+    final_text = apply_replicate_styles(text)
+    puts "🗣 #{final_text[0..50]}..."
+    
     res = replicate_api(:post, "/predictions", {
       model: Replicate::MODELS[:tts],
-      input: { text: text }
+      input: { text: final_text }
     })
     return unless res
 
-    url = replicate_wait(JSON.parse(res.body)["id"], "Speech")
+    url = replicate_wait(JSON.parse(res.body)["id"], "TTS", timeout: 60)
     if url
       filename = "speech_#{Time.now.strftime('%H%M%S')}.wav"
       download_file(url, filename)
