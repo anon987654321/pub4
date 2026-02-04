@@ -2,24 +2,41 @@
 require "net/http"
 require "json"
 require "uri"
+require "digest"
+require "fileutils"
 
 module Master
   class LLM
     TIERS = {
-      fast:   "google/gemini-2.0-flash-001",
-      code:   "x-ai/grok-3-mini-beta",
-      medium: "anthropic/claude-sonnet-4",
-      strong: "anthropic/claude-opus-4"
+      fast:   { model: "google/gemini-2.0-flash-001", cost_per_1k: 0.0001 },
+      code:   { model: "x-ai/grok-3-mini-beta", cost_per_1k: 0.0005 },
+      medium: { model: "anthropic/claude-sonnet-4", cost_per_1k: 0.003 },
+      strong: { model: "anthropic/claude-opus-4", cost_per_1k: 0.015 }
     }.freeze
+
+    attr_reader :total_cost, :total_tokens
 
     def initialize
       @api_key = ENV["OPENROUTER_API_KEY"]
       @base_uri = URI("https://openrouter.ai/api/v1/chat/completions")
+      @total_cost = 0.0
+      @total_tokens = 0
+      @cache_dir = File.join(Master::ROOT, "var", "cache")
+      FileUtils.mkdir_p(@cache_dir) rescue nil
     end
 
-    def ask(prompt, tier: :fast, max_tokens: 2048)
+    def ask(prompt, tier: :fast, max_tokens: 2048, cache: true)
       return Result.err("No API key") unless @api_key
-      model = TIERS[tier] || TIERS[:fast]
+      
+      tier_config = TIERS[tier] || TIERS[:fast]
+      model = tier_config[:model]
+      
+      # Check cache first
+      if cache
+        cached = cache_get(prompt, model)
+        return Result.ok(cached) if cached
+      end
+      
       body = {
         model: model,
         messages: [{ role: "user", content: prompt }],
@@ -34,13 +51,54 @@ module Master
       req.body = body.to_json
       resp = http.request(req)
       data = JSON.parse(resp.body)
+      
       if data["choices"]&.first
-        Result.ok(data["choices"].first.dig("message", "content"))
+        content = data["choices"].first.dig("message", "content")
+        
+        # Track cost
+        usage = data["usage"] || {}
+        tokens = (usage["total_tokens"] || 0)
+        cost = (tokens / 1000.0) * tier_config[:cost_per_1k]
+        @total_tokens += tokens
+        @total_cost += cost
+        
+        # Cache response
+        cache_set(prompt, model, content) if cache
+        
+        Result.ok(content)
       else
         Result.err(data["error"]&.dig("message") || "Unknown error")
       end
     rescue => e
       Result.err(e.message)
+    end
+
+    def cost_summary
+      "$#{'%.4f' % @total_cost} (#{@total_tokens} tokens)"
+    end
+
+    private
+
+    def cache_key(prompt, model)
+      Digest::SHA256.hexdigest("#{model}:#{prompt}")[0..15]
+    end
+
+    def cache_get(prompt, model)
+      path = File.join(@cache_dir, cache_key(prompt, model))
+      return nil unless File.exist?(path)
+      data = JSON.parse(File.read(path))
+      # Cache valid for 24 hours
+      return nil if Time.now.to_i - data["ts"] > 86400
+      data["response"]
+    rescue
+      nil
+    end
+
+    def cache_set(prompt, model, response)
+      path = File.join(@cache_dir, cache_key(prompt, model))
+      File.write(path, { ts: Time.now.to_i, response: response }.to_json)
+    rescue
+      # Ignore cache write failures
     end
   end
 end

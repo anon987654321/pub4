@@ -46,12 +46,14 @@ module Master
       when "ask", "a" then ask_llm(args.join(" "))
       when "serve" then start_server
       when "compress" then compress_session
+      when "cost", "$" then puts @llm.cost_summary
       else
         @session&.record(:chat, { input: input })
         puts "Working directory: #{@cwd}\n\n"
         result = @llm.ask(input)
         if result.ok?
           puts result.value
+          puts "\n[#{@llm.cost_summary}]"
         else
           puts "err: #{result.error}"
         end
@@ -65,6 +67,7 @@ module Master
           principles, p    List loaded principles
           scan, s <file>   Scan file for issues
           ask, a <prompt>  Send prompt to LLM
+          cost, $          Show session cost
           serve            Start HTTP API server
           compress         Compress session memory
           cd <dir>         Change directory
