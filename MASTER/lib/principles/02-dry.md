@@ -4,5 +4,16 @@
 
 tier: core
 priority: 2
-smells: [duplicate_code, copy_paste_programming]
 auto_fixable: true
+
+## Anti-patterns (violations)
+
+### duplicate_code
+- **Smell**: Same logic in multiple places
+- **Example**: Identical validation in 3 controllers
+- **Fix**: Extract to shared method/module
+
+### copy_paste_programming
+- **Smell**: Copying code instead of abstracting
+- **Example**: Cloning a function and changing variable names
+- **Fix**: Parameterize the original, reuse it

@@ -5,7 +5,7 @@ module Master
   class CLI
     def initialize
       @principles = Boot.run
-      @llm = LLM.new
+      @llm = LLM.new(principles: @principles)
       @engine = Engine.new(principles: @principles, llm: @llm)
       @cwd = Dir.pwd
       @session = Memory::Session.new

@@ -16,13 +16,34 @@ module Master
 
     attr_reader :total_cost, :total_tokens
 
-    def initialize
+    def initialize(principles: [])
       @api_key = ENV["OPENROUTER_API_KEY"]
       @base_uri = URI("https://openrouter.ai/api/v1/chat/completions")
       @total_cost = 0.0
       @total_tokens = 0
       @cache_dir = File.join(Master::ROOT, "var", "cache")
+      @principles = principles
+      @system_prompt = build_system_prompt
       FileUtils.mkdir_p(@cache_dir) rescue nil
+    end
+
+    def build_system_prompt
+      persona = Master::PERSONA
+      rules = persona[:rules].join(". ")
+      
+      prompt = "You are #{persona[:name]}: #{persona[:traits].join(', ')}.\n"
+      prompt += "Style: #{rules}.\n\n"
+      
+      if @principles.any?
+        prompt += "PRINCIPLES (ranked by importance):\n"
+        @principles.first(15).each_with_index do |p, i|
+          prompt += "#{i+1}. #{p.name}"
+          prompt += " - Anti-patterns: #{p.smells.join(', ')}" if p.smells.any?
+          prompt += "\n"
+        end
+      end
+      
+      prompt
     end
 
     def ask(prompt, tier: :fast, max_tokens: 2048, cache: true)
@@ -37,9 +58,13 @@ module Master
         return Result.ok(cached) if cached
       end
       
+      messages = []
+      messages << { role: "system", content: @system_prompt } if @system_prompt
+      messages << { role: "user", content: prompt }
+      
       body = {
         model: model,
-        messages: [{ role: "user", content: prompt }],
+        messages: messages,
         max_tokens: max_tokens
       }
       http = Net::HTTP.new(@base_uri.host, @base_uri.port)
