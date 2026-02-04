@@ -2959,6 +2959,8 @@ class AutoEngine
                   new_content: fixed_content
                 }
                 Log.ok("    Generated fix for #{cfg[:name]}")
+                puts "#{Dmesg.dim}    - #{cfg[:content].lines.first&.strip&.slice(0, 60)}#{Dmesg.reset}"
+                puts "#{Dmesg.green}    + #{fixed_content.lines.first&.strip&.slice(0, 60)}#{Dmesg.reset}"
               end
             end
           else
@@ -3493,8 +3495,13 @@ class CLI
     targets.each do |t|
       if File.directory?(t)
         Log.info("#{Dmesg.icon(:folder)} Entering: #{t}") unless Options.quiet
-        Core::TreeWalk.print_tree(t).first(20).each { |e| puts "  #{e}" } unless Options.quiet
-        puts "  ..." if Core::TreeWalk.print_tree(t).size > 20 && !Options.quiet
+        tree = Core::TreeWalk.print_tree(t)
+        tree.first(20).each { |e| puts "  #{e}" } unless Options.quiet
+        puts "  ..." if tree.size > 20 && !Options.quiet
+        unless Options.force || Options.quiet
+          print "#{Dmesg.dim}process #{tree.size} items? [y/N]#{Dmesg.reset} "
+          return unless $stdin.gets&.strip&.downcase == "y"
+        end
       end
     end
     files = expand_targets(targets)
@@ -3571,7 +3578,7 @@ class CLI
     supported.values.any? { |v| (v["extensions"] || []).include?(ext) }
   end
   def show_summary(total)
-    passed = @results.count { |r| r[:score] == 100 }
+    passed = @results.count { |r| (r[:score] || 0) == 100 }
     puts
     Log.ok("Processed #{total} files: #{passed}/#{total} at 100/100")
   end
@@ -3581,8 +3588,8 @@ class CLI
       files: @results,
       summary: {
         total: @results.size,
-        passed: @results.count { |r| r[:score] == 100 },
-        failed: @results.count { |r| r[:score] < 100 }
+        passed: @results.count { |r| (r[:score] || 0) == 100 },
+        failed: @results.count { |r| (r[:score] || 0) < 100 }
       }
     })
   end
@@ -5034,7 +5041,7 @@ if __FILE__ == $PROGRAM_NAME
   begin
     cli = CLI.new
     cli.run(ARGV)
-    if cli.instance_variable_get(:@results)&.any? { |r| r[:score] < 100 }
+    if cli.instance_variable_get(:@results)&.any? { |r| (r[:score] || 0) < 100 }
       exit 1
     end
   rescue StandardError => error
