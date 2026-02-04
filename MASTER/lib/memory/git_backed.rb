@@ -39,11 +39,19 @@ module Master
       end
       
       # Search for similar violations in history
-      def search_similar_violations(violation, limit: 10)
+      def search_similar_violations(principle: nil, violation: nil, limit: 10)
         return [] unless Dir.exist?(@memory_path)
         
         results = []
-        pattern = violation[:principle] || violation["principle"]
+        
+        # Determine search pattern
+        pattern = if principle
+          principle
+        elsif violation.is_a?(Hash)
+          violation[:principle] || violation["principle"]
+        else
+          violation
+        end
         
         Find.find(@memory_path) do |path|
           next unless path.end_with?(".json")
