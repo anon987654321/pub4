@@ -19,7 +19,7 @@ module Master
         when /mingw|mswin/ then "Windows"
         else RUBY_PLATFORM
       end
-      puts "#{platform} system. Sandbox active. Ready." if RUBY_PLATFORM =~ /openbsd/
+      puts "#{platform} ready."
       principles
     end
   end
