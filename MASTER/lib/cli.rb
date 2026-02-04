@@ -51,6 +51,7 @@ module Master
       when "ask", "a" then ask_llm(args.join(" "))
       when "serve" then start_server
       when "compress" then compress_session
+      when "clean" then clean_cache(args.first&.to_i || 7)
       when "cost", "$" then puts @llm.cost_summary
       when "persona" then puts "#{PERSONA[:name]}: #{PERSONA[:traits].join(', ')}"
       else
@@ -79,6 +80,7 @@ module Master
           evolve            Self-optimize MASTER code
           ask, a <prompt>   Send prompt to LLM
           cost, $           Show session cost
+          clean [days]      Purge cache/sessions older than N days (default: 7)
           persona           Show current persona
           serve             Start HTTP API server
           compress          Compress session memory
@@ -375,6 +377,49 @@ module Master
           puts "bsd0: found #{results.size} config(s) with issues"
         end
       end
+    end
+
+    def clean_cache(days)
+      cutoff = Time.now - (days * 86400)
+      cleaned = 0
+      
+      # Clean cache
+      cache_dir = File.join(Master::ROOT, "var", "cache")
+      if Dir.exist?(cache_dir)
+        Dir.glob("#{cache_dir}/*").each do |f|
+          next unless File.file?(f)
+          if File.mtime(f) < cutoff
+            File.delete(f)
+            cleaned += 1
+          end
+        end
+      end
+      
+      # Clean sessions
+      sessions_dir = File.join(Master::ROOT, "var", "sessions")
+      if Dir.exist?(sessions_dir)
+        Dir.glob("#{sessions_dir}/*").each do |f|
+          next unless File.file?(f)
+          if File.mtime(f) < cutoff
+            File.delete(f)
+            cleaned += 1
+          end
+        end
+      end
+      
+      # Clean man page cache
+      man_dir = File.join(Master::ROOT, "var", "cache", "man")
+      if Dir.exist?(man_dir)
+        Dir.glob("#{man_dir}/*").each do |f|
+          next unless File.file?(f)
+          if File.mtime(f) < cutoff
+            File.delete(f)
+            cleaned += 1
+          end
+        end
+      end
+      
+      puts "clean0: removed #{cleaned} files older than #{days} days"
     end
   end
 end
