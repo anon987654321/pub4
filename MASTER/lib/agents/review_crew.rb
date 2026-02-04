@@ -1,5 +1,9 @@
 # frozen_string_literal: true
-require "async"
+begin
+  require "async"
+rescue LoadError
+  # async gem not available - will use sequential execution
+end
 
 module Master
   module Agents
@@ -26,7 +30,26 @@ module Master
         puts "   Agents: #{@agents.map(&:name).join(', ')}"
         puts
 
-        # Run agents in parallel using Async
+        # Run agents in parallel using Async if available, otherwise sequential
+        if defined?(Async)
+          run_parallel_with_async(code, file_path, &progress_block)
+        else
+          run_sequential(code, file_path, &progress_block)
+        end
+
+        # Synthesize findings with LLM
+        synthesis = synthesize_findings
+
+        {
+          agents: @results,
+          synthesis: synthesis,
+          summary: generate_summary
+        }
+      end
+
+      private
+
+      def run_parallel_with_async(code, file_path, &progress_block)
         Async do |task|
           @agents.each do |agent|
             task.async do
@@ -46,18 +69,25 @@ module Master
             end
           end
         end
-
-        # Synthesize findings with LLM
-        synthesis = synthesize_findings
-
-        {
-          agents: @results,
-          synthesis: synthesis,
-          summary: generate_summary
-        }
       end
 
-      private
+      def run_sequential(code, file_path, &progress_block)
+        @agents.each do |agent|
+          progress_block&.call(agent.name, :started)
+          
+          start_time = Time.now
+          findings = agent.analyze(code, file_path)
+          duration = Time.now - start_time
+          
+          @results[agent.name] = {
+            findings: findings,
+            duration: duration,
+            severity_counts: count_by_severity(findings)
+          }
+          
+          progress_block&.call(agent.name, :completed, findings.size)
+        end
+      end
 
       def count_by_severity(findings)
         counts = Hash.new(0)
