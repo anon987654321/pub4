@@ -1,0 +1,51 @@
+# Safety configuration - cost protection, file validation, convergence
+---
+file_validation:
+  max_size_bytes: 10485760
+  max_lines: 10000
+  check_binary: true
+  check_permissions: true
+  allow_symlinks: false
+  binary_extensions:
+    - .png
+    - .jpg
+    - .gif
+    - .mp4
+    - .pdf
+    - .so
+    - .dylib
+    - .exe
+    - .dll
+    - .zip
+    - .gz
+
+cost_protection:
+  max_per_file: 1.00
+  max_per_session: 10.00
+  warn_at: 0.50
+  chunk_large_files: true
+  chunk_size_lines: 500
+
+convergence:
+  max_iterations: 10
+  detect_loops: true
+  detect_oscillation: true
+  max_total_violations: 10000
+  require_improvement: true
+
+fix_validation:
+  enabled: true
+  check_priority_inversion: true
+  check_new_violations: true
+  max_new_violations: 0
+
+concurrency:
+  file_locking: true
+  lock_timeout: 30
+  stale_lock_age: 300
+  lock_dir: .constitutional_locks
+
+transactions:
+  enabled: true
+  rollback_on_error: true
+  atomic_operations: true

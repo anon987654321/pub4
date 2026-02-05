@@ -7,35 +7,46 @@ require 'uri'
 module MASTER
   class LLM
     TIERS = {
-      fast:    { model: 'deepseek/deepseek-chat', cost: 0.00014 },
-      code:    { model: 'deepseek/deepseek-chat', cost: 0.00014 },
-      medium:  { model: 'deepseek/deepseek-chat', cost: 0.00014 },
-      strong:  { model: 'anthropic/claude-sonnet-4-20250514', cost: 0.015 },
-      premium: { model: 'anthropic/claude-opus-4-20250514', cost: 0.075 }
+      cheap:   { model: 'deepseek/deepseek-chat',              input: 0.00014, output: 0.00028 },
+      fast:    { model: 'anthropic/claude-3-5-haiku-20241022', input: 0.0008,  output: 0.004 },
+      strong:  { model: 'anthropic/claude-sonnet-4-20250514',  input: 0.003,   output: 0.015 },
+      premium: { model: 'anthropic/claude-opus-4-20250514',    input: 0.015,   output: 0.075 },
+      reasoning: { model: 'deepseek/deepseek-r1',              input: 0.00055, output: 0.00219 }
     }.freeze
 
-    DEFAULT_TIER = :medium
+    DEFAULT_TIER = :strong
     MAX_RETRIES = 3
     RETRY_DELAYS = [1, 2, 4].freeze
 
-    attr_reader :total_cost, :persona
+    attr_reader :total_cost, :persona, :last_tokens, :last_cached,
+                :total_tokens_in, :total_tokens_out, :request_count
 
     def initialize
       @api_key = ENV['OPENROUTER_API_KEY']
       @base_url = 'https://openrouter.ai/api/v1'
       @total_cost = 0.0
+      @total_tokens_in = 0
+      @total_tokens_out = 0
+      @request_count = 0
       @cache = {}
       @history = []
-      @persona = load_persona('default')
+      @persona = load_persona('generic')
       @principles = Principle.load_all
+      @last_tokens = { input: 0, output: 0 }
+      @last_cached = false
     end
 
     def chat(message, tier: DEFAULT_TIER)
       return Result.err('No API key') unless @api_key
 
       cache_key = "#{tier}:#{message}"
-      return Result.ok(@cache[cache_key]) if @cache[cache_key]
+      if @cache[cache_key]
+        @last_cached = true
+        @last_tokens = { input: 0, output: 0 }
+        return Result.ok(@cache[cache_key])
+      end
 
+      @last_cached = false
       @history << { role: 'user', content: message }
       result = call_api(tier)
 
@@ -58,6 +69,15 @@ module MASTER
     def clear_history
       @history.clear
     end
+
+    def chat_with_model(model, prompt)
+      return Result.err('No API key') unless @api_key
+
+      @last_cached = false
+      call_api_direct(model, prompt)
+    end
+
+    attr_reader :last_cost
 
     private
 
@@ -99,7 +119,13 @@ module MASTER
 
         content = data.dig('choices', 0, 'message', 'content')
         usage = data['usage'] || {}
-        @total_cost += (usage['total_tokens'] || 0) * config[:cost] / 1000.0
+        input_tokens = usage['prompt_tokens'] || 0
+        output_tokens = usage['completion_tokens'] || 0
+        @last_tokens = { input: input_tokens, output: output_tokens }
+        @total_tokens_in += input_tokens
+        @total_tokens_out += output_tokens
+        @request_count += 1
+        @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
 
         Result.ok(content)
       rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
@@ -109,6 +135,51 @@ module MASTER
           retry
         end
         Result.err("Network error: #{e.message}")
+      rescue => e
+        Result.err(e.message)
+      end
+    end
+
+    def call_api_direct(model, prompt)
+      @last_cost = 0.0
+
+      begin
+        uri = URI("#{@base_url}/chat/completions")
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 10
+        http.read_timeout = 90
+
+        request = Net::HTTP::Post.new(uri)
+        request['Authorization'] = "Bearer #{@api_key}"
+        request['Content-Type'] = 'application/json'
+        request['HTTP-Referer'] = 'https://brgen.no'
+
+        request.body = {
+          model: model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.5,
+          max_tokens: 4096
+        }.to_json
+
+        response = http.request(request)
+        data = JSON.parse(response.body)
+
+        return Result.err(data['error']['message']) if data['error']
+
+        content = data.dig('choices', 0, 'message', 'content')
+        usage = data['usage'] || {}
+        input_tokens = usage['prompt_tokens'] || 0
+        output_tokens = usage['completion_tokens'] || 0
+
+        # Estimate cost (average across models)
+        @last_cost = (input_tokens * 0.002 + output_tokens * 0.008) / 1000.0
+        @total_cost += @last_cost
+        @total_tokens_in += input_tokens
+        @total_tokens_out += output_tokens
+        @request_count += 1
+
+        Result.ok(content)
       rescue => e
         Result.err(e.message)
       end

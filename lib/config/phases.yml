@@ -1,0 +1,58 @@
+# Workflow phases - 7-phase development lifecycle
+---
+phases:
+  - id: 1
+    name: discover
+    goal: Understand actual need
+    output: Problem statement with success criteria
+    gates:
+      - no_vague_words
+      - audience_identified
+      - success_measurable
+
+  - id: 2
+    name: analyze
+    goal: Break into components
+    output: Component diagram with dependencies
+    gates:
+      - components_distinct
+      - dependencies_acyclic
+
+  - id: 3
+    name: ideate
+    goal: Generate alternatives
+    output: List of approaches with trade-offs
+    gates:
+      - trade_offs_documented
+
+  - id: 4
+    name: design
+    goal: Specific architecture
+    output: Interface definitions and error handling
+    gates:
+      - interfaces_explicit
+      - errors_documented
+
+  - id: 5
+    name: implement
+    goal: Execute with zero violations
+    output: Working code at 100/100 score
+    gates:
+      - tests_pass
+      - zero_violations
+
+  - id: 6
+    name: validate
+    goal: Prove with evidence
+    output: Test results, benchmarks
+    gates:
+      - zero_test_failures
+      - edge_cases_covered
+
+  - id: 7
+    name: deliver
+    goal: Ship with monitoring
+    output: Deployed code with dashboards
+    gates:
+      - deployed
+      - monitoring_configured

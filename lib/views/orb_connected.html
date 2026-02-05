@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connected Orbs</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000}
+canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="top"></canvas>
+<canvas id="bottom"></canvas>
+<script>
+var opts={
+  background:'black',
+  numberOrbs:80,
+  maxVelocity:2,
+  orbRadius:1,
+  minProximity:120,
+  colorFrequency:0.3,
+  colorAngleIncrement:0.009,
+  globalAlpha:0.015
+};
+
+var canvasTop,linecxt,canvasBottom,cxt,width,height,orbs,colorAngle=7,audio=0;
+
+function Vector(x,y){this.x=x;this.y=y}
+Vector.prototype.add=function(v){return new Vector(this.x+v.x,this.y+v.y)};
+Vector.prototype.subtract=function(v){return new Vector(this.x-v.x,this.y-v.y)};
+Vector.prototype.multiply=function(n){return new Vector(this.x*n,this.y*n)};
+Vector.prototype.length=function(){return Math.sqrt(this.x*this.x+this.y*this.y)};
+Vector.randomDirection=function(){var a=Math.random()*Math.PI*2;return new Vector(Math.cos(a),Math.sin(a))};
+
+function Orb(radius,color){
+  this.position=new Vector(Math.random()*width,Math.random()*height);
+  this.velocity=Vector.randomDirection().multiply(Math.random()*opts.maxVelocity);
+  this.radius=radius;
+  this.color=color;
+}
+Orb.prototype.update=function(){
+  this.position=this.position.add(this.velocity);
+  if(this.position.x+this.radius>=width||this.position.x-this.radius<=0)this.velocity.x*=-1;
+  if(this.position.y+this.radius>=height||this.position.y-this.radius<=0)this.velocity.y*=-1;
+};
+Orb.prototype.display=function(){
+  cxt.beginPath();
+  cxt.fillStyle=this.color;
+  cxt.arc(this.position.x,this.position.y,this.radius+audio*3,0,Math.PI*2);
+  cxt.fill();
+};
+Orb.prototype.run=function(){this.update();this.display()};
+
+function phaseColor(){
+  var r=Math.floor(Math.sin(opts.colorFrequency*colorAngle)*127+128);
+  var g=Math.floor(Math.sin(opts.colorFrequency*colorAngle+Math.PI*2/3)*127+128);
+  var b=Math.floor(Math.sin(opts.colorFrequency*colorAngle+Math.PI*4/3)*127+128);
+  colorAngle+=opts.colorAngleIncrement+audio*0.05;
+  return 'rgba('+r+','+g+','+b+',1)';
+}
+
+function setup(){
+  canvasTop=document.getElementById('top');
+  canvasBottom=document.getElementById('bottom');
+  width=window.innerWidth;
+  height=window.innerHeight;
+  canvasTop.width=canvasBottom.width=width;
+  canvasTop.height=canvasBottom.height=height;
+  canvasTop.style.position=canvasBottom.style.position='absolute';
+  canvasTop.style.top=canvasBottom.style.top='0';
+  canvasTop.style.left=canvasBottom.style.left='0';
+  linecxt=canvasTop.getContext('2d');
+  cxt=canvasBottom.getContext('2d');
+  orbs=[];
+  for(var i=0;i<opts.numberOrbs;i++)orbs.push(new Orb(opts.orbRadius,phaseColor()));
+}
+
+function draw(){
+  cxt.clearRect(0,0,width,height);
+  var color=phaseColor();
+  var proximity=opts.minProximity+audio*50;
+  for(var i=0;i<orbs.length;i++){
+    for(var j=i+1;j<orbs.length;j++){
+      var dist=orbs[i].position.subtract(orbs[j].position).length();
+      if(dist<=proximity){
+        linecxt.beginPath();
+        linecxt.strokeStyle=color;
+        linecxt.globalAlpha=opts.globalAlpha+audio*0.02;
+        linecxt.moveTo(orbs[i].position.x,orbs[i].position.y);
+        linecxt.lineTo(orbs[j].position.x,orbs[j].position.y);
+        linecxt.stroke();
+      }
+    }
+    orbs[i].color=color;
+    orbs[i].run();
+  }
+  requestAnimationFrame(draw);
+}
+
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  var data=new Uint8Array(an.frequencyBinCount);
+  (function loop(){
+    an.getByteFrequencyData(data);
+    var sum=0;for(var i=0;i<50;i++)sum+=data[i];
+    audio=sum/50/255;
+    requestAnimationFrame(loop);
+  })();
+}).catch(function(){});
+
+window.addEventListener('resize',function(){
+  width=window.innerWidth;
+  height=window.innerHeight;
+  canvasTop.width=canvasBottom.width=width;
+  canvasTop.height=canvasBottom.height=height;
+});
+
+setup();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

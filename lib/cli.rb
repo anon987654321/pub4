@@ -8,9 +8,9 @@ module MASTER
     attr_reader :llm, :verbosity
 
     COMMANDS = %w[
-      ask audit cat cd clean clear commit converge cost describe diff
+      ask audit cat cd chamber clean clear commit converge cost describe diff
       edit exit git help image log ls persona personas principles pull
-      push quit read refactor refine review scan smells status tree
+      push queue quit read refactor refine review scan smells status tree
       version web
     ].freeze
 
@@ -32,6 +32,9 @@ module MASTER
       @server = nil
       @root = Dir.pwd
       @verbosity = :high
+      @boot_time = Time.now
+      @last_tokens = { input: 0, output: 0 }
+      @last_cached = false
       setup_completion
       load_history
     end
@@ -116,11 +119,48 @@ module MASTER
 
         result = with_spinner { process_input(input) }
         puts colorize_output(result) if result
+        show_token_info if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
       end
 
       save_history
       @server&.stop
-      puts "#{C_DIM}Goodbye.#{C_RESET}"
+      show_session_summary
+    end
+
+    def show_token_info
+      cached = @last_cached ? " [cached]" : ""
+      puts "#{C_DIM}#{@last_tokens[:input]} tokens in, #{@last_tokens[:output]} tokens out#{cached}#{C_RESET}"
+      @last_tokens = { input: 0, output: 0 }
+      @last_cached = false
+    end
+
+    def show_session_summary
+      duration = Time.now - @boot_time
+      mins = (duration / 60).to_i
+      secs = (duration % 60).to_i
+      cost = @llm.total_cost
+      total_in = @llm.total_tokens_in rescue 0
+      total_out = @llm.total_tokens_out rescue 0
+      requests = @llm.request_count rescue 0
+
+      puts ""
+      puts "#{C_DIM}Session Summary#{C_RESET}"
+      puts "#{C_DIM}  Duration    #{mins}m #{secs}s#{C_RESET}"
+      puts "#{C_DIM}  Requests    #{requests}#{C_RESET}" if requests > 0
+      puts "#{C_DIM}  Tokens      #{total_in} in / #{total_out} out#{C_RESET}" if total_in > 0
+      puts "#{C_DIM}  Cost        #{colorize_cost(cost)}#{C_RESET}"
+      puts ""
+    end
+
+    def colorize_cost(cost)
+      formatted = "$#{'%.4f' % cost}"
+      if cost < 0.01
+        "#{C_GREEN}#{formatted}#{C_RESET}"
+      elsif cost < 0.10
+        "#{C_YELLOW}#{formatted}#{C_RESET}"
+      else
+        "#{C_RED}#{formatted}#{C_RESET}"
+      end
     end
 
     def colorize_output(text)
@@ -140,13 +180,32 @@ module MASTER
       persona = @llm.persona&.dig(:name)
       cost = @llm.total_cost
       hist = @llm.instance_variable_get(:@history)&.size || 0
+      uptime = Time.now - @boot_time
 
       parts = [dir]
       parts << ":#{persona}" if persona && persona != 'default'
       parts << "(#{hist})" if hist > 0
-      parts << "$#{'%.2f' % cost}" if cost > 0
+      parts << format_uptime(uptime) if uptime > 3600
+      parts << colorize_cost_inline(cost) if cost > 0
 
       "#{parts.join('')} $ "
+    end
+
+    def format_uptime(seconds)
+      hours = (seconds / 3600).to_i
+      mins = ((seconds % 3600) / 60).to_i
+      "#{hours}h#{mins}m"
+    end
+
+    def colorize_cost_inline(cost)
+      formatted = "$#{'%.2f' % cost}"
+      if cost < 0.01
+        "#{C_GREEN}#{formatted}#{C_RESET}"
+      elsif cost < 0.10
+        "#{C_YELLOW}#{formatted}#{C_RESET}"
+      else
+        "#{C_RED}#{formatted}#{C_RESET}"
+      end
     end
 
     def with_spinner
@@ -168,6 +227,15 @@ module MASTER
       done = true
       spinner.join
       result
+    end
+
+    def confirm_expensive(tier)
+      return true unless tier == :premium
+      info = LLM::TIERS[:premium]
+      puts "#{C_YELLOW}Premium tier costs #{info[:input]}/#{info[:output]} per 1000 tokens#{C_RESET}"
+      print "Continue? [y/N] "
+      response = $stdin.gets&.strip&.downcase
+      response == 'y' || response == 'yes'
     end
 
     def handle(input)
@@ -400,7 +468,9 @@ module MASTER
 
       trace "sending: #{message[0..50]}..."
       result = @llm.chat(message)
-      trace "received · $#{format('%.6f', @llm.total_cost)}"
+      @last_tokens = @llm.last_tokens
+      @last_cached = @llm.last_cached
+      trace "received"
       result.ok? ? result.value : "Error: #{result.error}"
     end
 

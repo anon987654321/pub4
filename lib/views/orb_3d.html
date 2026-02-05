@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Rotating Orb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000;display:flex;align-items:center;justify-content:center}
+.wrap{position:relative;top:50%;left:50%;width:0;height:0;transform-style:preserve-3d;perspective:1000px;animation:rotate 14s infinite linear}
+.c{position:absolute;width:2px;height:2px;border-radius:50%;opacity:0}
+@keyframes rotate{100%{transform:rotateY(360deg) rotateX(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap"></div>
+<script>
+var total=300,orbSize=100,time=14,baseHue=0,audio=0;
+var wrap=document.getElementById('wrap');
+
+for(var i=0;i<total;i++){
+  var c=document.createElement('div');
+  c.className='c';
+  c.style.backgroundColor='hsl('+(40/total*i+baseHue)+',100%,50%)';
+  c.style.animationDelay=(i*0.01)+'s';
+  wrap.appendChild(c);
+}
+
+var style=document.createElement('style');
+var css='';
+for(var i=1;i<=total;i++){
+  var z=Math.random()*360;
+  var y=Math.random()*360;
+  css+='.c:nth-child('+i+'){animation:orbit'+i+' '+time+'s infinite}';
+  css+='@keyframes orbit'+i+'{';
+  css+='20%{opacity:1}';
+  css+='30%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+orbSize+'px) rotateZ('+z+'deg)}';
+  css+='80%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+orbSize+'px) rotateZ('+z+'deg);opacity:1}';
+  css+='100%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+(orbSize*3)+'px) rotateZ('+z+'deg)}';
+  css+='}';
+}
+style.textContent=css;
+document.head.appendChild(style);
+
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  var data=new Uint8Array(an.frequencyBinCount);
+  (function loop(){
+    an.getByteFrequencyData(data);
+    var sum=0;for(var j=0;j<50;j++)sum+=data[j];
+    audio=sum/50/255;
+    var speed=14-audio*10;
+    wrap.style.animationDuration=Math.max(4,speed)+'s';
+    requestAnimationFrame(loop);
+  })();
+}).catch(function(){});
+
+document.addEventListener('mousemove',function(e){
+  var x=(e.clientX/window.innerWidth-0.5)*50;
+  var y=(e.clientY/window.innerHeight-0.5)*50;
+  wrap.style.transform='rotateX('+y+'deg) rotateY('+x+'deg)';
+});
+</script>
+</body>
+</html>

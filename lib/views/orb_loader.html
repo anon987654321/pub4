@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loader Orb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#eee;display:flex;align-items:center;justify-content:center;transition:background 1s}
+.mood-neutral{--c1:#1e3f57;--c2:#3c617d;--c3:#6bb2cd;--glow:rgba(107,178,205,0.4)}
+.mood-positive{--c1:#1e5737;--c2:#3c7d5d;--c3:#6bcd8d;--glow:rgba(107,205,141,0.4)}
+.mood-negative{--c1:#571e1e;--c2:#7d3c3c;--c3:#cd6b6b;--glow:rgba(205,107,107,0.4)}
+.mood-calm{--c1:#1e2f57;--c2:#3c4d7d;--c3:#6b8bcd;--glow:rgba(107,139,205,0.4)}
+.mood-excited{--c1:#571e57;--c2:#7d3c7d;--c3:#cd6bcd;--glow:rgba(205,107,205,0.4)}
+.loader{position:relative;width:200px;height:200px;border-radius:200px;background:linear-gradient(var(--c1),transparent),linear-gradient(90deg,var(--c2),transparent),linear-gradient(-90deg,var(--c3),transparent);background-blend-mode:screen;box-shadow:0 0 50px 0 var(--c3);animation:loader 3s cubic-bezier(.55,.3,.24,.99) infinite;transition:transform 0.1s}
+.loader:after{content:'';position:absolute;bottom:-30px;left:0;width:100%;height:100%;border-radius:999px;background-color:rgba(177,196,202,0.3);box-shadow:0 0 50px 20px rgba(177,196,202,0.3);transform-origin:50% 100%;transform:scaleX(0.7) scaleY(0.1)}
+.spec{position:absolute;top:50%;right:50%;width:1px;height:1px;border-radius:20px;background-color:var(--glow);box-shadow:0 0 35px 20px var(--glow);transform:rotateZ(30deg) translateY(-65px) scaleY(0.75)}
+.shadow{position:absolute;top:50%;right:50%;width:10px;height:10px;border-radius:20px;background-color:rgba(30,63,87,0.1);box-shadow:0 0 30px 20px rgba(30,63,87,0.1);transform:rotateZ(-140deg) translateY(-70px) scaleY(0.5)}
+.dot{position:absolute;bottom:0;left:50%;opacity:0;width:20px;height:20px;border-radius:20px;margin-left:-10px;background:linear-gradient(rgba(255,255,255,0.6),transparent),linear-gradient(90deg,var(--c2),transparent),linear-gradient(-90deg,var(--c3),transparent);background-blend-mode:screen;animation:dot5 3s cubic-bezier(.8,.1,.9,.5) infinite}
+.dot:nth-child(1){margin-left:-80px;bottom:34px;animation-name:dot1;animation-delay:750ms}
+.dot:nth-child(2){margin-left:-63px;bottom:18px;animation-name:dot2;animation-delay:1750ms}
+.dot:nth-child(3){margin-left:-50px;bottom:10px;animation-name:dot3;animation-delay:250ms}
+.dot:nth-child(4){margin-left:-27px;bottom:2px;animation-name:dot4;animation-delay:1500ms}
+.dot:nth-child(5){margin-left:-10px;bottom:0;animation-name:dot5;animation-delay:0ms}
+.dot:nth-child(6){margin-left:8px;bottom:3px;animation-name:dot6;animation-delay:1000ms}
+.dot:nth-child(7){margin-left:30px;bottom:10px;animation-name:dot7;animation-delay:2000ms}
+.dot:nth-child(8){margin-left:42px;bottom:19px;animation-name:dot8;animation-delay:500ms}
+.dot:nth-child(9){margin-left:60px;bottom:34px;animation-name:dot9;animation-delay:1250ms}
+@keyframes loader{0%{transform:translateY(0)}50%{transform:translateY(-20px)}100%{transform:translateY(0)}}
+@keyframes dot1{0%{transform:translateY(0) scale(0.1);opacity:0}50%{transform:translateY(-60px) scale(0.3);opacity:0.4}100%{opacity:0;transform:translateY(-120px) scale(0.1)}}
+@keyframes dot2{0%{transform:translateY(0) scale(0.2);opacity:0}50%{transform:translateY(-70px) scale(0.4);opacity:0.9}100%{opacity:0;transform:translateY(-140px) scale(0.2)}}
+@keyframes dot3{0%{transform:translateY(0) scale(0.2);opacity:0}50%{transform:translateY(-80px) scale(0.5);opacity:0.8}100%{opacity:0;transform:translateY(-160px) scale(0.2)}}
+@keyframes dot4{0%{transform:translateY(0) scale(0.1);opacity:0}50%{transform:translateY(-90px) scale(0.3);opacity:0.5}100%{opacity:0;transform:translateY(-180px) scale(0.1)}}
+@keyframes dot5{0%{transform:translateY(0) scale(0.3);opacity:0}50%{transform:translateY(-90px) scale(0.5);opacity:0.85}100%{opacity:0;transform:translateY(-180px) scale(0.3)}}
+@keyframes dot6{0%{transform:translateY(0) scale(0.2);opacity:0}50%{transform:translateY(-60px) scale(0.4);opacity:0.8}100%{opacity:0;transform:translateY(-120px) scale(0.2)}}
+@keyframes dot7{0%{transform:translateY(0) scale(0.1);opacity:0}50%{transform:translateY(-70px) scale(0.3);opacity:0.4}100%{opacity:0;transform:translateY(-140px) scale(0.1)}}
+@keyframes dot8{0%{transform:translateY(0) scale(0.2);opacity:0}50%{transform:translateY(-80px) scale(0.4);opacity:0.7}100%{opacity:0;transform:translateY(-160px) scale(0.2)}}
+@keyframes dot9{0%{transform:translateY(0) scale(0.1);opacity:0}50%{transform:translateY(-60px) scale(0.3);opacity:0.5}100%{opacity:0;transform:translateY(-120px) scale(0.1)}}
+</style>
+</head>
+<body class="mood-neutral">
+<div class="loader" id="orb">
+  <div class="spec"></div>
+  <div class="shadow"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+<script>
+var orb=document.getElementById('orb'),audio=0,mx=0,my=0,gx=0,gy=0;
+document.addEventListener('mousemove',function(e){
+  mx=(e.clientX/window.innerWidth-0.5)*20;
+  my=(e.clientY/window.innerHeight-0.5)*20;
+});
+window.addEventListener('deviceorientation',function(e){
+  if(e.gamma!==null){gx=e.gamma*0.3;gy=(e.beta-45)*0.3}
+});
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(s),an=ctx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  var data=new Uint8Array(an.frequencyBinCount);
+  (function loop(){
+    an.getByteFrequencyData(data);
+    var sum=0;for(var i=0;i<50;i++)sum+=data[i];
+    audio=sum/50/255;
+    requestAnimationFrame(loop);
+  })();
+}).catch(function(){});
+(function frame(){
+  var s=1+audio*0.2;
+  var tx=mx||gx,ty=my||gy;
+  orb.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
+  requestAnimationFrame(frame);
+})();
+var mood=new URLSearchParams(location.search).get('mood')||'neutral';
+document.body.className='mood-'+mood;
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.mood)document.body.className='mood-'+e.data.mood;
+});
+</script>
+</body>
+</html>

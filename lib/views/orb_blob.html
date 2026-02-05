@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blob Orb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg,#050515);display:flex;align-items:center;justify-content:center;transition:background 1s}
+.mood-neutral{--bg:#050515;--blob-1:#984ddf;--blob-2:#4344ad;--blob-3:#74d9e1;--blob-4:#050515}
+.mood-positive{--bg:#0a1a0f;--blob-1:#4ddf98;--blob-2:#44ad7d;--blob-3:#74e1a0;--blob-4:#0a1a0f}
+.mood-negative{--bg:#1a0a0a;--blob-1:#df4d4d;--blob-2:#ad4444;--blob-3:#e17474;--blob-4:#1a0a0a}
+.mood-calm{--bg:#0a0a1a;--blob-1:#4d7ddf;--blob-2:#4454ad;--blob-3:#74a0e1;--blob-4:#0a0a1a}
+.mood-excited{--bg:#1a0a1a;--blob-1:#df4ddf;--blob-2:#ad44ad;--blob-3:#e174e1;--blob-4:#1a0a1a}
+.blobs{width:min(60vw,60vh);height:min(60vw,60vh);transition:transform 0.1s ease-out}
+.blobs svg{width:100%;height:100%}
+.blob{animation:rotate 25s infinite alternate ease-in-out;transform-origin:50% 50%;opacity:0.7}
+.blob path{animation:morph 5s infinite alternate cubic-bezier(0.45,0.2,0.55,0.8);transform-origin:50% 50%;transform:scale(0.8);transition:fill 800ms}
+.blob.alt{animation-direction:alternate-reverse;opacity:0.3}
+.blob-1 path{fill:var(--blob-1);filter:blur(1rem)}
+.blob-2{animation-duration:18s;animation-direction:alternate-reverse}
+.blob-2 path{fill:var(--blob-2);animation-name:morph2;animation-duration:7s;filter:blur(0.75rem);transform:scale(0.78)}
+.blob-2.alt{animation-direction:alternate}
+.blob-3{animation-duration:23s}
+.blob-3 path{fill:var(--blob-3);animation-name:morph3;animation-duration:6s;filter:blur(0.5rem);transform:scale(0.76)}
+.blob-4{animation-duration:31s;animation-direction:alternate-reverse;opacity:0.9}
+.blob-4 path{fill:var(--blob-4);animation-name:morph4;animation-duration:10s;filter:blur(10rem);transform:scale(0.5)}
+.blob-4.alt{animation-direction:alternate;opacity:0.8}
+@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes morph{
+  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
+  33%{d:path("M 100 600 q -50 -400, 500 -500 t 450 550 t -500 500 T 100 600 z")}
+  66%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
+  100%{d:path("M 100 600 q 100 -600, 500 -500 t 400 500 t -500 500 T 100 600 z")}
+}
+@keyframes morph2{
+  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
+  50%{d:path("M 100 600 q 0 -400, 500 -500 t 400 500 t -500 500 T 100 600 z")}
+  100%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
+}
+@keyframes morph3{
+  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
+  50%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
+  100%{d:path("M 100 600 q 100 -600, 500 -500 t 400 500 t -500 500 T 100 600 z")}
+}
+@keyframes morph4{
+  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
+  100%{d:path("M 100 600 q -50 -400, 500 -500 t 450 550 t -500 500 T 100 600 z")}
+}
+</style>
+</head>
+<body class="mood-neutral">
+<div class="blobs" id="orb">
+  <svg viewBox="0 0 1200 1200">
+    <g class="blob blob-1"><path/></g>
+    <g class="blob blob-2"><path/></g>
+    <g class="blob blob-3"><path/></g>
+    <g class="blob blob-4"><path/></g>
+    <g class="blob blob-1 alt"><path/></g>
+    <g class="blob blob-2 alt"><path/></g>
+    <g class="blob blob-3 alt"><path/></g>
+    <g class="blob blob-4 alt"><path/></g>
+  </svg>
+</div>
+<script>
+var orb=document.getElementById('orb'),audio=0,mx=0,my=0,gx=0,gy=0;
+// Mouse parallax
+document.addEventListener('mousemove',function(e){
+  mx=(e.clientX/window.innerWidth-0.5)*30;
+  my=(e.clientY/window.innerHeight-0.5)*30;
+});
+// Mobile tilt
+window.addEventListener('deviceorientation',function(e){
+  if(e.gamma!==null){gx=e.gamma*0.5;gy=(e.beta-45)*0.5}
+});
+// Audio reactive
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  var data=new Uint8Array(an.frequencyBinCount);
+  (function loop(){
+    an.getByteFrequencyData(data);
+    var sum=0;for(var i=0;i<50;i++)sum+=data[i];
+    audio=sum/50/255;
+    requestAnimationFrame(loop);
+  })();
+}).catch(function(){});
+// Animate
+(function frame(){
+  var s=1+audio*0.3;
+  var tx=mx||gx,ty=my||gy;
+  orb.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
+  requestAnimationFrame(frame);
+})();
+// Mood from URL or message
+var mood=new URLSearchParams(location.search).get('mood')||'neutral';
+document.body.className='mood-'+mood;
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.mood)document.body.className='mood-'+e.data.mood;
+});
+</script>
+</body>
+</html>

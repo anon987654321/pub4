@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Warp Orb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#0a0a12}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+var ctx,w,h,fov=300,speed=2,time=0,audio=0,bass=0,mouseX=0,mouseY=0;
+var rings=[],stars=[];
+var segments=12,baseRadius=80,zStep=40;
+
+function resize(){
+  var canvas=document.getElementById('c');
+  w=canvas.width=window.innerWidth;
+  h=canvas.height=window.innerHeight;
+  ctx=canvas.getContext('2d');
+}
+
+function initRings(){
+  rings=[];
+  for(var z=-fov;z<fov;z+=zStep){
+    var ring={z:z,particles:[]};
+    for(var i=0;i<segments;i++){
+      var angle=i*Math.PI*2/segments;
+      ring.particles.push({
+        angle:angle,
+        radius:baseRadius,
+        phase:Math.random()*Math.PI*2,
+        speed:0.5+Math.random()*0.5
+      });
+    }
+    rings.push(ring);
+  }
+  rings.sort(function(a,b){return b.z-a.z});
+}
+
+function initStars(){
+  stars=[];
+  for(var i=0;i<200;i++){
+    stars.push({
+      x:(Math.random()-0.5)*w*3,
+      y:(Math.random()-0.5)*h*3,
+      z:Math.random()*fov*2-fov,
+      brightness:0.3+Math.random()*0.7
+    });
+  }
+}
+
+function draw(){
+  ctx.fillStyle='rgba(10,10,18,0.2)';
+  ctx.fillRect(0,0,w,h);
+  
+  var cx=w/2+mouseX*0.3;
+  var cy=h/2+mouseY*0.3;
+  var dynamicFov=fov+bass*100;
+  var dynamicSpeed=speed+audio*4;
+  
+  // Stars
+  for(var i=0;i<stars.length;i++){
+    var star=stars[i];
+    star.z-=dynamicSpeed*0.5;
+    if(star.z<-fov){
+      star.z+=fov*2;
+      star.x=(Math.random()-0.5)*w*3;
+      star.y=(Math.random()-0.5)*h*3;
+    }
+    var sc=dynamicFov/(dynamicFov+star.z);
+    var sx=cx+star.x*sc;
+    var sy=cy+star.y*sc;
+    if(sx>0&&sx<w&&sy>0&&sy<h){
+      var brightness=star.brightness*(1-star.z/fov)*0.6;
+      ctx.fillStyle='rgba(150,180,255,'+brightness+')';
+      ctx.fillRect(sx,sy,1,1);
+    }
+  }
+  
+  // Rings moving toward viewer
+  var hue=220+Math.sin(time*0.3)*30+audio*40;
+  
+  for(var i=0;i<rings.length;i++){
+    var ring=rings[i];
+    ring.z-=dynamicSpeed;
+    
+    if(ring.z<-fov){
+      ring.z+=fov*2;
+    }
+    
+    var depth=(ring.z+fov)/(fov*2);
+    var sc=dynamicFov/(dynamicFov+ring.z);
+    var ringRadius=(baseRadius+audio*40)*sc;
+    
+    if(ringRadius<2)continue;
+    
+    // Parallax offset based on depth
+    var parallaxX=mouseX*depth*0.5;
+    var parallaxY=mouseY*depth*0.5;
+    var ringCx=cx+parallaxX;
+    var ringCy=cy+parallaxY;
+    
+    // Draw ring particles
+    ctx.beginPath();
+    var alpha=0.3+depth*0.5+audio*0.2;
+    var lightness=40+depth*20+bass*20;
+    ctx.strokeStyle='hsla('+hue+',70%,'+lightness+'%,'+alpha+')';
+    ctx.lineWidth=1+audio*2;
+    
+    var firstX,firstY;
+    for(var j=0;j<ring.particles.length;j++){
+      var p=ring.particles[j];
+      
+      // Organic wobble
+      p.phase+=0.02*p.speed;
+      var wobble=Math.sin(p.phase+time)*10*audio;
+      var particleRadius=ringRadius+wobble;
+      
+      // Breathing effect on angle
+      var breathe=Math.sin(time*0.5+p.angle)*0.1*bass;
+      var angle=p.angle+time*0.1+breathe;
+      
+      var px=ringCx+Math.cos(angle)*particleRadius;
+      var py=ringCy+Math.sin(angle)*particleRadius;
+      
+      if(j===0){
+        firstX=px;firstY=py;
+        ctx.moveTo(px,py);
+      }else{
+        ctx.lineTo(px,py);
+      }
+    }
+    ctx.lineTo(firstX,firstY);
+    ctx.stroke();
+    
+    // Depth connections to previous ring
+    if(i>0&&i%3===0){
+      var prevRing=rings[i-1];
+      var prevSc=dynamicFov/(dynamicFov+prevRing.z);
+      var prevRadius=(baseRadius+audio*40)*prevSc;
+      var prevDepth=(prevRing.z+fov)/(fov*2);
+      var prevParallaxX=mouseX*prevDepth*0.5;
+      var prevParallaxY=mouseY*prevDepth*0.5;
+      var prevCx=cx+prevParallaxX;
+      var prevCy=cy+prevParallaxY;
+      
+      ctx.beginPath();
+      ctx.strokeStyle='hsla('+hue+',50%,'+lightness+'%,'+(alpha*0.3)+')';
+      ctx.lineWidth=0.5;
+      
+      for(var j=0;j<ring.particles.length;j+=2){
+        var p=ring.particles[j];
+        var angle=p.angle+time*0.1;
+        var px=ringCx+Math.cos(angle)*ringRadius;
+        var py=ringCy+Math.sin(angle)*ringRadius;
+        
+        var prevP=prevRing.particles[j];
+        var prevAngle=prevP.angle+time*0.1;
+        var prevPx=prevCx+Math.cos(prevAngle)*prevRadius;
+        var prevPy=prevCy+Math.sin(prevAngle)*prevRadius;
+        
+        ctx.moveTo(px,py);
+        ctx.lineTo(prevPx,prevPy);
+      }
+      ctx.stroke();
+    }
+  }
+  
+  // Sort by depth for proper rendering
+  rings.sort(function(a,b){return b.z-a.z});
+  
+  time+=0.01;
+  requestAnimationFrame(draw);
+}
+
+// Audio
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+  var actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  var data=new Uint8Array(an.frequencyBinCount);
+  (function loop(){
+    an.getByteFrequencyData(data);
+    var sum=0,bassSum=0;
+    for(var i=0;i<50;i++)sum+=data[i];
+    for(var i=0;i<10;i++)bassSum+=data[i];
+    audio=sum/50/255;
+    bass=bassSum/10/255;
+    requestAnimationFrame(loop);
+  })();
+}).catch(function(){});
+
+// Mouse
+document.addEventListener('mousemove',function(e){
+  mouseX=(e.clientX/window.innerWidth-0.5)*100;
+  mouseY=(e.clientY/window.innerHeight-0.5)*100;
+});
+
+// Touch
+document.addEventListener('touchmove',function(e){
+  var t=e.touches[0];
+  mouseX=(t.clientX/window.innerWidth-0.5)*100;
+  mouseY=(t.clientY/window.innerHeight-0.5)*100;
+});
+
+// Device orientation
+window.addEventListener('deviceorientation',function(e){
+  if(e.gamma!==null){
+    mouseX=e.gamma*2;
+    mouseY=(e.beta-45)*2;
+  }
+});
+
+window.addEventListener('resize',function(){resize();initStars()});
+resize();
+initRings();
+initStars();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
