@@ -97,6 +97,7 @@ class TestCLIContext < Minitest::Test
   def test_context_relative_path
     assert_equal 'Context empty', @cli.process_input('context')
     assert_includes @cli.process_input('context add context.txt'), @file
+    assert_includes @cli.process_input('context'), @file
     assert_equal "Context removed: #{@file}", @cli.process_input('context drop context.txt')
   end
 

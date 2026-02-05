@@ -251,7 +251,7 @@ module MASTER
       @total_tokens_in += input_tokens
       @total_tokens_out += output_tokens
       @request_count += 1
-      cost = response.respond_to?(:cost) && response.cost ? response.cost.to_f : nil
+      cost = response.respond_to?(:cost) ? response.cost&.to_f : nil
       @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
       @last_cost = cost if cost
     end

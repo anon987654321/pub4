@@ -1460,7 +1460,7 @@ module MASTER
       when 'list'
         context_list
       else
-        'Usage: context add <file> | context drop <file> | context clear | context list'
+        'Usage: context add <file> | context drop|remove <file> | context clear | context list'
       end
     end
 
