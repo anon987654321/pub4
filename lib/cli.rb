@@ -9,8 +9,8 @@ module MASTER
 
     COMMANDS = %w[
       ask audit cat cd clean clear converge cost describe edit exit
-      help image ls persona personas principles quit refactor review
-      scan smells status tree version web
+      help image ls persona personas principles quit refactor refine
+      review scan smells status tree version web
     ].freeze
 
     HISTORY_FILE = Paths.history
@@ -246,6 +246,9 @@ module MASTER
       when 'status'
         status_info
 
+      when 'refine'
+        run_refine(arg)
+
       else
         # Default: send to LLM
         chat(input)
@@ -272,6 +275,7 @@ module MASTER
           personas       List personas
           principles     List principles
           refactor <path> Auto-refactor with research + iteration
+          refine [path]  Suggest 20 micro-refinements, cherry-pick
           review <path>  Multi-agent code review
           scan <path>    Scan for issues
           smells <path>  Detect code smells
@@ -629,6 +633,96 @@ module MASTER
       total = [old_lines.size, new_lines.size].max
 
       1.0 - (common.size.to_f / total)
+    end
+
+    def run_refine(target = nil)
+      target ||= 'lib'
+      files = resolve_files(target)
+      return "No files found: #{target}" if files.empty?
+
+      prompt = <<~PROMPT
+        Analyze this codebase and suggest 20 micro-refinements.
+        Each refinement must be:
+        - Minimal (1-3 lines changed)
+        - High impact (UX, performance, clarity)
+        - Specific (exact file, line, change)
+
+        Format each as:
+        [N] file:line - description
+        OLD: exact code
+        NEW: exact code
+
+        Files:
+        #{files.map { |f| "--- #{f} ---\n#{File.read(f)}" }.join("\n\n")}
+      PROMPT
+
+      result = with_spinner { @llm.chat(prompt, tier: :strong) }
+      return result.error if result.err?
+
+      suggestions = parse_refinements(result.value)
+      return "No refinements found" if suggestions.empty?
+
+      puts "\n#{suggestions.size} refinements suggested:\n\n"
+      suggestions.each_with_index do |s, i|
+        puts "[#{i + 1}] #{s[:file]}:#{s[:line]} - #{s[:desc]}"
+      end
+
+      puts "\nApply which? (1,3,5 or 'all' or 'none'): "
+      choice = Readline.readline('', false)&.strip
+
+      return "Cancelled" if choice.nil? || choice == 'none' || choice.empty?
+
+      indices = if choice == 'all'
+        (0...suggestions.size).to_a
+      else
+        choice.split(/[,\s]+/).map { |n| n.to_i - 1 }.select { |i| i >= 0 && i < suggestions.size }
+      end
+
+      applied = 0
+      indices.each do |i|
+        s = suggestions[i]
+        if apply_refinement(s)
+          applied += 1
+          puts "Applied: #{s[:desc]}"
+        end
+      end
+
+      "Applied #{applied}/#{indices.size} refinements"
+    end
+
+    def parse_refinements(text)
+      refinements = []
+      current = nil
+
+      text.lines.each do |line|
+        if line =~ /^\[(\d+)\]\s*(\S+):(\d+)\s*-\s*(.+)/
+          refinements << current if current
+          current = { num: $1.to_i, file: $2, line: $3.to_i, desc: $4.strip, old: '', new: '' }
+        elsif current
+          if line =~ /^OLD:\s*(.*)/ || line =~ /^old:\s*(.*)/
+            current[:old] = $1.strip
+          elsif line =~ /^NEW:\s*(.*)/ || line =~ /^new:\s*(.*)/
+            current[:new] = $1.strip
+          end
+        end
+      end
+      refinements << current if current
+      refinements.compact
+    end
+
+    def apply_refinement(ref)
+      file = File.expand_path(ref[:file], @root)
+      return false unless File.exist?(file)
+
+      content = File.read(file)
+      return false if ref[:old].empty? || ref[:new].empty?
+      return false unless content.include?(ref[:old])
+
+      new_content = content.sub(ref[:old], ref[:new])
+      File.write(file, new_content)
+      true
+    rescue
+      false
     end
 
     def status_info
