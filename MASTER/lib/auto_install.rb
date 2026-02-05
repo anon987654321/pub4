@@ -182,5 +182,31 @@ module MASTER
         RUBY_PLATFORM.include?('openbsd')
       end
     end
+    
+    # Shell environment setup
+    ZSHRC_LINES = [
+      'export MASTER_TTY_INPUT=1',
+      'export EDITOR=vim'
+    ].freeze
+    
+    class << self
+      # Ensure .zshrc has MASTER settings
+      def setup_shell(verbose: true)
+        zshrc = File.expand_path('~/.zshrc')
+        return [] unless File.exist?(zshrc)
+        
+        content = File.read(zshrc)
+        added = []
+        
+        ZSHRC_LINES.each do |line|
+          next if content.include?(line)
+          File.open(zshrc, 'a') { |f| f.puts line }
+          added << line
+          puts "Added to .zshrc: #{line}" if verbose
+        end
+        
+        added
+      end
+    end
   end
 end

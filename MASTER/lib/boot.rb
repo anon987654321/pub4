@@ -373,6 +373,9 @@ module MASTER
         missing = AutoInstall.missing
         total_missing = missing[:packages].size + missing[:gems].size + missing[:repos].size
         
+        # Setup shell environment
+        AutoInstall.setup_shell(verbose: verbose)
+        
         return if total_missing == 0
         
         puts "deps0: #{total_missing} missing dependencies" if verbose
