@@ -11,7 +11,6 @@ module MASTER
   autoload :Result,    "#{LIB}/result"
   autoload :Principle, "#{LIB}/principle"
   autoload :Persona,   "#{LIB}/persona"
-  autoload :Sandbox,   "#{LIB}/sandbox"
   autoload :Boot,      "#{LIB}/boot"
   autoload :LLM,       "#{LIB}/llm"
   autoload :Engine,    "#{LIB}/engine"

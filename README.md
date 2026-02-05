@@ -6,8 +6,18 @@ Constitutional AI for code quality. 33 principles, modular Ruby architecture.
 
 ```bash
 export OPENROUTER_API_KEY="your-key"
-cd pub4
 ruby bin/cli
+```
+
+## Boot
+
+```
+master 50.8 (GENERIC) #1: Wed Feb  5 02:50:00 UTC 2026
+const0 at master0: 33 principles, 74 smells
+llm0 at openrouter0: deepseek-chat
+root0: /home/dev/pub
+openbsd0 at mainbus0
+boot time: 140ms
 ```
 
 ## Architecture
@@ -15,80 +25,83 @@ ruby bin/cli
 ```
 bin/cli                    # Entry point
 lib/
-├── master.rb              # Module loader (autoload)
-├── paths.rb               # Centralized path management
-├── result.rb              # Ok/Err monad
-├── llm.rb                 # 5-tier OpenRouter client
-├── principle.rb           # YAML principle parser
-├── persona.rb             # YAML persona parser
-├── boot.rb                # dmesg-style startup
-├── cli.rb                 # REPL with 20+ commands
-├── server.rb              # Falcon web server
-├── engine.rb              # Code scanner
-├── converge.rb            # Convergence detection
-├── smells.rb              # Code smell patterns
-├── safety.rb              # Dangerous command blocklist
-├── memory.rb              # Session compression
-├── replicate.rb           # Image/audio generation
-├── web.rb                 # Ferrum headless browser
-├── openbsd.rb             # pledge/unveil support
-├── sandbox.rb             # Sandboxing (disabled)
-├── principles/            # 33 principle .yml files
-└── personas/              # Persona .yml files
-DEMOS/                     # 90+ audio-reactive css-doodle orbs
+  master.rb                # Module loader (autoload)
+  paths.rb                 # Centralized path management
+  result.rb                # Ok/Err monad
+  llm.rb                   # 5-tier OpenRouter client
+  principle.rb             # YAML principle parser
+  persona.rb               # YAML persona parser
+  boot.rb                  # dmesg-style startup
+  cli.rb                   # REPL with 30+ commands
+  server.rb                # Falcon web server
+  engine.rb                # Code scanner
+  converge.rb              # Convergence detection
+  smells.rb                # Code smell patterns
+  safety.rb                # Dangerous command blocklist
+  memory.rb                # Session compression
+  replicate.rb             # Image/audio generation
+  web.rb                   # Headless browser (Ferrum or curl)
+  openbsd.rb               # Config validation + pledge/unveil
+  principles/              # 33 principle .yml files
+  personas/                # Persona .yml files
+test/
+  test_master.rb           # Test suite
+DEMOS/
+  orb01-20.html            # Audio-reactive orb visualizations
+```
+
+## Commands
+
+```
+ask <msg>       Chat with LLM
+cat <file>      View file (alias: read)
+cd <dir>        Change directory
+clean <file>    Fix CRLF, trim whitespace
+clear           Clear chat history
+commit [msg]    Git commit
+cost            Show LLM cost
+diff            Git diff
+edit <file>     Edit file
+git <cmd>       Run git command
+help            Show help
+image <prompt>  Generate image (Replicate)
+log             Git log
+ls              List files
+persona <name>  Switch persona
+personas        List personas
+principles      List principles
+pull            Git pull
+push            Git push
+refactor <path> Auto-refactor with research
+refine [path]   Suggest micro-refinements, cherry-pick
+review <path>   Multi-agent code review
+scan <path>     Scan for issues
+smells <path>   Detect code smells
+status          Show status
+version         Show version
+web <url>       Browse URL
+exit            Quit
 ```
 
 ## LLM Tiers
 
 | Tier | Model | Cost/1K |
 |------|-------|---------|
-| fast | DeepSeek | $0.00014 |
-| code | DeepSeek | $0.00014 |
-| medium | DeepSeek | $0.00014 |
-| strong | Claude Sonnet 4 | $0.015 |
-| premium | Claude Opus 4 | $0.075 |
+| fast | deepseek-chat | $0.00014 |
+| code | deepseek-chat | $0.00014 |
+| medium | deepseek-chat | $0.00014 |
+| strong | claude-sonnet-4 | $0.015 |
+| premium | claude-opus-4 | $0.075 |
 
-## Commands
-
-```
-ask <msg>      Chat with LLM
-audit [ref]    Compare features vs git history
-cat <file>     View file
-cd <dir>       Change directory
-clean <file>   Fix CRLF, trim whitespace
-clear          Clear chat history
-converge       Iterate until no changes
-cost           Show LLM cost
-describe <img> Describe image (Replicate)
-edit <file>    Edit file
-help           Show help
-image <prompt> Generate image (Replicate)
-ls             List files
-persona <name> Switch persona
-personas       List personas
-principles     List principles
-refactor <path> Auto-refactor with research
-review <path>  Multi-agent code review
-scan <path>    Scan for issues
-status         Show status
-tree           Show file tree
-version        Show version
-web <url>      Browse URL
-exit           Quit
-```
-
-## Web Interface
+## Test
 
 ```bash
-ruby bin/cli
-# Server starts automatically
-# Open cli.html for orb interface
-# DEMOS/ contains 90+ audio-reactive visualizations
+ruby test/test_master.rb
 ```
 
 ## Cross-Platform
 
-openbsd0 at mainbus0 | termux0 at mainbus0 | darwin0 at mainbus0 | linux0 at mainbus0
+openbsd0 | termux0 | darwin0 | linux0 | win0
 
 ## Environment
 
@@ -96,7 +109,3 @@ openbsd0 at mainbus0 | termux0 at mainbus0 | darwin0 at mainbus0 | linux0 at mai
 OPENROUTER_API_KEY    # Required
 REPLICATE_API_TOKEN   # For image generation
 ```
-
----
-
-*Delete until it hurts, then delete some more.*
