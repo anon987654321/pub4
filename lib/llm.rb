@@ -28,7 +28,7 @@ module MASTER
 
     def initialize
       @api_key = ENV['OPENROUTER_API_KEY']
-      @base_url = ENV['OPENROUTER_API_BASE'] || 'https://openrouter.ai/api/v1'
+      @base_url = ENV['OPENROUTER_BASE_URL'] || ENV['OPENROUTER_API_BASE'] || 'https://openrouter.ai/api/v1'
       @total_cost = 0.0
       @total_tokens_in = 0
       @total_tokens_out = 0

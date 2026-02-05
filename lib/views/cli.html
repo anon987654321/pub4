@@ -97,7 +97,7 @@ document.addEventListener('keydown',e=>{
   // Arrow keys cycle
   if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
   if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
-  if(e.key==='g'){toggleGrain();showToast(`grain ${grainCanvas.style.display==='none'?'off':'on'}`)}
+  if(e.key==='g'){showToast(`grain ${toggleGrain()}`)}
   if(e.key==='?'){help.style.display=help.style.display==='flex'?'none':'flex'}
 });
 
@@ -168,7 +168,7 @@ function updateStatus(data){
   const cost=formatCost(lastStatusData?.cost);
   const reqs=lastStatusData?.requests ?? 0;
   const orb=ORBS[currentOrb].replace('orb_','');
-  const sync=lastSync?lastSync.toLocaleTimeString(): '--';
+  const sync=lastSync ? lastSync.toLocaleTimeString() : '--';
   const conn=lastStatusData?.connected===false?'no api key':'connected';
   const offline=offlineCount>=2?'offline':'';
   status.innerHTML=`<span>${tier} · ${model} · ${persona} · orb ${orb} · ${tokens.input||0}/${tokens.output||0} · ${cached}</span><span class="${offline}">${conn} · ${cost} · ${reqs} req · sync ${sync}</span>`;
@@ -258,8 +258,10 @@ inp.addEventListener('keydown',e=>{
 })();
 
 function toggleGrain(){
-  grainCanvas.style.display=grainCanvas.style.display==='none'?'block':'none';
+  const enabled=grainCanvas.style.display==='none';
+  grainCanvas.style.display=enabled ? 'block' : 'none';
   localStorage.setItem('grain',grainCanvas.style.display);
+  return enabled ? 'on' : 'off';
 }
 
 const savedGrain=localStorage.getItem('grain');

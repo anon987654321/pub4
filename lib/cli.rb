@@ -801,10 +801,9 @@ module MASTER
     def clean_file(path)
       return 'Usage: clean <file>' unless path
 
-      return 'Cancelled.' unless confirm_write("Clean #{path}")
-
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
+      return 'Cancelled.' unless confirm_write("Clean #{path}")
 
       content = File.read(full)
       original = content.dup
@@ -1005,9 +1004,8 @@ module MASTER
 
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
-      return 'Cancelled.' unless confirm_write("Refactor #{files.size} file(s)")
-
       trace "refactoring #{files.size} files"
+      return 'Cancelled.' unless confirm_write("Refactor #{files.size} file(s)")
       total_iterations = 0
       total_changes = 0
 
