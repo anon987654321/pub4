@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vanilla 8: 8-Bit Pixel</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #000; display: grid; place-items: center; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(11, 10px);
+  gap: 2px;
+}
+.px {
+  width: 10px; height: 10px;
+  background: #222;
+  animation: flicker 2s ease-in-out infinite;
+}
+.px.on { background: #4af; box-shadow: 0 0 5px #4af; }
+</style>
+</head>
+<body>
+<div class="grid" id="g"></div>
+<script>
+const pattern = [
+  '00011111000',
+  '00111111100',
+  '01111111110',
+  '11111111111',
+  '11111111111',
+  '11111111111',
+  '11111111111',
+  '11111111111',
+  '01111111110',
+  '00111111100',
+  '00011111000'
+];
+const g = document.getElementById('g');
+pattern.forEach((row, y) => {
+  [...row].forEach((c, x) => {
+    const px = document.createElement('div');
+    px.className = 'px' + (c === '1' ? ' on' : '');
+    px.style.animationDelay = `${(x + y) * 50}ms`;
+    g.appendChild(px);
+  });
+});
+</script>
+</body>
+</html>

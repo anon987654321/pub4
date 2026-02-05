@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Kaleidoscope</title>
+<script src="css-doodle.js"></script>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #111; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+</style></head><body>
+<css-doodle click-to-update>
+  :doodle { @grid: 12; width: 380px; transform: rotate(0deg); animation: rotate 30s linear infinite; }
+  --angle: calc(@i() * 30deg);
+  background: hsla(calc(@i() * 30), 80%, 60%, 0.8);
+  clip-path: polygon(50% 50%, 50% 0%, 100% 0%);
+  transform: rotate(var(--angle));
+  transform-origin: 0% 100%;
+  animation: pulse @r(1s, 3s) ease-in-out infinite;
+  animation-delay: calc(@i() * -0.1s);
+</css-doodle>
+</body></html>

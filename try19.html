@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 19: Neural Pulse</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #050510; display: grid; place-items: center; }
+@keyframes sweep { to { transform: rotate(1turn); } }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 30px #00ff8822, 0 0 60px #00ff8811; }
+  50% { box-shadow: 0 0 50px #00ff8844, 0 0 100px #00ff8822; }
+}
+css-doodle { animation: sweep 4s linear infinite, pulse 2s ease-in-out infinite; }
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 1 / 180px;
+  border-radius: 50%;
+  background: 
+    conic-gradient(from 0deg, transparent 0deg, #00ff8866 20deg, transparent 40deg),
+    radial-gradient(circle at center, #0a1a10 0%, #051008 100%);
+  border: 1px solid #00ff8844;
+</css-doodle>
+</body>
+</html>

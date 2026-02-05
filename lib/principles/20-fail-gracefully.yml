@@ -1,0 +1,15 @@
+---
+name: Graceful Degradation
+description: Partial functionality beats total failure.
+tier: reliability
+priority: 20
+auto_fixable: false
+anti_patterns:
+- name: missing_fallback
+  smell: Single point of failure crashes everything
+  example: Cache miss = entire page 500 error
+  fix: Fallback to database, show stale data
+- name: cascade_failures
+  smell: One service down takes others with it
+  example: Auth service down = all services dead
+  fix: Circuit breakers, timeouts, bulkheads

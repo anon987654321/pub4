@@ -5,17 +5,48 @@ require 'fileutils'
 
 module MASTER
   class CLI
-    attr_reader :llm
+    attr_reader :llm, :verbosity
+
+    COMMANDS = %w[
+      ask audit cat cd clean clear converge cost describe edit exit
+      help image ls persona personas principles quit refactor review
+      scan smells status tree version web
+    ].freeze
+
+    HISTORY_FILE = Paths.history
+
+    # Verbosity levels
+    VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
+
+    # ANSI colors
+    C_RESET  = "\e[0m"
+    C_RED    = "\e[31m"
+    C_GREEN  = "\e[32m"
+    C_YELLOW = "\e[33m"
+    C_CYAN   = "\e[36m"
+    C_DIM    = "\e[2m"
 
     def initialize
       @llm = LLM.new
       @server = nil
       @root = Dir.pwd
+      @verbosity = :high
+      setup_completion
+      load_history
     end
 
     def run
+      ask_verbosity
       start_server
       repl
+    end
+
+    def trace(msg)
+      puts "#{C_DIM}[trace] #{msg}#{C_RESET}" if @verbosity == :high
+    end
+
+    def info(msg)
+      puts "#{C_DIM}#{msg}#{C_RESET}" if VERBOSITY[@verbosity] >= 1
     end
 
     def process_input(input)
@@ -29,7 +60,44 @@ module MASTER
 
     private
 
+    def setup_completion
+      Readline.completion_proc = proc do |s|
+        COMMANDS.grep(/^#{Regexp.escape(s)}/)
+      end
+      Readline.completion_append_character = ' '
+    end
+
+    def load_history
+      return unless File.exist?(HISTORY_FILE)
+
+      File.readlines(HISTORY_FILE).last(100).each do |line|
+        Readline::HISTORY.push(line.chomp)
+      end
+    rescue
+      # Ignore history errors
+    end
+
+    def save_history
+      File.open(HISTORY_FILE, 'a') do |f|
+        Readline::HISTORY.to_a.last(100).each { |line| f.puts(line) }
+      end
+    rescue
+      # Ignore history errors
+    end
+
+    def ask_verbosity
+      print "Verbosity [#{C_GREEN}high#{C_RESET}/medium/low] (Enter=high): "
+      choice = $stdin.gets&.strip&.downcase
+      @verbosity = case choice
+                   when 'low', 'l' then :low
+                   when 'medium', 'med', 'm' then :medium
+                   else :high
+                   end
+      trace "Verbosity set to #{@verbosity}"
+    end
+
     def start_server
+      trace "Starting web server..."
       @server = Server.new(self)
       @server.start
     end
@@ -48,18 +116,31 @@ module MASTER
         break if %w[exit quit q].include?(input)
 
         result = with_spinner { process_input(input) }
-        puts result if result
+        puts colorize_output(result) if result
       end
 
+      save_history
       @server&.stop
-      puts 'Goodbye.'
+      puts "#{C_DIM}Goodbye.#{C_RESET}"
+    end
+
+    def colorize_output(text)
+      return text unless text.is_a?(String)
+
+      if text.start_with?('Error', 'Not found', 'Usage')
+        "#{C_RED}#{text}#{C_RESET}"
+      elsif text.start_with?('Switched', 'Cleaned', 'Done', 'Changed', 'Cleared')
+        "#{C_GREEN}#{text}#{C_RESET}"
+      else
+        text
+      end
     end
 
     def build_prompt
       persona = @llm.persona&.dig(:name) || 'default'
       cost = format('$%.4f', @llm.total_cost)
       dir = File.basename(@root)
-      "#{dir} [#{persona}] #{cost} > "
+      "#{C_CYAN}#{dir}#{C_RESET} [#{C_YELLOW}#{persona}#{C_RESET}] #{C_DIM}#{cost}#{C_RESET} > "
     end
 
     def with_spinner
@@ -131,6 +212,18 @@ module MASTER
       when 'principles'
         list_principles
 
+      when 'converge'
+        run_converge(arg || '.')
+
+      when 'audit'
+        run_audit(arg)
+
+      when 'review'
+        run_review(arg || '.')
+
+      when 'refactor'
+        run_refactor(arg)
+
       when 'web'
         browse_web(arg)
 
@@ -156,10 +249,12 @@ module MASTER
       <<~HELP
         Commands:
           ask <msg>      Chat with LLM
+          audit [ref]    Compare features vs git history
           cat <file>     View file
           cd <dir>       Change directory
           clean <file>   Clean file (CRLF, whitespace)
           clear          Clear chat history
+          converge       Iterate until no changes
           cost           Show LLM cost
           describe <img> Describe image (Replicate)
           edit <file>    Edit file
@@ -169,6 +264,8 @@ module MASTER
           persona <name> Switch persona
           personas       List personas
           principles     List principles
+          refactor <path> Auto-refactor with research + iteration
+          review <path>  Multi-agent code review
           scan <path>    Scan for issues
           smells <path>  Detect code smells
           status         Show status
@@ -266,13 +363,16 @@ module MASTER
     def chat(message)
       return 'Usage: ask <message>' unless message
 
+      trace "Sending to LLM: #{message[0..50]}..."
       result = @llm.chat(message)
+      trace "LLM responded (cost: $#{format('%.6f', @llm.total_cost)})"
       result.ok? ? result.value : "Error: #{result.error}"
     end
 
     def switch_persona(name)
       return "Available: #{Persona.list.join(', ')}" unless name
 
+      trace "Switching persona to #{name}"
       result = @llm.switch_persona(name)
       result.ok? ? "Switched to #{name}" : result.error
     end
@@ -316,6 +416,212 @@ module MASTER
       rescue LoadError
         'Replicate module not available'
       end
+    end
+
+    def run_converge(path)
+      require_relative 'converge'
+
+      puts "#{C_CYAN}Starting convergence...#{C_RESET}"
+      result = Converge.run(path) do |iteration, issues|
+        puts "#{C_DIM}Iteration #{iteration}: #{issues.size} issues#{C_RESET}"
+      end
+
+      if result.ok?
+        data = result.value
+        "#{C_GREEN}Converged#{C_RESET} in #{data[:iterations]} iterations (#{data[:final_issues]} issues)"
+      else
+        "#{C_RED}#{result.error}#{C_RESET}"
+      end
+    end
+
+    def run_audit(ref)
+      require_relative 'converge'
+
+      ref ||= 'HEAD~10'
+      audit = Converge.audit(@root, ref)
+
+      lines = []
+      lines << "Comparing current vs #{ref}"
+      lines << "Current: #{audit[:current_count]} features"
+      lines << "Historical: #{audit[:historical_count]} features"
+      lines << "Coverage: #{(audit[:coverage] * 100).round(1)}%"
+
+      if audit[:missing].any?
+        lines << ""
+        lines << "#{C_RED}Missing (#{audit[:missing].size}):#{C_RESET}"
+        audit[:missing].first(10).each { |f| lines << "  - #{f}" }
+        lines << "  ..." if audit[:missing].size > 10
+      end
+
+      if audit[:added].any?
+        lines << ""
+        lines << "#{C_GREEN}Added (#{audit[:added].size}):#{C_RESET}"
+        audit[:added].first(10).each { |f| lines << "  + #{f}" }
+        lines << "  ..." if audit[:added].size > 10
+      end
+
+      lines.join("\n")
+    end
+
+    def run_review(path)
+      begin
+        require_relative 'agents/review_crew'
+
+        crew = Master::Agents::ReviewCrew.new(llm: @llm, principles: Principle.load_all)
+        code = File.read(File.expand_path(path, @root))
+        results = crew.review(code, path)
+
+        summary = results[:summary]
+        "#{C_CYAN}Review complete:#{C_RESET} #{summary[:total_findings]} findings"
+      rescue LoadError, StandardError => e
+        "Review agents not available: #{e.message}"
+      end
+    end
+
+    def run_refactor(path)
+      return 'Usage: refactor <file|dir>' unless path
+
+      files = resolve_files(path)
+      return "No files found: #{path}" if files.empty?
+
+      trace "Refactoring #{files.size} file(s)"
+      total_iterations = 0
+      total_changes = 0
+
+      files.each do |file|
+        result = refactor_file(file)
+        total_iterations += result[:iterations]
+        total_changes += result[:changes]
+      end
+
+      "#{C_GREEN}Refactored#{C_RESET} #{files.size} file(s): #{total_changes} changes in #{total_iterations} iterations"
+    end
+
+    def refactor_file(file)
+      trace "Analyzing: #{file}"
+
+      # Phase 1: Research - understand the domain
+      code = File.read(file)
+      ext = File.extname(file)
+      lang = detect_language(ext)
+
+      research_prompt = <<~PROMPT
+        Analyze this #{lang} code and identify:
+        1. What libraries/frameworks it uses
+        2. Best practices that should apply
+        3. Common patterns in this domain
+        4. Potential improvements
+
+        Be concise. Return as bullet points.
+
+        ```#{lang}
+        #{code[0..2000]}
+        ```
+      PROMPT
+
+      trace "Phase 1: Researching domain..."
+      research = with_spinner("Researching") { @llm.chat(research_prompt, tier: :fast) }
+      research_text = research.ok? ? research.value : ""
+
+      # Phase 2: Iterate until convergence
+      max_iterations = 5
+      min_change_threshold = 0.02
+      iteration = 0
+      prev_code = code
+      changes = 0
+
+      loop do
+        iteration += 1
+        break if iteration > max_iterations
+
+        trace "Phase 2: Iteration #{iteration}"
+
+        refactor_prompt = <<~PROMPT
+          You are refactoring #{lang} code. Apply these insights:
+          #{research_text[0..500]}
+
+          Rules:
+          - Make minimal, surgical changes
+          - Preserve all functionality
+          - Improve clarity, not just style
+          - Return ONLY the refactored code, no explanation
+
+          ```#{lang}
+          #{prev_code}
+          ```
+        PROMPT
+
+        result = with_spinner("Iteration #{iteration}") { @llm.chat(refactor_prompt, tier: :code) }
+        break unless result.ok?
+
+        new_code = extract_code(result.value, lang)
+        break if new_code.nil? || new_code.empty?
+
+        # Calculate change ratio
+        ratio = change_ratio(prev_code, new_code)
+        trace "Change ratio: #{(ratio * 100).round(1)}%"
+
+        if ratio < min_change_threshold
+          trace "Converged (< #{(min_change_threshold * 100).round}% change)"
+          break
+        end
+
+        changes += 1
+        prev_code = new_code
+      end
+
+      # Write final result if changed
+      if prev_code != code
+        File.write(file, prev_code)
+        info "Wrote: #{file}"
+      end
+
+      { iterations: iteration, changes: changes }
+    end
+
+    def resolve_files(path)
+      full = File.expand_path(path, @root)
+
+      if File.file?(full)
+        [full]
+      elsif Dir.exist?(full)
+        Dir.glob(File.join(full, '**', '*.{rb,py,js,ts,go,rs}')).reject { |f| f.include?('/vendor/') || f.include?('/node_modules/') }
+      else
+        Dir.glob(File.join(@root, path))
+      end
+    end
+
+    def detect_language(ext)
+      {
+        '.rb' => 'ruby', '.py' => 'python', '.js' => 'javascript',
+        '.ts' => 'typescript', '.go' => 'go', '.rs' => 'rust',
+        '.sh' => 'bash', '.yml' => 'yaml', '.yaml' => 'yaml'
+      }[ext] || 'text'
+    end
+
+    def extract_code(response, lang)
+      # Extract code block from LLM response
+      if response =~ /```#{lang}\s*(.*?)```/m
+        $1.strip
+      elsif response =~ /```\s*(.*?)```/m
+        $1.strip
+      else
+        response.strip
+      end
+    end
+
+    def change_ratio(old_code, new_code)
+      return 0.0 if old_code == new_code
+      return 1.0 if old_code.empty?
+
+      # Simple line-based diff ratio
+      old_lines = old_code.lines
+      new_lines = new_code.lines
+
+      common = old_lines & new_lines
+      total = [old_lines.size, new_lines.size].max
+
+      1.0 - (common.size.to_f / total)
     end
 
     def status_info

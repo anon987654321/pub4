@@ -1,0 +1,15 @@
+---
+name: Interface Segregation (SOLID I)
+description: Clients should not depend on interfaces they don't use.
+tier: solid
+priority: 8
+auto_fixable: false
+anti_patterns:
+- name: fat_interface
+  smell: Interface with too many methods
+  example: "`IRepository` with 30 methods, most unused"
+  fix: Split into smaller role-based interfaces
+- name: forced_implementation
+  smell: Empty or stub implementations of interface methods
+  example: "`def unused_method; raise NotImplementedError; end`"
+  fix: Remove method from interface, use mixins

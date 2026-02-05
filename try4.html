@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 4: Cosmic Dust</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #06060a; display: grid; place-items: center; }
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.1); }
+}
+@keyframes orbit {
+  0%, 100% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+css-doodle { animation: orbit 60s linear infinite; }
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 120x1 / 180px;
+  @size: @r(2px, 5px);
+  background: hsl(@r(200, 280), @r(50%, 80%), @r(60%, 80%));
+  border-radius: 50%;
+  @place: @plot(
+    r: sin(t * @r(3, 8)) * .3 + .35;
+    rotate: @r(360);
+  );
+  box-shadow: 0 0 @r(4px, 10px) currentColor;
+  animation: float @r(2s, 5s) ease-in-out infinite;
+  animation-delay: @r(-5s, 0s);
+</css-doodle>
+</body>
+</html>

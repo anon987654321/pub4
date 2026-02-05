@@ -1,0 +1,15 @@
+---
+name: Real-Time Feedback
+description: Keep users informed of system status.
+tier: ux
+priority: 24
+auto_fixable: true
+anti_patterns:
+- name: silent_operations
+  smell: No indication work is happening
+  example: Click button, nothing for 10 seconds
+  fix: Spinner, progress bar, status message
+- name: missing_progress
+  smell: Long operation with no updates
+  example: '"Installing..." for 5 minutes, no detail'
+  fix: 'Show step: "Installing 3/7: database..."'

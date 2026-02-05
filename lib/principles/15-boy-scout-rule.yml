@@ -1,0 +1,15 @@
+---
+name: Boy Scout Rule
+description: Leave the code cleaner than you found it.
+tier: practice
+priority: 15
+auto_fixable: true
+anti_patterns:
+- name: technical_debt_ignored
+  smell: TODO comments never addressed
+  example: "`# FIXME: this is broken` from 2019"
+  fix: Fix it now or delete the comment
+- name: broken_windows
+  smell: Visible code rot left unfixed
+  example: Dead imports, unused variables, lint warnings
+  fix: Clean up on each commit, no exceptions

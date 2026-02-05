@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Cantilever Stack</title>
+<script src="css-doodle.js"></script>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #1a1a1a; }
+@keyframes hover { 0%, 100% { transform: translateX(var(--offset)); } 50% { transform: translateX(calc(var(--offset) + 3px)); } }
+</style></head><body>
+<css-doodle click-to-update>
+  :doodle { @grid: 1 x 12; width: 380px; height: 380px; }
+  @place-cell: center;
+  position: absolute;
+  --offset: calc((@i() - 6) * 15px);
+  width: calc(280px - @i() * 10px);
+  height: 25px;
+  top: calc(30px + @i() * 28px);
+  background: linear-gradient(90deg, #f0f0f0, #d0d0d0);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transform: translateX(var(--offset));
+  animation: hover @r(2s, 4s) ease-in-out infinite;
+  animation-delay: calc(@i() * -0.15s);
+</css-doodle>
+</body></html>

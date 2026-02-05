@@ -1,0 +1,15 @@
+---
+name: Cost Transparency
+description: Show LLM costs in real-time. Users must know spend.
+tier: llm
+priority: 31
+auto_fixable: true
+anti_patterns:
+- name: hidden_costs
+  smell: API calls without showing token/cost count
+  example: LLM query completes, no cost shown
+  fix: Display `[$0.0023, 847 tokens]` after each call
+- name: surprise_bills
+  smell: Users discover costs only at billing
+  example: Month-end $500 invoice, no prior warning
+  fix: Running total, alerts at thresholds

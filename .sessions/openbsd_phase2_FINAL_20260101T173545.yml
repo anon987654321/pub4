@@ -1,7 +1,0 @@
-task_name: openbsd
-completed: 2026-01-01T17:35:45Z
-time_spent: "2h 40m (refactor 25m + testing/debug 2h 15m)"
-status: PAUSED_AWAITING_MANUAL_FIX
-violations_fixed: 5/11 (45% - partial, rest blocked by corruption)
-corruption_diagnosed: "Byte 0x01 (SOH) before '()' in function declarations"
-user_action: "Manually edit lines 170, 490 to fix 'orchestrator ()' syntax"

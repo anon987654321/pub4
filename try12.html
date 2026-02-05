@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 12: Analog Warmth</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0a0806; display: grid; place-items: center; }
+@keyframes flicker {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  92% { opacity: 1; filter: brightness(1); }
+  93% { opacity: .8; filter: brightness(.9); }
+  94% { opacity: 1; filter: brightness(1.1); }
+  96% { opacity: .9; filter: brightness(.95); }
+}
+css-doodle { 
+  border-radius: 50%; 
+  overflow: hidden;
+  box-shadow: 0 0 60px #ff990022, 0 0 120px #ff660011;
+  animation: flicker 4s steps(1) infinite;
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 1x60 / 180px;
+  background: linear-gradient(
+    90deg,
+    hsla(35, 80%, @r(20%, 40%), 0) 0%,
+    hsla(35, 80%, @r(40%, 70%), @r(.4, .9)) 50%,
+    hsla(35, 80%, @r(20%, 40%), 0) 100%
+  );
+  height: 2px;
+  margin: .5px 0;
+</css-doodle>
+</body>
+</html>

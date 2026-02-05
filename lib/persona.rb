@@ -2,28 +2,28 @@
 
 module MASTER
   class Persona
-    PERSONAS_DIR = File.join(__dir__, 'personas')
-
     class << self
       def load_all
-        return [] unless Dir.exist?(PERSONAS_DIR)
+        dir = Paths.personas
+        return [] unless Dir.exist?(dir)
 
-        Dir[File.join(PERSONAS_DIR, '*.md')].map do |path|
+        Dir[File.join(dir, '*.md')].map do |path|
           parse(File.read(path), File.basename(path, '.md'))
         end
       end
 
       def load(name)
-        path = File.join(PERSONAS_DIR, "#{name}.md")
+        path = File.join(Paths.personas, "#{name}.md")
         return nil unless File.exist?(path)
 
         parse(File.read(path), name)
       end
 
       def list
-        return [] unless Dir.exist?(PERSONAS_DIR)
+        dir = Paths.personas
+        return [] unless Dir.exist?(dir)
 
-        Dir[File.join(PERSONAS_DIR, '*.md')].map do |path|
+        Dir[File.join(dir, '*.md')].map do |path|
           File.basename(path, '.md')
         end.sort
       end

@@ -1,242 +1,98 @@
-# master.yml LLM OS v49.6
+# MASTER v50.8
 
-LLM-powered code quality analysis against 32 coding principles.
+Constitutional AI for code quality. 32 principles, modular Ruby architecture.
 
 ## Quick Start
 
 ```bash
 export OPENROUTER_API_KEY="your-key"
-ruby cli.rb .                    # analyze everything
-ruby cli.rb . --fix              # analyze and fix in-place
-ruby cli.rb --quick .            # fast scan (5 core principles)
-ruby cli.rb --watch .            # watch mode
-ruby cli.rb --garden-full        # self-improve constitution
+cd pub4
+ruby bin/cli
 ```
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **4-Tier Pipeline** | DeepSeek (cheap) → Grok Code Fast (code) → Sonnet (reasoning) → Opus (validation) |
-| **In-Place Fixing** | `--fix` applies LLM-generated fixes directly to source |
-| **Project Prescan** | Tree + clean (CRLF, whitespace) before analysis |
-| **Sprawl Detection** | Finds fragmented logic, tiny files, deep nesting |
-| **Grok Code Fast 1** | $0.20/$1.50 per 1M tokens for detection/refactoring |
-| **Replicate Module** | 50k+ generative models, wild chain mode |
-| **Progressive Disclosure** | Compact principle summaries for 60% token savings |
-| **Prompt Caching** | System prompts cached 1h (75-90% savings) |
-| **Parallel Detectors** | Concurrent smell scans |
-| **Reflection Critic** | Validates fixes before applying |
-| **Pattern Memory** | Remembers fix success rates |
-| **Model Cooldowns** | Auto-skips rate-limited models (5min cooldown) |
-| **Principle Profiles** | `--quick`, `--profile critical` for focused scans |
-| **Cost Tracking** | Cross-session JSONL cost reports |
-| **Hook System** | Event-driven extensibility |
-| **Skill System** | Modular skills in `~/.constitutional/skills/` |
-| **Gardener** | `--garden` / `--garden-full` self-improves |
-| **Watch Mode** | `--watch` auto-reanalyze on save |
-| **OpenBSD Support** | Config extraction, man page lookup, in-place heredoc fixing |
-| **NO_COLOR Support** | Respects terminal preferences |
-
-## Commands
-
-```bash
-# Basic usage
-ruby cli.rb file.rb              # single file
-ruby cli.rb src/                 # directory (recursive)
-ruby cli.rb **/*.rb              # glob pattern
-ruby cli.rb .                    # current directory
-
-# Fixing
-ruby cli.rb . --fix              # analyze and fix in-place
-ruby cli.rb . --fix --dry-run    # preview fixes (no changes)
-
-# Output modes
-ruby cli.rb --json .             # JSON output for CI/CD
-ruby cli.rb --quiet .            # minimal output (exit code only)
-
-# Filtering
-ruby cli.rb --git-changed        # only git-modified files
-ruby cli.rb --quick .            # fast mode (5 principles)
-ruby cli.rb --profile critical   # critical issues only
-
-# Performance
-ruby cli.rb --no-cache .         # skip cache, always query LLM
-ruby cli.rb --no-parallel .      # disable parallel detection
-
-# Watch & gardening
-ruby cli.rb --watch .            # watch mode
-ruby cli.rb --garden             # review learned smells
-ruby cli.rb --garden-full        # full self-improvement
-
-# Utilities
-ruby cli.rb --cost               # show LLM spending (daily/weekly)
-ruby cli.rb --rollback file.rb   # restore from backup
-ruby cli.rb --help               # show help
-ruby cli.rb --version            # show version
-
-# Replicate (generative AI)
-ruby cli.rb --replicate "a cyberpunk city"  # image generation
-ruby cli.rb --wild 5 --seed 42              # wild chain (5 random models)
-ruby cli.rb --index-models                  # index 50k Replicate models
-```
-
-## Profiles
-
-| Profile | Principles | Use Case |
-|---------|------------|----------|
-| `full` | All 32 | Complete analysis (default) |
-| `quick` | 5 core | Fast CI checks |
-| `axioms_only` | 10 | Foundational principles |
-| `solid_focus` | 15 | SOLID + axioms |
-| `critical` | 7 | Security/stability issues |
-
-## Safety
-
-- 🔒 **File locking** - concurrent-safe with stale lock detection
-- ↩️ **Transactional rollback** - `.constitutional_backups/` (keeps 5)
-- 💰 **Cost protection** - $1/file, $10/session limits with warnings
-- 🔄 **Convergence detection** - stops loops and oscillations
-- ⚖️ **Priority-aware** - won't introduce higher-priority violations
-- 🧠 **Reflection critic** - rejects risky fixes
-- ❄️ **Model cooldowns** - auto-skip rate-limited APIs (5min)
-- 🛡️ **File validation** - binary detection, symlink protection, size limits
-
-## Cross-Platform
-
-✅ OpenBSD | ✅ Termux | ✅ macOS | ✅ Linux | ✅ Windows/Cygwin
-
-Auto-installs dependencies via gem with `--user-install` fallback.
 
 ## Architecture
 
 ```
-cli.rb ⟷ master.yml (symbiotic pair)
-
-Core (pure functions):
-  PrincipleRegistry   - principle lookup and filtering
-  LLMDetector         - violation detection with progressive disclosure
-  ScoreCalculator     - scoring and analysis
-  SkillLoader         - modular skill system
-  Hooks               - event-driven extensibility
-  ModelCooldown       - rate limit tracking
-  CostTracker         - cross-session cost persistence
-  CostEstimator       - token/cost estimation
-  ConvergenceDetector - loop and oscillation detection
-  FixValidator        - priority-aware fix validation
-
-Shell (IO/state):
-  Constitution        - YAML loader with profile support
-  LLMClient           - OpenRouter API with fallback
-  TieredLLM           - fast/medium/strong pipeline
-  ParallelDetector    - concurrent smell scanning
-  Gardener            - self-improvement engine
-  ReflectionCritic    - fix validation before apply
-  PatternMemory       - fix success rate tracking
+bin/cli                    # Entry point
+lib/
+├── master.rb              # Module loader (autoload)
+├── paths.rb               # Centralized path management
+├── result.rb              # Ok/Err monad
+├── llm.rb                 # 5-tier OpenRouter client
+├── principle.rb           # Markdown principle parser
+├── persona.rb             # Markdown persona parser
+├── boot.rb                # dmesg-style startup
+├── cli.rb                 # REPL with 20+ commands
+├── server.rb              # Falcon web server (port 8080)
+├── engine.rb              # Code scanner
+├── converge.rb            # Convergence detection + audit
+├── safety.rb              # Dangerous command blocklist
+├── memory.rb              # Session compression
+├── replicate.rb           # Image/audio generation
+├── web.rb                 # Ferrum headless browser
+├── sandbox.rb             # OpenBSD pledge (disabled)
+├── principles/            # 32 principle .md files
+└── personas/              # Persona .md files
 ```
 
-## 32 Principles
+## LLM Tiers
 
-| Tier | Priority | Principles |
-|------|----------|------------|
-| **Axioms** | 10 | Clarity, Simplicity, Explicit, Scientific, Divide & Conquer |
-| **SOLID** | 7-8 | SRP, OCP, LSP, ISP, DIP |
-| **Coding** | 5-7 | DRY, WET, AHA (with conflict resolution) |
-| **Clean Code** | 6-7 | Names, Small Functions, Few Args, CQS, No Side Effects |
-| **UI** | 5-6 | Progressive Disclosure, Real-Time Feedback |
-| **LLM** | 6-9 | Cost Transparency, Fail Gracefully, Cache Aggressively |
-| **Operations** | 9-10 | Idempotent, Safe Refactoring |
-| **Architecture** | 9 | Functional Core / Imperative Shell |
+| Tier | Model | Cost/1K |
+|------|-------|---------|
+| fast | DeepSeek | $0.00014 |
+| code | DeepSeek | $0.00014 |
+| medium | DeepSeek | $0.00014 |
+| strong | Claude Sonnet 4 | $0.015 |
+| premium | Claude Opus 4 | $0.075 |
 
-## Hooks
+## Commands
 
-Event-driven extensibility via `master.yml`:
-
-```yaml
-hooks:
-  on_violation_found:
-    - action: "log"
-      path: ".constitutional_violations.jsonl"
-  on_cost_threshold:
-    - action: "warn"
-      message: "Cost limit approaching"
-  on_convergence_stuck:
-    - action: "pause"
-      message: "Review and press Enter..."
+```
+ask <msg>      Chat with LLM
+audit [ref]    Compare features vs git history
+cat <file>     View file
+cd <dir>       Change directory
+clean <file>   Fix CRLF, trim whitespace
+clear          Clear chat history
+converge       Iterate until no changes
+cost           Show LLM cost
+describe <img> Describe image (Replicate)
+edit <file>    Edit file
+help           Show help
+image <prompt> Generate image (Replicate)
+ls             List files
+persona <name> Switch persona
+personas       List personas
+principles     List principles
+refactor <path> Auto-refactor with research
+review <path>  Multi-agent code review
+scan <path>    Scan for issues
+status         Show status
+tree           Show file tree
+version        Show version
+web <url>      Browse URL
+exit           Quit
 ```
 
-**Events:** `before_scan`, `after_scan`, `before_fix`, `after_fix`, `violation_found`, `fix_applied`, `fix_rejected`, `iteration_start`, `iteration_end`, `cost_threshold`, `file_start`, `file_end`, `convergence_stuck`, `gardener_run`
+## Web Interface
 
-**Actions:** `log` (JSONL), `warn` (console), `pause` (interactive)
-
-## Skills
-
-Modular skills in `~/.constitutional/skills/` or `./skills/`:
-
-```yaml
-# skills/my-skill/SKILL.yml
-name: "My Custom Skill"
-description: "Does something cool"
-version: "1.0"
-priority: 50
-stages: [pre-scan, detection]
+```bash
+ruby bin/cli
+# Server starts on http://localhost:8080
+# Open cli.html for orb interface
 ```
+
+## Cross-Platform
+
+✅ OpenBSD | ✅ Termux | ✅ macOS | ✅ Linux | ✅ Windows
 
 ## Environment
 
 ```bash
-OPENROUTER_API_KEY       # required for AI features
-VERBOSE=1                # debug mode (detailed logs)
-NO_COLOR=1               # disable colors
-CONSTITUTIONAL_MINIMAL=1 # minimal boot output
-```
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success (100/100 score) |
-| 1 | Violations found |
-| 2 | Fatal error |
-
-## Files Generated
-
-| File | Purpose |
-|------|---------|
-| `.constitutional_backups/` | Rollback backups (keeps 5) |
-| `.constitutional_locks/` | File locks for concurrency |
-| `.constitutional_costs.jsonl` | Cross-session cost tracking |
-| `.constitutional_history.json` | Analysis history |
-| `.constitutional_memory.json` | Pattern memory (fix success rates) |
-| `.constitutional_violations.jsonl` | Violation log (if hook enabled) |
-
-## CI/CD Integration
-
-```yaml
-# GitHub Actions
-- name: master.yml LLM OS Check
-  run: |
-    ruby cli.rb --json --quiet . > results.json
-    exit_code=$?
-    if [ $exit_code -ne 0 ]; then
-      echo "Violations found"
-      cat results.json
-      exit 1
-    fi
-```
-
-## Starship Integration
-
-Add to `~/.config/starship.toml`:
-
-```toml
-[custom.constitutional]
-command = "ruby cli.rb --quiet --quick . && echo '✓' || echo '✗'"
-when = "test -f cli.rb"
-format = "[$output]($style) "
-style = "green"
+OPENROUTER_API_KEY    # Required
+REPLICATE_API_TOKEN   # For image generation
 ```
 
 ---
 
-*May your code be clean and your merge conflicts few.*
+*Delete until it hurts, then delete some more.*

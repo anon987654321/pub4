@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 9: RGB Pulse</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0a0a0a; display: grid; place-items: center; }
+@keyframes glitch1 {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -2px); }
+}
+@keyframes glitch2 {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(2px, -1px); }
+  40% { transform: translate(-1px, 2px); }
+  60% { transform: translate(3px, -2px); }
+  80% { transform: translate(-2px, 1px); }
+}
+@keyframes glitch3 {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(1px, 2px); }
+  40% { transform: translate(-2px, -1px); }
+  60% { transform: translate(2px, 1px); }
+  80% { transform: translate(-1px, -2px); }
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 3x1 / 180px;
+  @place: center;
+  @size: 100%;
+  border-radius: 50%;
+  border: 3px solid @pn(#ff0040, #00ff40, #4000ff);
+  mix-blend-mode: screen;
+  animation: @pn(glitch1, glitch2, glitch3) .15s steps(2) infinite;
+</css-doodle>
+</body>
+</html>

@@ -1,0 +1,19 @@
+---
+name: Separation of Concerns
+description: Divide program into distinct sections, each addressing a separate concern.
+tier: core
+priority: 4
+auto_fixable: false
+anti_patterns:
+- name: mixed_concerns
+  smell: One module handles unrelated responsibilities
+  example: User class handles auth, email, and billing
+  fix: Split into UserAuth, UserMailer, UserBilling
+- name: ui_logic_in_models
+  smell: Domain models contain presentation logic
+  example: "`User#to_html` or formatting in ActiveRecord"
+  fix: Use presenters/decorators for display logic
+- name: business_logic_in_views
+  smell: Templates contain conditionals and calculations
+  example: "`<% if user.age > 18 && user.verified? %>`"
+  fix: Move logic to model/presenter, expose simple flags

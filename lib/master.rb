@@ -6,6 +6,7 @@ module MASTER
   VERSION = '50.8'
   ROOT = File.expand_path('..', __dir__)
 
+  autoload :Paths,     'paths'
   autoload :Result,    'result'
   autoload :Principle, 'principle'
   autoload :Persona,   'persona'
@@ -14,6 +15,8 @@ module MASTER
   autoload :LLM,       'llm'
   autoload :Engine,    'engine'
   autoload :Memory,    'memory'
+  autoload :Safety,    'safety'
+  autoload :Converge,  'converge'
   autoload :Smells,    'smells'
   autoload :OpenBSD,   'openbsd'
   autoload :Web,       'web'

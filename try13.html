@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 13: Glyphic Oracle</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0a0a10; display: grid; place-items: center; }
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: .6; }
+  50% { transform: translateY(-2px) rotate(1deg); opacity: 1; }
+}
+css-doodle { 
+  border-radius: 50%; 
+  overflow: hidden;
+  box-shadow: 0 0 80px #8080ff11;
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 11 / 180px;
+  @content: @unicode.r(0x2200, 0x22ff);
+  color: hsla(@r(200, 280), 60%, 70%, @r(.3, .9));
+  font-size: @r(10px, 16px);
+  font-family: 'Times New Roman', Georgia, serif;
+  display: grid;
+  place-items: center;
+  text-shadow: 0 0 8px currentColor;
+  animation: drift @r(3s, 7s) ease-in-out infinite;
+  animation-delay: @r(-5s, 0s);
+</css-doodle>
+</body>
+</html>

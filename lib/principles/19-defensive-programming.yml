@@ -1,0 +1,15 @@
+---
+name: Defensive Programming
+description: Never trust input. Validate at boundaries.
+tier: reliability
+priority: 19
+auto_fixable: true
+anti_patterns:
+- name: missing_validation
+  smell: User input used without checks
+  example: "`File.read(params[:path])` - path traversal"
+  fix: Whitelist, sanitize, validate all input
+- name: trust_boundary_violation
+  smell: Internal code trusts external data
+  example: API response parsed without schema validation
+  fix: Validate at boundaries, fail on invalid data

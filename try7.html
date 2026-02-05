@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 7: Architect's Grid</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0c0c0c; display: grid; place-items: center; }
+@keyframes fade {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+css-doodle { 
+  border-radius: 50%; 
+  overflow: hidden;
+  box-shadow: 0 0 80px #ffffff08;
+  animation: fade 8s ease-in-out infinite;
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 18 / 180px;
+  background: transparent;
+  border-right: @p(1px, 0) solid hsla(0, 0%, 100%, @r(.05, .3));
+  border-bottom: @p(1px, 0) solid hsla(0, 0%, 100%, @r(.05, .3));
+  @random(.1) {
+    background: hsla(200, 60%, 60%, @r(.3, .7));
+  }
+</css-doodle>
+</body>
+</html>

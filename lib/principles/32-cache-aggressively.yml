@@ -1,0 +1,15 @@
+---
+name: Cache Aggressively
+description: Cache LLM responses. Same prompt = same result.
+tier: llm
+priority: 32
+auto_fixable: true
+anti_patterns:
+- name: redundant_api_calls
+  smell: Same prompt sent multiple times
+  example: Identical question costs tokens each time
+  fix: Hash prompt, cache response for 24h
+- name: wasted_tokens
+  smell: Re-computing what could be cached
+  example: System prompt rebuilt on every call
+  fix: Precompute, cache, reuse

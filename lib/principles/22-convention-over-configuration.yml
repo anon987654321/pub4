@@ -1,0 +1,15 @@
+---
+name: Convention Over Configuration
+description: Sensible defaults reduce boilerplate. Rails fame.
+tier: productivity
+priority: 22
+auto_fixable: false
+anti_patterns:
+- name: excessive_configuration
+  smell: Require config for every behavior
+  example: 200-line XML to configure ORM
+  fix: Provide sensible defaults, override only when needed
+- name: missing_defaults
+  smell: No default behavior, everything explicit
+  example: "`connect(host, port, timeout, retry, ...)` all required"
+  fix: Default to localhost:5432, timeout 30s, etc.

@@ -1,0 +1,15 @@
+---
+name: Pure Functions
+description: Same input, same output. No side effects.
+tier: functional
+priority: 30
+auto_fixable: true
+anti_patterns:
+- name: impure_functions
+  smell: Output depends on hidden state
+  example: "`calculate()` returns different values based on time"
+  fix: Pass all dependencies as parameters
+- name: hidden_dependencies
+  smell: Function reads from global/env without declaring
+  example: '`process()` reads `ENV["MODE"]` internally'
+  fix: 'Accept mode as parameter: `process(mode)`'

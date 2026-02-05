@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSS-Doodle Test</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #000; display: grid; place-items: center; }
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle>
+  :doodle {
+    @grid: 5 / 150px;
+    gap: 1px;
+  }
+  background: @p(#f00, #0f0, #00f, #ff0, #f0f);
+</css-doodle>
+</body>
+</html>

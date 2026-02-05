@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vanilla 10: Radar Sweep</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #000; display: grid; place-items: center; }
+.radar {
+  position: relative;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent, transparent 18px, #0a3 20px);
+  border: 2px solid #0f0;
+  box-shadow: 0 0 20px #0f0, inset 0 0 20px rgba(0,255,0,.2);
+}
+.sweep {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(transparent 0deg, rgba(0,255,0,.5) 30deg, transparent 60deg);
+  animation: spin 3s linear infinite;
+}
+.center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  background: #0f0;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #0f0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="radar">
+  <div class="sweep"></div>
+  <div class="center"></div>
+</div>
+</body>
+</html>

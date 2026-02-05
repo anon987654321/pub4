@@ -1,0 +1,15 @@
+---
+name: Idempotent Operations
+description: Same operation, same result. Critical for distributed systems.
+tier: reliability
+priority: 18
+auto_fixable: false
+anti_patterns:
+- name: non_idempotent_mutations
+  smell: Repeated calls produce different results
+  example: "`increment_counter()` called twice = +2"
+  fix: Use `set_counter(value)` instead
+- name: unsafe_retries
+  smell: Retry logic without idempotency keys
+  example: Payment API retried without dedup
+  fix: Add idempotency key, check before processing

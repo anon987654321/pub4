@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 18: Helvetica Nebula</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0c0c10; display: grid; place-items: center; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); opacity: .6; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+css-doodle { 
+  border-radius: 50%; 
+  overflow: hidden;
+  box-shadow: 0 0 100px #ffffff08;
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 10 / 180px;
+  @content: @p(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: @p(100, 200, 300, 400, 500, 600, 700, 800);
+  font-size: @r(10px, 20px);
+  color: hsla(0, 0%, 100%, @r(.15, .85));
+  display: grid;
+  place-items: center;
+  letter-spacing: @r(-2px, 2px);
+  animation: float @r(2s, 5s) ease-in-out infinite;
+  animation-delay: @r(-4s, 0s);
+</css-doodle>
+</body>
+</html>

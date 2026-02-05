@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 17: Bauhaus Grid</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #f5f5f0; display: grid; place-items: center; }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+css-doodle { 
+  border-radius: 50%; 
+  overflow: hidden;
+  box-shadow: 0 4px 30px rgba(0,0,0,.15);
+  animation: breathe 6s ease-in-out infinite;
+}
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 6 / 180px;
+  background: @p(#1a1a1a, #e63946, #f4a261, #2a9d8f, #264653, #f5f5f0, #f5f5f0);
+  clip-path: @p(
+    circle(50%),
+    polygon(50% 0%, 0% 100%, 100% 100%),
+    polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%),
+    circle(50%),
+    none
+  );
+</css-doodle>
+</body>
+</html>

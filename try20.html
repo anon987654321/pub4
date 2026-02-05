@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 20: Eternal Ripple</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #0a0a0f; display: grid; place-items: center; }
+@keyframes ripple {
+  0% { transform: scale(.3); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+@keyframes breathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+css-doodle { animation: breathe 4s ease-in-out infinite; }
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle>
+  @grid: 5x1 / 180px;
+  @place: center;
+  @size: 60px;
+  border-radius: 50%;
+  border: 2px solid hsla(calc(200 + @i() * 20), 60%, 70%, .8);
+  animation: ripple 3s ease-out infinite;
+  animation-delay: calc(@i() * 600ms);
+</css-doodle>
+</body>
+</html>

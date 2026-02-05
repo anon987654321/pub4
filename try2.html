@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orb 2: Living Rings</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body { height: 100%; background: #08080c; display: grid; place-items: center; }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: .6; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+@keyframes drift {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.02) rotate(1deg); }
+  75% { transform: scale(.98) rotate(-1deg); }
+}
+css-doodle { animation: drift 8s ease-in-out infinite; }
+</style>
+<script src="css-doodle.js"></script>
+</head>
+<body>
+<css-doodle onclick="this.update && this.update()">
+  @grid: 24x1 / 180px;
+  @place: center;
+  @size: calc(100% - @i() * 3.5%);
+  border-radius: 50%;
+  border: 1px solid hsla(calc(220 + @i() * 3), 60%, calc(40% + @i() * 2%), calc(1 - @i() * .03));
+  animation: pulse 3s ease-in-out infinite;
+  animation-delay: calc(@i() * -120ms);
+</css-doodle>
+</body>
+</html>
