@@ -61,7 +61,9 @@ module MASTER
       whisper:         'openai/whisper',
       riffusion:       'riffusion/riffusion',
 
-      # Text-to-speech
+      # Text-to-speech (fast to slow)
+      minimax_turbo:   'minimax/speech-02-turbo',
+      minimax_hd:      'minimax/speech-02-hd',
       kokoro:          'jaaari/kokoro-82m',
 
       # 3D and depth
@@ -267,12 +269,34 @@ module MASTER
         run_model(model_id, { prompt: prompt, duration: duration })
       end
 
-      def speak(text, voice: 'af_heart', speed: 1.0)
-        run_model(MODELS[:kokoro], {
-          text: text,
-          voice: voice,
-          speed: speed
-        })
+      def speak(text, voice: 'af_bella', speed: 1.0, turbo: true)
+        if turbo
+          speak_turbo(text)
+        else
+          run_model(MODELS[:kokoro], { text: text, voice: voice, speed: speed })
+        end
+      end
+
+      def speak_turbo(text)
+        run_model_by_name('minimax/speech-02-turbo', { text: text })
+      end
+
+      def run_model_by_name(model_name, input)
+        uri = URI("#{API_URL}/models/#{model_name}/predictions")
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+
+        request = Net::HTTP::Post.new(uri)
+        request['Authorization'] = "Bearer #{api_token}"
+        request['Content-Type'] = 'application/json'
+        request.body = { input: input }.to_json
+
+        response = http.request(request)
+        result = JSON.parse(response.body)
+
+        return result['error'] if result['error']
+
+        poll_prediction(result['id'])
       end
 
       def describe_image(path)

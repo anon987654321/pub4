@@ -23,7 +23,7 @@ module MASTER
     COMMANDS = %w[
       ask audit beautify cat cd chamber clean clear commit converge cost describe diff
       edit evolve exit git help image introspect lint log ls persona personas principles pull
-      push queue quit read refactor refine review sanity scan smells status tree
+      push queue quit radio read refactor refine review sanity scan smells speak status tree
       version web
     ].freeze
 
@@ -360,6 +360,12 @@ module MASTER
 
       when 'describe'
         describe_image(arg)
+
+      when 'speak'
+        speak_text(arg)
+
+      when 'radio'
+        start_radio(arg)
 
       when 'version'
         "MASTER v#{VERSION}"
@@ -1275,6 +1281,104 @@ module MASTER
       lines.join("\n")
     rescue LoadError, StandardError => e
       "Evolution error: #{e.message}"
+    end
+
+    def speak_text(text)
+      return "Usage: speak <text>" unless text && !text.empty?
+
+      result = Replicate.speak(text, voice: 'af_bella', speed: 1.0)
+      if result.is_a?(String) && result.start_with?('http')
+        save_and_play_audio(result)
+        "Spoke: #{text[0..50]}..."
+      else
+        "TTS error: #{result}"
+      end
+    end
+
+    def start_radio(topic = nil)
+      @radio_running = true
+      topic ||= 'science'
+
+      Thread.new do
+        while @radio_running
+          content = generate_radio_content(topic)
+          content.each do |item|
+            break unless @radio_running
+            result = Replicate.speak(item[:text], voice: 'af_bella', speed: item[:speed])
+            save_and_play_audio(result) if result.is_a?(String) && result.start_with?('http')
+          end
+        end
+      end
+
+      "Radio started (#{topic}). Type 'radio stop' to end."
+    end
+
+    def generate_radio_content(topic)
+      prompt = <<~PROMPT
+        Generate 10 fascinating #{topic} facts. Each should be one sentence.
+        Mix profound insights (mark with [SLOW]) and quick facts (mark with [FAST]).
+        Return as numbered list. No fluff, only genuinely interesting content.
+      PROMPT
+
+      result = @llm.chat(prompt, tier: :fast)
+      return default_facts unless result.ok?
+
+      parse_radio_content(result.value)
+    end
+
+    def parse_radio_content(text)
+      lines = text.lines.map(&:strip).reject(&:empty?)
+      lines.map do |line|
+        clean = line.sub(/^\d+\.\s*/, '').sub(/\[(SLOW|FAST)\]\s*/i, '')
+        speed = line.include?('[SLOW]') ? 0.85 : (line.include?('[FAST]') ? 1.15 : 1.0)
+        { text: clean, speed: speed }
+      end
+    end
+
+    def default_facts
+      [
+        { text: "A single bolt of lightning contains enough energy to toast a hundred thousand slices of bread.", speed: 0.9 },
+        { text: "Honey bees can recognize human faces.", speed: 0.95 },
+        { text: "Octopuses have nine brains. One central and one in each arm.", speed: 0.85 },
+        { text: "Crows can hold grudges and remember faces for years.", speed: 0.9 },
+        { text: "There are more trees on Earth than stars in the Milky Way.", speed: 0.85 },
+        { text: "A cloud weighs about one million pounds on average.", speed: 0.9 },
+        { text: "Bananas glow blue under black light.", speed: 1.0 },
+        { text: "The Eiffel Tower grows six inches every summer due to heat expansion.", speed: 0.9 },
+        { text: "Butterflies taste with their feet.", speed: 1.0 },
+        { text: "A shrimp's heart is in its head.", speed: 0.95 },
+        { text: "Humans share fifty percent of their DNA with bananas.", speed: 0.85 },
+        { text: "The shortest war in history lasted thirty eight minutes.", speed: 0.9 },
+        { text: "A group of flamingos is called a flamboyance.", speed: 1.0 },
+        { text: "The unicorn is Scotland's national animal.", speed: 0.95 },
+        { text: "Almonds are members of the peach family.", speed: 1.0 }
+      ].shuffle
+    end
+
+    def save_and_play_audio(url)
+      path = File.join(MASTER::ROOT, 'var', 'audio', "#{Time.now.to_i}.wav")
+      FileUtils.mkdir_p(File.dirname(path))
+
+      # Download
+      uri = URI(url)
+      Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+        File.binwrite(path, http.get(uri).body)
+      end
+
+      # Play based on OS
+      play_audio(path)
+      path
+    end
+
+    def play_audio(path)
+      case RbConfig::CONFIG['host_os']
+      when /mswin|mingw|cygwin/
+        system("powershell -c \"Add-Type -AssemblyName presentationCore; $p = New-Object System.Windows.Media.MediaPlayer; $p.Open('#{path}'); Start-Sleep -Milliseconds 500; $p.Play(); Start-Sleep -Seconds 5; $p.Close()\"")
+      when /darwin/
+        system("afplay '#{path}'")
+      when /linux|bsd/
+        system("mpv --no-video '#{path}' 2>/dev/null || ffplay -nodisp -autoexit '#{path}' 2>/dev/null || aplay '#{path}' 2>/dev/null")
+      end
     end
   end
 end
