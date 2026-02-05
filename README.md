@@ -1,4 +1,4 @@
-# llm.rb — The LLM Operating System
+# LLM.rb — The LLM Operating System
 
 Constitutional AI in pure Ruby. Runs on OpenBSD, the most secure Unix.
 
