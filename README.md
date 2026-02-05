@@ -1,6 +1,6 @@
-# LLM.rb — The LLM Operating System
+# LLM-Ruby — The LLM Operating System
 
-LLM.rb helps you think better with AI. You describe what you want in plain English, and it figures out the rest. The system knows when to use a fast, cheap model and when to bring in the heavy artillery. It argues with itself before giving you an answer. It questions its own assumptions. It learns from its mistakes.
+LLM-Ruby helps you think better with AI. You describe what you want in plain English, and it figures out the rest. The system knows when to use a fast, cheap model and when to bring in the heavy artillery. It argues with itself before giving you an answer. It questions its own assumptions. It learns from its mistakes.
 
 This is not another chatbot wrapper. It is a complete operating system for working with language models—built in pure Ruby, running on OpenBSD, designed for people who care about simplicity and security.
 
