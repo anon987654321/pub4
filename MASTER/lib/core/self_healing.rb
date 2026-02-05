@@ -1,0 +1,1 @@
+module MASTER; class SelfHealing; FIXES = {/pathspec.*did not match/ => ->(m) { ["find . -name \"*\""] }, /fetch first/ => ->(m) { ["git pull --rebase"] }}; def self.fix(cmd, out, code); return false if code == 0; FIXES.each { |p, f| return f.call(out.match(p)) if out.match(p) }; false; end; end; end

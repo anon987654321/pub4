@@ -1,0 +1,1 @@
+module MASTER; module ErrorInterceptor; def system_safe(cmd); out = `#{cmd} 2>&1`; code = $?.exitstatus; fixes = SelfHealing.fix(cmd, out, code) if code != 0; fixes&.each { |f| system(f) }; [out, code]; end; end; end
