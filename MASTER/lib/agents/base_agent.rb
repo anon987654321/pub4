@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-module Master
+require 'time'
+
+module MASTER
   module Agents
     class BaseAgent
       attr_reader :name, :findings
