@@ -5,11 +5,14 @@ module MASTER
     class << self
       def run(verbose: false)
         principles = load_principles
-        platform = platform_name
+        tiers = LLM::TIERS.keys.join(' ')
 
         puts
-        puts "\e[1mmaster\e[0m #{VERSION}"
-        puts "\e[2m#{principles.size} principles · #{LLM::TIERS.size} tiers · #{platform}\e[0m"
+        puts "master0 at root: version #{VERSION}"
+        puts "const0: #{principles.size} entries"
+        puts "llm0: #{tiers}"
+        puts "root0: #{ROOT}"
+        puts "#{platform_name}0 at mainbus0"
         puts
 
         principles
@@ -27,7 +30,7 @@ module MASTER
         case RUBY_PLATFORM
         when /openbsd/ then 'openbsd'
         when /linux.*android/, /aarch64.*linux/ then 'termux'
-        when /darwin/ then 'macos'
+        when /darwin/ then 'darwin'
         when /linux/ then 'linux'
         when /mingw|mswin/ then 'windows'
         else 'unix'
