@@ -20,6 +20,7 @@ module MASTER
   autoload :Safety,      "#{LIB}/safety"
   autoload :Converge,    "#{LIB}/converge"
   autoload :Smells,      "#{LIB}/smells"
+  autoload :Violations,  "#{LIB}/violations"
   autoload :OpenBSD,     "#{LIB}/openbsd"
   autoload :Web,         "#{LIB}/web"
   autoload :Replicate,   "#{LIB}/replicate"

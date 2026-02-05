@@ -4,6 +4,11 @@ require 'net/http'
 require 'json'
 require 'uri'
 
+begin
+  require 'ruby_llm'
+rescue LoadError
+end
+
 module MASTER
   class LLM
     TIERS = {
@@ -17,16 +22,17 @@ module MASTER
       kimi:      { model: 'moonshotai/kimi-k2.5',          input: 0.0002,  output: 0.001 },
       auto:      { model: 'openrouter/auto',               input: 0.003,   output: 0.015 }
     }.freeze
+    BACKENDS = %i[http ruby_llm].freeze
 
     DEFAULT_TIER = :strong
     MAX_RETRIES = 3
     RETRY_DELAYS = [1, 2, 4].freeze
 
     attr_reader :total_cost, :persona, :last_tokens, :last_cached,
-                :total_tokens_in, :total_tokens_out, :request_count,
-                :current_tier
+                :total_tokens_in, :total_tokens_out, :request_count, :backend,
+                :context_files
 
-    def initialize
+    def initialize(backend: nil)
       @api_key = ENV['OPENROUTER_API_KEY']
       @base_url = ENV['OPENROUTER_BASE_URL'] || ENV['OPENROUTER_API_BASE'] || 'https://openrouter.ai/api/v1'
       @total_cost = 0.0
@@ -40,6 +46,9 @@ module MASTER
       @last_tokens = { input: 0, output: 0 }
       @last_cached = false
       @current_tier = DEFAULT_TIER
+      @context_files = []
+      @backend = resolve_backend(backend || ENV['MASTER_LLM_BACKEND'])
+      configure_ruby_llm if @backend == :ruby_llm
     end
 
     def chat(message, tier: nil)
@@ -55,12 +64,16 @@ module MASTER
       end
 
       @last_cached = false
-      @history << { role: 'user', content: message }
-      result = call_api(tier)
+      result = if @backend == :ruby_llm
+                 ruby_llm_chat(message, tier)
+               else
+                 @history << { role: 'user', content: message }
+                 call_api(tier)
+               end
 
       if result.ok?
         @cache[cache_key] = result.value
-        @history << { role: 'assistant', content: result.value }
+        @history << { role: 'assistant', content: result.value } if @backend != :ruby_llm
       end
 
       result
@@ -100,7 +113,11 @@ module MASTER
       return Result.err('No API key') unless @api_key
 
       @last_cached = false
-      call_api_direct(model, prompt)
+      if @backend == :ruby_llm
+        ruby_llm_chat_with_model(model, prompt)
+      else
+        call_api_direct(model, prompt)
+      end
     end
 
     # Streaming support: yields tokens as they arrive
@@ -108,6 +125,8 @@ module MASTER
       tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
       return Result.err('No block given') unless block_given?
+
+      return ruby_llm_stream(message, tier, &block) if @backend == :ruby_llm
 
       begin
         require_relative 'token_streamer'
@@ -124,7 +143,6 @@ module MASTER
 
         if result.ok?
           @history << { role: 'assistant', content: result.value }
-          # Update cost tracking
           usage = result.metadata[:usage] || {}
           input_tokens = usage[:input] || 0
           output_tokens = usage[:output] || 0
@@ -132,7 +150,7 @@ module MASTER
           @total_tokens_in += input_tokens
           @total_tokens_out += output_tokens
           @request_count += 1
-          @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+          @total_cost += estimate_cost(input_tokens, output_tokens, tier)
         end
 
         result
@@ -145,7 +163,144 @@ module MASTER
 
     attr_reader :last_cost
 
+    def add_context_file(path)
+      return Result.err('Path required') unless path
+      return Result.err("Not found: #{path}") unless File.exist?(path)
+
+      full = File.expand_path(path)
+      @context_files << full unless @context_files.include?(full)
+      Result.ok(full)
+    end
+
+    def drop_context_file(path)
+      return Result.err('Path required') unless path
+      full = File.expand_path(path)
+      return Result.err("Not found: #{path}") unless @context_files.include?(full)
+
+      @context_files.delete(full)
+      Result.ok(full)
+    end
+
+    def clear_context_files
+      @context_files.clear
+    end
+
+    def set_backend(name)
+      return Result.err('Backend required') unless name
+      key = name.to_s.downcase.to_sym
+      return Result.err('Unknown backend') unless BACKENDS.include?(key)
+      return Result.err('ruby_llm unavailable') if key == :ruby_llm && !ruby_llm_available?
+
+      @backend = key
+      configure_ruby_llm if @backend == :ruby_llm
+      Result.ok(@backend)
+    end
+
     private
+
+    def resolve_backend(value)
+      return :http if value.nil? || value.to_s.strip.empty?
+      key = value.to_s.strip.downcase.to_sym
+      return :ruby_llm if key == :ruby_llm && ruby_llm_available?
+      :http
+    end
+
+    def ruby_llm_available?
+      defined?(RubyLLM)
+    end
+
+    def configure_ruby_llm
+      return unless ruby_llm_available? && @api_key
+      RubyLLM.configure do |config|
+        config.openrouter_api_key = @api_key
+      end
+    rescue StandardError
+      nil
+    end
+
+    def ruby_llm_chat(message, tier)
+      chat = ruby_llm_session(tier)
+      response = chat.ask(message, with: resolved_context_files)
+      content = response.content
+      @history << { role: 'user', content: message }
+      @history << { role: 'assistant', content: content }
+      update_usage_from_response(response, tier)
+      Result.ok(content)
+    rescue StandardError => e
+      Result.err(e.message)
+    end
+
+    def ruby_llm_chat_with_model(model, prompt)
+      chat = ruby_llm_session(DEFAULT_TIER, model: model)
+      response = chat.ask(prompt, with: resolved_context_files)
+      update_usage_from_response(response, DEFAULT_TIER)
+      Result.ok(response.content)
+    rescue StandardError => e
+      Result.err(e.message)
+    end
+
+    def ruby_llm_stream(message, tier, &block)
+      chat = ruby_llm_session(tier)
+      response = chat.ask(message, with: resolved_context_files) do |chunk|
+        block.call(chunk.content.to_s)
+      end
+      @history << { role: 'user', content: message }
+      @history << { role: 'assistant', content: response.content }
+      update_usage_from_response(response, tier)
+      Result.ok(response.content)
+    rescue StandardError => e
+      Result.err("Streaming error: #{e.message}")
+    end
+
+    def ruby_llm_session(tier, model: nil)
+      config = TIERS[tier] || TIERS[DEFAULT_TIER]
+      model_name = model || config[:model]
+      raise ArgumentError, 'Model required' if model_name.to_s.strip.empty?
+      raise ArgumentError, "Invalid model: #{model_name}" unless model_name.match?(/\A(?!.*\.\.)[\w.\-]+(?:\/[\w.\-]+)*\z/)
+
+      chat = RubyLLM.chat(provider: :openrouter, model: model_name, assume_model_exists: true)
+      chat.with_instructions(build_system_prompt, replace: true)
+      @history.each do |entry|
+        chat.add_message(role: entry[:role].to_sym, content: entry[:content])
+      end
+      chat
+    end
+
+    def resolved_context_files
+      @context_files.select { |path| File.exist?(path) }
+    end
+
+    def update_usage_from_response(response, tier)
+      tokens = extract_tokens(response)
+      input_tokens = tokens[:input]
+      output_tokens = tokens[:output]
+      @last_tokens = { input: input_tokens, output: output_tokens }
+      @total_tokens_in += input_tokens
+      @total_tokens_out += output_tokens
+      @request_count += 1
+      cost = safe_float(response.respond_to?(:cost) ? response.cost : nil)
+      @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
+      @last_cost = cost if cost
+    end
+
+    def estimate_cost(input_tokens, output_tokens, tier)
+      config = TIERS[tier] || TIERS[DEFAULT_TIER]
+      (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+    end
+
+    def extract_tokens(response)
+      {
+        input: response.respond_to?(:input_tokens) ? response.input_tokens.to_i : 0,
+        output: response.respond_to?(:output_tokens) ? response.output_tokens.to_i : 0
+      }
+    end
+
+    def safe_float(value)
+      return nil if value.nil?
+      Float(value)
+    rescue StandardError
+      nil
+    end
 
     def load_persona(name)
       Persona.load(name)
@@ -192,7 +347,7 @@ module MASTER
         @total_tokens_in += input_tokens
         @total_tokens_out += output_tokens
         @request_count += 1
-        @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+        @total_cost += estimate_cost(input_tokens, output_tokens, tier)
 
         Result.ok(content)
       rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e

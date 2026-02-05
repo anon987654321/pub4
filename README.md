@@ -1,6 +1,6 @@
 # MASTER — The LLM Operating System
 
-A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. Runs on OpenBSD with security-first principles and positions itself as a Copilot CLI / Claude Code / Aider alternative.
+A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. It is a GitHub Copilot CLI, Claude Code, and Aider alternative, tuned for OpenBSD, and carries forward ideas from Moltbot/Openclaw.
 
 **What it does:** You give MASTER a task. It thinks, writes code, runs it, sees the result, and iterates until done. It can improve its own source code, generate images and video, and manage servers.
 
@@ -18,7 +18,7 @@ MASTER loads via `bin/cli` → `lib/master.rb`. Uses Ruby autoloading—modules 
 **MASTER = bin/ + lib/** (nothing else)
 
 **Purpose:**
-- Provide a clean, OpenBSD-first CLI alternative to Copilot CLI, Claude Code, and Aider
+- Provide a Copilot/Claude/Aider-class CLI in pure Ruby for OpenBSD workflows
 - Finish apps in `deploy/` folder
 - Build billion-user web applications  
 - Administer OpenBSD servers securely
@@ -153,6 +153,16 @@ docs/
 └── ENFORCEMENT.md           # Enforcement system
 ```
 
+## Legacy master.yml (modularized)
+
+The previous monolithic `master.yml` configuration is now split across `lib/`:
+
+- `lib/principles/*.yml` → constitutional principles
+- `lib/config/*.yml` → phases, limits, enforcement, session recovery
+- `lib/framework/*.rb` + `lib/config/framework/*.yml` → workflow engine and quality gates
+
+`master.yml` still exists in git history. Use `git log --all -- master.yml` and `git show <commit>:master.yml` to inspect prior versions. An archival pre-refactor snapshot also lives at `.archive/pre_refactor_20260106_043550.yml`.
+
 ## Target Projects (deploy/)
 
 MASTER exists to finish and deploy these apps:
@@ -221,12 +231,14 @@ deploy/
 ```sh
 OPENROUTER_API_KEY=sk-or-...     # Required
 REPLICATE_API_TOKEN=r8_...       # For images/video/audio
+MASTER_LLM_BACKEND=ruby_llm      # Optional: ruby_llm or http
 ```
 
 ## Commands
 
 ```
 ask <query>      Chat with LLM
+backend <name>   Switch http/ruby_llm backend
 scan             Analyze current directory  
 refactor         Improve code quality
 optimize         Self-optimize files
@@ -234,6 +246,7 @@ chamber <query>  Multi-model deliberation
 replicate        Generate images/video/audio
 queue <dir>      Process directory with checkpoints
 evolve           Convergence loop until <2% improvement
+context <cmd>    Manage context add/drop/list/clear
 help             Show all commands
 ```
 
@@ -243,4 +256,4 @@ The web UI now surfaces live model, persona, cost, token telemetry, orb selectio
 
 ---
 
-*MASTER v50.9 • Pure Ruby • OpenBSD • Constitutional AI*
+*MASTER v51.0 • Pure Ruby • OpenBSD • Constitutional AI*
