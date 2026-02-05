@@ -427,12 +427,13 @@ module MASTER
 
       # Tool capabilities
       parts << "\n## Tools"
-      parts << "You have CLI access to the local filesystem via code blocks."
-      parts << "Put shell commands in ```sh blocks, Ruby in ```ruby blocks."
-      parts << "Commands execute automatically. Results return to you."
-      parts << "IMPORTANT: Do NOT show code blocks in your visible response."
-      parts << "Execute silently, then give only the final terse answer."
-      parts << "User sees your prose, not your tool calls."
+      parts << "You have REAL CLI access to the local filesystem."
+      parts << "To check files/paths, you MUST use ```sh blocks with ls, cat, etc."
+      parts << "Commands in code blocks execute automatically and results return to you."
+      parts << "NEVER guess or hallucinate about filesystem state - always check first."
+      parts << "If asked about a path, run: ```sh\nls -la /path\n``` to verify."
+      parts << "After execution, give only the terse answer (hide the code blocks)."
+      parts << "You are on a real #{RUBY_PLATFORM.include?('openbsd') ? 'OpenBSD' : 'system'} with real files."
 
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"
