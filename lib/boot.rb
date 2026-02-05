@@ -8,13 +8,11 @@ module MASTER
         tiers = LLM::TIERS.keys.join(' ')
         time = Time.now.utc.strftime('%a %b %e %H:%M:%S UTC %Y')
 
-        puts
         puts "master #{VERSION} (GENERIC) #1: #{time}"
         puts "const0: #{principles.size} entries"
         puts "llm0: #{tiers}"
         puts "root0: #{ROOT}"
         puts "#{platform_name}0 at mainbus0"
-        puts
 
         principles
       end
