@@ -141,9 +141,9 @@ module MASTER
       persona = @llm.persona&.dig(:name)
 
       if persona && persona != 'default'
-        "\e[1;36m#{dir}\e[0m\e[2m:\e[0m\e[33m#{persona}\e[0m \e[35m❯\e[0m "
+        "\e[1;36m#{dir}\e[0m\e[2m:\e[0m\e[33m#{persona}\e[0m \e[35m>\e[0m "
       else
-        "\e[1;36m#{dir}\e[0m \e[35m❯\e[0m "
+        "\e[1;36m#{dir}\e[0m \e[35m>\e[0m "
       end
     end
 

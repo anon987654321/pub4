@@ -10,7 +10,7 @@ module MASTER
         model = LLM::TIERS[LLM::DEFAULT_TIER][:model].split('/').last
         time = Time.now.utc.strftime('%b %e %H:%M UTC %Y')
 
-        puts "master #{VERSION} · #{time}"
+        puts "master #{VERSION} - #{time}"
         puts "llm: #{model} via openrouter"
         puts "const: #{principles.size} principles, #{smells} smells"
         puts "abilities: ask scan refactor review image web"
