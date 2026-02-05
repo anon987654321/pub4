@@ -117,17 +117,18 @@
 
     new SimpleCarousel(document.getElementById("cityCarousel"));
 
-    const MP3_TRACKS=[
-      {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
-      {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
-      {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
-      // {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"}, // file missing
-      {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
-      {artist:"Chase Swayze",title:"Traffic",src:".mp3/chase_swayze-traffic.mp3"},
-      {artist:"Haisam & Johann",title:"PB1",src:".mp3/haisam_and_johann-pb1.mp3"},
-      {artist:"Jan Hakim & Johann",title:"Stailings A",src:".mp3/jan_hakim_and_johann-stailings_a.mp3"},
-      {artist:"Mike T Jr",title:"Rauingar",src:".mp3/mike_t_jr-rauingar.mp3"}
-    ];
+    // Personal MP3s commented out for public web UI
+    // const MP3_TRACKS=[
+    //   {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
+    //   {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
+    //   {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
+    //   {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
+    //   {artist:"Chase Swayze",title:"Traffic",src:".mp3/chase_swayze-traffic.mp3"},
+    //   {artist:"Haisam & Johann",title:"PB1",src:".mp3/haisam_and_johann-pb1.mp3"},
+    //   {artist:"Jan Hakim & Johann",title:"Stailings A",src:".mp3/jan_hakim_and_johann-stailings_a.mp3"},
+    //   {artist:"Mike T Jr",title:"Rauingar",src:".mp3/mike_t_jr-rauingar.mp3"}
+    // ];
+    const MP3_TRACKS=[];
     const YOUTUBE_TRACKS=[
       {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
       {artist:"J Dilla",title:"In Space",id:"vO2nWXCVt6o"},
@@ -426,7 +427,62 @@
           }
           if(s)this.particles=this.particles.sort((a,b)=>b[0].z-a[0].z);
           this.time+=(this.mouse.down?-.005:.005)*m;
+          // Draw central orb merged with tunnel
+          this.drawOrb(a);
           this.ctx.putImageData(this.imageData,0,0);
+        }
+        drawOrb(a){
+          const cx=this.w/2,cy=this.h/2;
+          const bass=a?.bass||0.5,beat=a?.beat||0,avg=a?.average||0.4;
+          const baseR=Math.min(this.w,this.h)*0.08;
+          const pulse=baseR+bass*15+beat*8;
+          const layers=4;
+          const segs=10;
+          const wobble=this.bassWobble||0;
+          if(!this._orbCos||this._orbCos.length!==segs){
+            this._orbCos=new Float32Array(segs);
+            this._orbSin=new Float32Array(segs);
+            for(let i=0;i<segs;i++){const ang=i*Math.PI*2/segs;this._orbCos[i]=Math.cos(ang);this._orbSin[i]=Math.sin(ang);}
+          }
+          for(let layer=0;layer<layers;layer++){
+            const z=(layer-layers/2)*12;
+            const scale=this.fov/(this.fov+z+wobble*8);
+            const r=pulse*scale;
+            const depth=layer/layers;
+            const br=Math.round((30+depth*50+beat*25)/8)*8;
+            const g=Math.round((70+depth*100+bass*30)/8)*8;
+            const b=Math.round((50+depth*70)/8)*8;
+            const col=pack32(br,g,b+br/2,255);
+            const ct=Math.cos(this.time*0.6+layer*0.4+wobble*0.15);
+            const st=Math.sin(this.time*0.6+layer*0.4+wobble*0.15);
+            let px0,py0;
+            for(let i=0;i<=segs;i++){
+              const idx=i%segs;
+              const cosA=this._orbCos[idx]*ct-this._orbSin[idx]*st;
+              const sinA=this._orbSin[idx]*ct+this._orbCos[idx]*st;
+              const px=cx+cosA*r;
+              const py=cy+sinA*r*0.55;
+              if(i>0)this.drawLine32(px0|0,py0|0,px|0,py|0,col);
+              px0=px;py0=py;
+            }
+            if(layer%2===1){
+              for(let i=0;i<segs;i+=2){
+                const cosA=this._orbCos[i]*ct-this._orbSin[i]*st;
+                const sinA=this._orbSin[i]*ct+this._orbCos[i]*st;
+                this.drawLine32(cx|0,cy|0,(cx+cosA*r)|0,(cy+sinA*r*0.55)|0,col);
+              }
+            }
+          }
+          const glowR=2+beat*1.5;
+          const glowCol=pack32(80,200,160,255);
+          for(let dx=-glowR;dx<=glowR;dx++){
+            for(let dy=-glowR;dy<=glowR;dy++){
+              if(dx*dx+dy*dy<=glowR*glowR){
+                const px=(cx+dx)|0,py=(cy+dy)|0;
+                if(px>0&&px<this.w&&py>0&&py<this.h)this.setPixel32(px,py,glowCol);
+              }
+            }
+          }
         }
       }
       const ctx=canvas.getContext("2d",{alpha:false,willReadFrequently:true})||canvas.getContext("2d");
