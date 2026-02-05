@@ -1,6 +1,6 @@
 # MASTER — The LLM Operating System
 
-A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. Runs on OpenBSD with security-first principles.
+A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. Runs on OpenBSD with security-first principles and positions itself as a Copilot CLI / Claude Code / Aider alternative.
 
 **What it does:** You give MASTER a task. It thinks, writes code, runs it, sees the result, and iterates until done. It can improve its own source code, generate images and video, and manage servers.
 
@@ -18,10 +18,12 @@ MASTER loads via `bin/cli` → `lib/master.rb`. Uses Ruby autoloading—modules 
 **MASTER = bin/ + lib/** (nothing else)
 
 **Purpose:**
+- Provide a clean, OpenBSD-first CLI alternative to Copilot CLI, Claude Code, and Aider
 - Finish apps in `deploy/` folder
 - Build billion-user web applications  
 - Administer OpenBSD servers securely
 - Generate media via Replicate API
+ - Carry forward standout ideas from Moltbot and Openclaw
 
 **Capabilities:**
 - Shell commands via ```sh blocks
@@ -233,6 +235,61 @@ queue <dir>      Process directory with checkpoints
 evolve           Convergence loop until <2% improvement
 help             Show all commands
 ```
+
+## UX/LLM Micro-Refinement Opportunities (NN/g aligned)
+
+Synthesized from README, `bin/cli`, `lib/**`, and the archived pre-refactor master.yml (beauty standards + workflow rules).
+
+1. Add a compact status bar in the web UI showing active model tier, persona, and connection state (visibility of system status).
+2. Surface OpenRouter latency and last request duration near the input to reduce uncertainty (visibility of system status).
+3. Show token/cost counters in the web UI mirrored from CLI `show_token_info` (visibility of system status).
+4. Provide a “processing…” disable state for the web input to prevent duplicate submits (error prevention).
+5. Add a cancellable request button that sends an abort to `/chat` (user control and freedom).
+6. Display a short, human-readable error banner for rate-limit responses (help users recognize/recover from errors).
+7. Show a retry timer when rate limited to set expectations (visibility of system status).
+8. Provide an inline hint under the web input with 2–3 example commands (recognition over recall).
+9. Add keyboard shortcuts help (`?` overlay) listing orb hotkeys and input actions (help and documentation).
+10. Echo the selected orb name briefly on change to confirm the action (feedback).
+11. Add a subtle focus ring on the web input to improve keyboard navigation visibility (accessibility, operable).
+12. Increase minimum font size or allow a quick “A+/A-” toggle for readability (flexibility and efficiency).
+13. Ensure contrast for `#c4b49a` text meets 4.5:1 on the dark background (WCAG).
+14. Add timestamps to output lines in web UI, optionally toggleable (match between system and real world).
+15. Separate system notices (e.g., boot/status) from LLM output with a lightweight label (consistency).
+16. Preserve the last 100 web messages in `localStorage` to avoid accidental loss (error prevention).
+17. Provide a “clear session” button that maps to `clear` with confirmation (user control).
+18. Show current working directory in the web UI header (match between system and real world).
+19. Surface CLI `@verbosity` setting and allow switching from web UI (flexibility).
+20. Add a minimal “session summary” card in web UI when idle (visibility of system status).
+21. Display a badge when a response is cached (visibility of system status).
+22. Provide a lightweight “copy response” button for each message (efficiency of use).
+23. Add a “resend last prompt” shortcut (user control, efficiency).
+24. Add a small “reset persona” quick action in web UI (user control).
+25. Show OpenRouter model picker with the same ordering as Boot’s prompt (consistency).
+26. Use progressive disclosure: group advanced commands in web help (recognition over recall).
+27. Highlight failures using the same semantic colors as CLI (consistency and standards).
+28. For CLI, confirm destructive commands like `clean` or `refactor` when no git status (error prevention).
+29. Provide a warning when `@llm` has no API key before entering REPL (error prevention).
+30. Show a quick OpenRouter key status in CLI prompt (visibility of system status).
+31. Add a “persona: <name>” prefix in CLI output when persona changes (visibility).
+32. Expand CLI prompt to include current model tier for transparency (visibility).
+33. Add a concise help tip after unknown commands with the closest match (help users recover).
+34. Add an optional “quiet boot” switch in CLI to reduce startup noise (flexibility).
+35. Use the OrbStream mood to drive a subtle status icon in web UI (match between system and real world).
+36. Provide a “loading” animation that reflects token speed instead of static stars (visibility).
+37. Add a “system settings” modal for orb selection, font size, and color theme (user control).
+38. Replace the empty web input placeholder with an action-oriented prompt (match between system and real world).
+39. Add a small “offline mode” indicator if `/poll` fails repeatedly (visibility, error recovery).
+40. Show a “last synced” time for the web output feed (visibility).
+41. Provide a “copy auth token” utility on `/token` page with safe warnings (error prevention).
+42. Use the archived beauty standards to enforce more whitespace around message blocks (aesthetic/minimalist).
+43. Introduce a consistent 8px/16px spacing scale in `cli.html` for rhythm (consistency).
+44. Allow users to toggle the grain overlay to reduce visual noise (aesthetic/minimalist).
+45. Reduce visual clutter by hiding the loader when the last response is under 200ms (aesthetic/minimalist).
+46. Add an “undo last command” affordance that maps to `undo` if available (user control).
+47. Provide LLM-friendly system hints in the web UI (e.g., “respond with runnable code blocks”) for OpenRouter (match between system and real world).
+48. Add a “request context” toggle to include or exclude conversation history for short tasks (flexibility).
+49. Show a lightweight “token budget remaining” estimate per request (visibility of system status).
+50. Provide a link in help to the NN/g heuristics and the beauty standards section for rationale (help and documentation).
 
 ---
 
