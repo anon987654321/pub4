@@ -37,4 +37,4 @@ vendor/bundle/
 coverage/
 .coverage
 
-var/replicate/*.mp3
+var/
