@@ -1,0 +1,70 @@
+# Typography & UI Design Invariants
+# Terminal output rules - typography succeeds when it disappears
+
+version: 1
+
+colors:
+  reset: "\e[0m"
+  bold: "\e[1m"
+  dim: "\e[2m"
+  italic: "\e[3m"
+  red: "\e[31m"      # Error only
+  green: "\e[32m"    # Success only
+  yellow: "\e[33m"   # Warning only
+  cyan: "\e[36m"     # Accent (sparingly)
+  grey: "\e[38;5;245m"  # Main text (calmer than white)
+
+semantics:
+  error: red
+  success: green
+  warning: yellow
+  accent: cyan
+  primary: bold
+  secondary: dim
+  body: grey
+
+icons:
+  ok: "✓"
+  err: "✗"
+  warn: "!"
+  item: "·"
+  flow: "→"
+
+rules:
+  - name: one_color_per_meaning
+    description: Never reuse a color for different semantics
+    
+  - name: hierarchy_via_contrast
+    description: Use weight/brightness, not decoration
+    
+  - name: whitespace_is_layout
+    description: Structure via indentation and spacing, not lines
+    
+  - name: proximity_beats_borders
+    description: Group related items by closeness
+    
+  - name: vertical_scan_first
+    description: Labels left, values aligned right
+    
+  - name: one_concept_per_screen
+    description: Don't mix status/explanation/instructions
+    
+  - name: success_whispers
+    description: Successful operations say little
+    
+  - name: errors_speak_loudly
+    description: Failures get full context and suggestions
+
+anti_patterns:
+  - ascii_separators: "━━━, ═══, ---"
+  - boxes_and_frames: "╭╮╰╯"
+  - mixed_icon_styles: "✓ + ✔ + OK"
+  - color_without_meaning: true
+  - verbose_success: true
+  - motion_for_static: true
+  - surprise_reordering: true
+
+verbosity_levels:
+  silent: errors_only
+  normal: result_and_summary
+  verbose: full_trace

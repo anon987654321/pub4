@@ -1,0 +1,50 @@
+# Agent Workflows Configuration
+# Multi-agent systems: chains, parallel execution, chamber deliberation
+
+version: 1
+
+agents:
+  base:
+    retry_count: 3
+    retry_delays: [1, 2, 4]
+    track_cost: true
+    track_tokens: true
+    
+  chamber:
+    description: Multi-model deliberation with consensus
+    participants: [sonnet, gemini, deepseek]
+    voting: majority
+    timeout: 60
+    
+  chain:
+    description: Sequential agent pipeline
+    pass_output: true
+    stop_on_error: true
+    
+  parallel:
+    description: Concurrent execution
+    strategies:
+      fastest: return first result
+      consensus: wait for majority agreement
+      all: collect all results
+
+workflows:
+  code_review:
+    agents: [style, security, performance]
+    output: merged_report
+    
+  refactor:
+    chain: [analyze, transform, validate]
+    rollback_on_failure: true
+    
+  deliberate:
+    type: chamber
+    require_consensus: true
+    max_rounds: 3
+
+metrics:
+  - total_cost
+  - total_tokens
+  - execution_time
+  - retry_count
+  - model_switches
