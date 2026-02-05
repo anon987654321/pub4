@@ -45,8 +45,8 @@ module MASTER
     ICON_ITEM = "·"
     ICON_FLOW = "→"
 
-    # Spinner (minimal motion, only for >500ms waits)
-    SPINNER = %w[· o O o].freeze
+    # Spinner (ASCII, by prompt)
+    SPINNER = %w[| / - \\].freeze
 
     # Boot quotes (rotates each session)
     QUOTES = [
@@ -534,20 +534,12 @@ module MASTER
     end
 
     def draw_orb(frame)
-      cols = terminal_cols
-      print "\e7"           # save cursor
-      print "\e[1;#{cols}H" # move to row 1, last column
-      print frame
-      print "\e8"           # restore cursor
+      print "\r#{frame} "
       $stdout.flush
     end
 
     def clear_orb
-      cols = terminal_cols
-      print "\e7"
-      print "\e[1;#{cols}H"
-      print " "
-      print "\e8"
+      print "\r  \r"
       $stdout.flush
     end
 
