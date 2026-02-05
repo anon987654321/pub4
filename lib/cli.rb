@@ -5,6 +5,7 @@ require 'fileutils'
 require 'io/console'
 require 'securerandom'
 require 'json'
+require 'shellwords'
 
 require_relative 'cli/commands/openbsd' if RUBY_PLATFORM.include?('openbsd')
 
@@ -1466,7 +1467,7 @@ module MASTER
 
     def context_add(path)
       return 'Usage: context add <file>' unless path
-      paths = path.split(/\s+/)
+      paths = Shellwords.split(path)
       messages = paths.map do |item|
         full = File.expand_path(item, @root)
         result = @llm.add_context_file(full)
@@ -1477,7 +1478,7 @@ module MASTER
 
     def context_drop(path)
       return 'Usage: context drop <file>' unless path
-      paths = path.split(/\s+/)
+      paths = Shellwords.split(path)
       messages = paths.map do |item|
         full = File.expand_path(item, @root)
         result = @llm.drop_context_file(full)

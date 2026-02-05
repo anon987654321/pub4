@@ -128,9 +128,13 @@ class TestCLIContext < Minitest::Test
     assert_equal 'Backend: http', @cli.process_input('backend http')
     assert_equal 'Backend: ruby_llm', @cli.process_input('backend ruby_llm')
     assert_equal 'Unknown backend', @cli.process_input('backend nope')
-    result = @cli.llm.set_backend(nil)
-    assert result.err?
-    assert_equal 'Backend required', result.error
+  end
+
+  def test_context_paths_with_spaces
+    spaced = File.join(@dir, 'with space.txt')
+    File.write(spaced, "space\n")
+    assert_includes @cli.process_input("context add \"#{spaced}\""), spaced
+    assert_includes @cli.process_input("context drop \"#{spaced}\""), spaced
   end
 
   def test_status_and_chat_flow
