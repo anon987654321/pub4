@@ -4,22 +4,30 @@ module MASTER
   module Boot
     class << self
       def run(verbose: true)
-        puts ">> master #{VERSION}"
-        
+        puts
+        puts "master #{VERSION}"
+        puts
+
         principles = load_principles
-        puts "boot> const0: #{principles.size} principles armed"
-        
+        puts "#{principles.size} principles armed"
+        puts
+
         if verbose
           principles.each do |p|
             smells = p[:anti_patterns]&.size || 0
-            puts "  [#{p[:filename].sub('.md','')}] #{p[:name]} (#{smells} smells)"
+            name = p[:filename].sub('.yml', '')
+            puts "  #{name}  #{p[:name]}  #{smells} smells"
           end
+          puts
         end
-        
-        puts "boot> llm0: openrouter/auto (#{LLM::TIERS.size} tiers)"
-        puts "boot> root: #{ROOT}"
+
+        puts "llm  openrouter  #{LLM::TIERS.size} tiers"
+        puts
+        puts "root  #{ROOT}"
+        puts
         puts platform_ready
-        
+        puts
+
         principles
       end
 
@@ -33,11 +41,11 @@ module MASTER
 
       def platform_ready
         case RUBY_PLATFORM
-        when /openbsd/ then 'OpenBSD ready.'
-        when /linux.*android/, /aarch64.*linux/ then 'Termux ready.'
-        when /darwin/ then 'macOS ready.'
-        when /linux/ then 'Linux ready.'
-        else 'Ready.'
+        when /openbsd/ then 'openbsd ready'
+        when /linux.*android/, /aarch64.*linux/ then 'termux ready'
+        when /darwin/ then 'macos ready'
+        when /linux/ then 'linux ready'
+        else 'ready'
         end
       end
     end

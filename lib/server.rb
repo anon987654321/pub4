@@ -52,9 +52,10 @@ module MASTER
     def run_falcon
       require 'falcon'
       require 'async'
+      require 'async/http/endpoint'
 
       app = build_app
-      
+
       Async do
         endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(app), endpoint)
