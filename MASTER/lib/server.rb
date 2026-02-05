@@ -222,110 +222,112 @@ module MASTER
             [501, { 'content-type' => 'text/plain' }, ['WebSocket upgrade not supported']]
           end
 
-        # Webhook endpoints for platform integrations
-        when ['POST', %r{^/webhook/(\w+)$}]
-          platform = $1
-          
-          unless @bot_manager
-            next [503, { 'content-type' => 'application/json' }, 
-                  ['{"error":"bot manager not initialized"}']]
-          end
-          
-          # Rate limiting for webhooks
-          unless rate_limiter.allow?
-            next [429, { 'content-type' => 'application/json' }, 
-                  ['{"error":"rate limit exceeded"}']]
-          end
-          
-          body = env['rack.input'].read
-          
-          # Get signature from headers (platform-specific)
-          signature = case platform
-          when 'discord'
-            {
-              timestamp: env['HTTP_X_SIGNATURE_TIMESTAMP'],
-              signature: env['HTTP_X_SIGNATURE_ED25519']
-            }
-          when 'telegram'
-            env['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']
-          when 'slack'
-            {
-              timestamp: env['HTTP_X_SLACK_REQUEST_TIMESTAMP'],
-              signature: env['HTTP_X_SLACK_SIGNATURE']
-            }
-          when 'twitter'
-            env['HTTP_X_TWITTER_WEBHOOKS_SIGNATURE']
-          else
-            nil
-          end
-          
-          # Verify webhook signature
-          adapter = @bot_manager.platforms[platform.to_sym]
-          if adapter && !adapter.verify_webhook(signature, body)
-            Audit.log(
-              command: "webhook_verification_failed #{platform}",
-              type: :webhook,
-              status: :error,
-              output_length: 0,
-              session_id: 'webhook'
-            )
-            next [401, { 'content-type' => 'application/json' }, 
-                  ['{"error":"invalid signature"}']]
-          end
-          
-          # Parse webhook data
-          data = JSON.parse(body) rescue {}
-          
-          # Publish to event bus for async processing
-          Thread.new do
-            begin
-              cli.llm.event_bus.publish(:webhook_received, {
-                platform: platform,
-                data: data,
-                timestamp: Time.now.to_i
-              })
-              
+        else
+          # Check for webhook endpoints
+          if method == 'POST' && path =~ %r{^/webhook/(\w+)$}
+            platform = $1
+            bot_manager = @bot_manager
+            
+            unless bot_manager
+              next [503, { 'content-type' => 'application/json' }, 
+                    ['{"error":"bot manager not initialized"}']]
+            end
+            
+            # Rate limiting for webhooks
+            unless rate_limiter.allow?
+              next [429, { 'content-type' => 'application/json' }, 
+                    ['{"error":"rate limit exceeded"}']]
+            end
+            
+            body = env['rack.input'].read
+            
+            # Get signature from headers (platform-specific)
+            signature = case platform
+            when 'discord'
+              {
+                timestamp: env['HTTP_X_SIGNATURE_TIMESTAMP'],
+                signature: env['HTTP_X_SIGNATURE_ED25519']
+              }
+            when 'telegram'
+              env['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']
+            when 'slack'
+              {
+                timestamp: env['HTTP_X_SLACK_REQUEST_TIMESTAMP'],
+                signature: env['HTTP_X_SLACK_SIGNATURE']
+              }
+            when 'twitter'
+              env['HTTP_X_TWITTER_WEBHOOKS_SIGNATURE']
+            else
+              nil
+            end
+            
+            # Verify webhook signature
+            adapter = bot_manager.platforms[platform.to_sym]
+            if adapter && !adapter.verify_webhook(signature, body)
               Audit.log(
-                command: "webhook #{platform}",
-                type: :webhook,
-                status: :success,
-                output_length: body.length,
-                session_id: 'webhook'
-              )
-            rescue => e
-              Audit.log(
-                command: "webhook_error #{platform}",
+                command: "webhook_verification_failed #{platform}",
                 type: :webhook,
                 status: :error,
                 output_length: 0,
                 session_id: 'webhook'
               )
+              next [401, { 'content-type' => 'application/json' }, 
+                    ['{"error":"invalid signature"}']]
             end
-          end
-          
-          # Return 200 OK immediately (async processing)
-          [200, { 'content-type' => 'application/json' }, ['{"status":"ok"}']]
-
-        else
-          # Serve static files - check lib/views/ first, then root
-          clean_path = path.delete_prefix('/')
-          views_path = File.join(MASTER::LIB, 'views', clean_path)
-          root_path = File.join(MASTER::ROOT, clean_path)
-          
-          file_path = if File.exist?(views_path) && File.file?(views_path)
-            views_path
-          elsif File.exist?(root_path) && File.file?(root_path)
-            root_path
+            
+            # Parse webhook data
+            data = JSON.parse(body) rescue {}
+            
+            # Publish to event bus for async processing
+            Thread.new do
+              begin
+                cli.llm.event_bus.publish(:webhook_received, {
+                  platform: platform,
+                  data: data,
+                  timestamp: Time.now.to_i
+                })
+                
+                Audit.log(
+                  command: "webhook #{platform}",
+                  type: :webhook,
+                  status: :success,
+                  output_length: body.length,
+                  session_id: 'webhook'
+                )
+              rescue => e
+                Audit.log(
+                  command: "webhook_error #{platform}",
+                  type: :webhook,
+                  status: :error,
+                  output_length: 0,
+                  session_id: 'webhook'
+                )
+              end
+            end
+            
+            # Return 200 OK immediately (async processing)
+            [200, { 'content-type' => 'application/json' }, ['{"status":"ok"}']]
           else
-            nil
-          end
-          
-          if file_path
-            ext = File.extname(path)
-            type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css', '.ico' => 'image/x-icon', '.png' => 'image/png' }[ext] || 'application/octet-stream'
-            [200, { 'content-type' => type }, [File.read(file_path)]]
-          else
-            [404, { 'content-type' => 'text/plain' }, ["Not found: #{path}"]]
+            # Serve static files - check lib/views/ first, then root
+            clean_path = path.delete_prefix('/')
+            views_path = File.join(MASTER::LIB, 'views', clean_path)
+            root_path = File.join(MASTER::ROOT, clean_path)
+            
+            file_path = if File.exist?(views_path) && File.file?(views_path)
+              views_path
+            elsif File.exist?(root_path) && File.file?(root_path)
+              root_path
+            else
+              nil
+            end
+            
+            if file_path
+              ext = File.extname(path)
+              type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css', '.ico' => 'image/x-icon', '.png' => 'image/png' }[ext] || 'application/octet-stream'
+              [200, { 'content-type' => type }, [File.read(file_path)]]
+            else
+              [404, { 'content-type' => 'text/plain' }, ["Not found: #{path}"]]
+            end
           end
         end
       }

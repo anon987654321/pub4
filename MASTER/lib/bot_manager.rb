@@ -167,7 +167,7 @@ module MASTER
       data = event.data
       
       # Implement dead letter queue for failed messages
-      dead_letter_file = File.join(MASTER::Paths::VAR_DIR, 'bot_dead_letter.log')
+      dead_letter_file = File.join(MASTER::Paths.var, 'bot_dead_letter.log')
       File.open(dead_letter_file, 'a') do |f|
         f.puts({
           timestamp: Time.now.to_i,
