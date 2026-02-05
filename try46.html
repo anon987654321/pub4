@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Audio Reactive Breathing Circle</title>
+<script src="css-doodle.js"></script>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #111; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; background: #333; color: #fff; border: none; }
+</style></head><body>
+<button id="start">start audio</button>
+<css-doodle id="doodle">
+  :doodle { @grid: 1; width: 350px; height: 350px; }
+  @place-cell: center;
+  width: calc(200px + var(--bass, 0) * 100px);
+  height: calc(200px + var(--bass, 0) * 100px);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsla(calc(200 + var(--mid, 0) * 160), 80%, 60%, calc(0.8 + var(--high, 0) * 0.2)) 0%,
+    hsla(calc(240 + var(--mid, 0) * 120), 70%, 40%, 0.6) 50%,
+    transparent 70%
+  );
+  box-shadow: 
+    0 0 calc(30px + var(--bass, 0) * 50px) hsla(calc(200 + var(--mid, 0) * 100), 80%, 50%, calc(0.4 + var(--high, 0) * 0.4)),
+    inset 0 0 calc(20px + var(--bass, 0) * 30px) hsla(calc(180 + var(--mid, 0) * 80), 90%, 70%, 0.3);
+  transition: all 0.1s ease-out;
+</css-doodle>
+<script>
+const doodle = document.getElementById('doodle');
+let ctx, analyser, data;
+
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const mid = data.slice(10, 50).reduce((a, b) => a + b, 0) / 10200;
+  const high = data.slice(50, 100).reduce((a, b) => a + b, 0) / 12750;
+  doodle.style.setProperty('--bass', bass.toFixed(3));
+  doodle.style.setProperty('--mid', mid.toFixed(3));
+  doodle.style.setProperty('--high', high.toFixed(3));
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

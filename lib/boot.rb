@@ -5,26 +5,24 @@ module MASTER
     class << self
       def run(verbose: true)
         puts
-        puts "master #{VERSION}"
+        puts "MASTER #{VERSION}"
+        puts "real mem = #{mem_info}"
         puts
 
         principles = load_principles
-        puts "#{principles.size} principles armed"
-        puts
+        puts "const0: #{principles.size} principles"
 
         if verbose
           principles.each do |p|
             smells = p[:anti_patterns]&.size || 0
             name = p[:filename].sub('.yml', '')
-            puts "  #{name}  #{p[:name]}  #{smells} smells"
+            puts "  #{name}: #{p[:name]}, #{smells} smells"
           end
-          puts
         end
 
-        puts "llm  openrouter  #{LLM::TIERS.size} tiers"
         puts
-        puts "root  #{ROOT}"
-        puts
+        puts "llm0 at openrouter: #{LLM::TIERS.size} tiers"
+        puts "root0 at #{ROOT}"
         puts platform_ready
         puts
 
@@ -39,12 +37,21 @@ module MASTER
         []
       end
 
+      def mem_info
+        if File.exist?('/proc/meminfo')
+          total = File.read('/proc/meminfo')[/MemTotal:\s+(\d+)/, 1].to_i
+          "#{total / 1024}MB"
+        else
+          "#{`sysctl -n hw.physmem 2>/dev/null`.to_i / 1024 / 1024}MB" rescue '?'
+        end
+      end
+
       def platform_ready
         case RUBY_PLATFORM
-        when /openbsd/ then 'openbsd ready'
-        when /linux.*android/, /aarch64.*linux/ then 'termux ready'
-        when /darwin/ then 'macos ready'
-        when /linux/ then 'linux ready'
+        when /openbsd/ then 'openbsd0 at mainbus0'
+        when /linux.*android/, /aarch64.*linux/ then 'termux0 at mainbus0'
+        when /darwin/ then 'darwin0 at mainbus0'
+        when /linux/ then 'linux0 at mainbus0'
         else 'ready'
         end
       end

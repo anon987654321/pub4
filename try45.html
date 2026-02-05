@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Audio Reactive Parametric Wave</title>
+<script src="css-doodle.js"></script>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #f5f5f5; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; }
+</style></head><body>
+<button id="start">start audio</button>
+<css-doodle id="doodle">
+  :doodle { @grid: 40 x 1; width: 400px; height: 400px; }
+  @place-cell: center;
+  position: absolute;
+  --i: @i();
+  --curve: calc(sin(var(--i) * 0.15 + var(--mid, 0) * 3) * calc(100px + var(--bass, 0) * 80px));
+  width: 3px;
+  height: calc(40px + var(--bass, 0) * 60px + sin(var(--i) * 0.2) * 20px);
+  left: calc(var(--i) * 10px);
+  top: calc(50% + var(--curve));
+  background: linear-gradient(to bottom, 
+    hsla(0, 0%, calc(20% + var(--high, 0) * 30%), 1),
+    hsla(0, 0%, calc(50% + var(--high, 0) * 30%), 0.5)
+  );
+  border-radius: 2px;
+  transform-origin: center bottom;
+  transition: all 0.06s ease-out;
+</css-doodle>
+<script>
+const doodle = document.getElementById('doodle');
+let ctx, analyser, data;
+
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const mid = data.slice(10, 50).reduce((a, b) => a + b, 0) / 10200;
+  const high = data.slice(50, 100).reduce((a, b) => a + b, 0) / 12750;
+  doodle.style.setProperty('--bass', bass.toFixed(3));
+  doodle.style.setProperty('--mid', mid.toFixed(3));
+  doodle.style.setProperty('--high', high.toFixed(3));
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

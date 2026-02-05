@@ -42,7 +42,7 @@ module MASTER
     end
 
     def trace(msg)
-      puts "#{C_DIM}[trace] #{msg}#{C_RESET}" if @verbosity == :high
+      puts "#{C_DIM}#{msg}#{C_RESET}" if @verbosity == :high
     end
 
     def info(msg)
