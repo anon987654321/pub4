@@ -121,8 +121,12 @@ module MASTER
             [400, { 'content-type' => 'application/json' }, ['{"error":"no message"}']]
           else
             Thread.new do
-              result = cli.process_input(message)
-              queue.push(result) if result
+              begin
+                result = cli.process_input(message)
+                queue.push(result) if result
+              rescue => e
+                queue.push("Error: #{e.message}")
+              end
             end
             [200, { 'content-type' => 'application/json' }, ['{"status":"processing"}']]
           end
