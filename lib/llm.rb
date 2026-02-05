@@ -236,7 +236,7 @@ module MASTER
       config = TIERS[tier] || TIERS[DEFAULT_TIER]
       model_name = model || config[:model]
       raise ArgumentError, 'Model required' if model_name.to_s.strip.empty?
-      raise ArgumentError, "Invalid model: #{model_name}" unless model_name.match?(/\A[\w.\-\/]+\z/)
+      raise ArgumentError, "Invalid model: #{model_name}" unless model_name.match?(/\A(?!.*\.\.)[\w.\-]+(?:\/[\w.\-]+)*\z/)
 
       chat = RubyLLM.chat(provider: :openrouter, model: model_name, assume_model_exists: true)
       chat.with_instructions(build_system_prompt, replace: true)

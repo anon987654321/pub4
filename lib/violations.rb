@@ -213,7 +213,8 @@ module MASTER
           'Shared state modified by multiple methods'
         ]
       }
-    }.freeze
+      }.freeze
+    VAR_USAGE_PATTERN = /(\w+)\./.freeze
 
     class << self
       # Run both literal and conceptual detection
@@ -493,7 +494,7 @@ module MASTER
             end
           end
 
-          line.scan(/(\w+)\./).each { |found| used_vars[found[0]] = true }
+          line.scan(VAR_USAGE_PATTERN).each { |found| used_vars[found[0]] = true }
         end
         violations
       end
