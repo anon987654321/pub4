@@ -7,6 +7,18 @@ require 'securerandom'
 require 'json'
 require 'shellwords'
 
+# Optional rich terminal UI
+begin
+  require 'tty-prompt'
+  require 'tty-spinner'
+  require 'tty-table'
+  require 'tty-box'
+  require 'pastel'
+  TTY_AVAILABLE = true
+rescue LoadError
+  TTY_AVAILABLE = false
+end
+
 require_relative 'cli/commands/openbsd' if RUBY_PLATFORM.include?('openbsd')
 
 module MASTER
@@ -23,6 +35,8 @@ module MASTER
     C_CYAN   = "\e[36m"    # Accent (sparingly)
     C_DIM    = "\e[2m"     # Secondary/metadata
     C_BOLD   = "\e[1m"     # Primary emphasis
+    C_ITALIC = "\e[3m"     # Secondary emphasis
+    C_GREY   = "\e[38;5;245m"  # Dark grey for main text (calmer than white)
 
     # Icon vocabulary - 5 symbols max, single meaning each
     ICON_OK   = "✓"
@@ -119,6 +133,8 @@ module MASTER
       @aliases = {}
       @last_files = {}
       @last_interrupt = nil
+      @pastel = Pastel.new if TTY_AVAILABLE
+      @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
       load_state
       setup_completion
       load_history
@@ -423,6 +439,9 @@ module MASTER
     end
 
     def build_prompt
+      # Use starship if available
+      return starship_prompt if starship_available?
+      
       dir = File.basename(@root)
       persona = @llm.persona&.dig(:name)
       cost = @llm.total_cost
@@ -436,6 +455,25 @@ module MASTER
       parts << colorize_cost_inline(cost) if cost > 0
 
       "#{parts.join('')} $ "
+    end
+    
+    def starship_available?
+      @starship_available ||= system('which starship > /dev/null 2>&1')
+    end
+    
+    def starship_prompt
+      # Set MASTER-specific env vars for starship to use
+      ENV['MASTER_PERSONA'] = @llm.persona&.dig(:name) || 'generic'
+      ENV['MASTER_COST'] = format('%.2f', @llm.total_cost)
+      ENV['MASTER_HIST'] = (@llm.instance_variable_get(:@history)&.size || 0).to_s
+      
+      `starship prompt 2>/dev/null`.chomp
+    rescue StandardError
+      build_fallback_prompt
+    end
+    
+    def build_fallback_prompt
+      "#{File.basename(@root)} $ "
     end
 
     def format_uptime(seconds)
@@ -456,6 +494,16 @@ module MASTER
     end
 
     def with_spinner
+      # Use TTY::Spinner if available
+      if TTY_AVAILABLE
+        spinner = TTY::Spinner.new("[:spinner] ", format: :dots)
+        spinner.auto_spin
+        result = yield
+        spinner.stop
+        return result
+      end
+      
+      # Fallback to simple orb spinner
       done = false
       result = nil
 
@@ -915,17 +963,46 @@ module MASTER
     
     def clean_response(text)
       # Keep code blocks if they look intentional (user asked for code)
-      return text if text.scan(/```/).size >= 2 && text.match?(/def |class |function |const |import /)
+      return render_markdown(text) if text.scan(/```/).size >= 2 && text.match?(/def |class |function |const |import /)
       
-      text = text.gsub(/```[\w]*\n.*?```/m, '')  # Remove code blocks
-      text = text.gsub(/^#+\s+/, '')              # Remove headers
-      text = text.gsub(/^\s*[-*]\s+/, '')         # Remove bullets
-      text = text.gsub(/\*\*(.+?)\*\*/, '\1')     # Remove bold
-      text = text.gsub(/\*(.+?)\*/, '\1')         # Remove italic
-      text = text.gsub(/`([^`]+)`/, '\1')         # Remove inline code
-      text = text.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')  # Remove links
-      text = text.gsub(/\n{3,}/, "\n\n")          # Collapse whitespace
-      text.strip
+      # Render markdown to ANSI for terminal display
+      render_markdown(text)
+    end
+    
+    # Convert markdown to ANSI terminal codes
+    def render_markdown(text)
+      out = text.dup
+      
+      # Code blocks: dim grey background effect
+      out.gsub!(/```(\w*)\n(.*?)```/m) { "#{C_DIM}#{$2.strip}#{C_RESET}" }
+      
+      # Headers: bold cyan (# ## ###)
+      out.gsub!(/^#+ +(.+)$/) { "#{C_BOLD}#{C_CYAN}#{$1}#{C_RESET}" }
+      
+      # Bold: actual bold
+      out.gsub!(/\*\*(.+?)\*\*/) { "#{C_BOLD}#{$1}#{C_RESET}#{C_GREY}" }
+      
+      # Italic: actual italic
+      out.gsub!(/\*(.+?)\*/) { "#{C_ITALIC}#{$1}#{C_RESET}#{C_GREY}" }
+      out.gsub!(/_(.+?)_/) { "#{C_ITALIC}#{$1}#{C_RESET}#{C_GREY}" }
+      
+      # Inline code: dim
+      out.gsub!(/`([^`]+)`/) { "#{C_DIM}#{$1}#{C_RESET}#{C_GREY}" }
+      
+      # Links: just the text, cyan
+      out.gsub!(/\[([^\]]+)\]\([^)]+\)/) { "#{C_CYAN}#{$1}#{C_RESET}#{C_GREY}" }
+      
+      # Bullets: grey dot
+      out.gsub!(/^(\s*)[-*]\s+/) { "#{$1}#{C_DIM}·#{C_RESET} " }
+      
+      # Numbered lists: keep numbers, dim
+      out.gsub!(/^(\s*)(\d+)\.\s+/) { "#{$1}#{C_DIM}#{$2}.#{C_RESET} " }
+      
+      # Collapse excessive whitespace
+      out.gsub!(/\n{3,}/, "\n\n")
+      
+      # Wrap in grey for calmer appearance
+      "#{C_GREY}#{out.strip}#{C_RESET}"
     end
 
     def switch_persona(name)
@@ -2086,6 +2163,14 @@ module MASTER
 
     # Progress indicator for long operations
     def with_progress(message)
+      if TTY_AVAILABLE
+        spinner = TTY::Spinner.new("[:spinner] #{message}", format: :dots)
+        spinner.auto_spin
+        result = yield
+        spinner.success
+        return result
+      end
+      
       done = false
       spinner_thread = Thread.new do
         i = 0
@@ -2100,6 +2185,60 @@ module MASTER
       spinner_thread.join
       puts "\r#{message} #{C_GREEN}✓#{C_RESET}"
       result
+    end
+    
+    # TTY-Prompt interactive selection
+    def tty_select(question, choices, default: nil)
+      return choices.first unless TTY_AVAILABLE
+      @prompt.select(question, choices, default: default, cycle: true)
+    end
+    
+    # TTY-Prompt multi-select
+    def tty_multi_select(question, choices)
+      return choices unless TTY_AVAILABLE
+      @prompt.multi_select(question, choices, cycle: true)
+    end
+    
+    # TTY-Prompt yes/no
+    def tty_confirm(question, default: true)
+      return default unless TTY_AVAILABLE
+      @prompt.yes?(question, default: default)
+    end
+    
+    # TTY-Prompt text input
+    def tty_ask(question, default: nil)
+      return default unless TTY_AVAILABLE
+      @prompt.ask(question, default: default)
+    end
+    
+    # TTY-Table for structured data
+    def tty_table(headers, rows)
+      if TTY_AVAILABLE
+        table = TTY::Table.new(headers, rows)
+        table.render(:unicode, padding: [0, 1])
+      else
+        # Fallback to simple aligned output
+        widths = headers.map.with_index { |h, i| [h.to_s.length, rows.map { |r| r[i].to_s.length }.max || 0].max }
+        lines = [headers.map.with_index { |h, i| h.to_s.ljust(widths[i]) }.join('  ')]
+        rows.each { |row| lines << row.map.with_index { |c, i| c.to_s.ljust(widths[i]) }.join('  ') }
+        lines.join("\n")
+      end
+    end
+    
+    # TTY-Box for highlighted content
+    def tty_box(content, title: nil)
+      if TTY_AVAILABLE
+        TTY::Box.frame(content, title: title, padding: 1, border: :round)
+      else
+        title_line = title ? "#{C_BOLD}#{title}#{C_RESET}\n\n" : ""
+        "#{title_line}#{content}"
+      end
+    end
+    
+    # Pastel colorization (richer than ANSI)
+    def colorize(text, *styles)
+      return text unless TTY_AVAILABLE && @pastel
+      @pastel.decorate(text, *styles)
     end
   end
 end
