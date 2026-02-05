@@ -16,9 +16,16 @@ output{position:fixed;left:12px;right:12px;bottom:36px;max-height:28vh;overflow-
 output:empty{display:none}
 output p{margin:2px 0;opacity:0.85}
 output p.user{color:#7a9caa}
+output .loader{color:#00CED1;font-size:9px;margin:4px 0}
+@keyframes star{0%,100%{opacity:0.3}50%{opacity:1}}
+output .loader span{display:inline-block;animation:star 0.6s ease-in-out infinite}
+output .loader span:nth-child(2){animation-delay:0.1s}
+output .loader span:nth-child(3){animation-delay:0.2s}
+output .loader span:nth-child(4){animation-delay:0.3s}
+output .loader span:nth-child(5){animation-delay:0.4s}
 input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;border-top:1px solid #1a1a1c;color:#c4b49a;font:inherit;padding:8px 12px;outline:none;z-index:20}
 input::placeholder{color:#333}
-#status{position:fixed;top:8px;right:10px;color:#444;font-size:8px;letter-spacing:0.15em;z-index:20}
+#status{display:none}
 </style>
 </head>
 <body>
@@ -27,7 +34,6 @@ input::placeholder{color:#333}
 <canvas id="grain"></canvas>
 <output id="out"></output>
 <input id="in" type="text" placeholder="" autofocus>
-<div id="status"></div>
 <script>
 // Available orb designs
 const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
@@ -81,14 +87,29 @@ document.addEventListener('keydown',e=>{
 });
 
 // Chat
-const out=document.getElementById('out'),inp=document.getElementById('in'),status=document.getElementById('status');
+const out=document.getElementById('out'),inp=document.getElementById('in');
+let loaderEl=null;
 
 function add(t,isUser){
+  removeLoader();
   const p=document.createElement('p');
   if(isUser)p.className='user';
   p.textContent=isUser?'> '+t:t;
   out.appendChild(p);
   out.scrollTop=out.scrollHeight;
+}
+
+function showLoader(){
+  removeLoader();
+  loaderEl=document.createElement('div');
+  loaderEl.className='loader';
+  loaderEl.innerHTML='<span>✦</span><span>✦</span><span>✦</span><span>✦</span><span>✦</span>';
+  out.appendChild(loaderEl);
+  out.scrollTop=out.scrollHeight;
+}
+
+function removeLoader(){
+  if(loaderEl){loaderEl.remove();loaderEl=null}
 }
 
 inp.addEventListener('keydown',e=>{
@@ -97,17 +118,16 @@ inp.addEventListener('keydown',e=>{
   if(!m)return;
   add(m,true);
   inp.value='';
-  status.textContent='...';
+  showLoader();
   fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
-    .catch(()=>add('[offline]'));
+    .catch(()=>{removeLoader();add('[offline]')});
 });
 
 (function poll(){
   fetch('/poll',{signal:AbortSignal.timeout(10000)})
     .then(r=>r.json())
     .then(d=>{
-      if(d.text){add(d.text);status.textContent=''}
-      if(d.cost)status.textContent='$'+d.cost.toFixed(4);
+      if(d.text){removeLoader();add(d.text)}
       setTimeout(poll,800);
     })
     .catch(()=>setTimeout(poll,3000));

@@ -35,12 +35,17 @@ module MASTER
       end
 
       def execute_shell(command)
+        # Block recursive self-invocation
+        if command.match?(/\bbin\/cli\b|ruby.*master/i)
+          return { type: :blocked, command: command, error: "Cannot invoke self recursively" }
+        end
+
         # Safety check first
         unless Safety.command_safe?(command)
           return { type: :blocked, command: command, error: "Blocked by safety filter" }
         end
 
-        trace "[exec] #{command[0..60]}..."
+        trace "exec: #{command[0..60]}..."
 
         begin
           output = `#{command} 2>&1`
@@ -64,7 +69,7 @@ module MASTER
           return { type: :blocked, code: code[0..100], error: "Blocked by safety filter" }
         end
 
-        trace "[ruby] #{code[0..60]}..."
+        trace "ruby: #{code[0..60]}..."
 
         begin
           # Execute in isolated binding
@@ -87,12 +92,12 @@ module MASTER
           case r[:type]
           when :shell
             status = r[:success] ? "ok" : "err:#{r[:status]}"
-            "[#{status}] #{r[:command][0..40]}\n#{r[:output]}"
+            "#{status} #{r[:command][0..40]}\n#{r[:output]}"
           when :ruby
             status = r[:success] ? "ok" : "err"
-            "[#{status}] ruby: #{r[:result] || r[:error]}"
+            "#{status} ruby: #{r[:result] || r[:error]}"
           when :blocked
-            "[blocked] #{r[:error]}"
+            "blocked: #{r[:error]}"
           end
         end.join("\n\n")
       end
@@ -104,7 +109,8 @@ module MASTER
       end
 
       def trace(msg)
-        puts "[    0.#{(Time.now.usec / 1000).to_s.rjust(3, '0')}] #{msg}"
+        ts = format('%07.3f', (Time.now.to_f * 1000) % 1000 / 1000.0)
+        puts "    #{ts}  #{msg}"
       end
     end
   end

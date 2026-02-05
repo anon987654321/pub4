@@ -106,7 +106,7 @@ module MASTER
     def trace(msg)
       return unless @verbosity == :high
       ts = format('%07.3f', Time.now - @boot_time)
-      puts "[#{ts}] #{msg}"
+      puts " #{ts}  #{msg}"
     end
 
     def info(msg)
