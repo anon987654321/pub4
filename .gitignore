@@ -37,4 +37,6 @@ vendor/bundle/
 coverage/
 .coverage
 
+# Generated cache and output files
 var/replicate/*.mp3
+var/semantic_cache/*.json
