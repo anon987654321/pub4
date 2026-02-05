@@ -91,6 +91,7 @@ module MASTER
     MAX_VIOLATION_PREVIEW = 200
     MAX_REASON_PREVIEW = 200
     MAX_RESPONSE_PREVIEW = 150
+    INTERRUPT_TIMEOUT = 2.0  # Seconds to press Ctrl+C again to quit
 
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
@@ -111,6 +112,7 @@ module MASTER
       @favorites = []
       @aliases = {}
       @last_files = {}
+      @last_interrupt = nil
       load_state
       setup_completion
       load_history
@@ -169,8 +171,21 @@ module MASTER
     end
 
     def setup_crash_recovery
-      # Auto-save on signals
-      %w[INT TERM HUP].each do |sig|
+      # Double Ctrl+C to quit (first one just warns)
+      trap('INT') do
+        now = Time.now
+        if @last_interrupt && (now - @last_interrupt) < INTERRUPT_TIMEOUT
+          puts "\n#{C_DIM}Exiting...#{C_RESET}"
+          emergency_save
+          exit(0)
+        else
+          @last_interrupt = now
+          puts "\n#{C_YELLOW}Press Ctrl+C again within #{INTERRUPT_TIMEOUT.to_i}s to quit#{C_RESET}"
+        end
+      end
+
+      # Other signals still exit immediately
+      %w[TERM HUP].each do |sig|
         trap(sig) do
           emergency_save
           exit(1)
