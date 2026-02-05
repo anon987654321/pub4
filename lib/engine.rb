@@ -46,10 +46,13 @@ module MASTER
 
         files = File.directory?(path) ? Dir[File.join(path, '**', '*.rb')] : [path]
         
+        # Cache file line counts to avoid reading each file twice
+        line_counts = files.map { |f| File.read(f).lines.size rescue 0 }
+        
         {
           files: files.size,
-          total_lines: files.sum { |f| File.read(f).lines.size rescue 0 },
-          long_files: files.count { |f| (File.read(f).lines.size rescue 0) > 300 },
+          total_lines: line_counts.sum,
+          long_files: line_counts.count { |count| count > 300 },
           principles: Principle.load_all.size,
           patterns: Smells.all_patterns.size
         }

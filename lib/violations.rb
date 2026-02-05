@@ -414,7 +414,8 @@ module MASTER
       end
 
       def check_require_count(code)
-        requires = code.scan(/^require/).size + code.scan(/^require_relative/).size
+        # Combine require and require_relative patterns in single scan
+        requires = code.scan(/^(?:require|require_relative)/).size
         return [] if requires <= 10
 
         [{

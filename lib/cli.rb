@@ -1201,10 +1201,26 @@ module MASTER
         end
 
       when 'css', 'scss'
-        if code.scan(/!important/).size > 2
+        # Combine both scans into single pass with counters
+        important_count = 0
+        px_count = 0
+        rel_unit_count = 0
+        
+        code.scan(/!important|px|(?:rem|em)\b/) do |match|
+          case match
+          when '!important'
+            important_count += 1
+          when 'px'
+            px_count += 1
+          when /rem|em/
+            rel_unit_count += 1
+          end
+        end
+        
+        if important_count > 2
           issues << "#{C_YELLOW}#{rel}#{C_RESET}: excessive !important usage"
         end
-        if code.scan(/px/).size > 10 && code.scan(/rem|em/).size < 3
+        if px_count > 10 && rel_unit_count < 3
           issues << "#{C_YELLOW}#{rel}#{C_RESET}: prefer rem/em over px"
         end
 

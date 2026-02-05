@@ -711,6 +711,8 @@ module MASTER
       def poll_prediction(id, api_key, timeout: 300)
         uri = URI("#{API_URL}/predictions/#{id}")
         start = Time.now
+        wait_time = 1 # Start with 1 second
+        max_wait = 10 # Cap at 10 seconds
 
         loop do
           return 'Timeout waiting for prediction' if Time.now - start > timeout
@@ -733,7 +735,10 @@ module MASTER
           end
 
           print '.'
-          sleep 3
+          sleep wait_time
+          
+          # Exponential backoff: double wait time up to max_wait
+          wait_time = [wait_time * 1.5, max_wait].min
         end
       end
 

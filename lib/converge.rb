@@ -79,12 +79,12 @@ module MASTER
 
         Dir.glob(File.join(path, '**', '*.rb')).each do |file|
           content = File.read(file) rescue next
-          # Extract method names
-          content.scan(/def\s+(\w+)/).each { |m| features << "method:#{m[0]}" }
-          # Extract class names
-          content.scan(/class\s+(\w+)/).each { |c| features << "class:#{c[0]}" }
-          # Extract module names
-          content.scan(/module\s+(\w+)/).each { |m| features << "module:#{m[0]}" }
+          # Extract method, class, and module names in a single pass
+          content.scan(/(?:def\s+(\w+)|class\s+(\w+)|module\s+(\w+))/) do |method, klass, mod|
+            features << "method:#{method}" if method
+            features << "class:#{klass}" if klass
+            features << "module:#{mod}" if mod
+          end
         end
 
         features.to_a

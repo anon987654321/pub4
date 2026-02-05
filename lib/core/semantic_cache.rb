@@ -69,9 +69,12 @@ module MASTER
     
     # Get cache statistics
     def stats
+      total_hits = 0
+      @cache.each_value { |v| total_hits += v[:hits] }
+      
       {
         size: @cache.size,
-        total_hits: @cache.values.sum { |v| v[:hits] },
+        total_hits: total_hits,
         avg_similarity: avg_similarity,
         oldest_entry: oldest_entry,
         newest_entry: newest_entry
@@ -91,8 +94,12 @@ module MASTER
     end
     
     # Cosine similarity between two vectors
+    # Assumes vectors are already normalized for efficiency
     def cosine_similarity(a, b)
       dot_product = a.zip(b).map { |x, y| x * y }.sum
+      
+      # Vectors are normalized, so magnitude is 1.0
+      # But handle edge case where vector might not be normalized
       magnitude_a = Math.sqrt(a.map { |x| x * x }.sum)
       magnitude_b = Math.sqrt(b.map { |x| x * x }.sum)
       
@@ -105,21 +112,23 @@ module MASTER
     def find_best_match(query_embedding)
       return nil if @embeddings.empty?
       
-      similarities = @embeddings.map do |key, embedding|
-        {
-          key: key,
-          similarity: cosine_similarity(query_embedding, embedding)
-        }
-      end
+      best_key = nil
+      best_similarity = 0
       
-      best = similarities.max_by { |s| s[:similarity] }
+      @embeddings.each do |key, embedding|
+        similarity = cosine_similarity(query_embedding, embedding)
+        if similarity > best_similarity
+          best_similarity = similarity
+          best_key = key
+        end
+      end
       
       # Increment hit counter
-      if best && best[:similarity] >= SIMILARITY_THRESHOLD
-        @cache[best[:key]][:hits] += 1
+      if best_key && best_similarity >= SIMILARITY_THRESHOLD
+        @cache[best_key][:hits] += 1
       end
       
-      best
+      best_key ? { key: best_key, similarity: best_similarity } : nil
     end
     
     # Normalize vector to unit length
@@ -140,11 +149,18 @@ module MASTER
       # Remove 20% oldest entries with fewest hits
       remove_count = (MAX_CACHE_SIZE * 0.2).to_i
       
-      sorted = @cache.sort_by { |_, v| [v[:hits], v[:created_at]] }
-      sorted.first(remove_count).each do |key, _|
-        @cache.delete(key)
-        @embeddings.delete(key)
+      # Use min_by in a loop instead of full sort
+      to_remove = []
+      remove_count.times do
+        break if @cache.empty?
+        
+        # Find entry with lowest score (hits + age bonus)
+        worst = @cache.min_by { |_, v| [v[:hits], v[:created_at]] }
+        to_remove << worst[0]
+        @cache.delete(worst[0])
       end
+      
+      to_remove.each { |key| @embeddings.delete(key) }
     end
     
     # Load cache from disk

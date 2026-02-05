@@ -90,9 +90,7 @@ module Master
       end
 
       def count_by_severity(findings)
-        counts = Hash.new(0)
-        findings.each { |f| counts[f[:severity]] += 1 }
-        counts
+        findings.group_by { |f| f[:severity] }.transform_values(&:size)
       end
 
       def synthesize_findings
@@ -141,8 +139,7 @@ module Master
       def generate_summary
         all_findings = @results.values.flat_map { |r| r[:findings] }
         
-        severity_totals = Hash.new(0)
-        all_findings.each { |f| severity_totals[f[:severity]] += 1 }
+        severity_totals = all_findings.group_by { |f| f[:severity] }.transform_values(&:size)
 
         {
           total_findings: all_findings.size,
