@@ -76,6 +76,9 @@ module MASTER
           # Scrutiny mode
           puts "scrutiny0 at const0: maximum, brutal honesty"
           puts "boot device: #{ROOT}"
+          
+          # Auto-install missing dependencies on first run
+          check_dependencies(verbose) if first_run?
         end
 
         model_key = prompt_for_model(quiet: quiet)
@@ -360,8 +363,27 @@ module MASTER
           scan      analyze current directory
           refactor  improve code quality
           chamber   multi-model deliberation
+          install   auto-install dependencies
           exit      end session
         HINTS
+      end
+
+      def check_dependencies(verbose = false)
+        require_relative 'auto_install'
+        missing = AutoInstall.missing
+        total_missing = missing[:packages].size + missing[:gems].size + missing[:repos].size
+        
+        return if total_missing == 0
+        
+        puts "deps0: #{total_missing} missing dependencies" if verbose
+        
+        # Auto-install on OpenBSD
+        if RUBY_PLATFORM.include?('openbsd') && missing[:gems].any?
+          puts "deps0: installing #{missing[:gems].size} gems..." if verbose
+          AutoInstall.ensure_gems(verbose: false)
+        end
+      rescue StandardError
+        # Don't block boot on install failures
       end
 
       def apply_openbsd_security

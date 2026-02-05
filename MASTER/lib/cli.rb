@@ -93,8 +93,8 @@ module MASTER
 
     COMMANDS = %w[
       ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
-      context converge cost describe diff edit enforce-principles evolve exit fav favs git help
-      history image install-hooks introspect lint log ls metrics persona personas principles pull push
+      context converge cost deps describe diff edit enforce-principles evolve exit fav favs git help
+      history image install install-hooks introspect lint log ls metrics persona personas principles pull push
       queue quit radio read refactor refine reload review sanity scan smells speak status stream
       tree undo version web
     ].freeze
@@ -717,6 +717,12 @@ module MASTER
 
       when 'check-ports'
         check_port_consistency
+
+      when 'install'
+        run_install(arg)
+
+      when 'deps'
+        show_dependencies
 
       when 'reload'
         reload_master
@@ -2127,6 +2133,72 @@ module MASTER
       else
         "#{(secs / 3600).to_i}h #{((secs % 3600) / 60).to_i}m"
       end
+    end
+
+    # Auto-install dependencies
+    def run_install(arg)
+      case arg
+      when 'all'
+        results = AutoInstall.ensure_all(verbose: true)
+        summary = []
+        summary << "#{results[:packages].size} packages" if results[:packages].any?
+        summary << "#{results[:gems].size} gems" if results[:gems].any?
+        summary << "#{results[:repos].size} repos" if results[:repos].any?
+        summary.empty? ? out_ok("All dependencies installed") : out_ok("Installed: #{summary.join(', ')}")
+      when 'packages', 'pkg'
+        installed = AutoInstall.ensure_packages(verbose: true)
+        installed.empty? ? out_ok("All packages installed") : out_ok("Installed #{installed.size} packages")
+      when 'gems'
+        installed = AutoInstall.ensure_gems(verbose: true)
+        installed.empty? ? out_ok("All gems installed") : out_ok("Installed #{installed.size} gems")
+      when 'repos'
+        cloned = AutoInstall.ensure_repos(verbose: true)
+        cloned.empty? ? out_ok("All repos cloned") : out_ok("Cloned #{cloned.size} repos")
+      when nil
+        show_dependencies
+      else
+        # Install specific item
+        if AutoInstall.install_gem(arg)
+          out_ok("Installed gem: #{arg}")
+        elsif AutoInstall.install_package(arg)
+          out_ok("Installed package: #{arg}")
+        else
+          out_err("Could not install: #{arg}")
+        end
+      end
+    end
+
+    def show_dependencies
+      missing = AutoInstall.missing
+      status = AutoInstall.status
+      
+      lines = ["#{C_BOLD}Dependencies#{C_RESET}", ""]
+      
+      # Packages
+      if RUBY_PLATFORM.include?('openbsd')
+        lines << "#{C_BOLD}Packages#{C_RESET}"
+        lines << out_row("Installed", status[:packages].size)
+        lines << out_row("Missing", missing[:packages].size)
+        lines << "  #{C_DIM}#{missing[:packages].first(5).join(', ')}#{C_RESET}" if missing[:packages].any?
+        lines << ""
+      end
+      
+      # Gems
+      lines << "#{C_BOLD}Gems#{C_RESET}"
+      lines << out_row("Installed", status[:gems].size)
+      lines << out_row("Missing", missing[:gems].size)
+      lines << "  #{C_DIM}#{missing[:gems].first(5).join(', ')}#{C_RESET}" if missing[:gems].any?
+      lines << ""
+      
+      # Repos
+      lines << "#{C_BOLD}Repos#{C_RESET}"
+      lines << out_row("Cloned", status[:repos].size)
+      lines << out_row("Missing", missing[:repos].size)
+      
+      lines << ""
+      lines << "#{C_DIM}Run 'install all' to install everything#{C_RESET}"
+      
+      lines.join("\n")
     end
 
     # Output helpers - consistent formatting per typography spec

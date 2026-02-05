@@ -37,6 +37,7 @@ module MASTER
   autoload :ParallelTTS, "#{LIB}/tts"
   autoload :RateLimiter, "#{LIB}/server"
   autoload :Weaviate,   "#{LIB}/weaviate"
+  autoload :AutoInstall, "#{LIB}/auto_install"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
