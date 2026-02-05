@@ -49,7 +49,7 @@ module MASTER
         If everything is actually fine, say so—but prove it.
       PROMPT
 
-      @llm.chat(prompt, max_tokens: 500)
+      @llm.chat(prompt, tier: :fast)
     end
 
     # Hostile questioning for any principle or decision
@@ -68,7 +68,7 @@ module MASTER
 
       {
         question: question,
-        response: @llm.chat(prompt, max_tokens: 400)
+        response: @llm.chat(prompt, tier: :fast)
       }
     end
 
@@ -111,7 +111,7 @@ module MASTER
         Be specific. One paragraph max.
       PROMPT
 
-      @llm.chat(prompt, max_tokens: 300)
+      @llm.chat(prompt, tier: :fast)
     end
 
     # Pre-action sanity check
@@ -128,7 +128,7 @@ module MASTER
         One sentence per answer.
       PROMPT
 
-      @llm.chat(prompt, max_tokens: 200)
+      @llm.chat(prompt, tier: :fast)
     end
 
     # Adversarial self-review of generated code
@@ -150,7 +150,7 @@ module MASTER
         No softening language. Be harsh but accurate.
       PROMPT
 
-      @llm.chat(prompt, max_tokens: 500)
+      @llm.chat(prompt, tier: :code)
     end
   end
 end
