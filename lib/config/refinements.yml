@@ -216,3 +216,149 @@ refinements:
   - file: test/test_master.rb
     desc: Add mock LLM for offline testing
     effort: medium
+
+  # --- Additional refinements (round 2) ---
+
+  # Memory enhancements
+  - file: lib/memory.rb
+    line: 20
+    desc: Use LLM to summarize old messages instead of truncation
+    effort: high
+
+  - file: lib/memory.rb
+    line: 10
+    desc: Add topic tagging for retrieval
+    effort: medium
+
+  - file: lib/memory.rb
+    line: 15
+    desc: Export session history to markdown
+    effort: low
+
+  # Safety hardening
+  - file: lib/safety.rb
+    line: 17
+    desc: Add SQL injection patterns to DANGEROUS_RUBY
+    effort: low
+
+  - file: lib/safety.rb
+    line: 28
+    desc: Add allowlist mode for commands
+    effort: medium
+
+  - file: lib/safety.rb
+    line: 40
+    desc: Log blocked commands for security audit
+    effort: low
+
+  # Engine improvements
+  - file: lib/engine.rb
+    line: 21
+    desc: Add cyclomatic complexity check
+    effort: medium
+
+  - file: lib/engine.rb
+    line: 33
+    desc: Detect duplicated code blocks
+    effort: high
+
+  - file: lib/engine.rb
+    line: 25
+    desc: Add YAML and JSON lint support
+    effort: low
+
+  # Replicate multimodal
+  - file: lib/replicate.rb
+    line: 26
+    desc: Add image-to-image transformation
+    effort: medium
+
+  - file: lib/replicate.rb
+    line: 36
+    desc: Queue multiple predictions in batch
+    effort: medium
+
+  - file: lib/replicate.rb
+    line: 66
+    desc: Show progress bar during polling
+    effort: low
+
+  # Convergence refinements
+  - file: lib/converge.rb
+    line: 71
+    desc: Use Levenshtein distance for change_ratio instead of binary hash compare
+    effort: medium
+
+  - file: lib/converge.rb
+    line: 47
+    desc: Add visual diff between iterations
+    effort: medium
+
+  - file: lib/converge.rb
+    line: 30
+    desc: Store convergence history to disk
+    effort: low
+
+  # Smells detection
+  - file: lib/smells.rb
+    line: 30
+    desc: Add dead require detection
+    effort: medium
+
+  - file: lib/smells.rb
+    line: 60
+    desc: Detect inconsistent naming patterns
+    effort: medium
+
+  - file: lib/smells.rb
+    line: 80
+    desc: Add AST-based analysis with Prism gem
+    effort: high
+
+  # CLI usability
+  - file: lib/cli.rb
+    line: 42
+    desc: Add command aliases (q for quit, h for help)
+    effort: low
+
+  - file: lib/cli.rb
+    line: 56
+    desc: Add undo command for file edits
+    effort: high
+
+  - file: lib/cli.rb
+    line: 74
+    desc: Fuzzy match command names with did_you_mean
+    effort: low
+
+  - file: lib/cli.rb
+    line: 30
+    desc: Add configurable prompt format
+    effort: low
+
+  # LLM efficiency
+  - file: lib/llm.rb
+    line: 56
+    desc: Add token count preview before sending
+    effort: low
+
+  - file: lib/llm.rb
+    line: 79
+    desc: Retry with cheaper tier on rate limit
+    effort: medium
+
+  - file: lib/llm.rb
+    line: 44
+    desc: Add cache expiry by time and size
+    effort: low
+
+  # Boot polish
+  - file: lib/boot.rb
+    line: 50
+    desc: Add network latency measurement to each provider
+    effort: low
+
+  - file: lib/boot.rb
+    line: 80
+    desc: Detect and report disk usage of lib directory
+    effort: low
