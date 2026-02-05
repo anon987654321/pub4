@@ -16,7 +16,7 @@ module MASTER
 
         unless quiet
           # Kernel banner (OpenBSD style)
-          puts "MASTER #{VERSION} (GENERIC) #1: #{time_utc}"
+          puts "#{CODENAME} #{VERSION} (GENERIC) #1: #{time_utc}"
           puts "    root@#{hostname}:#{ROOT}"
           puts "real mem = #{mem * 1024 * 1024} (#{mem}MB)"
           puts "avail mem = #{avail * 1024 * 1024} (#{avail}MB)"
@@ -99,7 +99,7 @@ module MASTER
           puts "llm0: pricing #{model_info[:input]}/#{model_info[:output]} per 1K tokens"
           puts
           boot_ms = ((Time.now - t0) * 1000).round
-          puts "MASTER: boot complete, #{boot_ms}ms"
+          puts "#{CODENAME}: boot complete, #{boot_ms}ms"
           puts first_run_hints if first_run?
         end
 

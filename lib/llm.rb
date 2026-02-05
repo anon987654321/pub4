@@ -198,7 +198,7 @@ module MASTER
       parts = []
 
       # Identity and context
-      parts << "You are MASTER v#{VERSION}, a constitutional AI running on #{platform_context}."
+      parts << "You are #{CODENAME} v#{VERSION}, a constitutional AI running on #{platform_context}."
       parts << "Your host is a #{runtime_context}."
       parts << "You embody clarity, efficiency, and correctness. No bloat. No ceremony."
 
