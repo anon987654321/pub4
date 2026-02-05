@@ -21,6 +21,7 @@ Files in `lib/` are yours to improve.
 ## Structure
 
     bin/cli              Start here
+    bin/bot              Multi-platform bot launcher
     lib/master.rb        Autoloader
     lib/cli.rb           REPL and commands
     lib/llm.rb           Model routing (9 tiers)
@@ -28,6 +29,8 @@ Files in `lib/` are yours to improve.
     lib/safety.rb        Guardrails
     lib/evolve.rb        Self-optimization loop
     lib/chamber.rb       Multi-model deliberation
+    lib/bot_manager.rb   Multi-platform orchestrator
+    lib/platforms/       Social media adapters
     lib/principles/      45 constitutional rules
     lib/config/          YAML settings
     lib/personas/        Character modes
@@ -53,10 +56,162 @@ Files in `lib/` are yours to improve.
     code        Codestral
 
 
+## Multi-Platform Bot
+
+MASTER can run as a multi-platform chatbot on Discord, Telegram, Slack, and Twitter/X.
+
+### Setup
+
+1. **Install dependencies:**
+   ```bash
+   bundle install
+   ```
+
+2. **Configure platforms:**
+   
+   Edit `config/platforms.yml` and enable desired platforms:
+   ```yaml
+   discord:
+     enabled: true
+     token: <%= ENV['DISCORD_BOT_TOKEN'] %>
+   ```
+
+3. **Set environment variables:**
+   
+   **Discord:**
+   ```bash
+   export DISCORD_BOT_TOKEN="your_token_here"
+   export DISCORD_PUBLIC_KEY="your_public_key"  # For webhook verification
+   ```
+   
+   **Telegram:**
+   ```bash
+   export TELEGRAM_BOT_TOKEN="your_token_here"
+   export TELEGRAM_WEBHOOK_SECRET="your_secret"  # Optional for webhooks
+   ```
+   
+   **Slack:**
+   ```bash
+   export SLACK_BOT_TOKEN="xoxb-your-token"
+   export SLACK_SIGNING_SECRET="your_secret"  # For webhook verification
+   ```
+   
+   **Twitter/X:**
+   ```bash
+   export TWITTER_ACCESS_TOKEN="your_token"
+   export TWITTER_ACCESS_SECRET="your_secret"
+   export TWITTER_CONSUMER_KEY="your_key"
+   export TWITTER_CONSUMER_SECRET="your_secret"
+   ```
+
+4. **Start the bot:**
+   ```bash
+   bin/bot
+   ```
+
+### Token Acquisition
+
+**Discord:**
+1. Go to https://discord.com/developers/applications
+2. Create New Application
+3. Go to "Bot" → Reset Token
+4. Copy token to `DISCORD_BOT_TOKEN`
+5. Enable "Message Content Intent"
+6. Go to "General Information" → Copy Public Key to `DISCORD_PUBLIC_KEY`
+
+**Telegram:**
+1. Message @BotFather on Telegram
+2. Send `/newbot` and follow prompts
+3. Copy token to `TELEGRAM_BOT_TOKEN`
+4. Set webhook: `https://yourserver.com/webhook/telegram`
+
+**Slack:**
+1. Go to https://api.slack.com/apps
+2. Create New App → From scratch
+3. Go to "OAuth & Permissions"
+4. Add scopes: `chat:write`, `app_mentions:read`, `channels:history`
+5. Install to workspace
+6. Copy "Bot User OAuth Token" to `SLACK_BOT_TOKEN`
+7. Go to "Basic Information" → Copy "Signing Secret" to `SLACK_SIGNING_SECRET`
+
+**Twitter/X:**
+1. Go to https://developer.twitter.com/
+2. Create App with Read/Write permissions
+3. Generate Access Token & Secret
+4. Copy all credentials to respective ENV vars
+
+### Webhook Setup
+
+For production deployments, configure webhooks for each platform:
+
+**Discord:**
+```
+POST https://yourserver.com/webhook/discord
+Headers:
+  X-Signature-Timestamp: timestamp
+  X-Signature-Ed25519: signature
+```
+
+**Telegram:**
+```bash
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -d "url=https://yourserver.com/webhook/telegram"
+```
+
+**Slack:**
+```
+POST https://yourserver.com/webhook/slack
+Headers:
+  X-Slack-Request-Timestamp: timestamp
+  X-Slack-Signature: signature
+```
+
+**Twitter/X:**
+```
+POST https://yourserver.com/webhook/twitter
+Headers:
+  X-Twitter-Webhooks-Signature: signature
+```
+
+### Configuration
+
+Edit `config/platforms.yml` to customize:
+
+- Channel whitelists (restrict bot to specific channels)
+- Rate limits per platform
+- Message formatting options
+- Retry policies
+- Error handling behavior
+
+### Troubleshooting
+
+**Bot not responding:**
+- Check platform is enabled in `config/platforms.yml`
+- Verify token is set correctly in environment
+- Check logs in `~/.master/var/audit.log`
+- Ensure bot has proper permissions in Discord/Slack
+
+**Rate limit errors:**
+- Adjust rate limits in config
+- Twitter/X has strict rate limits - use sparingly
+- Consider implementing message queuing
+
+**Webhook verification failing:**
+- Ensure signing secrets are set correctly
+- Check server is accessible from internet
+- Verify webhook URLs in platform settings
+
+
 ## Environment
 
     OPENROUTER_API_KEY    Required
     REPLICATE_API_TOKEN   Media generation
+    
+    # Platform tokens (for bot mode)
+    DISCORD_BOT_TOKEN
+    TELEGRAM_BOT_TOKEN
+    SLACK_BOT_TOKEN
+    TWITTER_ACCESS_TOKEN
 
 
 ## Design
