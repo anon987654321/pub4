@@ -427,13 +427,21 @@ module MASTER
 
       # Tool capabilities
       parts << "\n## Tools"
-      parts << "You have REAL CLI access to the local filesystem."
-      parts << "To check files/paths, you MUST use ```sh blocks with ls, cat, etc."
-      parts << "Commands in code blocks execute automatically and results return to you."
-      parts << "NEVER guess or hallucinate about filesystem state - always check first."
-      parts << "If asked about a path, run: ```sh\nls -la /path\n``` to verify."
+      parts << "You have REAL CLI and Ruby execution on this #{RUBY_PLATFORM.include?('openbsd') ? 'OpenBSD' : 'system'}."
+      parts << ""
+      parts << "Shell commands: ```sh"
+      parts << "ls -la /path"
+      parts << "```"
+      parts << ""
+      parts << "Ruby code: ```ruby"
+      parts << "require 'ferrum'; browser = Ferrum::Browser.new; browser.goto('https://github.com'); puts browser.body_text[0..500]"
+      parts << "```"
+      parts << ""
+      parts << "Code blocks execute AUTOMATICALLY. Results return to you."
+      parts << "You CAN: run any Ruby gem (ferrum, nokogiri, http), make HTTP requests, scrape web, query APIs."
+      parts << "You CAN: use doas for root commands if needed."
+      parts << "NEVER say 'I cannot' - TRY IT with a code block first."
       parts << "After execution, give only the terse answer (hide the code blocks)."
-      parts << "You are on a real #{RUBY_PLATFORM.include?('openbsd') ? 'OpenBSD' : 'system'} with real files."
 
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"

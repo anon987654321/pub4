@@ -146,5 +146,63 @@ module MASTER
         "#{url}\n\n#{text[0..MAX_PREVIEW_LENGTH]}"
       end
     end
+
+    # GitHub search helper
+    module GitHub
+      SEARCH_URL = 'https://github.com/search'
+
+      class << self
+        def search_repos(query, sort: 'stars', limit: 10)
+          require 'ferrum'
+          require 'uri'
+
+          url = "#{SEARCH_URL}?q=#{URI.encode_www_form_component(query)}&type=repositories&s=#{sort}&o=desc"
+          
+          browser = Ferrum::Browser.new(headless: true)
+          page = browser.create_page
+          page.go_to(url)
+          sleep 3  # GitHub is slow
+
+          # Extract repo links
+          repos = page.css('a[href*="/"][data-testid="results-list"] a, .repo-list-item a, div[data-testid] a').map do |link|
+            href = link.attribute('href')
+            next unless href&.match?(%r{^/[^/]+/[^/]+$})
+            "https://github.com#{href}"
+          end.compact.uniq.first(limit)
+
+          # If CSS selectors don't work, try text extraction
+          if repos.empty?
+            text = page.body_text
+            repos = text.scan(%r{github\.com/([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)}).flatten.uniq.first(limit).map { |r| "https://github.com/#{r}" }
+          end
+
+          browser.quit
+          repos
+        rescue => e
+          ["Error: #{e.message}"]
+        end
+
+        def trending(language: nil, since: 'daily')
+          require 'ferrum'
+
+          url = "https://github.com/trending"
+          url += "/#{language}" if language
+          url += "?since=#{since}"
+
+          browser = Ferrum::Browser.new(headless: true)
+          page = browser.create_page
+          page.go_to(url)
+          sleep 2
+
+          text = page.body_text
+          repos = text.scan(%r{([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)\s+\d+}).flatten.uniq.first(20)
+          
+          browser.quit
+          repos.map { |r| "https://github.com/#{r}" }
+        rescue => e
+          ["Error: #{e.message}"]
+        end
+      end
+    end
   end
 end
