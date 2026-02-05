@@ -5,6 +5,7 @@ require 'fileutils'
 require 'io/console'
 require 'securerandom'
 require 'json'
+require 'shellwords'
 
 require_relative 'cli/commands/openbsd' if RUBY_PLATFORM.include?('openbsd')
 
@@ -12,7 +13,7 @@ module MASTER
   class CLI
     include Commands::OpenBSD if RUBY_PLATFORM.include?('openbsd')
 
-    attr_reader :llm, :verbosity
+    attr_reader :llm, :verbosity, :root
 
     # ANSI colors
     C_RESET  = "\e[0m"
@@ -63,8 +64,8 @@ module MASTER
     }.freeze
 
     COMMANDS = %w[
-      ask audit beautify cat cd chamber check-ports clean clear commit compare-images
-      converge cost describe diff edit enforce-principles evolve exit fav favs git help
+      ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
+      context converge cost describe diff edit enforce-principles evolve exit fav favs git help
       image install-hooks introspect lint log ls persona personas principles pull push
       queue quit radio read refactor refine reload review sanity scan smells speak status stream
       tree undo version web
@@ -76,10 +77,10 @@ module MASTER
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
 
-    def initialize
-      @llm = LLM.new
+    def initialize(llm: LLM.new, root: Dir.pwd)
+      @llm = llm
       @server = nil
-      @root = Dir.pwd
+      @root = root
       @verbosity = :high
       @boot_time = Time.now
       @last_tokens = { input: 0, output: 0 }
@@ -613,6 +614,12 @@ module MASTER
       when 'aliases'
         list_aliases
 
+      when 'context'
+        manage_context(arg)
+
+      when 'backend'
+        set_backend(arg)
+
       else
         # Default: send to LLM
         chat(input)
@@ -690,10 +697,12 @@ module MASTER
           alias k=v       Shortcut
           aliases         List shortcuts
           audit [ref]     Compare vs history
+          backend <name>  Switch LLM backend
           cat <file>      View
           cd <dir>        Change dir
           clean <file>    Fix whitespace
           clear           Reset chat
+          context <add|drop|list|clear>   Manage context files
           converge        Loop until stable
           cost            Usage stats
           describe <img>  Vision
@@ -1434,7 +1443,65 @@ module MASTER
         Persona: #{@llm.persona&.dig(:name) || 'default'}
         Cost: $#{format('%.6f', @llm.total_cost)}
         Server: #{@server&.url || 'stopped'}
+        Backend: #{@llm.backend}
+        Context files: #{@llm.context_files.size}
       STATUS
+    end
+
+    def manage_context(arg)
+      return context_list if arg.nil? || arg.empty?
+      action, value = arg.split(/\s+/, 2)
+      case action
+      when 'add'
+        context_add(value)
+      when 'drop'
+        context_drop(value)
+      when 'clear'
+        context_clear
+      when 'list'
+        context_list
+      else
+        'Usage: context add <file...> | context drop <file...> | context clear | context list'
+      end
+    end
+
+    def context_add(path)
+      return 'Usage: context add <file>' unless path
+      paths = Shellwords.split(path)
+      messages = paths.map do |item|
+        full = File.expand_path(item, @root)
+        result = @llm.add_context_file(full)
+        result.ok? ? "Context added: #{full}" : result.error
+      end
+      messages.join("\n")
+    end
+
+    def context_drop(path)
+      return 'Usage: context drop <file>' unless path
+      paths = Shellwords.split(path)
+      messages = paths.map do |item|
+        full = File.expand_path(item, @root)
+        result = @llm.drop_context_file(full)
+        result.ok? ? "Context removed: #{full}" : result.error
+      end
+      messages.join("\n")
+    end
+
+    def context_clear
+      @llm.clear_context_files
+      'Context cleared'
+    end
+
+    def context_list
+      files = @llm.context_files
+      return 'Context empty' if files.empty?
+      files.join("\n")
+    end
+
+    def set_backend(arg)
+      return "Usage: backend <#{LLM::BACKENDS.join('|')}>" unless arg
+      result = @llm.set_backend(arg)
+      result.ok? ? "Backend: #{result.value}" : result.error
     end
 
     def run_git(args)

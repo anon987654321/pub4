@@ -213,7 +213,8 @@ module MASTER
           'Shared state modified by multiple methods'
         ]
       }
-    }.freeze
+      }.freeze
+    VAR_USAGE_PATTERN = /(\w+)\./.freeze
 
     class << self
       # Run both literal and conceptual detection
@@ -248,19 +249,41 @@ module MASTER
 
         LITERAL_PATTERNS.each do |name, config|
           next unless config[:pattern]
+          next if name == :late_nil_check
 
-          matches = code.scan(config[:pattern])
-          matches.each do |match|
-            line_num = find_line_number(code, match.is_a?(Array) ? match.first : match)
-            violations << {
-              type: :literal,
-              name: name,
-              principle: config[:principle],
-              message: config[:message],
-              severity: config[:severity],
-              line: line_num,
-              match: (match.is_a?(Array) ? match.first : match).to_s[0..50]
-            }
+          pattern = config[:pattern]
+          multiline = (pattern.options & Regexp::MULTILINE) != 0
+
+          if multiline
+            matches = code.scan(pattern)
+            matches.each do |match|
+              match_value = match.is_a?(Array) ? match.first : match
+              line_num = find_line_number(code, match_value)
+              violations << {
+                type: :literal,
+                name: name,
+                principle: config[:principle],
+                message: config[:message],
+                severity: config[:severity],
+                line: line_num,
+                match: match_value.to_s[0..50]
+              }
+            end
+          else
+            lines.each_with_index do |line, idx|
+              line.scan(pattern).each do |match|
+                match_value = match.is_a?(Array) ? match.first : match
+                violations << {
+                  type: :literal,
+                  name: name,
+                  principle: config[:principle],
+                  message: config[:message],
+                  severity: config[:severity],
+                  line: idx + 1,
+                  match: match_value.to_s[0..50]
+                }
+              end
+            end
           end
         end
 
@@ -268,6 +291,7 @@ module MASTER
         violations += check_method_lengths(code, lines)
         violations += check_require_count(code)
         violations += check_repeated_strings(code)
+        violations += check_late_nil_check(lines)
 
         violations
       end
@@ -444,6 +468,34 @@ module MASTER
           }
         end
 
+        violations
+      end
+
+      def check_late_nil_check(lines)
+        config = LITERAL_PATTERNS[:late_nil_check]
+        return [] unless config
+
+        violations = []
+        used_vars = {}
+        lines.each_with_index do |line, idx|
+          match = line.match(/(\w+)\.nil\?/)
+          if match
+            var = match[1]
+            if used_vars[var]
+              violations << {
+                type: :literal,
+                name: :late_nil_check,
+                principle: config[:principle],
+                message: config[:message],
+                severity: config[:severity],
+                line: idx + 1,
+                match: line.strip[0..50]
+              }
+            end
+          end
+
+          line.scan(VAR_USAGE_PATTERN).each { |found| used_vars[found[0]] = true }
+        end
         violations
       end
     end
