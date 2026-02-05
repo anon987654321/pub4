@@ -9,7 +9,7 @@ module MASTER
 
     COMMANDS = %w[
       ask audit cat cd chamber clean clear commit converge cost describe diff
-      edit exit git help image introspect log ls persona personas principles pull
+      edit evolve exit git help image introspect log ls persona personas principles pull
       push queue quit read refactor refine review sanity scan smells status tree
       version web
     ].freeze
@@ -346,6 +346,9 @@ module MASTER
       when 'sanity'
         run_sanity_check(arg)
 
+      when 'evolve'
+        run_evolve(arg)
+
       else
         # Default: send to LLM
         chat(input)
@@ -385,6 +388,7 @@ module MASTER
           queue <dir>    Add directory to refactor queue
           introspect     Hostile question all principles
           sanity <plan>  Pre-action sanity check
+          evolve [path]  Self-improve until convergence
           scan <path>    Scan for issues
           smells <path>  Detect code smells
           status         Show status
@@ -964,6 +968,36 @@ module MASTER
       result
     rescue LoadError, StandardError => e
       "Sanity check error: #{e.message}"
+    end
+
+    def run_evolve(arg)
+      require_relative 'evolve'
+
+      target = arg ? File.expand_path(arg, @root) : @root
+      budget = 2.0 # Default $2 budget
+
+      puts "#{C_CYAN}Starting evolution loop...#{C_RESET}"
+      puts "Target: #{target}"
+      puts "Budget: $#{budget}"
+      puts
+
+      evolve = Evolve.new(@llm)
+      result = evolve.converge_and_document(target: target, budget: budget)
+
+      lines = []
+      lines << "#{C_GREEN}Evolution complete#{C_RESET}"
+      lines << "  Iterations: #{result[:iterations]}"
+      lines << "  Converged: #{result[:converged] ? 'yes' : 'no'}"
+      lines << "  Cost: $#{'%.4f' % result[:cost]}"
+      lines << ""
+      lines << "Wishlist for next session:"
+      result[:wishlist].first(5).each_with_index do |item, i|
+        lines << "  #{i + 1}. #{item}"
+      end
+
+      lines.join("\n")
+    rescue LoadError, StandardError => e
+      "Evolution error: #{e.message}"
     end
   end
 end
