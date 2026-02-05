@@ -318,7 +318,7 @@ module MASTER
           else
             0.5
           end
-        rescue
+        rescue StandardError
           0.5
         end
       end

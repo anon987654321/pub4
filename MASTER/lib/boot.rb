@@ -156,7 +156,7 @@ module MASTER
         else
           ''
         end
-      rescue
+      rescue StandardError
         ''
       end
 
@@ -218,7 +218,7 @@ module MASTER
 
       def load_principles
         Principle.load_all
-      rescue
+      rescue StandardError
         []
       end
 
@@ -266,7 +266,7 @@ module MASTER
       def dir_size_mb(path)
         total = Dir.glob(File.join(path, '**', '*')).sum { |f| File.file?(f) ? File.size(f) : 0 }
         (total / 1024.0 / 1024.0).round(1)
-      rescue
+      rescue StandardError
         '?'
       end
 
@@ -275,7 +275,7 @@ module MASTER
         Vips.version_string
       rescue LoadError
         'not installed'
-      rescue
+      rescue StandardError
         'unknown'
       end
 
@@ -299,7 +299,7 @@ module MASTER
         http.read_timeout = 3
         http.head(uri.path)
         ((Time.now - t0) * 1000).round
-      rescue
+      rescue StandardError
         nil
       end
 
@@ -312,7 +312,7 @@ module MASTER
         status = `git -C "#{ROOT}" status --porcelain 2>/dev/null`
         uncommitted = status.lines.size
         [branch, uncommitted]
-      rescue
+      rescue StandardError
         ['unknown', 0]
       end
 
@@ -325,13 +325,13 @@ module MASTER
         data = File.read(config_file)
         match = data.match(/^model:\s*(\w+)/)
         match ? match[1].to_sym : nil
-      rescue
+      rescue StandardError
         nil
       end
 
       def save_model_preference(key)
         File.write(config_file, "model: #{key}\n")
-      rescue
+      rescue StandardError
         nil
       end
 

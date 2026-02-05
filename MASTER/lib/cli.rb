@@ -151,7 +151,7 @@ module MASTER
       File.readlines(HISTORY_FILE).last(HISTORY_LIMIT).each do |line|
         Readline::HISTORY.push(line.chomp)
       end
-    rescue
+    rescue StandardError
       # Ignore history errors
     end
 
@@ -159,7 +159,7 @@ module MASTER
       File.open(HISTORY_FILE, 'a') do |f|
         Readline::HISTORY.to_a.last(HISTORY_LIMIT).each { |line| f.puts(line) }
       end
-    rescue
+    rescue StandardError
       # Ignore history errors
     end
 
@@ -180,7 +180,7 @@ module MASTER
       save_state
       save_history
       @llm.clear_history rescue nil
-    rescue
+    rescue StandardError
       # Best effort
     end
 
@@ -193,7 +193,7 @@ module MASTER
       @aliases = data[:aliases] || {}
       @command_count = data[:command_count] || 0
       @total_cost = data[:total_cost] || 0.0
-    rescue
+    rescue StandardError
       # Fresh state
     end
 
@@ -206,7 +206,7 @@ module MASTER
         command_count: @command_count,
         total_cost: @total_cost
       }))
-    rescue
+    rescue StandardError
       # Ignore save errors
     end
 
@@ -288,7 +288,7 @@ module MASTER
     def warn_missing_api_key
       return if @llm.status[:connected]
       puts "#{C_YELLOW}OpenRouter key missing. Set OPENROUTER_API_KEY to enable LLM responses.#{C_RESET}"
-    rescue
+    rescue StandardError
       nil
     end
 
@@ -334,7 +334,7 @@ module MASTER
         issues = lint_single_file(File.expand_path(file, @root))
         issues.each { |i| puts i }
       end
-    rescue
+    rescue StandardError
       # git not available or not a repo
     end
 
@@ -451,7 +451,7 @@ module MASTER
 
     def terminal_cols
       IO.console&.winsize&.last || 80
-    rescue
+    rescue StandardError
       80
     end
 
@@ -1573,7 +1573,7 @@ module MASTER
       new_content = content.sub(ref[:old], ref[:new])
       File.write(file, new_content)
       true
-    rescue
+    rescue StandardError
       false
     end
 

@@ -153,7 +153,7 @@ module MASTER
       begin
         chunk = File.read(file, 8192)
         chunk&.include?("\x00")
-      rescue
+      rescue StandardError
         true
       end
     end

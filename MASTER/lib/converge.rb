@@ -106,7 +106,7 @@ module MASTER
         end
 
         features.to_a
-      rescue
+      rescue StandardError
         []
       end
     end

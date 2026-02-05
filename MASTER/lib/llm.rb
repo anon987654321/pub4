@@ -306,7 +306,7 @@ module MASTER
 
     def load_persona(name)
       Persona.load(name)
-    rescue
+    rescue StandardError
       nil
     end
 
@@ -485,7 +485,7 @@ module MASTER
         else
           512
         end
-      rescue
+      rescue StandardError
         512
       end
 

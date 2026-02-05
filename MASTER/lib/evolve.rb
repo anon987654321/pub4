@@ -453,7 +453,7 @@ module MASTER
     def load_wishlist
       return [] unless File.exist?(WISHLIST_FILE)
       YAML.safe_load(File.read(WISHLIST_FILE))['items'] || []
-    rescue
+    rescue StandardError
       []
     end
 
@@ -510,7 +510,7 @@ module MASTER
       puts line
 
       File.open(EVOLUTION_LOG, 'a') { |f| f.puts(line) }
-    rescue
+    rescue StandardError
       # Ignore logging errors
     end
 

@@ -51,7 +51,7 @@ module MASTER
       port = server.addr[1]
       server.close
       port
-    rescue
+    rescue StandardError
       PORT
     end
 
