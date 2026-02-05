@@ -64,21 +64,14 @@ module MASTER
         end
 
         def generate_suggestions(code)
-          suggestions = []
-
-          patterns.each do |pattern|
-            next unless pattern[:enabled]
-            
-            if pattern[:type] == :prompt_engineering
-              suggestions.concat(suggest_prompts(code, pattern))
-            elsif pattern[:type] == :code_completion
-              suggestions.concat(suggest_completions(code, pattern))
-            elsif pattern[:type] == :refactoring
-              suggestions.concat(suggest_refactorings(code, pattern))
+          patterns.select { |p| p[:enabled] }.flat_map do |pattern|
+            case pattern[:type]
+            when :prompt_engineering then suggest_prompts(code, pattern)
+            when :code_completion then suggest_completions(code, pattern)
+            when :refactoring then suggest_refactorings(code, pattern)
+            else []
             end
           end
-
-          suggestions
         end
 
         def suggest_prompts(code, pattern)
@@ -134,24 +127,12 @@ module MASTER
         end
 
         def identify_patterns(code)
-          identified = []
-
-          patterns.each do |pattern|
-            next unless pattern[:enabled]
-            
-            matchers = pattern[:matchers] || []
-            matchers.each do |matcher|
-              if code.match?(Regexp.new(matcher[:regex]))
-                identified << {
-                  pattern: pattern[:name],
-                  matcher: matcher[:name],
-                  description: pattern[:description]
-                }
-              end
+          patterns.select { |p| p[:enabled] }.flat_map do |pattern|
+            (pattern[:matchers] || []).filter_map do |matcher|
+              next unless code.match?(Regexp.new(matcher[:regex]))
+              { pattern: pattern[:name], matcher: matcher[:name], description: pattern[:description] }
             end
           end
-
-          identified
         end
 
         def apply_pattern(code, pattern_name, options = {})

@@ -108,64 +108,61 @@ module MASTER
 
         def validate
           errors = []
+          errors.concat(validate_colors)
+          errors.concat(validate_typography)
+          errors.concat(validate_spacing)
+          errors.concat(validate_components)
+          errors.concat(validate_accessibility)
+          errors.any? ? { valid: false, errors: errors } : { valid: true }
+        end
 
-          # Validate colors
-          if config[:colors]
-            errors << 'Colors must be a hash' unless config[:colors].is_a?(Hash)
-            config[:colors]&.each do |key, value|
-              unless value.is_a?(String) && value.match?(/^#[0-9A-Fa-f]{6}$/)
-                errors << "Invalid color format for #{key}: #{value}"
-              end
-            end
+        def validate_colors
+          return [] unless config[:colors]
+          return ['Colors must be a hash'] unless config[:colors].is_a?(Hash)
+          
+          config[:colors].filter_map do |key, value|
+            next if value.is_a?(String) && value.match?(/^#[0-9A-Fa-f]{6}$/)
+            "Invalid color format for #{key}: #{value}"
           end
+        end
 
-          # Validate typography
-          if config[:typography]
-            errors << 'Typography must be a hash' unless config[:typography].is_a?(Hash)
-            if config[:typography][:base_size]
-              base_size = config[:typography][:base_size]
-              errors << 'Base size must be positive' unless base_size.is_a?(Numeric) && base_size > 0
-            end
-            if config[:typography][:scale_ratio]
-              ratio = config[:typography][:scale_ratio]
-              errors << 'Scale ratio must be >= 1' unless ratio.is_a?(Numeric) && ratio >= 1
-            end
-          end
+        def validate_typography
+          return [] unless config[:typography]
+          return ['Typography must be a hash'] unless config[:typography].is_a?(Hash)
+          
+          errors = []
+          base_size = config[:typography][:base_size]
+          errors << 'Base size must be positive' if base_size && !(base_size.is_a?(Numeric) && base_size > 0)
+          ratio = config[:typography][:scale_ratio]
+          errors << 'Scale ratio must be >= 1' if ratio && !(ratio.is_a?(Numeric) && ratio >= 1)
+          errors
+        end
 
-          # Validate spacing
-          if config[:spacing]
-            errors << 'Spacing must be a hash' unless config[:spacing].is_a?(Hash)
-            if config[:spacing][:unit]
-              unit = config[:spacing][:unit]
-              errors << 'Spacing unit must be positive' unless unit.is_a?(Numeric) && unit > 0
-            end
-            if config[:spacing][:scale]
-              errors << 'Spacing scale must be an array' unless config[:spacing][:scale].is_a?(Array)
-            end
-          end
+        def validate_spacing
+          return [] unless config[:spacing]
+          return ['Spacing must be a hash'] unless config[:spacing].is_a?(Hash)
+          
+          errors = []
+          unit = config[:spacing][:unit]
+          errors << 'Spacing unit must be positive' if unit && !(unit.is_a?(Numeric) && unit > 0)
+          errors << 'Spacing scale must be an array' if config[:spacing][:scale] && !config[:spacing][:scale].is_a?(Array)
+          errors
+        end
 
-          # Validate components
-          if config[:components]
-            errors << 'Components must be a hash' unless config[:components].is_a?(Hash)
-          end
+        def validate_components
+          return [] unless config[:components]
+          config[:components].is_a?(Hash) ? [] : ['Components must be a hash']
+        end
 
-          # Validate accessibility
-          if config[:accessibility]
-            if config[:accessibility][:wcag_level]
-              level = config[:accessibility][:wcag_level]
-              errors << 'Invalid WCAG level' unless ['A', 'AA', 'AAA'].include?(level)
-            end
-            if config[:accessibility][:contrast_ratio]
-              ratio = config[:accessibility][:contrast_ratio]
-              errors << 'Contrast ratio must be positive' unless ratio.is_a?(Numeric) && ratio > 0
-            end
-          end
-
-          if errors.any?
-            { valid: false, errors: errors }
-          else
-            { valid: true }
-          end
+        def validate_accessibility
+          return [] unless config[:accessibility]
+          
+          errors = []
+          level = config[:accessibility][:wcag_level]
+          errors << 'Invalid WCAG level' if level && !%w[A AA AAA].include?(level)
+          ratio = config[:accessibility][:contrast_ratio]
+          errors << 'Contrast ratio must be positive' if ratio && !(ratio.is_a?(Numeric) && ratio > 0)
+          errors
         end
 
         def colors

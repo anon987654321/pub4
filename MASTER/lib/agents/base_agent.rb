@@ -48,12 +48,8 @@ module MASTER
             log_execution(nil, success: false, error: e)
             
             if attempt >= max_retries
-              # Try fallback models if available
-              if fallback_models && !fallback_models.empty?
-                return try_fallback_models(fallback_models)
-              else
-                raise RetryExhausted, "Failed after #{max_retries} attempts: #{e.message}"
-              end
+              return try_fallback_models(fallback_models) if fallback_models&.any?
+              raise RetryExhausted, "Failed after #{max_retries} attempts: #{e.message}"
             end
             
             sleep_duration = exponential_backoff(attempt)
@@ -110,21 +106,15 @@ module MASTER
             puts "  🔄 Trying fallback model: #{model}"
             @metrics[:model_switches] += 1
             
-            # Temporarily override default model
             original_model = default_model
             define_singleton_method(:default_model) { model }
-            
             result = execute
-            
-            # Restore original model
             define_singleton_method(:default_model) { original_model }
             
             return result
             
-          rescue => e
-            if index == models.length - 1
-              raise RetryExhausted, "All fallback models failed: #{e.message}"
-            end
+          rescue StandardError => e
+            raise RetryExhausted, "All fallback models failed: #{e.message}" if index == models.length - 1
           end
         end
       end

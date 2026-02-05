@@ -99,63 +99,45 @@ module MASTER
         end
 
         def execute_phase(phase, context)
-          phase_result = {
-            phase: phase[:name],
-            started_at: Time.now,
-            steps: []
-          }
+          phase_result = { phase: phase[:name], started_at: Time.now, steps: [] }
 
-          steps = phase[:steps] || []
-          steps.each do |step|
+          (phase[:steps] || []).each do |step|
             step_result = execute_step(step, context)
             phase_result[:steps] << step_result
 
-            unless step_result[:success]
-              phase_result[:success] = false
-              phase_result[:error] = step_result[:error]
-              phase_result[:completed_at] = Time.now
-              return phase_result
-            end
-
-            # Update context with step results
-            context.merge!(step_result[:output] || {})
+            next if step_result[:success]
+            
+            phase_result[:success] = false
+            phase_result[:error] = step_result[:error]
+            phase_result[:completed_at] = Time.now
+            return phase_result
           end
 
+          context.merge!(phase_result[:steps].last&.dig(:output) || {})
           phase_result[:success] = true
           phase_result[:completed_at] = Time.now
           phase_result
         end
 
         def execute_step(step, context)
-          step_result = {
-            step: step[:name],
-            type: step[:type],
-            started_at: Time.now
-          }
+          step_result = { step: step[:name], type: step[:type], started_at: Time.now }
 
-          begin
-            case step[:type]
-            when :task
-              output = execute_task(step, context)
-            when :gate
-              output = execute_gate(step, context)
-            when :automation
-              output = execute_automation(step, context)
-            when :validation
-              output = execute_validation(step, context)
-            else
-              output = { success: false, error: "Unknown step type: #{step[:type]}" }
-            end
+          output = case step[:type]
+                   when :task then execute_task(step, context)
+                   when :gate then execute_gate(step, context)
+                   when :automation then execute_automation(step, context)
+                   when :validation then execute_validation(step, context)
+                   else { success: false, error: "Unknown step type: #{step[:type]}" }
+                   end
 
-            step_result.merge!(output)
-            step_result[:completed_at] = Time.now
-            step_result
-          rescue => e
-            step_result[:success] = false
-            step_result[:error] = e.message
-            step_result[:completed_at] = Time.now
-            step_result
-          end
+          step_result.merge!(output)
+          step_result[:completed_at] = Time.now
+          step_result
+        rescue StandardError => e
+          step_result[:success] = false
+          step_result[:error] = e.message
+          step_result[:completed_at] = Time.now
+          step_result
         end
 
         def execute_task(step, context)

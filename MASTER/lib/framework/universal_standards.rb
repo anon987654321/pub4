@@ -140,37 +140,28 @@ module MASTER
         end
 
         def check_naming(code, rule, language)
-          violations = []
+          return [] unless language == :ruby
           
-          if language == :ruby
-            # Check class names (PascalCase)
-            code.scan(/^\s*class\s+([a-z]\w*)/i).each do |match|
-              name = match[0]
-              unless name.match?(/^[A-Z][a-z0-9]*([A-Z][a-z0-9]*)*$/)
-                violations << {
-                  standard: :naming,
-                  severity: rule[:severity] || :warning,
-                  message: "Class name '#{name}' should be PascalCase",
-                  type: :naming
-                }
-              end
-            end
-
-            # Check method names (snake_case)
-            code.scan(/^\s*def\s+([A-Z]\w*)/i).each do |match|
-              name = match[0]
-              if name.match?(/[A-Z]/)
-                violations << {
-                  standard: :naming,
-                  severity: rule[:severity] || :warning,
-                  message: "Method name '#{name}' should be snake_case",
-                  type: :naming
-                }
-              end
-            end
-          end
-
+          violations = []
+          violations.concat(check_class_naming(code, rule))
+          violations.concat(check_method_naming(code, rule))
           violations
+        end
+
+        def check_class_naming(code, rule)
+          code.scan(/^\s*class\s+([a-z]\w*)/i).filter_map do |match|
+            name = match[0]
+            next if name.match?(/^[A-Z][a-z0-9]*([A-Z][a-z0-9]*)*$/)
+            { standard: :naming, severity: rule[:severity] || :warning, message: "Class name '#{name}' should be PascalCase", type: :naming }
+          end
+        end
+
+        def check_method_naming(code, rule)
+          code.scan(/^\s*def\s+([A-Z]\w*)/i).filter_map do |match|
+            name = match[0]
+            next unless name.match?(/[A-Z]/)
+            { standard: :naming, severity: rule[:severity] || :warning, message: "Method name '#{name}' should be snake_case", type: :naming }
+          end
         end
 
         def check_complexity(code, rule)

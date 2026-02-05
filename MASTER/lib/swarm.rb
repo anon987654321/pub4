@@ -184,24 +184,18 @@ module MASTER
       private
 
       def generate_variations(prompt, type, config, count, session_dir)
+        opts = { prompt: prompt, type: type, config: config, session_dir: session_dir }
         variations = []
         prompts = config[:vary_prompt] ? vary_prompt(prompt, count: [count / 4, 5].max) : [prompt]
 
         count.times do |i|
           seed = config[:vary_seed] ? rand(999_999) : 42
           current_prompt = prompts.sample
+          opts[:seed] = seed
+          opts[:prompt] = current_prompt
+          opts[:index] = i
 
-          variation = case type
-                      when :image
-                        generate_image_variation(current_prompt, config, seed, i, session_dir)
-                      when :video
-                        generate_video_variation(current_prompt, config, seed, i, session_dir)
-                      when :audio
-                        generate_audio_variation(current_prompt, config, seed, i, session_dir)
-                      when :postpro
-                        # Requires input image
-                        nil
-                      end
+          variation = generate_single_variation(type, opts)
 
           if variation && File.exist?(variation.to_s)
             variations << { path: variation, seed: seed, prompt: current_prompt, index: i }
@@ -215,41 +209,51 @@ module MASTER
         variations
       end
 
-      def generate_image_variation(prompt, config, seed, index, session_dir)
+      def generate_single_variation(type, opts)
+        case type
+        when :image then generate_image_variation(opts)
+        when :video then generate_video_variation(opts)
+        when :audio then generate_audio_variation(opts)
+        end
+      end
+
+      def generate_image_variation(opts)
+        config = opts[:config]
         model = config[:vary_model] ? config[:models].sample : config[:models].first
         chain = config[:vary_chain] ? config[:chains].sample : nil
         guidance = config[:vary_guidance] ? rand(config[:guidance_range]) : 7.5
 
         if chain
-          result = Replicate.run_chain(prompt, chain: chain, seed: seed)
+          result = Replicate.run_chain(opts[:prompt], chain: chain, seed: opts[:seed])
           return nil unless result.ok?
           result.value[:final]
         else
-          Replicate.generate_image(prompt, model: model)
+          Replicate.generate_image(opts[:prompt], model: model)
         end
-      rescue => e
+      rescue StandardError
         nil
       end
 
-      def generate_video_variation(prompt, config, seed, index, session_dir)
-        # First generate an image, then video
-        image = Replicate.generate_image(prompt, model: :flux_schnell)
+      def generate_video_variation(opts)
+        image = Replicate.generate_image(opts[:prompt], model: :flux_schnell)
         return nil unless image && File.exist?(image.to_s)
 
+        config = opts[:config]
         model = config[:vary_model] ? config[:models].sample : config[:models].first
         duration = config[:vary_duration] ? config[:durations].sample : 10
 
-        Replicate.generate_video(image, prompt, model: model, duration: duration)
-      rescue => e
+        Replicate.generate_video(image, opts[:prompt], model: model, duration: duration)
+      rescue StandardError
         nil
       end
 
-      def generate_audio_variation(prompt, config, seed, index, session_dir)
+      def generate_audio_variation(opts)
+        config = opts[:config]
         model = config[:vary_model] ? config[:models].sample : config[:models].first
         duration = config[:durations].sample
 
-        Replicate.generate_audio(prompt, model: model, duration: duration)
-      rescue => e
+        Replicate.generate_audio(opts[:prompt], model: model, duration: duration)
+      rescue StandardError
         nil
       end
 

@@ -120,64 +120,49 @@ module MASTER
 
         def validate
           errors = []
+          errors.concat(validate_rails)
+          errors.concat(validate_frontend)
+          errors.concat(validate_responsive)
+          errors << 'PWA config must be a hash' if config[:pwa] && !config[:pwa].is_a?(Hash)
+          errors << 'Performance config must be a hash' if config[:performance] && !config[:performance].is_a?(Hash)
+          errors << 'SEO config must be a hash' if config[:seo] && !config[:seo].is_a?(Hash)
+          errors << 'Security config must be a hash' if config[:security] && !config[:security].is_a?(Hash)
+          errors.any? ? { valid: false, errors: errors } : { valid: true }
+        end
 
-          # Validate Rails config
-          if config[:rails]
-            errors << 'Rails config must be a hash' unless config[:rails].is_a?(Hash)
-            if config[:rails][:version]
-              version = config[:rails][:version]
-              errors << 'Invalid Rails version format' unless version.to_s.match?(/^\d+\.\d+/)
-            end
-          end
+        def validate_rails
+          return [] unless config[:rails]
+          return ['Rails config must be a hash'] unless config[:rails].is_a?(Hash)
+          
+          version = config[:rails][:version]
+          version && !version.to_s.match?(/^\d+\.\d+/) ? ['Invalid Rails version format'] : []
+        end
 
-          # Validate frontend config
-          if config[:frontend]
-            errors << 'Frontend config must be a hash' unless config[:frontend].is_a?(Hash)
-            if config[:frontend][:framework]
-              valid_frameworks = ['vanilla', 'react', 'vue', 'svelte', 'alpine']
-              framework = config[:frontend][:framework].to_s
-              errors << "Invalid framework: #{framework}" unless valid_frameworks.include?(framework)
-            end
-          end
+        def validate_frontend
+          return [] unless config[:frontend]
+          return ['Frontend config must be a hash'] unless config[:frontend].is_a?(Hash)
+          
+          framework = config[:frontend][:framework]
+          return [] unless framework
+          
+          valid = %w[vanilla react vue svelte alpine]
+          valid.include?(framework.to_s) ? [] : ["Invalid framework: #{framework}"]
+        end
 
-          # Validate responsive config
-          if config[:responsive]
-            errors << 'Responsive config must be a hash' unless config[:responsive].is_a?(Hash)
-            if config[:responsive][:breakpoints]
-              bp = config[:responsive][:breakpoints]
-              errors << 'Breakpoints must be a hash' unless bp.is_a?(Hash)
-              bp&.each do |name, value|
-                errors << "Invalid breakpoint #{name}: #{value}" unless value.is_a?(Numeric) && value > 0
-              end
-            end
-          end
-
-          # Validate PWA config
-          if config[:pwa]
-            errors << 'PWA config must be a hash' unless config[:pwa].is_a?(Hash)
-          end
-
-          # Validate performance config
-          if config[:performance]
-            errors << 'Performance config must be a hash' unless config[:performance].is_a?(Hash)
-          end
-
-          # Validate SEO config
-          if config[:seo]
-            errors << 'SEO config must be a hash' unless config[:seo].is_a?(Hash)
-          end
-
-          # Validate security config
-          if config[:security]
-            errors << 'Security config must be a hash' unless config[:security].is_a?(Hash)
-          end
-
-          if errors.any?
-            { valid: false, errors: errors }
-          else
-            { valid: true }
+        def validate_responsive
+          return [] unless config[:responsive]
+          return ['Responsive config must be a hash'] unless config[:responsive].is_a?(Hash)
+          
+          bp = config[:responsive][:breakpoints]
+          return [] unless bp
+          return ['Breakpoints must be a hash'] unless bp.is_a?(Hash)
+          
+          bp.filter_map do |name, value|
+            "Invalid breakpoint #{name}: #{value}" unless value.is_a?(Numeric) && value > 0
           end
         end
+
+        private :validate_rails, :validate_frontend, :validate_responsive
 
         def rails_config
           config[:rails] || {}

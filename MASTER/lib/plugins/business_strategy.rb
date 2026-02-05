@@ -114,63 +114,53 @@ module MASTER
 
         def validate
           errors = []
-
-          # Validate planning config
-          if config[:planning]
-            errors << 'Planning config must be a hash' unless config[:planning].is_a?(Hash)
-            if config[:planning][:horizon]
-              valid_horizons = ['weekly', 'monthly', 'quarterly', 'yearly']
-              horizon = config[:planning][:horizon].to_s
-              errors << "Invalid planning horizon: #{horizon}" unless valid_horizons.include?(horizon)
-            end
-            if config[:planning][:frameworks]
-              errors << 'Frameworks must be an array' unless config[:planning][:frameworks].is_a?(Array)
-            end
-          end
-
-          # Validate metrics config
-          if config[:metrics]
-            errors << 'Metrics config must be a hash' unless config[:metrics].is_a?(Hash)
-            if config[:metrics][:kpis]
-              errors << 'KPIs must be an array' unless config[:metrics][:kpis].is_a?(Array)
-            end
-            if config[:metrics][:categories]
-              errors << 'Categories must be an array' unless config[:metrics][:categories].is_a?(Array)
-            end
-          end
-
-          # Validate analytics config
-          if config[:analytics]
-            errors << 'Analytics config must be a hash' unless config[:analytics].is_a?(Hash)
-            if config[:analytics][:tools]
-              errors << 'Tools must be an array' unless config[:analytics][:tools].is_a?(Array)
-            end
-          end
-
-          # Validate growth config
-          if config[:growth]
-            errors << 'Growth config must be a hash' unless config[:growth].is_a?(Hash)
-            if config[:growth][:channels]
-              errors << 'Channels must be an array' unless config[:growth][:channels].is_a?(Array)
-            end
-          end
-
-          # Validate market config
-          if config[:market]
-            errors << 'Market config must be a hash' unless config[:market].is_a?(Hash)
-          end
-
-          # Validate financial config
-          if config[:financial]
-            errors << 'Financial config must be a hash' unless config[:financial].is_a?(Hash)
-          end
-
-          if errors.any?
-            { valid: false, errors: errors }
-          else
-            { valid: true }
-          end
+          errors.concat(validate_planning)
+          errors.concat(validate_metrics)
+          errors.concat(validate_analytics)
+          errors.concat(validate_growth)
+          errors << 'Market config must be a hash' if config[:market] && !config[:market].is_a?(Hash)
+          errors << 'Financial config must be a hash' if config[:financial] && !config[:financial].is_a?(Hash)
+          errors.any? ? { valid: false, errors: errors } : { valid: true }
         end
+
+        def validate_planning
+          return [] unless config[:planning]
+          return ['Planning config must be a hash'] unless config[:planning].is_a?(Hash)
+          
+          errors = []
+          if (horizon = config[:planning][:horizon])
+            valid = %w[weekly monthly quarterly yearly]
+            errors << "Invalid planning horizon: #{horizon}" unless valid.include?(horizon.to_s)
+          end
+          errors << 'Frameworks must be an array' if config[:planning][:frameworks] && !config[:planning][:frameworks].is_a?(Array)
+          errors
+        end
+
+        def validate_metrics
+          return [] unless config[:metrics]
+          return ['Metrics config must be a hash'] unless config[:metrics].is_a?(Hash)
+          
+          errors = []
+          errors << 'KPIs must be an array' if config[:metrics][:kpis] && !config[:metrics][:kpis].is_a?(Array)
+          errors << 'Categories must be an array' if config[:metrics][:categories] && !config[:metrics][:categories].is_a?(Array)
+          errors
+        end
+
+        def validate_analytics
+          return [] unless config[:analytics]
+          return ['Analytics config must be a hash'] unless config[:analytics].is_a?(Hash)
+          
+          config[:analytics][:tools] && !config[:analytics][:tools].is_a?(Array) ? ['Tools must be an array'] : []
+        end
+
+        def validate_growth
+          return [] unless config[:growth]
+          return ['Growth config must be a hash'] unless config[:growth].is_a?(Hash)
+          
+          config[:growth][:channels] && !config[:growth][:channels].is_a?(Array) ? ['Channels must be an array'] : []
+        end
+
+        private :validate_planning, :validate_metrics, :validate_analytics, :validate_growth
 
         def planning_config
           config[:planning] || {}

@@ -57,18 +57,13 @@ module MASTER
         end
 
         def check_rule(rule, code, context)
-          violations = []
-          patterns = rule[:patterns] || []
-
-          patterns.each do |pattern|
-            if pattern[:type] == 'regex'
-              violations.concat(check_regex_pattern(pattern, code, rule))
-            elsif pattern[:type] == 'semantic'
-              violations.concat(check_semantic_pattern(pattern, code, context, rule))
+          (rule[:patterns] || []).flat_map do |pattern|
+            case pattern[:type]
+            when 'regex' then check_regex_pattern(pattern, code, rule)
+            when 'semantic' then check_semantic_pattern(pattern, code, context, rule)
+            else []
             end
           end
-
-          violations
         end
 
         def check_regex_pattern(pattern, code, rule)

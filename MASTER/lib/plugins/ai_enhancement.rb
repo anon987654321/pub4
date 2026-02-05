@@ -114,47 +114,22 @@ module MASTER
 
         def validate
           errors = []
-
-          # Validate LLM optimization config
-          if config[:llm_optimization]
-            errors << 'LLM optimization must be a hash' unless config[:llm_optimization].is_a?(Hash)
+          %i[llm_optimization prompt_engineering model_selection quality_control performance].each do |key|
+            errors << "#{key.to_s.tr('_', ' ').capitalize} must be a hash" if config[key] && !config[key].is_a?(Hash)
           end
-
-          # Validate prompt engineering config
-          if config[:prompt_engineering]
-            errors << 'Prompt engineering must be a hash' unless config[:prompt_engineering].is_a?(Hash)
-          end
-
-          # Validate model selection config
-          if config[:model_selection]
-            errors << 'Model selection must be a hash' unless config[:model_selection].is_a?(Hash)
-          end
-
-          # Validate context management config
-          if config[:context_management]
-            errors << 'Context management must be a hash' unless config[:context_management].is_a?(Hash)
-            if config[:context_management][:window_size]
-              size = config[:context_management][:window_size]
-              errors << 'Window size must be positive' unless size.is_a?(Numeric) && size > 0
-            end
-          end
-
-          # Validate quality control config
-          if config[:quality_control]
-            errors << 'Quality control must be a hash' unless config[:quality_control].is_a?(Hash)
-          end
-
-          # Validate performance config
-          if config[:performance]
-            errors << 'Performance must be a hash' unless config[:performance].is_a?(Hash)
-          end
-
-          if errors.any?
-            { valid: false, errors: errors }
-          else
-            { valid: true }
-          end
+          errors.concat(validate_context_management)
+          errors.any? ? { valid: false, errors: errors } : { valid: true }
         end
+
+        def validate_context_management
+          return [] unless config[:context_management]
+          return ['Context management must be a hash'] unless config[:context_management].is_a?(Hash)
+          
+          size = config[:context_management][:window_size]
+          size && !(size.is_a?(Numeric) && size > 0) ? ['Window size must be positive'] : []
+        end
+
+        private :validate_context_management
 
         def llm_optimization_config
           config[:llm_optimization] || {}

@@ -67,6 +67,11 @@ module MASTER
           # Image processing
           vips = vips_version
           puts "vips0 at mainbus0: libvips #{vips}" if vips != 'not installed'
+          
+          # Weaviate vector database
+          if weaviate_connected?
+            puts "weaviate0 at mainbus0: vector db, semantic memory"
+          end
 
           # Scrutiny mode
           puts "scrutiny0 at const0: maximum, brutal honesty"
@@ -305,6 +310,13 @@ module MASTER
 
       def git_repo?
         File.directory?(File.join(ROOT, '.git'))
+      end
+
+      def weaviate_connected?
+        require_relative 'weaviate'
+        Weaviate.new.healthy?
+      rescue StandardError
+        false
       end
 
       def git_info

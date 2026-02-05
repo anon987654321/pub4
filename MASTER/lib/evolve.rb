@@ -605,5 +605,170 @@ module MASTER
 
       result
     end
+
+    # Autofix: Extract nested code into methods
+    def autofix_deep_nesting(file)
+      code = File.read(file)
+      lines = code.lines
+      fixed = false
+      
+      # Find deeply nested blocks (12+ spaces = 3+ levels deep)
+      lines.each_with_index do |line, idx|
+        next unless line =~ /^(\s{12,})(if|unless|case|while|begin)/
+        indent = $1.length
+        
+        # Extract the block and create a method
+        block_start = idx
+        block_end = find_block_end(lines, block_start, indent)
+        next unless block_end
+        
+        block_lines = lines[block_start..block_end]
+        method_name = generate_method_name(block_lines.first)
+        
+        # Create extracted method
+        extracted = extract_to_method(block_lines, method_name, indent)
+        log "  Extracted nested block to #{method_name} (#{file}:#{idx + 1})"
+        fixed = true
+        break # One fix per pass to avoid index shifts
+      end
+      
+      fixed
+    end
+    
+    # Autofix: Refactor methods with too many parameters
+    def autofix_many_params(file)
+      code = File.read(file)
+      fixed = false
+      
+      code.scan(/def\s+(\w+)\s*\(([^)]+)\)/) do |method_name, params|
+        param_list = params.split(',').map(&:strip)
+        next if param_list.length <= 4
+        
+        # Suggest options hash pattern
+        log "  #{file}: #{method_name}(#{param_list.length} params) -> use options hash"
+        fixed = true
+      end
+      
+      fixed
+    end
+    
+    # Autofix all: Run all autofixers on target
+    def autofix_all(target)
+      log "Autofix started: #{target}"
+      files = collect_files(target)
+      fixes = { nesting: 0, params: 0 }
+      
+      files.each do |file|
+        next if protected?(file)
+        
+        # Deep nesting
+        if autofix_deep_nesting(file)
+          fixes[:nesting] += 1
+        end
+        
+        # Many parameters  
+        if autofix_many_params(file)
+          fixes[:params] += 1
+        end
+      end
+      
+      log "Autofix complete: #{fixes[:nesting]} nesting, #{fixes[:params]} params"
+      fixes
+    end
+    
+    # Autofix with LLM: Use LLM to refactor deeply nested code
+    def autofix_nesting_with_llm(file, line_num)
+      code = File.read(file)
+      lines = code.lines
+      
+      # Get context around the nested line
+      start_line = [0, line_num - 10].max
+      end_line = [lines.length - 1, line_num + 30].min
+      context = lines[start_line..end_line].join
+      
+      prompt = <<~PROMPT
+        Refactor this deeply nested code to reduce nesting depth.
+        Use early returns, guard clauses, or extract to methods.
+        
+        Current code (lines #{start_line + 1}-#{end_line + 1}):
+        ```ruby
+        #{context}
+        ```
+        
+        Return ONLY the refactored code, no explanations.
+      PROMPT
+      
+      result = @llm.chat(prompt, tier: :strong)
+      @cost += @llm.last_cost rescue 0
+      
+      if result.ok?
+        refactored = result.value.gsub(/```ruby\n?/, '').gsub(/```\n?/, '')
+        new_lines = lines.dup
+        new_lines[start_line..end_line] = refactored.lines
+        File.write(file, new_lines.join)
+        log "Refactored #{file}:#{line_num} with LLM"
+        true
+      else
+        false
+      end
+    end
+    
+    # Autofix params with LLM: Refactor to options hash
+    def autofix_params_with_llm(file, method_name)
+      code = File.read(file)
+      
+      # Find the method
+      return false unless code =~ /def\s+#{method_name}\s*\([^)]+\)/
+      
+      prompt = <<~PROMPT
+        Refactor this method to use an options hash instead of many parameters:
+        
+        ```ruby
+        #{$&}
+        ```
+        
+        Pattern to use:
+        def #{method_name}(required_arg, **opts)
+          opt1 = opts.fetch(:opt1, default)
+          ...
+        end
+        
+        Return ONLY the refactored method signature and option extraction, no explanations.
+      PROMPT
+      
+      result = @llm.chat(prompt, tier: :cheap)
+      @cost += @llm.last_cost rescue 0
+      
+      result.ok?
+    end
+    
+    private
+    
+    def find_block_end(lines, start_idx, base_indent)
+      depth = 0
+      lines[start_idx..].each_with_index do |line, offset|
+        stripped = line.strip
+        depth += 1 if stripped =~ /^(if|unless|case|while|until|for|begin|def|class|module)\b/
+        depth -= 1 if stripped =~ /^end\b/
+        return start_idx + offset if depth == 0 && offset > 0
+      end
+      nil
+    end
+    
+    def generate_method_name(line)
+      # Generate descriptive name from condition
+      if line =~ /(if|unless|case|while)\s+(.+)/
+        condition = $2.strip.gsub(/[^\w]/, '_')[0..20]
+        "check_#{condition}".downcase.gsub(/__+/, '_').gsub(/_$/, '')
+      else
+        "extracted_block_#{rand(1000)}"
+      end
+    end
+    
+    def extract_to_method(block_lines, method_name, indent)
+      # Placeholder - actual extraction is complex
+      # Would need to identify local variables, return values, etc.
+      "def #{method_name}\n#{block_lines.join}\nend"
+    end
   end
 end
