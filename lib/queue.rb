@@ -21,6 +21,10 @@ module MASTER
       self
     end
 
+    # Alias for compatibility
+    alias push add
+    alias << add
+
     def add_files(pattern, priority: 0)
       files = Dir.glob(pattern).select { |f| File.file?(f) }
       files = files.reject { |f| binary?(f) }
