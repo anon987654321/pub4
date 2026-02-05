@@ -192,7 +192,7 @@ module MASTER
       RubyLLM.configure do |config|
         config.openrouter_api_key = @api_key
       end
-    rescue
+    rescue StandardError
       nil
     end
 
@@ -204,7 +204,7 @@ module MASTER
       @history << { role: 'assistant', content: content }
       update_usage_from_response(response, tier)
       Result.ok(content)
-    rescue => e
+    rescue StandardError => e
       Result.err(e.message)
     end
 
@@ -213,7 +213,7 @@ module MASTER
       response = chat.ask(prompt, with: resolved_context_files)
       update_usage_from_response(response, DEFAULT_TIER)
       Result.ok(response.content)
-    rescue => e
+    rescue StandardError => e
       Result.err(e.message)
     end
 
@@ -226,7 +226,7 @@ module MASTER
       @history << { role: 'assistant', content: response.content }
       update_usage_from_response(response, tier)
       Result.ok(response.content)
-    rescue => e
+    rescue StandardError => e
       Result.err("Streaming error: #{e.message}")
     end
 

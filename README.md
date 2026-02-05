@@ -1,6 +1,6 @@
 # MASTER — The LLM Operating System
 
-A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. It is a GitHub Copilot CLI/Claude Code/Aider alternative, tuned for OpenBSD, and carries forward ideas from Moltbot/Openclaw.
+A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. It is a GitHub Copilot CLI, Claude Code, and Aider alternative, tuned for OpenBSD, and carries forward ideas from Moltbot/Openclaw.
 
 **What it does:** You give MASTER a task. It thinks, writes code, runs it, sees the result, and iterates until done. It can improve its own source code, generate images and video, and manage servers.
 
