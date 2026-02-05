@@ -18,6 +18,13 @@ module MASTER
     ARBITER = :sonnet
     MAX_ROUNDS = 3
     MAX_COST_PER_FILE = 0.50
+    CONSENSUS_THRESHOLD = 0.6  # Need >60% agreement
+    CODE_PREVIEW_LIMIT = 5000
+    LETTER_PREVIEW_LIMIT = 400
+    DIFF_PREVIEW_LIMIT = 600
+    REBUTTAL_PREVIEW_LIMIT = 150
+    SUMMARY_LETTER_LIMIT = 300
+    SUMMARY_DIFF_LIMIT = 500
 
     attr_reader :cost, :rounds, :proposals
 
@@ -106,14 +113,14 @@ module MASTER
         ---
         FILE: #{filename}
         ```
-        #{code[0..5000]}
+        #{code[0..CODE_PREVIEW_LIMIT]}
         ```
       PROMPT
     end
 
     def review_prompt(code, other_proposals, filename)
       summaries = other_proposals.map do |p|
-        "### #{p[:model]}\n#{p[:letter].to_s[0..400]}\n```diff\n#{p[:diff].to_s[0..600]}\n```"
+        "### #{p[:model]}\n#{p[:letter].to_s[0..LETTER_PREVIEW_LIMIT]}\n```diff\n#{p[:diff].to_s[0..DIFF_PREVIEW_LIMIT]}\n```"
       end.join("\n\n")
 
       <<~PROMPT
@@ -170,13 +177,13 @@ module MASTER
       tie_detected = detect_tie?
 
       summary = @proposals.map do |p|
-        rebuttals = p[:rebuttals]&.map { |r| "  - #{r[:model]}: #{r[:content].to_s[0..150]}" }&.join("\n")
+        rebuttals = p[:rebuttals]&.map { |r| "  - #{r[:model]}: #{r[:content].to_s[0..REBUTTAL_PREVIEW_LIMIT]}" }&.join("\n")
         <<~ENTRY
           ### #{p[:model]}
-          **Letter:** #{p[:letter].to_s[0..300]}
+          **Letter:** #{p[:letter].to_s[0..SUMMARY_LETTER_LIMIT]}
           **Diff:**
           ```diff
-          #{p[:diff].to_s[0..500]}
+          #{p[:diff].to_s[0..SUMMARY_DIFF_LIMIT]}
           ```
           **Rebuttals:**
           #{rebuttals}
@@ -243,8 +250,7 @@ module MASTER
       total = supports + opposes
       return false if total == 0
 
-      # Need >60% agreement for consensus
-      supports.to_f / total > 0.6
+      supports.to_f / total > CONSENSUS_THRESHOLD
     end
 
     def detect_tie?

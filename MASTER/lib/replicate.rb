@@ -9,6 +9,13 @@ module MASTER
   module Replicate
     API_URL = 'https://api.replicate.com/v1'
     OUTPUT_DIR = File.join(MASTER::ROOT, 'var', 'replicate')
+    
+    # Default durations
+    DEFAULT_VIDEO_DURATION = 10
+    DEFAULT_AUDIO_DURATION = 10
+    DEFAULT_ASPECT_RATIO = '16:9'
+    DEFAULT_COST_ESTIMATE = 0.02
+    RANDOM_CHAIN_COST = 0.50
 
     # Complete model registry for creative pipelines
     MODELS = {
@@ -106,13 +113,13 @@ module MASTER
       def estimate_chain_cost(chain)
         chain_config = CHAINS[chain.to_sym]
         return nil unless chain_config
-        return 0.50 if chain_config[:steps] == :random
+        return RANDOM_CHAIN_COST if chain_config[:steps] == :random
 
-        chain_config[:steps].sum { |step| COSTS[step[:model]] || 0.02 }
+        chain_config[:steps].sum { |step| COSTS[step[:model]] || DEFAULT_COST_ESTIMATE }
       end
 
       def estimate_cost(model)
-        COSTS[model.to_sym] || 0.02
+        COSTS[model.to_sym] || DEFAULT_COST_ESTIMATE
       end
     end
 
@@ -238,7 +245,7 @@ module MASTER
           { model: :flux_pro, action: :generate },
           { model: :depth_anything, action: :depth },
           { model: :instruct_pix, action: :edit, prompt: 'cinematic color grading, anamorphic lens flare, shallow depth of field' },
-          { model: :hailuo, action: :video, duration: 10 },
+          { model: :hailuo, action: :video, duration: DEFAULT_VIDEO_DURATION },
           { model: :musicgen, action: :audio, prompt: 'cinematic orchestral score, dramatic' }
         ]
       },
@@ -286,19 +293,19 @@ module MASTER
 
       def generate_image(prompt, model: :flux_schnell)
         model_id = MODELS[model] || MODELS[:flux_schnell]
-        run_model(model_id, { prompt: prompt, aspect_ratio: '16:9' })
+        run_model(model_id, { prompt: prompt, aspect_ratio: DEFAULT_ASPECT_RATIO })
       end
 
-      def generate_video(image_url, prompt, model: :hailuo, duration: 10)
+      def generate_video(image_url, prompt, model: :hailuo, duration: DEFAULT_VIDEO_DURATION)
         model_id = MODELS[model] || MODELS[:hailuo]
 
         input = case model
                 when :sora
                   { prompt: prompt, first_frame_image: image_url, duration: duration }
                 when :kling
-                  { image: image_url, prompt: prompt, duration: duration, aspect_ratio: '16:9' }
+                  { image: image_url, prompt: prompt, duration: duration, aspect_ratio: DEFAULT_ASPECT_RATIO }
                 when :luma_ray
-                  { prompt: prompt, start_image: image_url, aspect_ratio: '16:9' }
+                  { prompt: prompt, start_image: image_url, aspect_ratio: DEFAULT_ASPECT_RATIO }
                 when :wan
                   { image: image_url, prompt: prompt, duration: duration }
                 else
@@ -308,7 +315,7 @@ module MASTER
         run_model(model_id, input)
       end
 
-      def generate_audio(prompt, model: :musicgen, duration: 10)
+      def generate_audio(prompt, model: :musicgen, duration: DEFAULT_AUDIO_DURATION)
         model_id = MODELS[model] || MODELS[:musicgen]
         run_model(model_id, { prompt: prompt, duration: duration })
       end
@@ -674,7 +681,7 @@ module MASTER
         # Last: upscale or video
         if rand < 0.3
           videos = [:hailuo, :kling, :luma_ray, :wan]
-          pipeline << { model: videos.sample, action: :video, duration: 10 }
+          pipeline << { model: videos.sample, action: :video, duration: DEFAULT_VIDEO_DURATION }
         else
           pipeline << { model: enhancers.sample, action: :upscale }
         end
@@ -688,7 +695,7 @@ module MASTER
 
         case step[:action]
         when :generate
-          input = { prompt: context[:prompt], aspect_ratio: '16:9' }
+          input = { prompt: context[:prompt], aspect_ratio: DEFAULT_ASPECT_RATIO }
           input[:seed] = context[:seed] if context[:seed]
           run_model(model_id, input)
 

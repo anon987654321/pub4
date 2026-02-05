@@ -81,6 +81,11 @@ module MASTER
 
     HISTORY_FILE = Paths.history
     STATE_FILE = File.join(Paths.var, 'cli_state.json')
+    HISTORY_LIMIT = 100
+    EASTER_EGG_CHANCE = 0.01
+    UPTIME_THRESHOLD = 3600  # Show uptime after 1 hour
+    COST_TIER_LOW = 0.01
+    COST_TIER_MED = 0.10
 
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
@@ -143,7 +148,7 @@ module MASTER
     def load_history
       return unless File.exist?(HISTORY_FILE)
 
-      File.readlines(HISTORY_FILE).last(100).each do |line|
+      File.readlines(HISTORY_FILE).last(HISTORY_LIMIT).each do |line|
         Readline::HISTORY.push(line.chomp)
       end
     rescue
@@ -152,7 +157,7 @@ module MASTER
 
     def save_history
       File.open(HISTORY_FILE, 'a') do |f|
-        Readline::HISTORY.to_a.last(100).each { |line| f.puts(line) }
+        Readline::HISTORY.to_a.last(HISTORY_LIMIT).each { |line| f.puts(line) }
       end
     rescue
       # Ignore history errors
@@ -242,8 +247,8 @@ module MASTER
         next if input.empty?
         break if %w[exit quit q].include?(input)
 
-        # Easter egg (1% chance)
-        puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < 0.01
+        # Easter egg
+        puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < EASTER_EGG_CHANCE
 
         # Expand aliases
         input = expand_alias(input)
@@ -370,9 +375,9 @@ module MASTER
 
     def colorize_cost(cost)
       formatted = "$#{'%.4f' % cost}"
-      if cost < 0.01
+      if cost < COST_TIER_LOW
         "#{C_GREEN}#{formatted}#{C_RESET}"
-      elsif cost < 0.10
+      elsif cost < COST_TIER_MED
         "#{C_YELLOW}#{formatted}#{C_RESET}"
       else
         "#{C_RED}#{formatted}#{C_RESET}"
@@ -401,23 +406,23 @@ module MASTER
       parts = [dir]
       parts << ":#{persona}" if persona && persona != 'default'
       parts << "(#{hist})" if hist > 0
-      parts << format_uptime(uptime) if uptime > 3600
+      parts << format_uptime(uptime) if uptime > UPTIME_THRESHOLD
       parts << colorize_cost_inline(cost) if cost > 0
 
       "#{parts.join('')} $ "
     end
 
     def format_uptime(seconds)
-      hours = (seconds / 3600).to_i
-      mins = ((seconds % 3600) / 60).to_i
+      hours = (seconds / UPTIME_THRESHOLD).to_i
+      mins = ((seconds % UPTIME_THRESHOLD) / 60).to_i
       "#{hours}h#{mins}m"
     end
 
     def colorize_cost_inline(cost)
       formatted = "$#{'%.2f' % cost}"
-      if cost < 0.01
+      if cost < COST_TIER_LOW
         "#{C_GREEN}#{formatted}#{C_RESET}"
-      elsif cost < 0.10
+      elsif cost < COST_TIER_MED
         "#{C_YELLOW}#{formatted}#{C_RESET}"
       else
         "#{C_RED}#{formatted}#{C_RESET}"

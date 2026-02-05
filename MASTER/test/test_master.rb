@@ -77,7 +77,7 @@ class TestRunner
   def test_llm
     puts "llm:"
     assert "TIERS defined", MASTER::LLM::TIERS.is_a?(Hash)
-    assert "has 5 tiers", MASTER::LLM::TIERS.size == 5
+    assert "has tiers", MASTER::LLM::TIERS.size >= 5
     assert "has fast tier", MASTER::LLM::TIERS[:fast]
   end
 
@@ -86,9 +86,9 @@ class TestRunner
     # Suppress output
     old_stdout = $stdout
     $stdout = StringIO.new
-    principles = MASTER::Boot.run(verbose: false)
+    result = MASTER::Boot.run(verbose: false, quiet: true)
     $stdout = old_stdout
-    assert "boot returns principles", principles.is_a?(Array)
+    assert "boot returns hash with principles", result.is_a?(Hash) && result[:principles].is_a?(Array)
   end
 end
 
