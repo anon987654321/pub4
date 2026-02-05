@@ -64,6 +64,7 @@
     const IN_SANDBOX = false;
     const FADE_MS = 3500;
     const START_FADE_IN = true;
+    const MAX_TRACK_MS = 40000; // 40 seconds max per track (for podcast/sample mode)
     const DPR = Math.min(2, window.devicePixelRatio || 1);
     const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
                      (navigator.deviceMemory && navigator.deviceMemory <= 2);
@@ -242,7 +243,10 @@
         p.onloadedmetadata=()=>{
           const d=p.duration;
           if(d>0){
-            const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);
+            // Use shorter of track duration or MAX_TRACK_MS
+            const maxMs=t.maxMs||MAX_TRACK_MS||Infinity;
+            const trackMs=Math.min(d*1000,maxMs);
+            const m=Math.max(FADE_MS+1000,trackMs-FADE_MS-500);
             clearTimeout(this._prefadeTimer);
             this._prefadeTimer=setTimeout(()=>this.next({}),m);
           }
