@@ -113,9 +113,7 @@ inp.addEventListener('keydown',e=>{
     .catch(()=>setTimeout(poll,3000));
 })();
 
-// WebSocket audio (disabled - server uses HTTP polling)
-// TODO: Add WebSocket support to server.rb for real-time audio
-/*
+// WebSocket audio
 (function connectWS(){
   try{
     const ws=new WebSocket('ws://'+location.host+'/ws');
@@ -133,10 +131,10 @@ inp.addEventListener('keydown',e=>{
         if(d.text)add(d.text);
       }catch{}
     };
-    ws.onclose=()=>setTimeout(connectWS,3000);
+    ws.onclose=()=>setTimeout(connectWS,5000);
+    ws.onerror=()=>{};
   }catch{}
 })();
-*/
 </script>
 </body>
 </html>

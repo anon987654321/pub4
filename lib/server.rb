@@ -41,6 +41,9 @@ module MASTER
     private
 
     def find_port
+      # Reuse port on reload
+      return ENV['MASTER_PORT'].to_i if ENV['MASTER_PORT']
+      
       server = TCPServer.new('127.0.0.1', 0)
       port = server.addr[1]
       server.close
@@ -142,6 +145,34 @@ module MASTER
 
         when ['GET', '/health']
           [200, { 'content-type' => 'application/json' }, [{ status: 'ok', version: VERSION }.to_json]]
+
+        when ['GET', '/ws']
+          # WebSocket upgrade for Falcon
+          if env['rack.hijack']
+            begin
+              require 'async/websocket/adapters/rack'
+              
+              Async::WebSocket::Adapters::Rack.open(env) do |connection|
+                @ws_clients ||= []
+                @ws_clients << connection
+                
+                while message = connection.read
+                  # Handle incoming WebSocket messages if needed
+                  data = JSON.parse(message.to_s) rescue {}
+                  if data['message']
+                    result = cli.process_input(data['message'])
+                    connection.write({ text: result }.to_json) if result
+                  end
+                end
+              ensure
+                @ws_clients&.delete(connection)
+              end
+            rescue LoadError
+              [501, { 'content-type' => 'text/plain' }, ['WebSocket not available']]
+            end
+          else
+            [501, { 'content-type' => 'text/plain' }, ['WebSocket upgrade not supported']]
+          end
 
         else
           # Serve static files - check lib/views/ first, then root

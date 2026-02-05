@@ -24,8 +24,8 @@ module MASTER
     C_BOLD   = "\e[1m"
     C_MINT   = "\e[38;2;77;204;163m"
 
-    # Braille spinner (Claude Code style, minty)
-    ORB_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".chars.map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
+    # ASCII spinner (Unix style)
+    SPINNER = %w[| / - \\].map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
 
     # Boot quotes (rotates each session)
     QUOTES = [
@@ -66,7 +66,7 @@ module MASTER
       ask audit beautify cat cd chamber check-ports clean clear commit compare-images
       converge cost describe diff edit enforce-principles evolve exit fav favs git help
       image install-hooks introspect lint log ls persona personas principles pull push
-      queue quit radio read refactor refine review sanity scan smells speak status stream
+      queue quit radio read refactor refine reload review sanity scan smells speak status stream
       tree undo version web
     ].freeze
 
@@ -103,7 +103,9 @@ module MASTER
     end
 
     def trace(msg)
-      puts "#{C_DIM}#{msg}#{C_RESET}" if @verbosity == :high
+      return unless @verbosity == :high
+      ts = format('%07.3f', Time.now - @boot_time)
+      puts "[#{ts}] #{msg}"
     end
 
     def info(msg)
@@ -384,9 +386,9 @@ module MASTER
       spinner = Thread.new do
         i = 0
         until done
-          draw_orb(ORB_FRAMES[i % ORB_FRAMES.size])
+          draw_orb(SPINNER[i % SPINNER.size])
           i += 1
-          sleep 0.08
+          sleep 0.1
         end
         clear_orb
       end
@@ -577,6 +579,9 @@ module MASTER
       when 'check-ports'
         check_port_consistency
 
+      when 'reload'
+        reload_master
+
       when /^f(\d+)$/
         run_favorite($1.to_i)
 
@@ -595,6 +600,27 @@ module MASTER
     def undo_last
       result = `git checkout -- . 2>&1`
       result.empty? ? "Reverted uncommitted changes" : result
+    end
+
+    def reload_master
+      port = @server&.instance_variable_get(:@port)
+      
+      # Git pull
+      pull_result = `git pull 2>&1`.strip
+      trace "git pull: #{pull_result}"
+      
+      return "Pull failed: #{pull_result}" unless $?.success?
+      
+      # Save state
+      save_state
+      save_history
+      
+      # Re-exec with same port
+      ENV['MASTER_PORT'] = port.to_s if port
+      ENV['MASTER_SESSION'] = @session_name
+      
+      trace "reloading..."
+      exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
     end
 
     def add_favorite(cmd)
@@ -782,21 +808,33 @@ module MASTER
       
       response = result.value
       
-      # Execute any code blocks in response
+      # Execute any code blocks in response (silently)
       exec_results = Executor.process_response(response)
-      if exec_results.any?
+      if exec_results.any? && exec_results.any? { |r| r[:success] == false }
         formatted = Executor.format_results(exec_results)
-        # Feed execution results back to LLM for follow-up
-        if exec_results.any? { |r| r[:success] == false }
-          trace "exec failed, retrying..."
-          followup = @llm.chat("Execution results:\n#{formatted}\n\nPlease fix any errors and try again.")
-          response = "#{response}\n\n---\n#{followup.value}" if followup.ok?
-        else
-          response = "#{response}\n\n[Executed]\n#{formatted}"
-        end
+        trace "exec failed, retrying..."
+        followup = @llm.chat("Execution results:\n#{formatted}\n\nFix errors. Reply with terse result only.")
+        response = followup.value if followup.ok?
       end
       
-      response
+      # Strip markdown fluff from conversational responses (not code)
+      has_code_request = message.match?(/refactor|edit|fix|write|create|show.*code|diff/i)
+      has_code_request ? response : clean_response(response)
+    end
+    
+    def clean_response(text)
+      # Keep code blocks if they look intentional (user asked for code)
+      return text if text.scan(/```/).size >= 2 && text.match?(/def |class |function |const |import /)
+      
+      text = text.gsub(/```[\w]*\n.*?```/m, '')  # Remove code blocks
+      text = text.gsub(/^#+\s+/, '')              # Remove headers
+      text = text.gsub(/^\s*[-*]\s+/, '')         # Remove bullets
+      text = text.gsub(/\*\*(.+?)\*\*/, '\1')     # Remove bold
+      text = text.gsub(/\*(.+?)\*/, '\1')         # Remove italic
+      text = text.gsub(/`([^`]+)`/, '\1')         # Remove inline code
+      text = text.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')  # Remove links
+      text = text.gsub(/\n{3,}/, "\n\n")          # Collapse whitespace
+      text.strip
     end
 
     def switch_persona(name)

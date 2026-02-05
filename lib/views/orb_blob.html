@@ -6,7 +6,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:#0a0a0c}
+body{background:#000}
 canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
@@ -30,9 +30,9 @@ function quantize(r,g,b){
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 let w,h,scale=2,time=0,audio=0;
 let blobs=[
-  {x:0,y:0,r:60,phase:0,speed:0.02,color:[152,77,223]},
-  {x:0,y:0,r:55,phase:2,speed:0.015,color:[67,68,173]},
-  {x:0,y:0,r:50,phase:4,speed:0.025,color:[116,217,225]}
+  {x:0,y:0,r:60,phase:0,speed:0.02,color:[0,206,209]},
+  {x:0,y:0,r:55,phase:2,speed:0.015,color:[64,224,208]},
+  {x:0,y:0,r:50,phase:4,speed:0.025,color:[72,209,204]}
 ];
 
 function resize(){

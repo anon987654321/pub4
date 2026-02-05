@@ -247,17 +247,12 @@ module MASTER
 
       # Tool capabilities
       parts << "\n## Tools"
-      parts << "You have CLI access to the local filesystem and can execute commands."
-      parts << "To run shell commands, wrap them in ```sh code blocks."
-      parts << "To run Ruby code, wrap it in ```ruby code blocks."
-      parts << "Commands are executed automatically and results returned to you."
-      parts << "Examples:"
-      parts << "  ```sh"
-      parts << "  ls -la /home/dev/pub"
-      parts << "  ```"
-      parts << "  ```ruby"
-      parts << "  Dir.glob('**/*.rb').first(10)"
-      parts << "  ```"
+      parts << "You have CLI access to the local filesystem via code blocks."
+      parts << "Put shell commands in ```sh blocks, Ruby in ```ruby blocks."
+      parts << "Commands execute automatically. Results return to you."
+      parts << "IMPORTANT: Do NOT show code blocks in your visible response."
+      parts << "Execute silently, then give only the final terse answer."
+      parts << "User sees your prose, not your tool calls."
 
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"
@@ -269,11 +264,12 @@ module MASTER
         parts << "- #{p[:name]}: #{p[:description]}"
       end
 
-      parts << "\n## Style"
-      parts << "- Strunk & White: Omit needless words."
-      parts << "- Ultra-brief. Ultra-clear. No filler."
-      parts << "- Code over prose. Show, don't tell."
-      parts << "- One sentence when one will do."
+      parts << "\n## Output Style"
+      parts << "- Unix philosophy: terse, no fluff."
+      parts << "- One line when one will do."
+      parts << "- No markdown formatting in responses."
+      parts << "- No bullet points or headers."
+      parts << "- Plain text only. Like a shell."
       parts << "- Admit uncertainty. Never fabricate."
 
       parts.join("\n")
