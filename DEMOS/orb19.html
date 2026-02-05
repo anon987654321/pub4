@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Eclipse Orb</title>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #000; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; background: #333; color: #fff; border: none; }
+.container { position: relative; width: 300px; height: 300px; }
+#back { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border-radius: 50%; background: #fff; transition: all 0.1s ease-out; }
+#front { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; border-radius: 50%; background: #000; transition: all 0.08s ease-out; }
+</style></head><body>
+<button id="start">start</button>
+<div class="container">
+  <div id="back"></div>
+  <div id="front"></div>
+</div>
+<script>
+const back = document.getElementById('back');
+const front = document.getElementById('front');
+let ctx, analyser, data;
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const backSize = 200 + bass * 60;
+  const frontSize = 180 - bass * 40;
+  back.style.width = backSize + 'px';
+  back.style.height = backSize + 'px';
+  back.style.boxShadow = `0 0 ${bass * 80}px ${bass * 40}px rgba(255,255,255,0.5)`;
+  front.style.width = frontSize + 'px';
+  front.style.height = frontSize + 'px';
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

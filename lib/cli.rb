@@ -8,9 +8,10 @@ module MASTER
     attr_reader :llm, :verbosity
 
     COMMANDS = %w[
-      ask audit cat cd clean clear converge cost describe edit exit
-      help image ls persona personas principles quit refactor refine
-      review scan smells status tree version web
+      ask audit cat cd clean clear commit converge cost describe diff
+      edit exit git help image log ls persona personas principles pull
+      push quit read refactor refine review scan smells status tree
+      version web
     ].freeze
 
     HISTORY_FILE = Paths.history
@@ -183,7 +184,7 @@ module MASTER
       when 'ls', 'tree'
         show_tree
 
-      when 'cat', 'view'
+      when 'cat', 'view', 'read'
         view_file(arg)
 
       when 'edit'
@@ -247,6 +248,24 @@ module MASTER
       when 'refine'
         run_refine(arg)
 
+      when 'git'
+        run_git(arg)
+
+      when 'diff'
+        run_git('diff')
+
+      when 'log'
+        run_git('log --oneline -20')
+
+      when 'commit'
+        run_git("commit -am \"#{arg || 'update'}\"")
+
+      when 'pull'
+        run_git('pull')
+
+      when 'push'
+        run_git('push')
+
       else
         # Default: send to LLM
         chat(input)
@@ -265,13 +284,20 @@ module MASTER
           converge       Iterate until no changes
           cost           Show LLM cost
           describe <img> Describe image (Replicate)
+          diff           Git diff
           edit <file>    Edit file
+          git <cmd>      Run git command
           help           Show this help
           image <prompt> Generate image (Replicate)
+          log            Git log (last 20)
           ls             List files
           persona <name> Switch persona
           personas       List personas
           principles     List principles
+          pull           Git pull
+          push           Git push
+          commit [msg]   Git commit
+          read <file>    View file (alias: cat)
           refactor <path> Auto-refactor with research + iteration
           refine [path]  Suggest 20 micro-refinements, cherry-pick
           review <path>  Multi-agent code review
@@ -731,6 +757,11 @@ module MASTER
         Cost: $#{format('%.6f', @llm.total_cost)}
         Server: #{@server&.url || 'stopped'}
       STATUS
+    end
+
+    def run_git(args)
+      return 'Usage: git <command>' unless args
+      `git --no-pager #{args} 2>&1`.strip
     end
   end
 end

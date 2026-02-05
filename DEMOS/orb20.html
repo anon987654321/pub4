@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Wireframe Sphere</title>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #fafafa; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; }
+.container { position: relative; width: 250px; height: 250px; }
+.circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid #222; transition: all 0.1s ease-out; }
+#h { width: 200px; height: 200px; }
+#v { width: 200px; height: 100px; border-radius: 100px / 50px; }
+#m { width: 200px; height: 60px; border-radius: 100px / 30px; }
+</style></head><body>
+<button id="start">start</button>
+<div class="container">
+  <div class="circle" id="h"></div>
+  <div class="circle" id="v"></div>
+  <div class="circle" id="m"></div>
+</div>
+<script>
+const h = document.getElementById('h');
+const v = document.getElementById('v');
+const m = document.getElementById('m');
+let ctx, analyser, data, angle = 0;
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  angle += 1 + bass * 5;
+  const size = 200 + bass * 40;
+  h.style.width = size + 'px';
+  h.style.height = size + 'px';
+  v.style.width = size + 'px';
+  v.style.transform = `translate(-50%, -50%) rotateX(${angle}deg)`;
+  m.style.width = size + 'px';
+  m.style.transform = `translate(-50%, -50%) rotateX(${angle + 45}deg)`;
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Glowing Dot</title>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #000; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; background: #333; color: #fff; border: none; }
+#orb { width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: all 0.1s ease-out; }
+</style></head><body>
+<button id="start">start</button>
+<div id="orb"></div>
+<script>
+const orb = document.getElementById('orb');
+let ctx, analyser, data;
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const size = 20 + bass * 80;
+  const blur = bass * 50;
+  orb.style.width = size + 'px';
+  orb.style.height = size + 'px';
+  orb.style.boxShadow = `0 0 ${blur}px ${blur/2}px rgba(255,255,255,0.8)`;
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

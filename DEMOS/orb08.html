@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Split Halves</title>
+<style>
+body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: #111; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; background: #333; color: #fff; border: none; }
+.half { width: 100px; height: 200px; background: #fff; transition: all 0.1s ease-out; }
+#left { border-radius: 100px 0 0 100px; }
+#right { border-radius: 0 100px 100px 0; }
+</style></head><body>
+<button id="start">start</button>
+<div class="half" id="left"></div>
+<div class="half" id="right"></div>
+<script>
+const left = document.getElementById('left');
+const right = document.getElementById('right');
+let ctx, analyser, data;
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const gap = bass * 50;
+  left.style.transform = `translateX(-${gap}px)`;
+  right.style.transform = `translateX(${gap}px)`;
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>
