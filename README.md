@@ -1,4 +1,4 @@
-# MASTER v50.8
+# MASTER v50.9
 
 Constitutional AI for code quality. 33 principles, modular Ruby architecture.
 
@@ -75,6 +75,10 @@ push            Git push
 refactor <path> Auto-refactor with research
 refine [path]   Suggest micro-refinements, cherry-pick
 review <path>   Multi-agent code review
+chamber <file>  Multi-model deliberation on code
+queue <dir>     Add directory to refactor queue
+introspect      Hostile question all principles
+sanity <plan>   Pre-action sanity check
 scan <path>     Scan for issues
 smells <path>   Detect code smells
 status          Show status
@@ -102,6 +106,71 @@ ruby test/test_master.rb
 ## Cross-Platform
 
 openbsd0 | termux0 | darwin0 | linux0 | win0
+
+## Chamber RAG
+
+Multi-model deliberation system. After refactoring a file, send it to an "echo chamber" of top models. Each model proposes changes and defends them. The arbiter cherry-picks the best.
+
+### Code Chamber
+
+```ruby
+chamber = MASTER::Chamber.new(llm)
+result = chamber.deliberate("lib/cli.rb")
+# => Models propose diffs + write letters defending changes
+# => Arbiter (sonnet) picks winner
+```
+
+Models: sonnet (arbiter), gpt-4o, gemini-2.0-flash, deepseek-chat, qwen-coder
+
+### Creative Chamber
+
+```ruby
+chamber = MASTER::CreativeChamber.new(llm, replicate)
+
+# Brainstorm ideas
+result = chamber.brainstorm("App for connecting elderly with volunteers")
+
+# Image variations from multiple models
+result = chamber.image_variations("Norwegian fjord at sunset, cinematic")
+
+# Video storyboard
+result = chamber.video_storyboard("30-second ad for volleyball team", scenes: 4)
+
+# Simulated conversation
+result = chamber.simulate_conversation(
+  "Debate about AI regulation",
+  roles: [
+    { name: "Tech CEO", model: :gpt4, perspective: "Innovation-first" },
+    { name: "Policy Maker", model: :sonnet, perspective: "Public safety" }
+  ],
+  turns: 5
+)
+```
+
+## Introspection
+
+LLM self-examination at end of each phase. Hostile questioning for all principles.
+
+```ruby
+intro = MASTER::Introspection.new(llm)
+
+# End-of-phase reflection
+intro.reflect_on_phase(:implement, "Refactored 5 files, added tests")
+
+# Hostile question a principle
+intro.hostile_question("DRY: Don't Repeat Yourself")
+# => "What assumption here could be completely wrong?"
+
+# Audit all principles
+intro.audit_principles(Paths.principles)
+
+# Pre-action sanity check
+intro.sanity_check("Delete all .bak files recursively")
+# => Is this reversible? What's the worst case?
+
+# Self-review generated code
+intro.review_own_code(code, "API rate limiter")
+```
 
 ## Environment
 

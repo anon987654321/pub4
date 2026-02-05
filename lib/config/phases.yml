@@ -1,4 +1,5 @@
 # Workflow phases - 7-phase development lifecycle
+# Each phase ends with introspection
 ---
 phases:
   - id: 1
@@ -9,6 +10,7 @@ phases:
       - no_vague_words
       - audience_identified
       - success_measurable
+    introspect: "What did I miss? What assumptions did I make?"
 
   - id: 2
     name: analyze
@@ -17,6 +19,7 @@ phases:
     gates:
       - components_distinct
       - dependencies_acyclic
+    introspect: "Did I understand the real constraints? What's still unclear?"
 
   - id: 3
     name: ideate
@@ -24,6 +27,7 @@ phases:
     output: List of approaches with trade-offs
     gates:
       - trade_offs_documented
+    introspect: "Did I explore enough options? Was I too conservative?"
 
   - id: 4
     name: design
@@ -32,6 +36,7 @@ phases:
     gates:
       - interfaces_explicit
       - errors_documented
+    introspect: "Is this overengineered? Is it underengineered?"
 
   - id: 5
     name: implement
@@ -40,6 +45,7 @@ phases:
     gates:
       - tests_pass
       - zero_violations
+    introspect: "What shortcuts did I take? What would I do differently?"
 
   - id: 6
     name: validate
@@ -48,6 +54,7 @@ phases:
     gates:
       - zero_test_failures
       - edge_cases_covered
+    introspect: "Did I test the right things? What's still risky?"
 
   - id: 7
     name: deliver
@@ -56,3 +63,7 @@ phases:
     gates:
       - deployed
       - monitoring_configured
+    introspect: "Is this truly ready? What will the user actually experience?"
+
+# Introspection runs automatically at end of each phase
+# Hostile questioning can be triggered manually: `introspect <principle>`

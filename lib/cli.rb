@@ -9,8 +9,8 @@ module MASTER
 
     COMMANDS = %w[
       ask audit cat cd chamber clean clear commit converge cost describe diff
-      edit exit git help image log ls persona personas principles pull
-      push queue quit read refactor refine review scan smells status tree
+      edit exit git help image introspect log ls persona personas principles pull
+      push queue quit read refactor refine review sanity scan smells status tree
       version web
     ].freeze
 
@@ -334,6 +334,18 @@ module MASTER
       when 'push'
         run_git('push')
 
+      when 'chamber'
+        run_chamber(arg)
+
+      when 'queue'
+        run_queue(arg)
+
+      when 'introspect'
+        run_introspect(arg)
+
+      when 'sanity'
+        run_sanity_check(arg)
+
       else
         # Default: send to LLM
         chat(input)
@@ -369,6 +381,10 @@ module MASTER
           refactor <path> Auto-refactor with research + iteration
           refine [path]  Suggest 20 micro-refinements, cherry-pick
           review <path>  Multi-agent code review
+          chamber <file> Multi-model deliberation on code
+          queue <dir>    Add directory to refactor queue
+          introspect     Hostile question all principles
+          sanity <plan>  Pre-action sanity check
           scan <path>    Scan for issues
           smells <path>  Detect code smells
           status         Show status
@@ -832,6 +848,122 @@ module MASTER
     def run_git(args)
       return 'Usage: git <command>' unless args
       `git --no-pager #{args} 2>&1`.strip
+    end
+
+    def run_chamber(path)
+      return 'Usage: chamber <file>' unless path
+
+      require_relative 'chamber'
+      full = File.expand_path(path, @root)
+      return "Not found: #{path}" unless File.exist?(full)
+
+      puts "#{C_CYAN}Chamber deliberation starting...#{C_RESET}"
+      chamber = Chamber.new(@llm)
+      result = chamber.deliberate(full)
+
+      if result[:applied]
+        puts "#{C_GREEN}Applied winning proposal#{C_RESET}"
+        puts "Winner: #{result[:winner][:model]}"
+        puts "Reason: #{result[:reason][0..200]}..."
+        "Chamber complete: #{result[:proposals].size} models deliberated"
+      else
+        "Chamber complete (no changes): #{result[:reason]}"
+      end
+    rescue LoadError, StandardError => e
+      "Chamber error: #{e.message}"
+    end
+
+    def run_queue(arg)
+      require_relative 'queue'
+
+      if arg.nil? || arg.empty?
+        # Show queue status
+        queue = RefactorQueue.load
+        return "Queue empty" if queue.empty?
+
+        lines = ["Queue: #{queue.size} files"]
+        queue.pending.first(10).each do |item|
+          lines << "  #{item[:priority]}. #{item[:path]}"
+        end
+        lines << "  ..." if queue.size > 10
+        return lines.join("\n")
+      end
+
+      case arg
+      when 'next'
+        queue = RefactorQueue.load
+        item = queue.next
+        return "Queue empty" unless item
+        "Next: #{item[:path]} (priority #{item[:priority]})"
+
+      when 'run'
+        queue = RefactorQueue.load
+        return "Queue empty" if queue.empty?
+
+        processed = 0
+        queue.each do |item|
+          puts "#{C_DIM}Processing: #{item[:path]}#{C_RESET}"
+          result = refactor_file(item[:path])
+          queue.complete(item[:path])
+          processed += 1
+        end
+        "Processed #{processed} files"
+
+      when 'clear'
+        RefactorQueue.clear
+        "Queue cleared"
+
+      else
+        # Add directory to queue
+        queue = RefactorQueue.new
+        files = resolve_files(arg)
+        return "No files found: #{arg}" if files.empty?
+
+        files.each { |f| queue.add(f) }
+        queue.save
+        "Added #{files.size} files to queue"
+      end
+    rescue LoadError, StandardError => e
+      "Queue error: #{e.message}"
+    end
+
+    def run_introspect(target)
+      require_relative 'introspection'
+
+      intro = Introspection.new(@llm)
+
+      if target.nil? || target.empty? || target == 'principles'
+        # Hostile question all principles
+        puts "#{C_CYAN}Auditing principles with hostile questions...#{C_RESET}"
+        results = intro.audit_principles(Paths.principles)
+
+        lines = ["#{results.size} principles examined:\n"]
+        results.each do |r|
+          lines << "#{C_YELLOW}#{r[:principle]}#{C_RESET}"
+          lines << "  Q: #{r[:question]}"
+          lines << "  A: #{r[:response][0..150]}..."
+          lines << ""
+        end
+        lines.join("\n")
+      else
+        # Single hostile question
+        result = intro.hostile_question(target)
+        "#{C_YELLOW}Q: #{result[:question]}#{C_RESET}\n\n#{result[:response]}"
+      end
+    rescue LoadError, StandardError => e
+      "Introspection error: #{e.message}"
+    end
+
+    def run_sanity_check(plan)
+      return 'Usage: sanity <proposed action>' unless plan
+
+      require_relative 'introspection'
+
+      intro = Introspection.new(@llm)
+      result = intro.sanity_check(plan)
+      result
+    rescue LoadError, StandardError => e
+      "Sanity check error: #{e.message}"
     end
   end
 end
