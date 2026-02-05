@@ -28,7 +28,7 @@ module MASTER
       def tail(n = 20)
         return [] unless File.exist?(LOG_FILE)
         File.readlines(LOG_FILE).last(n).map { |l| JSON.parse(l, symbolize_names: true) }
-      rescue
+      rescue StandardError
         []
       end
 

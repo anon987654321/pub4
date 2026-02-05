@@ -87,7 +87,7 @@ module Master
                 suggestion: issue["fix"]
               )
             end
-          rescue
+          rescue StandardError
             # If parsing fails, add raw analysis as a finding
             add_finding(
               severity: :info,

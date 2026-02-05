@@ -545,7 +545,7 @@ module MASTER
             begin
               JSON.parse(response)
               true
-            rescue
+            rescue StandardError
               false
             end
           when 'markdown'

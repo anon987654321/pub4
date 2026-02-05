@@ -105,7 +105,7 @@ module MASTER
         begin
           data = JSON.parse(File.read(session_file), symbolize_names: true)
           "Resumed: #{data[:name]} | Commands: #{data[:command_count]} | Cost: $#{'%.2f' % data[:total_cost]}"
-        rescue
+        rescue StandardError
           "New session"
         end
       end

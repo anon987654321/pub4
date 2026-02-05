@@ -146,7 +146,7 @@ module MASTER
 
           # Apply fix suggestion (placeholder - real implementation would be more sophisticated)
           true
-        rescue
+        rescue StandardError
           false
         end
 

@@ -277,7 +277,7 @@ module MASTER
 
       def vips_available?
         defined?(Vips)
-      rescue
+      rescue StandardError
         false
       end
 
@@ -336,7 +336,7 @@ module MASTER
         warm_glow = glow.bandjoin([glow * 0.35, glow * 0.15])
 
         image.composite2(warm_glow * intensity * 255, 'screen')
-      rescue
+      rescue StandardError
         image
       end
 
@@ -355,7 +355,7 @@ module MASTER
         # Apply as overlay
         noise_rgb = noise.bandjoin([noise, noise])
         image.composite2(noise_rgb.cast('uchar'), 'soft-light', opacity: intensity * 0.5)
-      rescue
+      rescue StandardError
         image
       end
 
@@ -370,7 +370,7 @@ module MASTER
         b = b.linear([1 + 0.25 * intensity], [0])
 
         Vips::Image.bandjoin([r, g, b])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -386,7 +386,7 @@ module MASTER
         lift_rgb = lift_amount.bandjoin([lift_amount, lift_amount])
 
         image + lift_rgb
-      rescue
+      rescue StandardError
         image
       end
 
@@ -395,7 +395,7 @@ module MASTER
 
         gray = image.colourspace('grey16').colourspace('srgb')
         image * (1.0 - amount) + gray * amount
-      rescue
+      rescue StandardError
         image
       end
 
@@ -404,7 +404,7 @@ module MASTER
 
         tint_layer = Vips::Image.black(image.width, image.height, bands: 3) + tint_color
         image * 0.95 + tint_layer * 0.05
-      rescue
+      rescue StandardError
         image
       end
 
@@ -424,7 +424,7 @@ module MASTER
         end
 
         image
-      rescue
+      rescue StandardError
         image
       end
 
@@ -440,7 +440,7 @@ module MASTER
         vignette_rgb = vignette.bandjoin([vignette, vignette])
 
         image * vignette_rgb
-      rescue
+      rescue StandardError
         image
       end
 
@@ -513,7 +513,7 @@ module MASTER
 
         result = to_gamma(image * (1 - intensity) + curved.linear(1, lift * 255 * intensity))
         result
-      rescue
+      rescue StandardError
         image
       end
 
@@ -525,7 +525,7 @@ module MASTER
         contrast = print_stock[:contrast] || 1.1
         neg = neg.linear([contrast], [0])
         to_gamma(neg)
-      rescue
+      rescue StandardError
         image
       end
 
@@ -549,7 +549,7 @@ module MASTER
 
         grain_rgb = coarse * strength.bandjoin([strength, strength])
         to_gamma(image.composite2(grain_rgb.cast('uchar') * 0.3, 'soft-light'))
-      rescue
+      rescue StandardError
         apply_grain(image, intensity, stock_name)
       end
 
@@ -568,7 +568,7 @@ module MASTER
         matrix = [c, s, -s, c]
 
         image.affine(matrix, odx: ox, ody: oy, interpolate: Vips::Interpolate.new('bicubic'))
-      rescue
+      rescue StandardError
         image
       end
 
@@ -583,7 +583,7 @@ module MASTER
         b_bleed = b.gaussblur(1.0 * intensity * 10)
         result = Vips::Image.bandjoin([r_bleed, g_bleed, b_bleed])
         image * (1 - intensity) + result * intensity
-      rescue
+      rescue StandardError
         image
       end
 
@@ -600,7 +600,7 @@ module MASTER
           g,
           b_shifted.crop(shift * 2, 0, image.width, image.height)
         ])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -611,7 +611,7 @@ module MASTER
 
         # Boost contrast
         desaturated.linear([1 + intensity * 0.3], [-(intensity * 20)])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -624,7 +624,7 @@ module MASTER
         b_cross = b.linear([1 + intensity * 0.15], [-(intensity * 10)])
 
         Vips::Image.bandjoin([r_cross, g_cross, b_cross])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -640,7 +640,7 @@ module MASTER
 
         # Darken overall
         result.linear([1 - intensity * 0.4], [0])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -654,7 +654,7 @@ module MASTER
         b_ir = b.linear([1 - intensity * 0.4], [-(intensity * 20)])
 
         Vips::Image.bandjoin([r_ir, g_ir, b_ir])
-      rescue
+      rescue StandardError
         image
       end
 
@@ -669,7 +669,7 @@ module MASTER
 
         sepia = Vips::Image.bandjoin([r_sepia, g_sepia, b_sepia])
         image * (1 - intensity) + sepia * intensity
-      rescue
+      rescue StandardError
         image
       end
 
@@ -683,7 +683,7 @@ module MASTER
 
         cyan = Vips::Image.bandjoin([r_cyan, g_cyan, b_cyan])
         image * (1 - intensity) + cyan * intensity
-      rescue
+      rescue StandardError
         image
       end
 
@@ -705,7 +705,7 @@ module MASTER
         # Warm flare color
         flare_color = flare.bandjoin([flare * 0.8, flare * 0.4])
         image + flare_color * intensity * 100
-      rescue
+      rescue StandardError
         image
       end
 
@@ -732,7 +732,7 @@ module MASTER
         end
 
         image.composite2(leak_color * intensity * 150, 'screen')
-      rescue
+      rescue StandardError
         image
       end
 
@@ -742,7 +742,7 @@ module MASTER
         glow = bright.gaussblur(30) * 0.5 + bright.gaussblur(60) * 0.3 + bright.gaussblur(100) * 0.2
 
         image + glow * intensity * 0.5
-      rescue
+      rescue StandardError
         image
       end
 
@@ -751,7 +751,7 @@ module MASTER
         linear = to_linear(image)
         compressed = linear.pow(1.0 + intensity * 0.3)
         to_gamma(compressed)
-      rescue
+      rescue StandardError
         image
       end
 
@@ -772,7 +772,7 @@ module MASTER
         end
 
         image.composite2(dust_mask * 255, 'lighten')
-      rescue
+      rescue StandardError
         image
       end
 
@@ -784,7 +784,7 @@ module MASTER
         # Add horizontal noise bands
         noise = Vips::Image.gaussnoise(image.width, image.height, sigma: intensity * 30)
         result.composite2(noise.cast('uchar'), 'soft-light', opacity: intensity * 0.3)
-      rescue
+      rescue StandardError
         image
       end
 
@@ -806,7 +806,7 @@ module MASTER
 
         # Add RGB split
         apply_chromatic_aberration(result, intensity)
-      rescue
+      rescue StandardError
         image
       end
 
@@ -823,7 +823,7 @@ module MASTER
 
         # Return mask for blending
         skin_mask.ifthenelse(protection, 1.0)
-      rescue
+      rescue StandardError
         1.0
       end
 
@@ -839,7 +839,7 @@ module MASTER
 
         # Blend based on skin protection
         image * protection + graded * (1 - protection)
-      rescue
+      rescue StandardError
         apply_teal_orange(image, intensity)
       end
 
@@ -876,13 +876,6 @@ module MASTER
         end
 
         result
-      end
-        when :vignette then apply_vignette(image, intensity)
-        when :teal_orange then apply_teal_orange(image, intensity)
-        when :shadow_lift then apply_shadow_lift(image, intensity)
-        when :desaturate then apply_desaturate(image, intensity)
-        else image
-        end
       end
     end
   end

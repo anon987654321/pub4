@@ -134,7 +134,7 @@ module MASTER
         @clients.each do |client|
           begin
             client.close
-          rescue
+          rescue StandardError
             # Ignore errors on close
           end
         end
