@@ -133,7 +133,18 @@ module MASTER
       end
 
       def curl_browse(url)
-        html = `curl -sL --max-time #{CURL_TIMEOUT} "#{url}" 2>/dev/null`
+        # Try ftp first on OpenBSD (native, better TLS), fallback to curl
+        html = if RUBY_PLATFORM.include?('openbsd')
+          `ftp -o - "#{url}" 2>/dev/null`
+        else
+          `curl -sL --max-time #{CURL_TIMEOUT} "#{url}" 2>/dev/null`
+        end
+        
+        # Fallback if first method fails
+        if html.empty?
+          html = `curl -sLk --max-time #{CURL_TIMEOUT} "#{url}" 2>/dev/null`
+        end
+        
         return "Failed to fetch: #{url}" if html.empty?
 
         # Strip HTML tags for plain text

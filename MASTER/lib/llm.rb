@@ -428,24 +428,32 @@ module MASTER
       parts << "Your host is a #{runtime_context}."
       parts << "You embody clarity, efficiency, and correctness. No bloat. No ceremony."
 
-      # Tool capabilities
+      # Tool capabilities - platform specific
       parts << "\n## Tools - YOU HAVE REAL EXECUTION"
       parts << "You run on #{RUBY_PLATFORM.include?('openbsd') ? 'OpenBSD' : RUBY_PLATFORM}. Code blocks execute AUTOMATICALLY."
       parts << ""
-      parts << "Shell: ```sh"
-      parts << "curl -s https://example.com | head -20"
-      parts << "ls -la /path && cat file.txt"
-      parts << "doas pkg_add -u"
-      parts << "```"
+      
+      if RUBY_PLATFORM.include?('openbsd')
+        parts << "Shell (OpenBSD): ```sh"
+        parts << "ftp -o - https://example.com | head -20   # OpenBSD native HTTPS"
+        parts << "ls -la /path && cat file.txt"
+        parts << "doas pkg_add -u"
+        parts << "```"
+      else
+        parts << "Shell: ```sh"
+        parts << "curl -s https://example.com | head -20"
+        parts << "ls -la /path && cat file.txt"
+        parts << "```"
+      end
+      
       parts << ""
       parts << "Ruby: ```ruby"
       parts << "require 'net/http'; puts Net::HTTP.get(URI('https://api.github.com'))"
-      parts << "require 'ferrum'; Ferrum::Browser.new.goto('https://github.com').body_text"
+      parts << "MASTER::Web.browse('https://github.com')  # built-in web fetcher"
       parts << "```"
       parts << ""
-      parts << "You CAN: curl/wget URLs, run any shell command, execute Ruby gems, scrape web, query APIs, use doas."
-      parts << "NEVER say 'I cannot' or 'I don't have access' - JUST DO IT with a code block."
-      parts << "If unsure, TRY the code block. You'll see the real output."
+      parts << "You CAN: fetch URLs (ftp/curl), run any shell command, execute Ruby, scrape web, use doas."
+      parts << "NEVER say 'I cannot' - JUST DO IT with a code block. You'll see the output."
 
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"
