@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# LLM-Ruby - The LLM Operating System
+# MASTER - The LLM Operating System
 # A constitutional AI framework in pure Ruby
 
 module MASTER
   VERSION = '50.9'
-  CODENAME = 'LLM-Ruby'
+  CODENAME = 'MASTER'
   ROOT = File.expand_path('..', __dir__)
   LIB = __dir__
 
