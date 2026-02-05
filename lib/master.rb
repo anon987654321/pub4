@@ -34,8 +34,3 @@ module MASTER
     end
   end
 end
-
-# Load all lib files
-Dir[File.join(__dir__, '*.rb')].each do |f|
-  require f unless f.end_with?('master.rb')
-end
