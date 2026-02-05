@@ -21,8 +21,8 @@ module MASTER
     ORB_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".chars.map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
 
     COMMANDS = %w[
-      ask audit cat cd chamber clean clear commit converge cost describe diff
-      edit evolve exit git help image introspect log ls persona personas principles pull
+      ask audit beautify cat cd chamber clean clear commit converge cost describe diff
+      edit evolve exit git help image introspect lint log ls persona personas principles pull
       push queue quit read refactor refine review sanity scan smells status tree
       version web
     ].freeze
@@ -329,6 +329,12 @@ module MASTER
 
       when 'refactor'
         run_refactor(arg)
+
+      when 'beautify'
+        beautify_file(arg)
+
+      when 'lint'
+        lint_files(arg || '.')
 
       when 'web'
         browse_web(arg)
@@ -752,8 +758,209 @@ module MASTER
       {
         '.rb' => 'ruby', '.py' => 'python', '.js' => 'javascript',
         '.ts' => 'typescript', '.go' => 'go', '.rs' => 'rust',
-        '.sh' => 'bash', '.yml' => 'yaml', '.yaml' => 'yaml'
+        '.sh' => 'bash', '.zsh' => 'zsh', '.yml' => 'yaml', '.yaml' => 'yaml',
+        '.html' => 'html', '.erb' => 'erb', '.css' => 'css', '.scss' => 'scss'
       }[ext] || 'text'
+    end
+
+    BEAUTIFY_GUIDES = {
+      'ruby' => <<~GUIDE,
+        Follow these Ruby style principles:
+        - Short methods (under 10 lines ideal)
+        - Meaningful variable names, no abbreviations
+        - Use guard clauses instead of nested conditionals
+        - Prefer each/map/select over for loops
+        - Use symbols for hash keys
+        - Align hash rockets or use new syntax consistently
+        - Remove unnecessary parentheses
+        - Use string interpolation over concatenation
+        - Apply Sandi Metz rules (5 lines per method, 100 chars per line)
+      GUIDE
+      'html' => <<~GUIDE,
+        Follow semantic HTML principles:
+        - Eliminate divitis: use semantic tags (article, section, nav, header, footer, main, aside)
+        - Use proper heading hierarchy (h1 -> h2 -> h3)
+        - Lists for navigation (ul/li for menus)
+        - figure/figcaption for images with captions
+        - Use button for actions, a for navigation
+        - Minimal classes, prefer semantic structure
+        - No inline styles
+        - Accessible: alt text, aria labels where needed
+      GUIDE
+      'css' => <<~GUIDE,
+        Follow modern CSS principles:
+        - Use CSS Grid for 2D layouts, Flexbox for 1D
+        - CSS custom properties (variables) for colors and spacing
+        - Mobile-first: min-width media queries
+        - Logical properties (margin-inline, padding-block)
+        - Use clamp() for responsive typography
+        - Prefer rem/em over px
+        - Minimal specificity, avoid !important
+        - Group related properties
+        - Use modern selectors (:is, :where, :has)
+      GUIDE
+      'scss' => <<~GUIDE,
+        Follow SCSS best practices:
+        - Shallow nesting (max 3 levels)
+        - Use variables for colors, spacing, breakpoints
+        - Mixins for repeated patterns
+        - Placeholder selectors for extends
+        - BEM or similar naming when classes needed
+        - Separate concerns: variables, mixins, base, components
+      GUIDE
+      'erb' => <<~GUIDE,
+        Follow ERB best practices:
+        - Minimal logic in templates
+        - Use partials for reusable components
+        - Semantic HTML structure
+        - Escape output by default
+        - Use content_for for yield blocks
+        - Keep helpers in helper files, not inline
+      GUIDE
+      'javascript' => <<~GUIDE,
+        Follow modern JavaScript principles:
+        - Use const by default, let when needed, never var
+        - Arrow functions for callbacks
+        - Template literals over concatenation
+        - Destructuring for objects and arrays
+        - Spread operator over Object.assign
+        - Async/await over promise chains
+        - Short-circuit evaluation
+        - Optional chaining (?.) and nullish coalescing (??)
+        - Named exports over default
+      GUIDE
+      'zsh' => <<~GUIDE
+        Follow shell scripting best practices:
+        - Quote variables: "$var" not $var
+        - Use [[ ]] over [ ]
+        - Functions for reusable logic
+        - Meaningful variable names
+        - Error handling with set -e or explicit checks
+        - Use $() over backticks
+        - Local variables in functions
+        - Comments for non-obvious logic
+      GUIDE
+    }.freeze
+
+    def beautify_file(path)
+      return "Usage: beautify <file>" unless path
+
+      file = File.expand_path(path, @root)
+      return "File not found: #{path}" unless File.exist?(file)
+
+      code = File.read(file)
+      ext = File.extname(file)
+      lang = detect_language(ext)
+      guide = BEAUTIFY_GUIDES[lang] || ""
+
+      prompt = <<~PROMPT
+        Beautify this #{lang} code. Make it idiomatic, clean, and elegant.
+
+        #{guide}
+
+        Rules:
+        - Preserve all functionality exactly
+        - Return ONLY the beautified code, no explanation
+        - No markdown code fences in output
+
+        #{code}
+      PROMPT
+
+      result = with_spinner { @llm.chat(prompt, tier: :code) }
+      return result.error if result.error?
+
+      new_code = extract_code(result.value, lang)
+      if new_code && !new_code.empty? && new_code != code
+        File.write(file, new_code)
+        "Beautified: #{path} (#{lang})"
+      else
+        "No changes needed"
+      end
+    end
+
+    def lint_files(path)
+      files = resolve_beautify_files(path)
+      return "No supported files found" if files.empty?
+
+      warnings = []
+      files.each do |file|
+        issues = lint_single_file(file)
+        warnings.concat(issues) if issues.any?
+      end
+
+      if warnings.empty?
+        "All #{files.size} files pass style checks"
+      else
+        warnings.join("\n")
+      end
+    end
+
+    def resolve_beautify_files(path)
+      full = File.expand_path(path, @root)
+      exts = %w[.rb .js .ts .html .erb .css .scss .zsh .sh]
+
+      if File.file?(full)
+        [full]
+      elsif Dir.exist?(full)
+        Dir.glob(File.join(full, '**', '*')).select do |f|
+          File.file?(f) && exts.include?(File.extname(f)) &&
+            !f.include?('/vendor/') && !f.include?('/node_modules/')
+        end
+      else
+        []
+      end
+    end
+
+    def lint_single_file(file)
+      issues = []
+      code = File.read(file)
+      ext = File.extname(file)
+      lang = detect_language(ext)
+      rel = file.sub("#{@root}/", '')
+
+      case lang
+      when 'html'
+        div_count = code.scan(/<div/).size
+        semantic_count = code.scan(/<(article|section|nav|header|footer|main|aside)/).size
+        if div_count > 5 && semantic_count < div_count / 3
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: divitis detected (#{div_count} divs, #{semantic_count} semantic tags)"
+        end
+        if code.include?('style=')
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: inline styles found"
+        end
+
+      when 'css', 'scss'
+        if code.scan(/!important/).size > 2
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: excessive !important usage"
+        end
+        if code.scan(/px/).size > 10 && code.scan(/rem|em/).size < 3
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: prefer rem/em over px"
+        end
+
+      when 'ruby'
+        long_methods = code.scan(/^\s*def \w+.*?^\s*end/m).select { |m| m.lines.size > 20 }
+        if long_methods.any?
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: #{long_methods.size} methods exceed 20 lines"
+        end
+        if code =~ /\bfor\b.*\bdo\b/
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: use each/map instead of for loops"
+        end
+
+      when 'javascript'
+        if code.include?('var ')
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: use const/let instead of var"
+        end
+        if code.scan(/\.then\(/).size > 3
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: prefer async/await over promise chains"
+        end
+
+      when 'zsh', 'bash'
+        if code =~ /\$\w+[^"]/
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: unquoted variables detected"
+        end
+      end
+
+      issues
     end
 
     def extract_code(response, lang)
