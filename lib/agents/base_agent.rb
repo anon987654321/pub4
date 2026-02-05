@@ -32,7 +32,7 @@ module Master
       end
 
       def analyze_with_llm(prompt, tier: :fast)
-        result = @llm.ask(prompt, tier: tier)
+        result = @llm.chat(prompt, tier: tier)
         result.ok? ? result.value : nil
       end
 

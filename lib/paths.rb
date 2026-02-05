@@ -25,6 +25,10 @@ module MASTER
         @var ||= File.join(root, 'var')
       end
 
+      def data
+        @data ||= File.join(var, 'data')
+      end
+
       def screenshots
         @screenshots ||= File.join(var, 'screenshots')
       end

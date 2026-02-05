@@ -3,6 +3,8 @@
 require 'readline'
 require 'fileutils'
 require 'io/console'
+require 'securerandom'
+require 'json'
 
 module MASTER
   class CLI
@@ -15,19 +17,56 @@ module MASTER
     C_YELLOW = "\e[33m"
     C_CYAN   = "\e[36m"
     C_DIM    = "\e[2m"
+    C_BOLD   = "\e[1m"
     C_MINT   = "\e[38;2;77;204;163m"
 
     # Braille spinner (Claude Code style, minty)
     ORB_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".chars.map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
 
+    # Boot quotes (rotates each session)
+    QUOTES = [
+      "Simplicity is the ultimate sophistication.",
+      "Make it work, make it right, make it fast.",
+      "Code is read more often than written.",
+      "The best code is no code at all.",
+      "Clarity over cleverness.",
+      "Ship it.",
+      "Done is better than perfect.",
+      "Constraints breed creativity.",
+      "Less, but better.",
+      "If in doubt, leave it out."
+    ].freeze
+
+    # Session name parts
+    ADJECTIVES = %w[crimson azure golden silent swift keen bright calm deep iron].freeze
+    NOUNS = %w[falcon raven wolf oak storm forge arrow tide spark blade].freeze
+
+    # Easter eggs (1% chance)
+    EGGS = [
+      "The machine spirit is pleased.",
+      "Consulting the oracle...",
+      "Reticulating splines..."
+    ].freeze
+
+    # Achievements
+    ACHIEVEMENTS = {
+      first_command: { name: "First Steps", desc: "Ran first command" },
+      streak_5: { name: "Momentum", desc: "5 without error" },
+      streak_25: { name: "Flow State", desc: "25 without error" },
+      first_refactor: { name: "Craftsman", desc: "First refactor" },
+      spent_1: { name: "Investor", desc: "Spent $1 on LLM" },
+      commands_100: { name: "Centurion", desc: "100 commands" }
+    }.freeze
+
     COMMANDS = %w[
       ask audit beautify cat cd chamber clean clear commit converge cost describe diff
-      edit evolve exit git help image introspect lint log ls persona personas principles pull
-      push queue quit radio read refactor refine review sanity scan smells speak status tree
-      version web
+      edit evolve exit fav favs git help image introspect lint log ls persona personas
+      principles pull push queue quit radio read refactor refine review sanity scan
+      smells speak status tree undo version web
     ].freeze
 
     HISTORY_FILE = Paths.history
+    STATE_FILE = File.join(Paths.var, 'cli_state.json')
 
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
@@ -40,6 +79,15 @@ module MASTER
       @boot_time = Time.now
       @last_tokens = { input: 0, output: 0 }
       @last_cached = false
+      @session_name = "#{ADJECTIVES.sample}-#{NOUNS.sample}"
+      @streak = 0
+      @command_count = 0
+      @total_cost = 0.0
+      @achievements = []
+      @favorites = []
+      @aliases = {}
+      @last_files = {}
+      load_state
       setup_completion
       load_history
     end
@@ -94,6 +142,32 @@ module MASTER
       # Ignore history errors
     end
 
+    def load_state
+      return unless File.exist?(STATE_FILE)
+
+      data = JSON.parse(File.read(STATE_FILE), symbolize_names: true)
+      @achievements = data[:achievements] || []
+      @favorites = data[:favorites] || []
+      @aliases = data[:aliases] || {}
+      @command_count = data[:command_count] || 0
+      @total_cost = data[:total_cost] || 0.0
+    rescue
+      # Fresh state
+    end
+
+    def save_state
+      FileUtils.mkdir_p(Paths.var)
+      File.write(STATE_FILE, JSON.pretty_generate({
+        achievements: @achievements,
+        favorites: @favorites,
+        aliases: @aliases,
+        command_count: @command_count,
+        total_cost: @total_cost
+      }))
+    rescue
+      # Ignore save errors
+    end
+
     def ask_verbosity
       puts "Detail level?"
       puts "  1. Full (recommended)"
@@ -118,6 +192,10 @@ module MASTER
     end
 
     def repl
+      puts "#{C_DIM}#{QUOTES.sample}#{C_RESET}"
+      puts "#{C_DIM}Session: #{@session_name}#{C_RESET}"
+      puts
+
       loop do
         input = Readline.readline(build_prompt, true)
         break unless input
@@ -126,15 +204,67 @@ module MASTER
         next if input.empty?
         break if %w[exit quit q].include?(input)
 
-        result = with_spinner { process_input(input) }
-        puts colorize_output(result) if result
-        show_token_info if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+        # Easter egg (1% chance)
+        puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < 0.01
+
+        # Expand aliases
+        input = expand_alias(input)
+
+        start_time = Time.now
+        begin
+          result = with_spinner { process_input(input) }
+          elapsed_ms = ((Time.now - start_time) * 1000).round
+
+          @streak += 1
+          @command_count += 1
+          check_achievements
+
+          puts colorize_output(result) if result
+          puts "#{C_DIM}#{elapsed_ms}ms#{C_RESET}" if elapsed_ms > 100 && @verbosity == :high
+          show_token_info if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+        rescue => e
+          @streak = 0
+          puts "#{C_RED}#{e.message}#{C_RESET}"
+        end
+
         auto_lint
       end
 
       save_history
+      save_state
       @server&.stop
       show_session_summary
+    end
+
+    def expand_alias(input)
+      parts = input.split(' ', 2)
+      cmd = parts[0]
+      if @aliases[cmd]
+        [@aliases[cmd], parts[1]].compact.join(' ')
+      else
+        input
+      end
+    end
+
+    def check_achievements
+      unlock(:first_command) if @command_count == 1
+      unlock(:streak_5) if @streak == 5
+      unlock(:streak_25) if @streak == 25
+      unlock(:commands_100) if @command_count == 100
+      unlock(:spent_1) if @total_cost >= 1.0 && !@achievements.include?(:spent_1)
+    end
+
+    def unlock(key)
+      return if @achievements.include?(key)
+
+      @achievements << key
+      a = ACHIEVEMENTS[key]
+      puts "#{C_YELLOW}★ #{a[:name]}#{C_RESET} — #{a[:desc]}"
+      beep
+    end
+
+    def beep
+      print "\a" # Terminal bell
     end
 
     def auto_lint
@@ -168,12 +298,22 @@ module MASTER
       total_out = @llm.total_tokens_out rescue 0
       requests = @llm.request_count rescue 0
 
+      # Exit quotes
+      exits = [
+        "Until next time.",
+        "Ship it.",
+        "Good work.",
+        "Stay sharp.",
+        "Build something.",
+      ]
+
       puts ""
-      puts "#{C_DIM}Session Summary#{C_RESET}"
-      puts "#{C_DIM}  Duration    #{mins}m #{secs}s#{C_RESET}"
-      puts "#{C_DIM}  Requests    #{requests}#{C_RESET}" if requests > 0
-      puts "#{C_DIM}  Tokens      #{total_in} in / #{total_out} out#{C_RESET}" if total_in > 0
-      puts "#{C_DIM}  Cost        #{colorize_cost(cost)}#{C_RESET}"
+      puts "#{C_DIM}#{@session_name}#{C_RESET}"
+      puts "#{C_DIM}  #{mins}m #{secs}s, #{@command_count} commands, streak #{@streak}#{C_RESET}"
+      puts "#{C_DIM}  #{requests} requests, #{total_in + total_out} tokens#{C_RESET}" if requests > 0
+      puts "#{C_DIM}  #{colorize_cost(cost)}#{C_RESET}"
+      puts ""
+      puts "#{C_MINT}#{exits.sample}#{C_RESET}"
       puts ""
     end
 
@@ -409,16 +549,79 @@ module MASTER
       when 'evolve'
         run_evolve(arg)
 
+      when 'undo'
+        undo_last
+
+      when 'fav'
+        add_favorite(arg)
+
+      when 'favs'
+        list_favorites
+
+      when /^f(\d+)$/
+        run_favorite($1.to_i)
+
+      when 'alias'
+        set_alias(arg)
+
+      when 'aliases'
+        list_aliases
+
       else
         # Default: send to LLM
         chat(input)
       end
     end
 
+    def undo_last
+      result = `git checkout -- . 2>&1`
+      result.empty? ? "Reverted uncommitted changes" : result
+    end
+
+    def add_favorite(cmd)
+      return "Usage: fav <command>" unless cmd
+
+      @favorites << cmd
+      save_state
+      "Saved: #{cmd}"
+    end
+
+    def list_favorites
+      return "No favorites" if @favorites.empty?
+
+      @favorites.each_with_index.map { |f, i| "f#{i + 1}: #{f}" }.join("\n")
+    end
+
+    def run_favorite(n)
+      cmd = @favorites[n - 1]
+      return "No favorite ##{n}" unless cmd
+
+      handle(cmd)
+    end
+
+    def set_alias(arg)
+      return list_aliases unless arg
+
+      name, cmd = arg.split('=', 2)
+      return "Usage: alias name=command" unless name && cmd
+
+      @aliases[name.strip] = cmd.strip
+      save_state
+      "Alias: #{name} → #{cmd}"
+    end
+
+    def list_aliases
+      return "No aliases" if @aliases.empty?
+
+      @aliases.map { |k, v| "#{k} → #{v}" }.join("\n")
+    end
+
     def help_text
       <<~HELP
         Commands:
           ask <msg>       Chat
+          alias k=v       Shortcut
+          aliases         List shortcuts
           audit [ref]     Compare vs history
           cat <file>      View
           cd <dir>        Change dir
@@ -429,6 +632,9 @@ module MASTER
           describe <img>  Vision
           diff            Changes
           edit <file>     Modify
+          fav <cmd>       Save favorite
+          favs            List favorites
+          f1, f2...       Run favorite
           git <cmd>       Git
           help            This
           image <prompt>  Generate
@@ -452,6 +658,7 @@ module MASTER
           scan <path>     Find issues
           smells <path>   Detect rot
           status          State
+          undo            Revert changes
           version         Build
           web <url>       Fetch
           exit            Quit
