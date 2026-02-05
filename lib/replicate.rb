@@ -61,6 +61,9 @@ module MASTER
       whisper:         'openai/whisper',
       riffusion:       'riffusion/riffusion',
 
+      # Text-to-speech
+      kokoro:          'jaaari/kokoro-82m',
+
       # 3D and depth
       depth_pro:       'apple/depth-pro',
       marigold:        'prs-eth/marigold',
@@ -262,6 +265,14 @@ module MASTER
       def generate_audio(prompt, model: :musicgen, duration: 10)
         model_id = MODELS[model] || MODELS[:musicgen]
         run_model(model_id, { prompt: prompt, duration: duration })
+      end
+
+      def speak(text, voice: 'af_heart', speed: 1.0)
+        run_model(MODELS[:kokoro], {
+          text: text,
+          voice: voice,
+          speed: speed
+        })
       end
 
       def describe_image(path)
