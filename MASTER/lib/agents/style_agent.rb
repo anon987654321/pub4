@@ -6,6 +6,8 @@ module MASTER
   module Agents
     class StyleAgent < BaseAgent
       MAX_FINDINGS = 10
+      TRAILING_WHITESPACE = /[ \t]+$/.freeze
+      TAB_PATTERN = /\t/.freeze
 
       def analyze(code, file_path = nil)
         clear_findings
@@ -13,7 +15,7 @@ module MASTER
         code.lines.each_with_index do |line, idx|
           break if @findings.size >= MAX_FINDINGS
 
-          if line.match?(/[ \t]+$/)
+          if line.match?(TRAILING_WHITESPACE)
             add_finding(
               severity: :low,
               category: :style,
@@ -23,14 +25,17 @@ module MASTER
             )
           end
 
-          if line.include?("\t")
-            add_finding(
-              severity: :low,
-              category: :style,
-              message: "Tab indentation detected",
-              line: idx + 1,
-              suggestion: "Use spaces for indentation"
-            )
+          if line.match?(TAB_PATTERN)
+            line_without_trailing_whitespace = line.sub(TRAILING_WHITESPACE, '')
+            if line_without_trailing_whitespace.match?(TAB_PATTERN)
+              add_finding(
+                severity: :low,
+                category: :style,
+                message: "Tab indentation detected",
+                line: idx + 1,
+                suggestion: "Use spaces for indentation"
+              )
+            end
           end
 
           if line.chomp.length > 120

@@ -1012,20 +1012,25 @@ module MASTER
 
         total_findings = 0
         reviewed = 0
+        skipped = 0
 
         files.each do |file|
-          code = File.read(file)
-          results = crew.review(code, file)
-          total_findings += results[:summary][:total_findings]
-          reviewed += 1
-        rescue StandardError
-          next
+          begin
+            code = File.read(file)
+            results = crew.review(code, file)
+            total_findings += results[:summary][:total_findings]
+            reviewed += 1
+          rescue StandardError => e
+            skipped += 1
+            warn "Warning: review skipped #{file}: #{e.message}"
+          end
         end
 
+        suffix = skipped.positive? ? " (#{skipped} skipped)" : ""
         if reviewed > 1
-          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings across #{reviewed} files"
+          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings across #{reviewed} files#{suffix}"
         else
-          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings"
+          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings#{suffix}"
         end
       rescue LoadError, StandardError => e
         "Review agents not available: #{e.message}"

@@ -8,8 +8,8 @@ require_relative '../lib/master'
 require_relative '../lib/cli'
 require_relative '../lib/agents/review_crew'
 
-class FakeReviewLLM
-  def chat(_message, tier: nil)
+class StubReviewLLM
+  def chat(message, tier: nil)
     MASTER::Result.ok("ok")
   end
 end
@@ -35,7 +35,7 @@ end
 
 class TestReviewCrew < Minitest::Test
   def setup
-    @llm = FakeReviewLLM.new
+    @llm = StubReviewLLM.new
   end
 
   def test_review_crew_runs_with_agents
@@ -46,7 +46,7 @@ class TestReviewCrew < Minitest::Test
   end
 
   def test_review_command_recurses_directories
-    dir = Dir.mktmpdir('master_review')
+    dir = Dir.mktmpdir('master_review_test')
     File.write(File.join(dir, 'one.rb'), "def one\n  1\nend\n")
     File.write(File.join(dir, 'two.rb'), "def two\n  2\nend\n")
 
