@@ -229,6 +229,7 @@ REPLICATE_API_TOKEN=r8_...       # For images/video/audio
 ask <query>      Chat with LLM
 scan             Analyze current directory  
 refactor         Improve code quality
+optimize         Self-optimize files
 chamber <query>  Multi-model deliberation
 replicate        Generate images/video/audio
 queue <dir>      Process directory with checkpoints

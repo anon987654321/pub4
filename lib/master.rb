@@ -24,6 +24,7 @@ module MASTER
   autoload :Web,         "#{LIB}/web"
   autoload :Replicate,   "#{LIB}/replicate"
   autoload :Server,      "#{LIB}/server"
+  autoload :Violations,  "#{LIB}/violations"
   autoload :CLI,         "#{LIB}/cli"
   autoload :Chamber,     "#{LIB}/chamber"
   autoload :CreativeChamber, "#{LIB}/creative_chamber"

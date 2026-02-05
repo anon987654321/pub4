@@ -91,6 +91,10 @@ module MASTER
         { principles: principles, model: model_key, session: session, boot_time: t0, recovered: recovered }
       end
 
+      def save_preferred_model(key)
+        save_model_preference(key)
+      end
+
       private
 
       def try_auto_resume(quiet: false)

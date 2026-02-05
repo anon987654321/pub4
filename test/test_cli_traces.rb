@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
+require 'tempfile'
 require_relative '../lib/master'
 
 class TestCLIExecutionTraces < Minitest::Test
@@ -13,6 +14,7 @@ class TestCLIExecutionTraces < Minitest::Test
 
   def teardown
     ENV.delete('MASTER_NO_CONFIG_WRITE')
+    ENV.delete('MASTER_SIMULATE_OPTIMIZE')
   end
 
   def test_status_trace_includes_model
@@ -22,7 +24,9 @@ class TestCLIExecutionTraces < Minitest::Test
   end
 
   def test_edge_case_usage
+    before_count = @cli.instance_variable_get(:@command_count)
     assert_nil @cli.process_input(' ')
+    assert_equal before_count, @cli.instance_variable_get(:@command_count)
     assert_equal 'Usage: clean <file>', @cli.process_input('clean')
     assert_equal 'Usage: ask <message>', @cli.process_input('ask')
     assert_equal 'History cleared.', @cli.process_input('clear')
@@ -54,5 +58,20 @@ class TestCLIExecutionTraces < Minitest::Test
   def test_missing_api_key_response
     result = @cli.process_input('ask hello')
     assert_includes result, 'Error:'
+  end
+
+  def test_optimize_simulation
+    ENV['MASTER_SIMULATE_OPTIMIZE'] = '1'
+    file = Tempfile.new(['optimize', '.rb'])
+    file.write("def demo \n  puts 'hi'  \nend")
+    file.close
+
+    result = @cli.process_input("optimize #{file.path}")
+    updated = File.read(file.path)
+
+    assert_includes result, 'Self-optimization complete'
+    assert updated.end_with?("\n")
+  ensure
+    file.unlink if file
   end
 end

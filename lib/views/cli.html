@@ -39,9 +39,9 @@ input:disabled{opacity:0.6;cursor:not-allowed}
 <iframe id="orb" src="orb_blob.html"></iframe>
 <canvas id="halation"></canvas>
 <canvas id="grain"></canvas>
-<div id="status"></div>
+<div id="status"><span id="status-left"></span><span id="status-right"></span></div>
 <div id="toast"></div>
-<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt.</div></div>
+<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
 <output id="out"></output>
 <div id="hint">Try: ask “summarize README”, scan ., refactor lib/cli.rb</div>
 <input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
@@ -91,6 +91,10 @@ if(saved){
 }
 
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && help.style.display==='flex'){
+    help.style.display='none';
+    return;
+  }
   if(document.activeElement===document.getElementById('in'))return;
   const num=parseInt(e.key);
   if(num>=1&&num<=8)switchOrb(num-1);
@@ -104,6 +108,8 @@ document.addEventListener('keydown',e=>{
 // Chat
 const out=document.getElementById('out'),inp=document.getElementById('in');
 const status=document.getElementById('status');
+const statusLeft=document.getElementById('status-left');
+const statusRight=document.getElementById('status-right');
 const hint=document.getElementById('hint');
 const toast=document.getElementById('toast');
 const help=document.getElementById('help');
@@ -171,7 +177,9 @@ function updateStatus(data){
   const sync=lastSync ? lastSync.toLocaleTimeString() : '--';
   const conn=lastStatusData?.connected===false?'no api key':'connected';
   const offline=offlineCount>=2?'offline':'';
-  status.innerHTML=`<span>${tier} · ${model} · ${persona} · orb ${orb} · ${tokens.input||0}/${tokens.output||0} · ${cached}</span><span class="${offline}">${conn} · ${cost} · ${reqs} req · sync ${sync}</span>`;
+  statusLeft.textContent=`${tier} · ${model} · ${persona} · orb ${orb} · ${tokens.input||0}/${tokens.output||0} · ${cached}`;
+  statusRight.textContent=`${conn} · ${cost} · ${reqs} req · sync ${sync}`;
+  statusRight.className=offline;
   hint.style.opacity=pending ? '0.3' : '1';
 }
 
@@ -258,14 +266,19 @@ inp.addEventListener('keydown',e=>{
 })();
 
 function toggleGrain(){
-  const enabled=grainCanvas.style.display==='none';
-  grainCanvas.style.display=enabled ? 'block' : 'none';
-  localStorage.setItem('grain',grainCanvas.style.display);
-  return enabled ? 'on' : 'off';
+  const current=grainCanvas.style.display || 'block';
+  const next=current === 'none' ? 'block' : 'none';
+  grainCanvas.style.display=next;
+  localStorage.setItem('grain',next);
+  return next === 'block' ? 'on' : 'off';
 }
 
 const savedGrain=localStorage.getItem('grain');
-if(savedGrain){grainCanvas.style.display=savedGrain}
+if(savedGrain === 'block' || savedGrain === 'none'){
+  grainCanvas.style.display=savedGrain;
+}else{
+  grainCanvas.style.display='block';
+}
 </script>
 </body>
 </html>

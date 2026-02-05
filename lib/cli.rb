@@ -62,11 +62,17 @@ module MASTER
       commands_100: { name: "Centurion", desc: "100 commands" }
     }.freeze
 
+    class SimulatedLLM
+      def chat(*)
+        Result.ok('No violations found.')
+      end
+    end
+
     COMMANDS = %w[
       ask audit beautify cat cd chamber check-ports clean clear commit compare-images
       converge cost describe diff edit enforce-principles evolve exit fav favs git help
       image install-hooks introspect lint log ls persona personas principles pull push
-      queue quit radio read refactor refine reload review sanity scan smells speak status stream
+      optimize queue quit radio read refactor refine reload review sanity scan smells speak status stream
       tier
       tree undo version web
     ].freeze
@@ -558,6 +564,9 @@ module MASTER
       when 'status'
         status_info
 
+      when 'optimize'
+        run_optimize(arg)
+
       when 'tier'
         switch_tier(arg)
 
@@ -727,6 +736,7 @@ module MASTER
           image <prompt>  Generate
           log             History
           ls              Files
+          optimize [path] Self-optimize
           persona <name>  Switch
           personas        List
           principles      List
@@ -803,7 +813,7 @@ module MASTER
 
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
-      return 'Cancelled.' unless confirm_write("Clean #{path}")
+      return 'Cancelled.' unless confirm_write("This will reformat #{path}")
 
       content = File.read(full)
       original = content.dup
@@ -894,7 +904,7 @@ module MASTER
       key = name.to_sym
       return "Unknown tier: #{name}" unless LLM::TIERS.key?(key)
       @llm.set_tier(key)
-      MASTER::Boot.send(:save_model_preference, key) unless ENV['MASTER_NO_CONFIG_WRITE']
+      MASTER::Boot.save_preferred_model(key) unless ENV['MASTER_NO_CONFIG_WRITE']
       "Tier set to #{key}"
     end
 
@@ -1005,7 +1015,7 @@ module MASTER
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
       trace "refactoring #{files.size} files"
-      return 'Cancelled.' unless confirm_write("Refactor #{files.size} file(s)")
+      return 'Cancelled.' unless confirm_write("This will refactor #{files.size} file(s) using LLM suggestions")
       total_iterations = 0
       total_changes = 0
 
@@ -1368,6 +1378,37 @@ module MASTER
       1.0 - (common.size.to_f / total)
     end
 
+    def run_optimize(target = nil)
+      target ||= 'lib'
+      files = resolve_files(target)
+      return "No files found: #{target}" if files.empty?
+
+      simulate = ENV['MASTER_SIMULATE_OPTIMIZE'] || !@llm.status[:connected]
+      llm_for_conceptual = simulate ? SimulatedLLM.new : @llm
+      fixed_files = 0
+      violation_count = 0
+
+      files.each do |file|
+        code = File.read(file)
+        normalized = normalize_content(code)
+        analysis = Violations.analyze(code, path: file, llm: llm_for_conceptual, conceptual: true)
+        violations = (analysis[:literal] || []) + (analysis[:conceptual] || [])
+        needs_fix = normalized != code || violations.any?
+        next unless needs_fix
+
+        violation_count += violations.size
+        violation_count += 1 if normalized != code && violations.empty?
+        updated = autofix_code(normalized, file, violations, simulate: simulate)
+        next if updated == code
+
+        File.write(file, updated)
+        fixed_files += 1
+      end
+
+      note = simulate ? ' (simulated LLM pass)' : ''
+      "Self-optimization complete: scanned #{files.size}, fixed #{fixed_files}, violations #{violation_count}#{note}"
+    end
+
     def run_refine(target = nil)
       target ||= 'lib'
       files = resolve_files(target)
@@ -1421,6 +1462,51 @@ module MASTER
       end
 
       "Applied #{applied}/#{indices.size} refinements"
+    end
+
+    def autofix_code(code, file, violations, simulate:)
+      return normalize_content(code) if simulate
+
+      lang = detect_language(File.extname(file))
+      formatted = format_violations(violations)
+      prompt = <<~PROMPT
+        You are running a self-optimization pass to fix principle violations.
+        Fix every issue listed below with minimal, correct changes.
+        Return the full updated file content only. No markdown, no commentary.
+
+        Violations:
+        #{formatted}
+
+        CODE:
+        ```#{lang}
+        #{code}
+        ```
+      PROMPT
+
+      result = @llm.chat(prompt, tier: :code)
+      return normalize_content(code) if result.err?
+
+      updated = extract_code(result.value, lang)
+      updated.empty? ? normalize_content(code) : normalize_content(updated)
+    end
+
+    def normalize_content(content)
+      text = content.dup
+      text.gsub!("\r\n", "\n")
+      text.gsub!(/[ \t]+$/, '')
+      text.gsub!(/\n{3,}/, "\n\n")
+      text << "\n" unless text.end_with?("\n")
+      text
+    end
+
+    def format_violations(violations)
+      violations.map do |v|
+        if v[:type] == :conceptual
+          "#{v[:principle]}: #{v[:analysis].to_s[0..200]}"
+        else
+          "#{v[:principle]}: #{v[:message]} (line #{v[:line]})"
+        end
+      end.join("\n")
     end
 
     def parse_refinements(text)

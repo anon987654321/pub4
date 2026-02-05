@@ -76,7 +76,7 @@ module MASTER
       {
         tier: @current_tier,
         model: current_model_name,
-        last_tokens: @last_tokens.dup,
+        last_tokens: @last_tokens&.dup || {},
         last_cached: @last_cached,
         total_cost: @total_cost,
         request_count: @request_count,
