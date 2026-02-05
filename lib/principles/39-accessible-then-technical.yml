@@ -14,7 +14,7 @@ anti_patterns:
     fix: Lead with plain English explanation
   - name: buried_vision
     smell: Purpose hidden after implementation details
-    example: "Why" explained after "How"
+    example: Why explained after How
     fix: State the vision in the first paragraph
   - name: uniform_depth
     smell: Same technical level throughout
