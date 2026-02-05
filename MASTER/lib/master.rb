@@ -4,8 +4,8 @@
 # A constitutional AI framework in pure Ruby
 
 module MASTER
-  VERSION = '51.0'
-  CODENAME = 'MASTER'
+  VERSION = '52.0'
+  CODENAME = 'REFLEXION'
   ROOT = File.expand_path('..', __dir__)
   LIB = __dir__
   BOOT_TIME = Time.now
@@ -26,17 +26,16 @@ module MASTER
   autoload :Web,         "#{LIB}/web"
   autoload :Replicate,   "#{LIB}/replicate"
   autoload :Server,      "#{LIB}/server"
-  autoload :Violations,  "#{LIB}/violations"
   autoload :CLI,         "#{LIB}/cli"
   autoload :Chamber,     "#{LIB}/chamber"
   autoload :CreativeChamber, "#{LIB}/creative_chamber"
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
-  autoload :Audio,      "#{LIB}/audio"
-  autoload :TTS,        "#{LIB}/tts"
+  autoload :Audio,       "#{LIB}/audio"
+  autoload :TTS,         "#{LIB}/tts"
   autoload :ParallelTTS, "#{LIB}/tts"
   autoload :RateLimiter, "#{LIB}/server"
-  autoload :Weaviate,   "#{LIB}/weaviate"
+  autoload :Weaviate,    "#{LIB}/weaviate"
   autoload :AutoInstall, "#{LIB}/auto_install"
 
   # Core modules (lib/core/)
@@ -48,14 +47,24 @@ module MASTER
   autoload :SemanticCache,      "#{CORE}/semantic_cache"
   autoload :PrincipleAutoloader, "#{CORE}/principle_autoloader"
   autoload :TokenStreamer,      "#{CORE}/token_streamer"
-    autoload :Colors, 'core/colors'
-        autoload :CommandHandler, 'core/command_handler'
-        autoload :REPL, 'core/repl'
+  autoload :Colors,             "#{CORE}/colors"
+  autoload :CommandHandler,     "#{CORE}/command_handler"
+  autoload :REPL,               "#{CORE}/repl"
   autoload :SSEEndpoint,        "#{CORE}/sse_endpoint"
   autoload :OrbStream,          "#{CORE}/orb_stream"
   autoload :ImageComparison,    "#{CORE}/image_comparison"
   autoload :OpenBSDPledge,      "#{CORE}/openbsd_pledge"
   autoload :Audit,              "#{CORE}/audit"
+  
+  # Reflexion System (NEW)
+  autoload :ReflectionMemory,   "#{CORE}/reflection_memory"
+  autoload :SelfCritique,       "#{CORE}/self_critique"
+  autoload :AdaptiveRetry,      "#{CORE}/adaptive_retry"
+  autoload :ReActExecutor,      "#{CORE}/react_executor"
+
+  # Dreams modules
+  DREAMS = "#{LIB}/dreams"
+  autoload :SocialDreamer,      "#{DREAMS}/social_dreamer"
 
   # Framework modules
   module Framework
@@ -87,6 +96,17 @@ module MASTER
 
     def codename
       CODENAME
+    end
+    
+    # Reflexion API
+    def reflect(task:, model: 'smart', max_retries: 3)
+      Core::AdaptiveRetry.execute_with_reflection(task: task, max_attempts: max_retries) do |context, attempt|
+        LLM.call(context, model: model)
+      end
+    end
+    
+    def react(goal:, model: 'smart', max_steps: 15)
+      Core::ReActExecutor.execute(goal: goal, model: model, max_steps: max_steps)
     end
   end
 end
