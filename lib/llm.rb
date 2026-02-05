@@ -7,13 +7,15 @@ require 'uri'
 module MASTER
   class LLM
     TIERS = {
-      cheap:     { model: 'deepseek/deepseek-chat',       input: 0.00014, output: 0.00028 },
-      fast:      { model: 'x-ai/grok-4-fast',             input: 0.0002,  output: 0.0005 },
-      code:      { model: 'x-ai/grok-code-fast-1',        input: 0.0002,  output: 0.0015 },
-      strong:    { model: 'anthropic/claude-sonnet-4',    input: 0.003,   output: 0.015 },
-      reasoning: { model: 'deepseek/deepseek-r1',         input: 0.00055, output: 0.00219 },
-      gemini:    { model: 'google/gemini-3-flash-preview', input: 0.0001, output: 0.0004 },
-      glm:       { model: 'z-ai/glm-4.7',                 input: 0.00035, output: 0.0014 }
+      cheap:     { model: 'deepseek/deepseek-chat',        input: 0.00014, output: 0.00028 },
+      fast:      { model: 'x-ai/grok-4-fast',              input: 0.0002,  output: 0.0005 },
+      code:      { model: 'x-ai/grok-code-fast-1',         input: 0.0002,  output: 0.0015 },
+      strong:    { model: 'anthropic/claude-sonnet-4',     input: 0.003,   output: 0.015 },
+      reasoning: { model: 'deepseek/deepseek-r1',          input: 0.00055, output: 0.00219 },
+      gemini:    { model: 'google/gemini-3-flash-preview', input: 0.0001,  output: 0.0004 },
+      glm:       { model: 'z-ai/glm-4.7',                  input: 0.00035, output: 0.0014 },
+      kimi:      { model: 'moonshotai/kimi-k2.5',          input: 0.0002,  output: 0.001 },
+      auto:      { model: 'openrouter/auto',               input: 0.003,   output: 0.015 }
     }.freeze
 
     DEFAULT_TIER = :strong

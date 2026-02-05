@@ -11,7 +11,8 @@ module MASTER
       grok:     'x-ai/grok-4-fast',
       gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat',
-      glm:      'z-ai/glm-4.7'
+      glm:      'z-ai/glm-4.7',
+      kimi:     'moonshotai/kimi-k2.5'
     }.freeze
 
     ARBITER = :sonnet
