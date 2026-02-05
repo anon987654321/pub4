@@ -2,6 +2,7 @@
 
 require 'digest'
 require 'json'
+require 'fileutils'
 
 module MASTER
   # Semantic caching with embeddings for fast LLM response retrieval
