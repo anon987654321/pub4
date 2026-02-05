@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-module Master
+require 'json'
+require_relative 'base_agent'
+
+module MASTER
   module Agents
     class SecurityAgent < BaseAgent
       SECURITY_PATTERNS = [

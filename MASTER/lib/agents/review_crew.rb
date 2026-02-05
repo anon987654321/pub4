@@ -5,7 +5,13 @@ rescue LoadError
   # async gem not available - will use sequential execution
 end
 
-module Master
+require_relative 'base_agent'
+require_relative 'security_agent'
+require_relative 'performance_agent'
+require_relative 'style_agent'
+require_relative 'architecture_agent'
+
+module MASTER
   module Agents
     class ReviewCrew
       attr_reader :agents, :results
@@ -125,7 +131,7 @@ module Master
           Be direct and actionable.
         PROMPT
 
-        result = @llm.ask(prompt, tier: :strong)
+        result = @llm.chat(prompt, tier: :strong)
         result.ok? ? result.value : "Synthesis failed: #{result.error}"
       end
 

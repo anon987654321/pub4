@@ -1007,11 +1007,26 @@ module MASTER
         require_relative 'agents/review_crew'
 
         crew = MASTER::Agents::ReviewCrew.new(llm: @llm, principles: Principle.load_all)
-        code = File.read(File.expand_path(path, @root))
-        results = crew.review(code, path)
+        files = resolve_files(path)
+        return "No files found: #{path}" if files.empty?
 
-        summary = results[:summary]
-        "#{C_CYAN}Review complete:#{C_RESET} #{summary[:total_findings]} findings"
+        total_findings = 0
+        reviewed = 0
+
+        files.each do |file|
+          code = File.read(file)
+          results = crew.review(code, file)
+          total_findings += results[:summary][:total_findings]
+          reviewed += 1
+        rescue StandardError
+          next
+        end
+
+        if reviewed > 1
+          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings across #{reviewed} files"
+        else
+          "#{C_CYAN}Review complete:#{C_RESET} #{total_findings} findings"
+        end
       rescue LoadError, StandardError => e
         "Review agents not available: #{e.message}"
       end
