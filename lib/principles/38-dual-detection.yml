@@ -1,0 +1,23 @@
+---
+name: Dual Detection (Literal and Conceptual)
+description: When searching for violations or patterns, run both literal and
+  conceptual searches. Literal detection uses regular expressions and AST
+  analysis for mechanical patterns. Conceptual detection asks the LLM to
+  evaluate semantic meaning against principles. Neither approach catches
+  everything alone. Together they form a complete net.
+tier: verification
+priority: 38
+auto_fixable: false
+anti_patterns:
+- name: regex_only
+  smell: Relying solely on pattern matching
+  example: Checking for long methods but missing conceptual bloat
+  fix: Add LLM-based semantic analysis
+- name: llm_only
+  smell: Relying solely on LLM judgment
+  example: Missing obvious syntactic violations
+  fix: Add deterministic pattern matching first
+- name: single_pass
+  smell: Running detection once instead of layered
+  example: One linter run before commit
+  fix: Layer multiple detection strategies
