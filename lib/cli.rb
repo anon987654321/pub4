@@ -139,12 +139,15 @@ module MASTER
     def build_prompt
       dir = File.basename(@root)
       persona = @llm.persona&.dig(:name)
+      cost = @llm.total_cost
+      hist = @llm.instance_variable_get(:@history)&.size || 0
 
-      if persona && persona != 'default'
-        "\e[1;36m#{dir}\e[0m\e[2m:\e[0m\e[33m#{persona}\e[0m \e[35m>\e[0m "
-      else
-        "\e[1;36m#{dir}\e[0m \e[35m>\e[0m "
-      end
+      parts = [dir]
+      parts << ":#{persona}" if persona && persona != 'default'
+      parts << "(#{hist})" if hist > 0
+      parts << "$#{'%.2f' % cost}" if cost > 0
+
+      "#{parts.join('')} $ "
     end
 
     def with_spinner

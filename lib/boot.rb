@@ -7,15 +7,23 @@ module MASTER
         t0 = Time.now
         principles = load_principles
         smells = principles.sum { |p| p[:anti_patterns]&.size || 0 }
-        model = LLM::TIERS[LLM::DEFAULT_TIER][:model].split('/').last
+        tier = LLM::DEFAULT_TIER
+        model = LLM::TIERS[tier][:model].split('/').last
+        cost = LLM::TIERS[tier][:cost]
         time = Time.now.utc.strftime('%b %e %H:%M UTC %Y')
+        key_status = ENV['OPENROUTER_API_KEY'] ? 'ok' : 'missing'
+        session = SecureRandom.hex(2)
 
         puts "master #{VERSION} - #{time}"
-        puts "llm: #{model} via openrouter"
-        puts "const: #{principles.size} principles, #{smells} smells"
-        puts "abilities: ask scan refactor review image web"
+        puts "llm: #{model} $#{cost}/1k"
+        puts "const: #{principles.size}p #{smells}s"
+        puts "abilities: ask scan refactor review img web"
+        puts "key: #{key_status}"
+        puts "rag: off"
+        puts "cache: empty"
+        puts "session: #{session}"
         puts "#{platform_name}: #{ROOT}"
-        puts "ready in #{((Time.now - t0) * 1000).round}ms"
+        puts "#{((Time.now - t0) * 1000).round}ms"
 
         principles
       end
