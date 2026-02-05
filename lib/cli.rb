@@ -1493,7 +1493,7 @@ module MASTER
     def normalize_content(content)
       text = content.dup
       text.gsub!("\r\n", "\n")
-      text.gsub!(/[ \t]+$/, '')
+      text = text.lines.map(&:rstrip).join("\n")
       text.gsub!(/\n{3,}/, "\n\n")
       text << "\n" unless text.end_with?("\n")
       text
