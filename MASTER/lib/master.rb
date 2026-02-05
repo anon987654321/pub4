@@ -44,6 +44,7 @@ module MASTER
   autoload :MultiFileAnalyzer, "#{LIB}/multi_file_analyzer"
   autoload :AutoFixer,   "#{LIB}/auto_fixer"
   autoload :Planner,     "#{LIB}/planner"
+  autoload :Postpro,     "#{LIB}/postpro"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
