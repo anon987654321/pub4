@@ -747,6 +747,15 @@ module MASTER
       when 'backend'
         set_backend(arg)
 
+      when 'auto', 'autonomous'
+        run_autonomous(arg)
+
+      when 'goal'
+        set_goal(arg)
+
+      when 'goals'
+        list_goals
+
       else
         # Default: send to LLM
         chat(input)
@@ -869,6 +878,104 @@ module MASTER
       "checkpoint: #{task}"
     end
 
+    # Autonomous mode - MASTER continues working on goals
+    GOALS_FILE = File.join(Paths.var, 'goals.yml')
+    AUTO_INTERVAL = 30  # seconds between autonomous actions
+
+    def run_autonomous(duration_arg)
+      duration = (duration_arg || '10').to_i  # minutes
+      end_time = Time.now + (duration * 60)
+      
+      goals = load_goals
+      return "No goals set. Use: goal <description>" if goals.empty?
+      
+      puts "auto: #{goals.size} goals, #{duration}m"
+      iteration = 0
+      
+      while Time.now < end_time
+        iteration += 1
+        goal = goals.sample  # Pick a random goal
+        
+        # Introspect on what to do next
+        next_action = decide_next_action(goal)
+        
+        print "  [#{iteration}] #{goal[:name][0..30]}..."
+        
+        begin
+          result = process_input(next_action)
+          puts " ✓"
+          
+          # Learn from result
+          update_goal_progress(goal, next_action, result)
+        rescue => e
+          puts " ✗ #{e.message[0..40]}"
+        end
+        
+        sleep AUTO_INTERVAL
+      end
+      
+      save_goals(goals)
+      "auto: #{iteration} actions completed"
+    end
+
+    def decide_next_action(goal)
+      prompt = <<~PROMPT
+        Goal: #{goal[:name]}
+        Progress: #{goal[:progress].join('; ') rescue 'none yet'}
+        
+        What's the single next action to make progress?
+        Reply with just the command, e.g.: scan lib/, refactor lib/cli.rb, evolve
+      PROMPT
+      
+      result = @llm.chat(prompt, tier: :fast)
+      action = result.value.to_s.strip.split("\n").first.to_s.strip
+      action.empty? ? "introspect" : action
+    end
+
+    def update_goal_progress(goal, action, result)
+      goal[:progress] ||= []
+      goal[:progress] << "#{Time.now.strftime('%H:%M')} #{action[0..40]}"
+      goal[:progress] = goal[:progress].last(10)  # Keep last 10
+      goal[:last_updated] = Time.now.to_i
+    end
+
+    def set_goal(description)
+      return "Usage: goal <description>" unless description
+      
+      goals = load_goals
+      goal = {
+        id: SecureRandom.hex(4),
+        name: description,
+        created: Time.now.to_i,
+        progress: []
+      }
+      goals << goal
+      save_goals(goals)
+      
+      "goal set: #{description}"
+    end
+
+    def list_goals
+      goals = load_goals
+      return "No goals. Use: goal <description>" if goals.empty?
+      
+      goals.map.with_index do |g, i|
+        age = ((Time.now.to_i - g[:created]) / 3600.0).round(1)
+        progress = g[:progress]&.size || 0
+        "#{i + 1}. #{g[:name]} (#{age}h, #{progress} steps)"
+      end.join("\n")
+    end
+
+    def load_goals
+      return [] unless File.exist?(GOALS_FILE)
+      YAML.load_file(GOALS_FILE) rescue []
+    end
+
+    def save_goals(goals)
+      FileUtils.mkdir_p(File.dirname(GOALS_FILE))
+      File.write(GOALS_FILE, goals.to_yaml)
+    end
+
     def help_text
       <<~HELP
         #{C_BOLD}Core#{C_RESET}
@@ -916,6 +1023,11 @@ module MASTER
           resume        #{C_DIM}Restore session#{C_RESET}
           sessions      #{C_DIM}List checkpoints#{C_RESET}
           checkpoint    #{C_DIM}Save state#{C_RESET}
+
+        #{C_BOLD}Autonomous#{C_RESET}
+          auto          #{C_DIM}Run autonomously#{C_RESET}
+          goal          #{C_DIM}Set persistent goal#{C_RESET}
+          goals         #{C_DIM}List active goals#{C_RESET}
       HELP
     end
 
