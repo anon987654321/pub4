@@ -146,9 +146,12 @@ module MASTER
       return true if File.size(file) > 1_000_000
       return true if %w[.png .jpg .gif .mp4 .pdf .so .dylib .exe .dll .zip .gz].include?(File.extname(file).downcase)
 
-      # Check first 8KB for null bytes
-      chunk = File.read(file, 8192) rescue return true
-      chunk&.include?("\x00")
+      begin
+        chunk = File.read(file, 8192)
+        chunk&.include?("\x00")
+      rescue
+        true
+      end
     end
   end
 end

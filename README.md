@@ -19,3 +19,71 @@ Seven phases structure development: discover, analyze, ideate, design, implement
 Animation and motion graphics follow performance-first principles. Trigonometric functions are precomputed into lookup tables. Audio reactivity uses exponential smoothing with separate accumulators for bass wobble, beat envelope, and energy level. Quality degrades gracefully under load using frame time averaging, with emergency brakes at extreme thresholds. All visual output passes the squint test—it should look pleasing from afar before you read a single word.
 
 Set the environment variable OPENROUTER_API_KEY and run the CLI. Optionally set REPLICATE_API_TOKEN for image and video generation. Run the test suite to verify everything works.
+
+## File Structure
+
+bin
+  cli                           Entry point
+
+lib
+  master.rb                     Module loader
+  boot.rb                       OpenBSD-style hardware probe
+  cli.rb                        REPL, commands, braille spinner
+  llm.rb                        Nine-tier model routing
+  chamber.rb                    Multi-model deliberation
+  creative_chamber.rb           Visual deliberation with Replicate
+  replicate.rb                  Image, video, audio, TTS generation
+  postpro.rb                    Analog film emulation
+  swarm.rb                      Generate sixty-four, curate to eight
+  queue.rb                      Directory processing with checkpoints
+  evolve.rb                     Convergence loop
+  converge.rb                   Iterative refinement
+  introspection.rb              Self-analysis
+  violations.rb                 Conceptual violation detection
+  smells.rb                     Code smell patterns
+  safety.rb                     Guardrails and sanity checks
+  memory.rb                     Session persistence
+  persona.rb                    Character system
+  principle.rb                  YAML principle loader
+  engine.rb                     Core orchestration
+  result.rb                     Monadic result type
+  paths.rb                      Directory constants
+  server.rb                     SSE push server
+  web.rb                        URL fetching
+  openbsd.rb                    Platform-specific helpers
+
+  config
+    phases.yml                  Seven development phases
+    generation.yml              Swarm and creative settings
+    safety.yml                  Guardrails configuration
+    openbsd.yml                 Platform settings
+    refinements.yml             Version history
+    wishlist.yml                Session-to-session learning
+
+  principles
+    01-kiss.yml through 43-audio-smoothing.yml
+    meta-principles.yml
+
+  personas
+    generic.md                  Stoic, minimal, decisive
+    lawyer.md                   Norwegian law, child welfare
+    hacker.md                   OpenBSD security, pentesting
+    architect.md                Parametric design, BIM
+    sysadmin.md                 OpenBSD administration
+    trader.md                   Crypto, DeFi, technicals
+    medic.md                    Medical research
+
+  agents
+    base_agent.rb               Agent foundation
+    review_crew.rb              Parallel review agents
+    security_agent.rb           Security-focused analysis
+
+  views
+    orb_*.html                  Audio-reactive visualizations
+
+deploy
+  openbsd                       Server deployment scripts
+  rails                         Application generators
+
+test
+  test_master.rb                Core tests
