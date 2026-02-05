@@ -18,6 +18,36 @@ Seven phases structure development: discover, analyze, ideate, design, implement
 
 Animation and motion graphics follow performance-first principles. Trigonometric functions are precomputed into lookup tables. Audio reactivity uses exponential smoothing with separate accumulators for bass wobble, beat envelope, and energy level. Quality degrades gracefully under load using frame time averaging, with emergency brakes at extreme thresholds. All visual output passes the squint test—it should look pleasing from afar before you read a single word.
 
+## New in Version 2.0: MEGA RESTORATION
+
+Version 2.0 brings complete framework integration from pub, pub2, and pub3 repositories:
+
+**Framework System**: Five core modules provide behavioral rules, universal standards, workflow orchestration, quality gates, and Copilot optimization. Load framework configs dynamically, enforce rules automatically, and track workflow progress.
+
+**Plugin System**: Four domain-specific plugins for design systems, web development, business strategy, and AI enhancement. Each plugin is independently configurable and can be enabled/disabled per project.
+
+**Session Recovery**: Checkpoint system persists work state across interruptions. Checkpoints track completed files, pending work, context decisions, and recovery instructions. Resume exactly where you left off.
+
+**Principle Enforcement**: Git pre-commit hooks validate code against all 43 principles. Command-line tools (`validate_principles`, `check_ports`) ensure quality before deployment. Automated checks map principles to regex patterns and AST analysis.
+
+**Streaming Support**: Token-by-token streaming with mood detection. SSE endpoint broadcasts real-time updates to connected clients. Watch the orb animate as responses generate.
+
+**Semantic Caching**: Embeddings-based cache stores responses by semantic similarity. 85% threshold finds conceptually similar queries even with different wording. Saves cost and time on repeated questions.
+
+**Image Comparison**: LLaVA multimodal model compares images, ranks quality, finds differences. CLI command: `compare-images img1.jpg img2.jpg`.
+
+**OpenBSD Security**: Pledge and unveil integration restricts filesystem and system calls. Applied automatically at boot for maximum security on OpenBSD.
+
+**Adversarial Review**: Eight critical personas (Skeptic, Minimalist, Security Auditor, etc.) question every decision from different angles. Parallel review surfaces issues before they ship.
+
+**Temperature Synthesis**: Generate at multiple temperatures simultaneously (0.1 deterministic, 0.5 balanced, 0.9 creative). Vote, merge, or select best result for each use case.
+
+**Quality Limits**: 20KB file size limit enforces modularity. Cyclomatic complexity ≤10, method length ≤20 lines. Automatic violation detection with suggestions.
+
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
+
+## Installation
+
 Set the environment variable OPENROUTER_API_KEY and run the CLI. Optionally set REPLICATE_API_TOKEN for image and video generation. Run the test suite to verify everything works.
 
 ## File Structure
@@ -80,6 +110,43 @@ lib
 
   views
     orb_*.html                  Audio-reactive visualizations
+
+  framework
+    behavioral_rules.rb         Agent behavior enforcement
+    universal_standards.rb      Code standard validation
+    workflow_engine.rb          Development workflow orchestration
+    quality_gates.rb            Quality checkpoint system
+    copilot_optimization.rb     GitHub Copilot integration
+
+  plugins
+    design_system.rb            Design system management
+    web_development.rb          Web development patterns
+    business_strategy.rb        Business analysis tools
+    ai_enhancement.rb           AI optimization patterns
+
+  config
+    principle_enforcement.yml   Automated principle checking
+    session_recovery.yml        Checkpoint system config
+    langchain.yml               Safe tool patterns
+    frontend_architecture.yml   SCSS/PWA patterns
+    adversarial_personas.yml    8 critical reviewers
+    temperature_synthesis.yml   Multi-temperature generation
+    quality_limits.yml          File size & complexity limits
+    deployment.yml              Rails deployment config
+    framework/*.yml             Framework configurations
+    plugins/*.yml               Plugin configurations
+
+bin
+  cli                           Entry point
+  install-hooks                 Git hook installer
+  validate_principles           Principle validation tool
+  check_ports                   Port consistency checker
+
+docs
+  PRINCIPLES.md                 Guide to all 43 principles
+  SESSION_RECOVERY.md           Checkpoint system guide
+  FRAMEWORK_INTEGRATION.md      Framework & plugin documentation
+  ENFORCEMENT.md                Enforcement system guide
 
 deploy
   openbsd                       Server deployment scripts
