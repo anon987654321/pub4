@@ -9,7 +9,7 @@ module MASTER
     MODELS = {
       sonnet:   'anthropic/claude-sonnet-4-20250514',
       gpt4:     'openai/gpt-4o',
-      gemini:   'google/gemini-2.0-flash-001',
+      gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat',
       qwen:     'qwen/qwen-2.5-coder-32b-instruct'
     }.freeze

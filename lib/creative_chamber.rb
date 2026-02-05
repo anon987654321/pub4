@@ -8,7 +8,7 @@ module MASTER
     LLM_MODELS = {
       sonnet:   'anthropic/claude-sonnet-4-20250514',
       gpt4:     'openai/gpt-4o',
-      gemini:   'google/gemini-2.0-flash-001',
+      gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat'
     }.freeze
 
