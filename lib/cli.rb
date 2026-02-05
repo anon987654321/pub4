@@ -137,10 +137,17 @@ module MASTER
     end
 
     def build_prompt
-      persona = @llm.persona&.dig(:name) || 'default'
-      cost = format('$%.4f', @llm.total_cost)
+      # Starship.rs inspired: directory  git  context  cost ❯
       dir = File.basename(@root)
-      "#{C_CYAN}#{dir}#{C_RESET} [#{C_YELLOW}#{persona}#{C_RESET}] #{C_DIM}#{cost}#{C_RESET} > "
+      persona = @llm.persona&.dig(:name)
+      cost = @llm.total_cost
+
+      parts = []
+      parts << "\e[1;36m#{dir}\e[0m"  # cyan bold directory
+      parts << "\e[33m#{persona}\e[0m" if persona && persona != 'default'
+      parts << "\e[2m$#{format('%.4f', cost)}\e[0m" if cost > 0
+
+      "#{parts.join(' ')} \e[1;35m❯\e[0m "
     end
 
     def with_spinner
