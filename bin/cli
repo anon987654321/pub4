@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+# Load .env if dotenv available (graceful degradation)
+begin
+  require "dotenv/load"
+rescue LoadError
+  # dotenv not installed, use system ENV
+end
+
+require "master"
+Master::Sandbox.init
+Master::CLI.new.run
