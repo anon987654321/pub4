@@ -30,8 +30,6 @@ module MASTER
           return
         end
         
-        puts "\nchamber: deliberation"
-        
         agent = MASTER::Agents::ChamberAgent.new(
           question: question,
           context: @context

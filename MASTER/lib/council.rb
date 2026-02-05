@@ -52,7 +52,6 @@ module MASTER
         
         # Round 2+: Synthesis
         (2..rounds).each do |r|
-          puts "  round #{r}: synthesis"
           responses = members.map do |m|
             others = responses.reject{|x| x[:member] == m}.map{|o| "#{o[:member]}: #{o[:response]}"}.join(\n\n)
             synthesis = "Original: #{prompt}\n\nOthers said:\n#{others}\n\nYour synthesis:"

@@ -40,8 +40,6 @@ module MASTER
             agent_class = agent_config[:agent]
             config = agent_config[:config] || {}
             
-            puts "  · #{agent_class.name.split('::').last}..."
-            
             agent = agent_class.new(context: @context.merge(config))
             result = agent.execute_with_retry
             
