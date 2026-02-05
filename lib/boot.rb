@@ -6,9 +6,10 @@ module MASTER
       def run(verbose: false)
         principles = load_principles
         tiers = LLM::TIERS.keys.join(' ')
+        time = Time.now.utc.strftime('%a %b %e %H:%M:%S UTC %Y')
 
         puts
-        puts "master0 at root: version #{VERSION}"
+        puts "master #{VERSION} (GENERIC) #1: #{time}"
         puts "const0: #{principles.size} entries"
         puts "llm0: #{tiers}"
         puts "root0: #{ROOT}"
