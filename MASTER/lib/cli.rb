@@ -133,6 +133,8 @@ module MASTER
       @aliases = {}
       @last_files = {}
       @last_interrupt = nil
+      @input_queue = Queue.new
+      @processing = false
       @pastel = Pastel.new if TTY_AVAILABLE
       @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
       load_state
@@ -281,11 +283,15 @@ module MASTER
       warn_missing_api_key
       puts
 
+      # Start background processor for queued inputs
+      start_queue_processor
+
       loop do
+        prompt_text = @processing ? "#{SPINNER[0]} " : build_prompt
         input = if TTY_AVAILABLE && ENV['MASTER_TTY_INPUT']
-          @prompt.ask(build_prompt) { |q| q.modify :strip }
+          @prompt.ask(prompt_text) { |q| q.modify :strip }
         else
-          Readline.readline(build_prompt, true)
+          Readline.readline(prompt_text, true)
         end
         break unless input
 
@@ -293,42 +299,68 @@ module MASTER
         next if input.empty?
         break if %w[exit quit q].include?(input)
 
-        # Easter egg
-        puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < EASTER_EGG_CHANCE
-
-        # Expand aliases
-        input = expand_alias(input)
-
-        start_time = Time.now
-        begin
-          result = with_spinner { process_input(input) }
-          elapsed_ms = ((Time.now - start_time) * 1000).round
-
-          @streak += 1
-          @command_count += 1
-          check_achievements
-
-          puts colorize_output(result) if result
-          # Terse single-line stats (only if LLM was called)
-          if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
-            stats = "#{C_DIM}#{elapsed_ms}ms · #{@last_tokens[:input]}→#{@last_tokens[:output]}tok"
-            stats += " · cached" if @last_cached
-            puts "#{stats}#{C_RESET}"
-            @last_tokens = { input: 0, output: 0 }
-            @last_cached = false
-          end
-        rescue => e
-          @streak = 0
-          puts "#{C_RED}#{e.message}#{C_RESET}"
+        # Queue input for processing (allows typing while waiting)
+        if @processing
+          @input_queue << input
+          puts "#{C_DIM}queued: #{input[0..40]}#{input.size > 40 ? '...' : ''}#{C_RESET}"
+        else
+          process_single_input(input)
         end
-
-        auto_lint
       end
 
       save_history
       save_state
       @server&.stop
       show_session_summary
+    end
+
+    def start_queue_processor
+      Thread.new do
+        loop do
+          break if @shutdown
+          unless @input_queue.empty?
+            input = @input_queue.pop(true) rescue nil
+            process_single_input(input) if input
+          end
+          sleep 0.1
+        end
+      end
+    end
+
+    def process_single_input(input)
+      # Easter egg
+      puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < EASTER_EGG_CHANCE
+
+      # Expand aliases
+      input = expand_alias(input)
+
+      start_time = Time.now
+      @processing = true
+      begin
+        result = with_spinner { process_input(input) }
+        elapsed_ms = ((Time.now - start_time) * 1000).round
+
+        @streak += 1
+        @command_count += 1
+        check_achievements
+
+        puts colorize_output(result) if result
+        # Terse single-line stats (only if LLM was called)
+        if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+          stats = "#{C_DIM}#{elapsed_ms}ms · #{@last_tokens[:input]}→#{@last_tokens[:output]}tok"
+          stats += " · cached" if @last_cached
+          puts "#{stats}#{C_RESET}"
+          @last_tokens = { input: 0, output: 0 }
+          @last_cached = false
+        end
+      rescue => e
+        @streak = 0
+        puts "#{C_RED}#{e.message}#{C_RESET}"
+      ensure
+        @processing = false
+      end
+
+      auto_lint
     end
 
     def warn_missing_api_key

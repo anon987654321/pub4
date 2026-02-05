@@ -51,6 +51,7 @@ module MASTER
       @context_files = []
       @backend = resolve_backend(backend || ENV['MASTER_LLM_BACKEND'])
       configure_ruby_llm if @backend == :ruby_llm
+      load_conversation_history
     end
 
     def chat(message, tier: nil)
@@ -76,6 +77,7 @@ module MASTER
       if result.ok?
         @cache[cache_key] = result.value
         @history << { role: 'assistant', content: result.value } if @backend != :ruby_llm
+        save_conversation_history
       end
 
       result
@@ -109,6 +111,7 @@ module MASTER
 
     def clear_history
       @history.clear
+      save_conversation_history
     end
 
     def chat_with_model(model, prompt)
@@ -500,6 +503,58 @@ module MASTER
       end
 
       "pure Ruby CLI (#{RUBY_VERSION}, #{mem}MB RAM, no npm, no electron, no bloat)"
+    end
+
+    # Conversation persistence
+    CONVERSATION_FILE = File.join(Paths.var, 'conversation.json')
+    MAX_HISTORY = 100
+    COMPRESS_THRESHOLD = 50
+
+    def load_conversation_history
+      return unless File.exist?(CONVERSATION_FILE)
+
+      data = JSON.parse(File.read(CONVERSATION_FILE), symbolize_names: true)
+      @history = data[:messages] || []
+      @conversation_summary = data[:summary]
+      
+      # Inject summary as system context if exists
+      if @conversation_summary && @history.empty?
+        @history << { role: 'system', content: "Previous conversation summary: #{@conversation_summary}" }
+      end
+    rescue => e
+      @history = []
+    end
+
+    def save_conversation_history
+      compress_history if @history.size > COMPRESS_THRESHOLD
+
+      data = {
+        messages: @history.last(MAX_HISTORY),
+        summary: @conversation_summary,
+        saved_at: Time.now.to_i
+      }
+      
+      FileUtils.mkdir_p(File.dirname(CONVERSATION_FILE))
+      File.write(CONVERSATION_FILE, JSON.pretty_generate(data))
+    rescue => e
+      # Silent fail
+    end
+
+    def compress_history
+      return if @history.size <= 20
+
+      # Keep last 20, summarize the rest
+      to_summarize = @history[0...-20]
+      old_summary = @conversation_summary
+      
+      context = to_summarize.map { |m| "#{m[:role]}: #{m[:content][0..200]}" }.join("\n")
+      prompt = old_summary ? 
+        "Previous: #{old_summary}\n\nNew:\n#{context}\n\nUpdate summary (50 words max):" :
+        "Summarize:\n#{context}\n\n50 words max:"
+      
+      result = quick_ask(prompt, tier: :fast)
+      @conversation_summary = result if result
+      @history = @history.last(20)
     end
   end
 end
