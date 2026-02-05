@@ -83,6 +83,7 @@ module MASTER
       queue = @output_queue
       persona_ref = -> { @persona }
       persona_set = ->(p) { @persona = p }
+      cost_ref = -> { cli.llm.total_cost rescue 0.0 }
 
       ->(env) {
         path = env['PATH_INFO']
@@ -95,7 +96,7 @@ module MASTER
 
         when ['GET', '/poll']
           text = queue.empty? ? nil : queue.pop(true) rescue nil
-          body = { text: text, persona: persona_ref.call }.to_json
+          body = { text: text, persona: persona_ref.call, cost: cost_ref.call }.to_json
           [200, { 'content-type' => 'application/json' }, [body]]
 
         when ['POST', '/chat']

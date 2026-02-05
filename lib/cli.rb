@@ -39,20 +39,48 @@ module MASTER
     end
 
     def repl
-      prompt = "#{File.basename(@root)} main > "
+      loop do
+        input = Readline.readline(build_prompt, true)
+        break unless input
 
-      while (input = Readline.readline(prompt, true))
         input = input.strip
         next if input.empty?
-
         break if %w[exit quit q].include?(input)
 
-        result = process_input(input)
+        result = with_spinner { process_input(input) }
         puts result if result
       end
 
       @server&.stop
       puts 'Goodbye.'
+    end
+
+    def build_prompt
+      persona = @llm.persona&.dig(:name) || 'default'
+      cost = format('$%.4f', @llm.total_cost)
+      dir = File.basename(@root)
+      "#{dir} [#{persona}] #{cost} > "
+    end
+
+    def with_spinner
+      frames = %w[- \\ | /]
+      done = false
+      result = nil
+
+      spinner = Thread.new do
+        i = 0
+        until done
+          print "\r#{frames[i % 4]} "
+          i += 1
+          sleep 0.1
+        end
+        print "\r  \r"
+      end
+
+      result = yield
+      done = true
+      spinner.join
+      result
     end
 
     def handle(input)

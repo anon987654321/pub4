@@ -399,6 +399,21 @@ h1:empty::before {
   </style>
 </div>
 
+<!-- Chat log -->
+<div id="chatLog" style="position:fixed; bottom:80px; left:20px; right:20px; max-height:30vh; overflow-y:auto; font-family:'Courier New',monospace; font-size:13px; color:rgba(255,255,255,0.8); z-index:1000; pointer-events:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;">
+  <style>
+    #chatLog::-webkit-scrollbar { width: 4px; }
+    #chatLog::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .chat-entry { padding: 6px 10px; margin: 4px 0; border-radius: 4px; max-width: 85%; word-wrap: break-word; }
+    .chat-user { background: rgba(255,255,255,0.1); margin-left: auto; text-align: right; }
+    .chat-ai { background: rgba(100,100,100,0.2); }
+    .chat-time { font-size: 10px; opacity: 0.5; margin-right: 8px; }
+  </style>
+</div>
+
+<!-- Cost display -->
+<div id="costDisplay" style="position:fixed; bottom:20px; left:20px; font-family:'Courier New',monospace; font-size:11px; color:rgba(255,255,255,0.4); z-index:1000;">$0.0000</div>
+
 <!-- Fullscreen Effects (flat only) -->
 <div class="grain-overlay"></div>
 <div class="vignette"></div>
@@ -1693,6 +1708,7 @@ const Ares = {
   
   firstClick: true,
   lastSpoken: null,
+  lastPolledText: null,
   
   pollRetryDelay: 1000,
   maxPollRetry: 30000,
@@ -1865,6 +1881,9 @@ const Ares = {
     // Visual feedback via depth
     if (typeof depth !== 'undefined') depth = 0.6;
     
+    // Add to chat log
+    this.addChatEntry(message, 'user');
+    
     fetch('/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1874,6 +1893,8 @@ const Ares = {
       .then(r => r.json())
       .then(data => { 
         if (data.response) {
+          this.addChatEntry(data.response, 'ai');
+          if (data.cost) this.updateCost(data.cost);
           // If server provided audio URL, play that instead of browser TTS
           if (data.audio) {
             this.playServerAudio(data.audio, data.response);
@@ -1883,6 +1904,34 @@ const Ares = {
         }
       })
       .catch(() => this.speak("Connection issues... but I'm still thinking about you."));
+  },
+  
+  addChatEntry(text, type) {
+    const log = document.getElementById('chatLog');
+    if (!log) return;
+    
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const entry = document.createElement('div');
+    entry.className = `chat-entry chat-${type}`;
+    entry.innerHTML = `<span class="chat-time">${time}</span>${this.escapeHtml(text)}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+    
+    // Keep max 50 entries
+    while (log.children.length > 50) {
+      log.removeChild(log.firstChild);
+    }
+  },
+  
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+  
+  updateCost(cost) {
+    const el = document.getElementById('costDisplay');
+    if (el) el.textContent = '$' + cost.toFixed(4);
   },
   
   pollForTTS() {
@@ -1897,6 +1946,13 @@ const Ares = {
         // Update persona if server sent one
         if (data.persona && data.persona !== this.currentPersona) {
           this.setPersona(data.persona);
+        }
+        // Update cost if provided
+        if (data.cost) this.updateCost(data.cost);
+        // Add CLI output to chat log
+        if (data.text && data.text !== this.lastPolledText) {
+          this.lastPolledText = data.text;
+          this.addChatEntry(data.text, 'ai');
         }
         // Play server audio if available
         if (data.audio && !this.isSpeaking) {
