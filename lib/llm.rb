@@ -178,6 +178,7 @@ module MASTER
     private
 
     def resolve_backend(value)
+      return :http if value.nil? || value.to_s.strip.empty?
       key = value.to_s.strip.downcase.to_sym
       return :ruby_llm if key == :ruby_llm && ruby_llm_available?
       :http
@@ -251,7 +252,8 @@ module MASTER
       @total_tokens_in += input_tokens
       @total_tokens_out += output_tokens
       @request_count += 1
-      cost = response.respond_to?(:cost) ? response.cost&.to_f : nil
+      cost = response.respond_to?(:cost) ? response.cost : nil
+      cost = cost.to_f if cost
       @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
       @last_cost = cost if cost
     end

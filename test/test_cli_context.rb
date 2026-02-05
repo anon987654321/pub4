@@ -128,6 +128,9 @@ class TestCLIContext < Minitest::Test
     assert_equal 'Backend: http', @cli.process_input('backend http')
     assert_equal 'Backend: ruby_llm', @cli.process_input('backend ruby_llm')
     assert_equal 'Unknown backend', @cli.process_input('backend nope')
+    result = @cli.llm.set_backend(nil)
+    assert result.err?
+    assert_equal 'Backend required', result.error
   end
 
   def test_status_and_chat_flow

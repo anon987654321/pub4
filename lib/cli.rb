@@ -701,7 +701,7 @@ module MASTER
           cd <dir>        Change dir
           clean <file>    Fix whitespace
           clear           Reset chat
-          context <cmd>   Manage context files
+          context <add|drop|remove|list|clear>   Manage context files
           converge        Loop until stable
           cost            Usage stats
           describe <img>  Vision
