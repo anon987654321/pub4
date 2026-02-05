@@ -1,6 +1,6 @@
 # MASTER v50.8
 
-Constitutional AI for code quality. 32 principles, modular Ruby architecture.
+Constitutional AI for code quality. 33 principles, modular Ruby architecture.
 
 ## Quick Start
 
@@ -19,20 +19,23 @@ lib/
 ├── paths.rb               # Centralized path management
 ├── result.rb              # Ok/Err monad
 ├── llm.rb                 # 5-tier OpenRouter client
-├── principle.rb           # Markdown principle parser
-├── persona.rb             # Markdown persona parser
+├── principle.rb           # YAML principle parser
+├── persona.rb             # YAML persona parser
 ├── boot.rb                # dmesg-style startup
 ├── cli.rb                 # REPL with 20+ commands
-├── server.rb              # Falcon web server (port 8080)
+├── server.rb              # Falcon web server
 ├── engine.rb              # Code scanner
-├── converge.rb            # Convergence detection + audit
+├── converge.rb            # Convergence detection
+├── smells.rb              # Code smell patterns
 ├── safety.rb              # Dangerous command blocklist
 ├── memory.rb              # Session compression
 ├── replicate.rb           # Image/audio generation
 ├── web.rb                 # Ferrum headless browser
-├── sandbox.rb             # OpenBSD pledge (disabled)
-├── principles/            # 32 principle .md files
-└── personas/              # Persona .md files
+├── openbsd.rb             # pledge/unveil support
+├── sandbox.rb             # Sandboxing (disabled)
+├── principles/            # 33 principle .yml files
+└── personas/              # Persona .yml files
+DEMOS/                     # 60+ audio-reactive css-doodle orbs
 ```
 
 ## LLM Tiers
@@ -78,13 +81,14 @@ exit           Quit
 
 ```bash
 ruby bin/cli
-# Server starts on http://localhost:8080
+# Server starts automatically
 # Open cli.html for orb interface
+# DEMOS/ contains 60+ audio-reactive visualizations
 ```
 
 ## Cross-Platform
 
-✅ OpenBSD | ✅ Termux | ✅ macOS | ✅ Linux | ✅ Windows
+openbsd0 at mainbus0 | termux0 at mainbus0 | darwin0 at mainbus0 | linux0 at mainbus0
 
 ## Environment
 
