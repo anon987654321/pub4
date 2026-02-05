@@ -731,6 +731,15 @@ module MASTER
       when 'reload'
         reload_master
 
+      when 'resume'
+        resume_session(arg)
+
+      when 'sessions'
+        list_sessions
+
+      when 'checkpoint'
+        create_checkpoint(arg)
+
       when /^f(\d+)$/
         run_favorite($1.to_i)
 
@@ -816,6 +825,58 @@ module MASTER
       @aliases.map { |k, v| "#{k} → #{v}" }.join("\n")
     end
 
+    def resume_session(arg)
+      recovery = MASTER::SessionRecovery.new
+      checkpoints = recovery.list
+      
+      return "No sessions to resume" if checkpoints.empty?
+      
+      if arg
+        # Resume specific checkpoint by index or task name
+        idx = arg.to_i - 1
+        checkpoint = checkpoints[idx] if idx >= 0 && idx < checkpoints.size
+        checkpoint ||= checkpoints.find { |c| c[:task].to_s.include?(arg) }
+        return "Session not found: #{arg}" unless checkpoint
+      else
+        checkpoint = checkpoints.first
+      end
+      
+      restored = recovery.restore(checkpoint[:file])
+      return "Failed to restore" unless restored
+      
+      @context = restored[:context]
+      age = ((Time.now.to_i - restored[:timestamp]) / 3600.0).round(1)
+      "resumed: #{restored[:task]} (#{age}h ago)"
+    end
+
+    def list_sessions
+      recovery = MASTER::SessionRecovery.new
+      checkpoints = recovery.list
+      
+      return "No saved sessions" if checkpoints.empty?
+      
+      lines = checkpoints.each_with_index.map do |c, i|
+        age = ((Time.now.to_i - c[:timestamp]) / 3600.0).round(1)
+        completed = c.dig(:files, :completed)&.size || 0
+        pending = c.dig(:files, :pending)&.size || 0
+        "#{i + 1}. #{c[:task]} (#{age}h) #{completed}✓ #{pending}…"
+      end
+      lines.join("\n")
+    end
+
+    def create_checkpoint(task)
+      return "Usage: checkpoint <task_description>" unless task
+      
+      recovery = MASTER::SessionRecovery.new
+      checkpoint = recovery.checkpoint(
+        task: task,
+        context: { variables: @context || {} },
+        instructions: ["Resume with: resume #{task.split.first}"]
+      )
+      
+      "checkpoint: #{task}"
+    end
+
     def help_text
       <<~HELP
         #{C_BOLD}Core#{C_RESET}
@@ -858,6 +919,11 @@ module MASTER
           image         #{C_DIM}Generate#{C_RESET}
           describe      #{C_DIM}Vision#{C_RESET}
           speak         #{C_DIM}TTS#{C_RESET}
+
+        #{C_BOLD}Sessions#{C_RESET}
+          resume        #{C_DIM}Restore session#{C_RESET}
+          sessions      #{C_DIM}List checkpoints#{C_RESET}
+          checkpoint    #{C_DIM}Save state#{C_RESET}
       HELP
     end
 

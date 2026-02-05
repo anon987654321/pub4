@@ -30,7 +30,7 @@ module MASTER
           return
         end
         
-        puts "\n#{C_CYAN}🏛️  Initiating Chamber Mode...#{C_RESET}\n"
+        puts "\nchamber: deliberation"
         
         agent = MASTER::Agents::ChamberAgent.new(
           question: question,
@@ -39,15 +39,10 @@ module MASTER
         
         result = agent.execute_with_retry
         
-        puts "\n#{C_GREEN}━" * 60
-        puts "FINAL ANSWER:"
-        puts "━" * 60 + "#{C_RESET}"
+        puts "\n#{C_BOLD}Answer:#{C_RESET}"
         puts result[:final_answer]
-        puts "\n#{C_CYAN}Metrics:#{C_RESET}"
-        puts "  Rounds: #{result[:rounds]}"
-        puts "  Consensus: #{result[:consensus_reached] ? 'Yes' : 'No'}"
-        puts "  Cost: $#{result[:metrics][:total_cost].round(4)}"
-        puts "  Tokens: #{result[:metrics][:total_tokens]}"
+        consensus = result[:consensus_reached] ? '✓' : '✗'
+        puts "\n  rounds: #{result[:rounds]}  consensus: #{consensus}  cost: $#{result[:metrics][:total_cost].round(4)}  tokens: #{result[:metrics][:total_tokens]}"
       end
       
       def run_agent_chain(args)
@@ -57,7 +52,7 @@ module MASTER
           return
         end
         
-        puts "\n#{C_CYAN}⛓️  Building Agent Chain...#{C_RESET}\n"
+        puts "\nchain: #{args.length} agents"
         
         # Build chain dynamically
         chain = MASTER::Agents::ChainAgent.build do
@@ -81,7 +76,7 @@ module MASTER
       def run_parallel_agents(args)
         strategy = args.first || 'all'
         
-        puts "\n#{C_CYAN}⚡ Parallel Execution (#{strategy})...#{C_RESET}\n"
+        puts "\nparallel: #{strategy}"
         
         # Example: run multiple review agents with different models
         agent = MASTER::Agents::ParallelAgent.new(
@@ -96,7 +91,7 @@ module MASTER
         
         result = agent.execute
         
-        puts "\n#{C_GREEN}Parallel execution completed!#{C_RESET}"
+
         display_parallel_results(result)
       end
       
@@ -109,7 +104,7 @@ module MASTER
           return
         end
         
-        puts "\n#{C_CYAN}🔍 Reviewing #{file_path}...#{C_RESET}\n"
+        puts "\nreview: #{file_path}"
         
         agent = MASTER::Agents::CodeReviewAgent.new(
           file_path: file_path,
@@ -131,7 +126,7 @@ module MASTER
           return
         end
         
-        puts "\n#{C_CYAN}🔧 Refactoring #{file_path}...#{C_RESET}\n"
+        puts "\nrefactor: #{file_path}"
         
         agent = MASTER::Agents::RefactorAgent.new(
           file_path: file_path,
@@ -156,43 +151,30 @@ module MASTER
       end
       
       def display_review_result(result)
-        puts "\n#{C_GREEN}═" * 60
-        puts "CODE REVIEW: #{result[:file]}"
-        puts "═" * 60 + "#{C_RESET}"
-        puts "\n#{C_YELLOW}Score: #{result[:score]}/100#{C_RESET}"
-        puts "\n#{C_RED}Violations:#{C_RESET}"
+        puts "\n#{C_BOLD}#{result[:file]}#{C_RESET}  score: #{result[:score]}/100"
+        puts "\n#{C_DIM}violations:#{C_RESET}" if result[:violations]&.any?
         puts result[:violations]
-        puts "\n#{C_GREEN}Strengths:#{C_RESET}"
+        puts "\n#{C_DIM}strengths:#{C_RESET}" if result[:strengths]&.any?
         puts result[:strengths]
-        puts "\n#{C_CYAN}Suggestions:#{C_RESET}"
+        puts "\n#{C_DIM}suggestions:#{C_RESET}" if result[:suggestions]&.any?
         puts result[:suggestions]
       end
       
       def display_refactor_result(result)
-        puts "\n#{C_GREEN}═" * 60
-        puts "REFACTORING COMPLETE"
-        puts "═" * 60 + "#{C_RESET}"
-        puts "\n#{C_CYAN}Improvements:#{C_RESET}"
-        puts result[:improvements]
-        puts "\n#{C_YELLOW}Validation:#{C_RESET}"
-        puts "  Original score: #{result[:validation][:original_score]}"
-        puts "  New score: #{result[:validation][:new_score]}"
-        puts "  Improved: #{result[:validation][:score_improved] ? 'Yes ✓' : 'No ✗'}"
-        puts "\n#{C_CYAN}Diff:#{C_RESET}"
-        puts result[:diff]
+        improved = result[:validation][:score_improved] ? '✓' : '✗'
+        puts "\n#{C_BOLD}refactor#{C_RESET}  #{result[:validation][:original_score]} → #{result[:validation][:new_score]} #{improved}"
+        puts result[:improvements] if result[:improvements]
+        puts result[:diff] if result[:diff]
       end
       
       def display_parallel_results(result)
         case result[:strategy]
         when :all
           result[:results].each do |r|
-            puts "\n  #{r[:agent]}:"
-            puts "    Cost: $#{r[:metrics][:total_cost].round(4)}"
-            puts "    Tokens: #{r[:metrics][:total_tokens}"
+            puts "  #{r[:agent]}  $#{r[:metrics][:total_cost].round(4)}  #{r[:metrics][:total_tokens]}t"
           end
         else
-          puts "\n  Winner: #{result[:agent]}"
-          puts "  Cost: $#{result[:metrics][:total_cost].round(4)}"
+          puts "  winner: #{result[:agent]}  $#{result[:metrics][:total_cost].round(4)}"
         end
       end
     end

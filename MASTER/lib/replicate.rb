@@ -457,11 +457,12 @@ module MASTER
           result = speak_turbo(chunk.strip, voice: voice)
           if result && File.exist?(result.to_s)
             audio_files << result
-            puts "✓"
+            print "✓ "
           else
-            puts "✗"
+            print "✗ "
           end
         end
+        puts
 
         audio_files
       end

@@ -15,9 +15,7 @@ module MASTER
       end
       
       def execute
-        puts "⚡ Parallel Execution: #{@agents.length} agents"
-        puts "   Strategy: #{@strategy}"
-        puts "━" * 60
+        puts "parallel: #{@agents.length} agents, #{@strategy}"
         
         case @strategy
         when :all
@@ -42,12 +40,12 @@ module MASTER
             agent_class = agent_config[:agent]
             config = agent_config[:config] || {}
             
-            puts "   ▸ Starting #{agent_class.name}..."
+            puts "  · #{agent_class.name.split('::').last}..."
             
             agent = agent_class.new(context: @context.merge(config))
             result = agent.execute_with_retry
             
-            puts "   ✓ #{agent_class.name} completed"
+            puts "  ✓ #{agent_class.name.split('::').last}"
             
             {
               agent: agent_class.name,
@@ -96,7 +94,7 @@ module MASTER
                 result: result,
                 metrics: agent.metrics
               })
-                puts "   ✓ #{agent_class.name} finished first!"
+                puts "  ✓ #{agent_class.name.split('::').last} first"
                 latch.count_down
               end
             rescue => e

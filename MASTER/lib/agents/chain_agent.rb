@@ -12,8 +12,7 @@ module MASTER
       end
       
       def execute
-        puts "⛓️  Agent Chain: #{@stages.length} stages"
-        puts "━" * 60
+        puts "chain: #{@stages.length} stages"
         
         current_input = @context
         
@@ -22,8 +21,7 @@ module MASTER
           agent_class = stage_config[:agent]
           transform = stage_config[:transform] # Optional input transformation
           
-          puts "\n#{index + 1}. #{stage_name}"
-          puts "   Agent: #{agent_class.name}"
+          puts "  #{index + 1}. #{stage_name} (#{agent_class.name.split('::').last})"
           
           # Transform input if needed
           stage_input = transform ? transform.call(current_input) : current_input
@@ -52,7 +50,7 @@ module MASTER
           # Output becomes input for next stage
           current_input = stage_result
           
-          puts "   ✓ Completed (cost: $#{agent.metrics[:total_cost].round(4)})"
+          puts "     ✓ $#{agent.metrics[:total_cost].round(4)}"
         end
         
         {

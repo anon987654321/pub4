@@ -84,14 +84,14 @@ module MASTER
         session_dir = File.join(OUTPUT_DIR, session_id)
         FileUtils.mkdir_p(session_dir)
 
-        puts "swarm: generating #{count} #{type} variations"
-        puts "       prompt: #{prompt[0..60]}..."
-        puts "       session: #{session_id}"
+        puts "swarm: #{count} #{type}"
+        puts "  prompt: #{prompt[0..50]}..."
+        puts "  session: #{session_id}"
 
         # Phase 1: Generate all variations
         variations = generate_variations(prompt, type, config, count, session_dir)
 
-        puts "\nswarm: #{variations.size} generated, scoring..."
+        puts "  #{variations.size} generated, scoring..."
 
         # Phase 2: Score each variation
         scored = score_variations(variations, type)
@@ -105,11 +105,7 @@ module MASTER
         organize_output(session_dir, selected, rejected)
 
         # Summary
-        puts "\nswarm: complete"
-        puts "       generated: #{variations.size}"
-        puts "       selected: #{selected.size} (score >= #{selected.last&.dig(:score)&.round(2)})"
-        puts "       rejected: #{rejected.size}"
-        puts "       output: #{session_dir}/selected/"
+        puts "  ✓ #{selected.size}/#{variations.size} selected (≥#{selected.last&.dig(:score)&.round(2)})"
 
         Result.ok({
           session: session_id,

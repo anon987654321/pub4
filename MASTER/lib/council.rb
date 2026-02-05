@@ -36,14 +36,15 @@ module MASTER
         echo = EchoChamber.instance
         history = []
         
-        puts "🏛️  Council debate: #{members.size} members, #{rounds} rounds"
+        puts "council: #{members.size} members, #{rounds} rounds"
         
         # Round 1: Independent
         responses = members.map do |m|
-          puts "   #{m} thinking..."
+          print "  #{m}..."
           echoes = echo.find_similar(prompt, limit: 3, exclude: m)
           enhanced = echoes.any? ? "#{prompt}\n\nPast insights:\n#{echoes.map{|e| e[:content][0..100]}.join(\n)}" : prompt
           resp = call_llm(m, enhanced)
+          puts " ✓"
           history << {member: m, round: 1, content: resp}
           echo.store(content: resp, source: m, prompt: prompt, tags: [:debate, MEMBERS[m][:role]]) if store
           {member: m, response: resp, role: MEMBERS[m][:role]}
@@ -51,7 +52,7 @@ module MASTER
         
         # Round 2+: Synthesis
         (2..rounds).each do |r|
-          puts "\n🔄 Round #{r}: Synthesis"
+          puts "  round #{r}: synthesis"
           responses = members.map do |m|
             others = responses.reject{|x| x[:member] == m}.map{|o| "#{o[:member]}: #{o[:response]}"}.join(\n\n)
             synthesis = "Original: #{prompt}\n\nOthers said:\n#{others}\n\nYour synthesis:"
@@ -85,7 +86,7 @@ module MASTER
         start = Time.now
         reflections = []
         
-        puts "💭 Dream session: #{topic} (#{duration_minutes}m)"
+        puts "dream: #{topic} (#{duration_minutes}m)"
         
         iteration = 0
         while Time.now - start < duration_minutes * 60
@@ -93,19 +94,19 @@ module MASTER
           members = MEMBERS.keys.sample(2)
           prompt = reflections.empty? ? "Explore #{topic} from unexpected angle" : "Building on: #{reflections.last[:insight][0..80]}... Next layer?"
           
-          puts "   [#{iteration}] #{members.join(' + ')}"
+          print "  [#{iteration}] #{members.join('+')}..."
           result = debate(prompt: prompt, members: members, rounds: 1, store: true)
           reflections << {iteration: iteration, members: members, insight: result[:consensus][:synthesis]}
           
           sleep 30
         end
         
-        puts "✅ Dream complete: #{reflections.size} insights"
+        puts " ✓ #{reflections.size} insights"
         {topic: topic, duration: Time.now - start, iterations: reflections.size, reflections: reflections}
       end
       
       def emergency_consult(prompt:, previous_attempts:)
-        puts "🚨 Emergency consult (low confidence)"
+        puts "emergency: low confidence consult"
         context = "Previous attempts:\n#{previous_attempts.map.with_index{|a,i| "#{i+1}: #{a[:response][0..100]}"}.join(\n)}\n\nTask: #{prompt}"
         debate(prompt: context, members: [:claude, :grok, :kimi], rounds: 2, store: true)
       end

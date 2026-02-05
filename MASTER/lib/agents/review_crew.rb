@@ -32,9 +32,7 @@ module MASTER
       def review(code, file_path = nil, &progress_block)
         @results = {}
         
-        puts "🚀 Starting multi-agent code review..."
-        puts "   Agents: #{@agents.map(&:name).join(', ')}"
-        puts
+        puts "review: #{@agents.size} agents"
 
         # Run agents in parallel using Async if available, otherwise sequential
         if defined?(Async)

@@ -22,11 +22,10 @@ module MASTER
       end
       
       def execute
-        puts "🏛️  Chamber Mode: Multi-model deliberation"
-        puts "━" * 60
+        puts "chamber: #{CHAMBER_MODELS.keys.size} roles, #{MAX_ROUNDS} rounds max"
         
         MAX_ROUNDS.times do |round_num|
-          puts "\n📍 Round #{round_num + 1}/#{MAX_ROUNDS}"
+          puts "  round #{round_num + 1}/#{MAX_ROUNDS}"
           
           round_result = execute_round(round_num)
           @rounds << round_result
@@ -38,7 +37,7 @@ module MASTER
         end
         
         # No consensus reached - synthesizer makes final call
-        puts "\n⚖️  No consensus - Synthesizer making final decision..."
+        puts "  no consensus, synthesizing..."
         synthesize_final_answer(@rounds.last)
       end
       
