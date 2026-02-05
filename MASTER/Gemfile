@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+# Core
+gem 'async'
+gem 'falcon'
+
+# LLM
+gem 'ruby_llm', require: false
+
+# Web browsing
+gem 'ferrum', require: false
+
+# CLI
+gem 'readline'
+
+# Optional
+gem 'tty-spinner', require: false
+gem 'tty-prompt', require: false
