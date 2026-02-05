@@ -11,6 +11,8 @@ end
 
 module MASTER
   class LLM
+    MAX_TOKENS = 4096
+    
     TIERS = {
       cheap:     { model: 'deepseek/deepseek-chat',        input: 0.00014, output: 0.00028 },
       fast:      { model: 'x-ai/grok-4-fast',              input: 0.0002,  output: 0.0005 },
@@ -329,7 +331,7 @@ module MASTER
           model: config[:model],
           messages: build_messages,
           temperature: 0.7,
-          max_tokens: 4096
+          max_tokens: MAX_TOKENS
         }.to_json
 
         response = http.request(request)

@@ -8,6 +8,7 @@ module MASTER
   CODENAME = 'MASTER'
   ROOT = File.expand_path('..', __dir__)
   LIB = __dir__
+  BOOT_TIME = Time.now
 
   autoload :Paths,       "#{LIB}/paths"
   autoload :Result,      "#{LIB}/result"

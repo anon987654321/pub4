@@ -7,9 +7,21 @@ module MASTER
     MAX_ITERATIONS = 100
     CONVERGENCE_THRESHOLD = 0.02  # Stop when improvement rate drops below 2%
     MIN_REFINEMENTS = 2           # Stop when fewer than this found
+    PER_FILE_BUDGET = 0.5         # Max cost per file analysis
+    MAX_ANALYSIS_FILE_SIZE = 10_000
+    MAX_CONCEPTUAL_CHECK_SIZE = 5000
     REFINEMENT_FILE = File.join(Paths.config, 'refinements.yml')
     WISHLIST_FILE = File.join(Paths.config, 'wishlist.yml')
     EVOLUTION_LOG = File.join(Paths.data, 'evolution.log')
+    HISTORY_FILE = File.join(Paths.data, 'evolution_history.yml')
+    
+    # Files that should never be auto-modified during self-runs
+    PROTECTED_FILES = %w[
+      lib/evolve.rb
+      lib/violations.rb
+      lib/converge.rb
+      lib/core/executor.rb
+    ].freeze
 
     def initialize(llm, chamber = nil)
       @llm = llm
@@ -19,12 +31,85 @@ module MASTER
       @iteration = 0
       @cost = 0.0
       @history = []  # Track improvement rates
+      @prior_wishlist = load_prior_wishlist
+    end
+    
+    # Load wishlist from previous run to inform current analysis
+    def load_prior_wishlist
+      return [] unless File.exist?(WISHLIST_FILE)
+      YAML.load_file(WISHLIST_FILE) rescue []
+    end
+    
+    # Save run history for learning across sessions
+    def save_run_history(summary)
+      history = File.exist?(HISTORY_FILE) ? (YAML.load_file(HISTORY_FILE) rescue []) : []
+      history << {
+        timestamp: Time.now.iso8601,
+        iterations: @iteration,
+        cost: @cost,
+        summary: summary
+      }
+      history = history.last(50) # Keep last 50 runs
+      File.write(HISTORY_FILE, history.to_yaml)
+    end
+    
+    # Check if file is protected from auto-modification
+    def protected?(file)
+      PROTECTED_FILES.any? { |p| file.end_with?(p) }
+    end
+    
+    # Load principles from YAML files for context
+    def load_principles
+      dir = File.join(Paths.lib, 'principles')
+      return [] unless File.directory?(dir)
+      
+      Dir[File.join(dir, '*.yml')].map do |f|
+        YAML.load_file(f) rescue nil
+      end.compact
+    end
+    
+    # Format principles for LLM context
+    def principles_context
+      principles = load_principles
+      return "" if principles.empty?
+      
+      principles.first(10).map do |p|
+        "#{p['name']}: #{p['description']}"
+      end.join("\n")
+    end
+    
+    # Capture baseline metrics before any changes
+    def capture_baseline(target)
+      {
+        files: collect_files(target).size,
+        lines: collect_files(target).sum { |f| File.read(f).lines.count rescue 0 },
+        violations: count_violations(target),
+        timestamp: Time.now.iso8601
+      }
+    end
+    
+    # Run tests to verify changes didn't break anything
+    def verify_tests
+      test_dir = File.join(Paths.root, 'test')
+      return { passed: true, skipped: true } unless File.directory?(test_dir)
+      
+      result = `cd #{Paths.root} && ruby -Ilib -Itest -e "Dir['test/test_*.rb'].each { |f| require './'+f }" 2>&1`
+      passed = $?.success?
+      { passed: passed, output: result.lines.last(5).join, skipped: false }
     end
 
     # Continuous evolution until convergence
     def converge(target: Paths.lib, budget: 5.0)
       log "Convergence loop started: #{target}"
       log "Budget: $#{budget}, threshold: #{CONVERGENCE_THRESHOLD * 100}%"
+      
+      # Capture baseline before any changes
+      @baseline = capture_baseline(target)
+      log "Baseline: #{@baseline[:files]} files, #{@baseline[:violations]} violations"
+
+      # Full principle check at START (lexical + conceptual)
+      start_violations = full_principle_check(target)
+      log "Starting violations: #{start_violations} (lexical + conceptual)"
 
       prev_score = 0
       stall_count = 0
@@ -32,16 +117,22 @@ module MASTER
       loop do
         @iteration += 1
 
-        # Run one evolution cycle
+        # Run one evolution cycle (lexical checks only for speed)
         cycle_result = run_cycle(target)
         break if cycle_result[:stop]
 
         # Track improvement
         current_score = cycle_result[:applied]
+        current_violations = cycle_result[:violations] || 0
         improvement_rate = prev_score > 0 ? (current_score - prev_score).abs.to_f / prev_score : 1.0
-        @history << { iteration: @iteration, applied: current_score, rate: improvement_rate }
+        @history << { 
+          iteration: @iteration, 
+          applied: current_score, 
+          rate: improvement_rate,
+          violations: current_violations
+        }
 
-        log "Cycle #{@iteration}: #{current_score} applied, rate: #{(improvement_rate * 100).round(1)}%"
+        log "Cycle #{@iteration}: #{current_score} applied, #{current_violations} violations"
 
         # Check convergence conditions
         if improvement_rate < CONVERGENCE_THRESHOLD
@@ -76,6 +167,25 @@ module MASTER
         sleep 1
       end
 
+      # Full principle check at END (lexical + conceptual)
+      end_violations = full_principle_check(target)
+      log "Ending violations: #{end_violations} (lexical + conceptual)"
+      
+      # Verify tests still pass after all changes
+      test_result = verify_tests
+      if test_result[:skipped]
+        log "Tests: skipped (no test directory)"
+      elsif test_result[:passed]
+        log "Tests: passed"
+      else
+        log "Tests: FAILED - #{test_result[:output]}"
+      end
+      
+      # Store for summary
+      @start_violations = start_violations
+      @end_violations = end_violations
+      @test_result = test_result
+
       # Final summary
       summary = convergence_summary
       log summary
@@ -83,11 +193,17 @@ module MASTER
       # Generate wishlist for next session
       wishlist = generate_wishlist(target)
       save_wishlist(wishlist)
+      save_run_history(summary)
 
+      log "Evolution complete: #{@iteration} iterations, $#{'%.4f' % @cost}"
       {
         iterations: @iteration,
         cost: @cost,
         history: @history,
+        baseline: @baseline,
+        start_violations: start_violations,
+        end_violations: end_violations,
+        tests_passed: test_result[:passed],
         converged: stall_count >= 3 || @history.last&.dig(:applied).to_i < MIN_REFINEMENTS,
         wishlist: wishlist
       }
@@ -95,52 +211,98 @@ module MASTER
 
     # Single evolution cycle
     def run_cycle(target)
+      # 0. Measure principle compliance BEFORE
+      before_violations = count_violations(target)
+
       # 1. Analyze current state
       refinements = analyze(target)
       if refinements.empty?
         log "No refinements found"
-        return { stop: true, applied: 0 }
+        return { stop: true, applied: 0, violations: before_violations }
       end
 
-      # 2. Prioritize by impact
+      # 2. Prioritize by impact (principle violations first)
       prioritized = prioritize(refinements)
       log "Found #{prioritized.size} refinement opportunities"
 
       # 3. Apply top refinements
       applied = apply_top(prioritized, count: 5)
 
-      # 4. Validate changes
+      # 4. Validate changes (syntax + principles)
       unless validate(target)
         log "Validation failed, reverting"
         revert_last
-        return { stop: false, applied: 0 }
+        return { stop: false, applied: 0, violations: before_violations }
       end
 
-      # 5. Commit if successful
+      # 5. Check principle compliance AFTER
+      after_violations = count_violations(target)
+      if after_violations > before_violations
+        log "Principle violations increased (#{before_violations}→#{after_violations}), reverting"
+        revert_last
+        return { stop: false, applied: 0, violations: before_violations }
+      end
+
+      # 6. Commit if successful
       if applied > 0
-        commit_changes("evolve: #{applied} refinements, iteration #{@iteration}")
+        delta = before_violations - after_violations
+        msg = "evolve: #{applied} refinements"
+        msg += ", -#{delta} violations" if delta > 0
+        commit_changes(msg)
+        log "Violations: #{before_violations}→#{after_violations}"
       end
 
-      # 6. Introspect
+      # 7. Introspect
       reflect
 
-      { stop: false, applied: applied }
+      { stop: false, applied: applied, violations: after_violations }
+    end
+
+    # Count principle violations in target (lexical + conceptual)
+    def count_violations(target, conceptual: false)
+      files = collect_files(target)
+      total = 0
+      files.each do |file|
+        code = File.read(file) rescue next
+        # Lexical (fast, regex-based)
+        lexical = Violations.check_literal(code) rescue []
+        total += lexical.size
+        
+        # Conceptual (slow, LLM-based) - only on first/last cycle or when requested
+        if conceptual && code.length < MAX_CONCEPTUAL_CHECK_SIZE
+          conceptual_v = Violations.detect_conceptual(code, file, @llm) rescue []
+          total += conceptual_v.size
+          @cost += @llm.last_cost rescue 0
+        end
+      end
+      total
+    end
+
+    # Full principle check (both lexical and conceptual)
+    def full_principle_check(target)
+      log "Running full principle check (lexical + conceptual)..."
+      count_violations(target, conceptual: true)
     end
 
     # Full single-pass evolution (original method)
     def run(target: Paths.lib, budget: 1.0)
       log "Evolution started: #{target}"
+      @baseline = capture_baseline(target)
 
       until @iteration >= MAX_ITERATIONS || @cost >= budget
         result = run_cycle(target)
         break if result[:stop] || result[:applied] == 0
       end
 
+      test_result = verify_tests
+      log test_result[:passed] ? "Tests: passed" : "Tests: FAILED"
+
       wishlist = generate_wishlist(target)
       save_wishlist(wishlist)
+      save_run_history("#{@iteration} iterations, $#{'%.4f' % @cost}, tests: #{test_result[:passed]}")
 
       log "Evolution complete: #{@iteration} iterations, $#{'%.4f' % @cost}"
-      { iterations: @iteration, cost: @cost, wishlist: wishlist }
+      { iterations: @iteration, cost: @cost, tests_passed: test_result[:passed], wishlist: wishlist }
     end
 
     # Analyze codebase for refinement opportunities
@@ -149,23 +311,42 @@ module MASTER
       refinements = []
 
       files.each do |file|
-        next if @cost >= 0.5 # Per-file budget
+        next if @cost >= PER_FILE_BUDGET
+        next if protected?(file)
 
         code = File.read(file) rescue next
-        next if code.length > 10_000 # Skip large files
+        next if code.length > MAX_ANALYSIS_FILE_SIZE
+
+        # Check current violations for this file
+        current_violations = Violations.check_literal(code) rescue []
+        violation_context = current_violations.any? ? 
+          "Current violations: #{current_violations.map { |v| v[:principle] }.uniq.join(', ')}" : ""
+        
+        # Include prior wishlist items relevant to this file
+        prior_context = @prior_wishlist.select { |w| w[:file]&.include?(File.basename(file)) }
+        wishlist_context = prior_context.any? ?
+          "Prior wishlist: #{prior_context.map { |w| w[:description] }.join('; ')}" : ""
+        
+        # Load actual principles for context
+        principles_text = principles_context
 
         prompt = <<~PROMPT
-          Analyze this code for micro-refinement opportunities.
+          Analyze this code for refinements that align with these principles:
+          #{principles_text.empty? ? "KISS, DRY, YAGNI, Single Responsibility, Few Arguments, Small Functions." : principles_text}
+
+          #{violation_context}
+          #{wishlist_context}
+
           Return 3-5 specific improvements. For each:
           - Line number (approximate)
           - What to change (one sentence)
-          - Why (impact: clarity/performance/safety)
+          - Why (principle violated OR clarity/performance/safety)
           - Effort: low/medium/high
 
-          Only suggest changes that are:
+          Prioritize fixing principle violations. Only suggest changes that are:
           - Surgical (1-5 lines)
           - Safe (won't break behavior)
-          - Valuable (not style nitpicks)
+          - Aligned with principles above
 
           ```
           #{code[0..3000]}
@@ -341,13 +522,22 @@ module MASTER
       total_applied = @history.sum { |h| h[:applied] }
       avg_rate = @history.empty? ? 0 : @history.sum { |h| h[:rate] } / @history.size
 
+      # Use full principle check values if available, otherwise history
+      start_v = @start_violations || @history.first&.dig(:violations) || 0
+      end_v = @end_violations || @history.last&.dig(:violations) || 0
+      violation_delta = start_v - end_v
+
       <<~SUMMARY
-        Convergence Summary
-        -------------------
+        ━━━ Convergence Summary ━━━
         Iterations: #{@iteration}
-        Total refinements: #{total_applied}
-        Average improvement rate: #{(avg_rate * 100).round(1)}%
-        Total cost: $#{'%.4f' % @cost}
+        Refinements applied: #{total_applied}
+        
+        Principle Alignment:
+          Start: #{start_v} violations (lexical + conceptual)
+          End:   #{end_v} violations
+          Delta: #{violation_delta >= 0 ? '↓' : '↑'}#{violation_delta.abs} #{violation_delta >= 0 ? '✓' : '⚠'}
+        
+        Cost: $#{'%.4f' % @cost}
       SUMMARY
     end
 

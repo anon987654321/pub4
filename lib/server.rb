@@ -183,7 +183,7 @@ module MASTER
         when ['GET', '/metrics']
           metrics = {
             version: VERSION,
-            uptime: (Time.now - (defined?(BOOT_TIME) ? BOOT_TIME : Time.now)).to_i,
+            uptime: (Time.now - BOOT_TIME).to_i,
             requests: rate_limiter.request_count,
             cost: cost_ref.call,
             audit_entries: (Audit.tail(1).size rescue 0),
