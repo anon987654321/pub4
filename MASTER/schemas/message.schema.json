@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://master.ai/schemas/message.schema.json",
+  "title": "Message",
+  "description": "A message in a conversation between user and assistant",
+  "type": "object",
+  "required": ["role", "content"],
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": ["user", "assistant", "system"],
+      "description": "The role of the message sender"
+    },
+    "content": {
+      "type": "string",
+      "description": "The content of the message"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the message was created"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session identifier"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model used to generate the message"
+        },
+        "tier": {
+          "type": "string",
+          "description": "Tier used for the message"
+        },
+        "tokens": {
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "output": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cost in USD"
+        },
+        "cached": {
+          "type": "boolean",
+          "description": "Whether the response was cached"
+        }
+      }
+    }
+  }
+}
