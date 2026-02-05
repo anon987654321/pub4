@@ -1,0 +1,329 @@
+# Workflow Engine Configuration
+# Defines development workflows, phases, gates, and automation rules
+
+workflows:
+  - name: development
+    description: Standard development workflow
+    enabled: true
+    phases:
+      - name: planning
+        description: Requirements and design phase
+        order: 1
+        required: true
+        steps:
+          - name: requirements_gathering
+            type: task
+            description: Gather and document requirements
+            required: true
+            estimated_duration: 120
+          - name: technical_design
+            type: task
+            description: Create technical design
+            required: true
+            estimated_duration: 180
+          - name: design_review
+            type: validation
+            description: Review design with stakeholders
+            required: true
+            criteria:
+              - Design document complete
+              - Architecture approved
+              - Dependencies identified
+
+      - name: implementation
+        description: Code implementation phase
+        order: 2
+        required: true
+        steps:
+          - name: setup_environment
+            type: automation
+            description: Setup development environment
+            required: true
+            script: setup.sh
+          - name: write_code
+            type: task
+            description: Implement features
+            required: true
+            estimated_duration: 480
+          - name: write_tests
+            type: task
+            description: Write unit and integration tests
+            required: true
+            estimated_duration: 240
+          - name: code_review
+            type: validation
+            description: Peer code review
+            required: true
+            criteria:
+              - Code follows standards
+              - Tests pass
+              - Documentation complete
+
+      - name: quality_assurance
+        description: Quality checks and testing
+        order: 3
+        required: true
+        steps:
+          - name: unit_tests
+            type: gate
+            gate: tests
+            description: Run unit tests
+            required: true
+          - name: integration_tests
+            type: gate
+            gate: tests
+            description: Run integration tests
+            required: true
+          - name: coverage_check
+            type: gate
+            gate: test_coverage
+            description: Check code coverage
+            required: true
+          - name: security_scan
+            type: gate
+            gate: security
+            description: Run security analysis
+            required: true
+          - name: complexity_check
+            type: gate
+            gate: complexity
+            description: Check code complexity
+            required: false
+
+      - name: deployment
+        description: Deployment preparation and execution
+        order: 4
+        required: true
+        steps:
+          - name: build
+            type: automation
+            description: Build application
+            required: true
+            script: build.sh
+          - name: deploy_staging
+            type: automation
+            description: Deploy to staging
+            required: true
+            script: deploy_staging.sh
+          - name: smoke_tests
+            type: validation
+            description: Run smoke tests
+            required: true
+          - name: deploy_production
+            type: automation
+            description: Deploy to production
+            required: true
+            script: deploy_production.sh
+            approval_required: true
+
+  - name: feature_development
+    description: Feature-specific development workflow
+    enabled: true
+    phases:
+      - name: feature_planning
+        description: Plan feature implementation
+        order: 1
+        required: true
+        steps:
+          - name: feature_specification
+            type: task
+            description: Define feature specification
+            required: true
+          - name: break_down_tasks
+            type: task
+            description: Break feature into tasks
+            required: true
+
+      - name: feature_implementation
+        description: Implement feature
+        order: 2
+        required: true
+        steps:
+          - name: implement_feature
+            type: task
+            description: Write feature code
+            required: true
+          - name: add_tests
+            type: task
+            description: Add feature tests
+            required: true
+          - name: update_docs
+            type: task
+            description: Update documentation
+            required: false
+
+      - name: feature_validation
+        description: Validate feature
+        order: 3
+        required: true
+        steps:
+          - name: run_tests
+            type: gate
+            gate: tests
+            description: Run all tests
+            required: true
+          - name: feature_review
+            type: validation
+            description: Review feature implementation
+            required: true
+
+  - name: bugfix
+    description: Bug fix workflow
+    enabled: true
+    phases:
+      - name: investigation
+        description: Investigate and reproduce bug
+        order: 1
+        required: true
+        steps:
+          - name: reproduce_bug
+            type: task
+            description: Reproduce the bug
+            required: true
+          - name: root_cause_analysis
+            type: task
+            description: Identify root cause
+            required: true
+
+      - name: fix
+        description: Implement fix
+        order: 2
+        required: true
+        steps:
+          - name: implement_fix
+            type: task
+            description: Write fix
+            required: true
+          - name: add_regression_test
+            type: task
+            description: Add regression test
+            required: true
+
+      - name: verification
+        description: Verify fix
+        order: 3
+        required: true
+        steps:
+          - name: verify_fix
+            type: validation
+            description: Verify bug is fixed
+            required: true
+          - name: run_regression_tests
+            type: gate
+            gate: tests
+            description: Run regression tests
+            required: true
+
+  - name: refactoring
+    description: Code refactoring workflow
+    enabled: true
+    phases:
+      - name: analysis
+        description: Analyze code for refactoring
+        order: 1
+        required: true
+        steps:
+          - name: identify_smells
+            type: task
+            description: Identify code smells
+            required: true
+          - name: plan_refactoring
+            type: task
+            description: Plan refactoring approach
+            required: true
+
+      - name: refactor
+        description: Perform refactoring
+        order: 2
+        required: true
+        steps:
+          - name: apply_refactoring
+            type: task
+            description: Apply refactoring changes
+            required: true
+          - name: update_tests
+            type: task
+            description: Update tests if needed
+            required: true
+
+      - name: validation
+        description: Validate refactoring
+        order: 3
+        required: true
+        steps:
+          - name: verify_behavior
+            type: gate
+            gate: tests
+            description: Verify behavior unchanged
+            required: true
+          - name: check_complexity
+            type: gate
+            gate: complexity
+            description: Verify complexity improved
+            required: true
+
+  - name: release
+    description: Software release workflow
+    enabled: true
+    phases:
+      - name: pre_release
+        description: Pre-release preparation
+        order: 1
+        required: true
+        steps:
+          - name: version_bump
+            type: automation
+            description: Bump version number
+            required: true
+          - name: changelog_update
+            type: task
+            description: Update changelog
+            required: true
+          - name: final_tests
+            type: gate
+            gate: tests
+            description: Run all tests
+            required: true
+
+      - name: release
+        description: Create and publish release
+        order: 2
+        required: true
+        steps:
+          - name: create_release
+            type: automation
+            description: Create release tag
+            required: true
+          - name: build_artifacts
+            type: automation
+            description: Build release artifacts
+            required: true
+          - name: publish_release
+            type: automation
+            description: Publish release
+            required: true
+            approval_required: true
+
+      - name: post_release
+        description: Post-release activities
+        order: 3
+        required: false
+        steps:
+          - name: announce_release
+            type: task
+            description: Announce release
+            required: false
+          - name: monitor_deployment
+            type: task
+            description: Monitor production deployment
+            required: true
+
+settings:
+  parallel_phases: false
+  allow_phase_skip: false
+  auto_progress: false
+  notification_enabled: true
+  audit_log: true
+  max_workflow_duration: 28800  # 8 hours in seconds
+  retry_failed_steps: true
+  max_retries: 3

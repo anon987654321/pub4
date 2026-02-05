@@ -1,0 +1,285 @@
+# Copilot Optimization Configuration
+# Defines GitHub Copilot integration patterns, prompt engineering, and code completion strategies
+
+patterns:
+  - name: prompt_engineering
+    description: Optimize prompts for better AI assistance
+    type: prompt_engineering
+    enabled: true
+    priority: high
+    prompt_template: |
+      Context: {context}
+      Task: {task}
+      Code: {code}
+      Expected outcome: {expected}
+    strategies:
+      - name: context_enrichment
+        description: Add rich context to improve suggestions
+        enabled: true
+      - name: incremental_refinement
+        description: Refine prompts iteratively
+        enabled: true
+      - name: example_driven
+        description: Provide examples for better results
+        enabled: true
+
+  - name: code_completion
+    description: Enhance code completion suggestions
+    type: code_completion
+    enabled: true
+    priority: high
+    triggers:
+      - pattern: 'def '
+        suggestion: Complete method definition with proper signature
+        context: method_definition
+      - pattern: 'class '
+        suggestion: Complete class definition with documentation
+        context: class_definition
+      - pattern: '# TODO:'
+        suggestion: Suggest implementation based on TODO comment
+        context: todo_implementation
+      - pattern: 'test_'
+        suggestion: Generate test cases
+        context: test_generation
+      - pattern: 'rescue'
+        suggestion: Add proper error handling
+        context: error_handling
+    settings:
+      max_suggestions: 3
+      relevance_threshold: 0.7
+      context_window: 100
+
+  - name: refactoring
+    description: Suggest refactoring patterns
+    type: refactoring
+    enabled: true
+    priority: medium
+    matchers:
+      - name: long_method
+        regex: 'def \w+.*\n(?:.*\n){50,}'
+        suggestion: Extract method
+        description: Method is too long, consider breaking it down
+      - name: complex_conditional
+        regex: 'if.*&&.*&&'
+        suggestion: Extract to method or use guard clauses
+        description: Complex conditional detected
+      - name: duplicate_code
+        regex: null  # Handled by semantic analysis
+        suggestion: Extract common code to method
+        description: Duplicate code detected
+    auto_suggest: true
+
+  - name: documentation
+    description: Generate documentation patterns
+    type: prompt_engineering
+    enabled: true
+    priority: medium
+    prompt_template: |
+      Generate documentation for:
+      
+      {code}
+      
+      Include:
+      - Purpose and functionality
+      - Parameters and return values
+      - Usage examples
+      - Edge cases and exceptions
+    documentation_styles:
+      - rdoc
+      - yard
+      - markdown
+    settings:
+      include_examples: true
+      include_edge_cases: true
+      verbosity: balanced
+
+  - name: test_generation
+    description: Generate test cases
+    type: prompt_engineering
+    enabled: true
+    priority: high
+    prompt_template: |
+      Generate comprehensive tests for:
+      
+      {code}
+      
+      Include:
+      - Happy path tests
+      - Edge cases
+      - Error conditions
+      - Boundary values
+    test_frameworks:
+      ruby: [rspec, minitest]
+      python: [pytest, unittest]
+      javascript: [jest, mocha]
+    coverage_target: 90
+
+  - name: code_review
+    description: AI-assisted code review patterns
+    type: prompt_engineering
+    enabled: true
+    priority: high
+    prompt_template: |
+      Review the following code for:
+      - Bugs and logic errors
+      - Security vulnerabilities
+      - Performance issues
+      - Best practices violations
+      
+      Code:
+      {code}
+    review_aspects:
+      - correctness
+      - security
+      - performance
+      - maintainability
+      - style
+
+  - name: bug_fixing
+    description: Assist with bug identification and fixing
+    type: prompt_engineering
+    enabled: true
+    priority: high
+    prompt_template: |
+      Analyze this code for potential bugs:
+      
+      {code}
+      
+      Error message: {error}
+      
+      Suggest fixes that:
+      - Address the root cause
+      - Maintain existing functionality
+      - Follow best practices
+    debugging_steps:
+      - identify_symptoms
+      - reproduce_issue
+      - analyze_root_cause
+      - propose_solutions
+      - verify_fix
+
+  - name: performance_optimization
+    description: Performance optimization suggestions
+    type: refactoring
+    enabled: true
+    priority: medium
+    matchers:
+      - name: n_plus_one_query
+        regex: '\.each.*\.\w+\('
+        suggestion: Use eager loading or batch operations
+        description: Potential N+1 query detected
+      - name: inefficient_loop
+        regex: 'for.*in.*\n.*\.append\('
+        suggestion: Use list comprehension or map
+        description: Inefficient loop detected
+    optimization_targets:
+      - database_queries
+      - algorithms
+      - memory_usage
+      - network_calls
+
+  - name: security_enhancement
+    description: Security improvement suggestions
+    type: prompt_engineering
+    enabled: true
+    priority: critical
+    prompt_template: |
+      Analyze security aspects of:
+      
+      {code}
+      
+      Check for:
+      - Injection vulnerabilities
+      - Authentication issues
+      - Data exposure
+      - Input validation
+    security_checks:
+      - sql_injection
+      - xss
+      - csrf
+      - insecure_dependencies
+      - hardcoded_secrets
+
+  - name: api_design
+    description: API design assistance
+    type: prompt_engineering
+    enabled: true
+    priority: medium
+    prompt_template: |
+      Design API for:
+      
+      {description}
+      
+      Consider:
+      - RESTful principles
+      - Naming conventions
+      - Error handling
+      - Versioning
+      - Documentation
+    design_principles:
+      - rest
+      - consistency
+      - simplicity
+      - discoverability
+
+  - name: architecture_suggestions
+    description: Architectural pattern suggestions
+    type: prompt_engineering
+    enabled: true
+    priority: medium
+    prompt_template: |
+      Suggest architectural improvements for:
+      
+      {code}
+      
+      Consider:
+      - Design patterns
+      - Separation of concerns
+      - Scalability
+      - Maintainability
+    patterns:
+      - mvc
+      - repository
+      - service_layer
+      - dependency_injection
+
+context_enhancement:
+  include_file_path: true
+  include_git_history: false
+  include_related_files: true
+  include_project_conventions: true
+  max_context_lines: 500
+
+completion_preferences:
+  suggestion_count: 3
+  inline_suggestions: true
+  ghost_text: true
+  auto_import: true
+  snippet_expansion: true
+
+learning_settings:
+  track_acceptance_rate: true
+  track_modification_rate: true
+  track_rejection_rate: true
+  adapt_suggestions: true
+  feedback_loop_enabled: true
+
+integration:
+  editor: vscode
+  copilot_version: latest
+  enable_chat: true
+  enable_voice: false
+  enable_inline_chat: true
+
+quality_filters:
+  min_confidence: 0.6
+  filter_duplicates: true
+  filter_deprecated: true
+  prefer_modern_syntax: true
+
+settings:
+  auto_trigger: true
+  debounce_ms: 300
+  max_suggestions_per_line: 1
+  cache_suggestions: true
+  telemetry_enabled: false

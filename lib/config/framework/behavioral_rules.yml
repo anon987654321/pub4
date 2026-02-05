@@ -1,0 +1,156 @@
+# Behavioral Rules Configuration
+# Defines agent behavior patterns, autonomy rules, and collaboration standards
+
+rules:
+  - category: autonomy
+    description: Agent autonomy and decision-making rules
+    enabled: true
+    severity: warning
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: semantic
+        name: autonomous_decision_making
+        message: Ensure agent makes decisions within defined autonomy boundaries
+        description: Agents should make decisions independently but respect constraints
+      - type: regex
+        pattern: '(sudo|rm -rf|DROP TABLE)'
+        message: Potentially dangerous operation detected - requires oversight
+        severity: error
+    fixes: []
+
+  - category: collaboration
+    description: Multi-agent collaboration patterns
+    enabled: true
+    severity: info
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: semantic
+        name: agent_communication
+        message: Ensure proper inter-agent communication protocols
+        description: Agents should communicate clearly and follow established protocols
+      - type: semantic
+        name: task_delegation
+        message: Verify proper task delegation between agents
+        description: Tasks should be delegated to most appropriate agent
+    fixes: []
+
+  - category: safety
+    description: Safety and constraint rules
+    enabled: true
+    severity: error
+    enforcement: block
+    auto_fix: false
+    patterns:
+      - type: regex
+        pattern: 'eval\s*\('
+        message: Unsafe eval() usage detected
+        severity: error
+      - type: regex
+        pattern: 'exec\s*\('
+        message: Unsafe exec() usage detected
+        severity: error
+      - type: semantic
+        name: data_safety
+        message: Ensure safe data handling and no data leakage
+        description: Sensitive data must be protected and not exposed
+    fixes:
+      - pattern: eval
+        suggestion: Use safer alternatives like JSON.parse or specific parsers
+
+  - category: ethics
+    description: Ethical behavior guidelines
+    enabled: true
+    severity: warning
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: semantic
+        name: bias_detection
+        message: Check for potential bias in decision-making
+        description: Ensure fair and unbiased agent behavior
+      - type: semantic
+        name: transparency
+        message: Ensure agent actions are transparent and explainable
+        description: Agents should provide clear reasoning for decisions
+    fixes: []
+
+  - category: efficiency
+    description: Efficiency and resource optimization rules
+    enabled: true
+    severity: info
+    enforcement: warn
+    auto_fix: true
+    patterns:
+      - type: regex
+        pattern: 'sleep\(\d{4,}\)'
+        message: Long sleep detected - consider async alternatives
+        severity: warning
+      - type: regex
+        pattern: 'while\s+true\s*:'
+        message: Infinite loop detected - ensure proper exit conditions
+        severity: warning
+    fixes:
+      - pattern: 'sleep\(\d+\)'
+        suggestion: Use async/await or event-driven patterns instead of sleep
+
+  - category: learning
+    description: Agent learning and adaptation rules
+    enabled: true
+    severity: info
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: semantic
+        name: knowledge_retention
+        message: Ensure proper knowledge storage and retrieval
+        description: Agents should learn from experiences and retain knowledge
+      - type: semantic
+        name: adaptation
+        message: Verify agent adapts behavior based on feedback
+        description: Agents should improve performance over time
+    fixes: []
+
+  - category: error_handling
+    description: Error handling and recovery patterns
+    enabled: true
+    severity: warning
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: regex
+        pattern: 'rescue\s*$'
+        message: Empty rescue block - should handle specific errors
+        severity: warning
+      - type: regex
+        pattern: 'except\s*:'
+        message: Bare except clause - should catch specific exceptions
+        severity: warning
+    fixes:
+      - pattern: 'rescue\s*$'
+        suggestion: Specify exception class and handle appropriately
+
+  - category: observability
+    description: Monitoring and logging requirements
+    enabled: true
+    severity: info
+    enforcement: warn
+    auto_fix: false
+    patterns:
+      - type: semantic
+        name: logging
+        message: Ensure adequate logging for debugging and monitoring
+        description: Critical operations should be logged
+      - type: semantic
+        name: metrics
+        message: Track important metrics for performance monitoring
+        description: Key operations should emit metrics
+    fixes: []
+
+settings:
+  max_violations_before_block: 10
+  auto_fix_enabled: true
+  llm_semantic_checks: true
+  cache_results: true
+  report_format: detailed
