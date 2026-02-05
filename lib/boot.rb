@@ -6,13 +6,16 @@ module MASTER
       def run(verbose: false)
         t0 = Time.now
         principles = load_principles
-        time = Time.now.utc.strftime('%a %b %e %H:%M UTC %Y')
+        smells = principles.sum { |p| p[:anti_patterns]&.size || 0 }
+        model = LLM::TIERS[LLM::DEFAULT_TIER][:model].split('/').last
+        time = Time.now.utc.strftime('%b %e %H:%M UTC %Y')
 
-        puts "master #{VERSION} #1: #{time}"
-        puts "const0: #{principles.size} principles"
-        puts "llm0: #{LLM::TIERS.keys.join(' ')}"
-        puts "#{platform_name}0: #{ROOT}"
-        puts "boot: #{((Time.now - t0) * 1000).round}ms"
+        puts "master #{VERSION} · #{time}"
+        puts "llm: #{model} via openrouter"
+        puts "const: #{principles.size} principles, #{smells} smells"
+        puts "abilities: ask scan refactor review image web"
+        puts "#{platform_name}: #{ROOT}"
+        puts "ready in #{((Time.now - t0) * 1000).round}ms"
 
         principles
       end
