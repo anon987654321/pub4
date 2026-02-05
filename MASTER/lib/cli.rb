@@ -288,7 +288,7 @@ module MASTER
 
       loop do
         prompt_text = @processing ? "#{SPINNER[0]} " : build_prompt
-        input = if TTY_AVAILABLE && ENV['MASTER_TTY_INPUT']
+        input = if TTY_AVAILABLE && $stdin.tty?
           @prompt.ask(prompt_text) { |q| q.modify :strip }
         else
           Readline.readline(prompt_text, true)
