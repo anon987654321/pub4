@@ -57,7 +57,7 @@ function draw(){
   rotY+=0.01+audio*0.03;
   rotX+=0.005;
   
-  ctx.fillStyle='rgba(10,10,12,0.15)';
+  ctx.fillStyle='rgba(0,0,0,0.15)';
   ctx.fillRect(0,0,w,h);
   
   const img=ctx.getImageData(0,0,w,h);
@@ -86,27 +86,15 @@ function draw(){
     const px=Math.floor(p.px),py=Math.floor(p.py);
     if(px<1||px>=w-1||py<1||py>=h-1)continue;
     
-    // Color based on depth and hue
+    // Blue-mint color based on depth (hue 170-190)
     const depth=(p.z+50)/100;
-    const hue=(p.hue+time*20)%360;
-    const lit=0.3+depth*0.4;
+    const lit=0.3+depth*0.5;
     
-    // HSL to RGB
-    const c=(1-Math.abs(2*lit-1))*0.8;
-    const x2=c*(1-Math.abs((hue/60)%2-1));
-    const m=lit-c/2;
-    let R,G,B;
-    const h6=Math.floor(hue/60)%6;
-    if(h6===0){R=c;G=x2;B=0}
-    else if(h6===1){R=x2;G=c;B=0}
-    else if(h6===2){R=0;G=c;B=x2}
-    else if(h6===3){R=0;G=x2;B=c}
-    else if(h6===4){R=x2;G=0;B=c}
-    else{R=c;G=0;B=x2}
-    
-    R=Math.floor((R+m)*255);
-    G=Math.floor((G+m)*255);
-    B=Math.floor((B+m)*255);
+    // Cyan to turquoise gradient
+    const t=(Math.sin(p.hue*0.05+time)+1)/2;
+    let R=Math.floor(lit*(0+t*72));
+    let G=Math.floor(lit*(180+t*44));
+    let B=Math.floor(lit*(190+t*19));
     
     const q=quantize(R,G,B);
     const dith=((px+py)%2)*16-8;

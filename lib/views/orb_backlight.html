@@ -28,11 +28,11 @@ const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 let w,h,scale=2,audio=0,time=0,mood='neutral';
 
 const MOODS={
-  neutral:{bg:[32,41,58],c1:[0,252,189],c2:[116,0,249]},
-  positive:{bg:[32,58,41],c1:[0,252,125],c2:[0,249,116]},
-  negative:{bg:[58,32,32],c1:[252,0,0],c2:[249,116,0]},
-  calm:{bg:[32,42,58],c1:[0,116,252],c2:[0,0,249]},
-  excited:{bg:[58,32,58],c1:[252,0,252],c2:[249,0,249]}
+  neutral:{bg:[0,0,0],c1:[0,206,209],c2:[64,224,208]},
+  positive:{bg:[0,0,0],c1:[72,209,204],c2:[127,255,212]},
+  negative:{bg:[0,0,0],c1:[0,139,139],c2:[32,178,170]},
+  calm:{bg:[0,0,0],c1:[0,206,209],c2:[64,224,208]},
+  excited:{bg:[0,0,0],c1:[0,255,255],c2:[127,255,212]}
 };
 
 function resize(){
@@ -50,8 +50,8 @@ function draw(){
   const baseRadius=Math.min(w,h)*0.25;
   const radius=baseRadius+audio*baseRadius*0.3;
   
-  // Clear with background
-  ctx.fillStyle=`rgb(${m.bg[0]},${m.bg[1]},${m.bg[2]})`;
+  // Clear with pure black
+  ctx.fillStyle='#000';
   ctx.fillRect(0,0,w,h);
   
   const img=ctx.getImageData(0,0,w,h);
@@ -91,11 +91,10 @@ function draw(){
         img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
       }
       
-      // Dark orb center
+      // Dark orb center (pure black)
       if(dist<radius){
-        const q=quantize(m.bg[0]*0.8,m.bg[1]*0.8,m.bg[2]*0.8);
         const i=(y*w+x)*4;
-        img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
+        img.data[i]=0;img.data[i+1]=0;img.data[i+2]=0;img.data[i+3]=255;
       }
     }
   }

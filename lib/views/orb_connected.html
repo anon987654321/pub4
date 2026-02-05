@@ -47,9 +47,11 @@ function initOrbs(){
 }
 
 function phaseColor(angle){
-  const r=Math.floor(Math.sin(0.3*angle)*127+128);
-  const g=Math.floor(Math.sin(0.3*angle+2.094)*127+128);
-  const b=Math.floor(Math.sin(0.3*angle+4.188)*127+128);
+  // Blue-mint colors (hue 170-190)
+  const t=(Math.sin(angle*0.3)+1)/2;
+  const r=Math.floor(0+t*72);
+  const g=Math.floor(180+t*44);
+  const b=Math.floor(190+t*19);
   return [r,g,b];
 }
 

@@ -57,7 +57,7 @@ function draw(){
   const speed=2+audio*4;
   const cx=w/2,cy=h/2,fov=150;
   
-  ctx.fillStyle='rgba(10,10,12,0.2)';
+  ctx.fillStyle='rgba(0,0,0,0.2)';
   ctx.fillRect(0,0,w,h);
   
   const img=ctx.getImageData(0,0,w,h);
@@ -73,7 +73,7 @@ function draw(){
     
     if(sx>=0&&sx<w&&sy>=0&&sy<h){
       const bright=Math.floor(100+((200-star.z)/400)*155);
-      const q=quantize(bright,bright,252);
+      const q=quantize(0,bright*0.85,bright);
       const i=(sy*w+sx)*4;
       img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
     }
@@ -96,14 +96,10 @@ function draw(){
       const py=Math.floor(cy+Math.sin(a)*r);
       
       if(px>=0&&px<w&&py>=0&&py<h){
-        // Blue/cyan warp color
-        const hue=200+depth*40+audio*30;
-        const lit=0.3+depth*0.4;
-        
-        // Simple HSL approximation for blues
-        let R=Math.floor(50+depth*100);
-        let G=Math.floor(100+depth*80);
-        let B=Math.floor(180+depth*75);
+        // Blue-mint cyan color
+        let R=Math.floor(0+depth*72);
+        let G=Math.floor(180+depth*44);
+        let B=Math.floor(200+depth*9);
         
         const q=quantize(R,G,B);
         const dith=((px+py)%2)*20-10;

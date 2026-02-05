@@ -7,11 +7,11 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
 body{background:#000;display:flex;align-items:center;justify-content:center}
-.mood-neutral{--c1:#0d2818;--c2:#4ecca3;--c3:#36a88e;--c4:#1a3c34}
-.mood-positive{--c1:#0d3320;--c2:#7fefbd;--c3:#5cd9a7;--c4:#1a4d38}
-.mood-negative{--c1:#1a2634;--c2:#5eaaa8;--c3:#4a9492;--c4:#0d1820}
-.mood-calm{--c1:#0a1628;--c2:#48bfe3;--c3:#3a9fc0;--c4:#061018}
-.mood-excited{--c1:#0d2830;--c2:#72efdd;--c3:#56d4c4;--c4:#0a1c22}
+.mood-neutral{--c1:#003333;--c2:#00CED1;--c3:#40E0D0;--c4:#006666}
+.mood-positive{--c1:#004040;--c2:#48D1CC;--c3:#7FFFD4;--c4:#008080}
+.mood-negative{--c1:#002828;--c2:#008B8B;--c3:#20B2AA;--c4:#004040}
+.mood-calm{--c1:#003333;--c2:#00CED1;--c3:#40E0D0;--c4:#004D4D}
+.mood-excited{--c1:#004D4D;--c2:#00FFFF;--c3:#7FFFD4;--c4:#008080}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(transparent 0px,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:10}
 .crt{position:fixed;inset:0;box-shadow:inset 0 0 120px rgba(0,0,0,0.7);pointer-events:none;z-index:11}
@@ -31,14 +31,14 @@ var beatEnv=0;
 var audio={bass:0.5,mid:0.5,high:0.5,beat:0};
 var mouseX=0,mouseY=0,tiltX=0,tiltY=0;
 
-// Warp Records minty palette
+// Blue-mint palette
 var palette={
-  bg:'#0a0f0f',
-  dark:'#0d2818',
-  mid:'#1a3c34',
-  light:'#36a88e',
-  bright:'#4ecca3',
-  glow:'#7fefbd'
+  bg:'#000',
+  dark:'#003333',
+  mid:'#006666',
+  light:'#00CED1',
+  bright:'#40E0D0',
+  glow:'#48D1CC'
 };
 
 function resize(){
@@ -93,9 +93,10 @@ function rgb(r,g,b){var q=quantize(r,g,b);return 'rgb('+q[0]+','+q[1]+','+q[2]+'
 function getColor(layer,beat){
   var pulse=beat*40;
   var depth=layer/6;
-  var r=13+depth*20+pulse*0.2;
-  var g=40+depth*60+pulse*0.5;
-  var b=24+depth*50+pulse*0.3;
+  // Blue-mint gradient
+  var r=0+depth*30+pulse*0.1;
+  var g=160+depth*50+pulse*0.3;
+  var b=180+depth*30+pulse*0.2;
   return rgb(r,g,b);
 }
 
@@ -188,7 +189,7 @@ function drawStars(){
     if(sx>=0&&sx<w&&sy>=0&&sy<h){
       var b=s.b*(1-s.z/200);
       var c=b*80;
-      ctx.fillStyle=rgb(c*0.3,c*0.6,c);
+      ctx.fillStyle=rgb(0,c*0.8,c);
       ctx.fillRect(Math.floor(sx),Math.floor(sy),1,1);
     }
   }

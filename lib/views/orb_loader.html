@@ -28,11 +28,11 @@ const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 let w,h,scale=2,audio=0,time=0,mood='neutral';
 
 const MOODS={
-  neutral:{c1:[30,63,87],c2:[60,97,125],c3:[107,178,205]},
-  positive:{c1:[30,87,55],c2:[60,125,93],c3:[107,205,141]},
-  negative:{c1:[87,30,30],c2:[125,60,60],c3:[205,107,107]},
-  calm:{c1:[30,47,87],c2:[60,77,125],c3:[107,139,205]},
-  excited:{c1:[87,30,87],c2:[125,60,125],c3:[205,107,205]}
+  neutral:{c1:[0,80,85],c2:[0,206,209],c3:[64,224,208]},
+  positive:{c1:[0,100,100],c2:[72,209,204],c3:[127,255,212]},
+  negative:{c1:[0,60,65],c2:[0,139,139],c3:[32,178,170]},
+  calm:{c1:[0,80,85],c2:[0,206,209],c3:[64,224,208]},
+  excited:{c1:[0,120,120],c2:[0,255,255],c3:[127,255,212]}
 };
 
 let particles=[];
@@ -64,8 +64,8 @@ function draw(){
   const cy=baseY+bounce;
   const radius=Math.min(w,h)*0.15+audio*10;
   
-  // Background
-  ctx.fillStyle='#1a1a2e';
+  // Pure black background
+  ctx.fillStyle='#000';
   ctx.fillRect(0,0,w,h);
   
   const img=ctx.getImageData(0,0,w,h);
