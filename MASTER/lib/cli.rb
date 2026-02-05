@@ -659,6 +659,9 @@ module MASTER
       when 'lint'
         lint_files(arg || '.')
 
+      when 'bughunt', 'hunt', 'debug'
+        bughunt_file(arg)
+
       when 'web'
         browse_web(arg)
 
@@ -1031,6 +1034,7 @@ module MASTER
           refactor, r   #{C_DIM}Auto-fix#{C_RESET}
           lint          #{C_DIM}Check style#{C_RESET}
           beautify      #{C_DIM}Format#{C_RESET}
+          bughunt       #{C_DIM}8-phase debug#{C_RESET}
 
         #{C_BOLD}AI#{C_RESET}
           chamber, c    #{C_DIM}Multi-model#{C_RESET}
@@ -1658,6 +1662,17 @@ module MASTER
       else
         warnings.join("\n")
       end
+    end
+
+    def bughunt_file(path)
+      return "Usage: bughunt <file>" unless path
+
+      full = File.expand_path(path, @root)
+      return "File not found: #{path}" unless File.exist?(full)
+
+      code = File.read(full)
+      report = BugHunting.analyze(code, file_path: full)
+      BugHunting.format(report)
     end
 
     def resolve_beautify_files(path)

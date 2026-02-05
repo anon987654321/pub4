@@ -37,6 +37,7 @@ module MASTER
   autoload :RateLimiter, "#{LIB}/server"
   autoload :Weaviate,    "#{LIB}/weaviate"
   autoload :AutoInstall, "#{LIB}/auto_install"
+  autoload :BugHunting,  "#{LIB}/bug_hunting"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
