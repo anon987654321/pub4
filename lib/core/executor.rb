@@ -10,6 +10,15 @@ module MASTER
     MAX_OUTPUT = 4000
 
     class << self
+      # Dry-run mode: show what would execute without running
+      def dry_run?
+        ENV['MASTER_DRY_RUN'] == '1' || @dry_run
+      end
+
+      def dry_run=(val)
+        @dry_run = val
+      end
+
       def process_response(response)
         results = []
 
@@ -41,13 +50,16 @@ module MASTER
           return { type: :blocked, command: command, error: "Cannot invoke self recursively" }
         end
 
+        # Dry-run mode
+        if dry_run?
+          return { type: :dry_run, command: command, output: "[DRY] would run: #{command[0..80]}" }
+        end
+
         # Safety check first
         unless Safety.command_safe?(command)
           Audit.log(command: command, type: :shell, status: :blocked) rescue nil
           return { type: :blocked, command: command, error: "Blocked by safety filter" }
         end
-
-        trace "exec: #{command[0..60]}..."
 
         begin
           output = `#{command} 2>&1`
@@ -73,7 +85,10 @@ module MASTER
           return { type: :blocked, code: code[0..100], error: "Blocked by safety filter" }
         end
 
-        trace "ruby: #{code[0..60]}..."
+        # Dry-run mode
+        if dry_run?
+          return { type: :dry_run, code: code[0..100], output: "[DRY] would eval: #{code[0..60]}..." }
+        end
 
         begin
           # Execute in isolated binding

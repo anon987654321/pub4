@@ -69,8 +69,7 @@ module MASTER
       end
 
       def change_ratio(old_hash, new_hash)
-        return 1.0 if old_hash == new_hash
-        # Simple: different = 100% change
+        # Same hash = no change (0%), different = full change (100%)
         old_hash == new_hash ? 0.0 : 1.0
       end
 

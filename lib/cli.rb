@@ -63,10 +63,18 @@ module MASTER
       commands_100: { name: "Centurion", desc: "100 commands" }
     }.freeze
 
+    # Command aliases for speed
+    ALIASES = {
+      'q' => 'queue', 's' => 'scan', 'r' => 'refactor', 'a' => 'ask',
+      'c' => 'chamber', 'e' => 'evolve', 'i' => 'introspect', 'p' => 'personas',
+      'v' => 'version', 'h' => 'help', '?' => 'help', 'd' => 'diff', 'l' => 'log',
+      'st' => 'status', 'hi' => 'history', 'cl' => 'clear'
+    }.freeze
+
     COMMANDS = %w[
       ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
       context converge cost describe diff edit enforce-principles evolve exit fav favs git help
-      image install-hooks introspect lint log ls persona personas principles pull push
+      history image install-hooks introspect lint log ls metrics persona personas principles pull push
       queue quit radio read refactor refine reload review sanity scan smells speak status stream
       tree undo version web
     ].freeze
@@ -249,8 +257,14 @@ module MASTER
           check_achievements
 
           puts colorize_output(result) if result
-          puts "#{C_DIM}#{elapsed_ms}ms#{C_RESET}" if elapsed_ms > 100 && @verbosity == :high
-          show_token_info if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+          # Terse single-line stats (only if LLM was called)
+          if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+            stats = "#{C_DIM}#{elapsed_ms}ms · #{@last_tokens[:input]}→#{@last_tokens[:output]}tok"
+            stats += " · cached" if @last_cached
+            puts "#{stats}#{C_RESET}"
+            @last_tokens = { input: 0, output: 0 }
+            @last_cached = false
+          end
         rescue => e
           @streak = 0
           puts "#{C_RED}#{e.message}#{C_RESET}"
@@ -457,6 +471,7 @@ module MASTER
 
     def handle(input)
       cmd, *args = input.split(/\s+/, 2)
+      cmd = ALIASES[cmd] || cmd  # Resolve aliases
       arg = args.first
 
       case cmd
@@ -541,6 +556,12 @@ module MASTER
 
       when 'status'
         status_info
+
+      when 'history'
+        show_history(arg&.to_i || 20)
+
+      when 'metrics'
+        show_metrics
 
       when 'refine'
         run_refine(arg)
@@ -692,52 +713,48 @@ module MASTER
 
     def help_text
       <<~HELP
-        Commands:
-          ask <msg>       Chat
-          alias k=v       Shortcut
-          aliases         List shortcuts
-          audit [ref]     Compare vs history
-          backend <name>  Switch LLM backend
-          cat <file>      View
-          cd <dir>        Change dir
-          clean <file>    Fix whitespace
-          clear           Reset chat
-          context <add|drop|list|clear>   Manage context files
-          converge        Loop until stable
-          cost            Usage stats
-          describe <img>  Vision
-          diff            Changes
-          edit <file>     Modify
-          fav <cmd>       Save favorite
-          favs            List favorites
-          f1, f2...       Run favorite
-          git <cmd>       Git
-          help            This
-          image <prompt>  Generate
-          log             History
-          ls              Files
-          persona <name>  Switch
-          personas        List
-          principles      List
-          pull            Fetch
-          push            Deploy
-          commit [msg]    Save
-          read <file>     View
-          refactor <path> Auto-fix
-          refine [path]   Micro-improve
-          review <path>   Multi-agent
-          chamber <file>  Deliberate
-          queue <dir>     Batch
-          introspect      Self-check
-          sanity <plan>   Validate
-          evolve [path]   Self-improve
-          scan <path>     Find issues
-          smells <path>   Detect rot
-          status          State
-          undo            Revert changes
-          version         Build
-          web <url>       Fetch
-          exit            Quit
+        #{C_CYAN}━━━ Core ━━━#{C_RESET}
+          ask, a        Chat with LLM
+          clear, cl     Reset context
+          status, st    Show state
+          history, hi   Past commands
+          metrics       Session stats
+          exit, quit    Leave
+
+        #{C_CYAN}━━━ Files ━━━#{C_RESET}
+          ls, tree      List files
+          cat, read     View file
+          edit          Modify file
+          diff, d       Show changes
+          cd            Change dir
+
+        #{C_CYAN}━━━ Code ━━━#{C_RESET}
+          scan, s       Find issues
+          smells        Detect rot
+          refactor, r   Auto-fix
+          lint          Check style
+          beautify      Format
+
+        #{C_CYAN}━━━ AI ━━━#{C_RESET}
+          chamber, c    Multi-model
+          queue, q      Batch process
+          evolve, e     Self-improve
+          introspect, i Self-check
+          converge      Loop stable
+          backend       Switch LLM
+          context       Manage files
+
+        #{C_CYAN}━━━ Git ━━━#{C_RESET}
+          log, l        History
+          commit        Save
+          push/pull     Sync
+
+        #{C_CYAN}━━━ Media ━━━#{C_RESET}
+          image         Generate
+          describe      Vision
+          speak         TTS
+
+        #{C_DIM}Aliases: q=queue s=scan r=refactor a=ask c=chamber e=evolve#{C_RESET}
       HELP
     end
 
@@ -829,21 +846,18 @@ module MASTER
     def chat(message)
       return 'Usage: ask <message>' unless message
 
-      trace "sending: #{message[0..50]}..."
       result = @llm.chat(message)
       @last_tokens = @llm.last_tokens
       @last_cached = @llm.last_cached
-      trace "received"
       
       return "Error: #{result.error}" unless result.ok?
       
       response = result.value
       
-      # Execute any code blocks in response (silently)
+      # Execute any code blocks in response
       exec_results = Executor.process_response(response)
       if exec_results.any? && exec_results.any? { |r| r[:success] == false }
         formatted = Executor.format_results(exec_results)
-        trace "exec failed, retrying..."
         followup = @llm.chat("Execution results:\n#{formatted}\n\nFix errors. Reply with terse result only.")
         response = followup.value if followup.ok?
       end
@@ -1841,6 +1855,68 @@ module MASTER
       result.empty? ? "Ports OK" : result
     rescue => e
       "Error checking ports: #{e.message}"
+    end
+
+    # Show command history
+    def show_history(n = 20)
+      return "No history" unless File.exist?(HISTORY_FILE)
+      lines = File.readlines(HISTORY_FILE).last(n)
+      lines.each_with_index.map { |l, i| "#{i + 1}. #{l.strip}" }.join("\n")
+    end
+
+    # Show session metrics
+    def show_metrics
+      uptime = Time.now - @boot_time
+      [
+        "#{C_CYAN}━━━ MASTER v#{VERSION} Metrics ━━━#{C_RESET}",
+        "Uptime: #{format_duration(uptime)}",
+        "Commands: #{@command_count}",
+        "Streak: #{@streak}",
+        "Session: #{@session_name}",
+        "Cost: $#{'%.4f' % @llm.total_cost}",
+        "Tokens: #{@last_tokens[:input]}in/#{@last_tokens[:output]}out",
+        "Memory: #{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB",
+        "Audit entries: #{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0}"
+      ].join("\n")
+    end
+
+    def format_duration(secs)
+      if secs < 60
+        "#{secs.to_i}s"
+      elsif secs < 3600
+        "#{(secs / 60).to_i}m #{(secs % 60).to_i}s"
+      else
+        "#{(secs / 3600).to_i}h #{((secs % 3600) / 60).to_i}m"
+      end
+    end
+
+    # Visual separator
+    def separator(label = nil)
+      width = 60
+      if label
+        pad = (width - label.length - 2) / 2
+        "#{C_CYAN}╭#{'─' * pad} #{label} #{'─' * (width - pad - label.length - 2)}╮#{C_RESET}"
+      else
+        "#{C_CYAN}├#{'─' * width}┤#{C_RESET}"
+      end
+    end
+
+    # Progress indicator for long operations
+    def with_progress(message)
+      done = false
+      spinner_thread = Thread.new do
+        i = 0
+        until done
+          print "\r#{message} #{SPINNER[i % 4]}"
+          i += 1
+          sleep 0.1
+        end
+      end
+      result = yield
+      done = true
+      spinner_thread.join
+      puts "\r#{message} #{C_GREEN}✓#{C_RESET}"
+      result
     end
   end
 end
