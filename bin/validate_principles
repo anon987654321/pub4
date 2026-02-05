@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Comprehensive principle validation tool
+
+require_relative '../lib/master'
+
+# Colors
+RED = "\e[31m"
+GREEN = "\e[32m"
+YELLOW = "\e[33m"
+CYAN = "\e[36m"
+RESET = "\e[0m"
+
+def puts_colored(color, message)
+  puts "#{color}#{message}#{RESET}"
+end
+
+def header(text)
+  puts
+  puts_colored(CYAN, "=" * 60)
+  puts_colored(CYAN, text.center(60))
+  puts_colored(CYAN, "=" * 60)
+  puts
+end
+
+# Parse arguments
+verbose = ARGV.include?('--verbose') || ARGV.include?('-v')
+fix = ARGV.include?('--fix')
+files = ARGV.reject { |a| a.start_with?('--') || a.start_with?('-') }
+
+# Get files to check
+if files.empty?
+  # Check all Ruby files in lib/
+  files = Dir['lib/**/*.rb']
+else
+  files = files.select { |f| File.exist?(f) }
+end
+
+if files.empty?
+  puts_colored(RED, "No files to validate")
+  exit 1
+end
+
+header "Validating #{files.size} files against principles"
+
+# Statistics
+stats = {
+  files_checked: 0,
+  files_clean: 0,
+  files_with_violations: 0,
+  total_violations: 0,
+  critical: 0,
+  high: 0,
+  medium: 0,
+  low: 0
+}
+
+violations_by_file = {}
+
+# Check each file
+files.each do |file|
+  stats[:files_checked] += 1
+  
+  code = File.read(file)
+  
+  # Check literal violations
+  literal_violations = MASTER::Violations.check_literal(code)
+  
+  if literal_violations.any?
+    stats[:files_with_violations] += 1
+    violations_by_file[file] = literal_violations
+    
+    literal_violations.each do |v|
+      stats[:total_violations] += 1
+      severity = v[:severity] || :medium
+      stats[severity] += 1
+    end
+  else
+    stats[:files_clean] += 1
+  end
+  
+  print "." unless verbose
+end
+
+puts unless verbose
+puts
+
+# Report results
+if violations_by_file.any?
+  header "Violations Found"
+  
+  violations_by_file.each do |file, violations|
+    puts_colored(YELLOW, "\n#{file}")
+    
+    violations.each do |v|
+      severity_color = case v[:severity]
+                      when :critical then RED
+                      when :high then RED
+                      when :medium then YELLOW
+                      else GREEN
+                      end
+      
+      puts "  #{severity_color}[#{v[:severity]}]#{RESET} #{v[:principle]}"
+      puts "    Pattern: #{v[:pattern]}" if verbose
+      puts "    Suggestion: #{v[:suggestion]}" if v[:suggestion]
+    end
+  end
+end
+
+# Summary
+header "Validation Summary"
+
+puts "Files checked: #{stats[:files_checked]}"
+puts_colored(GREEN, "Clean files: #{stats[:files_clean]}")
+
+if stats[:files_with_violations] > 0
+  puts_colored(RED, "Files with violations: #{stats[:files_with_violations]}")
+  puts
+  puts "Violations by severity:"
+  puts_colored(RED, "  Critical: #{stats[:critical]}") if stats[:critical] > 0
+  puts_colored(RED, "  High: #{stats[:high]}") if stats[:high] > 0
+  puts_colored(YELLOW, "  Medium: #{stats[:medium]}") if stats[:medium] > 0
+  puts_colored(GREEN, "  Low: #{stats[:low]}") if stats[:low] > 0
+  puts
+  puts_colored(RED, "Total violations: #{stats[:total_violations]}")
+end
+
+# Exit code
+if stats[:critical] > 0 || stats[:high] > 0
+  puts
+  puts_colored(RED, "❌ Validation failed (critical or high severity violations)")
+  exit 1
+elsif stats[:medium] > 0
+  puts
+  puts_colored(YELLOW, "⚠ Validation passed with warnings")
+  exit 0
+else
+  puts
+  puts_colored(GREEN, "✓ All validations passed")
+  exit 0
+end

@@ -100,6 +100,18 @@ module MASTER
           body = { text: text, persona: persona_ref.call, cost: cost_ref.call }.to_json
           [200, { 'content-type' => 'application/json' }, [body]]
 
+        # Server-Sent Events endpoint for real-time updates
+        when ['GET', '/events']
+          begin
+            require_relative 'sse_endpoint'
+            sse = SSEEndpoint.new(cli.method(:broadcast))
+            sse.handle(env)
+          rescue LoadError => e
+            [500, { 'content-type' => 'text/plain' }, ["SSE not available: #{e.message}"]]
+          rescue => e
+            [500, { 'content-type' => 'text/plain' }, ["SSE error: #{e.message}"]]
+          end
+
         when ['POST', '/chat']
           body = env['rack.input'].read
           data = JSON.parse(body) rescue {}

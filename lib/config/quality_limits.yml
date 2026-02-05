@@ -1,0 +1,158 @@
+# Quality Limits Configuration
+# 20KB file limits, complexity thresholds from pub3 aight/
+---
+version: 1
+quality_limits:
+  enabled: true
+  enforcement: strict  # strict, warn, off
+  
+file_limits:
+  max_file_size: 20480  # 20KB (modularity forcing function)
+  max_lines: 500
+  reasoning: "Forces modular design, prevents god objects"
+  
+  exemptions:
+    - test/fixtures/*
+    - db/schema.rb
+    - db/seeds.rb
+    - config/routes.rb
+  
+complexity_limits:
+  cyclomatic_complexity: 10
+  abc_complexity: 18  # Assignment, Branch, Condition
+  perceived_complexity: 8
+  reasoning: "Keeps code understandable and testable"
+  
+method_limits:
+  max_length: 20  # lines
+  max_parameters: 4
+  max_nesting: 4
+  reasoning: "Small, focused methods are easier to understand"
+  
+class_limits:
+  max_methods: 15
+  max_instance_variables: 7
+  max_dependencies: 5
+  reasoning: "Single Responsibility Principle enforcement"
+  
+test_coverage:
+  minimum: 95  # percent
+  branch_coverage: 90
+  line_coverage: 95
+  reasoning: "High confidence in correctness"
+  
+  exemptions:
+    - lib/boot.rb  # System initialization
+    - lib/cli.rb   # User interface
+    
+code_quality:
+  duplication:
+    max_percentage: 5
+    min_token_count: 16
+    
+  documentation:
+    require_class_docs: true
+    require_public_method_docs: true
+    require_complex_method_docs: true  # complexity > 5
+    
+  naming:
+    min_method_name_length: 3
+    min_variable_name_length: 2
+    max_abbreviations: 2
+    
+maintainability:
+  maintainability_index:
+    minimum: 65  # Microsoft's threshold
+    reasoning: "Code should be maintainable long-term"
+    
+  technical_debt_ratio:
+    maximum: 5  # percent
+    reasoning: "Keep debt under control"
+    
+performance:
+  max_database_queries_per_request: 20
+  max_response_time: 200  # milliseconds
+  max_memory_per_object: 10485760  # 10MB
+  
+security:
+  no_hardcoded_secrets: true
+  no_sql_injection: true
+  no_xss_vulnerabilities: true
+  input_validation_required: true
+  
+thresholds_by_type:
+  ruby:
+    file_size: 20480
+    lines: 500
+    methods_per_class: 15
+    
+  javascript:
+    file_size: 15360  # 15KB
+    lines: 400
+    functions_per_file: 20
+    
+  yaml:
+    file_size: 10240  # 10KB
+    max_depth: 5
+    
+  markdown:
+    file_size: 51200  # 50KB (documentation can be longer)
+    
+enforcement_tools:
+  rubocop:
+    enabled: true
+    max_file_size: 20KB
+    
+  reek:
+    enabled: true
+    config: .reek.yml
+    
+  flog:
+    enabled: true
+    threshold: 18
+    
+  flay:
+    enabled: true
+    mass_threshold: 16
+    
+  simplecov:
+    enabled: true
+    minimum_coverage: 95
+
+violations:
+  on_exceed:
+    action: fail  # fail, warn, ignore
+    notify: true
+    log: true
+    
+  report_format:
+    type: structured
+    include_suggestions: true
+    include_refactoring_hints: true
+    
+graduation_path:
+  # Path from messy to clean code
+  phases:
+    1:
+      name: "Initial Cleanup"
+      file_size: 40960  # 40KB
+      complexity: 20
+      coverage: 70
+      
+    2:
+      name: "Modularization"
+      file_size: 30720  # 30KB
+      complexity: 15
+      coverage: 80
+      
+    3:
+      name: "Quality Focus"
+      file_size: 25600  # 25KB
+      complexity: 12
+      coverage: 90
+      
+    4:
+      name: "Production Ready"
+      file_size: 20480  # 20KB
+      complexity: 10
+      coverage: 95

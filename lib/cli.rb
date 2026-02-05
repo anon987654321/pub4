@@ -63,10 +63,11 @@ module MASTER
     }.freeze
 
     COMMANDS = %w[
-      ask audit beautify cat cd chamber clean clear commit converge cost describe diff
-      edit evolve exit fav favs git help image introspect lint log ls persona personas
-      principles pull push queue quit radio read refactor refine review sanity scan
-      smells speak status tree undo version web
+      ask audit beautify cat cd chamber check-ports clean clear commit compare-images
+      converge cost describe diff edit enforce-principles evolve exit fav favs git help
+      image install-hooks introspect lint log ls persona personas principles pull push
+      queue quit radio read refactor refine review sanity scan smells speak status stream
+      tree undo version web
     ].freeze
 
     HISTORY_FILE = Paths.history
@@ -561,6 +562,21 @@ module MASTER
 
       when 'favs'
         list_favorites
+
+      when 'stream'
+        stream_response(arg)
+
+      when 'compare-images'
+        compare_images(arg)
+
+      when 'enforce-principles'
+        enforce_principles(arg)
+
+      when 'install-hooks'
+        install_git_hooks
+
+      when 'check-ports'
+        check_port_consistency
 
       when /^f(\d+)$/
         run_favorite($1.to_i)
@@ -1588,6 +1604,92 @@ module MASTER
       when /linux|bsd/
         system("mpv --no-video '#{path}' 2>/dev/null || ffplay -nodisp -autoexit '#{path}' 2>/dev/null || aplay '#{path}' 2>/dev/null")
       end
+    end
+
+    # Stream LLM response token-by-token
+    def stream_response(query)
+      return "Usage: stream <query>" unless query
+      
+      puts "Streaming response..."
+      @llm.stream_ask(query) do |token|
+        print token
+        $stdout.flush
+      end
+      puts
+      "Stream complete"
+    rescue => e
+      "Error streaming: #{e.message}"
+    end
+
+    # Compare two images using LLaVA
+    def compare_images(args)
+      images = args&.split(/\s+/)
+      return "Usage: compare-images <image1> <image2>" unless images&.size == 2
+      
+      comparison = ImageComparison.new(llm: @llm)
+      result = comparison.compare(images[0], images[1])
+      
+      output = ["Image Comparison:", ""]
+      output << "Winner: Image #{result[:winner]}" if result[:winner]
+      output << "Similarity: #{result[:similarity_score]}%" if result[:similarity_score]
+      output << ""
+      output << "Key Observations:"
+      result[:key_observations]&.each { |obs| output << "  - #{obs}" }
+      
+      output.join("\n")
+    rescue => e
+      "Error comparing images: #{e.message}"
+    end
+
+    # Enforce principles on file or directory
+    def enforce_principles(path)
+      path ||= '.'
+      return "Path not found: #{path}" unless File.exist?(path)
+      
+      files = File.directory?(path) ? Dir["#{path}/**/*.rb"] : [path]
+      violations = []
+      
+      files.each do |file|
+        code = File.read(file)
+        file_violations = Violations.check_literal(code)
+        violations << { file: file, violations: file_violations } if file_violations.any?
+      end
+      
+      if violations.any?
+        output = ["Principle violations found:", ""]
+        violations.each do |item|
+          output << "#{item[:file]}:"
+          item[:violations].each { |v| output << "  - #{v[:principle]}: #{v[:pattern]}" }
+          output << ""
+        end
+        output.join("\n")
+      else
+        "✓ No principle violations found"
+      end
+    rescue => e
+      "Error checking principles: #{e.message}"
+    end
+
+    # Install git hooks
+    def install_git_hooks
+      hooks_script = File.expand_path('../bin/install-hooks', MASTER::ROOT)
+      return "Hook installer not found" unless File.exist?(hooks_script)
+      
+      result = `ruby #{hooks_script}`
+      result.empty? ? "Hooks installed" : result
+    rescue => e
+      "Error installing hooks: #{e.message}"
+    end
+
+    # Check port consistency
+    def check_port_consistency
+      ports_script = File.expand_path('../bin/check_ports', MASTER::ROOT)
+      return "Port checker not found" unless File.exist?(ports_script)
+      
+      result = `ruby #{ports_script}`
+      result.empty? ? "Ports OK" : result
+    rescue => e
+      "Error checking ports: #{e.message}"
     end
   end
 end
