@@ -49,21 +49,21 @@ module MASTER
         require 'twitter'
         
         # Initialize REST client
-        @client = ::Twitter::REST::Client.new do |config|
-          config.consumer_key        = config[:consumer_key] || ENV['TWITTER_CONSUMER_KEY']
-          config.consumer_secret     = config[:consumer_secret] || ENV['TWITTER_CONSUMER_SECRET']
-          config.access_token        = @token
-          config.access_token_secret = config[:access_token_secret] || ENV['TWITTER_ACCESS_SECRET']
+        @client = ::Twitter::REST::Client.new do |client_config|
+          client_config.consumer_key        = @config[:consumer_key] || ENV['TWITTER_CONSUMER_KEY']
+          client_config.consumer_secret     = @config[:consumer_secret] || ENV['TWITTER_CONSUMER_SECRET']
+          client_config.access_token        = @token
+          client_config.access_token_secret = @config[:access_token_secret] || ENV['TWITTER_ACCESS_SECRET']
         end
         
         emit(:twitter_ready, { username: @client.user.screen_name })
         
         # Use streaming API for real-time updates
-        @stream_client = ::Twitter::Streaming::Client.new do |config|
-          config.consumer_key        = config[:consumer_key] || ENV['TWITTER_CONSUMER_KEY']
-          config.consumer_secret     = config[:consumer_secret] || ENV['TWITTER_CONSUMER_SECRET']
-          config.access_token        = @token
-          config.access_token_secret = config[:access_token_secret] || ENV['TWITTER_ACCESS_SECRET']
+        @stream_client = ::Twitter::Streaming::Client.new do |client_config|
+          client_config.consumer_key        = @config[:consumer_key] || ENV['TWITTER_CONSUMER_KEY']
+          client_config.consumer_secret     = @config[:consumer_secret] || ENV['TWITTER_CONSUMER_SECRET']
+          client_config.access_token        = @token
+          client_config.access_token_secret = @config[:access_token_secret] || ENV['TWITTER_ACCESS_SECRET']
         end
         
         # Monitor mentions and DMs
@@ -76,7 +76,7 @@ module MASTER
               
               # Check if it's a mention
               mentioned = object.user_mentions.any? { |u| u.screen_name == @client.user.screen_name }
-              next unless mentioned || config[:monitor_all]
+              next unless mentioned || @config[:monitor_all]
               
               message_data = {
                 channel_id: 'tweet',

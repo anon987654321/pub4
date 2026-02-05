@@ -187,8 +187,8 @@ module MASTER
       Thread.new do
         while @running
           begin
-            # Wait for message with timeout
-            message = @message_queue.pop(true)
+            # Wait for message with timeout (non-blocking pop)
+            message = @message_queue.pop(true) # true = non-blocking
             process_message(message)
           rescue ThreadError
             # Queue empty, sleep briefly
