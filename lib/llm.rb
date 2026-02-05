@@ -129,7 +129,7 @@ module MASTER
           @total_tokens_in += input_tokens
           @total_tokens_out += output_tokens
           @request_count += 1
-          @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+          @total_cost += estimate_cost(input_tokens, output_tokens, tier)
         end
 
         result
@@ -251,10 +251,14 @@ module MASTER
       @total_tokens_in += input_tokens
       @total_tokens_out += output_tokens
       @request_count += 1
-      config = TIERS[tier] || TIERS[DEFAULT_TIER]
       cost = response.respond_to?(:cost) && response.cost ? response.cost.to_f : nil
-      @total_cost += cost || ((input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0)
+      @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
       @last_cost = cost if cost
+    end
+
+    def estimate_cost(input_tokens, output_tokens, tier)
+      config = TIERS[tier] || TIERS[DEFAULT_TIER]
+      (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
     end
 
     def load_persona(name)
@@ -301,7 +305,7 @@ module MASTER
         @total_tokens_in += input_tokens
         @total_tokens_out += output_tokens
         @request_count += 1
-        @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+        @total_cost += estimate_cost(input_tokens, output_tokens, tier)
 
         Result.ok(content)
       rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
