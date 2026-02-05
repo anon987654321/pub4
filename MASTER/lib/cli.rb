@@ -15,18 +15,24 @@ module MASTER
 
     attr_reader :llm, :verbosity, :root
 
-    # ANSI colors
+    # ANSI colors - one meaning per color, never reuse
     C_RESET  = "\e[0m"
-    C_RED    = "\e[31m"
-    C_GREEN  = "\e[32m"
-    C_YELLOW = "\e[33m"
-    C_CYAN   = "\e[36m"
-    C_DIM    = "\e[2m"
-    C_BOLD   = "\e[1m"
-    C_MINT   = "\e[38;2;77;204;163m"
+    C_RED    = "\e[31m"    # Error only
+    C_GREEN  = "\e[32m"    # Success only
+    C_YELLOW = "\e[33m"    # Warning only
+    C_CYAN   = "\e[36m"    # Accent (sparingly)
+    C_DIM    = "\e[2m"     # Secondary/metadata
+    C_BOLD   = "\e[1m"     # Primary emphasis
 
-    # ASCII spinner (Unix style)
-    SPINNER = %w[| / - \\].map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
+    # Icon vocabulary - 5 symbols max, single meaning each
+    ICON_OK   = "✓"
+    ICON_ERR  = "✗"
+    ICON_WARN = "!"
+    ICON_ITEM = "·"
+    ICON_FLOW = "→"
+
+    # Spinner (minimal motion, only for >500ms waits)
+    SPINNER = %w[· o O o].freeze
 
     # Boot quotes (rotates each session)
     QUOTES = [
@@ -2025,14 +2031,14 @@ module MASTER
       [
         "#{C_BOLD}MASTER v#{VERSION}#{C_RESET}",
         "",
-        "  Uptime      #{C_DIM}#{format_duration(uptime)}#{C_RESET}",
-        "  Commands    #{C_DIM}#{@command_count}#{C_RESET}",
-        "  Streak      #{C_DIM}#{@streak}#{C_RESET}",
-        "  Session     #{C_DIM}#{@session_name}#{C_RESET}",
-        "  Cost        #{C_DIM}$#{'%.4f' % @llm.total_cost}#{C_RESET}",
-        "  Tokens      #{C_DIM}#{@last_tokens[:input]}in / #{@last_tokens[:output]}out#{C_RESET}",
-        "  Memory      #{C_DIM}#{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB#{C_RESET}",
-        "  Audit       #{C_DIM}#{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0} entries#{C_RESET}"
+        out_row("Uptime", format_duration(uptime)),
+        out_row("Commands", @command_count),
+        out_row("Streak", @streak),
+        out_row("Session", @session_name),
+        out_row("Cost", "$#{'%.4f' % @llm.total_cost}"),
+        out_row("Tokens", "#{@last_tokens[:input]}in / #{@last_tokens[:output]}out"),
+        out_row("Memory", "#{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB"),
+        out_row("Audit", "#{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0} entries")
       ].join("\n")
     end
 
@@ -2044,6 +2050,29 @@ module MASTER
       else
         "#{(secs / 3600).to_i}h #{((secs % 3600) / 60).to_i}m"
       end
+    end
+
+    # Output helpers - consistent formatting per typography spec
+    def out_ok(msg)
+      "#{C_GREEN}#{ICON_OK}#{C_RESET} #{msg}"
+    end
+
+    def out_err(msg, detail = nil)
+      lines = ["#{C_RED}#{ICON_ERR}#{C_RESET} #{msg}"]
+      lines << "  #{C_DIM}#{detail}#{C_RESET}" if detail
+      lines.join("\n")
+    end
+
+    def out_warn(msg)
+      "#{C_YELLOW}#{ICON_WARN}#{C_RESET} #{msg}"
+    end
+
+    def out_dim(msg)
+      "#{C_DIM}#{msg}#{C_RESET}"
+    end
+
+    def out_row(label, value, width = 12)
+      "  #{label.ljust(width)}#{C_DIM}#{value}#{C_RESET}"
     end
 
     # Visual separator - using whitespace instead of ASCII art

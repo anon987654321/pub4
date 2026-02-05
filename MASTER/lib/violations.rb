@@ -257,13 +257,15 @@ module MASTER
         results = {
           literal: [],
           conceptual: [],
-          summary: { errors: 0, warnings: 0, info: 0 }
+          summary: { errors: 0, warnings: 0, info: 0, total: 0 }
         }
 
         # Phase 1: Literal detection (fast, no LLM)
         results[:literal] = detect_literal(code, path)
         results[:literal].each do |v|
-          results[:summary][v[:severity]] += 1
+          key = v[:severity]
+          results[:summary][key] = (results[:summary][key] || 0) + 1
+          results[:summary][:total] += 1
         end
 
         # Phase 2: Conceptual detection (requires LLM)
@@ -271,6 +273,7 @@ module MASTER
           results[:conceptual] = detect_conceptual(code, path, llm)
           results[:conceptual].each do |v|
             results[:summary][:warnings] += 1
+            results[:summary][:total] += 1
           end
         end
 

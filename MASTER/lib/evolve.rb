@@ -509,9 +509,10 @@ module MASTER
     end
 
     def log(msg)
-      timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+      timestamp = Time.now.strftime('%H:%M:%S')
       line = "[#{timestamp}] #{msg}"
-      puts line
+      $stdout.puts line
+      $stdout.flush  # Force immediate output
 
       File.open(EVOLUTION_LOG, 'a') { |f| f.puts(line) }
     rescue StandardError
