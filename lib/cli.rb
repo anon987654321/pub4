@@ -93,11 +93,11 @@ module MASTER
                    when 'medium', 'med', 'm' then :medium
                    else :high
                    end
-      trace "Verbosity set to #{@verbosity}"
+      trace "verbosity: #{@verbosity}"
     end
 
     def start_server
-      trace "Starting web server..."
+      trace "web server starting..."
       @server = Server.new(self)
       @server.start
     end
@@ -137,17 +137,14 @@ module MASTER
     end
 
     def build_prompt
-      # Starship.rs inspired: directory  git  context  cost ❯
       dir = File.basename(@root)
       persona = @llm.persona&.dig(:name)
-      cost = @llm.total_cost
 
-      parts = []
-      parts << "\e[1;36m#{dir}\e[0m"  # cyan bold directory
-      parts << "\e[33m#{persona}\e[0m" if persona && persona != 'default'
-      parts << "\e[2m$#{format('%.4f', cost)}\e[0m" if cost > 0
-
-      "#{parts.join(' ')} \e[1;35m❯\e[0m "
+      if persona && persona != 'default'
+        "\e[1;36m#{dir}\e[0m\e[2m:\e[0m\e[33m#{persona}\e[0m \e[35m❯\e[0m "
+      else
+        "\e[1;36m#{dir}\e[0m \e[35m❯\e[0m "
+      end
     end
 
     def with_spinner
@@ -370,16 +367,16 @@ module MASTER
     def chat(message)
       return 'Usage: ask <message>' unless message
 
-      trace "Sending to LLM: #{message[0..50]}..."
+      trace "sending: #{message[0..50]}..."
       result = @llm.chat(message)
-      trace "LLM responded (cost: $#{format('%.6f', @llm.total_cost)})"
+      trace "received · $#{format('%.6f', @llm.total_cost)}"
       result.ok? ? result.value : "Error: #{result.error}"
     end
 
     def switch_persona(name)
       return "Available: #{Persona.list.join(', ')}" unless name
 
-      trace "Switching persona to #{name}"
+      trace "persona: #{name}"
       result = @llm.switch_persona(name)
       result.ok? ? "Switched to #{name}" : result.error
     end
@@ -491,7 +488,7 @@ module MASTER
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
 
-      trace "Refactoring #{files.size} file(s)"
+      trace "refactoring #{files.size} files"
       total_iterations = 0
       total_changes = 0
 
@@ -505,7 +502,7 @@ module MASTER
     end
 
     def refactor_file(file)
-      trace "Analyzing: #{file}"
+      trace "analyzing: #{file}"
 
       # Phase 1: Research - understand the domain
       code = File.read(file)
@@ -526,7 +523,7 @@ module MASTER
         ```
       PROMPT
 
-      trace "Phase 1: Researching domain..."
+      trace "phase 1: research"
       research = with_spinner("Researching") { @llm.chat(research_prompt, tier: :fast) }
       research_text = research.ok? ? research.value : ""
 
@@ -541,7 +538,7 @@ module MASTER
         iteration += 1
         break if iteration > max_iterations
 
-        trace "Phase 2: Iteration #{iteration}"
+        trace "phase 2: iteration #{iteration}"
 
         refactor_prompt = <<~PROMPT
           You are refactoring #{lang} code. Apply these insights:
@@ -566,10 +563,10 @@ module MASTER
 
         # Calculate change ratio
         ratio = change_ratio(prev_code, new_code)
-        trace "Change ratio: #{(ratio * 100).round(1)}%"
+        trace "change: #{(ratio * 100).round(1)}%"
 
         if ratio < min_change_threshold
-          trace "Converged (< #{(min_change_threshold * 100).round}% change)"
+          trace "converged"
           break
         end
 
