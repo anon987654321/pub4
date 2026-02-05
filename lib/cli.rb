@@ -778,7 +778,26 @@ module MASTER
       @last_tokens = @llm.last_tokens
       @last_cached = @llm.last_cached
       trace "received"
-      result.ok? ? result.value : "Error: #{result.error}"
+      
+      return "Error: #{result.error}" unless result.ok?
+      
+      response = result.value
+      
+      # Execute any code blocks in response
+      exec_results = Executor.process_response(response)
+      if exec_results.any?
+        formatted = Executor.format_results(exec_results)
+        # Feed execution results back to LLM for follow-up
+        if exec_results.any? { |r| r[:success] == false }
+          trace "exec failed, retrying..."
+          followup = @llm.chat("Execution results:\n#{formatted}\n\nPlease fix any errors and try again.")
+          response = "#{response}\n\n---\n#{followup.value}" if followup.ok?
+        else
+          response = "#{response}\n\n[Executed]\n#{formatted}"
+        end
+      end
+      
+      response
     end
 
     def switch_persona(name)

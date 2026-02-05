@@ -245,6 +245,20 @@ module MASTER
       parts << "Your host is a #{runtime_context}."
       parts << "You embody clarity, efficiency, and correctness. No bloat. No ceremony."
 
+      # Tool capabilities
+      parts << "\n## Tools"
+      parts << "You have CLI access to the local filesystem and can execute commands."
+      parts << "To run shell commands, wrap them in ```sh code blocks."
+      parts << "To run Ruby code, wrap it in ```ruby code blocks."
+      parts << "Commands are executed automatically and results returned to you."
+      parts << "Examples:"
+      parts << "  ```sh"
+      parts << "  ls -la /home/dev/pub"
+      parts << "  ```"
+      parts << "  ```ruby"
+      parts << "  Dir.glob('**/*.rb').first(10)"
+      parts << "  ```"
+
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"
         parts << @persona[:prompt] if @persona[:prompt]
