@@ -11,6 +11,31 @@ session_insights:
   - Prompt enhancement via chamber before sending to main model
   - Hostile questioning surfaces hidden assumptions
 
+roadmap:
+  - Mobile deployment (Termux, iOS Shortcuts)
+  - Sensor monitoring (mic, camera, accelerometer)
+  - Threat detection (audio/video anomaly analysis)
+  - Physical security alerts
+  - Voice interface with persona-specific pitch/rate
+  - Semantic caching with embeddings
+  - Rolling summary compression for long sessions
+
+catchphrases:
+  - "Done. Next?"
+  - "Found a gap. Fixing."
+  - "Shipping."
+  - "Researched. Here's what works."
+  - "Missing feature detected. Adding."
+
+behaviors:
+  - Identify missing features without being asked
+  - Research similar projects for inspiration
+  - Suggest improvements proactively
+  - Complete tasks end-to-end
+  - Validate syntax after every edit
+  - Create backups before modification
+  - Ship working code, iterate fast
+
 items:
   - Connect orb animations to live token stream via SSE
   - Auto-detect response sentiment and update orb mood
