@@ -19,10 +19,6 @@ module MASTER
           puts "#{CODENAME} #{VERSION} (GENERIC) #1: #{time_utc}"
           puts "    root@#{hostname}:#{ROOT}"
 
-          # Human-centric metrics instead of RAM
-          puts "context window = 200000 tokens (about 150000 words)"
-          puts "session budget = unlimited (pay as you go)"
-
           # Mainbus and CPU
           puts "mainbus0 at root"
           puts "cpu0 at mainbus0: #{cpu_model}"
@@ -34,56 +30,41 @@ module MASTER
           # Ruby runtime as a device
           puts "ruby0 at #{platform_name}0: #{RUBY_ENGINE} #{RUBY_VERSION}"
 
-          # Pseudo-devices
+          # Storage
           puts "softraid0 at root"
-          puts "scsibus0 at softraid0: 256 targets"
-          puts "root on #{root_device}"
+          puts "root on #{root_device}, #{dir_size_mb(ROOT)}MB"
 
           # Git as version control device
           if git_repo?
             branch, uncommitted = git_info
-            puts "vcs0 at root: git"
-            puts "vcs0: branch #{branch}, #{uncommitted} modified"
+            puts "vcs0 at root: git, branch #{branch}, #{uncommitted} modified"
           end
-
-          puts
 
           # Constitutional AI subsystem
-          puts "const0 at mainbus0: constitutional ai"
-          puts "const0: #{principles.size} principles loaded"
-          cat_summary = category_summary(principles)
-          puts "const0: #{cat_summary}" if cat_summary
-          puts "const0: #{smells} anti-patterns indexed"
+          puts "const0 at mainbus0: constitutional ai, #{principles.size} principles, #{smells} anti-patterns"
 
           # LLM interface
-          puts "llm0 at const0: openrouter"
           if openrouter_connected?
             latency = ping_openrouter
-            puts "llm0: #{latency}ms latency" if latency
+            tier_count = LLM::TIERS.size
+            puts "llm0 at const0: openrouter, #{latency}ms, #{tier_count} tiers"
           else
-            puts "llm0: not connected"
+            puts "llm0 at const0: openrouter (not connected)"
           end
 
-          # Model tiers (summary only)
-          tier_count = LLM::TIERS.size
-          puts "llm0: #{tier_count} tiers available"
-
-          # Replicate (summary only)
+          # Replicate
           if replicate_connected?
             model_count = Replicate::MODELS.size
             chain_count = defined?(Replicate::CHAINS) ? Replicate::CHAINS.size : 0
-            puts "repligen0 at mainbus0: replicate api, #{model_count} models, #{chain_count} chains"
-          else
-            puts "repligen0 at mainbus0: replicate api (not connected)"
+            puts "repligen0 at mainbus0: replicate, #{model_count} models, #{chain_count} chains"
           end
 
           # Image processing
           vips = vips_version
-          if vips != 'not installed'
-            puts "vips0 at mainbus0: libvips #{vips}"
-          end
+          puts "vips0 at mainbus0: libvips #{vips}" if vips != 'not installed'
 
-          puts
+          # Scrutiny mode
+          puts "scrutiny0 at const0: maximum, brutal honesty"
           puts "boot device: #{ROOT}"
         end
 
@@ -93,10 +74,7 @@ module MASTER
 
         unless quiet
           puts
-          puts "llm0: selecting #{model_key} tier"
-          puts "llm0: model #{model_name}"
-          puts "llm0: pricing #{model_info[:input]}/#{model_info[:output]} per 1000 tokens"
-          puts
+          puts "llm0: #{model_key} tier, #{model_name}"
           boot_ms = ((Time.now - t0) * 1000).round
           puts "#{CODENAME}: boot complete, #{boot_ms}ms"
           puts first_run_hints if first_run?
