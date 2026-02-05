@@ -23,7 +23,7 @@ module MASTER
 
       Thread.new { run_falcon }
       sleep 0.5 # Let server start
-      puts "boot> web: http://0.0.0.0:#{@port}"
+      puts "web0 at http0: port #{@port}"
     end
 
     def stop

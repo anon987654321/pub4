@@ -86,18 +86,16 @@ module MASTER
     end
 
     def ask_verbosity
-      print "Verbosity [#{C_GREEN}high#{C_RESET}/medium/low] (Enter=high): "
+      print "verbosity? [h/m/l] "
       choice = $stdin.gets&.strip&.downcase
       @verbosity = case choice
                    when 'low', 'l' then :low
                    when 'medium', 'med', 'm' then :medium
                    else :high
                    end
-      trace "verbosity: #{@verbosity}"
     end
 
     def start_server
-      trace "web server starting..."
       @server = Server.new(self)
       @server.start
     end

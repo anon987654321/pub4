@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'securerandom'
+
 module MASTER
   module Boot
     class << self
@@ -7,23 +9,15 @@ module MASTER
         t0 = Time.now
         principles = load_principles
         smells = principles.sum { |p| p[:anti_patterns]&.size || 0 }
-        tier = LLM::DEFAULT_TIER
-        model = LLM::TIERS[tier][:model].split('/').last
-        cost = LLM::TIERS[tier][:cost]
-        time = Time.now.utc.strftime('%b %e %H:%M UTC %Y')
-        key_status = ENV['OPENROUTER_API_KEY'] ? 'ok' : 'missing'
-        session = SecureRandom.hex(2)
+        model = LLM::TIERS[LLM::DEFAULT_TIER][:model].split('/').last
+        time = Time.now.utc.strftime('%a %b %e %H:%M:%S UTC %Y')
 
-        puts "master #{VERSION} - #{time}"
-        puts "llm: #{model} $#{cost}/1k"
-        puts "const: #{principles.size}p #{smells}s"
-        puts "abilities: ask scan refactor review img web"
-        puts "key: #{key_status}"
-        puts "rag: off"
-        puts "cache: empty"
-        puts "session: #{session}"
-        puts "#{platform_name}: #{ROOT}"
-        puts "#{((Time.now - t0) * 1000).round}ms"
+        puts "master #{VERSION} (GENERIC) #1: #{time}"
+        puts "const0 at master0: #{principles.size} principles, #{smells} smells"
+        puts "llm0 at openrouter0: #{model}"
+        puts "root0: #{ROOT}"
+        puts "#{platform_name}0 at mainbus0"
+        puts "boot time: #{((Time.now - t0) * 1000).round}ms"
 
         principles
       end
