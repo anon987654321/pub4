@@ -7,7 +7,7 @@ module MASTER
     # Arbiter cherry-picks best improvements
 
     MODELS = {
-      sonnet:   'anthropic/claude-sonnet-4-20250514',
+      sonnet:   'anthropic/claude-sonnet-4',
       gpt4:     'openai/gpt-4o',
       gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat',

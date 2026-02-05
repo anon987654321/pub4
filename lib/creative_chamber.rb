@@ -6,7 +6,7 @@ module MASTER
     # LLMs debate concepts, Replicate models generate variations
 
     LLM_MODELS = {
-      sonnet:   'anthropic/claude-sonnet-4-20250514',
+      sonnet:   'anthropic/claude-sonnet-4',
       gpt4:     'openai/gpt-4o',
       gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat'

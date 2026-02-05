@@ -7,11 +7,11 @@ require 'uri'
 module MASTER
   class LLM
     TIERS = {
-      cheap:   { model: 'deepseek/deepseek-chat',              input: 0.00014, output: 0.00028 },
-      fast:    { model: 'anthropic/claude-3-5-haiku-20241022', input: 0.0008,  output: 0.004 },
-      strong:  { model: 'anthropic/claude-sonnet-4-20250514',  input: 0.003,   output: 0.015 },
-      premium: { model: 'anthropic/claude-opus-4-20250514',    input: 0.015,   output: 0.075 },
-      reasoning: { model: 'deepseek/deepseek-r1',              input: 0.00055, output: 0.00219 }
+      cheap:   { model: 'deepseek/deepseek-chat',         input: 0.00014, output: 0.00028 },
+      fast:    { model: 'anthropic/claude-3.5-haiku',     input: 0.0008,  output: 0.004 },
+      strong:  { model: 'anthropic/claude-sonnet-4',      input: 0.003,   output: 0.015 },
+      premium: { model: 'anthropic/claude-opus-4',        input: 0.015,   output: 0.075 },
+      reasoning: { model: 'deepseek/deepseek-r1',         input: 0.00055, output: 0.00219 }
     }.freeze
 
     DEFAULT_TIER = :strong
