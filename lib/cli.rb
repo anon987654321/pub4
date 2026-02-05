@@ -1206,13 +1206,14 @@ module MASTER
         px_count = 0
         rel_unit_count = 0
         
-        code.scan(/!important|px|(?:rem|em)\b/) do |match|
+        code.scan(/!important|px|rem|em/) do
+          match = Regexp.last_match[0]
           case match
           when '!important'
             important_count += 1
           when 'px'
             px_count += 1
-          when /rem|em/
+          when 'rem', 'em'
             rel_unit_count += 1
           end
         end

@@ -150,18 +150,12 @@ module MASTER
       # Remove 20% oldest entries with fewest hits
       remove_count = (MAX_CACHE_SIZE * 0.2).to_i
       
-      # Use min_by in a loop instead of full sort
-      to_remove = []
-      remove_count.times do
-        break if @cache.empty?
-        
-        # Find entry with lowest score (hits + age bonus)
-        worst = @cache.min_by { |_, v| [v[:hits], v[:created_at]] }
-        to_remove << worst[0]
-        @cache.delete(worst[0])
+      # Sort once and take first N entries (O(n log n) is better than O(n²))
+      sorted = @cache.sort_by { |_, v| [v[:hits], v[:created_at]] }
+      sorted.first(remove_count).each do |key, _|
+        @cache.delete(key)
+        @embeddings.delete(key)
       end
-      
-      to_remove.each { |key| @embeddings.delete(key) }
     end
     
     # Load cache from disk

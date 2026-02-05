@@ -737,7 +737,7 @@ module MASTER
           print '.'
           sleep wait_time
           
-          # Exponential backoff: double wait time up to max_wait
+          # Exponential backoff: increase wait time by 1.5x up to max_wait
           wait_time = [wait_time * 1.5, max_wait].min
         end
       end
