@@ -1,0 +1,23 @@
+---
+name: Audio-Reactive Smoothing
+description: Raw audio data is noisy and causes jitter. Apply exponential
+  smoothing to frequency bands. Use separate accumulators for bass wobble,
+  beat envelope, and energy level. The formula is simple. New value equals
+  old value times decay plus input times attack. Decay around 0.92 gives
+  smooth response. Attack around 0.08 preserves peaks.
+tier: aesthetic
+priority: 43
+auto_fixable: false
+anti_patterns:
+  - name: raw_audio_jitter
+    smell: Visual elements jump erratically with audio
+    example: Direct mapping of FFT bin to size
+    fix: Apply exponential smoothing accumulator
+  - name: uniform_reactivity
+    smell: Everything reacts the same way to audio
+    example: Bass mid and high all scale identically
+    fix: Separate accumulators with different decay rates
+  - name: instant_attack_decay
+    smell: Visual snaps to audio with no envelope
+    example: Beat triggers instant full brightness
+    fix: Use attack-decay envelope for beat pulse
