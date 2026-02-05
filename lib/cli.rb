@@ -8,8 +8,16 @@ module MASTER
   class CLI
     attr_reader :llm, :verbosity
 
+    # ANSI colors
+    C_RESET  = "\e[0m"
+    C_RED    = "\e[31m"
+    C_GREEN  = "\e[32m"
+    C_YELLOW = "\e[33m"
+    C_CYAN   = "\e[36m"
+    C_DIM    = "\e[2m"
+    C_MINT   = "\e[38;2;77;204;163m"
+
     # Braille spinner (Claude Code style, minty)
-    C_MINT = "\e[38;2;77;204;163m"
     ORB_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".chars.map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
 
     COMMANDS = %w[
@@ -23,14 +31,6 @@ module MASTER
 
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
-
-    # ANSI colors
-    C_RESET  = "\e[0m"
-    C_RED    = "\e[31m"
-    C_GREEN  = "\e[32m"
-    C_YELLOW = "\e[33m"
-    C_CYAN   = "\e[36m"
-    C_DIM    = "\e[2m"
 
     def initialize
       @llm = LLM.new
