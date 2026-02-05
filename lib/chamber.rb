@@ -28,7 +28,7 @@ module MASTER
       @proposals = []
     end
 
-    def deliberate(code, filename: 'code', participants: [:gpt4, :gemini, :deepseek])
+    def deliberate(code, filename: 'code', participants: [:sonnet, :gemini, :deepseek])
       @proposals = []
       @rounds = 0
 

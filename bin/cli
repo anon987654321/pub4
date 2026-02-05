@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# MASTER v50.8 entry point
+# MASTER v50.9 entry point
 
 require_relative '../lib/master'
 

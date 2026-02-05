@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Master
+module MASTER
   module Smells
     BLOATERS = {
       long_method: { check: "> 20 lines or > 5 nesting levels", fix: "Extract method" },
@@ -27,6 +27,20 @@ module Master
     }.freeze
 
     class << self
+      # Load anti-patterns from principle YAML files
+      def principle_patterns
+        @principle_patterns ||= Principle.anti_patterns
+      end
+
+      def all_patterns
+        static = BLOATERS.merge(COUPLERS).merge(DISPENSABLES).merge(ARCHITECTURE)
+        dynamic = principle_patterns.each_with_object({}) do |ap, hash|
+          key = ap[:name]&.to_sym
+          hash[key] = { check: ap[:smell], fix: ap[:fix], principle: true } if key
+        end
+        static.merge(dynamic)
+      end
+
       def analyze(code, file_path = nil)
         results = []
         lines = code.lines

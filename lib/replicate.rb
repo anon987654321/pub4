@@ -269,25 +269,189 @@ module MASTER
         run_model(model_id, { prompt: prompt, duration: duration })
       end
 
-      def speak(text, voice: 'af_bella', speed: 1.0, turbo: true)
+      def speak(text, voice: 'Casual_Guy', speed: 1.0, turbo: true)
         if turbo
-          speak_turbo(text)
+          speak_turbo(text, voice: voice)
         else
-          run_model(MODELS[:kokoro], { text: text, voice: voice, speed: speed })
+          # Kokoro uses af_/am_/bf_/bm_ prefixes
+          kokoro_voice = voice.start_with?('male') ? 'am_adam' : 'af_bella'
+          run_model(MODELS[:kokoro], { text: text, voice: kokoro_voice, speed: speed })
         end
       end
 
-      def speak_turbo(text)
-        run_model_by_name('minimax/speech-02-turbo', { text: text })
+      def speak_turbo(text, voice: 'Casual_Guy')
+        run_model_by_name('minimax/speech-02-turbo', { text: text, voice_id: voice })
+      end
+
+      # All-in-one: generate chunks and play them with pipelining
+      def say(text, voice: 'Casual_Guy', chunk_words: 10)
+        files = speak_stream(text, voice: voice, chunk_words: chunk_words)
+        play_files(files)
+        files.size
+      end
+
+      # Pipelined: generate and play concurrently (starts playing ASAP)
+      def say_fast(text, voice: 'Casual_Guy', chunk_words: 10)
+        require 'fileutils'
+        FileUtils.mkdir_p(OUTPUT_DIR)
+
+        chunks = smart_chunk(text, chunk_words)
+        queue = Thread::Queue.new
+        done = false
+
+        # Producer: generate audio chunks
+        producer = Thread.new do
+          chunks.each_with_index do |chunk, i|
+            result = speak_turbo(chunk.strip, voice: voice)
+            queue << result if result && File.exist?(result.to_s)
+          end
+          done = true
+        end
+
+        # Consumer: play as they arrive (1 sec max gap)
+        played = 0
+        loop do
+          if queue.empty?
+            break if done
+            sleep 0.5
+            next
+          end
+
+          file = queue.pop
+          play_single(file)
+          played += 1
+        end
+
+        producer.join
+        played
+      end
+
+      def play_single(file)
+        case RUBY_PLATFORM
+        when /mingw|mswin|cygwin/
+          system("powershell", "-Command", "
+            Add-Type -AssemblyName PresentationCore
+            $p = New-Object System.Windows.Media.MediaPlayer
+            $p.Open([Uri]'#{file.gsub('/', '\\')}')
+            Start-Sleep -Milliseconds 200
+            $d = $p.NaturalDuration.TimeSpan.TotalMilliseconds
+            if ($d -lt 500) { $d = 3000 }
+            $p.Play()
+            Start-Sleep -Milliseconds ($d + 100)
+          ")
+        when /darwin/
+          system("afplay", file)
+        else
+          system("mpv", "--no-video", "--really-quiet", file) rescue system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file)
+        end
+      end
+
+      # Play audio files sequentially (cross-platform)
+      def play_files(files)
+        case RUBY_PLATFORM
+        when /mingw|mswin|cygwin/
+          play_windows(files)
+        when /darwin/
+          play_macos(files)
+        when /linux|openbsd|freebsd/
+          play_unix(files)
+        else
+          puts "Unsupported platform for audio playback"
+        end
+      end
+
+      def play_windows(files)
+        # Use PowerShell MediaPlayer with proper duration detection
+        script = <<~PS
+          Add-Type -AssemblyName PresentationCore
+          $p = New-Object System.Windows.Media.MediaPlayer
+          $files = @(#{files.map { |f| "'#{f.gsub('/', '\\')}'" }.join(', ')})
+          foreach ($f in $files) {
+            $p.Open([Uri]$f)
+            Start-Sleep -Milliseconds 300
+            $duration = $p.NaturalDuration.TimeSpan.TotalMilliseconds
+            if ($duration -lt 500) { $duration = 3000 }
+            $p.Play()
+            Start-Sleep -Milliseconds ($duration + 200)
+          }
+        PS
+        system("powershell", "-Command", script)
+      end
+
+      def play_macos(files)
+        files.each { |f| system("afplay", f) }
+      end
+
+      def play_unix(files)
+        # Try mpv, ffplay, or aplay
+        player = %w[mpv ffplay aplay paplay].find { |p| system("which #{p} > /dev/null 2>&1") }
+        return puts "No audio player found (install mpv or ffmpeg)" unless player
+
+        case player
+        when 'mpv'
+          files.each { |f| system("mpv", "--no-video", "--really-quiet", f) }
+        when 'ffplay'
+          files.each { |f| system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", f) }
+        else
+          files.each { |f| system(player, f) }
+        end
+      end
+
+      # Streaming TTS: split into chunks, generate sequentially
+      def speak_stream(text, voice: 'Casual_Guy', chunk_words: 8)
+        require 'fileutils'
+        FileUtils.mkdir_p(OUTPUT_DIR)
+
+        # Split into sentence fragments at natural boundaries
+        chunks = smart_chunk(text, chunk_words)
+        audio_files = []
+
+        chunks.each_with_index do |chunk, i|
+          print "  [#{i + 1}/#{chunks.size}] "
+          result = speak_turbo(chunk.strip, voice: voice)
+          if result && File.exist?(result.to_s)
+            audio_files << result
+            puts "✓"
+          else
+            puts "✗"
+          end
+        end
+
+        audio_files
+      end
+
+      def smart_chunk(text, target_words)
+        # Split at natural pause points: periods, commas, semicolons, conjunctions
+        # But keep chunks roughly target_words size
+        words = text.split
+        chunks = []
+        current = []
+
+        words.each do |word|
+          current << word
+          # Check for natural break points
+          if current.size >= target_words || 
+             word.match?(/[.!?;]$/) || 
+             (current.size >= target_words / 2 && word.match?(/[,:]$/))
+            chunks << current.join(' ')
+            current = []
+          end
+        end
+
+        chunks << current.join(' ') unless current.empty?
+        chunks.reject(&:empty?)
       end
 
       def run_model_by_name(model_name, input)
+        api_key = ENV['REPLICATE_API_TOKEN']
+        return 'REPLICATE_API_TOKEN not set' unless api_key
+
         uri = URI("#{API_URL}/models/#{model_name}/predictions")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
 
         request = Net::HTTP::Post.new(uri)
-        request['Authorization'] = "Bearer #{api_token}"
+        request['Authorization'] = "Token #{api_key}"
         request['Content-Type'] = 'application/json'
         request.body = { input: input }.to_json
 
@@ -296,7 +460,7 @@ module MASTER
 
         return result['error'] if result['error']
 
-        poll_prediction(result['id'])
+        poll_prediction(result['id'], api_key)
       end
 
       def describe_image(path)
