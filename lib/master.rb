@@ -29,7 +29,7 @@ module MASTER
   autoload :CreativeChamber, "#{LIB}/creative_chamber"
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
-  autoload :Queue,       "#{LIB}/queue"
+  autoload :Audio,      "#{LIB}/audio"
 
   class << self
     def boot

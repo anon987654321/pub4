@@ -6,8 +6,12 @@ require 'io/console'
 require 'securerandom'
 require 'json'
 
+require_relative 'cli/commands/openbsd' if RUBY_PLATFORM.include?('openbsd')
+
 module MASTER
   class CLI
+    include Commands::OpenBSD if RUBY_PLATFORM.include?('openbsd')
+
     attr_reader :llm, :verbosity
 
     # ANSI colors
