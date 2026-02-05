@@ -67,6 +67,7 @@ module MASTER
       converge cost describe diff edit enforce-principles evolve exit fav favs git help
       image install-hooks introspect lint log ls persona personas principles pull push
       queue quit radio read refactor refine reload review sanity scan smells speak status stream
+      tier
       tree undo version web
     ].freeze
 
@@ -222,6 +223,7 @@ module MASTER
     def repl
       puts "#{C_DIM}#{QUOTES.sample}#{C_RESET}"
       puts "#{C_DIM}Session: #{@session_name}#{C_RESET}"
+      warn_missing_api_key
       puts
 
       loop do
@@ -262,6 +264,13 @@ module MASTER
       save_state
       @server&.stop
       show_session_summary
+    end
+
+    def warn_missing_api_key
+      return if @llm.status[:connected]
+      puts "#{C_YELLOW}OpenRouter key missing. Set OPENROUTER_API_KEY to enable LLM responses.#{C_RESET}"
+    rescue
+      nil
     end
 
     def expand_alias(input)
@@ -454,6 +463,14 @@ module MASTER
       response == 'y' || response == 'yes'
     end
 
+    def confirm_write(action)
+      return true if ENV['MASTER_AUTO_APPROVE']
+      return true unless $stdin.tty?
+      print "#{action}. Continue? [y/N] "
+      response = $stdin.gets&.strip&.downcase
+      response == 'y' || response == 'yes'
+    end
+
     def handle(input)
       cmd, *args = input.split(/\s+/, 2)
       arg = args.first
@@ -540,6 +557,9 @@ module MASTER
 
       when 'status'
         status_info
+
+      when 'tier'
+        switch_tier(arg)
 
       when 'refine'
         run_refine(arg)
@@ -725,6 +745,7 @@ module MASTER
           scan <path>     Find issues
           smells <path>   Detect rot
           status          State
+          tier <name>     Model tier
           undo            Revert changes
           version         Build
           web <url>       Fetch
@@ -779,6 +800,8 @@ module MASTER
 
     def clean_file(path)
       return 'Usage: clean <file>' unless path
+
+      return 'Cancelled.' unless confirm_write("Clean #{path}")
 
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
@@ -865,6 +888,15 @@ module MASTER
       trace "persona: #{name}"
       result = @llm.switch_persona(name)
       result.ok? ? "Switched to #{name}" : result.error
+    end
+
+    def switch_tier(name)
+      return "Current tier: #{@llm.current_tier}" unless name
+      key = name.to_sym
+      return "Unknown tier: #{name}" unless LLM::TIERS.key?(key)
+      @llm.set_tier(key)
+      MASTER::Boot.send(:save_model_preference, key) unless ENV['MASTER_NO_CONFIG_WRITE']
+      "Tier set to #{key}"
     end
 
     def list_personas
@@ -973,6 +1005,7 @@ module MASTER
 
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
+      return 'Cancelled.' unless confirm_write("Refactor #{files.size} file(s)")
 
       trace "refactoring #{files.size} files"
       total_iterations = 0
@@ -1428,10 +1461,16 @@ module MASTER
     end
 
     def status_info
+      llm_status = @llm.status rescue {}
+      model = llm_status[:model] ? "#{llm_status[:tier]} (#{llm_status[:model]})" : 'unknown'
+      cached = llm_status[:last_cached] ? 'yes' : 'no'
+      tokens = llm_status[:last_tokens] || {}
       <<~STATUS
         MASTER v#{VERSION}
         Root: #{@root}
         Persona: #{@llm.persona&.dig(:name) || 'default'}
+        Model: #{model}
+        Last tokens: #{tokens[:input] || 0} in, #{tokens[:output] || 0} out (cached: #{cached})
         Cost: $#{format('%.6f', @llm.total_cost)}
         Server: #{@server&.url || 'stopped'}
       STATUS

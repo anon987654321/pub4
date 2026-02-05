@@ -12,7 +12,12 @@ body{background:#0a0a0c;font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,Monaco,C
 #orb{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1}
 #halation{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 0.3s;z-index:9}
 #grain{position:fixed;inset:0;pointer-events:none;opacity:0.05;z-index:11;image-rendering:pixelated}
-output{position:fixed;left:12px;right:12px;bottom:36px;max-height:28vh;overflow-y:auto;color:#c4b49a;font-size:10px;z-index:20}
+#status{position:fixed;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;gap:12px;color:#8f9a9a;font-size:10px;z-index:20;pointer-events:none}
+#status .offline{color:#ff6b6b}
+#toast{position:fixed;top:34px;left:12px;padding:4px 8px;background:rgba(12,12,14,0.85);border:1px solid #1f1f23;color:#9bd;opacity:0;transition:opacity 0.2s;font-size:9px;z-index:21}
+#help{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,5,7,0.75);color:#c4b49a;font-size:11px;z-index:30}
+#help .panel{border:1px solid #2a2a2f;background:#0e0e12;padding:16px;max-width:420px;line-height:1.5}
+output{position:fixed;left:12px;right:12px;bottom:52px;max-height:28vh;overflow-y:auto;color:#c4b49a;font-size:10px;z-index:20}
 output:empty{display:none}
 output p{margin:2px 0;opacity:0.85}
 output p.user{color:#7a9caa}
@@ -24,16 +29,22 @@ output .loader span:nth-child(3){animation-delay:0.2s}
 output .loader span:nth-child(4){animation-delay:0.3s}
 output .loader span:nth-child(5){animation-delay:0.4s}
 input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;border-top:1px solid #1a1a1c;color:#c4b49a;font:inherit;padding:8px 12px;outline:none;z-index:20}
-input::placeholder{color:#333}
-#status{display:none}
+input::placeholder{color:#3d3d3d}
+input:focus{outline:2px solid #4dccaa;outline-offset:2px}
+input:disabled{opacity:0.6;cursor:not-allowed}
+#hint{position:fixed;left:12px;bottom:34px;color:#4b4b4b;font-size:9px;z-index:20;pointer-events:none}
 </style>
 </head>
 <body>
 <iframe id="orb" src="orb_blob.html"></iframe>
 <canvas id="halation"></canvas>
 <canvas id="grain"></canvas>
+<div id="status"></div>
+<div id="toast"></div>
+<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt.</div></div>
 <output id="out"></output>
-<input id="in" type="text" placeholder="" autofocus>
+<div id="hint">Try: ask “summarize README”, scan ., refactor lib/cli.rb</div>
+<input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
 <script>
 // Available orb designs
 const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
@@ -67,6 +78,8 @@ function switchOrb(idx){
     currentOrb=idx;
     document.getElementById('orb').src=ORBS[idx]+'.html';
     localStorage.setItem('orb',ORBS[idx]);
+    updateStatus(lastStatusData);
+    showToast(`orb ${ORBS[idx].replace('orb_','')}`);
   }
 }
 
@@ -84,19 +97,41 @@ document.addEventListener('keydown',e=>{
   // Arrow keys cycle
   if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
   if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
+  if(e.key==='g'){toggleGrain();showToast(`grain ${grainCanvas.style.display==='none'?'off':'on'}`)}
+  if(e.key==='?'){help.style.display=help.style.display==='flex'?'none':'flex'}
 });
 
 // Chat
 const out=document.getElementById('out'),inp=document.getElementById('in');
+const status=document.getElementById('status');
+const hint=document.getElementById('hint');
+const toast=document.getElementById('toast');
+const help=document.getElementById('help');
+const DEFAULT_PLACEHOLDER=inp.placeholder;
+let pending=false;
+let lastSync=null;
+let offlineCount=0;
+let lastSent='';
+let lastStatusData={};
+let history=[];
+const HISTORY_KEY='master_history';
+const HISTORY_MAX=100;
 let loaderEl=null;
 
-function add(t,isUser){
+help.addEventListener('click',()=>{help.style.display='none'});
+
+function add(t,isUser,skipStore){
   removeLoader();
   const p=document.createElement('p');
   if(isUser)p.className='user';
   p.textContent=isUser?'> '+t:t;
   out.appendChild(p);
   out.scrollTop=out.scrollHeight;
+  if(!skipStore){
+    history.push({text:t,user:!!isUser});
+    if(history.length>HISTORY_MAX)history=history.slice(-HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(history));
+  }
 }
 
 function showLoader(){
@@ -112,25 +147,91 @@ function removeLoader(){
   if(loaderEl){loaderEl.remove();loaderEl=null}
 }
 
+function setPending(state){
+  pending=state;
+  inp.disabled=state;
+  inp.placeholder=state ? 'Processing…' : DEFAULT_PLACEHOLDER;
+}
+
+function formatCost(cost){
+  if(cost==null)return '--';
+  return '$'+Number(cost).toFixed(4);
+}
+
+function updateStatus(data){
+  if(data && Object.keys(data).length){lastStatusData=data}
+  const model=lastStatusData?.model||'unknown';
+  const tier=lastStatusData?.tier||'unknown';
+  const persona=lastStatusData?.persona||'default';
+  const tokens=lastStatusData?.last_tokens||{};
+  const cached=lastStatusData?.last_cached?'cached':'live';
+  const cost=formatCost(lastStatusData?.cost);
+  const reqs=lastStatusData?.requests ?? 0;
+  const orb=ORBS[currentOrb].replace('orb_','');
+  const sync=lastSync?lastSync.toLocaleTimeString(): '--';
+  const conn=lastStatusData?.connected===false?'no api key':'connected';
+  const offline=offlineCount>=2?'offline':'';
+  status.innerHTML=`<span>${tier} · ${model} · ${persona} · orb ${orb} · ${tokens.input||0}/${tokens.output||0} · ${cached}</span><span class="${offline}">${conn} · ${cost} · ${reqs} req · sync ${sync}</span>`;
+  hint.style.opacity=pending ? '0.3' : '1';
+}
+
+function showToast(text){
+  toast.textContent=text;
+  toast.style.opacity='1';
+  setTimeout(()=>{toast.style.opacity='0'},1200);
+}
+
+function loadHistory(){
+  try{
+    const raw=localStorage.getItem(HISTORY_KEY);
+    if(!raw)return;
+    history=JSON.parse(raw)||[];
+    history.forEach(m=>add(m.text,m.user,true));
+  }catch{}
+}
+
+loadHistory();
+
 inp.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp' && !inp.value){
+    inp.value=lastSent||'';
+    return;
+  }
   if(e.key!=='Enter')return;
   const m=inp.value.trim();
   if(!m)return;
   add(m,true);
+  lastSent=m;
   inp.value='';
   showLoader();
+  setPending(true);
   fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
-    .catch(()=>{removeLoader();add('[offline]')});
+    .then(r=>r.ok ? r.json() : r.json().then(err=>Promise.reject(err)))
+    .catch(err=>{
+      removeLoader();
+      add(err?.error || '[offline]');
+      setPending(false);
+      offlineCount+=1;
+      updateStatus({});
+    });
 });
 
 (function poll(){
   fetch('/poll',{signal:AbortSignal.timeout(10000)})
     .then(r=>r.json())
     .then(d=>{
+      offlineCount=0;
+      lastSync=new Date();
+      updateStatus(d);
       if(d.text){removeLoader();add(d.text)}
+      if(d.text){setPending(false)}
       setTimeout(poll,800);
     })
-    .catch(()=>setTimeout(poll,3000));
+    .catch(()=>{
+      offlineCount+=1;
+      updateStatus({});
+      setTimeout(poll,3000);
+    });
 })();
 
 // WebSocket audio
@@ -155,6 +256,14 @@ inp.addEventListener('keydown',e=>{
     ws.onerror=()=>{};
   }catch{}
 })();
+
+function toggleGrain(){
+  grainCanvas.style.display=grainCanvas.style.display==='none'?'block':'none';
+  localStorage.setItem('grain',grainCanvas.style.display);
+}
+
+const savedGrain=localStorage.getItem('grain');
+if(savedGrain){grainCanvas.style.display=savedGrain}
 </script>
 </body>
 </html>
