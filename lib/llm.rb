@@ -251,18 +251,14 @@ module MASTER
     end
 
     def update_usage_from_response(response, tier)
-      input_tokens = response.respond_to?(:input_tokens) ? response.input_tokens.to_i : 0
-      output_tokens = response.respond_to?(:output_tokens) ? response.output_tokens.to_i : 0
+      tokens = extract_tokens(response)
+      input_tokens = tokens[:input]
+      output_tokens = tokens[:output]
       @last_tokens = { input: input_tokens, output: output_tokens }
       @total_tokens_in += input_tokens
       @total_tokens_out += output_tokens
       @request_count += 1
-      cost = response.respond_to?(:cost) ? response.cost : nil
-      cost = begin
-        cost ? Float(cost) : nil
-      rescue StandardError
-        nil
-      end
+      cost = safe_float(response.respond_to?(:cost) ? response.cost : nil)
       @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
       @last_cost = cost if cost
     end
@@ -270,6 +266,20 @@ module MASTER
     def estimate_cost(input_tokens, output_tokens, tier)
       config = TIERS[tier] || TIERS[DEFAULT_TIER]
       (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+    end
+
+    def extract_tokens(response)
+      {
+        input: response.respond_to?(:input_tokens) ? response.input_tokens.to_i : 0,
+        output: response.respond_to?(:output_tokens) ? response.output_tokens.to_i : 0
+      }
+    end
+
+    def safe_float(value)
+      return nil if value.nil?
+      Float(value)
+    rescue StandardError
+      nil
     end
 
     def load_persona(name)

@@ -475,23 +475,25 @@ module MASTER
         return [] unless config
 
         violations = []
+        used_vars = {}
         lines.each_with_index do |line, idx|
           match = line.match(/(\w+)\.nil\?/)
-          next unless match
+          if match
+            var = match[1]
+            if used_vars[var]
+              violations << {
+                type: :literal,
+                name: :late_nil_check,
+                principle: config[:principle],
+                message: config[:message],
+                severity: config[:severity],
+                line: idx + 1,
+                match: line.strip[0..50]
+              }
+            end
+          end
 
-          var = match[1]
-          used_before = lines[0...idx].any? { |prev| prev.include?("#{var}.") }
-          next unless used_before
-
-          violations << {
-            type: :literal,
-            name: :late_nil_check,
-            principle: config[:principle],
-            message: config[:message],
-            severity: config[:severity],
-            line: idx + 1,
-            match: line.strip[0..50]
-          }
+          line.scan(/(\w+)\./).each { |found| used_vars[found[0]] = true }
         end
         violations
       end
