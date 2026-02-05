@@ -92,7 +92,7 @@ module MASTER
 
         case [method, path]
         when ['GET', '/']
-          html = File.read(File.join(MASTER::ROOT, 'cli.html'))
+          html = File.read(File.join(MASTER::LIB, 'views', 'cli.html'))
           [200, { 'content-type' => 'text/html' }, [html]]
 
         when ['GET', '/poll']

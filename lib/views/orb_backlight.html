@@ -6,60 +6,121 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{display:flex;align-items:center;justify-content:center;width:100%;height:100vh;background-color:var(--background,#20293a);transition:background-color 1s}
-.mood-neutral{--background:#20293a;--color1:#00fcbd;--color2:#7400f9}
-.mood-positive{--background:#203a29;--color1:#00fc7d;--color2:#00f974}
-.mood-negative{--background:#3a2020;--color1:#fc0000;--color2:#f97400}
-.mood-calm{--background:#202a3a;--color1:#0074fc;--color2:#0000f9}
-.mood-excited{--background:#3a203a;--color1:#fc00fc;--color2:#f900f9}
-.orb{position:relative;display:flex;align-items:center;justify-content:center;width:300px;height:300px;background-color:var(--background);border-radius:50%;transition:transform 0.1s,color 10s}
-.orb::after{position:absolute;content:"";top:-5%;left:-5%;right:0;z-index:-1;height:100%;width:100%;margin:0 auto;transform:scale(0.85);filter:blur(5vw);background:linear-gradient(270deg,var(--color1),var(--color2));background-size:150% 150%;border-radius:50%;animation:glowmation 10s linear infinite}
-@keyframes glowmation{
-  0%{top:-3%;left:-3%;background-position:0% 50%;background-size:150% 150%}
-  12.5%{top:-3%;left:0;background-size:70% 30%}
-  25%{top:-3%;left:3%;background-size:100% 50%}
-  37.5%{top:0;left:3%;background-size:70% 30%}
-  50%{top:3%;left:3%;background-position:100% 50%;background-size:30% 30%}
-  62.5%{top:3%;left:0;background-size:30% 70%}
-  75%{top:3%;left:-3%;background-size:50% 100%}
-  87.5%{top:0;left:-3%;background-size:30% 70%}
-  100%{top:-3%;left:-3%;background-position:0% 50%;background-size:150% 150%}
-}
+body{background:#0a0a12}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
-<body class="mood-neutral">
-<div class="orb" id="orb"></div>
+<body>
+<canvas id="c"></canvas>
 <script>
-var orb=document.getElementById('orb'),audio=0,mx=0,my=0,gx=0,gy=0;
-document.addEventListener('mousemove',function(e){
-  mx=(e.clientX/window.innerWidth-0.5)*30;
-  my=(e.clientY/window.innerHeight-0.5)*30;
-});
-window.addEventListener('deviceorientation',function(e){
-  if(e.gamma!==null){gx=e.gamma*0.5;gy=(e.beta-45)*0.5}
-});
-navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-  var context=new AudioContext(),source=context.createMediaStreamSource(stream),analyser=context.createAnalyser();
-  analyser.fftSize=256;source.connect(analyser);
-  var data=new Uint8Array(analyser.frequencyBinCount);
+// 8-bit palette: 256 colors (6-8-5 levels RGB cube + grays)
+const PAL=[];
+for(let r=0;r<6;r++)for(let g=0;g<8;g++)for(let b=0;b<5;b++)PAL.push([r*51,g*36,b*64]);
+for(let i=0;i<16;i++)PAL.push([i*17,i*17,i*17]);
+
+function quantize(r,g,b){
+  let best=PAL[0],minD=Infinity;
+  for(const c of PAL){const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<minD){minD=d;best=c}}
+  return best;
+}
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let w,h,scale=2,audio=0,time=0,mood='neutral';
+
+const MOODS={
+  neutral:{bg:[32,41,58],c1:[0,252,189],c2:[116,0,249]},
+  positive:{bg:[32,58,41],c1:[0,252,125],c2:[0,249,116]},
+  negative:{bg:[58,32,32],c1:[252,0,0],c2:[249,116,0]},
+  calm:{bg:[32,42,58],c1:[0,116,252],c2:[0,0,249]},
+  excited:{bg:[58,32,58],c1:[252,0,252],c2:[249,0,249]}
+};
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+}
+
+function lerp(a,b,t){return a+(b-a)*t}
+
+function draw(){
+  time+=0.016;
+  const m=MOODS[mood]||MOODS.neutral;
+  const cx=w/2,cy=h/2;
+  const baseRadius=Math.min(w,h)*0.25;
+  const radius=baseRadius+audio*baseRadius*0.3;
+  
+  // Clear with background
+  ctx.fillStyle=`rgb(${m.bg[0]},${m.bg[1]},${m.bg[2]})`;
+  ctx.fillRect(0,0,w,h);
+  
+  const img=ctx.getImageData(0,0,w,h);
+  
+  // Draw backlight glow
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const dx=x-cx,dy=y-cy;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      const angle=Math.atan2(dy,dx);
+      
+      // Animated glow position
+      const glowOffX=Math.sin(time*0.5)*radius*0.15;
+      const glowOffY=Math.cos(time*0.7)*radius*0.15;
+      const glowDist=Math.sqrt((dx-glowOffX)**2+(dy-glowOffY)**2);
+      
+      if(glowDist<radius*1.8){
+        // Gradient between two colors based on angle
+        const t=(Math.sin(angle*2+time)+1)/2;
+        const r=lerp(m.c1[0],m.c2[0],t);
+        const g=lerp(m.c1[1],m.c2[1],t);
+        const b=lerp(m.c1[2],m.c2[2],t);
+        
+        // Falloff
+        const falloff=1-glowDist/(radius*1.8);
+        const intensity=falloff*falloff*(0.4+audio*0.3);
+        
+        // Dither
+        const dith=((x+y)%2)*8-4;
+        
+        const fr=m.bg[0]+r*intensity+dith;
+        const fg=m.bg[1]+g*intensity+dith;
+        const fb=m.bg[2]+b*intensity+dith;
+        
+        const q=quantize(fr,fg,fb);
+        const i=(y*w+x)*4;
+        img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
+      }
+      
+      // Dark orb center
+      if(dist<radius){
+        const q=quantize(m.bg[0]*0.8,m.bg[1]*0.8,m.bg[2]*0.8);
+        const i=(y*w+x)*4;
+        img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
+      }
+    }
+  }
+  
+  ctx.putImageData(img,0,0);
+  requestAnimationFrame(draw);
+}
+
+navigator.mediaDevices?.getUserMedia({audio:true}).then(s=>{
+  const ac=new AudioContext(),src=ac.createMediaStreamSource(s),an=ac.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
   (function loop(){
-    analyser.getByteFrequencyData(data);
-    var sum=0;for(var i=0;i<50;i++)sum+=data[i];
+    an.getByteFrequencyData(data);
+    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
     audio=sum/50/255;
     requestAnimationFrame(loop);
   })();
-}).catch(function(){});
-(function frame(){
-  var scale=1+audio*0.2;
-  var translateX=mx||gx,translateY=my||gy;
-  orb.style.transform='translate('+translateX+'px,'+translateY+'px) scale('+scale+')';
-  requestAnimationFrame(frame);
-})();
-var mood=new URLSearchParams(location.search).get('mood')||'neutral';
-document.body.className='mood-'+mood;
-window.addEventListener('message',function(event){
-  if(event.data&&event.data.mood)document.body.className='mood-'+event.data.mood;
-});
+}).catch(()=>{});
+
+mood=new URLSearchParams(location.search).get('mood')||'neutral';
+window.addEventListener('message',e=>{if(e.data?.mood)mood=e.data.mood});
+resize();
+window.addEventListener('resize',resize);
+draw();
 </script>
 </body>
 </html>

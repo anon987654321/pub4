@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>MASTER</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#0a0a0c;font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+#orb{position:fixed;inset:0;border:none;z-index:1}
+#halation{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 0.3s;z-index:9}
+#grain{position:fixed;inset:0;pointer-events:none;opacity:0.05;z-index:11;image-rendering:pixelated}
+output{position:fixed;left:12px;right:12px;bottom:36px;max-height:28vh;overflow-y:auto;color:#c4b49a;font-size:10px;z-index:20}
+output:empty{display:none}
+output p{margin:2px 0;opacity:0.85}
+output p.user{color:#7a9caa}
+input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;border-top:1px solid #1a1a1c;color:#c4b49a;font:inherit;padding:8px 12px;outline:none;z-index:20}
+input::placeholder{color:#333}
+#status{position:fixed;top:8px;right:10px;color:#444;font-size:8px;letter-spacing:0.15em;z-index:20}
+</style>
+</head>
+<body>
+<iframe id="orb" src="orb_blob.html"></iframe>
+<canvas id="halation"></canvas>
+<canvas id="grain"></canvas>
+<output id="out"></output>
+<input id="in" type="text" placeholder="" autofocus>
+<div id="status"></div>
+<script>
+// Available orb designs
+const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
+let currentOrb=0;
+
+// Film grain overlay
+const grainCanvas=document.getElementById('grain'),grainCtx=grainCanvas.getContext('2d');
+let gw,gh;
+function resizeGrain(){
+  gw=Math.floor(window.innerWidth/4);
+  gh=Math.floor(window.innerHeight/4);
+  grainCanvas.width=gw;grainCanvas.height=gh;
+  drawGrain();
+}
+function drawGrain(){
+  const img=grainCtx.createImageData(gw,gh);
+  for(let i=0;i<img.data.length;i+=4){
+    const v=128+(Math.random()-0.5)*30;
+    img.data[i]=img.data[i+1]=img.data[i+2]=v;
+    img.data[i+3]=255;
+  }
+  grainCtx.putImageData(img,0,0);
+}
+resizeGrain();
+window.addEventListener('resize',resizeGrain);
+setInterval(drawGrain,100);
+
+// Keyboard: 1-8 switch orbs, saved to localStorage
+function switchOrb(idx){
+  if(idx>=0&&idx<ORBS.length){
+    currentOrb=idx;
+    document.getElementById('orb').src=ORBS[idx]+'.html';
+    localStorage.setItem('orb',ORBS[idx]);
+  }
+}
+
+// Restore saved orb
+const saved=localStorage.getItem('orb');
+if(saved){
+  const idx=ORBS.indexOf(saved);
+  if(idx>=0)switchOrb(idx);
+}
+
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===document.getElementById('in'))return;
+  const num=parseInt(e.key);
+  if(num>=1&&num<=8)switchOrb(num-1);
+  // Arrow keys cycle
+  if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
+  if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
+});
+
+// Chat
+const out=document.getElementById('out'),inp=document.getElementById('in'),status=document.getElementById('status');
+
+function add(t,isUser){
+  const p=document.createElement('p');
+  if(isUser)p.className='user';
+  p.textContent=isUser?'> '+t:t;
+  out.appendChild(p);
+  out.scrollTop=out.scrollHeight;
+}
+
+inp.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const m=inp.value.trim();
+  if(!m)return;
+  add(m,true);
+  inp.value='';
+  status.textContent='...';
+  fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
+    .catch(()=>add('[offline]'));
+});
+
+(function poll(){
+  fetch('/poll',{signal:AbortSignal.timeout(10000)})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.text){add(d.text);status.textContent=''}
+      if(d.cost)status.textContent='$'+d.cost.toFixed(4);
+      setTimeout(poll,800);
+    })
+    .catch(()=>setTimeout(poll,3000));
+})();
+
+// WebSocket audio
+(function connectWS(){
+  try{
+    const ws=new WebSocket('ws://'+location.host+'/ws');
+    ws.onmessage=e=>{
+      try{
+        const d=JSON.parse(e.data);
+        if(d.audio){
+          const bin=atob(d.audio);
+          const arr=new Uint8Array(bin.length);
+          for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+          const blob=new Blob([arr],{type:'audio/mpeg'});
+          const a=new Audio(URL.createObjectURL(blob));
+          a.play().catch(()=>{});
+        }
+        if(d.text)add(d.text);
+      }catch{}
+    };
+    ws.onclose=()=>setTimeout(connectWS,3000);
+  }catch{}
+})();
+</script>
+</body>
+</html>

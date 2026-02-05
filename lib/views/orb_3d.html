@@ -2,65 +2,150 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>3D Rotating Orb</title>
+<title>3D Orb</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:#000;display:flex;align-items:center;justify-content:center}
-.wrap{position:relative;top:50%;left:50%;width:0;height:0;transform-style:preserve-3d;perspective:1000px;animation:rotate 14s infinite linear}
-.c{position:absolute;width:2px;height:2px;border-radius:50%;opacity:0}
-@keyframes rotate{100%{transform:rotateY(360deg) rotateX(360deg)}}
+body{background:#0a0a0c}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
 <body>
-<div class="wrap" id="wrap"></div>
+<canvas id="c"></canvas>
 <script>
-var total=300,orbSize=100,time=14,baseHue=0,audio=0;
-var wrap=document.getElementById('wrap');
-
-for(var i=0;i<total;i++){
-  var c=document.createElement('div');
-  c.className='c';
-  c.style.backgroundColor='hsl('+(40/total*i+baseHue)+',100%,50%)';
-  c.style.animationDelay=(i*0.01)+'s';
-  wrap.appendChild(c);
+// 8-bit palette (256 colors)
+const PAL=[];
+for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
+for(let i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
+function quantize(r,g,b){
+  let best=PAL[0],minD=Infinity;
+  for(const c of PAL){const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<minD){minD=d;best=c}}
+  return best;
 }
 
-var style=document.createElement('style');
-var css='';
-for(var i=1;i<=total;i++){
-  var z=Math.random()*360;
-  var y=Math.random()*360;
-  css+='.c:nth-child('+i+'){animation:orbit'+i+' '+time+'s infinite}';
-  css+='@keyframes orbit'+i+'{';
-  css+='20%{opacity:1}';
-  css+='30%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+orbSize+'px) rotateZ('+z+'deg)}';
-  css+='80%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+orbSize+'px) rotateZ('+z+'deg);opacity:1}';
-  css+='100%{transform:rotateZ(-'+z+'deg) rotateY('+y+'deg) translateX('+(orbSize*3)+'px) rotateZ('+z+'deg)}';
-  css+='}';
-}
-style.textContent=css;
-document.head.appendChild(style);
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+let w,h,scale=2,audio=0,time=0,rotX=0,rotY=0;
+let points=[];
 
-navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+  initPoints();
+}
+
+function initPoints(){
+  points=[];
+  // Fibonacci sphere
+  const n=120;
+  const phi=(1+Math.sqrt(5))/2;
+  for(let i=0;i<n;i++){
+    const y=1-(i/(n-1))*2;
+    const r=Math.sqrt(1-y*y);
+    const theta=2*Math.PI*i/phi;
+    points.push({
+      x:Math.cos(theta)*r*40,
+      y:y*40,
+      z:Math.sin(theta)*r*40,
+      hue:i*3
+    });
+  }
+}
+
+function draw(){
+  time+=0.016;
+  rotY+=0.01+audio*0.03;
+  rotX+=0.005;
+  
+  ctx.fillStyle='rgba(10,10,12,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  const img=ctx.getImageData(0,0,w,h);
+  const cx=w/2,cy=h/2;
+  const cosY=Math.cos(rotY),sinY=Math.sin(rotY);
+  const cosX=Math.cos(rotX),sinX=Math.sin(rotX);
+  const radius=35+audio*15;
+  
+  // Sort by z for depth
+  const projected=points.map(p=>{
+    // Scale by audio
+    const sx=p.x*(radius/40),sy=p.y*(radius/40),sz=p.z*(radius/40);
+    // Rotate Y
+    let x=sx*cosY-sz*sinY;
+    let z=sx*sinY+sz*cosY;
+    // Rotate X
+    let y=sy*cosX-z*sinX;
+    z=sy*sinX+z*cosX;
+    // Project
+    const fov=80;
+    const s=fov/(fov+z);
+    return{px:cx+x*s,py:cy+y*s,z,hue:p.hue,s};
+  }).sort((a,b)=>b.z-a.z);
+  
+  for(const p of projected){
+    const px=Math.floor(p.px),py=Math.floor(p.py);
+    if(px<1||px>=w-1||py<1||py>=h-1)continue;
+    
+    // Color based on depth and hue
+    const depth=(p.z+50)/100;
+    const hue=(p.hue+time*20)%360;
+    const lit=0.3+depth*0.4;
+    
+    // HSL to RGB
+    const c=(1-Math.abs(2*lit-1))*0.8;
+    const x2=c*(1-Math.abs((hue/60)%2-1));
+    const m=lit-c/2;
+    let R,G,B;
+    const h6=Math.floor(hue/60)%6;
+    if(h6===0){R=c;G=x2;B=0}
+    else if(h6===1){R=x2;G=c;B=0}
+    else if(h6===2){R=0;G=c;B=x2}
+    else if(h6===3){R=0;G=x2;B=c}
+    else if(h6===4){R=x2;G=0;B=c}
+    else{R=c;G=0;B=x2}
+    
+    R=Math.floor((R+m)*255);
+    G=Math.floor((G+m)*255);
+    B=Math.floor((B+m)*255);
+    
+    const q=quantize(R,G,B);
+    const dith=((px+py)%2)*16-8;
+    
+    // Draw 2x2 pixel
+    for(let dy=0;dy<2;dy++){
+      for(let dx=0;dx<2;dx++){
+        const i=((py+dy)*w+px+dx)*4;
+        img.data[i]=Math.min(255,q[0]+dith);
+        img.data[i+1]=Math.min(255,q[1]+dith);
+        img.data[i+2]=Math.min(255,q[2]+dith);
+        img.data[i+3]=255;
+      }
+    }
+  }
+  
+  ctx.putImageData(img,0,0);
+  requestAnimationFrame(draw);
+}
+
+navigator.mediaDevices?.getUserMedia({audio:true}).then(s=>{
+  const ac=new AudioContext(),src=ac.createMediaStreamSource(s),an=ac.createAnalyser();
   an.fftSize=256;src.connect(an);
-  var data=new Uint8Array(an.frequencyBinCount);
+  const data=new Uint8Array(an.frequencyBinCount);
   (function loop(){
     an.getByteFrequencyData(data);
-    var sum=0;for(var j=0;j<50;j++)sum+=data[j];
+    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
     audio=sum/50/255;
-    var speed=14-audio*10;
-    wrap.style.animationDuration=Math.max(4,speed)+'s';
     requestAnimationFrame(loop);
   })();
-}).catch(function(){});
+}).catch(()=>{});
 
-document.addEventListener('mousemove',function(e){
-  var x=(e.clientX/window.innerWidth-0.5)*50;
-  var y=(e.clientY/window.innerHeight-0.5)*50;
-  wrap.style.transform='rotateX('+y+'deg) rotateY('+x+'deg)';
+document.addEventListener('mousemove',e=>{
+  rotX=(e.clientY/window.innerHeight-0.5)*0.5;
 });
+
+resize();
+window.addEventListener('resize',resize);
+draw();
 </script>
 </body>
 </html>

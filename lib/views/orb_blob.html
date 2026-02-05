@@ -6,144 +6,123 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg,#050515);display:flex;align-items:center;justify-content:center;transition:background 1s}
-.mood-neutral{--bg:#050515;--blob-1:#984ddf;--blob-2:#4344ad;--blob-3:#74d9e1;--blob-4:#050515}
-.mood-positive{--bg:#0a1a0f;--blob-1:#4ddf98;--blob-2:#44ad7d;--blob-3:#74e1a0;--blob-4:#0a1a0f}
-.mood-negative{--bg:#1a0a0a;--blob-1:#df4d4d;--blob-2:#ad4444;--blob-3:#e17474;--blob-4:#1a0a0a}
-.mood-calm{--bg:#0a0a1a;--blob-1:#4d7ddf;--blob-2:#4454ad;--blob-3:#74a0e1;--blob-4:#0a0a1a}
-.mood-excited{--bg:#1a0a1a;--blob-1:#df4ddf;--blob-2:#ad44ad;--blob-3:#e174e1;--blob-4:#1a0a1a}
-.blobs{width:min(60vw,60vh);height:min(60vw,60vh);transition:transform 0.1s ease-out}
-.blobs svg{width:100%;height:100%}
-.blob{animation:rotate 25s infinite alternate ease-in-out;transform-origin:50% 50%;opacity:0.7}
-.blob path{animation:morph 5s infinite alternate cubic-bezier(0.45,0.2,0.55,0.8);transform-origin:50% 50%;transform:scale(0.8);transition:fill 800ms}
-.blob.alt{animation-direction:alternate-reverse;opacity:0.3}
-.blob-1 path{fill:var(--blob-1);filter:blur(1rem)}
-.blob-2{animation-duration:18s;animation-direction:alternate-reverse}
-.blob-2 path{fill:var(--blob-2);animation-name:morph2;animation-duration:7s;filter:blur(0.75rem);transform:scale(0.78)}
-.blob-2.alt{animation-direction:alternate}
-.blob-3{animation-duration:23s}
-.blob-3 path{fill:var(--blob-3);animation-name:morph3;animation-duration:6s;filter:blur(0.5rem);transform:scale(0.76)}
-.blob-4{animation-duration:31s;animation-direction:alternate-reverse;opacity:0.9}
-.blob-4 path{fill:var(--blob-4);animation-name:morph4;animation-duration:10s;filter:blur(10rem);transform:scale(0.5)}
-.blob-4.alt{animation-direction:alternate;opacity:0.8}
-@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes morph{
-  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
-  33%{d:path("M 100 600 q -50 -400, 500 -500 t 450 550 t -500 500 T 100 600 z")}
-  66%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
-  100%{d:path("M 100 600 q 100 -600, 500 -500 t 400 500 t -500 500 T 100 600 z")}
-}
-@keyframes morph2{
-  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
-  50%{d:path("M 100 600 q 0 -400, 500 -500 t 400 500 t -500 500 T 100 600 z")}
-  100%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
-}
-@keyframes morph3{
-  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
-  50%{d:path("M 150 600 q 0 -600, 500 -500 t 500 550 t -500 500 T 150 600 z")}
-  100%{d:path("M 100 600 q 100 -600, 500 -500 t 400 500 t -500 500 T 100 600 z")}
-}
-@keyframes morph4{
-  0%{d:path("M 100 600 q 0 -500, 500 -500 t 500 500 t -500 500 T 100 600 z")}
-  100%{d:path("M 100 600 q -50 -400, 500 -500 t 450 550 t -500 500 T 100 600 z")}
-}
+body{background:#0a0a0c}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
-<body class="mood-neutral">
-<div class="blobs" id="orb">
-  <svg viewBox="0 0 1200 1200">
-    <g class="blob blob-1"><path/></g>
-    <g class="blob blob-2"><path/></g>
-    <g class="blob blob-3"><path/></g>
-    <g class="blob blob-4"><path/></g>
-    <g class="blob blob-1 alt"><path/></g>
-    <g class="blob blob-2 alt"><path/></g>
-    <g class="blob blob-3 alt"><path/></g>
-    <g class="blob blob-4 alt"><path/></g>
-  </svg>
-</div>
+<body>
+<canvas id="c"></canvas>
 <script>
-var orb=document.getElementById('orb'),audio=0,mx=0,my=0,gx=0,gy=0;
-// Mouse parallax
-document.addEventListener('mousemove',function(e){
-  mx=(e.clientX/window.innerWidth-0.5)*30;
-  my=(e.clientY/window.innerHeight-0.5)*30;
-});
-// Mobile tilt
-window.addEventListener('deviceorientation',function(e){
-  if(e.gamma!==null){gx=e.gamma*0.5;gy=(e.beta-45)*0.5}
-});
-// Audio reactive
-navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-  var ctx=new AudioContext(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
+// 8-bit palette: 256 colors
+const PAL=[];
+for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
+for(let i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
+
+function quantize(r,g,b){
+  let minD=Infinity,best=PAL[0];
+  for(const c of PAL){
+    const dr=r-c[0],dg=g-c[1],db=b-c[2];
+    if(dr*dr+dg*dg+db*db<minD){minD=dr*dr+dg*dg+db*db;best=c}
+  }
+  return best;
+}
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+let w,h,scale=2,time=0,audio=0;
+let blobs=[
+  {x:0,y:0,r:60,phase:0,speed:0.02,color:[152,77,223]},
+  {x:0,y:0,r:55,phase:2,speed:0.015,color:[67,68,173]},
+  {x:0,y:0,r:50,phase:4,speed:0.025,color:[116,217,225]}
+];
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+  blobs.forEach(b=>{b.x=w/2;b.y=h/2});
+}
+resize();
+window.addEventListener('resize',resize);
+
+function draw(){
+  time+=0.016;
+  
+  // Clear with trail
+  ctx.fillStyle='rgba(10,10,12,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  const img=ctx.getImageData(0,0,w,h);
+  const cx=w/2,cy=h/2;
+  
+  // Draw each blob
+  for(const blob of blobs){
+    blob.phase+=blob.speed+audio*0.03;
+    const breathe=Math.sin(time*1.5+blob.phase)*8+audio*15;
+    const r=blob.r+breathe;
+    
+    for(let y=Math.max(0,Math.floor(cy-r-5));y<Math.min(h,Math.ceil(cy+r+5));y++){
+      for(let x=Math.max(0,Math.floor(cx-r-5));x<Math.min(w,Math.ceil(cx+r+5));x++){
+        const dx=x-cx,dy=y-cy;
+        // Morphing shape
+        const angle=Math.atan2(dy,dx);
+        const morph=1+Math.sin(angle*3+blob.phase)*0.2+Math.sin(angle*5-time)*0.1;
+        const dist=Math.sqrt(dx*dx+dy*dy)/morph;
+        
+        if(dist<r){
+          const edge=1-dist/r;
+          const intensity=Math.pow(edge,1.5)*0.7;
+          
+          let R=blob.color[0]*intensity;
+          let G=blob.color[1]*intensity;
+          let B=blob.color[2]*intensity;
+          
+          // Quantize
+          const q=quantize(R,G,B);
+          
+          // Dither
+          const dith=((x+y)%2)*16-8;
+          
+          const i=(y*w+x)*4;
+          img.data[i]=Math.min(255,Math.max(0,q[0]+dith+img.data[i]*0.3));
+          img.data[i+1]=Math.min(255,Math.max(0,q[1]+dith+img.data[i+1]*0.3));
+          img.data[i+2]=Math.min(255,Math.max(0,q[2]+dith+img.data[i+2]*0.3));
+          img.data[i+3]=255;
+        }
+      }
+    }
+  }
+  
+  ctx.putImageData(img,0,0);
+  requestAnimationFrame(draw);
+}
+
+// Audio
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
   an.fftSize=256;src.connect(an);
-  var data=new Uint8Array(an.frequencyBinCount);
+  const data=new Uint8Array(an.frequencyBinCount);
   (function loop(){
     an.getByteFrequencyData(data);
-    var sum=0;for(var i=0;i<50;i++)sum+=data[i];
+    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
     audio=sum/50/255;
     requestAnimationFrame(loop);
   })();
-}).catch(function(){});
-// Animate
-(function frame(){
-  var s=1+(audio||wsAudio)*0.3;
-  var tx=mx||gx,ty=my||gy;
-  orb.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
-  requestAnimationFrame(frame);
-})();
-// Mood from URL or message
-var mood=new URLSearchParams(location.search).get('mood')||'neutral';
-document.body.className='mood-'+mood;
-window.addEventListener('message',function(e){
-  if(e.data&&e.data.mood)document.body.className='mood-'+e.data.mood;
+}).catch(()=>{});
+
+// Mood from parent
+window.addEventListener('message',e=>{
+  if(e.data?.mood){
+    const moods={
+      positive:[[77,223,152],[68,173,125],[116,225,160]],
+      negative:[[223,77,77],[173,68,68],[225,116,116]],
+      calm:[[77,125,223],[68,84,173],[116,160,225]],
+      excited:[[223,77,223],[173,68,173],[225,116,225]]
+    };
+    if(moods[e.data.mood])blobs.forEach((b,i)=>b.color=moods[e.data.mood][i]||b.color);
+  }
 });
 
-// WebSocket for MASTER audio streaming
-var ws,wsAudio=0,audioCtx,audioQueue=[];
-function connectWS(){
-  var port=location.port||28436;
-  ws=new WebSocket('ws://'+location.hostname+':'+port+'/ws');
-  ws.onmessage=function(e){
-    try{
-      var msg=JSON.parse(e.data);
-      if(msg.type==='audio'&&msg.data){
-        playBase64Audio(msg.data);
-      }
-      if(msg.mood){
-        document.body.className='mood-'+msg.mood;
-      }
-    }catch(err){}
-  };
-  ws.onclose=function(){setTimeout(connectWS,3000)};
-  ws.onerror=function(){ws.close()};
-}
-function playBase64Audio(b64){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  var binary=atob(b64);
-  var len=binary.length;
-  var bytes=new Uint8Array(len);
-  for(var i=0;i<len;i++)bytes[i]=binary.charCodeAt(i);
-  audioCtx.decodeAudioData(bytes.buffer,function(buffer){
-    var src=audioCtx.createBufferSource();
-    var analyser=audioCtx.createAnalyser();
-    analyser.fftSize=256;
-    src.buffer=buffer;
-    src.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    src.start(0);
-    // React to playback audio
-    var data=new Uint8Array(analyser.frequencyBinCount);
-    (function pulse(){
-      if(src.playbackState===src.FINISHED_STATE)return;
-      analyser.getByteFrequencyData(data);
-      var sum=0;for(var i=0;i<50;i++)sum+=data[i];
-      wsAudio=sum/50/255;
-      requestAnimationFrame(pulse);
-    })();
-  });
-}
-if(location.protocol!=='file:')connectWS();
+draw();
 </script>
 </body>
 </html>

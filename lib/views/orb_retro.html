@@ -74,18 +74,28 @@ for(var i=0;i<40;i++){
   });
 }
 
-// Quantize to 4-bit palette
-function q4(v){return Math.round(v/16)*16}
+// 8-bit palette: 256 colors (6-7-6 RGB cube + grays)
+var PAL=[];
+for(var r=0;r<6;r++)for(var g=0;g<7;g++)for(var b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
+for(var i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
 
-// Pack color
-function rgb(r,g,b){return 'rgb('+q4(r)+','+q4(g)+','+q4(b)+')'}
+function quantize(r,g,b){
+  var best=PAL[0],minD=Infinity;
+  for(var i=0;i<PAL.length;i++){
+    var c=PAL[i],d=(r-c[0])*(r-c[0])+(g-c[1])*(g-c[1])+(b-c[2])*(b-c[2]);
+    if(d<minD){minD=d;best=c}
+  }
+  return best;
+}
+
+function rgb(r,g,b){var q=quantize(r,g,b);return 'rgb('+q[0]+','+q[1]+','+q[2]+')'}
 
 function getColor(layer,beat){
   var pulse=beat*40;
   var depth=layer/6;
-  var r=q4(13+depth*20+pulse*0.2);
-  var g=q4(40+depth*60+pulse*0.5);
-  var b=q4(24+depth*50+pulse*0.3);
+  var r=13+depth*20+pulse*0.2;
+  var g=40+depth*60+pulse*0.5;
+  var b=24+depth*50+pulse*0.3;
   return rgb(r,g,b);
 }
 
@@ -177,7 +187,7 @@ function drawStars(){
     var sy=cy+s.y*scale+(mouseY+tiltY)*scale*0.1;
     if(sx>=0&&sx<w&&sy>=0&&sy<h){
       var b=s.b*(1-s.z/200);
-      var c=q4(b*80);
+      var c=b*80;
       ctx.fillStyle=rgb(c*0.3,c*0.6,c);
       ctx.fillRect(Math.floor(sx),Math.floor(sy),1,1);
     }
@@ -201,7 +211,7 @@ function frame(){
     var nx=Math.random()*w;
     var ny=Math.random()*h;
     var nv=Math.random()*30;
-    ctx.fillStyle='rgba('+q4(nv)+','+q4(nv)+','+q4(nv)+',0.1)';
+    ctx.fillStyle='rgba('+Math.floor(nv)+','+Math.floor(nv)+','+Math.floor(nv)+',0.1)';
     ctx.fillRect(Math.floor(nx),Math.floor(ny),1,1);
   }
   
