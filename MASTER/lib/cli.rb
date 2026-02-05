@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require_relative "core/enhanced_colors"; require_relative "core/typography"; require_relative "core/cli_enhancements"
 
 require 'readline'
 require 'fileutils'

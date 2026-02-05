@@ -18,3 +18,4 @@ gem 'readline'
 # Optional
 gem 'tty-spinner', require: false
 gem 'tty-prompt', require: false
+starship
