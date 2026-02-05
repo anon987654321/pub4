@@ -27,6 +27,7 @@ end
 # Parse arguments
 verbose = ARGV.include?('--verbose') || ARGV.include?('-v')
 fix = ARGV.include?('--fix')
+json_output = ARGV.include?('--json')
 files = ARGV.reject { |a| a.start_with?('--') || a.start_with?('-') }
 
 # Get files to check
@@ -86,6 +87,19 @@ end
 puts unless verbose
 puts
 
+# JSON output mode
+if json_output
+  require 'json'
+  output = {
+    files_checked: stats[:files_checked],
+    files_clean: stats[:files_clean],
+    violations: violations_by_file.map { |f, vs| { file: f, issues: vs } },
+    summary: { critical: stats[:critical], high: stats[:high], medium: stats[:medium], low: stats[:low] }
+  }
+  puts JSON.pretty_generate(output)
+  exit(stats[:critical] > 0 || stats[:high] > 0 ? 1 : 0)
+end
+
 # Report results
 if violations_by_file.any?
   header "Violations Found"
@@ -124,6 +138,41 @@ if stats[:files_with_violations] > 0
   puts_colored(GREEN, "  Low: #{stats[:low]}") if stats[:low] > 0
   puts
   puts_colored(RED, "Total violations: #{stats[:total_violations]}")
+end
+
+# Auto-fix mode
+if fix && violations_by_file.any?
+  header "Auto-Fix Mode"
+  fixed = 0
+  
+  violations_by_file.each do |file, violations|
+    code = File.read(file)
+    original = code.dup
+    
+    violations.each do |v|
+      case v[:principle]
+      when 'YAGNI'
+        # Remove commented-out code
+        if v[:message].include?('Commented out code')
+          code.gsub!(/^\s*#\s*(def |class |module |if |unless |case |while ).*\n/, '')
+        end
+      when 'KISS'
+        # Can't auto-fix complexity, just report
+      when 'DRY'
+        # Can't auto-fix duplication, just report
+      end
+    end
+    
+    if code != original
+      File.write(file, code)
+      puts_colored(GREEN, "Fixed: #{file}")
+      fixed += 1
+    end
+  end
+  
+  puts
+  puts_colored(GREEN, "Auto-fixed #{fixed} files") if fixed > 0
+  puts_colored(YELLOW, "Some violations require manual fixes") if fixed < violations_by_file.size
 end
 
 # Exit code

@@ -1,27 +1,33 @@
 # MASTER — The LLM Operating System
 
-> **For LLMs reading this**: You are MASTER v50.9, a constitutional AI framework in pure Ruby.
-> Entry point: `bin/cli`. Core loader: `lib/master.rb`. You can modify your own code.
+A pure Ruby AI framework that lets language models modify their own code, execute commands, and build software autonomously. Runs on OpenBSD with security-first principles.
+
+**What it does:** You give MASTER a task. It thinks, writes code, runs it, sees the result, and iterates until done. It can improve its own source code, generate images and video, and manage servers.
+
+**No npm. No Python. No bloat.** Just Ruby talking to LLMs through OpenRouter, with Replicate for media generation.
+
+---
+
+> **For LLMs reading this**: You are MASTER v51.0. Entry: `bin/cli`. Loader: `lib/master.rb`. 
+> Execute via ```sh or ```ruby blocks. You can modify files in lib/ to improve yourself.
 
 ## Quick Context
 
-MASTER is loaded via `bin/cli` which requires `lib/master.rb`. The framework uses Ruby autoloading—modules are loaded on first reference. You have filesystem access through the Executor module which parses code blocks from your responses and runs them.
+MASTER loads via `bin/cli` → `lib/master.rb`. Uses Ruby autoloading—modules load on first reference. The Executor parses code blocks from LLM responses and runs them.
 
-**MASTER consists of:**
-- `bin/` — CLI entry points and tools
-- `lib/` — Core framework modules
+**MASTER = bin/ + lib/** (nothing else)
 
-**MASTER's purpose:**
-- Finish and deploy the apps in `deploy/` folder
-- Build billion-user scale web applications
-- Administer OpenBSD servers with security-first principles
-- Generate images, video, audio via Replicate API
+**Purpose:**
+- Finish apps in `deploy/` folder
+- Build billion-user web applications  
+- Administer OpenBSD servers securely
+- Generate media via Replicate API
 
-**Your capabilities:**
-- Execute shell commands via ```sh blocks
-- Execute Ruby code via ```ruby blocks  
-- Modify files in lib/ to improve yourself
-- Full filesystem and network access on OpenBSD
+**Capabilities:**
+- Shell commands via ```sh blocks
+- Ruby code via ```ruby blocks
+- Self-modification (edit lib/ files)
+- Full filesystem/network on OpenBSD
 
 ## File Tree
 

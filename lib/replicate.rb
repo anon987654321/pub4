@@ -72,6 +72,50 @@ module MASTER
       zoedepth:        'isl-org/zoedepth'
     }.freeze
 
+    # Estimated costs per model run (USD) - updated Feb 2026
+    COSTS = {
+      # Image generation
+      flux_schnell: 0.003, flux_dev: 0.025, flux_pro: 0.055, flux_1_1_pro: 0.04,
+      sdxl: 0.012, sdxl_lightning: 0.003, sdxl_turbo: 0.002,
+      ideogram: 0.08, recraft: 0.04, midjourney: 0.10,
+      # Video generation
+      hailuo: 0.25, kling: 0.35, kling_pro: 0.70, luma_ray: 0.30, 
+      wan: 0.20, sora: 0.50, stable_video: 0.15, runway_gen3: 0.40,
+      # Upscaling/enhancement
+      real_esrgan: 0.005, gfpgan: 0.004, codeformer: 0.005, 
+      clarity: 0.02, supir: 0.03, aura_sr: 0.01, topaz: 0.02,
+      # Depth/control
+      depth_anything: 0.003, depth_anything_v2: 0.004, controlnet: 0.01, 
+      remove_bg: 0.004, face_to_many: 0.02,
+      # Image editing
+      instruct_pix: 0.015, style_transfer: 0.01, inpainting: 0.02,
+      # Colorization
+      bigcolor: 0.008, ddcolor: 0.005, deoldify: 0.01,
+      # Vision/analysis
+      llava: 0.01, llava_next: 0.015, blip: 0.005, clip: 0.003, gpt4v: 0.03,
+      # Audio
+      musicgen: 0.05, musicgen_large: 0.08, bark: 0.02, whisper: 0.006, 
+      whisper_large: 0.01, riffusion: 0.02, audiocraft: 0.04,
+      # TTS
+      minimax_turbo: 0.008, minimax_hd: 0.015, kokoro: 0.004, elevenlabs: 0.03,
+      # 3D/depth
+      depth_pro: 0.01, marigold: 0.008, zoedepth: 0.005, point_e: 0.02
+    }.freeze
+
+    class << self
+      def estimate_chain_cost(chain)
+        chain_config = CHAINS[chain.to_sym]
+        return nil unless chain_config
+        return 0.50 if chain_config[:steps] == :random
+
+        chain_config[:steps].sum { |step| COSTS[step[:model]] || 0.02 }
+      end
+
+      def estimate_cost(model)
+        COSTS[model.to_sym] || 0.02
+      end
+    end
+
     # Cinematography chains: each step builds on the previous
     CHAINS = {
       # Classic film looks
@@ -527,14 +571,16 @@ module MASTER
         return Result.err("Unknown chain: #{chain}") unless chain_config
 
         steps = chain_config[:steps] == :random ? random_pipeline : chain_config[:steps]
+        cost_est = estimate_chain_cost(chain)
 
-        puts "  chain: #{chain} (#{steps.size} steps, seed #{seed})"
+        puts "  chain: #{chain} (#{steps.size} steps, ~$#{'%.2f' % cost_est}, seed #{seed})"
         context = { prompt: prompt, seed: seed, artifacts: [] }
 
         steps.each_with_index do |step, idx|
           model_name = step[:model]
           action = step[:action]
-          puts "  [#{idx + 1}/#{steps.size}] #{model_name} (#{action})"
+          step_cost = COSTS[model_name] || 0.02
+          puts "  #{idx + 1}/#{steps.size} #{model_name} #{action} ~$#{'%.3f' % step_cost}"
 
           result = execute_step(step, context)
 
@@ -549,6 +595,7 @@ module MASTER
         Result.ok({
           chain: chain,
           seed: seed,
+          estimated_cost: cost_est,
           steps: context[:artifacts],
           final: context[:artifacts].last&.dig(:output)
         })

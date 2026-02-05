@@ -4,7 +4,7 @@
 # A constitutional AI framework in pure Ruby
 
 module MASTER
-  VERSION = '50.9'
+  VERSION = '51.0'
   CODENAME = 'MASTER'
   ROOT = File.expand_path('..', __dir__)
   LIB = __dir__
@@ -47,6 +47,7 @@ module MASTER
   autoload :OrbStream,          "#{CORE}/orb_stream"
   autoload :ImageComparison,    "#{CORE}/image_comparison"
   autoload :OpenBSDPledge,      "#{CORE}/openbsd_pledge"
+  autoload :Audit,              "#{CORE}/audit"
 
   # Framework modules
   module Framework

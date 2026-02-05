@@ -169,6 +169,17 @@ module MASTER
         when ['GET', '/health']
           [200, { 'content-type' => 'application/json' }, [{ status: 'ok', version: VERSION }.to_json]]
 
+        when ['GET', '/metrics']
+          metrics = {
+            version: VERSION,
+            uptime: (Time.now - (defined?(BOOT_TIME) ? BOOT_TIME : Time.now)).to_i,
+            requests: rate_limiter.request_count,
+            cost: cost_ref.call,
+            audit_entries: (Audit.tail(1).size rescue 0),
+            memory_mb: (`ps -o rss= -p #{Process.pid}`.to_i / 1024 rescue 0)
+          }
+          [200, { 'content-type' => 'application/json' }, [metrics.to_json]]
+
         when ['GET', '/ws']
           # WebSocket upgrade for Falcon
           if env['rack.hijack']
@@ -266,6 +277,7 @@ module MASTER
       @window = 60.0
       @requests = []
       @mutex = Mutex.new
+      @total = 0
     end
 
     def allow?
@@ -274,8 +286,13 @@ module MASTER
         @requests.reject! { |t| t < now - @window }
         return false if @requests.size >= @limit
         @requests << now
+        @total += 1
         true
       end
+    end
+
+    def request_count
+      @total
     end
   end
 end
