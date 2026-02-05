@@ -23,6 +23,7 @@ MASTER loads via `bin/cli` → `lib/master.rb`. Uses Ruby autoloading—modules 
 - Build billion-user web applications  
 - Administer OpenBSD servers securely
 - Generate media via Replicate API
+ - Carry forward standout ideas from Moltbot and Openclaw
 
 **Capabilities:**
 - Shell commands via ```sh blocks
@@ -240,6 +241,7 @@ ask <query>      Chat with LLM
 backend <name>   Switch http/ruby_llm backend
 scan             Analyze current directory  
 refactor         Improve code quality
+optimize         Self-optimize files
 chamber <query>  Multi-model deliberation
 replicate        Generate images/video/audio
 queue <dir>      Process directory with checkpoints
@@ -247,6 +249,10 @@ evolve           Convergence loop until <2% improvement
 context <cmd>    Manage context add/drop/list/clear
 help             Show all commands
 ```
+
+## Recent UX/LLM Improvements
+
+The web UI now surfaces live model, persona, cost, token telemetry, orb selection, and connection state, saves local chat history, exposes a keyboard help overlay, and disables input while requests are in flight. OpenRouter headers are configurable for smoother routing, and the CLI status output includes the active model tier and cached-token status with a new tier command for quick switching.
 
 ---
 

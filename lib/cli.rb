@@ -231,6 +231,7 @@ module MASTER
     def repl
       puts "#{C_DIM}#{QUOTES.sample}#{C_RESET}"
       puts "#{C_DIM}Session: #{@session_name}#{C_RESET}"
+      warn_missing_api_key
       puts
 
       loop do
@@ -277,6 +278,13 @@ module MASTER
       save_state
       @server&.stop
       show_session_summary
+    end
+
+    def warn_missing_api_key
+      return if @llm.status[:connected]
+      puts "#{C_YELLOW}OpenRouter key missing. Set OPENROUTER_API_KEY to enable LLM responses.#{C_RESET}"
+    rescue
+      nil
     end
 
     def expand_alias(input)
@@ -465,6 +473,14 @@ module MASTER
       info = LLM::TIERS[:premium]
       puts "#{C_YELLOW}Premium tier costs #{info[:input]}/#{info[:output]} per 1000 tokens#{C_RESET}"
       print "Continue? [y/N] "
+      response = $stdin.gets&.strip&.downcase
+      response == 'y' || response == 'yes'
+    end
+
+    def confirm_write(action)
+      return true if ENV['MASTER_AUTO_APPROVE']
+      return true unless $stdin.tty?
+      print "#{action}. Continue? [y/N] "
       response = $stdin.gets&.strip&.downcase
       response == 'y' || response == 'yes'
     end
@@ -808,6 +824,7 @@ module MASTER
 
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
+      return 'Cancelled.' unless confirm_write("This will reformat #{path}")
 
       content = File.read(full)
       original = content.dup
@@ -888,6 +905,15 @@ module MASTER
       trace "persona: #{name}"
       result = @llm.switch_persona(name)
       result.ok? ? "Switched to #{name}" : result.error
+    end
+
+    def switch_tier(name)
+      return "Current tier: #{@llm.current_tier}" unless name
+      key = name.to_sym
+      return "Unknown tier: #{name}" unless LLM::TIERS.key?(key)
+      @llm.set_tier(key)
+      MASTER::Boot.save_preferred_model(key) unless ENV['MASTER_NO_CONFIG_WRITE']
+      "Tier set to #{key}"
     end
 
     def list_personas
@@ -996,8 +1022,8 @@ module MASTER
 
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
-
       trace "refactoring #{files.size} files"
+      return 'Cancelled.' unless confirm_write("This will refactor #{files.size} file(s) using LLM suggestions")
       total_iterations = 0
       total_changes = 0
 
@@ -1360,6 +1386,37 @@ module MASTER
       1.0 - (common.size.to_f / total)
     end
 
+    def run_optimize(target = nil)
+      target ||= 'lib'
+      files = resolve_files(target)
+      return "No files found: #{target}" if files.empty?
+
+      simulate = ENV['MASTER_SIMULATE_OPTIMIZE'] || !@llm.status[:connected]
+      llm_for_conceptual = simulate ? SimulatedLLM.new : @llm
+      fixed_files = 0
+      violation_count = 0
+
+      files.each do |file|
+        code = File.read(file)
+        normalized = normalize_content(code)
+        analysis = Violations.analyze(code, path: file, llm: llm_for_conceptual, conceptual: true)
+        violations = (analysis[:literal] || []) + (analysis[:conceptual] || [])
+        needs_fix = normalized != code || violations.any?
+        next unless needs_fix
+
+        violation_count += violations.size
+        violation_count += 1 if normalized != code && violations.empty?
+        updated = autofix_code(normalized, file, violations, simulate: simulate)
+        next if updated == code
+
+        File.write(file, updated)
+        fixed_files += 1
+      end
+
+      note = simulate ? ' (simulated LLM pass)' : ''
+      "Self-optimization complete: scanned #{files.size}, fixed #{fixed_files}, violations #{violation_count}#{note}"
+    end
+
     def run_refine(target = nil)
       target ||= 'lib'
       files = resolve_files(target)
@@ -1415,6 +1472,51 @@ module MASTER
       "Applied #{applied}/#{indices.size} refinements"
     end
 
+    def autofix_code(code, file, violations, simulate:)
+      return normalize_content(code) if simulate
+
+      lang = detect_language(File.extname(file))
+      formatted = format_violations(violations)
+      prompt = <<~PROMPT
+        You are running a self-optimization pass to fix principle violations.
+        Fix every issue listed below with minimal, correct changes.
+        Return the full updated file content only. No markdown, no commentary.
+
+        Violations:
+        #{formatted}
+
+        CODE:
+        ```#{lang}
+        #{code}
+        ```
+      PROMPT
+
+      result = @llm.chat(prompt, tier: :code)
+      return normalize_content(code) if result.err?
+
+      updated = extract_code(result.value, lang)
+      updated.empty? ? normalize_content(code) : normalize_content(updated)
+    end
+
+    def normalize_content(content)
+      text = content.dup
+      text.gsub!("\r\n", "\n")
+      text = text.lines.map(&:rstrip).join("\n")
+      text.gsub!(/\n{3,}/, "\n\n")
+      text << "\n" unless text.end_with?("\n")
+      text
+    end
+
+    def format_violations(violations)
+      violations.map do |v|
+        if v[:type] == :conceptual
+          "#{v[:principle]}: #{v[:analysis].to_s[0..200]}"
+        else
+          "#{v[:principle]}: #{v[:message]} (line #{v[:line]})"
+        end
+      end.join("\n")
+    end
+
     def parse_refinements(text)
       refinements = []
       current = nil
@@ -1451,10 +1553,16 @@ module MASTER
     end
 
     def status_info
+      llm_status = @llm.status rescue {}
+      model = llm_status[:model] ? "#{llm_status[:tier]} (#{llm_status[:model]})" : 'unknown'
+      cached = llm_status[:last_cached] ? 'yes' : 'no'
+      tokens = llm_status[:last_tokens] || {}
       <<~STATUS
         MASTER v#{VERSION}
         Root: #{@root}
         Persona: #{@llm.persona&.dig(:name) || 'default'}
+        Model: #{model}
+        Last tokens: #{tokens[:input] || 0} in, #{tokens[:output] || 0} out (cached: #{cached})
         Cost: $#{format('%.6f', @llm.total_cost)}
         Server: #{@server&.url || 'stopped'}
         Backend: #{@llm.backend}

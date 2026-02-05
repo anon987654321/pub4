@@ -119,7 +119,18 @@ module MASTER
 
         when ['GET', '/poll']
           text = queue.empty? ? nil : queue.pop(true) rescue nil
-          body = { text: text, persona: persona_ref.call, cost: cost_ref.call }.to_json
+          llm_status = cli.llm.status rescue {}
+          body = {
+            text: text,
+            persona: persona_ref.call,
+            cost: cost_ref.call,
+            model: llm_status[:model],
+            tier: llm_status[:tier],
+            last_tokens: llm_status[:last_tokens],
+            last_cached: llm_status[:last_cached],
+            connected: llm_status[:connected],
+            requests: llm_status[:request_count]
+          }.to_json
           [200, { 'content-type' => 'application/json' }, [body]]
 
         # Server-Sent Events endpoint for real-time updates
@@ -234,7 +245,7 @@ module MASTER
     end
 
     def mount_routes(server)
-      html_path = File.join(MASTER::ROOT, 'cli.html')
+      html_path = File.join(MASTER::LIB, 'views', 'cli.html')
 
       server.mount_proc('/') do |req, res|
         res.content_type = 'text/html'
@@ -244,7 +255,18 @@ module MASTER
       server.mount_proc('/poll') do |req, res|
         res.content_type = 'application/json'
         text = @output_queue.empty? ? nil : @output_queue.pop(true) rescue nil
-        res.body = { text: text, persona: @persona }.to_json
+        llm_status = @cli.llm.status rescue {}
+        res.body = {
+          text: text,
+          persona: @persona,
+          cost: (@cli.llm.total_cost rescue 0.0),
+          model: llm_status[:model],
+          tier: llm_status[:tier],
+          last_tokens: llm_status[:last_tokens],
+          last_cached: llm_status[:last_cached],
+          connected: llm_status[:connected],
+          requests: llm_status[:request_count]
+        }.to_json
       end
 
       server.mount_proc('/chat') do |req, res|

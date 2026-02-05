@@ -36,7 +36,7 @@ module MASTER
 
     def initialize(backend: nil)
       @api_key = ENV['OPENROUTER_API_KEY']
-      @base_url = 'https://openrouter.ai/api/v1'
+      @base_url = ENV['OPENROUTER_BASE_URL'] || ENV['OPENROUTER_API_BASE'] || 'https://openrouter.ai/api/v1'
       @total_cost = 0.0
       @total_tokens_in = 0
       @total_tokens_out = 0
@@ -53,7 +53,8 @@ module MASTER
       configure_ruby_llm if @backend == :ruby_llm
     end
 
-    def chat(message, tier: DEFAULT_TIER)
+    def chat(message, tier: nil)
+      tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
 
       @current_tier = tier
@@ -80,6 +81,24 @@ module MASTER
       result
     end
 
+    def set_tier(tier)
+      return false unless TIERS.key?(tier)
+      @current_tier = tier
+      true
+    end
+
+    def status
+      {
+        tier: @current_tier,
+        model: current_model_name,
+        last_tokens: @last_tokens&.dup || {},
+        last_cached: @last_cached,
+        total_cost: @total_cost,
+        request_count: @request_count,
+        connected: !!@api_key
+      }
+    end
+
     def switch_persona(name)
       persona = load_persona(name)
       return Result.err("Unknown persona: #{name}") unless persona
@@ -104,7 +123,8 @@ module MASTER
     end
 
     # Streaming support: yields tokens as they arrive
-    def stream_ask(message, tier: DEFAULT_TIER, &block)
+    def stream_ask(message, tier: nil, &block)
+      tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
       return Result.err('No block given') unless block_given?
 
@@ -304,7 +324,8 @@ module MASTER
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{@api_key}"
         request['Content-Type'] = 'application/json'
-        request['HTTP-Referer'] = 'https://brgen.no'
+        request['HTTP-Referer'] = ENV['OPENROUTER_REFERER'] || ENV['MASTER_ORIGIN'] || 'https://brgen.no'
+        request['X-Title'] = ENV['OPENROUTER_TITLE'] || 'MASTER'
 
         request.body = {
           model: config[:model],
@@ -356,7 +377,8 @@ module MASTER
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{@api_key}"
         request['Content-Type'] = 'application/json'
-        request['HTTP-Referer'] = 'https://brgen.no'
+        request['HTTP-Referer'] = ENV['OPENROUTER_REFERER'] || ENV['MASTER_ORIGIN'] || 'https://brgen.no'
+        request['X-Title'] = ENV['OPENROUTER_TITLE'] || 'MASTER'
 
         request.body = {
           model: model,
