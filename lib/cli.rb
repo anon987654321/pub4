@@ -701,7 +701,7 @@ module MASTER
           cd <dir>        Change dir
           clean <file>    Fix whitespace
           clear           Reset chat
-          context <add|drop|remove|list|clear>   Manage context files
+          context <add|drop|list|clear>   Manage context files
           converge        Loop until stable
           cost            Usage stats
           describe <img>  Vision
@@ -1453,14 +1453,14 @@ module MASTER
       case action
       when 'add'
         context_add(value)
-      when 'drop', 'remove'
+      when 'drop'
         context_drop(value)
       when 'clear'
         context_clear
       when 'list'
         context_list
       else
-        'Usage: context add <file> | context drop|remove <file> | context clear | context list'
+        'Usage: context add <file> | context drop <file> | context clear | context list'
       end
     end
 

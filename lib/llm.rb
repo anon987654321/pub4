@@ -189,7 +189,7 @@ module MASTER
     end
 
     def configure_ruby_llm
-      return unless ruby_llm_available?
+      return unless ruby_llm_available? && @api_key
       RubyLLM.configure do |config|
         config.openrouter_api_key = @api_key
       end
@@ -253,7 +253,11 @@ module MASTER
       @total_tokens_out += output_tokens
       @request_count += 1
       cost = response.respond_to?(:cost) ? response.cost : nil
-      cost = cost.to_f if cost
+      cost = begin
+        cost ? Float(cost) : nil
+      rescue StandardError
+        nil
+      end
       @total_cost += cost || estimate_cost(input_tokens, output_tokens, tier)
       @last_cost = cost if cost
     end
