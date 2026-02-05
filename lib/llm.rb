@@ -270,10 +270,11 @@ module MASTER
       end
 
       parts << "\n## Style"
-      parts << "- Concise. Direct. No filler."
-      parts << "- Code over prose. Show, do not tell."
+      parts << "- Strunk & White: Omit needless words."
+      parts << "- Ultra-brief. Ultra-clear. No filler."
+      parts << "- Code over prose. Show, don't tell."
+      parts << "- One sentence when one will do."
       parts << "- Admit uncertainty. Never fabricate."
-      parts << "- One right way. Find it."
 
       parts.join("\n")
     end

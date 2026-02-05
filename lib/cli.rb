@@ -98,7 +98,6 @@ module MASTER
     end
 
     def run
-      ask_verbosity
       start_server
       repl
     end

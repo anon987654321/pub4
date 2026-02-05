@@ -140,11 +140,21 @@ module MASTER
           [200, { 'content-type' => 'application/json' }, [{ status: 'ok', version: VERSION }.to_json]]
 
         else
-          # Serve static files
-          file_path = File.join(MASTER::ROOT, path)
-          if File.exist?(file_path) && File.file?(file_path)
+          # Serve static files - check lib/views/ first, then root
+          views_path = File.join(MASTER::LIB, 'views', path.sub('/', ''))
+          root_path = File.join(MASTER::ROOT, path)
+          
+          file_path = if File.exist?(views_path) && File.file?(views_path)
+            views_path
+          elsif File.exist?(root_path) && File.file?(root_path)
+            root_path
+          else
+            nil
+          end
+          
+          if file_path
             ext = File.extname(path)
-            type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css' }[ext] || 'application/octet-stream'
+            type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css', '.ico' => 'image/x-icon' }[ext] || 'application/octet-stream'
             [200, { 'content-type' => type }, [File.read(file_path)]]
           else
             [404, { 'content-type' => 'text/plain' }, ['Not found']]
