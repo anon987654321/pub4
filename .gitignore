@@ -36,3 +36,5 @@ vendor/bundle/
 # Test coverage
 coverage/
 .coverage
+
+var/replicate/*.mp3
