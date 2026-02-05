@@ -3,6 +3,8 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require 'securerandom'
+require 'fileutils'
 
 begin
   require 'ruby_llm'
@@ -513,17 +515,35 @@ module MASTER
       "pure Ruby CLI (#{RUBY_VERSION}, #{mem}MB RAM, no npm, no electron, no bloat)"
     end
 
-    # Conversation persistence
-    CONVERSATION_FILE = File.join(Paths.var, 'conversation.json')
+    # Conversation persistence - crash-safe with atomic writes
+    CONVERSATION_DIR = Paths.var
+    CONVERSATION_FILE = File.join(CONVERSATION_DIR, 'conversation.json')
+    SESSION_FILE = File.join(CONVERSATION_DIR, 'session.json')
     MAX_HISTORY = 100
     COMPRESS_THRESHOLD = 50
 
     def load_conversation_history
+      FileUtils.mkdir_p(CONVERSATION_DIR)
+      
+      # Load session ID or create new one
+      if File.exist?(SESSION_FILE)
+        session_data = JSON.parse(File.read(SESSION_FILE), symbolize_names: true) rescue {}
+        @session_id = session_data[:id]
+        @session_name = session_data[:name]
+        @session_started = session_data[:started]
+      end
+      @session_id ||= generate_session_id
+      @session_name ||= random_session_name
+      @session_started ||= Time.now.to_i
+      
+      # Load conversation
       return unless File.exist?(CONVERSATION_FILE)
 
       data = JSON.parse(File.read(CONVERSATION_FILE), symbolize_names: true)
       @history = data[:messages] || []
       @conversation_summary = data[:summary]
+      @total_cost = data[:total_cost] || 0.0
+      @request_count = data[:request_count] || 0
       
       # Inject summary as system context if exists
       if @conversation_summary && @history.empty?
@@ -537,15 +557,41 @@ module MASTER
       compress_history if @history.size > COMPRESS_THRESHOLD
 
       data = {
+        session_id: @session_id,
+        session_name: @session_name,
         messages: @history.last(MAX_HISTORY),
         summary: @conversation_summary,
+        total_cost: @total_cost,
+        request_count: @request_count,
         saved_at: Time.now.to_i
       }
       
-      FileUtils.mkdir_p(File.dirname(CONVERSATION_FILE))
-      File.write(CONVERSATION_FILE, JSON.pretty_generate(data))
+      FileUtils.mkdir_p(CONVERSATION_DIR)
+      
+      # Atomic write - write to temp file then rename
+      tmp_file = "#{CONVERSATION_FILE}.tmp"
+      File.write(tmp_file, JSON.pretty_generate(data))
+      File.rename(tmp_file, CONVERSATION_FILE)
+      
+      # Save session info separately
+      save_session_info
     rescue => e
-      # Silent fail
+      # Silent fail but try to cleanup tmp
+      File.delete(tmp_file) if tmp_file && File.exist?(tmp_file)
+    end
+
+    def save_session_info
+      data = {
+        id: @session_id,
+        name: @session_name,
+        started: @session_started,
+        last_active: Time.now.to_i,
+        message_count: @history.size,
+        total_cost: @total_cost
+      }
+      File.write(SESSION_FILE, JSON.pretty_generate(data))
+    rescue
+      # Ignore
     end
 
     def compress_history
@@ -563,6 +609,36 @@ module MASTER
       result = quick_ask(prompt, tier: :fast)
       @conversation_summary = result if result
       @history = @history.last(20)
+    end
+
+    def generate_session_id
+      "#{Time.now.strftime('%Y%m%d')}-#{SecureRandom.hex(4)}"
+    end
+
+    def random_session_name
+      adjectives = %w[iron steel cobalt neon cyber quantum plasma silicon carbon crystal]
+      nouns = %w[wolf falcon hawk phoenix dragon serpent tiger panther raven bear]
+      "#{adjectives.sample}-#{nouns.sample}"
+    end
+
+    def new_session!
+      @session_id = generate_session_id
+      @session_name = random_session_name
+      @session_started = Time.now.to_i
+      @history = []
+      @conversation_summary = nil
+      save_conversation_history
+      save_session_info
+    end
+
+    def session_info
+      {
+        id: @session_id,
+        name: @session_name,
+        started: @session_started ? Time.at(@session_started) : nil,
+        messages: @history.size,
+        summary: @conversation_summary
+      }
     end
   end
 end

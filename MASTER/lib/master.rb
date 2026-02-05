@@ -38,6 +38,7 @@ module MASTER
   autoload :Weaviate,    "#{LIB}/weaviate"
   autoload :AutoInstall, "#{LIB}/auto_install"
   autoload :BugHunting,  "#{LIB}/bug_hunting"
+  autoload :UI,          "#{LIB}/ui"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

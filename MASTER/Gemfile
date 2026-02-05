@@ -12,10 +12,28 @@ gem 'ruby_llm', require: false
 # Web browsing
 gem 'ferrum', require: false
 
-# CLI
+# CLI core
 gem 'readline'
 
-# Optional
-gem 'tty-spinner', require: false
-gem 'tty-prompt', require: false
-starship
+# TTY toolkit - full UI/UX power
+gem 'tty-prompt', require: false      # Interactive menus, selections
+gem 'tty-spinner', require: false     # Loading spinners
+gem 'tty-table', require: false       # Data tables
+gem 'tty-box', require: false         # Framed boxes
+gem 'tty-markdown', require: false    # Render markdown
+gem 'tty-progressbar', require: false # Progress indicators
+gem 'tty-cursor', require: false      # Cursor movement
+gem 'tty-reader', require: false      # Keyboard input, vim keys
+gem 'tty-tree', require: false        # Directory trees
+gem 'tty-pie', require: false         # Pie charts
+gem 'tty-logger', require: false      # Structured logging
+gem 'tty-pager', require: false       # Paginate output
+gem 'tty-link', require: false        # Hyperlinks
+gem 'tty-font', require: false        # ASCII fonts
+gem 'tty-editor', require: false      # Open $EDITOR
+gem 'tty-command', require: false     # Shell execution
+gem 'tty-screen', require: false      # Terminal size
+gem 'tty-platform', require: false    # OS detection
+gem 'tty-which', require: false       # Find binaries
+gem 'tty-config', require: false      # Config management
+gem 'pastel', require: false          # Colors

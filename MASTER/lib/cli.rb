@@ -719,6 +719,15 @@ module MASTER
       when 'introspect'
         run_introspect(arg)
 
+      when 'session'
+        show_session_info
+
+      when 'newsession', 'new-session'
+        new_session
+
+      when 'sessions'
+        list_sessions
+
       when 'sanity'
         run_sanity_check(arg)
 
@@ -1056,8 +1065,10 @@ module MASTER
           speak         #{C_DIM}TTS#{C_RESET}
 
         #{C_BOLD}Sessions#{C_RESET}
+          session       #{C_DIM}Show current session#{C_RESET}
+          newsession    #{C_DIM}Start fresh session#{C_RESET}
+          sessions      #{C_DIM}List all sessions#{C_RESET}
           resume        #{C_DIM}Restore session#{C_RESET}
-          sessions      #{C_DIM}List checkpoints#{C_RESET}
           checkpoint    #{C_DIM}Save state#{C_RESET}
 
         #{C_BOLD}Autonomous#{C_RESET}
@@ -1940,11 +1951,13 @@ module MASTER
 
     def status_info
       llm_status = @llm.status rescue {}
+      session = @llm.session_info rescue {}
       model = llm_status[:model] ? "#{llm_status[:tier]} (#{llm_status[:model]})" : 'unknown'
       cached = llm_status[:last_cached] ? 'yes' : 'no'
       tokens = llm_status[:last_tokens] || {}
       <<~STATUS
         MASTER v#{VERSION}
+        Session: #{session[:name] || 'unknown'} (#{session[:messages] || 0} messages)
         Root: #{@root}
         Persona: #{@llm.persona&.dig(:name) || 'default'}
         Model: #{model}
@@ -1954,6 +1967,45 @@ module MASTER
         Backend: #{@llm.backend}
         Context files: #{@llm.context_files.size}
       STATUS
+    end
+
+    def show_session_info
+      info = @llm.session_info rescue {}
+      started = info[:started] ? info[:started].strftime('%Y-%m-%d %H:%M') : 'unknown'
+      summary = info[:summary] ? "\nSummary: #{info[:summary]}" : ''
+      <<~SESSION
+        Session: #{info[:name] || 'unknown'}
+        ID: #{info[:id] || 'none'}
+        Started: #{started}
+        Messages: #{info[:messages] || 0}#{summary}
+      SESSION
+    end
+
+    def new_session
+      @llm.new_session!
+      info = @llm.session_info
+      "New session: #{info[:name]}"
+    end
+
+    def list_sessions
+      session_dir = File.join(@root, 'var')
+      return 'No sessions' unless File.directory?(session_dir)
+      
+      # Current session
+      current = @llm.session_info rescue {}
+      output = ["Current: #{current[:name]} (#{current[:messages]} messages)"]
+      
+      # Check for archived sessions
+      archives = Dir.glob(File.join(session_dir, 'sessions', '*.json'))
+      if archives.any?
+        output << "\nArchived sessions:"
+        archives.last(10).each do |f|
+          data = JSON.parse(File.read(f), symbolize_names: true) rescue next
+          output << "  #{data[:name]} - #{data[:message_count]} msgs (#{Time.at(data[:last_active]).strftime('%m/%d')})"
+        end
+      end
+      
+      output.join("\n")
     end
 
     def manage_context(arg)
