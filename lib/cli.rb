@@ -95,11 +95,11 @@ module MASTER
     end
 
     def ask_verbosity
-      puts "How much detail do you want in responses?"
-      puts "  1. Show everything (recommended for learning)"
-      puts "  2. Show essentials only"
-      puts "  3. Minimal, just results"
-      print "Enter 1, 2, or 3: "
+      puts "Detail level?"
+      puts "  1. Full (recommended)"
+      puts "  2. Essentials"
+      puts "  3. Minimal"
+      print "[1/2/3]: "
       choice = $stdin.gets&.strip
       @verbosity = case choice
                    when '3' then :low
@@ -418,43 +418,43 @@ module MASTER
     def help_text
       <<~HELP
         Commands:
-          ask <msg>      Chat with LLM
-          audit [ref]    Compare features vs git history
-          cat <file>     View file
-          cd <dir>       Change directory
-          clean <file>   Clean file (CRLF, whitespace)
-          clear          Clear chat history
-          converge       Iterate until no changes
-          cost           Show LLM cost
-          describe <img> Describe image (Replicate)
-          diff           Git diff
-          edit <file>    Edit file
-          git <cmd>      Run git command
-          help           Show this help
-          image <prompt> Generate image (Replicate)
-          log            Git log (last 20)
-          ls             List files
-          persona <name> Switch persona
-          personas       List personas
-          principles     List principles
-          pull           Git pull
-          push           Git push
-          commit [msg]   Git commit
-          read <file>    View file (alias: cat)
-          refactor <path> Auto-refactor with research + iteration
-          refine [path]  Suggest 20 micro-refinements, cherry-pick
-          review <path>  Multi-agent code review
-          chamber <file> Multi-model deliberation on code
-          queue <dir>    Add directory to refactor queue
-          introspect     Hostile question all principles
-          sanity <plan>  Pre-action sanity check
-          evolve [path]  Self-improve until convergence
-          scan <path>    Scan for issues
-          smells <path>  Detect code smells
-          status         Show status
-          version        Show version
-          web <url>      Browse URL
-          exit           Quit
+          ask <msg>       Chat
+          audit [ref]     Compare vs history
+          cat <file>      View
+          cd <dir>        Change dir
+          clean <file>    Fix whitespace
+          clear           Reset chat
+          converge        Loop until stable
+          cost            Usage stats
+          describe <img>  Vision
+          diff            Changes
+          edit <file>     Modify
+          git <cmd>       Git
+          help            This
+          image <prompt>  Generate
+          log             History
+          ls              Files
+          persona <name>  Switch
+          personas        List
+          principles      List
+          pull            Fetch
+          push            Deploy
+          commit [msg]    Save
+          read <file>     View
+          refactor <path> Auto-fix
+          refine [path]   Micro-improve
+          review <path>   Multi-agent
+          chamber <file>  Deliberate
+          queue <dir>     Batch
+          introspect      Self-check
+          sanity <plan>   Validate
+          evolve [path]   Self-improve
+          scan <path>     Find issues
+          smells <path>   Detect rot
+          status          State
+          version         Build
+          web <url>       Fetch
+          exit            Quit
       HELP
     end
 
@@ -1080,7 +1080,7 @@ module MASTER
         s = suggestions[i]
         if apply_refinement(s)
           applied += 1
-          puts "Applied: #{s[:desc]}"
+          puts "+ #{s[:desc]}"
         end
       end
 
@@ -1149,10 +1149,9 @@ module MASTER
       result = chamber.deliberate(full)
 
       if result[:applied]
-        puts "#{C_GREEN}Applied winning proposal#{C_RESET}"
-        puts "Winner: #{result[:winner][:model]}"
-        puts "Reason: #{result[:reason][0..200]}..."
-        "Chamber complete: #{result[:proposals].size} models deliberated"
+        puts "#{C_GREEN}Winner: #{result[:winner][:model]}#{C_RESET}"
+        puts result[:reason][0..200]
+        "#{result[:proposals].size} models deliberated"
       else
         "Chamber complete (no changes): #{result[:reason]}"
       end
@@ -1257,11 +1256,10 @@ module MASTER
       require_relative 'evolve'
 
       target = arg ? File.expand_path(arg, @root) : @root
-      budget = 2.0 # Default $2 budget
+      budget = 2.0
 
-      puts "#{C_CYAN}Starting evolution loop...#{C_RESET}"
-      puts "Target: #{target}"
-      puts "Budget: $#{budget}"
+      puts "#{C_CYAN}Evolving #{target}#{C_RESET}"
+      puts "$#{budget} budget"
       puts
 
       evolve = Evolve.new(@llm)
