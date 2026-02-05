@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Orbital Dots</title>
+<script src="css-doodle.js"></script>
+<style>
+body { margin: 0; height: 100vh; display: grid; place-items: center; background: #111; }
+#start { position: fixed; top: 20px; left: 20px; padding: 10px 20px; cursor: pointer; font: 14px system-ui; background: #333; color: #fff; border: none; }
+</style></head><body>
+<button id="start">start audio</button>
+<css-doodle id="doodle">
+  :doodle { @grid: 1 x 8; width: 350px; height: 350px; }
+  @place-cell: center;
+  position: absolute;
+  --angle: calc(@i() * 45deg + var(--mid, 0) * 90deg);
+  --dist: calc(100px + var(--bass, 0) * 50px);
+  left: calc(50% + cos(var(--angle)) * var(--dist) - 8px);
+  top: calc(50% + sin(var(--angle)) * var(--dist) - 8px);
+  width: calc(12px + var(--bass, 0) * 8px);
+  height: calc(12px + var(--bass, 0) * 8px);
+  border-radius: 50%;
+  background: hsl(0, 0%, calc(70% + var(--high, 0) * 30%));
+  box-shadow: 0 0 calc(10px + var(--bass, 0) * 15px) rgba(255,255,255,0.5);
+  transition: all 0.1s ease-out;
+</css-doodle>
+<script>
+const doodle = document.getElementById('doodle');
+let ctx, analyser, data;
+document.getElementById('start').onclick = async () => {
+  ctx = new AudioContext();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  data = new Uint8Array(analyser.frequencyBinCount);
+  document.getElementById('start').style.display = 'none';
+  animate();
+};
+function animate() {
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0, 10).reduce((a, b) => a + b, 0) / 2550;
+  const mid = data.slice(10, 50).reduce((a, b) => a + b, 0) / 10200;
+  const high = data.slice(50, 100).reduce((a, b) => a + b, 0) / 12750;
+  doodle.style.setProperty('--bass', bass.toFixed(3));
+  doodle.style.setProperty('--mid', mid.toFixed(3));
+  doodle.style.setProperty('--high', high.toFixed(3));
+  requestAnimationFrame(animate);
+}
+</script>
+</body></html>

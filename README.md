@@ -35,7 +35,7 @@ lib/
 ├── sandbox.rb             # Sandboxing (disabled)
 ├── principles/            # 33 principle .yml files
 └── personas/              # Persona .yml files
-DEMOS/                     # 60+ audio-reactive css-doodle orbs
+DEMOS/                     # 90+ audio-reactive css-doodle orbs
 ```
 
 ## LLM Tiers
@@ -83,7 +83,7 @@ exit           Quit
 ruby bin/cli
 # Server starts automatically
 # Open cli.html for orb interface
-# DEMOS/ contains 60+ audio-reactive visualizations
+# DEMOS/ contains 90+ audio-reactive visualizations
 ```
 
 ## Cross-Platform
