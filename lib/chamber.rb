@@ -8,10 +8,10 @@ module MASTER
 
     MODELS = {
       sonnet:   'anthropic/claude-sonnet-4',
-      gpt4:     'openai/gpt-4o',
+      grok:     'x-ai/grok-4-fast',
       gemini:   'google/gemini-3-flash-preview',
       deepseek: 'deepseek/deepseek-chat',
-      qwen:     'qwen/qwen-2.5-coder-32b-instruct'
+      glm:      'z-ai/glm-4.7'
     }.freeze
 
     ARBITER = :sonnet
