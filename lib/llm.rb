@@ -196,7 +196,11 @@ module MASTER
 
     def build_system_prompt
       parts = []
-      parts << "You are MASTER v#{VERSION}, a constitutional AI assistant."
+
+      # Identity and context
+      parts << "You are MASTER v#{VERSION}, a constitutional AI running on #{platform_context}."
+      parts << "Your host is a #{runtime_context}."
+      parts << "You embody clarity, efficiency, and correctness. No bloat. No ceremony."
 
       if @persona
         parts << "\n## Persona: #{@persona[:name]}"
@@ -208,12 +212,45 @@ module MASTER
         parts << "- #{p[:name]}: #{p[:description]}"
       end
 
-      parts << "\n## Rules"
-      parts << "- Be concise and direct"
-      parts << "- Show code, not explanations"
-      parts << "- Admit uncertainty"
+      parts << "\n## Style"
+      parts << "- Concise. Direct. No filler."
+      parts << "- Code over prose. Show, don't tell."
+      parts << "- Admit uncertainty. Never fabricate."
+      parts << "- One right way. Find it."
 
       parts.join("\n")
+    end
+
+    def platform_context
+      case RUBY_PLATFORM
+      when /openbsd/
+        "OpenBSD—the world's most secure Unix"
+      when /darwin/
+        "macOS"
+      when /linux.*android/, /aarch64.*linux/
+        "Termux on Android"
+      when /linux/
+        "Linux"
+      else
+        "a Unix-like system"
+      end
+    end
+
+    def runtime_context
+      mem = begin
+        case RUBY_PLATFORM
+        when /linux/
+          File.read('/proc/meminfo')[/MemTotal:\s+(\d+)/, 1].to_i / 1024
+        when /openbsd/, /darwin/
+          512
+        else
+          512
+        end
+      rescue
+        512
+      end
+
+      "pure Ruby CLI (#{RUBY_VERSION}, #{mem}MB RAM, no npm, no electron, no bloat)"
     end
   end
 end

@@ -9,53 +9,83 @@ module MASTER
         t0 = Time.now
         principles = load_principles
         smells = principles.sum { |p| p[:anti_patterns]&.size || 0 }
-        time_utc = Time.now.utc.strftime('%b %e %H:%M:%S UTC %Y')
-        time_local = Time.now.strftime('%H:%M %Z')
+        time_utc = Time.now.utc.strftime('%a %b %e %H:%M:%S %Z %Y')
         session = SecureRandom.hex(2)
         mem = memory_mb
+        avail = available_memory_mb
 
         unless quiet
-          # Hardware
+          # Kernel banner (OpenBSD style)
           puts "MASTER #{VERSION} (GENERIC) #1: #{time_utc}"
-          puts "memory total #{mem}MB, available #{(mem * 0.8).round}MB"
-          puts "entropy: good seed from kernel"
+          puts "    root@#{hostname}:#{ROOT}"
+          puts "real mem = #{mem * 1024 * 1024} (#{mem}MB)"
+          puts "avail mem = #{avail * 1024 * 1024} (#{avail}MB)"
+
+          # Mainbus and CPU
+          puts "mainbus0 at root"
+          puts "cpu0 at mainbus0: #{cpu_model}"
+          puts "cpu0: #{cpu_features}" if verbose
+
+          # Platform
           puts "#{platform_name}0 at mainbus0"
-          puts "processor0: #{cpu_info}"
+
+          # Ruby runtime as a device
+          puts "ruby0 at #{platform_name}0: #{RUBY_ENGINE} #{RUBY_VERSION}"
+
+          # Pseudo-devices
+          puts "softraid0 at root"
+          puts "scsibus0 at softraid0: 256 targets"
+          puts "root on #{root_device}"
+
+          # Git as version control device
+          if git_repo?
+            branch, uncommitted = git_info
+            puts "vcs0 at root: git"
+            puts "vcs0: branch #{branch}, #{uncommitted} modified"
+          end
+
           puts
 
-          # Runtime
-          puts "ruby0 at processor0: #{RUBY_ENGINE} #{RUBY_VERSION}"
-          puts "root on #{platform_name}0: #{ROOT} (#{dir_size_mb(ROOT)}MB)"
-          puts git_status_line if git_repo?
-          puts
+          # Constitutional AI subsystem
+          puts "const0 at mainbus0: constitutional ai"
+          puts "const0: #{principles.size} principles loaded"
+          cat_summary = category_summary(principles)
+          puts "const0: #{cat_summary}" if cat_summary
+          puts "const0: #{smells} anti-patterns indexed"
 
-          # Services
-          puts "constitution0 at master0: #{principles_summary(principles)}"
-          puts "constitution0: #{smells} anti-patterns indexed"
-          puts "repligen0 at replicate0: #{replicate_status}"
-          puts "postpro0 at vips0: #{vips_status}"
-          puts "softraid0: encryption ready"
-          puts
+          # LLM interface
+          puts "llm0 at const0: openrouter"
+          if openrouter_connected?
+            latency = ping_openrouter
+            puts "llm0: #{latency}ms latency" if latency
+          else
+            puts "llm0: not connected"
+          end
 
-          # API Configuration
-          puts "openrouter0: #{openrouter_status}"
-          latency = ping_openrouter
-          puts "openrouter0: #{latency}ms latency" if latency
-          puts "replicate0: #{replicate_api_status}"
-          puts
-          puts "Available models via OpenRouter:"
+          # Model tiers
           LLM::TIERS.each do |tier, info|
-            puts "  #{tier}: #{info[:model].split('/').last}"
+            model_short = info[:model].split('/').last
+            puts "llm0: #{tier} -> #{model_short}"
           end
-          puts
-          puts "Available models via Replicate:"
-          Replicate::MODELS.each do |key, model|
-            puts "  #{key}: #{model}"
-          end
-          puts
 
-          # Session
-          puts "session #{session} started #{time_utc} (local #{time_local})"
+          # Replicate
+          puts "repligen0 at mainbus0: replicate api"
+          if replicate_connected?
+            Replicate::MODELS.each do |key, model|
+              puts "repligen0: #{key} -> #{model}"
+            end
+          else
+            puts "repligen0: not connected"
+          end
+
+          # Image processing
+          vips = vips_version
+          if vips != 'not installed'
+            puts "vips0 at mainbus0: libvips #{vips}"
+          end
+
+          puts
+          puts "boot device: #{ROOT}"
         end
 
         model_key = prompt_for_model(quiet: quiet)
@@ -64,11 +94,12 @@ module MASTER
 
         unless quiet
           puts
-          puts "model0: #{model_key} tier selected"
-          puts "model0 at openrouter0: #{model_name}"
-          puts "model0 pricing: #{model_info[:input]} input, #{model_info[:output]} output per 1000 tokens"
+          puts "llm0: selecting #{model_key} tier"
+          puts "llm0: model #{model_name}"
+          puts "llm0: pricing #{model_info[:input]}/#{model_info[:output]} per 1K tokens"
           puts
-          puts "boot complete in #{((Time.now - t0) * 1000).round}ms"
+          boot_ms = ((Time.now - t0) * 1000).round
+          puts "MASTER: boot complete, #{boot_ms}ms"
           puts first_run_hints if first_run?
         end
 
@@ -77,6 +108,54 @@ module MASTER
       end
 
       private
+
+      def hostname
+        `hostname`.strip rescue 'localhost'
+      end
+
+      def cpu_model
+        case RUBY_PLATFORM
+        when /darwin/
+          `sysctl -n machdep.cpu.brand_string`.strip rescue cpu_arch
+        when /linux/
+          File.read('/proc/cpuinfo')[/model name\s*:\s*(.+)/, 1] rescue cpu_arch
+        when /openbsd/
+          `sysctl -n hw.model`.strip rescue cpu_arch
+        else
+          cpu_arch
+        end
+      end
+
+      def cpu_arch
+        case RUBY_PLATFORM
+        when /x86_64/ then 'x86_64'
+        when /aarch64|arm64/ then 'ARM64'
+        when /arm/ then 'ARM'
+        when /i[3-6]86/ then 'i386'
+        else 'unknown'
+        end
+      end
+
+      def cpu_features
+        case RUBY_PLATFORM
+        when /linux/
+          flags = File.read('/proc/cpuinfo')[/flags\s*:\s*(.+)/, 1]
+          flags&.split&.first(8)&.join(',') || ''
+        else
+          ''
+        end
+      rescue
+        ''
+      end
+
+      def root_device
+        case RUBY_PLATFORM
+        when /openbsd/ then 'sd0a'
+        when /darwin/ then 'disk0s2'
+        when /linux/ then 'sda1'
+        else 'wd0a'
+        end
+      end
 
       def prompt
         @prompt ||= begin
@@ -93,7 +172,6 @@ module MASTER
 
         models = LLM::TIERS.keys
         default_key = saved || LLM::DEFAULT_TIER
-        default_idx = models.index(default_key) || 0
 
         # Progressive disclosure: recommended first
         recommended = [:strong, :cheap, :fast]
@@ -136,12 +214,10 @@ module MASTER
         []
       end
 
-      def principles_summary(principles)
-        return "0 principles" if principles.empty?
-        # Group by source file or first word of name as category
+      def category_summary(principles)
+        return nil if principles.empty?
         categories = principles.group_by { |p| p[:source]&.split('/')&.last&.sub('.yml', '') || 'general' }
-        summary = categories.map { |cat, list| "#{list.size} #{cat}" }.join(', ')
-        "#{principles.size} principles (#{summary})"
+        categories.map { |cat, list| "#{list.size} #{cat}" }.join(', ')
       end
 
       def platform_name
@@ -155,16 +231,6 @@ module MASTER
         end
       end
 
-      def cpu_info
-        case RUBY_PLATFORM
-        when /x86_64/ then 'x86_64'
-        when /aarch64|arm64/ then 'ARM64'
-        when /arm/ then 'ARM'
-        when /i[3-6]86/ then 'x86'
-        else 'unknown'
-        end
-      end
-
       def memory_mb
         case RUBY_PLATFORM
         when /linux/
@@ -175,6 +241,17 @@ module MASTER
           `sysctl -n hw.physmem`.to_i / 1024 / 1024 rescue 512
         else
           512
+        end
+      end
+
+      def available_memory_mb
+        case RUBY_PLATFORM
+        when /linux/
+          File.read('/proc/meminfo')[/MemAvailable:\s+(\d+)/, 1].to_i / 1024 rescue (memory_mb * 0.8).round
+        when /darwin/, /openbsd/
+          (memory_mb * 0.8).round
+        else
+          (memory_mb * 0.8).round
         end
       end
 
@@ -194,11 +271,14 @@ module MASTER
         'unknown'
       end
 
-      def api_key_status
+      def openrouter_connected?
         key = ENV['OPENROUTER_API_KEY']
-        return 'key missing' unless key
-        return 'key too short' if key.length < 20
-        'connected'
+        key && key.length >= 20
+      end
+
+      def replicate_connected?
+        key = ENV['REPLICATE_API_TOKEN']
+        key && key.length >= 10
       end
 
       def ping_openrouter
@@ -219,15 +299,13 @@ module MASTER
         File.directory?(File.join(ROOT, '.git'))
       end
 
-      def git_status_line
+      def git_info
         branch = `git -C "#{ROOT}" rev-parse --abbrev-ref HEAD 2>/dev/null`.strip
         status = `git -C "#{ROOT}" status --porcelain 2>/dev/null`
         uncommitted = status.lines.size
-        msg = "git0: #{branch} branch"
-        msg += ", #{uncommitted} uncommitted" if uncommitted > 0
-        msg
+        [branch, uncommitted]
       rescue
-        nil
+        ['unknown', 0]
       end
 
       def config_file
@@ -260,41 +338,10 @@ module MASTER
           help      show all commands
           ask       chat with the model
           scan      analyze current directory
-          review    code review
           refactor  improve code quality
-          image     generate images via Replicate
-          web       browse and extract content
+          chamber   multi-model deliberation
           exit      end session
         HINTS
-      end
-
-      def openrouter_status
-        key = ENV['OPENROUTER_API_KEY']
-        return 'OPENROUTER_API_KEY not set' unless key
-        return 'key too short' if key.length < 20
-        "connected (key #{key[0..7]}...)"
-      end
-
-      def replicate_status
-        key = ENV['REPLICATE_API_TOKEN']
-        return 'image generation ready' if key && key.length > 10
-        'image generation (no token)'
-      end
-
-      def replicate_api_status
-        key = ENV['REPLICATE_API_TOKEN']
-        return 'REPLICATE_API_TOKEN not set' unless key
-        return 'token too short' if key.length < 10
-        "connected (token #{key[0..7]}...)"
-      end
-
-      def vips_status
-        version = vips_version
-        if version == 'not installed'
-          'photo processing (libvips not installed)'
-        else
-          "photo processing via libvips #{version}"
-        end
       end
     end
   end
