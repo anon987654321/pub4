@@ -1177,7 +1177,7 @@ module MASTER
       {
         '.rb' => 'ruby', '.py' => 'python', '.js' => 'javascript',
         '.ts' => 'typescript', '.go' => 'go', '.rs' => 'rust',
-        '.sh' => 'bash', '.zsh' => 'zsh', '.yml' => 'yaml', '.yaml' => 'yaml',
+        '.sh' => 'zsh', '.zsh' => 'zsh', '.yml' => 'yaml', '.yaml' => 'yaml',
         '.html' => 'html', '.erb' => 'erb', '.css' => 'css', '.scss' => 'scss'
       }[ext] || 'text'
     end
@@ -1395,7 +1395,11 @@ module MASTER
           issues << "#{C_YELLOW}#{rel}#{C_RESET}: prefer async/await over promise chains"
         end
 
-      when 'zsh', 'bash'
+      when 'zsh'
+        # Check for bash-isms that should use zsh native patterns
+        if code =~ /\|\s*(awk|sed|tr|grep)\s/
+          issues << "#{C_YELLOW}#{rel}#{C_RESET}: prefer zsh parameter expansion over #{$1}"
+        end
         if code =~ /\$\w+[^"]/
           issues << "#{C_YELLOW}#{rel}#{C_RESET}: unquoted variables detected"
         end

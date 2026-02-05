@@ -55,13 +55,13 @@ ruby:
 
 shell:
   rules:
-    - "#!/bin/sh for portability"
-    - set -eu
+    - "#!/bin/zsh preferred for parameter expansion"
+    - Use native zsh patterns over awk/sed/tr/grep
     - Quote all variables
     - Meaningful exit codes
   template: |
-    #!/bin/sh
-    set -eu
+    #!/bin/zsh
+    setopt errexit nounset
     main() { %{body} }
     main "$@"
 

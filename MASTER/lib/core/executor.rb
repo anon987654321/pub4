@@ -4,9 +4,11 @@ module MASTER
   module Executor
     # Agentic command execution loop
     # Parses LLM responses for code blocks, executes safely, returns output
+    # Prefers zsh for simpler syntax and native parameter expansion
 
-    SHELL_PATTERN = /```(?:sh|bash|shell|zsh)?\n(.*?)```/m
+    SHELL_PATTERN = /```(?:zsh|sh|bash|shell)?\n(.*?)```/m
     RUBY_PATTERN = /```ruby\n(.*?)```/m
+    PREFERRED_SHELL = 'zsh'  # zsh > bash for parameter expansion, less forking
     MAX_OUTPUT = 4000
     MAX_CODE_PREVIEW = 100
     MAX_CODE_SHORT = 60
@@ -64,7 +66,8 @@ module MASTER
         end
 
         begin
-          output = `#{command} 2>&1`
+          # Use zsh for execution (better parameter expansion, less forking)
+          output = IO.popen([PREFERRED_SHELL, '-c', command], err: [:child, :out], &:read)
           status = $?.exitstatus
           Audit.log(command: command, type: :shell, status: status == 0 ? :ok : :err, output_length: output.length) rescue nil
 
