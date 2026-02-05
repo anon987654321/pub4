@@ -400,31 +400,33 @@ module MASTER
 
       def report(results)
         output = []
-        output << "Violations Report"
-        output << "=" * 60
+        output << "\e[1mViolations Report\e[0m"
+        output << ""
 
         if results[:literal].any?
-          output << "\nLiteral Violations (#{results[:literal].size}):"
+          output << "\e[1mLiteral\e[0m \e[2m(#{results[:literal].size})\e[0m"
           results[:literal].each do |v|
             icon = case v[:severity]
-                   when :error then '❌'
-                   when :warning then '⚠️'
-                   else 'ℹ️'
+                   when :error then '✗'
+                   when :warning then '!'
+                   else '·'
                    end
-            output << "  #{icon} [#{v[:principle]}] #{v[:message]}"
-            output << "     Line #{v[:line]}: #{v[:match]}" if v[:line]
+            output << "  #{icon} #{v[:principle]}  \e[2m#{v[:message]}\e[0m"
+            output << "    \e[2mLine #{v[:line]}: #{v[:match]}\e[0m" if v[:line]
           end
+          output << ""
         end
 
         if results[:conceptual].any?
-          output << "\nConceptual Violations (#{results[:conceptual].size}):"
+          output << "\e[1mConceptual\e[0m \e[2m(#{results[:conceptual].size})\e[0m"
           results[:conceptual].each do |v|
-            output << "  🧠 [#{v[:principle]}]"
-            output << "     #{v[:analysis][0..MAX_ANALYSIS_PREVIEW]}..."
+            output << "  · #{v[:principle]}"
+            output << "    \e[2m#{v[:analysis][0..MAX_ANALYSIS_PREVIEW]}...\e[0m"
           end
+          output << ""
         end
 
-        output << "\nSummary: #{results[:summary][:errors]} errors, #{results[:summary][:warnings]} warnings, #{results[:summary][:info]} info"
+        output << "\e[2m#{results[:summary][:errors]} errors, #{results[:summary][:warnings]} warnings, #{results[:summary][:info]} info\e[0m"
         output.join("\n")
       end
 

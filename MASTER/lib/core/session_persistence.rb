@@ -199,7 +199,8 @@ module MASTER
       lines = []
       
       if @summary
-        lines << "=== SUMMARY ==="
+        lines << "Summary"
+        lines << ""
         lines << @summary
         lines << ""
       end

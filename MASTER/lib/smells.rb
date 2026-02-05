@@ -174,13 +174,14 @@ module MASTER
       end
       
       def report(results)
-        return "No smells detected." if results.empty?
+        return "\e[2mNo smells detected.\e[0m" if results.empty?
         
-        output = "Found #{results.size} smell(s):\n\n"
+        output = "\e[1mCode Smells\e[0m \e[2m(#{results.size})\e[0m\n\n"
         results.each_with_index do |r, i|
-          output += "#{i + 1}. #{r[:smell]}: #{r[:message]}\n"
-          output += "   Fix: #{r[:fix]}\n"
-          output += "   Line: #{r[:line]}\n" if r[:line]
+          output += "  #{i + 1}. \e[1m#{r[:smell]}\e[0m\n"
+          output += "     \e[2m#{r[:message]}\e[0m\n"
+          output += "     Fix: #{r[:fix]}\n"
+          output += "     \e[2mLine #{r[:line]}\e[0m\n" if r[:line]
           output += "\n"
         end
         output

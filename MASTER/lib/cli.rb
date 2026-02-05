@@ -754,48 +754,46 @@ module MASTER
 
     def help_text
       <<~HELP
-        #{C_CYAN}━━━ Core ━━━#{C_RESET}
-          ask, a        Chat with LLM
-          clear, cl     Reset context
-          status, st    Show state
-          history, hi   Past commands
-          metrics       Session stats
-          exit, quit    Leave
+        #{C_BOLD}Core#{C_RESET}
+          ask, a        #{C_DIM}Chat with LLM#{C_RESET}
+          clear, cl     #{C_DIM}Reset context#{C_RESET}
+          status, st    #{C_DIM}Show state#{C_RESET}
+          history, hi   #{C_DIM}Past commands#{C_RESET}
+          metrics       #{C_DIM}Session stats#{C_RESET}
+          exit, quit    #{C_DIM}Leave#{C_RESET}
 
-        #{C_CYAN}━━━ Files ━━━#{C_RESET}
-          ls, tree      List files
-          cat, read     View file
-          edit          Modify file
-          diff, d       Show changes
-          cd            Change dir
+        #{C_BOLD}Files#{C_RESET}
+          ls, tree      #{C_DIM}List files#{C_RESET}
+          cat, read     #{C_DIM}View file#{C_RESET}
+          edit          #{C_DIM}Modify file#{C_RESET}
+          diff, d       #{C_DIM}Show changes#{C_RESET}
+          cd            #{C_DIM}Change dir#{C_RESET}
 
-        #{C_CYAN}━━━ Code ━━━#{C_RESET}
-          scan, s       Find issues
-          smells        Detect rot
-          refactor, r   Auto-fix
-          lint          Check style
-          beautify      Format
+        #{C_BOLD}Code#{C_RESET}
+          scan, s       #{C_DIM}Find issues#{C_RESET}
+          smells        #{C_DIM}Detect rot#{C_RESET}
+          refactor, r   #{C_DIM}Auto-fix#{C_RESET}
+          lint          #{C_DIM}Check style#{C_RESET}
+          beautify      #{C_DIM}Format#{C_RESET}
 
-        #{C_CYAN}━━━ AI ━━━#{C_RESET}
-          chamber, c    Multi-model
-          queue, q      Batch process
-          evolve, e     Self-improve
-          introspect, i Self-check
-          converge      Loop stable
-          backend       Switch LLM
-          context       Manage files
+        #{C_BOLD}AI#{C_RESET}
+          chamber, c    #{C_DIM}Multi-model#{C_RESET}
+          queue, q      #{C_DIM}Batch process#{C_RESET}
+          evolve, e     #{C_DIM}Self-improve#{C_RESET}
+          introspect, i #{C_DIM}Self-check#{C_RESET}
+          converge      #{C_DIM}Loop stable#{C_RESET}
+          backend       #{C_DIM}Switch LLM#{C_RESET}
+          context       #{C_DIM}Manage files#{C_RESET}
 
-        #{C_CYAN}━━━ Git ━━━#{C_RESET}
-          log, l        History
-          commit        Save
-          push/pull     Sync
+        #{C_BOLD}Git#{C_RESET}
+          log, l        #{C_DIM}History#{C_RESET}
+          commit        #{C_DIM}Save#{C_RESET}
+          push/pull     #{C_DIM}Sync#{C_RESET}
 
-        #{C_CYAN}━━━ Media ━━━#{C_RESET}
-          image         Generate
-          describe      Vision
-          speak         TTS
-
-        #{C_DIM}Aliases: q=queue s=scan r=refactor a=ask c=chamber e=evolve#{C_RESET}
+        #{C_BOLD}Media#{C_RESET}
+          image         #{C_DIM}Generate#{C_RESET}
+          describe      #{C_DIM}Vision#{C_RESET}
+          speak         #{C_DIM}TTS#{C_RESET}
       HELP
     end
 
@@ -2021,15 +2019,16 @@ module MASTER
     def show_metrics
       uptime = Time.now - @boot_time
       [
-        "#{C_CYAN}━━━ MASTER v#{VERSION} Metrics ━━━#{C_RESET}",
-        "Uptime: #{format_duration(uptime)}",
-        "Commands: #{@command_count}",
-        "Streak: #{@streak}",
-        "Session: #{@session_name}",
-        "Cost: $#{'%.4f' % @llm.total_cost}",
-        "Tokens: #{@last_tokens[:input]}in/#{@last_tokens[:output]}out",
-        "Memory: #{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB",
-        "Audit entries: #{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0}"
+        "#{C_BOLD}MASTER v#{VERSION}#{C_RESET}",
+        "",
+        "  Uptime      #{C_DIM}#{format_duration(uptime)}#{C_RESET}",
+        "  Commands    #{C_DIM}#{@command_count}#{C_RESET}",
+        "  Streak      #{C_DIM}#{@streak}#{C_RESET}",
+        "  Session     #{C_DIM}#{@session_name}#{C_RESET}",
+        "  Cost        #{C_DIM}$#{'%.4f' % @llm.total_cost}#{C_RESET}",
+        "  Tokens      #{C_DIM}#{@last_tokens[:input]}in / #{@last_tokens[:output]}out#{C_RESET}",
+        "  Memory      #{C_DIM}#{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB#{C_RESET}",
+        "  Audit       #{C_DIM}#{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0} entries#{C_RESET}"
       ].join("\n")
     end
 
@@ -2043,14 +2042,12 @@ module MASTER
       end
     end
 
-    # Visual separator
+    # Visual separator - using whitespace instead of ASCII art
     def separator(label = nil)
-      width = 60
       if label
-        pad = (width - label.length - 2) / 2
-        "#{C_CYAN}╭#{'─' * pad} #{label} #{'─' * (width - pad - label.length - 2)}╮#{C_RESET}"
+        "\n#{C_BOLD}#{label}#{C_RESET}\n"
       else
-        "#{C_CYAN}├#{'─' * width}┤#{C_RESET}"
+        ""
       end
     end
 
