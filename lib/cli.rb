@@ -1498,7 +1498,7 @@ module MASTER
     end
 
     def set_backend(arg)
-      return 'Usage: backend <http|ruby_llm>' unless arg
+      return "Usage: backend <#{LLM::BACKENDS.join('|')}>" unless arg
       result = @llm.set_backend(arg)
       result.ok? ? "Backend: #{result.value}" : result.error
     end

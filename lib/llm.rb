@@ -22,6 +22,7 @@ module MASTER
       kimi:      { model: 'moonshotai/kimi-k2.5',          input: 0.0002,  output: 0.001 },
       auto:      { model: 'openrouter/auto',               input: 0.003,   output: 0.015 }
     }.freeze
+    BACKENDS = %i[http ruby_llm].freeze
 
     DEFAULT_TIER = :strong
     MAX_RETRIES = 3
@@ -167,7 +168,7 @@ module MASTER
     def set_backend(name)
       return Result.err('Backend required') unless name
       key = name.to_s.downcase.to_sym
-      return Result.err('Unknown backend') unless %i[http ruby_llm].include?(key)
+      return Result.err('Unknown backend') unless BACKENDS.include?(key)
       return Result.err('ruby_llm unavailable') if key == :ruby_llm && !ruby_llm_available?
 
       @backend = key
@@ -233,7 +234,11 @@ module MASTER
 
     def ruby_llm_session(tier, model: nil)
       config = TIERS[tier] || TIERS[DEFAULT_TIER]
-      chat = RubyLLM.chat(provider: :openrouter, model: model || config[:model], assume_model_exists: true)
+      model_name = model || config[:model]
+      raise ArgumentError, 'Model required' if model_name.to_s.strip.empty?
+      raise ArgumentError, "Unknown model: #{model_name}" unless model_name.include?('/')
+
+      chat = RubyLLM.chat(provider: :openrouter, model: model_name, assume_model_exists: true)
       chat.with_instructions(build_system_prompt, replace: true)
       @history.each do |entry|
         chat.add_message(role: entry[:role].to_sym, content: entry[:content])
