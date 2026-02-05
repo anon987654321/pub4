@@ -1008,6 +1008,9 @@ module MASTER
     def chat(message)
       return 'Usage: ask <message>' unless message
 
+      # Inject filesystem context for paths mentioned in message
+      message = inject_path_context(message)
+
       result = @llm.chat(message)
       @last_tokens = @llm.last_tokens
       @last_cached = @llm.last_cached
@@ -1071,6 +1074,32 @@ module MASTER
       
       # Wrap in grey for calmer appearance
       "#{C_GREY}#{out.strip}#{C_RESET}"
+    end
+
+    # Inject actual filesystem context when paths are mentioned
+    def inject_path_context(message)
+      # Find paths in message (Unix-style)
+      paths = message.scan(%r{(?:/[\w./-]+)+}).uniq
+      return message if paths.empty?
+
+      context_lines = []
+      paths.each do |path|
+        if File.exist?(path)
+          if File.directory?(path)
+            entries = Dir.children(path).first(20)
+            context_lines << "[PATH EXISTS] #{path}/ contains: #{entries.join(', ')}"
+          else
+            size = File.size(path)
+            context_lines << "[FILE EXISTS] #{path} (#{size} bytes)"
+          end
+        else
+          context_lines << "[PATH MISSING] #{path} does not exist"
+        end
+      end
+
+      return message if context_lines.empty?
+
+      "[Filesystem context:\n#{context_lines.join("\n")}]\n\n#{message}"
     end
 
     def switch_persona(name)
