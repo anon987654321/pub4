@@ -8,15 +8,15 @@ tier: communication
 priority: 40
 auto_fixable: true
 anti_patterns:
-- name: jargon_soup
-  smell: Text dense with abbreviations
-  example: "Config the repo's env vars for the app's API"
-  fix: Expand all abbreviations to full words
-- name: inconsistent_abbreviation
-  smell: Same term abbreviated differently
-  example: "config" and "cfg" in same file
-  fix: Pick full word and use it everywhere
-- name: ambiguous_shorthand
-  smell: Abbreviation with multiple meanings
-  example: "auth" meaning authentication or authorization
-  fix: Write the full word to remove ambiguity
+  - name: jargon_soup
+    smell: Text dense with abbreviations
+    example: "Config the repo's env vars for the app's API"
+    fix: Expand all abbreviations to full words
+  - name: inconsistent_abbreviation
+    smell: Same term abbreviated differently
+    example: "config" and "cfg" in same file
+    fix: Pick full word and use it everywhere
+  - name: ambiguous_shorthand
+    smell: Abbreviation with multiple meanings
+    example: "auth" meaning authentication or authorization
+    fix: Write the full word to remove ambiguity

@@ -9,15 +9,15 @@ tier: communication
 priority: 34
 auto_fixable: false
 anti_patterns:
-- name: bullet_point_thinking
-  smell: Ideas expressed as disconnected bullets
-  example: "Features: - Fast - Secure - Simple"
-  fix: Write a sentence connecting the ideas
-- name: numbered_steps
-  smell: Instructions as numbered list instead of narrative
-  example: "1. Open file 2. Edit 3. Save"
-  fix: Describe the workflow as continuous prose
-- name: table_abuse
-  smell: Tables used for non-tabular data
-  example: Table with two columns for key-value pairs
-  fix: Write prose or use simple inline format
+  - name: bullet_point_thinking
+    smell: Ideas expressed as disconnected bullets
+    example: "Features: - Fast - Secure - Simple"
+    fix: Write a sentence connecting the ideas
+  - name: numbered_steps
+    smell: Instructions as numbered list instead of narrative
+    example: "1. Open file 2. Edit 3. Save"
+    fix: Describe the workflow as continuous prose
+  - name: table_abuse
+    smell: Tables used for non-tabular data
+    example: Table with two columns for key-value pairs
+    fix: Write prose or use simple inline format

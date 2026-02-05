@@ -8,15 +8,15 @@ tier: aesthetic
 priority: 36
 auto_fixable: true
 anti_patterns:
-- name: clinical_output
-  smell: Generated images with zero texture or character
-  example: AI portrait with plastic skin and uniform lighting
-  fix: Apply film stock emulation and subtle grain
-- name: over_sharpening
-  smell: Artificial clarity that screams digital
-  example: Edges with halos from aggressive unsharp mask
-  fix: Embrace natural softness of vintage lenses
-- name: uniform_color
-  smell: Mathematically perfect color with no drift
-  example: Pure white whites and perfect black blacks
-  fix: Add lift to shadows and subtle color cast
+  - name: clinical_output
+    smell: Generated images with zero texture or character
+    example: AI portrait with plastic skin and uniform lighting
+    fix: Apply film stock emulation and subtle grain
+  - name: over_sharpening
+    smell: Artificial clarity that screams digital
+    example: Edges with halos from aggressive unsharp mask
+    fix: Embrace natural softness of vintage lenses
+  - name: uniform_color
+    smell: Mathematically perfect color with no drift
+    example: Pure white whites and perfect black blacks
+    fix: Add lift to shadows and subtle color cast

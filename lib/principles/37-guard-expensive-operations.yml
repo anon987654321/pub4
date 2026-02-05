@@ -8,15 +8,15 @@ tier: safety
 priority: 37
 auto_fixable: true
 anti_patterns:
-- name: silent_spending
-  smell: API calls without cost visibility
-  example: Running video generation without showing estimated cost
-  fix: Display cost estimate before execution
-- name: accidental_production
-  smell: Destructive operations without confirmation
-  example: Database drop without explicit confirmation
-  fix: Require explicit opt-in for dangerous actions
-- name: runaway_loops
-  smell: Unbounded iteration over expensive operations
-  example: Retry loop on paid API without limit
-  fix: Set hard limits and circuit breakers
+  - name: silent_spending
+    smell: API calls without cost visibility
+    example: Running video generation without showing estimated cost
+    fix: Display cost estimate before execution
+  - name: accidental_production
+    smell: Destructive operations without confirmation
+    example: Database drop without explicit confirmation
+    fix: Require explicit opt-in for dangerous actions
+  - name: runaway_loops
+    smell: Unbounded iteration over expensive operations
+    example: Retry loop on paid API without limit
+    fix: Set hard limits and circuit breakers

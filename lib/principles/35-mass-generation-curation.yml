@@ -9,15 +9,15 @@ tier: creative
 priority: 35
 auto_fixable: false
 anti_patterns:
-- name: first_draft_syndrome
-  smell: Accepting the first output without alternatives
-  example: Generating one logo and shipping it
-  fix: Generate a swarm and curate
-- name: incremental_refinement
-  smell: Polishing one idea instead of exploring many
-  example: Tweaking same design for hours
-  fix: Explore breadth before depth
-- name: false_scarcity
-  smell: Treating AI generation as expensive when it is cheap
-  example: Limiting to three variations to save time
-  fix: Generate abundantly when stakes are high
+  - name: first_draft_syndrome
+    smell: Accepting the first output without alternatives
+    example: Generating one logo and shipping it
+    fix: Generate a swarm and curate
+  - name: incremental_refinement
+    smell: Polishing one idea instead of exploring many
+    example: Tweaking same design for hours
+    fix: Explore breadth before depth
+  - name: false_scarcity
+    smell: Treating AI generation as expensive when it is cheap
+    example: Limiting to three variations to save time
+    fix: Generate abundantly when stakes are high

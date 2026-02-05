@@ -8,23 +8,23 @@ tier: aesthetic
 priority: 33
 auto_fixable: true
 anti_patterns:
-- name: wall_of_text
-  smell: Dense blocks with no visual breaks
-  example: 50-line method with no blank lines
-  fix: Add breathing room between logical sections
-- name: ragged_indentation
-  smell: Inconsistent nesting that zigzags visually
-  example: Mix of 2-space and 4-space indents
-  fix: Enforce consistent indentation
-- name: orphan_lines
-  smell: Single lines isolated between large blocks
-  example: One-line method lost in 500-line file
-  fix: Group related code together
-- name: asymmetric_structure
-  smell: Lopsided files with all logic at top or bottom
-  example: 10 methods then 1 giant method
-  fix: Balance method sizes or extract class
-- name: no_paragraph_breaks
-  smell: Prose without visual chunking
-  example: README as single wall of text
-  fix: Break into digestible paragraphs
+  - name: wall_of_text
+    smell: Dense blocks with no visual breaks
+    example: 50-line method with no blank lines
+    fix: Add breathing room between logical sections
+  - name: ragged_indentation
+    smell: Inconsistent nesting that zigzags visually
+    example: Mix of 2-space and 4-space indents
+    fix: Enforce consistent indentation
+  - name: orphan_lines
+    smell: Single lines isolated between large blocks
+    example: One-line method lost in 500-line file
+    fix: Group related code together
+  - name: asymmetric_structure
+    smell: Lopsided files with all logic at top or bottom
+    example: 10 methods then 1 giant method
+    fix: Balance method sizes or extract class
+  - name: no_paragraph_breaks
+    smell: Prose without visual chunking
+    example: README as single wall of text
+    fix: Break into digestible paragraphs

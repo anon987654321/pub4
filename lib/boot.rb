@@ -18,8 +18,10 @@ module MASTER
           # Kernel banner (OpenBSD style)
           puts "#{CODENAME} #{VERSION} (GENERIC) #1: #{time_utc}"
           puts "    root@#{hostname}:#{ROOT}"
-          puts "real memory = #{mem * 1024 * 1024} (#{mem} megabytes)"
-          puts "available memory = #{avail * 1024 * 1024} (#{avail} megabytes)"
+
+          # Human-centric metrics instead of RAM
+          puts "context window = 200000 tokens (about 150000 words)"
+          puts "session budget = unlimited (pay as you go)"
 
           # Mainbus and CPU
           puts "mainbus0 at root"
@@ -62,20 +64,17 @@ module MASTER
             puts "llm0: not connected"
           end
 
-          # Model tiers
-          LLM::TIERS.each do |tier, info|
-            model_short = info[:model].split('/').last
-            puts "llm0: #{tier} -> #{model_short}"
-          end
+          # Model tiers (summary only)
+          tier_count = LLM::TIERS.size
+          puts "llm0: #{tier_count} tiers available"
 
-          # Replicate
-          puts "repligen0 at mainbus0: replicate api"
+          # Replicate (summary only)
           if replicate_connected?
-            Replicate::MODELS.each do |key, model|
-              puts "repligen0: #{key} -> #{model}"
-            end
+            model_count = Replicate::MODELS.size
+            chain_count = defined?(Replicate::CHAINS) ? Replicate::CHAINS.size : 0
+            puts "repligen0 at mainbus0: replicate api, #{model_count} models, #{chain_count} chains"
           else
-            puts "repligen0: not connected"
+            puts "repligen0 at mainbus0: replicate api (not connected)"
           end
 
           # Image processing
@@ -168,10 +167,10 @@ module MASTER
 
       def prompt_for_model(quiet: false)
         saved = load_model_preference
-        return saved if quiet && saved
+        return saved if saved  # Skip prompt if already set
 
         models = LLM::TIERS.keys
-        default_key = saved || LLM::DEFAULT_TIER
+        default_key = LLM::DEFAULT_TIER
 
         # Progressive disclosure: recommended first
         recommended = [:strong, :cheap, :fast]
@@ -184,7 +183,6 @@ module MASTER
             info = LLM::TIERS[key]
             name = info[:model].split('/').last
             label = "#{key}: #{name} (#{info[:input]}/#{info[:output]} per 1000)"
-            label += " [last used]" if key == saved
             { name: label, value: key }
           end
           prompt.select("Select model:", choices, default: ordered.index(default_key) + 1, cycle: true, per_page: 10)
@@ -194,10 +192,7 @@ module MASTER
           ordered.each_with_index do |key, i|
             info = LLM::TIERS[key]
             name = info[:model].split('/').last
-            marks = []
-            marks << "default" if key == LLM::DEFAULT_TIER
-            marks << "last used" if key == saved
-            suffix = marks.empty? ? "" : " [#{marks.join(', ')}]"
+            suffix = key == LLM::DEFAULT_TIER ? " [default]" : ""
             puts "  #{i + 1}. #{key}: #{name} (#{info[:input]}/#{info[:output]})#{suffix}"
           end
           print "Model [1-#{ordered.size}]: "
