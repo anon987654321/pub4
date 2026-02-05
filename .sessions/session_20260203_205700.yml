@@ -1,0 +1,16 @@
+---
+:name: session_20260203_205700
+:saved_at: '2026-02-03T21:01:49+01:00'
+:history:
+- :role: user
+  :content: hello
+- :role: user
+  :content: how long will i love you?
+- :role: user
+  :content: what is 2+2
+- :role: user
+  :content: "`?"
+- :role: user
+  :content: helloqqquit
+:context: {}
+:plan:

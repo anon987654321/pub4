@@ -1,0 +1,129 @@
+#!/bin/sh
+set -euo pipefail
+
+# Demo Rails 8 app generator - Simple CRUD with Hotwire
+# Port: 10008
+# Domain: demo.local (or configure as needed)
+
+APP_NAME="demo"
+PORT=10008
+
+rails new $APP_NAME \
+  --database=postgresql \
+  --css=tailwind \
+  --javascript=importmap
+
+cd $APP_NAME
+
+# Configure database
+cat > config/database.yml <<EOF
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+
+development:
+  <<: *default
+  database: ${APP_NAME}_development
+
+test:
+  <<: *default
+  database: ${APP_NAME}_test
+
+production:
+  <<: *default
+  database: ${APP_NAME}_production
+  username: ${APP_NAME}
+  password: <%= ENV["${APP_NAME^^}_DATABASE_PASSWORD"] %>
+EOF
+
+# Add Solid Queue, Cache, Cable
+bundle add solid_queue solid_cache solid_cable
+
+# Configure for production
+cat >> config/application.rb <<EOF
+
+    # Solid* stack
+    config.active_job.queue_adapter = :solid_queue
+    config.cache_store = :solid_cache_store
+    config.action_cable.adapter = :solid_cable
+EOF
+
+# Generate Post scaffold with Hotwire
+rails generate scaffold Post title:string body:text
+
+# Add Turbo Frame to posts index
+cat > app/views/posts/index.html.erb <<'EOF'
+<div class="w-full">
+  <%= turbo_frame_tag "posts" do %>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="font-bold text-4xl">Posts</h1>
+      <%= link_to "New post", new_post_path, class: "rounded-lg py-3 px-5 bg-blue-600 text-white", data: { turbo_frame: "modal" } %>
+    </div>
+
+    <div id="posts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <%= render @posts %>
+    </div>
+  <% end %>
+
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <%= turbo_frame_tag "modal" %>
+  </div>
+</div>
+EOF
+
+# Update post partial for Turbo
+cat > app/views/posts/_post.html.erb <<'EOF'
+<%= turbo_frame_tag dom_id(post), class: "border rounded-lg p-4 shadow hover:shadow-lg transition" do %>
+  <h2 class="font-bold text-xl mb-2"><%= post.title %></h2>
+  <p class="text-gray-700 mb-4"><%= post.body&.truncate(100) %></p>
+
+  <div class="flex gap-2">
+    <%= link_to "Show", post, class: "text-blue-600 hover:underline" %>
+    <%= link_to "Edit", edit_post_path(post), class: "text-green-600 hover:underline" %>
+    <%= button_to "Delete", post, method: :delete, class: "text-red-600 hover:underline" %>
+  </div>
+<% end %>
+EOF
+
+# Setup database
+rails db:create db:migrate
+
+# Create systemd/rcctl service file
+cat > ${APP_NAME}.service <<EOF
+#!/bin/sh
+# OpenBSD rc.d service for $APP_NAME
+
+daemon="puma"
+daemon_flags="-C config/puma.rb -p $PORT"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
+EOF
+
+# Configure Puma for production
+cat > config/puma.rb <<EOF
+threads_count = ENV.fetch("RAILS_MAX_THREADS", 5)
+threads threads_count, threads_count
+
+port ENV.fetch("PORT", $PORT)
+environment ENV.fetch("RAILS_ENV", "development")
+
+pidfile ENV.fetch("PIDFILE", "tmp/pids/server.pid")
+
+plugin :tmp_restart
+EOF
+
+echo ""
+echo "✓ Demo app created"
+echo ""
+echo "Run locally:"
+echo "  cd $APP_NAME"
+echo "  rails server -p $PORT"
+echo ""
+echo "Deploy to VPS:"
+echo "  Copy to /var/www/$APP_NAME"
+echo "  Configure PostgreSQL"
+echo "  Add to httpd.conf reverse proxy"
+echo "  Enable service: rcctl enable ${APP_NAME}"

@@ -1,0 +1,105 @@
+---
+:name: session_20260204_033231
+:saved_at: '2026-02-04T03:33:50+01:00'
+:history:
+- :role: user
+  :content: great
+- :role: assistant
+  :content: Ready. What do you need?
+- :role: user
+  :content: propose 20 different startup messages and shell prompts (neovim, starship)
+- :role: assistant
+  :content: |-
+    STARTUP MESSAGES (20 variants):
+
+    1. System nominal. Ready.
+    2. All systems green. Deploy.
+    3. Network active. Standing by.
+    4. Bootstrap complete. Engage.
+    5. Terminal initialized. Execute.
+    6. Shell ready. Proceed.
+    7. Systems online. Awaiting input.
+    8. Connection established. Ready state.
+    9. Init sequence complete. Armed.
+    10. Environment loaded. Operational.
+    11. Core systems active. Go.
+    12. Terminal sync'd. Ready for work.
+    13. Stack initialized. Begin.
+    14. Session established. Standing ready.
+    15. Systems check passed. Execute.
+    16. Runtime stable. Proceed.
+    17. Shell environment loaded. Ready.
+    18. Kernel connected. Operational.
+    19. Terminal handshake complete. Go.
+    20. All subsystems nominal. Deploy.
+
+
+    NEOVIM STARTUP SCREENS (concepts):
+
+    1. ASCII art: Minimalist mountain peak
+    2. Single kanji character with version
+    3. Geometric pattern: Three horizontal lines
+    4. System uptime and git status
+    5. Random programming quote rotation
+    6. Current project tree preview
+    7. Last commit message display
+    8. Network latency indicator
+    9. Weather and time display
+    10. Simple dot matrix pattern
+    11. Recent file quick access
+    12. Keystroke efficiency stats
+    13. Plugin load time report
+    14. Blank with corner timestamp
+    15. Single blinking cursor
+    16. RAM and CPU snapshot
+    17. Color gradient test strip
+    18. Today's TODO from file
+    19. Commit streak calendar
+    20. Pure black silence
+
+
+    STARSHIP PROMPT CONFIGS (20 styles):
+
+    1. Minimal: directory git_branch character
+    2. Status bar: username hostname directory time
+    3. Two-line: info_line newline prompt
+    4. Powerline: arrows with background fills
+    5. Git-focused: branch status ahead_behind
+    6. Language stack: all dev env versions
+    7. Cloud aware: aws gcloud kubernetes
+    8. Pure path: just current directory
+    9. Exit code: prominent error display
+    10. Docker context: container awareness
+    11. Battery status: for laptop work
+    12. Command duration: execution timer
+    13. Job count: background process indicator
+    14. No icons: pure text fallback
+    15. Rainbow: each segment different color
+    16. Monochrome: single color variations
+    17. Right-aligned: info on right side
+    18. Compact: everything on one short line
+    19. Verbose: show everything always
+    20. Adaptive: changes based on directory type
+
+    Pick your poison. Need specific configs written out?
+- :role: user
+  :content: can you show them exactly as they will be?
+- :role: assistant
+  :content: |-
+    I'll show you the actual commands as they will be executed.
+
+    First, viewing the Python file:
+
+    cat testfile.py
+
+    Second, running it sandboxed with pledge:
+
+    pledge "stdio rpath" python3 testfile.py
+
+    Third, running without sandbox:
+
+    python3 testfile.py
+
+    These are the exact commands. No escaping needed. Direct execution.
+:context: {}
+:plan:

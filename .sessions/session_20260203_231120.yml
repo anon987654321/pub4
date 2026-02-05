@@ -1,0 +1,22 @@
+---
+:name: session_20260203_231120
+:saved_at: '2026-02-03T23:11:39+01:00'
+:history:
+- :role: user
+  :content: hi
+- :role: assistant
+  :content: Hello. I'm ready to help you with your development work. What would you
+    like to do?
+- :role: user
+  :content: who are you?
+- :role: assistant
+  :content: |-
+    I am Claude, an AI assistant made by Anthropic.
+
+    I can help you with coding, writing, analysis, math, and general questions.
+
+    I do not have access to the internet or your files. I can only see what you share with me in our conversation.
+
+    I aim to be helpful, harmless, and honest in my responses.
+:context: {}
+:plan:

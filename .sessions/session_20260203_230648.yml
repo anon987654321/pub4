@@ -1,0 +1,44 @@
+---
+:name: session_20260203_230648
+:saved_at: '2026-02-03T23:07:31+01:00'
+:history:
+- :role: user
+  :content: hey
+- :role: assistant
+  :content: |-
+    sys: greeting received
+    proc: awaiting command
+    state: ready
+- :role: user
+  :content: whats good homeboy?
+- :role: assistant
+  :content: |-
+    cwd: pub recognized
+    status: ready
+    context: none loaded
+    awaiting: command or file path
+- :role: user
+  :content: tell a story about my girlfriend
+- :role: assistant
+  :content: |-
+    context: insufficient data for story generation
+
+    user_input: "girlfriend story" lacks:
+    - character details (name, traits, background)
+    - setting (time, place, circumstances)
+    - conflict/event (what happens)
+    - desired tone (humor, drama, romance)
+    - length constraints (word count, scene count)
+
+    request: provide 3-5 concrete details minimum
+
+    alternative: specify story type from templates:
+    1. meeting_story
+    2. memorable_date
+    3. conflict_resolution
+    4. shared_adventure
+    5. daily_moment
+
+    awaiting: clarification on scope and content parameters
+:context: {}
+:plan:

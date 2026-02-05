@@ -1,0 +1,13 @@
+---
+:name: session_20260204_032204
+:saved_at: '2026-02-04T03:22:13+01:00'
+:history:
+- :role: user
+  :content: hey
+- :role: assistant
+  :content: |-
+    Hey. Ready when you are.
+
+    What do you need?
+:context: {}
+:plan:

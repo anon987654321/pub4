@@ -46,6 +46,9 @@ module MASTER
   autoload :SemanticCache,      "#{CORE}/semantic_cache"
   autoload :PrincipleAutoloader, "#{CORE}/principle_autoloader"
   autoload :TokenStreamer,      "#{CORE}/token_streamer"
+    autoload :Colors, 'core/colors'
+        autoload :CommandHandler, 'core/command_handler'
+        autoload :REPL, 'core/repl'
   autoload :SSEEndpoint,        "#{CORE}/sse_endpoint"
   autoload :OrbStream,          "#{CORE}/orb_stream"
   autoload :ImageComparison,    "#{CORE}/image_comparison"

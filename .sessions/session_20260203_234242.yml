@@ -1,0 +1,47 @@
+---
+:name: session_20260203_234242
+:saved_at: '2026-02-03T23:44:11+01:00'
+:history:
+- :role: user
+  :content: hey
+- :role: assistant
+  :content: |-
+    Hey.
+
+    What do you need?
+- :role: user
+  :content: isnt brgen.no:40810 working?
+- :role: assistant
+  :content: |-
+    I cannot see if brgen.no:40810 is working without checking it.
+
+    To verify:
+    - run: curl -I http://brgen.no:40810
+    - or: nc -zv brgen.no 40810
+
+    If testing from this machine, run those commands and show me output.
+
+    I won't guess network status.
+- :role: user
+  :content: youre supposed to route cli.html on startup to http random port
+- :role: assistant
+  :content: |-
+    You need to serve cli.html on a random HTTP port at startup.
+
+    Current setup analysis needed. Run:
+
+    cat cli.rb
+
+    This will show how the app currently starts. Need to see if httpd or relayd integration exists.
+
+    For OpenBSD native serving, you have options:
+
+    1. Use httpd(8) - chrooted in /var/www by default
+    2. Use WEBrick/Rack in Ruby directly
+    3. Use relayd(8) for TLS termination
+
+    Most direct for random port: Ruby WEBrick in cli.rb startup.
+
+    Show me cli.rb first.
+:context: {}
+:plan:
