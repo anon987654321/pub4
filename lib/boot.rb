@@ -18,8 +18,8 @@ module MASTER
           # Kernel banner (OpenBSD style)
           puts "#{CODENAME} #{VERSION} (GENERIC) #1: #{time_utc}"
           puts "    root@#{hostname}:#{ROOT}"
-          puts "real mem = #{mem * 1024 * 1024} (#{mem}MB)"
-          puts "avail mem = #{avail * 1024 * 1024} (#{avail}MB)"
+          puts "real memory = #{mem * 1024 * 1024} (#{mem} megabytes)"
+          puts "available memory = #{avail * 1024 * 1024} (#{avail} megabytes)"
 
           # Mainbus and CPU
           puts "mainbus0 at root"
@@ -96,7 +96,7 @@ module MASTER
           puts
           puts "llm0: selecting #{model_key} tier"
           puts "llm0: model #{model_name}"
-          puts "llm0: pricing #{model_info[:input]}/#{model_info[:output]} per 1K tokens"
+          puts "llm0: pricing #{model_info[:input]}/#{model_info[:output]} per 1000 tokens"
           puts
           boot_ms = ((Time.now - t0) * 1000).round
           puts "#{CODENAME}: boot complete, #{boot_ms}ms"

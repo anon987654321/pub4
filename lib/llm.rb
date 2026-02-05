@@ -38,11 +38,13 @@ module MASTER
       @principles = Principle.load_all
       @last_tokens = { input: 0, output: 0 }
       @last_cached = false
+      @current_tier = DEFAULT_TIER
     end
 
     def chat(message, tier: DEFAULT_TIER)
       return Result.err('No API key') unless @api_key
 
+      @current_tier = tier
       cache_key = "#{tier}:#{message}"
       if @cache[cache_key]
         @last_cached = true
@@ -198,7 +200,9 @@ module MASTER
       parts = []
 
       # Identity and context
-      parts << "You are #{CODENAME} v#{VERSION}, a constitutional AI running on #{platform_context}."
+      model_name = current_model_name
+      parts << "You are #{CODENAME} version #{VERSION} (#{model_name} via OpenRouter)."
+      parts << "You are running on #{platform_context}."
       parts << "Your host is a #{runtime_context}."
       parts << "You embody clarity, efficiency, and correctness. No bloat. No ceremony."
 
@@ -214,11 +218,16 @@ module MASTER
 
       parts << "\n## Style"
       parts << "- Concise. Direct. No filler."
-      parts << "- Code over prose. Show, don't tell."
+      parts << "- Code over prose. Show, do not tell."
       parts << "- Admit uncertainty. Never fabricate."
       parts << "- One right way. Find it."
 
       parts.join("\n")
+    end
+
+    def current_model_name
+      config = TIERS[@current_tier] || TIERS[DEFAULT_TIER]
+      config[:model].split('/').last.gsub('-', ' ').gsub(/(\d)/, ' \1').strip
     end
 
     def platform_context

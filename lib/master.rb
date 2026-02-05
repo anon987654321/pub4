@@ -2,7 +2,6 @@
 
 # llm.rb - The LLM Operating System
 # A constitutional AI framework in pure Ruby
-# Affiliated with the Rust OpenBSD project
 
 module MASTER
   VERSION = '50.9'

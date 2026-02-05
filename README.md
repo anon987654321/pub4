@@ -1,8 +1,8 @@
 # llm.rb — The LLM Operating System
 
-Constitutional AI in pure Ruby. Runs on OpenBSD, the world's most secure Unix. Affiliated with the Rust OpenBSD project.
+Constitutional AI in pure Ruby. Runs on OpenBSD, the most secure Unix.
 
-Set `OPENROUTER_API_KEY` and run `ruby bin/cli`. The system boots in under 100ms, prints a dmesg-style hardware probe, and drops you into a REPL. Thirty-three principles guide every decision. Seventy-four anti-patterns are continuously guarded against.
+Set `OPENROUTER_API_KEY` and run `ruby bin/cli`. The system boots in under 100 milliseconds, prints a dmesg-style hardware probe, and drops you into a REPL. Thirty-three principles guide every decision. Seventy-four anti-patterns are continuously guarded against.
 
 The LLM client routes through OpenRouter with nine model tiers. DeepSeek handles cheap requests. Grok handles fast and code tasks. Claude Sonnet handles strong reasoning. Gemini, GLM, and Kimi provide diversity for the chamber. The chamber sends code to multiple models for deliberation. Each model proposes a unified diff and writes a letter defending its changes. The arbiter cherry-picks the best ideas.
 
