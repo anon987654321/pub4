@@ -380,15 +380,11 @@ module MASTER
       def play_single(file)
         case RUBY_PLATFORM
         when /mingw|mswin|cygwin/
+          # Use WMPlayer COM object
           system("powershell", "-Command", "
-            Add-Type -AssemblyName PresentationCore
-            $p = New-Object System.Windows.Media.MediaPlayer
-            $p.Open([Uri]'#{file.gsub('/', '\\')}')
-            Start-Sleep -Milliseconds 200
-            $d = $p.NaturalDuration.TimeSpan.TotalMilliseconds
-            if ($d -lt 500) { $d = 3000 }
-            $p.Play()
-            Start-Sleep -Milliseconds ($d + 100)
+            $wmp = New-Object -ComObject WMPlayer.OCX
+            $wmp.URL = '#{file.gsub('/', '\\')}'
+            Start-Sleep -Seconds 10
           ")
         when /darwin/
           system("afplay", file)
@@ -412,18 +408,15 @@ module MASTER
       end
 
       def play_windows(files)
-        # Use PowerShell MediaPlayer with proper duration detection
+        # Use WMPlayer COM object - more reliable than PresentationCore
         script = <<~PS
-          Add-Type -AssemblyName PresentationCore
-          $p = New-Object System.Windows.Media.MediaPlayer
+          $wmp = New-Object -ComObject WMPlayer.OCX
           $files = @(#{files.map { |f| "'#{f.gsub('/', '\\')}'" }.join(', ')})
           foreach ($f in $files) {
-            $p.Open([Uri]$f)
-            Start-Sleep -Milliseconds 300
-            $duration = $p.NaturalDuration.TimeSpan.TotalMilliseconds
-            if ($duration -lt 500) { $duration = 3000 }
-            $p.Play()
-            Start-Sleep -Milliseconds ($duration + 200)
+            $wmp.URL = $f
+            Start-Sleep -Milliseconds 500
+            while ($wmp.playState -eq 3) { Start-Sleep -Milliseconds 100 }
+            Start-Sleep -Milliseconds 200
           }
         PS
         system("powershell", "-Command", script)
