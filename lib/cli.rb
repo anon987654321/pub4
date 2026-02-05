@@ -2,10 +2,15 @@
 
 require 'readline'
 require 'fileutils'
+require 'io/console'
 
 module MASTER
   class CLI
     attr_reader :llm, :verbosity
+
+    # Braille spinner (Claude Code style, minty)
+    C_MINT = "\e[38;2;77;204;163m"
+    ORB_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".chars.map { |c| "#{C_MINT}#{c}#{C_RESET}" }.freeze
 
     COMMANDS = %w[
       ask audit cat cd chamber clean clear commit converge cost describe diff
@@ -90,11 +95,15 @@ module MASTER
     end
 
     def ask_verbosity
-      print "verbosity? [h/m/l] "
-      choice = $stdin.gets&.strip&.downcase
+      puts "How much detail do you want in responses?"
+      puts "  1. Show everything (recommended for learning)"
+      puts "  2. Show essentials only"
+      puts "  3. Minimal, just results"
+      print "Enter 1, 2, or 3: "
+      choice = $stdin.gets&.strip
       @verbosity = case choice
-                   when 'low', 'l' then :low
-                   when 'medium', 'med', 'm' then :medium
+                   when '3' then :low
+                   when '2' then :medium
                    else :high
                    end
     end
@@ -209,24 +218,47 @@ module MASTER
     end
 
     def with_spinner
-      frames = %w[- \\ | /]
       done = false
       result = nil
 
       spinner = Thread.new do
         i = 0
         until done
-          print "\r#{frames[i % 4]} "
+          draw_orb(ORB_FRAMES[i % ORB_FRAMES.size])
           i += 1
-          sleep 0.1
+          sleep 0.08
         end
-        print "\r  \r"
+        clear_orb
       end
 
       result = yield
       done = true
       spinner.join
       result
+    end
+
+    def terminal_cols
+      IO.console&.winsize&.last || 80
+    rescue
+      80
+    end
+
+    def draw_orb(frame)
+      cols = terminal_cols
+      print "\e7"           # save cursor
+      print "\e[1;#{cols}H" # move to row 1, last column
+      print frame
+      print "\e8"           # restore cursor
+      $stdout.flush
+    end
+
+    def clear_orb
+      cols = terminal_cols
+      print "\e7"
+      print "\e[1;#{cols}H"
+      print " "
+      print "\e8"
+      $stdout.flush
     end
 
     def confirm_expensive(tier)
