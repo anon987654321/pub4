@@ -6,6 +6,9 @@ module MASTER
   module Boot
     class << self
       def run(verbose: false, quiet: false)
+        # Apply OpenBSD security restrictions on CLI startup (pledge/unveil)
+        apply_openbsd_security if RUBY_PLATFORM =~ /openbsd/ && !ENV['MASTER_WEB_MODE']
+        
         t0 = Time.now
         principles = load_principles
         smells = principles.sum { |p| p[:anti_patterns]&.size || 0 }
@@ -315,6 +318,17 @@ module MASTER
           chamber   multi-model deliberation
           exit      end session
         HINTS
+      end
+
+      def apply_openbsd_security
+        begin
+          require_relative 'openbsd_pledge'
+          OpenBSDPledge.cli_profile
+        rescue LoadError
+          # Silently skip if not available
+        rescue => e
+          warn "Warning: Could not apply OpenBSD security: #{e.message}" unless ENV['MASTER_QUIET']
+        end
       end
     end
   end

@@ -83,6 +83,45 @@ module MASTER
       call_api_direct(model, prompt)
     end
 
+    # Streaming support: yields tokens as they arrive
+    def stream_ask(message, tier: DEFAULT_TIER, &block)
+      return Result.err('No API key') unless @api_key
+      return Result.err('No block given') unless block_given?
+
+      begin
+        require_relative 'token_streamer'
+        @current_tier = tier
+        @last_cached = false
+        @history << { role: 'user', content: message }
+
+        streamer = TokenStreamer.new(@api_key, @base_url)
+        config = TIERS[tier] || TIERS[DEFAULT_TIER]
+        
+        result = streamer.stream(config[:model], build_messages) do |token|
+          block.call(token)
+        end
+
+        if result.ok?
+          @history << { role: 'assistant', content: result.value }
+          # Update cost tracking
+          usage = result.metadata[:usage] || {}
+          input_tokens = usage[:input] || 0
+          output_tokens = usage[:output] || 0
+          @last_tokens = { input: input_tokens, output: output_tokens }
+          @total_tokens_in += input_tokens
+          @total_tokens_out += output_tokens
+          @request_count += 1
+          @total_cost += (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
+        end
+
+        result
+      rescue LoadError => e
+        Result.err("Streaming not available: #{e.message}")
+      rescue => e
+        Result.err("Streaming error: #{e.message}")
+      end
+    end
+
     attr_reader :last_cost
 
     private

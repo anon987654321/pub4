@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Install git hooks for principle enforcement
+
+require 'fileutils'
+
+# Colors
+RED = "\e[31m"
+GREEN = "\e[32m"
+YELLOW = "\e[33m"
+RESET = "\e[0m"
+
+def puts_colored(color, message)
+  puts "#{color}#{message}#{RESET}"
+end
+
+# Get repository root
+repo_root = File.expand_path('..', __dir__)
+hooks_dir = File.join(repo_root, '.git', 'hooks')
+
+unless Dir.exist?(hooks_dir)
+  puts_colored(RED, "Error: Not a git repository")
+  exit 1
+end
+
+puts "Installing git hooks..."
+puts
+
+# Pre-commit hook
+pre_commit_source = __FILE__.sub('bin/install-hooks', '.git/hooks/pre-commit')
+pre_commit_target = File.join(hooks_dir, 'pre-commit')
+
+if File.exist?(pre_commit_target)
+  puts_colored(YELLOW, "⚠ pre-commit hook already exists")
+  print "Overwrite? (y/n): "
+  response = gets.chomp.downcase
+  
+  unless response == 'y'
+    puts "Skipping pre-commit hook"
+  else
+    File.chmod(0755, pre_commit_target)
+    puts_colored(GREEN, "✓ Updated pre-commit hook")
+  end
+else
+  # Hook should already be there from git, just make it executable
+  if File.exist?(pre_commit_target)
+    File.chmod(0755, pre_commit_target)
+    puts_colored(GREEN, "✓ Enabled pre-commit hook")
+  else
+    puts_colored(RED, "✗ pre-commit hook not found")
+  end
+end
+
+puts
+puts "Git hooks installed successfully!"
+puts
+puts "To disable a hook temporarily, use:"
+puts "  git commit --no-verify"
+puts
+puts "To uninstall, remove files from #{hooks_dir}"
