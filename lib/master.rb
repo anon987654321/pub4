@@ -5,24 +5,25 @@
 module MASTER
   VERSION = '50.8'
   ROOT = File.expand_path('..', __dir__)
+  LIB = __dir__
 
-  autoload :Paths,     'paths'
-  autoload :Result,    'result'
-  autoload :Principle, 'principle'
-  autoload :Persona,   'persona'
-  autoload :Sandbox,   'sandbox'
-  autoload :Boot,      'boot'
-  autoload :LLM,       'llm'
-  autoload :Engine,    'engine'
-  autoload :Memory,    'memory'
-  autoload :Safety,    'safety'
-  autoload :Converge,  'converge'
-  autoload :Smells,    'smells'
-  autoload :OpenBSD,   'openbsd'
-  autoload :Web,       'web'
-  autoload :Replicate, 'replicate'
-  autoload :Server,    'server'
-  autoload :CLI,       'cli'
+  autoload :Paths,     "#{LIB}/paths"
+  autoload :Result,    "#{LIB}/result"
+  autoload :Principle, "#{LIB}/principle"
+  autoload :Persona,   "#{LIB}/persona"
+  autoload :Sandbox,   "#{LIB}/sandbox"
+  autoload :Boot,      "#{LIB}/boot"
+  autoload :LLM,       "#{LIB}/llm"
+  autoload :Engine,    "#{LIB}/engine"
+  autoload :Memory,    "#{LIB}/memory"
+  autoload :Safety,    "#{LIB}/safety"
+  autoload :Converge,  "#{LIB}/converge"
+  autoload :Smells,    "#{LIB}/smells"
+  autoload :OpenBSD,   "#{LIB}/openbsd"
+  autoload :Web,       "#{LIB}/web"
+  autoload :Replicate, "#{LIB}/replicate"
+  autoload :Server,    "#{LIB}/server"
+  autoload :CLI,       "#{LIB}/cli"
 
   class << self
     def boot
