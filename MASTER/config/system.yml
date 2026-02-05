@@ -98,7 +98,7 @@ schemas:
 
 # Feature Flags (for gradual rollout)
 features:
-  event_sourcing: false          # Phase 2
+  event_sourcing: true           # Phase 2 ✅
   capability_security: false     # Phase 8
   immutable_state: false         # Phase 5
   plugin_system: false           # Phase 4
@@ -107,6 +107,7 @@ features:
   database_integration: false    # Phase 9
   modular_monolith: false        # Phase 10
   workflow_engine: false         # Phase 12
+  dynamic_loading: false         # Phase 11 (microkernel dynamic loading)
 
 # Performance Settings
 performance:

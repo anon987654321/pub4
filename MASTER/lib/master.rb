@@ -55,12 +55,31 @@ module MASTER
   autoload :ImageComparison,    "#{CORE}/image_comparison"
   autoload :OpenBSDPledge,      "#{CORE}/openbsd_pledge"
   autoload :Audit,              "#{CORE}/audit"
+  autoload :Validator,          "#{CORE}/validator"
   
   # Reflexion System (NEW)
   autoload :ReflectionMemory,   "#{CORE}/reflection_memory"
   autoload :SelfCritique,       "#{CORE}/self_critique"
   autoload :AdaptiveRetry,      "#{CORE}/adaptive_retry"
   autoload :ReActExecutor,      "#{CORE}/react_executor"
+  
+  # Phase 2: Event Bus and Actors (NEW - Microkernel + Event-Driven Architecture)
+  module Events
+    LIB = MASTER::LIB
+    autoload :Event,     "#{LIB}/events/event"
+    autoload :Bus,       "#{LIB}/events/bus"
+  end
+  
+  module Actors
+    LIB = MASTER::LIB
+    autoload :Base,      "#{LIB}/actors/base"
+    autoload :Registry,  "#{LIB}/actors/registry"
+  end
+  
+  module Kernel
+    LIB = MASTER::LIB
+    autoload :Boot,      "#{LIB}/kernel/boot"
+  end
 
   # Dreams modules
   DREAMS = "#{LIB}/dreams"
