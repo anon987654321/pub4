@@ -167,6 +167,8 @@ module MASTER
     def arbiter_decide(original, filename)
       return original if @proposals.empty? || over_budget?
 
+      tie_detected = detect_tie?
+
       summary = @proposals.map do |p|
         rebuttals = p[:rebuttals]&.map { |r| "  - #{r[:model]}: #{r[:content].to_s[0..150]}" }&.join("\n")
         <<~ENTRY
@@ -181,20 +183,26 @@ module MASTER
         ENTRY
       end.join("\n")
 
+      tie_note = tie_detected ? 
+        "\nNOTE: Models are divided. Be conservative—only accept uncontested improvements." : ""
+
       prompt = <<~PROMPT
         You are the ARBITER. Review all proposals for #{filename}:
 
-        #{summary}
+        #{summary}#{tie_note}
 
         Your task:
         1. Evaluate each proposed change
         2. Accept changes that are clearly improvements
-        3. Reject changes that are risky or unnecessary
+        3. Reject changes that are risky, contested, or unnecessary
         4. Apply accepted changes to the original code
 
         Return:
         ## ACCEPTED CHANGES
         List which changes you're accepting and why (one line each)
+
+        ## REJECTED CHANGES
+        List rejected and why (one line each)
 
         ## FINAL CODE
         ```
@@ -220,12 +228,36 @@ module MASTER
     def consensus_reached?
       return true if @proposals.size < 2
 
-      # Check if rebuttals show agreement
-      support_count = @proposals.sum do |p|
-        p[:rebuttals]&.count { |r| r[:content].to_s.downcase.include?('agree') } || 0
+      # Count support/oppose signals in rebuttals
+      supports = 0
+      opposes = 0
+      
+      @proposals.each do |p|
+        (p[:rebuttals] || []).each do |r|
+          text = r[:content].to_s.downcase
+          supports += 1 if text.match?(/\b(agree|support|approve|accept)\b/)
+          opposes += 1 if text.match?(/\b(disagree|oppose|reject|concern)\b/)
+        end
       end
 
-      support_count >= (@proposals.size * 2)
+      total = supports + opposes
+      return false if total == 0
+
+      # Need >60% agreement for consensus
+      supports.to_f / total > 0.6
+    end
+
+    def detect_tie?
+      return false if @proposals.size < 2
+
+      # Count how many rebuttals oppose each proposal
+      opposition_counts = @proposals.map do |p|
+        (p[:rebuttals] || []).count { |c| c[:content].to_s.downcase.match?(/\b(disagree|oppose|reject)\b/) }
+      end
+
+      # Tie if multiple proposals have similar opposition
+      max_opp = opposition_counts.max || 0
+      opposition_counts.count { |c| c == max_opp } > 1
     end
 
     def over_budget?

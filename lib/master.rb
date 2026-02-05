@@ -30,6 +30,9 @@ module MASTER
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
   autoload :Audio,      "#{LIB}/audio"
+  autoload :TTS,        "#{LIB}/tts"
+  autoload :ParallelTTS, "#{LIB}/tts"
+  autoload :RateLimiter, "#{LIB}/server"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

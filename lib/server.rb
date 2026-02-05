@@ -6,6 +6,7 @@ require 'socket'
 module MASTER
   class Server
     PORT = ENV.fetch('PORT', 8080).to_i
+    AUTH_TOKEN = ENV['MASTER_TOKEN'] || SecureRandom.hex(16)
     
     attr_reader :output_queue
 
@@ -15,6 +16,7 @@ module MASTER
       @output_queue = Queue.new
       @persona = 'default'
       @running = false
+      @rate_limiter = RateLimiter.new(requests_per_minute: 30)
     end
 
     def start
@@ -88,10 +90,27 @@ module MASTER
       persona_ref = -> { @persona }
       persona_set = ->(p) { @persona = p }
       cost_ref = -> { cli.llm.total_cost rescue 0.0 }
+      rate_limiter = @rate_limiter
 
       ->(env) {
         path = env['PATH_INFO']
         method = env['REQUEST_METHOD']
+
+        # Auth check (skip for static files and health)
+        unless ['/', '/health'].include?(path) || path.match?(/\.\w+$/)
+          token = env['HTTP_AUTHORIZATION']&.sub(/^Bearer\s+/, '') ||
+                  env['HTTP_X_MASTER_TOKEN'] ||
+                  Rack::Utils.parse_query(env['QUERY_STRING'])['token']
+          unless token == AUTH_TOKEN
+            next [401, { 'content-type' => 'application/json' }, ['{"error":"unauthorized"}']]
+          end
+        end
+
+        # Rate limiting for chat/LLM endpoints
+        if path == '/chat' && !rate_limiter.allow?
+          next [429, { 'content-type' => 'application/json' }, 
+                ['{"error":"rate limit exceeded, try again in 60s"}']]
+        end
 
         case [method, path]
         when ['GET', '/']
@@ -142,6 +161,10 @@ module MASTER
             cli.llm.switch_persona(data['name'])
           end
           [200, { 'content-type' => 'application/json' }, [{ persona: persona_ref.call }.to_json]]
+
+        when ['GET', '/token']
+          # Display auth token (local access only)
+          [200, { 'content-type' => 'application/json' }, [{ token: AUTH_TOKEN }.to_json]]
 
         when ['GET', '/health']
           [200, { 'content-type' => 'application/json' }, [{ status: 'ok', version: VERSION }.to_json]]
@@ -232,6 +255,26 @@ module MASTER
       server.mount_proc('/health') do |req, res|
         res.content_type = 'application/json'
         res.body = { status: 'ok', version: VERSION }.to_json
+      end
+    end
+  end
+
+  # Simple sliding window rate limiter
+  class RateLimiter
+    def initialize(requests_per_minute: 30)
+      @limit = requests_per_minute
+      @window = 60.0
+      @requests = []
+      @mutex = Mutex.new
+    end
+
+    def allow?
+      @mutex.synchronize do
+        now = Time.now.to_f
+        @requests.reject! { |t| t < now - @window }
+        return false if @requests.size >= @limit
+        @requests << now
+        true
       end
     end
   end

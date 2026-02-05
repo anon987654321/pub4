@@ -95,6 +95,7 @@ module MASTER
       load_state
       setup_completion
       load_history
+      setup_crash_recovery
     end
 
     def run
@@ -146,6 +147,27 @@ module MASTER
       end
     rescue
       # Ignore history errors
+    end
+
+    def setup_crash_recovery
+      # Auto-save on signals
+      %w[INT TERM HUP].each do |sig|
+        trap(sig) do
+          emergency_save
+          exit(1)
+        end
+      end
+
+      # Auto-save on unhandled exceptions
+      at_exit { emergency_save }
+    end
+
+    def emergency_save
+      save_state
+      save_history
+      @llm.clear_history rescue nil
+    rescue
+      # Best effort
     end
 
     def load_state
@@ -1567,12 +1589,18 @@ module MASTER
     def speak_text(text)
       return "Usage: speak <text>" unless text && !text.empty?
 
+      # Use parallel TTS for faster generation
+      @tts ||= ParallelTTS.new
+      Thread.new { @tts.speak(text) }
+      "Speaking: #{text[0..50]}..."
+    rescue => e
+      # Fall back to Replicate direct
       result = Replicate.speak(text, voice: 'af_bella', speed: 1.0)
       if result.is_a?(String) && result.start_with?('http')
         save_and_play_audio(result)
         "Spoke: #{text[0..50]}..."
       else
-        "TTS error: #{result}"
+        "TTS error: #{e.message}"
       end
     end
 
