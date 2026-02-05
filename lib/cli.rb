@@ -129,11 +129,27 @@ module MASTER
         result = with_spinner { process_input(input) }
         puts colorize_output(result) if result
         show_token_info if @last_tokens[:input] > 0 || @last_tokens[:output] > 0
+        auto_lint
       end
 
       save_history
       @server&.stop
       show_session_summary
+    end
+
+    def auto_lint
+      return unless @verbosity == :high
+
+      modified = `git diff --name-only 2>/dev/null`.lines.map(&:strip)
+      return if modified.empty?
+
+      modified.each do |file|
+        next unless File.exist?(file)
+        issues = lint_single_file(File.expand_path(file, @root))
+        issues.each { |i| puts i }
+      end
+    rescue
+      # git not available or not a repo
     end
 
     def show_token_info
@@ -854,14 +870,36 @@ module MASTER
       guide = BEAUTIFY_GUIDES[lang] || ""
 
       prompt = <<~PROMPT
-        Beautify this #{lang} code. Make it idiomatic, clean, and elegant.
+        Beautify this #{lang} code completely.
 
         #{guide}
 
-        Rules:
+        Reflow rules:
+        - Order everything by importance: constants, public API, then internals
+        - Most critical code at top, utilities at bottom
+        - Group related logic together
+
+        Comment rules:
+        - Delete ALL existing comments first
+        - Reassess each line: if not self-documenting, rewrite the code to be clearer
+        - Only add comments when code truly cannot express intent
+        - Comments must be Strunk & White style: brevity plus clarity
+        - Maximum information density, no filler words
+        - No ASCII art, no decorative lines, no banners
+
+        Naming rules:
+        - Reassess every name: variables, functions, classes, constants
+        - Names must be self-documenting, no abbreviations
+        - Rename anything unclear to express intent precisely
+        - Prefer verbs for functions, nouns for variables
+        - Boolean variables: use is_, has_, can_, should_ prefixes
+        - Collections: use plural nouns
+        - Single-letter variables only for trivial iterators (i, j, k)
+
+        Output rules:
         - Preserve all functionality exactly
-        - Return ONLY the beautified code, no explanation
-        - No markdown code fences in output
+        - Return ONLY the beautified code
+        - No markdown fences, no explanation
 
         #{code}
       PROMPT
