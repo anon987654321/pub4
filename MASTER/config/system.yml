@@ -1,0 +1,143 @@
+# MASTER System Configuration - Phase 1 Hybrid Architecture
+# Master registry for all system components
+version: "2.0"
+architecture: "hybrid"
+codename: "REFLEXION"
+
+# Core Modules (existing lib/ structure)
+modules:
+  llm:
+    file: lib/llm.rb
+    class: MASTER::LLM
+    config:
+      default_tier: strong
+      max_tokens: 4096
+      max_retries: 3
+    capabilities:
+      - llm:ask
+      - llm:embed
+      - llm:vision
+    description: "LLM routing and tier management"
+    
+  repl:
+    file: lib/core/repl.rb
+    class: MASTER::Core::REPL
+    depends:
+      - llm
+      - council
+    capabilities:
+      - repl:read
+      - repl:eval
+      - repl:print
+    description: "Read-Eval-Print Loop interface"
+    
+  council:
+    file: lib/council.rb
+    class: MASTER::Council
+    depends:
+      - llm
+      - chamber
+    capabilities:
+      - council:debate
+      - council:consensus
+    description: "Multi-model deliberation system"
+    
+  chamber:
+    file: lib/chamber.rb
+    class: MASTER::Chamber
+    depends:
+      - llm
+    description: "Echo chamber for diverse perspectives"
+    
+  memory:
+    file: lib/memory.rb
+    class: MASTER::Memory
+    capabilities:
+      - memory:store
+      - memory:retrieve
+      - memory:search
+    description: "Semantic memory and embeddings"
+    
+  safety:
+    file: lib/safety.rb
+    class: MASTER::Safety
+    config:
+      guardrails_enabled: true
+      max_scrutiny: true
+    capabilities:
+      - safety:validate
+      - safety:check
+    description: "Constitutional AI guardrails"
+
+  boot:
+    file: lib/boot.rb
+    class: MASTER::Boot
+    description: "System initialization and bootstrap"
+
+  engine:
+    file: lib/engine.rb
+    class: MASTER::Engine
+    description: "Core execution engine"
+
+# Data Sources (consolidated in Phase 1)
+data:
+  personas: data/personas.yml
+  principles: data/principles.yml
+  embeddings: data/embeddings.faiss
+  sessions: .sessions/
+  
+# Schema Definitions
+schemas:
+  directory: schemas/
+  files:
+    - message.schema.json
+    - debate.schema.json
+    - embedding.schema.json
+    - persona.schema.json
+    - principle.schema.json
+
+# Feature Flags (for gradual rollout)
+features:
+  event_sourcing: false          # Phase 2
+  capability_security: false     # Phase 8
+  immutable_state: false         # Phase 5
+  plugin_system: false           # Phase 4
+  hexagonal_ports: false         # Phase 6
+  command_pipeline: false        # Phase 7
+  database_integration: false    # Phase 9
+  modular_monolith: false        # Phase 10
+  workflow_engine: false         # Phase 12
+
+# Performance Settings
+performance:
+  lazy_loading: true
+  cache_principles: true
+  cache_personas: true
+  semantic_cache_ttl: 3600
+  
+# Security Settings
+security:
+  openbsd_pledge: true
+  max_file_size_mb: 100
+  allowed_commands:
+    - ruby
+    - git
+    - test
+  
+# Logging and Observability
+logging:
+  level: info
+  format: openbsd
+  audit_trail: true
+  
+# Cost Tracking
+cost:
+  enabled: true
+  warn_threshold: 1.0
+  max_per_session: 10.0
+  
+# Backward Compatibility
+compatibility:
+  legacy_autoload: true
+  v1_api: true
+  migration_mode: false

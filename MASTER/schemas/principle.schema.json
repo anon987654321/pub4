@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://master.ai/schemas/principle.schema.json",
+  "title": "Principle",
+  "description": "A coding principle with anti-patterns",
+  "type": "object",
+  "required": ["name", "description", "tier", "priority"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the principle"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the principle"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["core", "solid", "functional", "unix", "design", "meta"],
+      "description": "Category tier of the principle"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Priority level (lower is higher priority)"
+    },
+    "auto_fixable": {
+      "type": "boolean",
+      "description": "Whether violations can be automatically fixed"
+    },
+    "anti_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "smell"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the anti-pattern"
+          },
+          "smell": {
+            "type": "string",
+            "description": "How to detect this anti-pattern"
+          },
+          "example": {
+            "type": "string",
+            "description": "Example of the anti-pattern"
+          },
+          "fix": {
+            "type": "string",
+            "description": "How to fix the anti-pattern"
+          }
+        }
+      }
+    }
+  }
+}
