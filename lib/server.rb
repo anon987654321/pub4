@@ -141,8 +141,9 @@ module MASTER
 
         else
           # Serve static files - check lib/views/ first, then root
-          views_path = File.join(MASTER::LIB, 'views', path.sub('/', ''))
-          root_path = File.join(MASTER::ROOT, path)
+          clean_path = path.delete_prefix('/')
+          views_path = File.join(MASTER::LIB, 'views', clean_path)
+          root_path = File.join(MASTER::ROOT, clean_path)
           
           file_path = if File.exist?(views_path) && File.file?(views_path)
             views_path
@@ -154,10 +155,10 @@ module MASTER
           
           if file_path
             ext = File.extname(path)
-            type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css', '.ico' => 'image/x-icon' }[ext] || 'application/octet-stream'
+            type = { '.html' => 'text/html', '.js' => 'application/javascript', '.css' => 'text/css', '.ico' => 'image/x-icon', '.png' => 'image/png' }[ext] || 'application/octet-stream'
             [200, { 'content-type' => type }, [File.read(file_path)]]
           else
-            [404, { 'content-type' => 'text/plain' }, ['Not found']]
+            [404, { 'content-type' => 'text/plain' }, ["Not found: #{path}"]]
           end
         end
       }
