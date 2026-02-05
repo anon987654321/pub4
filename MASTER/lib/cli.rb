@@ -282,7 +282,11 @@ module MASTER
       puts
 
       loop do
-        input = Readline.readline(build_prompt, true)
+        input = if TTY_AVAILABLE && ENV['MASTER_TTY_INPUT']
+          @prompt.ask(build_prompt) { |q| q.modify :strip }
+        else
+          Readline.readline(build_prompt, true)
+        end
         break unless input
 
         input = input.strip
