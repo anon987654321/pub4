@@ -5,6 +5,18 @@ module MASTER
     # Multi-model deliberation for ideas, conversations, and multimedia
     # LLMs debate concepts, Replicate models generate variations
 
+    # String slice limits
+    MAX_IDEA_PREVIEW = 500
+    MAX_PROPOSAL_PREVIEW = 600
+    MAX_DIALOGUE_PREVIEW = 400
+    MAX_LETTER_PREVIEW = 300
+    MAX_HISTORY_PREVIEW = 200
+    MAX_TRANSCRIPT_PREVIEW = 150
+    MAX_CODE_PREVIEW = 4000
+    MAX_FEATURE_DESC = 100
+    MAX_DETAIL_PREVIEW = 200
+    MAX_IDEA_DESC = 150
+
     LLM_MODELS = {
       sonnet:   'anthropic/claude-sonnet-4',
       grok:     'x-ai/grok-4-fast',
@@ -190,13 +202,13 @@ module MASTER
     end
 
     def debate_prompt(topic, my_proposal, others)
-      other_ideas = others.map { |o| "#{o[:model]}:\n#{o[:ideas].to_s[0..500]}" }.join("\n\n")
+      other_ideas = others.map { |o| "#{o[:model]}:\n#{o[:ideas].to_s[0..MAX_IDEA_PREVIEW]}" }.join("\n\n")
 
       <<~PROMPT
         Topic: #{topic}
 
         Your original ideas:
-        #{my_proposal[:ideas].to_s[0..600]}
+        #{my_proposal[:ideas].to_s[0..MAX_PROPOSAL_PREVIEW]}
 
         Other models proposed:
         #{other_ideas}
@@ -215,7 +227,7 @@ module MASTER
       return nil if over_budget?
 
       summary = proposals.map do |p|
-        "#{p[:model]}:\nIdeas: #{p[:ideas].to_s[0..400]}\nLetter: #{p[:letter].to_s[0..300]}"
+        "#{p[:model]}:\nIdeas: #{p[:ideas].to_s[0..MAX_DIALOGUE_PREVIEW]}\nLetter: #{p[:letter].to_s[0..MAX_LETTER_PREVIEW]}"
       end.join("\n\n---\n\n")
 
       prompt = <<~PROMPT
@@ -284,7 +296,7 @@ module MASTER
     end
 
     def dialogue_prompt(scenario, role, history)
-      recent = history.last(6).map { |h| "#{h[:role]}: #{h[:message].to_s[0..200]}" }.join("\n")
+      recent = history.last(6).map { |h| "#{h[:role]}: #{h[:message].to_s[0..MAX_HISTORY_PREVIEW]}" }.join("\n")
 
       <<~PROMPT
         Scenario: #{scenario}
@@ -302,7 +314,7 @@ module MASTER
     end
 
     def summary_prompt(scenario, dialogue)
-      transcript = dialogue.map { |d| "#{d[:role]}: #{d[:message].to_s[0..150]}" }.join("\n")
+      transcript = dialogue.map { |d| "#{d[:role]}: #{d[:message].to_s[0..MAX_TRANSCRIPT_PREVIEW]}" }.join("\n")
 
       <<~PROMPT
         Scenario: #{scenario}
@@ -487,7 +499,7 @@ module MASTER
       return [] if over_budget?
 
       code_sample = user_code.is_a?(String) ? user_code : File.read(user_code) rescue ""
-      code_sample = code_sample[0..4000] # Limit size
+      code_sample = code_sample[0..MAX_CODE_PREVIEW]
 
       prompt = <<~PROMPT
         DOMAIN: #{domain}
@@ -569,7 +581,7 @@ module MASTER
 
       features = []
       response.scan(/(?:^|\n)\s*[-\d.]*\s*\*?\*?([A-Z][^:\n]{2,40})[:*]?\*?\s*[-–]?\s*(.+?)(?=\n|$)/i) do |name, desc|
-        features << "#{name.strip}: #{desc.strip[0..100]}"
+        features << "#{name.strip}: #{desc.strip[0..MAX_FEATURE_DESC]}"
       end
 
       # Fallback: just extract lines that look like features
@@ -616,7 +628,7 @@ module MASTER
         next if name.strip.length < 3
         gaps << {
           feature: name.strip,
-          details: details.strip[0..200],
+          details: details.strip[0..MAX_DETAIL_PREVIEW],
           priority: details =~ /hard/i ? :high : (details =~ /medium/i ? :medium : :low)
         }
       end
@@ -650,13 +662,13 @@ module MASTER
 
       ideas = []
       response.scan(/\*\*Name\*\*:?\s*(.+?)(?:\n|$).*?\*\*What\*\*:?\s*(.+?)(?:\n|$)/mi) do |name, what|
-        ideas << { name: name.strip, description: what.strip[0..150] }
+        ideas << { name: name.strip, description: what.strip[0..MAX_IDEA_DESC] }
       end
 
       # Fallback: look for numbered items
       if ideas.empty?
         response.scan(/(?:^|\n)\s*\d+[.)]\s*\*?\*?([^:\n*]+)\*?\*?:?\s*(.+?)(?=\n\d|\n\n|\z)/mi) do |name, desc|
-          ideas << { name: name.strip, description: desc.strip[0..150] }
+          ideas << { name: name.strip, description: desc.strip[0..MAX_IDEA_DESC] }
         end
       end
 

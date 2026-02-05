@@ -4,6 +4,9 @@ module MASTER
   # Dual violation detection: literal (regex/AST) + conceptual (LLM semantic)
   # Catches both syntactic violations and semantic principle violations
   module Violations
+    MAX_CODE_PREVIEW = 3000       # Max chars for LLM analysis
+    MAX_ANALYSIS_PREVIEW = 200    # Max chars for analysis display
+    
     # Literal patterns for fast detection (no LLM needed)
     LITERAL_PATTERNS = {
       # KISS violations
@@ -348,7 +351,7 @@ module MASTER
 
             CODE:
             ```ruby
-            #{code[0..3000]}
+            #{code[0..MAX_CODE_PREVIEW]}
             ```
 
             If there are violations, list them with line numbers.
@@ -417,7 +420,7 @@ module MASTER
           output << "\nConceptual Violations (#{results[:conceptual].size}):"
           results[:conceptual].each do |v|
             output << "  🧠 [#{v[:principle]}]"
-            output << "     #{v[:analysis][0..200]}..."
+            output << "     #{v[:analysis][0..MAX_ANALYSIS_PREVIEW]}..."
           end
         end
 

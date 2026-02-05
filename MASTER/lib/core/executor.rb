@@ -8,6 +8,8 @@ module MASTER
     SHELL_PATTERN = /```(?:sh|bash|shell|zsh)?\n(.*?)```/m
     RUBY_PATTERN = /```ruby\n(.*?)```/m
     MAX_OUTPUT = 4000
+    MAX_CODE_PREVIEW = 100
+    MAX_CODE_SHORT = 60
 
     class << self
       # Dry-run mode: show what would execute without running
@@ -81,28 +83,28 @@ module MASTER
       def execute_ruby(code)
         # Safety check
         unless Safety.ruby_safe?(code)
-          Audit.log(command: code[0..100], type: :ruby, status: :blocked) rescue nil
-          return { type: :blocked, code: code[0..100], error: "Blocked by safety filter" }
+          Audit.log(command: code[0..MAX_CODE_PREVIEW], type: :ruby, status: :blocked) rescue nil
+          return { type: :blocked, code: code[0..MAX_CODE_PREVIEW], error: "Blocked by safety filter" }
         end
 
         # Dry-run mode
         if dry_run?
-          return { type: :dry_run, code: code[0..100], output: "[DRY] would eval: #{code[0..60]}..." }
+          return { type: :dry_run, code: code[0..MAX_CODE_PREVIEW], output: "[DRY] would eval: #{code[0..MAX_CODE_SHORT]}..." }
         end
 
         begin
           # Execute in isolated binding
           result = eval(code, TOPLEVEL_BINDING.dup, "(master)", 1)
-          Audit.log(command: code[0..100], type: :ruby, status: :ok) rescue nil
+          Audit.log(command: code[0..MAX_CODE_PREVIEW], type: :ruby, status: :ok) rescue nil
           {
             type: :ruby,
-            code: code[0..100],
+            code: code[0..MAX_CODE_PREVIEW],
             result: truncate(result.inspect),
             success: true
           }
         rescue => e
-          Audit.log(command: code[0..100], type: :ruby, status: :err) rescue nil
-          { type: :ruby, code: code[0..100], error: e.message, success: false }
+          Audit.log(command: code[0..MAX_CODE_PREVIEW], type: :ruby, status: :err) rescue nil
+          { type: :ruby, code: code[0..MAX_CODE_PREVIEW], error: e.message, success: false }
         end
       end
 

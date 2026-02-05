@@ -86,6 +86,11 @@ module MASTER
     UPTIME_THRESHOLD = 3600  # Show uptime after 1 hour
     COST_TIER_LOW = 0.01
     COST_TIER_MED = 0.10
+    MAX_CODE_PREVIEW = 2000
+    MAX_RESEARCH_PREVIEW = 500
+    MAX_VIOLATION_PREVIEW = 200
+    MAX_REASON_PREVIEW = 200
+    MAX_RESPONSE_PREVIEW = 150
 
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
@@ -1079,7 +1084,7 @@ module MASTER
         Be concise. Return as bullet points.
 
         ```#{lang}
-        #{code[0..2000]}
+        #{code[0..MAX_CODE_PREVIEW]}
         ```
       PROMPT
 
@@ -1102,7 +1107,7 @@ module MASTER
 
         refactor_prompt = <<~PROMPT
           You are refactoring #{lang} code. Apply these insights:
-          #{research_text[0..500]}
+          #{research_text[0..MAX_RESEARCH_PREVIEW]}
 
           Rules:
           - Make minimal, surgical changes
@@ -1535,7 +1540,7 @@ module MASTER
     def format_violations(violations)
       violations.map do |v|
         if v[:type] == :conceptual
-          "#{v[:principle]}: #{v[:analysis].to_s[0..200]}"
+          "#{v[:principle]}: #{v[:analysis].to_s[0..MAX_VIOLATION_PREVIEW]}"
         else
           "#{v[:principle]}: #{v[:message]} (line #{v[:line]})"
         end
@@ -1669,7 +1674,7 @@ module MASTER
 
       if result[:applied]
         puts "#{C_GREEN}Winner: #{result[:winner][:model]}#{C_RESET}"
-        puts result[:reason][0..200]
+        puts result[:reason][0..MAX_REASON_PREVIEW]
         "#{result[:proposals].size} models deliberated"
       else
         "Chamber complete (no changes): #{result[:reason]}"
@@ -1746,7 +1751,7 @@ module MASTER
         results.each do |r|
           lines << "#{C_YELLOW}#{r[:principle]}#{C_RESET}"
           lines << "  Q: #{r[:question]}"
-          lines << "  A: #{r[:response][0..150]}..."
+          lines << "  A: #{r[:response][0..MAX_RESPONSE_PREVIEW]}..."
           lines << ""
         end
         lines.join("\n")

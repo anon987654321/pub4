@@ -10,6 +10,10 @@ module MASTER
     PER_FILE_BUDGET = 0.5         # Max cost per file analysis
     MAX_ANALYSIS_FILE_SIZE = 10_000
     MAX_CONCEPTUAL_CHECK_SIZE = 5000
+    CYCLE_DELAY = 1               # Seconds between cycles
+    AUTO_PROCEED = true           # Auto-apply safe refinements without confirmation
+    MAX_CODE_PREVIEW = 3000       # Max chars for code analysis
+    MAX_DESC_LENGTH = 100         # Max refinement description length
     REFINEMENT_FILE = File.join(Paths.config, 'refinements.yml')
     WISHLIST_FILE = File.join(Paths.config, 'wishlist.yml')
     EVOLUTION_LOG = File.join(Paths.data, 'evolution.log')
@@ -164,7 +168,7 @@ module MASTER
         prev_score = current_score
 
         # Brief pause between cycles
-        sleep 1
+        sleep CYCLE_DELAY
       end
 
       # Full principle check at END (lexical + conceptual)
@@ -349,7 +353,7 @@ module MASTER
           - Aligned with principles above
 
           ```
-          #{code[0..3000]}
+          #{code[0..MAX_CODE_PREVIEW]}
           ```
         PROMPT
 
@@ -483,7 +487,7 @@ module MASTER
         refinements << {
           file: file,
           line: line.to_i,
-          desc: desc.strip[0..100],
+          desc: desc.strip[0..MAX_DESC_LENGTH],
           impact: impact,
           effort: effort
         }

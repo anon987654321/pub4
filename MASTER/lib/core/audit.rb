@@ -3,6 +3,7 @@
 module MASTER
   module Audit
     LOG_FILE = File.join(MASTER::Paths::VAR_DIR, 'audit.log')
+    MAX_CMD_LENGTH = 200
 
     class << self
       def log(command:, type:, status:, output_length: 0, session_id: nil)
@@ -22,7 +23,7 @@ module MASTER
       end
 
       def sanitize(cmd)
-        cmd.to_s[0..200].gsub(/[\r\n]/, ' ')
+        cmd.to_s[0..MAX_CMD_LENGTH].gsub(/[\r\n]/, ' ')
       end
 
       def tail(n = 20)
