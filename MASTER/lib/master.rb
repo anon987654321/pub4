@@ -43,6 +43,7 @@ module MASTER
   autoload :ConvergenceLoop, "#{LIB}/convergence_loop"
   autoload :MultiFileAnalyzer, "#{LIB}/multi_file_analyzer"
   autoload :AutoFixer,   "#{LIB}/auto_fixer"
+  autoload :Planner,     "#{LIB}/planner"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
