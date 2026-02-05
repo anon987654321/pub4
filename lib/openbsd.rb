@@ -70,7 +70,7 @@ module MASTER
       end
 
       def fetch_man_page(man_page, cache_dir = nil)
-        cache_dir ||= File.join(Master::ROOT, "var", "cache", "man")
+        cache_dir ||= File.join(MASTER::ROOT, "var", "cache", "man")
         FileUtils.mkdir_p(cache_dir) rescue nil
         
         cache_file = File.join(cache_dir, man_page.gsub("/", "_"))

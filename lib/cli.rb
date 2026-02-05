@@ -502,7 +502,7 @@ module MASTER
       begin
         require_relative 'agents/review_crew'
 
-        crew = Master::Agents::ReviewCrew.new(llm: @llm, principles: Principle.load_all)
+        crew = MASTER::Agents::ReviewCrew.new(llm: @llm, principles: Principle.load_all)
         code = File.read(File.expand_path(path, @root))
         results = crew.review(code, path)
 
