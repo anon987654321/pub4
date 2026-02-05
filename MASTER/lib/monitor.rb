@@ -2,6 +2,7 @@
 
 require 'json'
 require 'fileutils'
+require 'time'
 
 module MASTER
   # Cost and token monitoring for LLM usage
