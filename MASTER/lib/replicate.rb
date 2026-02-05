@@ -10,12 +10,14 @@ module MASTER
     API_URL = 'https://api.replicate.com/v1'
     OUTPUT_DIR = File.join(MASTER::ROOT, 'var', 'replicate')
     
-    # Default durations
+    # Default durations and timing
     DEFAULT_VIDEO_DURATION = 10
     DEFAULT_AUDIO_DURATION = 10
     DEFAULT_ASPECT_RATIO = '16:9'
     DEFAULT_COST_ESTIMATE = 0.02
     RANDOM_CHAIN_COST = 0.50
+    POLL_INTERVAL = 0.5
+    BATCH_DELAY = 3
 
     # Complete model registry for creative pipelines
     MODELS = {
@@ -359,12 +361,12 @@ module MASTER
           done = true
         end
 
-        # Consumer: play as they arrive (1 sec max gap)
+        # Consumer: play as they arrive
         played = 0
         loop do
           if queue.empty?
             break if done
-            sleep 0.5
+            sleep POLL_INTERVAL
             next
           end
 
@@ -780,7 +782,7 @@ module MASTER
           end
 
           print '.'
-          sleep 3
+          sleep BATCH_DELAY
         end
       end
 

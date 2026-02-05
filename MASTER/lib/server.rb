@@ -7,6 +7,7 @@ module MASTER
   class Server
     PORT = ENV.fetch('PORT', 8080).to_i
     AUTH_TOKEN = ENV['MASTER_TOKEN'] || SecureRandom.hex(16)
+    STARTUP_DELAY = 0.5
     
     attr_reader :output_queue
 
@@ -24,7 +25,7 @@ module MASTER
       @running = true
 
       Thread.new { run_falcon }
-      sleep 0.5 # Let server start
+      sleep STARTUP_DELAY
       puts "web0 at http0: port #{@port}"
     end
 

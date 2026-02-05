@@ -4,6 +4,8 @@ module MASTER
   # LLM introspection and hostile questioning
   # Forces the system to examine its own reasoning and defend principles
   class Introspection
+    MAX_SUMMARY_LENGTH = 200
+
     HOSTILE_QUESTIONS = [
       "What assumption here could be completely wrong?",
       "What would a senior engineer critique first?",
@@ -80,7 +82,7 @@ module MASTER
 
         # Extract the core principle (first non-empty line after title)
         lines = content.lines.reject { |l| l.strip.empty? || l.start_with?("#") }
-        core = lines.first&.strip || content[0..200]
+        core = lines.first&.strip || content[0..MAX_SUMMARY_LENGTH]
 
         result = hostile_question(core, "From principle file: #{name}.md")
         results << {

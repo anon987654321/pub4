@@ -4,6 +4,8 @@ require 'securerandom'
 
 module MASTER
   module Boot
+    CHECKPOINT_MAX_AGE_HOURS = 24
+
     class << self
       def run(verbose: false, quiet: false)
         # Apply OpenBSD security restrictions on CLI startup (pledge/unveil)
@@ -103,7 +105,7 @@ module MASTER
         return nil unless checkpoint
         
         age_hours = (Time.now.to_i - checkpoint[:timestamp]) / 3600.0
-        return nil if age_hours > 24  # Skip checkpoints older than 24h
+        return nil if age_hours > CHECKPOINT_MAX_AGE_HOURS
         
         unless quiet
           puts "session0: recovering from checkpoint (#{age_hours.round(1)}h ago)"

@@ -2,6 +2,9 @@
 
 module MASTER
   module Engine
+    MAX_METHOD_LINES = 20
+    MAX_FILE_LINES = 300
+
     class << self
       def scan(path)
         return Result.err('Path not found') unless File.exist?(path)
@@ -61,15 +64,15 @@ module MASTER
         content = File.read(path)
         issues = []
 
-        # Long methods (>20 lines)
+        # Long methods
         content.scan(/def \w+.*?^  end/m).each do |method|
-          if method.lines.size > 20
+          if method.lines.size > MAX_METHOD_LINES
             issues << { file: path, type: :long_method, lines: method.lines.size }
           end
         end
 
-        # God class (>300 lines)
-        if content.lines.size > 300
+        # God class
+        if content.lines.size > MAX_FILE_LINES
           issues << { file: path, type: :god_class, lines: content.lines.size }
         end
 

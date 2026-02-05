@@ -114,6 +114,38 @@ module MASTER
         severity: :warning
       },
 
+      # Bare rescue (swallows errors silently)
+      bare_rescue: {
+        pattern: /rescue\s*$/,
+        principle: 'Fail Fast',
+        message: 'Bare rescue swallows errors silently',
+        severity: :warning
+      },
+
+      # String slice magic numbers
+      string_slice_magic: {
+        pattern: /\[0\.\.\d{3,}\]/,
+        principle: 'DRY',
+        message: 'Magic number in string slice (use constant)',
+        severity: :info
+      },
+
+      # Sleep magic numbers
+      sleep_magic: {
+        pattern: /sleep\s+\d+(\.\d+)?(?!\s*#)/,
+        principle: 'DRY',
+        message: 'Magic number in sleep (use constant)',
+        severity: :info
+      },
+
+      # Limit magic numbers (.first/.last)
+      limit_magic: {
+        pattern: /\.(first|last)\(\d{2,}\)/,
+        principle: 'DRY',
+        message: 'Magic number in limit (use constant)',
+        severity: :info
+      },
+
       # Few Arguments
       many_parameters: {
         pattern: /def\s+\w+\s*\(([^)]*,){4,}[^)]*\)/,

@@ -2,11 +2,18 @@
 
 module MASTER
   module Smells
+    MAX_METHOD_LINES = 20
+    MAX_FILE_LINES = 300
+    MAX_PARAMETERS = 4
+    MAX_NESTING = 5
+    MAX_PUBLIC_METHODS = 10
+    MIN_DUPLICATE_COUNT = 3
+
     BLOATERS = {
-      long_method: { check: "> 20 lines or > 5 nesting levels", fix: "Extract method" },
-      god_class: { check: "> 300 lines or > 10 public methods", fix: "Extract class" },
+      long_method: { check: "> #{MAX_METHOD_LINES} lines or > #{MAX_NESTING} nesting levels", fix: "Extract method" },
+      god_class: { check: "> #{MAX_FILE_LINES} lines or > #{MAX_PUBLIC_METHODS} public methods", fix: "Extract class" },
       primitive_obsession: { check: "Repeated primitive patterns", fix: "Introduce value object" },
-      long_parameter_list: { check: "> 4 parameters", fix: "Parameter object" }
+      long_parameter_list: { check: "> #{MAX_PARAMETERS} parameters", fix: "Parameter object" }
     }.freeze
 
     COUPLERS = {
@@ -51,10 +58,10 @@ module MASTER
         end
         
         # Long file (god class indicator)
-        if lines.size > 300
+        if lines.size > MAX_FILE_LINES
           results << {
             smell: :god_class,
-            message: "File has #{lines.size} lines (> 300)",
+            message: "File has #{lines.size} lines (> #{MAX_FILE_LINES})",
             fix: BLOATERS[:god_class][:fix]
           }
         end
@@ -62,10 +69,10 @@ module MASTER
         # Long parameter lists
         code.scan(/def\s+\w+\(([^)]+)\)/) do |params|
           count = params[0].split(",").size
-          if count > 4
+          if count > MAX_PARAMETERS
             results << {
               smell: :long_parameter_list,
-              message: "Method has #{count} parameters (> 4)",
+              message: "Method has #{count} parameters (> #{MAX_PARAMETERS})",
               fix: BLOATERS[:long_parameter_list][:fix]
             }
           end
@@ -82,7 +89,7 @@ module MASTER
         
         # Duplicate string literals (primitive obsession indicator)
         strings = code.scan(/"[^"]{10,}"/).flatten
-        dupes = strings.group_by(&:itself).select { |_, v| v.size > 2 }
+        dupes = strings.group_by(&:itself).select { |_, v| v.size >= MIN_DUPLICATE_COUNT }
         dupes.each do |str, occurrences|
           results << {
             smell: :primitive_obsession,
