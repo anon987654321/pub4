@@ -51,9 +51,14 @@ module MASTER
       @last_cached = false
       @current_tier = DEFAULT_TIER
       @context_files = []
+      @system_context = []  # Additional system context (e.g., self-awareness)
       @backend = resolve_backend(backend || ENV['MASTER_LLM_BACKEND'])
       configure_ruby_llm if @backend == :ruby_llm
       load_conversation_history
+    end
+
+    def add_system_context(context)
+      @system_context << context unless @system_context.include?(context)
     end
 
     def chat(message, tier: nil)
@@ -474,6 +479,12 @@ module MASTER
       parts << "- No bullet points or headers."
       parts << "- Plain text only. Like a shell."
       parts << "- Admit uncertainty. Never fabricate."
+
+      # Inject self-awareness and additional system context
+      if @system_context&.any?
+        parts << "\n## Self-Knowledge"
+        @system_context.each { |ctx| parts << ctx }
+      end
 
       parts.join("\n")
     end

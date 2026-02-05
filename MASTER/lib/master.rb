@@ -39,6 +39,10 @@ module MASTER
   autoload :AutoInstall, "#{LIB}/auto_install"
   autoload :BugHunting,  "#{LIB}/bug_hunting"
   autoload :UI,          "#{LIB}/ui"
+  autoload :SelfAwareness, "#{LIB}/self_awareness"
+  autoload :ConvergenceLoop, "#{LIB}/convergence_loop"
+  autoload :MultiFileAnalyzer, "#{LIB}/multi_file_analyzer"
+  autoload :AutoFixer,   "#{LIB}/auto_fixer"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

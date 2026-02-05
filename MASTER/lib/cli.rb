@@ -141,6 +141,7 @@ module MASTER
       setup_completion
       load_history
       setup_crash_recovery
+      load_self_awareness
     end
 
     def run
@@ -174,6 +175,17 @@ module MASTER
         COMMANDS.grep(/^#{Regexp.escape(s)}/)
       end
       Readline.completion_append_character = ' '
+    end
+
+    def load_self_awareness
+      # Load MASTER's knowledge of itself
+      SelfAwareness.load
+      
+      # Inject into LLM context
+      @llm.add_system_context(SelfAwareness.context_for_llm)
+    rescue => e
+      # Non-fatal - continue without self-awareness
+      trace("Self-awareness load failed: #{e.message}")
     end
 
     def load_history
@@ -727,6 +739,12 @@ module MASTER
 
       when 'sessions'
         list_sessions
+
+      when 'self', 'selfaware', 'whoami'
+        show_self_awareness
+
+      when 'refresh-self'
+        refresh_self_awareness
 
       when 'sanity'
         run_sanity_check(arg)
@@ -2006,6 +2024,16 @@ module MASTER
       end
       
       output.join("\n")
+    end
+
+    def show_self_awareness
+      SelfAwareness.summary
+    end
+
+    def refresh_self_awareness
+      SelfAwareness.refresh!
+      load_self_awareness
+      "Self-awareness refreshed. #{SelfAwareness.load[:file_count]} files analyzed."
     end
 
     def manage_context(arg)

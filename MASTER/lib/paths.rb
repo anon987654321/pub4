@@ -29,12 +29,24 @@ module MASTER
         @data ||= File.join(var, 'data')
       end
 
+      def config
+        @config ||= File.join(root, 'config')
+      end
+
+      def config_root
+        config
+      end
+
       def screenshots
         @screenshots ||= File.join(var, 'screenshots')
       end
 
       def replicate
         @replicate ||= File.join(var, 'replicate')
+      end
+
+      def sessions
+        @sessions ||= File.join(var, 'sessions')
       end
 
       def history

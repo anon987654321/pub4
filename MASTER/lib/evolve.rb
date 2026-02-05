@@ -4,20 +4,32 @@ module MASTER
   # Self-improvement workflow
   # Analyzes codebase, identifies refinements, applies them, repeats until convergence
   class Evolve
-    MAX_ITERATIONS = 100
-    CONVERGENCE_THRESHOLD = 0.02  # Stop when improvement rate drops below 2%
-    MIN_REFINEMENTS = 2           # Stop when fewer than this found
-    PER_FILE_BUDGET = 0.5         # Max cost per file analysis
-    MAX_ANALYSIS_FILE_SIZE = 10_000
-    MAX_CONCEPTUAL_CHECK_SIZE = 5000
-    CYCLE_DELAY = 1               # Seconds between cycles
-    AUTO_PROCEED = true           # Auto-apply safe refinements without confirmation
-    MAX_CODE_PREVIEW = 3000       # Max chars for code analysis
-    MAX_DESC_LENGTH = 100         # Max refinement description length
-    REFINEMENT_FILE = File.join(Paths.config, 'refinements.yml')
-    WISHLIST_FILE = File.join(Paths.config, 'wishlist.yml')
-    EVOLUTION_LOG = File.join(Paths.data, 'evolution.log')
-    HISTORY_FILE = File.join(Paths.data, 'evolution_history.yml')
+    MAX_ITERATIONS = 100 unless const_defined?(:MAX_ITERATIONS)
+    CONVERGENCE_THRESHOLD = 0.02 unless const_defined?(:CONVERGENCE_THRESHOLD)
+    MIN_REFINEMENTS = 2 unless const_defined?(:MIN_REFINEMENTS)
+    PER_FILE_BUDGET = 0.5 unless const_defined?(:PER_FILE_BUDGET)
+    MAX_ANALYSIS_FILE_SIZE = 10_000 unless const_defined?(:MAX_ANALYSIS_FILE_SIZE)
+    MAX_CONCEPTUAL_CHECK_SIZE = 5000 unless const_defined?(:MAX_CONCEPTUAL_CHECK_SIZE)
+    CYCLE_DELAY = 1 unless const_defined?(:CYCLE_DELAY)
+    AUTO_PROCEED = true unless const_defined?(:AUTO_PROCEED)
+    MAX_CODE_PREVIEW = 3000 unless const_defined?(:MAX_CODE_PREVIEW)
+    MAX_DESC_LENGTH = 100 unless const_defined?(:MAX_DESC_LENGTH)
+    
+    def self.refinement_file
+      @refinement_file ||= File.join(Paths.config, 'refinements.yml')
+    end
+    
+    def self.wishlist_file
+      @wishlist_file ||= File.join(Paths.config, 'wishlist.yml')
+    end
+    
+    def self.evolution_log
+      @evolution_log ||= File.join(Paths.data, 'evolution.log')
+    end
+    
+    def self.history_file
+      @history_file ||= File.join(Paths.data, 'evolution_history.yml')
+    end
     
     # Files that should never be auto-modified during self-runs
     PROTECTED_FILES = %w[
@@ -40,13 +52,13 @@ module MASTER
     
     # Load wishlist from previous run to inform current analysis
     def load_prior_wishlist
-      return [] unless File.exist?(WISHLIST_FILE)
-      YAML.load_file(WISHLIST_FILE) rescue []
+      return [] unless File.exist?(self.class.wishlist_file)
+      YAML.load_file(self.class.wishlist_file) rescue []
     end
     
     # Save run history for learning across sessions
     def save_run_history(summary)
-      history = File.exist?(HISTORY_FILE) ? (YAML.load_file(HISTORY_FILE) rescue []) : []
+      history = File.exist?(self.class.history_file) ? (YAML.load_file(self.class.history_file) rescue []) : []
       history << {
         timestamp: Time.now.iso8601,
         iterations: @iteration,
@@ -54,7 +66,8 @@ module MASTER
         summary: summary
       }
       history = history.last(50) # Keep last 50 runs
-      File.write(HISTORY_FILE, history.to_yaml)
+      FileUtils.mkdir_p(File.dirname(self.class.history_file))
+      File.write(self.class.history_file, history.to_yaml)
     end
     
     # Check if file is protected from auto-modification
@@ -450,13 +463,14 @@ module MASTER
         'items' => items
       }
 
-      File.write(WISHLIST_FILE, data.to_yaml)
+      FileUtils.mkdir_p(File.dirname(self.class.wishlist_file))
+      File.write(self.class.wishlist_file, data.to_yaml)
     end
 
     # Load previous wishlist
     def load_wishlist
-      return [] unless File.exist?(WISHLIST_FILE)
-      YAML.safe_load(File.read(WISHLIST_FILE))['items'] || []
+      return [] unless File.exist?(self.class.wishlist_file)
+      YAML.safe_load(File.read(self.class.wishlist_file))['items'] || []
     rescue StandardError
       []
     end
@@ -514,7 +528,8 @@ module MASTER
       $stdout.puts line
       $stdout.flush  # Force immediate output
 
-      File.open(EVOLUTION_LOG, 'a') { |f| f.puts(line) }
+      FileUtils.mkdir_p(File.dirname(self.class.evolution_log))
+      File.open(self.class.evolution_log, 'a') { |f| f.puts(line) }
     rescue StandardError
       # Ignore logging errors
     end
