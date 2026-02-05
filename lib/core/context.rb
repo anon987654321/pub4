@@ -9,6 +9,9 @@ module MASTER
         <<~PROMPT
           You are MASTER #{VERSION}, an AI system administrator and developer assistant.
 
+          ## Your Own Structure
+          #{self_structure}
+
           ## Your Environment
           #{environment_info}
 
@@ -22,6 +25,7 @@ module MASTER
           - You CAN modify files. Use heredocs or echo/cat commands.
           - You CAN query system state. Run commands to check status.
           - You have FULL access to the filesystem and network.
+          - You CAN modify your own code in lib/ to improve yourself.
 
           ## Execution Rules
           - Shell code in ```sh blocks executes automatically
@@ -39,6 +43,42 @@ module MASTER
           ## Current Session
           #{session_info}
         PROMPT
+      end
+
+      def self_structure
+        root = MASTER::ROOT
+        structure = []
+        structure << "Entry: bin/cli (starts MASTER)"
+        structure << "Main: lib/master.rb (module loader)"
+        
+        # Core components
+        core_files = Dir[File.join(root, 'lib', '*.rb')].map { |f| File.basename(f, '.rb') }
+        structure << "Components: #{core_files.join(', ')}"
+        
+        # Submodules
+        %w[core framework plugins agents cli views principles personas config].each do |dir|
+          path = File.join(root, 'lib', dir)
+          if File.directory?(path)
+            files = Dir[File.join(path, '*.{rb,yml}')].map { |f| File.basename(f, '.*') }
+            structure << "lib/#{dir}/: #{files.join(', ')}" if files.any?
+          end
+        end
+        
+        # Apps (bp/)
+        bp_path = File.join(root, 'bp')
+        if File.directory?(bp_path)
+          apps = Dir[File.join(bp_path, '*')].select { |f| File.directory?(f) }.map { |f| File.basename(f) }
+          structure << "Apps (bp/): #{apps.join(', ')}" if apps.any?
+        end
+        
+        # Deploy configs
+        deploy_path = File.join(root, 'deploy')
+        if File.directory?(deploy_path)
+          configs = Dir[File.join(deploy_path, '*.{rb,yml,sh}')].map { |f| File.basename(f) }
+          structure << "Deploy: #{configs.join(', ')}" if configs.any?
+        end
+        
+        structure.join("\n")
       end
 
       def environment_info

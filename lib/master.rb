@@ -30,17 +30,20 @@ module MASTER
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
   autoload :Audio,      "#{LIB}/audio"
-  autoload :Context,    "#{LIB}/context"
-  autoload :Executor,   "#{LIB}/executor"
-  autoload :SessionRecovery,    "#{LIB}/session_recovery"
-  autoload :SessionPersistence, "#{LIB}/session_persistence"
-  autoload :SemanticCache,      "#{LIB}/semantic_cache"
-  autoload :PrincipleAutoloader, "#{LIB}/principle_autoloader"
-  autoload :TokenStreamer,      "#{LIB}/token_streamer"
-  autoload :SSEEndpoint,        "#{LIB}/sse_endpoint"
-  autoload :OrbStream,          "#{LIB}/orb_stream"
-  autoload :ImageComparison,    "#{LIB}/image_comparison"
-  autoload :OpenBSDPledge,      "#{LIB}/openbsd_pledge"
+
+  # Core modules (lib/core/)
+  CORE = "#{LIB}/core"
+  autoload :Context,            "#{CORE}/context"
+  autoload :Executor,           "#{CORE}/executor"
+  autoload :SessionRecovery,    "#{CORE}/session_recovery"
+  autoload :SessionPersistence, "#{CORE}/session_persistence"
+  autoload :SemanticCache,      "#{CORE}/semantic_cache"
+  autoload :PrincipleAutoloader, "#{CORE}/principle_autoloader"
+  autoload :TokenStreamer,      "#{CORE}/token_streamer"
+  autoload :SSEEndpoint,        "#{CORE}/sse_endpoint"
+  autoload :OrbStream,          "#{CORE}/orb_stream"
+  autoload :ImageComparison,    "#{CORE}/image_comparison"
+  autoload :OpenBSDPledge,      "#{CORE}/openbsd_pledge"
 
   # Framework modules
   module Framework
