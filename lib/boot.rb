@@ -84,10 +84,36 @@ module MASTER
         end
 
         save_model_preference(model_key)
-        { principles: principles, model: model_key, session: session, boot_time: t0 }
+        
+        # Auto-resume last session if available
+        recovered = try_auto_resume(quiet: quiet)
+        
+        { principles: principles, model: model_key, session: session, boot_time: t0, recovered: recovered }
       end
 
       private
+
+      def try_auto_resume(quiet: false)
+        recovery = SessionRecovery.new
+        checkpoint = recovery.latest
+        return nil unless checkpoint
+        
+        age_hours = (Time.now.to_i - checkpoint[:timestamp]) / 3600.0
+        return nil if age_hours > 24  # Skip checkpoints older than 24h
+        
+        unless quiet
+          puts "session0: recovering from checkpoint (#{age_hours.round(1)}h ago)"
+          puts "  task: #{checkpoint[:task]}"
+          pending = checkpoint.dig(:files, :pending)&.size || 0
+          completed = checkpoint.dig(:files, :completed)&.size || 0
+          puts "  progress: #{completed} done, #{pending} pending" if pending > 0 || completed > 0
+        end
+        
+        checkpoint
+      rescue => e
+        warn "session0: recovery failed: #{e.message}" unless quiet
+        nil
+      end
 
       def hostname
         `hostname`.strip rescue 'localhost'

@@ -30,6 +30,36 @@ module MASTER
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
   autoload :Audio,      "#{LIB}/audio"
+  autoload :Context,    "#{LIB}/context"
+  autoload :Executor,   "#{LIB}/executor"
+  autoload :SessionRecovery,    "#{LIB}/session_recovery"
+  autoload :SessionPersistence, "#{LIB}/session_persistence"
+  autoload :SemanticCache,      "#{LIB}/semantic_cache"
+  autoload :PrincipleAutoloader, "#{LIB}/principle_autoloader"
+  autoload :TokenStreamer,      "#{LIB}/token_streamer"
+  autoload :SSEEndpoint,        "#{LIB}/sse_endpoint"
+  autoload :OrbStream,          "#{LIB}/orb_stream"
+  autoload :ImageComparison,    "#{LIB}/image_comparison"
+  autoload :OpenBSDPledge,      "#{LIB}/openbsd_pledge"
+
+  # Framework modules
+  module Framework
+    LIB = MASTER::LIB
+    autoload :BehavioralRules,     "#{LIB}/framework/behavioral_rules"
+    autoload :CopilotOptimization, "#{LIB}/framework/copilot_optimization"
+    autoload :QualityGates,        "#{LIB}/framework/quality_gates"
+    autoload :UniversalStandards,  "#{LIB}/framework/universal_standards"
+    autoload :WorkflowEngine,      "#{LIB}/framework/workflow_engine"
+  end
+
+  # Plugin modules
+  module Plugins
+    LIB = MASTER::LIB
+    autoload :AIEnhancement,     "#{LIB}/plugins/ai_enhancement"
+    autoload :BusinessStrategy,  "#{LIB}/plugins/business_strategy"
+    autoload :DesignSystem,      "#{LIB}/plugins/design_system"
+    autoload :WebDevelopment,    "#{LIB}/plugins/web_development"
+  end
 
   class << self
     def boot
