@@ -28,6 +28,7 @@ end
 verbose = ARGV.include?('--verbose') || ARGV.include?('-v')
 fix = ARGV.include?('--fix')
 json_output = ARGV.include?('--json')
+conceptual = ARGV.include?('--conceptual')
 files = ARGV.reject { |a| a.start_with?('--') || a.start_with?('-') }
 
 # Get files to check
@@ -59,6 +60,24 @@ stats = {
 
 violations_by_file = {}
 
+# Conceptual LLM setup
+llm = if conceptual && ENV['OPENROUTER_API_KEY']
+  MASTER::LLM.new
+else
+  nil
+end
+
+puts_colored(YELLOW, "Conceptual checks skipped (OPENROUTER_API_KEY not set)") if conceptual && llm.nil?
+
+def map_severity(severity)
+  case severity
+  when :error then :high
+  when :warning then :medium
+  when :info then :low
+  else :medium
+  end
+end
+
 # Check each file
 files.each do |file|
   stats[:files_checked] += 1
@@ -66,13 +85,17 @@ files.each do |file|
   code = File.read(file)
   
   # Check literal violations
-  literal_violations = MASTER::Violations.check_literal(code)
+  literal_violations = MASTER::Violations.detect_literal(code, file)
+  conceptual_violations = llm ? MASTER::Violations.detect_conceptual(code, file, llm) : []
+  literal_violations.each { |v| v[:severity] = map_severity(v[:severity]) }
+  conceptual_violations.each { |v| v[:severity] = map_severity(v[:severity]) }
+  all_violations = literal_violations + conceptual_violations
   
-  if literal_violations.any?
+  if all_violations.any?
     stats[:files_with_violations] += 1
-    violations_by_file[file] = literal_violations
+    violations_by_file[file] = all_violations
     
-    literal_violations.each do |v|
+    all_violations.each do |v|
       stats[:total_violations] += 1
       severity = v[:severity] || :medium
       stats[severity] += 1
@@ -116,7 +139,7 @@ if violations_by_file.any?
                       end
       
       puts "  #{severity_color}[#{v[:severity]}]#{RESET} #{v[:principle]}"
-      puts "    Pattern: #{v[:pattern]}" if verbose
+      puts "    Match: #{v[:match]}" if verbose && v[:match]
       puts "    Suggestion: #{v[:suggestion]}" if v[:suggestion]
     end
   end
