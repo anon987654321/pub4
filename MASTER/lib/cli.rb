@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require_relative "core/enhanced_colors"; require_relative "core/typography"; require_relative "core/cli_enhancements"
 
 require 'readline'
 require 'fileutils'
@@ -116,7 +117,7 @@ module MASTER
     # Verbosity levels
     VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
 
-    def initialize(llm: LLM.new, root: Dir.pwd)
+    def initialize(llm: LLM.new, root: Dir.pwd, verbosity: 0, quiet: false, dry_run: false)
       @llm = llm
       @server = nil
       @root = root
@@ -2384,3 +2385,5 @@ module MASTER
     end
   end
 end
+COMMAND_SHORTCUTS = {"q" => "quit", "h" => "help", "s" => "status", "l" => "list", "r" => "run", "c" => "clear", "v" => "version", "d" => "debug"}.freeze
+EXIT_CODES = {success: 0, error: 1, usage: 2}.freeze
