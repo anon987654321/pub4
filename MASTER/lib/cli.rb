@@ -98,9 +98,9 @@ module MASTER
 
     COMMANDS = %w[
       ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
-      context converge cost deps describe diff edit enforce-principles evolve exit fav favs git help
-      history image install install-hooks introspect lint log ls metrics persona personas principles pull push
-      queue quit radio read refactor refine reload review sanity scan smells speak status stream
+      context converge cost dashboard deps describe diff edit enforce-principles evolve exit fav favs git help
+      history image install install-hooks introspect lint log ls memory-stats metrics persona personas principles pull push
+      queue quit radio read recall refactor refine reload remember review sanity scan smells speak status stream
       tree undo version web
     ].freeze
 
@@ -747,6 +747,18 @@ module MASTER
 
       when 'metrics'
         show_metrics
+
+      when 'dashboard'
+        show_dashboard
+
+      when 'remember'
+        remember_text(arg)
+
+      when 'recall'
+        recall_memories(arg)
+
+      when 'memory-stats'
+        show_memory_stats
 
       when 'refine'
         run_refine(arg)
@@ -2841,6 +2853,85 @@ module MASTER
         out_row("Memory", "#{`ps -o rss= -p #{Process.pid}`.to_i / 1024}MB"),
         out_row("Audit", "#{Audit.tail(1).empty? ? 0 : File.readlines(Audit::LOG_FILE).size rescue 0} entries")
       ].join("\n")
+    end
+
+    def show_dashboard
+      require_relative 'dashboard'
+      Dashboard.new.render
+      nil  # Return nil to suppress additional output
+    rescue LoadError => e
+      "#{C_RED}Error: Failed to load dashboard: #{e.message}#{C_RESET}"
+    rescue StandardError => e
+      "#{C_RED}Error rendering dashboard: #{e.message}#{C_RESET}"
+    end
+
+    def remember_text(text)
+      return "Usage: remember <text> [--tags tag1,tag2] [--source source]" unless text
+
+      # Parse options from text
+      tags, source = parse_memory_options(text)
+      text = text.gsub(/--tags\s+\S+/, '').gsub(/--source\s+\S+/, '').strip
+
+      require_relative 'memory'
+      memory = VectorMemory.new
+      count = memory.store(text, tags: tags, source: source)
+      "#{C_GREEN}#{ICON_OK} Stored in #{count} chunks#{C_RESET}"
+    rescue StandardError => e
+      "#{C_RED}#{ICON_ERR} Error storing memory: #{e.message}#{C_RESET}"
+    end
+
+    def recall_memories(query)
+      return "Usage: recall <query>" unless query
+
+      require_relative 'memory'
+      memory = VectorMemory.new
+      results = memory.recall(query, k: 5)
+
+      if results.empty?
+        return "#{C_YELLOW}No relevant memories found#{C_RESET}"
+      end
+
+      output = ["#{C_BOLD}Memory Recall Results:#{C_RESET}\n"]
+      results.each_with_index do |r, i|
+        output << "#{C_CYAN}#{i + 1}. #{r[:source]} (#{format('%.2f', r[:relevance])} relevance)#{C_RESET}"
+        output << "   #{r[:content][0..200]}..."
+        output << "   #{C_DIM}Tags: #{r[:tags].join(', ')}#{C_RESET}" unless r[:tags].empty?
+        output << ""
+      end
+      output.join("\n")
+    rescue StandardError => e
+      "#{C_RED}#{ICON_ERR} Error recalling memories: #{e.message}#{C_RESET}"
+    end
+
+    def show_memory_stats
+      require_relative 'memory'
+      memory = VectorMemory.new
+      [
+        "#{C_BOLD}Memory Statistics:#{C_RESET}",
+        "",
+        out_row("Chunks", memory.count_chunks),
+        out_row("Vectors", memory.count_vectors),
+        out_row("Last Recall", memory.time_since_last_recall),
+        out_row("Status", memory.healthy? ? "#{C_GREEN}#{ICON_OK} Connected#{C_RESET}" : "#{C_RED}#{ICON_ERR} Disconnected#{C_RESET}")
+      ].join("\n")
+    rescue StandardError => e
+      "#{C_RED}#{ICON_ERR} Error fetching memory stats: #{e.message}#{C_RESET}"
+    end
+
+    # Helper to parse memory command options
+    def parse_memory_options(text)
+      tags = []
+      source = nil
+
+      if text =~ /--tags\s+(\S+)/
+        tags = $1.split(',')
+      end
+
+      if text =~ /--source\s+(\S+)/
+        source = $1
+      end
+
+      [tags, source]
     end
 
     def format_duration(secs)
