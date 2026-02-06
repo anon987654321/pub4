@@ -52,8 +52,9 @@ class TestMemory
     begin
       memory = MASTER::VectorMemory.new
       
-      # Test chunking internally
-      long_text = "word " * 1000
+      # Test chunking internally - create text longer than CHUNK_SIZE
+      test_word_count = MASTER::VectorMemory::CHUNK_SIZE * 2
+      long_text = "word " * test_word_count
       chunks = memory.send(:chunk_text, long_text)
       
       assert "chunks long text", chunks.size > 1

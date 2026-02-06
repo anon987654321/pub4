@@ -47,6 +47,7 @@ module MASTER
   class VectorMemory
     CHUNK_SIZE = 750
     CHUNK_OVERLAP = 75
+    RECENCY_DECAY_HOURS = 168.0  # 1 week decay period
 
     def initialize
       @weaviate = Weaviate.new
@@ -203,7 +204,7 @@ module MASTER
       age_hours = (Time.now.to_i - timestamp) / 3600.0
 
       # Decay over time: fresh = 1.0, 24h old = 0.5, 7d old = 0.1
-      Math.exp(-age_hours / 168.0)  # 168 hours = 1 week
+      Math.exp(-age_hours / RECENCY_DECAY_HOURS)
     end
   end
 end

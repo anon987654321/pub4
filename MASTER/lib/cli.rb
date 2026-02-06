@@ -2613,18 +2613,8 @@ module MASTER
       return "Usage: remember <text> [--tags tag1,tag2] [--source source]" unless text
 
       # Parse options from text
-      tags = []
-      source = nil
-      
-      if text =~ /--tags\s+(\S+)/
-        tags = $1.split(',')
-        text = text.gsub(/--tags\s+\S+/, '').strip
-      end
-      
-      if text =~ /--source\s+(\S+)/
-        source = $1
-        text = text.gsub(/--source\s+\S+/, '').strip
-      end
+      tags, source = parse_memory_options(text)
+      text = text.gsub(/--tags\s+\S+/, '').gsub(/--source\s+\S+/, '').strip
 
       require_relative 'memory'
       memory = VectorMemory.new
@@ -2670,6 +2660,22 @@ module MASTER
       ].join("\n")
     rescue StandardError => e
       "#{C_RED}#{ICON_ERR} Error fetching memory stats: #{e.message}#{C_RESET}"
+    end
+
+    # Helper to parse memory command options
+    def parse_memory_options(text)
+      tags = []
+      source = nil
+
+      if text =~ /--tags\s+(\S+)/
+        tags = $1.split(',')
+      end
+
+      if text =~ /--source\s+(\S+)/
+        source = $1
+      end
+
+      [tags, source]
     end
 
     def format_duration(secs)
