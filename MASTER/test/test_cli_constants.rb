@@ -24,14 +24,14 @@ class TestCLIConstants < Minitest::Test
 
   def test_quotes_array_is_frozen
     assert MASTER::CLI::Constants::QUOTES.frozen?
-    assert MASTER::CLI::Constants::QUOTES.size == 10
+    assert_equal 10, MASTER::CLI::Constants::QUOTES.size
   end
 
   def test_adjectives_and_nouns_are_frozen
     assert MASTER::CLI::Constants::ADJECTIVES.frozen?
     assert MASTER::CLI::Constants::NOUNS.frozen?
-    assert MASTER::CLI::Constants::ADJECTIVES.size == 10
-    assert MASTER::CLI::Constants::NOUNS.size == 10
+    assert_equal 10, MASTER::CLI::Constants::ADJECTIVES.size
+    assert_equal 10, MASTER::CLI::Constants::NOUNS.size
   end
 
   def test_achievements_hash_is_frozen

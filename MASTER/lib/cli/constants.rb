@@ -176,14 +176,6 @@ module MASTER
           - Comments for non-obvious logic
         GUIDE
       }.freeze
-
-      # Command shortcuts (at end of file)
-      COMMAND_SHORTCUTS = {
-        "q" => "quit", "h" => "help", "s" => "status", "l" => "list",
-        "r" => "run", "c" => "clear", "v" => "version", "d" => "debug"
-      }.freeze
-      
-      EXIT_CODES = { success: 0, error: 1, usage: 2 }.freeze
     end
   end
 end
