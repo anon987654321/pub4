@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Swarm generation: create many alternatives, curate to the best
+  # Swarm - Generate many alternatives, curate to the best
   # Like the orbs: generate 60-70 variations, keep only the worthy ones
+  #
+  # NOTE: One of four deliberation/generation engines:
+  #   - Chamber: Code refinement via multi-model debate
+  #   - CreativeChamber: Creative ideation for concepts/multimedia
+  #   - Council: Opinion/judgment deliberation with fixed member roles
+  #   - Swarm (this file): Generate many variations, curate best via scoring
   module Swarm
     OUTPUT_DIR = File.join(MASTER::ROOT, 'var', 'swarm')
 

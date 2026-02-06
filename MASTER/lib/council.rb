@@ -3,6 +3,14 @@
 require 'singleton'
 
 module MASTER
+  # Council - Multi-provider deliberation with FIXED MEMBER ROLES
+  # Members have specific roles (philosopher, rebel, analyst, generalist)
+  #
+  # NOTE: One of four deliberation/generation engines:
+  #   - Chamber: Code refinement via multi-model debate
+  #   - CreativeChamber: Creative ideation for concepts/multimedia
+  #   - Council (this file): Opinion/judgment deliberation with fixed member roles
+  #   - Swarm: Generate many variations, curate best via scoring
   module Council
     class << self
       MEMBERS = {

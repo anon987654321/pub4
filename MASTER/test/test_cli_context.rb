@@ -4,7 +4,7 @@ require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 require_relative '../lib/cli'
 
 class FakeLLM

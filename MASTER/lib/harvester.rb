@@ -249,7 +249,7 @@ end
 
 # CLI execution
 if __FILE__ == $0
-  require_relative 'master'
+  require_relative 'loader'
   
   harvester = MASTER::Harvester.new
   result = harvester.harvest

@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module MASTER
+  # Converge - Low-level convergence detection using hash comparison
+  # NOTE: Part of a three-layer architecture:
+  #   - Converge (this file): Basic hash-based convergence metrics
+  #   - ConvergenceLoop: Score-based iteration orchestration with plateau detection
+  #   - Evolve: Full self-improvement workflow with chamber integration
   module Converge
     # Convergence detection thresholds
     MAX_ITERATIONS = 10

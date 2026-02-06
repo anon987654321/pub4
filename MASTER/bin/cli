@@ -3,7 +3,7 @@
 
 # MASTER v51.0 entry point
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 
 MASTER.boot
 MASTER::CLI.new.run

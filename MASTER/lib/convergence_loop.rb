@@ -2,6 +2,11 @@
 
 # ConvergenceLoop - Auto-iterate until code reaches target quality
 # Ported from cli_v39.rb with enhancements
+#
+# NOTE: Part of a three-layer architecture:
+#   - Converge: Basic hash-based convergence metrics
+#   - ConvergenceLoop (this file): Score-based iteration orchestration with plateau detection
+#   - Evolve: Full self-improvement workflow with chamber integration
 
 module MASTER
   class ConvergenceLoop

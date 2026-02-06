@@ -5,7 +5,7 @@
 # Usage: ruby test/council_demo.rb
 
 require_relative '../MASTER/lib/council'
-require_relative '../MASTER/lib/master'
+require_relative '../MASTER/lib/loader'
 
 puts "🏛️  MASTER Council System Demo"
 puts "=" * 60

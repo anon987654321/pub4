@@ -3,7 +3,7 @@
 
 # MASTER v50.8 Test Suite
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 
 class TestRunner
   def initialize
