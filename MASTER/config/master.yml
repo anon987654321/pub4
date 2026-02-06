@@ -1,54 +1,124 @@
 ---
-# MASTER v226 - Unified Deep Debug Configuration
-# Merges v38 Constitutional AI, v38 Bug Hunting, v226 Resilience, and MASTER's 43 principles
+# MASTER Unified Configuration
+# Consolidated system, reflexion, and constitutional AI settings
+version: "2.0"
+architecture: "hybrid"
+codename: "REFLEXION"
 
+# Meta Information
 meta:
   version: "226.0.0"
   codename: "Unified Deep Debug"
-  description: "Unified framework combining constitutional AI, bug hunting protocol, resilience engine, and systematic protocols"
+  description: "Unified framework combining constitutional AI, bug hunting protocol, reflexion engine, and systematic protocols"
   base_system: "MASTER v52"
+
+# Core Modules (existing lib/ structure)
+modules:
+  llm:
+    file: lib/llm.rb
+    class: MASTER::LLM
+    config:
+      default_tier: strong
+      max_tokens: 4096
+      max_retries: 3
+    capabilities:
+      - llm:ask
+      - llm:embed
+      - llm:vision
+    description: "LLM routing and tier management"
+    
+  council:
+    file: lib/council.rb
+    class: MASTER::Council
+    depends:
+      - llm
+      - chamber
+    capabilities:
+      - council:debate
+      - council:consensus
+    description: "Multi-model deliberation system"
+    
+  chamber:
+    file: lib/chamber.rb
+    class: MASTER::Chamber
+    depends:
+      - llm
+    description: "Echo chamber for diverse perspectives"
+    
+  memory:
+    file: lib/memory.rb
+    class: MASTER::Memory
+    capabilities:
+      - memory:store
+      - memory:retrieve
+      - memory:search
+    description: "Semantic memory and embeddings"
+    
+  safety:
+    file: lib/safety.rb
+    class: MASTER::Safety
+    config:
+      guardrails_enabled: true
+      max_scrutiny: true
+    capabilities:
+      - safety:validate
+      - safety:check
+    description: "Constitutional AI guardrails"
+
+  boot:
+    file: lib/boot.rb
+    class: MASTER::Boot
+    description: "System initialization and bootstrap"
+
+  engine:
+    file: lib/engine.rb
+    class: MASTER::Engine
+    description: "Core execution engine"
+
+# Data Sources (consolidated in Phase 1)
+data:
+  personas: data/personas.yml
+  principles: data/principles.yml
+  embeddings: data/embeddings.faiss
+  sessions: .sessions/
   
+# Schema Definitions
+schemas:
+  directory: schemas/
+  files:
+    - message.schema.json
+    - debate.schema.json
+    - embedding.schema.json
+    - persona.schema.json
+    - principle.schema.json
+
+# Reflexion Configuration
+reflexion:
+  decay_settings:
+    days: 30
+    factor: 0.4
+  confidence_thresholds:
+    threshold: 0.6
+  max_retries: 3
+  react_max_steps: 15
+  dream_frequencies: []  # Add frequencies as needed
+  model_selections:
+    - smart
+    - cheap
+    - creative
+  memory_limits: {}  # Define memory limits
+  tool_configurations: {}  # Configure tools as necessary
+
 # Constitutional AI - Balanced decision making
 constitutional_ai:
   enabled: true
   description: "Multi-perspective analysis with bias mitigation and depth forcing"
   
-  # 7 Personas for weighted voting
-  personas:
-    - name: "pragmatist"
-      weight: 0.2
-      focus: "Practicality, shipping, tradeoffs"
-      question: "What's the fastest path to working code?"
-      
-    - name: "perfectionist"
-      weight: 0.15
-      focus: "Quality, edge cases, robustness"
-      question: "What could break? What did we miss?"
-      
-    - name: "minimalist"
-      weight: 0.2
-      focus: "Simplicity, deletion, KISS"
-      question: "What can we remove or simplify?"
-      
-    - name: "user_advocate"
-      weight: 0.15
-      focus: "UX, clarity, documentation"
-      question: "Will users understand this?"
-      
-    - name: "security_expert"
-      weight: 0.15
-      focus: "Vulnerabilities, attack vectors, safety"
-      question: "How could this be exploited?"
-      
-    - name: "performance_engineer"
-      weight: 0.1
-      focus: "Speed, memory, scalability"
-      question: "Will this scale? What's the big-O?"
-      
-    - name: "maintainer"
-      weight: 0.05
-      focus: "Future readability, technical debt"
-      question: "Will we regret this in 6 months?"
+  # Note: Persona definitions are maintained in data/personas.yml
+  # The 7 personas (pragmatist, perfectionist, minimalist, user_advocate, 
+  # security_expert, performance_engineer, maintainer) provide weighted voting
+  # for multi-perspective analysis.
+  personas_source: "data/personas.yml"
   
   # 12 Cognitive biases to actively counter
   bias_mitigation:
@@ -330,223 +400,138 @@ systematic_protocols:
     rationale: "Full context, not just error message"
     command: "journalctl -xe | tail -50"
 
-# MASTER's 43 Constitutional Principles
+# MASTER's Constitutional Principles
+# Full definitions are maintained in data/principles.yml
+# This section provides references to the 48 core principles organized by category
 principles:
-  description: "Core design and implementation principles"
+  description: "Core design and implementation principles - see data/principles.yml for full definitions"
+  source: "data/principles.yml"
   
-  fundamental:
-    - name: "kiss"
-      file: "01-kiss.yml"
-      summary: "Keep It Simple, Stupid"
-      
-    - name: "dry"
-      file: "02-dry.yml"
-      summary: "Don't Repeat Yourself"
-      
-    - name: "yagni"
-      file: "03-yagni.yml"
-      summary: "You Aren't Gonna Need It"
-      
-    - name: "separation_of_concerns"
-      file: "04-separation-of-concerns.yml"
-      summary: "Each component has one concern"
-      
-    - name: "single_responsibility"
-      file: "05-single-responsibility.yml"
-      summary: "Each class/function does one thing"
-  
-  solid:
-    - name: "open_closed"
-      file: "06-open-closed.yml"
-      summary: "Open for extension, closed for modification"
-      
-    - name: "liskov_substitution"
-      file: "07-liskov-substitution.yml"
-      summary: "Subtypes must be substitutable for base types"
-      
-    - name: "interface_segregation"
-      file: "08-interface-segregation.yml"
-      summary: "Many specific interfaces better than one general"
-      
-    - name: "dependency_inversion"
-      file: "09-dependency-inversion.yml"
-      summary: "Depend on abstractions, not concretions"
-  
-  design:
-    - name: "law_of_demeter"
-      file: "10-law-of-demeter.yml"
-      summary: "Only talk to immediate friends"
-      
-    - name: "composition_over_inheritance"
-      file: "11-composition-over-inheritance.yml"
-      summary: "Favor composition over class inheritance"
-      
-    - name: "fail_fast"
-      file: "12-fail-fast.yml"
-      summary: "Fail immediately on invalid state"
-      
-    - name: "least_astonishment"
-      file: "13-principle-of-least-astonishment.yml"
-      summary: "Do what users expect"
-      
-    - name: "command_query_separation"
-      file: "14-command-query-separation.yml"
-      summary: "Separate commands from queries"
-      
-    - name: "boy_scout_rule"
-      file: "15-boy-scout-rule.yml"
-      summary: "Leave code better than you found it"
-  
-  architecture:
-    - name: "unix_philosophy"
-      file: "16-unix-philosophy.yml"
-      summary: "Do one thing well, compose with others"
-      
-    - name: "functional_core_imperative_shell"
-      file: "17-functional-core-imperative-shell.yml"
-      summary: "Pure logic core, effects at boundaries"
-      
-    - name: "idempotent_operations"
-      file: "18-idempotent-operations.yml"
-      summary: "Same operation multiple times = same result"
-      
-    - name: "defensive_programming"
-      file: "19-defensive-programming.yml"
-      summary: "Validate inputs, handle errors gracefully"
-      
-    - name: "fail_gracefully"
-      file: "20-fail-gracefully.yml"
-      summary: "Degrade functionality, don't crash"
-  
-  code_quality:
-    - name: "explicit_over_implicit"
-      file: "21-explicit-over-implicit.yml"
-      summary: "Make intent clear, no magic"
-      
-    - name: "convention_over_configuration"
-      file: "22-convention-over-configuration.yml"
-      summary: "Sensible defaults, minimal config"
-      
-    - name: "progressive_disclosure"
-      file: "23-progressive-disclosure.yml"
-      summary: "Simple surface, complexity available"
-      
-    - name: "real_time_feedback"
-      file: "24-real-time-feedback.yml"
-      summary: "Immediate response to actions"
-      
-    - name: "meaningful_names"
-      file: "25-meaningful-names.yml"
-      summary: "Names reveal intent"
-      
-    - name: "small_functions"
-      file: "26-small-functions.yml"
-      summary: "Functions should be small and focused"
-      
-    - name: "few_arguments"
-      file: "27-few-arguments.yml"
-      summary: "Functions take 0-3 arguments ideally"
-      
-    - name: "no_side_effects"
-      file: "28-no-side-effects.yml"
-      summary: "Functions don't modify external state"
-      
-    - name: "immutability"
-      file: "29-immutability.yml"
-      summary: "Prefer immutable data structures"
-      
-    - name: "pure_functions"
-      file: "30-pure-functions.yml"
-      summary: "Same input always produces same output"
-  
-  performance:
-    - name: "cost_transparency"
-      file: "31-cost-transparency.yml"
-      summary: "Make computational cost visible"
-      
-    - name: "cache_aggressively"
-      file: "32-cache-aggressively.yml"
-      summary: "Cache expensive operations"
-      
-    - name: "squint_test"
-      file: "33-squint-test.yml"
-      summary: "Visual structure should reveal intent"
-      
-    - name: "prose_over_lists"
-      file: "34-prose-over-lists.yml"
-      summary: "Narrative explanations over bullet points"
-      
-    - name: "mass_generation_curation"
-      file: "35-mass-generation-curation.yml"
-      summary: "Generate many options, curate best"
-  
-  ui_ux:
-    - name: "analog_warmth"
-      file: "36-analog-warmth.yml"
-      summary: "Prefer organic feel over digital perfection"
-      
-    - name: "guard_expensive_operations"
-      file: "37-guard-expensive-operations.yml"
-      summary: "Confirm before costly actions"
-      
-    - name: "dual_detection"
-      file: "38-dual-detection.yml"
-      summary: "Detect intent from context"
-      
-    - name: "accessible_then_technical"
-      file: "39-accessible-then-technical.yml"
-      summary: "Friendly surface, technical depth available"
-      
-    - name: "no_abbreviations"
-      file: "40-no-abbreviations.yml"
-      summary: "Write full words for clarity"
-      
-    - name: "graceful_degradation"
-      file: "41-graceful-degradation.yml"
-      summary: "Reduce functionality, don't fail completely"
-      
-    - name: "precompute_math"
-      file: "42-precompute-math.yml"
-      summary: "Calculate complex values at build time"
-      
-    - name: "audio_smoothing"
-      file: "43-audio-smoothing.yml"
-      summary: "Apply gentle filtering to audio output"
-      
-    - name: "typography_discipline"
-      file: "44-typography-discipline.yml"
-      summary: "Consistent, readable text presentation"
-      
-    - name: "silence_by_default"
-      file: "45-silence-by-default.yml"
-      summary: "Only speak when you have something to say"
+  categories:
+    fundamental:
+      - "01-kiss.yml - Keep It Simple, Stupid"
+      - "02-dry.yml - Don't Repeat Yourself"
+      - "03-yagni.yml - You Aren't Gonna Need It"
+      - "04-separation-of-concerns.yml"
+      - "05-single-responsibility.yml"
+    
+    solid:
+      - "06-open-closed.yml"
+      - "07-liskov-substitution.yml"
+      - "08-interface-segregation.yml"
+      - "09-dependency-inversion.yml"
+    
+    design:
+      - "10-law-of-demeter.yml"
+      - "11-composition-over-inheritance.yml"
+      - "12-fail-fast.yml"
+      - "13-principle-of-least-astonishment.yml"
+      - "14-command-query-separation.yml"
+      - "15-boy-scout-rule.yml"
+    
+    architecture:
+      - "16-unix-philosophy.yml"
+      - "17-functional-core-imperative-shell.yml"
+      - "18-idempotent-operations.yml"
+      - "19-defensive-programming.yml"
+      - "20-fail-gracefully.yml"
+    
+    code_quality:
+      - "21-explicit-over-implicit.yml"
+      - "22-convention-over-configuration.yml"
+      - "23-progressive-disclosure.yml"
+      - "24-real-time-feedback.yml"
+      - "25-meaningful-names.yml"
+      - "26-small-functions.yml"
+      - "27-few-arguments.yml"
+      - "28-no-side-effects.yml"
+      - "29-immutability.yml"
+      - "30-pure-functions.yml"
+    
+    performance:
+      - "31-cost-transparency.yml"
+      - "32-cache-aggressively.yml"
+      - "33-squint-test.yml"
+      - "34-prose-over-lists.yml"
+      - "35-mass-generation-curation.yml"
+    
+    ui_ux:
+      - "36-analog-warmth.yml"
+      - "37-guard-expensive-operations.yml"
+      - "38-dual-detection.yml"
+      - "39-accessible-then-technical.yml"
+      - "40-no-abbreviations.yml"
+      - "41-graceful-degradation.yml"
+      - "42-precompute-math.yml"
+      - "43-audio-smoothing.yml"
+      - "44-typography-discipline.yml"
+      - "45-silence-by-default.yml"
+    
+    additional:
+      - "Robustness - Handle errors, edge cases, malicious input"
+      - "Clarity - Code reads like prose, intent is obvious"
+      - "Simplicity - Fewest moving parts, easiest mental model"
+      - "Hygiene - Clean diffs, no dead code, organized imports"
+      - "Testability - Easy to test, easy to mock, easy to verify"
 
-# v38 Additional Principles
-v38_principles:
-  - name: "robustness"
-    summary: "Handle errors, edge cases, malicious input"
-    
-  - name: "clarity"
-    summary: "Code reads like prose, intent is obvious"
-    
-  - name: "simplicity"
-    summary: "Fewest moving parts, easiest mental model"
-    
-  - name: "hygiene"
-    summary: "Clean diffs, no dead code, organized imports"
-    
-  - name: "testability"
-    summary: "Easy to test, easy to mock, easy to verify"
-
-# Feature Flags
+# Feature Flags (for gradual rollout)
 features:
+  # Constitutional AI features
   enable_constitutional_ai: true
   enable_bug_hunting: false
   enable_resilience: false
   enable_systematic_protocols: true
+  
+  # System features
+  event_sourcing: true           # Phase 2 ✅
+  capability_security: false     # Phase 8
+  immutable_state: false         # Phase 5
+  plugin_system: false           # Phase 4
+  hexagonal_ports: false         # Phase 6
+  command_pipeline: false        # Phase 7
+  database_integration: false    # Phase 9
+  modular_monolith: false        # Phase 10
+  workflow_engine: false         # Phase 12
+  dynamic_loading: false         # Phase 11 (microkernel dynamic loading)
+  
+  # Operational features
   enable_caching: true
   enable_metrics: true
   enable_achievements: false
+
+# Performance Settings
+performance:
+  lazy_loading: true
+  cache_principles: true
+  cache_personas: true
+  semantic_cache_ttl: 3600
+  
+# Security Settings
+security:
+  openbsd_pledge: true
+  max_file_size_mb: 100
+  allowed_commands:
+    - ruby
+    - git
+    - test
+  
+# Logging and Observability
+logging:
+  level: info
+  format: openbsd
+  audit_trail: true
+  
+# Cost Tracking
+cost:
+  enabled: true
+  warn_threshold: 1.0
+  max_per_session: 10.0
+  
+# Backward Compatibility
+compatibility:
+  legacy_autoload: true
+  v1_api: true
+  migration_mode: false
 
 # Metadata
 stats:
