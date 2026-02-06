@@ -5,6 +5,44 @@ All notable changes to the MASTER project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-02-06 - Radical Pipeline Architecture
+
+### Breaking Changes
+- **Complete architectural rewrite**: Monolithic Ruby application → Unix pipeline toolkit
+- Deleted `lib/cli.rb` (94 KB God object)
+- Removed 124 obsolete library files
+- SQLite replaces all YAML configs and Weaviate
+
+### Added
+- **15 composable pipeline executables** in `bin/`:
+  - Core: `intake`, `guard`, `route`, `ask`, `render`
+  - Advanced: `chamber`, `critique`, `execute`, `evolve`, `quality`, `converge`, `remember`, `plan`
+  - Frontend: `start` (Zsh REPL), `seed` (database initialization)
+- **8 core library files** (down from 132):
+  - `db.rb`, `json_protocol.rb`, `llm_client.rb`, `strunk.rb`, `metz.rb`, `typography.rb`, `pledge.rb`, `hooks.rb`
+- **SQLite schema** with 10 tables: principles, personas, memory, sessions, costs, evolution, hooks, config, quality_checks, circuit_breakers
+- **Zsh REPL orchestrator** (`bin/start`) replaces Ruby CLI
+- **Shell functions**: `m-start`, `m-ask`, `m-evolve`, `m-quality`, `m-status`, `m-cost`
+- **Test suite**: 17 tests covering protocol, database, and pipeline integration
+- **Minimal Gemfile**: Reduced from 45+ gems to 5 core gems
+
+### Changed
+- **lib/ directory**: 132 files → 8 files (94% reduction)
+- **Configuration**: YAML files now imported into SQLite via `bin/seed`
+- **CLI interface**: From Ruby REPL to Zsh REPL with Unix pipes
+
+### Removed
+- `lib/cli.rb` (94 KB), all monolithic components
+- Subdirectories: actors/, agents/, cli/, config/, core/, dreams/, events/, framework/, kernel/, personas/, platforms/, plugins/, principles/, skills/, unified/, views/, web/
+- Heavy gems: async, falcon, ruby_llm, ferrum, readline, twitter
+
+### Migration
+- Old lib/ backed up to `/archive_lib_20260206/`
+- Run `ruby bin/seed` to initialize database
+- Use `bin/start` for interactive REPL or pipe composition
+
+---
+
 ## [52.1] - 2024-02-05
 
 ### Completed Documentation Suite
