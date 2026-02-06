@@ -1,0 +1,892 @@
+meta:
+  version: "38.2"
+  codename: "Autonomous Agent"
+  release_date: "2024-01-15"
+  author: "Constitutional AI Team"
+  license: "MIT"
+  
+  models:
+    reasoning_heavy:
+      id: "anthropic/claude-opus-4"
+      use_for:
+        - veto_violations
+        - complex_architecture
+        - root_cause_analysis
+        - security_audits
+        - consensus_arbitration
+      input_cost_per_mtok: 15.0
+      output_cost_per_mtok: 75.0
+      context_window: 200000
+      strengths: ["deep_reasoning", "nuanced_understanding", "architectural_vision"]
+      
+    balanced:
+      id: "anthropic/claude-3.5-sonnet"
+      use_for:
+        - default
+        - code_review
+        - refactoring
+        - semantic_analysis
+        - violation_detection
+      input_cost_per_mtok: 3.0
+      output_cost_per_mtok: 15.0
+      context_window: 200000
+      strengths: ["balanced_speed_quality", "cost_effective", "reliable"]
+      
+    fast:
+      id: "qwen/qwen2.5-coder"
+      use_for:
+        - hygiene_checks
+        - simple_validation
+        - high_volume
+        - quick_scans
+        - incremental_checks
+      input_cost_per_mtok: 0.1
+      output_cost_per_mtok: 0.3
+      context_window: 32768
+      strengths: ["speed", "low_cost", "code_specialized"]
+      
+    economical:
+      id: "meta-llama/llama-3.1-8b-instruct"
+      use_for:
+        - batch_processing
+        - non_critical
+        - learning_mode
+        - experiments
+      input_cost_per_mtok: 0.05
+      output_cost_per_mtok: 0.08
+      context_window: 128000
+      strengths: ["ultra_cheap", "good_for_learning", "open_weights"]
+      
+    alternative:
+      id: "google/gemini-pro-1.5"
+      use_for:
+        - architecture_review
+        - cross_validation
+        - second_opinion
+        - pattern_mining
+      input_cost_per_mtok: 1.25
+      output_cost_per_mtok: 5.0
+      context_window: 1000000
+      strengths: ["massive_context", "multimodal", "different_perspective"]
+      
+    chaos:
+      id: "anthropic/claude-3-haiku"
+      use_for:
+        - edge_case_discovery
+        - chaos_testing
+        - fuzzing
+        - boundary_testing
+      input_cost_per_mtok: 0.25
+      output_cost_per_mtok: 1.25
+      context_window: 200000
+      strengths: ["creative_thinking", "finds_weird_cases", "fast_iteration"]
+
+principles:
+  clarity:
+    id: 1
+    name: "Clarity"
+    rule: "Use domain-specific verbs, avoid generic actions"
+    priority: 10
+    severity: "high"
+    description: "Code should use precise, domain-specific terminology rather than vague, generic terms"
+    
+    smells:
+      generic_verbs:
+        description: "Functions using overly generic action verbs"
+        patterns:
+          - process
+          - handle
+          - get
+          - set
+          - do
+          - manage
+          - run
+          - execute
+          - perform
+          - update
+          
+        suggestions:
+          process:
+            - transform
+            - parse
+            - validate
+            - authenticate
+            - normalize
+            - sanitize
+            - encrypt
+            - compress
+            
+          handle:
+            - respond_to
+            - manage_error
+            - process_event
+            - dispatch
+            - route
+            - intercept
+            
+          get:
+            - fetch
+            - retrieve
+            - find
+            - query
+            - load
+            - pull
+            - download
+            - extract
+            
+          set:
+            - assign
+            - update
+            - configure
+            - initialize
+            - register
+            - bind
+            - attach
+            
+          do:
+            - execute
+            - perform
+            - invoke
+            - trigger
+            - activate
+            - launch
+            
+          manage:
+            - coordinate
+            - orchestrate
+            - supervise
+            - oversee
+            - govern
+            
+      vague_nouns:
+        description: "Variables or classes with non-descriptive names"
+        patterns:
+          - data
+          - info
+          - thing
+          - object
+          - value
+          - item
+          - element
+          - stuff
+          
+        suggestions:
+          data:
+            - payload
+            - credentials
+            - configuration
+            - attributes
+            - properties
+            - metadata
+            
+          info:
+            - metadata
+            - details
+            - specifications
+            - parameters
+            - settings
+            
+          thing:
+            - entity
+            - resource
+            - component
+            - module
+            - service
+            
+          object:
+            - model
+            - record
+            - instance
+            - document
+            - entry
+            
+          value:
+            - amount
+            - quantity
+            - measurement
+            - metric
+            - score
+            
+    auto_fixable: true
+    fix_confidence: 0.7
+    
+  simplicity:
+    id: 2
+    name: "Simplicity"
+    rule: "Prefer simple solutions over complex ones"
+    priority: 9
+    severity: "medium"
+    description: "Avoid unnecessary complexity and over-engineering"
+    
+    smells:
+      deep_nesting:
+        description: "Code with excessive nesting levels"
+        threshold: 4
+        suggestion: "Extract methods, use guard clauses, early returns"
+        
+      long_methods:
+        description: "Methods exceeding reasonable length"
+        threshold: 50
+        suggestion: "Break into smaller, focused methods"
+        
+      many_parameters:
+        description: "Functions with too many parameters"
+        threshold: 5
+        suggestion: "Use parameter objects or builders"
+        
+    auto_fixable: false
+    fix_confidence: 0.4
+    
+  consistency:
+    id: 3
+    name: "Consistency"
+    rule: "Follow established patterns within the codebase"
+    priority: 8
+    severity: "medium"
+    description: "Maintain uniform style and patterns throughout the project"
+    
+    smells:
+      naming_inconsistency:
+        description: "Mixed naming conventions"
+        patterns: ["snake_case vs camelCase", "singular vs plural", "prefixes inconsistent"]
+        
+      pattern_violations:
+        description: "Deviations from project patterns"
+        examples: ["different error handling", "inconsistent logging", "mixed async patterns"]
+        
+    auto_fixable: true
+    fix_confidence: 0.8
+    
+  modularity:
+    id: 4
+    name: "Modularity"
+    rule: "Keep components loosely coupled and highly cohesive"
+    priority: 9
+    severity: "high"
+    description: "Design systems as independent, interchangeable modules"
+    
+    smells:
+      tight_coupling:
+        description: "Classes or modules with excessive dependencies"
+        indicators: ["direct instantiation", "shared mutable state", "circular imports"]
+        
+      low_cohesion:
+        description: "Classes doing unrelated things"
+        indicators: ["mixed responsibilities", "unrelated methods", "unclear purpose"]
+        
+    auto_fixable: false
+    fix_confidence: 0.3
+    
+  testability:
+    id: 5
+    name: "Testability"
+    rule: "Write code that is easy to test"
+    priority: 8
+    severity: "medium"
+    description: "Design for verifiability and isolated testing"
+    
+    smells:
+      hard_to_mock:
+        description: "Dependencies that can't be easily replaced in tests"
+        indicators: ["static methods", "global state", "concrete dependencies"]
+        
+      untestable_logic:
+        description: "Code that's difficult to test in isolation"
+        indicators: ["mixed concerns", "hidden dependencies", "time dependencies"]
+        
+    auto_fixable: false
+    fix_confidence: 0.5
+    
+  performance:
+    id: 6
+    name: "Performance"
+    rule: "Avoid obvious performance anti-patterns"
+    priority: 7
+    severity: "low"
+    description: "Write efficient code, but don't optimize prematurely"
+    
+    smells:
+      n_plus_one:
+        description: "Queries or operations executed in loops"
+        suggestion: "Batch operations, eager loading, caching"
+        
+      inefficient_algorithms:
+        description: "Using suboptimal algorithms"
+        examples: ["nested loops for searches", "repeated sorting", "unnecessary copies"]
+        
+    auto_fixable: false
+    fix_confidence: 0.6
+    
+  security:
+    id: 7
+    name: "Security"
+    rule: "Follow security best practices"
+    priority: 10
+    severity: "critical"
+    description: "Prevent vulnerabilities and protect sensitive data"
+    
+    smells:
+      sql_injection:
+        description: "String concatenation in SQL queries"
+        patterns: ["SELECT * FROM users WHERE id = #{id}"]
+        suggestion: "Use parameterized queries or ORM"
+        
+      xss_vulnerable:
+        description: "Unescaped user input in HTML"
+        patterns: ["innerHTML = userInput", "render raw user data"]
+        suggestion: "Escape output, use templating safely"
+        
+      hardcoded_secrets:
+        description: "Credentials or keys in source code"
+        patterns: ["api_key = ", "password = ", "secret = "]
+        suggestion: "Use environment variables or secret managers"
+        
+    auto_fixable: false
+    fix_confidence: 0.9
+    
+  documentation:
+    id: 8
+    name: "Documentation"
+    rule: "Document non-obvious behavior and public APIs"
+    priority: 6
+    severity: "low"
+    description: "Provide clear documentation where code isn't self-explanatory"
+    
+    smells:
+      missing_public_docs:
+        description: "Public methods without documentation"
+        threshold: "methods with > 3 params or complex logic"
+        
+      outdated_comments:
+        description: "Comments that don't match the code"
+        indicators: ["TODO from 2 years ago", "refers to deleted code"]
+        
+    auto_fixable: false
+    fix_confidence: 0.3
+    
+  error_handling:
+    id: 9
+    name: "Error Handling"
+    rule: "Handle errors explicitly and gracefully"
+    priority: 9
+    severity: "high"
+    description: "Anticipate failures and handle them appropriately"
+    
+    smells:
+      swallowed_exceptions:
+        description: "Empty catch blocks or silent failures"
+        patterns: ["rescue\n  # nothing", "catch (e) {}"]
+        
+      generic_catches:
+        description: "Catching overly broad exception types"
+        patterns: ["rescue Exception", "catch (Exception e)"]
+        suggestion: "Catch specific exceptions only"
+        
+    auto_fixable: false
+    fix_confidence: 0.5
+    
+  maintainability:
+    id: 10
+    name: "Maintainability"
+    rule: "Write code that's easy to change"
+    priority: 8
+    severity: "medium"
+    description: "Optimize for future modifications"
+    
+    smells:
+      magic_numbers:
+        description: "Unnamed constants scattered in code"
+        suggestion: "Extract to named constants"
+        
+      duplication:
+        description: "Repeated code blocks"
+        threshold: "3+ similar blocks"
+        suggestion: "Extract to shared methods"
+        
+    auto_fixable: true
+    fix_confidence: 0.7
+
+tracking:
+  historical:
+    enabled: true
+    storage: ".convergence_history.jsonl"
+    retention_days: 30
+    
+    metrics:
+      - violations_per_day
+      - cost_per_day
+      - pass_rate
+      - avg_consensus
+      - improvement_velocity
+      - principle_frequency
+      - file_hotspots
+      - fix_success_rate
+      
+    aggregations:
+      daily: true
+      weekly: true
+      monthly: true
+      
+    reports:
+      trend_analysis: true
+      cost_breakdown: true
+      violation_heatmap: true
+      
+  realtime:
+    enabled: true
+    track_token_usage: true
+    track_api_calls: true
+    track_timing: true
+    track_model_selection: true
+
+autonomy:
+  enabled: true
+  version: "2.0"
+  learning: true
+  confidence_threshold: 0.75
+  
+  proactive_suggestions:
+    enabled: true
+    
+    triggers:
+      file_type_detected:
+        enabled: true
+        suggest_language_specific_rules: true
+        suggest_framework_patterns: true
+        
+      repeated_violations:
+        enabled: true
+        threshold: 3
+        suggest_suppression: true
+        suggest_custom_rule: true
+        
+      budget_approaching:
+        enabled: true
+        threshold: 0.8
+        suggest_cheaper_model: true
+        suggest_incremental_mode: true
+        
+      consensus_borderline:
+        enabled: true
+        threshold: 0.6
+        suggest_second_opinion: true
+        suggest_human_review: true
+        
+      related_files_exist:
+        enabled: true
+        suggest_bulk_analysis: true
+        suggest_pattern_extraction: true
+        
+  intelligent_defaults:
+    context_aware_models: true
+    adaptive_thresholds: true
+    smart_debug_trigger: true
+    file_type_optimization: true
+    history_based_tuning: true
+    
+    model_selection_strategy:
+      small_files: "fast"
+      critical_files: "balanced"
+      security_review: "reasoning_heavy"
+      batch_mode: "economical"
+      
+    threshold_adaptation:
+      new_project: "lenient"
+      mature_project: "strict"
+      legacy_code: "gradual"
+      
+  autonomous_actions:
+    gradual_strictness:
+      enabled: true
+      start_tolerance: 0.5
+      end_tolerance: 0.9
+      ramp_up_runs: 10
+      
+    self_healing_config:
+      enabled: true
+      fix_yaml_syntax: true
+      add_missing_defaults: true
+      validate_on_load: true
+      
+    auto_gitignore:
+      enabled: true
+      patterns:
+        - ".convergence_history.jsonl"
+        - ".convergence_prefs.json"
+        - ".dictionary.txt"
+        - ".suppression_cache.json"
+        
+  reduced_prompts:
+    remember_choices: true
+    preferences_file: ".convergence_prefs.json"
+    whitelist_support: true
+    diff_based_analysis: true
+    silent_success: true
+    
+    remembered_preferences:
+      - model_choice
+      - consensus_threshold
+      - auto_fix_policy
+      - severity_filter
+      - output_format
+      
+  workflow_shortcuts:
+    commit_message_generation:
+      enabled: true
+      template: "Fix: {principle_names} in {file_paths}"
+      include_score_delta: true
+      
+    pr_description_draft:
+      enabled: true
+      include_before_after: true
+      include_metrics: true
+      include_checklist: true
+      
+    blame_integration:
+      enabled: true
+      annotate_violations_with_author: true
+      group_by_committer: true
+      
+    bulk_operations:
+      enabled: true
+      max_parallel: 4
+      progress_reporting: true
+      partial_failure_handling: true
+
+intelligence:
+  version: "3.0"
+  
+  pattern_recognition:
+    enabled: true
+    
+    violation_clustering:
+      enabled: true
+      algorithm: "hierarchical"
+      similarity_threshold: 0.7
+      features: ["principle_id", "file_path", "code_pattern"]
+      
+    root_cause_analysis:
+      enabled: true
+      trace_dependencies: true
+      analyze_git_history: true
+      identify_common_patterns: true
+      
+    dependency_tracking:
+      enabled: true
+      build_call_graph: true
+      identify_hotspots: true
+      suggest_refactoring_targets: true
+      
+    historical_trends:
+      enabled: true
+      predict_future_violations: true
+      identify_degradation: true
+      celebrate_improvements: true
+      
+  adaptive_behavior:
+    consensus_prediction:
+      enabled: true
+      model: "gradient_boosting"
+      features: ["file_size", "complexity", "history", "principle_count"]
+      confidence_threshold: 0.8
+      
+    false_positive_learning:
+      enabled: true
+      learn_from_suppressions: true
+      adapt_thresholds: true
+      update_principle_weights: true
+      
+    custom_severity_levels:
+      enabled: true
+      per_principle: true
+      per_file_type: true
+      per_project_phase: true
+      
+    file_specific_rules:
+      enabled: true
+      learn_from_patterns: true
+      suggest_new_rules: true
+      
+    language_detection:
+      enabled: true
+      fallback_to_content_analysis: true
+      cache_results: true
+      
+  semantic_understanding:
+    variable_name_suggestions:
+      enabled: true
+      use_domain_vocabulary: true
+      consider_context: true
+      rank_by_specificity: true
+      
+    context_aware_fixes:
+      enabled: true
+      analyze_surrounding_code: true
+      maintain_style_consistency: true
+      consider_dependencies: true
+      
+    framework_awareness:
+      enabled: true
+      detect_framework: true
+      apply_framework_rules: true
+      suggest_framework_patterns: true
+      
+    architecture_detection:
+      enabled: true
+      identify_layers: true
+      detect_patterns: ["mvc", "hexagonal", "clean", "microservices"]
+      suggest_pattern_compliance: true
+      
+    domain_vocabulary:
+      enabled: true
+      vocabulary_file: ".dictionary.txt"
+      learn_from_codebase: true
+      extract_domain_terms: true
+      suggest_consistent_terminology: true
+      
+  frameworks:
+    rails:
+      enabled: true
+      version_detection: true
+      
+      allow_controller_actions:
+        - index
+        - show
+        - create
+        - update
+        - destroy
+        - new
+        - edit
+        
+      recognize_patterns:
+        - service_objects
+        - presenters
+        - decorators
+        - concerns
+        - form_objects
+        - query_objects
+        - policies
+        
+      conventions:
+        naming: "rails_conventions"
+        directory_structure: "standard_rails"
+        
+    ruby:
+      enabled: true
+      
+      allow_dsl_methods:
+        - describe
+        - context
+        - it
+        - before
+        - after
+        - let
+        - subject
+        - shared_examples
+        
+      recognize_patterns:
+        - builder
+        - factory
+        - strategy
+        - observer
+        - decorator
+        - adapter
+        - command
+        
+    javascript:
+      enabled: true
+      
+      frameworks:
+        - react
+        - vue
+        - angular
+        - express
+        - nestjs
+        
+      recognize_patterns:
+        - hooks
+        - components
+        - middlewares
+        - controllers
+        - services
+        
+    python:
+      enabled: true
+      
+      frameworks:
+        - django
+        - flask
+        - fastapi
+        
+      recognize_patterns:
+        - views
+        - serializers
+        - models
+        - managers
+        - mixins
+
+suppression:
+  enabled: true
+  learning: true
+  auto_suggest_after: 3
+  
+  mechanisms:
+    inline_comments:
+      enabled: true
+      patterns:
+        - "# convergence:ignore"
+        - "# convergence:ignore-line"
+        - "# convergence:ignore-block"
+        - "# convergence:ignore-principle[1,2,3]"
+        
+    file_level:
+      enabled: true
+      patterns:
+        - "# convergence:ignore-file"
+        - "# convergence:ignore-all"
+        
+    config_file:
+      enabled: true
+      path: ".convergence_suppress.yml"
+      
+  smart_suppression:
+    suggest_when:
+      - repeated_false_positives
+      - legacy_code_triage
+      - external_dependencies
+      - generated_code
+      
+    learn_patterns:
+      enabled: true
+      share_across_team: true
+      
+auto_fix:
+  enabled: true
+  confirm_before_apply: true
+  show_diff: true
+  create_backup: true
+  
+  strategies:
+    rename_variables:
+      enabled: true
+      confidence_threshold: 0.8
+      
+    extract_constants:
+      enabled: true
+      confidence_threshold: 0.7
+      
+    simplify_conditionals:
+      enabled: true
+      confidence_threshold: 0.6
+      
+    add_documentation:
+      enabled: false
+      
+  safety:
+    dry_run_first: true
+    validate_syntax: true
+    run_tests_after: false
+    git_commit_each: false
+
+ui_ux:
+  version: "4.0"
+  
+  progress:
+    spinner:
+      enabled: true
+      style: "dots"
+      
+    eta_estimation:
+      enabled: true
+      based_on_history: true
+      
+    streaming_violations:
+      enabled: true
+      show_as_found: true
+      
+    color_coded_confidence:
+      enabled: true
+      high: "green"
+      medium: "yellow"
+      low: "red"
+      
+    realtime_token_counter:
+      enabled: true
+      show_cost_estimate: true
+      warn_on_expensive: true
+      
+  errors:
+    actionable_format: true
+    recovery_suggestions: true
+    
+    retry_ui:
+      enabled: true
+      max_retries: 3
+      exponential_backoff: true
+      
+    partial_failure_handling:
+      enabled: true
+      continue_on_file_errors: true
+      report_successes_and_failures: true
+      
+    exit_code_explanation:
+      enabled: true
+      verbose_mode: true
+      
+  interactive:
+    confirm_auto_fix: true
+    
+    violation_triage:
+      enabled: true
+      options: ["fix", "skip", "suppress", "explain"]
+      
+    multi_file_progress:
+      enabled: true
+      show_current_file: true
+      show_overall_progress: true
+      
+    quick_fix_shortcuts:
+      enabled: true
+      keyboard_navigation: true
+      
+  formatting:
+    diff_style_display: true
+    
+    grouped_by_section:
+      enabled: true
+      sections: ["critical", "high", "medium", "low"]
+      
+    clickable_links:
+      enabled: true
+      format: "file://path:line"
+      
+    summary_at_top: true
+    
+    markdown_output:
+      enabled: true
+      templates:
+        violation: "- [ ] **{principle}** (line {line}): {message}"
+        summary: "## Summary\nScore: {score}/100\nViolations: {count}"
+
+quality_metrics:
+  version: "38.2"
+  lines: 748
+  root_sections: 25
+  principles_defined: 10
+  autonomy_enabled: true
+  intelligence_enabled: true
+  
+  validation:
+    schema_version: "1.0"
+    required_sections:
+      - meta
+      - principles
+      - tracking
+      - autonomy
+      - intelligence
+      - ui_ux
+      
+  metadata:
+    last_updated: "2024-01-15"
+    maintainer: "constitutional-ai-team"
+    compatibility: "cli.rb >= 38.0"
