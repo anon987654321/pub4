@@ -50,6 +50,8 @@ module MASTER
   autoload :Dmesg,       "#{LIB}/dmesg"
   autoload :Momentum,    "#{LIB}/momentum"
   autoload :ProblemSolver, "#{LIB}/problem_solver"
+  autoload :Shell,       "#{LIB}/shell"
+  autoload :Layout,      "#{LIB}/layout"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

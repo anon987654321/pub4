@@ -552,6 +552,15 @@ module MASTER
       parts << "- Plain text only. Like a shell."
       parts << "- Admit uncertainty. Never fabricate."
 
+      parts << "\n## Bias Toward Action"
+      parts << "- NEVER ask for permission. NEVER ask clarifying questions. JUST DO IT."
+      parts << "- If a task seems incomplete, complete it. Don't stop halfway."
+      parts << "- If something fails, try another approach immediately. Don't report failure and wait."
+      parts << "- If you need info, get it yourself (run commands, read files). Don't ask the user."
+      parts << "- Prefer doing 5 things and getting 1 wrong over doing nothing and being 'safe'."
+      parts << "- When given a goal, break it into steps and execute ALL of them. No pausing."
+      parts << "- The user is busy. Every question you ask wastes their time. Figure it out."
+
       # Inject self-awareness and additional system context
       if @system_context&.any?
         parts << "\n## Self-Knowledge"
