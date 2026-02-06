@@ -1,11 +1,28 @@
 # frozen_string_literal: true
 
 # UI - Unified terminal interface using TTY toolkit
+# Consolidates three UI presentation concerns:
+#   - TTY toolkit components (original ui.rb)
+#   - Clean Grok-inspired terminal output (layout.rb)
+#   - Dashboard with stats and visualizations (dashboard.rb)
 # Lazy-loads components for fast startup
 
 module MASTER
   module UI
     extend self
+
+    # ========================================
+    # ANSI Color Constants (from Layout)
+    # ========================================
+    RESET  = "\e[0m"
+    BOLD   = "\e[1m"
+    DIM    = "\e[2m"
+    GREY   = "\e[90m"
+    WHITE  = "\e[97m"
+    CYAN   = "\e[36m"
+    GREEN  = "\e[32m"
+    YELLOW = "\e[33m"
+    RED    = "\e[31m"
 
     # Lazy accessors for TTY components
     def prompt
@@ -242,6 +259,290 @@ module MASTER
       require 'tty-tree'
       tree = TTY::Tree.new(path, level: depth)
       puts tree.render
+    end
+
+    # ========================================
+    # Layout Methods (from Layout)
+    # Clean, Grok-inspired terminal output
+    # ========================================
+
+    # Response: clean, minimal, breathing room
+    def response(text, tokens: nil, ms: nil, cached: false)
+      out = []
+      out << ""  # breathing room before response
+      out << render_content(text)
+      out << ""  # breathing room after
+      out << stats_line(tokens: tokens, ms: ms, cached: cached) if tokens
+      out.join("\n")
+    end
+
+    # Render markdown to clean ANSI
+    def render_content(text)
+      lines = text.lines.map { |l| render_line(l.chomp) }
+
+      # Collapse triple+ blank lines
+      collapsed = []
+      blank_count = 0
+      lines.each do |line|
+        if line.strip.empty?
+          blank_count += 1
+          collapsed << '' if blank_count <= 2
+        else
+          blank_count = 0
+          collapsed << line
+        end
+      end
+
+      collapsed.join("\n")
+    end
+
+    def render_line(line)
+      # Code block markers: hide them, content styled elsewhere
+      return '' if line.match?(/^```/)
+
+      # Headers: bold, no #
+      if line.match?(/^#+\s/)
+        return "#{BOLD}#{line.gsub(/^#+\s*/, '')}#{RESET}"
+      end
+
+      # Bullets: subtle dot
+      if line.match?(/^\s*[-*]\s/)
+        return line.gsub(/^(\s*)[-*]\s/, "\\1#{DIM}·#{RESET} ")
+      end
+
+      # Numbered: keep clean
+      if line.match?(/^\s*\d+\.\s/)
+        return line.gsub(/^(\s*)(\d+)\.\s/, "\\1#{DIM}\\2.#{RESET} ")
+      end
+
+      # Inline formatting
+      line = line.gsub(/\*\*(.+?)\*\*/, "#{BOLD}\\1#{RESET}")      # bold
+      line = line.gsub(/\*([^*]+)\*/, "#{DIM}\\1#{RESET}")         # italic as dim
+      line = line.gsub(/`([^`]+)`/, "#{CYAN}\\1#{RESET}")          # inline code
+      line = line.gsub(/\[([^\]]+)\]\([^)]+\)/, "#{CYAN}\\1#{RESET}")  # links
+
+      line
+    end
+
+    # Stats: single subtle line
+    def stats_line(tokens: nil, ms: nil, cached: false)
+      parts = []
+      parts << "#{ms}ms" if ms
+      parts << "#{tokens[:input]}→#{tokens[:output]}" if tokens
+      parts << "cached" if cached
+      "#{DIM}#{parts.join(' · ')}#{RESET}"
+    end
+
+    # Shell output: code-style, indented
+    def shell_output(text, cmd: nil)
+      out = []
+      out << "#{DIM}$ #{cmd}#{RESET}" if cmd
+      text.lines.each { |l| out << "  #{l.chomp}" }
+      out.join("\n")
+    end
+
+    # Separator: subtle line
+    def separator
+      "#{DIM}#{'─' * 40}#{RESET}"
+    end
+
+    # Prompt: minimal, shows only essential state
+    def prompt_line(dir:, persona: nil, cost: 0, turn: 0)
+      parts = [dir]
+      parts << ":#{persona}" if persona && persona != 'generic'
+      parts << "(#{turn})" if turn > 0
+      parts << cost_badge(cost) if cost > 0.01
+      "#{parts.join} #{CYAN}❯#{RESET} "
+    end
+
+    def cost_badge(cost)
+      color = cost < 0.10 ? GREEN : cost < 1.0 ? YELLOW : RED
+      "#{color}$#{'%.2f' % cost}#{RESET}"
+    end
+
+    # Code block: dimmed background effect
+    def code_block(code, lang: nil)
+      lines = code.lines.map { |l| "  #{DIM}#{l.chomp}#{RESET}" }
+      lines.unshift("#{DIM}#{lang}#{RESET}") if lang
+      lines.join("\n")
+    end
+
+    # ========================================
+    # Dashboard Class (from Dashboard)
+    # Stats and visualizations
+    # ========================================
+
+    class Dashboard
+      def initialize
+        @pastel = Pastel.new
+        @screen = TTY::Screen
+      end
+
+      def render
+        clear_screen
+
+        print_header
+        print_stats_box
+        print_cost_pie
+        print_recent_tasks
+        print_memory_status
+        print_footer
+      end
+
+      private
+
+      def clear_screen
+        print "\e[2J\e[H"
+      end
+
+      def print_header
+        title = @pastel.bold.cyan("MASTER Dashboard")
+        puts "\n#{title.center(@screen.width)}\n\n"
+      end
+
+      def print_stats_box
+        stats = fetch_stats
+
+        content = [
+          "Total Cost:    #{format_cost(stats[:total_cost])}",
+          "Tasks Today:   #{stats[:tasks_today]}",
+          "Avg Response:  #{stats[:avg_duration]}s",
+          "Active Model:  #{stats[:active_model]}"
+        ].join("\n")
+
+        box = TTY::Box.frame(
+          width: 50,
+          title: { top_left: " Stats " },
+          border: :thick,
+          padding: 1,
+          align: :left
+        ) { content }
+
+        puts box
+      end
+
+      def print_cost_pie
+        data = fetch_cost_breakdown
+
+        pie = TTY::Pie.new(
+          data: data,
+          radius: 4,
+          legend: { left: 2 }
+        )
+
+        puts "\n#{@pastel.bold('Cost by Model')}"
+        puts pie
+      end
+
+      def print_recent_tasks
+        tasks = fetch_recent_tasks(10)
+
+        table = TTY::Table.new(
+          header: ['Task', 'Model', 'Cost', 'Time'],
+          rows: tasks.map { |t|
+            [
+              truncate(t[:name], 20),
+              t[:model],
+              format_cost(t[:cost]),
+              "#{t[:duration]}s"
+            ]
+          }
+        )
+
+        puts "\n#{@pastel.bold('Recent Tasks')}"
+        puts table.render(:unicode, padding: [0, 1])
+      end
+
+      def print_memory_status
+        memory = fetch_memory_stats
+
+        status = [
+          "Chunks stored:  #{memory[:chunks]}",
+          "Total vectors:  #{memory[:vectors]}",
+          "Last recall:    #{memory[:last_recall]}",
+          "Weaviate:       #{memory[:healthy] ? '✓ Connected' : '✗ Disconnected'}"
+        ].join("\n")
+
+        box = TTY::Box.frame(
+          width: 40,
+          title: { top_left: " Memory " },
+          border: :light,
+          padding: 1
+        ) { status }
+
+        puts "\n#{box}"
+      end
+
+      def print_footer
+        puts "\n#{@pastel.dim('Press Ctrl+C to exit')}"
+      end
+
+      # Data fetching methods
+      def fetch_stats
+        # Will integrate with Monitor from first PR
+        {
+          total_cost: defined?(Monitor) ? Monitor.total_cost : 47.23,
+          tasks_today: defined?(Monitor) ? Monitor.tasks_today : 156,
+          avg_duration: defined?(Monitor) ? Monitor.avg_duration.round(1) : 2.3,
+          active_model: defined?(LLM) && LLM.respond_to?(:current_tier) ? LLM.current_tier : "claude-3.5-sonnet"
+        }
+      rescue StandardError
+        # Fallback for development
+        {
+          total_cost: 47.23,
+          tasks_today: 156,
+          avg_duration: 2.3,
+          active_model: "claude-3.5-sonnet"
+        }
+      end
+
+      def fetch_cost_breakdown
+        return Monitor.cost_by_model if defined?(Monitor) && Monitor.respond_to?(:cost_by_model)
+
+        [
+          { name: "DeepSeek (cheap)", value: 15.2 },
+          { name: "Grok (fast)", value: 8.4 },
+          { name: "Sonnet (strong)", value: 18.3 },
+          { name: "Opus (frontier)", value: 5.3 }
+        ]
+      rescue StandardError
+        [
+          { name: "DeepSeek (cheap)", value: 15.2 },
+          { name: "Grok (fast)", value: 8.4 },
+          { name: "Sonnet (strong)", value: 18.3 },
+          { name: "Opus (frontier)", value: 5.3 }
+        ]
+      end
+
+      def fetch_recent_tasks(limit)
+        return Monitor.recent_tasks(limit) if defined?(Monitor) && Monitor.respond_to?(:recent_tasks)
+
+        # Fallback
+        []
+      rescue StandardError
+        []
+      end
+
+      def fetch_memory_stats
+        memory = VectorMemory.new
+        {
+          chunks: memory.count_chunks,
+          vectors: memory.count_vectors,
+          last_recall: memory.time_since_last_recall,
+          healthy: memory.healthy?
+        }
+      rescue StandardError
+        { chunks: 0, vectors: 0, last_recall: "never", healthy: false }
+      end
+
+      # Helpers
+      def format_cost(amount)
+        "$#{format('%.2f', amount)}"
+      end
+
+      def truncate(str, max)
+        str.length > max ? "#{str[0...max - 3]}..." : str
+      end
     end
   end
 end
