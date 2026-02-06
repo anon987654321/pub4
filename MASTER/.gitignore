@@ -1,0 +1,5 @@
+master.db
+.env
+*.log
+vendor/bundle/
+.bundle/
