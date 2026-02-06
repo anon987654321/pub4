@@ -504,17 +504,18 @@ module MASTER
     end
 
     def test_changes(file)
-      # Syntax check
-      return false unless system("ruby -c #{file} > /dev/null 2>&1")
+      # Syntax check - safe array form to prevent injection
+      return false unless system('ruby', '-c', file, out: File::NULL, err: File::NULL)
       
       # Could add more tests here
       true
     end
 
     def commit_saga(refinement)
-      # Git commit (if in a repo)
+      # Git commit (if in a repo) - safe array form
       msg = "saga: #{refinement[:desc]}"
-      system("git add #{refinement[:file]} && git commit -m '#{msg}' > /dev/null 2>&1")
+      system('git', 'add', refinement[:file], out: File::NULL, err: File::NULL)
+      system('git', 'commit', '-m', msg, out: File::NULL, err: File::NULL)
     end
 
     def compensate_saga(saga_state)
@@ -527,9 +528,9 @@ module MASTER
         log "Restored #{file} from backup"
       end
       
-      # Revert any git changes
+      # Revert any git changes - safe array form
       if saga_state[:steps].include?(:apply)
-        system("git checkout -- #{saga_state[:refinement][:file]} 2>/dev/null")
+        system('git', 'checkout', '--', saga_state[:refinement][:file], err: File::NULL)
       end
     end
 

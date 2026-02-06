@@ -161,7 +161,13 @@ module MASTER
     end
 
     # Cost-aware tier selection with load balancing
-    def select_optimal_tier(budget_remaining: Float::INFINITY, latency_weight: 0.3, cost_weight: 0.5, availability_weight: 0.2)
+    # Weight constants for tier scoring
+    TIER_LATENCY_WEIGHT = 0.3
+    TIER_COST_WEIGHT = 0.5
+    TIER_AVAILABILITY_WEIGHT = 0.2
+    MAX_TIER_COST = 0.015  # Normalization baseline (highest cost tier)
+
+    def select_optimal_tier(budget_remaining: Float::INFINITY, latency_weight: TIER_LATENCY_WEIGHT, cost_weight: TIER_COST_WEIGHT, availability_weight: TIER_AVAILABILITY_WEIGHT)
       candidates = TIERS.keys.select { |t| tier_healthy?(t) }
       return DEFAULT_TIER if candidates.empty?
 
@@ -170,7 +176,7 @@ module MASTER
         
         # Cost score (lower is better, normalize to 0-1)
         avg_cost = (config[:input] + config[:output]) / 2.0
-        cost_score = 1.0 - (avg_cost / 0.015) # Normalize against highest cost tier
+        cost_score = 1.0 - (avg_cost / MAX_TIER_COST)
         cost_score = 0 if avg_cost * 1000 > budget_remaining # Exceeds budget
         
         # Latency score (estimate based on tier type)

@@ -50,6 +50,10 @@ module MASTER
     ICON_ITEM = "·"
     ICON_FLOW = "→"
 
+    # Cursor control
+    CURSOR_HIDE = "\e[?25l"
+    CURSOR_SHOW = "\e[?25h"
+
     # Spinner (ASCII, by prompt)
     SPINNER = %w[| / - \\].freeze
 
@@ -1577,10 +1581,9 @@ module MASTER
     # Streaming chat with character-by-character output
     def stream_chat(message)
       buffer = ""
-      cursor_visible = true
       
       # Hide cursor during streaming
-      print "\e[?25l" if $stdout.tty?
+      print CURSOR_HIDE if $stdout.tty?
       
       result = @llm.stream_ask(message) do |token|
         buffer += token
@@ -1589,7 +1592,7 @@ module MASTER
       end
       
       # Show cursor again
-      print "\e[?25h" if $stdout.tty?
+      print CURSOR_SHOW if $stdout.tty?
       print "\n"
       
       @last_tokens = @llm.last_tokens
@@ -1607,7 +1610,7 @@ module MASTER
       
       buffer
     rescue => e
-      print "\e[?25h" if $stdout.tty? # Ensure cursor is shown on error
+      print CURSOR_SHOW if $stdout.tty? # Ensure cursor is shown on error
       "Streaming error: #{e.message}"
     end
     
