@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module SystemMap
   def self.quick_context
-    module_count = Dir['/home/dev/pub/lib/**/*.rb'].count
-    bin_count = Dir['/home/dev/pub/bin/*'].reject { |f| File.directory?(f) }.count
-    "MASTER v50.9: #{module_count} Ruby modules, #{bin_count} CLI tools, autoloaded on OpenBSD"
+    module_count = Dir[File.join(MASTER::ROOT, 'MASTER', 'lib', '**', '*.rb')].count
+    bin_count = Dir[File.join(MASTER::ROOT, 'MASTER', 'bin', '*')].reject { |f| File.directory?(f) }.count
+    "MASTER v#{MASTER::VERSION}: #{module_count} Ruby modules, #{bin_count} CLI tools, autoloaded on OpenBSD"
   end
   
   def self.architecture
