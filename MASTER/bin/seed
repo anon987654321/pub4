@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'yaml'
+require_relative '../lib/db'
+
+# Initialize database schema
+MASTER::DB.initialize_schema
+
+# Load and import principles
+principles_file = File.expand_path('../../data/principles.yml', __FILE__)
+if File.exist?(principles_file)
+  data = YAML.load_file(principles_file)
+  
+  if data['principles']
+    data['principles'].each do |key, principle|
+      name = principle['name'] || key
+      description = principle['description'] || ''
+      protection_level = principle['tier'] == 'core' ? 'PROTECTED' : 'NEGOTIABLE'
+      category = principle['tier'] || 'general'
+      
+      MASTER::DB.connection.execute(
+        "INSERT OR REPLACE INTO principles (name, text, protection_level, category) VALUES (?, ?, ?, ?)",
+        [name, description, protection_level, category]
+      )
+    end
+    puts "✓ Imported #{data['principles'].length} principles"
+  end
+end
+
+# Load and import personas
+personas_file = File.expand_path('../../data/personas.yml', __FILE__)
+if File.exist?(personas_file)
+  data = YAML.load_file(personas_file)
+  
+  if data['personas']
+    data['personas'].each do |key, persona|
+      name = persona['name'] || key
+      role = persona['description'] || ''
+      instructions = persona['system_prompt'] || persona['style'] || ''
+      weight = 1.0
+      
+      MASTER::DB.connection.execute(
+        "INSERT OR REPLACE INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
+        [name, role, instructions, weight]
+      )
+    end
+    puts "✓ Imported #{data['personas'].length} personas"
+  end
+end
+
+puts "✓ Database seeded successfully"

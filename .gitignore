@@ -46,3 +46,8 @@ MASTER/data/monitoring/*.jsonl
 MASTER/data/intelligence/*.yml
 MASTER/data/memory/*.yml
 MASTER/data/memory/*.json
+
+# MASTER v2 - Environment and database
+MASTER/.env
+MASTER/master.db
+MASTER/master.db-*

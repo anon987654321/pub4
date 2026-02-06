@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require_relative "../lib/db"
+
+MASTER::DB.initialize_schema
+
+MASTER::Protocol.pipe do |input|
+  file_path = input[:file] || input[:path]
+  modification = input[:modification] || input[:response]
+  
+  unless file_path
+    input.merge(
+      modified: false,
+      error: "No file path specified"
+    )
+    next input
+  end
+  
+  begin
+    # Git stash snapshot
+    stash_output = `git stash create 2>&1`
+    before_sha = stash_output.strip
+    
+    # Apply modification (write to file)
+    if modification && File.exist?(file_path)
+      File.write(file_path, modification)
+    end
+    
+    after_sha = `git rev-parse HEAD`.strip
+    
+    # Run tests
+    test_command = input[:test_command] || "bundle exec rake test"
+    test_output = `#{test_command} 2>&1`
+    tests_passed = $?.success?
+    
+    rolled_back = false
+    
+    # Rollback on failure
+    unless tests_passed
+      if before_sha && !before_sha.empty?
+        `git stash apply #{before_sha} 2>&1`
+        rolled_back = true
+      end
+    end
+    
+    # Record evolution
+    MASTER::DB.connection.execute(
+      "INSERT INTO evolutions (file, before_sha, after_sha, tests_passed, rolled_back) 
+       VALUES (?, ?, ?, ?, ?)",
+      [file_path, before_sha, after_sha, tests_passed ? 1 : 0, rolled_back ? 1 : 0]
+    )
+    
+    input.merge(
+      modified: true,
+      tests_passed: tests_passed,
+      rolled_back: rolled_back,
+      before_sha: before_sha,
+      after_sha: after_sha,
+      test_output: test_output
+    )
+  rescue => e
+    input.merge(
+      modified: false,
+      error: e.message
+    )
+  end
+end

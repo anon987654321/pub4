@@ -1,3 +1,78 @@
+# MASTER v2.0 - Unix Pipeline Toolkit
+
+## Version 2.0.0 (2026-02-06)
+
+### 🔄 Major Architectural Transformation
+
+Transformed monolithic 94KB `lib/cli.rb` into composable Unix pipeline executables powered by ruby_llm ecosystem.
+
+### ✨ New Pipeline Architecture
+
+#### Core Libraries (lib/)
+- **db.rb** - SQLite with 10 tables (principles, personas, costs, circuits, hooks, etc.)
+- **json_protocol.rb** - stdin/stdout JSON protocol
+- **llm_client.rb** - Thin RubyLLM wrapper (under 30 lines)
+- **strunk.rb** - Text compression (Strunk & White)
+- **metz.rb** - Quality rules (Sandi Metz)
+- **typography.rb** - Typography formatting (Bringhurst)
+- **pledge.rb** - OpenBSD sandboxing
+- **hooks.rb** - Event system
+
+#### Pipeline Executables (bin/)
+All under 200 lines, JSON in/out:
+- **intake** - Input filter + compression
+- **guard** - Safety firewall
+- **route** - Model selector + circuit breaker
+- **ask** - LLM interface (RubyLLM.chat)
+- **critique** - Review (ruby_llm-tribunal)
+- **chamber** - Multi-model deliberation
+- **execute** - Sandboxed execution
+- **evolve** - Self-modification + rollback
+- **quality** - Quality gate
+- **converge** - Convergence detection
+- **remember** - Memory store/recall
+- **plan** - 8-phase workflow
+- **render** - Output formatter
+- **seed** - YAML import
+- **start** - Ruby REPL
+
+### 📦 Dependencies (ruby_llm ecosystem)
+- ruby_llm - Chat, streaming, 800+ models
+- ruby_llm-schema - Structured output
+- ruby_llm-tribunal - LLM evaluation
+- sqlite3 - State persistence
+- TTY toolkit - Terminal UI
+
+### 🔒 Security
+- No hardcoded API keys (.env in .gitignore)
+- Circuit breaker (3 failures → open)
+- Pledge/unveil sandboxing
+- Safety firewall
+
+### 🧪 Tests
+- test_protocol.rb - JSON protocol
+- test_db.rb - Database operations
+- test_pipeline.rb - Stage composition
+
+### 📝 Example Usage
+
+Interactive:
+```bash
+bin/start
+```
+
+Pipeline:
+```bash
+echo '{"text":"Explain SOLID"}' | bin/intake | bin/guard | bin/route | bin/ask | bin/render
+```
+
+Shell alias:
+```bash
+m-ask What is KISS?
+```
+
+---
+
 # Changelog
 
 All notable changes to the MASTER project will be documented in this file.

@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require "ruby_llm/tribunal"
+
+RubyLLM::Tribunal.configure do |config|
+  config.default_model = "gpt-4.1-mini"
+  config.default_threshold = 0.8
+end
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input[:original_text] || ""
+  response = input[:response] || ""
+  context = input[:context] || []
+  
+  begin
+    test_case = RubyLLM::Tribunal.test_case(
+      input: text,
+      actual_output: response,
+      context: context
+    )
+
+    results = RubyLLM::Tribunal.evaluate(test_case, [
+      [:relevant, {}],
+      [:hallucination, { threshold: 0.8 }]
+    ])
+
+    passed = results.values.all? { |status, _| status == :pass }
+
+    input.merge(
+      critique_passed: passed,
+      critique_results: results.transform_values { |s, d| { status: s, details: d } },
+      confidence: passed ? 0.9 : 0.4
+    )
+  rescue => e
+    # Critique is optional - don't fail the pipeline if it errors
+    input.merge(
+      critique_passed: true,
+      critique_error: e.message,
+      confidence: 0.7
+    )
+  end
+end

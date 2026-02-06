@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/typography"
+
+# This is the pipeline terminus - outputs plain text, not JSON
+input_json = $stdin.read
+input = JSON.parse(input_json, symbolize_names: true)
+
+response = input[:response] || input[:text] || ""
+
+# Apply typography
+formatted = MASTER::Typography.format(response, wrap: true)
+
+# Output to stdout (not JSON)
+puts formatted

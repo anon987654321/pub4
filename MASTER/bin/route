@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require_relative "../lib/db"
+
+MASTER::DB.initialize_schema
+
+# Model tiers with fallbacks
+TIERS = {
+  strong: ["deepseek-r1", "claude-sonnet-4"],
+  fast: ["deepseek-v3", "gpt-4.1-mini"],
+  cheap: ["gpt-4.1-nano"]
+}.freeze
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || ""
+  
+  # Determine complexity (simple heuristic)
+  complexity = if text.length > 1000 || text.include?("refactor") || text.include?("architecture")
+    :strong
+  elsif text.length > 200
+    :fast
+  else
+    :cheap
+  end
+  
+  # Get budget
+  budget_remaining = (MASTER::DB.get_config("budget") || "10.0").to_f
+  
+  # Auto-downgrade if budget low
+  if budget_remaining < 1.0
+    complexity = :cheap
+  end
+  
+  # Select model with circuit breaker
+  selected_model = nil
+  selected_tier = complexity
+  
+  TIERS[complexity].each do |model|
+    circuit_state = MASTER::DB.get_circuit_state(model)
+    if circuit_state != 'open'
+      selected_model = model
+      break
+    end
+  end
+  
+  # Fallback to cheaper tier if all models in current tier are open
+  unless selected_model
+    [:fast, :cheap].each do |fallback_tier|
+      next if fallback_tier == complexity
+      TIERS[fallback_tier].each do |model|
+        circuit_state = MASTER::DB.get_circuit_state(model)
+        if circuit_state != 'open'
+          selected_model = model
+          selected_tier = fallback_tier
+          break
+        end
+      end
+      break if selected_model
+    end
+  end
+  
+  # Ultimate fallback
+  selected_model ||= TIERS[:cheap].first
+  
+  input.merge(
+    model: selected_model,
+    tier: selected_tier,
+    budget_remaining: budget_remaining,
+    complexity: complexity
+  )
+end
