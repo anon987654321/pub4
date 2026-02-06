@@ -173,7 +173,7 @@ module MASTER
         if context
           connection.execute(
             "SELECT * FROM memory WHERE context = ? ORDER BY accessed_at DESC LIMIT ?",
-            [context, limit]
+            [context.to_s, limit]
           )
         else
           connection.execute(

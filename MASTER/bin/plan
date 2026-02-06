@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/plan - 8-phase workflow engine
+# Discover → Analyze → Ideate → Design → Implement → Validate → Deliver → Learn
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath wpath cpath')
+
+PHASES = [
+  {
+    name: 'discover',
+    questions: ['What problem are we solving?', 'What are the constraints?', 'What is the success criteria?'],
+    entry_criteria: ['Problem statement exists'],
+    exit_criteria: ['Problem is well-defined', 'Constraints documented', 'Success metrics defined']
+  },
+  {
+    name: 'analyze',
+    questions: ['What are the root causes?', 'What patterns exist?', 'What are the dependencies?'],
+    entry_criteria: ['Problem is well-defined'],
+    exit_criteria: ['Root causes identified', 'Dependencies mapped', 'Risks assessed']
+  },
+  {
+    name: 'ideate',
+    questions: ['What are possible solutions?', 'What are the tradeoffs?', 'What is the simplest approach?'],
+    entry_criteria: ['Problem analyzed'],
+    exit_criteria: ['3+ solutions proposed', 'Tradeoffs evaluated', 'Best approach selected']
+  },
+  {
+    name: 'design',
+    questions: ['How will it work?', 'What are the interfaces?', 'How will it be tested?'],
+    entry_criteria: ['Solution selected'],
+    exit_criteria: ['Architecture documented', 'Interfaces defined', 'Test strategy created']
+  },
+  {
+    name: 'implement',
+    questions: ['Is code clear?', 'Are tests passing?', 'Is it DRY?'],
+    entry_criteria: ['Design approved'],
+    exit_criteria: ['Code complete', 'Tests passing', 'Quality gates met']
+  },
+  {
+    name: 'validate',
+    questions: ['Does it meet requirements?', 'Are there edge cases?', 'Is it performant?'],
+    entry_criteria: ['Implementation complete'],
+    exit_criteria: ['All tests pass', 'Requirements met', 'Performance acceptable']
+  },
+  {
+    name: 'deliver',
+    questions: ['Is documentation complete?', 'Is it deployed?', 'Are stakeholders informed?'],
+    entry_criteria: ['Validation passed'],
+    exit_criteria: ['Deployed', 'Documentation updated', 'Stakeholders notified']
+  },
+  {
+    name: 'learn',
+    questions: ['What went well?', 'What could improve?', 'What did we learn?'],
+    entry_criteria: ['Delivery complete'],
+    exit_criteria: ['Retrospective done', 'Lessons documented', 'Improvements identified']
+  }
+].freeze
+
+MASTER::Protocol.pipe do |input|
+  current_phase = input[:phase] || input['phase'] || 'discover'
+  phase_idx = PHASES.find_index { |p| p[:name] == current_phase } || 0
+  phase = PHASES[phase_idx]
+  
+  # Check exit criteria
+  exit_criteria_met = input[:criteria_met] || false
+  
+  # Determine next phase
+  next_phase = if exit_criteria_met && phase_idx < PHASES.length - 1
+    PHASES[phase_idx + 1][:name]
+  elsif !exit_criteria_met
+    current_phase  # Stay in current phase
+  else
+    'complete'
+  end
+  
+  # Loop back to validate if implementation changed
+  if current_phase == 'deliver' && input[:implementation_changed]
+    next_phase = 'validate'
+  end
+  
+  input.merge(
+    phase: next_phase,
+    current_phase_name: phase[:name],
+    questions: phase[:questions],
+    entry_criteria: phase[:entry_criteria],
+    exit_criteria: phase[:exit_criteria],
+    progress: ((phase_idx + 1).to_f / PHASES.length * 100).round(1),
+    plan_timestamp: Time.now.to_i
+  )
+end

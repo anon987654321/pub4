@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/guard - Safety firewall
+# Checks protection levels, validates against constitutional principles
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input['text'] || ''
+  
+  # Get absolute and protected principles
+  absolute_principles = MASTER::DB.principles(level: 'absolute')
+  protected_principles = MASTER::DB.principles(level: 'protected')
+  
+  # Check for violations
+  violations = []
+  
+  # Check absolute principles - these cannot be violated
+  absolute_principles.each do |principle|
+    principle_text = principle['text'].downcase
+    # Simple keyword check (could be more sophisticated)
+    if principle_text.include?('security') && text.downcase.match?(/delete|remove|disable.*security/)
+      violations << {
+        level: 'absolute',
+        principle: principle['name'],
+        reason: 'Cannot disable security features'
+      }
+    end
+    
+    if principle_text.include?('test') && text.downcase.match?(/skip.*test|remove.*test/)
+      violations << {
+        level: 'absolute',
+        principle: principle['name'],
+        reason: 'Cannot remove or skip tests'
+      }
+    end
+  end
+  
+  # Check protected principles - warn but allow with justification
+  warnings = []
+  protected_principles.each do |principle|
+    principle_text = principle['text'].downcase
+    if principle_text.include?('dry') && text.downcase.match?(/copy|duplicate/)
+      warnings << {
+        level: 'protected',
+        principle: principle['name'],
+        reason: 'Potential DRY violation detected'
+      }
+    end
+  end
+  
+  # Determine if allowed
+  allowed = violations.empty?
+  
+  input.merge(
+    allowed: allowed,
+    violations: violations,
+    warnings: warnings,
+    guard_passed: allowed,
+    guard_timestamp: Time.now.to_i
+  )
+end

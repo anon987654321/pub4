@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/quality - Quality gate checker
+# Sandi Metz rules, cyclomatic complexity, DRY violations
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/metz'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  files = input[:files] || input['files'] || '.'
+  
+  # Expand glob if needed
+  file_list = if File.directory?(files)
+    Dir.glob(File.join(files, '**', '*.rb'))
+  elsif files.include?('*')
+    Dir.glob(files)
+  else
+    [files]
+  end
+  
+  results = []
+  total_violations = 0
+  total_score = 0.0
+  
+  file_list.each do |file|
+    next unless File.exist?(file)
+    
+    result = MASTER::Metz.check(file)
+    
+    # Record in database
+    MASTER::DB.record_quality(
+      file_path: file,
+      check_type: 'metz',
+      passed: result[:passed],
+      score: result[:score],
+      details: result
+    )
+    
+    results << result
+    total_violations += result[:violations].length
+    total_score += result[:score]
+  end
+  
+  avg_score = file_list.empty? ? 0.0 : (total_score / file_list.length).round(2)
+  passed = total_violations == 0
+  
+  input.merge(
+    quality_passed: passed,
+    files_checked: file_list.length,
+    violations: total_violations,
+    avg_score: avg_score,
+    results: results,
+    quality_timestamp: Time.now.to_i
+  )
+end

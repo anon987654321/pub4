@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/render - Terminal output formatter
+# Formats JSON response for terminal display using Bringhurst typography
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/typography'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath tty')
+
+input = MASTER::Protocol.read
+
+# Handle errors
+if input[:error] || input['error']
+  error = input[:error] || input['error']
+  puts "\n#{MASTER::Typography.dmesg(1, "ERROR: #{error}")}\n"
+  exit 1
+end
+
+# Handle guard violations
+if input[:violations] && !input[:violations].empty?
+  puts "\n#{MASTER::Typography.dmesg(1, 'GUARD BLOCKED')}"
+  input[:violations].each do |v|
+    puts "  #{v[:level].upcase}: #{v[:principle]}"
+    puts "  Reason: #{v[:reason]}"
+  end
+  puts
+  exit 1
+end
+
+# Show warnings if any
+if input[:warnings] && !input[:warnings].empty?
+  input[:warnings].each do |w|
+    puts MASTER::Typography.dmesg(0, "WARNING: #{w[:reason]}")
+  end
+end
+
+# Main response
+if input[:response] || input['response']
+  response = input[:response] || input['response']
+  
+  # Apply typography
+  formatted = MASTER::Typography.format(response)
+  
+  puts "\n#{formatted}\n"
+  
+  # Show metadata if verbose
+  if ENV['VERBOSE'] || ENV['DEBUG']
+    puts "\n" + "─" * 72
+    puts MASTER::Typography.dmesg(0, "tokens: #{input[:tokens_in]}→#{input[:tokens_out]}, cost: $#{input[:cost]&.round(4)}")
+    puts MASTER::Typography.dmesg(0, "model: #{input[:model_used]}, tier: #{input[:tier]}")
+    puts MASTER::Typography.dmesg(0, "density: #{input[:density]&.round(2)}, compression: #{input[:reduction]&.round(1)}%") if input[:density]
+  end
+elsif input[:final] || input['final']
+  # Critique output
+  final = input[:final] || input['final']
+  formatted = MASTER::Typography.format(final)
+  puts "\n#{formatted}\n"
+  
+  if input[:confidence]
+    puts "\n#{MASTER::Typography.dmesg(0, "confidence: #{input[:confidence]}")}"
+  end
+  
+  if input[:issues] && !input[:issues].empty?
+    puts "\n#{MASTER::Typography.dmesg(0, 'ISSUES FOUND:')}"
+    input[:issues].each { |issue| puts "  - #{issue}" }
+  end
+elsif input[:text] || input['text']
+  # Passthrough for intermediate stages
+  text = input[:text] || input['text']
+  puts MASTER::Typography.format(text)
+else
+  # Generic JSON output
+  require 'json'
+  puts JSON.pretty_generate(input)
+end

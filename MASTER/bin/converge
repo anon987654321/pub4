@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/converge - Convergence detector
+# Measures diff between iterations, detects when changes < threshold
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  current = input[:response] || input[:final] || input[:text] || ''
+  previous = input[:previous] || input['previous'] || ''
+  iteration = input[:iteration] || input['iteration'] || 0
+  
+  threshold = (MASTER::DB.config('convergence_threshold') || '0.02').to_f
+  
+  # Calculate similarity (Levenshtein distance normalized)
+  require 'set'
+  
+  # Simple word-based similarity
+  current_words = Set.new(current.downcase.split(/\W+/))
+  previous_words = Set.new(previous.downcase.split(/\W+/))
+  
+  if previous_words.empty?
+    similarity = 0.0
+    delta = 1.0
+  else
+    intersection = current_words & previous_words
+    union = current_words | previous_words
+    similarity = union.empty? ? 0.0 : (intersection.size.to_f / union.size)
+    delta = 1.0 - similarity
+  end
+  
+  converged = delta < threshold && iteration > 0
+  
+  input.merge(
+    converged: converged,
+    delta: delta.round(4),
+    similarity: similarity.round(4),
+    threshold: threshold,
+    iteration: iteration + 1,
+    converge_timestamp: Time.now.to_i
+  )
+end

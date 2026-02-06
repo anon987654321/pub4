@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/critique - Post-LLM review
+# Reviews LLM response, checks for violations, verifies citations
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  response = input[:response] || input['response'] || ''
+  
+  if response.empty?
+    next input.merge(
+      final: input[:text] || '',
+      confidence: 0.5,
+      issues: ['No response to critique']
+    )
+  end
+  
+  issues = []
+  
+  # Check for anti-simulation violations
+  if response.match?(/as an ai|i am an ai|i cannot|i don't have|i lack/i)
+    issues << 'Contains AI self-reference (anti-simulation)'
+  end
+  
+  # Check for hedging language
+  if response.match?(/maybe|perhaps|possibly|potentially|might|could be/i)
+    issues << 'Contains excessive hedging language'
+  end
+  
+  # Check for citations that don't exist (simplified)
+  cited_files = response.scan(/`([^`]+\.(rb|js|py|go|java))`/)
+  cited_files.each do |file, _ext|
+    unless File.exist?(File.join(MASTER::DB::ROOT, file))
+      issues << "Cites non-existent file: #{file}"
+    end
+  end
+  
+  # Calculate confidence based on issues
+  confidence = case issues.length
+  when 0 then 0.95
+  when 1 then 0.80
+  when 2 then 0.65
+  else 0.50
+  end
+  
+  # Final output is the response (could cherry-pick from multiple models)
+  final = response
+  
+  input.merge(
+    final: final,
+    confidence: confidence,
+    issues: issues,
+    critique_timestamp: Time.now.to_i,
+    critique_passed: issues.empty?
+  )
+end

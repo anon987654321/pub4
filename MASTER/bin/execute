@@ -1,0 +1,88 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/execute - Run code blocks safely
+# Extracts code blocks from response and runs them with sandboxing
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/pledge'
+require 'tempfile'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath wpath cpath proc exec')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:response] || input[:final] || input[:text] || ''
+  
+  # Extract code blocks
+  # Supports ```language\ncode\n``` format
+  code_blocks = text.scan(/```(\w+)?\n(.*?)```/m)
+  
+  if code_blocks.empty?
+    next input.merge(
+      executed: false,
+      reason: 'No code blocks found',
+      execute_timestamp: Time.now.to_i
+    )
+  end
+  
+  results = []
+  
+  code_blocks.each_with_index do |(lang, code), idx|
+    # Determine how to execute based on language
+    runner = case lang
+    when 'ruby', 'rb' then 'ruby'
+    when 'python', 'py' then 'python3'
+    when 'javascript', 'js' then 'node'
+    when 'sh', 'bash', 'zsh' then 'sh'
+    else nil
+    end
+    
+    unless runner
+      results << {
+        block: idx + 1,
+        language: lang,
+        executed: false,
+        reason: "Unsupported language: #{lang}"
+      }
+      next
+    end
+    
+    # Write code to temp file
+    tmpfile = Tempfile.new(['execute', lang ? ".#{lang}" : ''])
+    tmpfile.write(code)
+    tmpfile.close
+    
+    # Execute with timeout
+    stdout, stderr, status = '', '', 0
+    begin
+      require 'open3'
+      stdout, stderr, status = Open3.capture3("timeout 5 #{runner} #{tmpfile.path}")
+    rescue StandardError => e
+      stderr = e.message
+      status = 1
+    ensure
+      tmpfile.unlink
+    end
+    
+    results << {
+      block: idx + 1,
+      language: lang,
+      executed: true,
+      success: status == 0,
+      stdout: stdout[0..500],  # Limit output
+      stderr: stderr[0..500],
+      exit_code: status
+    }
+  end
+  
+  all_succeeded = results.all? { |r| r[:executed] && r[:success] }
+  
+  input.merge(
+    executed: true,
+    success: all_succeeded,
+    blocks_count: code_blocks.length,
+    results: results,
+    execute_timestamp: Time.now.to_i
+  )
+end

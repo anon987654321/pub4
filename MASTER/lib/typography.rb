@@ -20,27 +20,27 @@ module MASTER
 
       # Convert straight quotes to smart quotes
       def smart_quotes(text)
-        # Opening double quote
-        text.gsub!(/(\s|^)"(\w)/, '\1"\2')
-        # Closing double quote
-        text.gsub!(/(\w)"(\s|$|[,.!?;:])/, '\1"\2')
+        # Opening double quote (U+201C)
+        text.gsub!(/(\s|^)"(\w)/, "\\1\u201C\\2")
+        # Closing double quote (U+201D)
+        text.gsub!(/(\w)"(\s|$|[,.!?;:])/, "\\1\u201D\\2")
         
-        # Opening single quote
-        text.gsub!(/(\s|^)'(\w)/, '\1'\2')
-        # Closing single quote
-        text.gsub!(/(\w)'(\s|$|[,.!?;:])/, '\1'\2')
+        # Opening single quote (U+2018)
+        text.gsub!(/(\s|^)'(\w)/, "\\1\u2018\\2")
+        # Closing single quote (U+2019)
+        text.gsub!(/(\w)'(\s|$|[,.!?;:])/, "\\1\u2019\\2")
         
         text
       end
 
       # Convert double hyphens to em dashes
       def em_dashes(text)
-        text.gsub(/--/, '—')
+        text.gsub(/--/, "\u2014")  # U+2014 EM DASH
       end
 
       # Convert three dots to ellipsis
       def ellipses(text)
-        text.gsub(/\.\.\./, '…')
+        text.gsub(/\.\.\./, "\u2026")  # U+2026 HORIZONTAL ELLIPSIS
       end
 
       # Wrap lines to specified width

@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/evolve - Self-modification with saga rollback
+# Snapshots state, applies modification, runs tests, rollback if fail
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath wpath cpath proc exec')
+
+MASTER::Protocol.pipe do |input|
+  files = input[:modified] || input[:files] || []
+  test_command = input[:test_command] || 'ruby -Ilib:test test/test_*.rb'
+  
+  if files.empty?
+    next input.merge(
+      evolved: false,
+      reason: 'No files specified',
+      evolve_timestamp: Time.now.to_i
+    )
+  end
+  
+  # Snapshot current state (git stash)
+  snapshot_id = "evolve_#{Time.now.to_i}_#{rand(1000)}"
+  system("git stash push -m '#{snapshot_id}' --quiet")
+  
+  # Get before SHA for each file
+  before_shas = {}
+  files.each do |file|
+    if File.exist?(file)
+      sha = `git hash-object #{file}`.strip
+      before_shas[file] = sha
+    end
+  end
+  
+  # Files are already modified by this point
+  # Get after SHA
+  after_shas = {}
+  files.each do |file|
+    if File.exist?(file)
+      sha = `git hash-object #{file}`.strip
+      after_shas[file] = sha
+    end
+  end
+  
+  # Run tests
+  test_output = `#{test_command} 2>&1`
+  test_passed = $?.success?
+  
+  if test_passed
+    # Tests passed - commit
+    files.each do |file|
+      diff = `git diff #{file}`.strip
+      MASTER::DB.connection.execute(
+        "INSERT INTO evolution (file_path, before_sha, after_sha, diff, test_result, rolled_back, created_at) VALUES (?, ?, ?, ?, 1, 0, ?)",
+        [file, before_shas[file], after_shas[file], diff, Time.now.to_i]
+      )
+    end
+    
+    # Commit
+    system("git add #{files.join(' ')}")
+    system("git commit -m 'evolve: #{input[:reason] || 'self-modification'}' --quiet")
+    
+    input.merge(
+      evolved: true,
+      tests_passed: true,
+      rolled_back: false,
+      modified: files,
+      test_output: test_output[0..500],
+      evolve_timestamp: Time.now.to_i
+    )
+  else
+    # Tests failed - rollback
+    system("git stash pop --quiet 2>/dev/null")
+    
+    files.each do |file|
+      MASTER::DB.connection.execute(
+        "INSERT INTO evolution (file_path, before_sha, test_result, rolled_back, reason, created_at) VALUES (?, ?, 0, 1, ?, ?)",
+        [file, before_shas[file], 'Tests failed', Time.now.to_i]
+      )
+    end
+    
+    input.merge(
+      evolved: false,
+      tests_passed: false,
+      rolled_back: true,
+      modified: files,
+      test_output: test_output[0..500],
+      reason: 'Tests failed, rolled back',
+      evolve_timestamp: Time.now.to_i
+    )
+  end
+end

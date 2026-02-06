@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/ask - Send to LLM, stream response
+# Sends routed request to OpenRouter/DeepSeek/etc
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/llm_client'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath inet dns')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input['text'] || ''
+  model = input[:model] || input['model'] || 'deepseek/deepseek-chat'
+  
+  if text.empty?
+    next { error: 'No text provided', input: input }
+  end
+  
+  # Build messages array
+  messages = []
+  
+  # Add persona system prompt if available
+  if input[:persona_style] || input[:persona_focus]
+    system_msg = "You are #{input[:persona] || 'MASTER'}."
+    system_msg += " #{input[:persona_style]}" if input[:persona_style]
+    system_msg += " Focus: #{input[:persona_focus]}" if input[:persona_focus]
+    messages << { role: 'system', content: system_msg }
+  end
+  
+  # Add user message
+  messages << { role: 'user', content: text }
+  
+  # Create LLM client
+  client = MASTER::LLMClient.new(model: model)
+  
+  # Send request
+  result = client.chat(messages, model: model, stream: false)
+  
+  if result[:success]
+    # Track cost
+    MASTER::DB.track_cost(
+      model: model,
+      tier: input[:tier] || 'default',
+      tokens_in: result[:tokens_in],
+      tokens_out: result[:tokens_out],
+      cost: result[:cost]
+    )
+    
+    # Record success for circuit breaker
+    MASTER::DB.record_success(model)
+    
+    # Merge result with input
+    input.merge(
+      response: result[:response],
+      tokens_in: result[:tokens_in],
+      tokens_out: result[:tokens_out],
+      cost: result[:cost],
+      model_used: result[:model] || model,
+      ask_timestamp: Time.now.to_i,
+      success: true
+    )
+  else
+    # Record failure for circuit breaker
+    MASTER::DB.record_failure(model)
+    
+    input.merge(
+      error: result[:error],
+      success: false,
+      ask_timestamp: Time.now.to_i
+    )
+  end
+end

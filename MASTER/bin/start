@@ -1,0 +1,67 @@
+#!/usr/bin/env zsh
+# MASTER interactive REPL
+# Reads user input, pipes through the pipeline, displays results
+# Uses pure Zsh: zsh/mapfile, parameter expansion, glob qualifiers
+# NO bashisms
+
+zmodload zsh/mapfile
+zmodload zsh/stat
+zmodload zsh/datetime
+
+MASTER_ROOT="${0:A:h:h}"
+MASTER_DB="${MASTER_ROOT}/master.db"
+
+# Colors for output
+autoload -U colors && colors
+
+print -P "%F{cyan}master0: interactive REPL started%f"
+print -P "%F{cyan}master0: database at ${MASTER_DB}%f"
+print ""
+
+# The REPL loop
+while true; do
+  # Read input with prompt
+  print -n "%F{green}› %f"
+  read -r input
+  
+  # Check for exit
+  [[ -z "$input" || "$input" == "exit" || "$input" == "quit" ]] && break
+  
+  # Special commands
+  case "$input" in
+    status)
+      ruby "${MASTER_ROOT}/bin/seed" --status 2>/dev/null || print "No status available"
+      continue
+      ;;
+    cost)
+      sqlite3 "${MASTER_DB}" "SELECT date(created_at,'unixepoch','localtime') as date, ROUND(SUM(cost_usd),4) as cost FROM costs GROUP BY date ORDER BY date DESC LIMIT 7" 2>/dev/null || print "No cost data"
+      continue
+      ;;
+    help)
+      print "Commands:"
+      print "  status  - Show system status"
+      print "  cost    - Show spending summary"
+      print "  help    - Show this help"
+      print "  exit    - Exit REPL"
+      print ""
+      print "Or type any question to send through the pipeline"
+      continue
+      ;;
+  esac
+  
+  # Build JSON message
+  local json='{"text":"'"${input//\"/\\\"}"'","timestamp":'$EPOCHSECONDS'}'
+  
+  # Pipe through the pipeline
+  print -r -- "$json" | \
+    ruby "${MASTER_ROOT}/bin/intake" | \
+    ruby "${MASTER_ROOT}/bin/guard" | \
+    ruby "${MASTER_ROOT}/bin/route" | \
+    ruby "${MASTER_ROOT}/bin/ask" | \
+    ruby "${MASTER_ROOT}/bin/critique" | \
+    ruby "${MASTER_ROOT}/bin/render"
+  
+  print ""
+done
+
+print -P "%F{cyan}master0: REPL terminated%f"

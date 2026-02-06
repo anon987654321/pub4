@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/route - LLM tier selector
+# Picks model based on task complexity, budget, circuit breaker state
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input['text'] || ''
+  
+  # Get budget constraints
+  daily_budget = (MASTER::DB.config('daily_budget') || '10.00').to_f
+  daily_spend = MASTER::DB.daily_spend
+  budget_remaining = daily_budget - daily_spend
+  
+  # Determine task complexity (simplified heuristic)
+  complexity = if text.length > 1000 || text.match?(/refactor|redesign|architect/i)
+    :high
+  elsif text.length > 200 || text.match?(/implement|create|build/i)
+    :medium
+  else
+    :low
+  end
+  
+  # Get model configs
+  default_model = MASTER::DB.config('default_model') || 'deepseek/deepseek-chat'
+  strong_model = MASTER::DB.config('strong_model') || 'deepseek/deepseek-r1'
+  weak_model = MASTER::DB.config('weak_model') || 'deepseek/deepseek-chat'
+  
+  # Select model based on complexity and budget
+  selected_model = if budget_remaining < 0.50
+    # Low budget - use cheapest model
+    weak_model
+  elsif complexity == :high && budget_remaining > 2.0
+    # High complexity with budget - use strong model
+    strong_model
+  elsif complexity == :medium
+    default_model
+  else
+    weak_model
+  end
+  
+  # Check circuit breaker
+  circuit = MASTER::DB.circuit_state(selected_model)
+  if circuit['state'] == 'open'
+    # Circuit is open, downgrade to weak model
+    selected_model = weak_model if selected_model != weak_model
+    circuit_warning = "Circuit breaker open for #{circuit['model']}, using #{selected_model}"
+  end
+  
+  # Determine tier label
+  tier = if selected_model == strong_model
+    'strong'
+  elsif selected_model == default_model
+    'default'
+  else
+    'weak'
+  end
+  
+  input.merge(
+    model: selected_model,
+    tier: tier,
+    complexity: complexity.to_s,
+    budget_remaining: budget_remaining.round(2),
+    daily_spend: daily_spend.round(4),
+    circuit_breaker: circuit['state'],
+    circuit_warning: circuit_warning,
+    route_timestamp: Time.now.to_i
+  )
+end

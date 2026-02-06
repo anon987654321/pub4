@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/intake - Input filter
+# Applies Strunk & White compression, strips noise, measures density
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/strunk'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input['text'] || ''
+  
+  if text.empty?
+    next { error: 'No text provided', input: input }
+  end
+  
+  # Compress using Strunk & White principles
+  result = MASTER::Strunk.process(text)
+  
+  # Load default persona (generic/stoic)
+  persona = MASTER::DB.persona('generic') || {}
+  
+  # Pass through all input fields plus our additions
+  input.merge(
+    text: result[:text],
+    original_text: text,
+    density: result[:density],
+    compressed: result[:compressed],
+    reduction: result[:reduction],
+    persona: persona['name'] || 'generic',
+    persona_style: persona['style'],
+    persona_focus: persona['focus'],
+    timestamp: input[:timestamp] || Time.now.to_i
+  )
+end

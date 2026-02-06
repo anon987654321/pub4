@@ -1,0 +1,111 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/chamber - Multi-model deliberation
+# Sends same prompt to multiple models, implements adversarial personas
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/llm_client'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath inet dns')
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || input['text'] || ''
+  strategy = input[:strategy] || 'debate'
+  
+  if text.empty?
+    next { error: 'No text provided', input: input }
+  end
+  
+  # Get active personas
+  personas = MASTER::DB.personas
+  
+  # Select personas based on strategy
+  selected_personas = case strategy
+  when 'debate'
+    personas.sample(3)  # 3 debaters
+  when 'council'
+    personas.sample(5)  # 5 council members
+  when 'creative'
+    personas.select { |p| (p['traits'] || '').include?('Creative') }
+  else
+    personas.sample(2)
+  end
+  
+  if selected_personas.empty?
+    next { error: 'No personas available', input: input }
+  end
+  
+  # Query each persona
+  responses = []
+  models = ['deepseek/deepseek-chat', 'deepseek/deepseek-r1']
+  
+  selected_personas.each_with_index do |persona, idx|
+    model = models[idx % models.length]
+    
+    messages = []
+    
+    # Persona system prompt
+    if persona['system_prompt']
+      messages << { role: 'system', content: persona['system_prompt'] }
+    else
+      prompt = "You are #{persona['name']}. #{persona['style']}"
+      messages << { role: 'system', content: prompt }
+    end
+    
+    # Add question specific to persona's focus
+    if persona['question']
+      messages << { role: 'user', content: "#{text}\n\n#{persona['question']}" }
+    else
+      messages << { role: 'user', content: text }
+    end
+    
+    # Send request
+    client = MASTER::LLMClient.new(model: model)
+    result = client.chat(messages, model: model)
+    
+    if result[:success]
+      responses << {
+        persona: persona['name'],
+        model: model,
+        response: result[:response],
+        weight: persona['weight'] || 0.15,
+        tokens: result[:tokens_in] + result[:tokens_out],
+        cost: result[:cost]
+      }
+      
+      # Track cost
+      MASTER::DB.track_cost(
+        model: model,
+        tier: 'chamber',
+        tokens_in: result[:tokens_in],
+        tokens_out: result[:tokens_out],
+        cost: result[:cost]
+      )
+    end
+  end
+  
+  # Calculate consensus (simplified)
+  # Real implementation would use semantic similarity
+  total_weight = responses.sum { |r| r[:weight] }
+  consensus = responses.length >= 2 ? (responses.length.to_f / selected_personas.length) : 0.0
+  
+  # Find dissent (shortest response is often the contrarian)
+  dissent = responses.min_by { |r| r[:response].length }
+  
+  # Synthesize responses (simplified - just concatenate)
+  synthesis = responses.map { |r| "**#{r[:persona]}**: #{r[:response]}" }.join("\n\n---\n\n")
+  
+  input.merge(
+    chamber_strategy: strategy,
+    responses: responses,
+    consensus: consensus.round(2),
+    dissent_persona: dissent ? dissent[:persona] : nil,
+    synthesis: synthesis,
+    total_cost: responses.sum { |r| r[:cost] },
+    chamber_timestamp: Time.now.to_i
+  )
+end

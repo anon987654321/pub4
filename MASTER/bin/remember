@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/remember - Memory store/retrieve
+# Reads/writes to SQLite memory table
+
+require_relative '../lib/json_protocol'
+require_relative '../lib/db'
+require_relative '../lib/pledge'
+
+# Apply security sandbox
+MASTER::Pledge.apply('stdio rpath wpath cpath')
+
+MASTER::Protocol.pipe do |input|
+  action = input[:action] || input['action'] || 'recall'
+  
+  case action
+  when 'store'
+    content = input[:content] || input['content'] || input[:text] || ''
+    context = input[:context] || input['context']
+    
+    if content.empty?
+      next { error: 'No content to store', input: input }
+    end
+    
+    memory_id = MASTER::DB.store_memory(
+      content: content,
+      context: context
+    )
+    
+    input.merge(
+      stored: true,
+      memory_id: memory_id,
+      action: 'store',
+      remember_timestamp: Time.now.to_i
+    )
+    
+  when 'recall'
+    context = input[:context] || input['context']
+    limit = input[:limit] || input['limit'] || 10
+    
+    memories = MASTER::DB.recall_memories(context: context, limit: limit)
+    
+    # Touch accessed memories
+    memories.each { |m| MASTER::DB.touch_memory(m['id']) }
+    
+    input.merge(
+      recalled: memories.map { |m| { id: m['id'], content: m['content'], created_at: m['created_at'] } },
+      count: memories.length,
+      action: 'recall',
+      remember_timestamp: Time.now.to_i
+    )
+  else
+    { error: "Unknown action: #{action}", input: input }
+  end
+end
