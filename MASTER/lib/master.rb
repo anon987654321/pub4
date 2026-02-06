@@ -44,6 +44,9 @@ module MASTER
   autoload :MultiFileAnalyzer, "#{LIB}/multi_file_analyzer"
   autoload :AutoFixer,   "#{LIB}/auto_fixer"
   autoload :Planner,     "#{LIB}/planner"
+  autoload :Autonomy,    "#{LIB}/autonomy"
+  autoload :PromptAutonomy, "#{LIB}/prompt_autonomy"
+  autoload :AgentAutonomy,  "#{LIB}/agent_autonomy"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

@@ -852,10 +852,81 @@ module MASTER
       when 'goals'
         list_goals
 
+      when 'budget'
+        show_budget
+
+      when 'health'
+        run_health_check
+
+      when 'learn'
+        show_learning_stats
+
       else
         # Default: send to LLM
         chat(input)
       end
+    end
+
+    def show_budget
+      remaining = Autonomy.remaining_budget rescue 10.0
+      spent = Autonomy.total_cost rescue 0.0
+      limit = Autonomy.config[:budget_limit] rescue 10.0
+      pct = ((spent / limit) * 100).round(1)
+      
+      "Budget: $#{spent.round(4)} / $#{limit} (#{pct}% used, $#{remaining.round(4)} remaining)"
+    end
+
+    def run_health_check
+      checks = []
+      
+      # LLM connectivity
+      checks << "LLM: #{@llm.status[:connected] ? '✓' : '✗'}"
+      
+      # Circuit breakers
+      open_circuits = %i[anthropic google openai deepseek].count { |p| Autonomy.circuit_open?(p) rescue false }
+      checks << "Circuits: #{open_circuits > 0 ? "#{open_circuits} open" : '✓ all closed'}"
+      
+      # Budget
+      checks << "Budget: #{Autonomy.exceeded_budget? ? '✗ exceeded' : '✓ ok'}" rescue nil
+      
+      # Sessions
+      sessions_dir = Paths.sessions rescue nil
+      session_count = sessions_dir ? Dir.glob(File.join(sessions_dir, '*.yml')).size : 0
+      checks << "Sessions: #{session_count} saved"
+      
+      checks.compact.join("\n")
+    end
+
+    def show_learning_stats
+      stats = []
+      
+      # Prompt metrics
+      metrics_file = File.join(Paths.var, 'prompt_metrics.yml')
+      if File.exist?(metrics_file)
+        metrics = YAML.load_file(metrics_file) rescue {}
+        total_execs = metrics.values.sum { |m| m[:executions] || 0 }
+        total_success = metrics.values.sum { |m| m[:successes] || 0 }
+        rate = total_execs > 0 ? ((total_success.to_f / total_execs) * 100).round(1) : 0
+        stats << "Prompts: #{total_execs} executions, #{rate}% success"
+      end
+      
+      # Examples learned
+      examples_file = File.join(Paths.var, 'few_shot_examples.yml')
+      if File.exist?(examples_file)
+        examples = YAML.load_file(examples_file) rescue {}
+        success_count = (examples[:successes] || {}).values.flatten.size
+        failure_count = (examples[:failures] || []).size
+        stats << "Examples: #{success_count} successes, #{failure_count} failures learned"
+      end
+      
+      # Skills
+      skills_file = File.join(Paths.var, 'agent_skills.yml')
+      if File.exist?(skills_file)
+        skills = YAML.load_file(skills_file) rescue {}
+        stats << "Skills: #{skills.size} acquired"
+      end
+      
+      stats.empty? ? "No learning data yet" : stats.join("\n")
     end
 
     def undo_last
@@ -1199,6 +1270,9 @@ module MASTER
           plan [goal]   #{C_DIM}Break into tasks (uses current goal)#{C_RESET}
           next          #{C_DIM}Run next task#{C_RESET}
           show-plan     #{C_DIM}View current plan#{C_RESET}
+          budget        #{C_DIM}Show remaining budget#{C_RESET}
+          health        #{C_DIM}System health check#{C_RESET}
+          learn         #{C_DIM}Learning statistics#{C_RESET}
           
         #{C_BOLD}Self-Awareness#{C_RESET}
           self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
