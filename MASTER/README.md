@@ -30,11 +30,13 @@ Files in `lib/` are yours to improve.
     lib/safety.rb        Guardrails
     lib/evolve.rb        Self-optimization loop
     lib/chamber.rb       Multi-model deliberation
+    lib/autonomy/        Phase 4: Advanced autonomy modules
     lib/postpro.rb       Cinematic film emulation (12 stocks, 12 presets)
     lib/principles/      45 constitutional rules
     lib/config/          YAML settings
     lib/personas/        Character modes
     lib/unified/         v226 unified framework components
+    docs/PHASE4.md       Phase 4 documentation
 
 
 ## Commands
@@ -45,7 +47,21 @@ Files in `lib/` are yours to improve.
     evolve      Converge until <2% gain
     chamber     Multi-model debate
     tier        Switch model class
+    suggest     Get next suggestion (Phase 4)
+    diagnostics System health check (Phase 4)
     help        List all
+
+## Phase 4: Advanced Autonomy
+
+MASTER now features advanced autonomy and intelligence:
+
+- **Proactive Suggestions**: Anticipates your next command
+- **Self-Healing**: Automatic error recovery with rollback
+- **Adaptive UI**: Learns and adapts to your preferences
+- **Metrics Tracking**: Comprehensive analytics dashboard
+- **Feedback Loop**: Continuous improvement from user input
+
+See `docs/PHASE4.md` for complete documentation.
 
 
 ## Models

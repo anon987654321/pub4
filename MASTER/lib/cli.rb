@@ -1442,6 +1442,14 @@ module MASTER
           viral [topic] #{C_DIM}Generate viral ideas#{C_RESET}
           spicy [topic] #{C_DIM}Generate hot take#{C_RESET}
           
+        #{C_BOLD}Phase 4: Advanced Autonomy#{C_RESET}
+          suggest       #{C_DIM}Get proactive suggestion#{C_RESET}
+          diagnostics   #{C_DIM}Run system diagnostics#{C_RESET}
+          tune          #{C_DIM}Auto-tune based on feedback#{C_RESET}
+          satisfaction N #{C_DIM}Rate satisfaction (1-10)#{C_RESET}
+          phase4-report #{C_DIM}Export autonomy report#{C_RESET}
+          phase4-setup  #{C_DIM}Configure preferences#{C_RESET}
+          
         #{C_BOLD}Self-Awareness#{C_RESET}
           self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
           refresh-self  #{C_DIM}Rescan MASTER code#{C_RESET}
