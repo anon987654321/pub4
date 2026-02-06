@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+gem "ruby_llm"
+gem "sqlite3"
+gem "dotenv"
+gem "tty-prompt"
+gem "tty-spinner"
+
+group :test do
+  gem "minitest"
+  gem "rake"
+end

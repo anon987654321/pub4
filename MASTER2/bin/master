@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "dotenv/load" rescue nil
+
+require_relative "../lib/master"
+
+# Setup database
+MASTER::DB.setup
+
+# Configure LLM
+MASTER::LLM.configure
+
+# Determine mode
+if ARGV.include?("--pipe")
+  MASTER::Pipeline.pipe
+else
+  MASTER::Pipeline.repl
+end
