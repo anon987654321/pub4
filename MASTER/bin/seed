@@ -1,0 +1,120 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Seed script: Import YAML data into SQLite
+require 'yaml'
+require_relative '../lib/db'
+
+MASTER_ROOT = File.expand_path('..', __dir__)
+
+def seed_principles
+  principles_file = File.join(MASTER_ROOT, 'data', 'principles.yml')
+  return unless File.exist?(principles_file)
+  
+  data = YAML.safe_load(File.read(principles_file))
+  principles = data['principles']
+  
+  count = 0
+  principles.each do |key, principle|
+    # Determine protection level based on tier
+    protection_level = case principle['tier']
+    when 'core' then 'absolute'
+    when 'solid' then 'protected'
+    when 'design' then 'negotiable'
+    else 'flexible'
+    end
+    
+    MASTER::DB.upsert_principle(
+      name: principle['name'] || key,
+      text: principle['description'] || principle['name'],
+      protection_level: protection_level,
+      category: principle['tier'],
+      tier: principle['tier'],
+      priority: principle['priority'] || 50,
+      weight: 1.0,
+      auto_fixable: principle['auto_fixable'] || false
+    )
+    count += 1
+  end
+  
+  count
+end
+
+def seed_personas
+  personas_file = File.join(MASTER_ROOT, 'data', 'personas.yml')
+  return unless File.exist?(personas_file)
+  
+  data = YAML.safe_load(File.read(personas_file))
+  personas = data['personas']
+  
+  count = 0
+  personas.each do |key, persona|
+    MASTER::DB.upsert_persona(
+      name: persona['name'] || key,
+      description: persona['description'],
+      greeting: persona['greeting'],
+      traits: persona['traits'],
+      style: persona['style'],
+      focus: persona['focus'],
+      sources: persona['sources'],
+      rules: persona['rules'],
+      system_prompt: persona['system_prompt'],
+      weight: persona['weight'] || 0.15,
+      veto_domains: persona['veto_domains']
+    )
+    count += 1
+  end
+  
+  count
+end
+
+def seed_config
+  # Default configuration values
+  configs = {
+    'daily_budget' => ['10.00', 'negotiable', 'Maximum daily spend on LLM API calls (USD)'],
+    'convergence_threshold' => ['0.02', 'negotiable', 'Delta below which iterations are considered converged'],
+    'circuit_breaker_threshold' => ['3', 'protected', 'Number of failures before circuit opens'],
+    'max_method_lines' => ['5', 'negotiable', 'Sandi Metz: max lines per method'],
+    'max_class_lines' => ['100', 'negotiable', 'Sandi Metz: max lines per class'],
+    'max_method_params' => ['4', 'negotiable', 'Sandi Metz: max parameters per method'],
+    'information_density_target' => ['0.7', 'negotiable', 'Strunk & White: target information density'],
+    'default_model' => ['deepseek/deepseek-chat', 'flexible', 'Default LLM model'],
+    'strong_model' => ['deepseek/deepseek-r1', 'flexible', 'Strong reasoning model'],
+    'weak_model' => ['deepseek/deepseek-chat', 'flexible', 'Fast/cheap model'],
+  }
+  
+  count = 0
+  configs.each do |key, (value, protection, description)|
+    MASTER::DB.set_config(key, value, protection_level: protection, description: description)
+    count += 1
+  end
+  
+  count
+end
+
+# Main execution
+puts "master0: initializing database..."
+MASTER::DB.init!
+
+puts "master0: seeding principles..."
+principles_count = seed_principles
+puts "master0: seeded #{principles_count} principles"
+
+puts "master0: seeding personas..."
+personas_count = seed_personas
+puts "master0: seeded #{personas_count} personas"
+
+puts "master0: seeding config..."
+config_count = seed_config
+puts "master0: seeded #{config_count} config values"
+
+# Verify
+total_principles = MASTER::DB.connection.get_first_value("SELECT COUNT(*) FROM principles")
+total_personas = MASTER::DB.connection.get_first_value("SELECT COUNT(*) FROM personas")
+total_config = MASTER::DB.connection.get_first_value("SELECT COUNT(*) FROM config")
+
+puts "\nmaster0: database ready"
+puts "  - #{total_principles} principles"
+puts "  - #{total_personas} personas"
+puts "  - #{total_config} config values"
+puts "  - database: #{MASTER::DB::DB_PATH}"
