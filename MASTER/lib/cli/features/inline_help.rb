@@ -30,20 +30,31 @@ module MASTER
           
           return if hints.empty?
           
-          "#{C_DIM}💡 #{hints.first}#{C_RESET}"
+          # Use constants from the including class
+          c_dim = self.class.const_get(:C_DIM)
+          c_reset = self.class.const_get(:C_RESET)
+          
+          "#{c_dim}💡 #{hints.first}#{c_reset}"
         end
         
         def enhanced_help_text
-          lines = ["#{C_BOLD}MASTER CLI Commands#{C_RESET}", ""]
+          # Use constants from the including class
+          c_bold = self.class.const_get(:C_BOLD)
+          c_light_blue = self.class.const_get(:C_LIGHT_BLUE)
+          c_dim = self.class.const_get(:C_DIM)
+          c_reset = self.class.const_get(:C_RESET)
+          aliases = self.class.const_get(:ALIASES)
+          
+          lines = ["#{c_bold}MASTER CLI Commands#{c_reset}", ""]
           
           COMMAND_HINTS.each do |cmd, hint|
-            alias_str = ALIASES.key(cmd)
+            alias_str = aliases.key(cmd)
             alias_part = alias_str ? " (#{alias_str})" : ""
-            lines << "  #{C_LIGHT_BLUE}#{cmd}#{alias_part}#{C_RESET} - #{hint}"
+            lines << "  #{c_light_blue}#{cmd}#{alias_part}#{c_reset} - #{hint}"
           end
           
           lines << ""
-          lines << "#{C_DIM}Type 'command --help' for detailed help#{C_RESET}"
+          lines << "#{c_dim}Type 'command --help' for detailed help#{c_reset}"
           lines.join("\n")
         end
         

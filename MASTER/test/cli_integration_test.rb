@@ -177,7 +177,7 @@ class TestCLIIntegration < Minitest::Test
   # Test Feature: Pattern Learning
   def test_pattern_learning_initialization
     result = @cli.show_learned_patterns
-    assert_includes result, 'patterns' || result.include?('No patterns')
+    assert(result.include?('patterns') || result.include?('No patterns'))
   end
 
   # Test Feature: Command Chaining

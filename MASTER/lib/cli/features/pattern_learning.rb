@@ -49,7 +49,11 @@ module MASTER
         def show_learned_patterns
           return "No patterns learned yet" if @pattern_suggestions.empty?
           
-          lines = ["#{C_BOLD}Common Command Patterns#{C_RESET}"]
+          # Use constants from the including class
+          c_bold = self.class.const_get(:C_BOLD)
+          c_reset = self.class.const_get(:C_RESET)
+          
+          lines = ["#{c_bold}Common Command Patterns#{c_reset}"]
           @pattern_suggestions.sort_by { |_, count| -count }.first(10).each do |pattern, count|
             lines << "  #{count}× #{pattern}"
           end
