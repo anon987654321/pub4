@@ -47,6 +47,7 @@ module MASTER
   autoload :Autonomy,    "#{LIB}/autonomy"
   autoload :PromptAutonomy, "#{LIB}/prompt_autonomy"
   autoload :AgentAutonomy,  "#{LIB}/agent_autonomy"
+  autoload :Dmesg,       "#{LIB}/dmesg"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

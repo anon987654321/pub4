@@ -141,11 +141,19 @@ module MASTER
       @processing = false
       @pastel = Pastel.new if TTY_AVAILABLE
       @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
+      
+      # Dmesg boot header
+      Dmesg.boot_header rescue nil
+      
       load_state
       setup_completion
       load_history
       setup_crash_recovery
       load_self_awareness
+      
+      # Boot complete
+      boot_ms = ((Time.now - @boot_time) * 1000).round
+      Dmesg.boot_complete(boot_ms) rescue nil
     end
     
     # Smart defaults - infer missing arguments from context
@@ -861,9 +869,34 @@ module MASTER
       when 'learn'
         show_learning_stats
 
+      when 'dmesg'
+        show_dmesg(arg)
+
+      when 'trace'
+        toggle_trace(arg)
+
       else
         # Default: send to LLM
         chat(input)
+      end
+    end
+
+    def show_dmesg(arg)
+      count = arg&.to_i
+      count = 20 if count.nil? || count <= 0
+      Dmesg.dump(last_n: count)
+    end
+
+    def toggle_trace(arg)
+      case arg
+      when 'on', '1', 'true'
+        Dmesg.enabled = true
+        "Trace enabled (bold green)"
+      when 'off', '0', 'false'
+        Dmesg.enabled = false
+        "Trace disabled"
+      else
+        "Trace: #{Dmesg.enabled ? 'on' : 'off'}"
       end
     end
 
@@ -1277,6 +1310,10 @@ module MASTER
         #{C_BOLD}Self-Awareness#{C_RESET}
           self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
           refresh-self  #{C_DIM}Rescan MASTER code#{C_RESET}
+
+        #{C_BOLD}Debug#{C_RESET}
+          dmesg [n]     #{C_DIM}Show last n trace messages#{C_RESET}
+          trace on|off  #{C_DIM}Toggle dmesg output#{C_RESET}
       HELP
     end
 

@@ -418,19 +418,26 @@ module MASTER
         @last_cost = estimate_cost(input_tokens, output_tokens, tier)
         @total_cost += @last_cost
 
+        # Dmesg trace
+        Dmesg.llm(tier, config[:model], tokens_in: input_tokens, tokens_out: output_tokens, cost: @last_cost) rescue nil
+
         Result.ok(content)
       rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
         retries += 1
+        Dmesg.retry_event(retries, MAX_RETRIES, e.class.name) rescue nil
         if retries <= MAX_RETRIES
           # Autonomy: On timeout, try with reduced context
           if retries == 2 && Autonomy.config[:timeout_recovery]
             @history = Autonomy.timeout_recovery_context(@history) rescue @history
+            Dmesg.prune(@history.size + 10, @history.size) rescue nil
           end
           sleep RETRY_DELAYS[retries - 1]
           retry
         end
+        Dmesg.llm_error(tier, e.message) rescue nil
         Result.err("Network error: #{e.message}")
       rescue => e
+        Dmesg.llm_error(tier, e.message) rescue nil
         Result.err(e.message)
       end
     end

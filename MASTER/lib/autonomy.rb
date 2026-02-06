@@ -100,6 +100,7 @@ module MASTER
 
       def track_cost(cost)
         @total_cost += cost
+        Dmesg.budget('spent', cost, remaining_budget) rescue nil
         !exceeded_budget?
       end
 
@@ -126,6 +127,7 @@ module MASTER
 
         loop do
           attempt += 1
+          Dmesg.retry_event(attempt, max_retries, 'executing') rescue nil
           result = yield
           return result if result_ok?(result)
 
@@ -172,6 +174,7 @@ module MASTER
           if state[:failures] >= config[:circuit_breaker_threshold]
             state[:open] = true
             state[:opened_at] = Time.now
+            Dmesg.circuit(provider, 'OPEN - too many failures') rescue nil
           end
         end
       end
