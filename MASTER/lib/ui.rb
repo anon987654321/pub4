@@ -243,5 +243,100 @@ module MASTER
       tree = TTY::Tree.new(path, level: depth)
       puts tree.render
     end
+    
+    # Bringhurst typographic principles
+    module Typography
+      extend self
+      
+      # Maximum line length for readability (Bringhurst recommends 66 chars)
+      MAX_LINE_LENGTH = 72
+      
+      # Convert straight quotes to proper typographic quotes
+      def typographic_quotes(text)
+        text.gsub(/"([^"]+)"/, '"\1"')  # "" for quoted text
+            .gsub(/(\w)'(\w)/, '\1'\2')  # ' for contractions
+            .gsub(/'([^']+)'/, ''\1'')   # '' for single quotes
+      end
+      
+      # Convert double hyphens to em dashes
+      def em_dashes(text)
+        text.gsub(/--/, '—')
+      end
+      
+      # Convert ellipsis to proper character
+      def ellipsis(text)
+        text.gsub(/\.\.\./, '…')
+      end
+      
+      # Apply all typographic improvements
+      def enhance(text)
+        text = typographic_quotes(text)
+        text = em_dashes(text)
+        text = ellipsis(text)
+        text
+      end
+      
+      # Wrap text to max line length with proper indentation
+      def wrap(text, width: MAX_LINE_LENGTH, indent: 0)
+        lines = []
+        current = ''
+        indent_str = ' ' * indent
+        
+        text.split(/\s+/).each do |word|
+          if (current + word).length + 1 > width - indent
+            lines << indent_str + current.strip unless current.empty?
+            current = word + ' '
+          else
+            current += word + ' '
+          end
+        end
+        
+        lines << indent_str + current.strip unless current.empty?
+        lines.join("\n")
+      end
+      
+      # Create hierarchical text with proper indentation (no ALL CAPS)
+      def hierarchy(text, level: 0)
+        indent = '  ' * level
+        case level
+        when 0
+          "#{indent}#{text}"  # No decoration, just text
+        when 1
+          "\n#{indent}#{text}\n"  # Whitespace as punctuation
+        else
+          "#{indent}• #{text}"  # Bullet for deeper levels
+        end
+      end
+      
+      # Add generous vertical spacing between sections
+      def section_break
+        "\n\n"
+      end
+      
+      # Format a paragraph with proper typography
+      def paragraph(text, width: MAX_LINE_LENGTH)
+        enhanced = enhance(text)
+        wrapped = wrap(enhanced, width: width)
+        wrapped
+      end
+      
+      # Format multiple paragraphs with proper spacing
+      def document(*paragraphs, width: MAX_LINE_LENGTH)
+        paragraphs.map { |p| paragraph(p, width: width) }.join(section_break)
+      end
+    end
+    
+    # Convenience methods for typography
+    def typographic(text)
+      Typography.enhance(text)
+    end
+    
+    def wrap_text(text, width: 72)
+      Typography.wrap(text, width: width)
+    end
+    
+    def format_paragraph(text, width: 72)
+      Typography.paragraph(text, width: width)
+    end
   end
 end

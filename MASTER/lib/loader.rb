@@ -57,6 +57,9 @@ module MASTER
   autoload :Layout,      "#{LIB}/layout"
   autoload :PiperTTS,    "#{LIB}/piper_tts"
   autoload :EdgeTTS,     "#{LIB}/edge_tts"
+  autoload :TTY,         "#{LIB}/tty"
+  autoload :Quality,     "#{LIB}/quality"
+  autoload :InfoArch,    "#{LIB}/info_arch"
 
   # NOTE: Files in lib/core/ that are NOT autoloaded (loaded/included directly as needed):
   #   - hierarchy.rb, interactive.rb: UI modules included in other classes

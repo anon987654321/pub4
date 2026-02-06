@@ -75,6 +75,72 @@ module MASTER
       PROTECTED_FILES.any? { |p| file.end_with?(p) }
     end
     
+    # Saga rollback: safe self-modification with automatic rollback on failure
+    def safe_modify(file, test_cmd: nil)
+      return Result.err("File not found: #{file}") unless File.exist?(file)
+      return Result.err("Protected file: #{file}") if protected?(file)
+      
+      # 1. Snapshot current state
+      backup = File.read(file)
+      backup_path = "#{file}.backup.#{Time.now.to_i}"
+      File.write(backup_path, backup)
+      
+      begin
+        # 2. Apply modification
+        yield if block_given?
+        
+        # 3. Verify syntax
+        if file.end_with?('.rb')
+          unless system("ruby -c #{file} > /dev/null 2>&1")
+            raise "Syntax error after modification"
+          end
+        end
+        
+        # 4. Run tests if test command provided
+        if test_cmd
+          unless system(test_cmd)
+            raise "Tests failed after modification"
+          end
+        end
+        
+        # 5. Success - cleanup backup
+        File.delete(backup_path) if File.exist?(backup_path)
+        log "Modified #{file} successfully"
+        Result.ok(file)
+        
+      rescue => e
+        # 6. Rollback on any failure
+        log "Modification failed: #{e.message}, rolling back #{file}"
+        File.write(file, backup)
+        File.delete(backup_path) if File.exist?(backup_path)
+        
+        # 7. Log what was attempted
+        log_rollback(file, e, backup[0..500])
+        
+        Result.err("Rollback: #{e.message}")
+      end
+    end
+    
+    # Log rollback details for learning
+    def log_rollback(file, error, backup_preview)
+      rollback_log = File.join(Paths.data, 'rollback.log')
+      FileUtils.mkdir_p(File.dirname(rollback_log))
+      
+      entry = {
+        timestamp: Time.now.iso8601,
+        file: file,
+        error: error.message,
+        preview: backup_preview,
+        backtrace: error.backtrace&.first(3)
+      }
+      
+      File.open(rollback_log, 'a') do |f|
+        f.puts JSON.generate(entry)
+      end
+    rescue
+      # Ignore logging errors
+    end
+    
     # Load principles from YAML files for context
     def load_principles
       dir = File.join(Paths.lib, 'principles')

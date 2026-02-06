@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+# MASTER - Zsh CLI Frontend
+# Pure Zsh wrapper for the Ruby CLI
+
+# Load Zsh modules
+zmodload zsh/mapfile
+zmodload zsh/stat
+zmodload zsh/datetime
+
+# Set MASTER_ROOT if not already set
+: ${MASTER_ROOT:=${0:A:h:h}}
+export MASTER_ROOT
+
+# Add MASTER lib to Ruby load path
+export RUBYLIB="$MASTER_ROOT/lib:${RUBYLIB}"
+
+# Delegate to Ruby CLI
+exec ruby -I"$MASTER_ROOT/lib" "$MASTER_ROOT/bin/cli" "$@"

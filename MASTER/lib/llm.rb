@@ -31,12 +31,143 @@ module MASTER
     DEFAULT_TIER = :strong
     MAX_RETRIES = 3
     RETRY_DELAYS = [1, 2, 4].freeze
+    
+    # Circuit breaker configuration
+    CIRCUIT_FAILURE_THRESHOLD = 3
+    CIRCUIT_TIMEOUT = 300  # 5 minutes
+    
+    # Budget configuration (can be overridden via config)
+    DEFAULT_SESSION_BUDGET = 10.0  # $10 per session
+    DEFAULT_DAY_BUDGET = 50.0      # $50 per day
+    
+    # Circuit breaker state tracker
+    class CircuitBreaker
+      def initialize(threshold: CIRCUIT_FAILURE_THRESHOLD, timeout: CIRCUIT_TIMEOUT)
+        @failures = Hash.new(0)
+        @opened_at = {}
+        @threshold = threshold
+        @timeout = timeout
+      end
+      
+      def record_failure(provider)
+        @failures[provider] += 1
+        if @failures[provider] >= @threshold
+          @opened_at[provider] = Time.now
+          Dmesg.circuit_opened(provider, @timeout) rescue nil
+        end
+      end
+      
+      def record_success(provider)
+        @failures[provider] = 0
+        @opened_at.delete(provider)
+      end
+      
+      def open?(provider)
+        return false unless @opened_at.key?(provider)
+        
+        # Check if timeout has expired
+        if Time.now - @opened_at[provider] > @timeout
+          @opened_at.delete(provider)
+          @failures[provider] = 0
+          Dmesg.circuit_closed(provider) rescue nil
+          false
+        else
+          true
+        end
+      end
+      
+      def status
+        {
+          failures: @failures.dup,
+          opened: @opened_at.keys,
+          timeout: @timeout
+        }
+      end
+    end
+    
+    # Cost tracker with budget enforcement
+    class CostTracker
+      attr_reader :session_cost, :day_cost, :model_costs
+      
+      def initialize(session_budget: DEFAULT_SESSION_BUDGET, day_budget: DEFAULT_DAY_BUDGET)
+        @session_budget = session_budget
+        @day_budget = day_budget
+        @session_cost = 0.0
+        @day_cost = load_day_cost
+        @model_costs = Hash.new(0.0)
+        @current_day = Date.today
+      end
+      
+      def track(cost, model: nil, tier: nil)
+        @session_cost += cost
+        @day_cost += cost
+        @model_costs[model || tier] += cost if model || tier
+        save_day_cost
+      end
+      
+      def within_session_budget?(estimated_cost = 0)
+        (@session_cost + estimated_cost) <= @session_budget
+      end
+      
+      def within_day_budget?(estimated_cost = 0)
+        check_day_rollover
+        (@day_cost + estimated_cost) <= @day_budget
+      end
+      
+      def session_remaining
+        [@session_budget - @session_cost, 0].max
+      end
+      
+      def day_remaining
+        check_day_rollover
+        [@day_budget - @day_cost, 0].max
+      end
+      
+      def status
+        check_day_rollover
+        {
+          session: { spent: @session_cost, budget: @session_budget, remaining: session_remaining },
+          day: { spent: @day_cost, budget: @day_budget, remaining: day_remaining },
+          by_model: @model_costs.dup
+        }
+      end
+      
+      private
+      
+      def check_day_rollover
+        if Date.today != @current_day
+          @current_day = Date.today
+          @day_cost = 0.0
+          save_day_cost
+        end
+      end
+      
+      def load_day_cost
+        cost_file = File.join(Paths.var, 'day_cost.json')
+        return 0.0 unless File.exist?(cost_file)
+        
+        data = JSON.parse(File.read(cost_file))
+        data['date'] == Date.today.to_s ? data['cost'].to_f : 0.0
+      rescue
+        0.0
+      end
+      
+      def save_day_cost
+        cost_file = File.join(Paths.var, 'day_cost.json')
+        FileUtils.mkdir_p(File.dirname(cost_file))
+        
+        data = { date: @current_day.to_s, cost: @day_cost }
+        File.write(cost_file, JSON.generate(data))
+      rescue
+        # Ignore save errors
+      end
+    end
 
     attr_reader :total_cost, :persona, :last_tokens, :last_cached,
                 :total_tokens_in, :total_tokens_out, :request_count, :backend,
-                :context_files
+                :context_files, :circuit_breaker, :cost_tracker
 
-    def initialize(backend: nil)
+    def initialize(backend: nil, session_budget: DEFAULT_SESSION_BUDGET, day_budget: DEFAULT_DAY_BUDGET)
       @api_key = ENV['OPENROUTER_API_KEY']
       @base_url = ENV['OPENROUTER_BASE_URL'] || ENV['OPENROUTER_API_BASE'] || 'https://openrouter.ai/api/v1'
       @total_cost = 0.0
@@ -53,6 +184,8 @@ module MASTER
       @context_files = []
       @system_context = []  # Additional system context (e.g., self-awareness)
       @backend = resolve_backend(backend || ENV['MASTER_LLM_BACKEND'])
+      @circuit_breaker = CircuitBreaker.new
+      @cost_tracker = CostTracker.new(session_budget: session_budget, day_budget: day_budget)
       configure_ruby_llm if @backend == :ruby_llm
       load_conversation_history
     end
@@ -65,18 +198,31 @@ module MASTER
       tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
 
-      # Autonomy: Check budget before proceeding
-      estimated = Autonomy.estimate_cost(message) rescue 0.01
-      unless Autonomy.within_budget?(estimated)
-        return Result.err("Budget exceeded ($#{Autonomy.total_cost.round(2)}/$#{Autonomy.config[:budget_limit]})")
+      # Check budget before proceeding
+      estimated = estimate_cost_for_message(message, tier)
+      
+      unless @cost_tracker.within_session_budget?(estimated)
+        remaining = @cost_tracker.session_remaining
+        return Result.err("Session budget exceeded ($#{@cost_tracker.session_cost.round(2)}/$#{@cost_tracker.session_budget}). Remaining: $#{remaining.round(2)}")
+      end
+      
+      unless @cost_tracker.within_day_budget?(estimated)
+        remaining = @cost_tracker.day_remaining
+        return Result.err("Daily budget exceeded ($#{@cost_tracker.day_cost.round(2)}/$#{@cost_tracker.day_budget}). Remaining: $#{remaining.round(2)}")
       end
 
-      # Autonomy: Check circuit breaker
+      # Check circuit breaker
       provider = extract_provider(tier)
-      if Autonomy.circuit_open?(provider)
-        # Try fallback
+      if @circuit_breaker.open?(provider)
+        # Try fallback tier
         fallback_tier = find_fallback_tier(tier)
-        tier = fallback_tier if fallback_tier
+        if fallback_tier
+          tier = fallback_tier
+          provider = extract_provider(tier)
+          Dmesg.circuit_fallback(provider, tier) rescue nil
+        else
+          return Result.err("Provider #{provider} circuit open, no fallback available")
+        end
       end
 
       # Autonomy: Detect task type and adjust parameters
@@ -98,12 +244,14 @@ module MASTER
                  call_api(tier)
                end
 
-      # Autonomy: Record result for circuit breaker
-      Autonomy.record_provider_result(provider, result.ok?) rescue nil
-
-      # Autonomy: Track cost
+      # Record circuit breaker result
       if result.ok?
-        Autonomy.track_cost(@last_cost || 0) rescue nil
+        @circuit_breaker.record_success(provider)
+        
+        # Track cost
+        cost = @last_cost || 0
+        @cost_tracker.track(cost, tier: tier)
+        
         @cache[cache_key] = result.value
         @history << { role: 'assistant', content: result.value } if @backend != :ruby_llm
         save_conversation_history
@@ -111,10 +259,20 @@ module MASTER
         # Autonomy: Track for prompt learning
         PromptAutonomy.track_execution("chat:#{tier}", success: true, tokens: @last_tokens[:output]) rescue nil
       else
+        @circuit_breaker.record_failure(provider)
         PromptAutonomy.track_execution("chat:#{tier}", success: false) rescue nil
       end
 
       result
+    end
+    
+    def estimate_cost_for_message(message, tier)
+      # Rough estimation: 4 chars per token
+      input_tokens = (message.length / 4.0).ceil + 500  # Add overhead for system prompt
+      output_tokens = 500  # Assume average response
+      
+      config = TIERS[tier] || TIERS[DEFAULT_TIER]
+      (input_tokens * config[:input] + output_tokens * config[:output]) / 1000.0
     end
 
     def extract_provider(tier)

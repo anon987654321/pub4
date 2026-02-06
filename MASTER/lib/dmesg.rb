@@ -137,6 +137,35 @@ module MASTER
       def clear
         @buffer.clear
       end
+      
+      # Circuit breaker events (enhanced)
+      def circuit_opened(provider, timeout)
+        log("circuit0", parent: provider, message: "opened, #{timeout}s timeout")
+      end
+      
+      def circuit_closed(provider)
+        log("circuit0", parent: provider, message: "closed, reset")
+      end
+      
+      def circuit_fallback(provider, tier)
+        log("circuit0", parent: provider, message: "fallback to #{tier}")
+      end
+      
+      # Quality check events
+      def quality_check(type, result)
+        status = result.ok? ? 'passed' : 'failed'
+        details = result.ok? ? result.value : result.error
+        log("quality0", parent: type, message: "#{status}: #{details}")
+      end
+      
+      # Evolution events
+      def evolve_cycle(iteration, applied, violations)
+        log("evolve0", parent: "cycle#{iteration}", message: "#{applied} applied, #{violations} violations")
+      end
+      
+      def evolve_rollback(file, reason)
+        log("evolve0", parent: "rollback", message: "#{file}: #{reason[0..50]}")
+      end
 
       private
 
