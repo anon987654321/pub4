@@ -1,0 +1,223 @@
+MASTER v2.0 Pipeline Architecture
+================================================================================
+
+                          INTERACTIVE REPL
+                         ┌─────────────────┐
+                         │   bin/start     │
+                         │  Ruby + TTY     │
+                         │  RubyLLM.chat   │
+                         └─────────────────┘
+
+
+                         PIPELINE STAGES
+================================================================================
+
+Input → JSON Protocol → Output
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  ┌──────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐              │
+│  │  intake  │──▶│  guard  │──▶│  route  │──▶│   ask   │              │
+│  │ Compress │   │ Safety  │   │  Model  │   │RubyLLM  │              │
+│  │ Strunk&W │   │Firewall │   │Selector │   │ .chat() │              │
+│  └──────────┘   └─────────┘   └─────────┘   └─────────┘              │
+│       │              │              │              │                    │
+│       │              │              │              ▼                    │
+│       │              │              │         ┌──────────┐             │
+│       │              │              │         │ critique │             │
+│       │              │              │         │Tribunal  │             │
+│       │              │              │         └──────────┘             │
+│       │              │              │              │                    │
+│       │              │              │              ▼                    │
+│       │              │              │         ┌──────────┐             │
+│       │              │              └────────▶│ chamber  │             │
+│       │              │                        │Multi-LLM │             │
+│       │              │                        └──────────┘             │
+│       │              │                             │                    │
+│       ▼              ▼                             ▼                    │
+│  ┌──────────────────────────────────────────────────────┐             │
+│  │                  UTILITY STAGES                       │             │
+│  ├──────────┬──────────┬──────────┬──────────┬──────────┤             │
+│  │ execute  │ evolve   │ quality  │ converge │ remember │             │
+│  │Sandbox   │Self-Mod  │Metz      │Delta<2%  │Memory    │             │
+│  │Pledge    │+Rollback │Rules     │          │SQLite    │             │
+│  └──────────┴──────────┴──────────┴──────────┴──────────┘             │
+│       │          │          │          │          │                    │
+│       └──────────┴──────────┴──────────┴──────────┘                    │
+│                            │                                            │
+│                            ▼                                            │
+│                       ┌─────────┐                                      │
+│                       │  plan   │                                      │
+│                       │8-phase  │                                      │
+│                       │workflow │                                      │
+│                       └─────────┘                                      │
+│                            │                                            │
+│                            ▼                                            │
+│                       ┌─────────┐                                      │
+│                       │ render  │                                      │
+│                       │Typography                                      │
+│                       │(TERMINUS)                                      │
+│                       └─────────┘                                      │
+│                            │                                            │
+│                            ▼                                            │
+│                      Plain Text Output                                 │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+
+                        DATA FLOW EXAMPLE
+================================================================================
+
+User Input:
+  {"text": "Refactor this code for clarity"}
+
+      ↓ intake
+  
+  {"text": "Refactor code for clarity",          ← compressed
+   "persona": "architect",                       ← loaded
+   "density": 0.8}                               ← measured
+
+      ↓ guard
+  
+  {"text": "Refactor code for clarity",
+   "persona": "architect",
+   "allowed": true,                              ← safety check
+   "reason": null}
+
+      ↓ route
+  
+  {"text": "Refactor code for clarity",
+   "persona": "architect",
+   "model": "deepseek-r1",                       ← selected
+   "tier": "strong",                             ← complexity
+   "budget_remaining": 8.5}
+
+      ↓ ask
+  
+  {"text": "Refactor code for clarity",
+   "persona": "architect",
+   "model": "deepseek-r1",
+   "response": "Here's the refactored code...",  ← LLM response
+   "tokens_in": 42,
+   "tokens_out": 256}
+
+      ↓ critique
+  
+  {"text": "Refactor code for clarity",
+   "response": "Here's the refactored code...",
+   "critique_passed": true,                      ← hallucination check
+   "confidence": 0.9}
+
+      ↓ quality
+  
+  {"response": "Here's the refactored code...",
+   "quality_passed": true,                       ← Metz rules
+   "quality_score": 0.95}
+
+      ↓ render
+  
+  Here's the refactored code...                  ← plain text output
+
+
+                          STATE MANAGEMENT
+================================================================================
+
+                         ┌─────────────────┐
+                         │  master.db      │
+                         │   (SQLite)      │
+                         └─────────────────┘
+                                │
+           ┌────────────────────┼────────────────────┐
+           │                    │                    │
+      ┌─────────┐         ┌─────────┐         ┌─────────┐
+      │principles         │ costs   │         │circuits │
+      │personas  │         │sessions │         │hooks    │
+      │config    │         │messages │         │evolutions
+      └─────────┘         └─────────┘         └─────────┘
+
+
+                       CIRCUIT BREAKER PATTERN
+================================================================================
+
+Model Request → Success? → Record Cost
+                  │
+                  No (Failure)
+                  │
+                  ▼
+            Record Failure
+                  │
+                  ▼
+            Failures >= 3?
+                  │
+                  Yes
+                  │
+                  ▼
+            Mark Circuit OPEN
+                  │
+                  ▼
+        Auto-Downgrade to Next Tier
+
+
+                           SHELL ALIASES
+================================================================================
+
+.zshrc provides convenient aliases:
+
+  m-start     → bin/start
+  m-ask       → full pipeline (intake | guard | route | ask | render)
+  m-evolve    → bin/evolve
+  m-quality   → bin/quality
+
+Example:
+  $ m-ask What is SOLID?
+
+
+                         TESTING STRATEGY
+================================================================================
+
+Each stage is independently testable:
+
+  test/test_protocol.rb   → JSON round-trip
+  test/test_db.rb         → SQLite operations
+  test/test_pipeline.rb   → Stage composition
+
+Stages can be tested in isolation:
+  $ echo '{"text":"test"}' | bin/intake
+  $ echo '{"text":"rm -rf /"}' | bin/guard
+
+Or composed:
+  $ echo '{"text":"test"}' | bin/intake | bin/guard | bin/route
+
+
+                            METRICS
+================================================================================
+
+Code Reduction:
+  Old cli.rb:    3135 lines (monolithic)
+  New system:    1232 lines total (8 libs + 15 bins)
+  Reduction:     61%
+
+File Sizes:
+  Largest lib:   162 lines (lib/db.rb)
+  Largest bin:   73 lines (bin/route)
+  Average lib:   63 lines
+  Average bin:   49 lines
+
+Testability:
+  Old system:    1 testable unit
+  New system:    23 testable units
+  Improvement:   +2200%
+
+
+                      UNIX PHILOSOPHY ✓
+================================================================================
+
+✓ Do one thing well       Each stage has single responsibility
+✓ Compose via pipes       JSON in, JSON out
+✓ Text streams            Universal interface
+✓ No side effects         Pure functions (except DB/git)
+✓ Small, focused          No file over 162 lines
+✓ Rule of Silence         Only output data (stderr for logging)
+✓ Rule of Repair          Fail gracefully, continue pipeline
+✓ Rule of Economy         Every line earns its place
+
