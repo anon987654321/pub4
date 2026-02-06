@@ -32,9 +32,14 @@ module MASTER
     MAX_RETRIES = 3
     RETRY_DELAYS = [1, 2, 4].freeze
 
+    # Circuit breaker configuration
+    CIRCUIT_BREAKER_THRESHOLD = 5  # failures before opening
+    CIRCUIT_BREAKER_TIMEOUT = 60   # seconds before retry
+    CIRCUIT_BREAKER_SUCCESS_THRESHOLD = 2  # successes to close
+
     attr_reader :total_cost, :persona, :last_tokens, :last_cached,
                 :total_tokens_in, :total_tokens_out, :request_count, :backend,
-                :context_files
+                :context_files, :circuit_breakers
 
     def initialize(backend: nil)
       @api_key = ENV['OPENROUTER_API_KEY']
@@ -53,6 +58,7 @@ module MASTER
       @context_files = []
       @system_context = []  # Additional system context (e.g., self-awareness)
       @backend = resolve_backend(backend || ENV['MASTER_LLM_BACKEND'])
+      @circuit_breakers = initialize_circuit_breakers
       configure_ruby_llm if @backend == :ruby_llm
       load_conversation_history
     end
@@ -64,6 +70,17 @@ module MASTER
     def chat(message, tier: nil)
       tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
+
+      # Check circuit breaker before proceeding
+      if circuit_open?(tier)
+        # Try fallback tier
+        fallback_tier = find_healthy_fallback(tier)
+        if fallback_tier
+          tier = fallback_tier
+        else
+          return Result.err("All tiers unhealthy (circuit breakers open)")
+        end
+      end
 
       # Autonomy: Check budget before proceeding
       estimated = Autonomy.estimate_cost(message) rescue 0.01
@@ -98,6 +115,9 @@ module MASTER
                  call_api(tier)
                end
 
+      # Record result in circuit breaker
+      record_tier_result(tier, result.ok?)
+
       # Autonomy: Record result for circuit breaker
       Autonomy.record_provider_result(provider, result.ok?) rescue nil
 
@@ -129,6 +149,53 @@ module MASTER
       return nil unless idx
 
       chain[(idx + 1)..-1].find { |t| !Autonomy.circuit_open?(extract_provider(t)) }
+    end
+
+    # Find healthy fallback considering circuit breakers
+    def find_healthy_fallback(current_tier)
+      chain = [:strong, :code, :fast, :cheap, :gemini, :glm, :kimi]
+      idx = chain.index(current_tier)
+      return nil unless idx
+
+      chain[(idx + 1)..-1].find { |t| tier_healthy?(t) }
+    end
+
+    # Cost-aware tier selection with load balancing
+    def select_optimal_tier(budget_remaining: Float::INFINITY, latency_weight: 0.3, cost_weight: 0.5, availability_weight: 0.2)
+      candidates = TIERS.keys.select { |t| tier_healthy?(t) }
+      return DEFAULT_TIER if candidates.empty?
+
+      scores = candidates.map do |tier|
+        config = TIERS[tier]
+        
+        # Cost score (lower is better, normalize to 0-1)
+        avg_cost = (config[:input] + config[:output]) / 2.0
+        cost_score = 1.0 - (avg_cost / 0.015) # Normalize against highest cost tier
+        cost_score = 0 if avg_cost * 1000 > budget_remaining # Exceeds budget
+        
+        # Latency score (estimate based on tier type)
+        latency_score = case tier
+                       when :fast, :cheap then 0.9
+                       when :code, :gemini then 0.8
+                       when :strong then 0.6
+                       when :reasoning then 0.4
+                       else 0.5
+                       end
+        
+        # Availability score (based on circuit breaker state)
+        breaker = @circuit_breakers[tier]
+        availability_score = breaker[:state] == :closed ? 1.0 : 0.5
+        
+        # Weighted total score
+        total_score = (cost_score * cost_weight) + 
+                     (latency_score * latency_weight) + 
+                     (availability_score * availability_weight)
+        
+        { tier: tier, score: total_score }
+      end
+
+      best = scores.max_by { |s| s[:score] }
+      best ? best[:tier] : DEFAULT_TIER
     end
 
     def set_tier(tier)
@@ -249,7 +316,65 @@ module MASTER
       Result.ok(@backend)
     end
 
+    # Circuit breaker methods
+    def tier_healthy?(tier)
+      !circuit_open?(tier)
+    end
+
+    def circuit_open?(tier)
+      breaker = @circuit_breakers[tier]
+      return false unless breaker
+
+      if breaker[:state] == :open
+        # Check if timeout has passed for retry
+        if Time.now - breaker[:opened_at] > CIRCUIT_BREAKER_TIMEOUT
+          breaker[:state] = :half_open
+          breaker[:success_count] = 0
+          false
+        else
+          true
+        end
+      else
+        false
+      end
+    end
+
+    def record_tier_result(tier, success)
+      breaker = @circuit_breakers[tier]
+      return unless breaker
+
+      if success
+        breaker[:failure_count] = 0
+        if breaker[:state] == :half_open
+          breaker[:success_count] += 1
+          if breaker[:success_count] >= CIRCUIT_BREAKER_SUCCESS_THRESHOLD
+            breaker[:state] = :closed
+          end
+        end
+      else
+        breaker[:failure_count] += 1
+        breaker[:last_failure] = Time.now
+        
+        if breaker[:failure_count] >= CIRCUIT_BREAKER_THRESHOLD
+          breaker[:state] = :open
+          breaker[:opened_at] = Time.now
+        end
+      end
+    end
+
     private
+
+    def initialize_circuit_breakers
+      TIERS.keys.each_with_object({}) do |tier, hash|
+        hash[tier] = {
+          state: :closed,
+          failure_count: 0,
+          success_count: 0,
+          last_failure: nil,
+          opened_at: nil
+        }
+      end
+    end
 
     def resolve_backend(value)
       return :http if value.nil? || value.to_s.strip.empty?

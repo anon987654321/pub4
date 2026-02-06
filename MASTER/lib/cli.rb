@@ -1546,25 +1546,69 @@ module MASTER
       # Inject filesystem context for paths mentioned in message
       message = inject_path_context(message)
 
-      result = @llm.chat(message)
+      # Check if streaming is enabled (via environment or config)
+      use_streaming = ENV['MASTER_STREAM'] == '1' || ENV['MASTER_STREAM'] == 'true'
+
+      if use_streaming
+        stream_chat(message)
+      else
+        result = @llm.chat(message)
+        @last_tokens = @llm.last_tokens
+        @last_cached = @llm.last_cached
+        
+        return "Error: #{result.error}" unless result.ok?
+        
+        response = result.value
+        
+        # Execute any code blocks in response
+        exec_results = Executor.process_response(response)
+        if exec_results.any? && exec_results.any? { |r| r[:success] == false }
+          formatted = Executor.format_results(exec_results)
+          followup = @llm.chat("Execution results:\n#{formatted}\n\nFix errors. Reply with terse result only.")
+          response = followup.value if followup.ok?
+        end
+        
+        # Strip markdown fluff from conversational responses (not code)
+        has_code_request = message.match?(/refactor|edit|fix|write|create|show.*code|diff/i)
+        has_code_request ? response : clean_response(response)
+      end
+    end
+
+    # Streaming chat with character-by-character output
+    def stream_chat(message)
+      buffer = ""
+      cursor_visible = true
+      
+      # Hide cursor during streaming
+      print "\e[?25l" if $stdout.tty?
+      
+      result = @llm.stream_ask(message) do |token|
+        buffer += token
+        print token
+        $stdout.flush
+      end
+      
+      # Show cursor again
+      print "\e[?25h" if $stdout.tty?
+      print "\n"
+      
       @last_tokens = @llm.last_tokens
       @last_cached = @llm.last_cached
       
       return "Error: #{result.error}" unless result.ok?
       
-      response = result.value
-      
       # Execute any code blocks in response
-      exec_results = Executor.process_response(response)
+      exec_results = Executor.process_response(buffer)
       if exec_results.any? && exec_results.any? { |r| r[:success] == false }
         formatted = Executor.format_results(exec_results)
         followup = @llm.chat("Execution results:\n#{formatted}\n\nFix errors. Reply with terse result only.")
-        response = followup.value if followup.ok?
+        return followup.value if followup.ok?
       end
       
-      # Strip markdown fluff from conversational responses (not code)
-      has_code_request = message.match?(/refactor|edit|fix|write|create|show.*code|diff/i)
-      has_code_request ? response : clean_response(response)
+      buffer
+    rescue => e
+      print "\e[?25h" if $stdout.tty? # Ensure cursor is shown on error
+      "Streaming error: #{e.message}"
     end
     
     def clean_response(text)

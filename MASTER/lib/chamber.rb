@@ -269,5 +269,52 @@ module MASTER
     def over_budget?
       @cost >= MAX_COST_PER_FILE
     end
+
+    # Byzantine Fault Tolerance consensus: require 2f+1 agreements
+    # Rejects outliers using median absolute deviation
+    def consensus(proposals_with_scores)
+      return nil if proposals_with_scores.empty?
+      return proposals_with_scores.first if proposals_with_scores.size == 1
+
+      # Need at least 2f+1 agreements where f is max faulty nodes
+      # For n proposals, f = (n-1)/3, so need (2*(n-1)/3) + 1 = (2n+1)/3 agreements
+      n = proposals_with_scores.size
+      required_agreements = ((2 * n + 1) / 3.0).ceil
+
+      # Extract numeric scores for MAD calculation
+      scores = proposals_with_scores.map { |p| p[:score] || 0 }
+      median = calculate_median(scores)
+      mad = median_absolute_deviation(scores, median)
+
+      # Filter outliers (beyond 3 MAD from median)
+      threshold = 3 * mad
+      non_outliers = proposals_with_scores.select do |p|
+        (p[:score] - median).abs <= threshold
+      end
+
+      # Check if we have enough agreements
+      if non_outliers.size >= required_agreements
+        # Return proposal with highest score among non-outliers
+        non_outliers.max_by { |p| p[:score] }
+      else
+        # No consensus reached
+        nil
+      end
+    end
+
+    private
+
+    def calculate_median(values)
+      return 0 if values.empty?
+      sorted = values.sort
+      mid = sorted.length / 2
+      sorted.length.odd? ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2.0
+    end
+
+    def median_absolute_deviation(values, median)
+      return 0 if values.empty?
+      deviations = values.map { |v| (v - median).abs }
+      calculate_median(deviations)
+    end
   end
 end

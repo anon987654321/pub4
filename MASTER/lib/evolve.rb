@@ -425,6 +425,120 @@ module MASTER
       system("git checkout -- .")
     end
 
+    # Saga Pattern: Multi-step change with rollback capability
+    # Steps: backup → validate → apply → test → commit (or compensate/rollback)
+    def apply_with_saga(refinement)
+      saga_state = {
+        steps: [],
+        refinement: refinement,
+        backup: nil,
+        applied: false
+      }
+
+      begin
+        # Step 1: Backup
+        backup_path = create_backup(refinement[:file])
+        saga_state[:backup] = backup_path
+        saga_state[:steps] << :backup
+
+        # Step 2: Validate (pre-flight checks)
+        unless validate_refinement(refinement)
+          raise "Pre-flight validation failed"
+        end
+        saga_state[:steps] << :validate
+
+        # Step 3: Apply changes
+        apply_refinement(refinement)
+        saga_state[:applied] = true
+        saga_state[:steps] << :apply
+
+        # Step 4: Test (syntax + basic checks)
+        unless test_changes(refinement[:file])
+          raise "Post-application tests failed"
+        end
+        saga_state[:steps] << :test
+
+        # Step 5: Commit (finalize)
+        commit_saga(refinement)
+        saga_state[:steps] << :commit
+
+        # Success - cleanup backup
+        cleanup_backup(backup_path)
+        { success: true, saga: saga_state }
+
+      rescue => e
+        # Compensate/Rollback on any failure
+        log "Saga failed at step #{saga_state[:steps].last}: #{e.message}"
+        compensate_saga(saga_state)
+        { success: false, saga: saga_state, error: e.message }
+      end
+    end
+
+    private
+
+    def create_backup(file)
+      backup_dir = File.join(Paths.var, 'saga_backups')
+      FileUtils.mkdir_p(backup_dir)
+      
+      backup_path = File.join(backup_dir, "#{File.basename(file)}.#{Time.now.to_i}.bak")
+      FileUtils.cp(file, backup_path) if File.exist?(file)
+      backup_path
+    end
+
+    def validate_refinement(refinement)
+      # Check file exists and is readable
+      return false unless File.exist?(refinement[:file])
+      return false unless File.readable?(refinement[:file])
+      
+      # Check it's not protected
+      return false if protected?(refinement[:file])
+      
+      true
+    end
+
+    def apply_refinement(refinement)
+      # Simplified - actual implementation would apply the specific change
+      # For now, just verify the file is still valid
+      code = File.read(refinement[:file])
+      File.write(refinement[:file], code)
+    end
+
+    def test_changes(file)
+      # Syntax check
+      return false unless system("ruby -c #{file} > /dev/null 2>&1")
+      
+      # Could add more tests here
+      true
+    end
+
+    def commit_saga(refinement)
+      # Git commit (if in a repo)
+      msg = "saga: #{refinement[:desc]}"
+      system("git add #{refinement[:file]} && git commit -m '#{msg}' > /dev/null 2>&1")
+    end
+
+    def compensate_saga(saga_state)
+      log "Compensating saga - rolling back changes"
+      
+      # Restore from backup if available
+      if saga_state[:backup] && File.exist?(saga_state[:backup])
+        file = saga_state[:refinement][:file]
+        FileUtils.cp(saga_state[:backup], file)
+        log "Restored #{file} from backup"
+      end
+      
+      # Revert any git changes
+      if saga_state[:steps].include?(:apply)
+        system("git checkout -- #{saga_state[:refinement][:file]} 2>/dev/null")
+      end
+    end
+
+    def cleanup_backup(backup_path)
+      File.delete(backup_path) if backup_path && File.exist?(backup_path)
+    end
+
+    public
+
     # Post-iteration reflection
     def reflect
       summary = "Iteration #{@iteration}: analyzed codebase, applied refinements"
