@@ -39,7 +39,11 @@ function getPhaseCol(angle){
   const rr=0+tval*72;
   const gg=180+tval*44;
   const bb=190+tval*19;
-  return `rgb(${rr},${gg},${bb})`;
+  return {r:rr,g:gg,b:bb};
+}
+
+function applyTransparency(colorObj,opacity){
+  return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${opacity})`;
 }
 
 function render(){
@@ -49,15 +53,15 @@ function render(){
   c.fillStyle='rgba(0,0,0,0.12)';
   c.fillRect(0,0,wd,ht);
   
-  const col=getPhaseCol(colorPhase);
+  const baseCol=getPhaseCol(colorPhase);
   
   for(let i=0;i<nodes.length;i++){
     for(let j=i+1;j<nodes.length;j++){
       const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y;
       const len=Math.sqrt(dx*dx+dy*dy);
       if(len<=proximity){
-        const alpha=(1-len/proximity)*0.5;
-        c.strokeStyle=col.replace(')',`,${alpha})`).replace('rgb','rgba');
+        const opacity=(1-len/proximity)*0.5;
+        c.strokeStyle=applyTransparency(baseCol,opacity);
         c.lineWidth=1;
         c.beginPath();
         c.moveTo(nodes[i].x,nodes[i].y);
@@ -72,7 +76,7 @@ function render(){
     if(n.x<0||n.x>=wd)n.vx*=-1;
     if(n.y<0||n.y>=ht)n.vy*=-1;
     
-    c.fillStyle=col;
+    c.fillStyle=applyTransparency(baseCol,1);
     const rad=1+aud*2;
     c.fillRect(n.x-rad,n.y-rad,rad*2,rad*2);
   }
