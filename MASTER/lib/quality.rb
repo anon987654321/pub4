@@ -274,7 +274,7 @@ module MASTER
 
       # Command Query Separation
       query_with_side_effect: {
-        pattern: /def\s+(get_|find_|is_|has_|can_)\w+.*\n(?:.*\n)*?.*(?:save|update|delete|destroy|write|remove)/m,
+        pattern: nil, # Disabled due to ReDoS risk - use conceptual analysis instead
         principle: 'Command Query Separation',
         message: 'Query method appears to have side effects',
         severity: :error
@@ -282,7 +282,7 @@ module MASTER
 
       # Fail Fast violations
       late_nil_check: {
-        pattern: /(\w+)\.[^.]+\n(?:.*\n)*?.*\1\.nil\?/m,
+        pattern: nil, # Handled specially in check_late_nil_check
         principle: 'Fail Fast',
         message: 'Nil check after object use',
         severity: :warning
