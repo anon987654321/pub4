@@ -39,3 +39,10 @@ coverage/
 
 var/
 MASTER/var/
+
+# MASTER generated data (transient)
+MASTER/data/reports/*.md
+MASTER/data/monitoring/*.jsonl
+MASTER/data/intelligence/*.yml
+MASTER/data/memory/*.yml
+MASTER/data/memory/*.json
