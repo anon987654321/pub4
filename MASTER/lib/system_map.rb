@@ -6,7 +6,8 @@ module MASTER
       root_path = File.expand_path('../../..', __dir__)
       module_count = Dir[File.join(root_path, 'lib', '**', '*.rb')].count
       bin_count = Dir[File.join(root_path, 'bin', '*')].reject { |f| File.directory?(f) }.count
-      "MASTER v#{MASTER::VERSION}: #{module_count} Ruby modules, #{bin_count} CLI tools, autoloaded on #{RUBY_PLATFORM}"
+      version = defined?(MASTER::VERSION) ? MASTER::VERSION : '52.0'
+      "MASTER v#{version}: #{module_count} Ruby modules, #{bin_count} CLI tools, autoloaded on #{RUBY_PLATFORM}"
     end
     
     def self.architecture

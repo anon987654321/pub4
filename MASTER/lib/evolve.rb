@@ -504,11 +504,27 @@ module MASTER
     end
 
     def test_changes(file)
+      # Validate file path is safe
+      return false unless valid_file_path?(file)
+      
       # Syntax check - safe array form to prevent injection
       return false unless system('ruby', '-c', file, out: File::NULL, err: File::NULL)
       
       # Could add more tests here
       true
+    end
+
+    def valid_file_path?(file)
+      # Check file exists and is within the project
+      return false unless File.exist?(file)
+      
+      real_path = File.realpath(file)
+      root_path = File.realpath(Paths.root)
+      
+      # Ensure file is within project directory
+      real_path.start_with?(root_path)
+    rescue StandardError
+      false
     end
 
     def commit_saga(refinement)

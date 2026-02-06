@@ -177,7 +177,8 @@ module MASTER
         # Cost score (lower is better, normalize to 0-1)
         avg_cost = (config[:input] + config[:output]) / 2.0
         cost_score = 1.0 - (avg_cost / MAX_TIER_COST)
-        cost_score = 0 if avg_cost * 1000 > budget_remaining # Exceeds budget
+        # Budget check: avg_cost is per 1M tokens, convert to same unit
+        cost_score = 0 if (avg_cost / 1000.0) > budget_remaining # Exceeds budget
         
         # Latency score (estimate based on tier type)
         latency_score = case tier
