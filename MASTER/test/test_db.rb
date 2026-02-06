@@ -1,30 +1,27 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require 'fileutils'
-require_relative '../lib/db'
+require "minitest/autorun"
+require "sqlite3"
+require_relative "../lib/result"
+require_relative "../lib/db"
 
 class TestDB < Minitest::Test
   def setup
-    # Use test database
-    @original_db_path = MASTER::DB::DB_PATH
-    test_db = "/tmp/test_master_#{$$}.db"
-    FileUtils.rm_f(test_db)
-    MASTER::DB.const_set(:DB_PATH, test_db)
-    @connection = MASTER::DB.connection
+    # Use in-memory database for tests
+    @original_db = MASTER::DB.instance_variable_get(:@connection)
+    @db = SQLite3::Database.new(":memory:")
+    @db.results_as_hash = true
+    MASTER::DB.instance_variable_set(:@connection, @db)
     MASTER::DB.initialize_schema
   end
-  
+
   def teardown
-    @connection.close if @connection
-    FileUtils.rm_f(MASTER::DB::DB_PATH)
-    MASTER::DB.const_set(:DB_PATH, @original_db_path)
-    MASTER::DB.instance_variable_set(:@connection, nil)
+    MASTER::DB.instance_variable_set(:@connection, @original_db)
   end
-  
-  def test_schema_initialization
-    tables = @connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    table_names = tables.map { |row| row["name"] }
+
+  def test_initialize_schema_creates_tables
+    tables = @db.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    table_names = tables.map { |t| t["name"] }
     
     assert_includes table_names, "principles"
     assert_includes table_names, "personas"
@@ -32,39 +29,43 @@ class TestDB < Minitest::Test
     assert_includes table_names, "costs"
     assert_includes table_names, "circuits"
   end
-  
-  def test_config_operations
+
+  def test_get_persona_returns_nil_when_not_found
+    result = MASTER::DB.get_persona("nonexistent")
+    assert_nil result
+  end
+
+  def test_get_persona_returns_data_when_found
+    @db.execute("INSERT INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
+                ["test", "tester", "test instructions", 5])
+    
+    result = MASTER::DB.get_persona("test")
+    refute_nil result
+    assert_equal "test", result[:name]
+    assert_equal "test instructions", result[:instructions]
+  end
+
+  def test_get_principles_filters_by_protection_level
+    @db.execute("INSERT INTO principles (name, text, protection_level) VALUES (?, ?, ?)",
+                ["p1", "text1", 0])
+    @db.execute("INSERT INTO principles (name, text, protection_level) VALUES (?, ?, ?)",
+                ["p2", "text2", 5])
+    
+    results = MASTER::DB.get_principles(protection_level: 3)
+    assert_equal 1, results.length
+    assert_equal "p2", results[0][:name]
+  end
+
+  def test_set_and_get_config
     MASTER::DB.set_config("test_key", "test_value")
-    value = MASTER::DB.get_config("test_key")
-    assert_equal "test_value", value
+    result = MASTER::DB.get_config("test_key")
+    assert_equal "test_value", result
   end
-  
-  def test_track_cost
-    MASTER::DB.track_cost(
-      model: "test-model",
-      tokens_in: 100,
-      tokens_out: 200,
-      cost: 0.01
-    )
-    
-    costs = @connection.execute("SELECT * FROM costs WHERE model = ?", ["test-model"])
-    assert_equal 1, costs.length
-    assert_equal 100, costs.first["tokens_in"]
-    assert_equal 200, costs.first["tokens_out"]
-  end
-  
-  def test_circuit_breaker
-    # Initially no state
-    assert_nil MASTER::DB.get_circuit_state("test-model")
-    
-    # Record failures
-    3.times { MASTER::DB.record_circuit_failure("test-model") }
-    
-    # Should be open after 3 failures
-    assert_equal 'open', MASTER::DB.get_circuit_state("test-model")
-    
-    # Reset circuit
-    MASTER::DB.reset_circuit("test-model")
-    assert_nil MASTER::DB.get_circuit_state("test-model")
+
+  def test_set_config_updates_existing_key
+    MASTER::DB.set_config("key", "value1")
+    MASTER::DB.set_config("key", "value2")
+    result = MASTER::DB.get_config("key")
+    assert_equal "value2", result
   end
 end

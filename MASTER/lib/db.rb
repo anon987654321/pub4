@@ -75,7 +75,7 @@ module MASTER
       end
 
       def set_config(key, value)
-        connection.execute("INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?", key, value, value)
+        connection.execute("INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?", [key, value, value])
       end
     end
   end

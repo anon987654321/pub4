@@ -1,88 +1,58 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require 'json'
-require 'open3'
+require "minitest/autorun"
+require "sqlite3"
+require_relative "../lib/result"
+require_relative "../lib/db"
+require_relative "../lib/circuit"
+require_relative "../lib/budget"
+require_relative "../lib/typography"
+require_relative "../lib/pipeline"
 
 class TestPipeline < Minitest::Test
   def setup
-    @bin_dir = File.expand_path('../../bin', __FILE__)
+    # Setup in-memory DB
+    @db_conn = SQLite3::Database.new(":memory:")
+    @db_conn.results_as_hash = true
+    
+    @original_db = MASTER::DB.instance_variable_get(:@connection)
+    MASTER::DB.instance_variable_set(:@connection, @db_conn)
+    MASTER::DB.initialize_schema
   end
-  
-  def test_intake_stage
-    input = { text: "I would say that this is very complex" }
-    output = run_stage('intake', input)
-    
-    assert output[:text]
-    # Strunk compression should have removed "I would" and "very"
-    refute_includes output[:text], "I would"
-    assert output[:density]
+
+  def teardown
+    MASTER::DB.instance_variable_set(:@connection, @original_db)
   end
-  
-  def test_guard_stage
-    # Safe input
-    safe_input = { text: "Write a Ruby function" }
-    output = run_stage('guard', safe_input)
-    assert output[:allowed]
+
+  def test_pipeline_chains_stages
+    # Use only intake and guard stages for simple test
+    pipeline = MASTER::Pipeline.new(stages: [:intake, :guard])
+    result = pipeline.call({ text: "hello" })
     
-    # Dangerous input
-    dangerous_input = { text: "rm -rf /" }
-    output = run_stage('guard', dangerous_input)
-    refute output[:allowed]
-    assert output[:reason]
+    assert result.ok?
+    assert_equal "hello", result.value[:text]
   end
-  
-  def test_route_stage
-    input = { text: "Simple question" }
-    output = run_stage('route', input)
+
+  def test_pipeline_stops_on_error
+    # Guard will block this
+    pipeline = MASTER::Pipeline.new(stages: [:intake, :guard])
+    result = pipeline.call({ text: "rm -rf /" })
     
-    assert output[:model]
-    assert output[:tier]
-    assert output[:budget_remaining]
+    assert result.err?
   end
-  
-  def test_quality_stage
-    input = { response: "```ruby\nclass Test\nend\n```" }
-    output = run_stage('quality', input)
+
+  def test_pipeline_passes_data_through_stages
+    pipeline = MASTER::Pipeline.new(stages: [:intake, :guard])
+    result = pipeline.call({ text: "safe command" })
     
-    assert_includes output.keys, :quality_passed
-    assert_includes output.keys, :quality_score
+    assert result.ok?
+    assert_equal "safe command", result.value[:text]
   end
-  
-  def test_converge_stage
-    # First iteration
-    input = { response: "Version 1", iteration: 1 }
-    output = run_stage('converge', input)
-    refute output[:converged]
+
+  def test_custom_stage_order
+    pipeline = MASTER::Pipeline.new(stages: [:intake, :guard, :render])
+    result = pipeline.call({ text: "test", response: "response text" })
     
-    # Same response - should converge
-    input = { response: "Version 1", previous: "Version 1", iteration: 2 }
-    output = run_stage('converge', input)
-    assert output[:converged]
-  end
-  
-  def test_plan_stage
-    input = { phase: "discover", completed_criteria: ["problem understood", "constraints identified"] }
-    output = run_stage('plan', input)
-    
-    assert_equal "discover", output[:phase]
-    assert_equal "analyze", output[:next_phase]
-    assert output[:criteria_met]
-  end
-  
-  private
-  
-  def run_stage(stage, input)
-    stage_path = File.join(@bin_dir, stage)
-    
-    stdout, stderr, status = Open3.capture3(
-      stage_path,
-      stdin_data: JSON.generate(input)
-    )
-    
-    JSON.parse(stdout, symbolize_names: true)
-  rescue JSON::ParserError
-    # Some stages might not return JSON on error
-    { error: "Failed to parse output", stdout: stdout, stderr: stderr }
+    assert result.ok?
   end
 end

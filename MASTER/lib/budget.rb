@@ -32,7 +32,7 @@ module MASTER
       
       @db.connection.execute(
         "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
-        model, tokens_in, tokens_out, cost
+        [model, tokens_in, tokens_out, cost]
       )
       
       cost

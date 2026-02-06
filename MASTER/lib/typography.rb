@@ -12,40 +12,37 @@ module MASTER
     def self.split_regions(text)
       regions = []
       current_pos = 0
-      in_code = false
       
-      text.scan(/```.*?$/m).each_with_index do |match, _|
-        match_pos = text.index(match, current_pos)
+      # Find all code fence pairs
+      while current_pos < text.length
+        # Find next code fence start
+        fence_start = text.index(/^```/m, current_pos)
+        
+        if fence_start.nil?
+          # No more code blocks, add remaining as prose
+          regions << { text: text[current_pos..], code: false } if current_pos < text.length
+          break
+        end
         
         # Add prose before code fence
-        if match_pos > current_pos
-          regions << { text: text[current_pos...match_pos], code: in_code }
+        if fence_start > current_pos
+          regions << { text: text[current_pos...fence_start], code: false }
         end
         
-        # Toggle code mode
-        in_code = !in_code
+        # Find the end of this code block
+        fence_end = text.index(/^```\s*$/m, fence_start + 3)
         
-        # Find end of code block
-        if in_code
-          end_marker = text.index(/^```\s*$/m, match_pos + match.length)
-          if end_marker
-            code_end = end_marker + text[end_marker..].index("\n") + 1
-            regions << { text: text[match_pos...code_end], code: true }
-            current_pos = code_end
-            in_code = false
-          else
-            regions << { text: text[match_pos..], code: true }
-            current_pos = text.length
-          end
+        if fence_end
+          # Include the closing fence
+          fence_end_line = text.index("\n", fence_end)
+          fence_end_line = text.length if fence_end_line.nil?
+          regions << { text: text[fence_start..fence_end_line], code: true }
+          current_pos = fence_end_line + 1
         else
-          regions << { text: match + "\n", code: false }
-          current_pos = match_pos + match.length + 1
+          # No closing fence, treat rest as code
+          regions << { text: text[fence_start..], code: true }
+          break
         end
-      end
-      
-      # Add remaining text
-      if current_pos < text.length
-        regions << { text: text[current_pos..], code: in_code }
       end
       
       regions

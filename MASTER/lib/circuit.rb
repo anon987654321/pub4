@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "time"
+
 module MASTER
   class Circuit
     THRESHOLD = 3
@@ -10,7 +12,7 @@ module MASTER
     end
 
     def record_failure(model)
-      @db.connection.execute(<<~SQL, model, Time.now.utc.iso8601)
+      @db.connection.execute(<<~SQL, [model, Time.now.utc.iso8601, Time.now.utc.iso8601])
         INSERT INTO circuits (model, failures, last_failure, state)
         VALUES (?, 1, ?, 'closed')
         ON CONFLICT(model) DO UPDATE SET
