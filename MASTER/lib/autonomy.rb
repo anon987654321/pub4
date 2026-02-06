@@ -5,6 +5,17 @@ module MASTER
   # Implements: auto-approval, retries, fallbacks, budget guards, circuit breakers
   module Autonomy
     extend self
+    
+    # Phase 4 modules - Advanced autonomy and intelligence
+    AUTONOMY_LIB = "#{MASTER::LIB}/autonomy"
+    autoload :ProactiveSuggestions, "#{AUTONOMY_LIB}/proactive_suggestions"
+    autoload :SelfHealing,          "#{AUTONOMY_LIB}/self_healing"
+    autoload :AdaptiveUI,           "#{AUTONOMY_LIB}/adaptive_ui"
+    autoload :MetricsTracker,       "#{AUTONOMY_LIB}/metrics_tracker"
+    autoload :FeedbackLearning,     "#{AUTONOMY_LIB}/adaptive_ui"
+    autoload :ContextAnalyzer,      "#{AUTONOMY_LIB}/proactive_suggestions"
+    autoload :HealthMonitor,        "#{AUTONOMY_LIB}/self_healing"
+    autoload :Phase4,               "#{AUTONOMY_LIB}/phase4"
 
     # Configuration defaults
     DEFAULT_CONFIG = {

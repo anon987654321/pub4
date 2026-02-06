@@ -97,11 +97,11 @@ module MASTER
     }.freeze
 
     COMMANDS = %w[
-      ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
-      context converge cost deps describe diff edit enforce-principles evolve exit fav favs git help
-      history image install install-hooks introspect lint log ls metrics persona personas principles pull push
-      queue quit radio read refactor refine reload review sanity scan smells speak status stream
-      tree undo version web
+      ask audit auto-tune backend beautify cat cd chamber check-ports clean clear commit compare-images
+      context converge cost deps describe diagnostics diff edit enforce-principles evolve exit fav favs git help
+      history image install install-hooks introspect lint log ls metrics persona personas phase4-diag
+      phase4-report phase4-setup principles pull push queue quit radio read refactor refine reload review
+      sanity satisfaction scan smells speak status stream suggest tree tune undo version web
     ].freeze
 
     HISTORY_FILE = Paths.history
@@ -141,6 +141,7 @@ module MASTER
       @last_dir = nil       # Most recent directory
       @last_query = nil     # Most recent LLM query
       @last_result = nil    # Most recent result
+      @last_command = nil   # Most recent command for Phase 4
       @last_interrupt = nil
       @input_queue = Queue.new
       @processing = false
@@ -655,6 +656,9 @@ module MASTER
       cmd, *args = input.split(/\s+/, 2)
       cmd = ALIASES[cmd] || cmd  # Resolve aliases
       arg = args.first
+      
+      # Track last command for Phase 4
+      @last_command = cmd
 
       case cmd
       when 'help', '?'
@@ -904,6 +908,25 @@ module MASTER
 
       when 'spicy'
         spicy_take(arg)
+
+      # Phase 4: Advanced Autonomy Commands
+      when 'suggest'
+        show_proactive_suggestion
+      
+      when 'diagnostics', 'phase4-diag'
+        run_phase4_diagnostics
+      
+      when 'auto-tune', 'tune'
+        run_auto_tuning
+      
+      when 'phase4-report'
+        export_phase4_report(arg)
+      
+      when 'phase4-setup'
+        run_phase4_setup
+      
+      when 'satisfaction'
+        record_satisfaction(arg)
 
       else
         # Default: send to LLM
@@ -3029,6 +3052,82 @@ module MASTER
     def colorize(text, *styles)
       return text unless TTY_AVAILABLE && @pastel
       @pastel.decorate(text, *styles)
+    end
+    
+    # ━━━ Phase 4: Advanced Autonomy Methods ━━━
+    
+    def phase4_components
+      @phase4_components ||= begin
+        require_relative 'autonomy/phase4'
+        MASTER::Autonomy::Phase4.initialize_components(@llm)
+      end
+    end
+    
+    def show_proactive_suggestion
+      suggestion = phase4_components[:suggestions].suggest_next(
+        current_command: @last_command,
+        git_status: `git status --porcelain 2>/dev/null`.strip,
+        file_state: Dir.glob('**/*.rb').size
+      )
+      
+      if suggestion
+        phase4_components[:ui].with_emoji(
+          "Suggestion: #{suggestion}",
+          :info
+        )
+      else
+        "No suggestions at this time."
+      end
+    end
+    
+    def run_phase4_diagnostics
+      puts "#{C_CYAN}Running Phase 4 diagnostics...#{C_RESET}\n"
+      
+      diagnostics = MASTER::Autonomy::Phase4.run_diagnostics(phase4_components)
+      
+      "Diagnostics complete. Check output above."
+    end
+    
+    def run_auto_tuning
+      puts "#{C_CYAN}Running auto-tuning...#{C_RESET}\n"
+      
+      MASTER::Autonomy::Phase4.auto_tune(phase4_components)
+      
+      "Auto-tuning complete!"
+    end
+    
+    def export_phase4_report(format_arg)
+      format = format_arg&.to_sym || :markdown
+      
+      puts "#{C_CYAN}Generating Phase 4 report...#{C_RESET}"
+      
+      filepath = MASTER::Autonomy::Phase4.export_report(
+        phase4_components,
+        format: format
+      )
+      
+      "Report exported to: #{filepath}"
+    end
+    
+    def run_phase4_setup
+      MASTER::Autonomy::Phase4.setup_wizard
+    end
+    
+    def record_satisfaction(score_arg)
+      score = score_arg.to_i
+      
+      if score < 1 || score > 10
+        return "Please provide a score from 1-10"
+      end
+      
+      phase4_components[:feedback].record_satisfaction(
+        score,
+        context: { command: @last_command }
+      )
+      
+      avg = phase4_components[:feedback].average_satisfaction
+      
+      "Thank you! Your satisfaction: #{score}/10. Average: #{avg.round(1)}/10"
     end
   end
 end
