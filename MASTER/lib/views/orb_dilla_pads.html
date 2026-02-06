@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dilla Pads</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000;display:flex;align-items:center;justify-content:center}
+#pads{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(80vw,400px);height:min(80vw,400px)}
+.pad{background:#2563eb;border-radius:4px;transition:transform 0.05s}
+.pad.c1{background:#2563eb}
+.pad.c2{background:#eab308}
+.pad.c3{background:#06b6d4}
+.pad.c4{background:#d946ef}
+.pad.c5{background:#22c55e}
+</style>
+</head>
+<body>
+<div id="pads"></div>
+<script>
+const pads=document.getElementById('pads');
+const colors=['c1','c2','c3','c4','c5'];
+const padEls=[];
+
+// Create 4x4 grid
+for(let i=0;i<16;i++){
+  const pad=document.createElement('div');
+  pad.className='pad '+colors[i%5];
+  pads.appendChild(pad);
+  padEls.push({el:pad,scale:1,target:1});
+}
+
+let audio=0,bass=0,mid=0,high=0;
+
+// Audio setup
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  const n2=Math.floor(data.length*0.2);
+  const n6=Math.floor(data.length*0.6);
+  
+  (function loop(){
+    an.getByteFrequencyData(data);
+    let sum=0,s2=0,s6=0;
+    for(let i=0;i<n2;i++)sum+=data[i];
+    for(let i=n2;i<n6;i++)s2+=data[i];
+    for(let i=n6;i<data.length;i++)s6+=data[i];
+    bass=sum/(n2*255);
+    mid=s2/((n6-n2)*255);
+    high=s6/((data.length-n6)*255);
+    audio=(bass+mid+high)/3;
+    requestAnimationFrame(loop);
+  })();
+}).catch(()=>{});
+
+// Animation loop
+function draw(){
+  // Pads pulse with different frequencies
+  padEls.forEach((p,i)=>{
+    const row=Math.floor(i/4);
+    const col=i%4;
+    
+    // Map different frequency bands to different pads
+    let level=0;
+    if(row===0)level=bass; // Top row = bass
+    else if(row===1)level=mid; // Second row = mids
+    else if(row===2)level=high; // Third row = highs
+    else level=audio; // Bottom row = average
+    
+    p.target=1+level*0.6;
+    p.scale+=(p.target-p.scale)*0.2;
+    
+    const s=Math.max(0.8,p.scale);
+    p.el.style.transform=`scale(${s})`;
+  });
+  
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// Parent communication
+window.addEventListener('message',e=>{
+  if(e.data?.mood){
+    // Optional: change color palette based on mood
+  }
+});
+</script>
+</body>
+</html>

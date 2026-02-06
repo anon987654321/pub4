@@ -41,13 +41,13 @@ input:disabled{opacity:0.6;cursor:not-allowed}
 <canvas id="grain"></canvas>
 <div id="status"><span id="status-left"></span><span id="status-right"></span></div>
 <div id="toast"></div>
-<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
+<div id="help"><div class="panel">Keyboard: 1-9,0,Q-R switch orbs (14 total), ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
 <output id="out"></output>
 <div id="hint">Try: ask “summarize README”, scan ., refactor lib/cli.rb</div>
 <input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
 <script>
 // Available orb designs
-const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
+const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader','orb_dilla_pads','orb_dilla_waveform','orb_dilla_bars','orb_tunnel_clean','orb_tunnel_rings','orb_tunnel_orb'];
 let currentOrb=0;
 
 // Film grain overlay
@@ -72,7 +72,7 @@ resizeGrain();
 window.addEventListener('resize',resizeGrain);
 setInterval(drawGrain,100);
 
-// Keyboard: 1-8 switch orbs, saved to localStorage
+// Keyboard: 1-9, 0, Q-R switch orbs, saved to localStorage
 function switchOrb(idx){
   if(idx>=0&&idx<ORBS.length){
     currentOrb=idx;
@@ -97,7 +97,12 @@ document.addEventListener('keydown',e=>{
   }
   if(document.activeElement===document.getElementById('in'))return;
   const num=parseInt(e.key);
-  if(num>=1&&num<=8)switchOrb(num-1);
+  if(num>=1&&num<=9)switchOrb(num-1);
+  if(e.key==='0')switchOrb(9);
+  if(e.key.toLowerCase()==='q')switchOrb(10);
+  if(e.key.toLowerCase()==='w')switchOrb(11);
+  if(e.key.toLowerCase()==='e')switchOrb(12);
+  if(e.key.toLowerCase()==='r')switchOrb(13);
   // Arrow keys cycle
   if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
   if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);

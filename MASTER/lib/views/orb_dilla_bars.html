@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dilla Bars</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let w,h,scale=2;
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+}
+resize();
+window.addEventListener('resize',resize);
+
+const numBars=12;
+const bars=Array(numBars).fill(0).map(()=>({height:0,target:0}));
+
+// Audio setup
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=128;
+  an.smoothingTimeConstant=0.6;
+  src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  
+  (function loop(){
+    an.getByteFrequencyData(data);
+    
+    // Map frequency data to bars (low to high)
+    for(let i=0;i<numBars;i++){
+      const idx=Math.floor(i/numBars*data.length*0.6);
+      bars[i].target=data[idx]/255;
+    }
+    
+    requestAnimationFrame(loop);
+  })();
+}).catch(()=>{});
+
+function draw(){
+  // Clear
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,w,h);
+  
+  const barWidth=Math.floor(w/(numBars*2));
+  const gap=barWidth;
+  const maxHeight=h*0.7;
+  const startX=(w-(numBars*barWidth+(numBars-1)*gap))/2;
+  const baseY=h*0.85;
+  
+  // Draw bars
+  ctx.fillStyle='#00CED1';
+  
+  for(let i=0;i<numBars;i++){
+    // Smooth interpolation
+    bars[i].height+=(bars[i].target-bars[i].height)*0.15;
+    
+    const x=startX+i*(barWidth+gap);
+    const barH=bars[i].height*maxHeight;
+    const y=baseY-barH;
+    
+    ctx.fillRect(x,y,barWidth,barH);
+    
+    // Mirror below
+    ctx.globalAlpha=0.3;
+    ctx.fillRect(x,baseY+2,barWidth,barH*0.5);
+    ctx.globalAlpha=1;
+  }
+  
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

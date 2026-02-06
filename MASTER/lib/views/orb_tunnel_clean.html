@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tunnel Clean</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+let w,h,scale=2,imageData,u32,BLACK32;
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+  imageData=ctx.getImageData(0,0,w,h);
+  u32=new Uint32Array(imageData.data.buffer);
+  const t=new Uint8ClampedArray(4);t[3]=255;
+  BLACK32=new Uint32Array(t.buffer)[0];
+  init();
+}
+
+const fov=250,speed=0.75,segments=40,baseRadius=75,zStep=4;
+let particles=[],time=0,audio=0,bass=0,beat=0;
+
+function setPixel(x,y,c){
+  if(x<=0||x>=w||y<=0||y>=h)return;
+  u32[x+y*w]=c;
+}
+
+function drawLine(x1,y1,x2,y2,c){
+  let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1),sx=x1<x2?1:-1,sy=y1<y2?1:-1,err=dx-dy;
+  for(;;){
+    if(x1>0&&x1<w&&y1>0&&y1<h)setPixel(x1,y1,c);
+    if(x1===x2&&y1===y2)break;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x1+=sx}
+    if(e2<dx){err+=dx;y1+=sy}
+  }
+}
+
+function init(){
+  particles=[];
+  for(let z=-fov;z<fov;z+=zStep){
+    const row=[];
+    for(let i=0;i<segments;i++){
+      const a=i*Math.PI*2/segments;
+      row.push({x:Math.cos(a)*baseRadius,y:Math.sin(a)*baseRadius,z:z,x2d:0,y2d:0});
+    }
+    particles.push(row);
+  }
+}
+
+// Audio setup
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  let beatPhase=0;
+  
+  (function loop(){
+    an.getByteFrequencyData(data);
+    const n2=Math.floor(data.length*0.2);
+    let sum=0,avg=0;
+    for(let i=0;i<n2;i++)sum+=data[i];
+    for(let i=0;i<data.length;i++)avg+=data[i];
+    bass=sum/(n2*255);
+    audio=avg/(data.length*255);
+    beatPhase+=0.08;
+    beat=Math.sin(beatPhase)>0.8?1:0;
+    requestAnimationFrame(loop);
+  })();
+}).catch(()=>{});
+
+function draw(){
+  u32.fill(BLACK32);
+  
+  const cx=w/2,cy=h/2;
+  const fovDynamic=fov+bass*50;
+  const audioMod=audio*64+beat*8;
+  
+  for(let i=0;i<particles.length;i++){
+    const row=particles[i];
+    
+    // Update z position
+    for(let j=0;j<row.length;j++){
+      const p=row[j];
+      p.z-=speed;
+      if(p.z<-fov)p.z+=fov*2;
+      
+      // Project to 2D
+      const s=fovDynamic/(fovDynamic+p.z);
+      const r=baseRadius+audioMod;
+      const a=(j*Math.PI*2/segments)+time;
+      const px=Math.cos(a)*r;
+      const py=Math.sin(a)*r;
+      p.x2d=(px*s+cx)|0;
+      p.y2d=(py*s+cy)|0;
+    }
+    
+    // Color based on depth (cyan gradient)
+    const depth=i/particles.length;
+    const r=Math.round((20+depth*100)/8)*8;
+    const g=Math.round((150+depth*80)/8)*8;
+    const b=Math.round((150+depth*80)/8)*8;
+    const col=pack32(r,g,b,255);
+    
+    // Draw ring
+    for(let j=0;j<row.length;j++){
+      const p0=row[j];
+      const p1=row[(j+1)%row.length];
+      drawLine(p0.x2d,p0.y2d,p1.x2d,p1.y2d,col);
+    }
+  }
+  
+  time+=0.005;
+  ctx.putImageData(imageData,0,0);
+  requestAnimationFrame(draw);
+}
+
+resize();
+window.addEventListener('resize',resize);
+draw();
+</script>
+</body>
+</html>

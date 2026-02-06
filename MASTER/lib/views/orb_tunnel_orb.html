@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tunnel Orb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+let w,h,scale=2,imageData,u32,time=0;
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+  imageData=ctx.getImageData(0,0,w,h);
+  u32=new Uint32Array(imageData.data.buffer);
+}
+resize();
+window.addEventListener('resize',resize);
+
+let audio=0,bass=0,beat=0,bassWobble=0;
+
+// Audio setup
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=256;src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  let beatPhase=0;
+  
+  (function loop(){
+    an.getByteFrequencyData(data);
+    const n2=Math.floor(data.length*0.2);
+    let sum=0,avg=0;
+    for(let i=0;i<n2;i++)sum+=data[i];
+    for(let i=0;i<data.length;i++)avg+=data[i];
+    bass=sum/(n2*255);
+    audio=avg/(data.length*255);
+    beatPhase+=0.08;
+    beat=Math.sin(beatPhase)>0.8?1:0;
+    requestAnimationFrame(loop);
+  })();
+}).catch(()=>{});
+
+function setPixel(x,y,c){
+  if(x<=0||x>=w||y<=0||y>=h)return;
+  u32[x+y*w]=c;
+}
+
+function drawLine(x1,y1,x2,y2,c){
+  let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1),sx=x1<x2?1:-1,sy=y1<y2?1:-1,err=dx-dy;
+  for(;;){
+    if(x1>0&&x1<w&&y1>0&&y1<h)setPixel(x1,y1,c);
+    if(x1===x2&&y1===y2)break;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x1+=sx}
+    if(e2<dx){err+=dx;y1+=sy}
+  }
+}
+
+// Pre-compute trig tables
+const segs=10;
+const orbCos=new Float32Array(segs);
+const orbSin=new Float32Array(segs);
+for(let i=0;i<segs;i++){
+  const a=i*Math.PI*2/segs;
+  orbCos[i]=Math.cos(a);
+  orbSin[i]=Math.sin(a);
+}
+
+function draw(){
+  // Clear
+  u32.fill(0xFF000000);
+  
+  const cx=w/2,cy=h/2;
+  bassWobble=bassWobble*0.92+bass*beat*0.08;
+  
+  // Enlarged orb (3x larger than in tunnel)
+  const baseR=Math.min(w,h)*0.24;
+  const pulse=baseR+bass*30+beat*15;
+  const layers=4;
+  const fov=250;
+  
+  for(let layer=0;layer<layers;layer++){
+    const z=(layer-layers/2)*12;
+    const s=fov/(fov+z+bassWobble*8);
+    const r=pulse*s;
+    const depth=layer/layers;
+    
+    // Colors with bass reactivity
+    const br=Math.round(30+depth*50+beat*25);
+    const g=Math.round(70+depth*100+bass*30);
+    const b=Math.round(50+depth*70);
+    const col=pack32(br,g,b+br/2,255);
+    
+    const ct=Math.cos(time*0.6+layer*0.4+bassWobble*0.15);
+    const st=Math.sin(time*0.6+layer*0.4+bassWobble*0.15);
+    
+    let px0,py0;
+    for(let i=0;i<=segs;i++){
+      const idx=i%segs;
+      const cosA=orbCos[idx]*ct-orbSin[idx]*st;
+      const sinA=orbSin[idx]*ct+orbCos[idx]*st;
+      const px=(cx+cosA*r)|0;
+      const py=(cy+sinA*r*0.55)|0;
+      if(i>0)drawLine(px0,py0,px,py,col);
+      px0=px;py0=py;
+    }
+    
+    // Radial spokes on alternate layers
+    if(layer%2===1){
+      for(let i=0;i<segs;i+=2){
+        const cosA=orbCos[i]*ct-orbSin[i]*st;
+        const sinA=orbSin[i]*ct+orbCos[i]*st;
+        drawLine(cx|0,cy|0,(cx+cosA*r)|0,(cy+sinA*r*0.55)|0,col);
+      }
+    }
+  }
+  
+  // Central glow
+  const glowR=3+beat*2;
+  const glowCol=pack32(80,200,160,255);
+  for(let dx=-glowR;dx<=glowR;dx++){
+    for(let dy=-glowR;dy<=glowR;dy++){
+      if(dx*dx+dy*dy<=glowR*glowR){
+        const px=(cx+dx)|0,py=(cy+dy)|0;
+        if(px>0&&px<w&&py>0&&py<h)setPixel(px,py,glowCol);
+      }
+    }
+  }
+  
+  time+=0.016;
+  ctx.putImageData(imageData,0,0);
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

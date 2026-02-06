@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dilla Waveform</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#000}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let w,h,scale=2,time=0;
+
+function resize(){
+  w=Math.floor(window.innerWidth/scale);
+  h=Math.floor(window.innerHeight/scale);
+  canvas.width=w;canvas.height=h;
+}
+resize();
+window.addEventListener('resize',resize);
+
+let waveform=new Uint8Array(128);
+let audio=0;
+
+// Audio setup
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext(),src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();
+  an.fftSize=256;
+  an.smoothingTimeConstant=0.7;
+  src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  
+  (function loop(){
+    an.getByteTimeDomainData(data);
+    // Downsample to 128 points
+    for(let i=0;i<128;i++){
+      waveform[i]=data[i*2];
+    }
+    
+    // Calculate audio level
+    let sum=0;
+    for(let i=0;i<50;i++)sum+=Math.abs(data[i]-128);
+    audio=sum/50/128;
+    
+    requestAnimationFrame(loop);
+  })();
+}).catch(()=>{});
+
+function draw(){
+  time+=0.016;
+  
+  // Clear with fade
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const baseRadius=Math.min(w,h)*0.25;
+  const radius=baseRadius+audio*30;
+  
+  // Draw circular waveform
+  ctx.strokeStyle='#00CED1';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  
+  for(let i=0;i<=128;i++){
+    const angle=i/128*Math.PI*2-Math.PI/2;
+    const amp=(waveform[i%128]-128)/128;
+    const r=radius+amp*40;
+    const x=cx+Math.cos(angle)*r;
+    const y=cy+Math.sin(angle)*r;
+    
+    if(i===0)ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  
+  ctx.closePath();
+  ctx.stroke();
+  
+  // Inner circle
+  ctx.strokeStyle='#40E0D0';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.arc(cx,cy,radius*0.5,0,Math.PI*2);
+  ctx.stroke();
+  
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
