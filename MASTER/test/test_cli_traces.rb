@@ -3,7 +3,7 @@
 
 require 'minitest/autorun'
 require 'tempfile'
-require_relative '../lib/master'
+require_relative '../lib/loader'
 
 class TestCLIExecutionTraces < Minitest::Test
   def setup

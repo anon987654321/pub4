@@ -2,6 +2,9 @@
 
 # MASTER - The LLM Operating System
 # A constitutional AI framework in pure Ruby
+#
+# This is the framework loader/autoloader.
+# Originally named master.rb, renamed to loader.rb to avoid confusion with CLI and other components.
 
 module MASTER
   VERSION = '52.0'
@@ -55,6 +58,16 @@ module MASTER
   autoload :PiperTTS,    "#{LIB}/piper_tts"
   autoload :EdgeTTS,     "#{LIB}/edge_tts"
 
+  # NOTE: Files in lib/core/ that are NOT autoloaded (loaded/included directly as needed):
+  #   - hierarchy.rb, interactive.rb: UI modules included in other classes
+  #   - info_design.rb, accessibility.rb: UI utility modules
+  #   - prompt.rb: Prompt generator, loaded on demand
+  #   - error_interceptor.rb, self_healing.rb: Error handling, included in specific contexts
+  #   - performance.rb: Performance shortcuts/tips UI
+  #   - typography.rb: Typography config stub
+  #   - enhanced_colors.rb: Legacy compatibility stub
+  #   - error_handling.rb: Input validation utilities
+
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
   autoload :Context,            "#{CORE}/context"
@@ -65,8 +78,6 @@ module MASTER
   autoload :PrincipleAutoloader, "#{CORE}/principle_autoloader"
   autoload :TokenStreamer,      "#{CORE}/token_streamer"
   autoload :Colors,             "#{CORE}/colors"
-  autoload :CommandHandler,     "#{CORE}/command_handler"
-  autoload :REPL,               "#{CORE}/repl"
   autoload :SSEEndpoint,        "#{CORE}/sse_endpoint"
   autoload :OrbStream,          "#{CORE}/orb_stream"
   autoload :ImageComparison,    "#{CORE}/image_comparison"

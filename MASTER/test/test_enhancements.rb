@@ -3,7 +3,7 @@
 
 # Tests for new MASTER enhancements
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 require 'fileutils'
 require 'tmpdir'
 

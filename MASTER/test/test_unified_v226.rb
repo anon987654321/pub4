@@ -3,7 +3,7 @@
 
 # Comprehensive test for MASTER v226 Unified Framework
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 require_relative '../lib/unified/mood_indicator'
 require_relative '../lib/unified/personas'
 require_relative '../lib/unified/bug_hunting'

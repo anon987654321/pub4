@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 module MASTER
+  # Chamber - Multi-model deliberation for CODE REFINEMENT
+  # Each model proposes diffs + writes letter defending changes
+  # Arbiter cherry-picks best improvements
+  #
+  # NOTE: One of four deliberation/generation engines:
+  #   - Chamber (this file): Code refinement via multi-model debate
+  #   - CreativeChamber: Creative ideation for concepts/multimedia
+  #   - Council: Opinion/judgment deliberation with fixed member roles
+  #   - Swarm: Generate many variations, curate best via scoring
   class Chamber
-    # Multi-model deliberation for code refinement
-    # Each model proposes diffs + writes letter defending changes
-    # Arbiter cherry-picks best improvements
 
     MODELS = {
       sonnet:   'anthropic/claude-sonnet-4',

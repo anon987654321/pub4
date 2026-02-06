@@ -5,6 +5,11 @@ require 'json'
 require 'uri'
 
 module MASTER
+  # TTS: Cloud-based TTS using Replicate's minimax/speech-02-turbo model
+  # NOTE: This is one of three TTS implementations:
+  #   - TTS (this file): Replicate cloud API - high quality, costs money
+  #   - PiperTTS: Local neural TTS - fast, free, offline capable
+  #   - EdgeTTS: Microsoft cloud - free, 400+ voices, no API key
   class TTS
     REPLICATE_TOKEN = ENV['REPLICATE_API_TOKEN']
     MODEL = 'minimax/speech-02-turbo'

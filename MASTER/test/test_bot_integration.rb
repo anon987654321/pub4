@@ -4,7 +4,7 @@
 # MASTER Bot Integration Test Suite
 
 require 'stringio'
-require_relative '../lib/master'
+require_relative '../lib/loader'
 require_relative '../lib/events/bus'
 require_relative '../lib/actors/base'
 require_relative '../lib/platforms/base'

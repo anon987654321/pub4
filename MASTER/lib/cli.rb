@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+# TODO: This file is 94KB and could potentially be refactored into smaller modules.
+# Some extraction has begun (cli/commands/), but the main REPL loop and command
+# handlers remain in this single file. Consider extracting:
+#   - REPL logic → cli/repl.rb
+#   - Command routing → cli/router.rb
+#   - Individual commands → cli/commands/*.rb
+# However, the current monolithic structure is functional and well-organized.
+
 require 'readline'
 require 'fileutils'
 require 'io/console'

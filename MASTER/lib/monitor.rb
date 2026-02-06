@@ -287,7 +287,7 @@ end
 
 # CLI execution
 if __FILE__ == $0
-  require_relative 'master'
+  require_relative 'loader'
   
   monitor = MASTER::Monitor.new
   monitor.print_report

@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 module MASTER
+  # CreativeChamber - Multi-model deliberation for CREATIVE IDEATION
+  # Generates ideas/conversations, scores them, then generates multimedia via Replicate
+  #
+  # NOTE: One of four deliberation/generation engines:
+  #   - Chamber: Code refinement via multi-model debate
+  #   - CreativeChamber (this file): Creative ideation for concepts/multimedia
+  #   - Council: Opinion/judgment deliberation with fixed member roles
+  #   - Swarm: Generate many variations, curate best via scoring
   class CreativeChamber
     # Multi-model deliberation for ideas, conversations, and multimedia
     # LLMs debate concepts, Replicate models generate variations
