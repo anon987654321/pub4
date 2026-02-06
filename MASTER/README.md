@@ -22,15 +22,30 @@ Files in `lib/` are yours to improve.
 
     bin/cli              Start here
     bin/bot              Multi-platform bot launcher
+    bin/weekly           Weekly automation
+    bin/check_ports      Port checker
+    bin/validate_principles  Constitutional validation
     lib/master.rb        Autoloader
+    lib/boot.rb          Framework bootstrap
     lib/cli.rb           REPL and commands
     lib/cli_v226.rb      Unified CLI (interactive + batch)
     lib/llm.rb           Model routing (9 tiers)
-    lib/executor.rb      Runs code blocks from responses
     lib/safety.rb        Guardrails
     lib/evolve.rb        Self-optimization loop
     lib/chamber.rb       Multi-model deliberation
+    lib/swarm.rb         Multi-agent swarm
+    lib/planner.rb       Task planning
+    lib/autonomy.rb      Autonomous operation
+    lib/bot_manager.rb   Multi-platform bot management
+    lib/replicate.rb     Replicate API media generation
+    lib/weaviate.rb      Vector memory backend
+    lib/server.rb        Web server / SSE
+    lib/shell.rb         Shell execution
+    lib/monitor.rb       Usage monitoring
     lib/postpro.rb       Cinematic film emulation (12 stocks, 12 presets)
+    lib/self_awareness.rb  Self-identity/introspection
+    lib/system_map.rb    System architecture mapping
+    lib/core/            Core utilities (typography, audit, streaming, execution, error handling)
     lib/principles/      45 constitutional rules
     lib/config/          YAML settings
     lib/personas/        Character modes
