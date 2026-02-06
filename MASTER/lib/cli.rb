@@ -6,6 +6,7 @@ require 'io/console'
 require 'securerandom'
 require 'json'
 require 'shellwords'
+require 'digest'
 
 # Optional rich terminal UI
 begin
@@ -21,105 +22,56 @@ end
 
 require_relative 'cli/commands/openbsd' if RUBY_PLATFORM.include?('openbsd')
 
+# Require all constants
+require_relative 'cli/constants/colors'
+require_relative 'cli/constants/icons'
+require_relative 'cli/constants/data'
+require_relative 'cli/constants/achievements'
+require_relative 'cli/constants/aliases'
+require_relative 'cli/constants/commands'
+require_relative 'cli/constants/config'
+
+# Require all feature modules
+require_relative 'cli/features/next_actions'
+require_relative 'cli/features/rich_history'
+require_relative 'cli/features/inline_help'
+require_relative 'cli/features/error_solutions'
+require_relative 'cli/features/context_defaults'
+require_relative 'cli/features/llm_cache'
+require_relative 'cli/features/auto_scan'
+require_relative 'cli/features/pattern_learning'
+require_relative 'cli/features/command_chaining'
+require_relative 'cli/features/templates'
+
 module MASTER
   class CLI
     include Commands::OpenBSD if RUBY_PLATFORM.include?('openbsd')
+    
+    # Include all constants modules
+    include Constants::Colors
+    include Constants::Icons
+    include Constants::Data
+    include Constants::Achievements
+    include Constants::Aliases
+    include Constants::Commands
+    include Constants::Config
+    
+    # Include all feature modules
+    include Features::NextActions
+    include Features::RichHistory
+    include Features::InlineHelp
+    include Features::ErrorSolutions
+    include Features::ContextDefaults
+    include Features::LLMCache
+    include Features::AutoScan
+    include Features::PatternLearning
+    include Features::CommandChaining
+    include Features::Templates
 
     attr_reader :llm, :verbosity, :root
 
-    # ANSI colors - dark blue / light blue theme on black
-    C_RESET  = "\e[0m"
-    C_RED    = "\e[31m"              # Error only
-    C_GREEN  = "\e[32m"              # Success only
-    C_YELLOW = "\e[33m"              # Warning only
-    C_DIM    = "\e[2m"               # Secondary/metadata
-    C_BOLD   = "\e[1m"               # Primary emphasis
-    C_ITALIC = "\e[3m"               # Secondary emphasis
-
-    # Blue theme
-    C_DARK_BLUE  = "\e[38;5;24m"     # Dark blue - primary text
-    C_LIGHT_BLUE = "\e[38;5;75m"     # Light blue - accent/highlight
-    C_CYAN       = "\e[38;5;75m"     # Alias for light blue
-    C_GREY       = "\e[38;5;24m"     # Dark blue as main text
-    C_MINT       = "\e[38;5;75m"     # Light blue for exits
-
-    # Icon vocabulary - 5 symbols max, single meaning each
-    ICON_OK   = "✓"
-    ICON_ERR  = "✗"
-    ICON_WARN = "!"
-    ICON_ITEM = "·"
-    ICON_FLOW = "→"
-
-    # Spinner (ASCII, by prompt)
-    SPINNER = %w[| / - \\].freeze
-
-    # Boot quotes (rotates each session)
-    QUOTES = [
-      "Simplicity is the ultimate sophistication.",
-      "Make it work, make it right, make it fast.",
-      "Code is read more often than written.",
-      "The best code is no code at all.",
-      "Clarity over cleverness.",
-      "Ship it.",
-      "Done is better than perfect.",
-      "Constraints breed creativity.",
-      "Less, but better.",
-      "If in doubt, leave it out."
-    ].freeze
-
-    # Session name parts
-    ADJECTIVES = %w[crimson azure golden silent swift keen bright calm deep iron].freeze
-    NOUNS = %w[falcon raven wolf oak storm forge arrow tide spark blade].freeze
-
-    # Easter eggs (1% chance)
-    EGGS = [
-      "The machine spirit is pleased.",
-      "Consulting the oracle...",
-      "Reticulating splines..."
-    ].freeze
-
-    # Achievements
-    ACHIEVEMENTS = {
-      first_command: { name: "First Steps", desc: "Ran first command" },
-      streak_5: { name: "Momentum", desc: "5 without error" },
-      streak_25: { name: "Flow State", desc: "25 without error" },
-      first_refactor: { name: "Craftsman", desc: "First refactor" },
-      spent_1: { name: "Investor", desc: "Spent $1 on LLM" },
-      commands_100: { name: "Centurion", desc: "100 commands" }
-    }.freeze
-
-    # Command aliases for speed
-    ALIASES = {
-      'q' => 'queue', 's' => 'scan', 'r' => 'refactor', 'a' => 'ask',
-      'c' => 'chamber', 'e' => 'evolve', 'i' => 'introspect', 'p' => 'personas',
-      'v' => 'version', 'h' => 'help', '?' => 'help', 'd' => 'diff', 'l' => 'log',
-      'st' => 'status', 'hi' => 'history', 'cl' => 'clear'
-    }.freeze
-
-    COMMANDS = %w[
-      ask audit backend beautify cat cd chamber check-ports clean clear commit compare-images
-      context converge cost deps describe diff edit enforce-principles evolve exit fav favs git help
-      history image install install-hooks introspect lint log ls metrics persona personas principles pull push
-      queue quit radio read refactor refine reload review sanity scan smells speak status stream
-      tree undo version web
-    ].freeze
-
     HISTORY_FILE = Paths.history
     STATE_FILE = File.join(Paths.var, 'cli_state.json')
-    HISTORY_LIMIT = 100
-    EASTER_EGG_CHANCE = 0.01
-    UPTIME_THRESHOLD = 3600  # Show uptime after 1 hour
-    COST_TIER_LOW = 0.01
-    COST_TIER_MED = 0.10
-    MAX_CODE_PREVIEW = 2000
-    MAX_RESEARCH_PREVIEW = 500
-    MAX_VIOLATION_PREVIEW = 200
-    MAX_REASON_PREVIEW = 200
-    MAX_RESPONSE_PREVIEW = 150
-    INTERRUPT_TIMEOUT = 2.0  # Seconds to press Ctrl+C again to quit
-
-    # Verbosity levels
-    VERBOSITY = { low: 0, medium: 1, high: 2 }.freeze
 
     def initialize(llm: LLM.new, root: Dir.pwd, verbosity: 0, quiet: false, dry_run: false)
       @llm = llm
@@ -147,6 +99,13 @@ module MASTER
       @pastel = Pastel.new if TTY_AVAILABLE
       @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
       
+      # Initialize feature modules
+      initialize_cache
+      initialize_pattern_learning
+      @last_scan_time = nil
+      @show_hints = false
+      @command_history = []
+      
       # Dmesg boot header
       Dmesg.boot_header rescue nil
       
@@ -156,39 +115,12 @@ module MASTER
       setup_crash_recovery
       load_self_awareness
       
+      # Auto-scan on boot (from AutoScan feature)
+      auto_scan_on_boot
+      
       # Boot complete
       boot_ms = ((Time.now - @boot_time) * 1000).round
       Dmesg.boot_complete(boot_ms) rescue nil
-    end
-    
-    # Smart defaults - infer missing arguments from context
-    def default_file(arg = nil)
-      return arg if arg && !arg.empty?
-      return @last_file if @last_file && File.exist?(@last_file)
-      
-      # Find most recently modified .rb file in current dir
-      Dir.glob(File.join(@root, '*.rb')).max_by { |f| File.mtime(f) }
-    end
-    
-    def default_dir(arg = nil)
-      return arg if arg && !arg.empty?
-      return @last_dir if @last_dir && Dir.exist?(@last_dir)
-      @root
-    end
-    
-    def default_target(arg = nil)
-      return arg if arg && !arg.empty?
-      return @last_file if @last_file
-      return @last_dir if @last_dir
-      @root
-    end
-    
-    def remember_file(path)
-      @last_file = File.expand_path(path, @root) if path
-    end
-    
-    def remember_dir(path)
-      @last_dir = File.expand_path(path, @root) if path && Dir.exist?(File.expand_path(path, @root))
     end
 
     def run
@@ -390,11 +322,17 @@ module MASTER
       # Easter egg
       puts "#{C_DIM}#{EGGS.sample}#{C_RESET}" if rand < EASTER_EGG_CHANCE
 
+      # Check for command chaining
+      if input.match?(/&&|\|\||;/)
+        return process_chained_commands(input)
+      end
+
       # Expand aliases
       input = expand_alias(input)
 
       start_time = Time.now
       @processing = true
+      success = false
       begin
         result = with_spinner { process_input(input) }
         elapsed_ms = ((Time.now - start_time) * 1000).round
@@ -402,6 +340,7 @@ module MASTER
         @streak += 1
         @command_count += 1
         check_achievements
+        success = true
 
         puts colorize_output(result) if result
         # Terse single-line stats (only if LLM was called)
@@ -409,12 +348,27 @@ module MASTER
           stats = "#{C_DIM}#{elapsed_ms}ms · #{@last_tokens[:input]}→#{@last_tokens[:output]}tok"
           stats += " · cached" if @last_cached
           puts "#{stats}#{C_RESET}"
+          
+          # Record in rich history
+          record_command_history(input, success: true, elapsed_ms: elapsed_ms, tokens: @last_tokens.dup)
           @last_tokens = { input: 0, output: 0 }
           @last_cached = false
+        else
+          # Record command without token info
+          record_command_history(input, success: true, elapsed_ms: elapsed_ms)
         end
+        
+        # Learn command patterns
+        recent_commands = @command_history.last(5).map { |e| e[:command] }
+        learn_command_pattern(recent_commands) if recent_commands.size >= 2
+        
+        # Show next action suggestions
+        suggestions = format_next_actions
+        puts suggestions if suggestions
       rescue => e
         @streak = 0
-        puts "#{C_RED}#{e.message}#{C_RESET}"
+        handle_error(e)
+        record_command_history(input, success: false, elapsed_ms: ((Time.now - start_time) * 1000).round)
       ensure
         @processing = false
       end
@@ -743,10 +697,42 @@ module MASTER
         status_info
 
       when 'history'
-        show_history(arg&.to_i || 20)
+        # Use rich history if available
+        if arg == 'rich' || @command_history&.any?
+          show_rich_history(arg&.to_i || 20)
+        else
+          show_history(arg&.to_i || 20)
+        end
 
       when 'metrics'
         show_metrics
+      
+      when 'workflow', 'template'
+        if arg.nil? || arg.empty?
+          list_templates
+        else
+          parts = arg.split(' ', 2)
+          run_workflow(parts[0], parts[1])
+        end
+      
+      when 'patterns'
+        show_learned_patterns
+      
+      when 'cache'
+        if arg == 'clear'
+          clear_cache
+        else
+          cache_stats
+        end
+      
+      when 'auto-scan'
+        if arg == 'on'
+          enable_auto_scan
+        elsif arg == 'off'
+          disable_auto_scan
+        else
+          "Auto-scan: #{@auto_scan_disabled ? 'disabled' : 'enabled'}"
+        end
 
       when 'refine'
         run_refine(arg)

@@ -141,6 +141,9 @@ class TestCLIContext < Minitest::Test
     status = @cli.process_input('status')
     assert_includes status, 'Backend: http'
     assert_includes status, 'Context files: 0'
-    assert_equal 'echo: hello', @cli.process_input('ask hello')
+    # Strip ANSI color codes for comparison
+    result = @cli.process_input('ask hello')
+    cleaned = result.gsub(/\e\[[0-9;]*m/, '')
+    assert_equal 'echo: hello', cleaned
   end
 end
