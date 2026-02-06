@@ -3,6 +3,11 @@
 require 'json'
 require 'socket'
 
+# This file consolidates three networking concerns:
+# 1. Server - HTTP/WebSocket server with Falcon/WEBrick support
+# 2. Web - Browser automation and web scraping utilities
+# 3. BotManager - Multi-platform bot orchestration and message routing
+
 module MASTER
   class Server
     PORT = ENV.fetch('PORT', 8080).to_i
@@ -404,6 +409,475 @@ module MASTER
 
     def request_count
       @total
+    end
+  end
+
+  # Web browsing and automation utilities
+  module Web
+    MAX_PREVIEW_LENGTH = 2000
+    BROWSER_LOAD_DELAY = 2
+    CURL_TIMEOUT = 10
+    MAX_HTML_FOR_DISCOVERY = 5000
+
+    class << self
+      def browse(url)
+        return "Error: empty URL" if url.nil? || url.strip.empty?
+        
+        # Try Ferrum first, fall back to curl
+        ferrum_browse(url)
+      rescue LoadError
+        curl_browse(url)
+      rescue => e
+        "Error: #{e.message}"
+      end
+
+      # Dynamic CSS selector discovery using LLM + vision
+      # Instead of hardcoding selectors that break, ask LLM to find them
+      def discover_selector(url, action, llm = nil)
+        require 'ferrum'
+        
+        browser = Ferrum::Browser.new(headless: true)
+        page = browser.create_page
+        page.go_to(url)
+        sleep BROWSER_LOAD_DELAY
+
+        html_snippet = page.body[0..MAX_HTML_FOR_DISCOVERY]
+        screenshot_b64 = page.screenshot(format: :png, encoding: :base64)
+        
+        browser.quit
+
+        prompt = <<~PROMPT
+          Analyze this webpage to find the CSS selector for: #{action}
+          
+          HTML (truncated):
+          #{html_snippet}
+          
+          Return ONLY the CSS selector, nothing else.
+          Example: button.submit-btn, input#search, div.login-form
+        PROMPT
+
+        # Use vision if available, otherwise just HTML
+        if llm&.respond_to?(:chat_with_image)
+          result = llm.chat_with_image(prompt, screenshot_b64)
+        elsif llm
+          result = llm.chat(prompt)
+          result = result.value if result.respond_to?(:value)
+        else
+          result = MASTER::LLM.new.chat(prompt)
+          result = result.value if result.respond_to?(:value)
+        end
+
+        # Clean up response - extract just the selector
+        selector = result.to_s.strip.split("\n").first.to_s.strip
+        selector.gsub(/^['"`]|['"`]$/, '') # Remove quotes
+      rescue => e
+        nil
+      end
+
+      # Click an element discovered dynamically
+      def click_discovered(url, action, llm = nil)
+        require 'ferrum'
+
+        selector = discover_selector(url, action, llm)
+        return { success: false, error: "Could not find selector for: #{action}" } unless selector
+
+        browser = Ferrum::Browser.new(headless: true)
+        page = browser.create_page
+        page.go_to(url)
+        sleep BROWSER_LOAD_DELAY
+
+        element = page.at_css(selector)
+        return { success: false, error: "Element not found: #{selector}" } unless element
+
+        element.click
+        sleep 1
+        
+        result_html = page.body[0..MAX_PREVIEW_LENGTH]
+        browser.quit
+
+        { success: true, selector: selector, result: result_html }
+      rescue => e
+        { success: false, error: e.message }
+      end
+
+      # Fill a form field discovered dynamically  
+      def fill_discovered(url, action, value, llm = nil)
+        require 'ferrum'
+
+        selector = discover_selector(url, action, llm)
+        return { success: false, error: "Could not find selector for: #{action}" } unless selector
+
+        browser = Ferrum::Browser.new(headless: true)
+        page = browser.create_page
+        page.go_to(url)
+        sleep BROWSER_LOAD_DELAY
+
+        element = page.at_css(selector)
+        return { success: false, error: "Element not found: #{selector}" } unless element
+
+        element.focus.type(value)
+        sleep 0.5
+
+        browser.quit
+        { success: true, selector: selector, filled: value }
+      rescue => e
+        { success: false, error: e.message }
+      end
+
+      private
+
+      def ferrum_browse(url)
+        require 'ferrum'
+
+        browser = Ferrum::Browser.new(headless: true)
+        page = browser.create_page
+        page.go_to(url)
+        sleep BROWSER_LOAD_DELAY
+
+        text = page.body_text
+        screenshot_path = File.join(MASTER::ROOT, 'var', 'screenshots', "#{Time.now.to_i}.png")
+        FileUtils.mkdir_p(File.dirname(screenshot_path))
+        page.screenshot(path: screenshot_path)
+
+        browser.quit
+
+        "#{url}\n\n#{text[0..MAX_PREVIEW_LENGTH]}"
+      end
+
+      def curl_browse(url)
+        # Try ftp first on OpenBSD (native, better TLS), fallback to curl
+        html = if RUBY_PLATFORM.include?('openbsd')
+          `ftp -o - "#{url}" 2>/dev/null`
+        else
+          `curl -sL --max-time #{CURL_TIMEOUT} "#{url}" 2>/dev/null`
+        end
+        
+        # Fallback if first method fails
+        if html.empty?
+          html = `curl -sLk --max-time #{CURL_TIMEOUT} "#{url}" 2>/dev/null`
+        end
+        
+        return "Failed to fetch: #{url}" if html.empty?
+
+        # Strip HTML tags for plain text
+        text = html.gsub(/<script[^>]*>.*?<\/script>/mi, '')
+                   .gsub(/<style[^>]*>.*?<\/style>/mi, '')
+                   .gsub(/<[^>]+>/, ' ')
+                   .gsub(/\s+/, ' ')
+                   .strip
+
+        "#{url}\n\n#{text[0..MAX_PREVIEW_LENGTH]}"
+      end
+    end
+
+    # GitHub search helper
+    module GitHub
+      SEARCH_URL = 'https://github.com/search'
+
+      class << self
+        def search_repos(query, sort: 'stars', limit: 10)
+          require 'ferrum'
+          require 'uri'
+
+          url = "#{SEARCH_URL}?q=#{URI.encode_www_form_component(query)}&type=repositories&s=#{sort}&o=desc"
+          
+          browser = Ferrum::Browser.new(headless: true)
+          page = browser.create_page
+          page.go_to(url)
+          sleep 3  # GitHub is slow
+
+          # Extract repo links
+          repos = page.css('a[href*="/"][data-testid="results-list"] a, .repo-list-item a, div[data-testid] a').map do |link|
+            href = link.attribute('href')
+            next unless href&.match?(%r{^/[^/]+/[^/]+$})
+            "https://github.com#{href}"
+          end.compact.uniq.first(limit)
+
+          # If CSS selectors don't work, try text extraction
+          if repos.empty?
+            text = page.body_text
+            repos = text.scan(%r{github\.com/([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)}).flatten.uniq.first(limit).map { |r| "https://github.com/#{r}" }
+          end
+
+          browser.quit
+          repos
+        rescue => e
+          ["Error: #{e.message}"]
+        end
+
+        def trending(language: nil, since: 'daily')
+          require 'ferrum'
+
+          url = "https://github.com/trending"
+          url += "/#{language}" if language
+          url += "?since=#{since}"
+
+          browser = Ferrum::Browser.new(headless: true)
+          page = browser.create_page
+          page.go_to(url)
+          sleep 2
+
+          text = page.body_text
+          repos = text.scan(%r{([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)\s+\d+}).flatten.uniq.first(20)
+          
+          browser.quit
+          repos.map { |r| "https://github.com/#{r}" }
+        rescue => e
+          ["Error: #{e.message}"]
+        end
+      end
+    end
+  end
+
+  # BotManager orchestrates multiple platform adapters
+  # Routes messages between platforms and CLI
+  class BotManager
+    attr_reader :platforms, :event_bus, :cli
+
+    def initialize(cli, event_bus, config = {})
+      @cli = cli
+      @event_bus = event_bus
+      @config = config
+      @platforms = {}
+      @running = false
+      @message_queue = Queue.new
+      @mutex = Mutex.new
+      
+      setup_event_handlers
+    end
+
+    # Register a platform adapter
+    def register_platform(name, adapter)
+      @mutex.synchronize do
+        @platforms[name] = adapter
+      end
+    end
+
+    # Start all enabled platforms
+    def start_all
+      return if @running
+      @running = true
+
+      @platforms.each do |name, adapter|
+        begin
+          adapter.start
+          puts "#{MASTER::CLI::ICON_OK} #{name} started"
+        rescue => e
+          puts "#{MASTER::CLI::ICON_ERR} #{name} failed: #{e.message}"
+          MASTER::Audit.log(
+            command: "start #{name}",
+            type: :bot_startup,
+            status: :error,
+            output_length: 0,
+            session_id: 'bot_manager'
+          )
+        end
+      end
+
+      # Start message processor thread
+      start_message_processor
+      
+      emit(:bot_manager_started, { platforms: @platforms.keys })
+    end
+
+    # Stop all platforms
+    def stop_all
+      @running = false
+      
+      @platforms.each do |name, adapter|
+        begin
+          adapter.stop
+          puts "#{MASTER::CLI::ICON_OK} #{name} stopped"
+        rescue => e
+          puts "#{MASTER::CLI::ICON_WARN} #{name} stop error: #{e.message}"
+        end
+      end
+      
+      emit(:bot_manager_stopped, {})
+    end
+
+    # Send message to specific platform
+    def send_to_platform(platform_name, channel_id, text)
+      adapter = @platforms[platform_name.to_sym]
+      raise "Platform #{platform_name} not found" unless adapter
+      
+      adapter.handle_outgoing(channel_id, text)
+    end
+
+    # Broadcast message to all platforms
+    def broadcast(text, exclude: [])
+      @platforms.each do |name, adapter|
+        next if exclude.include?(name)
+        
+        # Get default channel from config
+        channels = @config.dig(name, :default_channels) || []
+        channels.each do |channel_id|
+          begin
+            send_to_platform(name, channel_id, text)
+          rescue => e
+            emit(:broadcast_error, {
+              platform: name,
+              channel: channel_id,
+              error: e.message
+            })
+          end
+        end
+      end
+    end
+
+    # Get platform statistics
+    def stats
+      {
+        platforms: @platforms.keys,
+        running: @running,
+        message_queue_size: @message_queue.size,
+        event_count: @event_bus.event_count
+      }
+    end
+
+    private
+
+    def setup_event_handlers
+      # Subscribe to platform events
+      @event_bus.subscribe(:message_received) do |event|
+        handle_incoming_message(event)
+      end
+
+      @event_bus.subscribe(:platform_error) do |event|
+        handle_platform_error(event)
+      end
+
+      @event_bus.subscribe(:message_failed) do |event|
+        handle_message_failure(event)
+      end
+
+      @event_bus.subscribe(:rate_limited) do |event|
+        handle_rate_limit(event)
+      end
+    end
+
+    def handle_incoming_message(event)
+      data = event.data
+      
+      # Log the incoming message
+      MASTER::Audit.log(
+        command: "incoming from #{data[:platform]}/#{data[:channel_id]}",
+        type: :bot_incoming,
+        status: :success,
+        output_length: data[:text].length,
+        session_id: 'bot_manager'
+      )
+      
+      # Queue message for processing
+      @message_queue.push({
+        platform: data[:platform],
+        channel_id: data[:channel_id],
+        user_id: data[:user_id],
+        text: data[:text],
+        timestamp: data[:timestamp]
+      })
+    end
+
+    def handle_platform_error(event)
+      data = event.data
+      puts "#{MASTER::CLI::ICON_ERR} #{data[:platform]} error: #{data[:error]}"
+      
+      MASTER::Audit.log(
+        command: "platform_error #{data[:platform]}",
+        type: :bot_error,
+        status: :error,
+        output_length: 0,
+        session_id: 'bot_manager'
+      )
+    end
+
+    def handle_message_failure(event)
+      data = event.data
+      
+      # Implement dead letter queue for failed messages
+      dead_letter_file = File.join(MASTER::Paths.var, 'bot_dead_letter.log')
+      File.open(dead_letter_file, 'a') do |f|
+        f.puts({
+          timestamp: Time.now.to_i,
+          platform: data[:platform],
+          channel: data[:channel_id],
+          error: data[:error]
+        }.to_json)
+      end
+    end
+
+    def handle_rate_limit(event)
+      data = event.data
+      puts "#{MASTER::CLI::ICON_WARN} #{data[:platform]} rate limited, reset at #{data[:reset_at]}"
+    end
+
+    def start_message_processor
+      Thread.new do
+        while @running
+          begin
+            # Wait for message with timeout (non-blocking pop)
+            message = @message_queue.pop(true) # true = non-blocking
+            process_message(message)
+          rescue ThreadError
+            # Queue empty, sleep briefly
+            sleep 0.1
+          rescue => e
+            puts "#{MASTER::CLI::ICON_ERR} Message processor error: #{e.message}"
+          end
+        end
+      end
+    end
+
+    def process_message(message)
+      # Format input for CLI
+      input = message[:text]
+      
+      # Process through CLI
+      result = @cli.process_input(input)
+      
+      return unless result
+      
+      # Send response back to the originating platform
+      response_text = format_response(result)
+      
+      send_to_platform(
+        message[:platform],
+        message[:channel_id],
+        response_text
+      )
+    rescue => e
+      # Send error message back
+      error_text = "#{MASTER::CLI::ICON_ERR} Error: #{e.message}"
+      
+      begin
+        send_to_platform(
+          message[:platform],
+          message[:channel_id],
+          error_text
+        )
+      rescue
+        # Give up if we can't send error
+      end
+    end
+
+    def format_response(result)
+      # Format CLI response for social media platforms
+      # Remove excessive whitespace and ANSI codes
+      text = result.to_s
+      text = text.gsub(/\e\[[0-9;]*m/, '') # Remove ANSI codes
+      text = text.strip
+      
+      # Truncate if too long (most platforms have limits)
+      max_length = @config.dig(:limits, :max_message_length) || 2000
+      if text.length > max_length
+        text = text[0...max_length - 3] + '...'
+      end
+      
+      text
+    end
+
+    def emit(event_type, data)
+      @event_bus.publish(event_type, data)
     end
   end
 end
