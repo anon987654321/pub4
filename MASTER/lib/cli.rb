@@ -3079,10 +3079,11 @@ module MASTER
       )
       
       if suggestion
-        phase4_components[:ui].with_emoji(
+        puts phase4_components[:ui].with_emoji(
           "Suggestion: #{suggestion}",
           :info
         )
+        "Suggested: #{suggestion}"
       else
         "No suggestions at this time."
       end

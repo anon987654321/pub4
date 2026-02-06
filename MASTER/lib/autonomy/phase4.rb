@@ -193,25 +193,34 @@ module MASTER
         
         preferences = {}
         
+        # Helper for yes/no prompts
+        def prompt_yes_no(question)
+          puts question
+          print "> "
+          gets.strip.downcase == 'yes'
+        end
+        
         # Verbosity
-        puts "Verbosity level? (low/medium/high)"
-        print "> "
-        preferences[:verbosity] = gets.strip.to_sym
+        loop do
+          puts "Verbosity level? (low/medium/high)"
+          print "> "
+          level = gets.strip.downcase.to_sym
+          if [:low, :medium, :high].include?(level)
+            preferences[:verbosity] = level
+            break
+          else
+            puts "Invalid choice. Please enter low, medium, or high."
+          end
+        end
         
         # Suggestions
-        puts "Show proactive suggestions? (yes/no)"
-        print "> "
-        preferences[:suggestions] = gets.strip.downcase == 'yes'
+        preferences[:suggestions] = prompt_yes_no("Show proactive suggestions? (yes/no)")
         
         # Auto-recovery
-        puts "Enable automatic error recovery? (yes/no)"
-        print "> "
-        preferences[:auto_recovery] = gets.strip.downcase == 'yes'
+        preferences[:auto_recovery] = prompt_yes_no("Enable automatic error recovery? (yes/no)")
         
         # Colors
-        puts "Use colors in output? (yes/no)"
-        print "> "
-        preferences[:colors] = gets.strip.downcase == 'yes'
+        preferences[:colors] = prompt_yes_no("Use colors in output? (yes/no)")
         
         # Save preferences
         pref_file = File.join(Paths.var, 'ui_preferences.yml')

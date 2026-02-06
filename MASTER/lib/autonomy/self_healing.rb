@@ -90,8 +90,10 @@ module MASTER
       def apply_healing_action(action)
         case action
         when :refresh_credentials
-          # Reload environment variables
-          ENV.each_key { |k| ENV[k] = `echo $#{k}`.strip if k.start_with?('MASTER_') }
+          # Reload environment variables safely
+          %w[OPENROUTER_API_KEY REPLICATE_API_TOKEN].each do |key|
+            ENV[key] = ENV.fetch(key, nil)
+          end
         when :create_missing_files
           # Create common missing directories
           %w[var data config/tmp].each do |dir|
@@ -113,8 +115,9 @@ module MASTER
       def perform_rollback
         return unless Dir.exist?('.git')
         
-        # Stash any uncommitted changes
-        system('git stash push -m "auto-rollback-$(date +%s)" 2>/dev/null')
+        # Stash any uncommitted changes with timestamp
+        timestamp = Time.now.to_i
+        system('git', 'stash', 'push', '-m', "auto-rollback-#{timestamp}")
       end
       
       # Classify error for recovery strategy

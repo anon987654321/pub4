@@ -235,7 +235,7 @@ module MASTER
       def detect_project_type
         return :rails if File.exist?('config/routes.rb')
         return :sinatra if File.exist?('config.ru')
-        return :gem if File.exist?('*.gemspec')
+        return :gem if Dir.glob('*.gemspec').any?
         :ruby
       end
     end
