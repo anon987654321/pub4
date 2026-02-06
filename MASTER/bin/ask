@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require_relative "../lib/llm_client"
+require_relative "../lib/db"
+
+MASTER::LLM.configure
+MASTER::DB.initialize_schema
+
+MASTER::Protocol.pipe do |input|
+  model = input[:model] || MASTER::LLM.default_model
+  text = input[:text] || ""
+  
+  begin
+    chat = RubyLLM.chat(model: model)
+    chat.with_instructions(input[:persona]) if input[:persona]
+
+    response_content = ""
+    response = chat.ask(text) do |chunk|
+      if chunk.content
+        $stderr.print chunk.content
+        response_content += chunk.content
+      end
+    end
+
+    MASTER::DB.track_cost(
+      model: model,
+      tokens_in: response.input_tokens || 0,
+      tokens_out: response.output_tokens || 0
+    )
+
+    input.merge(
+      response: response.content || response_content,
+      tokens_in: response.input_tokens || 0,
+      tokens_out: response.output_tokens || 0,
+      model_used: model
+    )
+  rescue => e
+    # Record circuit failure
+    MASTER::DB.record_circuit_failure(model)
+    
+    input.merge(
+      error: e.message,
+      model_failed: model
+    )
+  end
+end

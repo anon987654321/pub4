@@ -1,325 +1,394 @@
-# MASTER
+# MASTER v2 — Unix Pipeline Toolkit
 
-Self-modifying AI framework. Pure Ruby. OpenBSD.
+Universal code refactoring and completion engine. Pure Ruby. Composable pipelines. OpenBSD.
 
-Entry · `bin/cli`
-Loader · `lib/master.rb`
+**Version 2.0** transforms the monolithic 94KB `cli.rb` into surgical Unix executables powered by the ruby_llm ecosystem.
 
+---
 
-## What It Does
-
-Give it a task. It writes code, runs it, sees the result, iterates.
-Can modify its own source. No npm, no Python—just Ruby and LLMs.
-
-
-## For LLMs
-
-You are MASTER. Execute via `sh` or `ruby` fenced blocks.
-Files in `lib/` are yours to improve.
-
-
-## Structure
-
-    bin/cli              Start here
-    bin/bot              Multi-platform bot launcher
-    lib/master.rb        Autoloader
-    lib/cli.rb           REPL and commands
-    lib/cli_v226.rb      Unified CLI (interactive + batch)
-    lib/llm.rb           Model routing (9 tiers)
-    lib/executor.rb      Runs code blocks from responses
-    lib/safety.rb        Guardrails
-    lib/evolve.rb        Self-optimization loop
-    lib/chamber.rb       Multi-model deliberation
-    lib/postpro.rb       Cinematic film emulation (12 stocks, 12 presets)
-    lib/principles/      45 constitutional rules
-    lib/config/          YAML settings
-    lib/personas/        Character modes
-    lib/unified/         v226 unified framework components
-
-
-## Commands
-
-    ask           Chat
-    scan          Analyze cwd
-    refactor      Improve code
-    evolve        Converge until <2% gain
-    chamber       Multi-model debate
-    tier          Switch model class
-    dashboard     Show live dashboard
-    remember      Store in long-term memory
-    recall        Search long-term memory
-    memory-stats  Memory system status
-    help          List all
-
-
-## Dashboard
-
-View live statistics and metrics:
+## Quick Start
 
 ```bash
-bin/cli dashboard
+# Interactive REPL
+bin/start
+
+# Pipeline execution
+echo '{"text":"Refactor this code"}' | \
+  bin/intake | bin/guard | bin/route | bin/ask | bin/render
+
+# Shell alias (after sourcing .zshrc)
+m-ask What is the KISS principle?
 ```
 
-Shows:
-- Cost breakdown by model
-- Recent tasks
-- Memory statistics
-- System health
+---
 
+## Architecture
 
-## Memory
+### Core Philosophy
+- **Do one thing well** - Each executable has a single responsibility
+- **Compose via pipes** - JSON in, JSON out (except `render` terminus)
+- **No side effects** - Pure functions (except database/git operations)
+- **Under 200 lines** - Every `bin/` file
+- **Under 300 lines** - Every `lib/` file
 
-MASTER uses Weaviate for persistent vector memory.
+### Structure
 
-### Store Information
+```
+MASTER/
+├── bin/              Pipeline executables (15 stages)
+│   ├── start         Interactive Ruby REPL
+│   ├── intake        Input filter + compression
+│   ├── guard         Safety firewall
+│   ├── route         Model selector + circuit breaker
+│   ├── ask           LLM interface (RubyLLM.chat)
+│   ├── critique      Review (ruby_llm-tribunal)
+│   ├── chamber       Multi-model deliberation
+│   ├── execute       Sandboxed execution
+│   ├── evolve        Self-modification + rollback
+│   ├── quality       Quality gate
+│   ├── converge      Convergence detection
+│   ├── remember      Memory store/recall
+│   ├── plan          8-phase workflow
+│   ├── render        Output formatter
+│   └── seed          YAML → SQLite import
+├── lib/              Core libraries (8 modules)
+│   ├── db.rb         SQLite (10 tables)
+│   ├── json_protocol.rb  stdin/stdout protocol
+│   ├── llm_client.rb     RubyLLM wrapper (28 lines)
+│   ├── strunk.rb         Text compression
+│   ├── metz.rb           Quality rules
+│   ├── typography.rb     Formatting
+│   ├── pledge.rb         OpenBSD sandboxing
+│   └── hooks.rb          Event system
+├── data/
+│   ├── principles.yml    Design principles
+│   └── personas.yml      Character modes
+├── test/             Minitest suite
+├── .zshrc            Shell environment
+└── master.db         SQLite state (gitignored)
+```
+
+---
+
+## Pipeline Stages
+
+### 1. intake
+Applies Strunk & White compression, loads persona, measures information density.
+
+**Input:** `{ text: "..." }`  
+**Output:** `{ text: "compressed", persona: "...", density: 0.7 }`
+
+### 2. guard
+Safety firewall. Checks dangerous operations and principle violations.
+
+**Input:** `{ text: "..." }`  
+**Output:** `{ allowed: true/false, reason: "..." }`
+
+### 3. route
+Selects model based on complexity, budget, circuit breaker state.
+
+**Tiers:**
+- **strong** - deepseek-r1, claude-sonnet-4
+- **fast** - deepseek-v3, gpt-4.1-mini
+- **cheap** - gpt-4.1-nano
+
+**Input:** `{ text: "..." }`  
+**Output:** `{ model: "deepseek-r1", tier: "strong", budget_remaining: 8.5 }`
+
+### 4. ask
+Sends to LLM using `RubyLLM.chat`. Streams response. Tracks costs.
+
+**Input:** `{ text: "...", model: "...", persona: "..." }`  
+**Output:** `{ response: "...", tokens_in: 100, tokens_out: 200 }`
+
+### 5. critique
+Post-LLM review using `ruby_llm-tribunal`. Detects hallucination, checks relevance.
+
+**Input:** `{ text: "...", response: "..." }`  
+**Output:** `{ critique_passed: true, confidence: 0.9 }`
+
+### 6. chamber
+Multi-model deliberation. Parallel execution. Synthesis.
+
+**Input:** `{ text: "...", models: ["model1", "model2"] }`  
+**Output:** `{ response: "synthesized", consensus: true }`
+
+### 7. execute
+Extracts code blocks, runs in sandbox with pledge/unveil.
+
+**Input:** `{ response: "```ruby\ncode\n```" }`  
+**Output:** `{ success: true, output: "...", executed: true }`
+
+### 8. evolve
+Self-modification. Git stash snapshot → modify → test → rollback on failure.
+
+**Input:** `{ file: "path", modification: "..." }`  
+**Output:** `{ modified: true, tests_passed: true, rolled_back: false }`
+
+### 9. quality
+Sandi Metz quality rules: 100 lines/class, 5 lines/method, 4 params.
+
+**Input:** `{ response: "...", file: "..." }`  
+**Output:** `{ quality_passed: true, quality_score: 1.0 }`
+
+### 10. converge
+Detects convergence (δ < 2% threshold).
+
+**Input:** `{ response: "...", previous: "..." }`  
+**Output:** `{ converged: true, delta: 0.01 }`
+
+### 11. remember
+Store/recall memories from SQLite.
+
+**Input:** `{ action: "store", content: "..." }`  
+**Output:** `{ stored: true }`
+
+### 12. plan
+8-phase workflow: discover → analyze → ideate → design → implement → validate → deliver → learn
+
+**Input:** `{ phase: "discover", completed_criteria: [...] }`  
+**Output:** `{ phase: "discover", next_phase: "analyze", criteria_met: true }`
+
+### 13. render
+Typography formatter. Pipeline terminus (outputs text, not JSON).
+
+**Input:** `{ response: "..." }`  
+**Output:** Plain text with proper quotes, em dashes, 72-char wrapping
+
+---
+
+## Dependencies
+
+Using ruby_llm ecosystem (no custom HTTP client):
+
+```ruby
+gem "ruby_llm"            # Chat, streaming, 800+ models
+gem "ruby_llm-schema"     # Structured output
+gem "ruby_llm-tribunal"   # LLM evaluation
+gem "sqlite3"             # State persistence
+gem "tty-prompt"          # Interactive UI
+gem "tty-table"           # Data tables
+gem "tty-box"             # Framed boxes
+gem "tty-spinner"         # Loading spinners
+gem "tty-screen"          # Terminal size
+gem "minitest"            # Testing
+```
+
+**Critical:** No `net/http`, `faraday`, `httparty`. RubyLLM handles all provider communication.
+
+---
+
+## Environment Setup
+
+### 1. API Keys
+Create `MASTER/.env`:
 ```bash
-bin/cli remember "Important fact" --tags important,fact --source documentation
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+DEEPSEEK_API_KEY=sk-...
+OPENROUTER_API_KEY=sk-or-...
 ```
 
-### Recall Information
+### 2. Source .zshrc
+Add to `~/.zshrc`:
+```zsh
+source /home/dev/pub/MASTER/.zshrc
+```
+
+This adds aliases:
+- `m-start` - Interactive REPL
+- `m-ask <query>` - Quick pipeline query
+- `m-evolve` - Self-modification
+- `m-quality` - Quality check
+
+### 3. Seed Database
 ```bash
-bin/cli recall "what did I learn about X"
+bin/seed  # Imports principles.yml and personas.yml
 ```
 
-### Memory Stats
+---
+
+## Usage Examples
+
+### Interactive REPL
 ```bash
-bin/cli memory-stats
+bin/start
+› What is SOLID?
 ```
 
-Memory persists across sessions and improves over time.
+### Single Query
+```bash
+m-ask Explain the KISS principle
+```
 
-### Weaviate Setup
+### Full Pipeline
+```bash
+echo '{"text":"Refactor this for clarity", "persona":"architect"}' | \
+  bin/intake | \
+  bin/guard | \
+  bin/route | \
+  bin/ask | \
+  bin/critique | \
+  bin/quality | \
+  bin/render
+```
 
-MASTER uses Weaviate for vector memory. Run via Docker:
+### Multi-Model Chamber
+```bash
+echo '{"text":"Design a REST API", "models":["deepseek-r1","claude-sonnet-4"]}' | \
+  bin/intake | \
+  bin/chamber | \
+  bin/render
+```
+
+### Self-Evolution
+```bash
+echo '{"file":"lib/strunk.rb", "test_command":"ruby test/test_protocol.rb"}' | \
+  bin/evolve
+```
+
+---
+
+## Testing
 
 ```bash
-docker run -d \
-  -p 8080:8080 \
-  -e QUERY_DEFAULTS_LIMIT=25 \
-  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
-  -e PERSISTENCE_DATA_PATH='/var/lib/weaviate' \
-  -e DEFAULT_VECTORIZER_MODULE='text2vec-openai' \
-  -e ENABLE_MODULES='text2vec-openai' \
-  -e OPENAI_APIKEY='your-key' \
-  semitechnologies/weaviate:latest
+# All tests
+ruby -Ilib:test test/test_*.rb
+
+# Specific test
+ruby test/test_protocol.rb
+ruby test/test_db.rb
+ruby test/test_pipeline.rb
 ```
 
-Or use Weaviate Cloud: https://console.weaviate.cloud/
+---
 
+## Database Schema
 
-## Models
+SQLite with 10 tables:
 
-    cheap       DeepSeek
-    fast        Grok
-    strong      Sonnet
-    frontier    Opus
-    code        Codestral
+- **principles** - Design principles (KISS, DRY, SOLID, etc.)
+- **personas** - Character modes (architect, generic, etc.)
+- **config** - Key-value configuration
+- **memories** - Long-term memory with embeddings
+- **costs** - LLM usage tracking
+- **circuits** - Circuit breaker state (3 failures → open)
+- **hooks** - Event handlers (before_edit, after_fix, etc.)
+- **sessions** - Chat sessions with total cost
+- **evolutions** - Self-modification history
+- **messages** - Session message log
 
+---
 
-## Multi-Platform Bot
+## Security
 
-MASTER can run as a multi-platform chatbot on Discord, Telegram, Slack, and Twitter/X.
+### API Keys
+- **Never** commit `.env` to git (in `.gitignore`)
+- **Never** hardcode keys in `.zshrc` or source files
+- Source `.env` from `.zshrc` at runtime
 
-### Setup
+### Circuit Breaker
+- 3 consecutive failures → model marked 'open'
+- Auto-downgrade to next tier
+- Reset with `MASTER::DB.reset_circuit(model)`
 
-1. **Install dependencies:**
-   ```bash
-   bundle install
-   ```
+### Sandboxing
+- `pledge.rb` wraps OpenBSD pledge/unveil syscalls
+- Restricts filesystem and syscall access during execution
+- Graceful degradation on non-OpenBSD platforms
 
-2. **Configure platforms:**
-   
-   Edit `config/platforms.yml` and enable desired platforms:
-   ```yaml
-   discord:
-     enabled: true
-     token: <%= ENV['DISCORD_BOT_TOKEN'] %>
-   ```
+### Safety Firewall
+- `bin/guard` blocks dangerous operations
+- Checks against ABSOLUTE principles
+- Detects `rm -rf`, `drop table`, etc.
 
-3. **Set environment variables:**
-   
-   **Discord:**
-   ```bash
-   export DISCORD_BOT_TOKEN="your_token_here"
-   export DISCORD_PUBLIC_KEY="your_public_key"  # For webhook verification
-   ```
-   
-   **Telegram:**
-   ```bash
-   export TELEGRAM_BOT_TOKEN="your_token_here"
-   export TELEGRAM_WEBHOOK_SECRET="your_secret"  # Optional for webhooks
-   ```
-   
-   **Slack:**
-   ```bash
-   export SLACK_BOT_TOKEN="xoxb-your-token"
-   export SLACK_SIGNING_SECRET="your_secret"  # For webhook verification
-   ```
-   
-   **Twitter/X:**
-   ```bash
-   export TWITTER_ACCESS_TOKEN="your_token"
-   export TWITTER_ACCESS_SECRET="your_secret"
-   export TWITTER_CONSUMER_KEY="your_key"
-   export TWITTER_CONSUMER_SECRET="your_secret"
-   ```
+---
 
-4. **Start the bot:**
-   ```bash
-   bin/bot
-   ```
+## Philosophy
 
-### Token Acquisition
+### Unix Pipeline Principles
+1. **Small, focused tools** - Each stage does one thing
+2. **Text (JSON) streams** - Universal interface
+3. **Composable** - Chain any combination
+4. **Testable** - Each stage tested independently
+5. **Observable** - stderr for streaming, stdout for data
 
-**Discord:**
-1. Go to https://discord.com/developers/applications
-2. Create New Application
-3. Go to "Bot" → Reset Token
-4. Copy token to `DISCORD_BOT_TOKEN`
-5. Enable "Message Content Intent"
-6. Go to "General Information" → Copy Public Key to `DISCORD_PUBLIC_KEY`
+### Code Quality
+- **Strunk & White** - Omit needless words, active voice
+- **Sandi Metz** - 100 lines/class, 5 lines/method, 4 params
+- **Bringhurst** - Typography matters
 
-**Telegram:**
-1. Message @BotFather on Telegram
-2. Send `/newbot` and follow prompts
-3. Copy token to `TELEGRAM_BOT_TOKEN`
-4. Set webhook: `https://yourserver.com/webhook/telegram`
+### LLM Strategy
+- **Circuit breaker** - Fail fast, auto-recover
+- **Multi-model** - Deliberate, synthesize
+- **Cost tracking** - Budget awareness
+- **Critique** - Detect hallucination
 
-**Slack:**
-1. Go to https://api.slack.com/apps
-2. Create New App → From scratch
-3. Go to "OAuth & Permissions"
-4. Add scopes: `chat:write`, `app_mentions:read`, `channels:history`
-5. Install to workspace
-6. Copy "Bot User OAuth Token" to `SLACK_BOT_TOKEN`
-7. Go to "Basic Information" → Copy "Signing Secret" to `SLACK_SIGNING_SECRET`
+---
 
-**Twitter/X:**
-1. Go to https://developer.twitter.com/
-2. Create App with Read/Write permissions
-3. Generate Access Token & Secret
-4. Copy all credentials to respective ENV vars
+## Migration from v1
 
-### Webhook Setup
-
-For production deployments, configure webhooks for each platform:
-
-**Discord:**
-```
-POST https://yourserver.com/webhook/discord
-Headers:
-  X-Signature-Timestamp: timestamp
-  X-Signature-Ed25519: signature
+**Old (monolithic):**
+```ruby
+# lib/cli.rb - 94KB god object
+class CLI
+  def run
+    # 2000+ lines of REPL logic, commands, LLM calls...
+  end
+end
 ```
 
-**Telegram:**
+**New (composable):**
 ```bash
-curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
-  -d "url=https://yourserver.com/webhook/telegram"
+# 15 focused executables, 8 libraries
+bin/intake | bin/guard | bin/route | bin/ask | bin/render
 ```
 
-**Slack:**
-```
-POST https://yourserver.com/webhook/slack
-Headers:
-  X-Slack-Request-Timestamp: timestamp
-  X-Slack-Signature: signature
-```
+**Benefits:**
+- ✅ Testable - Each stage tested independently
+- ✅ Debuggable - Inspect JSON between stages
+- ✅ Composable - Mix and match stages
+- ✅ Maintainable - No file over 200 lines
+- ✅ Extensible - Add stages without touching core
 
-**Twitter/X:**
-```
-POST https://yourserver.com/webhook/twitter
-Headers:
-  X-Twitter-Webhooks-Signature: signature
-```
+---
 
-### Configuration
+## Troubleshooting
 
-Edit `config/platforms.yml` to customize:
-
-- Channel whitelists (restrict bot to specific channels)
-- Rate limits per platform
-- Message formatting options
-- Retry policies
-- Error handling behavior
-
-### Troubleshooting
-
-**Bot not responding:**
-- Check platform is enabled in `config/platforms.yml`
-- Verify token is set correctly in environment
-- Check logs in `~/.master/var/audit.log`
-- Ensure bot has proper permissions in Discord/Slack
-
-**Rate limit errors:**
-- Adjust rate limits in config
-- Twitter/X has strict rate limits - use sparingly
-- Consider implementing message queuing
-
-**Webhook verification failing:**
-- Ensure signing secrets are set correctly
-- Check server is accessible from internet
-- Verify webhook URLs in platform settings
-
-
-## Environment
-
-    OPENROUTER_API_KEY    Required
-    REPLICATE_API_TOKEN   Media generation
-    
-    # Platform tokens (for bot mode)
-    DISCORD_BOT_TOKEN
-    TELEGRAM_BOT_TOKEN
-    SLACK_BOT_TOKEN
-    TWITTER_ACCESS_TOKEN
-
-
-## Design
-
-Typography through contrast, not decoration.
-Whitespace is layout. Proximity beats borders.
-Success whispers. Errors speak.
-Five icons: `✓ ✗ ! · →`
-
-Zsh over Bash. Parameter expansion over forks.
-Calm palette. Monospace constraints respected.
-
-
-## Unified Framework v226
-
-MASTER v226 "Unified Deep Debug" merges powerful debugging frameworks:
-
-### Interactive Mode
+### RubyLLM not found
 ```bash
-ruby lib/cli_v226.rb
+bundle install
 ```
-Conversational REPL with visual mood indicators and persona switching.
 
-### Batch Analysis
+### API key errors
+Check `.env` exists and is sourced:
 ```bash
-ruby lib/cli_v226.rb file.rb            # Basic analysis
-ruby lib/cli_v226.rb file.rb --debug    # 8-phase bug hunting
-ruby lib/cli_v226.rb file.rb --json     # JSON output
+echo $OPENAI_API_KEY
 ```
 
-### Features
-- **Enhanced Postpro**: 12 film stocks, 12 presets, caching
-- **Bug Hunting**: 8-phase systematic debugging protocol
-- **Resilience**: Act-react loop, never give up approach
-- **Constitutional AI**: 7 personas, 12 biases, 7 depth techniques
-- **Systematic**: Required workflows (tree, clean, diff, logs)
-- **Mood Indicators**: Visual feedback (idle, thinking, working, success, error)
-- **Persona Modes**: Character-based output (ronin, verbose, hacker, poet, detective)
+### Database locked
+```bash
+rm master.db
+bin/seed
+```
 
-### Documentation
-See `docs/UNIFIED_v226.md` for complete documentation.
+### Tests failing
+```bash
+bundle exec ruby test/test_protocol.rb -v
+```
 
-### Configuration
-Edit `config/master_v226.yml` to customize behavior.
-
+---
 
 ## License
 
-MIT
+See repository root.
 
-*v52 · Ruby · OpenBSD · Constitutional · Unified v226*
+---
+
+## Credits
+
+- **RubyLLM** - https://github.com/alexrudall/ruby-llm
+- **TTY toolkit** - https://ttytoolkit.org
+- **Strunk & White** - The Elements of Style
+- **Sandi Metz** - Practical Object-Oriented Design in Ruby
+- **Robert Bringhurst** - The Elements of Typographic Style

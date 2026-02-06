@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require_relative "../lib/db"
+
+MASTER::DB.initialize_schema
+
+MASTER::Protocol.pipe do |input|
+  action = input[:action] || "recall"
+  context = input[:context] || ""
+  content = input[:content] || input[:text] || ""
+  
+  if action == "store"
+    # Store memory
+    MASTER::DB.connection.execute(
+      "INSERT INTO memories (context, content) VALUES (?, ?)",
+      [context, content]
+    )
+    
+    input.merge(
+      stored: true,
+      message: "Memory stored"
+    )
+  else
+    # Recall memories
+    query = input[:query] || context
+    
+    if query.empty?
+      # Get recent memories
+      memories = MASTER::DB.connection.execute(
+        "SELECT * FROM memories ORDER BY created_at DESC LIMIT 10"
+      )
+    else
+      # Search by context (simple LIKE query)
+      memories = MASTER::DB.connection.execute(
+        "SELECT * FROM memories WHERE context LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT 10",
+        ["%#{query}%", "%#{query}%"]
+      )
+    end
+    
+    input.merge(
+      recalled: true,
+      memories: memories.map { |m| Hash[m] },
+      count: memories.length
+    )
+  end
+end

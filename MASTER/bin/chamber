@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/json_protocol"
+require_relative "../lib/llm_client"
+
+MASTER::LLM.configure
+
+MASTER::Protocol.pipe do |input|
+  text = input[:text] || ""
+  models = input[:models] || ["deepseek-r1", "gpt-4.1-mini", "claude-sonnet-4"]
+  
+  responses = []
+  threads = []
+  
+  # Parallel execution using threads
+  models.each do |model|
+    threads << Thread.new do
+      begin
+        chat = RubyLLM.chat(model: model)
+        response = chat.ask(text)
+        { model: model, content: response.content, success: true }
+      rescue => e
+        { model: model, error: e.message, success: false }
+      end
+    end
+  end
+  
+  # Wait for all threads
+  responses = threads.map(&:value)
+  
+  # Filter successful responses
+  successful = responses.select { |r| r[:success] }
+  
+  if successful.empty?
+    input.merge(
+      response: "All models failed",
+      models_consulted: models,
+      consensus: false,
+      error: "Chamber deliberation failed"
+    )
+  else
+    # Synthesize with primary model
+    synthesis_prompt = "Synthesize these responses:\n\n" +
+      successful.map { |r| "#{r[:model]}: #{r[:content]}" }.join("\n\n")
+    
+    chat = RubyLLM.chat(model: models.first)
+    synthesis = chat.ask(synthesis_prompt)
+    
+    input.merge(
+      response: synthesis.content,
+      models_consulted: successful.map { |r| r[:model] },
+      individual_responses: successful,
+      consensus: successful.length > 1,
+      synthesis: true
+    )
+  end
+end

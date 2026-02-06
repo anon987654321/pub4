@@ -1,45 +1,20 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-# Core
-gem 'async'
-gem 'falcon'
+# Core LLM — the ONE API for all providers
+gem "ruby_llm"            # Chat, streaming, tools, 800+ models
+gem "ruby_llm-schema"     # Structured output DSL
+gem "ruby_llm-tribunal"   # LLM evaluation (critique engine)
+gem "sqlite3"             # State layer
 
-# LLM
-gem 'ruby_llm', require: false
+# Terminal UI
+gem "tty-prompt"
+gem "tty-table"
+gem "tty-box"
+gem "tty-spinner"
+gem "tty-screen"
 
-# Web browsing
-gem 'ferrum', require: false
-
-# CLI core
-gem 'readline'
-
-# Social media platform integrations
-gem 'discordrb', '~> 3.5', require: false
-gem 'telegram-bot-ruby', '~> 1.0', require: false
-gem 'slack-ruby-client', '~> 2.0', require: false
-gem 'twitter', '~> 8.0', require: false
-
-# TTY toolkit - full UI/UX power
-gem 'tty-prompt', require: false      # Interactive menus, selections
-gem 'tty-spinner', require: false     # Loading spinners
-gem 'tty-table', require: false       # Data tables
-gem 'tty-box', require: false         # Framed boxes
-gem 'tty-markdown', require: false    # Render markdown
-gem 'tty-progressbar', require: false # Progress indicators
-gem 'tty-cursor', require: false      # Cursor movement
-gem 'tty-reader', require: false      # Keyboard input, vim keys
-gem 'tty-tree', require: false        # Directory trees
-gem 'tty-pie', require: false         # Pie charts
-gem 'tty-logger', require: false      # Structured logging
-gem 'tty-pager', require: false       # Paginate output
-gem 'tty-link', require: false        # Hyperlinks
-gem 'tty-font', require: false        # ASCII fonts
-gem 'tty-editor', require: false      # Open $EDITOR
-gem 'tty-command', require: false     # Shell execution
-gem 'tty-screen', require: false      # Terminal size
-gem 'tty-platform', require: false    # OS detection
-gem 'tty-which', require: false       # Find binaries
-gem 'tty-config', require: false      # Config management
-gem 'pastel', require: false          # Colors
+group :test do
+  gem "minitest"
+end
