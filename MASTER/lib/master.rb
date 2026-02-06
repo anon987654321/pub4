@@ -54,6 +54,7 @@ module MASTER
   autoload :Layout,      "#{LIB}/layout"
   autoload :PiperTTS,    "#{LIB}/piper_tts"
   autoload :EdgeTTS,     "#{LIB}/edge_tts"
+  autoload :SystemMap,   "#{LIB}/system_map"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
