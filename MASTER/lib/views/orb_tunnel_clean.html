@@ -110,9 +110,9 @@ function draw(){
     
     // Color based on depth (cyan gradient)
     const depth=i/particles.length;
-    const r=Math.round((20+depth*100)/8)*8;
-    const g=Math.round((150+depth*80)/8)*8;
-    const b=Math.round((150+depth*80)/8)*8;
+    const r=20+depth*100;
+    const g=150+depth*80;
+    const b=150+depth*80;
     const col=pack32(r,g,b,255);
     
     // Draw ring
