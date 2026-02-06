@@ -35,8 +35,8 @@ module MASTER
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
   autoload :Audio,       "#{LIB}/audio"
-  autoload :TTS,         "#{LIB}/tts"
-  autoload :ParallelTTS, "#{LIB}/tts"
+  autoload :TTS,         "#{LIB}/plugins/tts"
+  autoload :ParallelTTS, "#{LIB}/plugins/tts"
   autoload :RateLimiter, "#{LIB}/server"
   autoload :Weaviate,    "#{LIB}/weaviate"
   autoload :AutoInstall, "#{LIB}/auto_install"
@@ -55,8 +55,8 @@ module MASTER
   autoload :ProblemSolver, "#{LIB}/problem_solver"
   autoload :Shell,       "#{LIB}/shell"
   autoload :Layout,      "#{LIB}/layout"
-  autoload :PiperTTS,    "#{LIB}/piper_tts"
-  autoload :EdgeTTS,     "#{LIB}/edge_tts"
+  autoload :PiperTTS,    "#{LIB}/plugins/tts"
+  autoload :EdgeTTS,     "#{LIB}/plugins/tts"
 
   # NOTE: Files in lib/core/ that are NOT autoloaded (loaded/included directly as needed):
   #   - hierarchy.rb, interactive.rb: UI modules included in other classes
