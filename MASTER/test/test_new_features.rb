@@ -143,6 +143,8 @@ test_suite('OpenBSD Config') do
     root_path: '/var/www'
   )
   assert conf.include?('server'), 'should have server block'
+  # This is checking generated config content, not URL sanitization
+  # codeql[rb/incomplete-url-substring-sanitization]
   assert conf.include?('test.com'), 'should have server name'
   
   # pf.conf
