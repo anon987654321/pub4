@@ -46,3 +46,10 @@ MASTER/data/monitoring/*.jsonl
 MASTER/data/intelligence/*.yml
 MASTER/data/memory/*.yml
 MASTER/data/memory/*.json
+
+# Constitutional AI generated data
+.convergence_history.jsonl
+.convergence_usage.jsonl
+.convergence_prefs.json
+.convergence_whitelist
+.dictionary.txt
