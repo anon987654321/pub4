@@ -65,6 +65,23 @@ module MASTER
       tier ||= @current_tier || DEFAULT_TIER
       return Result.err('No API key') unless @api_key
 
+      # Autonomy: Check budget before proceeding
+      estimated = Autonomy.estimate_cost(message) rescue 0.01
+      unless Autonomy.within_budget?(estimated)
+        return Result.err("Budget exceeded ($#{Autonomy.total_cost.round(2)}/$#{Autonomy.config[:budget_limit]})")
+      end
+
+      # Autonomy: Check circuit breaker
+      provider = extract_provider(tier)
+      if Autonomy.circuit_open?(provider)
+        # Try fallback
+        fallback_tier = find_fallback_tier(tier)
+        tier = fallback_tier if fallback_tier
+      end
+
+      # Autonomy: Detect task type and adjust parameters
+      @task_params = PromptAutonomy.task_parameters(message) rescue {}
+
       @current_tier = tier
       cache_key = "#{tier}:#{message}"
       if @cache[cache_key]
@@ -81,13 +98,37 @@ module MASTER
                  call_api(tier)
                end
 
+      # Autonomy: Record result for circuit breaker
+      Autonomy.record_provider_result(provider, result.ok?) rescue nil
+
+      # Autonomy: Track cost
       if result.ok?
+        Autonomy.track_cost(@last_cost || 0) rescue nil
         @cache[cache_key] = result.value
         @history << { role: 'assistant', content: result.value } if @backend != :ruby_llm
         save_conversation_history
+
+        # Autonomy: Track for prompt learning
+        PromptAutonomy.track_execution("chat:#{tier}", success: true, tokens: @last_tokens[:output]) rescue nil
+      else
+        PromptAutonomy.track_execution("chat:#{tier}", success: false) rescue nil
       end
 
       result
+    end
+
+    def extract_provider(tier)
+      model = TIERS.dig(tier, :model) || 'unknown'
+      model.split('/').first
+    end
+
+    def find_fallback_tier(current_tier)
+      # Fallback chain: strong -> code -> fast -> cheap
+      chain = [:strong, :code, :fast, :cheap, :gemini]
+      idx = chain.index(current_tier)
+      return nil unless idx
+
+      chain[(idx + 1)..-1].find { |t| !Autonomy.circuit_open?(extract_provider(t)) }
     end
 
     def set_tier(tier)
@@ -324,6 +365,16 @@ module MASTER
       config = TIERS[tier] || TIERS[DEFAULT_TIER]
       retries = 0
 
+      # Autonomy: Prune context if approaching limits
+      messages = build_messages
+      if messages.size > 50
+        messages = Autonomy.prune_context(messages, token_limit: 100000, current_tokens: estimate_message_tokens(messages)) rescue messages
+      end
+
+      # Autonomy: Get task-specific parameters
+      temp = @task_params[:temperature] || 0.7
+      top_p = @task_params[:top_p] || 0.95
+
       begin
         uri = URI("#{@base_url}/chat/completions")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -337,10 +388,15 @@ module MASTER
         request['HTTP-Referer'] = ENV['OPENROUTER_REFERER'] || ENV['MASTER_ORIGIN'] || 'https://brgen.no'
         request['X-Title'] = ENV['OPENROUTER_TITLE'] || 'MASTER'
 
+        # Autonomy: Add prompt caching headers if applicable
+        cache_headers = PromptAutonomy.cache_headers(messages.first&.dig(:content)) rescue {}
+        cache_headers.each { |k, v| request[k] = v }
+
         request.body = {
           model: config[:model],
-          messages: build_messages,
-          temperature: 0.7,
+          messages: messages,
+          temperature: temp,
+          top_p: top_p,
           max_tokens: MAX_TOKENS
         }.to_json
 
@@ -359,12 +415,17 @@ module MASTER
         @total_tokens_in += input_tokens
         @total_tokens_out += output_tokens
         @request_count += 1
-        @total_cost += estimate_cost(input_tokens, output_tokens, tier)
+        @last_cost = estimate_cost(input_tokens, output_tokens, tier)
+        @total_cost += @last_cost
 
         Result.ok(content)
       rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
         retries += 1
         if retries <= MAX_RETRIES
+          # Autonomy: On timeout, try with reduced context
+          if retries == 2 && Autonomy.config[:timeout_recovery]
+            @history = Autonomy.timeout_recovery_context(@history) rescue @history
+          end
           sleep RETRY_DELAYS[retries - 1]
           retry
         end
@@ -372,6 +433,10 @@ module MASTER
       rescue => e
         Result.err(e.message)
       end
+    end
+
+    def estimate_message_tokens(messages)
+      messages.sum { |m| (m[:content].to_s.length / 4.0).ceil }
     end
 
     def call_api_direct(model, prompt)
