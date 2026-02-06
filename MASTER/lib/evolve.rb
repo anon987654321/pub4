@@ -2,6 +2,7 @@
 
 module MASTER
   # Self-improvement workflow
+  # Consolidates: evolution, auto-fixing, and momentum tracking
   # Analyzes codebase, identifies refinements, applies them, repeats until convergence
   class Evolve
     MAX_ITERATIONS = 100 unless const_defined?(:MAX_ITERATIONS)
@@ -31,6 +32,10 @@ module MASTER
       @history_file ||= File.join(Paths.data, 'evolution_history.yml')
     end
     
+    def self.momentum_file
+      @momentum_file ||= File.join(Paths.var, 'momentum.yml')
+    end
+    
     # Files that should never be auto-modified during self-runs
     PROTECTED_FILES = %w[
       lib/evolve.rb
@@ -38,6 +43,61 @@ module MASTER
       lib/converge.rb
       lib/core/executor.rb
     ].freeze
+
+    # AutoFixer constants
+    MAX_FIXES_PER_RUN = 20
+    MODES = %i[conservative moderate aggressive].freeze
+    
+    # Fixable violation types and their fix strategies
+    FIXERS = {
+      trailing_whitespace: ->(code) { code.gsub(/[ \t]+$/, '') },
+      debug_code: ->(code) { code.gsub(/^\s*(binding\.pry|debugger|byebug).*\n/, '') },
+      puts_debug: ->(code) { code.gsub(/^\s*puts\s+["'].*["'].*\n/, '') },
+      empty_lines_excess: ->(code) { code.gsub(/\n{3,}/, "\n\n") },
+      trailing_newlines: ->(code) { code.rstrip + "\n" }
+    }.freeze
+    
+    # Which fixes are safe in each mode
+    MODE_FIXES = {
+      conservative: %i[trailing_whitespace empty_lines_excess trailing_newlines],
+      moderate: %i[trailing_whitespace empty_lines_excess trailing_newlines puts_debug],
+      aggressive: FIXERS.keys
+    }.freeze
+
+    # Momentum/gamification constants
+    XP = { chat: 5, scan: 10, refactor: 25, beautify: 15, bughunt: 30, commit: 20,
+           push: 10, evolve: 50, chamber: 40, goal_complete: 100, task_complete: 15,
+           streak_bonus: 10, first_of_day: 25, session_long: 50, error_recovery: 20, learning: 15 }.freeze
+
+    LEVELS = [0, 100, 300, 600, 1000, 1500, 2200, 3000, 4000, 5500,
+              7500, 10000, 13000, 17000, 22000, 28000, 35000, 45000, 60000, 80000].freeze
+
+    TITLES = %w[Novice Apprentice Journeyman Adept Expert Veteran Master
+                Grandmaster Legend Mythic Transcendent Eternal Cosmic
+                Omniscient Divine Ascended Primordial Infinite Absolute Ultimate].freeze
+
+    ACHIEVEMENTS = {
+      first_blood:   ["First Blood",      "Complete first task",    ->(s) { s[:tasks] >= 1 }],
+      centurion:     ["Centurion",        "100 tasks",              ->(s) { s[:tasks] >= 100 }],
+      streak_3:      ["Hat Trick",        "3-day streak",           ->(s) { s[:max_streak] >= 3 }],
+      streak_7:      ["Weekly Warrior",   "7-day streak",           ->(s) { s[:max_streak] >= 7 }],
+      streak_30:     ["Monthly Master",   "30-day streak",          ->(s) { s[:max_streak] >= 30 }],
+      refactor_10:   ["Code Surgeon",     "Refactor 10 files",      ->(s) { s[:refactors] >= 10 }],
+      refactor_100:  ["Architect",        "Refactor 100 files",     ->(s) { s[:refactors] >= 100 }],
+      bughunt_5:     ["Bug Hunter",       "Hunt 5 bugs",            ->(s) { s[:bughunts] >= 5 }],
+      bughunt_50:    ["Exterminator",     "Hunt 50 bugs",           ->(s) { s[:bughunts] >= 50 }],
+      commits_10:    ["Committer",        "10 commits",             ->(s) { s[:commits] >= 10 }],
+      commits_100:   ["Prolific",         "100 commits",            ->(s) { s[:commits] >= 100 }],
+      evolve_1:      ["Self-Aware",       "First evolution",        ->(s) { s[:evolves] >= 1 }],
+      evolve_10:     ["Transcendent",     "10 evolutions",          ->(s) { s[:evolves] >= 10 }],
+      chamber_1:     ["Deliberator",      "First chamber",          ->(s) { s[:chambers] >= 1 }],
+      night_owl:     ["Night Owl",        "Work past midnight",     ->(s) { s[:nights] >= 1 }],
+      early_bird:    ["Early Bird",       "Work before 6am",        ->(s) { s[:early] >= 1 }],
+      marathon:      ["Marathon",         "3+ hour session",        ->(s) { s[:marathons] >= 1 }],
+      level_5:       ["Rising Star",      "Reach level 5",          ->(s) { s[:level] >= 5 }],
+      level_10:      ["Veteran",          "Reach level 10",         ->(s) { s[:level] >= 10 }],
+      level_20:      ["Ultimate",         "Reach level 20",         ->(s) { s[:level] >= 20 }]
+    }.freeze
 
     def initialize(llm, chamber = nil)
       @llm = llm
@@ -48,6 +108,115 @@ module MASTER
       @cost = 0.0
       @history = []  # Track improvement rates
       @prior_wishlist = load_prior_wishlist
+      @autofix_mode = :conservative
+      @fixes_applied = []
+      @backups = {}
+    end
+    
+    # Momentum tracking methods
+    def momentum_state
+      @momentum_state ||= File.exist?(self.class.momentum_file) ? 
+        (YAML.load_file(self.class.momentum_file, symbolize_names: true) rescue fresh_momentum) : 
+        fresh_momentum
+    end
+    
+    def fresh_momentum
+      { xp: 0, level: 1, streak: 0, max_streak: 0, last_active: nil, tasks: 0,
+        refactors: 0, bughunts: 0, commits: 0, evolves: 0, chambers: 0, chats: 0,
+        nights: 0, early: 0, marathons: 0, session_start: Time.now.to_i, achievements: [] }
+    end
+    
+    def save_momentum
+      FileUtils.mkdir_p(File.dirname(self.class.momentum_file))
+      File.write(self.class.momentum_file, momentum_state.to_yaml)
+    end
+    
+    def award_xp(action, multiplier: 1.0)
+      pts = ((XP[action] || 5) * multiplier).round
+      momentum_state[:xp] += pts
+      old_lvl = momentum_state[:level]
+      momentum_state[:level] = LEVELS.index { |t| momentum_state[:xp] < t } || LEVELS.size
+
+      # Track counts
+      momentum_state[:refactors] += 1 if action == :refactor
+      momentum_state[:bughunts] += 1 if action == :bughunt
+      momentum_state[:commits] += 1 if action == :commit
+      momentum_state[:evolves] += 1 if action == :evolve
+      momentum_state[:chambers] += 1 if action == :chamber
+      momentum_state[:tasks] += 1 if %i[task_complete goal_complete].include?(action)
+
+      # Time achievements
+      h = Time.now.hour
+      momentum_state[:nights] += 1 if h >= 0 && h < 5
+      momentum_state[:early] += 1 if h >= 5 && h < 6
+      momentum_state[:marathons] += 1 if momentum_state[:session_start] && (Time.now.to_i - momentum_state[:session_start]) >= 10800
+
+      save_momentum
+      result = { xp: pts, total: momentum_state[:xp], level: momentum_state[:level] }
+
+      if momentum_state[:level] > old_lvl
+        result[:level_up] = momentum_title(momentum_state[:level])
+        log "Level UP! L#{momentum_state[:level]} #{result[:level_up]}"
+      end
+
+      (new_ach = check_achievements).each { |a| log "Achievement: #{a}" }
+      result[:achievements] = new_ach if new_ach.any?
+      result
+    end
+    
+    def update_streak
+      today = Date.today.to_s
+      if momentum_state[:last_active].nil?
+        momentum_state[:streak] = 1
+      elsif momentum_state[:last_active] == today
+        # already counted
+      elsif momentum_state[:last_active] == (Date.today - 1).to_s
+        momentum_state[:streak] += 1
+        momentum_state[:max_streak] = [momentum_state[:max_streak], momentum_state[:streak]].max
+        momentum_state[:xp] += momentum_state[:streak] * XP[:streak_bonus]
+        log "Streak: #{momentum_state[:streak]} days! +#{momentum_state[:streak] * XP[:streak_bonus]}xp"
+      else
+        momentum_state[:streak] = 1
+      end
+      momentum_state[:last_active] = today
+      save_momentum
+      momentum_state[:streak]
+    end
+    
+    def check_achievements
+      earned = []
+      ACHIEVEMENTS.each do |id, (name, desc, check)|
+        next if momentum_state[:achievements].include?(id.to_s)
+        if check.call(momentum_state)
+          momentum_state[:achievements] << id.to_s
+          earned << "#{name}: #{desc}"
+        end
+      end
+      save_momentum if earned.any?
+      earned
+    end
+    
+    def momentum_title(lvl = momentum_state[:level])
+      TITLES[[lvl - 1, TITLES.size - 1].min]
+    end
+    
+    def xp_needed
+      return 0 if momentum_state[:level] >= LEVELS.size
+      (LEVELS[momentum_state[:level]] || LEVELS.last) - momentum_state[:xp]
+    end
+    
+    def momentum_status
+      pct = momentum_state[:level] < LEVELS.size ? 
+        ((momentum_state[:xp] - (LEVELS[momentum_state[:level] - 1] || 0)).to_f / 
+         ((LEVELS[momentum_state[:level]] || 1) - (LEVELS[momentum_state[:level] - 1] || 0)) * 100).round : 100
+      bar = "█" * (pct / 5) + "░" * (20 - pct / 5)
+      [
+        "#{momentum_title} (L#{momentum_state[:level]})",
+        "[#{bar}] #{pct}%",
+        "#{momentum_state[:xp]} XP | #{xp_needed} to next",
+        momentum_state[:streak] > 0 ? "🔥 #{momentum_state[:streak]}-day streak" : nil,
+        "🏆 #{momentum_state[:achievements].size}/#{ACHIEVEMENTS.size}"
+      ].compact.join("\n")
     end
     
     # Load wishlist from previous run to inform current analysis
@@ -211,6 +380,10 @@ module MASTER
       wishlist = generate_wishlist(target)
       save_wishlist(wishlist)
       save_run_history(summary)
+      
+      # Award momentum XP for evolution
+      award_xp(:evolve)
+      update_streak
 
       log "Evolution complete: #{@iteration} iterations, $#{'%.4f' % @cost}"
       {
@@ -536,6 +709,7 @@ module MASTER
 
     def commit_changes(message)
       system("git add -A && git commit -m '#{message}' > /dev/null 2>&1")
+      award_xp(:commit) if $?.success?
     end
 
     def convergence_summary
@@ -784,6 +958,152 @@ module MASTER
       # Placeholder - actual extraction is complex
       # Would need to identify local variables, return values, etc.
       "def #{method_name}\n#{block_lines.join}\nend"
+    end
+    
+    # AutoFixer methods - safe automated code fixes with verification
+    def set_autofix_mode(mode)
+      @autofix_mode = MODES.include?(mode) ? mode : :conservative
+    end
+    
+    def can_autofix?(type)
+      type = type.to_sym
+      allowed = MODE_FIXES[@autofix_mode] || []
+      allowed.include?(type)
+    end
+    
+    def autodetect_violations(code)
+      violations = []
+      violations << { type: :trailing_whitespace } if code =~ /[ \t]+$/
+      violations << { type: :empty_lines_excess } if code =~ /\n{3,}/
+      violations << { type: :trailing_newlines } if code =~ /\n\n+\z/
+      violations << { type: :debug_code } if code =~ /\b(binding\.pry|debugger|byebug)\b/
+      violations << { type: :puts_debug } if code =~ /^\s*puts\s+["']/
+      violations
+    end
+    
+    def valid_ruby?(code)
+      RubyVM::InstructionSequence.compile(code)
+      true
+    rescue SyntaxError
+      false
+    end
+    
+    def autofix_file(file, violations = nil)
+      return Result.err("File not found: #{file}") unless File.exist?(file)
+      
+      code = File.read(file)
+      original = code.dup
+      @backups[file] = original
+      
+      # Determine which violations to fix
+      fixable = violations&.select { |v| can_autofix?(v[:type]) } || autodetect_violations(code)
+      fixable = fixable.take(MAX_FIXES_PER_RUN)
+      
+      return Result.ok({ file: file, fixed: 0, message: "No fixable violations" }) if fixable.empty?
+      
+      # Apply fixes
+      fixed_count = 0
+      fixable.each do |violation|
+        type = violation[:type]&.to_sym
+        next unless can_autofix?(type)
+        
+        fixer = FIXERS[type]
+        next unless fixer
+        
+        new_code = fixer.call(code)
+        if new_code != code
+          code = new_code
+          fixed_count += 1
+          @fixes_applied << { file: file, type: type }
+        end
+      end
+      
+      return Result.ok({ file: file, fixed: 0, message: "No changes made" }) if code == original
+      
+      # Verify the fix
+      unless valid_ruby?(code)
+        return Result.err("Fix produced invalid Ruby - rolling back")
+      end
+      
+      # Write the fixed code
+      File.write(file, code)
+      
+      Result.ok({
+        file: file,
+        fixed: fixed_count,
+        types: @fixes_applied.select { |f| f[:file] == file }.map { |f| f[:type] }
+      })
+    end
+    
+    def autofix_files(files, violations_by_file = {})
+      results = []
+      
+      files.each do |file|
+        violations = violations_by_file[file] || []
+        result = autofix_file(file, violations)
+        results << result
+      end
+      
+      successful = results.count(&:ok?)
+      total_fixed = results.select(&:ok?).sum { |r| r.value[:fixed] }
+      
+      Result.ok({
+        files_processed: files.size,
+        files_fixed: successful,
+        total_fixes: total_fixed,
+        details: results.map { |r| r.ok? ? r.value : { error: r.error } }
+      })
+    end
+    
+    def rollback_file(file)
+      return Result.err("No backup for #{file}") unless @backups[file]
+      
+      File.write(file, @backups[file])
+      @backups.delete(file)
+      
+      Result.ok("Rolled back #{file}")
+    end
+    
+    def rollback_all_fixes
+      @backups.each do |file, content|
+        File.write(file, content)
+      end
+      
+      count = @backups.size
+      @backups.clear
+      
+      Result.ok("Rolled back #{count} files")
+    end
+  end
+  
+  # Momentum module - Module-level interface for gamification
+  module Momentum
+    extend self
+    
+    def instance
+      @instance ||= begin
+        llm = LLM.new rescue nil
+        Evolve.new(llm) if llm
+      end
+    end
+    
+    def status_display
+      instance&.momentum_status || "Momentum not available"
+    end
+    
+    def list_achievements
+      return "Momentum not available" unless instance
+      ACHIEVEMENTS.map do |id, (n, d, _)| 
+        "#{instance.momentum_state[:achievements].include?(id.to_s) ? '✓' : '○'} #{n}: #{d}"
+      end.join("\n")
+    end
+    
+    def update_streak
+      instance&.update_streak || 0
+    end
+    
+    def award(action, multiplier: 1.0)
+      instance&.award_xp(action, multiplier: multiplier) || { xp: 0, total: 0, level: 1 }
     end
   end
 end
