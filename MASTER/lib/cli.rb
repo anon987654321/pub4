@@ -27,16 +27,21 @@ module MASTER
 
     attr_reader :llm, :verbosity, :root
 
-    # ANSI colors - one meaning per color, never reuse
+    # ANSI colors - dark blue / light blue theme on black
     C_RESET  = "\e[0m"
-    C_RED    = "\e[31m"    # Error only
-    C_GREEN  = "\e[32m"    # Success only
-    C_YELLOW = "\e[33m"    # Warning only
-    C_CYAN   = "\e[36m"    # Accent (sparingly)
-    C_DIM    = "\e[2m"     # Secondary/metadata
-    C_BOLD   = "\e[1m"     # Primary emphasis
-    C_ITALIC = "\e[3m"     # Secondary emphasis
-    C_GREY   = "\e[38;5;245m"  # Dark grey for main text (calmer than white)
+    C_RED    = "\e[31m"              # Error only
+    C_GREEN  = "\e[32m"              # Success only
+    C_YELLOW = "\e[33m"              # Warning only
+    C_DIM    = "\e[2m"               # Secondary/metadata
+    C_BOLD   = "\e[1m"               # Primary emphasis
+    C_ITALIC = "\e[3m"               # Secondary emphasis
+
+    # Blue theme
+    C_DARK_BLUE  = "\e[38;5;24m"     # Dark blue - primary text
+    C_LIGHT_BLUE = "\e[38;5;75m"     # Light blue - accent/highlight
+    C_CYAN       = "\e[38;5;75m"     # Alias for light blue
+    C_GREY       = "\e[38;5;24m"     # Dark blue as main text
+    C_MINT       = "\e[38;5;75m"     # Light blue for exits
 
     # Icon vocabulary - 5 symbols max, single meaning each
     ICON_OK   = "✓"
@@ -2599,21 +2604,47 @@ module MASTER
     end
 
     def speak_text(text)
-      return "Usage: speak <text>" unless text && !text.empty?
+      return "Usage: speak <text> [engine] — engines: piper, edge, kokoro, minimax" unless text && !text.empty?
 
-      # Use parallel TTS for faster generation
-      @tts ||= ParallelTTS.new
-      Thread.new { @tts.speak(text) }
-      "Speaking: #{text[0..50]}..."
-    rescue => e
-      # Fall back to Replicate direct
-      result = Replicate.speak(text, voice: 'af_bella', speed: 1.0)
-      if result.is_a?(String) && result.start_with?('http')
-        save_and_play_audio(result)
-        "Spoke: #{text[0..50]}..."
-      else
-        "TTS error: #{e.message}"
+      # Parse engine from text if specified
+      parts = text.split(' ')
+      engine = nil
+      if %w[piper edge kokoro minimax].include?(parts.last)
+        engine = parts.pop.to_sym
+        text = parts.join(' ')
       end
+
+      # Try engines in priority order: local > free > paid
+      if engine == :piper || (!engine && piper_available?)
+        tts = PiperTTS.new
+        Thread.new { tts.speak(text) }
+        "Speaking (Piper): #{text[0..50]}..."
+      elsif engine == :edge || (!engine && edge_available?)
+        Thread.new { EdgeTTS.speak(text) }
+        "Speaking (Edge): #{text[0..50]}..."
+      elsif engine == :kokoro
+        Thread.new do
+          file = Replicate.speak_kokoro(text)
+          Replicate.play_single(file) if file
+        end
+        "Speaking (Kokoro): #{text[0..50]}..."
+      else
+        Thread.new do
+          file = Replicate.speak_turbo(text)
+          Replicate.play_single(file) if file
+        end
+        "Speaking (Minimax): #{text[0..50]}..."
+      end
+    rescue => e
+      "TTS error: #{e.message}"
+    end
+
+    def piper_available?
+      File.exist?(File.join(Paths.var, 'piper_voices', 'en_US-lessac-medium.onnx'))
+    end
+
+    def edge_available?
+      defined?(EdgeTTS) && EdgeTTS.installed?
     end
 
     def start_radio(topic = nil)

@@ -52,6 +52,8 @@ module MASTER
   autoload :ProblemSolver, "#{LIB}/problem_solver"
   autoload :Shell,       "#{LIB}/shell"
   autoload :Layout,      "#{LIB}/layout"
+  autoload :PiperTTS,    "#{LIB}/piper_tts"
+  autoload :EdgeTTS,     "#{LIB}/edge_tts"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
