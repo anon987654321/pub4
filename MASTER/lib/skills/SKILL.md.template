@@ -1,0 +1,88 @@
+---
+name: skill-name
+description: One-line description of what this skill does
+metadata:
+  master:
+    emoji: "🎯"
+    os: [darwin, linux, openbsd]
+    requires:
+      bins: [command, tool]
+      gems: [gemname, other_gem]
+    install:
+      - kind: gem
+        name: gemname
+      - kind: brew
+        formula: package
+      - kind: pkg_add
+        name: package
+---
+
+# Usage
+
+Brief description of how to use this skill. Keep it concise and actionable.
+
+## Examples
+
+1. **Example 1**: Description
+   ```ruby
+   # Code example
+   skill.do_something
+   ```
+
+2. **Example 2**: Description
+   ```sh
+   # Shell command example
+   command --flag value
+   ```
+
+3. **Example 3**: Description
+   - Step 1
+   - Step 2
+   - Step 3
+
+## Requirements
+
+- Ruby 3.0+
+- OpenBSD 7.7+ (or macOS/Linux)
+- Specific dependencies listed above
+
+## Installation
+
+### Via RubyGems
+```sh
+gem install gemname
+```
+
+### Via Package Manager
+```sh
+# OpenBSD
+doas pkg_add package
+
+# macOS
+brew install package
+
+# Linux (apt)
+sudo apt install package
+```
+
+## Configuration
+
+Optional configuration steps if needed:
+
+```ruby
+# Example configuration
+config = {
+  option: 'value'
+}
+```
+
+## Notes
+
+- Important notes about usage
+- Known limitations
+- Performance considerations
+
+## See Also
+
+- Related skills or documentation
+- External references

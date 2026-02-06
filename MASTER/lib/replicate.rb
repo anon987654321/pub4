@@ -336,6 +336,12 @@ module MASTER
         run_model_by_name('minimax/speech-02-turbo', { text: text, voice_id: voice })
       end
 
+      # Kokoro 82M - fastest TTS for LLM voice interfaces (<300ms any length)
+      # Voices: af_bella, af_sarah, am_adam, am_michael, bf_emma, bm_george
+      def speak_kokoro(text, voice: 'af_bella', speed: 1.0)
+        run_model_by_name('jaaari/kokoro-82m', { text: text, voice: voice, speed: speed })
+      end
+
       # All-in-one: generate chunks and play them with pipelining
       def say(text, voice: 'Casual_Guy', chunk_words: 10)
         files = speak_stream(text, voice: voice, chunk_words: chunk_words)

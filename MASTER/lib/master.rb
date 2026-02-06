@@ -44,6 +44,16 @@ module MASTER
   autoload :MultiFileAnalyzer, "#{LIB}/multi_file_analyzer"
   autoload :AutoFixer,   "#{LIB}/auto_fixer"
   autoload :Planner,     "#{LIB}/planner"
+  autoload :Autonomy,    "#{LIB}/autonomy"
+  autoload :PromptAutonomy, "#{LIB}/prompt_autonomy"
+  autoload :AgentAutonomy,  "#{LIB}/agent_autonomy"
+  autoload :Dmesg,       "#{LIB}/dmesg"
+  autoload :Momentum,    "#{LIB}/momentum"
+  autoload :ProblemSolver, "#{LIB}/problem_solver"
+  autoload :Shell,       "#{LIB}/shell"
+  autoload :Layout,      "#{LIB}/layout"
+  autoload :PiperTTS,    "#{LIB}/piper_tts"
+  autoload :EdgeTTS,     "#{LIB}/edge_tts"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"

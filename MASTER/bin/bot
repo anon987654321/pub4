@@ -1,0 +1,242 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# MASTER Bot - Multi-platform social media integration
+# Boots MASTER framework and starts all enabled platform adapters
+
+require_relative '../lib/master'
+
+module MASTER
+  class Bot
+    def self.run
+      new.run
+    end
+
+    def initialize
+      @event_bus = MASTER::Events::Bus.new
+      @cli = nil
+      @bot_manager = nil
+      @server = nil
+      @running = false
+    end
+
+    def run
+      # Print banner
+      print_banner
+      
+      # Boot MASTER framework
+      boot_result = MASTER::Boot.run(verbose: false, quiet: false)
+      
+      # Initialize CLI
+      @cli = MASTER::CLI.new
+      @cli.setup
+      
+      # Load platform configuration
+      config = load_config
+      
+      # Initialize BotManager
+      @bot_manager = MASTER::BotManager.new(@cli, @event_bus, config)
+      
+      # Initialize platforms from config
+      initialize_platforms(config)
+      
+      # Start server with bot manager
+      @server = MASTER::Server.new(@cli)
+      @server.bot_manager = @bot_manager
+      @server.start
+      
+      # Start all enabled platforms
+      puts "\n#{MASTER::CLI::ICON_FLOW} Starting platforms..."
+      @bot_manager.start_all
+      
+      # Display status
+      print_status
+      
+      # Keep process alive and handle signals
+      @running = true
+      setup_signal_handlers
+      
+      puts "\n#{MASTER::CLI::ICON_OK} MASTER bot running. Press Ctrl+C to stop.\n\n"
+      
+      # Main loop
+      while @running
+        sleep 1
+      end
+      
+      # Graceful shutdown
+      shutdown
+      
+    rescue Interrupt
+      puts "\n#{MASTER::CLI::ICON_WARN} Interrupted"
+      shutdown
+    rescue => e
+      puts "\n#{MASTER::CLI::ICON_ERR} Fatal error: #{e.message}"
+      puts e.backtrace.first(5)
+      shutdown
+      exit 1
+    end
+
+    private
+
+    def print_banner
+      puts <<~BANNER
+        
+        #{MASTER::CLI::C_BOLD}MASTER Bot#{MASTER::CLI::C_RESET}
+        Multi-platform AI assistant
+        
+      BANNER
+    end
+
+    def load_config
+      config_path = File.join(MASTER::ROOT, 'config', 'platforms.yml')
+      
+      unless File.exist?(config_path)
+        puts "#{MASTER::CLI::ICON_ERR} Config not found: #{config_path}"
+        puts "#{MASTER::CLI::ICON_FLOW} Creating default config..."
+        create_default_config(config_path)
+      end
+      
+      require 'yaml'
+      require 'erb'
+      
+      # Process ERB templates in config
+      template = ERB.new(File.read(config_path))
+      yaml_content = template.result
+      config = YAML.safe_load(yaml_content, permitted_classes: [Symbol], aliases: true, symbolize_names: true)
+      
+      # Validate config
+      unless config.is_a?(Hash)
+        raise "Invalid config format"
+      end
+      
+      config
+    rescue => e
+      puts "#{MASTER::CLI::ICON_ERR} Config load error: #{e.message}"
+      {}
+    end
+
+    def create_default_config(path)
+      # Copy from template or create minimal config
+      default_config = <<~YAML
+        # MASTER Bot Platform Configuration
+        
+        global:
+          enabled: false
+          max_message_length: 2000
+        
+        discord:
+          enabled: false
+          token: <%= ENV['DISCORD_BOT_TOKEN'] %>
+        
+        telegram:
+          enabled: false
+          token: <%= ENV['TELEGRAM_BOT_TOKEN'] %>
+        
+        slack:
+          enabled: false
+          token: <%= ENV['SLACK_BOT_TOKEN'] %>
+        
+        twitter:
+          enabled: false
+          token: <%= ENV['TWITTER_ACCESS_TOKEN'] %>
+      YAML
+      
+      File.write(path, default_config)
+    end
+
+    def initialize_platforms(config)
+      # Discord
+      if config.dig(:discord, :enabled) && config.dig(:discord, :token)
+        require_relative '../lib/platforms/discord'
+        adapter = MASTER::Platforms::Discord.new(
+          :discord,
+          @event_bus,
+          token: config[:discord][:token],
+          config: config[:discord]
+        )
+        @bot_manager.register_platform(:discord, adapter)
+      end
+      
+      # Telegram
+      if config.dig(:telegram, :enabled) && config.dig(:telegram, :token)
+        require_relative '../lib/platforms/telegram'
+        adapter = MASTER::Platforms::Telegram.new(
+          :telegram,
+          @event_bus,
+          token: config[:telegram][:token],
+          config: config[:telegram]
+        )
+        @bot_manager.register_platform(:telegram, adapter)
+      end
+      
+      # Slack
+      if config.dig(:slack, :enabled) && config.dig(:slack, :token)
+        require_relative '../lib/platforms/slack'
+        adapter = MASTER::Platforms::Slack.new(
+          :slack,
+          @event_bus,
+          token: config[:slack][:token],
+          config: config[:slack]
+        )
+        @bot_manager.register_platform(:slack, adapter)
+      end
+      
+      # Twitter
+      if config.dig(:twitter, :enabled) && config.dig(:twitter, :token)
+        require_relative '../lib/platforms/twitter'
+        adapter = MASTER::Platforms::Twitter.new(
+          :twitter,
+          @event_bus,
+          token: config[:twitter][:token],
+          config: config[:twitter]
+        )
+        @bot_manager.register_platform(:twitter, adapter)
+      end
+      
+      if @bot_manager.platforms.empty?
+        puts "\n#{MASTER::CLI::ICON_WARN} No platforms enabled. Check config/platforms.yml"
+        puts "#{MASTER::CLI::ICON_FLOW} Set platform tokens in environment variables:"
+        puts "  - DISCORD_BOT_TOKEN"
+        puts "  - TELEGRAM_BOT_TOKEN"
+        puts "  - SLACK_BOT_TOKEN"
+        puts "  - TWITTER_ACCESS_TOKEN (and related keys)"
+        puts ""
+      end
+    end
+
+    def print_status
+      stats = @bot_manager.stats
+      
+      puts "\n#{MASTER::CLI::C_BOLD}Status:#{MASTER::CLI::C_RESET}"
+      puts "  Platforms: #{stats[:platforms].join(', ')}"
+      puts "  Server: #{@server.url}"
+      puts "  Webhook: #{@server.url}/webhook/:platform"
+      puts ""
+    end
+
+    def setup_signal_handlers
+      Signal.trap('INT') do
+        puts "\n#{MASTER::CLI::ICON_WARN} Shutting down..."
+        @running = false
+      end
+      
+      Signal.trap('TERM') do
+        puts "\n#{MASTER::CLI::ICON_WARN} Terminating..."
+        @running = false
+      end
+    end
+
+    def shutdown
+      puts "#{MASTER::CLI::ICON_FLOW} Stopping platforms..."
+      @bot_manager&.stop_all
+      
+      puts "#{MASTER::CLI::ICON_FLOW} Stopping server..."
+      @server&.stop
+      
+      puts "#{MASTER::CLI::ICON_OK} Shutdown complete"
+    end
+  end
+end
+
+# Run bot if called directly
+MASTER::Bot.run if __FILE__ == $PROGRAM_NAME

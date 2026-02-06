@@ -27,16 +27,21 @@ module MASTER
 
     attr_reader :llm, :verbosity, :root
 
-    # ANSI colors - one meaning per color, never reuse
+    # ANSI colors - dark blue / light blue theme on black
     C_RESET  = "\e[0m"
-    C_RED    = "\e[31m"    # Error only
-    C_GREEN  = "\e[32m"    # Success only
-    C_YELLOW = "\e[33m"    # Warning only
-    C_CYAN   = "\e[36m"    # Accent (sparingly)
-    C_DIM    = "\e[2m"     # Secondary/metadata
-    C_BOLD   = "\e[1m"     # Primary emphasis
-    C_ITALIC = "\e[3m"     # Secondary emphasis
-    C_GREY   = "\e[38;5;245m"  # Dark grey for main text (calmer than white)
+    C_RED    = "\e[31m"              # Error only
+    C_GREEN  = "\e[32m"              # Success only
+    C_YELLOW = "\e[33m"              # Warning only
+    C_DIM    = "\e[2m"               # Secondary/metadata
+    C_BOLD   = "\e[1m"               # Primary emphasis
+    C_ITALIC = "\e[3m"               # Secondary emphasis
+
+    # Blue theme
+    C_DARK_BLUE  = "\e[38;5;24m"     # Dark blue - primary text
+    C_LIGHT_BLUE = "\e[38;5;75m"     # Light blue - accent/highlight
+    C_CYAN       = "\e[38;5;75m"     # Alias for light blue
+    C_GREY       = "\e[38;5;24m"     # Dark blue as main text
+    C_MINT       = "\e[38;5;75m"     # Light blue for exits
 
     # Icon vocabulary - 5 symbols max, single meaning each
     ICON_OK   = "✓"
@@ -141,11 +146,19 @@ module MASTER
       @processing = false
       @pastel = Pastel.new if TTY_AVAILABLE
       @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
+      
+      # Dmesg boot header
+      Dmesg.boot_header rescue nil
+      
       load_state
       setup_completion
       load_history
       setup_crash_recovery
       load_self_awareness
+      
+      # Boot complete
+      boot_ms = ((Time.now - @boot_time) * 1000).round
+      Dmesg.boot_complete(boot_ms) rescue nil
     end
     
     # Smart defaults - infer missing arguments from context
@@ -864,10 +877,199 @@ module MASTER
       when 'goals'
         list_goals
 
+      when 'budget'
+        show_budget
+
+      when 'health'
+        run_health_check
+
+      when 'learn'
+        show_learning_stats
+
+      when 'dmesg'
+        show_dmesg(arg)
+
+      when 'trace'
+        toggle_trace(arg)
+
+      when 'xp', 'level', 'momentum'
+        Momentum.status_display
+
+      when 'achievements'
+        Momentum.list_achievements
+
+      when 'streak'
+        streak = Momentum.update_streak
+        "🔥 #{streak}-day streak"
+
+      when 'solve', 'debug'
+        solve_problem(arg)
+
+      when 'fixes'
+        show_fix_approaches(arg)
+
+      when 'hostile', 'challenge'
+        hostile_question
+
+      when 'viral', 'dream'
+        generate_viral(arg)
+
+      when 'spicy'
+        spicy_take(arg)
+
       else
         # Default: send to LLM
         chat(input)
       end
+    end
+
+    def solve_problem(error_desc)
+      # Use last error if none provided
+      error_desc ||= @last_error || "no error specified"
+      
+      puts "#{C_CYAN}Analyzing...#{C_RESET}"
+      result = ProblemSolver.analyze(error: error_desc, llm: @llm)
+      
+      return result.error if result.is_a?(Result) && result.err?
+      return "Analysis failed" unless result.is_a?(Hash)
+      
+      lines = []
+      lines << "#{C_BOLD}Root Cause:#{C_RESET} #{result[:root_cause]}"
+      lines << ""
+      lines << "#{C_YELLOW}⚠ #{result[:hostile_check]}#{C_RESET}" if result[:hostile_check]
+      lines << ""
+      lines << "#{C_BOLD}Fixes (safest first):#{C_RESET}"
+      
+      result[:fixes].each_with_index do |(key, fix), i|
+        lines << "  #{i + 1}. #{key.upcase}: #{fix}" if fix
+      end
+      
+      lines << ""
+      lines << "#{C_GREEN}Recommended:#{C_RESET} #{result[:recommended]}"
+      lines << "#{C_DIM}Verify: #{result[:verification]}#{C_RESET}" if result[:verification]
+      
+      lines.join("\n")
+    end
+
+    def show_fix_approaches(symptoms)
+      if symptoms && !symptoms.empty?
+        approaches = ProblemSolver.suggest_approach(symptoms)
+        "Suggested for '#{symptoms}':\n\n#{ProblemSolver.format_approaches(approaches)}"
+      else
+        ProblemSolver.format_approaches
+      end
+    end
+
+    def hostile_question
+      q = ProblemSolver.hostile_question
+      "#{C_YELLOW}🤔 #{q}#{C_RESET}"
+    end
+
+    def generate_viral(arg)
+      # Parse: "topic for platform" or just "topic"
+      if arg&.include?(' for ')
+        topic, platform = arg.split(' for ', 2)
+      else
+        topic = arg || "programming"
+        platform = "twitter"
+      end
+      
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      ideas = dreamer.dream(topic: topic, platform: platform)
+      
+      return "No ideas generated" unless ideas&.any?
+      
+      ideas.map.with_index do |idea, i|
+        "#{i + 1}. #{C_BOLD}#{idea[:hook]}#{C_RESET}\n   #{idea[:body]}\n   #{C_DIM}#{idea[:why]}#{C_RESET}"
+      end.join("\n\n")
+    end
+
+    def spicy_take(topic)
+      topic ||= "software engineering"
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      take = dreamer.spicy_take(topic)
+      take ? "🌶️ #{take}" : "Couldn't generate a spicy take"
+    end
+
+    def show_dmesg(arg)
+      count = arg&.to_i
+      count = 20 if count.nil? || count <= 0
+      Dmesg.dump(last_n: count)
+    end
+
+    def toggle_trace(arg)
+      case arg
+      when 'on', '1', 'true'
+        Dmesg.enabled = true
+        "Trace enabled (bold green)"
+      when 'off', '0', 'false'
+        Dmesg.enabled = false
+        "Trace disabled"
+      else
+        "Trace: #{Dmesg.enabled ? 'on' : 'off'}"
+      end
+    end
+
+    def show_budget
+      remaining = Autonomy.remaining_budget rescue 10.0
+      spent = Autonomy.total_cost rescue 0.0
+      limit = Autonomy.config[:budget_limit] rescue 10.0
+      pct = ((spent / limit) * 100).round(1)
+      
+      "Budget: $#{spent.round(4)} / $#{limit} (#{pct}% used, $#{remaining.round(4)} remaining)"
+    end
+
+    def run_health_check
+      checks = []
+      
+      # LLM connectivity
+      checks << "LLM: #{@llm.status[:connected] ? '✓' : '✗'}"
+      
+      # Circuit breakers
+      open_circuits = %i[anthropic google openai deepseek].count { |p| Autonomy.circuit_open?(p) rescue false }
+      checks << "Circuits: #{open_circuits > 0 ? "#{open_circuits} open" : '✓ all closed'}"
+      
+      # Budget
+      checks << "Budget: #{Autonomy.exceeded_budget? ? '✗ exceeded' : '✓ ok'}" rescue nil
+      
+      # Sessions
+      sessions_dir = Paths.sessions rescue nil
+      session_count = sessions_dir ? Dir.glob(File.join(sessions_dir, '*.yml')).size : 0
+      checks << "Sessions: #{session_count} saved"
+      
+      checks.compact.join("\n")
+    end
+
+    def show_learning_stats
+      stats = []
+      
+      # Prompt metrics
+      metrics_file = File.join(Paths.var, 'prompt_metrics.yml')
+      if File.exist?(metrics_file)
+        metrics = YAML.load_file(metrics_file) rescue {}
+        total_execs = metrics.values.sum { |m| m[:executions] || 0 }
+        total_success = metrics.values.sum { |m| m[:successes] || 0 }
+        rate = total_execs > 0 ? ((total_success.to_f / total_execs) * 100).round(1) : 0
+        stats << "Prompts: #{total_execs} executions, #{rate}% success"
+      end
+      
+      # Examples learned
+      examples_file = File.join(Paths.var, 'few_shot_examples.yml')
+      if File.exist?(examples_file)
+        examples = YAML.load_file(examples_file) rescue {}
+        success_count = (examples[:successes] || {}).values.flatten.size
+        failure_count = (examples[:failures] || []).size
+        stats << "Examples: #{success_count} successes, #{failure_count} failures learned"
+      end
+      
+      # Skills
+      skills_file = File.join(Paths.var, 'agent_skills.yml')
+      if File.exist?(skills_file)
+        skills = YAML.load_file(skills_file) rescue {}
+        stats << "Skills: #{skills.size} acquired"
+      end
+      
+      stats.empty? ? "No learning data yet" : stats.join("\n")
     end
 
     def undo_last
@@ -1211,10 +1413,31 @@ module MASTER
           plan [goal]   #{C_DIM}Break into tasks (uses current goal)#{C_RESET}
           next          #{C_DIM}Run next task#{C_RESET}
           show-plan     #{C_DIM}View current plan#{C_RESET}
+          budget        #{C_DIM}Show remaining budget#{C_RESET}
+          health        #{C_DIM}System health check#{C_RESET}
+          learn         #{C_DIM}Learning statistics#{C_RESET}
+
+        #{C_BOLD}Gamification#{C_RESET}
+          xp, level     #{C_DIM}Show XP and level#{C_RESET}
+          achievements  #{C_DIM}List achievements#{C_RESET}
+          streak        #{C_DIM}Update daily streak#{C_RESET}
+          
+        #{C_BOLD}Problem Solving#{C_RESET}
+          solve [error] #{C_DIM}5+ fix approaches for bug#{C_RESET}
+          fixes [type]  #{C_DIM}Show fix approach templates#{C_RESET}
+          hostile       #{C_DIM}Challenge your assumptions#{C_RESET}
+
+        #{C_BOLD}Content#{C_RESET}
+          viral [topic] #{C_DIM}Generate viral ideas#{C_RESET}
+          spicy [topic] #{C_DIM}Generate hot take#{C_RESET}
           
         #{C_BOLD}Self-Awareness#{C_RESET}
           self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
           refresh-self  #{C_DIM}Rescan MASTER code#{C_RESET}
+
+        #{C_BOLD}Debug#{C_RESET}
+          dmesg [n]     #{C_DIM}Show last n trace messages#{C_RESET}
+          trace on|off  #{C_DIM}Toggle dmesg output#{C_RESET}
       HELP
     end
 
@@ -1571,6 +1794,9 @@ module MASTER
         total_changes += result[:changes]
       end
 
+      # Award XP
+      Momentum.award(:refactor, multiplier: files.size) rescue nil
+
       "#{C_GREEN}Refactored#{C_RESET} #{files.size} file(s): #{total_changes} changes in #{total_iterations} iterations"
     end
 
@@ -1843,6 +2069,10 @@ module MASTER
       remember_file(full)
       code = File.read(full)
       report = BugHunting.analyze(code, file_path: full)
+      
+      # Award XP
+      Momentum.award(:bughunt) rescue nil
+      
       BugHunting.format(report)
     end
 
@@ -2386,21 +2616,47 @@ module MASTER
     end
 
     def speak_text(text)
-      return "Usage: speak <text>" unless text && !text.empty?
+      return "Usage: speak <text> [engine] — engines: piper, edge, kokoro, minimax" unless text && !text.empty?
 
-      # Use parallel TTS for faster generation
-      @tts ||= ParallelTTS.new
-      Thread.new { @tts.speak(text) }
-      "Speaking: #{text[0..50]}..."
-    rescue => e
-      # Fall back to Replicate direct
-      result = Replicate.speak(text, voice: 'af_bella', speed: 1.0)
-      if result.is_a?(String) && result.start_with?('http')
-        save_and_play_audio(result)
-        "Spoke: #{text[0..50]}..."
-      else
-        "TTS error: #{e.message}"
+      # Parse engine from text if specified
+      parts = text.split(' ')
+      engine = nil
+      if %w[piper edge kokoro minimax].include?(parts.last)
+        engine = parts.pop.to_sym
+        text = parts.join(' ')
       end
+
+      # Try engines in priority order: local > free > paid
+      if engine == :piper || (!engine && piper_available?)
+        tts = PiperTTS.new
+        Thread.new { tts.speak(text) }
+        "Speaking (Piper): #{text[0..50]}..."
+      elsif engine == :edge || (!engine && edge_available?)
+        Thread.new { EdgeTTS.speak(text) }
+        "Speaking (Edge): #{text[0..50]}..."
+      elsif engine == :kokoro
+        Thread.new do
+          file = Replicate.speak_kokoro(text)
+          Replicate.play_single(file) if file
+        end
+        "Speaking (Kokoro): #{text[0..50]}..."
+      else
+        Thread.new do
+          file = Replicate.speak_turbo(text)
+          Replicate.play_single(file) if file
+        end
+        "Speaking (Minimax): #{text[0..50]}..."
+      end
+    rescue => e
+      "TTS error: #{e.message}"
+    end
+
+    def piper_available?
+      File.exist?(File.join(Paths.var, 'piper_voices', 'en_US-lessac-medium.onnx'))
+    end
+
+    def edge_available?
+      defined?(EdgeTTS) && EdgeTTS.installed?
     end
 
     def start_radio(topic = nil)

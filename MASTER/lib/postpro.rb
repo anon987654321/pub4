@@ -35,6 +35,26 @@ module MASTER
       ektachrome_100: {
         grain: 10, gamma: 0.72, toe: 0.06, shoulder: 0.94, lift: 0.04,
         feeling: 'Slide film transparency, rich blues, vintage travel'
+      },
+      ilford_hp5: {
+        grain: 22, gamma: 0.68, toe: 0.14, shoulder: 0.82, lift: 0.09,
+        feeling: 'Classic B&W, versatile, forgiving latitude',
+        manufacturer: 'Ilford', year: 1931, format: 'black_white'
+      },
+      portra_400: {
+        grain: 18, gamma: 0.66, toe: 0.11, shoulder: 0.90, lift: 0.06,
+        feeling: 'Natural skin tones, fine grain, wedding favorite',
+        manufacturer: 'Kodak', year: 1998, format: 'color_negative'
+      },
+      portra_800: {
+        grain: 24, gamma: 0.68, toe: 0.13, shoulder: 0.88, lift: 0.08,
+        feeling: 'Low light versatility, warm color palette, push-friendly',
+        manufacturer: 'Kodak', year: 1998, format: 'color_negative'
+      },
+      cinestill_50d: {
+        grain: 12, gamma: 0.64, toe: 0.09, shoulder: 0.91, lift: 0.04, halation: 0.3,
+        feeling: 'Daylight tungsten-balanced, subtle halation, clean highlights',
+        manufacturer: 'CineStill', year: 2012, format: 'color_negative'
       }
     }.freeze
 
@@ -140,6 +160,41 @@ module MASTER
         grain: 0.7,
         shadow_lift: 0.15,
         feeling: 'Authentic, unpolished, genuine humanity'
+      },
+      cyberpunk: {
+        stock: :cinestill_800t,
+        lens: :anamorphic_kowa,
+        halation: 0.95,
+        grain: 0.4,
+        teal_orange: 1.3,
+        purple_magenta_push: 0.2,
+        feeling: 'Neon dystopia, blade runner aesthetics'
+      },
+      vintage_home_video: {
+        stock: :kodak_vision3_500t,
+        lens: :cooke_panchro,
+        grain: 0.85,
+        chromatic_aberration: 0.12,
+        gate_weave: 0.3,
+        saturation: 0.8,
+        feeling: 'VHS nostalgia, family memories, analog warmth'
+      },
+      lomography: {
+        stock: :portra_800,
+        lens: :helios_44,
+        vignette: 0.6,
+        color_shift: 0.4,
+        grain: 0.7,
+        cross_process: 0.5,
+        feeling: 'Happy accidents, unpredictable charm, toy camera aesthetic'
+      },
+      documentary: {
+        stock: :ilford_hp5,
+        lens: :zeiss_planar,
+        grain: 0.8,
+        desaturate: 1.0,
+        contrast: 1.15,
+        feeling: 'Unvarnished truth, photojournalism'
       }
     }.freeze
 
@@ -152,46 +207,70 @@ module MASTER
     ].freeze
 
     class << self
+      # Cache for transformation results
+      @transformation_cache = {}
+      
       # Apply a complete emotional preset to an image path
       def apply_preset(path, preset: :portrait)
         return Result.err('File not found') unless File.exist?(path)
-        return Result.err('libvips not installed') unless vips_available?
+        
+        # Check cache first
+        cache_key = "#{path}:#{preset}:#{File.mtime(path).to_i}"
+        if @transformation_cache[cache_key]
+          return Result.ok(@transformation_cache[cache_key])
+        end
+        
+        # Graceful fallback if libvips not available
+        unless vips_available?
+          return Result.ok({
+            path: path,
+            warning: 'libvips not available - returning original image',
+            css_filter: css_filter(preset: preset)
+          })
+        end
 
         config = PRESETS[preset.to_sym]
         return Result.err("Unknown preset: #{preset}") unless config
 
-        image = load_image(path)
-        return Result.err('Failed to load image') unless image
+        begin
+          image = load_image(path)
+          return Result.err('Failed to load image') unless image
 
-        # Apply film stock curve
-        image = apply_stock(image, config[:stock]) if config[:stock]
+          # Apply film stock curve
+          image = apply_stock(image, config[:stock]) if config[:stock]
 
-        # Apply halation (glow around highlights)
-        image = apply_halation(image, config[:halation]) if config[:halation]
+          # Apply halation (glow around highlights)
+          image = apply_halation(image, config[:halation]) if config[:halation]
 
-        # Apply grain
-        image = apply_grain(image, config[:grain], config[:stock]) if config[:grain]
+          # Apply grain
+          image = apply_grain(image, config[:grain], config[:stock]) if config[:grain]
 
-        # Apply teal/orange grading
-        image = apply_teal_orange(image, config[:teal_orange]) if config[:teal_orange]
+          # Apply teal/orange grading
+          image = apply_teal_orange(image, config[:teal_orange]) if config[:teal_orange]
 
-        # Apply shadow lift
-        image = apply_shadow_lift(image, config[:shadow_lift]) if config[:shadow_lift]
+          # Apply shadow lift
+          image = apply_shadow_lift(image, config[:shadow_lift]) if config[:shadow_lift]
 
-        # Apply desaturation
-        image = apply_desaturate(image, config[:desaturate]) if config[:desaturate]
+          # Apply desaturation
+          image = apply_desaturate(image, config[:desaturate]) if config[:desaturate]
 
-        # Apply tint
-        image = apply_tint(image, config[:tint]) if config[:tint]
+          # Apply tint
+          image = apply_tint(image, config[:tint]) if config[:tint]
 
-        # Apply lens characteristics
-        image = apply_lens(image, config[:lens]) if config[:lens]
+          # Apply lens characteristics
+          image = apply_lens(image, config[:lens]) if config[:lens]
 
-        # Save result
-        output_path = generate_output_path(path, preset)
-        save_image(image, output_path)
+          # Save result
+          output_path = generate_output_path(path, preset)
+          save_image(image, output_path)
 
-        Result.ok(output_path)
+          # Cache result
+          @transformation_cache[cache_key] = output_path
+          
+          Result.ok(output_path)
+        rescue StandardError => e
+          Result.err("Transformation failed: #{e.message}")
+        end
       end
 
       # Apply random effects for experimental results
