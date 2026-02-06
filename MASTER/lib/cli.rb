@@ -875,10 +875,103 @@ module MASTER
       when 'trace'
         toggle_trace(arg)
 
+      when 'xp', 'level', 'momentum'
+        Momentum.status_display
+
+      when 'achievements'
+        Momentum.list_achievements
+
+      when 'streak'
+        streak = Momentum.update_streak
+        "🔥 #{streak}-day streak"
+
+      when 'solve', 'debug'
+        solve_problem(arg)
+
+      when 'fixes'
+        show_fix_approaches(arg)
+
+      when 'hostile', 'challenge'
+        hostile_question
+
+      when 'viral', 'dream'
+        generate_viral(arg)
+
+      when 'spicy'
+        spicy_take(arg)
+
       else
         # Default: send to LLM
         chat(input)
       end
+    end
+
+    def solve_problem(error_desc)
+      # Use last error if none provided
+      error_desc ||= @last_error || "no error specified"
+      
+      puts "#{C_CYAN}Analyzing...#{C_RESET}"
+      result = ProblemSolver.analyze(error: error_desc, llm: @llm)
+      
+      return result.error if result.is_a?(Result) && result.err?
+      return "Analysis failed" unless result.is_a?(Hash)
+      
+      lines = []
+      lines << "#{C_BOLD}Root Cause:#{C_RESET} #{result[:root_cause]}"
+      lines << ""
+      lines << "#{C_YELLOW}⚠ #{result[:hostile_check]}#{C_RESET}" if result[:hostile_check]
+      lines << ""
+      lines << "#{C_BOLD}Fixes (safest first):#{C_RESET}"
+      
+      result[:fixes].each_with_index do |(key, fix), i|
+        lines << "  #{i + 1}. #{key.upcase}: #{fix}" if fix
+      end
+      
+      lines << ""
+      lines << "#{C_GREEN}Recommended:#{C_RESET} #{result[:recommended]}"
+      lines << "#{C_DIM}Verify: #{result[:verification]}#{C_RESET}" if result[:verification]
+      
+      lines.join("\n")
+    end
+
+    def show_fix_approaches(symptoms)
+      if symptoms && !symptoms.empty?
+        approaches = ProblemSolver.suggest_approach(symptoms)
+        "Suggested for '#{symptoms}':\n\n#{ProblemSolver.format_approaches(approaches)}"
+      else
+        ProblemSolver.format_approaches
+      end
+    end
+
+    def hostile_question
+      q = ProblemSolver.hostile_question
+      "#{C_YELLOW}🤔 #{q}#{C_RESET}"
+    end
+
+    def generate_viral(arg)
+      # Parse: "topic for platform" or just "topic"
+      if arg&.include?(' for ')
+        topic, platform = arg.split(' for ', 2)
+      else
+        topic = arg || "programming"
+        platform = "twitter"
+      end
+      
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      ideas = dreamer.dream(topic: topic, platform: platform)
+      
+      return "No ideas generated" unless ideas&.any?
+      
+      ideas.map.with_index do |idea, i|
+        "#{i + 1}. #{C_BOLD}#{idea[:hook]}#{C_RESET}\n   #{idea[:body]}\n   #{C_DIM}#{idea[:why]}#{C_RESET}"
+      end.join("\n\n")
+    end
+
+    def spicy_take(topic)
+      topic ||= "software engineering"
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      take = dreamer.spicy_take(topic)
+      take ? "🌶️ #{take}" : "Couldn't generate a spicy take"
     end
 
     def show_dmesg(arg)
@@ -1306,6 +1399,20 @@ module MASTER
           budget        #{C_DIM}Show remaining budget#{C_RESET}
           health        #{C_DIM}System health check#{C_RESET}
           learn         #{C_DIM}Learning statistics#{C_RESET}
+
+        #{C_BOLD}Gamification#{C_RESET}
+          xp, level     #{C_DIM}Show XP and level#{C_RESET}
+          achievements  #{C_DIM}List achievements#{C_RESET}
+          streak        #{C_DIM}Update daily streak#{C_RESET}
+          
+        #{C_BOLD}Problem Solving#{C_RESET}
+          solve [error] #{C_DIM}5+ fix approaches for bug#{C_RESET}
+          fixes [type]  #{C_DIM}Show fix approach templates#{C_RESET}
+          hostile       #{C_DIM}Challenge your assumptions#{C_RESET}
+
+        #{C_BOLD}Content#{C_RESET}
+          viral [topic] #{C_DIM}Generate viral ideas#{C_RESET}
+          spicy [topic] #{C_DIM}Generate hot take#{C_RESET}
           
         #{C_BOLD}Self-Awareness#{C_RESET}
           self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
@@ -1670,6 +1777,9 @@ module MASTER
         total_changes += result[:changes]
       end
 
+      # Award XP
+      Momentum.award(:refactor, multiplier: files.size) rescue nil
+
       "#{C_GREEN}Refactored#{C_RESET} #{files.size} file(s): #{total_changes} changes in #{total_iterations} iterations"
     end
 
@@ -1942,6 +2052,10 @@ module MASTER
       remember_file(full)
       code = File.read(full)
       report = BugHunting.analyze(code, file_path: full)
+      
+      # Award XP
+      Momentum.award(:bughunt) rescue nil
+      
       BugHunting.format(report)
     end
 

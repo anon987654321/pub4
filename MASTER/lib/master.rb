@@ -48,6 +48,8 @@ module MASTER
   autoload :PromptAutonomy, "#{LIB}/prompt_autonomy"
   autoload :AgentAutonomy,  "#{LIB}/agent_autonomy"
   autoload :Dmesg,       "#{LIB}/dmesg"
+  autoload :Momentum,    "#{LIB}/momentum"
+  autoload :ProblemSolver, "#{LIB}/problem_solver"
 
   # Core modules (lib/core/)
   CORE = "#{LIB}/core"
