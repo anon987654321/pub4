@@ -1,52 +1,53 @@
 # frozen_string_literal: true
 
+require "fiddle"
+
 module MASTER
   module Pledge
-    # OpenBSD pledge/unveil wrappers for sandboxing
-    # Only available on OpenBSD platform
+    class PledgeError < RuntimeError; end
 
     def self.available?
-      RUBY_PLATFORM.include?('openbsd')
+      RUBY_PLATFORM.include?("openbsd")
     end
 
-    def self.pledge(*promises)
-      return unless available?
+    def self.pledge(promises, execpromises = nil)
+      raise PledgeError, "pledge(2) is only available on OpenBSD" unless available?
+
+      libc = Fiddle.dlopen(nil)
+      pledge_func = libc["pledge"]
       
-      # OpenBSD pledge system call
-      # Restricts process to only specified operations
-      promises_str = promises.join(' ')
+      promises_ptr = Fiddle::Pointer[promises]
+      execpromises_ptr = execpromises ? Fiddle::Pointer[execpromises] : nil
       
-      begin
-        # This would call the actual pledge(2) syscall on OpenBSD
-        # For portability, we just log the intent
-        $stderr.puts "[pledge] #{promises_str}" if ENV['DEBUG']
-      rescue => e
-        $stderr.puts "[pledge] Warning: #{e.message}"
-      end
+      result = Fiddle::Function.new(
+        pledge_func,
+        [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
+        Fiddle::TYPE_INT
+      ).call(promises_ptr, execpromises_ptr)
+      
+      raise PledgeError, "pledge(2) failed with code #{result}" if result != 0
     end
 
     def self.unveil(path, permissions)
-      return unless available?
+      raise PledgeError, "unveil(2) is only available on OpenBSD" unless available?
+
+      libc = Fiddle.dlopen(nil)
+      unveil_func = libc["unveil"]
       
-      # OpenBSD unveil system call
-      # Restricts filesystem access to specified paths
-      begin
-        # This would call the actual unveil(2) syscall on OpenBSD
-        # For portability, we just log the intent
-        $stderr.puts "[unveil] #{path} (#{permissions})" if ENV['DEBUG']
-      rescue => e
-        $stderr.puts "[unveil] Warning: #{e.message}"
-      end
+      path_ptr = path ? Fiddle::Pointer[path] : nil
+      permissions_ptr = permissions ? Fiddle::Pointer[permissions] : nil
+      
+      result = Fiddle::Function.new(
+        unveil_func,
+        [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
+        Fiddle::TYPE_INT
+      ).call(path_ptr, permissions_ptr)
+      
+      raise PledgeError, "unveil(2) failed with code #{result}" if result != 0
     end
 
-    def self.sandbox(stdio: true, exec: false, rpath: true, wpath: false)
-      promises = []
-      promises << 'stdio' if stdio
-      promises << 'exec' if exec
-      promises << 'rpath' if rpath
-      promises << 'wpath' if wpath
-      
-      pledge(*promises)
+    def self.lock_unveil
+      unveil(nil, nil)
     end
   end
 end

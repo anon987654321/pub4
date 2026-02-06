@@ -1,52 +1,52 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'yaml'
-require_relative '../lib/db'
+require "yaml"
+require_relative "../lib/master"
 
-# Initialize database schema
+# Initialize schema
 MASTER::DB.initialize_schema
 
-# Load and import principles
-principles_file = File.expand_path('../../data/principles.yml', __FILE__)
+db = MASTER::DB.connection
+
+# Load principles
+principles_file = File.join(MASTER.root, "data", "principles.yml")
 if File.exist?(principles_file)
-  data = YAML.load_file(principles_file)
+  principles = YAML.load_file(principles_file)
+  count = 0
   
-  if data['principles']
-    data['principles'].each do |key, principle|
-      name = principle['name'] || key
-      description = principle['description'] || ''
-      protection_level = principle['tier'] == 'core' ? 'PROTECTED' : 'NEGOTIABLE'
-      category = principle['tier'] || 'general'
-      
-      MASTER::DB.connection.execute(
-        "INSERT OR REPLACE INTO principles (name, text, protection_level, category) VALUES (?, ?, ?, ?)",
-        [name, description, protection_level, category]
-      )
-    end
-    puts "✓ Imported #{data['principles'].length} principles"
+  principles.each do |principle|
+    db.execute(
+      "INSERT OR IGNORE INTO principles (name, text, protection_level, category) VALUES (?, ?, ?, ?)",
+      principle["name"],
+      principle["text"],
+      principle["protection_level"] || 0,
+      principle["category"]
+    )
+    count += 1
   end
+  
+  puts "Imported #{count} principles"
 end
 
-# Load and import personas
-personas_file = File.expand_path('../../data/personas.yml', __FILE__)
+# Load personas
+personas_file = File.join(MASTER.root, "data", "personas.yml")
 if File.exist?(personas_file)
-  data = YAML.load_file(personas_file)
+  personas = YAML.load_file(personas_file)
+  count = 0
   
-  if data['personas']
-    data['personas'].each do |key, persona|
-      name = persona['name'] || key
-      role = persona['description'] || ''
-      instructions = persona['system_prompt'] || persona['style'] || ''
-      weight = 1.0
-      
-      MASTER::DB.connection.execute(
-        "INSERT OR REPLACE INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
-        [name, role, instructions, weight]
-      )
-    end
-    puts "✓ Imported #{data['personas'].length} personas"
+  personas.each do |persona|
+    db.execute(
+      "INSERT OR REPLACE INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
+      persona["name"],
+      persona["role"],
+      persona["instructions"],
+      persona["weight"] || 0
+    )
+    count += 1
   end
+  
+  puts "Imported #{count} personas"
 end
 
-puts "✓ Database seeded successfully"
+puts "Seeding complete!"

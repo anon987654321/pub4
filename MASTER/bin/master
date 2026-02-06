@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/master"
+
+MASTER::DB.initialize_schema
+MASTER::LLM.configure
+
+if ARGV.include?("--pipe")
+  # JSON pipeline mode: read JSON from stdin, write JSON to stdout
+  require "json"
+  input = JSON.parse($stdin.read, symbolize_names: true)
+  stages = ARGV.include?("--evolve") ? %i[intake guard route ask evolve] : nil
+  pipeline = MASTER::Pipeline.new(**(stages ? { stages: stages } : {}))
+  result = pipeline.call(input)
+  if result.ok?
+    $stdout.puts JSON.generate(result.value)
+  else
+    $stderr.puts result.error
+    exit 1
+  end
+else
+  # REPL mode (default)
+  pipeline = MASTER::Pipeline.new
+  pipeline.repl
+end
