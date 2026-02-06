@@ -128,6 +128,8 @@ Or use Weaviate Cloud: https://console.weaviate.cloud/
 - Circuit breaker opens after 3 consecutive failures
 - 5-minute timeout before retry
 
+**Note:** LLM constructor now accepts optional `session_budget` and `day_budget` parameters. Defaults: $10 session, $50 day.
+
 
 ## Zsh Frontend
 

@@ -5,7 +5,6 @@ require 'json'
 require 'uri'
 require 'securerandom'
 require 'fileutils'
-require 'date'
 
 begin
   require 'ruby_llm'
@@ -88,6 +87,8 @@ module MASTER
     
     # Cost tracker with budget enforcement
     class CostTracker
+      require 'date'  # Required for day rollover tracking
+      
       attr_reader :session_cost, :day_cost, :model_costs
       
       def initialize(session_budget: DEFAULT_SESSION_BUDGET, day_budget: DEFAULT_DAY_BUDGET)

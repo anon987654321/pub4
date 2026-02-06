@@ -292,6 +292,8 @@ module MASTER
       end
       
       def can_doas?
+        # Using system() is sufficient here for boolean check
+        # More complex error handling not needed for permission check
         system("doas -n true 2>/dev/null")
       end
     end

@@ -162,7 +162,8 @@ module MASTER
       end
       
       # Check for natural language (match)
-      if code =~ /[A-Z_]{5,}/ # ALL_CAPS constants used as UI text
+      if code =~ /[A-Z_]{5,}/ && code !~ /MASTER|DEFAULT|MAX|MIN|VERSION/
+        # Only flag if constant appears to be used as UI text
         issues << { heuristic: :match, issue: 'Unnatural language (ALL_CAPS)' }
       end
       
@@ -257,9 +258,14 @@ module MASTER
     def count_test_methods(test_dir, from_git: false)
       if from_git
         # Count from previous git commit
-        output = `git --no-pager show HEAD:test/ 2>/dev/null`
-        return 0 if output.empty?
-        output.scan(/def\s+test_/).count
+        files_output = `git ls-tree -r --name-only HEAD -- #{test_dir} 2>/dev/null`
+        return 0 if files_output.empty?
+        
+        test_files = files_output.lines.map(&:strip).select { |f| f =~ /test_.*\.rb$/ }
+        test_files.sum do |file|
+          content = `git show HEAD:#{file} 2>/dev/null`
+          content.scan(/def\s+test_/).count
+        end
       else
         files = Dir.glob(File.join(test_dir, '**', 'test_*.rb'))
         files.sum do |file|

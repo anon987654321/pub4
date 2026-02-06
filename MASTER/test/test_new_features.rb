@@ -176,7 +176,8 @@ test_suite('Evolve Saga Rollback') do
   # Test rollback on syntax error
   File.write(test_file, "# valid ruby\n")
   result = evolve.safe_modify(test_file) do
-    File.write(test_file, "invalid ruby syntax {{\n")
+    # Write syntactically invalid Ruby code (missing 'end' for def)
+    File.write(test_file, "def incomplete_method\n  puts 'missing end'\n")
   end
   
   assert !result.ok?, 'safe_modify should fail on syntax error'

@@ -293,7 +293,7 @@ module MASTER
       end
       
       loop do
-        print 'Select (1-' + choices.length.to_s + '): '
+        print "Select (1-#{choices.length}): "
         answer = $stdin.gets&.strip&.to_i
         return choices[answer - 1] if answer > 0 && answer <= choices.length
         puts 'Invalid selection'

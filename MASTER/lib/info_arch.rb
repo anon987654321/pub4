@@ -224,10 +224,13 @@ module MASTER
       def initialize(total:, per_page: 20, page: 1)
         @total = total
         @per_page = per_page
-        @page = [[page, 1].max, total_pages].min
+        # Ensure page is valid even when total is 0
+        max_page = total_pages.zero? ? 1 : total_pages
+        @page = [[page, 1].max, max_page].min
       end
       
       def total_pages
+        return 1 if @total.zero?  # Handle zero case explicitly
         (@total.to_f / @per_page).ceil
       end
       

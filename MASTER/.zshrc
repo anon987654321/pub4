@@ -116,7 +116,7 @@ alias 1='cd -1'
 alias 2='cd -2'
 alias 3='cd -3'
 
-# Prompt
+# Prompt - shows project name "master" rather than system username
 PROMPT="%F{cyan}master%f@%F{yellow}%m%f %F{green}%1~%f %# "
 
 # History
