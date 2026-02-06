@@ -21,15 +21,22 @@ Files in `lib/` are yours to improve.
 ## Structure
 
     bin/cli              Start here
+    bin/master           Zsh frontend wrapper
     bin/bot              Multi-platform bot launcher
     lib/master.rb        Autoloader
     lib/cli.rb           REPL and commands
     lib/cli_v226.rb      Unified CLI (interactive + batch)
-    lib/llm.rb           Model routing (9 tiers)
+    lib/llm.rb           Model routing with circuit breakers
     lib/executor.rb      Runs code blocks from responses
     lib/safety.rb        Guardrails
-    lib/evolve.rb        Self-optimization loop
+    lib/evolve.rb        Self-optimization with saga rollback
     lib/chamber.rb       Multi-model deliberation
+    lib/quality.rb       "Never Lose Again" pre-commit checks
+    lib/tty.rb           Pure Ruby terminal toolkit
+    lib/ui.rb            Bringhurst typography
+    lib/info_arch.rb     Information architecture patterns
+    lib/openbsd.rb       OpenBSD config generation
+    lib/dmesg.rb         OpenBSD-style kernel logging
     lib/postpro.rb       Cinematic film emulation (12 stocks, 12 presets)
     lib/principles/      45 constitutional rules
     lib/config/          YAML settings
@@ -114,6 +121,56 @@ Or use Weaviate Cloud: https://console.weaviate.cloud/
     strong      Sonnet
     frontier    Opus
     code        Codestral
+
+**Cost Tracking & Circuit Breakers:**
+- Session and daily budget limits
+- Automatic fallback to cheaper tiers
+- Circuit breaker opens after 3 consecutive failures
+- 5-minute timeout before retry
+
+
+## Zsh Frontend
+
+Pure Zsh patterns for file operations:
+
+```zsh
+# Source the .zshrc
+source MASTER/.zshrc
+
+# Use Zsh-native file operations
+read_file path/to/file          # Read entire file
+read_lines path/to/file         # Read into array
+file_mtime path/to/file         # Get modification time
+
+# Modern parameter expansion
+${var:h}    # Directory
+${var:t}    # Filename
+${var:e}    # Extension
+
+# Glob qualifiers
+*.rb(.)         # Regular files only
+*.rb(.om[1])    # Most recent file
+**/*.rb(.N)     # Null glob (no error if no match)
+```
+
+
+## Quality Assurance
+
+Pre-commit "Never Lose Again" checklist:
+
+```bash
+ruby -Ilib -e "
+  require 'loader'
+  q = MASTER::Quality.new
+  q.pre_commit_check
+"
+```
+
+Checks:
+- No deleted methods/classes were lost
+- Autoload count didn't decrease
+- Test count didn't decrease
+- No new TODO/FIXME markers
 
 
 ## Multi-Platform Bot
