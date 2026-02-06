@@ -10,9 +10,9 @@
 html,body{height:100%;overflow:hidden}
 body{background:#0a0a0c;font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 #orb{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1}
-#halation{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 0.3s;z-index:9}
-#grain{position:fixed;inset:0;pointer-events:none;opacity:0.05;z-index:11;image-rendering:pixelated}
 #status{position:fixed;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;gap:12px;color:#8f9a9a;font-size:10px;z-index:20;pointer-events:none}
+#orb-nav{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);color:#3d3d3d;font-size:8px;letter-spacing:8px;z-index:20;pointer-events:none}
+#orb-nav .active{color:#00CED1}
 #status .offline{color:#ff6b6b}
 #toast{position:fixed;top:34px;left:12px;padding:4px 8px;background:rgba(12,12,14,0.85);border:1px solid #1f1f23;color:#9bd;opacity:0;transition:opacity 0.2s;font-size:9px;z-index:21}
 #help{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,5,7,0.75);color:#c4b49a;font-size:11px;z-index:30}
@@ -32,45 +32,30 @@ input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;
 input::placeholder{color:#3d3d3d}
 input:focus{outline:2px solid #4dccaa;outline-offset:2px}
 input:disabled{opacity:0.6;cursor:not-allowed}
-#hint{position:fixed;left:12px;bottom:34px;color:#4b4b4b;font-size:9px;z-index:20;pointer-events:none}
+#hint{position:fixed;left:12px;bottom:34px;color:#2a2a2a;font-size:8px;z-index:20;pointer-events:none;opacity:0.3}
 </style>
 </head>
 <body>
 <iframe id="orb" src="orb_blob.html"></iframe>
-<canvas id="halation"></canvas>
-<canvas id="grain"></canvas>
 <div id="status"><span id="status-left"></span><span id="status-right"></span></div>
+<div id="orb-nav"></div>
 <div id="toast"></div>
-<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
+<div id="help"><div class="panel">Keyboard: 1-8 switch orbs, ←/→ cycle, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
 <output id="out"></output>
 <div id="hint">Try: ask “summarize README”, scan ., refactor lib/cli.rb</div>
 <input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
 <script>
-// Available orb designs
 const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
 let currentOrb=0;
 
-// Film grain overlay
-const grainCanvas=document.getElementById('grain'),grainCtx=grainCanvas.getContext('2d');
-let gw,gh;
-function resizeGrain(){
-  gw=Math.floor(window.innerWidth/4);
-  gh=Math.floor(window.innerHeight/4);
-  grainCanvas.width=gw;grainCanvas.height=gh;
-  drawGrain();
-}
-function drawGrain(){
-  const img=grainCtx.createImageData(gw,gh);
-  for(let i=0;i<img.data.length;i+=4){
-    const v=128+(Math.random()-0.5)*30;
-    img.data[i]=img.data[i+1]=img.data[i+2]=v;
-    img.data[i+3]=255;
+function updateOrbNav(){
+  const nav=document.getElementById('orb-nav');
+  let html='';
+  for(let i=0;i<8;i++){
+    html+=`<span class="${i===currentOrb?'active':''}">${i+1}</span>`;
   }
-  grainCtx.putImageData(img,0,0);
+  nav.innerHTML=html;
 }
-resizeGrain();
-window.addEventListener('resize',resizeGrain);
-setInterval(drawGrain,100);
 
 // Keyboard: 1-8 switch orbs, saved to localStorage
 function switchOrb(idx){
@@ -79,7 +64,8 @@ function switchOrb(idx){
     document.getElementById('orb').src=ORBS[idx]+'.html';
     localStorage.setItem('orb',ORBS[idx]);
     updateStatus(lastStatusData);
-    showToast(`orb ${ORBS[idx].replace('orb_','')}`);
+    updateOrbNav();
+    showToast(`orb ${idx+1}`);
   }
 }
 
@@ -88,6 +74,8 @@ const saved=localStorage.getItem('orb');
 if(saved){
   const idx=ORBS.indexOf(saved);
   if(idx>=0)switchOrb(idx);
+}else{
+  updateOrbNav();
 }
 
 document.addEventListener('keydown',e=>{
@@ -101,7 +89,6 @@ document.addEventListener('keydown',e=>{
   // Arrow keys cycle
   if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
   if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
-  if(e.key==='g'){showToast(`grain ${toggleGrain()}`)}
   if(e.key==='?'){help.style.display=help.style.display==='flex'?'none':'flex'}
 });
 
@@ -166,21 +153,12 @@ function formatCost(cost){
 
 function updateStatus(data){
   if(data && Object.keys(data).length){lastStatusData=data}
-  const model=lastStatusData?.model||'unknown';
-  const tier=lastStatusData?.tier||'unknown';
-  const persona=lastStatusData?.persona||'default';
-  const tokens=lastStatusData?.last_tokens||{};
-  const cached=lastStatusData?.last_cached?'cached':'live';
-  const cost=formatCost(lastStatusData?.cost);
-  const reqs=lastStatusData?.requests ?? 0;
-  const orb=ORBS[currentOrb].replace('orb_','');
-  const sync=lastSync ? lastSync.toLocaleTimeString() : '--';
-  const conn=lastStatusData?.connected===false?'no api key':'connected';
-  const offline=offlineCount>=2?'offline':'';
-  statusLeft.textContent=`${tier} · ${model} · ${persona} · orb ${orb} · ${tokens.input||0}/${tokens.output||0} · ${cached}`;
-  statusRight.textContent=`${conn} · ${cost} · ${reqs} req · sync ${sync}`;
-  statusRight.className=offline;
-  hint.style.opacity=pending ? '0.3' : '1';
+  const orbName='orb '+(currentOrb+1);
+  const conn=lastStatusData?.connected===false?'no key':'ok';
+  statusLeft.textContent=orbName;
+  statusRight.textContent=conn;
+  statusRight.className=offlineCount>=2?'offline':'';
+  hint.style.opacity=pending ? '0.1' : '0.3';
 }
 
 function showToast(text){
@@ -264,21 +242,6 @@ inp.addEventListener('keydown',e=>{
     ws.onerror=()=>{};
   }catch{}
 })();
-
-function toggleGrain(){
-  const current=grainCanvas.style.display || 'block';
-  const next=current === 'none' ? 'block' : 'none';
-  grainCanvas.style.display=next;
-  localStorage.setItem('grain',next);
-  return next === 'block' ? 'on' : 'off';
-}
-
-const savedGrain=localStorage.getItem('grain');
-if(savedGrain === 'block' || savedGrain === 'none'){
-  grainCanvas.style.display=savedGrain;
-}else{
-  grainCanvas.style.display='block';
-}
 </script>
 </body>
 </html>

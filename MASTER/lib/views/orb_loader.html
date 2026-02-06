@@ -7,177 +7,107 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
 body{background:#000}
-canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+canvas{position:fixed;inset:0;width:100%;height:100%}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <script>
-// 8-bit palette
-const PAL=[];
-for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(let i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
-
-function quantize(r,g,b){
-  let best=PAL[0],minD=Infinity;
-  for(const c of PAL){const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<minD){minD=d;best=c}}
-  return best;
-}
-
-const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
-let w,h,scale=2,audio=0,time=0,mood='neutral';
+const cvs=document.getElementById('c'),c=cvs.getContext('2d');
+let wd,ht,aud=0,tm=0,mood='neutral';
 
 const MOODS={
-  neutral:{c1:[0,80,85],c2:[0,206,209],c3:[64,224,208]},
-  positive:{c1:[0,100,100],c2:[72,209,204],c3:[127,255,212]},
-  negative:{c1:[0,60,65],c2:[0,139,139],c3:[32,178,170]},
-  calm:{c1:[0,80,85],c2:[0,206,209],c3:[64,224,208]},
-  excited:{c1:[0,120,120],c2:[0,255,255],c3:[127,255,212]}
+  neutral:{c1:'#005055',c2:'#00CED1',c3:'#40E0D0'},
+  positive:{c1:'#006464',c2:'#48D1CC',c3:'#7FFFD4'},
+  negative:{c1:'#003C41',c2:'#008B8B',c3:'#20B2AA'},
+  calm:{c1:'#005055',c2:'#00CED1',c3:'#40E0D0'},
+  excited:{c1:'#007878',c2:'#00FFFF',c3:'#7FFFD4'}
 };
 
-let particles=[];
+let sparks=[];
 
-function resize(){
-  w=Math.floor(window.innerWidth/scale);
-  h=Math.floor(window.innerHeight/scale);
-  canvas.width=w;canvas.height=h;
+function onResize(){
+  wd=cvs.width=window.innerWidth;
+  ht=cvs.height=window.innerHeight;
 }
 
-function spawnParticle(cx,cy,radius){
-  const angle=Math.random()*Math.PI-Math.PI/2;
-  const dist=Math.random()*radius*0.6;
-  particles.push({
-    x:cx+Math.cos(angle+Math.PI/2)*dist,
-    y:cy+radius-3,
-    vy:-1.5-Math.random()*3-audio*4,
+function makeSpark(cx,cy,rad){
+  const ang=Math.random()*Math.PI-Math.PI/2;
+  const dist=Math.random()*rad*0.6;
+  sparks.push({
+    x:cx+Math.cos(ang+Math.PI/2)*dist,
+    y:cy+rad-3,
+    vy:-1.5-Math.random()*3-aud*4,
     vx:(Math.random()-0.5)*1.2,
     life:0.6+Math.random()*0.4,
     size:1+Math.random()*1.5
   });
 }
 
-function draw(){
-  time+=0.016;
-  const m=MOODS[mood]||MOODS.neutral;
-  const cx=w/2,baseY=h*0.55;
-  const bounce=Math.sin(time*2)*8;
-  const cy=baseY+bounce;
-  const radius=Math.min(w,h)*0.15+audio*10;
+function render(){
+  tm+=0.016;
+  const moodColors=MOODS[mood]||MOODS.neutral;
+  const midX=wd/2,baseY=ht*0.55;
+  const bounce=Math.sin(tm*2)*8;
+  const orbY=baseY+bounce;
+  const radius=Math.min(wd,ht)*0.15+aud*10;
   
-  // Pure black background
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,w,h);
+  c.fillStyle='#000';
+  c.fillRect(0,0,wd,ht);
   
-  const img=ctx.getImageData(0,0,w,h);
+  const shadowY=ht*0.7;
+  const grad=c.createRadialGradient(midX,shadowY,0,midX,shadowY,radius*1.5);
+  grad.addColorStop(0,'rgba(0,0,0,0.3)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=grad;
+  c.fillRect(0,0,wd,ht);
   
-  // Shadow under orb
-  const shadowY=Math.floor(h*0.7);
-  const shadowW=radius*1.5;
-  const shadowH=radius*0.15;
-  for(let y=shadowY-shadowH;y<shadowY+shadowH;y++){
-    for(let x=cx-shadowW;x<cx+shadowW;x++){
-      const dx=(x-cx)/shadowW,dy=(y-shadowY)/shadowH;
-      if(dx*dx+dy*dy<1){
-        const alpha=0.3*(1-Math.sqrt(dx*dx+dy*dy));
-        const i=(Math.floor(y)*w+Math.floor(x))*4;
-        if(i>=0&&i<img.data.length-3){
-          img.data[i]=Math.floor(img.data[i]*(1-alpha));
-          img.data[i+1]=Math.floor(img.data[i+1]*(1-alpha));
-          img.data[i+2]=Math.floor(img.data[i+2]*(1-alpha));
-          img.data[i+3]=255;
-        }
-      }
-    }
+  const spawnCnt=3+Math.floor(aud*8);
+  for(let s=0;s<spawnCnt;s++){
+    if(Math.random()<0.7)makeSpark(midX,orbY,radius);
   }
   
-  // Spawn particles - more frequent, smaller bursts!
-  const spawnCount=3+Math.floor(audio*8);
-  for(let s=0;s<spawnCount;s++){
-    if(Math.random()<0.7)spawnParticle(cx,cy,radius);
-  }
-  
-  // Update and draw particles
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    p.x+=p.vx;p.y+=p.vy;
-    p.life-=0.015;
-    if(p.life<=0){particles.splice(i,1);continue}
+  for(let i=sparks.length-1;i>=0;i--){
+    const sp=sparks[i];
+    sp.x+=sp.vx;sp.y+=sp.vy;
+    sp.life-=0.015;
+    if(sp.life<=0){sparks.splice(i,1);continue}
     
-    const alpha=p.life*0.8;
-    const t=1-p.life;
-    const r=m.c2[0]+t*(m.c3[0]-m.c2[0]);
-    const g=m.c2[1]+t*(m.c3[1]-m.c2[1]);
-    const b=m.c2[2]+t*(m.c3[2]-m.c2[2]);
-    const size=Math.floor(p.size*p.life);
-    
-    for(let dy=-size;dy<=size;dy++){
-      for(let dx=-size;dx<=size;dx++){
-        if(dx*dx+dy*dy<=size*size){
-          const px=Math.floor(p.x+dx),py=Math.floor(p.y+dy);
-          if(px>=0&&px<w&&py>=0&&py<h){
-            const q=quantize(r*alpha,g*alpha,b*alpha);
-            const idx=(py*w+px)*4;
-            img.data[idx]=Math.min(255,img.data[idx]+q[0]);
-            img.data[idx+1]=Math.min(255,img.data[idx+1]+q[1]);
-            img.data[idx+2]=Math.min(255,img.data[idx+2]+q[2]);
-          }
-        }
-      }
-    }
+    const alpha=sp.life*0.8;
+    c.fillStyle=moodColors.c3.replace(')',`,${alpha})`).replace('#','rgba('+parseInt(moodColors.c3.slice(1,3),16)+','+parseInt(moodColors.c3.slice(3,5),16)+','+parseInt(moodColors.c3.slice(5,7),16)+',').replace(')',`,${alpha})`);
+    c.fillRect(sp.x,sp.y,sp.size*sp.life,sp.size*sp.life);
   }
   
-  // Draw main orb with gradient
-  for(let y=cy-radius;y<cy+radius;y++){
-    for(let x=cx-radius;x<cx+radius;x++){
-      const dx=x-cx,dy=y-cy;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<radius){
-        const t=dist/radius;
-        const angle=Math.atan2(dy,dx);
-        
-        // Gradient blend between colors
-        const blend=(Math.sin(angle)+1)/2;
-        const r=m.c1[0]+(m.c2[0]-m.c1[0])*t+(m.c3[0]-m.c2[0])*blend*0.5;
-        const g=m.c1[1]+(m.c2[1]-m.c1[1])*t+(m.c3[1]-m.c2[1])*blend*0.5;
-        const b=m.c1[2]+(m.c2[2]-m.c1[2])*t+(m.c3[2]-m.c2[2])*blend*0.5;
-        
-        // Highlight
-        const hlX=-0.3,hlY=-0.4;
-        const hlDist=Math.sqrt((dx/radius-hlX)**2+(dy/radius-hlY)**2);
-        const hl=Math.max(0,1-hlDist*2)*0.4;
-        
-        const dith=((Math.floor(x)+Math.floor(y))%2)*10-5;
-        const q=quantize(r+hl*150+dith,g+hl*150+dith,b+hl*150+dith);
-        const i=(Math.floor(y)*w+Math.floor(x))*4;
-        if(i>=0&&i<img.data.length-3){
-          img.data[i]=q[0];img.data[i+1]=q[1];img.data[i+2]=q[2];img.data[i+3]=255;
-        }
-      }
-    }
-  }
+  const orbGrad=c.createRadialGradient(midX-radius*0.3,orbY-radius*0.4,0,midX,orbY,radius);
+  orbGrad.addColorStop(0,moodColors.c3);
+  orbGrad.addColorStop(0.5,moodColors.c2);
+  orbGrad.addColorStop(1,moodColors.c1);
+  c.fillStyle=orbGrad;
+  c.beginPath();
+  c.arc(midX,orbY,radius,0,Math.PI*2);
+  c.fill();
   
-  ctx.putImageData(img,0,0);
-  if(particles.length>100)particles.splice(0,20);
-  requestAnimationFrame(draw);
+  if(sparks.length>100)sparks.splice(0,20);
+  requestAnimationFrame(render);
 }
 
-navigator.mediaDevices?.getUserMedia({audio:true}).then(s=>{
-  const ac=new AudioContext(),src=ac.createMediaStreamSource(s),an=ac.createAnalyser();
-  an.fftSize=256;src.connect(an);
-  const data=new Uint8Array(an.frequencyBinCount);
-  (function loop(){
-    an.getByteFrequencyData(data);
-    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
-    audio=sum/50/255;
-    requestAnimationFrame(loop);
+navigator.mediaDevices?.getUserMedia({audio:true}).then(strm=>{
+  const ac=new AudioContext(),asrc=ac.createMediaStreamSource(strm),analyzer=ac.createAnalyser();
+  analyzer.fftSize=256;asrc.connect(analyzer);
+  const freq=new Uint8Array(analyzer.frequencyBinCount);
+  (function tick(){
+    analyzer.getByteFrequencyData(freq);
+    let total=0;for(let j=0;j<50;j++)total+=freq[j];
+    aud=total/50/255;
+    requestAnimationFrame(tick);
   })();
 }).catch(()=>{});
 
 mood=new URLSearchParams(location.search).get('mood')||'neutral';
-window.addEventListener('message',e=>{if(e.data?.mood)mood=e.data.mood});
-resize();
-window.addEventListener('resize',resize);
-draw();
+window.addEventListener('message',ev=>{if(ev.data?.mood)mood=ev.data.mood});
+onResize();
+window.addEventListener('resize',onResize);
+render();
 </script>
 </body>
 </html>

@@ -7,133 +7,97 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
 body{background:#000}
-canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+canvas{position:fixed;inset:0;width:100%;height:100%}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <script>
-// 8-bit palette (256 colors)
-const PAL=[];
-for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(let i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
-function quantize(r,g,b){
-  let best=PAL[0],minD=Infinity;
-  for(const c of PAL){const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<minD){minD=d;best=c}}
-  return best;
+const cvs=document.getElementById('c'),c=cvs.getContext('2d');
+let wd,ht,aud=0,tm=0,spinY=0,spinX=0;
+let pts=[];
+
+function onResize(){
+  wd=cvs.width=window.innerWidth;
+  ht=cvs.height=window.innerHeight;
+  makePts();
 }
 
-const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-let w,h,scale=2,audio=0,time=0,rotX=0,rotY=0;
-let points=[];
-
-function resize(){
-  w=Math.floor(window.innerWidth/scale);
-  h=Math.floor(window.innerHeight/scale);
-  canvas.width=w;canvas.height=h;
-  initPoints();
-}
-
-function initPoints(){
-  points=[];
-  // Fibonacci sphere
-  const n=120;
+function makePts(){
+  pts=[];
+  const count=120;
   const phi=(1+Math.sqrt(5))/2;
-  for(let i=0;i<n;i++){
-    const y=1-(i/(n-1))*2;
-    const r=Math.sqrt(1-y*y);
-    const theta=2*Math.PI*i/phi;
-    points.push({
-      x:Math.cos(theta)*r*40,
-      y:y*40,
-      z:Math.sin(theta)*r*40,
-      hue:i*3
+  for(let i=0;i<count;i++){
+    const yval=1-(i/(count-1))*2;
+    const rval=Math.sqrt(1-yval*yval);
+    const tval=2*Math.PI*i/phi;
+    pts.push({
+      x:Math.cos(tval)*rval*40,
+      y:yval*40,
+      z:Math.sin(tval)*rval*40,
+      h:i*3
     });
   }
 }
 
-function draw(){
-  time+=0.016;
-  rotY+=0.01+audio*0.03;
-  rotX+=0.005;
+function render(){
+  tm+=0.016;
+  spinY+=0.01+aud*0.03;
+  spinX+=0.005;
   
-  ctx.fillStyle='rgba(0,0,0,0.15)';
-  ctx.fillRect(0,0,w,h);
+  c.fillStyle='rgba(0,0,0,0.15)';
+  c.fillRect(0,0,wd,ht);
   
-  const img=ctx.getImageData(0,0,w,h);
-  const cx=w/2,cy=h/2;
-  const cosY=Math.cos(rotY),sinY=Math.sin(rotY);
-  const cosX=Math.cos(rotX),sinX=Math.sin(rotX);
-  const radius=35+audio*15;
+  const midX=wd/2,midY=ht/2;
+  const cosY=Math.cos(spinY),sinY=Math.sin(spinY);
+  const cosX=Math.cos(spinX),sinX=Math.sin(spinX);
+  const rad=35+aud*15;
   
-  // Sort by z for depth
-  const projected=points.map(p=>{
-    // Scale by audio
-    const sx=p.x*(radius/40),sy=p.y*(radius/40),sz=p.z*(radius/40);
-    // Rotate Y
-    let x=sx*cosY-sz*sinY;
-    let z=sx*sinY+sz*cosY;
-    // Rotate X
-    let y=sy*cosX-z*sinX;
-    z=sy*sinX+z*cosX;
-    // Project
+  const mapped=pts.map(pt=>{
+    const sx=pt.x*(rad/40),sy=pt.y*(rad/40),sz=pt.z*(rad/40);
+    let xr=sx*cosY-sz*sinY;
+    let zr=sx*sinY+sz*cosY;
+    let yr=sy*cosX-zr*sinX;
+    zr=sy*sinX+zr*cosX;
     const fov=80;
-    const s=fov/(fov+z);
-    return{px:cx+x*s,py:cy+y*s,z,hue:p.hue,s};
+    const proj=fov/(fov+zr);
+    return{px:midX+xr*proj,py:midY+yr*proj,z:zr,h:pt.h,proj};
   }).sort((a,b)=>b.z-a.z);
   
-  for(const p of projected){
-    const px=Math.floor(p.px),py=Math.floor(p.py);
-    if(px<1||px>=w-1||py<1||py>=h-1)continue;
+  for(const m of mapped){
+    const depth=(m.z+50)/100;
+    const brightness=0.3+depth*0.5;
+    const tval=(Math.sin(m.h*0.05+tm)+1)/2;
+    const rr=brightness*(0+tval*72);
+    const gg=brightness*(180+tval*44);
+    const bb=brightness*(190+tval*19);
     
-    // Blue-mint color based on depth (hue 170-190)
-    const depth=(p.z+50)/100;
-    const lit=0.3+depth*0.5;
-    
-    // Cyan to turquoise gradient
-    const t=(Math.sin(p.hue*0.05+time)+1)/2;
-    let R=Math.floor(lit*(0+t*72));
-    let G=Math.floor(lit*(180+t*44));
-    let B=Math.floor(lit*(190+t*19));
-    
-    const q=quantize(R,G,B);
-    const dith=((px+py)%2)*16-8;
-    
-    // Draw 2x2 pixel
-    for(let dy=0;dy<2;dy++){
-      for(let dx=0;dx<2;dx++){
-        const i=((py+dy)*w+px+dx)*4;
-        img.data[i]=Math.min(255,q[0]+dith);
-        img.data[i+1]=Math.min(255,q[1]+dith);
-        img.data[i+2]=Math.min(255,q[2]+dith);
-        img.data[i+3]=255;
-      }
-    }
+    c.fillStyle=`rgb(${rr},${gg},${bb})`;
+    c.fillRect(m.px-1,m.py-1,2,2);
   }
   
-  ctx.putImageData(img,0,0);
-  requestAnimationFrame(draw);
+  requestAnimationFrame(render);
 }
 
-navigator.mediaDevices?.getUserMedia({audio:true}).then(s=>{
-  const ac=new AudioContext(),src=ac.createMediaStreamSource(s),an=ac.createAnalyser();
-  an.fftSize=256;src.connect(an);
-  const data=new Uint8Array(an.frequencyBinCount);
-  (function loop(){
-    an.getByteFrequencyData(data);
-    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
-    audio=sum/50/255;
-    requestAnimationFrame(loop);
+navigator.mediaDevices?.getUserMedia({audio:true}).then(strm=>{
+  const ac=new AudioContext(),asrc=ac.createMediaStreamSource(strm),analyzer=ac.createAnalyser();
+  analyzer.fftSize=256;asrc.connect(analyzer);
+  const freq=new Uint8Array(analyzer.frequencyBinCount);
+  (function tick(){
+    analyzer.getByteFrequencyData(freq);
+    let total=0;for(let j=0;j<50;j++)total+=freq[j];
+    aud=total/50/255;
+    requestAnimationFrame(tick);
   })();
 }).catch(()=>{});
 
-document.addEventListener('mousemove',e=>{
-  rotX=(e.clientY/window.innerHeight-0.5)*0.5;
+document.addEventListener('mousemove',ev=>{
+  spinX=(ev.clientY/window.innerHeight-0.5)*0.5;
 });
 
-resize();
-window.addEventListener('resize',resize);
-draw();
+onResize();
+window.addEventListener('resize',onResize);
+render();
 </script>
 </body>
 </html>
