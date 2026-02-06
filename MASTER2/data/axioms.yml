@@ -1,0 +1,97 @@
+# MASTER/data/axioms.yml
+# Timeless, universal axioms from authoritative sources.
+# Ordered by foundational importance.
+
+# ENGINEERING AXIOMS
+- id: "DRY"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Do Not Repeat Yourself"
+  statement: "Every piece of knowledge must have a single, unambiguous, authoritative representation within the system."
+  source: "The Pragmatic Programmer"
+
+- id: "KISS"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Keep It Simple"
+  statement: "Simplicity is paramount. The simplest working solution is always preferred. Complexity multiplies failure."
+  source: "Unix Philosophy"
+
+- id: "SOLID_SRP"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Single Responsibility Principle"
+  statement: "A module, class, or function should have one, and only one, reason to change."
+  source: "SOLID | Clean Code by Robert C. Martin"
+
+- id: "SOLID_OCP"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Open/Closed Principle"
+  statement: "Software entities should be open for extension, but closed for modification."
+  source: "SOLID | Object-Oriented Software Construction by Bertrand Meyer"
+
+- id: "POLA"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Principle of Least Astonishment"
+  statement: "A system should behave in a way that least surprises its users, matching their experience, expectations, and mental models."
+  source: "The Pragmatic Programmer"
+
+- id: "SCOUT_RULE"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Leave Cleaner Than Found"
+  statement: "Every change must improve the overall health of the codebase by at least one measurable quality metric."
+  source: "The Pragmatic Programmer"
+
+- id: "YAGNI"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "You Are Not Gonna Need It"
+  statement: "Never add functionality until it is demonstrably necessary. Implement things only when you need them."
+  source: "Extreme Programming"
+
+# COMMUNICATION & TYPOGRAPHY AXIOMS
+- id: "OMIT_WORDS"
+  category: "communication"
+  protection: "PROTECTED"
+  title: "Omit Needless Words"
+  statement: "Vigorous writing is concise. A sentence should contain no unnecessary words, a paragraph no unnecessary sentences."
+  source: "The Elements of Style by Strunk & White"
+
+- id: "ACTIVE_VOICE"
+  category: "communication"
+  protection: "PROTECTED"
+  title: "Prefer the Active Voice"
+  statement: "The active voice is usually more direct and vigorous than the passive."
+  source: "The Elements of Style by Strunk & White"
+
+- id: "HIERARCHY"
+  category: "communication"
+  protection: "PROTECTED"
+  title: "Establish a Clear Hierarchy"
+  statement: "Typography must define a clear, unambiguous order of importance for the reader."
+  source: "The Elements of Typographic Style by Robert Bringhurst"
+
+- id: "RHYTHM"
+  category: "communication"
+  protection: "PROTECTED"
+  title: "Maintain a Consistent Rhythm"
+  statement: "The spacing and arrangement of elements should create a steady visual and logical rhythm."
+  source: "The Elements of Typographic Style by Robert Bringhurst"
+
+# META AXIOMS
+- id: "SELF_APPLY"
+  category: "meta"
+  protection: "ABSOLUTE"
+  title: "The Tool Applies to Itself"
+  statement: "A system that asserts quality must first and foremost achieve its own standards. Its first test is self-application."
+  source: "Recursive Quality"
+
+- id: "USABILITY_HEURISTICS"
+  category: "meta"
+  protection: "PROTECTED"
+  title: "Respect Usability Heuristics"
+  statement: "Design must adhere to established heuristics for visibility, user control, error prevention, and consistency."
+  source: "10 Usability Heuristics by Jakob Nielsen"

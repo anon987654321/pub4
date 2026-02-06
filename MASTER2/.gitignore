@@ -1,0 +1,4 @@
+master.db
+.env
+tmp/
+*.gem
