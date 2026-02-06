@@ -1,0 +1,144 @@
+# Frontend Architecture Configuration
+# Rails-ready SCSS, mobile-first, PWA patterns
+---
+version: 1
+architecture:
+  framework: rails
+  css_preprocessor: scss
+  approach: mobile_first
+  pwa_enabled: true
+
+scss:
+  structure:
+    base:
+      - reset
+      - typography
+      - colors
+      - spacing
+    components:
+      - buttons
+      - forms
+      - cards
+      - modals
+    layout:
+      - grid
+      - flex
+      - containers
+    utilities:
+      - spacing
+      - colors
+      - display
+      - typography
+  
+  conventions:
+    naming: bem  # Block Element Modifier
+    nesting_depth: 3
+    file_size_limit: 500  # lines
+    
+  mobile_first:
+    breakpoints:
+      xs: 0
+      sm: 576px
+      md: 768px
+      lg: 992px
+      xl: 1200px
+      xxl: 1400px
+    approach: progressive_enhancement
+    
+pwa:
+  manifest:
+    name: MASTER
+    short_name: MASTER
+    description: The LLM Operating System
+    theme_color: '#4dccaa'
+    background_color: '#1a1a1a'
+    display: standalone
+    orientation: any
+    
+  service_worker:
+    enabled: true
+    strategy: network_first
+    cache_version: v1
+    assets_to_cache:
+      - /
+      - /assets/application.css
+      - /assets/application.js
+      - /assets/orb.js
+    
+  offline_support:
+    enabled: true
+    offline_page: /offline.html
+    
+  features:
+    - push_notifications
+    - background_sync
+    - offline_mode
+    - install_prompt
+
+rails_integration:
+  asset_pipeline: true
+  webpacker: false
+  importmap: true
+  
+  view_components:
+    enabled: true
+    directory: app/components
+    
+  stimulus:
+    enabled: true
+    controllers:
+      - orb_controller
+      - chat_controller
+      - theme_controller
+    
+  turbo:
+    enabled: true
+    drive: true
+    frames: true
+    streams: true
+
+responsive_design:
+  approach: mobile_first
+  target_devices:
+    - mobile_phones
+    - tablets
+    - desktops
+    - high_dpi_displays
+    
+  touch_targets:
+    minimum_size: 44px  # iOS recommendation
+    spacing: 8px
+    
+  typography:
+    scale: modular  # 1.25 ratio
+    base_size: 16px
+    line_height: 1.5
+    
+  images:
+    responsive: true
+    lazy_load: true
+    formats:
+      - webp
+      - avif
+      - jpg
+
+performance:
+  critical_css: true
+  css_minification: true
+  js_minification: true
+  asset_compression: true
+  
+  targets:
+    first_contentful_paint: 1.5s
+    time_to_interactive: 3.0s
+    largest_contentful_paint: 2.5s
+    cumulative_layout_shift: 0.1
+    
+accessibility:
+  wcag_level: AA
+  features:
+    - keyboard_navigation
+    - screen_reader_support
+    - high_contrast_mode
+    - reduced_motion
+    - focus_indicators

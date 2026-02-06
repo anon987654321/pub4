@@ -1,0 +1,15 @@
+---
+name: DRY (Don't Repeat Yourself)
+description: Every piece of knowledge must have a single, authoritative representation.
+tier: core
+priority: 2
+auto_fixable: true
+anti_patterns:
+- name: duplicate_code
+  smell: Same logic in multiple places
+  example: Identical validation in 3 controllers
+  fix: Extract to shared method/module
+- name: copy_paste_programming
+  smell: Copying code instead of abstracting
+  example: Cloning a function and changing variable names
+  fix: Parameterize the original, reuse it

@@ -1,0 +1,258 @@
+# Design System Plugin Configuration
+
+enabled: false
+
+# Color System
+colors:
+  # Primary colors
+  primary: '#007bff'
+  primary_dark: '#0056b3'
+  primary_light: '#5ca9ff'
+  
+  # Secondary colors
+  secondary: '#6c757d'
+  secondary_dark: '#545b62'
+  secondary_light: '#a8aeb4'
+  
+  # Semantic colors
+  success: '#28a745'
+  warning: '#ffc107'
+  danger: '#dc3545'
+  info: '#17a2b8'
+  
+  # Neutral colors
+  white: '#ffffff'
+  black: '#000000'
+  gray_100: '#f8f9fa'
+  gray_200: '#e9ecef'
+  gray_300: '#dee2e6'
+  gray_400: '#ced4da'
+  gray_500: '#adb5bd'
+  gray_600: '#6c757d'
+  gray_700: '#495057'
+  gray_800: '#343a40'
+  gray_900: '#212529'
+
+# Typography System
+typography:
+  # Base settings
+  base_size: 16
+  scale_ratio: 1.25
+  line_height: 1.5
+  
+  # Font families
+  font_families:
+    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+    serif: 'Georgia, "Times New Roman", Times, serif'
+    mono: 'Menlo, Monaco, Consolas, "Courier New", monospace'
+  
+  # Font weights
+  weights:
+    light: 300
+    normal: 400
+    medium: 500
+    semibold: 600
+    bold: 700
+  
+  # Type scale (calculated from base_size and scale_ratio)
+  # Level 0: 16px (base)
+  # Level 1: 20px (16 * 1.25)
+  # Level 2: 25px (20 * 1.25)
+  # Level 3: 31.25px (25 * 1.25)
+  # Level 4: 39.06px
+  # Level 5: 48.83px
+  # Level 6: 61.04px
+
+# Spacing System
+spacing:
+  # Base unit in pixels
+  unit: 8
+  
+  # Scale multipliers
+  scale:
+    - 0   # 0px
+    - 1   # 8px
+    - 2   # 16px
+    - 3   # 24px
+    - 4   # 32px
+    - 5   # 40px
+    - 6   # 48px
+    - 8   # 64px
+    - 10  # 80px
+    - 12  # 96px
+    - 16  # 128px
+    - 20  # 160px
+    - 24  # 192px
+
+# Component System
+components:
+  # Naming convention
+  prefix: 'ds-'
+  namespace: 'DesignSystem'
+  
+  # Component categories
+  categories:
+    - layout      # Grid, Container, Flexbox
+    - navigation  # Nav, Menu, Breadcrumb
+    - forms       # Input, Select, Checkbox, Radio
+    - buttons     # Button, IconButton, ButtonGroup
+    - feedback    # Alert, Toast, Modal
+    - data        # Table, List, Card
+    - media       # Image, Video, Avatar
+    - overlay     # Modal, Drawer, Popover
+  
+  # Base component styles
+  base_styles:
+    border_radius: 4
+    border_width: 1
+    transition_duration: 200
+    box_shadow: '0 2px 4px rgba(0,0,0,0.1)'
+
+# Accessibility Configuration
+accessibility:
+  # WCAG compliance level
+  wcag_level: 'AA'  # Options: A, AA, AAA
+  
+  # Contrast ratios
+  contrast_ratio:
+    normal_text: 4.5     # WCAG AA for normal text
+    large_text: 3.0      # WCAG AA for large text
+    ui_components: 3.0   # WCAG AA for UI components
+  
+  # Focus indicators
+  focus:
+    visible: true
+    outline_width: 2
+    outline_style: 'solid'
+    outline_color: '#007bff'
+    outline_offset: 2
+  
+  # ARIA support
+  aria:
+    enabled: true
+    required_labels: true
+    role_validation: true
+  
+  # Keyboard navigation
+  keyboard:
+    enabled: true
+    skip_links: true
+    tab_order: true
+  
+  # Screen reader support
+  screen_reader:
+    enabled: true
+    live_regions: true
+    descriptive_text: true
+
+# Responsive Design
+responsive:
+  # Default breakpoints
+  breakpoints:
+    mobile: 320
+    mobile_large: 480
+    tablet: 768
+    desktop: 1024
+    desktop_large: 1440
+    wide: 1920
+  
+  # Mobile-first approach
+  mobile_first: true
+  
+  # Fluid typography
+  fluid_typography: true
+  
+  # Responsive spacing
+  fluid_spacing: true
+
+# Dark Mode Support
+dark_mode:
+  enabled: true
+  default: false
+  
+  # Dark mode colors
+  colors:
+    background: '#1a1a1a'
+    surface: '#2d2d2d'
+    text: '#e0e0e0'
+    text_secondary: '#b0b0b0'
+
+# Animation & Transitions
+animation:
+  # Duration presets (in milliseconds)
+  durations:
+    instant: 100
+    fast: 200
+    normal: 300
+    slow: 500
+    slower: 800
+  
+  # Easing functions
+  easing:
+    linear: 'linear'
+    ease: 'ease'
+    ease_in: 'ease-in'
+    ease_out: 'ease-out'
+    ease_in_out: 'ease-in-out'
+  
+  # Reduced motion support
+  respect_prefers_reduced_motion: true
+
+# Grid System
+grid:
+  columns: 12
+  gutter: 24
+  container_max_width: 1200
+  
+  # Breakpoint-specific settings
+  breakpoint_settings:
+    mobile:
+      columns: 4
+      gutter: 16
+    tablet:
+      columns: 8
+      gutter: 20
+    desktop:
+      columns: 12
+      gutter: 24
+
+# Icons
+icons:
+  library: 'custom'
+  size_unit: 'px'
+  sizes:
+    small: 16
+    medium: 24
+    large: 32
+    xlarge: 48
+
+# Elevation (Shadows)
+elevation:
+  levels:
+    - '0 1px 2px rgba(0,0,0,0.05)'                          # Level 1
+    - '0 2px 4px rgba(0,0,0,0.1)'                           # Level 2
+    - '0 4px 8px rgba(0,0,0,0.12)'                          # Level 3
+    - '0 8px 16px rgba(0,0,0,0.15)'                         # Level 4
+    - '0 12px 24px rgba(0,0,0,0.18)'                        # Level 5
+    - '0 16px 32px rgba(0,0,0,0.20)'                        # Level 6
+
+# Z-Index Scale
+z_index:
+  dropdown: 1000
+  sticky: 1020
+  fixed: 1030
+  modal_backdrop: 1040
+  modal: 1050
+  popover: 1060
+  tooltip: 1070
+
+# Design Tokens Export
+export:
+  formats:
+    - css_variables
+    - scss_variables
+    - js_module
+    - json
+  
+  # CSS custom properties prefix
+  css_prefix: '--ds'

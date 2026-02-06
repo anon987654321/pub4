@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-02-03T15:36:46+01:00",
+    "file": "README.md",
+    "smell": "hardcoded_api_key",
+    "principle_id": 1,
+    "fix_worked": true,
+    "context": "API key exposed in example code, should use placeholder or environment variable"
+  }
+]

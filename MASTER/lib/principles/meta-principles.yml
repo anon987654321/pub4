@@ -1,0 +1,7 @@
+---
+name: Meta-Principles
+description: Principles about principles. Self-reference for the system.
+tier: meta
+priority: 0
+auto_fixable: false
+anti_patterns: []

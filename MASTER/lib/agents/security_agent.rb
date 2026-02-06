@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
-module Master
+require 'json'
+require_relative 'base_agent'
+
+module MASTER
   module Agents
     class SecurityAgent < BaseAgent
+      MAX_CODE_PREVIEW = 1000
+      MAX_ANALYSIS_PREVIEW = 200
+      
       SECURITY_PATTERNS = [
         { pattern: /eval\s*\(/i, severity: :critical, message: "Use of eval() detected - code injection risk" },
         { pattern: /system\s*\(/i, severity: :critical, message: "Use of system() - command injection risk" },
@@ -64,9 +70,9 @@ module Master
           5. Insecure configurations
 
           File: #{file_path || "unknown"}
-          Code (first 1000 chars):
+          Code (first #{MAX_CODE_PREVIEW} chars):
           ```
-          #{code[0..1000]}
+          #{code[0..MAX_CODE_PREVIEW]}
           ```
 
           Return JSON array of issues: [{"severity": "critical|high|medium|low", "line": num, "issue": "...", "fix": "..."}]
@@ -87,12 +93,12 @@ module Master
                 suggestion: issue["fix"]
               )
             end
-          rescue
+          rescue StandardError
             # If parsing fails, add raw analysis as a finding
             add_finding(
               severity: :info,
               category: :security,
-              message: "LLM Security Analysis: #{analysis[0..200]}...",
+              message: "LLM Security Analysis: #{analysis[0..MAX_ANALYSIS_PREVIEW]}...",
               suggestion: "Review full analysis for details"
             )
           end

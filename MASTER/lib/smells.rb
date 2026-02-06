@@ -1,12 +1,19 @@
 # frozen_string_literal: true
 
-module Master
+module MASTER
   module Smells
+    MAX_METHOD_LINES = 20
+    MAX_FILE_LINES = 300
+    MAX_PARAMETERS = 4
+    MAX_NESTING = 5
+    MAX_PUBLIC_METHODS = 10
+    MIN_DUPLICATE_COUNT = 3
+
     BLOATERS = {
-      long_method: { check: "> 20 lines or > 5 nesting levels", fix: "Extract method" },
-      god_class: { check: "> 300 lines or > 10 public methods", fix: "Extract class" },
+      long_method: { check: "> #{MAX_METHOD_LINES} lines or > #{MAX_NESTING} nesting levels", fix: "Extract method" },
+      god_class: { check: "> #{MAX_FILE_LINES} lines or > #{MAX_PUBLIC_METHODS} public methods", fix: "Extract class" },
       primitive_obsession: { check: "Repeated primitive patterns", fix: "Introduce value object" },
-      long_parameter_list: { check: "> 4 parameters", fix: "Parameter object" }
+      long_parameter_list: { check: "> #{MAX_PARAMETERS} parameters", fix: "Parameter object" }
     }.freeze
 
     COUPLERS = {
@@ -27,6 +34,20 @@ module Master
     }.freeze
 
     class << self
+      # Load anti-patterns from principle YAML files
+      def principle_patterns
+        @principle_patterns ||= Principle.anti_patterns
+      end
+
+      def all_patterns
+        static = BLOATERS.merge(COUPLERS).merge(DISPENSABLES).merge(ARCHITECTURE)
+        dynamic = principle_patterns.each_with_object({}) do |ap, hash|
+          key = ap[:name]&.to_sym
+          hash[key] = { check: ap[:smell], fix: ap[:fix], principle: true } if key
+        end
+        static.merge(dynamic)
+      end
+
       def analyze(code, file_path = nil)
         results = []
         lines = code.lines
@@ -37,10 +58,10 @@ module Master
         end
         
         # Long file (god class indicator)
-        if lines.size > 300
+        if lines.size > MAX_FILE_LINES
           results << {
             smell: :god_class,
-            message: "File has #{lines.size} lines (> 300)",
+            message: "File has #{lines.size} lines (> #{MAX_FILE_LINES})",
             fix: BLOATERS[:god_class][:fix]
           }
         end
@@ -48,10 +69,10 @@ module Master
         # Long parameter lists
         code.scan(/def\s+\w+\(([^)]+)\)/) do |params|
           count = params[0].split(",").size
-          if count > 4
+          if count > MAX_PARAMETERS
             results << {
               smell: :long_parameter_list,
-              message: "Method has #{count} parameters (> 4)",
+              message: "Method has #{count} parameters (> #{MAX_PARAMETERS})",
               fix: BLOATERS[:long_parameter_list][:fix]
             }
           end
@@ -68,7 +89,7 @@ module Master
         
         # Duplicate string literals (primitive obsession indicator)
         strings = code.scan(/"[^"]{10,}"/).flatten
-        dupes = strings.group_by(&:itself).select { |_, v| v.size > 2 }
+        dupes = strings.group_by(&:itself).select { |_, v| v.size >= MIN_DUPLICATE_COUNT }
         dupes.each do |str, occurrences|
           results << {
             smell: :primitive_obsession,
@@ -153,13 +174,14 @@ module Master
       end
       
       def report(results)
-        return "No smells detected." if results.empty?
+        return "\e[2mNo smells detected.\e[0m" if results.empty?
         
-        output = "Found #{results.size} smell(s):\n\n"
+        output = "\e[1mCode Smells\e[0m \e[2m(#{results.size})\e[0m\n\n"
         results.each_with_index do |r, i|
-          output += "#{i + 1}. #{r[:smell]}: #{r[:message]}\n"
-          output += "   Fix: #{r[:fix]}\n"
-          output += "   Line: #{r[:line]}\n" if r[:line]
+          output += "  #{i + 1}. \e[1m#{r[:smell]}\e[0m\n"
+          output += "     \e[2m#{r[:message]}\e[0m\n"
+          output += "     Fix: #{r[:fix]}\n"
+          output += "     \e[2mLine #{r[:line]}\e[0m\n" if r[:line]
           output += "\n"
         end
         output

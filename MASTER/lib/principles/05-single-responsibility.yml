@@ -1,0 +1,19 @@
+---
+name: Single Responsibility (SOLID S)
+description: A module should have one, and only one, reason to change.
+tier: solid
+priority: 5
+auto_fixable: true
+anti_patterns:
+- name: god_class
+  smell: Class over 300 lines or 10+ public methods
+  example: "`ApplicationController` with 50 methods"
+  fix: Extract concerns into focused classes
+- name: feature_envy
+  smell: Method uses another class more than its own
+  example: "`order.customer.address.city.upcase`"
+  fix: Move method to the class it envies
+- name: long_method
+  smell: Method over 20 lines or 5 nesting levels
+  example: 100-line `process_order` with 8 if/else branches
+  fix: Extract into smaller named methods

@@ -1,0 +1,15 @@
+---
+name: Dependency Inversion (SOLID D)
+description: Depend on abstractions, not concretions.
+tier: solid
+priority: 9
+auto_fixable: false
+anti_patterns:
+- name: tight_coupling
+  smell: Class directly instantiates its dependencies
+  example: "`def initialize; @db = PostgreSQL.new; end`"
+  fix: Inject dependencies through constructor
+- name: hard_coded_dependencies
+  smell: Concrete class names scattered throughout code
+  example: "`HTTPClient.get(url)` called in 20 places"
+  fix: Inject abstraction, swap implementations easily

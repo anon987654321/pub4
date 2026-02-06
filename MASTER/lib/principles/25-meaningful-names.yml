@@ -1,0 +1,19 @@
+---
+name: Meaningful Names
+description: Names reveal intent. Clean Code principle.
+tier: clarity
+priority: 25
+auto_fixable: true
+anti_patterns:
+- name: cryptic_names
+  smell: Single letter or unclear abbreviations
+  example: "`def p(x, y, z)` - what do these mean?"
+  fix: "`def process_payment(amount, currency, user)`"
+- name: abbreviated_names
+  smell: Shortened names that obscure meaning
+  example: "`usrAcctMgr` instead of `user_account_manager`"
+  fix: Spell it out, IDE has autocomplete
+- name: generic_names
+  smell: Names that could mean anything
+  example: "`data`, `info`, `temp`, `handler`"
+  fix: 'Be specific: `user_profile`, `error_message`'

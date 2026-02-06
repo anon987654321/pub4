@@ -1,0 +1,15 @@
+---
+name: Small Functions
+description: Functions should do one thing, do it well.
+tier: clean_code
+priority: 26
+auto_fixable: true
+anti_patterns:
+- name: long_method
+  smell: Method over 20 lines
+  example: 150-line `process_order()` method
+  fix: 'Extract: `validate()`, `calculate()`, `persist()`'
+- name: multiple_responsibilities
+  smell: Method does unrelated things
+  example: "`save_and_email_and_log()`"
+  fix: Split into `save()`, `email()`, `log()`

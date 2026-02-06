@@ -1,0 +1,256 @@
+# Universal Standards Configuration
+# Defines coding standards, formatting rules, documentation requirements, and quality metrics
+
+standards:
+  - name: coding_style
+    description: Coding style and formatting standards
+    enabled: true
+    enforcement: warn
+    languages: [ruby, python, javascript, typescript, go]
+    rules:
+      - name: line_length
+        type: line_length
+        enabled: true
+        max_length: 120
+        severity: warning
+        description: Maximum line length limit
+
+      - name: indentation
+        type: indentation
+        enabled: true
+        indent_size: 2
+        use_spaces: true
+        severity: warning
+        description: Consistent indentation with spaces
+
+      - name: trailing_whitespace
+        type: formatting
+        enabled: true
+        severity: info
+        description: No trailing whitespace allowed
+
+      - name: blank_lines
+        type: formatting
+        enabled: true
+        max_consecutive: 2
+        severity: info
+        description: Limit consecutive blank lines
+
+  - name: naming_conventions
+    description: Naming conventions for various language constructs
+    enabled: true
+    enforcement: warn
+    languages: [ruby, python, javascript, typescript, go]
+    rules:
+      - name: class_names
+        type: naming
+        enabled: true
+        pattern: PascalCase
+        severity: warning
+        description: Class names should be PascalCase
+
+      - name: method_names
+        type: naming
+        enabled: true
+        pattern: snake_case
+        severity: warning
+        description: Method names should be snake_case (Ruby/Python)
+
+      - name: constant_names
+        type: naming
+        enabled: true
+        pattern: SCREAMING_SNAKE_CASE
+        severity: warning
+        description: Constants should be SCREAMING_SNAKE_CASE
+
+      - name: variable_names
+        type: naming
+        enabled: true
+        pattern: snake_case
+        severity: info
+        description: Variables should be snake_case
+
+  - name: documentation
+    description: Documentation requirements
+    enabled: true
+    enforcement: warn
+    languages: [all]
+    rules:
+      - name: class_documentation
+        type: documentation
+        enabled: true
+        severity: warning
+        description: Public classes should have documentation
+        required_for: [public_class, public_module]
+
+      - name: method_documentation
+        type: documentation
+        enabled: true
+        severity: info
+        description: Public methods should have documentation
+        required_for: [public_method]
+        min_lines: 1
+
+      - name: complex_logic_comments
+        type: documentation
+        enabled: true
+        severity: info
+        description: Complex logic should have explanatory comments
+        complexity_threshold: 5
+
+  - name: complexity
+    description: Code complexity limits
+    enabled: true
+    enforcement: warn
+    languages: [all]
+    rules:
+      - name: cyclomatic_complexity
+        type: complexity
+        enabled: true
+        max_complexity: 10
+        severity: warning
+        description: Maximum cyclomatic complexity per method
+
+      - name: cognitive_complexity
+        type: complexity
+        enabled: true
+        max_complexity: 15
+        severity: warning
+        description: Maximum cognitive complexity per method
+
+      - name: nesting_depth
+        type: complexity
+        enabled: true
+        max_depth: 4
+        severity: warning
+        description: Maximum nesting depth
+
+      - name: method_length
+        type: complexity
+        enabled: true
+        max_lines: 50
+        severity: info
+        description: Maximum method length in lines
+
+      - name: class_length
+        type: complexity
+        enabled: true
+        max_lines: 300
+        severity: info
+        description: Maximum class length in lines
+
+  - name: security
+    description: Security best practices
+    enabled: true
+    enforcement: block
+    languages: [all]
+    rules:
+      - name: no_hardcoded_secrets
+        type: security
+        enabled: true
+        severity: error
+        description: No hardcoded passwords, keys, or tokens
+
+      - name: no_eval
+        type: security
+        enabled: true
+        severity: error
+        description: Avoid eval and similar dangerous functions
+
+      - name: sql_injection_prevention
+        type: security
+        enabled: true
+        severity: error
+        description: Use parameterized queries to prevent SQL injection
+
+  - name: best_practices
+    description: General best practices
+    enabled: true
+    enforcement: warn
+    languages: [all]
+    rules:
+      - name: no_magic_numbers
+        type: best_practice
+        enabled: true
+        severity: info
+        description: Use named constants instead of magic numbers
+        exceptions: [0, 1, -1, 2]
+
+      - name: dry_principle
+        type: best_practice
+        enabled: true
+        severity: warning
+        description: Don't Repeat Yourself - avoid code duplication
+
+      - name: single_responsibility
+        type: best_practice
+        enabled: true
+        severity: info
+        description: Classes and methods should have single responsibility
+
+      - name: proper_error_handling
+        type: best_practice
+        enabled: true
+        severity: warning
+        description: Handle errors appropriately, avoid empty catch blocks
+
+  - name: testing
+    description: Testing standards
+    enabled: true
+    enforcement: warn
+    languages: [all]
+    rules:
+      - name: test_naming
+        type: testing
+        enabled: true
+        severity: info
+        description: Test names should be descriptive
+
+      - name: test_isolation
+        type: testing
+        enabled: true
+        severity: warning
+        description: Tests should be isolated and independent
+
+      - name: assertion_count
+        type: testing
+        enabled: true
+        max_assertions: 5
+        severity: info
+        description: Limit assertions per test
+
+  - name: performance
+    description: Performance guidelines
+    enabled: true
+    enforcement: warn
+    languages: [all]
+    rules:
+      - name: avoid_n_plus_one
+        type: performance
+        enabled: true
+        severity: warning
+        description: Avoid N+1 query problems
+
+      - name: efficient_algorithms
+        type: performance
+        enabled: true
+        severity: info
+        description: Use efficient algorithms and data structures
+
+      - name: memory_management
+        type: performance
+        enabled: true
+        severity: warning
+        description: Manage memory efficiently, avoid leaks
+
+settings:
+  auto_format: false
+  fix_on_save: false
+  show_inline_hints: true
+  severity_threshold: info
+  exclude_patterns:
+    - vendor/**
+    - node_modules/**
+    - tmp/**
+    - '*.min.js'
+  max_violations_per_file: 50

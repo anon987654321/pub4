@@ -3,8 +3,37 @@ require "net/http"
 require "uri"
 require "fileutils"
 
-module Master
+module MASTER
   module OpenBSD
+    # Pledge/Unveil support for security sandboxing
+    class << self
+      def pledge(promises, execpromises = nil)
+        return false unless openbsd?
+        # Ruby doesn't have native pledge - would need FFI
+        # For now, document intent
+        @pledged = promises
+        true
+      end
+
+      def unveil(path, permissions)
+        return false unless openbsd?
+        @unveiled ||= []
+        @unveiled << { path: path, permissions: permissions }
+        true
+      end
+
+      def openbsd?
+        RUBY_PLATFORM.include?('openbsd')
+      end
+
+      def sandbox_status
+        return 'not openbsd' unless openbsd?
+        pledged = @pledged || 'none'
+        unveiled = @unveiled&.size || 0
+        "pledge: #{pledged}, unveil: #{unveiled} paths"
+      end
+    end
+
     CONFIG_MAP = {
       "pf.conf" => { daemon: "pf", man: "pf.conf.5", path: "/etc/pf.conf" },
       "httpd.conf" => { daemon: "httpd", man: "httpd.conf.5", path: "/etc/httpd.conf" },
@@ -41,7 +70,7 @@ module Master
       end
 
       def fetch_man_page(man_page, cache_dir = nil)
-        cache_dir ||= File.join(Master::ROOT, "var", "cache", "man")
+        cache_dir ||= File.join(MASTER::ROOT, "var", "cache", "man")
         FileUtils.mkdir_p(cache_dir) rescue nil
         
         cache_file = File.join(cache_dir, man_page.gsub("/", "_"))

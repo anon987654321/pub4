@@ -1,0 +1,100 @@
+#!/usr/bin/env zsh
+# brgen.no - Business Registration Generator Rails App
+
+APP_NAME="brgen"
+APP_DIR="/var/www/${APP_NAME}"
+DOMAIN="brgen.no"
+
+source "$(dirname "$0")/@shared_functions.sh"
+
+# Create Rails app with modern stack
+rails new "${APP_DIR}" \
+  --database=postgresql \
+  --css=tailwind \
+  --javascript=esbuild \
+  --skip-test \
+  --skip-bundle
+
+cd "${APP_DIR}"
+
+# Add modern gems
+cat >> Gemfile <<'GEMS'
+gem 'stimulus_reflex'
+gem 'redis'
+gem 'sidekiq'
+gem 'pundit'
+gem 'pagy'
+GEMS
+
+bundle install
+
+# Generate business registration scaffold
+rails g scaffold Business \
+  name:string \
+  org_number:string \
+  industry:string \
+  status:string \
+  registered_at:datetime
+
+# Setup StimulusReflex
+rails stimulus_reflex:install
+
+# Create homepage controller
+rails g controller Home index
+
+# Configure routes
+cat > config/routes.rb <<'ROUTES'
+Rails.application.routes.draw do
+  root "home#index"
+  resources :businesses
+  mount ActionCable.server => '/cable'
+end
+ROUTES
+
+# Setup httpd vhost
+doas tee /etc/httpd.conf > /dev/null <<HTTPD
+server "${DOMAIN}" {
+  listen on * port 80
+  root "/var/www/${APP_NAME}/public"
+
+  location "*.php*" { block }
+  location "/*" {
+    fastcgi socket "/run/ruby-puma.sock"
+  }
+}
+HTTPD
+
+# Create systemd service for Puma
+doas tee /etc/rc.d/puma <<'SERVICE'
+#!/bin/ksh
+daemon="/usr/local/bin/bundle exec puma"
+daemon_flags="-C ${APP_DIR}/config/puma.rb"
+daemon_user="www"
+
+. /etc/rc.d/rc.subr
+rc_cmd $1
+SERVICE
+
+doas chmod +x /etc/rc.d/puma
+
+# Configure Puma
+cat > config/puma.rb <<'PUMA'
+workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+threads threads_count, threads_count
+bind "unix:///run/ruby-puma.sock"
+environment ENV.fetch("RAILS_ENV") { "production" }
+preload_app!
+PUMA
+
+# Run migrations
+RAILS_ENV=production rails db:create db:migrate
+
+# Precompile assets
+RAILS_ENV=production rails assets:precompile
+
+# Start services
+doas rcctl enable httpd puma
+doas rcctl restart httpd puma
+
+print_success "brgen.no deployed at http://${DOMAIN}"

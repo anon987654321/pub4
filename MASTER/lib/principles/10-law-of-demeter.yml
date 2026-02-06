@@ -1,0 +1,19 @@
+---
+name: Law of Demeter
+description: Only talk to your immediate friends. Avoid train wrecks.
+tier: design
+priority: 10
+auto_fixable: true
+anti_patterns:
+- name: message_chains
+  smell: Long chains like `a.b.c.d.e`
+  example: "`order.customer.address.city.downcase`"
+  fix: 'Add delegate method: `order.customer_city`'
+- name: inappropriate_intimacy
+  smell: Class knows too much about another's internals
+  example: Accessing private fields via reflection
+  fix: Use public interface, hide implementation
+- name: feature_envy
+  smell: Method uses another object's data excessively
+  example: Method with 10 calls to `other.field`
+  fix: Move method to the class it envies

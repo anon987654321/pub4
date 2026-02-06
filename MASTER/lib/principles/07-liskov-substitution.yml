@@ -1,0 +1,15 @@
+---
+name: Liskov Substitution (SOLID L)
+description: Subtypes must be substitutable for their base types.
+tier: solid
+priority: 7
+auto_fixable: false
+anti_patterns:
+- name: refused_bequest
+  smell: Subclass doesn't use inherited methods
+  example: "`Square < Rectangle` that ignores `height=`"
+  fix: Use composition, or don't inherit
+- name: type_checking
+  smell: Checking class type instead of using polymorphism
+  example: "`if obj.is_a?(Dog) then bark else meow`"
+  fix: Define common interface, let each type implement

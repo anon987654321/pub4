@@ -1,0 +1,19 @@
+---
+name: YAGNI (You Aren't Gonna Need It)
+description: Implement things when you need them, never when you foresee needing them.
+tier: core
+priority: 3
+auto_fixable: true
+anti_patterns:
+- name: speculative_generality
+  smell: Building for imagined future requirements
+  example: Plugin system for an app with one plugin
+  fix: Delete until actually needed
+- name: unused_code
+  smell: Methods/classes never called
+  example: "`def legacy_handler` with zero references"
+  fix: Delete it
+- name: dead_code
+  smell: Unreachable code paths
+  example: Code after unconditional return
+  fix: Delete it
