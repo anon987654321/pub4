@@ -2,7 +2,17 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../lib/master"
+require "sqlite3"
+
+# Define MASTER module
+module MASTER
+  def self.root
+    File.expand_path("..", __dir__)
+  end
+end
+
+require_relative "../lib/result"
+require_relative "../lib/db"
 
 # Initialize schema
 MASTER::DB.initialize_schema
@@ -12,16 +22,17 @@ db = MASTER::DB.connection
 # Load principles
 principles_file = File.join(MASTER.root, "data", "principles.yml")
 if File.exist?(principles_file)
-  principles = YAML.load_file(principles_file)
+  data = YAML.load_file(principles_file)
+  principles = data["principles"] || {}
   count = 0
   
-  principles.each do |principle|
+  principles.each do |key, principle|
     db.execute(
       "INSERT OR IGNORE INTO principles (name, text, protection_level, category) VALUES (?, ?, ?, ?)",
-      principle["name"],
-      principle["text"],
-      principle["protection_level"] || 0,
-      principle["category"]
+      [principle["name"] || key,
+       principle["description"] || principle["text"] || "",
+       principle["priority"] || principle["protection_level"] || 0,
+       principle["tier"] || principle["category"] || "general"]
     )
     count += 1
   end
@@ -32,16 +43,23 @@ end
 # Load personas
 personas_file = File.join(MASTER.root, "data", "personas.yml")
 if File.exist?(personas_file)
-  personas = YAML.load_file(personas_file)
+  data = YAML.load_file(personas_file)
+  personas = data["personas"] || {}
   count = 0
   
-  personas.each do |persona|
+  personas.each do |key, persona|
+    instructions = []
+    instructions << persona["description"] if persona["description"]
+    instructions << "Style: #{persona["style"]}" if persona["style"]
+    instructions << "Greeting: #{persona["greeting"]}" if persona["greeting"]
+    instructions_text = instructions.join("\n")
+    
     db.execute(
       "INSERT OR REPLACE INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
-      persona["name"],
-      persona["role"],
-      persona["instructions"],
-      persona["weight"] || 0
+      [persona["name"] || key.capitalize,
+       key,
+       instructions_text,
+       persona["priority"] || 0]
     )
     count += 1
   end
