@@ -31,7 +31,6 @@ module MASTER
   autoload :Server,      "#{LIB}/server"
   autoload :CLI,         "#{LIB}/cli"
   autoload :Chamber,     "#{LIB}/chamber"
-  autoload :CreativeChamber, "#{LIB}/creative_chamber"
   autoload :Introspection,   "#{LIB}/introspection"
   autoload :Evolve,      "#{LIB}/evolve"
   autoload :Audio,       "#{LIB}/audio"

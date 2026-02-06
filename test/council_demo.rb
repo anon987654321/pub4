@@ -4,7 +4,6 @@
 # Council System Demo - Test all features
 # Usage: ruby test/council_demo.rb
 
-require_relative '../MASTER/lib/council'
 require_relative '../MASTER/lib/loader'
 
 puts "🏛️  MASTER Council System Demo"
