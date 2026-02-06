@@ -69,14 +69,16 @@ function render(){
     if(ring.z<-200)ring.z+=400;
     
     const scale=fov/(fov+ring.z);
-    const radius=40*scale+aud*20*scale;
+    const radius=Math.max(1,40*scale+aud*20*scale);
     const depth=(ring.z+200)/400;
     
-    c.strokeStyle=`rgb(${depth*72},${180+depth*44},${200+depth*9})`;
-    c.lineWidth=1;
-    c.beginPath();
-    c.arc(midX,midY,radius,0,Math.PI*2);
-    c.stroke();
+    if(radius>0){
+      c.strokeStyle=`rgb(${depth*72},${180+depth*44},${200+depth*9})`;
+      c.lineWidth=1;
+      c.beginPath();
+      c.arc(midX,midY,radius,0,Math.PI*2);
+      c.stroke();
+    }
   }
   
   requestAnimationFrame(render);

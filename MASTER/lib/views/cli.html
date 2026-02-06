@@ -47,6 +47,16 @@ input:disabled{opacity:0.6;cursor:not-allowed}
 <script>
 const ORBS=['orb_blob','orb_particle','orb_3d','orb_backlight','orb_warp','orb_retro','orb_connected','orb_loader'];
 let currentOrb=0;
+let lastStatusData={};
+let offlineCount=0;
+let pending=false;
+const out=document.getElementById('out'),inp=document.getElementById('in');
+const status=document.getElementById('status');
+const statusLeft=document.getElementById('status-left');
+const statusRight=document.getElementById('status-right');
+const hint=document.getElementById('hint');
+const toast=document.getElementById('toast');
+const help=document.getElementById('help');
 
 function updateOrbNav(){
   const nav=document.getElementById('orb-nav');
@@ -55,6 +65,22 @@ function updateOrbNav(){
     html+=`<span class="${i===currentOrb?'active':''}">${i+1}</span>`;
   }
   nav.innerHTML=html;
+}
+
+function showToast(text){
+  toast.textContent=text;
+  toast.style.opacity='1';
+  setTimeout(()=>{toast.style.opacity='0'},1200);
+}
+
+function updateStatus(data){
+  if(data && Object.keys(data).length){lastStatusData=data}
+  const orbName='orb '+(currentOrb+1);
+  const conn=lastStatusData?.connected===false?'no key':'ok';
+  statusLeft.textContent=orbName;
+  statusRight.textContent=conn;
+  statusRight.className=offlineCount>=2?'offline':'';
+  hint.style.opacity=pending ? '0.1' : '0.3';
 }
 
 // Keyboard: 1-8 switch orbs, saved to localStorage
@@ -93,19 +119,9 @@ document.addEventListener('keydown',e=>{
 });
 
 // Chat
-const out=document.getElementById('out'),inp=document.getElementById('in');
-const status=document.getElementById('status');
-const statusLeft=document.getElementById('status-left');
-const statusRight=document.getElementById('status-right');
-const hint=document.getElementById('hint');
-const toast=document.getElementById('toast');
-const help=document.getElementById('help');
 const DEFAULT_PLACEHOLDER=inp.placeholder;
-let pending=false;
 let lastSync=null;
-let offlineCount=0;
 let lastSent='';
-let lastStatusData={};
 let history=[];
 const HISTORY_KEY='master_history';
 const HISTORY_MAX=100;
@@ -149,22 +165,6 @@ function setPending(state){
 function formatCost(cost){
   if(cost==null)return '--';
   return '$'+Number(cost).toFixed(4);
-}
-
-function updateStatus(data){
-  if(data && Object.keys(data).length){lastStatusData=data}
-  const orbName='orb '+(currentOrb+1);
-  const conn=lastStatusData?.connected===false?'no key':'ok';
-  statusLeft.textContent=orbName;
-  statusRight.textContent=conn;
-  statusRight.className=offlineCount>=2?'offline':'';
-  hint.style.opacity=pending ? '0.1' : '0.3';
-}
-
-function showToast(text){
-  toast.textContent=text;
-  toast.style.opacity='1';
-  setTimeout(()=>{toast.style.opacity='0'},1200);
 }
 
 function loadHistory(){
