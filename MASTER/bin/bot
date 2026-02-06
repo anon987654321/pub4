@@ -4,7 +4,7 @@
 # MASTER Bot - Multi-platform social media integration
 # Boots MASTER framework and starts all enabled platform adapters
 
-require_relative '../lib/master'
+require_relative '../lib/loader'
 
 module MASTER
   class Bot
