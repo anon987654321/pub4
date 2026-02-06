@@ -15,6 +15,12 @@ gem 'ferrum', require: false
 # CLI core
 gem 'readline'
 
+# Social media platform integrations
+gem 'discordrb', '~> 3.5', require: false
+gem 'telegram-bot-ruby', '~> 1.0', require: false
+gem 'slack-ruby-client', '~> 2.0', require: false
+gem 'twitter', '~> 8.0', require: false
+
 # TTY toolkit - full UI/UX power
 gem 'tty-prompt', require: false      # Interactive menus, selections
 gem 'tty-spinner', require: false     # Loading spinners

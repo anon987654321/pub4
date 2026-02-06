@@ -132,16 +132,58 @@ module MASTER
       @favorites = []
       @aliases = {}
       @last_files = {}
+      @last_file = nil      # Most recent file operated on
+      @last_dir = nil       # Most recent directory
+      @last_query = nil     # Most recent LLM query
+      @last_result = nil    # Most recent result
       @last_interrupt = nil
       @input_queue = Queue.new
       @processing = false
       @pastel = Pastel.new if TTY_AVAILABLE
       @prompt = TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan) if TTY_AVAILABLE
+      
+      # Dmesg boot header
+      Dmesg.boot_header rescue nil
+      
       load_state
       setup_completion
       load_history
       setup_crash_recovery
       load_self_awareness
+      
+      # Boot complete
+      boot_ms = ((Time.now - @boot_time) * 1000).round
+      Dmesg.boot_complete(boot_ms) rescue nil
+    end
+    
+    # Smart defaults - infer missing arguments from context
+    def default_file(arg = nil)
+      return arg if arg && !arg.empty?
+      return @last_file if @last_file && File.exist?(@last_file)
+      
+      # Find most recently modified .rb file in current dir
+      Dir.glob(File.join(@root, '*.rb')).max_by { |f| File.mtime(f) }
+    end
+    
+    def default_dir(arg = nil)
+      return arg if arg && !arg.empty?
+      return @last_dir if @last_dir && Dir.exist?(@last_dir)
+      @root
+    end
+    
+    def default_target(arg = nil)
+      return arg if arg && !arg.empty?
+      return @last_file if @last_file
+      return @last_dir if @last_dir
+      @root
+    end
+    
+    def remember_file(path)
+      @last_file = File.expand_path(path, @root) if path
+    end
+    
+    def remember_dir(path)
+      @last_dir = File.expand_path(path, @root) if path && Dir.exist?(File.expand_path(path, @root))
     end
 
     def run
@@ -818,10 +860,199 @@ module MASTER
       when 'goals'
         list_goals
 
+      when 'budget'
+        show_budget
+
+      when 'health'
+        run_health_check
+
+      when 'learn'
+        show_learning_stats
+
+      when 'dmesg'
+        show_dmesg(arg)
+
+      when 'trace'
+        toggle_trace(arg)
+
+      when 'xp', 'level', 'momentum'
+        Momentum.status_display
+
+      when 'achievements'
+        Momentum.list_achievements
+
+      when 'streak'
+        streak = Momentum.update_streak
+        "🔥 #{streak}-day streak"
+
+      when 'solve', 'debug'
+        solve_problem(arg)
+
+      when 'fixes'
+        show_fix_approaches(arg)
+
+      when 'hostile', 'challenge'
+        hostile_question
+
+      when 'viral', 'dream'
+        generate_viral(arg)
+
+      when 'spicy'
+        spicy_take(arg)
+
       else
         # Default: send to LLM
         chat(input)
       end
+    end
+
+    def solve_problem(error_desc)
+      # Use last error if none provided
+      error_desc ||= @last_error || "no error specified"
+      
+      puts "#{C_CYAN}Analyzing...#{C_RESET}"
+      result = ProblemSolver.analyze(error: error_desc, llm: @llm)
+      
+      return result.error if result.is_a?(Result) && result.err?
+      return "Analysis failed" unless result.is_a?(Hash)
+      
+      lines = []
+      lines << "#{C_BOLD}Root Cause:#{C_RESET} #{result[:root_cause]}"
+      lines << ""
+      lines << "#{C_YELLOW}⚠ #{result[:hostile_check]}#{C_RESET}" if result[:hostile_check]
+      lines << ""
+      lines << "#{C_BOLD}Fixes (safest first):#{C_RESET}"
+      
+      result[:fixes].each_with_index do |(key, fix), i|
+        lines << "  #{i + 1}. #{key.upcase}: #{fix}" if fix
+      end
+      
+      lines << ""
+      lines << "#{C_GREEN}Recommended:#{C_RESET} #{result[:recommended]}"
+      lines << "#{C_DIM}Verify: #{result[:verification]}#{C_RESET}" if result[:verification]
+      
+      lines.join("\n")
+    end
+
+    def show_fix_approaches(symptoms)
+      if symptoms && !symptoms.empty?
+        approaches = ProblemSolver.suggest_approach(symptoms)
+        "Suggested for '#{symptoms}':\n\n#{ProblemSolver.format_approaches(approaches)}"
+      else
+        ProblemSolver.format_approaches
+      end
+    end
+
+    def hostile_question
+      q = ProblemSolver.hostile_question
+      "#{C_YELLOW}🤔 #{q}#{C_RESET}"
+    end
+
+    def generate_viral(arg)
+      # Parse: "topic for platform" or just "topic"
+      if arg&.include?(' for ')
+        topic, platform = arg.split(' for ', 2)
+      else
+        topic = arg || "programming"
+        platform = "twitter"
+      end
+      
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      ideas = dreamer.dream(topic: topic, platform: platform)
+      
+      return "No ideas generated" unless ideas&.any?
+      
+      ideas.map.with_index do |idea, i|
+        "#{i + 1}. #{C_BOLD}#{idea[:hook]}#{C_RESET}\n   #{idea[:body]}\n   #{C_DIM}#{idea[:why]}#{C_RESET}"
+      end.join("\n\n")
+    end
+
+    def spicy_take(topic)
+      topic ||= "software engineering"
+      dreamer = Dreams::SocialDreamer.new(llm: @llm)
+      take = dreamer.spicy_take(topic)
+      take ? "🌶️ #{take}" : "Couldn't generate a spicy take"
+    end
+
+    def show_dmesg(arg)
+      count = arg&.to_i
+      count = 20 if count.nil? || count <= 0
+      Dmesg.dump(last_n: count)
+    end
+
+    def toggle_trace(arg)
+      case arg
+      when 'on', '1', 'true'
+        Dmesg.enabled = true
+        "Trace enabled (bold green)"
+      when 'off', '0', 'false'
+        Dmesg.enabled = false
+        "Trace disabled"
+      else
+        "Trace: #{Dmesg.enabled ? 'on' : 'off'}"
+      end
+    end
+
+    def show_budget
+      remaining = Autonomy.remaining_budget rescue 10.0
+      spent = Autonomy.total_cost rescue 0.0
+      limit = Autonomy.config[:budget_limit] rescue 10.0
+      pct = ((spent / limit) * 100).round(1)
+      
+      "Budget: $#{spent.round(4)} / $#{limit} (#{pct}% used, $#{remaining.round(4)} remaining)"
+    end
+
+    def run_health_check
+      checks = []
+      
+      # LLM connectivity
+      checks << "LLM: #{@llm.status[:connected] ? '✓' : '✗'}"
+      
+      # Circuit breakers
+      open_circuits = %i[anthropic google openai deepseek].count { |p| Autonomy.circuit_open?(p) rescue false }
+      checks << "Circuits: #{open_circuits > 0 ? "#{open_circuits} open" : '✓ all closed'}"
+      
+      # Budget
+      checks << "Budget: #{Autonomy.exceeded_budget? ? '✗ exceeded' : '✓ ok'}" rescue nil
+      
+      # Sessions
+      sessions_dir = Paths.sessions rescue nil
+      session_count = sessions_dir ? Dir.glob(File.join(sessions_dir, '*.yml')).size : 0
+      checks << "Sessions: #{session_count} saved"
+      
+      checks.compact.join("\n")
+    end
+
+    def show_learning_stats
+      stats = []
+      
+      # Prompt metrics
+      metrics_file = File.join(Paths.var, 'prompt_metrics.yml')
+      if File.exist?(metrics_file)
+        metrics = YAML.load_file(metrics_file) rescue {}
+        total_execs = metrics.values.sum { |m| m[:executions] || 0 }
+        total_success = metrics.values.sum { |m| m[:successes] || 0 }
+        rate = total_execs > 0 ? ((total_success.to_f / total_execs) * 100).round(1) : 0
+        stats << "Prompts: #{total_execs} executions, #{rate}% success"
+      end
+      
+      # Examples learned
+      examples_file = File.join(Paths.var, 'few_shot_examples.yml')
+      if File.exist?(examples_file)
+        examples = YAML.load_file(examples_file) rescue {}
+        success_count = (examples[:successes] || {}).values.flatten.size
+        failure_count = (examples[:failures] || []).size
+        stats << "Examples: #{success_count} successes, #{failure_count} failures learned"
+      end
+      
+      # Skills
+      skills_file = File.join(Paths.var, 'agent_skills.yml')
+      if File.exist?(skills_file)
+        skills = YAML.load_file(skills_file) rescue {}
+        stats << "Skills: #{skills.size} acquired"
+      end
+      
+      stats.empty? ? "No learning data yet" : stats.join("\n")
     end
 
     def undo_last
@@ -928,7 +1159,16 @@ module MASTER
     end
 
     def create_checkpoint(task)
-      return "Usage: checkpoint <task_description>" unless task
+      # Default to planner's current task or "snapshot"
+      if task.nil? || task.empty?
+        @planner ||= Planner.new(@llm)
+        if @planner.current_plan
+          current = @planner.next_task
+          task = current ? current[:action] : @planner.current_plan[:goal]
+        else
+          task = "manual snapshot #{Time.now.strftime('%H:%M')}"
+        end
+      end
       
       recovery = MASTER::SessionRecovery.new
       checkpoint = recovery.checkpoint(
@@ -948,57 +1188,117 @@ module MASTER
       duration = (duration_arg || '10').to_i  # minutes
       end_time = Time.now + (duration * 60)
       
-      goals = load_goals
-      return "No goals set. Use: goal <description>" if goals.empty?
+      # Use planner if a plan exists, otherwise check goals
+      @planner ||= Planner.new(@llm)
       
-      puts "auto: #{goals.size} goals, #{duration}m"
+      if @planner.current_plan
+        run_planned_execution(end_time)
+      else
+        goals = load_goals
+        return "No goals or plan. Use: goal <description> OR plan <goal>" if goals.empty?
+        
+        # Create plan from first goal
+        goal = goals.first
+        puts "auto: creating plan for: #{goal[:name]}"
+        result = @planner.create_plan(goal[:name])
+        
+        return "Failed to create plan: #{result.error}" unless result.ok?
+        
+        puts @planner.format_plan
+        run_planned_execution(end_time)
+      end
+    end
+    
+    def run_planned_execution(end_time)
       iteration = 0
       
       while Time.now < end_time
+        task = @planner.next_task
+        break unless task
+        
         iteration += 1
-        goal = goals.sample  # Pick a random goal
+        prog = @planner.progress
         
-        # Introspect on what to do next
-        next_action = decide_next_action(goal)
+        puts "\n[#{iteration}] (#{prog[:progress]}) #{task[:action]}"
         
-        print "  [#{iteration}] #{goal[:name][0..30]}..."
+        result = @planner.execute_next do |action|
+          process_input(action)
+        end
         
-        begin
-          result = process_input(next_action)
-          puts " ✓"
+        if result.ok?
+          puts "  ✓ done"
+        else
+          puts "  ✗ #{result.error[0..60]}"
           
-          # Learn from result
-          update_goal_progress(goal, next_action, result)
-        rescue => e
-          puts " ✗ #{e.message[0..40]}"
+          # Ask if should continue or abort
+          if @planner.current_plan[:status] == :blocked
+            puts "  Plan blocked after #{MAX_RETRIES} retries. Skipping task."
+            @planner.skip_task
+          end
         end
         
         sleep AUTO_INTERVAL
       end
       
-      save_goals(goals)
-      "auto: #{iteration} actions completed"
+      prog = @planner.progress
+      status = prog[:status] == :complete ? "complete!" : "#{prog[:progress]} tasks done"
+      "auto: #{status}"
     end
-
-    def decide_next_action(goal)
-      prompt = <<~PROMPT
-        Goal: #{goal[:name]}
-        Progress: #{goal[:progress].join('; ') rescue 'none yet'}
-        
-        What's the single next action to make progress?
-        Reply with just the command, e.g.: scan lib/, refactor lib/cli.rb, evolve
-      PROMPT
+    
+    def create_plan(goal_description)
+      # Use current goal if none provided
+      if goal_description.nil? || goal_description.empty?
+        goals = load_goals
+        if goals.empty?
+          return "No goal. Set one: goal <description>"
+        end
+        goal_description = goals.last[:name]
+        puts "Planning for: #{goal_description}"
+      end
       
-      result = @llm.chat(prompt, tier: :fast)
-      action = result.value.to_s.strip.split("\n").first.to_s.strip
-      action.empty? ? "introspect" : action
+      @planner ||= Planner.new(@llm)
+      result = @planner.create_plan(goal_description)
+      
+      return "Failed: #{result.error}" unless result.ok?
+      
+      @planner.format_plan
     end
-
-    def update_goal_progress(goal, action, result)
-      goal[:progress] ||= []
-      goal[:progress] << "#{Time.now.strftime('%H:%M')} #{action[0..40]}"
-      goal[:progress] = goal[:progress].last(10)  # Keep last 10
-      goal[:last_updated] = Time.now.to_i
+    
+    def show_plan
+      @planner ||= Planner.new(@llm)
+      @planner.format_plan
+    end
+    
+    def run_next_task
+      @planner ||= Planner.new(@llm)
+      
+      task = @planner.next_task
+      return "No tasks remaining" unless task
+      
+      puts "Running: #{task[:action]}"
+      
+      result = @planner.execute_next do |action|
+        process_input(action)
+      end
+      
+      if result.ok?
+        prog = @planner.progress
+        "✓ Done (#{prog[:progress]})"
+      else
+        "✗ Failed: #{result.error}"
+      end
+    end
+    
+    def skip_current_task
+      @planner ||= Planner.new(@llm)
+      result = @planner.skip_task
+      result.ok? ? result.value : result.error
+    end
+    
+    def clear_current_plan
+      @planner ||= Planner.new(@llm)
+      @planner.clear_plan
+      "Plan cleared"
     end
 
     def set_goal(description)
@@ -1048,23 +1348,23 @@ module MASTER
           metrics       #{C_DIM}Session stats#{C_RESET}
           exit, quit    #{C_DIM}Leave#{C_RESET}
 
-        #{C_BOLD}Files#{C_RESET}
+        #{C_BOLD}Files#{C_RESET} #{C_DIM}(defaults to last used)#{C_RESET}
           ls, tree      #{C_DIM}List files#{C_RESET}
-          cat, read     #{C_DIM}View file#{C_RESET}
-          edit          #{C_DIM}Modify file#{C_RESET}
+          cat [file]    #{C_DIM}View file#{C_RESET}
+          edit [file]   #{C_DIM}Modify file#{C_RESET}
           diff, d       #{C_DIM}Show changes#{C_RESET}
-          cd            #{C_DIM}Change dir#{C_RESET}
+          cd [path]     #{C_DIM}Change dir (default: ~)#{C_RESET}
 
-        #{C_BOLD}Code#{C_RESET}
-          scan, s       #{C_DIM}Find issues#{C_RESET}
+        #{C_BOLD}Code#{C_RESET} #{C_DIM}(defaults to last file/dir)#{C_RESET}
+          scan [path]   #{C_DIM}Find issues#{C_RESET}
           smells        #{C_DIM}Detect rot#{C_RESET}
-          refactor, r   #{C_DIM}Auto-fix#{C_RESET}
+          refactor [path] #{C_DIM}Auto-fix#{C_RESET}
           lint          #{C_DIM}Check style#{C_RESET}
-          beautify      #{C_DIM}Format#{C_RESET}
-          bughunt       #{C_DIM}8-phase debug#{C_RESET}
+          beautify [file] #{C_DIM}Format#{C_RESET}
+          bughunt [file] #{C_DIM}8-phase debug#{C_RESET}
 
         #{C_BOLD}AI#{C_RESET}
-          chamber, c    #{C_DIM}Multi-model#{C_RESET}
+          chamber [file] #{C_DIM}Multi-model deliberation#{C_RESET}
           queue, q      #{C_DIM}Batch process#{C_RESET}
           evolve, e     #{C_DIM}Self-improve#{C_RESET}
           introspect, i #{C_DIM}Self-check#{C_RESET}
@@ -1083,26 +1383,56 @@ module MASTER
           speak         #{C_DIM}TTS#{C_RESET}
 
         #{C_BOLD}Sessions#{C_RESET}
-          session       #{C_DIM}Show current session#{C_RESET}
-          newsession    #{C_DIM}Start fresh session#{C_RESET}
-          sessions      #{C_DIM}List all sessions#{C_RESET}
-          resume        #{C_DIM}Restore session#{C_RESET}
-          checkpoint    #{C_DIM}Save state#{C_RESET}
+          session       #{C_DIM}Show current#{C_RESET}
+          newsession    #{C_DIM}Start fresh#{C_RESET}
+          sessions      #{C_DIM}List all#{C_RESET}
+          resume        #{C_DIM}Restore#{C_RESET}
+          checkpoint    #{C_DIM}Save state (auto-names)#{C_RESET}
 
         #{C_BOLD}Autonomous#{C_RESET}
-          auto          #{C_DIM}Run autonomously#{C_RESET}
-          goal          #{C_DIM}Set persistent goal#{C_RESET}
+          auto [mins]   #{C_DIM}Run autonomously (default: 10)#{C_RESET}
+          goal <desc>   #{C_DIM}Set persistent goal#{C_RESET}
           goals         #{C_DIM}List active goals#{C_RESET}
+          plan [goal]   #{C_DIM}Break into tasks (uses current goal)#{C_RESET}
+          next          #{C_DIM}Run next task#{C_RESET}
+          show-plan     #{C_DIM}View current plan#{C_RESET}
+          budget        #{C_DIM}Show remaining budget#{C_RESET}
+          health        #{C_DIM}System health check#{C_RESET}
+          learn         #{C_DIM}Learning statistics#{C_RESET}
+
+        #{C_BOLD}Gamification#{C_RESET}
+          xp, level     #{C_DIM}Show XP and level#{C_RESET}
+          achievements  #{C_DIM}List achievements#{C_RESET}
+          streak        #{C_DIM}Update daily streak#{C_RESET}
+          
+        #{C_BOLD}Problem Solving#{C_RESET}
+          solve [error] #{C_DIM}5+ fix approaches for bug#{C_RESET}
+          fixes [type]  #{C_DIM}Show fix approach templates#{C_RESET}
+          hostile       #{C_DIM}Challenge your assumptions#{C_RESET}
+
+        #{C_BOLD}Content#{C_RESET}
+          viral [topic] #{C_DIM}Generate viral ideas#{C_RESET}
+          spicy [topic] #{C_DIM}Generate hot take#{C_RESET}
+          
+        #{C_BOLD}Self-Awareness#{C_RESET}
+          self, whoami  #{C_DIM}Show codebase knowledge#{C_RESET}
+          refresh-self  #{C_DIM}Rescan MASTER code#{C_RESET}
+
+        #{C_BOLD}Debug#{C_RESET}
+          dmesg [n]     #{C_DIM}Show last n trace messages#{C_RESET}
+          trace on|off  #{C_DIM}Toggle dmesg output#{C_RESET}
       HELP
     end
 
     def change_dir(path)
-      return 'Usage: cd <path>' unless path
+      path = path&.strip
+      path = '~' if path.nil? || path.empty?  # default to home
 
       full = File.expand_path(path, @root)
       if Dir.exist?(full)
         @root = full
         Dir.chdir(full)
+        remember_dir(full)
         "Changed to #{full}"
       else
         "Not found: #{path}"
@@ -1125,29 +1455,36 @@ module MASTER
     end
 
     def view_file(path)
-      return 'Usage: cat <file>' unless path
+      path = default_file(path)
+      return 'No file. Usage: cat <file>' unless path
 
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
 
+      remember_file(full)
       File.read(full)
     end
 
     def edit_file(path)
-      return 'Usage: edit <file>' unless path
+      path = default_file(path)
+      return 'No file. Usage: edit <file>' unless path
 
+      full = File.expand_path(path, @root)
+      remember_file(full)
       editor = ENV['EDITOR'] || 'vi'
-      system("#{editor} #{File.expand_path(path, @root)}")
+      system("#{editor} #{full}")
       'Done.'
     end
 
     def clean_file(path)
-      return 'Usage: clean <file>' unless path
+      path = default_file(path)
+      return 'No file. Usage: clean <file>' unless path
 
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
       return 'Cancelled.' unless confirm_write("This will reformat #{path}")
 
+      remember_file(full)
       content = File.read(full)
       original = content.dup
 
@@ -1169,6 +1506,10 @@ module MASTER
     end
 
     def scan_path(path)
+      path = default_target(path)
+      remember_file(path) if File.file?(path)
+      remember_dir(path) if File.directory?(path)
+      
       result = Engine.scan(File.expand_path(path, @root))
       return result.error if result.err?
 
@@ -1418,10 +1759,13 @@ module MASTER
     end
 
     def run_refactor(path)
-      return 'Usage: refactor <file|dir>' unless path
+      path = default_target(path)
+      return 'No target. Usage: refactor <file|dir>' unless path
 
       files = resolve_files(path)
       return "No files found: #{path}" if files.empty?
+      
+      remember_file(files.first) if files.size == 1
       trace "refactoring #{files.size} files"
       return 'Cancelled.' unless confirm_write("This will refactor #{files.size} file(s) using LLM suggestions")
       total_iterations = 0
@@ -1432,6 +1776,9 @@ module MASTER
         total_iterations += result[:iterations]
         total_changes += result[:changes]
       end
+
+      # Award XP
+      Momentum.award(:refactor, multiplier: files.size) rescue nil
 
       "#{C_GREEN}Refactored#{C_RESET} #{files.size} file(s): #{total_changes} changes in #{total_iterations} iterations"
     end
@@ -1619,11 +1966,13 @@ module MASTER
     }.freeze
 
     def beautify_file(path)
-      return "Usage: beautify <file>" unless path
+      path = default_file(path)
+      return "No file. Usage: beautify <file>" unless path
 
       file = File.expand_path(path, @root)
       return "File not found: #{path}" unless File.exist?(file)
 
+      remember_file(file)
       code = File.read(file)
       ext = File.extname(file)
       lang = detect_language(ext)
@@ -1694,13 +2043,19 @@ module MASTER
     end
 
     def bughunt_file(path)
-      return "Usage: bughunt <file>" unless path
+      path = default_file(path)
+      return "No file. Usage: bughunt <file>" unless path
 
       full = File.expand_path(path, @root)
       return "File not found: #{path}" unless File.exist?(full)
 
+      remember_file(full)
       code = File.read(full)
       report = BugHunting.analyze(code, file_path: full)
+      
+      # Award XP
+      Momentum.award(:bughunt) rescue nil
+      
       BugHunting.format(report)
     end
 
@@ -2098,12 +2453,14 @@ module MASTER
     end
 
     def run_chamber(path)
-      return 'Usage: chamber <file>' unless path
+      path = default_file(path)
+      return 'No file. Usage: chamber <file>' unless path
 
       require_relative 'chamber'
       full = File.expand_path(path, @root)
       return "Not found: #{path}" unless File.exist?(full)
 
+      remember_file(full)
       puts "#{C_CYAN}Chamber deliberation starting...#{C_RESET}"
       chamber = Chamber.new(@llm)
       result = chamber.deliberate(full)

@@ -2,7 +2,7 @@
 
 module MASTER
   module Audit
-    LOG_FILE = File.join(MASTER::Paths::VAR_DIR, 'audit.log')
+    LOG_FILE = File.join(MASTER::Paths.var, 'audit.log')
     MAX_CMD_LENGTH = 200
 
     class << self

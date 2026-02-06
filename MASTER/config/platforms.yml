@@ -1,0 +1,73 @@
+# Platform configuration for MASTER bot integrations
+
+# Global settings
+global:
+  enabled: true
+  max_message_length: 2000
+  retry_attempts: 3
+  retry_delay: 2
+
+# Discord configuration
+discord:
+  enabled: false
+  token: <%= ENV['DISCORD_BOT_TOKEN'] %>
+  use_embeds: true
+  embed_color: 0x5865F2
+  verify_signatures: true
+  public_key: <%= ENV['DISCORD_PUBLIC_KEY'] %>
+  channel_whitelist: []
+  rate_limit: 5  # messages per second
+
+# Telegram configuration
+telegram:
+  enabled: false
+  token: <%= ENV['TELEGRAM_BOT_TOKEN'] %>
+  parse_mode: 'Markdown'
+  verify_signatures: true
+  webhook_secret: <%= ENV['TELEGRAM_WEBHOOK_SECRET'] %>
+  chat_whitelist: []
+  rate_limit: 30  # messages per second
+
+# Slack configuration
+slack:
+  enabled: false
+  token: <%= ENV['SLACK_BOT_TOKEN'] %>
+  verify_signatures: true
+  signing_secret: <%= ENV['SLACK_SIGNING_SECRET'] %>
+  channel_whitelist: []
+  rate_limit: 1  # messages per second (Slack tier 2)
+  default_channels: []
+
+# Twitter/X configuration
+twitter:
+  enabled: false
+  token: <%= ENV['TWITTER_ACCESS_TOKEN'] %>
+  access_token_secret: <%= ENV['TWITTER_ACCESS_SECRET'] %>
+  consumer_key: <%= ENV['TWITTER_CONSUMER_KEY'] %>
+  consumer_secret: <%= ENV['TWITTER_CONSUMER_SECRET'] %>
+  verify_signatures: false
+  monitor_all: false  # Monitor all tweets or just mentions
+  rate_limit: 0.05  # tweets per second (very conservative)
+  default_channels: ['tweet']  # Default to public tweets
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_backoff: exponential
+  dead_letter_queue: true
+  alert_on_failure: true
+  failure_threshold: 5  # consecutive failures before alert
+
+# Webhook settings
+webhooks:
+  enabled: true
+  port: 8080
+  path_prefix: '/webhook'
+  verify_all: true
+  rate_limit_per_platform: 100  # per minute
+  
+# Audit settings
+audit:
+  log_all_messages: true
+  log_webhook_calls: true
+  log_errors: true
