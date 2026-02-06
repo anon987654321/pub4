@@ -5,6 +5,7 @@ require 'json'
 require 'uri'
 require 'securerandom'
 require 'fileutils'
+require 'date'
 
 begin
   require 'ruby_llm'

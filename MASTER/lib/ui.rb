@@ -253,9 +253,15 @@ module MASTER
       
       # Convert straight quotes to proper typographic quotes
       def typographic_quotes(text)
-        text.gsub(/"([^"]+)"/, '"\1"')  # "" for quoted text
-            .gsub(/(\w)'(\w)/, '\1'\2')  # ' for contractions
-            .gsub(/'([^']+)'/, ''\1'')   # '' for single quotes
+        # Use Unicode codepoints for clarity
+        left_double = "\u201C"  # "
+        right_double = "\u201D" # "
+        left_single = "\u2018"  # '
+        right_single = "\u2019" # '
+        
+        text.gsub(/"([^"]+)"/, "#{left_double}\\1#{right_double}")  # "" for quoted text
+            .gsub(/(\w)'(\w)/, "\\1#{right_single}\\2")  # ' for contractions
+            .gsub(/'([^']+)'/, "#{left_single}\\1#{right_single}")   # '' for single quotes
       end
       
       # Convert double hyphens to em dashes
