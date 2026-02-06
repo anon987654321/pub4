@@ -7,6 +7,7 @@ gem "ruby_llm"            # Chat, streaming, tools, 800+ models
 gem "ruby_llm-schema"     # Structured output DSL
 gem "ruby_llm-tribunal"   # LLM evaluation (critique engine)
 gem "sqlite3"             # State layer
+gem "weaviate-ruby"       # Vector database for semantic memory
 
 # Terminal UI
 gem "tty-prompt"

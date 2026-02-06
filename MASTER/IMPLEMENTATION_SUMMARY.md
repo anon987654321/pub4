@@ -8,7 +8,7 @@ Successfully transformed MASTER from a monolithic 3135-line cli.rb into a compos
 
 ## What Was Built
 
-### Core Libraries (8 files, all under 162 lines)
+### Core Libraries (9 files, all under 162 lines)
 
 | File | Lines | Purpose |
 |------|-------|---------|
@@ -18,10 +18,11 @@ Successfully transformed MASTER from a monolithic 3135-line cli.rb into a compos
 | lib/typography.rb | 55 | Bringhurst typography (smart quotes, em dashes, wrapping) |
 | lib/strunk.rb | 55 | Strunk & White compression (omit needless words) |
 | lib/pledge.rb | 52 | OpenBSD sandboxing (pledge/unveil wrappers) |
+| lib/weaviate_client.rb | 30 | **Weaviate vector memory (semantic search)** |
 | lib/llm_client.rb | 24 | **Thin RubyLLM wrapper (NO custom HTTP)** |
 | lib/json_protocol.rb | 16 | stdin/stdout JSON protocol |
 
-**Total: 503 lines** (vs. 3135 in old cli.rb = **84% reduction**)
+**Total: 533 lines** (vs. 3135 in old cli.rb = **83% reduction**)
 
 ### Pipeline Executables (15 files, all under 73 lines)
 
@@ -30,12 +31,12 @@ Successfully transformed MASTER from a monolithic 3135-line cli.rb into a compos
 | bin/route | 73 | Model selector + circuit breaker (3-tier system) |
 | bin/execute | 71 | Sandboxed code execution with pledge/unveil |
 | bin/evolve | 69 | Self-modification + git stash rollback |
+| bin/remember | 85 | **Hybrid memory: SQLite + Weaviate (semantic search)** |
 | bin/chamber | 58 | Multi-model deliberation with synthesis |
 | bin/guard | 52 | Safety firewall (dangerous ops, principles) |
 | bin/seed | 52 | YAML → SQLite import |
 | bin/ask | 48 | **LLM interface using RubyLLM.chat** |
 | bin/converge | 48 | Convergence detector (δ < 2%) |
-| bin/remember | 48 | Memory store/recall |
 | bin/plan | 47 | 8-phase workflow |
 | bin/critique | 44 | **Post-LLM review using ruby_llm-tribunal** |
 | bin/start | 40 | **Interactive Ruby REPL** |
@@ -43,7 +44,7 @@ Successfully transformed MASTER from a monolithic 3135-line cli.rb into a compos
 | bin/intake | 30 | Input filter + Strunk compression |
 | bin/render | 16 | Typography formatter (terminus) |
 
-**Total: 729 lines** (all independently testable)
+**Total: 766 lines** (all independently testable)
 
 ### Tests (3 files, Minitest)
 
@@ -114,9 +115,9 @@ lib/cli.rb: 3135 lines (god object)
 
 ### After (Composable)
 ```
-8 libraries:  503 lines total (avg 63 lines each)
-15 executables: 729 lines total (avg 49 lines each)
-Total: 1232 lines (vs 3135 = 61% reduction)
+9 libraries:  533 lines total (avg 59 lines each)
+15 executables: 766 lines total (avg 51 lines each)
+Total: 1299 lines (vs 3135 = 59% reduction)
 ```
 
 **Plus gained:**
@@ -163,20 +164,32 @@ echo '{"text":"Design REST API", "models":["deepseek-r1","claude-sonnet-4"]}' | 
 
 ---
 
-## Database Schema (SQLite)
+## Database Schema
 
-10 tables for complete state management:
+### SQLite (Structured Storage)
+10 tables for structured data and exact recall:
 
 1. **principles** - KISS, DRY, SOLID, etc. (protection levels)
 2. **personas** - Character modes (architect, generic, etc.)
 3. **config** - Key-value configuration
-4. **memories** - Long-term memory with embeddings
+4. **memories** - Long-term memory (structured storage)
 5. **costs** - LLM usage tracking (model, tokens, cost)
 6. **circuits** - Circuit breaker state (failures, last_failure)
 7. **hooks** - Event handlers (before_edit, after_fix, etc.)
 8. **sessions** - Chat sessions with total cost
 9. **evolutions** - Self-modification history (before/after SHA)
 10. **messages** - Session message log
+
+### Weaviate (Semantic Search)
+Vector database for semantic similarity search:
+
+- **Memory class** - Vector embeddings for semantic recall
+- Hybrid search: keyword + vector similarity
+- Hosted: `qcfmoxewtrqeutcpzpzkag.c0.europe-west3.gcp.weaviate.cloud`
+
+**Hybrid Strategy:**
+- **Write**: Store in BOTH SQLite (structured) and Weaviate (semantic)
+- **Read**: SQLite for exact recall, Weaviate for semantic search
 
 ---
 
@@ -187,6 +200,7 @@ gem "ruby_llm"            # Chat, streaming, tools, 800+ models
 gem "ruby_llm-schema"     # Structured output DSL
 gem "ruby_llm-tribunal"   # LLM evaluation (critique engine)
 gem "sqlite3"             # State persistence
+gem "weaviate-ruby"       # Vector database for semantic memory
 gem "tty-prompt"          # Interactive UI
 gem "tty-table"           # Data tables
 gem "tty-box"             # Framed boxes

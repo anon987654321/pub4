@@ -138,10 +138,18 @@ Detects convergence (δ < 2% threshold).
 **Output:** `{ converged: true, delta: 0.01 }`
 
 ### 11. remember
-Store/recall memories from SQLite.
+Hybrid memory store/recall: SQLite for structured data + Weaviate for semantic search.
 
-**Input:** `{ action: "store", content: "..." }`  
-**Output:** `{ stored: true }`
+**Write path (store):**
+- Stores in BOTH SQLite (structured/exact recall) and Weaviate (vector/semantic)
+- **Input:** `{ action: "store", content: "...", context: "..." }`  
+- **Output:** `{ stored: true, sqlite_stored: true, weaviate_stored: true }`
+
+**Read path (recall):**
+- SQLite: Exact recall by ID/context (default)
+- Weaviate: Semantic similarity search (when `semantic: true`)
+- **Input:** `{ action: "recall", query: "...", semantic: true, limit: 5 }`  
+- **Output:** `{ recalled: true, memories: [...], source: "weaviate" }`
 
 ### 12. plan
 8-phase workflow: discover → analyze → ideate → design → implement → validate → deliver → learn
@@ -166,6 +174,7 @@ gem "ruby_llm"            # Chat, streaming, 800+ models
 gem "ruby_llm-schema"     # Structured output
 gem "ruby_llm-tribunal"   # LLM evaluation
 gem "sqlite3"             # State persistence
+gem "weaviate-ruby"       # Vector database for semantic memory
 gem "tty-prompt"          # Interactive UI
 gem "tty-table"           # Data tables
 gem "tty-box"             # Framed boxes
@@ -181,13 +190,20 @@ gem "minitest"            # Testing
 ## Environment Setup
 
 ### 1. API Keys
-Create `MASTER/.env`:
+Create `MASTER/.env` or `~/.env.master`:
 ```bash
+# LLM Providers
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 DEEPSEEK_API_KEY=sk-...
 OPENROUTER_API_KEY=sk-or-...
+
+# Weaviate Vector Database (for semantic memory)
+WEAVIATE_URL=qcfmoxewtrqeutcpzpzkag.c0.europe-west3.gcp.weaviate.cloud
+WEAVIATE_API_KEY=<your-key>
 ```
+
+**Note:** Keys are NEVER hardcoded in source files. They are sourced from `.env` at runtime.
 
 ### 2. Source .zshrc
 Add to `~/.zshrc`:
@@ -247,6 +263,21 @@ echo '{"file":"lib/strunk.rb", "test_command":"ruby test/test_protocol.rb"}' | \
   bin/evolve
 ```
 
+### Hybrid Memory (SQLite + Weaviate)
+```bash
+# Store memory in both SQLite and Weaviate
+echo '{"action":"store", "content":"The KISS principle means Keep It Simple", "context":"principles"}' | \
+  bin/remember
+
+# Exact recall from SQLite (default)
+echo '{"action":"recall", "query":"KISS"}' | \
+  bin/remember
+
+# Semantic search via Weaviate
+echo '{"action":"recall", "query":"simplicity in design", "semantic":true, "limit":5}' | \
+  bin/remember
+```
+
 ---
 
 ## Testing
@@ -265,18 +296,30 @@ ruby test/test_pipeline.rb
 
 ## Database Schema
 
-SQLite with 10 tables:
+### SQLite (Structured Storage)
+10 tables for structured data and exact recall:
 
 - **principles** - Design principles (KISS, DRY, SOLID, etc.)
 - **personas** - Character modes (architect, generic, etc.)
 - **config** - Key-value configuration
-- **memories** - Long-term memory with embeddings
+- **memories** - Long-term memory (structured storage)
 - **costs** - LLM usage tracking
 - **circuits** - Circuit breaker state (3 failures → open)
 - **hooks** - Event handlers (before_edit, after_fix, etc.)
 - **sessions** - Chat sessions with total cost
 - **evolutions** - Self-modification history
 - **messages** - Session message log
+
+### Weaviate (Semantic Search)
+Vector database for semantic similarity search:
+
+- **Memory class** - Vector embeddings of memories for semantic recall
+- Hybrid search combining keyword + vector similarity
+- Hosted at: `qcfmoxewtrqeutcpzpzkag.c0.europe-west3.gcp.weaviate.cloud`
+
+**Storage Strategy:**
+- **Write**: Store in BOTH SQLite (structured) and Weaviate (semantic)
+- **Read**: SQLite for exact recall, Weaviate for semantic search
 
 ---
 
