@@ -1,437 +1,91 @@
-# MASTER v2 — Unix Pipeline Toolkit
+# MASTER v3
 
-Universal code refactoring and completion engine. Pure Ruby. Composable pipelines. OpenBSD.
+Autonomous code refactoring engine. Pure Ruby. OpenBSD.
 
-**Version 2.0** transforms the monolithic 94KB `cli.rb` into surgical Unix executables powered by the ruby_llm ecosystem.
-
----
-
-## Quick Start
+## Quick start
 
 ```bash
-# Interactive REPL
-bin/start
-
-# Pipeline execution
-echo '{"text":"Refactor this code"}' | \
-  bin/intake | bin/guard | bin/route | bin/ask | bin/render
-
-# Shell alias (after sourcing .zshrc)
-m-ask What is the KISS principle?
+bundle install
+bin/master                                              # REPL mode
+echo '{"text":"Hello"}' | bin/master --pipe             # JSON in/out
+echo '{"text":"...","file":"lib/foo.rb"}' | bin/master --pipe --evolve  # Self-modify
 ```
-
----
 
 ## Architecture
 
-### Core Philosophy
-- **Do one thing well** - Each executable has a single responsibility
-- **Compose via pipes** - JSON in, JSON out (except `render` terminus)
-- **No side effects** - Pure functions (except database/git operations)
-- **Under 200 lines** - Every `bin/` file
-- **Under 300 lines** - Every `lib/` file
-
-### Structure
-
 ```
 MASTER/
-├── bin/              Pipeline executables (15 stages)
-│   ├── start         Interactive Ruby REPL
-│   ├── intake        Input filter + compression
-│   ├── guard         Safety firewall
-│   ├── route         Model selector + circuit breaker
-│   ├── ask           LLM interface (RubyLLM.chat)
-│   ├── critique      Review (ruby_llm-tribunal)
-│   ├── chamber       Multi-model deliberation
-│   ├── execute       Sandboxed execution
-│   ├── evolve        Self-modification + rollback
-│   ├── quality       Quality gate
-│   ├── converge      Convergence detection
-│   ├── remember      Memory store/recall
-│   ├── plan          8-phase workflow
-│   ├── render        Output formatter
-│   └── seed          YAML → SQLite import
-├── lib/              Core libraries (8 modules)
-│   ├── db.rb         SQLite (10 tables)
-│   ├── json_protocol.rb  stdin/stdout protocol
-│   ├── llm_client.rb     RubyLLM wrapper (28 lines)
-│   ├── strunk.rb         Text compression
-│   ├── metz.rb           Quality rules
-│   ├── typography.rb     Formatting
-│   ├── pledge.rb         OpenBSD sandboxing
-│   └── hooks.rb          Event system
+├── bin/
+│   └── master              # Single entry. REPL or --pipe. Seeds DB on first run.
+├── lib/
+│   ├── master.rb           # Module root. VERSION = "3.0.0". Requires everything.
+│   ├── result.rb           # Ok/Err monad.
+│   ├── pipeline.rb         # Stage chain via Result.flat_map. Contains REPL loop.
+│   ├── db.rb               # SQLite: 5 tables, connection, schema, seed, queries.
+│   ├── llm.rb              # RubyLLM config + chat + circuit breaker + budget.
+│   ├── pledge.rb           # Real pledge(2)/unveil(2) via Fiddle.
+│   └── stages.rb           # All 5+ stage classes in one file.
 ├── data/
-│   ├── principles.yml    Design principles
-│   └── personas.yml      Character modes
-├── test/             Minitest suite
-├── .zshrc            Shell environment
-└── master.db         SQLite state (gitignored)
+│   ├── principles.yml      # Seed data.
+│   └── personas.yml        # Seed data.
+└── test/
+    ├── test_result.rb
+    ├── test_pipeline.rb
+    ├── test_db.rb
+    ├── test_llm.rb
+    └── test_stages.rb
 ```
 
----
+**7 source files** (bin/master + 6 lib files). **5 tests.** **2 data files.**
 
-## Pipeline Stages
+**lib/master.rb** — Module root, requires all files.  
+**lib/result.rb** — Functional Result monad (Ok/Err).  
+**lib/pipeline.rb** — Chains stages via Result.flat_map, includes REPL.  
+**lib/db.rb** — SQLite wrapper: 5 tables (principles, personas, config, costs, circuits).  
+**lib/llm.rb** — LLM client + circuit breaker + budget tracking + model selection.  
+**lib/pledge.rb** — OpenBSD pledge(2)/unveil(2) via Fiddle for sandboxing.  
+**lib/stages.rb** — All pipeline stage classes: Intake, Guard, Route, Ask, Render, Evolve, Execute.
 
-### 1. intake
-Applies Strunk & White compression, loads persona, measures information density.
+## Pipeline stages
 
-**Input:** `{ text: "..." }`  
-**Output:** `{ text: "compressed", persona: "...", density: 0.7 }`
+| Stage    | Purpose                                                    |
+|----------|------------------------------------------------------------|
+| Intake   | Pass text through, load persona if specified               |
+| Guard    | Block dangerous commands (rm -rf /, DROP TABLE, etc.)      |
+| Route    | Select model via circuit breaker + budget awareness        |
+| Ask      | Call LLM, stream to stderr, record cost                    |
+| Render   | Format output: typeset prose, preserve code blocks         |
 
-### 2. guard
-Safety firewall. Checks dangerous operations and principle violations.
+**Opt-in stages:**
+- **Execute** — Run Ruby code blocks in sandboxed environment (pledge on OpenBSD)
+- **Evolve** — Self-modify: git snapshot → write → test → rollback on failure
 
-**Input:** `{ text: "..." }`  
-**Output:** `{ allowed: true/false, reason: "..." }`
+## Setup
 
-### 3. route
-Selects model based on complexity, budget, circuit breaker state.
-
-**Tiers:**
-- **strong** - deepseek-r1, claude-sonnet-4
-- **fast** - deepseek-v3, gpt-4.1-mini
-- **cheap** - gpt-4.1-nano
-
-**Input:** `{ text: "..." }`  
-**Output:** `{ model: "deepseek-r1", tier: "strong", budget_remaining: 8.5 }`
-
-### 4. ask
-Sends to LLM using `RubyLLM.chat`. Streams response. Tracks costs.
-
-**Input:** `{ text: "...", model: "...", persona: "..." }`  
-**Output:** `{ response: "...", tokens_in: 100, tokens_out: 200 }`
-
-### 5. critique
-Post-LLM review using `ruby_llm-tribunal`. Detects hallucination, checks relevance.
-
-**Input:** `{ text: "...", response: "..." }`  
-**Output:** `{ critique_passed: true, confidence: 0.9 }`
-
-### 6. chamber
-Multi-model deliberation. Parallel execution. Synthesis.
-
-**Input:** `{ text: "...", models: ["model1", "model2"] }`  
-**Output:** `{ response: "synthesized", consensus: true }`
-
-### 7. execute
-Extracts code blocks, runs in sandbox with pledge/unveil.
-
-**Input:** `{ response: "```ruby\ncode\n```" }`  
-**Output:** `{ success: true, output: "...", executed: true }`
-
-### 8. evolve
-Self-modification. Git stash snapshot → modify → test → rollback on failure.
-
-**Input:** `{ file: "path", modification: "..." }`  
-**Output:** `{ modified: true, tests_passed: true, rolled_back: false }`
-
-### 9. quality
-Sandi Metz quality rules: 100 lines/class, 5 lines/method, 4 params.
-
-**Input:** `{ response: "...", file: "..." }`  
-**Output:** `{ quality_passed: true, quality_score: 1.0 }`
-
-### 10. converge
-Detects convergence (δ < 2% threshold).
-
-**Input:** `{ response: "...", previous: "..." }`  
-**Output:** `{ converged: true, delta: 0.01 }`
-
-### 11. remember
-Hybrid memory store/recall: SQLite for structured data + Weaviate for semantic search.
-
-**Write path (store):**
-- Stores in BOTH SQLite (structured/exact recall) and Weaviate (vector/semantic)
-- **Input:** `{ action: "store", content: "...", context: "..." }`  
-- **Output:** `{ stored: true, sqlite_stored: true, weaviate_stored: true }`
-
-**Read path (recall):**
-- SQLite: Exact recall by ID/context (default)
-- Weaviate: Semantic similarity search (when `semantic: true`)
-- **Input:** `{ action: "recall", query: "...", semantic: true, limit: 5 }`  
-- **Output:** `{ recalled: true, memories: [...], source: "weaviate" }`
-
-### 12. plan
-8-phase workflow: discover → analyze → ideate → design → implement → validate → deliver → learn
-
-**Input:** `{ phase: "discover", completed_criteria: [...] }`  
-**Output:** `{ phase: "discover", next_phase: "analyze", criteria_met: true }`
-
-### 13. render
-Typography formatter. Pipeline terminus (outputs text, not JSON).
-
-**Input:** `{ response: "..." }`  
-**Output:** Plain text with proper quotes, em dashes, 72-char wrapping
-
----
-
-## Dependencies
-
-Using ruby_llm ecosystem (no custom HTTP client):
-
-```ruby
-gem "ruby_llm"            # Chat, streaming, 800+ models
-gem "ruby_llm-schema"     # Structured output
-gem "ruby_llm-tribunal"   # LLM evaluation
-gem "sqlite3"             # State persistence
-gem "weaviate-ruby"       # Vector database for semantic memory
-gem "tty-prompt"          # Interactive UI
-gem "tty-table"           # Data tables
-gem "tty-box"             # Framed boxes
-gem "tty-spinner"         # Loading spinners
-gem "tty-screen"          # Terminal size
-gem "minitest"            # Testing
-```
-
-**Critical:** No `net/http`, `faraday`, `httparty`. RubyLLM handles all provider communication.
-
----
-
-## Environment Setup
-
-### 1. API Keys
-Create `MASTER/.env` or `~/.env.master`:
 ```bash
-# LLM Providers
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-DEEPSEEK_API_KEY=sk-...
-OPENROUTER_API_KEY=sk-or-...
-
-# Weaviate Vector Database (for semantic memory)
-WEAVIATE_URL=qcfmoxewtrqeutcpzpzkag.c0.europe-west3.gcp.weaviate.cloud
-WEAVIATE_API_KEY=<your-key>
+cp .env.example .env
+# Edit .env with your API keys
+bin/master  # DB seeds automatically on first run
 ```
 
-**Note:** Keys are NEVER hardcoded in source files. They are sourced from `.env` at runtime.
+## Shell aliases
 
-### 2. Source .zshrc
 Add to `~/.zshrc`:
-```zsh
-source /home/dev/pub/MASTER/.zshrc
-```
 
-This adds aliases:
-- `m-start` - Interactive REPL
-- `m-ask <query>` - Quick pipeline query
-- `m-evolve` - Self-modification
-- `m-quality` - Quality check
-
-### 3. Seed Database
 ```bash
-bin/seed  # Imports principles.yml and personas.yml
+alias m="ruby ~/path/to/MASTER/bin/master"
+alias m-ask='f() { echo "{\"text\":\"$*\"}" | ruby ~/path/to/MASTER/bin/master --pipe; }; f'
 ```
-
----
-
-## Usage Examples
-
-### Interactive REPL
-```bash
-bin/start
-› What is SOLID?
-```
-
-### Single Query
-```bash
-m-ask Explain the KISS principle
-```
-
-### Full Pipeline
-```bash
-echo '{"text":"Refactor this for clarity", "persona":"architect"}' | \
-  bin/intake | \
-  bin/guard | \
-  bin/route | \
-  bin/ask | \
-  bin/critique | \
-  bin/quality | \
-  bin/render
-```
-
-### Multi-Model Chamber
-```bash
-echo '{"text":"Design a REST API", "models":["deepseek-r1","claude-sonnet-4"]}' | \
-  bin/intake | \
-  bin/chamber | \
-  bin/render
-```
-
-### Self-Evolution
-```bash
-echo '{"file":"lib/strunk.rb", "test_command":"ruby test/test_protocol.rb"}' | \
-  bin/evolve
-```
-
-### Hybrid Memory (SQLite + Weaviate)
-```bash
-# Store memory in both SQLite and Weaviate
-echo '{"action":"store", "content":"The KISS principle means Keep It Simple", "context":"principles"}' | \
-  bin/remember
-
-# Exact recall from SQLite (default)
-echo '{"action":"recall", "query":"KISS"}' | \
-  bin/remember
-
-# Semantic search via Weaviate
-echo '{"action":"recall", "query":"simplicity in design", "semantic":true, "limit":5}' | \
-  bin/remember
-```
-
----
 
 ## Testing
 
 ```bash
-# All tests
-ruby -Ilib:test test/test_*.rb
-
-# Specific test
-ruby test/test_protocol.rb
-ruby test/test_db.rb
-ruby test/test_pipeline.rb
+rake test
 ```
-
----
-
-## Database Schema
-
-### SQLite (Structured Storage)
-10 tables for structured data and exact recall:
-
-- **principles** - Design principles (KISS, DRY, SOLID, etc.)
-- **personas** - Character modes (architect, generic, etc.)
-- **config** - Key-value configuration
-- **memories** - Long-term memory (structured storage)
-- **costs** - LLM usage tracking
-- **circuits** - Circuit breaker state (3 failures → open)
-- **hooks** - Event handlers (before_edit, after_fix, etc.)
-- **sessions** - Chat sessions with total cost
-- **evolutions** - Self-modification history
-- **messages** - Session message log
-
-### Weaviate (Semantic Search)
-Vector database for semantic similarity search:
-
-- **Memory class** - Vector embeddings of memories for semantic recall
-- Hybrid search combining keyword + vector similarity
-- Hosted at: `qcfmoxewtrqeutcpzpzkag.c0.europe-west3.gcp.weaviate.cloud`
-
-**Storage Strategy:**
-- **Write**: Store in BOTH SQLite (structured) and Weaviate (semantic)
-- **Read**: SQLite for exact recall, Weaviate for semantic search
-
----
 
 ## Security
 
-### API Keys
-- **Never** commit `.env` to git (in `.gitignore`)
-- **Never** hardcode keys in `.zshrc` or source files
-- Source `.env` from `.zshrc` at runtime
-
-### Circuit Breaker
-- 3 consecutive failures → model marked 'open'
-- Auto-downgrade to next tier
-- Reset with `MASTER::DB.reset_circuit(model)`
-
-### Sandboxing
-- `pledge.rb` wraps OpenBSD pledge/unveil syscalls
-- Restricts filesystem and syscall access during execution
-- Graceful degradation on non-OpenBSD platforms
-
-### Safety Firewall
-- `bin/guard` blocks dangerous operations
-- Checks against ABSOLUTE principles
-- Detects `rm -rf`, `drop table`, etc.
-
----
-
-## Philosophy
-
-### Unix Pipeline Principles
-1. **Small, focused tools** - Each stage does one thing
-2. **Text (JSON) streams** - Universal interface
-3. **Composable** - Chain any combination
-4. **Testable** - Each stage tested independently
-5. **Observable** - stderr for streaming, stdout for data
-
-### Code Quality
-- **Strunk & White** - Omit needless words, active voice
-- **Sandi Metz** - 100 lines/class, 5 lines/method, 4 params
-- **Bringhurst** - Typography matters
-
-### LLM Strategy
-- **Circuit breaker** - Fail fast, auto-recover
-- **Multi-model** - Deliberate, synthesize
-- **Cost tracking** - Budget awareness
-- **Critique** - Detect hallucination
-
----
-
-## Migration from v1
-
-**Old (monolithic):**
-```ruby
-# lib/cli.rb - 94KB god object
-class CLI
-  def run
-    # 2000+ lines of REPL logic, commands, LLM calls...
-  end
-end
-```
-
-**New (composable):**
-```bash
-# 15 focused executables, 8 libraries
-bin/intake | bin/guard | bin/route | bin/ask | bin/render
-```
-
-**Benefits:**
-- ✅ Testable - Each stage tested independently
-- ✅ Debuggable - Inspect JSON between stages
-- ✅ Composable - Mix and match stages
-- ✅ Maintainable - No file over 200 lines
-- ✅ Extensible - Add stages without touching core
-
----
-
-## Troubleshooting
-
-### RubyLLM not found
-```bash
-bundle install
-```
-
-### API key errors
-Check `.env` exists and is sourced:
-```bash
-echo $OPENAI_API_KEY
-```
-
-### Database locked
-```bash
-rm master.db
-bin/seed
-```
-
-### Tests failing
-```bash
-bundle exec ruby test/test_protocol.rb -v
-```
-
----
-
-## License
-
-See repository root.
-
----
-
-## Credits
-
-- **RubyLLM** - https://github.com/alexrudall/ruby-llm
-- **TTY toolkit** - https://ttytoolkit.org
-- **Strunk & White** - The Elements of Style
-- **Sandi Metz** - Practical Object-Oriented Design in Ruby
-- **Robert Bringhurst** - The Elements of Typographic Style
+- **Real pledge(2)** on OpenBSD via Fiddle for sandboxing Execute stage
+- **Circuit breaker**: 3 failures → open, 5min cooldown
+- **Guard stage**: blocks destructive patterns (rm -rf /, DROP TABLE, etc.)
+- **Budget tracking**: $10 limit, model selection aware of remaining budget

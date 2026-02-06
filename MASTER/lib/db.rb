@@ -1,162 +1,87 @@
 # frozen_string_literal: true
 
-require 'sqlite3'
-require 'json'
+require "sqlite3"
+require "yaml"
 
 module MASTER
   module DB
-    DB_PATH = File.expand_path("../../master.db", __FILE__)
-
     def self.connection
-      @connection ||= SQLite3::Database.new(DB_PATH).tap do |db|
+      @connection ||= begin
+        db = SQLite3::Database.new(File.join(MASTER.root, "master.db"))
         db.results_as_hash = true
+        db
       end
     end
 
-    def self.initialize_schema
-      connection.execute_batch <<-SQL
+    def self.setup
+      schema
+      seed_if_empty
+    end
+
+    def self.schema
+      connection.execute_batch(<<~SQL)
         CREATE TABLE IF NOT EXISTS principles (
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL,
-          text TEXT NOT NULL,
-          protection_level TEXT DEFAULT 'NEGOTIABLE',
-          category TEXT
+          id INTEGER PRIMARY KEY, name TEXT UNIQUE, text TEXT,
+          protection_level TEXT DEFAULT 'NEGOTIABLE', category TEXT
         );
-
         CREATE TABLE IF NOT EXISTS personas (
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL UNIQUE,
-          role TEXT,
-          instructions TEXT,
-          weight REAL DEFAULT 1.0
+          id INTEGER PRIMARY KEY, name TEXT UNIQUE, role TEXT,
+          instructions TEXT, weight REAL DEFAULT 1.0
         );
-
         CREATE TABLE IF NOT EXISTS config (
-          key TEXT PRIMARY KEY,
-          value TEXT
+          key TEXT PRIMARY KEY, value TEXT
         );
-
-        CREATE TABLE IF NOT EXISTS memories (
-          id INTEGER PRIMARY KEY,
-          context TEXT,
-          content TEXT NOT NULL,
-          embedding TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
         CREATE TABLE IF NOT EXISTS costs (
-          id INTEGER PRIMARY KEY,
-          model TEXT NOT NULL,
-          tokens_in INTEGER DEFAULT 0,
-          tokens_out INTEGER DEFAULT 0,
-          cost REAL DEFAULT 0.0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          id INTEGER PRIMARY KEY, model TEXT, tokens_in INTEGER,
+          tokens_out INTEGER, cost REAL, created_at TEXT DEFAULT (datetime('now'))
         );
-
         CREATE TABLE IF NOT EXISTS circuits (
-          model TEXT PRIMARY KEY,
-          failures INTEGER DEFAULT 0,
-          last_failure DATETIME,
-          state TEXT DEFAULT 'closed'
-        );
-
-        CREATE TABLE IF NOT EXISTS hooks (
-          id INTEGER PRIMARY KEY,
-          event TEXT NOT NULL,
-          handler TEXT NOT NULL,
-          priority INTEGER DEFAULT 0
-        );
-
-        CREATE TABLE IF NOT EXISTS sessions (
-          id INTEGER PRIMARY KEY,
-          started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          total_cost REAL DEFAULT 0.0
-        );
-
-        CREATE TABLE IF NOT EXISTS evolutions (
-          id INTEGER PRIMARY KEY,
-          file TEXT NOT NULL,
-          before_sha TEXT,
-          after_sha TEXT,
-          tests_passed INTEGER DEFAULT 0,
-          rolled_back INTEGER DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS messages (
-          id INTEGER PRIMARY KEY,
-          session_id INTEGER,
-          role TEXT NOT NULL,
-          content TEXT NOT NULL,
-          model TEXT,
-          tokens INTEGER DEFAULT 0,
-          cost REAL DEFAULT 0.0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (session_id) REFERENCES sessions(id)
+          model TEXT PRIMARY KEY, failures INTEGER DEFAULT 0,
+          last_failure TEXT, state TEXT DEFAULT 'closed'
         );
       SQL
     end
 
-    def self.track_cost(model:, tokens_in:, tokens_out:, cost: 0.0)
-      connection.execute(
-        "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
-        [model, tokens_in, tokens_out, cost]
-      )
+    def self.seed_if_empty
+      return unless connection.get_first_value("SELECT COUNT(*) FROM principles").to_i.zero?
+
+      seed_file("principles", File.join(MASTER.root, "data", "principles.yml"))
+      seed_file("personas", File.join(MASTER.root, "data", "personas.yml"))
+    end
+
+    def self.seed_file(table, path)
+      return unless File.exist?(path)
+      data = YAML.load_file(path)
+      key = data.keys.find { |k| k == table } || data.keys.first
+      return unless data[key].is_a?(Hash)
+
+      data[key].each do |name, entry|
+        case table
+        when "principles"
+          connection.execute(
+            "INSERT OR IGNORE INTO principles (name, text, protection_level, category) VALUES (?, ?, ?, ?)",
+            [entry["name"] || name, entry["description"] || "", entry["tier"] == "core" ? "PROTECTED" : "NEGOTIABLE", entry["tier"] || "general"]
+          )
+        when "personas"
+          connection.execute(
+            "INSERT OR IGNORE INTO personas (name, role, instructions, weight) VALUES (?, ?, ?, ?)",
+            [entry["name"] || name, entry["description"] || "", entry["system_prompt"] || entry["style"] || "", 1.0]
+          )
+        end
+      end
     end
 
     def self.get_persona(name)
-      row = connection.get_first_row(
-        "SELECT * FROM personas WHERE name = ?",
-        [name]
-      )
-      row ? Hash[row] : nil
-    end
-
-    def self.get_principles(protection_level: nil)
-      sql = "SELECT * FROM principles"
-      sql += " WHERE protection_level = ?" if protection_level
-      connection.execute(sql, protection_level ? [protection_level] : [])
-    end
-
-    def self.system_prompt
-      get_config("system_prompt") || "You are MASTER, a universal code refactoring and completion engine."
+      connection.get_first_row("SELECT * FROM personas WHERE name = ?", [name])
     end
 
     def self.get_config(key)
       row = connection.get_first_row("SELECT value FROM config WHERE key = ?", [key])
-      row ? row["value"] : nil
+      row && row["value"]
     end
 
     def self.set_config(key, value)
-      connection.execute(
-        "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
-        [key, value]
-      )
-    end
-
-    def self.record_circuit_failure(model)
-      connection.execute(
-        "INSERT OR REPLACE INTO circuits (model, failures, last_failure, state) 
-         VALUES (?, COALESCE((SELECT failures FROM circuits WHERE model = ?), 0) + 1, 
-         datetime('now'), ?)",
-        [model, model, 'open']
-      )
-    end
-
-    def self.get_circuit_state(model)
-      row = connection.get_first_row("SELECT * FROM circuits WHERE model = ?", [model])
-      return nil unless row
-      
-      failures = row["failures"].to_i
-      if failures >= 3
-        'open'
-      else
-        'closed'
-      end
-    end
-
-    def self.reset_circuit(model)
-      connection.execute("DELETE FROM circuits WHERE model = ?", [model])
+      connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", [key, value])
     end
   end
 end

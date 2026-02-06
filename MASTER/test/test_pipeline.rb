@@ -1,88 +1,103 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require 'json'
-require 'open3'
+require "minitest/autorun"
 
-class TestPipeline < Minitest::Test
-  def setup
-    @bin_dir = File.expand_path('../../bin', __FILE__)
+# Create minimal MASTER module for testing
+module MASTER
+  def self.root
+    File.expand_path("..", __dir__)
   end
-  
-  def test_intake_stage
-    input = { text: "I would say that this is very complex" }
-    output = run_stage('intake', input)
-    
-    assert output[:text]
-    # Strunk compression should have removed "I would" and "very"
-    refute_includes output[:text], "I would"
-    assert output[:density]
+end
+
+require_relative "../lib/result"
+require_relative "../lib/pipeline"
+
+module MASTER
+  # Mock stages for testing
+  module Stages
+    class Passthrough
+      def call(input)
+        Result.ok(input.merge(passed: true))
+      end
+    end
+
+    class Fail
+      def call(input)
+        Result.err("Stage failed")
+      end
+    end
+
+    class Append
+      def initialize(key, value)
+        @key = key
+        @value = value
+      end
+
+      def call(input)
+        Result.ok(input.merge(@key => @value))
+      end
+    end
   end
-  
-  def test_guard_stage
-    # Safe input
-    safe_input = { text: "Write a Ruby function" }
-    output = run_stage('guard', safe_input)
-    assert output[:allowed]
-    
-    # Dangerous input
-    dangerous_input = { text: "rm -rf /" }
-    output = run_stage('guard', dangerous_input)
-    refute output[:allowed]
-    assert output[:reason]
-  end
-  
-  def test_route_stage
-    input = { text: "Simple question" }
-    output = run_stage('route', input)
-    
-    assert output[:model]
-    assert output[:tier]
-    assert output[:budget_remaining]
-  end
-  
-  def test_quality_stage
-    input = { response: "```ruby\nclass Test\nend\n```" }
-    output = run_stage('quality', input)
-    
-    assert_includes output.keys, :quality_passed
-    assert_includes output.keys, :quality_score
-  end
-  
-  def test_converge_stage
-    # First iteration
-    input = { response: "Version 1", iteration: 1 }
-    output = run_stage('converge', input)
-    refute output[:converged]
-    
-    # Same response - should converge
-    input = { response: "Version 1", previous: "Version 1", iteration: 2 }
-    output = run_stage('converge', input)
-    assert output[:converged]
-  end
-  
-  def test_plan_stage
-    input = { phase: "discover", completed_criteria: ["problem understood", "constraints identified"] }
-    output = run_stage('plan', input)
-    
-    assert_equal "discover", output[:phase]
-    assert_equal "analyze", output[:next_phase]
-    assert output[:criteria_met]
-  end
-  
-  private
-  
-  def run_stage(stage, input)
-    stage_path = File.join(@bin_dir, stage)
-    
-    stdout, stderr, status = Open3.capture3(
-      stage_path,
-      stdin_data: JSON.generate(input)
-    )
-    
-    JSON.parse(stdout, symbolize_names: true)
-  rescue JSON::ParserError
-    # Some stages might not return JSON on error
-    { error: "Failed to parse output", stdout: stdout, stderr: stderr }
+
+  class TestPipeline < Minitest::Test
+    def test_pipeline_chains_stages_successfully
+      pipeline = Pipeline.new(stages: [:passthrough])
+      result = pipeline.call({ text: "hello" })
+      
+      assert result.ok?
+      assert_equal true, result.value[:passed]
+      assert_equal "hello", result.value[:text]
+    end
+
+    def test_pipeline_stops_on_error
+      # Create a custom pipeline with stages that will fail
+      stage1 = Stages::Passthrough.new
+      stage2 = Stages::Fail.new
+      stage3 = Stages::Passthrough.new
+      
+      pipeline = Pipeline.new(stages: [])
+      pipeline.instance_variable_set(:@stages, [stage1, stage2, stage3])
+      
+      result = pipeline.call({ text: "hello" })
+      
+      assert result.err?
+      assert_equal "Stage failed", result.error
+    end
+
+    def test_pipeline_passes_data_through_chain
+      # Create stages that add data
+      stage1 = Stages::Append.new(:step1, "done")
+      stage2 = Stages::Append.new(:step2, "complete")
+      
+      pipeline = Pipeline.new(stages: [])
+      pipeline.instance_variable_set(:@stages, [stage1, stage2])
+      
+      result = pipeline.call({ text: "hello" })
+      
+      assert result.ok?
+      assert_equal "hello", result.value[:text]
+      assert_equal "done", result.value[:step1]
+      assert_equal "complete", result.value[:step2]
+    end
+
+    def test_pipeline_with_empty_stages
+      pipeline = Pipeline.new(stages: [])
+      result = pipeline.call({ text: "hello" })
+      
+      assert result.ok?
+      assert_equal "hello", result.value[:text]
+    end
+
+    def test_pipeline_initializes_with_default_stages
+      # This test just verifies the pipeline can be created
+      # We can't test actual stages without mocking LLM calls
+      pipeline = Pipeline.new
+      assert_instance_of Pipeline, pipeline
+    end
+
+    def test_repl_method_exists
+      pipeline = Pipeline.new(stages: [])
+      assert_respond_to pipeline, :repl
+    end
   end
 end

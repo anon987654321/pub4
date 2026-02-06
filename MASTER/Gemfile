@@ -1,21 +1,5 @@
-# frozen_string_literal: true
-
 source "https://rubygems.org"
 
-# Core LLM — the ONE API for all providers
-gem "ruby_llm"            # Chat, streaming, tools, 800+ models
-gem "ruby_llm-schema"     # Structured output DSL
-gem "ruby_llm-tribunal"   # LLM evaluation (critique engine)
-gem "sqlite3"             # State layer
-gem "weaviate-ruby"       # Vector database for semantic memory
-
-# Terminal UI
-gem "tty-prompt"
-gem "tty-table"
-gem "tty-box"
-gem "tty-spinner"
-gem "tty-screen"
-
-group :test do
-  gem "minitest"
-end
+gem "ruby_llm"
+gem "sqlite3"
+gem "minitest", group: :test

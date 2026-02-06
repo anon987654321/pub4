@@ -1,52 +1,27 @@
 # frozen_string_literal: true
 
+require "fiddle"
+
 module MASTER
   module Pledge
-    # OpenBSD pledge/unveil wrappers for sandboxing
-    # Only available on OpenBSD platform
+    class Error < RuntimeError; end
 
-    def self.available?
-      RUBY_PLATFORM.include?('openbsd')
-    end
+    LIBC = Fiddle.dlopen(nil) rescue nil
 
-    def self.pledge(*promises)
-      return unless available?
-      
-      # OpenBSD pledge system call
-      # Restricts process to only specified operations
-      promises_str = promises.join(' ')
-      
-      begin
-        # This would call the actual pledge(2) syscall on OpenBSD
-        # For portability, we just log the intent
-        $stderr.puts "[pledge] #{promises_str}" if ENV['DEBUG']
-      rescue => e
-        $stderr.puts "[pledge] Warning: #{e.message}"
-      end
+    def self.available? = RUBY_PLATFORM.include?("openbsd") && !LIBC.nil?
+
+    def self.pledge(promises, execpromises = nil)
+      raise Error, "pledge(2) unavailable on #{RUBY_PLATFORM}" unless available?
+      fn = Fiddle::Function.new(LIBC["pledge"], [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP], Fiddle::TYPE_INT)
+      r = fn.call(promises, execpromises)
+      raise Error, "pledge(2) failed: errno #{Fiddle.last_error}" unless r.zero?
     end
 
     def self.unveil(path, permissions)
-      return unless available?
-      
-      # OpenBSD unveil system call
-      # Restricts filesystem access to specified paths
-      begin
-        # This would call the actual unveil(2) syscall on OpenBSD
-        # For portability, we just log the intent
-        $stderr.puts "[unveil] #{path} (#{permissions})" if ENV['DEBUG']
-      rescue => e
-        $stderr.puts "[unveil] Warning: #{e.message}"
-      end
-    end
-
-    def self.sandbox(stdio: true, exec: false, rpath: true, wpath: false)
-      promises = []
-      promises << 'stdio' if stdio
-      promises << 'exec' if exec
-      promises << 'rpath' if rpath
-      promises << 'wpath' if wpath
-      
-      pledge(*promises)
+      raise Error, "unveil(2) unavailable on #{RUBY_PLATFORM}" unless available?
+      fn = Fiddle::Function.new(LIBC["unveil"], [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP], Fiddle::TYPE_INT)
+      r = fn.call(path, permissions)
+      raise Error, "unveil(2) failed: errno #{Fiddle.last_error}" unless r.zero?
     end
   end
 end
