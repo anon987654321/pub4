@@ -4,64 +4,86 @@ require "json"
 require "open3"
 
 module MASTER
-  # Executor - Core execution engine using ReAct pattern
-  # Every task is: Thought → Action → Observation → repeat until done
-  # This is the default behavior, not a special mode
+  # Executor - Hybrid agent with multiple reasoning patterns
+  # Patterns: react, pre_act, rewoo, reflexion
+  # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
+    PATTERNS = %i[react pre_act rewoo reflexion].freeze
     
-    # All available tools - the executor's capabilities
+    # All available tools
     TOOLS = {
-      # Information gathering
       ask_llm: "Ask the LLM a question directly",
       web_search: "Search the web for information",
       browse_page: "Browse a URL and extract content",
       memory_search: "Search past interactions and learnings",
-      
-      # Code operations
       file_read: "Read a file's contents",
       file_write: "Write content to a file",
       analyze_code: "Analyze code for issues and opportunities",
       fix_code: "Auto-fix code violations",
       shell_command: "Run a shell command",
       code_execution: "Execute Ruby code",
-      
-      # MASTER-specific
       council_review: "Run adversarial council review",
       self_test: "Run self-test on MASTER",
     }.freeze
 
-    attr_reader :history, :step
+    attr_reader :history, :step, :pattern, :plan, :reflections
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
       @history = []
+      @reflections = []
+      @plan = []
       @step = 0
     end
 
-    # Main entry point - execute a task/goal
-    def call(goal, tier: nil)
+    # Main entry - auto-selects pattern or uses specified
+    def call(goal, pattern: :auto, tier: nil)
       @history = []
+      @reflections = []
+      @plan = []
       @step = 0
+      @pattern = pattern == :auto ? select_pattern(goal) : pattern
       
-      # Quick path: simple queries that don't need tools
-      if simple_query?(goal)
-        return direct_ask(goal, tier: tier)
-      end
+      # Quick path: simple queries
+      return direct_ask(goal, tier: tier) if simple_query?(goal)
 
-      # Full ReAct loop for complex tasks
-      execute_loop(goal, tier: tier || :strong)
+      UI.dim("  ⚡ Pattern: #{@pattern}") if ENV["DEBUG"]
+      
+      case @pattern
+      when :react     then execute_react(goal, tier: tier || :strong)
+      when :pre_act   then execute_pre_act(goal, tier: tier || :strong)
+      when :rewoo     then execute_rewoo(goal, tier: tier || :strong)
+      when :reflexion then execute_reflexion(goal, tier: tier || :strong)
+      else execute_react(goal, tier: tier || :strong)
+      end
     end
 
-    # Class method for easy invocation
     def self.call(goal, **opts)
       new.call(goal, **opts)
+    end
+
+    # Pattern selection heuristics
+    def select_pattern(goal)
+      # Pre-Act: explicit multi-step tasks
+      return :pre_act if goal.match?(/\b(then|after that|next|finally|step\s*\d|first.*then)\b/i)
+      return :pre_act if goal.match?(/\b(build|create|implement|develop)\b.*\b(and|with)\b/i)
+      
+      # ReWOO: cost-sensitive or pure reasoning
+      return :rewoo if goal.match?(/\b(explain|describe|summarize|compare|analyze)\b/i) &&
+                       !goal.match?(/\b(file|code|execute|run)\b/i)
+      
+      # Reflexion: learning/fixing tasks
+      return :reflexion if goal.match?(/\b(fix|debug|correct|improve|refactor)\b/i)
+      return :reflexion if goal.match?(/\b(don't break|carefully|safely)\b/i)
+      
+      # Default: ReAct for exploratory/unknown
+      :react
     end
 
     private
 
     def simple_query?(goal)
-      # Questions that don't need tool use
       goal.length < 200 &&
         !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
         !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
@@ -75,6 +97,7 @@ module MASTER
           answer: result.value[:content],
           steps: 0,
           mode: :direct,
+          pattern: :direct,
           cost: result.value[:cost]
         )
       else
@@ -82,7 +105,12 @@ module MASTER
       end
     end
 
-    def execute_loop(goal, tier:)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PATTERN 1: ReAct - Tight thought-action-observation loop
+    # Best for: exploratory tasks, dynamic adaptation, unknown territory
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def execute_react(goal, tier:)
       while @step < @max_steps
         @step += 1
 
@@ -106,7 +134,7 @@ module MASTER
           return Result.ok(
             answer: answer,
             steps: @step,
-            mode: :react,
+            pattern: :react,
             history: @history
           )
         end
@@ -120,6 +148,317 @@ module MASTER
 
       Result.err("Max steps (#{@max_steps}) reached without completion")
     end
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PATTERN 2: Pre-Act - Plan first, then execute
+    # Best for: multi-step tasks, structured workflows, clear sequences
+    # 70% better action recall than ReAct (arXiv:2505.09970)
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def execute_pre_act(goal, tier:)
+      # Phase 1: Generate plan
+      UI.dim("  📋 Planning...")
+      plan_result = generate_plan(goal, tier: tier)
+      return plan_result unless plan_result.ok?
+      
+      @plan = plan_result.value[:steps]
+      UI.dim("  📋 Plan: #{@plan.size} steps")
+      
+      # Phase 2: Execute plan step by step
+      results = []
+      @plan.each_with_index do |planned_step, idx|
+        @step = idx + 1
+        UI.dim("  ▸ Step #{@step}/#{@plan.size}: #{planned_step[0..60]}...")
+        
+        # Execute the planned action
+        observation = execute_tool(planned_step)
+        results << { step: @step, action: planned_step, observation: observation }
+        @history << results.last
+        
+        UI.dim("  📊 #{observation[0..80]}...")
+        
+        # Check if we need to replan (unexpected result)
+        if observation.include?("error") || observation.include?("not found")
+          UI.dim("  ⚠ Replanning due to unexpected result...")
+          replan_result = replan(goal, results, tier: tier)
+          if replan_result.ok? && replan_result.value[:steps].any?
+            @plan = @plan[0..idx] + replan_result.value[:steps]
+          end
+        end
+      end
+      
+      # Phase 3: Synthesize final answer
+      synthesize_answer(goal, results, tier: tier)
+    end
+
+    def generate_plan(goal, tier:)
+      tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
+      
+      prompt = <<~PLAN
+        Create a step-by-step plan to accomplish this task:
+        
+        TASK: #{goal}
+        
+        TOOLS AVAILABLE:
+        #{tool_list}
+        
+        Respond with a numbered list of tool invocations, one per line.
+        Each step should be a complete tool command.
+        
+        Example:
+        1. file_read "config.yml"
+        2. analyze_code "src/main.rb"
+        3. fix_code "src/main.rb"
+        
+        PLAN:
+      PLAN
+      
+      result = LLM.ask(prompt, tier: tier)
+      return result unless result.ok?
+      
+      # Parse numbered steps
+      steps = result.value[:content].scan(/^\d+\.\s*(.+)$/m).flatten
+      steps = steps.map(&:strip).reject(&:empty?)
+      
+      Result.ok(steps: steps)
+    end
+
+    def replan(goal, completed, tier:)
+      history_text = completed.map { |r| "#{r[:action]} → #{r[:observation][0..100]}" }.join("\n")
+      
+      prompt = <<~REPLAN
+        Original task: #{goal}
+        
+        Completed steps:
+        #{history_text}
+        
+        The last step had an unexpected result. What additional steps are needed?
+        Respond with numbered tool commands only:
+      REPLAN
+      
+      result = LLM.ask(prompt, tier: :fast)
+      return result unless result.ok?
+      
+      steps = result.value[:content].scan(/^\d+\.\s*(.+)$/m).flatten
+      Result.ok(steps: steps.map(&:strip))
+    end
+
+    def synthesize_answer(goal, results, tier:)
+      history_text = results.map do |r|
+        "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}"
+      end.join("\n\n")
+      
+      prompt = <<~SYNTH
+        Task: #{goal}
+        
+        Execution results:
+        #{history_text}
+        
+        Provide a concise final answer based on these results:
+      SYNTH
+      
+      result = LLM.ask(prompt, tier: :fast)
+      return result unless result.ok?
+      
+      Result.ok(
+        answer: result.value[:content],
+        steps: @step,
+        pattern: :pre_act,
+        plan: @plan,
+        history: @history
+      )
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PATTERN 3: ReWOO - Reason Without Observation (batch reasoning)
+    # Best for: cost-sensitive tasks, pure reasoning, minimal tool calls
+    # Reduces LLM calls by batching all reasoning upfront
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def execute_rewoo(goal, tier:)
+      tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
+      
+      # Single LLM call to plan ALL actions with placeholders
+      prompt = <<~REWOO
+        Task: #{goal}
+        
+        Tools: #{tool_list}
+        
+        Create a complete plan using #E{n} as placeholders for tool results.
+        Each step can reference previous results.
+        
+        Format:
+        Plan: (your reasoning)
+        #E1 = tool_name "args"
+        #E2 = tool_name "args using #E1 if needed"
+        ...
+        
+        Example:
+        Plan: Read the file, analyze it, then fix issues
+        #E1 = file_read "src/app.rb"
+        #E2 = analyze_code "src/app.rb"
+        #E3 = fix_code "src/app.rb"
+      REWOO
+      
+      UI.dim("  🧠 Batch reasoning...")
+      result = LLM.ask(prompt, tier: tier)
+      return result unless result.ok?
+      
+      # Parse the plan
+      content = result.value[:content]
+      plan_text = content[/Plan:\s*(.+?)(?=#E1|$)/mi, 1]&.strip
+      actions = content.scan(/#E(\d+)\s*=\s*(.+)$/i)
+      
+      UI.dim("  📋 Plan: #{actions.size} actions")
+      
+      # Execute all actions, substituting placeholders
+      evidence = {}
+      actions.each do |num, action_str|
+        @step = num.to_i
+        
+        # Substitute any #E{n} references with actual results
+        resolved = action_str.gsub(/#E(\d+)/) { evidence[$1.to_i] || "" }
+        
+        UI.dim("  ▸ #E#{num}: #{resolved[0..60]}...")
+        observation = execute_tool(resolved.strip)
+        evidence[num.to_i] = observation
+        @history << { step: @step, action: resolved, observation: observation }
+        
+        UI.dim("  📊 #{observation[0..60]}...")
+      end
+      
+      # Final synthesis with all evidence
+      synth_prompt = <<~SYNTH
+        Task: #{goal}
+        Plan: #{plan_text}
+        
+        Evidence:
+        #{evidence.map { |k, v| "#E#{k} = #{v[0..400]}" }.join("\n\n")}
+        
+        Final answer:
+      SYNTH
+      
+      final = LLM.ask(synth_prompt, tier: :fast)
+      return final unless final.ok?
+      
+      Result.ok(
+        answer: final.value[:content],
+        steps: @step,
+        pattern: :rewoo,
+        evidence: evidence,
+        history: @history
+      )
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PATTERN 4: Reflexion - Self-critique and learning
+    # Best for: fixing, debugging, tasks where mistakes are costly
+    # Adds meta-cognitive layer for error correction
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def execute_reflexion(goal, tier:)
+      max_attempts = 3
+      attempt = 0
+      
+      while attempt < max_attempts
+        attempt += 1
+        UI.dim("  🔄 Attempt #{attempt}/#{max_attempts}")
+        
+        # Execute using ReAct
+        result = execute_react_inner(goal, tier: tier)
+        
+        # Reflect on the result
+        reflection = reflect_on_result(goal, result, tier: :fast)
+        @reflections << reflection
+        
+        if reflection[:success]
+          UI.dim("  ✓ Reflection: Success")
+          return Result.ok(
+            answer: result.ok? ? result.value[:answer] : reflection[:improved_answer],
+            steps: @step,
+            pattern: :reflexion,
+            attempts: attempt,
+            reflections: @reflections,
+            history: @history
+          )
+        end
+        
+        UI.dim("  ⚠ Reflection: #{reflection[:critique][0..60]}...")
+        
+        # Update goal with learned lessons for next attempt
+        goal = "#{goal}\n\nIMPORTANT: #{reflection[:lessons]}"
+        @history = [] # Reset for fresh attempt
+        @step = 0
+      end
+      
+      Result.err("Failed after #{max_attempts} attempts with reflection")
+    end
+
+    def execute_react_inner(goal, tier:)
+      # Simplified ReAct without the outer Result wrapper
+      5.times do
+        @step += 1
+        context = build_context(goal)
+        
+        result = LLM.ask(context, tier: tier)
+        return Result.err("LLM error") unless result.ok?
+        
+        parsed = parse_response(result.value[:content])
+        @history << { step: @step, thought: parsed[:thought], action: parsed[:action] }
+        
+        if parsed[:action] =~ /^(ANSWER|DONE|COMPLETE):/i
+          answer = parsed[:action].sub(/^(ANSWER|DONE|COMPLETE):\s*/i, "")
+          return Result.ok(answer: answer, steps: @step)
+        end
+        
+        observation = execute_tool(parsed[:action])
+        @history.last[:observation] = observation
+      end
+      
+      Result.err("No answer in 5 steps")
+    end
+
+    def reflect_on_result(goal, result, tier:)
+      history_text = @history.map do |h|
+        "#{h[:thought]} → #{h[:action]} → #{h[:observation]&.[](0..200)}"
+      end.join("\n")
+      
+      prompt = <<~REFLECT
+        Task: #{goal}
+        
+        Execution trace:
+        #{history_text}
+        
+        Result: #{result.ok? ? result.value[:answer] : result.error}
+        
+        Reflect on this execution:
+        1. Did it successfully complete the task? (yes/no)
+        2. What went wrong or could be improved?
+        3. What lessons should be applied to the next attempt?
+        4. If the answer was incomplete, provide an improved answer.
+        
+        Respond in this format:
+        SUCCESS: yes/no
+        CRITIQUE: (what went wrong)
+        LESSONS: (what to do differently)
+        IMPROVED_ANSWER: (better answer if needed)
+      REFLECT
+      
+      result = LLM.ask(prompt, tier: tier)
+      return { success: true, critique: "", lessons: "" } unless result.ok?
+      
+      content = result.value[:content]
+      {
+        success: content.match?(/SUCCESS:\s*yes/i),
+        critique: content[/CRITIQUE:\s*(.+?)(?=LESSONS:|$)/mi, 1]&.strip || "",
+        lessons: content[/LESSONS:\s*(.+?)(?=IMPROVED_ANSWER:|$)/mi, 1]&.strip || "",
+        improved_answer: content[/IMPROVED_ANSWER:\s*(.+)/mi, 1]&.strip
+      }
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Shared: Context building and response parsing
+    # ═══════════════════════════════════════════════════════════════════════════
 
     def build_context(goal)
       history_text = @history.map do |h|

@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Pipeline - Now uses Executor as default, with stage-based fallback
+  # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
+
+    class << self
+      attr_accessor :current_pattern
+    end
+    @current_pattern = :auto
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
@@ -17,8 +22,8 @@ module MASTER
 
       case @mode
       when :executor
-        # Default: Use autonomous executor with tool access
-        Executor.call(text)
+        # Default: Use autonomous executor with pattern selection
+        Executor.call(text, pattern: self.class.current_pattern)
       when :stages
         # Legacy: Stage-based pipeline
         @stages.reduce(Result.ok(input)) do |result, stage|
@@ -28,7 +33,7 @@ module MASTER
         # Simple: Direct LLM call, no tools
         LLM.ask(text, stream: true)
       else
-        Executor.call(text)
+        Executor.call(text, pattern: self.class.current_pattern)
       end
     end
 

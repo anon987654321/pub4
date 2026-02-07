@@ -94,6 +94,12 @@ module MASTER
       when "models"
         list_models
         nil
+      when "pattern", "mode"
+        select_pattern(args)
+        nil
+      when "patterns", "modes"
+        list_patterns
+        nil
       when "exit", "quit"
         :exit
       else
@@ -201,6 +207,43 @@ module MASTER
             short = m.split("/").last[0, 30]
             puts "    #{status} #{short}"
           end
+        end
+        puts
+      end
+
+      def select_pattern(args)
+        unless args && !args.strip.empty?
+          current = Pipeline.current_pattern rescue :auto
+          puts "\n  Current pattern: #{current}"
+          puts "  Available: #{Executor::PATTERNS.join(', ')}, auto"
+          puts "  Use 'pattern <name>' to switch.\n"
+          return
+        end
+
+        pattern = args.strip.downcase.to_sym
+        if pattern == :auto || Executor::PATTERNS.include?(pattern)
+          Pipeline.current_pattern = pattern
+          puts "\n  ✓ Pattern set to: #{pattern}\n"
+        else
+          puts "\n  ✗ Unknown pattern '#{args}'."
+          puts "  Available: #{Executor::PATTERNS.join(', ')}, auto\n"
+        end
+      end
+
+      def list_patterns
+        UI.header("Executor Patterns")
+        patterns = {
+          react: "Tight thought-action-observation loop. Best for exploration.",
+          pre_act: "Plan first, then execute. Best for multi-step tasks (70% better recall).",
+          rewoo: "Batch reasoning upfront. Best for cost-sensitive tasks.",
+          reflexion: "Self-critique and retry. Best for fixing/debugging.",
+          auto: "Auto-select based on task characteristics (default)."
+        }
+        
+        current = Pipeline.current_pattern rescue :auto
+        patterns.each do |name, desc|
+          marker = name == current ? "▸" : " "
+          puts "  #{marker} #{name.to_s.ljust(10)} #{desc}"
         end
         puts
       end

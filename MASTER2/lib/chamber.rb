@@ -154,6 +154,37 @@ module MASTER
       }
     end
 
+    # Creative mode: Brainstorm → Critique → Synthesize cycle
+    # Merged from CreativeChamber
+    def ideate(prompt:, constraints: [], cycles: 2)
+      ideas = []
+      critiques = []
+      total_cost = 0
+
+      cycles.times do
+        brainstorm = generate_ideas(prompt, ideas, constraints)
+        return brainstorm if brainstorm.err?
+        ideas += brainstorm.value[:ideas]
+        total_cost += brainstorm.value[:cost]
+
+        critique = critique_ideas(ideas)
+        return critique if critique.err?
+        critiques << critique.value[:critique]
+        total_cost += critique.value[:cost]
+      end
+
+      synthesis = synthesize_ideas(prompt, ideas, critiques, constraints)
+      return synthesis if synthesis.err?
+      total_cost += synthesis.value[:cost]
+
+      Result.ok(
+        ideas: ideas,
+        critiques: critiques,
+        final: synthesis.value[:synthesis],
+        cost: total_cost
+      )
+    end
+
     private
 
     def synthesize(proposal, votes)
@@ -285,40 +316,6 @@ module MASTER
 
     def over_budget?
       @cost >= MAX_COST
-    end
-
-    # Creative mode: Brainstorm → Critique → Synthesize cycle
-    # Merged from CreativeChamber
-    def ideate(prompt:, constraints: [], cycles: 2)
-      ideas = []
-      critiques = []
-      total_cost = 0
-
-      cycles.times do
-        # Brainstorm phase
-        brainstorm = generate_ideas(prompt, ideas, constraints)
-        return brainstorm if brainstorm.err?
-        ideas += brainstorm.value[:ideas]
-        total_cost += brainstorm.value[:cost]
-
-        # Critique phase
-        critique = critique_ideas(ideas)
-        return critique if critique.err?
-        critiques << critique.value[:critique]
-        total_cost += critique.value[:cost]
-      end
-
-      # Synthesis phase
-      synthesis = synthesize_ideas(prompt, ideas, critiques, constraints)
-      return synthesis if synthesis.err?
-      total_cost += synthesis.value[:cost]
-
-      Result.ok(
-        ideas: ideas,
-        critiques: critiques,
-        final: synthesis.value[:synthesis],
-        cost: total_cost
-      )
     end
 
     private
