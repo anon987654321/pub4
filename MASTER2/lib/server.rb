@@ -135,8 +135,8 @@ module MASTER
             tier: LLM.tier,
             budget_remaining: LLM.budget_remaining,
             models: LLM.models.size,
-            tts: Audio.engine_status,
-            self: SelfAwareness.summary,
+            tts: defined?(Audio) ? Audio.engine_status : "unavailable",
+            self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
           }.to_json
           [200, { "content-type" => "application/json" }, [metrics]]
 
@@ -144,6 +144,10 @@ module MASTER
           # SSE endpoint for TTS streaming
           text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
           return [400, {}, ["Missing text"]] unless text
+
+          unless defined?(Web::OrbTTS)
+            return [501, { "content-type" => "text/plain" }, ["TTS not available"]]
+          end
 
           headers = {
             "Content-Type" => "text/event-stream",
