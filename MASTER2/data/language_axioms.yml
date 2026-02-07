@@ -508,7 +508,7 @@ universal:
   - id: typographic_excellence
     name: "Typographic excellence in user-facing text"
     detect: '["'']\.\.\.["'']|["'']--["'']'
-    suggest: "Use … (ellipsis), — (em dash), "" (curly quotes) in UI strings"
+    suggest: 'Use … (ellipsis), — (em dash), "" (curly quotes) in UI strings'
     severity: info
     autofix: true
 
