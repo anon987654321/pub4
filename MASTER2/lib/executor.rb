@@ -38,6 +38,25 @@ module MASTER
       council_review: "Run adversarial council review",
       self_test: "Run self-test on MASTER",
     }.freeze
+    
+    # Constitution-based permission system
+    CONSTITUTION_FILE = File.join(__dir__, "..", "data", "constitution.yml")
+    
+    def self.constitution
+      @constitution ||= load_constitution
+    end
+    
+    def self.load_constitution
+      if File.exist?(CONSTITUTION_FILE)
+        require "yaml"
+        YAML.safe_load_file(CONSTITUTION_FILE)
+      else
+        {}
+      end
+    rescue StandardError => e
+      puts "Warning: Failed to load constitution: #{e.message}" if ENV["DEBUG"]
+      {}
+    end
 
     attr_reader :history, :step, :pattern, :plan, :reflections
 
@@ -616,6 +635,59 @@ module MASTER
       "Tool error: #{e.message}"
     end
 
+    # Permission checking
+    
+    def check_shell_permission(cmd)
+      const = self.class.constitution
+      perms = const.dig("tool_permissions", "shell_command") || {}
+      
+      # Check blocked patterns first
+      blocked = perms["blocked_patterns"] || []
+      blocked.each do |pattern|
+        return "BLOCKED: Matches blocked pattern (#{pattern})" if Regexp.new(pattern, Regexp::IGNORECASE).match?(cmd)
+      end
+      
+      # If not default allowed, check allow patterns
+      unless perms["default_allowed"]
+        allowed = perms["allowed_patterns"] || []
+        return true if allowed.any? { |pattern| Regexp.new(pattern, Regexp::IGNORECASE).match?(cmd) }
+        return "BLOCKED: Shell command not in allow-list (use safe commands like ls, pwd, git status)"
+      end
+      
+      true
+    end
+    
+    def check_code_execution_permission(code)
+      const = self.class.constitution
+      perms = const.dig("tool_permissions", "code_execution") || {}
+      
+      # Check blocked patterns
+      blocked = perms["blocked_patterns"] || []
+      blocked.each do |pattern|
+        return "BLOCKED: Code matches blocked pattern (#{pattern})" if Regexp.new(pattern).match?(code)
+      end
+      
+      true
+    end
+    
+    def check_file_write_permission(path)
+      const = self.class.constitution
+      perms = const.dig("tool_permissions", "file_write") || {}
+      protected = perms["protected_paths"] || []
+      
+      # Normalize path for comparison
+      normalized = path.gsub(/^\.\//, "")
+      
+      # Check if path matches any protected pattern
+      protected.each do |protected_path|
+        if normalized.include?(protected_path) || path.include?(protected_path)
+          return "BLOCKED: Cannot write to protected path (#{protected_path})"
+        end
+      end
+      
+      true
+    end
+
     # Tool implementations
 
     def ask_llm(prompt)
@@ -648,6 +720,10 @@ module MASTER
     end
 
     def file_write(path, content)
+      # Check constitution permissions
+      permission = check_file_write_permission(path)
+      return permission if permission.is_a?(String) && permission.start_with?("BLOCKED")
+      
       expanded = File.expand_path(path)
       cwd = File.expand_path(".")
       unless expanded.start_with?(cwd)
@@ -681,6 +757,10 @@ module MASTER
     end
 
     def shell_command(cmd)
+      # Check constitution permissions first
+      permission = check_shell_permission(cmd)
+      return permission if permission.is_a?(String) && permission.start_with?("BLOCKED")
+      
       if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
         return "BLOCKED: dangerous shell command rejected"
       end
@@ -690,6 +770,10 @@ module MASTER
     end
 
     def code_execution(code)
+      # Check constitution permissions
+      permission = check_code_execution_permission(code)
+      return permission if permission.is_a?(String) && permission.start_with?("BLOCKED")
+      
       stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end

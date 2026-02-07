@@ -1,0 +1,91 @@
+# Constitution - Immutable Safety Policies
+# This file defines core safety constraints that cannot be self-modified.
+# Protect autonomy with principled boundaries.
+
+version: 1.0
+immutable: true
+created_at: 2026-02-07
+
+# Core Principles
+principles:
+  - name: "No Self-Modification of Safety Rules"
+    description: "Constitution file must not be writable by tool execution"
+    enforcement: "Tool path guard prevents writes to data/constitution.yml"
+  
+  - name: "No Environment Control"
+    description: "No direct control over external systems or infrastructure"
+    enforcement: "Dangerous patterns blocked in shell commands"
+  
+  - name: "Staged Self-Refactoring"
+    description: "Code changes to self require validation before promotion"
+    enforcement: "Staging flow with validation gates"
+
+# Tool Permissions - Allow-list for dangerous operations
+tool_permissions:
+  shell_command:
+    default_allowed: false
+    description: "Shell command execution requires explicit permission"
+    allowed_patterns:
+      - "^(ls|pwd|echo|cat|head|tail|grep|find|wc)"
+      - "^ruby -[cve]"
+      - "^git (status|log|diff|show)"
+      - "^bundle (exec|install)"
+      - "^rake"
+      - "^gem list"
+    blocked_patterns:
+      - "rm -rf /"
+      - "> /dev/[sh]da"
+      - "DROP TABLE"
+      - "FORMAT [A-Z]:"
+      - "mkfs\\."
+      - "dd if="
+      - "curl .* \\| (bash|sh)"
+      - "wget .* && (bash|sh)"
+    
+  code_execution:
+    default_allowed: true
+    description: "Ruby code execution in sandboxed context"
+    blocked_patterns:
+      - "system\\("
+      - "exec\\("
+      - "`.*`"
+      - "%x\\["
+      - "Kernel\\.system"
+      - "IO\\.popen"
+      - "File\\.delete"
+      - "FileUtils\\.rm"
+  
+  file_write:
+    default_allowed: true
+    description: "File writes restricted to working directory"
+    restrictions:
+      - "Must be within current working directory"
+      - "Cannot write to data/constitution.yml"
+      - "Cannot write to system directories"
+    protected_paths:
+      - "data/constitution.yml"
+      - "/etc/"
+      - "/usr/"
+      - "/System/"
+      - "/Library/"
+      - "/Windows/"
+
+# Self-Refactor Safety Requirements
+self_refactor:
+  staging_required: false  # Optional, not mandatory by default
+  validation_command: "ruby -c"  # Syntax check
+  test_command: "ruby -I lib test/test_helper.rb"  # Optional test run
+  rollback_on_failure: true
+  backup_original: true
+
+# Budget Limits
+budget:
+  max_cost_per_operation: 1.0
+  max_operations_per_session: 100
+  warning_threshold: 0.50
+
+# Observability
+logging:
+  log_dangerous_operations: true
+  log_permission_denials: true
+  log_constitution_access_attempts: true

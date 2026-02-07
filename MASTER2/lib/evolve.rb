@@ -13,12 +13,14 @@ module MASTER
       lib/db_jsonl.rb
     ].freeze
 
-    def initialize(llm: LLM, chamber: nil)
+    def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil)
       @llm = llm
       @chamber = chamber || Chamber.new(llm: llm)
       @iteration = 0
       @cost = 0.0
       @history = []
+      @staged = staged
+      @validation_command = validation_command || "ruby -c {file}"
     end
 
     def run(path: MASTER.root, dry_run: true)
@@ -30,7 +32,7 @@ module MASTER
         next if protected?(file)
 
         @iteration += 1
-        result = improve_file(file, dry_run: dry_run)
+        result = @staged ? improve_file_staged(file, dry_run: dry_run) : improve_file(file, dry_run: dry_run)
         @history << result
       end
 
@@ -40,6 +42,7 @@ module MASTER
         files_processed: @history.size,
         improvements: @history.count { |h| h[:improved] },
         history: @history,
+        staged: @staged,
       }
     end
 
@@ -63,6 +66,33 @@ module MASTER
         File.write(file, result.value[:final]) unless dry_run
         @cost += result.value[:cost]
         { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
+      else
+        { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
+      end
+    rescue StandardError => e
+      { file: file, error: e.message }
+    end
+    
+    def improve_file_staged(file, dry_run:)
+      return { file: file, skipped: true, reason: "dry_run + staged not supported" } if dry_run
+      
+      code = File.read(file)
+      return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
+
+      result = @chamber.deliberate(code, filename: File.basename(file))
+
+      if result.ok? && result.value[:final] != code
+        # Use staging workflow
+        staging_result = Staging.staged_workflow(file, validation_command: @validation_command) do |staged_path|
+          File.write(staged_path, result.value[:final])
+        end
+        
+        if staging_result.ok?
+          @cost += result.value[:cost]
+          { file: file, improved: true, cost: result.value[:cost], staged: true, validated: true }
+        else
+          { file: file, improved: false, staged: false, reason: "Staging failed: #{staging_result.error}" }
+        end
       else
         { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
       end
