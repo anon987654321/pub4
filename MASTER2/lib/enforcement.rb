@@ -11,9 +11,13 @@ module MASTER
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
+    @smells_mutex = Mutex.new
+
     class << self
       def smells
-        @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE) : {}
+        @smells_mutex.synchronize do
+          @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE) : {}
+        end
       end
 
       def thresholds
