@@ -71,4 +71,27 @@ class TestLLM < Minitest::Test
     assert model, "Should select a model"
     assert MASTER::LLM::RATES.key?(model), "Selected model should be in RATES"
   end
+
+  def test_select_model_with_text_length
+    # Short text should prefer strong tier with full budget
+    model = MASTER::LLM.select_model(100)
+    assert model, "Should select a model"
+    assert_equal :strong, MASTER::LLM::RATES[model][:tier], "Short text should use strong tier"
+  end
+
+  def test_select_model_with_long_text
+    # Long text should prefer cheaper tiers
+    model = MASTER::LLM.select_model(15000)
+    assert model, "Should select a model"
+    tier = MASTER::LLM::RATES[model][:tier]
+    assert [:fast, :cheap].include?(tier), "Long text should use fast or cheap tier"
+  end
+
+  def test_select_model_with_medium_text
+    # Medium text should prefer fast tier
+    model = MASTER::LLM.select_model(7000)
+    assert model, "Should select a model"
+    tier = MASTER::LLM::RATES[model][:tier]
+    assert [:fast, :cheap].include?(tier), "Medium text should use fast or cheap tier"
+  end
 end
