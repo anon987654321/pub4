@@ -7,7 +7,10 @@ module MASTER
     attr_reader :stages
 
     def initialize(stages: DEFAULT_STAGES)
-      @stages = stages.map { |name| stage_class(name).new }
+      @stages = stages.map do |stage|
+        # Support both stage names (symbols) and stage instances
+        stage.respond_to?(:call) ? stage : stage_class(stage).new
+      end
     end
 
     def call(input)
