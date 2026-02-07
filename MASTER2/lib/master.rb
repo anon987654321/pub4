@@ -15,7 +15,7 @@ require_relative "llm"
 require_relative "memory"
 require_relative "pledge"
 
-# UI
+# UI & NN/g compliance
 require_relative "ui"
 require_relative "help"
 require_relative "autocomplete"
@@ -23,6 +23,10 @@ require_relative "progress"
 require_relative "undo"
 require_relative "dashboard"
 require_relative "commands"
+require_relative "keybindings"
+require_relative "confirmations"
+require_relative "error_suggestions"
+require_relative "nng_checklist"
 
 # Pipeline
 require_relative "boot"
@@ -42,6 +46,9 @@ require_relative "evolve"
 require_relative "converge"
 require_relative "edge_tts"
 require_relative "momentum"
+require_relative "validator"
+require_relative "self_map"
+require_relative "file_hygiene"
 
 # External services
 require_relative "weaviate"

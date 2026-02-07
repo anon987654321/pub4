@@ -2,12 +2,11 @@
 
 module MASTER
   # Chamber - Multi-model deliberation for code refinement
-  # Each model proposes changes, arbiter cherry-picks best
   class Chamber
     MODELS = {
-      sonnet:   'anthropic/claude-sonnet-4',
-      deepseek: 'deepseek/deepseek-r1',
-      gpt:      'openai/gpt-4.1-mini'
+      sonnet: "anthropic/claude-sonnet-4",
+      deepseek: "deepseek/deepseek-r1",
+      gpt: "openai/gpt-4.1-mini",
     }.freeze
 
     ARBITER = :sonnet
@@ -24,7 +23,7 @@ module MASTER
       @proposals = []
     end
 
-    def deliberate(code, filename: 'code', participants: [:sonnet, :deepseek])
+    def deliberate(code, filename: "code", participants: %i[sonnet deepseek])
       @proposals = []
       @rounds = 0
 
@@ -40,26 +39,24 @@ module MASTER
 
       return Result.err("No proposals generated") if @proposals.empty?
 
-      # Arbiter picks best
       arbiter_model = MODELS[ARBITER]
       if @llm.healthy?(arbiter_model)
         final = arbiter_decision(code, @proposals, arbiter_model)
-        Result.ok({
+        Result.ok(
           original: code,
           proposals: @proposals,
           final: final,
           cost: @cost,
-          rounds: @rounds
-        })
+          rounds: @rounds,
+        )
       else
-        # Fallback to first proposal
-        Result.ok({
+        Result.ok(
           original: code,
           proposals: @proposals,
           final: @proposals.first[:proposal],
           cost: @cost,
-          rounds: @rounds
-        })
+          rounds: @rounds,
+        )
       end
     end
 
@@ -68,7 +65,7 @@ module MASTER
     def get_proposal(code, model, filename)
       @rounds += 1
 
-      prompt = <<~P
+      prompt = <<~PROMPT
         Review this code and propose improvements:
         FILE: #{filename}
 
@@ -80,7 +77,7 @@ module MASTER
         1. ISSUES: What's wrong (bullet points)
         2. DIFF: Proposed changes (unified diff format)
         3. RATIONALE: Why these changes (one paragraph)
-      P
+      PROMPT
 
       chat = @llm.chat(model: model)
       response = chat.ask(prompt)
@@ -90,13 +87,13 @@ module MASTER
       @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
 
       response.content
-    rescue => e
+    rescue StandardError
       @llm.trip!(model)
       nil
     end
 
     def arbiter_decision(original, proposals, model)
-      prompt = <<~P
+      prompt = <<~PROMPT
         You are the arbiter. Given these proposals, pick the best changes:
 
         ORIGINAL:
@@ -108,7 +105,7 @@ module MASTER
         #{proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n")}
 
         Output ONLY the final improved code. No explanation.
-      P
+      PROMPT
 
       chat = @llm.chat(model: model)
       response = chat.ask(prompt)
@@ -118,7 +115,7 @@ module MASTER
       @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
 
       response.content
-    rescue => e
+    rescue StandardError
       proposals.first[:proposal]
     end
 

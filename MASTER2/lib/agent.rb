@@ -20,16 +20,17 @@ module MASTER
     end
 
     def user_agent
-      axiom_count = DB.connection.execute("SELECT COUNT(*) as count FROM axioms").first["count"] rescue 0
-      "MASTER/#{VERSION} (agent:#{@id}; parent:#{@parent_id}; scope:#{@scope}; axioms:#{axiom_count}; budget:$#{"%.2f" % @budget})"
+      axiom_count = DB.axioms.size
+      "MASTER/#{VERSION} (agent:#{@id}; parent:#{@parent_id}; scope:#{@scope}; " \
+        "axioms:#{axiom_count}; budget:$#{format('%.2f', @budget)})"
     end
 
     def run
       @status = :running
       @started_at = Time.now
 
-      # Boot line
-      puts "agent0 at master0: #{@id} (parent:#{@parent_id}, scope:#{@scope}, budget:$#{"%.2f" % @budget})"
+      puts "agent0 at master0: #{@id} (parent:#{@parent_id}, scope:#{@scope}, " \
+           "budget:$#{format('%.2f', @budget)})"
 
       pipeline = Pipeline.new
       @result = pipeline.call(@task)
@@ -37,14 +38,12 @@ module MASTER
       @status = @result.ok? ? :completed : :failed
       @finished_at = Time.now
 
-      # Persist to DB
-      DB.record_agent(self)
-
       @result
     end
 
     def elapsed
       return nil unless @started_at
+
       (@finished_at || Time.now) - @started_at
     end
 
@@ -56,7 +55,7 @@ module MASTER
         status: @status,
         elapsed: elapsed,
         budget: @budget,
-        user_agent: user_agent
+        user_agent: user_agent,
       }
     end
   end

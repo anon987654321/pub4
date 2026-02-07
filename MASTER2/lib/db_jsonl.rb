@@ -30,11 +30,18 @@ module MASTER
 
     # --- Axioms ---
     def axioms
-      read_collection('axioms')
+      read_collection("axioms")
     end
 
-    def add_axiom(name:, description:, category: nil)
-      append('axioms', { name: name, description: description, category: category, created_at: Time.now.utc.iso8601 })
+    def add_axiom(name:, description:, category: nil, scope: nil)
+      record = {
+        name: name,
+        description: description,
+        category: category,
+        scope: scope,
+        created_at: Time.now.utc.iso8601,
+      }
+      append("axioms", record.compact)
     end
 
     # --- Council ---

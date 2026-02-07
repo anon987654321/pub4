@@ -11,114 +11,115 @@ module MASTER
       args = parts[1]
 
       case cmd
-      when 'help', '?'
+      when "help", "?"
         Help.show(args)
         nil
-      when 'status'
+      when "status"
         Dashboard.new.render
         nil
-      when 'budget'
+      when "budget"
         show_budget
         nil
-      when 'clear'
+      when "clear"
         print "\e[2J\e[H"
         nil
-      when 'history'
+      when "history"
         show_history
         nil
-      when 'refactor'
+      when "refactor"
         refactor(args)
-      when 'chamber'
+      when "chamber"
         chamber(args)
-      when 'evolve'
+      when "evolve"
         evolve(args)
-      when 'speak', 'say'
+      when "speak", "say"
         speak(args)
         nil
-      when 'exit', 'quit'
+      when "exit", "quit"
         :exit
       else
-        # Pass to pipeline
         pipeline.call({ text: input })
       end
     end
 
-    private
+    class << self
+      private
 
-    def show_budget
-      tier = LLM.tier
-      remaining = LLM.remaining
-      spent = LLM::BUDGET_LIMIT - remaining
-      pct = (spent / LLM::BUDGET_LIMIT * 100).round(1)
+      def show_budget
+        tier = LLM.tier
+        remaining = LLM.remaining
+        spent = LLM::BUDGET_LIMIT - remaining
+        pct = (spent / LLM::BUDGET_LIMIT * 100).round(1)
 
-      puts "\n  Budget Status"
-      puts "  Tier:      #{tier}"
-      puts "  Remaining: $#{'%.2f' % remaining}"
-      puts "  Spent:     $#{'%.2f' % spent} (#{pct}%)"
-      puts
-    end
-
-    def show_history
-      costs = DB.connection.execute(
-        "SELECT model, tokens_in, tokens_out, cost, created_at FROM costs ORDER BY id DESC LIMIT 10"
-      ) rescue []
-
-      if costs.empty?
-        puts "\n  No history yet.\n"
-      else
-        puts "\n  Recent Queries"
-        puts "  #{'-' * 50}"
-        costs.each do |row|
-          model = row['model'].split('/').last[0, 12]
-          puts "  #{row['created_at'][0, 16]} | #{model.ljust(12)} | #{row['tokens_in']}→#{row['tokens_out']} | $#{'%.4f' % row['cost']}"
-        end
+        puts "\n  Budget Status"
+        puts "  Tier:      #{tier}"
+        puts "  Remaining: $#{format('%.2f', remaining)}"
+        puts "  Spent:     $#{format('%.2f', spent)} (#{pct}%)"
         puts
       end
-    end
 
-    def refactor(file)
-      return Result.err("Usage: refactor <file>") unless file
+      def show_history
+        costs = DB.recent_costs(limit: 10)
 
-      path = File.expand_path(file)
-      return Result.err("File not found: #{file}") unless File.exist?(path)
-
-      code = File.read(path)
-      chamber = Chamber.new
-      result = chamber.deliberate(code, filename: File.basename(path))
-
-      if result.ok? && result.value[:final]
-        puts "\n  Proposals: #{result.value[:proposals].size}"
-        puts "  Cost: $#{'%.4f' % result.value[:cost]}"
-        puts "\n#{result.value[:final]}\n"
+        if costs.empty?
+          puts "\n  No history yet.\n"
+        else
+          puts "\n  Recent Queries"
+          puts "  #{'-' * 50}"
+          costs.each do |row|
+            model = (row["model"] || row[:model]).split("/").last[0, 12]
+            tokens_in = row["tokens_in"] || row[:tokens_in]
+            tokens_out = row["tokens_out"] || row[:tokens_out]
+            cost = row["cost"] || row[:cost]
+            created = row["created_at"] || row[:created_at]
+            puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}→#{tokens_out} | $#{format('%.4f', cost)}"
+          end
+          puts
+        end
       end
 
-      result
-    end
+      def refactor(file)
+        return Result.err("Usage: refactor <file>") unless file
 
-    def chamber(file)
-      refactor(file) # Same as refactor for now
-    end
+        path = File.expand_path(file)
+        return Result.err("File not found: #{file}") unless File.exist?(path)
 
-    def evolve(path)
-      path ||= MASTER.root
-      evolve = Evolve.new
-      result = evolve.run(path: path, dry_run: true)
+        code = File.read(path)
+        chamber_instance = Chamber.new
+        result = chamber_instance.deliberate(code, filename: File.basename(path))
 
-      puts "\n  Evolution Analysis (dry run)"
-      puts "  Files processed: #{result[:files_processed]}"
-      puts "  Improvements found: #{result[:improvements]}"
-      puts "  Cost: $#{'%.4f' % result[:cost]}"
-      puts
+        if result.ok? && result.value[:final]
+          puts "\n  Proposals: #{result.value[:proposals].size}"
+          puts "  Cost: $#{format('%.4f', result.value[:cost])}"
+          puts "\n#{result.value[:final]}\n"
+        end
 
-      Result.ok(result)
-    end
+        result
+      end
 
-    def speak(text)
-      return puts "  Usage: speak <text>" unless text
+      def chamber(file)
+        refactor(file)
+      end
 
-      result = EdgeTTS.speak_and_play(text)
-      if result.err?
-        puts "  TTS Error: #{result.error}"
+      def evolve(path)
+        path ||= MASTER.root
+        evolve_instance = Evolve.new
+        result = evolve_instance.run(path: path, dry_run: true)
+
+        puts "\n  Evolution Analysis (dry run)"
+        puts "  Files processed: #{result[:files_processed]}"
+        puts "  Improvements found: #{result[:improvements]}"
+        puts "  Cost: $#{format('%.4f', result[:cost])}"
+        puts
+
+        Result.ok(result)
+      end
+
+      def speak(text)
+        return puts "  Usage: speak <text>" unless text
+
+        result = EdgeTTS.speak_and_play(text)
+        puts "  TTS Error: #{result.error}" if result.err?
       end
     end
   end

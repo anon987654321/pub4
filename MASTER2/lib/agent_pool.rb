@@ -5,7 +5,7 @@ require "timeout"
 module MASTER
   class AgentPool
     MAX_CONCURRENT = 4
-    AGENT_TIMEOUT = 300 # 5 minutes per agent
+    AGENT_TIMEOUT = 300
 
     attr_reader :agents
 
@@ -23,7 +23,7 @@ module MASTER
         budget: agent_budget,
         scope: scope,
         axiom_filter: axiom_filter,
-        parent_id: parent_id
+        parent_id: parent_id,
       )
 
       @mutex.synchronize { @agents << agent }
@@ -33,14 +33,16 @@ module MASTER
     def run_all
       results = {}
 
-      # Run in batches of MAX_CONCURRENT
       @agents.each_slice(MAX_CONCURRENT) do |batch|
         threads = batch.map do |agent|
           Thread.new do
             Timeout.timeout(AGENT_TIMEOUT) { agent.run }
           rescue Timeout::Error
             agent.instance_variable_set(:@status, :timeout)
-            agent.instance_variable_set(:@result, Result.err("Agent #{agent.id} timed out after #{AGENT_TIMEOUT}s"))
+            agent.instance_variable_set(
+              :@result,
+              Result.err("Agent #{agent.id} timed out after #{AGENT_TIMEOUT}s"),
+            )
           end
         end
 
@@ -51,8 +53,16 @@ module MASTER
       results
     end
 
-    def completed = @agents.select { |a| a.status == :completed }
-    def failed = @agents.select { |a| a.status != :completed }
-    def total_budget_used = @agents.sum { |a| a.budget }
+    def completed
+      @agents.select { |a| a.status == :completed }
+    end
+
+    def failed
+      @agents.reject { |a| a.status == :completed }
+    end
+
+    def total_budget_used
+      @agents.sum(&:budget)
+    end
   end
 end

@@ -6,10 +6,6 @@ module MASTER
     class Intake
       def call(input)
         text = input[:text] || ""
-        if input[:persona]
-          persona = DB.get_persona(input[:persona].to_s)
-          input = input.merge(persona_instructions: persona&.dig("instructions"))
-        end
         Result.ok(input.merge(text: text))
       end
     end
@@ -17,8 +13,12 @@ module MASTER
     # Stage 2: Block dangerous patterns
     class Guard
       DENY = [
-        /rm\s+-r[f]?\s+\//, />\s*\/dev\/[sh]da/, /DROP\s+TABLE/i,
-        /FORMAT\s+[A-Z]:/i, /mkfs\./, /dd\s+if=/
+        /rm\s+-r[f]?\s+\//,
+        />\s*\/dev\/[sh]da/,
+        /DROP\s+TABLE/i,
+        /FORMAT\s+[A-Z]:/i,
+        /mkfs\./,
+        /dd\s+if=/,
       ].freeze
 
       def call(input)
@@ -34,10 +34,11 @@ module MASTER
         text = input[:text] || ""
         selected = LLM.select_model(text.length)
         return Result.err("All models unavailable") unless selected
+
         Result.ok(input.merge(
           model: selected[:model],
           tier: selected[:tier],
-          budget_remaining: LLM.remaining
+          budget_remaining: LLM.remaining,
         ))
       end
     end
@@ -49,7 +50,7 @@ module MASTER
       def call(input)
         return Result.ok(input) unless input[:debate]
 
-        personas = DB.council_personas || []
+        personas = DB.council
         return Result.ok(input) if personas.empty?
 
         text = input[:text] || ""
@@ -61,13 +62,13 @@ module MASTER
 
         MAX_ROUNDS.times do |i|
           persona = personas[i % personas.size]
-          prompt = "#{persona['instructions']}\n\nReview:\n#{current}"
+          prompt = "You are #{persona['name']} (#{persona['role']}). Style: #{persona['style']}.\n\nReview:\n#{current}"
 
           begin
             response = chat.ask(prompt)
             rounds << { persona: persona["name"], response: response.content }
             current = response.content
-          rescue => e
+          rescue StandardError
             break
           end
         end
@@ -83,9 +84,6 @@ module MASTER
         return Result.err("No model selected") unless model
 
         chat = LLM.chat(model: model)
-        persona = input[:persona_instructions]
-        chat.with_instructions(persona) if persona && chat.respond_to?(:with_instructions)
-
         text = input[:debated] || input[:text] || ""
 
         begin
@@ -94,7 +92,7 @@ module MASTER
           end
           $stderr.puts
 
-          tokens_in  = response.input_tokens  rescue 0
+          tokens_in = response.input_tokens rescue 0
           tokens_out = response.output_tokens rescue 0
           LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
           LLM.reset!(model)
@@ -102,9 +100,9 @@ module MASTER
           Result.ok(input.merge(
             response: response.content,
             tokens_in: tokens_in,
-            tokens_out: tokens_out
+            tokens_out: tokens_out,
           ))
-        rescue => e
+        rescue StandardError => e
           LLM.trip!(model)
           Result.err("LLM error (#{model}): #{e.message}")
         end
@@ -115,26 +113,23 @@ module MASTER
     class Lint
       def call(input)
         text = input[:response] || ""
-        axioms = DB.axioms rescue []
+        axioms = DB.axioms
         violations = []
 
         axioms.each do |axiom|
-          pattern = axiom["pattern"]
+          pattern = axiom["pattern"] || axiom[:pattern]
           next unless pattern
-          violations << axiom["name"] if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
+
+          violations << (axiom["name"] || axiom[:name]) if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
         end
 
-        if violations.any?
-          Result.ok(input.merge(axiom_violations: violations, linted: true))
-        else
-          Result.ok(input.merge(axiom_violations: [], linted: true))
-        end
+        Result.ok(input.merge(axiom_violations: violations, linted: true))
       end
     end
 
     # Stage 7: Format output (typography)
     class Render
-      CODE_FENCE = /^```/
+      CODE_FENCE = /^```/.freeze
 
       def call(input)
         text = input[:response] || ""
@@ -167,9 +162,10 @@ module MASTER
       end
 
       def prose(text)
-        text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }
-            .gsub(/\s--\s/, " \u2014 ")
-            .gsub(/\.\.\./, "\u2026")
+        text
+          .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
+          .gsub(/\s--\s/, " \u2014 ")
+          .gsub(/\.\.\./, "\u2026")
       end
     end
 
@@ -189,17 +185,17 @@ module MASTER
       private
 
       def run(code)
-        Tempfile.create(["master", ".rb"]) do |f|
+        Tempfile.create(%w[master .rb]) do |f|
           f.write(code)
           f.flush
           begin
             Pledge.unveil(f.path, "r")
             Pledge.pledge("stdio rpath")
-          rescue => e
+          rescue StandardError
             # Not on OpenBSD
           end
-          output = IO.popen(["ruby", f.path], err: [:child, :out], &:read)
-          { success: $?.success?, output: output, exit_code: $?.exitstatus }
+          output = IO.popen(["ruby", f.path], err: %i[child out], &:read)
+          { success: $CHILD_STATUS.success?, output: output, exit_code: $CHILD_STATUS.exitstatus }
         end
       end
     end
