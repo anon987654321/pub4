@@ -75,7 +75,11 @@ module MASTER
         PROMPT
         
         response = LLM.chat(model: model).ask(prompt)
-        result = response.content.strip.downcase.to_sym
+        raw_result = response.content.strip.downcase.to_sym
+        
+        # Validate against allowlist
+        valid_intents = %i[question refactor admin command general]
+        result = valid_intents.include?(raw_result) ? raw_result : :general
         
         # Track cost
         if response.respond_to?(:tokens_in) && response.respond_to?(:tokens_out)
@@ -112,7 +116,13 @@ module MASTER
         PROMPT
         
         response = LLM.chat(model: model).ask(prompt)
-        result = JSON.parse(response.content, symbolize_names: true)
+        
+        # Parse and validate JSON structure
+        parsed = JSON.parse(response.content, symbolize_names: true)
+        result = {}
+        result[:files] = parsed[:files] if parsed[:files].is_a?(Array)
+        result[:services] = parsed[:services] if parsed[:services].is_a?(Array)
+        result[:configs] = parsed[:configs] if parsed[:configs].is_a?(Array)
         
         # Track cost
         if response.respond_to?(:tokens_in) && response.respond_to?(:tokens_out)
@@ -124,7 +134,7 @@ module MASTER
         end
         
         result
-      rescue
+      rescue JSON::ParserError, TypeError
         regex_fallback_extract(text)
       end
       

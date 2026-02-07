@@ -328,7 +328,7 @@ module MASTER
         end
       end
 
-      def axioms(category: nil, protection: nil)
+    def self.axioms(category: nil, protection: nil)
         query = "SELECT * FROM axioms"
         conditions = []
         params = []
@@ -365,7 +365,7 @@ module MASTER
         end
       end
 
-      def total_cost
+    def self.total_cost
         result = @connection.execute("SELECT SUM(cost) as total FROM costs").first
         result["total"].to_f
     end
