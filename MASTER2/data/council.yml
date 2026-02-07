@@ -149,8 +149,8 @@
     - Examine: Transparency of decision-making and accountability.
     - Consider: Long-term societal consequences and dual-use potential.
 
-# COUNCIL PARAMETERS
-consensus_threshold: 0.70
-max_iterations: 25
-oscillation_detection: true
-veto_precedence: ["security", "attacker", "maintainer"]
+# COUNCIL PARAMETERS (stored in config table)
+- consensus_threshold: 0.70
+  max_iterations: 25
+  oscillation_detection: true
+  veto_precedence: ["security", "attacker", "maintainer"]
