@@ -1,4 +1,4 @@
-MASTER
+# MASTER
 
 MASTER is an autonomous agent system. It processes input through a five-stage pipeline: compression, adversarial debate, axiom enforcement, OpenBSD administration, and output refinement. It runs on OpenBSD, is written in Ruby, and talks to LLMs through OpenRouter.
 
