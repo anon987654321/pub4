@@ -4,3 +4,4 @@ tmp/
 *.gem
 vendor/
 Gemfile.lock
+nul

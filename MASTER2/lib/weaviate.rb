@@ -139,23 +139,32 @@ module MASTER
         request['Authorization'] = "Bearer #{API_KEY}" if API_KEY
       end
 
-      def post(path, body)
+      def post(path, body, retries: 3)
         uri = URI("#{base_url}#{path}")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.open_timeout = 10
-        http.read_timeout = 30
+        last_error = nil
+        
+        retries.times do |attempt|
+          begin
+            http = Net::HTTP.new(uri.host, uri.port)
+            http.use_ssl = (uri.scheme == 'https')
+            http.open_timeout = 10
+            http.read_timeout = 30
 
-        request = Net::HTTP::Post.new(uri)
-        add_auth_headers(request)
-        request.body = body.to_json
+            request = Net::HTTP::Post.new(uri)
+            add_auth_headers(request)
+            request.body = body.to_json
 
-        response = http.request(request)
-        JSON.parse(response.body)
-      rescue JSON::ParserError
-        { 'error' => response&.body || 'Parse error' }
-      rescue Net::OpenTimeout, Net::ReadTimeout
-        { 'error' => 'Request timed out' }
+            response = http.request(request)
+            return JSON.parse(response.body)
+          rescue JSON::ParserError
+            return { 'error' => response&.body || 'Parse error' }
+          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
+            last_error = e.message
+            sleep(2 ** attempt) if attempt < retries - 1
+          end
+        end
+        
+        { 'error' => "Failed after #{retries} retries: #{last_error}" }
       end
 
       def build_search_query(text, limit, type)

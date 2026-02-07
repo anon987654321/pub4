@@ -14,6 +14,8 @@ module MASTER
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     SPENDING_CAP = 10.0
+    RATE_LIMIT_PER_MINUTE = 30  # Max requests per minute
+    MAX_COST_PER_QUERY = 0.50   # Max cost per single query
 
     # OpenRouter API
     API_BASE = "https://openrouter.ai/api/v1"
@@ -25,6 +27,31 @@ module MASTER
 
     class << self
       attr_accessor :current_model, :current_tier
+
+      # Rate limiting state
+      def rate_limit_state
+        @rate_limit_state ||= { requests: [], window_start: Time.now }
+      end
+
+      def check_rate_limit!
+        now = Time.now
+        state = rate_limit_state
+        
+        # Clean old requests (older than 1 minute)
+        state[:requests].reject! { |t| now - t > 60 }
+        
+        if state[:requests].size >= RATE_LIMIT_PER_MINUTE
+          oldest = state[:requests].min
+          wait_time = 60 - (now - oldest)
+          if wait_time > 0
+            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
+            sleep(wait_time)
+            state[:requests].clear
+          end
+        end
+        
+        state[:requests] << now
+      end
 
       def models
         @models ||= load_models
@@ -115,6 +142,18 @@ module MASTER
               json_schema: nil, provider: nil, stream: false, online: false, messages: nil)
 
         return Result.err("Missing OPENROUTER_API_KEY") unless configured?
+
+        # Rate limit check
+        check_rate_limit!
+
+        # Pre-query cost estimate (rough: ~1k tokens in + 500 out)
+        primary_model = model || select_model_for_tier(tier || self.tier)
+        if primary_model && model_rates[primary_model]
+          est_cost = estimate_cost(primary_model, tokens_in: 1000, tokens_out: 500)
+          if est_cost > MAX_COST_PER_QUERY
+            return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{MAX_COST_PER_QUERY}")
+          end
+        end
 
         # Model selection with fallbacks
         primary = model || select_model_for_tier(tier || self.tier)
@@ -273,23 +312,48 @@ module MASTER
 
         req.body = body.to_json
 
-        http = Net::HTTP.new(uri.hostname, uri.port)
-        http.use_ssl = true
-        http.open_timeout = 30
-        http.read_timeout = 120
-        http.write_timeout = 30
+        # Retry with exponential backoff
+        max_retries = 3
+        retry_count = 0
+        last_error = nil
 
-        if stream
-          execute_streaming(http, req)
-        else
-          execute_blocking(http, req)
+        while retry_count < max_retries
+          begin
+            http = Net::HTTP.new(uri.hostname, uri.port)
+            http.use_ssl = true
+            http.open_timeout = 30
+            http.read_timeout = 120
+            http.write_timeout = 30
+
+            result = if stream
+                       execute_streaming(http, req)
+                     else
+                       execute_blocking(http, req)
+                     end
+
+            # Success or non-retryable error
+            return result if result.ok? || !retryable_error?(result.error)
+            
+            last_error = result.error
+          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+            last_error = e.message
+          end
+
+          retry_count += 1
+          break if retry_count >= max_retries
+
+          # Exponential backoff: 1s, 2s, 4s
+          sleep_time = 2 ** (retry_count - 1)
+          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Logging)
+          sleep(sleep_time)
         end
-      rescue Net::OpenTimeout
-        Result.err("Connection timeout (30s)")
-      rescue Net::ReadTimeout
-        Result.err("Read timeout (120s)")
-      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-        Result.err("Network error: #{e.message}")
+
+        Result.err("Failed after #{max_retries} retries: #{last_error}")
+      end
+
+      def retryable_error?(error)
+        return false unless error.is_a?(String)
+        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
 
       def execute_blocking(http, req)
@@ -463,12 +527,20 @@ module MASTER
         cost
       end
 
-      def estimate_cost(char_count, model)
-        base_model = model.to_s.split(":").first
-        rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
-        tokens_in = (char_count / 4.0).ceil
-        tokens_out = 500
-        (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
+      def estimate_cost(model_or_chars, tokens_in: nil, tokens_out: 500)
+        if tokens_in
+          # New signature: estimate_cost(model, tokens_in: x, tokens_out: y)
+          model = model_or_chars.to_s.split(":").first
+          rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+          (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
+        else
+          # Legacy signature: estimate_cost(char_count, model) - kept for compatibility
+          char_count = model_or_chars
+          model = tokens_out.to_s.split(":").first  # tokens_out is actually model in legacy call
+          rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+          est_tokens_in = (char_count / 4.0).ceil
+          (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
+        end
       end
     end
   end

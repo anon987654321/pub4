@@ -8,12 +8,15 @@ module MASTER
   class Session
     attr_reader :id, :created_at, :history, :metadata
 
+    AUTOSAVE_INTERVAL = 30  # seconds
+
     def initialize(id: nil)
       @id = id || SecureRandom.uuid
       @created_at = Time.now.utc
       @history = []
       @metadata = {}
       @dirty = false
+      @last_save = Time.now
     end
 
     def add(role:, content:, model: nil, cost: nil)
@@ -27,6 +30,9 @@ module MASTER
 
       @history << entry
       @dirty = true
+      
+      # Auto-save periodically
+      autosave_if_needed
       entry
     end
 
@@ -75,6 +81,12 @@ module MASTER
       @dirty
     end
 
+    def autosave_if_needed
+      return unless @dirty
+      return if Time.now - @last_save < AUTOSAVE_INTERVAL
+      save
+    end
+
     def save
       return unless @dirty
 
@@ -87,6 +99,7 @@ module MASTER
 
       Memory.save_session(@id, data)
       @dirty = false
+      @last_save = Time.now
       true
     end
 
@@ -124,6 +137,28 @@ module MASTER
 
     def self.start_new
       @current = new
+    end
+
+    # Install signal handlers for crash recovery
+    def self.install_crash_handlers
+      %w[INT TERM].each do |signal|
+        Signal.trap(signal) do
+          save_on_crash
+          exit(signal == "INT" ? 130 : 143)
+        end
+      end
+    rescue ArgumentError
+      # Some signals not available on all platforms
+    end
+
+    def self.save_on_crash
+      return unless @current&.dirty?
+      
+      @current.instance_variable_set(:@metadata, 
+        @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
+      @current.save
+    rescue StandardError
+      # Best effort on crash
     end
 
     def to_h

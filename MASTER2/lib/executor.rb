@@ -50,12 +50,32 @@ module MASTER
 
       UI.dim("  ⚡ Pattern: #{@pattern}") if ENV["DEBUG"]
       
-      case @pattern
-      when :react     then execute_react(goal, tier: tier || :strong)
-      when :pre_act   then execute_pre_act(goal, tier: tier || :strong)
-      when :rewoo     then execute_rewoo(goal, tier: tier || :strong)
-      when :reflexion then execute_reflexion(goal, tier: tier || :strong)
-      else execute_react(goal, tier: tier || :strong)
+      result = execute_pattern(@pattern, goal, tier: tier || :strong)
+      
+      # Fallback to simpler patterns if primary fails
+      if !result.ok? && @pattern != :react
+        UI.warn("Pattern #{@pattern} failed, falling back to :react")
+        @step = 0
+        @history = []
+        result = execute_pattern(:react, goal, tier: tier || :strong)
+      end
+      
+      # Final fallback to direct if all else fails
+      if !result.ok? && @step > 0
+        UI.warn("All patterns failed, attempting direct response")
+        result = direct_ask("Given this context, provide the best answer you can:\n\n#{goal}", tier: :fast)
+      end
+      
+      result
+    end
+
+    def execute_pattern(pattern, goal, tier:)
+      case pattern
+      when :react     then execute_react(goal, tier: tier)
+      when :pre_act   then execute_pre_act(goal, tier: tier)
+      when :rewoo     then execute_rewoo(goal, tier: tier)
+      when :reflexion then execute_reflexion(goal, tier: tier)
+      else execute_react(goal, tier: tier)
       end
     end
 
