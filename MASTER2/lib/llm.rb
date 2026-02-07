@@ -95,17 +95,22 @@ module MASTER
     end
 
     def self.remaining
-      BUDGET_LIMIT - DB.total_cost
+      budget_limit = DB.config("budget_limit")&.to_f || BUDGET_LIMIT
+      budget_limit - DB.total_cost
     end
 
     def self.tier
       remaining_budget = remaining
       return nil if remaining_budget <= 0
 
+      # Load thresholds from config with fallback to constants
+      strong_threshold = DB.config("budget_threshold_strong")&.to_f || STRONG_THRESHOLD
+      fast_threshold = DB.config("budget_threshold_fast")&.to_f || FAST_THRESHOLD
+
       # Return the most powerful tier we can afford
-      if remaining_budget > STRONG_THRESHOLD
+      if remaining_budget > strong_threshold
         :strong
-      elsif remaining_budget > FAST_THRESHOLD
+      elsif remaining_budget > fast_threshold
         :fast
       else
         :cheap

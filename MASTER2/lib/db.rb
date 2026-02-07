@@ -86,6 +86,12 @@ module MASTER
             output_cost REAL,
             provider TEXT
           );
+
+          CREATE TABLE IF NOT EXISTS compression_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            pattern TEXT
+          );
         SQL
     end
 
@@ -95,6 +101,8 @@ module MASTER
         seed_zsh_patterns
         seed_openbsd_patterns
         seed_models
+        seed_compression
+        seed_budget
     end
 
     def self.seed_axioms
@@ -252,6 +260,62 @@ module MASTER
         end
     end
 
+    def self.seed_compression
+        compression_path = "#{MASTER.root}/data/compression.yml"
+        return unless File.exist?(compression_path)
+
+        data = YAML.safe_load_file(compression_path)
+        return unless data.is_a?(Hash)
+
+        # Seed filler words
+        if data["fillers"]&.is_a?(Array)
+          data["fillers"].each do |word|
+            @connection.execute(
+              "INSERT OR REPLACE INTO compression_patterns (category, pattern) VALUES (?, ?)",
+              ["filler", word]
+            )
+          end
+        end
+
+        # Seed phrases
+        if data["phrases"]&.is_a?(Array)
+          data["phrases"].each do |phrase|
+            @connection.execute(
+              "INSERT OR REPLACE INTO compression_patterns (category, pattern) VALUES (?, ?)",
+              ["phrase", phrase]
+            )
+          end
+        end
+    end
+
+    def self.seed_budget
+        budget_path = "#{MASTER.root}/data/budget.yml"
+        return unless File.exist?(budget_path)
+
+        data = YAML.safe_load_file(budget_path)
+        return unless data.is_a?(Hash) && data["budget"]
+
+        budget = data["budget"]
+        
+        # Store budget limit
+        if budget["limit"]
+          @connection.execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+            ["budget_limit", budget["limit"].to_s]
+          )
+        end
+        
+        # Store thresholds
+        if budget["thresholds"]&.is_a?(Hash)
+          budget["thresholds"].each do |tier, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["budget_threshold_#{tier}", value.to_s]
+            )
+          end
+        end
+    end
+
     def self.zsh_patterns
         @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
     end
@@ -333,6 +397,14 @@ module MASTER
     def self.config(key)
       result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
       result ? result["value"] : nil
+    end
+
+    def self.compression_patterns(category: nil)
+      if category
+        @connection.execute("SELECT * FROM compression_patterns WHERE category = ?", [category])
+      else
+        @connection.execute("SELECT * FROM compression_patterns")
+      end
     end
   end
 end

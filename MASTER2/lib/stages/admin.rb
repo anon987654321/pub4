@@ -38,14 +38,36 @@ module MASTER
       private
 
       def admin?(text, intent)
-        intent == :admin || text.match?(/\b(pf|httpd|relayd|acme-client|bgpd|ospfd)\b/i)
+        return true if intent == :admin
+        
+        # Use patterns from DB
+        config_paths = DB.openbsd_patterns(category: "config_paths")
+        services = config_paths.map { |p| p["key"] }.compact
+        
+        # Build dynamic pattern from DB data
+        return false if services.empty?
+        pattern = /\b(#{services.join("|")})\b/i
+        text.match?(pattern)
+      rescue
+        # Fallback to hardcoded patterns if DB query fails
+        text.match?(/\b(pf|httpd|relayd|acme-client|bgpd|ospfd)\b/i)
       end
 
       def detect(text)
+        # Try to detect from DB patterns first
+        config_paths = DB.openbsd_patterns(category: "config_paths")
+        config_paths.each do |pattern|
+          key = pattern["key"]
+          return key.to_sym if text.match?(/\b#{Regexp.escape(key)}\b/i)
+        end
+        
+        # Fallback to basic detection
         return :pf if text.match?(/\bpf\b/i)
         return :httpd if text.match?(/\bhttpd\b/i)
         return :relayd if text.match?(/\brelayd\b/i)
         return :acme if text.match?(/\bacme\b/i)
+        :generic
+      rescue
         :generic
       end
 

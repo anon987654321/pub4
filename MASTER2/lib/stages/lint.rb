@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+require "json"
+
+begin
+  require "ruby_llm-tribunal"
+rescue LoadError
+  # ruby_llm-tribunal not available, fall back to regex heuristics
+end
+
 module MASTER
   module Stages
     # Universal Refactor: Enforces axioms from axioms.yml
@@ -43,9 +51,45 @@ module MASTER
       private
 
       def check_axiom_violation(text, axiom)
-        # TODO: Implement actual AST analysis for code
-        # For now, do simple pattern matching based on axiom ID
-
+        # Try LLM-as-Judge first if available
+        model = LLM.pick
+        if model && defined?(RubyLLM::Tribunal)
+          return check_with_llm(text, axiom, model)
+        end
+        
+        # Fallback to regex heuristics
+        check_with_regex(text, axiom)
+      end
+      
+      def check_with_llm(text, axiom, model)
+        prompt = <<~PROMPT
+          Axiom: #{axiom["title"]} — #{axiom["statement"]}
+          
+          Does this text violate this axiom? Return JSON:
+          {"violated": true/false, "reason": "one sentence explanation"}
+          
+          Text: #{text[0..2000]}
+        PROMPT
+        
+        response = LLM.chat(model: model).ask(prompt)
+        result = JSON.parse(response.content)
+        
+        # Track cost
+        if response.respond_to?(:tokens_in) && response.respond_to?(:tokens_out)
+          LLM.log_cost(
+            model: model,
+            tokens_in: response.tokens_in || 0,
+            tokens_out: response.tokens_out || 0
+          )
+        end
+        
+        result["violated"] ? result["reason"] : nil
+      rescue
+        nil  # Can't check, don't block
+      end
+      
+      def check_with_regex(text, axiom)
+        # Simple pattern matching based on axiom ID
         case axiom["id"]
         when "DRY"
           # Check for repeated code patterns

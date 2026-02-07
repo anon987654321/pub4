@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module MASTER
   module Stages
     # Pressure Tank: Compresses and refines user input through 8-phase discovery
@@ -60,6 +62,36 @@ module MASTER
       end
 
       def classify(text)
+        # Fast path: regex pre-filter for obvious cases
+        return :command if text.match?(/^(create|delete|update|run|execute)\b/i)
+        
+        # LLM path: use cheap model for structured classification
+        model = LLM.pick
+        return regex_fallback_classify(text) unless model
+        
+        prompt = <<~PROMPT
+          Classify this input. Return ONLY one word: question, refactor, admin, command, or general.
+          Input: #{text}
+        PROMPT
+        
+        response = LLM.chat(model: model).ask(prompt)
+        result = response.content.strip.downcase.to_sym
+        
+        # Track cost
+        if response.respond_to?(:tokens_in) && response.respond_to?(:tokens_out)
+          LLM.log_cost(
+            model: model,
+            tokens_in: response.tokens_in || 0,
+            tokens_out: response.tokens_out || 0
+          )
+        end
+        
+        result
+      rescue
+        regex_fallback_classify(text)
+      end
+      
+      def regex_fallback_classify(text)
         # Simple keyword-based intent detection
         return :question if text.match?(/\?$|\bwhat\b|\bhow\b|\bwhy\b|\bwhen\b/i)
         return :refactor if text.match?(/\brefactor\b|\bimprove\b|\boptimize\b/i)
@@ -69,6 +101,34 @@ module MASTER
       end
 
       def extract(text)
+        model = LLM.pick
+        return regex_fallback_extract(text) unless model
+        
+        prompt = <<~PROMPT
+          Extract entities from this text. Return JSON:
+          {"files": [...], "services": [...], "configs": [...]}
+          Only include entities actually mentioned. Empty arrays for missing types.
+          Text: #{text}
+        PROMPT
+        
+        response = LLM.chat(model: model).ask(prompt)
+        result = JSON.parse(response.content, symbolize_names: true)
+        
+        # Track cost
+        if response.respond_to?(:tokens_in) && response.respond_to?(:tokens_out)
+          LLM.log_cost(
+            model: model,
+            tokens_in: response.tokens_in || 0,
+            tokens_out: response.tokens_out || 0
+          )
+        end
+        
+        result
+      rescue
+        regex_fallback_extract(text)
+      end
+      
+      def regex_fallback_extract(text)
         entities = {}
 
         # Extract file paths
@@ -86,13 +146,27 @@ module MASTER
         # Basic Strunk & White: remove filler words
         compressed = text.dup
         
-        # Remove common filler phrases
-        fillers = [
-          /\b(just|really|very|quite|rather|somewhat|basically|actually|literally)\b/i,
-          /\b(in order to|due to the fact that|at this point in time)\b/i
-        ]
-
-        fillers.each { |pattern| compressed = compressed.gsub(pattern, "") }
+        # Load patterns from DB, with fallback to hardcoded
+        begin
+          filler_words = DB.compression_patterns(category: "filler").map { |p| p["pattern"] }
+          phrases = DB.compression_patterns(category: "phrase").map { |p| p["pattern"] }
+          
+          unless filler_words.empty?
+            filler_pattern = /\b(#{filler_words.join("|")})\b/i
+            compressed = compressed.gsub(filler_pattern, "")
+          end
+          
+          phrases.each do |phrase|
+            compressed = compressed.gsub(/#{Regexp.escape(phrase)}/i, "")
+          end
+        rescue
+          # Fallback to hardcoded patterns
+          fillers = [
+            /\b(just|really|very|quite|rather|somewhat|basically|actually|literally)\b/i,
+            /\b(in order to|due to the fact that|at this point in time)\b/i
+          ]
+          fillers.each { |pattern| compressed = compressed.gsub(pattern, "") }
+        end
 
         # Clean up extra whitespace
         compressed = compressed.gsub(/\s+/, " ").strip
