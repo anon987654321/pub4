@@ -7,11 +7,28 @@ Encoding.default_internal = Encoding::UTF_8
 $stdout.set_encoding(Encoding::UTF_8)
 $stderr.set_encoding(Encoding::UTF_8)
 
+require "json"
 require_relative "../lib/master"
 
 MASTER::DB.setup
+MASTER::Session.install_crash_handlers
 
 case ARGV[0]
+when "--help", "-h"
+  puts "MASTER v#{MASTER::VERSION}"
+  puts "\nUsage: master [OPTIONS]"
+  puts "\nOptions:"
+  puts "  -h, --help        Show this help message"
+  puts "  -v, --version     Show version information"
+  puts "  -w, --web         Start web-only mode (no REPL)"
+  puts "  -p, --pipe        Pipe mode for automation"
+  puts "  -t, --tts [TOPIC] TTS test mode - continuous talking"
+  puts "  -d, --daemon      Daemon mode for agentd"
+  puts "\nDefault: Start REPL with integrated web server"
+  exit 0
+when "--version", "-v"
+  puts "MASTER v#{MASTER::VERSION}"
+  exit 0
 when "--web", "-w"
   # Web-only mode (no REPL)
   server = MASTER::Server.new

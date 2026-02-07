@@ -60,6 +60,66 @@ Timeless rules from authoritative sources:
 
 **ABSOLUTE** axioms halt on violation. **PROTECTED** axioms warn.
 
+### Language Axioms
+
+Language axioms are a comprehensive set of 41 timeless principles organized into 7 categories:
+
+- **Engineering** (11) — Core software engineering principles (SRP, OCP, DRY, KISS, composability)
+- **Structural** (8) — Refactoring operations (merge, flatten, decouple, hoist)
+- **Process** (6) — Development workflow (test-first, one-change, measure-then-optimize)
+- **Communication** (4) — Code as literature (concise, self-explaining)
+- **Meta** (4) — Self-governance (show-cost-first, depth-on-demand)
+- **Resilience** (3) — Systems that survive (degrade-gracefully, expect-failure)
+- **Aesthetic** (5) — Beauty in craft (least-power, just-enough)
+
+Each axiom includes:
+- **ID** — Unique identifier
+- **Title** — Short name
+- **Statement** — Actionable, validatable principle
+- **Source** — Authoritative reference (e.g., "The Pragmatic Programmer", "SOLID Principles")
+- **Category** — Logical grouping
+- **Protection Level** — ABSOLUTE (halt on violation) or PROTECTED (warn only)
+
+#### View Language Axioms Stats
+
+In the REPL, use the `axioms-stats` or `axioms` command:
+
+```
+master> axioms-stats
+Language Axioms Summary
+========================================
+
+Total axioms: 41
+
+By Category:
+  engineering          11
+  structural           8
+  process              6
+  aesthetic            5
+  communication        4
+  meta                 4
+  resilience           3
+
+By Protection Level:
+  PROTECTED            40
+  ABSOLUTE             1
+```
+
+#### Data Source
+
+Language axioms are stored in `data/axioms.yml` as a data-driven YAML file. Each entry follows a consistent structure:
+
+```yaml
+- id: "ONE_SOURCE"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "One Source of Truth"
+  statement: "Every piece of knowledge has exactly one authoritative representation."
+  source: "The Pragmatic Programmer"
+```
+
+To add new axioms, edit `data/axioms.yml` following the existing structure.
+
 ## Council
 
 Twelve personas. Three hold veto:
@@ -99,6 +159,7 @@ pattern       Switch execution pattern (react/pre_act/rewoo/reflexion)
 patterns      List execution patterns
 opportunities Analyze codebase for improvements
 selftest      Run MASTER through itself
+axioms-stats  Show language axioms statistics
 session       Session management
 budget        Show remaining budget
 health        System health check

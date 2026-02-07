@@ -82,7 +82,7 @@ module MASTER
 
     def total_cost
       costs = read_collection("costs")
-      costs.sum { |c| c["cost"] || c[:cost] || 0 }
+      costs.sum { |c| c[:cost] || 0 }
     end
 
     def recent_costs(limit: 10)
@@ -219,10 +219,13 @@ module MASTER
 
     def write_collection(name, data)
       path = file_path(name)
+      temp_path = "#{path}.tmp"
+      
       synchronize do
-        File.open(path, "w") do |f|
+        File.open(temp_path, "w") do |f|
           data.each { |item| f.puts(JSON.generate(item)) }
         end
+        File.rename(temp_path, path)
       end
     end
 

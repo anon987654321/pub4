@@ -6,7 +6,7 @@ require "fileutils"
 module MASTER
   # Memory - Session cache and persistence
   module Memory
-    COMPRESS_AFTER_MESSAGES = 11  # Fixed: was 10, kept 10 (off-by-one)
+    COMPRESS_AFTER_MESSAGES = 10  # Fixed: was 11, should be 10
     KEEP_FIRST_N = 2
     KEEP_LAST_N = 8
 
@@ -70,9 +70,9 @@ module MASTER
         
         list_sessions.each do |session_id|
           data = load_session(session_id)
-          next unless data && data[:messages]
+          next unless data && data[:history]
           
-          data[:messages].each do |msg|
+          data[:history].each do |msg|
             content = msg[:content].to_s.downcase
             # Score by number of matching words
             score = query_words.count { |w| content.include?(w) }
