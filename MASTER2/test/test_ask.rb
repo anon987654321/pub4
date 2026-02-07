@@ -11,7 +11,7 @@ class TestAsk < Minitest::Test
 
   def test_returns_error_when_no_model_available
     # Exhaust budget to ensure no model available
-    MASTER::DB.record_cost(
+    MASTER::DB.log_cost(
       model: "test-model",
       tokens_in: 1_000_000,
       tokens_out: 1_000_000,
@@ -19,7 +19,7 @@ class TestAsk < Minitest::Test
     )
 
     result = @stage.call({ text: "test input" })
-    refute result.ok?
+    refute result.success?
     assert_match(/No LLM model available/, result.error)
   end
 
@@ -32,7 +32,7 @@ class TestAsk < Minitest::Test
     
     # The result will likely be an error (no API keys) but we can check the error structure
     # OR if somehow it succeeds (shouldn't), we can check the success structure
-    if result.ok?
+    if result.success?
       assert result.value[:response], "Should have response key"
       assert result.value[:tokens_in], "Should have tokens_in key"
       assert result.value[:tokens_out], "Should have tokens_out key"
@@ -50,6 +50,6 @@ class TestAsk < Minitest::Test
     
     # If it fails (expected without API keys), that's fine
     # We're just testing that the stage attempts to make the call
-    assert result.ok? || !result.ok?
+    assert result.success? || !result.success?
   end
 end

@@ -77,6 +77,8 @@ module MASTER
 
     # Pick a model from the current tier with healthy circuit
     def pick
+      return nil unless ENV["OPENROUTER_API_KEY"] # No API key, no model
+      
       current_tier = tier
       return nil unless current_tier
 
@@ -92,12 +94,17 @@ module MASTER
 
     # Create a chat instance with ruby_llm gem
     def chat(model:)
+      unless ENV["OPENROUTER_API_KEY"]
+        raise ConfigurationError, "Missing OPENROUTER_API_KEY environment variable"
+      end
+      
       RubyLLM.chat(
         provider: :openrouter,
-        model: model,
-        api_key: ENV["OPENROUTER_API_KEY"]
+        model: model
       )
     end
+    
+    class ConfigurationError < StandardError; end
 
     # Select model based on text length (for backward compatibility)
     def select_model(text_length)

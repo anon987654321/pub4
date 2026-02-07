@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'json'
-require 'net/http'
-require 'uri'
 require 'fileutils'
 require 'sqlite3'
+require 'dry/monads'
 
 begin
   require 'dotenv/load'
@@ -18,9 +19,24 @@ module MASTER
   end
 end
 
-require_relative 'parser/multi'
+# Load core modules
+require_relative 'db'
 require_relative 'llm'
-require_relative 'autonomy'
-require_relative 'engine'
-require_relative 'persistence'
+require_relative 'boot'
+require_relative 'config'
+require_relative 'pledge'
+require_relative 'pipeline'
 require_relative 'cli'
+
+# Load stages
+require_relative 'stages/compress'
+require_relative 'stages/guard'
+require_relative 'stages/debate'
+require_relative 'stages/ask'
+require_relative 'stages/lint'
+require_relative 'stages/admin'
+require_relative 'stages/render'
+
+# Initialize DB and LLM on load
+MASTER::DB.setup unless ENV['SKIP_DB_SETUP']
+MASTER::LLM.configure unless ENV['SKIP_LLM_CONFIG']

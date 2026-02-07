@@ -20,7 +20,7 @@ module MASTER
 
     def call(input)
       @stages.reduce(Success(input)) do |result, stage|
-        result.flat_map do |data|
+        result.bind do |data|
           # Note: Timeout.timeout uses Thread#raise which may interrupt at any point.
           # This is acceptable for the current use case but could leave resources
           # in inconsistent states. Consider a safer timeout mechanism for production.
