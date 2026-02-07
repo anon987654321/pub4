@@ -10,8 +10,9 @@ module MASTER
       @value = value
       @error = error
       # Freeze to prevent mutation after construction
-      @value.freeze if @value && !@value.frozen?
-      @error.freeze if @error && !@error.frozen?
+      # Check respond_to? to avoid issues with BasicObject subclasses
+      @value.freeze if @value && @value.respond_to?(:freeze) && !@value.frozen?
+      @error.freeze if @error && @error.respond_to?(:freeze) && !@error.frozen?
       freeze
     end
 

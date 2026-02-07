@@ -53,8 +53,15 @@ module MASTER
           $stderr.puts
 
           # Validate LLM response contract
-          unless response.respond_to?(:content) && response.content
-            return Result.err("Invalid LLM response: missing or empty content")
+          unless response.respond_to?(:content) && !response.content.nil?
+            return Result.err("Invalid LLM response: missing or nil content")
+          end
+          
+          # Allow empty string content (valid for some responses)
+          # but check that content exists
+          content = response.content
+          unless content.is_a?(String)
+            return Result.err("Invalid LLM response: content must be a string")
           end
           
           tokens_in = response.input_tokens rescue 0

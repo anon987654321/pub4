@@ -170,8 +170,24 @@ module MASTER
           "Written to \\#{match[1]}"
           
         when /^shell_command/
-          # Try multiple parsing patterns
-          cmd = action_str[/["']([^"']+)["']/, 1] || action_str[/{"([^\"]+)"/, 1] || action_str.split.last
+          # Parse command with proper quote matching
+          # Try different patterns in order of preference
+          cmd = nil
+          
+          # Pattern 1: Double-quoted string
+          if action_str =~ /"([^"]+)"/
+            cmd = $1
+          # Pattern 2: Single-quoted string
+          elsif action_str =~ /'([^']+)'/
+            cmd = $1
+          # Pattern 3: JSON-style {"command"}
+          elsif action_str =~ /\{"([^"]+)"\}/
+            cmd = $1
+          # Pattern 4: Last resort - everything after shell_command
+          else
+            parts = action_str.split(/\s+/, 2)
+            cmd = parts[1] if parts.length > 1
+          end
           
           return "Error: No command specified" if cmd.nil? || cmd.empty?
           
@@ -203,18 +219,26 @@ module MASTER
       end
 
       def self.execute_code_sandboxed(code)
-        # Try to use Pledge for sandboxing on OpenBSD
+        # Note: Pledge sandboxing has limited effectiveness here because
+        # the code executes in a separate Ruby process via Open3.capture3.
+        # For stronger sandboxing, consider:
+        # 1. Using a pre-sandboxed Ruby interpreter
+        # 2. Running in a container or jail
+        # 3. Using SELinux/AppArmor policies
+        # This implementation provides basic file access restriction on OpenBSD.
+        
         begin
           require 'tempfile'
           Tempfile.create(['react_exec', '.rb']) do |f|
             f.write(code)
             f.flush
             
-            # Attempt to apply Pledge sandboxing
+            # Attempt to apply Pledge sandboxing (OpenBSD only)
+            # Note: This affects the parent process, not the child
             begin
               require_relative 'openbsd_pledge'
               Pledge.unveil(f.path, 'r')
-              Pledge.pledge('stdio rpath')
+              Pledge.pledge('stdio rpath exec')
             rescue LoadError, NameError
               # Pledge not available - continue without sandboxing
             end

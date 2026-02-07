@@ -42,7 +42,7 @@ module MASTER
 
         # Validate input length
         if line.bytesize > max_input_length
-          $stderr.puts "error: Input too long (max #{max_input_length} bytes)"
+          $stderr.puts "error: Input too long (#{line.bytesize} bytes, max #{max_input_length} bytes)"
           next
         end
         
