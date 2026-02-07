@@ -43,6 +43,11 @@ module MASTER
           enriched[:openbsd_patterns] = DB.get_openbsd_patterns || []
         end
 
+        # Load gh patterns for github intents
+        if intent == :github
+          enriched[:gh_patterns] = DB.get_gh_patterns || []
+        end
+
         # Phase 8: Return enriched input
         Result.ok(input.is_a?(Hash) ? input.merge(enriched) : enriched)
       end
@@ -63,6 +68,7 @@ module MASTER
         return :refactor if text.match?(/\brefactor\b|\bimprove\b|\boptimize\b/i)
         return :admin if text.match?(/\bpf\b|\bhttpd\b|\brelayd\b|\bconfig\b/i)
         return :command if text.match?(/^(create|delete|update|run|execute)\b/i)
+        return :github if text.match?(/\bgithub\b|\bgh\b|\bpr\b|\bissue\b|\bworkflow\b/i)
         :general
       end
 

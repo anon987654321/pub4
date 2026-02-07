@@ -2,6 +2,7 @@
 
 require "sqlite3"
 require "yaml"
+require "json"
 
 module MASTER
   module DB
@@ -76,6 +77,38 @@ module MASTER
             command TEXT,
             replacement TEXT
           );
+
+          CREATE TABLE IF NOT EXISTS agents (
+            id TEXT PRIMARY KEY,
+            parent_id TEXT,
+            scope TEXT,
+            status TEXT DEFAULT 'pending',
+            task_json TEXT,
+            result_json TEXT,
+            budget REAL,
+            budget_spent REAL DEFAULT 0,
+            axiom_filter TEXT,
+            user_agent TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            finished_at TEXT
+          );
+
+          CREATE TABLE IF NOT EXISTS agent_reputation (
+            agent_scope TEXT PRIMARY KEY,
+            total_runs INTEGER DEFAULT 0,
+            successful INTEGER DEFAULT 0,
+            rejected INTEGER DEFAULT 0,
+            injection_attempts INTEGER DEFAULT 0,
+            timeouts INTEGER DEFAULT 0,
+            trust_score REAL DEFAULT 1.0
+          );
+
+          CREATE TABLE IF NOT EXISTS gh_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action TEXT,
+            pattern TEXT,
+            category TEXT DEFAULT 'operation'
+          );
         SQL
       end
 
@@ -84,6 +117,7 @@ module MASTER
         seed_council
         seed_zsh_patterns
         seed_openbsd_patterns
+        seed_gh_patterns
       end
 
       def seed_axioms
@@ -307,6 +341,82 @@ module MASTER
       def get_config(key)
         result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
         result ? result["value"] : nil
+      end
+
+      def record_agent(agent)
+        task_json = JSON.generate(agent.task) rescue "{}"
+        result_json = agent.result ? (agent.result.ok? ? JSON.generate(agent.result.value) : JSON.generate({ error: agent.result.error })) : "{}"
+
+        @connection.execute(
+          "INSERT OR REPLACE INTO agents (id, parent_id, scope, status, task_json, result_json, budget, user_agent, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+          [agent.id, agent.parent_id, agent.scope, agent.status.to_s, task_json, result_json, agent.budget, agent.user_agent]
+        )
+
+        update_reputation(agent)
+      end
+
+      def update_reputation(agent)
+        scope = agent.scope
+        @connection.execute("INSERT OR IGNORE INTO agent_reputation (agent_scope) VALUES (?)", [scope])
+        @connection.execute("UPDATE agent_reputation SET total_runs = total_runs + 1 WHERE agent_scope = ?", [scope])
+
+        case agent.status
+        when :completed
+          @connection.execute("UPDATE agent_reputation SET successful = successful + 1 WHERE agent_scope = ?", [scope])
+        when :timeout
+          @connection.execute("UPDATE agent_reputation SET timeouts = timeouts + 1 WHERE agent_scope = ?", [scope])
+        when :failed
+          @connection.execute("UPDATE agent_reputation SET rejected = rejected + 1 WHERE agent_scope = ?", [scope])
+        end
+
+        # Recalculate trust score
+        rep = @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
+        if rep && rep["total_runs"].to_i > 0
+          trust = rep["successful"].to_f / rep["total_runs"].to_f
+          trust -= (rep["injection_attempts"].to_i * 0.1)
+          trust = [0.0, [trust, 1.0].min].max
+          @connection.execute("UPDATE agent_reputation SET trust_score = ? WHERE agent_scope = ?", [trust, scope])
+        end
+      end
+
+      def get_agent_reputation(scope)
+        @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
+      end
+
+      def get_agents(parent_id: nil)
+        if parent_id
+          @connection.execute("SELECT * FROM agents WHERE parent_id = ?", [parent_id])
+        else
+          @connection.execute("SELECT * FROM agents")
+        end
+      end
+
+      def seed_gh_patterns
+        gh_path = "#{MASTER.root}/data/gh_patterns.yml"
+        return unless File.exist?(gh_path)
+
+        data = YAML.safe_load_file(gh_path)
+        return unless data.is_a?(Hash)
+
+        operations = data["operations"] || []
+        operations.each do |op|
+          @connection.execute(
+            "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'operation')",
+            [op["action"], op["pattern"]]
+          )
+        end
+
+        forbidden = data["forbidden"] || []
+        forbidden.each do |f|
+          @connection.execute(
+            "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'forbidden')",
+            [f["command"], f["replacement"]]
+          )
+        end
+      end
+
+      def get_gh_patterns
+        @connection.execute("SELECT * FROM gh_patterns")
       end
     end
   end
