@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "tmpdir"
+require "open3"
 
 module MASTER
   # Staging - Staged self-refactor with validation and rollback
