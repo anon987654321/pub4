@@ -131,7 +131,8 @@ class TestRefactor < Minitest::Test
       rounds: 1
     })
     
-    mock_chamber.expect(:deliberate, mock_result, [String, Hash])
+    # deliberate expects (code, filename: basename)
+    mock_chamber.expect(:deliberate, mock_result, [String], filename: String)
     
     MASTER::Chamber.stub :new, mock_chamber do
       # Capture output
@@ -140,9 +141,9 @@ class TestRefactor < Minitest::Test
       end.join
       
       # Should show diff in preview mode
-      assert_match /---/, output
-      assert_match /\+\+\+/, output
-      assert_match /Proposals/, output
+      assert_match(/---/, output)
+      assert_match(/\+\+\+/, output)
+      assert_match(/Proposals/, output)
     end
     
     mock_chamber.verify
@@ -160,7 +161,7 @@ class TestRefactor < Minitest::Test
       rounds: 1
     })
     
-    mock_chamber.expect(:deliberate, mock_result, [String, Hash])
+    mock_chamber.expect(:deliberate, mock_result, [String], filename: String)
     
     MASTER::Chamber.stub :new, mock_chamber do
       output = capture_io do
@@ -168,9 +169,9 @@ class TestRefactor < Minitest::Test
       end.join
       
       # Should show full output in raw mode
-      assert_match /class Calculator/, output
-      assert_match /plus/, output  # Modified version
-      refute_match /---/, output   # No diff markers
+      assert_match(/class Calculator/, output)
+      assert_match(/plus/, output)  # Modified version
+      refute_match(/---/, output)   # No diff markers
     end
     
     mock_chamber.verify
@@ -188,7 +189,7 @@ class TestRefactor < Minitest::Test
       rounds: 1
     })
     
-    mock_chamber.expect(:deliberate, mock_result, [String, Hash])
+    mock_chamber.expect(:deliberate, mock_result, [String], filename: String)
     
     MASTER::Chamber.stub :new, mock_chamber do
       # Simulate user typing "y" and pressing enter
@@ -198,8 +199,8 @@ class TestRefactor < Minitest::Test
         end.join
         
         # Should show confirmation prompt and success message
-        assert_match /Apply these changes/, output
-        assert_match /Changes applied/, output
+        assert_match(/Apply these changes/, output)
+        assert_match(/Changes applied/, output)
       end
     end
     
@@ -224,7 +225,7 @@ class TestRefactor < Minitest::Test
       rounds: 1
     })
     
-    mock_chamber.expect(:deliberate, mock_result, [String, Hash])
+    mock_chamber.expect(:deliberate, mock_result, [String], filename: String)
     
     MASTER::Chamber.stub :new, mock_chamber do
       # Simulate user typing "n" and pressing enter
@@ -234,8 +235,8 @@ class TestRefactor < Minitest::Test
         end.join
         
         # Should show rejection message
-        assert_match /Apply these changes/, output
-        assert_match /Changes not applied/, output
+        assert_match(/Apply these changes/, output)
+        assert_match(/Changes not applied/, output)
       end
     end
     
