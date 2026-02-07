@@ -71,6 +71,7 @@ module MASTER
         reader = defined?(TTY::Reader) ? TTY::Reader.new : nil
         pipeline = new
         session = Session.current
+        last_interrupt = nil  # Track Ctrl+C timing
 
         Boot.banner
 
@@ -83,7 +84,7 @@ module MASTER
         end
 
         puts "Session: #{UI.truncate_id(session.id)}"
-        puts "Type 'help' for commands, 'exit' to quit"
+        puts "Type 'help' for commands, Ctrl+C twice to quit"
         puts
 
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
@@ -98,10 +99,20 @@ module MASTER
                      print prompt_str
                      $stdin.gets
                    end
+            last_interrupt = nil  # Reset on successful input
           rescue Interrupt
-            puts
-            session.save
-            break
+            now = Time.now
+            if last_interrupt && (now - last_interrupt) < 1.0
+              # Double Ctrl+C within 1 second - exit
+              puts "\nExiting..."
+              session.save
+              break
+            else
+              # First Ctrl+C - warn user
+              puts "\nPress Ctrl+C again to exit"
+              last_interrupt = now
+              next
+            end
           end
 
           break if line.nil?
