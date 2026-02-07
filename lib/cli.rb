@@ -75,3 +75,23 @@ end
           puts "Skipped #{file}: #{result[:error]}"
         end
       end
+    when 'refactor'
+      unless File.exist?(args[1])
+        puts "Error: File not found #{args[1]}"
+        return
+      end
+      code = File.read(args[1])
+      # ... rest
+    when 'self_refactor'
+      Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
+        backup = file + '.backup'
+        FileUtils.cp(file, backup)
+        code = File.read(file)
+        result = engine.refactor(code)
+        if result[:success]
+          File.write(file, result[:code])
+          puts "Self-refactored: #{file} (backup: #{backup})"
+        else
+          puts "Skipped #{file}: #{result[:error]}"
+        end
+      end
