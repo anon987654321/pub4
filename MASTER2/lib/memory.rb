@@ -6,7 +6,7 @@ require "fileutils"
 module MASTER
   # Memory - Session cache and persistence
   module Memory
-    COMPRESS_AFTER_MESSAGES = 11  # Fixed: was 10, kept 10 (off-by-one)
+    COMPRESS_AFTER_MESSAGES = 10  # Fixed: was 11, should be 10
     KEEP_FIRST_N = 2
     KEEP_LAST_N = 8
 

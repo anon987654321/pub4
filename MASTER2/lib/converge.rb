@@ -39,10 +39,10 @@ module MASTER
     end
 
     def change_ratio(hash1, hash2)
-      return 1.0 if hash1 == hash2
+      return 0.0 if hash1 == hash2
       # Simple: if hashes differ, assume 100% change
       # For real diff ratio, would need content comparison
-      0.0
+      1.0
     end
 
     def audit(current_path, compare_ref: 'HEAD~5')

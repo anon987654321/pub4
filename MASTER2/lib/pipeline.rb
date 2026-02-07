@@ -41,7 +41,7 @@ module MASTER
       def prompt
         model = LLM.prompt_model_name
         budget = LLM.budget_remaining
-        tokens = Session.current.token_count rescue 0
+        tokens = Session.current.message_count rescue 0
 
         # Shell-style: master@model [tokens] $cost$
         # Dense, informative prompt

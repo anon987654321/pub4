@@ -27,6 +27,9 @@ module MASTER
         input = shortcut.is_a?(Symbol) ? @last_command : shortcut
       end
 
+      # Guard against nil after shortcut resolution
+      return Result.err("No previous command to repeat.") if input.nil?
+
       @last_command = input unless input.to_s.start_with?("!")
 
       parts = input.strip.split(/\s+/, 2)
