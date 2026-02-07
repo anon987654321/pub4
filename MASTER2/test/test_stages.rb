@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-require_relative "../lib/master"
+require_relative "test_helper"
 
 class TestStages < Minitest::Test
   def setup
-    MASTER::DB.setup(path: ":memory:")
+    setup_db
   end
 
   def test_guard_allows_safe_input
@@ -60,12 +59,12 @@ class TestStages < Minitest::Test
     assert_match(/x = "test"/, result.value[:rendered], "Should preserve code")
   end
 
-  def test_intake_loads_persona
+  def test_intake_passes_through
     stage = MASTER::Stages::Intake.new
-    result = stage.call({ text: "Hello", persona: "security" })
+    result = stage.call({ text: "Hello" })
     
     assert result.ok?
-    # Persona loading depends on DB data
+    assert_equal "Hello", result.value[:text]
   end
 
   def test_debate_skips_when_not_enabled
