@@ -41,6 +41,10 @@ module MASTER
         session = Session.current
 
         Boot.banner
+
+        # First-run welcome
+        Onboarding.show_welcome if defined?(Onboarding)
+
         puts "Session: #{session.id[0, 8]}..."
         puts "Type 'help' for commands, 'exit' to quit\n\n"
 
@@ -63,7 +67,11 @@ module MASTER
           end
 
           break if line.nil?
-          next if line.strip.empty?
+
+          if line.strip.empty?
+            Onboarding.suggest_on_empty if defined?(Onboarding)
+            next
+          end
 
           # Track user input in session
           session.add_user(line.strip)
@@ -72,6 +80,11 @@ module MASTER
             cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
             break if cmd_result == :exit
             next if cmd_result.nil?
+
+            # Check for typos if command not recognized
+            if cmd_result.respond_to?(:err?) && cmd_result.err?
+              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
+            end
 
             if cmd_result.respond_to?(:ok?)
               if cmd_result.ok?

@@ -28,6 +28,8 @@ require_relative "keybindings"
 require_relative "confirmations"
 require_relative "error_suggestions"
 require_relative "nng_checklist"
+require_relative "onboarding"
+require_relative "context_window"
 
 # Pipeline
 require_relative "boot"

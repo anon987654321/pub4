@@ -26,6 +26,9 @@ module MASTER
       when "history"
         show_history
         nil
+      when "context"
+        show_context
+        nil
       when "session"
         handle_session(args)
         nil
@@ -62,6 +65,23 @@ module MASTER
         puts "  Remaining: $#{format('%.2f', remaining)}"
         puts "  Spent:     $#{format('%.2f', spent)} (#{pct}%)"
         puts
+      end
+
+      def show_context
+        session = Session.current
+        u = ContextWindow.usage(session)
+
+        puts "\n  Context Window"
+        puts "  #{ContextWindow.bar(session)}"
+        puts "  Used:      #{format_tokens(u[:used])}"
+        puts "  Limit:     #{format_tokens(u[:limit])}"
+        puts "  Remaining: #{format_tokens(u[:remaining])}"
+        puts "  Messages:  #{session.message_count}"
+        puts
+      end
+
+      def format_tokens(n)
+        n >= 1000 ? "#{(n / 1000.0).round(1)}k" : n.to_s
       end
 
       def show_history

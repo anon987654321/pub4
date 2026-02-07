@@ -15,6 +15,7 @@ module MASTER
       sessions: { desc: "List saved sessions", usage: "sessions" },
       status: { desc: "Show system status", usage: "status" },
       budget: { desc: "Show budget remaining", usage: "budget" },
+      context: { desc: "Show context window usage", usage: "context" },
       history: { desc: "Show cost history", usage: "history" },
       speak: { desc: "Text-to-speech", usage: "speak <text>" },
       clear: { desc: "Clear screen", usage: "clear" },
