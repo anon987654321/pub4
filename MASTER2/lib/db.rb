@@ -1,6 +1,4 @@
 # frozen_string_literal: true
 
-require_relative "db/schema"
-require_relative "db/seeds"
-require_relative "db/queries"
-require_relative "db/connection"
+# JSONL-based storage - zero dependencies
+require_relative "db_jsonl"

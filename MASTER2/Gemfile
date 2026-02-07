@@ -1,10 +1,23 @@
 source "https://rubygems.org"
 
 gem "ruby_llm"
-gem "sqlite3"
+
+# TTY toolkit
 gem "tty-reader"
+gem "tty-spinner"
+gem "tty-table"
+gem "tty-box"
+gem "tty-markdown"
+gem "tty-prompt"
+gem "tty-progressbar"
+gem "tty-cursor"
+
+# Utilities
+gem "pastel"         # Terminal colors
+gem "rouge"          # Syntax highlighting
 
 group :test do
   gem "minitest"
   gem "rake"
+  gem "webmock"      # HTTP mocking
 end

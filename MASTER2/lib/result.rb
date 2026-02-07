@@ -21,6 +21,10 @@ module MASTER
 
     def unwrap = value!
 
+    def value_or(default)
+      ok? ? @value : default
+    end
+
     def map
       return self if err?
       Result.ok(yield(@value))

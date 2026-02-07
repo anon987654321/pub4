@@ -29,15 +29,23 @@ require_relative "boot"
 require_relative "stages"
 require_relative "pipeline"
 
+# Deliberation engines
+require_relative "chamber"
+require_relative "creative_chamber"
+require_relative "swarm"
+
 # Tools
 require_relative "shell"
 require_relative "introspection"
 require_relative "problem_solver"
-require_relative "chamber"
 require_relative "evolve"
 require_relative "converge"
 require_relative "edge_tts"
 require_relative "momentum"
+
+# External services
+require_relative "weaviate"
+require_relative "replicate"
 
 # Agents
 require_relative "agent"
