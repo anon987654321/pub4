@@ -66,7 +66,7 @@ module MASTER
       def call(input)
         text = input[:text] || ""
         match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
-        match ? Result.err("Blocked: dangerous pattern") : Result.ok(input)
+        match ? Result.err("Blocked: dangerous pattern detected.") : Result.ok(input)
       end
     end
 
@@ -75,7 +75,7 @@ module MASTER
       def call(input)
         text = input[:text] || ""
         selected = LLM.select_model(text.length)
-        return Result.err("All models unavailable") unless selected
+        return Result.err("All models unavailable.") unless selected
 
         Result.ok(input.merge(
           model: selected[:model],
@@ -108,7 +108,7 @@ module MASTER
     class Ask
       def call(input)
         model = input[:model]
-        return Result.err("No model selected") unless model
+        return Result.err("No model selected.") unless model
 
         chat = LLM.chat(model: model)
         text = input[:text] || ""
@@ -131,7 +131,7 @@ module MASTER
           ))
         rescue StandardError => e
           LLM.open_circuit!(model)
-          Result.err("LLM error (#{model}): #{e.message}")
+          Result.err("LLM error (#{model}): #{e.message}.")
         end
       end
     end

@@ -2,6 +2,7 @@
 
 module MASTER
   # SelfTest - Run MASTER through its own rules and standards
+  # Includes consistency checks, logic analysis, and council review
   module SelfTest
     class << self
       def run
@@ -13,10 +14,20 @@ module MASTER
         static = run_static_analysis
         puts "    #{static[:passed] ? '✓' : '✗'} #{static[:message]}"
 
+        # Phase 1.5: Consistency checks
+        puts "\n  Phase 1.5: Consistency Checks"
+        consistency = run_consistency_checks
+        puts "    #{consistency[:passed] ? '✓' : '✗'} #{consistency[:message]}"
+
         # Phase 2: 5-layer enforcement
         puts "\n  Phase 2: 5-Layer Enforcement"
         enforcement = run_enforcement
         puts "    #{enforcement[:passed] ? '✓' : '✗'} #{enforcement[:message]}"
+
+        # Phase 2.5: Logic checks
+        puts "\n  Phase 2.5: Logic Analysis"
+        logic = run_logic_checks
+        puts "    #{logic[:passed] ? '✓' : '✗'} #{logic[:message]}"
 
         # Phase 3: Adversarial introspection
         puts "\n  Phase 3: Adversarial Introspection"
@@ -41,7 +52,9 @@ module MASTER
         # Summary
         results = {
           static_analysis: static,
+          consistency_checks: consistency,
           enforcement: enforcement,
+          logic_checks: logic,
           introspection: introspection,
           file_processing: file_proc,
           pipeline_safety: pipeline_check,
@@ -53,6 +66,79 @@ module MASTER
       end
 
       private
+
+      def run_consistency_checks
+        files = lib_files
+        issues = []
+
+        files.each do |file|
+          content = File.read(file)
+          basename = File.basename(file)
+          issues.concat(check_error_message_format(content, basename))
+          issues.concat(check_exception_handling(content, basename))
+        end
+
+        {
+          passed: issues.size < 5,
+          message: "#{issues.size} consistency issues",
+          issues: issues,
+        }
+      end
+
+      def run_logic_checks
+        files = lib_files
+        issues = []
+
+        files.each do |file|
+          content = File.read(file)
+          basename = File.basename(file)
+          issues.concat(check_logic_patterns(content, basename))
+        end
+
+        {
+          passed: issues.size < 3,
+          message: "#{issues.size} logic issues",
+          issues: issues,
+        }
+      end
+
+      def check_error_message_format(content, file)
+        issues = []
+        messages = content.scan(/Result\.err\(["']([^"']+)["']\)/)
+        messages.flatten.each do |msg|
+          next if msg.start_with?(/[A-Z]/) && msg.end_with?(".")
+          issues << "#{file}: Error message missing period or capitalization"
+        end
+        issues.first(2)  # Limit per file
+      end
+
+      def check_exception_handling(content, file)
+        issues = []
+        # Check for bare rescues (not rescue StandardError)
+        if content.match?(/rescue\s*$/) && !BARE_RESCUE_ALLOWED.include?(file)
+          issues << "#{file}: Bare rescue found"
+        end
+        issues
+      end
+
+      def check_logic_patterns(content, file)
+        issues = []
+        # Thread-unsafe memoization
+        if content.match?(/\|\|=.*YAML\./) && !content.match?(/Monitor|Mutex/)
+          issues << "#{file}: Potential thread-unsafe YAML memoization"
+        end
+        # Mixed hash key types
+        symbol_keys = content.scan(/\[:\w+\]/).size
+        string_keys = content.scan(/\["[^"]+"\]/).size
+        if symbol_keys > 5 && string_keys > 5
+          issues << "#{file}: Mixed symbol/string hash access"
+        end
+        issues
+      end
+
+      BARE_RESCUE_ALLOWED = %w[
+        result.rb boot.rb autocomplete.rb edge_tts.rb momentum.rb weaviate.rb
+      ].freeze
 
       def run_static_analysis
         files = lib_files
