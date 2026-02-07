@@ -17,10 +17,11 @@ class TestDB < Minitest::Test
     assert_includes table_names, "config"
     assert_includes table_names, "costs"
     assert_includes table_names, "circuits"
+    assert_includes table_names, "models"
   end
 
   def test_axioms_seeded
-    axioms = MASTER::DB.get_axioms
+    axioms = MASTER::DB.axioms
     assert axioms.length > 0, "Axioms should be seeded"
     
     # Check specific axioms
@@ -31,11 +32,11 @@ class TestDB < Minitest::Test
   end
 
   def test_council_seeded
-    members = MASTER::DB.get_council_members
+    members = MASTER::DB.council
     assert_equal 12, members.length, "Should have 12 council members"
     
     # Check veto members
-    veto_members = MASTER::DB.get_council_members(veto_only: true)
+    veto_members = MASTER::DB.council(veto_only: true)
     assert_equal 3, veto_members.length, "Should have 3 veto members"
     
     security = members.find { |m| m["slug"] == "security" }
@@ -44,40 +45,40 @@ class TestDB < Minitest::Test
     assert_equal 0.30, security["weight"]
   end
 
-  def test_get_axioms_by_category
-    eng_axioms = MASTER::DB.get_axioms(category: "engineering")
+  def test_axioms_by_category
+    eng_axioms = MASTER::DB.axioms(category: "engineering")
     assert eng_axioms.all? { |a| a["category"] == "engineering" }
   end
 
-  def test_get_axioms_by_protection
-    protected_axioms = MASTER::DB.get_axioms(protection: "PROTECTED")
+  def test_axioms_by_protection
+    protected_axioms = MASTER::DB.axioms(protection: "PROTECTED")
     assert protected_axioms.all? { |a| a["protection"] == "PROTECTED" }
     
-    absolute_axioms = MASTER::DB.get_axioms(protection: "ABSOLUTE")
+    absolute_axioms = MASTER::DB.axioms(protection: "ABSOLUTE")
     assert absolute_axioms.all? { |a| a["protection"] == "ABSOLUTE" }
   end
 
-  def test_record_cost
-    MASTER::DB.record_cost(model: "test-model", tokens_in: 100, tokens_out: 50, cost: 0.05)
-    total = MASTER::DB.get_total_cost
+  def test_log_cost
+    MASTER::DB.log_cost(model: "test-model", tokens_in: 100, tokens_out: 50, cost: 0.05)
+    total = MASTER::DB.total_cost
     assert_equal 0.05, total
   end
 
   def test_circuit_breaker
     # Record failure
-    MASTER::DB.record_circuit_failure("test-model")
-    circuit = MASTER::DB.get_circuit("test-model")
+    MASTER::DB.trip!("test-model")
+    circuit = MASTER::DB.circuit("test-model")
     assert_equal 1, circuit["failures"]
     
     # Record success (should reset)
-    MASTER::DB.record_circuit_success("test-model")
-    circuit = MASTER::DB.get_circuit("test-model")
+    MASTER::DB.reset!("test-model")
+    circuit = MASTER::DB.circuit("test-model")
     assert_equal 0, circuit["failures"]
   end
 
   def test_config_storage
     MASTER::DB.connection.execute("INSERT INTO config (key, value) VALUES (?, ?)", ["test_key", "test_value"])
-    value = MASTER::DB.get_config("test_key")
+    value = MASTER::DB.config("test_key")
     assert_equal "test_value", value
   end
 
@@ -88,7 +89,7 @@ class TestDB < Minitest::Test
   end
 
   def test_openbsd_patterns_seeded
-    patterns = MASTER::DB.get_openbsd_patterns
+    patterns = MASTER::DB.openbsd_patterns
     assert patterns.length > 0, "OpenBSD patterns should be seeded"
     
     # Check forbidden commands exist
@@ -101,7 +102,7 @@ class TestDB < Minitest::Test
   end
 
   def test_openbsd_patterns_service_management
-    patterns = MASTER::DB.get_openbsd_patterns(category: "service_management")
+    patterns = MASTER::DB.openbsd_patterns(category: "service_management")
     assert patterns.length > 0, "Should have service management patterns"
     
     enable = patterns.find { |p| p["key"] == "enable" }
@@ -110,7 +111,7 @@ class TestDB < Minitest::Test
   end
 
   def test_openbsd_patterns_config_paths
-    patterns = MASTER::DB.get_openbsd_patterns(category: "config_paths")
+    patterns = MASTER::DB.openbsd_patterns(category: "config_paths")
     assert patterns.length > 0, "Should have config paths"
     
     pf = patterns.find { |p| p["key"] == "pf" }
@@ -119,7 +120,7 @@ class TestDB < Minitest::Test
   end
 
   def test_openbsd_patterns_package_management
-    patterns = MASTER::DB.get_openbsd_patterns(category: "package_management")
+    patterns = MASTER::DB.openbsd_patterns(category: "package_management")
     assert patterns.length > 0, "Should have package management patterns"
     
     install = patterns.find { |p| p["key"] == "install" }
@@ -128,7 +129,7 @@ class TestDB < Minitest::Test
   end
 
   def test_openbsd_patterns_security
-    patterns = MASTER::DB.get_openbsd_patterns(category: "security")
+    patterns = MASTER::DB.openbsd_patterns(category: "security")
     assert patterns.length > 0, "Should have security patterns"
     
     pledge = patterns.find { |p| p["key"] == "pledge" }

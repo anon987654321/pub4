@@ -7,20 +7,21 @@ module MASTER
   module DB
     class << self
       attr_reader :connection
+    end
 
-      def setup(path: "#{MASTER.root}/master.db")
-        @mutex ||= Mutex.new
-        @connection = SQLite3::Database.new(path)
-        @connection.results_as_hash = true
-        create_schema
-        seed_data
-      end
+    def self.setup(path: "#{MASTER.root}/master.db")
+      @mutex ||= Mutex.new
+      @connection = SQLite3::Database.new(path)
+      @connection.results_as_hash = true
+      migrate!
+      seed!
+    end
 
-      def synchronize(&block)
-        @mutex.synchronize(&block)
-      end
+    def self.synchronize(&block)
+      @mutex.synchronize(&block)
+    end
 
-      def create_schema
+    def self.migrate!
         @connection.execute_batch <<~SQL
           CREATE TABLE IF NOT EXISTS axioms (
             id TEXT PRIMARY KEY,
@@ -76,17 +77,27 @@ module MASTER
             command TEXT,
             replacement TEXT
           );
-        SQL
-      end
 
-      def seed_data
+          CREATE TABLE IF NOT EXISTS models (
+            id TEXT PRIMARY KEY,
+            alias TEXT,
+            tier TEXT,
+            input_cost REAL,
+            output_cost REAL,
+            provider TEXT
+          );
+        SQL
+    end
+
+    def self.seed!
         seed_axioms
         seed_council
         seed_zsh_patterns
         seed_openbsd_patterns
-      end
+        seed_models
+    end
 
-      def seed_axioms
+    def self.seed_axioms
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
@@ -99,9 +110,9 @@ module MASTER
             [axiom["id"], axiom["category"], axiom["protection"], axiom["title"], axiom["statement"], axiom["source"]]
           )
         end
-      end
+    end
 
-      def seed_council
+    def self.seed_council
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
@@ -138,9 +149,9 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def seed_zsh_patterns
+    def self.seed_zsh_patterns
         patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
         return unless File.exist?(patterns_path)
 
@@ -166,9 +177,9 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def seed_openbsd_patterns
+    def self.seed_openbsd_patterns
         patterns_path = "#{MASTER.root}/data/openbsd_patterns.yml"
         return unless File.exist?(patterns_path)
 
@@ -224,13 +235,28 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def get_zsh_patterns
+    def self.seed_models
+        models_path = "#{MASTER.root}/data/models.yml"
+        return unless File.exist?(models_path)
+
+        models = YAML.safe_load_file(models_path)
+        return unless models.is_a?(Array)
+
+        models.each do |model|
+          @connection.execute(
+            "INSERT OR REPLACE INTO models (id, alias, tier, input_cost, output_cost, provider) VALUES (?, ?, ?, ?, ?, ?)",
+            [model["id"], model["alias"], model["tier"], model["input_cost"], model["output_cost"], model["provider"]]
+          )
+        end
+    end
+
+    def self.zsh_patterns
         @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
-      end
+    end
 
-      def get_openbsd_patterns(category: nil)
+    def self.openbsd_patterns(category: nil)
         if category
           @connection.execute("SELECT * FROM openbsd_patterns WHERE category = ? ORDER BY category, key, command", [category])
         else
@@ -238,7 +264,7 @@ module MASTER
         end
       end
 
-      def get_axioms(category: nil, protection: nil)
+      def axioms(category: nil, protection: nil)
         query = "SELECT * FROM axioms"
         conditions = []
         params = []
@@ -257,16 +283,16 @@ module MASTER
         query += " ORDER BY CASE protection WHEN 'ABSOLUTE' THEN 1 WHEN 'PROTECTED' THEN 2 ELSE 3 END"
 
         @connection.execute(query, params)
-      end
+    end
 
-      def get_council_members(veto_only: false)
+    def self.council(veto_only: false)
         query = "SELECT * FROM council"
         query += " WHERE veto = 1" if veto_only
         query += " ORDER BY weight DESC, name ASC"
         @connection.execute(query)
-      end
+    end
 
-      def record_cost(model:, tokens_in:, tokens_out:, cost:)
+    def self.log_cost(model:, tokens_in:, tokens_out:, cost:)
         synchronize do
           @connection.execute(
             "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
@@ -275,39 +301,38 @@ module MASTER
         end
       end
 
-      def get_total_cost
+      def total_cost
         result = @connection.execute("SELECT SUM(cost) as total FROM costs").first
         result["total"].to_f
-      end
+    end
 
-      def record_circuit_failure(model)
-        synchronize do
-          @connection.execute(
-            "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
-             ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
-            [model]
-          )
-        end
+        def self.trip!(model)
+      synchronize do
+        @connection.execute(
+          "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
+           ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
+          [model]
+        )
       end
+    end
 
-      def record_circuit_success(model)
-        synchronize do
-          @connection.execute(
-            "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
-             ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
-            [model]
-          )
-        end
+    def self.reset!(model)
+      synchronize do
+        @connection.execute(
+          "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
+           ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
+          [model]
+        )
       end
+    end
 
-      def get_circuit(model)
-        @connection.execute("SELECT * FROM circuits WHERE model = ?", [model]).first
-      end
+    def self.circuit(model)
+      @connection.execute("SELECT * FROM circuits WHERE model = ?", [model]).first
+    end
 
-      def get_config(key)
-        result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
-        result ? result["value"] : nil
-      end
+    def self.config(key)
+      result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
+      result ? result["value"] : nil
     end
   end
 end

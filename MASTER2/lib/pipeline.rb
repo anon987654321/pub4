@@ -4,7 +4,9 @@ require "timeout"
 
 module MASTER
   class Pipeline
-    DEFAULT_STAGES = %i[input_tank council_debate refactor_engine output_tank].freeze
+    include Dry::Monads[:result]
+
+    DEFAULT_STAGES = %i[compress debate lint render].freeze
     STAGE_TIMEOUT = 120 # seconds
 
     attr_reader :stages
@@ -17,7 +19,7 @@ module MASTER
     end
 
     def call(input)
-      @stages.reduce(Result.ok(input)) do |result, stage|
+      @stages.reduce(Success(input)) do |result, stage|
         result.flat_map do |data|
           # Note: Timeout.timeout uses Thread#raise which may interrupt at any point.
           # This is acceptable for the current use case but could leave resources
@@ -26,7 +28,7 @@ module MASTER
         end
       end
     rescue Timeout::Error
-      Result.err("Pipeline timed out after #{STAGE_TIMEOUT}s")
+      Failure("Pipeline timed out after #{STAGE_TIMEOUT}s")
     end
 
     # Convert stage name symbol to class
@@ -37,16 +39,16 @@ module MASTER
     end
 
     # Build dynamic prompt showing LLM tier and budget
-    def self.build_prompt
-      tier = LLM.affordable_tier
-      tier_str = tier ? tier.to_s : "none"
+    def self.prompt
+      tier_level = LLM.tier
+      tier_str = tier_level ? tier_level.to_s : "none"
       budget = format("$%.2f", LLM.remaining)
       
       # Check if any model in current tier has a tripped circuit
-      tripped = if tier
-        LLM::RATES.select { |_k, v| v[:tier] == tier }
+      tripped = if tier_level
+        LLM::RATES.select { |_k, v| v[:tier] == tier_level }
                   .keys
-                  .any? { |model| !LLM.circuit_available?(model) }
+                  .any? { |model| !LLM.healthy?(model) }
       else
         false
       end
@@ -76,11 +78,11 @@ module MASTER
       prompt = defined?(TTY::Prompt) ? TTY::Prompt.new : nil
       spinner_class = defined?(TTY::Spinner) ? TTY::Spinner : nil
 
-      Boot.dmesg
+      Boot.banner
       puts "Type 'exit' or 'quit' to quit\n\n"
 
       loop do
-        prompt_str = build_prompt
+        prompt_str = prompt
         
         if prompt
           input = prompt.ask("master$", required: false)
@@ -102,11 +104,11 @@ module MASTER
 
         spinner&.success("Done!")
 
-        if result.ok?
-          output = result.value[:rendered] || result.value[:response] || result.value.inspect
+        if result.success?
+          output = result.value![:rendered] || result.value![:response] || result.value!.inspect
           puts "\n#{output}\n\n"
         else
-          puts "\nError: #{result.error}\n\n"
+          puts "\nError: #{result.failure}\n\n"
         end
       rescue Interrupt
         puts "\nInterrupted. Use 'exit' to quit."
@@ -122,11 +124,11 @@ module MASTER
       input = JSON.parse($stdin.read, symbolize_names: true)
       result = new.call(input)
 
-      if result.ok?
-        puts JSON.generate(result.value)
+      if result.success?
+        puts JSON.generate(result.value!)
         exit 0
       else
-        warn JSON.generate({ error: result.error })
+        warn JSON.generate({ error: result.failure })
         exit 1
       end
     rescue JSON::ParserError => e

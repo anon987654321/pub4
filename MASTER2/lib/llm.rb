@@ -16,77 +16,77 @@ module MASTER
     CIRCUIT_THRESHOLD = 3
     CIRCUIT_COOLDOWN = 300 # seconds
     BUDGET_LIMIT = 10.0 # dollars
+    STRONG_THRESHOLD = 5.0
+    FAST_THRESHOLD = 1.0
 
-    class << self
-      def configure
-        RubyLLM.configure do |config|
-          config.openai_api_key = ENV["OPENAI_API_KEY"]
-          config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-          config.deepseek_api_key = ENV["DEEPSEEK_API_KEY"]
-          config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
-        end
+    def self.configure
+      RubyLLM.configure do |config|
+        config.openai_api_key = ENV["OPENAI_API_KEY"]
+        config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
+        config.deepseek_api_key = ENV["DEEPSEEK_API_KEY"]
+        config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
       end
+    end
 
-      def select_model
-        tier = affordable_tier
-        return nil unless tier
+    def self.pick
+      tier_level = tier
+      return nil unless tier_level
 
-        candidates = RATES.select { |_k, v| v[:tier] == tier }.keys
-        candidates.find { |model| circuit_available?(model) }
+      candidates = RATES.select { |_k, v| v[:tier] == tier_level }.keys
+      candidates.find { |model| healthy?(model) }
+    end
+
+    def self.healthy?(model)
+      circuit = DB.circuit(model)
+      return true unless circuit
+
+      failures = circuit["failures"].to_i
+      return true if failures < CIRCUIT_THRESHOLD
+
+      begin
+        last_failure = Time.parse(circuit["last_failure"])
+      rescue ArgumentError
+        last_failure = Time.now
       end
+      Time.now - last_failure > CIRCUIT_COOLDOWN
+    end
 
-      def circuit_available?(model)
-        circuit = DB.get_circuit(model)
-        return true unless circuit
+    def self.record_failure(model)
+      DB.trip!(model)
+    end
 
-        failures = circuit["failures"].to_i
-        return true if failures < CIRCUIT_THRESHOLD
+    def self.record_success(model)
+      DB.reset!(model)
+    end
 
-        begin
-          last_failure = Time.parse(circuit["last_failure"])
-        rescue ArgumentError
-          last_failure = Time.now
-        end
-        Time.now - last_failure > CIRCUIT_COOLDOWN
+    def self.log_cost(model:, tokens_in:, tokens_out:)
+      rate = RATES[model]
+      return unless rate
+
+      cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
+      DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
+    end
+
+    def self.remaining
+      BUDGET_LIMIT - DB.total_cost
+    end
+
+    def self.tier
+      remaining_budget = remaining
+      return nil if remaining_budget <= 0
+
+      # Return the most powerful tier we can afford
+      if remaining_budget > STRONG_THRESHOLD
+        :strong
+      elsif remaining_budget > FAST_THRESHOLD
+        :fast
+      else
+        :cheap
       end
+    end
 
-      def record_failure(model)
-        DB.record_circuit_failure(model)
-      end
-
-      def record_success(model)
-        DB.record_circuit_success(model)
-      end
-
-      def record_cost(model:, tokens_in:, tokens_out:)
-        rate = RATES[model]
-        return unless rate
-
-        cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
-        DB.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
-      end
-
-      def remaining
-        BUDGET_LIMIT - DB.get_total_cost
-      end
-
-      def affordable_tier
-        remaining_budget = remaining
-        return nil if remaining_budget <= 0
-
-        # Return the most powerful tier we can afford
-        if remaining_budget > 5.0
-          :strong
-        elsif remaining_budget > 1.0
-          :fast
-        else
-          :cheap
-        end
-      end
-
-      def chat(model:)
-        RubyLLM.chat(model: model)
-      end
+    def self.chat(model:)
+      RubyLLM.chat(model: model)
     end
   end
 end

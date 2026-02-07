@@ -1,0 +1,34 @@
+- id: deepseek/deepseek-r1
+  alias: deepseek-r1
+  tier: strong
+  input_cost: 0.55
+  output_cost: 2.19
+  provider: deepseek
+
+- id: anthropic/claude-sonnet-4
+  alias: claude-sonnet-4
+  tier: strong
+  input_cost: 3.00
+  output_cost: 15.00
+  provider: anthropic
+
+- id: deepseek/deepseek-v3
+  alias: deepseek-v3
+  tier: fast
+  input_cost: 0.27
+  output_cost: 1.10
+  provider: deepseek
+
+- id: openai/gpt-4.1-mini
+  alias: gpt-4.1-mini
+  tier: fast
+  input_cost: 0.40
+  output_cost: 1.60
+  provider: openai
+
+- id: openai/gpt-4.1-nano
+  alias: gpt-4.1-nano
+  tier: cheap
+  input_cost: 0.10
+  output_cost: 0.40
+  provider: openai

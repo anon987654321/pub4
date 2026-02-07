@@ -3,13 +3,15 @@
 module MASTER
   module Stages
     # Universal Refactor: Enforces axioms from axioms.yml
-    class RefactorEngine
+    class Lint
+      include Dry::Monads[:result]
+
       def call(input)
         text = input[:text] || input[:original_text] || ""
 
         # Load axioms from DB
-        protected_axioms = DB.get_axioms(protection: "PROTECTED")
-        absolute_axioms = DB.get_axioms(protection: "ABSOLUTE")
+        protected_axioms = DB.axioms(protection: "PROTECTED")
+        absolute_axioms = DB.axioms(protection: "ABSOLUTE")
 
         violations = []
         warnings = []
@@ -27,7 +29,7 @@ module MASTER
         end
 
         # Return error if ABSOLUTE axioms are violated
-        return Result.err("ABSOLUTE axiom violation: #{violations.first}") unless violations.empty?
+        return Failure("ABSOLUTE axiom violation: #{violations.first}") unless violations.empty?
 
         # Add warnings to output
         enriched = input.merge(
@@ -35,7 +37,7 @@ module MASTER
           axioms_checked: true
         )
 
-        Result.ok(enriched)
+        Success(enriched)
       end
 
       private

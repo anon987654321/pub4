@@ -3,29 +3,31 @@
 module MASTER
   module Stages
     # Pressure Tank: Compresses and refines user input through 8-phase discovery
-    class InputTank
+    class Compress
+      include Dry::Monads[:result]
+
       MAX_INPUT_SIZE = 50_000 # characters
 
       def call(input)
         # Phase 1: Parse raw text
-        text = extract_text(input)
-        return Result.err("No input text provided") if text.empty?
-        return Result.err("Input too large: #{text.length} chars (max #{MAX_INPUT_SIZE})") if text.length > MAX_INPUT_SIZE
+        text = parse(input)
+        return Failure("No input text provided") if text.empty?
+        return Failure("Input too large: #{text.length} chars (max #{MAX_INPUT_SIZE})") if text.length > MAX_INPUT_SIZE
 
         # Phase 2: Identify intent
-        intent = identify_intent(text)
+        intent = classify(text)
 
         # Phase 3: Extract entities
-        entities = extract_entities(text)
+        entities = extract(text)
 
         # Phase 4: Load relevant axioms from DB (TODO: implement filtering logic)
-        axioms = DB.get_axioms(protection: "PROTECTED") || []
+        axioms = DB.axioms(protection: "PROTECTED") || []
 
         # Phase 5: Load relevant council members (TODO: implement task-based filtering)
-        council = DB.get_council_members || []
+        council = DB.council || []
 
         # Phase 6: Apply Strunk & White compression (TODO: implement omit needless words)
-        compressed_text = compress_text(text)
+        compressed_text = compress(text)
 
         # Phase 7: Build structured context hash
         enriched = {
@@ -39,25 +41,25 @@ module MASTER
 
         # Load zsh patterns for command/admin intents or when services are detected
         if intent == :command || intent == :admin || entities[:services]
-          enriched[:zsh_patterns] = DB.get_zsh_patterns || []
-          enriched[:openbsd_patterns] = DB.get_openbsd_patterns || []
+          enriched[:zsh_patterns] = DB.zsh_patterns || []
+          enriched[:openbsd_patterns] = DB.openbsd_patterns || []
         end
 
         # Phase 8: Return enriched input
-        Result.ok(input.is_a?(Hash) ? input.merge(enriched) : enriched)
+        Success(input.is_a?(Hash) ? input.merge(enriched) : enriched)
       end
 
       private
 
-      def extract_text(input)
+      def parse(input)
         case input
         when String then input
-        when Hash then input[:text] || input["text"] || ""
+        when Hash then input.fetch(:text) { input.fetch("text", "") }
         else ""
         end
       end
 
-      def identify_intent(text)
+      def classify(text)
         # Simple keyword-based intent detection
         return :question if text.match?(/\?$|\bwhat\b|\bhow\b|\bwhy\b|\bwhen\b/i)
         return :refactor if text.match?(/\brefactor\b|\bimprove\b|\boptimize\b/i)
@@ -66,7 +68,7 @@ module MASTER
         :general
       end
 
-      def extract_entities(text)
+      def extract(text)
         entities = {}
 
         # Extract file paths
@@ -80,7 +82,7 @@ module MASTER
         entities
       end
 
-      def compress_text(text)
+      def compress(text)
         # Basic Strunk & White: remove filler words
         compressed = text.dup
         
