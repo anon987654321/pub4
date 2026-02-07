@@ -2,111 +2,103 @@
 
 require "time"
 
-begin
-  require "tty-logger"
-rescue LoadError
-  # TTY::Logger not available, fall back to puts
-end
-
 module MASTER
   module Boot
-    def self.logger
-      @logger ||= if defined?(TTY::Logger)
-        TTY::Logger.new do |config|
-          config.metadata = [:time]
-          config.level = :info
-        end
-      else
-        nil
-      end
-    end
-
-    def self.log(level, message)
-      if logger
-        logger.public_send(level, message)
-      else
-        puts message
-      end
-    end
-
+    # OpenBSD dmesg-style boot sequence
+    # Outputs system information in kernel message format
     def self.banner
-      timestamp = Time.now.strftime("%a %b %e %H:%M:%S %Z %Y")
-      build_num = 1
-      
-      # Header: version and build info
-      log(:info, "MASTER #{VERSION} (PIPELINE) ##{build_num}: #{timestamp}")
-      log(:debug, "    master@openbsd:#{MASTER.root}")
-      
-      # Ruby platform info
-      ruby_version = RUBY_VERSION
-      platform = RUBY_PLATFORM
-      log(:debug, "ruby0: Ruby #{ruby_version}, platform #{platform}")
-      
-      # Database info
-      db_type = DB.connection.is_a?(SQLite3::Database) ? "SQLite3" : "unknown"
-      db_path = DB.connection.filename rescue "in-memory"
-      db_location = db_path == ":memory:" ? "in-memory" : db_path
-      log(:debug, "db0 at master0: #{db_type} #{db_location}")
-      
-      # Count database entities
-      axiom_count = DB.connection.execute("SELECT COUNT(*) as count FROM axioms").first["count"] rescue 0
-      council_count = DB.connection.execute("SELECT COUNT(*) as count FROM council").first["count"] rescue 0
-      zsh_count = DB.connection.execute("SELECT COUNT(*) as count FROM zsh_patterns").first["count"] rescue 0
-      log(:debug, "db0: schema 6 tables, axioms #{axiom_count}, council #{council_count}, zsh_patterns #{zsh_count}")
-      
-      # LLM configuration
-      providers = []
-      providers << "OpenRouter" if ENV["OPENROUTER_API_KEY"]
-      providers << "Anthropic" if ENV["ANTHROPIC_API_KEY"]
-      providers << "DeepSeek" if ENV["DEEPSEEK_API_KEY"]
-      providers << "OpenAI" if ENV["OPENAI_API_KEY"]
-      
-      if providers.empty?
-        log(:warn, "llm0 at master0: no providers configured")
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
+
+      # Header
+      puts "MASTER #{VERSION} (PIPELINE) #1: #{timestamp}"
+      puts "    dev@dev.openbsd.amsterdam:#{MASTER.root}"
+
+      # Hardware/platform
+      puts "mainbus0 at root"
+      puts "cpu0 at mainbus0: #{cpu_info}"
+      puts "openbsd0 at mainbus0: #{platform_info}"
+      puts "ruby0 at openbsd0: ruby #{RUBY_VERSION}"
+
+      # Database
+      axiom_count = DB.axioms.count rescue 0
+      council_count = DB.council.count rescue 0
+      zsh_count = DB.zsh_patterns.count rescue 0
+      puts "db0 at mainbus0: SQLite3, #{table_count} tables"
+      puts "db0: axioms #{axiom_count}, council #{council_count}, zsh_patterns #{zsh_count}"
+
+      # Constitutional core
+      protected_count = DB.axioms(protection: "PROTECTED").count rescue 0
+      absolute_count = DB.axioms(protection: "ABSOLUTE").count rescue 0
+      puts "const0 at mainbus0: #{axiom_count} axioms, #{protected_count} PROTECTED, #{absolute_count} ABSOLUTE"
+
+      # Council
+      veto_count = DB.council(veto_only: true).count rescue 0
+      threshold = DB.config("council_consensus_threshold") || "0.70"
+      puts "council0 at const0: #{council_count} personas, #{veto_count} veto, threshold #{threshold}"
+
+      # LLM providers
+      puts "llm0 at council0: openrouter"
+      strong = LLM::RATES.select { |_, v| v[:tier] == :strong }.keys.map { |k| k.split("/").last }
+      fast = LLM::RATES.select { |_, v| v[:tier] == :fast }.keys.map { |k| k.split("/").last }
+      cheap = LLM::RATES.select { |_, v| v[:tier] == :cheap }.keys.map { |k| k.split("/").last }
+      puts "llm0: strong (#{strong.join(", ")}), fast (#{fast.join(", ")}), cheap (#{cheap.join(", ")})"
+
+      # Budget
+      budget = format("%.2f", LLM::BUDGET_LIMIT)
+      remaining = format("%.2f", LLM.remaining)
+      puts "budget0 at llm0: $#{budget} limit, $#{remaining} remaining"
+
+      # Circuit breakers
+      tripped = DB.connection.execute("SELECT COUNT(*) as c FROM circuits WHERE failures >= 3").first["c"] rescue 0
+      if tripped.zero?
+        puts "circuit0 at llm0: #{LLM::RATES.count} models, all nominal"
       else
-        log(:info, "llm0 at master0: #{providers.join(", ")}")
-        
-        # Model tiers
-        strong_models = LLM::RATES.select { |_k, v| v[:tier] == :strong }.keys
-        fast_models = LLM::RATES.select { |_k, v| v[:tier] == :fast }.keys
-        cheap_models = LLM::RATES.select { |_k, v| v[:tier] == :cheap }.keys
-        
-        strong = strong_models.join(", ")
-        fast = fast_models.join(", ")
-        cheap = cheap_models.join(", ")
-        log(:info, "llm0: strong (#{strong}), fast (#{fast}), cheap (#{cheap})")
-        
-        # Budget info
-        budget = LLM::BUDGET_LIMIT
-        remaining = LLM.remaining
-        log(:info, "llm0: budget $#{"%.2f" % budget}, remaining $#{"%.2f" % remaining}")
+        puts "circuit0 at llm0: #{LLM::RATES.count} models, #{tripped} tripped"
       end
-      
-      # Circuit status
-      circuits = DB.connection.execute("SELECT model, failures FROM circuits WHERE failures > 0") rescue []
-      if circuits.empty?
-        log(:info, "circuit0: all models nominal")
-      else
-        circuits.each do |circuit|
-          log(:warn, "circuit0: #{circuit["model"]} has #{circuit["failures"]} failures")
-        end
-      end
-      
-      # Pledge/unveil availability
+
+      # Pledge/unveil
       if Pledge.available?
-        log(:info, "pledge0: available (OpenBSD detected)")
+        puts "pledge0 at mainbus0: armed (stdio rpath wpath cpath fattr inet dns)"
       else
-        log(:debug, "pledge0: unavailable (not OpenBSD)")
+        puts "pledge0 at mainbus0: unavailable (not OpenBSD)"
       end
-      
-      # Pipeline stages
+
+      # Pipeline
       stages = Pipeline::DEFAULT_STAGES
-      log(:info, "pipeline0 at master0: #{stages.length} stages")
-      stage_names = stages.map { |s| s.to_s.gsub("_", "-") }.join(" -> ")
-      log(:info, "pipeline0: #{stage_names}")
-      
+      puts "pipeline0 at mainbus0: #{stages.length} stages"
+      stage_names = stages.map { |s| s.to_s.gsub("_", " ").split.map(&:capitalize).join }.join(" -> ")
+      puts "pipeline0: #{stage_names}"
+
       # Boot complete
-      log(:info, "boot: complete, 0 errors")
+      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round
+      puts "boot: complete, #{elapsed}ms"
+    end
+
+    def self.cpu_info
+      if RUBY_PLATFORM.include?("darwin")
+        `sysctl -n machdep.cpu.brand_string`.strip rescue "Unknown CPU"
+      elsif RUBY_PLATFORM.include?("linux")
+        File.read("/proc/cpuinfo").match(/model name\s*:\s*(.+)/)&.[](1)&.strip rescue "Unknown CPU"
+      else
+        "#{RUBY_PLATFORM} CPU"
+      end
+    end
+
+    def self.platform_info
+      if RUBY_PLATFORM.include?("openbsd")
+        `uname -sr`.strip rescue "OpenBSD"
+      elsif RUBY_PLATFORM.include?("darwin")
+        "macOS #{`sw_vers -productVersion`.strip}" rescue "macOS"
+      elsif RUBY_PLATFORM.include?("linux")
+        File.read("/etc/os-release").match(/PRETTY_NAME="(.+)"/)&.[](1) rescue "Linux"
+      else
+        RUBY_PLATFORM
+      end
+    end
+
+    def self.table_count
+      DB.connection.execute("SELECT COUNT(*) as c FROM sqlite_master WHERE type='table'").first["c"] rescue 0
     end
   end
 end

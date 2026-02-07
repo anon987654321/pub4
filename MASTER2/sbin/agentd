@@ -28,7 +28,7 @@ POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || "5").to_i
 FileUtils.mkdir_p(INBOX_DIR)
 FileUtils.mkdir_p(OUTBOX_DIR)
 
-MASTER::Boot.dmesg
+MASTER::Boot.banner
 puts "Watching: #{INBOX_DIR}"
 puts "Output: #{OUTBOX_DIR}"
 puts "Poll interval: #{POLL_INTERVAL}s"

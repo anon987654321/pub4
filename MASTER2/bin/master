@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
 require_relative '../lib/master'
-require_relative '../lib/cli'
 
-MASTER::CLI.start(ARGV)
+DB.setup
+MASTER::Pipeline.repl

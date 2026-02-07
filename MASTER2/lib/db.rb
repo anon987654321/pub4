@@ -516,5 +516,14 @@ module MASTER
     def self.gh_patterns
       @connection.execute("SELECT * FROM gh_patterns")
     end
+
+    def self.council_personas
+      @connection.execute("SELECT * FROM council ORDER BY weight DESC")
+    end
+
+    def self.get_persona(name)
+      @connection.execute("SELECT * FROM personas WHERE name = ?", [name]).first rescue
+      @connection.execute("SELECT * FROM council WHERE slug = ?", [name]).first
+    end
   end
 end

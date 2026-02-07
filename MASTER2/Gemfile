@@ -2,18 +2,7 @@ source "https://rubygems.org"
 
 gem "ruby_llm"
 gem "sqlite3"
-gem "dotenv"
-gem "tty-prompt"
-gem "tty-spinner"
-gem "tty-logger"
-gem "dry-monads"
-gem "stoplight"
-gem "typogruby"
-gem "zeitwerk"
-
-group :development do
-  gem "ruby_llm-tribunal"
-end
+gem "tty-reader"
 
 group :test do
   gem "minitest"
