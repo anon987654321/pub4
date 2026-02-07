@@ -47,7 +47,7 @@ module MASTER
         :generic
       end
 
-      def generate_config_stub(task_type, text)
+      def generate_config_stub(task_type, _text)
         case task_type
         when :pf
           "# TODO: Generate pf.conf based on requirements"

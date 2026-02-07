@@ -61,7 +61,7 @@ module MASTER
 
       def format_summary(input)
         parts = []
-        
+
         if input[:tokens_in] && input[:tokens_out]
           parts << "Tokens: #{input[:tokens_in]} in, #{input[:tokens_out]} out"
         end

@@ -16,7 +16,7 @@ module MASTER
       end
 
       def create_schema
-        @connection.execute_batch <<-SQL
+        @connection.execute_batch <<~SQL
           CREATE TABLE IF NOT EXISTS axioms (
             id TEXT PRIMARY KEY,
             category TEXT,
@@ -75,7 +75,7 @@ module MASTER
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
-        axioms = YAML.load_file(axioms_path)
+        axioms = YAML.safe_load_file(axioms_path)
         return unless axioms.is_a?(Array)
 
         axioms.each do |axiom|
@@ -90,7 +90,7 @@ module MASTER
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
-        data = YAML.load_file(council_path)
+        data = YAML.safe_load_file(council_path)
         return unless data.is_a?(Array)
 
         # Filter out council parameters (non-hash entries or entries without slug)
@@ -104,16 +104,23 @@ module MASTER
         end
 
         # Store council parameters in config table
-        params = data.select { |item| item.is_a?(Hash) && !item["slug"] }.first
+        params = data.find { |item| item.is_a?(Hash) && !item["slug"] }
         if params
           params.each do |key, value|
             next if key == "veto_precedence" # Special handling for arrays
-            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_#{key}", value.to_s])
+
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["council_#{key}", value.to_s]
+            )
           end
           
           # Store veto_precedence as comma-separated string
           if params["veto_precedence"]
-            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_veto_precedence", params["veto_precedence"].join(",")])
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["council_veto_precedence", params["veto_precedence"].join(",")]
+            )
           end
         end
       end
@@ -122,7 +129,7 @@ module MASTER
         patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
         return unless File.exist?(patterns_path)
 
-        data = YAML.load_file(patterns_path)
+        data = YAML.safe_load_file(patterns_path)
         return unless data.is_a?(Hash)
 
         # Seed forbidden commands
