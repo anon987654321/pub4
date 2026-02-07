@@ -79,5 +79,14 @@ require_relative "file_processor"
 require_relative "reflow"
 require_relative "self_test"
 
+# Quality & Analysis (restored from MASTER)
+require_relative "violations"
+require_relative "smells"
+require_relative "bug_hunting"
+require_relative "dmesg"
+require_relative "planner"
+require_relative "self_critique"
+require_relative "reflection_memory"
+
 # Optional
 require_relative "server"

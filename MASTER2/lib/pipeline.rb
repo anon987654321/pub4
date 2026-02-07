@@ -18,18 +18,18 @@ module MASTER
 
     class << self
       def prompt
-        tier = LLM.tier || :strong
+        model = LLM.prompt_model_name
         budget = LLM.budget_remaining
 
-        # Starship-inspired: minimal, informative
-        # Only show budget warning when low
-        budget_str = budget < 5.0 ? " #{UI.currency(budget)}" : ""
-        tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
-        indicator = tripped ? " ⚡" : ""
+        # Shell-style: master@model$ 
+        # Show budget warning when low
+        budget_warn = budget < 2.0 ? " [#{UI.currency(budget)}]" : ""
+        tripped = LLM.model_tiers[LLM.tier]&.any? { |m| !LLM.circuit_closed?(m) }
+        indicator = tripped ? "!" : ""
 
-        "master[#{tier}#{indicator}#{budget_str}]› "
+        "master@#{model}#{indicator}#{budget_warn}$ "
       rescue StandardError
-        "master› "
+        "master$ "
       end
 
       def repl

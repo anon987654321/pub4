@@ -1,0 +1,70 @@
+# MASTER2 Development Phases - Systematic workflow
+# Used by planner.rb and introspection.rb
+
+phases:
+  - id: discover
+    name: Discover
+    gate: requirements_clear
+    introspection: "What problem am I solving? Who benefits?"
+    outputs:
+      - problem_statement
+      - success_criteria
+
+  - id: analyze
+    name: Analyze
+    gate: codebase_understood
+    introspection: "What exists? What patterns are in use?"
+    outputs:
+      - existing_code_map
+      - dependencies
+      - risk_areas
+
+  - id: ideate
+    name: Ideate
+    gate: options_explored
+    introspection: "What are 3 different approaches? Trade-offs?"
+    outputs:
+      - approach_options
+      - recommendation
+
+  - id: design
+    name: Design
+    gate: design_approved
+    introspection: "Is this minimal? Does it fit existing patterns?"
+    outputs:
+      - file_changes
+      - interface_contracts
+
+  - id: implement
+    name: Implement
+    gate: code_complete
+    introspection: "Did I change only what was needed? Tests pass?"
+    outputs:
+      - changed_files
+      - test_results
+
+  - id: validate
+    name: Validate
+    gate: quality_verified
+    introspection: "Does it work? Is it safe? Would I approve this PR?"
+    outputs:
+      - lint_results
+      - security_check
+      - self_review
+
+  - id: deliver
+    name: Deliver
+    gate: user_satisfied
+    introspection: "Is the user happy? What did I learn?"
+    outputs:
+      - user_feedback
+      - learnings
+
+# Phase transitions
+transitions:
+  discover_to_analyze: requirements_clear
+  analyze_to_ideate: codebase_understood
+  ideate_to_design: approach_selected
+  design_to_implement: design_approved
+  implement_to_validate: code_complete
+  validate_to_deliver: quality_verified

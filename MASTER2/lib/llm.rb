@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-require "ruby_llm"
+require "net/http"
+require "json"
 require "yaml"
+require "uri"
 
 module MASTER
-  # LLM - Model selection, circuit breaker, cost tracking
-  # Single source: data/models.yml
+  # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
+  # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     TIER_ORDER = %i[strong fast cheap].freeze
@@ -13,7 +15,17 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     SPENDING_CAP = 10.0
 
+    # OpenRouter API
+    API_BASE = "https://openrouter.ai/api/v1"
+    API_KEY_CHECK = "#{API_BASE}/key"
+    CHAT_ENDPOINT = "#{API_BASE}/chat/completions"
+
+    # Reasoning effort levels (OpenRouter normalized)
+    REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
+
     class << self
+      attr_accessor :current_model, :current_tier
+
       def models
         @models ||= load_models
       end
@@ -21,6 +33,14 @@ module MASTER
       def load_models
         return [] unless File.exist?(MODELS_FILE)
         YAML.safe_load_file(MODELS_FILE, symbolize_names: true) || []
+      end
+
+      def reload_models
+        @models = nil
+        @model_tiers = nil
+        @model_rates = nil
+        @context_limits = nil
+        models
       end
 
       def model_tiers
@@ -41,92 +61,333 @@ module MASTER
         end
       end
 
-      def configure
-        RubyLLM.configure do |c|
-          c.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
-        end
+      def api_key
+        ENV.fetch("OPENROUTER_API_KEY", nil)
       end
 
-      # Unified ask helper - handles model selection, circuit, cost
-      def ask(prompt, model: nil, stream: true)
-        model ||= select_available_model
-        return Result.err("No model available.") unless model
-        return Result.err("Circuit open for #{model}.") unless circuit_closed?(model)
+      def configured?
+        !api_key.nil? && !api_key.empty?
+      end
 
-        model_short = model.split("/").last
-        tier = model_rates[model]&.[](:tier) || :unknown
-        log("llm0: #{tier} #{model_short}, #{prompt.length} chars")
+      # Check API key status and remaining credits
+      def check_key
+        return Result.err("No API key") unless configured?
 
-        spinner = UI.spinner("Thinking")
-        spinner.auto_spin unless stream
+        uri = URI(API_KEY_CHECK)
+        req = Net::HTTP::Get.new(uri)
+        req["Authorization"] = "Bearer #{api_key}"
 
-        chat_instance = chat(model: model)
-        response = if stream
-                     spinner.stop
-                     chat_instance.ask(prompt) { |chunk| $stderr.print chunk.content if chunk.content }
-                   else
-                     result = chat_instance.ask(prompt)
-                     spinner.success
-                     result
-                   end
-        $stderr.puts if stream
-
-        content = response.content
-        if content.nil? || content.strip.empty?
-          return Result.err("(no response)")
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(req)
         end
 
-        tokens_in = response.input_tokens || 0
-        tokens_out = response.output_tokens || 0
-        cost = record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
-        close_circuit!(model)
+        return Result.err("API error: #{response.code}") unless response.code == "200"
 
-        log("llm0: #{tokens_in}→#{tokens_out} tok, #{UI.currency_precise(cost)}")
-
+        data = JSON.parse(response.body, symbolize_names: true)[:data]
         Result.ok(
-          content: content,
-          model: model,
-          tokens_in: tokens_in,
-          tokens_out: tokens_out,
-          cost: cost,
+          label: data[:label],
+          limit: data[:limit],
+          remaining: data[:limit_remaining],
+          usage: data[:usage],
+          is_free_tier: data[:is_free_tier]
         )
       rescue StandardError => e
+        Result.err("Key check failed: #{e.message}")
+      end
+
+      # Main ask method with OpenRouter features
+      # Options:
+      #   tier: :strong/:fast/:cheap - model tier selection
+      #   model: explicit model ID
+      #   fallbacks: array of fallback model IDs
+      #   reasoning: :none/:minimal/:low/:medium/:high/:xhigh or { effort:, max_tokens:, exclude: }
+      #   json_schema: hash for structured output
+      #   provider: { sort:, order:, only:, ignore: } routing preferences
+      #   stream: true/false
+      #   online: true - enable web search
+      def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
+              json_schema: nil, provider: nil, stream: false, online: false, messages: nil)
+
+        return Result.err("Missing OPENROUTER_API_KEY") unless configured?
+
+        # Model selection with fallbacks
+        primary = model || select_model_for_tier(tier || self.tier)
+        return Result.err("No model available") unless primary
+
+        # Apply suffix shortcuts
+        primary = apply_suffix(primary, online: online, provider: provider)
+
+        model_short = extract_model_name(primary)
+        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+
+        # Update current state for prompt display
+        @current_model = model_short
+        @current_tier = selected_tier
+
+        Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
+
+        # Build request body
+        body = build_request_body(
+          prompt: prompt,
+          messages: messages,
+          model: primary,
+          fallbacks: fallbacks,
+          reasoning: reasoning,
+          json_schema: json_schema,
+          provider: provider,
+          stream: stream
+        )
+
+        # Execute request
+        spinner = nil
+        unless stream
+          spinner = UI.spinner("#{model_short}")
+          spinner.auto_spin
+        end
+
+        result = execute_request(body, stream: stream)
+
+        if result.ok?
+          data = result.value
+          spinner&.success
+
+          tokens_in = data[:tokens_in]
+          tokens_out = data[:tokens_out]
+          cost = data[:cost] || record_cost(model: primary, tokens_in: tokens_in, tokens_out: tokens_out)
+
+          Dmesg.llm(selected_tier, model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+
+          close_circuit!(primary)
+          Result.ok(data)
+        else
+          spinner&.error
+          open_circuit!(primary)
+          Dmesg.llm_error(selected_tier, result.error) if defined?(Dmesg)
+          result
+        end
+      rescue StandardError => e
         spinner&.error rescue nil
-        open_circuit!(model) if model
-        log("llm0: error #{e.message}")
+        open_circuit!(primary) if primary
         Result.err("LLM error: #{e.message}")
       end
 
-      def log(msg)
-        puts UI.dim(msg)
+      # Structured output helper - guarantees valid JSON matching schema
+      def ask_json(prompt, schema:, tier: :fast, **opts)
+        ask(prompt, tier: tier, json_schema: schema, **opts)
       end
 
-      def chat(model:)
-        RubyLLM.chat(model: model)
+      # Reasoning-enhanced query
+      def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **opts)
+        ask(prompt, tier: tier, reasoning: { effort: effort }, **opts)
       end
 
-      def select_model(text_length = 0)
-        desired = if text_length > 1000
-                    :strong
-                  elsif text_length > 200
-                    :fast
-                  else
-                    :cheap
-                  end
-        start = [TIER_ORDER.index(desired), TIER_ORDER.index(tier)].max
+      # Web-grounded query
+      def ask_online(prompt, tier: :fast, **opts)
+        ask(prompt, tier: tier, online: true, **opts)
+      end
 
-        TIER_ORDER[start..].each do |t|
-          model_tiers[t]&.each { |m| return { model: m, tier: t } if circuit_closed?(m) }
+      # Auto-router - let OpenRouter pick best model
+      def ask_auto(prompt, allowed_models: nil, **opts)
+        body = { model: "openrouter/auto" }
+        if allowed_models
+          body[:plugins] = [{ id: "auto-router", allowed_models: allowed_models }]
         end
+        ask(prompt, model: "openrouter/auto", **opts)
+      end
+
+      def extract_model_name(model_id)
+        # Remove provider prefix and suffixes
+        name = model_id.split("/").last
+        name = name.split(":").first  # Remove :nitro, :floor, :online
+        name
+      end
+
+      def prompt_model_name
+        @current_model || "unknown"
+      end
+
+      private
+
+      def apply_suffix(model, online: false, provider: nil)
+        suffixes = []
+        suffixes << ":online" if online
+        suffixes << ":nitro" if provider&.dig(:sort) == "throughput"
+        suffixes << ":floor" if provider&.dig(:sort) == "price"
+
+        return model if suffixes.empty?
+        "#{model}#{suffixes.first}"  # Only one suffix allowed
+      end
+
+      def build_request_body(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
+        body = { model: model, stream: stream }
+
+        # Messages
+        body[:messages] = messages || [{ role: "user", content: prompt }]
+
+        # Model fallbacks
+        body[:models] = fallbacks if fallbacks&.any?
+
+        # Reasoning tokens
+        if reasoning
+          body[:reasoning] = case reasoning
+                             when Symbol
+                               { effort: reasoning.to_s }
+                             when Hash
+                               reasoning.transform_keys(&:to_s)
+                             else
+                               { effort: "medium" }
+                             end
+        end
+
+        # Structured outputs
+        if json_schema
+          body[:response_format] = {
+            type: "json_schema",
+            json_schema: {
+              name: json_schema[:name] || "response",
+              strict: true,
+              schema: json_schema[:schema] || json_schema
+            }
+          }
+        end
+
+        # Provider preferences
+        body[:provider] = provider if provider
+
+        body
+      end
+
+      def execute_request(body, stream: false)
+        uri = URI(CHAT_ENDPOINT)
+        req = Net::HTTP::Post.new(uri)
+        req["Authorization"] = "Bearer #{api_key}"
+        req["Content-Type"] = "application/json"
+        req["HTTP-Referer"] = "https://github.com/MASTER"
+        req["X-Title"] = "MASTER Pipeline"
+
+        req.body = body.to_json
+
+        http = Net::HTTP.new(uri.hostname, uri.port)
+        http.use_ssl = true
+        http.read_timeout = 120
+
+        if stream
+          execute_streaming(http, req)
+        else
+          execute_blocking(http, req)
+        end
+      end
+
+      def execute_blocking(http, req)
+        response = http.request(req)
+
+        unless response.code == "200"
+          error_body = JSON.parse(response.body) rescue {}
+          return Result.err(error_body["error"]&.[]("message") || "HTTP #{response.code}")
+        end
+
+        data = JSON.parse(response.body, symbolize_names: true)
+        choice = data[:choices]&.first
+        message = choice&.[](:message)
+
+        Result.ok(
+          content: message&.[](:content),
+          reasoning: message&.[](:reasoning),
+          model: data[:model],
+          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
+          tokens_out: data.dig(:usage, :completion_tokens) || 0,
+          cost: data.dig(:usage, :cost),
+          finish_reason: choice&.[](:finish_reason)
+        )
+      rescue JSON::ParserError => e
+        Result.err("JSON parse error: #{e.message}")
+      end
+
+      def execute_streaming(http, req)
+        content_parts = []
+        reasoning_parts = []
+        final_data = {}
+
+        http.request(req) do |response|
+          unless response.code == "200"
+            error_body = response.read_body
+            parsed = JSON.parse(error_body) rescue {}
+            return Result.err(parsed.dig("error", "message") || "HTTP #{response.code}")
+          end
+
+          response.read_body do |chunk|
+            chunk.each_line do |line|
+              next unless line.start_with?("data: ")
+              json_str = line[6..]
+              next if json_str.strip == "[DONE]"
+
+              begin
+                data = JSON.parse(json_str, symbolize_names: true)
+                delta = data.dig(:choices, 0, :delta)
+
+                if delta
+                  if delta[:content]
+                    $stderr.print delta[:content]
+                    content_parts << delta[:content]
+                  end
+                  if delta[:reasoning]
+                    reasoning_parts << delta[:reasoning]
+                  end
+                end
+
+                # Capture final usage data
+                if data[:usage]
+                  final_data[:tokens_in] = data[:usage][:prompt_tokens]
+                  final_data[:tokens_out] = data[:usage][:completion_tokens]
+                  final_data[:cost] = data[:usage][:cost]
+                end
+                final_data[:model] = data[:model] if data[:model]
+              rescue JSON::ParserError
+                next
+              end
+            end
+          end
+        end
+
+        $stderr.puts
+
+        Result.ok(
+          content: content_parts.join,
+          reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
+          model: final_data[:model],
+          tokens_in: final_data[:tokens_in] || 0,
+          tokens_out: final_data[:tokens_out] || 0,
+          cost: final_data[:cost],
+          finish_reason: "stop"
+        )
+      end
+
+      def select_model_for_tier(tier)
+        tier = tier.to_sym
+        tier = :fast unless TIER_ORDER.include?(tier)
+
+        # Try requested tier first, then fall back to cheaper tiers
+        start_idx = TIER_ORDER.index(tier) || 1
+        TIER_ORDER[start_idx..].each do |t|
+          model_tiers[t]&.each do |m|
+            return m if circuit_closed?(m)
+          end
+        end
+
+        # Try stronger tiers as last resort
+        TIER_ORDER[0...start_idx].reverse_each do |t|
+          model_tiers[t]&.each do |m|
+            return m if circuit_closed?(m)
+          end
+        end
+
         nil
       end
 
-      def select_available_model
-        result = select_model(500)
-        result&.fetch(:model)
-      end
+      public
 
       def circuit_closed?(model)
+        return true unless defined?(DB)
         row = DB.circuit(model)
         return true unless row
 
@@ -143,14 +404,15 @@ module MASTER
       end
 
       def open_circuit!(model)
-        DB.trip!(model)
+        DB.trip!(model) if defined?(DB)
       end
 
       def close_circuit!(model)
-        DB.reset!(model)
+        DB.reset!(model) if defined?(DB)
       end
 
       def total_spent
+        return 0.0 unless defined?(DB)
         DB.total_cost
       end
 
@@ -170,16 +432,18 @@ module MASTER
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
-        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        base_model = model.split(":").first  # Remove suffixes
+        rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
         cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
-        DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
+        DB.log_cost(model: base_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(DB)
         cost
       end
 
       def estimate_cost(char_count, model)
-        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        base_model = model.to_s.split(":").first
+        rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
         tokens_in = (char_count / 4.0).ceil
-        tokens_out = 500  # estimate
+        tokens_out = 500
         (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
       end
     end

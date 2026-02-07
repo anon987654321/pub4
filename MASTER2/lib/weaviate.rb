@@ -12,6 +12,7 @@ module MASTER
     HOST = ENV['WEAVIATE_HOST'] || 'localhost'
     PORT = (ENV['WEAVIATE_PORT'] || 8080).to_i
     SCHEME = ENV['WEAVIATE_SCHEME'] || 'http'
+    API_KEY = ENV['WEAVIATE_API_KEY']
 
     CLASS_NAME = 'MasterMemory'
 
@@ -24,7 +25,12 @@ module MASTER
 
       def health_check
         uri = URI("#{base_url}/v1/.well-known/ready")
-        response = Net::HTTP.get_response(uri)
+        request = Net::HTTP::Get.new(uri)
+        add_auth_headers(request)
+        
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = (uri.scheme == 'https')
+        response = http.request(request)
         response.is_a?(Net::HTTPSuccess)
       rescue StandardError
         false
@@ -124,13 +130,18 @@ module MASTER
         "#{SCHEME}://#{HOST}:#{PORT}"
       end
 
+      def add_auth_headers(request)
+        request['Content-Type'] = 'application/json'
+        request['Authorization'] = "Bearer #{API_KEY}" if API_KEY
+      end
+
       def post(path, body)
         uri = URI("#{base_url}#{path}")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
 
         request = Net::HTTP::Post.new(uri)
-        request['Content-Type'] = 'application/json'
+        add_auth_headers(request)
         request.body = body.to_json
 
         response = http.request(request)

@@ -21,7 +21,7 @@ module MASTER
 
     class << self
       def api_key
-        ENV['REPLICATE_API_TOKEN']
+        ENV['REPLICATE_API_KEY']
       end
 
       def available?
@@ -29,7 +29,7 @@ module MASTER
       end
 
       def generate(prompt:, model: DEFAULT_MODEL, params: {})
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err("REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[DEFAULT_MODEL]
 

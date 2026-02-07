@@ -1,3 +1,22 @@
+# MASTER2 Model Configuration - February 2026
+# Pricing: $/million tokens (input/output)
+# Updated from openrouter.ai/models
+
+# === STRONG TIER (complex reasoning, code review) ===
+- id: anthropic/claude-sonnet-4.5
+  alias: claude-sonnet-4.5
+  tier: strong
+  input_cost: 3.00
+  output_cost: 15.00
+  context_window: 1000000
+  provider: anthropic
+  reasoning: true
+  use_for:
+    - code_review
+    - refactoring
+    - semantic_analysis
+    - council_debate
+
 - id: deepseek/deepseek-r1
   alias: deepseek-r1
   tier: strong
@@ -5,31 +24,56 @@
   output_cost: 2.19
   context_window: 64000
   provider: deepseek
+  reasoning: true
   use_for:
     - veto_violations
     - architecture_review
     - security_audits
     - root_cause_analysis
 
-- id: anthropic/claude-sonnet-4
-  alias: claude-sonnet-4
+- id: google/gemini-3-pro-preview
+  alias: gemini-3-pro
   tier: strong
-  input_cost: 3.00
-  output_cost: 15.00
-  context_window: 200000
-  provider: anthropic
+  input_cost: 1.25
+  output_cost: 10.00
+  context_window: 1000000
+  provider: google
+  reasoning: true
   use_for:
-    - code_review
-    - refactoring
-    - semantic_analysis
-    - council_debate
+    - large_context
+    - document_analysis
 
-- id: deepseek/deepseek-v3
-  alias: deepseek-v3
+# === FAST TIER (quick responses, high throughput) ===
+- id: moonshotai/kimi-k2.5
+  alias: kimi-k2.5
   tier: fast
-  input_cost: 0.27
-  output_cost: 1.10
-  context_window: 64000
+  input_cost: 0.45
+  output_cost: 2.25
+  context_window: 262000
+  provider: moonshot
+  reasoning: true
+  use_for:
+    - programming
+    - agentic_tasks
+
+- id: google/gemini-3-flash-preview
+  alias: gemini-3-flash
+  tier: fast
+  input_cost: 0.50
+  output_cost: 3.00
+  context_window: 1050000
+  provider: google
+  reasoning: true
+  use_for:
+    - fast_reasoning
+    - large_context
+
+- id: deepseek/deepseek-v3.2
+  alias: deepseek-v3.2
+  tier: fast
+  input_cost: 0.25
+  output_cost: 0.38
+  context_window: 164000
   provider: deepseek
   use_for:
     - hygiene_checks
@@ -46,7 +90,18 @@
   use_for:
     - incremental_checks
     - high_volume
+
+# === CHEAP TIER (high volume, non-critical) ===
+- id: google/gemini-2.5-flash-lite
+  alias: gemini-flash-lite
+  tier: cheap
+  input_cost: 0.10
+  output_cost: 0.40
+  context_window: 1050000
+  provider: google
+  use_for:
     - batch_processing
+    - large_context_cheap
 
 - id: openai/gpt-4.1-nano
   alias: gpt-4.1-nano
@@ -59,3 +114,14 @@
     - non_critical
     - experiments
     - learning_mode
+
+- id: minimax/minimax-m2.1
+  alias: minimax-m2.1
+  tier: cheap
+  input_cost: 0.27
+  output_cost: 0.95
+  context_window: 197000
+  provider: minimax
+  use_for:
+    - coding_cheap
+    - batch_tasks
