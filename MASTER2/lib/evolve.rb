@@ -13,17 +13,30 @@ module MASTER
       lib/db_jsonl.rb
     ].freeze
 
-    def initialize(llm: LLM, chamber: nil)
+    def initialize(llm: LLM, chamber: nil, staged: false)
       @llm = llm
       @chamber = chamber || Chamber.new(llm: llm)
       @iteration = 0
       @cost = 0.0
       @history = []
+      @staged = staged
+      @staging = staged ? Staging.new : nil
     end
 
-    def run(path: MASTER.root, dry_run: true)
+    def run(path: MASTER.root, dry_run: true, validation_command: nil)
       @iteration = 0
       files = find_ruby_files(path)
+
+      # If using staged mode, stage all files first
+      if @staged
+        files.each do |file|
+          next if protected?(file)
+          result = @staging.stage(file)
+          unless result.ok?
+            @history << { file: file, error: "staging failed: #{result.error}" }
+          end
+        end
+      end
 
       files.each do |file|
         break if over_budget?
@@ -33,6 +46,11 @@ module MASTER
         result = improve_file(file, dry_run: dry_run)
         @history << result
       end
+      
+      # If using staged mode, validate and promote
+      if @staged && !dry_run
+        handle_staged_promotion(validation_command)
+      end
 
       {
         iterations: @iteration,
@@ -40,6 +58,8 @@ module MASTER
         files_processed: @history.size,
         improvements: @history.count { |h| h[:improved] },
         history: @history,
+        staged: @staged,
+        staging_summary: @staged ? @staging.summary : nil,
       }
     end
 
@@ -60,7 +80,9 @@ module MASTER
       result = @chamber.deliberate(code, filename: File.basename(file))
 
       if result.ok? && result.value[:final] != code
-        File.write(file, result.value[:final]) unless dry_run
+        # In staged mode, write to staging area; otherwise write directly
+        target_file = @staged && !dry_run ? file_in_staging(file) : file
+        File.write(target_file, result.value[:final]) unless dry_run
         @cost += result.value[:cost]
         { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
       else
@@ -68,6 +90,35 @@ module MASTER
       end
     rescue StandardError => e
       { file: file, error: e.message }
+    end
+    
+    def handle_staged_promotion(validation_command)
+      # Validate staged changes
+      if validation_command
+        validation = @staging.validate(command: validation_command)
+      else
+        # Default validation: ensure Ruby files parse correctly
+        validation = @staging.validate do |staging_dir, files|
+          files.each do |file_info|
+            next unless file_info[:relative].end_with?('.rb')
+            ruby_check = `ruby -c #{file_info[:staged]} 2>&1`
+            raise "Syntax error in #{file_info[:relative]}" unless $?.success?
+          end
+          "All Ruby files parse correctly"
+        end
+      end
+      
+      if validation.ok?
+        @staging.promote
+      else
+        @staging.rollback
+        @history << { staged_validation: :failed, reason: validation.error }
+      end
+    end
+    
+    def file_in_staging(original_path)
+      relative = original_path.sub(File.expand_path(".") + "/", "")
+      File.join(@staging.class::STAGING_DIR, relative)
     end
 
     def over_budget?

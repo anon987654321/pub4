@@ -23,6 +23,15 @@ module MASTER
       /dd\s+if=/,
     ].freeze
     
+    # Protected paths that should never be written to
+    PROTECTED_WRITE_PATHS = [
+      /data\/constitution\.yml$/,
+      /^\/etc\//,
+      /^\/sys\//,
+      /^\/proc\//,
+      /^\/dev\//,
+    ].freeze
+    
     # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
@@ -648,7 +657,18 @@ module MASTER
     end
 
     def file_write(path, content)
+      # Check protected paths first
+      if PROTECTED_WRITE_PATHS.any? { |pattern| pattern.match?(path) }
+        return "BLOCKED: file_write to protected path '#{path}' (constitution or system file)"
+      end
+      
       expanded = File.expand_path(path)
+      
+      # Check if path is also protected in expanded form
+      if PROTECTED_WRITE_PATHS.any? { |pattern| pattern.match?(expanded) }
+        return "BLOCKED: file_write to protected path '#{path}' (constitution or system file)"
+      end
+      
       cwd = File.expand_path(".")
       unless expanded.start_with?(cwd)
         return "BLOCKED: file_write path '#{path}' is outside working directory"

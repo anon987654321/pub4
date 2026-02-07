@@ -1,0 +1,101 @@
+# frozen_string_literal: true
+# Constitution - Immutable policy defaults for safe autonomy
+# This file should be treated as read-only by all tool execution
+
+version: "1.0.0"
+last_updated: "2026-02-07"
+
+# Core autonomy constraints
+autonomy:
+  # Self-modification policies
+  self_modification:
+    enabled: false
+    protected_files:
+      - "data/constitution.yml"
+      - "lib/master.rb"
+      - "lib/executor.rb"
+      - "lib/pledge.rb"
+    reason: "Prevent uncontrolled self-modification that could disable safety"
+
+  # Environment control policies  
+  environment_control:
+    enabled: false
+    protected_operations:
+      - "system_reboot"
+      - "user_management"
+      - "network_config"
+      - "firewall_rules"
+    reason: "Prevent system-level control outside agent scope"
+
+# Tool execution permissions
+permissions:
+  # Dangerous tools that require explicit allow-listing
+  dangerous_tools:
+    - shell_command
+    - code_execution
+    - file_write
+  
+  # Shell command restrictions
+  shell_command:
+    allowed: true
+    restricted_patterns:
+      - "rm -rf /"
+      - "> /dev/sda"
+      - "> /dev/hda"
+      - "DROP TABLE"
+      - "FORMAT"
+      - "mkfs."
+      - "dd if="
+    max_concurrent: 3
+    timeout_seconds: 300
+
+  # Code execution restrictions
+  code_execution:
+    allowed: true
+    restricted_operations:
+      - "system"
+      - "exec"
+      - "spawn"
+      - "eval untrusted input"
+    timeout_seconds: 60
+    max_memory_mb: 512
+
+  # File write restrictions
+  file_write:
+    allowed: true
+    restricted_paths:
+      - "/etc"
+      - "/sys"
+      - "/proc"
+      - "/dev"
+      - "data/constitution.yml"
+    must_be_within_workdir: true
+    max_file_size_mb: 10
+
+  # Web operations
+  web_operations:
+    allowed: true
+    max_requests_per_minute: 30
+    timeout_seconds: 30
+    allowed_protocols:
+      - "http"
+      - "https"
+
+# Resource limits
+resources:
+  max_cost_per_operation: 1.0  # USD
+  max_tokens_per_request: 100000
+  max_concurrent_operations: 5
+  max_execution_time_seconds: 600
+
+# Monitoring and logging
+monitoring:
+  log_all_tool_executions: true
+  log_all_permission_checks: true
+  alert_on_permission_denial: true
+  
+# Convergence and safety
+convergence:
+  max_iterations_without_progress: 5
+  require_validation_before_commit: true
+  enable_rollback: true
