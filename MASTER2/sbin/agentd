@@ -1,24 +1,19 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "fileutils"
 require "dotenv/load" rescue nil
 require "json"
 
 require_relative "../lib/master"
 
-# Setup database
 MASTER::DB.setup
-
-# Configure LLM
 MASTER::LLM.configure
 
-# Configuration
 INBOX_DIR = ENV["MASTER_INBOX"] || "#{MASTER.root}/tmp/inbox"
 OUTBOX_DIR = ENV["MASTER_OUTBOX"] || "#{MASTER.root}/tmp/outbox"
 POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || "5").to_i
 
-# Create directories
-require "fileutils"
 FileUtils.mkdir_p(INBOX_DIR)
 FileUtils.mkdir_p(OUTBOX_DIR)
 
@@ -28,7 +23,6 @@ puts "Output: #{OUTBOX_DIR}"
 puts "Poll interval: #{POLL_INTERVAL}s"
 puts "Press Ctrl+C to stop\n\n"
 
-# Signal handling
 running = true
 Signal.trap("INT") { running = false; puts "\nShutting down..." }
 Signal.trap("TERM") { running = false; puts "\nShutting down..." }
@@ -37,19 +31,14 @@ pipeline = MASTER::Pipeline.new
 
 while running
   begin
-    # Find all .json files in inbox
     files = Dir.glob("#{INBOX_DIR}/*.json").sort
 
     files.each do |file|
       puts "[#{Time.now}] Processing: #{File.basename(file)}"
 
-      # Read and parse JSON
       input = JSON.parse(File.read(file), symbolize_names: true)
-
-      # Process through pipeline
       result = pipeline.call(input)
 
-      # Write result to outbox
       basename = File.basename(file, ".json")
       output_file = "#{OUTBOX_DIR}/#{basename}_#{Time.now.to_i}.json"
 
@@ -61,11 +50,9 @@ while running
         puts "  ✗ Error: #{result.error}"
       end
 
-      # Remove processed file
       File.delete(file)
-    rescue => e
+    rescue StandardError => e
       puts "  ✗ Failed to process #{file}: #{e.message}"
-      # Move to error directory
       error_dir = "#{INBOX_DIR}/errors"
       FileUtils.mkdir_p(error_dir)
       FileUtils.mv(file, "#{error_dir}/#{File.basename(file)}")
@@ -74,7 +61,7 @@ while running
     sleep POLL_INTERVAL
   rescue Interrupt
     running = false
-  rescue => e
+  rescue StandardError => e
     puts "Error in main loop: #{e.message}"
     sleep POLL_INTERVAL
   end

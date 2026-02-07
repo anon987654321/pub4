@@ -12,11 +12,11 @@ module MASTER
         @connection = SQLite3::Database.new(path)
         @connection.results_as_hash = true
         create_schema
-        seed_data
+        seed_all
       end
 
       def create_schema
-        @connection.execute_batch <<-SQL
+        @connection.execute_batch <<~SQL
           CREATE TABLE IF NOT EXISTS axioms (
             id TEXT PRIMARY KEY,
             category TEXT,
@@ -65,7 +65,7 @@ module MASTER
         SQL
       end
 
-      def seed_data
+      def seed_all
         seed_axioms
         seed_council
         seed_zsh_patterns
@@ -75,7 +75,7 @@ module MASTER
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
-        axioms = YAML.load_file(axioms_path)
+        axioms = YAML.safe_load_file(axioms_path, permitted_classes: [Date])
         return unless axioms.is_a?(Array)
 
         axioms.each do |axiom|
@@ -90,7 +90,7 @@ module MASTER
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
-        data = YAML.load_file(council_path)
+        data = YAML.safe_load_file(council_path, permitted_classes: [Date])
         return unless data.is_a?(Array)
 
         # Filter out council parameters (non-hash entries or entries without slug)
@@ -122,7 +122,7 @@ module MASTER
         patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
         return unless File.exist?(patterns_path)
 
-        data = YAML.load_file(patterns_path)
+        data = YAML.safe_load_file(patterns_path, permitted_classes: [Date])
         return unless data.is_a?(Hash)
 
         # Seed forbidden commands
@@ -146,11 +146,11 @@ module MASTER
         end
       end
 
-      def get_zsh_patterns
+      def zsh_patterns
         @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
       end
 
-      def get_axioms(category: nil, protection: nil)
+      def axioms(category: nil, protection: nil)
         query = "SELECT * FROM axioms"
         conditions = []
         params = []
@@ -171,46 +171,53 @@ module MASTER
         @connection.execute(query, params)
       end
 
-      def get_council_members(veto_only: false)
+      def council_members(veto_only: false)
         query = "SELECT * FROM council"
         query += " WHERE veto = 1" if veto_only
         query += " ORDER BY weight DESC, name ASC"
         @connection.execute(query)
       end
 
-      def record_cost(model:, tokens_in:, tokens_out:, cost:)
+      def track_cost(model:, tokens_in:, tokens_out:, cost:)
         @connection.execute(
           "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
           [model, tokens_in, tokens_out, cost]
         )
       end
 
-      def get_total_cost
+      def total_cost
         result = @connection.execute("SELECT SUM(cost) as total FROM costs").first
         result["total"].to_f
       end
 
-      def record_circuit_failure(model)
+      def circuit_failure!(model)
         @connection.execute(
-          "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
-           ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
+          <<~SQL,
+            INSERT INTO circuits (model, failures, last_failure, state)
+            VALUES (?, 1, datetime('now'), 'closed')
+            ON CONFLICT(model) DO UPDATE SET
+            failures = failures + 1, last_failure = datetime('now')
+          SQL
           [model]
         )
       end
 
-      def record_circuit_success(model)
+      def circuit_success!(model)
         @connection.execute(
-          "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
-           ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
+          <<~SQL,
+            INSERT INTO circuits (model, failures, state)
+            VALUES (?, 0, 'closed')
+            ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'
+          SQL
           [model]
         )
       end
 
-      def get_circuit(model)
+      def circuit(model)
         @connection.execute("SELECT * FROM circuits WHERE model = ?", [model]).first
       end
 
-      def get_config(key)
+      def config_value(key)
         result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
         result ? result["value"] : nil
       end

@@ -2,7 +2,7 @@
 
 module MASTER
   class Pipeline
-    DEFAULT_STAGES = %i[input_tank council_debate refactor_engine output_tank].freeze
+    DEFAULT_STAGES = %i[preprocessor adversarial_review postprocessor].freeze
 
     attr_reader :stages
 
@@ -16,17 +16,23 @@ module MASTER
       end
     end
 
-    # Convert stage name symbol to class
-    # :input_tank -> Stages::InputTank
     def stage_class(name)
-      class_name = name.to_s.split('_').map(&:capitalize).join
+      class_name = name.to_s.split("_").map(&:capitalize).join
       Stages.const_get(class_name)
     end
 
-    # REPL mode with tty-prompt (graceful fallback)
     def self.repl
-      require "tty-prompt" rescue nil
-      require "tty-spinner" rescue nil
+      begin
+        require "tty-prompt"
+      rescue LoadError
+        nil
+      end
+
+      begin
+        require "tty-spinner"
+      rescue LoadError
+        nil
+      end
 
       prompt = defined?(TTY::Prompt) ? TTY::Prompt.new : nil
       spinner_class = defined?(TTY::Spinner) ? TTY::Spinner : nil
@@ -66,7 +72,6 @@ module MASTER
       puts "Goodbye!"
     end
 
-    # Pipe mode: JSON stdin -> JSON stdout
     def self.pipe
       require "json"
 
@@ -87,6 +92,5 @@ module MASTER
   end
 
   module Stages
-    # Stages are loaded via require_relative in master.rb
   end
 end

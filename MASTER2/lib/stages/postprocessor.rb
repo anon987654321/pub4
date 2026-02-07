@@ -2,21 +2,12 @@
 
 module MASTER
   module Stages
-    # Depressure Tank: Multi-model output refinement
-    class OutputTank
+    class Postprocessor
       CODE_FENCE = /^```/
 
       def call(input)
-        # Get the text to render (prefer response, fallback to text)
         text = input[:response] || input[:text] || input[:original_text] || ""
-
-        # Apply typesetting to prose, preserve code blocks
         typeset_text = typeset_safe(text)
-
-        # TODO: Implement multi-model refinement
-        # TODO: Apply additional Strunk & White rules (active voice)
-
-        # Format cost/token summary if available
         summary = format_summary(input)
 
         enriched = input.merge(
@@ -53,10 +44,9 @@ module MASTER
       end
 
       def typeset_prose(text)
-        # Apply typography rules from Bringhurst
-        text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }      # Smart quotes
-            .gsub(/\s--\s/, " \u2014 ")                      # Em dashes
-            .gsub(/\.\.\./, "\u2026")                        # Ellipses
+        text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }
+            .gsub(/\s--\s/, " \u2014 ")
+            .gsub(/\.\.\./, "\u2026")
       end
 
       def format_summary(input)

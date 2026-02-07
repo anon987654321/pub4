@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "time"
 
 module MASTER
   module LLM
@@ -35,38 +36,42 @@ module MASTER
       end
 
       def circuit_available?(model)
-        circuit = DB.get_circuit(model)
+        circuit = DB.circuit(model)
         return true unless circuit
 
         failures = circuit["failures"].to_i
         return true if failures < CIRCUIT_THRESHOLD
 
-        last_failure = Time.parse(circuit["last_failure"]) rescue Time.now
+        last_failure = begin
+          Time.parse(circuit["last_failure"])
+        rescue
+          Time.now
+        end
         Time.now - last_failure > CIRCUIT_COOLDOWN
       end
 
-      def record_failure(model)
-        DB.record_circuit_failure(model)
+      def circuit_failure!(model)
+        DB.circuit_failure!(model)
       end
 
-      def record_success(model)
-        DB.record_circuit_success(model)
+      def circuit_success!(model)
+        DB.circuit_success!(model)
       end
 
-      def record_cost(model:, tokens_in:, tokens_out:)
+      def track_cost(model:, tokens_in:, tokens_out:)
         rate = RATES[model]
         return unless rate
 
         cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
-        DB.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
+        DB.track_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
       end
 
-      def remaining
-        BUDGET_LIMIT - DB.get_total_cost
+      def budget_remaining
+        BUDGET_LIMIT - DB.total_cost
       end
 
       def affordable_tier
-        remaining_budget = remaining
+        remaining_budget = budget_remaining
         return nil if remaining_budget <= 0
 
         # Return the most powerful tier we can afford
