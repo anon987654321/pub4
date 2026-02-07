@@ -75,7 +75,7 @@ module MASTER
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
-        axioms = YAML.safe_load_file(axioms_path, permitted_classes: [Date])
+        axioms = YAML.safe_load_file(axioms_path)
         return unless axioms.is_a?(Array)
 
         axioms.each do |axiom|
@@ -101,7 +101,7 @@ module MASTER
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
-        data = YAML.safe_load_file(council_path, permitted_classes: [Date])
+        data = YAML.safe_load_file(council_path)
         return unless data.is_a?(Array)
 
         # Filter out council parameters (non-hash entries or entries without slug)
@@ -148,7 +148,7 @@ module MASTER
         patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
         return unless File.exist?(patterns_path)
 
-        data = YAML.safe_load_file(patterns_path, permitted_classes: [Date])
+        data = YAML.safe_load_file(patterns_path)
         return unless data.is_a?(Hash)
 
         if data["forbidden_commands"]&.is_a?(Array)

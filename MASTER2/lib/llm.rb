@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
-require "time"
 
 module MASTER
   module LLM
@@ -44,7 +43,7 @@ module MASTER
 
         last_failure = begin
           Time.parse(circuit["last_failure"])
-        rescue
+        rescue StandardError
           Time.now
         end
         Time.now - last_failure > CIRCUIT_COOLDOWN
