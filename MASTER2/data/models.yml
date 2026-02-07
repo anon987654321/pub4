@@ -2,7 +2,41 @@
 # Pricing: $/million tokens (input/output)
 # Updated from openrouter.ai/models
 
+# === PREMIUM TIER (billion-dollar apps, business plans, multimedia) ===
+- id: anthropic/claude-opus-4.6
+  alias: claude-opus-4.6
+  tier: premium
+  input_cost: 15.00
+  output_cost: 75.00
+  context_window: 200000
+  provider: anthropic
+  reasoning: true
+  use_for:
+    - billion_dollar_apps
+    - business_plans
+    - multimedia_projects
+    - critical_decisions
+    - architecture_design
+
 # === STRONG TIER (complex reasoning, code review) ===
+# DEFAULT: DeepSeek-R1 (best value) or Claude Sonnet 4.5 (best quality)
+- id: deepseek/deepseek-r1
+  alias: deepseek-r1
+  tier: strong
+  input_cost: 0.55
+  output_cost: 2.19
+  context_window: 64000
+  provider: deepseek
+  reasoning: true
+  default: true
+  use_for:
+    - code_review
+    - refactoring
+    - veto_violations
+    - architecture_review
+    - security_audits
+    - root_cause_analysis
+
 - id: anthropic/claude-sonnet-4.5
   alias: claude-sonnet-4.5
   tier: strong
@@ -12,24 +46,9 @@
   provider: anthropic
   reasoning: true
   use_for:
-    - code_review
-    - refactoring
     - semantic_analysis
     - council_debate
-
-- id: deepseek/deepseek-r1
-  alias: deepseek-r1
-  tier: strong
-  input_cost: 0.55
-  output_cost: 2.19
-  context_window: 64000
-  provider: deepseek
-  reasoning: true
-  use_for:
-    - veto_violations
-    - architecture_review
-    - security_audits
-    - root_cause_analysis
+    - nuanced_writing
 
 - id: google/gemini-3-pro-preview
   alias: gemini-3-pro
@@ -43,7 +62,32 @@
     - large_context
     - document_analysis
 
+- id: qwen/qwen3-235b-a22b
+  alias: qwen3-235b
+  tier: strong
+  input_cost: 0.80
+  output_cost: 0.80
+  context_window: 41000
+  provider: alibaba
+  reasoning: true
+  use_for:
+    - multilingual
+    - complex_reasoning
+
 # === FAST TIER (quick responses, high throughput) ===
+- id: deepseek/deepseek-chat
+  alias: deepseek-v3
+  tier: fast
+  input_cost: 0.27
+  output_cost: 1.10
+  context_window: 64000
+  provider: deepseek
+  default: true
+  use_for:
+    - quick_tasks
+    - hygiene_checks
+    - simple_validation
+
 - id: moonshotai/kimi-k2.5
   alias: kimi-k2.5
   tier: fast
@@ -55,6 +99,30 @@
   use_for:
     - programming
     - agentic_tasks
+    - vision
+
+- id: qwen/qwen3-coder-next
+  alias: qwen3-coder
+  tier: fast
+  input_cost: 0.07
+  output_cost: 0.30
+  context_window: 262000
+  provider: alibaba
+  use_for:
+    - coding
+    - tool_use
+    - agents
+
+- id: zhipu/glm-4.5-air
+  alias: glm-4.5
+  tier: fast
+  input_cost: 0.05
+  output_cost: 0.22
+  context_window: 131000
+  provider: zhipu
+  use_for:
+    - chinese_nlp
+    - large_context
 
 - id: google/gemini-3-flash-preview
   alias: gemini-3-flash
@@ -68,18 +136,6 @@
     - fast_reasoning
     - large_context
 
-- id: deepseek/deepseek-v3.2
-  alias: deepseek-v3.2
-  tier: fast
-  input_cost: 0.25
-  output_cost: 0.38
-  context_window: 164000
-  provider: deepseek
-  use_for:
-    - hygiene_checks
-    - simple_validation
-    - quick_scans
-
 - id: openai/gpt-4.1-mini
   alias: gpt-4.1-mini
   tier: fast
@@ -91,7 +147,51 @@
     - incremental_checks
     - high_volume
 
+- id: meta-llama/llama-3.3-70b-instruct
+  alias: llama-3.3-70b
+  tier: fast
+  input_cost: 0.10
+  output_cost: 0.10
+  context_window: 131000
+  provider: meta
+  use_for:
+    - open_source
+    - general_tasks
+
 # === CHEAP TIER (high volume, non-critical) ===
+- id: qwen/qwen3-8b
+  alias: qwen3-8b
+  tier: cheap
+  input_cost: 0.05
+  output_cost: 0.40
+  context_window: 32000
+  provider: alibaba
+  use_for:
+    - batch_processing
+    - lightweight_tasks
+
+- id: zhipu/glm-4-32b
+  alias: glm-4-32b
+  tier: cheap
+  input_cost: 0.10
+  output_cost: 0.10
+  context_window: 128000
+  provider: zhipu
+  use_for:
+    - chinese_tasks
+    - bulk_processing
+
+- id: meta-llama/llama-3.2-3b-instruct
+  alias: llama-3.2-3b
+  tier: cheap
+  input_cost: 0.02
+  output_cost: 0.02
+  context_window: 131000
+  provider: meta
+  use_for:
+    - ultra_cheap
+    - experiments
+
 - id: google/gemini-2.5-flash-lite
   alias: gemini-flash-lite
   tier: cheap

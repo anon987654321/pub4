@@ -10,12 +10,13 @@ module MASTER
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
-    TIER_ORDER = %i[strong fast cheap].freeze
+    TIER_ORDER = %i[premium strong fast cheap].freeze
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     SPENDING_CAP = 10.0
     RATE_LIMIT_PER_MINUTE = 30  # Max requests per minute
-    MAX_COST_PER_QUERY = 0.50   # Max cost per single query
+    MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
+    PREMIUM_COST_LIMIT = 5.00   # Higher limit for premium tier
 
     # OpenRouter API
     API_BASE = "https://openrouter.ai/api/v1"
