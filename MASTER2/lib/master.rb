@@ -7,7 +7,12 @@ end
 
 require "fileutils"
 
+# Auto-install missing gems first
+require_relative "auto_install"
+MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
+
 # Core
+require_relative "utils"
 require_relative "paths"
 require_relative "result"
 require_relative "db_jsonl"
@@ -72,5 +77,4 @@ require_relative "reflow"
 require_relative "self_test"
 
 # Optional
-require_relative "auto_install"
 require_relative "server"

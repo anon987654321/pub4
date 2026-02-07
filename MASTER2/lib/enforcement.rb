@@ -154,29 +154,12 @@ module MASTER
 
         # STRUCTURAL_MERGE: similar class names
         all_classes.keys.combination(2).each do |a, b|
-          if levenshtein(a, b) <= 2 && a != b
+          if Utils.levenshtein(a, b) <= 2 && a != b
             violations << { scope: :framework, axiom: "STRUCTURAL_MERGE", message: "Similar classes: #{a}, #{b}" }
           end
         end
 
         violations
-      end
-
-      def levenshtein(a, b)
-        return b.length if a.empty?
-        return a.length if b.empty?
-
-        m = Array.new(a.length + 1) { Array.new(b.length + 1) }
-        (0..a.length).each { |i| m[i][0] = i }
-        (0..b.length).each { |j| m[0][j] = j }
-
-        (1..a.length).each do |i|
-          (1..b.length).each do |j|
-            cost = a[i - 1] == b[j - 1] ? 0 : 1
-            m[i][j] = [m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + cost].min
-          end
-        end
-        m[a.length][b.length]
       end
 
       # Layer 1: Literal - exact string/pattern matching

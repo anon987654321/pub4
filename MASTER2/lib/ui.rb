@@ -54,38 +54,72 @@ module MASTER
       @prompt ||= begin
         require "tty-prompt"
         TTY::Prompt.new(symbols: { marker: "›" }, active_color: :cyan)
+      rescue LoadError
+        nil
       end
     end
 
     def spinner(message = nil, format: :dots)
       require "tty-spinner"
       TTY::Spinner.new("[:spinner] #{message}", format: format)
+    rescue LoadError
+      # Fallback: simple inline status
+      Object.new.tap do |s|
+        s.define_singleton_method(:auto_spin) { print "  #{message}..." }
+        s.define_singleton_method(:success) { |msg = "done"| puts " #{msg}" }
+        s.define_singleton_method(:error) { |msg = "error"| puts " #{msg}" }
+        s.define_singleton_method(:stop) { puts }
+      end
     end
 
     def table(data, header: nil)
       require "tty-table"
       TTY::Table.new(header: header) { |t| data.each { |row| t << row } }
+    rescue LoadError
+      lines = []
+      lines << header.join(" | ") if header
+      data.each { |row| lines << row.join(" | ") }
+      lines.join("\n")
     end
 
     def box(content, title: nil, **opts)
       require "tty-box"
       TTY::Box.frame(content, title: title ? { top_left: " #{title} " } : nil, padding: [0, 1], border: :round, **opts)
+    rescue LoadError
+      border = title ? "┌─ #{title} ─┐" : "┌────┐"
+      "#{border}\n│ #{content.gsub("\n", "\n│ ")} │\n└────┘"
     end
 
     def markdown(text, width: nil)
       require "tty-markdown"
       TTY::Markdown.parse(text, width: width || screen_width)
+    rescue LoadError
+      text
     end
 
     def progress(total)
       require "tty-progressbar"
       TTY::ProgressBar.new("[:bar] :percent", total: total)
+    rescue LoadError
+      Object.new.tap do |p|
+        p.instance_variable_set(:@current, 0)
+        p.instance_variable_set(:@total, total)
+        p.define_singleton_method(:advance) { |n = 1| @current += n; print "\r  [#{@current}/#{@total}]" }
+        p.define_singleton_method(:finish) { puts " done" }
+      end
     end
 
     def cursor
       @cursor ||= begin
         require "tty-cursor"
         TTY::Cursor
+      rescue LoadError
+        Module.new do
+          def self.hide; ""; end
+          def self.show; ""; end
+          def self.move_to(x, y); ""; end
+          def self.clear_line; "\r"; end
+        end
       end
     end
 
@@ -93,6 +127,8 @@ module MASTER
       @reader ||= begin
         require "tty-reader"
         TTY::Reader.new
+      rescue LoadError
+        nil
       end
     end
 

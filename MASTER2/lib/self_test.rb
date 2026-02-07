@@ -141,29 +141,23 @@ module MASTER
       ].freeze
 
       def run_static_analysis
-        files = lib_files
         total_issues = 0
-
-        files.each do |file|
-          code = File.read(file)
-          result = CodeReview.analyze(code, filename: File.basename(file))
+        each_lib_file do |code, filename|
+          result = CodeReview.analyze(code, filename: filename)
           total_issues += (result[:issues] || []).size
         end
 
         {
           passed: total_issues < 20,
-          message: "#{files.size} files, #{total_issues} issues",
+          message: "#{lib_files.size} files, #{total_issues} issues",
           issues: total_issues,
         }
       end
 
       def run_enforcement
-        files = lib_files
         all_violations = []
-
-        files.each do |file|
-          code = File.read(file)
-          result = Enforcement.check(code, filename: File.basename(file))
+        each_lib_file do |code, filename|
+          result = Enforcement.check(code, filename: filename)
           all_violations.concat(result[:violations] || [])
         end
 
@@ -175,10 +169,8 @@ module MASTER
       end
 
       def run_introspection
-        files = lib_files.first(10)  # Sample for speed
         all_issues = []
-
-        files.each do |file|
+        lib_files.first(10).each do |file|
           code = File.read(file)
           result = Introspection.interrogate(code, context: { filename: File.basename(file) })
           all_issues.concat(result[:issues] || [])
@@ -267,7 +259,7 @@ module MASTER
         total = results.size
 
         results.each do |name, result|
-          status = result[:passed] ? UI.pastel.green("✓") : UI.pastel.red("✗")
+          status = result[:passed] ? UI.pastel.green(UI.icon(:success)) : UI.pastel.red(UI.icon(:failure))
           puts "  #{status} #{name.to_s.tr('_', ' ').capitalize}"
         end
 
@@ -282,6 +274,10 @@ module MASTER
 
       def lib_files
         Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
+      end
+
+      def each_lib_file
+        lib_files.each { |f| yield File.read(f), File.basename(f) }
       end
     end
   end

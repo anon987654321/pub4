@@ -214,62 +214,56 @@ module MASTER
     class << self
       private
 
+      FAST_CHECKS = {
+        /assumption.*wrong/i => {
+          pattern: /\b(always|never|must|definitely|guaranteed)\b/i,
+          issue: "Contains absolute language",
+        },
+        /hostile user/i => {
+          pattern: /\b(password|secret|key|token|credential)\b/i,
+          issue: "May expose sensitive information",
+        },
+        /edge case/i => {
+          check: ->(c) { c.match?(/\bnil\b|\bnull\b/) && !c.match?(/\b(handle|check|guard|rescue)\b/i) },
+          issue: "May not handle nil/null edge cases",
+        },
+        /simplest/i => {
+          check: ->(c) { c.length > 5000 },
+          issue: "Content very long - may not be simplest",
+        },
+        /regret/i => {
+          pattern: /\b(TODO|FIXME|XXX|HACK|temporary|workaround)\b/i,
+          issue: "Contains technical debt markers",
+        },
+        /who loses/i => {
+          pattern: /\b(delete|remove|drop|disable|revoke)\b/i,
+          issue: "Contains destructive operations",
+        },
+        /second-order/i => {
+          check: ->(c) { c.scan(/\b(require|import|include|use)\b/).size > 10 },
+          issue: "Many dependencies - consider cascading effects",
+        },
+        /security officer/i => {
+          pattern: /\b(eval|exec|system|`[^`]+`|%x\{)/i,
+          issue: "Contains code execution patterns",
+        },
+        /complexity hiding/i => {
+          check: ->(c) { c.scan(/\bif\b|\bcase\b|\b\?\s*.*:/).size > 20 },
+          issue: "High branching complexity",
+        },
+        /technical debt/i => {
+          check: ->(c) { c.scan(/\b(TODO|FIXME|HACK|XXX|OPTIMIZE|REFACTOR)\b/i).size > 3 },
+          issue: "Multiple technical debt markers",
+        },
+      }.freeze
+
       def fast_check(content, question)
-        # Heuristic checks without LLM
-        case question
-        when /assumption.*wrong/i
-          if content.match?(/\b(always|never|must|definitely|guaranteed)\b/i)
-            return { question: question, issue: "Contains absolute language" }
-          end
+        FAST_CHECKS.each do |q_pattern, check|
+          next unless question.match?(q_pattern)
 
-        when /hostile user/i
-          if content.match?(/\b(password|secret|key|token|credential)\b/i)
-            return { question: question, issue: "May expose sensitive information" }
-          end
-
-        when /edge case/i
-          if content.match?(/\bnil\b|\bnull\b/) && !content.match?(/\b(handle|check|guard|rescue)\b/i)
-            return { question: question, issue: "May not handle nil/null edge cases" }
-          end
-
-        when /simplest/i
-          if content.length > 5000
-            return { question: question, issue: "Content very long - may not be simplest" }
-          end
-
-        when /regret/i
-          if content.match?(/\b(TODO|FIXME|XXX|HACK|temporary|workaround)\b/i)
-            return { question: question, issue: "Contains technical debt markers" }
-          end
-
-        when /who loses/i
-          if content.match?(/\b(delete|remove|drop|disable|revoke)\b/i)
-            return { question: question, issue: "Contains destructive operations" }
-          end
-
-        when /second-order/i
-          deps = content.scan(/\b(require|import|include|use)\b/).size
-          if deps > 10
-            return { question: question, issue: "Many dependencies (#{deps}) - consider cascading effects" }
-          end
-
-        when /security officer/i
-          if content.match?(/\b(eval|exec|system|`[^`]+`|%x\{)/i)
-            return { question: question, issue: "Contains code execution patterns" }
-          end
-
-        when /complexity hiding/i
-          if content.scan(/\bif\b|\bcase\b|\b\?\s*.*:/).size > 20
-            return { question: question, issue: "High branching complexity" }
-          end
-
-        when /technical debt/i
-          debt_markers = content.scan(/\b(TODO|FIXME|HACK|XXX|OPTIMIZE|REFACTOR)\b/i).size
-          if debt_markers > 3
-            return { question: question, issue: "#{debt_markers} technical debt markers" }
-          end
+          triggered = check[:check]&.call(content) || (check[:pattern] && content.match?(check[:pattern]))
+          return { question: question, issue: check[:issue] } if triggered
         end
-
         nil
       end
 

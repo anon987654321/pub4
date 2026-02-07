@@ -16,51 +16,48 @@ module MASTER
       end
 
       def var
-        @var ||= begin
-          path = File.join(root, "var")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @var ||= mkdir(File.join(root, "var"))
       end
 
       def tmp
-        @tmp ||= begin
-          path = File.join(var, "tmp")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @tmp ||= mkdir(File.join(var, "tmp"))
       end
 
       def config
-        @config ||= begin
-          path = File.join(var, "config")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @config ||= mkdir(File.join(var, "config"))
       end
 
       def cache
-        @cache ||= begin
-          path = File.join(var, "cache")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @cache ||= mkdir(File.join(var, "cache"))
       end
 
       def logs
-        @logs ||= begin
-          path = File.join(var, "logs")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @logs ||= mkdir(File.join(var, "logs"))
       end
 
       def sessions
-        @sessions ||= begin
-          path = File.join(var, "sessions")
-          FileUtils.mkdir_p(path)
-          path
-        end
+        @sessions ||= mkdir(File.join(var, "sessions"))
+      end
+
+      # DRY helpers for common path patterns
+      def session_file(id)
+        safe_id = File.basename(id.to_s)
+        File.join(sessions, "#{safe_id}.json")
+      end
+
+      def var_file(name)
+        File.join(var, name)
+      end
+
+      def data_file(name)
+        File.join(data, name)
+      end
+
+      private
+
+      def mkdir(path)
+        FileUtils.mkdir_p(path)
+        path
       end
     end
   end

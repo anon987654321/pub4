@@ -39,35 +39,26 @@ module MASTER
         history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
       end
 
-      # Persist session to disk (with path traversal protection)
       def save_session(session_id, data)
-        safe_id = File.basename(session_id.to_s)
-        path = File.join(Paths.sessions, "#{safe_id}.json")
+        path = Paths.session_file(session_id)
         File.write(path, JSON.pretty_generate(data))
         path
       end
 
-      # Load session from disk (with path traversal protection)
       def load_session(session_id)
-        safe_id = File.basename(session_id.to_s)
-        path = File.join(Paths.sessions, "#{safe_id}.json")
+        path = Paths.session_file(session_id)
         return nil unless File.exist?(path)
+
         JSON.parse(File.read(path), symbolize_names: true)
       end
 
-      # List all saved sessions
       def list_sessions
-        Dir.glob(File.join(Paths.sessions, "*.json")).map do |f|
-          File.basename(f, ".json")
-        end
+        Dir.glob(File.join(Paths.sessions, "*.json")).map { |f| File.basename(f, ".json") }
       end
 
-      # Delete old sessions
       def delete_old_sessions(max_age_hours: 24)
         cutoff = Time.now - (max_age_hours * 3600)
-        Dir.glob(File.join(Paths.sessions, "*.json")).each do |f|
-          File.delete(f) if File.mtime(f) < cutoff
-        end
+        Dir.glob(File.join(Paths.sessions, "*.json")).each { |f| File.delete(f) if File.mtime(f) < cutoff }
       end
     end
   end

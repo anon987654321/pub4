@@ -4,22 +4,24 @@ module MASTER
   module AutoInstall
     GEMS = %w[
       ruby_llm
-      sqlite3
       tty-reader
       tty-prompt
       tty-spinner
       tty-table
       tty-box
+      tty-markdown
+      tty-progressbar
+      tty-cursor
       pastel
-      minitest
-      rake
+      rouge
+      falcon
+      async-websocket
     ].freeze
 
     OPENBSD_PACKAGES = %w[
       ruby
       git
       curl
-      sqlite3
     ].freeze
 
     class << self
