@@ -1,6 +1,0 @@
-{"name":"Architect","role":"system_design","style":"formal","bias":"structure","created_at":"2026-02-07T15:59:55Z"}
-{"name":"Skeptic","role":"devil_advocate","style":"critical","bias":"caution","created_at":"2026-02-07T15:59:55Z"}
-{"name":"Pragmatist","role":"implementation","style":"direct","bias":"shipping","created_at":"2026-02-07T15:59:55Z"}
-{"name":"Security","role":"security_review","style":"paranoid","bias":"safety","created_at":"2026-02-07T15:59:55Z"}
-{"name":"User","role":"ux_advocate","style":"empathetic","bias":"usability","created_at":"2026-02-07T15:59:55Z"}
-{"name":"Mentor","role":"code_review","style":"teaching","bias":"clarity","created_at":"2026-02-07T15:59:55Z"}
