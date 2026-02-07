@@ -2,6 +2,7 @@
 
 require "json"
 require "open3"
+require "yaml"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
@@ -11,7 +12,9 @@ module MASTER
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT = 120  # seconds
     MAX_HISTORY_SIZE = 50
+    MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
+    SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
     # Dangerous patterns to block (injection prevention)
     DANGEROUS_PATTERNS = [
@@ -122,7 +125,32 @@ module MASTER
     end
 
     def direct_ask(goal, tier: nil)
-      result = LLM.ask(goal, tier: tier || :fast, stream: true)
+      config = self.class.system_prompt_config
+      
+      # Build concise system context for direct queries
+      identity = if config["identity"]
+        config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
+      else
+        "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
+      end
+      
+      commands = config["commands"] || <<~CMD
+        YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
+      CMD
+      
+      # Tone from config
+      tone_rules = config.dig("tone")&.take(2)&.join(" ") || "Be concise and direct."
+      
+      prompt = <<~PROMPT
+        #{identity}
+        #{tone_rules}
+        
+        #{commands.lines.first(8).join}
+        
+        User question: #{goal}
+      PROMPT
+      
+      result = LLM.ask(prompt, tier: tier || :fast, stream: true)
       
       if result.ok?
         Result.ok(
@@ -517,19 +545,60 @@ module MASTER
     # Shared: Context building and response parsing
     # ═══════════════════════════════════════════════════════════════════════════
 
+    def self.system_prompt_config
+      @system_prompt_config ||= if File.exist?(SYSTEM_PROMPT_FILE)
+        YAML.safe_load_file(SYSTEM_PROMPT_FILE) rescue {}
+      else
+        {}
+      end
+    end
+
     def build_context(goal)
+      config = self.class.system_prompt_config
       history_text = @history.map do |h|
         "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]&.[](0..400)}"
       end.join("\n\n")
 
       tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
+      
+      # Build identity from config or default
+      identity = if config["identity"]
+        config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
+      else
+        "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant running on #{RUBY_PLATFORM}."
+      end
+      
+      # Tone guidelines
+      tone = config.dig("tone")&.map { |t| "- #{t}" }&.join("\n") || ""
+      
+      # Commands from config or inline
+      commands = config["commands"] || <<~CMD
+        YOUR COMMANDS (what users type at the master> prompt):
+          model <name>      Switch LLM model (e.g., model kimi-k2.5)
+          models            List available models
+          pattern <name>    Switch execution pattern
+          budget            Show remaining budget
+          selftest          Run self-test
+          help              Show all commands
+          exit              Exit MASTER (or Ctrl+C twice)
+      CMD
+      
+      # Check for project-specific MASTER.md
+      project_context = ""
+      master_md = File.join(Dir.pwd, "MASTER.md")
+      if File.exist?(master_md)
+        project_context = "\nPROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}\n"
+      end
 
       <<~CONTEXT
-        You are MASTER, an autonomous coding assistant. Solve this task:
+        #{identity}
         
+        #{tone.empty? ? "" : "COMMUNICATION STYLE:\n#{tone}\n"}
+        #{commands}
+        #{project_context}
         TASK: #{goal}
         
-        TOOLS AVAILABLE:
+        TOOLS AVAILABLE (for autonomous execution):
         #{tool_list}
         
         TOOL FORMAT:
@@ -553,7 +622,7 @@ module MASTER
         #{history_text.empty? ? "" : "PREVIOUS STEPS:\n#{history_text}\n"}
         
         Respond with:
-        Thought: (your reasoning about what to do next)
+        Thought: (brief reasoning)
         Action: (tool invocation or ANSWER: final answer)
       CONTEXT
     end
