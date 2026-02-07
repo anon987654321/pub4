@@ -24,21 +24,21 @@ class TestPipeline < Minitest::Test
 
   def test_pipeline_call_with_string
     # Use pipeline without Ask stage (requires API keys)
-    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
+    pipeline = MASTER::Pipeline.new(stages: %i[compress guard debate lint admin render])
     result = pipeline.call("test input")
     assert result.success?, "Pipeline should succeed with string input"
   end
 
   def test_pipeline_call_with_hash
     # Use pipeline without Ask stage (requires API keys)
-    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
+    pipeline = MASTER::Pipeline.new(stages: %i[compress guard debate lint admin render])
     result = pipeline.call({ text: "test input" })
     assert result.success?, "Pipeline should succeed with hash input"
   end
 
   def test_pipeline_preserves_data
     # Use pipeline without Ask stage (requires API keys)
-    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
+    pipeline = MASTER::Pipeline.new(stages: %i[compress guard debate lint admin render])
     result = pipeline.call({ text: "test", custom: "data" })
     assert result.success?
     assert result.value![:custom] == "data", "Custom data should be preserved"

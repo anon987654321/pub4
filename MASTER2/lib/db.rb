@@ -404,6 +404,11 @@ module MASTER
         result["total"].to_f
     end
 
+    # Alias for backward compatibility
+    def self.get_total_cost
+      total_cost
+    end
+
         def self.trip!(model)
       synchronize do
         @connection.execute(

@@ -12,6 +12,7 @@ module MASTER
     ].freeze
 
     class << self
+      include Dry::Monads[:result]
       def tree(root: MASTER.root, depth: 0, max_depth: 10)
         return [] if depth > max_depth
         return [] unless File.directory?(root)
@@ -72,7 +73,7 @@ module MASTER
       # Target a directory for processing — returns files grouped by type
       def target(directory)
         root = File.expand_path(directory, MASTER.root)
-        return Result.err("Directory not found: #{root}") unless File.directory?(root)
+        return Failure("Directory not found: #{root}") unless File.directory?(root)
 
         all_files = files(root: root)
 
@@ -84,7 +85,7 @@ module MASTER
           other: all_files.reject { |f| [".rb", ".yml", ".yaml", ".md", ".sh", ""].include?(f[:ext]) }
         }
 
-        Result.ok(grouped)
+        Success(grouped)
       end
     end
   end

@@ -4,12 +4,13 @@ module MASTER
   module Stages
     # Ask: Call LLM to generate a response
     class Ask
+      include Dry::Monads[:result]
       def call(input)
         text = input[:text] || ""
         
         # Select model based on text length
         model = LLM.select_model(text.length)
-        return Result.err("No LLM model available (budget exhausted or all circuits tripped)") unless model
+        return Failure("No LLM model available (budget exhausted or all circuits tripped)") unless model
 
         begin
           # Create chat instance
@@ -39,7 +40,7 @@ module MASTER
           circuit_state = LLM.circuit_available?(model) ? :available : :tripped
 
           # Merge response into pipeline hash
-          Result.ok(input.merge(
+          Success(input.merge(
             response: response.content,
             tokens_in: tokens_in,
             tokens_out: tokens_out,
@@ -49,7 +50,7 @@ module MASTER
         rescue => e
           # Record failure
           LLM.record_failure(model)
-          Result.err("LLM error (#{model}): #{e.message}")
+          Failure("LLM error (#{model}): #{e.message}")
         end
       end
     end
