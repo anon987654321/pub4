@@ -1,0 +1,6 @@
+{"name":"SRP","description":"Single Responsibility Principle","category":"solid","created_at":"2026-02-07T06:29:25Z"}
+{"name":"OCP","description":"Open/Closed - open for extension, closed for modification","category":"solid","created_at":"2026-02-07T06:29:25Z"}
+{"name":"DRY","description":"Don't Repeat Yourself","category":"core","created_at":"2026-02-07T06:29:25Z"}
+{"name":"KISS","description":"Keep It Simple - reduce complexity, preserve UI/UX","category":"core","scope":"internal_logic","created_at":"2026-02-07T06:29:25Z"}
+{"name":"small_files","description":"Files under 300 lines","category":"style","created_at":"2026-02-07T06:29:25Z"}
+{"name":"NN/g","description":"Follow Nielsen Norman Group usability heuristics","category":"ux","created_at":"2026-02-07T06:29:25Z"}

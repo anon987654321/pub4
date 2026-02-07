@@ -12,4 +12,4 @@ MASTER::DB.setup(path: ":memory:")
 MASTER::LLM.configure
 
 # Call the boot sequence
-MASTER::Boot.dmesg
+MASTER::Boot.banner
