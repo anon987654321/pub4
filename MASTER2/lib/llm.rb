@@ -50,20 +50,27 @@ module MASTER
       # Unified ask helper - handles model selection, circuit, cost
       def ask(prompt, model: nil, stream: true)
         model ||= select_available_model
-        return Result.err("No model available") unless model
-        return Result.err("Circuit open for #{model}") unless circuit_closed?(model)
+        return Result.err("No model available.") unless model
+        return Result.err("Circuit open for #{model}.") unless circuit_closed?(model)
 
-        # TRANSPARENT_COST: estimate before execution
-        estimated = estimate_cost(prompt.length, model)
-        $stderr.puts "  [cost: ~#{format('$%.4f', estimated)}]" if estimated > 0.001
+        spinner = UI.spinner("Thinking")
+        spinner.auto_spin unless stream
 
         chat_instance = chat(model: model)
         response = if stream
+                     spinner.stop
                      chat_instance.ask(prompt) { |chunk| $stderr.print chunk.content if chunk.content }
                    else
-                     chat_instance.ask(prompt)
+                     result = chat_instance.ask(prompt)
+                     spinner.success
+                     result
                    end
         $stderr.puts if stream
+
+        content = response.content
+        if content.nil? || content.strip.empty?
+          return Result.err("(no response)")
+        end
 
         tokens_in = response.input_tokens || 0
         tokens_out = response.output_tokens || 0
@@ -71,13 +78,14 @@ module MASTER
         close_circuit!(model)
 
         Result.ok(
-          content: response.content,
+          content: content,
           model: model,
           tokens_in: tokens_in,
           tokens_out: tokens_out,
           cost: cost,
         )
       rescue StandardError => e
+        spinner&.error rescue nil
         open_circuit!(model) if model
         Result.err("LLM error: #{e.message}")
       end
@@ -136,7 +144,7 @@ module MASTER
       end
 
       def budget_remaining
-        SPENDING_CAP - total_spent
+        [SPENDING_CAP - total_spent, 0.0].max
       end
 
       def tier

@@ -59,16 +59,50 @@ module MASTER
       end
     end
 
-    def spinner(message = nil, format: :dots)
+    # ASCII star spinner: | / - \
+    SPIN_FRAMES = %w[| / - \\].freeze
+
+    def spinner(message = nil, format: :classic)
       require "tty-spinner"
       TTY::Spinner.new("[:spinner] #{message}", format: format)
     rescue LoadError
-      # Fallback: simple inline status
-      Object.new.tap do |s|
-        s.define_singleton_method(:auto_spin) { print "  #{message}..." }
-        s.define_singleton_method(:success) { |msg = "done"| puts " #{msg}" }
-        s.define_singleton_method(:error) { |msg = "error"| puts " #{msg}" }
-        s.define_singleton_method(:stop) { puts }
+      # Fallback: ASCII star spinner
+      AsciiSpinner.new(message)
+    end
+
+    class AsciiSpinner
+      def initialize(message)
+        @message = message
+        @running = false
+        @thread = nil
+      end
+
+      def auto_spin
+        @running = true
+        @thread = Thread.new do
+          i = 0
+          while @running
+            print "\r  #{SPIN_FRAMES[i % 4]} #{@message}"
+            i += 1
+            sleep 0.1
+          end
+        end
+      end
+
+      def success(msg = "done")
+        stop
+        puts "\r  #{ICONS[:success]} #{@message} #{msg}"
+      end
+
+      def error(msg = "error")
+        stop
+        puts "\r  #{ICONS[:failure]} #{@message} #{msg}"
+      end
+
+      def stop
+        @running = false
+        @thread&.join(0.2)
+        print "\r#{' ' * 60}\r"
       end
     end
 
