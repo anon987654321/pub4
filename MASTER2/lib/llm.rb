@@ -434,9 +434,9 @@ module MASTER
         [SPENDING_CAP - total_spent, 0.0].max
       end
 
-      # Pick best available model for current budget tier
-      def pick
-        select_model_for_tier(tier)
+      # Pick best available model for given tier (or current)
+      def pick(tier_override = nil)
+        select_model_for_tier(tier_override || tier)
       end
 
       # Alias for pick (used by Chamber)
