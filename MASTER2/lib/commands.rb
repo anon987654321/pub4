@@ -70,7 +70,7 @@ module MASTER
       when "health"
         print_health
         nil
-      when "axioms-stats", "axioms"
+      when "axioms-stats", "stats"
         print_axiom_stats
         nil
       when "refactor"

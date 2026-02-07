@@ -22,6 +22,10 @@ require_relative "memory"
 require_relative "session"
 require_relative "pledge"
 
+# Safe Autonomy Architecture
+require_relative "constitution"
+require_relative "staging"
+
 # UI & NN/g compliance
 require_relative "ui"
 require_relative "help"
@@ -63,6 +67,7 @@ require_relative "momentum"
 require_relative "validator"
 require_relative "self_map"
 require_relative "file_hygiene"
+require_relative "planner_helper"
 
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"
@@ -91,6 +96,12 @@ require_relative "language_axioms"
 require_relative "file_processor"
 require_relative "reflow"
 require_relative "self_test"
+require_relative "audit"
+require_relative "confirmation_gate"
+require_relative "cross_ref"
+require_relative "self_repair"
+require_relative "learning_feedback"
+require_relative "learning_quality"
 
 # Quality & Analysis (restored from MASTER)
 require_relative "violations"

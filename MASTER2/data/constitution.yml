@@ -1,0 +1,56 @@
+# frozen_string_literal: true
+# MASTER Constitution - Immutable governance policy for safe autonomous operation
+
+safety_policies:
+  self_modification:
+    require_staging: true
+    description: "Self-modification must use staging and validation before promotion"
+  
+  environment_control:
+    direct_control: false
+    description: "No direct environment control - all changes must be reversible"
+
+tool_permissions:
+  granted:
+    - shell_command
+    - code_execution
+    - file_write
+  
+  description: "Tools that require explicit constitutional grants"
+
+shell_patterns:
+  allowed:
+    - "^(ls|pwd|echo|git|cat|head|tail|wc|find|grep)"
+    - "^ruby"
+    - "^bundle"
+  
+  blocked:
+    - "rm -rf /"
+    - "DROP TABLE"
+    - "mkfs"
+    - "dd if="
+    - ":(){ :|:& };:"
+  
+  description: "Shell command patterns for allow/block lists"
+
+protected_paths:
+  - "data/constitution.yml"
+  - "/etc/"
+  - "/usr/"
+  - "/sys/"
+  - "/proc/"
+  - "/dev/"
+  - "/boot/"
+
+resource_limits:
+  max_file_size: 1048576  # 1MB
+  max_concurrent_tools: 5
+  max_staging_files: 10
+  max_shell_output: 10000
+
+staging:
+  validation:
+    default_command: "ruby -c"
+    require_tests: true
+  
+  description: "Staging validation rules for safe code changes"
