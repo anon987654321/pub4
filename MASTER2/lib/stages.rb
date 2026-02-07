@@ -62,11 +62,11 @@ module MASTER
 
         MAX_ROUNDS.times do |i|
           persona = personas[i % personas.size]
-          prompt = "You are #{persona['name']} (#{persona['role']}). Style: #{persona['style']}.\n\nReview:\n#{current}"
+          prompt = "You are #{persona[:name]} (#{persona[:role]}). Style: #{persona[:style]}.\n\nReview:\n#{current}"
 
           begin
             response = chat.ask(prompt)
-            rounds << { persona: persona["name"], response: response.content }
+            rounds << { persona: persona[:name], response: response.content }
             current = response.content
           rescue StandardError
             break
@@ -117,10 +117,10 @@ module MASTER
         violations = []
 
         axioms.each do |axiom|
-          pattern = axiom["pattern"] || axiom[:pattern]
+          pattern = axiom[:pattern]
           next unless pattern
 
-          violations << (axiom["name"] || axiom[:name]) if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
+          violations << axiom[:name] if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
         end
 
         Result.ok(input.merge(axiom_violations: violations, linted: true))

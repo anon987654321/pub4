@@ -84,17 +84,17 @@ module MASTER
     # --- Circuits ---
     def circuit(model)
       circuits = read_collection("circuits")
-      circuits.find { |c| (c["model"] || c[:model]) == model }
+      circuits.find { |c| c[:model] == model }
     end
 
     def trip!(model)
       circuits = read_collection("circuits")
-      existing = circuits.find { |c| (c["model"] || c[:model]) == model }
+      existing = circuits.find { |c| c[:model] == model }
 
       if existing
-        existing["state"] = "open"
-        existing["failures"] = (existing["failures"] || 0) + 1
-        existing["last_failure"] = Time.now.utc.iso8601
+        existing[:state] = "open"
+        existing[:failures] = (existing[:failures] || 0) + 1
+        existing[:last_failure] = Time.now.utc.iso8601
         write_collection("circuits", circuits)
       else
         record = {
@@ -109,24 +109,24 @@ module MASTER
 
     def reset!(model)
       circuits = read_collection("circuits")
-      existing = circuits.find { |c| (c["model"] || c[:model]) == model }
+      existing = circuits.find { |c| c[:model] == model }
 
       return unless existing
 
-      existing["state"] = "closed"
-      existing["failures"] = 0
+      existing[:state] = "closed"
+      existing[:failures] = 0
       write_collection("circuits", circuits)
     end
 
     # --- Sessions ---
     def save_session(id:, data:)
       sessions = read_collection("sessions")
-      existing = sessions.find { |s| (s["id"] || s[:id]) == id }
+      existing = sessions.find { |s| s[:id] == id }
       now = Time.now.utc.iso8601
 
       if existing
-        existing["data"] = data
-        existing["updated_at"] = now
+        existing[:data] = data
+        existing[:updated_at] = now
         write_collection("sessions", sessions)
       else
         record = { id: id, data: data, created_at: now, updated_at: now }
@@ -136,8 +136,8 @@ module MASTER
 
     def load_session(id)
       sessions = read_collection("sessions")
-      session = sessions.find { |s| (s["id"] || s[:id]) == id }
-      session ? (session["data"] || session[:data]) : nil
+      session = sessions.find { |s| s[:id] == id }
+      session&.dig(:data)
     end
 
     # --- Patterns ---
@@ -145,7 +145,7 @@ module MASTER
       all = read_collection("patterns")
       return all unless category
 
-      all.select { |p| (p["category"] || p[:category]) == category }
+      all.select { |p| p[:category] == category }
     end
 
     def add_pattern(category:, pattern:, replacement: nil, description: nil)
@@ -180,7 +180,7 @@ module MASTER
 
       synchronize do
         File.readlines(path).filter_map do |line|
-          JSON.parse(line.strip)
+          JSON.parse(line.strip, symbolize_names: true)
         rescue JSON::ParserError
           nil
         end

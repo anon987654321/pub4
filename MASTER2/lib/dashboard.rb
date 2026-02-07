@@ -61,9 +61,9 @@ module MASTER
         puts "    (no activity yet)"
       else
         costs.each do |row|
-          model = (row["model"] || row[:model]).split("/").last
-          cost = row["cost"] || row[:cost]
-          created = row["created_at"] || row[:created_at]
+          model = row[:model].split("/").last
+          cost = row[:cost]
+          created = row[:created_at]
           puts "    #{created[11, 5]} | #{model.ljust(15)} | $#{format('%.4f', cost)}"
         end
       end

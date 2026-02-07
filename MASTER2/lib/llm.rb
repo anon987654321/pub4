@@ -60,10 +60,10 @@ module MASTER
         row = DB.circuit(model)
         return true unless row
 
-        state = row["state"] || row[:state]
+        state = row[:state]
         return true if state == "closed"
 
-        last_failure = row["last_failure"] || row[:last_failure]
+        last_failure = row[:last_failure]
         if Time.now.utc - Time.parse(last_failure) > CIRCUIT_COOLDOWN
           reset!(model)
           true

@@ -23,11 +23,11 @@ module MASTER
       if input.strip == "!!"
         return Result.err("No previous command") unless @last_command
         input = @last_command
-      elsif SHORTCUTS[input.strip]
-        input = SHORTCUTS[input.strip]
+      elsif (shortcut = SHORTCUTS[input.strip])
+        input = shortcut.is_a?(Symbol) ? @last_command : shortcut
       end
 
-      @last_command = input unless input.start_with?("!")
+      @last_command = input unless input.to_s.start_with?("!")
 
       parts = input.strip.split(/\s+/, 2)
       cmd = parts[0]&.downcase
@@ -122,11 +122,11 @@ module MASTER
           puts "\n  Recent Queries"
           puts "  #{'-' * 50}"
           costs.each do |row|
-            model = (row["model"] || row[:model]).split("/").last[0, 12]
-            tokens_in = row["tokens_in"] || row[:tokens_in]
-            tokens_out = row["tokens_out"] || row[:tokens_out]
-            cost = row["cost"] || row[:cost]
-            created = row["created_at"] || row[:created_at]
+            model = row[:model].split("/").last[0, 12]
+            tokens_in = row[:tokens_in]
+            tokens_out = row[:tokens_out]
+            cost = row[:cost]
+            created = row[:created_at]
             puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}→#{tokens_out} | $#{format('%.4f', cost)}"
           end
           puts
@@ -230,8 +230,9 @@ module MASTER
           return
         end
 
-        # Remove last user + assistant pair
+        # Remove last user + assistant pair and mark dirty
         session.history.pop(2)
+        session.instance_variable_set(:@dirty, true)
         puts "  Forgot last exchange. Context rolled back."
       end
 
