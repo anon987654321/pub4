@@ -1,0 +1,69 @@
+# frozen_string_literal: true
+
+module MASTER
+  # Help system - NN/g compliant help and documentation
+  module Help
+    extend self
+
+    COMMANDS = {
+      help:     { desc: "Show this help",           usage: "help [command]" },
+      ask:      { desc: "Ask the LLM a question",   usage: "ask <question>" },
+      refactor: { desc: "Refactor a file",          usage: "refactor <file>" },
+      chamber:  { desc: "Multi-model deliberation", usage: "chamber <file>" },
+      evolve:   { desc: "Self-improvement cycle",   usage: "evolve [path]" },
+      scan:     { desc: "Scan for issues",          usage: "scan [path]" },
+      status:   { desc: "Show system status",       usage: "status" },
+      budget:   { desc: "Show budget remaining",    usage: "budget" },
+      history:  { desc: "Show session history",     usage: "history" },
+      clear:    { desc: "Clear screen",             usage: "clear" },
+      exit:     { desc: "Exit MASTER",              usage: "exit" }
+    }.freeze
+
+    TIPS = [
+      "Use Tab for autocomplete",
+      "Ctrl+C to cancel current operation",
+      "Type 'help <command>' for details",
+      "Budget shown in prompt: master[tier|$X.XX]$",
+      "⚡ in prompt means circuit tripped"
+    ].freeze
+
+    def show(command = nil)
+      if command && COMMANDS[command.to_sym]
+        show_command(command.to_sym)
+      else
+        show_all
+      end
+    end
+
+    def show_all
+      puts "\n  MASTER v#{VERSION} - Commands\n\n"
+
+      COMMANDS.each do |cmd, info|
+        puts "  #{cmd.to_s.ljust(12)} #{info[:desc]}"
+      end
+
+      puts "\n  Tips:"
+      TIPS.each { |t| puts "    • #{t}" }
+      puts
+    end
+
+    def show_command(cmd)
+      info = COMMANDS[cmd]
+      return puts "Unknown command: #{cmd}" unless info
+
+      puts "\n  #{cmd}"
+      puts "  #{'-' * cmd.to_s.length}"
+      puts "  #{info[:desc]}"
+      puts "  Usage: #{info[:usage]}"
+      puts
+    end
+
+    def tip
+      TIPS.sample
+    end
+
+    def autocomplete(partial)
+      COMMANDS.keys.map(&:to_s).select { |c| c.start_with?(partial) }
+    end
+  end
+end
