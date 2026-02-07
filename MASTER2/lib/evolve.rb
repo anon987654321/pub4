@@ -13,9 +13,11 @@ module MASTER
       lib/db_jsonl.rb
     ].freeze
 
-    def initialize(llm: LLM, chamber: nil)
+    def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil)
       @llm = llm
       @chamber = chamber || Chamber.new(llm: llm)
+      @staged = staged
+      @validation_command = validation_command
       @iteration = 0
       @cost = 0.0
       @history = []
@@ -60,7 +62,23 @@ module MASTER
       result = @chamber.deliberate(code, filename: File.basename(file))
 
       if result.ok? && result.value[:final] != code
-        File.write(file, result.value[:final]) unless dry_run
+        unless dry_run
+          if @staged && defined?(Staging)
+            # Use staging workflow when enabled
+            staging = Staging.new
+            stage_result = staging.staged_modify(file, validation_command: @validation_command) do |staged_path|
+              File.write(staged_path, result.value[:final])
+            end
+            
+            unless stage_result.ok?
+              return { file: file, improved: false, error: stage_result.error }
+            end
+          else
+            # Default behavior - direct write
+            File.write(file, result.value[:final])
+          end
+        end
+        
         @cost += result.value[:cost]
         { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
       else

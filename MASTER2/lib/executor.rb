@@ -26,6 +26,17 @@ module MASTER
       /dd\s+if=/,
     ].freeze
     
+    # Protected paths that cannot be written to
+    PROTECTED_WRITE_PATHS = %w[
+      data/constitution.yml
+      /etc/
+      /usr/
+      /sys/
+      /proc/
+      /dev/
+      /boot/
+    ].freeze
+    
     # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
@@ -472,9 +483,10 @@ module MASTER
 
     def execute_react_inner(goal, tier:)
       # Simplified ReAct without the outer Result wrapper
+      # Intentionally cap inner loop to respect overall step budget
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-      5.times do
+      [5, @max_steps - @step].max.times do
         # Check wall clock timeout
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
         if elapsed > WALL_CLOCK_LIMIT
@@ -718,10 +730,27 @@ module MASTER
 
     def file_write(path, content)
       expanded = File.expand_path(path)
+      
+      # Check protected paths first
+      PROTECTED_WRITE_PATHS.each do |protected|
+        # For absolute paths, compare directly; for relative, expand from root
+        protected_expanded = if protected.start_with?("/")
+          protected
+        else
+          File.expand_path(protected, MASTER.root)
+        end
+        
+        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
+          return "BLOCKED: file_write to protected path '#{path}'"
+        end
+      end
+      
+      # Check working directory constraint
       cwd = File.expand_path(".")
       unless expanded.start_with?(cwd)
         return "BLOCKED: file_write path '#{path}' is outside working directory"
       end
+      
       FileUtils.mkdir_p(File.dirname(expanded))
       File.write(expanded, content)
       "Written #{content.length} bytes to #{path}"
@@ -753,12 +782,43 @@ module MASTER
       if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
         return "BLOCKED: dangerous shell command rejected"
       end
+      
+      # Check against Constitution if available
+      if defined?(Constitution)
+        check = Constitution.check_operation(:shell_command, command: cmd)
+        return "BLOCKED: #{check.error}" unless check.ok?
+      end
+      
       stdout, stderr, status = Open3.capture3(cmd)
       output = status.success? ? stdout : "Error: #{stderr}"
       output.length > 1000 ? "#{output[0..1000]}... (truncated)" : output
     end
 
     def code_execution(code)
+      # Block dangerous Ruby constructs
+      dangerous_code = [
+        /system\s*\(/,
+        /exec\s*\(/,
+        /`[^`]*`/,
+        /Kernel\.exec/,
+        /IO\.popen/,
+        /Open3/,
+        /FileUtils\.rm_rf/
+      ]
+      
+      if dangerous_code.any? { |pattern| pattern.match?(code) }
+        return "BLOCKED: code_execution contains dangerous constructs"
+      end
+      
+      # Attempt Pledge sandboxing on OpenBSD if available
+      if defined?(Pledge)
+        begin
+          Pledge.pledge("stdio rpath")
+        rescue StandardError
+          # Pledge not available or failed, continue without it
+        end
+      end
+      
       stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end
@@ -795,6 +855,15 @@ module MASTER
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str
+    end
+
+    def check_tool_permission(tool_name)
+      if defined?(Constitution)
+        unless Constitution.permission?(tool_name)
+          return Result.err("Tool '#{tool_name}' not permitted by constitution")
+        end
+      end
+      Result.ok
     end
 
     def record_history(entry)
