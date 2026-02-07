@@ -18,7 +18,7 @@ module MASTER
     class << self
       def available?
         health_check
-      rescue
+      rescue StandardError
         false
       end
 
@@ -26,7 +26,7 @@ module MASTER
         uri = URI("#{base_url}/v1/.well-known/ready")
         response = Net::HTTP.get_response(uri)
         response.is_a?(Net::HTTPSuccess)
-      rescue
+      rescue StandardError
         false
       end
 
@@ -114,7 +114,7 @@ module MASTER
 
         response = http.request(request)
         response.is_a?(Net::HTTPSuccess)
-      rescue
+      rescue StandardError
         false
       end
 

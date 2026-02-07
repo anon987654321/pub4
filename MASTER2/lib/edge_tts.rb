@@ -82,7 +82,7 @@ module MASTER
         return [] unless installed?
         output = `edge-tts --list-voices 2>/dev/null`
         output.lines.map(&:strip).reject(&:empty?)
-      rescue
+      rescue StandardError
         []
       end
 

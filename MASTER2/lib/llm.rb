@@ -46,8 +46,8 @@ module MASTER
                    end
         $stderr.puts if stream
 
-        tokens_in = response.input_tokens rescue 0
-        tokens_out = response.output_tokens rescue 0
+        tokens_in = response.input_tokens || 0
+        tokens_out = response.output_tokens || 0
         cost = record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
         close_circuit!(model)
 

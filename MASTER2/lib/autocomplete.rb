@@ -44,7 +44,7 @@ module MASTER
          .reject { |e| e.start_with?('.') }
          .select { |e| e.start_with?(base) }
          .map { |e| File.join(dir, e) }
-    rescue
+    rescue StandardError
       []
     end
 

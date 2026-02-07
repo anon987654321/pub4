@@ -8,7 +8,7 @@ module MASTER
   module DB
     extend self
 
-    @mutex = Mutex.new
+    @mutex = Monitor.new
 
     def setup(path: nil)
       @root = path || File.join(Paths.var, "db")

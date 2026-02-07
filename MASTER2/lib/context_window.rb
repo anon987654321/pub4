@@ -3,8 +3,6 @@
 module MASTER
   # ContextWindow - Track and display token usage
   module ContextWindow
-    extend self
-
     # Rough estimates for different models
     LIMITS = {
       "deepseek/deepseek-r1" => 64_000,
@@ -17,9 +15,9 @@ module MASTER
     DEFAULT_LIMIT = 32_000
 
     class << self
-      def estimate_tokens(text)
+      def estimate_tokens(char_count)
         # Rough estimate: ~4 chars per token for English
-        (text.to_s.length / 4.0).ceil
+        (char_count.to_i / 4.0).ceil
       end
 
       def limit_for(model)
@@ -27,11 +25,11 @@ module MASTER
       end
 
       def usage(session, model: nil)
-        model ||= LLM::TIERS[:strong]
+        model ||= LLM::MODEL_TIERS[:strong]&.first
         limit = limit_for(model)
 
         total_chars = session.history.sum { |h| h[:content].to_s.length }
-        used = estimate_tokens(total_chars.to_s)
+        used = estimate_tokens(total_chars)
         percent = ((used.to_f / limit) * 100).round(1)
 
         {

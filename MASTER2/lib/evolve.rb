@@ -10,7 +10,7 @@ module MASTER
     PROTECTED_FILES = %w[
       lib/evolve.rb
       lib/master.rb
-      lib/db.rb
+      lib/db_jsonl.rb
     ].freeze
 
     def initialize(llm: LLM, chamber: nil)

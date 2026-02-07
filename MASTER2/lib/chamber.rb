@@ -198,13 +198,14 @@ module MASTER
       chat = @llm.chat(model: model)
       response = chat.ask(prompt)
 
-      tokens_in = response.input_tokens rescue 0
-      tokens_out = response.output_tokens rescue 0
+      tokens_in = response.input_tokens || 0
+      tokens_out = response.output_tokens || 0
       @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
       @rounds += 1
 
       response.content
-    rescue StandardError
+    rescue StandardError => e
+      DB.append("errors", { context: "chamber_synthesize", error: e.message, time: Time.now.utc.iso8601 })
       proposal
     end
 
@@ -233,8 +234,8 @@ module MASTER
       chat = @llm.chat(model: model)
       response = chat.ask(prompt)
 
-      tokens_in = response.input_tokens rescue 0
-      tokens_out = response.output_tokens rescue 0
+      tokens_in = response.input_tokens || 0
+      tokens_out = response.output_tokens || 0
       @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
 
       content = response.content.to_s.strip
@@ -248,7 +249,8 @@ module MASTER
         weight: persona[:weight] || 0.1,
         reason: content.split("\n").last,
       }
-    rescue StandardError
+    rescue StandardError => e
+      DB.append("errors", { context: "chamber_vote", persona: persona[:name], error: e.message, time: Time.now.utc.iso8601 })
       { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 }
     end
 

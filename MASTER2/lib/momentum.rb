@@ -45,7 +45,7 @@ module MASTER
       def load_state
         require 'yaml'
         File.exist?(DATA_FILE.call) ? YAML.load_file(DATA_FILE.call, symbolize_names: true) : fresh
-      rescue
+      rescue StandardError
         fresh
       end
 
