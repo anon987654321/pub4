@@ -170,7 +170,10 @@ module MASTER
           "Written to \\#{match[1]}"
           
         when /^shell_command/
-          cmd = action_str[/{"([^\"]+)"/, 1]
+          # Try multiple parsing patterns
+          cmd = action_str[/["']([^"']+)["']/, 1] || action_str[/{"([^\"]+)"/, 1] || action_str.split.last
+          
+          return "Error: No command specified" if cmd.nil? || cmd.empty?
           
           # Apply dangerous pattern guard (same as Stages::Guard)
           dangerous_patterns = [
