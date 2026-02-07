@@ -1,39 +1,31 @@
 # MASTER v4.0.0
 
-An autonomous agent system with 5 specialized engines for quality-driven software development.
+An autonomous agent system with 3 specialized stages for quality-driven software development.
 
 ## Architecture
 
 MASTER v4 processes input through a pipeline of specialized stages:
 
-1. **Input Tank** (Pressure Tank): Compresses and refines user input through 8-phase discovery including intent identification, entity extraction, and Strunk & White compression.
+1. **Preprocessor**: Classifies intent, extracts entities, loads relevant axioms/council/zsh_patterns, and compresses input via Strunk & White principles.
 
-2. **Council Debate**: Adversarial council of 12 personas debates every decision. Three veto-capable personas (Security Officer, The Attacker, The Maintainer) can block proposals. Requires 70% weighted consensus to proceed.
+2. **Adversarial Review**: Council of 12 personas evaluates input AND checks axiom violations. Three veto-capable personas (Security Officer, The Attacker, The Maintainer) can block proposals. Requires 70% weighted consensus to proceed. ABSOLUTE axiom violations trigger errors, PROTECTED axiom violations become warnings.
 
-3. **Refactor Engine**: Enforces timeless axioms from `axioms.yml`. ABSOLUTE axioms (like "The Tool Applies to Itself") trigger errors on violation. PROTECTED axioms trigger warnings.
+3. **Postprocessor**: Typesets output with typographic rules (smart quotes, em dashes, ellipses) and formats cost/token summaries.
 
-4. **OpenBSD Admin**: Generates declarative OpenBSD configurations (pf, httpd, relayd) when admin tasks are detected.
+## The Three Stages
 
-5. **Output Tank** (Depressure Tank): Multi-model refinement with typographic rules (smart quotes, em dashes, ellipses), Zsh-pure validation for shell code, and cost/token summaries.
+### 1. Preprocessor
+Compresses verbose user requests into precise, axiom-aligned prompts. Applies Strunk & White's "omit needless words" principle. Extracts entities, classifies intent, and loads relevant context.
 
-## The Five Engines
-
-### 1. Pressure Tank (Input)
-Compresses verbose user requests into precise, axiom-aligned prompts. Applies Strunk & White's "omit needless words" principle. Extracts entities, identifies intent, and loads relevant context.
-
-### 2. Adversarial Council
+### 2. Adversarial Review
 12 distinct personas debate every proposal:
 - 3 veto-capable: Security Officer, The Attacker, The Maintainer
 - 9 advisory: Performance Analyst, System Architect, Minimalist, User Advocate, Skeptic, Chaos Engineer, Accessibility Advocate, Realist, Ethicist
 
-### 3. Universal Refactor
-Enforces engineering axioms (DRY, KISS, SOLID), communication axioms (omit needless words, active voice), and meta axioms (self-application, usability heuristics).
+Enforces engineering axioms (DRY, KISS, SOLID), communication axioms (omit needless words, active voice), and meta axioms (self-application, usability heuristics). ABSOLUTE axiom violations cause errors. PROTECTED axiom violations generate warnings.
 
-### 4. OpenBSD Admin
-Generates secure, minimal OpenBSD configurations. Validates syntax. Uses pledge/unveil for security boundaries.
-
-### 5. Depressure Tank (Output)
-Refines and polishes output. Applies typography rules. Validates shell code for Zsh compatibility. Preserves code blocks byte-for-byte.
+### 3. Postprocessor
+Refines and polishes output. Applies typography rules. Preserves code blocks byte-for-byte.
 
 ## Installation
 
@@ -97,6 +89,10 @@ bundle exec rake test
 ```
 
 All tests use in-memory SQLite (`:memory:`) and mock LLM calls. The pipeline can run end-to-end without API keys for testing.
+
+## Domain-Specific Behavior
+
+MASTER is use-case-agnostic (Rails apps, bug hunting, personal assistant, chatbot, SEO, OpenBSD admin, etc). Domain-specific behavior comes from LLM prompts + axioms loaded from DB, not from hardcoded stage classes.
 
 ## Axioms
 
