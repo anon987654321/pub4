@@ -1,0 +1,53 @@
+# Constitution - Immutable governance rules for MASTER2
+# Defines limits, permissions, protected files, and principles
+
+limits:
+  max_file_size: 100000  # bytes
+  max_method_length: 50  # lines
+  max_class_length: 300  # lines
+  max_nesting_depth: 5
+  max_parameters: 5
+  max_concurrent_operations: 3
+  budget_threshold: 50.0  # USD
+
+permissions:
+  can_modify_config: true
+  can_modify_data: true
+  can_modify_lib: true
+  can_modify_bin: false
+  can_delete_files: false
+  can_execute_shell: true
+  can_use_llm: true
+  can_self_modify: true
+
+protected_files:
+  - "data/constitution.yml"
+  - "lib/constitution.rb"
+  - "lib/master.rb"
+  - "lib/result.rb"
+  - "lib/logging.rb"
+  - ".github/workflows/*"
+
+protected_directories:
+  - ".git"
+  - ".github/agents"
+
+principles:
+  - name: "Defensive Programming"
+    description: "Always check preconditions and handle errors gracefully"
+  - name: "Idempotency"
+    description: "Operations should be safe to run multiple times"
+  - name: "Staged Rollout"
+    description: "Changes require confirmation before destructive operations"
+  - name: "Minimal Change"
+    description: "Make the smallest possible change to achieve the goal"
+  - name: "Self-Documentation"
+    description: "Code should be self-explanatory with clear naming"
+  - name: "Immutability"
+    description: "Constitution cannot modify itself"
+
+violation_actions:
+  protected_file_modification: "block"
+  over_budget: "warn"
+  over_complexity: "warn"
+  missing_confirmation: "block"
