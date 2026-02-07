@@ -1,0 +1,31 @@
+# MASTER2/data/aesthetics.yml
+# Japanese aesthetic principles applied to software design
+# These guide the council when evaluating proposals for beauty and elegance
+
+- id: "kanso"
+  principle: "Simplicity"
+  application: "Eliminate clutter. Remove unnecessary complexity."
+  
+- id: "shibui"
+  principle: "Subtle elegance"
+  application: "Refined, not garish. Understated beauty."
+  
+- id: "seijaku"
+  principle: "Tranquility"
+  application: "Graceful error handling. Energized calm."
+  
+- id: "ma"
+  principle: "Negative space"
+  application: "Whitespace, breathing room between elements."
+  
+- id: "wabi_sabi"
+  principle: "Beauty in imperfection"
+  application: "Accept technical debt consciously. Kintsugi over perfection theater."
+  
+- id: "yugen"
+  principle: "Profound depth"
+  application: "Hint at depth without exposing complexity."
+  
+- id: "datsuzoku"
+  principle: "Freedom from convention"
+  application: "Break patterns when purposeful."

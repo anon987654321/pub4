@@ -1,0 +1,38 @@
+# MASTER2/data/config.yml
+# System configuration values
+# These are loaded into the config table at boot
+
+# LLM Model Rates (cost per million tokens)
+rates:
+  deepseek-r1:
+    in: 0.00000055
+    out: 0.00000219
+    tier: "strong"
+  claude-sonnet-4:
+    in: 0.000003
+    out: 0.000015
+    tier: "strong"
+  deepseek-v3:
+    in: 0.00000027
+    out: 0.0000011
+    tier: "fast"
+  gpt-4.1-mini:
+    in: 0.0000004
+    out: 0.0000016
+    tier: "fast"
+  gpt-4.1-nano:
+    in: 0.0000001
+    out: 0.0000004
+    tier: "cheap"
+
+# Budget Configuration
+budget_limit: 10.0
+budget_tier_strong: 5.0
+budget_tier_fast: 1.0
+
+# Circuit Breaker Configuration
+circuit_threshold: 3
+circuit_cooldown: 300
+
+# Agent Daemon Configuration
+agentd_max_age: 604800  # 7 days in seconds

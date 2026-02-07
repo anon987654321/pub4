@@ -1,0 +1,25 @@
+# MASTER2/data/shell.yml
+# Shell configuration and command templates
+# Used by the shell stage for OpenBSD system administration
+
+# Common OpenBSD commands and their safety levels
+commands:
+  - name: "pfctl"
+    category: "firewall"
+    danger: "high"
+    requires_root: true
+  
+  - name: "rcctl"
+    category: "services"
+    danger: "medium"
+    requires_root: true
+  
+  - name: "httpd"
+    category: "web"
+    danger: "medium"
+    requires_root: false
+  
+  - name: "relayd"
+    category: "proxy"
+    danger: "medium"
+    requires_root: false

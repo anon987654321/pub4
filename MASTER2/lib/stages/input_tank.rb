@@ -51,6 +51,7 @@ module MASTER
       def identify_intent(text)
         # Simple keyword-based intent detection
         return :question if text.match?(/\?$|\bwhat\b|\bhow\b|\bwhy\b|\bwhen\b/i)
+        return :security if text.match?(/\bCVE\b|\bvulnerab|\bexploit|\binjection|\bzero.day/i)
         return :refactor if text.match?(/\brefactor\b|\bimprove\b|\boptimize\b/i)
         return :admin if text.match?(/\bpf\b|\bhttpd\b|\brelayd\b|\bconfig\b/i)
         return :command if text.match?(/^(create|delete|update|run|execute)\b/i)
@@ -60,8 +61,8 @@ module MASTER
       def extract_entities(text)
         entities = {}
 
-        # Extract file paths
-        files = text.scan(%r{(?:^|\s)([\w./\-]+\.(?:rb|js|py|txt|yml|yaml|json|md))(?:\s|$)}).flatten
+        # Extract file paths - any token containing / and ending in a known extension
+        files = text.scan(%r{(?:^|\s)([\w./\-0-9]+\.(?:rb|js|py|txt|yml|yaml|json|md|sh|c|h|go|rs))(?:\s|$)}).flatten
         entities[:files] = files unless files.empty?
 
         # Extract service names
@@ -84,7 +85,7 @@ module MASTER
         fillers.each { |pattern| compressed.gsub!(pattern, "") }
         
         # Clean up extra whitespace
-        compressed.gsub!(/\s+/, " ").strip
+        compressed = compressed.gsub(/\s+/, " ").strip
         
         compressed
       end

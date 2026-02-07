@@ -1,97 +1,217 @@
-# MASTER/data/axioms.yml
+# MASTER2/data/axioms.yml
 # Timeless, universal axioms from authoritative sources.
-# Ordered by foundational importance.
+# Weights are relative influence (0.0-1.0). Higher weight = stronger enforcement.
+# Ordered by category and foundational importance.
 
-# ENGINEERING AXIOMS
-- id: "DRY"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Do Not Repeat Yourself"
-  statement: "Every piece of knowledge must have a single, unambiguous, authoritative representation within the system."
-  source: "The Pragmatic Programmer"
-
-- id: "KISS"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Keep It Simple"
-  statement: "Simplicity is paramount. The simplest working solution is always preferred. Complexity multiplies failure."
-  source: "Unix Philosophy"
-
-- id: "SOLID_SRP"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Single Responsibility Principle"
-  statement: "A module, class, or function should have one, and only one, reason to change."
-  source: "SOLID | Clean Code by Robert C. Martin"
-
-- id: "SOLID_OCP"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Open/Closed Principle"
-  statement: "Software entities should be open for extension, but closed for modification."
-  source: "SOLID | Object-Oriented Software Construction by Bertrand Meyer"
-
-- id: "POLA"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Principle of Least Astonishment"
-  statement: "A system should behave in a way that least surprises its users, matching their experience, expectations, and mental models."
-  source: "The Pragmatic Programmer"
-
-- id: "SCOUT_RULE"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "Leave Cleaner Than Found"
-  statement: "Every change must improve the overall health of the codebase by at least one measurable quality metric."
-  source: "The Pragmatic Programmer"
-
-- id: "YAGNI"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "You Are Not Gonna Need It"
-  statement: "Never add functionality until it is demonstrably necessary. Implement things only when you need them."
-  source: "Extreme Programming"
-
-# COMMUNICATION & TYPOGRAPHY AXIOMS
-- id: "OMIT_WORDS"
-  category: "communication"
-  protection: "PROTECTED"
-  title: "Omit Needless Words"
-  statement: "Vigorous writing is concise. A sentence should contain no unnecessary words, a paragraph no unnecessary sentences."
-  source: "The Elements of Style by Strunk & White"
-
-- id: "ACTIVE_VOICE"
-  category: "communication"
-  protection: "PROTECTED"
-  title: "Prefer the Active Voice"
-  statement: "The active voice is usually more direct and vigorous than the passive."
-  source: "The Elements of Style by Strunk & White"
-
-- id: "HIERARCHY"
-  category: "communication"
-  protection: "PROTECTED"
-  title: "Establish a Clear Hierarchy"
-  statement: "Typography must define a clear, unambiguous order of importance for the reader."
-  source: "The Elements of Typographic Style by Robert Bringhurst"
-
-- id: "RHYTHM"
-  category: "communication"
-  protection: "PROTECTED"
-  title: "Maintain a Consistent Rhythm"
-  statement: "The spacing and arrangement of elements should create a steady visual and logical rhythm."
-  source: "The Elements of Typographic Style by Robert Bringhurst"
-
-# META AXIOMS
-- id: "SELF_APPLY"
+# META AXIOMS (ABSOLUTE protection)
+- id: "meta.SELF_APPLY"
   category: "meta"
   protection: "ABSOLUTE"
+  weight: 1.0
   title: "The Tool Applies to Itself"
   statement: "A system that asserts quality must first and foremost achieve its own standards. Its first test is self-application."
   source: "Recursive Quality"
+  check: "code review against own axioms"
 
-- id: "USABILITY_HEURISTICS"
+- id: "meta.NO_SIMULATION"
+  category: "meta"
+  protection: "ABSOLUTE"
+  weight: 1.0
+  title: "Evidence Over Promises"
+  statement: "Never describe what will happen. Show what did happen. Future tense is forbidden in claims."
+  source: "Anti-simulation principle"
+  check: "no future tense in output"
+
+- id: "meta.VETO_INVIOLABLE"
+  category: "meta"
+  protection: "ABSOLUTE"
+  weight: 1.0
+  title: "Security Veto Cannot Be Overridden"
+  statement: "A veto from security, attacker, or maintainer personas halts the pipeline. No programmatic override."
+  source: "Constitutional AI governance"
+  check: "veto_precedence enforced in council"
+
+- id: "meta.FAIL_FAST"
+  category: "meta"
+  protection: "ABSOLUTE"
+  weight: 1.0
+  title: "Fail Fast and Loudly"
+  statement: "Errors must surface immediately at the point of failure, not propagate silently."
+  source: "The Pragmatic Programmer"
+  check: "no silent exception handling"
+
+# ENGINEERING AXIOMS (PROTECTED)
+- id: "eng.DRY"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.9
+  title: "Do Not Repeat Yourself"
+  statement: "Every piece of knowledge must have a single, unambiguous, authoritative representation within the system."
+  source: "The Pragmatic Programmer"
+  check: "no duplicate blocks > 3 lines"
+
+- id: "eng.KISS"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.95
+  title: "Keep It Simple"
+  statement: "Simplicity is paramount. The simplest working solution is always preferred. Complexity multiplies failure."
+  source: "Unix Philosophy"
+  check: "cyclomatic_complexity <= 10, nesting <= 2"
+
+- id: "eng.SOLID_SRP"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.85
+  title: "Single Responsibility Principle"
+  statement: "A module, class, or function should have one, and only one, reason to change."
+  source: "SOLID | Clean Code by Robert C. Martin"
+  check: "one responsibility per class"
+
+- id: "eng.SOLID_OCP"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.8
+  title: "Open/Closed Principle"
+  statement: "Software entities should be open for extension, but closed for modification."
+  source: "SOLID | Object-Oriented Software Construction by Bertrand Meyer"
+  check: "extensibility through interfaces"
+
+- id: "eng.POLA"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.85
+  title: "Principle of Least Astonishment"
+  statement: "A system should behave in a way that least surprises its users, matching their experience, expectations, and mental models."
+  source: "The Pragmatic Programmer"
+  check: "consistent with user expectations"
+
+- id: "eng.SCOUT_RULE"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.8
+  title: "Leave Cleaner Than Found"
+  statement: "Every change must improve the overall health of the codebase by at least one measurable quality metric."
+  source: "The Pragmatic Programmer"
+  check: "metrics improve (complexity, coverage, duplication)"
+
+- id: "eng.YAGNI"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.85
+  title: "You Are Not Gonna Need It"
+  statement: "Never add functionality until it is demonstrably necessary. Implement things only when you need them."
+  source: "Extreme Programming"
+  check: "all code has current use"
+
+- id: "eng.POSTEL"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.8
+  title: "Postel's Law"
+  statement: "Be conservative in what you send, liberal in what you accept."
+  source: "RFC 761 / Jon Postel"
+  check: "strict output validation, lenient input parsing"
+
+- id: "eng.COMPOSITION"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.8
+  title: "Prefer Composition"
+  statement: "Build complex behavior by composing simple, independent units rather than inheriting from complex bases."
+  source: "Unix Philosophy / Gang of Four"
+  check: "composition over inheritance"
+
+- id: "eng.FAIL_FAST"
+  category: "engineering"
+  protection: "PROTECTED"
+  weight: 0.9
+  title: "Fail Fast"
+  statement: "Surface errors immediately at the point of failure. Silent failures compound."
+  source: "The Pragmatic Programmer"
+  check: "no ignored exceptions"
+
+# COMMUNICATION & TYPOGRAPHY AXIOMS (PROTECTED)
+- id: "comm.OMIT_WORDS"
+  category: "communication"
+  protection: "PROTECTED"
+  weight: 0.7
+  title: "Omit Needless Words"
+  statement: "Vigorous writing is concise. A sentence should contain no unnecessary words, a paragraph no unnecessary sentences."
+  source: "The Elements of Style by Strunk & White"
+  check: "no filler words in prose output"
+
+- id: "comm.ACTIVE_VOICE"
+  category: "communication"
+  protection: "PROTECTED"
+  weight: 0.65
+  title: "Prefer the Active Voice"
+  statement: "The active voice is usually more direct and vigorous than the passive."
+  source: "The Elements of Style by Strunk & White"
+  check: "active voice ratio > 70%"
+
+- id: "comm.HIERARCHY"
+  category: "communication"
+  protection: "PROTECTED"
+  weight: 0.6
+  title: "Establish a Clear Hierarchy"
+  statement: "Typography must define a clear, unambiguous order of importance for the reader."
+  source: "The Elements of Typographic Style by Robert Bringhurst"
+  check: "consistent heading levels"
+
+- id: "comm.RHYTHM"
+  category: "communication"
+  protection: "PROTECTED"
+  weight: 0.55
+  title: "Maintain a Consistent Rhythm"
+  statement: "The spacing and arrangement of elements should create a steady visual and logical rhythm."
+  source: "The Elements of Typographic Style by Robert Bringhurst"
+  check: "consistent spacing"
+
+# META AXIOMS (PROTECTED)
+- id: "meta.USABILITY_HEURISTICS"
   category: "meta"
   protection: "PROTECTED"
+  weight: 0.75
   title: "Respect Usability Heuristics"
   statement: "Design must adhere to established heuristics for visibility, user control, error prevention, and consistency."
   source: "10 Usability Heuristics by Jakob Nielsen"
+  check: "Nielsen heuristics compliance"
+
+# NEGOTIABLE AXIOMS (context-dependent)
+- id: "eng.LINE_LENGTH"
+  category: "engineering"
+  protection: "NEGOTIABLE"
+  weight: 0.4
+  title: "Line Length Limit"
+  statement: "Lines should generally not exceed 100 characters, but readability trumps rules."
+  source: "Style guides consensus"
+  check: "lines <= 100 chars (with exceptions)"
+
+- id: "eng.MAX_PARAMS"
+  category: "engineering"
+  protection: "NEGOTIABLE"
+  weight: 0.45
+  title: "Limit Function Parameters"
+  statement: "Functions with more than 3-4 parameters suggest poor abstraction, but domain complexity may require more."
+  source: "Code Complete"
+  check: "params <= 4 (justified if more)"
+
+# FLEXIBLE AXIOMS (informational)
+- id: "aesthetic.EMOJI"
+  category: "aesthetic"
+  protection: "FLEXIBLE"
+  weight: 0.2
+  title: "Emoji Use in CLI"
+  statement: "CLI output may use emoji for clarity (✓ ✗ ⚠️ 🔒) but must have text fallback."
+  source: "Modern CLI UX"
+  check: "emoji with text alternative"
+
+- id: "aesthetic.SPINNER_STYLE"
+  category: "aesthetic"
+  protection: "FLEXIBLE"
+  weight: 0.15
+  title: "Progress Indicator Style"
+  statement: "Prefer dots spinner over bars for Unix aesthetic consistency."
+  source: "CLI conventions"
+  check: "spinner style preference"

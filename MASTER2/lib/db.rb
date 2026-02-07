@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# Database abstraction layer for MASTER2 system state and configuration
 
 require "sqlite3"
 require "yaml"
@@ -15,15 +16,27 @@ module MASTER
         seed_data
       end
 
+      # ============================================================================
+      # SCHEMA
+      # ============================================================================
+
       def create_schema
         @connection.execute_batch <<-SQL
+          CREATE TABLE IF NOT EXISTS schema_versions (
+            component TEXT PRIMARY KEY,
+            version INTEGER,
+            updated_at TEXT DEFAULT (datetime('now'))
+          );
+
           CREATE TABLE IF NOT EXISTS axioms (
             id TEXT PRIMARY KEY,
             category TEXT,
             protection TEXT,
             title TEXT,
             statement TEXT,
-            source TEXT
+            source TEXT,
+            weight REAL,
+            check TEXT
           );
 
           CREATE TABLE IF NOT EXISTS council (
@@ -38,6 +51,13 @@ module MASTER
           CREATE TABLE IF NOT EXISTS config (
             key TEXT PRIMARY KEY,
             value TEXT
+          );
+
+          CREATE TABLE IF NOT EXISTS shell_commands (
+            name TEXT PRIMARY KEY,
+            category TEXT,
+            danger TEXT,
+            requires_root BOOLEAN
           );
 
           CREATE TABLE IF NOT EXISTS costs (
@@ -58,9 +78,48 @@ module MASTER
         SQL
       end
 
+      # ============================================================================
+      # SEED
+      # ============================================================================
+
       def seed_data
+        return if data_is_current?
         seed_axioms
+        seed_aesthetics
         seed_council
+        seed_config
+        seed_shell_commands
+        mark_data_current
+      end
+
+      def data_is_current?
+        version = @connection.execute("SELECT version FROM schema_versions WHERE component = 'seed_data'").first
+        return false unless version
+        
+        tables_empty = @connection.execute("SELECT COUNT(*) as count FROM axioms").first["count"] == 0
+        return false if tables_empty
+        
+        version["version"] == current_data_version
+      end
+
+      def current_data_version
+        1
+      end
+
+      def mark_data_current
+        @connection.execute(
+          "INSERT OR REPLACE INTO schema_versions (component, version, updated_at) VALUES (?, ?, datetime('now'))",
+          ["seed_data", current_data_version]
+        )
+      end
+
+      def reseed!
+        @connection.execute("DELETE FROM axioms")
+        @connection.execute("DELETE FROM council")
+        @connection.execute("DELETE FROM config WHERE key NOT LIKE 'runtime_%'")
+        @connection.execute("DELETE FROM shell_commands")
+        @connection.execute("DELETE FROM schema_versions WHERE component = 'seed_data'")
+        seed_data
       end
 
       def seed_axioms
@@ -72,8 +131,23 @@ module MASTER
 
         axioms.each do |axiom|
           @connection.execute(
-            "INSERT OR REPLACE INTO axioms (id, category, protection, title, statement, source) VALUES (?, ?, ?, ?, ?, ?)",
-            [axiom["id"], axiom["category"], axiom["protection"], axiom["title"], axiom["statement"], axiom["source"]]
+            "INSERT OR REPLACE INTO axioms (id, category, protection, title, statement, source, weight, check) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [axiom["id"], axiom["category"], axiom["protection"], axiom["title"], axiom["statement"], axiom["source"], axiom["weight"], axiom["check"]]
+          )
+        end
+      end
+
+      def seed_aesthetics
+        aesthetics_path = "#{MASTER.root}/data/aesthetics.yml"
+        return unless File.exist?(aesthetics_path)
+
+        aesthetics = YAML.load_file(aesthetics_path)
+        return unless aesthetics.is_a?(Array)
+
+        aesthetics.each do |aesthetic|
+          @connection.execute(
+            "INSERT OR REPLACE INTO axioms (id, category, protection, title, statement, source, weight, check) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            ["aesthetic.#{aesthetic["id"]}", "aesthetic", "GUIDANCE", aesthetic["principle"], aesthetic["application"], "Japanese Aesthetics", nil, nil]
           )
         end
       end
@@ -83,10 +157,12 @@ module MASTER
         return unless File.exist?(council_path)
 
         data = YAML.load_file(council_path)
-        return unless data.is_a?(Array)
+        return unless data.is_a?(Hash)
 
-        # Filter out council parameters (non-hash entries or entries without slug)
-        personas = data.select { |item| item.is_a?(Hash) && item["slug"] }
+        config = data["config"]
+        personas = data["personas"]
+
+        return unless config && personas
 
         personas.each do |persona|
           @connection.execute(
@@ -95,20 +171,53 @@ module MASTER
           )
         end
 
-        # Store council parameters in config table
-        params = data.select { |item| item.is_a?(Hash) && !item["slug"] }.first
-        if params
-          params.each do |key, value|
-            next if key == "veto_precedence" # Special handling for arrays
+        config.each do |key, value|
+          if key == "veto_precedence"
+            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_veto_precedence", value.join(",")])
+          else
             @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_#{key}", value.to_s])
-          end
-          
-          # Store veto_precedence as comma-separated string
-          if params["veto_precedence"]
-            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_veto_precedence", params["veto_precedence"].join(",")])
           end
         end
       end
+
+      def seed_config
+        config_path = "#{MASTER.root}/data/config.yml"
+        return unless File.exist?(config_path)
+
+        data = YAML.load_file(config_path)
+        return unless data.is_a?(Hash)
+
+        data.each do |key, value|
+          if key == "rates" && value.is_a?(Hash)
+            value.each do |model, rates|
+              @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["rate_#{model}_in", rates["in"].to_s])
+              @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["rate_#{model}_out", rates["out"].to_s])
+              @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["rate_#{model}_tier", rates["tier"].to_s])
+            end
+          else
+            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", [key, value.to_s])
+          end
+        end
+      end
+
+      def seed_shell_commands
+        shell_path = "#{MASTER.root}/data/shell.yml"
+        return unless File.exist?(shell_path)
+
+        data = YAML.load_file(shell_path)
+        return unless data.is_a?(Hash) && data["commands"]
+
+        data["commands"].each do |cmd|
+          @connection.execute(
+            "INSERT OR REPLACE INTO shell_commands (name, category, danger, requires_root) VALUES (?, ?, ?, ?)",
+            [cmd["name"], cmd["category"], cmd["danger"], cmd["requires_root"] ? 1 : 0]
+          )
+        end
+      end
+
+      # ============================================================================
+      # QUERIES
+      # ============================================================================
 
       def get_axioms(category: nil, protection: nil)
         query = "SELECT * FROM axioms"
