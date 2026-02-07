@@ -13,6 +13,8 @@ module MASTER
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]" },
       session: { desc: "Session management", usage: "session [new|save|load|info]" },
       sessions: { desc: "List saved sessions", usage: "sessions" },
+      forget: { desc: "Undo last exchange", usage: "forget" },
+      summary: { desc: "Show conversation summary", usage: "summary" },
       status: { desc: "Show system status", usage: "status" },
       budget: { desc: "Show budget remaining", usage: "budget" },
       context: { desc: "Show context window usage", usage: "context" },
@@ -26,10 +28,11 @@ module MASTER
       "Use Tab for autocomplete",
       "Ctrl+C to cancel current operation",
       "Type 'help <command>' for details",
+      "!! repeats last command, !r = refactor, !c = chamber",
       "Budget shown in prompt: master[tier|$X.XX]$",
       "⚡ in prompt means circuit tripped",
       "Sessions auto-save every 5 messages",
-      "Use 'session info' to see current session",
+      "Use 'forget' to undo last exchange",
     ].freeze
 
     def show(command = nil)

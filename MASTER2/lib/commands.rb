@@ -5,7 +5,30 @@ module MASTER
   module Commands
     extend self
 
+    @last_command = nil
+
+    # Shortcuts for power users
+    SHORTCUTS = {
+      "!!" => :repeat_last,
+      "!r" => "refactor",
+      "!c" => "chamber",
+      "!e" => "evolve",
+      "!s" => "status",
+      "!b" => "budget",
+      "!h" => "help",
+    }.freeze
+
     def dispatch(input, pipeline:)
+      # Handle shortcuts
+      if input.strip == "!!"
+        return Result.err("No previous command") unless @last_command
+        input = @last_command
+      elsif SHORTCUTS[input.strip]
+        input = SHORTCUTS[input.strip]
+      end
+
+      @last_command = input unless input.start_with?("!")
+
       parts = input.strip.split(/\s+/, 2)
       cmd = parts[0]&.downcase
       args = parts[1]
@@ -34,6 +57,12 @@ module MASTER
         nil
       when "sessions"
         list_sessions
+        nil
+      when "forget", "undo"
+        forget_last
+        nil
+      when "summary"
+        show_summary
         nil
       when "refactor"
         refactor(args)
@@ -192,6 +221,43 @@ module MASTER
           end
           puts
         end
+      end
+
+      def forget_last
+        session = Session.current
+        if session.history.size < 2
+          puts "  Nothing to forget."
+          return
+        end
+
+        # Remove last user + assistant pair
+        session.history.pop(2)
+        puts "  Forgot last exchange. Context rolled back."
+      end
+
+      def show_summary
+        session = Session.current
+        if session.history.empty?
+          puts "  No conversation yet."
+          return
+        end
+
+        puts "\n  Conversation Summary"
+        puts "  #{'-' * 40}"
+        puts "  Messages: #{session.message_count}"
+        puts "  Cost:     $#{format('%.4f', session.total_cost)}"
+        puts
+
+        # Show first and last few messages
+        history = session.history
+        puts "  First message: #{truncate(history.first[:content], 60)}"
+        puts "  Last message:  #{truncate(history.last[:content], 60)}" if history.size > 1
+        puts
+      end
+
+      def truncate(str, max)
+        return str if str.length <= max
+        "#{str[0, max - 3]}..."
       end
     end
   end

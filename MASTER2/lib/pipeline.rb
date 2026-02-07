@@ -24,7 +24,14 @@ module MASTER
         tripped = LLM::TIERS[tier]&.any? { |m| !LLM.healthy?(m) }
         indicator = tripped ? "⚡" : ""
 
-        "master[#{tier}#{indicator}|#{budget}]$ "
+        # Show context usage if session has messages
+        ctx = ""
+        if defined?(ContextWindow) && defined?(Session)
+          u = ContextWindow.usage(Session.current)
+          ctx = "|ctx:#{u[:percent].round}%" if u[:percent] > 5
+        end
+
+        "master[#{tier}#{indicator}|#{budget}#{ctx}]$ "
       rescue StandardError
         "master$ "
       end
