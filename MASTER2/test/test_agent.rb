@@ -19,7 +19,7 @@ class TestAgent < Minitest::Test
   def test_user_agent_string
     agent = MASTER::Agent.new(task: { text: "test" }, budget: 2.50, scope: "rails")
     ua = agent.user_agent
-    assert_match(/MASTER\/4\.0\.0/, ua)
+    assert_match(/MASTER\/#{MASTER::VERSION}/, ua)
     assert_match(/agent:#{agent.id}/, ua)
     assert_match(/scope:rails/, ua)
     assert_match(/budget:\$2\.50/, ua)

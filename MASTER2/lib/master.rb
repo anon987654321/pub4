@@ -73,3 +73,4 @@ require_relative "self_test"
 
 # Optional
 require_relative "auto_install"
+require_relative "server"

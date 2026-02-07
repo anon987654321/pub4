@@ -1,6 +1,20 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/master'
+require_relative "../lib/master"
 
 MASTER::DB.setup
-MASTER::Pipeline.repl
+
+case ARGV[0]
+when "--web", "-w"
+  server = MASTER::Server.new
+  MASTER::Boot.banner
+  server.start
+  puts "\nPress Ctrl+C to stop"
+  sleep
+when "--pipe", "-p"
+  input = JSON.parse($stdin.read) rescue { "text" => $stdin.read }
+  result = MASTER::Pipeline.new.call(input)
+  puts JSON.generate(result.ok? ? result.value : { error: result.error })
+else
+  MASTER::Pipeline.repl
+end

@@ -16,6 +16,10 @@ gem "tty-cursor"
 gem "pastel"         # Terminal colors
 gem "rouge"          # Syntax highlighting
 
+# Web server
+gem "falcon"         # Async HTTP server
+gem "async-websocket"
+
 group :test do
   gem "minitest"
   gem "rake"
