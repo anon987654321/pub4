@@ -98,6 +98,7 @@ require_relative "smells"
 require_relative "bug_hunting"
 require_relative "dmesg"
 require_relative "planner"
+require_relative "staging"
 require_relative "self_critique"
 require_relative "reflection_memory"
 

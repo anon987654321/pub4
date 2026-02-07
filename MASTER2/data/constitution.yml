@@ -1,0 +1,112 @@
+# frozen_string_literal: true
+# MASTER2 Constitution - Immutable safety policies and operational defaults
+# This file defines core safety rules and must remain read-only in production.
+# Tool execution guards must prevent writes to this file.
+
+version: "1.0.0"
+
+# Safety policies - immutable rules that govern autonomy
+safety:
+  self_modification:
+    # Prevent unguarded self-modification
+    enabled: false
+    description: "Self-modification requires staging and validation"
+    enforcement: "required"
+    
+  environment_control:
+    # Prevent direct environment control commands
+    enabled: false
+    description: "No direct system control without explicit permission"
+    enforcement: "required"
+    
+  dangerous_operations:
+    # Block inherently dangerous operations
+    block_patterns:
+      - pattern: 'rm\s+-r[f]?\s+\/'
+        reason: "Recursive delete of root directory"
+      - pattern: '>\s*\/dev\/[sh]da'
+        reason: "Direct disk write"
+      - pattern: 'DROP\s+TABLE'
+        reason: "Database table deletion"
+      - pattern: 'FORMAT\s+[A-Z]:'
+        reason: "Disk formatting"
+      - pattern: 'mkfs\.'
+        reason: "Filesystem creation"
+      - pattern: 'dd\s+if='
+        reason: "Direct disk operations"
+    enforcement: "required"
+
+# Permission defaults for tool execution
+permissions:
+  shell_command:
+    default: "restricted"
+    allowed_when: "explicit_permission"
+    require_review: true
+    
+  code_execution:
+    default: "sandboxed"
+    allowed_when: "explicit_permission"
+    require_review: true
+    
+  file_write:
+    default: "repo_only"
+    blocked_paths:
+      - "/etc"
+      - "/sys"
+      - "/proc"
+      - "/dev"
+      - "~/.ssh"
+      - "data/constitution.yml"  # Self-protection
+    allowed_paths:
+      - "lib/**/*.rb"
+      - "test/**/*.rb"
+      - "data/**/*.yml"  # Except constitution.yml
+      - "var/**/*"
+      - "tmp/**/*"
+    
+  file_read:
+    default: "unrestricted"
+    blocked_paths:
+      - "~/.ssh/id_*"
+      - "/etc/shadow"
+      
+  network_access:
+    default: "restricted"
+    allowed_when: "explicit_permission"
+    allowed_domains:
+      - "api.anthropic.com"
+      - "api.openai.com"
+
+# Staging requirements for self-refactor
+staging:
+  enabled: true
+  staging_dir: "var/staging"
+  validation_required: true
+  backup_required: true
+  
+  validation_commands:
+    - "rake test"
+    - "ruby -c {file}"
+    
+  rollback_on_failure: true
+  max_attempts: 1
+
+# Operational limits
+limits:
+  max_iterations: 10
+  wall_clock_timeout: 120
+  max_cost_per_operation: 0.25
+  max_file_size: 10000
+  
+# Protected files - cannot be modified without staging
+protected_files:
+  - "lib/evolve.rb"
+  - "lib/master.rb"
+  - "lib/executor.rb"
+  - "data/constitution.yml"
+  
+# Audit settings
+audit:
+  log_all_tool_calls: true
+  log_blocked_operations: true
+  log_path: "var/logs/audit.jsonl"

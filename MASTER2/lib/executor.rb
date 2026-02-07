@@ -2,6 +2,7 @@
 
 require "json"
 require "open3"
+require "yaml"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
@@ -23,6 +24,33 @@ module MASTER
       /dd\s+if=/,
     ].freeze
     
+    # Load constitution for permission checking
+    def self.constitution
+      @constitution ||= begin
+        const_file = File.join(Paths.data, "constitution.yml")
+        File.exist?(const_file) ? YAML.safe_load_file(const_file) : {}
+      rescue => e
+        warn "Failed to load constitution: #{e.message}"
+        {}
+      end
+    end
+    
+    # Check if a tool is allowed based on constitution
+    def self.tool_permitted?(tool_name, context = {})
+      perms = constitution.dig("permissions", tool_name.to_s) || {}
+      default_policy = perms["default"] || "unrestricted"
+      
+      case default_policy
+      when "unrestricted"
+        true
+      when "restricted", "sandboxed", "repo_only"
+        # Allow if explicit permission granted via context
+        context[:explicit_permission] == true
+      else
+        false
+      end
+    end
+    
     # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
@@ -39,22 +67,24 @@ module MASTER
       self_test: "Run self-test on MASTER",
     }.freeze
 
-    attr_reader :history, :step, :pattern, :plan, :reflections
+    attr_reader :history, :step, :pattern, :plan, :reflections, :permissions
 
-    def initialize(max_steps: MAX_STEPS)
+    def initialize(max_steps: MAX_STEPS, permissions: {})
       @max_steps = max_steps
       @history = []
       @reflections = []
       @plan = []
       @step = 0
+      @permissions = permissions
     end
 
     # Main entry - auto-selects pattern or uses specified
-    def call(goal, pattern: :auto, tier: nil)
+    def call(goal, pattern: :auto, tier: nil, permissions: nil)
       @history = []
       @reflections = []
       @plan = []
       @step = 0
+      @permissions = permissions || @permissions
       @pattern = pattern == :auto ? select_pattern(goal) : pattern
       
       # Quick path: simple queries
@@ -572,6 +602,14 @@ module MASTER
       action_str = sanitize_tool_input(action_str)
       return action_str if action_str.start_with?("BLOCKED:")
 
+      # Check permissions for dangerous tools
+      tool_name = extract_tool_name(action_str)
+      if dangerous_tool?(tool_name)
+        unless self.class.tool_permitted?(tool_name, @permissions)
+          return "BLOCKED: Tool '#{tool_name}' requires explicit permission (constitution)"
+        end
+      end
+
       case action_str
       when /^ask_llm\s+["']?(.+?)["']?\s*$/i
         ask_llm($1)
@@ -650,9 +688,23 @@ module MASTER
     def file_write(path, content)
       expanded = File.expand_path(path)
       cwd = File.expand_path(".")
+      
+      # Check constitution blocked paths
+      const = self.class.constitution
+      blocked_paths = const.dig("permissions", "file_write", "blocked_paths") || []
+      
+      blocked_paths.each do |blocked|
+        if blocked.end_with?("constitution.yml") && expanded.end_with?("constitution.yml")
+          return "BLOCKED: Cannot write to constitution.yml (protected by constitution)"
+        elsif expanded.include?(blocked) || expanded.start_with?(File.expand_path(blocked))
+          return "BLOCKED: file_write to '#{path}' is blocked by constitution"
+        end
+      end
+      
       unless expanded.start_with?(cwd)
         return "BLOCKED: file_write path '#{path}' is outside working directory"
       end
+      
       FileUtils.mkdir_p(File.dirname(expanded))
       File.write(expanded, content)
       "Written #{content.length} bytes to #{path}"
@@ -726,6 +778,16 @@ module MASTER
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str
+    end
+    
+    def extract_tool_name(action_str)
+      # Extract tool name from action string
+      action_str[/^(\w+)/, 1]&.to_sym
+    end
+    
+    def dangerous_tool?(tool_name)
+      # Tools that require explicit permission
+      [:shell_command, :code_execution, :file_write].include?(tool_name)
     end
 
     def record_history(entry)

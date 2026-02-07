@@ -13,15 +13,16 @@ module MASTER
       lib/db_jsonl.rb
     ].freeze
 
-    def initialize(llm: LLM, chamber: nil)
+    def initialize(llm: LLM, chamber: nil, staging: nil)
       @llm = llm
       @chamber = chamber || Chamber.new(llm: llm)
+      @staging = staging
       @iteration = 0
       @cost = 0.0
       @history = []
     end
 
-    def run(path: MASTER.root, dry_run: true)
+    def run(path: MASTER.root, dry_run: true, staged: false)
       @iteration = 0
       files = find_ruby_files(path)
 
@@ -30,7 +31,11 @@ module MASTER
         next if protected?(file)
 
         @iteration += 1
-        result = improve_file(file, dry_run: dry_run)
+        result = if staged
+                   improve_file_staged(file, dry_run: dry_run)
+                 else
+                   improve_file(file, dry_run: dry_run)
+                 end
         @history << result
       end
 
@@ -65,6 +70,35 @@ module MASTER
         { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
       else
         { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
+      end
+    rescue StandardError => e
+      { file: file, error: e.message }
+    end
+    
+    def improve_file_staged(file, dry_run:)
+      code = File.read(file)
+      return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
+      
+      # Initialize staging if not provided
+      staging = @staging || Staging.new
+      
+      result = staging.staged_modify(file) do |staged_path|
+        # Get improvements from chamber
+        improvement = @chamber.deliberate(code, filename: File.basename(file))
+        
+        if improvement.ok? && improvement.value[:final] != code
+          File.write(staged_path, improvement.value[:final]) unless dry_run
+          @cost += improvement.value[:cost]
+        else
+          # No changes, just keep original
+          return { file: file, improved: false, reason: "no changes needed" }
+        end
+      end
+      
+      if result.ok?
+        { file: file, improved: true, staged: true, validated: true }
+      else
+        { file: file, improved: false, staged: true, error: result.error }
       end
     rescue StandardError => e
       { file: file, error: e.message }
