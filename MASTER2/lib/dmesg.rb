@@ -12,6 +12,7 @@ module MASTER
 
     @buffer = []
     @start_time = Time.now
+    MAX_BUFFER_SIZE = 1000  # Cap buffer at 1000 entries
 
     # Trace levels
     SILENT = 0
@@ -42,6 +43,9 @@ module MASTER
 
         entry = { time: timestamp, line: line, level: level }
         @buffer << entry
+        
+        # Cap buffer to prevent unbounded growth
+        @buffer = @buffer.last(MAX_BUFFER_SIZE) if @buffer.size > MAX_BUFFER_SIZE
 
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?

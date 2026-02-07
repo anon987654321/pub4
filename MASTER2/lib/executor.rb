@@ -9,6 +9,8 @@ module MASTER
   # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
+    WALL_CLOCK_TIMEOUT = 120  # 2 minutes
+    MAX_HISTORY_SIZE = 50  # Cap history buffer
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     
     # All available tools
@@ -131,7 +133,21 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_react(goal, tier:)
+      start_time = Time.now
+      
       while @step < @max_steps
+        # Check wall-clock timeout
+        if Time.now - start_time > WALL_CLOCK_TIMEOUT
+          partial_context = @history.map { |h| 
+            "Step #{h[:step]}: #{h[:thought][0..100]}... -> #{h[:action][0..60]}"
+          }.join("\n")
+          
+          return Result.err(
+            "Timeout: execution exceeded #{WALL_CLOCK_TIMEOUT}s. " \
+            "Partial context:\n#{partial_context[0..500]}"
+          )
+        end
+        
         @step += 1
 
         context = build_context(goal)
@@ -143,6 +159,9 @@ module MASTER
 
         parsed = parse_response(result.value[:content])
         @history << { step: @step, thought: parsed[:thought], action: parsed[:action] }
+        
+        # Cap history buffer
+        @history = @history.last(MAX_HISTORY_SIZE) if @history.size > MAX_HISTORY_SIZE
 
         # Show progress
         UI.dim("  💭 #{@step}: #{parsed[:thought][0..80]}...")
@@ -379,16 +398,25 @@ module MASTER
     def execute_reflexion(goal, tier:)
       max_attempts = 3
       attempt = 0
+      original_goal = goal  # Preserve original goal
+      lessons_learned = []
       
       while attempt < max_attempts
         attempt += 1
         UI.dim("  🔄 Attempt #{attempt}/#{max_attempts}")
         
+        # Build goal with lessons without mutation
+        working_goal = if lessons_learned.empty?
+                         original_goal
+                       else
+                         "#{original_goal}\n\n=== Lessons from Previous Attempts ===\n#{lessons_learned.join("\n")}"
+                       end
+        
         # Execute using ReAct
-        result = execute_react_inner(goal, tier: tier)
+        result = execute_react_inner(working_goal, tier: tier)
         
         # Reflect on the result
-        reflection = reflect_on_result(goal, result, tier: :fast)
+        reflection = reflect_on_result(original_goal, result, tier: :fast)
         @reflections << reflection
         
         if reflection[:success]
@@ -405,8 +433,8 @@ module MASTER
         
         UI.dim("  ⚠ Reflection: #{reflection[:critique][0..60]}...")
         
-        # Update goal with learned lessons for next attempt
-        goal = "#{goal}\n\nIMPORTANT: #{reflection[:lessons]}"
+        # Append lessons to structured list (no nested growth)
+        lessons_learned << "Attempt #{attempt}: #{reflection[:lessons]}"
         @history = [] # Reset for fresh attempt
         @step = 0
       end
@@ -531,6 +559,12 @@ module MASTER
     end
 
     def execute_tool(action_str)
+      # Validate tool name
+      tool_name = action_str.split(/\s+/).first&.to_sym
+      unless TOOLS.key?(tool_name)
+        return "Unknown tool '#{tool_name}'. Available: #{TOOLS.keys.join(', ')}"
+      end
+      
       case action_str
       when /^ask_llm\s+["']?(.+?)["']?\s*$/i
         ask_llm($1)
@@ -545,7 +579,17 @@ module MASTER
         file_read($1.strip)
 
       when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
-        file_write($1.strip, $2)
+        path = $1.strip
+        content = $2
+        # Validate path is under MASTER.root if defined
+        if defined?(MASTER) && MASTER.respond_to?(:root)
+          root = MASTER.root
+          expanded_path = File.expand_path(path)
+          unless expanded_path.start_with?(root)
+            return "Security: file_write path must be under #{root}"
+          end
+        end
+        file_write(path, content)
 
       when /^analyze_code\s+["']?([^"'\n]+)["']?/i
         analyze_code($1.strip)
@@ -554,10 +598,16 @@ module MASTER
         fix_code($1.strip)
 
       when /^shell_command\s+["']?([^"'\n]+)["']?/i
-        shell_command($1)
+        cmd = $1
+        # Apply dangerous pattern guard from Stages::Guard
+        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+          return "Security: shell command blocked due to dangerous pattern"
+        end
+        shell_command(cmd)
 
       when /^code_execution.*```(\w*)?\n(.+?)```/mi
-        code_execution($2)
+        code = $2
+        code_execution(code)
 
       when /^council_review\s+["']?(.+?)["']?\s*$/i
         council_review($1)
@@ -569,7 +619,7 @@ module MASTER
         self_test
 
       else
-        "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
+        "Unknown tool format. Available: #{TOOLS.keys.join(', ')}"
       end
     rescue StandardError => e
       "Tool error: #{e.message}"
@@ -641,6 +691,15 @@ module MASTER
     end
 
     def code_execution(code)
+      # Enforce sandboxing with Pledge if available (OpenBSD)
+      begin
+        if defined?(Pledge)
+          Pledge.pledge("stdio rpath wpath cpath proc exec")
+        end
+      rescue StandardError => e
+        # Pledge not available on this platform, continue without it
+      end
+      
       stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end

@@ -100,14 +100,19 @@ module MASTER
       existing = circuits.find { |c| c[:model] == model }
 
       if existing
-        existing[:state] = "open"
         existing[:failures] = (existing[:failures] || 0) + 1
         existing[:last_failure] = Time.now.utc.iso8601
+        
+        # Only trip circuit after reaching threshold
+        if existing[:failures] >= MASTER::LLM::FAILURES_BEFORE_TRIP
+          existing[:state] = "open"
+        end
+        
         write_collection("circuits", circuits)
       else
         record = {
           model: model,
-          state: "open",
+          state: "closed",  # Don't trip on first failure
           failures: 1,
           last_failure: Time.now.utc.iso8601,
         }
@@ -215,8 +220,17 @@ module MASTER
     end
 
     def ensure_seeded
-      seed_axioms if axioms.empty?
-      seed_council if council.empty?
+      synchronize do
+        # Check for seed marker to prevent duplicate seeding
+        markers = read_collection("seed_markers")
+        return if markers.any? { |m| m[:seeded] == true }
+        
+        seed_axioms if axioms.empty?
+        seed_council if council.empty?
+        
+        # Set seed marker
+        append("seed_markers", { seeded: true, timestamp: Time.now.utc.iso8601 })
+      end
     end
 
     def seed_axioms

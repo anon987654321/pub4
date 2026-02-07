@@ -8,6 +8,7 @@ class TestResult < Minitest::Test
     assert result.ok?
     refute result.err?
     assert_equal "success", result.value
+    assert_equal :ok, result.kind
   end
 
   def test_err_result
@@ -15,6 +16,38 @@ class TestResult < Minitest::Test
     assert result.err?
     refute result.ok?
     assert_equal "failure", result.error
+    assert_equal :err, result.kind
+  end
+  
+  def test_ok_with_nil_value
+    result = MASTER::Result.ok(nil)
+    assert result.ok?
+    refute result.err?
+    assert_nil result.value
+    assert_equal :ok, result.kind
+  end
+  
+  def test_result_is_frozen
+    result = MASTER::Result.ok("value")
+    assert result.frozen?
+  end
+  
+  def test_map_rescues_standard_error
+    result = MASTER::Result.ok(5).map { |v| raise StandardError, "test error" }
+    assert result.err?
+    assert_equal "test error", result.error
+  end
+  
+  def test_flat_map_rescues_standard_error
+    result = MASTER::Result.ok(5).flat_map { |v| raise StandardError, "test error" }
+    assert result.err?
+    assert_equal "test error", result.error
+  end
+  
+  def test_flat_map_handles_non_result_return
+    result = MASTER::Result.ok(5).flat_map { |v| v * 2 }
+    assert result.ok?
+    assert_equal 10, result.value
   end
 
   def test_flat_map_on_ok

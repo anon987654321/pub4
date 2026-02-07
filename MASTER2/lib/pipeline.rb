@@ -4,6 +4,7 @@ module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
+    VALID_STAGES = %i[intake compress guard route council ask lint render execute].freeze
 
     class << self
       attr_accessor :current_pattern
@@ -12,6 +13,16 @@ module MASTER
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
+      
+      # Validate stage names if using stage symbols
+      if @mode == :stages
+        invalid_stages = stages.select { |s| s.is_a?(Symbol) && !VALID_STAGES.include?(s) }
+        unless invalid_stages.empty?
+          raise ArgumentError, "Invalid stage(s): #{invalid_stages.join(', ')}. " \
+                               "Valid stages: #{VALID_STAGES.join(', ')}"
+        end
+      end
+      
       @stages = stages.map do |stage|
         stage.respond_to?(:call) ? stage : Stages.const_get(stage.to_s.capitalize).new
       end
@@ -23,15 +34,66 @@ module MASTER
       case @mode
       when :executor
         # Default: Use autonomous executor with pattern selection
-        Executor.call(text, pattern: self.class.current_pattern)
+        result = Executor.call(text, pattern: self.class.current_pattern)
+        # Normalize return shape
+        if result.ok?
+          Result.ok(
+            response: result.value[:answer],
+            rendered: result.value[:answer],
+            model: nil,
+            cost: result.value[:cost] || 0,
+            tokens_in: 0,
+            tokens_out: 0,
+            pattern: result.value[:pattern],
+            steps: result.value[:steps]
+          )
+        else
+          result
+        end
       when :stages
-        # Legacy: Stage-based pipeline
-        @stages.reduce(Result.ok(input)) do |result, stage|
-          result.flat_map { |data| stage.call(data) }
+        # Legacy: Stage-based pipeline with error context
+        result = @stages.reduce(Result.ok(input)) do |res, stage|
+          res.flat_map do |data|
+            stage_result = stage.call(data)
+            # Add stage name to error if it fails
+            if stage_result.err?
+              stage_name = stage.class.name.split('::').last
+              Result.err("#{stage_name}: #{stage_result.error}")
+            else
+              stage_result
+            end
+          end
+        end
+        # Normalize return shape
+        if result.ok?
+          data = result.value
+          Result.ok(
+            response: data[:response] || data[:text],
+            rendered: data[:rendered] || data[:response] || data[:text],
+            model: data[:model],
+            cost: data[:cost] || 0,
+            tokens_in: data[:tokens_in] || 0,
+            tokens_out: data[:tokens_out] || 0
+          )
+        else
+          result
         end
       when :direct
         # Simple: Direct LLM call, no tools
-        LLM.ask(text, stream: true)
+        result = LLM.ask(text, stream: true)
+        # Normalize return shape
+        if result.ok?
+          Result.ok(
+            response: result.value[:content],
+            rendered: result.value[:content],
+            model: result.value[:model],
+            cost: result.value[:cost] || 0,
+            tokens_in: result.value[:tokens_in] || 0,
+            tokens_out: result.value[:tokens_out] || 0
+          )
+        else
+          result
+        end
       else
         Executor.call(text, pattern: self.class.current_pattern)
       end
@@ -117,16 +179,34 @@ module MASTER
 
           break if line.nil?
 
-          if line.strip.empty?
+          # Input validation
+          input_text = line.strip
+          
+          if input_text.empty?
             Onboarding.suggest_on_empty if defined?(Onboarding)
+            next
+          end
+          
+          # Max input length validation (10KB)
+          MAX_INPUT_LENGTH = 10_000
+          if input_text.bytesize > MAX_INPUT_LENGTH
+            puts
+            UI.error("Input too long (#{input_text.bytesize} bytes). Maximum: #{MAX_INPUT_LENGTH} bytes")
+            next
+          end
+          
+          # UTF-8 validation
+          unless input_text.valid_encoding?
+            puts
+            UI.error("Invalid UTF-8 encoding in input. Please use valid UTF-8 characters.")
             next
           end
 
           # Track user input in session
-          session.add_user(line.strip)
+          session.add_user(input_text)
 
           if defined?(Commands)
-            cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
+            cmd_result = Commands.dispatch(input_text, pipeline: pipeline)
             break if cmd_result == :exit
             next if cmd_result.nil?
 
@@ -145,12 +225,12 @@ module MASTER
               end
             elsif cmd_result.respond_to?(:err?) && cmd_result.err?
               # Unknown command - suggest similar
-              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
+              Onboarding.show_did_you_mean(input_text) if defined?(Onboarding)
             end
             next
           end
 
-          result = pipeline.call({ text: line.strip })
+          result = pipeline.call({ text: input_text })
 
           if result.ok?
             output = result.value[:rendered] || result.value[:response]

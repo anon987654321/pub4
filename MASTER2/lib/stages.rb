@@ -153,6 +153,8 @@ module MASTER
 
     # Stage 7: Axiom enforcement
     class Lint
+      REGEX_TIMEOUT = 1.0  # 1 second timeout for regex matching
+      
       def call(input)
         text = input[:response] || ""
         axioms = DB.axioms
@@ -162,7 +164,35 @@ module MASTER
           pattern = axiom[:pattern]
           next unless pattern
 
-          violations << axiom[:name] if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
+          begin
+            # Guard against pathological regexes with timeout
+            regex = if RUBY_VERSION >= "3.2"
+                      # Ruby 3.2+ supports Regexp.timeout
+                      Regexp.new(pattern, Regexp::IGNORECASE, timeout: REGEX_TIMEOUT)
+                    else
+                      Regexp.new(pattern, Regexp::IGNORECASE)
+                    end
+            
+            # Use a thread with timeout for older Ruby versions
+            if RUBY_VERSION < "3.2"
+              match_result = nil
+              thread = Thread.new { match_result = text.match?(regex) }
+              unless thread.join(REGEX_TIMEOUT)
+                thread.kill
+                # Skip this axiom if regex times out
+                next
+              end
+              violations << axiom[:name] if match_result
+            else
+              violations << axiom[:name] if text.match?(regex)
+            end
+          rescue Regexp::TimeoutError
+            # Regex timed out, skip this axiom
+            next
+          rescue RegexpError => e
+            # Invalid regex pattern, skip this axiom
+            next
+          end
         end
 
         Result.ok(input.merge(axiom_violations: violations, linted: true))

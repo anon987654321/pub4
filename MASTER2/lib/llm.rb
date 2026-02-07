@@ -146,18 +146,17 @@ module MASTER
         # Rate limit check
         check_rate_limit!
 
-        # Pre-query cost estimate (rough: ~1k tokens in + 500 out)
-        primary_model = model || select_model_for_tier(tier || self.tier)
-        if primary_model && model_rates[primary_model]
-          est_cost = estimate_cost(primary_model, tokens_in: 1000, tokens_out: 500)
+        # Model selection with fallbacks - SELECT ONCE
+        primary = model || select_model_for_tier(tier || self.tier)
+        return Result.err("No model available") unless primary
+
+        # Pre-query cost estimate (rough: ~1k tokens in + 500 out) using selected model
+        if model_rates[primary]
+          est_cost = estimate_cost(primary, tokens_in: 1000, tokens_out: 500)
           if est_cost > MAX_COST_PER_QUERY
             return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{MAX_COST_PER_QUERY}")
           end
         end
-
-        # Model selection with fallbacks
-        primary = model || select_model_for_tier(tier || self.tier)
-        return Result.err("No model available") unless primary
 
         # Apply suffix shortcuts
         primary = apply_suffix(primary, online: online, provider: provider)
@@ -367,14 +366,31 @@ module MASTER
         data = JSON.parse(response.body, symbolize_names: true)
         choice = data[:choices]&.first
         message = choice&.[](:message)
+        
+        # Validate required fields
+        content = message&.[](:content)
+        if content.nil? || (content.is_a?(String) && content.empty?)
+          return Result.err("LLM response missing content")
+        end
+        
+        tokens_in = data.dig(:usage, :prompt_tokens)
+        tokens_out = data.dig(:usage, :completion_tokens)
+        unless tokens_in.is_a?(Integer) && tokens_in >= 0 && tokens_out.is_a?(Integer) && tokens_out >= 0
+          return Result.err("LLM response has invalid token counts")
+        end
+        
+        cost = data.dig(:usage, :cost)
+        if cost && (!cost.is_a?(Numeric) || cost < 0)
+          return Result.err("LLM response has invalid cost")
+        end
 
         Result.ok(
-          content: message&.[](:content),
+          content: content,
           reasoning: message&.[](:reasoning),
           model: data[:model],
-          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
-          tokens_out: data.dig(:usage, :completion_tokens) || 0,
-          cost: data.dig(:usage, :cost),
+          tokens_in: tokens_in,
+          tokens_out: tokens_out,
+          cost: cost,
           finish_reason: choice&.[](:finish_reason)
         )
       rescue JSON::ParserError => e
