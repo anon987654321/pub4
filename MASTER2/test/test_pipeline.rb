@@ -59,4 +59,23 @@ class TestPipeline < Minitest::Test
   ensure
     MASTER::Pipeline.const_set(:DEFAULT_STAGES, original_stages)
   end
+
+  def test_build_prompt_with_budget
+    prompt = MASTER::Pipeline.build_prompt
+    assert_match(/^master\[/, prompt, "Prompt should start with 'master['")
+    assert_match(/\|\$\d+\.\d{2}\]> $/, prompt, "Prompt should end with budget format '|$X.XX]> '")
+  end
+
+  def test_build_prompt_shows_tier
+    prompt = MASTER::Pipeline.build_prompt
+    # Should contain one of the tiers or "none"
+    assert_match(/\[(strong|fast|cheap|none)/, prompt, "Prompt should contain a tier")
+  end
+
+  def test_build_prompt_format
+    prompt = MASTER::Pipeline.build_prompt
+    # Full format: master[tier|$budget]> 
+    # Or with circuit: master[tier⚡|$budget]> 
+    assert_match(/^master\[(strong|fast|cheap|none)(⚡)?\|\$\d+\.\d{2}\]> $/, prompt, "Prompt should match expected format")
+  end
 end

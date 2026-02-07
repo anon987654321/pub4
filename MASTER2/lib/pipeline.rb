@@ -23,6 +23,27 @@ module MASTER
       Stages.const_get(class_name)
     end
 
+    # Build dynamic prompt showing LLM tier and budget
+    def self.build_prompt
+      tier = LLM.affordable_tier
+      tier_str = tier ? tier.to_s : "none"
+      budget = format("$%.2f", LLM.remaining)
+      
+      # Check if any model in current tier has a tripped circuit
+      tripped = if tier
+        LLM::RATES.select { |_k, v| v[:tier] == tier }
+                  .keys
+                  .any? { |model| !LLM.circuit_available?(model) }
+      end
+      
+      circuit_indicator = tripped ? "⚡" : ""
+      
+      "master[#{tier_str}#{circuit_indicator}|#{budget}]> "
+    rescue => e
+      # Fallback to basic prompt if DB isn't set up
+      "master> "
+    end
+
     # REPL mode with tty-prompt (graceful fallback)
     def self.repl
       require "tty-prompt" rescue nil
@@ -35,10 +56,12 @@ module MASTER
       puts "Type 'exit' or 'quit' to quit\n\n"
 
       loop do
+        prompt_str = build_prompt
+        
         if prompt
-          input = prompt.ask("master>", required: false)
+          input = prompt.ask(prompt_str, required: false)
         else
-          print "master> "
+          print prompt_str
           input = $stdin.gets&.chomp
         end
 
