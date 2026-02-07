@@ -11,7 +11,20 @@ cp .env.example .env
 ./bin/master
 ```
 
-## Pipeline
+## Architecture
+
+MASTER is a hybrid agent system with multiple execution patterns:
+
+### Execution Patterns (auto-selected)
+
+| Pattern | Use Case | Behavior |
+|---------|----------|----------|
+| **ReAct** | Exploration, unknown tasks | Tight thought→action→observation loop |
+| **Pre-Act** | Multi-step workflows | Plan all steps first, then execute (70% better recall) |
+| **ReWOO** | Cost-sensitive reasoning | Single LLM call with #E{n} placeholders |
+| **Reflexion** | Fix/debug/refactor | Execute → self-critique → retry if needed |
+
+### Pipeline Stages
 
 Seven stages, chained via Result monad:
 
@@ -24,6 +37,14 @@ Seven stages, chained via Result monad:
 7. **Render** — Typography refinement
 
 First error short-circuits. No exceptions.
+
+## Features
+
+- **Auto-retry** with exponential backoff (3 attempts)
+- **Rate limiting** (30 requests/minute, $0.50 per-query cap)
+- **Circuit breaker** (3 failures → 5-minute cooldown)
+- **Session persistence** with crash recovery (SIGINT/SIGTERM auto-save)
+- **Pattern fallback** (if primary fails → react → direct)
 
 ## Axioms
 
@@ -67,7 +88,15 @@ If MASTER fails its own review, it has failed.
 help          Show commands
 refactor      Multi-model file review
 chamber       Council deliberation
+ideate        Creative brainstorming (Chamber)
 evolve        Self-improvement cycle
+fix           Auto-fix code violations
+browse        Web browsing (Ferrum)
+speak         Text-to-speech (Piper/Edge/Replicate)
+model         Switch LLM model
+models        List available models
+pattern       Switch execution pattern (react/pre_act/rewoo/reflexion)
+patterns      List execution patterns
 opportunities Analyze codebase for improvements
 selftest      Run MASTER through itself
 session       Session management
@@ -97,10 +126,10 @@ Circuit breaker trips after 3 failures. 5-minute cooldown.
 
 ```
 bin/master       Entry point
-lib/             46 modules
+lib/             60+ modules
 data/            Axioms, council, patterns (YAML)
 var/db/          JSONL storage
-test/            Minitest suite
+test/            Minitest suite (24 files, 100+ tests)
 ```
 
 ## License
