@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "timeout"
 
 module MASTER
   module Stages
@@ -153,6 +154,8 @@ module MASTER
 
     # Stage 7: Axiom enforcement
     class Lint
+      REGEX_TIMEOUT = 0.1 # seconds
+
       def call(input)
         text = input[:response] || ""
         axioms = DB.axioms
@@ -162,7 +165,14 @@ module MASTER
           pattern = axiom[:pattern]
           next unless pattern
 
-          violations << axiom[:name] if text.match?(Regexp.new(pattern, Regexp::IGNORECASE))
+          begin
+            re = Regexp.new(pattern, Regexp::IGNORECASE)
+            matched = Timeout.timeout(REGEX_TIMEOUT) { text.match?(re) }
+            violations << axiom[:name] if matched
+          rescue RegexpError, Timeout::Error
+            # Skip invalid or pathological patterns
+            next
+          end
         end
 
         Result.ok(input.merge(axiom_violations: violations, linted: true))

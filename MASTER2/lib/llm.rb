@@ -146,18 +146,17 @@ module MASTER
         # Rate limit check
         check_rate_limit!
 
-        # Pre-query cost estimate (rough: ~1k tokens in + 500 out)
-        primary_model = model || select_model_for_tier(tier || self.tier)
-        if primary_model && model_rates[primary_model]
-          est_cost = estimate_cost(primary_model, tokens_in: 1000, tokens_out: 500)
+        # Model selection (single call - no TOCTOU)
+        primary = model || select_model_for_tier(tier || self.tier)
+        return Result.err("No model available") unless primary
+
+        # Pre-query cost estimate
+        if model_rates[primary]
+          est_cost = estimate_cost(primary, tokens_in: 1000, tokens_out: 500)
           if est_cost > MAX_COST_PER_QUERY
             return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{MAX_COST_PER_QUERY}")
           end
         end
-
-        # Model selection with fallbacks
-        primary = model || select_model_for_tier(tier || self.tier)
-        return Result.err("No model available") unless primary
 
         # Apply suffix shortcuts
         primary = apply_suffix(primary, online: online, provider: provider)
@@ -368,7 +367,7 @@ module MASTER
         choice = data[:choices]&.first
         message = choice&.[](:message)
 
-        Result.ok(
+        response_data = {
           content: message&.[](:content),
           reasoning: message&.[](:reasoning),
           model: data[:model],
@@ -376,7 +375,9 @@ module MASTER
           tokens_out: data.dig(:usage, :completion_tokens) || 0,
           cost: data.dig(:usage, :cost),
           finish_reason: choice&.[](:finish_reason)
-        )
+        }
+
+        validate_response(response_data, req.body ? JSON.parse(req.body)[:model] : "unknown")
       rescue JSON::ParserError => e
         Result.err("JSON parse error: #{e.message}")
       end
@@ -429,7 +430,7 @@ module MASTER
 
         $stderr.puts
 
-        Result.ok(
+        final_data = {
           content: content_parts.join,
           reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
           model: final_data[:model],
@@ -437,7 +438,9 @@ module MASTER
           tokens_out: final_data[:tokens_out] || 0,
           cost: final_data[:cost],
           finish_reason: "stop"
-        )
+        }
+
+        validate_response(final_data, "streaming")
       end
 
       def select_model_for_tier(tier)
@@ -482,7 +485,17 @@ module MASTER
       end
 
       def open_circuit!(model)
-        DB.trip!(model) if defined?(DB)
+        return unless defined?(DB)
+
+        row = DB.circuit(model)
+        current_failures = row ? (row[:failures] || 0) + 1 : 1
+
+        if current_failures >= FAILURES_BEFORE_TRIP
+          DB.trip!(model)
+        else
+          # Increment failure count without tripping
+          DB.increment_failure!(model)
+        end
       end
 
       def close_circuit!(model)
@@ -541,6 +554,27 @@ module MASTER
           est_tokens_in = (char_count / 4.0).ceil
           (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
         end
+      end
+
+      def validate_response(data, model_id)
+        content = data[:content]
+        if content.nil? || (content.is_a?(String) && content.strip.empty?)
+          return Result.err("Empty response from #{extract_model_name(model_id)}")
+        end
+
+        unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
+          data[:tokens_in] = 0
+        end
+
+        unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
+          data[:tokens_out] = 0
+        end
+
+        if data[:cost] && !(data[:cost].is_a?(Numeric))
+          data[:cost] = nil
+        end
+
+        Result.ok(data)
       end
     end
   end
