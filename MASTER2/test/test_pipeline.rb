@@ -13,7 +13,7 @@ class TestPipeline < Minitest::Test
 
   def test_pipeline_initialization
     pipeline = MASTER::Pipeline.new
-    assert_equal 4, pipeline.stages.length
+    assert_equal 7, pipeline.stages.length
   end
 
   def test_stage_class_conversion
@@ -23,19 +23,22 @@ class TestPipeline < Minitest::Test
   end
 
   def test_pipeline_call_with_string
-    pipeline = MASTER::Pipeline.new
+    # Use pipeline without Ask stage (requires API keys)
+    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
     result = pipeline.call("test input")
     assert result.success?, "Pipeline should succeed with string input"
   end
 
   def test_pipeline_call_with_hash
-    pipeline = MASTER::Pipeline.new
+    # Use pipeline without Ask stage (requires API keys)
+    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
     result = pipeline.call({ text: "test input" })
     assert result.success?, "Pipeline should succeed with hash input"
   end
 
   def test_pipeline_preserves_data
-    pipeline = MASTER::Pipeline.new
+    # Use pipeline without Ask stage (requires API keys)
+    pipeline = MASTER::Pipeline.new(stages: %i[input_tank guard council_debate refactor_engine openbsd_admin output_tank])
     result = pipeline.call({ text: "test", custom: "data" })
     assert result.success?
     assert result.value![:custom] == "data", "Custom data should be preserved"

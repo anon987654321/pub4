@@ -49,6 +49,25 @@ class TestStages < Minitest::Test
     assert result.success?
     assert result.value![:council_responses], "Should have council responses"
     assert result.value![:consensus_reached], "Should reach consensus (stubbed)"
+    assert result.value![:iterations_used], "Should track iterations used"
+  end
+
+  def test_debate_tracks_iterations
+    stage = MASTER::Stages::Debate.new
+    result = stage.call({ text: "test" })
+    
+    assert result.success?
+    assert result.value![:iterations_used], "Should have iterations_used"
+    assert result.value![:iterations_used] >= 1, "Should have at least 1 iteration"
+  end
+
+  def test_debate_single_round_when_consensus_reached
+    stage = MASTER::Stages::Debate.new
+    result = stage.call({ text: "safe proposal" })
+    
+    assert result.success?
+    # With stub responses, consensus should be reached in 1 iteration
+    assert_equal 1, result.value![:iterations_used], "Should complete in 1 iteration when consensus reached"
   end
 
   def test_debate_checks_threshold

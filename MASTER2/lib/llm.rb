@@ -12,11 +12,11 @@ end
 module MASTER
   module LLM
     RATES = {
-      "deepseek-r1" => { in: 0.55 / 1_000_000, out: 2.19 / 1_000_000, tier: :strong },
-      "claude-sonnet-4" => { in: 3.0 / 1_000_000, out: 15.0 / 1_000_000, tier: :strong },
-      "deepseek-v3" => { in: 0.27 / 1_000_000, out: 1.10 / 1_000_000, tier: :fast },
-      "gpt-4.1-mini" => { in: 0.40 / 1_000_000, out: 1.60 / 1_000_000, tier: :fast },
-      "gpt-4.1-nano" => { in: 0.10 / 1_000_000, out: 0.40 / 1_000_000, tier: :cheap },
+      "deepseek/deepseek-r1" => { in: 0.55 / 1_000_000, out: 2.19 / 1_000_000, tier: :strong },
+      "anthropic/claude-sonnet-4" => { in: 3.0 / 1_000_000, out: 15.0 / 1_000_000, tier: :strong },
+      "deepseek/deepseek-v3" => { in: 0.27 / 1_000_000, out: 1.10 / 1_000_000, tier: :fast },
+      "openai/gpt-4.1-mini" => { in: 0.40 / 1_000_000, out: 1.60 / 1_000_000, tier: :fast },
+      "openai/gpt-4.1-nano" => { in: 0.10 / 1_000_000, out: 0.40 / 1_000_000, tier: :cheap },
     }.freeze
 
     CIRCUIT_THRESHOLD = 3
@@ -27,9 +27,6 @@ module MASTER
 
     def self.configure
       RubyLLM.configure do |config|
-        config.openai_api_key = ENV["OPENAI_API_KEY"]
-        config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-        config.deepseek_api_key = ENV["DEEPSEEK_API_KEY"]
         config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
       end
     end

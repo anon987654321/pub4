@@ -10,15 +10,15 @@ class TestLLM < Minitest::Test
   end
 
   def test_rates_defined
-    assert MASTER::LLM::RATES.key?("deepseek-r1")
-    assert MASTER::LLM::RATES.key?("claude-sonnet-4")
-    assert MASTER::LLM::RATES.key?("deepseek-v3")
-    assert MASTER::LLM::RATES.key?("gpt-4.1-mini")
-    assert MASTER::LLM::RATES.key?("gpt-4.1-nano")
+    assert MASTER::LLM::RATES.key?("deepseek/deepseek-r1")
+    assert MASTER::LLM::RATES.key?("anthropic/claude-sonnet-4")
+    assert MASTER::LLM::RATES.key?("deepseek/deepseek-v3")
+    assert MASTER::LLM::RATES.key?("openai/gpt-4.1-mini")
+    assert MASTER::LLM::RATES.key?("openai/gpt-4.1-nano")
   end
 
   def test_rate_structure
-    rate = MASTER::LLM::RATES["deepseek-r1"]
+    rate = MASTER::LLM::RATES["deepseek/deepseek-r1"]
     assert rate[:in], "Rate should have :in price"
     assert rate[:out], "Rate should have :out price"
     assert rate[:tier], "Rate should have :tier"
@@ -34,7 +34,7 @@ class TestLLM < Minitest::Test
 
   def test_healthy_when_no_failures
     # No failures recorded, should be available
-    assert MASTER::LLM.healthy?("deepseek-r1")
+    assert MASTER::LLM.healthy?("deepseek/deepseek-r1")
   end
 
   def test_circuit_trips_after_threshold
@@ -46,7 +46,7 @@ class TestLLM < Minitest::Test
   end
 
   def test_log_cost
-    MASTER::LLM.log_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
+    MASTER::LLM.log_cost(model: "deepseek/deepseek-r1", tokens_in: 1000, tokens_out: 500)
     total = MASTER::DB.total_cost
     assert total > 0, "Cost should be recorded"
   end
@@ -55,7 +55,7 @@ class TestLLM < Minitest::Test
     initial = MASTER::LLM.remaining
     assert_equal MASTER::LLM::BUDGET_LIMIT, initial
     
-    MASTER::LLM.log_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
+    MASTER::LLM.log_cost(model: "deepseek/deepseek-r1", tokens_in: 1000, tokens_out: 500)
     remaining = MASTER::LLM.remaining
     assert remaining < initial, "Remaining budget should decrease"
   end
@@ -71,4 +71,5 @@ class TestLLM < Minitest::Test
     assert model, "Should select a model"
     assert MASTER::LLM::RATES.key?(model), "Selected model should be in RATES"
   end
+
 end

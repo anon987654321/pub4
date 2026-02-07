@@ -6,7 +6,7 @@ module MASTER
   class Pipeline
     include Dry::Monads[:result]
 
-    DEFAULT_STAGES = %i[compress debate lint render].freeze
+    DEFAULT_STAGES = %i[compress guard debate ask lint admin render].freeze
     STAGE_TIMEOUT = 120 # seconds
 
     attr_reader :stages
