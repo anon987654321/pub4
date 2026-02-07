@@ -67,11 +67,11 @@ class TestStages < Minitest::Test
     assert_equal "Hello", result.value[:text]
   end
 
-  def test_debate_skips_when_not_enabled
-    stage = MASTER::Stages::Debate.new
+  def test_council_skips_when_not_enabled
+    stage = MASTER::Stages::Council.new
     result = stage.call({ text: "Simple query" })
     
     assert result.ok?
-    refute result.value[:debate_rounds], "Should skip debate when not enabled"
+    refute result.value[:council_verdict], "Should skip council when not enabled"
   end
 end

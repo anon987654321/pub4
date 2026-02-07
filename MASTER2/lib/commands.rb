@@ -75,8 +75,8 @@ module MASTER
         evolve(args)
       when "opportunities", "opps"
         opportunities(args)
-      when "selftest", "self-test"
-        run_self_test
+      when "selftest", "self-test", "selfrun", "self-run"
+        SelfTest.run
       when "speak", "say"
         speak(args)
         nil
@@ -319,40 +319,6 @@ module MASTER
         end
 
         Result.ok(result)
-      end
-
-      def run_self_test
-        UI.header("Self-Application Test")
-        puts "  Running MASTER through itself...\n\n"
-
-        # Collect all lib files
-        files = Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
-        total_issues = 0
-        total_files = files.size
-
-        files.each_with_index do |file, idx|
-          code = File.read(file)
-          basename = File.basename(file)
-          issues = CodeReview.analyze(code, filename: basename)
-
-          if issues.any?
-            total_issues += issues.size
-            puts "  #{basename}: #{issues.size} issues"
-            issues.first(3).each { |i| puts "    - #{i[:message]}" }
-          else
-            print "." # Progress dot for clean files
-          end
-        end
-
-        puts "\n\n  Files: #{total_files}, Issues: #{total_issues}"
-
-        if total_issues.zero?
-          UI.success("Self-application passed!")
-        else
-          UI.warn("#{total_issues} issues found")
-        end
-
-        Result.ok({ files: total_files, issues: total_issues })
       end
     end
   end

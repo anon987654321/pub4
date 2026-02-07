@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module MASTER
   module Stages
     # Stage 1: Pass text through, load persona
@@ -10,7 +12,47 @@ module MASTER
       end
     end
 
-    # Stage 2: Block dangerous patterns
+    # Stage 2: Strip filler words and verbose phrases
+    class Compress
+      COMPRESSION_FILE = File.join(__dir__, "..", "data", "compression.yml")
+
+      def self.patterns
+        @patterns ||= load_patterns
+      end
+
+      def self.load_patterns
+        return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
+
+        data = YAML.safe_load_file(COMPRESSION_FILE)
+        {
+          fillers: (data["fillers"] || []).map { |w| /\b#{Regexp.escape(w)}\b/i },
+          phrases: (data["phrases"] || []).map { |p| /#{Regexp.escape(p)}/i },
+        }
+      end
+
+      def call(input)
+        text = input[:text] || ""
+        original_length = text.length
+
+        # Strip filler words
+        self.class.patterns[:fillers].each do |pattern|
+          text = text.gsub(pattern, "")
+        end
+
+        # Simplify verbose phrases
+        self.class.patterns[:phrases].each do |pattern|
+          text = text.gsub(pattern, "")
+        end
+
+        # Clean up extra spaces
+        text = text.gsub(/\s{2,}/, " ").strip
+        compressed = original_length - text.length
+
+        Result.ok(input.merge(text: text, bytes_compressed: compressed))
+      end
+    end
+
+    # Stage 3: Block dangerous patterns
     class Guard
       DANGEROUS_PATTERNS = [
         /rm\s+-r[f]?\s+\//,
@@ -28,7 +70,7 @@ module MASTER
       end
     end
 
-    # Stage 3: Route to model via circuit breaker + budget
+    # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
         text = input[:text] || ""
@@ -43,48 +85,33 @@ module MASTER
       end
     end
 
-    # Stage 4: Adversarial council debate (optional)
-    class Debate
-      DEBATE_ROUNDS_LIMIT = 3
-
+    # Stage 5: Adversarial council review (delegates to Chamber)
+    class Council
       def call(input)
-        return Result.ok(input) unless input[:debate]
-
-        personas = DB.council
-        return Result.ok(input) if personas.empty?
+        return Result.ok(input) unless input[:council]
 
         text = input[:text] || ""
         model = input[:model]
-        chat = LLM.chat(model: model)
+        return Result.ok(input) unless model
 
-        rounds = []
-        current = text
-
-        DEBATE_ROUNDS_LIMIT.times do |i|
-          persona = personas[i % personas.size]
-          prompt = "You are #{persona[:name]} (#{persona[:role]}). Style: #{persona[:style]}.\n\nReview:\n#{current}"
-
-          begin
-            response = chat.ask(prompt)
-            rounds << { persona: persona[:name], response: response.content }
-            current = response.content
-          rescue StandardError
-            break
-          end
-        end
-
-        Result.ok(input.merge(debate_rounds: rounds, debated: current))
+        review = Chamber.council_review(text, model: model)
+        Result.ok(input.merge(
+          council_verdict: review[:verdict],
+          council_vetoed: review[:vetoed_by].any?,
+          council_vetoes: review[:vetoed_by],
+          council_votes: review[:votes],
+        ))
       end
     end
 
-    # Stage 5: Query LLM, stream to stderr
+    # Stage 6: Query LLM, stream to stderr
     class Ask
       def call(input)
         model = input[:model]
         return Result.err("No model selected") unless model
 
         chat = LLM.chat(model: model)
-        text = input[:debated] || input[:text] || ""
+        text = input[:text] || ""
 
         begin
           response = chat.ask(text) do |chunk|
@@ -109,7 +136,7 @@ module MASTER
       end
     end
 
-    # Stage 6: Axiom enforcement
+    # Stage 7: Axiom enforcement
     class Lint
       def call(input)
         text = input[:response] || ""
@@ -127,7 +154,7 @@ module MASTER
       end
     end
 
-    # Stage 7: Format output (typography)
+    # Stage 8: Format output (typography)
     class Render
       CODE_FENCE = /^```/.freeze
 

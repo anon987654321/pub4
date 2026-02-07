@@ -4,6 +4,11 @@
   input_cost: 0.55
   output_cost: 2.19
   provider: deepseek
+  use_for:
+    - veto_violations
+    - architecture_review
+    - security_audits
+    - root_cause_analysis
 
 - id: anthropic/claude-sonnet-4
   alias: claude-sonnet-4
@@ -11,6 +16,11 @@
   input_cost: 3.00
   output_cost: 15.00
   provider: anthropic
+  use_for:
+    - code_review
+    - refactoring
+    - semantic_analysis
+    - council_debate
 
 - id: deepseek/deepseek-v3
   alias: deepseek-v3
@@ -18,6 +28,10 @@
   input_cost: 0.27
   output_cost: 1.10
   provider: deepseek
+  use_for:
+    - hygiene_checks
+    - simple_validation
+    - quick_scans
 
 - id: openai/gpt-4.1-mini
   alias: gpt-4.1-mini
@@ -25,6 +39,10 @@
   input_cost: 0.40
   output_cost: 1.60
   provider: openai
+  use_for:
+    - incremental_checks
+    - high_volume
+    - batch_processing
 
 - id: openai/gpt-4.1-nano
   alias: gpt-4.1-nano
@@ -32,3 +50,7 @@
   input_cost: 0.10
   output_cost: 0.40
   provider: openai
+  use_for:
+    - non_critical
+    - experiments
+    - learning_mode

@@ -66,6 +66,10 @@ require_relative "agent_firewall"
 require_relative "code_review"
 require_relative "llm_friendly"
 require_relative "learnings"
+require_relative "enforcement"
+require_relative "file_processor"
+require_relative "reflow"
+require_relative "self_test"
 
 # Optional
 require_relative "auto_install"

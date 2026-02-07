@@ -7,6 +7,17 @@ module MASTER
   module UI
     extend self
 
+    # --- Typography Icons (minimal vocabulary per Strunk & White) ---
+    ICONS = {
+      success: "✓",
+      failure: "✗",
+      warning: "!",
+      bullet: "·",
+      arrow: "→",
+      thinking: "◐",
+      done: "●",
+    }.freeze
+
     # --- Formatting Helpers (DRY) ---
     def currency(n)
       format("$%.2f", n)
@@ -23,6 +34,20 @@ module MASTER
     def header(title, width: 40)
       puts "\n  #{bold(title)}"
       puts "  #{'-' * width}"
+    end
+
+    def icon(name)
+      ICONS[name.to_sym] || "·"
+    end
+
+    def status(prefix, message, success: true)
+      i = success ? icon(:success) : icon(:failure)
+      "#{prefix}: #{message} #{i}"
+    end
+
+    def progress_line(current, total, message = nil)
+      msg = message ? " #{message}" : ""
+      "  [#{current}/#{total}]#{msg}"
     end
 
     def prompt

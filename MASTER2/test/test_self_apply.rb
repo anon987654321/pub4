@@ -21,7 +21,10 @@ class TestSelfApply < Minitest::Test
     violations = []
     @lib_files.each do |file|
       content = File.read(file)
-      next unless content.match?(/\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b/i)
+      # Skip regex pattern definitions (e.g., /\bTODO\b/)
+      # Only match actual TODO comments
+      lines = content.lines.reject { |l| l.include?("match?") || l.include?("scan(") || l.include?("Regexp") }
+      next unless lines.any? { |l| l.match?(/\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b/i) && l.match?(/^\s*#/) }
       violations << File.basename(file)
     end
     assert violations.empty?, "Files with TODO/FIXME:\n  #{violations.join("\n  ")}"

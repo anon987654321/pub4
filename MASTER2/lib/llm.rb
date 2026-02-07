@@ -32,6 +32,37 @@ module MASTER
         end
       end
 
+      # Unified ask helper - handles model selection, circuit, cost
+      def ask(prompt, model: nil, stream: true)
+        model ||= select_available_model
+        return Result.err("No model available") unless model
+        return Result.err("Circuit open for #{model}") unless circuit_closed?(model)
+
+        chat_instance = chat(model: model)
+        response = if stream
+                     chat_instance.ask(prompt) { |chunk| $stderr.print chunk.content if chunk.content }
+                   else
+                     chat_instance.ask(prompt)
+                   end
+        $stderr.puts if stream
+
+        tokens_in = response.input_tokens rescue 0
+        tokens_out = response.output_tokens rescue 0
+        cost = record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+        close_circuit!(model)
+
+        Result.ok(
+          content: response.content,
+          model: model,
+          tokens_in: tokens_in,
+          tokens_out: tokens_out,
+          cost: cost,
+        )
+      rescue StandardError => e
+        open_circuit!(model) if model
+        Result.err("LLM error: #{e.message}")
+      end
+
       def chat(model:)
         RubyLLM.chat(model: model)
       end

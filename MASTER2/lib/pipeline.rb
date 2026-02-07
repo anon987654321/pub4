@@ -2,7 +2,7 @@
 
 module MASTER
   class Pipeline
-    DEFAULT_STAGES = %i[intake guard route debate ask lint render].freeze
+    DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
 
     def initialize(stages: DEFAULT_STAGES)
       @stages = stages.map do |stage|

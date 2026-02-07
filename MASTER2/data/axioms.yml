@@ -7,7 +7,7 @@
   category: "engineering"
   protection: "PROTECTED"
   title: "Do Not Repeat Yourself"
-  statement: "Every piece of knowledge must have a single, unambiguous, authoritative representation within the system."
+  statement: "Every piece of knowledge must have a single, unambiguous, authoritative representation within the system. Extract on second use, not first."
   source: "The Pragmatic Programmer"
 
 - id: "KISS"
@@ -42,7 +42,42 @@
   category: "engineering"
   protection: "PROTECTED"
   title: "Leave Cleaner Than Found"
-  statement: "Every change must improve the overall health of the codebase by at least one measurable quality metric."
+  statement: "Every change must improve the overall health of the codebase and its metrics. Leave code, tests, and documentation better."
+  source: "The Pragmatic Programmer"
+
+- id: "SINGLE_SOURCE"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Single Source of Truth"
+  statement: "Every fact lives in exactly one place. Configuration, constants, and data have one authoritative location."
+  source: "Data Management Principles"
+
+- id: "FAIL_LOUD"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Fail Loudly"
+  statement: "Errors surface immediately and visibly. Never swallow exceptions. Silent failures compound into disasters."
+  source: "Defensive Programming"
+
+- id: "MEASURE_FIRST"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Measure Before Optimizing"
+  statement: "No optimization without metrics. Profile first, then improve. Premature optimization wastes effort on non-bottlenecks."
+  source: "Unix Philosophy"
+
+- id: "COMPOSABLE"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Design for Composition"
+  statement: "Each component works standalone and combined. Modules should be independently testable and freely composable."
+  source: "Unix Philosophy"
+
+- id: "REVERSIBLE"
+  category: "engineering"
+  protection: "PROTECTED"
+  title: "Make Actions Reversible"
+  statement: "Every action can be undone. Edits, config changes, and state mutations need rollback capability."
   source: "The Pragmatic Programmer"
 
 # COMMUNICATION & TYPOGRAPHY AXIOMS
@@ -50,7 +85,7 @@
   category: "communication"
   protection: "PROTECTED"
   title: "Omit Needless Words"
-  statement: "Vigorous writing is concise. A sentence should contain no unnecessary words, a paragraph no unnecessary sentences."
+  statement: "Vigorous writing is concise. A sentence should contain no unnecessary words, a paragraph no unnecessary sentences. Apply to variable names, file names, and prompts."
   source: "The Elements of Style by Strunk & White"
 
 - id: "ACTIVE_VOICE"
@@ -74,12 +109,19 @@
   statement: "The spacing and arrangement of elements should create a steady visual and logical rhythm."
   source: "The Elements of Typographic Style by Robert Bringhurst"
 
+- id: "SELF_DOCUMENT"
+  category: "communication"
+  protection: "PROTECTED"
+  title: "Code Explains Itself"
+  statement: "Code should be self-explanatory. Comments explain why, not what. If you need a comment to explain what, rewrite the code."
+  source: "Clean Code by Robert C. Martin"
+
 # META AXIOMS
 - id: "SELF_APPLY"
   category: "meta"
   protection: "ABSOLUTE"
   title: "The Tool Applies to Itself"
-  statement: "A system that asserts quality must first and foremost achieve its own standards. Its first test is self-application."
+  statement: "A system that asserts quality must first achieve its own standards. Run selftest before every commit."
   source: "Recursive Quality"
 
 - id: "USABILITY_HEURISTICS"
@@ -88,6 +130,34 @@
   title: "Respect Usability Heuristics"
   statement: "Design must adhere to established heuristics for visibility, user control, error prevention, and consistency."
   source: "10 Usability Heuristics by Jakob Nielsen"
+
+- id: "TRANSPARENT_COST"
+  category: "meta"
+  protection: "PROTECTED"
+  title: "Show Cost Before Execution"
+  statement: "Always show what LLM calls will cost before execution. Users should never be surprised by spend."
+  source: "User Trust Principles"
+
+- id: "PROGRESSIVE_DISCLOSURE"
+  category: "meta"
+  protection: "PROTECTED"
+  title: "Progressive Disclosure"
+  statement: "Simple by default, depth on demand. Show essential information first, reveal complexity only when requested."
+  source: "Interaction Design Principles"
+
+- id: "GRACEFUL_DEGRADATION"
+  category: "meta"
+  protection: "PROTECTED"
+  title: "Graceful Degradation"
+  statement: "Works offline, works without API key, works with tripped circuits. The system is never fully broken."
+  source: "Resilience Engineering"
+
+- id: "IMMUTABLE_HISTORY"
+  category: "meta"
+  protection: "PROTECTED"
+  title: "Immutable History"
+  statement: "Session history is append-only, never mutated. Prevents data loss and enables replay."
+  source: "Event Sourcing Principles"
 
 # STRUCTURAL AXIOMS
 - id: "STRUCTURAL_MERGE"
@@ -137,4 +207,11 @@
   protection: "PROTECTED"
   title: "Coalesce Sequential Operations"
   statement: "Merge sequential same-type operations into one. Five inserts become one bulk insert. Three API calls become one batch."
+  source: "Structural Transformation Theory"
+
+- id: "STRUCTURAL_REFLOW"
+  category: "structural"
+  protection: "PROTECTED"
+  title: "Reflow by Importance and Chronology"
+  statement: "Order code by importance first, then by logical flow. Public API at top, private helpers at bottom. Within methods: setup, action, cleanup. Constants before methods. Requires before definitions."
   source: "Structural Transformation Theory"

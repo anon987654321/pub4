@@ -1,0 +1,27 @@
+# Smell patterns with suggestions
+# From master.yml v38.2
+
+generic_verbs:
+  process: [transform, parse, validate, normalize, sanitize]
+  handle: [respond_to, dispatch, route, intercept]
+  get: [fetch, retrieve, find, query, load, extract]
+  set: [assign, update, configure, initialize, bind]
+  do: [execute, invoke, trigger, activate]
+  manage: [coordinate, orchestrate, supervise, govern]
+  run: [execute, spawn, invoke, dispatch]
+
+vague_nouns:
+  data: [payload, credentials, configuration, attributes]
+  info: [metadata, details, parameters, settings]
+  thing: [entity, resource, component, module]
+  object: [model, record, instance, document]
+  value: [amount, quantity, metric, score]
+  item: [element, entry, record, member]
+  stuff: [content, material, payload, resources]
+
+thresholds:
+  nesting_depth: 4
+  method_length: 50
+  parameter_count: 5
+  class_count_per_file: 3
+  line_length: 120
