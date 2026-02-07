@@ -126,7 +126,7 @@ module MASTER
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
-        axioms = YAML.load_file(axioms_path)
+        axioms = YAML.safe_load_file(axioms_path)
         return unless axioms.is_a?(Array)
 
         axioms.each do |axiom|
@@ -141,7 +141,7 @@ module MASTER
         aesthetics_path = "#{MASTER.root}/data/aesthetics.yml"
         return unless File.exist?(aesthetics_path)
 
-        aesthetics = YAML.load_file(aesthetics_path)
+        aesthetics = YAML.safe_load_file(aesthetics_path)
         return unless aesthetics.is_a?(Array)
 
         aesthetics.each do |aesthetic|
@@ -156,7 +156,7 @@ module MASTER
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
-        data = YAML.load_file(council_path)
+        data = YAML.safe_load_file(council_path)
         return unless data.is_a?(Hash)
 
         config = data["config"]
@@ -184,7 +184,7 @@ module MASTER
         config_path = "#{MASTER.root}/data/config.yml"
         return unless File.exist?(config_path)
 
-        data = YAML.load_file(config_path)
+        data = YAML.safe_load_file(config_path)
         return unless data.is_a?(Hash)
 
         data.each do |key, value|
@@ -204,7 +204,7 @@ module MASTER
         shell_path = "#{MASTER.root}/data/shell.yml"
         return unless File.exist?(shell_path)
 
-        data = YAML.load_file(shell_path)
+        data = YAML.safe_load_file(shell_path)
         return unless data.is_a?(Hash) && data["commands"]
 
         data["commands"].each do |cmd|
