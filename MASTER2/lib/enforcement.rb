@@ -7,7 +7,7 @@ module MASTER
   # Layers: Literal → Lexical → Conceptual → Semantic → Cognitive
   # Scopes: Line → Unit → File → Framework
   module Enforcement
-    LAYERS = %i[literal lexical conceptual semantic cognitive].freeze
+    LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
@@ -316,6 +316,15 @@ module MASTER
         end
 
         violations
+      end
+
+      # Layer 6: Language axiom - language-specific beauty rules
+      def check_language_axiom(code, axioms, filename)
+        if defined?(LanguageAxioms)
+          LanguageAxioms.check(code, filename: filename)
+        else
+          []
+        end
       end
     end
   end

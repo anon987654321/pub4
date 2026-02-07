@@ -81,6 +81,9 @@ module MASTER
         evolve(args)
       when "opportunities", "opps"
         opportunities(args)
+      when "axioms", "language-axioms"
+        print_language_axioms(args)
+        nil
       when "selftest", "self-test", "selfrun", "self-run"
         SelfTest.run
       when "speak", "say"
