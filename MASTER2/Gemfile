@@ -7,7 +7,6 @@ gem "tty-prompt"
 gem "tty-spinner"
 gem "tty-logger"
 gem "dry-monads"
-gem "stoplight"
 gem "typogruby"
 gem "zeitwerk"
 

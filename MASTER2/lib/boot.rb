@@ -54,17 +54,9 @@ module MASTER
       zsh_count = DB.connection.execute("SELECT COUNT(*) as count FROM zsh_patterns").first["count"] rescue 0
       log(:debug, "db0: schema 6 tables, axioms #{axiom_count}, council #{council_count}, zsh_patterns #{zsh_count}")
       
-      # LLM configuration
-      providers = []
-      providers << "OpenRouter" if ENV["OPENROUTER_API_KEY"]
-      providers << "Anthropic" if ENV["ANTHROPIC_API_KEY"]
-      providers << "DeepSeek" if ENV["DEEPSEEK_API_KEY"]
-      providers << "OpenAI" if ENV["OPENAI_API_KEY"]
-      
-      if providers.empty?
-        log(:warn, "llm0 at master0: no providers configured")
-      else
-        log(:info, "llm0 at master0: #{providers.join(", ")}")
+      # LLM configuration (OpenRouter only)
+      if ENV["OPENROUTER_API_KEY"]
+        log(:info, "llm0 at master0: OpenRouter")
         
         # Model tiers
         strong_models = LLM::RATES.select { |_k, v| v[:tier] == :strong }.keys
@@ -80,6 +72,8 @@ module MASTER
         budget = LLM::BUDGET_LIMIT
         remaining = LLM.remaining
         log(:info, "llm0: budget $#{"%.2f" % budget}, remaining $#{"%.2f" % remaining}")
+      else
+        log(:warn, "llm0 at master0: no OpenRouter API key configured")
       end
       
       # Circuit status

@@ -32,9 +32,22 @@ module MASTER
     end
 
     # Convert stage name symbol to class
-    # :input_tank -> Stages::InputTank
+    # Supports both new names (compress, debate, etc.) and old names (input_tank, council_debate, etc.)
     def stage_class(name)
-      class_name = name.to_s.split("_").map(&:capitalize).join
+      # Map old names to new names
+      name_map = {
+        input_tank: :compress,
+        council_debate: :debate,
+        refactor_engine: :lint,
+        openbsd_admin: :admin,
+        output_tank: :render
+      }
+      
+      # Use mapped name if available, otherwise use provided name
+      mapped_name = name_map[name] || name
+      
+      # Convert to class name: :compress -> Compress
+      class_name = mapped_name.to_s.split("_").map(&:capitalize).join
       Stages.const_get(class_name)
     end
 

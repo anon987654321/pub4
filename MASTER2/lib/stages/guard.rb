@@ -4,6 +4,8 @@ module MASTER
   module Stages
     # Guard: Block dangerous patterns before they reach the LLM
     class Guard
+      include Dry::Monads[:result]
+
       DENY = [
         /rm\s+-r[f]?\s+\//,        # rm -rf /
         />\s*\/dev\/[sh]da/,       # > /dev/sda or > /dev/hda
@@ -18,9 +20,9 @@ module MASTER
         match = DENY.find { |pattern| pattern.match?(text) }
         
         if match
-          Result.err("Blocked: dangerous pattern detected")
+          Failure("Blocked: dangerous pattern detected")
         else
-          Result.ok(input)
+          Success(input)
         end
       end
     end

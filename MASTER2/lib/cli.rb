@@ -1,86 +1,67 @@
+# frozen_string_literal: true
+
 module MASTER
-  class CLI
-    def self.start(args)
-      case args[0]
-      when 'refactor'
-        unless File.exist?(args[1])
-          puts "Error: File not found #{args[1]}"
-          return
-        end
-        code = File.read(args[1])
-        engine = Engine.new
-        result = engine.refactor(code)
-        if result[:success]
-          File.write(args[1], result[:code])
-          puts "Refactored with diff:\n#{result[:diff]}"
-        else
-          puts "Suggestions: #{result[:suggestions]}"
-        end
-      when 'analyze'
-        unless File.exist?(args[1])
-          puts "Error: File not found #{args[1]}"
-          return
-        end
-        code = File.read(args[1])
-        engine = Engine.new
-        analysis = engine.analyze(code)
-        puts analysis
-      when 'self_refactor'
-        engine = Engine.new
-        Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
-          backup = file + '.backup'
-          FileUtils.cp(file, backup)
-          code = File.read(file)
-          result = engine.refactor(code)
-          if result[:success]
-            File.write(file, result[:code])
-            puts "Self-refactored: #{file} (backup: #{backup})"
-          else
-            puts "Skipped #{file}: #{result[:error]}"
-          end
-        end
-      when 'auto_iterate'
-        max_iterations = 5
-        iterations = 0
-        changes_made = true
-        while changes_made && iterations < max_iterations
-          iterations += 1
-          puts "Iteration #{iterations}"
-          changes_made = false
-          engine = Engine.new
-          Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
-            backup = file + ".iter#{iterations}.backup"
-            FileUtils.cp(file, backup)
-            code = File.read(file)
-            result = engine.refactor(code)
-            if result[:success]
-              File.write(file, result[:code])
-              puts "Updated #{file}"
-              changes_made = true
-            end
-          end
-          sleep 1  # Rate limit
-        end
-        puts "Auto-iteration complete: #{iterations} iterations"
+  module CLI
+    extend self
+
+    def start(args)
+      mode = args[0] || "repl"
+      
+      case mode
+      when "repl", "interactive"
+        Pipeline.repl
+      when "pipe", "json"
+        Pipeline.pipe
+      when "daemon", "server"
+        daemon_mode
+      when "--help", "-h", "help"
+        print_help
       else
-        repl
+        # Treat first arg as input text for quick execution
+        result = Pipeline.new.call({ text: args.join(" ") })
+        
+        if result.success?
+          output = result.value![:rendered] || result.value![:response] || result.value!.inspect
+          puts output
+          exit 0
+        else
+          warn "Error: #{result.failure}"
+          exit 1
+        end
       end
     end
 
-    def self.repl
-      engine = Engine.new
-      loop do
-        print "master> "
-        input = gets.chomp
-        break if input == 'exit'
+    def daemon_mode
+      puts "Daemon mode not yet implemented"
+      puts "Use 'repl' for interactive mode or 'pipe' for JSON I/O"
+      exit 1
+    end
+
+    def print_help
+      puts <<~HELP
+        MASTER v4 - LLM-powered pipeline system
         
-        if input.start_with?('refactor ')
-          result = engine.refactor(input[9..-1])
-          puts result
-        else
-          puts "Processed: #{input}"
-        end
-      end
+        Usage:
+          master [mode] [args]
+        
+        Modes:
+          repl              Interactive REPL mode (default)
+          pipe              JSON input/output mode (stdin → stdout)
+          daemon            Background server mode (not yet implemented)
+          help              Show this help message
+          
+          [text]            Quick execution with text as input
+        
+        Examples:
+          master repl
+          echo '{"text":"hello"}' | master pipe
+          master "What is Ruby?"
+        
+        Environment:
+          OPENROUTER_API_KEY    Required for LLM access
+          
+        See README.md for full documentation.
+      HELP
     end
   end
 end
