@@ -171,4 +171,125 @@ class TestStages < Minitest::Test
     assert_includes result.value![:entities][:services], "ntpd"
     assert_includes result.value![:entities][:services], "sshd"
   end
+
+  # Tests with LLM stubbing to avoid network requests
+  def test_compress_classify_fallback_when_no_model
+    stage = MASTER::Stages::Compress.new
+    
+    # Stub LLM.pick to return nil (no model available)
+    MASTER::LLM.stub :pick, nil do
+      result = stage.call("What is the meaning of life?")
+      
+      assert result.success?
+      assert_equal :question, result.value![:intent], "Should use regex fallback when no model"
+    end
+  end
+
+  def test_compress_classify_validates_llm_output
+    stage = MASTER::Stages::Compress.new
+    mock_response = Minitest::Mock.new
+    mock_response.expect :content, "invalid_intent"
+    mock_response.expect :respond_to?, false, [:tokens_in]
+    
+    mock_chat = Minitest::Mock.new
+    mock_chat.expect :ask, mock_response, [String]
+    
+    # Stub LLM methods to return invalid intent
+    MASTER::LLM.stub :pick, "test-model" do
+      MASTER::LLM.stub :chat, mock_chat, [{ model: "test-model" }] do
+        result = stage.call("test input")
+        
+        assert result.success?
+        assert_equal :general, result.value![:intent], "Should fallback to :general for invalid intent"
+      end
+    end
+    
+    mock_chat.verify
+    mock_response.verify
+  end
+
+  def test_compress_extract_handles_invalid_json
+    stage = MASTER::Stages::Compress.new
+    mock_response = Minitest::Mock.new
+    mock_response.expect :content, "not valid json"
+    mock_response.expect :respond_to?, false, [:tokens_in]
+    
+    mock_chat = Minitest::Mock.new
+    mock_chat.expect :ask, mock_response, [String]
+    
+    # Stub LLM methods to return invalid JSON
+    MASTER::LLM.stub :pick, "test-model" do
+      MASTER::LLM.stub :chat, mock_chat, [{ model: "test-model" }] do
+        result = stage.call("test input")
+        
+        assert result.success?
+        # Should use regex fallback when JSON parsing fails
+        assert result.value![:entities].is_a?(Hash)
+      end
+    end
+    
+    mock_chat.verify
+    mock_response.verify
+  end
+
+  def test_compress_extract_validates_json_structure
+    stage = MASTER::Stages::Compress.new
+    mock_response = Minitest::Mock.new
+    # Return JSON with non-array values
+    mock_response.expect :content, '{"files": "not-an-array", "services": [123], "configs": []}'
+    mock_response.expect :respond_to?, false, [:tokens_in]
+    
+    mock_chat = Minitest::Mock.new
+    mock_chat.expect :ask, mock_response, [String]
+    
+    MASTER::LLM.stub :pick, "test-model" do
+      MASTER::LLM.stub :chat, mock_chat, [{ model: "test-model" }] do
+        result = stage.call("test.rb config.yml")
+        
+        assert result.success?
+        entities = result.value![:entities]
+        # Should only include valid arrays
+        refute entities.key?(:files), "Should not include non-array values"
+        refute entities.key?(:services), "Should not include array with non-string elements"
+        assert entities[:configs].is_a?(Array), "Should include valid array"
+      end
+    end
+    
+    mock_chat.verify
+    mock_response.verify
+  end
+
+  def test_compress_classify_logs_cost_when_available
+    stage = MASTER::Stages::Compress.new
+    mock_response = Minitest::Mock.new
+    mock_response.expect :content, "question"
+    mock_response.expect :respond_to?, true, [:tokens_in]
+    mock_response.expect :respond_to?, true, [:tokens_out]
+    mock_response.expect :tokens_in, 10
+    mock_response.expect :tokens_out, 5
+    
+    mock_chat = Minitest::Mock.new
+    mock_chat.expect :ask, mock_response, [String]
+    
+    cost_logged = false
+    
+    MASTER::LLM.stub :pick, "test-model" do
+      MASTER::LLM.stub :chat, mock_chat, [{ model: "test-model" }] do
+        MASTER::LLM.stub :log_cost, ->(model:, tokens_in:, tokens_out:) {
+          cost_logged = true
+          assert_equal "test-model", model
+          assert_equal 10, tokens_in
+          assert_equal 5, tokens_out
+        } do
+          result = stage.call("What is this?")
+          
+          assert result.success?
+          assert cost_logged, "Should log cost when token info available"
+        end
+      end
+    end
+    
+    mock_chat.verify
+    mock_response.verify
+  end
 end
