@@ -38,8 +38,10 @@ module MASTER
 
         reader = defined?(TTY::Reader) ? TTY::Reader.new : nil
         pipeline = new
+        session = Session.current
 
         Boot.banner
+        puts "Session: #{session.id[0, 8]}..."
         puts "Type 'help' for commands, 'exit' to quit\n\n"
 
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
@@ -56,11 +58,15 @@ module MASTER
                    end
           rescue Interrupt
             puts
+            session.save
             break
           end
 
           break if line.nil?
           next if line.strip.empty?
+
+          # Track user input in session
+          session.add_user(line.strip)
 
           if defined?(Commands)
             cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
@@ -70,7 +76,10 @@ module MASTER
             if cmd_result.respond_to?(:ok?)
               if cmd_result.ok?
                 output = cmd_result.value[:rendered] || cmd_result.value[:response]
-                puts "\n#{output}\n\n" if output && !output.empty?
+                if output && !output.empty?
+                  puts "\n#{output}\n\n"
+                  session.add_assistant(output, cost: cmd_result.value[:cost])
+                end
               else
                 puts "\nError: #{cmd_result.failure}\n\n"
               end
@@ -82,12 +91,23 @@ module MASTER
 
           if result.ok?
             output = result.value[:rendered] || result.value[:response]
-            puts "\n#{output}\n\n" if output && !output.empty?
+            if output && !output.empty?
+              puts "\n#{output}\n\n"
+              session.add_assistant(
+                output,
+                model: result.value[:model],
+                cost: result.value[:cost],
+              )
+            end
           else
             puts "\nError: #{result.failure}\n\n"
           end
+
+          # Auto-save every 5 messages
+          session.save if session.message_count % 5 == 0
         end
 
+        session.save
         puts "Goodbye!"
       end
 

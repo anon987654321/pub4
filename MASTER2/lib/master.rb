@@ -13,6 +13,7 @@ require_relative "result"
 require_relative "db"
 require_relative "llm"
 require_relative "memory"
+require_relative "session"
 require_relative "pledge"
 
 # UI & NN/g compliance

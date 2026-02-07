@@ -26,6 +26,12 @@ module MASTER
       when "history"
         show_history
         nil
+      when "session"
+        handle_session(args)
+        nil
+      when "sessions"
+        list_sessions
+        nil
       when "refactor"
         refactor(args)
       when "chamber"
@@ -120,6 +126,52 @@ module MASTER
 
         result = EdgeTTS.speak_and_play(text)
         puts "  TTS Error: #{result.error}" if result.err?
+      end
+
+      def handle_session(args)
+        case args&.split&.first
+        when "new"
+          Session.start_new
+          puts "  New session: #{Session.current.id[0, 8]}..."
+        when "save"
+          Session.current.save
+          puts "  Session saved: #{Session.current.id[0, 8]}..."
+        when "load", "resume"
+          id = args.split[1]
+          if id && Session.resume(id)
+            puts "  Resumed session: #{Session.current.id[0, 8]}..."
+          else
+            puts "  Session not found: #{id}"
+          end
+        when "info"
+          s = Session.current
+          puts "\n  Session Info"
+          puts "  ID:       #{s.id}"
+          puts "  Messages: #{s.message_count}"
+          puts "  Cost:     $#{format('%.4f', s.total_cost)}"
+          puts "  Created:  #{s.created_at}"
+          puts
+        else
+          puts "  Usage: session [new|save|load <id>|info]"
+        end
+      end
+
+      def list_sessions
+        sessions = Session.list
+        if sessions.empty?
+          puts "\n  No saved sessions.\n"
+        else
+          puts "\n  Saved Sessions"
+          puts "  #{'-' * 40}"
+          sessions.each do |id|
+            data = Memory.load_session(id)
+            next unless data
+
+            msgs = data[:history]&.size || 0
+            puts "  #{id[0, 8]}... | #{msgs} messages"
+          end
+          puts
+        end
       end
     end
   end

@@ -6,17 +6,19 @@ module MASTER
     extend self
 
     COMMANDS = {
-      help:     { desc: "Show this help",           usage: "help [command]" },
-      ask:      { desc: "Ask the LLM a question",   usage: "ask <question>" },
-      refactor: { desc: "Refactor a file",          usage: "refactor <file>" },
-      chamber:  { desc: "Multi-model deliberation", usage: "chamber <file>" },
-      evolve:   { desc: "Self-improvement cycle",   usage: "evolve [path]" },
-      scan:     { desc: "Scan for issues",          usage: "scan [path]" },
-      status:   { desc: "Show system status",       usage: "status" },
-      budget:   { desc: "Show budget remaining",    usage: "budget" },
-      history:  { desc: "Show session history",     usage: "history" },
-      clear:    { desc: "Clear screen",             usage: "clear" },
-      exit:     { desc: "Exit MASTER",              usage: "exit" }
+      help: { desc: "Show this help", usage: "help [command]" },
+      ask: { desc: "Ask the LLM a question", usage: "ask <question>" },
+      refactor: { desc: "Refactor a file", usage: "refactor <file>" },
+      chamber: { desc: "Multi-model deliberation", usage: "chamber <file>" },
+      evolve: { desc: "Self-improvement cycle", usage: "evolve [path]" },
+      session: { desc: "Session management", usage: "session [new|save|load|info]" },
+      sessions: { desc: "List saved sessions", usage: "sessions" },
+      status: { desc: "Show system status", usage: "status" },
+      budget: { desc: "Show budget remaining", usage: "budget" },
+      history: { desc: "Show cost history", usage: "history" },
+      speak: { desc: "Text-to-speech", usage: "speak <text>" },
+      clear: { desc: "Clear screen", usage: "clear" },
+      exit: { desc: "Exit MASTER", usage: "exit" },
     }.freeze
 
     TIPS = [
@@ -24,7 +26,9 @@ module MASTER
       "Ctrl+C to cancel current operation",
       "Type 'help <command>' for details",
       "Budget shown in prompt: master[tier|$X.XX]$",
-      "⚡ in prompt means circuit tripped"
+      "⚡ in prompt means circuit tripped",
+      "Sessions auto-save every 5 messages",
+      "Use 'session info' to see current session",
     ].freeze
 
     def show(command = nil)
@@ -43,7 +47,7 @@ module MASTER
       end
 
       puts "\n  Tips:"
-      TIPS.each { |t| puts "    • #{t}" }
+      TIPS.first(4).each { |t| puts "    • #{t}" }
       puts
     end
 
