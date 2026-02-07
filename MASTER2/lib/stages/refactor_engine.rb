@@ -60,6 +60,25 @@ module MASTER
           if text.length > 1000 && text.scan(/\bif\b/).length > 20
             "Potential KISS violation: high complexity detected"
           end
+        when "STRUCTURAL_MERGE"
+          defs = text.scan(/def\s+(\w+)/).flatten
+          duplicates = defs.select { |d| defs.count(d) > 1 }.uniq
+          "Potential STRUCTURAL_MERGE violation: duplicate definitions: #{duplicates.join(", ")}" unless duplicates.empty?
+        when "STRUCTURAL_FLATTEN"
+          max_indent = text.each_line.map { |l| l[/\A\s*/].length }.max || 0
+          "Potential STRUCTURAL_FLATTEN violation: nesting depth #{max_indent / 2} levels" if max_indent > 12
+        when "STRUCTURAL_HOIST"
+          if text.match?(/\b(each|map|select|reject|loop|while|until)\b.*\b(require|load|read|query|fetch)\b/m)
+            "Potential STRUCTURAL_HOIST violation: I/O or loading inside iteration"
+          end
+        when "STRUCTURAL_COALESCE"
+          lines = text.each_line.to_a
+          sequential = lines.each_cons(2).count { |a, b| a.strip.start_with?("DB.") && b.strip.start_with?("DB.") }
+          "Potential STRUCTURAL_COALESCE violation: #{sequential} sequential DB operations" if sequential > 2
+        when "STRUCTURAL_PRUNE"
+          if text.match?(/# (TODO|FIXME|HACK|XXX|DEAD|UNUSED):/i)
+            "Potential STRUCTURAL_PRUNE violation: dead/unused code markers found"
+          end
         else
           nil # No violation detected
         end
