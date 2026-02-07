@@ -33,9 +33,12 @@ module MASTER
       require "tty-reader" rescue nil
 
       reader = defined?(TTY::Reader) ? TTY::Reader.new : nil
+      pipeline = new
 
       Boot.banner
-      puts "Type 'exit' to quit\n\n"
+      puts "Type 'help' for commands, 'exit' to quit\n\n"
+
+      Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
       loop do
         prompt_str = self.prompt
@@ -52,9 +55,28 @@ module MASTER
           break
         end
 
-        break if line.nil? || line.strip.empty? || %w[exit quit].include?(line.strip.downcase)
+        break if line.nil?
+        next if line.strip.empty?
 
-        result = new.call({ text: line.strip })
+        # Handle commands
+        if defined?(Commands)
+          cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
+          break if cmd_result == :exit
+          next if cmd_result.nil?
+          # cmd_result is a Result, print it
+          if cmd_result.respond_to?(:ok?)
+            if cmd_result.ok?
+              output = cmd_result.value[:rendered] || cmd_result.value[:response]
+              puts "\n#{output}\n\n" if output && !output.empty?
+            else
+              puts "\nError: #{cmd_result.failure}\n\n"
+            end
+          end
+          next
+        end
+
+        # Direct pipeline call
+        result = pipeline.call({ text: line.strip })
 
         if result.ok?
           output = result.value[:rendered] || result.value[:response]

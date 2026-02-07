@@ -18,6 +18,11 @@ require_relative "pledge"
 # UI
 require_relative "ui"
 require_relative "help"
+require_relative "autocomplete"
+require_relative "progress"
+require_relative "undo"
+require_relative "dashboard"
+require_relative "commands"
 
 # Pipeline
 require_relative "boot"
