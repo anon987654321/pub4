@@ -1,17 +1,25 @@
 # frozen_string_literal: true
 
+begin
+  require "typogruby"
+rescue LoadError
+  # Typogruby not available, fall back to manual rules
+end
+
 module MASTER
   module Stages
     # Depressure Tank: Multi-model output refinement
-    class OutputTank
+    class Render
+      include Dry::Monads[:result]
+
       CODE_FENCE = /^```/
 
       def call(input)
         # Get the text to render (prefer response, fallback to text)
-        text = input[:response] || input[:text] || input[:original_text] || ""
+        text = input.fetch(:response) { input.fetch(:text) { input.fetch(:original_text, "") } }
 
         # Apply typesetting to prose, preserve code blocks
-        typeset_text = typeset_safe(text)
+        typeset_text = typeset(text)
 
         # TODO: Implement multi-model refinement
         # TODO: Apply additional Strunk & White rules (active voice)
@@ -24,12 +32,12 @@ module MASTER
           summary: summary
         )
 
-        Result.ok(enriched)
+        Success(enriched)
       end
 
       private
 
-      def typeset_safe(text)
+      def typeset(text)
         regions = []
         current = []
         in_code = false
@@ -49,14 +57,19 @@ module MASTER
         end
         regions << { text: current.join, code: in_code } unless current.empty?
 
-        regions.map { |r| r[:code] ? r[:text] : typeset_prose(r[:text]) }.join
+        regions.map { |r| r[:code] ? r[:text] : prettify(r[:text]) }.join
       end
 
-      def typeset_prose(text)
-        # Apply typography rules from Bringhurst
-        text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }      # Smart quotes
-            .gsub(/\s--\s/, " \u2014 ")                      # Em dashes
-            .gsub(/\.\.\./, "\u2026")                        # Ellipses
+      def prettify(text)
+        # Use typogruby if available, otherwise fall back to manual rules
+        if defined?(Typogruby)
+          Typogruby.improve(text)
+        else
+          # Apply typography rules from Bringhurst
+          text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }      # Smart quotes
+              .gsub(/\s--\s/, " \u2014 ")                      # Em dashes
+              .gsub(/\.\.\./, "\u2026")                        # Ellipses
+        end
       end
 
       def format_summary(input)

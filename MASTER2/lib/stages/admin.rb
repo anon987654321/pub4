@@ -3,23 +3,25 @@
 module MASTER
   module Stages
     # OpenBSD Admin: Generates declarative OpenBSD configurations
-    class OpenbsdAdmin
+    class Admin
+      include Dry::Monads[:result]
+
       def call(input)
         text = input[:text] || input[:original_text] || ""
         intent = input[:intent]
 
         # Check if this is an admin task
-        unless admin_task?(text, intent)
+        unless admin?(text, intent)
           # Not an admin task, pass through unchanged
-          return Result.ok(input)
+          return Success(input)
         end
 
         # Detect specific admin task type
-        task_type = detect_admin_task(text)
+        task_type = detect(text)
 
         # TODO: Implement actual config generation
         # For now, stub with a placeholder
-        config = generate_config_stub(task_type, text)
+        config = stub_config(task_type, text)
 
         # TODO: Validate generated config syntax
         # TODO: Apply pledge/unveil constraints when writing files
@@ -30,24 +32,46 @@ module MASTER
           generated_config: config
         )
 
-        Result.ok(enriched)
+        Success(enriched)
       end
 
       private
 
-      def admin_task?(text, intent)
-        intent == :admin || text.match?(/\b(pf|httpd|relayd|acme-client|bgpd|ospfd)\b/i)
+      def admin?(text, intent)
+        return true if intent == :admin
+        
+        # Use patterns from DB
+        config_paths = DB.openbsd_patterns(category: "config_paths")
+        services = config_paths.map { |p| p["key"] }.compact
+        
+        # Build dynamic pattern from DB data
+        return false if services.empty?
+        pattern = /\b(#{services.join("|")})\b/i
+        text.match?(pattern)
+      rescue
+        # Fallback to hardcoded patterns if DB query fails
+        text.match?(/\b(pf|httpd|relayd|acme-client|bgpd|ospfd)\b/i)
       end
 
-      def detect_admin_task(text)
+      def detect(text)
+        # Try to detect from DB patterns first
+        config_paths = DB.openbsd_patterns(category: "config_paths")
+        config_paths.each do |pattern|
+          key = pattern["key"]
+          return key.to_sym if text.match?(/\b#{Regexp.escape(key)}\b/i)
+        end
+        
+        # Fallback to basic detection
         return :pf if text.match?(/\bpf\b/i)
         return :httpd if text.match?(/\bhttpd\b/i)
         return :relayd if text.match?(/\brelayd\b/i)
         return :acme if text.match?(/\bacme\b/i)
         :generic
+      rescue
+        :generic
       end
 
-      def generate_config_stub(task_type, _text)
+      def stub_config(task_type, _text)
         case task_type
         when :pf
           "# TODO: Generate pf.conf based on requirements"

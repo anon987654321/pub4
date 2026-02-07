@@ -8,20 +8,21 @@ module MASTER
   module DB
     class << self
       attr_reader :connection
+    end
 
-      def setup(path: "#{MASTER.root}/master.db")
-        @mutex ||= Mutex.new
-        @connection = SQLite3::Database.new(path)
-        @connection.results_as_hash = true
-        create_schema
-        seed_data
-      end
+    def self.setup(path: "#{MASTER.root}/master.db")
+      @mutex ||= Mutex.new
+      @connection = SQLite3::Database.new(path)
+      @connection.results_as_hash = true
+      migrate!
+      seed!
+    end
 
-      def synchronize(&block)
-        @mutex.synchronize(&block)
-      end
+    def self.synchronize(&block)
+      @mutex.synchronize(&block)
+    end
 
-      def create_schema
+    def self.migrate!
         @connection.execute_batch <<~SQL
           CREATE TABLE IF NOT EXISTS axioms (
             id TEXT PRIMARY KEY,
@@ -109,18 +110,36 @@ module MASTER
             pattern TEXT,
             category TEXT DEFAULT 'operation'
           );
-        SQL
-      end
 
-      def seed_data
+          CREATE TABLE IF NOT EXISTS models (
+            id TEXT PRIMARY KEY,
+            alias TEXT,
+            tier TEXT,
+            input_cost REAL,
+            output_cost REAL,
+            provider TEXT
+          );
+
+          CREATE TABLE IF NOT EXISTS compression_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            pattern TEXT
+          );
+        SQL
+    end
+
+    def self.seed!
         seed_axioms
         seed_council
         seed_zsh_patterns
         seed_openbsd_patterns
+        seed_models
+        seed_compression
+        seed_budget
         seed_gh_patterns
-      end
+    end
 
-      def seed_axioms
+    def self.seed_axioms
         axioms_path = "#{MASTER.root}/data/axioms.yml"
         return unless File.exist?(axioms_path)
 
@@ -133,9 +152,9 @@ module MASTER
             [axiom["id"], axiom["category"], axiom["protection"], axiom["title"], axiom["statement"], axiom["source"]]
           )
         end
-      end
+    end
 
-      def seed_council
+    def self.seed_council
         council_path = "#{MASTER.root}/data/council.yml"
         return unless File.exist?(council_path)
 
@@ -172,9 +191,9 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def seed_zsh_patterns
+    def self.seed_zsh_patterns
         patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
         return unless File.exist?(patterns_path)
 
@@ -200,9 +219,9 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def seed_openbsd_patterns
+    def self.seed_openbsd_patterns
         patterns_path = "#{MASTER.root}/data/openbsd_patterns.yml"
         return unless File.exist?(patterns_path)
 
@@ -258,13 +277,84 @@ module MASTER
             )
           end
         end
-      end
+    end
 
-      def get_zsh_patterns
+    def self.seed_models
+        models_path = "#{MASTER.root}/data/models.yml"
+        return unless File.exist?(models_path)
+
+        models = YAML.safe_load_file(models_path)
+        return unless models.is_a?(Array)
+
+        models.each do |model|
+          @connection.execute(
+            "INSERT OR REPLACE INTO models (id, alias, tier, input_cost, output_cost, provider) VALUES (?, ?, ?, ?, ?, ?)",
+            [model["id"], model["alias"], model["tier"], model["input_cost"], model["output_cost"], model["provider"]]
+          )
+        end
+    end
+
+    def self.seed_compression
+        compression_path = "#{MASTER.root}/data/compression.yml"
+        return unless File.exist?(compression_path)
+
+        data = YAML.safe_load_file(compression_path)
+        return unless data.is_a?(Hash)
+
+        # Seed filler words
+        if data["fillers"]&.is_a?(Array)
+          data["fillers"].each do |word|
+            @connection.execute(
+              "INSERT OR REPLACE INTO compression_patterns (category, pattern) VALUES (?, ?)",
+              ["filler", word]
+            )
+          end
+        end
+
+        # Seed phrases
+        if data["phrases"]&.is_a?(Array)
+          data["phrases"].each do |phrase|
+            @connection.execute(
+              "INSERT OR REPLACE INTO compression_patterns (category, pattern) VALUES (?, ?)",
+              ["phrase", phrase]
+            )
+          end
+        end
+    end
+
+    def self.seed_budget
+        budget_path = "#{MASTER.root}/data/budget.yml"
+        return unless File.exist?(budget_path)
+
+        data = YAML.safe_load_file(budget_path)
+        return unless data.is_a?(Hash) && data["budget"]
+
+        budget = data["budget"]
+        
+        # Store budget limit
+        if budget["limit"]
+          @connection.execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+            ["budget_limit", budget["limit"].to_s]
+          )
+        end
+        
+        # Store thresholds
+        if budget["thresholds"]&.is_a?(Hash)
+          budget["thresholds"].each do |tier, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["budget_threshold_#{tier}", value.to_s]
+            )
+          end
+        end
+    end
+
+    def self.zsh_patterns
         @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
-      end
+    end
 
-      def get_openbsd_patterns(category: nil)
+    def self.openbsd_patterns(category: nil)
         if category
           @connection.execute("SELECT * FROM openbsd_patterns WHERE category = ? ORDER BY category, key, command", [category])
         else
@@ -272,7 +362,7 @@ module MASTER
         end
       end
 
-      def get_axioms(category: nil, protection: nil)
+    def self.axioms(category: nil, protection: nil)
         query = "SELECT * FROM axioms"
         conditions = []
         params = []
@@ -291,16 +381,16 @@ module MASTER
         query += " ORDER BY CASE protection WHEN 'ABSOLUTE' THEN 1 WHEN 'PROTECTED' THEN 2 ELSE 3 END"
 
         @connection.execute(query, params)
-      end
+    end
 
-      def get_council_members(veto_only: false)
+    def self.council(veto_only: false)
         query = "SELECT * FROM council"
         query += " WHERE veto = 1" if veto_only
         query += " ORDER BY weight DESC, name ASC"
         @connection.execute(query)
-      end
+    end
 
-      def record_cost(model:, tokens_in:, tokens_out:, cost:)
+    def self.log_cost(model:, tokens_in:, tokens_out:, cost:)
         synchronize do
           @connection.execute(
             "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
@@ -309,115 +399,122 @@ module MASTER
         end
       end
 
-      def get_total_cost
+    def self.total_cost
         result = @connection.execute("SELECT SUM(cost) as total FROM costs").first
         result["total"].to_f
-      end
+    end
 
-      def record_circuit_failure(model)
-        synchronize do
-          @connection.execute(
-            "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
-             ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
-            [model]
-          )
-        end
-      end
-
-      def record_circuit_success(model)
-        synchronize do
-          @connection.execute(
-            "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
-             ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
-            [model]
-          )
-        end
-      end
-
-      def get_circuit(model)
-        @connection.execute("SELECT * FROM circuits WHERE model = ?", [model]).first
-      end
-
-      def get_config(key)
-        result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
-        result ? result["value"] : nil
-      end
-
-      def record_agent(agent)
-        task_json = JSON.generate(agent.task) rescue "{}"
-        result_json = agent.result ? (agent.result.ok? ? JSON.generate(agent.result.value) : JSON.generate({ error: agent.result.error })) : "{}"
-
+        def self.trip!(model)
+      synchronize do
         @connection.execute(
-          "INSERT OR REPLACE INTO agents (id, parent_id, scope, status, task_json, result_json, budget, user_agent, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
-          [agent.id, agent.parent_id, agent.scope, agent.status.to_s, task_json, result_json, agent.budget, agent.user_agent]
+          "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
+           ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
+          [model]
         )
+      end
+    end
 
-        update_reputation(agent)
+    def self.reset!(model)
+      synchronize do
+        @connection.execute(
+          "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
+           ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
+          [model]
+        )
+      end
+    end
+
+    def self.circuit(model)
+      @connection.execute("SELECT * FROM circuits WHERE model = ?", [model]).first
+    end
+
+    def self.config(key)
+      result = @connection.execute("SELECT value FROM config WHERE key = ?", [key]).first
+      result ? result["value"] : nil
+    end
+
+    def self.compression_patterns(category: nil)
+      if category
+        @connection.execute("SELECT * FROM compression_patterns WHERE category = ?", [category])
+      else
+        @connection.execute("SELECT * FROM compression_patterns")
+      end
+    end
+
+    def self.record_agent(agent)
+      task_json = JSON.generate(agent.task) rescue "{}"
+      result_json = agent.result ? (agent.result.success? ? JSON.generate(agent.result.value!) : JSON.generate({ error: agent.result.failure })) : "{}"
+
+      @connection.execute(
+        "INSERT OR REPLACE INTO agents (id, parent_id, scope, status, task_json, result_json, budget, user_agent, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+        [agent.id, agent.parent_id, agent.scope, agent.status.to_s, task_json, result_json, agent.budget, agent.user_agent]
+      )
+
+      update_reputation(agent)
+    end
+
+    def self.update_reputation(agent)
+      scope = agent.scope
+      @connection.execute("INSERT OR IGNORE INTO agent_reputation (agent_scope) VALUES (?)", [scope])
+      @connection.execute("UPDATE agent_reputation SET total_runs = total_runs + 1 WHERE agent_scope = ?", [scope])
+
+      case agent.status
+      when :completed
+        @connection.execute("UPDATE agent_reputation SET successful = successful + 1 WHERE agent_scope = ?", [scope])
+      when :timeout
+        @connection.execute("UPDATE agent_reputation SET timeouts = timeouts + 1 WHERE agent_scope = ?", [scope])
+      when :failed
+        @connection.execute("UPDATE agent_reputation SET rejected = rejected + 1 WHERE agent_scope = ?", [scope])
       end
 
-      def update_reputation(agent)
-        scope = agent.scope
-        @connection.execute("INSERT OR IGNORE INTO agent_reputation (agent_scope) VALUES (?)", [scope])
-        @connection.execute("UPDATE agent_reputation SET total_runs = total_runs + 1 WHERE agent_scope = ?", [scope])
+      # Recalculate trust score
+      rep = @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
+      if rep && rep["total_runs"].to_i > 0
+        trust = rep["successful"].to_f / rep["total_runs"].to_f
+        trust -= (rep["injection_attempts"].to_i * 0.1)
+        trust = [0.0, [trust, 1.0].min].max
+        @connection.execute("UPDATE agent_reputation SET trust_score = ? WHERE agent_scope = ?", [trust, scope])
+      end
+    end
 
-        case agent.status
-        when :completed
-          @connection.execute("UPDATE agent_reputation SET successful = successful + 1 WHERE agent_scope = ?", [scope])
-        when :timeout
-          @connection.execute("UPDATE agent_reputation SET timeouts = timeouts + 1 WHERE agent_scope = ?", [scope])
-        when :failed
-          @connection.execute("UPDATE agent_reputation SET rejected = rejected + 1 WHERE agent_scope = ?", [scope])
-        end
+    def self.agent_reputation(scope)
+      @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
+    end
 
-        # Recalculate trust score
-        rep = @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
-        if rep && rep["total_runs"].to_i > 0
-          trust = rep["successful"].to_f / rep["total_runs"].to_f
-          trust -= (rep["injection_attempts"].to_i * 0.1)
-          trust = [0.0, [trust, 1.0].min].max
-          @connection.execute("UPDATE agent_reputation SET trust_score = ? WHERE agent_scope = ?", [trust, scope])
-        end
+    def self.agents(parent_id: nil)
+      if parent_id
+        @connection.execute("SELECT * FROM agents WHERE parent_id = ?", [parent_id])
+      else
+        @connection.execute("SELECT * FROM agents")
+      end
+    end
+
+    def self.seed_gh_patterns
+      gh_path = "#{MASTER.root}/data/gh_patterns.yml"
+      return unless File.exist?(gh_path)
+
+      data = YAML.safe_load_file(gh_path)
+      return unless data.is_a?(Hash)
+
+      operations = data["operations"] || []
+      operations.each do |op|
+        @connection.execute(
+          "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'operation')",
+          [op["action"], op["pattern"]]
+        )
       end
 
-      def get_agent_reputation(scope)
-        @connection.execute("SELECT * FROM agent_reputation WHERE agent_scope = ?", [scope]).first
+      forbidden = data["forbidden"] || []
+      forbidden.each do |f|
+        @connection.execute(
+          "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'forbidden')",
+          [f["command"], f["replacement"]]
+        )
       end
+    end
 
-      def get_agents(parent_id: nil)
-        if parent_id
-          @connection.execute("SELECT * FROM agents WHERE parent_id = ?", [parent_id])
-        else
-          @connection.execute("SELECT * FROM agents")
-        end
-      end
-
-      def seed_gh_patterns
-        gh_path = "#{MASTER.root}/data/gh_patterns.yml"
-        return unless File.exist?(gh_path)
-
-        data = YAML.safe_load_file(gh_path)
-        return unless data.is_a?(Hash)
-
-        operations = data["operations"] || []
-        operations.each do |op|
-          @connection.execute(
-            "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'operation')",
-            [op["action"], op["pattern"]]
-          )
-        end
-
-        forbidden = data["forbidden"] || []
-        forbidden.each do |f|
-          @connection.execute(
-            "INSERT OR REPLACE INTO gh_patterns (action, pattern, category) VALUES (?, ?, 'forbidden')",
-            [f["command"], f["replacement"]]
-          )
-        end
-      end
-
-      def get_gh_patterns
-        @connection.execute("SELECT * FROM gh_patterns")
-      end
+    def self.gh_patterns
+      @connection.execute("SELECT * FROM gh_patterns")
     end
   end
 end

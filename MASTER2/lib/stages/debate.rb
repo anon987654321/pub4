@@ -3,28 +3,28 @@
 module MASTER
   module Stages
     # Adversarial Council: Multi-persona debate with veto logic and iterative convergence
-    class CouncilDebate
+    class Debate
+      include Dry::Monads[:result]
+
       MAX_ITERATIONS = 25
 
       def call(input)
         # Load council members from DB
-        members = DB.get_council_members
-        return Result.err("No council members found") if members.empty?
+        members = DB.council
+        return Failure("No council members found") if members.empty?
 
         # Load council parameters
-        threshold = (DB.get_config("council_consensus_threshold") || "0.70").to_f
-        _veto_precedence = (DB.get_config("council_veto_precedence") || "security,attacker,maintainer").split(",")
-        max_iterations = (DB.get_config("council_max_iterations") || MAX_ITERATIONS.to_s).to_i
+        threshold = (DB.config("council_consensus_threshold") || "0.70").to_f
+        _veto_precedence = (DB.config("council_veto_precedence") || "security,attacker,maintainer").split(",")
+        max_iterations = (DB.config("council_max_iterations") || MAX_ITERATIONS.to_s).to_i
 
         # Load axioms for context
-        axioms = input[:axioms] || DB.get_axioms(protection: "PROTECTED") || []
+        axioms = input[:axioms] || DB.axioms(protection: "PROTECTED") || []
         axioms_text = axioms.map { |a| "- #{a['title']}: #{a['statement']}" }.join("\n")
 
         # Extract text from input
-        text = input[:text] || ""
-
-        # Try to select an LLM model
-        model = LLM.select_model(text.length)
+        text = input[:text] || input[:original_text] || ""
+        model = LLM.pick
         use_llm = !model.nil?
 
         # Multi-round debate loop
@@ -41,62 +41,9 @@ module MASTER
 
           if use_llm
             members.each do |member|
-              begin
-                # Construct prompt for this council member
-                prompt = if iteration == 1
-                  # Round 1: Independent response
-                  build_prompt(member, text, axioms_text)
-                else
-                  # Subsequent rounds: Show previous responses for reconsideration
-                  build_synthesis_prompt(member, text, axioms_text, previous_responses, iteration)
-                end
-
-                # Make LLM call
-                chat = LLM.chat(model: model)
-                llm_response = chat.ask(prompt)
-
-                # Parse response
-                decision, reasoning = parse_llm_response(llm_response.content)
-
-                # Track cost
-                if llm_response.respond_to?(:input_tokens) && llm_response.respond_to?(:output_tokens)
-                  LLM.record_cost(
-                    model: model,
-                    tokens_in: llm_response.input_tokens || 0,
-                    tokens_out: llm_response.output_tokens || 0
-                  )
-                end
-
-                # Track success
-                LLM.record_success(model)
-
-                response = {
-                  slug: member["slug"],
-                  name: member["name"],
-                  weight: member["weight"],
-                  veto: member["veto"] == 1,
-                  decision: decision,
-                  reasoning: reasoning
-                }
-
-                responses << response
-                vetoes << response if response[:veto] && response[:decision] == :veto
-              rescue => e
-                # LLM call failed, track failure and fall back to stub
-                LLM.record_failure(model) if model
-                
-                # Fall back to stub behavior
-                response = {
-                  slug: member["slug"],
-                  name: member["name"],
-                  weight: member["weight"],
-                  veto: member["veto"] == 1,
-                  decision: :approve,
-                  reasoning: "LLM unavailable (#{e.message}), defaulting to approval"
-                }
-
-                responses << response
-              end
+              response = query_persona(member, model, text, axioms_text, iteration, previous_responses)
+              responses << response
+              vetoes << response if response[:veto] && response[:decision] == :veto
             end
           else
             # No model available, use stub behavior
@@ -109,9 +56,8 @@ module MASTER
                 weight: member["weight"],
                 veto: member["veto"] == 1,
                 decision: :approve,
-                reasoning: "LLM unavailable, defaulting to approval"
+                reasoning: "LLM unavailable, defaulting to approval",
               }
-
               responses << response
             end
           end
@@ -119,7 +65,7 @@ module MASTER
           # Check for vetoes (precedence order matters)
           unless vetoes.empty?
             veto = vetoes.first
-            return Result.err("VETOED by #{veto[:name]}: #{veto[:reasoning]}")
+            return Failure("VETOED by #{veto[:name]}: #{veto[:reasoning]}")
           end
 
           # Calculate weighted consensus
@@ -138,8 +84,7 @@ module MASTER
 
           # Check if max iterations reached
           if iteration >= max_iterations
-            # Oscillation detected
-            return Result.err("Consensus not reached after #{iteration} iterations (oscillation detected): #{(consensus_score * 100).round}% < #{(threshold * 100).round}%")
+            return Failure("Consensus not reached after #{iteration} iterations (oscillation detected): #{(consensus_score * 100).round}% < #{(threshold * 100).round}%")
           end
 
           # Save responses for next round
@@ -151,15 +96,65 @@ module MASTER
           council_responses: final_responses,
           consensus_score: final_consensus_score,
           consensus_reached: consensus_reached,
-          iterations_used: iteration
+          iterations_used: iteration,
         )
 
-        Result.ok(enriched)
+        Success(enriched)
       end
 
       private
 
-      def build_prompt(member, text, axioms_text)
+      def query_persona(member, model, text, axioms_text, iteration, previous_responses)
+        # Construct prompt for this council member
+        prompt_text = if iteration == 1
+          prompt(member, text, axioms_text)
+        else
+          build_synthesis_prompt(member, text, axioms_text, previous_responses, iteration)
+        end
+
+        # Make LLM call
+        chat = LLM.chat(model: model)
+        llm_response = chat.ask(prompt_text)
+
+        # Parse response
+        decision, reasoning = parse_llm_response(llm_response.content)
+
+        # Track cost
+        if llm_response.respond_to?(:input_tokens) && llm_response.respond_to?(:output_tokens)
+          LLM.log_cost(
+            model: model,
+            tokens_in: llm_response.input_tokens || 0,
+            tokens_out: llm_response.output_tokens || 0,
+          )
+        end
+
+        # Track success
+        LLM.record_success(model)
+
+        {
+          slug: member["slug"],
+          name: member["name"],
+          weight: member["weight"],
+          veto: member["veto"] == 1,
+          decision: decision,
+          reasoning: reasoning,
+        }
+      rescue => e
+        # LLM call failed, track failure and fall back to stub
+        LLM.record_failure(model) if model
+        
+        # Fall back to stub behavior
+        {
+          slug: member["slug"],
+          name: member["name"],
+          weight: member["weight"],
+          veto: member["veto"] == 1,
+          decision: :approve,
+          reasoning: "LLM unavailable (#{e.message}), defaulting to approval",
+        }
+      end
+
+      def prompt(member, text, axioms_text)
         <<~PROMPT
           You are: #{member['name']}
           Your role: #{member['directive']}

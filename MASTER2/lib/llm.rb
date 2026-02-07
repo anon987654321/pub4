@@ -3,6 +3,12 @@
 require "ruby_llm"
 require "time"
 
+begin
+  require "stoplight"
+rescue LoadError
+  # Stoplight not available, fall back to manual circuit breaker
+end
+
 module MASTER
   module LLM
     RATES = {
@@ -10,30 +16,38 @@ module MASTER
       "anthropic/claude-sonnet-4" => { in: 3.0 / 1_000_000, out: 15.0 / 1_000_000, tier: :strong },
       "deepseek/deepseek-v3" => { in: 0.27 / 1_000_000, out: 1.10 / 1_000_000, tier: :fast },
       "openai/gpt-4.1-mini" => { in: 0.40 / 1_000_000, out: 1.60 / 1_000_000, tier: :fast },
-      "openai/gpt-4.1-nano" => { in: 0.10 / 1_000_000, out: 0.40 / 1_000_000, tier: :cheap }
+      "openai/gpt-4.1-nano" => { in: 0.10 / 1_000_000, out: 0.40 / 1_000_000, tier: :cheap },
     }.freeze
 
     CIRCUIT_THRESHOLD = 3
     CIRCUIT_COOLDOWN = 300 # seconds
     BUDGET_LIMIT = 10.0 # dollars
+    STRONG_THRESHOLD = 5.0
+    FAST_THRESHOLD = 1.0
 
-    class << self
-      def configure
-        RubyLLM.configure do |config|
-          config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
-        end
+    def self.configure
+      RubyLLM.configure do |config|
+        config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
       end
+    end
 
-      def select_model(text_length = nil)
-        tier = affordable_tier(text_length)
-        return nil unless tier
+    def self.pick
+      tier_level = tier
+      return nil unless tier_level
 
-        candidates = RATES.select { |_k, v| v[:tier] == tier }.keys
-        candidates.find { |model| circuit_available?(model) }
-      end
+      candidates = RATES.select { |_k, v| v[:tier] == tier_level }.keys
+      candidates.find { |model| healthy?(model) }
+    end
 
-      def circuit_available?(model)
-        circuit = DB.get_circuit(model)
+    def self.healthy?(model)
+      if defined?(Stoplight)
+        light = Stoplight("llm:#{model}") { true }
+                  .with_threshold(CIRCUIT_THRESHOLD)
+                  .with_cool_off_time(CIRCUIT_COOLDOWN)
+        light.color == :green
+      else
+        # Fallback to DB-based circuit breaker
+        circuit = DB.circuit(model)
         return true unless circuit
 
         failures = circuit["failures"].to_i
@@ -46,66 +60,62 @@ module MASTER
         end
         Time.now - last_failure > CIRCUIT_COOLDOWN
       end
+    end
 
-      def record_failure(model)
-        DB.record_circuit_failure(model)
-      end
-
-      def record_success(model)
-        DB.record_circuit_success(model)
-      end
-
-      def record_cost(model:, tokens_in:, tokens_out:)
-        rate = RATES[model]
-        return unless rate
-
-        cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
-        DB.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
-      end
-
-      def remaining
-        BUDGET_LIMIT - DB.get_total_cost
-      end
-
-      def affordable_tier(text_length = nil)
-        remaining_budget = remaining
-        return nil if remaining_budget <= 0
-
-        # Use text_length to select tier if provided (smarter selection like v3)
-        # For long texts, prefer cheaper tiers to stay within budget
-        if text_length && text_length > 10000
-          # Long text: prefer cheaper tiers
-          if remaining_budget > 1.0
-            :fast
-          elsif remaining_budget > 0
-            :cheap
-          else
-            nil
-          end
-        elsif text_length && text_length > 5000
-          # Medium text: prefer fast tier
-          if remaining_budget > 5.0
-            :fast
-          elsif remaining_budget > 0.5
-            :cheap
-          else
-            nil
-          end
-        else
-          # Short text or no length provided: use budget-based selection
-          if remaining_budget > 5.0
-            :strong
-          elsif remaining_budget > 1.0
-            :fast
-          else
-            :cheap
-          end
+    def self.record_failure(model)
+      if defined?(Stoplight)
+        light = Stoplight("llm:#{model}") { raise "Model failure" }
+                  .with_threshold(CIRCUIT_THRESHOLD)
+                  .with_cool_off_time(CIRCUIT_COOLDOWN)
+        begin
+          light.run
+        rescue
+          # Light recorded the failure
         end
       end
+      # Also record in DB for audit trail
+      DB.trip!(model)
+    end
 
-      def chat(model:)
-        RubyLLM.chat(model: model)
+    def self.record_success(model)
+      # Stoplight automatically resets on success
+      # Also reset in DB
+      DB.reset!(model)
+    end
+
+    def self.log_cost(model:, tokens_in:, tokens_out:)
+      rate = RATES[model]
+      return unless rate
+
+      cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
+      DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
+    end
+
+    def self.remaining
+      budget_limit = DB.config("budget_limit")&.to_f || BUDGET_LIMIT
+      budget_limit - DB.total_cost
+    end
+
+    def self.tier
+      remaining_budget = remaining
+      return nil if remaining_budget <= 0
+
+      # Load thresholds from config with fallback to constants
+      strong_threshold = DB.config("budget_threshold_strong")&.to_f || STRONG_THRESHOLD
+      fast_threshold = DB.config("budget_threshold_fast")&.to_f || FAST_THRESHOLD
+
+      # Return the most powerful tier we can afford
+      if remaining_budget > strong_threshold
+        :strong
+      elsif remaining_budget > fast_threshold
+        :fast
+      else
+        :cheap
       end
+    end
+
+    def self.chat(model:)
+      RubyLLM.chat(model: model)
     end
   end
 end
