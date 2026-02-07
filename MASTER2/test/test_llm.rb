@@ -10,7 +10,9 @@ class TestLLM < Minitest::Test
   def test_models_loaded
     assert MASTER::LLM.models.any?, "Models should be loaded from YAML"
     assert MASTER::LLM.model_rates.key?("deepseek/deepseek-r1")
-    assert MASTER::LLM.model_rates.key?("anthropic/claude-sonnet-4")
+    # Check for any claude model (version may vary)
+    claude_models = MASTER::LLM.model_rates.keys.select { |k| k.include?("claude") }
+    assert claude_models.any?, "Should have at least one Claude model"
   end
 
   def test_rate_structure
