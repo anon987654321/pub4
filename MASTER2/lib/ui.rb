@@ -191,13 +191,27 @@ module MASTER
       TTY::Screen.height rescue 24
     end
 
-    # Convenience methods
-    def success(msg) = puts pastel.green("✓ #{msg}")
-    def error(msg)   = puts pastel.red("✗ #{msg}")
+    # Convenience methods - blueish-purple color scheme
+    def success(msg) = puts pastel.blue("✓ #{msg}")
+    def error(msg)   = puts pastel.magenta("✗ #{msg}")
     def warn(msg)    = puts pastel.yellow("⚠ #{msg}")
     def info(msg)    = puts pastel.cyan("ℹ #{msg}")
-    def dim(msg)     = pastel.dim(msg)
-    def bold(msg)    = pastel.bold(msg)
+    def dim(msg)     = pastel.bright_black(msg)
+    def bold(msg)    = pastel.bold.blue(msg)
+
+    # Primary colorize for dmesg output
+    def colorize(text)
+      return text unless color_enabled?
+      # Subtle blue-purple: device names blue, values magenta
+      text
+        .gsub(/^(\w+) at (\w+):/) { "#{pastel.blue($1)} at #{pastel.cyan($2)}:" }
+        .gsub(/^(MASTER .+)$/) { pastel.bold.magenta($1) }
+        .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta($1)} #{$2}" }
+        .gsub(/(\$[\d.]+)/) { pastel.bright_cyan($1) }
+        .gsub(/(armed|available)/) { pastel.green($1) }
+        .gsub(/(unavailable|error)/) { pastel.red($1) }
+        .gsub(/(\d+ms)$/) { pastel.bright_black($1) }
+    end
 
     def with_spinner(message)
       s = spinner(message)
