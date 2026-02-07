@@ -55,12 +55,20 @@ module MASTER
             last_failure TEXT,
             state TEXT DEFAULT 'closed'
           );
+
+          CREATE TABLE IF NOT EXISTS zsh_patterns (
+            id TEXT PRIMARY KEY,
+            category TEXT,
+            command TEXT,
+            replacement TEXT
+          );
         SQL
       end
 
       def seed_data
         seed_axioms
         seed_council
+        seed_zsh_patterns
       end
 
       def seed_axioms
@@ -108,6 +116,38 @@ module MASTER
             @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_veto_precedence", params["veto_precedence"].join(",")])
           end
         end
+      end
+
+      def seed_zsh_patterns
+        patterns_path = "#{MASTER.root}/data/zsh_patterns.yml"
+        return unless File.exist?(patterns_path)
+
+        data = YAML.load_file(patterns_path)
+        return unless data.is_a?(Hash)
+
+        # Seed forbidden commands
+        if data["forbidden_commands"]&.is_a?(Array)
+          data["forbidden_commands"].each_with_index do |item, idx|
+            @connection.execute(
+              "INSERT OR REPLACE INTO zsh_patterns (id, category, command, replacement) VALUES (?, ?, ?, ?)",
+              ["forbidden_#{idx}", "forbidden", item["command"], item["replacement"]]
+            )
+          end
+        end
+
+        # Seed native patterns
+        if data["native_patterns"]&.is_a?(Hash)
+          data["native_patterns"].each_with_index do |(name, pattern), idx|
+            @connection.execute(
+              "INSERT OR REPLACE INTO zsh_patterns (id, category, command, replacement) VALUES (?, ?, ?, ?)",
+              ["native_#{idx}", "native", name.to_s, pattern]
+            )
+          end
+        end
+      end
+
+      def get_zsh_patterns
+        @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
       end
 
       def get_axioms(category: nil, protection: nil)

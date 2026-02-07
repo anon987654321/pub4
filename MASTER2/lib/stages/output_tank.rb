@@ -13,10 +13,6 @@ module MASTER
         # Apply typesetting to prose, preserve code blocks
         typeset_text = typeset_safe(text)
 
-        # Validate shell code blocks with ZshPure
-        validation = ZshPure.validate(typeset_text)
-        return validation if validation.err?
-
         # TODO: Implement multi-model refinement
         # TODO: Apply additional Strunk & White rules (active voice)
 

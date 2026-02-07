@@ -34,6 +34,11 @@ module MASTER
           council: council
         }
 
+        # Load zsh patterns for command/admin intents or when services are detected
+        if intent == :command || intent == :admin || entities[:services]
+          enriched[:zsh_patterns] = DB.get_zsh_patterns || []
+        end
+
         # Phase 8: Return enriched input
         Result.ok(input.is_a?(Hash) ? input.merge(enriched) : enriched)
       end
@@ -83,8 +88,8 @@ module MASTER
         
         fillers.each { |pattern| compressed.gsub!(pattern, "") }
         
-        # Clean up extra whitespace
-        compressed.gsub!(/\s+/, " ").strip
+        # Clean up extra whitespace (use non-bang version to avoid nil on no match)
+        compressed = compressed.gsub(/\s+/, " ").strip
         
         compressed
       end

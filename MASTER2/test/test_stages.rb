@@ -90,9 +90,9 @@ class TestStages < Minitest::Test
     
     assert result.ok?
     assert result.value[:rendered], "Should have rendered output"
-    assert_match(/\u201C/, result.value[:rendered]), "Should convert quotes"
-    assert_match(/\u2014/, result.value[:rendered]), "Should convert dashes"
-    assert_match(/\u2026/, result.value[:rendered]), "Should convert ellipses"
+    assert_match(/\u{201C}/, result.value[:rendered], "Should convert quotes")
+    assert_match(/\u{2014}/, result.value[:rendered], "Should convert dashes")
+    assert_match(/\u{2026}/, result.value[:rendered], "Should convert ellipses")
   end
 
   def test_output_tank_preserves_code
@@ -101,14 +101,39 @@ class TestStages < Minitest::Test
     result = stage.call(input)
     
     assert result.ok?
-    assert_match(/x = "test"/, result.value[:rendered]), "Should preserve code"
+    assert_match(/x = "test"/, result.value[:rendered], "Should preserve code")
   end
 
-  def test_output_tank_validates_shell
-    stage = MASTER::Stages::OutputTank.new
-    result = stage.call({ text: "```sh\necho hello\n```" })
+  def test_input_tank_loads_zsh_patterns_for_command_intent
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("create a new script")
     
-    # Should pass validation for simple shell
     assert result.ok?
+    assert result.value[:zsh_patterns], "Should load zsh patterns for command intent"
+    assert result.value[:zsh_patterns].length > 0, "Should have zsh patterns loaded"
+  end
+
+  def test_input_tank_loads_zsh_patterns_for_admin_intent
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("configure pf firewall")
+    
+    assert result.ok?
+    assert result.value[:zsh_patterns], "Should load zsh patterns for admin intent"
+  end
+
+  def test_input_tank_loads_zsh_patterns_for_services
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("check httpd status")
+    
+    assert result.ok?
+    assert result.value[:zsh_patterns], "Should load zsh patterns when services detected"
+  end
+
+  def test_input_tank_no_zsh_patterns_for_general
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("What is the weather?")
+    
+    assert result.ok?
+    refute result.value[:zsh_patterns], "Should not load zsh patterns for general intent"
   end
 end
