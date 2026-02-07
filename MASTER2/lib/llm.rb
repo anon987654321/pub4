@@ -53,6 +53,10 @@ module MASTER
         return Result.err("No model available.") unless model
         return Result.err("Circuit open for #{model}.") unless circuit_closed?(model)
 
+        model_short = model.split("/").last
+        tier = model_rates[model]&.[](:tier) || :unknown
+        log("llm0: #{tier} #{model_short}, #{prompt.length} chars")
+
         spinner = UI.spinner("Thinking")
         spinner.auto_spin unless stream
 
@@ -77,6 +81,8 @@ module MASTER
         cost = record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
         close_circuit!(model)
 
+        log("llm0: #{tokens_in}→#{tokens_out} tok, #{UI.currency_precise(cost)}")
+
         Result.ok(
           content: content,
           model: model,
@@ -87,7 +93,12 @@ module MASTER
       rescue StandardError => e
         spinner&.error rescue nil
         open_circuit!(model) if model
+        log("llm0: error #{e.message}")
         Result.err("LLM error: #{e.message}")
+      end
+
+      def log(msg)
+        puts UI.dim(msg)
       end
 
       def chat(model:)

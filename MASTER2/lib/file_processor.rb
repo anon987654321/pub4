@@ -9,6 +9,7 @@ module MASTER
     class << self
       # Process a file through all 4 phases
       def process(content, filename: "file", dry_run: true)
+        log("file0: processing #{File.basename(filename)}")
         result = { filename: filename, original: content, phases: {} }
         current = content
 
@@ -20,6 +21,7 @@ module MASTER
 
         result[:final] = current
         result[:changed] = current != content
+        log("file0: #{result[:changed] ? 'changed' : 'unchanged'}")
         result
       end
 
@@ -27,6 +29,7 @@ module MASTER
       def process_directory(path, dry_run: true)
         patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml]
         files = patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }
+        log("file0: scanning #{files.size} files in #{path}")
         results = []
 
         files.each do |file|
@@ -35,12 +38,17 @@ module MASTER
           
           if result[:changed] && !dry_run
             File.write(file, result[:final])
+            log("file0: wrote #{File.basename(file)}")
           end
           
           results << result if result[:changed]
         end
 
         { files_checked: files.size, files_changed: results.size, results: results }
+      end
+
+      def log(msg)
+        puts UI.dim(msg)
       end
 
       private

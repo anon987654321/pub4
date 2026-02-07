@@ -48,8 +48,14 @@ module MASTER
         # First-run welcome
         Onboarding.show_welcome if defined?(Onboarding)
 
+        # Check for API key
+        unless ENV["OPENROUTER_API_KEY"]
+          UI.warn("OPENROUTER_API_KEY not set. Run: source ~/.zshrc")
+        end
+
         puts "Session: #{UI.truncate_id(session.id)}"
-        puts "Type 'help' for commands, 'exit' to quit\n\n"
+        puts "Type 'help' for commands, 'exit' to quit"
+        puts
 
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
@@ -84,11 +90,6 @@ module MASTER
             break if cmd_result == :exit
             next if cmd_result.nil?
 
-            # Check for typos if command not recognized
-            if cmd_result.respond_to?(:err?) && cmd_result.err?
-              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
-            end
-
             if cmd_result.respond_to?(:ok?)
               if cmd_result.ok?
                 output = cmd_result.value[:rendered] || cmd_result.value[:response]
@@ -102,6 +103,9 @@ module MASTER
                 puts
                 UI.error(cmd_result.failure)
               end
+            elsif cmd_result.respond_to?(:err?) && cmd_result.err?
+              # Unknown command - suggest similar
+              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
             end
             next
           end

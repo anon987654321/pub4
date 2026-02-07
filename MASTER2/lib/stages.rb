@@ -110,6 +110,10 @@ module MASTER
         model = input[:model]
         return Result.err("No model selected.") unless model
 
+        model_short = model.split("/").last
+        tier = input[:tier] || :unknown
+        puts UI.dim("llm0: #{tier} #{model_short}")
+
         chat = LLM.chat(model: model)
         text = input[:text] || ""
 
@@ -121,13 +125,16 @@ module MASTER
 
           tokens_in = response.input_tokens rescue 0
           tokens_out = response.output_tokens rescue 0
-          LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+          cost = LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
           LLM.close_circuit!(model)
+
+          puts UI.dim("llm0: #{tokens_in}→#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
             response: response.content,
             tokens_in: tokens_in,
             tokens_out: tokens_out,
+            cost: cost,
           ))
         rescue StandardError => e
           LLM.open_circuit!(model)
