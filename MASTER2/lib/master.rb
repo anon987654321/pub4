@@ -25,6 +25,7 @@ require_relative "pledge"
 # UI & NN/g compliance
 require_relative "ui"
 require_relative "help"
+require_relative "axiom_stats"
 require_relative "autocomplete"
 require_relative "progress"
 require_relative "undo"
