@@ -3,3 +3,4 @@ master.db
 tmp/
 *.gem
 vendor/
+Gemfile.lock

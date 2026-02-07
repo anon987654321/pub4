@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "dotenv/load" rescue nil
+begin
+  require "dotenv/load"
+rescue LoadError
+  # dotenv not available
+end
 
 require_relative "../lib/master"
 

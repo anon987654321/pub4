@@ -10,7 +10,10 @@ module MASTER
     attr_reader :stages
 
     def initialize(stages: DEFAULT_STAGES)
-      @stages = stages.map { |name| stage_class(name).new }
+      @stages = stages.map do |stage|
+        # Support both stage names (symbols) and stage instances
+        stage.respond_to?(:call) ? stage : stage_class(stage).new
+      end
     end
 
     def call(input)
@@ -29,31 +32,42 @@ module MASTER
     # Convert stage name symbol to class
     # :input_tank -> Stages::InputTank
     def stage_class(name)
-      class_name = name.to_s.split('_').map(&:capitalize).join
+      class_name = name.to_s.split("_").map(&:capitalize).join
       Stages.const_get(class_name)
     end
 
     # REPL mode with tty-prompt (graceful fallback)
     def self.repl
-      require "tty-prompt" rescue nil
-      require "tty-spinner" rescue nil
+      begin
+        require "tty-prompt"
+      rescue LoadError
+        # tty-prompt not available
+      end
+
+      begin
+        require "tty-spinner"
+      rescue LoadError
+        # tty-spinner not available
+      end
 
       prompt = defined?(TTY::Prompt) ? TTY::Prompt.new : nil
       spinner_class = defined?(TTY::Spinner) ? TTY::Spinner : nil
 
-      puts "MASTER v#{MASTER::VERSION} REPL"
+      Boot.dmesg
       puts "Type 'exit' or 'quit' to quit\n\n"
 
       loop do
         if prompt
-          input = prompt.ask("master>", required: false)
+          input = prompt.ask("master$", required: false)
         else
-          print "master> "
+          print "master$ "
           input = $stdin.gets&.chomp
         end
 
         break if input.nil? || input.strip.empty? || %w[exit quit].include?(input.strip.downcase)
 
+        # Spinner blocks input while pipeline runs. Async input (type-ahead
+        # while waiting) requires threaded pipeline execution — planned for v5.
         if spinner_class
           spinner = spinner_class.new("[:spinner] Processing...", format: :dots)
           spinner.auto_spin

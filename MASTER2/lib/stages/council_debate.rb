@@ -5,15 +5,13 @@ module MASTER
     # Adversarial Council: Multi-persona debate with veto logic
     class CouncilDebate
       def call(input)
-        text = input[:text] || input[:original_text] || ""
-        
         # Load council members from DB
         members = DB.get_council_members
         return Result.err("No council members found") if members.empty?
 
         # Load council parameters
         threshold = (DB.get_config("council_consensus_threshold") || "0.70").to_f
-        veto_precedence = (DB.get_config("council_veto_precedence") || "security,attacker,maintainer").split(",")
+        _veto_precedence = (DB.get_config("council_veto_precedence") || "security,attacker,maintainer").split(",")
 
         # Load axioms for context
         axioms = input[:axioms] || DB.get_axioms(protection: "PROTECTED") || []

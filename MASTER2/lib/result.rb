@@ -41,7 +41,7 @@ module MASTER
     end
   end
 
-  # Shortcuts
+  # Shortcuts - Uppercase Ok/Err convention intentionally matches Rust/Haskell style
   def self.Ok(v) = Result.ok(v)
   def self.Err(e) = Result.err(e)
 end

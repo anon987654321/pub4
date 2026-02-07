@@ -27,7 +27,7 @@ module MASTER
         end
       end
 
-      def select_model(input_size = 0)
+      def select_model
         tier = affordable_tier
         return nil unless tier
 
@@ -42,15 +42,11 @@ module MASTER
         failures = circuit["failures"].to_i
         return true if failures < CIRCUIT_THRESHOLD
 
-        last_failure_str = circuit["last_failure"]
-        return true if last_failure_str.nil? || last_failure_str.empty?
-
         begin
-          last_failure = Time.parse(last_failure_str)
-        rescue ArgumentError, TypeError
-          return true  # corrupt data = assume recovered
+          last_failure = Time.parse(circuit["last_failure"])
+        rescue ArgumentError
+          last_failure = Time.now
         end
-
         Time.now - last_failure > CIRCUIT_COOLDOWN
       end
 
