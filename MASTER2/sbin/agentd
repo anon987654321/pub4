@@ -7,7 +7,8 @@ require "json"
 require_relative "../lib/master"
 
 # Setup database
-MASTER::DB.setup
+db_path = "#{MASTER.root}/master.db"
+MASTER::DB.setup(path: db_path)
 
 # Configure LLM
 MASTER::LLM.configure
@@ -21,6 +22,20 @@ POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || "5").to_i
 require "fileutils"
 FileUtils.mkdir_p(INBOX_DIR)
 FileUtils.mkdir_p(OUTBOX_DIR)
+
+# Arm Pledge security boundary (OpenBSD only)
+if MASTER::Pledge.available?
+  # Unveil paths we need
+  MASTER::Pledge.unveil(MASTER.root, "r")        # read project files
+  MASTER::Pledge.unveil(db_path, "rwc")          # read/write/create DB
+  MASTER::Pledge.unveil("/tmp", "rwc")           # temp files
+  MASTER::Pledge.unveil(INBOX_DIR, "rwc")        # inbox directory
+  MASTER::Pledge.unveil(OUTBOX_DIR, "rwc")       # outbox directory
+  MASTER::Pledge.unveil(nil, nil)                # lock unveil
+
+  # Pledge syscalls we need
+  MASTER::Pledge.pledge("stdio rpath wpath cpath fattr inet dns")
+end
 
 puts "MASTER agentd v#{MASTER::VERSION}"
 puts "Watching: #{INBOX_DIR}"

@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 module MASTER
   class Pipeline
     DEFAULT_STAGES = %i[input_tank council_debate refactor_engine output_tank].freeze
+    STAGE_TIMEOUT = 120 # seconds
 
     attr_reader :stages
 
@@ -12,8 +15,12 @@ module MASTER
 
     def call(input)
       @stages.reduce(Result.ok(input)) do |result, stage|
-        result.flat_map { |data| stage.call(data) }
+        result.flat_map do |data|
+          Timeout.timeout(STAGE_TIMEOUT) { stage.call(data) }
+        end
       end
+    rescue Timeout::Error
+      Result.err("Pipeline timed out after #{STAGE_TIMEOUT}s")
     end
 
     # Convert stage name symbol to class

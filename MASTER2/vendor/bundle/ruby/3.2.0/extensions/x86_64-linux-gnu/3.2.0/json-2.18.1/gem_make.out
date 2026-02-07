@@ -10,16 +10,16 @@ checking for cpuid.h... yes
 creating Makefile
 
 current directory: /home/runner/work/pub4/pub4/MASTER2/vendor/bundle/ruby/3.2.0/gems/json-2.18.1/ext/json/ext/parser
-make DESTDIR\= sitearchdir\=./.gem.20260207-2634-muj2n9 sitelibdir\=./.gem.20260207-2634-muj2n9 clean
+make DESTDIR\= sitearchdir\=./.gem.20260207-2956-ca0bit sitelibdir\=./.gem.20260207-2956-ca0bit clean
 
 current directory: /home/runner/work/pub4/pub4/MASTER2/vendor/bundle/ruby/3.2.0/gems/json-2.18.1/ext/json/ext/parser
-make DESTDIR\= sitearchdir\=./.gem.20260207-2634-muj2n9 sitelibdir\=./.gem.20260207-2634-muj2n9
+make DESTDIR\= sitearchdir\=./.gem.20260207-2956-ca0bit sitelibdir\=./.gem.20260207-2956-ca0bit
 compiling parser.c
 linking shared-object json/ext/parser.so
 
 current directory: /home/runner/work/pub4/pub4/MASTER2/vendor/bundle/ruby/3.2.0/gems/json-2.18.1/ext/json/ext/parser
-make DESTDIR\= sitearchdir\=./.gem.20260207-2634-muj2n9 sitelibdir\=./.gem.20260207-2634-muj2n9 install
-/usr/bin/install -c -m 0755 parser.so ./.gem.20260207-2634-muj2n9/json/ext
+make DESTDIR\= sitearchdir\=./.gem.20260207-2956-ca0bit sitelibdir\=./.gem.20260207-2956-ca0bit install
+/usr/bin/install -c -m 0755 parser.so ./.gem.20260207-2956-ca0bit/json/ext
 
 current directory: /home/runner/work/pub4/pub4/MASTER2/vendor/bundle/ruby/3.2.0/gems/json-2.18.1/ext/json/ext/parser
-make DESTDIR\= sitearchdir\=./.gem.20260207-2634-muj2n9 sitelibdir\=./.gem.20260207-2634-muj2n9 clean
+make DESTDIR\= sitearchdir\=./.gem.20260207-2956-ca0bit sitelibdir\=./.gem.20260207-2956-ca0bit clean

@@ -4,10 +4,13 @@ module MASTER
   module Stages
     # Pressure Tank: Compresses and refines user input through 8-phase discovery
     class InputTank
+      MAX_INPUT_SIZE = 50_000 # characters
+
       def call(input)
         # Phase 1: Parse raw text
         text = extract_text(input)
         return Result.err("No input text provided") if text.empty?
+        return Result.err("Input too large: #{text.length} chars (max #{MAX_INPUT_SIZE})") if text.length > MAX_INPUT_SIZE
 
         # Phase 2: Identify intent
         intent = identify_intent(text)
