@@ -149,10 +149,12 @@ class TestLanguageAxioms < Minitest::Test
     
     # Check that some axioms are marked as autofix
     safe_nav = ruby_axioms.find { |a| a["id"] == "safe_navigation_chain" }
+    assert safe_nav, "safe_navigation_chain axiom not found"
     assert safe_nav["autofix"] == true
     
     # Check that some are not
     guard = ruby_axioms.find { |a| a["id"] == "guard_clause_over_nested" }
+    assert guard, "guard_clause_over_nested axiom not found"
     assert guard["autofix"] == false
   end
 end

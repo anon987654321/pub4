@@ -494,7 +494,8 @@ module MASTER
             UI.header("#{lang.capitalize} Axioms (#{axioms.size})")
             axioms.each do |a|
               fix = a["autofix"] ? " [autofix]" : ""
-              puts "  #{a['severity']&.upcase&.ljust(7)} #{a['id']}#{fix}"
+              severity = (a['severity']&.upcase || '').ljust(7)
+              puts "  #{severity} #{a['id']}#{fix}"
               puts "          #{a['suggest']}"
             end
             puts

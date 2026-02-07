@@ -152,7 +152,7 @@ rails:
 
   - id: frozen_string_literal_auto
     name: "Auto-add frozen_string_literal magic comment"
-    detect: '^(?!# frozen_string_literal)'
+    detect: '\A(?!# frozen_string_literal)'
     suggest: "Add # frozen_string_literal: true as first line"
     severity: warning
     autofix: true
