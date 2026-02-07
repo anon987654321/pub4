@@ -9,6 +9,14 @@ module MASTER
       @root = root
     end
 
+    # Class method for quick summary (used by Boot)
+    def self.summary
+      map = new
+      "#{map.lib_files.count} lib, #{map.test_files.count} test"
+    rescue StandardError
+      "unavailable"
+    end
+
     def tree
       scan_dir(@root)
     end

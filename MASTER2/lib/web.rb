@@ -23,7 +23,7 @@ module MASTER
       def discover_selector(url, action)
         require "ferrum"
 
-        browser = Ferrum::Browser.new(headless: true)
+        browser = Ferrum::Browser.new(headless: true, timeout: 30)
         page = browser.create_page
         page.go_to(url)
         sleep BROWSER_LOAD_DELAY
@@ -46,8 +46,11 @@ module MASTER
         result = LLM.ask(prompt, tier: :fast)
         return nil unless result.ok?
 
-        selector = result.value[:content].to_s.strip.split("\n").first.to_s.strip
-        selector.gsub(/^['"`]|['"`]$/, "")
+        selector = result.value[:content].to_s.strip.split("\n").first
+        return nil if selector.nil? || selector.empty?
+        selector.strip.gsub(/^['"`]|['"`]$/, "")
+      rescue Ferrum::TimeoutError
+        nil
       rescue StandardError
         nil
       end
@@ -58,7 +61,7 @@ module MASTER
         selector = discover_selector(url, action)
         return Result.err("Could not find selector for: #{action}") unless selector
 
-        browser = Ferrum::Browser.new(headless: true)
+        browser = Ferrum::Browser.new(headless: true, timeout: 30)
         page = browser.create_page
         page.go_to(url)
         sleep BROWSER_LOAD_DELAY
@@ -75,6 +78,8 @@ module MASTER
         Result.ok(selector: selector, result: result_html)
       rescue LoadError
         Result.err("Ferrum not available - install with: gem install ferrum")
+      rescue Ferrum::TimeoutError
+        Result.err("Browser timeout")
       rescue StandardError => e
         Result.err("Click failed: #{e.message}")
       end
@@ -85,7 +90,7 @@ module MASTER
         selector = discover_selector(url, action)
         return Result.err("Could not find selector for: #{action}") unless selector
 
-        browser = Ferrum::Browser.new(headless: true)
+        browser = Ferrum::Browser.new(headless: true, timeout: 30)
         page = browser.create_page
         page.go_to(url)
         sleep BROWSER_LOAD_DELAY
@@ -100,6 +105,8 @@ module MASTER
         Result.ok(selector: selector, filled: value)
       rescue LoadError
         Result.err("Ferrum not available")
+      rescue Ferrum::TimeoutError
+        Result.err("Browser timeout")
       rescue StandardError => e
         Result.err("Fill failed: #{e.message}")
       end
@@ -107,7 +114,7 @@ module MASTER
       def screenshot(url, path: nil)
         require "ferrum"
 
-        browser = Ferrum::Browser.new(headless: true)
+        browser = Ferrum::Browser.new(headless: true, timeout: 30)
         page = browser.create_page
         page.go_to(url)
         sleep BROWSER_LOAD_DELAY
@@ -120,6 +127,8 @@ module MASTER
         Result.ok(path: path)
       rescue LoadError
         Result.err("Ferrum not available")
+      rescue Ferrum::TimeoutError
+        Result.err("Browser timeout")
       rescue StandardError => e
         Result.err("Screenshot failed: #{e.message}")
       end
@@ -129,7 +138,7 @@ module MASTER
       def ferrum_browse(url)
         require "ferrum"
 
-        browser = Ferrum::Browser.new(headless: true)
+        browser = Ferrum::Browser.new(headless: true, timeout: 30)
         page = browser.create_page
         page.go_to(url)
         sleep BROWSER_LOAD_DELAY
@@ -138,6 +147,8 @@ module MASTER
         browser.quit
 
         Result.ok(url: url, content: text[0..MAX_PREVIEW_LENGTH])
+      rescue Ferrum::TimeoutError
+        curl_browse(url)
       end
 
       def curl_browse(url)

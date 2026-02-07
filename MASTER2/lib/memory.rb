@@ -60,6 +60,34 @@ module MASTER
         cutoff = Time.now - (max_age_hours * 3600)
         Dir.glob(File.join(Paths.sessions, "*.json")).each { |f| File.delete(f) if File.mtime(f) < cutoff }
       end
+
+      # Search past sessions for relevant content
+      def search(query, limit: 3)
+        return [] if query.nil? || query.strip.empty?
+        
+        results = []
+        query_words = query.downcase.split(/\s+/)
+        
+        list_sessions.each do |session_id|
+          data = load_session(session_id)
+          next unless data && data[:messages]
+          
+          data[:messages].each do |msg|
+            content = msg[:content].to_s.downcase
+            # Score by number of matching words
+            score = query_words.count { |w| content.include?(w) }
+            if score > 0
+              results << { score: score, content: msg[:content][0..200], session: session_id }
+            end
+          end
+        end
+        
+        results.sort_by { |r| -r[:score] }
+               .first(limit)
+               .map { |r| r[:content] }
+      rescue StandardError
+        []
+      end
     end
   end
 end

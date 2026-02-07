@@ -87,6 +87,8 @@ module MASTER
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
+        http.open_timeout = 10
+        http.read_timeout = 60
 
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
@@ -101,6 +103,8 @@ module MASTER
         else
           { error: data[:detail] || 'Unknown error' }
         end
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        { error: 'Request timed out' }
       rescue => e
         { error: e.message }
       end
@@ -108,10 +112,13 @@ module MASTER
       def wait_for_completion(id, timeout: 300)
         uri = URI("#{API_URL}/#{id}")
         start_time = Time.now
+        max_polls = 150  # Safety limit: 150 polls * 2s = 300s max
 
-        loop do
+        max_polls.times do
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
+          http.open_timeout = 10
+          http.read_timeout = 30
 
           request = Net::HTTP::Get.new(uri)
           request['Authorization'] = "Bearer #{api_key}"
@@ -132,6 +139,10 @@ module MASTER
 
           return { error: 'Timeout waiting for generation' } if Time.now - start_time > timeout
         end
+
+        { error: 'Max polls exceeded' }
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        { error: 'Poll request timed out' }
       rescue => e
         { error: e.message }
       end

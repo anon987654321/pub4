@@ -77,13 +77,17 @@ module MASTER
         req = Net::HTTP::Get.new(uri)
         req["Authorization"] = "Bearer #{api_key}"
 
-        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-          http.request(req)
-        end
+        http = Net::HTTP.new(uri.hostname, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 10
+        http.read_timeout = 30
+        response = http.request(req)
 
         return Result.err("API error: #{response.code}") unless response.code == "200"
 
         data = JSON.parse(response.body, symbolize_names: true)[:data]
+        return Result.err("Invalid API response") unless data
+
         Result.ok(
           label: data[:label],
           limit: data[:limit],
@@ -91,6 +95,8 @@ module MASTER
           usage: data[:usage],
           is_free_tier: data[:is_free_tier]
         )
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        Result.err("API key check timed out")
       rescue StandardError => e
         Result.err("Key check failed: #{e.message}")
       end
@@ -269,13 +275,21 @@ module MASTER
 
         http = Net::HTTP.new(uri.hostname, uri.port)
         http.use_ssl = true
+        http.open_timeout = 30
         http.read_timeout = 120
+        http.write_timeout = 30
 
         if stream
           execute_streaming(http, req)
         else
           execute_blocking(http, req)
         end
+      rescue Net::OpenTimeout
+        Result.err("Connection timeout (30s)")
+      rescue Net::ReadTimeout
+        Result.err("Read timeout (120s)")
+      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+        Result.err("Network error: #{e.message}")
       end
 
       def execute_blocking(http, req)

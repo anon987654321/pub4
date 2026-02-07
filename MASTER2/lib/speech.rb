@@ -179,6 +179,12 @@ module MASTER
       end
     end
 
+    def engine_status
+      engines = available_engines
+      return "off" if engines.empty?
+      engines.map(&:to_s).join("/")
+    end
+
     private
 
     # Piper TTS (local)

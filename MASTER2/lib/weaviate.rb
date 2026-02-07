@@ -30,6 +30,8 @@ module MASTER
         
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
+        http.open_timeout = 5
+        http.read_timeout = 10
         response = http.request(request)
         response.is_a?(Net::HTTPSuccess)
       rescue StandardError
@@ -114,6 +116,8 @@ module MASTER
         uri = URI("#{base_url}/v1/objects/#{CLASS_NAME}/#{id}")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
+        http.open_timeout = 10
+        http.read_timeout = 30
 
         request = Net::HTTP::Delete.new(uri)
         request['Content-Type'] = 'application/json'
@@ -139,6 +143,8 @@ module MASTER
         uri = URI("#{base_url}#{path}")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
+        http.open_timeout = 10
+        http.read_timeout = 30
 
         request = Net::HTTP::Post.new(uri)
         add_auth_headers(request)
@@ -147,7 +153,9 @@ module MASTER
         response = http.request(request)
         JSON.parse(response.body)
       rescue JSON::ParserError
-        { 'error' => response.body }
+        { 'error' => response&.body || 'Parse error' }
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        { 'error' => 'Request timed out' }
       end
 
       def build_search_query(text, limit, type)
