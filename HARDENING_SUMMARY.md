@@ -175,8 +175,8 @@ This document summarizes all hardening improvements implemented to address secur
 ## 14. REPL Input Validation (MASTER2/lib/pipeline.rb)
 
 **Changes:**
-- Added `MAX_INPUT_LENGTH = 10_000` constant (10KB)
-- Validates input length before processing
+- Added `MAX_INPUT_BYTES = 10_000` constant (10KB)
+- Validates input byte size before processing
 - Checks `valid_encoding?` for UTF-8
 - Clear error messages for violations
 

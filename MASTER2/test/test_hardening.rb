@@ -78,7 +78,7 @@ class TestHardening < Minitest::Test
   end
 
   # Test 14: REPL input validation constants
-  def test_repl_has_input_length_constant
+  def test_repl_has_input_bytes_constant
     # Verify MAX_INPUT_BYTES constant exists
     assert defined?(MASTER::Pipeline::MAX_INPUT_BYTES)
     assert_equal 10_000, MASTER::Pipeline::MAX_INPUT_BYTES

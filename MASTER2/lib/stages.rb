@@ -174,8 +174,9 @@ module MASTER
                     end
             
             # Use a thread with timeout for older Ruby versions
-            # Note: Thread.kill is used here as regex matching shouldn't leave
-            # critical resources in inconsistent state
+            # Note: Thread.kill is generally unsafe as it can leave resources inconsistent,
+            # but is acceptable here because regex matching is a pure computation with no
+            # resource management (no files, sockets, locks, or other external state).
             if RUBY_VERSION < "3.2"
               match_result = nil
               thread = Thread.new { match_result = text.match?(regex) }

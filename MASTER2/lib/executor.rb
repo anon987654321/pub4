@@ -694,7 +694,9 @@ module MASTER
 
     def code_execution(code)
       # Enforce sandboxing with Pledge if available (OpenBSD)
-      # Uses restrictive permissions - no exec, only stdio and rpath
+      # Uses restrictive permissions: stdio for I/O, rpath for reading files
+      # No wpath (write), cpath (create), proc, or exec permissions
+      # Code execution is read-only from the sandbox perspective
       begin
         if defined?(Pledge)
           Pledge.pledge("stdio rpath")
