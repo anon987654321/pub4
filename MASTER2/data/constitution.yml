@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 # MASTER2 Constitution - Immutable safety policies and operational defaults
 # This file defines core safety rules and must remain read-only in production.
 # Tool execution guards must prevent writes to this file.

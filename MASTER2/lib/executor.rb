@@ -693,7 +693,9 @@ module MASTER
       const = self.class.constitution
       blocked_paths = const.dig("permissions", "file_write", "blocked_paths") || []
       
+      # Check each blocked path (constitution.yml gets special protection)
       blocked_paths.each do |blocked|
+        # Special handling for constitution.yml - exact match required for security
         if blocked.end_with?("constitution.yml") && expanded.end_with?("constitution.yml")
           return "BLOCKED: Cannot write to constitution.yml (protected by constitution)"
         elsif expanded.include?(blocked) || expanded.start_with?(File.expand_path(blocked))

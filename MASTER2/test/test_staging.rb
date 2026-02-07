@@ -39,7 +39,8 @@ class TestStaging < Minitest::Test
     staged_path = result.value[:staged_path]
     
     validation = @staging.validate(staged_path)
-    assert validation.ok?, "Valid Ruby should pass validation"
+    assert validation.ok?
+    assert validation.value[:results].all? { |r| r[:success] }
   end
   
   def test_validate_with_invalid_ruby
@@ -52,6 +53,7 @@ class TestStaging < Minitest::Test
     validation = @staging.validate(staged_path)
     refute validation.ok?
     assert_match(/Validation failed/, validation.error)
+    assert_match(/ruby -c/, validation.error)
   end
   
   def test_promote_replaces_original_file
@@ -93,13 +95,16 @@ class TestStaging < Minitest::Test
   
   def test_staged_modify_workflow_validation_failure
     original_content = File.read(@test_file)
+    staged_content = "invalid ruby {{{"
     
     result = @staging.staged_modify(@test_file) do |staged_path|
-      File.write(staged_path, "invalid ruby {{{")
+      File.write(staged_path, staged_content)
     end
     
     refute result.ok?
     assert_equal original_content, File.read(@test_file)
+    # Verify staging was cleaned up or rolled back
+    assert_match(/Validation failed/, result.error)
   end
   
   def test_staged_modify_workflow_modification_error

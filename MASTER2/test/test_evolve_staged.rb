@@ -20,15 +20,19 @@ class TestEvolveStaged < Minitest::Test
   def test_evolve_run_accepts_staged_option
     evolve = MASTER::Evolve.new(llm: nil, chamber: nil)
     
-    # This will fail quickly due to nil dependencies, but validates the interface
+    # Call with staged: true to verify parameter is accepted
+    # This will fail quickly due to nil dependencies, catching that
     begin
-      # Try to call with staged: true to verify parameter is accepted
       evolve.run(path: "/nonexistent", dry_run: true, staged: true)
-    rescue => e
-      # Expected to fail, we're just checking the parameter is accepted
+    rescue NoMethodError, SystemCallError => e
+      # Expected to fail on nil dependencies or nonexistent path
+      # NOT on ArgumentError for unknown keyword 'staged'
+    rescue ArgumentError => e
+      # If we get ArgumentError, make sure it's not about unknown keyword
+      refute_match(/unknown keyword.*staged/i, e.message)
     end
     
-    # If we got here without ArgumentError about unknown keyword, it worked
+    # If we got here without ArgumentError about unknown keyword, test passes
     assert true
   end
   
