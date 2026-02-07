@@ -1,0 +1,75 @@
+# Question Banks - Guided inquiry per workflow phase
+# Source: 8-phase workflow from master.yml archaeology
+
+discover:
+  purpose: "Define the problem precisely"
+  questions:
+    - "What specifically is the problem?"
+    - "Who is affected and how?"
+    - "What evidence exists?"
+    - "What is the cost of inaction?"
+    - "When did this start happening?"
+
+analyze:
+  purpose: "Understand root causes and constraints"
+  questions:
+    - "What is the root cause?"
+    - "What are the dependencies?"
+    - "What constraints exist?"
+    - "What prior art exists?"
+    - "What has been tried before?"
+
+ideate:
+  purpose: "Generate alternatives (minimum 15)"
+  questions:
+    - "What are 5 obvious solutions?"
+    - "What are 5 unconventional solutions?"
+    - "What are 5 solutions from other domains?"
+    - "What would a beginner try?"
+    - "What would an expert avoid?"
+  note: "Best solutions emerge in attempts 8-15"
+
+design:
+  purpose: "Select and specify the approach"
+  questions:
+    - "What is the simplest approach?"
+    - "What could break?"
+    - "How will we test this?"
+    - "What are the edge cases?"
+    - "What is the rollback plan?"
+
+implement:
+  purpose: "Build the solution"
+  questions:
+    - "Does this follow existing patterns?"
+    - "Is this the minimal change?"
+    - "Are there side effects?"
+    - "Is this debuggable at 3am?"
+    - "Can a junior understand this?"
+
+validate:
+  purpose: "Verify correctness"
+  questions:
+    - "Do all tests pass?"
+    - "Is coverage adequate?"
+    - "Are edge cases handled?"
+    - "Does it match the spec?"
+    - "Is it secure?"
+
+deliver:
+  purpose: "Deploy safely"
+  questions:
+    - "Is there a rollback plan?"
+    - "Are metrics in place?"
+    - "Is documentation updated?"
+    - "Are stakeholders notified?"
+    - "Is monitoring active?"
+
+learn:
+  purpose: "Extract insights"
+  questions:
+    - "What worked well?"
+    - "What failed or surprised us?"
+    - "What would we do differently?"
+    - "What patterns emerged?"
+    - "What should we document?"

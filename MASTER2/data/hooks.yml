@@ -1,0 +1,37 @@
+# Hooks - Lifecycle events for pipeline operations
+# Inspired by git hooks and OpenBSD rc.d
+
+before_edit:
+  - backup_original
+  - validate_syntax
+  - check_tests_pass
+
+after_fix:
+  - validate_syntax
+  - run_affected_tests
+  - check_principles
+
+before_commit:
+  - full_test_suite
+  - security_scan
+  - lint_check
+
+on_stuck:
+  - broaden_search
+  - change_perspective
+  - escalate_to_user
+
+on_oscillation:
+  - freeze_state
+  - analyze_cycle
+  - break_deadlock
+
+on_error:
+  - log_context
+  - suggest_fix
+  - offer_rollback
+
+on_budget_low:
+  - warn_user
+  - switch_to_cheap_tier
+  - summarize_session

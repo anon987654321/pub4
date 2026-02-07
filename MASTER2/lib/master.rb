@@ -40,6 +40,9 @@ require_relative "context_window"
 require_relative "boot"
 require_relative "stages"
 require_relative "pipeline"
+require_relative "hooks"
+require_relative "convergence"
+require_relative "questions"
 
 # Deliberation engines
 require_relative "chamber"
