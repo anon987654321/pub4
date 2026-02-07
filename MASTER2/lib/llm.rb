@@ -34,23 +34,26 @@ module MASTER
       end
 
       def check_rate_limit!
-        now = Time.now
-        state = rate_limit_state
-        
-        # Clean old requests (older than 1 minute)
-        state[:requests].reject! { |t| now - t > 60 }
-        
-        if state[:requests].size >= RATE_LIMIT_PER_MINUTE
-          oldest = state[:requests].min
-          wait_time = 60 - (now - oldest)
-          if wait_time > 0
-            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
-            sleep(wait_time)
-            state[:requests].clear
+        @rate_limit_mutex ||= Mutex.new
+        @rate_limit_mutex.synchronize do
+          now = Time.now
+          state = rate_limit_state
+          
+          # Clean old requests (older than 1 minute)
+          state[:requests].reject! { |t| now - t > 60 }
+          
+          if state[:requests].size >= RATE_LIMIT_PER_MINUTE
+            oldest = state[:requests].min
+            wait_time = 60 - (now - oldest)
+            if wait_time > 0
+              Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
+              sleep(wait_time)
+              state[:requests].clear
+            end
           end
+          
+          state[:requests] << now
         end
-        
-        state[:requests] << now
       end
 
       def models

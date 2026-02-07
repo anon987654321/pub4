@@ -5,10 +5,18 @@ module MASTER
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
 
-    class << self
-      attr_accessor :current_pattern
-    end
     @current_pattern = :auto
+    @current_pattern_mutex = Mutex.new
+
+    class << self
+      def current_pattern
+        @current_pattern_mutex.synchronize { @current_pattern }
+      end
+
+      def current_pattern=(value)
+        @current_pattern_mutex.synchronize { @current_pattern = value }
+      end
+    end
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
@@ -41,7 +49,7 @@ module MASTER
       def prompt
         model = LLM.prompt_model_name
         budget = LLM.budget_remaining
-        tokens = Session.current.token_count rescue 0
+        tokens = Session.current.message_count rescue 0
 
         # Shell-style: master@model [tokens] $cost$
         # Dense, informative prompt

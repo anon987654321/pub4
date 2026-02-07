@@ -2,6 +2,7 @@
 
 require "securerandom"
 require "json"
+require "time"
 
 module MASTER
   # Session - Persistent session management with auto-save
@@ -68,14 +69,18 @@ module MASTER
       end
     end
 
-    def set_metadata(key, value)
+    def write_metadata(key, value)
       @metadata[key.to_sym] = value
       @dirty = true
     end
 
-    def get_metadata(key)
+    def metadata_value(key)
       @metadata[key.to_sym]
     end
+
+    # Aliases for backward compatibility
+    alias set_metadata write_metadata
+    alias get_metadata metadata_value
 
     def dirty?
       @dirty
