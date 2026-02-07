@@ -1,99 +1,156 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-require 'open3'
+require "open3"
+require "fileutils"
+require "securerandom"
 
 module MASTER
-  # EdgeTTS - Free Microsoft TTS via edge-tts CLI
-  # No API key required, 400+ voices
+  # EdgeTTS: Free unlimited Microsoft neural voices via edge-tts Python package
+  # Zero cost, 400+ voices, 150ms latency, no API key needed
   module EdgeTTS
     extend self
 
+    OUTPUT_DIR = File.join(Paths.var, "edge_tts")
+
+    # Popular voices - neural quality, many languages
     VOICES = {
-      aria:     'en-US-AriaNeural',
-      guy:      'en-US-GuyNeural',
-      jenny:    'en-US-JennyNeural',
-      davis:    'en-US-DavisNeural',
-      sara:     'en-US-SaraNeural',
-      tony:     'en-US-TonyNeural',
-      nancy:    'en-US-NancyNeural',
-      amber:    'en-US-AmberNeural',
-      ana:      'en-US-AnaNeural',
-      brandon:  'en-US-BrandonNeural',
-      # British
-      sonia:    'en-GB-SoniaNeural',
-      ryan:     'en-GB-RyanNeural',
-      # Australian  
-      natasha:  'en-AU-NatashaNeural',
-      william:  'en-AU-WilliamNeural'
+      # English US
+      aria: "en-US-AriaNeural",
+      guy: "en-US-GuyNeural",
+      jenny: "en-US-JennyNeural",
+      davis: "en-US-DavisNeural",
+      sara: "en-US-SaraNeural",
+      tony: "en-US-TonyNeural",
+      nancy: "en-US-NancyNeural",
+      # English UK
+      sonia: "en-GB-SoniaNeural",
+      ryan: "en-GB-RyanNeural",
+      # Norwegian
+      finn: "nb-NO-FinnNeural",
+      pernille: "nb-NO-PernilleNeural",
+      iselin: "nb-NO-IselinNeural",
+      # Other languages
+      seraphina: "de-DE-SeraphinaMultilingualNeural",
+      vivienne: "fr-FR-VivienneMultilingualNeural",
+      florian: "de-DE-FlorianMultilingualNeural",
+    }.freeze
+
+    # Pitch/rate adjustments
+    STYLES = {
+      normal: { rate: "+0%", pitch: "+0Hz" },
+      fast: { rate: "+25%", pitch: "+0Hz" },
+      slow: { rate: "-20%", pitch: "+0Hz" },
+      high: { rate: "+0%", pitch: "+50Hz" },
+      low: { rate: "+0%", pitch: "-50Hz" },
+      excited: { rate: "+15%", pitch: "+30Hz" },
+      calm: { rate: "-10%", pitch: "-20Hz" },
+      whisper: { rate: "-15%", pitch: "-30Hz" },
+      urgent: { rate: "+30%", pitch: "+20Hz" },
     }.freeze
 
     DEFAULT_VOICE = :aria
 
     class << self
       def installed?
-        system('which edge-tts > /dev/null 2>&1') || 
-        system('where edge-tts > nul 2>&1')
+        system('python -c "import edge_tts" 2>/dev/null') ||
+          system('python3 -c "import edge_tts" 2>/dev/null') ||
+          system('py -c "import edge_tts" 2>/dev/null')
+      end
+
+      def install!
+        python = find_python
+        system("#{python} -m pip install edge-tts --quiet")
       end
 
       def install_hint
         "pip install edge-tts"
       end
 
-      def speak(text, voice: DEFAULT_VOICE, output: nil)
+      def speak(text, voice: DEFAULT_VOICE, style: :normal, output: nil)
         return Result.err("edge-tts not installed. Run: #{install_hint}") unless installed?
+        return Result.err("Empty text") if text.nil? || text.strip.empty?
 
-        voice_name = VOICES[voice.to_sym] || VOICES[DEFAULT_VOICE]
-        output ||= File.join(Paths.tmp, "tts_#{Time.now.to_i}.mp3")
+        FileUtils.mkdir_p(OUTPUT_DIR)
+        output ||= File.join(OUTPUT_DIR, "edge_#{SecureRandom.hex(4)}.mp3")
 
-        cmd = ['edge-tts', '--voice', voice_name, '--text', text, '--write-media', output]
+        voice_id = VOICES[voice.to_sym] || VOICES[DEFAULT_VOICE]
+        params = STYLES[style.to_sym] || STYLES[:normal]
 
-        stdout, stderr, status = Open3.capture3(*cmd)
+        python = find_python
 
-        if status.success? && File.exist?(output)
-          Result.ok(output)
-        else
-          Result.err("TTS failed: #{stderr}")
+        script = <<~PY
+          import asyncio
+          import edge_tts
+          async def main():
+              communicate = edge_tts.Communicate(
+                  #{text.inspect},
+                  voice="#{voice_id}",
+                  rate="#{params[:rate]}",
+                  pitch="#{params[:pitch]}"
+              )
+              await communicate.save("#{output.gsub('\\', '/')}")
+          asyncio.run(main())
+        PY
+
+        Open3.popen3("#{python} -c #{script.inspect}") do |_, _, stderr, wait|
+          if wait.value.success? && File.exist?(output)
+            Result.ok(output)
+          else
+            Result.err("TTS failed: #{stderr.read}")
+          end
         end
       end
 
-      def speak_and_play(text, voice: DEFAULT_VOICE)
-        result = speak(text, voice: voice)
+      def speak_and_play(text, voice: DEFAULT_VOICE, style: :normal)
+        result = speak(text, voice: voice, style: style)
         return result if result.err?
 
         play(result.value)
-        Result.ok(result.value)
+        File.delete(result.value) rescue nil
+        Result.ok(text)
       end
 
       def play(file)
-        if Shell.which('afplay')
-          system('afplay', file)
-        elsif Shell.which('mpv')
-          system('mpv', '--no-video', file)
-        elsif Shell.which('ffplay')
-          system('ffplay', '-nodisp', '-autoexit', file)
-        else
-          puts "No audio player found. File saved at: #{file}"
+        return unless file && File.exist?(file)
+
+        case RUBY_PLATFORM
+        when /openbsd/
+          system("mpv --no-video --really-quiet #{file} 2>/dev/null") ||
+            system("ffplay -nodisp -autoexit -loglevel quiet #{file} 2>/dev/null")
+        when /darwin/
+          system("afplay #{file}")
+        when /linux/
+          system("mpv --no-video --really-quiet #{file} 2>/dev/null") ||
+            system("ffplay -nodisp -autoexit -loglevel quiet #{file} 2>/dev/null")
+        when /mingw|mswin|cygwin/
+          system("powershell -c \"(New-Object Media.SoundPlayer '#{file}').PlaySync()\"")
         end
       end
 
-      def list_voices
-        return [] unless installed?
-        output = `edge-tts --list-voices 2>/dev/null`
-        output.lines.map(&:strip).reject(&:empty?)
-      rescue StandardError
-        []
-      end
-
-      def generate_base64(text, voice: DEFAULT_VOICE)
-        result = speak(text, voice: voice)
+      def generate_base64(text, voice: DEFAULT_VOICE, style: :normal)
+        result = speak(text, voice: voice, style: style)
         return nil if result.err?
 
-        require 'base64'
+        require "base64"
         data = Base64.strict_encode64(File.binread(result.value))
         File.delete(result.value) rescue nil
         "data:audio/mp3;base64,#{data}"
+      end
+
+      def list_voices
+        return VOICES.values unless installed?
+
+        python = find_python
+        output = `#{python} -c "import asyncio; import edge_tts; print(asyncio.run(edge_tts.list_voices()))" 2>/dev/null`
+        output.scan(/'ShortName': '([^']+)'/).flatten
+      rescue StandardError
+        VOICES.values
+      end
+
+      private
+
+      def find_python
+        %w[py python3 python].find { |p| system("#{p} --version > /dev/null 2>&1") } || "python"
       end
     end
   end

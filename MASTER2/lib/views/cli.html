@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>MASTER</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:#0a0a0c;font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+#orb{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1}
+#halation{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 0.3s;z-index:9}
+#grain{position:fixed;inset:0;pointer-events:none;opacity:0.05;z-index:11;image-rendering:pixelated}
+#status{position:fixed;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;gap:12px;color:#8f9a9a;font-size:10px;z-index:20;pointer-events:none}
+#status .offline{color:#ff6b6b}
+#toast{position:fixed;top:34px;left:12px;padding:4px 8px;background:rgba(12,12,14,0.85);border:1px solid #1f1f23;color:#9bd;opacity:0;transition:opacity 0.2s;font-size:9px;z-index:21}
+#help{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,5,7,0.75);color:#c4b49a;font-size:11px;z-index:30}
+#help .panel{border:1px solid #2a2a2f;background:#0e0e12;padding:16px;max-width:420px;line-height:1.5}
+output{position:fixed;left:12px;right:12px;bottom:52px;max-height:28vh;overflow-y:auto;color:#c4b49a;font-size:10px;z-index:20}
+output:empty{display:none}
+output p{margin:2px 0;opacity:0.85}
+output p.user{color:#7a9caa}
+output .loader{color:#00CED1;font-size:9px;margin:4px 0}
+@keyframes star{0%,100%{opacity:0.3}50%{opacity:1}}
+output .loader span{display:inline-block;animation:star 0.6s ease-in-out infinite}
+output .loader span:nth-child(2){animation-delay:0.1s}
+output .loader span:nth-child(3){animation-delay:0.2s}
+output .loader span:nth-child(4){animation-delay:0.3s}
+output .loader span:nth-child(5){animation-delay:0.4s}
+input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;border-top:1px solid #1a1a1c;color:#c4b49a;font:inherit;padding:8px 12px;outline:none;z-index:20}
+input::placeholder{color:#3d3d3d}
+input:focus{outline:2px solid #4dccaa;outline-offset:2px}
+input:disabled{opacity:0.6;cursor:not-allowed}
+#hint{position:fixed;left:12px;bottom:34px;color:#4b4b4b;font-size:9px;z-index:20;pointer-events:none}
+</style>
+</head>
+<body>
+<iframe id="orb" src="orb_blob.html"></iframe>
+<canvas id="halation"></canvas>
+<canvas id="grain"></canvas>
+<div id="status"><span id="status-left"></span><span id="status-right"></span></div>
+<div id="toast"></div>
+<div id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></div>
+<output id="out"></output>
+<div id="hint">Type a message and press Enter</div>
+<input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
+<script>
+const ORBS=['orb_blob','orb_particle','orb_3d','orb_retro'];
+let currentOrb=0;
+
+const grainCanvas=document.getElementById('grain'),grainCtx=grainCanvas.getContext('2d');
+let gw,gh;
+function resizeGrain(){
+  gw=Math.floor(window.innerWidth/4);
+  gh=Math.floor(window.innerHeight/4);
+  grainCanvas.width=gw;grainCanvas.height=gh;
+  drawGrain();
+}
+function drawGrain(){
+  const img=grainCtx.createImageData(gw,gh);
+  for(let i=0;i<img.data.length;i+=4){
+    const v=128+(Math.random()-0.5)*30;
+    img.data[i]=img.data[i+1]=img.data[i+2]=v;
+    img.data[i+3]=255;
+  }
+  grainCtx.putImageData(img,0,0);
+}
+resizeGrain();
+window.addEventListener('resize',resizeGrain);
+setInterval(drawGrain,100);
+
+function switchOrb(idx){
+  if(idx>=0&&idx<ORBS.length){
+    currentOrb=idx;
+    document.getElementById('orb').src=ORBS[idx]+'.html';
+    localStorage.setItem('orb',ORBS[idx]);
+    updateStatus(lastStatusData);
+    showToast(`orb ${ORBS[idx].replace('orb_','')}`);
+  }
+}
+
+const saved=localStorage.getItem('orb');
+if(saved){const idx=ORBS.indexOf(saved);if(idx>=0)switchOrb(idx)}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && help.style.display==='flex'){help.style.display='none';return}
+  if(document.activeElement===document.getElementById('in'))return;
+  const num=parseInt(e.key);
+  if(num>=1&&num<=4)switchOrb(num-1);
+  if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
+  if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
+  if(e.key==='g'){showToast(`grain ${toggleGrain()}`)}
+  if(e.key==='?'){help.style.display=help.style.display==='flex'?'none':'flex'}
+});
+
+const out=document.getElementById('out'),inp=document.getElementById('in');
+const statusLeft=document.getElementById('status-left');
+const statusRight=document.getElementById('status-right');
+const toast=document.getElementById('toast');
+const help=document.getElementById('help');
+let pending=false;
+let lastSync=null;
+let offlineCount=0;
+let lastSent='';
+let lastStatusData={};
+let loaderEl=null;
+
+help.addEventListener('click',()=>{help.style.display='none'});
+
+function add(t,isUser){
+  removeLoader();
+  const p=document.createElement('p');
+  if(isUser)p.className='user';
+  p.textContent=isUser?'> '+t:t;
+  out.appendChild(p);
+  out.scrollTop=out.scrollHeight;
+}
+
+function showLoader(){
+  removeLoader();
+  loaderEl=document.createElement('div');
+  loaderEl.className='loader';
+  loaderEl.innerHTML='<span>·</span><span>·</span><span>·</span><span>·</span><span>·</span>';
+  out.appendChild(loaderEl);
+  out.scrollTop=out.scrollHeight;
+}
+
+function removeLoader(){if(loaderEl){loaderEl.remove();loaderEl=null}}
+
+function setPending(state){
+  pending=state;
+  inp.disabled=state;
+  inp.placeholder=state?'Processing…':'Ask MASTER… (press Enter to send)';
+}
+
+function formatCost(cost){
+  if(cost==null)return'--';
+  return'$'+Number(cost).toFixed(4);
+}
+
+function updateStatus(data){
+  if(data && Object.keys(data).length){lastStatusData=data}
+  const tier=lastStatusData?.tier||'unknown';
+  const budget=formatCost(lastStatusData?.budget);
+  const orb=ORBS[currentOrb].replace('orb_','');
+  const sync=lastSync?lastSync.toLocaleTimeString():'--';
+  statusLeft.textContent=`${tier} · orb ${orb}`;
+  statusRight.textContent=`${budget} · sync ${sync}`;
+  statusRight.className=offlineCount>=2?'offline':'';
+}
+
+function showToast(text){
+  toast.textContent=text;
+  toast.style.opacity='1';
+  setTimeout(()=>{toast.style.opacity='0'},1200);
+}
+
+inp.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp' && !inp.value){inp.value=lastSent||'';return}
+  if(e.key!=='Enter')return;
+  const m=inp.value.trim();
+  if(!m)return;
+  add(m,true);
+  lastSent=m;
+  inp.value='';
+  showLoader();
+  setPending(true);
+  fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
+    .then(r=>r.ok?r.json():r.json().then(err=>Promise.reject(err)))
+    .catch(err=>{
+      removeLoader();
+      add(err?.error||'[offline]');
+      setPending(false);
+      offlineCount+=1;
+      updateStatus({});
+    });
+});
+
+(function poll(){
+  fetch('/poll',{signal:AbortSignal.timeout(10000)})
+    .then(r=>r.json())
+    .then(d=>{
+      offlineCount=0;
+      lastSync=new Date();
+      updateStatus(d);
+      if(d.text){removeLoader();add(d.text)}
+      if(d.text){setPending(false)}
+      setTimeout(poll,800);
+    })
+    .catch(()=>{
+      offlineCount+=1;
+      updateStatus({});
+      setTimeout(poll,3000);
+    });
+})();
+
+function toggleGrain(){
+  const current=grainCanvas.style.display||'block';
+  const next=current==='none'?'block':'none';
+  grainCanvas.style.display=next;
+  localStorage.setItem('grain',next);
+  return next==='block'?'on':'off';
+}
+
+const savedGrain=localStorage.getItem('grain');
+if(savedGrain==='block'||savedGrain==='none'){grainCanvas.style.display=savedGrain}
+</script>
+</body>
+</html>

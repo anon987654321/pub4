@@ -59,50 +59,56 @@ module MASTER
       end
     end
 
-    # ASCII star spinner: | / - \
-    SPIN_FRAMES = %w[| / - \\].freeze
+    # Subtle spinner (Shibui - understated elegance)
+    SPIN_FRAMES = %w[· ·· ··· ····].freeze
 
     def spinner(message = nil, format: :classic)
       require "tty-spinner"
       TTY::Spinner.new("[:spinner] #{message}", format: format)
     rescue LoadError
-      # Fallback: ASCII star spinner
-      AsciiSpinner.new(message)
+      # Fallback: subtle dot spinner
+      SubtleSpinner.new(message)
     end
 
-    class AsciiSpinner
+    class SubtleSpinner
       def initialize(message)
         @message = message
         @running = false
         @thread = nil
+        @start_time = nil
       end
 
       def auto_spin
         @running = true
+        @start_time = Time.now
         @thread = Thread.new do
           i = 0
           while @running
-            print "\r  #{SPIN_FRAMES[i % 4]} #{@message}"
+            elapsed = (Time.now - @start_time).round
+            time_str = elapsed > 5 ? " (#{elapsed}s)" : ""
+            print "\r  #{SPIN_FRAMES[i % 4]} #{@message}#{time_str}  "
             i += 1
-            sleep 0.1
+            sleep 0.15
           end
         end
       end
 
-      def success(msg = "done")
+      def success(msg = nil)
         stop
-        puts "\r  #{ICONS[:success]} #{@message} #{msg}"
+        suffix = msg ? " #{msg}" : ""
+        puts "\r  #{ICONS[:success]} #{@message}#{suffix}"
       end
 
-      def error(msg = "error")
+      def error(msg = nil)
         stop
-        puts "\r  #{ICONS[:failure]} #{@message} #{msg}"
+        suffix = msg ? " #{msg}" : ""
+        puts "\r  #{ICONS[:failure]} #{@message}#{suffix}"
       end
 
       def stop
         @running = false
         @thread&.join(0.2)
-        print "\r#{' ' * 60}\r"
+        print "\r#{' ' * 70}\r"
       end
     end
 

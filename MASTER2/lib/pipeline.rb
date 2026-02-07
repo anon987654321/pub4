@@ -20,16 +20,24 @@ module MASTER
       def prompt
         model = LLM.prompt_model_name
         budget = LLM.budget_remaining
+        tokens = Session.current.token_count rescue 0
 
-        # Shell-style: master@model$ 
-        # Show budget warning when low
-        budget_warn = budget < 2.0 ? " [#{UI.currency(budget)}]" : ""
+        # Shell-style: master@model [tokens] $cost$
+        # Dense, informative prompt
+        budget_str = budget < 10.0 ? " $#{format('%.2f', budget)}" : ""
+        token_str = tokens > 0 ? " ↑#{format_tokens(tokens)}" : ""
         tripped = LLM.model_tiers[LLM.tier]&.any? { |m| !LLM.circuit_closed?(m) }
         indicator = tripped ? "!" : ""
 
-        "master@#{model}#{indicator}#{budget_warn}$ "
+        "master@#{model}#{indicator}#{token_str}#{budget_str}$ "
       rescue StandardError
         "master$ "
+      end
+
+      def format_tokens(n)
+        return "#{n}" if n < 1000
+        return "#{(n / 1000.0).round(1)}k" if n < 1_000_000
+        "#{(n / 1_000_000.0).round(1)}M"
       end
 
       def repl

@@ -13,15 +13,28 @@ MASTER::DB.setup
 
 case ARGV[0]
 when "--web", "-w"
+  # Web-only mode (no REPL)
   server = MASTER::Server.new
-  MASTER::Boot.banner
+  MASTER::Boot.banner_with_web(server.port)
   server.start
-  puts "\nPress Ctrl+C to stop"
+  puts "Press Ctrl+C to stop"
   sleep
 when "--pipe", "-p"
+  # Pipe mode for automation
   input = JSON.parse($stdin.read) rescue { "text" => $stdin.read }
   result = MASTER::Pipeline.new.call(input)
   puts JSON.generate(result.ok? ? result.value : { error: result.error })
+when "--tts", "-t"
+  # TTS test mode - continuous talking (Windows/Cygwin)
+  topic = ARGV[1]&.to_sym || :master
+  puts "Starting continuous TTS (#{topic})... Ctrl+C to stop"
+  MASTER::StreamTTS.windows_chatter(topic: topic)
+when "--daemon", "-d"
+  # Daemon mode for agentd
+  require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
 else
+  # Default: REPL with integrated web server
+  server = MASTER::Server.new
+  Thread.new { server.start }
   MASTER::Pipeline.repl
 end

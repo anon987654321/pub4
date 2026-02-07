@@ -55,11 +55,20 @@ require_relative "introspection"
 require_relative "problem_solver"
 require_relative "evolve"
 require_relative "converge"
-require_relative "edge_tts"
 require_relative "momentum"
 require_relative "validator"
 require_relative "self_map"
 require_relative "file_hygiene"
+
+# TTS & Audio (multi-modal)
+require_relative "edge_tts"
+require_relative "tts"
+require_relative "piper_tts"
+require_relative "stream_tts"
+require_relative "audio"
+
+# Self-awareness
+require_relative "self_awareness"
 
 # External services
 require_relative "weaviate"
@@ -88,5 +97,6 @@ require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
 
-# Optional
+# Web UI
 require_relative "server"
+require_relative "web/orb_tts"
