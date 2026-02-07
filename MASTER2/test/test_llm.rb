@@ -7,13 +7,14 @@ class TestLLM < Minitest::Test
     setup_db
   end
 
-  def test_rates_defined
-    assert MASTER::LLM::MODEL_RATES.key?("deepseek/deepseek-r1")
-    assert MASTER::LLM::MODEL_RATES.key?("anthropic/claude-sonnet-4")
+  def test_models_loaded
+    assert MASTER::LLM.models.any?, "Models should be loaded from YAML"
+    assert MASTER::LLM.model_rates.key?("deepseek/deepseek-r1")
+    assert MASTER::LLM.model_rates.key?("anthropic/claude-sonnet-4")
   end
 
   def test_rate_structure
-    rate = MASTER::LLM::MODEL_RATES["deepseek/deepseek-r1"]
+    rate = MASTER::LLM.model_rates["deepseek/deepseek-r1"]
     assert rate[:in], "Rate should have :in price"
     assert rate[:out], "Rate should have :out price"
     assert rate[:tier], "Rate should have :tier"

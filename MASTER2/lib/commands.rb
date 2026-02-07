@@ -235,9 +235,11 @@ module MASTER
           return
         end
 
-        session.history.pop(2)
+        # IMMUTABLE_HISTORY: append tombstone instead of mutating
+        session.history << { role: :system, content: "[UNDO: Previous 2 messages hidden]", tombstone: true, undone_at: Time.now.utc.iso8601 }
+        session.instance_variable_set(:@undo_count, (session.instance_variable_get(:@undo_count) || 0) + 1)
         session.instance_variable_set(:@dirty, true)
-        puts "  Forgot last exchange. Context rolled back."
+        puts "  Marked last exchange as undone. Context preserved for history."
       end
 
       def print_session_summary

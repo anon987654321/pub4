@@ -1,31 +1,46 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "yaml"
 
 module MASTER
   # LLM - Model selection, circuit breaker, cost tracking
+  # Single source: data/models.yml
   module LLM
-    MODEL_TIERS = {
-      strong: %w[deepseek/deepseek-r1 anthropic/claude-sonnet-4],
-      fast: %w[deepseek/deepseek-v3 openai/gpt-4.1-mini],
-      cheap: %w[openai/gpt-4.1-nano],
-    }.freeze
-
+    MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     TIER_ORDER = %i[strong fast cheap].freeze
-
-    MODEL_RATES = {
-      "deepseek/deepseek-r1" => { in: 0.55, out: 2.19, tier: :strong },
-      "anthropic/claude-sonnet-4" => { in: 3.00, out: 15.00, tier: :strong },
-      "deepseek/deepseek-v3" => { in: 0.27, out: 1.10, tier: :fast },
-      "openai/gpt-4.1-mini" => { in: 0.40, out: 1.60, tier: :fast },
-      "openai/gpt-4.1-nano" => { in: 0.10, out: 0.40, tier: :cheap },
-    }.freeze
-
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     SPENDING_CAP = 10.0
 
     class << self
+      def models
+        @models ||= load_models
+      end
+
+      def load_models
+        return [] unless File.exist?(MODELS_FILE)
+        YAML.safe_load_file(MODELS_FILE, symbolize_names: true) || []
+      end
+
+      def model_tiers
+        @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
+          hash[tier] = models.select { |m| m[:tier].to_sym == tier }.map { |m| m[:id] }
+        end
+      end
+
+      def model_rates
+        @model_rates ||= models.each_with_object({}) do |m, hash|
+          hash[m[:id]] = { in: m[:input_cost], out: m[:output_cost], tier: m[:tier].to_sym }
+        end
+      end
+
+      def context_limits
+        @context_limits ||= models.each_with_object({}) do |m, hash|
+          hash[m[:id]] = m[:context_window] || 32_000
+        end
+      end
+
       def configure
         RubyLLM.configure do |c|
           c.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
@@ -37,6 +52,10 @@ module MASTER
         model ||= select_available_model
         return Result.err("No model available") unless model
         return Result.err("Circuit open for #{model}") unless circuit_closed?(model)
+
+        # TRANSPARENT_COST: estimate before execution
+        estimated = estimate_cost(prompt.length, model)
+        $stderr.puts "  [cost: ~#{format('$%.4f', estimated)}]" if estimated > 0.001
 
         chat_instance = chat(model: model)
         response = if stream
@@ -78,7 +97,7 @@ module MASTER
         start = [TIER_ORDER.index(desired), TIER_ORDER.index(tier)].max
 
         TIER_ORDER[start..].each do |t|
-          MODEL_TIERS[t].each { |m| return { model: m, tier: t } if circuit_closed?(m) }
+          model_tiers[t]&.each { |m| return { model: m, tier: t } if circuit_closed?(m) }
         end
         nil
       end
@@ -132,10 +151,17 @@ module MASTER
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
-        rates = MODEL_RATES.fetch(model, { in: 1.0, out: 1.0 })
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
         cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
         DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
         cost
+      end
+
+      def estimate_cost(char_count, model)
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        tokens_in = (char_count / 4.0).ceil
+        tokens_out = 500  # estimate
+        (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
       end
     end
   end

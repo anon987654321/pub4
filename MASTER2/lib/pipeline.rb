@@ -21,7 +21,7 @@ module MASTER
         tier = LLM.tier || :none
         budget = UI.currency(LLM.budget_remaining)
 
-        tripped = LLM::MODEL_TIERS[tier]&.any? { |m| !LLM.circuit_closed?(m) }
+        tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
         indicator = tripped ? "⚡" : ""
 
         # Show context usage if session has messages

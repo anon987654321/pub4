@@ -46,7 +46,7 @@ module MASTER
     private
 
     def find_ruby_files(path)
-      Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| File.size(f) }
+      Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| -File.size(f) }
     end
 
     def protected?(file)

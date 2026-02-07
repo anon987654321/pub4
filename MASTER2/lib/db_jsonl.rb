@@ -9,10 +9,12 @@ module MASTER
     extend self
 
     @mutex = Monitor.new
+    @cache = {}
 
     def setup(path: nil)
       @root = path || File.join(Paths.var, "db")
       FileUtils.mkdir_p(@root)
+      @cache.clear
       ensure_seeded
     end
 
@@ -28,9 +30,13 @@ module MASTER
       @mutex.synchronize(&block)
     end
 
-    # --- Axioms ---
+    def clear_cache
+      @cache.clear
+    end
+
+    # --- Axioms (cached) ---
     def axioms
-      read_collection("axioms")
+      @cache[:axioms] ||= read_collection("axioms")
     end
 
     def add_axiom(name:, description:, category: nil, scope: nil)
@@ -42,11 +48,12 @@ module MASTER
         created_at: Time.now.utc.iso8601,
       }
       append("axioms", record.compact)
+      @cache.delete(:axioms)
     end
 
-    # --- Council ---
+    # --- Council (cached) ---
     def council
-      read_collection("council")
+      @cache[:council] ||= read_collection("council")
     end
 
     def add_persona(name:, role:, style:, bias: nil)
@@ -58,6 +65,7 @@ module MASTER
         created_at: Time.now.utc.iso8601,
       }
       append("council", record.compact)
+      @cache.delete(:council)
     end
 
     # --- Costs ---
@@ -171,7 +179,9 @@ module MASTER
     private
 
     def file_path(collection)
-      File.join(root, "#{collection}.jsonl")
+      # Path traversal protection
+      safe_name = File.basename(collection.to_s)
+      File.join(root, "#{safe_name}.jsonl")
     end
 
     def read_collection(name)

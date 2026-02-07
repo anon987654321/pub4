@@ -3,6 +3,7 @@
   tier: strong
   input_cost: 0.55
   output_cost: 2.19
+  context_window: 64000
   provider: deepseek
   use_for:
     - veto_violations
@@ -15,6 +16,7 @@
   tier: strong
   input_cost: 3.00
   output_cost: 15.00
+  context_window: 200000
   provider: anthropic
   use_for:
     - code_review
@@ -27,6 +29,7 @@
   tier: fast
   input_cost: 0.27
   output_cost: 1.10
+  context_window: 64000
   provider: deepseek
   use_for:
     - hygiene_checks
@@ -38,6 +41,7 @@
   tier: fast
   input_cost: 0.40
   output_cost: 1.60
+  context_window: 128000
   provider: openai
   use_for:
     - incremental_checks
@@ -49,6 +53,7 @@
   tier: cheap
   input_cost: 0.10
   output_cost: 0.40
+  context_window: 128000
   provider: openai
   use_for:
     - non_critical

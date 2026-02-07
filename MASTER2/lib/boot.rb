@@ -36,7 +36,7 @@ module MASTER
         remaining = UI.currency(LLM.budget_remaining)
         puts "budget0 at llm0: #{budget} limit, #{remaining} remaining"
 
-        puts "circuit0 at llm0: #{LLM::MODEL_RATES.size} models, all nominal"
+        puts "circuit0 at llm0: #{LLM.models.size} models, all nominal"
 
         if Pledge.available?
           puts "pledge0 at mainbus0: armed (stdio rpath wpath cpath fattr inet dns)"
@@ -84,7 +84,7 @@ module MASTER
       end
 
       def models_for_tier(tier)
-        LLM::MODEL_RATES.select { |_, v| v[:tier] == tier }.keys.map { |k| k.split("/").last }.join(", ")
+        LLM.model_tiers[tier]&.map { |k| k.split("/").last }&.join(", ") || ""
       end
     end
   end

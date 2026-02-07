@@ -4,13 +4,6 @@ module MASTER
   # Chamber - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent → Synthesis → Convergence
   class Chamber
-    MODELS = {
-      sonnet: "anthropic/claude-sonnet-4",
-      deepseek: "deepseek/deepseek-r1",
-      gpt: "openai/gpt-4.1-mini",
-    }.freeze
-
-    ARBITER = :sonnet
     MAX_ROUNDS = 25          # Max iterations before forced halt
     MAX_COST = 0.50
     CONSENSUS_THRESHOLD = 0.70
@@ -23,6 +16,10 @@ module MASTER
       @cost = 0.0
       @rounds = 0
       @proposals = []
+    end
+
+    def arbiter_model
+      LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
     end
 
     # Class method for stage integration

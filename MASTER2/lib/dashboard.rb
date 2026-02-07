@@ -79,8 +79,8 @@ module MASTER
         tier: LLM.tier,
         remaining: LLM.budget_remaining,
         limit: LLM::SPENDING_CAP,
-        circuits_ok: LLM::MODEL_RATES.count { |m, _| LLM.circuit_closed?(m) },
-        circuits_tripped: LLM::MODEL_RATES.count { |m, _| !LLM.circuit_closed?(m) },
+        circuits_ok: LLM.models.count { |m| LLM.circuit_closed?(m[:id]) },
+        circuits_tripped: LLM.models.count { |m| !LLM.circuit_closed?(m[:id]) },
         axioms: DB.axioms.size,
         council: DB.council.size,
       }

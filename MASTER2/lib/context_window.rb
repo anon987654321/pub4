@@ -2,30 +2,21 @@
 
 module MASTER
   # ContextWindow - Track and display token usage
+  # Uses LLM.context_limits as single source of truth
   module ContextWindow
-    # Rough estimates for different models
-    LIMITS = {
-      "deepseek/deepseek-r1" => 64_000,
-      "anthropic/claude-sonnet-4" => 200_000,
-      "deepseek/deepseek-chat" => 64_000,
-      "openai/gpt-4.1-mini" => 128_000,
-      "openai/gpt-4.1-nano" => 128_000,
-    }.freeze
-
     DEFAULT_LIMIT = 32_000
 
     class << self
       def estimate_tokens(char_count)
-        # Rough estimate: ~4 chars per token for English
         (char_count.to_i / 4.0).ceil
       end
 
       def limit_for(model)
-        LIMITS[model] || DEFAULT_LIMIT
+        LLM.context_limits[model] || DEFAULT_LIMIT
       end
 
       def usage(session, model: nil)
-        model ||= LLM::MODEL_TIERS[:strong]&.first
+        model ||= LLM.model_tiers[:strong]&.first
         limit = limit_for(model)
 
         total_chars = session.history.sum { |h| h[:content].to_s.length }

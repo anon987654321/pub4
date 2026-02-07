@@ -6,7 +6,7 @@ require "fileutils"
 module MASTER
   # Memory - Session cache and persistence
   module Memory
-    COMPRESS_AFTER_MESSAGES = 10
+    COMPRESS_AFTER_MESSAGES = 11  # Fixed: was 10, kept 10 (off-by-one)
     KEEP_FIRST_N = 2
     KEEP_LAST_N = 8
 
@@ -39,16 +39,18 @@ module MASTER
         history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
       end
 
-      # Persist session to disk
+      # Persist session to disk (with path traversal protection)
       def save_session(session_id, data)
-        path = File.join(Paths.sessions, "#{session_id}.json")
+        safe_id = File.basename(session_id.to_s)
+        path = File.join(Paths.sessions, "#{safe_id}.json")
         File.write(path, JSON.pretty_generate(data))
         path
       end
 
-      # Load session from disk
+      # Load session from disk (with path traversal protection)
       def load_session(session_id)
-        path = File.join(Paths.sessions, "#{session_id}.json")
+        safe_id = File.basename(session_id.to_s)
+        path = File.join(Paths.sessions, "#{safe_id}.json")
         return nil unless File.exist?(path)
         JSON.parse(File.read(path), symbolize_names: true)
       end
