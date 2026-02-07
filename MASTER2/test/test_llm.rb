@@ -43,10 +43,9 @@ class TestLLM < Minitest::Test
   end
 
   def test_select_model
-    result = MASTER::LLM.select_model(500)
-    assert result, "Should select a model"
-    assert result[:model], "Should have model key"
-    assert result[:tier], "Should have tier key"
+    model = MASTER::LLM.pick
+    assert model, "Should pick a model"
+    assert model.is_a?(String), "Model should be a string ID"
   end
 
   def test_record_cost

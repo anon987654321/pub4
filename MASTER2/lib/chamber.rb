@@ -4,10 +4,10 @@ module MASTER
   # Chamber - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent → Synthesis → Convergence
   class Chamber
-    MAX_ROUNDS = 25          # Max iterations before forced halt
+    MAX_ROUNDS = 25
     MAX_COST = 0.50
     CONSENSUS_THRESHOLD = 0.70
-    CONVERGENCE_THRESHOLD = 0.05  # Stop if opinions change < 5%
+    CONVERGENCE_THRESHOLD = 0.05
 
     attr_reader :cost, :rounds, :proposals
 
@@ -22,7 +22,6 @@ module MASTER
       LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
     end
 
-    # Class method for stage integration
     def self.council_review(text, model: nil)
       chamber = new(llm: LLM)
       chamber.council_review(text, text, model: model)
@@ -44,7 +43,6 @@ module MASTER
 
       return Result.err("No proposals generated") if @proposals.empty?
 
-      # Run through multi-round council review
       council_result = multi_round_review(code, @proposals.first[:proposal])
 
       arbiter_model = MODELS[ARBITER]
@@ -70,7 +68,6 @@ module MASTER
       end
     end
 
-    # Multi-round council review with convergence detection
     def multi_round_review(original, proposal)
       personas = DB.council
       return { passed: true, votes: [], vetoed_by: [], rounds: 0 } if personas.empty?
@@ -82,21 +79,17 @@ module MASTER
       MAX_ROUNDS.times do |round_num|
         break if over_budget?
 
-        # Phase 1: Independent voting
         round_result = council_review(original, proposal, model: nil)
         all_rounds << round_result
 
-        # Check for veto
         if round_result[:vetoed_by]&.any?
           return round_result.merge(rounds: round_num + 1, all_rounds: all_rounds)
         end
 
-        # Check for convergence
         current_consensus = round_result[:consensus] || 0
         delta = (current_consensus - previous_consensus).abs
 
         if round_num > 0 && delta < CONVERGENCE_THRESHOLD
-          # Converged - no significant opinion change
           return round_result.merge(
             rounds: round_num + 1,
             converged: true,
@@ -104,12 +97,10 @@ module MASTER
           )
         end
 
-        # Check if consensus reached
         if current_consensus >= CONSENSUS_THRESHOLD
           return round_result.merge(rounds: round_num + 1, all_rounds: all_rounds)
         end
 
-        # Phase 2: Synthesis - share votes and let personas revise
         if round_num < MAX_ROUNDS - 1 && !over_budget?
           proposal = synthesize(proposal, round_result[:votes])
         end
@@ -118,7 +109,6 @@ module MASTER
         final_result = round_result
       end
 
-      # Max rounds reached without consensus
       (final_result || {}).merge(
         rounds: MAX_ROUNDS,
         converged: false,
@@ -136,25 +126,21 @@ module MASTER
       veto_personas = personas.select { |p| p[:veto] }
       advisory_personas = personas.reject { |p| p[:veto] }
 
-      # Veto holders review first
       veto_personas.first(3).each do |persona|
         break if over_budget?
         vote = get_persona_vote(persona, original, proposal)
         votes << vote
-        # Veto blocks immediately
         if vote[:veto]
           vetoed_by << persona[:name]
           return { passed: false, verdict: :rejected, vetoed_by: vetoed_by, votes: votes }
         end
       end
 
-      # Advisory personas
       advisory_personas.first(3).each do |persona|
         break if over_budget?
         votes << get_persona_vote(persona, original, proposal)
       end
 
-      # Calculate weighted consensus
       total_weight = votes.sum { |v| v[:weight] || 0.1 }
       approve_weight = votes.select { |v| v[:approve] }.sum { |v| v[:weight] || 0.1 }
       consensus = total_weight > 0 ? (approve_weight / total_weight) : 0
@@ -170,7 +156,6 @@ module MASTER
 
     private
 
-    # Synthesis phase: incorporate feedback into proposal
     def synthesize(proposal, votes)
       rejections = votes.select { |v| !v[:approve] }
       return proposal if rejections.empty? || over_budget?
@@ -189,18 +174,14 @@ module MASTER
         Output ONLY the revised proposal, no explanation.
       PROMPT
 
-      model = @llm.select_available_model
-      return proposal unless model
+      result = @llm.ask(prompt, tier: :fast)
+      return proposal unless result.ok?
 
-      chat = @llm.chat(model: model)
-      response = chat.ask(prompt)
-
-      tokens_in = response.input_tokens || 0
-      tokens_out = response.output_tokens || 0
-      @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+      data = result.value
+      @cost += data[:cost] || 0
       @rounds += 1
 
-      response.content
+      data[:content]
     rescue StandardError => e
       DB.append("errors", { context: "chamber_synthesize", error: e.message, time: Time.now.utc.iso8601 })
       proposal
@@ -208,9 +189,6 @@ module MASTER
 
     def get_persona_vote(persona, original, proposal)
       return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
-
-      model = @llm.select_available_model
-      return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless model
 
       prompt = <<~PROMPT
         You are #{persona[:name]}.
@@ -228,14 +206,13 @@ module MASTER
         Then one sentence explaining why.
       PROMPT
 
-      chat = @llm.chat(model: model)
-      response = chat.ask(prompt)
+      result = @llm.ask(prompt, tier: :fast)
+      return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
 
-      tokens_in = response.input_tokens || 0
-      tokens_out = response.output_tokens || 0
-      @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+      data = result.value
+      @cost += data[:cost] || 0
 
-      content = response.content.to_s.strip
+      content = data[:content].to_s.strip
       approve = content.upcase.start_with?("APPROVE")
       veto = persona[:veto] && content.upcase.start_with?("REJECT")
 
@@ -268,14 +245,13 @@ module MASTER
         3. RATIONALE: Why these changes (one paragraph)
       PROMPT
 
-      chat = @llm.chat(model: model)
-      response = chat.ask(prompt)
+      result = @llm.ask(prompt, model: model)
+      return nil unless result.ok?
 
-      tokens_in = response.input_tokens rescue 0
-      tokens_out = response.output_tokens rescue 0
-      @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+      data = result.value
+      @cost += data[:cost] || 0
 
-      response.content
+      data[:content]
     rescue StandardError
       @llm.open_circuit!(model)
       nil
@@ -296,20 +272,121 @@ module MASTER
         Output ONLY the final improved code. No explanation.
       PROMPT
 
-      chat = @llm.chat(model: model)
-      response = chat.ask(prompt)
+      result = @llm.ask(prompt, model: model)
+      return proposals.first[:proposal] unless result.ok?
 
-      tokens_in = response.input_tokens rescue 0
-      tokens_out = response.output_tokens rescue 0
-      @cost += @llm.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
+      data = result.value
+      @cost += data[:cost] || 0
 
-      response.content
+      data[:content]
     rescue StandardError
       proposals.first[:proposal]
     end
 
     def over_budget?
       @cost >= MAX_COST
+    end
+
+    # Creative mode: Brainstorm → Critique → Synthesize cycle
+    # Merged from CreativeChamber
+    def ideate(prompt:, constraints: [], cycles: 2)
+      ideas = []
+      critiques = []
+      total_cost = 0
+
+      cycles.times do
+        # Brainstorm phase
+        brainstorm = generate_ideas(prompt, ideas, constraints)
+        return brainstorm if brainstorm.err?
+        ideas += brainstorm.value[:ideas]
+        total_cost += brainstorm.value[:cost]
+
+        # Critique phase
+        critique = critique_ideas(ideas)
+        return critique if critique.err?
+        critiques << critique.value[:critique]
+        total_cost += critique.value[:cost]
+      end
+
+      # Synthesis phase
+      synthesis = synthesize_ideas(prompt, ideas, critiques, constraints)
+      return synthesis if synthesis.err?
+      total_cost += synthesis.value[:cost]
+
+      Result.ok(
+        ideas: ideas,
+        critiques: critiques,
+        final: synthesis.value[:synthesis],
+        cost: total_cost
+      )
+    end
+
+    private
+
+    def generate_ideas(prompt, existing_ideas, constraints)
+      system_prompt = <<~SYS
+        You are a creative visionary. Generate 3-5 novel ideas.
+        Be bold, unconventional, surprising.
+        Constraints to respect: #{constraints.join(', ')}
+        #{"Previous ideas (don't repeat): #{existing_ideas.join(', ')}" if existing_ideas.any?}
+      SYS
+
+      full_prompt = "#{system_prompt}\n\nGenerate ideas for: #{prompt}"
+      result = @llm.ask(full_prompt, tier: :strong)
+
+      if result.ok?
+        data = result.value
+        content = data[:content].to_s
+        parsed = content.scan(/^[\-\*•]\s*(.+)/).flatten
+        parsed = [content] if parsed.empty?
+        Result.ok(ideas: parsed, cost: data[:cost] || 0)
+      else
+        Result.err("Brainstorm failed: #{result.error}")
+      end
+    end
+
+    def critique_ideas(ideas)
+      critique_prompt = <<~PROMPT
+        Critique these ideas honestly. What are the weaknesses, blind spots, implementation challenges?
+
+        Ideas:
+        #{ideas.map { |i| "- #{i}" }.join("\n")}
+      PROMPT
+
+      result = @llm.ask(critique_prompt, tier: :fast)
+
+      if result.ok?
+        data = result.value
+        Result.ok(critique: data[:content], cost: data[:cost] || 0)
+      else
+        Result.err("Critique failed: #{result.error}")
+      end
+    end
+
+    def synthesize_ideas(original_prompt, ideas, critiques, constraints)
+      prompt = <<~PROMPT
+        Original goal: #{original_prompt}
+        Constraints: #{constraints.join(', ')}
+
+        Ideas generated:
+        #{ideas.map { |i| "- #{i}" }.join("\n")}
+
+        Critiques:
+        #{critiques.join("\n---\n")}
+
+        Synthesize the best elements into a cohesive recommendation.
+        Address the valid critiques.
+        Be practical but preserve innovation.
+      PROMPT
+
+      result = @llm.ask(prompt, tier: :strong)
+
+      if result.ok?
+        data = result.value
+        Result.ok(synthesis: data[:content], cost: data[:cost] || 0)
+      else
+        Result.err("Synthesis failed: #{result.error}")
+      end
     end
   end
 end

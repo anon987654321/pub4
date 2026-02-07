@@ -420,6 +420,16 @@ module MASTER
         [SPENDING_CAP - total_spent, 0.0].max
       end
 
+      # Pick best available model for current budget tier
+      def pick
+        select_model_for_tier(tier)
+      end
+
+      # Alias for pick (used by Chamber)
+      def select_available_model
+        pick
+      end
+
       def tier
         r = budget_remaining
         if r > 5.0

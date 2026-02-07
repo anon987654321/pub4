@@ -80,6 +80,20 @@ module MASTER
       when "speak", "say"
         speak(args)
         nil
+      when "fix"
+        fix_code(args)
+        nil
+      when "browse"
+        browse_url(args)
+        nil
+      when "ideate", "brainstorm"
+        ideate(args)
+      when "model", "use"
+        select_model(args)
+        nil
+      when "models"
+        list_models
+        nil
       when "exit", "quit"
         :exit
       else
@@ -89,6 +103,107 @@ module MASTER
 
     class << self
       private
+
+      def fix_code(args)
+        path = args&.strip
+        if path.nil? || path.empty?
+          path = "."
+        end
+
+        if File.directory?(path)
+          fixer = AutoFixer.new(mode: :moderate)
+          result = fixer.fix_directory(path)
+          if result.ok?
+            puts "\n  ✓ Fixed #{result.value[:total_fixes]} issues in #{result.value[:files_fixed]} files\n"
+          else
+            UI.error(result.error)
+          end
+        elsif File.exist?(path)
+          fixer = AutoFixer.new(mode: :moderate)
+          result = fixer.fix(path)
+          if result.ok?
+            puts "\n  ✓ Fixed #{result.value[:fixed]} issues in #{path}\n"
+          else
+            UI.error(result.error)
+          end
+        else
+          UI.error("Path not found: #{path}")
+        end
+      end
+
+      def browse_url(args)
+        url = args&.strip
+        if url.nil? || url.empty?
+          puts "\n  Usage: browse <url>\n"
+          return
+        end
+
+        url = "https://#{url}" unless url.start_with?("http")
+        result = Web.browse(url)
+        
+        if result.ok?
+          puts "\n#{result.value[:content]}\n"
+        else
+          UI.error(result.error)
+        end
+      end
+
+      def ideate(args)
+        prompt = args&.strip
+        if prompt.nil? || prompt.empty?
+          puts "\n  Usage: ideate <topic or problem>\n"
+          return nil
+        end
+
+        chamber = Chamber.new(llm: LLM)
+        result = chamber.ideate(prompt: prompt)
+        
+        if result.ok?
+          data = result.value
+          puts "\n  Ideas:"
+          data[:ideas].first(5).each { |i| puts "    • #{i[0..80]}" }
+          puts "\n  Synthesis:"
+          puts "    #{data[:final][0..500]}..."
+          puts "\n  Cost: #{UI.currency(data[:cost])}\n"
+        end
+        result
+      end
+
+      def select_model(args)
+        unless args && !args.strip.empty?
+          puts "\n  Current model: #{LLM.current_model || 'auto'}"
+          puts "  Current tier:  #{LLM.current_tier || LLM.tier}"
+          puts "  Use 'model <name>' to switch, 'models' to list.\n"
+          return
+        end
+
+        query = args.strip.downcase
+        found = LLM.models.find { |m| m[:id].downcase.include?(query) || m[:name]&.downcase&.include?(query) }
+
+        if found
+          LLM.current_model = LLM.extract_model_name(found[:id])
+          LLM.current_tier = found[:tier]&.to_sym || :fast
+          puts "\n  ✓ Switched to #{found[:id]} (#{found[:tier]})\n"
+        else
+          puts "\n  ✗ No model matching '#{args}' found."
+          puts "  Use 'models' to list available models.\n"
+        end
+      end
+
+      def list_models
+        UI.header("Available Models")
+        LLM::TIER_ORDER.each do |tier|
+          models = LLM.model_tiers[tier]
+          next if models.nil? || models.empty?
+          puts "  #{tier}:"
+          models.each do |m|
+            status = LLM.circuit_closed?(m) ? "✓" : "✗"
+            short = m.split("/").last[0, 30]
+            puts "    #{status} #{short}"
+          end
+        end
+        puts
+      end
 
       def print_budget
         tier = LLM.tier
@@ -179,7 +294,7 @@ module MASTER
       def speak(text)
         return puts "  Usage: speak <text>" unless text
 
-        result = EdgeTTS.speak_and_play(text)
+        result = Speech.speak(text)
         puts "  TTS Error: #{result.error}" if result.err?
       end
 

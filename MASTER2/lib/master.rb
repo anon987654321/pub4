@@ -36,6 +36,9 @@ require_relative "nng_checklist"
 require_relative "onboarding"
 require_relative "context_window"
 
+# Executor (ReAct pattern - default behavior)
+require_relative "executor"
+
 # Pipeline
 require_relative "boot"
 require_relative "stages"
@@ -46,7 +49,6 @@ require_relative "questions"
 
 # Deliberation engines
 require_relative "chamber"
-require_relative "creative_chamber"
 require_relative "swarm"
 
 # Tools
@@ -60,15 +62,14 @@ require_relative "validator"
 require_relative "self_map"
 require_relative "file_hygiene"
 
-# TTS & Audio (multi-modal)
-require_relative "edge_tts"
-require_relative "tts"
-require_relative "piper_tts"
-require_relative "stream_tts"
-require_relative "audio"
+# Auto-fixer (restored from MASTER)
+require_relative "auto_fixer"
 
-# Self-awareness
-require_relative "self_awareness"
+# Web browsing (restored from MASTER)
+require_relative "web"
+
+# Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
+require_relative "speech"
 
 # External services
 require_relative "weaviate"
@@ -97,6 +98,8 @@ require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
 
+# Quality gates (restored from MASTER)
+require_relative "framework/quality_gates"
+
 # Web UI
 require_relative "server"
-require_relative "web/orb_tts"

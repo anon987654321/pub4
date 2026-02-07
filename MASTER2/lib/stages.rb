@@ -74,12 +74,25 @@ module MASTER
     class Route
       def call(input)
         text = input[:text] || ""
-        selected = LLM.select_model(text.length)
-        return Result.err("All models unavailable.") unless selected
+        tier = LLM.tier
+        model = nil
+        
+        # Find an available model for the current tier
+        LLM::TIER_ORDER.each do |t|
+          LLM.model_tiers[t]&.each do |m|
+            if LLM.circuit_closed?(m)
+              model = m
+              break
+            end
+          end
+          break if model
+        end
+        
+        return Result.err("All models unavailable.") unless model
 
         Result.ok(input.merge(
-          model: selected[:model],
-          tier: selected[:tier],
+          model: model,
+          tier: tier,
           budget_remaining: LLM.budget_remaining,
         ))
       end
@@ -114,31 +127,26 @@ module MASTER
         tier = input[:tier] || :unknown
         puts UI.dim("llm0: #{tier} #{model_short}")
 
-        chat = LLM.chat(model: model)
         text = input[:text] || ""
 
-        begin
-          response = chat.ask(text) do |chunk|
-            $stderr.print chunk.content if chunk.content
-          end
-          $stderr.puts
+        result = LLM.ask(text, model: model, stream: true)
 
-          tokens_in = response.input_tokens rescue 0
-          tokens_out = response.output_tokens rescue 0
-          cost = LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
-          LLM.close_circuit!(model)
+        if result.ok?
+          data = result.value
+          tokens_in = data[:tokens_in] || 0
+          tokens_out = data[:tokens_out] || 0
+          cost = data[:cost] || 0
 
           puts UI.dim("llm0: #{tokens_in}→#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
-            response: response.content,
+            response: data[:content],
             tokens_in: tokens_in,
             tokens_out: tokens_out,
             cost: cost,
           ))
-        rescue StandardError => e
-          LLM.open_circuit!(model)
-          Result.err("LLM error (#{model}): #{e.message}.")
+        else
+          Result.err("LLM error (#{model}): #{result.error}.")
         end
       end
     end

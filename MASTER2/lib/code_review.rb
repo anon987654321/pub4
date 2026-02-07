@@ -83,13 +83,10 @@ module MASTER
 
         prompt = format(OPPORTUNITY_PROMPT, code: truncate_code(code))
 
-        model = llm.pick
-        return Result.err("No model available") unless model
+        result = llm.ask(prompt, tier: :fast)
+        return Result.err("No model available") unless result.ok?
 
-        chat = llm.chat(model: model)
-        response = chat.ask(prompt)
-
-        parse_opportunities(response.content)
+        parse_opportunities(result.value[:content])
       rescue StandardError => e
         Result.err("Analysis failed: #{e.message}")
       end

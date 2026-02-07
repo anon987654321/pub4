@@ -1,18 +1,34 @@
 # frozen_string_literal: true
 
 module MASTER
+  # Pipeline - Now uses Executor as default, with stage-based fallback
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
 
-    def initialize(stages: DEFAULT_STAGES)
+    def initialize(stages: DEFAULT_STAGES, mode: :executor)
+      @mode = mode
       @stages = stages.map do |stage|
         stage.respond_to?(:call) ? stage : Stages.const_get(stage.to_s.capitalize).new
       end
     end
 
     def call(input)
-      @stages.reduce(Result.ok(input)) do |result, stage|
-        result.flat_map { |data| stage.call(data) }
+      text = input.is_a?(Hash) ? input[:text] : input.to_s
+
+      case @mode
+      when :executor
+        # Default: Use autonomous executor with tool access
+        Executor.call(text)
+      when :stages
+        # Legacy: Stage-based pipeline
+        @stages.reduce(Result.ok(input)) do |result, stage|
+          result.flat_map { |data| stage.call(data) }
+        end
+      when :direct
+        # Simple: Direct LLM call, no tools
+        LLM.ask(text, stream: true)
+      else
+        Executor.call(text)
       end
     end
 

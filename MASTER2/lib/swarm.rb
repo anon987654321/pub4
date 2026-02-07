@@ -13,28 +13,26 @@ module MASTER
       responses = []
       total_cost = 0
 
-      # Fan out - get multiple responses from different models or temperatures
+      # Fan out - get multiple responses using different approaches
       @size.times do |i|
-        model_info = LLM.select_model(prompt.length)
-        next unless model_info
-
+        tier = i < 2 ? :strong : :fast  # Mix of tiers for diversity
+        
         begin
-          chat = LLM.chat(model: model_info[:model])
-          response = chat.ask(prompt)
+          result = LLM.ask(prompt, tier: tier)
+          next unless result.ok?
 
-          tokens_in = response.input_tokens || 100
-          tokens_out = response.output_tokens || 200
-          cost = LLM.record_cost(model: model_info[:model], tokens_in: tokens_in, tokens_out: tokens_out)
+          data = result.value
+          cost = data[:cost] || 0
           total_cost += cost
 
           responses << {
             index: i,
-            model: model_info[:model],
-            content: response.content,
-            tokens: tokens_in + tokens_out
+            model: data[:model],
+            content: data[:content],
+            tokens: (data[:tokens_in] || 0) + (data[:tokens_out] || 0)
           }
-        rescue => e
-          LLM.trip!(model_info[:model])
+        rescue StandardError => e
+          # Continue with other attempts
         end
       end
 
@@ -58,31 +56,24 @@ module MASTER
       return { selected: responses.first, reasoning: "Only one response", curation_cost: 0 } if responses.size == 1
 
       curation_prompt = build_curation_prompt(responses, prompt)
-      model_info = LLM.select_model(curation_prompt.length)
-      return { selected: responses.first, reasoning: "No model available", curation_cost: 0 } unless model_info
+      
+      result = LLM.ask(curation_prompt, tier: :fast)
+      return { selected: responses.first, reasoning: "Curation failed", curation_cost: 0 } unless result.ok?
 
-      begin
-        chat = LLM.chat(model: model_info[:model])
-        response = chat.ask(curation_prompt)
+      data = result.value
+      cost = data[:cost] || 0
 
-        cost = LLM.record_cost(
-          model: model_info[:model],
-          tokens_in: response.input_tokens || 200,
-          tokens_out: response.output_tokens || 100
-        )
+      # Parse selection
+      content = data[:content].to_s
+      selected_idx = content.match(/\[(\d+)\]/)[1].to_i rescue 0
 
-        # Parse selection
-        content = response.content
-        selected_idx = content.match(/\[(\d+)\]/)[1].to_i rescue 0
-
-        {
-          selected: responses[selected_idx] || responses.first,
-          reasoning: content,
-          curation_cost: cost
-        }
-      rescue => e
-        { selected: responses.first, reasoning: "Curation failed: #{e.message}", curation_cost: 0 }
-      end
+      {
+        selected: responses[selected_idx] || responses.first,
+        reasoning: content,
+        curation_cost: cost
+      }
+    rescue StandardError => e
+      { selected: responses.first, reasoning: "Curation failed: #{e.message}", curation_cost: 0 }
     end
 
     def build_curation_prompt(responses, original_prompt)
