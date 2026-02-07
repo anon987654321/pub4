@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+export GEM_HOME=$(ruby -e'puts Gem.user_dir')
+export PATH="$GEM_HOME/bin:$PATH"
+
+require_relative '../lib/master'
+require_relative '../lib/cli'
+
+MASTER::CLI.start(ARGV)
