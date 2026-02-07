@@ -38,30 +38,27 @@ class TestLLM < Minitest::Test
   end
 
   def test_circuit_trips_after_threshold
-    # Record failures up to threshold
-    3.times { MASTER::LLM.record_failure("test-model") }
+    3.times { MASTER::LLM.circuit_failure!("test-model") }
     
-    # Circuit should now be unavailable
     refute MASTER::LLM.circuit_available?("test-model")
   end
 
-  def test_record_cost
-    MASTER::LLM.record_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
-    total = MASTER::DB.get_total_cost
+  def test_track_cost
+    MASTER::LLM.track_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
+    total = MASTER::DB.total_cost
     assert total > 0, "Cost should be recorded"
   end
 
-  def test_remaining_budget
-    initial = MASTER::LLM.remaining
+  def test_budget_remaining
+    initial = MASTER::LLM.budget_remaining
     assert_equal MASTER::LLM::BUDGET_LIMIT, initial
     
-    MASTER::LLM.record_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
-    remaining = MASTER::LLM.remaining
+    MASTER::LLM.track_cost(model: "deepseek-r1", tokens_in: 1000, tokens_out: 500)
+    remaining = MASTER::LLM.budget_remaining
     assert remaining < initial, "Remaining budget should decrease"
   end
 
   def test_affordable_tier
-    # With full budget, should select strong
     tier = MASTER::LLM.affordable_tier
     assert_equal :strong, tier
   end

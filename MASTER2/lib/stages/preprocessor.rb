@@ -50,10 +50,12 @@ module MASTER
       def extract_entities(text)
         entities = {}
 
-        files = text.scan(%r{(?:^|\s)([\w./\-]+\.(?:rb|js|py|txt|yml|yaml|json|md))(?:\s|$)}).flatten
+        file_pattern = %r{(?:^|\s)([\w./\-]+\.(?:rb|js|py|txt|yml|yaml|json|md))(?:\s|$)}
+        files = text.scan(file_pattern).flatten
         entities[:files] = files unless files.empty?
 
-        services = text.scan(/\b(httpd|relayd|pf|nginx|postgresql|redis)\b/i).flatten.map(&:downcase).uniq
+        service_pattern = /\b(httpd|relayd|pf|nginx|postgresql|redis)\b/i
+        services = text.scan(service_pattern).flatten.map(&:downcase).uniq
         entities[:services] = services unless services.empty?
 
         entities

@@ -80,8 +80,19 @@ module MASTER
 
         axioms.each do |axiom|
           @connection.execute(
-            "INSERT OR REPLACE INTO axioms (id, category, protection, title, statement, source) VALUES (?, ?, ?, ?, ?, ?)",
-            [axiom["id"], axiom["category"], axiom["protection"], axiom["title"], axiom["statement"], axiom["source"]]
+            <<~SQL,
+              INSERT OR REPLACE INTO axioms
+              (id, category, protection, title, statement, source)
+              VALUES (?, ?, ?, ?, ?, ?)
+            SQL
+            [
+              axiom["id"],
+              axiom["category"],
+              axiom["protection"],
+              axiom["title"],
+              axiom["statement"],
+              axiom["source"]
+            ]
           )
         end
       end
@@ -98,22 +109,37 @@ module MASTER
 
         personas.each do |persona|
           @connection.execute(
-            "INSERT OR REPLACE INTO council (slug, name, weight, temperature, veto, directive) VALUES (?, ?, ?, ?, ?, ?)",
-            [persona["slug"], persona["name"], persona["weight"], persona["temperature"], persona["veto"] ? 1 : 0, persona["directive"]]
+            <<~SQL,
+              INSERT OR REPLACE INTO council
+              (slug, name, weight, temperature, veto, directive)
+              VALUES (?, ?, ?, ?, ?, ?)
+            SQL
+            [
+              persona["slug"],
+              persona["name"],
+              persona["weight"],
+              persona["temperature"],
+              persona["veto"] ? 1 : 0,
+              persona["directive"]
+            ]
           )
         end
 
-        # Store council parameters in config table
-        params = data.select { |item| item.is_a?(Hash) && !item["slug"] }.first
+        params = data.find { |item| item.is_a?(Hash) && !item["slug"] }
         if params
           params.each do |key, value|
-            next if key == "veto_precedence" # Special handling for arrays
-            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_#{key}", value.to_s])
+            next if key == "veto_precedence"
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["council_#{key}", value.to_s]
+            )
           end
           
-          # Store veto_precedence as comma-separated string
           if params["veto_precedence"]
-            @connection.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", ["council_veto_precedence", params["veto_precedence"].join(",")])
+            @connection.execute(
+              "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+              ["council_veto_precedence", params["veto_precedence"].join(",")]
+            )
           end
         end
       end
@@ -125,21 +151,27 @@ module MASTER
         data = YAML.safe_load_file(patterns_path, permitted_classes: [Date])
         return unless data.is_a?(Hash)
 
-        # Seed forbidden commands
         if data["forbidden_commands"]&.is_a?(Array)
           data["forbidden_commands"].each_with_index do |item, idx|
             @connection.execute(
-              "INSERT OR REPLACE INTO zsh_patterns (id, category, command, replacement) VALUES (?, ?, ?, ?)",
+              <<~SQL,
+                INSERT OR REPLACE INTO zsh_patterns
+                (id, category, command, replacement)
+                VALUES (?, ?, ?, ?)
+              SQL
               ["forbidden_#{idx}", "forbidden", item["command"], item["replacement"]]
             )
           end
         end
 
-        # Seed native patterns
         if data["native_patterns"]&.is_a?(Hash)
           data["native_patterns"].each_with_index do |(name, pattern), idx|
             @connection.execute(
-              "INSERT OR REPLACE INTO zsh_patterns (id, category, command, replacement) VALUES (?, ?, ?, ?)",
+              <<~SQL,
+                INSERT OR REPLACE INTO zsh_patterns
+                (id, category, command, replacement)
+                VALUES (?, ?, ?, ?)
+              SQL
               ["native_#{idx}", "native", name.to_s, pattern]
             )
           end
@@ -166,7 +198,13 @@ module MASTER
         end
 
         query += " WHERE #{conditions.join(" AND ")}" unless conditions.empty?
-        query += " ORDER BY CASE protection WHEN 'ABSOLUTE' THEN 1 WHEN 'PROTECTED' THEN 2 ELSE 3 END"
+        query += <<~SQL.strip
+           ORDER BY CASE protection
+             WHEN 'ABSOLUTE' THEN 1
+             WHEN 'PROTECTED' THEN 2
+             ELSE 3
+           END
+        SQL
 
         @connection.execute(query, params)
       end

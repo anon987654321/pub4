@@ -10,7 +10,10 @@ module MASTER
         return Result.err("No council members found") if members.empty?
 
         threshold = (DB.config_value("council_consensus_threshold") || "0.70").to_f
-        veto_precedence = (DB.config_value("council_veto_precedence") || "security,attacker,maintainer").split(",")
+        veto_precedence = (
+          DB.config_value("council_veto_precedence") ||
+          "security,attacker,maintainer"
+        ).split(",")
 
         protected_axioms = DB.axioms(protection: "PROTECTED")
         absolute_axioms = DB.axioms(protection: "ABSOLUTE")
@@ -57,7 +60,9 @@ module MASTER
         consensus_score = total_weight
 
         if consensus_score < threshold
-          return Result.err("Consensus not reached: #{(consensus_score * 100).round}% < #{(threshold * 100).round}%")
+          actual = (consensus_score * 100).round
+          required = (threshold * 100).round
+          return Result.err("Consensus not reached: #{actual}% < #{required}%")
         end
 
         enriched = input.merge(
