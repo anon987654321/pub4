@@ -48,14 +48,16 @@ module MASTER
 
       loop do
         if prompt
-          input = prompt.ask("master>", required: false)
+          input = prompt.ask("master$", required: false)
         else
-          print "master> "
+          print "master$ "
           input = $stdin.gets&.chomp
         end
 
         break if input.nil? || input.strip.empty? || %w[exit quit].include?(input.strip.downcase)
 
+        # Spinner blocks input while pipeline runs. Async input (type-ahead
+        # while waiting) requires threaded pipeline execution — planned for v5.
         if spinner_class
           spinner = spinner_class.new("[:spinner] Processing...", format: :dots)
           spinner.auto_spin
