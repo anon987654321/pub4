@@ -13,7 +13,8 @@ end
 require_relative "../lib/master"
 
 # Setup database
-MASTER::DB.setup
+db_path = "#{MASTER.root}/master.db"
+MASTER::DB.setup(path: db_path)
 
 # Configure LLM
 MASTER::LLM.configure

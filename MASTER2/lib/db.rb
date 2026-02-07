@@ -6,13 +6,18 @@ require "yaml"
 module MASTER
   module DB
     class << self
-      attr_accessor :connection
+      attr_reader :connection
 
       def setup(path: "#{MASTER.root}/master.db")
+        @mutex ||= Mutex.new
         @connection = SQLite3::Database.new(path)
         @connection.results_as_hash = true
         create_schema
         seed_data
+      end
+
+      def synchronize(&block)
+        @mutex.synchronize(&block)
       end
 
       def create_schema
@@ -262,10 +267,12 @@ module MASTER
       end
 
       def record_cost(model:, tokens_in:, tokens_out:, cost:)
-        @connection.execute(
-          "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
-          [model, tokens_in, tokens_out, cost]
-        )
+        synchronize do
+          @connection.execute(
+            "INSERT INTO costs (model, tokens_in, tokens_out, cost) VALUES (?, ?, ?, ?)",
+            [model, tokens_in, tokens_out, cost]
+          )
+        end
       end
 
       def get_total_cost
@@ -274,19 +281,23 @@ module MASTER
       end
 
       def record_circuit_failure(model)
-        @connection.execute(
-          "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
-           ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
-          [model]
-        )
+        synchronize do
+          @connection.execute(
+            "INSERT INTO circuits (model, failures, last_failure, state) VALUES (?, 1, datetime('now'), 'closed')
+             ON CONFLICT(model) DO UPDATE SET failures = failures + 1, last_failure = datetime('now')",
+            [model]
+          )
+        end
       end
 
       def record_circuit_success(model)
-        @connection.execute(
-          "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
-           ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
-          [model]
-        )
+        synchronize do
+          @connection.execute(
+            "INSERT INTO circuits (model, failures, state) VALUES (?, 0, 'closed')
+             ON CONFLICT(model) DO UPDATE SET failures = 0, state = 'closed'",
+            [model]
+          )
+        end
       end
 
       def get_circuit(model)
