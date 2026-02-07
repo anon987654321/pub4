@@ -18,22 +18,18 @@ module MASTER
 
     class << self
       def prompt
-        tier = LLM.tier || :none
-        budget = UI.currency(LLM.budget_remaining)
+        tier = LLM.tier || :strong
+        budget = LLM.budget_remaining
 
+        # Starship-inspired: minimal, informative
+        # Only show budget warning when low
+        budget_str = budget < 5.0 ? " #{UI.currency(budget)}" : ""
         tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
-        indicator = tripped ? "⚡" : ""
+        indicator = tripped ? " ⚡" : ""
 
-        # Show context usage if session has messages
-        ctx = ""
-        if defined?(ContextWindow) && defined?(Session)
-          u = ContextWindow.usage(Session.current)
-          ctx = "|ctx:#{u[:percent].round}%" if u[:percent] > 5
-        end
-
-        "master[#{tier}#{indicator}|#{budget}#{ctx}]$ "
+        "master[#{tier}#{indicator}#{budget_str}]› "
       rescue StandardError
-        "master$ "
+        "master› "
       end
 
       def repl
@@ -97,11 +93,14 @@ module MASTER
               if cmd_result.ok?
                 output = cmd_result.value[:rendered] || cmd_result.value[:response]
                 if output && !output.empty?
-                  puts "\n#{output}\n\n"
+                  puts
+                  puts output
+                  puts UI.dim("  #{format_meta(cmd_result.value)}") if cmd_result.value[:cost]
                   session.add_assistant(output, cost: cmd_result.value[:cost])
                 end
               else
-                puts "\nError: #{cmd_result.failure}\n\n"
+                puts
+                UI.error(cmd_result.failure)
               end
             end
             next
@@ -112,7 +111,9 @@ module MASTER
           if result.ok?
             output = result.value[:rendered] || result.value[:response]
             if output && !output.empty?
-              puts "\n#{output}\n\n"
+              puts
+              puts output
+              puts UI.dim("  #{format_meta(result.value)}") if result.value[:cost]
               session.add_assistant(
                 output,
                 model: result.value[:model],
@@ -120,15 +121,32 @@ module MASTER
               )
             end
           else
-            puts "\nError: #{result.failure}\n\n"
+            puts
+            UI.error(result.failure)
           end
 
-          # Auto-save every 5 messages
+          # Auto-save silently
           session.save if session.message_count % 5 == 0
         end
 
         session.save
-        puts "Goodbye!"
+        show_exit_summary(session)
+      end
+
+      def format_meta(value)
+        parts = []
+        parts << "#{value[:tokens_in]}→#{value[:tokens_out]}tok" if value[:tokens_in]
+        parts << UI.currency_precise(value[:cost]) if value[:cost]
+        parts << value[:model]&.split("/")&.last if value[:model]
+        parts.join(" · ")
+      end
+
+      def show_exit_summary(session)
+        cost = session.total_cost
+        msgs = session.message_count
+        puts
+        puts UI.dim("  #{msgs} messages · #{UI.currency(cost)} · session #{UI.truncate_id(session.id)}")
+        puts
       end
 
       def pipe

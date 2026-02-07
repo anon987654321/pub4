@@ -22,3 +22,5 @@
 {"model":"test-model","tokens_in":1000000,"tokens_out":1000000,"cost":100.0,"created_at":"2026-02-07T08:09:43Z"}
 {"model":"test-model","tokens_in":1000000,"tokens_out":1000000,"cost":100.0,"created_at":"2026-02-07T08:13:53Z"}
 {"model":"test-model","tokens_in":1000000,"tokens_out":1000000,"cost":100.0,"created_at":"2026-02-07T08:16:55Z"}
+{"model":"test-model","tokens_in":1000000,"tokens_out":1000000,"cost":100.0,"created_at":"2026-02-07T08:25:24Z"}
+{"model":"test-model","tokens_in":1000000,"tokens_out":1000000,"cost":100.0,"created_at":"2026-02-07T08:25:46Z"}

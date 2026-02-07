@@ -10,50 +10,43 @@ module MASTER
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
 
         puts "MASTER #{VERSION} (PIPELINE) #1: #{timestamp}"
-        puts "    dev@dev.openbsd.amsterdam:#{MASTER.root}"
+        puts "    #{ENV['USER'] || 'user'}@#{hostname}:#{MASTER.root}"
+        puts
 
+        # System
         puts "mainbus0 at root"
         puts "cpu0 at mainbus0: #{cpu_info}"
-        puts "openbsd0 at mainbus0: #{platform_info}"
-        puts "ruby0 at openbsd0: ruby #{RUBY_VERSION}"
+        puts "os0 at mainbus0: #{platform_info}"
+        puts "ruby0 at os0: ruby #{RUBY_VERSION}"
 
-        axiom_count = DB.axioms.size
-        council_count = DB.council.size
-        puts "db0 at mainbus0: JSONL, #{collection_count} collections"
-        puts "db0: axioms #{axiom_count}, council #{council_count}"
+        # Data
+        axioms = DB.axioms.size
+        council = DB.council.size
+        puts "db0 at mainbus0: #{axioms} axioms, #{council} personas"
 
-        puts "const0 at mainbus0: #{axiom_count} axioms"
+        # LLM
+        puts "llm0 at db0: openrouter"
+        puts "llm0: #{model_summary}"
+        puts "budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining"
 
-        puts "council0 at const0: #{council_count} personas"
+        # Security
+        pledge_status = Pledge.available? ? "armed" : "unavailable"
+        puts "pledge0 at mainbus0: #{pledge_status}"
 
-        puts "llm0 at council0: openrouter"
-        strong = models_for_tier(:strong)
-        fast = models_for_tier(:fast)
-        cheap = models_for_tier(:cheap)
-        puts "llm0: strong (#{strong}), fast (#{fast}), cheap (#{cheap})"
-
-        budget = UI.currency(LLM::SPENDING_CAP)
-        remaining = UI.currency(LLM.budget_remaining)
-        puts "budget0 at llm0: #{budget} limit, #{remaining} remaining"
-
-        puts "circuit0 at llm0: #{LLM.models.size} models, all nominal"
-
-        if Pledge.available?
-          puts "pledge0 at mainbus0: armed (stdio rpath wpath cpath fattr inet dns)"
-        else
-          puts "pledge0 at mainbus0: unavailable (not OpenBSD)"
-        end
-
-        stages = Pipeline::DEFAULT_STAGES
-        puts "pipeline0 at mainbus0: #{stages.length} stages"
-        stage_names = stages.map { |s| s.to_s.split("_").map(&:capitalize).join }.join(" -> ")
-        puts "pipeline0: #{stage_names}"
+        # Pipeline
+        stages = Pipeline::DEFAULT_STAGES.map { |s| s.to_s.split("::").last }
+        puts "pipeline0 at mainbus0: #{stages.join(' → ')}"
 
         elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round
         puts "boot: complete, #{elapsed}ms"
+        puts
       end
 
       private
+
+      def hostname
+        `hostname`.strip rescue "localhost"
+      end
 
       def cpu_info
         case RUBY_PLATFORM
@@ -79,12 +72,14 @@ module MASTER
         end
       end
 
-      def collection_count
-        Dir.glob(File.join(DB.root, "*.jsonl")).size
-      end
-
-      def models_for_tier(tier)
-        LLM.model_tiers[tier]&.map { |k| k.split("/").last }&.join(", ") || ""
+      def model_summary
+        tiers = LLM.model_tiers
+        parts = []
+        %i[strong fast cheap].each do |t|
+          models = tiers[t]&.map { |k| k.split("/").last }&.first(2)
+          parts << "#{t}:#{models.join(',')}" if models&.any?
+        end
+        parts.join(" · ")
       end
     end
   end

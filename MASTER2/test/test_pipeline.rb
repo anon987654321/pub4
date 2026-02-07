@@ -48,8 +48,8 @@ class TestPipeline < Minitest::Test
 
   def test_prompt_shows_budget_or_fallback
     prompt = MASTER::Pipeline.prompt
-    # Accept either formatted prompt or fallback
-    valid = prompt.match?(/\$[\-\d]+\.\d{2}/) || prompt == "master$ "
-    assert valid, "Prompt should show budget or be fallback: #{prompt}"
+    # Accept formatted prompt with tier or fallback
+    valid = prompt.match?(/master\[.+\]›/) || prompt == "master› "
+    assert valid, "Prompt should show tier or be fallback: #{prompt}"
   end
 end

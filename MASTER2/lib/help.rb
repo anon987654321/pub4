@@ -6,39 +6,47 @@ module MASTER
     extend self
 
     COMMANDS = {
-      help: { desc: "Show this help", usage: "help [command]" },
-      ask: { desc: "Ask the LLM a question", usage: "ask <question>" },
-      refactor: { desc: "Refactor a file", usage: "refactor <file>" },
-      chamber: { desc: "Multi-model deliberation", usage: "chamber <file>" },
-      evolve: { desc: "Self-improvement cycle", usage: "evolve [path]" },
-      opportunities: { desc: "Analyze codebase for improvements", usage: "opportunities [path]" },
-      session: { desc: "Session management", usage: "session [new|save|load|info]" },
-      sessions: { desc: "List saved sessions", usage: "sessions" },
-      forget: { desc: "Undo last exchange", usage: "forget" },
-      summary: { desc: "Show conversation summary", usage: "summary" },
-      status: { desc: "Show system status", usage: "status" },
-      budget: { desc: "Show budget remaining", usage: "budget" },
-      context: { desc: "Show context window usage", usage: "context" },
-      history: { desc: "Show cost history", usage: "history" },
-      health: { desc: "System health check", usage: "health" },
-      speak: { desc: "Text-to-speech", usage: "speak <text>" },
-      clear: { desc: "Clear screen", usage: "clear" },
-      exit: { desc: "Exit MASTER", usage: "exit" },
+      # Queries
+      ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query },
+      refactor: { desc: "Refactor a file", usage: "refactor <file>", group: :query },
+      chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query },
+      evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query },
+      opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query },
+      # Session
+      session: { desc: "Session management", usage: "session [new|save|load]", group: :session },
+      sessions: { desc: "List saved sessions", usage: "sessions", group: :session },
+      forget: { desc: "Undo last exchange", usage: "forget", group: :session },
+      summary: { desc: "Conversation summary", usage: "summary", group: :session },
+      # System
+      status: { desc: "System status", usage: "status", group: :system },
+      budget: { desc: "Budget remaining", usage: "budget", group: :system },
+      context: { desc: "Context window usage", usage: "context", group: :system },
+      history: { desc: "Cost history", usage: "history", group: :system },
+      health: { desc: "Health check", usage: "health", group: :system },
+      # Utility
+      help: { desc: "Show this help", usage: "help [command]", group: :util },
+      speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util },
+      clear: { desc: "Clear screen", usage: "clear", group: :util },
+      exit: { desc: "Exit MASTER", usage: "exit", group: :util },
     }.freeze
 
     TIPS = [
-      "Use Tab for autocomplete",
-      "Ctrl+C to cancel current operation",
-      "Type 'help <command>' for details",
-      "!! repeats last command, !r = refactor, !c = chamber",
-      "Budget shown in prompt: master[tier|$X.XX]$",
-      "⚡ in prompt means circuit tripped",
-      "Sessions auto-save every 5 messages",
-      "Use 'forget' to undo last exchange",
+      "Tab for autocomplete",
+      "Ctrl+C to cancel",
+      "!! repeats last command",
     ].freeze
 
+    GROUPS = {
+      query: "Queries",
+      session: "Session",
+      system: "System",
+      util: "Utility",
+    }.freeze
+
     def show(command = nil)
-      if command && COMMANDS[command.to_sym]
+      if command == "tips"
+        show_tips
+      elsif command && COMMANDS[command.to_sym]
         show_command(command.to_sym)
       else
         show_all
@@ -46,14 +54,20 @@ module MASTER
     end
 
     def show_all
-      puts "\n  MASTER v#{VERSION} - Commands\n\n"
-
-      COMMANDS.each do |cmd, info|
-        puts "  #{cmd.to_s.ljust(14)} #{info[:desc]}"
+      puts
+      GROUPS.each do |group, label|
+        cmds = COMMANDS.select { |_, v| v[:group] == group }
+        puts "  #{label}"
+        cmds.each do |cmd, info|
+          puts "    #{cmd.to_s.ljust(12)} #{info[:desc]}"
+        end
+        puts
       end
+    end
 
-      puts "\n  Tips:"
-      TIPS.first(4).each { |t| puts "    • #{t}" }
+    def show_tips
+      puts
+      TIPS.each { |t| puts "  · #{t}" }
       puts
     end
 
