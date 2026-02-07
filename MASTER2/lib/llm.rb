@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "time"
 
 module MASTER
   module LLM
@@ -26,7 +27,7 @@ module MASTER
         end
       end
 
-      def select_model(input_size = 0)
+      def select_model
         tier = affordable_tier
         return nil unless tier
 
@@ -41,7 +42,11 @@ module MASTER
         failures = circuit["failures"].to_i
         return true if failures < CIRCUIT_THRESHOLD
 
-        last_failure = Time.parse(circuit["last_failure"]) rescue Time.now
+        begin
+          last_failure = Time.parse(circuit["last_failure"])
+        rescue ArgumentError
+          last_failure = Time.now
+        end
         Time.now - last_failure > CIRCUIT_COOLDOWN
       end
 

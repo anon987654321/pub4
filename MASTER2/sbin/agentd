@@ -1,8 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "dotenv/load" rescue nil
+require "fileutils"
 require "json"
+
+begin
+  require "dotenv/load"
+rescue LoadError
+  # dotenv not available
+end
 
 require_relative "../lib/master"
 
@@ -18,11 +24,10 @@ OUTBOX_DIR = ENV["MASTER_OUTBOX"] || "#{MASTER.root}/tmp/outbox"
 POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || "5").to_i
 
 # Create directories
-require "fileutils"
 FileUtils.mkdir_p(INBOX_DIR)
 FileUtils.mkdir_p(OUTBOX_DIR)
 
-puts "MASTER agentd v#{MASTER::VERSION}"
+MASTER::Boot.dmesg
 puts "Watching: #{INBOX_DIR}"
 puts "Output: #{OUTBOX_DIR}"
 puts "Poll interval: #{POLL_INTERVAL}s"
@@ -30,8 +35,14 @@ puts "Press Ctrl+C to stop\n\n"
 
 # Signal handling
 running = true
-Signal.trap("INT") { running = false; puts "\nShutting down..." }
-Signal.trap("TERM") { running = false; puts "\nShutting down..." }
+Signal.trap("INT") do
+  running = false
+  puts "\nShutting down..."
+end
+Signal.trap("TERM") do
+  running = false
+  puts "\nShutting down..."
+end
 
 pipeline = MASTER::Pipeline.new
 
