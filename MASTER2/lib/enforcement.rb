@@ -170,15 +170,8 @@ module MASTER
       def check_literal(code, axioms, filename)
         violations = []
 
-        # STRUCTURAL_PRUNE: dead code markers
-        if code.match?(/\b(TODO|FIXME|XXX|HACK)\b/)
-          violations << { layer: :literal, axiom: "STRUCTURAL_PRUNE", message: "Dead code marker found", file: filename }
-        end
-
-        # Bare rescue (bad practice)
-        if code.match?(/rescue\s*($|#)/)
-          violations << { layer: :literal, axiom: "FAIL_LOUD", message: "Bare rescue swallows errors", file: filename }
-        end
+        # Note: TODO/FIXME/XXX/HACK and bare rescue checks are in check_lines (scope 1)
+        # to avoid double-counting violations
 
         # Hardcoded secrets
         if code.match?(/['"][A-Za-z0-9]{32,}['"]/)
