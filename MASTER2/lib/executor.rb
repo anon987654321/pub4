@@ -675,12 +675,17 @@ module MASTER
       perms = const.dig("tool_permissions", "file_write") || {}
       protected = perms["protected_paths"] || []
       
-      # Normalize path for comparison
+      # Normalize and expand path for comparison
       normalized = path.gsub(/^\.\//, "")
+      expanded = File.expand_path(normalized) rescue normalized
       
       # Check if path matches any protected pattern
       protected.each do |protected_path|
-        if normalized.include?(protected_path) || path.include?(protected_path)
+        # Check both normalized and expanded paths
+        if normalized.start_with?(protected_path) || 
+           normalized.include?(protected_path) ||
+           expanded.start_with?(protected_path) ||
+           expanded.include?(protected_path)
           return "BLOCKED: Cannot write to protected path (#{protected_path})"
         end
       end
