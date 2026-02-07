@@ -67,6 +67,9 @@ module MASTER
       when "health"
         print_health
         nil
+      when "axioms-stats", "axioms"
+        print_axiom_stats
+        nil
       when "refactor"
         refactor(args)
       when "chamber"
@@ -455,6 +458,13 @@ module MASTER
         all_ok = checks.all? { |c| c[:ok] }
         puts
         puts all_ok ? "  System healthy." : "  Some checks failed."
+        puts
+      end
+
+      def print_axiom_stats
+        summary = AxiomStats.summary
+        puts
+        puts summary
         puts
       end
 
