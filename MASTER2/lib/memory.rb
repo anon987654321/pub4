@@ -70,9 +70,9 @@ module MASTER
         
         list_sessions.each do |session_id|
           data = load_session(session_id)
-          next unless data && data[:messages]
+          next unless data && data[:history]
           
-          data[:messages].each do |msg|
+          data[:history].each do |msg|
             content = msg[:content].to_s.downcase
             # Score by number of matching words
             score = query_words.count { |w| content.include?(w) }
