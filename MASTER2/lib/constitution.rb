@@ -92,8 +92,14 @@ module MASTER
       expanded = File.expand_path(path)
       
       protected.any? do |protected_path|
-        expanded_protected = File.expand_path(protected_path, MASTER.root)
-        expanded.start_with?(expanded_protected) || expanded.include?(expanded_protected)
+        # For absolute paths, compare directly; for relative, expand from root
+        expanded_protected = if protected_path.start_with?("/")
+          protected_path
+        else
+          File.expand_path(protected_path, MASTER.root)
+        end
+        
+        expanded.start_with?(expanded_protected) || expanded == expanded_protected
       end
     end
 

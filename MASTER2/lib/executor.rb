@@ -664,8 +664,14 @@ module MASTER
       
       # Check protected paths first
       PROTECTED_WRITE_PATHS.each do |protected|
-        protected_expanded = File.expand_path(protected, MASTER.root)
-        if expanded.start_with?(protected_expanded) || expanded.include?(protected_expanded)
+        # For absolute paths, compare directly; for relative, expand from root
+        protected_expanded = if protected.start_with?("/")
+          protected
+        else
+          File.expand_path(protected, MASTER.root)
+        end
+        
+        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
           return "BLOCKED: file_write to protected path '#{path}'"
         end
       end

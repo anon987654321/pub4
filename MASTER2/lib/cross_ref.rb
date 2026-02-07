@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "ostruct"
+
 module MASTER
   # CrossRef - Cross-reference analyzer for constants and methods
   module CrossRef

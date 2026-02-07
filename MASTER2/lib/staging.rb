@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "tmpdir"
+require "open3"
 
 module MASTER
   # Staging - Safe file modification workflow with validation and rollback
