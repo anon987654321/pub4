@@ -28,6 +28,15 @@ module MASTER
     class << self
       attr_accessor :current_model, :current_tier
 
+      # Tier setter for compatibility
+      def tier=(value)
+        @forced_tier = value.to_sym if value
+      end
+
+      def forced_tier
+        @forced_tier
+      end
+
       # Rate limiting state
       def rate_limit_state
         @rate_limit_state ||= { requests: [], window_start: Time.now }
