@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+begin
+  require "typogruby"
+rescue LoadError
+  # Typogruby not available, fall back to manual rules
+end
+
 module MASTER
   module Stages
     # Depressure Tank: Multi-model output refinement
@@ -55,10 +61,15 @@ module MASTER
       end
 
       def prettify(text)
-        # Apply typography rules from Bringhurst
-        text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }      # Smart quotes
-            .gsub(/\s--\s/, " \u2014 ")                      # Em dashes
-            .gsub(/\.\.\./, "\u2026")                        # Ellipses
+        # Use typogruby if available, otherwise fall back to manual rules
+        if defined?(Typogruby)
+          Typogruby.improve(text)
+        else
+          # Apply typography rules from Bringhurst
+          text.gsub(/"([^"]*?)"/) { "\u201C#{$1}\u201D" }      # Smart quotes
+              .gsub(/\s--\s/, " \u2014 ")                      # Em dashes
+              .gsub(/\.\.\./, "\u2026")                        # Ellipses
+        end
       end
 
       def format_summary(input)

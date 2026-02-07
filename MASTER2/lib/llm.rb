@@ -3,6 +3,12 @@
 require "ruby_llm"
 require "time"
 
+begin
+  require "stoplight"
+rescue LoadError
+  # Stoplight not available, fall back to manual circuit breaker
+end
+
 module MASTER
   module LLM
     RATES = {
@@ -37,25 +43,46 @@ module MASTER
     end
 
     def self.healthy?(model)
-      circuit = DB.circuit(model)
-      return true unless circuit
+      if defined?(Stoplight)
+        light = Stoplight("llm:#{model}") { true }
+                  .with_threshold(CIRCUIT_THRESHOLD)
+                  .with_cool_off_time(CIRCUIT_COOLDOWN)
+        light.color == :green
+      else
+        # Fallback to DB-based circuit breaker
+        circuit = DB.circuit(model)
+        return true unless circuit
 
-      failures = circuit["failures"].to_i
-      return true if failures < CIRCUIT_THRESHOLD
+        failures = circuit["failures"].to_i
+        return true if failures < CIRCUIT_THRESHOLD
 
-      begin
-        last_failure = Time.parse(circuit["last_failure"])
-      rescue ArgumentError
-        last_failure = Time.now
+        begin
+          last_failure = Time.parse(circuit["last_failure"])
+        rescue ArgumentError
+          last_failure = Time.now
+        end
+        Time.now - last_failure > CIRCUIT_COOLDOWN
       end
-      Time.now - last_failure > CIRCUIT_COOLDOWN
     end
 
     def self.record_failure(model)
+      if defined?(Stoplight)
+        light = Stoplight("llm:#{model}") { raise "Model failure" }
+                  .with_threshold(CIRCUIT_THRESHOLD)
+                  .with_cool_off_time(CIRCUIT_COOLDOWN)
+        begin
+          light.run
+        rescue
+          # Light recorded the failure
+        end
+      end
+      # Also record in DB for audit trail
       DB.trip!(model)
     end
 
     def self.record_success(model)
+      # Stoplight automatically resets on success
+      # Also reset in DB
       DB.reset!(model)
     end
 
