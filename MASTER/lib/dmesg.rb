@@ -9,6 +9,7 @@ module MASTER
     # Bold green for trace output
     TRACE_COLOR = "\e[1;32m"  # Bold green
     RESET = "\e[0m"
+    MAX_BUFFER_SIZE = 10_000 # Cap buffer at 10k entries
 
     @buffer = []
     @enabled = true
@@ -32,6 +33,9 @@ module MASTER
 
         entry = { time: timestamp, line: line }
         @buffer << entry
+        
+        # Cap buffer size to prevent unbounded growth
+        @buffer.shift if @buffer.size > MAX_BUFFER_SIZE
         
         # Print in bold green if TTY
         if $stdout.tty? && ENV['MASTER_TRACE'] != '0'

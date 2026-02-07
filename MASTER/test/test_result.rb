@@ -94,5 +94,29 @@ module MASTER
       assert result.err?
       assert_equal "fail", result.error
     end
+
+    def test_ok_with_nil_is_unambiguously_ok
+      result = Result.ok(nil)
+      assert result.ok?
+      refute result.err?
+      assert_nil result.value
+      assert_equal :ok, result.kind
+    end
+
+    def test_kind_field_is_set_correctly
+      ok_result = Result.ok(42)
+      assert_equal :ok, ok_result.kind
+      
+      err_result = Result.err("error")
+      assert_equal :err, err_result.kind
+    end
+
+    def test_result_values_are_frozen
+      result = Result.ok("mutable")
+      assert result.value.frozen?
+      
+      err_result = Result.err("error")
+      assert err_result.error.frozen?
+    end
   end
 end

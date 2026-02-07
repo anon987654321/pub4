@@ -7,6 +7,7 @@ module MASTER
   module Core
     class ReActExecutor
       MAX_STEPS = 15
+      WALL_CLOCK_TIMEOUT = 120 # seconds
       TOOLS = %w[
         web_search
         code_execution
@@ -20,11 +21,25 @@ module MASTER
       ].freeze
 
       def self.execute(goal:, model: 'smart', max_steps: MAX_STEPS)
+        start_time = Time.now
         memory = ReflectionMemory.new
         history = []
         step = 0
 
         while step < max_steps
+          # Check wall-clock timeout
+          elapsed = Time.now - start_time
+          if elapsed > WALL_CLOCK_TIMEOUT
+            return {
+              success: false,
+              error: "Wall-clock timeout (#{WALL_CLOCK_TIMEOUT}s) exceeded",
+              timeout: true,
+              steps: step,
+              history: history,
+              elapsed: elapsed
+            }
+          end
+          
           step += 1
           
           context = build_context(goal, history, memory)
@@ -110,6 +125,14 @@ module MASTER
       end
 
       def self.execute_tool(action_str)
+        # Extract tool name from action string
+        tool_name = action_str[/^(\w+)/, 1]
+        
+        # Validate tool name
+        unless TOOLS.include?(tool_name)
+          return "Error: Invalid tool '#{tool_name}'. Available tools: #{TOOLS.join(', ')}"
+        end
+        
         case action_str
         when /^web_search/
           query = action_str[/{"([^\"]+)"/, 1] || action_str.split.last
@@ -117,7 +140,8 @@ module MASTER
           
         when /^code_execution/
           code = action_str[/```(\w+)?\n(.+?)```/m, 2] || action_str.split('"')[1]
-          execute_code(code || "puts 'No code provided'")
+          # Enforce sandboxing if available (Pledge on OpenBSD)
+          execute_code_sandboxed(code || "puts 'No code provided'")
           
         when /^browse_page/
           url = action_str[/https?:\/\/[^\s]+/]
@@ -133,11 +157,31 @@ module MASTER
           
         when /^file_write/
           match = action_str.match(/"([^\"]+)"\s+"([^\"]+)"/)
-          File.write(match[1], match[2]) if match
+          return "Error: Invalid file_write format" unless match
+          
+          # Ensure path is under MASTER.root
+          path = File.expand_path(match[1])
+          root = File.expand_path(MASTER.root)
+          unless path.start_with?(root)
+            return "Error: file_write path must be under #{root}"
+          end
+          
+          File.write(path, match[2])
           "Written to \\#{match[1]}"
           
         when /^shell_command/
           cmd = action_str[/{"([^\"]+)"/, 1]
+          
+          # Apply dangerous pattern guard (same as Stages::Guard)
+          dangerous_patterns = [
+            /rm\s+-r[f]?\s+\//, />\s*\/dev\/[sh]da/, /DROP\s+TABLE/i,
+            /FORMAT\s+[A-Z]:/i, /mkfs\./, /dd\s+if=/
+          ]
+          
+          if dangerous_patterns.any? { |pattern| pattern.match?(cmd) }
+            return "Error: Blocked by safety filter - dangerous pattern detected"
+          end
+          
           stdout, stderr, status = Open3.capture3(cmd)
           status.success? ? stdout[0..500] : "Error: \\#{stderr[0..200]}"
           
@@ -153,6 +197,31 @@ module MASTER
         end
       rescue => e
         "Tool execution error: \\#{e.message}"
+      end
+
+      def self.execute_code_sandboxed(code)
+        # Try to use Pledge for sandboxing on OpenBSD
+        begin
+          require 'tempfile'
+          Tempfile.create(['react_exec', '.rb']) do |f|
+            f.write(code)
+            f.flush
+            
+            # Attempt to apply Pledge sandboxing
+            begin
+              require_relative 'openbsd_pledge'
+              Pledge.unveil(f.path, 'r')
+              Pledge.pledge('stdio rpath')
+            rescue LoadError, NameError
+              # Pledge not available - continue without sandboxing
+            end
+            
+            stdout, stderr, status = Open3.capture3('ruby', f.path)
+            status.success? ? stdout[0..500] : stderr[0..200]
+          end
+        rescue => e
+          "Execution error: #{e.message}"
+        end
       end
 
       def self.execute_code(code)

@@ -2,9 +2,13 @@
 
 require "sqlite3"
 require "yaml"
+require "thread"
 
 module MASTER
   module DB
+    @seed_mutex = Mutex.new
+    @seeded = false
+    
     def self.connection
       @connection ||= begin
         db = SQLite3::Database.new(File.join(MASTER.root, "master.db"))
@@ -15,7 +19,7 @@ module MASTER
 
     def self.setup
       schema
-      seed_if_empty
+      ensure_seeded
     end
 
     def self.schema
@@ -42,11 +46,19 @@ module MASTER
       SQL
     end
 
-    def self.seed_if_empty
-      return unless connection.get_first_value("SELECT COUNT(*) FROM principles").to_i.zero?
-
-      seed_file("principles", File.join(MASTER.root, "data", "principles.yml"))
-      seed_file("personas", File.join(MASTER.root, "data", "personas.yml"))
+    def self.ensure_seeded
+      @seed_mutex.synchronize do
+        return if @seeded
+        
+        # Check if already seeded
+        count = connection.get_first_value("SELECT COUNT(*) FROM principles").to_i
+        if count.zero?
+          seed_file("principles", File.join(MASTER.root, "data", "principles.yml"))
+          seed_file("personas", File.join(MASTER.root, "data", "personas.yml"))
+        end
+        
+        @seeded = true
+      end
     end
 
     def self.seed_file(table, path)

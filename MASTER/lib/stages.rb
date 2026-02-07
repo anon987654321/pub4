@@ -52,8 +52,19 @@ module MASTER
           end
           $stderr.puts
 
+          # Validate LLM response contract
+          unless response.respond_to?(:content) && response.content
+            return Result.err("Invalid LLM response: missing or empty content")
+          end
+          
           tokens_in = response.input_tokens rescue 0
           tokens_out = response.output_tokens rescue 0
+          
+          # Validate tokens are numeric
+          unless tokens_in.is_a?(Numeric) && tokens_out.is_a?(Numeric)
+            return Result.err("Invalid LLM response: tokens must be numeric")
+          end
+          
           LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
           LLM.record_success(model)
 
