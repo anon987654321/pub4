@@ -83,11 +83,13 @@ module MASTER
     end
 
     def box(content, title: nil, **opts)
-      require "tty-box"
-      TTY::Box.frame(content, title: title ? { top_left: " #{title} " } : nil, padding: [0, 1], border: :round, **opts)
-    rescue LoadError
-      border = title ? "┌─ #{title} ─┐" : "┌────┐"
-      "#{border}\n│ #{content.gsub("\n", "\n│ ")} │\n└────┘"
+      # No box art - just indented content with optional title
+      lines = []
+      lines << bold(title) if title
+      lines << ""
+      content.each_line { |l| lines << "  #{l.rstrip}" }
+      lines << ""
+      lines.join("\n")
     end
 
     def markdown(text, width: nil)

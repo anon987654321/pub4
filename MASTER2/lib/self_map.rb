@@ -47,14 +47,11 @@ module MASTER
 
       entries.each_with_index do |entry, idx|
         path = File.join(dir, entry)
-        is_last = idx == entries.size - 1
-        connector = is_last ? '└── ' : '├── '
-        extension = is_last ? '    ' : '│   '
 
-        result << "#{prefix}#{connector}#{entry}"
+        result << "#{prefix}#{entry}/"
 
         if File.directory?(path)
-          result << tree_string(path, "#{prefix}#{extension}")
+          result << tree_string(path, "#{prefix}  ")
         end
       end
 

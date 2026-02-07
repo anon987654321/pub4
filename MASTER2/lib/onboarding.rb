@@ -42,7 +42,10 @@ module MASTER
       def show_welcome
         return unless first_run?
 
-        puts UI.box(WELCOME, title: "MASTER", style: { fg: :cyan })
+        puts
+        puts UI.bold("MASTER v#{VERSION}")
+        puts
+        WELCOME.each_line { |l| puts "  #{l}" }
         mark_first_run
       end
 
