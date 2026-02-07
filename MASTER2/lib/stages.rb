@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "timeout"
 
 module MASTER
   module Stages
@@ -153,8 +154,8 @@ module MASTER
 
     # Stage 7: Axiom enforcement
     class Lint
-      REGEX_TIMEOUT = 1.0  # 1 second timeout for regex matching
-      
+      REGEX_TIMEOUT = 0.1 # seconds
+
       def call(input)
         text = input[:response] || ""
         axioms = DB.axioms
@@ -165,35 +166,11 @@ module MASTER
           next unless pattern
 
           begin
-            # Guard against pathological regexes with timeout
-            regex = if RUBY_VERSION >= "3.2"
-                      # Ruby 3.2+ supports Regexp.timeout
-                      Regexp.new(pattern, Regexp::IGNORECASE, timeout: REGEX_TIMEOUT)
-                    else
-                      Regexp.new(pattern, Regexp::IGNORECASE)
-                    end
-            
-            # Use a thread with timeout for older Ruby versions
-            # Note: Thread.kill is generally unsafe as it can leave resources inconsistent,
-            # but is acceptable here because regex matching is a pure computation with no
-            # resource management (no files, sockets, locks, or other external state).
-            if RUBY_VERSION < "3.2"
-              match_result = nil
-              thread = Thread.new { match_result = text.match?(regex) }
-              unless thread.join(REGEX_TIMEOUT)
-                thread.kill
-                # Skip this axiom if regex times out
-                next
-              end
-              violations << axiom[:name] if match_result
-            else
-              violations << axiom[:name] if text.match?(regex)
-            end
-          rescue Regexp::TimeoutError
-            # Regex timed out, skip this axiom
-            next
-          rescue RegexpError => e
-            # Invalid regex pattern, skip this axiom
+            re = Regexp.new(pattern, Regexp::IGNORECASE)
+            matched = Timeout.timeout(REGEX_TIMEOUT) { text.match?(re) }
+            violations << axiom[:name] if matched
+          rescue RegexpError, Timeout::Error
+            # Skip invalid or pathological patterns
             next
           end
         end

@@ -7,13 +7,17 @@ module MASTER
   # Layers: Literal → Lexical → Conceptual → Semantic → Cognitive
   # Scopes: Line → Unit → File → Framework
   module Enforcement
-    LAYERS = %i[literal lexical conceptual semantic cognitive].freeze
+    LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
+    @smells_mutex = Mutex.new
+
     class << self
       def smells
-        @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE) : {}
+        @smells_mutex.synchronize do
+          @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE) : {}
+        end
       end
 
       def thresholds
@@ -166,15 +170,8 @@ module MASTER
       def check_literal(code, axioms, filename)
         violations = []
 
-        # STRUCTURAL_PRUNE: dead code markers
-        if code.match?(/\b(TODO|FIXME|XXX|HACK)\b/)
-          violations << { layer: :literal, axiom: "STRUCTURAL_PRUNE", message: "Dead code marker found", file: filename }
-        end
-
-        # Bare rescue (bad practice)
-        if code.match?(/rescue\s*($|#)/)
-          violations << { layer: :literal, axiom: "FAIL_LOUD", message: "Bare rescue swallows errors", file: filename }
-        end
+        # Note: TODO/FIXME/XXX/HACK and bare rescue checks are in check_lines (scope 1)
+        # to avoid double-counting violations
 
         # Hardcoded secrets
         if code.match?(/['"][A-Za-z0-9]{32,}['"]/)
@@ -319,6 +316,15 @@ module MASTER
         end
 
         violations
+      end
+
+      # Layer 6: Language axiom - language-specific beauty rules
+      def check_language_axiom(code, axioms, filename)
+        if defined?(LanguageAxioms)
+          LanguageAxioms.check(code, filename: filename)
+        else
+          []
+        end
       end
     end
   end

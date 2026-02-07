@@ -9,9 +9,19 @@ module MASTER
   # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
-    WALL_CLOCK_TIMEOUT = 120  # 2 minutes
-    MAX_HISTORY_SIZE = 50  # Cap history buffer
+    WALL_CLOCK_LIMIT = 120  # seconds
+    MAX_HISTORY_SIZE = 50
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
+    
+    # Dangerous patterns to block (injection prevention)
+    DANGEROUS_PATTERNS = [
+      /rm\s+-r[f]?\s+\//,
+      />\s*\/dev\/[sh]da/,
+      /DROP\s+TABLE/i,
+      /FORMAT\s+[A-Z]:/i,
+      /mkfs\./,
+      /dd\s+if=/,
+    ].freeze
     
     # All available tools
     TOOLS = {
@@ -133,21 +143,16 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_react(goal, tier:)
-      start_time = Time.now
-      
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
       while @step < @max_steps
-        # Check wall-clock timeout
-        if Time.now - start_time > WALL_CLOCK_TIMEOUT
-          partial_context = @history.map { |h| 
-            "Step #{h[:step]}: #{h[:thought][0..100]}... -> #{h[:action][0..60]}"
-          }.join("\n")
-          
-          return Result.err(
-            "Timeout: execution exceeded #{WALL_CLOCK_TIMEOUT}s. " \
-            "Partial context:\n#{partial_context[0..500]}"
-          )
+        # Check wall clock timeout
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        if elapsed > WALL_CLOCK_LIMIT
+          best_answer = @history.last&.[](:observation) || "Timed out"
+          return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
         end
-        
+
         @step += 1
 
         context = build_context(goal)
@@ -158,12 +163,7 @@ module MASTER
         end
 
         parsed = parse_response(result.value[:content])
-        @history << { step: @step, thought: parsed[:thought], action: parsed[:action] }
-        
-        # Cap history buffer to prevent unbounded growth
-        if @history.size > MAX_HISTORY_SIZE
-          @history.shift  # Remove oldest entry
-        end
+        record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
         # Show progress
         UI.dim("  💭 #{@step}: #{parsed[:thought][0..80]}...")
@@ -214,7 +214,7 @@ module MASTER
         # Execute the planned action
         observation = execute_tool(planned_step)
         results << { step: @step, action: planned_step, observation: observation }
-        @history << results.last
+        record_history(results.last)
         
         UI.dim("  📊 #{observation[0..80]}...")
         
@@ -363,7 +363,7 @@ module MASTER
         UI.dim("  ▸ #E#{num}: #{resolved[0..60]}...")
         observation = execute_tool(resolved.strip)
         evidence[num.to_i] = observation
-        @history << { step: @step, action: resolved, observation: observation }
+        record_history({ step: @step, action: resolved, observation: observation })
         
         UI.dim("  📊 #{observation[0..60]}...")
       end
@@ -398,24 +398,24 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_reflexion(goal, tier:)
+      original_goal = goal.dup.freeze
       max_attempts = 3
       attempt = 0
-      original_goal = goal  # Preserve original goal
-      lessons_learned = []
       
       while attempt < max_attempts
         attempt += 1
         UI.dim("  🔄 Attempt #{attempt}/#{max_attempts}")
         
-        # Build goal with lessons without mutation
-        working_goal = if lessons_learned.empty?
-                         original_goal
-                       else
-                         "#{original_goal}\n\n=== Lessons from Previous Attempts ===\n#{lessons_learned.join("\n")}"
-                       end
-        
+        # Build augmented goal from original + all lessons so far
+        augmented_goal = if @reflections.any?
+          lessons = @reflections.map { |r| r[:lessons] }.compact.reject(&:empty?)
+          "#{original_goal}\n\nLESSONS FROM PREVIOUS ATTEMPTS:\n#{lessons.join("\n")}"
+        else
+          original_goal
+        end
+
         # Execute using ReAct
-        result = execute_react_inner(working_goal, tier: tier)
+        result = execute_react_inner(augmented_goal, tier: tier)
         
         # Reflect on the result
         reflection = reflect_on_result(original_goal, result, tier: :fast)
@@ -435,8 +435,6 @@ module MASTER
         
         UI.dim("  ⚠ Reflection: #{reflection[:critique][0..60]}...")
         
-        # Append lessons to structured list (no nested growth)
-        lessons_learned << "Attempt #{attempt}: #{reflection[:lessons]}"
         @history = [] # Reset for fresh attempt
         @step = 0
       end
@@ -446,7 +444,16 @@ module MASTER
 
     def execute_react_inner(goal, tier:)
       # Simplified ReAct without the outer Result wrapper
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
       5.times do
+        # Check wall clock timeout
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        if elapsed > WALL_CLOCK_LIMIT
+          best_answer = @history.last&.[](:observation) || "Timed out"
+          return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
+        end
+
         @step += 1
         context = build_context(goal)
         
@@ -454,7 +461,7 @@ module MASTER
         return Result.err("LLM error") unless result.ok?
         
         parsed = parse_response(result.value[:content])
-        @history << { step: @step, thought: parsed[:thought], action: parsed[:action] }
+        record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
         
         if parsed[:action] =~ /^(ANSWER|DONE|COMPLETE):/i
           answer = parsed[:action].sub(/^(ANSWER|DONE|COMPLETE):\s*/i, "")
@@ -561,12 +568,10 @@ module MASTER
     end
 
     def execute_tool(action_str)
-      # Validate tool name
-      tool_name = action_str.split(/\s+/).first&.to_sym
-      unless TOOLS.key?(tool_name)
-        return "Unknown tool '#{tool_name}'. Available: #{TOOLS.keys.join(', ')}"
-      end
-      
+      # Sanitize input before processing
+      action_str = sanitize_tool_input(action_str)
+      return action_str if action_str.start_with?("BLOCKED:")
+
       case action_str
       when /^ask_llm\s+["']?(.+?)["']?\s*$/i
         ask_llm($1)
@@ -581,17 +586,7 @@ module MASTER
         file_read($1.strip)
 
       when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
-        path = $1.strip
-        content = $2
-        # Validate path is under MASTER.root if defined
-        if defined?(MASTER) && MASTER.respond_to?(:root)
-          root = MASTER.root
-          expanded_path = File.expand_path(path)
-          unless expanded_path.start_with?(root)
-            return "Security: file_write path must be under #{root}"
-          end
-        end
-        file_write(path, content)
+        file_write($1.strip, $2)
 
       when /^analyze_code\s+["']?([^"'\n]+)["']?/i
         analyze_code($1.strip)
@@ -600,16 +595,10 @@ module MASTER
         fix_code($1.strip)
 
       when /^shell_command\s+["']?([^"'\n]+)["']?/i
-        cmd = $1
-        # Apply dangerous pattern guard from Stages::Guard
-        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
-          return "Security: shell command blocked due to dangerous pattern"
-        end
-        shell_command(cmd)
+        shell_command($1)
 
       when /^code_execution.*```(\w*)?\n(.+?)```/mi
-        code = $2
-        code_execution(code)
+        code_execution($2)
 
       when /^council_review\s+["']?(.+?)["']?\s*$/i
         council_review($1)
@@ -621,7 +610,7 @@ module MASTER
         self_test
 
       else
-        "Unknown tool format. Available: #{TOOLS.keys.join(', ')}"
+        "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
     rescue StandardError => e
       "Tool error: #{e.message}"
@@ -659,8 +648,13 @@ module MASTER
     end
 
     def file_write(path, content)
-      FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, content)
+      expanded = File.expand_path(path)
+      cwd = File.expand_path(".")
+      unless expanded.start_with?(cwd)
+        return "BLOCKED: file_write path '#{path}' is outside working directory"
+      end
+      FileUtils.mkdir_p(File.dirname(expanded))
+      File.write(expanded, content)
       "Written #{content.length} bytes to #{path}"
     end
 
@@ -687,6 +681,9 @@ module MASTER
     end
 
     def shell_command(cmd)
+      if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+        return "BLOCKED: dangerous shell command rejected"
+      end
       stdout, stderr, status = Open3.capture3(cmd)
       output = status.success? ? stdout : "Error: #{stderr}"
       output.length > 1000 ? "#{output[0..1000]}... (truncated)" : output
@@ -734,6 +731,18 @@ module MASTER
       else
         "SelfTest module not available"
       end
+    end
+
+    def sanitize_tool_input(action_str)
+      if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+        return "BLOCKED: dangerous pattern detected in tool input"
+      end
+      action_str
+    end
+
+    def record_history(entry)
+      @history << entry
+      @history.shift if @history.size > MAX_HISTORY_SIZE
     end
   end
 end

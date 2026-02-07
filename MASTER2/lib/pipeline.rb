@@ -4,107 +4,99 @@ module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
-    VALID_STAGES = %i[intake compress guard route council ask lint render execute].freeze
-    MAX_INPUT_BYTES = 10_000  # Maximum input size in bytes
+    MAX_INPUT_LENGTH = 100_000 # ~25k tokens
+
+    @current_pattern = :auto
+    @current_pattern_mutex = Mutex.new
 
     class << self
-      attr_accessor :current_pattern
+      def current_pattern
+        @current_pattern_mutex.synchronize { @current_pattern }
+      end
+
+      def current_pattern=(value)
+        @current_pattern_mutex.synchronize { @current_pattern = value }
+      end
     end
-    @current_pattern = :auto
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
-      
-      # Validate stage names if using stage symbols
-      if @mode == :stages
-        invalid_stages = stages.select { |s| s.is_a?(Symbol) && !VALID_STAGES.include?(s) }
-        unless invalid_stages.empty?
-          raise ArgumentError, "Invalid stage(s): #{invalid_stages.join(', ')}. " \
-                               "Valid stages: #{VALID_STAGES.join(', ')}"
-        end
-      end
-      
       @stages = stages.map do |stage|
-        stage.respond_to?(:call) ? stage : Stages.const_get(stage.to_s.capitalize).new
+        if stage.respond_to?(:call)
+          stage
+        else
+          const_name = stage.to_s.capitalize.to_sym
+          unless Stages.const_defined?(const_name)
+            available = Stages.constants.join(", ")
+            raise ArgumentError, "Unknown pipeline stage: #{stage}. Available: #{available}"
+          end
+          Stages.const_get(const_name).new
+        end
       end
     end
 
     def call(input)
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
-      case @mode
-      when :executor
-        # Default: Use autonomous executor with pattern selection
-        result = Executor.call(text, pattern: self.class.current_pattern)
-        # Normalize return shape
-        if result.ok?
-          Result.ok(
-            response: result.value[:answer],
-            rendered: result.value[:answer],
-            model: nil,
-            cost: result.value[:cost] || 0,
-            tokens_in: 0,
-            tokens_out: 0,
-            pattern: result.value[:pattern],
-            steps: result.value[:steps]
-          )
-        else
-          result
-        end
-      when :stages
-        # Legacy: Stage-based pipeline with error context
-        result = @stages.reduce(Result.ok(input)) do |res, stage|
-          res.flat_map do |data|
-            stage_result = stage.call(data)
-            # Add stage name to error if it fails
-            if stage_result.err?
-              stage_name = stage.class.name.split('::').last
-              Result.err("#{stage_name}: #{stage_result.error}")
+      raw = case @mode
+            when :executor
+              # Default: Use autonomous executor with pattern selection
+              Executor.call(text, pattern: self.class.current_pattern)
+            when :stages
+              # Legacy: Stage-based pipeline
+              @stages.reduce(Result.ok(input)) do |result, stage|
+                stage_name = stage.class.name&.split("::")&.last || stage.class.name
+                result.and_then(stage_name) { |data| stage.call(data) }
+              end
+            when :direct
+              # Simple: Direct LLM call, no tools
+              LLM.ask(text, stream: true)
             else
-              stage_result
+              Executor.call(text, pattern: self.class.current_pattern)
             end
-          end
-        end
-        # Normalize return shape
-        if result.ok?
-          data = result.value
-          Result.ok(
-            response: data[:response] || data[:text],
-            rendered: data[:rendered] || data[:response] || data[:text],
-            model: data[:model],
-            cost: data[:cost] || 0,
-            tokens_in: data[:tokens_in] || 0,
-            tokens_out: data[:tokens_out] || 0
-          )
-        else
-          result
-        end
-      when :direct
-        # Simple: Direct LLM call, no tools
-        result = LLM.ask(text, stream: true)
-        # Normalize return shape
-        if result.ok?
-          Result.ok(
-            response: result.value[:content],
-            rendered: result.value[:content],
-            model: result.value[:model],
-            cost: result.value[:cost] || 0,
-            tokens_in: result.value[:tokens_in] || 0,
-            tokens_out: result.value[:tokens_out] || 0
-          )
-        else
-          result
-        end
-      else
-        Executor.call(text, pattern: self.class.current_pattern)
+
+      normalize_result(raw)
+    end
+
+    private
+
+    def normalize_result(result)
+      return result if result.err?
+
+      v = result.value
+      return result unless v.is_a?(Hash)
+
+      # Normalize known keys
+      normalized = {
+        response: v[:response] || v[:answer] || v[:content],
+        rendered: v[:rendered],
+        model: v[:model],
+        cost: v[:cost],
+        tokens_in: v[:tokens_in],
+        tokens_out: v[:tokens_out],
+        pattern: v[:pattern],
+        steps: v[:steps],
+        history: v[:history],
+      }.compact
+
+      # Apply typography rendering if we have a response but no rendered version
+      if normalized[:response] && !normalized[:rendered]
+        normalized[:rendered] = normalized[:response]
       end
+
+      # Preserve any custom keys from the original value
+      v.each do |key, val|
+        normalized[key] = val unless normalized.key?(key)
+      end
+
+      Result.ok(normalized)
     end
 
     class << self
       def prompt
         model = LLM.prompt_model_name
         budget = LLM.budget_remaining
-        tokens = Session.current.token_count rescue 0
+        tokens = Session.current.message_count rescue 0
 
         # Shell-style: master@model [tokens] $cost$
         # Dense, informative prompt
@@ -180,33 +172,28 @@ module MASTER
 
           break if line.nil?
 
-          # Input validation
-          input_text = line.strip
-          
-          if input_text.empty?
+          # Validate encoding
+          unless line.valid_encoding?
+            UI.warn("Invalid encoding in input — converting to UTF-8")
+            line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+          end
+
+          # Validate length
+          if line.length > MAX_INPUT_LENGTH
+            UI.warn("Input too long (#{line.length} chars). Truncated to #{MAX_INPUT_LENGTH}.")
+            line = line[0, MAX_INPUT_LENGTH]
+          end
+
+          if line.strip.empty?
             Onboarding.suggest_on_empty if defined?(Onboarding)
-            next
-          end
-          
-          # Max input length validation
-          if input_text.bytesize > MAX_INPUT_BYTES
-            puts
-            UI.error("Input too long (#{input_text.bytesize} bytes). Maximum: #{MAX_INPUT_BYTES} bytes")
-            next
-          end
-          
-          # UTF-8 validation
-          unless input_text.valid_encoding?
-            puts
-            UI.error("Invalid UTF-8 encoding in input. Please use valid UTF-8 characters.")
             next
           end
 
           # Track user input in session
-          session.add_user(input_text)
+          session.add_user(line.strip)
 
           if defined?(Commands)
-            cmd_result = Commands.dispatch(input_text, pipeline: pipeline)
+            cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
             break if cmd_result == :exit
             next if cmd_result.nil?
 
@@ -225,12 +212,12 @@ module MASTER
               end
             elsif cmd_result.respond_to?(:err?) && cmd_result.err?
               # Unknown command - suggest similar
-              Onboarding.show_did_you_mean(input_text) if defined?(Onboarding)
+              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
             end
             next
           end
 
-          result = pipeline.call({ text: input_text })
+          result = pipeline.call({ text: line.strip })
 
           if result.ok?
             output = result.value[:rendered] || result.value[:response]

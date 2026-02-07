@@ -6,15 +6,10 @@ module MASTER
     attr_reader :value, :error, :kind
 
     def initialize(value: nil, error: nil, kind: nil)
-      @kind = kind || (error.nil? ? :ok : :err)
       @value = value
       @error = error
-      # Freeze to prevent mutation after construction
-      # Note: Hash/Array values are not frozen to allow mutation of result data structures
-      # Only freeze simple immutable types (String, Symbol, Numeric, etc.)
-      @value.freeze if @value.is_a?(String) || @value.is_a?(Symbol)
-      @error.freeze unless @error.nil?
-      freeze
+      @kind = kind || (error.nil? ? :ok : :err)
+      freeze_state
     end
 
     def ok? = @kind == :ok
@@ -23,7 +18,8 @@ module MASTER
     def failure = @error
 
     def value!
-      ok? ? @value : raise(@error.to_s)
+      raise(@error.to_s) if err?
+      @value
     end
 
     def unwrap = value!
@@ -42,9 +38,17 @@ module MASTER
     def flat_map
       return self if err?
       result = yield(@value)
+      # Auto-wrap non-Result returns for convenience
       result.is_a?(Result) ? result : Result.ok(result)
     rescue StandardError => e
       Result.err(e.message)
+    end
+
+    def and_then(label = nil)
+      return self if err?
+      yield(@value)
+    rescue StandardError => e
+      Result.err("#{label ? "#{label}: " : ""}#{e.message}")
     end
 
     class << self
@@ -56,6 +60,15 @@ module MASTER
       rescue StandardError => e
         err(e.message)
       end
+    end
+
+    private
+
+    def freeze_state
+      # Don't deep-freeze, just prevent reassignment
+      # Freeze String and Symbol values to prevent mutation
+      @value.freeze if @value.is_a?(String) || @value.is_a?(Symbol)
+      @error.freeze if @error.is_a?(String)
     end
   end
 

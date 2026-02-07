@@ -11,6 +11,7 @@ module MASTER
     extend self
 
     @buffer = []
+    @buffer_mutex = Mutex.new
     @start_time = Time.now
     MAX_BUFFER_SIZE = 1000  # Cap buffer at 1000 entries
 
@@ -42,10 +43,11 @@ module MASTER
                end
 
         entry = { time: timestamp, line: line, level: level }
-        @buffer << entry
-        
-        # Cap buffer to prevent unbounded growth
-        @buffer = @buffer.last(MAX_BUFFER_SIZE) if @buffer.size > MAX_BUFFER_SIZE
+        @buffer_mutex.synchronize do
+          @buffer << entry
+          # Cap buffer to prevent unbounded growth
+          @buffer.shift if @buffer.size > MAX_BUFFER_SIZE
+        end
 
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?
@@ -136,13 +138,13 @@ module MASTER
 
       # Dump buffer
       def dump(last_n: nil, min_level: SILENT)
-        entries = @buffer.select { |e| e[:level] >= min_level }
+        entries = @buffer_mutex.synchronize { @buffer.select { |e| e[:level] >= min_level } }
         entries = entries.last(last_n) if last_n
         entries.map { |e| "[#{e[:time]}ms] #{e[:line]}" }.join("\n")
       end
 
       def clear
-        @buffer.clear
+        @buffer_mutex.synchronize { @buffer.clear }
       end
 
       def reset_timer

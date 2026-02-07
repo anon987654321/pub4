@@ -25,3 +25,15 @@ thresholds:
   parameter_count: 5
   class_count_per_file: 3
   line_length: 120
+
+# Language axioms are defined in language_axioms.yml
+# See: data/language_axioms.yml for 78 language-specific beauty rules
+language_axiom_categories:
+  - ruby
+  - rails
+  - zsh
+  - html_erb
+  - css_scss
+  - javascript
+  - universal
+

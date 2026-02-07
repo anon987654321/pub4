@@ -34,23 +34,26 @@ module MASTER
       end
 
       def check_rate_limit!
-        now = Time.now
-        state = rate_limit_state
-        
-        # Clean old requests (older than 1 minute)
-        state[:requests].reject! { |t| now - t > 60 }
-        
-        if state[:requests].size >= RATE_LIMIT_PER_MINUTE
-          oldest = state[:requests].min
-          wait_time = 60 - (now - oldest)
-          if wait_time > 0
-            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
-            sleep(wait_time)
-            state[:requests].clear
+        @rate_limit_mutex ||= Mutex.new
+        @rate_limit_mutex.synchronize do
+          now = Time.now
+          state = rate_limit_state
+          
+          # Clean old requests (older than 1 minute)
+          state[:requests].reject! { |t| now - t > 60 }
+          
+          if state[:requests].size >= RATE_LIMIT_PER_MINUTE
+            oldest = state[:requests].min
+            wait_time = 60 - (now - oldest)
+            if wait_time > 0
+              Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
+              sleep(wait_time)
+              state[:requests].clear
+            end
           end
+          
+          state[:requests] << now
         end
-        
-        state[:requests] << now
       end
 
       def models
@@ -146,11 +149,11 @@ module MASTER
         # Rate limit check
         check_rate_limit!
 
-        # Model selection with fallbacks - SELECT ONCE
+        # Model selection (single call - no TOCTOU)
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
 
-        # Pre-query cost estimate (rough: ~1k tokens in + 500 out) using selected model
+        # Pre-query cost estimate
         if model_rates[primary]
           est_cost = estimate_cost(primary, tokens_in: 1000, tokens_out: 500)
           if est_cost > MAX_COST_PER_QUERY
@@ -366,33 +369,18 @@ module MASTER
         data = JSON.parse(response.body, symbolize_names: true)
         choice = data[:choices]&.first
         message = choice&.[](:message)
-        
-        # Validate required fields
-        content = message&.[](:content)
-        if content.nil? || (content.is_a?(String) && content.empty?)
-          return Result.err("LLM response missing content")
-        end
-        
-        tokens_in = data.dig(:usage, :prompt_tokens)
-        tokens_out = data.dig(:usage, :completion_tokens)
-        unless tokens_in.is_a?(Integer) && tokens_in >= 0 && tokens_out.is_a?(Integer) && tokens_out >= 0
-          return Result.err("LLM response has invalid token counts")
-        end
-        
-        cost = data.dig(:usage, :cost)
-        if cost && (!cost.is_a?(Numeric) || cost < 0)
-          return Result.err("LLM response has invalid cost")
-        end
 
-        Result.ok(
-          content: content,
+        response_data = {
+          content: message&.[](:content),
           reasoning: message&.[](:reasoning),
           model: data[:model],
-          tokens_in: tokens_in,
-          tokens_out: tokens_out,
-          cost: cost,
+          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
+          tokens_out: data.dig(:usage, :completion_tokens) || 0,
+          cost: data.dig(:usage, :cost),
           finish_reason: choice&.[](:finish_reason)
-        )
+        }
+
+        validate_response(response_data, req.body ? JSON.parse(req.body)[:model] : "unknown")
       rescue JSON::ParserError => e
         Result.err("JSON parse error: #{e.message}")
       end
@@ -445,7 +433,7 @@ module MASTER
 
         $stderr.puts
 
-        Result.ok(
+        final_data = {
           content: content_parts.join,
           reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
           model: final_data[:model],
@@ -453,7 +441,9 @@ module MASTER
           tokens_out: final_data[:tokens_out] || 0,
           cost: final_data[:cost],
           finish_reason: "stop"
-        )
+        }
+
+        validate_response(final_data, "streaming")
       end
 
       def select_model_for_tier(tier)
@@ -498,7 +488,17 @@ module MASTER
       end
 
       def open_circuit!(model)
-        DB.trip!(model) if defined?(DB)
+        return unless defined?(DB)
+
+        row = DB.circuit(model)
+        current_failures = row ? (row[:failures] || 0) + 1 : 1
+
+        if current_failures >= FAILURES_BEFORE_TRIP
+          DB.trip!(model)
+        else
+          # Increment failure count without tripping
+          DB.increment_failure!(model)
+        end
       end
 
       def close_circuit!(model)
@@ -557,6 +557,27 @@ module MASTER
           est_tokens_in = (char_count / 4.0).ceil
           (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
         end
+      end
+
+      def validate_response(data, model_id)
+        content = data[:content]
+        if content.nil? || (content.is_a?(String) && content.strip.empty?)
+          return Result.err("Empty response from #{extract_model_name(model_id)}")
+        end
+
+        unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
+          data[:tokens_in] = 0
+        end
+
+        unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
+          data[:tokens_out] = 0
+        end
+
+        if data[:cost] && !(data[:cost].is_a?(Numeric))
+          data[:cost] = nil
+        end
+
+        Result.ok(data)
       end
     end
   end

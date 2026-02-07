@@ -82,7 +82,7 @@ module MASTER
 
     def total_cost
       costs = read_collection("costs")
-      costs.sum { |c| c["cost"] || c[:cost] || 0 }
+      costs.sum { |c| c[:cost] || 0 }
     end
 
     def recent_costs(limit: 10)
@@ -129,6 +129,26 @@ module MASTER
       existing[:state] = "closed"
       existing[:failures] = 0
       write_collection("circuits", circuits)
+    end
+
+    def increment_failure!(model)
+      circuits = read_collection("circuits")
+      existing = circuits.find { |c| c[:model] == model }
+
+      if existing
+        existing[:failures] = (existing[:failures] || 0) + 1
+        existing[:last_failure] = Time.now.utc.iso8601
+        # Keep state as-is (don't open yet)
+        write_collection("circuits", circuits)
+      else
+        record = {
+          model: model,
+          state: "closed",
+          failures: 1,
+          last_failure: Time.now.utc.iso8601,
+        }
+        append("circuits", record)
+      end
     end
 
     # --- Sessions ---
@@ -204,10 +224,13 @@ module MASTER
 
     def write_collection(name, data)
       path = file_path(name)
+      temp_path = "#{path}.tmp"
+      
       synchronize do
-        File.open(path, "w") do |f|
+        File.open(temp_path, "w") do |f|
           data.each { |item| f.puts(JSON.generate(item)) }
         end
+        File.rename(temp_path, path)
       end
     end
 
@@ -234,6 +257,7 @@ module MASTER
     end
 
     def seed_axioms
+      return unless read_collection("axioms").empty?
       default_axioms = [
         { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
         { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },
@@ -246,6 +270,7 @@ module MASTER
     end
 
     def seed_council
+      return unless read_collection("council").empty?
       default_council = [
         { name: "Architect", role: "system_design", style: "formal", bias: "structure" },
         { name: "Skeptic", role: "devil_advocate", style: "critical", bias: "caution" },
