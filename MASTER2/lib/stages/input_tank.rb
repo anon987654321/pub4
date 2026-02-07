@@ -63,12 +63,12 @@ module MASTER
       end
 
       def identify_intent(text)
-        # Simple keyword-based intent detection
+        # Simple keyword-based intent detection (order matters - more specific first)
+        return :github if text.match?(/\bgithub\b|\bgh\b|\bpr\b|\bissue\b|\bworkflow\b/i)
         return :question if text.match?(/\?$|\bwhat\b|\bhow\b|\bwhy\b|\bwhen\b/i)
         return :refactor if text.match?(/\brefactor\b|\bimprove\b|\boptimize\b/i)
         return :admin if text.match?(/\bpf\b|\bhttpd\b|\brelayd\b|\bconfig\b/i)
         return :command if text.match?(/^(create|delete|update|run|execute)\b/i)
-        return :github if text.match?(/\bgithub\b|\bgh\b|\bpr\b|\bissue\b|\bworkflow\b/i)
         :general
       end
 
