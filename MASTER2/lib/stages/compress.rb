@@ -69,12 +69,15 @@ module MASTER
         model = LLM.pick
         return regex_fallback_classify(text) unless model
         
+        chat = LLM.chat(model: model)
+        return regex_fallback_classify(text) unless chat
+        
         prompt = <<~PROMPT
           Classify this input. Return ONLY one word: question, refactor, admin, command, or general.
           Input: #{text}
         PROMPT
         
-        response = LLM.chat(model: model).ask(prompt)
+        response = chat.ask(prompt)
         raw_result = response.content.strip.downcase.to_sym
         
         # Validate against allowlist
@@ -108,6 +111,9 @@ module MASTER
         model = LLM.pick
         return regex_fallback_extract(text) unless model
         
+        chat = LLM.chat(model: model)
+        return regex_fallback_extract(text) unless chat
+        
         prompt = <<~PROMPT
           Extract entities from this text. Return JSON:
           {"files": [...], "services": [...], "configs": [...]}
@@ -115,7 +121,7 @@ module MASTER
           Text: #{text}
         PROMPT
         
-        response = LLM.chat(model: model).ask(prompt)
+        response = chat.ask(prompt)
         
         # Parse and validate JSON structure
         parsed = JSON.parse(response.content, symbolize_names: true)

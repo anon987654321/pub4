@@ -41,13 +41,13 @@ class TestSelfMap < Minitest::Test
 
   def test_target_directory
     result = MASTER::SelfMap.target("lib")
-    assert result.ok?
-    groups = result.value
+    assert result.success?
+    groups = result.value!
     assert groups[:ruby].length > 0
   end
 
   def test_target_missing_directory
     result = MASTER::SelfMap.target("nonexistent_dir_xyz")
-    assert result.err?
+    assert result.failure?
   end
 end
