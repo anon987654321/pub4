@@ -1,0 +1,58 @@
+# OpenBSD system knowledge — agents generate OpenBSD-native commands
+
+service_management:
+  enable: "rcctl enable ${service}"
+  start: "rcctl start ${service}"
+  restart: "rcctl restart ${service}"
+  check: "rcctl check ${service}"
+  disable: "rcctl disable ${service}"
+
+config_paths:
+  pf: "/etc/pf.conf"
+  httpd: "/etc/httpd.conf"
+  relayd: "/etc/relayd.conf"
+  smtpd: "/etc/mail/smtpd.conf"
+  acme: "/etc/acme-client.conf"
+  ssh: "/etc/ssh/sshd_config"
+  ntp: "/etc/ntpd.conf"
+  cron: "/var/cron/tabs/${user}"
+
+package_management:
+  install: "pkg_add ${package}"
+  remove: "pkg_delete ${package}"
+  search: "pkg_info -Q ${query}"
+  update: "pkg_add -u"
+  firmware: "fw_update"
+
+forbidden:
+  - command: "systemctl"
+    replacement: "rcctl"
+  - command: "apt"
+    replacement: "pkg_add"
+  - command: "apt-get"
+    replacement: "pkg_add"
+  - command: "brew"
+    replacement: "pkg_add"
+  - command: "yum"
+    replacement: "pkg_add"
+  - command: "ip addr"
+    replacement: "ifconfig"
+  - command: "ip route"
+    replacement: "route"
+  - command: "journalctl"
+    replacement: "cat /var/log/messages"
+  - command: "sudo"
+    replacement: "doas"
+  - command: "ufw"
+    replacement: "pfctl"
+  - command: "iptables"
+    replacement: "pf"
+  - command: "nginx"
+    replacement: "httpd (OpenBSD native)"
+
+security:
+  pledge: "pledge(2) restricts syscalls after initialization"
+  unveil: "unveil(2) restricts filesystem visibility"
+  doas: "doas.conf for privilege escalation (never sudo)"
+  signify: "signify(1) for cryptographic signing"
+  chroot: "httpd runs chrooted by default"

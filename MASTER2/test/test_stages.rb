@@ -136,4 +136,39 @@ class TestStages < Minitest::Test
     assert result.ok?
     refute result.value[:zsh_patterns], "Should not load zsh patterns for general intent"
   end
+
+  def test_input_tank_loads_openbsd_patterns_for_command_intent
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("create a new script")
+    
+    assert result.ok?
+    assert result.value[:openbsd_patterns], "Should load openbsd patterns for command intent"
+    assert result.value[:openbsd_patterns].length > 0, "Should have openbsd patterns loaded"
+  end
+
+  def test_input_tank_loads_openbsd_patterns_for_admin_intent
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("configure pf firewall")
+    
+    assert result.ok?
+    assert result.value[:openbsd_patterns], "Should load openbsd patterns for admin intent"
+  end
+
+  def test_input_tank_loads_openbsd_patterns_for_services
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("check ntpd status")
+    
+    assert result.ok?
+    assert result.value[:openbsd_patterns], "Should load openbsd patterns when OpenBSD services detected"
+  end
+
+  def test_input_tank_extracts_openbsd_services
+    stage = MASTER::Stages::InputTank.new
+    result = stage.call("restart ntpd and check sshd")
+    
+    assert result.ok?
+    assert result.value[:entities][:services], "Should extract OpenBSD service names"
+    assert_includes result.value[:entities][:services], "ntpd"
+    assert_includes result.value[:entities][:services], "sshd"
+  end
 end

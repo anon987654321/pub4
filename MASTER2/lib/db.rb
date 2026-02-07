@@ -62,6 +62,15 @@ module MASTER
             command TEXT,
             replacement TEXT
           );
+
+          CREATE TABLE IF NOT EXISTS openbsd_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            key TEXT,
+            value TEXT,
+            command TEXT,
+            replacement TEXT
+          );
         SQL
       end
 
@@ -69,6 +78,7 @@ module MASTER
         seed_axioms
         seed_council
         seed_zsh_patterns
+        seed_openbsd_patterns
       end
 
       def seed_axioms
@@ -153,8 +163,74 @@ module MASTER
         end
       end
 
+      def seed_openbsd_patterns
+        patterns_path = "#{MASTER.root}/data/openbsd_patterns.yml"
+        return unless File.exist?(patterns_path)
+
+        data = YAML.safe_load_file(patterns_path)
+        return unless data.is_a?(Hash)
+
+        # Seed forbidden commands
+        if data["forbidden"]&.is_a?(Array)
+          data["forbidden"].each do |item|
+            @connection.execute(
+              "INSERT OR REPLACE INTO openbsd_patterns (category, command, replacement) VALUES (?, ?, ?)",
+              ["forbidden", item["command"], item["replacement"]]
+            )
+          end
+        end
+
+        # Seed service management patterns
+        if data["service_management"]&.is_a?(Hash)
+          data["service_management"].each do |key, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO openbsd_patterns (category, key, value) VALUES (?, ?, ?)",
+              ["service_management", key.to_s, value]
+            )
+          end
+        end
+
+        # Seed config paths
+        if data["config_paths"]&.is_a?(Hash)
+          data["config_paths"].each do |key, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO openbsd_patterns (category, key, value) VALUES (?, ?, ?)",
+              ["config_paths", key.to_s, value]
+            )
+          end
+        end
+
+        # Seed package management patterns
+        if data["package_management"]&.is_a?(Hash)
+          data["package_management"].each do |key, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO openbsd_patterns (category, key, value) VALUES (?, ?, ?)",
+              ["package_management", key.to_s, value]
+            )
+          end
+        end
+
+        # Seed security patterns
+        if data["security"]&.is_a?(Hash)
+          data["security"].each do |key, value|
+            @connection.execute(
+              "INSERT OR REPLACE INTO openbsd_patterns (category, key, value) VALUES (?, ?, ?)",
+              ["security", key.to_s, value]
+            )
+          end
+        end
+      end
+
       def get_zsh_patterns
         @connection.execute("SELECT * FROM zsh_patterns ORDER BY category, command")
+      end
+
+      def get_openbsd_patterns(category: nil)
+        if category
+          @connection.execute("SELECT * FROM openbsd_patterns WHERE category = ? ORDER BY category, key, command", [category])
+        else
+          @connection.execute("SELECT * FROM openbsd_patterns ORDER BY category, key, command")
+        end
       end
 
       def get_axioms(category: nil, protection: nil)
