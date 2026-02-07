@@ -27,8 +27,8 @@ module MASTER
         end
       end
 
-      def select_model
-        tier = affordable_tier
+      def select_model(text_length = nil)
+        tier = affordable_tier(text_length)
         return nil unless tier
 
         candidates = RATES.select { |_k, v| v[:tier] == tier }.keys
@@ -70,17 +70,39 @@ module MASTER
         BUDGET_LIMIT - DB.get_total_cost
       end
 
-      def affordable_tier
+      def affordable_tier(text_length = nil)
         remaining_budget = remaining
         return nil if remaining_budget <= 0
 
-        # Return the most powerful tier we can afford
-        if remaining_budget > 5.0
-          :strong
-        elsif remaining_budget > 1.0
-          :fast
+        # Use text_length to select tier if provided (smarter selection like v3)
+        # For long texts, prefer cheaper tiers to stay within budget
+        if text_length && text_length > 10000
+          # Long text: prefer cheaper tiers
+          if remaining_budget > 1.0
+            :fast
+          elsif remaining_budget > 0
+            :cheap
+          else
+            nil
+          end
+        elsif text_length && text_length > 5000
+          # Medium text: prefer fast tier
+          if remaining_budget > 5.0
+            :fast
+          elsif remaining_budget > 0.5
+            :cheap
+          else
+            nil
+          end
         else
-          :cheap
+          # Short text or no length provided: use budget-based selection
+          if remaining_budget > 5.0
+            :strong
+          elsif remaining_budget > 1.0
+            :fast
+          else
+            :cheap
+          end
         end
       end
 

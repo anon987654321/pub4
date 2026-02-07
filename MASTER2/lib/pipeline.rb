@@ -4,7 +4,7 @@ require "timeout"
 
 module MASTER
   class Pipeline
-    DEFAULT_STAGES = %i[input_tank council_debate refactor_engine output_tank].freeze
+    DEFAULT_STAGES = %i[input_tank guard council_debate ask refactor_engine openbsd_admin output_tank].freeze
     STAGE_TIMEOUT = 120 # seconds
 
     attr_reader :stages
