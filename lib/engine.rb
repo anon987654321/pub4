@@ -84,3 +84,13 @@ end
         end
       end
     end
+    autonomy = Autonomy.new
+    decision = autonomy.decide(:refactor, analysis[:risk])
+    case decision
+    when :apply
+      # Apply
+    when :preview
+      { success: false, preview: transformed_code }
+    when :ask
+      { success: false, suggestions: analysis[:suggestions] }
+    end
