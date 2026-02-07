@@ -82,7 +82,7 @@ module MASTER
           end
         else
           # No model available, use stub behavior
-          warn "WARN: No LLM model available (budget exhausted or all circuits tripped). Using stub responses."
+          warn "No LLM model available (budget exhausted or all circuits tripped). Using stub responses."
           
           members.each do |member|
             response = {

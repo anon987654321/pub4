@@ -9,7 +9,7 @@ module MASTER
       attr_reader :connection
 
       def setup(path: "#{MASTER.root}/master.db")
-        @mutex = Mutex.new
+        @mutex ||= Mutex.new
         @connection = SQLite3::Database.new(path)
         @connection.results_as_hash = true
         create_schema
