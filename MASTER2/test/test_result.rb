@@ -62,7 +62,7 @@ class TestResult < Minitest::Test
 
   def test_flat_map_short_circuit
     result = MASTER::Result.ok(5)
-      .flat_map { |x| MASTER::Result.err("error") }
+      .flat_map { |_x| MASTER::Result.err("error") }
       .flat_map { |x| MASTER::Result.ok(x + 3) }
     assert result.err?
     assert_equal "error", result.error

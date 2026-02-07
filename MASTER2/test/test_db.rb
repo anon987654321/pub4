@@ -80,4 +80,59 @@ class TestDB < Minitest::Test
     value = MASTER::DB.get_config("test_key")
     assert_equal "test_value", value
   end
+
+  def test_openbsd_patterns_table_created
+    tables = MASTER::DB.connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    table_names = tables.map { |row| row["name"] }
+    assert_includes table_names, "openbsd_patterns"
+  end
+
+  def test_openbsd_patterns_seeded
+    patterns = MASTER::DB.get_openbsd_patterns
+    assert patterns.length > 0, "OpenBSD patterns should be seeded"
+    
+    # Check forbidden commands exist
+    forbidden = patterns.select { |p| p["category"] == "forbidden" }
+    assert forbidden.length > 0, "Should have forbidden commands"
+    
+    systemctl = forbidden.find { |p| p["command"] == "systemctl" }
+    assert systemctl, "Should have systemctl forbidden command"
+    assert_equal "rcctl", systemctl["replacement"]
+  end
+
+  def test_openbsd_patterns_service_management
+    patterns = MASTER::DB.get_openbsd_patterns(category: "service_management")
+    assert patterns.length > 0, "Should have service management patterns"
+    
+    enable = patterns.find { |p| p["key"] == "enable" }
+    assert enable, "Should have enable pattern"
+    assert_equal "rcctl enable ${service}", enable["value"]
+  end
+
+  def test_openbsd_patterns_config_paths
+    patterns = MASTER::DB.get_openbsd_patterns(category: "config_paths")
+    assert patterns.length > 0, "Should have config paths"
+    
+    pf = patterns.find { |p| p["key"] == "pf" }
+    assert pf, "Should have pf config path"
+    assert_equal "/etc/pf.conf", pf["value"]
+  end
+
+  def test_openbsd_patterns_package_management
+    patterns = MASTER::DB.get_openbsd_patterns(category: "package_management")
+    assert patterns.length > 0, "Should have package management patterns"
+    
+    install = patterns.find { |p| p["key"] == "install" }
+    assert install, "Should have install pattern"
+    assert_equal "pkg_add ${package}", install["value"]
+  end
+
+  def test_openbsd_patterns_security
+    patterns = MASTER::DB.get_openbsd_patterns(category: "security")
+    assert patterns.length > 0, "Should have security patterns"
+    
+    pledge = patterns.find { |p| p["key"] == "pledge" }
+    assert pledge, "Should have pledge security pattern"
+    assert_match /pledge\(2\)/, pledge["value"]
+  end
 end

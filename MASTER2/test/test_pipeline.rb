@@ -42,7 +42,7 @@ class TestPipeline < Minitest::Test
   def test_pipeline_short_circuits_on_error
     # Create a custom stage that fails
     failing_stage = Class.new do
-      def call(input)
+      def call(_input)
         MASTER::Result.err("intentional failure")
       end
     end
@@ -50,10 +50,10 @@ class TestPipeline < Minitest::Test
     # Monkey patch stages temporarily
     original_stages = MASTER::Pipeline::DEFAULT_STAGES
     MASTER::Pipeline.const_set(:DEFAULT_STAGES, [:input_tank])
-    
+
     pipeline = MASTER::Pipeline.new(stages: [failing_stage.new])
     result = pipeline.call({ text: "test" })
-    
+
     assert result.err?
     assert_equal "intentional failure", result.error
   ensure
