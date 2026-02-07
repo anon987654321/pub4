@@ -41,6 +41,18 @@ class TestRefactor < Minitest::Test
     assert_match /Usage/, result.error
   end
 
+  def test_refactor_empty_arguments
+    result = MASTER::Commands.send(:refactor, "   ")
+    assert result.err?
+    assert_match(/Usage/, result.error)
+  end
+
+  def test_refactor_only_flags
+    result = MASTER::Commands.send(:refactor, "--raw")
+    assert result.err?
+    assert_match(/Usage|empty/, result.error)
+  end
+
   def test_extract_mode_preview_default
     mode = MASTER::Commands.send(:extract_mode, [])
     assert_equal :preview, mode

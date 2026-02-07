@@ -301,9 +301,19 @@ module MASTER
         return Result.err("Usage: refactor <file> [--preview|--raw|--apply]") unless args
 
         parts = args.strip.split(/\s+/)
+        return Result.err("Usage: refactor <file> [--preview|--raw|--apply]") if parts.empty?
+        
         file = parts.first
+        
+        # Check if the first argument looks like a flag
+        if file&.start_with?("--")
+          return Result.err("Usage: refactor <file> [--preview|--raw|--apply]")
+        end
+        
         mode = extract_mode(parts[1..-1])
 
+        return Result.err("File path cannot be empty") if file.nil? || file.empty?
+        
         path = File.expand_path(file)
         return Result.err("File not found: #{file}") unless File.exist?(path)
 
