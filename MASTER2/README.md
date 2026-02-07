@@ -1,147 +1,31 @@
-# MASTER v4.0.0
+# MASTER
 
-An autonomous agent system with 5 specialized engines for quality-driven software development.
+MASTER is an autonomous agent system. It processes input through a five-stage pipeline: compression, adversarial debate, axiom enforcement, OpenBSD administration, and output refinement. It runs on OpenBSD, is written in Ruby, and talks to LLMs through OpenRouter.
 
-## Architecture
+The pipeline uses a functional Result monad. Each stage receives input, transforms it, and returns Ok or Err. Stages chain via flat_map. First error short-circuits the pipeline. No exceptions, no nil checks, no imperative error handling.
 
-MASTER v4 processes input through a pipeline of specialized stages:
+MASTER is self-aware. It knows its own file tree. It can target any directory including itself for analysis and refactoring. When told to run itself over itself, it maps every file, assigns agents, and applies its own axioms to its own code. The self-application axiom is ABSOLUTE: if MASTER cannot pass its own review, it has failed.
 
-1. **Input Tank** (Pressure Tank): Compresses and refines user input through 8-phase discovery including intent identification, entity extraction, and Strunk & White compression.
+MASTER is a superagent. It spawns child agents for decomposed tasks. Each child gets a hex ID, a user-agent string, a budget slice, and an axiom filter. Children run through the same pipeline as the parent. Their output passes through a pf-inspired firewall before the parent trusts it. Children cannot escalate privileges. They cannot doas, sudo, or write to protected paths. If a child needs elevated access, it returns an escalation request. The parent's adversarial council reviews it. Separation of privilege, same as Unix.
 
-2. **Council Debate**: Adversarial council of 12 personas debates every decision. Three veto-capable personas (Security Officer, The Attacker, The Maintainer) can block proposals. Requires 70% weighted consensus to proceed.
+The adversarial council has 12 personas. Three hold veto power: Security Officer, The Attacker, The Maintainer. These three can unilaterally block any proposal. The remaining nine are advisory. Consensus requires 70% weighted agreement. If the council oscillates for 25 iterations without convergence, it halts and demands human intervention.
 
-3. **Refactor Engine**: Enforces timeless axioms from `axioms.yml`. ABSOLUTE axioms (like "The Tool Applies to Itself") trigger errors on violation. PROTECTED axioms trigger warnings.
+MASTER enforces 20 axioms. 13 are from engineering and communication literature: DRY, KISS, SOLID, Strunk and White, Bringhurst, Nielsen. 7 are structural transformations: merge, flatten, defragment, decouple, hoist, prune, coalesce. These structural axioms apply to everything. Code, configuration, prose, directory trees. Violations of ABSOLUTE axioms halt the system. Violations of PROTECTED axioms generate warnings.
 
-4. **OpenBSD Admin**: Generates declarative OpenBSD configurations (pf, httpd, relayd) when admin tasks are detected.
+Axiom enforcement happens at five layers: literal with regex, lexical with token counting, conceptual with intent analysis via LLM, semantic with meaning analysis via LLM, and cognitive with human comprehension assessment via LLM. Literal and lexical are free. Conceptual, semantic, and cognitive cost tokens, escalating from cheap to strong tier models.
 
-5. **Output Tank** (Depressure Tank): Multi-model refinement with typographic rules (smart quotes, em dashes, ellipses), Zsh-pure validation for shell code, and cost/token summaries.
+The LLM provider is OpenRouter. All model requests route through OpenRouter's API. MASTER uses the ruby_llm gem configured with a single OPENROUTER_API_KEY. Models are organized in three tiers: strong with deepseek/deepseek-r1 and anthropic/claude-sonnet-4, fast with deepseek/deepseek-v3 and openai/gpt-4.1-mini, and cheap with openai/gpt-4.1-nano. The system selects the most powerful affordable tier based on remaining budget. A circuit breaker trips after three consecutive failures per model, with a five-minute cooldown. Session budget is ten dollars.
 
-## The Five Engines
+Before editing any file, MASTER cleans it: CRLF to LF, trailing whitespace, BOM, zero-width characters, final newline. Then it assesses each file for rename and rephrase opportunities, structural transformations, and whether the file should be expanded, contracted, or flagged for research.
 
-### 1. Pressure Tank (Input)
-Compresses verbose user requests into precise, axiom-aligned prompts. Applies Strunk & White's "omit needless words" principle. Extracts entities, identifies intent, and loads relevant context.
+MASTER generates OpenBSD-native commands and configurations. It uses rcctl not systemctl, pkg_add not apt, doas not sudo, pf not iptables, httpd not nginx. These patterns are loaded from YAML seed data and injected into the LLM context when admin tasks are detected. Similarly, shell output follows zsh-native patterns with parameter expansion, array operations, globbing, never bash-isms.
 
-### 2. Adversarial Council
-12 distinct personas debate every proposal:
-- 3 veto-capable: Security Officer, The Attacker, The Maintainer
-- 9 advisory: Performance Analyst, System Architect, Minimalist, User Advocate, Skeptic, Chaos Engineer, Accessibility Advocate, Realist, Ethicist
+MASTER uses GitHub via the gh CLI. Agents generate gh commands, never raw API calls. Patterns for creating PRs, merging, issues, workflows, cloning, and forking are loaded from seed data.
 
-### 3. Universal Refactor
-Enforces engineering axioms (DRY, KISS, SOLID), communication axioms (omit needless words, active voice), and meta axioms (self-application, usability heuristics).
+There are three execution modes. Interactive REPL with a prompt showing tier and budget. Pipe mode for JSON in/out scripting. Daemon mode watching an inbox directory for task files.
 
-### 4. OpenBSD Admin
-Generates secure, minimal OpenBSD configurations. Validates syntax. Uses pledge/unveil for security boundaries.
+The system boots with OpenBSD-style dmesg output: platform, Ruby version, database schema, LLM providers, model tiers, budget, circuit status, pledge availability.
 
-### 5. Depressure Tank (Output)
-Refines and polishes output. Applies typography rules. Validates shell code for Zsh compatibility. Preserves code blocks byte-for-byte.
+Setup: bundle install, copy .env.example to .env, set OPENROUTER_API_KEY. Run ./bin/master for REPL, echo JSON to ./bin/master --pipe for scripting, ./sbin/agentd for daemon.
 
-## Installation
-
-```sh
-cd MASTER2
-bundle install
-```
-
-## Configuration
-
-Copy `.env.example` to `.env` and add your API keys:
-
-```sh
-cp .env.example .env
-# Edit .env with your keys
-```
-
-Required environment variables:
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `DEEPSEEK_API_KEY`
-- `OPENROUTER_API_KEY`
-
-## Usage
-
-### Interactive REPL
-
-```sh
-./bin/master
-```
-
-Uses `tty-prompt` and `tty-spinner` for rich terminal UI. Gracefully falls back to basic I/O if TTY gems are unavailable.
-
-### Pipe Mode (JSON)
-
-```sh
-echo '{"text":"What is the meaning of code?"}' | ./bin/master --pipe
-```
-
-Input: JSON object with `text` field.
-Output: JSON object with full pipeline result or `error` field.
-
-### Daemon Mode
-
-Long-running agent that watches for task files:
-
-```sh
-./sbin/agentd
-```
-
-- Watches: `tmp/inbox/` (configurable via `MASTER_INBOX`)
-- Outputs: `tmp/outbox/` (configurable via `MASTER_OUTBOX`)
-- Poll interval: 5s (configurable via `MASTER_POLL_INTERVAL`)
-
-Place `.json` files in inbox, retrieve results from outbox.
-
-## Testing
-
-```sh
-bundle exec rake test
-```
-
-All tests use in-memory SQLite (`:memory:`) and mock LLM calls. The pipeline can run end-to-end without API keys for testing.
-
-## Axioms
-
-13 timeless axioms from authoritative sources:
-- Engineering: DRY, KISS, SOLID (SRP, OCP), POLA, Scout Rule, YAGNI
-- Communication: Omit Needless Words, Active Voice, Hierarchy, Rhythm
-- Meta: Self-Application (ABSOLUTE), Usability Heuristics
-
-See `data/axioms.yml` for full definitions.
-
-## Council
-
-12 personas with distinct directives and weights:
-- Veto power: Security Officer (0.30), The Attacker (0.20), The Maintainer (0.20)
-- High influence: Performance Analyst (0.20), System Architect (0.15), Minimalist (0.15)
-- Specialists: User Advocate, Skeptic, Chaos Engineer, Accessibility Advocate, Realist, Ethicist (0.10-0.15 each)
-
-Consensus threshold: 70%
-Max iterations: 25
-Oscillation detection: enabled
-
-See `data/council.yml` for full directives.
-
-## Circuit Breaker & Budget
-
-- Circuit trips after 3 consecutive failures (300s cooldown)
-- Budget limit: $10 per session
-- 3-tier model selection: strong (deepseek-r1, claude-sonnet-4), fast (deepseek-v3, gpt-4.1-mini), cheap (gpt-4.1-nano)
-- Automatically selects most powerful tier within remaining budget
-
-## Result Monad
-
-All stages return `Result.ok(value)` or `Result.err(error)`. Pipeline uses `flat_map` to chain stages, short-circuiting on first error.
-
-```ruby
-Result.ok(5)
-  .flat_map { |x| Result.ok(x * 2) }
-  .flat_map { |x| Result.ok(x + 3) }
-# => Result.ok(13)
-```
-
-## Security
-
-OpenBSD `pledge(2)` and `unveil(2)` support via Fiddle when running on OpenBSD. Automatically detected at runtime.
-
-## License
-
-See repository root for license information.
+Tests use minitest with in-memory SQLite. The pipeline runs end-to-end without API keys for testing.
