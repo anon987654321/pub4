@@ -31,16 +31,8 @@ module MASTER
         puts "db0: schema 6 tables, axioms #{axiom_count}, council #{council_count}, zsh_patterns #{zsh_count}"
         
         # LLM configuration
-        providers = []
-        providers << "OpenRouter" if ENV["OPENROUTER_API_KEY"]
-        providers << "Anthropic" if ENV["ANTHROPIC_API_KEY"]
-        providers << "DeepSeek" if ENV["DEEPSEEK_API_KEY"]
-        providers << "OpenAI" if ENV["OPENAI_API_KEY"]
-        
-        if providers.empty?
-          puts "llm0 at master0: no providers configured"
-        else
-          puts "llm0 at master0: #{providers.join(", ")}"
+        if ENV["OPENROUTER_API_KEY"]
+          puts "llm0 at master0: OpenRouter"
           
           # Model tiers
           strong_models = LLM::RATES.select { |_k, v| v[:tier] == :strong }.keys
@@ -56,6 +48,8 @@ module MASTER
           budget = LLM::BUDGET_LIMIT
           remaining = LLM.remaining
           puts "llm0: budget $#{"%.2f" % budget}, remaining $#{"%.2f" % remaining}"
+        else
+          puts "llm0 at master0: no providers configured"
         end
         
         # Circuit status
