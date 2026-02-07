@@ -1,0 +1,555 @@
+# Language-specific beauty axioms for MASTER2's refactoring engine
+# 78 rules across 7 domains
+
+ruby:
+  - id: prefer_each_with_object
+    name: "Prefer each_with_object over inject for hash building"
+    detect: '\.(inject|reduce)\(\s*\{\s*\}\s*\)'
+    suggest: "Use .each_with_object({}) instead — eliminates mutable-return footgun"
+    severity: warning
+    autofix: false
+
+  - id: guard_clause_over_nested
+    name: "Favor guard clauses over nested conditionals"
+    detect: '^\s*def \w+.*\n\s*if .+\n(?:.*\n)*?\s*else\n(?:.*\n)*?\s*end\s*$'
+    suggest: "Flatten to: return ... unless condition"
+    severity: info
+    autofix: false
+
+  - id: safe_navigation_chain
+    name: "Use &. safe navigation consistently"
+    detect: '(\w+)\s*&&\s*\1\.\w+'
+    suggest: "Rewrite to x&.foo&.bar"
+    severity: warning
+    autofix: true
+
+  - id: freeze_collection_constants
+    name: "Freeze all collection literals assigned to constants"
+    detect: '^\s*[A-Z][A-Z_]*\s*=\s*[\[{](?!.*\.freeze)'
+    suggest: "Add .freeze to prevent mutation: CONST = [...].freeze"
+    severity: warning
+    autofix: true
+
+  - id: module_function_over_extend_self
+    name: "Prefer module_function where appropriate"
+    detect: 'extend self\n.*class << self'
+    suggest: "Consider module_function for cleaner intent"
+    severity: info
+    autofix: false
+
+  - id: keyword_args_over_positional
+    name: "Enforce keyword arguments for ≥3 parameters"
+    detect: 'def \w+\([^)]*,\s*[^:)]+,\s*[^:)]+,\s*[^:)]+\)'
+    suggest: "Use keyword arguments for clarity and safety"
+    severity: info
+    autofix: false
+
+  - id: kernel_coercion
+    name: "Prefer Array(), Hash(), String() kernel coercions"
+    detect: '(\w+)\s*\.\s*nil\?\s*\?\s*\[\]\s*:\s*\1|(\w+)\s*\|\|\s*\[\]'
+    suggest: "Use Array(x) instead of x.nil? ? [] : x"
+    severity: info
+    autofix: true
+
+  - id: include_comparable
+    name: "Use Comparable instead of manual comparison methods"
+    detect: 'def <\(|def >\(|def <=>\('
+    suggest: "include Comparable and define <=> only"
+    severity: info
+    autofix: false
+
+  - id: rescue_on_def
+    name: "Move begin/rescue wrapping entire method to def line"
+    detect: '^\s*def \w+.*\n\s*begin\n(?:.*\n)*?\s*rescue'
+    suggest: "Put rescue directly on the def block"
+    severity: info
+    autofix: false
+
+  - id: use_tap
+    name: "Promote tap for inline debugging and builder returns"
+    detect: '(\w+)\s*=\s*\w+\.new\n\s*\1\.\w+\s*=.*\n\s*\1\s*$'
+    suggest: "Use Foo.new.tap { |o| o.bar = val }"
+    severity: info
+    autofix: false
+
+  - id: percent_literal_arrays
+    name: "Favor %i[] and %w[] for symbol/string arrays"
+    detect: '\[:[a-z_]+,\s*:[a-z_]+,\s*:[a-z_]+'
+    suggest: "Use %i[a b c] for symbol arrays"
+    severity: info
+    autofix: true
+
+  - id: transform_keys_values
+    name: "Use transform_keys/transform_values over manual hash iteration"
+    detect: '\.each_with_object\(\{\}\)\s*\{\s*\|\(k,\s*v\),\s*h\|'
+    suggest: "Use .transform_values { |v| ... } (Ruby 2.5+)"
+    severity: info
+    autofix: false
+
+  - id: use_then_pipeline
+    name: "Use .then for single-line pipeline transforms"
+    detect: '(\w+)\s*=\s*\w+\(.*\)\n\s*\w+\(\1\)'
+    suggest: "Chain with .then { |r| next_step(r) }"
+    severity: info
+    autofix: false
+
+  - id: hash_fetch_over_bracket_or
+    name: "Prefer Hash#fetch over [] with ||"
+    detect: '\w+\[:\w+\]\s*\|\|'
+    suggest: "Use hash.fetch(:key, default) for nil-vs-false safety"
+    severity: info
+    autofix: false
+
+  - id: private_section_placement
+    name: "Enforce single private section at bottom"
+    detect: 'private\s+:\w+'
+    suggest: "Use a single 'private' keyword with methods below it"
+    severity: info
+    autofix: false
+
+rails:
+  - id: detect_n_plus_one
+    name: "Detect N+1 queries by static pattern"
+    detect: '\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+'
+    suggest: "Add .includes(:association) to prevent N+1"
+    severity: warning
+    autofix: false
+
+  - id: strict_loading
+    name: "Enforce strict_loading on associations"
+    detect: '(has_many|belongs_to|has_one)\s+:\w+(?!.*strict_loading)'
+    suggest: "Add strict_loading: true for dev/test"
+    severity: info
+    autofix: false
+
+  - id: scope_over_class_method
+    name: "Prefer scopes over class methods for chainable queries"
+    detect: 'def self\.\w+.*\n\s*where\('
+    suggest: "Use scope :name, -> { where(...) }"
+    severity: info
+    autofix: false
+
+  - id: find_each_over_each
+    name: "Use find_each for batch processing"
+    detect: '\.(all\.each|where\(.*\)\.each)\b'
+    suggest: "Use .find_each(batch_size: 1000) for memory efficiency"
+    severity: warning
+    autofix: false
+
+  - id: no_update_attribute
+    name: "Replace update_attribute with update!"
+    detect: '\.update_attribute\('
+    suggest: "update_attribute skips validations — use update!"
+    severity: error
+    autofix: true
+
+  - id: callback_extraction
+    name: "Extract long callbacks to service objects"
+    detect: '(after_create|before_save|after_save)\s+:\w+(?=.*\n(?:.*\n){5,})'
+    suggest: "Extract callback logic >5 lines to a service object"
+    severity: info
+    autofix: false
+
+  - id: frozen_string_literal_auto
+    name: "Auto-add frozen_string_literal magic comment"
+    detect: '^(?!# frozen_string_literal)'
+    suggest: "Add # frozen_string_literal: true as first line"
+    severity: warning
+    autofix: true
+
+  - id: pluck_over_map
+    name: "Prefer pluck over map for single-column selects"
+    detect: '\.\w+\.map\(&:\w+\)'
+    suggest: "Use .pluck(:column) to avoid AR object instantiation"
+    severity: info
+    autofix: false
+
+  - id: use_delegate
+    name: "Use delegate instead of manual delegation"
+    detect: 'def (\w+)\n\s*\w+\.\1\n\s*end'
+    suggest: "Use delegate :method, to: :association"
+    severity: info
+    autofix: false
+
+  - id: strong_params_exhaustive
+    name: "Enforce strong parameters exhaustiveness"
+    detect: '\.permit\('
+    suggest: "Cross-reference .permit() list with schema.rb columns"
+    severity: info
+    autofix: false
+
+zsh:
+  - id: quote_variables
+    name: "Always quote $variables"
+    detect: '(?<!["\x27\\])\$\w+(?!["\x27])'
+    suggest: 'Use "$VAR" to prevent word splitting and glob expansion'
+    severity: error
+    autofix: true
+
+  - id: double_bracket_test
+    name: "Use [[ ]] over [ ] for conditionals"
+    detect: '(?<!\[)\[\s+[^[]'
+    suggest: "Use [[ ... ]] for safe conditionals"
+    severity: warning
+    autofix: true
+
+  - id: dollar_paren_over_backtick
+    name: "Replace backticks with $(command)"
+    detect: '`[^`]+`'
+    suggest: "Use $(command) — nestable and readable"
+    severity: warning
+    autofix: true
+
+  - id: local_in_functions
+    name: "Use local for function variables"
+    detect: '^\w+\(\)\s*\{[^}]*\n\s+\w+='
+    suggest: "Declare with 'local' to prevent global leaks"
+    severity: warning
+    autofix: false
+
+  - id: parameter_expansion_default
+    name: "Prefer ${var:-default} over if/then"
+    detect: 'if \[ -z "\$\w+" \]; then\s+\w+=\w+'
+    suggest: 'Use ${var:-default} for concise defaults'
+    severity: info
+    autofix: false
+
+  - id: strict_mode
+    name: "Use set -euo pipefail at script top"
+    detect: '^#!/.*(?:ba|z)sh\n(?!set -)'
+    suggest: "Add 'set -euo pipefail' after shebang"
+    severity: error
+    autofix: true
+
+  - id: useless_cat
+    name: "Replace cat file | command with command < file"
+    detect: 'cat\s+\S+\s*\|'
+    suggest: "Use command < file (Useless Use of Cat)"
+    severity: info
+    autofix: true
+
+  - id: heredoc_for_multiline
+    name: "Use heredocs for multi-line strings"
+    detect: 'echo\s+".*"\n\s*echo\s+".*"\n\s*echo\s+"'
+    suggest: "Use heredoc: cat <<'EOF'"
+    severity: info
+    autofix: false
+
+html_erb:
+  - id: semantic_elements
+    name: "Enforce semantic HTML5 elements"
+    detect: '<div\s+class="(header|footer|nav|main|sidebar|article|section)"'
+    suggest: "Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>"
+    severity: warning
+    autofix: true
+
+  - id: img_alt_required
+    name: "Require alt on every <img>"
+    detect: '<img\s+(?![^>]*alt=)'
+    suggest: "Add alt= attribute (use alt=\"\" for decorative images)"
+    severity: error
+    autofix: false
+
+  - id: button_over_anchor
+    name: "Prefer <button> over <a href=\"#\">"
+    detect: '<a\s+href=["'']#["'']'
+    suggest: "Use <button> for actions — accessible by default"
+    severity: warning
+    autofix: false
+
+  - id: time_element
+    name: "Use <time datetime=\"\"> for dates"
+    detect: '\d{4}-\d{2}-\d{2}(?!.*<time)'
+    suggest: "Wrap dates in <time datetime=\"ISO8601\">"
+    severity: info
+    autofix: false
+
+  - id: html_lang
+    name: "Enforce lang attribute on <html>"
+    detect: '<html(?!\s+[^>]*lang=)'
+    suggest: "Add lang=\"en\" (or appropriate locale)"
+    severity: error
+    autofix: true
+
+  - id: no_inline_styles
+    name: "Replace inline styles with classes"
+    detect: '\bstyle="[^"]*"'
+    suggest: "Extract to CSS class for cacheability"
+    severity: warning
+    autofix: false
+
+  - id: erb_partials
+    name: "Use ERB partials for repeated blocks"
+    detect: null
+    suggest: "Extract repeated ≥3-line blocks to _partial.html.erb"
+    severity: info
+    autofix: false
+
+  - id: content_tag_helpers
+    name: "Prefer content_tag/tag helpers over raw HTML in helpers"
+    detect: '["'']<\w+[^"'']*>["'']'
+    suggest: "Use Rails tag() or content_tag() helpers"
+    severity: info
+    autofix: false
+
+  - id: aria_on_interactive
+    name: "Enforce ARIA on non-semantic interactive elements"
+    detect: '<(div|span)\s+[^>]*onclick'
+    suggest: "Add role= and tabindex= for accessibility"
+    severity: warning
+    autofix: false
+
+  - id: lazy_loading_images
+    name: "Use loading=\"lazy\" on below-fold images"
+    detect: '<img\s+(?![^>]*loading=)'
+    suggest: "Add loading=\"lazy\" for below-fold images"
+    severity: info
+    autofix: true
+
+css_scss:
+  - id: logical_properties
+    name: "Prefer logical properties over physical"
+    detect: '(margin|padding)-(left|right):'
+    suggest: "Use margin-inline-start/end, padding-inline-start/end for RTL support"
+    severity: info
+    autofix: true
+
+  - id: custom_properties_over_magic
+    name: "Replace magic numbers with CSS custom properties"
+    detect: '(?:margin|padding|gap|font-size):\s*\d+px'
+    suggest: "Extract to var(--spacing-*) or var(--size-*)"
+    severity: info
+    autofix: false
+
+  - id: gap_over_margins
+    name: "Prefer gap over margin hacks for flex/grid"
+    detect: '\+\s*\w+\s*\{[^}]*margin-(left|top):'
+    suggest: "Use gap on the flex/grid container instead"
+    severity: info
+    autofix: false
+
+  - id: clamp_typography
+    name: "Use clamp() for fluid typography"
+    detect: '@media.*\{[^}]*font-size:'
+    suggest: "Use font-size: clamp(1rem, 2.5vw, 1.5rem)"
+    severity: info
+    autofix: false
+
+  - id: mobile_first
+    name: "Enforce mobile-first media queries"
+    detect: '@media\s*\(\s*max-width'
+    suggest: "Use min-width (mobile-first, progressive enhancement)"
+    severity: warning
+    autofix: false
+
+  - id: use_forward_over_import
+    name: "Replace @import with @use/@forward in SCSS"
+    detect: '@import\s+["\x27]'
+    suggest: "@import is deprecated — use @use/@forward"
+    severity: warning
+    autofix: false
+
+  - id: no_important
+    name: "Detect and flag !important"
+    detect: '!\s*important'
+    suggest: "Restructure selectors to avoid specificity bankruptcy"
+    severity: warning
+    autofix: false
+
+  - id: is_where_selectors
+    name: "Use :is()/:where() for selector grouping"
+    detect: '(\.[a-z]+\s+\.\w+),\s*(\.[a-z]+\s+\.\w+),\s*(\.[a-z]+\s+\.\w+)'
+    suggest: "Use :is(.a, .b, .c) .target for grouped selectors"
+    severity: info
+    autofix: false
+
+  - id: consistent_naming
+    name: "Enforce consistent naming convention (BEM or utility)"
+    detect: '__.*--.*\n(?:.*\n)*?(?!.*__)'
+    suggest: "Pick one naming convention (BEM or utility) per project"
+    severity: info
+    autofix: false
+
+  - id: intrinsic_sizing
+    name: "Replace fixed dimensions with intrinsic sizing"
+    detect: 'width:\s*\d+px;\s*\n\s*height:\s*\d+px'
+    suggest: "Use min/max-width and aspect-ratio for responsive behavior"
+    severity: info
+    autofix: false
+
+javascript:
+  - id: const_by_default
+    name: "Prefer const by default, let only when reassigned"
+    detect: '\blet\s+(\w+)\s*='
+    suggest: "Use const unless the variable is reassigned"
+    severity: warning
+    autofix: false
+
+  - id: optional_chaining
+    name: "Use optional chaining ?. over && chains"
+    detect: '(\w+)\s*&&\s*\1\.\w+'
+    suggest: "Rewrite to obj?.foo?.bar"
+    severity: warning
+    autofix: true
+
+  - id: nullish_coalescing
+    name: "Use ?? over || for defaults"
+    detect: '(\w+)\s*\|\|\s*\w+'
+    suggest: "Use ?? when 0 or '' are valid values"
+    severity: info
+    autofix: false
+
+  - id: for_of_over_for_in
+    name: "Prefer for...of over for...in for arrays"
+    detect: 'for\s*\(\s*(const|let|var)\s+\w+\s+in\s+'
+    suggest: "Use for...of (for...in iterates prototype properties)"
+    severity: error
+    autofix: true
+
+  - id: template_literals
+    name: "Use template literals over concatenation"
+    detect: '["'']\s*\+\s*\w+\s*\+\s*["'']'
+    suggest: "Use `Hello ${name}!` template literals"
+    severity: warning
+    autofix: true
+
+  - id: fetch_over_xhr
+    name: "Prefer fetch over XMLHttpRequest"
+    detect: 'new\s+XMLHttpRequest'
+    suggest: "Use the Fetch API with async/await"
+    severity: warning
+    autofix: false
+
+  - id: array_from_over_slice
+    name: "Use Array.from() or spread over slice.call"
+    detect: 'Array\.prototype\.slice\.call'
+    suggest: "Use Array.from(arrayLike) or [...arrayLike]"
+    severity: info
+    autofix: true
+
+  - id: add_event_listener
+    name: "Enforce addEventListener over onclick"
+    detect: '\.\s*onclick\s*='
+    suggest: "Use addEventListener for multiple listeners"
+    severity: warning
+    autofix: false
+
+  - id: destructuring
+    name: "Use destructuring for multi-property access"
+    detect: 'const\s+\w+\s*=\s*\w+\.\w+;\s*\nconst\s+\w+\s*=\s*\w+\.\w+;'
+    suggest: "Use const { a, b } = obj;"
+    severity: info
+    autofix: false
+
+  - id: async_await_over_then
+    name: "Prefer async/await over .then() chains"
+    detect: '\.then\(.*\.then\(.*\.then\('
+    suggest: "Use async/await for readability"
+    severity: warning
+    autofix: false
+
+universal:
+  - id: meaningful_names
+    name: "Name things for the reader"
+    detect: '\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*='
+    suggest: "Use domain-specific names over generic placeholders"
+    severity: info
+    autofix: false
+
+  - id: single_abstraction_level
+    name: "One level of abstraction per function"
+    detect: null
+    suggest: "Don't mix orchestration with implementation in the same method"
+    severity: info
+    autofix: false
+
+  - id: fail_loudly
+    name: "Fail loudly with context"
+    detect: 'rescue\s*$|catch\s*\(\s*\)|except\s*:|catch\s*{}'
+    suggest: "Catch specific errors, log context, re-raise or return Result"
+    severity: warning
+    autofix: false
+
+  - id: vertical_proximity
+    name: "Related code should be adjacent"
+    detect: null
+    suggest: "Called functions should be near their callers within the same file"
+    severity: info
+    autofix: false
+
+  - id: consistent_file_structure
+    name: "Consistent file structure order"
+    detect: null
+    suggest: "Order: magic comments → requires → module → constants → public → private → end"
+    severity: info
+    autofix: false
+
+  - id: why_not_what_comments
+    name: "Comments explain why, not what"
+    detect: '#\s*(increment|set|get|update|return|initialize|create|add)\s+\w+'
+    suggest: "Comments should explain intent, not restate the code"
+    severity: info
+    autofix: false
+
+  - id: immutability_by_default
+    name: "Immutability by default"
+    detect: null
+    suggest: "Prefer frozen/const/immutable forms — mutate only when necessary"
+    severity: info
+    autofix: false
+
+  - id: consistent_quoting
+    name: "Consistent string quoting within a file"
+    detect: null
+    suggest: "Normalize to project convention (single or double quotes)"
+    severity: info
+    autofix: false
+
+  - id: typographic_excellence
+    name: "Typographic excellence in user-facing text"
+    detect: '["'']\.\.\.["'']|["'']--["'']'
+    suggest: "Use … (ellipsis), — (em dash), "" (curly quotes) in UI strings"
+    severity: info
+    autofix: true
+
+  - id: progressive_disclosure
+    name: "Progressive disclosure in APIs and UIs"
+    detect: null
+    suggest: "Group >5 options into sub-commands or collapsible sections"
+    severity: info
+    autofix: false
+
+  - id: dead_code_elimination
+    name: "Eliminate dead/unreachable code"
+    detect: '(return|exit|raise|throw)\s+.*\n\s*\w+'
+    suggest: "Remove unreachable code after return/exit/raise/throw"
+    severity: warning
+    autofix: true
+
+  - id: consistent_error_strategy
+    name: "Consistent error handling strategy per module"
+    detect: null
+    suggest: "Don't mix Result objects, exceptions, and nil-returns in one module"
+    severity: info
+    autofix: false
+
+  - id: trailing_commas
+    name: "Trailing commas in multi-line collections"
+    detect: null
+    suggest: "Add trailing commas so adding elements produces one-line diffs"
+    severity: info
+    autofix: true
+
+  - id: whitespace_as_punctuation
+    name: "Whitespace as punctuation"
+    detect: '\n{4,}'
+    suggest: "One blank line between sections, never >2 consecutive blank lines"
+    severity: info
+    autofix: true
+
+  - id: small_files
+    name: "Files under 300 lines"
+    detect: null
+    suggest: "Split files >300 lines at module boundaries"
+    severity: warning
+    autofix: false

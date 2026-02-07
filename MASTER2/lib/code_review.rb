@@ -74,6 +74,7 @@ module MASTER
       guard_clause: /return .* (if|unless) /,
       explicit_error: /rescue StandardError/,
       symbolize_names: /symbolize_names:\s*true/,
+      language_axioms_clean: /\A(?!.*(?:inject\(\{\})|(?:update_attribute)|(?:for\s+\w+\s+in\s+))/m,
     }.freeze
 
     class << self

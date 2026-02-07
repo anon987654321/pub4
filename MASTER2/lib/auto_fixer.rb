@@ -16,6 +16,9 @@ module MASTER
       mixed_indentation: ->(code) { code.gsub(/^(\t+)/) { |m| "  " * m.length } },
       crlf_to_lf: ->(code) { code.gsub("\r\n", "\n") },
       bom_strip: ->(code) { code.sub(/\A\xEF\xBB\xBF/, "") },
+      # Language axiom auto-fixes
+      freeze_constants: ->(code) { code.gsub(/^(\s*[A-Z][A-Z_]*\s*=\s*(?:\[.*?\]|\{.*?\}))\s*$/) { |m| m.include?(".freeze") ? m : m.rstrip + ".freeze" } },
+      safe_navigation: ->(code) { code.gsub(/(\w+)\s*&&\s*\1\.(\w+)/) { "#{$1}&.#{$2}" } },
     }.freeze
 
     MODE_FIXES = {

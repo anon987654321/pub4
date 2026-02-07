@@ -75,6 +75,9 @@ module MASTER
         evolve(args)
       when "opportunities", "opps"
         opportunities(args)
+      when "axioms", "language-axioms"
+        print_language_axioms(args)
+        nil
       when "selftest", "self-test", "selfrun", "self-run"
         SelfTest.run
       when "speak", "say"
@@ -479,6 +482,34 @@ module MASTER
         end
 
         Result.ok(result)
+      end
+
+      def print_language_axioms(args)
+        if args && !args.strip.empty?
+          lang = args.strip.downcase
+          axioms = LanguageAxioms.axioms_for(lang)
+          if axioms.empty?
+            puts "\n  No axioms for '#{lang}'. Available: #{LanguageAxioms.axioms_data.keys.join(', ')}\n"
+          else
+            UI.header("#{lang.capitalize} Axioms (#{axioms.size})")
+            axioms.each do |a|
+              fix = a["autofix"] ? " [autofix]" : ""
+              puts "  #{a['severity']&.upcase&.ljust(7)} #{a['id']}#{fix}"
+              puts "          #{a['suggest']}"
+            end
+            puts
+          end
+        else
+          summary = LanguageAxioms.summary
+          UI.header("Language Axioms")
+          summary.each do |lang, count|
+            next if lang == "total"
+            puts "  #{lang.ljust(12)} #{count} axioms"
+          end
+          puts "  #{'─' * 24}"
+          puts "  #{'total'.ljust(12)} #{summary['total']} axioms"
+          puts "\n  Use 'axioms <language>' for details.\n"
+        end
       end
     end
   end
