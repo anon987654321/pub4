@@ -34,6 +34,8 @@ module MASTER
         LLM::RATES.select { |_k, v| v[:tier] == tier }
                   .keys
                   .any? { |model| !LLM.circuit_available?(model) }
+      else
+        false
       end
       
       circuit_indicator = tripped ? "⚡" : ""
