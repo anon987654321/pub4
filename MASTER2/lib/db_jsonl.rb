@@ -126,6 +126,26 @@ module MASTER
       write_collection("circuits", circuits)
     end
 
+    def increment_failure!(model)
+      circuits = read_collection("circuits")
+      existing = circuits.find { |c| c[:model] == model }
+
+      if existing
+        existing[:failures] = (existing[:failures] || 0) + 1
+        existing[:last_failure] = Time.now.utc.iso8601
+        # Keep state as-is (don't open yet)
+        write_collection("circuits", circuits)
+      else
+        record = {
+          model: model,
+          state: "closed",
+          failures: 1,
+          last_failure: Time.now.utc.iso8601,
+        }
+        append("circuits", record)
+      end
+    end
+
     # --- Sessions ---
     def save_session(id:, data:)
       sessions = read_collection("sessions")
@@ -218,11 +238,14 @@ module MASTER
     end
 
     def ensure_seeded
-      seed_axioms if axioms.empty?
-      seed_council if council.empty?
+      synchronize do
+        seed_axioms if axioms.empty?
+        seed_council if council.empty?
+      end
     end
 
     def seed_axioms
+      return unless read_collection("axioms").empty?
       default_axioms = [
         { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
         { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },
@@ -235,6 +258,7 @@ module MASTER
     end
 
     def seed_council
+      return unless read_collection("council").empty?
       default_council = [
         { name: "Architect", role: "system_design", style: "formal", bias: "structure" },
         { name: "Skeptic", role: "devil_advocate", style: "critical", bias: "caution" },
