@@ -37,6 +37,7 @@ module MASTER
         # Load zsh patterns for command/admin intents or when services are detected
         if intent == :command || intent == :admin || entities[:services]
           enriched[:zsh_patterns] = DB.get_zsh_patterns || []
+          enriched[:openbsd_patterns] = DB.get_openbsd_patterns || []
         end
 
         # Phase 8: Return enriched input
@@ -70,7 +71,7 @@ module MASTER
         entities[:files] = files unless files.empty?
 
         # Extract service names
-        services = text.scan(/\b(httpd|relayd|pf|nginx|postgresql|redis)\b/i).flatten.map(&:downcase).uniq
+        services = text.scan(/\b(httpd|relayd|pf|nginx|postgresql|redis|acme-client|bgpd|ospfd|rad|dhcpd|ntpd|sshd|smtpd|cron)\b/i).flatten.map(&:downcase).uniq
         entities[:services] = services unless services.empty?
 
         entities
