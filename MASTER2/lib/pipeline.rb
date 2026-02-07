@@ -5,7 +5,7 @@ module MASTER
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
     VALID_STAGES = %i[intake compress guard route council ask lint render execute].freeze
-    MAX_INPUT_LENGTH = 10_000  # Maximum input length in bytes
+    MAX_INPUT_BYTES = 10_000  # Maximum input size in bytes
 
     class << self
       attr_accessor :current_pattern
@@ -189,9 +189,9 @@ module MASTER
           end
           
           # Max input length validation
-          if input_text.bytesize > MAX_INPUT_LENGTH
+          if input_text.bytesize > MAX_INPUT_BYTES
             puts
-            UI.error("Input too long (#{input_text.bytesize} bytes). Maximum: #{MAX_INPUT_LENGTH} bytes")
+            UI.error("Input too long (#{input_text.bytesize} bytes). Maximum: #{MAX_INPUT_BYTES} bytes")
             next
           end
           

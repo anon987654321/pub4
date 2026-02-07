@@ -160,8 +160,10 @@ module MASTER
         parsed = parse_response(result.value[:content])
         @history << { step: @step, thought: parsed[:thought], action: parsed[:action] }
         
-        # Cap history buffer
-        @history = @history.last(MAX_HISTORY_SIZE) if @history.size > MAX_HISTORY_SIZE
+        # Cap history buffer to prevent unbounded growth
+        if @history.size > MAX_HISTORY_SIZE
+          @history.shift  # Remove oldest entry
+        end
 
         # Show progress
         UI.dim("  💭 #{@step}: #{parsed[:thought][0..80]}...")
@@ -692,9 +694,10 @@ module MASTER
 
     def code_execution(code)
       # Enforce sandboxing with Pledge if available (OpenBSD)
+      # Uses restrictive permissions - no exec, only stdio and rpath
       begin
         if defined?(Pledge)
-          Pledge.pledge("stdio rpath wpath cpath proc exec")
+          Pledge.pledge("stdio rpath")
         end
       rescue StandardError => e
         # Pledge not available on this platform, continue without it

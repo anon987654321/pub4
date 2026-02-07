@@ -10,7 +10,9 @@ module MASTER
       @value = value
       @error = error
       # Freeze to prevent mutation after construction
-      @value.freeze unless @value.nil? || @value.is_a?(Hash) || @value.is_a?(Array)
+      # Note: Hash/Array values are not frozen to allow mutation of result data structures
+      # Only freeze simple immutable types (String, Symbol, Numeric, etc.)
+      @value.freeze if @value.is_a?(String) || @value.is_a?(Symbol)
       @error.freeze unless @error.nil?
       freeze
     end
