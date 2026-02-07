@@ -4,6 +4,7 @@ module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
+    MAX_INPUT_LENGTH = 100_000 # ~25k tokens
 
     class << self
       attr_accessor :current_pattern
@@ -57,6 +58,7 @@ module MASTER
       v = result.value
       return result unless v.is_a?(Hash)
 
+      # Normalize known keys
       normalized = {
         response: v[:response] || v[:answer] || v[:content],
         rendered: v[:rendered],
@@ -72,6 +74,11 @@ module MASTER
       # Apply typography rendering if we have a response but no rendered version
       if normalized[:response] && !normalized[:rendered]
         normalized[:rendered] = normalized[:response]
+      end
+
+      # Preserve any custom keys from the original value
+      v.each do |key, val|
+        normalized[key] = val unless normalized.key?(key)
       end
 
       Result.ok(normalized)
@@ -102,8 +109,6 @@ module MASTER
       end
 
       def repl
-        MAX_INPUT_LENGTH = 100_000 # ~25k tokens
-
         begin
           require "tty-reader"
         rescue LoadError
