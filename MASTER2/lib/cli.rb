@@ -1,8 +1,6 @@
 module MASTER
   class CLI
     def self.start(args)
-      persistence = Persistence.new("#{MASTER.root}/master.db")
-      
       case args[0]
       when 'refactor'
         unless File.exist?(args[1])
@@ -15,7 +13,6 @@ module MASTER
         if result[:success]
           File.write(args[1], result[:code])
           puts "Refactored with diff:\n#{result[:diff]}"
-          persistence.save_session({ action: 'refactor', file: args[1], result: result })
         else
           puts "Suggestions: #{result[:suggestions]}"
         end
@@ -28,7 +25,6 @@ module MASTER
         engine = Engine.new
         analysis = engine.analyze(code)
         puts analysis
-        persistence.save_session({ action: 'analyze', file: args[1], analysis: analysis })
       when 'self_refactor'
         engine = Engine.new
         Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
@@ -43,12 +39,36 @@ module MASTER
             puts "Skipped #{file}: #{result[:error]}"
           end
         end
+      when 'auto_iterate'
+        max_iterations = 5
+        iterations = 0
+        changes_made = true
+        while changes_made && iterations < max_iterations
+          iterations += 1
+          puts "Iteration #{iterations}"
+          changes_made = false
+          engine = Engine.new
+          Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
+            backup = file + ".iter#{iterations}.backup"
+            FileUtils.cp(file, backup)
+            code = File.read(file)
+            result = engine.refactor(code)
+            if result[:success]
+              File.write(file, result[:code])
+              puts "Updated #{file}"
+              changes_made = true
+            end
+          end
+          sleep 1  # Rate limit
+        end
+        puts "Auto-iteration complete: #{iterations} iterations"
       else
-        repl(persistence, Engine.new)
+        repl
       end
     end
 
-    def self.repl(persistence, engine)
+    def self.repl
+      engine = Engine.new
       loop do
         print "master> "
         input = gets.chomp
@@ -57,10 +77,8 @@ module MASTER
         if input.start_with?('refactor ')
           result = engine.refactor(input[9..-1])
           puts result
-          persistence.save_session({ action: 'repl_refactor', input: input, result: result })
         else
           puts "Processed: #{input}"
-          persistence.save_session({ action: 'repl', input: input })
         end
       end
     end

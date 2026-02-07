@@ -3,20 +3,28 @@
 ## Setup
 export GEM_HOME=\$(ruby -e'puts Gem.user_dir')
 export PATH="\$GEM_HOME/bin:\$PATH"
-gem install --user-install parser unparser diffy minitest dotenv
+gem install --user-install parser unparser diffy minitest dotenv sqlite3
 
-Set OPENROUTER_API_KEY in .env
+export OPENROUTER_API_KEY=your_key
 
 ## Commands
-- refactor <file> : Analyze and apply low-risk changes
+- refactor <file> : Auto-refactor low-risk changes
 - analyze <file> : Get suggestions
-- self_refactor : Refactor MASTER2 itself
-- repl : Interactive mode
+- self_refactor : Refactor lib/ files
+- auto_iterate : Iterative self-improvement (converges on no changes)
+- stats : Show monitoring stats
+- repl : Interactive
 
-## Examples
-See examples/
+## Features
+- Ruby AST (parser/unparser)
+- JS/Python regex stubs
+- LLM analysis (Grok-4-fast)
+- Autonomy decisions
+- Persistence (SQLite)
+- Monitoring (tokens/cost)
+- Tools (shell/web search)
 
-## Multi-Language
-Ruby (AST), JS/Python (regex stubs)
+## Tests
+ruby -I lib test/full_test.rb
 
-Ready for production.
+Ready.

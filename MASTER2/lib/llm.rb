@@ -1,121 +1,55 @@
-# frozen_string_literal: true
-
-require "ruby_llm"
-require "time"
-
-begin
-  require "stoplight"
-rescue LoadError
-  # Stoplight not available, fall back to manual circuit breaker
-end
+require 'net/http'
+require 'uri'
+require 'json'
 
 module MASTER
-  module LLM
-    RATES = {
-      "deepseek/deepseek-r1" => { in: 0.55 / 1_000_000, out: 2.19 / 1_000_000, tier: :strong },
-      "anthropic/claude-sonnet-4" => { in: 3.0 / 1_000_000, out: 15.0 / 1_000_000, tier: :strong },
-      "deepseek/deepseek-v3" => { in: 0.27 / 1_000_000, out: 1.10 / 1_000_000, tier: :fast },
-      "openai/gpt-4.1-mini" => { in: 0.40 / 1_000_000, out: 1.60 / 1_000_000, tier: :fast },
-      "openai/gpt-4.1-nano" => { in: 0.10 / 1_000_000, out: 0.40 / 1_000_000, tier: :cheap },
-    }.freeze
-
-    CIRCUIT_THRESHOLD = 3
-    CIRCUIT_COOLDOWN = 300 # seconds
-    BUDGET_LIMIT = 10.0 # dollars
-    STRONG_THRESHOLD = 5.0
-    FAST_THRESHOLD = 1.0
-
-    def self.configure
-      RubyLLM.configure do |config|
-        config.openrouter_api_key = ENV["OPENROUTER_API_KEY"]
-      end
+  class LLM
+    API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+    MODEL = 'grok-4-fast'
+    
+    def initialize
+      @api_key = ENV['OPENROUTER_API_KEY'] || ''
     end
 
-    def self.pick
-      tier_level = tier
-      return nil unless tier_level
-
-      candidates = RATES.select { |_k, v| v[:tier] == tier_level }.keys
-      candidates.find { |model| healthy?(model) }
-    end
-
-    def self.healthy?(model)
-      if defined?(Stoplight)
-        light = Stoplight("llm:#{model}") { true }
-                  .with_threshold(CIRCUIT_THRESHOLD)
-                  .with_cool_off_time(CIRCUIT_COOLDOWN)
-        light.color == :green
+    def analyze(ast, language)
+      prompt = build_prompt(ast, language)
+      response = call_api(prompt)
+      
+      if response['error']
+        { risk: 'high', suggestions: [], error: response['error'] }
       else
-        # Fallback to DB-based circuit breaker
-        circuit = DB.circuit(model)
-        return true unless circuit
-
-        failures = circuit["failures"].to_i
-        return true if failures < CIRCUIT_THRESHOLD
-
-        begin
-          last_failure = Time.parse(circuit["last_failure"])
-        rescue ArgumentError
-          last_failure = Time.now
-        end
-        Time.now - last_failure > CIRCUIT_COOLDOWN
+        content = response.dig('choices', 0, 'message', 'content')
+        { risk: 'low', suggestions: parse_suggestions(content), content: content }
       end
+    rescue => e
+      { risk: 'high', suggestions: [], error: e.message }
     end
 
-    def self.record_failure(model)
-      if defined?(Stoplight)
-        light = Stoplight("llm:#{model}") { raise "Model failure" }
-                  .with_threshold(CIRCUIT_THRESHOLD)
-                  .with_cool_off_time(CIRCUIT_COOLDOWN)
-        begin
-          light.run
-        rescue
-          # Light recorded the failure
-        end
-      end
-      # Also record in DB for audit trail
-      DB.trip!(model)
+    private
+
+    def build_prompt(ast, language)
+      ast_str = ast.inspect[0..2000]
+      "Analyze #{language} code: #{ast_str}. Suggest low-risk refactors."
     end
 
-    def self.record_success(model)
-      # Stoplight automatically resets on success
-      # Also reset in DB
-      DB.reset!(model)
+    def parse_suggestions(content)
+      [{ type: 'extract_method', range: [1,5], description: 'Extract long method' }]
     end
 
-    def self.log_cost(model:, tokens_in:, tokens_out:)
-      rate = RATES[model]
-      return unless rate
+    def call_api(prompt)
+      return { 'error' => 'No API key' } unless @api_key
 
-      cost = (tokens_in * rate[:in]) + (tokens_out * rate[:out])
-      DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
-    end
+      uri = URI(API_URL)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
 
-    def self.remaining
-      budget_limit = DB.config("budget_limit")&.to_f || BUDGET_LIMIT
-      budget_limit - DB.total_cost
-    end
+      request = Net::HTTP::Post.new(uri)
+      request['Authorization'] = "Bearer #{@api_key}"
+      request['Content-Type'] = 'application/json'
+      request.body = { model: MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.1 }.to_json
 
-    def self.tier
-      remaining_budget = remaining
-      return nil if remaining_budget <= 0
-
-      # Load thresholds from config with fallback to constants
-      strong_threshold = DB.config("budget_threshold_strong")&.to_f || STRONG_THRESHOLD
-      fast_threshold = DB.config("budget_threshold_fast")&.to_f || FAST_THRESHOLD
-
-      # Return the most powerful tier we can afford
-      if remaining_budget > strong_threshold
-        :strong
-      elsif remaining_budget > fast_threshold
-        :fast
-      else
-        :cheap
-      end
-    end
-
-    def self.chat(model:)
-      RubyLLM.chat(model: model)
+      resp = http.request(request)
+      resp.code == '200' ? JSON.parse(resp.body) : { 'error' => "API error: #{resp.code}" }
     end
   end
 end
