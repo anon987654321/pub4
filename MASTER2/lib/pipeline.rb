@@ -19,9 +19,9 @@ module MASTER
     class << self
       def prompt
         tier = LLM.tier || :none
-        budget = format("$%.2f", LLM.remaining)
+        budget = UI.currency(LLM.budget_remaining)
 
-        tripped = LLM::TIERS[tier]&.any? { |m| !LLM.healthy?(m) }
+        tripped = LLM::MODEL_TIERS[tier]&.any? { |m| !LLM.circuit_closed?(m) }
         indicator = tripped ? "⚡" : ""
 
         # Show context usage if session has messages
@@ -52,7 +52,7 @@ module MASTER
         # First-run welcome
         Onboarding.show_welcome if defined?(Onboarding)
 
-        puts "Session: #{session.id[0, 8]}..."
+        puts "Session: #{UI.truncate_id(session.id)}"
         puts "Type 'help' for commands, 'exit' to quit\n\n"
 
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)

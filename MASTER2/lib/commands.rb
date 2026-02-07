@@ -41,28 +41,31 @@ module MASTER
         Dashboard.new.render
         nil
       when "budget"
-        show_budget
+        print_budget
         nil
       when "clear"
         print "\e[2J\e[H"
         nil
       when "history"
-        show_history
+        print_cost_history
         nil
       when "context"
-        show_context
+        print_context_usage
         nil
       when "session"
-        handle_session(args)
+        manage_session(args)
         nil
       when "sessions"
-        list_sessions
+        print_saved_sessions
         nil
       when "forget", "undo"
-        forget_last
+        undo_last_exchange
         nil
       when "summary"
-        show_summary
+        print_session_summary
+        nil
+      when "health"
+        print_health
         nil
       when "refactor"
         refactor(args)
@@ -70,6 +73,10 @@ module MASTER
         chamber(args)
       when "evolve"
         evolve(args)
+      when "opportunities", "opps"
+        opportunities(args)
+      when "selftest", "self-test"
+        run_self_test
       when "speak", "say"
         speak(args)
         nil
@@ -83,51 +90,50 @@ module MASTER
     class << self
       private
 
-      def show_budget
+      def print_budget
         tier = LLM.tier
-        remaining = LLM.remaining
-        spent = LLM::BUDGET_LIMIT - remaining
-        pct = (spent / LLM::BUDGET_LIMIT * 100).round(1)
+        remaining = LLM.budget_remaining
+        spent = LLM::SPENDING_CAP - remaining
+        pct = (spent / LLM::SPENDING_CAP * 100).round(1)
 
-        puts "\n  Budget Status"
+        UI.header("Budget Status")
         puts "  Tier:      #{tier}"
-        puts "  Remaining: $#{format('%.2f', remaining)}"
-        puts "  Spent:     $#{format('%.2f', spent)} (#{pct}%)"
+        puts "  Remaining: #{UI.currency(remaining)}"
+        puts "  Spent:     #{UI.currency(spent)} (#{pct}%)"
         puts
       end
 
-      def show_context
+      def print_context_usage
         session = Session.current
         u = ContextWindow.usage(session)
 
-        puts "\n  Context Window"
+        UI.header("Context Window")
         puts "  #{ContextWindow.bar(session)}"
-        puts "  Used:      #{format_tokens(u[:used])}"
-        puts "  Limit:     #{format_tokens(u[:limit])}"
-        puts "  Remaining: #{format_tokens(u[:remaining])}"
+        puts "  Used:      #{humanize_tokens(u[:used])}"
+        puts "  Limit:     #{humanize_tokens(u[:limit])}"
+        puts "  Remaining: #{humanize_tokens(u[:remaining])}"
         puts "  Messages:  #{session.message_count}"
         puts
       end
 
-      def format_tokens(n)
+      def humanize_tokens(n)
         n >= 1000 ? "#{(n / 1000.0).round(1)}k" : n.to_s
       end
 
-      def show_history
+      def print_cost_history
         costs = DB.recent_costs(limit: 10)
 
         if costs.empty?
           puts "\n  No history yet.\n"
         else
-          puts "\n  Recent Queries"
-          puts "  #{'-' * 50}"
+          UI.header("Recent Queries", width: 50)
           costs.each do |row|
             model = row[:model].split("/").last[0, 12]
             tokens_in = row[:tokens_in]
             tokens_out = row[:tokens_out]
             cost = row[:cost]
             created = row[:created_at]
-            puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}→#{tokens_out} | $#{format('%.4f', cost)}"
+            puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}→#{tokens_out} | #{UI.currency_precise(cost)}"
           end
           puts
         end
@@ -140,12 +146,12 @@ module MASTER
         return Result.err("File not found: #{file}") unless File.exist?(path)
 
         code = File.read(path)
-        chamber_instance = Chamber.new
-        result = chamber_instance.deliberate(code, filename: File.basename(path))
+        chamber = Chamber.new
+        result = chamber.deliberate(code, filename: File.basename(path))
 
         if result.ok? && result.value[:final]
           puts "\n  Proposals: #{result.value[:proposals].size}"
-          puts "  Cost: $#{format('%.4f', result.value[:cost])}"
+          puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
           puts "\n#{result.value[:final]}\n"
         end
 
@@ -158,13 +164,13 @@ module MASTER
 
       def evolve(path)
         path ||= MASTER.root
-        evolve_instance = Evolve.new
-        result = evolve_instance.run(path: path, dry_run: true)
+        evolver = Evolve.new
+        result = evolver.run(path: path, dry_run: true)
 
-        puts "\n  Evolution Analysis (dry run)"
+        UI.header("Evolution Analysis (dry run)")
         puts "  Files processed: #{result[:files_processed]}"
         puts "  Improvements found: #{result[:improvements]}"
-        puts "  Cost: $#{format('%.4f', result[:cost])}"
+        puts "  Cost: #{UI.currency_precise(result[:cost])}"
         puts
 
         Result.ok(result)
@@ -177,27 +183,27 @@ module MASTER
         puts "  TTS Error: #{result.error}" if result.err?
       end
 
-      def handle_session(args)
+      def manage_session(args)
         case args&.split&.first
         when "new"
           Session.start_new
-          puts "  New session: #{Session.current.id[0, 8]}..."
+          puts "  New session: #{UI.truncate_id(Session.current.id)}"
         when "save"
           Session.current.save
-          puts "  Session saved: #{Session.current.id[0, 8]}..."
+          puts "  Session saved: #{UI.truncate_id(Session.current.id)}"
         when "load", "resume"
           id = args.split[1]
           if id && Session.resume(id)
-            puts "  Resumed session: #{Session.current.id[0, 8]}..."
+            puts "  Resumed session: #{UI.truncate_id(Session.current.id)}"
           else
             puts "  Session not found: #{id}"
           end
         when "info"
           s = Session.current
-          puts "\n  Session Info"
+          UI.header("Session Info")
           puts "  ID:       #{s.id}"
           puts "  Messages: #{s.message_count}"
-          puts "  Cost:     $#{format('%.4f', s.total_cost)}"
+          puts "  Cost:     #{UI.currency_precise(s.total_cost)}"
           puts "  Created:  #{s.created_at}"
           puts
         else
@@ -205,51 +211,47 @@ module MASTER
         end
       end
 
-      def list_sessions
+      def print_saved_sessions
         sessions = Session.list
         if sessions.empty?
           puts "\n  No saved sessions.\n"
         else
-          puts "\n  Saved Sessions"
-          puts "  #{'-' * 40}"
+          UI.header("Saved Sessions")
           sessions.each do |id|
             data = Memory.load_session(id)
             next unless data
 
             msgs = data[:history]&.size || 0
-            puts "  #{id[0, 8]}... | #{msgs} messages"
+            puts "  #{UI.truncate_id(id)} | #{msgs} messages"
           end
           puts
         end
       end
 
-      def forget_last
+      def undo_last_exchange
         session = Session.current
         if session.history.size < 2
           puts "  Nothing to forget."
           return
         end
 
-        # Remove last user + assistant pair and mark dirty
         session.history.pop(2)
         session.instance_variable_set(:@dirty, true)
         puts "  Forgot last exchange. Context rolled back."
       end
 
-      def show_summary
+      def print_session_summary
         session = Session.current
         if session.history.empty?
           puts "  No conversation yet."
           return
         end
 
-        puts "\n  Conversation Summary"
-        puts "  #{'-' * 40}"
+        UI.header("Conversation Summary")
         puts "  Messages: #{session.message_count}"
-        puts "  Cost:     $#{format('%.4f', session.total_cost)}"
+        puts "  Cost:     #{UI.currency_precise(session.total_cost)}"
         puts
 
-        # Show first and last few messages
         history = session.history
         puts "  First message: #{truncate(history.first[:content], 60)}"
         puts "  Last message:  #{truncate(history.last[:content], 60)}" if history.size > 1
@@ -259,6 +261,98 @@ module MASTER
       def truncate(str, max)
         return str if str.length <= max
         "#{str[0, max - 3]}..."
+      end
+
+      def print_health
+        UI.header("Health Check")
+        checks = []
+
+        # Check API key
+        api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
+        checks << { name: "API Key", ok: !api_key.nil? && !api_key.empty? }
+
+        # Check var directory writable
+        var_ok = File.writable?(Paths.var) rescue false
+        checks << { name: "Var writable", ok: var_ok }
+
+        # Check DB initialized
+        db_ok = DB.axioms.any? rescue false
+        checks << { name: "DB seeded", ok: db_ok }
+
+        # Check models available
+        model = LLM.select_available_model
+        checks << { name: "Models available", ok: !model.nil? }
+
+        # Check budget
+        budget_ok = LLM.budget_remaining > 0
+        checks << { name: "Budget remaining", ok: budget_ok }
+
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("✓") : UI.pastel.red("✗")
+          puts "  #{status} #{c[:name]}"
+        end
+
+        all_ok = checks.all? { |c| c[:ok] }
+        puts
+        puts all_ok ? "  System healthy." : "  Some checks failed."
+        puts
+      end
+
+      def opportunities(path)
+        path ||= MASTER.root
+        UI.header("Analyzing for opportunities")
+        puts "  Path: #{path}"
+        puts "  This may take a moment...\n\n"
+
+        result = CodeReview.opportunities(path)
+        if result[:error]
+          puts "  Error: #{result[:error]}"
+        else
+          %i[architectural micro_refinement ui_ux typography].each do |cat|
+            items = result[cat] || []
+            next if items.empty?
+
+            puts "  #{cat.to_s.gsub('_', ' ').upcase} (#{items.size})"
+            items.first(5).each { |item| puts "    • #{item}" }
+            puts
+          end
+        end
+
+        Result.ok(result)
+      end
+
+      def run_self_test
+        UI.header("Self-Application Test")
+        puts "  Running MASTER through itself...\n\n"
+
+        # Collect all lib files
+        files = Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
+        total_issues = 0
+        total_files = files.size
+
+        files.each_with_index do |file, idx|
+          code = File.read(file)
+          basename = File.basename(file)
+          issues = CodeReview.analyze(code, filename: basename)
+
+          if issues.any?
+            total_issues += issues.size
+            puts "  #{basename}: #{issues.size} issues"
+            issues.first(3).each { |i| puts "    - #{i[:message]}" }
+          else
+            print "." # Progress dot for clean files
+          end
+        end
+
+        puts "\n\n  Files: #{total_files}, Issues: #{total_issues}"
+
+        if total_issues.zero?
+          UI.success("Self-application passed!")
+        else
+          UI.warn("#{total_issues} issues found")
+        end
+
+        Result.ok({ files: total_files, issues: total_issues })
       end
     end
   end

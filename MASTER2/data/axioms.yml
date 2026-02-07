@@ -45,13 +45,6 @@
   statement: "Every change must improve the overall health of the codebase by at least one measurable quality metric."
   source: "The Pragmatic Programmer"
 
-- id: "YAGNI"
-  category: "engineering"
-  protection: "PROTECTED"
-  title: "You Are Not Gonna Need It"
-  statement: "Never add functionality until it is demonstrably necessary. Implement things only when you need them."
-  source: "Extreme Programming"
-
 # COMMUNICATION & TYPOGRAPHY AXIOMS
 - id: "OMIT_WORDS"
   category: "communication"

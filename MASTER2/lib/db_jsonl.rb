@@ -4,7 +4,7 @@ require "json"
 require "fileutils"
 
 module MASTER
-  # JSONL-based storage - zero dependencies, portable
+  # Store - Persists axioms, council, costs, sessions to JSONL files
   module DB
     extend self
 
@@ -13,7 +13,7 @@ module MASTER
     def setup(path: nil)
       @root = path || File.join(Paths.var, "db")
       FileUtils.mkdir_p(@root)
-      seed_if_empty
+      ensure_seeded
     end
 
     def root
@@ -204,7 +204,7 @@ module MASTER
       record
     end
 
-    def seed_if_empty
+    def ensure_seeded
       seed_axioms if axioms.empty?
       seed_council if council.empty?
     end

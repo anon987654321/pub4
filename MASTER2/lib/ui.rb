@@ -7,66 +7,90 @@ module MASTER
   module UI
     extend self
 
+    # --- Formatting Helpers (DRY) ---
+    def currency(n)
+      format("$%.2f", n)
+    end
+
+    def currency_precise(n)
+      format("$%.4f", n)
+    end
+
+    def truncate_id(id, len = 8)
+      "#{id[0, len]}..."
+    end
+
+    def header(title, width: 40)
+      puts "\n  #{bold(title)}"
+      puts "  #{'-' * width}"
+    end
+
     def prompt
       @prompt ||= begin
-        require 'tty-prompt'
-        TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan)
+        require "tty-prompt"
+        TTY::Prompt.new(symbols: { marker: "›" }, active_color: :cyan)
       end
     end
 
     def spinner(message = nil, format: :dots)
-      require 'tty-spinner'
+      require "tty-spinner"
       TTY::Spinner.new("[:spinner] #{message}", format: format)
     end
 
     def table(data, header: nil)
-      require 'tty-table'
+      require "tty-table"
       TTY::Table.new(header: header) { |t| data.each { |row| t << row } }
     end
 
     def box(content, title: nil, **opts)
-      require 'tty-box'
+      require "tty-box"
       TTY::Box.frame(content, title: title ? { top_left: " #{title} " } : nil, padding: [0, 1], border: :round, **opts)
     end
 
     def markdown(text, width: nil)
-      require 'tty-markdown'
+      require "tty-markdown"
       TTY::Markdown.parse(text, width: width || screen_width)
     end
 
     def progress(total)
-      require 'tty-progressbar'
+      require "tty-progressbar"
       TTY::ProgressBar.new("[:bar] :percent", total: total)
     end
 
     def cursor
       @cursor ||= begin
-        require 'tty-cursor'
+        require "tty-cursor"
         TTY::Cursor
       end
     end
 
     def reader
       @reader ||= begin
-        require 'tty-reader'
+        require "tty-reader"
         TTY::Reader.new
       end
     end
 
     def pastel
       @pastel ||= begin
-        require 'pastel'
-        Pastel.new
+        require "pastel"
+        Pastel.new(enabled: color_enabled?)
       end
     end
 
+    def color_enabled?
+      return false if ENV["NO_COLOR"]
+      return false if ENV["TERM"] == "dumb"
+      true
+    end
+
     def screen_width
-      require 'tty-screen'
+      require "tty-screen"
       TTY::Screen.width rescue 80
     end
 
     def screen_height
-      require 'tty-screen'
+      require "tty-screen"
       TTY::Screen.height rescue 24
     end
 
@@ -84,7 +108,7 @@ module MASTER
       result = yield
       s.success
       result
-    rescue => e
+    rescue StandardError
       s.error
       raise
     end

@@ -4,10 +4,11 @@ require "json"
 require "fileutils"
 
 module MASTER
+  # Memory - Session cache and persistence
   module Memory
-    HISTORY_THRESHOLD = 10
-    HISTORY_HEAD = 2
-    HISTORY_TAIL = 8
+    COMPRESS_AFTER_MESSAGES = 10
+    KEEP_FIRST_N = 2
+    KEEP_LAST_N = 8
 
     @sessions = {}
 
@@ -34,8 +35,8 @@ module MASTER
 
       # Compress history to fit token limits
       def compress(history, max_tokens: 4000)
-        return history if history.size <= HISTORY_THRESHOLD
-        history.first(HISTORY_HEAD) + history.last(HISTORY_TAIL)
+        return history if history.size <= COMPRESS_AFTER_MESSAGES
+        history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
       end
 
       # Persist session to disk
@@ -60,7 +61,7 @@ module MASTER
       end
 
       # Delete old sessions
-      def prune_sessions(max_age_hours: 24)
+      def delete_old_sessions(max_age_hours: 24)
         cutoff = Time.now - (max_age_hours * 3600)
         Dir.glob(File.join(Paths.sessions, "*.json")).each do |f|
           File.delete(f) if File.mtime(f) < cutoff

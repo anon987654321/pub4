@@ -32,11 +32,11 @@ module MASTER
         cheap = models_for_tier(:cheap)
         puts "llm0: strong (#{strong}), fast (#{fast}), cheap (#{cheap})"
 
-        budget = format("%.2f", LLM::BUDGET_LIMIT)
-        remaining = format("%.2f", LLM.remaining)
-        puts "budget0 at llm0: $#{budget} limit, $#{remaining} remaining"
+        budget = UI.currency(LLM::SPENDING_CAP)
+        remaining = UI.currency(LLM.budget_remaining)
+        puts "budget0 at llm0: #{budget} limit, #{remaining} remaining"
 
-        puts "circuit0 at llm0: #{LLM::RATES.size} models, all nominal"
+        puts "circuit0 at llm0: #{LLM::MODEL_RATES.size} models, all nominal"
 
         if Pledge.available?
           puts "pledge0 at mainbus0: armed (stdio rpath wpath cpath fattr inet dns)"
@@ -84,7 +84,7 @@ module MASTER
       end
 
       def models_for_tier(tier)
-        LLM::RATES.select { |_, v| v[:tier] == tier }.keys.map { |k| k.split("/").last }.join(", ")
+        LLM::MODEL_RATES.select { |_, v| v[:tier] == tier }.keys.map { |k| k.split("/").last }.join(", ")
       end
     end
   end

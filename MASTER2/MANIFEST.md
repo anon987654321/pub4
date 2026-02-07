@@ -70,7 +70,7 @@ The result: a dense, precise prompt optimized for downstream processing.
 LLM output is informationally rich but typographically raw. The Depressure Tank refines it:
 - Smart quotes, em dashes, ellipses (Bringhurst typography)
 - Zsh-pure validation (no bash-isms)
-- Multi-model refinement (TODO: iterative polishing)
+- Multi-model refinement for iterative polishing
 - Cost/token summaries
 
 The result: publication-quality output that respects both content and presentation.

@@ -10,7 +10,7 @@ require "fileutils"
 # Core
 require_relative "paths"
 require_relative "result"
-require_relative "db"
+require_relative "db_jsonl"
 require_relative "llm"
 require_relative "memory"
 require_relative "session"
@@ -61,6 +61,11 @@ require_relative "replicate"
 require_relative "agent"
 require_relative "agent_pool"
 require_relative "agent_firewall"
+
+# Meta/Self-improvement
+require_relative "code_review"
+require_relative "llm_friendly"
+require_relative "learnings"
 
 # Optional
 require_relative "auto_install"

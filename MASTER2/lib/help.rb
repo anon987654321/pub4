@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Help system - NN/g compliant help and documentation
+  # Help - Command documentation (NN/g compliant)
   module Help
     extend self
 
@@ -11,6 +11,7 @@ module MASTER
       refactor: { desc: "Refactor a file", usage: "refactor <file>" },
       chamber: { desc: "Multi-model deliberation", usage: "chamber <file>" },
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]" },
+      opportunities: { desc: "Analyze codebase for improvements", usage: "opportunities [path]" },
       session: { desc: "Session management", usage: "session [new|save|load|info]" },
       sessions: { desc: "List saved sessions", usage: "sessions" },
       forget: { desc: "Undo last exchange", usage: "forget" },
@@ -19,6 +20,7 @@ module MASTER
       budget: { desc: "Show budget remaining", usage: "budget" },
       context: { desc: "Show context window usage", usage: "context" },
       history: { desc: "Show cost history", usage: "history" },
+      health: { desc: "System health check", usage: "health" },
       speak: { desc: "Text-to-speech", usage: "speak <text>" },
       clear: { desc: "Clear screen", usage: "clear" },
       exit: { desc: "Exit MASTER", usage: "exit" },
@@ -47,7 +49,7 @@ module MASTER
       puts "\n  MASTER v#{VERSION} - Commands\n\n"
 
       COMMANDS.each do |cmd, info|
-        puts "  #{cmd.to_s.ljust(12)} #{info[:desc]}"
+        puts "  #{cmd.to_s.ljust(14)} #{info[:desc]}"
       end
 
       puts "\n  Tips:"
@@ -59,8 +61,7 @@ module MASTER
       info = COMMANDS[cmd]
       return puts "Unknown command: #{cmd}" unless info
 
-      puts "\n  #{cmd}"
-      puts "  #{'-' * cmd.to_s.length}"
+      UI.header(cmd.to_s, width: cmd.to_s.length)
       puts "  #{info[:desc]}"
       puts "  Usage: #{info[:usage]}"
       puts

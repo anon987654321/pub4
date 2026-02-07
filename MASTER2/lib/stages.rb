@@ -12,7 +12,7 @@ module MASTER
 
     # Stage 2: Block dangerous patterns
     class Guard
-      DENY = [
+      DANGEROUS_PATTERNS = [
         /rm\s+-r[f]?\s+\//,
         />\s*\/dev\/[sh]da/,
         /DROP\s+TABLE/i,
@@ -23,7 +23,7 @@ module MASTER
 
       def call(input)
         text = input[:text] || ""
-        match = DENY.find { |p| p.match?(text) }
+        match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
         match ? Result.err("Blocked: dangerous pattern") : Result.ok(input)
       end
     end
@@ -38,14 +38,14 @@ module MASTER
         Result.ok(input.merge(
           model: selected[:model],
           tier: selected[:tier],
-          budget_remaining: LLM.remaining,
+          budget_remaining: LLM.budget_remaining,
         ))
       end
     end
 
     # Stage 4: Adversarial council debate (optional)
     class Debate
-      MAX_ROUNDS = 3
+      DEBATE_ROUNDS_LIMIT = 3
 
       def call(input)
         return Result.ok(input) unless input[:debate]
@@ -60,7 +60,7 @@ module MASTER
         rounds = []
         current = text
 
-        MAX_ROUNDS.times do |i|
+        DEBATE_ROUNDS_LIMIT.times do |i|
           persona = personas[i % personas.size]
           prompt = "You are #{persona[:name]} (#{persona[:role]}). Style: #{persona[:style]}.\n\nReview:\n#{current}"
 
@@ -95,7 +95,7 @@ module MASTER
           tokens_in = response.input_tokens rescue 0
           tokens_out = response.output_tokens rescue 0
           LLM.record_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out)
-          LLM.reset!(model)
+          LLM.close_circuit!(model)
 
           Result.ok(input.merge(
             response: response.content,
@@ -103,7 +103,7 @@ module MASTER
             tokens_out: tokens_out,
           ))
         rescue StandardError => e
-          LLM.trip!(model)
+          LLM.open_circuit!(model)
           Result.err("LLM error (#{model}): #{e.message}")
         end
       end
@@ -133,12 +133,12 @@ module MASTER
 
       def call(input)
         text = input[:response] || ""
-        Result.ok(input.merge(rendered: typeset(text)))
+        Result.ok(input.merge(rendered: apply_typography(text)))
       end
 
       private
 
-      def typeset(text)
+      def apply_typography(text)
         regions = []
         current = []
         in_code = false
@@ -158,10 +158,10 @@ module MASTER
         end
         regions << { text: current.join, code: in_code } unless current.empty?
 
-        regions.map { |r| r[:code] ? r[:text] : prose(r[:text]) }.join
+        regions.map { |r| r[:code] ? r[:text] : beautify_prose(r[:text]) }.join
       end
 
-      def prose(text)
+      def beautify_prose(text)
         text
           .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
           .gsub(/\s--\s/, " \u2014 ")

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Dashboard - Terminal dashboard with TTY components
+  # Dashboard - Terminal status display
   class Dashboard
     def initialize
       @ui = UI
@@ -32,7 +32,7 @@ module MASTER
 
       puts "  #{@ui.bold('System Status')}"
       puts "    Model Tier:    #{stats[:tier]}"
-      puts "    Budget:        $#{format('%.2f', stats[:remaining])} / $#{format('%.2f', stats[:limit])}"
+      puts "    Budget:        #{UI.currency(stats[:remaining])} / #{UI.currency(stats[:limit])}"
       puts "    Circuit:       #{stats[:circuits_ok]} ok, #{stats[:circuits_tripped]} tripped"
       puts "    Axioms:        #{stats[:axioms]}"
       puts "    Council:       #{stats[:council]} personas"
@@ -40,8 +40,8 @@ module MASTER
     end
 
     def budget_box
-      spent = LLM::BUDGET_LIMIT - LLM.remaining
-      pct = (spent / LLM::BUDGET_LIMIT * 100).round(1)
+      spent = LLM::SPENDING_CAP - LLM.budget_remaining
+      pct = (spent / LLM::SPENDING_CAP * 100).round(1)
 
       bar_width = 30
       filled = (pct / 100.0 * bar_width).round
@@ -64,7 +64,7 @@ module MASTER
           model = row[:model].split("/").last
           cost = row[:cost]
           created = row[:created_at]
-          puts "    #{created[11, 5]} | #{model.ljust(15)} | $#{format('%.4f', cost)}"
+          puts "    #{created[11, 5]} | #{model.ljust(15)} | #{UI.currency_precise(cost)}"
         end
       end
       puts
@@ -77,10 +77,10 @@ module MASTER
     def fetch_stats
       {
         tier: LLM.tier,
-        remaining: LLM.remaining,
-        limit: LLM::BUDGET_LIMIT,
-        circuits_ok: LLM::RATES.count { |m, _| LLM.healthy?(m) },
-        circuits_tripped: LLM::RATES.count { |m, _| !LLM.healthy?(m) },
+        remaining: LLM.budget_remaining,
+        limit: LLM::SPENDING_CAP,
+        circuits_ok: LLM::MODEL_RATES.count { |m, _| LLM.circuit_closed?(m) },
+        circuits_tripped: LLM::MODEL_RATES.count { |m, _| !LLM.circuit_closed?(m) },
         axioms: DB.axioms.size,
         council: DB.council.size,
       }

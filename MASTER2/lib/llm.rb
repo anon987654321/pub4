@@ -3,8 +3,9 @@
 require "ruby_llm"
 
 module MASTER
+  # LLM - Model selection, circuit breaker, cost tracking
   module LLM
-    TIERS = {
+    MODEL_TIERS = {
       strong: %w[deepseek/deepseek-r1 anthropic/claude-sonnet-4],
       fast: %w[deepseek/deepseek-v3 openai/gpt-4.1-mini],
       cheap: %w[openai/gpt-4.1-nano],
@@ -12,7 +13,7 @@ module MASTER
 
     TIER_ORDER = %i[strong fast cheap].freeze
 
-    RATES = {
+    MODEL_RATES = {
       "deepseek/deepseek-r1" => { in: 0.55, out: 2.19, tier: :strong },
       "anthropic/claude-sonnet-4" => { in: 3.00, out: 15.00, tier: :strong },
       "deepseek/deepseek-v3" => { in: 0.27, out: 1.10, tier: :fast },
@@ -20,9 +21,9 @@ module MASTER
       "openai/gpt-4.1-nano" => { in: 0.10, out: 0.40, tier: :cheap },
     }.freeze
 
-    CIRCUIT_THRESHOLD = 3
-    CIRCUIT_COOLDOWN = 300
-    BUDGET_LIMIT = 10.0
+    FAILURES_BEFORE_TRIP = 3
+    CIRCUIT_RESET_SECONDS = 300
+    SPENDING_CAP = 10.0
 
     class << self
       def configure
@@ -46,17 +47,17 @@ module MASTER
         start = [TIER_ORDER.index(desired), TIER_ORDER.index(tier)].max
 
         TIER_ORDER[start..].each do |t|
-          TIERS[t].each { |m| return { model: m, tier: t } if healthy?(m) }
+          MODEL_TIERS[t].each { |m| return { model: m, tier: t } if circuit_closed?(m) }
         end
         nil
       end
 
-      def pick
+      def select_available_model
         result = select_model(500)
         result&.fetch(:model)
       end
 
-      def healthy?(model)
+      def circuit_closed?(model)
         row = DB.circuit(model)
         return true unless row
 
@@ -64,32 +65,32 @@ module MASTER
         return true if state == "closed"
 
         last_failure = row[:last_failure]
-        if Time.now.utc - Time.parse(last_failure) > CIRCUIT_COOLDOWN
-          reset!(model)
+        if Time.now.utc - Time.parse(last_failure) > CIRCUIT_RESET_SECONDS
+          close_circuit!(model)
           true
         else
           false
         end
       end
 
-      def trip!(model)
+      def open_circuit!(model)
         DB.trip!(model)
       end
 
-      def reset!(model)
+      def close_circuit!(model)
         DB.reset!(model)
       end
 
-      def spent
+      def total_spent
         DB.total_cost
       end
 
-      def remaining
-        BUDGET_LIMIT - spent
+      def budget_remaining
+        SPENDING_CAP - total_spent
       end
 
       def tier
-        r = remaining
+        r = budget_remaining
         if r > 5.0
           :strong
         elsif r > 1.0
@@ -100,7 +101,7 @@ module MASTER
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
-        rates = RATES.fetch(model, { in: 1.0, out: 1.0 })
+        rates = MODEL_RATES.fetch(model, { in: 1.0, out: 1.0 })
         cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
         DB.log_cost(model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost)
         cost

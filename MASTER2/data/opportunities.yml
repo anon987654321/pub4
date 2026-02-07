@@ -1,0 +1,232 @@
+# Improvement opportunities discovered through deep analysis sessions
+# MASTER2 uses these for self-improvement (evolve command) and code review
+
+architectural:
+  - id: consolidate_files
+    description: "Consolidate 44 files into ~12 logical modules"
+    effort: large
+    impact: high
+
+  - id: single_config
+    description: "Single configuration source - all constants in config.rb or data/config.yml"
+    effort: medium
+    impact: high
+
+  - id: event_driven
+    description: "Event bus for decoupling: on(:llm_response), on(:budget_low)"
+    effort: large
+    impact: medium
+
+  - id: plugin_stages
+    description: "Plugin system for stages - auto-discovered, YAML-configurable order"
+    effort: medium
+    impact: medium
+
+  - id: unified_storage
+    description: "Single Store module with pluggable backends (jsonl, sqlite, redis)"
+    effort: medium
+    impact: high
+
+  - id: streaming_first
+    description: "Streaming-first LLM with progress callbacks, token counting, interruptible"
+    effort: medium
+    impact: high
+
+  - id: typed_structs
+    description: "Typed data structures - PipelineInput, LLMResponse, SessionEntry"
+    effort: medium
+    impact: medium
+
+  - id: middleware_pattern
+    description: "Middleware stack with before/after hooks, error recovery, metrics"
+    effort: medium
+    impact: medium
+
+  - id: async_branches
+    description: "Async/concurrent for parallel council deliberation, swarm generation"
+    effort: large
+    impact: medium
+
+  - id: model_registry
+    description: "Model registry with context_window, supports_streaming, supports_tools"
+    effort: small
+    impact: medium
+
+  - id: session_state_machine
+    description: "Formal state machine: new → active → paused → saved → resumed → closed"
+    effort: small
+    impact: low
+
+  - id: dependency_injection
+    description: "DI container for testability, swappable implementations"
+    effort: medium
+    impact: medium
+
+  - id: command_pattern
+    description: "Command objects with undo/redo, validation, help text baked in"
+    effort: medium
+    impact: medium
+
+  - id: cqrs_lite
+    description: "Separate Queries (read) and Commands (write) modules"
+    effort: small
+    impact: low
+
+  - id: web_api
+    description: "Rack-based API server alongside CLI"
+    effort: large
+    impact: high
+
+micro:
+  - id: module_function
+    pattern: "extend self"
+    replacement: "module_function"
+    description: "Replace extend self with module_function"
+
+  - id: fetch_with_default
+    pattern: '\[:\w+\]\s*\|\|\s*\S+'
+    description: "Use hash.fetch(:key, default) instead of hash[:key] || default"
+
+  - id: freeze_constants
+    pattern: '^\s*[A-Z_]+\s*=\s*[\[{]'
+    description: "Freeze all constant arrays/hashes"
+
+  - id: result_inspect
+    description: "Add #to_s and #inspect to Result class"
+
+  - id: pathname
+    pattern: 'File\.join\('
+    description: "Use Pathname instead of File.join"
+
+  - id: named_constants
+    pattern: '\b\d{2,}\b'
+    description: "Extract magic numbers to named constants"
+
+  - id: result_and_then
+    description: "Add Result#and_then alias for flat_map"
+
+  - id: utc_time
+    pattern: 'Time\.now(?!\.utc)'
+    description: "Use Time.now.utc consistently"
+
+  - id: explicit_rescue
+    pattern: 'rescue\s*$'
+    replacement: "rescue StandardError"
+    description: "Replace bare rescue with rescue StandardError"
+
+  - id: result_empty
+    description: "Add #empty? and #present? to Result"
+
+  - id: delete_prefix
+    pattern: '\.sub\(/\^'
+    description: "Use String#delete_prefix instead of regex"
+
+  - id: validate_data
+    description: "Validate axiom/council data on load"
+
+  - id: db_transaction
+    description: "Add DB.transaction for multi-write operations"
+
+  - id: set_for_patterns
+    pattern: 'DENY\s*=\s*\['
+    description: "Use Set for DENY patterns - O(1) lookup"
+
+  - id: memoize
+    description: "Memoize expensive computations with @cache ||= {}"
+
+ui_ux:
+  - id: typewriter_effect
+    description: "Character-by-character response reveal, cancelable"
+
+  - id: syntax_highlighting
+    description: "Use rouge/coderay for colorized code blocks"
+
+  - id: fuzzy_matching
+    description: "Fuzzy command matching: sta → status"
+
+  - id: command_history
+    description: "Persistent command history with arrow keys"
+
+  - id: multiline_input
+    description: 'Multi-line input mode with """ delimiters'
+
+  - id: streaming_progress
+    description: "Progress bar during LLM streaming with token count"
+
+  - id: notification_sounds
+    description: "Optional ding on completion"
+
+  - id: output_modes
+    description: "--quiet for scripts, --verbose for debugging"
+
+  - id: color_themes
+    description: "Dark/light/solarized, respect NO_COLOR"
+
+  - id: breadcrumb_trail
+    description: "Show context: master > session:abc > file:foo.rb"
+
+  - id: inline_help
+    description: "budget shows brief, budget --help shows full"
+
+  - id: path_autocomplete
+    description: "Tab-complete file paths for refactor/chamber"
+
+  - id: split_pane
+    description: "Response left, metadata (tokens, cost) right"
+
+  - id: clipboard
+    description: "Copy code blocks to clipboard"
+
+  - id: session_picker
+    description: "Resume session picker on startup"
+
+typography:
+  - id: smart_quotes
+    pattern: '"([^"]*)"'
+    replacement: '"\1"'
+    description: "Straight quotes to curly quotes"
+
+  - id: em_dash
+    pattern: '\s--\s'
+    replacement: " — "
+    description: "Double hyphen to em-dash"
+
+  - id: ellipsis
+    pattern: '\.\.\.'
+    replacement: "…"
+    description: "Three dots to ellipsis character"
+
+  - id: apostrophe
+    pattern: "'"
+    replacement: "'"
+    description: "Straight apostrophe to curly"
+
+  - id: nbsp_currency
+    description: "Non-breaking space in $10.00"
+
+  - id: figure_dash
+    pattern: '(\d)-(\d)'
+    replacement: '\1‒\2'
+    description: "Hyphen to figure dash in ranges"
+
+  - id: thin_space_dash
+    description: "Thin spaces (U+2009) around em-dashes"
+
+  - id: multiplication
+    pattern: '(\d)x\s'
+    replacement: '\1× '
+    description: "Letter x to multiplication sign"
+
+  - id: fractions
+    patterns:
+      "1/2": "½"
+      "1/4": "¼"
+      "3/4": "¾"
+    description: "ASCII fractions to Unicode"
+
+  - id: bullets_nested
+    levels: ["•", "◦", "‣"]
+    description: "Bullet variety for nested lists"
+
+  - id: box_drawing
+    description: "Use ┌─┬─┐ instead of +--+--+"

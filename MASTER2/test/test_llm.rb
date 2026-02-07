@@ -8,32 +8,32 @@ class TestLLM < Minitest::Test
   end
 
   def test_rates_defined
-    assert MASTER::LLM::RATES.key?("deepseek/deepseek-r1")
-    assert MASTER::LLM::RATES.key?("anthropic/claude-sonnet-4")
+    assert MASTER::LLM::MODEL_RATES.key?("deepseek/deepseek-r1")
+    assert MASTER::LLM::MODEL_RATES.key?("anthropic/claude-sonnet-4")
   end
 
   def test_rate_structure
-    rate = MASTER::LLM::RATES["deepseek/deepseek-r1"]
+    rate = MASTER::LLM::MODEL_RATES["deepseek/deepseek-r1"]
     assert rate[:in], "Rate should have :in price"
     assert rate[:out], "Rate should have :out price"
     assert rate[:tier], "Rate should have :tier"
   end
 
-  def test_circuit_threshold
-    assert_equal 3, MASTER::LLM::CIRCUIT_THRESHOLD
+  def test_failures_before_trip
+    assert_equal 3, MASTER::LLM::FAILURES_BEFORE_TRIP
   end
 
-  def test_budget_limit
-    assert_equal 10.0, MASTER::LLM::BUDGET_LIMIT
+  def test_spending_cap
+    assert_equal 10.0, MASTER::LLM::SPENDING_CAP
   end
 
-  def test_healthy_when_no_failures
-    assert MASTER::LLM.healthy?("deepseek/deepseek-r1")
+  def test_circuit_closed_when_no_failures
+    assert MASTER::LLM.circuit_closed?("deepseek/deepseek-r1")
   end
 
-  def test_remaining_budget
-    initial = MASTER::LLM.remaining
-    assert_equal MASTER::LLM::BUDGET_LIMIT, initial
+  def test_budget_remaining
+    initial = MASTER::LLM.budget_remaining
+    assert_equal MASTER::LLM::SPENDING_CAP, initial
   end
 
   def test_tier_with_full_budget
@@ -51,6 +51,6 @@ class TestLLM < Minitest::Test
   def test_record_cost
     cost = MASTER::LLM.record_cost(model: "deepseek/deepseek-r1", tokens_in: 1000, tokens_out: 500)
     assert cost > 0, "Cost should be positive"
-    assert MASTER::LLM.remaining < MASTER::LLM::BUDGET_LIMIT, "Budget should decrease"
+    assert MASTER::LLM.budget_remaining < MASTER::LLM::SPENDING_CAP, "Budget should decrease"
   end
 end
