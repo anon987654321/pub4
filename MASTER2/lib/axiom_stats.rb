@@ -54,9 +54,16 @@ module MASTER
     private
 
     def load_axioms
-      axioms_file = File.join(MASTER.root, "MASTER2", "data", "axioms.yml")
+      # MASTER.root points to the MASTER2 directory when running from within MASTER2
+      # or to pub4 directory when running from outside
+      axioms_paths = [
+        File.join(MASTER.root, "data", "axioms.yml"),              # When run from MASTER2
+        File.join(MASTER.root, "MASTER2", "data", "axioms.yml")   # When run from pub4
+      ]
       
-      return [] unless File.exist?(axioms_file)
+      axioms_file = axioms_paths.find { |path| File.exist?(path) }
+      
+      return [] unless axioms_file
       
       begin
         YAML.load_file(axioms_file) || []
