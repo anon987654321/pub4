@@ -24,7 +24,8 @@ class TestAxiomStats < Minitest::Test
   def test_category_counts
     stats = MASTER::AxiomStats.stats
     
-    # Based on actual axioms.yml content
+    # These tests validate the exact axioms.yml content at time of writing.
+    # If axioms.yml is intentionally updated, these assertions should be updated too.
     assert_equal 11, stats[:by_category]["engineering"]
     assert_equal 8, stats[:by_category]["structural"]
     assert_equal 6, stats[:by_category]["process"]
@@ -37,7 +38,8 @@ class TestAxiomStats < Minitest::Test
   def test_protection_counts
     stats = MASTER::AxiomStats.stats
     
-    # Based on actual axioms.yml content
+    # These tests validate the exact axioms.yml content at time of writing.
+    # If axioms.yml is intentionally updated, these assertions should be updated too.
     assert_equal 40, stats[:by_protection]["PROTECTED"]
     assert_equal 1, stats[:by_protection]["ABSOLUTE"]
   end
@@ -45,6 +47,7 @@ class TestAxiomStats < Minitest::Test
   def test_total_axiom_count
     stats = MASTER::AxiomStats.stats
     
+    # This validates the total count matches axioms.yml at time of writing.
     # 11 + 8 + 6 + 5 + 4 + 4 + 3 = 41
     assert_equal 41, stats[:total]
   end

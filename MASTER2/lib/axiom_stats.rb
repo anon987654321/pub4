@@ -66,7 +66,7 @@ module MASTER
       return [] unless axioms_file
       
       begin
-        YAML.load_file(axioms_file) || []
+        YAML.safe_load_file(axioms_file) || []
       rescue => e
         []
       end
