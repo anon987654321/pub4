@@ -25,6 +25,11 @@ require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
+# Multi-language parsing and NLU
+require_relative "../../lib/parser/multi_language"
+require_relative "../../lib/nlu"
+require_relative "../../lib/conversation"
+
 # Safe Autonomy Architecture
 require_relative "constitution"
 require_relative "staging"

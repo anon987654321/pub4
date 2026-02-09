@@ -114,6 +114,9 @@ module MASTER
         # List keywords
         intents << :list if normalized.match?(/\b(list|enumerate|show all)\b/)
 
+        # Help keywords
+        intents << :help if normalized.match?(/\b(help|assist|guide)\b/)
+
         intents.uniq
       end
 
