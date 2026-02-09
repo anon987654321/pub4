@@ -1,0 +1,65 @@
+#compdef master
+
+_master() {
+  local -a commands
+  commands=(
+    'refactor:Refactor file with LLM guidance'
+    'fix:Fix violations in files'
+    'scan:Scan directory for code smells'
+    'chamber:Open language-specific chamber'
+    'ideate:Generate 15+ alternatives for a topic'
+    'evolve:Evolve entire codebase'
+    'browse:Start web interface'
+    'speak:Voice interaction mode'
+    'session:Session management (show|save|load)'
+    'health:System health check'
+    'opportunities:Find improvement opportunities'
+    'axioms-stats:Display axiom violation statistics'
+    'version:Show version'
+    'help:Show help message'
+  )
+
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '1: :->command' \
+    '*::arg:->args'
+
+  case $state in
+    command)
+      _describe -t commands 'master commands' commands
+      ;;
+    args)
+      case $line[1] in
+        refactor|opportunities)
+          # Complete with Ruby/Shell/YAML files
+          _files -g '(*.(rb|sh|zsh|yml|yaml)|Gemfile|Rakefile)'
+          ;;
+        fix)
+          _arguments \
+            '--all[Fix all files with violations]' \
+            '*:files:_files -g "(*.(rb|sh|zsh|yml|yaml)|Gemfile|Rakefile)"'
+          ;;
+        scan)
+          # Complete with directories
+          _directories
+          ;;
+        chamber)
+          # Complete with language names
+          local -a languages
+          languages=(ruby python javascript zsh shell yaml markdown)
+          _describe -t languages 'programming languages' languages
+          ;;
+        session)
+          # Complete with session subcommands
+          local -a session_cmds
+          session_cmds=(show save load list delete)
+          _describe -t session_commands 'session commands' session_cmds
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_master "$@"
