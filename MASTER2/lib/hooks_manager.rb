@@ -100,7 +100,7 @@ module MASTER
 
     def load_config
       path = File.join(MASTER.root, 'data', 'hooks.yml')
-      YAML.load_file(path)
+      YAML.safe_load_file(path, permitted_classes: [Symbol])
     rescue Errno::ENOENT
       default_hooks
     end

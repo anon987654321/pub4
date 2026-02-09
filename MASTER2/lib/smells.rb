@@ -181,7 +181,7 @@ module MASTER
 
       def load_config
         path = File.join(MASTER.root, 'data', 'smells.yml')
-        YAML.load_file(path)
+        YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}
       end
