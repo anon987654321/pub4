@@ -19,27 +19,19 @@ module MASTER
 
     # Check if result is successful
     # @return [Boolean] true if ok
-    def ok?
-      @kind == :ok
-    end
+    def ok? = @kind == :ok
 
     # Check if result is error
     # @return [Boolean] true if err
-    def err?
-      @kind == :err
-    end
+    def err? = @kind == :err
 
     # Alias for ok?
     # @return [Boolean] true if successful
-    def success?
-      ok?
-    end
+    def success? = ok?
 
     # Get error (alias for error)
     # @return [String, nil] Error message if err
-    def failure
-      @error
-    end
+    def failure = @error
 
     # Unwrap value or raise error
     # @return [Object] Value if ok
@@ -52,9 +44,7 @@ module MASTER
     # Alias for value!
     # @return [Object] Value if ok
     # @raise [RuntimeError] if err
-    def unwrap
-      value!
-    end
+    def unwrap = value!
 
     # Get value or return default
     # @param default [Object] Default value if err
@@ -99,16 +89,12 @@ module MASTER
       # Create successful result
       # @param value [Object] Success value (defaults to nil)
       # @return [Result] Ok result
-      def ok(value = nil)
-        new(value: value, kind: :ok)
-      end
+      def ok(value = nil) = new(value: value, kind: :ok)
 
       # Create error result
       # @param error [String] Error message
       # @return [Result] Err result
-      def err(error)
-        new(error: error, kind: :err)
-      end
+      def err(error) = new(error: error, kind: :err)
 
       # Try block and wrap in Result
       # @yield Block to execute
