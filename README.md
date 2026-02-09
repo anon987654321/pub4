@@ -13,7 +13,24 @@ export OPENROUTER_API_KEY=your_key
 - self_refactor : Refactor lib/ files
 - auto_iterate : Iterative self-improvement (converges on no changes)
 - stats : Show monitoring stats
-- repl : Interactive
+- repl : Interactive REPL with ? help and !! repeat
+- version : Show version
+- help : Show help
+
+### Command Options
+- `--offline` or `-o` : Offline mode
+- `--converge` or `-c` : Auto-iterate until convergence
+- `--dry-run` or `-d` : Show what would change without writing
+- `--preview` or `-p` : Show before/after diff with confirmation
+
+### Smart Features (Phase 1 Quick Wins)
+- **Auto-detection**: Run `./bin/master file.rb` to auto-suggest refactor/analyze
+- **Progress indicators**: Spinner with elapsed time for long operations
+- **Color output**: Green for success, red for errors, yellow for warnings
+- **Smart errors**: Command typos suggest closest match, missing files suggest similar
+- **Interactive REPL**: Type `?` for help, `!!` to repeat last command
+- **Performance metrics**: Shows tokens used, cost estimate, and execution time
+- **Smart defaults**: No args enters REPL, directory input prompts for batch analysis
 
 ## Features
 - Ruby AST (parser/unparser)
