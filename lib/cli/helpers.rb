@@ -30,8 +30,10 @@ module MASTER
         end
         if options[:converge]
           consecutive_no_changes = 0
+          options_without_converge = options.dup
+          options_without_converge.delete(:converge)
           while consecutive_no_changes < 3
-            changes = self_refactor(options)
+            changes = self_refactor(options_without_converge)
             if changes
               consecutive_no_changes = 0
             else

@@ -61,6 +61,7 @@ module MASTER
       response = $stdin.gets.chomp.downcase
       return false unless response == 'y'
 
+      # Modify args in place to inject suggested command
       args.unshift(suggestion[:command])
       true
     end
@@ -83,8 +84,6 @@ module MASTER
         stats = Monitoring.get_stats
         puts Colors.blue("Stats: #{stats}")
       when 'repl'
-        REPL.start(options)
-      else
         REPL.start(options)
       end
     end
