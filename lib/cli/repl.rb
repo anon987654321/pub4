@@ -34,15 +34,23 @@ module MASTER
       end
 
       def self.read_input
-        begin
-          Readline.readline(Colors.blue("master> "), true)
-        rescue Interrupt
-          puts "\nInterrupted. Type 'exit' to quit."
-          return ""
-        rescue NoMethodError
-          # Fallback if readline not available
+        # Check if Readline is available before using it
+        if defined?(Readline)
+          begin
+            Readline.readline(Colors.blue("master> "), true)
+          rescue Interrupt
+            puts "\nInterrupted. Type 'exit' to quit."
+            return ""
+          end
+        else
+          # Fallback to basic input if readline not available
           print Colors.blue("master> ")
-          $stdin.gets&.chomp
+          begin
+            $stdin.gets&.chomp
+          rescue Interrupt
+            puts "\nInterrupted. Type 'exit' to quit."
+            return ""
+          end
         end
       end
 

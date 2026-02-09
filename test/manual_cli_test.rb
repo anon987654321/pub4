@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # Simple manual test for CLI features
 
+require 'tmpdir'
 require_relative '../lib/cli/constants'
 require_relative '../lib/cli/colors'
 require_relative '../lib/cli/progress'
@@ -45,7 +46,7 @@ puts
 
 # Test 5: File type detection
 puts "5. File detection:"
-temp_file = '/tmp/test_cli_manual.rb'
+temp_file = File.join(Dir.tmpdir, 'test_cli_manual.rb')
 File.write(temp_file, "def hello\n  puts 'world'\nend\n")
 type = MASTER::CLI::FileDetector.detect_type(temp_file)
 complexity = MASTER::CLI::FileDetector.analyze_complexity(temp_file)

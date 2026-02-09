@@ -2,6 +2,7 @@ module MASTER
   module CLI
     class Progress
       FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+      CLEAR_PADDING = 10  # Extra space to clear progress line
 
       def initialize(message = "Processing")
         @message = message
@@ -20,7 +21,7 @@ module MASTER
             @frame += 1
             sleep 0.1
           end
-          print "\r" + " " * (@message.length + 10) + "\r"
+          print "\r" + " " * (@message.length + CLEAR_PADDING) + "\r"
           $stdout.flush
         end
       end
