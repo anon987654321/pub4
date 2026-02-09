@@ -68,6 +68,7 @@ require_relative "validator"
 require_relative "self_map"
 require_relative "file_hygiene"
 require_relative "planner_helper"
+require_relative "gh_helper"
 
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"

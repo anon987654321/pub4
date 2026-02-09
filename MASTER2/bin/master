@@ -13,32 +13,137 @@ require_relative "../lib/master"
 MASTER::DB.setup
 MASTER::Session.install_crash_handlers
 
-case ARGV[0]
-when "--help", "-h"
-  puts "MASTER v#{MASTER::VERSION}"
-  puts "\nUsage: master [OPTIONS]"
-  puts "\nOptions:"
-  puts "  -h, --help        Show this help message"
-  puts "  -v, --version     Show version information"
-  puts "  -w, --web         Start web-only mode (no REPL)"
-  puts "  -p, --pipe        Pipe mode for automation"
-  puts "  -t, --tts [TOPIC] TTS test mode - continuous talking"
-  puts "  -d, --daemon      Daemon mode for agentd"
-  puts "  --persona [NAME]  Set active persona (ronin, lawyer, hacker, architect, sysadmin, trader, medic)"
-  puts "\nDefault: Start REPL with integrated web server"
-  exit 0
-when "--version", "-v"
-  puts "MASTER v#{MASTER::VERSION}"
-  exit 0
-when "--persona"
-  persona = ARGV[1]&.to_sym
-  if MASTER::Session::SUPPORTED_PERSONAS.include?(persona)
-    MASTER::Session.set_persona(persona)
-    puts "Persona set to: #{persona}"
-  else
-    puts "Unknown persona. Available: #{MASTER::Session::SUPPORTED_PERSONAS.join(", ")}"
+# Parse command line arguments
+command = ARGV[0]
+args = ARGV[1..-1] || []
+
+case command
+when "refactor"
+  # Direct refactoring: master refactor file.rb
+  if args.empty?
+    puts "Usage: master refactor <file> [--preview|--raw|--apply]"
+    exit 1
   end
-  exit
+  result = MASTER::Commands.refactor(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "fix"
+  # Batch fixing: master fix --all, master fix file.rb
+  arg_str = args.join(" ")
+  MASTER::Commands.fix_code(arg_str)
+
+when "scan"
+  # Directory scanning: master scan deploy/rails/
+  path = args.first || "."
+  result = MASTER::Commands.opportunities(path)
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "chamber"
+  # Open specific chamber: master chamber ruby
+  if args.empty?
+    puts "Usage: master chamber <file>"
+    exit 1
+  end
+  result = MASTER::Commands.chamber(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "ideate", "brainstorm"
+  # Generate alternatives: master ideate "authentication system"
+  if args.empty?
+    puts "Usage: master ideate <topic>"
+    exit 1
+  end
+  result = MASTER::Commands.ideate(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "evolve"
+  # Evolve codebase: master evolve
+  result = MASTER::Commands.evolve(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "browse"
+  # Web browser: master browse <url>
+  if args.empty?
+    puts "Usage: master browse <url>"
+    exit 1
+  end
+  MASTER::Commands.browse_url(args.join(" "))
+
+when "speak", "say"
+  # Voice interaction: master speak <text>
+  MASTER::Commands.speak(args.join(" "))
+
+when "session"
+  # Session management: master session show, master session save
+  MASTER::Commands.manage_session(args.join(" "))
+
+when "health"
+  # System health: master health
+  MASTER::Commands.print_health
+
+when "opportunities", "opps"
+  # Code improvements: master opportunities file.rb
+  path = args.first
+  result = MASTER::Commands.opportunities(path)
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
+when "axioms-stats", "stats"
+  # Statistics: master axioms-stats
+  MASTER::Commands.print_axiom_stats
+
+when "version", "-v", "--version"
+  puts "MASTER2 v#{MASTER::VERSION}"
+  exit 0
+
+when "help", "-h", "--help", nil
+  puts <<~HELP
+    MASTER2 - Constitutional AI Code Quality System
+    
+    Usage:
+      master [command] [arguments]
+    
+    Commands:
+      refactor <file>             Refactor file with LLM guidance
+      fix [--all|<path>]          Fix violations in files or directory
+      scan [directory]            Scan for code smells (default: .)
+      chamber <file>              Chamber review with multi-model deliberation
+      ideate <topic>              Generate 15+ alternatives for a topic
+      evolve [args]               Evolve entire codebase
+      browse <url>                Browse and extract web content
+      speak <text>                Text-to-speech output
+      session <cmd>               Session management (show|save|load)
+      health                      System health check
+      opportunities [path]        Find improvement opportunities
+      axioms-stats                Display axiom violation statistics
+      version                     Show version
+      help                        Show this help
+    
+    Legacy Options:
+      -w, --web                   Start web-only mode (no REPL)
+      -p, --pipe                  Pipe mode for automation
+      -t, --tts [TOPIC]           TTS test mode
+      -d, --daemon                Daemon mode for agentd
+    
+    Examples:
+      master refactor deploy/openbsd/openbsd.sh
+      master fix --all
+      master scan deploy/rails/
+      master chamber lib/master.rb
+      master ideate "authentication system"
+      master session save milestone-1
+    
+    Environment Variables:
+      OPENROUTER_API_KEY          Required for LLM operations
+      MASTER_VOICE                Enable voice mode (true/false)
+      MASTER_DEBUG                Debug logging (true/false)
+    
+    Documentation:
+      https://github.com/anon987654321/pub4/tree/main/MASTER2
+    
+    No command specified starts REPL mode with integrated web server.
+  HELP
+  exit 0
+
 when "--web", "-w"
   # Web-only mode (no REPL)
   server = MASTER::Server.new
@@ -46,22 +151,33 @@ when "--web", "-w"
   server.start
   puts "Press Ctrl+C to stop"
   sleep
+
 when "--pipe", "-p"
   # Pipe mode for automation
   input = JSON.parse($stdin.read) rescue { "text" => $stdin.read }
   result = MASTER::Pipeline.new.call(input)
   puts JSON.generate(result.ok? ? result.value : { error: result.error })
+
 when "--tts", "-t"
   # TTS test mode - continuous talking (Windows/Cygwin)
   topic = ARGV[1]&.to_sym || :master
   puts "Starting continuous TTS (#{topic})... Ctrl+C to stop"
   MASTER::StreamTTS.windows_chatter(topic: topic)
+
 when "--daemon", "-d"
   # Daemon mode for agentd
   require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
+
 else
-  # Default: REPL with integrated web server
-  server = MASTER::Server.new
-  Thread.new { server.start }
-  MASTER::Pipeline.repl
+  # Unknown command or REPL mode
+  if command && !command.start_with?("-")
+    puts "Unknown command: #{command}"
+    puts "Run 'master help' for usage information"
+    exit 1
+  else
+    # No command = REPL mode
+    server = MASTER::Server.new
+    Thread.new { server.start }
+    MASTER::Pipeline.repl
+  end
 end

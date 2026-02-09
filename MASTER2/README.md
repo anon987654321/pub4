@@ -144,6 +144,10 @@ If MASTER fails its own review, it has failed.
 
 ## Commands
 
+MASTER2 supports both REPL mode and direct CLI commands:
+
+### REPL Mode Commands
+
 ```
 help          Show commands
 refactor      Multi-model file review
@@ -164,6 +168,62 @@ session       Session management
 budget        Show remaining budget
 health        System health check
 ```
+
+### Direct CLI Commands
+
+Execute commands directly from the shell without entering REPL mode:
+
+```bash
+# Refactor a file
+./bin/master refactor path/to/file.rb
+
+# Fix all violations in current directory
+./bin/master fix --all
+
+# Fix specific file
+./bin/master fix path/to/file.rb
+
+# Scan directory for code smells
+./bin/master scan deploy/rails/
+
+# Chamber review
+./bin/master chamber lib/master.rb
+
+# Generate ideas
+./bin/master ideate "authentication system"
+
+# Show version
+./bin/master version
+
+# Show help
+./bin/master help
+
+# Health check
+./bin/master health
+
+# Axiom statistics
+./bin/master axioms-stats
+```
+
+### Zsh Completion
+
+Tab completion is available for all commands and arguments:
+
+**Installation:**
+
+```bash
+# Add to your ~/.zshrc
+fpath=(~/path/to/pub4/MASTER2/completions $fpath)
+autoload -Uz compinit && compinit
+```
+
+**Features:**
+- Complete command names: `master <TAB>`
+- File completion for `refactor`, `fix`, `opportunities`
+- Directory completion for `scan`
+- Language names for `chamber`
+- Session subcommands for `session`
+- `--all` flag completion for `fix`
 
 ## Modes
 
