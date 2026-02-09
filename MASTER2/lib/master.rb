@@ -16,11 +16,14 @@ require_relative "utils"
 require_relative "paths"
 require_relative "result"
 require_relative "logging"
+require_relative "dmesg"
+require_relative "log"  # Unified logging facade
 require_relative "db_jsonl"
 require_relative "llm"
 require_relative "memory"
 require_relative "session"
 require_relative "pledge"
+require_relative "rubocop_detector"  # Style checking integration
 
 # Safe Autonomy Architecture
 require_relative "constitution"
