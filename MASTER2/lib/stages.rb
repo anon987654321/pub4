@@ -17,18 +17,24 @@ module MASTER
     class Compress
       COMPRESSION_FILE = File.join(__dir__, "..", "data", "compression.yml")
 
-      def self.patterns
-        @patterns ||= load_patterns
-      end
+      class << self
+        # Load compression patterns from YAML
+        # @return [Hash] Hash with :fillers and :phrases arrays
+        def patterns
+          @patterns ||= load_patterns
+        end
 
-      def self.load_patterns
-        return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
+        # Load and compile compression patterns from file
+        # @return [Hash] Compiled regex patterns
+        def load_patterns
+          return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
 
-        data = YAML.safe_load_file(COMPRESSION_FILE)
-        {
-          fillers: (data["fillers"] || []).map { |w| /\b#{Regexp.escape(w)}\b/i },
-          phrases: (data["phrases"] || []).map { |p| /#{Regexp.escape(p)}/i },
-        }
+          data = YAML.safe_load_file(COMPRESSION_FILE)
+          {
+            fillers: (data["fillers"] || []).map { |w| /\b#{Regexp.escape(w)}\b/i },
+            phrases: (data["phrases"] || []).map { |p| /#{Regexp.escape(p)}/i },
+          }
+        end
       end
 
       def call(input)
