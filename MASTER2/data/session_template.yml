@@ -1,0 +1,99 @@
+# Session template for MASTER2 workflow
+# Used to initialize new project sessions
+
+project_context:
+  name: brgen
+  type: rails_8_solid_hotwire_pwa
+  vps: 185.52.176.18
+  user: dev
+  stack: relayd_httpd_puma
+  description: "Rails 8 PWA with Solid Queue/Cache/Cable on OpenBSD"
+
+deployment:
+  proxy: relayd
+  static: httpd
+  app: puma
+  notes: |
+    - relayd handles TLS termination and load balancing
+    - httpd serves static assets
+    - puma runs Rails app
+
+related_apps:
+  - name: brgen
+    description: Main app
+  - name: amber
+    description: Sister app
+  - name: blognet
+    description: Blog platform
+  - name: bsdports
+    description: OpenBSD ports
+  - name: hjerterom
+    description: Norwegian service
+  - name: privcam
+    description: Privacy camera
+  - name: pubattorney
+    description: Public attorney
+
+workflow:
+  current_phase: discover
+  phase_history: []
+  phases_available:
+    - discover
+    - analyze
+    - ideate
+    - design
+    - implement
+    - validate
+    - deliver
+    - reflect
+
+conversation:
+  messages: []
+  context_window_used: 0
+  started_at: null
+
+decisions:
+  log: []
+  categories:
+    - architectural
+    - implementation
+    - deployment
+    - refactoring
+    - security
+
+quality_gates:
+  discover:
+    - requirements_clear
+    - problem_defined
+    - stakeholders_identified
+  analyze:
+    - codebase_understood
+    - dependencies_mapped
+    - risks_identified
+  ideate:
+    - alternatives_generated
+    - tradeoffs_evaluated
+    - approach_recommended
+  design:
+    - design_approved
+    - interfaces_defined
+    - edge_cases_considered
+  implement:
+    - code_complete
+    - tests_passing
+    - patterns_followed
+  validate:
+    - quality_verified
+    - security_checked
+    - reviewed
+  deliver:
+    - user_satisfied
+    - documented
+    - deployed
+
+learnings:
+  patterns_discovered: []
+  mistakes_made: []
+  wins: []
+  technical_debt_added: []
+  axioms_validated: []

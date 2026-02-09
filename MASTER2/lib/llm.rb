@@ -4,6 +4,7 @@ require "net/http"
 require "json"
 require "yaml"
 require "uri"
+require_relative "circuit_breaker"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
@@ -11,10 +12,7 @@ module MASTER
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
-    FAILURES_BEFORE_TRIP = 3
-    CIRCUIT_RESET_SECONDS = 300
     SPENDING_CAP = 10.0
-    RATE_LIMIT_PER_MINUTE = 30  # Max requests per minute
     MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
     PREMIUM_COST_LIMIT = 5.00   # Higher limit for premium tier
 
@@ -38,35 +36,7 @@ module MASTER
         @forced_tier
       end
 
-      # Rate limiting state
-      def rate_limit_state
-        @rate_limit_state ||= { requests: [], window_start: Time.now }
-      end
-
-      def check_rate_limit!
-        @rate_limit_mutex ||= Mutex.new
-        @rate_limit_mutex.synchronize do
-          now = Time.now
-          state = rate_limit_state
-          
-          # Clean old requests (older than 1 minute)
-          state[:requests].reject! { |t| now - t > 60 }
-          
-          if state[:requests].size >= RATE_LIMIT_PER_MINUTE
-            oldest = state[:requests].min
-            wait_time = 60 - (now - oldest)
-            if wait_time > 0
-              Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
-              sleep(wait_time)
-              state[:requests].clear
-            end
-          end
-          
-          state[:requests] << now
-        end
-      end
-
-      def models
+      # Main ask method with OpenRouter features
         @models ||= load_models
       end
 
@@ -157,7 +127,7 @@ module MASTER
         return Result.err("Missing OPENROUTER_API_KEY") unless configured?
 
         # Rate limit check
-        check_rate_limit!
+        CircuitBreaker.check_rate_limit!
 
         # Model selection (single call - no TOCTOU)
         primary = model || select_model_for_tier(tier || self.tier)
@@ -214,17 +184,17 @@ module MASTER
 
           Dmesg.llm(selected_tier, model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
 
-          close_circuit!(primary)
+          CircuitBreaker.close_circuit!(primary)
           Result.ok(data)
         else
           spinner&.error
-          open_circuit!(primary)
+          CircuitBreaker.open_circuit!(primary)
           Dmesg.llm_error(selected_tier, result.error) if defined?(Dmesg)
           result
         end
       rescue StandardError => e
         spinner&.error rescue nil
-        open_circuit!(primary) if primary
+        CircuitBreaker.open_circuit!(primary) if primary
         Result.err("LLM error: #{e.message}")
       end
 
@@ -464,14 +434,14 @@ module MASTER
         start_idx = TIER_ORDER.index(tier) || 1
         TIER_ORDER[start_idx..].each do |t|
           model_tiers[t]&.each do |m|
-            return m if circuit_closed?(m)
+            return m if CircuitBreaker.circuit_closed?(m)
           end
         end
 
         # Try stronger tiers as last resort
         TIER_ORDER[0...start_idx].reverse_each do |t|
           model_tiers[t]&.each do |m|
-            return m if circuit_closed?(m)
+            return m if CircuitBreaker.circuit_closed?(m)
           end
         end
 
@@ -479,41 +449,6 @@ module MASTER
       end
 
       public
-
-      def circuit_closed?(model)
-        return true unless defined?(DB)
-        row = DB.circuit(model)
-        return true unless row
-
-        state = row[:state]
-        return true if state == "closed"
-
-        last_failure = row[:last_failure]
-        if Time.now.utc - Time.parse(last_failure) > CIRCUIT_RESET_SECONDS
-          close_circuit!(model)
-          true
-        else
-          false
-        end
-      end
-
-      def open_circuit!(model)
-        return unless defined?(DB)
-
-        row = DB.circuit(model)
-        current_failures = row ? (row[:failures] || 0) + 1 : 1
-
-        if current_failures >= FAILURES_BEFORE_TRIP
-          DB.trip!(model)
-        else
-          # Increment failure count without tripping
-          DB.increment_failure!(model)
-        end
-      end
-
-      def close_circuit!(model)
-        DB.reset!(model) if defined?(DB)
-      end
 
       def total_spent
         return 0.0 unless defined?(DB)

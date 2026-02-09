@@ -1,8 +1,26 @@
 # Question Banks - Guided inquiry per workflow phase
 # Source: 8-phase workflow from master.yml archaeology
 
+hostile:
+  purpose: "Adversarial questioning - catch hidden issues"
+  questions:
+    - "What assumption here could be completely wrong?"
+    - "What would a hostile user do with this?"
+    - "What edge case would break this in production?"
+    - "Is this the simplest possible solution?"
+    - "What would I regret about this in 6 months?"
+    - "What am I not seeing?"
+    - "Who loses if this is implemented?"
+    - "What's the second-order effect?"
+    - "Is this solving the right problem or a symptom?"
+    - "What would the security officer veto here?"
+    - "Where is the complexity hiding?"
+    - "What would break if requirements changed 20%?"
+    - "Where is technical debt accumulating?"
+
 discover:
   purpose: "Define the problem precisely"
+  introspection: "What problem am I solving? Who benefits?"
   questions:
     - "What specifically is the problem?"
     - "Who is affected and how?"
@@ -12,6 +30,7 @@ discover:
 
 analyze:
   purpose: "Understand root causes and constraints"
+  introspection: "What exists? What patterns are in use?"
   questions:
     - "What is the root cause?"
     - "What are the dependencies?"
@@ -21,6 +40,7 @@ analyze:
 
 ideate:
   purpose: "Generate alternatives (minimum 15)"
+  introspection: "What are 3 different approaches? Trade-offs?"
   questions:
     - "What are 5 obvious solutions?"
     - "What are 5 unconventional solutions?"
@@ -31,6 +51,7 @@ ideate:
 
 design:
   purpose: "Select and specify the approach"
+  introspection: "Is this minimal? Does it fit existing patterns?"
   questions:
     - "What is the simplest approach?"
     - "What could break?"
@@ -40,6 +61,7 @@ design:
 
 implement:
   purpose: "Build the solution"
+  introspection: "Did I change only what was needed? Tests pass?"
   questions:
     - "Does this follow existing patterns?"
     - "Is this the minimal change?"
@@ -49,6 +71,7 @@ implement:
 
 validate:
   purpose: "Verify correctness"
+  introspection: "Does it work? Is it safe? Would I approve this PR?"
   questions:
     - "Do all tests pass?"
     - "Is coverage adequate?"
@@ -58,6 +81,7 @@ validate:
 
 deliver:
   purpose: "Deploy safely"
+  introspection: "Is the user happy? Documentation updated?"
   questions:
     - "Is there a rollback plan?"
     - "Are metrics in place?"
@@ -67,9 +91,21 @@ deliver:
 
 learn:
   purpose: "Extract insights"
+  introspection: "What worked well? What would I do differently?"
   questions:
     - "What worked well?"
     - "What failed or surprised us?"
     - "What would we do differently?"
     - "What patterns emerged?"
     - "What should we document?"
+
+reflect:
+  purpose: "Extract insights"
+  introspection: "What did I learn? What patterns emerged?"
+  questions:
+    - "What worked well?"
+    - "What failed or surprised us?"
+    - "What would we do differently?"
+    - "What patterns emerged?"
+    - "What should we document?"
+
