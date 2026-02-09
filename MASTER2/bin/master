@@ -24,11 +24,21 @@ when "--help", "-h"
   puts "  -p, --pipe        Pipe mode for automation"
   puts "  -t, --tts [TOPIC] TTS test mode - continuous talking"
   puts "  -d, --daemon      Daemon mode for agentd"
+  puts "  --persona [NAME]  Set active persona (ronin, lawyer, hacker, architect, sysadmin, trader, medic)"
   puts "\nDefault: Start REPL with integrated web server"
   exit 0
 when "--version", "-v"
   puts "MASTER v#{MASTER::VERSION}"
   exit 0
+when "--persona"
+  persona = ARGV[1]&.to_sym
+  if MASTER::Session::SUPPORTED_PERSONAS.include?(persona)
+    MASTER::Session.set_persona(persona)
+    puts "Persona set to: #{persona}"
+  else
+    puts "Unknown persona. Available: #{MASTER::Session::SUPPORTED_PERSONAS.join(", ")}"
+  end
+  exit
 when "--web", "-w"
   # Web-only mode (no REPL)
   server = MASTER::Server.new

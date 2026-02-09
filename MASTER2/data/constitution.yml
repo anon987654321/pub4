@@ -54,3 +54,28 @@ staging:
     require_tests: true
   
   description: "Staging validation rules for safe code changes"
+
+preserve:
+  boot_message:
+    format: "5-line OpenBSD dmesg style"
+    reason: "Diagnostic output - verbose is correct"
+    never: "Collapse to single cryptic line"
+  
+  diagnostic_output:
+    rule: "Structured multi-line output is intentional"
+    never: "Compress to cryptic abbreviations"
+  
+  help_text:
+    rule: "Help must be scannable and complete"
+    minimum_info:
+      - "Command name and syntax"
+      - "Brief description"
+      - "At least one example"
+  
+  spinner_feedback:
+    rule: "Progress indicators show elapsed time and status"
+  
+  polish_rules:
+    - "'Streamline' means remove redundancy, not information"
+    - "'Polish' means refine wording, not delete output"
+    - "'Minimize' applies to tokens in prompts, not diagnostic output"
