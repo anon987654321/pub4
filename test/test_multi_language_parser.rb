@@ -111,8 +111,9 @@ class TestMultiLanguageParser < Minitest::Test
     result = @parser.new(content).parse
     ruby_block = result[:embedded][:ruby].first
     
-    # The heredoc starts on line 4 (after "ruby <<-RUBY")
-    assert_equal 4, ruby_block[:start_line]
+    # The heredoc marker "<<-RUBY" is on line 4
+    # The actual Ruby code starts on line 5
+    assert_equal 5, ruby_block[:start_line]
   end
 
   def test_handles_python_heredoc

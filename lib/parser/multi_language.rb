@@ -96,7 +96,10 @@ module MASTER
           next unless match_start
 
           # Calculate line number
-          start_line = @content[0...match_start].count("\n") + 1
+          # The match starts at the marker line (e.g., "<<-RUBY")
+          # The actual code content starts on the next line
+          marker_line = @content[0...match_start].count("\n") + 1
+          start_line = marker_line + 1  # Content starts after the marker
           end_line = start_line + code.count("\n")
 
           blocks << {

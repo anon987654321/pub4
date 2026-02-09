@@ -113,9 +113,6 @@ module MASTER
     end
 
     def improve_shell_file(file, code, dry_run:)
-      # Load multi-language parser if available
-      require_relative '../../lib/parser/multi_language' unless defined?(MASTER::Parser::MultiLanguage)
-      
       parser = MASTER::Parser::MultiLanguage.new(code, file_path: file)
       parsed = parser.parse
 
