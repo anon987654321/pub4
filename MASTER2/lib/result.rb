@@ -97,9 +97,9 @@ module MASTER
     # Class methods for creating Results
     class << self
       # Create successful result
-      # @param value [Object] Success value
+      # @param value [Object] Success value (defaults to nil)
       # @return [Result] Ok result
-      def ok(value)
+      def ok(value = nil)
         new(value: value, kind: :ok)
       end
 
