@@ -113,6 +113,9 @@ require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
 
+# Generators (restored from historical features)
+require_relative "generators/html"
+
 # Quality gates (restored from MASTER)
 require_relative "framework/quality_gates"
 
