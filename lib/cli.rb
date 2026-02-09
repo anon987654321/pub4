@@ -1,132 +1,197 @@
 require 'optparse'
+require 'readline'
+require_relative 'cli/constants'
+require_relative 'cli/colors'
+require_relative 'cli/progress'
+require_relative 'cli/suggestions'
+require_relative 'cli/file_detector'
+require_relative 'cli/helpers'
+require_relative 'cli/repl'
 
 module MASTER
   class CLI
     def self.start(args)
-      options = {}
+      options = Constants::DEFAULT_OPTIONS.dup
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: bin/master [command] [options]"
+        opts.banner = Constants::BANNER
         opts.on('-o', '--offline', 'Offline mode') { options[:offline] = true }
         opts.on('-c', '--converge', 'Auto-iterate until convergence') { options[:converge] = true }
+        opts.on('-d', '--dry-run', 'Show what would change without writing') { options[:dry_run] = true }
+        opts.on('-p', '--preview', 'Show before/after diff') { options[:preview] = true }
       end
       parser.parse!(args)
 
-      case args[0]
-      when 'refactor'
-        unless File.exist?(args[1])
-          puts "Error: File not found #{args[1]}"
-          return
-        end
-        code = File.read(args[1])
-        engine = Engine.new
-        if options[:offline]
-          ENV['OFFLINE'] = '1'
-        end
-        result = engine.refactor(code)
-        ENV.delete 'OFFLINE'
-        if result[:success]
-          File.write(args[1], result[:code])
-          puts "Refactored with diff:\n#{result[:diff]}"
-        else
-          puts "Suggestions: #{result[:suggestions]}"
-        end
-      when 'analyze'
-        unless File.exist?(args[1])
-          puts "Error: File not found #{args[1]}"
-          return
-        end
-        code = File.read(args[1])
-        engine = Engine.new
-        analysis = engine.analyze(code)
-        puts analysis
-      when 'self_refactor'
-        self_refactor(options)
-      when 'auto_iterate'
-        auto_iterate(options)
-      when 'stats'
-        stats = Monitoring.get_stats
-        puts "Stats: #{stats}"
-      else
-        repl
+      # Smart defaults: no args → REPL
+      return REPL.start(options) if args.empty?
+
+      command = args[0]
+
+      # Handle unknown commands with suggestions
+      unless Constants::COMMANDS.include?(command) || File.exist?(command)
+        handle_unknown_command(command)
+        return
       end
+
+      # Smart file detection
+      if File.exist?(command) && !Constants::COMMANDS.include?(command)
+        return unless handle_file_detection(command, args, options)
+        command = args[0]
+      end
+
+      route_command(command, args, options, parser)
     rescue => e
-      puts "Error: #{e.message}"
+      puts Colors.red("Error: #{e.message}")
       puts parser.help
     end
 
-    def self.self_refactor(options)
-      engine = Engine.new
-      Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
-        backup = file + '.backup'
-        FileUtils.cp(file, backup)
-        code = File.read(file)
-        result = engine.refactor(code)
-        if result[:success]
-          File.write(file, result[:code])
-          puts "Self-refactored: #{file} (backup: #{backup})"
-        else
-          puts "Skipped #{file}: #{result[:error]}"
-        end
-      end
-      if options[:converge]
-        consecutive_no_changes = 0
-        while consecutive_no_changes < 3
-          changes = self_refactor(options)
-          if changes
-            consecutive_no_changes = 0
-          else
-            consecutive_no_changes += 1
-          end
-        end
+    def self.handle_unknown_command(command)
+      puts Colors.red("Error: Unknown command '#{command}'")
+      suggestion = Suggestions.closest_match(command, Constants::COMMANDS)
+      puts Colors.yellow("Did you mean '#{suggestion}'?") if suggestion
+      puts "\nAvailable commands: #{Constants::COMMANDS.join(', ')}"
+    end
+
+    def self.handle_file_detection(file_path, args, options)
+      suggestion = FileDetector.suggest_command(file_path)
+      return true unless suggestion
+
+      puts Colors.blue("Auto-detected file type. Suggested command: #{suggestion[:command]}")
+      puts Colors.blue("Reason: #{suggestion[:reason]}")
+      print "Proceed with '#{suggestion[:command]}'? (y/n): "
+      response = $stdin.gets.chomp.downcase
+      return false unless response == 'y'
+
+      args.unshift(suggestion[:command])
+      true
+    end
+
+    def self.route_command(command, args, options, parser)
+      case command
+      when 'refactor'
+        handle_refactor(args[1], options)
+      when 'analyze'
+        handle_analyze(args[1], options)
+      when 'version'
+        puts Colors.blue("MASTER version #{MASTER::VERSION}")
+      when 'help'
+        show_help(parser)
+      when 'self_refactor'
+        Helpers.self_refactor(options)
+      when 'auto_iterate'
+        Helpers.auto_iterate(options)
+      when 'stats'
+        stats = Monitoring.get_stats
+        puts Colors.blue("Stats: #{stats}")
+      when 'repl'
+        REPL.start(options)
+      else
+        REPL.start(options)
       end
     end
 
-    def self.auto_iterate(options)
-      max_iterations = options[:max] || 10
-      iterations = 0
-      consecutive_no_changes = 0
-      while iterations < max_iterations && consecutive_no_changes < 3
-        iterations += 1
-        puts "Iteration #{iterations}"
-        changes = false
-        engine = Engine.new
-        Dir.glob("#{MASTER.root}/lib/*.rb").each do |file|
-          backup = file + ".iter#{iterations}.backup"
-          FileUtils.cp(file, backup)
-          code = File.read(file)
-          result = engine.refactor(code)
-          if result[:success]
-            File.write(file, result[:code])
-            puts "Updated #{file}"
-            changes = true
-          end
-        end
-        if !changes
-          consecutive_no_changes += 1
-        else
-          consecutive_no_changes = 0
-        end
-        sleep 2
-      end
-      puts "Auto-iteration complete: #{iterations} iterations"
+    def self.show_help(parser)
+      puts parser.help
+      puts "\nAvailable commands:"
+      puts "  refactor <file>  - Refactor code in file"
+      puts "  analyze <file>   - Analyze code quality"
+      puts "  repl             - Enter interactive REPL"
+      puts "  version          - Show version"
+      puts "  help             - Show this help"
     end
 
-    def self.repl
+    def self.handle_refactor(file_path, options)
+      return handle_file_error(file_path) unless File.exist?(file_path)
+
+      timer = Timer.new
+      progress = Progress.new("Refactoring #{file_path}")
+      progress.start
+
+      code = File.read(file_path)
+      ENV['OFFLINE'] = '1' if options[:offline]
+      
       engine = Engine.new
-      loop do
-        print "master> "
-        input = gets.chomp
-        break if input == 'exit'
-        
-        if input.start_with?('refactor ')
-          result = engine.refactor(input[9..-1])
-          puts result
-        elsif input.start_with?('analyze ')
-          result = engine.analyze(input[9..-1])
-          puts result
+      result = engine.refactor(code)
+      
+      ENV.delete 'OFFLINE'
+      progress.stop
+
+      if result[:success]
+        handle_refactor_success(file_path, result, options, timer)
+      else
+        puts Colors.yellow("Suggestions: #{result[:suggestions]}")
+      end
+    end
+
+    def self.handle_refactor_success(file_path, result, options, timer)
+      if options[:dry_run]
+        puts Colors.yellow("Dry-run mode: showing changes without writing")
+        puts Colors.blue("Diff:\n#{result[:diff]}")
+      elsif options[:preview]
+        puts Colors.blue("Preview of changes:")
+        puts result[:diff]
+        print "Apply changes? (y/n): "
+        if $stdin.gets.chomp.downcase == 'y'
+          File.write(file_path, result[:code])
+          puts Colors.green("✓ Refactored successfully")
         else
-          puts "Processed: #{input}"
+          puts Colors.yellow("Changes not applied")
         end
+      else
+        File.write(file_path, result[:code])
+        puts Colors.green("✓ Refactored with diff:")
+        puts result[:diff]
+      end
+
+      show_performance_metrics(result, timer)
+    end
+
+    def self.handle_analyze(target, options)
+      # Handle directory input
+      if File.directory?(target)
+        print Colors.yellow("Analyze all files in directory '#{target}'? (y/n): ")
+        return unless $stdin.gets.chomp.downcase == 'y'
+        return Helpers.analyze_directory(target, options)
+      end
+
+      return handle_file_error(target) unless File.exist?(target)
+
+      timer = Timer.new
+      progress = Progress.new("Analyzing #{target}")
+      progress.start
+
+      code = File.read(target)
+      engine = Engine.new
+      analysis = engine.analyze(code)
+
+      progress.stop
+
+      puts Colors.green("✓ Analysis complete")
+      puts analysis
+      puts Colors.blue("\n💡 Tip: Run `master refactor #{target}` to auto-apply fixes")
+      puts Colors.blue("\n--- Performance Metrics ---")
+      puts "Time: #{timer.format_elapsed}"
+    end
+
+    def self.handle_file_error(file_path)
+      puts Colors.red("Error: File not found #{file_path}")
+      similar = Suggestions.similar_files(file_path)
+      if similar.any?
+        puts Colors.yellow("Did you mean one of these?")
+        similar.each { |f| puts "  - #{f}" }
+      end
+      false
+    end
+
+    def self.show_performance_metrics(result, timer)
+      return unless result[:analysis]
+
+      puts Colors.blue("\n--- Performance Metrics ---")
+      puts "Time: #{timer.format_elapsed}"
+      if result[:analysis][:tokens_in]
+        puts "Tokens: #{result[:analysis][:tokens_in]} in, #{result[:analysis][:tokens_out]} out"
+      end
+      if result[:analysis][:cost]
+        puts "Estimated cost: $#{result[:analysis][:cost].round(4)}"
       end
     end
   end
