@@ -1,5 +1,19 @@
 # frozen_string_literal: true
 # MASTER Constitution - Immutable governance policy for safe autonomous operation
+#
+# NOTE: This file can be extended to include axioms, council, principles, and workflows
+# for a single-source-of-truth configuration. The Constitution module will automatically
+# load these sections if present, otherwise it falls back to separate YAML files:
+#   - data/axioms.yml
+#   - data/council.yml
+#
+# Example consolidated structure:
+#   axioms: []          # List of axiom definitions
+#   council: []         # List of council personas
+#   principles: {}      # SOLID, Clean Code principles
+#   workflows: {}       # 8-phase workflow definitions
+#
+# Current implementation maintains backward compatibility with separate files.
 
 safety_policies:
   self_modification:
