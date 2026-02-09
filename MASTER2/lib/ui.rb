@@ -19,37 +19,67 @@ module MASTER
     }.freeze
 
     # --- Formatting Helpers (DRY) ---
+    
+    # Format currency with 2 decimal places
+    # @param n [Float] Amount in dollars
+    # @return [String] Formatted currency string
     def currency(n)
       format("$%.2f", n)
     end
 
+    # Format currency with 4 decimal places (for small amounts)
+    # @param n [Float] Amount in dollars
+    # @return [String] Formatted currency string
     def currency_precise(n)
       format("$%.4f", n)
     end
 
+    # Truncate ID to specified length with ellipsis
+    # @param id [String] ID string to truncate
+    # @param len [Integer] Length to truncate to
+    # @return [String] Truncated ID with ellipsis
     def truncate_id(id, len = 8)
       "#{id[0, len]}..."
     end
 
+    # Print section header with underline
+    # @param title [String] Header title
+    # @param width [Integer] Width of underline
+    # @return [void]
     def header(title, width: 40)
       puts "\n  #{bold(title)}"
       puts "  #{'-' * width}"
     end
 
+    # Get icon by name
+    # @param name [Symbol, String] Icon name
+    # @return [String] Icon character
     def icon(name)
       ICONS[name.to_sym] || "·"
     end
 
+    # Format status message with icon
+    # @param prefix [String] Message prefix
+    # @param message [String] Status message
+    # @param success [Boolean] Whether status is successful
+    # @return [String] Formatted status line
     def status(prefix, message, success: true)
       i = success ? icon(:success) : icon(:failure)
       "#{prefix}: #{message} #{i}"
     end
 
+    # Format progress indicator line
+    # @param current [Integer] Current step
+    # @param total [Integer] Total steps
+    # @param message [String, nil] Optional message
+    # @return [String] Formatted progress line
     def progress_line(current, total, message = nil)
       msg = message ? " #{message}" : ""
       "  [#{current}/#{total}]#{msg}"
     end
 
+    # Get TTY prompt instance (lazy loaded)
+    # @return [TTY::Prompt, nil] Prompt instance or nil if unavailable
     def prompt
       @prompt ||= begin
         require "tty-prompt"
