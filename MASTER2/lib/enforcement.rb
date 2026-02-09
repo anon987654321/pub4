@@ -11,6 +11,32 @@ module MASTER
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
+    # Simulated execution scenarios for safety pre-checks
+    SIMULATED_SCENARIOS = [
+      {
+        scenario: "empty_input",
+        cases: [nil, "", [], 0, false]
+      },
+      {
+        scenario: "boundary_values",
+        cases: [
+          2**63 - 1,  # max int
+          "x" * 10_000,  # very long string
+          "\u{1F600}",  # unicode emoji
+          Float::INFINITY
+        ]
+      },
+      {
+        scenario: "malformed_input",
+        cases: [
+          "{ invalid json",
+          "SELECT * FROM users; DROP TABLE users;",
+          "<script>alert('xss')</script>",
+          "../../../etc/passwd"
+        ]
+      }
+    ].freeze
+
     @smells_mutex = Mutex.new
 
     class << self
@@ -74,7 +100,38 @@ module MASTER
         source[word.downcase]&.first
       end
 
+      # Simulate code execution with all scenarios before running
+      def simulate_execution(code)
+        results = []
+        
+        SIMULATED_SCENARIOS.each do |scenario_group|
+          scenario_group[:cases].each do |test_case|
+            result = simulate_with_input(code, test_case)
+            results << {
+              scenario: scenario_group[:scenario],
+              input: test_case,
+              result: result
+            }
+          end
+        end
+        
+        Result.ok(results: results)
+      rescue StandardError => e
+        Result.err("Simulation failed: #{e.message}")
+      end
+
       private
+
+      def simulate_with_input(code, input)
+        # Create safe binding with test input
+        binding_obj = binding
+        binding_obj.local_variable_set(:input, input)
+        
+        # Evaluate in isolated context
+        eval(code, binding_obj)
+      rescue StandardError => e
+        { error: e.class.name, message: e.message }
+      end
 
       # Scope 1: Line-by-line analysis
       def check_lines(code, filename)

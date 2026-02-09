@@ -71,6 +71,7 @@ require_relative "validator"
 require_relative "self_map"
 require_relative "file_hygiene"
 require_relative "planner_helper"
+require_relative "gh_helper"
 
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"
@@ -114,6 +115,9 @@ require_relative "dmesg"
 require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
+
+# Generators (restored from historical features)
+require_relative "generators/html"
 
 # Quality gates (restored from MASTER)
 require_relative "framework/quality_gates"

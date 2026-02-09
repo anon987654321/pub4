@@ -8,6 +8,10 @@ module MASTER
     extend self
 
     @rules_cache = nil
+    @axioms_cache = nil
+    @council_cache = nil
+    @principles_cache = nil
+    @workflows_cache = nil
 
     # Load and cache constitution rules, with sensible defaults if file is missing
     def rules
@@ -48,6 +52,64 @@ module MASTER
       end
       
       @rules_cache
+    end
+
+    # Load axioms from constitution or fallback to axioms.yml
+    def axioms
+      return @axioms_cache if @axioms_cache
+      
+      # Try loading from constitution first
+      if rules["axioms"]
+        @axioms_cache = rules["axioms"]
+      else
+        # Fallback to separate axioms.yml file
+        axioms_path = File.join(MASTER.root, "data", "axioms.yml")
+        @axioms_cache = File.exist?(axioms_path) ? YAML.load_file(axioms_path) : []
+      end
+      
+      @axioms_cache
+    end
+
+    # Load council from constitution or fallback to council.yml
+    def council
+      return @council_cache if @council_cache
+      
+      # Try loading from constitution first
+      if rules["council"]
+        @council_cache = rules["council"]
+      else
+        # Fallback to separate council.yml file
+        council_path = File.join(MASTER.root, "data", "council.yml")
+        @council_cache = File.exist?(council_path) ? YAML.load_file(council_path) : []
+      end
+      
+      @council_cache
+    end
+
+    # Load principles from constitution (SOLID, Clean Code, etc.)
+    def principles
+      return @principles_cache if @principles_cache
+      
+      @principles_cache = rules["principles"] || {}
+      @principles_cache
+    end
+
+    # Load workflows from constitution (8-phase workflow)
+    def workflows
+      return @workflows_cache if @workflows_cache
+      
+      @workflows_cache = rules["workflows"] || {}
+      @workflows_cache
+    end
+
+    # Reload all cached data
+    def reload!
+      @rules_cache = nil
+      @axioms_cache = nil
+      @council_cache = nil
+      @principles_cache = nil
+      @workflows_cache = nil
+      rules
     end
 
     # Validate operation against constitution rules

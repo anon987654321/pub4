@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "yaml"
 
 module MASTER
   # Store - Persists axioms, council, costs, sessions to JSONL files
@@ -31,9 +32,17 @@ module MASTER
       end
     end
 
-    # Thread-safe synchronization wrapper
-    # @yield Block to execute with mutex lock
-    # @return [Object] Result of block execution
+    # Load YAML configuration files from data/ directory
+    def load_yml(name)
+      yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
+      return {} unless File.exist?(yml_path)
+      
+      YAML.load_file(yml_path) || {}
+    rescue StandardError => e
+      Logging.error("Failed to load #{name}.yml: #{e.message}")
+      {}
+    end
+
     def synchronize(&block)
       @mutex.synchronize(&block)
     end
@@ -75,7 +84,13 @@ module MASTER
     # Get all council personas (cached)
     # @return [Array<Hash>] Array of persona records
     def council
-      @cache[:council] ||= read_collection("council")
+      # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
+      yml_data = load_yml("council")
+      if yml_data && yml_data["council"]
+        yml_data["council"]
+      else
+        @cache[:council] ||= read_collection("council")
+      end
     end
 
     # Add new council persona
