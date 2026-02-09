@@ -1,52 +1,48 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module MASTER
   # Introspection - Adversarial questioning engine
   # ALL code piped through MASTER2 gets the same hostile treatment
   # Whether self or user code, everything is questioned equally
   class Introspection
-    HOSTILE_QUESTIONS = [
-      "What assumption here could be completely wrong?",
-      "What would a hostile user do with this?",
-      "What edge case would break this in production?",
-      "Is this the simplest possible solution?",
-      "What would I regret about this in 6 months?",
-      "What am I not seeing?",
-      "Who loses if this is implemented?",
-      "What's the second-order effect?",
-      "Is this solving the right problem or a symptom?",
-      "What would the security officer veto here?",
-      "Where is the complexity hiding?",
-      "What would break if requirements changed 20%?",
-      "Where is technical debt accumulating?",
-    ].freeze
-
-    PHASE_REFLECTIONS = {
-      intake: "Did I understand the actual intent, not just the words?",
-      compress: "Did I lose essential meaning in compression?",
-      guard: "Did I block something legitimate?",
-      route: "Did I pick the right model for this task?",
-      council: "Did the council debate the real issues?",
-      ask: "Did the LLM answer what was asked?",
-      lint: "Did I enforce axioms consistently?",
-      render: "Is the output clear to the user?",
-    }.freeze
-
     class << self
+      def hostile_questions
+        @hostile_questions ||= begin
+          config = load_questions
+          config.dig('hostile', 'questions') || default_hostile_questions
+        end
+      end
+
+      def phase_reflections
+        @phase_reflections ||= begin
+          config = load_questions
+          reflections = {}
+          %w[discover analyze ideate design implement validate deliver learn].each do |phase|
+            if config[phase]
+              reflections[phase.to_sym] = config.dig(phase, 'introspection') || 
+                                          config.dig(phase, 'purpose')
+            end
+          end
+          reflections.empty? ? default_phase_reflections : reflections
+        end
+      end
+
       # Interrogate any input/output with hostile questions
       # This is the main entry point - treats all code equally
       def interrogate(content, context: {})
         issues = []
 
         # Fast path: heuristic checks (no LLM cost)
-        HOSTILE_QUESTIONS.each do |question|
+        hostile_questions.each do |question|
           issue = fast_check(content, question)
           issues << issue if issue
         end
 
         # Phase-specific reflection if stage provided
         if context[:stage]
-          reflection = PHASE_REFLECTIONS[context[:stage].to_sym]
+          reflection = phase_reflections[context[:stage].to_sym]
           if reflection
             issue = fast_check(content, reflection)
             issues << issue if issue
@@ -67,8 +63,8 @@ module MASTER
         issues = []
 
         # Sample questions for cost efficiency
-        questions = HOSTILE_QUESTIONS.sample(3)
-        questions << PHASE_REFLECTIONS[context[:stage].to_sym] if context[:stage]
+        questions = hostile_questions.sample(3)
+        questions << phase_reflections[context[:stage].to_sym] if context[:stage]
 
         questions.compact.each do |question|
           result = ask_hostile(content, question)
@@ -129,7 +125,7 @@ module MASTER
     end
 
     def reflect_on_phase(phase, summary)
-      reflection = PHASE_REFLECTIONS[phase.to_sym]
+      reflection = self.class.phase_reflections[phase.to_sym]
       return nil unless reflection
 
       prompt = <<~PROMPT
@@ -146,7 +142,7 @@ module MASTER
     end
 
     def hostile_question(content, context = nil)
-      question = HOSTILE_QUESTIONS.sample
+      question = self.class.hostile_questions.sample
 
       prompt = <<~PROMPT
         CONTENT TO REVIEW:
@@ -341,6 +337,44 @@ module MASTER
         when :medium then "Minor issues - acceptable with acknowledgment"
         else "Passes adversarial review"
         end
+      end
+
+      def load_questions
+        path = File.join(MASTER.root, 'data', 'questions.yml')
+        YAML.load_file(path)
+      rescue Errno::ENOENT
+        {}
+      end
+
+      def default_hostile_questions
+        [
+          "What assumption here could be completely wrong?",
+          "What would a hostile user do with this?",
+          "What edge case would break this in production?",
+          "Is this the simplest possible solution?",
+          "What would I regret about this in 6 months?",
+          "What am I not seeing?",
+          "Who loses if this is implemented?",
+          "What's the second-order effect?",
+          "Is this solving the right problem or a symptom?",
+          "What would the security officer veto here?",
+          "Where is the complexity hiding?",
+          "What would break if requirements changed 20%?",
+          "Where is technical debt accumulating?"
+        ]
+      end
+
+      def default_phase_reflections
+        {
+          intake: "Did I understand the actual intent, not just the words?",
+          compress: "Did I lose essential meaning in compression?",
+          guard: "Did I block something legitimate?",
+          route: "Did I pick the right model for this task?",
+          council: "Did the council debate the real issues?",
+          ask: "Did the LLM answer what was asked?",
+          lint: "Did I enforce axioms consistently?",
+          render: "Is the output clear to the user?"
+        }
       end
     end
   end

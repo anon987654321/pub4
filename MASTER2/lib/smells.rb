@@ -1,67 +1,70 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module MASTER
   # Code smell detection - complements Violations with structural analysis
   module Smells
     extend self
 
-    MAX_METHOD_LINES = 20
-    MAX_FILE_LINES = 300
-    MAX_PARAMETERS = 4
-    MAX_NESTING = 5
-    MAX_PUBLIC_METHODS = 10
-    MIN_DUPLICATE_COUNT = 3
+    def thresholds
+      @thresholds ||= begin
+        config = load_config
+        {
+          max_method_lines: config.dig('thresholds', 'method_length') || 20,
+          max_file_lines: config.dig('thresholds', 'file_lines') || 300,
+          max_parameters: config.dig('thresholds', 'parameter_count') || 4,
+          max_nesting: config.dig('thresholds', 'nesting_depth') || 5,
+          max_public_methods: config.dig('thresholds', 'class_methods') || 10,
+          min_duplicate_count: config.dig('thresholds', 'min_duplicate_count') || 3
+        }
+      end
+    end
 
-    BLOATERS = {
-      long_method: { check: "> #{MAX_METHOD_LINES} lines", fix: 'Extract method' },
-      god_class: { check: "> #{MAX_FILE_LINES} lines or > #{MAX_PUBLIC_METHODS} public methods", fix: 'Extract class' },
-      primitive_obsession: { check: 'Repeated primitive patterns', fix: 'Introduce value object' },
-      long_parameter_list: { check: "> #{MAX_PARAMETERS} parameters", fix: 'Parameter object' }
-    }.freeze
-
-    COUPLERS = {
-      feature_envy: { check: 'Method uses other class more than self', fix: 'Move method' },
-      inappropriate_intimacy: { check: 'Classes know too much about each other', fix: 'Extract class' },
-      message_chains: { check: 'Long chains like a.b.c.d', fix: 'Hide delegate' }
-    }.freeze
-
-    DISPENSABLES = {
-      dead_code: { check: 'Unreachable or unused code', fix: 'Delete it' },
-      lazy_class: { check: 'Class does almost nothing', fix: 'Inline or merge' },
-      duplicate_code: { check: 'Same logic in multiple places', fix: 'Extract method/class' }
-    }.freeze
-
-    ARCHITECTURE = {
-      cyclic_dependency: { check: 'A requires B requires A', fix: 'Dependency inversion' },
-      scattered_functionality: { check: 'Related code in many files', fix: 'Colocate' }
-    }.freeze
+    def patterns
+      @patterns ||= begin
+        config = load_config
+        bloaters = config['bloaters'] || default_bloaters
+        couplers = config['couplers'] || default_couplers
+        dispensables = config['dispensables'] || default_dispensables
+        architecture = config['architecture'] || default_architecture
+        rails = config['rails_specific'] || {}
+        pwa = config['pwa_specific'] || {}
+        html_css = config['html_css_quality'] || {}
+        
+        bloaters.merge(couplers).merge(dispensables).merge(architecture)
+                .merge(rails).merge(pwa).merge(html_css)
+      end
+    end
 
     class << self
       def all_patterns
-        BLOATERS.merge(COUPLERS).merge(DISPENSABLES).merge(ARCHITECTURE)
+        patterns
       end
 
       def analyze(code, file_path = nil)
         results = []
         lines = code.lines
+        t = thresholds
+        p = patterns
 
         results += analyze_ruby_methods(code, lines) if file_path&.end_with?('.rb')
 
-        if lines.size > MAX_FILE_LINES
+        if lines.size > t[:max_file_lines]
           results << {
             smell: :god_class,
-            message: "File has #{lines.size} lines (> #{MAX_FILE_LINES})",
-            fix: BLOATERS[:god_class][:fix]
+            message: "File has #{lines.size} lines (> #{t[:max_file_lines]})",
+            fix: p.dig(:god_class, :fix) || p.dig(:god_class, 'fix') || 'Extract class'
           }
         end
 
         code.scan(/def\s+\w+\(([^)]+)\)/) do |params|
           count = params[0].split(',').size
-          if count > MAX_PARAMETERS
+          if count > t[:max_parameters]
             results << {
               smell: :long_parameter_list,
-              message: "Method has #{count} parameters (> #{MAX_PARAMETERS})",
-              fix: BLOATERS[:long_parameter_list][:fix]
+              message: "Method has #{count} parameters (> #{t[:max_parameters]})",
+              fix: p.dig(:long_parameter_list, :fix) || p.dig(:long_parameter_list, 'fix') || 'Parameter object'
             }
           end
         end
@@ -70,12 +73,12 @@ module MASTER
           results << {
             smell: :message_chains,
             message: "Long chain: #{chain[0..40]}...",
-            fix: COUPLERS[:message_chains][:fix]
+            fix: p.dig(:message_chains, :fix) || p.dig(:message_chains, 'fix') || 'Hide delegate'
           }
         end
 
         strings = code.scan(/"[^"]{10,}"/).flatten
-        dupes = strings.group_by(&:itself).select { |_, v| v.size >= MIN_DUPLICATE_COUNT }
+        dupes = strings.group_by(&:itself).select { |_, v| v.size >= t[:min_duplicate_count] }
         dupes.each do |str, occurrences|
           results << {
             smell: :primitive_obsession,
@@ -91,6 +94,8 @@ module MASTER
         results = []
         method_starts = []
         nesting = 0
+        t = thresholds
+        p = patterns
 
         lines.each_with_index do |line, idx|
           stripped = line.strip
@@ -102,12 +107,12 @@ module MASTER
             if method_starts.any? && nesting.positive?
               start = method_starts.pop
               length = idx - start[:line]
-              if length > MAX_METHOD_LINES
+              if length > t[:max_method_lines]
                 results << {
                   smell: :long_method,
-                  message: "#{start[:name]} is #{length} lines (> #{MAX_METHOD_LINES})",
+                  message: "#{start[:name]} is #{length} lines (> #{t[:max_method_lines]})",
                   line: start[:line],
-                  fix: BLOATERS[:long_method][:fix]
+                  fix: p.dig(:long_method, :fix) || p.dig(:long_method, 'fix') || 'Extract method'
                 }
               end
             end
@@ -120,7 +125,8 @@ module MASTER
         results
       end
 
-      def deep_nesting?(code, max_depth = MAX_NESTING)
+      def deep_nesting?(code, max_depth = nil)
+        max_depth ||= thresholds[:max_nesting]
         nesting = 0
         max_seen = 0
 
@@ -169,6 +175,48 @@ module MASTER
           output << ''
         end
         output.join("\n")
+      end
+
+      private
+
+      def load_config
+        path = File.join(MASTER.root, 'data', 'smells.yml')
+        YAML.load_file(path)
+      rescue Errno::ENOENT
+        {}
+      end
+
+      def default_bloaters
+        t = thresholds
+        {
+          'long_method' => { 'check' => "> #{t[:max_method_lines]} lines", 'fix' => 'Extract method' },
+          'god_class' => { 'check' => "> #{t[:max_file_lines]} lines", 'fix' => 'Extract class' },
+          'primitive_obsession' => { 'check' => 'Repeated primitive patterns', 'fix' => 'Introduce value object' },
+          'long_parameter_list' => { 'check' => "> #{t[:max_parameters]} parameters", 'fix' => 'Parameter object' }
+        }
+      end
+
+      def default_couplers
+        {
+          'feature_envy' => { 'check' => 'Method uses other class more than self', 'fix' => 'Move method' },
+          'inappropriate_intimacy' => { 'check' => 'Classes know too much', 'fix' => 'Extract class' },
+          'message_chains' => { 'check' => 'Long chains like a.b.c.d', 'fix' => 'Hide delegate' }
+        }
+      end
+
+      def default_dispensables
+        {
+          'dead_code' => { 'check' => 'Unreachable or unused code', 'fix' => 'Delete it' },
+          'lazy_class' => { 'check' => 'Class does almost nothing', 'fix' => 'Inline or merge' },
+          'duplicate_code' => { 'check' => 'Same logic in multiple places', 'fix' => 'Extract method/class' }
+        }
+      end
+
+      def default_architecture
+        {
+          'cyclic_dependency' => { 'check' => 'A requires B requires A', 'fix' => 'Dependency inversion' },
+          'scattered_functionality' => { 'check' => 'Related code in many files', 'fix' => 'Colocate' }
+        }
       end
     end
   end

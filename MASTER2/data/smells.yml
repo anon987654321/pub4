@@ -25,6 +25,125 @@ thresholds:
   parameter_count: 5
   class_count_per_file: 3
   line_length: 120
+  file_lines: 300
+  class_methods: 10
+  min_duplicate_count: 3
+
+bloaters:
+  long_method:
+    check: "> method_length lines"
+    fix: Extract method
+  god_class:
+    check: "> file_lines or > class_methods public methods"
+    fix: Extract class
+  primitive_obsession:
+    check: Repeated primitive patterns
+    fix: Introduce value object
+  long_parameter_list:
+    check: "> parameter_count parameters"
+    fix: Parameter object
+
+couplers:
+  feature_envy:
+    check: Method uses other class more than self
+    fix: Move method
+  inappropriate_intimacy:
+    check: Classes know too much about each other
+    fix: Extract class
+  message_chains:
+    check: Long chains like a.b.c.d
+    fix: Hide delegate
+
+dispensables:
+  dead_code:
+    check: Unreachable or unused code
+    fix: Delete it
+  lazy_class:
+    check: Class does almost nothing
+    fix: Inline or merge
+  duplicate_code:
+    check: Same logic in multiple places
+    fix: Extract method/class
+
+architecture:
+  cyclic_dependency:
+    check: A requires B requires A
+    fix: Dependency inversion
+  scattered_functionality:
+    check: Related code in many files
+    fix: Colocate
+
+rails_specific:
+  erb_sprawl:
+    symptoms:
+      - partial_explosion_over_5
+      - deep_partial_nesting_over_3
+    fixes:
+      - consolidate
+      - extract_view_component
+      - use_turbo_frames
+
+  divitis:
+    symptoms:
+      - excessive_nesting_over_5
+      - non_semantic_markup
+    fixes:
+      - use_semantic_html
+      - stimulus_component
+      - turbo_frame_boundaries
+
+  stimulus_antipatterns:
+    symptoms:
+      - action_sprawl_over_5
+      - target_explosion_over_10
+    fixes:
+      - stimulus_components
+      - extract_controller
+      - use_outlets
+
+  hotwire_misuse:
+    symptoms:
+      - full_page_turbo
+      - missing_turbo_streams
+    fixes:
+      - turbo_frame_wrap
+      - respond_turbo_stream
+
+pwa_specific:
+  offline_capability:
+    symptoms:
+      - no_service_worker
+      - no_offline_fallback
+    fixes:
+      - register_service_worker
+      - cache_strategies
+
+  cache_invalidation:
+    symptoms:
+      - stale_assets
+      - no_cache_busting
+    fixes:
+      - versioned_cache_names
+      - cache_first_network
+
+html_css_quality:
+  accessibility:
+    symptoms:
+      - missing_alt_text
+      - no_aria_labels
+      - keyboard_nav_broken
+    fixes:
+      - add_alt_attributes
+      - aria_label_buttons
+      - tabindex_focus_trap
+
+  semantic_html:
+    symptoms:
+      - div_soup
+      - improper_heading_hierarchy
+    fixes:
+      - use_semantic_tags
+      - proper_h1_h6_order
 
 # Language axioms are defined in language_axioms.yml
 # See: data/language_axioms.yml for 78 language-specific beauty rules
