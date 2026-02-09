@@ -4,10 +4,17 @@ require 'diffy'
 
 module MASTER
   class Engine
-    def initialize
+    attr_accessor :auto_proceed, :confidence_threshold, :create_checkpoints
+
+    def initialize(options = {})
       @llm = LLM.new
       @parser = Parser::Multi.new
       @tools = Tools::Shell.new
+      
+      # Auto-proceed options
+      @auto_proceed = options[:auto_proceed] || false
+      @confidence_threshold = options[:confidence_threshold] || 0.85
+      @create_checkpoints = options[:create_checkpoints] || false
     end
 
     def refactor(code, language = 'ruby')
@@ -16,8 +23,27 @@ module MASTER
       ast = @parser.parse(code, language)
       analysis = @llm.analyze(ast, language)
 
-      autonomy = Autonomy.new
-      decision = autonomy.decide(:refactor, analysis[:risk])
+      # Auto-proceed logic
+      confidence = analysis[:confidence] || 0.5
+      
+      if @auto_proceed
+        # Check confidence threshold
+        if confidence < @confidence_threshold
+          return { 
+            success: false, 
+            skipped: true,
+            reason: "Confidence #{confidence} below threshold #{@confidence_threshold}",
+            suggestions: analysis[:suggestions] 
+          }
+        end
+        
+        # Auto-apply if confidence is high enough
+        decision = :apply
+      else
+        # Use normal autonomy decision
+        autonomy = Autonomy.new
+        decision = autonomy.decide(:refactor, analysis[:risk])
+      end
       
       case decision
       when :apply
@@ -25,7 +51,13 @@ module MASTER
         transformed_code = unparse(transformed_ast, language)
         Monitoring.track_tokens(analysis[:tokens_in] || 0, analysis[:tokens_out] || 0)
         Monitoring.track_cost(analysis[:cost] || 0)
-        { success: true, code: transformed_code, diff: Diffy::Diff.new(code, transformed_code).to_s(:text), analysis: analysis }
+        { 
+          success: true, 
+          code: transformed_code, 
+          diff: Diffy::Diff.new(code, transformed_code).to_s(:text), 
+          analysis: analysis,
+          confidence: confidence
+        }
       when :preview
         transformed_ast = apply_transforms(ast, analysis[:suggestions], language)
         transformed_code = unparse(transformed_ast, language)
@@ -35,6 +67,19 @@ module MASTER
       end
     rescue => e
       { success: false, error: e.message }
+    end
+
+    # Create a git checkpoint before applying changes
+    def create_checkpoint(message = "MASTER checkpoint")
+      return unless @create_checkpoints
+      
+      `git add -A`
+      `git commit -m "#{message}" 2>/dev/null`
+    end
+
+    # Rollback to previous checkpoint
+    def rollback_checkpoint
+      `git reset --hard HEAD~1 2>/dev/null`
     end
 
     def analyze(code, language = 'ruby')
