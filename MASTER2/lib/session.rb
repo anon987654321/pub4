@@ -117,62 +117,82 @@ module MASTER
       true
     end
 
-    def self.load(id)
-      data = Memory.load_session(id)
-      return nil unless data
+    # Class methods for session management
+    class << self
+      # Load session from storage by ID
+      # @param id [String] Session ID
+      # @return [Session, nil] Session instance or nil if not found
+      def load(id)
+        data = Memory.load_session(id)
+        return nil unless data
 
-      session = new(id: data[:id])
-      session.instance_variable_set(:@created_at, Time.parse(data[:created_at]))
-      session.instance_variable_set(:@history, data[:history] || [])
-      session.instance_variable_set(:@metadata, data[:metadata] || {})
-      session.instance_variable_set(:@dirty, false)
-      session
-    end
-
-    def self.list
-      Memory.list_sessions
-    end
-
-    def self.current
-      @current ||= new
-    end
-
-    def self.current=(session)
-      @current = session
-    end
-
-    def self.resume(id)
-      session = load(id)
-      return nil unless session
-
-      @current = session
-      session
-    end
-
-    def self.start_new
-      @current = new
-    end
-
-    # Install signal handlers for crash recovery
-    def self.install_crash_handlers
-      %w[INT TERM].each do |signal|
-        Signal.trap(signal) do
-          save_on_crash
-          exit(signal == "INT" ? 130 : 143)
-        end
+        session = new(id: data[:id])
+        session.instance_variable_set(:@created_at, Time.parse(data[:created_at]))
+        session.instance_variable_set(:@history, data[:history] || [])
+        session.instance_variable_set(:@metadata, data[:metadata] || {})
+        session.instance_variable_set(:@dirty, false)
+        session
       end
-    rescue ArgumentError
-      # Some signals not available on all platforms
-    end
 
-    def self.save_on_crash
-      return unless @current&.dirty?
-      
-      @current.instance_variable_set(:@metadata, 
-        @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
-      @current.save
-    rescue StandardError
-      # Best effort on crash
+      # List all available sessions
+      # @return [Array<Hash>] Array of session metadata
+      def list
+        Memory.list_sessions
+      end
+
+      # Get current session (creates new if none exists)
+      # @return [Session] Current session
+      def current
+        @current ||= new
+      end
+
+      # Set current session
+      # @param session [Session] Session to set as current
+      def current=(session)
+        @current = session
+      end
+
+      # Resume existing session by ID
+      # @param id [String] Session ID to resume
+      # @return [Session, nil] Session if found, nil otherwise
+      def resume(id)
+        session = load(id)
+        return nil unless session
+
+        @current = session
+        session
+      end
+
+      # Start new session and set as current
+      # @return [Session] New session
+      def start_new
+        @current = new
+      end
+
+      # Install signal handlers for crash recovery
+      # @return [void]
+      def install_crash_handlers
+        %w[INT TERM].each do |signal|
+          Signal.trap(signal) do
+            save_on_crash
+            exit(signal == "INT" ? 130 : 143)
+          end
+        end
+      rescue ArgumentError
+        # Some signals not available on all platforms
+      end
+
+      # Save current session on crash
+      # @return [void]
+      def save_on_crash
+        return unless @current&.dirty?
+        
+        @current.instance_variable_set(:@metadata, 
+          @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
+        @current.save
+      rescue StandardError
+        # Best effort on crash
+      end
     end
 
     def to_h

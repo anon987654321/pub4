@@ -222,7 +222,7 @@ module MASTER
       voice_id = EDGE_VOICES[voice&.to_sym] || EDGE_VOICES[:aria]
       params = STYLES[style.to_sym] || STYLES[:normal]
 
-      output_dir = File.join(Paths.var, "edge_tts")
+      output_dir = Paths.edge_tts_output
       FileUtils.mkdir_p(output_dir)
       output = File.join(output_dir, "edge_#{SecureRandom.hex(4)}.mp3")
 

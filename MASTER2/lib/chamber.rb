@@ -22,9 +22,15 @@ module MASTER
       LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
     end
 
-    def self.council_review(text, model: nil)
-      chamber = new(llm: LLM)
-      chamber.council_review(text, text, model: model)
+    # Convenience method for single council review
+    # @param text [String] Code or text to review
+    # @param model [String, nil] Optional model override
+    # @return [Hash] Review result with votes and consensus
+    class << self
+      def council_review(text, model: nil)
+        chamber = new(llm: LLM)
+        chamber.council_review(text, text, model: model)
+      end
     end
 
     def deliberate(code, filename: "code", participants: %i[sonnet deepseek])

@@ -2,9 +2,14 @@
 
 module MASTER
   # Functional Result monad (Ok/Err)
+  # Provides railway-oriented programming for error handling
   class Result
     attr_reader :value, :error, :kind
 
+    # Initialize Result
+    # @param value [Object, nil] Success value
+    # @param error [String, nil] Error message
+    # @param kind [Symbol, nil] Result kind (:ok or :err)
     def initialize(value: nil, error: nil, kind: nil)
       @value = value
       @error = error
@@ -12,22 +17,45 @@ module MASTER
       freeze_state
     end
 
+    # Check if result is successful
+    # @return [Boolean] true if ok
     def ok? = @kind == :ok
+
+    # Check if result is error
+    # @return [Boolean] true if err
     def err? = @kind == :err
+
+    # Alias for ok?
+    # @return [Boolean] true if successful
     def success? = ok?
+
+    # Get error (alias for error)
+    # @return [String, nil] Error message if err
     def failure = @error
 
+    # Unwrap value or raise error
+    # @return [Object] Value if ok
+    # @raise [RuntimeError] if err
     def value!
       raise(@error.to_s) if err?
       @value
     end
 
+    # Alias for value!
+    # @return [Object] Value if ok
+    # @raise [RuntimeError] if err
     def unwrap = value!
 
+    # Get value or return default
+    # @param default [Object] Default value if err
+    # @return [Object] Value if ok, default if err
     def value_or(default)
       ok? ? @value : default
     end
 
+    # Map over value if ok
+    # @yield [Object] Value to transform
+    # @return [Result] New result with transformed value or same err
     def map
       return self if err?
       Result.ok(yield(@value))
@@ -35,6 +63,9 @@ module MASTER
       Result.err(e.message)
     end
 
+    # Flat map over value if ok
+    # @yield [Object] Value to transform
+    # @return [Result] Result from block or same err
     def flat_map
       return self if err?
       yield(@value)
@@ -42,6 +73,10 @@ module MASTER
       Result.err(e.message)
     end
 
+    # Chain operations with labeled error context
+    # @param label [String, nil] Label for error context
+    # @yield [Object] Value to transform
+    # @return [Result] Result from block or labeled err
     def and_then(label = nil)
       return self if err?
       yield(@value)
@@ -49,10 +84,21 @@ module MASTER
       Result.err("#{label ? "#{label}: " : ""}#{e.message}")
     end
 
+    # Class methods for creating Results
     class << self
-      def ok(value) = new(value: value, kind: :ok)
+      # Create successful result
+      # @param value [Object] Success value (defaults to nil)
+      # @return [Result] Ok result
+      def ok(value = nil) = new(value: value, kind: :ok)
+
+      # Create error result
+      # @param error [String] Error message
+      # @return [Result] Err result
       def err(error) = new(error: error, kind: :err)
 
+      # Try block and wrap in Result
+      # @yield Block to execute
+      # @return [Result] Ok with result or Err with error message
       def try
         ok(yield)
       rescue StandardError => e

@@ -12,6 +12,9 @@ module MASTER
     @mutex = Monitor.new
     @cache = {}
 
+    # Initialize database at given path
+    # @param path [String, nil] Database directory path (defaults to var/db)
+    # @return [void]
     def setup(path: nil)
       @root = path || File.join(Paths.var, "db")
       FileUtils.mkdir_p(@root)
@@ -19,6 +22,8 @@ module MASTER
       ensure_seeded
     end
 
+    # Get database root directory
+    # @return [String] Absolute path to database directory
     def root
       @root ||= begin
         r = File.join(Paths.var, "db")
@@ -42,15 +47,26 @@ module MASTER
       @mutex.synchronize(&block)
     end
 
+    # Clear all cached data
+    # @return [void]
     def clear_cache
       @cache.clear
     end
 
     # --- Axioms (cached) ---
+    
+    # Get all axioms (cached)
+    # @return [Array<Hash>] Array of axiom records
     def axioms
       @cache[:axioms] ||= read_collection("axioms")
     end
 
+    # Add new axiom to database
+    # @param name [String] Axiom name
+    # @param description [String] Axiom description
+    # @param category [String, nil] Category classification
+    # @param scope [String, nil] Scope of application
+    # @return [Hash] Created axiom record
     def add_axiom(name:, description:, category: nil, scope: nil)
       record = {
         name: name,
@@ -64,6 +80,9 @@ module MASTER
     end
 
     # --- Council (cached) ---
+    
+    # Get all council personas (cached)
+    # @return [Array<Hash>] Array of persona records
     def council
       # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
       yml_data = load_yml("council")
@@ -74,6 +93,12 @@ module MASTER
       end
     end
 
+    # Add new council persona
+    # @param name [String] Persona name
+    # @param role [String] Role description
+    # @param style [String] Communication style
+    # @param bias [String, nil] Decision bias
+    # @return [Hash] Created persona record
     def add_persona(name:, role:, style:, bias: nil)
       record = {
         name: name,
@@ -87,6 +112,13 @@ module MASTER
     end
 
     # --- Costs ---
+    
+    # Log LLM API cost
+    # @param model [String] Model identifier
+    # @param tokens_in [Integer] Input tokens
+    # @param tokens_out [Integer] Output tokens
+    # @param cost [Float] Cost in dollars
+    # @return [Hash] Created cost record
     def log_cost(model:, tokens_in:, tokens_out:, cost:)
       record = {
         model: model,
@@ -98,11 +130,16 @@ module MASTER
       append("costs", record)
     end
 
+    # Get total cost across all logged API calls
+    # @return [Float] Total cost in dollars
     def total_cost
       costs = read_collection("costs")
       costs.sum { |c| c[:cost] || 0 }
     end
 
+    # Get recent cost records
+    # @param limit [Integer] Number of records to return
+    # @return [Array<Hash>] Recent cost records
     def recent_costs(limit: 10)
       read_collection("costs").last(limit)
     end
