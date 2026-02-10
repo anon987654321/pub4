@@ -96,7 +96,7 @@ require_relative "web"
 require_relative "speech"
 
 # External services
-%w[weaviate replicate].each do |mod|
+%w[weaviate replicate cinematic].each do |mod|
   begin
     require_relative mod
   rescue LoadError, StandardError => e

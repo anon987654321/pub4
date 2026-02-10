@@ -109,6 +109,113 @@ module MASTER
         puts all_ok ? "  System healthy." : "  Some checks failed."
         puts
       end
+
+      # Cinematic AI Pipeline Commands
+
+      def cinematic(args)
+        parts = args&.split || []
+        return show_cinematic_help if parts.empty?
+
+        command = parts.first
+        case command
+        when 'list'
+          list_cinematic_presets
+        when 'apply'
+          apply_cinematic_preset(parts[1], parts[2])
+        when 'discover'
+          discover_cinematic_styles(parts[1], samples: (parts[2] || 10).to_i)
+        when 'build'
+          build_cinematic_pipeline
+        else
+          show_cinematic_help
+        end
+      end
+
+      private
+
+      def show_cinematic_help
+        puts <<~HELP
+          
+          Cinematic AI Pipeline Commands:
+          
+            cinematic list                     List available presets
+            cinematic apply <preset> <input>   Apply preset to image
+            cinematic discover <input> [n]     Discover new styles (n samples)
+            cinematic build                    Interactive pipeline builder
+          
+          Presets: blade-runner, wes-anderson, noir, golden-hour, teal-orange
+          
+        HELP
+      end
+
+      def list_cinematic_presets
+        result = Cinematic.list_presets
+        return puts "  Error: #{result.error}" if result.err?
+
+        UI.header("Cinematic Presets")
+        result.value[:presets].each do |preset|
+          source = preset[:source] == 'builtin' ? UI.pastel.dim('[builtin]') : UI.pastel.cyan('[custom]')
+          puts "  • #{UI.pastel.bold(preset[:name])} #{source}"
+          puts "    #{preset[:description]}"
+          puts
+        end
+      end
+
+      def apply_cinematic_preset(preset_name, input_path)
+        unless preset_name && input_path
+          return puts "  Usage: cinematic apply <preset> <input>"
+        end
+
+        unless File.exist?(input_path)
+          return puts "  Error: File not found: #{input_path}"
+        end
+
+        UI.info("Applying preset '#{preset_name}' to #{input_path}...")
+        
+        result = Cinematic.apply_preset(input_path, preset_name)
+        
+        if result.ok?
+          output = result.value[:final]
+          UI.success("Pipeline complete!")
+          puts "  Output: #{output}"
+        else
+          UI.error("Pipeline failed: #{result.error}")
+        end
+      end
+
+      def discover_cinematic_styles(input_path, samples: 10)
+        unless input_path
+          return puts "  Usage: cinematic discover <input> [samples]"
+        end
+
+        unless File.exist?(input_path)
+          return puts "  Error: File not found: #{input_path}"
+        end
+
+        result = Cinematic.discover_style(input_path, samples: samples)
+        
+        if result.ok?
+          discoveries = result.value[:discoveries]
+          UI.success("Discovered #{discoveries.size} styles!")
+          
+          discoveries.each_with_index do |d, i|
+            puts "  #{i + 1}. Score: #{d[:score].round(2)} | #{d[:pipeline].stages.size} stages"
+          end
+        else
+          UI.error("Discovery failed: #{result.error}")
+        end
+      end
+
+      def build_cinematic_pipeline
+        UI.header("Build Custom Pipeline")
+        puts "  (Interactive pipeline builder coming soon)"
+        puts "  For now, use the Ruby API:"
+        puts
+        puts "    pipeline = MASTER::Cinematic::Pipeline.new"
+        puts "    pipeline.chain('stability-ai/sdxl', { prompt: 'cinematic' })"
+        puts "    result = pipeline.execute(input)"
+        puts
+      end
     end
   end
 end
