@@ -39,7 +39,7 @@ module MASTER
 
     # Resolve model key (like :sonnet, :deepseek) to model ID
     def resolve_model(model_key)
-      # Map common model keys to search patterns (from trusted source, no user input)
+      # Map common model keys to search patterns (from trusted hardcoded source)
       search_map = {
         sonnet: "claude.*sonnet",
         deepseek: "deepseek",
@@ -50,8 +50,9 @@ module MASTER
       pattern = search_map[model_key]
       return nil unless pattern
 
-      # Patterns are from trusted source (hardcoded above), safe to use directly
-      model = LLM.models.find { |m| m[:id] =~ /#{pattern}/i }
+      # Use Regexp.new for safer pattern construction
+      regex = Regexp.new(pattern, Regexp::IGNORECASE)
+      model = LLM.models.find { |m| m[:id] =~ regex }
       model&.[](:id) || LLM.pick(:strong)
     end
 
