@@ -2,6 +2,7 @@
 
 require "yaml"
 require "timeout"
+require_relative "dangerous_patterns"
 
 module MASTER
   module Stages
@@ -61,19 +62,10 @@ module MASTER
 
     # Stage 3: Block dangerous patterns
     class Guard
-      DANGEROUS_PATTERNS = [
-        /rm\s+-r[f]?\s+\//,
-        />\s*\/dev\/[sh]da/,
-        /DROP\s+TABLE/i,
-        /FORMAT\s+[A-Z]:/i,
-        /mkfs\./,
-        /dd\s+if=/,
-      ].freeze
-
       def call(input)
         text = input[:text] || ""
-        match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
-        match ? Result.err("Blocked: dangerous pattern detected.") : Result.ok(input)
+        result = DangerousPatterns.check(text)
+        result[:dangerous] ? Result.err("Blocked: dangerous pattern detected.") : Result.ok(input)
       end
     end
 

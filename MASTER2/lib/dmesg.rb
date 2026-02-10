@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# dmesg.rb — OpenBSD dmesg-style kernel/system log output.
+# See also: log.rb (unified facade), logging.rb (formatting).
+
 module MASTER
   # Dmesg - OpenBSD-inspired kernel message logging
   # Progressive disclosure via MASTER_TRACE levels (Yugen principle)

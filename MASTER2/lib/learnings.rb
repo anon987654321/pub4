@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# learnings.rb — Core learning pattern storage and retrieval.
+# See also: learning_feedback.rb (user feedback loop), learning_quality.rb (quality scoring).
+
 module MASTER
   # Learnings - Captures insights from sessions for future use
   # When something is discovered (bug pattern, good practice, UX insight),

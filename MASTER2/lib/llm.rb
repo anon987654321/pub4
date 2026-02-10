@@ -133,11 +133,15 @@ module MASTER
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
 
+        # Determine tier for cost check
+        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+
         # Pre-query cost estimate
         if model_rates[primary]
           est_cost = estimate_cost(primary, tokens_in: 1000, tokens_out: 500)
-          if est_cost > MAX_COST_PER_QUERY
-            return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{MAX_COST_PER_QUERY}")
+          cost_limit = (selected_tier == :premium) ? PREMIUM_COST_LIMIT : MAX_COST_PER_QUERY
+          if est_cost > cost_limit
+            return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{cost_limit}")
           end
         end
 
@@ -145,7 +149,6 @@ module MASTER
         primary = apply_suffix(primary, online: online, provider: provider)
 
         model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":" ).first]&.[](:tier) || tier || :unknown
 
         # Update current state for prompt display
         @current_model = model_short
@@ -215,11 +218,11 @@ module MASTER
 
       # Auto-router - let OpenRouter pick best model
       def ask_auto(prompt, allowed_models: nil, **opts)
-        body = { model: "openrouter/auto" }
+        provider = opts.delete(:provider) || {}
         if allowed_models
-          body[:plugins] = [{ id: "auto-router", allowed_models: allowed_models }]
+          provider[:only] = allowed_models
         end
-        ask(prompt, model: "openrouter/auto", **opts)
+        ask(prompt, model: "openrouter/auto", provider: provider.empty? ? nil : provider, **opts)
       end
 
       def extract_model_name(model_id)
@@ -327,7 +330,7 @@ module MASTER
           end
 
           retry_count += 1
-          break if retry_count >= max_retries
+          next if retry_count >= max_retries  # skip sleep on last iteration
 
           # Exponential backoff: 1s, 2s, 4s
           sleep_time = 2 ** (retry_count - 1)
@@ -340,7 +343,7 @@ module MASTER
 
       def retryable_error?(error)
         return false unless error.is_a?(String)
-        error.match?("/timeout|connection|network|429|502|503|504|overloaded/i")
+        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
 
       def execute_blocking(http, req)
@@ -475,14 +478,23 @@ module MASTER
       end
 
       def tier
-        r = budget_remaining
-        if r > 5.0
-          :strong
-        elsif r > 1.0
-          :fast
-        else
-          :cheap
+        return @forced_tier if @forced_tier
+
+        @budget_thresholds ||= begin
+          budget_file = File.join(__dir__, "..", "data", "budget.yml")
+          if File.exist?(budget_file)
+            config = YAML.safe_load_file(budget_file, symbolize_names: true)
+            config.dig(:budget, :thresholds) || {}
+          else
+            {}
+          end
         end
+
+        r = budget_remaining
+        return :premium if @budget_thresholds[:premium] && r > @budget_thresholds[:premium]
+        return :strong  if r > (@budget_thresholds[:strong] || 5.0)
+        return :fast    if r > (@budget_thresholds[:fast] || 1.0)
+        :cheap
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
@@ -495,18 +507,29 @@ module MASTER
 
       def estimate_cost(model_or_chars, tokens_in: nil, tokens_out: 500)
         if tokens_in
-          # New signature: estimate_cost(model, tokens_in: x, tokens_out: y)
+          # Primary signature: estimate_cost(model, tokens_in: x, tokens_out: y)
           model = model_or_chars.to_s.split(":").first
           rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
           (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
         else
-          # Legacy signature: estimate_cost(char_count, model) - kept for compatibility
-          char_count = model_or_chars
-          model = tokens_out.to_s.split(":" ).first  # tokens_out is actually model in legacy call
-          rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
-          est_tokens_in = (char_count / 4.0).ceil
-          (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
+          # Legacy signature — DEPRECATED, use estimate_cost_by_chars instead
+          estimate_cost_by_chars(model_or_chars, tokens_out.to_s)
         end
+      end
+
+      # Explicit model-based cost estimation
+      def estimate_cost_by_model(model, tokens_in:, tokens_out: 500)
+        model = model.to_s.split(":").first
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
+      end
+
+      # Explicit character-count-based cost estimation (legacy)
+      def estimate_cost_by_chars(char_count, model)
+        model = model.to_s.split(":").first
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        est_tokens_in = (char_count / 4.0).ceil
+        (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
       end
 
       def validate_response(data, model_id)

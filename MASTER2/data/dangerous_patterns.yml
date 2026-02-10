@@ -1,0 +1,36 @@
+# MASTER2/data/dangerous_patterns.yml
+# Dangerous shell/SQL patterns to block (injection prevention)
+# Single source of truth — used by Executor and Guard
+
+patterns:
+  - name: recursive_delete
+    regex: 'rm\s+-r[f]?\s+\/'
+    description: "Recursive file deletion from root"
+    severity: critical
+
+  - name: disk_overwrite
+    regex: '>\s*\/dev\/[sh]da'
+    description: "Direct disk device write"
+    severity: critical
+
+  - name: sql_drop
+    regex: 'DROP\s+TABLE'
+    case_insensitive: true
+    description: "SQL table deletion"
+    severity: critical
+
+  - name: disk_format
+    regex: 'FORMAT\s+[A-Z]:'
+    case_insensitive: true
+    description: "Disk format command"
+    severity: critical
+
+  - name: filesystem_create
+    regex: 'mkfs\.'
+    description: "Filesystem creation"
+    severity: critical
+
+  - name: disk_dump
+    regex: 'dd\s+if='
+    description: "Raw disk copy"
+    severity: critical

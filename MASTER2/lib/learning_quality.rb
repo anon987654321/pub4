@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# learning_quality.rb — Quality scoring for learning patterns.
+# See also: learnings.rb (core storage), learning_feedback.rb (feedback loop).
+
 module MASTER
   # LearningQuality - Assess and filter learning data quality
   module LearningQuality

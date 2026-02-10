@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# convergence.rb — Multi-round convergence detection engine.
+# See also: converge.rb — Single-pass convergence check utility.
+
 module MASTER
   # Convergence - Detect plateaus, oscillations, and diminishing returns
   # Prevents infinite loops and wasted compute

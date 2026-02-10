@@ -3,6 +3,8 @@
 require "json"
 require "open3"
 require "yaml"
+require_relative "dangerous_patterns"
+require_relative "classifier"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
@@ -10,21 +12,11 @@ module MASTER
   # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
-    WALL_CLOCK_LIMIT = 120  # seconds
-    MAX_HISTORY_SIZE = 50
+    WALL_CLOCK_LIMIT_SECONDS = 120  # Maximum wall clock time for execution
+    MAX_HISTORY_ENTRIES = 50        # Maximum history items to retain
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
-    
-    # Dangerous patterns to block (injection prevention)
-    DANGEROUS_PATTERNS = [
-      /rm\s+-r[f]?\s+\//,
-      />\s*\/dev\/[sh]da/,
-      /DROP\s+TABLE/i,
-      /FORMAT\s+[A-Z]:/i,
-      /mkfs\./,
-      /dd\s+if=/,
-    ].freeze
     
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
@@ -111,28 +103,14 @@ module MASTER
 
     # Pattern selection heuristics
     def select_pattern(goal)
-      # Pre-Act: explicit multi-step tasks
-      return :pre_act if goal.match?(/\b(then|after that|next|finally|step\s*\d|first.*then)\b/i)
-      return :pre_act if goal.match?(/\b(build|create|implement|develop)\b.*\b(and|with)\b/i)
-      
-      # ReWOO: cost-sensitive or pure reasoning
-      return :rewoo if goal.match?(/\b(explain|describe|summarize|compare|analyze)\b/i) &&
-                       !goal.match?(/\b(file|code|execute|run)\b/i)
-      
-      # Reflexion: learning/fixing tasks
-      return :reflexion if goal.match?(/\b(fix|debug|correct|improve|refactor)\b/i)
-      return :reflexion if goal.match?(/\b(don't break|carefully|safely)\b/i)
-      
-      # Default: ReAct for exploratory/unknown
-      :react
+      result = Classifier.classify(:pattern_selection, goal)
+      result&.to_sym || :react
     end
 
     private
 
     def simple_query?(goal)
-      goal.length < 200 &&
-        !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
-        !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
+      Classifier.classify(:query_complexity, goal) == "simple"
     end
 
     def direct_ask(goal, tier: nil)
@@ -187,7 +165,7 @@ module MASTER
       while @step < @max_steps
         # Check wall clock timeout
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-        if elapsed > WALL_CLOCK_LIMIT
+        if elapsed > WALL_CLOCK_LIMIT_SECONDS
           best_answer = @history.last&.[](:observation) || "Timed out"
           return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
         end
@@ -489,7 +467,7 @@ module MASTER
       [5, @max_steps - @step].max.times do
         # Check wall clock timeout
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-        if elapsed > WALL_CLOCK_LIMIT
+        if elapsed > WALL_CLOCK_LIMIT_SECONDS
           best_answer = @history.last&.[](:observation) || "Timed out"
           return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
         end
@@ -779,7 +757,7 @@ module MASTER
     end
 
     def shell_command(cmd)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+      if DangerousPatterns.dangerous?(cmd)
         return "BLOCKED: dangerous shell command rejected"
       end
 
@@ -856,7 +834,7 @@ module MASTER
     end
 
     def sanitize_tool_input(action_str)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+      if DangerousPatterns.dangerous?(action_str)
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str
@@ -873,7 +851,7 @@ module MASTER
 
     def record_history(entry)
       @history << entry
-      @history.shift if @history.size > MAX_HISTORY_SIZE
+      @history.shift if @history.size > MAX_HISTORY_ENTRIES
     end
   end
 end

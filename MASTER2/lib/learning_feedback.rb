@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# learning_feedback.rb — User feedback loop for learning patterns.
+# See also: learnings.rb (core storage), learning_quality.rb (quality scoring).
+
 require "json"
 
 module MASTER

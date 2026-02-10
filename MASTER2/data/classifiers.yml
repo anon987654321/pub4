@@ -1,0 +1,29 @@
+# MASTER2/data/classifiers.yml
+# Classification tasks — used by Classifier module
+# Each classifier defines: task description, categories, examples, and a fallback regex
+
+classifiers:
+  pattern_selection:
+    description: "Select the best execution pattern for a given task"
+    categories:
+      react: "Exploratory tasks, dynamic adaptation, unknown territory, general questions requiring tool use"
+      pre_act: "Multi-step tasks, structured workflows, clear sequences, build/create tasks with multiple phases"
+      rewoo: "Cost-sensitive pure reasoning, explanations, comparisons, analysis without file/code operations"
+      reflexion: "Fix/debug/refactor tasks, improvement tasks, tasks requiring careful/safe execution"
+    default: "react"
+    examples:
+      - input: "Build a REST API with authentication and deploy it"
+        output: "pre_act"
+      - input: "Explain the difference between TCP and UDP"
+        output: "rewoo"
+      - input: "Fix the broken login page"
+        output: "reflexion"
+      - input: "What files are in the src directory?"
+        output: "react"
+
+  query_complexity:
+    description: "Determine if a query is simple (direct LLM answer) or complex (needs agent loop)"
+    categories:
+      simple: "Factual questions, greetings, definitions, opinions — no tool use needed"
+      complex: "Tasks requiring file operations, code analysis, web browsing, multi-step reasoning"
+    default: "complex"

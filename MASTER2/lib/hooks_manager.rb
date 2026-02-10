@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# hooks_manager.rb — Hook lifecycle execution (runtime layer).
+# See also: hooks.rb — Hook definitions and registration (data layer).
+
 require 'yaml'
 require 'time'
 require 'fileutils'
