@@ -212,7 +212,7 @@ module MASTER
           next if models.nil? || models.empty?
           puts "  #{tier}:"
           models.each do |m|
-            status = LLM.circuit_closed?(m) ? "✓" : "✗"
+            status = CircuitBreaker.circuit_closed?(m) ? "✓" : "✗"
             short = m.split("/").last[0, 30]
             puts "    #{status} #{short}"
           end
@@ -499,6 +499,19 @@ module MASTER
         puts
         puts summary
         puts
+      end
+
+      def print_language_axioms(args)
+        if defined?(LanguageAxioms)
+          puts "\nLanguage Axioms:"
+          axioms = LanguageAxioms.all_axioms
+          axioms.group_by { |a| a["language"] }.each do |lang, rules|
+            puts "  #{lang}: #{rules.size} axiom#{'s' if rules.size != 1}"
+          end
+          puts
+        else
+          puts "LanguageAxioms module not available"
+        end
       end
 
       def opportunities(path)
