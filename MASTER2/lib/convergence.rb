@@ -151,6 +151,59 @@ module MASTER
 
         nil
       end
+
+      # Utility methods merged from Converge module
+      
+      # Calculate SHA256 hash of all Ruby files in a path
+      def content_hash(path)
+        require 'digest'
+        files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
+        content = files.sort.map { |f| File.read(f) rescue '' }.join
+        Digest::SHA256.hexdigest(content)
+      end
+
+      # Calculate change ratio between two content states
+      # Fixed: Now uses proper diff ratio instead of always returning 1.0
+      def change_ratio(content1, content2)
+        return 0.0 if content1 == content2
+        
+        # Use Levenshtein distance for character-level diff
+        # For large strings, sample first N chars for efficiency
+        max_len = 10_000
+        str1 = content1[0, max_len]
+        str2 = content2[0, max_len]
+        
+        distance = Utils.levenshtein(str1, str2)
+        max_length = [str1.length, str2.length].max
+        return 1.0 if max_length == 0
+        
+        distance.to_f / max_length
+      end
+
+      # Audit current codebase features (classes, modules, methods)
+      def audit(path, compare_ref: 'HEAD~5')
+        features = extract_features(path)
+        {
+          current_count: features.size,
+          features: features
+        }
+      end
+
+      # Extract feature signatures from codebase
+      def extract_features(path)
+        files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
+        features = []
+
+        files.each do |file|
+          content = File.read(file) rescue next
+          # Extract class/module definitions
+          content.scan(/(?:class|module)\s+(\w+)/) { |m| features << m[0] }
+          # Extract method definitions
+          content.scan(/def\s+(\w+)/) { |m| features << m[0] }
+        end
+
+        features.uniq
+      end
     end
   end
 end
