@@ -129,6 +129,75 @@ module MASTER
         # Rate limit check
         CircuitBreaker.check_rate_limit!
 
+        # Prepare model and check cost
+        result = prepare_primary_model(tier: tier, model: model, online: online, provider: provider)
+        return result unless result.ok?
+        
+        primary, model_short, selected_tier = result.value.values_at(:primary, :model_short, :tier)
+
+        # Build request body
+        body = build_request_body(
+          prompt: prompt,
+          messages: messages,
+          model: primary,
+          fallbacks: fallbacks,
+          reasoning: reasoning,
+          json_schema: json_schema,
+          provider: provider,
+          stream: stream
+        )
+
+        # Execute with spinner
+        result = execute_with_spinner(body, model_short, stream: stream)
+
+        # Handle result
+        handle_ask_result(result, primary, selected_tier, model_short)
+      rescue StandardError => e
+        CircuitBreaker.open_circuit!(primary) if primary
+        Result.err("LLM error: #{e.message}")
+      end
+
+      # Structured output helper - guarantees valid JSON matching schema
+      def ask_json(prompt, schema:, tier: :fast, **opts)
+        ask(prompt, tier: tier, json_schema: schema, **opts)
+      end
+
+      # Reasoning-enhanced query
+      def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **opts)
+        ask(prompt, tier: tier, reasoning: { effort: effort }, **opts)
+      end
+
+      # Web-grounded query
+      def ask_online(prompt, tier: :fast, **opts)
+        ask(prompt, tier: tier, online: true, **opts)
+      end
+
+      # Auto-router - let OpenRouter pick best model
+      def ask_auto(prompt, allowed_models: nil, **opts)
+        # Note: allowed_models would need OpenRouter API support for auto-router plugins
+        ask(prompt, model: "openrouter/auto", **opts)
+      end
+
+      def extract_model_name(model_id)
+        # Remove provider prefix and suffixes
+        name = model_id.split("/").last
+        name = name.split(":" ).first  # Remove :nitro, :floor, :online
+        name
+      end
+
+      def prompt_model_name
+        @current_model || "unknown"
+      end
+
+      # Delegate circuit_closed? to CircuitBreaker for callers that use LLM.circuit_closed?
+      def circuit_closed?(model)
+        CircuitBreaker.circuit_closed?(model)
+      end
+
+      private
+
+      # Prepare model selection and validate cost
+      def prepare_primary_model(tier:, model:, online:, provider:)
         # Model selection (single call - no TOCTOU)
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
@@ -153,19 +222,11 @@ module MASTER
 
         Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
-        # Build request body
-        body = build_request_body(
-          prompt: prompt,
-          messages: messages,
-          model: primary,
-          fallbacks: fallbacks,
-          reasoning: reasoning,
-          json_schema: json_schema,
-          provider: provider,
-          stream: stream
-        )
+        Result.ok(primary: primary, model_short: model_short, tier: selected_tier)
+      end
 
-        # Execute request
+      # Execute request with spinner UI
+      def execute_with_spinner(body, model_short, stream:)
         spinner = nil
         unless stream
           spinner = UI.spinner("#{model_short}")
@@ -173,10 +234,18 @@ module MASTER
         end
 
         result = execute_request(body, stream: stream)
+        spinner&.success if result.ok?
+        spinner&.error unless result.ok?
+        result
+      rescue StandardError => e
+        spinner&.error rescue nil
+        raise
+      end
 
+      # Handle ask result - update circuit breaker and logging
+      def handle_ask_result(result, primary, selected_tier, model_short)
         if result.ok?
           data = result.value
-          spinner&.success
 
           tokens_in = data[:tokens_in]
           tokens_out = data[:tokens_out]
@@ -187,58 +256,11 @@ module MASTER
           CircuitBreaker.close_circuit!(primary)
           Result.ok(data)
         else
-          spinner&.error
           CircuitBreaker.open_circuit!(primary)
           Dmesg.llm_error(selected_tier, result.error) if defined?(Dmesg)
           result
         end
-      rescue StandardError => e
-        spinner&.error rescue nil
-        CircuitBreaker.open_circuit!(primary) if primary
-        Result.err("LLM error: #{e.message}")
       end
-
-      # Structured output helper - guarantees valid JSON matching schema
-      def ask_json(prompt, schema:, tier: :fast, **opts)
-        ask(prompt, tier: tier, json_schema: schema, **opts)
-      end
-
-      # Reasoning-enhanced query
-      def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **opts)
-        ask(prompt, tier: tier, reasoning: { effort: effort }, **opts)
-      end
-
-      # Web-grounded query
-      def ask_online(prompt, tier: :fast, **opts)
-        ask(prompt, tier: tier, online: true, **opts)
-      end
-
-      # Auto-router - let OpenRouter pick best model
-      def ask_auto(prompt, allowed_models: nil, **opts)
-        body = { model: "openrouter/auto" }
-        if allowed_models
-          body[:plugins] = [{ id: "auto-router", allowed_models: allowed_models }]
-        end
-        ask(prompt, model: "openrouter/auto", **opts)
-      end
-
-      def extract_model_name(model_id)
-        # Remove provider prefix and suffixes
-        name = model_id.split("/").last
-        name = name.split(":" ).first  # Remove :nitro, :floor, :online
-        name
-      end
-
-      def prompt_model_name
-        @current_model || "unknown"
-      end
-
-      # Delegate circuit_closed? to CircuitBreaker for callers that use LLM.circuit_closed?
-      def circuit_closed?(model)
-        CircuitBreaker.circuit_closed?(model)
-      end
-
-      private
 
       def apply_suffix(model, online: false, provider: nil)
         suffixes = []
@@ -340,7 +362,7 @@ module MASTER
 
       def retryable_error?(error)
         return false unless error.is_a?(String)
-        error.match?("/timeout|connection|network|429|502|503|504|overloaded/i")
+        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
 
       def execute_blocking(http, req)
@@ -496,17 +518,26 @@ module MASTER
       def estimate_cost(model_or_chars, tokens_in: nil, tokens_out: 500)
         if tokens_in
           # New signature: estimate_cost(model, tokens_in: x, tokens_out: y)
-          model = model_or_chars.to_s.split(":").first
-          rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
-          (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
+          estimate_cost_by_model(model_or_chars, tokens_in: tokens_in, tokens_out: tokens_out)
         else
           # Legacy signature: estimate_cost(char_count, model) - kept for compatibility
-          char_count = model_or_chars
-          model = tokens_out.to_s.split(":" ).first  # tokens_out is actually model in legacy call
-          rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
-          est_tokens_in = (char_count / 4.0).ceil
-          (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
+          estimate_cost_by_chars(model_or_chars, tokens_out)
         end
+      end
+
+      # Clear signature: estimate cost by model and token counts
+      def estimate_cost_by_model(model, tokens_in:, tokens_out: 500)
+        model = model.to_s.split(":").first
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
+      end
+
+      # Legacy signature: estimate cost by character count
+      def estimate_cost_by_chars(char_count, model)
+        model = model.to_s.split(":" ).first  # Remove suffixes
+        rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
+        est_tokens_in = (char_count / 4.0).ceil
+        (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
       end
 
       def validate_response(data, model_id)
