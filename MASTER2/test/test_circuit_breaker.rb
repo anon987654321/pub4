@@ -13,4 +13,15 @@ class TestCircuitBreaker < Minitest::Test
   def test_circuit_breaker_class_exists
     assert defined?(MASTER::CircuitBreaker), "MASTER::CircuitBreaker should be defined"
   end
+
+  def test_circuit_opens_after_failures
+    # TODO: Implement test that verifies circuit opens after repeated failures
+    # and closes/resets correctly after timeout period
+    skip "Circuit breaker failure behavior test not yet implemented"
+  end
+
+  def test_circuit_reset
+    # TODO: Implement test that verifies manual reset works correctly
+    skip "Circuit breaker reset test not yet implemented"
+  end
 end

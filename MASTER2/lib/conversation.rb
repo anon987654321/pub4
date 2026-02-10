@@ -65,11 +65,12 @@ module MASTER
       @context[key]
     end
 
-    # Check if input contains pronouns
+    # Check if input contains pronouns (whole word matching)
     # @param text [String] Input text
     # @return [Boolean] true if pronouns detected
-    def has_pronouns?(text)
-      PRONOUNS.any? { |pronoun| text.downcase.include?(pronoun) }
+    def contains_pronouns?(text)
+      normalized = text.downcase
+      PRONOUNS.any? { |pronoun| normalized =~ /\b#{Regexp.escape(pronoun)}\b/ }
     end
 
     # Build context string for LLM

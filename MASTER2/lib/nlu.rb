@@ -71,8 +71,9 @@ module MASTER
       def extract_entities(text)
         entities = {}
 
-        # Extract file paths
-        if text =~ /(\S+\.(rb|py|js|ts|go|rs|sh|zsh|bash))/
+        # Extract file paths (simple pattern for common extensions)
+        # Matches word-boundary separated filenames with extensions
+        if text =~ /\b(\S+\.(rb|py|js|ts|go|rs|sh|zsh|bash))\b/
           entities[:file] = $1
         end
 

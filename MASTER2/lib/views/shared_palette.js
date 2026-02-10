@@ -7,9 +7,10 @@
 //   - PAL: Array of 256 RGB color triplets [r,g,b]
 //   - quantize(r,g,b): Returns closest palette color to given RGB values
 //
-// The palette consists of:
-//   - 252 colors: 6×7×6 RGB cube (216 web-safe + 36 additional)
+// The 256-color palette consists of:
+//   - 252 colors: 6×7×6 RGB cube (r∈{0,51,102,153,204,255}, g∈{0,42,84,126,168,210,252}, b∈{0,51,102,153,204,255})
 //   - 4 grayscale: [0,0,0], [85,85,85], [170,170,170], [255,255,255]
+//   Total: 252 + 4 = 256 colors
 
 const PAL = [];
 for (let r = 0; r < 6; r++)
