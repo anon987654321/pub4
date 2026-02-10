@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
-require "stoplight"
+begin
+  require "stoplight"
+  STOPLIGHT_AVAILABLE = true
+rescue LoadError
+  STOPLIGHT_AVAILABLE = false
+end
 
 module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls
@@ -12,8 +17,10 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Initialize stoplight with memory data store
-    Stoplight.default_data_store = Stoplight::DataStore::Memory.new
+    # Initialize stoplight with memory data store if available
+    if STOPLIGHT_AVAILABLE
+      Stoplight.default_data_store = Stoplight::DataStore::Memory.new
+    end
 
     # Rate limiting state
     def rate_limit_state
@@ -44,13 +51,19 @@ module MASTER
     end
 
     def run(model, &block)
-      Stoplight("openrouter-#{model}")
-        .with_threshold(FAILURES_BEFORE_TRIP)
-        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
-        .run(&block)
+      if STOPLIGHT_AVAILABLE
+        Stoplight("openrouter-#{model}")
+          .with_threshold(FAILURES_BEFORE_TRIP)
+          .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+          .run(&block)
+      else
+        # Fallback to simple execution without circuit breaker
+        yield
+      end
     end
 
     def open?(model)
+      return false unless STOPLIGHT_AVAILABLE
       light = Stoplight("openrouter-#{model}")
       light.color == Stoplight::Color::RED
     end
@@ -60,6 +73,7 @@ module MASTER
     end
 
     def record_failure(model, error)
+      return unless STOPLIGHT_AVAILABLE
       Stoplight("openrouter-#{model}")
         .with_threshold(FAILURES_BEFORE_TRIP)
         .with_cool_off_time(CIRCUIT_RESET_SECONDS)

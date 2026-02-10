@@ -506,7 +506,6 @@ module MASTER
         rates = model_rates[model] || { in: 1.0, out: 2.0 }
         (tokens_in / 1_000_000.0 * rates[:in]) + (tokens_out / 1_000_000.0 * rates[:out])
       end
-      end
 
       def validate_response(data, model_id)
         content = data[:content]
