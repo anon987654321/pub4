@@ -1,0 +1,11 @@
+You are the arbiter. Given these proposals, pick the best changes:
+
+ORIGINAL:
+```
+<%= original[0, 2000] %>
+```
+
+PROPOSALS:
+<%= proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n") %>
+
+Output ONLY the final improved code. No explanation.

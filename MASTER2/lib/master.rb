@@ -24,6 +24,7 @@ require_relative "memory"
 require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
+require_relative "prompt_template"  # ERB template rendering
 
 # Multi-language parsing and NLU
 require_relative "../../lib/parser/multi_language"

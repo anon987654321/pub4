@@ -9,6 +9,21 @@ module MASTER
     CONSENSUS_THRESHOLD = 0.70
     CONVERGENCE_THRESHOLD = 0.05
 
+    # JSON schema for structured council votes
+    VOTE_SCHEMA = {
+      name: "council_vote",
+      schema: {
+        type: "object",
+        properties: {
+          decision: { type: "string", enum: ["APPROVE", "REJECT"] },
+          reason: { type: "string" },
+          confidence: { type: "number", minimum: 0, maximum: 1 }
+        },
+        required: ["decision", "reason", "confidence"],
+        additionalProperties: false
+      }
+    }.freeze
+
     attr_reader :cost, :rounds, :proposals
 
     def initialize(llm: LLM)
@@ -217,17 +232,10 @@ module MASTER
 
       concerns = rejections.map { |v| "#{v[:name]}: #{v[:reason]}" }.join("\n")
 
-      prompt = <<~PROMPT
-        The council raised these concerns about the proposal:
-
-        #{concerns}
-
-        CURRENT PROPOSAL (first 1500 chars):
-        #{proposal[0, 1500]}
-
-        Revise the proposal to address these concerns.
-        Output ONLY the revised proposal, no explanation.
-      PROMPT
+      prompt = PromptTemplate.render_with_vars("synthesize", {
+        concerns: concerns,
+        proposal: proposal
+      })
 
       result = @llm.ask(prompt, tier: :fast)
       return proposal unless result.ok?
@@ -245,6 +253,7 @@ module MASTER
     def get_persona_vote(persona, original, proposal)
       return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
 
+      # Build prompt from template but use structured output
       prompt = <<~PROMPT
         You are #{persona[:name]}.
         #{persona[:directive] || persona[:style]}
@@ -257,26 +266,37 @@ module MASTER
         PROPOSED (first 500 chars):
         #{proposal[0, 500]}
 
-        Respond with ONLY one word: APPROVE or REJECT
-        Then one sentence explaining why.
+        Provide your decision (APPROVE or REJECT), reason, and confidence (0-1).
       PROMPT
 
-      result = @llm.ask(prompt, tier: :fast)
+      result = @llm.ask_json(prompt, schema: VOTE_SCHEMA, tier: :fast)
       return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
 
       data = result.value
       @cost += data[:cost] || 0
 
-      content = data[:content].to_s.strip
-      approve = content.upcase.start_with?("APPROVE")
-      veto = persona[:veto] && content.upcase.start_with?("REJECT")
+      # Parse structured response
+      json_content = data[:content]
+      if json_content.is_a?(Hash)
+        approve = json_content[:decision] == "APPROVE" || json_content["decision"] == "APPROVE"
+        reason = json_content[:reason] || json_content["reason"]
+        confidence = json_content[:confidence] || json_content["confidence"] || 0.5
+      else
+        # Fallback if JSON parsing failed
+        approve = true
+        reason = "No reason provided"
+        confidence = 0.5
+      end
+
+      veto = persona[:veto] && !approve
 
       {
         name: persona[:name],
         approve: approve,
         veto: veto,
         weight: persona[:weight] || 0.1,
-        reason: content.split("\n").last,
+        reason: reason,
+        confidence: confidence
       }
     rescue StandardError => e
       DB.append("errors", { context: "chamber_vote", persona: persona[:name], error: e.message, time: Time.now.utc.iso8601 })
@@ -286,19 +306,10 @@ module MASTER
     def propose(code, model, filename)
       @rounds += 1
 
-      prompt = <<~PROMPT
-        Review this code and propose improvements:
-        FILE: #{filename}
-
-        ```
-        #{code[0, 4000]}
-        ```
-
-        Provide:
-        1. ISSUES: What's wrong (bullet points)
-        2. DIFF: Proposed changes (unified diff format)
-        3. RATIONALE: Why these changes (one paragraph)
-      PROMPT
+      prompt = PromptTemplate.render_with_vars("propose", {
+        filename: filename,
+        code: code
+      })
 
       result = @llm.ask(prompt, model: model)
       return nil unless result.ok?
@@ -313,19 +324,10 @@ module MASTER
     end
 
     def arbiter_decision(original, proposals, model)
-      prompt = <<~PROMPT
-        You are the arbiter. Given these proposals, pick the best changes:
-
-        ORIGINAL:
-        ```
-        #{original[0, 2000]}
-        ```
-
-        PROPOSALS:
-        #{proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n")}
-
-        Output ONLY the final improved code. No explanation.
-      PROMPT
+      prompt = PromptTemplate.render_with_vars("arbiter", {
+        original: original,
+        proposals: proposals
+      })
 
       result = @llm.ask(prompt, model: model)
       return proposals.first[:proposal] unless result.ok?
