@@ -63,7 +63,7 @@ module MASTER
         current_output = input
 
         @stages.each_with_index do |stage, idx|
-          UI.info("Stage #{idx + 1}/#{@stages.size}: #{stage[:model]}") if defined?(UI)
+          puts "  Stage #{idx + 1}/#{@stages.size}: #{stage[:model]}"
 
           # Merge params with current output
           stage_input = detect_input_type(current_output, stage[:model])
@@ -256,11 +256,11 @@ module MASTER
 
     # Discover new styles via random exploration
     def discover_style(input, samples: 10)
-      UI.header("Discovering new cinematic styles...") if defined?(UI)
+      puts "Discovering new cinematic styles..."
 
       results = []
       samples.times do |i|
-        UI.info("Sample #{i + 1}/#{samples}") if defined?(UI)
+        puts "  Sample #{i + 1}/#{samples}"
 
         # Random pipeline 3-6 stages long
         pipeline_result = Pipeline.random(length: rand(3..6), category: :image)
