@@ -124,4 +124,89 @@ module MASTER
       end
     end
   end
+
+  # StagedOperation - A single staged operation with lifecycle tracking
+  class StagedOperation
+    STAGES = %i[proposed reviewed staged executed rejected].freeze
+    
+    attr_reader :id, :action, :context, :stage, :created_at, :reviewed_by
+    
+    def initialize(action:, context: {})
+      @id = SecureRandom.hex(8)
+      @action = action
+      @context = context
+      @stage = :proposed
+      @created_at = Time.now
+      @history = []
+    end
+    
+    def advance!(to:, by: nil, reason: nil)
+      unless valid_transition?(@stage, to)
+        raise "Invalid transition: #{@stage} → #{to}"
+      end
+      @history << { from: @stage, to: to, by: by, reason: reason, at: Time.now }
+      @stage = to
+    end
+    
+    def executable?
+      @stage == :staged
+    end
+    
+    private
+    
+    def valid_transition?(from, to)
+      transitions = {
+        proposed: [:reviewed, :rejected],
+        reviewed: [:staged, :rejected],
+        staged: [:executed, :rejected],
+      }
+      transitions[from]&.include?(to) || false
+    end
+  end
+
+  # Module-level staging operations management
+  module Staging
+    class << self
+      def propose(action, context = {})
+        op = StagedOperation.new(action: action, context: context)
+        # Check constitution first
+        check = Constitution.check(action, context)
+        return check if check.err?
+        
+        @pending ||= {}
+        @pending[op.id] = op
+        Result.ok(op)
+      end
+      
+      def review(id, approved:, by: "system", reason: nil)
+        op = find(id)
+        return Result.err("Operation not found: #{id}") unless op
+        
+        if approved
+          op.advance!(to: :reviewed, by: by, reason: reason)
+          op.advance!(to: :staged, by: by, reason: "Auto-staged after review")
+        else
+          op.advance!(to: :rejected, by: by, reason: reason)
+        end
+        Result.ok(op)
+      end
+      
+      def execute(id)
+        op = find(id)
+        return Result.err("Operation not found: #{id}") unless op
+        return Result.err("Operation not staged: #{op.stage}") unless op.executable?
+        
+        op.advance!(to: :executed, by: "executor")
+        Result.ok(op)
+      end
+      
+      def pending
+        @pending&.values&.select { |op| op.stage == :proposed } || []
+      end
+      
+      def find(id)
+        @pending&.[](id)
+      end
+    end
+  end
 end

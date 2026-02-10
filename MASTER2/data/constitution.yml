@@ -94,3 +94,23 @@ enforcement_layers:
     description: "Rails/Ruby/PWA/OpenBSD conventions"
   - name: security
     description: "Input validation, privilege separation"
+
+constitution:
+  version: "1.0"
+  rules:
+    - name: "no_destructive_system_commands"
+      pattern: "rm\\s+-rf\\s+/"
+      severity: critical
+      description: "Never execute recursive delete on root filesystem"
+    - name: "no_data_exfiltration"
+      pattern: "curl.*\\|.*sh"
+      severity: critical
+      description: "Never pipe remote content to shell"
+    - name: "no_credential_exposure"
+      pattern: "echo.*API_KEY|echo.*SECRET|echo.*PASSWORD"
+      severity: high
+      description: "Never echo credentials to stdout"
+    - name: "no_unauthorized_network"
+      pattern: "nc\\s+-l|ncat.*listen"
+      severity: high
+      description: "Never open unauthorized network listeners"

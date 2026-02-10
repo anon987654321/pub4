@@ -112,6 +112,22 @@ module MASTER
       rules
     end
 
+    # Check action against constitution rules (simplified pattern matching)
+    # Returns Result.ok(action) if allowed, Result.err(reason) if violation
+    def check(action, context = {})
+      violations = constitution_rules.select { |rule| violates?(rule, action, context) }
+      if violations.any?
+        Result.err("Constitution violation: #{violations.map { |r| r[:name] }.join(', ')}")
+      else
+        Result.ok(action)
+      end
+    end
+
+    # Get constitution rules for checking
+    def constitution_rules
+      @constitution_rules ||= load_constitution_rules
+    end
+
     # Validate operation against constitution rules
     def check_operation(op, context = {})
       case op
@@ -172,6 +188,24 @@ module MASTER
 
     private
 
+    def load_constitution_rules
+      constitution_file = File.join(MASTER.root, "data", "constitution.yml")
+      return [] unless File.exist?(constitution_file)
+      
+      config = YAML.safe_load_file(constitution_file, symbolize_names: true)
+      config&.dig(:constitution, :rules) || config || []
+    rescue StandardError => e
+      $stderr.puts "Constitution load failed: #{e.message}"
+      []
+    end
+
+    def violates?(rule, action, context)
+      return false unless rule[:pattern]
+      action.to_s.match?(Regexp.new(rule[:pattern], Regexp::IGNORECASE))
+    rescue RegexpError
+      false
+    end
+    
     def check_shell_command(cmd)
       blocked = rules.dig("shell_patterns", "blocked") || []
       allowed = rules.dig("shell_patterns", "allowed") || []
