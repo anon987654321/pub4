@@ -17,10 +17,16 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
-    # Dangerous patterns defined in Stages::Guard
-    def self.dangerous_patterns
-      Stages::Guard::DANGEROUS_PATTERNS
-    end
+    # Dangerous patterns to block (injection prevention)
+    # Also defined in Stages::Guard for pipeline filtering
+    DANGEROUS_PATTERNS = [
+      /rm\s+-r[f]?\s+\//,
+      />\s*\/dev\/[sh]da/,
+      /DROP\s+TABLE/i,
+      /FORMAT\s+[A-Z]:/i,
+      /mkfs\./,
+      /dd\s+if=/,
+    ].freeze
     
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
@@ -775,7 +781,7 @@ module MASTER
     end
 
     def shell_command(cmd)
-      if dangerous_patterns.any? { |p| p.match?(cmd) }
+      if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
         return "BLOCKED: dangerous shell command rejected"
       end
 
@@ -852,7 +858,7 @@ module MASTER
     end
 
     def sanitize_tool_input(action_str)
-      if dangerous_patterns.any? { |p| p.match?(action_str) }
+      if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str

@@ -110,7 +110,7 @@ module MASTER
 
     def freeze_state
       # Don't deep-freeze, just prevent reassignment
-      @value.freeze if @value.is_a?(Hash) || @value.is_a?(Array)
+      @value.freeze if @value.is_a?(Hash) || @value.is_a?(Array) || @value.is_a?(String)
       @error.freeze if @error.is_a?(String)
       freeze
     end
