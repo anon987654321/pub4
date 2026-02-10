@@ -19,6 +19,7 @@ module MASTER
     LLM_ONLY = 1
     ALL_EVENTS = 2
     FULL_DEBUG = 3
+    MAX_BUFFER_SIZE = 1000
 
     class << self
       attr_reader :buffer
@@ -42,7 +43,10 @@ module MASTER
                end
 
         entry = { time: timestamp, line: line, level: level }
-        @buffer_mutex.synchronize { @buffer << entry }
+        @buffer_mutex.synchronize do
+          @buffer << entry
+          @buffer.shift while @buffer.size > MAX_BUFFER_SIZE
+        end
 
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?

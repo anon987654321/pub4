@@ -46,6 +46,8 @@ module MASTER
         logic = results[:logic_checks]
         introspection = results[:introspection]
         council = results[:council_review]
+        fp = results[:file_processing]
+        ps = results[:pipeline_safety]
         
         # Build natural prose
         paragraphs = []
@@ -88,6 +90,14 @@ module MASTER
           else
             paragraphs << "The adversarial council rated the codebase #{rating}/10, suggesting significant gaps between stated principles and implementation."
           end
+        end
+        
+        # File processing and pipeline
+        notes = []
+        notes << "#{fp[:details][:files_changed]} files need processing" if fp && !fp[:passed]
+        notes << "pipeline rejected own code" if ps && !ps[:passed]
+        if notes.any?
+          paragraphs << "Infrastructure checks flagged: #{notes.join('; ')}."
         end
         
         # Print with nice wrapping
@@ -158,7 +168,7 @@ module MASTER
       def check_logic_patterns(content, file)
         issues = []
         # Thread-unsafe memoization
-        if content.match?(/\|\|=.*YAML\./) && !content.match?(/Monitor|Mutex/)
+        if content.match?(/\|\|=.*YAML\./) && !content.match?(/Monitor|Mutex|@mutex/)
           issues << "#{file}: Potential thread-unsafe YAML memoization"
         end
         # Mixed hash key types
@@ -268,7 +278,12 @@ module MASTER
         if result.ok?
           response = result.value[:content].to_s
           rating_match = response.match(/(\d+)\s*\/\s*10|rating[:\s]+(\d+)/i)
-          rating = rating_match ? (rating_match[1] || rating_match[2]).to_i : 5
+          
+          if rating_match
+            rating = (rating_match[1] || rating_match[2]).to_i
+          else
+            return { passed: false, message: "Council returned no parseable rating", rating: nil }
+          end
 
           puts "\n    Rating: #{rating}/10"
 
