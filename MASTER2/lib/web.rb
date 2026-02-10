@@ -61,15 +61,10 @@ module MASTER
       text = doc.text.squeeze(" \n").strip
       text
     rescue LoadError
-      # Fallback to simple regex if nokogiri not available
-      # WARNING: This fallback has limited ReDoS protection. Install nokogiri for production use.
-      # Limit input size to prevent ReDoS
-      html = html[0..50000] if html.length > 50000
-      html.gsub(/<script[^>]{0,100}>.*?<\/script>/im, " ")
-          .gsub(/<style[^>]{0,100}>.*?<\/style>/im, " ")
-          .gsub(/<[^>]{0,200}>/, " ")
-          .squeeze(" \n")
-          .strip
+      # CRITICAL: nokogiri gem is required for HTML parsing
+      # Install nokogiri to use web browsing features
+      # No fallback is provided due to ReDoS security concerns
+      "ERROR: nokogiri gem not installed. Run: gem install nokogiri"
     end
   end
 end
