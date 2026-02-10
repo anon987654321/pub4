@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+# TODO: REFACTOR — This file is ~30KB / 800+ lines, violating the project's
+# own Metz quality gates (class_lines: 100 for lib/). Consider extracting:
+#   - Tool execution logic → lib/executor/tools.rb
+#   - ReAct/PreAct/ReWOO patterns → lib/executor/reasoning.rb
+#   - Reflexion loop → lib/executor/reflexion.rb
+#   - File I/O safety → lib/executor/sandbox.rb
+
 require "json"
 require "open3"
 require "yaml"

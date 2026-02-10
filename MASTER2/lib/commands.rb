@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# TODO: REFACTOR — This file is ~19KB, violating SMALL_INTERFACES axiom.
+# Consider extracting command groups into separate modules under lib/commands/.
+
 module MASTER
   # Commands - REPL command dispatcher
   module Commands

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# hooks.rb — Hook definitions and registration (data layer).
+# See also: hooks_manager.rb — Hook lifecycle execution (runtime layer).
+
 require "yaml"
 
 module MASTER

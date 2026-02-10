@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# converge.rb — Single-pass convergence check utility.
+# See also: convergence.rb — Multi-round convergence detection engine.
+
 module MASTER
   # Converge - Low-level convergence detection
   module Converge

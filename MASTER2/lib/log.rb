@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# log.rb — Unified logging facade (public API).
+# See also: logging.rb (log formatting), dmesg.rb (OpenBSD dmesg-style output).
+
 module MASTER
   # Log - Unified logging facade consolidating three logging systems
   # Combines Dmesg (kernel-style), Logging (structured JSON), and puts statements

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# logging.rb — Log formatting and rotation.
+# See also: log.rb (unified facade), dmesg.rb (dmesg-style output).
+
 require "json"
 require "time"
 

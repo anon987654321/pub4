@@ -23,12 +23,13 @@ require_relative "llm"
 require_relative "memory"
 require_relative "session"
 require_relative "pledge"
+require_relative "circuit_breaker"  # LLM failure circuit breaker
 require_relative "rubocop_detector"  # Style checking integration
 
 # Multi-language parsing and NLU
-require_relative "../../lib/parser/multi_language"
-require_relative "../../lib/nlu"
-require_relative "../../lib/conversation"
+require_relative "parser/multi_language"
+require_relative "nlu"
+require_relative "conversation"
 
 # Safe Autonomy Architecture
 require_relative "constitution"
