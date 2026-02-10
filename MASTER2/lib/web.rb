@@ -20,40 +20,8 @@ module MASTER
       response = http.request(Net::HTTP::Get.new(uri))
 
       if response.code.start_with?("2")
-        # Simple text extraction - remove scripts, styles, and HTML tags
-        # Using conservative patterns to avoid ReDoS vulnerabilities
-        text = response.body.dup
-        
-        # Remove script blocks (limit backtracking)
-        while (match = text.match(/<script(?:\s[^>]{0,200})?>|<script>/i))
-          start_pos = match.begin(0)
-          end_pos = text.index(/<\/script>/i, start_pos)
-          if end_pos
-            text[start_pos..(end_pos + 8)] = " "
-          else
-            text[start_pos..-1] = " "
-            break
-          end
-        end
-        
-        # Remove style blocks (limit backtracking)
-        while (match = text.match(/<style(?:\s[^>]{0,200})?>|<style>/i))
-          start_pos = match.begin(0)
-          end_pos = text.index(/<\/style>/i, start_pos)
-          if end_pos
-            text[start_pos..(end_pos + 7)] = " "
-          else
-            text[start_pos..-1] = " "
-            break
-          end
-        end
-        
-        # Remove all remaining HTML tags with limited backtracking
-        text.gsub!(/<[^<>]*>/, " ")
-        
-        # Normalize whitespace
-        text.gsub!(/\s+/, " ")
-        text.strip!
+        # Use nokogiri for safe HTML parsing
+        text = extract_text(response.body)
 
         Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url, status: response.code)
       else
@@ -61,6 +29,44 @@ module MASTER
       end
     rescue StandardError => e
       Result.err("Browse failed: #{e.message}")
+    end
+
+    # JavaScript-rendered pages using Ferrum (optional)
+    def browse_js(url)
+      require "ferrum"
+      
+      browser = Ferrum::Browser.new(headless: true, timeout: 30)
+      browser.go_to(url)
+      browser.network.wait_for_idle
+      
+      text = extract_text(browser.body)
+      browser.quit
+      
+      Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url)
+    rescue LoadError
+      Result.err("Ferrum gem not available - install for JS-rendered pages")
+    rescue StandardError => e
+      Result.err("Browse JS failed: #{e.message}")
+    ensure
+      browser&.quit rescue nil
+    end
+
+    private
+
+    def extract_text(html)
+      require "nokogiri"
+      
+      doc = Nokogiri::HTML(html)
+      doc.css("script, style").remove
+      text = doc.text.squeeze(" \n").strip
+      text
+    rescue LoadError
+      # Fallback to simple regex if nokogiri not available
+      html.gsub(/<script[^>]*>.*?<\/script>/im, " ")
+          .gsub(/<style[^>]*>.*?<\/style>/im, " ")
+          .gsub(/<[^>]*>/, " ")
+          .squeeze(" \n")
+          .strip
     end
   end
 end

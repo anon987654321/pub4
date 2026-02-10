@@ -7,8 +7,7 @@ module MASTER
   # Logging - Structured logging for production observability
   # Outputs JSON logs for aggregation, human-readable for development
   module Logging
-    extend self
-
+    # Fix: Remove redundant extend self - all methods are in class << self
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
     
     @level = :info

@@ -14,6 +14,16 @@ module MASTER
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
     MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
+    
+    # Magic number constants extracted for clarity (Phase 5 - Style compliance)
+    MAX_BROWSE_CONTENT = 5000
+    MAX_FILE_CONTENT = 3000
+    MAX_CURL_CONTENT = 2000
+    MAX_LLM_RESPONSE_PREVIEW = 1000
+    MAX_SHELL_OUTPUT = 1000
+    SIMPLE_QUERY_LENGTH_THRESHOLD = 200
+    MAX_PARSE_FALLBACK_LENGTH = 100
+    
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
@@ -125,7 +135,7 @@ module MASTER
     private
 
     def simple_query?(goal)
-      goal.length < 200 &&
+      goal.length < SIMPLE_QUERY_LENGTH_THRESHOLD &&
         !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
         !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
     end
@@ -696,7 +706,7 @@ module MASTER
 
     def ask_llm(prompt)
       result = LLM.ask(prompt, tier: :fast)
-      result.ok? ? result.value[:content][0..1000] : "LLM error: #{result.error}"
+      result.ok? ? result.value[:content][0..MAX_LLM_RESPONSE_PREVIEW] : "LLM error: #{result.error}"
     end
 
     def web_search(query)
@@ -716,14 +726,14 @@ module MASTER
         # Fix: Use Open3 with proper escaping to prevent shell injection
         require "open3"
         stdout, _, _ = Open3.capture3("curl", "-sL", "--max-time", "10", url)
-        stdout[0..2000]
+        stdout[0..MAX_CURL_CONTENT]
       end
     end
 
     def file_read(path)
       return "File not found: #{path}" unless File.exist?(path)
       content = File.read(path)
-      content.length > 3000 ? "#{content[0..3000]}... (truncated, #{content.length} chars total)" : content
+      content.length > MAX_FILE_CONTENT ? "#{content[0..MAX_FILE_CONTENT]}... (truncated, #{content.length} chars total)" : content
     end
 
     def file_write(path, content)
@@ -802,7 +812,7 @@ module MASTER
         output = status.success? ? stdout : "Error: #{stderr}"
       end
 
-      output.length > 1000 ? "#{output[0..1000]}... (truncated)" : output
+      output.length > MAX_SHELL_OUTPUT ? "#{output[0..MAX_SHELL_OUTPUT]}... (truncated)" : output
     end
 
     def code_execution(code)

@@ -13,6 +13,7 @@ gem "tty-cursor"
 # Utilities
 gem "pastel"         # Terminal colors
 gem "rouge"          # Syntax highlighting
+gem "nokogiri", "~> 1.16"  # HTML/XML parsing
 
 # HTTP client
 gem "faraday", "~> 2.0"
