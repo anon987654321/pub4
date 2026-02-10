@@ -1,4 +1,5 @@
 require 'json'
+require_relative 'smart_suggest'
 
 module MASTER
   # HTMLView - Generates visual dashboards for code quality
