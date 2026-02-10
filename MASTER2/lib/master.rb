@@ -77,12 +77,9 @@ require_relative "shell"
 require_relative "introspection"
 require_relative "problem_solver"
 require_relative "evolve"
-require_relative "converge"
 require_relative "momentum"
 require_relative "validator"
-require_relative "self_map"
 require_relative "file_hygiene"
-require_relative "planner_helper"
 require_relative "gh_helper"
 
 # Auto-fixer (restored from MASTER)
