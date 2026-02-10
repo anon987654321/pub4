@@ -1,6 +1,7 @@
 budget:
   limit: 10.0
   thresholds:
+    premium: 8.0
     strong: 5.0
     fast: 1.0
     cheap: 0.0

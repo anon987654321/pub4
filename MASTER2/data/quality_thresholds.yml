@@ -1,0 +1,9 @@
+file_lines:
+  warn: 250
+  error: 300
+  self_test_max: 300
+method_lines:
+  warn: 15
+  error: 25
+max_self_test_issues: 0
+max_self_test_violations: 0
