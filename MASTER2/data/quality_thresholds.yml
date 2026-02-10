@@ -1,0 +1,30 @@
+# MASTER2/data/quality_thresholds.yml
+# Single source of truth for all quality checks.
+# All enforcement modules MUST read from this file.
+# Violating ONE_SOURCE axiom by hardcoding thresholds elsewhere is forbidden.
+
+file:
+  max_lines: 300           # Maximum lines per file
+  warn_lines: 250          # Warning threshold
+  error_lines: 500         # Error threshold (hard fail)
+
+method:
+  max_lines: 25            # Maximum lines per method
+  max_params: 4            # Maximum parameters per method
+
+class:
+  max_lines: 300           # Maximum lines per class (matches file)
+
+naming:
+  min_length: 3            # Minimum identifier length
+  max_length: 40           # Maximum identifier length
+
+complexity:
+  max_abc: 20              # ABC metric threshold
+  max_cyclomatic: 10       # Cyclomatic complexity
+
+# Self-test uses the SAME thresholds - no exceptions
+# If MASTER2 can't pass its own rules, it must be refactored
+self_test:
+  max_issues: 0            # Zero tolerance for axiom violations
+  max_enforcement_violations: 0

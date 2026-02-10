@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "quality_standards"
+
 module MASTER
-  # Audit - Code smell detection and quality analysis
+  # audit.rb — Code smell detection and quality analysis.
+  # Thresholds: reads from QualityStandards (data/quality_thresholds.yml).
+  # See also: smells.rb (smell definitions), code_review.rb (pattern detection).
   module Audit
     extend self
 
@@ -89,32 +93,30 @@ module MASTER
     private
 
     def check_file_length(file, lines, report)
-      thresholds = if defined?(Smells)
-        Smells.thresholds
-      else
-        { warn: 250, error: 500 }
-      end
+      # Use QualityStandards (ONE_SOURCE axiom)
+      warn_threshold = QualityStandards.warn_file_lines
+      error_threshold = QualityStandards.error_file_lines
       
       length = lines.size
       
-      if length > thresholds[:error]
+      if length > error_threshold
         report.add(Finding.new(
           file: file,
           line: 0,
           severity: :high,
           effort: :hard,
           category: :file_length,
-          message: "File is too long (#{length} lines, threshold: #{thresholds[:error]})",
+          message: "File is too long (#{length} lines, threshold: #{error_threshold})",
           suggestion: "Split into smaller, focused modules"
         ))
-      elsif length > thresholds[:warn]
+      elsif length > warn_threshold
         report.add(Finding.new(
           file: file,
           line: 0,
           severity: :medium,
           effort: :moderate,
           category: :file_length,
-          message: "File is getting long (#{length} lines, threshold: #{thresholds[:warn]})",
+          message: "File is getting long (#{length} lines, threshold: #{warn_threshold})",
           suggestion: "Consider refactoring into smaller files"
         ))
       end

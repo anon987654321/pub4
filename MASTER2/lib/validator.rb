@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "quality_standards"
+
 module MASTER
-  # Validator - Axiom enforcement engine
+  # validator.rb — Axiom enforcement for LLM output validation.
+  # Thresholds: reads from QualityStandards (data/quality_thresholds.yml).
+  # See also: enforcement.rb (multi-layer engine), violations.rb (dual detection).
   class Validator
     def initialize
       @axioms = DB.axioms rescue []
@@ -114,7 +118,7 @@ module MASTER
 
     def check_file_size(code)
       lines = code.lines.size
-      return { axiom: 'small_files', message: "File too large: #{lines} lines" } if lines > 300
+      return { axiom: 'small_files', message: "File too large: #{lines} lines (max: #{QualityStandards.max_file_lines})" } if QualityStandards.file_too_long?(lines)
 
       nil
     end

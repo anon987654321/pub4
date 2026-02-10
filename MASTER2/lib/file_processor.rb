@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "quality_standards"
+
 module MASTER
   # FileProcessor - 4-phase file processing
   # Clean → Rename/Rephrase → Structural Transform → Expand/Contract
@@ -187,8 +189,8 @@ module MASTER
         original_bytes = content.bytesize
 
         # Assess if file should be split
-        if original_lines > 300
-          changes << "Consider splitting: #{original_lines} lines exceeds 300 limit"
+        if QualityStandards.file_too_long?(original_lines)
+          changes << "Consider splitting: #{original_lines} lines exceeds #{QualityStandards.max_file_lines} limit"
         end
 
         # Assess if file is too small (maybe merge with related)

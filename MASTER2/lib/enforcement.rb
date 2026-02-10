@@ -3,6 +3,9 @@
 require "yaml"
 
 module MASTER
+  # enforcement.rb — 5-layer axiom enforcement at 4 scopes.
+  # Thresholds: reads from QualityStandards (data/quality_thresholds.yml).
+  # See also: validator.rb (output validation), violations.rb (dual detection).
   # Enforcement - 5-layer axiom enforcement at 4 scopes
   # Layers: Literal → Lexical → Conceptual → Semantic → Cognitive
   # Scopes: Line → Unit → File → Framework

@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require 'yaml'
+require_relative 'quality_standards'
 
 module MASTER
-  # Code smell detection - complements Violations with structural analysis
+  # smells.rb — Code smell definitions and thresholds.
+  # Thresholds: reads from QualityStandards (data/quality_thresholds.yml).
+  # See also: audit.rb (quality analysis), code_review.rb (pattern detection).
   module Smells
     extend self
 
@@ -11,12 +14,14 @@ module MASTER
       @thresholds ||= begin
         config = load_config
         {
-          max_method_lines: config.dig('thresholds', 'method_length') || 20,
-          max_file_lines: config.dig('thresholds', 'file_lines') || 300,
-          max_parameters: config.dig('thresholds', 'parameter_count') || 4,
+          max_method_lines: config.dig('thresholds', 'method_length') || QualityStandards.max_method_lines,
+          max_file_lines: config.dig('thresholds', 'file_lines') || QualityStandards.max_file_lines,
+          max_parameters: config.dig('thresholds', 'parameter_count') || QualityStandards.max_method_params,
           max_nesting: config.dig('thresholds', 'nesting_depth') || 5,
           max_public_methods: config.dig('thresholds', 'class_methods') || 10,
-          min_duplicate_count: config.dig('thresholds', 'min_duplicate_count') || 3
+          min_duplicate_count: config.dig('thresholds', 'min_duplicate_count') || 3,
+          warn: QualityStandards.warn_file_lines,
+          error: QualityStandards.error_file_lines
         }
       end
     end

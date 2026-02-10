@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
+  # violations.rb — Dual violation detection: literal (regex) + conceptual (LLM).
+  # Thresholds: reads from QualityStandards (data/quality_thresholds.yml).
+  # See also: validator.rb (output validation), enforcement.rb (multi-layer engine).
   # Dual violation detection: literal (regex/AST) + conceptual (LLM semantic)
   # Catches both syntactic violations and semantic principle violations
   module Violations
