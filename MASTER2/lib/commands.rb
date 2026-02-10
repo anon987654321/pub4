@@ -611,6 +611,22 @@ module MASTER
           puts "  Changes not applied"
         end
       end
+
+      def print_language_axioms(args)
+        axioms = DB.axioms
+        if axioms.empty?
+          puts "\n  No language axioms found.\n"
+          return
+        end
+
+        UI.header("Language Axioms")
+        axioms.each do |axiom|
+          name = axiom[:name] || axiom["name"] || "unnamed"
+          desc = axiom[:description] || axiom["description"] || ""
+          puts "  #{name.ljust(20)} #{desc[0, 50]}"
+        end
+        puts
+      end
     end
   end
 end

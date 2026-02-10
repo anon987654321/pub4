@@ -9,6 +9,14 @@ module MASTER
     CONSENSUS_THRESHOLD = 0.70
     CONVERGENCE_THRESHOLD = 0.05
 
+    MODELS = {
+      sonnet: nil,    # Will be resolved via LLM.pick
+      deepseek: nil,  # Will be resolved via LLM.pick  
+      gemini: nil,    # Will be resolved via LLM.pick
+    }.freeze
+
+    ARBITER = :sonnet
+
     attr_reader :cost, :rounds, :proposals
 
     def initialize(llm: LLM)
@@ -40,7 +48,7 @@ module MASTER
       participants.each do |model_key|
         break if over_budget?
 
-        model = MODELS[model_key]
+        model = MODELS[model_key] || LLM.pick
         next unless model && @llm.circuit_closed?(model)
 
         proposal = propose(code, model, filename)
@@ -51,7 +59,7 @@ module MASTER
 
       council_result = multi_round_review(code, @proposals.first[:proposal])
 
-      arbiter_model = MODELS[ARBITER]
+      arbiter_model = MODELS[ARBITER] || LLM.pick(:strong)
       if @llm.circuit_closed?(arbiter_model)
         final = arbiter_decision(code, @proposals, arbiter_model)
         Result.ok(
