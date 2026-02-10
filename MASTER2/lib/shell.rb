@@ -62,13 +62,14 @@ module MASTER
 
         sanitized = sanitize(cmd)
         output = nil
+        status = nil
         
         Timeout.timeout(timeout) do
           # Use Open3 for safer shell execution
           output, status = Open3.capture2e(sanitized)
         end
 
-        status&.success? ? Result.ok(output) : Result.err(output)
+        status&.success? ? Result.ok(output) : Result.err(output || "Command failed")
       rescue Timeout::Error
         Result.err("Command timed out after #{timeout}s")
       rescue StandardError => e
