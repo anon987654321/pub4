@@ -1,27 +1,29 @@
+# frozen_string_literal: true
 source "https://rubygems.org"
 
 gem "ruby_llm"
 
 # TTY toolkit
-gem "tty-reader"
-gem "tty-spinner"
-gem "tty-table"
-gem "tty-box"
-gem "tty-markdown"
-gem "tty-prompt"
-gem "tty-progressbar"
-gem "tty-cursor"
+gem "tty-reader", "~> 0.9"
+gem "tty-prompt", "~> 0.23"
+gem "tty-spinner", "~> 0.9"
+gem "tty-table", "~> 0.12"
+gem "tty-box", "~> 0.7"
+gem "tty-markdown", "~> 0.7"
+gem "tty-progressbar", "~> 0.18"
+gem "tty-cursor", "~> 0.7"
 
 # Utilities
-gem "pastel"         # Terminal colors
-gem "rouge"          # Syntax highlighting
+gem "pastel", "~> 0.8"        # Terminal colors
+gem "rouge", "~> 4.0"         # Syntax highlighting
 
 # Web server
-gem "falcon"         # Async HTTP server
-gem "async-websocket"
+gem "falcon", "~> 0.47"       # Async HTTP server
+gem "async-websocket", "~> 0.26"
 
 group :test do
-  gem "minitest"
+  gem "minitest", "~> 5.0"
+  gem "minitest-reporters", "~> 1.6"
   gem "rake"
   gem "webmock"      # HTTP mocking
 end

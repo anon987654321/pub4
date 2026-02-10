@@ -20,6 +20,13 @@ module MASTER
       FileUtils.mkdir_p(@root)
       @cache.clear
       ensure_seeded
+      @setup_complete = true
+    end
+
+    def ready?
+      @setup_complete == true
+    rescue StandardError
+      false
     end
 
     # Get database root directory

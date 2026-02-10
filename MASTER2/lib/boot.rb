@@ -22,12 +22,21 @@ module MASTER
         # Smoke test first - catch runtime errors early
         smoke_result = smoke_test
 
+        # DB status guard
+        db_status = if defined?(DB) && DB.respond_to?(:ready?) && DB.ready?
+          "#{DB.axioms.size} axioms, #{DB.council.size} personas"
+        elsif defined?(DB)
+          "offline"
+        else
+          "unavailable"
+        end
+
         # Dense dmesg - no fluff, no breathing room
         puts c("MASTER #{VERSION} #1: #{timestamp}")
         puts c("#{user}@#{host}:#{MASTER.root}")
         puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
         puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
-        puts c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas")
+        puts c("db0 at ruby0: #{db_status}")
         puts c("llm0 at db0: openrouter #{tier_models}")
         puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")
         puts c("tts0 at budget0: #{tts_status}")

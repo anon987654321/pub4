@@ -151,7 +151,7 @@ module MASTER
         @current_model = model_short
         @current_tier = selected_tier
 
-        Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
+        Log.llm(tier: selected_tier, model: model_short, tokens_in: 0, tokens_out: 0) if defined?(Log)
 
         # Build request body
         body = build_request_body(
@@ -182,14 +182,14 @@ module MASTER
           tokens_out = data[:tokens_out]
           cost = data[:cost] || record_cost(model: primary, tokens_in: tokens_in, tokens_out: tokens_out)
 
-          Dmesg.llm(selected_tier, model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+          Log.llm(tier: selected_tier, model: model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Log)
 
           CircuitBreaker.close_circuit!(primary)
           Result.ok(data)
         else
           spinner&.error
           CircuitBreaker.open_circuit!(primary)
-          Dmesg.llm_error(selected_tier, result.error) if defined?(Dmesg)
+          Log.llm_error(tier: selected_tier, error: result.error) if defined?(Log)
           result
         end
       rescue StandardError => e
@@ -289,6 +289,33 @@ module MASTER
         body
       end
 
+      def connection
+        @connection_mutex ||= Mutex.new
+        @connection_mutex.synchronize do
+          if @connection.nil? || !@connection.started?
+            uri = URI(CHAT_ENDPOINT)
+            @connection = Net::HTTP.new(uri.hostname, uri.port)
+            @connection.use_ssl = true
+            @connection.open_timeout = 30
+            @connection.read_timeout = 120
+            @connection.write_timeout = 30
+            @connection.keep_alive_timeout = 60
+            @connection.start
+          end
+          @connection
+        end
+      rescue StandardError
+        @connection = nil
+        nil
+      end
+
+      def reset_connection!
+        @connection_mutex&.synchronize do
+          @connection&.finish rescue nil
+          @connection = nil
+        end
+      end
+
       def execute_request(body, stream: false)
         uri = URI(CHAT_ENDPOINT)
         req = Net::HTTP::Post.new(uri)
@@ -306,11 +333,19 @@ module MASTER
 
         while retry_count < max_retries
           begin
-            http = Net::HTTP.new(uri.hostname, uri.port)
-            http.use_ssl = true
-            http.open_timeout = 30
-            http.read_timeout = 120
-            http.write_timeout = 30
+            # Try to use pooled connection first
+            http = connection
+            
+            # Fallback to new connection if pool unavailable
+            if http.nil?
+              uri = URI(CHAT_ENDPOINT)
+              http = Net::HTTP.new(uri.hostname, uri.port)
+              http.use_ssl = true
+              http.open_timeout = 30
+              http.read_timeout = 120
+              http.write_timeout = 30
+              http.start
+            end
 
             result = if stream
                        execute_streaming(http, req)
@@ -324,6 +359,7 @@ module MASTER
             last_error = result.error
           rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
             last_error = e.message
+            reset_connection!  # Reset pool on connection error
           end
 
           retry_count += 1
@@ -331,7 +367,7 @@ module MASTER
 
           # Exponential backoff: 1s, 2s, 4s
           sleep_time = 2 ** (retry_count - 1)
-          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Logging)
+          Log.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Log)
           sleep(sleep_time)
         end
 
