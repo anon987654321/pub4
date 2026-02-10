@@ -1,4 +1,8 @@
 require 'json'
+require_relative 'voice'
+require_relative 'html_view'
+require_relative 'smart_suggest'
+require_relative 'engine'
 
 module MASTER
   # Multimodal - Unified interface for voice, text, and visual interactions
@@ -74,9 +78,10 @@ module MASTER
 
     # Switch mode
     def switch_mode(new_mode)
+      old_mode = @mode
       puts "🔄 Switching to #{new_mode} mode"
       @mode = new_mode
-      update_context(:mode_switched, { from: @mode, to: new_mode })
+      update_context(:mode_switched, { from: old_mode, to: new_mode })
     end
 
     # Update context
@@ -180,7 +185,7 @@ module MASTER
     end
 
     def process_voice(command)
-      intent = NLU.parse(command)
+      intent = VoiceNLU.parse(command)
       execute_command(intent)
     end
 

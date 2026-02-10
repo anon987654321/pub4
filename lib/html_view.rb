@@ -97,15 +97,16 @@ module MASTER
           }
         end
         
-        # Long method
-        code.scan(/def\s+(\w+).*?^end/m).each do |match|
+        # Long method - scan for full method bodies
+        code.scan(/^\s*def\s+(\w+).*?^\s*end/m).each do |match|
           method_name = match[0]
-          method_code = match[0]
-          if method_code && method_code.lines.count > 30
+          # Get the full match string by rescanning with the method name
+          method_body = code[/^\s*def\s+#{Regexp.escape(method_name)}.*?^\s*end/m]
+          if method_body && method_body.lines.count > 30
             violations << {
               type: 'warning',
               title: "Long Method: #{method_name}",
-              description: "#{method_code.lines.count} lines",
+              description: "#{method_body.lines.count} lines",
               file: file,
               action: 'extract_method'
             }
@@ -137,7 +138,7 @@ module MASTER
       html = template.dup
       
       data.each do |key, value|
-        html.gsub!("<%=\s*#{key}\s*%>", value.to_s)
+        html.gsub!(/<%=\s*#{Regexp.escape(key.to_s)}\s*%>/, value.to_s)
       end
       
       html

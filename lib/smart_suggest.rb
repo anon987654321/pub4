@@ -129,37 +129,56 @@ module MASTER
         end
       end
 
+      # Final check in case the last method in the file is long and was not followed by another `def`
+      if current_method && method_lines > 25
+        suggestions << Suggestion.new(
+          type: :long_method,
+          file: file,
+          description: "Long method '#{current_method}': #{method_lines} lines",
+          impact: :medium,
+          effort: :medium,
+          confidence: calculate_confidence(method_lines, 25, 1.2),
+          line: method_start
+        )
+      end
+
       suggestions
     end
 
     def detect_duplicate_code(file, code)
-      # Simple duplicate detection - look for repeated code blocks
+      # Optimized duplicate detection using hash-based lookup
       suggestions = []
       lines = code.lines
       block_size = 5
       
+      return suggestions if lines.size < block_size
+
+      # Map block content to occurrence count and first index for near O(n) detection
+      block_counts = Hash.new { |h, k| h[k] = { count: 0, first_index: nil } }
+
       (0..lines.size - block_size).each do |i|
         block = lines[i, block_size].join
         next if block.strip.empty?
-        
-        matches = 0
-        (i + block_size..lines.size - block_size).each do |j|
-          other_block = lines[j, block_size].join
-          matches += 1 if block == other_block
-        end
-        
-        if matches > 0
-          suggestions << Suggestion.new(
-            type: :duplicate_code,
-            file: file,
-            description: "Duplicate code block found (#{matches + 1} instances)",
-            impact: :medium,
-            effort: :medium,
-            confidence: 0.8,
-            line: i + 1
-          )
-          break # Only report once per file
-        end
+
+        entry = block_counts[block]
+        entry[:count] += 1
+        entry[:first_index] = i if entry[:first_index].nil? || i < entry[:first_index]
+      end
+
+      duplicate_entry = block_counts.values
+        .select { |entry| entry[:count] > 1 }
+        .min_by { |entry| entry[:first_index] }
+
+      if duplicate_entry
+        suggestions << Suggestion.new(
+          type: :duplicate_code,
+          file: file,
+          description: "Duplicate code block found (#{duplicate_entry[:count]} instances)",
+          impact: :medium,
+          effort: :medium,
+          confidence: 0.8,
+          line: duplicate_entry[:first_index] + 1
+        )
       end
       
       suggestions

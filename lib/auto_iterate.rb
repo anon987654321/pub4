@@ -1,5 +1,4 @@
 require 'fileutils'
-require 'benchmark'
 
 module MASTER
   # AutoIterate - Loops refactoring until code quality converges
@@ -106,6 +105,11 @@ module MASTER
             changes += 1
             files_changed << file
             
+            # Track cost if available
+            if result[:analysis] && result[:analysis][:cost]
+              @total_cost += result[:analysis][:cost]
+            end
+            
             puts "   ✓ Updated #{file}"
           end
         rescue => e
@@ -171,7 +175,14 @@ module MASTER
       
       # Check if improvement is less than threshold for convergence_window iterations
       recent_scores = @scores.last(@convergence_window + 1)
-      improvements = recent_scores.each_cons(2).map { |a, b| ((b - a) / a.abs).abs }
+      improvements = recent_scores.each_cons(2).map do |a, b|
+        if a == 0
+          # From 0 to 0: no change; from 0 to non-zero: treat as maximal improvement
+          b == 0 ? 0.0 : 1.0
+        else
+          ((b - a) / a.abs.to_f).abs
+        end
+      end
       
       improvements.all? { |imp| imp < @convergence_threshold }
     end

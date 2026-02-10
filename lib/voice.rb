@@ -33,8 +33,10 @@ module MASTER
       # In production, this would use actual speech recognition
       loop do
         print "🎤 Listening... "
-        input = gets.chomp
+        input = STDIN.gets
+        break if input.nil? # Handle EOF/closed STDIN
         
+        input = input.chomp
         break if input.downcase == 'exit'
         
         # Check for wake word
@@ -43,7 +45,9 @@ module MASTER
           
           # Get actual command
           print "🎤 Command: "
-          command = gets.chomp
+          command = STDIN.gets
+          break if command.nil? # Handle EOF/closed STDIN
+          command = command.chomp
           
           if command && !command.empty?
             process_command(command, &block)
@@ -93,7 +97,7 @@ module MASTER
       puts "📝 Processing: #{command}"
       
       # Parse intent
-      intent = NLU.parse(command)
+      intent = VoiceNLU.parse(command)
       
       # Execute command
       result = execute_intent(intent)
@@ -111,18 +115,33 @@ module MASTER
     private
 
     def execute_intent(intent)
+      target = intent[:target]
+      
       case intent[:action]
       when :refactor
+        return { success: false, message: "File not found: #{target}" } unless File.exist?(target)
+        
+        code = File.read(target)
         engine = Engine.new
-        result = engine.refactor(intent[:target])
-        { success: result[:success], message: "Refactoring complete" }
+        result = engine.refactor(code)
+        
+        if result[:success]
+          File.write(target, result[:code])
+          { success: true, message: "Refactoring complete" }
+        else
+          { success: false, message: result[:error] || "Refactoring failed" }
+        end
       when :analyze
+        return { success: false, message: "File not found: #{target}" } unless File.exist?(target)
+        
+        code = File.read(target)
         engine = Engine.new
-        result = engine.analyze(intent[:target])
+        result = engine.analyze(code)
         { success: true, message: "Analysis complete", data: result }
       when :suggest
         suggester = SmartSuggest.new
-        suggestions = suggester.analyze_file(intent[:target])
+        suggestions = suggester.analyze_file(target) if File.exist?(target)
+        suggestions ||= []
         { success: true, message: "Found #{suggestions.size} suggestions", data: suggestions }
       else
         { success: false, message: "Unknown command" }
@@ -140,9 +159,9 @@ module MASTER
     end
   end
 
-  # NLU - Natural Language Understanding for voice commands
+  # VoiceNLU - Natural Language Understanding for voice commands
   # Parses voice commands into structured intents
-  class NLU
+  class VoiceNLU
     def self.parse(command)
       new.parse(command)
     end
@@ -165,9 +184,9 @@ module MASTER
         return { action: :suggest, target: $3.strip }
       end
       
-      # Fix intent
+      # Fix intent - map to refactor since fix_all is not implemented
       if command =~ /fix\s+(all|them|it)/
-        return { action: :fix_all, target: nil }
+        return { action: :refactor, target: command }
       end
       
       # Default - treat as refactor target

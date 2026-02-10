@@ -23,8 +23,14 @@ module MASTER
       ast = @parser.parse(code, language)
       analysis = @llm.analyze(ast, language)
 
-      # Auto-proceed logic
-      confidence = analysis[:confidence] || 0.5
+      # Map risk to confidence (inverse relationship)
+      # low risk = high confidence, high risk = low confidence
+      confidence = case analysis[:risk]
+                   when 'low' then 0.9
+                   when 'medium' then 0.7
+                   when 'high' then 0.4
+                   else analysis[:confidence] || 0.5
+                   end
       
       if @auto_proceed
         # Check confidence threshold
@@ -47,6 +53,9 @@ module MASTER
       
       case decision
       when :apply
+        # Create checkpoint before applying if enabled
+        create_checkpoint("Before refactoring #{language} code") if @create_checkpoints
+        
         transformed_ast = apply_transforms(ast, analysis[:suggestions], language)
         transformed_code = unparse(transformed_ast, language)
         Monitoring.track_tokens(analysis[:tokens_in] || 0, analysis[:tokens_out] || 0)
@@ -73,13 +82,26 @@ module MASTER
     def create_checkpoint(message = "MASTER checkpoint")
       return unless @create_checkpoints
       
-      `git add -A`
-      `git commit -m "#{message}" 2>/dev/null`
+      # Check if we're in a git repository
+      return unless system('git rev-parse --git-dir > /dev/null 2>&1')
+      
+      # Sanitize message to prevent command injection
+      safe_message = message.gsub(/['"\\]/, '')
+      
+      # Use system with array to avoid shell injection
+      system('git', 'add', '-A')
+      system('git', 'commit', '-m', safe_message, err: File::NULL)
     end
 
     # Rollback to previous checkpoint
     def rollback_checkpoint
-      `git reset --hard HEAD~1 2>/dev/null`
+      return unless @create_checkpoints
+      
+      # Check if we're in a git repository
+      return unless system('git rev-parse --git-dir > /dev/null 2>&1')
+      
+      # Use system with array to avoid shell injection
+      system('git', 'reset', '--hard', 'HEAD~1', err: File::NULL)
     end
 
     def analyze(code, language = 'ruby')
