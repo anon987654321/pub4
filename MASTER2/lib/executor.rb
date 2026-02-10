@@ -3,6 +3,7 @@
 require "json"
 require "open3"
 require "yaml"
+require "timeout"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
@@ -65,6 +66,17 @@ module MASTER
 
     # Main entry - auto-selects pattern or uses specified
     def call(goal, pattern: :auto, tier: nil)
+      # Input validation
+      raise ArgumentError, "Goal cannot be nil" if goal.nil?
+      goal = goal.to_s.strip
+      raise ArgumentError, "Goal cannot be empty" if goal.empty?
+      raise ArgumentError, "Goal too long (max 10000 chars)" if goal.length > 10_000
+      
+      # Validate pattern
+      if pattern != :auto && !PATTERNS.include?(pattern.to_sym)
+        raise ArgumentError, "Invalid pattern: #{pattern}. Valid: #{PATTERNS.join(', ')}"
+      end
+      
       @history = []
       @reflections = []
       @plan = []
@@ -236,6 +248,8 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_pre_act(goal, tier:)
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      
       # Phase 1: Generate plan
       UI.dim("  📋 Planning...")
       plan_result = generate_plan(goal, tier: tier)
@@ -247,6 +261,12 @@ module MASTER
       # Phase 2: Execute plan step by step
       results = []
       @plan.each_with_index do |planned_step, idx|
+        # Check wall clock timeout
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        if elapsed > WALL_CLOCK_LIMIT
+          return Result.err("Execution exceeded #{WALL_CLOCK_LIMIT}s wall-clock limit")
+        end
+        
         @step = idx + 1
         UI.dim("  ▸ Step #{@step}/#{@plan.size}: #{planned_step[0..60]}...")
         
@@ -356,6 +376,8 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_rewoo(goal, tier:)
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      
       tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
       
       # Single LLM call to plan ALL actions with placeholders
@@ -394,6 +416,12 @@ module MASTER
       # Execute all actions, substituting placeholders
       evidence = {}
       actions.each do |num, action_str|
+        # Check wall clock timeout
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        if elapsed > WALL_CLOCK_LIMIT
+          return Result.err("Execution exceeded #{WALL_CLOCK_LIMIT}s wall-clock limit")
+        end
+        
         @step = num.to_i
         
         # Substitute any #E{n} references with actual results
@@ -437,11 +465,18 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_reflexion(goal, tier:)
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       original_goal = goal.dup.freeze
       max_attempts = 3
       attempt = 0
       
       while attempt < max_attempts
+        # Check wall clock timeout
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        if elapsed > WALL_CLOCK_LIMIT
+          return Result.err("Execution exceeded #{WALL_CLOCK_LIMIT}s wall-clock limit")
+        end
+        
         attempt += 1
         UI.dim("  🔄 Attempt #{attempt}/#{max_attempts}")
         
@@ -695,6 +730,13 @@ module MASTER
       end
     rescue StandardError => e
       "Tool error: #{e.message}"
+    end
+
+    def validate_tool_result(result, tool_name)
+      unless result.is_a?(Result) || result.is_a?(Hash) || result.is_a?(String)
+        return Result.err("Tool #{tool_name} returned unexpected type: #{result.class}")
+      end
+      result.is_a?(Result) ? result : Result.ok(result)
     end
 
     # Tool implementations
