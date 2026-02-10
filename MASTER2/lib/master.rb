@@ -55,12 +55,14 @@ require_relative "nng_checklist"
 require_relative "onboarding"
 require_relative "context_window"
 
+# Pipeline stages (needed by executor)
+require_relative "boot"
+require_relative "stages"
+
 # Executor (ReAct pattern - default behavior)
 require_relative "executor"
 
 # Pipeline
-require_relative "boot"
-require_relative "stages"
 require_relative "pipeline"
 require_relative "hooks"
 require_relative "convergence"

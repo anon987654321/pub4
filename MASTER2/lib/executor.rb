@@ -11,22 +11,15 @@ module MASTER
   # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
-    WALL_CLOCK_LIMIT_SECONDS_SECONDS = 120  # seconds
+    WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
     MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
     # Dangerous patterns to block (injection prevention)
-    # Also defined in Stages::Guard for pipeline filtering
-    DANGEROUS_PATTERNS = [
-      /rm\s+-r[f]?\s+\//,
-      />\s*\/dev\/[sh]da/,
-      /DROP\s+TABLE/i,
-      /FORMAT\s+[A-Z]:/i,
-      /mkfs\./,
-      /dd\s+if=/,
-    ].freeze
+    # Reference the canonical definition in Stages::Guard
+    DANGEROUS_PATTERNS = Stages::Guard::DANGEROUS_PATTERNS
     
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
