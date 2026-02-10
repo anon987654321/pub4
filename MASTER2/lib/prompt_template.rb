@@ -38,9 +38,9 @@ module MASTER
       def binding_from_hash(vars)
         obj = Object.new
         vars.each do |key, value|
-          # Validate key is a valid Ruby identifier to prevent injection
+          # Validate key is a valid Ruby identifier (snake_case convention)
           key_str = key.to_s
-          unless key_str =~ /\A[a-z_][a-z0-9_]*\z/i
+          unless key_str =~ /\A[a-z_][a-z0-9_]*\z/
             raise ArgumentError, "Invalid variable name: #{key_str}"
           end
           

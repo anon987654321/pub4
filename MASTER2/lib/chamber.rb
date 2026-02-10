@@ -39,7 +39,7 @@ module MASTER
 
     # Resolve model key (like :sonnet, :deepseek) to model ID
     def resolve_model(model_key)
-      # Map common model keys to search patterns
+      # Map common model keys to search patterns (from trusted source, no user input)
       search_map = {
         sonnet: "claude.*sonnet",
         deepseek: "deepseek",
@@ -50,8 +50,8 @@ module MASTER
       pattern = search_map[model_key]
       return nil unless pattern
 
-      # Search in LLM.models for matching model - use Regexp.escape to prevent injection
-      model = LLM.models.find { |m| m[:id] =~ /#{Regexp.escape(pattern)}/i }
+      # Patterns are from trusted source (hardcoded above), safe to use directly
+      model = LLM.models.find { |m| m[:id] =~ /#{pattern}/i }
       model&.[](:id) || LLM.pick(:strong)
     end
 
@@ -268,7 +268,7 @@ module MASTER
 
       # Parse structured response - normalize hash keys to symbols
       json_content = data[:content]
-      if json_content.is_a?(Hash)
+      if json_content.is_a?(Hash) && !json_content.empty?
         json_content = json_content.transform_keys(&:to_sym) if json_content.keys.first.is_a?(String)
         approve = json_content[:decision] == "APPROVE"
         reason = json_content[:reason]

@@ -181,7 +181,7 @@ module MASTER
       def extract_model_name(model_id)
         # Remove provider prefix and suffixes
         name = model_id.split("/").last
-        name = name.split(":" ).first  # Remove :nitro, :floor, :online
+        name = name.split(":").first  # Remove :nitro, :floor, :online
         name
       end
 
@@ -214,7 +214,7 @@ module MASTER
         primary = apply_suffix(primary, online: online, provider: provider)
 
         model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":" ).first]&.[](:tier) || tier || :unknown
+        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
 
         # Update current state for prompt display
         @current_model = model_short
@@ -534,7 +534,7 @@ module MASTER
 
       # Legacy signature: estimate cost by character count
       def estimate_cost_by_chars(char_count, model)
-        model = model.to_s.split(":" ).first  # Remove suffixes
+        model = model.to_s.split(":").first  # Remove suffixes
         rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
         est_tokens_in = (char_count / 4.0).ceil
         (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
