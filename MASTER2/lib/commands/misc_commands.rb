@@ -152,10 +152,10 @@ module MASTER
         result = Cinematic.list_presets
         return puts "  Error: #{result.error}" if result.err?
 
-        UI.header("Cinematic Presets")
+        puts "\nCinematic Presets\n" + ("-" * 40)
         result.value[:presets].each do |preset|
-          source = preset[:source] == 'builtin' ? UI.pastel.dim('[builtin]') : UI.pastel.cyan('[custom]')
-          puts "  • #{UI.pastel.bold(preset[:name])} #{source}"
+          source = preset[:source] == 'builtin' ? '[builtin]' : '[custom]'
+          puts "  • #{preset[:name]} #{source}"
           puts "    #{preset[:description]}"
           puts
         end
@@ -170,16 +170,16 @@ module MASTER
           return puts "  Error: File not found: #{input_path}"
         end
 
-        UI.info("Applying preset '#{preset_name}' to #{input_path}...")
+        puts "  Applying preset '#{preset_name}' to #{input_path}..."
         
         result = Cinematic.apply_preset(input_path, preset_name)
         
         if result.ok?
           output = result.value[:final]
-          UI.success("Pipeline complete!")
+          puts "  ✓ Pipeline complete!"
           puts "  Output: #{output}"
         else
-          UI.error("Pipeline failed: #{result.error}")
+          puts "  ✗ Pipeline failed: #{result.error}"
         end
       end
 
@@ -196,18 +196,18 @@ module MASTER
         
         if result.ok?
           discoveries = result.value[:discoveries]
-          UI.success("Discovered #{discoveries.size} styles!")
+          puts "  ✓ Discovered #{discoveries.size} styles!"
           
           discoveries.each_with_index do |d, i|
             puts "  #{i + 1}. Score: #{d[:score].round(2)} | #{d[:pipeline].stages.size} stages"
           end
         else
-          UI.error("Discovery failed: #{result.error}")
+          puts "  ✗ Discovery failed: #{result.error}"
         end
       end
 
       def build_cinematic_pipeline
-        UI.header("Build Custom Pipeline")
+        puts "\nBuild Custom Pipeline\n" + ("-" * 40)
         puts "  (Interactive pipeline builder coming soon)"
         puts "  For now, use the Ruby API:"
         puts

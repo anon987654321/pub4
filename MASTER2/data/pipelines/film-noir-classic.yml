@@ -1,0 +1,14 @@
+---
+name: film-noir-classic
+description: High contrast black and white, dramatic shadows, 1940s detective film aesthetic
+tags:
+  - noir
+  - blackandwhite
+  - classic
+stages:
+  - model: stability-ai/sdxl
+    params:
+      prompt: "film noir, dramatic lighting, high contrast, black and white, venetian blinds shadows, 1940s aesthetic"
+      guidance_scale: 10.0
+      strength: 0.7
+created_at: '2026-02-10T23:55:00Z'

@@ -1,0 +1,14 @@
+---
+name: wes-anderson-aesthetic
+description: Symmetrical composition, pastel palette, whimsical and nostalgic tones
+tags:
+  - pastel
+  - symmetrical
+  - vintage
+stages:
+  - model: stability-ai/sdxl
+    params:
+      prompt: "wes anderson style, symmetrical composition, pastel colors, centered frame, nostalgic film look"
+      guidance_scale: 8.0
+      strength: 0.5
+created_at: '2026-02-10T23:55:00Z'
