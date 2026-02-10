@@ -11,6 +11,7 @@ module MASTER
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
+    BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
     SPENDING_CAP = 10.0
     MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
@@ -49,7 +50,16 @@ module MASTER
         @model_tiers = nil
         @model_rates = nil
         @context_limits = nil
+        @budget_thresholds = nil
         models
+      end
+
+      def budget_thresholds
+        @budget_thresholds ||= begin
+          return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
+          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+          data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
+        end
       end
 
       def model_tiers
@@ -471,11 +481,12 @@ module MASTER
       def tier
         return @forced_tier if @forced_tier
         r = budget_remaining
-        if r > 8.0
+        thresholds = budget_thresholds
+        if r > thresholds[:premium]
           :premium
-        elsif r > 5.0
+        elsif r > thresholds[:strong]
           :strong
-        elsif r > 1.0
+        elsif r > thresholds[:fast]
           :fast
         else
           :cheap

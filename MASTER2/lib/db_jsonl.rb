@@ -305,15 +305,29 @@ module MASTER
 
     def seed_axioms
       return unless read_collection("axioms").empty?
-      default_axioms = [
-        { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
-        { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },
-        { name: "DRY", description: "Don't Repeat Yourself", category: "core" },
-        { name: "KISS", description: "Keep It Simple - reduce complexity, preserve UI/UX", category: "core", scope: "internal_logic" },
-        { name: "small_files", description: "Files under 300 lines", category: "style" },
-        { name: "NN/g", description: "Follow Nielsen Norman Group usability heuristics", category: "ux" },
-      ]
-      default_axioms.each { |a| add_axiom(**a) }
+      
+      axioms_file = File.join(MASTER.root, "data", "axioms.yml")
+      if File.exist?(axioms_file)
+        axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)
+        axioms_data.each do |axiom|
+          add_axiom(
+            name: axiom[:id] || axiom[:name],
+            description: axiom[:statement] || axiom[:description],
+            category: axiom[:category] || "core"
+          )
+        end
+      else
+        # Fallback to hardcoded defaults
+        default_axioms = [
+          { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
+          { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },
+          { name: "DRY", description: "Don't Repeat Yourself", category: "core" },
+          { name: "KISS", description: "Keep It Simple - reduce complexity, preserve UI/UX", category: "core", scope: "internal_logic" },
+          { name: "small_files", description: "Files under 300 lines", category: "style" },
+          { name: "NN/g", description: "Follow Nielsen Norman Group usability heuristics", category: "ux" },
+        ]
+        default_axioms.each { |a| add_axiom(**a) }
+      end
     end
 
     def seed_council
