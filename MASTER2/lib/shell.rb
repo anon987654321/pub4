@@ -79,6 +79,13 @@ module MASTER
       def zsh?
         ENV['SHELL']&.include?('zsh')
       end
+
+      def ensure_openbsd_path!
+        paths = %w[/usr/local/bin /usr/X11R6/bin /usr/local/sbin]
+        current = ENV["PATH"].to_s.split(":")
+        missing = paths - current
+        ENV["PATH"] = (missing + current).join(":") if missing.any?
+      end
     end
   end
 end

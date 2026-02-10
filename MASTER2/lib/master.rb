@@ -9,7 +9,7 @@ require "fileutils"
 
 # Auto-install missing gems first
 require_relative "auto_install"
-MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
+# Gems auto-install on first LoadError — no blocking boot
 
 # Core
 require_relative "utils"
@@ -92,8 +92,13 @@ require_relative "web"
 require_relative "speech"
 
 # External services
-require_relative "weaviate"
-require_relative "replicate"
+%w[weaviate replicate].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    warn "MASTER: #{mod} unavailable (#{e.message})"
+  end
+end
 
 # Agents
 require_relative "agent"
@@ -131,4 +136,10 @@ require_relative "generators/html"
 require_relative "framework/quality_gates"
 
 # Web UI
-require_relative "server"
+%w[server].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    warn "MASTER: #{mod} unavailable (#{e.message})"
+  end
+end

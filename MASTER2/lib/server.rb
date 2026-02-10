@@ -56,7 +56,7 @@ module MASTER
       app = build_app
 
       Async do
-        endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
+        endpoint = Async::HTTP::Endpoint.parse("http://127.0.0.1:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(app), endpoint)
         server.run
       end
@@ -93,6 +93,12 @@ module MASTER
       ->(env) {
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
+
+        # Auth check for all endpoints except /health
+        unless path == "/health"
+          token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
+          return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
+        end
 
         case [method, path]
         when ["GET", "/"]

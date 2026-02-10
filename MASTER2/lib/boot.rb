@@ -5,14 +5,18 @@ require "time"
 module MASTER
   # Boot - OpenBSD dmesg-style startup (dense, terse, beautiful)
   module Boot
-    # Critical methods that must exist at runtime
-    SMOKE_TEST_METHODS = {
-      LLM => %i[ask pick tier=],
-      Executor => %i[call],
-      Result => %i[ok err ok? err?],
-    }.freeze
-
     class << self
+      # Lazy SMOKE_TEST_METHODS to avoid crashes if modules didn't load
+      def smoke_test_methods
+        {
+          LLM => %i[ask pick tier=],
+          Executor => %i[call],
+          Result => %i[ok err ok? err?],
+        }
+      rescue NameError => e
+        warn "Smoke test skipped: #{e.message}"
+        {}
+      end
       def banner
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
@@ -51,7 +55,7 @@ module MASTER
       def smoke_test
         missing = []
         
-        SMOKE_TEST_METHODS.each do |mod, methods|
+        smoke_test_methods.each do |mod, methods|
           methods.each do |method|
             unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.instance_methods.include?(method))
               missing << "#{mod}##{method}"

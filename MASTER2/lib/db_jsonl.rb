@@ -278,6 +278,7 @@ module MASTER
       
       synchronize do
         File.open(temp_path, "w") do |f|
+          f.flock(File::LOCK_EX)
           data.each { |item| f.puts(JSON.generate(item)) }
         end
         File.rename(temp_path, path)
@@ -287,7 +288,10 @@ module MASTER
     def append(collection, record)
       path = file_path(collection)
       synchronize do
-        File.open(path, "a") { |f| f.puts(JSON.generate(record)) }
+        File.open(path, "a") do |f|
+          f.flock(File::LOCK_EX)
+          f.puts(JSON.generate(record))
+        end
       end
       record
     end
