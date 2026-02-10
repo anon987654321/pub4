@@ -4,11 +4,10 @@ require "json"
 require "time"
 
 module MASTER
-  # Logging - Structured logging for production observability
+  # Logging - Backend for MASTER::Log facade. Do not call directly — use MASTER::Log instead.
+  # Structured logging for production observability
   # Outputs JSON logs for aggregation, human-readable for development
   module Logging
-    extend self
-
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
     
     @level = :info

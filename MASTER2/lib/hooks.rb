@@ -98,14 +98,22 @@ module MASTER
       def validate_ruby_syntax(target)
         return true unless target
         if File.exist?(target.to_s)
-          system("ruby -c #{target} > /dev/null 2>&1")
+          # Use array form to avoid shell interpretation - prevents injection attacks
+          system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
         else
-          eval("BEGIN { return true }; #{target}; true") rescue false
+          # For code strings, use RubyVM::InstructionSequence for parse-only validation
+          begin
+            RubyVM::InstructionSequence.compile(target.to_s)
+            true
+          rescue SyntaxError
+            false
+          end
         end
       end
 
       def run_tests
-        system("ruby -Ilib -Itest -e 'exit 0'") # Placeholder
+        # Placeholder - not yet implemented
+        Result.err("run_tests not yet implemented")
       end
 
       def log(msg)
