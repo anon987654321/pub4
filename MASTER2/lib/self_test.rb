@@ -171,7 +171,7 @@ module MASTER
       end
 
       BARE_RESCUE_ALLOWED = %w[
-        result.rb boot.rb autocomplete.rb edge_tts.rb momentum.rb weaviate.rb
+        result.rb boot.rb autocomplete.rb speech.rb momentum.rb weaviate.rb
       ].freeze
 
       def run_static_analysis
