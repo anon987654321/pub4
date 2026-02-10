@@ -78,29 +78,18 @@ module MASTER
         AccessLog: [],
       )
 
-      # Auth helper for WEBrick
-      check_auth = ->(req, res) {
-        token = req["Authorization"]&.delete_prefix("Bearer ")
-        unless token == AUTH_TOKEN
-          res.status = 401
-          res.body = "Unauthorized"
-          return false
-        end
-        true
-      }
-
       # Health endpoint - no auth required
       server.mount_proc("/health") { |_, res| res.body = health_json; res.content_type = "application/json" }
 
       # Protected endpoints
       server.mount_proc("/") do |req, res|
-        next unless check_auth.call(req, res)
+        next unless webrick_check_auth(req, res)
         res.body = read_view("cli.html")
         res.content_type = "text/html"
       end
 
       server.mount_proc("/poll") do |req, res|
-        next unless check_auth.call(req, res)
+        next unless webrick_check_auth(req, res)
         res.body = poll_json
         res.content_type = "application/json"
       end
@@ -109,13 +98,23 @@ module MASTER
       Dir.glob(File.join(VIEWS_DIR, "*.html")).each do |file|
         name = "/" + File.basename(file)
         server.mount_proc(name) do |req, res|
-          next unless check_auth.call(req, res)
+          next unless webrick_check_auth(req, res)
           res.body = File.read(file)
           res.content_type = "text/html"
         end
       end
 
       server.start
+    end
+
+    def webrick_check_auth(req, res)
+      token = req["Authorization"]&.delete_prefix("Bearer ")
+      unless token == AUTH_TOKEN
+        res.status = 401
+        res.body = "Unauthorized"
+        return false
+      end
+      true
     end
 
     def build_app
