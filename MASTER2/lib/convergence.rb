@@ -186,9 +186,9 @@ module MASTER
       end
 
       def change_ratio(hash1, hash2)
+        # Direct hash comparison - either identical (0.0) or different (1.0)
+        # This is intentionally simple for fast convergence detection
         return 0.0 if hash1 == hash2
-        # Simple: if hashes differ, assume 100% change
-        # For real diff ratio, would need content comparison
         1.0
       end
 

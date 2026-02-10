@@ -402,10 +402,12 @@ module MASTER
 
         entries.each_with_index do |entry, idx|
           path = File.join(dir, entry)
+          is_dir = File.directory?(path)
 
-          result << "#{prefix}#{entry}/"
+          # Only append slash for directories
+          result << "#{prefix}#{entry}#{is_dir ? '/' : ''}"
 
-          if File.directory?(path)
+          if is_dir
             result << tree_string(path, "#{prefix}  ")
           end
         end

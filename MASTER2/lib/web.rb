@@ -62,9 +62,12 @@ module MASTER
       text
     rescue LoadError
       # Fallback to simple regex if nokogiri not available
-      html.gsub(/<script[^>]*>.*?<\/script>/im, " ")
-          .gsub(/<style[^>]*>.*?<\/style>/im, " ")
-          .gsub(/<[^>]*>/, " ")
+      # WARNING: This fallback has limited ReDoS protection. Install nokogiri for production use.
+      # Limit input size to prevent ReDoS
+      html = html[0..50000] if html.length > 50000
+      html.gsub(/<script[^>]{0,100}>.*?<\/script>/im, " ")
+          .gsub(/<style[^>]{0,100}>.*?<\/style>/im, " ")
+          .gsub(/<[^>]{0,200}>/, " ")
           .squeeze(" \n")
           .strip
     end

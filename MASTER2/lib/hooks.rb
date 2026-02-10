@@ -230,17 +230,16 @@ module MASTER
       def validate_syntax(code)
         return Result.err("No code provided") unless code
         
-        # Simple Ruby syntax check
-        if code.is_a?(String) && code.include?("def ")
+        # Ruby syntax check using safe compilation
+        begin
           RubyVM::InstructionSequence.compile(code)
           Result.ok({ valid: true })
-        else
-          Result.ok({ skipped: true, reason: "not Ruby code" })
+        rescue SyntaxError => e
+          Result.err("Syntax error: #{e.message}")
+        rescue StandardError => e
+          # For non-Ruby code or other errors, skip validation
+          Result.ok({ skipped: true, reason: e.message })
         end
-      rescue SyntaxError => e
-        Result.err("Syntax error: #{e.message}")
-      rescue StandardError => e
-        Result.ok({ skipped: true, reason: e.message })
       end
 
       def log_event(hook_name, data)
