@@ -33,7 +33,7 @@ class TestServer < Minitest::Test
   end
 
   def test_server_not_running_initially
-    refute @server.instance_variable_get(:@running)
+    refute @server.running?
   end
 
   def test_localhost_binding

@@ -46,6 +46,6 @@ class TestExecutorTimeout < Minitest::Test
 
   def test_executor_initializes_with_custom_max_steps
     executor = MASTER::Executor.new(max_steps: 5)
-    assert_equal 5, executor.instance_variable_get(:@max_steps)
+    assert_equal 5, executor.max_steps
   end
 end
