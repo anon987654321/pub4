@@ -9,20 +9,13 @@ module MASTER
     CONSENSUS_THRESHOLD = 0.70
     CONVERGENCE_THRESHOLD = 0.05
 
-    # JSON schema for structured council votes
-    VOTE_SCHEMA = {
-      name: "council_vote",
-      schema: {
-        type: "object",
-        properties: {
-          decision: { type: "string", enum: ["APPROVE", "REJECT"] },
-          reason: { type: "string" },
-          confidence: { type: "number", minimum: 0, maximum: 1 }
-        },
-        required: ["decision", "reason", "confidence"],
-        additionalProperties: false
-      }
+    MODELS = {
+      sonnet: nil,    # Will be resolved via LLM.pick
+      deepseek: nil,  # Will be resolved via LLM.pick
+      gemini: nil,    # Will be resolved via LLM.pick
     }.freeze
+
+    ARBITER = :sonnet
 
     attr_reader :cost, :rounds, :proposals
 
@@ -74,8 +67,8 @@ module MASTER
       participants.each do |model_key|
         break if over_budget?
 
-        model = resolve_model(model_key)
-        next unless model && CircuitBreaker.circuit_closed?(model)
+        model = MODELS[model_key] || LLM.pick
+        next unless model && @llm.circuit_closed?(model)
 
         proposal = propose(code, model, filename)
         @proposals << { model: model_key, proposal: proposal } if proposal
@@ -85,9 +78,9 @@ module MASTER
 
       council_result = multi_round_review(code, @proposals.first[:proposal])
 
-      arbiter = arbiter_model
-      if CircuitBreaker.circuit_closed?(arbiter)
-        final = arbiter_decision(code, @proposals, arbiter)
+      arbiter_model = MODELS[ARBITER] || LLM.pick(:strong)
+      if @llm.circuit_closed?(arbiter_model)
+        final = arbiter_decision(code, @proposals, arbiter_model)
         Result.ok(
           original: code,
           proposals: @proposals,
