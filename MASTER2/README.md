@@ -45,6 +45,27 @@ First error short-circuits. No exceptions.
 - **Circuit breaker** (3 failures → 5-minute cooldown)
 - **Session persistence** with crash recovery (SIGINT/SIGTERM auto-save)
 - **Pattern fallback** (if primary fails → react → direct)
+- **Cinematic AI Pipeline** - Chain Replicate models for film-quality image transformations (see [docs/CINEMATIC_PIPELINE.md](docs/CINEMATIC_PIPELINE.md))
+
+### Cinematic AI Pipeline
+
+Transform images and videos using AI model chains with cinematic presets:
+
+```ruby
+# Apply a cinematic preset
+MASTER::Cinematic.apply_preset("photo.jpg", "blade-runner")
+
+# Build custom pipelines
+pipeline = MASTER::Cinematic::Pipeline.new
+  .chain('stability-ai/sdxl', { prompt: 'cinematic grade' })
+  .chain('tencentarc/gfpgan', { scale: 2 })
+  
+result = pipeline.execute("input.jpg", save_intermediates: true)
+```
+
+Built-in presets: `blade-runner`, `wes-anderson`, `noir`, `golden-hour`, `teal-orange`
+
+See [docs/CINEMATIC_PIPELINE.md](docs/CINEMATIC_PIPELINE.md) for full documentation.
 
 ## Axioms
 
