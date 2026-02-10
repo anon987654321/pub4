@@ -184,8 +184,8 @@ module MASTER
           
           if fix_result.ok?
             # Step 5: Run self-test if available
-            if defined?(SelfTest)
-              test_result = SelfTest.run
+            if respond_to?(:run)
+              test_result = run
               unless test_result.ok?
                 # Rollback on test failure
                 rollback_fix(finding)
