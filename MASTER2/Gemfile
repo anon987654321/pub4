@@ -1,9 +1,7 @@
 source "https://rubygems.org"
 
-gem "ruby_llm"
-
 # TTY toolkit
-gem "tty-reader"
+gem "tty-reader", "~> 0.9"
 gem "tty-spinner"
 gem "tty-table"
 gem "tty-box"
@@ -16,8 +14,16 @@ gem "tty-cursor"
 gem "pastel"         # Terminal colors
 gem "rouge"          # Syntax highlighting
 
+# HTTP client
+gem "faraday", "~> 2.0"
+gem "faraday-retry", "~> 2.0"
+gem "net-http-persistent", "~> 4.0"
+
+# Circuit breaker
+gem "stoplight", "~> 4.0"
+
 # Web server
-gem "falcon"         # Async HTTP server
+gem "falcon", "~> 0.47"
 gem "async-websocket"
 
 group :test do
