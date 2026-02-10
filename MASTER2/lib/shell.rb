@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "shellwords"
+require "open3"
+
 module MASTER
   # Shell integration - zsh-native patterns
   module Shell
@@ -8,21 +11,21 @@ module MASTER
     BUILTINS = %w[cd pwd echo print printf export alias source].freeze
 
     ZSH_PREFERRED = {
-      'ls' => 'ls -F',
-      'grep' => 'grep --color=auto',
-      'cat' => 'cat -v',
-      'rm' => 'rm -i',
-      'mv' => 'mv -i',
-      'cp' => 'cp -i'
+      "ls" => "ls -F",
+      "grep" => "grep --color=auto",
+      "cat" => "cat -v",
+      "rm" => "rm -i",
+      "mv" => "mv -i",
+      "cp" => "cp -i"
     }.freeze
 
     FORBIDDEN = {
-      'sudo' => 'doas',
-      'apt' => 'pkg_add',
-      'apt-get' => 'pkg_add',
-      'yum' => 'pkg_add',
-      'systemctl' => 'rcctl',
-      'journalctl' => 'tail -f /var/log/messages'
+      "sudo" => "doas",
+      "apt" => "pkg_add",
+      "apt-get" => "pkg_add",
+      "yum" => "pkg_add",
+      "systemctl" => "rcctl",
+      "journalctl" => "tail -f /var/log/messages"
     }.freeze
 
     class << self
@@ -35,7 +38,7 @@ module MASTER
         # Replace forbidden commands
         if FORBIDDEN.key?(base)
           parts[0] = FORBIDDEN[base]
-          return parts.join(' ')
+          return parts.join(" ")
         end
 
         # Apply zsh preferences
@@ -59,25 +62,30 @@ module MASTER
 
         sanitized = sanitize(cmd)
         output = nil
+        status = nil
         
         Timeout.timeout(timeout) do
-          output = `#{sanitized} 2>&1`
+          # Use Open3 for safer shell execution
+          output, status = Open3.capture2e(sanitized)
         end
 
-        $?.success? ? Result.ok(output) : Result.err(output)
+        status&.success? ? Result.ok(output) : Result.err(output || "Command failed")
       rescue Timeout::Error
         Result.err("Command timed out after #{timeout}s")
-      rescue => e
+      rescue StandardError => e
         Result.err(e.message)
       end
 
       def which(cmd)
-        path = `which #{cmd} 2>/dev/null`.strip
-        path.empty? ? nil : path
+        # Use Open3 instead of backticks
+        stdout, status = Open3.capture2("which", cmd.to_s)
+        status.success? ? stdout.strip : nil
+      rescue StandardError
+        nil
       end
 
       def zsh?
-        ENV['SHELL']&.include?('zsh')
+        ENV["SHELL"]&.include?("zsh")
       end
 
       def ensure_openbsd_path!

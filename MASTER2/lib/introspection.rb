@@ -376,6 +376,66 @@ module MASTER
           render: "Is the output clear to the user?"
         }
       end
+
+      # Merged from self_map.rb - File tree mapping for self-awareness
+      IGNORED = %w[.git node_modules vendor tmp log .bundle].freeze
+
+      def generate_map(root = MASTER.root)
+        {
+          files: collect_files(root),
+          ruby_files: collect_files(root).select { |f| f.end_with?(".rb") },
+          lib_files: collect_files(root).select { |f| f.include?("/lib/") && f.end_with?(".rb") },
+          test_files: collect_files(root).select { |f| (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb") }
+        }
+      end
+
+      def describe(root = MASTER.root)
+        map = generate_map(root)
+        "#{map[:lib_files].count} lib, #{map[:test_files].count} test"
+      rescue StandardError
+        "unavailable"
+      end
+
+      def tree_string(dir = MASTER.root, prefix = "")
+        result = []
+        entries = Dir.entries(dir).sort.reject { |e| e.start_with?(".") || IGNORED.include?(e) }
+
+        entries.each_with_index do |entry, idx|
+          path = File.join(dir, entry)
+          is_dir = File.directory?(path)
+
+          # Only append slash for directories
+          result << "#{prefix}#{entry}#{is_dir ? '/' : ''}"
+
+          if is_dir
+            result << tree_string(path, "#{prefix}  ")
+          end
+        end
+
+        result.join("\n")
+      end
+
+      private
+
+      def collect_files(dir)
+        result = []
+
+        Dir.entries(dir).each do |entry|
+          next if entry.start_with?(".") || IGNORED.include?(entry)
+
+          path = File.join(dir, entry)
+          if File.directory?(path)
+            result.concat(collect_files(path))
+          else
+            result << path.sub("#{dir}/", "")
+          end
+        end
+
+        result
+      end
     end
   end
+
+  # Backward compatibility aliases
+  SelfMap = Introspection
 end
