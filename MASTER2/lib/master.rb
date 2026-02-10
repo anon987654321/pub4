@@ -9,7 +9,9 @@ require "fileutils"
 
 # Auto-install missing gems first
 require_relative "auto_install"
-MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
+if defined?(AutoInstall) && AutoInstall.missing_gems.any?
+  $stderr.puts "MASTER: missing gems: #{AutoInstall.missing_gems.join(', ')}. Run: master setup"
+end
 
 # Core
 require_relative "utils"
@@ -81,15 +83,14 @@ require_relative "gh_helper"
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"
 
-# Web browsing (restored from MASTER)
-require_relative "web"
-
-# Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
-require_relative "speech"
-
-# External services
-require_relative "weaviate"
-require_relative "replicate"
+# Optional integrations (degrade gracefully)
+%w[web speech weaviate replicate server].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    $stderr.puts "MASTER: #{mod} unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+  end
+end
 
 # Agents
 require_relative "agent"
@@ -125,6 +126,3 @@ require_relative "generators/html"
 
 # Quality gates (restored from MASTER)
 require_relative "framework/quality_gates"
-
-# Web UI
-require_relative "server"

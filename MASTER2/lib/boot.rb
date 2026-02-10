@@ -44,6 +44,7 @@ module MASTER
       def banner_with_web(port)
         banner
         puts c("web0 at smoke0: http://localhost:#{port}")
+        puts c("auth0 at web0: token=#{Server::AUTH_TOKEN[0..7]}...")
         puts
       end
 

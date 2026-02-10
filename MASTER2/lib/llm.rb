@@ -340,7 +340,7 @@ module MASTER
 
       def retryable_error?(error)
         return false unless error.is_a?(String)
-        error.match?("/timeout|connection|network|429|502|503|504|overloaded/i")
+        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
 
       def execute_blocking(http, req)
@@ -475,14 +475,22 @@ module MASTER
       end
 
       def tier
-        r = budget_remaining
-        if r > 5.0
-          :strong
-        elsif r > 1.0
-          :fast
-        else
-          :cheap
+        @budget_thresholds ||= begin
+          budget_file = File.join(__dir__, "..", "data", "budget.yml")
+          if File.exist?(budget_file)
+            config = YAML.safe_load_file(budget_file, symbolize_names: true)
+            config.dig(:budget, :thresholds) || {}
+          else
+            {}
+          end
         end
+
+        r = budget_remaining
+        # Check tiers in order: premium → strong → fast → cheap
+        return :premium if @budget_thresholds[:premium] && r > @budget_thresholds[:premium]
+        return :strong  if r > (@budget_thresholds[:strong] || 5.0)
+        return :fast    if r > (@budget_thresholds[:fast] || 1.0)
+        :cheap
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
