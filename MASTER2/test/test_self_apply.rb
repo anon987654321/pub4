@@ -10,7 +10,7 @@ class TestSelfApply < Minitest::Test
 
   def test_all_files_under_300_lines
     # Note: Larger files allowed if well-structured (executor, llm, commands)
-    max_lines = QualityStandards.max_file_lines_self_test
+    max_lines = MASTER::QualityStandards.max_file_lines_self_test
     violations = []
     @lib_files.each do |file|
       lines = File.read(file).lines.size

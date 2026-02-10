@@ -182,7 +182,7 @@ module MASTER
         end
 
         {
-          passed: total_issues < QualityStandards.max_self_test_issues,
+          passed: total_issues < MASTER::QualityStandards.max_self_test_issues,
           message: "#{lib_files.size} files, #{total_issues} issues",
           issues: total_issues,
         }
@@ -196,7 +196,7 @@ module MASTER
         end
 
         {
-          passed: all_violations.size < QualityStandards.max_self_test_violations,
+          passed: all_violations.size < MASTER::QualityStandards.max_self_test_violations,
           message: "#{all_violations.size} violations across 5 layers",
           violations: all_violations,
         }
