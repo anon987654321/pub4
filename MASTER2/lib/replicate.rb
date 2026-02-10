@@ -81,9 +81,48 @@ module MASTER
         Result.ok({ caption: result[:output] })
       end
 
+      # Generic model runner - supports any Replicate model
+      def run(model_id:, input:, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        combined_input = input.merge(params)
+
+        prediction = create_prediction(model_id, input: combined_input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Model run failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          output: result[:output],
+          model: model_id
+        })
+      end
+
+      # Download file from URL to local path
+      def download_file(url, path)
+        uri = URI(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = (uri.scheme == 'https')
+        
+        response = http.get(uri.path)
+        return false unless response.is_a?(Net::HTTPSuccess)
+        
+        FileUtils.mkdir_p(File.dirname(path))
+        File.binwrite(path, response.body)
+        true
+      rescue => e
+        false
+      end
+
       private
 
-      def create_prediction(model_version, input)
+      def create_prediction(model_version_or_id, input: nil, version: nil)
+        # Support both old signature (model_version, input) and new signature with named params
+        actual_input = input || model_version_or_id.is_a?(Hash) ? {} : model_version_or_id
+        actual_version = version || (model_version_or_id.is_a?(String) ? model_version_or_id : nil)
+        
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
@@ -93,7 +132,10 @@ module MASTER
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
-        request.body = { version: model_version, input: input }.to_json
+        
+        body = { input: actual_input }
+        body[:version] = actual_version if actual_version
+        request.body = body.to_json
 
         response = http.request(request)
         data = JSON.parse(response.body, symbolize_names: true)

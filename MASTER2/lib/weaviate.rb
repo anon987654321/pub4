@@ -60,6 +60,84 @@ module MASTER
         post('/v1/schema', schema)
       end
 
+      # Create a custom schema class
+      def create_schema(schema_def)
+        return Result.err("Weaviate not available") unless available?
+        
+        response = post('/v1/schema', schema_def)
+        
+        if response['error']
+          Result.err("Failed to create schema: #{response['error']}")
+        else
+          Result.ok({ class: schema_def[:class] })
+        end
+      rescue => e
+        Result.err("Schema creation failed: #{e.message}")
+      end
+
+      # Index an object in a specific class
+      def index(class_name, properties, vector: nil)
+        return Result.err("Weaviate not available") unless available?
+
+        object = {
+          class: class_name,
+          properties: properties
+        }
+        object[:vector] = vector if vector
+
+        response = post('/v1/objects', object)
+
+        if response['id']
+          Result.ok({ id: response['id'] })
+        else
+          Result.err("Failed to index: #{response['error'] || 'unknown error'}")
+        end
+      rescue => e
+        Result.err("Index failed: #{e.message}")
+      end
+
+      # Search in a specific class
+      def search_class(class_name, query:, limit: 10, filters: {})
+        return Result.err("Weaviate not available") unless available?
+
+        filter_clause = if filters.any?
+          filter_conditions = filters.map do |field, value|
+            "path: [\"#{field}\"], operator: Equal, valueString: \"#{value}\""
+          end.join(', ')
+          ", where: { #{filter_conditions} }"
+        else
+          ""
+        end
+
+        gql = <<~GQL
+          {
+            Get {
+              #{class_name}(
+                nearText: { concepts: ["#{query.gsub('"', '\\"')}"] }
+                limit: #{limit}
+                #{filter_clause}
+              ) {
+                _additional {
+                  distance
+                  id
+                }
+              }
+            }
+          }
+        GQL
+
+        response = post('/v1/graphql', { query: gql })
+
+        if response.dig('data', 'Get', class_name)
+          results = response['data']['Get'][class_name]
+          Result.ok(results)
+        else
+          Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
+        end
+      rescue => e
+        Result.err("Search failed: #{e.message}")
+      end
+
       def store(content:, type: 'chat', source: nil, metadata: {})
         return Result.err("Weaviate not available") unless available?
 
