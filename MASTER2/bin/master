@@ -166,7 +166,7 @@ when "--tts", "-t"
   # TTS test mode - continuous talking (Windows/Cygwin)
   topic = ARGV[1]&.to_sym || :master
   puts "Starting continuous TTS (#{topic})... Ctrl+C to stop"
-  MASTER::StreamTTS.windows_chatter(topic: topic)
+  MASTER::Speech.chatter(topic: topic)
 
 when "--daemon", "-d"
   # Daemon mode for agentd

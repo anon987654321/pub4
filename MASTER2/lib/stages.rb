@@ -2,6 +2,7 @@
 
 require "yaml"
 require "timeout"
+require "rbconfig"
 
 module MASTER
   module Stages
@@ -252,7 +253,7 @@ module MASTER
           rescue StandardError
             # Not on OpenBSD
           end
-          output = IO.popen(["ruby", f.path], err: %i[child out], &:read)
+          output = IO.popen([RbConfig.ruby, f.path], err: %i[child out], &:read)
           { success: $CHILD_STATUS.success?, output: output, exit_code: $CHILD_STATUS.exitstatus }
         end
       end
