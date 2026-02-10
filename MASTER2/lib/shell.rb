@@ -1,11 +1,20 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Shell integration - zsh-native patterns
+  # Shell integration - zsh-native patterns with OpenBSD support
   module Shell
     extend self
 
     BUILTINS = %w[cd pwd echo print printf export alias source].freeze
+    
+    OPENBSD_PATHS = %w[
+      /usr/local/bin
+      /usr/local/sbin
+      /usr/bin
+      /usr/sbin
+      /bin
+      /sbin
+    ].freeze
 
     ZSH_PREFERRED = {
       'ls' => 'ls -F',
@@ -26,6 +35,25 @@ module MASTER
     }.freeze
 
     class << self
+      def detect_shell
+        shell = ENV["SHELL"] || "/bin/sh"
+        {
+          path: shell,
+          name: File.basename(shell),
+          is_zsh: File.basename(shell) == "zsh",
+          is_openbsd: RUBY_PLATFORM.include?("openbsd") || File.exist?("/bsd")
+        }
+      end
+
+      def safe_env
+        env = ENV.to_h.dup
+        if detect_shell[:is_openbsd]
+          env["PATH"] = (OPENBSD_PATHS + ENV["PATH"].to_s.split(":")).uniq.join(":")
+        end
+        env["SHELL"] ||= "/bin/sh"
+        env
+      end
+
       def sanitize(cmd)
         parts = cmd.strip.split(/\s+/)
         return cmd if parts.empty?

@@ -866,7 +866,7 @@ module MASTER
         end
       end
       
-      stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
+      stdout, stderr, status = Open3.capture3(Shell.safe_env, "ruby", stdin_data: code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end
 

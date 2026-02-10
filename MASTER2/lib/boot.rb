@@ -27,6 +27,13 @@ module MASTER
         puts c("#{user}@#{host}:#{MASTER.root}")
         puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
         puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
+        
+        # Shell info (if available)
+        if defined?(Shell)
+          shell_info = Shell.detect_shell rescue {}
+          puts c("shell0 at ruby0: #{shell_info[:name] || 'unknown'}") if ENV["MASTER_DEBUG"]
+        end
+        
         puts c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas")
         puts c("llm0 at db0: openrouter #{tier_models}")
         puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")
