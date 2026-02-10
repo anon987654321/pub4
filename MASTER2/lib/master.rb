@@ -25,10 +25,14 @@ require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
-# Multi-language parsing and NLU
-require_relative "../../lib/parser/multi_language"
-require_relative "../../lib/nlu"
-require_relative "../../lib/conversation"
+# Multi-language parsing and NLU (optional — from parent repo)
+%w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
+  begin
+    require_relative dep
+  rescue LoadError
+    # MASTER2 runs standalone without parent repo
+  end
+end
 
 # Safe Autonomy Architecture
 require_relative "constitution"
