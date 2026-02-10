@@ -26,6 +26,13 @@ module MASTER
     }.freeze
 
     class << self
+      def ensure_openbsd_path!
+        openbsd_paths = %w[/usr/local/bin /usr/X11R6/bin /usr/local/sbin]
+        current = ENV["PATH"].to_s.split(":")
+        missing = openbsd_paths - current
+        ENV["PATH"] = (missing + current).join(":") if missing.any?
+      end
+
       def sanitize(cmd)
         parts = cmd.strip.split(/\s+/)
         return cmd if parts.empty?

@@ -171,7 +171,7 @@ module MASTER
       end
 
       BARE_RESCUE_ALLOWED = %w[
-        result.rb boot.rb autocomplete.rb edge_tts.rb momentum.rb weaviate.rb
+        result.rb boot.rb autocomplete.rb speech.rb momentum.rb weaviate.rb
       ].freeze
 
       def run_static_analysis
@@ -182,7 +182,7 @@ module MASTER
         end
 
         {
-          passed: total_issues < 20,
+          passed: total_issues < 5,
           message: "#{lib_files.size} files, #{total_issues} issues",
           issues: total_issues,
         }
@@ -196,7 +196,7 @@ module MASTER
         end
 
         {
-          passed: all_violations.size < 15,
+          passed: all_violations.size < 5,
           message: "#{all_violations.size} violations across 5 layers",
           violations: all_violations,
         }
@@ -242,11 +242,11 @@ module MASTER
 
       def run_council_review
         # Build code sample from key files
-        key_files = %w[master.rb pipeline.rb stages.rb llm.rb chamber.rb]
+        key_files = %w[master.rb pipeline.rb stages.rb llm.rb chamber.rb executor.rb commands.rb enforcement.rb self_test.rb]
         code_sample = key_files.map do |f|
           path = File.join(MASTER.root, "lib", f)
           next unless File.exist?(path)
-          "# #{f}\n#{File.read(path)[0, 2000]}"
+          "# #{f}\n#{File.read(path)[0, 4000]}"
         end.compact.join("\n\n---\n\n")
 
         axiom_list = DB.axioms.map { |a| "- #{a[:name] || a[:id]}" }.join("\n")
@@ -267,8 +267,10 @@ module MASTER
 
         if result.ok?
           response = result.value[:content].to_s
-          rating_match = response.match(/(\d+)\s*\/\s*10|rating[:\s]+(\d+)/i)
-          rating = rating_match ? (rating_match[1] || rating_match[2]).to_i : 5
+          rating = response.match(/(\d+)\s*\/\s*10/)&.[](1)&.to_i
+          unless rating
+            return { passed: false, details: "Council review failed: could not parse rating from LLM response" }
+          end
 
           puts "\n    Rating: #{rating}/10"
 

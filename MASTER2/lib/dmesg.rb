@@ -10,6 +10,8 @@ module MASTER
   module Dmesg
     extend self
 
+    MAX_BUFFER_SIZE = 1000
+
     @buffer = []
     @buffer_mutex = Mutex.new
     @start_time = Time.now
@@ -42,7 +44,10 @@ module MASTER
                end
 
         entry = { time: timestamp, line: line, level: level }
-        @buffer_mutex.synchronize { @buffer << entry }
+        @buffer_mutex.synchronize do
+          @buffer << entry
+          @buffer.shift if @buffer.size > MAX_BUFFER_SIZE
+        end
 
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?

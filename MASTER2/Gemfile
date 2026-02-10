@@ -1,27 +1,21 @@
 source "https://rubygems.org"
 
-gem "ruby_llm"
+gem "tty-reader", "~> 0.9"
+gem "tty-prompt", "~> 0.23"
+gem "tty-spinner", "~> 0.9"
+gem "tty-table", "~> 0.12"
+gem "tty-box", "~> 0.7"
+gem "tty-markdown", "~> 0.7"
+gem "tty-progressbar", "~> 0.18"
+gem "tty-cursor", "~> 0.7"
+gem "pastel", "~> 0.8"
+gem "rouge", "~> 4.0"
+gem "falcon", "~> 0.47"
 
-# TTY toolkit
-gem "tty-reader"
-gem "tty-spinner"
-gem "tty-table"
-gem "tty-box"
-gem "tty-markdown"
-gem "tty-prompt"
-gem "tty-progressbar"
-gem "tty-cursor"
-
-# Utilities
-gem "pastel"         # Terminal colors
-gem "rouge"          # Syntax highlighting
-
-# Web server
-gem "falcon"         # Async HTTP server
-gem "async-websocket"
+# Remove ruby_llm if not actually used (llm.rb uses raw Net::HTTP)
+# gem "ruby_llm"
 
 group :test do
-  gem "minitest"
-  gem "rake"
-  gem "webmock"      # HTTP mocking
+  gem "minitest", "~> 5.0"
+  gem "minitest-reporters", "~> 1.6"
 end

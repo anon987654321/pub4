@@ -25,6 +25,16 @@ module MASTER
     ].freeze
 
     class << self
+      def require_gem(name)
+        require name
+      rescue LoadError
+        return if @installed&.key?(name)
+        @installed ||= {}
+        $stderr.puts "master: installing #{name}..."
+        @installed[name] = system("gem install #{name} --no-document")
+        require name
+      end
+
       def missing_gems
         GEMS.reject { |g| gem_installed?(g) }
       end

@@ -287,7 +287,11 @@ module MASTER
     def append(collection, record)
       path = file_path(collection)
       synchronize do
-        File.open(path, "a") { |f| f.puts(JSON.generate(record)) }
+        File.open(path, "a") do |f|
+          f.flock(File::LOCK_EX)
+          f.puts(JSON.generate(record))
+          f.flock(File::LOCK_UN)
+        end
       end
       record
     end
