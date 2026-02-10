@@ -1,16 +1,30 @@
 source "https://rubygems.org"
 
+# TTY toolkit
 gem "tty-reader", "~> 0.9"
-gem "tty-prompt", "~> 0.23"
-gem "tty-spinner", "~> 0.9"
-gem "tty-table", "~> 0.12"
-gem "tty-box", "~> 0.7"
-gem "tty-markdown", "~> 0.7"
-gem "tty-progressbar", "~> 0.18"
-gem "tty-cursor", "~> 0.7"
-gem "pastel", "~> 0.8"
-gem "rouge", "~> 4.0"
+gem "tty-spinner"
+gem "tty-table"
+gem "tty-box"
+gem "tty-markdown"
+gem "tty-prompt"
+gem "tty-progressbar"
+gem "tty-cursor"
+
+# Utilities
+gem "pastel"         # Terminal colors
+gem "rouge"          # Syntax highlighting
+
+# HTTP client
+gem "faraday", "~> 2.0"
+gem "faraday-retry", "~> 2.0"
+gem "net-http-persistent", "~> 4.0"
+
+# Circuit breaker
+gem "stoplight", "~> 4.0"
+
+# Web server
 gem "falcon", "~> 0.47"
+gem "async-websocket"
 
 group :test do
   gem "minitest", "~> 5.0"

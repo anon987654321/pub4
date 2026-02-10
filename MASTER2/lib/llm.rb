@@ -11,6 +11,7 @@ module MASTER
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
+    BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
     SPENDING_CAP = 10.0
     MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
@@ -49,7 +50,16 @@ module MASTER
         @model_tiers = nil
         @model_rates = nil
         @context_limits = nil
+        @budget_thresholds = nil
         models
+      end
+
+      def budget_thresholds
+        @budget_thresholds ||= begin
+          return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
+          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+          data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
+        end
       end
 
       def model_tiers
@@ -471,16 +481,12 @@ module MASTER
       def tier
         return @forced_tier if @forced_tier
         r = budget_remaining
-        # Budget thresholds for tier selection
-        # premium: > $8.00 (reserved for critical tasks)
-        # strong: > $5.00 (default for most work)
-        # fast: > $1.00 (when budget is getting low)
-        # cheap: remaining budget (cost-conscious mode)
-        if r > 8.0
+        thresholds = budget_thresholds
+        if r > thresholds[:premium]
           :premium
-        elsif r > 5.0
+        elsif r > thresholds[:strong]
           :strong
-        elsif r > 1.0
+        elsif r > thresholds[:fast]
           :fast
         else
           :cheap
@@ -495,21 +501,10 @@ module MASTER
         cost
       end
 
-      def estimate_cost(model_or_chars, tokens_in: nil, tokens_out: 500, model: nil)
-        if tokens_in
-          # New signature: estimate_cost("model", tokens_in: 1000, tokens_out: 500)
-          m = model_or_chars.to_s
-          # Default rates are per million tokens: $1.00 input, $2.00 output
-          rates = model_rates[m] || { input: 1.0, output: 2.0 }
-          (tokens_in / 1_000_000.0 * rates[:input]) + (tokens_out / 1_000_000.0 * rates[:output])
-        else
-          # Legacy signature: estimate_cost(char_count, model: "deepseek/...")
-          char_count = model_or_chars
-          m = (model || "deepseek/deepseek-r1").to_s.split(":").first
-          tokens = char_count / 4.0
-          rates = model_rates[m] || { input: 1.0, output: 2.0 }
-          tokens / 1_000_000.0 * rates[:input]
-        end
+      def estimate_cost(model, tokens_in:, tokens_out: 500)
+        # Only the new signature — remove legacy path entirely
+        rates = model_rates[model] || { in: 1.0, out: 2.0 }
+        (tokens_in / 1_000_000.0 * rates[:in]) + (tokens_out / 1_000_000.0 * rates[:out])
       end
 
       def validate_response(data, model_id)

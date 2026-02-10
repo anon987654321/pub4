@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+begin
+  require "stoplight"
+  STOPLIGHT_AVAILABLE = true
+rescue LoadError
+  STOPLIGHT_AVAILABLE = false
+end
+
 module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls
   # Prevents cascading failures and manages request throttling
@@ -9,6 +16,11 @@ module MASTER
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
+
+    # Initialize stoplight with memory data store if available
+    if STOPLIGHT_AVAILABLE
+      Stoplight.default_data_store = Stoplight::DataStore::Memory.new
+    end
 
     # Rate limiting state
     def rate_limit_state
@@ -38,39 +50,46 @@ module MASTER
       end
     end
 
-    def circuit_closed?(model)
-      return true unless defined?(DB)
-      row = DB.circuit(model)
-      return true unless row
-
-      state = row[:state]
-      return true if state == "closed"
-
-      last_failure = row[:last_failure]
-      if Time.now.utc - Time.parse(last_failure) > CIRCUIT_RESET_SECONDS
-        close_circuit!(model)
-        true
+    def run(model, &block)
+      if STOPLIGHT_AVAILABLE
+        Stoplight("openrouter-#{model}")
+          .with_threshold(FAILURES_BEFORE_TRIP)
+          .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+          .run(&block)
       else
-        false
+        # Fallback to simple execution without circuit breaker
+        yield
       end
     end
 
+    def open?(model)
+      return false unless STOPLIGHT_AVAILABLE
+      light = Stoplight("openrouter-#{model}")
+      light.color == Stoplight::Color::RED
+    end
+
+    def circuit_closed?(model)
+      !open?(model)
+    end
+
+    def record_failure(model, error)
+      return unless STOPLIGHT_AVAILABLE
+      Stoplight("openrouter-#{model}")
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+        .run { raise error }
+    rescue Stoplight::Error::RedLight
+      # Circuit is now open
+    end
+
+    # Compatibility methods for old API
     def open_circuit!(model)
-      return unless defined?(DB)
-
-      row = DB.circuit(model)
-      current_failures = row ? (row[:failures] || 0) + 1 : 1
-
-      if current_failures >= FAILURES_BEFORE_TRIP
-        DB.trip!(model)
-      else
-        # Increment failure count without tripping
-        DB.increment_failure!(model)
-      end
+      record_failure(model, StandardError.new("Circuit breaker tripped"))
     end
 
     def close_circuit!(model)
-      DB.reset!(model) if defined?(DB)
+      # Stoplight handles this automatically based on cool_off_time
     end
   end
 end
+

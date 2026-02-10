@@ -94,10 +94,10 @@ module MASTER
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
 
-        # Add auth check before processing requests (except health)
+        # Auth check for all endpoints except /health
         unless path == "/health"
           token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
-          return [401, { "Content-Type" => "text/plain" }, ["Unauthorized"]] unless token == AUTH_TOKEN
+          return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
         end
 
         case [method, path]

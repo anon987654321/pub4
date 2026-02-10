@@ -8,13 +8,13 @@ end
 require "fileutils"
 
 # Auto-install missing gems first
-require_relative "auto_install"
-# Gems are auto-installed on first LoadError via AutoInstall.require_gem
+require_relative "auto_install"# Gems auto-install on first LoadError — no blocking boot
 
 # Core
 require_relative "utils"
 require_relative "paths"
 require_relative "result"
+require_relative "quality_standards"
 require_relative "logging"
 require_relative "dmesg"
 require_relative "log"  # Unified logging facade
@@ -25,12 +25,12 @@ require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
-# Multi-language parsing and NLU (optional — may not exist outside pub4 repo)
-%w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |lib|
+# Multi-language parsing and NLU (optional — from parent repo)
+%w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
   begin
-    require_relative lib
+    require_relative dep
   rescue LoadError
-    # Running standalone without parent repo
+    # MASTER2 runs standalone without parent repo
   end
 end
 
@@ -90,13 +90,11 @@ require_relative "web"
 
 # Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
 # External services
-# Web UI
-# Optional integrations (degrade gracefully)
-%w[weaviate replicate speech web server].each do |mod|
+%w[weaviate replicate].each do |mod|
   begin
     require_relative mod
   rescue LoadError, StandardError => e
-    warn "master: #{mod} unavailable (#{e.message})"
+    warn "MASTER: #{mod} unavailable (#{e.message})"
   end
 end
 
@@ -134,3 +132,12 @@ require_relative "generators/html"
 
 # Quality gates (restored from MASTER)
 require_relative "framework/quality_gates"
+
+# Web UI
+%w[server].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    warn "MASTER: #{mod} unavailable (#{e.message})"
+  end
+end

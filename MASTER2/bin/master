@@ -10,7 +10,11 @@ $stderr.set_encoding(Encoding::UTF_8)
 require "json"
 require_relative "../lib/master"
 
-MASTER::DB.setup
+begin
+  MASTER::DB.setup
+rescue => e
+  $stderr.puts "DB setup failed: #{e.message} — running without persistence"
+end
 MASTER::Session.install_crash_handlers
 
 # Parse command line arguments
