@@ -9,7 +9,9 @@ require "fileutils"
 
 # Auto-install missing gems first
 require_relative "auto_install"
-MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
+if defined?(MASTER::AutoInstall) && MASTER::AutoInstall.missing_gems.any?
+  $stderr.puts "MASTER: missing gems: #{MASTER::AutoInstall.missing_gems.join(', ')}. Run: master setup"
+end
 
 # Core
 require_relative "utils"
@@ -26,9 +28,9 @@ require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
 # Multi-language parsing and NLU
-require_relative "../../lib/parser/multi_language"
-require_relative "../../lib/nlu"
-require_relative "../../lib/conversation"
+require_relative "parser/multi_language"
+require_relative "nlu"
+require_relative "conversation"
 
 # Safe Autonomy Architecture
 require_relative "constitution"
@@ -81,15 +83,22 @@ require_relative "gh_helper"
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"
 
-# Web browsing (restored from MASTER)
-require_relative "web"
+# Optional integrations (degrade gracefully)
+%w[weaviate replicate speech web server].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    $stderr.puts "MASTER: #{mod} unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+  end
+end
 
-# Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
-require_relative "speech"
-
-# External services
-require_relative "weaviate"
-require_relative "replicate"
+# External services - falcon and async-websocket (optional)
+begin
+  require "falcon"
+  require "async-websocket"
+rescue LoadError => e
+  $stderr.puts "MASTER: falcon/async-websocket unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+end
 
 # Agents
 require_relative "agent"
@@ -125,6 +134,3 @@ require_relative "generators/html"
 
 # Quality gates (restored from MASTER)
 require_relative "framework/quality_gates"
-
-# Web UI
-require_relative "server"

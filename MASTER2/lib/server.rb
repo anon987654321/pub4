@@ -94,6 +94,14 @@ module MASTER
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
 
+        # Auth check for all endpoints except /health
+        unless path == "/health"
+          token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")&.strip
+          unless token == AUTH_TOKEN
+            return [401, { "content-type" => "application/json" }, ['{"error":"unauthorized"}']]
+          end
+        end
+
         case [method, path]
         when ["GET", "/"]
           [200, { "content-type" => "text/html" }, [read_view("cli.html")]]
