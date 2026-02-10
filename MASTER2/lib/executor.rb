@@ -11,6 +11,8 @@ require_relative "executor/pre_act"
 require_relative "executor/rewoo"
 require_relative "executor/reflexion"
 require_relative "executor/tools"
+require_relative "executor/patterns"
+require_relative "executor/context"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
