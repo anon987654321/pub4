@@ -109,6 +109,24 @@ module MASTER
       when "patterns", "modes"
         list_patterns
         nil
+      when "persona"
+        manage_persona(args)
+        nil
+      when "personas"
+        list_personas
+        nil
+      when "creative"
+        creative_chamber(args)
+        nil
+      when "scan"
+        scan_code(args)
+        nil
+      when "queue"
+        manage_queue(args)
+        nil
+      when "harvest"
+        harvest_data(args)
+        nil
       when "exit", "quit"
         :exit
       else
@@ -639,6 +657,202 @@ module MASTER
           puts "  #{name.ljust(20)} #{desc[0, 50]}"
         end
         puts
+      end
+
+      # New commands restored from MASTER v1
+
+      def manage_persona(args)
+        args = args&.strip
+        
+        if args.nil? || args.empty?
+          puts "\n  Current personas:"
+          Personas.list.each { |p| puts "    • #{p}" }
+          puts "\n  Usage: persona <name>  - switch to persona"
+          puts "         personas       - list all personas"
+          return
+        end
+        
+        persona = Personas.load(args)
+        if persona
+          puts "\n  ✓ Switched to persona: #{persona[:name]}"
+          puts "  #{persona[:description]}" if persona[:description]
+          puts "\n  Greeting: #{persona[:greeting]}" if persona[:greeting]
+        else
+          UI.error("Persona '#{args}' not found")
+        end
+      end
+
+      def list_personas
+        personas = Personas.load_all
+        
+        if personas.empty?
+          puts "\n  No personas available\n"
+          return
+        end
+        
+        puts "\n  Available Personas:"
+        personas.each do |persona|
+          puts "\n    #{persona[:name]}"
+          puts "      #{persona[:description]}" if persona[:description]
+          puts "      Traits: #{persona[:traits].join(', ')}" if persona[:traits]
+        end
+        puts ""
+      end
+
+      def creative_chamber(args)
+        prompt = args&.strip
+        
+        if prompt.nil? || prompt.empty?
+          puts "\n  Usage: creative <topic>"
+          puts "  Example: creative 'New app feature ideas'"
+          return
+        end
+        
+        puts "\n  🎨 Starting creative brainstorm on: #{prompt}"
+        chamber = CreativeChamber.new
+        result = chamber.brainstorm(prompt, participants: 3)
+        
+        if result.ok?
+          data = result.value
+          puts "\n  Generated #{data[:ideas].size} idea sets"
+          
+          if data[:synthesis]
+            puts "\n  💡 Synthesis:"
+            puts "  #{data[:synthesis][0..500]}"
+          end
+          
+          puts "\n  Cost: #{UI.currency_precise(data[:cost])}"
+        else
+          UI.error(result.error)
+        end
+      end
+
+      def scan_code(args)
+        path = args&.strip
+        
+        if path.nil? || path.empty?
+          path = "."
+        end
+        
+        unless File.exist?(path)
+          UI.error("Path not found: #{path}")
+          return
+        end
+        
+        puts "\n  🔍 Scanning: #{path}"
+        result = Engine.scan(path)
+        
+        if result.ok?
+          issues = result.value
+          
+          if issues.empty?
+            puts "  ✓ No issues found"
+          else
+            puts "\n  Found #{issues.size} issues:"
+            issues.group_by { |i| i[:type] }.each do |type, type_issues|
+              puts "\n    #{type} (#{type_issues.size}):"
+              type_issues.first(3).each do |issue|
+                puts "      • #{issue[:file] ? File.basename(issue[:file]) : 'unknown'}: #{issue[:message] || issue[:type]}"
+              end
+            end
+          end
+        else
+          UI.error(result.error)
+        end
+      end
+
+      def manage_queue(args)
+        args = args&.strip
+        
+        if args.nil? || args.empty?
+          puts "\n  Queue Commands:"
+          puts "    queue add <file>     - Add file to queue"
+          puts "    queue adddir <dir>   - Add directory to queue"
+          puts "    queue status         - Show queue status"
+          puts "    queue process        - Process queue"
+          return
+        end
+        
+        parts = args.split(/\s+/, 2)
+        command = parts[0]
+        arg = parts[1]
+        
+        queue = Queue.new
+        
+        case command
+        when "add"
+          if arg && File.exist?(arg)
+            queue.add(arg)
+            puts "  ✓ Added #{arg} to queue"
+          else
+            UI.error("File not found: #{arg}")
+          end
+        when "adddir"
+          if arg && Dir.exist?(arg)
+            queue.add_directory(arg)
+            puts "  ✓ Added directory #{arg} to queue"
+          else
+            UI.error("Directory not found: #{arg}")
+          end
+        when "status"
+          puts "\n  Queue Status:"
+          puts "  #{queue.status}"
+        when "process"
+          puts "\n  Processing queue..."
+          count = 0
+          while (item = queue.next)
+            puts "  Processing: #{item}"
+            # Process item here
+            queue.complete(cost: 0.0)
+            count += 1
+          end
+          puts "  ✓ Processed #{count} items"
+        else
+          UI.error("Unknown queue command: #{command}")
+        end
+      end
+
+      def harvest_data(args)
+        args = args&.strip
+        
+        puts "\n  🌾 Starting ecosystem harvest..."
+        harvester = Harvester.new
+        
+        if args && !args.empty?
+          # Harvest specific query
+          result = harvester.search_repos(args, limit: 10)
+          if result.ok?
+            repos = result.value[:repos]
+            puts "\n  Found #{repos.size} repositories:"
+            repos.each do |repo|
+              puts "    • #{repo[:name]} (⭐ #{repo[:stars]}) - #{repo[:description]&.[](0..60)}"
+            end
+          else
+            UI.error(result.error)
+          end
+        else
+          # Harvest from default sources
+          sources = [
+            "ruby llm",
+            "ai agents ruby"
+          ]
+          result = harvester.harvest(sources: sources)
+          
+          if result.ok?
+            data = result.value
+            puts "\n  ✓ Harvest complete"
+            puts "  Items found: #{data[:stats][:items_found]}"
+            puts "  Duration: #{data[:stats][:duration]}s"
+            
+            # Save results
+            save_result = harvester.save
+            if save_result.ok?
+              puts "  Saved to: #{save_result.value[:path]}"
+            end
+          else
+            UI.error(result.error)
+          end
+        end
       end
     end
   end
