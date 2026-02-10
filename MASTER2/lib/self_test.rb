@@ -94,7 +94,7 @@ module MASTER
         
         # File processing and pipeline
         notes = []
-        notes << "#{fp[:details][:files_changed]} files need processing" if fp && !fp[:passed]
+        notes << "#{fp[:details][:files_changed]} files need processing" if fp && fp[:details] && !fp[:passed]
         notes << "pipeline rejected own code" if ps && !ps[:passed]
         if notes.any?
           paragraphs << "Infrastructure checks flagged: #{notes.join('; ')}."
