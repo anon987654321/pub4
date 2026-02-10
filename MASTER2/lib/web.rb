@@ -20,13 +20,40 @@ module MASTER
       response = http.request(Net::HTTP::Get.new(uri))
 
       if response.code.start_with?("2")
-        # Strip HTML tags for simple text extraction
-        text = response.body
-          .gsub(/<script[^>]*>.*?<\/script>/mi, "")
-          .gsub(/<style[^>]*>.*?<\/style>/mi, "")
-          .gsub(/<[^>]+>/, " ")
-          .gsub(/\s+/, " ")
-          .strip
+        # Simple text extraction - remove scripts, styles, and HTML tags
+        # Using conservative patterns to avoid ReDoS vulnerabilities
+        text = response.body.dup
+        
+        # Remove script blocks (limit backtracking)
+        while (match = text.match(/<script(?:\s[^>]{0,200})?>|<script>/i))
+          start_pos = match.begin(0)
+          end_pos = text.index(/<\/script>/i, start_pos)
+          if end_pos
+            text[start_pos..(end_pos + 8)] = " "
+          else
+            text[start_pos..-1] = " "
+            break
+          end
+        end
+        
+        # Remove style blocks (limit backtracking)
+        while (match = text.match(/<style(?:\s[^>]{0,200})?>|<style>/i))
+          start_pos = match.begin(0)
+          end_pos = text.index(/<\/style>/i, start_pos)
+          if end_pos
+            text[start_pos..(end_pos + 7)] = " "
+          else
+            text[start_pos..-1] = " "
+            break
+          end
+        end
+        
+        # Remove all remaining HTML tags with limited backtracking
+        text.gsub!(/<[^<>]*>/, " ")
+        
+        # Normalize whitespace
+        text.gsub!(/\s+/, " ")
+        text.strip!
 
         Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url, status: response.code)
       else
