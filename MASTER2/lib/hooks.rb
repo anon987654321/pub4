@@ -182,12 +182,12 @@ module MASTER
       def validate_ruby_syntax(target)
         return true unless target
         if File.exist?(target.to_s)
-          # Fix: Use array form to prevent shell injection
+          # Use array form to avoid shell interpretation - prevents injection attacks
           system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
         else
-          # Fix: Use safe syntax check instead of eval
+          # For code strings, use RubyVM::InstructionSequence for parse-only validation
           begin
-            RubyVM::InstructionSequence.compile(target)
+            RubyVM::InstructionSequence.compile(target.to_s)
             true
           rescue SyntaxError
             false
@@ -196,7 +196,8 @@ module MASTER
       end
 
       def run_tests
-        system("ruby -Ilib -Itest -e 'exit 0'") # Placeholder
+        # Placeholder - not yet implemented
+        Result.err("run_tests not yet implemented")
       end
 
       def log(msg)

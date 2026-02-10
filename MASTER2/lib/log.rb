@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Log - Unified logging facade consolidating three logging systems
+  # Log - Unified logging facade. Delegates to Dmesg (kernel-style) and Logging (structured JSON).
+  # This is the public API — use this instead of calling Dmesg or Logging directly.
   # Combines Dmesg (kernel-style), Logging (structured JSON), and puts statements
   # Provides single interface with progressive disclosure via MASTER_TRACE
   module Log

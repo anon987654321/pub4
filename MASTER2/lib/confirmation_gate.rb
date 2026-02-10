@@ -27,14 +27,8 @@ module MASTER
 
       # Phase 2: Confirm
       unless @auto_confirm
-        confirmed = if defined?(UI) && UI.respond_to?(:confirm)
-          UI.confirm("Proceed with this operation?")
-        else
-          # Fallback to STDIN if UI not available
-          print "  Proceed? (y/n): "
-          response = $stdin.gets.to_s.strip.downcase
-          response == "y" || response == "yes"
-        end
+        # Delegate to Confirmations module for actual confirmation
+        confirmed = Confirmations.confirm("Proceed with this operation?")
 
         unless confirmed
           return Result.err("Cancelled by user")

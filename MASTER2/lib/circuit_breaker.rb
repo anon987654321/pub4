@@ -19,7 +19,7 @@ module MASTER
 
     # Initialize stoplight with memory data store if available
     if STOPLIGHT_AVAILABLE
-      Stoplight.default_data_store = Stoplight::DataStore::Memory.new
+      Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
     end
 
     # Rate limiting state

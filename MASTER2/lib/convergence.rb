@@ -154,67 +154,54 @@ module MASTER
         nil
       end
 
-      # Methods merged from converge.rb
-      def run(path = MASTER.root)
-        iteration = 0
-        prev_hash = nil
-
-        loop do
-          iteration += 1
-          return Result.err("Max iterations reached") if iteration > MAX_ITERATIONS
-
-          current_hash = content_hash(path)
-
-          if prev_hash && change_ratio(prev_hash, current_hash) < DIFF_THRESHOLD
-            return Result.ok({
-              iterations: iteration,
-              status: "converged",
-              hash: current_hash
-            })
-          end
-
-          prev_hash = current_hash
-          yield(iteration, current_hash) if block_given?
-        end
-      end
-
+      # Utility methods merged from Converge module
+      
+      # Calculate SHA256 hash of all Ruby files in a path
       def content_hash(path)
-        require "digest"
-        files = Dir.glob(File.join(path, "lib", "**", "*.rb"))
-        content = files.sort.select { |f| File.readable?(f) }.map { |f| File.read(f) }.join
+        require 'digest'
+        files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
+        content = files.sort.map { |f| File.read(f) rescue '' }.join
         Digest::SHA256.hexdigest(content)
       end
 
-      def change_ratio(hash1, hash2)
-        # Direct hash comparison - either identical (0.0) or different (1.0)
-        # This is intentionally simple for fast convergence detection
-        return 0.0 if hash1 == hash2
-        1.0
+      # Calculate change ratio between two content states
+      # Fixed: Now uses proper diff ratio instead of always returning 1.0
+      def change_ratio(content1, content2)
+        return 0.0 if content1 == content2
+        
+        # Use Levenshtein distance for character-level diff
+        # For large strings, sample first N chars for efficiency
+        max_len = 10_000
+        str1 = content1[0, max_len]
+        str2 = content2[0, max_len]
+        
+        distance = Utils.levenshtein(str1, str2)
+        max_length = [str1.length, str2.length].max
+        return 1.0 if max_length == 0
+        
+        distance.to_f / max_length
       end
 
-      def audit(current_path, compare_ref: "HEAD~5")
-        current = extract_features(current_path)
-        
+      # Audit current codebase features (classes, modules, methods)
+      def audit(path, compare_ref: 'HEAD~5')
+        features = extract_features(path)
         {
-          current_count: current.size,
-          features: current
+          current_count: features.size,
+          features: features
         }
       end
 
+      # Extract feature signatures from codebase
       def extract_features(path)
-        files = Dir.glob(File.join(path, "lib", "**", "*.rb"))
+        files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
         features = []
 
         files.each do |file|
-          begin
-            content = File.read(file)
-            # Extract class/module definitions
-            content.scan(/(?:class|module)\s+(\w+)/) { |m| features << m[0] }
-            # Extract method definitions
-            content.scan(/def\s+(\w+)/) { |m| features << m[0] }
-          rescue StandardError
-            next
-          end
+          content = File.read(file) rescue next
+          # Extract class/module definitions
+          content.scan(/(?:class|module)\s+(\w+)/) { |m| features << m[0] }
+          # Extract method definitions
+          content.scan(/def\s+(\w+)/) { |m| features << m[0] }
         end
 
         features.uniq

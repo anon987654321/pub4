@@ -233,7 +233,12 @@ autoload -Uz compinit && compinit
 
 ## Budget
 
-$10.00 session limit. Three tiers:
+$10.00 session limit. Four tiers:
+
+- **Premium**: Claude-3.5-Sonnet, GPT-4o (high-quality, highest cost)
+- **Strong**: Claude-3-Haiku, GPT-4o-mini (balanced quality/cost)
+- **Fast**: Qwen/QwQ-32B-Preview, DeepSeek-R1 (quick iteration, lower cost)
+- **Cheap**: Llama-3.1-8B, DeepSeek-Coder (bulk operations, minimal cost)
 
 | Tier | Models |
 |------|--------|
@@ -250,7 +255,7 @@ bin/master       Entry point
 lib/             60+ modules
 data/            Axioms, council, patterns (YAML)
 var/db/          JSONL storage
-test/            Minitest suite (24 files, 100+ tests)
+test/            Minitest suite
 ```
 
 ## License

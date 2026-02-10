@@ -145,8 +145,8 @@ module MASTER
     end
 
     def trigger_hook(event, **data)
-      return unless defined?(HooksManager)
-      HooksManager.dispatch(event, data)
+      return unless defined?(Hooks)
+      Hooks.run(event, data)
     rescue StandardError => e
       # Silently fail hooks - they're not critical
       nil

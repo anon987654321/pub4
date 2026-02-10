@@ -1,15 +1,63 @@
 # frozen_string_literal: true
 
-require "open3"
-require "rbconfig"
-
 module MASTER
   class Executor
-    # Tool implementations - All available tools for the executor
+    # Tools module - All tool execution and dispatch logic
     module Tools
+      def execute_tool(action_str)
+        # Sanitize input before processing
+        action_str = sanitize_tool_input(action_str)
+        return action_str if action_str.start_with?("BLOCKED:")
+
+        case action_str
+        when /^ask_llm\s+["']?(.+?)["']?\s*$/i
+          ask_llm($1)
+
+        when /^web_search\s+["']?([^"']+)["']?/i
+          web_search($1)
+
+        when /^browse_page\s+["']?(https?:\/\/[^\s"']+)["']?/i
+          browse_page($1)
+
+        when /^file_read\s+["']?([^"'\n]+)["']?/i
+          file_read($1.strip)
+
+        when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
+          file_write($1.strip, $2)
+
+        when /^analyze_code\s+["']?([^"'\n]+)["']?/i
+          analyze_code($1.strip)
+
+        when /^fix_code\s+["']?([^"'\n]+)["']?/i
+          fix_code($1.strip)
+
+        when /^shell_command\s+["']?([^"'\n]+)["']?/i
+          shell_command($1)
+
+        when /^code_execution.*```(\w*)?\n(.+?)```/mi
+          code_execution($2)
+
+        when /^council_review\s+["']?(.+?)["']?\s*$/i
+          council_review($1)
+
+        when /^memory_search\s+["']?([^"']+)["']?/i
+          memory_search($1)
+
+        when /^self_test/i
+          self_test
+
+        else
+          "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
+        end
+      rescue StandardError => e
+        "Tool error: #{e.message}"
+      end
+
+      # Tool implementations
+
       def ask_llm(prompt)
         result = LLM.ask(prompt, tier: :fast)
-        result.ok? ? result.value[:content][0..MAX_LLM_RESPONSE_PREVIEW] : "LLM error: #{result.error}"
+        result.ok? ? result.value[:content][0..1000] : "LLM error: #{result.error}"
       end
 
       def web_search(query)
@@ -26,34 +74,18 @@ module MASTER
           result = Web.browse(url)
           result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
         else
-          # Fix: Use Open3 with proper escaping to prevent shell injection
-          stdout, _, _ = Open3.capture3("curl", "-sL", "--max-time", "10", url)
-          stdout[0..MAX_CURL_CONTENT]
+          `curl -sL --max-time 10 "#{url}" 2>/dev/null`[0..2000]
         end
       end
 
       def file_read(path)
         return "File not found: #{path}" unless File.exist?(path)
         content = File.read(path)
-        content.length > MAX_FILE_CONTENT ? "#{content[0..MAX_FILE_CONTENT]}... (truncated, #{content.length} chars total)" : content
+        content.length > 3000 ? "#{content[0..3000]}... (truncated, #{content.length} chars total)" : content
       end
 
       def file_write(path, content)
         expanded = File.expand_path(path)
-        
-        # Fix: Add explicit canonicalization to prevent path traversal
-        begin
-          real_cwd = File.realpath(".")
-          unless expanded.start_with?(real_cwd)
-            return "BLOCKED: file_write path '#{path}' is outside working directory"
-          end
-        rescue Errno::ENOENT
-          # If realpath fails, fall back to expand_path check
-          cwd = File.expand_path(".")
-          unless expanded.start_with?(cwd)
-            return "BLOCKED: file_write path '#{path}' is outside working directory"
-          end
-        end
         
         # Check protected paths first
         PROTECTED_WRITE_PATHS.each do |protected|
@@ -67,6 +99,12 @@ module MASTER
           if expanded.start_with?(protected_expanded) || expanded == protected_expanded
             return "BLOCKED: file_write to protected path '#{path}'"
           end
+        end
+        
+        # Check working directory constraint
+        cwd = File.expand_path(".")
+        unless expanded.start_with?(cwd)
+          return "BLOCKED: file_write path '#{path}' is outside working directory"
         end
         
         FileUtils.mkdir_p(File.dirname(expanded))
@@ -114,7 +152,7 @@ module MASTER
           output = status.success? ? stdout : "Error: #{stderr}"
         end
 
-        output.length > MAX_SHELL_OUTPUT ? "#{output[0..MAX_SHELL_OUTPUT]}... (truncated)" : output
+        output.length > 1000 ? "#{output[0..1000]}... (truncated)" : output
       end
 
       def code_execution(code)
@@ -171,6 +209,27 @@ module MASTER
         else
           "SelfTest module not available"
         end
+      end
+
+      def sanitize_tool_input(action_str)
+        if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+          return "BLOCKED: dangerous pattern detected in tool input"
+        end
+        action_str
+      end
+
+      def check_tool_permission(tool_name)
+        if defined?(Constitution)
+          unless Constitution.permission?(tool_name)
+            return Result.err("Tool '#{tool_name}' not permitted by constitution")
+          end
+        end
+        Result.ok
+      end
+
+      def record_history(entry)
+        @history << entry
+        @history.shift if @history.size > MAX_HISTORY_ENTRIES
       end
     end
   end
