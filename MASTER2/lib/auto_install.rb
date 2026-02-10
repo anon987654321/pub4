@@ -46,6 +46,16 @@ module MASTER
         end
       end
 
+      def require_gem(name)
+        require name
+      rescue LoadError
+        return if @installed&.dig(name)
+        @installed ||= {}
+        $stderr.puts "Installing #{name}..."
+        @installed[name] = system("gem install #{name} --no-document")
+        require name
+      end
+
       def openbsd?
         RUBY_PLATFORM.include?("openbsd")
       end

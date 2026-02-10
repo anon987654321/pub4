@@ -13,6 +13,7 @@ module MASTER
     @buffer = []
     @buffer_mutex = Mutex.new
     @start_time = Time.now
+    BUFFER_CAP = 1000  # Cap buffer at 1000 entries
 
     # Trace levels
     SILENT = 0
@@ -42,7 +43,10 @@ module MASTER
                end
 
         entry = { time: timestamp, line: line, level: level }
-        @buffer_mutex.synchronize { @buffer << entry }
+        @buffer_mutex.synchronize do
+          @buffer << entry
+          @buffer.shift if @buffer.size > BUFFER_CAP  # Cap buffer size
+        end
 
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?

@@ -3,6 +3,7 @@
 require "json"
 require "open3"
 require "yaml"
+require "rbconfig"
 
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
@@ -824,7 +825,7 @@ module MASTER
         end
       end
       
-      stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
+      stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end
 
