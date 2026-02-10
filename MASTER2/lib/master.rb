@@ -15,6 +15,7 @@ MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
 require_relative "utils"
 require_relative "paths"
 require_relative "result"
+require_relative "quality_standards"  # ONE_SOURCE for quality thresholds
 require_relative "logging"
 require_relative "dmesg"
 require_relative "log"  # Unified logging facade

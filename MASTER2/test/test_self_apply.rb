@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/quality_standards"
 
 # SELF_APPLY Axiom: "A system that asserts quality must achieve its own standards"
 class TestSelfApply < Minitest::Test
@@ -10,7 +11,7 @@ class TestSelfApply < Minitest::Test
 
   def test_all_files_under_300_lines
     # Note: Larger files allowed if well-structured (executor, llm, commands)
-    max_lines = 700
+    max_lines = MASTER::QualityStandards.max_file_lines
     violations = []
     @lib_files.each do |file|
       lines = File.read(file).lines.size
@@ -58,8 +59,8 @@ class TestSelfApply < Minitest::Test
         violations << File.basename(file)
       end
     end
-    # Only warn, don't fail - docstrings are in progress
-    skip "Docstrings not complete yet" if violations.any?
+    # Test should fail if docstrings are missing
+    assert violations.empty?, "Files missing docstrings:\n  #{violations.join("\n  ")}"
   end
 
   def test_code_review_finds_no_critical_issues
