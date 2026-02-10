@@ -28,10 +28,10 @@ module MASTER
       # @return [Hash] Structure map with files, ruby_files, lib_files, test_files
       def generate_map(root = MASTER.root)
         {
-          files: collect_files(root),
-          ruby_files: collect_files(root).select { |f| f.end_with?(".rb") },
-          lib_files: collect_files(root).select { |f| f.include?("/lib/") && f.end_with?(".rb") },
-          test_files: collect_files(root).select { |f| (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb") }
+          files: collect_files(root, root),
+          ruby_files: collect_files(root, root).select { |f| f.end_with?(".rb") },
+          lib_files: collect_files(root, root).select { |f| f.include?("/lib/") && f.end_with?(".rb") },
+          test_files: collect_files(root, root).select { |f| (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb") }
         }
       end
       
@@ -717,7 +717,7 @@ module MASTER
       # PRIVATE HELPERS - Section 1 (SelfMap)
       # ═══════════════════════════════════════════════════════════════════
       
-      def collect_files(dir)
+      def collect_files(dir, root = dir)
         result = []
 
         Dir.entries(dir).each do |entry|
@@ -725,9 +725,9 @@ module MASTER
 
           path = File.join(dir, entry)
           if File.directory?(path)
-            result.concat(collect_files(path))
+            result.concat(collect_files(path, root))
           else
-            result << path.sub("#{dir}/", "")
+            result << path.sub("#{root}/", "")
           end
         end
 
