@@ -261,13 +261,9 @@ module MASTER
         # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?
           output = trace_level >= FULL_DEBUG ? "[#{timestamp}ms] #{line}" : line
-          begin
-            if defined?(UI) && UI.respond_to?(:dim)
-              puts UI.dim(output)
-            else
-              puts output
-            end
-          rescue LoadError
+          if defined?(UI) && UI.respond_to?(:dim)
+            puts UI.dim(output)
+          else
             puts output
           end
         end
