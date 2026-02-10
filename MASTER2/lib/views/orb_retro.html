@@ -16,6 +16,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <canvas id="canvas"></canvas>
 <div class="scanlines"></div>
 <div class="crt"></div>
+<script src="shared_palette.js"></script>
 <script>
 var canvas=document.getElementById('canvas');
 var ctx=canvas.getContext('2d');
@@ -24,19 +25,6 @@ var time=0;
 var bassWobble=0;
 var beatEnv=0;
 var audio={bass:0.5,mid:0.5,high:0.5,beat:0};
-
-var PAL=[];
-for(var r=0;r<6;r++)for(var g=0;g<7;g++)for(var b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(var i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
-
-function quantize(r,g,b){
-  var best=PAL[0],minD=Infinity;
-  for(var i=0;i<PAL.length;i++){
-    var c=PAL[i],d=(r-c[0])*(r-c[0])+(g-c[1])*(g-c[1])+(b-c[2])*(b-c[2]);
-    if(d<minD){minD=d;best=c}
-  }
-  return best;
-}
 
 function rgb(r,g,b){var q=quantize(r,g,b);return 'rgb('+q[0]+','+q[1]+','+q[2]+')'}
 

@@ -1,0 +1,37 @@
+gates:
+  - name: syntax
+    enabled: true
+    enforcement: strict
+    checks:
+      - metric: syntax_errors
+        operator: "=="
+        threshold: 0
+        message: "No syntax errors allowed"
+  - name: tests
+    enabled: true
+    enforcement: strict
+    checks:
+      - metric: pass_rate
+        operator: ">="
+        threshold: 100
+        message: "All tests must pass"
+  - name: complexity
+    enabled: true
+    enforcement: warn
+    checks:
+      - metric: cyclomatic_complexity
+        operator: "<="
+        threshold: 10
+        message: "Cyclomatic complexity should be ≤ 10"
+      - metric: max_method_lines
+        operator: "<="
+        threshold: 5
+        message: "Methods should be ≤ 5 lines (Metz rule)"
+  - name: coverage
+    enabled: true
+    enforcement: warn
+    checks:
+      - metric: line_coverage
+        operator: ">="
+        threshold: 80
+        message: "Line coverage should be ≥ 80%"
