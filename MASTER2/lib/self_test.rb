@@ -182,7 +182,7 @@ module MASTER
         end
 
         {
-          passed: total_issues < 20,
+          passed: total_issues < QualityStandards.max_self_test_issues,
           message: "#{lib_files.size} files, #{total_issues} issues",
           issues: total_issues,
         }
@@ -196,7 +196,7 @@ module MASTER
         end
 
         {
-          passed: all_violations.size < 15,
+          passed: all_violations.size < QualityStandards.max_self_test_violations,
           message: "#{all_violations.size} violations across 5 layers",
           violations: all_violations,
         }
@@ -242,11 +242,11 @@ module MASTER
 
       def run_council_review
         # Build code sample from key files
-        key_files = %w[master.rb pipeline.rb stages.rb llm.rb chamber.rb]
+        key_files = %w[master.rb pipeline.rb stages.rb llm.rb chamber.rb executor.rb commands.rb enforcement.rb self_test.rb]
         code_sample = key_files.map do |f|
           path = File.join(MASTER.root, "lib", f)
           next unless File.exist?(path)
-          "# #{f}\n#{File.read(path)[0, 2000]}"
+          "# #{f}\n#{File.read(path)[0, 4000]}"
         end.compact.join("\n\n---\n\n")
 
         axiom_list = DB.axioms.map { |a| "- #{a[:name] || a[:id]}" }.join("\n")

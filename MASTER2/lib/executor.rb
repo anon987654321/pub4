@@ -11,8 +11,8 @@ module MASTER
   # Auto-selects best pattern based on task characteristics
   class Executor
     MAX_STEPS = 15
-    WALL_CLOCK_LIMIT = 120  # seconds
-    MAX_HISTORY_SIZE = 50
+    WALL_CLOCK_LIMIT_SECONDS_SECONDS = 120  # seconds
+    MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
@@ -183,7 +183,7 @@ module MASTER
       while @step < @max_steps
         # Check wall clock timeout
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-        if elapsed > WALL_CLOCK_LIMIT
+        if elapsed > WALL_CLOCK_LIMIT_SECONDS
           best_answer = @history.last&.[](:observation) || "Timed out"
           return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
         end
@@ -485,7 +485,7 @@ module MASTER
       [5, @max_steps - @step].max.times do
         # Check wall clock timeout
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-        if elapsed > WALL_CLOCK_LIMIT
+        if elapsed > WALL_CLOCK_LIMIT_SECONDS
           best_answer = @history.last&.[](:observation) || "Timed out"
           return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
         end
@@ -869,7 +869,7 @@ module MASTER
 
     def record_history(entry)
       @history << entry
-      @history.shift if @history.size > MAX_HISTORY_SIZE
+      @history.shift if @history.size > MAX_HISTORY_ENTRIES
     end
   end
 end

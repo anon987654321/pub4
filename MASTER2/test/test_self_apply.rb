@@ -10,7 +10,7 @@ class TestSelfApply < Minitest::Test
 
   def test_all_files_under_300_lines
     # Note: Larger files allowed if well-structured (executor, llm, commands)
-    max_lines = 700
+    max_lines = QualityStandards.max_file_lines_self_test
     violations = []
     @lib_files.each do |file|
       lines = File.read(file).lines.size
@@ -58,8 +58,8 @@ class TestSelfApply < Minitest::Test
         violations << File.basename(file)
       end
     end
-    # Only warn, don't fail - docstrings are in progress
-    skip "Docstrings not complete yet" if violations.any?
+    # Test should run and either pass or fail honestly
+    assert violations.empty?, "Modules without docstrings:\n  #{violations.join("\n  ")}"
   end
 
   def test_code_review_finds_no_critical_issues
