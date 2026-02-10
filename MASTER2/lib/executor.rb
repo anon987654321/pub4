@@ -5,10 +5,20 @@ require "open3"
 require "yaml"
 require "rbconfig"
 
+# Load extracted submodules (Phase 6 - Axiom compliance)
+require_relative "executor/tools"
+require_relative "executor/patterns"
+require_relative "executor/context"
+
 module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
   # Patterns: react, pre_act, rewoo, reflexion
   # Auto-selects best pattern based on task characteristics
+  # 
+  # NOTE: This file is split across multiple files for readability:
+  # - executor/tools.rb - Tool implementations
+  # - executor/patterns.rb - Pattern execution methods
+  # - executor/context.rb - Context building and response parsing
   class Executor
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
@@ -59,6 +69,11 @@ module MASTER
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
+
+    # Include extracted modules
+    include Tools
+    include Patterns
+    include Context
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
