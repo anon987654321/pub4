@@ -4,6 +4,9 @@ require "net/http"
 require "json"
 require "yaml"
 require "uri"
+require "faraday"
+require "faraday/retry"
+require "net/http/persistent"
 require_relative "circuit_breaker"
 
 module MASTER
@@ -41,8 +44,7 @@ module MASTER
       end
 
       def load_models
-        return [] unless File.exist?(MODELS_FILE)
-        YAML.safe_load_file(MODELS_FILE, symbolize_names: true) || []
+        ConfigLoader.load(MODELS_FILE, default: [])
       end
 
       def reload_models
@@ -290,6 +292,61 @@ module MASTER
       end
 
       def execute_request(body, stream: false)
+        if stream
+          execute_streaming_raw(body)
+        else
+          execute_blocking_faraday(body)
+        end
+      end
+
+      def http_client
+        @http_client ||= Faraday.new(url: API_BASE) do |f|
+          f.request :json
+          f.request :retry, max: 3, interval: 1, backoff_factor: 2,
+                    retry_statuses: [429, 502, 503, 504],
+                    exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed],
+                    retry_block: ->(env, _opts, retries, exc) {
+                      Logging.warn("LLM retry #{retries}/3", error: exc&.message) if defined?(Logging)
+                    }
+          f.response :json, parser_options: { symbolize_names: true }
+          f.adapter :net_http_persistent
+          f.options.open_timeout = 30
+          f.options.read_timeout = 120
+          f.options.write_timeout = 30
+          f.headers["Authorization"] = "Bearer #{api_key}"
+          f.headers["HTTP-Referer"] = "https://github.com/MASTER"
+          f.headers["X-Title"] = "MASTER Pipeline"
+        end
+      end
+
+      def execute_blocking_faraday(body)
+        response = http_client.post("chat/completions", body)
+
+        unless response.status == 200
+          error_msg = response.body.dig(:error, :message) || "HTTP #{response.status}"
+          return Result.err(error_msg)
+        end
+
+        data = response.body
+        choice = data[:choices]&.first
+        message = choice&.[](:message)
+
+        response_data = {
+          content: message&.[](:content),
+          reasoning: message&.[](:reasoning),
+          model: data[:model],
+          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
+          tokens_out: data.dig(:usage, :completion_tokens) || 0,
+          cost: data.dig(:usage, :cost),
+          finish_reason: choice&.[](:finish_reason)
+        }
+
+        validate_response(response_data, body[:model] || "unknown")
+      rescue Faraday::Error => e
+        Result.err("LLM request failed: #{e.message}")
+      end
+
+      def execute_streaming_raw(body)
         uri = URI(CHAT_ENDPOINT)
         req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Bearer #{api_key}"
@@ -299,48 +356,13 @@ module MASTER
 
         req.body = body.to_json
 
-        # Retry with exponential backoff
-        max_retries = 3
-        retry_count = 0
-        last_error = nil
+        http = Net::HTTP.new(uri.hostname, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 30
+        http.read_timeout = 120
+        http.write_timeout = 30
 
-        while retry_count < max_retries
-          begin
-            http = Net::HTTP.new(uri.hostname, uri.port)
-            http.use_ssl = true
-            http.open_timeout = 30
-            http.read_timeout = 120
-            http.write_timeout = 30
-
-            result = if stream
-                       execute_streaming(http, req)
-                     else
-                       execute_blocking(http, req)
-                     end
-
-            # Success or non-retryable error
-            return result if result.ok? || !retryable_error?(result.error)
-            
-            last_error = result.error
-          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-            last_error = e.message
-          end
-
-          retry_count += 1
-          break if retry_count >= max_retries
-
-          # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2 ** (retry_count - 1)
-          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Logging)
-          sleep(sleep_time)
-        end
-
-        Result.err("Failed after #{max_retries} retries: #{last_error}")
-      end
-
-      def retryable_error?(error)
-        return false unless error.is_a?(String)
-        error.match?("/timeout|connection|network|429|502|503|504|overloaded/i")
+        execute_streaming(http, req)
       end
 
       def execute_blocking(http, req)

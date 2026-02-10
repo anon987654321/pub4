@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require "stoplight"
+
 module MASTER
-  # CircuitBreaker - Rate limiting and failure handling for LLM calls
-  # Prevents cascading failures and manages request throttling
+  # Circuit breaker backed by Stoplight gem
+  # Preserves existing API for backward compatibility
   module CircuitBreaker
     extend self
 
@@ -10,67 +12,45 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Rate limiting state
-    def rate_limit_state
-      @rate_limit_state ||= { requests: [], window_start: Time.now }
-    end
+    @request_times = []
+    @mutex = Mutex.new
 
-    def check_rate_limit!
-      @rate_limit_mutex ||= Mutex.new
-      @rate_limit_mutex.synchronize do
-        now = Time.now
-        state = rate_limit_state
-        
-        # Clean old requests (older than 1 minute)
-        state[:requests].reject! { |t| now - t > 60 }
-        
-        if state[:requests].size >= RATE_LIMIT_PER_MINUTE
-          oldest = state[:requests].min
-          wait_time = 60 - (now - oldest)
-          if wait_time > 0
-            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
-            sleep(wait_time)
-            state[:requests].clear
-          end
-        end
-        
-        state[:requests] << now
-      end
-    end
+    Stoplight.default_data_store = Stoplight::DataStore::Memory.new
 
     def circuit_closed?(model)
-      return true unless defined?(DB)
-      row = DB.circuit(model)
-      return true unless row
-
-      state = row[:state]
-      return true if state == "closed"
-
-      last_failure = row[:last_failure]
-      if Time.now.utc - Time.parse(last_failure) > CIRCUIT_RESET_SECONDS
-        close_circuit!(model)
-        true
-      else
-        false
-      end
+      light = Stoplight(model)
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light.color != Stoplight::Color::RED
     end
 
     def open_circuit!(model)
-      return unless defined?(DB)
-
-      row = DB.circuit(model)
-      current_failures = row ? (row[:failures] || 0) + 1 : 1
-
-      if current_failures >= FAILURES_BEFORE_TRIP
-        DB.trip!(model)
-      else
-        # Increment failure count without tripping
-        DB.increment_failure!(model)
-      end
+      light = Stoplight(model)
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light.record_failure(Stoplight::Error::RedLight.new)
     end
 
     def close_circuit!(model)
-      DB.reset!(model) if defined?(DB)
+      light = Stoplight(model)
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light.record_success
+    end
+
+    def check_rate_limit!
+      @mutex.synchronize do
+        now = Time.now
+        @request_times.reject! { |t| now - t > 60 }
+        if @request_times.size >= RATE_LIMIT_PER_MINUTE
+          raise "Rate limit exceeded (#{RATE_LIMIT_PER_MINUTE}/min)"
+        end
+        @request_times << now
+      end
+    end
+
+    def status
+      { rate_limit: { current: @request_times.size, max: RATE_LIMIT_PER_MINUTE } }
     end
   end
 end
