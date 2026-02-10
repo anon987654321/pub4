@@ -9,7 +9,7 @@ require "fileutils"
 
 # Auto-install missing gems first
 require_relative "auto_install"
-MASTER::AutoInstall.install_gems if MASTER::AutoInstall.missing_gems.any?
+# Gems install lazily on first LoadError — no separate setup step needed
 
 # Core
 require_relative "utils"
@@ -23,12 +23,17 @@ require_relative "llm"
 require_relative "memory"
 require_relative "session"
 require_relative "pledge"
+require_relative "safety"
 require_relative "rubocop_detector"  # Style checking integration
 
 # Multi-language parsing and NLU
-require_relative "../../lib/parser/multi_language"
-require_relative "../../lib/nlu"
-require_relative "../../lib/conversation"
+%w[parser/multi_language nlu conversation].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError
+    # Stubs created by PR #147, or degrade gracefully
+  end
+end
 
 # Safe Autonomy Architecture
 require_relative "constitution"
@@ -84,12 +89,14 @@ require_relative "auto_fixer"
 # Web browsing (restored from MASTER)
 require_relative "web"
 
-# Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
-require_relative "speech"
-
-# External services
-require_relative "weaviate"
-require_relative "replicate"
+# Optional integrations — degrade gracefully if unavailable
+%w[speech weaviate replicate server].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    $stderr.puts "MASTER: #{mod} unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+  end
+end
 
 # Agents
 require_relative "agent"
@@ -120,11 +127,11 @@ require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
 
-# Generators (restored from historical features)
-require_relative "generators/html"
-
-# Quality gates (restored from MASTER)
-require_relative "framework/quality_gates"
-
-# Web UI
-require_relative "server"
+# Generators and framework — optional
+%w[generators/html framework/quality_gates diff_view].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    $stderr.puts "MASTER: #{mod} unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+  end
+end

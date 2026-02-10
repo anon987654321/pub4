@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module MASTER
   module AutoInstall
     GEMS = %w[
@@ -43,6 +45,20 @@ module MASTER
         puts "Installing #{missing.size} gems..." if verbose
         missing.each do |gem|
           system("gem install #{gem} --no-document")
+        end
+      end
+
+      def require_gem(name)
+        require name
+      rescue LoadError
+        return if @attempted&.include?(name)
+        (@attempted ||= Set.new) << name
+        $stderr.puts "MASTER: installing #{name}..."
+        if system("gem install #{name} --no-document")
+          require name
+        else
+          $stderr.puts "MASTER: failed to install #{name}. Run: gem install #{name}"
+          raise
         end
       end
 

@@ -11,6 +11,7 @@
   context_window: 200000
   provider: anthropic
   reasoning: true
+  default: true
   use_for:
     - billion_dollar_apps
     - business_plans
@@ -19,7 +20,7 @@
     - architecture_design
 
 # === STRONG TIER (complex reasoning, code review) ===
-# DEFAULT: DeepSeek-R1 (best value) or Claude Sonnet 4.5 (best quality)
+# DeepSeek-R1 (best value) or Claude Sonnet 4.5 (best quality)
 - id: deepseek/deepseek-r1
   alias: deepseek-r1
   tier: strong
@@ -28,7 +29,6 @@
   context_window: 64000
   provider: deepseek
   reasoning: true
-  default: true
   use_for:
     - code_review
     - refactoring

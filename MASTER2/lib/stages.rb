@@ -61,19 +61,13 @@ module MASTER
 
     # Stage 3: Block dangerous patterns
     class Guard
-      DANGEROUS_PATTERNS = [
-        /rm\s+-r[f]?\s+\//,
-        />\s*\/dev\/[sh]da/,
-        /DROP\s+TABLE/i,
-        /FORMAT\s+[A-Z]:/i,
-        /mkfs\./,
-        /dd\s+if=/,
-      ].freeze
-
       def call(input)
         text = input[:text] || ""
-        match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
-        match ? Result.err("Blocked: dangerous pattern detected.") : Result.ok(input)
+        if Safety.dangerous?(text)
+          Result.err("Blocked: dangerous pattern detected.")
+        else
+          Result.ok(input)
+        end
       end
     end
 

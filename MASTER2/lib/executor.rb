@@ -16,27 +16,6 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
-    # Dangerous patterns to block (injection prevention)
-    DANGEROUS_PATTERNS = [
-      /rm\s+-r[f]?\s+\//,
-      />\s*\/dev\/[sh]da/,
-      /DROP\s+TABLE/i,
-      /FORMAT\s+[A-Z]:/i,
-      /mkfs\./,
-      /dd\s+if=/,
-    ].freeze
-    
-    # Protected paths that cannot be written to
-    PROTECTED_WRITE_PATHS = %w[
-      data/constitution.yml
-      /etc/
-      /usr/
-      /sys/
-      /proc/
-      /dev/
-      /boot/
-    ].freeze
-    
     # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
@@ -272,15 +251,13 @@ module MASTER
     end
 
     def generate_plan(goal, tier:)
-      tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
-      
       prompt = <<~PLAN
         Create a step-by-step plan to accomplish this task:
         
         TASK: #{goal}
         
         TOOLS AVAILABLE:
-        #{tool_list}
+        #{tool_list_text}
         
         Respond with a numbered list of tool invocations, one per line.
         Each step should be a complete tool command.
@@ -356,13 +333,11 @@ module MASTER
     # ═══════════════════════════════════════════════════════════════════════════
     
     def execute_rewoo(goal, tier:)
-      tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
-      
       # Single LLM call to plan ALL actions with placeholders
       prompt = <<~REWOO
         Task: #{goal}
         
-        Tools: #{tool_list}
+        Tools: #{tool_list_text}
         
         Create a complete plan using #E{n} as placeholders for tool results.
         Each step can reference previous results.
@@ -571,8 +546,6 @@ module MASTER
         "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]&.[](0..400)}"
       end.join("\n\n")
 
-      tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
-      
       # Build identity from config or default
       identity = if config["identity"]
         config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
@@ -611,7 +584,7 @@ module MASTER
         TASK: #{goal}
         
         TOOLS AVAILABLE (for autonomous execution):
-        #{tool_list}
+        #{tool_list_text}
         
         TOOL FORMAT:
         - ask_llm "your question"
@@ -732,17 +705,8 @@ module MASTER
       expanded = File.expand_path(path)
       
       # Check protected paths first
-      PROTECTED_WRITE_PATHS.each do |protected|
-        # For absolute paths, compare directly; for relative, expand from root
-        protected_expanded = if protected.start_with?("/")
-          protected
-        else
-          File.expand_path(protected, MASTER.root)
-        end
-        
-        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
-          return "BLOCKED: file_write to protected path '#{path}'"
-        end
+      if Safety.protected_path?(path)
+        return "BLOCKED: file_write to protected path '#{path}'"
       end
       
       # Check working directory constraint
@@ -779,7 +743,7 @@ module MASTER
     end
 
     def shell_command(cmd)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+      if Safety.dangerous?(cmd)
         return "BLOCKED: dangerous shell command rejected"
       end
 
@@ -856,7 +820,7 @@ module MASTER
     end
 
     def sanitize_tool_input(action_str)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+      if Safety.dangerous?(action_str)
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str
@@ -874,6 +838,10 @@ module MASTER
     def record_history(entry)
       @history << entry
       @history.shift if @history.size > MAX_HISTORY_SIZE
+    end
+
+    def tool_list_text
+      @tool_list_text ||= TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
     end
   end
 end
