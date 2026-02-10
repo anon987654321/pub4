@@ -5,6 +5,8 @@ module MASTER
   module Momentum
     extend self
 
+    TASKS_PER_XP = 5
+
     XP = {
       chat: 1,
       refactor: 5,
@@ -71,7 +73,7 @@ module MASTER
 
     def summary
       { 
-        tasks_completed: state[:xp] / 5,
+        tasks_completed: state[:xp] / TASKS_PER_XP,
         streak: state[:streak],
         level: state[:level],
         title: title

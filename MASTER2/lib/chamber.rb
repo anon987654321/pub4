@@ -11,7 +11,7 @@ module MASTER
 
     MODELS = {
       sonnet: nil,    # Will be resolved via LLM.pick
-      deepseek: nil,  # Will be resolved via LLM.pick  
+      deepseek: nil,  # Will be resolved via LLM.pick
       gemini: nil,    # Will be resolved via LLM.pick
     }.freeze
 

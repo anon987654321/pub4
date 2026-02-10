@@ -8,6 +8,8 @@ module MASTER
   module Web
     extend self
 
+    MAX_CONTENT_LENGTH = 5000
+
     def browse(url)
       uri = URI(url)
       http = Net::HTTP.new(uri.hostname, uri.port)
@@ -26,7 +28,7 @@ module MASTER
           .gsub(/\s+/, " ")
           .strip
 
-        Result.ok(content: text[0, 5000], url: url, status: response.code)
+        Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url, status: response.code)
       else
         Result.err("HTTP #{response.code} for #{url}")
       end
