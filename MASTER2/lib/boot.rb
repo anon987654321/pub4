@@ -31,11 +31,16 @@ module MASTER
           "unavailable"
         end
 
+        # Shell info
+        shell_info = ENV["SHELL"] || "unknown"
+        shell_info += " (zsh)" if shell_info.include?("zsh")
+
         # Dense dmesg - no fluff, no breathing room
         puts c("MASTER #{VERSION} #1: #{timestamp}")
         puts c("#{user}@#{host}:#{MASTER.root}")
         puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
         puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
+        puts c("shell0 at cpu0: #{shell_info}")
         puts c("db0 at ruby0: #{db_status}")
         puts c("llm0 at db0: openrouter #{tier_models}")
         puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")

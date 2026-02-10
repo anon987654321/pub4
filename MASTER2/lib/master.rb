@@ -24,6 +24,7 @@ require_relative "db_jsonl"
 require_relative "llm"
 require_relative "memory"
 require_relative "session"
+require_relative "locale"  # Language detection and persona management
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
@@ -59,6 +60,7 @@ require_relative "executor"
 require_relative "boot"
 require_relative "stages"
 require_relative "pipeline"
+require_relative "repl"  # REPL extracted from Pipeline
 require_relative "hooks"
 require_relative "convergence"
 require_relative "questions"
@@ -110,6 +112,7 @@ require_relative "audit"
 require_relative "confirmation_gate"
 require_relative "cross_ref"
 require_relative "self_repair"
+require_relative "self_refactor"  # Self-refactoring capability
 require_relative "learning_feedback"
 require_relative "learning_quality"
 

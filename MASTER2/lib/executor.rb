@@ -51,6 +51,7 @@ module MASTER
       code_execution: "Execute Ruby code",
       council_review: "Run adversarial council review",
       self_test: "Run self-test on MASTER",
+      self_refactor: "Refactor MASTER's own source files (dry_run by default)",
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections
@@ -690,6 +691,9 @@ module MASTER
       when /^self_test/i
         self_test
 
+      when /^self_refactor\s*(.*)$/i
+        self_refactor($1)
+
       else
         "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
@@ -808,23 +812,19 @@ module MASTER
         /Kernel\.exec/,
         /IO\.popen/,
         /Open3/,
-        /FileUtils\.rm_rf/
+        /FileUtils\.rm_rf/,
+        /File\.delete/,
+        /Pledge\./,
+        /unveil/
       ]
       
       if dangerous_code.any? { |pattern| pattern.match?(code) }
         return "BLOCKED: code_execution contains dangerous constructs"
       end
       
-      # Attempt Pledge sandboxing on OpenBSD if available
-      if defined?(Pledge)
-        begin
-          Pledge.pledge("stdio rpath")
-        rescue StandardError
-          # Pledge not available or failed, continue without it
-        end
-      end
-      
-      stdout, stderr, status = Open3.capture3("ruby", stdin_data: code)
+      # Run in subprocess with restricted environment
+      env = Shell.respond_to?(:zsh_env) ? Shell.zsh_env : ENV.to_h
+      stdout, stderr, status = Open3.capture3(env, "ruby", "-e", code)
       status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
     end
 
@@ -852,6 +852,16 @@ module MASTER
         result.ok? ? "Self-test completed" : "Self-test failed: #{result.error}"
       else
         "SelfTest module not available"
+      end
+    end
+
+    def self_refactor(args = "")
+      if defined?(SelfRefactor)
+        dry_run = !args.include?("apply")
+        result = SelfRefactor.run(dry_run: dry_run, auto_confirm: true)
+        result.ok? ? "Self-refactor: #{result.value}" : "Failed: #{result.error}"
+      else
+        "SelfRefactor module not available"
       end
     end
 

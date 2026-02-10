@@ -61,6 +61,23 @@ when "evolve"
   result = MASTER::Commands.evolve(args.join(" "))
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
+when "self-refactor", "self-fix"
+  # Self-refactoring: master self-refactor [--apply] [--auto]
+  dry_run = !args.include?("--apply")
+  auto_confirm = args.include?("--auto")
+  file_args = args.reject { |a| a.start_with?("--") }
+  targets = file_args.empty? ? nil : file_args.map { |f| File.expand_path(f) }
+
+  puts dry_run ? "Self-refactor (DRY RUN):" : "Self-refactor (APPLYING CHANGES):"
+  result = MASTER::SelfRefactor.run(targets: targets, dry_run: dry_run, auto_confirm: auto_confirm)
+  if result.ok?
+    v = result.value
+    puts "  Refactored: #{v[:refactored]}, Skipped: #{v[:skipped]}, Failed: #{v[:failed]}, Rollbacks: #{v[:rollbacks]}"
+  else
+    puts "Error: #{result.error}"
+    exit 1
+  end
+
 when "browse"
   # Web browser: master browse <url>
   if args.empty?
@@ -109,6 +126,7 @@ when "help", "-h", "--help", nil
       chamber <file>              Chamber review with multi-model deliberation
       ideate <topic>              Generate 15+ alternatives for a topic
       evolve [args]               Evolve entire codebase
+      self-refactor [--apply]     Refactor MASTER's own source code
       browse <url>                Browse and extract web content
       speak <text>                Text-to-speech output
       session <cmd>               Session management (show|save|load)

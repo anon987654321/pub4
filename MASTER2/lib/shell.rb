@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "open3"
+require "timeout"
+
 module MASTER
   # Shell integration - zsh-native patterns
   module Shell
@@ -25,7 +28,34 @@ module MASTER
       'journalctl' => 'tail -f /var/log/messages'
     }.freeze
 
+    OPENBSD_PATHS = %w[
+      /usr/local/bin
+      /usr/bin
+      /bin
+      /usr/sbin
+      /sbin
+      /usr/X11R6/bin
+      /usr/local/sbin
+    ].freeze
+
     class << self
+      def openbsd?
+        RUBY_PLATFORM.include?("openbsd")
+      end
+
+      def default_path
+        openbsd? ? OPENBSD_PATHS.join(":") : ENV["PATH"]
+      end
+
+      def zsh_env
+        env = ENV.to_h.dup
+        env["SHELL"] = which("zsh") || "/bin/zsh" if zsh?
+        env["PATH"] = default_path if openbsd?
+        env["LC_ALL"] = "en_US.UTF-8"
+        env["LANG"] = "en_US.UTF-8"
+        env
+      end
+
       def sanitize(cmd)
         parts = cmd.strip.split(/\s+/)
         return cmd if parts.empty?
@@ -56,18 +86,17 @@ module MASTER
 
       def execute(cmd, timeout: 30)
         return Result.err("Dangerous command blocked") unless safe?(cmd)
-
         sanitized = sanitize(cmd)
-        output = nil
-        
+
+        stdout, stderr, status = nil
         Timeout.timeout(timeout) do
-          output = `#{sanitized} 2>&1`
+          stdout, stderr, status = Open3.capture3(zsh_env, sanitized)
         end
 
-        $?.success? ? Result.ok(output) : Result.err(output)
+        status.success? ? Result.ok(stdout) : Result.err("#{stderr}\n#{stdout}".strip)
       rescue Timeout::Error
         Result.err("Command timed out after #{timeout}s")
-      rescue => e
+      rescue StandardError => e
         Result.err(e.message)
       end
 
