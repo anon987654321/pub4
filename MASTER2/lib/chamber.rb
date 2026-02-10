@@ -22,6 +22,24 @@ module MASTER
       LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
     end
 
+    # Resolve model key (like :sonnet, :deepseek) to model ID
+    def resolve_model(model_key)
+      # Map common model keys to search patterns
+      search_map = {
+        sonnet: "claude.*sonnet",
+        deepseek: "deepseek",
+        gpt4: "gpt-4",
+        gemini: "gemini"
+      }
+
+      pattern = search_map[model_key]
+      return nil unless pattern
+
+      # Search in LLM.models for matching model
+      model = LLM.models.find { |m| m[:id] =~ /#{pattern}/i }
+      model&.[](:id) || LLM.pick(:strong)
+    end
+
     # Convenience method for single council review
     # @param text [String] Code or text to review
     # @param model [String, nil] Optional model override
@@ -40,8 +58,8 @@ module MASTER
       participants.each do |model_key|
         break if over_budget?
 
-        model = MODELS[model_key]
-        next unless model && @llm.circuit_closed?(model)
+        model = resolve_model(model_key)
+        next unless model && CircuitBreaker.circuit_closed?(model)
 
         proposal = propose(code, model, filename)
         @proposals << { model: model_key, proposal: proposal } if proposal
@@ -51,9 +69,9 @@ module MASTER
 
       council_result = multi_round_review(code, @proposals.first[:proposal])
 
-      arbiter_model = MODELS[ARBITER]
-      if @llm.circuit_closed?(arbiter_model)
-        final = arbiter_decision(code, @proposals, arbiter_model)
+      arbiter = arbiter_model
+      if CircuitBreaker.circuit_closed?(arbiter)
+        final = arbiter_decision(code, @proposals, arbiter)
         Result.ok(
           original: code,
           proposals: @proposals,
@@ -290,7 +308,7 @@ module MASTER
 
       data[:content]
     rescue StandardError
-      @llm.open_circuit!(model)
+      CircuitBreaker.open_circuit!(model)
       nil
     end
 

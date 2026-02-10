@@ -270,6 +270,25 @@ module MASTER
         puts
       end
 
+      def print_language_axioms(args)
+        if defined?(LanguageAxioms)
+          puts "\nLanguage Axioms:"
+          puts
+          axioms = LanguageAxioms.all rescue []
+          if axioms.any?
+            axioms.each_with_index do |axiom, idx|
+              puts "  #{idx + 1}. #{axiom[:language]}: #{axiom[:rule]}"
+            end
+          else
+            puts "  No axioms defined yet."
+          end
+          puts
+        else
+          puts "\nLanguage Axioms system not yet implemented."
+          puts
+        end
+      end
+
       def print_context_usage
         session = Session.current
         u = ContextWindow.usage(session)
