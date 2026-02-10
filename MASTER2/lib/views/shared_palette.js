@@ -1,4 +1,16 @@
 // shared_palette.js — 8-bit palette (256 colors) shared across orb views
+// 
+// Usage: Include this script in HTML files before any script that uses palette:
+//   <script src="shared_palette.js"></script>
+//
+// Exports:
+//   - PAL: Array of 256 RGB color triplets [r,g,b]
+//   - quantize(r,g,b): Returns closest palette color to given RGB values
+//
+// The palette consists of:
+//   - 252 colors: 6×7×6 RGB cube (216 web-safe + 36 additional)
+//   - 4 grayscale: [0,0,0], [85,85,85], [170,170,170], [255,255,255]
+
 const PAL = [];
 for (let r = 0; r < 6; r++)
   for (let g = 0; g < 7; g++)

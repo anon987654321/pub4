@@ -14,13 +14,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 <canvas id="c"></canvas>
 <script src="shared_palette.js"></script>
 <script>
-// 8-bit palette: 256 colors
 
-function quantize_fallback(r,g,b){
-  let minD=Infinity,best=PAL[0];
-  for(const c of PAL){
-    const dr=r-c[0],dg=g-c[1],db=b-c[2];
-    if(dr*dr+dg*dg+db*db<minD){minD=dr*dr+dg*dg+db*db;best=c}
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
   }
   return best;
 }
