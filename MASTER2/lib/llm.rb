@@ -36,7 +36,7 @@ module MASTER
         @forced_tier
       end
 
-      # Main ask method with OpenRouter features
+      def models
         @models ||= load_models
       end
 
@@ -145,7 +145,7 @@ module MASTER
         primary = apply_suffix(primary, online: online, provider: provider)
 
         model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+        selected_tier = model_rates[primary.split(":" ).first]&.[](:tier) || tier || :unknown
 
         # Update current state for prompt display
         @current_model = model_short
@@ -225,12 +225,17 @@ module MASTER
       def extract_model_name(model_id)
         # Remove provider prefix and suffixes
         name = model_id.split("/").last
-        name = name.split(":").first  # Remove :nitro, :floor, :online
+        name = name.split(":" ).first  # Remove :nitro, :floor, :online
         name
       end
 
       def prompt_model_name
         @current_model || "unknown"
+      end
+
+      # Delegate circuit_closed? to CircuitBreaker for callers that use LLM.circuit_closed?
+      def circuit_closed?(model)
+        CircuitBreaker.circuit_closed?(model)
       end
 
       private
@@ -335,7 +340,7 @@ module MASTER
 
       def retryable_error?(error)
         return false unless error.is_a?(String)
-        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
+        error.match?("/timeout|connection|network|429|502|503|504|overloaded/i")
       end
 
       def execute_blocking(http, req)
@@ -497,7 +502,7 @@ module MASTER
         else
           # Legacy signature: estimate_cost(char_count, model) - kept for compatibility
           char_count = model_or_chars
-          model = tokens_out.to_s.split(":").first  # tokens_out is actually model in legacy call
+          model = tokens_out.to_s.split(":" ).first  # tokens_out is actually model in legacy call
           rates = model_rates.fetch(model, { in: 1.0, out: 1.0 })
           est_tokens_in = (char_count / 4.0).ceil
           (est_tokens_in * rates[:in] + 500 * rates[:out]) / 1_000_000.0
