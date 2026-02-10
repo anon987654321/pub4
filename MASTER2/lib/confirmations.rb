@@ -78,7 +78,7 @@ module MASTER
 
       # Phase 2: Confirm
       unless @auto_confirm
-        confirmed = confirm("Proceed with this operation?")
+        confirmed = Confirmations.confirm("Proceed with this operation?")
 
         unless confirmed
           return Result.err("Cancelled by user")
