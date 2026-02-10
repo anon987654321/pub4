@@ -35,6 +35,10 @@ module MASTER
       "http://localhost:#{@port}"
     end
 
+    def running?
+      @running
+    end
+
     private
 
     def find_port

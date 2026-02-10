@@ -48,7 +48,7 @@ module MASTER
       self_test: "Run self-test on MASTER",
     }.freeze
 
-    attr_reader :history, :step, :pattern, :plan, :reflections
+    attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
