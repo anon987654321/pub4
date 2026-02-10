@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "time"
+require "socket"
 
 module MASTER
   # Boot - OpenBSD dmesg-style startup (dense, terse, beautiful)
@@ -17,7 +18,7 @@ module MASTER
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
         user = ENV["USER"] || ENV["USERNAME"] || "user"
-        host = `hostname`.strip rescue "localhost"
+        host = Socket.gethostname rescue "localhost"
 
         # Smoke test first - catch runtime errors early
         smoke_result = smoke_test
@@ -27,7 +28,12 @@ module MASTER
         puts c("#{user}@#{host}:#{MASTER.root}")
         puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
         puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
-        puts c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas")
+        db_info = begin
+          "#{DB.axioms.size} axioms, #{DB.council.size} personas"
+        rescue StandardError
+          "offline"
+        end
+        puts c("db0 at ruby0: #{db_info}")
         puts c("llm0 at db0: openrouter #{tier_models}")
         puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")
         puts c("tts0 at budget0: #{tts_status}")

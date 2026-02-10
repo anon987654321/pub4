@@ -26,9 +26,9 @@ require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
 # Multi-language parsing and NLU
-require_relative "../../lib/parser/multi_language"
-require_relative "../../lib/nlu"
-require_relative "../../lib/conversation"
+require_relative "parser/multi_language"
+require_relative "nlu"
+require_relative "conversation"
 
 # Safe Autonomy Architecture
 require_relative "constitution"
@@ -87,9 +87,14 @@ require_relative "web"
 # Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
 require_relative "speech"
 
-# External services
-require_relative "weaviate"
-require_relative "replicate"
+# External services (degrade gracefully on OpenBSD)
+%w[weaviate replicate].each do |mod|
+  begin
+    require_relative mod
+  rescue LoadError, StandardError => e
+    $stderr.puts "MASTER: #{mod} unavailable (#{e.message})" if ENV["MASTER_DEBUG"]
+  end
+end
 
 # Agents
 require_relative "agent"
@@ -120,11 +125,19 @@ require_relative "planner"
 require_relative "self_critique"
 require_relative "reflection_memory"
 
-# Generators (restored from historical features)
-require_relative "generators/html"
+# Generators (may not exist yet)
+begin
+  require_relative "generators/html"
+rescue LoadError, StandardError => e
+  $stderr.puts "MASTER: generators/html unavailable" if ENV["MASTER_DEBUG"]
+end
 
-# Quality gates (restored from MASTER)
-require_relative "framework/quality_gates"
+# Quality gates (may not exist yet)
+begin
+  require_relative "framework/quality_gates"
+rescue LoadError, StandardError => e
+  $stderr.puts "MASTER: quality_gates unavailable" if ENV["MASTER_DEBUG"]
+end
 
 # Web UI
 require_relative "server"

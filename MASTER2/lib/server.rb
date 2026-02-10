@@ -2,6 +2,7 @@
 
 require "json"
 require "socket"
+require "securerandom"
 
 module MASTER
   # Server - Multimodal web UI with Falcon
@@ -56,7 +57,7 @@ module MASTER
       app = build_app
 
       Async do
-        endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
+        endpoint = Async::HTTP::Endpoint.parse("http://127.0.0.1:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(app), endpoint)
         server.run
       end

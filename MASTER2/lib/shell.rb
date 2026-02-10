@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "open3"
+require "timeout"
+
 module MASTER
   # Shell integration - zsh-native patterns
   module Shell
@@ -58,22 +61,25 @@ module MASTER
         return Result.err("Dangerous command blocked") unless safe?(cmd)
 
         sanitized = sanitize(cmd)
-        output = nil
-        
+        stdout = stderr = nil
+        status = nil
+
         Timeout.timeout(timeout) do
-          output = `#{sanitized} 2>&1`
+          stdout, stderr, status = Open3.capture3(sanitized)
         end
 
-        $?.success? ? Result.ok(output) : Result.err(output)
+        status.success? ? Result.ok(stdout) : Result.err("#{stderr}\n#{stdout}".strip)
       rescue Timeout::Error
         Result.err("Command timed out after #{timeout}s")
-      rescue => e
+      rescue StandardError => e
         Result.err(e.message)
       end
 
       def which(cmd)
-        path = `which #{cmd} 2>/dev/null`.strip
-        path.empty? ? nil : path
+        stdout, _, status = Open3.capture3("which", cmd)
+        status.success? ? stdout.strip : nil
+      rescue StandardError
+        nil
       end
 
       def zsh?

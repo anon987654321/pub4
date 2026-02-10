@@ -1,0 +1,36 @@
+#!/bin/sh
+# MASTER2 first-run setup for OpenBSD
+set -e
+
+cd "$(dirname "$0")/.."
+
+echo "MASTER2 setup for OpenBSD"
+echo "========================="
+
+# Check Ruby
+ruby -v || { echo "Error: Ruby not found. Run: pkg_add ruby"; exit 1; }
+
+# Check for bundler
+gem list -i bundler > /dev/null 2>&1 || gem install bundler
+
+# Install gems
+bundle install --jobs 4
+
+# Check for API key
+if [ -z "$OPENROUTER_API_KEY" ]; then
+  echo ""
+  echo "WARNING: OPENROUTER_API_KEY not set"
+  echo "  export OPENROUTER_API_KEY=sk-or-v1-your-key"
+  echo "  Or add to ~/.profile"
+fi
+
+# Create data directory if needed
+mkdir -p data
+
+# Verify boot
+echo ""
+echo "Testing boot..."
+ruby -e "require_relative 'lib/master'; puts 'MASTER #{MASTER::VERSION} OK'"
+
+echo ""
+echo "Setup complete. Run: bin/master"

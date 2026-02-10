@@ -10,8 +10,15 @@ $stderr.set_encoding(Encoding::UTF_8)
 require "json"
 require_relative "../lib/master"
 
-MASTER::DB.setup
-MASTER::Session.install_crash_handlers
+begin
+  MASTER::DB.setup
+rescue StandardError => e
+  $stderr.puts "MASTER: DB setup failed (#{e.message}), continuing with defaults"
+end
+
+if defined?(MASTER::Session)
+  MASTER::Session.install_crash_handlers
+end
 
 # Parse command line arguments
 command = ARGV[0]
@@ -91,6 +98,25 @@ when "axioms-stats", "stats"
   # Statistics: master axioms-stats
   MASTER::Commands.print_axiom_stats
 
+when "selftest", "self-test"
+  # Run self-test: master selftest
+  result = MASTER::SelfTest.run
+  exit result.ok? ? 0 : 1
+
+when "repair", "self-repair"
+  # Self-repair: master repair [--apply]
+  dry_run = !args.include?("--apply")
+  files = Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
+  puts dry_run ? "Self-repair (DRY RUN):" : "Self-repair (APPLYING):"
+  result = MASTER::SelfRepair.repair(files, dry_run: dry_run)
+  if result.ok?
+    v = result.value
+    puts "  Repaired: #{v[:repaired]}, Failed: #{v[:failed]}, Skipped: #{v[:skipped]}/#{v[:total]}"
+  else
+    puts "Error: #{result.error}"
+    exit 1
+  end
+
 when "version", "-v", "--version"
   puts "MASTER2 v#{MASTER::VERSION}"
   exit 0
@@ -115,6 +141,8 @@ when "help", "-h", "--help", nil
       health                      System health check
       opportunities [path]        Find improvement opportunities
       axioms-stats                Display axiom violation statistics
+      selftest                    Run self-test suite
+      repair [--apply]            Self-repair code issues (dry-run by default)
       version                     Show version
       help                        Show this help
     
