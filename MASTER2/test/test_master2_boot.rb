@@ -80,6 +80,7 @@ class TestMaster2Boot < Minitest::Test
 
   def test_server_class_loaded
     skip "Server might not be available" unless defined?(MASTER::Server)
-    assert defined?(MASTER::Server)
+    # Server is loaded, verify it has expected methods
+    assert MASTER::Server.respond_to?(:new)
   end
 end
