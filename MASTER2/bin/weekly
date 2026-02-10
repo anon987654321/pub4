@@ -1,0 +1,164 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Weekly automation script for MASTER2
+# Generates weekly reports from learnings, session history, and axiom violations
+# Ported from MASTER v1, adapted for MASTER2's architecture
+
+require_relative '../lib/master'
+require 'yaml'
+require 'date'
+
+def generate_weekly_report
+  report = {
+    generated_at: Time.now.iso8601,
+    week_ending: Date.today.to_s,
+    sections: {}
+  }
+  
+  puts "📊 Generating Weekly Report for week ending #{Date.today}"
+  puts "=" * 60
+  
+  # Section 1: Learning Summary
+  if File.exist?(MASTER::AgentAutonomy::LEARNING_FILE)
+    puts "\n📚 Learning Summary..."
+    learning_data = YAML.safe_load_file(MASTER::AgentAutonomy::LEARNING_FILE, symbolize_names: true) rescue {}
+    
+    corrections = learning_data[:corrections] || []
+    skills = learning_data[:skills] || []
+    
+    report[:sections][:learning] = {
+      corrections_count: corrections.size,
+      skills_count: skills.size,
+      recent_corrections: corrections.last(5),
+      top_skills: skills.sort_by { |s| -(s[:use_count] || 0) }.first(5)
+    }
+    
+    puts "  Corrections recorded: #{corrections.size}"
+    puts "  Skills acquired: #{skills.size}"
+  end
+  
+  # Section 2: Session Statistics
+  puts "\n📈 Session Statistics..."
+  sessions_dir = File.join(MASTER::Paths.root, '.sessions')
+  if Dir.exist?(sessions_dir)
+    session_files = Dir[File.join(sessions_dir, '*.json')]
+    recent_sessions = session_files.sort_by { |f| File.mtime(f) }.reverse.first(10)
+    
+    total_cost = 0
+    total_queries = 0
+    
+    recent_sessions.each do |session_file|
+      data = JSON.parse(File.read(session_file)) rescue {}
+      total_cost += data['cost'].to_f if data['cost']
+      total_queries += data['query_count'].to_i if data['query_count']
+    end
+    
+    report[:sections][:sessions] = {
+      total_sessions: session_files.size,
+      recent_sessions: recent_sessions.size,
+      total_cost: total_cost.round(2),
+      total_queries: total_queries,
+      avg_cost_per_query: total_queries > 0 ? (total_cost / total_queries).round(4) : 0
+    }
+    
+    puts "  Total sessions: #{session_files.size}"
+    puts "  Total cost: $#{total_cost.round(2)}"
+    puts "  Total queries: #{total_queries}"
+  end
+  
+  # Section 3: Axiom Violations Trends
+  puts "\n⚖️  Axiom Violations..."
+  if defined?(MASTER::AxiomStats)
+    violations = MASTER::AxiomStats.recent_violations rescue []
+    
+    report[:sections][:axioms] = {
+      violations_count: violations.size,
+      top_violations: violations.group_by { |v| v[:axiom] }
+                                .transform_values(&:size)
+                                .sort_by { |_, count| -count }
+                                .first(5)
+                                .to_h
+    }
+    
+    puts "  Total violations: #{violations.size}"
+    if violations.any?
+      puts "  Top violators:"
+      report[:sections][:axioms][:top_violations].each do |axiom, count|
+        puts "    - #{axiom}: #{count} times"
+      end
+    end
+  end
+  
+  # Section 4: Model Performance
+  puts "\n🤖 Model Performance..."
+  if File.exist?(MASTER::Paths.data_file('circuit_breaker.jsonl'))
+    lines = File.readlines(MASTER::Paths.data_file('circuit_breaker.jsonl'))
+    recent_events = lines.last(100).map { |l| JSON.parse(l) rescue nil }.compact
+    
+    model_stats = recent_events.group_by { |e| e['model'] }
+                               .transform_values { |events|
+                                 {
+                                   successes: events.count { |e| e['event'] == 'success' },
+                                   failures: events.count { |e| e['event'] == 'failure' }
+                                 }
+                               }
+    
+    report[:sections][:models] = model_stats
+    
+    puts "  Active models: #{model_stats.keys.size}"
+    model_stats.each do |model, stats|
+      success_rate = stats[:successes] + stats[:failures] > 0 ? 
+                     (stats[:successes].to_f / (stats[:successes] + stats[:failures]) * 100).round(1) : 0
+      puts "    #{model}: #{success_rate}% success rate"
+    end
+  end
+  
+  # Section 5: Recommendations
+  puts "\n💡 Recommendations..."
+  recommendations = []
+  
+  if report.dig(:sections, :axioms, :violations_count).to_i > 50
+    recommendations << "High axiom violation rate - consider code review"
+  end
+  
+  if report.dig(:sections, :sessions, :avg_cost_per_query).to_f > 0.05
+    recommendations << "High cost per query - consider using cheaper tiers"
+  end
+  
+  if report.dig(:sections, :learning, :corrections_count).to_i < 5
+    recommendations << "Low learning activity - provide more feedback"
+  end
+  
+  report[:sections][:recommendations] = recommendations
+  
+  if recommendations.any?
+    recommendations.each { |rec| puts "  • #{rec}" }
+  else
+    puts "  ✓ All metrics look good!"
+  end
+  
+  # Save report
+  output_dir = File.join(MASTER::Paths.data, 'reports')
+  FileUtils.mkdir_p(output_dir)
+  
+  output_file = File.join(output_dir, "weekly_#{Date.today.strftime('%Y%m%d')}.yml")
+  File.write(output_file, YAML.dump(report))
+  
+  puts "\n" + "=" * 60
+  puts "📄 Report saved to: #{output_file}"
+  puts "=" * 60
+  
+  report
+end
+
+# Run if executed directly
+if __FILE__ == $PROGRAM_NAME
+  begin
+    generate_weekly_report
+  rescue => e
+    puts "❌ Error generating report: #{e.message}"
+    puts e.backtrace.first(5)
+    exit 1
+  end
+end

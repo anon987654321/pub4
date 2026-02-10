@@ -178,7 +178,7 @@ module MASTER
       text.lines.each do |line|
         if line =~ /^\s*(\d+)[.)]\s*(.+)/
           action = ::Regexp.last_match(2).strip
-          action = action.sub(/^(run|execute|do):\s*/i, '')
+          action = action.sub(/^(run|execute|do):\s*/i, "")
 
           tasks << {
             action: action,
@@ -189,6 +189,49 @@ module MASTER
       end
 
       tasks.take(MAX_TASKS)
+    end
+
+    # Merged from planner_helper.rb - Parse numbered steps from text into an array
+    def self.parse_plan(text)
+      return [] if text.nil? || text.empty?
+      
+      # Extract lines that start with numbers followed by period or parenthesis
+      steps = text.scan(/^\s*(\d+)[.)]\s*(.+?)$/m).map { |_num, step| step.strip }
+      
+      # Remove empty steps
+      steps.reject(&:empty?)
+    end
+
+    # Merged from planner_helper.rb - Generate a numbered step plan from a goal string
+    def self.generate_plan(goal, max_steps: 10)
+      return Result.err("Goal cannot be empty") if goal.nil? || goal.empty?
+
+      prompt = <<~PROMPT
+        Create a step-by-step plan to accomplish this goal:
+        
+        GOAL: #{goal}
+        
+        Provide a numbered list of steps (maximum #{max_steps} steps).
+        Each step should be clear and actionable.
+        
+        Format:
+        1. First step
+        2. Second step
+        3. Third step
+        ...
+        
+        PLAN:
+      PROMPT
+
+      if defined?(LLM)
+        result = LLM.ask(prompt, tier: :fast)
+        return result unless result.ok?
+        
+        steps = parse_plan(result.value[:content])
+        Result.ok(steps: steps)
+      else
+        Result.err("LLM module not available")
+      end
     end
 
     def load_plan
@@ -223,6 +266,19 @@ module MASTER
       YAML.load_file(PLAN_HISTORY) || []
     rescue StandardError
       []
+    end
+  end
+
+  # Backward compatibility alias for planner_helper.rb
+  module PlannerHelper
+    extend self
+    
+    def parse_plan(text)
+      Planner.parse_plan(text)
+    end
+    
+    def generate_plan(goal, max_steps: 10)
+      Planner.generate_plan(goal, max_steps: max_steps)
     end
   end
 end

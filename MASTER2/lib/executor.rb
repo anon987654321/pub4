@@ -16,6 +16,11 @@ module MASTER
   # Executor - Hybrid agent with multiple reasoning patterns
   # Patterns: react, pre_act, rewoo, reflexion
   # Auto-selects best pattern based on task characteristics
+  # 
+  # NOTE: This file is split across multiple files for readability:
+  # - executor/tools.rb - Tool implementations
+  # - executor/patterns.rb - Pattern execution methods
+  # - executor/context.rb - Context building and response parsing
   class Executor
     include React
     include PreAct
@@ -27,6 +32,16 @@ module MASTER
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
     MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
+    
+    # Magic number constants extracted for clarity (Phase 5 - Style compliance)
+    MAX_BROWSE_CONTENT = 5000
+    MAX_FILE_CONTENT = 3000
+    MAX_CURL_CONTENT = 2000
+    MAX_LLM_RESPONSE_PREVIEW = 1000
+    MAX_SHELL_OUTPUT = 1000
+    SIMPLE_QUERY_LENGTH_THRESHOLD = 200
+    MAX_PARSE_FALLBACK_LENGTH = 100
+    
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
@@ -69,6 +84,11 @@ module MASTER
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
+
+    # Include extracted modules
+    include Tools
+    include Patterns
+    include Context
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
@@ -145,7 +165,7 @@ module MASTER
     private
 
     def simple_query?(goal)
-      goal.length < 200 &&
+      goal.length < SIMPLE_QUERY_LENGTH_THRESHOLD &&
         !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
         !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
     end

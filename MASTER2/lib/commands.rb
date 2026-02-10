@@ -123,6 +123,24 @@ module MASTER
       when "patterns", "modes"
         list_patterns
         nil
+      when "persona"
+        manage_persona(args)
+        nil
+      when "personas"
+        list_personas
+        nil
+      when "creative"
+        creative_chamber(args)
+        nil
+      when "scan"
+        scan_code(args)
+        nil
+      when "queue"
+        manage_queue(args)
+        nil
+      when "harvest"
+        harvest_data(args)
+        nil
       when "exit", "quit"
         :exit
       else

@@ -3,10 +3,12 @@
 module MASTER
   # Convergence - Detect plateaus, oscillations, and diminishing returns
   # Prevents infinite loops and wasted compute
+  # Merged from converge.rb for DRY compliance
   module Convergence
     PLATEAU_WINDOW = 3
     MIN_DELTA = 0.02
     MAX_ITERATIONS = 25
+    DIFF_THRESHOLD = 0.02
 
     class << self
       def track(history, current_metrics)
@@ -206,4 +208,7 @@ module MASTER
       end
     end
   end
+
+  # Backward compatibility alias
+  Converge = Convergence
 end
