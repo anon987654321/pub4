@@ -2,6 +2,7 @@
 
 module MASTER
   # Confirmations - NN/g: Prevent errors by confirming destructive actions
+  # Merged with ConfirmationGate functionality for unified confirmation workflow
   module Confirmations
     extend self
 
@@ -14,6 +15,12 @@ module MASTER
       /--force/i,
       /overwrite/i
     ].freeze
+
+    @auto_confirm = false
+
+    class << self
+      attr_accessor :auto_confirm
+    end
 
     def needs_confirmation?(input)
       DESTRUCTIVE_PATTERNS.any? { |pat| input.match?(pat) }
@@ -53,5 +60,56 @@ module MASTER
         options[choice - 1] if choice.between?(1, options.size)
       end
     end
+
+    # Gate operation with three phases: propose → confirm → execute
+    # Merged from confirmation_gate.rb
+    def gate(operation_name, description: nil, &block)
+      return Result.err("No block provided") unless block
+
+      # Phase 1: Propose
+      if description
+        puts "\n"
+        puts "  ⚠️  Operation: #{operation_name}"
+        puts "  📋 Description: #{description}"
+        puts "\n"
+      else
+        puts "\n  ⚠️  Operation: #{operation_name}\n\n"
+      end
+
+      # Phase 2: Confirm
+      unless @auto_confirm
+        confirmed = confirm("Proceed with this operation?")
+
+        unless confirmed
+          return Result.err("Cancelled by user")
+        end
+      end
+
+      # Phase 3: Execute
+      begin
+        result = block.call
+        Result.ok(result: result)
+      rescue StandardError => e
+        Result.err("Execution failed: #{e.message}")
+      end
+    end
+
+    # Stage class for pipeline integration
+    # Merged from confirmation_gate.rb
+    class Stage
+      def initialize(operation_name, description: nil)
+        @operation_name = operation_name
+        @description = description
+      end
+
+      def call(context)
+        Confirmations.gate(@operation_name, description: @description) do
+          context
+        end
+      end
+    end
   end
+
+  # Backward compatibility alias for confirmation_gate.rb
+  ConfirmationGate = Confirmations
 end
