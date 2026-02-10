@@ -67,8 +67,8 @@ module MASTER
       participants.each do |model_key|
         break if over_budget?
 
-        model = MODELS[model_key] || LLM.pick
-        next unless model && @llm.circuit_closed?(model)
+        model = resolve_model(model_key)
+        next unless model && CircuitBreaker.circuit_closed?(model)
 
         proposal = propose(code, model, filename)
         @proposals << { model: model_key, proposal: proposal } if proposal
@@ -78,9 +78,9 @@ module MASTER
 
       council_result = multi_round_review(code, @proposals.first[:proposal])
 
-      arbiter_model = MODELS[ARBITER] || LLM.pick(:strong)
-      if @llm.circuit_closed?(arbiter_model)
-        final = arbiter_decision(code, @proposals, arbiter_model)
+      arbiter = arbiter_model
+      if CircuitBreaker.circuit_closed?(arbiter)
+        final = arbiter_decision(code, @proposals, arbiter)
         Result.ok(
           original: code,
           proposals: @proposals,
