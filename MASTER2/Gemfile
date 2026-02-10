@@ -12,9 +12,6 @@ gem "pastel", "~> 0.8"
 gem "rouge", "~> 4.0"
 gem "falcon", "~> 0.47"
 
-# Remove ruby_llm if not actually used (llm.rb uses raw Net::HTTP)
-# gem "ruby_llm"
-
 group :test do
   gem "minitest", "~> 5.0"
   gem "minitest-reporters", "~> 1.6"

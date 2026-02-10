@@ -471,6 +471,11 @@ module MASTER
       def tier
         return @forced_tier if @forced_tier
         r = budget_remaining
+        # Budget thresholds for tier selection
+        # premium: > $8.00 (reserved for critical tasks)
+        # strong: > $5.00 (default for most work)
+        # fast: > $1.00 (when budget is getting low)
+        # cheap: remaining budget (cost-conscious mode)
         if r > 8.0
           :premium
         elsif r > 5.0
@@ -494,6 +499,7 @@ module MASTER
         if tokens_in
           # New signature: estimate_cost("model", tokens_in: 1000, tokens_out: 500)
           m = model_or_chars.to_s
+          # Default rates are per million tokens: $1.00 input, $2.00 output
           rates = model_rates[m] || { input: 1.0, output: 2.0 }
           (tokens_in / 1_000_000.0 * rates[:input]) + (tokens_out / 1_000_000.0 * rates[:output])
         else
