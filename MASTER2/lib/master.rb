@@ -16,9 +16,7 @@ require_relative "utils"
 require_relative "paths"
 require_relative "result"
 require_relative "quality_standards"
-require_relative "logging"
-require_relative "dmesg"
-require_relative "log"  # Unified logging facade
+require_relative "logging"  # Unified logging (replaces log.rb, logging.rb, dmesg.rb)
 require_relative "db_jsonl"
 require_relative "llm"
 require_relative "memory"
