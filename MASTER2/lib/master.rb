@@ -71,6 +71,7 @@ require_relative "questions"
 # Deliberation engines
 require_relative "chamber"
 require_relative "swarm"
+require_relative "creative_chamber"  # Creative ideation engine (restored from MASTER v1)
 
 # Tools
 require_relative "shell"
@@ -84,6 +85,11 @@ require_relative "self_map"
 require_relative "file_hygiene"
 require_relative "planner_helper"
 require_relative "gh_helper"
+require_relative "queue"              # Priority task queue (restored from MASTER v1)
+require_relative "engine"             # Unified scan facade (restored from MASTER v1)
+require_relative "agent_autonomy"     # Goal decomposition & self-correction (restored from MASTER v1)
+require_relative "personas"           # Persona management (restored from MASTER v1)
+require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
 
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"
