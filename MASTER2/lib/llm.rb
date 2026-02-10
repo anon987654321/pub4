@@ -36,7 +36,7 @@ module MASTER
         @forced_tier
       end
 
-      # Main ask method with OpenRouter features
+      def models
         @models ||= load_models
       end
 
