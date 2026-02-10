@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 # MASTER Constitution - Immutable governance policy for safe autonomous operation
 #
 # NOTE: This file can be extended to include axioms, council, principles, and workflows
@@ -30,7 +29,10 @@ protection_levels:
     examples: [output_format, emoji_set]
 
 anti_simulation:
-  forbidden_phrases: ["will", "would", "could", "should", "might"]
+  # Note: These forbidden phrases apply to LLM output claims about actions taken,
+  # not to prescriptive axiom definitions. Axiom statements use "should" prescriptively.
+  context: "Applies to LLM output claims about actions taken, not to prescriptive axiom definitions."
+  forbidden_phrases: ["will", "would", "could", "might"]
   required_evidence:
     file_read: "Show content with SHA256"
     modification: "Show diff"

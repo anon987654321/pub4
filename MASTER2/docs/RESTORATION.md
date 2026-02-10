@@ -50,10 +50,11 @@ This restoration rebuilt MASTER2 from its minimal state into a complete framewor
   - `lib/ui/table.rb` - Tabular display
 - **Benefit:** Each under 100 lines, single responsibility
 
-#### Merged Learning Quality
-- **Before:** Separate `learning_quality.rb` module
-- **After:** Integrated into `learnings.rb`
-- **Benefit:** Related functionality colocated, reduced file count
+#### Learning Quality Modules
+- **Status:** `learning_quality.rb` and `learnings.rb` are complementary modules
+- `learning_quality.rb` provides confidence scoring and tier evaluation
+- `learnings.rb` handles memory storage and retrieval  
+- **Benefit:** Both modules work together, kept separate for clarity
 
 ### 3. YAML-Driven Configuration
 
@@ -133,7 +134,7 @@ Cleaned up non-essential files:
 - `data/gh_patterns.yml` - GitHub CLI patterns (not core)
 - `lib/web.rb` - Browser automation (adds dependency weight)
 - `lib/momentum.rb` - Gamification (not essential)
-- `lib/learning_quality.rb` - Merged into learnings.rb
+- `lib/learning_quality.rb` - Confidence scoring module (separate from learnings.rb)
 
 ## Architecture After Restoration
 
@@ -148,7 +149,8 @@ MASTER2/
 │   ├── circuit_breaker.rb  # NEW: Rate limiting + failure handling
 │   ├── smells.rb          # REFACTORED: YAML-driven + Rails/PWA
 │   ├── introspection.rb   # REFACTORED: YAML-driven questions
-│   ├── learnings.rb       # ENHANCED: Merged learning_quality
+│   ├── learnings.rb       # ENHANCED: Memory storage and retrieval
+│   ├── learning_quality.rb # Confidence scoring (complementary to learnings)
 │   └── ui/                # REFACTORED: Split into 3 modules
 │       ├── core.rb
 │       ├── spinner.rb
