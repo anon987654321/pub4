@@ -50,8 +50,8 @@ module MASTER
       pattern = search_map[model_key]
       return nil unless pattern
 
-      # Search in LLM.models for matching model
-      model = LLM.models.find { |m| m[:id] =~ /#{pattern}/i }
+      # Search in LLM.models for matching model - use Regexp.escape to prevent injection
+      model = LLM.models.find { |m| m[:id] =~ /#{Regexp.escape(pattern)}/i }
       model&.[](:id) || LLM.pick(:strong)
     end
 
@@ -266,12 +266,13 @@ module MASTER
       data = result.value
       @cost += data[:cost] || 0
 
-      # Parse structured response
+      # Parse structured response - normalize hash keys to symbols
       json_content = data[:content]
       if json_content.is_a?(Hash)
-        approve = json_content[:decision] == "APPROVE" || json_content["decision"] == "APPROVE"
-        reason = json_content[:reason] || json_content["reason"]
-        confidence = json_content[:confidence] || json_content["confidence"] || 0.5
+        json_content = json_content.transform_keys(&:to_sym) if json_content.keys.first.is_a?(String)
+        approve = json_content[:decision] == "APPROVE"
+        reason = json_content[:reason]
+        confidence = json_content[:confidence] || 0.5
       else
         # Fallback if JSON parsing failed
         approve = true

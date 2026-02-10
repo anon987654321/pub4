@@ -38,8 +38,14 @@ module MASTER
       def binding_from_hash(vars)
         obj = Object.new
         vars.each do |key, value|
-          obj.instance_variable_set("@#{key}", value)
-          obj.define_singleton_method(key) { instance_variable_get("@#{key}") }
+          # Validate key is a valid Ruby identifier to prevent injection
+          key_str = key.to_s
+          unless key_str =~ /\A[a-z_][a-z0-9_]*\z/i
+            raise ArgumentError, "Invalid variable name: #{key_str}"
+          end
+          
+          obj.instance_variable_set("@#{key_str}", value)
+          obj.define_singleton_method(key_str) { instance_variable_get("@#{key_str}") }
         end
         obj.instance_eval { binding }
       end
