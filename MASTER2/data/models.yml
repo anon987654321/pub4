@@ -82,7 +82,6 @@
   output_cost: 1.10
   context_window: 64000
   provider: deepseek
-  default: true
   use_for:
     - quick_tasks
     - hygiene_checks
