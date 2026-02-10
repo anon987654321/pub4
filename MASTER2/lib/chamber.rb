@@ -253,21 +253,12 @@ module MASTER
     def get_persona_vote(persona, original, proposal)
       return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
 
-      # Build prompt from template but use structured output
-      prompt = <<~PROMPT
-        You are #{persona[:name]}.
-        #{persona[:directive] || persona[:style]}
-
-        Review this proposed change:
-
-        ORIGINAL (first 500 chars):
-        #{original[0, 500]}
-
-        PROPOSED (first 500 chars):
-        #{proposal[0, 500]}
-
-        Provide your decision (APPROVE or REJECT), reason, and confidence (0-1).
-      PROMPT
+      # Use template for prompt with structured JSON schema
+      prompt = PromptTemplate.render_with_vars("council_vote", {
+        persona: persona,
+        original: original,
+        proposal: proposal
+      })
 
       result = @llm.ask_json(prompt, schema: VOTE_SCHEMA, tier: :fast)
       return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
