@@ -119,11 +119,10 @@ require_relative "enforcement"
 require_relative "language_axioms"
 require_relative "file_processor"
 require_relative "reflow"
-require_relative "self_test"
+require_relative "introspection"  # Unified introspection (includes SelfMap, SelfCritique, SelfRepair, SelfTest)
 require_relative "audit"
 require_relative "confirmation_gate"
 require_relative "cross_ref"
-require_relative "self_repair"
 require_relative "learning_feedback"
 require_relative "learning_quality"
 
@@ -132,7 +131,6 @@ require_relative "violations"
 require_relative "smells"
 require_relative "bug_hunting"
 require_relative "planner"
-require_relative "self_critique"
 require_relative "reflection_memory"
 
 # Generators (restored from historical features)
