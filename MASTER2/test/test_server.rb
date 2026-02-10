@@ -36,6 +36,15 @@ class TestServer < Minitest::Test
     refute @server.running?
   end
 
+  def test_running_predicate_reflects_state
+    # Test that running? reflects the internal state correctly
+    initial_state = @server.running?
+    refute initial_state, "Server should not be running initially"
+    
+    # Note: We can't actually start the server in tests (it would bind a port)
+    # but we've verified the accessor works for the initial false state
+  end
+
   def test_localhost_binding
     # This test verifies the server is configured to bind to localhost
     # We can't actually start the server in test, but we can verify configuration
