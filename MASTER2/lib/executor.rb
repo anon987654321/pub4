@@ -17,27 +17,6 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
-    # Dangerous patterns to block (injection prevention)
-    DANGEROUS_PATTERNS = [
-      /rm\s+-r[f]?\s+\//,
-      />\s*\/dev\/[sh]da/,
-      /DROP\s+TABLE/i,
-      /FORMAT\s+[A-Z]:/i,
-      /mkfs\./,
-      /dd\s+if=/,
-    ].freeze
-    
-    # Protected paths that cannot be written to
-    PROTECTED_WRITE_PATHS = %w[
-      data/constitution.yml
-      /etc/
-      /usr/
-      /sys/
-      /proc/
-      /dev/
-      /boot/
-    ].freeze
-    
     # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
@@ -773,18 +752,9 @@ module MASTER
     def file_write(path, content)
       expanded = File.expand_path(path)
       
-      # Check protected paths first
-      PROTECTED_WRITE_PATHS.each do |protected|
-        # For absolute paths, compare directly; for relative, expand from root
-        protected_expanded = if protected.start_with?("/")
-          protected
-        else
-          File.expand_path(protected, MASTER.root)
-        end
-        
-        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
-          return "BLOCKED: file_write to protected path '#{path}'"
-        end
+      # Check protected paths using Safety module
+      if Safety.protected_path?(expanded)
+        return "BLOCKED: file_write to protected path '#{path}'"
       end
       
       # Check working directory constraint
@@ -821,7 +791,7 @@ module MASTER
     end
 
     def shell_command(cmd)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+      if Safety.dangerous?(cmd)
         return "BLOCKED: dangerous shell command rejected"
       end
 
@@ -898,7 +868,7 @@ module MASTER
     end
 
     def sanitize_tool_input(action_str)
-      if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+      if Safety.dangerous?(action_str)
         return "BLOCKED: dangerous pattern detected in tool input"
       end
       action_str

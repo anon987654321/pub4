@@ -1,0 +1,19 @@
+quality:
+  static_analysis:
+    max_issues: 10
+  enforcement:
+    max_violations: 8
+  consistency:
+    max_issues: 5
+  logic:
+    max_issues: 3
+  council:
+    min_rating: 7
+    files_to_review: 10
+    chars_per_file: 3000
+  file_length:
+    max_lines: 300
+    warning_lines: 200
+  method_length:
+    max_lines: 25
+    warning_lines: 15
