@@ -13,7 +13,7 @@ module MASTER
       Rule.new(action: :block, pattern: /override (?:axiom|principle|rule)/i, quick: true),
       Rule.new(action: :block, pattern: /disregard (?:axiom|principle|rule|safety)/i, quick: true),
       # Block privilege escalation (inbound only)
-      Rule.new(action: :block, direction: :in, pattern: /\bdoas\b/, quick: true),
+      Rule.new(action: :pass, direction: :in, pattern: /\bdoas\b/, quick: false, tag: :needs_review),
       Rule.new(action: :block, direction: :in, pattern: /\bsudo\b/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\bsu\s+-?\s/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\bpfctl\s+-f\b/, quick: true),

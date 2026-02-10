@@ -782,15 +782,20 @@ module MASTER
       if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
         return "BLOCKED: dangerous shell command rejected"
       end
-      
-      # Check against Constitution if available
+
       if defined?(Constitution)
         check = Constitution.check_operation(:shell_command, command: cmd)
         return "BLOCKED: #{check.error}" unless check.ok?
       end
-      
-      stdout, stderr, status = Open3.capture3(cmd)
-      output = status.success? ? stdout : "Error: #{stderr}"
+
+      if defined?(Shell)
+        result = Shell.execute(cmd)
+        output = result.ok? ? result.value : "Error: #{result.error}"
+      else
+        stdout, stderr, status = Open3.capture3(cmd)
+        output = status.success? ? stdout : "Error: #{stderr}"
+      end
+
       output.length > 1000 ? "#{output[0..1000]}... (truncated)" : output
     end
 
