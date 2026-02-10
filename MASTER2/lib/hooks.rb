@@ -98,9 +98,16 @@ module MASTER
       def validate_ruby_syntax(target)
         return true unless target
         if File.exist?(target.to_s)
-          system("ruby -c #{target} > /dev/null 2>&1")
+          # Fix: Use array form to prevent shell injection
+          system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
         else
-          eval("BEGIN { return true }; #{target}; true") rescue false
+          # Fix: Use safe syntax check instead of eval
+          begin
+            RubyVM::InstructionSequence.compile(target)
+            true
+          rescue SyntaxError
+            false
+          end
         end
       end
 

@@ -713,7 +713,10 @@ module MASTER
         result = Web.browse(url)
         result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
       else
-        `curl -sL --max-time 10 "#{url}" 2>/dev/null`[0..2000]
+        # Fix: Use Open3 with proper escaping to prevent shell injection
+        require "open3"
+        stdout, _, _ = Open3.capture3("curl", "-sL", "--max-time", "10", url)
+        stdout[0..2000]
       end
     end
 
@@ -725,6 +728,20 @@ module MASTER
 
     def file_write(path, content)
       expanded = File.expand_path(path)
+      
+      # Fix: Add explicit canonicalization to prevent path traversal
+      begin
+        real_cwd = File.realpath(".")
+        unless expanded.start_with?(real_cwd)
+          return "BLOCKED: file_write path '#{path}' is outside working directory"
+        end
+      rescue Errno::ENOENT
+        # If realpath fails, fall back to expand_path check
+        cwd = File.expand_path(".")
+        unless expanded.start_with?(cwd)
+          return "BLOCKED: file_write path '#{path}' is outside working directory"
+        end
+      end
       
       # Check protected paths first
       PROTECTED_WRITE_PATHS.each do |protected|
@@ -738,12 +755,6 @@ module MASTER
         if expanded.start_with?(protected_expanded) || expanded == protected_expanded
           return "BLOCKED: file_write to protected path '#{path}'"
         end
-      end
-      
-      # Check working directory constraint
-      cwd = File.expand_path(".")
-      unless expanded.start_with?(cwd)
-        return "BLOCKED: file_write path '#{path}' is outside working directory"
       end
       
       FileUtils.mkdir_p(File.dirname(expanded))
