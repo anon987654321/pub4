@@ -117,6 +117,10 @@ module MASTER
     def execute_intent(intent)
       target = intent[:target]
       
+      # Require dependencies lazily
+      require_relative 'engine' unless defined?(MASTER::Engine)
+      require_relative 'smart_suggest' unless defined?(MASTER::SmartSuggest)
+      
       case intent[:action]
       when :refactor
         return { success: false, message: "File not found: #{target}" } unless File.exist?(target)

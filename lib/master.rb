@@ -27,3 +27,15 @@ require_relative 'parser/multi'
 require_relative 'parser/multi_language'
 require_relative 'nlu'
 require_relative 'conversation'
+
+# Load new modules
+begin
+  require_relative 'smart_suggest'
+  require_relative 'auto_iterate'
+  require_relative 'voice'
+  require_relative 'html_view'
+  require_relative 'multimodal'
+rescue LoadError => e
+  # Optional modules - not all dependencies may be available
+  warn "Warning: Could not load some optional modules: #{e.message}" if ENV['DEBUG']
+end

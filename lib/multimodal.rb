@@ -2,7 +2,6 @@ require 'json'
 require_relative 'voice'
 require_relative 'html_view'
 require_relative 'smart_suggest'
-require_relative 'engine'
 
 module MASTER
   # Multimodal - Unified interface for voice, text, and visual interactions
@@ -227,6 +226,9 @@ module MASTER
     def refactor_file(file)
       return { success: false, message: "File not found: #{file}" } unless File.exist?(file)
       
+      # Require engine lazily to avoid circular dependency
+      require_relative 'engine' unless defined?(MASTER::Engine)
+      
       engine = Engine.new
       code = File.read(file)
       result = engine.refactor(code)
@@ -245,6 +247,9 @@ module MASTER
 
     def analyze_file(file)
       return { success: false, message: "File not found: #{file}" } unless File.exist?(file)
+      
+      # Require engine lazily to avoid circular dependency
+      require_relative 'engine' unless defined?(MASTER::Engine)
       
       engine = Engine.new
       code = File.read(file)
