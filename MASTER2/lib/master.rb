@@ -124,7 +124,6 @@ require_relative "enforcement"
 require_relative "language_axioms"
 require_relative "file_processor"
 require_relative "reflow"
-require_relative "introspection"  # Unified introspection (includes SelfMap, SelfCritique, SelfRepair, SelfTest)
 require_relative "audit"
 require_relative "cross_ref"
 require_relative "learning_feedback"
