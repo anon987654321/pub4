@@ -90,7 +90,9 @@ module MASTER
         max_len = [diff1.length, diff2.length].max
         return 0.0 if max_len == 0
         
-        # Require Utils module for Levenshtein - return 0.0 (no similarity) if unavailable
+        # Require Utils module for Levenshtein
+        # Returns 0.0 (no similarity) if unavailable - conservative approach avoids false positives
+        # This means oscillation detection will be disabled if Utils.levenshtein is missing
         unless defined?(Utils) && Utils.respond_to?(:levenshtein)
           return 0.0
         end
