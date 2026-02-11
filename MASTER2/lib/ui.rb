@@ -292,6 +292,13 @@ module MASTER
       @pastel ||= begin
         require 'pastel'
         Pastel.new(enabled: color_enabled?)
+      rescue LoadError
+        # Fallback when pastel gem is not available
+        Object.new.tap do |p|
+          %i[green red yellow cyan dim bold].each do |color|
+            p.define_singleton_method(color) { |text| text }
+          end
+        end
       end
     end
 
