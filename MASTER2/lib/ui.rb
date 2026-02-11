@@ -8,6 +8,9 @@ module MASTER
   module UI
     extend self
 
+    # Boot time for dmesg-style timestamps
+    MASTER_BOOT_TIME = Time.now
+
     # --- Typography Icons (minimal vocabulary per Strunk & White) ---
     ICONS = {
       success: "✓",
@@ -417,6 +420,17 @@ module MASTER
     end
 
     # --- Colorization for dmesg and system output ---
+    
+    def dmesg(subsystem, message, level: :info)
+      elapsed = (Time.now - MASTER_BOOT_TIME).round(6)
+      prefix = format("[%12.6f]", elapsed)
+      line = "#{prefix} #{subsystem}: #{message}"
+      case level
+      when :error then $stderr.puts line
+      when :warn  then $stderr.puts line
+      else puts line
+      end
+    end
     
     def colorize(text)
       return text unless color_enabled?
