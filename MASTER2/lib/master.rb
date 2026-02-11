@@ -65,6 +65,7 @@ require_relative "pipeline"
 require_relative "hooks"
 require_relative "convergence"
 require_relative "questions"
+require_relative "workflow_engine"
 
 # Deliberation engines
 require_relative "chamber"

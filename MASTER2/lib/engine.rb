@@ -19,12 +19,12 @@ module MASTER
     class << self
       # Basic structural scan - long methods, god classes, deep nesting
       # Now supports profile parameter for axiom filtering
-      def scan(path, profile: :standard)
+      def scan(path, profile: :standard, silent: false)
         return Result.err('Path not found') unless File.exist?(path)
 
         # Load and filter axioms by profile
         axioms = load_axioms_for_profile(profile)
-        puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms
+        puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
 
         if File.directory?(path)
           files = Dir[File.join(path, '**', '*.rb')]

@@ -27,16 +27,16 @@ module MASTER
 
     def start_workflow(session)
       Result.try do
-        session[:workflow] ||= {}
-        session[:workflow][:current_phase] = :discover
-        session[:workflow][:phase_history] = []
-        session[:workflow][:started_at] = Time.now.iso8601
+        session.metadata[:workflow] ||= {}
+        session.metadata[:workflow][:current_phase] = :discover
+        session.metadata[:workflow][:phase_history] = []
+        session.metadata[:workflow][:started_at] = Time.now.iso8601
         session
       end
     end
 
     def current_phase(session)
-      session.dig(:workflow, :current_phase) || :discover
+      session.metadata.dig(:workflow, :current_phase) || :discover
     end
 
     def advance_phase(session, outputs: {})
@@ -51,7 +51,7 @@ module MASTER
         gate = transitions[transition_key] || transitions[transition_key.to_s]
 
         record_transition(session, current, next_phase, gate: gate, outputs: outputs)
-        session[:workflow][:current_phase] = next_phase
+        session.metadata[:workflow][:current_phase] = next_phase
         
         { phase: next_phase, gate: gate, previous: current }
       end
@@ -95,8 +95,8 @@ module MASTER
     end
 
     def record_transition(session, from, to, gate: nil, outputs: {})
-      session[:workflow][:phase_history] ||= []
-      session[:workflow][:phase_history] << {
+      session.metadata[:workflow][:phase_history] ||= []
+      session.metadata[:workflow][:phase_history] << {
         from: from,
         to: to,
         gate: gate,
@@ -106,7 +106,7 @@ module MASTER
     end
 
     def phase_history(session)
-      session.dig(:workflow, :phase_history) || []
+      session.metadata.dig(:workflow, :phase_history) || []
     end
 
     def can_advance?(session)
