@@ -177,6 +177,27 @@ module MASTER
           }.to_json
           [200, { "content-type" => "application/json" }, [metrics]]
 
+        when ["POST", "/tts"]
+          # Simple TTS endpoint - accepts JSON with text, returns audio
+          body = env["rack.input"].read
+          data = JSON.parse(body) rescue {}
+          text = data["text"].to_s.strip
+
+          return [400, { "content-type" => "application/json" }, ['{"error":"no text provided"}']] if text.empty?
+
+          unless defined?(Speech) && Speech.respond_to?(:synthesize)
+            return [501, { "content-type" => "application/json" }, ['{"error":"TTS not available"}']]
+          end
+
+          result = Speech.synthesize(text)
+          if result.respond_to?(:ok?) && result.ok?
+            audio_data = result.value[:audio] || result.value[:data]
+            [200, { "content-type" => "audio/mpeg" }, [audio_data]]
+          else
+            error = result.respond_to?(:error) ? result.error : "TTS failed"
+            [500, { "content-type" => "application/json" }, [{ error: error }.to_json]]
+          end
+
         when ["GET", "/tts/stream"]
           # SSE endpoint for TTS streaming
           text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
