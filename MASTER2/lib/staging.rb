@@ -95,7 +95,7 @@ module MASTER
       results = []
       @backups.each do |original_path, backup_path|
         result = rollback(original_path)
-        results << { path: original_path, success: result.ok?, error: result.err? ? result.error : nil }
+        results << { path: original_path, success: result.ok?, error: result.error }
       end
       
       successes = results.count { |r| r[:success] }
