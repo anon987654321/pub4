@@ -126,6 +126,7 @@ module MASTER
 
         Result.ok({ path: path })
       rescue => e
+        $stderr.puts "Cinematic: save preset error: #{e.class} - #{e.message}"
         Result.err("Failed to save preset: #{e.message}")
       end
 
@@ -146,6 +147,7 @@ module MASTER
 
         Result.ok(pipeline)
       rescue => e
+        $stderr.puts "Cinematic: load preset error: #{e.class} - #{e.message}"
         Result.err("Failed to load preset: #{e.message}")
       end
 
@@ -207,7 +209,8 @@ module MASTER
         path = File.join(intermediate_dir, filename)
         Replicate.download_file(output, path)
       rescue => e
-        # Silently fail - intermediate saves are optional
+        $stderr.puts "Cinematic: save_intermediate failed: #{e.message}"
+        # Intermediate saves are optional, continue execution
       end
 
       def generate_embedding(text)
