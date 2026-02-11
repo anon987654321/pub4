@@ -21,16 +21,34 @@ module MASTER
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
+      
+      # Allowlist of valid stages to prevent arbitrary constant access
+      allowed_stages = %w[
+        Refactor Expand Simplify Optimize Validate
+        Critique Research Generate Review Test
+      ].freeze
+      
       @stages = stages.map do |stage|
         if stage.respond_to?(:call)
           stage
         else
           const_name = stage.to_s.capitalize.to_sym
+          const_name_str = const_name.to_s
+          
+          unless allowed_stages.include?(const_name_str)
+            raise ArgumentError, "Invalid stage: #{stage}. Must be one of: #{allowed_stages.join(', ')}"
+          end
+          
           unless Stages.const_defined?(const_name)
             available = Stages.constants.join(", ")
             raise ArgumentError, "Unknown pipeline stage: #{stage}. Available: #{available}"
           end
-          Stages.const_get(const_name).new
+          
+          begin
+            Stages.const_get(const_name).new
+          rescue NameError => e
+            raise ArgumentError, "Stage not found: #{const_name}"
+          end
         end
       end
     end
