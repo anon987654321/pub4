@@ -6,7 +6,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:#000;display:flex;align-items:center;justify-content:center}
+body{background:#050505;display:flex;align-items:center;justify-content:center}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(transparent 0px,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:10}
 .crt{position:fixed;inset:0;box-shadow:inset 0 0 120px rgba(0,0,0,0.7);pointer-events:none;z-index:11}
@@ -17,28 +17,34 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <div class="scanlines"></div>
 <div class="crt"></div>
 <script>
-var canvas=document.getElementById('canvas');
-var ctx=canvas.getContext('2d');
-var w,h,cx,cy;
-var time=0;
-var bassWobble=0;
-var beatEnv=0;
-var audio={bass:0.5,mid:0.5,high:0.5,beat:0};
-
-var PAL=[];
-for(var r=0;r<6;r++)for(var g=0;g<7;g++)for(var b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(var i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
-
-function quantize(r,g,b){
-  var best=PAL[0],minD=Infinity;
-  for(var i=0;i<PAL.length;i++){
-    var c=PAL[i],d=(r-c[0])*(r-c[0])+(g-c[1])*(g-c[1])+(b-c[2])*(b-c[2]);
-    if(d<minD){minD=d;best=c}
+// Monochrome mint ramp
+const MINT=[90,240,182];
+const RAMP=[];
+for(let i=0;i<16;i++){
+  const t=i/15;
+  if(t<0.5){
+    const s=t*2;
+    RAMP.push([
+      Math.round(5+MINT[0]*s*0.6),
+      Math.round(5+MINT[1]*s*0.6),
+      Math.round(5+MINT[2]*s*0.6)
+    ]);
+  }else{
+    const s=(t-0.5)*2;
+    RAMP.push([
+      Math.round(MINT[0]*0.6+(255-MINT[0]*0.6)*s*0.4),
+      Math.round(MINT[1]*0.6+(255-MINT[1]*0.6)*s*0.3),
+      Math.round(MINT[2]*0.6+(255-MINT[2]*0.6)*s*0.3)
+    ]);
   }
-  return best;
 }
 
-function rgb(r,g,b){var q=quantize(r,g,b);return 'rgb('+q[0]+','+q[1]+','+q[2]+')'}
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let w,h,cx,cy;
+let audio=0,state='idle';
+let waveform=new Float32Array(256);
+let prevFrame=null;
 
 function resize(){
   w=Math.min(256,window.innerWidth);
@@ -48,96 +54,130 @@ function resize(){
   canvas.style.width=window.innerWidth+'px';
   canvas.style.height=window.innerHeight+'px';
   cx=w/2;cy=h/2;
+  prevFrame=null;
 }
 resize();
 window.addEventListener('resize',resize);
 
-var segments=16;
-var cosTable=new Float32Array(segments);
-var sinTable=new Float32Array(segments);
-for(var i=0;i<segments;i++){
-  var a=i*Math.PI*2/segments;
-  cosTable[i]=Math.cos(a);
-  sinTable[i]=Math.sin(a);
+function drawPixel(x,y,intensity){
+  if(x<0||x>=w||y<0||y>=h)return;
+  const idx=Math.min(15,Math.max(0,Math.floor(intensity*15)));
+  const c=RAMP[idx];
+  ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`;
+  ctx.fillRect(Math.floor(x),Math.floor(y),1,1);
 }
 
-function drawLine(x1,y1,x2,y2,color){
-  var dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
-  var sx=x1<x2?1:-1,sy=y1<y2?1:-1;
-  var err=dx-dy;
-  ctx.fillStyle=color;
-  while(true){
-    if(x1>=0&&x1<w&&y1>=0&&y1<h)ctx.fillRect(Math.floor(x1),Math.floor(y1),1,1);
-    if(Math.floor(x1)===Math.floor(x2)&&Math.floor(y1)===Math.floor(y2))break;
-    var e2=2*err;
-    if(e2>-dy){err-=dy;x1+=sx}
-    if(e2<dx){err+=dx;y1+=sy}
+function hilbertPhaseShift(wave){
+  // Simple approximation: delay by 1/4 wavelength
+  const shifted=new Float32Array(wave.length);
+  const delay=Math.floor(wave.length/4);
+  for(let i=0;i<wave.length;i++){
+    shifted[i]=wave[(i+delay)%wave.length];
   }
+  return shifted;
 }
 
-function drawOrb(){
-  var layers=6;
-  var baseRadius=28;
-  var fov=150+audio.bass*30;
-  
-  for(var layer=0;layer<layers;layer++){
-    var z=(layer-layers/2)*20+bassWobble*5;
-    var scale=fov/(fov+z);
-    var radius=(baseRadius+audio.bass*8+beatEnv*4)*scale;
-    
-    var pulse=beatEnv*40;
-    var depth=layer/6;
-    var r=0+depth*30+pulse*0.1;
-    var g=160+depth*50+pulse*0.3;
-    var b=180+depth*30+pulse*0.2;
-    var color=rgb(r,g,b);
-    
-    var prevX,prevY;
-    for(var i=0;i<=segments;i++){
-      var idx=i%segments;
-      var wobble=bassWobble*0.1;
-      var ct=Math.cos(time+wobble);
-      var st=Math.sin(time+wobble);
-      var cosA=cosTable[idx]*ct-sinTable[idx]*st;
-      var sinA=sinTable[idx]*ct+cosTable[idx]*st;
-      var px=cx+cosA*radius;
-      var py=cy+sinA*radius;
-      
-      if(i>0)drawLine(prevX,prevY,px,py,color);
-      prevX=px;prevY=py;
+function drawLissajous(){
+  // Phosphor persistence - fade previous frame
+  if(prevFrame){
+    const img=ctx.getImageData(0,0,w,h);
+    for(let i=0;i<img.data.length;i+=4){
+      img.data[i]=Math.floor(img.data[i]*0.92);
+      img.data[i+1]=Math.floor(img.data[i+1]*0.92);
+      img.data[i+2]=Math.floor(img.data[i+2]*0.92);
     }
+    ctx.putImageData(img,0,0);
+  }else{
+    ctx.fillStyle='#050505';
+    ctx.fillRect(0,0,w,h);
+  }
+  prevFrame=true;
+  
+  // Phase-shifted waveform for XY
+  const shifted=hilbertPhaseShift(waveform);
+  
+  // Scale based on state
+  let scale=30;
+  if(state==='thinking')scale*=0.6;
+  else if(state==='speaking')scale*=1.2;
+  
+  // Draw Lissajous with beam brightness
+  let prevX=null,prevY=null;
+  const samples=128;
+  
+  for(let i=0;i<samples;i++){
+    const idx=Math.floor(i*waveform.length/samples);
+    const x=cx+waveform[idx]*scale;
+    const y=cy+shifted[idx]*scale;
+    
+    if(prevX!==null){
+      // Beam brightness = inverse of speed
+      const dx=x-prevX,dy=y-prevY;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      const speed=dist;
+      const brightness=Math.min(1,3/Math.max(0.5,speed));
+      
+      // Bresenham line with brightness
+      let x1=Math.floor(prevX),y1=Math.floor(prevY);
+      let x2=Math.floor(x),y2=Math.floor(y);
+      const ddx=Math.abs(x2-x1),ddy=Math.abs(y2-y1);
+      const sx=x1<x2?1:-1,sy=y1<y2?1:-1;
+      let err=ddx-ddy;
+      
+      while(true){
+        drawPixel(x1,y1,brightness);
+        if(x1===x2&&y1===y2)break;
+        const e2=2*err;
+        if(e2>-ddy){err-=ddy;x1+=sx}
+        if(e2<ddx){err+=ddx;y1+=sy}
+      }
+    }
+    
+    prevX=x;
+    prevY=y;
   }
 }
 
 function frame(){
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,w,h);
-  
-  bassWobble=bassWobble*0.92+audio.bass*audio.beat*0.08;
-  beatEnv=beatEnv*0.94+(audio.beat>0.5?0.4:0)*0.06;
-  
-  drawOrb();
-  
-  time+=0.02;
+  drawLissajous();
   requestAnimationFrame(frame);
 }
 
-navigator.mediaDevices?.getUserMedia({audio:true}).then(function(stream){
-  var actx=new AudioContext();
-  var src=actx.createMediaStreamSource(stream);
-  var an=actx.createAnalyser();
-  an.fftSize=256;
+// Audio
+navigator.mediaDevices?.getUserMedia({audio:true}).then(stream=>{
+  const actx=new AudioContext();
+  const src=actx.createMediaStreamSource(stream);
+  const an=actx.createAnalyser();
+  an.fftSize=512;
+  an.smoothingTimeConstant=0.8;
   src.connect(an);
-  var data=new Uint8Array(an.frequencyBinCount);
+  const timeDomain=new Uint8Array(an.fftSize);
+  
   (function audioLoop(){
-    an.getByteFrequencyData(data);
-    var bass=0;
-    for(var i=0;i<20;i++)bass+=data[i];
-    audio.bass=bass/20/255;
-    audio.beat=audio.bass>0.6?1:0;
+    an.getByteTimeDomainData(timeDomain);
+    
+    // Convert to Float32 normalized
+    for(let i=0;i<waveform.length;i++){
+      waveform[i]=(timeDomain[i]-128)/128;
+    }
+    
+    // Calculate audio level
+    let sum=0;
+    for(let i=0;i<waveform.length;i++)sum+=Math.abs(waveform[i]);
+    audio=sum/waveform.length;
+    
     requestAnimationFrame(audioLoop);
   })();
-}).catch(function(){});
+}).catch(()=>{
+  // No audio - generate silence/idle pattern
+  waveform.fill(0);
+});
+
+// State and audio from parent
+window.addEventListener('message',e=>{
+  if(e.data?.type==='state')state=e.data.mode;
+  if(e.data?.type==='audio')audio=e.data.level;
+});
 
 frame();
 </script>
