@@ -45,13 +45,15 @@ First error short-circuits. No exceptions.
 - **Circuit breaker** (3 failures → 5-minute cooldown)
 - **Session persistence** with crash recovery (SIGINT/SIGTERM auto-save)
 - **Pattern fallback** (if primary fails → react → direct)
-- **AI Media Generation & Enhancement** - 30+ cutting-edge AI models for image, video, audio generation and enhancement
+- **AI Media Generation & Enhancement** - 30+ cutting-edge AI models via Replicate and Postpro plugins
 
-### AI Media Generation (Replicate & Postpro)
+### AI Media Plugins
 
-Transform MASTER2 into a creative powerhouse with direct access to 30+ AI models via Replicate.com.
+MASTER2 includes two powerful plugins for AI-powered media generation and enhancement:
 
-**Quick Examples:**
+#### [Replicate Plugin](plugins/replicate/README.md)
+
+Generate images, videos, and audio with 30+ AI models from Replicate.com.
 
 ```ruby
 # Generate cinematic images
@@ -63,69 +65,31 @@ MASTER::Replicate.generate_image(
 MASTER::Replicate.generate_video(
   prompt: "drone shot flying through forest at golden hour"
 )
+```
 
+**WILD_CHAIN Model Catalog:** 17 models across 5 categories (image_gen, video_gen, enhance, audio, transcribe)
+
+See **[plugins/replicate/README.md](plugins/replicate/README.md)** for complete documentation.
+
+#### [Postpro Plugin](plugins/postpro/README.md)
+
+High-level image enhancement operations optimized for common workflows.
+
+```ruby
 # AI-powered upscaling (4x)
 MASTER::Postpro.upscale(image_url: "photo.jpg", scale: 4)
 
 # Face restoration
 MASTER::Postpro.restore_face(image_url: "old_photo.jpg")
 
-# List available models
-MASTER::Replicate.categories  # => [:image_gen, :video_gen, :enhance, :audio, :transcribe]
-MASTER::Replicate.models_for(:image_gen)  # => Array of image generation models
+# Batch processing
+MASTER::Postpro.batch_enhance(
+  image_urls: ["photo1.jpg", "photo2.jpg"],
+  operation: :upscale
+)
 ```
 
-**WILD_CHAIN Model Catalog** (17 models across 5 categories):
-
-**Image Generation (5 models)**
-- **Flux Pro** - State-of-the-art photorealism
-- **Flux Dev** - Fast iteration, excellent quality  
-- **SDXL** - Stable Diffusion XL, highly controllable
-- **Ideogram V2** - Best for text rendering in images
-- **Recraft V3** - Vector-friendly generation
-
-**Video Generation (5 models)**
-- **Hailuo 2.3** (Minimax) - High-quality video synthesis
-- **Kling 2.5** - Fast, smooth motion
-- **Luma Ray 2** - Photorealistic video
-- **WAN 2.5** - Image-to-video specialist
-- **Sora 2** (OpenAI) - Cinematic quality
-
-**Enhancement (4 models)**
-- **Real-ESRGAN 4x** - General-purpose upscaling
-- **GFPGAN** - Face restoration specialist
-- **CodeFormer** - Advanced face enhancement  
-- **Clarity Upscaler 4x** - Detail preservation
-
-**Audio (2 models)**
-- **MusicGen** (Meta) - Music generation
-- **Bark TTS** (Suno) - Natural text-to-speech
-
-**Transcription (1 model)**
-- **Whisper** (OpenAI) - Speech recognition
-
-**CLI Commands:**
-
-```bash
-# In REPL
-master> repligen "cyberpunk city at night"
-master> generate-video "drone flying through forest"  
-master> upscale photo.jpg
-master> postpro upscale photo.jpg
-```
-
-**Production Use Cases:**
-- Automated social media content generation
-- Video production pipelines
-- Photo restoration services  
-- Cinematic effects chains (see Cinematic Pipeline below)
-
-**Configuration:**
-```bash
-export REPLICATE_API_KEY="r8_..."  # Required
-```
-
-All operations use MASTER2's Result monad pattern, budget tracking, and error handling.
+See **[plugins/postpro/README.md](plugins/postpro/README.md)** for complete documentation.
 
 ### Cinematic AI Pipeline
 
