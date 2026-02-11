@@ -155,6 +155,8 @@ class TestReplicate < Minitest::Test
 
   def test_upscale_still_works
     # Verify existing upscale method is not broken
+    # Note: upscale() is a pre-existing method that uses "REPLICATE_API_TOKEN" (not KEY)
+    # and doesn't follow dmesg style - we keep backward compatibility
     ENV['REPLICATE_API_KEY'] = nil
     result = MASTER::Replicate.upscale(image_url: "http://example.com/test.jpg")
     
@@ -164,6 +166,8 @@ class TestReplicate < Minitest::Test
 
   def test_describe_still_works
     # Verify existing describe method is not broken
+    # Note: describe() is a pre-existing method that uses "REPLICATE_API_TOKEN" (not KEY)
+    # and doesn't follow dmesg style - we keep backward compatibility
     ENV['REPLICATE_API_KEY'] = nil
     result = MASTER::Replicate.describe(image_url: "http://example.com/test.jpg")
     
