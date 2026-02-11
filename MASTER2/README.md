@@ -163,6 +163,75 @@ Run `selftest` to pass MASTER through itself:
 
 If MASTER fails its own review, it has failed.
 
+## Automatic Bug Hunting
+
+Every refactor now runs a **6-phase analysis**:
+
+1. **🔍 Bug Hunting** - 8-phase deep analysis (lexical, execution, data flow, patterns)
+2. **🧠 Constitutional Validation** - Check all 32 principles
+3. **📚 Learnings Check** - Apply patterns from past fixes
+4. **👃 Smell Detection** - Find code smells
+5. **🤖 Fix Generation** - LLM-powered refactoring
+6. **📝 Learning Recording** - Save successful patterns
+
+### Usage
+
+```bash
+# Automatic multi-phase analysis + fixes
+master> refactor lib/session.rb
+
+# Output:
+# 🔍 PHASE 1: Bug Hunting...
+# ⚠️  Found 2 potential bugs
+# 🧠 PHASE 2: Constitutional Validation...
+# 🚨 1 critical violations
+# 📚 PHASE 3: Checking Learnings...
+# 💡 Found 1 known patterns
+# 👃 PHASE 4: Code Smell Detection...
+# 📋 Found 3 code smells
+#
+# 📊 SUMMARY: 7 issues found
+# 🤔 Proceed with automatic fixes? (y/n): y
+# 🤖 PHASE 5: Generating Fixes...
+# ✓ Applied 7 fixes
+# 📝 PHASE 6: Recording Learnings...
+# ✓ Learnings updated
+```
+
+### Manual Commands
+
+For deep inspection without auto-fix:
+
+```bash
+master> hunt lib/session.rb        # 8-phase bug analysis only
+master> critique lib/master.rb     # Constitutional validation only
+master> learn lib/learnings.rb     # Show matching learned patterns
+master> conflict                   # Detect principle conflicts
+```
+
+## Quickstart
+
+```bash
+# Start interactive REPL
+$ cd MASTER2
+$ ./bin/master
+
+# Automatic refactor with bug hunting
+master> refactor lib/session.rb
+
+# Manual inspection
+master> hunt lib/session.rb
+master> critique lib/learnings.rb
+master> learn lib/smells.rb
+master> conflict
+
+# Full codebase scan
+master> scan .
+
+# Weekly automation (cron: 0 9 * * 1)
+$ ./bin/weekly
+```
+
 ## Commands
 
 MASTER2 supports both REPL mode and direct CLI commands:
@@ -171,7 +240,11 @@ MASTER2 supports both REPL mode and direct CLI commands:
 
 ```
 help          Show commands
-refactor      Multi-model file review
+refactor      Multi-model file review with 6-phase analysis
+hunt          8-phase bug analysis (manual deep-dive)
+critique      Constitutional validation (manual review)
+learn         Show matching learned patterns for a file
+conflict      Detect principle conflicts in constitution
 chamber       Council deliberation
 ideate        Creative brainstorming (Chamber)
 evolve        Self-improvement cycle
