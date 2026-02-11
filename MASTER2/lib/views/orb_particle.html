@@ -1,144 +1,347 @@
 <!DOCTYPE html>
-<html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Particle Orb</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orb Particle</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{background:#000}
-canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+:root {
+  --mint: #5af0b6;
+  --mint-dim: #2a7a5a;
+  --mint-ghost: #153a2d;
+  --bg: #050505;
+  --text: #c8d0cc;
+  --text-2: #5a6a62;
+  --error: #f06050;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  canvas {
+    display: none;
+  }
+  body::after {
+    content: 'Animation disabled due to motion preferences';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    color: var(--text-2);
+    font-family: monospace;
+  }
+}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="canvas"></canvas>
 <script>
-const PAL=[];
-for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(let i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
-function quantize(r,g,b){
-  let best=PAL[0],minD=Infinity;
-  for(const c of PAL){const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<minD){minD=d;best=c}}
-  return best;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let w, h;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Continuous shade function
+function shade(t) {
+  t = Math.max(0, Math.min(1, t));
+  const r = Math.round(5 + t * 85);
+  const g = Math.round(5 + t * 235);
+  const b = Math.round(5 + t * 177);
+  return "rgb(" + r + "," + g + "," + b + ")";
 }
 
-const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-let w,h,scale=2,audio=0,time=0;
-let particles=[];
+// State management
+let state = 'idle';
+let audioLevel = 0;
+let bass = 0;
+let mids = 0;
+let highs = 0;
 
-function resize(){
-  w=Math.floor(window.innerWidth/scale);
-  h=Math.floor(window.innerHeight/scale);
-  canvas.width=w;canvas.height=h;
-  initParticles();
-}
+const STATE_PARAMS = {
+  idle: { decay: 0.05, reactivity: 0.3, speed: 0.5 },
+  thinking: { decay: 0.12, reactivity: 0.6, speed: 0.8 },
+  speaking: { decay: 0.20, reactivity: 1.0, speed: 1.0 }
+};
 
-function initParticles(){
-  particles=[];
-  const cx=w/2,cy=h/2;
-  for(let i=0;i<150;i++){
-    const angle=Math.random()*Math.PI*2;
-    const r=Math.random()*50;
-    particles.push({
-      x:cx+Math.cos(angle)*r,
-      y:cy+Math.sin(angle)*r,
-      vx:(Math.random()-0.5)*0.8,
-      vy:(Math.random()-0.5)*0.8,
-      phase:Math.random()*Math.PI*2,
-      hue:170+Math.random()*20
-    });
-  }
-}
-
-function draw(){
-  time+=0.016;
-  const cx=w/2,cy=h/2;
-  
-  ctx.fillStyle='rgba(0,0,0,0.12)';
-  ctx.fillRect(0,0,w,h);
-  
-  const img=ctx.getImageData(0,0,w,h);
-  
-  for(const p of particles){
-    p.phase+=0.02;
-    p.vx+=Math.cos(p.phase)*0.1;
-    p.vy+=Math.sin(p.phase*1.3)*0.1;
-    
-    const dx=cx-p.x,dy=cy-p.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    p.vx+=dx*0.002;
-    p.vy+=dy*0.002;
-    
-    p.vx+=(Math.random()-0.5)*audio*2;
-    p.vy+=(Math.random()-0.5)*audio*2;
-    
-    p.vx*=0.98;p.vy*=0.98;
-    p.x+=p.vx;p.y+=p.vy;
-    
-    const maxR=60+audio*20;
-    if(dist>maxR){
-      const a=Math.atan2(dy,dx);
-      p.x=cx-Math.cos(a)*maxR;
-      p.y=cy-Math.sin(a)*maxR;
-      p.vx*=-0.5;p.vy*=-0.5;
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'state') state = e.data.mode;
+  if (e.data && e.data.type === 'audio') {
+    audioLevel = e.data.level;
+    // Parse audio into frequency bands
+    if (e.data.bands) {
+      bass = e.data.bands.bass || 0;
+      mids = e.data.bands.mids || 0;
+      highs = e.data.bands.highs || 0;
+    } else {
+      // Simulate frequency bands from level if not provided
+      bass = audioLevel * (0.3 + Math.random() * 0.2);
+      mids = audioLevel * (0.4 + Math.random() * 0.2);
+      highs = audioLevel * (0.2 + Math.random() * 0.3);
     }
-    
-    const px=Math.floor(p.x),py=Math.floor(p.y);
-    if(px>=0&&px<w&&py>=0&&py<h){
-      const hue=p.hue+time*10+audio*30;
-      const sat=0.7,lit=0.5+audio*0.2;
-      
-      const c=(1-Math.abs(2*lit-1))*sat;
-      const x2=c*(1-Math.abs((hue/60)%2-1));
-      const m=lit-c/2;
-      let R,G,B;
-      const h6=Math.floor(hue/60)%6;
-      if(h6===0){R=c;G=x2;B=0}
-      else if(h6===1){R=x2;G=c;B=0}
-      else if(h6===2){R=0;G=c;B=x2}
-      else if(h6===3){R=0;G=x2;B=c}
-      else if(h6===4){R=x2;G=0;B=c}
-      else{R=c;G=0;B=x2}
-      
-      R=Math.floor((R+m)*255);
-      G=Math.floor((G+m)*255);
-      B=Math.floor((B+m)*255);
-      
-      const q=quantize(R,G,B);
-      const dith=((px+py)%2)*20-10;
-      
-      const i=(py*w+px)*4;
-      img.data[i]=Math.min(255,q[0]+dith);
-      img.data[i+1]=Math.min(255,q[1]+dith);
-      img.data[i+2]=Math.min(255,q[2]+dith);
-      img.data[i+3]=255;
-      
-      if(px+1<w){
-        const i2=(py*w+px+1)*4;
-        img.data[i2]=q[0];img.data[i2+1]=q[1];img.data[i2+2]=q[2];img.data[i2+3]=255;
+  }
+});
+
+// Boid flocking constants
+const SEPARATION_RADIUS = 12;
+const ALIGNMENT_RADIUS = 40;
+const COHESION_RADIUS = 60;
+const MAX_SPEED = 2.0;
+const MAX_FORCE = 0.1;
+const TRAIL_LENGTH = 8;
+
+class Boid {
+  constructor(x, y) {
+    this.pos = { x, y };
+    this.vel = {
+      x: (Math.random() - 0.5) * 2,
+      y: (Math.random() - 0.5) * 2
+    };
+    this.acc = { x: 0, y: 0 };
+    this.trail = [];
+  }
+
+  edges() {
+    if (this.pos.x > w) this.pos.x = 0;
+    if (this.pos.x < 0) this.pos.x = w;
+    if (this.pos.y > h) this.pos.y = 0;
+    if (this.pos.y < 0) this.pos.y = h;
+  }
+
+  align(boids) {
+    let steering = { x: 0, y: 0 };
+    let total = 0;
+    for (let other of boids) {
+      let d = this.distance(other);
+      if (other !== this && d < ALIGNMENT_RADIUS) {
+        steering.x += other.vel.x;
+        steering.y += other.vel.y;
+        total++;
       }
     }
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+      let mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+      if (mag > 0) {
+        steering.x = (steering.x / mag) * MAX_SPEED;
+        steering.y = (steering.y / mag) * MAX_SPEED;
+        steering.x -= this.vel.x;
+        steering.y -= this.vel.y;
+        mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+        if (mag > MAX_FORCE) {
+          steering.x = (steering.x / mag) * MAX_FORCE;
+          steering.y = (steering.y / mag) * MAX_FORCE;
+        }
+      }
+    }
+    return steering;
   }
-  
-  ctx.putImageData(img,0,0);
-  requestAnimationFrame(draw);
+
+  cohesion(boids) {
+    let steering = { x: 0, y: 0 };
+    let total = 0;
+    for (let other of boids) {
+      let d = this.distance(other);
+      if (other !== this && d < COHESION_RADIUS) {
+        steering.x += other.pos.x;
+        steering.y += other.pos.y;
+        total++;
+      }
+    }
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+      steering.x -= this.pos.x;
+      steering.y -= this.pos.y;
+      let mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+      if (mag > 0) {
+        steering.x = (steering.x / mag) * MAX_SPEED;
+        steering.y = (steering.y / mag) * MAX_SPEED;
+        steering.x -= this.vel.x;
+        steering.y -= this.vel.y;
+        mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+        if (mag > MAX_FORCE) {
+          steering.x = (steering.x / mag) * MAX_FORCE;
+          steering.y = (steering.y / mag) * MAX_FORCE;
+        }
+      }
+    }
+    return steering;
+  }
+
+  separation(boids) {
+    let steering = { x: 0, y: 0 };
+    let total = 0;
+    for (let other of boids) {
+      let d = this.distance(other);
+      if (other !== this && d < SEPARATION_RADIUS) {
+        let diff = {
+          x: this.pos.x - other.pos.x,
+          y: this.pos.y - other.pos.y
+        };
+        if (d > 0) {
+          diff.x /= d;
+          diff.y /= d;
+        }
+        steering.x += diff.x;
+        steering.y += diff.y;
+        total++;
+      }
+    }
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+      let mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+      if (mag > 0) {
+        steering.x = (steering.x / mag) * MAX_SPEED;
+        steering.y = (steering.y / mag) * MAX_SPEED;
+        steering.x -= this.vel.x;
+        steering.y -= this.vel.y;
+        mag = Math.sqrt(steering.x * steering.x + steering.y * steering.y);
+        if (mag > MAX_FORCE) {
+          steering.x = (steering.x / mag) * MAX_FORCE;
+          steering.y = (steering.y / mag) * MAX_FORCE;
+        }
+      }
+    }
+    return steering;
+  }
+
+  distance(other) {
+    let dx = this.pos.x - other.pos.x;
+    let dy = this.pos.y - other.pos.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  flock(boids) {
+    let separation = this.separation(boids);
+    let alignment = this.align(boids);
+    let cohesion = this.cohesion(boids);
+
+    // Audio mapping
+    let separationWeight = 1.5 + bass * 2.0;
+    let alignmentWeight = 1.0 + mids * 1.5;
+    let cohesionWeight = 0.8 + highs * 2.5;
+
+    this.acc.x += separation.x * separationWeight;
+    this.acc.y += separation.y * separationWeight;
+    this.acc.x += alignment.x * alignmentWeight;
+    this.acc.y += alignment.y * alignmentWeight;
+    this.acc.x += cohesion.x * cohesionWeight;
+    this.acc.y += cohesion.y * cohesionWeight;
+  }
+
+  update() {
+    const params = STATE_PARAMS[state] || STATE_PARAMS.idle;
+    
+    // Update trail
+    this.trail.unshift({ x: this.pos.x, y: this.pos.y });
+    if (this.trail.length > TRAIL_LENGTH) {
+      this.trail.pop();
+    }
+
+    // Update position
+    this.vel.x += this.acc.x;
+    this.vel.y += this.acc.y;
+
+    // Limit speed
+    let speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
+    let maxSpeed = MAX_SPEED * params.speed;
+    if (speed > maxSpeed) {
+      this.vel.x = (this.vel.x / speed) * maxSpeed;
+      this.vel.y = (this.vel.y / speed) * maxSpeed;
+    }
+
+    this.pos.x += this.vel.x;
+    this.pos.y += this.vel.y;
+    
+    this.acc.x = 0;
+    this.acc.y = 0;
+  }
+
+  show() {
+    const params = STATE_PARAMS[state] || STATE_PARAMS.idle;
+    const speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
+    const intensity = Math.min(1, speed / (MAX_SPEED * params.speed));
+    
+    // Draw trail with exponential decay
+    for (let i = 0; i < this.trail.length; i++) {
+      const age = i;
+      const opacity = 1.0 * Math.pow(0.7, age);
+      const point = this.trail[i];
+      const t = intensity * 0.8 * opacity;
+      ctx.fillStyle = shade(t);
+      ctx.globalAlpha = opacity * 0.6;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Draw main particle
+    ctx.globalAlpha = 1.0;
+    const t = 0.3 + intensity * 0.7 + audioLevel * params.reactivity * 0.3;
+    ctx.fillStyle = shade(t);
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
-navigator.mediaDevices?.getUserMedia({audio:true}).then(s=>{
-  const ac=new AudioContext(),src=ac.createMediaStreamSource(s),an=ac.createAnalyser();
-  an.fftSize=256;src.connect(an);
-  const data=new Uint8Array(an.frequencyBinCount);
-  (function loop(){
-    an.getByteFrequencyData(data);
-    let sum=0;for(let i=0;i<50;i++)sum+=data[i];
-    audio=sum/50/255;
-    requestAnimationFrame(loop);
-  })();
-}).catch(()=>{});
+// Initialize boids
+const boids = [];
+const NUM_BOIDS = 150;
+for (let i = 0; i < NUM_BOIDS; i++) {
+  boids.push(new Boid(Math.random() * w, Math.random() * h));
+}
 
-resize();
-window.addEventListener('resize',resize);
-draw();
+// Check for reduced motion preference
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function animate() {
+  if (prefersReducedMotion) return;
+
+  // Multiplicative frame decay
+  ctx.fillStyle = 'rgba(5,5,5,0.12)';
+  ctx.fillRect(0, 0, w, h);
+
+  // Update and render boids
+  for (let boid of boids) {
+    boid.edges();
+    boid.flock(boids);
+    boid.update();
+    boid.show();
+  }
+
+  requestAnimationFrame(animate);
+}
+
+if (!prefersReducedMotion) {
+  animate();
+}
 </script>
 </body>
 </html>
