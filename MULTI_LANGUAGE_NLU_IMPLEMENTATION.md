@@ -70,7 +70,7 @@ intent = MASTER::NLU.parse("refactor lib/user.rb")
 - Confidence scoring
 - Clarification requests
 
-### 3. Shell Script Refactoring (`MASTER2/lib/evolve.rb`)
+### 3. Shell Script Refactoring (`lib/evolve.rb`)
 
 Extended Evolve to support shell scripts with embedded Ruby.
 
@@ -116,7 +116,7 @@ puts conv.summary  # Print conversation history
 
 ### Required Modules
 - `lib/master.rb` - Requires new modules
-- `MASTER2/lib/master.rb` - Requires new modules via relative paths
+- `lib/master.rb` - Requires new modules via relative paths
 
 ### Dependencies
 - `MASTER::LLM` - For NLU classification (optional, falls back to patterns)
@@ -153,7 +153,7 @@ lib/
   nlu.rb                    # Natural language understanding
   conversation.rb           # Conversational interface
 
-MASTER2/lib/
+lib/
   evolve.rb                 # Extended with shell support
 
 test/

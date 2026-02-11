@@ -234,7 +234,7 @@ Tab completion is available for all commands and arguments:
 
 ```bash
 # Add to your ~/.zshrc
-fpath=(~/path/to/pub4/MASTER2/completions $fpath)
+fpath=(~/path/to/pub4/completions $fpath)
 autoload -Uz compinit && compinit
 ```
 

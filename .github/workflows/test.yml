@@ -4,11 +4,15 @@ on:
   push:
     branches: [main]
     paths:
-      - 'MASTER2/**'
+      - 'lib/**'
+      - 'bin/**'
+      - 'test/**'
   pull_request:
     branches: [main]
     paths:
-      - 'MASTER2/**'
+      - 'lib/**'
+      - 'bin/**'
+      - 'test/**'
 
 jobs:
   test:
@@ -21,13 +25,10 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-          working-directory: MASTER2
           bundler-cache: true
 
       - name: Install dependencies
-        working-directory: MASTER2
         run: bundle install
 
       - name: Run tests
-        working-directory: MASTER2
         run: bundle exec rake test

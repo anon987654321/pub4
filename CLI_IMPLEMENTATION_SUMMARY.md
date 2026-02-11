@@ -46,7 +46,7 @@ This document summarizes the changes made to add direct CLI operations and zsh c
 **Installation:**
 Add to `~/.zshrc`:
 ```bash
-fpath=(~/path/to/pub4/MASTER2/completions $fpath)
+fpath=(~/path/to/pub4/completions $fpath)
 autoload -Uz compinit && compinit
 ```
 

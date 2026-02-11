@@ -118,7 +118,7 @@ undo
 
 ### DiffView Module
 
-A new `MASTER2/lib/diff_view.rb` module provides unified diff generation:
+A new `lib/diff_view.rb` module provides unified diff generation:
 
 ```ruby
 MASTER::DiffView.unified_diff(original, modified, 
@@ -136,7 +136,7 @@ The refactor command integrates seamlessly with the existing `Commands.dispatch`
 
 ## Tests
 
-Comprehensive test coverage in `MASTER2/test/test_refactor.rb`:
+Comprehensive test coverage in `test/test_refactor.rb`:
 
 - ✅ Missing file error handling
 - ✅ Mode extraction (--preview, --raw, --apply)
@@ -147,7 +147,7 @@ Comprehensive test coverage in `MASTER2/test/test_refactor.rb`:
 - ✅ Council summary formatting
 - ✅ Lint and render integration
 
-Additional tests in `MASTER2/test/test_diff_view.rb`:
+Additional tests in `test/test_diff_view.rb`:
 
 - ✅ Unified diff generation
 - ✅ Line changes, additions, deletions
