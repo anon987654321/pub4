@@ -138,6 +138,11 @@ module MASTER
         # Rate limit check
         CircuitBreaker.check_rate_limit!
 
+        # Cost firewall - abort if cumulative spend exceeds cap
+        if total_spent >= SPENDING_CAP
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{SPENDING_CAP}. Session terminated.")
+        end
+
         # Model selection (single call - no TOCTOU)
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary

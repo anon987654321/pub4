@@ -88,6 +88,30 @@ module MASTER
       end
     end
 
+    # Rollback all files modified in this staging session
+    def rollback_all
+      return Result.err("No backups to rollback") if @backups.empty?
+      
+      results = []
+      @backups.each do |original_path, backup_path|
+        result = rollback(original_path)
+        results << { path: original_path, success: result.ok? }
+      end
+      
+      successes = results.count { |r| r[:success] }
+      
+      if successes == results.size
+        Result.ok(restored: successes, details: results)
+      else
+        Result.err("Partial rollback: #{successes}/#{results.size} succeeded")
+      end
+    end
+
+    # Get list of all backed-up files
+    def backups
+      @backups.keys
+    end
+
     # Full staged modification workflow
     def staged_modify(path, validation_command: nil, &block)
       # Stage the file
