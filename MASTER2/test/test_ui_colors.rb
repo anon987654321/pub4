@@ -65,7 +65,7 @@ class TestUIColors < Minitest::Test
   def test_color_methods_accept_text_input
     # Test that color methods can accept and process text
     text = "Hello World"
-    
+
     assert MASTER::UI.yellow(text).include?("Hello World"), "yellow should contain input text"
     assert MASTER::UI.green(text).include?("Hello World"), "green should contain input text"
     assert MASTER::UI.red(text).include?("Hello World"), "red should contain input text"
