@@ -23,6 +23,78 @@ module MASTER
 
     @last_command = nil
 
+    # RepLigen command handler
+    def repligen_command(cmd, args)
+      require_relative "repligen_bridge"
+      
+      case cmd
+      when "repligen", "generate-image"
+        return puts "Usage: repligen <prompt>" if args.nil? || args.empty?
+        puts "🎨 Generating image: #{args}"
+        result = RepLigenBridge.generate_image(prompt: args)
+        if result.ok?
+          puts "✓ Image generated: #{result.value[:urls]&.first || 'Success'}"
+        else
+          puts "✗ Error: #{result.error}"
+        end
+      when "generate-video"
+        return puts "Usage: generate-video <prompt>" if args.nil? || args.empty?
+        puts "🎬 Generating video: #{args}"
+        result = RepLigenBridge.generate_video(prompt: args)
+        if result.ok?
+          puts "✓ Video generated: #{result.value[:urls]&.first || 'Success'}"
+        else
+          puts "✗ Error: #{result.error}"
+        end
+      end
+    rescue => e
+      $stderr.puts "RepLigen error: #{e.message}"
+      puts "✗ Failed: #{e.message}"
+    end
+
+    # PostPro command handler
+    def postpro_command(cmd, args)
+      require_relative "postpro_bridge"
+      
+      case cmd
+      when "postpro"
+        if args.nil? || args.empty?
+          puts "PostPro Operations:"
+          PostProBridge.operations.each do |op|
+            puts "  #{op[:id]} - #{op[:name]}"
+          end
+          return
+        end
+        # Parse: postpro <operation> <image_url>
+        parts = args.split(/\s+/, 2)
+        operation = parts[0]
+        image_url = parts[1]
+        return puts "Usage: postpro <operation> <image_url>" if image_url.nil?
+        
+        puts "🔧 Enhancing with #{operation}..."
+        result = PostProBridge.enhance(image_url: image_url, operation: operation)
+        if result.ok?
+          puts "✓ Enhanced: #{result.value[:urls]&.first || 'Success'}"
+        else
+          puts "✗ Error: #{result.error}"
+        end
+      when "enhance", "upscale"
+        return puts "Usage: #{cmd} <image_url>" if args.nil? || args.empty?
+        puts "🔧 #{cmd.capitalize}ing image..."
+        result = cmd == "upscale" ? 
+          PostProBridge.upscale(image_url: args) : 
+          PostProBridge.enhance(image_url: args, operation: :upscale)
+        if result.ok?
+          puts "✓ Done: #{result.value[:urls]&.first || 'Success'}"
+        else
+          puts "✗ Error: #{result.error}"
+        end
+      end
+    rescue => e
+      $stderr.puts "PostPro error: #{e.message}"
+      puts "✗ Failed: #{e.message}"
+    end
+
     # Shortcuts for power users
     SHORTCUTS = {
       "!!" => :repeat_last,
@@ -151,6 +223,12 @@ module MASTER
         nil
       when "review-captures"
         review_captures
+        nil
+      when "repligen", "generate-image", "generate-video"
+        repligen_command(cmd, args)
+        nil
+      when "postpro", "enhance", "upscale"
+        postpro_command(cmd, args)
         nil
       when "shell"
         # Start interactive shell
