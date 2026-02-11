@@ -192,6 +192,24 @@ module MASTER
         :error
       end
     end
+
+    # Check file count in lib/ directory
+    def check_file_count
+      rb_files = Dir[File.join(MASTER.root, "lib", "*.rb")]
+      count = rb_files.size
+      
+      if count > 25
+        [{
+          layer: :structural,
+          severity: :warn,
+          message: "lib/ has #{count} top-level files (target: 15-25). Run minimization pass per ULTRA_MINIMALISM axiom.",
+          file: "lib/",
+          suggestion: "Merge small files into parent modules"
+        }]
+      else
+        []
+      end
+    end
   end
 
   # LanguageAxioms - Language-specific beauty rules

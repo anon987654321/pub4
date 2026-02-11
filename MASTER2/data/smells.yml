@@ -145,6 +145,14 @@ html_css_quality:
       - use_semantic_tags
       - proper_h1_h6_order
 
+# Structural smells
+file_proliferation:
+  description: "Too many top-level files in lib/"
+  threshold: 25
+  severity: warn
+  suggestion: "Merge small files into parent modules per ULTRA_MINIMALISM axiom"
+  axiom: "ULTRA_MINIMALISM"
+
 # Language axioms are defined in language_axioms.yml
 # See: data/language_axioms.yml for 78 language-specific beauty rules
 language_axiom_categories:

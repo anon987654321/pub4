@@ -354,3 +354,23 @@
   title: "User-Friendly Design"
   statement: "Visibility. User control. Error prevention. Consistency. Recognition over recall."
   source: "10 Usability Heuristics by Jakob Nielsen"
+
+- id: "ULTRA_MINIMALISM"
+  category: "architecture"
+  protection: "ENFORCED"
+  priority: 10
+  title: "Ultra-Minimalism"
+  statement: "Conceptual, lexical, semantic, and structural minimalism without losing features, logic, or style. Files under 30 lines merge into parent module. Target 15-25 files in lib/, never 60+."
+  source: "MASTER2 Architecture Principles"
+  dimensions:
+    conceptual: "One module per concept. If two files answer the same question, they are one file."
+    lexical: "One name per idea. Synonymous modules collapse. No _bridge/_wrapper/_helper suffixes."
+    semantic: "Every module must earn its file. If you can't explain the boundary, there is none."
+    structural: "Flat over nested. Fewer doors to the same rooms. Merging ≠ deleting."
+  rules:
+    - "Files under 30 lines merge into parent module"
+    - "Target 15-25 files in lib/, never 60+"
+    - "Synonymous modules collapse: one word per concept"
+    - "No _bridge/_wrapper/_helper suffixes — name the thing"
+    - "Every require in master.rb must justify its existence"
+    - "Merge absorbs code verbatim; deletion requires separate PR"

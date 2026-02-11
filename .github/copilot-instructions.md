@@ -24,3 +24,9 @@
 - `self_test.rb` — All testing and self-repair
 - `enforcement.rb` — Axiom enforcement (single entry point)
 
+## Ultra-Minimalism Axiom (4 dimensions)
+- **Conceptual**: One module per concept. If two files answer the same question, they are one file.
+- **Lexical**: One name per idea. Kill synonyms. No `_bridge`/`_wrapper`/`_helper` suffixes.
+- **Semantic**: Every module earns its file. If you can't explain the boundary in one sentence, there is none.
+- **Structural**: Flat over nested. Fewer doors to the same rooms. Merging ≠ deleting.
+
