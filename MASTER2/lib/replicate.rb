@@ -27,7 +27,7 @@ module MASTER
 
     class << self
       def api_key
-        ENV['REPLICATE_API_KEY']
+        ENV['REPLICATE_API_TOKEN'] || ENV['REPLICATE_API_KEY']
       end
 
       def available?
@@ -35,7 +35,7 @@ module MASTER
       end
 
       def generate(prompt:, model: DEFAULT_MODEL, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[DEFAULT_MODEL]
 
@@ -58,7 +58,7 @@ module MASTER
       end
 
       def upscale(image_url:, scale: 4)
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
         model_id = 'nightmareai/real-esrgan'
         input = { image: image_url, scale: scale }
@@ -73,7 +73,7 @@ module MASTER
       end
 
       def describe(image_url:)
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
         model_id = 'salesforce/blip'
         input = { image: image_url }
@@ -89,11 +89,11 @@ module MASTER
 
       # Generic model runner - supports any Replicate model
       def run(model_id:, input:, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
         combined_input = input.merge(params)
 
-        prediction = create_prediction(model_id, input: combined_input)
+        prediction = create_prediction(model: model_id, input: combined_input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -118,7 +118,9 @@ module MASTER
         FileUtils.mkdir_p(File.dirname(path))
         File.binwrite(path, response.body)
         true
-      rescue => e
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        { error: 'Request timed out' }
+      rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
       end
@@ -150,7 +152,7 @@ module MASTER
         end
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Request timed out' }
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
       end
@@ -189,7 +191,7 @@ module MASTER
         { error: 'Max polls exceeded' }
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Poll request timed out' }
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
         { error: e.message }
       end
