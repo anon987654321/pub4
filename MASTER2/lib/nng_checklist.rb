@@ -134,5 +134,114 @@ module MASTER
 
       lines.join("\n")
     end
+
+    # Lint HTML file for web UI best practices
+    def lint_html(file_path)
+      return { error: "File not found: #{file_path}" } unless File.exist?(file_path)
+      
+      content = File.read(file_path)
+      issues = []
+      
+      # Check for CSS custom properties usage (no raw hex outside :root)
+      if content.include?('<style>')
+        style_section = content[/<style>(.*?)<\/style>/m, 1]
+        if style_section
+          # Extract :root section
+          root_section = style_section[/:root\s*\{[^}]*\}/m]
+          non_root = style_section.gsub(/:root\s*\{[^}]*\}/m, '')
+          
+          # Check for hex colors outside :root
+          hex_colors = non_root.scan(/#[0-9a-fA-F]{3,8}/)
+          unless hex_colors.empty?
+            issues << "Found #{hex_colors.length} raw hex colors outside :root (should use CSS vars)"
+          end
+        end
+      end
+      
+      # Check for prefers-reduced-motion media query
+      unless content.include?('prefers-reduced-motion')
+        issues << "Missing @media (prefers-reduced-motion) support"
+      end
+      
+      # Check for focus styles
+      has_focus = content.include?('focus-visible') || content.include?(':focus')
+      unless has_focus
+        issues << "Missing focus styles (:focus or :focus-visible)"
+      end
+      
+      # Check for dialog element vs custom modal
+      if content.include?('modal') && !content.include?('<dialog')
+        issues << "Consider using <dialog> element instead of custom modal"
+      end
+      
+      # Check for semantic HTML
+      semantic_score = 0
+      semantic_score += 1 if content.include?('<nav')
+      semantic_score += 1 if content.include?('<header')
+      semantic_score += 1 if content.include?('<main')
+      semantic_score += 1 if content.include?('<footer')
+      semantic_score += 1 if content.include?('<article')
+      semantic_score += 1 if content.include?('<section')
+      
+      if semantic_score == 0 && content.length > 1000
+        issues << "Consider using semantic HTML elements (nav, header, main, footer, article, section)"
+      end
+      
+      {
+        file: file_path,
+        issues: issues,
+        pass: issues.empty?
+      }
+    end
+
+    # Lint all view files
+    def lint_views
+      views_dir = File.join(MASTER.root, 'lib', 'views')
+      return { error: "Views directory not found" } unless Dir.exist?(views_dir)
+      
+      results = []
+      Dir.glob(File.join(views_dir, '*.html')).each do |file|
+        results << lint_html(file)
+      end
+      
+      {
+        total: results.length,
+        passed: results.count { |r| r[:pass] },
+        failed: results.count { |r| !r[:pass] },
+        results: results
+      }
+    end
+
+    # Check color contrast (simplified WCAG check)
+    def check_contrast(fg_hex, bg_hex)
+      # Convert hex to RGB
+      fg_rgb = [fg_hex[1..2], fg_hex[3..4], fg_hex[5..6]].map { |h| h.to_i(16) / 255.0 }
+      bg_rgb = [bg_hex[1..2], bg_hex[3..4], bg_hex[5..6]].map { |h| h.to_i(16) / 255.0 }
+      
+      # Calculate relative luminance
+      fg_lum = relative_luminance(fg_rgb)
+      bg_lum = relative_luminance(bg_rgb)
+      
+      # Calculate contrast ratio
+      lighter = [fg_lum, bg_lum].max
+      darker = [fg_lum, bg_lum].min
+      ratio = (lighter + 0.05) / (darker + 0.05)
+      
+      {
+        ratio: ratio.round(2),
+        wcag_aa: ratio >= 4.5,
+        wcag_aaa: ratio >= 7.0
+      }
+    end
+
+    private
+
+    def relative_luminance(rgb)
+      rgb.map do |c|
+        c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+      end.then do |r, g, b|
+        0.2126 * r + 0.7152 * g + 0.0722 * b
+      end
+    end
   end
 end
