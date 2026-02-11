@@ -7,34 +7,35 @@ module MASTER
   module RepligenBridge
     extend self
 
-    # Model catalog from repligen's WILD_CHAIN
+    # Model catalog - delegates to Replicate::MODELS for canonical registry
+    # Organized by category for easy discovery
     WILD_CHAIN = {
       image_gen: [
-        { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
-        { model: "black-forest-labs/flux-dev", name: "Flux Dev" },
-        { model: "stability-ai/sdxl", name: "SDXL" },
-        { model: "ideogram-ai/ideogram-v2", name: "Ideogram V2" },
-        { model: "recraft-ai/recraft-v3", name: "Recraft V3" }
+        { model: MASTER::Replicate::MODELS[:flux_pro], name: "Flux Pro" },
+        { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
+        { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
+        { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
+        { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" }
       ],
       video_gen: [
-        { model: "minimax/video-01", name: "Hailuo 2.3" },
-        { model: "kwaivgi/kling-v2.5-turbo-pro", name: "Kling 2.5" },
-        { model: "luma/ray-2", name: "Luma Ray 2" },
-        { model: "wan-video/wan-2.5-i2v", name: "WAN 2.5" },
-        { model: "openai/sora-2", name: "Sora 2" }
+        { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
+        { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
+        { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
+        { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
+        { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" }
       ],
       enhance: [
-        { model: "nightmareai/real-esrgan", name: "Real-ESRGAN 4x" },
-        { model: "tencentarc/gfpgan", name: "GFPGAN Face" },
-        { model: "sczhou/codeformer", name: "CodeFormer" },
-        { model: "lucataco/clarity-upscaler", name: "Clarity 4x" }
+        { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
+        { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
+        { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
+        { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" }
       ],
       audio: [
-        { model: "meta/musicgen", name: "MusicGen" },
-        { model: "suno/bark", name: "Bark TTS" }
+        { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
+        { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" }
       ],
       transcribe: [
-        { model: "openai/whisper", name: "Whisper" }
+        { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" }
       ]
     }.freeze
 
@@ -50,11 +51,12 @@ module MASTER
 
     # Generate image using Replicate API
     def generate_image(prompt:, model: nil)
-      model_id = model || WILD_CHAIN[:image_gen].first[:model]
+      model_symbol = model_symbol_from_id(model) if model
+      model_symbol ||= :flux_pro
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
-      Replicate.generate(prompt: prompt, model: model_id)
+      Replicate.generate(prompt: prompt, model: model_symbol)
     end
 
     # Generate video using Replicate API
@@ -63,7 +65,7 @@ module MASTER
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
-      Replicate.generate(prompt: prompt, model: model_id)
+      Replicate.run(model_id: model_id, input: { prompt: prompt })
     end
 
     # Enhance image using upscaling models
@@ -72,7 +74,7 @@ module MASTER
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
-      Replicate.generate(prompt: "", model: model_id, params: { image: image_url })
+      Replicate.run(model_id: model_id, input: { image: image_url })
     end
 
     # Get model info
@@ -133,24 +135,23 @@ module MASTER
       current_output = nil
       
       chain.each_with_index do |step, idx|
-        params = {}
+        input = { prompt: step[:prompt] || "" }
         
         # If not first step and previous output exists, use it as input
         if idx > 0 && current_output
-          params[:image] = current_output if step[:category] == :enhance
-          params[:init_image] = current_output if step[:category] == :image_gen
+          input[:image] = current_output if step[:category] == :enhance
+          input[:init_image] = current_output if step[:category] == :image_gen
         end
         
-        # Execute step
-        result = Replicate.generate(
-          prompt: step[:prompt] || "",
-          model: step[:model],
-          params: params
+        # Execute step via Replicate.run
+        result = Replicate.run(
+          model_id: step[:model],
+          input: input
         )
         
         return result if result.err?
         
-        current_output = result.ok
+        current_output = result.value[:output]
         results << {
           step: idx + 1,
           model: step[:name],
@@ -170,13 +171,14 @@ module MASTER
       return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
       
       full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
-      model_id = model || WILD_CHAIN[:image_gen].first[:model]
+      model_symbol = model_symbol_from_id(model) if model
+      model_symbol ||= :flux_pro
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
       Replicate.generate(
         prompt: full_prompt,
-        model: model_id,
+        model: model_symbol,
         params: { style: style, lighting: lighting }
       )
     end
@@ -203,16 +205,22 @@ module MASTER
       return Result.err("Training data cannot be empty") if training_data.nil? || training_data.empty?
       return Result.err("Trigger word required") if trigger_word.nil? || trigger_word.empty?
       
-      Replicate.generate(
-        prompt: "",
-        model: model,
-        params: {
+      Replicate.run(
+        model_id: model,
+        input: {
           input_images: training_data,
           trigger_word: trigger_word,
           steps: 1000,
           learning_rate: 0.0004
         }
       )
+    end
+
+    private
+
+    # Convert model ID to symbol if it exists in MODELS
+    def model_symbol_from_id(model_id)
+      MASTER::Replicate::MODELS.find { |k, v| v == model_id }&.first
     end
   end
 end

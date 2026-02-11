@@ -12,14 +12,56 @@ module MASTER
     API_URL = 'https://api.replicate.com/v1/predictions'
 
     MODELS = {
-      flux:      'black-forest-labs/flux-1.1-pro',
-      sdxl:      'stability-ai/sdxl',
-      kandinsky: 'ai-forever/kandinsky-2.2'
+      # Image generation
+      flux:         'black-forest-labs/flux-1.1-pro',
+      flux_pro:     'black-forest-labs/flux-pro',
+      flux_dev:     'black-forest-labs/flux-dev',
+      sdxl:         'stability-ai/sdxl',
+      kandinsky:    'ai-forever/kandinsky-2.2',
+      ideogram_v2:  'ideogram-ai/ideogram-v2',
+      recraft_v3:   'recraft-ai/recraft-v3',
+
+      # Upscaling/Enhancement
+      esrgan:       'nightmareai/real-esrgan',
+      gfpgan:       'tencentarc/gfpgan',
+      codeformer:   'sczhou/codeformer',
+      clarity:      'lucataco/clarity-upscaler',
+
+      # Image captioning
+      blip:         'salesforce/blip',
+
+      # Video generation
+      svd:          'stability-ai/stable-video-diffusion',
+      hailuo:       'minimax/video-01',
+      kling:        'kwaivgi/kling-v2.5-turbo-pro',
+      luma_ray:     'luma/ray-2',
+      wan:          'wan-video/wan-2.5-i2v',
+      sora:         'openai/sora-2',
+
+      # Music/Audio generation
+      musicgen:     'meta/musicgen',
+      bark:         'suno/bark',
+
+      # Transcription
+      whisper:      'openai/whisper',
+
+      # 3D generation
+      shap_e:       'openai/shap-e'
     }.freeze
 
     DEFAULT_MODEL = :flux
 
-    # Timeout constants (from timeouts.rb)
+    # Model categories for filtering
+    MODEL_CATEGORIES = {
+      image: [:flux, :flux_pro, :flux_dev, :sdxl, :kandinsky, :ideogram_v2, :recraft_v3],
+      video: [:svd, :hailuo, :kling, :luma_ray, :wan, :sora],
+      upscale: [:esrgan, :gfpgan, :codeformer, :clarity],
+      audio: [:musicgen, :bark],
+      transcribe: [:whisper],
+      caption: [:blip],
+      threed: [:shap_e]
+    }.freeze
+
     REPLICATE_TIMEOUT = (ENV['MASTER_REPLICATE_TIMEOUT'] || 300).to_i
     POLL_INTERVAL = (ENV['MASTER_POLL_INTERVAL'] || 2).to_i
     HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
@@ -34,6 +76,15 @@ module MASTER
         !api_key.nil? && !api_key.empty?
       end
 
+      def model_id(name)
+        MODELS[name.to_sym] || raise(ArgumentError, "Unknown model: #{name}")
+      end
+
+      def models_for(category)
+        model_keys = MODEL_CATEGORIES[category.to_sym] || []
+        model_keys.map { |key| { name: key, id: MODELS[key] } }
+      end
+
       def generate(prompt:, model: DEFAULT_MODEL, params: {})
         return Result.err("REPLICATE_API_KEY not set") unless available?
 
@@ -41,11 +92,9 @@ module MASTER
 
         input = { prompt: prompt }.merge(params)
 
-        # Create prediction
         prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
-        # Poll for completion
         result = wait_for_completion(prediction[:id])
         return Result.err("Generation failed: #{result[:error]}") if result[:error]
 
@@ -60,7 +109,7 @@ module MASTER
       def upscale(image_url:, scale: 4)
         return Result.err("REPLICATE_API_KEY not set") unless available?
 
-        model_id = 'nightmareai/real-esrgan'
+        model_id = MODELS[:esrgan]
         input = { image: image_url, scale: scale }
 
         prediction = create_prediction(model: model_id, input: input)
@@ -75,7 +124,7 @@ module MASTER
       def describe(image_url:)
         return Result.err("REPLICATE_API_KEY not set") unless available?
 
-        model_id = 'salesforce/blip'
+        model_id = MODELS[:blip]
         input = { image: image_url }
 
         prediction = create_prediction(model: model_id, input: input)
@@ -87,7 +136,61 @@ module MASTER
         Result.ok({ caption: result[:output] })
       end
 
-      # Generic model runner - supports any Replicate model
+      # Video generation helper
+      def generate_video(prompt:, model: :svd, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:svd]
+        input = { prompt: prompt }.merge(params)
+
+        prediction = create_prediction(model: model_id, input: input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Video generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          prompt: prompt
+        })
+      end
+
+      # Music generation helper
+      def generate_music(prompt:, duration: 10, model: :musicgen, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:musicgen]
+        input = { prompt: prompt, duration: duration }.merge(params)
+
+        prediction = create_prediction(model: model_id, input: input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Music generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          prompt: prompt,
+          duration: duration
+        })
+      end
+
+      # Batch generation with progress
+      def batch_generate(prompts, model: DEFAULT_MODEL, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Prompts array cannot be empty") if prompts.nil? || prompts.empty?
+
+        results = prompts.map do |prompt|
+          generate(prompt: prompt, model: model, params: params)
+        end
+
+        Result.ok(results)
+      end
+
       def run(model_id:, input:, params: {})
         return Result.err("REPLICATE_API_KEY not set") unless available?
 
@@ -106,7 +209,6 @@ module MASTER
         })
       end
 
-      # Download file from URL to local path
       def download_file(url, path)
         uri = URI(url)
         http = Net::HTTP.new(uri.host, uri.port)

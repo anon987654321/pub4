@@ -13,27 +13,27 @@ module MASTER
     PRESETS = {
       'blade-runner' => {
         description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
-        models: ['stability-ai/sdxl', 'tencentarc/gfpgan'],
+        models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
         params: { guidance_scale: 12.0, strength: 0.6 }
       },
       'wes-anderson' => {
         description: 'Symmetrical, pastel palette, centered compositions',
-        models: ['stability-ai/sdxl'],
+        models: [Replicate::MODELS[:sdxl]],
         params: { guidance_scale: 8.0, strength: 0.5 }
       },
       'noir' => {
         description: 'High contrast black and white, dramatic shadows',
-        models: ['stability-ai/sdxl'],
+        models: [Replicate::MODELS[:sdxl]],
         params: { guidance_scale: 10.0, strength: 0.7 }
       },
       'golden-hour' => {
         description: 'Warm, soft, glowing light',
-        models: ['stability-ai/sdxl'],
+        models: [Replicate::MODELS[:sdxl]],
         params: { guidance_scale: 9.0, strength: 0.5 }
       },
       'teal-orange' => {
         description: 'Hollywood blockbuster: teal shadows, orange highlights',
-        models: ['stability-ai/sdxl'],
+        models: [Replicate::MODELS[:sdxl]],
         params: { guidance_scale: 11.0, strength: 0.6 }
       }
     }.freeze
@@ -222,59 +222,27 @@ module MASTER
       end
 
       def self.discover_models(category)
-        # Model list based on repligen's WILD_CHAIN
-        # Updated with current best models for each category
+        # Use canonical model registry from Replicate::MODELS
         case category
         when :image
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
-            'ideogram-ai/ideogram-v2',
-            'recraft-ai/recraft-v3'
-          ]
+          Replicate.models_for(:image).map { |m| m[:id] }
         when :video
-          [
-            'minimax/video-01',      # Hailuo 2.3
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'luma/ray-2',
-            'wan-video/wan-2.5-i2v',
-            'openai/sora-2'
-          ]
+          Replicate.models_for(:video).map { |m| m[:id] }
         when :enhance
-          [
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler'
-          ]
+          Replicate.models_for(:upscale).map { |m| m[:id] }
         when :audio
-          [
-            'meta/musicgen',
-            'suno/bark'
-          ]
+          Replicate.models_for(:audio).map { |m| m[:id] }
         when :transcribe
-          ['openai/whisper']
+          Replicate.models_for(:transcribe).map { |m| m[:id] }
         when :color
-          ['stability-ai/sdxl']
+          [Replicate::MODELS[:sdxl]]
         else
           # All models combined
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
-            'ideogram-ai/ideogram-v2',
-            'recraft-ai/recraft-v3',
-            'minimax/video-01',
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler',
-            'meta/musicgen',
-            'suno/bark',
-            'openai/whisper'
-          ]
+          (Replicate.models_for(:image) + 
+           Replicate.models_for(:video) + 
+           Replicate.models_for(:upscale) + 
+           Replicate.models_for(:audio) + 
+           Replicate.models_for(:transcribe)).map { |m| m[:id] }.uniq
         end
       end
 
