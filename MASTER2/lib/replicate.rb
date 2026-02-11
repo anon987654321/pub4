@@ -178,7 +178,10 @@ module MASTER
       def generate_video(prompt:, model: :svd, params: {})
         return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
-        model_id = MODELS[model.to_sym] || MODELS[:svd]
+        model_sym = model.to_sym
+        return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
+
+        model_id = MODELS[model_sym]
         input = { prompt: prompt }.merge(params)
 
         prediction = create_prediction(model: model_id, input: input)
@@ -204,7 +207,10 @@ module MASTER
       def generate_music(prompt:, duration: 10, model: :musicgen, params: {})
         return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
-        model_id = MODELS[model.to_sym] || MODELS[:musicgen]
+        model_sym = model.to_sym
+        return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
+
+        model_id = MODELS[model_sym]
         input = { prompt: prompt, duration: duration }.merge(params)
 
         prediction = create_prediction(model: model_id, input: input)
