@@ -9,10 +9,22 @@ module MASTER
     MAX_METHOD_LINES = 20
     MAX_FILE_LINES = 300
 
+    # Scan profiles for tiered axiom checking
+    SCAN_PROFILES = {
+      quick: { min_priority: 9, description: "Critical axioms only (~5 axioms)" },
+      standard: { min_priority: 7, description: "Important axioms (~12 axioms)" },
+      full: { min_priority: 0, description: "All axioms (32 axioms)" }
+    }.freeze
+
     class << self
       # Basic structural scan - long methods, god classes, deep nesting
-      def scan(path)
+      # Now supports profile parameter for axiom filtering
+      def scan(path, profile: :standard)
         return Result.err('Path not found') unless File.exist?(path)
+
+        # Load and filter axioms by profile
+        axioms = load_axioms_for_profile(profile)
+        puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms
 
         if File.directory?(path)
           files = Dir[File.join(path, '**', '*.rb')]
@@ -130,6 +142,23 @@ module MASTER
       end
 
       private
+
+      # Load axioms filtered by scan profile priority
+      def load_axioms_for_profile(profile)
+        return nil unless SCAN_PROFILES.key?(profile)
+        
+        config = SCAN_PROFILES[profile]
+        min_priority = config[:min_priority]
+        
+        axioms_path = File.join(Paths.data, 'axioms.yml')
+        return nil unless File.exist?(axioms_path)
+        
+        all_axioms = YAML.load_file(axioms_path)
+        all_axioms.select { |a| (a['priority'] || a[:priority] || 5) >= min_priority }
+      rescue => e
+        UI.warn("Failed to load axioms: #{e.message}")
+        nil
+      end
 
       # Scan individual file for basic structural issues
       def scan_file(path)

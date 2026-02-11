@@ -85,6 +85,7 @@ require_relative "engine"             # Unified scan facade (restored from MASTE
 require_relative "agent_autonomy"     # Goal decomposition & self-correction (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
+require_relative "prescan"            # Situational awareness ritual (restored from MASTER v1)
 
 # Auto-fixer (restored from MASTER)
 require_relative "auto_fixer"

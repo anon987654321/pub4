@@ -1,6 +1,7 @@
 # MASTER/data/axioms.yml
 # Timeless, universal axioms from authoritative sources.
 # 6 categories, 32 axioms. Each is actionable and validatable.
+# Priority: 10=critical (always scan), 7=important (standard), 5=normal, 3=deep-only
 
 # ============================================================================
 # ENGINEERING AXIOMS (Core principles)
@@ -9,6 +10,7 @@
 - id: "ONE_SOURCE"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 10
   title: "One Source of Truth"
   statement: "Every piece of knowledge has exactly one authoritative representation. Extract on second use."
   source: "The Pragmatic Programmer"
@@ -16,6 +18,7 @@
 - id: "SIMPLEST_WORKS"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 10
   title: "Simplest Thing That Works"
   statement: "The simplest working solution wins. Complexity multiplies failure modes."
   source: "Unix Philosophy"
@@ -23,6 +26,7 @@
 - id: "ONE_JOB"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 10
   title: "One Job Per Thing"
   statement: "A module, class, or function has one reason to change. Do one thing well."
   source: "Clean Code by Robert C. Martin"
@@ -30,6 +34,7 @@
 - id: "EXTEND_DONT_MODIFY"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Extend, Don't Modify"
   statement: "Open for extension, closed for modification. Add behavior without changing existing code."
   source: "SOLID Principles"
@@ -37,6 +42,7 @@
 - id: "SUBSTITUTABLE"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Children Honor Parents"
   statement: "Subtypes must be substitutable for their base types. A child class never breaks parent's contract."
   source: "SOLID Principles"
@@ -44,6 +50,7 @@
 - id: "SMALL_INTERFACES"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Small Specific Interfaces"
   statement: "Many specific interfaces beat one general interface. Clients shouldn't depend on methods they don't use."
   source: "SOLID Principles"
@@ -51,6 +58,7 @@
 - id: "DEPEND_ON_ABSTRACTIONS"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Depend on Abstractions"
   statement: "Depend on abstractions, not concretions. High-level modules don't depend on low-level modules."
   source: "SOLID Principles"
@@ -58,6 +66,7 @@
 - id: "NO_SURPRISES"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 10
   title: "No Surprises"
   statement: "Systems behave as users expect. Match mental models. Surprising behavior is a bug."
   source: "The Pragmatic Programmer"
@@ -65,6 +74,7 @@
 - id: "COMPOSABLE"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Design for Composition"
   statement: "Components work standalone and combined. Independently testable. Freely composable."
   source: "Unix Philosophy"
@@ -72,6 +82,7 @@
 - id: "FAIL_VISIBLY"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 10
   title: "Fail Visibly"
   statement: "Errors surface immediately. Never swallow exceptions. Silent failures compound into disasters."
   source: "Release It! by Michael Nygard"
@@ -79,6 +90,7 @@
 - id: "DEADLINES"
   category: "engineering"
   protection: "PROTECTED"
+  priority: 7
   title: "Every Call Has a Deadline"
   statement: "External calls have explicit timeouts. Infinity is not a timeout. Hanging is worse than failing."
   source: "Release It! by Michael Nygard"
@@ -90,6 +102,7 @@
 - id: "MERGE"
   category: "structural"
   protection: "PROTECTED"
+  priority: 5
   title: "Merge Duplicates"
   statement: "Combine duplicates into one source. Two representations of the same knowledge become one."
   source: "Refactoring by Martin Fowler"
@@ -97,6 +110,7 @@
 - id: "FLATTEN"
   category: "structural"
   protection: "PROTECTED"
+  priority: 5
   title: "Flatten Nesting"
   statement: "Remove unnecessary nesting levels. Deep hierarchies obscure intent and multiply complexity."
   source: "Refactoring by Martin Fowler"
@@ -104,6 +118,7 @@
 - id: "DEFRAGMENT"
   category: "structural"
   protection: "PROTECTED"
+  priority: 5
   title: "Group Related Code"
   statement: "Move related things adjacent. Scattered code forces readers to reconstruct context."
   source: "Refactoring by Martin Fowler"
@@ -111,6 +126,7 @@
 - id: "DECOUPLE"
   category: "structural"
   protection: "PROTECTED"
+  priority: 7
   title: "Decouple Dependencies"
   statement: "Hidden dependencies become explicit. Every coupling point is a failure point."
   source: "Refactoring by Martin Fowler"
@@ -118,6 +134,7 @@
 - id: "HOIST"
   category: "structural"
   protection: "PROTECTED"
+  priority: 3
   title: "Hoist Invariants"
   statement: "Move invariants out of repetition. Computation inside loops wastes resources and obscures intent."
   source: "Refactoring by Martin Fowler"
@@ -125,6 +142,7 @@
 - id: "PRUNE"
   category: "structural"
   protection: "PROTECTED"
+  priority: 5
   title: "Prune Dead Paths"
   statement: "Remove dead and unreachable code. Dead code hides bugs and burdens maintenance."
   source: "Refactoring by Martin Fowler"
@@ -132,6 +150,7 @@
 - id: "COALESCE"
   category: "structural"
   protection: "PROTECTED"
+  priority: 3
   title: "Coalesce Operations"
   statement: "Merge sequential same-type operations. Five inserts become one bulk. Three API calls become one batch."
   source: "Refactoring by Martin Fowler"
@@ -139,6 +158,7 @@
 - id: "REFLOW"
   category: "structural"
   protection: "PROTECTED"
+  priority: 3
   title: "Reflow by Importance"
   statement: "Order by importance, then chronology. Public API at top, helpers at bottom. Constants before methods."
   source: "Clean Code by Robert C. Martin"
@@ -150,6 +170,7 @@
 - id: "LEAVE_BETTER"
   category: "process"
   protection: "PROTECTED"
+  priority: 7
   title: "Leave It Better"
   statement: "Every change improves the codebase. Fix nearby broken windows. Never degrade."
   source: "Clean Code by Robert C. Martin"
@@ -157,6 +178,7 @@
 - id: "ONE_CHANGE"
   category: "process"
   protection: "PROTECTED"
+  priority: 5
   title: "Change One Thing"
   statement: "Modify one thing at a time. Commit often. Verify each step."
   source: "Refactoring by Martin Fowler"
@@ -164,6 +186,7 @@
 - id: "TEST_FIRST"
   category: "process"
   protection: "PROTECTED"
+  priority: 7
   title: "Test Before Fix"
   statement: "Write the failing test before the fix. If you can't test it, you can't prove it."
   source: "Test-Driven Development by Kent Beck"
@@ -171,6 +194,7 @@
 - id: "SKELETON_FIRST"
   category: "process"
   protection: "PROTECTED"
+  priority: 5
   title: "Build Skeleton First"
   statement: "Build the thinnest working slice first. Skeleton before flesh. Validate the path before optimizing."
   source: "The Pragmatic Programmer"
@@ -178,6 +202,7 @@
 - id: "MEASURE_THEN_OPTIMIZE"
   category: "process"
   protection: "PROTECTED"
+  priority: 5
   title: "Measure Before Optimizing"
   statement: "No optimization without metrics. Measure, don't guess."
   source: "Unix Philosophy"
@@ -185,6 +210,7 @@
 - id: "REVERSIBLE"
   category: "process"
   protection: "PROTECTED"
+  priority: 5
   title: "Make It Reversible"
   statement: "Every action can be undone. Edits, config changes, state mutations need rollback."
   source: "The Pragmatic Programmer"
@@ -196,6 +222,7 @@
 - id: "BE_CONCISE"
   category: "communication"
   protection: "PROTECTED"
+  priority: 7
   title: "Be Concise"
   statement: "Vigorous writing is concise. No unnecessary words, sentences, or tokens."
   source: "The Elements of Style by Strunk & White"
@@ -203,6 +230,7 @@
 - id: "SELF_EXPLAINING"
   category: "communication"
   protection: "PROTECTED"
+  priority: 10
   title: "Code Explains Itself"
   statement: "Code is self-explanatory. Comments explain why, not what."
   source: "Clean Code by Robert C. Martin"
@@ -210,6 +238,7 @@
 - id: "VISUAL_HIERARCHY"
   category: "communication"
   protection: "PROTECTED"
+  priority: 3
   title: "Clear Visual Hierarchy"
   statement: "Structure defines importance. Important code is visually prominent."
   source: "The Elements of Typographic Style by Robert Bringhurst"
@@ -217,6 +246,7 @@
 - id: "STEADY_RHYTHM"
   category: "communication"
   protection: "PROTECTED"
+  priority: 3
   title: "Steady Rhythm"
   statement: "Spacing and arrangement create steady visual and logical rhythm."
   source: "The Elements of Typographic Style by Robert Bringhurst"
@@ -228,6 +258,7 @@
 - id: "DEGRADE_GRACEFULLY"
   category: "resilience"
   protection: "PROTECTED"
+  priority: 7
   title: "Degrade Gracefully"
   statement: "Works offline. Works without API. Works with failures. Never fully broken."
   source: "Release It! by Michael Nygard"
@@ -235,6 +266,7 @@
 - id: "EXPECT_FAILURE"
   category: "resilience"
   protection: "PROTECTED"
+  priority: 7
   title: "Expect Failure"
   statement: "Every operation considers: what if this fails? Plan the unhappy path."
   source: "Stoic Philosophy"
@@ -242,6 +274,7 @@
 - id: "APPEND_ONLY"
   category: "resilience"
   protection: "PROTECTED"
+  priority: 5
   title: "Append-Only History"
   statement: "History is never mutated. Append-only enables replay, prevents data loss."
   source: "Event Sourcing Principles"
@@ -253,6 +286,7 @@
 - id: "JUST_ENOUGH"
   category: "aesthetic"
   protection: "PROTECTED"
+  priority: 5
   title: "Just Enough"
   statement: "Not too much, not too little. Right-sized responses, complexity, intervention."
   source: "Swedish Design Philosophy"
@@ -260,6 +294,7 @@
 - id: "LEAST_POWER"
   category: "aesthetic"
   protection: "PROTECTED"
+  priority: 7
   title: "Use Least Power"
   statement: "Choose the weakest tool that works. Use :cheap before :strong. Use grep before LLM."
   source: "W3C Design Principles"
@@ -267,6 +302,7 @@
 - id: "VISIBLE_REPAIRS"
   category: "aesthetic"
   protection: "PROTECTED"
+  priority: 3
   title: "Visible Repairs"
   statement: "Fixes are features. Document repairs visibly. Addressed debt is beautiful."
   source: "Japanese Aesthetics"
@@ -274,6 +310,7 @@
 - id: "ANTICIPATE_NEEDS"
   category: "aesthetic"
   protection: "PROTECTED"
+  priority: 5
   title: "Anticipate Needs"
   statement: "Predict what the user needs next. Suggest before asked. Prepare before requested."
   source: "Japanese Hospitality"
@@ -281,6 +318,7 @@
 - id: "DONT_FORCE"
   category: "aesthetic"
   protection: "PROTECTED"
+  priority: 3
   title: "Don't Force It"
   statement: "Don't force solutions. The right solution flows naturally."
   source: "Taoist Philosophy"

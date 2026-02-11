@@ -247,6 +247,102 @@ module MASTER
         puts "    result = pipeline.execute(input)"
         puts
       end
+
+      # Persona management commands
+      def manage_persona(args)
+        parts = args&.split || []
+        return show_persona_help if parts.empty?
+
+        command = parts[0]
+        name = parts[1]
+
+        case command
+        when "activate"
+          return puts "  Usage: persona activate <name>" unless name
+          
+          if defined?(Personas)
+            result = Personas.activate(name)
+            if result.err?
+              puts "  Error: #{result.error}"
+            end
+          else
+            puts "  Personas module not available"
+          end
+        when "deactivate"
+          if defined?(Personas)
+            Personas.deactivate
+          else
+            puts "  Personas module not available"
+          end
+        when "list"
+          list_personas
+        else
+          show_persona_help
+        end
+      end
+
+      def list_personas
+        return puts "  Personas module not available" unless defined?(Personas)
+        
+        personas = Personas.list
+        if personas.empty?
+          puts "  No personas available"
+        else
+          puts "\nAvailable Personas:"
+          personas.each do |name|
+            active_marker = defined?(Personas.active) && Personas.active&.dig(:name) == name ? " *" : ""
+            puts "  • #{name}#{active_marker}"
+          end
+        end
+      end
+
+      def show_persona_help
+        puts <<~HELP
+          
+          Persona Commands:
+          
+            persona activate <name>    Activate a persona
+            persona deactivate         Deactivate current persona
+            persona list               List available personas
+          
+        HELP
+      end
+
+      # Workflow management commands
+      def manage_workflow(args)
+        parts = args&.split || []
+        return show_workflow_help if parts.empty?
+
+        command = parts[0]
+
+        case command
+        when "status"
+          result = workflow_status
+          puts "  Error: #{result.error}" if result.err?
+        when "advance"
+          result = workflow_advance
+          puts "  Error: #{result.error}" if result.err?
+        when "reset"
+          session = Session.current
+          session[:workflow] = nil
+          session.save
+          puts "  Workflow reset"
+        else
+          show_workflow_help
+        end
+      end
+
+      def show_workflow_help
+        puts <<~HELP
+          
+          Workflow Commands:
+          
+            workflow status     Show current workflow phase and history
+            workflow advance    Advance to next workflow phase
+            workflow reset      Reset workflow to initial state
+          
+        HELP
+      end
     end
   end
 end
