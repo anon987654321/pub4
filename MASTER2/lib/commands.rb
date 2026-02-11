@@ -141,6 +141,16 @@ module MASTER
       when "harvest"
         harvest_data(args)
         nil
+      when "capture", "session-capture"
+        session_capture
+        nil
+      when "review-captures"
+        review_captures
+        nil
+      when "shell"
+        # Start interactive shell
+        InteractiveShell.new.run
+        nil
       when "exit", "quit"
         :exit
       else
