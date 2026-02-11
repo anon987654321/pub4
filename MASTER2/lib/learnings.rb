@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module MASTER
   # Learnings - Captures insights from sessions for future use
   # When something is discovered (bug pattern, good practice, UX insight),
@@ -9,7 +11,6 @@ module MASTER
 
     CATEGORIES = %i[bug_pattern good_practice ux_insight architecture security].freeze
 
-    # Quality tiers based on success rate (merged from LearningQuality)
     QUALITY_TIERS = {
       promote: { min: 0.90, description: "Auto-apply (>90% success)" },
       keep: { min: 0.50, description: "Keep learning (50-90%)" },
@@ -18,6 +19,15 @@ module MASTER
     }.freeze
 
     MINIMUM_APPLICATIONS = 3
+    MIN_CONFIDENCE = 0.6
+    FEEDBACK_DB_FILE = "tmp/learning_feedback.jsonl"
+
+    CONFIDENCE_WEIGHTS = {
+      category: 0.3,
+      success: 0.3,
+      timestamp: 0.2,
+      fix_hash: 0.2
+    }.freeze
 
     def file_path
       File.join(Paths.var, "learnings.jsonl")
@@ -89,7 +99,16 @@ module MASTER
       rewrite(learnings)
     end
 
-    # Quality evaluation methods (merged from LearningQuality)
+    # === Quality Assessment (from LearningQuality) ===
+
+    def assess(learning)
+      confidence = calculate_confidence(learning)
+      {
+        confidence: confidence,
+        quality: confidence >= MIN_CONFIDENCE ? :acceptable : :low,
+        usable: confidence >= MIN_CONFIDENCE
+      }
+    end
     def evaluate(pattern)
       return :unrated if pattern["applications"].to_i < MINIMUM_APPLICATIONS
       
@@ -109,25 +128,79 @@ module MASTER
 
     def calculate_success_rate(pattern)
       if pattern.is_a?(Hash)
-        successes = pattern["successes"].to_i
-        failures = pattern["failures"].to_i
+        successes = (pattern["successes"] || pattern[:successes] || 0).to_f
+        failures = (pattern["failures"] || pattern[:failures] || 0).to_f
         total = successes + failures
         
         return 0.0 if total.zero?
-        
-        successes.to_f / total
+        successes / total
       else
         0.0
       end
     end
 
+    # === Feedback Recording (from LearningFeedback) ===
+
+    def record_feedback(finding, fix, success:)
+      ensure_feedback_db_exists
+      
+      pattern = {
+        category: finding.category,
+        message_pattern: generalize_message(finding.message),
+        fix_hash: hash_fix(fix),
+        success: success,
+        timestamp: Time.now.to_i
+      }
+      
+      File.open(feedback_db_path, "a") do |f|
+        f.puts(pattern.to_json)
+      end
+      
+      Result.ok
+    rescue StandardError => e
+      Result.err("Failed to record learning: #{e.message}")
+    end
+
+    def known_fix?(finding)
+      patterns = load_feedback_patterns
+      
+      category_patterns = patterns.select do |p|
+        p["category"] == finding.category.to_s
+      end
+      
+      successes = category_patterns.count { |p| p["success"] }
+      total = category_patterns.size
+      
+      total >= 3 && (successes.to_f / total) > 0.7
+    end
+
+    def apply_known(finding)
+      patterns = load_feedback_patterns
+      
+      successful_patterns = patterns.select do |p|
+        p["category"] == finding.category.to_s && p["success"]
+      end
+      
+      return Result.err("No successful pattern found") if successful_patterns.empty?
+      
+      pattern = successful_patterns.last
+      Result.ok(applied: pattern["fix_hash"])
+    end
+
+    def load_feedback_patterns
+      return [] unless File.exist?(feedback_db_path)
+      
+      File.readlines(feedback_db_path).map do |line|
+        JSON.parse(line.strip)
+      rescue JSON::ParserError
+        nil
+      end.compact
+    end
+
     # Prune retired patterns from database
     def prune!
-      return Result.err("LearningFeedback not available") unless defined?(LearningFeedback)
+      patterns = load_feedback_patterns
       
-      patterns = LearningFeedback.load_patterns
-      
-      # Group by category and fix_hash to aggregate stats
       grouped = patterns.group_by { |p| [p["category"], p["fix_hash"]] }
       
       pruned = 0
@@ -158,10 +231,8 @@ module MASTER
         end
       end
       
-      # Rewrite database with kept patterns only
       if pruned > 0
-        db_path = File.join(MASTER.root, LearningFeedback::DB_FILE)
-        File.open(db_path, "w") do |f|
+        File.open(feedback_db_path, "w") do |f|
           kept_patterns.each do |pattern|
             f.puts(pattern.to_json)
           end
@@ -246,6 +317,7 @@ module MASTER
       end
     end
     
+    
     # Extract regex pattern from code diff (simple heuristic)
     def self.extract_pattern_from_fix(original, fixed)
       # Find the line that changed
@@ -277,6 +349,43 @@ module MASTER
 
     private
 
+    def calculate_confidence(learning)
+      return 0.0 unless learning.is_a?(Hash)
+      
+      score = 0.0
+      score += CONFIDENCE_WEIGHTS[:category] if learning[:category]
+      score += CONFIDENCE_WEIGHTS[:success] if learning[:success]
+      score += CONFIDENCE_WEIGHTS[:timestamp] if learning[:timestamp]
+      score += CONFIDENCE_WEIGHTS[:fix_hash] if learning[:fix_hash]
+      score
+    end
+
+    def ensure_feedback_db_exists
+      FileUtils.mkdir_p(File.dirname(feedback_db_path))
+      FileUtils.touch(feedback_db_path) unless File.exist?(feedback_db_path)
+    end
+
+    def feedback_db_path
+      File.join(MASTER.root, FEEDBACK_DB_FILE)
+    end
+
+    def generalize_message(message)
+      message
+        .gsub(/\d+/, "N")
+        .gsub(/\/[^\s]+/, "PATH")
+        .gsub(/'[^']+'/, "'X'")
+    end
+
+    def hash_fix(fix)
+      if fix.is_a?(Hash)
+        fix.hash.to_s
+      elsif fix.respond_to?(:to_s)
+        fix.to_s.hash.to_s
+      else
+        "unknown"
+      end
+    end
+
     def exists?(description)
       all.any? { |l| l[:description] == description }
     end
@@ -285,6 +394,59 @@ module MASTER
       File.open(file_path, "w") do |f|
         learnings.each { |l| f.puts(JSON.generate(l)) }
       end
+    end
+  end
+
+  # Backward compatibility aliases
+  module LearningQuality
+    extend self
+
+    MINIMUM_APPLICATIONS = Learnings::MINIMUM_APPLICATIONS
+    MIN_CONFIDENCE = Learnings::MIN_CONFIDENCE
+    
+    TIERS = {
+      promote: { threshold: 0.90, action: "Promote to core patterns" },
+      keep: { threshold: 0.60, action: "Keep in active set" },
+      demote: { threshold: 0.30, action: "Demote to experimental" },
+      retire: { threshold: 0.0, action: "Retire pattern" }
+    }.freeze
+
+    def assess(learning)
+      Learnings.assess(learning)
+    end
+
+    def evaluate(pattern)
+      Learnings.evaluate(pattern)
+    end
+
+    def tier(pattern)
+      Learnings.tier(pattern)
+    end
+
+    def calculate_success_rate(pattern)
+      Learnings.calculate_success_rate(pattern)
+    end
+  end
+
+  module LearningFeedback
+    extend self
+
+    DB_FILE = Learnings::FEEDBACK_DB_FILE
+
+    def record(finding, fix, success:)
+      Learnings.record_feedback(finding, fix, success: success)
+    end
+
+    def known_fix?(finding)
+      Learnings.known_fix?(finding)
+    end
+
+    def apply_known(finding)
+      Learnings.apply_known(finding)
+    end
+
+    def load_patterns
+      Learnings.load_feedback_patterns
     end
   end
 end

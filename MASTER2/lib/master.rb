@@ -127,8 +127,6 @@ require_relative "reflow"
 require_relative "introspection"  # Unified introspection (includes SelfMap, SelfCritique, SelfRepair, SelfTest)
 require_relative "audit"
 require_relative "cross_ref"
-require_relative "learning_feedback"
-require_relative "learning_quality"
 
 # Quality & Analysis (restored from MASTER)
 require_relative "violations"
