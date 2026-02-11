@@ -252,7 +252,16 @@ module MASTER
       original_lines = original.lines
       fixed_lines = fixed.lines
       
-      diff_line = original_lines.zip(fixed_lines).find { |o, f| o != f }
+      # Handle length differences by iterating through the shorter array
+      min_length = [original_lines.length, fixed_lines.length].min
+      diff_line = nil
+      
+      min_length.times do |i|
+        if original_lines[i] != fixed_lines[i]
+          diff_line = [original_lines[i], fixed_lines[i]]
+          break
+        end
+      end
       
       return nil unless diff_line
       
@@ -262,7 +271,7 @@ module MASTER
       # Extract a simple regex pattern
       # Example: "foo.bar" becomes "foo\.bar"
       Regexp.escape(original_part[0..50]) # First 50 chars
-    rescue
+    rescue StandardError
       nil
     end
 

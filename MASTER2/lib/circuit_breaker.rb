@@ -95,7 +95,7 @@ module MASTER
         if circuit[:failures] >= FAILURES_BEFORE_TRIP
           circuit[:state] = :open
           circuit[:opened_at] = Time.now
-          Logging.warn("Circuit breaker opened", model: model, failures: circuit[:failures]) if defined?(Logging)
+          log_warning("Circuit breaker opened", model: model, failures: circuit[:failures])
         end
         
         self.class.circuits[model] = circuit
@@ -112,6 +112,15 @@ module MASTER
     end
     
     private
+    
+    def log_warning(message, **args)
+      if defined?(Logging)
+        Logging.warn(message, **args)
+      else
+        # Fallback to stderr if Logging not available
+        warn "#{message}: #{args.inspect}"
+      end
+    end
     
     def get_circuit(model)
       self.class.circuits_mutex.synchronize do
