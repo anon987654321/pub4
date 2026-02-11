@@ -182,7 +182,18 @@ module MASTER
           end
         end
 
-        Result.ok(input.merge(axiom_violations: violations, linted: true))
+        # Run NNG usability heuristics check if enabled
+        design_violations = []
+        if ENV['MASTER_CHECK_DESIGN'] == 'true' && defined?(NNGChecklist)
+          result = NNGChecklist.validate(text)
+          design_violations = result.value if result.ok?
+        end
+
+        Result.ok(input.merge(
+          axiom_violations: violations,
+          design_violations: design_violations,
+          linted: true
+        ))
       end
     end
 
