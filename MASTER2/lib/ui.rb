@@ -337,6 +337,31 @@ module MASTER
       pastel.bold(msg)
     end
 
+    # Color delegate methods - return colored strings without printing
+    def yellow(msg)
+      pastel.yellow(msg)
+    end
+
+    def green(msg)
+      pastel.green(msg)
+    end
+
+    def red(msg)
+      pastel.red(msg)
+    end
+
+    def cyan(msg)
+      pastel.cyan(msg)
+    end
+
+    def magenta(msg)
+      pastel.magenta(msg)
+    end
+
+    def blue(msg)
+      pastel.blue(msg)
+    end
+
     def with_spinner(message, &block)
       s = spinner(message)
       s.auto_spin
