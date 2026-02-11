@@ -319,7 +319,7 @@ module MASTER
       
       begin
         stock = FILM_STOCKS[preset]
-        temp_dir = "/tmp/postpro_#{Time.now.to_i}"
+        temp_dir = "/tmp/postpro_#{Time.now.to_i}_#{Process.pid}"
         Dir.mkdir(temp_dir) unless Dir.exist?(temp_dir)
         
         # Step 1: Color grade
@@ -347,17 +347,18 @@ module MASTER
       end
     end
 
+    # Check if ffmpeg is available
+    def ffmpeg_available?
+      @ffmpeg_available ||= system("which ffmpeg > /dev/null 2>&1")
+    end
+
     # Video frame processing via ffmpeg
     def process_video_frames(video_path:, processor:, output_path: nil)
       return Result.err("ruby-vips not available") unless vips_available?
+      return Result.err("ffmpeg not available") unless ffmpeg_available?
       
       begin
-        # Check for ffmpeg
-        unless system("which ffmpeg > /dev/null 2>&1")
-          return Result.err("ffmpeg not available")
-        end
-        
-        temp_dir = "/tmp/video_frames_#{Time.now.to_i}"
+        temp_dir = "/tmp/video_frames_#{Time.now.to_i}_#{Process.pid}"
         Dir.mkdir(temp_dir)
         
         # Extract frames
