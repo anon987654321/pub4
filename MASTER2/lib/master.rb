@@ -15,6 +15,7 @@ require_relative "auto_install"
 require_relative "utils"
 require_relative "paths"
 require_relative "result"
+require_relative "timeouts"
 require_relative "quality_standards"
 require_relative "logging"  # Unified logging (replaces log.rb, logging.rb, dmesg.rb)
 require_relative "db_jsonl"

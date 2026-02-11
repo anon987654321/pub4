@@ -3,6 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative 'timeouts'
 
 module MASTER
   # Replicate - Image generation via Replicate API
@@ -105,6 +106,8 @@ module MASTER
         uri = URI(url)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
+        http.open_timeout = Timeouts.http_open
+        http.read_timeout = Timeouts.download
         
         response = http.get(uri.path)
         return false unless response.is_a?(Net::HTTPSuccess)
@@ -126,8 +129,8 @@ module MASTER
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        http.open_timeout = 10
-        http.read_timeout = 60
+        http.open_timeout = Timeouts.http_open
+        http.read_timeout = Timeouts.replicate_create
 
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
@@ -151,7 +154,7 @@ module MASTER
         { error: e.message }
       end
 
-      def wait_for_completion(id, timeout: 300)
+      def wait_for_completion(id, timeout: Timeouts.replicate_poll)
         uri = URI("#{API_URL}/#{id}")
         start_time = Time.now
         max_polls = 150  # Safety limit: 150 polls * 2s = 300s max
@@ -159,8 +162,8 @@ module MASTER
         max_polls.times do
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
-          http.open_timeout = 10
-          http.read_timeout = 30
+          http.open_timeout = Timeouts.http_open
+          http.read_timeout = Timeouts.http_read
 
           request = Net::HTTP::Get.new(uri)
           request['Authorization'] = "Bearer #{api_key}"

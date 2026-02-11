@@ -2,6 +2,8 @@
 
 require "fileutils"
 require "securerandom"
+require "timeout"
+require_relative "timeouts"
 
 module MASTER
   # Speech - Unified TTS interface with multiple engines
@@ -97,14 +99,16 @@ module MASTER
 
       null = RUBY_PLATFORM =~ /mingw|mswin|cygwin/ ? "NUL" : "/dev/null"
 
-      tts = IO.popen(tts_cmd, "rb", err: null)
-      fx = IO.popen([ffmpeg, "-i", "pipe:0", "-af", fx_filter, "-f", "wav", "pipe:1"], "r+b", err: null)
-      play = IO.popen([ffplay, "-nodisp", "-autoexit", "-i", "pipe:0"], "wb", err: null)
+      Timeout.timeout(Timeouts.tts_stream) do
+        tts = IO.popen(tts_cmd, "rb", err: null)
+        fx = IO.popen([ffmpeg, "-i", "pipe:0", "-af", fx_filter, "-f", "wav", "pipe:1"], "r+b", err: null)
+        play = IO.popen([ffplay, "-nodisp", "-autoexit", "-i", "pipe:0"], "wb", err: null)
 
-      Thread.new { IO.copy_stream(tts, fx); fx.close_write }
-      IO.copy_stream(fx, play)
+        Thread.new { IO.copy_stream(tts, fx); fx.close_write }
+        IO.copy_stream(fx, play)
 
-      [tts, fx, play].each(&:close)
+        [tts, fx, play].each(&:close)
+      end
       Result.ok(text: text, effect: effect)
     rescue StandardError => e
       Result.err("Stream failed: #{e.message}")

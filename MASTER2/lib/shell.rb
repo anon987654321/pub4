@@ -2,6 +2,7 @@
 
 require "shellwords"
 require "open3"
+require_relative "timeouts"
 
 module MASTER
   # Shell integration - zsh-native patterns
@@ -57,7 +58,7 @@ module MASTER
         !dangerous.any? { |p| cmd.match?(p) }
       end
 
-      def execute(cmd, timeout: 30)
+      def execute(cmd, timeout: Timeouts.shell)
         return Result.err("Dangerous command blocked") unless safe?(cmd)
 
         sanitized = sanitize(cmd)

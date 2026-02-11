@@ -2,6 +2,8 @@
 
 require 'fileutils'
 require 'yaml'
+require 'timeout'
+require_relative 'timeouts'
 
 module MASTER
   # Cinematic - AI-powered cinematic pipeline and color grading
@@ -59,10 +61,11 @@ module MASTER
       def execute(input, save_intermediates: false)
         return Result.err("Empty pipeline") if @stages.empty?
 
-        results = []
-        current_output = input
+        Timeout.timeout(Timeouts.pipeline) do
+          results = []
+          current_output = input
 
-        @stages.each_with_index do |stage, idx|
+          @stages.each_with_index do |stage, idx|
           puts "  Stage #{idx + 1}/#{@stages.size}: #{stage[:model]}"
 
           # Merge params with current output

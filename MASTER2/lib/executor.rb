@@ -4,6 +4,7 @@ require "json"
 require "open3"
 require "yaml"
 require "rbconfig"
+require_relative "timeouts"
 
 # Load pattern modules
 require_relative "executor/react"
@@ -31,7 +32,7 @@ module MASTER
     include Tools
 
     MAX_STEPS = 15
-    WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
+    WALL_CLOCK_LIMIT_SECONDS = Timeouts.executor_wall_clock  # seconds
     MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     

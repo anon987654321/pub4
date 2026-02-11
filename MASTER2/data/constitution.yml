@@ -96,3 +96,18 @@ enforcement_layers:
     description: "Rails/Ruby/PWA/OpenBSD conventions"
   - name: security
     description: "Input validation, privilege separation"
+
+timeouts:
+  http_open: 10
+  http_read: 30
+  http_write: 30
+  llm_read: 120
+  browser: 30
+  shell: 30
+  executor_wall_clock: 120
+  replicate_create: 60
+  replicate_poll: 300
+  replicate_poll_interval: 2
+  pipeline: 600
+  download: 60
+  tts_stream: 120

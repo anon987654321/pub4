@@ -5,6 +5,7 @@ require "json"
 require "yaml"
 require "uri"
 require_relative "circuit_breaker"
+require_relative "timeouts"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
@@ -98,8 +99,8 @@ module MASTER
 
         http = Net::HTTP.new(uri.hostname, uri.port)
         http.use_ssl = true
-        http.open_timeout = 10
-        http.read_timeout = 30
+        http.open_timeout = Timeouts.http_open
+        http.read_timeout = Timeouts.http_read
         response = http.request(req)
 
         return Result.err("API error: #{response.code}") unless response.code == "200"
@@ -318,9 +319,9 @@ module MASTER
           begin
             http = Net::HTTP.new(uri.hostname, uri.port)
             http.use_ssl = true
-            http.open_timeout = 30
-            http.read_timeout = 120
-            http.write_timeout = 30
+            http.open_timeout = Timeouts.http_open
+            http.read_timeout = Timeouts.llm_read
+            http.write_timeout = Timeouts.http_write
 
             result = if stream
                        execute_streaming(http, req)
