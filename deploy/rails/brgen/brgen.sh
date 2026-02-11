@@ -556,8 +556,13 @@ class VotesController < ApplicationController
   end
 
   private
+
+  ALLOWED_VOTABLE_TYPES = %w[Post Comment].freeze
+
   def find_votable
-    params[:votable_type].constantize.find(params[:votable_id])
+    type = params[:votable_type]
+    raise ArgumentError, "Invalid votable type" unless ALLOWED_VOTABLE_TYPES.include?(type)
+    type.constantize.find(params[:votable_id])
 
   end
 

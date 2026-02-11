@@ -435,8 +435,8 @@ command_exists() {
 # Install gem idempotently
 install_gem() {
   typeset gem_name="$1"
-  grep -q "gem "${gem_name}"" Gemfile || {
-    print "gem "${gem_name}"" >> Gemfile
+  grep -q "gem ['\"]${gem_name}['\"]" Gemfile 2>/dev/null || {
+    print -r -- "gem \"${gem_name}\"" >> Gemfile
     bundle install
   }
 }
@@ -559,8 +559,12 @@ class VoteReflex < ApplicationReflex
 
   private
 
+  ALLOWED_VOTABLE_TYPES = %w[Post Comment].freeze
+
   def find_votable
-    element.dataset["votable_type"].constantize.find(element.dataset["votable_id"])
+    type = element.dataset["votable_type"]
+    raise ArgumentError, "Invalid votable type" unless ALLOWED_VOTABLE_TYPES.include?(type)
+    type.constantize.find(element.dataset["votable_id"])
   end
 
   def update_vote_display(votable)
