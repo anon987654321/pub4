@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module MASTER
-  # RepLigen Bridge - Interface to AI media generation pipeline
+  # Repligen Bridge - Interface to AI media generation pipeline
   # Based on repligen.rb WILD_CHAIN model catalog
   # Provides access to image, video, and enhancement models
-  module RepLigenBridge
+  module RepligenBridge
     extend self
 
     # Model catalog from repligen's WILD_CHAIN
