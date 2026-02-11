@@ -2,7 +2,10 @@ module MASTER
   module SelfEnforce
     extend self
 
-    LIB_PATH = File.join(MASTER.root, "lib")
+    def lib_path
+      @lib_path ||= File.expand_path("../lib", __dir__)
+    end
+
     TARGET_FILE_COUNT = 25
     MAX_FILE_COUNT = 30
     FORBIDDEN_SUFFIXES = %w[_helper _bridge _wrapper _utils _util].freeze
@@ -23,7 +26,7 @@ module MASTER
     end
 
     def check_file_count
-      rb_files = Dir[File.join(LIB_PATH, "*.rb")]
+      rb_files = Dir[File.join(lib_path, "*.rb")]
       count = rb_files.size
       
       return [] if count <= MAX_FILE_COUNT
@@ -39,7 +42,7 @@ module MASTER
 
     def check_forbidden_suffixes
       violations = []
-      Dir[File.join(LIB_PATH, "*.rb")].each do |file|
+      Dir[File.join(lib_path, "*.rb")].each do |file|
         basename = File.basename(file, ".rb")
         FORBIDDEN_SUFFIXES.each do |suffix|
           if basename.end_with?(suffix)
@@ -58,7 +61,7 @@ module MASTER
 
     def check_bare_rescues
       violations = []
-      Dir[File.join(LIB_PATH, "**/*.rb")].each do |file|
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
         lines = File.readlines(file)
         lines.each_with_index do |line, idx|
           FORBIDDEN_PATTERNS.each do |pattern|
@@ -80,7 +83,7 @@ module MASTER
 
     def check_comment_density
       violations = []
-      Dir[File.join(LIB_PATH, "*.rb")].each do |file|
+      Dir[File.join(lib_path, "*.rb")].each do |file|
         next if file.end_with?("self_enforce.rb")
         
         lines = File.readlines(file)
@@ -106,7 +109,7 @@ module MASTER
 
     def check_file_sizes
       violations = []
-      Dir[File.join(LIB_PATH, "*.rb")].each do |file|
+      Dir[File.join(lib_path, "*.rb")].each do |file|
         lines = File.readlines(file).size
         
         if lines < 30
@@ -141,7 +144,7 @@ module MASTER
 
     def auto_merge_small_files
       fixed = []
-      small_files = Dir[File.join(LIB_PATH, "*.rb")].select do |file|
+      small_files = Dir[File.join(lib_path, "*.rb")].select do |file|
         File.readlines(file).size < 30
       end
       
@@ -157,7 +160,7 @@ module MASTER
 
     def auto_strip_comments
       fixed = []
-      Dir[File.join(LIB_PATH, "**/*.rb")].each do |file|
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
         content = File.read(file)
         stripped = strip_obvious_comments(content)
         
