@@ -97,7 +97,7 @@ module MASTER
         
         # Confirmation gate
         print "\n🤔 Proceed with automatic fixes? (y/n): "
-        response = $stdin.gets&.chomp&.downcase
+        response = get_user_input&.chomp&.downcase
         
         unless response == 'y' || response == 'yes'
           puts "Cancelled."
@@ -284,6 +284,13 @@ module MASTER
             puts "Learning ID: #{issue[:learning_id]}"
           end
         end
+      end
+      
+      private
+      
+      # Abstraction for user input to improve testability
+      def get_user_input
+        $stdin.gets
       end
     end
   end
