@@ -89,6 +89,27 @@ module MASTER
       when "axioms-stats", "stats"
         print_axiom_stats
         nil
+      when "design-lint", "dlint"
+        result = DesignLint.lint_all_views
+        if result.ok?
+          v = result.value
+          if v[:clean]
+            puts UI.pastel.green("✓ All #{v[:files]} view files pass design axioms")
+          else
+            puts UI.pastel.yellow("#{v[:violations]} violations in #{v[:files]} files:")
+            v[:results].each do |r|
+              next unless r.ok? && !r.value[:clean]
+              puts "  #{File.basename(r.value[:path])}:"
+              r.value[:violations].each do |viol|
+                icon = viol[:severity] == :high ? "✗" : "!"
+                puts "    #{icon} [#{viol[:rule]}] #{viol[:message]}"
+              end
+            end
+          end
+        else
+          UI.error(result.error)
+        end
+        nil
       when "refactor"
         refactor(args)
       when "chamber"

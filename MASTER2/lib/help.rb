@@ -12,6 +12,7 @@ module MASTER
       chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query },
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query },
       opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query },
+      'design-lint': { desc: "Lint view files against design axioms", usage: "design-lint", group: :query },
       # Session
       session: { desc: "Session management", usage: "session [new|save|load]", group: :session },
       sessions: { desc: "List saved sessions", usage: "sessions", group: :session },

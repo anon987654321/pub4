@@ -1,0 +1,123 @@
+# MASTER2 Design Axioms — Codified from expert crit sessions
+# Enforced across web UI (cli.html) and TTY shell (tty-reader REPL)
+# Aligned with Nielsen Norman Group's 10 Usability Heuristics
+
+parity:
+  principle: "Web and TTY must offer equivalent capability and feedback"
+  checks:
+    - "Every TTY command has a web UI equivalent"
+    - "System status visible in both: tier, budget, model, session"
+    - "Error messages identical across surfaces"
+    - "Progress indication present in both during async operations"
+
+color:
+  principle: "Single accent color family. Monochrome mint."
+  tokens:
+    mint: "#5af0b6"
+    mint_dim: "#2a7a5a"
+    mint_ghost: "#153a2d"
+    bg: "#050505"
+    text: "#c8d0cc"
+    text_secondary: "#5a6a62"
+    error: "#f06050"
+  rules:
+    - "All color values reference tokens, never raw hex outside :root"
+    - "Continuous shade functions, never banded lookup tables"
+    - "Maximum 2 non-background colors visible simultaneously"
+    - "Error is the only non-mint hue permitted"
+
+typography:
+  principle: "System monospace only. No web fonts. No loading."
+  rules:
+    - "Font stack: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+    - "Base size: 11px (web), terminal default (TTY)"
+    - "Line height: 1.4"
+    - "No bold except structural headers"
+    - "No italic"
+
+feedback:
+  principle: "Every action produces visible feedback within 100ms"
+  nng_heuristic: "H1 - Visibility of System Status"
+  checks:
+    - "Loader appears immediately on command submission"
+    - "Prompt updates after model/tier change"
+    - "Toast confirms orb switch, grain toggle, mode change"
+    - "TTY: spinner or dots during LLM calls"
+    - "Cost displayed after every LLM response"
+
+progressive_disclosure:
+  principle: "Show minimum, reveal on demand"
+  nng_heuristic: "H8 - Aesthetic and Minimalist Design"
+  checks:
+    - "Default view: input + output + status. Nothing else."
+    - "Help only on explicit request (? key or help command)"
+    - "Advanced status (model, pattern, tokens) in status bar, not output"
+    - "Orb parameters hidden — no knobs, no sliders"
+    - "TTY: help command lists commands, nothing shown unsolicited"
+
+error_handling:
+  principle: "Errors are actionable, not diagnostic"
+  nng_heuristic: "H9 - Help Users Recognize, Diagnose, Recover from Errors"
+  checks:
+    - "Error messages suggest next action"
+    - "Offline state shows retry timing"
+    - "Unknown commands suggest closest match (Levenshtein)"
+    - "TTY: did-you-mean for misspelled commands"
+    - "Never show stack traces to users"
+
+keyboard:
+  principle: "Everything reachable without mouse"
+  nng_heuristic: "H7 - Flexibility and Efficiency of Use"
+  checks:
+    - "Tab completion for commands (TTY)"
+    - "Arrow up recalls last command (both)"
+    - "Number keys switch orbs (web)"
+    - "Escape dismisses modals (web)"
+    - "Ctrl+C cancels, double Ctrl+C exits (both)"
+
+performance:
+  principle: "UI never blocks. Animations use requestAnimationFrame."
+  checks:
+    - "No setInterval for rendering"
+    - "Grain overlay: rAF, throttled to every 3rd frame"
+    - "Orb rendering: rAF, never setTimeout"
+    - "Polling: exponential backoff when offline"
+    - "Idle tab: all animation pauses (rAF stops automatically)"
+
+persistence:
+  principle: "Visual persistence via multiplicative decay, never clearRect"
+  checks:
+    - "All orbs: ctx.fillStyle = 'rgba(5,5,5,<decay>)'; ctx.fillRect(0,0,w,h)"
+    - "Decay factor parameterized by state (idle=0.05, thinking=0.12, speaking=0.20)"
+    - "No canvas.clearRect() in any orb animation loop"
+    - "Phosphor trails provide temporal context"
+
+audio_mapping:
+  principle: "Audio-to-visual mapping follows physical intuition"
+  checks:
+    - "Bass (low freq) → expansive, separating, heavy forces"
+    - "Mids → flowing, streaming, directional forces"
+    - "Highs → tight, precise, contracting forces"
+    - "Silence → minimal seed pattern, never blank screen"
+    - "Feed floor prevents reaction-diffusion death"
+
+state_bridge:
+  principle: "Orbs reflect cognitive state, not just audio amplitude"
+  states:
+    idle: "Minimal motion, slow decay, dim"
+    thinking: "Internal contraction, lingering trails, medium brightness"
+    speaking: "Expansive, full audio reactivity, bright"
+  checks:
+    - "postMessage({type:'state', mode:'idle|thinking|speaking'}) sent from cli.html"
+    - "Each orb adjusts decay, reactivity, speed based on state"
+    - "State transition is smooth (lerp parameters, don't snap)"
+
+accessibility:
+  principle: "WCAG 2.2 AA minimum for all interactive elements"
+  nng_heuristic: "H4 - Consistency and Standards"
+  checks:
+    - "Focus visible on all interactive elements (box-shadow, not outline-offset)"
+    - ":focus-visible distinguishes keyboard from mouse focus"
+    - "Contrast ratio ≥ 4.5:1 for text on background"
+    - "Prefers-reduced-motion disables orb animation"
+    - "Input touch target ≥ 44px height"

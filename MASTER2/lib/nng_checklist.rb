@@ -78,6 +78,50 @@ module MASTER
           { feature: 'tips', desc: 'Contextual tips', file: 'help.rb' },
           { feature: 'readme', desc: 'Comprehensive README', file: '../README.md' }
         ]
+      },
+      web_visibility: {
+        name: "Web UI: Visibility of System Status",
+        checks: [
+          { feature: 'status_bar', desc: 'Status bar shows tier, budget, sync time', file: 'views/cli.html' },
+          { feature: 'loader_feedback', desc: 'Loader appears within 100ms of submit', file: 'views/cli.html' },
+          { feature: 'toast_feedback', desc: 'Toast confirms mode switches', file: 'views/cli.html' },
+          { feature: 'offline_indicator', desc: 'Offline state clearly indicated', file: 'views/cli.html' }
+        ]
+      },
+      web_aesthetic: {
+        name: "Web UI: Aesthetic and Minimalist Design",
+        checks: [
+          { feature: 'css_tokens', desc: 'All colors defined as CSS custom properties', file: 'views/cli.html' },
+          { feature: 'single_accent', desc: 'Single mint accent color family', file: 'views/cli.html' },
+          { feature: 'system_font', desc: 'System monospace only, no web fonts', file: 'views/cli.html' },
+          { feature: 'minimal_chrome', desc: 'Input + output + status bar only', file: 'views/cli.html' }
+        ]
+      },
+      web_performance: {
+        name: "Web UI: Performance",
+        checks: [
+          { feature: 'raf_grain', desc: 'Grain uses requestAnimationFrame not setInterval', file: 'views/cli.html' },
+          { feature: 'raf_orbs', desc: 'All orbs use requestAnimationFrame', file: 'views/orb_blob.html' },
+          { feature: 'backoff_polling', desc: 'Exponential backoff when offline', file: 'views/cli.html' },
+          { feature: 'no_clear_rect', desc: 'Orbs use decay fill, never clearRect', file: 'views/orb_blob.html' }
+        ]
+      },
+      web_accessibility: {
+        name: "Web UI: Accessibility",
+        checks: [
+          { feature: 'focus_visible', desc: 'Focus ring uses box-shadow + :focus-visible', file: 'views/cli.html' },
+          { feature: 'dialog_help', desc: 'Help uses <dialog> with backdrop click', file: 'views/cli.html' },
+          { feature: 'contrast_ratio', desc: 'Text contrast ≥ 4.5:1 on #050505 bg', file: 'views/cli.html' },
+          { feature: 'reduced_motion', desc: 'prefers-reduced-motion stops animations', file: 'views/orb_blob.html' }
+        ]
+      },
+      parity: {
+        name: "Web/TTY Parity",
+        checks: [
+          { feature: 'command_parity', desc: 'Every TTY command has web equivalent', file: 'commands.rb' },
+          { feature: 'error_parity', desc: 'Error messages identical across surfaces', file: 'ui.rb' },
+          { feature: 'status_parity', desc: 'System status shown in both surfaces', file: 'pipeline.rb' }
+        ]
       }
     }.freeze
 
