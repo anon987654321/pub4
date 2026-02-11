@@ -5,10 +5,6 @@ require "json"
 require "time"
 
 module MASTER
-  # Session - Persistent session management with auto-save
-  # STORAGE: Uses Memory module (JSON files in .sessions/)
-  # NOTE: DB JSONL system is separate and used by LearningFeedback
-  # See learnings.rb line 241-242 for architecture notes
   class Session
     attr_reader :id, :created_at, :history, :metadata
 
@@ -44,7 +40,6 @@ module MASTER
       @history << entry
       @dirty = true
       
-      # Auto-save periodically
       autosave_if_needed
       entry
     end
@@ -90,7 +85,6 @@ module MASTER
       @metadata[key.to_sym]
     end
 
-    # Aliases for backward compatibility
     alias set_metadata write_metadata
     alias get_metadata metadata_value
 
@@ -120,11 +114,7 @@ module MASTER
       true
     end
 
-    # Class methods for session management
     class << self
-      # Load session from storage by ID
-      # @param id [String] Session ID
-      # @return [Session, nil] Session instance or nil if not found
       def load(id)
         data = Memory.load_session(id)
         return nil unless data
@@ -137,27 +127,18 @@ module MASTER
         session
       end
 
-      # List all available sessions
-      # @return [Array<Hash>] Array of session metadata
       def list
         Memory.list_sessions
       end
 
-      # Get current session (creates new if none exists)
-      # @return [Session] Current session
       def current
         @current ||= new
       end
 
-      # Set current session
-      # @param session [Session] Session to set as current
       def current=(session)
         @current = session
       end
 
-      # Resume existing session by ID
-      # @param id [String] Session ID to resume
-      # @return [Session, nil] Session if found, nil otherwise
       def resume(id)
         session = load(id)
         return nil unless session
@@ -166,14 +147,10 @@ module MASTER
         session
       end
 
-      # Start new session and set as current
-      # @return [Session] New session
       def start_new
         @current = new
       end
 
-      # Install signal handlers for crash recovery
-      # @return [void]
       def install_crash_handlers
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
@@ -182,11 +159,8 @@ module MASTER
           end
         end
       rescue ArgumentError
-        # Some signals not available on all platforms
       end
 
-      # Save current session on crash
-      # @return [void]
       def save_on_crash
         return unless @current&.dirty?
         
@@ -194,7 +168,6 @@ module MASTER
           @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
       rescue StandardError
-        # Best effort on crash
       end
     end
 
@@ -208,13 +181,10 @@ module MASTER
       }
     end
 
-    # Language detection and multi-language support
     def self.detect_language(text)
-      # Norwegian indicators
       norwegian_words = %w[og men er på av til fra med som den det]
       norwegian_count = norwegian_words.count { |word| text.downcase.include?(word) }
       
-      # English indicators
       english_words = %w[the and but are on of to from with as that this]
       english_count = english_words.count { |word| text.downcase.include?(word) }
       
@@ -228,7 +198,6 @@ module MASTER
     def self.norwegian_style_check(text)
       issues = []
       
-      # Check for common anglicisms
       anglicisms = {
         "meeting" => "møte",
         "deal" => "avtale",
@@ -245,7 +214,6 @@ module MASTER
       Result.ok(issues: issues)
     end
 
-    # Persona management
     def self.set_persona(persona)
       return Result.err("Unknown persona: #{persona}") unless SUPPORTED_PERSONAS.include?(persona)
       
@@ -258,8 +226,6 @@ module MASTER
     end
   end
 
-  # SessionCapture - Automatic pattern extraction from successful sessions
-  # Ported from MASTER v1 master.yml v49.75 meta_analysis section
   module SessionCapture
     extend self
 
@@ -295,7 +261,6 @@ module MASTER
       File.join(Paths.var, "session_captures.jsonl")
     end
 
-    # Run session capture (call after successful work session)
     def capture(session_id: nil)
       session_id ||= Session.current.id
       
@@ -320,7 +285,6 @@ module MASTER
         return Result.ok(captured: false)
       end
 
-      # Save capture
       capture_entry = {
         session_id: session_id,
         timestamp: Time.now.utc.iso8601,
@@ -331,7 +295,6 @@ module MASTER
         f.puts(JSON.generate(capture_entry))
       end
 
-      # Add to learnings automatically
       answers.each do |category, answer|
         learning_category = map_to_learning_category(category)
         if learning_category
@@ -349,7 +312,6 @@ module MASTER
       Result.ok(captured: true, insights: answers.size)
     end
 
-    # Auto-capture if session was successful (called on exit)
     def auto_capture_if_successful
       session = Session.current
       return unless session
@@ -359,7 +321,6 @@ module MASTER
       capture(session_id: session.id)
     end
 
-    # Review all captures
     def review
       return Result.err("No captures found") unless File.exist?(capture_file)
 
@@ -372,7 +333,6 @@ module MASTER
       Result.ok(captures: captures, count: captures.size)
     end
 
-    # Suggest new commands/features based on automation captures
     def suggest_automations
       review_result = review
       return Result.err("No captures to analyze") unless review_result.ok?

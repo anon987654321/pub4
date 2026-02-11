@@ -5,28 +5,23 @@ module MASTER
     Rule = Struct.new(:action, :direction, :pattern, :quick, :tag, keyword_init: true)
 
     DEFAULT_RULES = [
-      # Block prompt injections in both directions
       Rule.new(action: :block, pattern: /ignore (?:all )?(?:previous|above|prior) instructions/i, quick: true),
       Rule.new(action: :block, pattern: /you are now/i, quick: true),
       Rule.new(action: :block, pattern: /new system prompt/i, quick: true),
       Rule.new(action: :block, pattern: /forget (?:everything|all|your)/i, quick: true),
       Rule.new(action: :block, pattern: /override (?:axiom|principle|rule)/i, quick: true),
       Rule.new(action: :block, pattern: /disregard (?:axiom|principle|rule|safety)/i, quick: true),
-      # Block privilege escalation (inbound only)
       Rule.new(action: :pass, direction: :in, pattern: /\bdoas\b/, quick: false, tag: :needs_review),
       Rule.new(action: :block, direction: :in, pattern: /\bsudo\b/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\bsu\s+-?\s/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\bpfctl\s+-f\b/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\brcctl\s+restart\b/, quick: true),
-      # Block destructive operations (inbound only)
       Rule.new(action: :block, direction: :in, pattern: /\brm\s+-rf?\s+\//, quick: true),
       Rule.new(action: :block, direction: :in, pattern: />\s*\/dev\/[sh]da/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /DROP\s+TABLE/i, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /mkfs\./, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /dd\s+if=/, quick: true),
-      # Pass with tag for review
       Rule.new(action: :pass, pattern: /escalation:/, quick: false, tag: :needs_review),
-      # Default pass for clean content
       Rule.new(action: :pass, pattern: /.*/, quick: false),
     ].freeze
 

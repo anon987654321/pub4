@@ -2,12 +2,10 @@
 
 require "yaml"
 
-# Load enforcement modules
 require_relative "enforcement/layers"
 require_relative "enforcement/scopes"
 
 module MASTER
-  # QualityStandards - Unified quality thresholds from quality_thresholds.yml
   module QualityStandards
     extend self
 
@@ -58,9 +56,6 @@ module MASTER
     end
   end
 
-  # Enforcement - 6-layer axiom enforcement at 4 scopes
-  # Layers: Literal → Lexical → Conceptual → Semantic → Cognitive → Language Axiom
-  # Scopes: Line → Unit → File → Framework
   module Enforcement
     extend self
     extend Layers
@@ -70,10 +65,6 @@ module MASTER
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
-    # Simulated execution scenarios for safety pre-checks
-    # SECURITY NOTE: simulate_with_input() evaluates arbitrary code in a controlled binding.
-    # This is intentional for pre-execution safety validation. Code must be trusted.
-    # For production use, consider subprocess execution with timeouts.
     SIMULATED_SCENARIOS = [
       {
         scenario: "empty_input",
@@ -112,7 +103,6 @@ module MASTER
         smells["thresholds"] || {}
       end
 
-      # Full analysis: all layers, all scopes
       def analyze(code, axioms: nil, filename: "code")
         axioms ||= DB.axioms
         {
@@ -123,7 +113,6 @@ module MASTER
         }
       end
 
-      # Analyze entire framework (multiple files)
       def analyze_framework(files, axioms: nil)
         axioms ||= DB.axioms
         file_results = files.map { |f, content| analyze(content, axioms: axioms, filename: f) }
@@ -141,7 +130,6 @@ module MASTER
         }
       end
 
-      # Run all 6 layers on single file
       def check(code, axioms: nil, filename: "code")
         axioms ||= DB.axioms
         violations = []
@@ -154,14 +142,11 @@ module MASTER
         { filename: filename, violations: violations, layers_checked: LAYERS }
       end
 
-      # Suggest better names from smells.yml
       def suggest(word, type: :verb)
         suggestions = smells.dig(type == :verb ? "generic_verbs" : "vague_nouns", word)
         suggestions || []
       end
 
-      # Simulate code execution with test scenarios for safety validation
-      # SECURITY NOTE: This evaluates code. Use only on trusted code or in sandboxed environments.
       def simulate_execution(code)
         results = []
 
@@ -181,9 +166,6 @@ module MASTER
 
       private
 
-      # SECURITY NOTE: This uses eval() to execute code in a controlled binding.
-      # The code parameter must be trusted. For untrusted code, use RubyVM::InstructionSequence.compile
-      # for syntax-only validation, or execute in a subprocess with timeout.
       def simulate_with_input(code, input)
         binding_obj = binding
         binding_obj.local_variable_set(:input, input)
@@ -193,7 +175,6 @@ module MASTER
       end
     end
 
-    # Check file count in lib/ directory
     def check_file_count
       rb_files = Dir[File.join(MASTER.root, "lib", "*.rb")]
       count = rb_files.size
@@ -212,8 +193,6 @@ module MASTER
     end
   end
 
-  # LanguageAxioms - Language-specific beauty rules
-  # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
   module LanguageAxioms
     AXIOMS_FILE = File.join(__dir__, "..", "data", "language_axioms.yml")
 
@@ -297,7 +276,6 @@ module MASTER
     end
   end
 
-  # AxiomStats - Provides statistics and summary views for language axioms
   module AxiomStats
     extend self
 
@@ -348,8 +326,6 @@ module MASTER
     private
 
     def load_axioms
-      # MASTER.root points to the MASTER2 directory when running from within MASTER2
-      # or to pub4 directory when running from outside
       axioms_paths = [
         File.join(MASTER.root, "data", "axioms.yml"),              # When run from MASTER2
         File.join(MASTER.root, "MASTER2", "data", "axioms.yml")   # When run from pub4

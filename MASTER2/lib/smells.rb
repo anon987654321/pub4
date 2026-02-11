@@ -3,7 +3,6 @@
 require 'yaml'
 
 module MASTER
-  # Code smell detection - complements Violations with structural analysis
   module Smells
     extend self
 

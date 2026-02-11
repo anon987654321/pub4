@@ -3,20 +3,11 @@
 require 'yaml'
 
 module MASTER
-  # Introspection - Unified self-awareness and introspection module
-  # Consolidates: SelfMap, SelfCritique, SelfRepair, SelfTest, and adversarial questioning
-  # ALL code piped through MASTER2 gets the same hostile treatment
-  # Whether self or user code, everything is questioned equally
   class Introspection
     class << self
-      # ═══════════════════════════════════════════════════════════════════
-      # SECTION 1: Structure Mapping (from self_map.rb)
-      # ═══════════════════════════════════════════════════════════════════
       
       IGNORED = %w[.git node_modules vendor tmp log .bundle].freeze
       
-      # Generate summary of MASTER's structure for boot display
-      # @return [String] Brief summary "X lib, Y test"
       def summary(root = MASTER.root)
         map = generate_map(root)
         "#{map[:lib_files].count} lib, #{map[:test_files].count} test"
@@ -24,8 +15,6 @@ module MASTER
         "unavailable"
       end
       
-      # Generate complete map of MASTER's structure
-      # @return [Hash] Structure map with files, ruby_files, lib_files, test_files
       def generate_map(root = MASTER.root)
         {
           files: collect_files(root, root),
@@ -35,10 +24,6 @@ module MASTER
         }
       end
       
-      # Generate tree string representation of directory
-      # @param dir [String] Directory to scan
-      # @param prefix [String] Prefix for indentation
-      # @return [String] Tree representation
       def tree_string(dir = MASTER.root, prefix = "")
         result = []
         entries = Dir.entries(dir).sort.reject { |e| e.start_with?(".") || IGNORED.include?(e) }
@@ -47,7 +32,6 @@ module MASTER
           path = File.join(dir, entry)
           is_dir = File.directory?(path)
 
-          # Only append slash for directories
           result << "#{prefix}#{entry}#{is_dir ? '/' : ''}"
 
           if is_dir
@@ -58,19 +42,10 @@ module MASTER
         result.join("\n")
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # SECTION 2: Self-Critique (from self_critique.rb)
-      # ═══════════════════════════════════════════════════════════════════
       
       CONFIDENCE_THRESHOLD = 0.6
       MAX_RETRIES = 3
       
-      # LLM evaluates its own work with confidence scoring
-      # @param task [String] The task description
-      # @param response [String] The response to critique
-      # @param llm [Object] LLM instance
-      # @param tier [Symbol] Tier to use (:cheap, :fast, :smart, :genius)
-      # @return [Hash] Critique with scores and suggestions
       def critique_response(task:, response:, llm:, tier: :cheap)
         prompt = <<~PROMPT
           You are evaluating your own work. Be brutally honest.
@@ -101,18 +76,12 @@ module MASTER
         parse_critique(result.value)
       end
       
-      # Check if response should be retried based on confidence
-      # @param critique [Hash] Critique hash
-      # @return [Boolean] True if should retry
       def should_retry?(critique)
         return false unless critique
 
         critique[:overall_confidence] < CONFIDENCE_THRESHOLD
       end
       
-      # Extract strength score from critique
-      # @param critique [Hash] Critique hash
-      # @return [Float] Weighted strength score 0.0-1.0
       def extract_strength(critique)
         return 0.5 unless critique
 
@@ -125,15 +94,7 @@ module MASTER
         weighted_sum.clamp(0.0, 1.0)
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # SECTION 3: Self-Repair (from self_repair.rb)
-      # ═══════════════════════════════════════════════════════════════════
       
-      # Full repair pipeline with audit → confirm → fix → test → learn
-      # @param files [String, Array<String>] File(s) to repair
-      # @param dry_run [Boolean] Preview changes without writing
-      # @param auto_confirm [Boolean] Skip confirmation gates
-      # @return [Result] Ok with repair summary or Err
       def repair(files, dry_run: true, auto_confirm: false)
         files = [files] unless files.is_a?(Array)
         
@@ -141,7 +102,6 @@ module MASTER
         failed = 0
         skipped = 0
         
-        # Step 1: Audit scan
         audit_result = if defined?(Audit)
           Audit.scan(files)
         else
@@ -155,16 +115,13 @@ module MASTER
         
         UI.dim("  🔍 Found #{findings.size} issues") if defined?(UI)
         
-        # Step 2: Process each finding
         findings.each do |finding|
-          # Skip if dry_run
           if dry_run
             UI.dim("  [DRY RUN] Would repair: #{finding.message}") if defined?(UI)
             skipped += 1
             next
           end
           
-          # Step 3: Confirmation gate (unless auto_confirm)
           unless auto_confirm
             if defined?(ConfirmationGate)
               gate_result = ConfirmationGate.gate(
@@ -179,19 +136,15 @@ module MASTER
             end
           end
           
-          # Step 4: Attempt fix
           fix_result = attempt_fix(finding)
           
           if fix_result.ok?
-            # Step 5: Run self-test if available
             if respond_to?(:run)
               test_result = run
               unless test_result.ok?
-                # Rollback on test failure
                 rollback_fix(finding)
                 failed += 1
                 
-                # Record failure
                 record_learning(finding, fix_result.value, success: false)
                 next
               end
@@ -199,7 +152,6 @@ module MASTER
             
             repaired += 1
             
-            # Step 6: Record success
             record_learning(finding, fix_result.value, success: true)
           else
             failed += 1
@@ -215,20 +167,14 @@ module MASTER
         )
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # SECTION 4: Self-Test (from self_test.rb)
-      # ═══════════════════════════════════════════════════════════════════
       
       BARE_RESCUE_ALLOWED = %w[
         result.rb boot.rb autocomplete.rb speech.rb momentum.rb weaviate.rb
       ].freeze
       
-      # Run comprehensive self-tests on MASTER
-      # @return [Result] Ok with test results or Err
       def run
         print "Running self-test"
         
-        # Collect all results silently
         results = {}
         
         print "."
@@ -249,12 +195,10 @@ module MASTER
         results[:council_review] = run_council_review
         puts " done.\n\n"
 
-        # Output prose summary
         print_prose_summary(results)
         Result.ok(results)
       end
       
-      # Test methods for self-test
       def run_static_analysis
         total_issues = 0
         each_lib_file do |code, filename|
@@ -357,7 +301,6 @@ module MASTER
       end
       
       def run_council_review
-        # Build code sample from key files
         key_files = %w[master.rb pipeline.rb stages.rb llm.rb chamber.rb executor.rb commands.rb enforcement.rb introspection.rb]
         code_sample = key_files.map do |f|
           path = File.join(MASTER.root, "lib", f)
@@ -376,7 +319,6 @@ module MASTER
           Be brutally honest.
           
           CODE:
-          #{code_sample[0, 12_000]}
         PROMPT
 
         result = LLM.ask(prompt, stream: false)
@@ -411,10 +353,8 @@ module MASTER
         introspection_result = results[:introspection]
         council = results[:council_review]
         
-        # Build natural prose
         paragraphs = []
         
-        # Opening
         if passed == total
           paragraphs << "MASTER passed all #{total} self-application phases. The codebase meets its own standards."
         elsif passed >= total - 2
@@ -423,7 +363,6 @@ module MASTER
           paragraphs << "Self-application found gaps in #{total - passed} of #{total} phases. Significant work remains."
         end
         
-        # Static analysis and structure
         issues_summary = []
         issues_summary << "#{static[:issues] || 0} static analysis issues" if static[:issues].to_i > 0
         issues_summary << "#{consistency[:issues]&.size || 0} consistency issues" if consistency[:issues]&.size.to_i > 0
@@ -435,14 +374,12 @@ module MASTER
           paragraphs << "Code review found no significant issues."
         end
         
-        # Logic and adversarial
         if logic[:issues]&.size.to_i > 0 || introspection_result[:issues]&.size.to_i > 0
           logic_count = logic[:issues]&.size || 0
           adversarial_count = introspection_result[:issues]&.size || 0
           paragraphs << "Deeper analysis identified #{logic_count} logic patterns worth reviewing and #{adversarial_count} potential issues from adversarial introspection. These include thread-safety considerations and edge cases an attacker might exploit."
         end
         
-        # Council rating
         if council[:rating]
           rating = council[:rating]
           if rating >= 8
@@ -454,7 +391,6 @@ module MASTER
           end
         end
         
-        # Print with nice wrapping
         paragraphs.each do |para|
           puts word_wrap(para, 72)
           puts
@@ -477,7 +413,6 @@ module MASTER
 
       def check_exception_handling(content, file)
         issues = []
-        # Check for bare rescues (not rescue StandardError)
         if content.match?(/rescue\s*$/) && !BARE_RESCUE_ALLOWED.include?(file)
           issues << "#{file}: Bare rescue found"
         end
@@ -486,11 +421,9 @@ module MASTER
 
       def check_logic_patterns(content, file)
         issues = []
-        # Thread-unsafe memoization
         if content.match?(/\|\|=.*YAML\./) && !content.match?(/Monitor|Mutex/)
           issues << "#{file}: Potential thread-unsafe YAML memoization"
         end
-        # Mixed hash key types
         symbol_keys = content.scan(/\[:\w+\]/).size
         string_keys = content.scan(/\["[^"]+"\]/).size
         if symbol_keys > 5 && string_keys > 5
@@ -507,9 +440,6 @@ module MASTER
         lib_files.each { |f| yield File.read(f), File.basename(f) }
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # SECTION 5: Adversarial Questioning (original introspection)
-      # ═══════════════════════════════════════════════════════════════════
 
       def hostile_questions
         @hostile_questions ||= begin
@@ -532,18 +462,14 @@ module MASTER
         end
       end
 
-      # Interrogate any input/output with hostile questions
-      # This is the main entry point - treats all code equally
       def interrogate(content, context: {})
         issues = []
 
-        # Fast path: heuristic checks (no LLM cost)
         hostile_questions.each do |question|
           issue = fast_check(content, question)
           issues << issue if issue
         end
 
-        # Phase-specific reflection if stage provided
         if context[:stage]
           reflection = phase_reflections[context[:stage].to_sym]
           if reflection
@@ -561,11 +487,9 @@ module MASTER
         }
       end
 
-      # Deep interrogation with LLM (uses budget)
       def deep_interrogate(content, context: {})
         issues = []
 
-        # Sample questions for cost efficiency
         questions = hostile_questions.sample(3)
         questions << phase_reflections[context[:stage].to_sym] if context[:stage]
 
@@ -582,7 +506,6 @@ module MASTER
         }
       end
 
-      # Audit against axioms
       def audit(content, axioms: nil)
         axioms ||= DB.axioms
         violations = []
@@ -600,7 +523,6 @@ module MASTER
         }
       end
 
-      # Full adversarial review: interrogate + audit + enforcement
       def full_review(content, context: {})
         interrogation = interrogate(content, context: context)
         audit_result = audit(content)
@@ -622,7 +544,6 @@ module MASTER
       end
     end
 
-    # Instance methods for LLM-based introspection
     def initialize(llm: LLM)
       @llm = llm
     end
@@ -649,8 +570,6 @@ module MASTER
 
       prompt = <<~PROMPT
         CONTENT TO REVIEW:
-        #{content[0, 2000]}
-        #{"CONTEXT: #{context}" if context}
 
         HOSTILE QUESTION: #{question}
 
@@ -680,10 +599,8 @@ module MASTER
     def examine(code, filename: nil)
       prompt = <<~PROMPT
         Examine this code as a hostile reviewer.
-        #{"FILE: #{filename}" if filename}
 
         ```
-        #{code[0, 4000]}
         ```
 
         Answer each briefly (one line each):
@@ -713,9 +630,6 @@ module MASTER
     class << self
       private
       
-      # ═══════════════════════════════════════════════════════════════════
-      # PRIVATE HELPERS - Section 1 (SelfMap)
-      # ═══════════════════════════════════════════════════════════════════
       
       def collect_files(dir, root = dir)
         result = []
@@ -734,9 +648,6 @@ module MASTER
         result
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # PRIVATE HELPERS - Section 2 (SelfCritique)
-      # ═══════════════════════════════════════════════════════════════════
       
       def parse_critique(text)
         json_match = text.match(/\{[^{}]*\}/m)
@@ -767,12 +678,8 @@ module MASTER
         }
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # PRIVATE HELPERS - Section 3 (SelfRepair)
-      # ═══════════════════════════════════════════════════════════════════
       
       def attempt_fix(finding)
-        # Try AutoFixer if available
         if defined?(AutoFixer)
           fixer = AutoFixer.new(mode: :moderate)
           
@@ -782,7 +689,6 @@ module MASTER
           end
         end
         
-        # Try known fix from learning
         if defined?(LearningFeedback)
           if LearningFeedback.known_fix?(finding)
             return LearningFeedback.apply_known(finding)
@@ -793,7 +699,6 @@ module MASTER
       end
 
       def rollback_fix(finding)
-        # Use Staging rollback if available
         if defined?(Staging)
           staging = Staging.new
           staging.rollback(finding.file)
@@ -801,15 +706,11 @@ module MASTER
       end
 
       def record_learning(finding, fix, success:)
-        # Record pattern in learning feedback
         if defined?(LearningFeedback)
           LearningFeedback.record(finding, fix, success: success)
         end
       end
       
-      # ═══════════════════════════════════════════════════════════════════
-      # PRIVATE HELPERS - Section 5 (Adversarial Questioning)
-      # ═══════════════════════════════════════════════════════════════════
 
       FAST_CHECKS = {
         /assumption.*wrong/i => {
@@ -869,7 +770,6 @@ module MASTER
           HOSTILE QUESTION: #{question}
 
           CONTENT:
-          #{content[0, 2000]}
 
           If genuine issue found, respond: ISSUE: [description]
           Otherwise respond: PASS
@@ -980,9 +880,6 @@ module MASTER
     end
   end
 
-  # ═══════════════════════════════════════════════════════════════════
-  # BACKWARD COMPATIBILITY ALIASES
-  # ═══════════════════════════════════════════════════════════════════
   
   SelfMap = Introspection
   SelfCritique = Introspection

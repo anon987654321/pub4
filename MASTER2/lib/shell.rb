@@ -4,7 +4,6 @@ require "shellwords"
 require "open3"
 
 module MASTER
-  # Shell integration - zsh-native patterns
   module Shell
     extend self
 
@@ -35,13 +34,11 @@ module MASTER
 
         base = parts.first
 
-        # Replace forbidden commands
         if FORBIDDEN.key?(base)
           parts[0] = FORBIDDEN[base]
           return parts.join(" ")
         end
 
-        # Apply zsh preferences
         if ZSH_PREFERRED.key?(base) && parts.size == 1
           return ZSH_PREFERRED[base]
         end
@@ -65,7 +62,6 @@ module MASTER
         status = nil
         
         Timeout.timeout(timeout) do
-          # Use Open3 for safer shell execution
           output, status = Open3.capture2e(sanitized)
         end
 
@@ -77,7 +73,6 @@ module MASTER
       end
 
       def which(cmd)
-        # Use Open3 instead of backticks
         stdout, status = Open3.capture2("which", cmd.to_s)
         status.success? ? stdout.strip : nil
       rescue StandardError
@@ -97,8 +92,6 @@ module MASTER
     end
   end
 
-  # InteractiveShell - Interactive shell mixing Unix commands with MASTER commands
-  # Ported from MASTER v1 cli.rb shell_mode
   class InteractiveShell
     UNIX_COMMANDS = %w[ls cd pwd cat grep find wc head tail tree file stat].freeze
     
@@ -121,7 +114,6 @@ module MASTER
         input = $stdin.gets&.chomp&.strip
         break if input.nil?
 
-        # Add to history
         @context[:history] << input unless input.empty?
 
         result = execute(input)
@@ -306,7 +298,6 @@ module MASTER
     end
   end
 
-  # GHHelper - GitHub CLI integration for PR creation and git operations
   module GHHelper
     class << self
       def create_pr(title:, body:, draft: true)
@@ -320,12 +311,8 @@ module MASTER
 
       def create_pr_with_context(title, description, files_changed)
         body = <<~BODY
-          #{description}
 
-          ## Files Changed
-          #{files_changed.map { |f| "- `#{f}`" }.join("\n")}
 
-          ## Automated Tests
           - [ ] Syntax validation passed
           - [ ] No new violations introduced
           - [ ] All existing tests pass

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # NNgChecklist - Nielsen Norman Group usability heuristics compliance
   module NNgChecklist
     HEURISTICS = {
       visibility: {
@@ -135,22 +134,18 @@ module MASTER
       lines.join("\n")
     end
 
-    # Lint HTML file for web UI best practices
     def lint_html(file_path)
       return { error: "File not found: #{file_path}" } unless File.exist?(file_path)
       
       content = File.read(file_path)
       issues = []
       
-      # Check for CSS custom properties usage (no raw hex outside :root)
       if content.include?('<style>')
         style_section = content[/<style>(.*?)<\/style>/m, 1]
         if style_section
-          # Extract :root section
           root_section = style_section[/:root\s*\{[^}]*\}/m]
           non_root = style_section.gsub(/:root\s*\{[^}]*\}/m, '')
           
-          # Check for hex colors outside :root
           hex_colors = non_root.scan(/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/)
           unless hex_colors.empty?
             issues << "Found #{hex_colors.length} raw hex colors outside :root (should use CSS vars)"
@@ -158,23 +153,19 @@ module MASTER
         end
       end
       
-      # Check for prefers-reduced-motion media query
       unless content.include?('prefers-reduced-motion')
         issues << "Missing @media (prefers-reduced-motion) support"
       end
       
-      # Check for focus styles
       has_focus = content.include?('focus-visible') || content.include?(':focus')
       unless has_focus
         issues << "Missing focus styles (:focus or :focus-visible)"
       end
       
-      # Check for dialog element vs custom modal
       if content.include?('modal') && !content.include?('<dialog')
         issues << "Consider using <dialog> element instead of custom modal"
       end
       
-      # Check for semantic HTML
       semantic_score = 0
       semantic_score += 1 if content.include?('<nav')
       semantic_score += 1 if content.include?('<header')
@@ -194,7 +185,6 @@ module MASTER
       }
     end
 
-    # Lint all view files
     def lint_views
       views_dir = File.join(MASTER.root, 'lib', 'views')
       return { error: "Views directory not found" } unless Dir.exist?(views_dir)
@@ -212,17 +202,13 @@ module MASTER
       }
     end
 
-    # Check color contrast (simplified WCAG check)
     def check_contrast(fg_hex, bg_hex)
-      # Convert hex to RGB
       fg_rgb = [fg_hex[1..2], fg_hex[3..4], fg_hex[5..6]].map { |h| h.to_i(16) / 255.0 }
       bg_rgb = [bg_hex[1..2], bg_hex[3..4], bg_hex[5..6]].map { |h| h.to_i(16) / 255.0 }
       
-      # Calculate relative luminance
       fg_lum = relative_luminance(fg_rgb)
       bg_lum = relative_luminance(bg_rgb)
       
-      # Calculate contrast ratio
       lighter = [fg_lum, bg_lum].max
       darker = [fg_lum, bg_lum].min
       ratio = (lighter + 0.05) / (darker + 0.05)

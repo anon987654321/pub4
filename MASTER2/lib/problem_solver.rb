@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # ProblemSolver - Systematic 5-fix approach to debugging
   module ProblemSolver
     extend self
 

@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
 module MASTER
-  # ErrorSuggestions - NN/g: Help users recognize, diagnose, and recover from errors
   module ErrorSuggestions
     extend self
 
     SUGGESTIONS = {
-      # API errors
       /401|unauthorized/i => [
         "Check your OPENROUTER_API_KEY in .env",
         "Verify the API key hasn't expired",
@@ -28,7 +26,6 @@ module MASTER
         "Check firewall settings"
       ],
 
-      # File errors
       /file.?not.?found|no.?such.?file/i => [
         "Check the file path is correct",
         "Use tab completion to verify the path",
@@ -40,7 +37,6 @@ module MASTER
         "Verify you own the file"
       ],
 
-      # Ruby errors
       /undefined.?method/i => [
         "The method doesn't exist on this object",
         "Check for typos in the method name",
@@ -57,7 +53,6 @@ module MASTER
         "Verify method definitions are complete"
       ],
 
-      # MASTER specific
       /budget.?exceeded|insufficient.?budget/i => [
         "Your session budget is exhausted",
         "Start a new session for fresh budget",
@@ -82,7 +77,6 @@ module MASTER
         return suggestions if error_message.match?(pattern)
       end
 
-      # Generic fallback
       ["Check the error message for details", "Try 'help' for available commands"]
     end
 

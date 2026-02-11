@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Dashboard - Terminal status display
   class Dashboard
     def initialize
       @ui = UI

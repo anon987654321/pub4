@@ -5,7 +5,6 @@ require "open3"
 require "yaml"
 require "rbconfig"
 
-# Load pattern modules
 require_relative "executor/react"
 require_relative "executor/pre_act"
 require_relative "executor/rewoo"
@@ -15,14 +14,6 @@ require_relative "executor/patterns"
 require_relative "executor/context"
 
 module MASTER
-  # Executor - Hybrid agent with multiple reasoning patterns
-  # Patterns: react, pre_act, rewoo, reflexion
-  # Auto-selects best pattern based on task characteristics
-  # 
-  # NOTE: This file is split across multiple files for readability:
-  # - executor/tools.rb - Tool implementations
-  # - executor/patterns.rb - Pattern execution methods
-  # - executor/context.rb - Context building and response parsing
   class Executor
     include React
     include PreAct
@@ -35,7 +26,6 @@ module MASTER
     MAX_HISTORY_ENTRIES = 50
     MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
     
-    # Magic number constants extracted for clarity (Phase 5 - Style compliance)
     MAX_BROWSE_CONTENT = 5000
     MAX_FILE_CONTENT = 3000
     MAX_CURL_CONTENT = 2000
@@ -47,8 +37,6 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
     
-    # Dangerous patterns to block (injection prevention)
-    # Synchronized with Stages::Guard::DANGEROUS_PATTERNS
     DANGEROUS_PATTERNS = [
       /rm\s+-r[f]?\s+\//,
       />\s*\/dev\/[sh]da/,
@@ -58,7 +46,6 @@ module MASTER
       /dd\s+if=/,
     ].freeze
     
-    # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
       data/constitution.yml
       /etc/
@@ -69,7 +56,6 @@ module MASTER
       /boot/
     ].freeze
     
-    # All available tools
     TOOLS = {
       ask_llm: "Ask the LLM a question directly",
       web_search: "Search the web for information",
@@ -87,7 +73,6 @@ module MASTER
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
 
-    # Include extracted modules
     include Tools
     include Patterns
     include Context
@@ -100,7 +85,6 @@ module MASTER
       @step = 0
     end
 
-    # Main entry - auto-selects pattern or uses specified
     def call(goal, pattern: :auto, tier: nil)
       @history = []
       @reflections = []
@@ -108,14 +92,12 @@ module MASTER
       @step = 0
       @pattern = pattern == :auto ? select_pattern(goal) : pattern
       
-      # Quick path: simple queries
       return direct_ask(goal, tier: tier) if simple_query?(goal)
 
       UI.dim("  ⚡ Pattern: #{@pattern}") if ENV["DEBUG"]
       
       result = execute_pattern(@pattern, goal, tier: tier || :strong)
       
-      # Fallback to simpler patterns if primary fails
       if !result.ok? && @pattern != :react
         UI.warn("Pattern #{@pattern} failed, falling back to :react")
         @step = 0
@@ -123,7 +105,6 @@ module MASTER
         result = execute_pattern(:react, goal, tier: tier || :strong)
       end
       
-      # Final fallback to direct if all else fails
       if !result.ok? && @step > 0
         UI.warn("All patterns failed, attempting direct response")
         result = direct_ask("Given this context, provide the best answer you can:\n\n#{goal}", tier: :fast)
@@ -146,21 +127,16 @@ module MASTER
       new.call(goal, **opts)
     end
 
-    # Pattern selection heuristics
     def select_pattern(goal)
-      # Pre-Act: explicit multi-step tasks
       return :pre_act if goal.match?(/\b(then|after that|next|finally|step\s*\d|first.*then)\b/i)
       return :pre_act if goal.match?(/\b(build|create|implement|develop)\b.*\b(and|with)\b/i)
       
-      # ReWOO: cost-sensitive or pure reasoning
       return :rewoo if goal.match?(/\b(explain|describe|summarize|compare|analyze)\b/i) &&
                        !goal.match?(/\b(file|code|execute|run)\b/i)
       
-      # Reflexion: learning/fixing tasks
       return :reflexion if goal.match?(/\b(fix|debug|correct|improve|refactor)\b/i)
       return :reflexion if goal.match?(/\b(don't break|carefully|safely)\b/i)
       
-      # Default: ReAct for exploratory/unknown
       :react
     end
 
@@ -175,7 +151,6 @@ module MASTER
     def direct_ask(goal, tier: nil)
       config = self.class.system_prompt_config
       
-      # Build concise system context for direct queries
       identity = if config["identity"]
         config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
       else
@@ -186,14 +161,10 @@ module MASTER
         YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
       CMD
       
-      # Tone from config
       tone_rules = config.dig("tone")&.take(2)&.join(" ") || "Be concise and direct."
       
       prompt = <<~PROMPT
-        #{identity}
-        #{tone_rules}
         
-        #{commands.lines.first(8).join}
         
         User question: #{goal}
       PROMPT
@@ -229,17 +200,14 @@ module MASTER
 
       tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
       
-      # Build identity from config or default
       identity = if config["identity"]
         config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
       else
         "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant running on #{RUBY_PLATFORM}."
       end
       
-      # Tone guidelines
       tone = config.dig("tone")&.map { |t| "- #{t}" }&.join("\n") || ""
       
-      # Commands from config or inline
       commands = config["commands"] || <<~CMD
         YOUR COMMANDS (what users type at the master> prompt):
           model <name>      Switch LLM model (e.g., model kimi-k2.5)
@@ -251,7 +219,6 @@ module MASTER
           exit              Exit MASTER (or Ctrl+C twice)
       CMD
       
-      # Check for project-specific MASTER.md
       project_context = ""
       master_md = File.join(Dir.pwd, "MASTER.md")
       if File.exist?(master_md)
@@ -259,15 +226,10 @@ module MASTER
       end
 
       <<~CONTEXT
-        #{identity}
         
-        #{tone.empty? ? "" : "COMMUNICATION STYLE:\n#{tone}\n"}
-        #{commands}
-        #{project_context}
         TASK: #{goal}
         
         TOOLS AVAILABLE (for autonomous execution):
-        #{tool_list}
         
         TOOL FORMAT:
         - ask_llm "your question"
@@ -287,7 +249,6 @@ module MASTER
         
         When complete, respond: ANSWER: your final answer
         
-        #{history_text.empty? ? "" : "PREVIOUS STEPS:\n#{history_text}\n"}
         
         Respond with:
         Thought: (brief reasoning)
@@ -305,8 +266,6 @@ module MASTER
     end
   end
 
-  # Prescan - Mandatory situational awareness before touching code
-  # Ported from MASTER v1 cli.rb prescan ritual
   module Prescan
     extend self
 
@@ -334,7 +293,6 @@ module MASTER
         system("tree -L 3 -I 'node_modules|.git|tmp|vendor' #{path}")
         true
       else
-        # Fallback: simple directory listing
         puts `find #{path} -maxdepth 3 -type d | head -20`
         false
       end

@@ -3,14 +3,10 @@
 require 'yaml'
 
 module MASTER
-  # Personas - Character persona management system
-  # Loads personas from consolidated YAML for behavioral modes
-  # Ported from MASTER v1, adapted for MASTER2's architecture
   class Personas
     PERSONAS_FILE = File.join(Paths.data, 'personas.yml')
     
     class << self
-      # Load all personas from YAML file
       def load_all
         return [] unless File.exist?(PERSONAS_FILE)
         
@@ -23,7 +19,6 @@ module MASTER
         end
       end
 
-      # Load specific persona by name
       def load(name)
         return nil unless File.exist?(PERSONAS_FILE)
         
@@ -31,14 +26,12 @@ module MASTER
         personas_hash = data['personas'] || data[:personas]
         return nil unless personas_hash
         
-        # Try both string and symbol keys
         persona = personas_hash[name] || personas_hash[name.to_s] || personas_hash[name.to_sym]
         return nil unless persona
         
         normalize_persona(name, persona)
       end
 
-      # List all available persona names
       def list
         return [] unless File.exist?(PERSONAS_FILE)
         
@@ -49,12 +42,10 @@ module MASTER
         personas_hash.keys.map(&:to_s).sort
       end
 
-      # Check if persona exists
       def exists?(name)
         list.include?(name.to_s)
       end
 
-      # Get persona system prompt for LLM
       def system_prompt(name)
         persona = load(name)
         return nil unless persona
@@ -62,7 +53,6 @@ module MASTER
         persona[:system_prompt] || build_system_prompt(persona)
       end
 
-      # Clear cache (useful for testing)
       def clear_cache
         @personas_cache = nil
       end
@@ -73,7 +63,6 @@ module MASTER
         @personas_cache ||= begin
           YAML.safe_load_file(PERSONAS_FILE, symbolize_names: true)
         rescue ArgumentError
-          # Fallback for older YAML versions
           YAML.load_file(PERSONAS_FILE)
         end
       end
@@ -120,7 +109,6 @@ module MASTER
       end
     end
 
-    # Instance methods for working with a specific persona
     attr_reader :name, :data
 
     def initialize(name)
@@ -170,24 +158,20 @@ module MASTER
     end
   end
 
-  # Class-level activation methods
   class Personas
     class << self
       @active_persona = nil
 
-      # Activate a persona with proactive behaviors
       def activate(name)
         persona = load(name)
         return Result.err("Persona '#{name}' not found") unless persona
 
         @active_persona = persona
         
-        # Set LLM system prompt
         if defined?(LLM) && persona[:system_prompt]
           LLM.instance_variable_set(:@persona_prompt, persona[:system_prompt])
         end
 
-        # Register behavior hooks
         register_behaviors(persona) if persona[:behaviors]
 
         puts UI.green("✓ Activated persona: #{persona[:name]}")
@@ -218,17 +202,14 @@ module MASTER
       def register_behaviors(persona)
         return unless persona[:behaviors]
 
-        # Register "find gaps" behavior
         if persona[:behaviors].include?("Identify missing features without being asked")
           Hooks.register(:after_phase, ->(data) {
-            # Check for common gaps after implement phase
             if data[:phase] == :implement
               check_for_gaps(data)
             end
           }) if defined?(Hooks)
         end
 
-        # Register "research similar" behavior
         if persona[:behaviors].include?("Research similar projects for inspiration")
           Hooks.register(:before_phase, ->(data) {
             if data[:phase] == :ideate
@@ -239,7 +220,6 @@ module MASTER
       end
 
       def unregister_behaviors
-        # Clear behavior hooks
         Hooks.clear_handlers if defined?(Hooks)
       end
 

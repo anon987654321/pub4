@@ -5,16 +5,12 @@ require "fileutils"
 require "yaml"
 
 module MASTER
-  # Store - Persists axioms, council, costs, sessions to JSONL files
   module DB
     extend self
 
     @mutex = Monitor.new
     @cache = {}
 
-    # Initialize database at given path
-    # @param path [String, nil] Database directory path (defaults to var/db)
-    # @return [void]
     def setup(path: nil)
       @root = path || File.join(Paths.var, "db")
       FileUtils.mkdir_p(@root)
@@ -22,8 +18,6 @@ module MASTER
       ensure_seeded
     end
 
-    # Get database root directory
-    # @return [String] Absolute path to database directory
     def root
       @root ||= begin
         r = File.join(Paths.var, "db")
@@ -32,7 +26,6 @@ module MASTER
       end
     end
 
-    # Load YAML configuration files from data/ directory
     def load_yml(name)
       yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
       return {} unless File.exist?(yml_path)
@@ -47,26 +40,15 @@ module MASTER
       @mutex.synchronize(&block)
     end
 
-    # Clear all cached data
-    # @return [void]
     def clear_cache
       @cache.clear
     end
 
-    # --- Axioms (cached) ---
     
-    # Get all axioms (cached)
-    # @return [Array<Hash>] Array of axiom records
     def axioms
       @cache[:axioms] ||= read_collection("axioms")
     end
 
-    # Add new axiom to database
-    # @param name [String] Axiom name
-    # @param description [String] Axiom description
-    # @param category [String, nil] Category classification
-    # @param scope [String, nil] Scope of application
-    # @return [Hash] Created axiom record
     def add_axiom(name:, description:, category: nil, scope: nil)
       record = {
         name: name,
@@ -79,12 +61,8 @@ module MASTER
       @cache.delete(:axioms)
     end
 
-    # --- Council (cached) ---
     
-    # Get all council personas (cached)
-    # @return [Array<Hash>] Array of persona records
     def council
-      # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
       yml_data = load_yml("council")
       if yml_data && yml_data["council"]
         yml_data["council"]
@@ -93,12 +71,6 @@ module MASTER
       end
     end
 
-    # Add new council persona
-    # @param name [String] Persona name
-    # @param role [String] Role description
-    # @param style [String] Communication style
-    # @param bias [String, nil] Decision bias
-    # @return [Hash] Created persona record
     def add_persona(name:, role:, style:, bias: nil)
       record = {
         name: name,
@@ -111,14 +83,7 @@ module MASTER
       @cache.delete(:council)
     end
 
-    # --- Costs ---
     
-    # Log LLM API cost
-    # @param model [String] Model identifier
-    # @param tokens_in [Integer] Input tokens
-    # @param tokens_out [Integer] Output tokens
-    # @param cost [Float] Cost in dollars
-    # @return [Hash] Created cost record
     def log_cost(model:, tokens_in:, tokens_out:, cost:)
       record = {
         model: model,
@@ -130,21 +95,15 @@ module MASTER
       append("costs", record)
     end
 
-    # Get total cost across all logged API calls
-    # @return [Float] Total cost in dollars
     def total_cost
       costs = read_collection("costs")
       costs.sum { |c| c[:cost] || 0 }
     end
 
-    # Get recent cost records
-    # @param limit [Integer] Number of records to return
-    # @return [Array<Hash>] Recent cost records
     def recent_costs(limit: 10)
       read_collection("costs").last(limit)
     end
 
-    # --- Circuits ---
     def circuit(model)
       circuits = read_collection("circuits")
       circuits.find { |c| c[:model] == model }
@@ -188,7 +147,6 @@ module MASTER
       if existing
         existing[:failures] = (existing[:failures] || 0) + 1
         existing[:last_failure] = Time.now.utc.iso8601
-        # Keep state as-is (don't open yet)
         write_collection("circuits", circuits)
       else
         record = {
@@ -201,7 +159,6 @@ module MASTER
       end
     end
 
-    # --- Sessions ---
     def save_session(id:, data:)
       sessions = read_collection("sessions")
       existing = sessions.find { |s| s[:id] == id }
@@ -223,7 +180,6 @@ module MASTER
       session&.dig(:data)
     end
 
-    # --- Patterns ---
     def patterns(category = nil)
       all = read_collection("patterns")
       return all unless category
@@ -241,7 +197,6 @@ module MASTER
       append("patterns", record.compact)
     end
 
-    # --- Models ---
     def models
       read_collection("models")
     end
@@ -254,7 +209,6 @@ module MASTER
     private
 
     def file_path(collection)
-      # Path traversal protection
       safe_name = File.basename(collection.to_s)
       File.join(root, "#{safe_name}.jsonl")
     end
@@ -317,7 +271,6 @@ module MASTER
           )
         end
       else
-        # Fallback to hardcoded defaults
         default_axioms = [
           { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
           { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },

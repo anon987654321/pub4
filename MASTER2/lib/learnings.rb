@@ -1,15 +1,11 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Learnings - Captures insights from sessions for future use
-  # When something is discovered (bug pattern, good practice, UX insight),
-  # it gets recorded here so MASTER can apply it automatically next time
   module Learnings
     extend self
 
     CATEGORIES = %i[bug_pattern good_practice ux_insight architecture security].freeze
 
-    # Quality tiers based on success rate (merged from LearningQuality)
     QUALITY_TIERS = {
       promote: { min: 0.90, description: "Auto-apply (>90% success)" },
       keep: { min: 0.50, description: "Keep learning (50-90%)" },
@@ -73,7 +69,6 @@ module MASTER
             increment_applied(learning[:id])
           end
         rescue RegexpError
-          # Invalid pattern, skip
         end
       end
 
@@ -89,7 +84,6 @@ module MASTER
       rewrite(learnings)
     end
 
-    # Quality evaluation methods (merged from LearningQuality)
     def evaluate(pattern)
       return :unrated if pattern["applications"].to_i < MINIMUM_APPLICATIONS
       
@@ -121,13 +115,11 @@ module MASTER
       end
     end
 
-    # Prune retired patterns from database
     def prune!
       return Result.err("LearningFeedback not available") unless defined?(LearningFeedback)
       
       patterns = LearningFeedback.load_patterns
       
-      # Group by category and fix_hash to aggregate stats
       grouped = patterns.group_by { |p| [p["category"], p["fix_hash"]] }
       
       pruned = 0
@@ -158,7 +150,6 @@ module MASTER
         end
       end
       
-      # Rewrite database with kept patterns only
       if pruned > 0
         db_path = File.join(MASTER.root, LearningFeedback::DB_FILE)
         File.open(db_path, "w") do |f|
@@ -174,7 +165,6 @@ module MASTER
     end
 
     def seed_from_session
-      # Learnings discovered in the Feb 7 2026 deep analysis session
       [
         {
           category: :bug_pattern,
@@ -246,13 +236,10 @@ module MASTER
       end
     end
     
-    # Extract regex pattern from code diff (simple heuristic)
     def self.extract_pattern_from_fix(original, fixed)
-      # Find the line that changed
       original_lines = original.lines
       fixed_lines = fixed.lines
       
-      # Handle length differences by iterating through the shorter array
       min_length = [original_lines.length, fixed_lines.length].min
       diff_line = nil
       
@@ -268,8 +255,6 @@ module MASTER
       original_part = diff_line[0]&.strip
       return nil unless original_part
       
-      # Extract a simple regex pattern
-      # Example: "foo.bar" becomes "foo\.bar"
       Regexp.escape(original_part[0..50]) # First 50 chars
     rescue StandardError
       nil
@@ -288,14 +273,12 @@ module MASTER
     end
   end
 
-  # LearningQuality - Assess and filter learning data quality
   module LearningQuality
     extend self
 
     MIN_CONFIDENCE = 0.6
     MINIMUM_APPLICATIONS = 3
 
-    # Confidence scoring weights
     WEIGHT_CATEGORY = 0.3
     WEIGHT_SUCCESS = 0.3
     WEIGHT_TIMESTAMP = 0.2
@@ -358,13 +341,11 @@ module MASTER
     end
   end
 
-  # LearningFeedback - Pattern storage and retrieval for automated fixes
   module LearningFeedback
     extend self
 
     DB_FILE = "tmp/learning_feedback.jsonl"
 
-    # Record a finding + fix pattern with success/fail
     def record(finding, fix, success:)
       ensure_db_exists
       
@@ -376,7 +357,6 @@ module MASTER
         timestamp: Time.now.to_i
       }
       
-      # Append to JSONL
       File.open(db_path, "a") do |f|
         f.puts(pattern.to_json)
       end
@@ -386,7 +366,6 @@ module MASTER
       Result.err("Failed to record learning: #{e.message}")
     end
 
-    # Check if we have a known successful fix for this finding
     def known_fix?(finding)
       patterns = load_patterns
       
@@ -394,15 +373,12 @@ module MASTER
         p["category"] == finding.category.to_s
       end
       
-      # Count successes
       successes = category_patterns.count { |p| p["success"] }
       total = category_patterns.size
       
-      # Need at least 3 applications and >70% success rate
       total >= 3 && (successes.to_f / total) > 0.7
     end
 
-    # Apply a known fix without LLM
     def apply_known(finding)
       patterns = load_patterns
       
@@ -412,15 +388,11 @@ module MASTER
       
       return Result.err("No successful pattern found") if successful_patterns.empty?
       
-      # Use the most recent successful pattern
       pattern = successful_patterns.last
       
-      # This is a simplified implementation
-      # In a real system, this would reconstruct and apply the actual fix
       Result.ok(applied: pattern["fix_hash"])
     end
 
-    # Load all patterns from DB
     def load_patterns
       return [] unless File.exist?(db_path)
       
@@ -443,7 +415,6 @@ module MASTER
     end
 
     def generalize_message(message)
-      # Remove specific numbers and paths to create pattern
       message
         .gsub(/\d+/, "N")
         .gsub(/\/[^\s]+/, "PATH")
@@ -451,8 +422,6 @@ module MASTER
     end
 
     def hash_fix(fix)
-      # Create a hash of the fix for comparison
-      # This is simplified - real implementation would be more sophisticated
       if fix.is_a?(Hash)
         fix.hash.to_s
       elsif fix.respond_to?(:to_s)
@@ -463,7 +432,6 @@ module MASTER
     end
   end
 
-  # ReflectionMemory - Weighted learning from self-critiques with decay
   class ReflectionMemory
     DECAY_DAYS = 30
     DECAY_FACTOR = 0.4
@@ -552,7 +520,6 @@ module MASTER
         Focus on patterns and actionable insights.
 
         Recent Reflections:
-        #{recent.map { |r| "- [strength: #{r[:strength]}] #{r[:content]}" }.join("\n")}
 
         Provide 3 concise lessons (1 sentence each):
       PROMPT

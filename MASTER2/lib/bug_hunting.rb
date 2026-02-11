@@ -1,17 +1,13 @@
 # frozen_string_literal: true
 
-# 8-Phase Bug Hunting Protocol
-# Systematic debugging methodology
 
 module MASTER
   module BugHunting
     extend self
 
-    # Diagnostic escalation levels (cheap to expensive)
     ESCALATION_LEVELS = %i[syntax logic history llm].freeze
 
     class << self
-      # Hunt for bugs with automatic escalation
       def hunt(error_or_file, level: :auto)
         if level == :auto
           escalate(error_or_file)
@@ -107,25 +103,20 @@ module MASTER
         lines.join("\n")
       end
 
-      # Escalation strategy - try cheap fixes before expensive LLM
       private
 
       def escalate(target)
         puts UI.dim("🔍 Diagnostic escalation...")
 
-        # Level 1: Syntax (2 sec, $0)
         result = level_syntax(target)
         return result if result[:fixed]
 
-        # Level 2: Logic (10 sec, $0)
         result = level_logic(target)
         return result if result[:fixed]
 
-        # Level 3: History (30 sec, $0)
         result = level_history(target)
         return result if result[:fixed]
 
-        # Level 4: LLM (60 sec, $0.10-0.50)
         level_llm(target)
       end
 
@@ -167,7 +158,6 @@ module MASTER
         puts UI.dim("  Level 3: Git history...")
         
         if system("git rev-parse --git-dir > /dev/null 2>&1")
-          # Check if file was recently modified
           log = `git log --oneline -5 -- #{target}`.strip
           if log.empty?
             { level: :history, fixed: false, message: "No recent changes" }
@@ -182,7 +172,6 @@ module MASTER
       def level_llm(target)
         puts UI.dim("  Level 4: LLM analysis (costs $$$)...")
         
-        # Fall back to existing analyze method
         if File.exist?(target)
           code = File.read(target)
           report = analyze(code, file_path: target)
@@ -195,7 +184,6 @@ module MASTER
       public
     end
 
-    # Phase 1: Lexical Consistency Analysis
     module Phase1Lexical
       KEYWORDS = %w[if else elsif unless while until for do end class module def return break next case when then begin rescue ensure raise nil true false self].freeze
 
@@ -243,7 +231,6 @@ module MASTER
           return b.length if a.empty?
           return a.length if b.empty?
 
-          # Wagner-Fischer dynamic programming algorithm
           matrix = Array.new(a.length + 1) { Array.new(b.length + 1) }
           
           (0..a.length).each { |i| matrix[i][0] = i }
@@ -265,7 +252,6 @@ module MASTER
       end
     end
 
-    # Phase 2: Simulated Execution
     module Phase2Execution
       PERSPECTIVES = [
         { name: 'happy_path', desc: 'nominal execution' },
@@ -281,7 +267,6 @@ module MASTER
       end
     end
 
-    # Phase 3: Assumption Interrogation
     module Phase3Assumptions
       def self.analyze(code)
         found = []
@@ -310,7 +295,6 @@ module MASTER
       end
     end
 
-    # Phase 4: Data Flow Analysis
     module Phase4DataFlow
       def self.analyze(code)
         traces = []
@@ -323,7 +307,6 @@ module MASTER
       end
     end
 
-    # Phase 5: State Reconstruction
     module Phase5State
       def self.analyze(code)
         edges = []
@@ -336,7 +319,6 @@ module MASTER
       end
     end
 
-    # Phase 6: Pattern Recognition
     module Phase6Patterns
       PATTERNS = [
         { name: 'resource_leak', check: ->(c) { c.include?('File.open') && !c.match?(/File\.open.*do|ensure/) }, confidence: 'HIGH', fix: 'Use block form: File.open(path) { |f| ... }' },
@@ -355,7 +337,6 @@ module MASTER
       end
     end
 
-    # Phase 7: Proof of Understanding
     module Phase7Proof
       def self.validate(report)
         checks = {
@@ -369,7 +350,6 @@ module MASTER
       end
     end
 
-    # Phase 8: Verification
     module Phase8Verify
       def self.check(report)
         passed = report[:phases].size == 8 &&

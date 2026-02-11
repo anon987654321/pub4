@@ -4,17 +4,9 @@ require "json"
 require "time"
 
 module MASTER
-  # Logging - Unified logging system
-  # Combines three logging approaches:
-  #   1. Standard logging (debug/info/warn/error) - from log.rb
-  #   2. Structured JSON logging - from logging.rb
-  #   3. OpenBSD kernel-style dmesg - from dmesg.rb
   module Logging
     extend self
 
-    # ========================================================================
-    # CONFIGURATION
-    # ========================================================================
 
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
     
@@ -23,13 +15,11 @@ module MASTER
     @output = $stderr
     @request_id = nil
 
-    # Dmesg configuration
     @buffer = []
     @buffer_mutex = Mutex.new
     @start_time = Time.now
     BUFFER_CAP = 1000
 
-    # Trace levels (for dmesg-style logging)
     SILENT = 0
     LLM_ONLY = 1
     ALL_EVENTS = 2
@@ -51,9 +41,6 @@ module MASTER
         trace_level >= level
       end
 
-      # ========================================================================
-      # STANDARD LOGGING (from log.rb + logging.rb)
-      # ========================================================================
 
       def debug(message, **context)
         log(:debug, message, **context)
@@ -80,7 +67,6 @@ module MASTER
         dmesg_log('fatal0', message: message, level: SILENT)
       end
 
-      # Track operation duration with automatic timing
       def timed(operation, **context)
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         result = yield
@@ -94,7 +80,6 @@ module MASTER
         raise
       end
 
-      # Set request ID for tracing through pipeline
       def with_request_id(id = nil)
         old_id = @request_id
         @request_id = id || SecureRandom.hex(8)
@@ -103,11 +88,7 @@ module MASTER
         @request_id = old_id
       end
 
-      # ========================================================================
-      # DOMAIN-SPECIFIC LOGGING (from log.rb)
-      # ========================================================================
 
-      # Log LLM call with tier/model information
       def llm(tier:, model:, tokens_in: 0, tokens_out: 0, cost: 0, latency: nil)
         details = "#{tokens_in}→#{tokens_out}tok"
         details += ", $#{cost.round(4)}" if cost.positive?
@@ -126,14 +107,12 @@ module MASTER
         end
       end
 
-      # Log LLM error
       def llm_error(tier:, error:)
         msg = error.to_s.gsub(/\s+/, ' ')[0..60]
         dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: SILENT)
         error("LLM error", tier: tier, error: error.to_s) if logging_enabled?
       end
 
-      # Log autonomy event
       def autonomy(subsystem, event, details = nil)
         dmesg_log('autonomy0', parent: subsystem, message: "#{event}#{details ? ", #{details}" : ''}", level: ALL_EVENTS)
         if logging_enabled?
@@ -141,7 +120,6 @@ module MASTER
         end
       end
 
-      # Log budget event
       def budget(action, amount, remaining)
         dmesg_log('budget0', parent: 'autonomy0', message: "#{action} $#{amount.round(4)}, $#{remaining.round(4)} remaining", level: ALL_EVENTS)
         if logging_enabled?
@@ -149,7 +127,6 @@ module MASTER
         end
       end
 
-      # Log circuit breaker event
       def circuit(provider, state)
         dmesg_log('circuit0', parent: 'autonomy0', message: "#{provider} #{state}", level: ALL_EVENTS)
         info("Circuit", provider: provider, state: state) if logging_enabled?
@@ -163,7 +140,6 @@ module MASTER
         dmesg_log('fallback0', parent: 'autonomy0', message: "#{from} → #{to}", level: LLM_ONLY)
       end
 
-      # Log tool execution
       def tool(name, action, approved: nil)
         approval = approved.nil? ? '' : (approved ? ', auto' : ', manual')
         dmesg_log('tool0', parent: 'executor0', message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
@@ -172,7 +148,6 @@ module MASTER
         end
       end
 
-      # Log file operation
       def file(action, path, details = nil)
         dmesg_log('file0', parent: 'executor0', message: "#{action} #{File.basename(path)}#{details ? " (#{details})" : ''}", level: ALL_EVENTS)
         if logging_enabled?
@@ -180,7 +155,6 @@ module MASTER
         end
       end
 
-      # Log memory operation
       def memory(action, details)
         dmesg_log('mem0', parent: 'agent0', message: "#{action}: #{details}", level: ALL_EVENTS)
         debug("Memory", action: action, details: details) if logging_enabled?
@@ -190,7 +164,6 @@ module MASTER
         dmesg_log('mem0', parent: 'agent0', message: "pruned #{before} → #{after}", level: ALL_EVENTS)
       end
 
-      # Learning events
       def learn(type, details)
         dmesg_log('learn0', parent: 'agent0', message: "#{type}: #{details}", level: ALL_EVENTS)
       end
@@ -199,7 +172,6 @@ module MASTER
         dmesg_log('skill0', parent: 'learn0', message: "#{name} #{action}", level: ALL_EVENTS)
       end
 
-      # Task events
       def task(id, action, details = nil)
         dmesg_log("task#{id}", parent: 'planner0', message: "#{action}#{details ? ": #{details}" : ''}", level: ALL_EVENTS)
       end
@@ -208,17 +180,12 @@ module MASTER
         dmesg_log('goal0', parent: 'planner0', message: "#{status}: #{name[0..40]}", level: LLM_ONLY)
       end
 
-      # Boot complete event
       def boot_complete(duration_ms)
         dmesg_log('boot', message: "#{duration_ms}ms", level: SILENT)
         info("Boot complete", duration_ms: duration_ms) if logging_enabled?
       end
 
-      # ========================================================================
-      # CONVENIENCE METHODS (from logging.rb)
-      # ========================================================================
 
-      # Convenience: log LLM calls (alternative signature)
       def llm_call(model:, tokens_in:, tokens_out:, cost:, duration_ms:, success:)
         info("LLM call",
              model: model,
@@ -229,7 +196,6 @@ module MASTER
              success: success)
       end
 
-      # Convenience: log tool executions (alternative signature)
       def tool_exec(tool:, args:, duration_ms:, success:, error: nil)
         if success
           debug("Tool executed", tool: tool, duration_ms: duration_ms)
@@ -238,11 +204,7 @@ module MASTER
         end
       end
 
-      # ========================================================================
-      # DMESG-STYLE LOGGING (from dmesg.rb)
-      # ========================================================================
 
-      # Core dmesg logging - OpenBSD kernel style
       def dmesg_log(device, parent: nil, message: nil, level: ALL_EVENTS)
         timestamp = ((Time.now - @start_time) * 1000).round
 
@@ -258,7 +220,6 @@ module MASTER
           @buffer.shift if @buffer.size > BUFFER_CAP  # Cap buffer size
         end
 
-        # Progressive disclosure (Yugen)
         if enabled?(level) && $stdout.tty?
           output = trace_level >= FULL_DEBUG ? "[#{timestamp}ms] #{line}" : line
           if defined?(UI) && UI.respond_to?(:dim)
@@ -271,7 +232,6 @@ module MASTER
         line
       end
 
-      # Dump buffer
       def dump(last_n: nil, min_level: SILENT)
         entries = @buffer_mutex.synchronize { @buffer.select { |e| e[:level] >= min_level } }
         entries = entries.last(last_n) if last_n
@@ -288,9 +248,6 @@ module MASTER
 
       private
 
-      # ========================================================================
-      # PRIVATE HELPERS
-      # ========================================================================
 
       def log(severity, message, **context)
         return if LEVELS[severity] < LEVELS[@level]
@@ -333,20 +290,14 @@ module MASTER
         "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
       end
 
-      # Check if structured logging is enabled
       def logging_enabled?
         @level != :silent && ENV['MASTER_LOG'] != '0'
       end
     end
   end
 
-  # ========================================================================
-  # BACKWARD COMPATIBILITY ALIASES
-  # ========================================================================
 
-  # Alias for old Log module
   Log = Logging
 
-  # Alias for old Dmesg module
   Dmesg = Logging
 end

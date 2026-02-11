@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # CircuitBreaker - Rate limiting and failure handling for LLM calls
-  # Prevents cascading failures and manages request throttling
-  # Simple implementation without external dependencies
   module CircuitBreaker
     extend self
 
@@ -11,7 +8,6 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Circuit breaker states
     @circuits = {}
     @circuits_mutex = Mutex.new
 
@@ -19,7 +15,6 @@ module MASTER
       attr_reader :circuits, :circuits_mutex
     end
 
-    # Rate limiting state
     def rate_limit_state
       @rate_limit_state ||= { requests: [], window_start: Time.now }
     end
@@ -30,7 +25,6 @@ module MASTER
         now = Time.now
         state = rate_limit_state
         
-        # Clean old requests (older than 1 minute)
         state[:requests].reject! { |t| now - t > 60 }
         
         if state[:requests].size >= RATE_LIMIT_PER_MINUTE
@@ -50,11 +44,9 @@ module MASTER
     def run(model, &block)
       check_rate_limit!
       
-      # Get circuit state
       circuit = get_circuit(model)
       
       if circuit[:state] == :open
-        # Check if cool-off period has passed
         if Time.now - circuit[:opened_at] > CIRCUIT_RESET_SECONDS
           set_circuit_state(model, :half_open)
         else
@@ -65,7 +57,6 @@ module MASTER
       begin
         result = yield
         
-        # Success - reset circuit if it was half_open
         if circuit[:state] == :half_open
           set_circuit_state(model, :closed)
         end
@@ -102,7 +93,6 @@ module MASTER
       end
     end
 
-    # Compatibility methods for old API
     def open_circuit!(model)
       record_failure(model, StandardError.new("Circuit breaker tripped"))
     end
@@ -117,7 +107,6 @@ module MASTER
       if defined?(Logging)
         Logging.warn(message, **args)
       else
-        # Fallback to stderr if Logging not available
         warn "#{message}: #{args.inspect}"
       end
     end

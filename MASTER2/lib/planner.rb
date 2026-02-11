@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Planner - Systematic task breakdown and execution
   class Planner
     PLAN_FILE = File.join(Paths.var, 'current_plan.yml')
     PLAN_HISTORY = File.join(Paths.var, 'plan_history.yml')
@@ -191,18 +190,14 @@ module MASTER
       tasks.take(MAX_TASKS)
     end
 
-    # Merged from planner_helper.rb - Parse numbered steps from text into an array
     def self.parse_plan(text)
       return [] if text.nil? || text.empty?
       
-      # Extract lines that start with numbers followed by period or parenthesis
       steps = text.scan(/^\s*(\d+)[.)]\s*(.+?)$/m).map { |_num, step| step.strip }
       
-      # Remove empty steps
       steps.reject(&:empty?)
     end
 
-    # Merged from planner_helper.rb - Generate a numbered step plan from a goal string
     def self.generate_plan(goal, max_steps: 10)
       return Result.err("Goal cannot be empty") if goal.nil? || goal.empty?
 
@@ -269,7 +264,6 @@ module MASTER
     end
   end
 
-  # Backward compatibility alias for planner_helper.rb
   module PlannerHelper
     extend self
     

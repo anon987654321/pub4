@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Progress - Show progress during LLM calls (NN/g: visibility of system status)
   module Progress
     extend self
 
@@ -124,7 +123,6 @@ module MASTER
         spinner.success("Complete")
         result
       else
-        # Auto-stop after duration if given
         if duration
           sleep duration
           spinner.stop

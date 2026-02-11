@@ -1,6 +1,6 @@
-# frozen_string_literal: true
 
-# Load command modules
+
+
 require_relative "commands/session_commands"
 require_relative "commands/model_commands"
 require_relative "commands/budget_commands"
@@ -10,7 +10,7 @@ require_relative "commands/refactor_helpers"
 require_relative "commands/workflow_commands"
 
 module MASTER
-  # Commands - REPL command dispatcher
+
   module Commands
     extend self
     include SessionCommands
@@ -23,9 +23,9 @@ module MASTER
 
     @last_command = nil
 
-    # Replicate command handler (image/video generation)
+
     def repligen_command(cmd, args)
-      # Replicate module is now in replicate.rb
+
       
       case cmd
       when "repligen", "generate-image"
@@ -52,9 +52,9 @@ module MASTER
       puts "✗ Failed: #{e.message}"
     end
 
-    # Postpro command handler (image enhancement)
+
     def postpro_command(cmd, args)
-      # Postpro module is now in replicate.rb
+
       
       case cmd
       when "postpro"
@@ -65,7 +65,7 @@ module MASTER
           end
           return
         end
-        # Parse: postpro <operation> <image_url>
+
         parts = args.split(/\s+/, 2)
         operation = parts[0]
         image_url = parts[1]
@@ -95,7 +95,7 @@ module MASTER
       puts "✗ Failed: #{e.message}"
     end
 
-    # Shortcuts for power users
+
     SHORTCUTS = {
       "!!" => :repeat_last,
       "!r" => "refactor",
@@ -107,7 +107,7 @@ module MASTER
     }.freeze
 
     def dispatch(input, pipeline:)
-      # Handle shortcuts
+
       if input.strip == "!!"
         return Result.err("No previous command") unless @last_command
         input = @last_command
@@ -115,7 +115,7 @@ module MASTER
         input = shortcut.is_a?(Symbol) ? @last_command : shortcut
       end
 
-      # Guard against nil after shortcut resolution
+
       return Result.err("No previous command to repeat.") if input.nil?
 
       @last_command = input unless input.to_s.start_with?("!")
@@ -243,7 +243,7 @@ module MASTER
         postpro_command(cmd, args)
         nil
       when "shell"
-        # Start interactive shell
+
         InteractiveShell.new.run
         nil
       when "exit", "quit"
@@ -254,7 +254,7 @@ module MASTER
     end
   end
 
-  # Autocomplete - Tab completion for REPL
+
   module Autocomplete
     extend self
 
@@ -263,23 +263,23 @@ module MASTER
     def complete(partial, context: nil)
       completions = []
 
-      # Command completion
+
       if partial.match?(/^\w*$/)
         completions += COMMANDS.select { |c| c.start_with?(partial) }
       end
 
-      # File path completion
+
       if partial.include?('/') || partial.include?('\\') || partial.end_with?('.rb')
         completions += complete_path(partial)
       end
 
-      # After known commands, suggest relevant completions
+
       if context
         case context
         when 'refactor', 'chamber'
           completions += complete_path(partial).select { |p| p.end_with?('.rb') }
         when 'speak', 'say'
-          # No completion for freeform text
+
         end
       end
 
@@ -318,7 +318,7 @@ module MASTER
           word = event.line.text.split.last || ''
           matches = complete(word)
           if matches.size == 1
-            # Replace word with completion
+
             event.line.replace(event.line.text.sub(/#{Regexp.escape(word)}$/, matches.first))
           elsif matches.size > 1
             puts "\n#{matches.join('  ')}"
@@ -328,7 +328,7 @@ module MASTER
     end
   end
 
-  # ProblemSolver - Systematic 5-fix approach to debugging
+
   module ProblemSolver
     extend self
 
@@ -398,7 +398,7 @@ module MASTER
     end
   end
 
-  # Keybindings - Keyboard shortcuts for REPL
+
   module Keybindings
     BINDINGS = {
       ctrl_c:    { action: :interrupt,   desc: "Cancel current operation" },

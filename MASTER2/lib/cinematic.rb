@@ -4,12 +4,9 @@ require 'fileutils'
 require 'yaml'
 
 module MASTER
-  # Cinematic - AI-powered cinematic pipeline and color grading
-  # Chains Replicate models to create film-quality image/video transformations
   module Cinematic
     extend self
 
-    # Cinematic presets - film looks and color grades
     PRESETS = {
       'blade-runner' => {
         description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
@@ -38,7 +35,6 @@ module MASTER
       }
     }.freeze
 
-    # Pipeline builder class
     class Pipeline
       attr_reader :stages
 
@@ -46,7 +42,6 @@ module MASTER
         @stages = []
       end
 
-      # Chain a model into the pipeline
       def chain(model_id, params = {})
         @stages << {
           model: model_id,
@@ -55,7 +50,6 @@ module MASTER
         self  # Return self for chaining
       end
 
-      # Execute pipeline on input
       def execute(input, save_intermediates: false)
         return Result.err("Empty pipeline") if @stages.empty?
 
@@ -65,11 +59,9 @@ module MASTER
         @stages.each_with_index do |stage, idx|
           puts "  Stage #{idx + 1}/#{@stages.size}: #{stage[:model]}"
 
-          # Merge params with current output
           stage_input = detect_input_type(current_output, stage[:model])
           combined_params = stage[:params].merge(stage_input)
 
-          # Run model via Replicate
           result = Replicate.run(
             model_id: stage[:model],
             input: {},
@@ -78,10 +70,8 @@ module MASTER
 
           return result if result.err?
 
-          # Extract output
           current_output = extract_output(result.value[:output])
 
-          # Save intermediate if requested
           if save_intermediates
             save_intermediate(current_output, idx, stage[:model])
           end
@@ -99,7 +89,6 @@ module MASTER
         })
       end
 
-      # Save pipeline as preset
       def save_preset(name:, description:, tags: [])
         preset = {
           'name' => name,
@@ -109,16 +98,13 @@ module MASTER
           'created_at' => Time.now.utc.iso8601
         }
 
-        # Ensure pipelines directory exists
         pipelines_dir = File.join(Paths.data, 'pipelines')
         FileUtils.mkdir_p(pipelines_dir)
 
-        # Save to filesystem
         filename = name.downcase.gsub(/[^a-z0-9]+/, '-') + '.yml'
         path = File.join(pipelines_dir, filename)
         File.write(path, YAML.dump(preset))
 
-        # Index in Weaviate if available
         if Weaviate.available?
           embedding = generate_embedding(description)
           Weaviate.index('Pipeline', preset.merge('vector' => embedding)) if embedding
@@ -130,7 +116,6 @@ module MASTER
         Result.err("Failed to save preset: #{e.message}")
       end
 
-      # Load preset by name
       def self.load(name)
         pipelines_dir = File.join(Paths.data, 'pipelines')
         filename = name.downcase.gsub(/[^a-z0-9]+/, '-') + '.yml'
@@ -151,7 +136,6 @@ module MASTER
         Result.err("Failed to load preset: #{e.message}")
       end
 
-      # Generate random creative pipeline
       def self.random(length: 5, category: :all)
         pipeline = new
         models = discover_models(category)
@@ -170,7 +154,6 @@ module MASTER
       private
 
       def detect_input_type(output, model_id)
-        # Detect if output is image, video, or text
         if output.is_a?(String)
           if output.match?(/\.(jpg|jpeg|png|webp)$/i)
             { 'image' => output }
@@ -187,7 +170,6 @@ module MASTER
       end
 
       def extract_output(result_output)
-        # Extract URL or data from Replicate response
         if result_output.is_a?(Array)
           result_output.first
         elsif result_output.is_a?(String)
@@ -210,20 +192,15 @@ module MASTER
         Replicate.download_file(output, path)
       rescue => e
         $stderr.puts "Cinematic: save_intermediate failed: #{e.message}"
-        # Intermediate saves are optional, continue execution
       end
 
       def generate_embedding(text)
         return nil unless defined?(LLM) && LLM.configured?
         
-        # Use OpenRouter for embeddings if available
-        # For now, return nil - embeddings can be added later
         nil
       end
 
       def self.discover_models(category)
-        # Model list based on repligen's WILD_CHAIN
-        # Updated with current best models for each category
         case category
         when :image
           [
@@ -258,7 +235,6 @@ module MASTER
         when :color
           ['stability-ai/sdxl']
         else
-          # All models combined
           [
             'black-forest-labs/flux-pro',
             'black-forest-labs/flux-dev',
@@ -287,7 +263,6 @@ module MASTER
       end
     end
 
-    # Apply a named preset
     def apply_preset(input, preset_name)
       preset = PRESETS[preset_name]
       return Result.err("Unknown preset: #{preset_name}") unless preset
@@ -300,7 +275,6 @@ module MASTER
       pipeline.execute(input, save_intermediates: true)
     end
 
-    # Discover new styles via random exploration
     def discover_style(input, samples: 10)
       puts "Discovering new cinematic styles..."
 
@@ -308,7 +282,6 @@ module MASTER
       samples.times do |i|
         puts "  Sample #{i + 1}/#{samples}"
 
-        # Random pipeline 3-6 stages long
         pipeline_result = Pipeline.random(length: rand(3..6), category: :image)
         next if pipeline_result.err?
 
@@ -326,19 +299,16 @@ module MASTER
 
       return Result.err("No successful pipelines generated") if results.empty?
 
-      # Sort by score and return top results
       top = results.sort_by { |r| -r[:score] }.first(3)
 
       Result.ok({ discoveries: top })
     end
 
-    # List available presets
     def list_presets
       builtin = PRESETS.keys.map do |name|
         { name: name, description: PRESETS[name][:description], source: 'builtin' }
       end
 
-      # Load custom presets from disk
       pipelines_dir = File.join(Paths.data, 'pipelines')
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
@@ -359,8 +329,6 @@ module MASTER
     private
 
     def score_aesthetic(result)
-      # Simple placeholder scoring
-      # In production, could use LAION aesthetic predictor or similar
       rand(0.5..1.0)
     end
   end

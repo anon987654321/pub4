@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Chamber - Multi-model deliberation with council personas
-  # Implements multi-round debate: Independent → Synthesis → Convergence
   class Chamber
     MAX_ROUNDS = 25
     MAX_COST = 0.50
@@ -30,10 +28,6 @@ module MASTER
       LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
     end
 
-    # Convenience method for single council review
-    # @param text [String] Code or text to review
-    # @param model [String, nil] Optional model override
-    # @return [Hash] Review result with votes and consensus
     class << self
       def council_review(text, model: nil)
         chamber = new(llm: LLM)
@@ -168,8 +162,6 @@ module MASTER
       }
     end
 
-    # Creative mode: Brainstorm → Critique → Synthesize cycle
-    # Merged from CreativeChamber
     def ideate(prompt:, constraints: [], cycles: 2)
       ideas = []
       critiques = []
@@ -210,10 +202,8 @@ module MASTER
       prompt = <<~PROMPT
         The council raised these concerns about the proposal:
 
-        #{concerns}
 
         CURRENT PROPOSAL (first 1500 chars):
-        #{proposal[0, 1500]}
 
         Revise the proposal to address these concerns.
         Output ONLY the revised proposal, no explanation.
@@ -237,15 +227,12 @@ module MASTER
 
       prompt = <<~PROMPT
         You are #{persona[:name]}.
-        #{persona[:directive] || persona[:style]}
 
         Review this proposed change:
 
         ORIGINAL (first 500 chars):
-        #{original[0, 500]}
 
         PROPOSED (first 500 chars):
-        #{proposal[0, 500]}
 
         Respond with ONLY one word: APPROVE or REJECT
         Then one sentence explaining why.
@@ -281,7 +268,6 @@ module MASTER
         FILE: #{filename}
 
         ```
-        #{code[0, 4000]}
         ```
 
         Provide:
@@ -308,11 +294,9 @@ module MASTER
 
         ORIGINAL:
         ```
-        #{original[0, 2000]}
         ```
 
         PROPOSALS:
-        #{proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n")}
 
         Output ONLY the final improved code. No explanation.
       PROMPT
@@ -339,7 +323,6 @@ module MASTER
         You are a creative visionary. Generate 3-5 novel ideas.
         Be bold, unconventional, surprising.
         Constraints to respect: #{constraints.join(', ')}
-        #{"Previous ideas (don't repeat): #{existing_ideas.join(', ')}" if existing_ideas.any?}
       SYS
 
       full_prompt = "#{system_prompt}\n\nGenerate ideas for: #{prompt}"
@@ -361,7 +344,6 @@ module MASTER
         Critique these ideas honestly. What are the weaknesses, blind spots, implementation challenges?
 
         Ideas:
-        #{ideas.map { |i| "- #{i}" }.join("\n")}
       PROMPT
 
       result = @llm.ask(critique_prompt, tier: :fast)
@@ -380,10 +362,8 @@ module MASTER
         Constraints: #{constraints.join(', ')}
 
         Ideas generated:
-        #{ideas.map { |i| "- #{i}" }.join("\n")}
 
         Critiques:
-        #{critiques.join("\n---\n")}
 
         Synthesize the best elements into a cohesive recommendation.
         Address the valid critiques.
@@ -401,7 +381,6 @@ module MASTER
     end
   end
 
-  # Swarm - Generate many variations, curate best
   class Swarm
     SWARM_SIZE = 5
 
@@ -413,7 +392,6 @@ module MASTER
       responses = []
       total_cost = 0
 
-      # Fan out - get multiple responses using different approaches
       @size.times do |i|
         tier = i < 2 ? :strong : :fast  # Mix of tiers for diversity
         
@@ -432,13 +410,11 @@ module MASTER
             tokens: (data[:tokens_in] || 0) + (data[:tokens_out] || 0)
           }
         rescue StandardError => e
-          # Continue with other attempts
         end
       end
 
       return Result.err("No responses generated") if responses.empty?
 
-      # Curate - pick the best response
       best = curate(responses, prompt: prompt)
       total_cost += best[:curation_cost] || 0
 
@@ -463,7 +439,6 @@ module MASTER
       data = result.value
       cost = data[:cost] || 0
 
-      # Parse selection
       content = data[:content].to_s
       selected_idx = content.match(/\[(\d+)\]/)[1].to_i rescue 0
 
@@ -484,7 +459,6 @@ module MASTER
       <<~PROMPT
         Original request: #{original_prompt[0, 200]}
 
-        #{options}
 
         Select the best response. Reply with [N] where N is the index, followed by a brief explanation.
       PROMPT

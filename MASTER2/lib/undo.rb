@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Undo - Undo support for operations (NN/g: user control and freedom)
   module Undo
     extend self
 
@@ -71,17 +70,14 @@ module MASTER
         @redo_stack.clear
       end
 
-      # Track file edit
       def track_edit(path, original_content)
         push(:file_edit, { path: path, original: original_content })
       end
 
-      # Track file creation
       def track_create(path)
         push(:file_create, { path: path })
       end
 
-      # Track file deletion
       def track_delete(path, content)
         push(:file_delete, { path: path, content: content })
       end
@@ -104,10 +100,8 @@ module MASTER
       def apply(op)
         case op.type
         when :file_edit
-          # Can't redo edit without new content - this is a limitation
           puts "  Warning: Cannot redo file edit"
         when :file_create
-          # File was deleted on undo, would need content to recreate
           puts "  Warning: Cannot redo file create"
         when :file_delete
           File.delete(op.data[:path]) if File.exist?(op.data[:path])

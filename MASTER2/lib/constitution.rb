@@ -3,7 +3,6 @@
 require "yaml"
 
 module MASTER
-  # Constitution - Enforcement of governance policies for safe autonomous operation
   module Constitution
     extend self
 
@@ -13,7 +12,6 @@ module MASTER
     @principles_cache = nil
     @workflows_cache = nil
 
-    # Load and cache constitution rules, with sensible defaults if file is missing
     def rules
       return @rules_cache if @rules_cache
 
@@ -22,7 +20,6 @@ module MASTER
       @rules_cache = if File.exist?(constitution_path)
         YAML.load_file(constitution_path)
       else
-        # Sensible defaults when constitution.yml is missing
         {
           "safety_policies" => {
             "self_modification" => { "require_staging" => true },
@@ -54,15 +51,12 @@ module MASTER
       @rules_cache
     end
 
-    # Load axioms from constitution or fallback to axioms.yml
     def axioms
       return @axioms_cache if @axioms_cache
       
-      # Try loading from constitution first
       if rules["axioms"]
         @axioms_cache = rules["axioms"]
       else
-        # Fallback to separate axioms.yml file
         axioms_path = File.join(MASTER.root, "data", "axioms.yml")
         @axioms_cache = File.exist?(axioms_path) ? YAML.load_file(axioms_path) : []
       end
@@ -70,15 +64,12 @@ module MASTER
       @axioms_cache
     end
 
-    # Load council from constitution or fallback to council.yml
     def council
       return @council_cache if @council_cache
       
-      # Try loading from constitution first
       if rules["council"]
         @council_cache = rules["council"]
       else
-        # Fallback to separate council.yml file
         council_path = File.join(MASTER.root, "data", "council.yml")
         @council_cache = File.exist?(council_path) ? YAML.load_file(council_path) : []
       end
@@ -86,7 +77,6 @@ module MASTER
       @council_cache
     end
 
-    # Load principles from constitution (SOLID, Clean Code, etc.)
     def principles
       return @principles_cache if @principles_cache
       
@@ -94,7 +84,6 @@ module MASTER
       @principles_cache
     end
 
-    # Load workflows from constitution (8-phase workflow)
     def workflows
       return @workflows_cache if @workflows_cache
       
@@ -102,7 +91,6 @@ module MASTER
       @workflows_cache
     end
 
-    # Reload all cached data
     def reload!
       @rules_cache = nil
       @axioms_cache = nil
@@ -112,7 +100,6 @@ module MASTER
       rules
     end
 
-    # Validate operation against constitution rules
     def check_operation(op, context = {})
       case op
       when :self_modification
@@ -142,19 +129,16 @@ module MASTER
       end
     end
 
-    # Check if a tool is permitted
     def permission?(tool)
       granted = rules.dig("tool_permissions", "granted") || []
       granted.include?(tool.to_s)
     end
 
-    # Check if a path is protected
     def protected_file?(path)
       protected = rules["protected_paths"] || []
       expanded = File.expand_path(path)
       
       protected.any? do |protected_path|
-        # For absolute paths, compare directly; for relative, expand from root
         expanded_protected = if protected_path.start_with?("/")
           protected_path
         else
@@ -165,7 +149,6 @@ module MASTER
       end
     end
 
-    # Get a resource limit value
     def limit(key)
       rules.dig("resource_limits", key.to_s)
     end
@@ -176,14 +159,12 @@ module MASTER
       blocked = rules.dig("shell_patterns", "blocked") || []
       allowed = rules.dig("shell_patterns", "allowed") || []
       
-      # Check blocked patterns first
       blocked.each do |pattern|
         if cmd.include?(pattern) || cmd.match?(Regexp.new(pattern))
           return Result.err("Shell command blocked by constitution: #{pattern}")
         end
       end
       
-      # Check allowed patterns
       if allowed.any?
         unless allowed.any? { |pattern| cmd.match?(Regexp.new(pattern)) }
           return Result.err("Shell command not in allowed list")

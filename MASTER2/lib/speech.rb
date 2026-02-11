@@ -4,16 +4,11 @@ require "fileutils"
 require "securerandom"
 
 module MASTER
-  # Speech - Unified TTS interface with multiple engines
-  # Priority: Piper (local) → Edge (free cloud) → Replicate (paid cloud)
-  # Stream mode uses FFmpeg for real-time effects
   module Speech
     extend self
 
-    # Engine selection priority
     ENGINES = %i[piper edge replicate].freeze
 
-    # FFmpeg effect presets for streaming
     STREAM_EFFECTS = {
       dark: "asetrate=44100*0.8,atempo=1.25,bass=g=10",
       demon: "asetrate=44100*0.7,atempo=1.4,bass=g=15,acompressor=threshold=0.08:ratio=12",
@@ -23,7 +18,6 @@ module MASTER
       ghost: "asetrate=44100*0.75,atempo=1.33,areverse,aecho=0.8:0.88:60:0.4,areverse",
     }.freeze
 
-    # Voice styles (rate/pitch adjustments for Edge)
     STYLES = {
       normal: { rate: "+0%", pitch: "+0Hz" },
       fast: { rate: "+25%", pitch: "+0Hz" },
@@ -36,7 +30,6 @@ module MASTER
       urgent: { rate: "+30%", pitch: "+20Hz" },
     }.freeze
 
-    # Piper voice presets (length_scale/noise_scale)
     PIPER_PRESETS = {
       normal: { length_scale: 1.0, noise_scale: 0.667 },
       chipmunk: { length_scale: 0.6, noise_scale: 0.667 },
@@ -49,7 +42,6 @@ module MASTER
       caffeinated: { length_scale: 0.5, noise_scale: 0.7 },
     }.freeze
 
-    # Edge TTS voices
     EDGE_VOICES = {
       aria: "en-US-AriaNeural",
       guy: "en-US-GuyNeural",
@@ -61,7 +53,6 @@ module MASTER
       pernille: "nb-NO-PernilleNeural",
     }.freeze
 
-    # Speak text using best available engine
     def speak(text, engine: nil, voice: nil, style: :normal, play: true)
       return Result.err("Empty text") if text.nil? || text.strip.empty?
 
@@ -76,7 +67,6 @@ module MASTER
       end
     end
 
-    # Stream with real-time FFmpeg effects (requires edge-tts + ffmpeg)
     def stream(text, effect: :dark, voice: :guy, rate: "-25%", pitch: "-25Hz")
       python = find_python
       return Result.err("Python not found") unless python
@@ -110,12 +100,10 @@ module MASTER
       Result.err("Stream failed: #{e.message}")
     end
 
-    # Demon mode (maximum darkness effect)
     def demon(text)
       stream(text, effect: :demon, rate: "-35%", pitch: "-35Hz")
     end
 
-    # Continuous chatter mode (for Windows background talking)
     def chatter(topic: :master, effect: :calm, delay: 2.0)
       topics = {
         master: [
@@ -145,7 +133,6 @@ module MASTER
       end
     end
 
-    # Engine availability checks
     def best_engine
       return :piper if piper_installed?
       return :edge if edge_installed?
@@ -187,7 +174,6 @@ module MASTER
 
     private
 
-    # Piper TTS (local)
     def speak_piper(text, voice: nil, preset: :normal, play: true)
       voice ||= "en_US-lessac-medium"
       params = PIPER_PRESETS[preset.to_sym] || PIPER_PRESETS[:normal]
@@ -214,7 +200,6 @@ module MASTER
       Result.ok(engine: :piper, voice: voice, preset: preset)
     end
 
-    # Edge TTS (free cloud)
     def speak_edge(text, voice: nil, style: :normal, play: true)
       python = find_python
       return Result.err("Python not found") unless python
@@ -231,7 +216,6 @@ module MASTER
         import edge_tts
         async def main():
             communicate = edge_tts.Communicate(
-                #{text.inspect},
                 voice="#{voice_id}",
                 rate="#{params[:rate]}",
                 pitch="#{params[:pitch]}"
@@ -249,7 +233,6 @@ module MASTER
       Result.ok(engine: :edge, voice: voice_id, style: style)
     end
 
-    # Replicate TTS (paid cloud)
     def speak_replicate(text, play: true)
       require "net/http"
       require "json"

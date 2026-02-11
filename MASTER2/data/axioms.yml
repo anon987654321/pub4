@@ -374,3 +374,12 @@
     - "No _bridge/_wrapper/_helper suffixes — name the thing"
     - "Every require in master.rb must justify its existence"
     - "Merge absorbs code verbatim; deletion requires separate PR"
+  enforcement:
+    automatic: true
+    boot_check: true
+    module: "SelfEnforce"
+    fixes:
+      - "Auto-merge files < 30 lines"
+      - "Strip non-essential comments (target <5% density)"
+      - "Reflow by importance (public API first)"
+      - "Flag forbidden suffixes"

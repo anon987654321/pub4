@@ -1,37 +1,31 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Help - Command documentation (NN/g compliant)
   module Help
     extend self
 
     COMMANDS = {
-      # Queries
       ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query },
       refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query },
       chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query },
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query },
       opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query },
-      # Analysis
       hunt: { desc: "8-phase bug analysis", usage: "hunt <file>", group: :analysis },
       critique: { desc: "Constitutional validation", usage: "critique <file>", group: :analysis },
       learn: { desc: "Show matching learned patterns", usage: "learn <file>", group: :analysis },
       conflict: { desc: "Detect principle conflicts", usage: "conflict", group: :analysis },
       scan: { desc: "Scan for code smells", usage: "scan [path]", group: :analysis },
-      # Session
       session: { desc: "Session management", usage: "session [new|save|load]", group: :session },
       sessions: { desc: "List saved sessions", usage: "sessions", group: :session },
       forget: { desc: "Undo last exchange", usage: "forget", group: :session },
       summary: { desc: "Conversation summary", usage: "summary", group: :session },
       capture: { desc: "Capture session insights", usage: "capture", group: :session },
       'review-captures': { desc: "Review captured insights", usage: "review-captures", group: :session },
-      # System
       status: { desc: "System status", usage: "status", group: :system },
       budget: { desc: "Budget remaining", usage: "budget", group: :system },
       context: { desc: "Context window usage", usage: "context", group: :system },
       history: { desc: "Cost history", usage: "history", group: :system },
       health: { desc: "Health check", usage: "health", group: :system },
-      # Utility
       help: { desc: "Show this help", usage: "help [command]", group: :util },
       speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util },
       shell: { desc: "Interactive shell", usage: "shell", group: :util },
@@ -100,7 +94,6 @@ module MASTER
     end
   end
 
-  # Onboarding - First-run experience and helpful prompts
   module Onboarding
     extend self
 

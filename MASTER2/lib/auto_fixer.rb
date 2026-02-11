@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # AutoFixer - Automated code fixes with verification and rollback
-  # Modes: conservative (whitespace only), moderate (+debug), aggressive (all)
   class AutoFixer
     MAX_FIXES_PER_RUN = 20
     MODES = %i[conservative moderate aggressive].freeze
@@ -16,7 +14,6 @@ module MASTER
       mixed_indentation: ->(code) { code.gsub(/^(\t+)/) { |m| "  " * m.length } },
       crlf_to_lf: ->(code) { code.gsub("\r\n", "\n") },
       bom_strip: ->(code) { code.sub(/\A\xEF\xBB\xBF/, "") },
-      # Language axiom auto-fixes
       freeze_constants: ->(code) { code.gsub(/^(\s*[A-Z][A-Z_]*\s*=\s*[\[{].*)$/m) { |m| m.include?(".freeze") ? m : m.rstrip + ".freeze" } },
       safe_navigation: ->(code) { code.gsub(/(\w+)\s*&&\s*\1\.(\w+)/) { "#{Regexp.last_match(1)}&.#{Regexp.last_match(2)}" } },
     }.freeze

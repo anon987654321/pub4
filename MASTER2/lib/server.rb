@@ -4,7 +4,6 @@ require "json"
 require "socket"
 
 module MASTER
-  # Server - Multimodal web UI with Falcon
   class Server
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
     VIEWS_DIR = File.join(File.dirname(__FILE__), "views")
@@ -78,10 +77,8 @@ module MASTER
         AccessLog: [],
       )
 
-      # Health endpoint - no auth required
       server.mount_proc("/health") { |_, res| res.body = health_json; res.content_type = "application/json" }
 
-      # Protected endpoints
       server.mount_proc("/") do |req, res|
         next unless webrick_check_auth(req, res)
         res.body = read_view("cli.html")
@@ -94,7 +91,6 @@ module MASTER
         res.content_type = "application/json"
       end
 
-      # Serve orb views - protected
       Dir.glob(File.join(VIEWS_DIR, "*.html")).each do |file|
         name = "/" + File.basename(file)
         server.mount_proc(name) do |req, res|
@@ -125,7 +121,6 @@ module MASTER
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
 
-        # Auth check for all endpoints except /health
         unless path == "/health"
           token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
           return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
@@ -178,7 +173,6 @@ module MASTER
           [200, { "content-type" => "application/json" }, [metrics]]
 
         when ["POST", "/tts"]
-          # Simple TTS endpoint - accepts JSON with text, returns audio
           body = env["rack.input"].read
           data = JSON.parse(body) rescue {}
           text = data["text"].to_s.strip
@@ -199,7 +193,6 @@ module MASTER
           end
 
         when ["GET", "/tts/stream"]
-          # SSE endpoint for TTS streaming
           text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
           return [400, {}, ["Missing text"]] unless text
 
@@ -216,7 +209,6 @@ module MASTER
           [200, headers, body]
 
         else
-          # Serve orb views and static files
           clean_path = path.delete_prefix("/")
           view_path = File.join(VIEWS_DIR, clean_path)
 

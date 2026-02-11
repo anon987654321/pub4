@@ -1,18 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # CreativeChamber - Multi-model deliberation for CREATIVE IDEATION
-  # Generates ideas/conversations, scores them, then generates multimedia via Replicate
-  #
-  # NOTE: One of four deliberation/generation engines:
-  #   - Chamber: Code refinement via multi-model debate
-  #   - CreativeChamber (this file): Creative ideation for concepts/multimedia
-  #   - Council: Opinion/judgment deliberation with fixed member roles
-  #   - Swarm: Generate many variations, curate best via scoring
-  #
-  # Ported from MASTER v1, adapted for MASTER2's Result monad and LLM.ask API
   class CreativeChamber
-    # String slice limits for output truncation
     MAX_IDEA_PREVIEW = 500
     MAX_PROPOSAL_PREVIEW = 600
     MAX_DIALOGUE_PREVIEW = 400
@@ -34,11 +23,9 @@ module MASTER
       @results = []
     end
 
-    # Idea brainstorming - multiple models propose and debate
     def brainstorm(topic, rounds: 2, participants: 3)
       @results = []
 
-      # Round 1: Each model proposes ideas
       proposals = []
       participants.times do |i|
         break if over_budget?
@@ -57,7 +44,6 @@ module MASTER
 
       return Result.ok({ ideas: [], cost: @cost }) if proposals.empty?
 
-      # Round 2: Each model critiques others and defends their own
       proposals.each_with_index do |prop, i|
         break if over_budget?
 
@@ -71,12 +57,10 @@ module MASTER
         end
       end
 
-      # Arbiter synthesizes best ideas
       synthesis = arbiter_synthesize(topic, proposals)
       Result.ok({ ideas: proposals, synthesis: synthesis, cost: @cost })
     end
 
-    # Image variations - multiple models interpret same prompt
     def image_variations(prompt, count: 2)
       return Result.ok({ images: [], cost: @cost }) unless Replicate.available?
 
@@ -94,18 +78,15 @@ module MASTER
       Result.ok({ images: images, cost: @cost })
     end
 
-    # Video storyboard - LLMs propose scenes, arbiter picks, generate via Replicate
     def video_storyboard(concept, scenes: 3)
       return Result.ok({ storyboard: [], cost: @cost }) unless Replicate.available?
 
-      # Step 1: Generate scene descriptions
       result = ask_llm("Create a #{scenes}-scene video storyboard for: #{concept}\n\nFor each scene, describe the visual composition, camera angle, mood, and key elements. Be vivid and specific.", tier: :strong)
       return Result.err("Failed to generate storyboard") unless result.ok?
 
       scene_text = result.value[:content]
       @results << { type: :storyboard_text, content: scene_text }
 
-      # Step 2: Extract individual scenes and generate images
       storyboard = []
       scene_text.split(/Scene \d+/).drop(1).take(scenes).each_with_index do |scene_desc, i|
         break if over_budget?
@@ -121,7 +102,6 @@ module MASTER
       Result.ok({ storyboard: storyboard, cost: @cost })
     end
 
-    # Simulate conversation - role-play dialogue across turns
     def simulate_conversation(scenario, turns: 4, participants: 2)
       @results = []
       dialogue = []
@@ -145,7 +125,6 @@ module MASTER
       Result.ok({ dialogue: dialogue, cost: @cost })
     end
 
-    # Enhance prompt - iterative refinement through multi-model debate
     def enhance_prompt(initial_prompt, iterations: 2)
       current = initial_prompt
       history = [{ version: 0, prompt: current }]
@@ -153,13 +132,11 @@ module MASTER
       iterations.times do |i|
         break if over_budget?
 
-        # Get enhancement suggestions
         result = ask_llm("This is an AI prompt:\n\n#{current}\n\nSuggest 3 specific improvements to make it more effective, clear, and detailed. Focus on actionable changes.", tier: :fast)
         next unless result.ok?
 
         suggestions = result.value[:content]
 
-        # Apply improvements
         enhance_result = ask_llm("Original prompt:\n#{current}\n\nSuggestions:\n#{suggestions}\n\nRewrite the prompt incorporating these improvements. Return only the improved prompt.", tier: :strong)
         if enhance_result.ok?
           current = enhance_result.value[:content]
@@ -171,11 +148,9 @@ module MASTER
       Result.ok({ final_prompt: current, history: history, cost: @cost })
     end
 
-    # Analyze competitors - research competitive landscape & identify gaps
     def analyze_competitors(product, competitors: [])
       @results = []
 
-      # Analyze each competitor
       analyses = competitors.map do |competitor|
         break if over_budget?
 
@@ -189,7 +164,6 @@ module MASTER
         end
       end.compact
 
-      # Synthesize gaps and opportunities
       if analyses.any? && !over_budget?
         all_analyses = analyses.map { |a| "#{a[:competitor]}:\n#{a[:analysis][0...MAX_DETAIL_PREVIEW]}" }.join("\n\n")
         synthesis_prompt = "Based on these competitor analyses:\n\n#{all_analyses}\n\nFor building: #{product}\n\nIdentify 5 key opportunities or gaps in the market. What features or approaches are missing?"
@@ -204,7 +178,6 @@ module MASTER
       Result.ok({ analyses: analyses, opportunities: nil, cost: @cost })
     end
 
-    # Feature ideation - generate new feature ideas
     def ideate_features(product_description, constraints: nil, count: 5)
       constraints_text = constraints ? "\n\nConstraints:\n#{constraints}" : ""
       prompt = "Product: #{product_description}#{constraints_text}\n\nGenerate #{count} innovative feature ideas. For each:\n1. Name\n2. One-line description\n3. User value\n4. Technical complexity (Low/Med/High)\n\nBe creative but realistic."

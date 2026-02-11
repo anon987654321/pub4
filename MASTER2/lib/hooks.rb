@@ -5,13 +5,9 @@ require "time"
 require "fileutils"
 
 module MASTER
-  # Hooks - Lifecycle event handlers
-  # Merged from hooks_manager.rb for DRY compliance
-  # Executes registered actions at key pipeline moments
   module Hooks
     HOOKS_FILE = File.join(__dir__, "..", "data", "hooks.yml")
     
-    # Events supported by the hook system
     EVENTS = %i[
       before_edit after_edit
       before_fix after_fix
@@ -68,7 +64,6 @@ module MASTER
         run(:on_budget_low, context)
       end
 
-      # Merged from hooks_manager.rb - Runtime handler registration
       def register(event, handler)
         Result.try do
           raise "Unknown event: #{event}" unless EVENTS.include?(event.to_sym)
@@ -107,7 +102,6 @@ module MASTER
             results << { hook: hook_name, result: result }
           end
 
-          # Also call registered runtime handlers
           @handlers ||= {}
           @handlers[event.to_sym]&.each do |handler|
             result = execute_handler(handler, data)
@@ -182,10 +176,8 @@ module MASTER
       def validate_ruby_syntax(target)
         return true unless target
         if File.exist?(target.to_s)
-          # Use array form to avoid shell interpretation - prevents injection attacks
           system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
         else
-          # For code strings, use RubyVM::InstructionSequence for parse-only validation
           begin
             RubyVM::InstructionSequence.compile(target.to_s)
             true
@@ -196,7 +188,6 @@ module MASTER
       end
 
       def run_tests
-        # Placeholder - not yet implemented
         Result.err("run_tests not yet implemented")
       end
 
@@ -204,7 +195,6 @@ module MASTER
         puts UI.dim(msg)
       end
 
-      # Merged from hooks_manager.rb - Hook execution logic
       def execute_hook(hook_name, data)
         case hook_name.to_s
         when "backup_original"
@@ -214,7 +204,6 @@ module MASTER
         when "log_context"
           log_event(hook_name, data)
         else
-          # Default: log that hook was called
           Result.ok({ hook: hook_name, executed: true })
         end
       rescue StandardError => e
@@ -231,14 +220,12 @@ module MASTER
       def validate_syntax(code)
         return Result.err("No code provided") unless code
         
-        # Ruby syntax check using safe compilation
         begin
           RubyVM::InstructionSequence.compile(code)
           Result.ok({ valid: true })
         rescue SyntaxError => e
           Result.err("Syntax error: #{e.message}")
         rescue StandardError => e
-          # For non-Ruby code or other errors, skip validation
           Result.ok({ skipped: true, reason: e.message })
         end
       end
@@ -249,6 +236,5 @@ module MASTER
     end
   end
 
-  # Backward compatibility alias
   HooksManager = Hooks
 end

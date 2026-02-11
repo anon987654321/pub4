@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Dual violation detection: literal (regex/AST) + conceptual (LLM semantic)
-  # Catches both syntactic violations and semantic principle violations
   module Violations
     extend self
 
     MAX_CODE_PREVIEW = 3000
     MAX_ANALYSIS_PREVIEW = 200
 
-    # Literal patterns for fast detection (no LLM needed)
     LITERAL_PATTERNS = {
       deep_nesting: {
         pattern: /^(\s{8,})(if|unless|case|while|until|for|begin)/,
@@ -85,7 +82,6 @@ module MASTER
       }
     }.freeze
 
-    # Conceptual checks for LLM semantic analysis
     CONCEPTUAL_CHECKS = {
       kiss: {
         prompt: 'Is this code unnecessarily complex? Could it be simpler?',
@@ -176,12 +172,10 @@ module MASTER
 
           prompt = <<~PROMPT
             Analyze this Ruby code for #{principle.to_s.upcase.tr('_', ' ')} violations.
-            #{config[:prompt]}
             Examples: #{config[:examples].join(', ')}
 
             CODE:
             ```ruby
-            #{code[0..MAX_CODE_PREVIEW]}
             ```
 
             If violations exist, list them with line numbers.

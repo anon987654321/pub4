@@ -4,15 +4,11 @@ require 'yaml'
 require 'fileutils'
 
 module MASTER
-  # AgentAutonomy - Higher-level autonomous behaviors for intelligent agents
-  # Features: goal decomposition, progress tracking, self-correction, learning from feedback
-  # Ported from MASTER v1, adapted for MASTER2's architecture
   module AgentAutonomy
     extend self
 
     LEARNING_FILE = File.join(Paths.data, 'agent_learning.yml')
     
-    # Goal decomposition - break complex goals into subtasks via LLM
     def decompose_goal(goal)
       prompt = <<~PROMPT
         Break this goal into 3-7 concrete, actionable subtasks.
@@ -34,7 +30,6 @@ module MASTER
       Result.ok(tasks: tasks)
     end
 
-    # Progress tracking - track started/completed/failed tasks
     @progress = { pending: [], completed: [], failed: [] }
 
     class << self
@@ -92,16 +87,13 @@ module MASTER
       end
     end
 
-    # Self-correction - detect own mistakes and auto-fix via LLM
     def self_correct(original_output, error)
       prompt = <<~PROMPT
         Your previous output caused an error. Fix it.
         
         Original output:
-        #{original_output[0..1000]}
         
         Error:
-        #{error[0..500]}
         
         Provide corrected output only, no explanations.
       PROMPT
@@ -112,7 +104,6 @@ module MASTER
       Result.ok(corrected: result.value[:content])
     end
 
-    # Mistake detection - pattern-based output validation
     def detect_mistake(output, expected_pattern: nil)
       return :empty if output.nil? || output.strip.empty?
       return :too_short if output.length < 10
@@ -122,7 +113,6 @@ module MASTER
       nil
     end
 
-    # Learning from feedback - record user corrections
     def record_correction(original:, corrected:, context: nil)
       learning = load_learning
       learning[:corrections] ||= []
@@ -134,20 +124,17 @@ module MASTER
         recorded_at: Time.now.to_i
       }
 
-      # Keep last 100 corrections
       learning[:corrections] = learning[:corrections].last(100)
       save_learning(learning)
       Result.ok("Correction recorded")
     end
 
-    # Apply learned corrections to new output
     def apply_learned_corrections(output, context: nil)
       learning = load_learning
       corrections = learning[:corrections] || []
 
       return output if corrections.empty?
 
-      # Find similar contexts if context provided
       relevant = if context
         corrections.select do |c|
           c[:context] && similarity(c[:context], context) > 0.5
@@ -158,7 +145,6 @@ module MASTER
 
       return output if relevant.empty?
 
-      # Apply pattern-based corrections
       result = output
       relevant.each do |c|
         if result.include?(c[:original])
@@ -169,7 +155,6 @@ module MASTER
       result
     end
 
-    # Context awareness - check if task requires specific context
     def requires_context?(task)
       context_keywords = %w[
         understand explain describe analyze
@@ -180,7 +165,6 @@ module MASTER
       task.downcase.split.any? { |word| context_keywords.include?(word) }
     end
 
-    # Skill acquisition - track learned capabilities
     def record_skill(name, description: nil, examples: [])
       learning = load_learning
       learning[:skills] ||= []
@@ -193,7 +177,6 @@ module MASTER
         use_count: 0
       }
 
-      # Update if exists, add if new
       existing = learning[:skills].find { |s| s[:name] == name }
       if existing
         existing[:examples] = (existing[:examples] + skill[:examples]).last(5)
@@ -223,7 +206,6 @@ module MASTER
       (learning[:skills] || []).sort_by { |s| -(s[:use_count] || 0) }
     end
 
-    # Error recovery - suggest recovery actions based on error type
     def suggest_recovery(error_message)
       case error_message
       when /file not found|no such file/i
@@ -247,7 +229,6 @@ module MASTER
 
     private
 
-    # Text similarity using Jaccard index
     def similarity(text_a, text_b)
       return 0.0 if text_a.nil? || text_b.nil?
 

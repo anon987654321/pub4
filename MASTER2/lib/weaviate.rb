@@ -5,7 +5,6 @@ require 'json'
 require 'uri'
 
 module MASTER
-  # Weaviate - Vector database for semantic memory
   module Weaviate
     extend self
 
@@ -60,7 +59,6 @@ module MASTER
         post('/v1/schema', schema)
       end
 
-      # Create a custom schema class
       def create_schema(schema_def)
         return Result.err("Weaviate not available") unless available?
         
@@ -75,7 +73,6 @@ module MASTER
         Result.err("Schema creation failed: #{e.message}")
       end
 
-      # Index an object in a specific class
       def index(class_name, properties, vector: nil)
         return Result.err("Weaviate not available") unless available?
 
@@ -96,7 +93,6 @@ module MASTER
         Result.err("Index failed: #{e.message}")
       end
 
-      # Search in a specific class
       def search_class(class_name, query:, limit: 10, filters: {})
         return Result.err("Weaviate not available") unless available?
 
@@ -112,10 +108,8 @@ module MASTER
         gql = <<~GQL
           {
             Get {
-              #{class_name}(
                 nearText: { concepts: ["#{query.gsub('"', '\\"')}"] }
                 limit: #{limit}
-                #{filter_clause}
               ) {
                 _additional {
                   distance
@@ -251,10 +245,8 @@ module MASTER
         <<~GQL
           {
             Get {
-              #{CLASS_NAME}(
                 nearText: { concepts: ["#{text.gsub('"', '\\"')}"] }
                 limit: #{limit}
-                #{filter}
               ) {
                 content
                 type

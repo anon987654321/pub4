@@ -6,7 +6,6 @@ require "rbconfig"
 
 module MASTER
   module Stages
-    # Stage 1: Pass text through, load persona
     class Intake
       def call(input)
         text = input[:text] || ""
@@ -14,19 +13,14 @@ module MASTER
       end
     end
 
-    # Stage 2: Strip filler words and verbose phrases
     class Compress
       COMPRESSION_FILE = File.join(__dir__, "..", "data", "compression.yml")
 
       class << self
-        # Load compression patterns from YAML
-        # @return [Hash] Hash with :fillers and :phrases arrays
         def patterns
           @patterns ||= load_patterns
         end
 
-        # Load and compile compression patterns from file
-        # @return [Hash] Compiled regex patterns
         def load_patterns
           return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
 
@@ -42,17 +36,14 @@ module MASTER
         text = input[:text] || ""
         original_length = text.length
 
-        # Strip filler words
         self.class.patterns[:fillers].each do |pattern|
           text = text.gsub(pattern, "")
         end
 
-        # Simplify verbose phrases
         self.class.patterns[:phrases].each do |pattern|
           text = text.gsub(pattern, "")
         end
 
-        # Clean up extra spaces
         text = text.gsub(/\s{2,}/, " ").strip
         compressed = original_length - text.length
 
@@ -60,7 +51,6 @@ module MASTER
       end
     end
 
-    # Stage 3: Block dangerous patterns
     class Guard
       DANGEROUS_PATTERNS = [
         /rm\s+-r[f]?\s+\//,
@@ -78,14 +68,12 @@ module MASTER
       end
     end
 
-    # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
         text = input[:text] || ""
         tier = LLM.tier
         model = nil
         
-        # Find an available model for the current tier
         LLM::TIER_ORDER.each do |t|
           LLM.model_tiers[t]&.each do |m|
             if LLM.circuit_closed?(m)
@@ -106,7 +94,6 @@ module MASTER
       end
     end
 
-    # Stage 5: Adversarial council review (delegates to Chamber)
     class Council
       def call(input)
         return Result.ok(input) unless input[:council]
@@ -125,7 +112,6 @@ module MASTER
       end
     end
 
-    # Stage 6: Query LLM, stream to stderr
     class Ask
       def call(input)
         model = input[:model]
@@ -159,7 +145,6 @@ module MASTER
       end
     end
 
-    # Stage 7: Axiom enforcement
     class Lint
       REGEX_TIMEOUT = 0.1 # seconds
 
@@ -177,12 +162,10 @@ module MASTER
             matched = Timeout.timeout(REGEX_TIMEOUT) { text.match?(re) }
             violations << axiom[:name] if matched
           rescue RegexpError, Timeout::Error
-            # Skip invalid or pathological patterns
             next
           end
         end
 
-        # Run NNG usability heuristics check if enabled
         design_violations = []
         if ENV['MASTER_CHECK_DESIGN'] == 'true' && defined?(NNGChecklist)
           result = NNGChecklist.validate(text)
@@ -197,7 +180,6 @@ module MASTER
       end
     end
 
-    # Stage 8: Format output (typography)
     class Render
       CODE_FENCE = /^```/.freeze
 
@@ -239,7 +221,6 @@ module MASTER
       end
     end
 
-    # Sandboxed code execution (pledge on OpenBSD)
     class Execute
       def call(input)
         response = input[:response] || ""
@@ -262,7 +243,6 @@ module MASTER
             Pledge.unveil(f.path, "r")
             Pledge.pledge("stdio rpath")
           rescue StandardError
-            # Not on OpenBSD
           end
           output = IO.popen([RbConfig.ruby, f.path], err: %i[child out], &:read)
           { success: $CHILD_STATUS.success?, output: output, exit_code: $CHILD_STATUS.exitstatus }

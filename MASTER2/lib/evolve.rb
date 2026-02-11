@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Evolve - Self-improvement workflow
   class Evolve
     MAX_ITERATIONS = 10
     CONVERGENCE_THRESHOLD = 0.02
@@ -76,7 +75,6 @@ module MASTER
       code = File.read(file)
       return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
 
-      # Handle shell scripts with embedded Ruby
       if @language == :shell || shell_file?(file)
         return improve_shell_file(file, code, dry_run: dry_run)
       end
@@ -86,7 +84,6 @@ module MASTER
       if result.ok? && result.value[:final] != code
         unless dry_run
           if @staged && defined?(Staging)
-            # Use staging workflow when enabled
             staging = Staging.new
             stage_result = staging.staged_modify(file, validation_command: @validation_command) do |staged_path|
               File.write(staged_path, result.value[:final])
@@ -96,7 +93,6 @@ module MASTER
               return { file: file, improved: false, error: stage_result.error }
             end
           else
-            # Default behavior - direct write
             File.write(file, result.value[:final])
           end
         end
@@ -123,7 +119,6 @@ module MASTER
       ruby_blocks = parsed[:embedded][:ruby] || []
       return { file: file, skipped: true, reason: "no Ruby heredocs" } if ruby_blocks.empty?
 
-      # Refactor each Ruby block
       improved_blocks = []
       total_cost = 0.0
 
@@ -137,7 +132,6 @@ module MASTER
       end
 
       if improved_blocks.any?
-        # Reconstruct shell script with improved Ruby blocks
         new_code = code.dup
         improved_blocks.reverse.each do |improvement|
           block = improvement[:original]
@@ -172,7 +166,6 @@ module MASTER
     end
   end
 
-  # Momentum - Track task progress and productivity metrics
   module Momentum
     extend self
 
@@ -232,7 +225,6 @@ module MASTER
     end
 
     def track(action, result: nil)
-      # Track action and update streak if successful
       if result&.ok? || result.nil?
         state[:streak] += 1
       else

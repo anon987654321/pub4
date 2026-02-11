@@ -4,8 +4,6 @@ require "time"
 require "fiddle"
 
 module MASTER
-  # OpenBSD security primitives - pledge(2) and unveil(2)
-  # Restricts system calls and filesystem access for sandboxing
   module Pledge
     class Error < RuntimeError; end
 
@@ -16,17 +14,10 @@ module MASTER
     end
 
     class << self
-      # Check if pledge(2) is available on this platform
-      # @return [Boolean] true if running on OpenBSD with pledge support
       def available?
         RUBY_PLATFORM.include?("openbsd") && !LIBC.nil?
       end
 
-      # Restrict process to specified promises
-      # @param promises [String] Space-separated list of pledge promises
-      # @param execpromises [String, nil] Promises for execve(2) processes
-      # @return [void]
-      # @raise [Error] if pledge unavailable or call fails
       def pledge(promises, execpromises = nil)
         raise Error, "pledge(2) unavailable on #{RUBY_PLATFORM}" unless available?
 
@@ -39,11 +30,6 @@ module MASTER
         raise Error, "pledge(2) failed: errno #{Fiddle.last_error}" unless r.zero?
       end
 
-      # Restrict filesystem access to specific paths
-      # @param path [String] Path to reveal
-      # @param permissions [String] Permission string (e.g., "r", "rw", "rx")
-      # @return [void]
-      # @raise [Error] if unveil unavailable or call fails
       def unveil(path, permissions)
         raise Error, "unveil(2) unavailable on #{RUBY_PLATFORM}" unless available?
 
@@ -58,10 +44,8 @@ module MASTER
     end
   end
 
-  # Boot - OpenBSD dmesg-style startup (dense, terse, beautiful)
   module Boot
     class << self
-      # Lazy SMOKE_TEST_METHODS to avoid crashes if modules didn't load
       def smoke_test_methods
         {
           LLM => %i[ask pick tier=],
@@ -78,10 +62,8 @@ module MASTER
         user = ENV["USER"] || ENV["USERNAME"] || "user"
         host = `hostname`.strip rescue "localhost"
 
-        # Smoke test first - catch runtime errors early
         smoke_result = smoke_test
 
-        # Dense dmesg - no fluff, no breathing room
         puts c("MASTER #{VERSION} #1: #{timestamp}")
         puts c("#{user}@#{host}:#{MASTER.root}")
         puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
@@ -99,14 +81,12 @@ module MASTER
         puts
       end
 
-      # For web mode, also print the URL
       def banner_with_web(port)
         banner
         puts c("web0 at smoke0: http://localhost:#{port}")
         puts
       end
 
-      # Verify critical methods exist at runtime
       def smoke_test
         missing = []
         
@@ -118,7 +98,6 @@ module MASTER
           end
         end
         
-        # Also check optional modules
         optional_checks = []
         optional_checks << "Chamber" if defined?(Chamber) && !Chamber.respond_to?(:call)
         optional_checks << "CodeReview" if defined?(CodeReview) && !CodeReview.respond_to?(:analyze)
@@ -159,6 +138,27 @@ module MASTER
         SelfMap.summary
       rescue StandardError
         "unavailable"
+      end
+
+      def run_self_enforcement
+        return unless defined?(SelfEnforce)
+        
+        violations = SelfEnforce.run_all_checks
+        return if violations.empty?
+        
+        errors = violations.select { |v| v[:severity] == :error }
+        warns = violations.select { |v| v[:severity] == :warn }
+        
+        if errors.any?
+          puts "⚠️  #{errors.size} axiom violation(s) detected"
+          errors.each do |v|
+            puts "   [#{v[:axiom]}] #{v[:message]}"
+          end
+        end
+        
+        if warns.any? && ENV["MASTER_VERBOSE"]
+          puts "ℹ️  #{warns.size} warning(s)"
+        end
       end
     end
   end

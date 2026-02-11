@@ -4,8 +4,6 @@ require 'yaml'
 require 'time'
 
 module MASTER
-  # 8-phase workflow orchestrator
-  # Orchestrates: discover → analyze → ideate → design → implement → validate → deliver → reflect
   module WorkflowEngine
     extend self
 
@@ -148,7 +146,6 @@ module MASTER
       return unless defined?(Hooks)
       Hooks.run(event, data)
     rescue StandardError => e
-      # Silently fail hooks - they're not critical
       nil
     end
   end

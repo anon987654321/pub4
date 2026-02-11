@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Convergence - Detect plateaus, oscillations, and diminishing returns
-  # Prevents infinite loops and wasted compute
-  # Merged from converge.rb for DRY compliance
   module Convergence
     PLATEAU_WINDOW = 3
     MIN_DELTA = 0.02
@@ -31,7 +28,6 @@ module MASTER
         prev = history[-2]
         curr = history[-1]
 
-        # Calculate improvement across key metrics
         deltas = []
         %i[violations complexity coverage score].each do |metric|
           if prev[metric] && curr[metric] && prev[metric] != 0
@@ -56,43 +52,33 @@ module MASTER
       def oscillating?(history)
         return false if history.size < 4
 
-        # Check if metrics are bouncing back and forth
         recent = history.last(4)
         scores = recent.map { |h| h[:score] || h[:violations] || 0 }
 
-        # A-B-A-B pattern detection
         (scores[0] - scores[2]).abs < MIN_DELTA &&
           (scores[1] - scores[3]).abs < MIN_DELTA &&
           (scores[0] - scores[1]).abs > MIN_DELTA
       end
 
-      # Detect if recent diffs are too similar (formatter wars, refactor loops)
       def oscillating_diffs?(history)
         return false if history.size < 4
         return false unless history.last(4).all? { |h| h[:diff] }
         
         recent_diffs = history.last(4).map { |h| h[:diff] }
         
-        # Compare first and third, second and fourth
         similarity_03 = diff_similarity(recent_diffs[0], recent_diffs[2])
         similarity_13 = diff_similarity(recent_diffs[1], recent_diffs[3])
         
-        # If both pairs are >90% similar, we're oscillating
         similarity_03 > 0.9 && similarity_13 > 0.9
       end
 
-      # Calculate similarity between two diffs (0.0 = completely different, 1.0 = identical)
       def diff_similarity(diff1, diff2)
         return 1.0 if diff1 == diff2
         return 0.0 if diff1.nil? || diff2.nil?
         
-        # Levenshtein-based similarity
         max_len = [diff1.length, diff2.length].max
         return 0.0 if max_len == 0
         
-        # Require Utils module for Levenshtein
-        # Returns 0.0 (no similarity) if unavailable - conservative approach avoids false positives
-        # This means oscillation detection will be disabled if Utils.levenshtein is missing
         unless defined?(Utils) && Utils.respond_to?(:levenshtein)
           return 0.0
         end
@@ -106,19 +92,14 @@ module MASTER
 
         latest = history.last
 
-        # Success: zero violations
         return true if latest[:violations]&.zero?
 
-        # Plateau: no improvement for PLATEAU_WINDOW iterations
         return true if plateau?(history)
 
-        # Max iterations reached
         return true if history.size >= MAX_ITERATIONS
 
-        # Oscillation detected (score-based)
         return true if oscillating?(history)
         
-        # Oscillation detected (diff-based)
         return true if oscillating_diffs?(history)
 
         false
@@ -194,9 +175,7 @@ module MASTER
         nil
       end
 
-      # Utility methods merged from Converge module
       
-      # Calculate SHA256 hash of all Ruby files in a path
       def content_hash(path)
         require 'digest'
         files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
@@ -204,13 +183,9 @@ module MASTER
         Digest::SHA256.hexdigest(content)
       end
 
-      # Calculate change ratio between two content states
-      # Fixed: Now uses proper diff ratio instead of always returning 1.0
       def change_ratio(content1, content2)
         return 0.0 if content1 == content2
         
-        # Use Levenshtein distance for character-level diff
-        # For large strings, sample first N chars for efficiency
         max_len = 10_000
         str1 = content1[0, max_len]
         str2 = content2[0, max_len]
@@ -222,7 +197,6 @@ module MASTER
         distance.to_f / max_length
       end
 
-      # Audit current codebase features (classes, modules, methods)
       def audit(path, compare_ref: 'HEAD~5')
         features = extract_features(path)
         {
@@ -231,16 +205,13 @@ module MASTER
         }
       end
 
-      # Extract feature signatures from codebase
       def extract_features(path)
         files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
         features = []
 
         files.each do |file|
           content = File.read(file) rescue next
-          # Extract class/module definitions
           content.scan(/(?:class|module)\s+(\w+)/) { |m| features << m[0] }
-          # Extract method definitions
           content.scan(/def\s+(\w+)/) { |m| features << m[0] }
         end
 
@@ -249,6 +220,5 @@ module MASTER
     end
   end
 
-  # Backward compatibility alias
   Converge = Convergence
 end

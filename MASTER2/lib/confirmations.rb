@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Confirmations - NN/g: Prevent errors by confirming destructive actions
-  # Merged with ConfirmationGate functionality for unified confirmation workflow
   module Confirmations
     extend self
 
@@ -61,12 +59,9 @@ module MASTER
       end
     end
 
-    # Gate operation with three phases: propose → confirm → execute
-    # Merged from confirmation_gate.rb
     def gate(operation_name, description: nil, &block)
       return Result.err("No block provided") unless block
 
-      # Phase 1: Propose
       if description
         puts "\n"
         puts "  ⚠️  Operation: #{operation_name}"
@@ -76,7 +71,6 @@ module MASTER
         puts "\n  ⚠️  Operation: #{operation_name}\n\n"
       end
 
-      # Phase 2: Confirm
       unless @auto_confirm
         confirmed = Confirmations.confirm("Proceed with this operation?")
 
@@ -85,7 +79,6 @@ module MASTER
         end
       end
 
-      # Phase 3: Execute
       begin
         result = block.call
         Result.ok(result: result)
@@ -94,8 +87,6 @@ module MASTER
       end
     end
 
-    # Stage class for pipeline integration
-    # Merged from confirmation_gate.rb
     class Stage
       def initialize(operation_name, description: nil)
         @operation_name = operation_name
@@ -110,6 +101,5 @@ module MASTER
     end
   end
 
-  # Backward compatibility alias for confirmation_gate.rb
   ConfirmationGate = Confirmations
 end

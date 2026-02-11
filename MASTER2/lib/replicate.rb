@@ -5,7 +5,6 @@ require 'json'
 require 'uri'
 
 module MASTER
-  # Replicate - Image generation via Replicate API
   module Replicate
     extend self
 
@@ -35,11 +34,9 @@ module MASTER
 
         input = { prompt: prompt }.merge(params)
 
-        # Create prediction
         prediction = create_prediction(model_id, input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
-        # Poll for completion
         result = wait_for_completion(prediction[:id])
         return Result.err("Generation failed: #{result[:error]}") if result[:error]
 
@@ -81,7 +78,6 @@ module MASTER
         Result.ok({ caption: result[:output] })
       end
 
-      # Generic model runner - supports any Replicate model
       def run(model_id:, input:, params: {})
         return Result.err("REPLICATE_API_KEY not set") unless available?
 
@@ -100,7 +96,6 @@ module MASTER
         })
       end
 
-      # Download file from URL to local path
       def download_file(url, path)
         uri = URI(url)
         http = Net::HTTP.new(uri.host, uri.port)
@@ -120,7 +115,6 @@ module MASTER
       private
 
       def create_prediction(model_version_or_id, input: nil, version: nil)
-        # Support both old signature (model_version, input) and new signature with named params
         actual_input = input || model_version_or_id.is_a?(Hash) ? {} : model_version_or_id
         actual_version = version || (model_version_or_id.is_a?(String) ? model_version_or_id : nil)
         
@@ -193,7 +187,6 @@ module MASTER
       end
     end
 
-    # Extended model catalog (WILD_CHAIN) for image, video, and enhancement models
     WILD_CHAIN = {
       image_gen: [
         { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
@@ -224,17 +217,14 @@ module MASTER
       ]
     }.freeze
 
-    # Get all models for a category
     def models_for(category)
       WILD_CHAIN[category.to_sym] || []
     end
 
-    # List all available categories
     def categories
       WILD_CHAIN.keys
     end
 
-    # Generate image using Replicate API
     def generate_image(prompt:, model: nil)
       model_id = model || WILD_CHAIN[:image_gen].first[:model]
       
@@ -243,7 +233,6 @@ module MASTER
       generate(prompt: prompt, model: model_id)
     end
 
-    # Generate video using Replicate API
     def generate_video(prompt:, model: nil)
       model_id = model || WILD_CHAIN[:video_gen].first[:model]
       
@@ -252,7 +241,6 @@ module MASTER
       generate(prompt: prompt, model: model_id)
     end
 
-    # Enhance image using upscaling models
     def enhance_image(image_url:, model: nil)
       model_id = model || WILD_CHAIN[:enhance].first[:model]
       
@@ -261,7 +249,6 @@ module MASTER
       generate(prompt: "", model: model_id, params: { image: image_url })
     end
 
-    # Get model info
     def model_info(model_id)
       WILD_CHAIN.each do |category, models|
         models.each do |m|
@@ -271,7 +258,6 @@ module MASTER
       nil
     end
 
-    # List all models
     def all_models
       result = []
       WILD_CHAIN.each do |category, models|
@@ -283,12 +269,9 @@ module MASTER
     end
   end
 
-  # Postpro - Post-processing and enhancement utilities
-  # Provides image and video enhancement capabilities
   module Postpro
     extend self
 
-    # Enhancement operations
     OPERATIONS = {
       upscale: {
         name: "Upscale 4x",
@@ -312,14 +295,12 @@ module MASTER
       }
     }.freeze
 
-    # Apply enhancement to image
     def enhance(image_url:, operation:, params: {})
       return Result.err("Unknown operation: #{operation}") unless OPERATIONS.key?(operation.to_sym)
       
       op = OPERATIONS[operation.to_sym]
       
       if op[:models]
-        # Use Replicate model
         model = op[:models].first
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
         
@@ -329,12 +310,10 @@ module MASTER
           params: { image: image_url }.merge(params)
         )
       else
-        # Local processing (placeholder)
         Result.err("Local processing not yet implemented for #{operation}")
       end
     end
 
-    # Batch enhance multiple images
     def batch_enhance(image_urls:, operation:, params: {})
       results = []
       
@@ -346,7 +325,6 @@ module MASTER
       Result.ok(results)
     end
 
-    # List available operations
     def operations
       OPERATIONS.map do |key, op|
         {
@@ -358,7 +336,6 @@ module MASTER
       end
     end
 
-    # Upscale shortcut
     def upscale(image_url:, scale: 4, model: nil)
       model_id = model || OPERATIONS[:upscale][:models].first
       
@@ -371,7 +348,6 @@ module MASTER
       )
     end
 
-    # Face restoration shortcut
     def restore_face(image_url:, model: nil)
       model_id = model || OPERATIONS[:face_restore][:models].first
       

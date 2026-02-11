@@ -4,7 +4,6 @@ require "json"
 require "fileutils"
 
 module MASTER
-  # Memory - Session cache and persistence
   module Memory
     COMPRESS_AFTER_MESSAGES = 10  # Fixed: was 11, should be 10
     KEEP_FIRST_N = 2
@@ -33,7 +32,6 @@ module MASTER
         @sessions.size
       end
 
-      # Compress history to fit token limits
       def compress(history, max_tokens: 4000)
         return history if history.size <= COMPRESS_AFTER_MESSAGES
         history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
@@ -61,7 +59,6 @@ module MASTER
         Dir.glob(File.join(Paths.sessions, "*.json")).each { |f| File.delete(f) if File.mtime(f) < cutoff }
       end
 
-      # Search past sessions for relevant content
       def search(query, limit: 3)
         return [] if query.nil? || query.strip.empty?
         
@@ -74,7 +71,6 @@ module MASTER
           
           data[:history].each do |msg|
             content = msg[:content].to_s.downcase
-            # Score by number of matching words
             score = query_words.count { |w| content.include?(w) }
             if score > 0
               results << { score: score, content: msg[:content][0..200], session: session_id }

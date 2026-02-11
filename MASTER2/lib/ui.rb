@@ -1,17 +1,12 @@
 # frozen_string_literal: true
 
-# UI - Unified terminal interface using TTY toolkit
-# Lazy-loads components for fast startup
-# Restored from MASTER v1 with full TTY integration
 
 module MASTER
   module UI
     extend self
 
-    # Boot time for dmesg-style timestamps
     MASTER_BOOT_TIME = Time.now
 
-    # --- Typography Icons (minimal vocabulary per Strunk & White) ---
     ICONS = {
       success: "✓",
       failure: "✗",
@@ -22,7 +17,6 @@ module MASTER
       done: "●",
     }.freeze
 
-    # --- Formatting Helpers (DRY) ---
     def currency(n)
       format("$%.2f", n)
     end
@@ -54,7 +48,6 @@ module MASTER
       "  [#{current}/#{total}]#{msg}"
     end
 
-    # --- TTY Component Lazy Loaders ---
     
     def prompt
       @prompt ||= begin
@@ -88,7 +81,6 @@ module MASTER
       opts = header ? { header: header } : {}
       TTY::Table.new(opts) { |t| data.each { |row| t << row } }
     rescue LoadError
-      # Fallback to simple text table
       lines = []
       lines << header.join(" | ") if header
       data.each { |row| lines << row.join(" | ") }
@@ -105,7 +97,6 @@ module MASTER
         **opts
       )
     rescue LoadError
-      # Fallback to indented content
       lines = []
       lines << bold(title) if title
       lines << ""
@@ -173,7 +164,6 @@ module MASTER
       require 'tty-tree'
       TTY::Tree.new(data)
     rescue LoadError
-      # Fallback to simple indented list
       def self.format_tree(data, indent=0)
         return "" unless data.is_a?(Hash) || data.is_a?(Array)
         lines = []
@@ -190,7 +180,6 @@ module MASTER
       require 'tty-pie'
       TTY::Pie.new(data: data, radius: 5)
     rescue LoadError
-      # Fallback to simple list
       Object.new.tap do |p|
         p.instance_variable_set(:@data, data)
         p.define_singleton_method(:render) do
@@ -228,7 +217,6 @@ module MASTER
       require 'tty-editor'
       TTY::Editor.open(path_or_text)
     rescue LoadError
-      # Fallback to system editor
       editor = ENV['EDITOR'] || 'vi'
       if File.exist?(path_or_text)
         system(editor, path_or_text)
@@ -244,7 +232,6 @@ module MASTER
       require 'tty-command'
       TTY::Command.new(printer: :quiet).run(*cmd, **opts)
     rescue LoadError
-      # Fallback to system
       system(*cmd)
     end
 
@@ -283,7 +270,6 @@ module MASTER
       require 'tty-which'
       TTY::Which.which(cmd)
     rescue LoadError
-      # Fallback to simple which
       ENV['PATH'].split(':').each do |dir|
         path = File.join(dir, cmd)
         return path if File.executable?(path)
@@ -296,7 +282,6 @@ module MASTER
         require 'pastel'
         Pastel.new(enabled: color_enabled?)
       rescue LoadError
-        # Fallback when pastel gem is not available
         Object.new.tap do |p|
           %i[green red yellow cyan dim bold magenta bright_magenta bright_cyan bright_black blue].each do |color|
             p.define_singleton_method(color) { |text = nil| text.nil? ? self : text }
@@ -311,7 +296,6 @@ module MASTER
       true
     end
 
-    # --- High-level Convenience Methods ---
 
     def success(msg)
       puts pastel.green("✓ #{msg}")
@@ -387,10 +371,8 @@ module MASTER
       print cursor.show
     end
 
-    # --- Special rendering methods ---
 
     def render_response(text)
-      # Try markdown rendering, fallback to plain
       markdown(text)
     rescue => e
       text
@@ -413,13 +395,11 @@ module MASTER
       tree_obj = TTY::Tree.new(path, level: depth)
       puts tree_obj.render
     rescue LoadError
-      # Simple fallback
       Dir.glob(File.join(path, '*')).each do |f|
         puts "  #{File.basename(f)}"
       end
     end
 
-    # --- Colorization for dmesg and system output ---
     
     def dmesg(subsystem, message, level: :info)
       elapsed = (Time.now - MASTER_BOOT_TIME).round(6)
@@ -445,7 +425,6 @@ module MASTER
   end
 end
 
-# Load ui submodules for backwards compatibility
 require_relative "ui/spinner" if File.exist?(File.join(__dir__, "ui/spinner.rb"))
 require_relative "ui/table" if File.exist?(File.join(__dir__, "ui/table.rb"))
 

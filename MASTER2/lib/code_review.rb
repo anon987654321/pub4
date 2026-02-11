@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
-  # CodeReview - Automated checks learned from deep analysis sessions
-  # These patterns were discovered through cross-referencing and execution tracing
   module CodeReview
     extend self
 
-    # The analysis prompt template - generates categorized opportunities
     OPPORTUNITY_PROMPT = <<~PROMPT
       Analyze this codebase and identify concrete improvement opportunities.
 
@@ -14,36 +11,28 @@ module MASTER
       Be precise - reference specific files, line numbers, patterns.
       Prioritize by impact and effort.
 
-      ## Categories:
 
-      ### MAJOR ARCHITECTURAL OPPORTUNITIES
       Large-scale structural improvements: consolidation, patterns, abstractions,
       module boundaries, data flow, concurrency, APIs.
 
-      ### MICRO-REFINEMENT OPPORTUNITIES  
       Small code-level improvements: idioms, naming, constants, memoization,
       type safety, error handling, Ruby style guide adherence.
 
-      ### CLI UI/UX OPPORTUNITIES
       User experience improvements: feedback, discoverability, shortcuts,
       progress indication, error messages, help system, accessibility.
 
-      ### TYPOGRAPHICAL OPPORTUNITIES
       Text presentation: smart quotes, dashes, symbols, Unicode,
       formatting, box drawing, bullets, spacing.
 
-      ## Format each item as:
       - **ID**: short_snake_case_id
       - **Description**: One clear sentence
       - **Location**: File/line or "throughout"
       - **Effort**: small/medium/large
       - **Impact**: low/medium/high
 
-      ## Codebase to analyze:
       %{code}
     PROMPT
 
-    # Issues found in this codebase that should be auto-detected
     CHECKS = {
       namespace_prefix: {
         pattern: /^(?!.*MASTER::)(DB|LLM|Session|Pipeline)\./,
@@ -67,7 +56,6 @@ module MASTER
       },
     }.freeze
 
-    # Patterns that indicate good code
     GOOD_PATTERNS = {
       frozen_string: /^# frozen_string_literal: true/,
       module_docstring: /module \w+\n\s+# [A-Z]/,
@@ -78,7 +66,6 @@ module MASTER
     }.freeze
 
     class << self
-      # Generate categorized opportunities using LLM
       def opportunities(code_or_path, llm: LLM)
         code = File.exist?(code_or_path.to_s) ? aggregate_code(code_or_path) : code_or_path
 
@@ -92,7 +79,6 @@ module MASTER
         Result.err("Analysis failed: #{e.message}")
       end
 
-      # Quick static analysis (no LLM)
       def analyze(code, filename: nil)
         issues = []
 

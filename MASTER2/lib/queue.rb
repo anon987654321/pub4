@@ -4,9 +4,6 @@ require 'fileutils'
 require 'json'
 
 module MASTER
-  # Queue - Priority-based task queue with checkpoint persistence
-  # Features: budget tracking, batch processing, pause/resume, binary filtering
-  # Ported from MASTER v1, adapted for MASTER2's Paths and Result monad
   class Queue
     attr_reader :items, :completed, :failed, :current
 
@@ -21,18 +18,15 @@ module MASTER
       @checkpoint_file = checkpoint_file || File.join(Paths.data, 'queue_checkpoint.json')
     end
 
-    # Add item to queue with optional priority (higher = processed first)
     def add(item, priority: 0)
       @items << { item: item, priority: priority, added_at: Time.now }
       @items.sort_by! { |i| -i[:priority] }
       self
     end
 
-    # Alias for compatibility
     alias push add
     alias << add
 
-    # Add files matching glob pattern
     def add_files(pattern, priority: 0)
       files = Dir.glob(pattern).select { |f| File.file?(f) }
       files = files.reject { |f| binary?(f) }
@@ -40,7 +34,6 @@ module MASTER
       self
     end
 
-    # Add all files from directory with optional filters
     def add_directory(path, extensions: %w[.rb .py .js .ts .sh .yml .yaml], recursive: true)
       pattern = recursive ? File.join(path, '**', '*') : File.join(path, '*')
       files = Dir.glob(pattern).select { |f| File.file?(f) }
@@ -51,13 +44,11 @@ module MASTER
       self
     end
 
-    # Set budget limit in dollars
     def set_budget(max_cost)
       @budget = max_cost
       self
     end
 
-    # Get next item from queue (respects pause and budget)
     def next
       return nil if @paused
       return nil if @budget && @spent >= @budget
@@ -66,7 +57,6 @@ module MASTER
       @current&.dig(:item)
     end
 
-    # Mark current item as completed
     def complete(cost: 0.0)
       return unless @current
 
@@ -76,7 +66,6 @@ module MASTER
       save_checkpoint
     end
 
-    # Mark current item as failed
     def fail(error)
       return unless @current
 
@@ -85,18 +74,15 @@ module MASTER
       save_checkpoint
     end
 
-    # Pause processing
     def pause
       @paused = true
       save_checkpoint
     end
 
-    # Resume processing
     def resume
       @paused = false
     end
 
-    # Get progress statistics
     def progress
       total = @items.size + @completed.size + @failed.size + (@current ? 1 : 0)
       done = @completed.size
@@ -111,14 +97,12 @@ module MASTER
       }
     end
 
-    # Get human-readable status string
     def status
       p = progress
       budget_str = @budget ? " / $#{'%.2f' % @budget} budget" : ""
       "#{p[:done]}/#{p[:total]} (#{p[:percent]}%) | $#{'%.4f' % p[:spent]}#{budget_str} | #{p[:remaining]} remaining"
     end
 
-    # Save checkpoint to disk
     def save_checkpoint
       data = {
         items: @items,
@@ -136,7 +120,6 @@ module MASTER
       Result.err("Failed to save checkpoint: #{e.message}")
     end
 
-    # Load checkpoint from disk
     def load_checkpoint
       return Result.err("Checkpoint file not found") unless File.exist?(@checkpoint_file)
 
@@ -154,7 +137,6 @@ module MASTER
       Result.err("Failed to load checkpoint: #{e.message}")
     end
 
-    # Delete checkpoint file
     def clear_checkpoint
       File.delete(@checkpoint_file) if File.exist?(@checkpoint_file)
       Result.ok("Checkpoint cleared")
@@ -162,7 +144,6 @@ module MASTER
       Result.err("Failed to clear checkpoint: #{e.message}")
     end
 
-    # Reset queue to empty state
     def reset
       @items = []
       @completed = []
@@ -173,39 +154,31 @@ module MASTER
       clear_checkpoint
     end
 
-    # Check if queue is empty
     def empty?
       @items.empty? && @current.nil?
     end
 
-    # Check if queue is paused
     def paused?
       @paused
     end
 
-    # Check if budget is exceeded
     def over_budget?
       @budget && @spent >= @budget
     end
 
-    # Get total cost spent
     def total_spent
       @spent
     end
 
-    # Get remaining budget
     def budget_remaining
       @budget ? (@budget - @spent) : nil
     end
 
     private
 
-    # Check if file is binary (to filter out non-text files)
     def binary?(file)
-      # Size check
       return true if File.size(file) > 1_000_000
 
-      # Extension check
       binary_extensions = %w[
         .png .jpg .jpeg .gif .bmp .ico .svg
         .mp4 .avi .mov .mkv .webm
@@ -218,7 +191,6 @@ module MASTER
       ]
       return true if binary_extensions.include?(File.extname(file).downcase)
 
-      # Content check - look for null bytes
       begin
         chunk = File.read(file, 8192)
         chunk&.include?("\x00")

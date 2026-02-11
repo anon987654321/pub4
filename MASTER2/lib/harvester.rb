@@ -7,9 +7,6 @@ require 'net/http'
 require 'uri'
 
 module MASTER
-  # Harvester - Ecosystem intelligence gathering
-  # Gathers information from open source ecosystems (GitHub, etc.)
-  # Ported from MASTER v1, adapted for MASTER2's Result monad
   class Harvester
     GITHUB_API = 'https://api.github.com'
     RATE_LIMIT_DELAY = 1.0 # seconds between requests
@@ -27,7 +24,6 @@ module MASTER
       }
     end
     
-    # Search GitHub for repositories
     def search_repos(query, limit: 10)
       uri = URI("#{GITHUB_API}/search/repositories")
       uri.query = URI.encode_www_form(q: query, per_page: limit, sort: 'stars')
@@ -52,7 +48,6 @@ module MASTER
       Result.err("Search failed: #{e.message}")
     end
     
-    # Get repository info
     def get_repo_info(owner, repo)
       uri = URI("#{GITHUB_API}/repos/#{owner}/#{repo}")
       response = github_request(uri)
@@ -77,9 +72,7 @@ module MASTER
       Result.err("Failed to get repo info: #{e.message}")
     end
     
-    # Get trending repositories
     def get_trending(language: nil, since: 'daily')
-      # Use Web module's GitHub helper if available
       if defined?(Web::GitHub)
         return Web::GitHub.trending(language: language, since: since)
       end
@@ -87,7 +80,6 @@ module MASTER
       Result.err("Web::GitHub module not available")
     end
     
-    # Harvest data from multiple sources
     def harvest(sources: [])
       puts "🌾 Starting ecosystem harvest..."
       
@@ -122,7 +114,6 @@ module MASTER
       Result.ok(data: @harvested_data, stats: @stats)
     end
     
-    # Save harvested data to YAML
     def save(output_path: nil)
       output_path ||= File.join(Paths.data, "harvested_#{Time.now.strftime('%Y-%m-%d')}.yml")
       
@@ -144,7 +135,6 @@ module MASTER
       Result.err("Failed to save: #{e.message}")
     end
     
-    # Analyze trends in harvested data
     def analyze_trends
       return {} if @harvested_data.empty?
       

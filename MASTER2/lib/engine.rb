@@ -1,15 +1,10 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Engine - Unified code quality scan facade
-  # Delegates to Smells, Violations, and BugHunting modules
-  # Provides scan, deep_scan, and quick_scan entry points
-  # Ported from MASTER v1, adapted for MASTER2's architecture
   module Engine
     MAX_METHOD_LINES = 20
     MAX_FILE_LINES = 300
 
-    # Scan profiles for tiered axiom checking
     SCAN_PROFILES = {
       quick: { min_priority: 9, description: "Critical axioms only (~5 axioms)" },
       standard: { min_priority: 7, description: "Important axioms (~12 axioms)" },
@@ -17,12 +12,9 @@ module MASTER
     }.freeze
 
     class << self
-      # Basic structural scan - long methods, god classes, deep nesting
-      # Now supports profile parameter for axiom filtering
       def scan(path, profile: :standard, silent: false)
         return Result.err('Path not found') unless File.exist?(path)
 
-        # Load and filter axioms by profile
         axioms = load_axioms_for_profile(profile)
         puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
 
@@ -36,7 +28,6 @@ module MASTER
         Result.ok(issues)
       end
 
-      # Deep scan - adds smell analysis and cyclic dependency detection
       def deep_scan(path)
         return Result.err('Path not found') unless File.exist?(path)
 
@@ -48,14 +39,12 @@ module MASTER
             content = File.read(f) rescue next
             issues += scan_file(f)
             
-            # Add smell analysis if module is available
             if defined?(Smells)
               smells = Smells.detect(content, path: f) rescue []
               issues += smells.map { |s| s.merge(file: f, type: :smell) }
             end
           end
 
-          # Check for cyclic dependencies if Smells module supports it
           if defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
             cycle = Smells.cyclic_deps?(files) rescue nil
             issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
@@ -73,7 +62,6 @@ module MASTER
         Result.ok(issues.uniq { |i| [i[:file], i[:type] || i[:smell], i[:line]] })
       end
 
-      # Quick scan - fast summary stats without detailed analysis
       def quick_scan(path)
         return Result.err('Path not found') unless File.exist?(path)
 
@@ -88,7 +76,6 @@ module MASTER
 
         stats[:avg_file_size] = (stats[:total_lines].to_f / files.size).round(1) if files.any?
 
-        # Add module counts if available
         if defined?(MASTER::Axioms)
           stats[:axioms] = MASTER::Axioms.count rescue 0
         end
@@ -100,7 +87,6 @@ module MASTER
         Result.ok(stats)
       end
 
-      # Scan with specific focus areas
       def focused_scan(path, focus: [:complexity, :duplication, :security])
         return Result.err('Path not found') unless File.exist?(path)
 
@@ -128,7 +114,6 @@ module MASTER
         Result.ok(issues)
       end
 
-      # Get scan summary for display
       def scan_summary(scan_result)
         return {} unless scan_result.ok?
 
@@ -143,7 +128,6 @@ module MASTER
 
       private
 
-      # Load axioms filtered by scan profile priority
       def load_axioms_for_profile(profile)
         return nil unless SCAN_PROFILES.key?(profile)
         
@@ -160,12 +144,10 @@ module MASTER
         nil
       end
 
-      # Scan individual file for basic structural issues
       def scan_file(path)
         content = File.read(path)
         issues = []
 
-        # Long methods
         content.scan(/^\s*def\s+\w+.*?^\s*end/m).each do |method|
           lines = method.lines.size
           if lines > MAX_METHOD_LINES
@@ -179,7 +161,6 @@ module MASTER
           end
         end
 
-        # God class
         lines = content.lines.size
         if lines > MAX_FILE_LINES
           issues << { 
@@ -191,14 +172,11 @@ module MASTER
           }
         end
 
-        # Deep nesting (more than 3 levels)
         max_nesting = 0
         current_nesting = 0
         content.each_line do |line|
-          # Count block starts
           current_nesting += line.scan(/\b(if|unless|while|until|for|begin|class|module|def|case)\b/).size
           current_nesting += line.scan(/\bdo\b|\{/).size
-          # Count block ends
           current_nesting -= line.scan(/\bend\b|\}/).size
           max_nesting = [max_nesting, current_nesting].max
         end

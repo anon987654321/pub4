@@ -3,11 +3,9 @@
 require "ostruct"
 
 module MASTER
-  # CrossRef - Cross-reference analyzer for constants and methods
   module CrossRef
     extend self
 
-    # Analyzer class for building reference maps
     class Analyzer
       attr_reader :constant_defs, :constant_uses, :method_defs, :method_calls
 
@@ -28,7 +26,6 @@ module MASTER
             content = File.read(file)
             analyze_file(file, content)
           rescue StandardError
-            # Skip files that can't be read
             next
           end
         end
@@ -36,23 +33,18 @@ module MASTER
         Result.ok(analyzer: self)
       end
 
-      # Find unused constants
       def unused_constants
         @constant_defs.keys.reject { |name| @constant_uses[name]&.any? }
       end
 
-      # Find uncalled public methods
       def uncalled_methods
         @method_defs.keys.reject { |name| @method_calls[name]&.any? }
       end
 
-      # Find duplicate method calls in same method
       def duplicate_calls
-        # Simplified: find methods that call the same method multiple times
         duplicates = []
         
         @method_defs.each do |method_name, location|
-          # This is a simplified heuristic - proper implementation would need AST
           file, _line = location
           next unless File.exist?(file)
           
@@ -79,16 +71,13 @@ module MASTER
         duplicates
       end
 
-      # Generate audit report
       def to_audit_report
         report = if defined?(Audit::Report)
           Audit::Report.new
         else
-          # Fallback if Audit not available
           OpenStruct.new(findings: [])
         end
 
-        # Add findings for unused constants
         unused_constants.each do |const|
           location = @constant_defs[const]
           finding = if defined?(Audit::Finding)
@@ -105,7 +94,6 @@ module MASTER
           report.findings << finding if finding
         end
 
-        # Add findings for uncalled methods
         uncalled_methods.each do |method|
           location = @method_defs[method]
           finding = if defined?(Audit::Finding)
@@ -133,26 +121,22 @@ module MASTER
         lines.each_with_index do |line, idx|
           line_num = idx + 1
           
-          # Detect constant definitions (simplified)
           if line =~ /^\s*([A-Z][A-Z0-9_]*)\s*=/
             const_name = $1
             @constant_defs[const_name] = [file, line_num]
           end
           
-          # Detect constant uses
           line.scan(/\b([A-Z][A-Z0-9_]*)\b/) do |match|
             const_name = match[0]
             @constant_uses[const_name] ||= []
             @constant_uses[const_name] << [file, line_num]
           end
           
-          # Detect method definitions
           if line =~ /^\s*def\s+([a-z_][a-z0-9_?!]*)/
             method_name = $1
             @method_defs[method_name] = [file, line_num]
           end
           
-          # Detect method calls (simplified)
           line.scan(/\b([a-z_][a-z0-9_]*)\s*\(/) do |match|
             method_name = match[0]
             @method_calls[method_name] ||= []

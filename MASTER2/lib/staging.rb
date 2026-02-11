@@ -5,7 +5,6 @@ require "tmpdir"
 require "open3"
 
 module MASTER
-  # Staging - Safe file modification workflow with validation and rollback
   class Staging
     attr_reader :staging_dir
 
@@ -15,15 +14,12 @@ module MASTER
       FileUtils.mkdir_p(@staging_dir)
     end
 
-    # Stage a file for modification
     def stage_file(path)
       return Result.err("File not found: #{path}") unless File.exist?(path)
 
-      # Create unique staging path
       basename = File.basename(path)
       staged_path = File.join(@staging_dir, "#{Time.now.to_i}_#{basename}")
       
-      # Create backup of original
       backup_path = "#{staged_path}.backup"
       
       begin
@@ -37,11 +33,9 @@ module MASTER
       end
     end
 
-    # Validate a staged file
     def validate(staged_path, command: nil)
       return Result.err("Staged file not found: #{staged_path}") unless File.exist?(staged_path)
 
-      # Get validation command from constitution or use provided
       validation_cmd = command
       if validation_cmd.nil? && defined?(Constitution)
         validation_cmd = Constitution.rules.dig("staging", "validation", "default_command")
@@ -49,7 +43,6 @@ module MASTER
       validation_cmd ||= "ruby -c"
 
       begin
-        # Run validation command
         stdout, stderr, status = Open3.capture3("#{validation_cmd} #{staged_path}")
         
         if status.success?
@@ -62,12 +55,10 @@ module MASTER
       end
     end
 
-    # Promote staged file to original location
     def promote(staged_path, original_path)
       return Result.err("Staged file not found: #{staged_path}") unless File.exist?(staged_path)
 
       begin
-        # Atomic replace
         FileUtils.cp(staged_path, original_path)
         Result.ok(promoted: original_path)
       rescue StandardError => e
@@ -75,7 +66,6 @@ module MASTER
       end
     end
 
-    # Rollback to backup
     def rollback(original_path)
       backup_path = @backups[original_path]
       return Result.err("No backup found for: #{original_path}") unless backup_path && File.exist?(backup_path)
@@ -88,7 +78,6 @@ module MASTER
       end
     end
 
-    # Rollback all files modified in this staging session
     def rollback_all
       return Result.err("No backups to rollback") if @backups.empty?
       
@@ -109,31 +98,25 @@ module MASTER
       end
     end
 
-    # Get list of all backed-up files
     def backups
       @backups.keys
     end
 
-    # Full staged modification workflow
     def staged_modify(path, validation_command: nil, &block)
-      # Stage the file
       stage_result = stage_file(path)
       return stage_result unless stage_result.ok?
       
       staged_path = stage_result.value[:staged_path]
       
       begin
-        # Yield to the block for modification
         block.call(staged_path) if block
         
-        # Validate the changes
         validate_result = validate(staged_path, command: validation_command)
         unless validate_result.ok?
           rollback(path)
           return validate_result
         end
         
-        # Promote to original location
         promote_result = promote(staged_path, path)
         unless promote_result.ok?
           rollback(path)
@@ -145,7 +128,6 @@ module MASTER
         rollback(path)
         Result.err("Staged modification failed: #{e.message}")
       ensure
-        # Cleanup staging file
         FileUtils.rm_f(staged_path) if staged_path && File.exist?(staged_path)
       end
     end

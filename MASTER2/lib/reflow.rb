@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Reflow - Reorder any code or content by importance and chronology
-  # Part of 4-phase file processing: Clean → Rename/Rephrase → Structural Transform → Expand/Contract
   module Reflow
-    # Universal ordering principles (language-agnostic)
     IMPORTANCE_ORDER = [
       :meta,          # Shebang, magic comments, frontmatter
       :imports,       # Requires, imports, includes, use statements
@@ -16,7 +13,6 @@ module MASTER
       :tests,         # Test code
     ].freeze
 
-    # Language detection patterns
     LANGUAGE_PATTERNS = {
       ruby: /\.rb$/,
       python: /\.py$/,
@@ -31,7 +27,6 @@ module MASTER
     }.freeze
 
     class << self
-      # Analyze any file and suggest reflow
       def analyze(content, filename: "file")
         lang = detect_language(filename)
         sections = extract_sections(content, lang)
@@ -40,15 +35,12 @@ module MASTER
         { filename: filename, language: lang, issues: issues, sections: sections }
       end
 
-      # Reflow any file (returns new content)
       def reflow(content, filename: "file")
         lang = detect_language(filename)
         sections = extract_sections(content, lang)
 
-        # Sort by importance
         sorted = sections.sort_by { |s| IMPORTANCE_ORDER.index(s[:type]) || 999 }
 
-        # Rebuild with proper spacing
         result = []
         sorted.each_with_index do |section, idx|
           result << "\n" if idx > 0 && needs_blank_line?(sections[idx - 1], section)
@@ -58,7 +50,6 @@ module MASTER
         result.join
       end
 
-      # Batch reflow directory
       def reflow_directory(path, dry_run: true)
         patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml]
         files = patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }
@@ -214,7 +205,6 @@ module MASTER
       end
 
       def extract_markdown_sections(content)
-        # For markdown: frontmatter → h1 → h2 → h3 → content
         sections = []
         current = { type: :unknown, lines: [] }
         in_frontmatter = false
@@ -246,7 +236,6 @@ module MASTER
       end
 
       def extract_yaml_sections(content)
-        # YAML: comments at top, then keys by importance
         sections = []
         current = { type: :unknown, lines: [] }
 

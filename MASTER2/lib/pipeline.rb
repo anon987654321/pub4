@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
@@ -40,16 +39,13 @@ module MASTER
 
       raw = case @mode
             when :executor
-              # Default: Use autonomous executor with pattern selection
               Executor.call(text, pattern: self.class.current_pattern)
             when :stages
-              # Legacy: Stage-based pipeline
               @stages.reduce(Result.ok(input)) do |result, stage|
                 stage_name = stage.class.name&.split("::")&.last || stage.class.name
                 result.and_then(stage_name) { |data| stage.call(data) }
               end
             when :direct
-              # Simple: Direct LLM call, no tools
               LLM.ask(text, stream: true)
             else
               Executor.call(text, pattern: self.class.current_pattern)
@@ -66,7 +62,6 @@ module MASTER
       v = result.value
       return result unless v.is_a?(Hash)
 
-      # Normalize known keys
       normalized = {
         response: v[:response] || v[:answer] || v[:content],
         rendered: v[:rendered],
@@ -79,12 +74,10 @@ module MASTER
         history: v[:history],
       }.compact
 
-      # Apply typography rendering if we have a response but no rendered version
       if normalized[:response] && !normalized[:rendered]
         normalized[:rendered] = normalized[:response]
       end
 
-      # Preserve any custom keys from the original value
       v.each do |key, val|
         normalized[key] = val unless normalized.key?(key)
       end
@@ -98,8 +91,6 @@ module MASTER
         budget = LLM.budget_remaining
         tokens = Session.current.message_count rescue 0
 
-        # Shell-style: master@model [tokens] $cost$
-        # Dense, informative prompt
         budget_str = budget < 10.0 ? " $#{format('%.2f', budget)}" : ""
         token_str = tokens > 0 ? " ↑#{format_tokens(tokens)}" : ""
         tripped = LLM.model_tiers[LLM.tier]&.any? { |m| !LLM.circuit_closed?(m) }
@@ -120,7 +111,6 @@ module MASTER
         begin
           require "tty-reader"
         rescue LoadError
-          # TTY not available
         end
 
         reader = defined?(TTY::Reader) ? TTY::Reader.new : nil
@@ -130,15 +120,12 @@ module MASTER
 
         Boot.banner
 
-        # Add prescan before starting work
         if ENV['MASTER_PRESCAN'] != 'false'
           Prescan.run(MASTER.root) if defined?(Prescan)
         end
 
-        # First-run welcome
         Onboarding.show_welcome if defined?(Onboarding)
 
-        # Check for API key
         unless ENV["OPENROUTER_API_KEY"]
           UI.warn("OPENROUTER_API_KEY not set. Run: source ~/.zshrc")
         end
@@ -147,7 +134,6 @@ module MASTER
         puts "Type 'help' for commands, Ctrl+C twice to quit"
         puts
 
-        # Initialize workflow if not present
         if defined?(WorkflowEngine)
           workflow_result = WorkflowEngine.start_workflow(session)
           if workflow_result.ok?
@@ -163,7 +149,6 @@ module MASTER
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
         loop do
-          # Show current phase in prompt if workflow active
           prompt_str = if defined?(WorkflowEngine) && session.metadata[:workflow]
                          phase = WorkflowEngine.current_phase(session)
                          "#{phase}> "
@@ -182,12 +167,10 @@ module MASTER
           rescue Interrupt
             now = Time.now
             if last_interrupt && (now - last_interrupt) < 1.0
-              # Double Ctrl+C within 1 second - exit
               puts "\nExiting..."
               session.save
               break
             else
-              # First Ctrl+C - warn user
               puts "\nPress Ctrl+C again to exit"
               last_interrupt = now
               next
@@ -196,13 +179,11 @@ module MASTER
 
           break if line.nil?
 
-          # Validate encoding
           unless line.valid_encoding?
             UI.warn("Invalid encoding in input — converting to UTF-8")
             line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
           end
 
-          # Validate length
           if line.length > MAX_INPUT_LENGTH
             UI.warn("Input too long (#{line.length} chars). Truncated to #{MAX_INPUT_LENGTH}.")
             line = line[0, MAX_INPUT_LENGTH]
@@ -213,7 +194,6 @@ module MASTER
             next
           end
 
-          # Track user input in session
           session.add_user(line.strip)
 
           if defined?(Commands)
@@ -235,7 +215,6 @@ module MASTER
                 UI.error(cmd_result.failure)
               end
             elsif cmd_result.respond_to?(:err?) && cmd_result.err?
-              # Unknown command - suggest similar
               Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
             end
             next
@@ -260,13 +239,11 @@ module MASTER
             UI.error(result.failure)
           end
 
-          # Auto-save silently
           session.save if session.message_count % 5 == 0
         end
 
         session.save
         
-        # Auto-capture if session was marked successful
         if defined?(SessionCapture) && session.metadata_value(:successful)
           SessionCapture.auto_capture_if_successful
         end
@@ -309,8 +286,6 @@ module MASTER
     end
   end
 
-  # Questions - Guided inquiry per workflow phase
-  # Ensures thorough analysis before implementation
   module Questions
     QUESTIONS_FILE = File.join(__dir__, "..", "data", "questions.yml")
 
@@ -390,7 +365,6 @@ module MASTER
           Purpose: #{info[:purpose]}
 
           Consider these questions:
-          #{questions}
 
           Context: #{context}
         PROMPT
