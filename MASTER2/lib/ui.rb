@@ -426,8 +426,7 @@ module MASTER
       prefix = format("[%12.6f]", elapsed)
       line = "#{prefix} #{subsystem}: #{message}"
       case level
-      when :error then $stderr.puts line
-      when :warn  then $stderr.puts line
+      when :error, :warn then $stderr.puts line
       else puts line
       end
     end

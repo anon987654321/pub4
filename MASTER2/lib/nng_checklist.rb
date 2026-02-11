@@ -151,7 +151,7 @@ module MASTER
           non_root = style_section.gsub(/:root\s*\{[^}]*\}/m, '')
           
           # Check for hex colors outside :root
-          hex_colors = non_root.scan(/#[0-9a-fA-F]{3,8}/)
+          hex_colors = non_root.scan(/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/)
           unless hex_colors.empty?
             issues << "Found #{hex_colors.length} raw hex colors outside :root (should use CSS vars)"
           end

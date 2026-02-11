@@ -217,6 +217,7 @@ inp.addEventListener('keydown',e=>{
 });
 
 (function poll(){
+  // Exponential backoff: 800ms when online, increases from 3s to 30s max when offline
   const pollDelay=offlineCount===0?800:Math.min(3000*Math.pow(2,offlineCount-1),30000);
   fetch('/poll',{signal:AbortSignal.timeout(10000)})
     .then(r=>r.json())
