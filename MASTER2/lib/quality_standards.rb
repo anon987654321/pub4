@@ -11,8 +11,21 @@ module MASTER
 
     def thresholds
       @thresholds ||= begin
-        return defaults unless File.exist?(THRESHOLDS_FILE)
-        YAML.safe_load_file(THRESHOLDS_FILE, symbolize_names: true) || defaults
+        # Primary: constitution quality gates (martin_pragmatic for bin/ and test/)
+        # Metz strict gate is aspirational for lib/ files
+        if defined?(Constitution) && Constitution.rules.dig("quality_gates", "martin_pragmatic")
+          gate = Constitution.rules["quality_gates"]["martin_pragmatic"]
+          {
+            file_lines: { warn: 250, error: gate["class_lines"] || 300, self_test_max: 300 },
+            method_lines: { warn: 15, error: gate["method_lines"] || 20 },
+            max_self_test_issues: 0,
+            max_self_test_violations: 0
+          }
+        elsif File.exist?(THRESHOLDS_FILE)
+          YAML.safe_load_file(THRESHOLDS_FILE, symbolize_names: true) || defaults
+        else
+          defaults
+        end
       end
     end
 

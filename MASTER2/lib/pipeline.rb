@@ -106,7 +106,8 @@ module MASTER
         indicator = tripped ? "!" : ""
 
         "master@#{model}#{indicator}#{token_str}#{budget_str}$ "
-      rescue StandardError
+      rescue StandardError => e
+        Logging.warn("pipeline", error: e.message) if defined?(Logging)
         "master$ "
       end
 

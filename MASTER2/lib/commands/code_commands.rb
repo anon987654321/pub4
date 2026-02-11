@@ -56,6 +56,9 @@ module MASTER
 
       def evolve(path)
         path ||= MASTER.root
+        files = Dir.glob(File.join(path, "**", "*.rb")).reject { |f| f.include?("/test/") || f.include?("/vendor/") }
+        puts UI.dim("  evolve: #{files.size} files, budget: #{UI.currency(LLM.budget_remaining)}")
+        
         evolver = Evolve.new
         result = evolver.run(path: path, dry_run: true)
 

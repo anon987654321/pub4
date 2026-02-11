@@ -96,13 +96,15 @@ module MASTER
 
       def tts_status
         Speech.engine_status
-      rescue StandardError
+      rescue StandardError => e
+        Logging.warn("boot", error: e.message) if defined?(Logging)
         "off"
       end
 
       def self_awareness_summary
         SelfMap.summary
-      rescue StandardError
+      rescue StandardError => e
+        Logging.warn("boot", error: e.message) if defined?(Logging)
         "unavailable"
       end
     end

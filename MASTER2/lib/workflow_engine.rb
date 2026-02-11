@@ -50,6 +50,13 @@ module MASTER
         transition_key = "#{current}_to_#{next_phase}"
         gate = transitions[transition_key] || transitions[transition_key.to_s]
 
+        # Evaluate gate if defined
+        if gate && !gate_satisfied?(gate, outputs)
+          Logging.warn("workflow", message: "Gate not satisfied: #{gate}") if defined?(Logging)
+          # Allow advancement but record the skip
+          outputs[:gate_skipped] = gate
+        end
+
         record_transition(session, current, next_phase, gate: gate, outputs: outputs)
         session.metadata[:workflow][:current_phase] = next_phase
         
@@ -117,6 +124,13 @@ module MASTER
 
     private
 
+    def gate_satisfied?(gate, outputs)
+      return true if outputs[:force]
+      # Check if outputs contain evidence for the gate
+      gate_key = gate.is_a?(String) ? gate.to_sym : gate
+      outputs.key?(gate_key) || outputs.key?(gate.to_s)
+    end
+
     def load_config
       path = File.join(MASTER.root, 'data', 'phases.yml')
       YAML.safe_load_file(path, permitted_classes: [Symbol])
@@ -148,7 +162,7 @@ module MASTER
       return unless defined?(Hooks)
       Hooks.run(event, data)
     rescue StandardError => e
-      # Silently fail hooks - they're not critical
+      Logging.warn("hooks", message: "#{event} failed: #{e.message}") if defined?(Logging)
       nil
     end
   end

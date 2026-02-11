@@ -18,6 +18,9 @@ module MASTER
         end
 
         if File.directory?(path)
+          files = Dir.glob(File.join(path, "**", "*.rb"))
+          puts UI.dim("  fix: #{files.size} files, budget: #{UI.currency(LLM.budget_remaining)}")
+          
           fixer = AutoFixer.new(mode: :moderate)
           result = fixer.fix_directory(path)
           if result.ok?
