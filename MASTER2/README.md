@@ -45,13 +45,13 @@ First error short-circuits. No exceptions.
 - **Circuit breaker** (3 failures → 5-minute cooldown)
 - **Session persistence** with crash recovery (SIGINT/SIGTERM auto-save)
 - **Pattern fallback** (if primary fails → react → direct)
-- **AI Media Generation** - Generate images, videos, and audio with 30+ cutting-edge AI models via Replicate (see [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md))
-- **AI Enhancement** - Upscale, restore, and enhance images with AI-powered post-processing (see [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md))
-- **Cinematic AI Pipeline** - Chain Replicate models for film-quality image transformations (see [docs/CINEMATIC_PIPELINE.md](docs/CINEMATIC_PIPELINE.md))
+- **AI Media Generation & Enhancement** - 30+ cutting-edge AI models for image, video, audio generation and enhancement
 
 ### AI Media Generation (Replicate & Postpro)
 
-Transform MASTER2 into a creative powerhouse with direct access to 30+ AI models:
+Transform MASTER2 into a creative powerhouse with direct access to 30+ AI models via Replicate.com.
+
+**Quick Examples:**
 
 ```ruby
 # Generate cinematic images
@@ -64,21 +64,68 @@ MASTER::Replicate.generate_video(
   prompt: "drone shot flying through forest at golden hour"
 )
 
-# AI-powered upscaling
+# AI-powered upscaling (4x)
 MASTER::Postpro.upscale(image_url: "photo.jpg", scale: 4)
 
 # Face restoration
 MASTER::Postpro.restore_face(image_url: "old_photo.jpg")
+
+# List available models
+MASTER::Replicate.categories  # => [:image_gen, :video_gen, :enhance, :audio, :transcribe]
+MASTER::Replicate.models_for(:image_gen)  # => Array of image generation models
 ```
 
-**WILD_CHAIN Model Catalog:**
-- **Image Generation**: Flux Pro, SDXL, Ideogram V2, Recraft V3
-- **Video Generation**: Hailuo 2.3, Kling 2.5, Luma Ray 2, Sora 2
-- **Enhancement**: Real-ESRGAN 4x, GFPGAN, CodeFormer, Clarity
-- **Audio**: MusicGen, Bark TTS
-- **Transcription**: Whisper
+**WILD_CHAIN Model Catalog** (17 models across 5 categories):
 
-See [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md) for full documentation.
+**Image Generation (5 models)**
+- **Flux Pro** - State-of-the-art photorealism
+- **Flux Dev** - Fast iteration, excellent quality  
+- **SDXL** - Stable Diffusion XL, highly controllable
+- **Ideogram V2** - Best for text rendering in images
+- **Recraft V3** - Vector-friendly generation
+
+**Video Generation (5 models)**
+- **Hailuo 2.3** (Minimax) - High-quality video synthesis
+- **Kling 2.5** - Fast, smooth motion
+- **Luma Ray 2** - Photorealistic video
+- **WAN 2.5** - Image-to-video specialist
+- **Sora 2** (OpenAI) - Cinematic quality
+
+**Enhancement (4 models)**
+- **Real-ESRGAN 4x** - General-purpose upscaling
+- **GFPGAN** - Face restoration specialist
+- **CodeFormer** - Advanced face enhancement  
+- **Clarity Upscaler 4x** - Detail preservation
+
+**Audio (2 models)**
+- **MusicGen** (Meta) - Music generation
+- **Bark TTS** (Suno) - Natural text-to-speech
+
+**Transcription (1 model)**
+- **Whisper** (OpenAI) - Speech recognition
+
+**CLI Commands:**
+
+```bash
+# In REPL
+master> repligen "cyberpunk city at night"
+master> generate-video "drone flying through forest"  
+master> upscale photo.jpg
+master> postpro upscale photo.jpg
+```
+
+**Production Use Cases:**
+- Automated social media content generation
+- Video production pipelines
+- Photo restoration services  
+- Cinematic effects chains (see Cinematic Pipeline below)
+
+**Configuration:**
+```bash
+export REPLICATE_API_KEY="r8_..."  # Required
+```
+
+All operations use MASTER2's Result monad pattern, budget tracking, and error handling.
 
 ### Cinematic AI Pipeline
 
