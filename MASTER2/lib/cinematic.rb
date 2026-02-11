@@ -222,16 +222,59 @@ module MASTER
       end
 
       def self.discover_models(category)
-        # Default model list for each category
+        # Model list based on repligen's WILD_CHAIN
+        # Updated with current best models for each category
         case category
         when :image
-          ['stability-ai/sdxl', 'tencentarc/gfpgan', 'nightmareai/real-esrgan']
+          [
+            'black-forest-labs/flux-pro',
+            'black-forest-labs/flux-dev',
+            'stability-ai/sdxl',
+            'ideogram-ai/ideogram-v2',
+            'recraft-ai/recraft-v3'
+          ]
         when :video
-          ['stability-ai/stable-video-diffusion']
+          [
+            'minimax/video-01',      # Hailuo 2.3
+            'kwaivgi/kling-v2.5-turbo-pro',
+            'luma/ray-2',
+            'wan-video/wan-2.5-i2v',
+            'openai/sora-2'
+          ]
+        when :enhance
+          [
+            'nightmareai/real-esrgan',
+            'tencentarc/gfpgan',
+            'sczhou/codeformer',
+            'lucataco/clarity-upscaler'
+          ]
+        when :audio
+          [
+            'meta/musicgen',
+            'suno/bark'
+          ]
+        when :transcribe
+          ['openai/whisper']
         when :color
           ['stability-ai/sdxl']
         else
-          ['stability-ai/sdxl', 'tencentarc/gfpgan', 'nightmareai/real-esrgan']
+          # All models combined
+          [
+            'black-forest-labs/flux-pro',
+            'black-forest-labs/flux-dev',
+            'stability-ai/sdxl',
+            'ideogram-ai/ideogram-v2',
+            'recraft-ai/recraft-v3',
+            'minimax/video-01',
+            'kwaivgi/kling-v2.5-turbo-pro',
+            'nightmareai/real-esrgan',
+            'tencentarc/gfpgan',
+            'sczhou/codeformer',
+            'lucataco/clarity-upscaler',
+            'meta/musicgen',
+            'suno/bark',
+            'openai/whisper'
+          ]
         end
       end
 
