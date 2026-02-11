@@ -293,7 +293,168 @@ GEMS
 
   bundle install
   bin/rails stimulus_reflex:install
+}
 
+# Setup stimulus-components (F1)
+setup_stimulus_components() {
+  # Add stimulus-components npm packages
+  yarn add @stimulus-components/notification \
+           @stimulus-components/content-loader \
+           @stimulus-components/clipboard \
+           @stimulus-components/dialog \
+           @stimulus-components/popover \
+           @stimulus-components/read-more \
+           @stimulus-components/scroll-progress \
+           @stimulus-components/scroll-to \
+           @stimulus-components/color-picker \
+           @stimulus-components/character-counter \
+           @stimulus-components/textarea-autogrow
+
+  # Register controllers in app/javascript/controllers/index.js
+  cat >> app/javascript/controllers/index.js << 'JS'
+// stimulus-components
+import Notification from "@stimulus-components/notification"
+import ContentLoader from "@stimulus-components/content-loader"
+import Clipboard from "@stimulus-components/clipboard"
+import Dialog from "@stimulus-components/dialog"
+import Popover from "@stimulus-components/popover"
+import ReadMore from "@stimulus-components/read-more"
+import ScrollProgress from "@stimulus-components/scroll-progress"
+import ScrollTo from "@stimulus-components/scroll-to"
+import CharacterCounter from "@stimulus-components/character-counter"
+import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
+
+application.register("notification", Notification)
+application.register("content-loader", ContentLoader)
+application.register("clipboard", Clipboard)
+application.register("dialog", Dialog)
+application.register("popover", Popover)
+application.register("read-more", ReadMore)
+application.register("scroll-progress", ScrollProgress)
+application.register("scroll-to", ScrollTo)
+application.register("character-counter", CharacterCounter)
+application.register("textarea-autogrow", TextareaAutogrow)
+JS
+}
+
+# Generate ReplicateService for AI generation (F2)
+generate_replicate_service() {
+  mkdir -p app/services
+  cat > app/services/replicate_service.rb << 'RUBY'
+# frozen_string_literal: true
+
+class ReplicateService
+  API_URL = "https://api.replicate.com/v1/predictions"
+  MODELS = {
+    image: "black-forest-labs/flux-1.1-pro",
+    video: "minimax/hailuo-2.3",
+    music: "meta/musicgen",
+    upscale: "nightmareai/real-esrgan",
+  }.freeze
+
+  def initialize(api_key: ENV["REPLICATE_API_KEY"])
+    @api_key = api_key
+  end
+
+  def generate_image(prompt:, model: :image)
+    create_and_poll(MODELS[model], { prompt: prompt })
+  end
+
+  def generate_video(prompt:, model: :video)
+    create_and_poll(MODELS[model], { prompt: prompt }, timeout: 300)
+  end
+
+  def generate_music(prompt:, duration: 10)
+    create_and_poll(MODELS[:music], { prompt: prompt, duration: duration }, timeout: 120)
+  end
+
+  private
+
+  def create_and_poll(model_id, input, timeout: 120)
+    uri = URI(API_URL)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+
+    request = Net::HTTP::Post.new(uri)
+    request["Authorization"] = "Bearer #{@api_key}"
+    request["Content-Type"] = "application/json"
+    request.body = { version: model_id, input: input }.to_json
+
+    response = http.request(request)
+    data = JSON.parse(response.body)
+
+    return { error: data["detail"] } unless data["id"]
+
+    # Poll for completion
+    poll_uri = URI("#{API_URL}/#{data['id']}")
+    start_time = Time.now
+
+    loop do
+      poll_http = Net::HTTP.new(poll_uri.host, poll_uri.port)
+      poll_http.use_ssl = true
+
+      poll_request = Net::HTTP::Get.new(poll_uri)
+      poll_request["Authorization"] = "Bearer #{@api_key}"
+
+      poll_response = poll_http.request(poll_request)
+      poll_data = JSON.parse(poll_response.body)
+
+      case poll_data["status"]
+      when "succeeded"
+        return { id: poll_data["id"], output: poll_data["output"] }
+      when "failed", "canceled"
+        return { error: poll_data["error"] || "Generation failed" }
+      when "processing", "starting"
+        sleep 2
+      else
+        return { error: "Unknown status: #{poll_data['status']}" }
+      end
+
+      return { error: "Timeout" } if Time.now - start_time > timeout
+    end
+  rescue StandardError => e
+    { error: e.message }
+  end
+end
+RUBY
+}
+
+# Generate AI job polling Stimulus controller (F3)
+generate_ai_job_controller() {
+  cat > app/javascript/controllers/ai_job_controller.js << 'JS'
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["status", "result", "progress"]
+  static values = { url: String, interval: { type: Number, default: 2000 } }
+
+  connect() {
+    if (this.urlValue) this.poll()
+  }
+
+  disconnect() {
+    clearTimeout(this.timeout)
+  }
+
+  poll() {
+    fetch(this.urlValue, { headers: { "Accept": "text/vnd.turbo-stream.html" } })
+      .then(response => {
+        if (response.ok) return response.text()
+        throw new Error("Poll failed")
+      })
+      .then(html => {
+        Turbo.renderStreamMessage(html)
+        // Re-poll if still processing
+        if (this.element.dataset.aiJobStatus === "processing") {
+          this.timeout = setTimeout(() => this.poll(), this.intervalValue)
+        }
+      })
+      .catch(() => {
+        this.timeout = setTimeout(() => this.poll(), this.intervalValue * 2)
+      })
+  }
+}
+JS
 }
 
 # Add acts_as_votable with proper setup
