@@ -354,3 +354,15 @@
   title: "User-Friendly Design"
   statement: "Visibility. User control. Error prevention. Consistency. Recognition over recall."
   source: "10 Usability Heuristics by Jakob Nielsen"
+
+- id: "ULTRA_MINIMALISM"
+  category: "meta"
+  protection: "ABSOLUTE"
+  title: "Ultra Minimalism"
+  statement: "Comments < 5% density. Files merge on second occurrence. Target 15-25 files in lib/, not 60+."
+  source: "MASTER2 Contribution Rules"
+  metadata:
+    max_comment_density: 0.05
+    min_file_lines: 30
+    target_file_count: 20
+    max_file_lines: 250
