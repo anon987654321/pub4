@@ -2,9 +2,8 @@
 # Shared functions for Rails app generators
 # Per master.yml v206 workflow: Extract duplication, DRY, modern zsh
 
-set -euo pipefail
 emulate -L zsh
-setopt extended_glob warn_create_global
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # Generate base application.scss with CSS variables
 generate_application_scss() {
@@ -237,9 +236,9 @@ JS
 # Generate application layout with Stimulus/Turbo
 generate_application_layout() {
 
-  local app_name="$1"
+  typeset app_name="$1"
 
-  local description="$2"
+  typeset description="$2"
 
   mkdir -p app/views/layouts
   cat > app/views/layouts/application.html.erb << 'LAYOUT'
@@ -431,6 +430,10 @@ GEMS
 command_exists() {
   command -v "$1" >/dev/null 2>&1 || { log "ERROR: $1 not found"; exit 1; }
 }
+
+# NOTE: For adding gems, prefer install_gem() which checks for duplicates,
+# or use `bundle add <gem> --skip-install` which is idempotent.
+# Avoid raw `cat >> Gemfile` as it creates duplicates on re-run.
 
 # Install gem idempotently
 install_gem() {

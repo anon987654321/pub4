@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # BRGEN v3.0.0 - Rails 8 Complete Social Network
 # Per master.yml v207
@@ -38,7 +39,7 @@ if [[ ! -f "config/application.rb" ]]; then
 fi
 
 echo "Appending gems to Gemfile"
-cat >> Gemfile << 'GEMFILE'
+grep -q "solid_queue" Gemfile || cat >> Gemfile << 'GEMFILE'
 
 # Rails 8 Solid Stack
 gem "solid_queue"

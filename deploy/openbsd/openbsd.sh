@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
-# Configures OpenBSD 7.7 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
+# Configures OpenBSD 7.8 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
 
 # Usage: doas zsh openbsd.sh [--help | --resume]
 
 #
 
-# VERIFIED AGAINST: OpenBSD 7.7 manual pages (2026-01-06)
+# VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-02-11)
 
 # - All configuration syntax validated against man.openbsd.org
 
-# - smtpd.conf updated to OpenBSD 7.7 syntax (PKI-based TLS)
+# - smtpd.conf updated to OpenBSD 7.8 syntax (PKI-based TLS)
 
 # - relayd.conf includes TLS keypair directives
 
@@ -1432,7 +1432,7 @@ main() {
 
   if [[ $arg1 = --help ]]; then
 
-    print -r -- "Sets up OpenBSD 7.7 for Rails with DNSSEC and minimal OpenSMTPD.
+    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and minimal OpenSMTPD.
 Usage: doas zsh openbsd.sh [--help | --resume]"
 
     exit 0
