@@ -1963,7 +1963,7 @@ log "   A platform for community mutual aid and resource sharing"
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.7.
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN ENTRY POINT - Must be at end of file after all function definitions
