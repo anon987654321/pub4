@@ -53,8 +53,14 @@ module MASTER
 
     # Generate image using Replicate API
     def generate_image(prompt:, model: nil)
-      model_symbol = model_symbol_from_id(model) if model
-      model_symbol ||= :flux_pro
+      # If model is already a symbol, use it directly; otherwise try to convert
+      model_symbol = if model.nil?
+        :flux_pro
+      elsif model.is_a?(Symbol)
+        model
+      else
+        model_symbol_from_id(model) || :flux_pro
+      end
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
@@ -220,9 +226,14 @@ module MASTER
 
     private
 
+    # Reverse lookup cache for model ID to symbol
+    def reverse_model_map
+      @reverse_model_map ||= MASTER::Replicate::MODELS.invert.freeze
+    end
+
     # Convert model ID to symbol if it exists in MODELS
     def model_symbol_from_id(model_id)
-      MASTER::Replicate::MODELS.find { |k, v| v == model_id }&.first
+      reverse_model_map[model_id]
     end
   end
 end

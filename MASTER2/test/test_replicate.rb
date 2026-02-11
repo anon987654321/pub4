@@ -101,7 +101,7 @@ class TestReplicate < Minitest::Test
 
   def test_available_without_api_key
     original_key = ENV['REPLICATE_API_KEY']
-    ENV['REPLICATE_API_KEY'] = nil
+    ENV.delete('REPLICATE_API_KEY')
     
     refute @replicate.available?
     
@@ -110,7 +110,7 @@ class TestReplicate < Minitest::Test
 
   def test_generate_video_returns_error_without_api_key
     original_key = ENV['REPLICATE_API_KEY']
-    ENV['REPLICATE_API_KEY'] = nil
+    ENV.delete('REPLICATE_API_KEY')
     
     result = @replicate.generate_video(prompt: "test")
     assert result.err?
@@ -121,7 +121,7 @@ class TestReplicate < Minitest::Test
 
   def test_generate_music_returns_error_without_api_key
     original_key = ENV['REPLICATE_API_KEY']
-    ENV['REPLICATE_API_KEY'] = nil
+    ENV.delete('REPLICATE_API_KEY')
     
     result = @replicate.generate_music(prompt: "test")
     assert result.err?
@@ -132,7 +132,7 @@ class TestReplicate < Minitest::Test
 
   def test_batch_generate_returns_error_without_api_key
     original_key = ENV['REPLICATE_API_KEY']
-    ENV['REPLICATE_API_KEY'] = nil
+    ENV.delete('REPLICATE_API_KEY')
     
     result = @replicate.batch_generate(["prompt1", "prompt2"])
     assert result.err?
@@ -146,7 +146,7 @@ class TestReplicate < Minitest::Test
     
     result = @replicate.batch_generate([])
     assert result.err?
-    assert_match(/empty/, result.error)
+    assert_equal "Prompts array cannot be empty", result.error
   end
 
   def test_batch_generate_returns_error_with_nil_prompts
@@ -154,6 +154,6 @@ class TestReplicate < Minitest::Test
     
     result = @replicate.batch_generate(nil)
     assert result.err?
-    assert_match(/empty/, result.error)
+    assert_equal "Prompts array cannot be empty", result.error
   end
 end
