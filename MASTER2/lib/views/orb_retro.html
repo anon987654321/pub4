@@ -1,145 +1,271 @@
 <!DOCTYPE html>
-<html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Retro Orb</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orb Retro - CRT Oscilloscope</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{background:#000;display:flex;align-items:center;justify-content:center}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges}
-.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(transparent 0px,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:10}
-.crt{position:fixed;inset:0;box-shadow:inset 0 0 120px rgba(0,0,0,0.7);pointer-events:none;z-index:11}
+:root {
+  --mint: #5af0b6;
+  --mint-dim: #2a7a5a;
+  --mint-ghost: #153a2d;
+  --bg: #050505;
+  --text: #c8d0cc;
+  --text-2: #5a6a62;
+  --error: #f06050;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+#canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: crisp-edges;
+  filter: contrast(1.1) brightness(1.05);
+}
+
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #canvas {
+    animation: none;
+    filter: none;
+  }
+}
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<div class="scanlines"></div>
-<div class="crt"></div>
+<div class="container">
+  <canvas id="canvas"></canvas>
+</div>
+
 <script>
-var canvas=document.getElementById('canvas');
-var ctx=canvas.getContext('2d');
-var w,h,cx,cy;
-var time=0;
-var bassWobble=0;
-var beatEnv=0;
-var audio={bass:0.5,mid:0.5,high:0.5,beat:0};
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { alpha: false });
 
-var PAL=[];
-for(var r=0;r<6;r++)for(var g=0;g<7;g++)for(var b=0;b<6;b++)PAL.push([r*51,g*42,b*51]);
-for(var i=0;i<4;i++)PAL.push([i*85,i*85,i*85]);
+let w = canvas.width = window.innerWidth;
+let h = canvas.height = window.innerHeight;
+let cx = w / 2;
+let cy = h / 2;
+let scale = Math.min(w, h) * 0.35;
 
-function quantize(r,g,b){
-  var best=PAL[0],minD=Infinity;
-  for(var i=0;i<PAL.length;i++){
-    var c=PAL[i],d=(r-c[0])*(r-c[0])+(g-c[1])*(g-c[1])+(b-c[2])*(b-c[2]);
-    if(d<minD){minD=d;best=c}
-  }
-  return best;
+const DELAY_BUFFER_SIZE = 256;
+const delayBuffer = new Float32Array(DELAY_BUFFER_SIZE);
+let delayIndex = 0;
+
+let audioCtx = null;
+let analyser = null;
+let dataArray = null;
+let audioLevel = 0;
+let state = 'idle';
+
+const STATE_PARAMS = {
+  idle: { decay: 0.05, reactivity: 0.3, speed: 0.5 },
+  thinking: { decay: 0.12, reactivity: 0.6, speed: 0.8 },
+  speaking: { decay: 0.20, reactivity: 1.0, speed: 1.0 }
+};
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function shade(t) {
+  t = Math.max(0, Math.min(1, t));
+  const r = Math.round(5 + t * 85);
+  const g = Math.round(5 + t * 235);
+  const b = Math.round(5 + t * 177);
+  return "rgb(" + r + "," + g + "," + b + ")";
 }
 
-function rgb(r,g,b){var q=quantize(r,g,b);return 'rgb('+q[0]+','+q[1]+','+q[2]+')'}
-
-function resize(){
-  w=Math.min(256,window.innerWidth);
-  h=Math.min(256,window.innerHeight);
-  canvas.width=w;
-  canvas.height=h;
-  canvas.style.width=window.innerWidth+'px';
-  canvas.style.height=window.innerHeight+'px';
-  cx=w/2;cy=h/2;
-}
-resize();
-window.addEventListener('resize',resize);
-
-var segments=16;
-var cosTable=new Float32Array(segments);
-var sinTable=new Float32Array(segments);
-for(var i=0;i<segments;i++){
-  var a=i*Math.PI*2/segments;
-  cosTable[i]=Math.cos(a);
-  sinTable[i]=Math.sin(a);
-}
-
-function drawLine(x1,y1,x2,y2,color){
-  var dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
-  var sx=x1<x2?1:-1,sy=y1<y2?1:-1;
-  var err=dx-dy;
-  ctx.fillStyle=color;
-  while(true){
-    if(x1>=0&&x1<w&&y1>=0&&y1<h)ctx.fillRect(Math.floor(x1),Math.floor(y1),1,1);
-    if(Math.floor(x1)===Math.floor(x2)&&Math.floor(y1)===Math.floor(y2))break;
-    var e2=2*err;
-    if(e2>-dy){err-=dy;x1+=sx}
-    if(e2<dx){err+=dx;y1+=sy}
-  }
-}
-
-function drawOrb(){
-  var layers=6;
-  var baseRadius=28;
-  var fov=150+audio.bass*30;
+function estimatePeriod(buffer) {
+  let crossings = 0;
+  let lastSign = buffer[0] >= 0;
   
-  for(var layer=0;layer<layers;layer++){
-    var z=(layer-layers/2)*20+bassWobble*5;
-    var scale=fov/(fov+z);
-    var radius=(baseRadius+audio.bass*8+beatEnv*4)*scale;
-    
-    var pulse=beatEnv*40;
-    var depth=layer/6;
-    var r=0+depth*30+pulse*0.1;
-    var g=160+depth*50+pulse*0.3;
-    var b=180+depth*30+pulse*0.2;
-    var color=rgb(r,g,b);
-    
-    var prevX,prevY;
-    for(var i=0;i<=segments;i++){
-      var idx=i%segments;
-      var wobble=bassWobble*0.1;
-      var ct=Math.cos(time+wobble);
-      var st=Math.sin(time+wobble);
-      var cosA=cosTable[idx]*ct-sinTable[idx]*st;
-      var sinA=sinTable[idx]*ct+cosTable[idx]*st;
-      var px=cx+cosA*radius;
-      var py=cy+sinA*radius;
-      
-      if(i>0)drawLine(prevX,prevY,px,py,color);
-      prevX=px;prevY=py;
+  for (let i = 1; i < buffer.length; i++) {
+    const sign = buffer[i] >= 0;
+    if (sign !== lastSign) {
+      crossings++;
+      lastSign = sign;
     }
   }
+  
+  if (crossings < 2) return 64;
+  const period = Math.floor((buffer.length / crossings) * 2);
+  return Math.max(16, Math.min(128, period));
 }
 
-function frame(){
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,w,h);
+function initAudio() {
+  if (audioCtx) return;
   
-  bassWobble=bassWobble*0.92+audio.bass*audio.beat*0.08;
-  beatEnv=beatEnv*0.94+(audio.beat>0.5?0.4:0)*0.06;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  analyser.smoothingTimeConstant = 0.7;
   
-  drawOrb();
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
   
-  time+=0.02;
-  requestAnimationFrame(frame);
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(stream => {
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+    })
+    .catch(err => {
+      console.warn('Audio not available:', err);
+      generateTestSignal();
+    });
 }
 
-navigator.mediaDevices?.getUserMedia({audio:true}).then(function(stream){
-  var actx=new AudioContext();
-  var src=actx.createMediaStreamSource(stream);
-  var an=actx.createAnalyser();
-  an.fftSize=256;
-  src.connect(an);
-  var data=new Uint8Array(an.frequencyBinCount);
-  (function audioLoop(){
-    an.getByteFrequencyData(data);
-    var bass=0;
-    for(var i=0;i<20;i++)bass+=data[i];
-    audio.bass=bass/20/255;
-    audio.beat=audio.bass>0.6?1:0;
-    requestAnimationFrame(audioLoop);
-  })();
-}).catch(function(){});
+function generateTestSignal() {
+  if (!dataArray) return;
+  const params = STATE_PARAMS[state] || STATE_PARAMS.idle;
+  const amp = audioLevel > 0 ? audioLevel : (0.3 + Math.random() * 0.2) * params.reactivity;
+  
+  for (let i = 0; i < dataArray.length; i++) {
+    const t = i / dataArray.length;
+    const freq = 2 + (state === 'speaking' ? 8 : 4);
+    const val = Math.sin(t * Math.PI * freq + Date.now() * 0.001 * params.speed) * amp;
+    dataArray[i] = Math.floor((val + 1) * 127.5);
+  }
+}
 
-frame();
+function drawVignette() {
+  const gradient = ctx.createRadialGradient(cx, cy, scale * 0.5, cx, cy, scale * 1.8);
+  gradient.addColorStop(0, 'rgba(5,5,5,0)');
+  gradient.addColorStop(0.7, 'rgba(5,5,5,0.3)');
+  gradient.addColorStop(1, 'rgba(5,5,5,0.8)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function drawScanlines() {
+  if (prefersReducedMotion) return;
+  
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#050505';
+  for (let y = 0; y < h; y += 4) {
+    ctx.fillRect(0, y, w, 2);
+  }
+  ctx.globalAlpha = 1.0;
+}
+
+function render() {
+  const params = STATE_PARAMS[state] || STATE_PARAMS.idle;
+  
+  ctx.fillStyle = 'rgba(5,5,5,0.12)';
+  ctx.fillRect(0, 0, w, h);
+  
+  if (!analyser) {
+    generateTestSignal();
+  } else {
+    analyser.getByteTimeDomainData(dataArray);
+  }
+  
+  if (!dataArray) {
+    requestAnimationFrame(render);
+    return;
+  }
+  
+  const buffer = new Float32Array(dataArray.length);
+  for (let i = 0; i < dataArray.length; i++) {
+    buffer[i] = (dataArray[i] - 128) / 128.0 * params.reactivity;
+  }
+  
+  const period = estimatePeriod(buffer);
+  const delay = Math.floor(period / 4);
+  
+  for (let i = 0; i < buffer.length; i++) {
+    delayBuffer[delayIndex] = buffer[i];
+    delayIndex = (delayIndex + 1) % DELAY_BUFFER_SIZE;
+  }
+  
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  let prevX = 0, prevY = 0;
+  
+  for (let i = 0; i < buffer.length - 1; i++) {
+    const x = buffer[i];
+    const yIdx = (delayIndex + DELAY_BUFFER_SIZE - delay - (buffer.length - i)) % DELAY_BUFFER_SIZE;
+    const y = delayBuffer[yIdx];
+    
+    const sx = cx + x * scale;
+    const sy = cy - y * scale;
+    
+    if (i > 0) {
+      const dx = sx - prevX;
+      const dy = sy - prevY;
+      const speed = Math.sqrt(dx * dx + dy * dy) / scale;
+      const brightness = Math.min(1.0, 0.3 / (speed + 0.01));
+      
+      const gradient = ctx.createLinearGradient(prevX, prevY, sx, sy);
+      gradient.addColorStop(0, shade(brightness * 0.8));
+      gradient.addColorStop(1, shade(brightness));
+      
+      ctx.strokeStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+      
+      if (brightness > 0.6) {
+        ctx.fillStyle = shade(brightness * 0.4);
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    prevX = sx;
+    prevY = sy;
+  }
+  
+  drawVignette();
+  drawScanlines();
+  
+  requestAnimationFrame(render);
+}
+
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'state') state = e.data.mode;
+  if (e.data && e.data.type === 'audio') audioLevel = e.data.level;
+});
+
+window.addEventListener('resize', () => {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  cx = w / 2;
+  cy = h / 2;
+  scale = Math.min(w, h) * 0.35;
+});
+
+canvas.addEventListener('click', () => {
+  initAudio();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0, 0, w, h);
+  render();
+});
 </script>
 </body>
 </html>
