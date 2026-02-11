@@ -17,17 +17,23 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
+    # Module-level synchronization for lazy initialization
+    @stoplight_config_mutex = Mutex.new
+    @stoplight_configured = false
+
+    class << self
+      attr_accessor :stoplight_config_mutex, :stoplight_configured
+    end
+
     # Lazy initialization for Stoplight configuration
     # Only configures Stoplight on first use, ensuring graceful degradation
     def ensure_stoplight_configured
       return unless STOPLIGHT_AVAILABLE
-      return if @stoplight_configured
       
-      @stoplight_config_mutex ||= Mutex.new
-      @stoplight_config_mutex.synchronize do
-        return if @stoplight_configured  # Double-check after acquiring lock
+      self.class.stoplight_config_mutex.synchronize do
+        return if self.class.stoplight_configured  # Double-check after acquiring lock
         
-        @stoplight_configured = true
+        self.class.stoplight_configured = true
         Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
       end
     end
