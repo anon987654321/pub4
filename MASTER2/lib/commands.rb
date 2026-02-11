@@ -254,6 +254,150 @@ module MASTER
     end
   end
 
+  # Autocomplete - Tab completion for REPL
+  module Autocomplete
+    extend self
+
+    COMMANDS = %w[help status budget clear history refactor chamber evolve speak exit quit ask scan].freeze
+
+    def complete(partial, context: nil)
+      completions = []
+
+      # Command completion
+      if partial.match?(/^\w*$/)
+        completions += COMMANDS.select { |c| c.start_with?(partial) }
+      end
+
+      # File path completion
+      if partial.include?('/') || partial.include?('\\') || partial.end_with?('.rb')
+        completions += complete_path(partial)
+      end
+
+      # After known commands, suggest relevant completions
+      if context
+        case context
+        when 'refactor', 'chamber'
+          completions += complete_path(partial).select { |p| p.end_with?('.rb') }
+        when 'speak', 'say'
+          # No completion for freeform text
+        end
+      end
+
+      completions.uniq
+    end
+
+    def complete_path(partial)
+      dir = File.dirname(partial)
+      dir = '.' if dir == partial
+      base = File.basename(partial)
+
+      return [] unless Dir.exist?(dir)
+
+      Dir.entries(dir)
+         .reject { |e| e.start_with?('.') }
+         .select { |e| e.start_with?(base) }
+         .map { |e| File.join(dir, e) }
+    rescue StandardError
+      []
+    end
+
+    def setup_readline
+      return unless defined?(Readline)
+
+      Readline.completion_proc = proc do |input|
+        complete(input)
+      end
+      Readline.completion_append_character = ' '
+    end
+
+    def setup_tty(reader)
+      return unless reader.respond_to?(:on)
+
+      reader.on(:keypress) do |event|
+        if event.key.name == :tab
+          word = event.line.text.split.last || ''
+          matches = complete(word)
+          if matches.size == 1
+            # Replace word with completion
+            event.line.replace(event.line.text.sub(/#{Regexp.escape(word)}$/, matches.first))
+          elsif matches.size > 1
+            puts "\n#{matches.join('  ')}"
+          end
+        end
+      end
+    end
+  end
+
+  # ProblemSolver - Systematic 5-fix approach to debugging
+  module ProblemSolver
+    extend self
+
+    HOSTILE = [
+      "What if the bug is in a different file?",
+      "What if your fix creates a worse bug?",
+      "What if the 'bug' is correct behavior?",
+      "What if 5 other places have this bug?",
+      "What if it worked yesterday—what changed?",
+      "What if the error message lies?",
+      "What if it's data, not code?",
+      "What if it only works on your machine?",
+      "What if you're fixing symptoms, not cause?",
+      "What if deleting the feature is simpler?"
+    ].freeze
+
+    FIXES = {
+      surgical:   { effort: 1, desc: "Minimal change to exact broken line" },
+      defensive:  { effort: 2, desc: "Add guards, nil checks, validations" },
+      refactor:   { effort: 3, desc: "Restructure to eliminate bug class" },
+      workaround: { effort: 2, desc: "Route around it, don't touch it" },
+      rewrite:    { effort: 4, desc: "Rewrite function from scratch" }
+    }.freeze
+
+    PROMPT = <<~P.freeze
+      You are a senior debugger. Analyze this bug systematically.
+
+      ERROR: {{ERROR}}
+      CODE: {{CODE}}
+
+      Provide:
+      ROOT: [Why this happens - root cause, not symptoms]
+      DOUBT: [Challenge your diagnosis - what could be wrong?]
+
+      FIXES (safest to most invasive):
+      1. SURGICAL: [Exact minimal change]
+      2. DEFENSIVE: [Guards and validations]
+      3. REFACTOR: [Structural fix]
+      4. WORKAROUND: [Avoid the broken code]
+      5. REWRITE: [Clean rewrite if needed]
+
+      PICK: [Recommended fix and why]
+      VERIFY: [How to confirm fix works]
+      SIMILAR: [Other places with same bug pattern]
+    P
+
+    def analyze(error:, code:, llm: LLM)
+      prompt = PROMPT.gsub("{{ERROR}}", error.to_s[0, 1000])
+                     .gsub("{{CODE}}", code.to_s[0, 3000])
+
+      result = llm.ask(prompt, tier: :fast)
+      if result.ok?
+        {
+          analysis: result.value[:content],
+          hostile_check: HOSTILE.sample,
+          fixes: FIXES.keys
+        }
+      else
+        { error: result.error }
+      end
+    rescue StandardError => e
+      { error: e.message }
+    end
+
+    def hostile_check
+      HOSTILE.sample
+    end
+  end
+
   # Keybindings - Keyboard shortcuts for REPL
   module Keybindings
     BINDINGS = {

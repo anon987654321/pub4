@@ -38,11 +38,10 @@ require_relative "boot"  # includes Pledge
 # UI & NN/g compliance
 require_relative "ui"
 require_relative "help"  # includes Onboarding
-require_relative "autocomplete"
 require_relative "progress"
 require_relative "undo"
 require_relative "dashboard"
-require_relative "commands"  # includes Keybindings
+require_relative "commands"  # includes Keybindings, Autocomplete, ProblemSolver
 require_relative "confirmations"
 require_relative "error_suggestions"
 require_relative "nng_checklist"
@@ -62,7 +61,6 @@ require_relative "creative_chamber"
 # Tools
 require_relative "shell"  # includes GHHelper
 require_relative "introspection"  # Unified introspection (includes SelfMap, SelfCritique, SelfRepair, SelfTest)
-require_relative "problem_solver"
 require_relative "evolve"  # includes Momentum
 require_relative "validator"
 require_relative "file_processor"  # includes FileHygiene, Reflow
@@ -91,8 +89,8 @@ require_relative "speech"
 end
 
 # Agents
-require_relative "agent"  # includes AgentPool
-require_relative "agent_firewall"
+require_relative "agent"  # includes AgentPool, AgentFirewall
+require_relative "agent_autonomy"
 
 # Meta/Self-improvement
 require_relative "code_review"
