@@ -25,7 +25,7 @@ module MASTER
 
     # RepLigen command handler
     def repligen_command(cmd, args)
-      require_relative "repligen_bridge"
+      # RepLigenBridge is now in replicate.rb
       
       case cmd
       when "repligen", "generate-image"
@@ -54,7 +54,7 @@ module MASTER
 
     # PostPro command handler
     def postpro_command(cmd, args)
-      require_relative "postpro_bridge"
+      # PostProBridge is now in replicate.rb
       
       case cmd
       when "postpro"

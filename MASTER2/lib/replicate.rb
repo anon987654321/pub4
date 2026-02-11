@@ -3,7 +3,6 @@
 require 'net/http'
 require 'json'
 require 'uri'
-require_relative 'timeouts'
 
 module MASTER
   # Replicate - Image generation via Replicate API
