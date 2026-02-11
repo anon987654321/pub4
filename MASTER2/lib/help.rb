@@ -8,10 +8,16 @@ module MASTER
     COMMANDS = {
       # Queries
       ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query },
-      refactor: { desc: "Refactor a file", usage: "refactor <file>", group: :query },
+      refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query },
       chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query },
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query },
       opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query },
+      # Analysis
+      hunt: { desc: "8-phase bug analysis", usage: "hunt <file>", group: :analysis },
+      critique: { desc: "Constitutional validation", usage: "critique <file>", group: :analysis },
+      learn: { desc: "Show matching learned patterns", usage: "learn <file>", group: :analysis },
+      conflict: { desc: "Detect principle conflicts", usage: "conflict", group: :analysis },
+      scan: { desc: "Scan for code smells", usage: "scan [path]", group: :analysis },
       # Session
       session: { desc: "Session management", usage: "session [new|save|load]", group: :session },
       sessions: { desc: "List saved sessions", usage: "sessions", group: :session },
@@ -41,6 +47,7 @@ module MASTER
 
     GROUPS = {
       query: "Queries",
+      analysis: "Analysis",
       session: "Session",
       system: "System",
       util: "Utility",
