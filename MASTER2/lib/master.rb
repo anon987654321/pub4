@@ -133,7 +133,7 @@ require_relative "violations"
 require_relative "smells"
 require_relative "bug_hunting"
 require_relative "planner"
-require_relative "reflection_memory"
+
 
 # Generators (restored from historical features)
 require_relative "generators/html"
