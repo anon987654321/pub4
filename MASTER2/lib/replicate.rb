@@ -126,9 +126,6 @@ module MASTER
       private
 
       def create_prediction(model:, input:)
-        actual_input = input
-        actual_version = model
-        
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
@@ -139,8 +136,8 @@ module MASTER
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
         
-        body = { input: actual_input }
-        body[:version] = actual_version if actual_version
+        body = { input: input }
+        body[:version] = model if model
         request.body = body.to_json
 
         response = http.request(request)
