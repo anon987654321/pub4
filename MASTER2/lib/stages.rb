@@ -221,6 +221,50 @@ module MASTER
       end
     end
 
+    class EnforceAxioms
+      def call(input)
+        code = input[:code] || input[:text] || input[:response] || ""
+        return Result.ok(input) if code.empty?
+        
+        language = detect_language(input[:file_path] || input[:language])
+        
+        result = UniversalEnforce.enforce_on_code(
+          code: code,
+          language: language,
+          path: input[:file_path]
+        )
+        
+        if result.ok?
+          violations = result.value[:violations]
+          critical = violations.select { |v| v[:severity] == :error }
+          
+          if critical.any? && input[:strict_enforcement]
+            return Result.err("Code violates #{critical.size} critical axioms")
+          end
+          
+          Result.ok(input.merge(
+            axiom_violations: violations,
+            axiom_errors: critical.size,
+            axiom_warnings: violations.count { |v| v[:severity] == :warn },
+            enforced: true
+          ))
+        else
+          Result.ok(input.merge(enforced: false, enforcement_error: result.error))
+        end
+      end
+      
+      private
+      
+      def detect_language(hint)
+        case hint.to_s
+        when /\.rb$/, /ruby/i then :ruby
+        when /\.js$/, /javascript/i then :javascript
+        when /\.py$/, /python/i then :python
+        else :ruby
+        end
+      end
+    end
+
     class Execute
       def call(input)
         response = input[:response] || ""

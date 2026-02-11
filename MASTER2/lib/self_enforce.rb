@@ -22,6 +22,10 @@ module MASTER
       violations += check_bare_rescues
       violations += check_comment_density
       violations += check_file_sizes
+      violations += check_logic_inconsistencies
+      violations += check_code_smells
+      violations += check_naming_consistency
+      violations += check_duplicated_logic
       violations
     end
 
@@ -203,6 +207,227 @@ module MASTER
       else
         nil
       end
+    end
+
+    def check_logic_inconsistencies
+      violations = []
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        lines = content.lines
+        
+        lines.each_with_index do |line, idx|
+          if line =~ /if\s+(.+)\s*$/
+            condition = $1.strip
+            
+            if condition =~ /&&.*\|\|/ && !(condition =~ /\(.*\)/)
+              violations << {
+                axiom: :SIMPLEST_WORKS,
+                severity: :warn,
+                file: file,
+                line: idx + 1,
+                message: "Mixed && and || without parentheses - ambiguous precedence",
+                fix: "Add parentheses to clarify: (a && b) || c"
+              }
+            end
+            
+            if condition =~ /\s==\s*true\b|\s==\s*false\b/
+              violations << {
+                axiom: :BE_CONCISE,
+                severity: :info,
+                file: file,
+                line: idx + 1,
+                message: "Comparing to true/false is redundant",
+                fix: "Use 'if variable' or 'unless variable' directly"
+              }
+            end
+            
+            if condition =~ /!\s*!\s*/
+              violations << {
+                axiom: :SELF_EXPLAINING,
+                severity: :info,
+                file: file,
+                line: idx + 1,
+                message: "Double negation (!!) is unclear",
+                fix: "Convert to explicit boolean or truthy check"
+              }
+            end
+          end
+          
+          if line =~ /if\s+.*\s+then\s+.*\s+else\s+.*\s+end/ && line.length > 80
+            violations << {
+              axiom: :REFLOW,
+              severity: :info,
+              file: file,
+              line: idx + 1,
+              message: "One-line if/else/end is too long and hard to read",
+              fix: "Break into multiple lines"
+            }
+          end
+          
+          if line =~ /return\s+if\b/ && lines[idx - 1] && lines[idx - 1] =~ /return\b/
+            violations << {
+              axiom: :SIMPLEST_WORKS,
+              severity: :warn,
+              file: file,
+              line: idx + 1,
+              message: "Consecutive returns - second may be unreachable",
+              fix: "Review control flow logic"
+            }
+          end
+        end
+      end
+      violations
+    end
+
+    def check_code_smells
+      violations = []
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        lines = content.lines
+        
+        lines.each_with_index do |line, idx|
+          if line =~ /\.nil\?\s*\?\s*.*:\s*.*/
+            violations << {
+              axiom: :BE_CONCISE,
+              severity: :info,
+              file: file,
+              line: idx + 1,
+              message: "Ternary for nil check can use ||",
+              fix: "Use: value || default"
+            }
+          end
+          
+          if line =~ /if\s+.*\.empty\?.*\n.*\.size\s*[<>=]/
+            violations << {
+              axiom: :ONE_JOB,
+              severity: :info,
+              file: file,
+              line: idx + 1,
+              message: "Checking both empty? and size - pick one",
+              fix: "Use either empty? or size comparison, not both"
+            }
+          end
+          
+          if line =~ /def\s+(\w+).*\n.*raise.*NotImplementedError/
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :warn,
+              file: file,
+              line: idx + 1,
+              message: "Method defined but raises NotImplementedError",
+              fix: "Remove method or implement it"
+            }
+          end
+          
+          if line =~ /TODO|FIXME|HACK|XXX/
+            violations << {
+              axiom: :PRUNE,
+              severity: :info,
+              file: file,
+              line: idx + 1,
+              message: "TODO/FIXME/HACK comment found",
+              fix: "Complete the work or remove the comment"
+            }
+          end
+          
+          if line =~ /sleep\s*\(\s*[0-9]+\s*\)/ && line =~ /sleep\s*\(\s*([5-9]|\d{2,})\s*\)/
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :warn,
+              file: file,
+              line: idx + 1,
+              message: "Long sleep (>5s) may indicate poor error handling",
+              fix: "Use exponential backoff or proper async"
+            }
+          end
+        end
+      end
+      violations
+    end
+
+    def check_naming_consistency
+      violations = []
+      
+      module_names = {}
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        
+        content.scan(/module\s+([A-Z]\w+)/) do |match|
+          name = match[0]
+          module_names[name] ||= []
+          module_names[name] << file
+        end
+        
+        content.scan(/class\s+([A-Z]\w+)/) do |match|
+          name = match[0]
+          module_names[name] ||= []
+          module_names[name] << file
+        end
+      end
+      
+      module_names.each do |name, files|
+        if files.size > 1
+          violations << {
+            axiom: :ONE_SOURCE,
+            severity: :error,
+            file: files.join(", "),
+            message: "Module/Class '#{name}' defined in #{files.size} files",
+            fix: "Consolidate into single file"
+          }
+        end
+      end
+      
+      Dir[File.join(lib_path, "*.rb")].each do |file|
+        basename = File.basename(file, ".rb")
+        content = File.read(file)
+        
+        expected_module = basename.split('_').map(&:capitalize).join
+        
+        unless content =~ /module\s+#{expected_module}\b|class\s+#{expected_module}\b/i
+          violations << {
+            axiom: :SELF_EXPLAINING,
+            severity: :info,
+            file: file,
+            message: "Filename '#{basename}' doesn't match module/class name",
+            fix: "Rename file or module to match"
+          }
+        end
+      end
+      
+      violations
+    end
+
+    def check_duplicated_logic
+      violations = []
+      
+      code_blocks = {}
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        lines = content.lines
+        
+        lines.each_cons(5).with_index do |block, idx|
+          normalized = block.map(&:strip).join("\n")
+          next if normalized.length < 50
+          next if normalized =~ /^\s*$|^\s*#/
+          
+          code_blocks[normalized] ||= []
+          code_blocks[normalized] << { file: file, line: idx + 1 }
+        end
+      end
+      
+      code_blocks.each do |code, locations|
+        if locations.size > 1
+          violations << {
+            axiom: :ONE_SOURCE,
+            severity: :warn,
+            file: locations.map { |l| "#{l[:file]}:#{l[:line]}" }.join(", "),
+            message: "Duplicated 5-line code block found in #{locations.size} places",
+            fix: "Extract to shared method"
+          }
+        end
+      end
+      
+      violations
     end
 
     def report
