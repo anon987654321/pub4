@@ -90,9 +90,12 @@ module MASTER
         max_len = [diff1.length, diff2.length].max
         return 0.0 if max_len == 0
         
-        distance = Utils.levenshtein(diff1, diff2) if defined?(Utils.levenshtein)
-        distance ||= 0
+        # Require Utils module for Levenshtein - return 0.0 (no similarity) if unavailable
+        unless defined?(Utils) && Utils.respond_to?(:levenshtein)
+          return 0.0
+        end
         
+        distance = Utils.levenshtein(diff1, diff2)
         1.0 - (distance.to_f / max_len)
       end
 
