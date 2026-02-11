@@ -125,7 +125,7 @@ module MASTER
         end
 
         Result.ok({ path: path })
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Cinematic: save preset error: #{e.class} - #{e.message}"
         Result.err("Failed to save preset: #{e.message}")
       end
@@ -138,7 +138,7 @@ module MASTER
 
         return Result.err("Preset not found: #{name}") unless File.exist?(path)
 
-        preset = YAML.load_file(path)
+        preset = YAML.safe_load_file(path, permitted_classes: [Time, Date])
         pipeline = new
 
         preset['stages'].each do |stage|
@@ -146,7 +146,7 @@ module MASTER
         end
 
         Result.ok(pipeline)
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Cinematic: load preset error: #{e.class} - #{e.message}"
         Result.err("Failed to load preset: #{e.message}")
       end
@@ -205,10 +205,9 @@ module MASTER
         
         intermediate_dir = File.join(Paths.var, 'pipeline')
         FileUtils.mkdir_p(intermediate_dir)
-        
         path = File.join(intermediate_dir, filename)
         Replicate.download_file(output, path)
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Cinematic: save_intermediate failed: #{e.message}"
         # Intermediate saves are optional, continue execution
       end
@@ -342,7 +341,7 @@ module MASTER
       pipelines_dir = File.join(Paths.data, 'pipelines')
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
-          preset = YAML.load_file(path)
+          preset = YAML.safe_load_file(path, permitted_classes: [Time, Date])
           { 
             name: preset['name'], 
             description: preset['description'], 

@@ -10,6 +10,10 @@ module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
+    # Timeout constants (moved from timeouts.rb)
+    LLM_TIMEOUT = (ENV['MASTER_LLM_TIMEOUT'] || 60).to_i
+    WEB_TIMEOUT = (ENV['MASTER_WEB_TIMEOUT'] || 30).to_i
+
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
