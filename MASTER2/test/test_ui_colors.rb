@@ -62,8 +62,8 @@ class TestUIColors < Minitest::Test
     assert result.is_a?(String), "blue should return a string"
   end
 
-  def test_color_methods_accept_text_input
-    # Test that color methods can accept and process text
+  def test_colored_output_contains_input_text
+    # Test that color methods preserve the input text in colored output
     text = "Hello World"
 
     assert MASTER::UI.yellow(text).include?("Hello World"), "yellow should contain input text"
