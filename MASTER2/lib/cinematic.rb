@@ -10,33 +10,35 @@ module MASTER
     extend self
 
     # Cinematic presets - film looks and color grades
-    PRESETS = {
-      'blade-runner' => {
-        description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
-        models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
-        params: { guidance_scale: 12.0, strength: 0.6 }
-      },
-      'wes-anderson' => {
-        description: 'Symmetrical, pastel palette, centered compositions',
-        models: [Replicate::MODELS[:sdxl]],
-        params: { guidance_scale: 8.0, strength: 0.5 }
-      },
-      'noir' => {
-        description: 'High contrast black and white, dramatic shadows',
-        models: [Replicate::MODELS[:sdxl]],
-        params: { guidance_scale: 10.0, strength: 0.7 }
-      },
-      'golden-hour' => {
-        description: 'Warm, soft, glowing light',
-        models: [Replicate::MODELS[:sdxl]],
-        params: { guidance_scale: 9.0, strength: 0.5 }
-      },
-      'teal-orange' => {
-        description: 'Hollywood blockbuster: teal shadows, orange highlights',
-        models: [Replicate::MODELS[:sdxl]],
-        params: { guidance_scale: 11.0, strength: 0.6 }
-      }
-    }.freeze
+    def self.presets
+      @presets ||= {
+        'blade-runner' => {
+          description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
+          models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
+          params: { guidance_scale: 12.0, strength: 0.6 }
+        },
+        'wes-anderson' => {
+          description: 'Symmetrical, pastel palette, centered compositions',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 8.0, strength: 0.5 }
+        },
+        'noir' => {
+          description: 'High contrast black and white, dramatic shadows',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 10.0, strength: 0.7 }
+        },
+        'golden-hour' => {
+          description: 'Warm, soft, glowing light',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 9.0, strength: 0.5 }
+        },
+        'teal-orange' => {
+          description: 'Hollywood blockbuster: teal shadows, orange highlights',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 11.0, strength: 0.6 }
+        }
+      }.freeze
+    end
 
     # Pipeline builder class
     class Pipeline
@@ -257,7 +259,7 @@ module MASTER
 
     # Apply a named preset
     def apply_preset(input, preset_name)
-      preset = PRESETS[preset_name]
+      preset = presets[preset_name]
       return Result.err("Unknown preset: #{preset_name}") unless preset
 
       pipeline = Pipeline.new
@@ -302,8 +304,8 @@ module MASTER
 
     # List available presets
     def list_presets
-      builtin = PRESETS.keys.map do |name|
-        { name: name, description: PRESETS[name][:description], source: 'builtin' }
+      builtin = presets.keys.map do |name|
+        { name: name, description: presets[name][:description], source: 'builtin' }
       end
 
       # Load custom presets from disk

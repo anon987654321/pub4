@@ -9,44 +9,46 @@ module MASTER
 
     # Model catalog - delegates to Replicate::MODELS for canonical registry
     # Organized by category for easy discovery
-    WILD_CHAIN = {
-      image_gen: [
-        { model: MASTER::Replicate::MODELS[:flux_pro], name: "Flux Pro" },
-        { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
-        { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
-        { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
-        { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" }
-      ],
-      video_gen: [
-        { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
-        { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
-        { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
-        { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
-        { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" }
-      ],
-      enhance: [
-        { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
-        { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
-        { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
-        { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" }
-      ],
-      audio: [
-        { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
-        { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" }
-      ],
-      transcribe: [
-        { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" }
-      ]
-    }.freeze
+    def self.wild_chain
+      @wild_chain ||= {
+        image_gen: [
+          { model: MASTER::Replicate::MODELS[:flux_pro], name: "Flux Pro" },
+          { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
+          { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
+          { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
+          { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" }
+        ],
+        video_gen: [
+          { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
+          { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
+          { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
+          { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
+          { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" }
+        ],
+        enhance: [
+          { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
+          { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
+          { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
+          { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" }
+        ],
+        audio: [
+          { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
+          { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" }
+        ],
+        transcribe: [
+          { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" }
+        ]
+      }.freeze
+    end
 
     # Get all models for a category
     def models_for(category)
-      WILD_CHAIN[category.to_sym] || []
+      wild_chain[category.to_sym] || []
     end
 
     # List all available categories
     def categories
-      WILD_CHAIN.keys
+      wild_chain.keys
     end
 
     # Generate image using Replicate API
@@ -61,7 +63,7 @@ module MASTER
 
     # Generate video using Replicate API
     def generate_video(prompt:, model: nil)
-      model_id = model || WILD_CHAIN[:video_gen].first[:model]
+      model_id = model || wild_chain[:video_gen].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
@@ -70,7 +72,7 @@ module MASTER
 
     # Enhance image using upscaling models
     def enhance_image(image_url:, model: nil)
-      model_id = model || WILD_CHAIN[:enhance].first[:model]
+      model_id = model || wild_chain[:enhance].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
@@ -79,7 +81,7 @@ module MASTER
 
     # Get model info
     def model_info(model_id)
-      WILD_CHAIN.each do |category, models|
+      wild_chain.each do |category, models|
         models.each do |m|
           return { category: category, **m } if m[:model] == model_id
         end
@@ -90,7 +92,7 @@ module MASTER
     # List all models
     def all_models
       result = []
-      WILD_CHAIN.each do |category, models|
+      wild_chain.each do |category, models|
         models.each do |m|
           result << { category: category, **m }
         end
@@ -110,7 +112,7 @@ module MASTER
       steps.times do
         # Randomly pick a category (prefer image gen and enhance)
         category = [:image_gen, :enhance, :video_gen].sample(random: rng)
-        models = WILD_CHAIN[category]
+        models = wild_chain[category]
         
         next if models.nil? || models.empty?
         
@@ -188,7 +190,7 @@ module MASTER
       query_lower = query.to_s.downcase
       matches = []
       
-      WILD_CHAIN.each do |category, models|
+      wild_chain.each do |category, models|
         models.each do |m|
           if m[:name].downcase.include?(query_lower) || m[:model].downcase.include?(query_lower)
             matches << { category: category, **m }
