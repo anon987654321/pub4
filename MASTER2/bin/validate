@@ -21,7 +21,7 @@ def check(name)
     puts "✗"
     false
   end
-rescue => e
+rescue StandardError => e
   puts "✗ (#{e.message})"
   false
 end

@@ -190,7 +190,7 @@ end
 if __FILE__ == $PROGRAM_NAME
   begin
     generate_weekly_report
-  rescue => e
+  rescue StandardError => e
     puts "❌ Error generating report: #{e.message}"
     puts e.backtrace.first(5)
     exit 1

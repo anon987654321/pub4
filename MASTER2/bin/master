@@ -12,7 +12,7 @@ require_relative "../lib/master"
 
 begin
   MASTER::DB.setup
-rescue => e
+rescue StandardError => e
   $stderr.puts "DB setup failed: #{e.message} — running without persistence"
 end
 MASTER::Session.install_crash_handlers
