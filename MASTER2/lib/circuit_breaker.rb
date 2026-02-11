@@ -23,11 +23,6 @@ module MASTER
 
     class << self
       attr_reader :stoplight_config_mutex, :stoplight_configured
-      
-      # Private setter for configuration flag
-      private def stoplight_configured=(value)
-        @stoplight_configured = value
-      end
     end
 
     # Lazy initialization for Stoplight configuration
@@ -39,7 +34,7 @@ module MASTER
         return if self.class.stoplight_configured  # Double-check after acquiring lock
         
         Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
-        self.class.send(:stoplight_configured=, true)  # Set flag only after configuration is complete
+        self.class.instance_variable_set(:@stoplight_configured, true)  # Set flag only after configuration is complete
       end
     end
 
