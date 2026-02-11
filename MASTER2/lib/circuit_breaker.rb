@@ -1,15 +1,9 @@
 # frozen_string_literal: true
 
-begin
-  require "stoplight"
-  STOPLIGHT_AVAILABLE = true
-rescue LoadError
-  STOPLIGHT_AVAILABLE = false
-end
-
 module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls
   # Prevents cascading failures and manages request throttling
+  # Standalone implementation without external dependencies
   module CircuitBreaker
     extend self
 
@@ -17,26 +11,9 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Module-level synchronization for lazy initialization
-    @stoplight_config_mutex = Mutex.new
-    @stoplight_configured = false
-
-    class << self
-      attr_reader :stoplight_config_mutex, :stoplight_configured
-    end
-
-    # Lazy initialization for Stoplight configuration
-    # Only configures Stoplight on first use, ensuring graceful degradation
-    def ensure_stoplight_configured
-      return unless STOPLIGHT_AVAILABLE
-      
-      self.class.stoplight_config_mutex.synchronize do
-        return if self.class.stoplight_configured  # Double-check after acquiring lock
-        
-        Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
-        self.class.instance_variable_set(:@stoplight_configured, true)  # Set flag only after configuration is complete
-      end
-    end
+    # Circuit state: :closed (normal), :open (tripped), :half_open (testing recovery)
+    @circuits = {}
+    @circuit_mutex = Mutex.new
 
     # Rate limiting state
     def rate_limit_state
@@ -67,23 +44,43 @@ module MASTER
     end
 
     def run(model, &block)
-      if STOPLIGHT_AVAILABLE
-        ensure_stoplight_configured
-        Stoplight("openrouter-#{model}")
-          .with_threshold(FAILURES_BEFORE_TRIP)
-          .with_cool_off_time(CIRCUIT_RESET_SECONDS)
-          .run(&block)
-      else
-        # Fallback to simple execution without circuit breaker
-        yield
+      @circuit_mutex.synchronize do
+        circuit = get_circuit(model)
+        
+        # Check if circuit is open
+        if circuit[:state] == :open
+          if Time.now - circuit[:opened_at] > CIRCUIT_RESET_SECONDS
+            circuit[:state] = :half_open
+          else
+            raise StandardError, "Circuit breaker open for #{model}"
+          end
+        end
+        
+        begin
+          result = yield
+          # Success - reset failures if in half_open state
+          if circuit[:state] == :half_open
+            circuit[:state] = :closed
+            circuit[:failures] = 0
+          end
+          result
+        rescue => e
+          # Record failure
+          circuit[:failures] += 1
+          if circuit[:failures] >= FAILURES_BEFORE_TRIP
+            circuit[:state] = :open
+            circuit[:opened_at] = Time.now
+          end
+          raise e
+        end
       end
     end
 
     def open?(model)
-      return false unless STOPLIGHT_AVAILABLE
-      ensure_stoplight_configured
-      light = Stoplight("openrouter-#{model}")
-      light.color == Stoplight::Color::RED
+      @circuit_mutex.synchronize do
+        circuit = get_circuit(model)
+        circuit[:state] == :open
+      end
     end
 
     def circuit_closed?(model)
@@ -91,14 +88,14 @@ module MASTER
     end
 
     def record_failure(model, error)
-      return unless STOPLIGHT_AVAILABLE
-      ensure_stoplight_configured
-      Stoplight("openrouter-#{model}")
-        .with_threshold(FAILURES_BEFORE_TRIP)
-        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
-        .run { raise error }
-    rescue Stoplight::Error::RedLight
-      # Circuit is now open
+      @circuit_mutex.synchronize do
+        circuit = get_circuit(model)
+        circuit[:failures] += 1
+        if circuit[:failures] >= FAILURES_BEFORE_TRIP
+          circuit[:state] = :open
+          circuit[:opened_at] = Time.now
+        end
+      end
     end
 
     # Compatibility methods for old API
@@ -107,7 +104,21 @@ module MASTER
     end
 
     def close_circuit!(model)
-      # Stoplight handles this automatically based on cool_off_time
+      @circuit_mutex.synchronize do
+        circuit = get_circuit(model)
+        circuit[:state] = :closed
+        circuit[:failures] = 0
+      end
+    end
+
+    private
+
+    def get_circuit(model)
+      @circuits[model] ||= {
+        state: :closed,
+        failures: 0,
+        opened_at: nil
+      }
     end
   end
 end
