@@ -37,7 +37,7 @@ module MASTER
       yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
       return {} unless File.exist?(yml_path)
       
-      YAML.load_file(yml_path) || {}
+      YAML.safe_load_file(yml_path) || {}
     rescue StandardError => e
       Logging.error("Failed to load #{name}.yml: #{e.message}")
       {}

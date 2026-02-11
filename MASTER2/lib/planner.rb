@@ -237,7 +237,7 @@ module MASTER
     def load_plan
       return nil unless File.exist?(PLAN_FILE)
 
-      YAML.load_file(PLAN_FILE)
+      YAML.safe_load_file(PLAN_FILE)
     rescue StandardError
       nil
     end
@@ -263,7 +263,7 @@ module MASTER
     def load_history
       return [] unless File.exist?(PLAN_HISTORY)
 
-      YAML.load_file(PLAN_HISTORY) || []
+      YAML.safe_load_file(PLAN_HISTORY) || []
     rescue StandardError
       []
     end

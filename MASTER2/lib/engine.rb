@@ -153,7 +153,7 @@ module MASTER
         axioms_path = File.join(Paths.data, 'axioms.yml')
         return nil unless File.exist?(axioms_path)
         
-        all_axioms = YAML.load_file(axioms_path)
+        all_axioms = YAML.safe_load_file(axioms_path)
         all_axioms.select { |a| (a['priority'] || a[:priority] || 5) >= min_priority }
       rescue => e
         UI.warn("Failed to load axioms: #{e.message}")

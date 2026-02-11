@@ -73,8 +73,8 @@ module MASTER
         @personas_cache ||= begin
           YAML.safe_load_file(PERSONAS_FILE, symbolize_names: true)
         rescue ArgumentError
-          # Fallback for older YAML versions
-          YAML.load_file(PERSONAS_FILE)
+          # Fallback for older YAML versions or different parameter order
+          YAML.safe_load_file(PERSONAS_FILE)
         end
       end
 
