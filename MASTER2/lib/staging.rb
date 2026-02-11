@@ -95,15 +95,17 @@ module MASTER
       results = []
       @backups.each do |original_path, backup_path|
         result = rollback(original_path)
-        results << { path: original_path, success: result.ok? }
+        results << { path: original_path, success: result.ok?, error: result.err? ? result.error : nil }
       end
       
       successes = results.count { |r| r[:success] }
+      failures = results.reject { |r| r[:success] }
       
       if successes == results.size
         Result.ok(restored: successes, details: results)
       else
-        Result.err("Partial rollback: #{successes}/#{results.size} succeeded")
+        failed_paths = failures.map { |f| f[:path] }.join(", ")
+        Result.err("Partial rollback: #{successes}/#{results.size} succeeded. Failed: #{failed_paths}")
       end
     end
 

@@ -163,8 +163,8 @@ module MASTER
       return unless system("git rev-parse --git-dir > /dev/null 2>&1")
       
       tag_name = "evolve_checkpoint_#{Time.now.to_i}"
-      system("git tag #{tag_name} > /dev/null 2>&1")
-      tag_name
+      success = system("git", "tag", tag_name, out: File::NULL, err: File::NULL)
+      success ? tag_name : nil
     end
 
     def over_budget?
