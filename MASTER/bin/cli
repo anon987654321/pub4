@@ -1,9 +1,0 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
-# MASTER v51.0 entry point
-
-require_relative '../lib/loader'
-
-MASTER.boot
-MASTER::CLI.new.run

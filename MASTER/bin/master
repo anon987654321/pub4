@@ -1,23 +1,6 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
 
-require_relative "../lib/master"
+require_relative '../lib/master'
+require_relative '../lib/cli'
 
-MASTER::DB.setup
-MASTER::LLM.configure
-
-if ARGV.delete("--pipe")
-  require "json"
-  input = JSON.parse($stdin.read, symbolize_names: true)
-  evolve = ARGV.delete("--evolve")
-  stages = evolve ? %i[intake guard route ask evolve] : nil
-  result = MASTER::Pipeline.new(**(stages ? { stages: stages } : {})).call(input)
-  if result.ok?
-    $stdout.puts JSON.generate(result.value)
-  else
-    $stderr.puts result.error
-    exit 1
-  end
-else
-  MASTER::Pipeline.new.repl
-end
+MASTER::CLI.start(ARGV)
