@@ -26,6 +26,12 @@ module MASTER
       violations += check_code_smells
       violations += check_naming_consistency
       violations += check_duplicated_logic
+      violations += check_method_complexity
+      violations += check_unused_code
+      violations += check_security_issues
+      violations += integrate_code_review_checks
+      violations += integrate_smells_checks
+      violations += integrate_violations_checks
       violations
     end
 
@@ -427,6 +433,244 @@ module MASTER
         end
       end
       
+      violations
+    end
+
+    def check_method_complexity
+      violations = []
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        methods = content.scan(/def\s+(\w+).*?^  end/m)
+        
+        methods.each do |method_match|
+          method_body = method_match[0]
+          lines = method_body.lines.size
+          
+          if lines > 30
+            violations << {
+              axiom: :ONE_JOB,
+              severity: :warn,
+              file: file,
+              message: "Method is #{lines} lines (limit: 30)",
+              fix: "Break into smaller methods"
+            }
+          end
+          
+          nesting = method_body.scan(/\bif\b|\bcase\b|\bwhile\b|\bloop\b/).size
+          if nesting > 4
+            violations << {
+              axiom: :SIMPLEST_WORKS,
+              severity: :warn,
+              file: file,
+              message: "Method has #{nesting} nested conditionals (limit: 4)",
+              fix: "Extract guard clauses or use polymorphism"
+            }
+          end
+        end
+      end
+      violations
+    end
+
+    def check_unused_code
+      violations = []
+      all_methods = Set.new
+      all_references = Set.new
+      
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        
+        content.scan(/def\s+(self\.)?(\w+)/) do |match|
+          all_methods << match[1]
+        end
+        
+        content.scan(/\.(\w+)[\(\s]|\.(\w+)$|^(\w+)[\(\s]/) do |match|
+          all_references << match.compact.first
+        end
+      end
+      
+      unused = all_methods - all_references
+      unused.each do |method|
+        violations << {
+          axiom: :PRUNE,
+          severity: :info,
+          file: "lib/",
+          message: "Method '#{method}' may be unused",
+          fix: "Remove if truly unused or mark as public API"
+        }
+      end
+      
+      violations
+    end
+
+    def check_security_issues
+      violations = []
+      Dir[File.join(lib_path, "**/*.rb")].each do |file|
+        content = File.read(file)
+        lines = content.lines
+        
+        lines.each_with_index do |line, idx|
+          if line =~ /eval\s*\(/ && line !~ /safe_eval/
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :error,
+              file: file,
+              line: idx + 1,
+              message: "Unsafe eval() call - potential security risk",
+              fix: "Use safe_eval or refactor to avoid eval"
+            }
+          end
+          
+          if line =~ /system\s*\(|`.*`|\%x\{/ && line !~ /shell_escape|shellescape/
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :error,
+              file: file,
+              line: idx + 1,
+              message: "Shell command without escaping - injection risk",
+              fix: "Use Shellwords.escape or Shell module"
+            }
+          end
+          
+          if line =~ /password.*=.*["'].*["']|api_key.*=.*["'].*["']/i
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :error,
+              file: file,
+              line: idx + 1,
+              message: "Hardcoded credential detected",
+              fix: "Move to environment variable or secure storage"
+            }
+          end
+          
+          if line =~ /File\.open\([^,]+,\s*["']w["']\)/ && line !~ /ensure.*close/
+            violations << {
+              axiom: :FAIL_VISIBLY,
+              severity: :warn,
+              file: file,
+              line: idx + 1,
+              message: "File opened without ensure/close",
+              fix: "Use File.open with block or add ensure clause"
+            }
+          end
+        end
+      end
+      violations
+    end
+
+    def integrate_code_review_checks
+      violations = []
+      begin
+        return violations unless defined?(MASTER::CodeReview)
+        
+        Dir[File.join(lib_path, "**/*.rb")].each do |file|
+          content = File.read(file)
+          
+          MASTER::CodeReview::CHECKS.each do |check_name, check_def|
+            next unless check_def[:pattern]
+            
+            content.lines.each_with_index do |line, idx|
+              if line =~ check_def[:pattern]
+                violations << {
+                  axiom: :CODE_REVIEW,
+                  severity: check_def[:severity] || :warn,
+                  file: file,
+                  line: idx + 1,
+                  message: check_def[:message],
+                  fix: check_def[:fix] || "Review code"
+                }
+              end
+            end
+          end
+        end
+      rescue StandardError => e
+        violations << {
+          axiom: :SELF_APPLY,
+          severity: :error,
+          file: "self_enforce.rb",
+          message: "Failed to integrate CodeReview checks: #{e.message}",
+          fix: "Fix CodeReview module integration"
+        }
+      end
+      violations
+    end
+
+    def integrate_smells_checks
+      violations = []
+      begin
+        return violations unless File.exist?(File.join(lib_path, "../data/smells.yml"))
+        
+        smells = YAML.load_file(File.join(lib_path, "../data/smells.yml"))
+        
+        Dir[File.join(lib_path, "**/*.rb")].each do |file|
+          content = File.read(file)
+          
+          smells.each do |smell_name, smell_def|
+            next unless smell_def["pattern"]
+            
+            pattern = Regexp.new(smell_def["pattern"])
+            content.lines.each_with_index do |line, idx|
+              if line =~ pattern
+                violations << {
+                  axiom: :CODE_SMELL,
+                  severity: (smell_def["severity"] || "warn").to_sym,
+                  file: file,
+                  line: idx + 1,
+                  message: smell_def["description"] || smell_name.to_s,
+                  fix: smell_def["suggestion"] || "Refactor"
+                }
+              end
+            end
+          end
+        end
+      rescue StandardError => e
+        violations << {
+          axiom: :SELF_APPLY,
+          severity: :warn,
+          file: "self_enforce.rb",
+          message: "Failed to load smells.yml: #{e.message}",
+          fix: "Check smells.yml format"
+        }
+      end
+      violations
+    end
+
+    def integrate_violations_checks
+      violations = []
+      begin
+        return violations unless File.exist?(File.join(lib_path, "../data/axioms.yml"))
+        
+        axioms = YAML.load_file(File.join(lib_path, "../data/axioms.yml"))
+        
+        axioms.each do |axiom|
+          next unless axiom["pattern"]
+          
+          pattern = Regexp.new(axiom["pattern"])
+          Dir[File.join(lib_path, "**/*.rb")].each do |file|
+            content = File.read(file)
+            
+            content.lines.each_with_index do |line, idx|
+              if line =~ pattern
+                violations << {
+                  axiom: axiom["name"].to_sym,
+                  severity: (axiom["protection"] == "enforced" ? :error : :warn),
+                  file: file,
+                  line: idx + 1,
+                  message: "Violates #{axiom['name']}: #{axiom['description']}",
+                  fix: axiom["rules"]&.first || "Follow axiom rules"
+                }
+              end
+            end
+          end
+        end
+      rescue StandardError => e
+        violations << {
+          axiom: :SELF_APPLY,
+          severity: :warn,
+          file: "self_enforce.rb",
+          message: "Failed to load axioms.yml: #{e.message}",
+          fix: "Check axioms.yml format"
+        }
+      end
       violations
     end
 
