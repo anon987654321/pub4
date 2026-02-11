@@ -99,7 +99,7 @@ when "version", "-v", "--version"
   puts "MASTER2 v#{MASTER::VERSION}"
   exit 0
 
-when "help", "-h", "--help", nil
+when "help", "-h", "--help"
   puts <<~HELP
     MASTER2 - Constitutional AI Code Quality System
     
@@ -173,15 +173,14 @@ when "--daemon", "-d"
   require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
 
 else
-  # Unknown command or REPL mode
-  if command && !command.start_with?("-")
-    puts "Unknown command: #{command}"
-    puts "Run 'master help' for usage information"
-    exit 1
-  else
-    # No command = REPL mode
+  if command.nil?
+    # No command = interactive REPL mode (default)
     server = MASTER::Server.new
     Thread.new { server.start }
     MASTER::Pipeline.repl
+  else
+    puts "Unknown command: #{command}"
+    puts "Run 'master help' for usage information"
+    exit 1
   end
 end
