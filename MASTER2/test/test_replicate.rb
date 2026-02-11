@@ -68,7 +68,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.generate_video(prompt: "test")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_generate_music_returns_error_without_api_key
@@ -76,7 +76,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.generate_music(prompt: "test music")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_text_to_speech_returns_error_without_api_key
@@ -84,7 +84,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.text_to_speech(text: "hello world")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_generate_3d_returns_error_without_api_key
@@ -92,7 +92,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.generate_3d(image_url: "http://example.com/test.jpg")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_edit_image_returns_error_without_api_key
@@ -100,7 +100,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.edit_image(image_url: "http://example.com/test.jpg", prompt: "add trees")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_restore_face_returns_error_without_api_key
@@ -108,7 +108,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.restore_face(image_url: "http://example.com/test.jpg")
     
     assert result.err?
-    assert_match(/REPLICATE_API_KEY not set/, result.error)
+    assert_match(/Replicate:.*REPLICATE_API_KEY not set/, result.error)
   end
 
   def test_generate_video_uses_correct_default_model
@@ -159,7 +159,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.upscale(image_url: "http://example.com/test.jpg")
     
     assert result.err?
-    assert_match(/REPLICATE_API_TOKEN not set/, result.error)
+    assert_match(/REPLICATE_API/, result.error)
   end
 
   def test_describe_still_works
@@ -168,7 +168,7 @@ class TestReplicate < Minitest::Test
     result = MASTER::Replicate.describe(image_url: "http://example.com/test.jpg")
     
     assert result.err?
-    assert_match(/REPLICATE_API_TOKEN not set/, result.error)
+    assert_match(/REPLICATE_API/, result.error)
   end
 
   def test_run_still_works

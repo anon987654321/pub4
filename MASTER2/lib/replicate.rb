@@ -139,7 +139,7 @@ module MASTER
 
       # Generate video from text prompt
       def generate_video(prompt:, model: :hailuo, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[:hailuo]
         
@@ -156,10 +156,10 @@ module MASTER
         input = { prompt: prompt }.merge(default_params).merge(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: generate_video failed: #{prediction[:error]}") if prediction[:error]
 
-        result = wait_for_completion(prediction[:id], timeout: 300) # 5 min timeout for video
-        return Result.err("Video generation failed: #{result[:error]}") if result[:error]
+        result = wait_for_completion(prediction[:id], timeout: Timeouts::REPLICATE_TIMEOUT)
+        return Result.err("Replicate: generate_video failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
@@ -171,17 +171,17 @@ module MASTER
 
       # Generate music from text prompt
       def generate_music(prompt:, model: :musicgen, duration: 10, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[:musicgen]
         
         input = { prompt: prompt, duration: duration }.merge(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: generate_music failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
-        return Result.err("Music generation failed: #{result[:error]}") if result[:error]
+        return Result.err("Replicate: generate_music failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
@@ -194,7 +194,7 @@ module MASTER
 
       # Text-to-speech synthesis
       def text_to_speech(text:, model: :bark, voice: nil, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[:bark]
         
@@ -203,10 +203,10 @@ module MASTER
         input.merge!(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: text_to_speech failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
-        return Result.err("TTS failed: #{result[:error]}") if result[:error]
+        return Result.err("Replicate: text_to_speech failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
@@ -218,17 +218,17 @@ module MASTER
 
       # Generate 3D model from image
       def generate_3d(image_url:, model: :triposr, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[:triposr]
         
         input = { image: image_url }.merge(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: generate_3d failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
-        return Result.err("3D generation failed: #{result[:error]}") if result[:error]
+        return Result.err("Replicate: generate_3d failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
@@ -240,17 +240,17 @@ module MASTER
 
       # Edit image using text guidance
       def edit_image(image_url:, prompt:, model: :flux_kontext, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[:flux_kontext]
         
         input = { image: image_url, prompt: prompt }.merge(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: edit_image failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
-        return Result.err("Image editing failed: #{result[:error]}") if result[:error]
+        return Result.err("Replicate: edit_image failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
@@ -262,16 +262,16 @@ module MASTER
 
       # Restore and enhance faces in image
       def restore_face(image_url:, params: {})
-        return Result.err("REPLICATE_API_KEY not set") unless available?
+        return Result.err("Replicate: REPLICATE_API_KEY not set") unless available?
 
         model_id = MODELS[:gfpgan]
         input = { image: image_url }.merge(params)
 
         prediction = create_prediction(model_id, input)
-        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+        return Result.err("Replicate: restore_face failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
-        return Result.err("Face restoration failed: #{result[:error]}") if result[:error]
+        return Result.err("Replicate: restore_face failed: #{result[:error]}") if result[:error]
 
         Result.ok({
           id: result[:id],
