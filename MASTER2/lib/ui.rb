@@ -295,8 +295,8 @@ module MASTER
       rescue LoadError
         # Fallback when pastel gem is not available
         Object.new.tap do |p|
-          %i[green red yellow cyan dim bold].each do |color|
-            p.define_singleton_method(color) { |text| text }
+          %i[green red yellow cyan dim bold magenta bright_magenta bright_cyan bright_black blue].each do |color|
+            p.define_singleton_method(color) { |text = nil| text.nil? ? self : text }
           end
         end
       end
