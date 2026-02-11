@@ -44,6 +44,9 @@ input:focus{outline:2px solid var(--mint);outline-offset:2px}
 input:focus-visible{box-shadow:0 0 0 2px var(--mint);outline:none}
 input:disabled{opacity:0.6;cursor:not-allowed}
 #hint{position:fixed;left:12px;bottom:34px;color:var(--text-2);font-size:9px;z-index:20;pointer-events:none}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
 </style>
 </head>
 <body>

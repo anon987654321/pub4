@@ -97,6 +97,10 @@ require_relative "web"
 # Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
 require_relative "speech"
 
+# Media generation and post-processing bridges
+require_relative "postpro_bridge"
+require_relative "repligen_bridge"
+
 # External services
 %w[weaviate replicate cinematic].each do |mod|
   begin

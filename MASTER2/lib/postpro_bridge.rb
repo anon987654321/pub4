@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
-  # PostPro Bridge - Post-processing and enhancement utilities
+  # Postpro Bridge - Post-processing and enhancement utilities
   # Provides image and video enhancement capabilities
-  module PostProBridge
+  module PostproBridge
     extend self
 
     # Film stock presets with recomb matrices
