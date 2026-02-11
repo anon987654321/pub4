@@ -324,7 +324,7 @@ module MASTER
           puts "  Error: #{result.error}" if result.err?
         when "reset"
           session = Session.current
-          session[:workflow] = nil
+          session.metadata[:workflow] = nil
           session.save
           puts "  Workflow reset"
         else

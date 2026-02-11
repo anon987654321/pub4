@@ -164,7 +164,7 @@ module MASTER
 
         loop do
           # Show current phase in prompt if workflow active
-          prompt_str = if defined?(WorkflowEngine) && session[:workflow]
+          prompt_str = if defined?(WorkflowEngine) && session.metadata[:workflow]
                          phase = WorkflowEngine.current_phase(session)
                          "#{phase}> "
                        else

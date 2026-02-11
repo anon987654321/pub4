@@ -6,7 +6,7 @@ module MASTER
     module WorkflowCommands
       def workflow_status
         session = Session.current
-        return Result.err("Workflow not started") unless session[:workflow]
+        return Result.err("Workflow not started") unless session.metadata[:workflow]
 
         phase = WorkflowEngine.current_phase(session)
         history = WorkflowEngine.phase_history(session)
@@ -25,7 +25,7 @@ module MASTER
 
       def workflow_advance(outputs: {})
         session = Session.current
-        return Result.err("Workflow not started") unless session[:workflow]
+        return Result.err("Workflow not started") unless session.metadata[:workflow]
 
         result = WorkflowEngine.advance_phase(session, outputs: outputs)
         
