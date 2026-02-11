@@ -87,7 +87,7 @@ module MASTER
     end
 
     def record_failure(model, error)
-      self.class.circuits_mutex.synchronize do
+      CircuitBreaker.circuits_mutex.synchronize do
         circuit = get_circuit(model)
         circuit[:failures] += 1
         circuit[:last_failure] = Time.now
@@ -98,7 +98,7 @@ module MASTER
           log_warning("Circuit breaker opened", model: model, failures: circuit[:failures])
         end
         
-        self.class.circuits[model] = circuit
+        CircuitBreaker.circuits[model] = circuit
       end
     end
 
@@ -123,8 +123,8 @@ module MASTER
     end
     
     def get_circuit(model)
-      self.class.circuits_mutex.synchronize do
-        self.class.circuits[model] ||= {
+      CircuitBreaker.circuits_mutex.synchronize do
+        CircuitBreaker.circuits[model] ||= {
           state: :closed,
           failures: 0,
           opened_at: nil,
@@ -134,11 +134,11 @@ module MASTER
     end
     
     def set_circuit_state(model, state)
-      self.class.circuits_mutex.synchronize do
+      CircuitBreaker.circuits_mutex.synchronize do
         circuit = get_circuit(model)
         circuit[:state] = state
         circuit[:failures] = 0 if state == :closed
-        self.class.circuits[model] = circuit
+        CircuitBreaker.circuits[model] = circuit
       end
     end
   end
