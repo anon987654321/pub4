@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require 'yaml'  # Used by Smells module
 
 module MASTER
   # CodeReview - Automated checks learned from deep analysis sessions
