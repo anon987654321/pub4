@@ -17,6 +17,8 @@ module MASTER
       sessions: { desc: "List saved sessions", usage: "sessions", group: :session },
       forget: { desc: "Undo last exchange", usage: "forget", group: :session },
       summary: { desc: "Conversation summary", usage: "summary", group: :session },
+      capture: { desc: "Capture session insights", usage: "capture", group: :session },
+      'review-captures': { desc: "Review captured insights", usage: "review-captures", group: :session },
       # System
       status: { desc: "System status", usage: "status", group: :system },
       budget: { desc: "Budget remaining", usage: "budget", group: :system },
@@ -26,6 +28,7 @@ module MASTER
       # Utility
       help: { desc: "Show this help", usage: "help [command]", group: :util },
       speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util },
+      shell: { desc: "Interactive shell", usage: "shell", group: :util },
       clear: { desc: "Clear screen", usage: "clear", group: :util },
       exit: { desc: "Exit MASTER", usage: "exit", group: :util },
     }.freeze

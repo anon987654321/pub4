@@ -241,6 +241,12 @@ module MASTER
         end
 
         session.save
+        
+        # Auto-capture if session was marked successful
+        if defined?(SessionCapture) && session.metadata_value(:successful)
+          SessionCapture.auto_capture_if_successful
+        end
+        
         show_exit_summary(session)
       end
 

@@ -75,6 +75,37 @@ module MASTER
         Result.ok(result.value[:content])
       end
 
+      def session_capture
+        # Capture insights from current session
+        if defined?(SessionCapture)
+          SessionCapture.capture
+        else
+          puts "  SessionCapture not available"
+        end
+      end
+
+      def review_captures
+        # Review all session captures
+        if defined?(SessionCapture)
+          result = SessionCapture.review
+          if result.ok?
+            captures = result.value[:captures]
+            puts "\n  #{captures.size} session captures:"
+            captures.last(10).each do |c|
+              puts "\n  #{UI.dim(c[:timestamp])}"
+              c[:answers].each do |category, answer|
+                puts "    #{UI.bold(category)}: #{answer}"
+              end
+            end
+            puts
+          else
+            puts "  #{result.error}"
+          end
+        else
+          puts "  SessionCapture not available"
+        end
+      end
+
       def print_health
         UI.header("Health Check")
         checks = []
