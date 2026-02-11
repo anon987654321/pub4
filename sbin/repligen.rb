@@ -626,7 +626,7 @@ After training, use with:"
 
     if audio_path && File.exist?(audio_path)
       final_file = vid_file.gsub(".mp4", "_audio.mp4")
-      system("ffmpeg -i "#{vid_file}" -i "#{audio_path}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "#{final_file}" -y 2>&1")
+      system("ffmpeg -i \"#{vid_file}\" -i \"#{audio_path}\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"#{final_file}\" -y 2>&1")
       puts "✓ Audio added: #{final_file}" if File.exist?(final_file)
     end
 
