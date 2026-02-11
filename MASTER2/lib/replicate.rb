@@ -3,6 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative 'timeouts'
 
 module MASTER
   # Replicate - Image generation via Replicate API
@@ -113,6 +114,7 @@ module MASTER
         File.binwrite(path, response.body)
         true
       rescue => e
+        $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
       end
 
@@ -126,8 +128,8 @@ module MASTER
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        http.open_timeout = 10
-        http.read_timeout = 60
+        http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
+        http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
 
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
@@ -148,19 +150,20 @@ module MASTER
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Request timed out' }
       rescue => e
+        $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
       end
 
-      def wait_for_completion(id, timeout: 300)
+      def wait_for_completion(id, timeout: Timeouts::REPLICATE_TIMEOUT)
         uri = URI("#{API_URL}/#{id}")
         start_time = Time.now
-        max_polls = 150  # Safety limit: 150 polls * 2s = 300s max
+        max_polls = (timeout / Timeouts::POLL_INTERVAL).to_i  # Calculate max polls based on timeout
 
         max_polls.times do
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
-          http.open_timeout = 10
-          http.read_timeout = 30
+          http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
+          http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
 
           request = Net::HTTP::Get.new(uri)
           request['Authorization'] = "Bearer #{api_key}"
@@ -174,7 +177,7 @@ module MASTER
           when 'failed', 'canceled'
             return { error: data[:error] || 'Generation failed' }
           when 'processing', 'starting'
-            sleep 2
+            sleep Timeouts::POLL_INTERVAL
           else
             return { error: "Unknown status: #{data[:status]}" }
           end
@@ -186,6 +189,7 @@ module MASTER
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Poll request timed out' }
       rescue => e
+        $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
         { error: e.message }
       end
     end
