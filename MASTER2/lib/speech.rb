@@ -2,7 +2,6 @@
 
 require "fileutils"
 require "securerandom"
-require "shellwords"
 
 module MASTER
   # Speech - Unified TTS interface with multiple engines
@@ -217,11 +216,11 @@ module MASTER
         return Result.err("Piper generation failed") unless success && File.exist?(output)
 
         play_audio(output) if play
-        File.delete(output) rescue nil if play
+        FileUtils.rm_f(output) if play
 
         Result.ok(engine: :piper, voice: voice, preset: preset)
       ensure
-        File.delete(input_file) rescue nil
+        FileUtils.rm_f(input_file)
       end
     end
 
@@ -260,11 +259,11 @@ module MASTER
         return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
 
         play_audio(output) if play
-        File.delete(output) rescue nil if play
+        FileUtils.rm_f(output) if play
 
         Result.ok(engine: :edge, voice: voice_id, style: style)
       ensure
-        File.delete(script_file) rescue nil
+        FileUtils.rm_f(script_file)
       end
     end
 

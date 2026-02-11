@@ -52,13 +52,15 @@ module MASTER
       rescue LoadError
         return if @installed&.dig(name)
         # SECURITY: Only install gems from the allowlist
-        unless GEMS.include?(name.to_s)
-          raise ArgumentError, "Gem '#{name}' is not in the allowed GEMS list"
+        # Convert to string for consistent comparison (GEMS contains strings)
+        gem_name = name.to_s
+        unless GEMS.include?(gem_name)
+          raise ArgumentError, "Gem '#{gem_name}' is not in the allowed GEMS list"
         end
         @installed ||= {}
-        $stderr.puts "Installing #{name}..."
+        $stderr.puts "Installing #{gem_name}..."
         # SECURITY: Use array form of system() to prevent shell injection
-        @installed[name] = system("gem", "install", name.to_s, "--no-document")
+        @installed[name] = system("gem", "install", gem_name, "--no-document")
         require name
       end
 

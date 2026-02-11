@@ -34,10 +34,12 @@ module MASTER
             available = ALLOWED_STAGES.join(", ")
             raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{available}"
           end
-          unless Stages.const_defined?(const_name)
-            raise ArgumentError, "Stage class not found: #{const_name}"
+          begin
+            Stages.const_get(const_name).new
+          rescue NameError
+            raise ArgumentError, "Stage class not found: #{const_name}. " \
+                                 "This indicates ALLOWED_STAGES is misconfigured."
           end
-          Stages.const_get(const_name).new
         end
       end
     end
