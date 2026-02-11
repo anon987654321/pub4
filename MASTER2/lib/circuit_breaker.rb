@@ -17,8 +17,13 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Initialize stoplight with memory data store if available
-    if STOPLIGHT_AVAILABLE
+    # Lazy initialization for Stoplight configuration
+    # Only configures Stoplight on first use, ensuring graceful degradation
+    def ensure_stoplight_configured
+      return unless STOPLIGHT_AVAILABLE
+      return if @stoplight_configured
+      
+      @stoplight_configured = true
       Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
     end
 
@@ -52,6 +57,7 @@ module MASTER
 
     def run(model, &block)
       if STOPLIGHT_AVAILABLE
+        ensure_stoplight_configured
         Stoplight("openrouter-#{model}")
           .with_threshold(FAILURES_BEFORE_TRIP)
           .with_cool_off_time(CIRCUIT_RESET_SECONDS)
@@ -64,6 +70,7 @@ module MASTER
 
     def open?(model)
       return false unless STOPLIGHT_AVAILABLE
+      ensure_stoplight_configured
       light = Stoplight("openrouter-#{model}")
       light.color == Stoplight::Color::RED
     end
@@ -74,6 +81,7 @@ module MASTER
 
     def record_failure(model, error)
       return unless STOPLIGHT_AVAILABLE
+      ensure_stoplight_configured
       Stoplight("openrouter-#{model}")
         .with_threshold(FAILURES_BEFORE_TRIP)
         .with_cool_off_time(CIRCUIT_RESET_SECONDS)
