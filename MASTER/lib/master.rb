@@ -1,13 +1,29 @@
-# frozen_string_literal: true
+require 'json'
+require 'net/http'
+require 'uri'
+require 'fileutils'
+require 'sqlite3'
 
-module MASTER
-  VERSION = "3.0.0"
-  def self.root = File.expand_path("..", __dir__)
+begin
+  require 'dotenv/load'
+rescue LoadError
+  # No dotenv
 end
 
-require_relative "result"
-require_relative "db"
-require_relative "llm"
-require_relative "pledge"
-require_relative "pipeline"
-require_relative "stages"
+module MASTER
+  VERSION = '4.0.0'
+
+  def self.root
+    File.expand_path("..", __dir__)
+  end
+end
+
+require_relative 'engine'
+require_relative 'llm'
+require_relative 'autonomy'
+require_relative 'persistence'
+require_relative 'cli'
+require_relative 'parser/multi'
+require_relative 'parser/multi_language'
+require_relative 'nlu'
+require_relative 'conversation'
