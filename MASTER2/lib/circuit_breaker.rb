@@ -23,8 +23,13 @@ module MASTER
       return unless STOPLIGHT_AVAILABLE
       return if @stoplight_configured
       
-      @stoplight_configured = true
-      Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
+      @stoplight_config_mutex ||= Mutex.new
+      @stoplight_config_mutex.synchronize do
+        return if @stoplight_configured  # Double-check after acquiring lock
+        
+        @stoplight_configured = true
+        Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
+      end
     end
 
     # Rate limiting state
