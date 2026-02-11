@@ -18,7 +18,7 @@ rails new "${APP_DIR}" \
 cd "${APP_DIR}"
 
 # Add modern gems
-cat >> Gemfile <<'GEMS'
+grep -q "stimulus_reflex" Gemfile || cat >> Gemfile <<'GEMS'
 gem 'stimulus_reflex'
 gem 'redis'
 gem 'sidekiq'

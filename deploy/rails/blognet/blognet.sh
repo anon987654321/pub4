@@ -22,7 +22,7 @@ check_app_exists "$APP_NAME" "app/models/blog.rb" && exit 0
 
 setup_full_app "$APP_NAME"
 
-cat >> Gemfile << 'GEMFILE'
+grep -q "solid_queue" Gemfile || cat >> Gemfile << 'GEMFILE'
 gem "solid_queue"
 gem "solid_cache"
 gem "solid_cable"

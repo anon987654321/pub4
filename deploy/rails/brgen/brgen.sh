@@ -39,7 +39,7 @@ if [[ ! -f "config/application.rb" ]]; then
 fi
 
 echo "Appending gems to Gemfile"
-cat >> Gemfile << 'GEMFILE'
+grep -q "solid_queue" Gemfile || cat >> Gemfile << 'GEMFILE'
 
 # Rails 8 Solid Stack
 gem "solid_queue"

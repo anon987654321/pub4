@@ -31,7 +31,7 @@ add_voting_system() {
 
 install_voting_gems() {
 
-  cat >> Gemfile << 'EOF'
+  grep -q "acts_as_votable" Gemfile || cat >> Gemfile << 'EOF'
 
 # Voting and Reviews
 
