@@ -21,7 +21,7 @@ def generate_weekly_report
   
   # Section 1: Learning Summary
   if File.exist?(MASTER::AgentAutonomy::LEARNING_FILE)
-    puts "\n📚 Learning Summary..."
+    puts "\n📚 Learning Summary (AgentAutonomy)..."
     learning_data = YAML.safe_load_file(MASTER::AgentAutonomy::LEARNING_FILE, symbolize_names: true) rescue {}
     
     corrections = learning_data[:corrections] || []
@@ -36,6 +36,40 @@ def generate_weekly_report
     
     puts "  Corrections recorded: #{corrections.size}"
     puts "  Skills acquired: #{skills.size}"
+  end
+  
+  # Section 1b: Learnings Database
+  puts "\n📚 Learnings Database..."
+  if defined?(MASTER::Learnings)
+    learnings_all = MASTER::Learnings.all rescue []
+    
+    by_category = learnings_all.group_by { |l| l[:category] }
+    
+    report[:sections][:learnings] = {
+      total_count: learnings_all.size,
+      by_category: by_category.transform_values(&:size),
+      top_patterns: learnings_all.sort_by { |l| -(l[:applied_count] || 0) }.first(5).map { |l|
+        {
+          id: l[:id],
+          description: l[:description],
+          applied_count: l[:applied_count] || 0,
+          category: l[:category]
+        }
+      }
+    }
+    
+    puts "  Total learnings: #{learnings_all.size}"
+    puts "  Categories:"
+    by_category.each do |category, items|
+      puts "    - #{category}: #{items.size}"
+    end
+    
+    if report[:sections][:learnings][:top_patterns].any?
+      puts "  Top Applied Patterns:"
+      report[:sections][:learnings][:top_patterns].each do |pattern|
+        puts "    - #{pattern[:description][0..50]}... (#{pattern[:applied_count]} times)"
+      end
+    end
   end
   
   # Section 2: Session Statistics
