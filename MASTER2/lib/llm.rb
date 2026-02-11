@@ -24,6 +24,15 @@ module MASTER
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
 
+    # Timeouts - Centralized timeout configuration (absorbed from timeouts.rb)
+    # All timeouts can be overridden via environment variables
+    LLM_TIMEOUT = (ENV.fetch('MASTER_LLM_TIMEOUT', '60')).to_i
+    WEB_TIMEOUT = (ENV.fetch('MASTER_WEB_TIMEOUT', '30')).to_i
+    REPLICATE_TIMEOUT = (ENV.fetch('MASTER_REPLICATE_TIMEOUT', '300')).to_i
+    POLL_INTERVAL = (ENV.fetch('MASTER_POLL_INTERVAL', '2')).to_i
+    HTTP_OPEN_TIMEOUT = (ENV.fetch('MASTER_HTTP_OPEN_TIMEOUT', '10')).to_i
+    HTTP_READ_TIMEOUT = (ENV.fetch('MASTER_HTTP_READ_TIMEOUT', '60')).to_i
+
     class << self
       attr_accessor :current_model, :current_tier
 
@@ -531,6 +540,70 @@ module MASTER
         end
 
         Result.ok(data)
+      end
+    end
+  end
+
+  # ContextWindow - Track and display token usage (absorbed from context_window.rb)
+  # Uses LLM.context_limits as single source of truth
+  module ContextWindow
+    DEFAULT_LIMIT = 32_000
+
+    class << self
+      def estimate_tokens(char_count)
+        (char_count.to_i / 4.0).ceil
+      end
+
+      def limit_for(model)
+        LLM.context_limits[model] || DEFAULT_LIMIT
+      end
+
+      def usage(session, model: nil)
+        model ||= LLM.model_tiers[:strong]&.first
+        limit = limit_for(model)
+
+        total_chars = session.history.sum { |h| h[:content].to_s.length }
+        used = estimate_tokens(total_chars)
+        percent = ((used.to_f / limit) * 100).round(1)
+
+        {
+          used: used,
+          limit: limit,
+          percent: percent,
+          remaining: limit - used,
+        }
+      end
+
+      def bar(session, model: nil, width: 20)
+        u = usage(session, model: model)
+        filled = ((u[:percent] / 100.0) * width).round
+        empty = width - filled
+
+        color = if u[:percent] > 90
+                  :red
+                elsif u[:percent] > 70
+                  :yellow
+                else
+                  :green
+                end
+
+        bar_str = "█" * filled + "░" * empty
+        "#{bar_str} #{u[:percent]}%"
+      end
+
+      def status(session, model: nil)
+        u = usage(session, model: model)
+        "Context: #{format_tokens(u[:used])}/#{format_tokens(u[:limit])} (#{u[:percent]}%)"
+      end
+
+      private
+
+      def format_tokens(n)
+        if n >= 1000
+          "#{(n / 1000.0).round(1)}k"
+        else
+          n.to_s
+        end
       end
     end
   end

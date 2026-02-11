@@ -3,7 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
-require_relative 'timeouts'
+require_relative 'llm'
 
 module MASTER
   # Replicate - Image generation via Replicate API
@@ -128,8 +128,8 @@ module MASTER
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
-        http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
+        http.open_timeout = LLM::HTTP_OPEN_TIMEOUT
+        http.read_timeout = LLM::HTTP_READ_TIMEOUT
 
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
@@ -154,16 +154,16 @@ module MASTER
         { error: e.message }
       end
 
-      def wait_for_completion(id, timeout: Timeouts::REPLICATE_TIMEOUT)
+      def wait_for_completion(id, timeout: LLM::REPLICATE_TIMEOUT)
         uri = URI("#{API_URL}/#{id}")
         start_time = Time.now
-        max_polls = (timeout / Timeouts::POLL_INTERVAL).to_i  # Calculate max polls based on timeout
+        max_polls = (timeout / LLM::POLL_INTERVAL).to_i  # Calculate max polls based on timeout
 
         max_polls.times do
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
-          http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
-          http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
+          http.open_timeout = LLM::HTTP_OPEN_TIMEOUT
+          http.read_timeout = LLM::HTTP_READ_TIMEOUT
 
           request = Net::HTTP::Get.new(uri)
           request['Authorization'] = "Bearer #{api_key}"
@@ -177,7 +177,7 @@ module MASTER
           when 'failed', 'canceled'
             return { error: data[:error] || 'Generation failed' }
           when 'processing', 'starting'
-            sleep Timeouts::POLL_INTERVAL
+            sleep LLM::POLL_INTERVAL
           else
             return { error: "Unknown status: #{data[:status]}" }
           end
