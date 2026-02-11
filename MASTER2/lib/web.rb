@@ -2,7 +2,6 @@
 
 require "net/http"
 require "uri"
-require_relative "timeouts"
 
 module MASTER
   # Web - Browse and fetch web content with LLM-powered automation
@@ -16,12 +15,16 @@ module MASTER
     BROWSER_LOAD_DELAY = 2
     MAX_HTML_FOR_DISCOVERY = 5000
 
+    # Timeout constants (from timeouts.rb)
+    WEB_TIMEOUT = (ENV['MASTER_WEB_TIMEOUT'] || 30).to_i
+    HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
+
     def browse(url)
       uri = URI(url)
       http = Net::HTTP.new(uri.hostname, uri.port)
       http.use_ssl = uri.scheme == "https"
-      http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
-      http.read_timeout = Timeouts::WEB_TIMEOUT
+      http.open_timeout = HTTP_OPEN_TIMEOUT
+      http.read_timeout = WEB_TIMEOUT
 
       response = http.request(Net::HTTP::Get.new(uri))
 
@@ -41,7 +44,7 @@ module MASTER
     def browse_js(url)
       require "ferrum"
       
-      browser = Ferrum::Browser.new(headless: true, timeout: Timeouts::WEB_TIMEOUT)
+      browser = Ferrum::Browser.new(headless: true, timeout: WEB_TIMEOUT)
       browser.go_to(url)
       browser.network.wait_for_idle
       
