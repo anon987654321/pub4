@@ -45,7 +45,40 @@ First error short-circuits. No exceptions.
 - **Circuit breaker** (3 failures → 5-minute cooldown)
 - **Session persistence** with crash recovery (SIGINT/SIGTERM auto-save)
 - **Pattern fallback** (if primary fails → react → direct)
+- **AI Media Generation** - Generate images, videos, and audio with 30+ cutting-edge AI models via Replicate (see [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md))
+- **AI Enhancement** - Upscale, restore, and enhance images with AI-powered post-processing (see [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md))
 - **Cinematic AI Pipeline** - Chain Replicate models for film-quality image transformations (see [docs/CINEMATIC_PIPELINE.md](docs/CINEMATIC_PIPELINE.md))
+
+### AI Media Generation (Replicate & Postpro)
+
+Transform MASTER2 into a creative powerhouse with direct access to 30+ AI models:
+
+```ruby
+# Generate cinematic images
+MASTER::Replicate.generate_image(
+  prompt: "cyberpunk city at night, neon lights, cinematic"
+)
+
+# Generate videos
+MASTER::Replicate.generate_video(
+  prompt: "drone shot flying through forest at golden hour"
+)
+
+# AI-powered upscaling
+MASTER::Postpro.upscale(image_url: "photo.jpg", scale: 4)
+
+# Face restoration
+MASTER::Postpro.restore_face(image_url: "old_photo.jpg")
+```
+
+**WILD_CHAIN Model Catalog:**
+- **Image Generation**: Flux Pro, SDXL, Ideogram V2, Recraft V3
+- **Video Generation**: Hailuo 2.3, Kling 2.5, Luma Ray 2, Sora 2
+- **Enhancement**: Real-ESRGAN 4x, GFPGAN, CodeFormer, Clarity
+- **Audio**: MusicGen, Bark TTS
+- **Transcription**: Whisper
+
+See [docs/REPLICATE_POSTPRO.md](docs/REPLICATE_POSTPRO.md) for full documentation.
 
 ### Cinematic AI Pipeline
 
