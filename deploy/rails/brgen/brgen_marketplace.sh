@@ -2,7 +2,7 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Brgen Marketplace setup: Multi-vendor marketplace with Solidus, payments, Mapbox, search, and anonymous features on OpenBSD 7.5, unprivileged user
+# Brgen Marketplace setup: Multi-vendor marketplace with Solidus, payments, Mapbox, search, and anonymous features on OpenBSD 7.8, unprivileged user
 
 # Framework v37.3.2 compliant with enhanced e-commerce functionality
 
@@ -1478,4 +1478,4 @@ log "Brgen Marketplace setup complete. Run 'bin/falcon-host' with PORT set to st
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.

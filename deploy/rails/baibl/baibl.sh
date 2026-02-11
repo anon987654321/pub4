@@ -2,7 +2,7 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# BAIBL - AI Bible Application setup: Norwegian language interface with dark theme, precision metrics, and religious text analysis on OpenBSD 7.5
+# BAIBL - AI Bible Application setup: Norwegian language interface with dark theme, precision metrics, and religious text analysis on OpenBSD 7.8
 
 # Framework v37.3.2 compliant with advanced AI and linguistic features
 
@@ -2283,4 +2283,4 @@ log "UserStudies views completed"
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.

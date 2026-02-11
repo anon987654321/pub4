@@ -325,4 +325,4 @@ stream_url = "rtmp://#{Rails.application.config.streaming_server}/live/#{stream.
 - Progressive enhancement with Hotwire and Stimulus
 ---
 
-*Built with Rails 8, Hotwire, and modern streaming technologies for OpenBSD 7.5*
+*Built with Rails 8, Hotwire, and modern streaming technologies for OpenBSD 7.8*
