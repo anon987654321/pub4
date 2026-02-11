@@ -119,7 +119,8 @@ module MASTER
         File.binwrite(path, response.body)
         true
       rescue Net::OpenTimeout, Net::ReadTimeout
-        { error: 'Request timed out' }
+        $stderr.puts "Replicate: download_file timed out for #{url}"
+        false
       rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
