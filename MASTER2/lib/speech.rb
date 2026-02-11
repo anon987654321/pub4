@@ -208,10 +208,13 @@ module MASTER
       success = system(cmd)
       return Result.err("Piper generation failed") unless success && File.exist?(output)
 
-      play_audio(output) if play
-      File.delete(output) rescue nil if play
-
-      Result.ok(engine: :piper, voice: voice, preset: preset)
+      if play
+        play_audio(output)
+        File.delete(output) rescue nil
+        Result.ok(engine: :piper, voice: voice, preset: preset)
+      else
+        Result.ok(engine: :piper, voice: voice, preset: preset, file: output)
+      end
     end
 
     # Edge TTS (free cloud)
@@ -243,10 +246,13 @@ module MASTER
       success = system("#{python} -c #{script.inspect} 2>/dev/null")
       return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
 
-      play_audio(output) if play
-      File.delete(output) rescue nil if play
-
-      Result.ok(engine: :edge, voice: voice_id, style: style)
+      if play
+        play_audio(output)
+        File.delete(output) rescue nil
+        Result.ok(engine: :edge, voice: voice_id, style: style)
+      else
+        Result.ok(engine: :edge, voice: voice_id, style: style, file: output)
+      end
     end
 
     # Replicate TTS (paid cloud)
@@ -273,12 +279,21 @@ module MASTER
       audio_url = data["output"]
       return Result.err("No audio URL returned") unless audio_url
 
+      temp = File.join(Dir.tmpdir, "replicate_#{SecureRandom.hex(4)}.wav")
+      
       if play
-        temp = File.join(Dir.tmpdir, "replicate_#{SecureRandom.hex(4)}.wav")
         download_and_play(audio_url, temp)
+        Result.ok(engine: :replicate, url: audio_url)
+      else
+        # Download but don't play
+        require "net/http"
+        uri = URI(audio_url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = uri.scheme == "https"
+        response = http.get(uri.request_uri)
+        File.binwrite(temp, response.body)
+        Result.ok(engine: :replicate, url: audio_url, file: temp)
       end
-
-      Result.ok(engine: :replicate, url: audio_url)
     rescue StandardError => e
       Result.err("Replicate error: #{e.message}")
     end

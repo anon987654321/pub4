@@ -177,6 +177,43 @@ module MASTER
           }.to_json
           [200, { "content-type" => "application/json" }, [metrics]]
 
+        when ["POST", "/tts"]
+          # TTS audio generation endpoint
+          body = env["rack.input"].read
+          data = JSON.parse(body) rescue {}
+          text = data["text"].to_s.strip
+
+          return [400, { "content-type" => "application/json" }, ['{"error":"no text"}']] if text.empty?
+
+          # Generate TTS audio without playing
+          result = Speech.speak(text, play: false)
+          
+          if result.ok?
+            # Get the audio file from the result
+            audio_file = result.value[:file]
+            
+            if audio_file && File.exist?(audio_file)
+              audio_data = File.binread(audio_file)
+              content_type = audio_file.end_with?(".mp3") ? "audio/mpeg" : "audio/wav"
+              
+              headers = {
+                "Content-Type" => content_type,
+                "Access-Control-Allow-Origin" => "*",
+                "Access-Control-Allow-Methods" => "POST, OPTIONS",
+                "Access-Control-Allow-Headers" => "Content-Type, Authorization",
+              }
+              
+              # Clean up the temp file
+              File.delete(audio_file) rescue nil
+              
+              [200, headers, [audio_data]]
+            else
+              [500, { "content-type" => "application/json" }, ['{"error":"audio generation failed"}']]
+            end
+          else
+            [500, { "content-type" => "application/json" }, [%Q({"error":"#{result.error}"})]]
+          end
+
         when ["GET", "/tts/stream"]
           # SSE endpoint for TTS streaming
           text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
@@ -223,6 +260,19 @@ module MASTER
       File.read(File.join(VIEWS_DIR, name))
     rescue StandardError
       "<!DOCTYPE html><html><body><h1>MASTER #{VERSION}</h1><p>View not found: #{name}</p></body></html>"
+    end
+
+    def find_latest_tts_file
+      # Look for TTS files in the Edge TTS output directory
+      edge_dir = Paths.edge_tts_output
+      edge_files = Dir.glob(File.join(edge_dir, "edge_*.mp3")).sort_by { |f| File.mtime(f) }.reverse
+      
+      # Look for Piper files in temp directory
+      tmp_files = Dir.glob(File.join(Dir.tmpdir, "piper_*.wav")).sort_by { |f| File.mtime(f) }.reverse
+      
+      # Return the most recent file from either source
+      all_files = edge_files + tmp_files
+      all_files.sort_by { |f| File.mtime(f) }.reverse.first
     end
   end
 end
