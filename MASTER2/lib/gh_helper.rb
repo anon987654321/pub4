@@ -33,14 +33,17 @@ module MASTER
       end
 
       def pr_status
+        # SECURITY: Safe use of backtick - no user input
         `gh pr status --json number,title,state`
       end
 
       def current_branch
+        # SECURITY: Safe use of backtick - no user input
         `git branch --show-current`.strip
       end
 
       def has_uncommitted_changes?
+        # SECURITY: Safe use of backtick - no user input
         !`git status --porcelain`.strip.empty?
       end
 

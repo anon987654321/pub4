@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "securerandom"
+require "shellwords"
 
 module MASTER
   # Speech - Unified TTS interface with multiple engines
@@ -197,21 +198,31 @@ module MASTER
       model = File.join(voices_dir, "#{voice}.onnx")
 
       output = File.join(Dir.tmpdir, "piper_#{SecureRandom.hex(4)}.wav")
-      escaped = text.gsub('"', '\\"').gsub("`", "\\`")
+      # SECURITY: Write text to temp file to avoid shell injection via echo
+      input_file = File.join(Dir.tmpdir, "piper_input_#{SecureRandom.hex(4)}.txt")
+      File.write(input_file, text)
 
-      cmd = if RUBY_PLATFORM =~ /mingw|mswin|cygwin/
-              "echo #{escaped} | py -m piper --model #{model} --output #{output} --length_scale #{params[:length_scale]} --noise_scale #{params[:noise_scale]}"
-            else
-              "echo \"#{escaped}\" | piper --model #{model} --output_file #{output} --length_scale #{params[:length_scale]} --noise_scale #{params[:noise_scale]} 2>/dev/null"
-            end
+      begin
+        success = if RUBY_PLATFORM =~ /mingw|mswin|cygwin/
+                    system("py", "-m", "piper", "--model", model, "--output", output,
+                           "--length_scale", params[:length_scale].to_s,
+                           "--noise_scale", params[:noise_scale].to_s,
+                           in: input_file)
+                  else
+                    system("piper", "--model", model, "--output_file", output,
+                           "--length_scale", params[:length_scale].to_s,
+                           "--noise_scale", params[:noise_scale].to_s,
+                           in: input_file, err: File::NULL)
+                  end
+        return Result.err("Piper generation failed") unless success && File.exist?(output)
 
-      success = system(cmd)
-      return Result.err("Piper generation failed") unless success && File.exist?(output)
+        play_audio(output) if play
+        File.delete(output) rescue nil if play
 
-      play_audio(output) if play
-      File.delete(output) rescue nil if play
-
-      Result.ok(engine: :piper, voice: voice, preset: preset)
+        Result.ok(engine: :piper, voice: voice, preset: preset)
+      ensure
+        File.delete(input_file) rescue nil
+      end
     end
 
     # Edge TTS (free cloud)
@@ -226,27 +237,35 @@ module MASTER
       FileUtils.mkdir_p(output_dir)
       output = File.join(output_dir, "edge_#{SecureRandom.hex(4)}.mp3")
 
+      # SECURITY: Write Python script to temp file to avoid shell injection
+      script_file = File.join(Dir.tmpdir, "edge_tts_#{SecureRandom.hex(4)}.py")
       script = <<~PY
         import asyncio
         import edge_tts
         async def main():
             communicate = edge_tts.Communicate(
                 #{text.inspect},
-                voice="#{voice_id}",
-                rate="#{params[:rate]}",
-                pitch="#{params[:pitch]}"
+                voice=#{voice_id.inspect},
+                rate=#{params[:rate].inspect},
+                pitch=#{params[:pitch].inspect}
             )
-            await communicate.save("#{output.gsub('\\', '/')}")
+            await communicate.save(#{output.gsub('\\', '/').inspect})
         asyncio.run(main())
       PY
+      File.write(script_file, script)
 
-      success = system("#{python} -c #{script.inspect} 2>/dev/null")
-      return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
+      begin
+        # SECURITY: Use array form of system() to prevent shell injection
+        success = system(python, script_file, err: File::NULL)
+        return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
 
-      play_audio(output) if play
-      File.delete(output) rescue nil if play
+        play_audio(output) if play
+        File.delete(output) rescue nil if play
 
-      Result.ok(engine: :edge, voice: voice_id, style: style)
+        Result.ok(engine: :edge, voice: voice_id, style: style)
+      ensure
+        File.delete(script_file) rescue nil
+      end
     end
 
     # Replicate TTS (paid cloud)

@@ -5,6 +5,9 @@ module MASTER
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
+    
+    # SECURITY: Allowlist of valid stage class names to prevent arbitrary constant access
+    ALLOWED_STAGES = %w[Intake Compress Guard Route Council Ask Lint Render Execute].freeze
 
     @current_pattern = :auto
     @current_pattern_mutex = Mutex.new
@@ -25,10 +28,14 @@ module MASTER
         if stage.respond_to?(:call)
           stage
         else
-          const_name = stage.to_s.capitalize.to_sym
+          const_name = stage.to_s.capitalize
+          # SECURITY: Validate against allowlist before const_get
+          unless ALLOWED_STAGES.include?(const_name)
+            available = ALLOWED_STAGES.join(", ")
+            raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{available}"
+          end
           unless Stages.const_defined?(const_name)
-            available = Stages.constants.join(", ")
-            raise ArgumentError, "Unknown pipeline stage: #{stage}. Available: #{available}"
+            raise ArgumentError, "Stage class not found: #{const_name}"
           end
           Stages.const_get(const_name).new
         end

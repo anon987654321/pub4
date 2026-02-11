@@ -21,6 +21,7 @@ module MASTER
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
         user = ENV["USER"] || ENV["USERNAME"] || "user"
+        # SECURITY: Safe use of backtick - no user input
         host = `hostname`.strip rescue "localhost"
 
         # Smoke test first - catch runtime errors early

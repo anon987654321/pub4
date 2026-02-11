@@ -42,7 +42,8 @@ module MASTER
 
         puts "Installing #{missing.size} gems..." if verbose
         missing.each do |gem|
-          system("gem install #{gem} --no-document")
+          # SECURITY: Use array form of system() to prevent shell injection
+          system("gem", "install", gem, "--no-document")
         end
       end
 
@@ -50,9 +51,14 @@ module MASTER
         require name
       rescue LoadError
         return if @installed&.dig(name)
+        # SECURITY: Only install gems from the allowlist
+        unless GEMS.include?(name.to_s)
+          raise ArgumentError, "Gem '#{name}' is not in the allowed GEMS list"
+        end
         @installed ||= {}
         $stderr.puts "Installing #{name}..."
-        @installed[name] = system("gem install #{name} --no-document")
+        # SECURITY: Use array form of system() to prevent shell injection
+        @installed[name] = system("gem", "install", name.to_s, "--no-document")
         require name
       end
 
@@ -75,7 +81,9 @@ module MASTER
         return if missing.empty?
 
         puts "Installing #{missing.size} packages..." if verbose
-        system("doas pkg_add #{missing.join(' ')}")
+        # SECURITY: Package names are from OPENBSD_PACKAGES constant (safe)
+        # Using array form for additional safety
+        system("doas", "pkg_add", *missing)
       end
 
       def setup(verbose: false)
