@@ -26,6 +26,7 @@ module MASTER
 
     def run(path: MASTER.root, dry_run: true)
       @iteration = 0
+      @checkpoint = create_safety_checkpoint unless dry_run
       files = find_files(path)
 
       files.each do |file|
@@ -43,6 +44,7 @@ module MASTER
         files_processed: @history.size,
         improvements: @history.count { |h| h[:improved] },
         history: @history,
+        checkpoint: @checkpoint
       }
     end
 
@@ -155,6 +157,14 @@ module MASTER
       end
     rescue StandardError => e
       { file: file, error: e.message }
+    end
+
+    def create_safety_checkpoint
+      return unless system("git rev-parse --git-dir > /dev/null 2>&1")
+      
+      tag_name = "evolve_checkpoint_#{Time.now.to_i}"
+      system("git tag #{tag_name} > /dev/null 2>&1")
+      tag_name
     end
 
     def over_budget?

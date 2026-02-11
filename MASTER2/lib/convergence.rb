@@ -66,6 +66,36 @@ module MASTER
           (scores[0] - scores[1]).abs > MIN_DELTA
       end
 
+      # Detect if recent diffs are too similar (formatter wars, refactor loops)
+      def oscillating_diffs?(history)
+        return false if history.size < 4
+        return false unless history.last(4).all? { |h| h[:diff] }
+        
+        recent_diffs = history.last(4).map { |h| h[:diff] }
+        
+        # Compare first and third, second and fourth
+        similarity_03 = diff_similarity(recent_diffs[0], recent_diffs[2])
+        similarity_13 = diff_similarity(recent_diffs[1], recent_diffs[3])
+        
+        # If both pairs are >90% similar, we're oscillating
+        similarity_03 > 0.9 && similarity_13 > 0.9
+      end
+
+      # Calculate similarity between two diffs (0.0 = completely different, 1.0 = identical)
+      def diff_similarity(diff1, diff2)
+        return 1.0 if diff1 == diff2
+        return 0.0 if diff1.nil? || diff2.nil?
+        
+        # Levenshtein-based similarity
+        max_len = [diff1.length, diff2.length].max
+        return 0.0 if max_len == 0
+        
+        distance = Utils.levenshtein(diff1, diff2) if defined?(Utils.levenshtein)
+        distance ||= 0
+        
+        1.0 - (distance.to_f / max_len)
+      end
+
       def should_stop?(history)
         return false if history.empty?
 
@@ -80,8 +110,11 @@ module MASTER
         # Max iterations reached
         return true if history.size >= MAX_ITERATIONS
 
-        # Oscillation detected
+        # Oscillation detected (score-based)
         return true if oscillating?(history)
+        
+        # Oscillation detected (diff-based)
+        return true if oscillating_diffs?(history)
 
         false
       end
@@ -97,6 +130,8 @@ module MASTER
           :max_iterations
         elsif oscillating?(history)
           :oscillation
+        elsif oscillating_diffs?(history)
+          :oscillation_diff
         elsif plateau?(history)
           :plateau
         end
