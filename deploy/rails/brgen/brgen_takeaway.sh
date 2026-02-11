@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Brgen Takeaway setup: Food delivery platform with real-time tracking, restaurant management, and location services on OpenBSD 7.5, unprivileged user
+# Brgen Takeaway setup: Food delivery platform with real-time tracking, restaurant management, and location services on OpenBSD 7.8, unprivileged user
 
 # Framework v37.3.2 compliant with enhanced food delivery features
 
@@ -1538,4 +1538,4 @@ log "Brgen Takeaway setup complete. Run 'bin/falcon-host' with PORT set to start
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.

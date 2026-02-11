@@ -1,9 +1,9 @@
 # OpenBSD Infrastructure Automation
-Complete Rails 8 deployment for OpenBSD 7.7 with data integrity and security hardening.
+Complete Rails 8 deployment for OpenBSD 7.8 with data integrity and security hardening.
 **Quick Start:** `doas zsh openbsd.sh`
 **Last Updated:** 2026-01-11 (master.yml v206 analysis, 5 security improvements applied)
 ## Overview
-This script automates the complete setup of an OpenBSD 7.7 server for hosting Rails applications with:
+This script automates the complete setup of an OpenBSD 7.8 server for hosting Rails applications with:
 - **DNS & DNSSEC**: Authoritative nameserver (NSD) with DNSSEC signing and DDoS mitigation (RRL)
 - **TLS Certificates**: Automated Let's Encrypt via acme-client
 - **Reverse Proxy**: relayd with TLS termination and load balancing
