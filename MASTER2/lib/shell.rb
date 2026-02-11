@@ -202,7 +202,7 @@ module MASTER
         @context[:cwd] = expanded_path
         Dir.chdir(expanded_path)
       else
-        UI.error("Directory not found: #{path}")
+        puts "Error: Directory not found: #{path}"
       end
     end
 
