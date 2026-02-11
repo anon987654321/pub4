@@ -3,7 +3,6 @@
 require 'net/http'
 require 'json'
 require 'uri'
-require_relative 'timeouts'
 
 module MASTER
   # Replicate - Image generation via Replicate API
@@ -12,10 +11,48 @@ module MASTER
 
     API_URL = 'https://api.replicate.com/v1/predictions'
 
+    # Timeout constants (merged from timeouts.rb)
+    module Timeouts
+      # Replicate API timeout for long-running generations (seconds)
+      REPLICATE_TIMEOUT = (ENV['MASTER_REPLICATE_TIMEOUT'] || 300).to_i
+      
+      # Poll interval for async operations (seconds)
+      POLL_INTERVAL = (ENV['MASTER_POLL_INTERVAL'] || 2).to_i
+      
+      # HTTP connection timeouts
+      HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
+      HTTP_READ_TIMEOUT = (ENV['MASTER_HTTP_READ_TIMEOUT'] || 60).to_i
+    end
+
+    # Image generation models
     MODELS = {
       flux:      'black-forest-labs/flux-1.1-pro',
+      flux2:     'black-forest-labs/flux-2',
       sdxl:      'stability-ai/sdxl',
-      kandinsky: 'ai-forever/kandinsky-2.2'
+      kandinsky: 'ai-forever/kandinsky-2.2',
+      ideogram:  'ideogram-ai/ideogram-v2',
+      recraft:   'recraft-ai/recraft-v3'
+    }.freeze
+
+    # Video generation models
+    VIDEO_MODELS = {
+      hailuo:    'minimax/hailuo-2.3',
+      kling:     'kwaivgi/kling-v2.5-turbo-pro',
+      ray:       'luma/ray-2',
+      wan:       'wan-video/wan-2.5-i2v'
+    }.freeze
+
+    # Audio generation models
+    AUDIO_MODELS = {
+      musicgen:  'meta/musicgen',
+      bark:      'suno/bark'
+    }.freeze
+
+    # Enhancement/upscaling models
+    ENHANCE_MODELS = {
+      esrgan:    'nightmareai/real-esrgan',
+      gfpgan:    'tencentarc/gfpgan',
+      codeformer: 'sczhou/codeformer'
     }.freeze
 
     DEFAULT_MODEL = :flux
@@ -37,7 +74,7 @@ module MASTER
         input = { prompt: prompt }.merge(params)
 
         # Create prediction
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
         # Poll for completion
@@ -53,12 +90,12 @@ module MASTER
       end
 
       def upscale(image_url:, scale: 4)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err("REPLICATE_API_KEY not set") unless available?
 
         model_id = 'nightmareai/real-esrgan'
         input = { image: image_url, scale: scale }
 
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -68,12 +105,12 @@ module MASTER
       end
 
       def describe(image_url:)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err("REPLICATE_API_KEY not set") unless available?
 
         model_id = 'salesforce/blip'
         input = { image: image_url }
 
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -88,7 +125,7 @@ module MASTER
 
         combined_input = input.merge(params)
 
-        prediction = create_prediction(model_id, input: combined_input)
+        prediction = create_prediction(model: model_id, input: combined_input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -120,11 +157,7 @@ module MASTER
 
       private
 
-      def create_prediction(model_version_or_id, input: nil, version: nil)
-        # Support both old signature (model_version, input) and new signature with named params
-        actual_input = input || model_version_or_id.is_a?(Hash) ? {} : model_version_or_id
-        actual_version = version || (model_version_or_id.is_a?(String) ? model_version_or_id : nil)
-        
+      def create_prediction(model:, input:)
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
@@ -135,8 +168,10 @@ module MASTER
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
         
-        body = { input: actual_input }
-        body[:version] = actual_version if actual_version
+        body = { 
+          version: model,
+          input: input
+        }
         request.body = body.to_json
 
         response = http.request(request)

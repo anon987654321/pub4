@@ -138,7 +138,7 @@ module MASTER
 
         return Result.err("Preset not found: #{name}") unless File.exist?(path)
 
-        preset = YAML.load_file(path)
+        preset = YAML.safe_load_file(path, permitted_classes: [Time, Date], symbolize_names: true)
         pipeline = new
 
         preset['stages'].each do |stage|
@@ -222,59 +222,30 @@ module MASTER
       end
 
       def self.discover_models(category)
-        # Model list based on repligen's WILD_CHAIN
-        # Updated with current best models for each category
+        # Reference canonical model registry from Replicate module
         case category
         when :image
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
+          Replicate::MODELS.values + [
             'ideogram-ai/ideogram-v2',
             'recraft-ai/recraft-v3'
           ]
         when :video
-          [
-            'minimax/video-01',      # Hailuo 2.3
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'luma/ray-2',
-            'wan-video/wan-2.5-i2v',
-            'openai/sora-2'
-          ]
+          Replicate::VIDEO_MODELS.values
         when :enhance
-          [
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler'
-          ]
+          Replicate::ENHANCE_MODELS.values + ['lucataco/clarity-upscaler']
         when :audio
-          [
-            'meta/musicgen',
-            'suno/bark'
-          ]
+          Replicate::AUDIO_MODELS.values
         when :transcribe
           ['openai/whisper']
         when :color
           ['stability-ai/sdxl']
         else
           # All models combined
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
-            'ideogram-ai/ideogram-v2',
-            'recraft-ai/recraft-v3',
-            'minimax/video-01',
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler',
-            'meta/musicgen',
-            'suno/bark',
-            'openai/whisper'
-          ]
+          Replicate::MODELS.values + 
+          Replicate::VIDEO_MODELS.values +
+          Replicate::ENHANCE_MODELS.values + 
+          Replicate::AUDIO_MODELS.values +
+          ['openai/whisper', 'lucataco/clarity-upscaler']
         end
       end
 
@@ -342,7 +313,7 @@ module MASTER
       pipelines_dir = File.join(Paths.data, 'pipelines')
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
-          preset = YAML.load_file(path)
+          preset = YAML.safe_load_file(path, permitted_classes: [Time, Date], symbolize_names: true)
           { 
             name: preset['name'], 
             description: preset['description'], 

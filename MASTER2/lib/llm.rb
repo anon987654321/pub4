@@ -24,6 +24,15 @@ module MASTER
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
 
+    # Timeout constants (merged from timeouts.rb)
+    module Timeouts
+      # LLM request timeout (seconds)
+      LLM_TIMEOUT = (ENV['MASTER_LLM_TIMEOUT'] || 60).to_i
+      
+      # Web request timeout (seconds)
+      WEB_TIMEOUT = (ENV['MASTER_WEB_TIMEOUT'] || 30).to_i
+    end
+
     class << self
       attr_accessor :current_model, :current_tier
 

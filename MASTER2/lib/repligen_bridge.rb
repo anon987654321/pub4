@@ -2,36 +2,35 @@
 
 module MASTER
   # Repligen Bridge - Interface to AI media generation pipeline
-  # Based on repligen.rb WILD_CHAIN model catalog
+  # References canonical model registry from Replicate module
   # Provides access to image, video, and enhancement models
   module RepligenBridge
     extend self
 
-    # Model catalog from repligen's WILD_CHAIN
+    # Model catalog - references Replicate::MODELS for canonical source
     WILD_CHAIN = {
       image_gen: [
-        { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
-        { model: "black-forest-labs/flux-dev", name: "Flux Dev" },
-        { model: "stability-ai/sdxl", name: "SDXL" },
-        { model: "ideogram-ai/ideogram-v2", name: "Ideogram V2" },
-        { model: "recraft-ai/recraft-v3", name: "Recraft V3" }
+        { model: Replicate::MODELS[:flux], name: "Flux 1.1 Pro" },
+        { model: Replicate::MODELS[:flux2], name: "Flux 2" },
+        { model: Replicate::MODELS[:sdxl], name: "SDXL" },
+        { model: Replicate::MODELS[:ideogram], name: "Ideogram V2" },
+        { model: Replicate::MODELS[:recraft], name: "Recraft V3" }
       ],
       video_gen: [
-        { model: "minimax/video-01", name: "Hailuo 2.3" },
-        { model: "kwaivgi/kling-v2.5-turbo-pro", name: "Kling 2.5" },
-        { model: "luma/ray-2", name: "Luma Ray 2" },
-        { model: "wan-video/wan-2.5-i2v", name: "WAN 2.5" },
-        { model: "openai/sora-2", name: "Sora 2" }
+        { model: Replicate::VIDEO_MODELS[:hailuo], name: "Hailuo 2.3" },
+        { model: Replicate::VIDEO_MODELS[:kling], name: "Kling 2.5" },
+        { model: Replicate::VIDEO_MODELS[:ray], name: "Luma Ray 2" },
+        { model: Replicate::VIDEO_MODELS[:wan], name: "WAN 2.5" }
       ],
       enhance: [
-        { model: "nightmareai/real-esrgan", name: "Real-ESRGAN 4x" },
-        { model: "tencentarc/gfpgan", name: "GFPGAN Face" },
-        { model: "sczhou/codeformer", name: "CodeFormer" },
+        { model: Replicate::ENHANCE_MODELS[:esrgan], name: "Real-ESRGAN 4x" },
+        { model: Replicate::ENHANCE_MODELS[:gfpgan], name: "GFPGAN Face" },
+        { model: Replicate::ENHANCE_MODELS[:codeformer], name: "CodeFormer" },
         { model: "lucataco/clarity-upscaler", name: "Clarity 4x" }
       ],
       audio: [
-        { model: "meta/musicgen", name: "MusicGen" },
-        { model: "suno/bark", name: "Bark TTS" }
+        { model: Replicate::AUDIO_MODELS[:musicgen], name: "MusicGen" },
+        { model: Replicate::AUDIO_MODELS[:bark], name: "Bark TTS" }
       ],
       transcribe: [
         { model: "openai/whisper", name: "Whisper" }
