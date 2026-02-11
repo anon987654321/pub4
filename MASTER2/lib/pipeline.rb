@@ -130,6 +130,11 @@ module MASTER
 
         Boot.banner
 
+        # Add prescan before starting work
+        if ENV['MASTER_PRESCAN'] != 'false'
+          Prescan.run(MASTER.root) if defined?(Prescan)
+        end
+
         # First-run welcome
         Onboarding.show_welcome if defined?(Onboarding)
 
@@ -142,10 +147,29 @@ module MASTER
         puts "Type 'help' for commands, Ctrl+C twice to quit"
         puts
 
+        # Initialize workflow if not present
+        if defined?(WorkflowEngine)
+          workflow_result = WorkflowEngine.start_workflow(session)
+          if workflow_result.ok?
+            phase = WorkflowEngine.current_phase(session)
+            phase_info = Questions.for_phase(phase) if defined?(Questions)
+            
+            puts UI.bold("Phase: #{phase.to_s.upcase}")
+            puts UI.dim("  Purpose: #{phase_info[:purpose]}") if phase_info
+            puts
+          end
+        end
+
         Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
         loop do
-          prompt_str = prompt
+          # Show current phase in prompt if workflow active
+          prompt_str = if defined?(WorkflowEngine) && session[:workflow]
+                         phase = WorkflowEngine.current_phase(session)
+                         "#{phase}> "
+                       else
+                         prompt
+                       end
 
           begin
             line = if reader

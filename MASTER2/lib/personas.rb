@@ -169,4 +169,97 @@ module MASTER
       @data
     end
   end
+
+  # Class-level activation methods
+  class Personas
+    class << self
+      @active_persona = nil
+
+      # Activate a persona with proactive behaviors
+      def activate(name)
+        persona = load(name)
+        return Result.err("Persona '#{name}' not found") unless persona
+
+        @active_persona = persona
+        
+        # Set LLM system prompt
+        if defined?(LLM) && persona[:system_prompt]
+          LLM.instance_variable_set(:@persona_prompt, persona[:system_prompt])
+        end
+
+        # Register behavior hooks
+        register_behaviors(persona) if persona[:behaviors]
+
+        puts UI.green("✓ Activated persona: #{persona[:name]}")
+        puts UI.dim("  #{persona[:description]}")
+        
+        Result.ok(persona)
+      end
+
+      def deactivate
+        @active_persona = nil
+        LLM.instance_variable_set(:@persona_prompt, nil) if defined?(LLM)
+        unregister_behaviors
+        
+        puts UI.dim("Persona deactivated")
+        Result.ok(true)
+      end
+
+      def active
+        @active_persona
+      end
+
+      def active?
+        !@active_persona.nil?
+      end
+
+      private
+
+      def register_behaviors(persona)
+        return unless persona[:behaviors]
+
+        # Register "find gaps" behavior
+        if persona[:behaviors].include?("Identify missing features without being asked")
+          Hooks.register(:after_phase, ->(data) {
+            # Check for common gaps after implement phase
+            if data[:phase] == :implement
+              check_for_gaps(data)
+            end
+          }) if defined?(Hooks)
+        end
+
+        # Register "research similar" behavior
+        if persona[:behaviors].include?("Research similar projects for inspiration")
+          Hooks.register(:before_phase, ->(data) {
+            if data[:phase] == :ideate
+              suggest_research(data)
+            end
+          }) if defined?(Hooks)
+        end
+      end
+
+      def unregister_behaviors
+        # Clear behavior hooks
+        Hooks.clear_handlers if defined?(Hooks)
+      end
+
+      def check_for_gaps(data)
+        puts UI.dim("\n[Persona] Checking for common gaps...")
+        
+        gaps = []
+        gaps << "No tests found" unless File.exist?("test")
+        gaps << "No README" unless File.exist?("README.md")
+        gaps << "No .gitignore" unless File.exist?(".gitignore")
+
+        if gaps.any?
+          puts UI.yellow("  Found gaps: #{gaps.join(', ')}")
+          puts UI.dim("  Should I add these?")
+        end
+      end
+
+      def suggest_research(data)
+        puts UI.dim("\n[Persona] Consider researching similar projects for inspiration")
+      end
+    end
+  end
 end

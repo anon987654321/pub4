@@ -7,6 +7,7 @@ require_relative "commands/budget_commands"
 require_relative "commands/code_commands"
 require_relative "commands/misc_commands"
 require_relative "commands/refactor_helpers"
+require_relative "commands/workflow_commands"
 
 module MASTER
   # Commands - REPL command dispatcher
@@ -18,6 +19,7 @@ module MASTER
     include CodeCommands
     include MiscCommands
     include RefactorHelpers
+    include WorkflowCommands
 
     @last_command = nil
 
@@ -128,6 +130,9 @@ module MASTER
         nil
       when "personas"
         list_personas
+        nil
+      when "workflow"
+        manage_workflow(args)
         nil
       when "creative"
         creative_chamber(args)
