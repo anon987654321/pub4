@@ -1,7 +1,8 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Privcam setup: Private video sharing platform with live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
+# Privcam setup: Private video sharing platform with live search, infinite scroll, and anonymous features on OpenBSD 7.8, unprivileged user
 
 APP_NAME="privcam"
 
@@ -1413,4 +1414,4 @@ log "Privcam setup complete. Run 'bin/falcon-host' with PORT set to start on Ope
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.

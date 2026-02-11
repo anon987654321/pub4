@@ -132,7 +132,7 @@ BSDPorts is a comprehensive package search and management platform that provides
 - **Vulnerability Scanning**: Integration with security databases
 ## Deployment
 
-### OpenBSD 7.5 Deployment
+### OpenBSD 7.8 Deployment
 - **Unprivileged User**: Runs without root privileges
 - **Falcon Server**: Optimized for OpenBSD performance
 - **Service Management**: Integration with OpenBSD rc.d system

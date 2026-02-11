@@ -1,7 +1,8 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Brgen Playlist setup: Music playlist sharing platform with streaming, collaboration, and social features on OpenBSD 7.5, unprivileged user
+# Brgen Playlist setup: Music playlist sharing platform with streaming, collaboration, and social features on OpenBSD 7.8, unprivileged user
 
 # Framework v37.3.2 compliant with enhanced music sharing capabilities
 
@@ -1839,7 +1840,7 @@ log "   See G:/pub/README-VISUALIZER.md for full documentation"
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.
 
 # - Integrated Radio Bergen Visualizer (G:/pub/index.html) as static asset at /visualizer route
 

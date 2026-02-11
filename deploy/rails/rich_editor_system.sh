@@ -2,7 +2,8 @@
 # Rich Text Editor System
 # Tiptap (Medium-style) + stimulus-lightbox integration
 
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 add_rich_editor() {
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Brgen Dating setup: Location-based dating platform with matchmaking, Mapbox, live search, infinite scroll, and anonymous features on OpenBSD 7.5, unprivileged user
+# Brgen Dating setup: Location-based dating platform with matchmaking, Mapbox, live search, infinite scroll, and anonymous features on OpenBSD 7.8, unprivileged user
 
 # Framework v37.3.2 compliant
 
@@ -1659,4 +1660,4 @@ log "Brgen Dating setup complete. Run 'bin/falcon-host' with PORT set to start o
 
 # - Ensured NNG principles, SEO, schema data, and minimal flat design compliance.
 
-# - Finalized for unprivileged user on OpenBSD 7.5.
+# - Finalized for unprivileged user on OpenBSD 7.8.
