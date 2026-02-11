@@ -29,12 +29,13 @@ module MASTER
     # Only configures Stoplight on first use, ensuring graceful degradation
     def ensure_stoplight_configured
       return unless STOPLIGHT_AVAILABLE
+      return if self.class.stoplight_configured  # Early return if already configured
       
       self.class.stoplight_config_mutex.synchronize do
         return if self.class.stoplight_configured  # Double-check after acquiring lock
         
-        self.class.stoplight_configured = true
         Stoplight::Light.default_data_store = Stoplight::DataStore::Memory.new
+        self.class.stoplight_configured = true  # Set flag only after configuration is complete
       end
     end
 
