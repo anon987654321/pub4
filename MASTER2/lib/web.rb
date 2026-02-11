@@ -2,7 +2,6 @@
 
 require "net/http"
 require "uri"
-require_relative "timeouts"
 
 module MASTER
   # Web - Browse and fetch web content with LLM-powered automation
