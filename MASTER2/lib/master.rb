@@ -22,7 +22,6 @@ require_relative "llm"
 require_relative "memory"
 require_relative "session"
 require_relative "pledge"
-require_relative "rubocop_detector"  # Style checking integration
 
 # Multi-language parsing and NLU (optional — from parent repo)
 %w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
@@ -130,7 +129,6 @@ require_relative "cross_ref"
 
 # Quality & Analysis (restored from MASTER)
 require_relative "violations"
-require_relative "smells"
 require_relative "bug_hunting"
 require_relative "planner"
 
