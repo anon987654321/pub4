@@ -13,12 +13,31 @@ module MASTER
     API_URL = 'https://api.replicate.com/v1/predictions'
 
     MODELS = {
-      flux:      'black-forest-labs/flux-1.1-pro',
-      sdxl:      'stability-ai/sdxl',
-      kandinsky: 'ai-forever/kandinsky-2.2'
+      # Image generation
+      flux:         'black-forest-labs/flux-1.1-pro',  # Alias for flux_pro (backward compat)
+      flux_pro:     'black-forest-labs/flux-1.1-pro',
+      flux_kontext: 'black-forest-labs/flux-kontext-pro',
+      flux2:        'black-forest-labs/flux-1.1-pro-ultra',
+      sdxl:         'stability-ai/sdxl',
+      kandinsky:    'ai-forever/kandinsky-2.2',
+      # Video generation
+      hailuo:       'minimax/hailuo-2.3',
+      mochi:        'genmo/mochi-1-preview',
+      # Music/Audio
+      musicgen:     'meta/musicgen',
+      bark:         'suno-ai/bark',
+      stable_audio: 'stability-ai/stable-audio',
+      # 3D generation
+      triposr:      'VAST-AI-Research/triposr',
+      trellis:      'firtoz/trellis',
+      # Upscale/Post-processing
+      esrgan:       'nightmareai/real-esrgan',
+      gfpgan:       'tencentarc/gfpgan',
+      # Caption/Description
+      blip:         'salesforce/blip'
     }.freeze
 
-    DEFAULT_MODEL = :flux
+    DEFAULT_MODEL = :flux_pro
 
     class << self
       def api_key
@@ -116,6 +135,148 @@ module MASTER
       rescue => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
+      end
+
+      # Generate video from text prompt
+      def generate_video(prompt:, model: :hailuo, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:hailuo]
+        
+        # Set default params per model
+        default_params = case model.to_sym
+        when :hailuo
+          { duration: 5, resolution: '720p' }
+        when :mochi
+          { num_frames: 84, fps: 24 }
+        else
+          {}
+        end
+
+        input = { prompt: prompt }.merge(default_params).merge(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id], timeout: 300) # 5 min timeout for video
+        return Result.err("Video generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          prompt: prompt
+        })
+      end
+
+      # Generate music from text prompt
+      def generate_music(prompt:, model: :musicgen, duration: 10, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:musicgen]
+        
+        input = { prompt: prompt, duration: duration }.merge(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Music generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          prompt: prompt,
+          duration: duration
+        })
+      end
+
+      # Text-to-speech synthesis
+      def text_to_speech(text:, model: :bark, voice: nil, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:bark]
+        
+        input = { text: text }
+        input[:voice_preset] = voice if voice
+        input.merge!(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("TTS failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          text: text
+        })
+      end
+
+      # Generate 3D model from image
+      def generate_3d(image_url:, model: :triposr, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:triposr]
+        
+        input = { image: image_url }.merge(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("3D generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output],
+          model: model_id,
+          format: 'glb'
+        })
+      end
+
+      # Edit image using text guidance
+      def edit_image(image_url:, prompt:, model: :flux_kontext, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[model.to_sym] || MODELS[:flux_kontext]
+        
+        input = { image: image_url, prompt: prompt }.merge(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Image editing failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          urls: result[:output],
+          model: model_id,
+          prompt: prompt
+        })
+      end
+
+      # Restore and enhance faces in image
+      def restore_face(image_url:, params: {})
+        return Result.err("REPLICATE_API_KEY not set") unless available?
+
+        model_id = MODELS[:gfpgan]
+        input = { image: image_url }.merge(params)
+
+        prediction = create_prediction(model_id, input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Face restoration failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          url: result[:output]
+        })
       end
 
       private
