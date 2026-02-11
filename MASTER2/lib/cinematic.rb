@@ -10,33 +10,35 @@ module MASTER
     extend self
 
     # Cinematic presets - film looks and color grades
-    PRESETS = {
-      'blade-runner' => {
-        description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
-        models: ['stability-ai/sdxl', 'tencentarc/gfpgan'],
-        params: { guidance_scale: 12.0, strength: 0.6 }
-      },
-      'wes-anderson' => {
-        description: 'Symmetrical, pastel palette, centered compositions',
-        models: ['stability-ai/sdxl'],
-        params: { guidance_scale: 8.0, strength: 0.5 }
-      },
-      'noir' => {
-        description: 'High contrast black and white, dramatic shadows',
-        models: ['stability-ai/sdxl'],
-        params: { guidance_scale: 10.0, strength: 0.7 }
-      },
-      'golden-hour' => {
-        description: 'Warm, soft, glowing light',
-        models: ['stability-ai/sdxl'],
-        params: { guidance_scale: 9.0, strength: 0.5 }
-      },
-      'teal-orange' => {
-        description: 'Hollywood blockbuster: teal shadows, orange highlights',
-        models: ['stability-ai/sdxl'],
-        params: { guidance_scale: 11.0, strength: 0.6 }
-      }
-    }.freeze
+    def self.presets
+      @presets ||= {
+        'blade-runner' => {
+          description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
+          models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
+          params: { guidance_scale: 12.0, strength: 0.6 }
+        },
+        'wes-anderson' => {
+          description: 'Symmetrical, pastel palette, centered compositions',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 8.0, strength: 0.5 }
+        },
+        'noir' => {
+          description: 'High contrast black and white, dramatic shadows',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 10.0, strength: 0.7 }
+        },
+        'golden-hour' => {
+          description: 'Warm, soft, glowing light',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 9.0, strength: 0.5 }
+        },
+        'teal-orange' => {
+          description: 'Hollywood blockbuster: teal shadows, orange highlights',
+          models: [Replicate::MODELS[:sdxl]],
+          params: { guidance_scale: 11.0, strength: 0.6 }
+        }
+      }.freeze
+    end
 
     # Pipeline builder class
     class Pipeline
@@ -222,59 +224,25 @@ module MASTER
       end
 
       def self.discover_models(category)
-        # Model list based on repligen's WILD_CHAIN
-        # Updated with current best models for each category
+        # Use Replicate.models_for to get model IDs from categories
         case category
         when :image
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
-            'ideogram-ai/ideogram-v2',
-            'recraft-ai/recraft-v3'
-          ]
+          Replicate.models_for(:image).map { |m| m[:id] }
         when :video
-          [
-            'minimax/video-01',      # Hailuo 2.3
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'luma/ray-2',
-            'wan-video/wan-2.5-i2v',
-            'openai/sora-2'
-          ]
+          Replicate.models_for(:video).map { |m| m[:id] }
         when :enhance
-          [
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler'
-          ]
+          Replicate.models_for(:upscale).map { |m| m[:id] }
         when :audio
-          [
-            'meta/musicgen',
-            'suno/bark'
-          ]
+          Replicate.models_for(:audio).map { |m| m[:id] }
         when :transcribe
-          ['openai/whisper']
+          Replicate.models_for(:transcribe).map { |m| m[:id] }
         when :color
-          ['stability-ai/sdxl']
+          [Replicate::MODELS[:sdxl]]
         else
           # All models combined
-          [
-            'black-forest-labs/flux-pro',
-            'black-forest-labs/flux-dev',
-            'stability-ai/sdxl',
-            'ideogram-ai/ideogram-v2',
-            'recraft-ai/recraft-v3',
-            'minimax/video-01',
-            'kwaivgi/kling-v2.5-turbo-pro',
-            'nightmareai/real-esrgan',
-            'tencentarc/gfpgan',
-            'sczhou/codeformer',
-            'lucataco/clarity-upscaler',
-            'meta/musicgen',
-            'suno/bark',
-            'openai/whisper'
-          ]
+          [:image, :video, :upscale, :audio, :transcribe].flat_map do |cat|
+            Replicate.models_for(cat).map { |m| m[:id] }
+          end
         end
       end
 
@@ -289,7 +257,7 @@ module MASTER
 
     # Apply a named preset
     def apply_preset(input, preset_name)
-      preset = PRESETS[preset_name]
+      preset = self.class.presets[preset_name]
       return Result.err("Unknown preset: #{preset_name}") unless preset
 
       pipeline = Pipeline.new
@@ -334,8 +302,8 @@ module MASTER
 
     # List available presets
     def list_presets
-      builtin = PRESETS.keys.map do |name|
-        { name: name, description: PRESETS[name][:description], source: 'builtin' }
+      builtin = self.class.presets.keys.map do |name|
+        { name: name, description: self.class.presets[name][:description], source: 'builtin' }
       end
 
       # Load custom presets from disk

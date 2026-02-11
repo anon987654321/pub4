@@ -7,50 +7,52 @@ module MASTER
   module RepligenBridge
     extend self
 
-    # Model catalog from repligen's WILD_CHAIN
-    WILD_CHAIN = {
-      image_gen: [
-        { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
-        { model: "black-forest-labs/flux-dev", name: "Flux Dev" },
-        { model: "stability-ai/sdxl", name: "SDXL" },
-        { model: "ideogram-ai/ideogram-v2", name: "Ideogram V2" },
-        { model: "recraft-ai/recraft-v3", name: "Recraft V3" }
-      ],
-      video_gen: [
-        { model: "minimax/video-01", name: "Hailuo 2.3" },
-        { model: "kwaivgi/kling-v2.5-turbo-pro", name: "Kling 2.5" },
-        { model: "luma/ray-2", name: "Luma Ray 2" },
-        { model: "wan-video/wan-2.5-i2v", name: "WAN 2.5" },
-        { model: "openai/sora-2", name: "Sora 2" }
-      ],
-      enhance: [
-        { model: "nightmareai/real-esrgan", name: "Real-ESRGAN 4x" },
-        { model: "tencentarc/gfpgan", name: "GFPGAN Face" },
-        { model: "sczhou/codeformer", name: "CodeFormer" },
-        { model: "lucataco/clarity-upscaler", name: "Clarity 4x" }
-      ],
-      audio: [
-        { model: "meta/musicgen", name: "MusicGen" },
-        { model: "suno/bark", name: "Bark TTS" }
-      ],
-      transcribe: [
-        { model: "openai/whisper", name: "Whisper" }
-      ]
-    }.freeze
+    # Model catalog - delegates to Replicate::MODELS for DRY
+    def self.wild_chain
+      @wild_chain ||= {
+        image_gen: [
+          { model: MASTER::Replicate::MODELS[:flux_pro], name: "Flux Pro" },
+          { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
+          { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
+          { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
+          { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" }
+        ],
+        video_gen: [
+          { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
+          { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
+          { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
+          { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
+          { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" }
+        ],
+        enhance: [
+          { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
+          { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
+          { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
+          { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" }
+        ],
+        audio: [
+          { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
+          { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" }
+        ],
+        transcribe: [
+          { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" }
+        ]
+      }.freeze
+    end
 
     # Get all models for a category
     def models_for(category)
-      WILD_CHAIN[category.to_sym] || []
+      self.class.wild_chain[category.to_sym] || []
     end
 
     # List all available categories
     def categories
-      WILD_CHAIN.keys
+      self.class.wild_chain.keys
     end
 
     # Generate image using Replicate API
     def generate_image(prompt:, model: nil)
-      model_id = model || WILD_CHAIN[:image_gen].first[:model]
+      model_id = model || self.class.wild_chain[:image_gen].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
@@ -59,25 +61,25 @@ module MASTER
 
     # Generate video using Replicate API
     def generate_video(prompt:, model: nil)
-      model_id = model || WILD_CHAIN[:video_gen].first[:model]
+      model_id = model || self.class.wild_chain[:video_gen].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
-      Replicate.generate(prompt: prompt, model: model_id)
+      Replicate.run(model_id: model_id, input: { prompt: prompt })
     end
 
     # Enhance image using upscaling models
     def enhance_image(image_url:, model: nil)
-      model_id = model || WILD_CHAIN[:enhance].first[:model]
+      model_id = model || self.class.wild_chain[:enhance].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
-      Replicate.generate(prompt: "", model: model_id, params: { image: image_url })
+      Replicate.run(model_id: model_id, input: { image: image_url })
     end
 
     # Get model info
     def model_info(model_id)
-      WILD_CHAIN.each do |category, models|
+      self.class.wild_chain.each do |category, models|
         models.each do |m|
           return { category: category, **m } if m[:model] == model_id
         end
@@ -88,7 +90,7 @@ module MASTER
     # List all models
     def all_models
       result = []
-      WILD_CHAIN.each do |category, models|
+      self.class.wild_chain.each do |category, models|
         models.each do |m|
           result << { category: category, **m }
         end
@@ -108,7 +110,7 @@ module MASTER
       steps.times do
         # Randomly pick a category (prefer image gen and enhance)
         category = [:image_gen, :enhance, :video_gen].sample(random: rng)
-        models = WILD_CHAIN[category]
+        models = self.class.wild_chain[category]
         
         next if models.nil? || models.empty?
         
@@ -142,15 +144,14 @@ module MASTER
         end
         
         # Execute step
-        result = Replicate.generate(
-          prompt: step[:prompt] || "",
-          model: step[:model],
-          params: params
+        result = Replicate.run(
+          model_id: step[:model],
+          input: { prompt: step[:prompt] || "" }.merge(params)
         )
         
         return result if result.err?
         
-        current_output = result.ok
+        current_output = result.value[:output]
         results << {
           step: idx + 1,
           model: step[:name],
@@ -170,7 +171,7 @@ module MASTER
       return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
       
       full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
-      model_id = model || WILD_CHAIN[:image_gen].first[:model]
+      model_id = model || self.class.wild_chain[:image_gen].first[:model]
       
       return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
       
@@ -186,7 +187,7 @@ module MASTER
       query_lower = query.to_s.downcase
       matches = []
       
-      WILD_CHAIN.each do |category, models|
+      self.class.wild_chain.each do |category, models|
         models.each do |m|
           if m[:name].downcase.include?(query_lower) || m[:model].downcase.include?(query_lower)
             matches << { category: category, **m }
@@ -203,10 +204,9 @@ module MASTER
       return Result.err("Training data cannot be empty") if training_data.nil? || training_data.empty?
       return Result.err("Trigger word required") if trigger_word.nil? || trigger_word.empty?
       
-      Replicate.generate(
-        prompt: "",
-        model: model,
-        params: {
+      Replicate.run(
+        model_id: model,
+        input: {
           input_images: training_data,
           trigger_word: trigger_word,
           steps: 1000,
