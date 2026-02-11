@@ -6,6 +6,9 @@ require "time"
 
 module MASTER
   # Session - Persistent session management with auto-save
+  # STORAGE: Uses Memory module (JSON files in .sessions/)
+  # NOTE: DB JSONL system is separate and used by LearningFeedback
+  # See learnings.rb line 241-242 for architecture notes
   class Session
     attr_reader :id, :created_at, :history, :metadata
 

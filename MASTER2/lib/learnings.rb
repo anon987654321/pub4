@@ -245,6 +245,26 @@ module MASTER
         record(**learning) unless exists?(learning[:description])
       end
     end
+    
+    # Extract regex pattern from code diff (simple heuristic)
+    def self.extract_pattern_from_fix(original, fixed)
+      # Find the line that changed
+      original_lines = original.lines
+      fixed_lines = fixed.lines
+      
+      diff_line = original_lines.zip(fixed_lines).find { |o, f| o != f }
+      
+      return nil unless diff_line
+      
+      original_part = diff_line[0]&.strip
+      return nil unless original_part
+      
+      # Extract a simple regex pattern
+      # Example: "foo.bar" becomes "foo\.bar"
+      Regexp.escape(original_part[0..50]) # First 50 chars
+    rescue
+      nil
+    end
 
     private
 

@@ -56,6 +56,18 @@ module MASTER
       when "help", "?"
         Help.show(args)
         nil
+      when "hunt"
+        hunt_bugs(args)
+        nil
+      when "critique"
+        critique_code(args)
+        nil
+      when "conflict"
+        detect_conflicts
+        nil
+      when "learn"
+        show_learnings(args)
+        nil
       when "status"
         Dashboard.new.render
         nil

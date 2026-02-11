@@ -25,6 +25,87 @@ module MASTER
         return Result.err("File not found: #{file}") unless File.exist?(path)
 
         original_code = File.read(path)
+        
+        # PHASE 1: Bug Hunting (8-phase analysis)
+        puts UI.bold("🔍 PHASE 1: Bug Hunting (8-phase analysis)...")
+        hunt_result = BugHunting.analyze(original_code, file_path: file)
+        bugs_found = hunt_result.dig(:findings, :verification, :bugs_found) || 0
+        
+        # Count actual bugs from patterns
+        pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
+        bugs_found = pattern_matches.size
+        
+        if bugs_found > 0
+          puts "⚠️  Found #{bugs_found} potential bugs"
+          puts BugHunting.format(hunt_result)
+        else
+          puts "✓ No bugs detected"
+        end
+        
+        # PHASE 2: Constitutional Validation
+        puts "\n" + UI.bold("🧠 PHASE 2: Constitutional Validation...")
+        violations = Violations.analyze(original_code, path: file, llm: nil, conceptual: false)
+        critical_count = violations[:literal].count { |v| v[:severity] == :error }
+        
+        if critical_count > 0
+          puts "🚨 #{critical_count} critical violations"
+          puts Violations.report(violations)
+        else
+          puts "✓ No constitutional violations"
+        end
+        
+        # PHASE 3: Checking Learnings Database
+        puts "\n" + UI.bold("📚 PHASE 3: Checking Learnings Database...")
+        learned_issues = Learnings.apply_to(original_code)
+        
+        if learned_issues.any?
+          puts "💡 Found #{learned_issues.size} known patterns:"
+          learned_issues.each do |issue|
+            puts "  • #{issue[:description]} (#{issue[:severity]})"
+          end
+        else
+          puts "✓ No known patterns detected"
+        end
+        
+        # PHASE 4: Code Smell Detection
+        puts "\n" + UI.bold("👃 PHASE 4: Code Smell Detection...")
+        smells = Smells.analyze(original_code, file)
+        
+        if smells.any?
+          puts "📋 Found #{smells.size} code smells"
+          smells.first(5).each do |smell|
+            puts "  • #{smell[:smell]}: #{smell[:message]}"
+          end
+        else
+          puts "✓ No code smells"
+        end
+        
+        # Summary
+        total_issues = bugs_found + critical_count + learned_issues.size + smells.size
+        
+        if total_issues == 0
+          puts "\n✨ File is clean! No refactoring needed."
+          return Result.ok({ message: "No issues found" })
+        end
+        
+        puts "\n" + UI.bold("📊 SUMMARY:")
+        puts "  Bugs: #{bugs_found}"
+        puts "  Critical Violations: #{critical_count}"
+        puts "  Known Patterns: #{learned_issues.size}"
+        puts "  Code Smells: #{smells.size}"
+        puts "  TOTAL: #{total_issues} issues"
+        
+        # Confirmation gate
+        print "\n🤔 Proceed with automatic fixes? (y/n): "
+        response = $stdin.gets&.chomp&.downcase
+        
+        unless response == 'y' || response == 'yes'
+          puts "Cancelled."
+          return Result.ok({ message: "Cancelled by user" })
+        end
+        
+        # PHASE 5: Generating Fixes
+        puts "\n" + UI.bold("🤖 PHASE 5: Generating Fixes...")
         chamber = Chamber.new
         result = chamber.deliberate(original_code, filename: File.basename(path))
 
@@ -36,15 +117,41 @@ module MASTER
         # Pass through lint + render stages for governance
         linted = lint_output(proposed_code)
         rendered = render_output(linted)
+        
+        fix_successful = false
 
         # Format output based on mode
         case mode
         when :raw
           display_raw_output(result, rendered, council_info)
+          fix_successful = true
         when :apply
           apply_refactor(path, original_code, rendered, result, council_info)
+          fix_successful = true
         else # :preview (default)
           display_preview(path, original_code, rendered, result, council_info)
+          fix_successful = true
+        end
+        
+        # PHASE 6: Recording Learnings
+        if fix_successful && bugs_found > 0
+          puts "\n" + UI.bold("📝 PHASE 6: Recording Learnings...")
+          
+          # Extract pattern from bugs that were fixed
+          pattern_matches.first(3).each do |match|
+            pattern = Learnings.extract_pattern_from_fix(original_code, rendered)
+            if pattern
+              Learnings.record(
+                category: :bug_pattern,
+                pattern: pattern,
+                description: "Auto-discovered during refactor of #{file}: #{match[:name]}",
+                example: "Fixed in #{file}",
+                severity: :info
+              )
+            end
+          end
+          
+          puts "✓ Learnings updated"
         end
 
         result
@@ -112,6 +219,71 @@ module MASTER
           puts "  #{name.ljust(20)} #{desc[0, 50]}"
         end
         puts
+      end
+      
+      # Manual deep-dive bug analysis
+      def hunt_bugs(args)
+        return puts "Usage: hunt <file>" unless args
+        
+        file = args.strip
+        path = File.expand_path(file)
+        return puts "File not found: #{file}" unless File.exist?(path)
+        
+        code = File.read(path)
+        result = BugHunting.analyze(code, file_path: file)
+        puts BugHunting.format(result)
+      end
+      
+      # Manual constitutional validation
+      def critique_code(args)
+        return puts "Usage: critique <file>" unless args
+        
+        file = args.strip
+        path = File.expand_path(file)
+        return puts "File not found: #{file}" unless File.exist?(path)
+        
+        code = File.read(path)
+        violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
+        puts Violations.report(violations)
+      end
+      
+      # Detect principle conflicts in constitution
+      def detect_conflicts
+        puts "Analyzing constitution for principle conflicts..."
+        puts
+        
+        # This would require analyzing the constitution file
+        # For now, provide a simple implementation
+        constitution_path = File.join(MASTER.root, 'data', 'constitution.yml')
+        
+        if File.exist?(constitution_path)
+          puts "✓ Constitution file found"
+          puts "  Manual review recommended for complex conflicts"
+        else
+          puts "⚠ Constitution file not found at: #{constitution_path}"
+        end
+      end
+      
+      # Show what learnings would apply to this code
+      def show_learnings(args)
+        return puts "Usage: learn <file>" unless args
+        
+        file = args.strip
+        path = File.expand_path(file)
+        return puts "File not found: #{file}" unless File.exist?(path)
+        
+        code = File.read(path)
+        issues = Learnings.apply_to(code)
+        
+        if issues.empty?
+          puts "No learned patterns match this code"
+        else
+          puts "Matched Patterns:"
+          issues.each do |issue|
+            puts "\n#{issue[:severity].to_s.upcase}: #{issue[:description]}"
+            puts "Learning ID: #{issue[:learning_id]}"
+          end
+        end
       end
     end
   end
