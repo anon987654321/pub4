@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # Brgen TV setup: Video streaming platform with live streaming, content management, and social viewing features on OpenBSD 7.5, unprivileged user
 

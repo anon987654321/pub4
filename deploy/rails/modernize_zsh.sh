@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 # Modernize all .sh files to pure zsh patterns per master.yml v17.0.0
 
-set -euo pipefail
 emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 typeset -a files
 files=(${(f)"$(find . -name '*.sh' -type f ! -name 'modernize_zsh.sh')"})

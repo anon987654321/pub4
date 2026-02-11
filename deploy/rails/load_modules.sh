@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # Central module loader - consolidated per master.yml v74.2.0
 

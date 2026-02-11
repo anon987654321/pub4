@@ -2,7 +2,8 @@
 # Voting System Generator
 # Universal voting and reviews for all Rails apps
 
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # Usage: add_voting_to_app app_name
 

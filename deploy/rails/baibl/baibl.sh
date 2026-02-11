@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-set -euo pipefail
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 # BAIBL - AI Bible Application setup: Norwegian language interface with dark theme, precision metrics, and religious text analysis on OpenBSD 7.5
 
