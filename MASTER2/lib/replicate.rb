@@ -192,15 +192,8 @@ module MASTER
         { error: e.message }
       end
     end
-  end
 
-  # RepLigen Bridge - Interface to AI media generation pipeline
-  # Based on repligen.rb WILD_CHAIN model catalog
-  # Provides access to image, video, and enhancement models
-  module RepLigenBridge
-    extend self
-
-    # Model catalog from repligen's WILD_CHAIN
+    # Extended model catalog (WILD_CHAIN) for image, video, and enhancement models
     WILD_CHAIN = {
       image_gen: [
         { model: "black-forest-labs/flux-pro", name: "Flux Pro" },
@@ -245,27 +238,27 @@ module MASTER
     def generate_image(prompt:, model: nil)
       model_id = model || WILD_CHAIN[:image_gen].first[:model]
       
-      return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
+      return Result.err("Replicate not available") unless available?
       
-      Replicate.generate(prompt: prompt, model: model_id)
+      generate(prompt: prompt, model: model_id)
     end
 
     # Generate video using Replicate API
     def generate_video(prompt:, model: nil)
       model_id = model || WILD_CHAIN[:video_gen].first[:model]
       
-      return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
+      return Result.err("Replicate not available") unless available?
       
-      Replicate.generate(prompt: prompt, model: model_id)
+      generate(prompt: prompt, model: model_id)
     end
 
     # Enhance image using upscaling models
     def enhance_image(image_url:, model: nil)
       model_id = model || WILD_CHAIN[:enhance].first[:model]
       
-      return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
+      return Result.err("Replicate not available") unless available?
       
-      Replicate.generate(prompt: "", model: model_id, params: { image: image_url })
+      generate(prompt: "", model: model_id, params: { image: image_url })
     end
 
     # Get model info
@@ -290,9 +283,9 @@ module MASTER
     end
   end
 
-  # PostPro Bridge - Post-processing and enhancement utilities
+  # Postpro - Post-processing and enhancement utilities
   # Provides image and video enhancement capabilities
-  module PostProBridge
+  module Postpro
     extend self
 
     # Enhancement operations

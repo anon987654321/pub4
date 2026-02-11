@@ -23,15 +23,15 @@ module MASTER
 
     @last_command = nil
 
-    # RepLigen command handler
+    # Replicate command handler (image/video generation)
     def repligen_command(cmd, args)
-      # RepLigenBridge is now in replicate.rb
+      # Replicate module is now in replicate.rb
       
       case cmd
       when "repligen", "generate-image"
         return puts "Usage: repligen <prompt>" if args.nil? || args.empty?
         puts "🎨 Generating image: #{args}"
-        result = RepLigenBridge.generate_image(prompt: args)
+        result = Replicate.generate_image(prompt: args)
         if result.ok?
           puts "✓ Image generated: #{result.value[:urls]&.first || 'Success'}"
         else
@@ -40,7 +40,7 @@ module MASTER
       when "generate-video"
         return puts "Usage: generate-video <prompt>" if args.nil? || args.empty?
         puts "🎬 Generating video: #{args}"
-        result = RepLigenBridge.generate_video(prompt: args)
+        result = Replicate.generate_video(prompt: args)
         if result.ok?
           puts "✓ Video generated: #{result.value[:urls]&.first || 'Success'}"
         else
@@ -48,19 +48,19 @@ module MASTER
         end
       end
     rescue => e
-      $stderr.puts "RepLigen error: #{e.message}"
+      $stderr.puts "Replicate error: #{e.message}"
       puts "✗ Failed: #{e.message}"
     end
 
-    # PostPro command handler
+    # Postpro command handler (image enhancement)
     def postpro_command(cmd, args)
-      # PostProBridge is now in replicate.rb
+      # Postpro module is now in replicate.rb
       
       case cmd
       when "postpro"
         if args.nil? || args.empty?
-          puts "PostPro Operations:"
-          PostProBridge.operations.each do |op|
+          puts "Postpro Operations:"
+          Postpro.operations.each do |op|
             puts "  #{op[:id]} - #{op[:name]}"
           end
           return
@@ -72,7 +72,7 @@ module MASTER
         return puts "Usage: postpro <operation> <image_url>" if image_url.nil?
         
         puts "🔧 Enhancing with #{operation}..."
-        result = PostProBridge.enhance(image_url: image_url, operation: operation)
+        result = Postpro.enhance(image_url: image_url, operation: operation)
         if result.ok?
           puts "✓ Enhanced: #{result.value[:urls]&.first || 'Success'}"
         else
@@ -82,8 +82,8 @@ module MASTER
         return puts "Usage: #{cmd} <image_url>" if args.nil? || args.empty?
         puts "🔧 #{cmd.capitalize}ing image..."
         result = cmd == "upscale" ? 
-          PostProBridge.upscale(image_url: args) : 
-          PostProBridge.enhance(image_url: args, operation: :upscale)
+          Postpro.upscale(image_url: args) : 
+          Postpro.enhance(image_url: args, operation: :upscale)
         if result.ok?
           puts "✓ Done: #{result.value[:urls]&.first || 'Success'}"
         else
@@ -91,7 +91,7 @@ module MASTER
         end
       end
     rescue => e
-      $stderr.puts "PostPro error: #{e.message}"
+      $stderr.puts "Postpro error: #{e.message}"
       puts "✗ Failed: #{e.message}"
     end
 
