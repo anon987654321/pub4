@@ -1,5 +1,44 @@
+source "https://rubygems.org"
 
-# Stolen from MASTER
-gem "digest"
-gem "fileutils"
-gem "benchmark"
+# TTY toolkit - restored full integration from MASTER v1
+gem "tty-reader", "~> 0.9"
+gem "tty-spinner"
+gem "tty-table"
+gem "tty-box"
+gem "tty-markdown"
+gem "tty-prompt"
+gem "tty-progressbar"
+gem "tty-cursor"
+gem "tty-tree"       # Tree display
+gem "tty-pie"        # Pie charts for stats
+gem "tty-pager"      # Pagination
+gem "tty-link"       # Clickable links
+gem "tty-font"       # ASCII art fonts
+gem "tty-editor"     # External editor integration
+gem "tty-command"    # Safe command execution
+gem "tty-screen"     # Terminal dimensions
+gem "tty-platform"   # Platform detection
+gem "tty-which"      # Command location
+
+# Utilities
+gem "pastel"         # Terminal colors
+gem "rouge"          # Syntax highlighting
+gem "nokogiri", "~> 1.16"  # HTML/XML parsing (security: safe HTML processing)
+
+# HTTP client
+gem "faraday", "~> 2.0"
+gem "faraday-retry", "~> 2.0"
+gem "net-http-persistent", "~> 4.0"
+
+# Circuit breaker
+gem "stoplight", "~> 4.0"
+
+# Web server
+gem "falcon", "~> 0.47"
+gem "async-websocket"
+
+group :test do
+  gem "minitest"
+  gem "rake"
+  gem "webmock"      # HTTP mocking
+end

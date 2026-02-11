@@ -1,8 +1,0 @@
-master.db
-.env
-tmp/
-*.gem
-vendor/
-Gemfile.lock
-nul
-:memory:/

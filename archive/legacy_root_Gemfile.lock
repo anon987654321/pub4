@@ -1,0 +1,17 @@
+GEM
+  specs:
+    benchmark (0.4.0)
+    digest (3.2.0)
+    fileutils (1.7.3)
+
+PLATFORMS
+  ruby
+  x86_64-openbsd
+
+DEPENDENCIES
+  benchmark
+  digest
+  fileutils
+
+BUNDLED WITH
+   2.6.9
