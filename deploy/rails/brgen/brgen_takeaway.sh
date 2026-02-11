@@ -53,6 +53,17 @@ bundle add redis
 
 bundle install
 
+# Source shared functions for enhanced Turbo Streams (F7)
+if [[ -f "../@shared_functions.sh" ]]; then
+  source "../@shared_functions.sh"
+  echo "Setting up stimulus-components for takeaway app..."
+  setup_stimulus_components || true
+  echo "Generating ReplicateService..."
+  generate_replicate_service || true
+  echo "Generating AI job polling controller..."
+  generate_ai_job_controller || true
+fi
+
 # Use shared infinite scroll generators
 generate_base_infinite_scroll_reflex
 generate_infinite_scroll_reflex "Restaurant" "Restaurant.all.order(rating: :desc)"

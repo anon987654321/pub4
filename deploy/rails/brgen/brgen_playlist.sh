@@ -53,6 +53,17 @@ bundle add soundcloud-ruby
 
 bundle install
 
+# Source shared functions for AI music features (F6)
+if [[ -f "../@shared_functions.sh" ]]; then
+  source "../@shared_functions.sh"
+  echo "Setting up stimulus-components for playlist app..."
+  setup_stimulus_components || true
+  echo "Generating ReplicateService for AI music generation..."
+  generate_replicate_service || true
+  echo "Generating AI job polling controller..."
+  generate_ai_job_controller || true
+fi
+
 # Generate Playlist models (Rails will create proper files)
 
 log "Generating Playlist::Set model with associations"

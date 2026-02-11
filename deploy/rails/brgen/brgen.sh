@@ -90,6 +90,18 @@ end
 GEMFILE
 
 bundle install
+
+# Source shared functions for AI features (F4)
+if [[ -f "../@shared_functions.sh" ]]; then
+  source "../@shared_functions.sh"
+  echo "Setting up stimulus-components..."
+  setup_stimulus_components || true
+  echo "Generating ReplicateService for AI features..."
+  generate_replicate_service || true
+  echo "Generating AI job polling controller..."
+  generate_ai_job_controller || true
+fi
+
 # === ACTS AS VOTABLE ===
 echo "Installing acts_as_votable"
 bin/rails generate acts_as_votable:migration
