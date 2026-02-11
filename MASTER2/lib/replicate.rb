@@ -3,7 +3,6 @@
 require 'net/http'
 require 'json'
 require 'uri'
-require_relative 'timeouts'
 
 module MASTER
   # Replicate - Image generation via Replicate API
@@ -19,6 +18,12 @@ module MASTER
     }.freeze
 
     DEFAULT_MODEL = :flux
+
+    # Timeout constants (from timeouts.rb)
+    REPLICATE_TIMEOUT = (ENV['MASTER_REPLICATE_TIMEOUT'] || 300).to_i
+    POLL_INTERVAL = (ENV['MASTER_POLL_INTERVAL'] || 2).to_i
+    HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
+    HTTP_READ_TIMEOUT = (ENV['MASTER_HTTP_READ_TIMEOUT'] || 60).to_i
 
     class << self
       def api_key
@@ -37,7 +42,7 @@ module MASTER
         input = { prompt: prompt }.merge(params)
 
         # Create prediction
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
 
         # Poll for completion
@@ -53,12 +58,12 @@ module MASTER
       end
 
       def upscale(image_url:, scale: 4)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err("REPLICATE_API_KEY not set") unless available?
 
         model_id = 'nightmareai/real-esrgan'
         input = { image: image_url, scale: scale }
 
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -68,12 +73,12 @@ module MASTER
       end
 
       def describe(image_url:)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err("REPLICATE_API_KEY not set") unless available?
 
         model_id = 'salesforce/blip'
         input = { image: image_url }
 
-        prediction = create_prediction(model_id, input)
+        prediction = create_prediction(model: model_id, input: input)
         return Result.err("Failed: #{prediction[:error]}") if prediction[:error]
 
         result = wait_for_completion(prediction[:id])
@@ -120,23 +125,19 @@ module MASTER
 
       private
 
-      def create_prediction(model_version_or_id, input: nil, version: nil)
-        # Support both old signature (model_version, input) and new signature with named params
-        actual_input = input || model_version_or_id.is_a?(Hash) ? {} : model_version_or_id
-        actual_version = version || (model_version_or_id.is_a?(String) ? model_version_or_id : nil)
-        
+      def create_prediction(model:, input:)
         uri = URI(API_URL)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
-        http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
+        http.open_timeout = HTTP_OPEN_TIMEOUT
+        http.read_timeout = HTTP_READ_TIMEOUT
 
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
         
-        body = { input: actual_input }
-        body[:version] = actual_version if actual_version
+        body = { input: input }
+        body[:version] = model if model
         request.body = body.to_json
 
         response = http.request(request)
@@ -154,16 +155,16 @@ module MASTER
         { error: e.message }
       end
 
-      def wait_for_completion(id, timeout: Timeouts::REPLICATE_TIMEOUT)
+      def wait_for_completion(id, timeout: REPLICATE_TIMEOUT)
         uri = URI("#{API_URL}/#{id}")
         start_time = Time.now
-        max_polls = (timeout / Timeouts::POLL_INTERVAL).to_i  # Calculate max polls based on timeout
+        max_polls = (timeout / POLL_INTERVAL).to_i  # Calculate max polls based on timeout
 
         max_polls.times do
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
-          http.open_timeout = Timeouts::HTTP_OPEN_TIMEOUT
-          http.read_timeout = Timeouts::HTTP_READ_TIMEOUT
+          http.open_timeout = HTTP_OPEN_TIMEOUT
+          http.read_timeout = HTTP_READ_TIMEOUT
 
           request = Net::HTTP::Get.new(uri)
           request['Authorization'] = "Bearer #{api_key}"
@@ -177,7 +178,7 @@ module MASTER
           when 'failed', 'canceled'
             return { error: data[:error] || 'Generation failed' }
           when 'processing', 'starting'
-            sleep Timeouts::POLL_INTERVAL
+            sleep POLL_INTERVAL
           else
             return { error: "Unknown status: #{data[:status]}" }
           end

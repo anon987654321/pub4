@@ -138,7 +138,7 @@ module MASTER
 
         return Result.err("Preset not found: #{name}") unless File.exist?(path)
 
-        preset = YAML.load_file(path)
+        preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
         pipeline = new
 
         preset['stages'].each do |stage|
@@ -342,7 +342,7 @@ module MASTER
       pipelines_dir = File.join(Paths.data, 'pipelines')
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
-          preset = YAML.load_file(path)
+          preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
           { 
             name: preset['name'], 
             description: preset['description'], 
