@@ -320,7 +320,7 @@ module MASTER
             chat = chat.with_thinking(
               effort: options[:thinking_effort],
               budget: options[:thinking_budget]
-            ).compact
+            )
           end
           
           # Apply schema if needed
