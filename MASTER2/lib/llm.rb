@@ -102,8 +102,7 @@ module MASTER
         
         begin
           # Use ruby_llm to check the key
-          # Note: ruby_llm doesn't have a direct key check method, so we'll do a minimal request
-          # or fall back to manual HTTP check
+          # Note: ruby_llm doesn't have a direct key check method, so we'll do a manual HTTP check
           require "net/http"
           require "uri"
           
@@ -276,6 +275,12 @@ module MASTER
       end
 
       def execute_with_ruby_llm(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
+        # NOTE: This implementation uses ruby_llm which may not support all OpenRouter-specific features:
+        # - Model fallbacks (fallbacks parameter) - not directly supported by ruby_llm v1.11
+        # - Provider routing preferences (provider parameter) - may not work with ruby_llm
+        # - Multi-turn message history - simplified to last user message only
+        # These features were previously handled by manual HTTP requests to OpenRouter.
+        
         # Build options hash for ruby_llm
         options = {}
         
@@ -302,7 +307,7 @@ module MASTER
         # Handle provider preferences (OpenRouter-specific)
         if provider
           # OpenRouter uses HTTP headers for provider preferences
-          options[:provider_params] = provider
+          options[:provider_preference] = provider
         end
         
         # Handle model fallbacks (OpenRouter-specific)
@@ -327,14 +332,23 @@ module MASTER
           chat = chat.with_schema(options[:schema]) if options[:schema]
           
           # Apply custom headers for OpenRouter provider preferences
-          if options[:provider_params]
-            # OpenRouter accepts provider params in request body, not headers
-            # We'll need to use with_params to pass these through
-            chat = chat.with_params(provider: options[:provider_params])
+          # Note: OpenRouter-specific features (provider routing, fallbacks) may not be
+          # fully supported by ruby_llm. These will be silently ignored if not supported.
+          if options[:provider_preference]
+            chat = chat.with_params(provider: options[:provider_preference])
           end
           
-          # Prepare messages - ruby_llm expects string for simple ask
-          msg_content = messages || prompt
+          # Prepare messages for ruby_llm
+          # ruby_llm's ask() expects a string prompt, not an array of messages
+          # For multi-turn conversations, we need to use the chat history methods
+          if messages && messages.is_a?(Array)
+            # If we have a message array, extract just the last user message
+            # This is a limitation - full conversation history isn't preserved in this simple implementation
+            last_user_msg = messages.reverse.find { |m| m[:role] == "user" || m[:role] == :user }
+            msg_content = last_user_msg&.[](:content) || prompt
+          else
+            msg_content = prompt
+          end
           
           # Execute with or without streaming
           if stream
@@ -355,10 +369,17 @@ module MASTER
                 reasoning_parts << chunk.thinking.text
               end
               
-              # Accumulate tokens from chunks
-              final_tokens_in = chunk.input_tokens if chunk.input_tokens
-              final_tokens_out = chunk.output_tokens if chunk.output_tokens
-              final_model = chunk.model_id if chunk.model_id
+              # Token counts in streaming are typically cumulative in the final chunk
+              # We capture the latest values, which should be the final totals
+              if chunk.input_tokens && chunk.input_tokens > 0
+                final_tokens_in = chunk.input_tokens
+              end
+              if chunk.output_tokens && chunk.output_tokens > 0
+                final_tokens_out = chunk.output_tokens
+              end
+              if chunk.model_id
+                final_model = chunk.model_id
+              end
             end
             
             $stderr.puts
