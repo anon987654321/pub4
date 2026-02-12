@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
+require "stoplight"
+
 module MASTER
-  # CircuitBreaker - Rate limiting and failure handling for LLM calls
+  # CircuitBreaker - Rate limiting and failure handling for LLM calls using Stoplight
   # Prevents cascading failures and manages request throttling
-  # Simple implementation without external dependencies
   module CircuitBreaker
     extend self
 
@@ -11,13 +12,12 @@ module MASTER
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
 
-    # Circuit breaker states
-    @circuits = {}
-    @circuits_mutex = Mutex.new
-
-    class << self
-      attr_reader :circuits, :circuits_mutex
-    end
+    # Configure stoplight defaults
+    Stoplight::Light.default_error_notifier = ->(light, from_color, to_color, error) {
+      log_warning("Circuit breaker state changed", light: light.name, from: from_color, to: to_color)
+    }
+    Stoplight::Light.default_threshold = FAILURES_BEFORE_TRIP
+    Stoplight::Light.default_timeout = CIRCUIT_RESET_SECONDS
 
     # Rate limiting state
     def rate_limit_state
@@ -37,7 +37,7 @@ module MASTER
           oldest = state[:requests].min
           wait_time = 60 - (now - oldest)
           if wait_time > 0
-            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round) if defined?(Logging)
+            log_warning("Rate limit reached, waiting", seconds: wait_time.round)
             sleep(wait_time)
             state[:requests].clear
           end
@@ -47,68 +47,25 @@ module MASTER
       end
     end
 
-    def run(model, &block)
-      check_rate_limit!
-      
-      # Get circuit state
-      circuit = get_circuit(model)
-      
-      if circuit[:state] == :open
-        # Check if cool-off period has passed
-        if Time.now - circuit[:opened_at] > CIRCUIT_RESET_SECONDS
-          set_circuit_state(model, :half_open)
-        else
-          raise "Circuit breaker open for #{model}"
-        end
-      end
-      
-      begin
-        result = yield
-        
-        # Success - reset circuit if it was half_open
-        if circuit[:state] == :half_open
-          set_circuit_state(model, :closed)
-        end
-        
-        result
-      rescue => e
-        record_failure(model, e)
-        raise
-      end
-    end
-
-    def open?(model)
-      circuit = get_circuit(model)
-      circuit[:state] == :open
-    end
-
     def circuit_closed?(model)
-      !open?(model)
-    end
-
-    def record_failure(model, error)
-      CircuitBreaker.circuits_mutex.synchronize do
-        circuit = get_circuit(model)
-        circuit[:failures] += 1
-        circuit[:last_failure] = Time.now
-        
-        if circuit[:failures] >= FAILURES_BEFORE_TRIP
-          circuit[:state] = :open
-          circuit[:opened_at] = Time.now
-          log_warning("Circuit breaker opened", model: model, failures: circuit[:failures])
-        end
-        
-        CircuitBreaker.circuits[model] = circuit
-      end
+      light = Stoplight("llm-#{model}")
+      light.color == Stoplight::Color::GREEN
     end
 
     # Compatibility methods for old API
     def open_circuit!(model)
-      record_failure(model, StandardError.new("Circuit breaker tripped"))
+      light = Stoplight("llm-#{model}") { raise "Circuit forced open" }
+      begin
+        light.run
+      rescue Stoplight::Error::RedLight
+        # Expected - circuit is now open
+      end
     end
 
     def close_circuit!(model)
-      set_circuit_state(model, :closed)
+      # Reset the circuit by clearing its state
+      data_store = Stoplight::Light.default_data_store
+      data_store.clear_failures(Stoplight("llm-#{model}"))
     end
     
     private
@@ -119,26 +76,6 @@ module MASTER
       else
         # Fallback to stderr if Logging not available
         warn "#{message}: #{args.inspect}"
-      end
-    end
-    
-    def get_circuit(model)
-      CircuitBreaker.circuits_mutex.synchronize do
-        CircuitBreaker.circuits[model] ||= {
-          state: :closed,
-          failures: 0,
-          opened_at: nil,
-          last_failure: nil
-        }
-      end
-    end
-    
-    def set_circuit_state(model, state)
-      CircuitBreaker.circuits_mutex.synchronize do
-        circuit = get_circuit(model)
-        circuit[:state] = state
-        circuit[:failures] = 0 if state == :closed
-        CircuitBreaker.circuits[model] = circuit
       end
     end
   end

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "ruby_llm"
+require "net/http"
 require "json"
 require "yaml"
+require "uri"
 require_relative "circuit_breaker"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
-  # Now powered by ruby_llm gem instead of manual Net::HTTP
   module LLM
     MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
@@ -16,22 +16,16 @@ module MASTER
     SPENDING_CAP = 10.0
     MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
 
+    # OpenRouter API
+    API_BASE = "https://openrouter.ai/api/v1"
+    API_KEY_CHECK = "#{API_BASE}/key"
+    CHAT_ENDPOINT = "#{API_BASE}/chat/completions"
+
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
 
     class << self
       attr_accessor :current_model, :current_tier
-
-      # Initialize ruby_llm configuration
-      def configure_ruby_llm
-        return if @ruby_llm_configured
-        
-        RubyLLM.configure do |c|
-          c.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
-        end
-        
-        @ruby_llm_configured = true
-      end
 
       # Tier setter for compatibility
       def tier=(value)
@@ -97,43 +91,33 @@ module MASTER
       # Check API key status and remaining credits
       def check_key
         return Result.err("No API key") unless configured?
-        
-        configure_ruby_llm
-        
-        begin
-          # Use ruby_llm to check the key
-          # Note: ruby_llm doesn't have a direct key check method, so we'll do a minimal request
-          # or fall back to manual HTTP check
-          require "net/http"
-          require "uri"
-          
-          uri = URI("https://openrouter.ai/api/v1/auth/key")
-          req = Net::HTTP::Get.new(uri)
-          req["Authorization"] = "Bearer #{api_key}"
-          
-          http = Net::HTTP.new(uri.hostname, uri.port)
-          http.use_ssl = true
-          http.open_timeout = 10
-          http.read_timeout = 30
-          response = http.request(req)
-          
-          return Result.err("API error: #{response.code}") unless response.code == "200"
-          
-          data = JSON.parse(response.body, symbolize_names: true)[:data]
-          return Result.err("Invalid API response") unless data
-          
-          Result.ok(
-            label: data[:label],
-            limit: data[:limit],
-            remaining: data[:limit_remaining],
-            usage: data[:usage],
-            is_free_tier: data[:is_free_tier]
-          )
-        rescue Net::OpenTimeout, Net::ReadTimeout
-          Result.err("API key check timed out")
-        rescue StandardError => e
-          Result.err("Key check failed: #{e.message}")
-        end
+
+        uri = URI(API_KEY_CHECK)
+        req = Net::HTTP::Get.new(uri)
+        req["Authorization"] = "Bearer #{api_key}"
+
+        http = Net::HTTP.new(uri.hostname, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 10
+        http.read_timeout = 30
+        response = http.request(req)
+
+        return Result.err("API error: #{response.code}") unless response.code == "200"
+
+        data = JSON.parse(response.body, symbolize_names: true)[:data]
+        return Result.err("Invalid API response") unless data
+
+        Result.ok(
+          label: data[:label],
+          limit: data[:limit],
+          remaining: data[:limit_remaining],
+          usage: data[:usage],
+          is_free_tier: data[:is_free_tier]
+        )
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        Result.err("API key check timed out")
+      rescue StandardError => e
+        Result.err("Key check failed: #{e.message}")
       end
 
       # Main ask method with OpenRouter features
@@ -150,8 +134,6 @@ module MASTER
               json_schema: nil, provider: nil, stream: false, online: false, messages: nil)
 
         return Result.err("Missing OPENROUTER_API_KEY") unless configured?
-        
-        configure_ruby_llm
 
         # Rate limit check
         CircuitBreaker.check_rate_limit!
@@ -177,7 +159,7 @@ module MASTER
         primary = apply_suffix(primary, online: online, provider: provider)
 
         model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+        selected_tier = model_rates[primary.split(":" ).first]&.[](:tier) || tier || :unknown
 
         # Update current state for prompt display
         @current_model = model_short
@@ -185,14 +167,8 @@ module MASTER
 
         Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
-        # Execute request
-        spinner = nil
-        unless stream
-          spinner = UI.spinner("#{model_short}")
-          spinner.auto_spin
-        end
-
-        result = execute_with_ruby_llm(
+        # Build request body
+        body = build_request_body(
           prompt: prompt,
           messages: messages,
           model: primary,
@@ -202,6 +178,15 @@ module MASTER
           provider: provider,
           stream: stream
         )
+
+        # Execute request
+        spinner = nil
+        unless stream
+          spinner = UI.spinner("#{model_short}")
+          spinner.auto_spin
+        end
+
+        result = execute_request(body, stream: stream)
 
         if result.ok?
           data = result.value
@@ -250,7 +235,7 @@ module MASTER
       def extract_model_name(model_id)
         # Remove provider prefix and suffixes
         name = model_id.split("/").last
-        name = name.split(":").first  # Remove :nitro, :floor, :online
+        name = name.split(":" ).first  # Remove :nitro, :floor, :online
         name
       end
 
@@ -275,121 +260,184 @@ module MASTER
         "#{model}#{suffixes.first}"  # Only one suffix allowed
       end
 
-      def execute_with_ruby_llm(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
-        # Build options hash for ruby_llm
-        options = {}
-        
-        # Handle reasoning - use with_thinking for reasoning support
+      def build_request_body(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
+        body = { model: model, stream: stream }
+
+        # Messages
+        body[:messages] = messages || [{ role: "user", content: prompt }]
+
+        # Model fallbacks
+        body[:models] = fallbacks if fallbacks&.any?
+
+        # Reasoning tokens
         if reasoning
-          reasoning_params = case reasoning
-                            when Symbol
-                              { effort: reasoning.to_s }
-                            when Hash
-                              reasoning
-                            else
-                              { effort: "medium" }
-                            end
-          # Note: with_thinking uses effort or budget params
-          options[:thinking_effort] = reasoning_params[:effort]
-          options[:thinking_budget] = reasoning_params[:max_tokens] if reasoning_params[:max_tokens]
-        end
-        
-        # Handle JSON schema
-        if json_schema
-          options[:schema] = json_schema[:schema] || json_schema
-        end
-        
-        # Handle provider preferences (OpenRouter-specific)
-        if provider
-          # OpenRouter uses HTTP headers for provider preferences
-          options[:provider_params] = provider
-        end
-        
-        # Handle model fallbacks (OpenRouter-specific)
-        if fallbacks&.any?
-          # OpenRouter models parameter for fallbacks
-          options[:fallback_models] = fallbacks
+          body[:reasoning] = case reasoning
+                             when Symbol
+                               { effort: reasoning.to_s }
+                             when Hash
+                               reasoning.transform_keys(&:to_s)
+                             else
+                               { effort: "medium" }
+                             end
         end
 
-        begin
-          # Create chat instance
-          chat = RubyLLM.chat(model: model)
-          
-          # Apply thinking if needed
-          if options[:thinking_effort] || options[:thinking_budget]
-            chat = chat.with_thinking(
-              effort: options[:thinking_effort],
-              budget: options[:thinking_budget]
-            ).compact
-          end
-          
-          # Apply schema if needed
-          chat = chat.with_schema(options[:schema]) if options[:schema]
-          
-          # Apply custom headers for OpenRouter provider preferences
-          if options[:provider_params]
-            # OpenRouter accepts provider params in request body, not headers
-            # We'll need to use with_params to pass these through
-            chat = chat.with_params(provider: options[:provider_params])
-          end
-          
-          # Prepare messages - ruby_llm expects string for simple ask
-          msg_content = messages || prompt
-          
-          # Execute with or without streaming
-          if stream
-            content_parts = []
-            reasoning_parts = []
-            final_tokens_in = 0
-            final_tokens_out = 0
-            final_model = model
-            
-            response = chat.ask(msg_content) do |chunk|
-              # ruby_llm streaming - chunk is a Message/Chunk object
-              if chunk.content
-                $stderr.print chunk.content
-                content_parts << chunk.content
-              end
-              
-              if chunk.thinking&.text
-                reasoning_parts << chunk.thinking.text
-              end
-              
-              # Accumulate tokens from chunks
-              final_tokens_in = chunk.input_tokens if chunk.input_tokens
-              final_tokens_out = chunk.output_tokens if chunk.output_tokens
-              final_model = chunk.model_id if chunk.model_id
-            end
-            
-            $stderr.puts
-            
-            # Get final cost from response tokens
-            Result.ok({
-              content: content_parts.join,
-              reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
-              model: final_model,
-              tokens_in: final_tokens_in,
-              tokens_out: final_tokens_out,
-              cost: nil,  # Cost will be calculated by record_cost
-              finish_reason: "stop"
-            })
-          else
-            # Blocking request
-            response = chat.ask(msg_content)
-            
-            Result.ok({
-              content: response.content || "",
-              reasoning: response.thinking&.text,
-              model: response.model_id || model,
-              tokens_in: response.input_tokens || 0,
-              tokens_out: response.output_tokens || 0,
-              cost: nil,  # Cost will be calculated by record_cost
-              finish_reason: "stop"
-            })
-          end
-        rescue StandardError => e
-          Result.err("RubyLLM error: #{e.message}")
+        # Structured outputs
+        if json_schema
+          body[:response_format] = {
+            type: "json_schema",
+            json_schema: {
+              name: json_schema[:name] || "response",
+              strict: true,
+              schema: json_schema[:schema] || json_schema
+            }
+          }
         end
+
+        # Provider preferences
+        body[:provider] = provider if provider
+
+        body
+      end
+
+      def execute_request(body, stream: false)
+        uri = URI(CHAT_ENDPOINT)
+        req = Net::HTTP::Post.new(uri)
+        req["Authorization"] = "Bearer #{api_key}"
+        req["Content-Type"] = "application/json"
+        req["HTTP-Referer"] = "https://github.com/MASTER"
+        req["X-Title"] = "MASTER Pipeline"
+
+        req.body = body.to_json
+
+        # Retry with exponential backoff
+        max_retries = 3
+        retry_count = 0
+        last_error = nil
+
+        while retry_count < max_retries
+          begin
+            http = Net::HTTP.new(uri.hostname, uri.port)
+            http.use_ssl = true
+            http.open_timeout = 30
+            http.read_timeout = 120
+            http.write_timeout = 30
+
+            result = if stream
+                       execute_streaming(http, req)
+                     else
+                       execute_blocking(http, req)
+                     end
+
+            # Success or non-retryable error
+            return result if result.ok? || !retryable_error?(result.error)
+            
+            last_error = result.error
+          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+            last_error = e.message
+          end
+
+          retry_count += 1
+
+          # Exponential backoff: 1s, 2s, 4s
+          sleep_time = 2 ** (retry_count - 1)
+          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Logging)
+          sleep(sleep_time)
+        end
+
+        Result.err("Failed after #{max_retries} retries: #{last_error}")
+      end
+
+      def retryable_error?(error)
+        return false unless error.is_a?(String)
+        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
+      end
+
+      def execute_blocking(http, req)
+        response = http.request(req)
+
+        unless response.code == "200"
+          error_body = JSON.parse(response.body) rescue {}
+          return Result.err(error_body["error"]&.[]("message") || "HTTP #{response.code}")
+        end
+
+        data = JSON.parse(response.body, symbolize_names: true)
+        choice = data[:choices]&.first
+        message = choice&.[](:message)
+
+        response_data = {
+          content: message&.[](:content),
+          reasoning: message&.[](:reasoning),
+          model: data[:model],
+          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
+          tokens_out: data.dig(:usage, :completion_tokens) || 0,
+          cost: data.dig(:usage, :cost),
+          finish_reason: choice&.[](:finish_reason)
+        }
+
+        validate_response(response_data, req.body ? JSON.parse(req.body)[:model] : "unknown")
+      rescue JSON::ParserError => e
+        Result.err("JSON parse error: #{e.message}")
+      end
+
+      def execute_streaming(http, req)
+        content_parts = []
+        reasoning_parts = []
+        final_data = {}
+
+        http.request(req) do |response|
+          unless response.code == "200"
+            error_body = response.read_body
+            parsed = JSON.parse(error_body) rescue {}
+            return Result.err(parsed.dig("error", "message") || "HTTP #{response.code}")
+          end
+
+          response.read_body do |chunk|
+            chunk.each_line do |line|
+              next unless line.start_with?("data: ")
+              json_str = line[6..]
+              next if json_str.strip == "[DONE]"
+
+              begin
+                data = JSON.parse(json_str, symbolize_names: true)
+                delta = data.dig(:choices, 0, :delta)
+
+                if delta
+                  if delta[:content]
+                    $stderr.print delta[:content]
+                    content_parts << delta[:content]
+                  end
+                  if delta[:reasoning]
+                    reasoning_parts << delta[:reasoning]
+                  end
+                end
+
+                # Capture final usage data
+                if data[:usage]
+                  final_data[:tokens_in] = data[:usage][:prompt_tokens]
+                  final_data[:tokens_out] = data[:usage][:completion_tokens]
+                  final_data[:cost] = data[:usage][:cost]
+                end
+                final_data[:model] = data[:model] if data[:model]
+              rescue JSON::ParserError
+                next
+              end
+            end
+          end
+        end
+
+        $stderr.puts
+
+        final_data = {
+          content: content_parts.join,
+          reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
+          model: final_data[:model],
+          tokens_in: final_data[:tokens_in] || 0,
+          tokens_out: final_data[:tokens_out] || 0,
+          cost: final_data[:cost],
+          finish_reason: "stop"
+        }
+
+        validate_response(final_data, "streaming")
       end
 
       def select_model_for_tier(tier)
@@ -459,8 +507,30 @@ module MASTER
       end
 
       def estimate_cost(model, tokens_in:, tokens_out: 500)
+        # Only the new signature — remove legacy path entirely
         rates = model_rates[model] || { in: 1.0, out: 2.0 }
         (tokens_in / 1_000_000.0 * rates[:in]) + (tokens_out / 1_000_000.0 * rates[:out])
+      end
+
+      def validate_response(data, model_id)
+        content = data[:content]
+        if content.nil? || (content.is_a?(String) && content.strip.empty?)
+          return Result.err("Empty response from #{extract_model_name(model_id)}")
+        end
+
+        unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
+          data[:tokens_in] = 0
+        end
+
+        unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
+          data[:tokens_out] = 0
+        end
+
+        if data[:cost] && !(data[:cost].is_a?(Numeric))
+          data[:cost] = nil
+        end
+
+        Result.ok(data)
       end
     end
   end
