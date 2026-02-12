@@ -13,11 +13,9 @@ module MASTER
     RATE_LIMIT_PER_MINUTE = 30
 
     # Configure stoplight defaults
-    Stoplight::Light.default_error_notifier = ->(light, from_color, to_color, error) {
+    Stoplight.default_error_notifier = ->(light, from_color, to_color, error) {
       log_warning("Circuit breaker state changed", light: light.name, from: from_color, to: to_color)
     }
-    Stoplight::Light.default_threshold = FAILURES_BEFORE_TRIP
-    Stoplight::Light.default_timeout = CIRCUIT_RESET_SECONDS
 
     # Rate limiting state
     def rate_limit_state
@@ -49,23 +47,28 @@ module MASTER
 
     def circuit_closed?(model)
       light = Stoplight("llm-#{model}")
-      light.color == Stoplight::Color::GREEN
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light.color == "green"
     end
 
     # Compatibility methods for old API
     def open_circuit!(model)
       light = Stoplight("llm-#{model}") { raise "Circuit forced open" }
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
       begin
         light.run
-      rescue Stoplight::Error::RedLight
+      rescue Stoplight::Error::RedLight, RuntimeError
         # Expected - circuit is now open
       end
     end
 
     def close_circuit!(model)
       # Reset the circuit by clearing its state
-      data_store = Stoplight::Light.default_data_store
-      data_store.clear_failures(Stoplight("llm-#{model}"))
+      data_store = Stoplight.default_data_store
+      light = Stoplight("llm-#{model}")
+      data_store.clear_failures(light)
     end
     
     private
