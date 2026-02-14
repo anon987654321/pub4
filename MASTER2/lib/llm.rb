@@ -43,6 +43,10 @@ module MASTER
         RubyLLM.models
       end
 
+      def chat_models
+        @chat_models ||= models.chat_models
+      end
+
       def budget_thresholds
         @budget_thresholds ||= begin
           return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
@@ -50,15 +54,6 @@ module MASTER
           data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
         end
       end
-
-      def spending_cap
-        @spending_cap ||= begin
-          return SPENDING_CAP unless File.exist?(BUDGET_FILE)
-          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-          data.dig(:budget, :limit) || SPENDING_CAP
-        end
-      end
-
       # Classify a model into a tier based on its input pricing
       def classify_tier(model)
         price = model.input_price_per_million || 0
@@ -156,9 +151,8 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Cost firewall - abort if cumulative spend exceeds cap
-        cap = spending_cap
-        if total_spent >= cap
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{cap}. Session terminated.")
+        if total_spent >= spending_cap
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
         end
 
         # Model selection (single call - no TOCTOU)
