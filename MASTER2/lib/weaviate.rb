@@ -15,6 +15,10 @@ module MASTER
     API_KEY = ENV['WEAVIATE_API_KEY']
 
     CLASS_NAME = 'MasterMemory'
+    
+    # Retry configuration
+    MAX_RETRIES = 3
+    RETRY_BACKOFF_BASE = 2  # seconds, exponential
 
     class << self
       def available?
@@ -217,7 +221,7 @@ module MASTER
         request['Authorization'] = "Bearer #{API_KEY}" if API_KEY
       end
 
-      def post(path, body, retries: 3)
+      def post(path, body, retries: MAX_RETRIES)
         uri = URI("#{base_url}#{path}")
         last_error = nil
         
@@ -238,7 +242,7 @@ module MASTER
             return { 'error' => response&.body || 'Parse error' }
           rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
             last_error = e.message
-            sleep(2 ** attempt) if attempt < retries - 1
+            sleep(RETRY_BACKOFF_BASE ** attempt) if attempt < retries - 1
           end
         end
         

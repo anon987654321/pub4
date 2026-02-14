@@ -24,30 +24,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 </head>
 <body>
 <canvas id="c"></canvas>
+<script src="orb_shared.js"></script>
 <script>
-function shade(t) {
-  t = Math.max(0, Math.min(1, t));
-  const r = Math.round(5 + t * 85);
-  const g = Math.round(5 + t * 235);
-  const b = Math.round(5 + t * 177);
-  return "rgb(" + r + "," + g + "," + b + ")";
-}
+setupDefaultMessageHandler();
 
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-let w,h,scale=2,time=0,audioLevel=0;
+let w,h,scale=2,time=0;
 let U,V,U2,V2;
-
-let state='idle';
-const STATE_PARAMS={
-  idle:{decay:0.05,reactivity:0.3,speed:0.5},
-  thinking:{decay:0.12,reactivity:0.6,speed:0.8},
-  speaking:{decay:0.20,reactivity:1.0,speed:1.0}
-};
-
-window.addEventListener('message',function(e){
-  if(e.data&&e.data.type==='state')state=e.data.mode;
-  if(e.data&&e.data.type==='audio')audioLevel=e.data.level;
-});
 
 function resize(){
   w=Math.floor(window.innerWidth/scale);

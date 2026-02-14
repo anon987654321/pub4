@@ -7,8 +7,13 @@ require "fileutils"
 
 module MASTER
   # Memory - Session cache and persistence
+  # STORAGE ARCHITECTURE:
+  # - Session state is stored as JSON files in .sessions/ directory
+  # - Each session has a unique ID and is saved via save_session() method
+  # - DB JSONL system (db_jsonl.rb) is separate and used for learning feedback only
+  # - Do not mix Memory (sessions) with DB (learnings/feedback)
   module Memory
-    COMPRESS_AFTER_MESSAGES = 10  # Fixed: was 11, should be 10
+    COMPRESS_AFTER_MESSAGES = 10
     KEEP_FIRST_N = 2
     KEEP_LAST_N = 8
 

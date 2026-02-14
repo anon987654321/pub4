@@ -173,8 +173,9 @@ require_relative "rubocop_detector"  # Style checking integration
 %w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
   begin
     require_relative dep
-  rescue LoadError
-    # MASTER2 runs standalone without parent repo
+  rescue LoadError => e
+    # Only silence if the missing file is the optional dep itself
+    raise unless e.path.nil? || e.message.include?(File.basename(dep))
   end
 end
 

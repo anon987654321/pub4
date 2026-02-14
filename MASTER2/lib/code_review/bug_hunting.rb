@@ -152,8 +152,9 @@ module MASTER
         
         test_file = target.sub('/lib/', '/test/').sub('.rb', '_test.rb')
         if File.exist?(test_file)
-          output = `ruby #{test_file} 2>&1`
-          if $?.success?
+          require 'open3'
+          output, status = Open3.capture2e("ruby", test_file)
+          if status.success?
             { level: :logic, fixed: false, message: "Tests pass" }
           else
             { level: :logic, fixed: true, error: output, fix: "Check test output above" }

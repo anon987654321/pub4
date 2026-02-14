@@ -43,7 +43,8 @@ module MASTER
 
     private
 
-    def find_ruby_files(path)
+    # Only evolve lib/ files — bin/, test/, and sbin/ are excluded for safety
+    def find_lib_ruby_files(path)
       Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| -File.size(f) }
     end
 
@@ -57,7 +58,7 @@ module MASTER
       when :shell
         find_shell_files(path)
       else
-        find_ruby_files(path)
+        find_lib_ruby_files(path)
       end
     end
 
