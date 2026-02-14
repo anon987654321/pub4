@@ -370,7 +370,7 @@ module MASTER
 
             # Abort if response exceeds MAX_RESPONSE_SIZE
             if total_size > MAX_RESPONSE_SIZE
-              log_warning("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
               break
             end
           end

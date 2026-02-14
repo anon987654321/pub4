@@ -122,7 +122,7 @@ module MASTER
         # Expected - TestFailure triggers the failure, RedLight means circuit was already open
       end
     rescue StandardError => e
-      log_warning("Failed to open circuit", model: model, error: e.message)
+      Logging.warn("Failed to open circuit", model: model, error: e.message)
     end
 
     # P2 fix #8: Add nil check and rescue in close_circuit!
