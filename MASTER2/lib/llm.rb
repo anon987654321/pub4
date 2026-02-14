@@ -196,10 +196,7 @@ module MASTER
         Result.err("All models failed. Last error: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
-        # Preserve error type and backtrace
-        error_msg = "#{e.class.name}: #{e.message}"
-        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
-        Result.err(error_msg)
+        Result.err(Logging.format_error(e))
       end
 
       # Structured output helper - guarantees valid JSON matching schema
@@ -321,10 +318,7 @@ module MASTER
           execute_blocking_ruby_llm(chat, msg_content, model)
         end
       rescue StandardError => e
-        # Preserve error type and backtrace
-        error_msg = "#{e.class.name}: #{e.message}"
-        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
-        Result.err(error_msg)
+        Result.err(Logging.format_error(e))
       end
 
       # Build message content preserving full conversation history
