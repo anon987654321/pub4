@@ -107,8 +107,10 @@ module MASTER
 
     # P1 fix #1: Record only ONE failure per request (not in a loop)
     def open_circuit!(model)
-      # Record failure using Stoplight's execution API
-      # Trigger a failure by running a block that raises an exception
+      # Note: In Stoplight v4/v5, we cannot directly access default_data_store to record failures.
+      # Instead, we use the execution API to trigger a failure. This is the recommended approach
+      # when the data store API is not available or has changed between versions.
+      # The circuit breaker will record this as a failure and potentially trip the circuit.
       light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       
       begin
@@ -122,8 +124,10 @@ module MASTER
 
     # P2 fix #8: Add nil check and rescue in close_circuit!
     def close_circuit!(model)
-      # Clear failures by successfully running the circuit
-      # In Stoplight v4/v5, successful runs automatically clear failures
+      # Note: In Stoplight v4/v5, successful runs automatically clear failure counts.
+      # We cannot directly access default_data_store.clear_failures() in v5.
+      # Per Stoplight documentation, running a successful execution is the standard way
+      # to reset the circuit breaker state. The PROBE_VALUE ensures a no-op execution.
       light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       
       begin
