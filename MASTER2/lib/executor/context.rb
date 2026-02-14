@@ -24,7 +24,7 @@ module MASTER
         
         # Build identity from config or default
         identity = if config["identity"]
-          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
+          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
         else
           "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant running on #{RUBY_PLATFORM}."
         end

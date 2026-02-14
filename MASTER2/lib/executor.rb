@@ -260,7 +260,7 @@ module MASTER
       
       # Build concise system context for direct queries
       identity = if config["identity"]
-        config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM }
+        config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
       else
         "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
       end
