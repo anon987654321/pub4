@@ -202,7 +202,7 @@ module MASTER
         @current_model = model_short
         @current_tier = selected_tier
 
-        Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
+        Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
         # P1 fix #2: Manual fallback logic (ruby_llm doesn't support OpenRouter's models array)
         models_to_try = [primary] + (fallbacks || [])
@@ -236,7 +236,7 @@ module MASTER
             tokens_out = data[:tokens_out]
             cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
 
-            Dmesg.llm(selected_tier, model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+            Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
 
             CircuitBreaker.close_circuit!(current_model)
             return Result.ok(data)
@@ -244,7 +244,7 @@ module MASTER
             spinner&.error
             CircuitBreaker.open_circuit!(current_model)
             last_error = result.error
-            Dmesg.llm_error(selected_tier, result.error) if defined?(Dmesg)
+            Dmesg.llm_error(tier: selected_tier, error: result.error) if defined?(Dmesg)
             # Try next fallback model
           end
         end
