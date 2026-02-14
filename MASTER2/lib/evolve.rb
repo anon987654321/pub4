@@ -7,12 +7,6 @@ module MASTER
     CONVERGENCE_THRESHOLD = 0.02
     PER_FILE_BUDGET = 0.25
 
-    PROTECTED_FILES = %w[
-      lib/evolve.rb
-      lib/master.rb
-      lib/db_jsonl.rb
-    ].freeze
-
     def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
       @llm = llm
       @chamber = chamber || Chamber.new(llm: llm)
@@ -31,7 +25,6 @@ module MASTER
 
       files.each do |file|
         break if over_budget?
-        next if protected?(file)
 
         @iteration += 1
         result = improve_file(file, dry_run: dry_run)
@@ -66,10 +59,6 @@ module MASTER
       else
         find_ruby_files(path)
       end
-    end
-
-    def protected?(file)
-      PROTECTED_FILES.any? { |p| file.end_with?(p) }
     end
 
     def improve_file(file, dry_run:)
