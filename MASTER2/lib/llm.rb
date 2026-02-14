@@ -92,9 +92,9 @@ module MASTER
         price = model.is_a?(String) ? 0 : model.input_price_per_million || 0
         
         case price
-        when 10.0.. then :premium
-        when 2.0...10.0 then :strong
-        when 0.1...2.0 then :fast
+        when (10.0..) then :premium
+        when (2.0...10.0) then :strong
+        when (0.1...2.0) then :fast
         else :cheap
         end
       end

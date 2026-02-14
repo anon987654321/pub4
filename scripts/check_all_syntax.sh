@@ -5,12 +5,7 @@
 echo "🔍 Checking Ruby syntax in all .rb files..."
 errors=0
 
-find . -name "*.rb" -type f \
-  -not -path "*/vendor/*" \
-  -not -path "*/node_modules/*" \
-  -not -path "*/.git/*" \
-  -not -path "*/tmp/*" | while read -r file; do
-  
+while read -r file; do
   ruby -c "$file" > /dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "❌ $file"
@@ -19,7 +14,11 @@ find . -name "*.rb" -type f \
   else
     echo "✅ $file"
   fi
-done
+done < <(find . -name "*.rb" -type f \
+  -not -path "*/vendor/*" \
+  -not -path "*/node_modules/*" \
+  -not -path "*/.git/*" \
+  -not -path "*/tmp/*")
 
 if [[ $errors -eq 1 ]]; then
   echo ""
