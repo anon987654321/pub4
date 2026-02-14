@@ -253,12 +253,10 @@ module MASTER
         Result.err("All models failed. Last error: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
-        # P2 fix #9: Preserve error type and backtrace
-        Result.err({
-          type: e.class.name,
-          message: e.message,
-          backtrace: e.backtrace&.first(5)
-        })
+        # P2 fix #9: Preserve error type and backtrace (format as string for consistency)
+        error_msg = "#{e.class.name}: #{e.message}"
+        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
+        Result.err(error_msg)
       end
 
       # Structured output helper - guarantees valid JSON matching schema
@@ -378,7 +376,7 @@ module MASTER
           if chat.respond_to?(:with_json_schema)
             chat = chat.with_json_schema(schema_data)
           else
-            $stderr.puts "[MASTER::LLM] JSON schema ignored — ruby_llm does not support with_json_schema"
+            log_warning("JSON schema ignored — ruby_llm does not support with_json_schema")
           end
         end
 
@@ -387,7 +385,7 @@ module MASTER
           if chat.respond_to?(:with_params)
             chat = chat.with_params(provider: provider)
           else
-            $stderr.puts "[MASTER::LLM] Provider preference ignored — ruby_llm does not support with_params"
+            log_warning("Provider preference ignored — ruby_llm does not support with_params")
           end
         end
 
@@ -401,12 +399,10 @@ module MASTER
           execute_blocking_ruby_llm(chat, msg_content, model)
         end
       rescue StandardError => e
-        # P2 fix #9: Preserve error type and backtrace
-        Result.err({
-          type: e.class.name,
-          message: e.message,
-          backtrace: e.backtrace&.first(5)
-        })
+        # P2 fix #9: Preserve error type and backtrace (format as string for consistency)
+        error_msg = "#{e.class.name}: #{e.message}"
+        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
+        Result.err(error_msg)
       end
 
       # P2 fix #4: Build message content preserving full conversation history
@@ -458,7 +454,7 @@ module MASTER
 
             # P3 fix #13: Abort if response exceeds MAX_RESPONSE_SIZE
             if total_size > MAX_RESPONSE_SIZE
-              $stderr.puts "\n[MASTER::LLM] Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating"
+              log_warning("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
               break
             end
           end

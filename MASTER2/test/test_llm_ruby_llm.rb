@@ -100,17 +100,14 @@ class TestLLMRubyLLM < Minitest::Test
       # Create a mock error with backtrace
       raise ArgumentError, "Test error"
     rescue ArgumentError => e
-      # Verify our error handling would preserve the details
-      error_hash = {
-        type: e.class.name,
-        message: e.message,
-        backtrace: e.backtrace&.first(5)
-      }
+      # Format error as our code does (consistent string format)
+      error_msg = "#{e.class.name}: #{e.message}"
+      error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
       
-      assert_equal "ArgumentError", error_hash[:type]
-      assert_equal "Test error", error_hash[:message]
-      assert_kind_of Array, error_hash[:backtrace]
-      assert error_hash[:backtrace].length <= 5, "Should limit backtrace to 5 lines"
+      assert error_msg.start_with?("ArgumentError: Test error")
+      assert error_msg.include?("\n  "), "Should include backtrace lines"
+      # Count newlines to verify backtrace is included (should have at least 1)
+      assert error_msg.scan(/\n/).count >= 1, "Should have backtrace lines"
     end
   end
 end
