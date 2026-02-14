@@ -81,7 +81,12 @@ module MASTER
       # Classify a model into a tier based on models.yml configuration
       def classify_tier(model)
         # For configured models, look up tier from models.yml with O(1) hash access
-        model_id = model.is_a?(String) ? model : (model&.id || return :cheap)
+        if model.is_a?(String)
+          model_id = model
+        else
+          return :cheap unless model&.id
+          model_id = model.id
+        end
         configured_model = configured_models_by_id[model_id]
         return configured_model[:tier].to_sym if configured_model && configured_model[:tier]
         
