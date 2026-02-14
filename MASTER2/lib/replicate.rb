@@ -12,9 +12,51 @@ module MASTER
     API_URL = 'https://api.replicate.com/v1/predictions'
 
     MODELS = {
-      flux:      'black-forest-labs/flux-1.1-pro',
-      sdxl:      'stability-ai/sdxl',
-      kandinsky: 'ai-forever/kandinsky-2.2'
+      # Image generation
+      flux:         'black-forest-labs/flux-1.1-pro',
+      flux_pro:     'black-forest-labs/flux-pro',
+      flux_dev:     'black-forest-labs/flux-dev',
+      sdxl:         'stability-ai/sdxl',
+      kandinsky:    'ai-forever/kandinsky-2.2',
+      ideogram_v2:  'ideogram-ai/ideogram-v2',
+      recraft_v3:   'recraft-ai/recraft-v3',
+      
+      # Upscaling
+      esrgan:       'nightmareai/real-esrgan',
+      gfpgan:       'tencentarc/gfpgan',
+      codeformer:   'sczhou/codeformer',
+      clarity:      'lucataco/clarity-upscaler',
+      
+      # Video generation
+      svd:          'stability-ai/stable-video-diffusion',
+      hailuo:       'minimax/video-01',
+      kling:        'kwaivgi/kling-v2.5-turbo-pro',
+      luma_ray:     'luma/ray-2',
+      wan:          'wan-video/wan-2.5-i2v',
+      sora:         'openai/sora-2',
+      
+      # Audio
+      musicgen:     'meta/musicgen',
+      bark:         'suno/bark',
+      
+      # Transcription
+      whisper:      'openai/whisper',
+      
+      # Captioning
+      blip:         'salesforce/blip',
+      
+      # 3D
+      shap_e:       'openai/shap-e'
+    }.freeze
+
+    MODEL_CATEGORIES = {
+      image: [:flux, :flux_pro, :flux_dev, :sdxl, :kandinsky, :ideogram_v2, :recraft_v3],
+      video: [:svd, :hailuo, :kling, :luma_ray, :wan, :sora],
+      upscale: [:esrgan, :gfpgan, :codeformer, :clarity],
+      audio: [:musicgen, :bark],
+      transcribe: [:whisper],
+      caption: [:blip],
+      threed: [:shap_e]
     }.freeze
 
     DEFAULT_MODEL = :flux
@@ -60,7 +102,7 @@ module MASTER
       def upscale(image_url:, scale: 4)
         return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
-        model_id = 'nightmareai/real-esrgan'
+        model_id = MODELS[:esrgan]
         input = { image: image_url, scale: scale }
 
         prediction = create_prediction(model: model_id, input: input)
@@ -75,7 +117,7 @@ module MASTER
       def describe(image_url:)
         return Result.err("REPLICATE_API_TOKEN not set") unless available?
 
-        model_id = 'salesforce/blip'
+        model_id = MODELS[:blip]
         input = { image: image_url }
 
         prediction = create_prediction(model: model_id, input: input)
@@ -104,6 +146,102 @@ module MASTER
           output: result[:output],
           model: model_id
         })
+      end
+
+      # Lookup model ID by symbol name
+      # @param name [Symbol] Model name (e.g., :flux, :sdxl)
+      # @return [String] Model ID string
+      # @raise [ArgumentError] if model name not found
+      def model_id(name)
+        model = MODELS[name.to_sym]
+        raise ArgumentError, "Unknown model: #{name}" unless model
+        model
+      end
+
+      # Get all models for a category
+      # @param category [Symbol] Category name (e.g., :image, :video)
+      # @return [Array<Hash>] Array of {name: symbol, id: string} hashes
+      def models_for(category)
+        model_names = MODEL_CATEGORIES[category.to_sym]
+        return [] unless model_names
+
+        model_names.map do |name|
+          { name: name, id: MODELS[name] }
+        end
+      end
+
+      # Generate video from prompt
+      # @param prompt [String] Text prompt for video generation
+      # @param model [Symbol] Video model to use (default: :svd)
+      # @param params [Hash] Additional parameters to pass to the model
+      # @return [Result] Result object with video URL or error
+      def generate_video(prompt:, model: :svd, params: {})
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+
+        model_sym = model.to_sym
+        return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
+
+        model_id = MODELS[model_sym]
+        input = { prompt: prompt }.merge(params)
+
+        prediction = create_prediction(model: model_id, input: input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Video generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          urls: result[:output],
+          model: model_id,
+          prompt: prompt
+        })
+      end
+
+      # Generate music from prompt
+      # @param prompt [String] Text description of music to generate
+      # @param duration [Integer] Length in seconds (default: 10)
+      # @param model [Symbol] Audio model to use (default: :musicgen)
+      # @param params [Hash] Additional parameters to pass to the model
+      # @return [Result] Result object with audio URL or error
+      def generate_music(prompt:, duration: 10, model: :musicgen, params: {})
+        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+
+        model_sym = model.to_sym
+        return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
+
+        model_id = MODELS[model_sym]
+        input = { prompt: prompt, duration: duration }.merge(params)
+
+        prediction = create_prediction(model: model_id, input: input)
+        return Result.err("Failed to create prediction: #{prediction[:error]}") if prediction[:error]
+
+        result = wait_for_completion(prediction[:id])
+        return Result.err("Music generation failed: #{result[:error]}") if result[:error]
+
+        Result.ok({
+          id: result[:id],
+          urls: result[:output],
+          model: model_id,
+          prompt: prompt,
+          duration: duration
+        })
+      end
+
+      # Batch generate multiple prompts
+      # @param prompts [Array<String>] Array of text prompts
+      # @param model [Symbol] Model to use (default: DEFAULT_MODEL)
+      # @param params [Hash] Additional parameters to pass to all generations
+      # @return [Array<Result>] Array of Result objects
+      def batch_generate(prompts, model: DEFAULT_MODEL, params: {})
+        unless available?
+          # Return an error result for each prompt
+          return prompts.map { Result.err("REPLICATE_API_TOKEN not set") }
+        end
+
+        prompts.map do |prompt|
+          generate(prompt: prompt, model: model, params: params)
+        end
       end
 
       # Download file from URL to local path
