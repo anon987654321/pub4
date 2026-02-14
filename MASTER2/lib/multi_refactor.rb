@@ -98,7 +98,6 @@ module MASTER
       exclude_patterns << Regexp.new(exclude) if exclude
 
       files.reject { |f| exclude_patterns.any? { |p| f.match?(p) } }
-           .sort_by { |f| -File.size(f) }  # Largest first
     end
 
     def build_dependency_graph(files)
@@ -123,7 +122,8 @@ module MASTER
           end
         when ".html"
           # HTML files reference each other via links
-          content.scan(/href=["']\.\/([^"']+)["']/).each do |match|
+          # Capture relative links: ./file.html, file.html, ../file.html
+          content.scan(/href=["'](?:\.\/)?\.\.?\/?([^"'\/]+\.html)["']/i).each do |match|
             dep_path = File.expand_path(match[0], File.dirname(file))
             @graph[file] << dep_path if file_set.include?(dep_path)
           end

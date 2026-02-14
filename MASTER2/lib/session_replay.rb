@@ -44,7 +44,7 @@ module MASTER
           cost: history.sum { |h| h[:cost] || 0 },
           created_at: data[:created_at],
           duration: calculate_duration(history),
-          has_diffs: history.any? { |h| h[:content]&.include?("```diff") || h[:content]&.include?("---") },
+          has_diffs: history.any? { |h| h.dig(:metadata, :contains_diff) || h[:type] == :diff },
           crashed: data.dig(:metadata, :crashed) || false,
           metadata: data[:metadata] || {}
         }

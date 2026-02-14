@@ -159,10 +159,23 @@ module MASTER
         entries = Dir.glob(File.join(cache_dir, "*.json"))
         return if entries.size <= MAX_CACHE_SIZE
 
-        # Evict oldest entries
-        sorted = entries.sort_by { |f| File.mtime(f) }
+        # Evict entries with lowest hit count, then oldest last_hit
+        entries_with_data = entries.map do |path|
+          begin
+            entry = JSON.parse(File.read(path), symbolize_names: true)
+            {
+              path: path,
+              hit_count: entry[:hit_count] || 0,
+              last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path)
+            }
+          rescue
+            { path: path, hit_count: 0, last_hit: File.mtime(path) }
+          end
+        end
+
+        sorted = entries_with_data.sort_by { |e| [e[:hit_count], e[:last_hit]] }
         to_remove = sorted.first(entries.size - MAX_CACHE_SIZE)
-        to_remove.each { |f| File.delete(f) rescue nil }
+        to_remove.each { |e| File.delete(e[:path]) rescue nil }
       end
 
       def format_size(bytes)
