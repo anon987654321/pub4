@@ -397,7 +397,8 @@ module MASTER
           first_msg = messages.first
           if first_msg && (first_msg[:role] == "system" || first_msg["role"] == "system")
             system_msg = first_msg[:content] || first_msg["content"]
-            user_messages = messages[1..-1]  # Remove system message from user messages
+            # Remove system message from user messages (may result in empty array, which is valid)
+            user_messages = messages[1..-1]
           end
         end
 

@@ -84,13 +84,11 @@ module MASTER
         sections.join("\n\n")
       end
 
-      def build_context(goal, include_task: true)
+      # Build task context (tools + format + history)
+      def build_task_context(goal)
         history_text = @history.map do |h|
           "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]&.[](0..400)}"
         end.join("\n\n")
-
-        # Get comprehensive system message
-        system_msg = Context.build_system_message(include_commands: true)
         
         # Build tool list and format from TOOLS hash
         tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
@@ -113,7 +111,7 @@ module MASTER
           end
         }.join("\n")
 
-        task_context = <<~TASK
+        <<~TASK
           TASK: #{goal}
           
           TOOLS AVAILABLE (for autonomous execution):
@@ -130,22 +128,24 @@ module MASTER
           Thought: (brief reasoning)
           Action: (tool invocation or ANSWER: final answer)
         TASK
+      end
 
-        # If not including task, return just system message (for messages array usage)
-        return system_msg unless include_task
+      def build_context(goal, system_only: false)
+        # Get comprehensive system message
+        system_msg = Context.build_system_message(include_commands: true)
+        
+        # If system_only flag set, return just system message (for messages array usage)
+        return system_msg if system_only
         
         # Return full context with system + task
-        "#{system_msg}\n\n#{task_context}"
+        "#{system_msg}\n\n#{build_task_context(goal)}"
       end
       
       # Build context as messages array with system/user separation
       def build_context_messages(goal)
-        system_msg = Context.build_system_message(include_commands: true)
-        user_msg = build_context(goal, include_task: true).sub(system_msg, "").strip
-        
         [
-          { role: "system", content: system_msg },
-          { role: "user", content: user_msg }
+          { role: "system", content: Context.build_system_message(include_commands: true) },
+          { role: "user", content: build_task_context(goal) }
         ]
       end
 
