@@ -29,11 +29,11 @@ module MASTER
         # PHASE 1: Bug Hunting (8-phase analysis)
         puts UI.bold("🔍 PHASE 1: Bug Hunting (8-phase analysis)...")
         hunt_result = BugHunting.analyze(original_code, file_path: file)
-        bugs_found = hunt_result.dig(:findings, :verification, :bugs_found) || 0
         
         # Count actual bugs from patterns
         pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
-        bugs_found = pattern_matches.size
+        verification_bugs = hunt_result.dig(:findings, :verification, :bugs_found) || 0
+        bugs_found = pattern_matches.size + verification_bugs
         
         if bugs_found > 0
           puts "⚠️  Found #{bugs_found} potential bugs"

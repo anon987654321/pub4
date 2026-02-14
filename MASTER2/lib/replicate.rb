@@ -3,6 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative 'result'
 
 module MASTER
   # Replicate - Image generation via Replicate API

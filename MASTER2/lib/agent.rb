@@ -4,6 +4,7 @@ require "securerandom"
 require "timeout"
 require 'yaml'
 require 'fileutils'
+require 'set'
 
 module MASTER
   class Agent

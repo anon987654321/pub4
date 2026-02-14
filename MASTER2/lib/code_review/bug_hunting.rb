@@ -133,14 +133,14 @@ module MASTER
         puts UI.dim("  Level 1: Syntax check...")
         
         if target.end_with?('.rb')
-          output = `ruby -c #{target} 2>&1`
+          output = `ruby -c #{Shellwords.escape(target)} 2>&1`
           if $?.success?
             { level: :syntax, fixed: false, message: "No syntax errors" }
           else
-            { level: :syntax, fixed: true, error: output, fix: "Run rubocop -a #{target}" }
+            { level: :syntax, fixed: true, error: output, fix: "Run rubocop -a #{Shellwords.escape(target)}" }
           end
         elsif target.end_with?('.sh')
-          output = `zsh -n #{target} 2>&1`
+          output = `zsh -n #{Shellwords.escape(target)} 2>&1`
           { level: :syntax, fixed: !$?.success?, error: output }
         else
           { level: :syntax, fixed: false }

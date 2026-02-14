@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module MASTER
   # Engine - Unified code quality scan facade
   # Delegates to Smells, Violations, and BugHunting modules
@@ -150,7 +152,7 @@ module MASTER
         config = SCAN_PROFILES[profile]
         min_priority = config[:min_priority]
         
-        axioms_path = File.join(Paths.data, 'axioms.yml')
+        axioms_path = File.join(MASTER.root, 'data', 'axioms.yml')
         return nil unless File.exist?(axioms_path)
         
         all_axioms = YAML.safe_load_file(axioms_path)

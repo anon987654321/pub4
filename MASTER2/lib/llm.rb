@@ -450,6 +450,10 @@ module MASTER
 
       public
 
+      def spending_cap
+        SPENDING_CAP
+      end
+
       def total_spent
         return 0.0 unless defined?(DB)
         DB.total_cost

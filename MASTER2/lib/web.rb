@@ -172,10 +172,7 @@ module MASTER
       text = doc.text.squeeze(" \n").strip
       text
     rescue LoadError
-      # CRITICAL: nokogiri gem is required for HTML parsing
-      # Install nokogiri to use web browsing features
-      # No fallback is provided due to ReDoS security concerns
-      "ERROR: nokogiri gem not installed. Run: gem install nokogiri"
+      raise "nokogiri gem required for HTML parsing. Install with: gem install nokogiri"
     end
   end
 end

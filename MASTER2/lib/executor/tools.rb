@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+require 'uri'
+
 module MASTER
   class Executor
     # Tools module - All tool execution and dispatch logic

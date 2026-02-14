@@ -61,9 +61,10 @@ while running
       # Process through pipeline
       result = pipeline.call(input)
 
-      # Write result to outbox
+      # Write result to outbox (validate basename)
       basename = File.basename(file, ".json")
-      output_file = "#{OUTBOX_DIR}/#{basename}_#{Time.now.to_i}.json"
+      raise "Invalid filename" if basename.include?("..") || basename.start_with?("/")
+      output_file = File.join(OUTBOX_DIR, "#{basename}_#{Time.now.to_i}.json")
 
       if result.ok?
         File.write(output_file, JSON.pretty_generate(result.value))
@@ -74,7 +75,7 @@ while running
       end
 
       # Remove processed file
-      File.delete(file)
+      File.delete(file) if File.exist?(file)
     rescue StandardError => e
       puts "  ✗ Failed to process #{file}: #{e.message}"
       # Move to error directory
