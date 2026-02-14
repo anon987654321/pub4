@@ -189,7 +189,6 @@ require_relative "commands"
 require_relative "confirmations"
 require_relative "error_suggestions"
 require_relative "nng_checklist"
-require_relative "onboarding"
 
 # Pipeline stages (needed by executor)
 require_relative "boot"
@@ -271,7 +270,7 @@ end
 # Boot-time SELF_APPLY enforcement: Check own source for ABSOLUTE violations
 # Deferred to background to avoid slowing boot
 # Warns only, does not halt boot
-if ENV["MASTER_SELF_CHECK"] != "false" && defined?(MASTER::Enforcement)
+if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
   Thread.new do
     sleep (ENV["MASTER_SELF_CHECK_DELAY"] || "1").to_i
     begin

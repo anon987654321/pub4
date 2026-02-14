@@ -3,7 +3,7 @@
 require "json"
 require "yaml"
 require_relative "circuit_breaker"
-require_relative "../../lib/ruby_llm"
+require "ruby_llm"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
