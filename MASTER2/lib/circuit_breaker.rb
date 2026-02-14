@@ -58,7 +58,8 @@ module MASTER
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
-    PROBE_VALUE = :probe  # Value used to test circuit state
+    # Value used to test circuit state without side effects
+    PROBE_VALUE = :probe
 
     # Rate limiting state
     @rate_limit_mutex = Mutex.new
