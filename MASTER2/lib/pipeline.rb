@@ -135,9 +135,6 @@ module MASTER
           Prescan.run(MASTER.root) if defined?(Prescan)
         end
 
-        # First-run welcome
-        Onboarding.show_welcome if defined?(Onboarding)
-
         # Check for API key
         unless ENV["OPENROUTER_API_KEY"]
           UI.warn("OPENROUTER_API_KEY not set. Run: source ~/.zshrc")
@@ -209,7 +206,6 @@ module MASTER
           end
 
           if line.strip.empty?
-            Onboarding.suggest_on_empty if defined?(Onboarding)
             next
           end
 
@@ -236,7 +232,7 @@ module MASTER
               end
             elsif cmd_result.respond_to?(:err?) && cmd_result.err?
               # Unknown command - suggest similar
-              Onboarding.show_did_you_mean(line.strip) if defined?(Onboarding)
+              Commands.show_did_you_mean(line.strip) if defined?(Commands)
             end
             next
           end

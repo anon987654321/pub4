@@ -95,6 +95,23 @@ module MASTER
       puts "✗ Failed: #{e.message}"
     end
 
+    # Fuzzy match for command suggestions (moved from Onboarding)
+    def did_you_mean(input)
+      commands = Help::COMMANDS.keys.map(&:to_s)
+      word = input.strip.split.first&.downcase
+      return nil unless word
+
+      commands.find { |c| Utils.levenshtein(word, c) <= 2 }
+    end
+
+    def show_did_you_mean(input)
+      suggestion = did_you_mean(input)
+      return false unless suggestion
+
+      puts UI.dim("  Did you mean: #{suggestion}?")
+      true
+    end
+
     # Shortcuts for power users
     SHORTCUTS = {
       "!!" => :repeat_last,
