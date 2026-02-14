@@ -94,20 +94,67 @@ module MASTER
 
     class << self
       def prompt
-        model = LLM.prompt_model_name
-        budget = LLM.budget_remaining
+        # Starship-style multi-segment prompt
+        # Line 1: Info bar with segments
+        # Line 2: Input prompt
+        ruby_version = RUBY_VERSION
+        model = LLM.prompt_model_name rescue "unknown"
+        tier = LLM.tier rescue nil
+        budget = (LLM::SPENDING_CAP - LLM.total_spent) rescue 10.0
+        budget = [budget, 0.0].max
         tokens = Session.current.message_count rescue 0
-
-        # Shell-style: master@model [tokens] $cost$
-        # Dense, informative prompt
-        budget_str = budget < 10.0 ? " $#{format('%.2f', budget)}" : ""
-        token_str = tokens > 0 ? " ↑#{format_tokens(tokens)}" : ""
-        tripped = LLM.model_tiers[LLM.tier]&.any? { |m| !LLM.circuit_closed?(m) }
-        indicator = tripped ? "!" : ""
-
-        "master@#{model}#{indicator}#{token_str}#{budget_str}$ "
+        
+        # Check circuit breaker status safely
+        tripped = begin
+          LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
+        rescue
+          false
+        end
+        
+        segments = []
+        
+        # Ruby version segment
+        segments << UI.cyan("🔧 ruby #{ruby_version}")
+        
+        # Model + tier segment
+        tier_label = tier ? "(#{tier})" : ""
+        segments << UI.yellow("🤖 #{model} #{tier_label}".strip)
+        
+        # Turn count segment
+        segments << "↑#{format_tokens(tokens)}" if tokens > 0
+        
+        # Budget remaining segment
+        segments << "$#{format('%.2f', budget)}" if budget < 10.0
+        
+        # Circuit breaker status segment
+        status_icon = tripped ? "⚡tripped" : "⚡ok"
+        status_color = tripped ? :red : :green
+        segments << UI.send(status_color, status_icon)
+        
+        # Git branch segment (if in git repo)
+        git_segment = git_info
+        segments << git_segment if git_segment
+        
+        # Build the two-line prompt
+        info_line = "┌─ #{segments.join(' · ')}"
+        input_line = "└─ master »"
+        
+        "#{info_line}\n#{input_line} "
       rescue StandardError
         "master$ "
+      end
+      
+      def git_info
+        # Detect git branch and dirty status
+        branch = IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out], &:read).strip
+        return nil if branch.empty? || $?.exitstatus != 0
+        
+        dirty = !IO.popen(%w[git status --porcelain], err: [:child, :out], &:read).strip.empty?
+        indicator = dirty ? "*" : ""
+        
+        "#{branch}#{indicator}"
+      rescue StandardError
+        nil
       end
 
       def format_tokens(n)
