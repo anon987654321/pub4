@@ -194,7 +194,6 @@ require_relative "confirmations"
 require_relative "error_suggestions"
 require_relative "nng_checklist"
 require_relative "onboarding"
-require_relative "context_window"
 
 # Pipeline stages (needed by executor)
 require_relative "boot"
