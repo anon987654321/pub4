@@ -94,20 +94,73 @@ module MASTER
 
     class << self
       def prompt
-        model = LLM.prompt_model_name
-        budget = LLM.budget_remaining
-        tokens = Session.current.message_count rescue 0
-
-        # Shell-style: master@model [tokens] $cost$
-        # Dense, informative prompt
-        budget_str = budget < 10.0 ? " $#{format('%.2f', budget)}" : ""
-        token_str = tokens > 0 ? " ↑#{format_tokens(tokens)}" : ""
-        tripped = LLM.model_tiers[LLM.tier]&.any? { |m| !LLM.circuit_closed?(m) }
-        indicator = tripped ? "!" : ""
-
-        "master@#{model}#{indicator}#{token_str}#{budget_str}$ "
+        # Starship-inspired multi-segment prompt
+        # Line 1: Info bar with context segments
+        # Line 2: Simple input prompt
+        begin
+          pastel = UI.pastel
+          
+          # Gather context
+          model = LLM.prompt_model_name
+          tier = LLM.tier
+          budget = LLM.budget_remaining
+          tokens = Session.current.message_count rescue 0
+          tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
+          
+          # Build segments
+          segments = []
+          
+          # Ruby version segment
+          ruby_version = RUBY_VERSION
+          segments << pastel.cyan("🔧 ruby #{ruby_version}")
+          
+          # Model + tier segment
+          tier_label = tier ? "(#{tier})" : ""
+          segments << pastel.yellow("🤖 #{model} #{tier_label}".strip)
+          
+          # Turn count
+          if tokens > 0
+            segments << "↑#{format_tokens(tokens)}"
+          end
+          
+          # Budget
+          if budget < 10.0
+            segments << "$#{format('%.2f', budget)}"
+          end
+          
+          # Circuit breaker status
+          status_icon = tripped ? pastel.red("⚡tripped") : pastel.green("⚡ok")
+          segments << status_icon
+          
+          # Git branch (if in repo)
+          git_segment = git_info
+          segments << git_segment if git_segment
+          
+          # Build prompt
+          sep = pastel.dim(" · ")
+          info_line = "┌─ #{segments.join(sep)}"
+          input_line = "└─ master »"
+          
+          "#{info_line}\n#{input_line}"
+        rescue StandardError => e
+          # Fallback to simple prompt on any error
+          "master$ "
+        end
+      end
+      
+      def git_info
+        # Detect git branch and dirty status
+        branch = IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out]) { |io| io.read.strip }
+        return nil if branch.empty? || $?.exitstatus != 0
+        
+        # Check for uncommitted changes
+        status = IO.popen(%w[git status --porcelain], err: [:child, :out]) { |io| io.read }
+        dirty = !status.empty? && $?.exitstatus == 0
+        
+        dirty_indicator = dirty ? "*" : ""
+        UI.pastel.blue("#{branch}#{dirty_indicator}")
       rescue StandardError
-        "master$ "
+        nil
       end
 
       def format_tokens(n)
@@ -165,7 +218,15 @@ module MASTER
                          phase = WorkflowEngine.current_phase(session)
                          "#{phase}> "
                        else
-                         prompt
+                         full_prompt = prompt
+                         # For multi-line prompts, print info line and use only input line
+                         if full_prompt.include?("\n")
+                           lines = full_prompt.split("\n")
+                           puts lines[0..-2].join("\n") # Print all but last line
+                           lines[-1] + " " # Return last line as input prompt
+                         else
+                           full_prompt
+                         end
                        end
 
           begin
