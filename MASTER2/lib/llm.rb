@@ -37,6 +37,7 @@ module MASTER
 
     class << self
       attr_accessor :current_model, :current_tier
+      attr_reader :persona_prompt
 
       # Tier setter for compatibility
       def tier=(value)
@@ -45,6 +46,11 @@ module MASTER
 
       def forced_tier
         @forced_tier
+      end
+      
+      # Set persona prompt (called from Personas module)
+      def persona_prompt=(value)
+        @persona_prompt = value
       end
 
       def models
@@ -392,7 +398,7 @@ module MASTER
         # Extract system message from messages array if present
         system_msg = nil
         user_messages = messages
-        if messages && messages.is_a?(Array) && !messages.empty?
+        if valid_messages?(messages)
           # Check if first message is a system message
           first_msg = messages.first
           if first_msg && (first_msg[:role] == "system" || first_msg["role"] == "system")
@@ -418,6 +424,11 @@ module MASTER
         Result.err(error_msg)
       end
 
+      # Helper to validate messages array
+      def valid_messages?(messages)
+        messages && messages.is_a?(Array) && !messages.empty?
+      end
+
       # P2 fix #4: Build message content preserving full conversation history
       # Supports system-role separation by detecting and formatting system messages
       def build_message_content(prompt, messages, system_message: nil)
@@ -429,7 +440,7 @@ module MASTER
         end
         
         # Add conversation history
-        if messages && messages.is_a?(Array) && !messages.empty?
+        if valid_messages?(messages)
           all_messages.concat(messages)
         end
         

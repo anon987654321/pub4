@@ -70,8 +70,8 @@ module MASTER
         end
         
         # Check for active persona
-        if defined?(LLM) && LLM.instance_variable_defined?(:@persona_prompt)
-          persona_prompt = LLM.instance_variable_get(:@persona_prompt)
+        if defined?(LLM) && LLM.respond_to?(:persona_prompt)
+          persona_prompt = LLM.persona_prompt
           sections << "\nACTIVE PERSONA:\n#{persona_prompt}" if persona_prompt && !persona_prompt.empty?
         end
         
