@@ -51,6 +51,14 @@ module MASTER
         end
       end
 
+      def spending_cap
+        @spending_cap ||= begin
+          return SPENDING_CAP unless File.exist?(BUDGET_FILE)
+          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+          data.dig(:budget, :limit) || SPENDING_CAP
+        end
+      end
+
       # Classify a model into a tier based on its input pricing
       def classify_tier(model)
         price = model.input_price_per_million || 0
@@ -148,8 +156,9 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Cost firewall - abort if cumulative spend exceeds cap
-        if total_spent >= SPENDING_CAP
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{SPENDING_CAP}. Session terminated.")
+        cap = spending_cap
+        if total_spent >= cap
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{cap}. Session terminated.")
         end
 
         # Model selection (single call - no TOCTOU)
@@ -444,7 +453,7 @@ module MASTER
       end
 
       def budget_remaining
-        [SPENDING_CAP - total_spent, 0.0].max
+        [spending_cap - total_spent, 0.0].max
       end
 
       # Pick best available model for given tier (or current)
