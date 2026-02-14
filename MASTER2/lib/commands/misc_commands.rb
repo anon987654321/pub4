@@ -363,6 +363,17 @@ module MASTER
           puts "  Usage: cache [stats|clear]"
         end
       end
+
+      # Multi-file refactoring
+      def multi_refactor(args)
+        return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
+
+        path = args&.split&.first || MASTER.root
+        dry_run = !args&.include?("--apply")
+        mr = MultiRefactor.new(dry_run: dry_run)
+        result = mr.run(path: path)
+        result
+      end
     end
   end
 end

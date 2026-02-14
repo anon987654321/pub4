@@ -248,6 +248,7 @@ require_relative "learnings"
 require_relative "enforcement"
 require_relative "file_processor"
 require_relative "reflow"
+require_relative "multi_refactor"
 
 # Quality & Analysis (restored from MASTER)
 require_relative "planner"

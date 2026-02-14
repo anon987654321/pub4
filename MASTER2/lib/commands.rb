@@ -262,6 +262,8 @@ module MASTER
       when "cache"
         show_cache_stats(args)
         nil
+      when "multi-refactor", "mrefactor"
+        multi_refactor(args)
       when "shell"
         # Start interactive shell
         InteractiveShell.new.run

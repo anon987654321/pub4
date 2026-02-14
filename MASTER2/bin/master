@@ -91,6 +91,14 @@ when "opportunities", "opps"
   result = MASTER::Commands.opportunities(path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
+when "multi-refactor", "mrefactor"
+  # Multi-file refactoring: master multi-refactor deploy/rails/
+  path = args.first || "."
+  dry_run = !args.include?("--apply")
+  mr = MASTER::MultiRefactor.new(dry_run: dry_run)
+  result = mr.run(path: path)
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
 when "axioms-stats", "stats"
   # Statistics: master axioms-stats
   MASTER::Commands.print_axiom_stats
@@ -108,6 +116,7 @@ when "help", "-h", "--help"
     
     Commands:
       refactor <file>             Refactor file with LLM guidance
+      multi-refactor [path]       Refactor entire directory with dependency graph
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
       chamber <file>              Chamber review with multi-model deliberation
