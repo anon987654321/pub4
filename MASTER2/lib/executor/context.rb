@@ -90,7 +90,7 @@ module MASTER
         end.join("\n\n")
 
         # Get comprehensive system message
-        system_msg = self.class.build_system_message(include_commands: true)
+        system_msg = Context.build_system_message(include_commands: true)
         
         # Build tool list and format from TOOLS hash
         tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
@@ -140,7 +140,7 @@ module MASTER
       
       # Build context as messages array with system/user separation
       def build_context_messages(goal)
-        system_msg = self.class.build_system_message(include_commands: true)
+        system_msg = Context.build_system_message(include_commands: true)
         user_msg = build_context(goal, include_task: true).sub(system_msg, "").strip
         
         [
