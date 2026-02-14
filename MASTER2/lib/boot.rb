@@ -65,7 +65,7 @@ module MASTER
         
         # Also check optional modules
         optional_checks = []
-        optional_checks << "Chamber" if defined?(Chamber) && !Chamber.respond_to?(:call)
+        optional_checks << "Chamber" if defined?(Chamber) && !Chamber.respond_to?(:council_review)
         optional_checks << "CodeReview" if defined?(CodeReview) && !CodeReview.respond_to?(:analyze)
         optional_checks << "AutoFixer" if defined?(AutoFixer) && !AutoFixer.new.respond_to?(:fix)
         
