@@ -114,7 +114,7 @@ module MASTER
 
       # Full analysis: all layers, all scopes
       def analyze(code, axioms: nil, filename: "code")
-        axioms ||= DB.axioms
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         {
           filename: filename,
           line: check_lines(code, filename),
@@ -125,7 +125,7 @@ module MASTER
 
       # Analyze entire framework (multiple files)
       def analyze_framework(files, axioms: nil)
-        axioms ||= DB.axioms
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         file_results = files.map { |f, content| analyze(content, axioms: axioms, filename: f) }
         framework_violations = check_framework(files, axioms)
 
@@ -143,7 +143,8 @@ module MASTER
 
       # Run all 6 layers on single file
       def check(code, axioms: nil, filename: "code")
-        axioms ||= DB.axioms
+        # Load axioms from Constitution.axioms if not provided (includes YAML with detect patterns)
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         violations = []
 
         LAYERS.each do |layer|
@@ -151,7 +152,93 @@ module MASTER
           violations.concat(layer_violations)
         end
 
+        # Add additional checks from merged Validator
+        violations.concat(check_srp(code, filename: filename))
+        violations.concat(check_kiss_complexity(code, filename: filename))
+        violations.concat(check_dry_violations(code, filename: filename))
+        violations.concat(check_file_size_violation(code, filename: filename))
+
         { filename: filename, violations: violations, layers_checked: LAYERS }
+      end
+
+      # Validate LLM response text by extracting and checking code blocks
+      # Merged from Validator for ONE_SOURCE compliance
+      def validate_llm_response(text)
+        issues = []
+
+        # Check for code blocks
+        if text.include?('```')
+          code_blocks = text.scan(/```\w*\n(.*?)```/m).flatten
+          code_blocks.each do |code|
+            result = check(code, filename: "llm_response")
+            issues.concat(result[:violations])
+          end
+        end
+
+        issues
+      end
+
+      # Boot-time self-check: Enforce SELF_APPLY axiom on own source
+      # Checks key source files for ABSOLUTE protection violations only
+      # Does NOT halt boot - warns only via Dmesg if violations found
+      def self_check!
+        # Skip if already ran
+        return @last_self_check if @last_self_check
+
+        # Check only result.rb to keep boot fast and avoid recursion
+        # result.rb is the core monad/result type used throughout - critical to validate
+        # Checking enforcement.rb itself would create recursion risk
+        key_files = %w[result.rb]
+        violations = []
+
+        begin
+          key_files.each do |f|
+            path = File.join(MASTER.root, "lib", f)
+            next unless File.exist?(path)
+
+            code = File.read(path)
+
+            result = check(code, filename: f)
+
+            # Filter for ABSOLUTE protection violations only
+            absolute_violations = result[:violations].select do |v|
+              v[:protection] == "ABSOLUTE"
+            end
+
+            violations.concat(absolute_violations)
+          end
+        rescue StandardError => e
+          # Gracefully handle any errors during self-check
+          @last_self_check = {
+            timestamp: Time.now,
+            files_checked: 0,
+            absolute_violations: [],
+            passed: false,
+            error: e.message
+          }
+          return @last_self_check
+        end
+
+        @last_self_check = {
+          timestamp: Time.now,
+          files_checked: key_files.size,
+          absolute_violations: violations,
+          passed: violations.empty?
+        }
+
+        # Warn if violations found (don't halt boot)
+        unless violations.empty?
+          if defined?(Dmesg)
+            Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source")
+          end
+        end
+
+        @last_self_check
+      end
+
+      # Get last self-check result
+      def last_self_check
+        @last_self_check || { timestamp: nil, files_checked: 0, absolute_violations: [], passed: true }
       end
 
       # Suggest better names from smells.yml

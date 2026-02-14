@@ -15,16 +15,17 @@ class TestLLMRubyLLM < Minitest::Test
   end
 
   def test_ruby_llm_available_check
-    # Test that we can check if ruby_llm is available
-    result = MASTER::LLM.ruby_llm_available?
-    assert [true, false].include?(result)
+    # RubyLLM is now a hard dependency, so it's always available
+    # Test that configuration works without error
+    MASTER::LLM.configure_ruby_llm
+    # Verify RubyLLM module exists and is configured
+    assert defined?(RubyLLM), "RubyLLM module should be defined"
+    # Note: Cannot directly access @ruby_llm_configured as it's private,
+    # but successful configuration is verified by no errors being raised
   end
 
   def test_reasoning_effort_validation
     # Test that invalid reasoning effort is rejected
-    # This would be tested via a mock if ruby_llm is not available
-    skip "ruby_llm not available" unless MASTER::LLM.ruby_llm_available?
-    
     result = MASTER::LLM.ask("test", reasoning: :invalid_effort)
     assert result.err?, "Should reject invalid reasoning effort"
   end
@@ -32,7 +33,6 @@ class TestLLMRubyLLM < Minitest::Test
   def test_fallback_models_logic
     # Test that fallback models array is properly handled
     skip "API key required" unless MASTER::LLM.configured?
-    skip "ruby_llm not available" unless MASTER::LLM.ruby_llm_available?
     
     # This test verifies the fallback logic structure without making real API calls
     # The actual API calls would need mocking or a test mode
