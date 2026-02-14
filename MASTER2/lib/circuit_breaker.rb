@@ -45,6 +45,9 @@ module MASTER
   module CircuitBreaker
     extend self
 
+    # Custom exception for intentional circuit breaker state changes
+    class TestFailure < StandardError; end
+
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
@@ -114,9 +117,9 @@ module MASTER
       light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       
       begin
-        light.run { raise StandardError, "Circuit breaker failure" }
-      rescue Stoplight::Error::RedLight, StandardError
-        # Expected - circuit is now aware of the failure
+        light.run { raise TestFailure, "Intentional failure for circuit breaker state management" }
+      rescue TestFailure, Stoplight::Error::RedLight
+        # Expected - TestFailure triggers the failure, RedLight means circuit was already open
       end
     rescue StandardError => e
       log_warning("Failed to open circuit", model: model, error: e.message)
