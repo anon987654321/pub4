@@ -52,7 +52,12 @@ module MASTER
         @models_config ||= begin
           models_file = File.join(__dir__, "..", "data", "models.yml")
           return [] unless File.exist?(models_file)
-          YAML.safe_load_file(models_file, symbolize_names: true) || []
+          begin
+            YAML.safe_load_file(models_file, symbolize_names: true) || []
+          rescue StandardError => e
+            warn "Failed to load models.yml: #{e.message}"
+            []
+          end
         end
       end
 
@@ -76,12 +81,12 @@ module MASTER
       # Classify a model into a tier based on models.yml configuration
       def classify_tier(model)
         # For configured models, look up tier from models.yml with O(1) hash access
-        model_id = model.is_a?(String) ? model : model.id
+        model_id = model.is_a?(String) ? model : (model&.id || return :cheap)
         configured_model = configured_models_by_id[model_id]
         return configured_model[:tier].to_sym if configured_model && configured_model[:tier]
         
         # Fallback to price-based classification for models not in models.yml
-        # Note: String model IDs without a corresponding model object default to :cheap tier
+        # This applies to any model (string ID or object) not found in the configured models
         price = model.is_a?(String) ? 0 : (model.input_price_per_million || 0)
         if price >= 10.0
           :premium
