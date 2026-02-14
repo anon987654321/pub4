@@ -224,7 +224,6 @@ require_relative "evolve"
 require_relative "validator"
 require_relative "queue"              # Priority task queue (restored from MASTER v1)
 require_relative "engine"             # Unified scan facade (restored from MASTER v1)
-require_relative "agent_autonomy"     # Goal decomposition & self-correction (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
 require_relative "prescan"            # Situational awareness ritual (restored from MASTER v1)
@@ -253,8 +252,6 @@ end
 
 # Agents
 require_relative "agent"
-require_relative "agent_pool"
-require_relative "agent_firewall"
 
 # Meta/Self-improvement
 require_relative "code_review"
