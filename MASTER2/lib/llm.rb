@@ -103,12 +103,23 @@ module MASTER
       def configure_ruby_llm
         CONFIGURE_MUTEX.synchronize do
           return if @ruby_llm_configured
-          require "ruby_llm"
-          RubyLLM.configure do |c|
-            c.openrouter_api_key = api_key
+          begin
+            require "ruby_llm"
+            RubyLLM.configure do |c|
+              c.openrouter_api_key = api_key
+            end
+            @ruby_llm_configured = true
+          rescue LoadError
+            # ruby_llm not available - will fall back to Net::HTTP
+            @ruby_llm_configured = false
           end
-          @ruby_llm_configured = true
         end
+      end
+
+      # Check if ruby_llm is available and configured
+      def ruby_llm_available?
+        configure_ruby_llm
+        @ruby_llm_configured
       end
 
       # Check API key status and remaining credits
@@ -344,6 +355,11 @@ module MASTER
 
       # Execute request using ruby_llm
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
+        # If ruby_llm is not available, return error
+        unless ruby_llm_available?
+          return Result.err("ruby_llm gem not available. Please install with: gem install ruby_llm")
+        end
+
         chat = RubyLLM.chat(model: model)
 
         # P2 fix #10: Validate reasoning effort values

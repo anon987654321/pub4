@@ -1,9 +1,53 @@
 # frozen_string_literal: true
 
-require "stoplight"
-
-# Check if Stoplight is available
-STOPLIGHT_AVAILABLE = true
+# Try to load Stoplight, fall back to simple implementation if not available
+begin
+  require "stoplight"
+  STOPLIGHT_AVAILABLE = true
+rescue LoadError
+  STOPLIGHT_AVAILABLE = false
+  
+  # Simple mock for when Stoplight is not available
+  module Stoplight
+    class Light
+      def self.default_data_store
+        nil
+      end
+    end
+    
+    module Error
+      class RedLight < StandardError; end
+    end
+  end
+  
+  def Stoplight(name)
+    StoplightMock.new(name)
+  end
+  
+  class StoplightMock
+    attr_reader :name
+    
+    def initialize(name)
+      @name = name
+      @threshold = 3
+      @cool_off_time = 300
+    end
+    
+    def with_threshold(n)
+      @threshold = n
+      self
+    end
+    
+    def with_cool_off_time(seconds)
+      @cool_off_time = seconds
+      self
+    end
+    
+    def run
+      yield
+    end
+  end
+end
 
 module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls using Stoplight
