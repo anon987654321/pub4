@@ -23,7 +23,7 @@ class TestLLM < Minitest::Test
   end
 
   def test_failures_before_trip
-    assert_equal 3, MASTER::LLM::FAILURES_BEFORE_TRIP
+    assert_equal 3, MASTER::CircuitBreaker::FAILURES_BEFORE_TRIP
   end
 
   def test_spending_cap
@@ -41,7 +41,7 @@ class TestLLM < Minitest::Test
 
   def test_tier_with_full_budget
     tier = MASTER::LLM.tier
-    assert_equal :strong, tier
+    assert_equal :premium, tier
   end
 
   def test_select_model

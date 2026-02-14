@@ -23,12 +23,10 @@ gem "tty-which"      # Command location
 # Utilities
 gem "pastel"         # Terminal colors
 gem "rouge"          # Syntax highlighting
-gem "nokogiri", "~> 1.16"  # HTML/XML parsing (security: safe HTML processing)
+gem "nokogiri", "~> 1.19"  # HTML/XML parsing (security: safe HTML processing)
 
-# HTTP client
-gem "faraday", "~> 2.0"
-gem "faraday-retry", "~> 2.0"
-gem "net-http-persistent", "~> 4.0"
+# LLM client
+gem "ruby_llm", "~> 1.11"
 
 # Circuit breaker
 gem "stoplight", "~> 4.0"

@@ -4,6 +4,7 @@ module MASTER
   module AutoInstall
     GEMS = %w[
       ruby_llm
+      stoplight
       tty-reader
       tty-prompt
       tty-spinner
