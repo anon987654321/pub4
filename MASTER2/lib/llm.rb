@@ -339,7 +339,7 @@ module MASTER
           break if retry_count >= max_retries
 
           # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2**(retry_count - 1)
+          sleep_time = 2 ** (retry_count - 1)
           log_warning("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
           sleep(sleep_time)
         end

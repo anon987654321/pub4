@@ -58,6 +58,7 @@ module MASTER
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
+    PROBE_VALUE = :probe  # Value used to test circuit state
 
     # Rate limiting state
     @rate_limit_mutex = Mutex.new
@@ -99,7 +100,7 @@ module MASTER
                 .with_threshold(FAILURES_BEFORE_TRIP)
                 .with_cool_off_time(CIRCUIT_RESET_SECONDS)
       begin
-        light.run { :probe }
+        light.run { PROBE_VALUE }
         true
       rescue Stoplight::Error::RedLight
         false
@@ -119,18 +120,19 @@ module MASTER
 
     # P1 fix #1: Record only ONE failure per request (not in a loop)
     def open_circuit!(model)
+      # Record failure using Stoplight's data store API directly
+      # This is more idiomatic than raising/catching exceptions
       light = Stoplight("llm-#{model}")
                 .with_threshold(FAILURES_BEFORE_TRIP)
                 .with_cool_off_time(CIRCUIT_RESET_SECONDS)
       
-      # Record single failure using Stoplight's mechanism
-      begin
-        light.run { raise StandardError, "Circuit breaker tripped" }
-      rescue Stoplight::Error::RedLight
-        # Expected - circuit is now open after threshold reached
-      rescue StandardError
-        # Failure recorded
-      end
+      data_store = Stoplight::Light.default_data_store
+      return unless data_store
+      
+      # Record a failure for this circuit
+      data_store.record_failure(light)
+    rescue StandardError => e
+      log_warning("Failed to open circuit", model: model, error: e.message)
     end
 
     # P2 fix #8: Add nil check and rescue in close_circuit!
