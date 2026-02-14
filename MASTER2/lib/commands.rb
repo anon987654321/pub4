@@ -259,6 +259,13 @@ module MASTER
       when "postpro", "enhance", "upscale"
         postpro_command(cmd, args)
         nil
+      when "cache"
+        show_cache_stats(args)
+        nil
+      when "multi-refactor", "mrefactor"
+        multi_refactor(args)
+      when "selfrun", "self-run"
+        selfrun_full(args)
       when "shell"
         # Start interactive shell
         InteractiveShell.new.run

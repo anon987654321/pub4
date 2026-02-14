@@ -155,6 +155,12 @@ module MASTER
           return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
         end
 
+        # Check semantic cache before making API call
+        cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
+        if cache_result&.ok?
+          return cache_result
+        end
+
         # Model selection (single call - no TOCTOU)
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
@@ -201,6 +207,9 @@ module MASTER
             cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
 
             Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+
+            # Store in semantic cache
+            SemanticCache.store(prompt, data, tier: selected_tier) if defined?(SemanticCache) && !stream
 
             CircuitBreaker.close_circuit!(current_model)
             return Result.ok(data)

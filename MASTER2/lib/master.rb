@@ -166,6 +166,7 @@ require_relative "logging"  # Unified logging (replaces log.rb, logging.rb, dmes
 require_relative "db_jsonl"
 require_relative "llm"
 require_relative "session"
+require_relative "session_replay"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
@@ -232,7 +233,7 @@ require_relative "postpro_bridge"
 require_relative "repligen_bridge"
 
 # External services
-%w[weaviate replicate cinematic].each do |mod|
+%w[weaviate replicate cinematic semantic_cache].each do |mod|
   begin
     require_relative mod
   rescue LoadError, StandardError => e
@@ -249,6 +250,7 @@ require_relative "learnings"
 require_relative "enforcement"
 require_relative "file_processor"
 require_relative "reflow"
+require_relative "multi_refactor"
 
 # Quality & Analysis (restored from MASTER)
 require_relative "planner"

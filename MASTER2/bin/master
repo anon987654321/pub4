@@ -91,9 +91,43 @@ when "opportunities", "opps"
   result = MASTER::Commands.opportunities(path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
+when "multi-refactor", "mrefactor"
+  # Multi-file refactoring: master multi-refactor deploy/rails/
+  path = args.first || "."
+  dry_run = !args.include?("--apply")
+  mr = MASTER::MultiRefactor.new(dry_run: dry_run)
+  result = mr.run(path: path)
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+
 when "axioms-stats", "stats"
   # Statistics: master axioms-stats
   MASTER::Commands.print_axiom_stats
+
+when "selfrun", "self-run"
+  # Full self-run: analyze and refactor the entire pub4 repo
+  puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
+  pub4_root = File.expand_path("../..", __dir__)  # Go up from MASTER2/bin/ to pub4/
+  
+  # Phase 1: Self-refactor MASTER2 itself
+  puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
+  mr = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
+  mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
+  
+  # Phase 2: Deploy scripts
+  puts "\n=== Phase 2: Deploy Scripts ==="
+  mr2 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
+  mr2.run(path: File.join(pub4_root, "deploy"))
+  
+  # Phase 3: Business plans (HTML)
+  puts "\n=== Phase 3: Business Plans ==="
+  mr3 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 0.5)
+  mr3.run(path: File.join(pub4_root, "bp"))
+  
+  # Phase 4: Self-test
+  puts "\n=== Phase 4: Self-Test ==="
+  MASTER::Introspection.run if defined?(MASTER::Introspection)
+  
+  exit 0
 
 when "version", "-v", "--version"
   puts "MASTER2 v#{MASTER::VERSION}"
@@ -108,6 +142,8 @@ when "help", "-h", "--help"
     
     Commands:
       refactor <file>             Refactor file with LLM guidance
+      multi-refactor [path]       Refactor entire directory with dependency graph
+      selfrun [--apply]           Full self-run across entire pub4 repo
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
       chamber <file>              Chamber review with multi-model deliberation
@@ -115,7 +151,8 @@ when "help", "-h", "--help"
       evolve [args]               Evolve entire codebase
       browse <url>                Browse and extract web content
       speak <text>                Text-to-speech output
-      session <cmd>               Session management (show|save|load)
+      session <cmd>               Session management (replay|ls|diff|export)
+      cache [stats|clear]         Semantic cache management
       health                      System health check
       opportunities [path]        Find improvement opportunities
       axioms-stats                Display axiom violation statistics
