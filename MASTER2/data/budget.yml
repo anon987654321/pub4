@@ -5,3 +5,16 @@ budget:
     strong: 5.0
     fast: 1.0
     cheap: 0.0
+
+# Pricing cutoffs for classifying OpenRouter models into tiers
+# (input price per million tokens)
+model_tiers:
+  premium: 10.0
+  strong: 2.0
+  fast: 0.10
+
+# Optional: override tier classification for specific models
+# model_overrides:
+#   google/gemini-2.0-flash-001: strong
+#   deepseek/deepseek-r1: premium
+#   meta-llama/llama-3.3-70b-instruct:free: fast
