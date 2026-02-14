@@ -267,3 +267,17 @@ require_relative "framework/quality_gates"
     warn "MASTER: #{mod} unavailable (#{e.message})"
   end
 end
+
+# Boot-time SELF_APPLY enforcement: Check own source for ABSOLUTE violations
+# Deferred to background to avoid slowing boot
+# Warns only, does not halt boot
+if ENV["MASTER_SELF_CHECK"] != "false" && defined?(MASTER::Enforcement)
+  Thread.new do
+    sleep 1 # Give boot a chance to complete
+    begin
+      MASTER::Enforcement.self_check!
+    rescue StandardError => e
+      warn "MASTER: self_check! failed (#{e.message})"
+    end
+  end
+end

@@ -178,6 +178,67 @@ module MASTER
         issues
       end
 
+      # Boot-time self-check: Enforce SELF_APPLY axiom on own source
+      # Checks key source files for ABSOLUTE protection violations only
+      # Does NOT halt boot - warns only via Dmesg if violations found
+      def self_check!
+        # Skip if already ran
+        return @last_self_check if @last_self_check
+
+        # Check only result.rb to avoid recursion and keep boot fast
+        key_files = %w[result.rb]
+        violations = []
+
+        begin
+          key_files.each do |f|
+            path = File.join(MASTER.root, "lib", f)
+            next unless File.exist?(path)
+
+            code = File.read(path)
+
+            result = check(code, filename: f)
+
+            # Filter for ABSOLUTE protection violations only
+            absolute_violations = result[:violations].select do |v|
+              v[:protection] == "ABSOLUTE"
+            end
+
+            violations.concat(absolute_violations)
+          end
+        rescue StandardError => e
+          # Gracefully handle any errors during self-check
+          @last_self_check = {
+            timestamp: Time.now,
+            files_checked: 0,
+            absolute_violations: [],
+            passed: false,
+            error: e.message
+          }
+          return @last_self_check
+        end
+
+        @last_self_check = {
+          timestamp: Time.now,
+          files_checked: key_files.size,
+          absolute_violations: violations,
+          passed: violations.empty?
+        }
+
+        # Warn if violations found (don't halt boot)
+        unless violations.empty?
+          if defined?(Dmesg)
+            Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source")
+          end
+        end
+
+        @last_self_check
+      end
+
+      # Get last self-check result
+      def last_self_check
+        @last_self_check || { timestamp: nil, files_checked: 0, absolute_violations: [], passed: true }
+      end
+
       # Suggest better names from smells.yml
       def suggest(word, type: :verb)
         suggestions = smells.dig(type == :verb ? "generic_verbs" : "vague_nouns", word)
