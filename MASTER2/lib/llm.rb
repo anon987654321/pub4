@@ -54,93 +54,38 @@ module MASTER
           data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
         end
       end
-
-      def safe_input_price(model)
-        model.input_price_per_million || 0
-      rescue NoMethodError
-        0
-      end
-
-      def safe_output_price(model)
-        model.output_price_per_million || 0
-      rescue NoMethodError
-        0
-      end
-
-      def tier_pricing_thresholds
-        @tier_pricing_thresholds ||= begin
-          if File.exist?(BUDGET_FILE)
-            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-            data[:model_tiers] || { premium: 10.0, strong: 2.0, fast: 0.10 }
-          else
-            { premium: 10.0, strong: 2.0, fast: 0.10 }
-          end
-        end
-      end
-
-      def model_tier_overrides
-        @model_tier_overrides ||= begin
-          if File.exist?(BUDGET_FILE)
-            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-            (data[:model_overrides] || {}).transform_values(&:to_sym)
-          else
-            {}
-          end
-        end
-      end
-
+      # Classify a model into a tier based on its input pricing
       def classify_tier(model)
-        override = model_tier_overrides[model.id]
-        return override if override
-
-        price = safe_input_price(model)
-        thresholds = tier_pricing_thresholds
-        if price >= thresholds[:premium]
+        price = model.input_price_per_million || 0
+        if price >= 10.0
           :premium
-        elsif price >= thresholds[:strong]
+        elsif price >= 2.0
           :strong
-        elsif price >= thresholds[:fast]
+        elsif price >= 0.1
           :fast
         else
           :cheap
         end
       end
 
-      def spending_cap
-        @spending_cap ||= begin
-          if File.exist?(BUDGET_FILE)
-            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-            data.dig(:budget, :limit) || 10.0
-          else
-            10.0
-          end
-        end
-      end
-
-      def reset_model_cache!
-        @model_tiers = nil
-        @model_rates = nil
-        @context_limits = nil
-        @chat_models = nil
-        @tier_pricing_thresholds = nil
-        @model_tier_overrides = nil
-        @spending_cap = nil
-      end
-
       def model_tiers
         @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
-          hash[tier] = chat_models.select { |m| classify_tier(m) == tier }.map { |m| m.id }
+          hash[tier] = models.select { |m| classify_tier(m) == tier }.map(&:id)
         end
       end
 
       def model_rates
-        @model_rates ||= chat_models.each_with_object({}) do |m, hash|
-          hash[m.id] = { in: safe_input_price(m), out: safe_output_price(m), tier: classify_tier(m) }
+        @model_rates ||= models.each_with_object({}) do |m, hash|
+          hash[m.id] = {
+            in: m.input_price_per_million || 0,
+            out: m.output_price_per_million || 0,
+            tier: classify_tier(m)
+          }
         end
       end
 
       def context_limits
-        @context_limits ||= chat_models.each_with_object({}) do |m, hash|
+        @context_limits ||= models.each_with_object({}) do |m, hash|
           hash[m.id] = m.context_window || 32_000
         end
       end
