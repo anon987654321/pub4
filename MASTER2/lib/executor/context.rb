@@ -93,6 +93,9 @@ module MASTER
         # Build tool list and format from TOOLS hash
         tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
         
+        # Generate tool format examples
+        # NOTE: These patterns are derived from TOOLS keys but usage strings are hardcoded
+        # TODO: Consider extending TOOLS hash with usage patterns for single source of truth
         tool_format = TOOLS.keys.map { |tool|
           case tool
           when :ask_llm then '- ask_llm "your question"'
