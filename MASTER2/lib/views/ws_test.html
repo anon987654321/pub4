@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASTER2 WebSocket Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.connected {
+            background: #2e7d32;
+            color: white;
+        }
+        
+        .status.disconnected {
+            background: #c62828;
+            color: white;
+        }
+        
+        .status.connecting {
+            background: #f57c00;
+            color: white;
+        }
+        
+        #chat-box {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 20px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .message.user {
+            background: #1565c0;
+            text-align: right;
+        }
+        
+        .message.assistant {
+            background: #424242;
+        }
+        
+        .message.error {
+            background: #c62828;
+        }
+        
+        .message.system {
+            background: #37474f;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        #message-input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #4fc3f7;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #29b6f6;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        .meta {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 MASTER2 WebSocket Test</h1>
+        
+        <div id="status" class="status connecting">Connecting...</div>
+        
+        <div id="chat-box"></div>
+        
+        <div class="input-group">
+            <input type="text" id="message-input" placeholder="Type your message..." disabled>
+            <button id="send-btn" disabled>Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const statusEl = document.getElementById('status');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        
+        function addMessage(text, type = 'system') {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
+        }
+        
+        function updateStatus(status) {
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = {
+                'connected': '✓ Connected',
+                'disconnected': '✗ Disconnected',
+                'connecting': '⟳ Connecting...'
+            }[status] || status;
+        }
+        
+        function connect() {
+            // Get auth token from localStorage or prompt
+            const token = localStorage.getItem('master_token') || prompt('Enter auth token:');
+            if (!token) {
+                addMessage('No auth token provided', 'error');
+                return;
+            }
+            localStorage.setItem('master_token', token);
+            
+            updateStatus('connecting');
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            ws = new WebSocket(wsUrl, ['chat']);
+            
+            ws.onopen = () => {
+                updateStatus('connected');
+                addMessage('Connected to MASTER2', 'system');
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                reconnectAttempts = 0;
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    switch (data.type) {
+                        case 'chunk':
+                            // Append chunk to last assistant message or create new one
+                            let lastMsg = chatBox.querySelector('.message.assistant:last-child');
+                            if (!lastMsg || lastMsg.dataset.complete === 'true') {
+                                lastMsg = addMessage('', 'assistant');
+                                lastMsg.dataset.complete = 'false';
+                            }
+                            lastMsg.textContent += data.text;
+                            break;
+                            
+                        case 'done':
+                            // Mark last message as complete and add metadata
+                            const lastAssistantMsg = chatBox.querySelector('.message.assistant:last-child');
+                            if (lastAssistantMsg) {
+                                lastAssistantMsg.dataset.complete = 'true';
+                                if (data.meta) {
+                                    const meta = document.createElement('div');
+                                    meta.className = 'meta';
+                                    meta.textContent = `Tier: ${data.meta.tier} | Budget: $${data.meta.budget.toFixed(2)}`;
+                                    lastAssistantMsg.appendChild(meta);
+                                }
+                            }
+                            break;
+                            
+                        case 'error':
+                            addMessage(`Error: ${data.message}`, 'error');
+                            break;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addMessage('Connection error', 'error');
+            };
+            
+            ws.onclose = () => {
+                updateStatus('disconnected');
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    addMessage(`Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`, 'system');
+                    setTimeout(connect, 2000 * reconnectAttempts);
+                } else {
+                    addMessage('Maximum reconnection attempts reached', 'error');
+                }
+            };
+        }
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            addMessage(message, 'user');
+            
+            ws.send(JSON.stringify({
+                type: 'chat',
+                message: message
+            }));
+            
+            messageInput.value = '';
+        }
+        
+        sendBtn.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Connect on load
+        connect();
+    </script>
+</body>
+</html>
