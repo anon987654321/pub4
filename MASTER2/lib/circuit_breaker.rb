@@ -20,27 +20,17 @@ rescue LoadError
     end
   end
   
-  def Stoplight(name)
-    StoplightMock.new(name)
+  def Stoplight(name, threshold: 3, cool_off_time: 300)
+    StoplightMock.new(name, threshold, cool_off_time)
   end
   
   class StoplightMock
     attr_reader :name
     
-    def initialize(name)
+    def initialize(name, threshold = 3, cool_off_time = 300)
       @name = name
-      @threshold = 3
-      @cool_off_time = 300
-    end
-    
-    def with_threshold(n)
-      @threshold = n
-      self
-    end
-    
-    def with_cool_off_time(seconds)
-      @cool_off_time = seconds
-      self
+      @threshold = threshold
+      @cool_off_time = cool_off_time
     end
     
     def run
@@ -97,9 +87,7 @@ module MASTER
 
     # Check if circuit is closed for a model (P2 fix #7: use Stoplight execution)
     def circuit_closed?(model)
-      light = Stoplight("llm-#{model}")
-                .with_threshold(FAILURES_BEFORE_TRIP)
-                .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       begin
         light.run { PROBE_VALUE }
         true
@@ -112,40 +100,37 @@ module MASTER
     def run(model, &block)
       check_rate_limit!
 
-      light = Stoplight("llm-#{model}")
-                .with_threshold(FAILURES_BEFORE_TRIP)
-                .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
 
       light.run(&block)
     end
 
     # P1 fix #1: Record only ONE failure per request (not in a loop)
     def open_circuit!(model)
-      # Record failure using Stoplight's data store API directly
-      # This is more idiomatic than raising/catching exceptions
-      light = Stoplight("llm-#{model}")
-                .with_threshold(FAILURES_BEFORE_TRIP)
-                .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      # Record failure using Stoplight's execution API
+      # Trigger a failure by running a block that raises an exception
+      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       
-      data_store = Stoplight::Light.default_data_store
-      return unless data_store
-      
-      # Record a failure for this circuit
-      data_store.record_failure(light)
+      begin
+        light.run { raise StandardError, "Circuit breaker failure" }
+      rescue Stoplight::Error::RedLight, StandardError
+        # Expected - circuit is now aware of the failure
+      end
     rescue StandardError => e
       log_warning("Failed to open circuit", model: model, error: e.message)
     end
 
     # P2 fix #8: Add nil check and rescue in close_circuit!
     def close_circuit!(model)
-      data_store = Stoplight::Light.default_data_store
-      return unless data_store&.respond_to?(:clear_failures)
-
-      light = Stoplight("llm-#{model}")
-                .with_threshold(FAILURES_BEFORE_TRIP)
-                .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      # Clear failures by successfully running the circuit
+      # In Stoplight v4/v5, successful runs automatically clear failures
+      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
       
-      data_store.clear_failures(light)
+      begin
+        light.run { PROBE_VALUE }
+      rescue Stoplight::Error::RedLight
+        # Circuit may still be open, that's ok
+      end
     rescue StandardError => e
       log_warning("Failed to close circuit", model: model, error: e.message)
     end
