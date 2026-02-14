@@ -70,6 +70,44 @@ module MASTER
     SCOPES = %i[line unit file framework].freeze
     SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
 
+    # MASTER2 contribution rules and architecture
+    ARCHITECTURE = {
+      rules: {
+        new_files: {
+          mandate: "No new files without justification",
+          guidelines: [
+            "Check if concept fits inside existing module first",
+            "New file only justified if would exceed 200 lines when added to existing code",
+            "Prefer adding methods to existing modules over creating new modules"
+          ]
+        },
+        file_size: {
+          guidelines: [
+            "Files under 30 lines should be merged into parent module",
+            "Target: 15-25 files in lib/, not 60+"
+          ]
+        },
+        pr_rules: {
+          guidelines: [
+            "Never create a PR that overlaps with an existing open PR",
+            "Every PR must list which existing files it modifies (not just new files)",
+            "Bug fixes and new features must be in separate PRs"
+          ]
+        }
+      },
+      canonical_map: {
+        "result.rb" => "Result monad (do not duplicate)",
+        "llm.rb" => "All LLM/OpenRouter logic including context window management",
+        "executor.rb" => "Tool dispatch, permission gates, safety guards",
+        "pipeline.rb" => "Pipeline processing (with stages.rb)",
+        "stages.rb" => "Pipeline stages",
+        "code_review.rb" => "All static analysis (smells, violations, bug hunting)",
+        "introspection.rb" => "All self-analysis (critique, reflection)",
+        "self_test.rb" => "All testing and self-repair",
+        "enforcement.rb" => "Axiom enforcement (single entry point)"
+      }
+    }.freeze
+
     # Simulated execution scenarios for safety pre-checks
     # SECURITY NOTE: simulate_with_input() evaluates arbitrary code in a controlled binding.
     # This is intentional for pre-execution safety validation. Code must be trusted.
@@ -245,6 +283,16 @@ module MASTER
       def suggest(word, type: :verb)
         suggestions = smells.dig(type == :verb ? "generic_verbs" : "vague_nouns", word)
         suggestions || []
+      end
+
+      # Get canonical file→responsibility mapping
+      def architecture_map
+        ARCHITECTURE[:canonical_map]
+      end
+
+      # Get contribution rules as structured data
+      def contribution_rules
+        ARCHITECTURE[:rules]
       end
 
       # Simulate code execution with test scenarios for safety validation

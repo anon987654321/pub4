@@ -78,7 +78,7 @@ module MASTER
           oldest = state[:requests].min
           wait_time = 60 - (now - oldest)
           if wait_time > 0
-            log_warning("Rate limit reached, waiting", seconds: wait_time.round)
+            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round)
             sleep(wait_time)
             state[:requests].clear
           end
@@ -122,7 +122,7 @@ module MASTER
         # Expected - TestFailure triggers the failure, RedLight means circuit was already open
       end
     rescue StandardError => e
-      log_warning("Failed to open circuit", model: model, error: e.message)
+      Logging.warn("Failed to open circuit", model: model, error: e.message)
     end
 
     # P2 fix #8: Add nil check and rescue in close_circuit!
@@ -139,18 +139,7 @@ module MASTER
         # Circuit may still be open, that's ok
       end
     rescue StandardError => e
-      log_warning("Failed to close circuit", model: model, error: e.message)
-    end
-
-    private
-
-    def log_warning(message, **args)
-      if defined?(Logging)
-        Logging.warn(message, **args)
-      else
-        # Fallback to stderr if Logging not available
-        warn "#{message}: #{args.inspect}"
-      end
+      Logging.warn("Failed to close circuit", model: model, error: e.message)
     end
   end
 end

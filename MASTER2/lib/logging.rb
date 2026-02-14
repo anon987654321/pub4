@@ -103,6 +103,15 @@ module MASTER
         @request_id = old_id
       end
 
+      # Format exception with error class, message, and optional backtrace
+      def format_error(exception, backtrace_lines: 5)
+        error_msg = "#{exception.class.name}: #{exception.message}"
+        if exception.backtrace && backtrace_lines > 0
+          error_msg += "\n  " + exception.backtrace.first(backtrace_lines).join("\n  ")
+        end
+        error_msg
+      end
+
       # ========================================================================
       # DOMAIN-SPECIFIC LOGGING (from log.rb)
       # ========================================================================

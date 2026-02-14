@@ -196,10 +196,7 @@ module MASTER
         Result.err("All models failed. Last error: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
-        # Preserve error type and backtrace
-        error_msg = "#{e.class.name}: #{e.message}"
-        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
-        Result.err(error_msg)
+        Result.err(Logging.format_error(e))
       end
 
       # Structured output helper - guarantees valid JSON matching schema
@@ -271,7 +268,7 @@ module MASTER
 
           # Exponential backoff: 1s, 2s, 4s
           sleep_time = 2 ** (retry_count - 1)
-          log_warning("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
+          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
           sleep(sleep_time)
         end
 
@@ -321,10 +318,7 @@ module MASTER
           execute_blocking_ruby_llm(chat, msg_content, model)
         end
       rescue StandardError => e
-        # Preserve error type and backtrace
-        error_msg = "#{e.class.name}: #{e.message}"
-        error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
-        Result.err(error_msg)
+        Result.err(Logging.format_error(e))
       end
 
       # Build message content preserving full conversation history
@@ -341,14 +335,6 @@ module MASTER
         else
           prompt.to_s
         end
-        
-        # Format as [role] content for ruby_llm text transcript format
-        all_messages.map do |m|
-          role = (m[:role] || m["role"]).to_s
-          content = m[:content] || m["content"]
-          next unless content
-          "[#{role}] #{content}"
-        end.compact.join("\n\n")
       end
 
       def execute_blocking_ruby_llm(chat, content, model)
@@ -384,7 +370,7 @@ module MASTER
 
             # Abort if response exceeds MAX_RESPONSE_SIZE
             if total_size > MAX_RESPONSE_SIZE
-              log_warning("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
               break
             end
           end
@@ -498,14 +484,6 @@ module MASTER
         end
 
         Result.ok(data)
-      end
-
-      def log_warning(message, **args)
-        if defined?(Logging)
-          Logging.warn(message, **args)
-        else
-          warn "#{message}: #{args.inspect}"
-        end
       end
     end
   end
