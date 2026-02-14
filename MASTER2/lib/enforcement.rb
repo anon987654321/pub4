@@ -114,7 +114,7 @@ module MASTER
 
       # Full analysis: all layers, all scopes
       def analyze(code, axioms: nil, filename: "code")
-        axioms ||= DB.axioms
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         {
           filename: filename,
           line: check_lines(code, filename),
@@ -125,7 +125,7 @@ module MASTER
 
       # Analyze entire framework (multiple files)
       def analyze_framework(files, axioms: nil)
-        axioms ||= DB.axioms
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         file_results = files.map { |f, content| analyze(content, axioms: axioms, filename: f) }
         framework_violations = check_framework(files, axioms)
 
@@ -143,7 +143,8 @@ module MASTER
 
       # Run all 6 layers on single file
       def check(code, axioms: nil, filename: "code")
-        axioms ||= DB.axioms
+        # Load axioms from Constitution.axioms if not provided (includes YAML with detect patterns)
+        axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
         violations = []
 
         LAYERS.each do |layer|

@@ -16,6 +16,41 @@ module MASTER
           violations << { layer: :literal, axiom: "SINGLE_SOURCE", message: "Possible hardcoded secret", file: filename }
         end
 
+        # Check core axioms with detect patterns from axioms.yml
+        axioms.each do |axiom|
+          axiom_id = axiom["id"] || axiom[:id]
+          pattern_str = axiom["detect"] || axiom[:detect]
+          suggest = axiom["suggest"] || axiom[:suggest]
+          negative_pattern_str = axiom["negative_detect"] || axiom[:negative_detect]
+
+          next if pattern_str.nil? # Skip axioms without detect patterns
+
+          begin
+            pattern = Regexp.new(pattern_str, Regexp::MULTILINE)
+            
+            # Check if code matches the violation pattern
+            if code.match?(pattern)
+              # If there's a negative pattern, check that too
+              if negative_pattern_str
+                negative_pattern = Regexp.new(negative_pattern_str, Regexp::MULTILINE)
+                # Only flag if negative pattern is NOT found (i.e., timeout is missing)
+                next if code.match?(negative_pattern)
+              end
+
+              violations << {
+                layer: :literal,
+                axiom: axiom_id,
+                message: suggest || "Axiom #{axiom_id} violation detected",
+                protection: axiom["protection"] || axiom[:protection],
+                file: filename
+              }
+            end
+          rescue RegexpError
+            # Skip invalid patterns
+            next
+          end
+        end
+
         violations
       end
 
