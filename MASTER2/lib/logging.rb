@@ -335,7 +335,7 @@ module MASTER
                  end
         reset = "\e[0m"
         
-        ctx = entry.reject { |k, _| [:timestamp, :level, :message, :request_id].include?(k) }
+        ctx = entry.except(:timestamp, :level, :message, :request_id)
         ctx_str = ctx.any? ? " #{ctx.map { |k, v| "#{k}=#{v}" }.join(' ')}" : ""
         rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
         
