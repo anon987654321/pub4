@@ -202,9 +202,8 @@ require_relative "executor"
 # Pipeline
 require_relative "pipeline"
 require_relative "hooks"
-require_relative "convergence"
 require_relative "questions"
-require_relative "workflow_engine"
+require_relative "workflow"  # Consolidated: planner + workflow_engine + convergence
 
 # Deliberation engines
 require_relative "chamber"
@@ -253,7 +252,7 @@ require_relative "reflow"
 require_relative "multi_refactor"
 
 # Quality & Analysis (restored from MASTER)
-require_relative "planner"
+# planner now in workflow.rb
 
 # Generators (restored from historical features)
 require_relative "generators/html"
