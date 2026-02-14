@@ -29,6 +29,8 @@ module MASTER
     include ReWOO
     include Reflexion
     include Tools
+    include Patterns
+    include Context
 
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
@@ -86,11 +88,6 @@ module MASTER
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
-
-    # Include extracted modules
-    include Tools
-    include Patterns
-    include Context
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
