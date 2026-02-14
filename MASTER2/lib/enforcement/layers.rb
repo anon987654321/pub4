@@ -164,6 +164,83 @@ module MASTER
           []
         end
       end
+
+      # ========================================================================
+      # Additional checks from Validator (merged for ONE_SOURCE compliance)
+      # ========================================================================
+
+      # KISS: Only flag unnecessary complexity in internal logic
+      # Never remove: UI/UX features, user-facing functionality, accessibility, error messages
+      KISS_PROTECTED_PATTERNS = [
+        /ui/i, /ux/i, /user/i, /display/i, /render/i, /print/i, /puts/i,
+        /progress/i, /spinner/i, /prompt/i, /help/i, /error/i, /warning/i,
+        /autocomplete/i, /accessibility/i, /a11y/i, /feedback/i, /message/i
+      ].freeze
+
+      # Check SRP (Single Responsibility Principle)
+      def check_srp(code, filename: "code")
+        violations = []
+
+        # Check for too many class definitions
+        classes = code.scan(/^\s*class\s+\w+/).size
+        if classes > 1
+          violations << { layer: :lexical, axiom: "ONE_JOB", message: "Multiple classes in single file", file: filename }
+        end
+
+        # Check for too many public methods
+        methods = code.scan(/^\s*def\s+(?!private|protected)/).size
+        if methods > 10
+          violations << { layer: :lexical, axiom: "ONE_JOB", message: "Too many methods (>10)", file: filename }
+        end
+
+        violations
+      end
+
+      # Check KISS (Keep It Simple)
+      def check_kiss_complexity(code, filename: "code")
+        violations = []
+
+        # Skip KISS checks for UI/UX related code
+        return violations if KISS_PROTECTED_PATTERNS.any? { |pat| code.match?(pat) }
+
+        lines = code.lines
+
+        # Check for deeply nested code (internal logic complexity)
+        max_indent = lines.map { |l| l.match(/^(\s*)/)[1].length }.max || 0
+        if max_indent > 24
+          violations << { layer: :lexical, axiom: "KISS", message: "Deeply nested internal logic (>6 levels)", file: filename }
+        end
+
+        violations
+      end
+
+      # Check DRY (Don't Repeat Yourself)
+      def check_dry_violations(code, filename: "code")
+        violations = []
+
+        # Look for duplicate string literals
+        strings = code.scan(/"([^"]+)"/).flatten
+        duplicates = strings.group_by(&:itself).select { |_, v| v.size > 2 }
+
+        duplicates.each do |str, occurrences|
+          violations << { layer: :lexical, axiom: "ONE_SOURCE", message: "Repeated string: '#{str}' (#{occurrences.size} times)", file: filename }
+        end
+
+        violations
+      end
+
+      # Check file size
+      def check_file_size_violation(code, filename: "code")
+        violations = []
+        lines = code.lines.size
+        max_lines = QualityStandards.max_file_lines
+
+        if lines > max_lines
+          violations << { layer: :cognitive, axiom: "JUST_ENOUGH", message: "File too large: #{lines} lines (limit: #{max_lines})", file: filename }
+        end
+
+        violations
+      end
     end
   end
 end

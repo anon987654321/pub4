@@ -213,7 +213,6 @@ require_relative "shell"
 require_relative "introspection"  # Includes self_map functionality (consolidated)
 require_relative "problem_solver"
 require_relative "evolve"
-require_relative "validator"
 require_relative "queue"              # Priority task queue (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)

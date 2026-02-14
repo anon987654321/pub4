@@ -151,7 +151,30 @@ module MASTER
           violations.concat(layer_violations)
         end
 
+        # Add additional checks from merged Validator
+        violations.concat(check_srp(code, filename: filename))
+        violations.concat(check_kiss_complexity(code, filename: filename))
+        violations.concat(check_dry_violations(code, filename: filename))
+        violations.concat(check_file_size_violation(code, filename: filename))
+
         { filename: filename, violations: violations, layers_checked: LAYERS }
+      end
+
+      # Validate LLM response text by extracting and checking code blocks
+      # Merged from Validator for ONE_SOURCE compliance
+      def validate_llm_response(text)
+        issues = []
+
+        # Check for code blocks
+        if text.include?('```')
+          code_blocks = text.scan(/```\w*\n(.*?)```/m).flatten
+          code_blocks.each do |code|
+            result = check(code, filename: "llm_response")
+            issues.concat(result[:violations])
+          end
+        end
+
+        issues
       end
 
       # Suggest better names from smells.yml
