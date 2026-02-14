@@ -44,6 +44,7 @@ GEM
     bake (0.24.1)
       bigdecimal
       samovar (~> 2.1)
+    base64 (0.3.0)
     bigdecimal (4.0.1)
     connection_pool (3.0.2)
     console (1.34.2)
@@ -53,6 +54,7 @@ GEM
     crack (1.0.1)
       bigdecimal
       rexml
+    event_stream_parser (1.0.0)
     falcon (0.54.1)
       async
       async-container (~> 0.20)
@@ -70,6 +72,8 @@ GEM
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
+    faraday-multipart (1.2.0)
+      multipart-post (~> 2.0)
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
     faraday-retry (2.4.0)
@@ -88,6 +92,7 @@ GEM
     localhost (1.7.0)
     logger (1.7.0)
     mapping (1.1.3)
+    marcel (1.1.0)
     memory (0.12.0)
       bake (~> 0.15)
       console
@@ -98,10 +103,9 @@ GEM
     minitest (6.0.1)
       prism (~> 1.5)
     msgpack (1.8.0)
+    multipart-post (2.4.1)
     net-http (0.9.1)
       uri (>= 0.11.1)
-    net-http-persistent (4.0.8)
-      connection_pool (>= 2.2.4, < 4)
     nokogiri (1.19.0)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
@@ -155,6 +159,17 @@ GEM
       redis (>= 3.0.0, < 6.0)
     rexml (3.4.4)
     rouge (4.7.0)
+    ruby_llm (1.12.0)
+      base64
+      event_stream_parser (~> 1)
+      faraday (>= 2.0)
+      faraday-multipart (>= 1)
+      faraday-net_http (>= 1)
+      faraday-retry (>= 2.0)
+      marcel (~> 1.0)
+      ruby_llm-schema (~> 0.2.1)
+      zeitwerk (~> 2)
+    ruby_llm-schema (0.2.5)
     samovar (2.4.1)
       console (~> 1.0)
       mapping (~> 1.0)
@@ -222,6 +237,7 @@ GEM
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
     wisper (2.0.1)
+    zeitwerk (2.7.4)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -238,14 +254,12 @@ PLATFORMS
 DEPENDENCIES
   async-websocket
   falcon (~> 0.47)
-  faraday (~> 2.0)
-  faraday-retry (~> 2.0)
   minitest
-  net-http-persistent (~> 4.0)
   nokogiri (~> 1.16)
   pastel
   rake
   rouge
+  ruby_llm (~> 1.11)
   stoplight (~> 4.0)
   tty-box
   tty-command
@@ -278,12 +292,15 @@ CHECKSUMS
   async-service (0.18.1) sha256=a74fd686c2f290179e273ceb61cc002528ecb80a16b93492be2e8160fa2a2f7d
   async-websocket (0.30.0) sha256=55739954528ad8f87f7792d0452e1268d1ef2aa5b3719f79400a05a1a6202cdf
   bake (0.24.1) sha256=8bfac7e61514b17720e3b13cf6a5e122243f43123c6802707b150904bec5f4c7
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   console (1.34.2) sha256=1c036abf606ccec83f9dc28f0c31710fe5936ffe7ba5d235ae2865590a482d58
   crack (1.0.1) sha256=ff4a10390cd31d66440b7524eb1841874db86201d5b70032028553130b6d4c7e
+  event_stream_parser (1.0.0) sha256=a2683bab70126286f8184dc88f7968ffc4028f813161fb073ec90d171f7de3c8
   falcon (0.54.1) sha256=a59a91ff9c95a21c568c670ecd52101c9aaa906eecad67d4080647c5aa570c24
   faraday (2.14.0) sha256=8699cfe5d97e55268f2596f9a9d5a43736808a943714e3d9a53e6110593941cd
+  faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
   faraday-net_http (3.4.2) sha256=f147758260d3526939bf57ecf911682f94926a3666502e24c69992765875906c
   faraday-retry (2.4.0) sha256=7b79c48fb7e56526faf247b12d94a680071ff40c9fda7cf1ec1549439ad11ebe
   fiber-annotation (0.2.0) sha256=7abfadf1d119f508867d4103bf231c0354d019cc39a5738945dec2edadaf6c03
@@ -298,14 +315,15 @@ CHECKSUMS
   localhost (1.7.0) sha256=09b32819537f914ccdf0a7c595fab162517401b6ef644a2afd3708d943c4547f
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   mapping (1.1.3) sha256=2274931d20ecd46eaafdd1e00c58cc7472133b213bcac335cc7733d3c75f4da2
+  marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   memory (0.12.0) sha256=786a14d84cec8e5667a491da02ebbf492b9ec3d19d35161131ac9d47abb684b4
   memory-leak (0.7.0) sha256=3eca5f0447e9250eb6d9dc5d567345b9dc7f2f05289d0691aa8ed24ca4dece20
   metrics (0.15.0) sha256=61ded5bac95118e995b1bc9ed4a5f19bc9814928a312a85b200abbdac9039072
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (6.0.1) sha256=7854c74f48e2e975969062833adc4013f249a4b212f5e7b9d5c040bf838d54bb
   msgpack (1.8.0) sha256=e64ce0212000d016809f5048b48eb3a65ffb169db22238fb4b72472fecb2d732
+  multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
   net-http (0.9.1) sha256=25ba0b67c63e89df626ed8fac771d0ad24ad151a858af2cc8e6a716ca4336996
-  net-http-persistent (4.0.8) sha256=ef3de8319d691537b329053fae3a33195f8b070bbbfae8bf1a58c796081960e6
   nokogiri (1.19.0) sha256=e304d21865f62518e04f2bf59f93bd3a97ca7b07e7f03952946d8e1c05f45695
   nokogiri (1.19.0-aarch64-linux-gnu) sha256=11a97ecc3c0e7e5edcf395720b10860ef493b768f6aa80c539573530bc933767
   nokogiri (1.19.0-aarch64-linux-musl) sha256=eb70507f5e01bc23dad9b8dbec2b36ad0e61d227b42d292835020ff754fb7ba9
@@ -335,6 +353,8 @@ CHECKSUMS
   redlock (1.3.2) sha256=6c7cea3d62c6e31e8df6b1924fdf89e35e5576e52dce10c62412e783bfe37277
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rouge (4.7.0) sha256=dba5896715c0325c362e895460a6d350803dbf6427454f49a47500f3193ea739
+  ruby_llm (1.12.0) sha256=b99e1252d1d0f60e576ce93086257e0ec2a0a8d629a5353dcd2447d0901180d5
+  ruby_llm-schema (0.2.5) sha256=b08cd42e8de7100325e2e868672a56f1915eb23692bb808f51f214e41392104f
   samovar (2.4.1) sha256=c3b91dd0580771e3bc600621c1111f29542529dcffafaac3b6bf068b3f309e80
   stoplight (4.1.1) sha256=ed475d174d40f4ce316023243517bdd2158c3c84092a09aa7c85ec2b4ce0459a
   string-format (0.2.0) sha256=bc981c14116b061f12134549f32fa2d61a17b5a35dd6fd36596c21722a789af6
@@ -365,6 +385,7 @@ CHECKSUMS
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
   webmock (3.26.1) sha256=4f696fb57c90a827c20aadb2d4f9058bbff10f7f043bd0d4c3f58791143b1cd7
   wisper (2.0.1) sha256=ce17bc5c3a166f241a2e6613848b025c8146fce2defba505920c1d1f3f88fae6
+  zeitwerk (2.7.4) sha256=2bef90f356bdafe9a6c2bd32bcd804f83a4f9b8bc27f3600fff051eb3edcec8b
 
 BUNDLED WITH
   4.0.6

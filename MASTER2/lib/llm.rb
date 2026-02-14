@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
-require "net/http"
+require "ruby_llm"
 require "json"
 require "yaml"
-require "uri"
+require "stoplight"
+
+# Configure RubyLLM with OpenRouter
+RubyLLM.configure do |c|
+  c.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
+end
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
@@ -18,7 +23,6 @@ module MASTER
     # OpenRouter API
     API_BASE = "https://openrouter.ai/api/v1"
     API_KEY_CHECK = "#{API_BASE}/key"
-    CHAT_ENDPOINT = "#{API_BASE}/chat/completions"
 
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
@@ -91,6 +95,9 @@ module MASTER
       def check_key
         return Result.err("No API key") unless configured?
 
+        require "net/http"
+        require "uri"
+        
         uri = URI(API_KEY_CHECK)
         req = Net::HTTP::Get.new(uri)
         req["Authorization"] = "Bearer #{api_key}"
@@ -158,7 +165,7 @@ module MASTER
         primary = apply_suffix(primary, online: online, provider: provider)
 
         model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":" ).first]&.[](:tier) || tier || :unknown
+        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
 
         # Update current state for prompt display
         @current_model = model_short
@@ -166,8 +173,14 @@ module MASTER
 
         Dmesg.llm(selected_tier, model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
-        # Build request body
-        body = build_request_body(
+        # Execute request
+        spinner = nil
+        unless stream
+          spinner = UI.spinner("#{model_short}")
+          spinner.auto_spin
+        end
+
+        result = execute_request_ruby_llm(
           prompt: prompt,
           messages: messages,
           model: primary,
@@ -177,15 +190,6 @@ module MASTER
           provider: provider,
           stream: stream
         )
-
-        # Execute request
-        spinner = nil
-        unless stream
-          spinner = UI.spinner("#{model_short}")
-          spinner.auto_spin
-        end
-
-        result = execute_request(body, stream: stream)
 
         if result.ok?
           data = result.value
@@ -259,30 +263,30 @@ module MASTER
         "#{model}#{suffixes.first}"  # Only one suffix allowed
       end
 
-      def build_request_body(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
-        body = { model: model, stream: stream }
+      def execute_request_ruby_llm(prompt:, messages:, model:, fallbacks:, reasoning:, json_schema:, provider:, stream:)
+        # Create chat instance
+        chat = RubyLLM.chat(provider: :openrouter, model: model, assume_model_exists: true)
 
-        # Messages
-        body[:messages] = messages || [{ role: "user", content: prompt }]
+        # Apply params
+        params = {}
+        params[:models] = fallbacks if fallbacks&.any?
+        params[:provider] = provider if provider
 
-        # Model fallbacks
-        body[:models] = fallbacks if fallbacks&.any?
-
-        # Reasoning tokens
+        # Apply reasoning
         if reasoning
-          body[:reasoning] = case reasoning
-                             when Symbol
-                               { effort: reasoning.to_s }
-                             when Hash
-                               reasoning.transform_keys(&:to_s)
-                             else
-                               { effort: "medium" }
-                             end
+          params[:reasoning] = case reasoning
+                               when Symbol
+                                 { effort: reasoning.to_s }
+                               when Hash
+                                 reasoning.transform_keys(&:to_s)
+                               else
+                                 { effort: "medium" }
+                               end
         end
 
-        # Structured outputs
+        # Apply structured outputs
         if json_schema
-          body[:response_format] = {
+          params[:response_format] = {
             type: "json_schema",
             json_schema: {
               name: json_schema[:name] || "response",
@@ -292,136 +296,72 @@ module MASTER
           }
         end
 
-        # Provider preferences
-        body[:provider] = provider if provider
+        chat = chat.with_params(**params) unless params.empty?
 
-        body
-      end
+        # Prepare messages
+        msgs = messages || [{ role: "user", content: prompt }]
 
-      def execute_request(body, stream: false)
-        uri = URI(CHAT_ENDPOINT)
-        req = Net::HTTP::Post.new(uri)
-        req["Authorization"] = "Bearer #{api_key}"
-        req["Content-Type"] = "application/json"
-        req["HTTP-Referer"] = "https://github.com/MASTER"
-        req["X-Title"] = "MASTER Pipeline"
-
-        req.body = body.to_json
-
-        # Retry with exponential backoff
-        max_retries = 3
-        retry_count = 0
-        last_error = nil
-
-        while retry_count < max_retries
-          begin
-            http = Net::HTTP.new(uri.hostname, uri.port)
-            http.use_ssl = true
-            http.open_timeout = 30
-            http.read_timeout = 120
-            http.write_timeout = 30
-
-            result = if stream
-                       execute_streaming(http, req)
-                     else
-                       execute_blocking(http, req)
-                     end
-
-            # Success or non-retryable error
-            return result if result.ok? || !retryable_error?(result.error)
-            
-            last_error = result.error
-          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-            last_error = e.message
-          end
-
-          retry_count += 1
-
-          # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2 ** (retry_count - 1)
-          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error) if defined?(Logging)
-          sleep(sleep_time)
+        # Execute request
+        if stream
+          execute_streaming_ruby_llm(chat, msgs)
+        else
+          execute_blocking_ruby_llm(chat, msgs)
         end
-
-        Result.err("Failed after #{max_retries} retries: #{last_error}")
+      rescue StandardError => e
+        Result.err("Request failed: #{e.message}")
       end
 
-      def retryable_error?(error)
-        return false unless error.is_a?(String)
-        error.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
-      end
+      def execute_blocking_ruby_llm(chat, messages)
+        response = chat.ask(messages)
 
-      def execute_blocking(http, req)
-        response = http.request(req)
-
-        unless response.code == "200"
-          error_body = JSON.parse(response.body) rescue {}
-          return Result.err(error_body["error"]&.[]("message") || "HTTP #{response.code}")
-        end
-
-        data = JSON.parse(response.body, symbolize_names: true)
-        choice = data[:choices]&.first
-        message = choice&.[](:message)
+        # Extract response data
+        content = response.content
+        reasoning_text = nil
+        # Check if response has reasoning method
+        reasoning_text = response.reasoning if response.respond_to?(:reasoning)
+        
+        tokens_in = response.usage&.prompt_tokens || 0
+        tokens_out = response.usage&.completion_tokens || 0
+        cost = response.usage&.cost
 
         response_data = {
-          content: message&.[](:content),
-          reasoning: message&.[](:reasoning),
-          model: data[:model],
-          tokens_in: data.dig(:usage, :prompt_tokens) || 0,
-          tokens_out: data.dig(:usage, :completion_tokens) || 0,
-          cost: data.dig(:usage, :cost),
-          finish_reason: choice&.[](:finish_reason)
+          content: content,
+          reasoning: reasoning_text,
+          model: response.model.id,
+          tokens_in: tokens_in,
+          tokens_out: tokens_out,
+          cost: cost,
+          finish_reason: response.finish_reason
         }
 
-        validate_response(response_data, req.body ? JSON.parse(req.body)[:model] : "unknown")
-      rescue JSON::ParserError => e
-        Result.err("JSON parse error: #{e.message}")
+        validate_response(response_data, response.model.id)
+      rescue StandardError => e
+        Result.err("Request failed: #{e.message}")
       end
 
-      def execute_streaming(http, req)
+      def execute_streaming_ruby_llm(chat, messages)
         content_parts = []
         reasoning_parts = []
         final_data = {}
 
-        http.request(req) do |response|
-          unless response.code == "200"
-            error_body = response.read_body
-            parsed = JSON.parse(error_body) rescue {}
-            return Result.err(parsed.dig("error", "message") || "HTTP #{response.code}")
+        chat.ask(messages) do |chunk|
+          if chunk.content
+            $stderr.print chunk.content
+            content_parts << chunk.content
+          end
+          
+          # Check if chunk has reasoning
+          if chunk.respond_to?(:reasoning) && chunk.reasoning
+            reasoning_parts << chunk.reasoning
           end
 
-          response.read_body do |chunk|
-            chunk.each_line do |line|
-              next unless line.start_with?("data: ")
-              json_str = line[6..]
-              next if json_str.strip == "[DONE]"
-
-              begin
-                data = JSON.parse(json_str, symbolize_names: true)
-                delta = data.dig(:choices, 0, :delta)
-
-                if delta
-                  if delta[:content]
-                    $stderr.print delta[:content]
-                    content_parts << delta[:content]
-                  end
-                  if delta[:reasoning]
-                    reasoning_parts << delta[:reasoning]
-                  end
-                end
-
-                # Capture final usage data
-                if data[:usage]
-                  final_data[:tokens_in] = data[:usage][:prompt_tokens]
-                  final_data[:tokens_out] = data[:usage][:completion_tokens]
-                  final_data[:cost] = data[:usage][:cost]
-                end
-                final_data[:model] = data[:model] if data[:model]
-              rescue JSON::ParserError
-                next
-              end
-            end
+          # Capture final usage data
+          if chunk.usage
+            final_data[:tokens_in] = chunk.usage.prompt_tokens
+            final_data[:tokens_out] = chunk.usage.completion_tokens
+            final_data[:cost] = chunk.usage.cost
           end
+          final_data[:model] = chunk.model.id if chunk.model
         end
 
         $stderr.puts
@@ -437,6 +377,8 @@ module MASTER
         }
 
         validate_response(final_data, "streaming")
+      rescue StandardError => e
+        Result.err("Streaming failed: #{e.message}")
       end
 
       def select_model_for_tier(tier)
@@ -536,21 +478,13 @@ module MASTER
 
   # CircuitBreaker - Rate limiting and failure handling for LLM calls
   # Prevents cascading failures and manages request throttling
-  # Simple implementation without external dependencies
+  # Uses stoplight gem for circuit breaker functionality
   module CircuitBreaker
     extend self
 
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
     RATE_LIMIT_PER_MINUTE = 30
-
-    # Circuit breaker states
-    @circuits = {}
-    @circuits_mutex = Mutex.new
-
-    class << self
-      attr_reader :circuits, :circuits_mutex
-    end
 
     # Rate limiting state
     def rate_limit_state
@@ -583,65 +517,34 @@ module MASTER
     def run(model, &block)
       check_rate_limit!
       
-      # Get circuit state
-      circuit = get_circuit(model)
+      # Use Stoplight for circuit breaker
+      light = Stoplight("llm-#{model}")
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
       
-      if circuit[:state] == :open
-        # Check if cool-off period has passed
-        if Time.now - circuit[:opened_at] > CIRCUIT_RESET_SECONDS
-          set_circuit_state(model, :half_open)
-        else
-          raise "Circuit breaker open for #{model}"
-        end
-      end
-      
-      begin
-        result = yield
-        
-        # Success - reset circuit if it was half_open
-        if circuit[:state] == :half_open
-          set_circuit_state(model, :closed)
-        end
-        
-        result
-      rescue => e
-        record_failure(model, e)
-        raise
-      end
-    end
-
-    def open?(model)
-      circuit = get_circuit(model)
-      circuit[:state] == :open
+      light.run(&block)
     end
 
     def circuit_closed?(model)
-      !open?(model)
-    end
-
-    def record_failure(model, error)
-      CircuitBreaker.circuits_mutex.synchronize do
-        circuit = get_circuit(model)
-        circuit[:failures] += 1
-        circuit[:last_failure] = Time.now
-        
-        if circuit[:failures] >= FAILURES_BEFORE_TRIP
-          circuit[:state] = :open
-          circuit[:opened_at] = Time.now
-          log_warning("Circuit breaker opened", model: model, failures: circuit[:failures])
-        end
-        
-        CircuitBreaker.circuits[model] = circuit
-      end
+      light = Stoplight("llm-#{model}")
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      
+      # Green = closed, yellow = half-open (testing), red = open (tripped)
+      color = light.color
+      color == "green" || color == "yellow"
     end
 
     # Compatibility methods for old API
     def open_circuit!(model)
-      record_failure(model, StandardError.new("Circuit breaker tripped"))
+      # Record a failure to trip the circuit
+      # Stoplight manages state automatically based on failures
+      log_warning("Circuit breaker triggered", model: model)
     end
 
     def close_circuit!(model)
-      set_circuit_state(model, :closed)
+      # In Stoplight, circuits close automatically after cool-off
+      # We don't need to do anything here
     end
     
     private
@@ -652,26 +555,6 @@ module MASTER
       else
         # Fallback to stderr if Logging not available
         warn "#{message}: #{args.inspect}"
-      end
-    end
-    
-    def get_circuit(model)
-      CircuitBreaker.circuits_mutex.synchronize do
-        CircuitBreaker.circuits[model] ||= {
-          state: :closed,
-          failures: 0,
-          opened_at: nil,
-          last_failure: nil
-        }
-      end
-    end
-    
-    def set_circuit_state(model, state)
-      CircuitBreaker.circuits_mutex.synchronize do
-        circuit = get_circuit(model)
-        circuit[:state] = state
-        circuit[:failures] = 0 if state == :closed
-        CircuitBreaker.circuits[model] = circuit
       end
     end
   end

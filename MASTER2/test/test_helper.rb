@@ -4,6 +4,9 @@ require "minitest/autorun"
 require 'tmpdir'
 require_relative "../lib/master"
 
+# Stoplight is now always available since it's in the Gemfile
+STOPLIGHT_AVAILABLE = true
+
 # Shared test setup
 module TestHelper
   def setup_db

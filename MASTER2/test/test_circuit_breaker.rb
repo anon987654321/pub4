@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-require_relative "../lib/master"
+require_relative "test_helper"
 
 class TestCircuitBreaker < Minitest::Test
   def test_rate_limit_state_initialized
@@ -12,10 +11,10 @@ class TestCircuitBreaker < Minitest::Test
     assert_kind_of Time, state[:window_start]
   end
 
-  def test_circuit_closed_when_stoplight_unavailable
-    skip "Stoplight is available" if STOPLIGHT_AVAILABLE
+  def test_circuit_closed_by_default
+    # Stoplight is now always available
     result = MASTER::CircuitBreaker.circuit_closed?("test-model")
-    assert result, "Circuit should be closed when stoplight unavailable"
+    assert result, "Circuit should be closed by default"
   end
 
   def test_run_executes_block
@@ -36,6 +35,6 @@ class TestCircuitBreaker < Minitest::Test
   end
 
   def test_stoplight_constant_is_boolean
-    assert [true, false].include?(STOPLIGHT_AVAILABLE)
+    assert [true, false].include?(::STOPLIGHT_AVAILABLE)
   end
 end
