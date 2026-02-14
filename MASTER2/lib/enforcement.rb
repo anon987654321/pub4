@@ -193,4 +193,367 @@ module MASTER
       end
     end
   end
+
+  # LanguageAxioms - Language-specific beauty rules
+  # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
+  module LanguageAxioms
+    AXIOMS_FILE = File.join(__dir__, "..", "data", "language_axioms.yml")
+
+    EXTENSION_MAP = {
+      ".rb"    => %w[ruby rails universal],
+      ".rake"  => %w[ruby rails universal],
+      ".gemspec" => %w[ruby universal],
+      ".sh"    => %w[zsh universal],
+      ".zsh"   => %w[zsh universal],
+      ".bash"  => %w[zsh universal],
+      ".html"  => %w[html_erb universal],
+      ".erb"   => %w[html_erb universal],
+      ".htm"   => %w[html_erb universal],
+      ".css"   => %w[css_scss universal],
+      ".scss"  => %w[css_scss universal],
+      ".sass"  => %w[css_scss universal],
+      ".js"    => %w[javascript universal],
+      ".mjs"   => %w[javascript universal],
+      ".jsx"   => %w[javascript universal],
+      ".ts"    => %w[javascript universal],
+      ".tsx"   => %w[javascript universal],
+    }.freeze
+
+    class << self
+      def axioms_data
+        @axioms_data ||= File.exist?(AXIOMS_FILE) ? YAML.safe_load_file(AXIOMS_FILE) : {}
+      end
+
+      def all_axioms
+        axioms_data.flat_map { |lang, rules| (rules || []).map { |r| r.merge("language" => lang) } }
+      end
+
+      def axioms_for(language)
+        axioms_data[language.to_s] || []
+      end
+
+      def languages_for_file(filename)
+        ext = File.extname(filename).downcase
+        EXTENSION_MAP[ext] || %w[universal]
+      end
+
+      def check(code, filename: "code")
+        violations = []
+        languages = languages_for_file(filename)
+
+        languages.each do |lang|
+          axioms_for(lang).each do |axiom|
+            pattern_str = axiom["detect"]
+            next if pattern_str.nil? # Advisory-only axioms
+
+            begin
+              pattern = Regexp.new(pattern_str, Regexp::MULTILINE)
+            rescue RegexpError
+              next
+            end
+
+            next unless code.match?(pattern)
+
+            violations << {
+              layer: :language_axiom,
+              language: lang,
+              axiom_id: axiom["id"],
+              axiom_name: axiom["name"],
+              message: axiom["suggest"],
+              severity: axiom["severity"]&.to_sym || :info,
+              autofix: axiom["autofix"] || false,
+              file: filename,
+            }
+          end
+        end
+
+        violations
+      end
+
+      def summary
+        counts = {}
+        axioms_data.each { |lang, rules| counts[lang] = (rules || []).size }
+        counts["total"] = counts.values.sum
+        counts
+      end
+    end
+  end
+
+  # AxiomStats - Provides statistics and summary views for language axioms
+  module AxiomStats
+    extend self
+
+    def stats
+      axioms = load_axioms
+      
+      return { error: "No axioms found" } if axioms.empty?
+
+      {
+        total: axioms.size,
+        by_category: count_by_key(axioms, "category"),
+        by_protection: count_by_key(axioms, "protection"),
+        axioms: axioms
+      }
+    end
+
+    def summary
+      data = stats
+      return data if data[:error]
+
+      lines = []
+      lines << "Language Axioms Summary"
+      lines << "=" * 40
+      lines << ""
+      lines << "Total axioms: #{data[:total]}"
+      lines << ""
+      lines << "By Category:"
+      data[:by_category].sort_by { |_, count| -count }.each do |category, count|
+        lines << "  #{category.ljust(20)} #{count}"
+      end
+      lines << ""
+      lines << "By Protection Level:"
+      data[:by_protection].sort_by { |_, count| -count }.each do |protection, count|
+        lines << "  #{protection.ljust(20)} #{count}"
+      end
+      lines << ""
+      
+      lines.join("\n")
+    end
+
+    def top_categories(limit: 5)
+      data = stats
+      return [] if data[:error]
+      
+      data[:by_category].sort_by { |_, count| -count }.first(limit)
+    end
+
+    private
+
+    def load_axioms
+      # MASTER.root points to the MASTER2 directory when running from within MASTER2
+      # or to pub4 directory when running from outside
+      axioms_paths = [
+        File.join(MASTER.root, "data", "axioms.yml"),              # When run from MASTER2
+        File.join(MASTER.root, "MASTER2", "data", "axioms.yml")   # When run from pub4
+      ]
+      
+      axioms_file = axioms_paths.find { |path| File.exist?(path) }
+      
+      return [] unless axioms_file
+      
+      begin
+        YAML.safe_load_file(axioms_file) || []
+      rescue => e
+        []
+      end
+    end
+
+    def count_by_key(axioms, key)
+      counts = Hash.new(0)
+      axioms.each do |axiom|
+        value = axiom[key]
+        counts[value] += 1 if value
+      end
+      counts
+    end
+  end
+
+  # Constitution - Enforcement of governance policies for safe autonomous operation
+  module Constitution
+    extend self
+
+    @rules_cache = nil
+    @axioms_cache = nil
+    @council_cache = nil
+    @principles_cache = nil
+    @workflows_cache = nil
+
+    # Load and cache constitution rules, with sensible defaults if file is missing
+    def rules
+      return @rules_cache if @rules_cache
+
+      constitution_path = File.join(MASTER.root, "data", "constitution.yml")
+      
+      @rules_cache = if File.exist?(constitution_path)
+        YAML.safe_load_file(constitution_path)
+      else
+        # Sensible defaults when constitution.yml is missing
+        {
+          "safety_policies" => {
+            "self_modification" => { "require_staging" => true },
+            "environment_control" => { "direct_control" => false }
+          },
+          "tool_permissions" => {
+            "granted" => ["shell_command", "code_execution", "file_write"]
+          },
+          "shell_patterns" => {
+            "allowed" => ["^(ls|pwd|echo|git|cat|head|tail|wc|find|grep)", "^ruby", "^bundle"],
+            "blocked" => ["rm -rf /", "DROP TABLE", "mkfs", "dd if=", ":(){ :|:& };:"]
+          },
+          "protected_paths" => ["data/constitution.yml", "/etc/", "/usr/", "/sys/"],
+          "resource_limits" => {
+            "max_file_size" => 1048576,
+            "max_concurrent_tools" => 5,
+            "max_staging_files" => 10,
+            "max_shell_output" => 10000
+          },
+          "staging" => {
+            "validation" => {
+              "default_command" => "ruby -c",
+              "require_tests" => true
+            }
+          }
+        }
+      end
+      
+      @rules_cache
+    end
+
+    # Load axioms from constitution or fallback to axioms.yml
+    def axioms
+      return @axioms_cache if @axioms_cache
+      
+      # Try loading from constitution first
+      if rules["axioms"]
+        @axioms_cache = rules["axioms"]
+      else
+        # Fallback to separate axioms.yml file
+        axioms_path = File.join(MASTER.root, "data", "axioms.yml")
+        @axioms_cache = File.exist?(axioms_path) ? YAML.safe_load_file(axioms_path) : []
+      end
+      
+      @axioms_cache
+    end
+
+    # Load council from constitution or fallback to council.yml
+    def council
+      return @council_cache if @council_cache
+      
+      # Try loading from constitution first
+      if rules["council"]
+        @council_cache = rules["council"]
+      else
+        # Fallback to separate council.yml file
+        council_path = File.join(MASTER.root, "data", "council.yml")
+        @council_cache = File.exist?(council_path) ? YAML.safe_load_file(council_path) : []
+      end
+      
+      @council_cache
+    end
+
+    # Load principles from constitution (SOLID, Clean Code, etc.)
+    def principles
+      return @principles_cache if @principles_cache
+      
+      @principles_cache = rules["principles"] || {}
+      @principles_cache
+    end
+
+    # Load workflows from constitution (8-phase workflow)
+    def workflows
+      return @workflows_cache if @workflows_cache
+      
+      @workflows_cache = rules["workflows"] || {}
+      @workflows_cache
+    end
+
+    # Reload all cached data
+    def reload!
+      @rules_cache = nil
+      @axioms_cache = nil
+      @council_cache = nil
+      @principles_cache = nil
+      @workflows_cache = nil
+      rules
+    end
+
+    # Validate operation against constitution rules
+    def check_operation(op, context = {})
+      case op
+      when :self_modification
+        if rules.dig("safety_policies", "self_modification", "require_staging")
+          unless context[:staged]
+            return Result.err("Self-modification requires staging")
+          end
+        end
+        Result.ok
+      
+      when :environment_control
+        if rules.dig("safety_policies", "environment_control", "direct_control") == false
+          return Result.err("Direct environment control not permitted")
+        end
+        Result.ok
+      
+      when :shell_command
+        cmd = context[:command] || ""
+        check_shell_command(cmd)
+      
+      when :file_write
+        path = context[:path] || ""
+        check_file_write(path)
+      
+      else
+        Result.ok
+      end
+    end
+
+    # Check if a tool is permitted
+    def permission?(tool)
+      granted = rules.dig("tool_permissions", "granted") || []
+      granted.include?(tool.to_s)
+    end
+
+    # Check if a path is protected
+    def protected_file?(path)
+      protected = rules["protected_paths"] || []
+      expanded = File.expand_path(path)
+      
+      protected.any? do |protected_path|
+        # For absolute paths, compare directly; for relative, expand from root
+        expanded_protected = if protected_path.start_with?("/")
+          protected_path
+        else
+          File.expand_path(protected_path, MASTER.root)
+        end
+        
+        expanded.start_with?(expanded_protected) || expanded == expanded_protected
+      end
+    end
+
+    # Get a resource limit value
+    def limit(key)
+      rules.dig("resource_limits", key.to_s)
+    end
+
+    private
+
+    def check_shell_command(cmd)
+      blocked = rules.dig("shell_patterns", "blocked") || []
+      allowed = rules.dig("shell_patterns", "allowed") || []
+      
+      # Check blocked patterns first
+      blocked.each do |pattern|
+        if cmd.include?(pattern) || cmd.match?(Regexp.new(pattern))
+          return Result.err("Shell command blocked by constitution: #{pattern}")
+        end
+      end
+      
+      # Check allowed patterns
+      if allowed.any?
+        unless allowed.any? { |pattern| cmd.match?(Regexp.new(pattern)) }
+          return Result.err("Shell command not in allowed list")
+        end
+      end
+      
+      Result.ok
+    end
+
+    def check_file_write(path)
+      if protected_file?(path)
+        Result.err("File write to protected path: #{path}")
+      else
+        Result.ok
+      end
+    end
+  end
 end

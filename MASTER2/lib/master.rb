@@ -180,13 +180,11 @@ require_relative "rubocop_detector"  # Style checking integration
 end
 
 # Safe Autonomy Architecture
-require_relative "constitution"
 require_relative "staging"
 
 # UI & NN/g compliance
 require_relative "ui"
 require_relative "help"
-require_relative "axiom_stats"
 require_relative "autocomplete"
 require_relative "progress"
 require_relative "undo"
@@ -264,7 +262,6 @@ require_relative "llm_friendly"
 require_relative "learnings"
 require_relative "session_capture"
 require_relative "enforcement"
-require_relative "language_axioms"
 require_relative "file_processor"
 require_relative "reflow"
 require_relative "audit"
