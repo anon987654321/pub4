@@ -374,6 +374,35 @@ module MASTER
         result = mr.run(path: path)
         result
       end
+
+      # Full self-run across entire pub4 repo
+      def selfrun_full(args)
+        return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
+
+        puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
+        pub4_root = File.expand_path("../..", MASTER.root)  # Go up from MASTER2/ to pub4/
+        
+        # Phase 1: Self-refactor MASTER2 itself
+        puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
+        mr = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
+        mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
+        
+        # Phase 2: Deploy scripts
+        puts "\n=== Phase 2: Deploy Scripts ==="
+        mr2 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
+        mr2.run(path: File.join(pub4_root, "deploy"))
+        
+        # Phase 3: Business plans (HTML)
+        puts "\n=== Phase 3: Business Plans ==="
+        mr3 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 0.5)
+        mr3.run(path: File.join(pub4_root, "bp"))
+        
+        # Phase 4: Self-test
+        puts "\n=== Phase 4: Self-Test ==="
+        Introspection.run if defined?(Introspection)
+        
+        Result.ok("Self-run complete")
+      end
     end
   end
 end
