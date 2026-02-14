@@ -14,11 +14,6 @@ module MASTER
     SPENDING_CAP = 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
 
-    # OpenRouter API
-    API_BASE = "https://openrouter.ai/api/v1"
-    API_KEY_CHECK = "#{API_BASE}/key"
-    CHAT_ENDPOINT = "#{API_BASE}/chat/completions"
-
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
 
@@ -137,9 +132,6 @@ module MASTER
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
 
-        # Apply suffix shortcuts
-        primary = apply_suffix(primary, online: online, provider: provider)
-
         model_short = extract_model_name(primary)
         selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
 
@@ -241,16 +233,6 @@ module MASTER
       end
 
       private
-
-      def apply_suffix(model, online: false, provider: nil)
-        suffixes = []
-        suffixes << ":online" if online
-        suffixes << ":nitro" if provider&.dig(:sort) == "throughput"
-        suffixes << ":floor" if provider&.dig(:sort) == "price"
-
-        return model if suffixes.empty?
-        "#{model}#{suffixes.first}"  # Only one suffix allowed
-      end
 
       # Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
       def execute_with_retry(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
