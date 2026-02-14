@@ -18,8 +18,10 @@ class TestLLMRubyLLM < Minitest::Test
     # RubyLLM is now a hard dependency, so it's always available
     # Test that configuration works without error
     MASTER::LLM.configure_ruby_llm
-    # Verify RubyLLM module exists
-    assert defined?(RubyLLM)
+    # Verify RubyLLM module exists and is configured
+    assert defined?(RubyLLM), "RubyLLM module should be defined"
+    # Note: Cannot directly access @ruby_llm_configured as it's private,
+    # but successful configuration is verified by no errors being raised
   end
 
   def test_reasoning_effort_validation

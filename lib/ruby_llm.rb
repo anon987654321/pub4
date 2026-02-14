@@ -68,12 +68,13 @@ module RubyLLM
     
     def ask(content, &block)
       # Stub implementation - would make actual API call in real gem
-      # For now, return a mock response
+      # Always return valid numeric values for consistency
       Response.new(
         content: "Stub response",
         input_tokens: 100,
         output_tokens: 50,
-        cost: 0.001
+        cost: 0.001,
+        reasoning: nil
       )
     end
   end

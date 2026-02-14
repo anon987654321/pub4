@@ -342,11 +342,11 @@ module MASTER
 
         response_data = {
           content: response.content,
-          reasoning: response.reasoning,
+          reasoning: response.reasoning || nil,
           model: model,
           tokens_in: response.input_tokens || 0,
           tokens_out: response.output_tokens || 0,
-          cost: response.cost,
+          cost: response.cost || nil,
           finish_reason: "stop"
         }
 
@@ -387,7 +387,7 @@ module MASTER
           model: model,
           tokens_in: final_response.input_tokens || 0,
           tokens_out: final_response.output_tokens || 0,
-          cost: final_response.cost,
+          cost: final_response.cost || nil,
           finish_reason: "stop"
         }
 
