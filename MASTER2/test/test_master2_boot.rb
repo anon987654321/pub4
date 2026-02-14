@@ -6,7 +6,7 @@ require_relative "../lib/master"
 class TestMaster2Boot < Minitest::Test
   def test_master_module_defined
     assert defined?(MASTER)
-    assert_equal "1.0.0", MASTER::VERSION
+    assert_equal "2.0.0", MASTER::VERSION
   end
 
   def test_core_classes_loaded
