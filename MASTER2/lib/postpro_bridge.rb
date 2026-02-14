@@ -362,7 +362,7 @@ module MASTER
         Dir.mkdir(temp_dir)
         
         # Extract frames
-        system("ffmpeg -i '#{video_path}' '#{temp_dir}/frame_%04d.png' 2>/dev/null")
+        system("ffmpeg", "-i", video_path, "#{temp_dir}/frame_%04d.png", err: File::NULL)
         
         # Process each frame
         Dir.glob("#{temp_dir}/frame_*.png").sort.each do |frame|
@@ -371,7 +371,8 @@ module MASTER
         
         # Reassemble
         out = output_path || video_path.sub(/(\.\w+)$/, '_processed\1')
-        system("ffmpeg -framerate 30 -i '#{temp_dir}/frame_%04d.png' -c:v libx264 -pix_fmt yuv420p '#{out}' 2>/dev/null")
+        system("ffmpeg", "-framerate", "30", "-i", "#{temp_dir}/frame_%04d.png", 
+               "-c:v", "libx264", "-pix_fmt", "yuv420p", out, err: File::NULL)
         
         # Cleanup
         FileUtils.rm_rf(temp_dir)

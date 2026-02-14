@@ -1,13 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Weekly automation script for MASTER2
-# Generates weekly reports from learnings, session history, and axiom violations
-# Ported from MASTER v1, adapted for MASTER2's architecture
-
 require_relative '../lib/master'
 require 'yaml'
 require 'date'
+require 'fileutils'
 
 def generate_weekly_report
   report = {
@@ -173,7 +170,7 @@ def generate_weekly_report
   end
   
   # Save report
-  output_dir = File.join(MASTER::Paths.data, 'reports')
+  output_dir = File.join(MASTER.root, 'data', 'reports')
   FileUtils.mkdir_p(output_dir)
   
   output_file = File.join(output_dir, "weekly_#{Date.today.strftime('%Y%m%d')}.yml")

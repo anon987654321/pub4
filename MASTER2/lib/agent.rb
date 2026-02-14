@@ -4,6 +4,7 @@ require "securerandom"
 require "timeout"
 require 'yaml'
 require 'fileutils'
+require 'set'
 
 module MASTER
   class Agent
@@ -198,7 +199,7 @@ module MASTER
   module AgentAutonomy
     extend self
 
-    LEARNING_FILE = File.join(Paths.data, 'agent_learning.yml')
+    LEARNING_FILE = File.join(MASTER.root, 'data', 'agent_learning.yml')
     
     # Goal decomposition - break complex goals into subtasks via LLM
     def decompose_goal(goal)

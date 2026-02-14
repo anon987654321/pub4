@@ -159,7 +159,11 @@ module MASTER
         when "freeze_state"
           context[:frozen] = true
         when "analyze_cycle"
-          Convergence.analyze_oscillation(context[:history] || [])
+          if defined?(Convergence)
+            Convergence.analyze_oscillation(context[:history] || [])
+          else
+            false
+          end
         when "warn_user"
           UI.warn("Budget low: #{UI.currency(LLM.budget_remaining)} remaining")
         when "switch_to_cheap_tier"

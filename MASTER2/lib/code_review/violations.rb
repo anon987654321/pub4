@@ -130,7 +130,7 @@ module MASTER
 
         if conceptual && llm
           results[:conceptual] = detect_conceptual(code, path, llm)
-          results[:conceptual].each do
+          results[:conceptual].each do |violation|
             results[:summary][:warnings] += 1
             results[:summary][:total] += 1
           end

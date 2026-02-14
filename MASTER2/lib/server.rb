@@ -224,11 +224,10 @@ module MASTER
           [200, { "content-type" => "text/html" }, [read_view("ws_test.html")]]
 
         else
-          # Serve orb views and static files
-          clean_path = path.delete_prefix("/")
-          view_path = File.join(VIEWS_DIR, clean_path)
-
-          if File.exist?(view_path) && File.file?(view_path)
+          clean_path = File.basename(path)
+          view_path = File.expand_path(clean_path, VIEWS_DIR)
+          
+          if view_path.start_with?(VIEWS_DIR) && File.exist?(view_path) && File.file?(view_path)
             ext = File.extname(path)
             type = { ".html" => "text/html", ".js" => "application/javascript", ".css" => "text/css" }[ext] || "text/plain"
             [200, { "content-type" => type }, [File.read(view_path)]]

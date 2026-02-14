@@ -27,7 +27,7 @@ module MASTER
       puts UI.dim("Structure:")
       
       if system("which tree > /dev/null 2>&1")
-        system("tree -L 3 -I 'node_modules|.git|tmp|vendor' #{path}")
+        system("tree", "-L", "3", "-I", "node_modules|.git|tmp|vendor", path)
         true
       else
         # Fallback: simple directory listing
@@ -57,9 +57,9 @@ module MASTER
     end
 
     def check_git_status(path)
-      return nil unless system("git -C #{path} rev-parse --git-dir > /dev/null 2>&1")
+      return nil unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
-      status = `git -C #{path} status --porcelain`.strip
+      status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
       
       if status.empty?
         puts UI.green("\n✓ Git: Clean working tree")
@@ -75,7 +75,7 @@ module MASTER
       return nil unless system("git -C #{path} rev-parse --git-dir > /dev/null 2>&1")
 
       puts UI.dim("\nRecent commits:")
-      system("git -C #{path} log --oneline --decorate -5")
+      system("git", "-C", path, "log", "--oneline", "--decorate", "-5")
       
       true
     end
