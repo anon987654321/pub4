@@ -158,7 +158,8 @@ module MASTER
       when /^ask\s+(.+)$/
         ask_llm($1)
       else
-        UI.warn("Unknown command: #{input}. Type 'help' for available commands.")
+        # Treat unmatched input as natural language query for better UX
+        ask_llm(input)
       end
     end
 
@@ -181,12 +182,15 @@ module MASTER
           analyze <file>    Deep analysis with LLM
           fix <file>        Auto-fix issues in file
           session <cmd>     Session management (info, save, list)
-          ask <question>    Ask LLM a question
+          ask <question>    Ask LLM a question (optional - any text is treated as a question)
           history           Show command history
           
         Control:
           help, ?           Show this help
           exit, quit, q     Exit shell
+          
+        Tip: You can ask questions directly without the 'ask' command.
+             Example: Just type "hello, what's up?" instead of "ask hello, what's up?"
       HELP
     end
 
