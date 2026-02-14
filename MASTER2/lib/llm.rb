@@ -47,6 +47,30 @@ module MASTER
         @chat_models ||= models.chat_models
       end
 
+      # Load model configuration from models.yml
+      def load_models_config
+        @models_config ||= begin
+          models_file = File.join(__dir__, "..", "data", "models.yml")
+          return [] unless File.exist?(models_file)
+          begin
+            YAML.safe_load_file(models_file, symbolize_names: true) || []
+          rescue StandardError => e
+            warn "Failed to load models.yml: #{e.message}"
+            []
+          end
+        end
+      end
+
+      # Get curated models from models.yml
+      def configured_models
+        load_models_config
+      end
+
+      # Hash lookup for O(1) access to configured models by ID
+      def configured_models_by_id
+        @configured_models_by_id ||= configured_models.each_with_object({}) { |m, h| h[m[:id]] = m }
+      end
+
       def budget_thresholds
         @budget_thresholds ||= begin
           return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
@@ -54,9 +78,16 @@ module MASTER
           data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
         end
       end
-      # Classify a model into a tier based on its input pricing
+      # Classify a model into a tier based on models.yml configuration
       def classify_tier(model)
-        price = model.input_price_per_million || 0
+        # For configured models, look up tier from models.yml with O(1) hash access
+        model_id = model.is_a?(String) ? model : (model&.id || return :cheap)
+        configured_model = configured_models_by_id[model_id]
+        return configured_model[:tier].to_sym if configured_model && configured_model[:tier]
+        
+        # Fallback to price-based classification for models not in models.yml
+        # This applies to any model (string ID or object) not found in the configured models
+        price = model.is_a?(String) ? 0 : (model.input_price_per_million || 0)
         if price >= 10.0
           :premium
         elsif price >= 2.0
@@ -70,23 +101,24 @@ module MASTER
 
       def model_tiers
         @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
-          hash[tier] = models.select { |m| classify_tier(m) == tier }.map(&:id)
+          # Get models from models.yml for this tier (tier values are strings in YAML)
+          hash[tier] = configured_models.select { |m| m[:tier].to_s == tier.to_s }.map { |m| m[:id] }
         end
       end
 
       def model_rates
-        @model_rates ||= models.each_with_object({}) do |m, hash|
-          hash[m.id] = {
-            in: m.input_price_per_million || 0,
-            out: m.output_price_per_million || 0,
-            tier: classify_tier(m)
+        @model_rates ||= configured_models.each_with_object({}) do |m, hash|
+          hash[m[:id]] = {
+            in: m[:input_cost] || 0,
+            out: m[:output_cost] || 0,
+            tier: m[:tier]&.to_sym || :cheap
           }
         end
       end
 
       def context_limits
-        @context_limits ||= models.each_with_object({}) do |m, hash|
-          hash[m.id] = m.context_window || 32_000
+        @context_limits ||= configured_models.each_with_object({}) do |m, hash|
+          hash[m[:id]] = m[:context_window] || 32_000
         end
       end
 
@@ -104,6 +136,7 @@ module MASTER
           return if @ruby_llm_configured
           RubyLLM.configure do |c|
             c.openrouter_api_key = api_key
+            c.default_provider = :openrouter
           end
           @ruby_llm_configured = true
         end
