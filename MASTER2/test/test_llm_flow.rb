@@ -6,7 +6,7 @@ require_relative "../lib/master"
 class TestLLMFlow < Minitest::Test
   # Model tier tests
   def test_tier_order_exists
-    assert_equal %i[strong fast cheap], MASTER::LLM::TIER_ORDER
+    assert_equal %i[premium strong fast cheap], MASTER::LLM::TIER_ORDER
   end
 
   def test_model_tiers_hash_exists
@@ -99,7 +99,7 @@ class TestLLMFlow < Minitest::Test
   # Tier is computed from budget, not settable
   def test_tier_returns_symbol
     tier = MASTER::LLM.tier
-    assert %i[strong fast cheap].include?(tier)
+    assert %i[premium strong fast cheap].include?(tier)
   end
 
   # Current model tracking

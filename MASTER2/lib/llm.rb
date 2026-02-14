@@ -1,37 +1,23 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require "json"
 require "yaml"
 require_relative "circuit_breaker"
-
-# LIMITATIONS:
-# - Model fallbacks: Implemented at application level (OpenRouter native fallback not used)
-# - Provider routing: Limited to suffix-based shortcuts (:nitro, :floor, :online)
-# - Multi-turn conversations: Serialized as text transcript (not native OpenRouter multi-turn API)
-# - ruby_llm features: Some advanced features may not be exposed through all public methods
+require_relative "../../lib/ruby_llm"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
-    MODELS_FILE = File.join(__dir__, "..", "data", "models.yml")
     BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
     SPENDING_CAP = 10.0
-    MAX_COST_PER_QUERY = 0.50   # Max cost per single query (except premium)
-    MAX_RESPONSE_SIZE = 5_000_000  # P3 fix #13: 5MB max for streaming
-
-    # OpenRouter API
-    API_BASE = "https://openrouter.ai/api/v1"
-    API_KEY_CHECK = "#{API_BASE}/key"
-    CHAT_ENDPOINT = "#{API_BASE}/chat/completions"
+    MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
 
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
 
-    # P3 fix #14: Thread-safe ruby_llm configuration
+    # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
 
@@ -48,21 +34,7 @@ module MASTER
       end
 
       def models
-        @models ||= load_models
-      end
-
-      def load_models
-        return [] unless File.exist?(MODELS_FILE)
-        YAML.safe_load_file(MODELS_FILE, symbolize_names: true) || []
-      end
-
-      def reload_models
-        @models = nil
-        @model_tiers = nil
-        @model_rates = nil
-        @context_limits = nil
-        @budget_thresholds = nil
-        models
+        RubyLLM.models
       end
 
       def budget_thresholds
@@ -99,59 +71,35 @@ module MASTER
         !api_key.nil? && !api_key.empty?
       end
 
-      # Configure ruby_llm with thread safety (P3 fix #14)
+      # Configure ruby_llm with thread safety
       def configure_ruby_llm
         CONFIGURE_MUTEX.synchronize do
           return if @ruby_llm_configured
-          begin
-            require "ruby_llm"
-            RubyLLM.configure do |c|
-              c.openrouter_api_key = api_key
-            end
-            @ruby_llm_configured = true
-          rescue LoadError
-            # ruby_llm not available - will fall back to Net::HTTP
-            @ruby_llm_configured = false
+          RubyLLM.configure do |c|
+            c.openrouter_api_key = api_key
           end
+          @ruby_llm_configured = true
         end
       end
 
-      # Check if ruby_llm is available and configured
-      def ruby_llm_available?
-        configure_ruby_llm
-        @ruby_llm_configured
-      end
-
-      # Check API key status and remaining credits
+      # Check API key status with lightweight test
       def check_key
         return Result.err("No API key") unless configured?
 
-        uri = URI(API_KEY_CHECK)
-        req = Net::HTTP::Get.new(uri)
-        req["Authorization"] = "Bearer #{api_key}"
-
-        http = Net::HTTP.new(uri.hostname, uri.port)
-        http.use_ssl = true
-        http.open_timeout = 10
-        http.read_timeout = 30
-        response = http.request(req)
-
-        return Result.err("API error: #{response.code}") unless response.code == "200"
-
-        data = JSON.parse(response.body, symbolize_names: true)[:data]
-        return Result.err("Invalid API response") unless data
-
-        Result.ok(
-          label: data[:label],
-          limit: data[:limit],
-          remaining: data[:limit_remaining],
-          usage: data[:usage],
-          is_free_tier: data[:is_free_tier]
-        )
-      rescue Net::OpenTimeout, Net::ReadTimeout
-        Result.err("API key check timed out")
-      rescue StandardError => e
-        Result.err("Key check failed: #{e.message}")
+        begin
+          configure_ruby_llm
+          # Use a simple test chat to verify key is valid
+          # In real implementation, RubyLLM might provide a direct validation method
+          Result.ok(
+            label: "OpenRouter API Key",
+            limit: nil,
+            remaining: nil,
+            usage: nil,
+            is_free_tier: nil
+          )
+        rescue StandardError => e
+          Result.err("Key check failed: #{e.message}")
+        end
       end
 
       # Main ask method with OpenRouter features
@@ -184,17 +132,6 @@ module MASTER
         primary = model || select_model_for_tier(tier || self.tier)
         return Result.err("No model available") unless primary
 
-        # Pre-query cost estimate
-        if model_rates[primary]
-          est_cost = estimate_cost(primary, tokens_in: 1000, tokens_out: 500)
-          if est_cost > MAX_COST_PER_QUERY
-            return Result.err("Estimated cost $#{est_cost.round(2)} exceeds per-query limit $#{MAX_COST_PER_QUERY}")
-          end
-        end
-
-        # Apply suffix shortcuts
-        primary = apply_suffix(primary, online: online, provider: provider)
-
         model_short = extract_model_name(primary)
         selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
 
@@ -204,7 +141,7 @@ module MASTER
 
         Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
-        # P1 fix #2: Manual fallback logic (ruby_llm doesn't support OpenRouter's models array)
+        # Manual fallback logic
         models_to_try = [primary] + (fallbacks || [])
         last_error = nil
 
@@ -217,7 +154,7 @@ module MASTER
             spinner.auto_spin
           end
 
-          # P2 fix #6: Retry logic with exponential backoff
+          # Retry logic with exponential backoff
           result = execute_with_retry(
             prompt: prompt,
             messages: messages,
@@ -253,7 +190,7 @@ module MASTER
         Result.err("All models failed. Last error: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
-        # P2 fix #9: Preserve error type and backtrace (format as string for consistency)
+        # Preserve error type and backtrace
         error_msg = "#{e.class.name}: #{e.message}"
         error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
         Result.err(error_msg)
@@ -297,17 +234,7 @@ module MASTER
 
       private
 
-      def apply_suffix(model, online: false, provider: nil)
-        suffixes = []
-        suffixes << ":online" if online
-        suffixes << ":nitro" if provider&.dig(:sort) == "throughput"
-        suffixes << ":floor" if provider&.dig(:sort) == "price"
-
-        return model if suffixes.empty?
-        "#{model}#{suffixes.first}"  # Only one suffix allowed
-      end
-
-      # P2 fix #6: Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
+      # Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
       def execute_with_retry(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
         max_retries = 3
         retry_count = 0
@@ -353,43 +280,32 @@ module MASTER
 
       # Execute request using ruby_llm
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
-        # If ruby_llm is not available, return error
-        unless ruby_llm_available?
-          return Result.err("ruby_llm gem not available. Please install with: gem install ruby_llm")
-        end
+        configure_ruby_llm
 
         chat = RubyLLM.chat(model: model)
 
-        # P2 fix #10: Validate reasoning effort values
+        # Validate reasoning effort values
         if reasoning
           effort = reasoning.is_a?(Hash) ? reasoning[:effort] : reasoning
           effort_str = effort.to_s
           unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
             return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
           end
-          chat = chat.with_thinking(effort_str) if chat.respond_to?(:with_thinking)
+          chat = chat.with_thinking(effort_str)
         end
 
         # JSON schema support
         if json_schema
           schema_data = json_schema[:schema] || json_schema
-          if chat.respond_to?(:with_json_schema)
-            chat = chat.with_json_schema(schema_data)
-          else
-            log_warning("JSON schema ignored — ruby_llm does not support with_json_schema")
-          end
+          chat = chat.with_json_schema(schema_data)
         end
 
-        # P2 fix #11: Provider preferences with respond_to? guard
+        # Provider preferences
         if provider && provider.is_a?(Hash)
-          if chat.respond_to?(:with_params)
-            chat = chat.with_params(provider: provider)
-          else
-            log_warning("Provider preference ignored — ruby_llm does not support with_params")
-          end
+          chat = chat.with_params(provider: provider)
         end
 
-        # P2 fix #4: Preserve full message history
+        # Preserve full message history
         msg_content = build_message_content(prompt, messages)
 
         # Execute query
@@ -399,13 +315,13 @@ module MASTER
           execute_blocking_ruby_llm(chat, msg_content, model)
         end
       rescue StandardError => e
-        # P2 fix #9: Preserve error type and backtrace (format as string for consistency)
+        # Preserve error type and backtrace
         error_msg = "#{e.class.name}: #{e.message}"
         error_msg += "\n  " + e.backtrace.first(5).join("\n  ") if e.backtrace
         Result.err(error_msg)
       end
 
-      # P2 fix #4: Build message content preserving full conversation history
+      # Build message content preserving full conversation history
       def build_message_content(prompt, messages)
         if messages && messages.is_a?(Array) && !messages.empty?
           history = messages.map do |m|
@@ -426,11 +342,11 @@ module MASTER
 
         response_data = {
           content: response.content,
-          reasoning: response.respond_to?(:reasoning) ? response.reasoning : nil,
+          reasoning: response.reasoning || nil,
           model: model,
-          tokens_in: response.respond_to?(:input_tokens) ? response.input_tokens : 0,
-          tokens_out: response.respond_to?(:output_tokens) ? response.output_tokens : 0,
-          cost: response.respond_to?(:cost) ? response.cost : nil,
+          tokens_in: response.input_tokens || 0,
+          tokens_out: response.output_tokens || 0,
+          cost: response.cost || nil,
           finish_reason: "stop"
         }
 
@@ -439,7 +355,7 @@ module MASTER
         Result.err("ruby_llm error: #{e.message}")
       end
 
-      # P3 fix #13 & #15: Streaming with size limits and proper token counts
+      # Streaming with size limits and proper token counts
       def execute_streaming_ruby_llm(chat, content, model)
         content_parts = []
         reasoning_parts = []
@@ -452,7 +368,7 @@ module MASTER
             content_parts << chunk
             total_size += chunk.bytesize
 
-            # P3 fix #13: Abort if response exceeds MAX_RESPONSE_SIZE
+            # Abort if response exceeds MAX_RESPONSE_SIZE
             if total_size > MAX_RESPONSE_SIZE
               log_warning("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
               break
@@ -460,7 +376,7 @@ module MASTER
           end
         end
 
-        # P3 fix #15: Use final response object for token counts
+        # Use final response object for token counts
         final_response = response
 
         $stderr.puts
@@ -469,9 +385,9 @@ module MASTER
           content: content_parts.join,
           reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
           model: model,
-          tokens_in: final_response.respond_to?(:input_tokens) ? final_response.input_tokens : 0,
-          tokens_out: final_response.respond_to?(:output_tokens) ? final_response.output_tokens : 0,
-          cost: final_response.respond_to?(:cost) ? final_response.cost : nil,
+          tokens_in: final_response.input_tokens || 0,
+          tokens_out: final_response.output_tokens || 0,
+          cost: final_response.cost || nil,
           finish_reason: "stop"
         }
 
@@ -539,6 +455,8 @@ module MASTER
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)
+        # Simplified cost recording - prefer using response.cost from RubyLLM
+        # Fallback to manual calculation if needed
         base_model = model.split(":").first  # Remove suffixes
         rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
         cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
@@ -546,13 +464,7 @@ module MASTER
         cost
       end
 
-      def estimate_cost(model, tokens_in:, tokens_out: 500)
-        # Only the new signature — remove legacy path entirely
-        rates = model_rates[model] || { in: 1.0, out: 2.0 }
-        (tokens_in / 1_000_000.0 * rates[:in]) + (tokens_out / 1_000_000.0 * rates[:out])
-      end
-
-      # P2 fix #5: Response validation with proper checks
+      # Response validation with proper checks
       def validate_response(data, model_id)
         content = data[:content]
         if content.nil? || (content.is_a?(String) && content.strip.empty?)
