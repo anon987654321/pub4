@@ -13,12 +13,12 @@ module MASTER
         end
 
         query = args.strip.downcase
-        found = LLM.models.find { |m| m[:id].downcase.include?(query) || m[:name]&.downcase&.include?(query) }
+        found = LLM.models.find { |m| m.id.downcase.include?(query) || m.name&.downcase&.include?(query) }
 
         if found
-          LLM.current_model = LLM.extract_model_name(found[:id])
-          LLM.current_tier = found[:tier]&.to_sym || :fast
-          puts "\n  ✓ Switched to #{found[:id]} (#{found[:tier]})\n"
+          LLM.current_model = LLM.extract_model_name(found.id)
+          LLM.current_tier = LLM.classify_tier(found)
+          puts "\n  ✓ Switched to #{found.id} (#{LLM.current_tier})\n"
         else
           puts "\n  ✗ No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"
