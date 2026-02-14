@@ -75,7 +75,7 @@ while running
 
       # Remove processed file
       File.delete(file)
-    rescue => e
+    rescue StandardError => e
       puts "  ✗ Failed to process #{file}: #{e.message}"
       # Move to error directory
       error_dir = "#{INBOX_DIR}/errors"
@@ -86,7 +86,7 @@ while running
     sleep POLL_INTERVAL
   rescue Interrupt
     running = false
-  rescue => e
+  rescue StandardError => e
     puts "Error in main loop: #{e.message}"
     sleep POLL_INTERVAL
   end

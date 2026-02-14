@@ -202,6 +202,8 @@ module MASTER
     end
 
     # --- Sessions ---
+    # WARNING: This DB.save_session is for learning feedback only.
+    # For actual session storage, use Memory.save_session in session.rb
     def save_session(id:, data:)
       sessions = read_collection("sessions")
       existing = sessions.find { |s| s[:id] == id }
@@ -339,6 +341,10 @@ module MASTER
         { name: "Security", role: "security_review", style: "paranoid", bias: "safety" },
         { name: "User", role: "ux_advocate", style: "empathetic", bias: "usability" },
         { name: "Mentor", role: "code_review", style: "teaching", bias: "clarity" },
+        { name: "Historian", role: "precedent_analysis", style: "scholarly", bias: "context" },
+        { name: "Minimalist", role: "simplification", style: "terse", bias: "reduction" },
+        { name: "Devil", role: "adversarial_testing", style: "provocative", bias: "breaking" },
+        { name: "Diplomat", role: "conflict_resolution", style: "balanced", bias: "consensus" },
       ]
       default_council.each { |c| add_persona(**c) }
     end

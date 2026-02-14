@@ -243,7 +243,7 @@ module MASTER
       def extract_model_name(model_id)
         # Remove provider prefix and suffixes
         name = model_id.split("/").last
-        name = name.split(":" ).first  # Remove :nitro, :floor, :online
+        name = name.split(":").first  # Remove :nitro, :floor, :online
         name
       end
 
