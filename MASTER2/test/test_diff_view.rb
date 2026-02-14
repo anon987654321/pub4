@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/diff_view"
+require_relative "../lib/ui"
 
 class TestDiffView < Minitest::Test
   def test_unified_diff_no_changes
