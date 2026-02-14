@@ -185,7 +185,9 @@ module MASTER
         # Skip if already ran
         return @last_self_check if @last_self_check
 
-        # Check only result.rb to avoid recursion and keep boot fast
+        # Check only result.rb to keep boot fast and avoid recursion
+        # result.rb is the core monad/result type used throughout - critical to validate
+        # Checking enforcement.rb itself would create recursion risk
         key_files = %w[result.rb]
         violations = []
 

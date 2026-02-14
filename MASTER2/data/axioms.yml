@@ -90,7 +90,7 @@
   title: "Fail Visibly"
   statement: "Errors surface immediately. Never swallow exceptions. Silent failures compound into disasters."
   source: "Release It! by Michael Nygard"
-  detect: "rescue\\s*($|=>\\s*\\w+\\s*$)"
+  detect: "rescue\\s*(?:$|=>\\s*\\w+\\s*$|;|\\n\\s*(?:nil|#|end))"
   suggest: "Don't use bare rescue. Specify exception type and handle or re-raise."
 
 - id: "DEADLINES"

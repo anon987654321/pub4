@@ -273,7 +273,7 @@ end
 # Warns only, does not halt boot
 if ENV["MASTER_SELF_CHECK"] != "false" && defined?(MASTER::Enforcement)
   Thread.new do
-    sleep 1 # Give boot a chance to complete
+    sleep (ENV["MASTER_SELF_CHECK_DELAY"] || "1").to_i
     begin
       MASTER::Enforcement.self_check!
     rescue StandardError => e

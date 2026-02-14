@@ -253,8 +253,8 @@ module MASTER
       def check_dry_violations(code, filename: "code")
         violations = []
 
-        # Look for duplicate string literals
-        strings = code.scan(/"([^"]+)"/).flatten
+        # Look for duplicate string literals (both single and double quotes)
+        strings = code.scan(/"([^"]+)"/).flatten + code.scan(/'([^']+)'/).flatten
         duplicates = strings.group_by(&:itself).select { |_, v| v.size > 2 }
 
         duplicates.each do |str, occurrences|
