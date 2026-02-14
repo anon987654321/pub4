@@ -43,6 +43,10 @@ module MASTER
         RubyLLM.models
       end
 
+      def chat_models
+        @chat_models ||= models.chat_models
+      end
+
       def budget_thresholds
         @budget_thresholds ||= begin
           return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
@@ -51,21 +55,93 @@ module MASTER
         end
       end
 
+      def safe_input_price(model)
+        model.input_price_per_million || 0
+      rescue NoMethodError
+        0
+      end
+
+      def safe_output_price(model)
+        model.output_price_per_million || 0
+      rescue NoMethodError
+        0
+      end
+
+      def tier_pricing_thresholds
+        @tier_pricing_thresholds ||= begin
+          if File.exist?(BUDGET_FILE)
+            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+            data[:model_tiers] || { premium: 10.0, strong: 2.0, fast: 0.10 }
+          else
+            { premium: 10.0, strong: 2.0, fast: 0.10 }
+          end
+        end
+      end
+
+      def model_tier_overrides
+        @model_tier_overrides ||= begin
+          if File.exist?(BUDGET_FILE)
+            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+            (data[:model_overrides] || {}).transform_values(&:to_sym)
+          else
+            {}
+          end
+        end
+      end
+
+      def classify_tier(model)
+        override = model_tier_overrides[model.id]
+        return override if override
+
+        price = safe_input_price(model)
+        thresholds = tier_pricing_thresholds
+        if price >= thresholds[:premium]
+          :premium
+        elsif price >= thresholds[:strong]
+          :strong
+        elsif price >= thresholds[:fast]
+          :fast
+        else
+          :cheap
+        end
+      end
+
+      def spending_cap
+        @spending_cap ||= begin
+          if File.exist?(BUDGET_FILE)
+            data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
+            data.dig(:budget, :limit) || 10.0
+          else
+            10.0
+          end
+        end
+      end
+
+      def reset_model_cache!
+        @model_tiers = nil
+        @model_rates = nil
+        @context_limits = nil
+        @chat_models = nil
+        @tier_pricing_thresholds = nil
+        @model_tier_overrides = nil
+        @spending_cap = nil
+      end
+
       def model_tiers
         @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
-          hash[tier] = models.select { |m| m[:tier].to_sym == tier }.map { |m| m[:id] }
+          hash[tier] = chat_models.select { |m| classify_tier(m) == tier }.map { |m| m.id }
         end
       end
 
       def model_rates
-        @model_rates ||= models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = { in: m[:input_cost], out: m[:output_cost], tier: m[:tier].to_sym }
+        @model_rates ||= chat_models.each_with_object({}) do |m, hash|
+          hash[m.id] = { in: safe_input_price(m), out: safe_output_price(m), tier: classify_tier(m) }
         end
       end
 
       def context_limits
-        @context_limits ||= models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = m[:context_window] || 32_000
+        @context_limits ||= chat_models.each_with_object({}) do |m, hash|
+          hash[m.id] = m.context_window || 32_000
         end
       end
 
@@ -130,8 +206,8 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Cost firewall - abort if cumulative spend exceeds cap
-        if total_spent >= SPENDING_CAP
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{SPENDING_CAP}. Session terminated.")
+        if total_spent >= spending_cap
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
         end
 
         # Model selection (single call - no TOCTOU)
@@ -426,7 +502,7 @@ module MASTER
       end
 
       def budget_remaining
-        [SPENDING_CAP - total_spent, 0.0].max
+        [spending_cap - total_spent, 0.0].max
       end
 
       # Pick best available model for given tier (or current)
