@@ -389,8 +389,20 @@ module MASTER
           end
         end
 
-        # P2 fix #4: Preserve full message history
-        msg_content = build_message_content(prompt, messages)
+        # Extract system message from messages array if present
+        system_msg = nil
+        user_messages = messages
+        if messages && messages.is_a?(Array) && !messages.empty?
+          # Check if first message is a system message
+          first_msg = messages.first
+          if first_msg && (first_msg[:role] == "system" || first_msg["role"] == "system")
+            system_msg = first_msg[:content] || first_msg["content"]
+            user_messages = messages[1..-1]  # Remove system message from user messages
+          end
+        end
+
+        # P2 fix #4: Preserve full message history with system-role separation
+        msg_content = build_message_content(prompt, user_messages, system_message: system_msg)
 
         # Execute query
         if stream
@@ -406,19 +418,32 @@ module MASTER
       end
 
       # P2 fix #4: Build message content preserving full conversation history
-      def build_message_content(prompt, messages)
-        if messages && messages.is_a?(Array) && !messages.empty?
-          history = messages.map do |m|
-            role = (m[:role] || m["role"]).to_s
-            content = m[:content] || m["content"]
-            next unless content
-            "[#{role}] #{content}"
-          end.compact
-          history << "[user] #{prompt}" if prompt && !prompt.to_s.empty?
-          history.join("\n\n")
-        else
-          prompt.to_s
+      # Supports system-role separation by detecting and formatting system messages
+      def build_message_content(prompt, messages, system_message: nil)
+        all_messages = []
+        
+        # Add system message first if provided
+        if system_message && !system_message.empty?
+          all_messages << { role: "system", content: system_message }
         end
+        
+        # Add conversation history
+        if messages && messages.is_a?(Array) && !messages.empty?
+          all_messages.concat(messages)
+        end
+        
+        # Add current prompt as user message
+        if prompt && !prompt.to_s.empty?
+          all_messages << { role: "user", content: prompt }
+        end
+        
+        # Format as [role] content for ruby_llm text transcript format
+        all_messages.map do |m|
+          role = (m[:role] || m["role"]).to_s
+          content = m[:content] || m["content"]
+          next unless content
+          "[#{role}] #{content}"
+        end.compact.join("\n\n")
       end
 
       def execute_blocking_ruby_llm(chat, content, model)

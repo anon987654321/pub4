@@ -14,69 +14,113 @@ module MASTER
         end
       end
 
-      def build_context(goal)
-        config = self.class.system_prompt_config
+      # Build comprehensive system message with all YAML sections + persona
+      def self.build_system_message(include_commands: true)
+        config = system_prompt_config
+        
+        # Identity (interpolated)
+        identity = if config["identity"]
+          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
+        else
+          "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
+        end
+        
+        sections = [identity]
+        
+        # Environment
+        sections << config["environment"] if config["environment"]
+        
+        # Shell patterns
+        sections << config["shell_patterns"] if config["shell_patterns"]
+        
+        # Behavior
+        sections << config["behavior"] if config["behavior"]
+        
+        # Task workflow
+        if config["task_workflow"]
+          sections << "TASK WORKFLOW:\n#{config["task_workflow"]}"
+        end
+        
+        # Tone
+        if config["tone"]
+          sections << "COMMUNICATION:\n#{config["tone"]}"
+        end
+        
+        # Commands (optional)
+        if include_commands
+          commands = config["commands"] || <<~CMD
+            YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
+          CMD
+          sections << commands
+        end
+        
+        # Safety / Injection defense
+        if config["safety"]
+          sections << "SAFETY:\n#{config["safety"]}"
+        end
+        
+        # Critical axioms
+        if config["critical_axioms"]
+          sections << "CORE AXIOMS:\n#{config["critical_axioms"]}"
+        end
+        
+        # Anti-simulation rules
+        if config["anti_simulation"]
+          sections << "EVIDENCE RULES:\n#{config["anti_simulation"]}"
+        end
+        
+        # Check for active persona
+        if defined?(LLM) && LLM.instance_variable_defined?(:@persona_prompt)
+          persona_prompt = LLM.instance_variable_get(:@persona_prompt)
+          sections << "\nACTIVE PERSONA:\n#{persona_prompt}" if persona_prompt && !persona_prompt.empty?
+        end
+        
+        # Check for project-specific MASTER.md
+        master_md = File.join(Dir.pwd, "MASTER.md")
+        if File.exist?(master_md)
+          sections << "\nPROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}"
+        end
+        
+        sections.join("\n\n")
+      end
+
+      def build_context(goal, include_task: true)
         history_text = @history.map do |h|
           "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]&.[](0..400)}"
         end.join("\n\n")
 
+        # Get comprehensive system message
+        system_msg = self.class.build_system_message(include_commands: true)
+        
+        # Build tool list and format from TOOLS hash
         tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
         
-        # Build identity from config or default
-        identity = if config["identity"]
-          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
-        else
-          "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant running on #{RUBY_PLATFORM}."
-        end
-        
-        # Tone guidelines
-        tone = config.dig("tone")&.map { |t| "- #{t}" }&.join("\n") || ""
-        
-        # Commands from config or inline
-        commands = config["commands"] || <<~CMD
-          YOUR COMMANDS (what users type at the master> prompt):
-            model <name>      Switch LLM model (e.g., model kimi-k2.5)
-            models            List available models
-            pattern <name>    Switch execution pattern
-            budget            Show remaining budget
-            selftest          Run self-test
-            help              Show all commands
-            exit              Exit MASTER (or Ctrl+C twice)
-        CMD
-        
-        # Check for project-specific MASTER.md
-        project_context = ""
-        master_md = File.join(Dir.pwd, "MASTER.md")
-        if File.exist?(master_md)
-          project_context = "\nPROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}\n"
-        end
+        tool_format = TOOLS.keys.map { |tool|
+          case tool
+          when :ask_llm then '- ask_llm "your question"'
+          when :web_search then '- web_search "query"'
+          when :browse_page then '- browse_page "url"'
+          when :file_read then '- file_read "path"'
+          when :file_write then '- file_write "path" "content"'
+          when :analyze_code then '- analyze_code "path"'
+          when :fix_code then '- fix_code "path"'
+          when :shell_command then '- shell_command "command"'
+          when :code_execution then "- code_execution ```ruby\n  code here\n  ```"
+          when :council_review then '- council_review "text to review"'
+          when :memory_search then '- memory_search "query"'
+          when :self_test then '- self_test'
+          else "- #{tool} (use appropriately)"
+          end
+        }.join("\n")
 
-        <<~CONTEXT
-          #{identity}
-          
-          #{tone.empty? ? "" : "COMMUNICATION STYLE:\n#{tone}\n"}
-          #{commands}
-          #{project_context}
+        task_context = <<~TASK
           TASK: #{goal}
           
           TOOLS AVAILABLE (for autonomous execution):
           #{tool_list}
           
           TOOL FORMAT:
-          - ask_llm "your question"
-          - web_search "query"
-          - browse_page "url"
-          - file_read "path"
-          - file_write "path" "content"
-          - analyze_code "path"
-          - fix_code "path"
-          - shell_command "command"
-          - code_execution ```ruby
-            code here
-            ```
-          - council_review "text to review"
-          - memory_search "query"
-          - self_test
+          #{tool_format}
           
           When complete, respond: ANSWER: your final answer
           
@@ -85,7 +129,24 @@ module MASTER
           Respond with:
           Thought: (brief reasoning)
           Action: (tool invocation or ANSWER: final answer)
-        CONTEXT
+        TASK
+
+        # If not including task, return just system message (for messages array usage)
+        return system_msg unless include_task
+        
+        # Return full context with system + task
+        "#{system_msg}\n\n#{task_context}"
+      end
+      
+      # Build context as messages array with system/user separation
+      def build_context_messages(goal)
+        system_msg = self.class.build_system_message(include_commands: true)
+        user_msg = build_context(goal, include_task: true).sub(system_msg, "").strip
+        
+        [
+          { role: "system", content: system_msg },
+          { role: "user", content: user_msg }
+        ]
       end
 
       def parse_response(text)
