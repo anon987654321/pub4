@@ -134,14 +134,17 @@ module MASTER
           line_num = idx + 1
           
           # Detect constant definitions (simplified)
+          defined_const = nil
           if line =~ /^\s*([A-Z][A-Z0-9_]*)\s*=/
             const_name = $1
             @constant_defs[const_name] = [file, line_num]
+            defined_const = const_name
           end
           
-          # Detect constant uses
+          # Detect constant uses (excluding the one being defined on this line)
           line.scan(/\b([A-Z][A-Z0-9_]*)\b/) do |match|
             const_name = match[0]
+            next if const_name == defined_const  # Skip if this is the constant being defined
             @constant_uses[const_name] ||= []
             @constant_uses[const_name] << [file, line_num]
           end
