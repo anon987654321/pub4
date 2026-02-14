@@ -217,9 +217,6 @@ require_relative "personas"           # Persona management (restored from MASTER
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
 require_relative "prescan"            # Situational awareness ritual (restored from MASTER v1)
 
-# Auto-fixer (restored from MASTER)
-require_relative "auto_fixer"
-
 # Web browsing (restored from MASTER)
 require_relative "web"
 
@@ -242,10 +239,9 @@ end
 # Agents
 require_relative "agent"
 
-# Meta/Self-improvement
-require_relative "code_review"  # Includes: violations, smells, bug_hunting, engine, llm_friendly, audit, cross_ref
+# Meta/Self-improvement - Consolidated into review.rb
+require_relative "review"  # Includes: Scanner (code_review), Fixer (auto_fixer), Enforcer (enforcement)
 require_relative "learnings"
-require_relative "enforcement"
 require_relative "file_processor"
 require_relative "reflow"
 require_relative "multi_refactor"
