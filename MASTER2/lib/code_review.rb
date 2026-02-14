@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Load all code review sub-modules
+require_relative "code_review/violations"
+require_relative "code_review/smells"
+require_relative "code_review/bug_hunting"
+require_relative "code_review/engine"
+require_relative "code_review/llm_friendly"
+require_relative "code_review/audit"
+require_relative "code_review/cross_ref"
+
 module MASTER
   # CodeReview - Automated checks learned from deep analysis sessions
   # These patterns were discovered through cross-referencing and execution tracing

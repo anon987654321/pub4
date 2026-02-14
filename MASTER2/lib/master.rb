@@ -215,7 +215,6 @@ require_relative "problem_solver"
 require_relative "evolve"
 require_relative "validator"
 require_relative "queue"              # Priority task queue (restored from MASTER v1)
-require_relative "engine"             # Unified scan facade (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
 require_relative "prescan"            # Situational awareness ritual (restored from MASTER v1)
@@ -246,19 +245,13 @@ end
 require_relative "agent"
 
 # Meta/Self-improvement
-require_relative "code_review"
-require_relative "llm_friendly"
+require_relative "code_review"  # Includes: violations, smells, bug_hunting, engine, llm_friendly, audit, cross_ref
 require_relative "learnings"
 require_relative "enforcement"
 require_relative "file_processor"
 require_relative "reflow"
-require_relative "audit"
-require_relative "cross_ref"
 
 # Quality & Analysis (restored from MASTER)
-require_relative "violations"
-require_relative "smells"
-require_relative "bug_hunting"
 require_relative "planner"
 
 # Generators (restored from historical features)
