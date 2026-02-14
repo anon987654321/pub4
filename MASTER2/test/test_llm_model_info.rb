@@ -4,6 +4,18 @@ require_relative "test_helper"
 
 # Test for ruby_llm v1.11.0 compatibility with RubyLLM::Model::Info objects
 class TestLLMModelInfo < Minitest::Test
+  # Simple struct to simulate RubyLLM::Model::Info for testing
+  class MockModel
+    attr_reader :id, :input_price_per_million, :output_price_per_million, :context_window
+    
+    def initialize(id:, input_price_per_million:, output_price_per_million: 1.0, context_window: 32_000)
+      @id = id
+      @input_price_per_million = input_price_per_million
+      @output_price_per_million = output_price_per_million
+      @context_window = context_window
+    end
+  end
+
   def setup
     setup_db
     # Clear any cached values
@@ -13,53 +25,43 @@ class TestLLMModelInfo < Minitest::Test
   end
 
   def test_classify_tier_premium
-    # Mock a model with premium pricing (>= 10.0)
-    model = Minitest::Mock.new
-    model.expect(:input_price_per_million, 15.0)
+    # Model with premium pricing (>= 10.0)
+    model = MockModel.new(id: "premium-model", input_price_per_million: 15.0)
     
     tier = MASTER::LLM.classify_tier(model)
     assert_equal :premium, tier
-    model.verify
   end
 
   def test_classify_tier_strong
-    # Mock a model with strong pricing (>= 2.0, < 10.0)
-    model = Minitest::Mock.new
-    model.expect(:input_price_per_million, 5.0)
+    # Model with strong pricing (>= 2.0, < 10.0)
+    model = MockModel.new(id: "strong-model", input_price_per_million: 5.0)
     
     tier = MASTER::LLM.classify_tier(model)
     assert_equal :strong, tier
-    model.verify
   end
 
   def test_classify_tier_fast
-    # Mock a model with fast pricing (>= 0.1, < 2.0)
-    model = Minitest::Mock.new
-    model.expect(:input_price_per_million, 0.5)
+    # Model with fast pricing (>= 0.1, < 2.0)
+    model = MockModel.new(id: "fast-model", input_price_per_million: 0.5)
     
     tier = MASTER::LLM.classify_tier(model)
     assert_equal :fast, tier
-    model.verify
   end
 
   def test_classify_tier_cheap
-    # Mock a model with cheap pricing (< 0.1)
-    model = Minitest::Mock.new
-    model.expect(:input_price_per_million, 0.01)
+    # Model with cheap pricing (< 0.1)
+    model = MockModel.new(id: "cheap-model", input_price_per_million: 0.01)
     
     tier = MASTER::LLM.classify_tier(model)
     assert_equal :cheap, tier
-    model.verify
   end
 
   def test_classify_tier_nil_price
-    # Mock a model with nil pricing (should default to 0 = cheap)
-    model = Minitest::Mock.new
-    model.expect(:input_price_per_million, nil)
+    # Model with nil pricing (should default to 0 = cheap)
+    model = MockModel.new(id: "nil-model", input_price_per_million: nil)
     
     tier = MASTER::LLM.classify_tier(model)
     assert_equal :cheap, tier
-    model.verify
   end
 
   def test_model_tiers_uses_object_accessors
