@@ -231,7 +231,7 @@ require_relative "postpro_bridge"
 require_relative "repligen_bridge"
 
 # External services
-%w[weaviate replicate cinematic].each do |mod|
+%w[weaviate replicate cinematic semantic_cache].each do |mod|
   begin
     require_relative mod
   rescue LoadError, StandardError => e

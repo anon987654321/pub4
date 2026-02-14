@@ -343,6 +343,26 @@ module MASTER
           
         HELP
       end
+
+      # Semantic cache management
+      def show_cache_stats(args)
+        return puts "  SemanticCache not available" unless defined?(SemanticCache)
+
+        case args&.strip
+        when "clear"
+          SemanticCache.clear!
+          UI.success("Cache cleared")
+        when "stats", nil, ""
+          stats = SemanticCache.stats
+          UI.header("Semantic Cache")
+          puts "  Entries: #{stats[:entries]}"
+          puts "  Size: #{stats[:size_human]}"
+          puts "  Dir: #{stats[:cache_dir]}"
+          puts
+        else
+          puts "  Usage: cache [stats|clear]"
+        end
+      end
     end
   end
 end
