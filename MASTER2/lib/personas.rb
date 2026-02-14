@@ -182,9 +182,9 @@ module MASTER
 
         @active_persona = persona
         
-        # Set LLM system prompt
+        # Set LLM system prompt via proper accessor
         if defined?(LLM) && persona[:system_prompt]
-          LLM.instance_variable_set(:@persona_prompt, persona[:system_prompt])
+          LLM.persona_prompt = persona[:system_prompt]
         end
 
         # Register behavior hooks
@@ -198,7 +198,7 @@ module MASTER
 
       def deactivate
         @active_persona = nil
-        LLM.instance_variable_set(:@persona_prompt, nil) if defined?(LLM)
+        LLM.persona_prompt = nil if defined?(LLM)
         unregister_behaviors
         
         puts UI.dim("Persona deactivated")

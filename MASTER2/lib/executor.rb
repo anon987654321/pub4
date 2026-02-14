@@ -256,27 +256,11 @@ module MASTER
     end
 
     def direct_ask(goal, tier: nil)
-      config = self.class.system_prompt_config
-      
-      # Build concise system context for direct queries
-      identity = if config["identity"]
-        config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
-      else
-        "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
-      end
-      
-      commands = config["commands"] || <<~CMD
-        YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
-      CMD
-      
-      # Tone from config
-      tone_rules = config.dig("tone")&.take(2)&.join(" ") || "Be concise and direct."
+      # Use shared system message builder (no commands for brevity)
+      system_msg = Context.build_system_message(include_commands: false)
       
       prompt = <<~PROMPT
-        #{identity}
-        #{tone_rules}
-        
-        #{commands.lines.first(8).join}
+        #{system_msg}
         
         User question: #{goal}
       PROMPT
