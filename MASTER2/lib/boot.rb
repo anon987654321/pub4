@@ -39,6 +39,9 @@ module MASTER
         puts c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}")
         puts c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}")
         puts c("smoke0 at executor0: #{smoke_result}")
+        
+        yield if block_given?  # Allow caller to inject web line before boot summary
+        
         elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round
         puts c("boot: #{elapsed}ms")
         puts
@@ -46,9 +49,9 @@ module MASTER
 
       # For web mode, also print the URL
       def banner_with_web(port)
-        banner
-        puts c("web0 at smoke0: http://localhost:#{port}")
-        puts
+        banner do
+          puts c("web0 at smoke0: http://localhost:#{port}")
+        end
       end
 
       # Verify critical methods exist at runtime
