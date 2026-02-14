@@ -212,8 +212,6 @@ require_relative "workflow_engine"
 
 # Deliberation engines
 require_relative "chamber"
-require_relative "swarm"
-require_relative "creative_chamber"  # Creative ideation engine (restored from MASTER v1)
 
 # Tools
 require_relative "shell"
