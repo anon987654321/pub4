@@ -5,7 +5,8 @@ module MASTER
     # Session management commands
     module SessionCommands
       def manage_session(args)
-        case args&.split&.first
+        parts = args&.split || []
+        case parts.first
         when "new"
           Session.start_new
           puts "  New session: #{UI.truncate_id(Session.current.id)}"
@@ -13,7 +14,7 @@ module MASTER
           Session.current.save
           puts "  Session saved: #{UI.truncate_id(Session.current.id)}"
         when "load", "resume"
-          id = args.split[1]
+          id = parts[1]
           if id && Session.resume(id)
             puts "  Resumed session: #{UI.truncate_id(Session.current.id)}"
           else
@@ -27,8 +28,65 @@ module MASTER
           puts "  Cost:     #{UI.currency_precise(s.total_cost)}"
           puts "  Created:  #{s.created_at}"
           puts
+        when "replay"
+          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          id = parts[1] || Session.current.id
+          SessionReplay.replay(id)
+        when "list-detail", "ls"
+          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          result = SessionReplay.list_with_summaries
+          if result.ok?
+            UI.header("Sessions (detailed)")
+            result.value.each do |s|
+              status = s[:crashed] ? UI.red("CRASHED") : UI.green("ok")
+              cost_str = s[:cost] > 0 ? UI.currency_precise(s[:cost]) : "free"
+              puts "  #{s[:short_id]} | #{s[:messages]} msgs | #{cost_str} | #{s[:duration]} | #{status}"
+            end
+            puts
+          end
+        when "diff"
+          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          if parts.size >= 3
+            result = SessionReplay.diff_sessions(parts[1], parts[2])
+            if result.ok?
+              diff = result.value
+              puts "\n  Session Diff:"
+              puts "  A: #{diff[:session_a][:messages]} messages"
+              puts "  B: #{diff[:session_b][:messages]} messages"
+              puts "  Cost diff: #{UI.currency_precise(diff[:cost_diff].abs)} (#{diff[:cost_diff] > 0 ? '+' : '-'})"
+              puts
+            else
+              puts "  Error: #{result.error}"
+            end
+          else
+            puts "  Usage: session diff <id_a> <id_b>"
+          end
+        when "export"
+          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          id = parts[1] || Session.current.id
+          format = args&.include?("--md") ? :markdown : :json
+          result = SessionReplay.replay(id, format: format)
+          if result.ok?
+            puts result.value if format == :markdown
+            puts JSON.pretty_generate(result.value) if format == :json
+          else
+            puts "  Error: #{result.error}"
+          end
         else
-          puts "  Usage: session [new|save|load <id>|info]"
+          puts <<~HELP
+            
+            Session Commands:
+            
+              session new                  Start new session
+              session save                 Save current session
+              session load <id>            Load saved session
+              session info                 Show current session info
+              session replay [id]          Replay session conversation
+              session ls                   List sessions with details
+              session diff <a> <b>         Diff two sessions
+              session export [id] [--md]   Export session as JSON or Markdown
+            
+          HELP
         end
       end
 

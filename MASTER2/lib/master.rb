@@ -166,6 +166,7 @@ require_relative "logging"  # Unified logging (replaces log.rb, logging.rb, dmes
 require_relative "db_jsonl"
 require_relative "llm"
 require_relative "session"
+require_relative "session_replay"
 require_relative "pledge"
 require_relative "rubocop_detector"  # Style checking integration
 
