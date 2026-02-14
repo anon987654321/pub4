@@ -123,4 +123,36 @@ class TestSelfApply < Minitest::Test
       assert File.exist?(path), "Dead require: #{req}"
     end
   end
+
+  def test_enforcement_self_check_exists
+    # Test that self_check! method exists and can be called
+    assert_respond_to MASTER::Enforcement, :self_check!
+    assert_respond_to MASTER::Enforcement, :last_self_check
+  end
+
+  def test_enforcement_self_check_runs
+    # Run self-check and verify it returns expected structure
+    result = MASTER::Enforcement.self_check!
+
+    assert result.is_a?(Hash), "self_check! should return a hash"
+    assert result.key?(:timestamp), "Result should have timestamp"
+    assert result.key?(:files_checked), "Result should have files_checked"
+    assert result.key?(:absolute_violations), "Result should have absolute_violations"
+    assert result.key?(:passed), "Result should have passed flag"
+
+    assert result[:files_checked] > 0, "Should check at least one file"
+    assert result[:absolute_violations].is_a?(Array), "Violations should be an array"
+  end
+
+  def test_enforcement_self_check_caches_result
+    # First call
+    result1 = MASTER::Enforcement.self_check!
+    timestamp1 = result1[:timestamp]
+
+    # Second call should return cached result
+    result2 = MASTER::Enforcement.self_check!
+    timestamp2 = result2[:timestamp]
+
+    assert_equal timestamp1, timestamp2, "self_check! should cache its result"
+  end
 end

@@ -213,7 +213,6 @@ require_relative "shell"
 require_relative "introspection"  # Includes self_map functionality (consolidated)
 require_relative "problem_solver"
 require_relative "evolve"
-require_relative "validator"
 require_relative "queue"              # Priority task queue (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
@@ -266,5 +265,19 @@ require_relative "framework/quality_gates"
     require_relative mod
   rescue LoadError, StandardError => e
     warn "MASTER: #{mod} unavailable (#{e.message})"
+  end
+end
+
+# Boot-time SELF_APPLY enforcement: Check own source for ABSOLUTE violations
+# Deferred to background to avoid slowing boot
+# Warns only, does not halt boot
+if ENV["MASTER_SELF_CHECK"] != "false" && defined?(MASTER::Enforcement)
+  Thread.new do
+    sleep (ENV["MASTER_SELF_CHECK_DELAY"] || "1").to_i
+    begin
+      MASTER::Enforcement.self_check!
+    rescue StandardError => e
+      warn "MASTER: self_check! failed (#{e.message})"
+    end
   end
 end
