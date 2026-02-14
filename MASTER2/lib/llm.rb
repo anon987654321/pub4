@@ -61,6 +61,11 @@ module MASTER
         load_models_config
       end
 
+      # Hash lookup for O(1) access to configured models by ID
+      def configured_models_by_id
+        @configured_models_by_id ||= configured_models.each_with_object({}) { |m, h| h[m[:id]] = m }
+      end
+
       def budget_thresholds
         @budget_thresholds ||= begin
           return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
@@ -70,12 +75,13 @@ module MASTER
       end
       # Classify a model into a tier based on models.yml configuration
       def classify_tier(model)
-        # For configured models, look up tier from models.yml
+        # For configured models, look up tier from models.yml with O(1) hash access
         model_id = model.is_a?(String) ? model : model.id
-        configured_model = configured_models.find { |m| m[:id] == model_id }
+        configured_model = configured_models_by_id[model_id]
         return configured_model[:tier].to_sym if configured_model && configured_model[:tier]
         
-        # Fallback to price-based classification for unconfigured models
+        # Fallback to price-based classification for models not in models.yml
+        # Note: String model IDs without a corresponding model object default to :cheap tier
         price = model.is_a?(String) ? 0 : (model.input_price_per_million || 0)
         if price >= 10.0
           :premium
