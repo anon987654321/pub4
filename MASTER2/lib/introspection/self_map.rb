@@ -386,20 +386,17 @@ module MASTER
         }
       end
 
-      # Full adversarial review: interrogate + audit + enforcement
+      # Full adversarial review: interrogate + enforcement
+      # Simplified to use only Enforcement.check() (ONE_SOURCE compliance)
       def full_review(content, context: {})
         interrogation = interrogate(content, context: context)
-        audit_result = audit(content)
         enforcement = Enforcement.check(content, filename: context[:filename] || "input")
 
-        all_issues = interrogation[:issues] + 
-                     audit_result[:violations] + 
-                     enforcement[:violations]
+        all_issues = interrogation[:issues] + enforcement[:violations]
 
         {
           passed: all_issues.empty?,
           interrogation: interrogation,
-          audit: audit_result,
           enforcement: enforcement,
           total_issues: all_issues.size,
           severity: calculate_severity(all_issues),
