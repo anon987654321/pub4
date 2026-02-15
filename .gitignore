@@ -1,53 +1,45 @@
-.backup
-.archive
+# Build artifacts and outputs
+OUTPUT_*.md
+*.gem
+*.rbc
+.bundle
+vendor/bundle
 
-# Editor artifacts
-*.swp
-*.swo
-*~
-.*.swp
-.*.swo
+# Logs and databases
+*.log
+*.sqlite3
+*.db
 
-# OS artifacts
+# Runtime and temp files
+.session_recovery
+tmp/
+temp/
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.bak
-*.old
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Generated exports
-governance_export_*.json
+# Memory files (runtime data)
+memory/*.jsonl
+:memory:/
 
-# Node modules
-node_modules/
+# Constitution costs (runtime tracking)
+.constitutional_costs.jsonl
+.constitutional_memory.json
 
-# Ruby
-.bundle/
-vendor/bundle/
+# Environment files with secrets
+.env
+.env.local
+!.env.example
 
-# Rails
-/log/*
-/tmp/*
-!/log/.keep
-!/tmp/.keep
-
-# Test coverage
+# Coverage reports
 coverage/
-.coverage
 
-var/
-MASTER/var/
-
-# MASTER generated data (transient)
-MASTER/data/reports/*.md
-MASTER/data/monitoring/*.jsonl
-MASTER/data/intelligence/*.yml
-MASTER/data/memory/*.yml
-MASTER/data/memory/*.json
-
-# MASTER v2 - Environment and database
-MASTER/.env
-MASTER/master.db
-MASTER/master.db-*
+# Node modules (if any JS tooling)
+node_modules/
