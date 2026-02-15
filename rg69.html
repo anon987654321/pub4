@@ -121,6 +121,23 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label>Pads</label><input type="range" id="padsSwing" min="0" max="50" value="0"></div>
 </div></div>
 </div>
+<div class="panel">
+<div class="panel-header">EXPERT CONTROLS</div>
+<div class="panel-body"><div>
+<div class="control"><label title="Kick timing lag (J Dilla style)">Kick Lag (ms)</label><input type="range" id="kickLag" min="0" max="80" value="0" step="1"><span id="kickLagVal">0</span></div>
+<div class="control"><label title="Snare timing rush (ahead of beat)">Snare Rush (ms)</label><input type="range" id="snareRush" min="0" max="60" value="0" step="1"><span id="snareRushVal">0</span></div>
+<div class="control"><label title="Hi-hat timing drift (upbeat variation)">Hat Drift (ms)</label><input type="range" id="hatDrift" min="0" max="50" value="0" step="1"><span id="hatDriftVal">0</span></div>
+<div class="control"><label title="Bass glide/portamento time">Glide (ms)</label><input type="range" id="glide" min="0" max="300" value="0" step="10"><span id="glideVal">0</span></div>
+<div class="control"><label title="Vinyl crackle intensity">Crackle</label><input type="range" id="crackle" min="0" max="100" value="0"><span id="crackleVal">0</span></div>
+<div class="control"><label title="Tape wow/flutter depth">Flutter</label><input type="range" id="flutter" min="0" max="100" value="0"><span id="flutterVal">0</span></div>
+<div class="control"><label title="Tape saturation/drive">Tape Drive</label><input type="range" id="tapeDrive" min="0" max="100" value="0"><span id="tapeDriveVal">0</span></div>
+<div class="control"><label title="Lo-fi processing mix">Lo-Fi Mix</label><input type="range" id="lofiMix" min="0" max="100" value="0"><span id="lofiMixVal">0</span></div>
+<div class="control"><label title="Master reverb amount">Reverb</label><input type="range" id="reverbAmt" min="0" max="100" value="30"><span id="reverbVal">30</span></div>
+<div class="control"><label title="Master drive/distortion">Drive</label><input type="range" id="driveAmt" min="0" max="100" value="0"><span id="driveVal">0</span></div>
+<div class="control"><label title="Bit crushing depth">Crush</label><input type="range" id="crushAmt" min="0" max="100" value="0"><span id="crushVal">0</span></div>
+<div class="control"><label title="Vinyl noise character">Vinyl</label><input type="range" id="vinylAmt" min="0" max="100" value="0"><span id="vinylVal">0</span></div>
+</div></div>
+</div>
 </div>
 <div class="log" id="log"></div>
 <div class="tooltip" id="tooltip"></div>
@@ -281,6 +298,8 @@ const M={
 let bpm=120,swing=0,rootNote=0,playing=false,recording=false,step=0,currentBank='A',curD='basic',curB='basic',curK='basic',curP='none';
 let drumVol=80,bassVol=70,keysVol=60,padsVol=50,masterVol=75;
 let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
+let kickLag=0,snareRush=0,hatDrift=0,glide=0; // Micro-timing humanization
+let crackle=0,flutter=0,tapeDrive=0,lofiMix=0,reverbAmt=30,driveAmt=0,crushAmt=0,vinylAmt=0; // Lo-fi & FX
 let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>SP[b][t]=Array(16).fill(0).map(()=>({on:0}))));
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
@@ -288,6 +307,10 @@ let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
 let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN;
 let drumG,bassG,keysG,padsG,masterG,limiter,analyser;
 let analogSum,vintageSat,phaserFX,lofiNoise;
+// Lo-fi processing elements
+let crackleNoise,hissNoise,flutterLFO,vhsNoise,rumbleOsc,lofiCompressor,tapeSat,lofiFilter,lofiReverb;
+// FX chain elements
+let feedbackDelay,bassDist,keysTrem,keysCrush,masterReverb,masterDrive,masterCrush;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
@@ -326,6 +349,70 @@ const initAudio=()=>{
   const noiseLP=new Tone.Filter(4000,'lowpass');
   lofiNoise.connect(noiseLP);
   
+  // Lo-fi processing chain (Grok version features)
+  lofiCompressor=new Tone.Compressor(-24,3);
+  lofiCompressor.attack.value=0.003;
+  lofiCompressor.release.value=0.1;
+  
+  // Tape saturation with tanh waveshaper
+  tapeSat=new Tone.WaveShaper((val)=>Math.tanh(val*1.5),4096);
+  tapeSat.oversample='2x';
+  
+  lofiFilter=new Tone.Filter(3500,'lowpass');
+  lofiReverb=new Tone.Reverb(1.2);
+  lofiReverb.wet.value=0.2;
+  
+  // Crackle noise (brown → 380Hz lowpass → gain 0.018)
+  crackleNoise=new Tone.Noise('brown').start();
+  crackleNoise.volume.value=-35; // Will be modulated by crackle slider
+  const crackleLP=new Tone.Filter(380,'lowpass');
+  crackleNoise.connect(crackleLP);
+  
+  // Hiss noise (pink → 6200Hz bandpass → gain 0.024)
+  hissNoise=new Tone.Noise('pink').start();
+  hissNoise.volume.value=-32; // Will be modulated
+  const hissBP=new Tone.Filter(6200,'bandpass');
+  hissBP.Q.value=0.7;
+  hissNoise.connect(hissBP);
+  
+  // Flutter LFO (0.22Hz → pitch ±2.2 cents)
+  flutterLFO=new Tone.LFO(0.22,-2.2,2.2);
+  flutterLFO.start();
+  // Connect to Destination frequency for pitch modulation
+  
+  // VHS noise (white noise with LFO-modulated gain)
+  vhsNoise=new Tone.Noise('white').start();
+  vhsNoise.volume.value=-40;
+  const vhsLFO=new Tone.LFO(0.15,-6,0);
+  vhsLFO.start();
+  vhsLFO.connect(vhsNoise.volume);
+  
+  // Rumble osc (36Hz sine at -44dB)
+  rumbleOsc=new Tone.Oscillator(36,'sine').start();
+  rumbleOsc.volume.value=-44;
+  
+  // Additional FX chains
+  feedbackDelay=new Tone.FeedbackDelay('8n.',0.35);
+  feedbackDelay.wet.value=0.12;
+  const delayLP=new Tone.Filter(2200,'lowpass');
+  feedbackDelay.connect(delayLP);
+  
+  bassDist=new Tone.Distortion({distortion:0.08,wet:0.12,oversample:'2x'});
+  
+  keysTrem=new Tone.Tremolo({frequency:3.2,depth:0.2,wet:0.25,spread:90});
+  keysTrem.start();
+  keysCrush=new Tone.BitCrusher(4);
+  keysCrush.wet.value=0.15;
+  
+  masterReverb=new Tone.Reverb(2.5);
+  masterReverb.wet.value=reverbAmt/100;
+  
+  masterDrive=new Tone.Distortion(0.4);
+  masterDrive.wet.value=0;
+  
+  masterCrush=new Tone.BitCrusher(8);
+  masterCrush.wet.value=0;
+  
   // Connect synths to gain stages (DRY: reusable connection pattern)
   [kickN,snareN,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
   bassN.disconnect();bassN.connect(bassG);
@@ -333,14 +420,32 @@ const initAudio=()=>{
   keysN.disconnect();keysN.connect(keysG);
   padsN.disconnect();padsN.connect(padsG);
   
-  // Analog summing: all tracks → vintage saturation → phaser → master (KISS)
+  // Wire additional FX into chains
+  // Bass: gain → distortion → analogSum
+  bassG.disconnect();
+  bassG.chain(bassDist,analogSum);
+  
+  // Keys: gain → tremolo → bitcrusher → analogSum
+  keysG.disconnect();
+  keysG.chain(keysTrem,keysCrush,analogSum);
+  
+  // Analog summing: all tracks → vintage saturation → phaser → feedbackDelay → master (KISS)
   analogSum=new Tone.Gain(1); // Summing node
   drumG.connect(analogSum);
-  bassG.connect(analogSum);
-  keysG.connect(analogSum);
+  // bassG and keysG already connected above
   padsG.connect(analogSum);
   noiseLP.connect(analogSum); // Lo-fi noise floor
-  analogSum.chain(vintageSat,phaserFX,masterG);
+  crackleLP.connect(analogSum);
+  hissBP.connect(analogSum);
+  vhsNoise.connect(analogSum);
+  rumbleOsc.connect(analogSum);
+  
+  // Main chain with lo-fi processing
+  analogSum.disconnect();
+  delayLP.disconnect();
+  analogSum.chain(vintageSat,phaserFX,lofiCompressor,tapeSat,lofiFilter);
+  delayLP.connect(lofiFilter);
+  lofiFilter.chain(lofiReverb,masterReverb,masterDrive,masterCrush,masterG);
   
   // Output chain
   limiter=new Tone.Limiter(-1);
@@ -433,6 +538,14 @@ const updateFXTags=()=>{
 };
 // Sequencer
 const getSwingDelay=(track,s)=>{if(s%2!==1)return 0;const ts={d:drumSwing,b:bassSwing,k:keysSwing,p:padsSwing}[track]||swing;return(ts/100)*(60/bpm/4);};
+// Micro-timing humanization (J Dilla style)
+const getMicroTiming=(instrument,s)=>{
+  let offset=0;
+  if(instrument==='kick')offset=kickLag/1000; // Lag behind
+  else if(instrument==='snare')offset=-snareRush/1000; // Rush ahead
+  else if(instrument==='hat'&&s%2===1)offset=(Math.random()-0.5)*(hatDrift/1000); // Drift on upbeats
+  return offset;
+};
 const transpose=(n,semi)=>{const m=Tone.Frequency(n).toMidi();return Tone.Frequency(m+semi).toNote();};
 const loop=new Tone.Sequence((time,s)=>{
   step=s;
@@ -444,10 +557,10 @@ const loop=new Tone.Sequence((time,s)=>{
   const playP=isSolo?muteSolo.p.s:!muteSolo.p.m;
   if(playD){
     const sd=getSwingDelay('d',s);
-    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s])kickN.triggerAttackRelease('C1',.1,time+sd,d.k[s]);
-    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s])snareN.triggerAttackRelease(.1,time+sd,d.s[s]);
+    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s])kickN.triggerAttackRelease('C1',.1,time+sd+getMicroTiming('kick',s),d.k[s]);
+    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s])snareN.triggerAttackRelease(.1,time+sd+getMicroTiming('snare',s),d.s[s]);
     if((d.c[s]||SP[currentBank].clap[s].on)&&d.c[s])clapN.triggerAttackRelease(.15,time+sd,d.c[s]);
-    if((d.h[s]||SP[currentBank].hat[s].on)&&d.h[s])hatN.triggerAttackRelease('16n',time+sd,d.h[s]);
+    if((d.h[s]||SP[currentBank].hat[s].on)&&d.h[s])hatN.triggerAttackRelease('16n',time+sd+getMicroTiming('hat',s),d.h[s]);
     if((d.o[s]||SP[currentBank].open[s].on)&&d.o[s])openN.triggerAttackRelease('8n',time+sd,d.o[s]);
   }
   if(playB&&bp[s]){const sd=getSwingDelay('b',s);const n=transpose(bp[s],rootNote);bassN.triggerAttackRelease(n,'8n',time+sd);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),time+sd);}
@@ -508,6 +621,19 @@ const attachEvents=()=>{
   document.getElementById('bassSwing').oninput=e=>{bassSwing=+e.target.value;};
   document.getElementById('keysSwing').oninput=e=>{keysSwing=+e.target.value;};
   document.getElementById('padsSwing').oninput=e=>{padsSwing=+e.target.value;};
+  // Expert controls handlers
+  document.getElementById('kickLag').oninput=e=>{kickLag=+e.target.value;document.getElementById('kickLagVal').textContent=kickLag;};
+  document.getElementById('snareRush').oninput=e=>{snareRush=+e.target.value;document.getElementById('snareRushVal').textContent=snareRush;};
+  document.getElementById('hatDrift').oninput=e=>{hatDrift=+e.target.value;document.getElementById('hatDriftVal').textContent=hatDrift;};
+  document.getElementById('glide').oninput=e=>{glide=+e.target.value;document.getElementById('glideVal').textContent=glide;bassN.portamento=Math.pow(glide/200,1.6)*0.3;};
+  document.getElementById('crackle').oninput=e=>{crackle=+e.target.value;document.getElementById('crackleVal').textContent=crackle;crackleNoise.volume.value=-35+crackle*0.2;};
+  document.getElementById('flutter').oninput=e=>{flutter=+e.target.value;document.getElementById('flutterVal').textContent=flutter;flutterLFO.frequency.value=0.22*(1+flutter/100);};
+  document.getElementById('tapeDrive').oninput=e=>{tapeDrive=+e.target.value;document.getElementById('tapeDriveVal').textContent=tapeDrive;vintageSat.wet.value=0.3+tapeDrive*0.005;};
+  document.getElementById('lofiMix').oninput=e=>{lofiMix=+e.target.value;document.getElementById('lofiMixVal').textContent=lofiMix;lofiCompressor.threshold.value=-24+lofiMix*0.2;};
+  document.getElementById('reverbAmt').oninput=e=>{reverbAmt=+e.target.value;document.getElementById('reverbVal').textContent=reverbAmt;masterReverb.wet.value=reverbAmt/100;};
+  document.getElementById('driveAmt').oninput=e=>{driveAmt=+e.target.value;document.getElementById('driveVal').textContent=driveAmt;masterDrive.wet.value=driveAmt/100;};
+  document.getElementById('crushAmt').oninput=e=>{crushAmt=+e.target.value;document.getElementById('crushVal').textContent=crushAmt;masterCrush.wet.value=crushAmt/100;};
+  document.getElementById('vinylAmt').oninput=e=>{vinylAmt=+e.target.value;document.getElementById('vinylVal').textContent=vinylAmt;hissNoise.volume.value=-32+vinylAmt*0.15;};
   document.querySelectorAll('.step').forEach(s=>{
     const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;s.classList.toggle('on',SP[currentBank][t][i].on);pushState();};
     s.onclick=toggle;
