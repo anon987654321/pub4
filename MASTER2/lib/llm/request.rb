@@ -142,16 +142,18 @@ module MASTER
         final_response = nil
 
         response = chat.ask(content) do |chunk|
-          if chunk.is_a?(String)
-            $stderr.print chunk
-            content_parts << chunk
-            total_size += chunk.bytesize
+          # RubyLLM yields Chunk objects (inherits from Message)
+          text = chunk.is_a?(String) ? chunk : chunk.content.to_s
+          next if text.empty?
 
-            # Abort if response exceeds MAX_RESPONSE_SIZE
-            if total_size > MAX_RESPONSE_SIZE
-              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-              break
-            end
+          $stderr.print text
+          content_parts << text
+          total_size += text.bytesize
+
+          # Abort if response exceeds MAX_RESPONSE_SIZE
+          if total_size > MAX_RESPONSE_SIZE
+            Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+            break
           end
         end
 
