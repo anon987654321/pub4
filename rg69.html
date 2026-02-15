@@ -353,7 +353,7 @@ let bpm=110,swing=0,rootNote='A',hatIsOpen=false;
 let midiOutput=null,mediaRecorder=null,recordedChunks=[];
 let SP={A:{},B:{},C:{},D:{}};
 let currentMood=null,velHumanAmount=0.15,chainMode=false,barCount=0;
-let tapTimes=[],samplesLoaded=false,sampleTimeout=null;
+let tapTimes=[],samplesLoaded=false,sampleTimeout=null,cpuWarned=false;
 const tracks=['kick','snare','clap','chh','ohh'];
 tracks.forEach(t=>{
 ['A','B','C','D'].forEach(b=>{
@@ -793,8 +793,10 @@ log(`Chain: ${currentBank}`);
 // Refinement #24: CPU usage monitor
 const callbackTime=performance.now()-callbackStart;
 const budget=(128/Tone.context.sampleRate)*1000;
-if(callbackTime>budget*0.8){
+if(callbackTime>budget*0.8&&!cpuWarned){
 log('CPU warning');
+cpuWarned=true;
+setTimeout(()=>cpuWarned=false,5000); // Reset warning after 5s
 }
 
 // Visual feedback
@@ -971,8 +973,8 @@ bassN.portamento=val/100*0.5;
 };
 
 // Export/Import
-const exportPatch=()=>{
-const patch={
+const getPatchData=()=>{
+return {
 currentBank,
 selectedDrum,selectedBass,selectedKeys,selectedPads,
 bpm,swing,rootNote,
@@ -998,6 +1000,10 @@ flutter:document.getElementById('flutter').value,
 crackle:document.getElementById('crackle').value
 }
 };
+};
+
+const exportPatch=()=>{
+const patch=getPatchData();
 const json=JSON.stringify(patch,null,2);
 const blob=new Blob([json],{type:'application/json'});
 const url=URL.createObjectURL(blob);
@@ -1007,6 +1013,34 @@ a.download=`rg69-patch-${Date.now()}.json`;
 a.click();
 URL.revokeObjectURL(url);
 log('Patch exported');
+};
+
+const importPatchData=patch=>{
+currentBank=patch.currentBank||'A';
+selectedDrum=patch.selectedDrum||'d1';
+selectedBass=patch.selectedBass||'b1';
+selectedKeys=patch.selectedKeys||'k1';
+selectedPads=patch.selectedPads||'p1';
+if(patch.bpm)setBPM(patch.bpm);
+if(patch.swing)setSwing(patch.swing);
+if(patch.rootNote)rootNote=patch.rootNote;
+if(patch.volumes){
+document.getElementById('volDrums').value=patch.volumes.drums||70;
+document.getElementById('volBass').value=patch.volumes.bass||65;
+document.getElementById('volKeys').value=patch.volumes.keys||50;
+document.getElementById('volPads').value=patch.volumes.pads||45;
+}
+if(patch.sequencer)SP=patch.sequencer;
+if(patch.expertFX){
+const fx=patch.expertFX;
+if(fx.kickLag)setKickLag(fx.kickLag);
+if(fx.reverb)setReverb(fx.reverb);
+if(fx.drive)setDrive(fx.drive);
+if(fx.bitcrush)setBitcrush(fx.bitcrush);
+if(fx.lofi)setLofi(fx.lofi);
+if(fx.glide)setGlide(fx.glide);
+}
+buildSequencer();
 };
 
 const importPatch=()=>{
@@ -1145,31 +1179,7 @@ const reader=new FileReader();
 reader.onload=ev=>{
 try{
 const patch=JSON.parse(ev.target.result);
-currentBank=patch.currentBank||'A';
-selectedDrum=patch.selectedDrum||'d1';
-selectedBass=patch.selectedBass||'b1';
-selectedKeys=patch.selectedKeys||'k1';
-selectedPads=patch.selectedPads||'p1';
-if(patch.bpm)setBPM(patch.bpm);
-if(patch.swing)setSwing(patch.swing);
-if(patch.rootNote)rootNote=patch.rootNote;
-if(patch.volumes){
-document.getElementById('volDrums').value=patch.volumes.drums||70;
-document.getElementById('volBass').value=patch.volumes.bass||65;
-document.getElementById('volKeys').value=patch.volumes.keys||50;
-document.getElementById('volPads').value=patch.volumes.pads||45;
-}
-if(patch.sequencer)SP=patch.sequencer;
-if(patch.expertFX){
-const fx=patch.expertFX;
-if(fx.kickLag)setKickLag(fx.kickLag);
-if(fx.reverb)setReverb(fx.reverb);
-if(fx.drive)setDrive(fx.drive);
-if(fx.bitcrush)setBitcrush(fx.bitcrush);
-if(fx.lofi)setLofi(fx.lofi);
-if(fx.glide)setGlide(fx.glide);
-}
-buildSequencer();
+importPatchData(patch);
 log('Patch imported');
 }catch(err){
 log(`Import error: ${err.message}`);
@@ -1191,7 +1201,14 @@ document.getElementById('bpm').oninput=e=>setBPM(e.target.value);
 document.getElementById('swing').oninput=e=>setSwing(e.target.value);
 document.getElementById('rootNote').onchange=e=>rootNote=e.target.value;
 
-document.getElementById('volDrums').oninput=e=>kickG.gain.value=e.target.value/100;
+document.getElementById('volDrums').oninput=e=>{
+const v=e.target.value/100;
+kickG.gain.value=v*0.7;
+snareG.gain.value=v*0.5;
+clapG.gain.value=v*0.4;
+chhG.gain.value=v*0.3;
+ohhG.gain.value=v*0.25;
+};
 document.getElementById('volBass').oninput=e=>bassG.gain.value=e.target.value/100;
 document.getElementById('volKeys').oninput=e=>keysG.gain.value=e.target.value/100;
 document.getElementById('volPads').oninput=e=>padsG.gain.value=e.target.value/100;
@@ -1230,7 +1247,7 @@ var intervals=[];
 for(var i=1;i<tapTimes.length;i++)intervals.push(tapTimes[i]-tapTimes[i-1]);
 var avg=intervals.reduce(function(a,b){return a+b},0)/intervals.length;
 var newBpm=Math.round(60000/avg);
-if(newBpm>=58&&newBpm<=160){
+if(newBpm>=60&&newBpm<=180){
 setBPM(newBpm);
 log(`Tap BPM: ${newBpm}`);
 }
@@ -1296,7 +1313,7 @@ log(chainMode?'Chain mode ON':'Chain mode OFF');
 setInterval(function(){
 if(playing){
 try{
-const patch=exportPatch();
+const patch=getPatchData();
 localStorage.setItem('rg69_patch_v1',JSON.stringify(patch));
 }catch(e){
 // Ignore quota errors
@@ -1338,7 +1355,7 @@ if(e.code==='Digit4'){e.preventDefault();document.querySelector('[data-bank="D"]
 // Refinement #25: Keyboard shortcut overlay
 if(e.key==='?'||e.key==='/'){e.preventDefault();document.getElementById('helpOverlay').classList.toggle('show');}
 if(e.code==='KeyT'){e.preventDefault();document.getElementById('tapBtn').click();}
-if(e.code==='KeyF'){e.preventDefault();document.getElementById('randomBtn').click();}
+if(e.code==='KeyF'){e.preventDefault();document.getElementById('randomFxBtn').click();}
 if(e.code==='KeyM'){e.preventDefault();document.querySelector('.mute-btn[data-track="drums"]').click();}
 });
 
