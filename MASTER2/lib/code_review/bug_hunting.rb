@@ -223,7 +223,7 @@ module MASTER
 
             if a.downcase == b.downcase && a != b
               issues << "case mismatch: #{a} vs #{b}"
-            elsif levenshtein(a, b) == 1
+            elsif Utils.levenshtein(a, b) == 1
               issues << "typo? #{a} vs #{b}"
             end
           end
@@ -240,29 +240,6 @@ module MASTER
           singles.map { |s| "single-letter var: #{s}" }
         end
 
-        def levenshtein(a, b)
-          return b.length if a.empty?
-          return a.length if b.empty?
-
-          # Wagner-Fischer dynamic programming algorithm
-          matrix = Array.new(a.length + 1) { Array.new(b.length + 1) }
-
-          (0..a.length).each { |i| matrix[i][0] = i }
-          (0..b.length).each { |j| matrix[0][j] = j }
-
-          (1..a.length).each do |i|
-            (1..b.length).each do |j|
-              cost = a[i - 1] == b[j - 1] ? 0 : 1
-              matrix[i][j] = [
-                matrix[i - 1][j] + 1,      # deletion
-                matrix[i][j - 1] + 1,      # insertion
-                matrix[i - 1][j - 1] + cost # substitution
-              ].min
-            end
-          end
-
-          matrix[a.length][b.length]
-        end
       end
     end
 

@@ -330,11 +330,4 @@ module MASTER
       end
     end
   end
-  # BACKWARD COMPATIBILITY ALIASES
-
-  # Alias for old Log module
-  Log = Logging
-
-  # Alias for old Dmesg module
-  Dmesg = Logging
 end

@@ -27,10 +27,3 @@ require_relative "review/fixer"
 require_relative "review/enforcer"
 require_relative "review/axiom_stats"
 require_relative "review/constitution"
-
-# Backward-compatible aliases
-CodeReview = MASTER::Review::Scanner
-AutoFixer = MASTER::Review::Fixer
-Enforcement = MASTER::Review::Enforcer
-QualityStandards = MASTER::Review::Enforcer
-FileHygiene = MASTER::Review::Scanner::FileHygiene

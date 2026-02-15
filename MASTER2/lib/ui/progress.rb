@@ -13,49 +13,7 @@ module MASTER
       circuit: %w[◯ ◔ ◑ ◕ ●]
     }.freeze
 
-    class Spinner
-      def initialize(message = "Processing...", style: :dots)
-        @message = message
-        @frames = SPINNERS[style] || SPINNERS[:dots]
-        @index = 0
-        @running = false
-        @thread = nil
-      end
 
-      def start
-        @running = true
-        @thread = Thread.new do
-          while @running
-            print "\r  #{@frames[@index % @frames.size]} #{@message}"
-            @index += 1
-            sleep 0.1
-          end
-        end
-        self
-      end
-
-      def update(message)
-        @message = message
-      end
-
-      def stop(final_message = nil)
-        @running = false
-        @thread&.join
-        print "\r#{' ' * 60}\r"
-        puts "  ✓ #{final_message}" if final_message
-      end
-
-      def success(message)
-        stop("#{message}")
-      end
-
-      def error(message)
-        @running = false
-        @thread&.join
-        print "\r#{' ' * 60}\r"
-        puts "  ✗ #{message}"
-      end
-    end
 
     class ProgressBar
       def initialize(total:, message: "Progress")
@@ -97,8 +55,10 @@ module MASTER
     end
 
     def spinner(message = "Processing...", style: :dots, &block)
-      s = Spinner.new(message, style: style)
-      s.start
+      # Delegate to UI.spinner for consistency (avoids duplicate implementation)
+      require_relative 'spinner'
+      s = UI.spinner(message, format: :classic)
+      s.auto_spin
 
       result = yield
       s.success("Done")

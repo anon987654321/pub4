@@ -77,16 +77,6 @@ module MASTER
           }
         end
 
-        strings = code.scan(/"[^"]{10,}"/).flatten
-        dupes = strings.group_by(&:itself).select { |_, v| v.size >= t[:min_duplicate_count] }
-        dupes.each do |str, occurrences|
-          results << {
-            smell: :primitive_obsession,
-            message: "String #{str[0..30]}... repeated #{occurrences.size}x",
-            fix: 'Extract to constant'
-          }
-        end
-
         results
       end
 

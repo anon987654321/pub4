@@ -96,7 +96,7 @@ module MASTER
           error: smells_thresholds[:max_file_lines] * 2
         }
       else
-        { warn: 250, error: 500 }
+        { warn: 250, error: 300 }
       end
 
       length = lines.size

@@ -520,15 +520,4 @@ module MASTER
       end
     end
   end
-
-  # ═══════════════════════════════════════════════════════════════════
-  # BACKWARD COMPATIBILITY ALIASES
-  # ═══════════════════════════════════════════════════════════════════
-
-  Prescan = Analysis::Prescan
-  Introspection = Analysis::Introspection
-  SelfMap = Analysis::Introspection
-  SelfCritique = Analysis::Introspection
-  SelfRepair = Analysis::Introspection
-  SelfTest = Analysis::Introspection
 end

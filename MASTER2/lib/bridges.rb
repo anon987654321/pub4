@@ -602,11 +602,4 @@ module MASTER
       end
     end
   end
-
-  # ═══════════════════════════════════════════════════════════════════
-  # BACKWARD COMPATIBILITY ALIASES
-  # ═══════════════════════════════════════════════════════════════════
-
-  PostproBridge = Bridges::PostproBridge
-  RepligenBridge = Bridges::RepligenBridge
 end

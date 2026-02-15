@@ -9,7 +9,6 @@ module MASTER
   # Ported from MASTER v1, adapted for MASTER2's architecture
   module Engine
     MAX_METHOD_LINES = 20
-    MAX_FILE_LINES = 300
 
     # Scan profiles for tiered axiom checking
     SCAN_PROFILES = {
@@ -84,7 +83,7 @@ module MASTER
         stats = {
           files: files.size,
           total_lines: files.sum { |f| File.read(f).lines.size rescue 0 },
-          long_files: files.count { |f| (File.read(f).lines.size rescue 0) > MAX_FILE_LINES },
+          long_files: files.count { |f| (File.read(f).lines.size rescue 0) > QualityStandards.max_file_lines },
           avg_file_size: 0
         }
 
@@ -183,13 +182,13 @@ module MASTER
 
         # God class
         lines = content.lines.size
-        if lines > MAX_FILE_LINES
+        if lines > QualityStandards.max_file_lines
           issues << {
             file: path,
             type: :god_class,
             lines: lines,
             severity: lines > 500 ? :high : :medium,
-            message: "File has #{lines} lines (max: #{MAX_FILE_LINES})"
+            message: "File has #{lines} lines (max: #{QualityStandards.max_file_lines})"
           }
         end
 

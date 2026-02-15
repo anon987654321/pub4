@@ -252,7 +252,4 @@ module MASTER
       end
     end
   end
-
-  # Backward compatibility alias
-  HooksManager = Hooks
 end

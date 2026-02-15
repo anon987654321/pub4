@@ -163,7 +163,6 @@ module MASTER
 
         violations += check_method_lengths(lines)
         violations += check_require_count(code)
-        violations += check_repeated_strings(code)
         violations
       end
 
@@ -292,25 +291,6 @@ module MASTER
         }]
       end
 
-      def check_repeated_strings(code)
-        violations = []
-        strings = code.scan(/"[^"]{8,}"|'[^']{8,}'/).flatten
-        counts = strings.tally
-
-        counts.each do |str, count|
-          next if count < 3
-
-          violations << {
-            type: :literal,
-            name: :repeated_string,
-            principle: 'DRY',
-            message: "String #{str[0..30]}... repeated #{count} times",
-            severity: :warning
-          }
-        end
-
-        violations
-      end
     end
   end
 end

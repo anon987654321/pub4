@@ -453,6 +453,9 @@ require_relative "html_generator"
 # Quality gates (hoisted from framework/)
 require_relative "quality_gates"
 
+# Backward compatibility aliases (must be loaded last)
+require_relative "compat"
+
 # Web UI
 %w[server].each do |mod|
   begin

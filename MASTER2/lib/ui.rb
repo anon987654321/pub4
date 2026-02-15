@@ -66,14 +66,10 @@ module MASTER
     end
 
     def spinner(message = nil, format: :braille)
-      require 'tty-spinner'
-      TTY::Spinner.new("[:spinner] #{message}", format: format)
-    rescue LoadError
-      Object.new.tap do |s|
-        s.define_singleton_method(:auto_spin) {}
-        s.define_singleton_method(:success) { puts "✓" }
-        s.define_singleton_method(:error) { puts "✗" }
-      end
+      # Delegate to UI::spinner from lib/ui/spinner.rb
+      # This avoids duplication and uses the richer SubtleSpinner fallback
+      require_relative 'ui/spinner'
+      self.class.spinner(message, format: format)
     end
 
     def multi_spinner

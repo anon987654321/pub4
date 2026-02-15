@@ -634,23 +634,4 @@ module MASTER
       end
     end
   end
-
-  # Backward compatibility aliases
-  Planner = Workflow::Planner
-  WorkflowEngine = Workflow::Engine
-  Convergence = Workflow::Convergence
-  Converge = Workflow::Convergence
-
-  # Backward compatibility for PlannerHelper module
-  module PlannerHelper
-    extend self
-
-    def parse_plan(text)
-      Workflow::Planner.parse_plan(text)
-    end
-
-    def generate_plan(goal, max_steps: 10)
-      Workflow::Planner.generate_plan(goal, max_steps: max_steps)
-    end
-  end
 end
