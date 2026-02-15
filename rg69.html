@@ -275,7 +275,8 @@ Pattern Chain Mode
 <button class="close-btn" onclick="document.getElementById('helpOverlay').classList.remove('show')">Close</button>
 </div>
 <script>
-// Pattern Data
+// Constants
+const BPM_MIN=60,BPM_MAX=180;
 const D={
 d1:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
 d2:[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0],
@@ -489,9 +490,13 @@ log('Audio engine initialized');
 
 const loadSamples=async()=>{
 // Refinement #22: Graceful Sample Loading Timeout
-sampleTimeout=setTimeout(function(){
-log('Samples timeout — using synths only');
 samplesLoaded=false;
+let timedOut=false;
+sampleTimeout=setTimeout(function(){
+if(!samplesLoaded){
+timedOut=true;
+log('Samples timeout — using synths only');
+}
 },10000);
 
 try{
@@ -500,11 +505,13 @@ const notes=['A1','C2','A2','C3','A3','C4','A4','C5','A5','C6'];
 const urls={};
 notes.forEach(n=>urls[n]=`${baseUrl}${n}.mp3`);
 pianoSampler=new Tone.Sampler({urls,onload:()=>{
+if(!timedOut){
 clearTimeout(sampleTimeout);
 log('Piano samples loaded');
 pianoSampler.volume.value=-18;
 pianoSampler.connect(keysG);
 samplesLoaded=true;
+}
 }});
 }catch(e){log(`Piano load error: ${e.message}`);}
 
@@ -1203,15 +1210,36 @@ document.getElementById('rootNote').onchange=e=>rootNote=e.target.value;
 
 document.getElementById('volDrums').oninput=e=>{
 const v=e.target.value/100;
+trackVolumes.drums=v;
+if(!trackMuted.drums&&(soloTrack===null||soloTrack==='drums')){
 kickG.gain.value=v*0.7;
 snareG.gain.value=v*0.5;
 clapG.gain.value=v*0.4;
 chhG.gain.value=v*0.3;
 ohhG.gain.value=v*0.25;
+}
 };
-document.getElementById('volBass').oninput=e=>bassG.gain.value=e.target.value/100;
-document.getElementById('volKeys').oninput=e=>keysG.gain.value=e.target.value/100;
-document.getElementById('volPads').oninput=e=>padsG.gain.value=e.target.value/100;
+document.getElementById('volBass').oninput=e=>{
+const v=e.target.value/100;
+trackVolumes.bass=v;
+if(!trackMuted.bass&&(soloTrack===null||soloTrack==='bass')){
+bassG.gain.value=v;
+}
+};
+document.getElementById('volKeys').oninput=e=>{
+const v=e.target.value/100;
+trackVolumes.keys=v;
+if(!trackMuted.keys&&(soloTrack===null||soloTrack==='keys')){
+keysG.gain.value=v;
+}
+};
+document.getElementById('volPads').oninput=e=>{
+const v=e.target.value/100;
+trackVolumes.pads=v;
+if(!trackMuted.pads&&(soloTrack===null||soloTrack==='pads')){
+padsG.gain.value=v;
+}
+};
 
 document.getElementById('kickLag').oninput=e=>setKickLag(e.target.value);
 document.getElementById('snareRush').oninput=e=>{document.getElementById('snareRushVal').textContent=e.target.value;};
@@ -1247,7 +1275,7 @@ var intervals=[];
 for(var i=1;i<tapTimes.length;i++)intervals.push(tapTimes[i]-tapTimes[i-1]);
 var avg=intervals.reduce(function(a,b){return a+b},0)/intervals.length;
 var newBpm=Math.round(60000/avg);
-if(newBpm>=60&&newBpm<=180){
+if(newBpm>=BPM_MIN&&newBpm<=BPM_MAX){
 setBPM(newBpm);
 log(`Tap BPM: ${newBpm}`);
 }
