@@ -2,15 +2,16 @@
 
 module MASTER
   class Executor
-    module Patterns
-      # Pattern methods are already defined in individual modules above
-      # This module exists for backward compatibility
-    end
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Context module - Context building and response parsing
-    # ═══════════════════════════════════════════════════════════════════════════
     module Context
+      SIMPLE_SECTIONS = %w[environment shell_patterns behavior].freeze
+      LABELED_SECTIONS = {
+        "task_workflow" => "TASK WORKFLOW",
+        "tone" => "COMMUNICATION",
+        "safety" => "SAFETY",
+        "critical_axioms" => "CORE AXIOMS",
+        "anti_simulation" => "EVIDENCE RULES",
+      }.freeze
+
       def self.system_prompt_config
         @system_prompt_config ||= if File.exist?(Executor::SYSTEM_PROMPT_FILE)
           YAML.safe_load_file(Executor::SYSTEM_PROMPT_FILE) rescue {}
@@ -32,23 +33,12 @@ module MASTER
 
         sections = [identity]
 
-        # Environment
-        sections << config["environment"] if config["environment"]
+        # Add simple sections
+        SIMPLE_SECTIONS.each { |key| sections << config[key] if config[key] }
 
-        # Shell patterns
-        sections << config["shell_patterns"] if config["shell_patterns"]
-
-        # Behavior
-        sections << config["behavior"] if config["behavior"]
-
-        # Task workflow
-        if config["task_workflow"]
-          sections << "TASK WORKFLOW:\n#{config["task_workflow"]}"
-        end
-
-        # Tone
-        if config["tone"]
-          sections << "COMMUNICATION:\n#{config["tone"]}"
+        # Add labeled sections
+        LABELED_SECTIONS.each do |key, label|
+          sections << "#{label}:\n#{config[key]}" if config[key]
         end
 
         # Commands (optional)
@@ -57,21 +47,6 @@ module MASTER
             YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
           CMD
           sections << commands
-        end
-
-        # Safety / Injection defense
-        if config["safety"]
-          sections << "SAFETY:\n#{config["safety"]}"
-        end
-
-        # Critical axioms
-        if config["critical_axioms"]
-          sections << "CORE AXIOMS:\n#{config["critical_axioms"]}"
-        end
-
-        # Anti-simulation rules
-        if config["anti_simulation"]
-          sections << "EVIDENCE RULES:\n#{config["anti_simulation"]}"
         end
 
         # Check for active persona
@@ -96,28 +71,8 @@ module MASTER
         end.join("\n\n")
 
         # Build tool list and format from TOOLS hash
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
-
-        # Generate tool format examples
-        # NOTE: These patterns are derived from TOOLS keys but usage strings are hardcoded
-        # TODO: Consider extending TOOLS hash with usage patterns for single source of truth
-        tool_format = TOOLS.keys.map { |tool|
-          case tool
-          when :ask_llm then '- ask_llm "your question"'
-          when :web_search then '- web_search "query"'
-          when :browse_page then '- browse_page "url"'
-          when :file_read then '- file_read "path"'
-          when :file_write then '- file_write "path" "content"'
-          when :analyze_code then '- analyze_code "path"'
-          when :fix_code then '- fix_code "path"'
-          when :shell_command then '- shell_command "command"'
-          when :code_execution then "- code_execution ```ruby\n  code here\n  ```"
-          when :council_review then '- council_review "text to review"'
-          when :memory_search then '- memory_search "query"'
-          when :self_test then '- self_test'
-          else "- #{tool} (use appropriately)"
-          end
-        }.join("\n")
+        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+        tool_format = TOOLS.map { |k, v| "- #{v[:usage]}" }.join("\n")
 
         <<~TASK
           TASK: #{goal}
@@ -164,11 +119,6 @@ module MASTER
                  "ask_llm \"#{text[0..MAX_PARSE_FALLBACK_LENGTH]}\""
 
         { thought: thought, action: action }
-      end
-
-      def execute_tool(action_str)
-        # Delegate to Tools module
-        Tools.instance_method(:execute_tool).bind(self).call(action_str)
       end
     end
   end

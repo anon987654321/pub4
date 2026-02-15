@@ -118,11 +118,6 @@ module MASTER
       end
     end
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # ReWOO pattern implementation
-    # Reason Without Observation (batch reasoning)
-    # Best for: cost-sensitive tasks, pure reasoning, minimal tool calls
-    # Reduces LLM calls by batching all reasoning upfront
-    # ═══════════════════════════════════════════════════════════════════════════
+    # --- ReWOO pattern implementation ---
   end
 end

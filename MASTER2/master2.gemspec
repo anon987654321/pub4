@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "lib/master"
+
 Gem::Specification.new do |s|
   s.name          = "master2"
-  s.version       = "1.0.0"
+  s.version       = MASTER::VERSION
   s.summary       = "Constitutional AI Code Quality System"
   s.description   = "MASTER2 is a self-governing AI development partner with constitutional governance, adversarial council deliberation, four execution reasoning patterns, and self-improvement capabilities. OpenBSD-first."
   s.authors       = ["anon987654321"]

@@ -4,14 +4,13 @@ module MASTER
   class Executor
     module React
       def execute_react(goal, tier:)
-        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        start_time = MASTER::Utils.monotonic_now
 
         while @step < @max_steps
-          # Check wall clock timeout
-          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-          if elapsed > WALL_CLOCK_LIMIT_SECONDS
-            best_answer = @history.last&.[](:observation) || "Timed out"
-            return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
           end
 
           @step += 1
@@ -31,8 +30,8 @@ module MASTER
           UI.dim("  🔧 #{parsed[:action][0..60]}")
 
           # Check for completion
-          if parsed[:action] =~ /^(ANSWER|DONE|COMPLETE):/i
-            answer = parsed[:action].sub(/^(ANSWER|DONE|COMPLETE):\s*/i, "")
+          if parsed[:action] =~ COMPLETION_PATTERN
+            answer = parsed[:action].sub(COMPLETION_PATTERN, "")
             return Result.ok(
               answer: answer,
               steps: @step,
@@ -50,63 +49,8 @@ module MASTER
 
         Result.err("Max steps (#{@max_steps}) reached without completion")
       end
-
-      def build_context(goal)
-        config = self.class.system_prompt_config
-
-        # Core identity and rules
-        identity = if config["identity"]
-          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
-        else
-          "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
-        end
-
-        rules = (config["rules"] || []).map { |r| "- #{r}" }.join("\n")
-
-        # Available tools
-        tools_desc = TOOLS.map { |name, desc| "- #{name}: #{desc}" }.join("\n")
-
-        # Recent history
-        history_str = if @history.empty?
-          "This is the first step."
-        else
-          @history.last(5).map do |h|
-            "Step #{h[:step]}: Thought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]}"
-          end.join("\n\n")
-        end
-
-        <<~PROMPT
-          #{identity}
-
-          #{rules}
-
-          TOOLS:
-          #{tools_desc}
-
-          HISTORY:
-          #{history_str}
-
-          TASK: #{goal}
-
-          Respond with:
-          Thought: [your reasoning]
-          Action: [tool_name: arguments] OR ANSWER: [final answer]
-        PROMPT
-      end
-
-      def parse_response(text)
-        thought = text[/Thought:\s*(.+?)(?=Action:|$)/mi, 1]&.strip || ""
-        action = text[/Action:\s*(.+?)(?=Observation:|$)/mi, 1]&.strip || ""
-
-        { thought: thought, action: action }
-      end
     end
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Pre-Act pattern implementation
-    # Plan first, then execute
-    # Best for: multi-step tasks, structured workflows, clear sequences
-    # 70% better action recall than ReAct (arXiv:2505.09970)
-    # ═══════════════════════════════════════════════════════════════════════════
+    # --- Pre-Act pattern implementation ---
   end
 end

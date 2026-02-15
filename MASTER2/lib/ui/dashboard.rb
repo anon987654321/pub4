@@ -44,9 +44,7 @@ module MASTER
       spent = cap - LLM.budget_remaining
       pct = (spent / cap * 100).round(1)
 
-      bar_width = 30
-      filled = (pct / 100.0 * bar_width).round
-      bar = "[#{'█' * filled}#{'░' * (bar_width - filled)}]"
+      bar = UI.render_bar(pct)
 
       puts "  #{@ui.bold('Budget Usage')}"
       puts "    #{bar} #{pct}%"

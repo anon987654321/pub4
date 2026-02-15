@@ -6,6 +6,13 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
+require_relative "executor/momentum"
+require_relative "executor/react"
+require_relative "executor/preact"
+require_relative "executor/rewoo"
+require_relative "executor/reflexion"
+require_relative "executor/tools"
+require_relative "executor/context"
 
 module MASTER
 
@@ -24,6 +31,8 @@ module MASTER
     MAX_SHELL_OUTPUT = 1000
     SIMPLE_QUERY_LENGTH_THRESHOLD = 200
     MAX_PARSE_FALLBACK_LENGTH = 100
+
+    COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i.freeze
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
@@ -52,18 +61,18 @@ module MASTER
 
     # All available tools
     TOOLS = {
-      ask_llm: "Ask the LLM a question directly",
-      web_search: "Search the web for information",
-      browse_page: "Browse a URL and extract content",
-      memory_search: "Search past interactions and learnings",
-      file_read: "Read a file's contents",
-      file_write: "Write content to a file",
-      analyze_code: "Analyze code for issues and opportunities",
-      fix_code: "Auto-fix code violations",
-      shell_command: "Run a shell command",
-      code_execution: "Execute Ruby code",
-      council_review: "Run adversarial council review",
-      self_test: "Run self-test on MASTER",
+      ask_llm: { desc: "Ask the LLM a question directly", usage: 'ask_llm "your question"' },
+      web_search: { desc: "Search the web for information", usage: 'web_search "query"' },
+      browse_page: { desc: "Browse a URL and extract content", usage: 'browse_page "url"' },
+      memory_search: { desc: "Search past interactions and learnings", usage: 'memory_search "query"' },
+      file_read: { desc: "Read a file's contents", usage: 'file_read "path"' },
+      file_write: { desc: "Write content to a file", usage: 'file_write "path" "content"' },
+      analyze_code: { desc: "Analyze code for issues and opportunities", usage: 'analyze_code "path"' },
+      fix_code: { desc: "Auto-fix code violations", usage: 'fix_code "path"' },
+      shell_command: { desc: "Run a shell command", usage: 'shell_command "command"' },
+      code_execution: { desc: "Execute Ruby code", usage: "code_execution ```ruby\n  code here\n  ```" },
+      council_review: { desc: "Run adversarial council review", usage: 'council_review "text to review"' },
+      self_test: { desc: "Run self-test on MASTER", usage: 'self_test' },
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
@@ -75,6 +84,9 @@ module MASTER
       @plan = []
       @step = 0
     end
+
+    include Context
+    include Tools
 
     # Main entry - auto-selects pattern or uses specified
     def call(goal, pattern: :auto, tier: nil)
@@ -115,6 +127,14 @@ module MASTER
       when :rewoo     then execute_rewoo(goal, tier: tier)
       when :reflexion then execute_reflexion(goal, tier: tier)
       else execute_react(goal, tier: tier)
+      end
+    end
+
+    def check_timeout!(start_time)
+      elapsed = MASTER::Utils.monotonic_now - start_time
+      if elapsed > WALL_CLOCK_LIMIT_SECONDS
+        best_answer = @history.last&.[](:observation) || "Timed out"
+        raise Result::Error.new("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
       end
     end
 
@@ -172,27 +192,5 @@ module MASTER
         result
       end
     end
-
-    def self.system_prompt_config
-      @system_prompt_config ||= if File.exist?(SYSTEM_PROMPT_FILE)
-        YAML.safe_load_file(SYSTEM_PROMPT_FILE) rescue {}
-      else
-        {}
-      end
-    end
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # ReAct pattern implementation
-    # Tight thought-action-observation loop
-    # Best for: exploratory tasks, dynamic adaptation, unknown territory
-    # ═══════════════════════════════════════════════════════════════════════════
   end
 end
-
-require_relative "executor/momentum"
-require_relative "executor/react"
-require_relative "executor/preact"
-require_relative "executor/rewoo"
-require_relative "executor/reflexion"
-require_relative "executor/tools"
-require_relative "executor/context"

@@ -189,13 +189,7 @@ module MASTER
           # Use array form to avoid shell interpretation - prevents injection attacks
           system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
         else
-          # For code strings, use RubyVM::InstructionSequence for parse-only validation
-          begin
-            RubyVM::InstructionSequence.compile(target.to_s)
-            true
-          rescue SyntaxError
-            false
-          end
+          MASTER::Utils.valid_ruby?(target.to_s)
         end
       end
 
@@ -236,12 +230,14 @@ module MASTER
         return Result.err("No code provided") unless code
 
         # Ruby syntax check using safe compilation
-        begin
-          RubyVM::InstructionSequence.compile(code)
+        if MASTER::Utils.valid_ruby?(code)
           Result.ok({ valid: true })
-        rescue SyntaxError => e
-          Result.err("Syntax error: #{e.message}")
-        rescue StandardError => e
+        else
+          Result.err("Syntax error in code")
+        end
+      rescue SyntaxError => e
+        Result.err("Syntax error: #{e.message}")
+      rescue StandardError => e
           # For non-Ruby code or other errors, skip validation
           Result.ok({ skipped: true, reason: e.message })
         end

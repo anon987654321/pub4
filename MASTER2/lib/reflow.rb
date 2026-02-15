@@ -19,7 +19,6 @@ module MASTER
     # Language detection patterns
     LANGUAGE_PATTERNS = {
       ruby: /\.rb$/,
-      python: /\.py$/,
       javascript: /\.(js|jsx|mjs)$/,
       typescript: /\.(ts|tsx)$/,
       go: /\.go$/,
@@ -93,7 +92,6 @@ module MASTER
       def extract_sections(content, lang)
         case lang
         when :ruby then extract_ruby_sections(content)
-        when :python then extract_python_sections(content)
         when :javascript, :typescript then extract_js_sections(content)
         when :go then extract_go_sections(content)
         when :markdown then extract_markdown_sections(content)
@@ -118,33 +116,6 @@ module MASTER
                  when "protected" then visibility = :internal; nil
                  when /^def\s+self\./ then :public_api
                  when /^def\s/ then visibility
-                 else nil
-                 end
-
-          if type && type != current[:type]
-            sections << current unless current[:lines].empty?
-            current = { type: type, lines: [] }
-          end
-          current[:lines] << line
-        end
-
-        sections << current unless current[:lines].empty?
-        sections
-      end
-
-      def extract_python_sections(content)
-        sections = []
-        current = { type: :unknown, lines: [] }
-
-        content.each_line do |line|
-          type = case line.strip
-                 when /^#!/ then :meta
-                 when /^#.*coding[:=]/ then :meta
-                 when /^(from|import)\s/ then :imports
-                 when /^[A-Z][A-Z0-9_]*\s*=/ then :constants
-                 when /^class\s/ then :types
-                 when /^def\s+_[^_]/ then :private
-                 when /^def\s/ then :public_api
                  else nil
                  end
 

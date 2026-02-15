@@ -44,6 +44,11 @@ module MASTER
       ICONS[name.to_sym] || "·"
     end
 
+    def render_bar(pct, width: 30)
+      filled = (pct / 100.0 * width).round
+      "[#{'█' * filled}#{'░' * (width - filled)}]"
+    end
+
     def status(prefix, message, success: true)
       i = success ? icon(:success) : icon(:failure)
       "#{prefix}: #{message} #{i}"
@@ -368,7 +373,7 @@ module MASTER
       result = yield
       s.success
       result
-    rescue => e
+    rescue StandardError => e
       s.error
       raise
     end
@@ -417,7 +422,7 @@ module MASTER
     def render_response(text)
       # Try markdown rendering, fallback to plain
       markdown(text)
-    rescue => e
+    rescue StandardError => e
       text
     end
 

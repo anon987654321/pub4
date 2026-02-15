@@ -231,11 +231,5 @@ module MASTER
         @history.shift if @history.size > MAX_HISTORY_ENTRIES
       end
     end
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Patterns module - Pattern execution orchestration
-    # Note: Most patterns are defined above but some duplicates exist here
-    # for compatibility with the original file organization
-    # ═══════════════════════════════════════════════════════════════════════════
   end
 end
