@@ -93,24 +93,40 @@ module MASTER
         when :file_edit
           if op.data[:original]
             File.write(op.data[:path], op.data[:original])
+            Result.ok(restored: op.data[:path])
+          else
+            Result.err("No original content to restore")
           end
         when :file_create
-          File.delete(op.data[:path]) if File.exist?(op.data[:path])
+          if File.exist?(op.data[:path])
+            File.delete(op.data[:path])
+            Result.ok(deleted: op.data[:path])
+          else
+            Result.ok(already_gone: op.data[:path])
+          end
         when :file_delete
           File.write(op.data[:path], op.data[:content])
+          Result.ok(restored: op.data[:path])
+        else
+          Result.err("Unknown operation type: #{op.type}")
         end
       end
 
       def apply(op)
         case op.type
         when :file_edit
-          # Can't redo edit without new content - this is a limitation
-          puts "  Warning: Cannot redo file edit"
+          Result.err("Cannot redo file edit without new content")
         when :file_create
-          # File was deleted on undo, would need content to recreate
-          puts "  Warning: Cannot redo file create"
+          Result.err("Cannot redo file create without content")
         when :file_delete
-          File.delete(op.data[:path]) if File.exist?(op.data[:path])
+          if File.exist?(op.data[:path])
+            File.delete(op.data[:path])
+            Result.ok(deleted: op.data[:path])
+          else
+            Result.err("File not found: #{op.data[:path]}")
+          end
+        else
+          Result.err("Unknown operation type: #{op.type}")
         end
       end
     end

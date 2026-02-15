@@ -20,22 +20,22 @@ module MASTER
               "Check if concept fits inside existing module first",
               "New file only justified if would exceed 200 lines when added to existing code",
               "Prefer adding methods to existing modules over creating new modules"
-            ]
-          },
+            ].freeze
+          }.freeze,
           file_size: {
             guidelines: [
               "Files under 30 lines should be merged into parent module",
               "Target: 15-25 files in lib/, not 60+"
-            ]
-          },
+            ].freeze
+          }.freeze,
           pr_rules: {
             guidelines: [
               "Never create a PR that overlaps with an existing open PR",
               "Every PR must list which existing files it modifies (not just new files)",
               "Bug fixes and new features must be in separate PRs"
-            ]
-          }
-        },
+            ].freeze
+          }.freeze
+        }.freeze,
         canonical_map: {
           "result.rb" => "Result monad (do not duplicate)",
           "llm.rb" => "All LLM/OpenRouter logic including context window management",
@@ -46,7 +46,7 @@ module MASTER
           "introspection.rb" => "All self-analysis (critique, reflection)",
           "self_test.rb" => "All testing and self-repair",
           "enforcement.rb" => "Axiom enforcement (single entry point)"
-        }
+        }.freeze
       }.freeze
 
       # Simulated execution scenarios for safety pre-checks
@@ -56,17 +56,17 @@ module MASTER
       SIMULATED_SCENARIOS = [
         {
           scenario: "empty_input",
-          cases: [nil, "", [], 0, false]
-        },
+          cases: [nil, "", [], 0, false].freeze
+        }.freeze,
         {
           scenario: "boundary_values",
           cases: [
-            2**63 - 1,  # max int
-            "x" * 10_000,  # very long string
-            "\u{1F600}",  # unicode emoji
+            2**63 - 1,
+            "x" * 10_000,
+            "\u{1F600}",
             Float::INFINITY
-          ]
-        },
+          ].freeze
+        }.freeze,
         {
           scenario: "malformed_input",
           cases: [
@@ -74,8 +74,8 @@ module MASTER
             "SELECT * FROM users; DROP TABLE users;",
             "<script>alert('xss')</script>",
             "../../../etc/passwd"
-          ]
-        }
+          ].freeze
+        }.freeze
       ].freeze
 
       @smells_mutex = Mutex.new
