@@ -304,7 +304,7 @@ let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
 // Tone.js setup - Audio components (SOLID: Single Responsibility)
-let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN;
+let kickN,kickClick,kickClickBP,snareN,snareRing,snareRingBP,clapN,hatN,openN,bassN,bassSub,keysN,padsN,padsFilter,padsLFO;
 let drumG,bassG,keysG,padsG,masterG,limiter,analyser;
 let analogSum,vintageSat,phaserFX,lofiNoise;
 // Lo-fi processing elements
@@ -318,15 +318,42 @@ let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 // Init audio engine with analog summing and lo-fi character (KISS: Keep It Simple)
 const initAudio=()=>{
   // Synths - Clear, self-explanatory names (POLA: Principle of Least Astonishment)
+  // Kick: layered MembraneSynth (body) + NoiseSynth (click transient)
   kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}}).toDestination();
+  const kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}}).toDestination();
+  const kickClickBP=new Tone.Filter(1200,'bandpass');
+  kickClickBP.Q.value=5;
+  kickClick.disconnect();
+  kickClick.connect(kickClickBP);
+  
+  // Snare: layered NoiseSynth (body) + triangle ring (E4)
   snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}}).toDestination();
+  const snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
+  const snareRingBP=new Tone.Filter(400,'bandpass');
+  snareRingBP.Q.value=3;
+  snareRing.disconnect();
+  snareRing.connect(snareRingBP);
+  
   clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
+  
+  // Hats: MetalSynth with higher harmonicity and resonance
   hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
   openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
+  
   bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}}).toDestination();
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
-  keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}}).toDestination();
-  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'sine'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}}).toDestination();
+  
+  // Keys: FM synth with velocity-reactive parameters
+  keysN=new Tone.PolySynth(Tone.FMSynth,{harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}}).toDestination();
+  
+  // Pads: fatsawtooth (count:3, spread:25) with LFO-modulated lowpass filter
+  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}}).toDestination();
+  const padsFilter=new Tone.Filter(1000,'lowpass');
+  const padsLFO=new Tone.LFO(0.12,600,1400);
+  padsLFO.start();
+  padsLFO.connect(padsFilter.frequency);
+  padsN.disconnect();
+  padsN.connect(padsFilter);
   
   // Per-track gain nodes (analog-style summing mixer)
   drumG=new Tone.Gain(.8);
@@ -414,11 +441,11 @@ const initAudio=()=>{
   masterCrush.wet.value=0;
   
   // Connect synths to gain stages (DRY: reusable connection pattern)
-  [kickN,snareN,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
+  [kickN,kickClickBP,snareN,snareRingBP,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
   bassN.disconnect();bassN.connect(bassG);
   bassSub.disconnect();bassSub.connect(bassG);
   keysN.disconnect();keysN.connect(keysG);
-  padsN.disconnect();padsN.connect(padsG);
+  padsFilter.disconnect();padsFilter.connect(padsG);
   
   // Wire additional FX into chains
   // Bass: gain → distortion → analogSum
@@ -557,8 +584,14 @@ const loop=new Tone.Sequence((time,s)=>{
   const playP=isSolo?muteSolo.p.s:!muteSolo.p.m;
   if(playD){
     const sd=getSwingDelay('d',s);
-    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s])kickN.triggerAttackRelease('C1',.1,time+sd+getMicroTiming('kick',s),d.k[s]);
-    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s])snareN.triggerAttackRelease(.1,time+sd+getMicroTiming('snare',s),d.s[s]);
+    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s]){
+      kickN.triggerAttackRelease('C1',.1,time+sd+getMicroTiming('kick',s),d.k[s]);
+      kickClick.triggerAttackRelease(.02,time+sd+getMicroTiming('kick',s),d.k[s]*.5); // Layered click
+    }
+    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s]){
+      snareN.triggerAttackRelease(.1,time+sd+getMicroTiming('snare',s),d.s[s]);
+      snareRing.triggerAttackRelease('E4',.15,time+sd+getMicroTiming('snare',s),d.s[s]*.3); // Triangle ring
+    }
     if((d.c[s]||SP[currentBank].clap[s].on)&&d.c[s])clapN.triggerAttackRelease(.15,time+sd,d.c[s]);
     if((d.h[s]||SP[currentBank].hat[s].on)&&d.h[s])hatN.triggerAttackRelease('16n',time+sd+getMicroTiming('hat',s),d.h[s]);
     if((d.o[s]||SP[currentBank].open[s].on)&&d.o[s])openN.triggerAttackRelease('8n',time+sd,d.o[s]);
