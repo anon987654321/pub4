@@ -65,3 +65,18 @@ auto_remediation:
   sort: "${(o)arr} or ${(O)arr}"
   find: "**/*.ext(.)"
   sudo: "doas"
+
+# Token economics — why pure zsh saves LLM tokens
+token_economics:
+  philosophy: >
+    Replacing multi-tool shell pipelines with pure zsh parameter expansion
+    eliminates process boundaries, collapses multiple grammars into one,
+    reduces reasoning entropy for LLMs, and converts runtime overhead
+    into in-memory transforms — saving both tokens and wall-clock time.
+  example_bad:
+    code: "awk -F, '{print $4}' | sed 's/\\r//g' | tr '[:upper:]' '[:lower:]'"
+    cost: "3 grammars, pipes + subshells, I/O transformations"
+  example_good:
+    code: "cleaned=${var//$'\\r'/}; lower=${(L)cleaned}; fourth=${${(s:,:)lower}[4]}"
+    cost: "One grammar, one evaluation model, no process boundaries"
+  benefit: "Model reasons locally instead of globally across pipeline"

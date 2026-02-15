@@ -165,3 +165,60 @@ language:
   norwegian:
     dialect: "bokmål"
     rules: ["short sentences", "avoid anglicisms"]
+
+# Self-improvement — convergence mandate
+self_improvement:
+  continuous: true
+  mandate: "ALL violations found MUST be autofixed — zero tolerance for manual fixes"
+  convergence_loop: "Iterate until no violations remain and no further improvements possible"
+  auto_refine:
+    enabled: true
+    trigger: "on_every_violation"
+    mode: "convergence"
+
+# Autofix — safe transformations
+autofix:
+  enabled: true
+  confidence_threshold: 0.90
+  safe_transformations:
+    whitespace_normalization: true
+    import_sorting: true
+    quote_style_consistency: true
+    trailing_comma_addition: true
+    frozen_string_literal: true
+
+# Formatting rules
+formatting:
+  indent: 2
+  quotes: "double"
+  ruby:
+    frozen_string_literal: true
+  rails:
+    convention: "standard Rails conventions"
+  threshold: 0.98
+
+# Constraints — allowed languages and banned tools
+constraints:
+  allowed_languages: [ruby, zsh]
+  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  enforcement: "critical"
+
+# Comment preservation policy
+comments:
+  preserve: true
+  rule: "Preserve ALL existing comments when editing"
+  removal_criteria:
+    redundant: true
+    self_explanatory: true
+    keep: ["workarounds", "performance notes", "decision context", "warnings"]
+    remove: ["restates the code", "obvious getters/setters"]
+
+# CLI integration — supported platforms
+cli_integration:
+  primary_platform: "OpenBSD 7.6+"
+  primary_shell: "zsh"
+  supported_platforms:
+    - "OpenBSD 7.6+ (primary)"
+    - "Linux with Zsh"
+    - "macOS with Zsh"
+  session_management: true
