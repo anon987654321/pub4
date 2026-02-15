@@ -103,7 +103,14 @@ module MASTER
         primary, selected_tier = resolve_model(model, tier)
         return Result.err("No model available.") unless primary
 
-        models_to_try = [primary] + (fallbacks || [])
+        # Auto-fallback: try all models in the tier, then cheaper tiers
+        models_to_try = if fallbacks
+                          [primary] + fallbacks
+                        else
+                          tier_models = model_tiers[selected_tier] || []
+                          others = tier_models.reject { |m| m == primary }
+                          [primary] + others
+                        end
         last_error = nil
 
         models_to_try.each do |current_model|
@@ -129,7 +136,7 @@ module MASTER
       private
 
       def resolve_model(model, tier)
-        primary = model || select_model_for_tier(tier || forced_tier || :strong)
+        primary = model || select_model_for_tier(tier || forced_tier || :premium)
         return [nil, nil] unless primary
 
         model_short = extract_model_name(primary)

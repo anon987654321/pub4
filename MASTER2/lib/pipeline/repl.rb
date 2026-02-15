@@ -20,10 +20,10 @@ module MASTER
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
-        initial_model = LLM.send(:select_model_for_tier, :fast) rescue nil
+        initial_model = LLM.send(:select_model_for_tier, :premium) rescue nil
         if initial_model
           LLM.current_model = LLM.extract_model_name(initial_model)
-          LLM.current_tier = :fast
+          LLM.current_tier = :premium
         end
       end
 

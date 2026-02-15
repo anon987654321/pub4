@@ -7,4 +7,4 @@ Gemfile.lock
 nul
 :memory:/
 OUTPUT_*.md
-MASTER2/var/
+var/
