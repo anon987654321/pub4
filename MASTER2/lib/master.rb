@@ -273,18 +273,20 @@ module MASTER
         smoke_result = smoke_test
 
         # Dense dmesg - no fluff, no breathing room
-        puts c("MASTER #{VERSION} #1: #{timestamp}")
-        puts c("#{user}@#{host}:#{MASTER.root}")
-        puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
-        puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
-        puts c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas")
-        puts c("llm0 at db0: openrouter #{tier_models}")
-        puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")
-        puts c("tts0 at budget0: #{tts_status}")
-        puts c("self0 at tts0: #{self_awareness_summary}")
-        puts c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}")
-        puts c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}")
-        puts c("smoke0 at executor0: #{smoke_result}")
+        puts [
+          c("MASTER #{VERSION} #1: #{timestamp}"),
+          c("#{user}@#{host}:#{MASTER.root}"),
+          c("cpu0 at mainbus0: #{RUBY_PLATFORM}"),
+          c("ruby0 at cpu0: ruby #{RUBY_VERSION}"),
+          c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas"),
+          c("llm0 at db0: openrouter #{tier_models}"),
+          c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining"),
+          c("tts0 at budget0: #{tts_status}"),
+          c("self0 at tts0: #{self_awareness_summary}"),
+          c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}"),
+          c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
+          c("smoke0 at executor0: #{smoke_result}")
+        ].join("\n")
 
         yield if block_given?  # Allow caller to inject web line before boot summary
 

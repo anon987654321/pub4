@@ -6,6 +6,7 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
+require_relative "stages"
 
 module MASTER
 
@@ -28,16 +29,8 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
-    # Dangerous patterns to block (injection prevention)
-    # Synchronized with Stages::Guard::DANGEROUS_PATTERNS
-    DANGEROUS_PATTERNS = [
-      /rm\s+-r[f]?\s+\//,
-      />\s*\/dev\/[sh]da/,
-      /DROP\s+TABLE/i,
-      /FORMAT\s+[A-Z]:/i,
-      /mkfs\./,
-      /dd\s+if=/,
-    ].freeze
+    # Reference to dangerous patterns defined in Stages::Guard
+    DANGEROUS_PATTERNS = Stages::Guard::DANGEROUS_PATTERNS
 
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
