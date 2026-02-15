@@ -4,7 +4,9 @@ module MASTER
   module Autocomplete
     extend self
 
-    COMMANDS = %w[help status budget clear history refactor chamber evolve speak exit quit ask scan].freeze
+    COMMANDS = %w[help status budget clear history refactor chamber evolve speak exit quit ask scan
+                  model models pattern persona personas session schedule heartbeat policy phase
+                  selftest fix harvest repligen postpro browse queue].freeze
 
     def complete(partial, context: nil)
       completions = []
@@ -61,15 +63,20 @@ module MASTER
 
       reader.on(:keypress) do |event|
         if event.key.name == :tab
-          word = event.line.text.split.last || ''
+          line_text = event.line.respond_to?(:text) ? event.line.text : event.line.to_s
+          word = line_text.split.last || ''
           matches = complete(word)
           if matches.size == 1
-            # Replace word with completion
-            event.line.replace(event.line.text.sub(/#{Regexp.escape(word)}$/, matches.first))
+            replacement = line_text.sub(/#{Regexp.escape(word)}$/, matches.first)
+            if event.line.respond_to?(:replace)
+              event.line.replace(replacement)
+            end
           elsif matches.size > 1
             puts "\n#{matches.join('  ')}"
           end
         end
+      rescue StandardError => e
+        # Silently ignore autocomplete errors
       end
     end
   end

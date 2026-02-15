@@ -6,7 +6,6 @@ module MASTER
       SIMPLE_SECTIONS = %w[environment shell_patterns behavior].freeze
       LABELED_SECTIONS = {
         "task_workflow" => "TASK WORKFLOW",
-        "tone" => "COMMUNICATION",
         "safety" => "SAFETY",
         "critical_axioms" => "CORE AXIOMS",
         "anti_simulation" => "EVIDENCE RULES",

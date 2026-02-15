@@ -41,7 +41,7 @@ module MASTER
       end
 
       def trace_level
-        (ENV['MASTER_TRACE'] || '0').to_i
+        (ENV['MASTER_TRACE'] || '1').to_i
       end
 
       def enabled?(level = LLM_ONLY)
@@ -113,24 +113,12 @@ module MASTER
         details += ", $#{cost.round(4)}" if cost.positive?
         details += ", #{latency}ms" if latency
         dmesg_log('llm0', parent: tier.to_s, message: "#{model}, #{details}", level: LLM_ONLY)
-
-        if logging_enabled?
-          info("LLM call",
-            tier: tier,
-            model: model,
-            tokens_in: tokens_in,
-            tokens_out: tokens_out,
-            cost: cost,
-            latency: latency
-          )
-        end
       end
 
       # Log LLM error
       def llm_error(tier:, error:)
         msg = error.to_s.gsub(/\s+/, ' ')[0..60]
-        dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: SILENT)
-        error("LLM error", tier: tier, error: error.to_s) if logging_enabled?
+        dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: LLM_ONLY)
       end
 
       # Log autonomy event

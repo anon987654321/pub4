@@ -131,7 +131,7 @@ module MASTER
       private
 
       def resolve_model(model, tier)
-        primary = model || select_model_for_tier(tier || self.tier)
+        primary = model || select_model_for_tier(tier || forced_tier || :strong)
         return [nil, nil] unless primary
 
         model_short = extract_model_name(primary)
