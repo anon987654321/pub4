@@ -83,16 +83,8 @@ module MASTER
         tier = LLM.tier
         model = nil
 
-        # Find an available model for the current tier
-        LLM::TIER_ORDER.each do |t|
-          LLM.model_tiers[t]&.each do |m|
-            if LLM.circuit_closed?(m)
-              model = m
-              break
-            end
-          end
-          break if model
-        end
+        # Find an available model
+        model = LLM.all_models.find { |m| LLM.circuit_closed?(m) }
 
         return Result.err("All models unavailable.") unless model
 

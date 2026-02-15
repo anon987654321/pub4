@@ -94,22 +94,23 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         if total_spent >= spending_cap
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}.")
         end
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
 
-        primary, selected_tier = resolve_model(model, tier)
+        primary = model || select_model
         return Result.err("No model available.") unless primary
 
-        # Auto-fallback: try all models in the tier, then cheaper tiers
+        @current_model = extract_model_name(primary)
+
+        # Auto-fallback: try all models in order
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         else
-                          tier_models = model_tiers[selected_tier] || []
-                          others = tier_models.reject { |m| m == primary }
-                          [primary] + others
+                          remaining = all_models.reject { |m| m == primary }
+                          [primary] + remaining
                         end
         last_error = nil
 
@@ -119,10 +120,10 @@ module MASTER
           result = try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
 
           if result.ok?
-            process_llm_response(result, current_model, prompt, selected_tier, stream)
+            process_llm_response(result, current_model, prompt, stream)
             return Result.ok(result.value)
           else
-            handle_llm_failure(result, current_model, selected_tier)
+            handle_llm_failure(result, current_model)
             last_error = result.error
           end
         end
@@ -135,17 +136,12 @@ module MASTER
 
       private
 
-      def resolve_model(model, tier)
-        primary = model || select_model_for_tier(tier || forced_tier || :strong)
-        return [nil, nil] unless primary
+      def resolve_model(model)
+        primary = model || select_model
+        return nil unless primary
 
-        model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
-
-        @current_model = model_short
-        @current_tier = selected_tier
-
-        [primary, selected_tier]
+        @current_model = extract_model_name(primary)
+        primary
       end
 
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
@@ -165,20 +161,20 @@ module MASTER
         result
       end
 
-      def process_llm_response(result, current_model, prompt, selected_tier, stream)
+      def process_llm_response(result, current_model, prompt, stream)
         data = result.value
         tokens_in = data[:tokens_in]
         tokens_out = data[:tokens_out]
         cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
 
-        Dmesg.llm(tier: selected_tier, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
-        SemanticCache.store(prompt, data, tier: selected_tier) if defined?(SemanticCache) && !stream
+        Dmesg.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+        SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
         CircuitBreaker.close_circuit!(current_model)
       end
 
-      def handle_llm_failure(result, current_model, selected_tier)
+      def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
-        Dmesg.llm_error(tier: selected_tier, error: result.error) if defined?(Dmesg)
+        Dmesg.llm_error(tier: :default, error: result.error) if defined?(Dmesg)
       end
 
       public

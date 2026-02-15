@@ -54,11 +54,8 @@ module MASTER
         end
       end
 
-      def model_tiers
-        @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
-          # Get models from models.yml for this tier (tier values are strings in YAML)
-          hash[tier] = configured_models.select { |m| m[:tier].to_s == tier.to_s }.map { |m| m[:id] }
-        end
+      def all_models
+        @all_models ||= configured_models.map { |m| m[:id] }
       end
 
       def model_rates
@@ -66,7 +63,6 @@ module MASTER
           hash[m[:id]] = {
             in: m[:input_cost] || 0,
             out: m[:output_cost] || 0,
-            tier: m[:tier]&.to_sym || :cheap
           }
         end
       end
@@ -78,9 +74,8 @@ module MASTER
       end
 
       def extract_model_name(model_id)
-        # Remove provider prefix and suffixes
         name = model_id.split("/").last
-        name = name.split(":").first  # Remove :nitro, :floor, :online
+        name = name.split(":").first
         name
       end
 
@@ -90,26 +85,8 @@ module MASTER
 
       private
 
-      def select_model_for_tier(tier)
-        tier = tier.to_sym
-        tier = :fast unless TIER_ORDER.include?(tier)
-
-        # Try requested tier first, then fall back to cheaper tiers
-        start_idx = TIER_ORDER.index(tier) || 1
-        TIER_ORDER[start_idx..].each do |t|
-          model_tiers[t]&.each do |m|
-            return m if CircuitBreaker.circuit_closed?(m)
-          end
-        end
-
-        # Try stronger tiers as last resort
-        TIER_ORDER[0...start_idx].reverse_each do |t|
-          model_tiers[t]&.each do |m|
-            return m if CircuitBreaker.circuit_closed?(m)
-          end
-        end
-
-        nil
+      def select_model
+        all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
     end
   end

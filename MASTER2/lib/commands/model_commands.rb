@@ -7,7 +7,6 @@ module MASTER
       def select_model(args)
         unless args && !args.strip.empty?
           puts "\n  Current model: #{LLM.current_model || 'auto'}"
-          puts "  Current tier:  #{LLM.current_tier || LLM.tier}"
           puts "  Use 'model <name>' to switch, 'models' to list.\n"
           return
         end
@@ -17,8 +16,7 @@ module MASTER
 
         if found
           LLM.current_model = LLM.extract_model_name(found.id)
-          LLM.current_tier = LLM.classify_tier(found)
-          puts "\n  ✓ Switched to #{found.id} (#{LLM.current_tier})\n"
+          puts "\n  ✓ Switched to #{found.id}\n"
         else
           puts "\n  ✗ No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"
@@ -27,15 +25,12 @@ module MASTER
 
       def list_models
         UI.header("Available Models")
-        LLM::TIER_ORDER.each do |tier|
-          models = LLM.model_tiers[tier]
-          next if models.nil? || models.empty?
-          puts "  #{tier}:"
-          models.each do |m|
-            status = CircuitBreaker.circuit_closed?(m) ? "✓" : "✗"
-            short = m.split("/").last[0, 30]
-            puts "    #{status} #{short}"
-          end
+        LLM.all_models.each do |m|
+          status = CircuitBreaker.circuit_closed?(m) ? "✓" : "✗"
+          rate = LLM.model_rates[m]
+          cost = rate ? "$#{rate[:in]}/$#{rate[:out]}" : ""
+          short = m.split("/").last[0, 30]
+          puts "  #{status} #{short.ljust(32)} #{cost}"
         end
         puts
       end

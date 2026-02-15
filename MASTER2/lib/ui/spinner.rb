@@ -3,13 +3,12 @@
 module MASTER
   module UI
     # Subtle spinner (Shibui - understated elegance)
-    SPIN_FRAMES = %w[· ·· ··· ····].freeze
+    SPIN_FRAMES = %w[- \\ | /].freeze
 
-    def self.spinner(message = nil, format: :classic)
+    def self.spinner(message = nil, format: :dots)
       require "tty-spinner"
       TTY::Spinner.new("[:spinner] #{message}", format: format)
     rescue LoadError
-      # Fallback: subtle dot spinner
       SubtleSpinner.new(message)
     end
 

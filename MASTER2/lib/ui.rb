@@ -42,7 +42,7 @@ module MASTER
       end
     end
 
-    def spinner(message = nil, format: :braille)
+    def spinner(message = nil, format: :dots)
       require 'tty-spinner'
       TTY::Spinner.new("[:spinner] #{message}", format: format)
     rescue LoadError
@@ -55,7 +55,7 @@ module MASTER
 
     def multi_spinner
       require 'tty-spinner'
-      TTY::Spinner::Multi.new("[:spinner] Processing", format: :braille)
+      TTY::Spinner::Multi.new("[:spinner] Processing", format: :dots)
     rescue LoadError
       Object.new.tap { |s| s.define_singleton_method(:register) { |*| spinner } }
     end

@@ -20,11 +20,8 @@ module MASTER
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
-        initial_model = LLM.send(:select_model_for_tier, :strong) rescue nil
-        if initial_model
-          LLM.current_model = LLM.extract_model_name(initial_model)
-          LLM.current_tier = :strong
-        end
+        initial_model = LLM.send(:select_model) rescue nil
+        LLM.current_model = LLM.extract_model_name(initial_model) if initial_model
       end
 
       # Add prescan before starting work

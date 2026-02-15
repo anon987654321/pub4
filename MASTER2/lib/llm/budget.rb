@@ -24,14 +24,14 @@ module MASTER
         [spending_cap - total_spent, 0.0].max
       end
 
-      # Pick best available model for given tier (or current)
+      # Pick best available model
       def pick(tier_override = nil)
-        select_model_for_tier(tier_override || tier)
+        select_model
       end
 
       # Alias for pick (used by Chamber)
       def select_available_model
-        pick
+        select_model
       end
 
       def tier

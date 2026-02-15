@@ -90,10 +90,7 @@ module MASTER
       end
 
       def tier_models
-        LLM.model_tiers.map do |tier, models|
-          names = models.first(2).map { |m| LLM.extract_model_name(m) }.join(",")
-          "#{tier}:#{names}"
-        end.join(" ")
+        LLM.all_models.map { |m| LLM.extract_model_name(m) }.first(6).join(", ")
       end
 
       def tts_status
