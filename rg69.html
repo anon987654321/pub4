@@ -60,6 +60,18 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .file-controls{display:flex;gap:10px;margin-top:10px}
 .file-controls button{padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);cursor:pointer;font-family:inherit;border-radius:4px;font-size:.9em}
 .file-controls button:hover{border-color:var(--green);color:var(--green)}
+.mute-btn,.solo-btn{padding:4px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-family:inherit;border-radius:3px;font-size:.75em;margin-left:5px}
+.mute-btn:hover{border-color:var(--orange);color:var(--orange)}
+.mute-btn.active{background:var(--orange);color:var(--bg);border-color:var(--orange)}
+.solo-btn:hover{border-color:var(--green);color:var(--green)}
+.solo-btn.active{background:var(--green);color:var(--bg);border-color:var(--green)}
+.help-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:2px solid var(--cyan);padding:30px;border-radius:8px;z-index:1000;display:none;max-width:400px}
+.help-overlay.show{display:block}
+.help-overlay h3{color:var(--cyan);margin-bottom:15px;font-size:1.3em}
+.help-overlay ul{list-style:none;line-height:1.8}
+.help-overlay li{color:var(--text);font-size:.9em}
+.help-overlay li strong{color:var(--pink);margin-right:10px;min-width:60px;display:inline-block}
+.help-overlay .close-btn{margin-top:20px;width:100%;padding:10px;background:var(--cyan);color:var(--bg);border:none;cursor:pointer;border-radius:4px;font-family:inherit;font-weight:600}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -99,7 +111,10 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 <div class="controls">
 <div class="control">
 <label>BPM: <span id="bpmVal">110</span></label>
-<input type="range" id="bpm" min="60" max="180" value="110">
+<div style="display:flex;gap:10px;align-items:center">
+<input type="range" id="bpm" min="60" max="180" value="110" style="flex:1">
+<button class="btn" id="tapBtn" style="padding:6px 12px;font-size:0.9em">TAP</button>
+</div>
 </div>
 <div class="control">
 <label>Root Note</label>
@@ -122,24 +137,42 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 <label>Swing: <span id="swingVal">0</span></label>
 <input type="range" id="swing" min="0" max="100" value="0">
 </div>
+<div class="control">
+<label>Master Volume: <span id="masterVolVal">80</span></label>
+<input type="range" id="masterVol" min="0" max="100" value="80">
+</div>
+<div class="control">
+<label style="display:flex;align-items:center;gap:8px">
+<input type="checkbox" id="chainMode" style="width:auto">
+Pattern Chain Mode
+</label>
+</div>
 </div>
 <div class="mix-section">
 <h2>MIX</h2>
 <div class="mix-row">
 <label>Drums</label>
 <input type="range" id="volDrums" min="0" max="100" value="70">
+<button class="mute-btn" data-track="drums">M</button>
+<button class="solo-btn" data-track="drums">S</button>
 </div>
 <div class="mix-row">
 <label>Bass</label>
 <input type="range" id="volBass" min="0" max="100" value="65">
+<button class="mute-btn" data-track="bass">M</button>
+<button class="solo-btn" data-track="bass">S</button>
 </div>
 <div class="mix-row">
 <label>Keys</label>
 <input type="range" id="volKeys" min="0" max="100" value="50">
+<button class="mute-btn" data-track="keys">M</button>
+<button class="solo-btn" data-track="keys">S</button>
 </div>
 <div class="mix-row">
 <label>Pads</label>
 <input type="range" id="volPads" min="0" max="100" value="45">
+<button class="mute-btn" data-track="pads">M</button>
+<button class="solo-btn" data-track="pads">S</button>
 </div>
 </div>
 <div class="fx-section">
@@ -227,6 +260,19 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 <div class="log" id="log"></div>
 </div>
 </div>
+</div>
+<div class="help-overlay" id="helpOverlay">
+<h3>Keyboard Shortcuts</h3>
+<ul>
+<li><strong>Space</strong> Play/Pause</li>
+<li><strong>R</strong> Randomize</li>
+<li><strong>1-4</strong> Pattern banks A-D</li>
+<li><strong>M</strong> Mute/unmute drums</li>
+<li><strong>F</strong> Randomize FX</li>
+<li><strong>T</strong> Tap tempo</li>
+<li><strong>?</strong> This help overlay</li>
+</ul>
+<button class="close-btn" onclick="document.getElementById('helpOverlay').classList.remove('show')">Close</button>
 </div>
 <script>
 // Pattern Data
@@ -618,21 +664,58 @@ const bass=bB();
 const keys=bK();
 const pads=bP();
 const step=currentStep%16;
+const barStep=currentStep%64; // Refinement #11, #12: track bar position
+const barNum=Math.floor(currentStep/64); // Track bars for variations
 
-// Apply swing
+// Refinement #6: Swing velocity reduction
 const swingDelay=step%2===1?swingAmount:0;
+const swingVelReduce=(step%2===1)?0.85:1.0;
+
+// Refinement #12: Fill generator every 8 bars (128 steps)
+const isFillBar=(currentStep%128>=112&&currentStep%128<128);
+
+// Refinement #11: Pattern variation every 4 bars
+const shouldVary=(barNum%4===3&&Math.random()<0.15);
+
+// Refinement #10: Sidechain pump for HATE/Industrial
+const shouldSidechain=currentMood&&MOODS[currentMood]&&MOODS[currentMood].sidechain;
 
 // Drums with sequencer overlay
-if(drum[step]||SP[currentBank].kick[step].on){
+if(drum[step]||SP[currentBank].kick[step].on||(isFillBar&&Math.random()<0.3)){
+const vel=hv(0.9,velHumanAmount)*swingVelReduce;
+kickN.volume.value=Tone.gainToDb(vel);
 kickN.triggerAttackRelease('C1',0.1,time+swingDelay);
+// Refinement #10: Sidechain pump
+if(shouldSidechain&&keysG&&padsG){
+keysG.gain.setValueAtTime(0.3,time);
+keysG.gain.linearRampToValueAtTime(1.0,time+0.15);
+padsG.gain.setValueAtTime(0.2,time);
+padsG.gain.linearRampToValueAtTime(1.0,time+0.2);
 }
-if((step===4||step===12)||SP[currentBank].snare[step].on){
+// Refinement #20: Visual beat flash
+if(step===0){
+const logo=document.querySelector('.hero h1');
+if(logo&&currentMood&&MOODS[currentMood]){
+const colors={dusty:'#ff8800',wonky:'#00ffff',tense:'#ff0000',ethio:'#00ff00',dub:'#0088ff',industrial:'#ff00ff',hardtechno:'#ff0000'};
+const c=colors[currentMood]||'#00ffff';
+logo.style.textShadow=`0 0 20px ${c}`;
+setTimeout(()=>logo.style.textShadow='',150);
+}
+}
+}
+if((step===4||step===12)||SP[currentBank].snare[step].on||(isFillBar&&step>=12)){
+const vel=hv(0.85,velHumanAmount)*swingVelReduce;
+snareN.volume.value=Tone.gainToDb(vel);
 snareN.triggerAttackRelease('16n',time+swingDelay);
 }
 if((step===6||step===14)||SP[currentBank].clap[step].on){
+const vel=hv(0.8,velHumanAmount)*swingVelReduce;
+clapN.volume.value=Tone.gainToDb(vel);
 clapN.triggerAttackRelease('16n',time+swingDelay);
 }
-if((step%2===0)||SP[currentBank].chh[step].on){
+if((step%2===0)||SP[currentBank].chh[step].on||isFillBar){
+const vel=hv(0.7,velHumanAmount)*swingVelReduce;
+chhN.volume.value=Tone.gainToDb(vel);
 chhN.triggerAttackRelease('32n',time+swingDelay);
 if(hatIsOpen){
 ohhN.triggerRelease(time+swingDelay);
@@ -640,20 +723,34 @@ hatIsOpen=false;
 }
 }
 if((step===3||step===11)||SP[currentBank].ohh[step].on){
+const vel=hv(0.65,velHumanAmount)*swingVelReduce;
+ohhN.volume.value=Tone.gainToDb(vel);
 ohhN.triggerAttack(time+swingDelay);
 hatIsOpen=true;
 }
 
+// Refinement #24: CPU usage monitor (simple)
+const callbackStart=performance.now();
+
 // Bass
 if(bass[step]!=='-'){
-const note=transposeNote(bass[step]);
+let note=transposeNote(bass[step]);
+// Refinement #14: Bass octave range protection
+note=clampBass(note);
+// Refinement #11: Octave variation
+if(shouldVary&&Math.random()<0.1){
+const midi=Tone.Frequency(note).toMidi();
+note=Tone.Frequency((midi>36?midi-12:midi+12),'midi').toNote();
+}
+const vel=hv(0.8,velHumanAmount)*swingVelReduce;
+bassN.volume.value=Tone.gainToDb(vel);
 bassN.triggerAttackRelease(note,'8n',time+swingDelay);
 if(bassSub){
 bassSub.frequency.setValueAtTime(Tone.Frequency(note).toFrequency(),time+swingDelay);
 }
 if(midiOutput){
 const midi=noteToMidi(note);
-midiOutput.send([0x90,midi,100],time*1000);
+midiOutput.send([0x90,midi,Math.floor(vel*127)],time*1000);
 midiOutput.send([0x80,midi,0],(time+0.3)*1000);
 }
 }
@@ -661,19 +758,43 @@ midiOutput.send([0x80,midi,0],(time+0.3)*1000);
 // Keys
 if(keys[step]!=='-'){
 const note=transposeNote(keys[step]);
+const vel=hv(0.7,velHumanAmount)*swingVelReduce;
+keysN.volume.value=Tone.gainToDb(vel);
 keysN.triggerAttackRelease(note,'8n',time+swingDelay);
-if(pianoSampler)pianoSampler.triggerAttackRelease(note,'8n',time+swingDelay);
+if(pianoSampler)pianoSampler.triggerAttackRelease(note,'8n',time+swingDelay,vel);
 if(midiOutput){
 const midi=noteToMidi(note);
-midiOutput.send([0x90,midi,80],time*1000);
+midiOutput.send([0x90,midi,Math.floor(vel*100)],time*1000);
 midiOutput.send([0x80,midi,0],(time+0.3)*1000);
 }
 }
 
 // Pads
 if(pads[step]!=='-'){
-const notes=pads[step].split(',').map(transposeNote);
+let notes=pads[step].split(',').map(transposeNote);
+// Refinement #13: Chord voicing spread (30% chance)
+if(Math.random()<0.3)notes=spreadVoicing(notes);
+const vel=hv(0.65,velHumanAmount)*swingVelReduce;
+padsN.volume.value=Tone.gainToDb(vel);
 padsN.triggerAttackRelease(notes,'2n',time+swingDelay);
+}
+
+// Refinement #19: Pattern chain mode
+if(chainMode&&step===15){
+const banks=['A','B','C','D'];
+const nextIdx=(banks.indexOf(currentBank)+1)%banks.length;
+if(barNum%4===3){
+currentBank=banks[nextIdx];
+buildSequencer();
+log(`Chain: ${currentBank}`);
+}
+}
+
+// Refinement #24: CPU usage monitor
+const callbackTime=performance.now()-callbackStart;
+const budget=(128/Tone.context.sampleRate)*1000;
+if(callbackTime>budget*0.8){
+log('CPU warning');
 }
 
 // Visual feedback
@@ -746,6 +867,7 @@ grid.appendChild(btn);
 
 const applyMood=mood=>{
 const m=MOODS[mood];
+currentMood=mood; // Store current mood
 selectedDrum=m.d||selectedDrum;
 selectedBass=m.b||selectedBass;
 selectedKeys=m.k||selectedKeys;
@@ -759,6 +881,40 @@ if(m.lofi!==undefined)setLofi(m.lofi);
 if(m.kickLag!==undefined)setKickLag(m.kickLag);
 if(m.hatDrift!==undefined)setHatDrift(m.hatDrift);
 if(m.glide!==undefined)setGlide(m.glide);
+
+// Refinement #1: Kick tuning per genre
+if(m.kickTune&&kickN){
+kickN.pitchDecay=m.kickTune.pitchDecay;
+kickN.octaves=m.kickTune.octaves;
+}
+
+// Refinement #2: Snare tone variation
+if(m.snareTone&&snareN){
+snareN.noise.type=m.snareTone.type;
+if(snareFilter)snareFilter.frequency.value=m.snareTone.freq;
+if(m.snareTone.decay)snareN.envelope.decay=m.snareTone.decay;
+}
+
+// Refinement #3: Hi-hat brightness control
+if(m.hatBright&&chhFilter){
+chhFilter.frequency.value=m.hatBright;
+}
+
+// Refinement #4: Bass glide/portamento per genre
+if(m.bassGlide!==undefined&&bassN){
+bassN.portamento=m.bassGlide;
+}
+
+// Refinement #5: Velocity humanization amount
+if(m.velHuman!==undefined){
+velHumanAmount=m.velHuman;
+}
+
+// Refinement #9: Master limiter ceiling adjustment
+if(m.limiter&&limiter){
+limiter.threshold=m.limiter;
+}
+
 document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('active',b.textContent===mood));
 log(`Mood: ${mood}`);
 };
@@ -965,10 +1121,13 @@ log('Patterns randomized');
 };
 
 document.getElementById('randomFxBtn').onclick=()=>{
-const names1=randomizeFX(drumsFX,kickG,{min:2,max:5});
-const names2=randomizeFX(bassFX,bassG,{min:2,max:5});
-const names3=randomizeFX(keysFX,keysG,{min:2,max:5});
-const names4=randomizeFX(padsFX,padsG,{min:2,max:5});
+// Refinement #8: Use mood-specific FX chain length
+const m=currentMood?MOODS[currentMood]:null;
+const fxCount=(m&&m.fxChain)?m.fxChain:{min:2,max:5};
+const names1=randomizeFX(drumsFX,kickG,fxCount);
+const names2=randomizeFX(bassFX,bassG,fxCount);
+const names3=randomizeFX(keysFX,keysG,fxCount);
+const names4=randomizeFX(padsFX,padsG,fxCount);
 updateFXTags();
 log('Per-track FX randomized');
 };
@@ -1062,6 +1221,112 @@ document.getElementById('crackleVal').textContent=v;
 crackleG.gain.value=v/100*0.04;
 };
 
+// Refinement #16: BPM Tap Tempo
+document.getElementById('tapBtn').onclick=()=>{
+tapTimes.push(Date.now());
+if(tapTimes.length>6)tapTimes.shift();
+if(tapTimes.length>=3){
+var intervals=[];
+for(var i=1;i<tapTimes.length;i++)intervals.push(tapTimes[i]-tapTimes[i-1]);
+var avg=intervals.reduce(function(a,b){return a+b},0)/intervals.length;
+var newBpm=Math.round(60000/avg);
+if(newBpm>=58&&newBpm<=160){
+setBPM(newBpm);
+log(`Tap BPM: ${newBpm}`);
+}
+}
+};
+
+// Refinement #17: Master Volume Slider
+document.getElementById('masterVol').oninput=e=>{
+const v=e.target.value;
+document.getElementById('masterVolVal').textContent=v;
+if(masterG)masterG.gain.value=v/100;
+};
+
+// Refinement #18: Mute/Solo Buttons
+const trackGains={drums:kickG,bass:bassG,keys:keysG,pads:padsG};
+const trackVolumes={drums:0.7,bass:0.65,keys:0.5,pads:0.45};
+const trackMuted={drums:false,bass:false,keys:false,pads:false};
+let soloTrack=null;
+
+document.querySelectorAll('.mute-btn').forEach(btn=>{
+btn.onclick=()=>{
+const track=btn.dataset.track;
+trackMuted[track]=!trackMuted[track];
+btn.classList.toggle('active',trackMuted[track]);
+if(trackGains[track]){
+trackGains[track].gain.value=trackMuted[track]?0:trackVolumes[track];
+}
+if(!trackMuted[track]&&soloTrack===track)soloTrack=null;
+};
+});
+
+document.querySelectorAll('.solo-btn').forEach(btn=>{
+btn.onclick=()=>{
+const track=btn.dataset.track;
+if(soloTrack===track){
+soloTrack=null;
+document.querySelectorAll('.solo-btn').forEach(b=>b.classList.remove('active'));
+Object.keys(trackGains).forEach(t=>{
+if(trackGains[t]&&!trackMuted[t]){
+trackGains[t].gain.value=trackVolumes[t];
+}
+});
+}else{
+soloTrack=track;
+document.querySelectorAll('.solo-btn').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+Object.keys(trackGains).forEach(t=>{
+if(trackGains[t]){
+trackGains[t].gain.value=(t===track&&!trackMuted[t])?trackVolumes[t]:0;
+}
+});
+}
+};
+});
+
+// Refinement #19: Pattern Chain Mode
+document.getElementById('chainMode').onchange=e=>{
+chainMode=e.target.checked;
+log(chainMode?'Chain mode ON':'Chain mode OFF');
+};
+
+// Refinement #23: LocalStorage Autosave
+setInterval(function(){
+if(playing){
+try{
+const patch=exportPatch();
+localStorage.setItem('rg69_patch_v1',JSON.stringify(patch));
+}catch(e){
+// Ignore quota errors
+}
+}
+},30000);
+
+// Refinement #23: Restore on load
+const saved=localStorage.getItem('rg69_patch_v1');
+if(saved){
+const restoreBtn=document.createElement('button');
+restoreBtn.className='btn';
+restoreBtn.textContent='📂 RESTORE SESSION';
+restoreBtn.style.position='fixed';
+restoreBtn.style.top='10px';
+restoreBtn.style.right='10px';
+restoreBtn.style.zIndex='999';
+restoreBtn.onclick=()=>{
+try{
+const patch=JSON.parse(saved);
+importPatchData(patch);
+restoreBtn.remove();
+log('Session restored');
+}catch(e){
+log('Restore failed');
+}
+};
+document.body.appendChild(restoreBtn);
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown',e=>{
 if(e.code==='Space'){e.preventDefault();document.getElementById('playBtn').click();}
@@ -1070,6 +1335,11 @@ if(e.code==='Digit1'){e.preventDefault();document.querySelector('[data-bank="A"]
 if(e.code==='Digit2'){e.preventDefault();document.querySelector('[data-bank="B"]').click();}
 if(e.code==='Digit3'){e.preventDefault();document.querySelector('[data-bank="C"]').click();}
 if(e.code==='Digit4'){e.preventDefault();document.querySelector('[data-bank="D"]').click();}
+// Refinement #25: Keyboard shortcut overlay
+if(e.key==='?'||e.key==='/'){e.preventDefault();document.getElementById('helpOverlay').classList.toggle('show');}
+if(e.code==='KeyT'){e.preventDefault();document.getElementById('tapBtn').click();}
+if(e.code==='KeyF'){e.preventDefault();document.getElementById('randomBtn').click();}
+if(e.code==='KeyM'){e.preventDefault();document.querySelector('.mute-btn[data-track="drums"]').click();}
 });
 
 // Init
