@@ -521,7 +521,7 @@ const randomizeFX=()=>{
           case'StereoWidener':eff=new Tone.StereoWidener(0.3+Math.random()*0.6);break;
         }
         if(eff){eff.wet.value=wet;fx.push(eff);}
-      }catch(e){log(`⚠️ FX creation error: ${e.message}`);} // Fail visibly (FAIL_VISIBLY axiom)
+      }catch(e){log(`⚠️ FX creation error (${type}): ${e.message}`);} // Fail visibly (FAIL_VISIBLY axiom)
     }
     return fx;
   };
