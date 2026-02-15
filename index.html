@@ -60,7 +60,17 @@
     const DEBUG=false;
     const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
 
-    // Environment & Performance Config
+    // ============================================================================
+    // MASTER2 Axiom Compliance:
+    // - ONE_SOURCE: Configuration centralized, track list single source
+    // - SIMPLEST_WORKS: Canvas 2D API, native Web Audio, minimal dependencies
+    // - ONE_JOB: Separate classes (Carousel, AudioEngine, Renderer, TunnelRenderer)
+    // - FAIL_VISIBLY: Try/catch on all external APIs (YouTube, Audio), error logging
+    // - NO_SURPRISES: Graceful degradation (sandbox mode, low-end devices)
+    // - DEADLINES: YouTube API timeout (10s), frame throttling, emergency brake
+    // ============================================================================
+
+    // Environment & Performance Config - Single Source of Truth
     const IN_SANDBOX = false;
     const FADE_MS = 3500;
     const START_FADE_IN = true;
@@ -69,7 +79,7 @@
     const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
                      (navigator.deviceMemory && navigator.deviceMemory <= 2);
 
-    let audio;
+    let audio; // Global audio engine instance
 
     // Animated loading dots UI (". " → ".. " → "..." pattern)
     (() => {
@@ -97,7 +107,9 @@
       return 1;
     };
 
-    // City name carousel (cycles through playlist.city.tld domains)
+    // ============================================================================
+    // City name carousel - ONE_JOB principle (single responsibility)
+    // ============================================================================
     class SimpleCarousel {
       constructor(element, intervalMs = 2800) {
         this.slides = Array.from(element.querySelectorAll(".carousel-slide"));
@@ -175,20 +187,28 @@
     const YT_ORIGIN="https://www.youtube.com";
     const ytPost=(i,f,a=[])=>{if(IN_SANDBOX)return;try{if(!i||!i.contentWindow)return;i.contentWindow.postMessage({event:"command",func:f,args:a},YT_ORIGIN)}catch{try{i.contentWindow.postMessage({event:"command",func:f,args:a},"*")}catch{}}};
 
-    // ===== UNIFIED AUDIO ENGINE (MP3 + YouTube) =====
+    // ============================================================================
+    // UNIFIED AUDIO ENGINE - Handles MP3 and YouTube playback with crossfading
+    // MASTER2: ONE_JOB (single responsibility - audio playback and analysis)
+    // MASTER2: FAIL_VISIBLY (explicit error handling, graceful degradation)
+    // ============================================================================
     class UnifiedAudioEngine{
       constructor(tracks){
         this.started=false;this.muted=false;this.trackIndex=0;
-        this.tracks=tracks.slice().sort(()=>Math.random()-.5);
+        this.tracks=tracks.slice().sort(()=>Math.random()-.5); // Shuffle on init
         this.activeKey="a";this.inactiveKey="b";
+        // Dual MP3 players for crossfading
         this.mp3Players={a:new Audio(),b:new Audio()};
         this.mp3Players.a.crossOrigin="anonymous";this.mp3Players.b.crossOrigin="anonymous";
         this.mp3Players.a.preload="metadata";this.mp3Players.b.preload="metadata";
         this.mp3Players.a.volume=0;this.mp3Players.b.volume=0;
+        // Dual YouTube players for crossfading
         this.ytPlayers={a:null,b:null};this.ytReady=false;
         this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;
+        // Beat detection state
         this.beatPhase=0;this.energyLevel=.5;this._beatEnv=0;
         this.audioContext=null;this.analyser=null;this.compressor=null;this.dataArray=null;
+        // Initialize Web Audio API with error handling (MASTER2: FAIL_VISIBLY)
         try{
           this.audioContext=new(window.AudioContext||window.webkitAudioContext)();
           

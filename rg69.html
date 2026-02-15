@@ -69,18 +69,19 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 </head>
 <body>
 <div class="container">
-<h1>RG69</h1>
-<canvas id="viz"></canvas>
+<h1>RG69 <button class="btn" id="helpBtn" style="font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px" title="Show help and tips">?</button></h1>
+<canvas id="viz" title="Audio waveform visualizer - shows the sound waves in real-time"></canvas>
 <div class="transport">
-<button class="btn" id="playBtn">▶</button>
-<button class="btn" id="stopBtn">■</button>
-<button class="btn rec" id="recBtn">⏺</button>
-<button class="btn" id="wavBtn">📀</button>
-<button class="btn" id="shareBtn">🔗</button>
-<button class="btn" id="undoBtn" title="Undo">↶</button>
-<button class="btn" id="redoBtn" title="Redo">↷</button>
-<button class="btn" id="tapBtn">🥁</button>
-<button class="btn" id="themeBtn">🌓</button>
+<button class="btn" id="playBtn" title="Play/Pause - Start or stop the music (Spacebar)">▶</button>
+<button class="btn" id="stopBtn" title="Stop - Stop playback and return to beginning">■</button>
+<button class="btn" id="quickStartBtn" title="Quick Start - Load a preset and start playing!" style="background:var(--pink);color:var(--bg);border-color:var(--pink)">🚀 START</button>
+<button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file">⏺</button>
+<button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file">📀</button>
+<button class="btn" id="shareBtn" title="Share - Copy link to share your creation">🔗</button>
+<button class="btn" id="undoBtn" title="Undo - Go back one step (Ctrl+Z)">↶</button>
+<button class="btn" id="redoBtn" title="Redo - Go forward one step (Ctrl+Shift+Z)">↷</button>
+<button class="btn" id="tapBtn" title="Tap Tempo - Tap repeatedly to set tempo (T key)">🥁</button>
+<button class="btn" id="themeBtn" title="Toggle light/dark theme (L key)">🌓</button>
 </div>
 <div class="grid">
 <div class="panel open">
@@ -90,15 +91,15 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="panel open">
 <div class="panel-header">CONTROLS</div>
 <div class="panel-body"><div>
-<div class="control"><label>BPM</label><input type="range" id="bpmSlider" min="50" max="180" value="120"><span id="bpmVal">120</span></div>
-<div class="control"><label>Swing</label><input type="range" id="swingSlider" min="0" max="50" value="0"><span id="swingVal">0</span></div>
-<div class="control"><label>Root</label><select id="rootSel"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
-<div class="control"><label>Mood</label><div class="mood-grid" id="moodGrid"></div></div>
-<div class="control"><label>Drums</label><select id="drumSel"></select><div id="drumFx" class="fx-tags"></div></div>
-<div class="control"><label>Bass</label><select id="bassSel"></select><div id="bassFx" class="fx-tags"></div></div>
-<div class="control"><label>Keys</label><select id="keysSel"></select><div id="keysFx" class="fx-tags"></div></div>
-<div class="control"><label>Pads</label><select id="padsSel"></select><div id="padsFx" class="fx-tags"></div></div>
-<button class="btn" id="randomBtn" style="width:100%;margin-top:10px">⚡ RANDOMIZE</button>
+<div class="control"><label title="Beats Per Minute - The speed/tempo of the music">BPM (Speed)</label><input type="range" id="bpmSlider" min="50" max="180" value="120" title="Drag to change tempo: slower (left) to faster (right)"><span id="bpmVal">120</span></div>
+<div class="control"><label title="Swing - Adds groove by delaying every other beat">Swing (Groove)</label><input type="range" id="swingSlider" min="0" max="50" value="0" title="Add swing/shuffle feel: 0 = straight, 50 = maximum shuffle"><span id="swingVal">0</span></div>
+<div class="control"><label title="Root Note - The musical key/pitch to play in">Root Note (Key)</label><select id="rootSel" title="Choose the musical key for melodies and bass"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
+<div class="control"><label title="Genre/Style Presets - Quick ways to get started!">🎭 Style Presets (Try These!)</label><div class="mood-grid" id="moodGrid"></div></div>
+<div class="control"><label title="Drum Pattern - Different rhythmic patterns">🥁 Drum Pattern</label><select id="drumSel" title="Choose a drum rhythm"></select><div id="drumFx" class="fx-tags"></div></div>
+<div class="control"><label title="Bass Pattern - Low-end groove">🎸 Bass Pattern</label><select id="bassSel" title="Choose a bassline"></select><div id="bassFx" class="fx-tags"></div></div>
+<div class="control"><label title="Melody Pattern - Melodic/harmonic parts">🎹 Keys Pattern</label><select id="keysSel" title="Choose a melody or chord pattern"></select><div id="keysFx" class="fx-tags"></div></div>
+<div class="control"><label title="Background Pad - Atmospheric textures">🎼 Pads Pattern</label><select id="padsSel" title="Choose an atmospheric pad sound"></select><div id="padsFx" class="fx-tags"></div></div>
+<button class="btn" id="randomBtn" style="width:100%;margin-top:10px" title="Generate random combination of patterns and effects">⚡ SURPRISE ME!</button>
 </div></div>
 </div>
 <div class="panel">
@@ -259,13 +260,17 @@ let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
 let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>SP[b][t]=Array(16).fill(0).map(()=>({on:0}))));
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
-// Tone.js setup
-let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN,drumG,bassG,keysG,padsG,masterG,limiter,analyser;
+// Tone.js setup - Audio components (SOLID: Single Responsibility)
+let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN;
+let drumG,bassG,keysG,padsG,masterG,limiter,analyser;
+let analogSum,vintageSat,phaserFX,lofiNoise;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
-// Init audio
+
+// Init audio engine with analog summing and lo-fi character (KISS: Keep It Simple)
 const initAudio=()=>{
+  // Synths - Clear, self-explanatory names (POLA: Principle of Least Astonishment)
   kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}}).toDestination();
   snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}}).toDestination();
   clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
@@ -275,63 +280,129 @@ const initAudio=()=>{
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
   keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}}).toDestination();
   padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'sine'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}}).toDestination();
-  drumG=new Tone.Gain(.8);bassG=new Tone.Gain(.7);keysG=new Tone.Gain(.6);padsG=new Tone.Gain(.5);masterG=new Tone.Gain(.75);
-  kickN.disconnect();kickN.connect(drumG);
-  snareN.disconnect();snareN.connect(drumG);
-  clapN.disconnect();clapN.connect(drumG);
-  hatN.disconnect();hatN.connect(drumG);
-  openN.disconnect();openN.connect(drumG);
+  
+  // Per-track gain nodes (analog-style summing mixer)
+  drumG=new Tone.Gain(.8);
+  bassG=new Tone.Gain(.7);
+  keysG=new Tone.Gain(.6);
+  padsG=new Tone.Gain(.5);
+  masterG=new Tone.Gain(.75);
+  
+  // Analog warmth: soft saturation on summing bus
+  vintageSat=new Tone.Chebyshev(2); // Analog-style harmonic distortion
+  vintageSat.wet.value=0.3;
+  
+  // Phase effect: adds analog stereo width and movement
+  phaserFX=new Tone.Phaser({frequency:0.5,octaves:2,baseFrequency:350,stages:4});
+  phaserFX.wet.value=0.15;
+  
+  // Lo-fi character: gentle noise floor like analog tape
+  lofiNoise=new Tone.Noise('pink').start();
+  lofiNoise.volume.value=-45; // Very subtle, just adds warmth
+  const noiseLP=new Tone.Filter(4000,'lowpass');
+  lofiNoise.connect(noiseLP);
+  
+  // Connect synths to gain stages (DRY: reusable connection pattern)
+  [kickN,snareN,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
   bassN.disconnect();bassN.connect(bassG);
   bassSub.disconnect();bassSub.connect(bassG);
   keysN.disconnect();keysN.connect(keysG);
   padsN.disconnect();padsN.connect(padsG);
+  
+  // Analog summing: all tracks → vintage saturation → phaser → master (KISS)
+  analogSum=new Tone.Gain(1); // Summing node
+  drumG.connect(analogSum);
+  bassG.connect(analogSum);
+  keysG.connect(analogSum);
+  padsG.connect(analogSum);
+  noiseLP.connect(analogSum); // Lo-fi noise floor
+  analogSum.chain(vintageSat,phaserFX,masterG);
+  
+  // Output chain
   limiter=new Tone.Limiter(-1);
   analyser=new Tone.Analyser('waveform',256);
-  drumG.connect(masterG);bassG.connect(masterG);keysG.connect(masterG);padsG.connect(masterG);
-  masterG.connect(analyser);masterG.connect(limiter);limiter.toDestination();
+  masterG.connect(analyser);
+  masterG.connect(limiter);
+  limiter.toDestination();
+  
   Tone.Transport.bpm.value=bpm;
   randomizeFX();
 };
-// FX randomizer
+// FX randomizer - DRY principle with reusable helper functions
 const randomizeFX=()=>{
-  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{fx.disconnect();fx.dispose();});arr.length=0;});
+  // Clear existing FX (DRY: single cleanup function)
+  const clearFXArray=(arr)=>arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){}});
+  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(clearFXArray);
+  drumFX.length=bassFX.length=keysFX.length=padsFX.length=masterFX.length=0;
+  
+  // Create random FX chain (KISS: simple, clear logic)
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
-    const wet=isMaster?.08+Math.random()*.27:.15+Math.random()*.35;
+    const wet=isMaster?0.08+Math.random()*0.19:0.15+Math.random()*0.35;
     const fx=[];
     for(let i=0;i<num;i++){
       const type=fxPool[Math.floor(Math.random()*fxPool.length)];
       let eff;
       try{
+        // Effect factory (SOLID: Open/Closed Principle - easy to extend)
         switch(type){
           case'AutoWah':eff=new Tone.AutoWah(60+Math.random()*340,2+Math.random()*4,-40+Math.random()*30);break;
-          case'AutoFilter':eff=new Tone.AutoFilter(.1+Math.random()*7.9);eff.depth.value=.3+Math.random()*.7;eff.baseFrequency=100+Math.random()*1900;eff.start();break;
-          case'AutoPanner':eff=new Tone.AutoPanner(.2+Math.random()*5.8);eff.depth.value=.4+Math.random()*.6;eff.start();break;
+          case'AutoFilter':eff=new Tone.AutoFilter(0.1+Math.random()*7.9);eff.depth.value=0.3+Math.random()*0.7;eff.baseFrequency=100+Math.random()*1900;eff.start();break;
+          case'AutoPanner':eff=new Tone.AutoPanner(0.2+Math.random()*5.8);eff.depth.value=0.4+Math.random()*0.6;eff.start();break;
           case'BitCrusher':eff=new Tone.BitCrusher(2+Math.floor(Math.random()*7));break;
           case'Chebyshev':eff=new Tone.Chebyshev(2+Math.floor(Math.random()*29));break;
-          case'Chorus':eff=new Tone.Chorus(1+Math.random()*5,1+Math.random()*4,.3+Math.random()*.6);eff.start();break;
-          case'Distortion':eff=new Tone.Distortion(.1+Math.random()*.7);break;
-          case'FeedbackDelay':eff=new Tone.FeedbackDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],.15+Math.random()*.45);break;
-          case'Freeverb':eff=new Tone.Freeverb(.3+Math.random()*.65);eff.dampening=1000+Math.random()*7000;break;
+          case'Chorus':eff=new Tone.Chorus(1+Math.random()*5,1+Math.random()*4,0.3+Math.random()*0.6);eff.start();break;
+          case'Distortion':eff=new Tone.Distortion(0.1+Math.random()*0.7);break;
+          case'FeedbackDelay':eff=new Tone.FeedbackDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.15+Math.random()*0.45);break;
+          case'Freeverb':eff=new Tone.Freeverb(0.3+Math.random()*0.65);eff.dampening=1000+Math.random()*7000;break;
           case'FrequencyShifter':eff=new Tone.FrequencyShifter(-20+Math.random()*40);break;
-          case'JCReverb':eff=new Tone.JCReverb(.3+Math.random()*.55);break;
-          case'Phaser':eff=new Tone.Phaser(.2+Math.random()*3.8,1+Math.random()*4,200+Math.random()*1300);eff.start();break;
-          case'PingPongDelay':eff=new Tone.PingPongDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],.1+Math.random()*.4);break;
+          case'JCReverb':eff=new Tone.JCReverb(0.3+Math.random()*0.55);break;
+          case'Phaser':eff=new Tone.Phaser(0.2+Math.random()*3.8,1+Math.random()*4,200+Math.random()*1300);eff.start();break;
+          case'PingPongDelay':eff=new Tone.PingPongDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.1+Math.random()*0.4);break;
           case'PitchShift':eff=new Tone.PitchShift([-12,-7,-5,5,7,12][Math.floor(Math.random()*6)]);break;
-          case'Tremolo':eff=new Tone.Tremolo(.5+Math.random()*11.5,.3+Math.random()*.6);eff.start();break;
-          case'Vibrato':eff=new Tone.Vibrato(1+Math.random()*9,.05+Math.random()*.35);eff.start();break;
-          case'StereoWidener':eff=new Tone.StereoWidener(.3+Math.random()*.6);break;
+          case'Tremolo':eff=new Tone.Tremolo(0.5+Math.random()*11.5,0.3+Math.random()*0.6);eff.start();break;
+          case'Vibrato':eff=new Tone.Vibrato(1+Math.random()*9,0.05+Math.random()*0.35);eff.start();break;
+          case'StereoWidener':eff=new Tone.StereoWidener(0.3+Math.random()*0.6);break;
         }
         if(eff){eff.wet.value=wet;fx.push(eff);}
-      }catch(e){}
+      }catch(e){} // Fail gracefully (POLA: no surprises)
     }
     return fx;
   };
-  drumFX=createFX(0);bassFX=createFX(0);keysFX=createFX(0);padsFX=createFX(0);masterFX=createFX(1);
-  const chainFX=(g,fx)=>{g.disconnect();let last=g;fx.forEach(f=>{last.connect(f);last=f;});last.connect(masterG);};
-  chainFX(drumG,drumFX);chainFX(bassG,bassFX);chainFX(keysG,keysFX);chainFX(padsG,padsFX);
-  masterG.disconnect(limiter);let lastM=masterG;masterFX.forEach(f=>{lastM.connect(f);lastM=f;});lastM.connect(analyser);lastM.connect(limiter);
+  
+  // Generate FX for each track (DRY: reusable pattern)
+  drumFX=createFX(0);
+  bassFX=createFX(0);
+  keysFX=createFX(0);
+  padsFX=createFX(0);
+  masterFX=createFX(1);
+  
+  // Chain FX helper (DRY: single chaining function)
+  const chainFX=(g,fx,target)=>{
+    if(!fx.length)return;
+    g.disconnect();
+    let last=g;
+    fx.forEach(f=>{last.connect(f);last=f;});
+    last.connect(target);
+  };
+  
+  // Reconnect with analog summing (respects new architecture)
+  chainFX(drumG,drumFX,analogSum);
+  chainFX(bassG,bassFX,analogSum);
+  chainFX(keysG,keysFX,analogSum);
+  chainFX(padsG,padsFX,analogSum);
+  
+  // Master FX on output (after summing/saturation)
+  if(masterFX.length){
+    masterG.disconnect(limiter);
+    let lastM=masterG;
+    masterFX.forEach(f=>{lastM.connect(f);lastM=f;});
+    lastM.connect(analyser);
+    lastM.connect(limiter);
+  }
+  
   updateFXTags();
+};
 };
 const updateFXTags=()=>{
   const show=(id,fx)=>{const el=document.getElementById(id);el.innerHTML='';fx.forEach(f=>{const t=document.createElement('span');t.className='fx-tag';t.textContent=f.constructor.name;el.appendChild(t);});};
@@ -385,8 +456,11 @@ const buildUI=()=>{
   drawViz();
 };
 const attachEvents=()=>{
+  // Transport and new buttons
   document.getElementById('playBtn').onclick=()=>{if(!playing){if(Tone.context.state!=='running')Tone.context.resume();Tone.Transport.start();loop.start(0);playing=true;log('▶ Playing');}else{Tone.Transport.pause();playing=false;log('⏸ Paused');}};
   document.getElementById('stopBtn').onclick=()=>{Tone.Transport.stop();loop.stop();playing=false;step=0;log('■ Stopped');};
+  document.getElementById('quickStartBtn').onclick=quickStart;
+  document.getElementById('helpBtn').onclick=showHelp;
   document.getElementById('recBtn').onclick=startRec;
   document.getElementById('wavBtn').onclick=exportWAV;
   document.getElementById('shareBtn').onclick=shareURL;
@@ -440,29 +514,65 @@ const autosave=()=>{try{localStorage.setItem('rg69_save',JSON.stringify({d:curD,
 const autoload=()=>{try{const s=localStorage.getItem('rg69_save');if(s){const st=JSON.parse(s);curD=st.d;curB=st.b;curK=st.k;curP=st.p;bpm=st.bpm;swing=st.swing;rootNote=st.rootNote;drumVol=st.drumVol;bassVol=st.bassVol;keysVol=st.keysVol;padsVol=st.padsVol;masterVol=st.masterVol;SP=st.SP;log('💾 Autoloaded');}}catch(e){}};
 const log=m=>{const l=document.getElementById('log');const line=document.createElement('div');line.textContent=`${new Date().toLocaleTimeString()} ${m}`;l.appendChild(line);l.scrollTop=l.scrollHeight;};
 const drawViz=()=>{requestAnimationFrame(drawViz);const c=document.getElementById('viz'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const w=c.width,h=c.height;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');ctx.fillRect(0,0,w,h);if(!analyser)return;const data=analyser.getValue();ctx.beginPath();ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--cyan');ctx.lineWidth=2;for(let i=0;i<data.length;i++){const x=(i/data.length)*w;const y=(1-(data[i]+1)/2)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();};
-// Help overlay
-const showHelp=()=>{const help=`KEYBOARD SHORTCUTS
-Space - Play/Pause
-R - Randomize all
-E - Export WAV
-T - Tap tempo
-L - Toggle theme
-Ctrl+Z - Undo
-Ctrl+Shift+Z - Redo
-? - This help
+// Help overlay - Enhanced for beginners and musicians
+const showHelp=()=>{const help=`🎵 RG69 BEAT MACHINE - QUICK GUIDE
 
-FEATURES
-• Mobile-first responsive design
+🚀 FOR BEGINNERS:
+1. Click "🚀 START" button to hear a preset
+2. Try clicking different Style Presets (mood buttons)
+3. Adjust Speed (BPM) slider to make it faster/slower
+4. Click "⚡ SURPRISE ME!" for random combinations
+5. Press ▶ (Play) and ■ (Stop) to control playback
+6. Draw patterns by clicking grid squares in SEQUENCER
+
+🎹 FOR MUSICIANS:
+⌨️ KEYBOARD SHORTCUTS:
+Space - Play/Pause
+R - Randomize all patterns and effects
+E - Export as WAV file
+T - Tap tempo to set BPM
+L - Toggle light/dark theme
+Ctrl+Z - Undo last change
+Ctrl+Shift+Z - Redo
+? - Show this help
+
+📊 TECHNICAL FEATURES:
 • 30+ drum/bass/keys/pads patterns
-• 14 mood presets (Ethio, Reggae, Dub, Afrobeat, Trap, etc.)
-• 17 FX types with randomization
-• Waveform visualizer
-• WAV export (4 bars)
+• 14 mood/genre presets
+• 17 FX types with per-track randomization
+• Real-time waveform visualizer
+• WAV export (4 bars, 44.1kHz)
 • WebM recording
-• URL sharing
+• URL sharing with state
 • Per-track mute/solo/swing
+• MIDI output (WebMIDI API)
+• Patch export/import (JSON)
+• Undo/redo with history
 • Autosave to localStorage
-• Dark/light themes`;alert(help);};
+• Touch-friendly mobile UI
+• Dark/light themes
+
+💡 TIPS:
+• Hover over any control for a description
+• Style Presets automatically set tempo and patterns
+• Click panel headers to collapse/expand sections
+• Drag audio files onto the page to load samples`;alert(help);};
+
+// Quick Start - Automatically load a preset and play
+const quickStart=()=>{
+  if(Tone.context.state!=='running')Tone.context.resume();
+  // Load a friendly preset
+  applyMood('dusty');
+  // Wait a moment then start playing
+  setTimeout(()=>{
+    if(!playing){
+      Tone.Transport.start();
+      loop.start(0);
+      playing=true;
+      log('🚀 Quick Start! Press Stop (■) to pause');
+    }
+  },100);
+};
 // Sample drag & drop
 document.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';});
 document.addEventListener('drop',async e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(!file||!file.type.startsWith('audio/'))return;try{const arrayBuffer=await file.arrayBuffer();const audioBuffer=await Tone.context.decodeAudioData(arrayBuffer);const player=new Tone.Player(audioBuffer).connect(drumG);log(`📂 Loaded: ${file.name}`);}catch(err){log('❌ Load failed');}});
