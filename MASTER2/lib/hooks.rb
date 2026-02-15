@@ -202,21 +202,8 @@ module MASTER
         puts UI.dim(msg)
       end
 
-      # Merged from hooks_manager.rb - Hook execution logic
       def execute_hook(hook_name, data)
-        case hook_name.to_s
-        when "backup_original"
-          backup_file(data[:file_path] || data[:file]) if data[:file_path] || data[:file]
-        when "validate_syntax"
-          validate_syntax(data[:code] || data[:content]) if data[:code] || data[:content]
-        when "log_context"
-          log_event(hook_name, data)
-        else
-          # Default: log that hook was called
-          Result.ok({ hook: hook_name, executed: true })
-        end
-      rescue StandardError => e
-        Result.err("Hook #{hook_name} failed: #{e.message}")
+        execute_action(hook_name, data)
       end
 
       def execute_handler(handler, data)
@@ -225,30 +212,8 @@ module MASTER
       rescue StandardError => e
         Result.err("Handler failed: #{e.message}")
       end
-
-      def validate_syntax(code)
-        return Result.err("No code provided") unless code
-
-        # Ruby syntax check using safe compilation
-        if MASTER::Utils.valid_ruby?(code)
-          Result.ok({ valid: true })
-        else
-          Result.err("Syntax error in code")
-        end
-      rescue SyntaxError => e
-        Result.err("Syntax error: #{e.message}")
-      rescue StandardError => e
-          # For non-Ruby code or other errors, skip validation
-          Result.ok({ skipped: true, reason: e.message })
-        end
-      end
-
-      def log_event(hook_name, data)
-        Result.ok({ logged: true, hook: hook_name, timestamp: Time.now.iso8601 })
-      end
     end
   end
 
-  # Backward compatibility alias
   HooksManager = Hooks
 end
