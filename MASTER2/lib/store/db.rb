@@ -34,7 +34,7 @@ module MASTER
 
     # Load YAML configuration files from data/ directory
     def load_yml(name)
-      yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
+      yml_path = File.join(File.dirname(__dir__), "config", "#{name}.yml")
       return {} unless File.exist?(yml_path)
 
       YAML.safe_load_file(yml_path) || {}
@@ -308,7 +308,7 @@ module MASTER
     def seed_axioms
       return unless read_collection("axioms").empty?
 
-      axioms_file = File.join(MASTER.root, "data", "axioms.yml")
+      axioms_file = File.join(MASTER.root, "config", "axioms.yml")
       if File.exist?(axioms_file)
         axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)
         axioms_data.each do |axiom|

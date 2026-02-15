@@ -51,11 +51,13 @@ module MASTER
         File.join(root, "lib")
       end
 
-      # Data directory for static resources
-      # @return [String] Path to data/
+      # Config directory for static resources (renamed from data/)
+      # @return [String] Path to config/
       def data
-        File.join(root, "data")
+        File.join(root, "config")
       end
+
+      alias config data
 
       # Variable data directory (runtime state)
       # @return [String] Path to var/
@@ -367,12 +369,12 @@ require "shellwords"
 
 # Core
 require_relative "result"
-require_relative "logging"  # Unified logging (replaces log.rb, logging.rb, dmesg.rb)
-require_relative "db_jsonl"
+require_relative "support/logging"
+require_relative "store/db"
 require_relative "llm"
-require_relative "session"  # Includes SessionReplay (consolidated)
-require_relative "pledge"
-require_relative "rubocop_detector"  # Style checking integration
+require_relative "session"
+require_relative "security/pledge"
+require_relative "rubocop_detector"
 
 # Multi-language parsing and NLU (optional — from parent repo)
 %w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
@@ -385,45 +387,45 @@ require_relative "rubocop_detector"  # Style checking integration
 end
 
 # Safe Autonomy Architecture
-require_relative "staging"
+require_relative "security/staging"
 
 # UI & NN/g compliance
-require_relative "ui"  # Includes Help, ErrorSuggestions, NNGChecklist, Confirmations
-require_relative "undo"
-require_relative "commands"
+require_relative "ui"
+require_relative "store/undo"
+require_relative "cli/commands"
 
 # Pipeline stages (needed by executor)
-require_relative "stages"
+require_relative "pipeline/stages"
 
 # Executor (ReAct pattern - default behavior)
-require_relative "executor"
+require_relative "pipeline/executor"
 
 # Pipeline
-require_relative "pipeline"
-require_relative "hooks"
-require_relative "questions"
-require_relative "workflow"  # Consolidated: planner + workflow_engine + convergence
+require_relative "pipeline/pipeline"
+require_relative "support/hooks"
+require_relative "support/questions"
+require_relative "workflow"
 
 # Deliberation engines
-require_relative "chamber"
+require_relative "refactor/chamber"
 
 # Tools
-require_relative "shell"
-require_relative "analysis"  # Consolidated: Prescan + Introspection (includes self_map)
+require_relative "io/shell"
+require_relative "support/analysis"
 require_relative "problem_solver"
-require_relative "evolve"
-require_relative "queue"              # Priority task queue (restored from MASTER v1)
-require_relative "personas"           # Persona management (restored from MASTER v1)
-require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
+require_relative "refactor/evolve"
+require_relative "store/queue"
+require_relative "support/personas"
+require_relative "support/harvester"
 
-# Web browsing (restored from MASTER)
-require_relative "web"
+# Web browsing
+require_relative "io/web"
 
-# Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
-require_relative "speech"
+# Speech
+require_relative "io/speech"
 
-# Media generation and post-processing bridges - Consolidated
-require_relative "bridges"  # Consolidated: PostproBridge + RepligenBridge
+# Media generation and post-processing bridges
+require_relative "io/bridges"
 
 # External services
 %w[weaviate replicate cinematic semantic_cache].each do |mod|
@@ -437,24 +439,21 @@ end
 # Agents
 require_relative "agent"
 
-# Meta/Self-improvement - Consolidated into review.rb
-require_relative "review"  # Includes: Scanner (code_review), Fixer (auto_fixer), Enforcer (enforcement)
-require_relative "learnings"
-require_relative "file_processor"
-require_relative "reflow"
-require_relative "multi_refactor"
+# Code review and quality
+require_relative "review"
+require_relative "store/learnings"
+require_relative "refactor/file_processor"
+require_relative "refactor/reflow"
+require_relative "refactor/multi_refactor"
 
-# Quality & Analysis (restored from MASTER)
-# planner now in workflow.rb
-
-# Generators (hoisted from generators/)
+# Generators
 require_relative "html_generator"
 
-# Quality gates (hoisted from framework/)
-require_relative "quality_gates"
+# Quality gates
+require_relative "support/quality_gates"
 
 # Web UI
-%w[server].each do |mod|
+%w[io/server].each do |mod|
   begin
     require_relative mod
   rescue LoadError, StandardError => e

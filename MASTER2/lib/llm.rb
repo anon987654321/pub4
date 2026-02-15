@@ -9,7 +9,7 @@ module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
-    BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
+    BUDGET_FILE = File.join(__dir__, "..", "config", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
     SPENDING_CAP = 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
@@ -50,7 +50,7 @@ module MASTER
       # Load model configuration from models.yml
       def load_models_config
         @models_config ||= begin
-          models_file = File.join(__dir__, "..", "data", "models.yml")
+          models_file = File.join(__dir__, "..", "config", "models.yml")
           return [] unless File.exist?(models_file)
           begin
             YAML.safe_load_file(models_file, symbolize_names: true) || []

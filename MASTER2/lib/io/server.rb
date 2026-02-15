@@ -7,7 +7,7 @@ module MASTER
   # Server - Multimodal web UI with Falcon
   class Server
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
-    VIEWS_DIR = File.join(File.dirname(__FILE__), "views")
+    VIEWS_DIR = File.join(MASTER.root, "web")
 
     attr_reader :port, :output_queue
 

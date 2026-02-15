@@ -9,7 +9,7 @@ module MASTER
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
-      SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
+      SMELLS_FILE = File.join(__dir__, "..", "config", "smells.yml")
 
       # MASTER2 contribution rules and architecture
       ARCHITECTURE = {
@@ -274,7 +274,7 @@ module MASTER
     module QualityStandards
       extend self
 
-      THRESHOLDS_FILE = File.join(__dir__, "..", "data", "quality_thresholds.yml")
+      THRESHOLDS_FILE = File.join(__dir__, "..", "config", "quality_thresholds.yml")
 
       def thresholds
         @thresholds ||= begin
@@ -324,7 +324,7 @@ module MASTER
     # LanguageAxioms - Language-specific beauty rules
     # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
     module LanguageAxioms
-      AXIOMS_FILE = File.join(__dir__, "..", "data", "language_axioms.yml")
+      AXIOMS_FILE = File.join(__dir__, "..", "config", "language_axioms.yml")
 
       EXTENSION_MAP = {
         ".rb"    => %w[ruby rails universal],

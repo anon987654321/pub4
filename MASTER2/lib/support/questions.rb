@@ -6,7 +6,7 @@ module MASTER
   # Questions - Guided inquiry per workflow phase
   # Ensures thorough analysis before implementation
   module Questions
-    QUESTIONS_FILE = File.join(__dir__, "..", "data", "questions.yml")
+    QUESTIONS_FILE = File.join(__dir__, "..", "config", "questions.yml")
 
     PHASES = %i[discover analyze ideate design implement validate deliver learn].freeze
 

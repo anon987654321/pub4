@@ -16,7 +16,7 @@ module MASTER
 
     # Stage 2: Strip filler words and verbose phrases
     class Compress
-      COMPRESSION_FILE = File.join(__dir__, "..", "data", "compression.yml")
+      COMPRESSION_FILE = File.join(__dir__, "..", "config", "compression.yml")
 
       class << self
         # Load compression patterns from YAML

@@ -9,7 +9,7 @@ module MASTER
   # Merged from hooks_manager.rb for DRY compliance
   # Executes registered actions at key pipeline moments
   module Hooks
-    HOOKS_FILE = File.join(__dir__, "..", "data", "hooks.yml")
+    HOOKS_FILE = File.join(__dir__, "..", "config", "hooks.yml")
 
     # Events supported by the hook system
     EVENTS = %i[

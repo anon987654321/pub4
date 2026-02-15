@@ -26,7 +26,7 @@ module MASTER
     MAX_PARSE_FALLBACK_LENGTH = 100
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
-    SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
+    SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "config", "system_prompt.yml")
 
     # Dangerous patterns to block (injection prevention)
     # Synchronized with Stages::Guard::DANGEROUS_PATTERNS

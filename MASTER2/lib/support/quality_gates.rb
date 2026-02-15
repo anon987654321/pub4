@@ -142,7 +142,7 @@ module MASTER
         private
 
         def config_path
-          File.join(MASTER.root, "data", "quality_gates.yml")
+          File.join(MASTER.root, "config", "quality_gates.yml")
         end
 
         def default_config

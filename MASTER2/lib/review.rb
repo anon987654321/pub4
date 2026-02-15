@@ -2,23 +2,22 @@
 
 require "yaml"
 
-# Load all code review sub-modules
-require_relative "code_review/violations"
-require_relative "code_review/smells"
-require_relative "code_review/bug_hunting"
-require_relative "code_review/engine"
-require_relative "code_review/llm_friendly"
-require_relative "code_review/audit"
-require_relative "code_review/cross_ref"
+# Load all code review sub-modules from review/ directory
+require_relative "review/violations"
+require_relative "review/smells"
+require_relative "review/bug_hunting"
+require_relative "review/engine"
+require_relative "review/llm_friendly"
+require_relative "review/audit"
+require_relative "review/cross_ref"
 
 # Load enforcement modules
-require_relative "enforcement/layers"
-require_relative "enforcement/scopes"
+require_relative "review/layers"
+require_relative "review/scopes"
 
 module MASTER
   module Review
     # Scanner - Automated checks learned from deep analysis sessions
-    # These patterns were discovered through cross-referencing and execution tracing
   end
 end
 
