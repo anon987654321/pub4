@@ -174,7 +174,7 @@ module MASTER
         User question: #{goal}
       PROMPT
 
-      result = LLM.ask(prompt, tier: tier || :fast, stream: true)
+      result = LLM.ask(prompt, tier: tier, stream: true)
 
       if result.ok?
         Result.ok(
