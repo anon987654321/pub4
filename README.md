@@ -1,47 +1,52 @@
-# MASTER2 - Autonomous Code Refactoring Engine
+# pub4
 
-## Setup
-export GEM_HOME=\$(ruby -e'puts Gem.user_dir')
-export PATH="\$GEM_HOME/bin:\$PATH"
-gem install --user-install parser unparser diffy minitest dotenv sqlite3
+A collection of autonomous systems and AI tools.
 
-export OPENROUTER_API_KEY=your_key
+## MASTER2 - Constitutional AI Code Quality System
 
-## Commands
-- refactor <file> : Auto-refactor low-risk changes
-- analyze <file> : Get suggestions
-- self_refactor : Refactor lib/ files
-- auto_iterate : Iterative self-improvement (converges on no changes)
-- stats : Show monitoring stats
-- repl : Interactive REPL with ? help and !! repeat
-- version : Show version
-- help : Show help
+The main project in this repository. An AI that reviews its own code, argues with itself, and ships the result.
 
-### Command Options
-- `--offline` or `-o` : Offline mode
-- `--converge` or `-c` : Auto-iterate until convergence
-- `--dry-run` or `-d` : Show what would change without writing
-- `--preview` or `-p` : Show before/after diff with confirmation
+**[→ Full documentation in MASTER2/README.md](MASTER2/README.md)**
 
-### Smart Features (Phase 1 Quick Wins)
-- **Auto-detection**: Run `./bin/master file.rb` to auto-suggest refactor/analyze
-- **Progress indicators**: Spinner with elapsed time for long operations
-- **Color output**: Green for success, red for errors, yellow for warnings
-- **Smart errors**: Command typos suggest closest match, missing files suggest similar
-- **Interactive REPL**: Type `?` for help, `!!` to repeat last command
-- **Performance metrics**: Shows tokens used, cost estimate, and execution time
-- **Smart defaults**: No args enters REPL, directory input prompts for batch analysis
+## Quick Start
 
-## Features
-- Ruby AST (parser/unparser)
-- JS/Python regex stubs
-- LLM analysis (Grok-4-fast)
-- Autonomy decisions
-- Persistence (SQLite)
-- Monitoring (tokens/cost)
-- Tools (shell/web search)
+```sh
+cd MASTER2
+bundle install
+export OPENROUTER_API_KEY="your-key-here"
+./bin/master refactor lib/session.rb
+```
 
-## Tests
-ruby -I lib test/full_test.rb
+MASTER2 reads your code, runs it through twelve adversarial personas, enforces thirty-two axioms from Clean Code and The Pragmatic Programmer, and writes the fix.
 
-Ready.
+## What It Does
+
+- **Autonomous refactoring** - LLM-guided code improvements with consensus voting
+- **Constitutional governance** - 32 timeless axioms from authoritative sources
+- **Council deliberation** - 12 adversarial personas with veto power
+- **Four reasoning patterns** - ReAct, PreAct, ReWOO, Reflexion
+- **Self-improvement** - Runs itself through its own refactoring engine
+- **OpenBSD-first** - Built for security and simplicity
+
+## Key Features
+
+- ✅ Zero violations tolerance - Enforces its own standards
+- ✅ Budget limits - $10 session cap prevents runaway costs
+- ✅ Circuit breaker - Auto-stops after failures
+- ✅ Rollback safety - Validates before applying changes
+- ✅ Result monad - No exceptions, explicit error handling
+- ✅ Ruby-native - No system dependencies
+
+## Version
+
+**v1.0.0** - Stable release after architectural consolidation
+
+All file sprawl eliminated. Regex removed from axioms. Ruby tree walker. Single README documentation.
+
+## License
+
+MIT License
+
+---
+
+**Everything you need is in [MASTER2/](MASTER2/)**

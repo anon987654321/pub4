@@ -259,6 +259,6 @@ MIT License. See LICENSE file for details.
 
 ## Version
 
-Version two point zero point zero. Stable release. Frozen API.
+Version one point zero point zero. Stable release. Frozen API.
 
-This is v1.0.0 after architectural consolidation. All file sprawl eliminated. Regex removed. Tree command replaced. Documentation streamlined.
+Architectural consolidation complete. All file sprawl eliminated. Regex removed from axioms. Ruby tree walker. Single README documentation.
