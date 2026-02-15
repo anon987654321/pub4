@@ -428,3 +428,175 @@
   title: "Simplest Explanation"
   statement: "Among competing solutions, the one with fewest assumptions is usually correct."
   source: "William of Ockham"
+
+# ============================================================================
+# FUNCTIONAL AXIOMS (Restored from MASTER/data/principles.yml)
+# ============================================================================
+
+- id: "FUNCTIONAL_CORE"
+  category: "functional"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Functional Core, Imperative Shell"
+  statement: "Pure logic at the center, side effects at the edges. Testable core, thin IO boundary."
+  source: "Gary Bernhardt"
+
+- id: "IDEMPOTENT"
+  category: "functional"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Idempotent Operations"
+  statement: "Same input produces same result regardless of repetition. Safe to retry."
+  source: "Distributed Systems"
+
+- id: "EXPLICIT"
+  category: "functional"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Explicit Over Implicit"
+  statement: "Make behavior visible. Hidden magic creates hidden bugs."
+  source: "Python Zen / Clean Code"
+
+- id: "CQS"
+  category: "functional"
+  protection: "PROTECTED"
+  priority: 5
+  title: "Command-Query Separation"
+  statement: "Methods either change state or return data, never both."
+  source: "Bertrand Meyer"
+
+- id: "PURE_FUNCTIONS"
+  category: "functional"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Pure Functions"
+  statement: "No side effects, deterministic output. Prefer pure transforms over stateful procedures."
+  source: "Functional Programming"
+
+- id: "IMMUTABLE"
+  category: "functional"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Immutability by Default"
+  statement: "Freeze data on creation. Mutate only when necessary and document why."
+  source: "Functional Programming"
+
+# ============================================================================
+# PERFORMANCE AXIOMS (Restored from MASTER/data/principles.yml)
+# ============================================================================
+
+- id: "CACHE_FIRST"
+  category: "performance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Cache Aggressively"
+  statement: "Cache LLM responses, computations, and lookups. Semantic cache before API call."
+  source: "MASTER/principles.yml"
+
+- id: "GUARD_EXPENSIVE"
+  category: "performance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Guard Expensive Operations"
+  statement: "Check preconditions before costly work. Fail fast, fail cheap."
+  source: "MASTER/principles.yml"
+
+- id: "PRECOMPUTE"
+  category: "performance"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Precompute Expensive Math"
+  statement: "Move invariant calculations outside loops. Lookup tables over repeated computation."
+  source: "MASTER/principles.yml"
+
+# ============================================================================
+# COMMUNICATION AXIOMS (Restored from MASTER/data/principles.yml)
+# ============================================================================
+
+- id: "PROSE_NOT_LISTS"
+  category: "communication"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Prose Over Lists"
+  statement: "Write connected prose. Bullet lists fragment reasoning and hide relationships."
+  source: "MASTER/principles.yml"
+
+- id: "ACCESSIBLE_FIRST"
+  category: "communication"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Accessible Then Technical"
+  statement: "Lead with plain language, layer in technical detail. Never jargon-first."
+  source: "MASTER/principles.yml"
+
+- id: "NO_ABBREVIATIONS"
+  category: "communication"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "No Abbreviations"
+  statement: "Spell it out. Abbreviations exclude newcomers and create ambiguity."
+  source: "MASTER/principles.yml"
+
+# ============================================================================
+# AESTHETIC AXIOMS (Restored from MASTER/data/principles.yml)
+# ============================================================================
+
+- id: "SQUINT_TEST"
+  category: "aesthetic"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Squint Test"
+  statement: "Code should reveal structure when squinted at. Visual rhythm matters."
+  source: "Sandi Metz"
+
+- id: "ANALOG_WARMTH"
+  category: "aesthetic"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Analog Warmth Over Digital Perfection"
+  statement: "Slight imperfection feels human. Over-polished feels sterile."
+  source: "MASTER/principles.yml"
+
+- id: "TYPOGRAPHY"
+  category: "aesthetic"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Typography Discipline"
+  statement: "Curly quotes, em dashes, proper ellipsis. Typographic care signals quality."
+  source: "MASTER/principles.yml"
+
+- id: "AUDIO_SMOOTH"
+  category: "aesthetic"
+  protection: "NEGOTIABLE"
+  priority: 3
+  title: "Audio-Reactive Smoothing"
+  statement: "Audio visualizations use exponential smoothing. Never raw FFT data."
+  source: "MASTER/principles.yml"
+
+# ============================================================================
+# VERIFICATION AXIOMS (Restored from MASTER/data/principles.yml + chat insights)
+# ============================================================================
+
+- id: "DUAL_DETECT"
+  category: "verification"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Dual Detection"
+  statement: "Check both literal patterns and conceptual violations. Regex + LLM together."
+  source: "MASTER/principles.yml"
+
+- id: "SILENCE_DEFAULT"
+  category: "verification"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Silence by Default"
+  statement: "Only report actionable findings. No noise, no filler, no congratulations."
+  source: "MASTER/principles.yml"
+
+- id: "MASS_CURATE"
+  category: "verification"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Mass Generation with Curation"
+  statement: "Generate many alternatives, curate ruthlessly. Quantity enables quality."
+  source: "MASTER/principles.yml"

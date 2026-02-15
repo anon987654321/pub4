@@ -222,3 +222,24 @@ cli_integration:
     - "Linux with Zsh"
     - "macOS with Zsh"
   session_management: true
+
+# Heredoc editing — in-place atomic editing of embedded apps
+heredoc_editing:
+  description: "Ruby/Rails apps embedded in zsh heredocs within .sh deployers are single source of truth"
+  locations: ["deploy/rails/*.sh", "deploy/openbsd/*.sh"]
+  capabilities:
+    - "In-place atomic editing of Ruby, ERB, SCSS, JS within heredocs"
+    - "Flesh out missing features without extracting to separate files"
+    - "Refine, polish, streamline embedded app code"
+    - "Maintain heredoc boundaries and shell variable interpolation"
+  rules:
+    - "Never extract heredoc content to separate files"
+    - "Preserve shell variable references ($var, ${var})"
+    - "Escape Ruby interpolation inside heredocs where needed"
+    - "Validate both shell syntax and embedded language syntax"
+    - "Apply language_axioms.yml rules to embedded code"
+  workflow:
+    scan: "Detect language blocks within heredocs"
+    analyze: "Apply appropriate language axioms per block"
+    edit: "Atomic in-place replacement preserving heredoc structure"
+    validate: "Shell syntax check + embedded language check"

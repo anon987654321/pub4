@@ -7,3 +7,36 @@ method_lines:
   error: 25
 max_self_test_issues: 0
 max_self_test_violations: 0
+
+# Detailed limits (merged from quality_limits.yml)
+file:
+  max_bytes: 20480
+  max_lines: 500
+  max_line_length: 120
+method:
+  max_lines: 20
+  max_params: 4
+  max_nesting: 4
+  max_complexity: 10
+class:
+  max_methods: 15
+  max_instance_vars: 7
+  max_dependencies: 5
+  max_lines: 300
+coverage:
+  minimum: 95
+
+# Graduation path — levels of autonomy earned
+graduation:
+  apprentice:
+    requires: []
+    autonomy: ask_always
+  journeyman:
+    requires: [10_successful_tasks, zero_reverts_7d]
+    autonomy: preview_changes
+  craftsman:
+    requires: [50_successful_tasks, zero_reverts_30d, test_coverage_95]
+    autonomy: apply_safe
+  master:
+    requires: [200_successful_tasks, zero_reverts_90d, positive_user_feedback]
+    autonomy: apply_all
