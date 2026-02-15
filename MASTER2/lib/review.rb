@@ -487,8 +487,8 @@ module MASTER
     # Scopes: Line → Unit → File → Framework
     module Enforcer
       extend self
-      extend Layers
-      extend Scopes
+      extend Enforcement::Layers
+      extend Enforcement::Scopes
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
