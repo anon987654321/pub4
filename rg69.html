@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RG-69 | Genre Lab</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+      letter-spacing: 0.1em;
+    }
+    .subtitle {
+      color: #888;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+    .controls {
+      display: grid;
+      gap: 20px;
+      max-width: 900px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    label {
+      min-width: 80px;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    select, input[type="range"], button {
+      padding: 8px 12px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    select {
+      min-width: 150px;
+    }
+    button {
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #2a2a2a;
+      border-color: #555;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .play-btn {
+      background: #1a7a3a;
+      border-color: #2a9a5a;
+      font-size: 1rem;
+      padding: 12px 32px;
+    }
+    .play-btn:hover {
+      background: #2a9a5a;
+    }
+    .play-btn.playing {
+      background: #c44;
+      border-color: #d55;
+    }
+    input[type="range"] {
+      flex: 1;
+      min-width: 150px;
+    }
+    .mdr {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .md {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+    .info {
+      margin-top: 2rem;
+      padding: 15px;
+      background: #111;
+      border-left: 3px solid #1a7a3a;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #aaa;
+    }
+    .value {
+      display: inline-block;
+      min-width: 40px;
+      text-align: right;
+      color: #fff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>RG-69</h1>
+  <div class="subtitle">Genre Lab — Ethio-Jazz • Roots Reggae • Industrial Techno • J Dilla • Bach</div>
+  
+  <div class="controls">
+    <div class="row">
+      <button class="play-btn" id="play">▶ Play</button>
+    </div>
+    
+    <div class="row">
+      <label>Rhythm:</label>
+      <select id="sd">
+        <option value="basic">Basic</option>
+        <option value="eth-mulatu">EthioGroove</option>
+        <option value="eth-funk">EthioFunk</option>
+        <option value="eth-tizita">EthioTizita</option>
+        <option value="reg-onedrop">OneDrop</option>
+        <option value="reg-steppers">Steppers</option>
+        <option value="reg-rockers">Rockers</option>
+        <option value="reg-nyabinghi">Nyabinghi</option>
+        <option value="reg-dub">Dub</option>
+        <option value="hate-pummel">HATE:Pummel</option>
+        <option value="hate-grind">HATE:Grind</option>
+        <option value="hate-perc">HATE:Perc</option>
+        <option value="hate-broken">HATE:Broken</option>
+        <option value="hate-stomp">HATE:Stomp</option>
+      </select>
+    </div>
+    
+    <div class="row">
+      <label>Bass:</label>
+      <select id="sb">
+        <option value="basic">Basic</option>
+        <option value="ethiobass">EthioBass</option>
+        <option value="ethiovamp">EthioVamp</option>
+        <option value="reggaebass">ReggaeBass</option>
+        <option value="dubbass">DubBass</option>
+        <option value="riddimbass">RiddimBass</option>
+        <option value="stepperbass">StepperBass</option>
+        <option value="rockerbass">RockerBass</option>
+        <option value="acidbass">AcidBass</option>
+        <option value="industrialbass">Industrial</option>
+        <option value="dronebass">DroneBass</option>
+        <option value="pulsebass">PulseBass</option>
+        <option value="stabbass">StabBass</option>
+      </select>
+    </div>
+    
+    <div class="row">
+      <label>Melody/Keys:</label>
+      <select id="sk">
+        <option value="basic">Basic</option>
+        <option value="tizita">Tizita</option>
+        <option value="bati">Bati</option>
+        <option value="ambassel">Ambassel</option>
+        <option value="anchihoye">Anchihoye</option>
+        <option value="ethiomod">EthioMod</option>
+        <option value="skank">Skank</option>
+        <option value="roots">Roots</option>
+        <option value="dubchord">DubChord</option>
+        <option value="nyachord">Nyabinghi</option>
+        <option value="indstab">IndStab</option>
+        <option value="darkchrom">DarkChrom</option>
+        <option value="noisechord">Noise</option>
+        <option value="acid">Acid</option>
+        <option value="dilla1">Dilla</option>
+        <option value="neosoul">NeoSoul</option>
+        <option value="gospel">Gospel</option>
+        <option value="badu">Badu</option>
+        <option value="drunk">Drunk</option>
+        <option value="bachdown">BachDown</option>
+        <option value="bachfugue">BachFugue</option>
+        <option value="chorale">Chorale</option>
+        <option value="prelude">Prelude</option>
+        <option value="cadence">Cadence</option>
+      </select>
+    </div>
+    
+    <div class="row">
+      <label>Pads:</label>
+      <select id="spa">
+        <option value="none">None</option>
+        <option value="ethiodrone">EthioDrone</option>
+        <option value="dubwash">DubWash</option>
+        <option value="rootsdrone">RootsDrone</option>
+        <option value="industrialdrone">IndDrone</option>
+        <option value="noisewash">NoiseWash</option>
+      </select>
+    </div>
+    
+    <div class="row">
+      <label>BPM:</label>
+      <input type="range" id="bpm" min="50" max="180" value="90" step="1">
+      <span class="value" id="bpmv">90</span>
+    </div>
+    
+    <div class="row">
+      <label>Swing:</label>
+      <input type="range" id="swing" min="0" max="50" value="10" step="1">
+      <span class="value" id="swingv">10%</span>
+    </div>
+    
+    <div class="row">
+      <label>Root:</label>
+      <select id="root">
+        <option value="0">C</option>
+        <option value="1">C#</option>
+        <option value="2">D</option>
+        <option value="3">D#</option>
+        <option value="4">E</option>
+        <option value="5">F</option>
+        <option value="6">F#</option>
+        <option value="7">G</option>
+        <option value="8">G#</option>
+        <option value="9">A</option>
+        <option value="10">A#</option>
+        <option value="11">B</option>
+      </select>
+    </div>
+    
+    <div class="mdr">
+      <button class="md" data-m="ethio">Ethio-Jazz</button>
+      <button class="md" data-m="reggae">Reggae</button>
+      <button class="md" data-m="dub">Dub</button>
+      <button class="md" data-m="steppers">Steppers</button>
+      <button class="md" data-m="industrial">Industrial</button>
+      <button class="md" data-m="hardtechno">Hard Techno</button>
+      <button class="md" data-m="hatestyle">HATE</button>
+    </div>
+  </div>
+  
+  <div class="info">
+    RG-69 Genre Lab v1.0 — Patterns from Mulatu Astatke, Bob Marley, HATE Podcast, J Dilla, J.S. Bach. 
+    MIT Licensed. Web Audio API.
+  </div>
+
+  <script>
+    // ==== WEB AUDIO SETUP ====
+    let actx, playing = false, step = 0, timer;
+    const steps = 16;
+    
+    // Oscillator pools for performance
+    const oscPool = { drums: [], bass: null, keys: [], pads: [] };
+    
+    // ==== DRUM PATTERNS ====
+    // Format: {k: kick, s: snare, c: clap, h: hihat, o: open hat}
+    // Values: 0 = silent, 0.1-1.0 = velocity
+    const D = {
+      'basic': {k:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[.5,.3,.5,.3,.5,.3,.5,.3,.5,.3,.5,.3,.5,.3,.5,.3], o:[0,0,0,0,0,0,0,.4,0,0,0,0,0,0,0,.4]},
+      
+      // ETHIO-JAZZ (Mulatu Astatke style)
+      'eth-mulatu': {k:[1,0,0,.5,0,0,.7,0,0,1,0,0,.5,0,.6,0], s:[0,0,0,0,.8,0,0,.3,0,0,0,0,.9,0,0,.3], c:[0,0,0,0,0,0,0,0,0,0,.4,0,0,0,0,0], h:[.6,.3,.5,.3,.6,.3,.5,.3,.6,.3,.5,.3,.6,.3,.5,.3], o:[0,0,0,0,0,0,0,.4,0,0,0,0,0,0,0,.3]},
+      'eth-funk': {k:[1,0,0,0,.6,0,1,0,0,.5,0,0,1,0,.5,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,.4], c:[0,0,.3,0,0,0,.3,0,0,0,.3,0,0,0,.3,0], h:[.7,.5,.7,.5,.7,.5,.7,.5,.7,.5,.7,.5,.7,.5,.7,.5], o:[0,0,0,0,0,0,0,.5,0,0,0,0,0,0,0,.5]},
+      'eth-tizita': {k:[1,0,0,0,0,0,0,0,.8,0,.4,0,0,0,0,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,.2], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[.5,0,.3,0,.5,0,.3,.4,.5,0,.3,0,.5,0,.3,0], o:[0,0,0,0,0,0,0,.3,0,0,0,0,0,0,0,.4]},
+      
+      // ROOTS REGGAE / DUB
+      'reg-onedrop': {k:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], s:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], c:[0,0,0,0,0,0,0,0,.4,0,0,0,0,0,0,0], h:[0,.5,0,.5,0,.5,0,.5,0,.5,0,.5,0,.5,0,.5], o:[0,0,0,0,0,0,0,.3,0,0,0,0,0,0,0,.3]},
+      'reg-steppers': {k:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[0,.4,0,.4,0,.4,0,.4,0,.4,0,.4,0,.4,0,.4], o:[0,0,0,0,0,0,0,.3,0,0,0,0,0,0,0,.3]},
+      'reg-rockers': {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,.6,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[0,.5,0,.4,0,.5,0,.4,0,.5,0,.4,0,.5,0,.4], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,.4]},
+      'reg-nyabinghi': {k:[1,0,0,.3,0,0,0,0,.7,0,0,.3,0,0,0,0], s:[0,0,0,0,0,0,.4,0,0,0,0,0,0,0,.4,0], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[.3,0,.2,0,.3,0,.2,0,.3,0,.2,0,.3,0,.2,0], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      'reg-dub': {k:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], s:[0,0,0,0,0,0,0,0,.8,0,0,0,0,0,0,0], c:[0,0,0,0,0,0,0,0,.3,0,0,0,0,0,0,0], h:[0,.3,0,0,0,.3,0,0,0,.3,0,0,0,.3,0,0], o:[0,0,0,0,0,0,0,.5,0,0,0,0,0,0,0,0]},
+      
+      // INDUSTRIAL TECHNO (HATE Podcast style)
+      'hate-pummel': {k:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], c:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], h:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      'hate-grind': {k:[1,0,0,.7,1,0,.5,0,1,0,0,.8,1,0,.6,0], s:[0,0,0,0,1,0,0,.5,0,0,0,0,1,0,0,.6], c:[0,0,.4,0,0,0,.4,0,0,0,.4,0,0,0,.4,0], h:[1,.8,1,.8,1,.8,1,.8,1,.8,1,.8,1,.8,1,.8], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      'hate-perc': {k:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,.4], c:[.5,0,.3,0,.5,0,.3,0,.5,0,.3,0,.5,0,.3,0], h:[.8,.5,.8,.5,.8,.5,.8,.5,.8,.5,.8,.5,.8,.5,.8,.5], o:[0,0,0,.3,0,0,0,.3,0,0,0,.3,0,0,0,.3]},
+      'hate-broken': {k:[1,0,0,0,0,0,1,0,0,0,1,0,.8,0,0,0], s:[0,0,0,0,1,0,0,.6,0,0,0,0,1,0,0,0], c:[0,.4,0,0,0,.4,0,0,0,.4,0,0,0,.4,0,0], h:[1,.7,1,.7,1,.7,1,.7,1,.7,1,.7,1,.7,1,.7], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      'hate-stomp': {k:[1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0], s:[0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0], c:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], h:[.9,.5,.9,.5,.9,.5,.9,.5,.9,.5,.9,.5,.9,.5,.9,.5], o:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+    };
+    
+    // ==== BASS PATTERNS ====
+    // Comma-separated note strings, empty = rest
+    const B = {
+      'basic': 'C2,,,,C2,,,,C2,,,,C2,,,',
+      
+      // ETHIO-JAZZ
+      'ethiobass': 'C2,,Eb2,,G2,,Ab2,,G2,,Eb2,,C2,,,',
+      'ethiovamp': 'C2,,,,,,,Eb2,,,,,G1,,,',
+      
+      // ROOTS REGGAE / DUB
+      'reggaebass': 'C2,,,,,,,Eb2,,,,G1,,,,',
+      'dubbass': 'C2,,,,,,,,,,,,,,,',
+      'riddimbass': 'C2,,,,G1,,,,Eb2,,,,F2,,,',
+      'stepperbass': 'C2,,C2,,G1,,G1,,Eb2,,Eb2,,F2,,F2,',
+      'rockerbass': 'C2,,Eb2,,F2,,G2,,Ab2,,G2,,F2,,Eb2,',
+      
+      // INDUSTRIAL TECHNO
+      'acidbass': 'C2,,C2,C3,,C2,,Eb2,C2,,C2,C3,,Bb1,,C2',
+      'industrialbass': 'C1,C1,,C1,,C1,,,C1,C1,,C1,,C1,,',
+      'dronebass': 'C1,,,,,,,,,,,,,,,',
+      'pulsebass': 'C2,C2,,C2,,C2,,,C2,C2,,C2,,,C2,',
+      'stabbass': 'C2,,,,C2,,,,C2,,,,C2,,,,'
+    };
+    
+    // ==== KEYS/CHORD PATTERNS ====
+    // Arrays: note arrays for chords, 0 for rest (converted to null)
+    const K = {
+      'basic': [['C4','E4','G4'],0,0,0,['F4','A4','C5'],0,0,0,['G4','B4','D5'],0,0,0,['C4','E4','G4'],0,0,0],
+      
+      // ETHIO-JAZZ (Qenet modal system)
+      'tizita': [['C4','D4','E4','G4'],0,0,0,['G3','A3','C4','D4'],0,0,0],
+      'bati': [['C4','D4','Eb4','G4'],0,0,0,['Eb4','G4','Ab4','C5'],0,0,0],
+      'ambassel': [['C4','Db4','F4','G4'],0,0,0,['F3','G3','Ab3','C4'],0,0,0],
+      'anchihoye': [['C4','Db4','F4','Gb4'],0,0,0,['Gb3','Ab3','C4','Db4'],0,0,0],
+      'ethiomod': [['C4','Eb4','G4','Bb4'],0,0,0,['Ab3','C4','Eb4','G4'],0,0,0,['Bb3','D4','F4','Ab4'],0,0,0],
+      
+      // ROOTS REGGAE / DUB
+      'skank': [0,['C4','Eb4','G4'],0,['C4','Eb4','G4'],0,['Bb3','D4','F4'],0,['Bb3','D4','F4'],0,['Ab3','C4','Eb4'],0,['Ab3','C4','Eb4'],0,['Bb3','D4','F4'],0,0],
+      'roots': [['C4','Eb4','G4'],0,0,0,['Bb3','D4','F4'],0,0,0,['Ab3','C4','Eb4'],0,0,0,['Bb3','D4','F4'],0,0,0],
+      'dubchord': [['C4','Eb4','G4'],0,0,0,0,0,0,0,['Ab3','C4','Eb4'],0,0,0,0,0,0,0],
+      'nyachord': [['C4','G4'],0,0,0,0,0,0,0,['F3','C4'],0,0,0,0,0,0,0],
+      
+      // INDUSTRIAL TECHNO
+      'indstab': [['C4','Eb4','Gb4'],['C4','Eb4','Gb4'],0,0,['C4','Eb4','Gb4'],['C4','Eb4','Gb4'],0,0,0,0,['Bb3','Db4','E4'],0,0,0,0,0],
+      'darkchrom': [['C4','Gb4'],0,0,0,['Db4','G4'],0,0,0,['C4','Gb4'],0,0,0,['B3','F4'],0,0,0],
+      'noisechord': [['C4','Db4','E4','Gb4'],0,0,0,0,0,0,0,['B3','C4','Eb4','F4'],0,0,0,0,0,0,0],
+      'acid': ['C4','C4',0,'C4',0,'Eb4','C4',0,'C4','C4',0,'C5',0,'Bb3',0,'C4'],
+      
+      // J DILLA-INSPIRED
+      'dilla1': [['D4','F4','A4','C5','E5'],0,0,0,['G3','B3','D4','F4','A4'],0,0,0,['C4','E4','G4','B4','D5'],0,0,0,0,0,0,0],
+      'neosoul': [['C4','Eb4','G4','Bb4'],0,0,0,['Bb3','D4','F4','A4'],0,0,0,['Ab3','C4','Eb4','G4'],0,0,0,['F3','Ab3','C4','Eb4'],0,0,0],
+      'gospel': [['F4','A4','C5','E5'],0,0,0,['G4','B4','D5','F5'],0,0,0,['C4','E4','G4','B4'],0,0,0,0,0,0,0],
+      'badu': [['C4','F4','G4','Bb4'],0,0,0,['Eb4','Ab4','Bb4','D5'],0,0,0,['F4','Bb4','C5','Eb5'],0,0,0,['C4','F4','G4','Bb4'],0,0,0],
+      'drunk': [['C4','Eb4','G4','Bb4'],0,['C4','Eb4','G4','Bb4'],0,0,0,['Ab3','C4','Eb4','G4'],0,0,['Ab3','C4','Eb4','G4'],0,0,0,0,0],
+      
+      // BACH-INSPIRED
+      'bachdown': [['C4','E4','G4'],0,['B3','D4','G4'],0,['A3','C4','E4'],0,['G3','B3','E4'],0,['F3','A3','C4'],0,['E3','G3','C4'],0,['F3','A3','D4'],0,['G3','B3','D4'],0],
+      'bachfugue': ['C4',0,'Eb4',0,'G4','C5',0,'B4','A4',0,'G4',0,'F4','E4','D4','C4'],
+      'chorale': [['C4','E4','G4','C5'],0,0,0,['B3','D4','G4','B4'],0,0,0,['A3','C4','E4','A4'],0,0,0,['G3','B3','D4','G4'],0,0,0],
+      'prelude': ['C4','E4','G4','C5','E5','C5','G4','E4','C4','D4','A4','D5','F5','D5','A4','F4'],
+      'cadence': [['F3','Ab3','C4','F4'],0,0,0,['G3','B3','D4','F4'],0,0,0,['C3','Eb3','G3','C4'],0,0,0,0,0,0,0]
+    };
+    
+    // ==== PAD PATTERNS ====
+    const P = {
+      'none': null,
+      'ethiodrone': [['C3','G3','C4','Eb4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      'dubwash': [['C3','Eb3','G3','Bb3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      'rootsdrone': [['C2','G2','C3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      'industrialdrone': [['C2','Gb2','C3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      'noisewash': [['C3','Db3','Gb3','B3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    };
+    
+    // ==== MOOD PRESETS ====
+    const M = {
+      'ethio': {d:'eth-mulatu', b:'ethiobass', k:'tizita', p:'ethiodrone', bpm:[85,110], sw:[15,35]},
+      'reggae': {d:'reg-onedrop', b:'reggaebass', k:'skank', p:'dubwash', bpm:[65,82], sw:[10,25]},
+      'dub': {d:'reg-dub', b:'dubbass', k:'dubchord', p:'dubwash', bpm:[62,78], sw:[8,20]},
+      'steppers': {d:'reg-steppers', b:'stepperbass', k:'skank', p:'rootsdrone', bpm:[70,85], sw:[5,15]},
+      'industrial': {d:'hate-pummel', b:'pulsebass', k:'indstab', p:'industrialdrone', bpm:[140,155], sw:[0,5]},
+      'hardtechno': {d:'hate-grind', b:'acidbass', k:'acid', p:'noisewash', bpm:[145,160], sw:[0,3]},
+      'hatestyle': {d:'hate-broken', b:'industrialbass', k:'darkchrom', p:'industrialdrone', bpm:[142,158], sw:[0,5]}
+    };
+    
+    // ==== NOTE HELPER ====
+    const noteFreq = (note) => {
+      if (!note) return 0;
+      const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      const match = note.match(/^([A-G]#?)(\d+)$/);
+      if (!match) return 0;
+      const n = notes.indexOf(match[1]);
+      const oct = parseInt(match[2]);
+      const midi = (oct + 1) * 12 + n;
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    };
+    
+    // Transpose note by semitones
+    const tp = (note, semi) => {
+      if (!note) return null;
+      const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      const match = note.match(/^([A-G]#?)(\d+)$/);
+      if (!match) return note;
+      let n = notes.indexOf(match[1]);
+      let oct = parseInt(match[2]);
+      n += semi;
+      while (n < 0) { n += 12; oct--; }
+      while (n >= 12) { n -= 12; oct++; }
+      return notes[n] + oct;
+    };
+    
+    // Transpose array (chord or single)
+    const ta = (arr, semi) => {
+      if (!arr) return null;
+      if (Array.isArray(arr)) return arr.map(n => tp(n, semi));
+      return tp(arr, semi);
+    };
+    
+    // Parse bass pattern string
+    const pb = (str) => str.split(',').map(n => n.trim() || null);
+    
+    // Convert 0 to null in pattern
+    const cn = (p) => p.map(x => x === 0 ? null : x);
+    
+    // ==== AUDIO ENGINE ====
+    const initAudio = () => {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+    };
+    
+    const playDrum = (type, vel, time) => {
+      if (vel === 0) return;
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      const filter = actx.createBiquadFilter();
+      
+      // Drum synthesis
+      const params = {
+        k: { freq: 60, decay: 0.5, noise: 0.3 }, // kick
+        s: { freq: 200, decay: 0.15, noise: 0.8 }, // snare
+        c: { freq: 800, decay: 0.08, noise: 1 }, // clap
+        h: { freq: 8000, decay: 0.05, noise: 1 }, // hihat
+        o: { freq: 6000, decay: 0.2, noise: 1 }  // open hat
+      }[type];
+      
+      if (!params) return;
+      
+      osc.frequency.setValueAtTime(params.freq, time);
+      osc.frequency.exponentialRampToValueAtTime(params.freq * 0.01, time + params.decay);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(params.freq * 2, time);
+      filter.frequency.exponentialRampToValueAtTime(params.freq * 0.5, time + params.decay);
+      
+      gain.gain.setValueAtTime(vel * 0.3, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + params.decay);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(actx.destination);
+      
+      osc.start(time);
+      osc.stop(time + params.decay);
+    };
+    
+    const playBass = (note, time, dur) => {
+      if (!note) return;
+      const freq = noteFreq(note);
+      if (freq === 0) return;
+      
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      const filter = actx.createBiquadFilter();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(freq * 4, time);
+      filter.frequency.exponentialRampToValueAtTime(freq * 2, time + dur * 0.3);
+      filter.Q.setValueAtTime(5, time);
+      
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(0.2, time + 0.01);
+      gain.gain.setValueAtTime(0.2, time + dur * 0.8);
+      gain.gain.linearRampToValueAtTime(0, time + dur);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(actx.destination);
+      
+      osc.start(time);
+      osc.stop(time + dur);
+    };
+    
+    const playKeys = (notes, time, dur) => {
+      if (!notes) return;
+      const noteArr = Array.isArray(notes) ? notes : [notes];
+      
+      noteArr.forEach(note => {
+        if (!note) return;
+        const freq = noteFreq(note);
+        if (freq === 0) return;
+        
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, time);
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.08, time + 0.02);
+        gain.gain.setValueAtTime(0.08, time + dur * 0.7);
+        gain.gain.linearRampToValueAtTime(0, time + dur);
+        
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        
+        osc.start(time);
+        osc.stop(time + dur);
+      });
+    };
+    
+    const playPad = (notes, time, dur) => {
+      if (!notes) return;
+      const noteArr = Array.isArray(notes) ? notes : [notes];
+      
+      noteArr.forEach(note => {
+        if (!note) return;
+        const freq = noteFreq(note);
+        if (freq === 0) return;
+        
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        const filter = actx.createBiquadFilter();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(freq * 3, time);
+        filter.Q.setValueAtTime(1, time);
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.04, time + 0.3);
+        gain.gain.setValueAtTime(0.04, time + dur - 0.3);
+        gain.gain.linearRampToValueAtTime(0, time + dur);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(actx.destination);
+        
+        osc.start(time);
+        osc.stop(time + dur);
+      });
+    };
+    
+    // ==== SEQUENCER ====
+    const tick = () => {
+      if (!playing) return;
+      
+      const bpm = parseInt(document.getElementById('bpm').value);
+      const swing = parseInt(document.getElementById('swing').value) / 100;
+      const rootSemi = parseInt(document.getElementById('root').value);
+      
+      const beatDur = 60 / bpm / 4; // 16th note duration
+      const now = actx.currentTime;
+      
+      // Apply swing to odd steps
+      const swingOffset = (step % 2 === 1) ? beatDur * swing : 0;
+      const time = now + swingOffset;
+      
+      // Get current patterns
+      const drumKey = document.getElementById('sd').value;
+      const bassKey = document.getElementById('sb').value;
+      const keysKey = document.getElementById('sk').value;
+      const padKey = document.getElementById('spa').value;
+      
+      const drumPat = D[drumKey];
+      const bassPat = pb(B[bassKey]);
+      const keysPat = cn(K[keysKey]);
+      const padPat = P[padKey] ? cn(P[padKey]) : null;
+      
+      // Play drums
+      if (drumPat) {
+        if (drumPat.k[step]) playDrum('k', drumPat.k[step], time);
+        if (drumPat.s[step]) playDrum('s', drumPat.s[step], time);
+        if (drumPat.c[step]) playDrum('c', drumPat.c[step], time);
+        if (drumPat.h[step]) playDrum('h', drumPat.h[step], time);
+        if (drumPat.o[step]) playDrum('o', drumPat.o[step], time);
+      }
+      
+      // Play bass
+      if (bassPat[step]) {
+        const note = tp(bassPat[step], rootSemi);
+        playBass(note, time, beatDur * 0.8);
+      }
+      
+      // Play keys
+      if (keysPat[step]) {
+        const notes = ta(keysPat[step], rootSemi);
+        playKeys(notes, time, beatDur * 2);
+      }
+      
+      // Play pads
+      if (padPat && padPat[step]) {
+        const notes = ta(padPat[step], rootSemi);
+        playPad(notes, time, beatDur * 8);
+      }
+      
+      step = (step + 1) % steps;
+      const nextBeat = beatDur * (1 + swing * (step % 2 === 1 ? 1 : 0));
+      timer = setTimeout(tick, nextBeat * 1000);
+    };
+    
+    // ==== UI HANDLERS ====
+    document.getElementById('play').addEventListener('click', () => {
+      if (!actx) initAudio();
+      
+      if (playing) {
+        playing = false;
+        clearTimeout(timer);
+        document.getElementById('play').textContent = '▶ Play';
+        document.getElementById('play').classList.remove('playing');
+      } else {
+        playing = true;
+        step = 0;
+        document.getElementById('play').textContent = '⬛ Stop';
+        document.getElementById('play').classList.add('playing');
+        tick();
+      }
+    });
+    
+    document.getElementById('bpm').addEventListener('input', (e) => {
+      document.getElementById('bpmv').textContent = e.target.value;
+    });
+    
+    document.getElementById('swing').addEventListener('input', (e) => {
+      document.getElementById('swingv').textContent = e.target.value + '%';
+    });
+    
+    // Mood preset buttons
+    document.querySelectorAll('.md').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mood = M[btn.dataset.m];
+        if (!mood) return;
+        
+        document.getElementById('sd').value = mood.d;
+        document.getElementById('sb').value = mood.b;
+        document.getElementById('sk').value = mood.k;
+        document.getElementById('spa').value = mood.p;
+        
+        const bpm = Math.floor(Math.random() * (mood.bpm[1] - mood.bpm[0] + 1)) + mood.bpm[0];
+        const sw = Math.floor(Math.random() * (mood.sw[1] - mood.sw[0] + 1)) + mood.sw[0];
+        
+        document.getElementById('bpm').value = bpm;
+        document.getElementById('bpmv').textContent = bpm;
+        document.getElementById('swing').value = sw;
+        document.getElementById('swingv').textContent = sw + '%';
+      });
+    });
+  </script>
+</body>
+</html>
