@@ -106,7 +106,20 @@ module MASTER
       end
 
       def execute_blocking_ruby_llm(chat, content, model)
-        response = chat.ask(content)
+        # If content starts with [system], extract and set as system message
+        if content.start_with?("[system]")
+          parts = content.split("\n\n[user] ", 2)
+          if parts.size == 2
+            system_text = parts[0].sub(/^\[system\]\s*/, "")
+            user_text = parts[1]
+            chat.with_instructions(system_text)
+            response = chat.ask(user_text)
+          else
+            response = chat.ask(content)
+          end
+        else
+          response = chat.ask(content)
+        end
 
         response_data = {
           content: response.content,

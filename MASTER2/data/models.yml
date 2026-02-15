@@ -1,217 +1,121 @@
 # MASTER2 Model Configuration - February 2026
 # Pricing: $/million tokens (input/output)
-# Updated from openrouter.ai/models
+# First model is default. Order = fallback priority.
 
-# === PREMIUM TIER (billion-dollar apps, business plans, multimedia) ===
-- id: anthropic/claude-opus-4.6
-  alias: claude-opus-4.6
-  tier: premium
-  input_cost: 5.00
-  output_cost: 25.00
-  context_window: 1000000
-  provider: anthropic
-  reasoning: true
-  use_for:
-    - billion_dollar_apps
-    - business_plans
-    - multimedia_projects
-    - critical_decisions
-    - architecture_design
-
-# === STRONG TIER (complex reasoning, code review) ===
-# DEFAULT: Claude Sonnet 4.5 (best value for quality)
 - id: anthropic/claude-sonnet-4.5
   alias: claude-sonnet-4.5
-  tier: strong
   input_cost: 3.00
   output_cost: 15.00
   context_window: 1000000
   provider: anthropic
   reasoning: true
-  default: true
-  use_for:
-    - code_review
-    - refactoring
-    - veto_violations
-    - architecture_review
-    - security_audits
-    - root_cause_analysis
-    - semantic_analysis
-    - council_debate
-    - nuanced_writing
 
 - id: anthropic/claude-opus-4.6
   alias: claude-opus-4.6
-  tier: strong
   input_cost: 5.00
   output_cost: 25.00
   context_window: 1000000
   provider: anthropic
   reasoning: true
-  use_for:
-    - billion_dollar_apps
-    - critical_decisions
 
 - id: deepseek/deepseek-r1
   alias: deepseek-r1
-  tier: strong
   input_cost: 0.70
   output_cost: 2.50
   context_window: 64000
   provider: deepseek
   reasoning: true
-  use_for:
-    - budget_reasoning
-    - batch_review
 
 - id: google/gemini-3-pro-preview
   alias: gemini-3-pro
-  tier: strong
   input_cost: 2.00
   output_cost: 12.00
   context_window: 1048576
   provider: google
   reasoning: true
-  use_for:
-    - large_context
-    - document_analysis
 
-# === FAST TIER (quick responses, high throughput) ===
 - id: deepseek/deepseek-chat
   alias: deepseek-v3
-  tier: fast
   input_cost: 0.30
   output_cost: 1.20
   context_window: 163840
   provider: deepseek
-  default: true
-  use_for:
-    - quick_tasks
-    - hygiene_checks
-    - simple_validation
 
 - id: moonshotai/kimi-k2.5
   alias: kimi-k2.5
-  tier: fast
   input_cost: 0.45
   output_cost: 0.44
   context_window: 262144
   provider: moonshot
   reasoning: true
-  use_for:
-    - programming
-    - agentic_tasks
-    - vision
 
 - id: qwen/qwen3-coder-next
   alias: qwen3-coder
-  tier: fast
   input_cost: 0.07
   output_cost: 0.30
   context_window: 262144
   provider: alibaba
-  use_for:
-    - coding
-    - tool_use
-    - agents
 
 - id: z-ai/glm-5
   alias: glm-5
-  tier: fast
   input_cost: 0.75
   output_cost: 2.55
   context_window: 204800
   provider: zhipu
-  use_for:
-    - agentic
-    - large_context
 
 - id: google/gemini-3-flash-preview
   alias: gemini-3-flash
-  tier: fast
   input_cost: 0.50
   output_cost: 3.00
   context_window: 1048576
   provider: google
   reasoning: true
-  use_for:
-    - fast_reasoning
-    - large_context
 
 - id: openai/gpt-4.1-mini
   alias: gpt-4.1-mini
-  tier: fast
   input_cost: 0.40
   output_cost: 1.60
   context_window: 1047576
   provider: openai
-  use_for:
-    - incremental_checks
-    - high_volume
 
 - id: meta-llama/llama-3.3-70b-instruct
   alias: llama-3.3-70b
-  tier: fast
   input_cost: 0.10
   output_cost: 0.32
   context_window: 131072
   provider: meta
-  use_for:
-    - open_source
-    - general_tasks
 
-# === CHEAP TIER (high volume, non-critical) ===
 - id: qwen/qwen3-8b
   alias: qwen3-8b
-  tier: cheap
   input_cost: 0.05
   output_cost: 0.40
   context_window: 32000
   provider: alibaba
-  use_for:
-    - batch_processing
-    - lightweight_tasks
 
 - id: minimax/minimax-m2.5
   alias: minimax-m2.5
-  tier: cheap
   input_cost: 0.20
   output_cost: 1.00
   context_window: 196608
   provider: minimax
-  use_for:
-    - coding_cheap
-    - batch_tasks
 
 - id: google/gemini-2.5-flash-lite
   alias: gemini-flash-lite
-  tier: cheap
   input_cost: 0.10
   output_cost: 0.40
   context_window: 1048576
   provider: google
-  use_for:
-    - batch_processing
-    - large_context_cheap
 
 - id: openai/gpt-4.1-nano
   alias: gpt-4.1-nano
-  tier: cheap
   input_cost: 0.10
   output_cost: 0.40
   context_window: 1047576
   provider: openai
-  use_for:
-    - non_critical
-    - experiments
 
 - id: meta-llama/llama-3.2-3b-instruct
   alias: llama-3.2-3b
-  tier: cheap
   input_cost: 0.02
   output_cost: 0.02
   context_window: 131072
   provider: meta
-  use_for:
-    - ultra_cheap
-    - experiments

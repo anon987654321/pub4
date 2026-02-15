@@ -165,16 +165,11 @@ module MASTER
     end
 
     def direct_ask(goal, tier: nil)
-      # Use shared system message builder (no commands for brevity)
       system_msg = Context.build_system_message(include_commands: false)
 
-      prompt = <<~PROMPT
-        #{system_msg}
-
-        User question: #{goal}
-      PROMPT
-
-      result = LLM.ask(prompt, tier: tier, stream: true)
+      result = LLM.ask(goal, messages: [
+        { role: "system", content: system_msg }
+      ], stream: true)
 
       if result.ok?
         Result.ok(
