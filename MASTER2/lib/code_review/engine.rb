@@ -59,7 +59,7 @@ module MASTER
 
           # Check for cyclic dependencies if Smells module supports it
           if defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
-            cycle = Smells.cyclic_deps?(files) rescue nil
+            cycle = begin; Smells.cyclic_deps?(files); rescue StandardError => e; Logging.warn("CodeReview", "cyclic_deps check failed: #{e.message}"); nil; end
             issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
           end
         else

@@ -209,7 +209,7 @@ module MASTER
       return Result.err("Piper generation failed") unless success && File.exist?(output)
 
       play_audio(output) if play
-      File.delete(output) rescue nil if play
+      FileUtils.rm_f(output) if play
 
       Result.ok(engine: :piper, voice: voice, preset: preset)
     end
@@ -244,7 +244,7 @@ module MASTER
       return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
 
       play_audio(output) if play
-      File.delete(output) rescue nil if play
+      FileUtils.rm_f(output) if play
 
       Result.ok(engine: :edge, voice: voice_id, style: style)
     end
@@ -291,7 +291,7 @@ module MASTER
       response = http.get(uri.request_uri)
       File.binwrite(temp_file, response.body)
       play_audio(temp_file)
-      File.delete(temp_file) rescue nil
+      FileUtils.rm_f(temp_file)
     end
 
     def play_audio(file)

@@ -57,7 +57,7 @@ module MASTER
     rescue StandardError => e
       Result.err("Browse JS failed: #{e.message}")
     ensure
-      browser&.quit rescue nil
+      browser&.quit rescue StandardError
     end
 
     # Dynamic CSS selector discovery using LLM + vision

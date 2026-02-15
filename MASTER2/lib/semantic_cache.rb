@@ -168,14 +168,16 @@ module MASTER
               hit_count: entry[:hit_count] || 0,
               last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path)
             }
-          rescue
+          rescue StandardError
             { path: path, hit_count: 0, last_hit: File.mtime(path) }
           end
         end
 
         sorted = entries_with_data.sort_by { |e| [e[:hit_count], e[:last_hit]] }
         to_remove = sorted.first(entries.size - MAX_CACHE_SIZE)
-        to_remove.each { |e| File.delete(e[:path]) rescue nil }
+        to_remove.each do |e|
+          begin; File.delete(e[:path]); rescue SystemCallError => err; Logging.warn("SemanticCache", "cleanup failed: #{err.message}"); end
+        end
       end
 
       def format_size(bytes)

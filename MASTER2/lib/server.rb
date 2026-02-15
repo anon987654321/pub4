@@ -24,7 +24,7 @@ module MASTER
       @running = true
       Thread.new { run_server }
       sleep 0.3
-      Dmesg.log("web0", message: "http://localhost:#{@port}") rescue nil
+      begin; Dmesg.log("web0", message: "http://localhost:#{@port}"); rescue StandardError; end
     end
 
     def stop
@@ -139,7 +139,7 @@ module MASTER
           [200, { "content-type" => "application/json" }, [health_json]]
 
         when ["GET", "/poll"]
-          text = queue.empty? ? nil : (queue.pop(true) rescue nil)
+          text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
           body = {
             text: text,
             tier: LLM.tier,
@@ -244,7 +244,7 @@ module MASTER
         require "async"
         require "async/websocket/adapters/rack"
       rescue LoadError
-        Logging.warn("WebSocket", "async-websocket not available") rescue nil
+        Logging.warn("WebSocket", "async-websocket not available")
         return [501, { "content-type" => "text/plain" }, ["WebSocket not available"]]
       end
 
@@ -295,13 +295,13 @@ module MASTER
             connection.write({ type: "error", message: "Invalid JSON" }.to_json)
             connection.flush
           rescue StandardError => e
-            Logging.warn("WebSocket", "Error: #{e.message}") rescue nil
+            Logging.warn("WebSocket", "Error: #{e.message}")
             connection.write({ type: "error", message: e.message }.to_json)
             connection.flush
           end
         end
       rescue StandardError => e
-        Logging.warn("WebSocket", "Connection error: #{e.message}") rescue nil
+        Logging.warn("WebSocket", "Connection error: #{e.message}")
       end
       
       # Return nil to indicate WebSocket handled the request
@@ -313,7 +313,7 @@ module MASTER
     end
 
     def poll_json
-      text = @output_queue.empty? ? nil : (@output_queue.pop(true) rescue nil)
+      text = begin; @output_queue.pop(true) unless @output_queue.empty?; rescue ThreadError; nil; end
       { text: text, tier: LLM.tier, budget: LLM.budget_remaining }.to_json
     end
 

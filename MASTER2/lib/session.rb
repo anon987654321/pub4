@@ -646,7 +646,7 @@ module MASTER
     def calculate_duration(history)
       return "unknown" if history.empty?
 
-      timestamps = history.map { |h| Time.parse(h[:timestamp]) rescue nil }.compact
+      timestamps = history.map { |h| begin; Time.parse(h[:timestamp]); rescue ArgumentError, TypeError; nil; end }.compact
       return "unknown" if timestamps.size < 2
 
       seconds = (timestamps.last - timestamps.first).to_i
