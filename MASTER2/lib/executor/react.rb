@@ -51,11 +51,6 @@ module MASTER
       end
     end
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Pre-Act pattern implementation
-    # Plan first, then execute
-    # Best for: multi-step tasks, structured workflows, clear sequences
-    # 70% better action recall than ReAct (arXiv:2505.09970)
-    # ═══════════════════════════════════════════════════════════════════════════
+    # --- Pre-Act pattern implementation ---
   end
 end

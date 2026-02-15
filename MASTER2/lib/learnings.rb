@@ -381,15 +381,7 @@ module MASTER
     end
 
     def hash_fix(fix)
-      # Create a hash of the fix for comparison
-      # This is simplified - real implementation would be more sophisticated
-      if fix.is_a?(Hash)
-        fix.hash.to_s
-      elsif fix.respond_to?(:to_s)
-        fix.to_s.hash.to_s
-      else
-        "unknown"
-      end
+      fix.to_s.hash.to_s
     end
   end
 

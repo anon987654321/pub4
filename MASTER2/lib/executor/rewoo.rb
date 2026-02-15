@@ -79,11 +79,6 @@ module MASTER
       end
     end
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Reflexion pattern implementation
-    # Self-critique and learning
-    # Best for: fixing, debugging, tasks where mistakes are costly
-    # Adds meta-cognitive layer for error correction
-    # ═══════════════════════════════════════════════════════════════════════════
+    # --- Reflexion pattern implementation ---
   end
 end
