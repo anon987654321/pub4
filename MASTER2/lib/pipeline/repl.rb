@@ -48,20 +48,12 @@ module MASTER
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
       loop do
-        # Show current phase in prompt if workflow active
+        # Starship-style prompt with phase context
         prompt_str = if defined?(WorkflowEngine) && session.metadata[:workflow]
                        phase = WorkflowEngine.current_phase(session)
-                       "#{phase}> "
+                       "#{UI.pastel.cyan(phase.to_s)} #{UI.pastel.bold.green('❯')} "
                      else
-                       full_prompt = prompt
-                       # For multi-line prompts, print info line and use only input line
-                       if full_prompt.include?("\n")
-                         lines = full_prompt.split("\n")
-                         puts lines[0..-2].join("\n") # Print all but last line
-                         lines[-1] + " " # Return last line as input prompt
-                       else
-                         full_prompt
-                       end
+                       "#{UI.pastel.bold.green('❯')} "
                      end
 
         begin

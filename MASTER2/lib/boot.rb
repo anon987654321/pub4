@@ -29,15 +29,14 @@ module MASTER
         smoke_result = smoke_test
 
         lines = [
-          c("MASTER #{VERSION} #1: #{timestamp}"),
+          c("MASTER #{VERSION} #{UI::ICONS[:separator]} #{timestamp}"),
           c("#{user}@#{host}:#{MASTER.root}"),
+          "",
           c("cpu0 at mainbus0: #{RUBY_PLATFORM}"),
           c("ruby0 at cpu0: ruby #{RUBY_VERSION}"),
           c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas"),
-          c("llm0 at db0: openrouter #{tier_models}"),
+          c("llm0 at db0: #{tier_models}"),
           c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining"),
-          c("tts0 at budget0: #{tts_status}"),
-          c("self0 at tts0: #{self_awareness_summary}"),
           c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}"),
           c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
           c("smoke0 at executor0: #{smoke_result}"),

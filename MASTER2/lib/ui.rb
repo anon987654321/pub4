@@ -12,14 +12,23 @@ module MASTER
     MASTER_BOOT_TIME = Time.now
 
     # --- Typography Icons (minimal vocabulary per Strunk & White) ---
+    # --- Typography Icons (Starship-inspired, Nerd Font compatible) ---
     ICONS = {
       success: "✓",
       failure: "✗",
-      warning: "!",
+      warning: "⚠",
       bullet: "·",
       arrow: "→",
       thinking: "◐",
       done: "●",
+      prompt_ok: "❯",
+      prompt_err: "❯",
+      branch: "",
+      lock: "󰌾",
+      separator: "│",
+      ellipsis: "…",
+      lightning: "⚡",
+      gear: "⚙",
     }.freeze
 
     # --- TTY Component Lazy Loaders ---
