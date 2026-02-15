@@ -243,11 +243,11 @@ require_relative "multi_refactor"
 # Quality & Analysis (restored from MASTER)
 # planner now in workflow.rb
 
-# Generators (restored from historical features)
-require_relative "generators/html"
+# Generators (hoisted from generators/)
+require_relative "html_generator"
 
-# Quality gates (restored from MASTER)
-require_relative "framework/quality_gates"
+# Quality gates (hoisted from framework/)
+require_relative "quality_gates"
 
 # Web UI
 %w[server].each do |mod|
