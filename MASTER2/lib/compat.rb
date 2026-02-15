@@ -48,5 +48,5 @@ end
 CodeReview = MASTER::Review::Scanner
 AutoFixer = MASTER::Review::Fixer
 Enforcement = MASTER::Review::Enforcer
-QualityStandards = MASTER::Review::Enforcer
+QualityStandards = MASTER::Review::QualityStandards
 FileHygiene = MASTER::Review::Scanner::FileHygiene

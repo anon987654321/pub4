@@ -66,10 +66,10 @@ module MASTER
     end
 
     def spinner(message = nil, format: :braille)
-      # Delegate to UI::spinner from lib/ui/spinner.rb
+      # Delegate to UI.spinner (class method defined in lib/ui/spinner.rb)
       # This avoids duplication and uses the richer SubtleSpinner fallback
       require_relative 'ui/spinner'
-      self.class.spinner(message, format: format)
+      UI.spinner(message, format: format)
     end
 
     def multi_spinner

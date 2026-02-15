@@ -55,9 +55,9 @@ module MASTER
     end
 
     def spinner(message = "Processing...", style: :dots, &block)
-      # Delegate to UI.spinner for consistency (avoids duplicate implementation)
+      # Delegate to UI.spinner (class method) for consistency
       require_relative 'spinner'
-      s = UI.spinner(message, format: :classic)
+      s = MASTER::UI.spinner(message, format: :classic)
       s.auto_spin
 
       result = yield
