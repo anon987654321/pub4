@@ -99,20 +99,6 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label>Keys</label><select id="keysSel"></select><div id="keysFx" class="fx-tags"></div></div>
 <div class="control"><label>Pads</label><select id="padsSel"></select><div id="padsFx" class="fx-tags"></div></div>
 <button class="btn" id="randomBtn" style="width:100%;margin-top:10px">⚡ RANDOMIZE</button>
-<button class="btn" id="exportBtn" style="width:100%;margin-top:5px">💾 EXPORT PATCH</button>
-<button class="btn" id="importBtn" style="width:100%;margin-top:5px">📂 IMPORT PATCH</button>
-<input type="file" id="importFile" accept=".json" style="display:none">
-</div></div>
-</div>
-<div class="panel">
-<div class="panel-header">EXPERT / LO-FI</div>
-<div class="panel-body"><div>
-<div class="control"><label>Tape Drive</label><input type="range" id="tapeDriveSlider" min="0" max="100" value="50"><span id="tapeDriveVal">50</span></div>
-<div class="control"><label>Crackle</label><input type="range" id="crackleSlider" min="0" max="100" value="30"><span id="crackleVal">30</span></div>
-<div class="control"><label>Hiss</label><input type="range" id="hissSlider" min="0" max="100" value="20"><span id="hissVal">20</span></div>
-<div class="control"><label>Flutter</label><input type="range" id="flutterSlider" min="0" max="100" value="10"><span id="flutterVal">10</span></div>
-<div class="control"><label>VHS Noise</label><input type="range" id="vhsSlider" min="0" max="100" value="15"><span id="vhsVal">15</span></div>
-<div class="control"><label>Vinyl</label><input type="range" id="vinylSlider" min="0" max="100" value="25"><span id="vinylVal">25</span></div>
 </div></div>
 </div>
 <div class="panel">
@@ -139,23 +125,6 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="tooltip" id="tooltip"></div>
 </div>
 <script>
-// ============================================================================
-// RG69 MOBILE BEAT LAB - Audio Engine
-// ============================================================================
-// MASTER2 Axiom Compliance:
-// - ONE_SOURCE: Pattern data centralized in D, B, K, P objects
-// - SIMPLEST_WORKS: Direct Tone.js API usage without abstractions
-// - ONE_JOB: Separate functions for audio init, FX, sequencer, UI
-// - FAIL_VISIBLY: Explicit error handling with try/catch and user feedback
-// - NO_SURPRISES: Predictable behavior matching user mental models
-// - DEADLINES: Async operations have explicit error boundaries
-// ============================================================================
-
-// ============================================================================
-// PATTERN DATA - Single Source of Truth (MASTER2: ONE_SOURCE)
-// ============================================================================
-// All 28+ drum patterns, 19 bass patterns, 20+ keys patterns, 9 pad patterns
-// Format: Arrays of 16 step velocities (0-1) for k=kick, s=snare, c=clap, h=hat, o=open
 // Pattern Data - All patterns from PR #249, #250 plus 5 new genre packs
 const D={
 // PR #250 Ethio-Jazz
@@ -291,107 +260,44 @@ let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
 // Tone.js setup
-let kickN,kickClick,snareBody,snareRing,clapN,hatN,openN,bassN,bassSub,keysN,padsN,drumG,bassG,keysG,padsG,masterG,limiter,analyser;
-let reverb,feedbackDelay,delayLP,hatIsOpen=false;
-let drumDrive,bassDistortion,keysTremolo,keysChorus,keysBitcrusher,padFilter,padLFO,stereoWidener;
-let tapeSaturation,crackle,hiss,flutter,vhsNoise,vinyl,vinylGain,lofiComp,lofiLP;
-let tapeDrive=0.5,crackleLevel=0.3,hissLevel=0.2,flutterRate=0.1,vhsLevel=0.15,vinylLevel=0.25;
+let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN,drumG,bassG,keysG,padsG,masterG,limiter,analyser;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 // Init audio
-const initAudio=async()=>{
-  // Layered kick: MembraneSynth + NoiseSynth click
-  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}});
-  kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.01,sustain:0}});
-  // Layered snare: NoiseSynth body (bandpass) + Synth ring
-  snareBody=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}});
-  const snareBP=new Tone.Filter(1500,'bandpass');
-  snareBody.connect(snareBP);
-  snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0,release:.05}});
-  // Clap with bandpass
-  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}});
-  const clapBP=new Tone.Filter(2000,'bandpass');
-  clapN.connect(clapBP);
-  // MetalSynth hats
-  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
-  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
-  // Bass with sub-oscillator
-  bassN=new Tone.MonoSynth({oscillator:{type:'fatsawtooth'},envelope:{attack:.01,decay:.3,sustain:.4,release:.1},filterEnvelope:{attack:.005,decay:.2,sustain:.3,release:.1,baseFrequency:100,octaves:4},portamento:.02});
-  bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-15;
-  bassDistortion=new Tone.Distortion(0.3);
-  // Keys with FX chain
-  keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}});
-  keysTremolo=new Tone.Tremolo(4,.3).start();
-  keysChorus=new Tone.Chorus(2,2.5,.5).start();
-  keysBitcrusher=new Tone.BitCrusher(4);
-  // Pads with LFO filter and widener
-  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}});
-  padFilter=new Tone.Filter(800,'lowpass');
-  padLFO=new Tone.LFO(0.1,200,1200).start();
-  padLFO.connect(padFilter.frequency);
-  stereoWidener=new Tone.StereoWidener(0.5);
-  // Gain nodes
+const initAudio=()=>{
+  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}}).toDestination();
+  snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}}).toDestination();
+  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
+  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
+  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
+  bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}}).toDestination();
+  bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
+  keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}}).toDestination();
+  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'sine'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}}).toDestination();
   drumG=new Tone.Gain(.8);bassG=new Tone.Gain(.7);keysG=new Tone.Gain(.6);padsG=new Tone.Gain(.5);masterG=new Tone.Gain(.75);
-  drumDrive=new Tone.Distortion(0.15);
-  // Connect drums to drumG
-  kickN.connect(drumG);kickClick.connect(drumG);
-  snareBP.connect(drumG);snareRing.connect(drumG);
-  clapBP.connect(drumG);
-  hatN.connect(drumG);openN.connect(drumG);
-  // Connect bass
-  bassN.connect(bassDistortion);bassDistortion.connect(bassG);
-  bassSub.connect(bassG);
-  // Connect keys
-  keysN.chain(keysTremolo,keysChorus,keysBitcrusher,keysG);
-  // Connect pads
-  padsN.connect(padFilter);padFilter.connect(stereoWidener);stereoWidener.connect(padsG);
-  // Lo-fi chain (MASTER2: SIMPLEST_WORKS - tape saturation, noise layers)
-  lofiComp=new Tone.Compressor(-20,3);
-  // Initial tape saturation curve (256 points, tanh mapping)
-  const CURVE_SIZE=256,CURVE_CENTER=128,TAPE_DRIVE_BASE=2;
-  const tanhCurve=new Float32Array(CURVE_SIZE).map((_,i)=>{const x=(i/CURVE_CENTER)-1;return Math.tanh(x*TAPE_DRIVE_BASE);});
-  tapeSaturation=new Tone.WaveShaper(tanhCurve);
-  lofiLP=new Tone.Filter(8000,'lowpass');
-  crackle=new Tone.Noise('brown').start();crackle.volume.value=-30;
-  const crackleLP=new Tone.Filter(500,'lowpass');crackle.connect(crackleLP);
-  hiss=new Tone.Noise('pink').start();hiss.volume.value=-35;
-  const hissBP=new Tone.Filter(5000,'bandpass');hiss.connect(hissBP);
-  flutter=new Tone.LFO(0.1,-12,12);
-  vhsNoise=new Tone.Noise('white').start();vhsNoise.volume.value=-40;
-  const vhsGain=new Tone.Gain(0);
-  const vhsLFO=new Tone.LFO(0.05,0,0.3).start();
-  vhsLFO.connect(vhsGain.gain);
-  vhsNoise.connect(vhsGain);
-  vinyl=new Tone.Noise('brown').start();vinyl.volume.value=-32;
-  const vinylLP=new Tone.Filter(300,'lowpass');
-  vinylGain=new Tone.Gain(0.25);
-  vinyl.connect(vinylLP);vinylLP.connect(vinylGain);
-  // Master FX chain
-  feedbackDelay=new Tone.FeedbackDelay('8n.',0.3);
-  delayLP=new Tone.Filter(4000,'lowpass');
-  feedbackDelay.connect(delayLP);
-  reverb=new Tone.Reverb(2.5);
-  await reverb.generate();
+  kickN.disconnect();kickN.connect(drumG);
+  snareN.disconnect();snareN.connect(drumG);
+  clapN.disconnect();clapN.connect(drumG);
+  hatN.disconnect();hatN.connect(drumG);
+  openN.disconnect();openN.connect(drumG);
+  bassN.disconnect();bassN.connect(bassG);
+  bassSub.disconnect();bassSub.connect(bassG);
+  keysN.disconnect();keysN.connect(keysG);
+  padsN.disconnect();padsN.connect(padsG);
   limiter=new Tone.Limiter(-1);
   analyser=new Tone.Analyser('waveform',256);
-  // Connect tracks to master through lofi
-  drumG.connect(drumDrive);drumDrive.connect(lofiComp);
-  bassG.connect(lofiComp);keysG.connect(lofiComp);padsG.connect(lofiComp);
-  lofiComp.chain(tapeSaturation,lofiLP,masterG);
-  crackleLP.connect(masterG);hissBP.connect(masterG);vhsGain.connect(masterG);vinylGain.connect(masterG);
-  // Master chain - delay and reverb in series (not feedback loop)
-  masterG.chain(feedbackDelay,delayLP,reverb,analyser,limiter);
-  limiter.toDestination();
+  drumG.connect(masterG);bassG.connect(masterG);keysG.connect(masterG);padsG.connect(masterG);
+  masterG.connect(analyser);masterG.connect(limiter);limiter.toDestination();
   Tone.Transport.bpm.value=bpm;
   randomizeFX();
 };
 // FX randomizer
 const randomizeFX=()=>{
-  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){}});arr.length=0;});
+  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{fx.disconnect();fx.dispose();});arr.length=0;});
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
-    const wet=isMaster ? .08+Math.random()*.19 : .15+Math.random()*.35;
+    const wet=isMaster?.08+Math.random()*.27:.15+Math.random()*.35;
     const fx=[];
     for(let i=0;i<num;i++){
       const type=fxPool[Math.floor(Math.random()*fxPool.length)];
@@ -422,24 +328,9 @@ const randomizeFX=()=>{
     return fx;
   };
   drumFX=createFX(0);bassFX=createFX(0);keysFX=createFX(0);padsFX=createFX(0);masterFX=createFX(1);
-  // Chain per-track FX properly without creating feedback loops
-  const chainTrackFX=(g,fx,target)=>{
-    if(fx.length===0)return;
-    let last=g;
-    fx.forEach(f=>{last.connect(f);last=f;});
-    last.connect(target);
-  };
-  // Disconnect existing FX connections first
-  try{drumG.disconnect(drumDrive);drumDrive.disconnect(lofiComp);}catch(e){}
-  try{bassG.disconnect(lofiComp);}catch(e){}
-  try{keysG.disconnect(lofiComp);}catch(e){}
-  try{padsG.disconnect(lofiComp);}catch(e){}
-  // Reconnect with FX chains
-  if(drumFX.length>0){drumG.disconnect();chainTrackFX(drumG,drumFX,drumDrive);drumDrive.connect(lofiComp);}else{drumG.connect(drumDrive);drumDrive.connect(lofiComp);}
-  if(bassFX.length>0){bassG.disconnect();chainTrackFX(bassG,bassFX,lofiComp);}else{bassG.connect(lofiComp);}
-  if(keysFX.length>0){keysG.disconnect();chainTrackFX(keysG,keysFX,lofiComp);}else{keysG.connect(lofiComp);}
-  if(padsFX.length>0){padsG.disconnect();chainTrackFX(padsG,padsFX,lofiComp);}else{padsG.connect(lofiComp);}
-  // Master FX chain (already connected in initAudio, just update tags)
+  const chainFX=(g,fx)=>{g.disconnect();let last=g;fx.forEach(f=>{last.connect(f);last=f;});last.connect(masterG);};
+  chainFX(drumG,drumFX);chainFX(bassG,bassFX);chainFX(keysG,keysFX);chainFX(padsG,padsFX);
+  masterG.disconnect(limiter);let lastM=masterG;masterFX.forEach(f=>{lastM.connect(f);lastM=f;});lastM.connect(analyser);lastM.connect(limiter);
   updateFXTags();
 };
 const updateFXTags=()=>{
@@ -459,15 +350,15 @@ const loop=new Tone.Sequence((time,s)=>{
   const playP=isSolo?muteSolo.p.s:!muteSolo.p.m;
   if(playD){
     const sd=getSwingDelay('d',s);
-    if(d.k[s]>0||SP[currentBank].kick[s].on){kickN.triggerAttackRelease('C1',.1,time+sd,d.k[s]||.8);kickClick.triggerAttackRelease(.05,time+sd,.5);}
-    if(d.s[s]>0||SP[currentBank].snare[s].on){snareBody.triggerAttackRelease(.1,time+sd,d.s[s]||.8);snareRing.triggerAttackRelease('C5',.15,time+sd,(d.s[s]||.8)*.7);}
-    if(d.c[s]>0||SP[currentBank].clap[s].on)clapN.triggerAttackRelease(.15,time+sd,d.c[s]||.7);
-    if(d.h[s]>0||SP[currentBank].hat[s].on){if(hatIsOpen)openN.triggerRelease(time+sd);hatN.triggerAttackRelease('16n',time+sd,d.h[s]||.6);hatIsOpen=false;}
-    if(d.o[s]>0||SP[currentBank].open[s].on){if(!hatIsOpen)hatN.triggerRelease(time+sd);openN.triggerAttackRelease('8n',time+sd,d.o[s]||.7);hatIsOpen=true;}
+    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s])kickN.triggerAttackRelease('C1',.1,time+sd,d.k[s]);
+    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s])snareN.triggerAttackRelease(.1,time+sd,d.s[s]);
+    if((d.c[s]||SP[currentBank].clap[s].on)&&d.c[s])clapN.triggerAttackRelease(.15,time+sd,d.c[s]);
+    if((d.h[s]||SP[currentBank].hat[s].on)&&d.h[s])hatN.triggerAttackRelease('16n',time+sd,d.h[s]);
+    if((d.o[s]||SP[currentBank].open[s].on)&&d.o[s])openN.triggerAttackRelease('8n',time+sd,d.o[s]);
   }
-  if(playB&&bp[s]){const sd=getSwingDelay('b',s);const n=transpose(bp[s],rootNote);bassN.triggerAttackRelease(n,'8n',time+sd);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),time+sd);sendMIDI(n,.8);}
-  if(playK&&kp[s]){const sd=getSwingDelay('k',s);if(Array.isArray(kp[s])){const notes=kp[s].map(n=>transpose(n,rootNote));keysN.triggerAttackRelease(notes,'8n',time+sd);notes.forEach(n=>sendMIDI(n,.6));}else if(kp[s]){const n=transpose(kp[s],rootNote);keysN.triggerAttackRelease(n,'8n',time+sd);sendMIDI(n,.6);}}
-  if(playP&&pp[s]){const sd=getSwingDelay('p',s);if(Array.isArray(pp[s])&&pp[s].length){const notes=pp[s].map(n=>transpose(n,rootNote));padsN.triggerAttackRelease(notes,'2n',time+sd);notes.forEach(n=>sendMIDI(n,.5));}}
+  if(playB&&bp[s]){const sd=getSwingDelay('b',s);const n=transpose(bp[s],rootNote);bassN.triggerAttackRelease(n,'8n',time+sd);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),time+sd);}
+  if(playK&&kp[s]){const sd=getSwingDelay('k',s);if(Array.isArray(kp[s]))keysN.triggerAttackRelease(kp[s].map(n=>transpose(n,rootNote)),'8n',time+sd);else if(kp[s])keysN.triggerAttackRelease(transpose(kp[s],rootNote),'8n',time+sd);}
+  if(playP&&pp[s]){const sd=getSwingDelay('p',s);if(Array.isArray(pp[s])&&pp[s].length)padsN.triggerAttackRelease(pp[s].map(n=>transpose(n,rootNote)),'2n',time+sd);}
   updateStepViz(s);
 },Array.from({length:16},(_,i)=>i),'16n');
 const updateStepViz=(s)=>{document.querySelectorAll('.step').forEach((el,i)=>{el.classList.toggle('playing',i===s);});};
@@ -494,7 +385,6 @@ const buildUI=()=>{
   drawViz();
 };
 const attachEvents=()=>{
-  // Transport controls
   document.getElementById('playBtn').onclick=()=>{if(!playing){if(Tone.context.state!=='running')Tone.context.resume();Tone.Transport.start();loop.start(0);playing=true;log('▶ Playing');}else{Tone.Transport.pause();playing=false;log('⏸ Paused');}};
   document.getElementById('stopBtn').onclick=()=>{Tone.Transport.stop();loop.stop();playing=false;step=0;log('■ Stopped');};
   document.getElementById('recBtn').onclick=startRec;
@@ -505,11 +395,6 @@ const attachEvents=()=>{
   document.getElementById('tapBtn').onclick=tapTempo;
   document.getElementById('themeBtn').onclick=toggleTheme;
   document.getElementById('randomBtn').onclick=randomizeAll;
-  // Patch export/import
-  document.getElementById('exportBtn').onclick=exportPatch;
-  document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
-  document.getElementById('importFile').onchange=importPatch;
-  // Controls
   document.getElementById('bpmSlider').oninput=e=>{bpm=+e.target.value;Tone.Transport.bpm.value=bpm;document.getElementById('bpmVal').textContent=bpm;};
   document.getElementById('swingSlider').oninput=e=>{swing=+e.target.value;document.getElementById('swingVal').textContent=swing;};
   document.getElementById('rootSel').onchange=e=>{rootNote=e.target.selectedIndex;};
@@ -517,14 +402,6 @@ const attachEvents=()=>{
   document.getElementById('bassSel').onchange=e=>{curB=e.target.value;pushState();};
   document.getElementById('keysSel').onchange=e=>{curK=e.target.value;pushState();};
   document.getElementById('padsSel').onchange=e=>{curP=e.target.value;pushState();};
-  // Lo-Fi controls
-  document.getElementById('tapeDriveSlider').oninput=e=>{tapeDrive=+e.target.value/100;document.getElementById('tapeDriveVal').textContent=e.target.value;updateLoFi();};
-  document.getElementById('crackleSlider').oninput=e=>{crackleLevel=+e.target.value/100;document.getElementById('crackleVal').textContent=e.target.value;updateLoFi();};
-  document.getElementById('hissSlider').oninput=e=>{hissLevel=+e.target.value/100;document.getElementById('hissVal').textContent=e.target.value;updateLoFi();};
-  document.getElementById('flutterSlider').oninput=e=>{flutterRate=+e.target.value/100;document.getElementById('flutterVal').textContent=e.target.value;updateLoFi();};
-  document.getElementById('vhsSlider').oninput=e=>{vhsLevel=+e.target.value/100;document.getElementById('vhsVal').textContent=e.target.value;updateLoFi();};
-  document.getElementById('vinylSlider').oninput=e=>{vinylLevel=+e.target.value/100;document.getElementById('vinylVal').textContent=e.target.value;updateLoFi();};
-  // Volume controls
   document.getElementById('drumVol').oninput=e=>{drumVol=+e.target.value;drumG.gain.value=drumVol/100;};
   document.getElementById('bassVol').oninput=e=>{bassVol=+e.target.value;bassG.gain.value=bassVol/100;};
   document.getElementById('keysVol').oninput=e=>{keysVol=+e.target.value;keysG.gain.value=keysVol/100;};
@@ -534,18 +411,15 @@ const attachEvents=()=>{
   document.getElementById('bassSwing').oninput=e=>{bassSwing=+e.target.value;};
   document.getElementById('keysSwing').oninput=e=>{keysSwing=+e.target.value;};
   document.getElementById('padsSwing').oninput=e=>{padsSwing=+e.target.value;};
-  // Sequencer grid
   document.querySelectorAll('.step').forEach(s=>{
     const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;s.classList.toggle('on',SP[currentBank][t][i].on);pushState();};
     s.onclick=toggle;
     s.ontouchstart=e=>{e.preventDefault();toggle();};
     s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;el.classList.add('on');pushState();}};
   });
-  // Mood and track buttons
   document.querySelectorAll('.mood-btn').forEach(b=>b.onclick=e=>{applyMood(e.target.dataset.mood);document.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');});
   document.querySelectorAll('.track-btn').forEach(b=>b.onclick=e=>{const tr=e.target.dataset.track,act=e.target.dataset.action;if(act==='m'){muteSolo[tr].m=1-muteSolo[tr].m;e.target.classList.toggle('active',muteSolo[tr].m);}else{muteSolo[tr].s=1-muteSolo[tr].s;e.target.classList.toggle('active',muteSolo[tr].s);}});
   document.querySelectorAll('.panel-header').forEach(h=>h.onclick=e=>{e.currentTarget.parentElement.classList.toggle('open');});
-  // Keyboard shortcuts
   document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.getElementById('playBtn').click();}else if(e.key==='r'||e.key==='R'){randomizeAll();}else if(e.key==='e'||e.key==='E'){exportWAV();}else if(e.key==='t'||e.key==='T'){tapTempo();}else if(e.key==='l'||e.key==='L'){toggleTheme();}else if(e.key==='?'){showHelp();}else if(e.ctrlKey&&e.key==='z'){undo();}else if(e.ctrlKey&&e.shiftKey&&e.key==='Z'){redo();}});
   document.addEventListener('touchstart',()=>{if(Tone.context.state!=='running')Tone.context.resume();},{once:true});
 };
@@ -554,150 +428,6 @@ const randomizeAll=()=>{curD=Object.keys(D)[Math.floor(Math.random()*Object.keys
 const startRec=async()=>{if(!recording){try{const dest=Tone.context.createMediaStreamDestination();masterG.connect(dest);mediaStream=dest.stream;recorder=new MediaRecorder(mediaStream);const chunks=[];recorder.ondataavailable=e=>chunks.push(e.data);recorder.onstop=()=>{const blob=new Blob(chunks,{type:'audio/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.webm`;a.click();URL.revokeObjectURL(url);log('💾 Recording saved');};recorder.start();recording=true;document.getElementById('recBtn').classList.add('active');log('⏺ Recording...');}catch(e){log('❌ Recording error');}}else{recorder.stop();recording=false;document.getElementById('recBtn').classList.remove('active');}};
 const exportWAV=async()=>{log('📀 Exporting WAV...');const dur=4;const len=dur*4*(60/bpm);const sampleRate=44100;const offline=new OfflineAudioContext(2,sampleRate*len,sampleRate);const k=new Tone.MembraneSynth().connect(offline.destination);const s=new Tone.NoiseSynth().connect(offline.destination);const c=new Tone.NoiseSynth().connect(offline.destination);const h=new Tone.MetalSynth().connect(offline.destination);const o=new Tone.MetalSynth().connect(offline.destination);const b=new Tone.MonoSynth().connect(offline.destination);const ky=new Tone.PolySynth(Tone.Synth).connect(offline.destination);const pd=new Tone.PolySynth(Tone.Synth).connect(offline.destination);const steps=16;const stepTime=60/bpm/4;for(let bar=0;bar<dur;bar++){for(let st=0;st<steps;st++){const t=bar*steps*stepTime+st*stepTime;const dp=D[curD],bp=B[curB].split(','),kp=K[curK],pp=P[curP];if(dp.k[st])k.triggerAttackRelease('C1',.1,t,dp.k[st]);if(dp.s[st])s.triggerAttackRelease(.1,t,dp.s[st]);if(dp.c[st])c.triggerAttackRelease(.15,t,dp.c[st]);if(dp.h[st])h.triggerAttackRelease('16n',t,dp.h[st]);if(dp.o[st])o.triggerAttackRelease('8n',t,dp.o[st]);if(bp[st])b.triggerAttackRelease(transpose(bp[st],rootNote),'8n',t);if(kp[st]){if(Array.isArray(kp[st]))ky.triggerAttackRelease(kp[st].map(n=>transpose(n,rootNote)),'8n',t);else ky.triggerAttackRelease(transpose(kp[st],rootNote),'8n',t);}if(pp[st]&&Array.isArray(pp[st])&&pp[st].length)pd.triggerAttackRelease(pp[st].map(n=>transpose(n,rootNote)),'2n',t);}}const buffer=await offline.startRendering();const wav=audioBufferToWav(buffer);const url=URL.createObjectURL(wav);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.wav`;a.click();URL.revokeObjectURL(url);log('📀 WAV saved');};const audioBufferToWav=buffer=>{const nc=buffer.numberOfChannels,sr=buffer.sampleRate,fmt=1,bd=16;const bps=bd/8,ba=nc*bps,dl=buffer.length*ba,hl=44,tl=hl+dl;const ab=new ArrayBuffer(tl),view=new DataView(ab);const writeString=(offset,str)=>{for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));};writeString(0,'RIFF');view.setUint32(4,tl-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,fmt,true);view.setUint16(22,nc,true);view.setUint32(24,sr,true);view.setUint32(28,sr*ba,true);view.setUint16(32,ba,true);view.setUint16(34,bd,true);writeString(36,'data');view.setUint32(40,dl,true);const channels=[];for(let i=0;i<nc;i++)channels.push(buffer.getChannelData(i));let offset=44;for(let i=0;i<buffer.length;i++){for(let ch=0;ch<nc;ch++){const sample=Math.max(-1,Math.min(1,channels[ch][i]));view.setInt16(offset,sample<0?sample*0x8000:sample*0x7FFF,true);offset+=2;}}return new Blob([ab],{type:'audio/wav'});};
 const shareURL=()=>{const state=encodeState();const url=`${location.origin}${location.pathname}#${state}`;navigator.clipboard.writeText(url).then(()=>log('🔗 URL copied')).catch(()=>log('❌ Copy failed'));};
-// ============================================================================
-// PATCH EXPORT/IMPORT - MASTER2: ONE_SOURCE (centralized patch management)
-// ============================================================================
-const exportPatch=()=>{
-  try{
-    const patch={
-      version:'1.0',
-      timestamp:Date.now(),
-      patterns:{d:curD,b:curB,k:curK,p:curP},
-      sequencer:SP,
-      controls:{bpm,swing,rootNote},
-      volumes:{drumVol,bassVol,keysVol,padsVol,masterVol},
-      swings:{drumSwing,bassSwing,keysSwing,padsSwing},
-      lofi:{tapeDrive,crackleLevel,hissLevel,flutterRate,vhsLevel,vinylLevel}
-    };
-    const json=JSON.stringify(patch,null,2);
-    const blob=new Blob([json],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=`rg69-patch-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    log('💾 Patch exported');
-  }catch(e){
-    log('❌ Export failed: '+e.message);
-  }
-};
-const importPatch=async e=>{
-  try{
-    const file=e.target.files[0];
-    if(!file)return;
-    const text=await file.text();
-    const patch=JSON.parse(text);
-    // Validate patch structure (MASTER2: FAIL_VISIBLY)
-    if(!patch.version||!patch.patterns){
-      log('❌ Invalid patch file');
-      return;
-    }
-    // Apply patch
-    curD=patch.patterns.d||'basic';
-    curB=patch.patterns.b||'basic';
-    curK=patch.patterns.k||'basic';
-    curP=patch.patterns.p||'none';
-    SP=patch.sequencer||SP;
-    bpm=patch.controls?.bpm||120;
-    swing=patch.controls?.swing||0;
-    rootNote=patch.controls?.rootNote||0;
-    drumVol=patch.volumes?.drumVol||80;
-    bassVol=patch.volumes?.bassVol||70;
-    keysVol=patch.volumes?.keysVol||60;
-    padsVol=patch.volumes?.padsVol||50;
-    masterVol=patch.volumes?.masterVol||75;
-    drumSwing=patch.swings?.drumSwing||0;
-    bassSwing=patch.swings?.bassSwing||0;
-    keysSwing=patch.swings?.keysSwing||0;
-    padsSwing=patch.swings?.padsSwing||0;
-    if(patch.lofi){
-      tapeDrive=patch.lofi.tapeDrive||0.5;
-      crackleLevel=patch.lofi.crackleLevel||0.3;
-      hissLevel=patch.lofi.hissLevel||0.2;
-      flutterRate=patch.lofi.flutterRate||0.1;
-      vhsLevel=patch.lofi.vhsLevel||0.15;
-      vinylLevel=patch.lofi.vinylLevel||0.25;
-    }
-    // Update UI
-    document.getElementById('drumSel').value=curD;
-    document.getElementById('bassSel').value=curB;
-    document.getElementById('keysSel').value=curK;
-    document.getElementById('padsSel').value=curP;
-    document.getElementById('bpmSlider').value=bpm;
-    document.getElementById('bpmVal').textContent=bpm;
-    document.getElementById('swingSlider').value=swing;
-    document.getElementById('swingVal').textContent=swing;
-    document.getElementById('rootSel').selectedIndex=rootNote;
-    updateLoFi();
-    Tone.Transport.bpm.value=bpm;
-    log('📂 Patch imported');
-    pushState();
-  }catch(e){
-    log('❌ Import failed: '+e.message);
-  }
-  e.target.value=''; // Reset input
-};
-// ============================================================================
-// LO-FI CHAIN UPDATE - Dynamic parameter control
-// ============================================================================
-// Tape saturation curve constants
-const CURVE_SIZE=256;
-const CURVE_CENTER=128;
-const TAPE_DRIVE_BASE=2;
-const updateLoFi=()=>{
-  try{
-    if(crackle)crackle.volume.value=-30+(crackleLevel*20);
-    if(hiss)hiss.volume.value=-35+(hissLevel*15);
-    if(flutter)flutter.frequency.value=0.05+(flutterRate*0.3);
-    if(vhsNoise)vhsNoise.volume.value=-40+(vhsLevel*20);
-    if(vinylGain)vinylGain.gain.value=vinylLevel;
-    // Update tape saturation curve (only if drive changed significantly)
-    if(tapeSaturation){
-      const drive=1+(tapeDrive*3);
-      const tanhCurve=new Float32Array(CURVE_SIZE).map((_,i)=>{
-        const x=(i/CURVE_CENTER)-1;
-        return Math.tanh(x*drive*TAPE_DRIVE_BASE);
-      });
-      tapeSaturation.curve=tanhCurve;
-    }
-  }catch(e){
-    console.error('Lo-Fi update error:',e);
-  }
-};
-// ============================================================================
-// MIDI OUTPUT - WebMIDI API integration (MASTER2: FAIL_VISIBLY with graceful degradation)
-// ============================================================================
-let midiOutput=null;
-const initMIDI=async()=>{
-  if(!navigator.requestMIDIAccess){
-    log('ℹ️ MIDI not supported');
-    return;
-  }
-  try{
-    const midi=await navigator.requestMIDIAccess();
-    const outputs=Array.from(midi.outputs.values());
-    if(outputs.length>0){
-      midiOutput=outputs[0];
-      log(`🎹 MIDI: ${midiOutput.name}`);
-    }else{
-      log('ℹ️ No MIDI devices');
-    }
-  }catch(e){
-    log('❌ MIDI error: '+e.message);
-  }
-};
-const sendMIDI=(note,velocity)=>{
-  if(!midiOutput)return;
-  try{
-    const midi=Tone.Frequency(note).toMidi();
-    const vel=Math.floor(velocity*127);
-    midiOutput.send([0x90,midi,vel]); // Note on
-    setTimeout(()=>midiOutput.send([0x80,midi,0]),100); // Note off after 100ms
-  }catch(e){
-    console.error('MIDI send error:',e);
-  }
-};
 const encodeState=()=>{const s={d:curD,b:curB,k:curK,p:curP,bpm,swing,root:rootNote,vol:{d:drumVol,b:bassVol,k:keysVol,p:padsVol,m:masterVol},seq:SP[currentBank]};return btoa(JSON.stringify(s));};
 const decodeState=h=>{try{const s=JSON.parse(atob(h));curD=s.d;curB=s.b;curK=s.k;curP=s.p;bpm=s.bpm;swing=s.swing;rootNote=s.root;drumVol=s.vol.d;bassVol=s.vol.b;keysVol=s.vol.k;padsVol=s.vol.p;masterVol=s.vol.m;SP[currentBank]=s.seq;return true;}catch(e){return false;}};
 const pushState=()=>{hist.splice(histIdx+1);hist.push(JSON.stringify({d:curD,b:curB,k:curK,p:curP,bpm,swing,seq:JSON.parse(JSON.stringify(SP))}));histIdx=hist.length-1;if(hist.length>50){hist.shift();histIdx--;}autosave();};
@@ -745,7 +475,7 @@ const hideTooltip=()=>{document.getElementById('tooltip').style.display='none';}
 document.addEventListener('mouseover',e=>{if(e.target.title){showTooltip(e.target,e.target.title);}});
 document.addEventListener('mouseout',hideTooltip);
 // Init
-window.addEventListener('load',async()=>{await initAudio();buildUI();initMIDI();if(location.hash.length>1)decodeState(location.hash.slice(1));else autoload();monitorCPU();log('🎵 RG69 Ready');setInterval(()=>{if(playing)autosave();},10000);});
+window.addEventListener('load',()=>{initAudio();buildUI();if(location.hash.length>1)decodeState(location.hash.slice(1));else autoload();monitorCPU();log('🎵 RG69 Ready');setInterval(()=>{if(playing)autosave();},10000);});
 </script>
 </body>
 </html>
