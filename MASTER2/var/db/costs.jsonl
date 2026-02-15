@@ -16,3 +16,12 @@
 {"model":"deepseek/deepseek-chat","tokens_in":4372,"tokens_out":918,"cost":0.0021902400000000004,"created_at":"2026-02-15T09:44:18Z"}
 {"model":"deepseek/deepseek-chat","tokens_in":4433,"tokens_out":1119,"cost":0.0024278100000000003,"created_at":"2026-02-15T10:40:18Z"}
 {"model":"deepseek/deepseek-chat","tokens_in":16695,"tokens_out":981,"cost":0.005586750000000001,"created_at":"2026-02-15T11:04:16Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":4105,"tokens_out":1291,"cost":0.0025284500000000002,"created_at":"2026-02-15T14:26:15Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":8386,"tokens_out":1095,"cost":0.0034687200000000002,"created_at":"2026-02-15T14:27:10Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":5704,"tokens_out":919,"cost":0.0025509800000000004,"created_at":"2026-02-15T14:27:57Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":6763,"tokens_out":718,"cost":0.0026158100000000005,"created_at":"2026-02-15T14:28:41Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":6978,"tokens_out":443,"cost":0.0023713600000000003,"created_at":"2026-02-15T14:41:17Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":6686,"tokens_out":452,"cost":0.00230242,"created_at":"2026-02-15T14:41:30Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":6633,"tokens_out":384,"cost":0.00221331,"created_at":"2026-02-15T14:41:43Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":5144,"tokens_out":493,"cost":0.0019311800000000002,"created_at":"2026-02-15T18:55:47Z"}
+{"model":"deepseek/deepseek-chat","tokens_in":4211,"tokens_out":668,"cost":0.00187177,"created_at":"2026-02-15T19:13:29Z"}

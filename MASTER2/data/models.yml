@@ -19,12 +19,12 @@
     - architecture_design
 
 # === STRONG TIER (complex reasoning, code review) ===
-# DEFAULT: Claude Opus 4.6 (best quality)
-- id: anthropic/claude-opus-4.6
-  alias: claude-opus-4.6-strong
+# DEFAULT: Claude Sonnet 4.5 (best value for quality)
+- id: anthropic/claude-sonnet-4.5
+  alias: claude-sonnet-4.5
   tier: strong
-  input_cost: 5.00
-  output_cost: 25.00
+  input_cost: 3.00
+  output_cost: 15.00
   context_window: 1000000
   provider: anthropic
   reasoning: true
@@ -36,6 +36,21 @@
     - architecture_review
     - security_audits
     - root_cause_analysis
+    - semantic_analysis
+    - council_debate
+    - nuanced_writing
+
+- id: anthropic/claude-opus-4.6
+  alias: claude-opus-4.6
+  tier: strong
+  input_cost: 5.00
+  output_cost: 25.00
+  context_window: 1000000
+  provider: anthropic
+  reasoning: true
+  use_for:
+    - billion_dollar_apps
+    - critical_decisions
 
 - id: deepseek/deepseek-r1
   alias: deepseek-r1
@@ -48,19 +63,6 @@
   use_for:
     - budget_reasoning
     - batch_review
-
-- id: anthropic/claude-sonnet-4.5
-  alias: claude-sonnet-4.5
-  tier: strong
-  input_cost: 3.00
-  output_cost: 15.00
-  context_window: 1000000
-  provider: anthropic
-  reasoning: true
-  use_for:
-    - semantic_analysis
-    - council_debate
-    - nuanced_writing
 
 - id: google/gemini-3-pro-preview
   alias: gemini-3-pro
