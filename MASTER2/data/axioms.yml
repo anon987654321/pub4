@@ -14,7 +14,6 @@
   title: "One Source of Truth"
   statement: "Every piece of knowledge has exactly one authoritative representation. Extract on second use."
   source: "The Pragmatic Programmer"
-  detect: "^(\\s*)([A-Z][A-Z_]+)\\s*=.*$\\n(?:.*\\n){0,50}?^\\1\\2\\s*="
   suggest: "Possible duplicate constant. Consider extracting to a shared location."
 
 - id: "SIMPLEST_WORKS"
@@ -32,7 +31,6 @@
   title: "One Job Per Thing"
   statement: "A module, class, or function has one reason to change. Do one thing well."
   source: "Clean Code by Robert C. Martin"
-  detect: "^\\s*class\\s+\\w+.*$\\n(?:.*\\n)*?^\\s*class\\s+\\w+"
   suggest: "Multiple classes in one file. Consider splitting into separate files."
 
 - id: "EXTEND_DONT_MODIFY"
@@ -90,7 +88,6 @@
   title: "Fail Visibly"
   statement: "Errors surface immediately. Never swallow exceptions. Silent failures compound into disasters."
   source: "Release It! by Michael Nygard"
-  detect: "rescue\\s*(?:$|=>\\s*\\w+\\s*$|;|\\n\\s*(?:nil|#|end))"
   suggest: "Don't use bare rescue. Specify exception type and handle or re-raise."
 
 - id: "DEADLINES"
@@ -100,8 +97,6 @@
   title: "Every Call Has a Deadline"
   statement: "External calls have explicit timeouts. Infinity is not a timeout. Hanging is worse than failing."
   source: "Release It! by Michael Nygard"
-  detect: "Net::HTTP\\.new|Faraday\\.new|HTTP\\.get|open\\(|URI\\.open"
-  negative_detect: "timeout|open_timeout|read_timeout"
   suggest: "Add explicit timeout to external call (e.g., open_timeout: 5, read_timeout: 10)."
 
 # ============================================================================
@@ -123,7 +118,6 @@
   title: "Flatten Nesting"
   statement: "Remove unnecessary nesting levels. Deep hierarchies obscure intent and multiply complexity."
   source: "Refactoring by Martin Fowler"
-  detect: "^\\s{25,}"
   suggest: "Deep nesting detected (>6 levels). Consider extracting methods or using guard clauses."
 
 - id: "DEFRAGMENT"
@@ -157,7 +151,6 @@
   title: "Prune Dead Paths"
   statement: "Remove dead and unreachable code. Dead code hides bugs and burdens maintenance."
   source: "Refactoring by Martin Fowler"
-  detect: "^\\s*#.*(?:TODO|FIXME|XXX|HACK|DEPRECATED|UNUSED)"
   suggest: "Dead code marker found. Remove or fix the code."
 
 - id: "COALESCE"
