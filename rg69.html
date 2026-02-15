@@ -357,7 +357,7 @@ const randomizeFX=()=>{
           case'Freeverb':eff=new Tone.Freeverb(0.3+Math.random()*0.65);eff.dampening=1000+Math.random()*7000;break;
           case'FrequencyShifter':eff=new Tone.FrequencyShifter(-20+Math.random()*40);break;
           case'JCReverb':eff=new Tone.JCReverb(0.3+Math.random()*0.55);break;
-          case'Phaser':eff=new Tone.Phaser(0.2+Math.random()*3.8,1+Math.random()*4,200+Math.random()*1300);eff.start();break;
+          case'Phaser':eff=new Tone.Phaser({frequency:0.2+Math.random()*3.8,octaves:1+Math.random()*4,baseFrequency:200+Math.random()*1300});eff.start();break;
           case'PingPongDelay':eff=new Tone.PingPongDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.1+Math.random()*0.4);break;
           case'PitchShift':eff=new Tone.PitchShift([-12,-7,-5,5,7,12][Math.floor(Math.random()*6)]);break;
           case'Tremolo':eff=new Tone.Tremolo(0.5+Math.random()*11.5,0.3+Math.random()*0.6);eff.start();break;
@@ -402,7 +402,6 @@ const randomizeFX=()=>{
   }
   
   updateFXTags();
-};
 };
 const updateFXTags=()=>{
   const show=(id,fx)=>{const el=document.getElementById(id);el.innerHTML='';fx.forEach(f=>{const t=document.createElement('span');t.className='fx-tag';t.textContent=f.constructor.name;el.appendChild(t);});};
