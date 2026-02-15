@@ -292,11 +292,12 @@ module MASTER
 
         duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 8, min_count: 3)
         duplicates.each do |dup|
+          str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
           violations << {
             type: :literal,
             name: :repeated_string,
             principle: 'DRY',
-            message: "String #{dup[:string][0..30]}... repeated #{dup[:count]} times",
+            message: "String #{str_preview} repeated #{dup[:count]} times",
             severity: :warning
           }
         end

@@ -256,7 +256,7 @@ module MASTER
         duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 8, min_count: 3)
 
         duplicates.each do |dup|
-          str_preview = dup[:string].length > 30 ? "#{dup[:string][0..30]}..." : dup[:string]
+          str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
           violations << { layer: :lexical, axiom: "ONE_SOURCE", message: "Repeated string: '#{str_preview}' (#{dup[:count]} times)", file: filename }
         end
 

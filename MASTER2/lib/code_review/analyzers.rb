@@ -62,12 +62,13 @@ module MASTER
     end
 
     # Repeated string detection - returns array of {string:, count:} hashes
-    # Scans both single and double quoted strings
+    # Scans both single and double quoted strings (including quotes in result)
     module RepeatedStringDetector
       def self.find(code, min_length: 8, min_count: 3)
-        # Scan double and single quoted strings separately with the min_length requirement
+        # Scan double and single quoted strings with the min_length requirement
+        # Pattern matches strings including their quotes
         pattern = /"[^"]{#{min_length},}"|'[^']{#{min_length},}'/
-        strings = code.scan(pattern).flatten
+        strings = code.scan(pattern)
         counts = strings.tally
 
         counts.select { |_, count| count >= min_count }
