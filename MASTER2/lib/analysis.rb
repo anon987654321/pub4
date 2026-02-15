@@ -31,14 +31,32 @@ module MASTER
       def show_tree(path)
         puts UI.dim("Structure:")
         
-        if system("which tree > /dev/null 2>&1")
-          system("tree", "-L", "3", "-I", "node_modules|.git|tmp|vendor", path)
-          true
-        else
-          # Fallback: simple directory listing
-          puts `find #{path} -maxdepth 3 -type d | head -20`
-          false
+        # Ruby-native tree walker - no system dependencies
+        tree = file_tree(path, max_depth: 3, exclude: %w[. .. .git vendor tmp node_modules var])
+        puts tree.join("\n")
+        true
+      end
+
+      # Ruby-native tree walker
+      def file_tree(root, indent: "", max_depth: 3, depth: 0, exclude: [])
+        return [] if depth >= max_depth
+        
+        entries = Dir.children(root).sort.reject { |e| exclude.include?(e) }
+        lines = []
+        
+        entries.each_with_index do |entry, i|
+          path = File.join(root, entry)
+          last = i == entries.size - 1
+          connector = last ? "└── " : "├── "
+          lines << "#{indent}#{connector}#{entry}"
+          
+          if File.directory?(path)
+            extension = last ? "    " : "│   "
+            lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1, exclude: exclude))
+          end
         end
+        
+        lines
       end
 
       def detect_sprawl(path)

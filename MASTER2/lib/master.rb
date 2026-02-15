@@ -152,12 +152,217 @@ module MASTER
       end
     end
   end
+
+  # AutoInstall - Automatic gem and package installation
+  module AutoInstall
+    GEMS = %w[
+      ruby_llm
+      stoplight
+      tty-reader
+      tty-prompt
+      tty-spinner
+      tty-table
+      tty-box
+      tty-markdown
+      tty-progressbar
+      tty-cursor
+      pastel
+      rouge
+      falcon
+      async-websocket
+    ].freeze
+
+    OPENBSD_PACKAGES = %w[
+      ruby
+      git
+      curl
+    ].freeze
+
+    class << self
+      def missing_gems
+        GEMS.reject { |g| gem_installed?(g) }
+      end
+
+      def gem_installed?(name)
+        Gem::Specification.find_by_name(name)
+        true
+      rescue Gem::MissingSpecError
+        false
+      end
+
+      def install_gems(verbose: false)
+        missing = missing_gems
+        return if missing.empty?
+
+        puts "Installing #{missing.size} gems..." if verbose
+        missing.each do |gem|
+          next unless gem.match?(/\A[a-z0-9_-]+\z/)
+          system("gem", "install", gem, "--no-document")
+        end
+      end
+
+      def require_gem(name)
+        require name
+      rescue LoadError
+        return if @installed&.dig(name)
+        return unless name.to_s.match?(/\A[a-z0-9_-]+\z/)
+        @installed ||= {}
+        $stderr.puts "Installing #{name}..."
+        @installed[name] = system("gem", "install", name, "--no-document")
+        require name
+      end
+
+      def openbsd?
+        RUBY_PLATFORM.include?("openbsd")
+      end
+
+      def missing_packages
+        return [] unless openbsd?
+        OPENBSD_PACKAGES.reject { |p| package_installed?(p) }
+      end
+
+      def package_installed?(name)
+        system("pkg_info -e '#{name}-*' > /dev/null 2>&1")
+      end
+
+      def install_packages(verbose: false)
+        return unless openbsd?
+        missing = missing_packages
+        return if missing.empty?
+
+        puts "Installing #{missing.size} packages..." if verbose
+        valid_packages = missing.select { |p| p.match?(/\A[a-z0-9_-]+\z/) }
+        system("doas", "pkg_add", *valid_packages) unless valid_packages.empty?
+      end
+
+      def setup(verbose: false)
+        install_packages(verbose: verbose)
+        install_gems(verbose: verbose)
+      end
+
+      def status
+        {
+          gems: { installed: GEMS.size - missing_gems.size, missing: missing_gems },
+          packages: openbsd? ? { installed: OPENBSD_PACKAGES.size - missing_packages.size, missing: missing_packages } : nil
+        }
+      end
+    end
+  end
+
+  # Boot - OpenBSD dmesg-style startup (dense, terse, beautiful)
+  module Boot
+    class << self
+      # Lazy SMOKE_TEST_METHODS to avoid crashes if modules didn't load
+      def smoke_test_methods
+        {
+          LLM => %i[ask pick tier=],
+          Executor => %i[call],
+          Result => %i[ok err ok? err?],
+        }
+      rescue NameError => e
+        warn "Smoke test skipped: #{e.message}"
+        {}
+      end
+      def banner
+        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
+        user = ENV["USER"] || ENV["USERNAME"] || "user"
+        host = `hostname`.strip rescue "localhost"
+
+        # Smoke test first - catch runtime errors early
+        smoke_result = smoke_test
+
+        # Dense dmesg - no fluff, no breathing room
+        puts c("MASTER #{VERSION} #1: #{timestamp}")
+        puts c("#{user}@#{host}:#{MASTER.root}")
+        puts c("cpu0 at mainbus0: #{RUBY_PLATFORM}")
+        puts c("ruby0 at cpu0: ruby #{RUBY_VERSION}")
+        puts c("db0 at ruby0: #{DB.axioms.size} axioms, #{DB.council.size} personas")
+        puts c("llm0 at db0: openrouter #{tier_models}")
+        puts c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)} remaining")
+        puts c("tts0 at budget0: #{tts_status}")
+        puts c("self0 at tts0: #{self_awareness_summary}")
+        puts c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}")
+        puts c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}")
+        puts c("smoke0 at executor0: #{smoke_result}")
+        
+        yield if block_given?  # Allow caller to inject web line before boot summary
+        
+        elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round
+        puts c("boot: #{elapsed}ms")
+        puts
+      end
+
+      # For web mode, also print the URL
+      def banner_with_web(port)
+        banner do
+          puts c("web0 at smoke0: http://localhost:#{port}")
+        end
+      end
+
+      # Verify critical methods exist at runtime
+      def smoke_test
+        missing = []
+        
+        smoke_test_methods.each do |mod, methods|
+          methods.each do |method|
+            unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.instance_methods.include?(method))
+              missing << "#{mod}##{method}"
+            end
+          end
+        end
+        
+        # Also check optional modules
+        optional_checks = []
+        optional_checks << "Chamber" if defined?(Chamber) && !Chamber.respond_to?(:council_review)
+        optional_checks << "CodeReview" if defined?(CodeReview) && !CodeReview.respond_to?(:analyze)
+        optional_checks << "AutoFixer" if defined?(AutoFixer) && !AutoFixer.instance_methods.include?(:fix)
+        
+        if missing.any?
+          UI.warn("Missing methods: #{missing.join(', ')}")
+          "FAIL #{missing.size}"
+        elsif optional_checks.any?
+          "WARN #{optional_checks.join(',')}"
+        else
+          "ok"
+        end
+      rescue StandardError => e
+        "FAIL #{e.message[0..30]}"
+      end
+
+      private
+
+      def c(text)
+        UI.colorize(text)
+      end
+
+      def tier_models
+        LLM.model_tiers.map do |tier, models|
+          names = models.first(2).map { |m| LLM.extract_model_name(m) }.join(",")
+          "#{tier}:#{names}"
+        end.join(" ")
+      end
+
+      def tts_status
+        Speech.engine_status
+      rescue StandardError
+        "off"
+      end
+
+      def self_awareness_summary
+        SelfMap.summary
+      rescue StandardError
+        "unavailable"
+      end
+    end
+  end
 end
 
 require "fileutils"
+require "time"
+require "shellwords"
 
 # Auto-install missing gems first
-require_relative "auto_install"
 # Gems auto-install on first LoadError — no blocking boot
 
 # Core
@@ -188,7 +393,6 @@ require_relative "undo"
 require_relative "commands"
 
 # Pipeline stages (needed by executor)
-require_relative "boot"
 require_relative "stages"
 
 # Executor (ReAct pattern - default behavior)
