@@ -183,13 +183,9 @@ end
 require_relative "staging"
 
 # UI & NN/g compliance
-require_relative "ui"
-require_relative "help"
+require_relative "ui"  # Includes Help, ErrorSuggestions, NNGChecklist, Confirmations
 require_relative "undo"
 require_relative "commands"
-require_relative "confirmations"
-require_relative "error_suggestions"
-require_relative "nng_checklist"
 
 # Pipeline stages (needed by executor)
 require_relative "boot"
