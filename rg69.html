@@ -69,18 +69,19 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 </head>
 <body>
 <div class="container">
-<h1>RG69</h1>
-<canvas id="viz"></canvas>
+<h1>RG69 <button class="btn" id="helpBtn" style="font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px" title="Show help and tips">?</button></h1>
+<canvas id="viz" title="Audio waveform visualizer - shows the sound waves in real-time"></canvas>
 <div class="transport">
-<button class="btn" id="playBtn">▶</button>
-<button class="btn" id="stopBtn">■</button>
-<button class="btn rec" id="recBtn">⏺</button>
-<button class="btn" id="wavBtn">📀</button>
-<button class="btn" id="shareBtn">🔗</button>
-<button class="btn" id="undoBtn" title="Undo">↶</button>
-<button class="btn" id="redoBtn" title="Redo">↷</button>
-<button class="btn" id="tapBtn">🥁</button>
-<button class="btn" id="themeBtn">🌓</button>
+<button class="btn" id="playBtn" title="Play/Pause - Start or stop the music (Spacebar)">▶</button>
+<button class="btn" id="stopBtn" title="Stop - Stop playback and return to beginning">■</button>
+<button class="btn" id="quickStartBtn" title="Quick Start - Load a preset and start playing!" style="background:var(--pink);color:var(--bg);border-color:var(--pink)">🚀 START</button>
+<button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file">⏺</button>
+<button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file">📀</button>
+<button class="btn" id="shareBtn" title="Share - Copy link to share your creation">🔗</button>
+<button class="btn" id="undoBtn" title="Undo - Go back one step (Ctrl+Z)">↶</button>
+<button class="btn" id="redoBtn" title="Redo - Go forward one step (Ctrl+Shift+Z)">↷</button>
+<button class="btn" id="tapBtn" title="Tap Tempo - Tap repeatedly to set tempo (T key)">🥁</button>
+<button class="btn" id="themeBtn" title="Toggle light/dark theme (L key)">🌓</button>
 </div>
 <div class="grid">
 <div class="panel open">
@@ -90,15 +91,15 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="panel open">
 <div class="panel-header">CONTROLS</div>
 <div class="panel-body"><div>
-<div class="control"><label>BPM</label><input type="range" id="bpmSlider" min="50" max="180" value="120"><span id="bpmVal">120</span></div>
-<div class="control"><label>Swing</label><input type="range" id="swingSlider" min="0" max="50" value="0"><span id="swingVal">0</span></div>
-<div class="control"><label>Root</label><select id="rootSel"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
-<div class="control"><label>Mood</label><div class="mood-grid" id="moodGrid"></div></div>
-<div class="control"><label>Drums</label><select id="drumSel"></select><div id="drumFx" class="fx-tags"></div></div>
-<div class="control"><label>Bass</label><select id="bassSel"></select><div id="bassFx" class="fx-tags"></div></div>
-<div class="control"><label>Keys</label><select id="keysSel"></select><div id="keysFx" class="fx-tags"></div></div>
-<div class="control"><label>Pads</label><select id="padsSel"></select><div id="padsFx" class="fx-tags"></div></div>
-<button class="btn" id="randomBtn" style="width:100%;margin-top:10px">⚡ RANDOMIZE</button>
+<div class="control"><label title="Beats Per Minute - The speed/tempo of the music">BPM (Speed)</label><input type="range" id="bpmSlider" min="50" max="180" value="120" title="Drag to change tempo: slower (left) to faster (right)"><span id="bpmVal">120</span></div>
+<div class="control"><label title="Swing - Adds groove by delaying every other beat">Swing (Groove)</label><input type="range" id="swingSlider" min="0" max="50" value="0" title="Add swing/shuffle feel: 0 = straight, 50 = maximum shuffle"><span id="swingVal">0</span></div>
+<div class="control"><label title="Root Note - The musical key/pitch to play in">Root Note (Key)</label><select id="rootSel" title="Choose the musical key for melodies and bass"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
+<div class="control"><label title="Genre/Style Presets - Quick ways to get started!">🎭 Style Presets (Try These!)</label><div class="mood-grid" id="moodGrid"></div></div>
+<div class="control"><label title="Drum Pattern - Different rhythmic patterns">🥁 Drum Pattern</label><select id="drumSel" title="Choose a drum rhythm"></select><div id="drumFx" class="fx-tags"></div></div>
+<div class="control"><label title="Bass Pattern - Low-end groove">🎸 Bass Pattern</label><select id="bassSel" title="Choose a bassline"></select><div id="bassFx" class="fx-tags"></div></div>
+<div class="control"><label title="Melody Pattern - Melodic/harmonic parts">🎹 Keys Pattern</label><select id="keysSel" title="Choose a melody or chord pattern"></select><div id="keysFx" class="fx-tags"></div></div>
+<div class="control"><label title="Background Pad - Atmospheric textures">🎼 Pads Pattern</label><select id="padsSel" title="Choose an atmospheric pad sound"></select><div id="padsFx" class="fx-tags"></div></div>
+<button class="btn" id="randomBtn" style="width:100%;margin-top:10px" title="Generate random combination of patterns and effects">⚡ SURPRISE ME!</button>
 </div></div>
 </div>
 <div class="panel">
@@ -440,29 +441,65 @@ const autosave=()=>{try{localStorage.setItem('rg69_save',JSON.stringify({d:curD,
 const autoload=()=>{try{const s=localStorage.getItem('rg69_save');if(s){const st=JSON.parse(s);curD=st.d;curB=st.b;curK=st.k;curP=st.p;bpm=st.bpm;swing=st.swing;rootNote=st.rootNote;drumVol=st.drumVol;bassVol=st.bassVol;keysVol=st.keysVol;padsVol=st.padsVol;masterVol=st.masterVol;SP=st.SP;log('💾 Autoloaded');}}catch(e){}};
 const log=m=>{const l=document.getElementById('log');const line=document.createElement('div');line.textContent=`${new Date().toLocaleTimeString()} ${m}`;l.appendChild(line);l.scrollTop=l.scrollHeight;};
 const drawViz=()=>{requestAnimationFrame(drawViz);const c=document.getElementById('viz'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const w=c.width,h=c.height;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');ctx.fillRect(0,0,w,h);if(!analyser)return;const data=analyser.getValue();ctx.beginPath();ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--cyan');ctx.lineWidth=2;for(let i=0;i<data.length;i++){const x=(i/data.length)*w;const y=(1-(data[i]+1)/2)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();};
-// Help overlay
-const showHelp=()=>{const help=`KEYBOARD SHORTCUTS
-Space - Play/Pause
-R - Randomize all
-E - Export WAV
-T - Tap tempo
-L - Toggle theme
-Ctrl+Z - Undo
-Ctrl+Shift+Z - Redo
-? - This help
+// Help overlay - Enhanced for beginners and musicians
+const showHelp=()=>{const help=`🎵 RG69 BEAT MACHINE - QUICK GUIDE
 
-FEATURES
-• Mobile-first responsive design
+🚀 FOR BEGINNERS:
+1. Click "🚀 START" button to hear a preset
+2. Try clicking different Style Presets (mood buttons)
+3. Adjust Speed (BPM) slider to make it faster/slower
+4. Click "⚡ SURPRISE ME!" for random combinations
+5. Press ▶ (Play) and ■ (Stop) to control playback
+6. Draw patterns by clicking grid squares in SEQUENCER
+
+🎹 FOR MUSICIANS:
+⌨️ KEYBOARD SHORTCUTS:
+Space - Play/Pause
+R - Randomize all patterns and effects
+E - Export as WAV file
+T - Tap tempo to set BPM
+L - Toggle light/dark theme
+Ctrl+Z - Undo last change
+Ctrl+Shift+Z - Redo
+? - Show this help
+
+📊 TECHNICAL FEATURES:
 • 30+ drum/bass/keys/pads patterns
-• 14 mood presets (Ethio, Reggae, Dub, Afrobeat, Trap, etc.)
-• 17 FX types with randomization
-• Waveform visualizer
-• WAV export (4 bars)
+• 14 mood/genre presets
+• 17 FX types with per-track randomization
+• Real-time waveform visualizer
+• WAV export (4 bars, 44.1kHz)
 • WebM recording
-• URL sharing
+• URL sharing with state
 • Per-track mute/solo/swing
+• MIDI output (WebMIDI API)
+• Patch export/import (JSON)
+• Undo/redo with history
 • Autosave to localStorage
-• Dark/light themes`;alert(help);};
+• Touch-friendly mobile UI
+• Dark/light themes
+
+💡 TIPS:
+• Hover over any control for a description
+• Style Presets automatically set tempo and patterns
+• Click panel headers to collapse/expand sections
+• Drag audio files onto the page to load samples`;alert(help);};
+
+// Quick Start - Automatically load a preset and play
+const quickStart=()=>{
+  if(Tone.context.state!=='running')Tone.context.resume();
+  // Load a friendly preset
+  applyMood('dusty');
+  // Wait a moment then start playing
+  setTimeout(()=>{
+    if(!playing){
+      Tone.Transport.start();
+      loop.start(0);
+      playing=true;
+      log('🚀 Quick Start! Press Stop (■) to pause');
+    }
+  },100);
+};
 // Sample drag & drop
 document.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';});
 document.addEventListener('drop',async e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(!file||!file.type.startsWith('audio/'))return;try{const arrayBuffer=await file.arrayBuffer();const audioBuffer=await Tone.context.decodeAudioData(arrayBuffer);const player=new Tone.Player(audioBuffer).connect(drumG);log(`📂 Loaded: ${file.name}`);}catch(err){log('❌ Load failed');}});
