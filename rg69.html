@@ -291,13 +291,13 @@ p7:'A3,C4,E4 - - - C4,E4,A4 - - - E4,A4,C5 - - - A4,C5,E5 - - -'
 
 // Mood Presets
 const MOODS={
-dusty:{d:'d1',b:'b1',k:'k1',p:'p1',bpm:92,swing:15,reverb:35,drive:20,bitcrush:15,lofi:30},
-wonky:{d:'d7',b:'b4',k:'k3',p:'p2',bpm:118,swing:45,hatDrift:40,glide:30,reverb:25},
-tense:{d:'d12',b:'b7',k:'k8',p:'p4',bpm:135,swing:10,drive:40,reverb:15,bitcrush:25},
-ethio:{d:'d5',b:'b3',k:'k6',p:'p3',bpm:105,swing:25,reverb:45,glide:20},
-dub:{d:'d2',b:'b2',k:'k2',p:'p1',bpm:85,swing:35,reverb:60,kickLag:30},
-industrial:{d:'d14',b:'b10',k:'k11',p:'p6',bpm:145,swing:5,drive:60,bitcrush:40,reverb:10},
-hardtechno:{d:'d16',b:'b13',k:'k12',p:'p7',bpm:155,swing:0,drive:50,bitcrush:30,reverb:5}
+dusty:{d:'d1',b:'b1',k:'k1',p:'p1',bpm:92,swing:15,reverb:35,drive:20,bitcrush:15,lofi:30,kickTune:{pitchDecay:0.07,octaves:4},snareTone:{type:'white',freq:3500},hatBright:9000,bassGlide:0,velHuman:0.2,fxFavor:['PitchShift','Freeverb','Chorus','AutoFilter'],fxChain:{min:2,max:5},limiter:-1},
+wonky:{d:'d7',b:'b4',k:'k3',p:'p2',bpm:118,swing:45,hatDrift:40,glide:30,reverb:25,kickTune:{pitchDecay:0.07,octaves:4},snareTone:{type:'white',freq:3500},hatBright:9000,bassGlide:0,velHuman:0.2,fxFavor:['PitchShift','Freeverb','Chorus','AutoFilter'],fxChain:{min:2,max:5},limiter:-1},
+tense:{d:'d12',b:'b7',k:'k8',p:'p4',bpm:135,swing:10,drive:40,reverb:15,bitcrush:25,kickTune:{pitchDecay:0.03,octaves:3},snareTone:{type:'white',freq:4500,decay:0.12},hatBright:12000,bassGlide:0.08,velHuman:0.05,fxFavor:['Distortion','BitCrusher','Chebyshev','Phaser'],fxChain:{min:3,max:6},limiter:-0.5},
+ethio:{d:'d5',b:'b3',k:'k6',p:'p3',bpm:105,swing:25,reverb:45,glide:20,kickTune:{pitchDecay:0.08,octaves:5},snareTone:{type:'pink',freq:2800},hatBright:8500,bassGlide:0.1,velHuman:0.15,fxFavor:['Chorus','Vibrato','Tremolo','Phaser'],fxChain:{min:2,max:5},limiter:-1},
+dub:{d:'d2',b:'b2',k:'k2',p:'p1',bpm:85,swing:35,reverb:60,kickLag:30,kickTune:{pitchDecay:0.12,octaves:6},snareTone:{type:'pink',freq:2200},hatBright:7000,bassGlide:0.15,velHuman:0.25,fxFavor:['FeedbackDelay','PingPongDelay','Freeverb','JCReverb','AutoPanner'],fxChain:{min:1,max:3},limiter:-2},
+industrial:{d:'d14',b:'b10',k:'k11',p:'p6',bpm:145,swing:5,drive:60,bitcrush:40,reverb:10,kickTune:{pitchDecay:0.03,octaves:3},snareTone:{type:'white',freq:4500,decay:0.12},hatBright:12000,bassGlide:0.08,velHuman:0.05,fxFavor:['Distortion','BitCrusher','Chebyshev','Phaser'],fxChain:{min:3,max:6},limiter:-0.5,sidechain:true},
+hardtechno:{d:'d16',b:'b13',k:'k12',p:'p7',bpm:155,swing:0,drive:50,bitcrush:30,reverb:5,kickTune:{pitchDecay:0.03,octaves:3},snareTone:{type:'white',freq:4500,decay:0.12},hatBright:12000,bassGlide:0.08,velHuman:0.05,fxFavor:['Distortion','BitCrusher','Chebyshev','Phaser'],fxChain:{min:3,max:6},limiter:-0.5,sidechain:true}
 };
 
 // Global State
@@ -306,6 +306,8 @@ let selectedDrum='d1',selectedBass='b1',selectedKeys='k1',selectedPads='p1';
 let bpm=110,swing=0,rootNote='A',hatIsOpen=false;
 let midiOutput=null,mediaRecorder=null,recordedChunks=[];
 let SP={A:{},B:{},C:{},D:{}};
+let currentMood=null,velHumanAmount=0.15,chainMode=false,barCount=0;
+let tapTimes=[],samplesLoaded=false,sampleTimeout=null;
 const tracks=['kick','snare','clap','chh','ohh'];
 tracks.forEach(t=>{
 ['A','B','C','D'].forEach(b=>{
@@ -320,6 +322,7 @@ let limiter,mainRev,feedDly;
 let drumsFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 let lofiGain,tapeSat,lofiLP,crackleN,crackleG,hissN,hissG,flutterVib,rumbleOsc,rumbleG;
 let pianoSampler=null,casioSampler=null;
+let snareFilter,chhFilter; // Refinements #2, #3
 
 const log=msg=>{
 const el=document.getElementById('log');
@@ -330,14 +333,39 @@ el.appendChild(line);
 el.scrollTop=el.scrollHeight;
 };
 
+// Refinement #5: Velocity Humanization
+function hv(v,amount){return Math.max(0.05,Math.min(1,v*(1-amount/2+Math.random()*amount)));}
+
+// Refinement #13: Chord Voicing Spread
+function spreadVoicing(notes){
+if(!Array.isArray(notes)||notes.length<3)return notes;
+var out=notes.slice();
+out[0]=Tone.Frequency(out[0]).transpose(-12).toNote();
+out[out.length-1]=Tone.Frequency(out[out.length-1]).transpose(12).toNote();
+return out;
+}
+
+// Refinement #14: Bass Octave Range Protection
+function clampBass(note){
+var midi=Tone.Frequency(note).toMidi();
+if(midi<24)midi+=12;
+if(midi>48)midi-=12;
+return Tone.Frequency(midi,'midi').toNote();
+}
+
 // Initialize Tone.js
 const initAudio=async()=>{
 await Tone.start();
 log('Tone.js started');
 
+// Refinement #21: Audio Context Resume Guard
+document.addEventListener('click',function(){
+if(Tone.context.state!=='running')Tone.context.resume();
+},{once:false,passive:true});
+
 // Master Chain
 masterG=new Tone.Gain(0.8).toDestination();
-limiter=new Tone.Limiter(-3).connect(masterG);
+limiter=new Tone.Limiter(-1).connect(masterG); // Refinement #9: adjusted per mood
 const preMaster=new Tone.Gain(1);
 mainRev=new Tone.Freeverb({roomSize:0.7,dampening:3000}).connect(preMaster);
 mainRev.wet.value=0.2;
@@ -364,19 +392,23 @@ rumbleOsc=new Tone.Oscillator(36,'sine').start();
 rumbleG=new Tone.Gain(Tone.dbToGain(-50)).connect(lofiGain);
 rumbleOsc.connect(rumbleG);
 
-// Drums
+// Drums - Refinements #1, #2, #3: tunable per genre
 kickN=new Tone.MembraneSynth({pitchDecay:0.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:0.001,decay:0.4,sustain:0.01,release:1.4}});
 kickG=new Tone.Gain(0.7);
 kickN.connect(kickG);
-snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:0.001,decay:0.2,sustain:0}});
 snareG=new Tone.Gain(0.5);
-snareN.connect(snareG);
+snareFilter=new Tone.Filter(3500,'bandpass');
+snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:0.001,decay:0.2,sustain:0}});
+snareN.connect(snareFilter);
+snareFilter.connect(snareG);
 clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:0,decay:0.15,sustain:0}});
 clapG=new Tone.Gain(0.4);
 clapN.connect(clapG);
-chhN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:0,decay:0.05,sustain:0}});
 chhG=new Tone.Gain(0.3);
-chhN.connect(chhG);
+chhFilter=new Tone.Filter(9000,'bandpass');
+chhN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:0,decay:0.05,sustain:0}});
+chhN.connect(chhFilter);
+chhFilter.connect(chhG);
 ohhN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:0.01,decay:0.3,sustain:0.1,release:0.2}});
 ohhG=new Tone.Gain(0.25);
 ohhN.connect(ohhG);
@@ -410,15 +442,23 @@ log('Audio engine initialized');
 };
 
 const loadSamples=async()=>{
+// Refinement #22: Graceful Sample Loading Timeout
+sampleTimeout=setTimeout(function(){
+log('Samples timeout — using synths only');
+samplesLoaded=false;
+},10000);
+
 try{
 const baseUrl='https://tonejs.github.io/audio/salamander/';
 const notes=['A1','C2','A2','C3','A3','C4','A4','C5','A5','C6'];
 const urls={};
 notes.forEach(n=>urls[n]=`${baseUrl}${n}.mp3`);
 pianoSampler=new Tone.Sampler({urls,onload:()=>{
+clearTimeout(sampleTimeout);
 log('Piano samples loaded');
 pianoSampler.volume.value=-18;
 pianoSampler.connect(keysG);
+samplesLoaded=true;
 }});
 }catch(e){log(`Piano load error: ${e.message}`);}
 
@@ -458,6 +498,7 @@ const FX_POOL=[
 const rnd=(min,max)=>Math.random()*(max-min)+min;
 
 const randomizeFX=(chain,target,count)=>{
+// Refinement #7 & #8: Genre-aware FX weighting and chain length
 // Dispose old chain
 chain.forEach(fx=>{fx.disconnect();fx.dispose();});
 chain.length=0;
@@ -465,9 +506,23 @@ chain.length=0;
 // Create new chain
 const n=Math.floor(rnd(count.min,count.max+1));
 const pool=[...FX_POOL];
+
+// Get mood-specific favorites for weighting
+const m=currentMood?MOODS[currentMood]:null;
+const favorites=(m&&m.fxFavor)?m.fxFavor:[];
+
 for(let i=0;i<n;i++){
-const idx=Math.floor(Math.random()*pool.length);
-const fxDef=pool.splice(idx,1)[0];
+// Build weighted pool
+let weightedPool=[];
+pool.forEach(fx=>{
+const weight=favorites.includes(fx.name)?3:1;
+for(let w=0;w<weight;w++)weightedPool.push(fx);
+});
+if(weightedPool.length===0)break;
+const idx=Math.floor(Math.random()*weightedPool.length);
+const fxDef=weightedPool[idx];
+const fxIdx=pool.indexOf(fxDef);
+if(fxIdx>-1)pool.splice(fxIdx,1);
 const fx=fxDef.create();
 fx._name=fxDef.name;
 chain.push(fx);
