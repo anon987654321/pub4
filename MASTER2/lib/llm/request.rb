@@ -169,7 +169,8 @@ module MASTER
           tokens_in: final_response.input_tokens || 0,
           tokens_out: final_response.output_tokens || 0,
           cost: nil,
-          finish_reason: "stop"
+          finish_reason: "stop",
+          streamed: true
         }
 
         validate_response(response_data, model)

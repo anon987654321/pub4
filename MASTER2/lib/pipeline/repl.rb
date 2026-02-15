@@ -122,12 +122,15 @@ module MASTER
           if cmd_result.respond_to?(:ok?)
             if cmd_result.ok?
               output = cmd_result.value[:rendered] || cmd_result.value[:response]
-              if output && !output.empty?
+              streamed = cmd_result.value[:streamed]
+              if output && !output.empty? && !streamed
                 puts
                 puts output
-                puts UI.dim("  #{format_meta(cmd_result.value)}") if cmd_result.value[:cost]
-                session.add_assistant(output, cost: cmd_result.value[:cost])
               end
+              if cmd_result.value[:cost]
+                puts UI.dim("  #{format_meta(cmd_result.value)}")
+              end
+              session.add_assistant(output, cost: cmd_result.value[:cost]) if output
             else
               puts
               UI.error(cmd_result.failure)
@@ -143,16 +146,19 @@ module MASTER
 
         if result.ok?
           output = result.value[:rendered] || result.value[:response]
-          if output && !output.empty?
+          streamed = result.value[:streamed]
+          if output && !output.empty? && !streamed
             puts
             puts output
-            puts UI.dim("  #{format_meta(result.value)}") if result.value[:cost]
-            session.add_assistant(
-              output,
-              model: result.value[:model],
-              cost: result.value[:cost],
-            )
           end
+          if result.value[:cost]
+            puts UI.dim("  #{format_meta(result.value)}")
+          end
+          session.add_assistant(
+            output,
+            model: result.value[:model],
+            cost: result.value[:cost],
+          ) if output
         else
           puts
           UI.error(result.failure)

@@ -4,6 +4,9 @@ module MASTER
   # Functional Result monad (Ok/Err)
   # Provides railway-oriented programming for error handling
   class Result
+    # Custom error class for raising within Result flows
+    class Error < StandardError; end
+
     attr_reader :value, :error, :kind
 
     # Initialize Result
