@@ -1,5 +1,7 @@
 # MASTER2 - Autonomous Code Refactoring Engine
 
+> ⚠️ **IMPORTANT**: See [AGENT_WORK_MERGE_STATUS.md](AGENT_WORK_MERGE_STATUS.md) for critical information about unmerged agent work.
+
 ## Setup
 export GEM_HOME=\$(ruby -e'puts Gem.user_dir')
 export PATH="\$GEM_HOME/bin:\$PATH"
