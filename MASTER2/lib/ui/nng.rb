@@ -8,78 +8,78 @@ module MASTER
         visibility: {
           name: "Visibility of System Status",
           checks: [
-            { feature: 'progress_indicators', desc: 'Show progress during LLM calls', file: 'progress.rb' },
-            { feature: 'prompt_status', desc: 'Prompt shows tier and budget', file: 'pipeline.rb' },
-            { feature: 'circuit_indicator', desc: '⚡ shows tripped circuits', file: 'pipeline.rb' }
-          ]
-        },
+            { feature: 'progress_indicators', desc: 'Show progress during LLM calls', file: 'progress.rb' }.freeze,
+            { feature: 'prompt_status', desc: 'Prompt shows tier and budget', file: 'pipeline.rb' }.freeze,
+            { feature: 'circuit_indicator', desc: '⚡ shows tripped circuits', file: 'pipeline.rb' }.freeze
+          ].freeze
+        }.freeze,
         match: {
           name: "Match Between System and Real World",
           checks: [
-            { feature: 'natural_commands', desc: 'Commands use natural language', file: 'commands.rb' },
-            { feature: 'dmesg_boot', desc: 'Boot messages in familiar format', file: 'boot.rb' }
-          ]
-        },
+            { feature: 'natural_commands', desc: 'Commands use natural language', file: 'commands.rb' }.freeze,
+            { feature: 'dmesg_boot', desc: 'Boot messages in familiar format', file: 'boot.rb' }.freeze
+          ].freeze
+        }.freeze,
         control: {
           name: "User Control and Freedom",
           checks: [
-            { feature: 'undo', desc: 'Undo support for file operations', file: 'undo.rb' },
-            { feature: 'ctrl_c', desc: 'Ctrl+C cancels operations', file: 'pipeline.rb' },
-            { feature: 'exit', desc: 'Clear exit command', file: 'commands.rb' }
-          ]
-        },
+            { feature: 'undo', desc: 'Undo support for file operations', file: 'undo.rb' }.freeze,
+            { feature: 'ctrl_c', desc: 'Ctrl+C cancels operations', file: 'pipeline.rb' }.freeze,
+            { feature: 'exit', desc: 'Clear exit command', file: 'commands.rb' }.freeze
+          ].freeze
+        }.freeze,
         consistency: {
           name: "Consistency and Standards",
           checks: [
-            { feature: 'prompt_format', desc: 'Consistent prompt format', file: 'pipeline.rb' },
-            { feature: 'result_monad', desc: 'Consistent Result type', file: 'result.rb' }
-          ]
-        },
+            { feature: 'prompt_format', desc: 'Consistent prompt format', file: 'pipeline.rb' }.freeze,
+            { feature: 'result_monad', desc: 'Consistent Result type', file: 'result.rb' }.freeze
+          ].freeze
+        }.freeze,
         error_prevention: {
           name: "Error Prevention",
           checks: [
-            { feature: 'guard_stage', desc: 'Guard blocks dangerous commands', file: 'stages.rb' },
-            { feature: 'confirmations', desc: 'Confirm destructive actions', file: 'confirmations.rb' },
-            { feature: 'agent_firewall', desc: 'Filter agent outputs', file: 'agent_firewall.rb' }
-          ]
-        },
+            { feature: 'guard_stage', desc: 'Guard blocks dangerous commands', file: 'stages.rb' }.freeze,
+            { feature: 'confirmations', desc: 'Confirm destructive actions', file: 'confirmations.rb' }.freeze,
+            { feature: 'agent_firewall', desc: 'Filter agent outputs', file: 'agent_firewall.rb' }.freeze
+          ].freeze
+        }.freeze,
         recognition: {
           name: "Recognition Rather Than Recall",
           checks: [
-            { feature: 'autocomplete', desc: 'Tab completion for commands', file: 'autocomplete.rb' },
-            { feature: 'help', desc: 'Help shows all commands', file: 'help.rb' }
-          ]
-        },
+            { feature: 'autocomplete', desc: 'Tab completion for commands', file: 'autocomplete.rb' }.freeze,
+            { feature: 'help', desc: 'Help shows all commands', file: 'help.rb' }.freeze
+          ].freeze
+        }.freeze,
         flexibility: {
           name: "Flexibility and Efficiency of Use",
           checks: [
-            { feature: 'keybindings', desc: 'Keyboard shortcuts', file: 'keybindings.rb' },
-            { feature: 'tiers', desc: 'Multiple model tiers', file: 'llm.rb' },
-            { feature: 'pipe_mode', desc: 'Pipe mode for scripting', file: 'pipeline.rb' }
-          ]
-        },
+            { feature: 'keybindings', desc: 'Keyboard shortcuts', file: 'keybindings.rb' }.freeze,
+            { feature: 'tiers', desc: 'Multiple model tiers', file: 'llm.rb' }.freeze,
+            { feature: 'pipe_mode', desc: 'Pipe mode for scripting', file: 'pipeline.rb' }.freeze
+          ].freeze
+        }.freeze,
         aesthetic: {
           name: "Aesthetic and Minimalist Design",
           checks: [
-            { feature: 'clean_output', desc: 'Minimal, focused output', file: 'stages.rb' },
-            { feature: 'render_stage', desc: 'Typography improvements', file: 'stages.rb' }
-          ]
-        },
+            { feature: 'clean_output', desc: 'Minimal, focused output', file: 'stages.rb' }.freeze,
+            { feature: 'render_stage', desc: 'Typography improvements', file: 'stages.rb' }.freeze
+          ].freeze
+        }.freeze,
         errors: {
           name: "Help Users Recognize, Diagnose, Recover from Errors",
           checks: [
-            { feature: 'error_suggestions', desc: 'Actionable error messages', file: 'error_suggestions.rb' },
-            { feature: 'circuit_breaker', desc: 'Auto-recover from API failures', file: 'llm.rb' }
-          ]
-        },
+            { feature: 'error_suggestions', desc: 'Actionable error messages', file: 'error_suggestions.rb' }.freeze,
+            { feature: 'circuit_breaker', desc: 'Auto-recover from API failures', file: 'llm.rb' }.freeze
+          ].freeze
+        }.freeze,
         documentation: {
           name: "Help and Documentation",
           checks: [
-            { feature: 'help_command', desc: 'Built-in help', file: 'help.rb' },
-            { feature: 'tips', desc: 'Contextual tips', file: 'help.rb' },
-            { feature: 'readme', desc: 'Comprehensive README', file: '../README.md' }
-          ]
-        }
+            { feature: 'help_command', desc: 'Built-in help', file: 'help.rb' }.freeze,
+            { feature: 'tips', desc: 'Contextual tips', file: 'help.rb' }.freeze,
+            { feature: 'readme', desc: 'Comprehensive README', file: '../README.md' }.freeze
+          ].freeze
+        }.freeze
       }.freeze
 
       extend self

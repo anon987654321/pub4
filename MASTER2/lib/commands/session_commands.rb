@@ -23,10 +23,12 @@ module MASTER
         when "info"
           s = Session.current
           UI.header("Session Info")
-          puts "  ID:       #{s.id}"
-          puts "  Messages: #{s.message_count}"
-          puts "  Cost:     #{UI.currency_precise(s.total_cost)}"
-          puts "  Created:  #{s.created_at}"
+          puts [
+            "  ID:       #{s.id}",
+            "  Messages: #{s.message_count}",
+            "  Cost:     #{UI.currency_precise(s.total_cost)}",
+            "  Created:  #{s.created_at}"
+          ].join("\n")
           puts
         when "replay"
           return puts "  SessionReplay not available" unless defined?(SessionReplay)

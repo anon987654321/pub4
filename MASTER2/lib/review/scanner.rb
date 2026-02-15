@@ -23,22 +23,22 @@ module MASTER
           pattern: /^(?!.*MASTER::)(DB|LLM|Session|Pipeline)\./,
           message: "Use MASTER:: prefix for module references in bin/ scripts",
           severity: :critical,
-        },
+        }.freeze,
         symbol_string_fallback: {
           pattern: /\[["'][a-z_]+["']\]\s*\|\|\s*\[:[a-z_]+\]/,
           message: "Mixed string/symbol access - use symbolize_names: true in JSON.parse",
           severity: :major,
-        },
+        }.freeze,
         dirty_flag_missing: {
           pattern: /\.pop\(|\.shift\(|\.delete|\.clear(?!\s*#.*dirty)/,
           message: "Mutation without @dirty = true - changes won't persist",
           severity: :major,
-        },
+        }.freeze,
         rescue_without_type: {
           pattern: /rescue\s*$/,
           message: "Bare rescue catches all exceptions - use StandardError",
           severity: :minor,
-        },
+        }.freeze,
       }.freeze
 
       # Patterns that indicate good code

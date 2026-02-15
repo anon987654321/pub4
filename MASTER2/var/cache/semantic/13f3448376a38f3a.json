@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "key": "13f3448376a38f3a",
+  "prompt_hash": "2241ad11cef852fc28a0f6e4e2228361af71011a2c76cd2162fdd0cbcec97da2",
+  "prompt_preview": "Analyze this Ruby code for: 1) bugs 2) rescue nil or swallowed exceptions\n3) dead code 4) methods that duplicate popular gem functionality.\nReturn ONLY JSON: {\"bugs\":[],\"dead_code\":[],\"gem_opportuniti",
+  "tier": "fast",
+  "response": {
+    "content": "```json\n{\n  \"bugs\": [\n    {\n      \"line\": \"61\",\n      \"description\": \"Potential nil access in `@proposals.first[:proposal]` if @proposals is empty\"\n    },\n    {\n      \"line\": \"130\",\n      \"description\": \"Possible infinite loop if `MAX_ROUNDS` is set to a very high value without budget check\"\n    },\n    {\n      \"line\": \"187\",\n      \"description\": \"Division by zero risk if `total_weight` is 0 in consensus calculation\"\n    }\n  ],\n  \"dead_code\": [\n    {\n      \"line\": \"29\",\n      \"description\": \"Unused constant `ARBITER` (shadowed by method on line 44)\"\n    },\n    {\n      \"line\": \"44\",\n      \"description\": \"Unused method `arbiter_model` (never called)\"\n    },\n    {\n      \"line\": \"295\",\n      \"description\": \"Duplicate `private` visibility modifier\"\n    }\n  ],\n  \"gem_opportunities\": [\n    {\n      \"line\": \"N/A\",\n      \"description\": \"Circuit breaker pattern could use `circuitbox` gem instead of manual implementation\"\n    },\n    {\n      \"line\": \"N/A\",\n      \"description\": \"Result handling could use `dry-monads` gem for better error handling\"\n    },\n    {\n      \"line\": \"N/A\",\n      \"description\": \"Configuration management could use `dry-configurable` gem instead of constants\"\n    }\n  ]\n}\n```",
+    "reasoning": null,
+    "model": "deepseek/deepseek-chat",
+    "tokens_in": 7572,
+    "tokens_out": 319,
+    "cost": null,
+    "finish_reason": "stop"
+  },
+  "created_at": "2026-02-15T12:15:52Z",
+  "hit_count": 0
+}

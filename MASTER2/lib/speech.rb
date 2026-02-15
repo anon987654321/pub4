@@ -25,28 +25,28 @@ module MASTER
 
     # Voice styles (rate/pitch adjustments for Edge)
     STYLES = {
-      normal: { rate: "+0%", pitch: "+0Hz" },
-      fast: { rate: "+25%", pitch: "+0Hz" },
-      slow: { rate: "-20%", pitch: "+0Hz" },
-      high: { rate: "+0%", pitch: "+50Hz" },
-      low: { rate: "+0%", pitch: "-50Hz" },
-      excited: { rate: "+15%", pitch: "+30Hz" },
-      calm: { rate: "-10%", pitch: "-20Hz" },
-      whisper: { rate: "-15%", pitch: "-30Hz" },
-      urgent: { rate: "+30%", pitch: "+20Hz" },
+      normal: { rate: "+0%", pitch: "+0Hz" }.freeze,
+      fast: { rate: "+25%", pitch: "+0Hz" }.freeze,
+      slow: { rate: "-20%", pitch: "+0Hz" }.freeze,
+      high: { rate: "+0%", pitch: "+50Hz" }.freeze,
+      low: { rate: "+0%", pitch: "-50Hz" }.freeze,
+      excited: { rate: "+15%", pitch: "+30Hz" }.freeze,
+      calm: { rate: "-10%", pitch: "-20Hz" }.freeze,
+      whisper: { rate: "-15%", pitch: "-30Hz" }.freeze,
+      urgent: { rate: "+30%", pitch: "+20Hz" }.freeze,
     }.freeze
 
     # Piper voice presets (length_scale/noise_scale)
     PIPER_PRESETS = {
-      normal: { length_scale: 1.0, noise_scale: 0.667 },
-      chipmunk: { length_scale: 0.6, noise_scale: 0.667 },
-      zombie: { length_scale: 2.5, noise_scale: 0.4 },
-      robot: { length_scale: 1.0, noise_scale: 0.1 },
-      manic: { length_scale: 0.8, noise_scale: 0.9 },
-      calm: { length_scale: 1.2, noise_scale: 0.3 },
-      urgent: { length_scale: 0.7, noise_scale: 0.5 },
-      demon: { length_scale: 3.0, noise_scale: 0.3 },
-      caffeinated: { length_scale: 0.5, noise_scale: 0.7 },
+      normal: { length_scale: 1.0, noise_scale: 0.667 }.freeze,
+      chipmunk: { length_scale: 0.6, noise_scale: 0.667 }.freeze,
+      zombie: { length_scale: 2.5, noise_scale: 0.4 }.freeze,
+      robot: { length_scale: 1.0, noise_scale: 0.1 }.freeze,
+      manic: { length_scale: 0.8, noise_scale: 0.9 }.freeze,
+      calm: { length_scale: 1.2, noise_scale: 0.3 }.freeze,
+      urgent: { length_scale: 0.7, noise_scale: 0.5 }.freeze,
+      demon: { length_scale: 3.0, noise_scale: 0.3 }.freeze,
+      caffeinated: { length_scale: 0.5, noise_scale: 0.7 }.freeze,
     }.freeze
 
     # Edge TTS voices

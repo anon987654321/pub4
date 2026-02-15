@@ -212,7 +212,6 @@ module MASTER
         Replicate.download_file(output, path)
       rescue StandardError => e
         $stderr.puts "Cinematic: save_intermediate failed: #{e.message}"
-        # Intermediate saves are optional, continue execution
       end
 
       def generate_embedding(text)

@@ -108,27 +108,27 @@ module MASTER
         question: "What new techniques were discovered?",
         action: "Add to structural_analysis or principles",
         category: :technique
-      },
+      }.freeze,
       {
         question: "What patterns kept recurring?",
         action: "Codify as detection rules",
         category: :pattern
-      },
+      }.freeze,
       {
         question: "What questions yielded good results?",
         action: "Add to hierarchy questions for reuse",
         category: :question
-      },
+      }.freeze,
       {
         question: "What manual steps could be automated?",
         action: "Add as new command or automation",
         category: :automation
-      },
+      }.freeze,
       {
         question: "What external tools/APIs were useful?",
         action: "Add to providers/integrations",
         category: :tool
-      }
+      }.freeze
     ].freeze
 
     def capture_file

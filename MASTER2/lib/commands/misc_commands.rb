@@ -308,41 +308,7 @@ module MASTER
         HELP
       end
 
-      # Workflow management commands
-      def manage_workflow(args)
-        parts = args&.split || []
-        return show_workflow_help if parts.empty?
 
-        command = parts[0]
-
-        case command
-        when "status"
-          result = workflow_status
-          puts "  Error: #{result.error}" if result.err?
-        when "advance"
-          result = workflow_advance
-          puts "  Error: #{result.error}" if result.err?
-        when "reset"
-          session = Session.current
-          session.metadata[:workflow] = nil
-          session.save
-          puts "  Workflow reset"
-        else
-          show_workflow_help
-        end
-      end
-
-      def show_workflow_help
-        puts <<~HELP
-
-          Workflow Commands:
-
-            workflow status     Show current workflow phase and history
-            workflow advance    Advance to next workflow phase
-            workflow reset      Reset workflow to initial state
-
-        HELP
-      end
 
       # Semantic cache management
       def show_cache_stats(args)

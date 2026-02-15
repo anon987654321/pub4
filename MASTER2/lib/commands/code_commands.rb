@@ -88,12 +88,14 @@ module MASTER
           return Result.ok({ message: "No issues found" })
         end
 
-        puts "\n" + UI.bold("📊 SUMMARY:")
-        puts "  Bugs: #{bugs_found}"
-        puts "  Critical Violations: #{critical_count}"
-        puts "  Known Patterns: #{learned_issues.size}"
-        puts "  Code Smells: #{smells.size}"
-        puts "  TOTAL: #{total_issues} issues"
+        puts [
+          "\n" + UI.bold("📊 SUMMARY:"),
+          "  Bugs: #{bugs_found}",
+          "  Critical Violations: #{critical_count}",
+          "  Known Patterns: #{learned_issues.size}",
+          "  Code Smells: #{smells.size}",
+          "  TOTAL: #{total_issues} issues"
+        ].join("\n")
 
         # Confirmation gate
         print "\n🤔 Proceed with automatic fixes? (y/n): "
@@ -167,9 +169,11 @@ module MASTER
         result = evolver.run(path: path, dry_run: true)
 
         UI.header("Evolution Analysis (dry run)")
-        puts "  Files processed: #{result[:files_processed]}"
-        puts "  Improvements found: #{result[:improvements]}"
-        puts "  Cost: #{UI.currency_precise(result[:cost])}"
+        puts [
+          "  Files processed: #{result[:files_processed]}",
+          "  Improvements found: #{result[:improvements]}",
+          "  Cost: #{UI.currency_precise(result[:cost])}"
+        ].join("\n")
         puts
 
         Result.ok(result)

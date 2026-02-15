@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "key": "d8e771752e47633f",
+  "prompt_hash": "d1b748ca5e5987069e92ba3c414d482ddb08f9f3115816a80f33e10fa4a1c599",
+  "prompt_preview": "Analyze this Ruby code for: 1) bugs 2) rescue nil or swallowed exceptions\n3) dead code 4) methods that duplicate popular gem functionality.\nReturn ONLY JSON: {\"bugs\":[],\"dead_code\":[],\"gem_opportuniti",
+  "tier": "fast",
+  "response": {
+    "content": "```json\n{\n  \"bugs\": [],\n  \"dead_code\": [],\n  \"gem_opportunities\": []\n}\n```",
+    "reasoning": null,
+    "model": "deepseek/deepseek-chat",
+    "tokens_in": 8131,
+    "tokens_out": 26,
+    "cost": null,
+    "finish_reason": "stop"
+  },
+  "created_at": "2026-02-15T12:15:57Z",
+  "hit_count": 0
+}
