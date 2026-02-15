@@ -183,8 +183,8 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Cost firewall - abort if cumulative spend exceeds cap
-        if total_spent >= spending_cap
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
+        if total_spent >= SPENDING_CAP
+          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{SPENDING_CAP}. Session terminated.")
         end
 
         # Check semantic cache before making API call
@@ -482,17 +482,13 @@ module MASTER
 
       public
 
-      def spending_cap
-        SPENDING_CAP
-      end
-
       def total_spent
         return 0.0 unless defined?(DB)
         DB.total_cost
       end
 
       def budget_remaining
-        [spending_cap - total_spent, 0.0].max
+        [SPENDING_CAP - total_spent, 0.0].max
       end
 
       # Pick best available model for given tier (or current)

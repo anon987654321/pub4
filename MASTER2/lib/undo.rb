@@ -72,13 +72,13 @@ module MASTER
       end
 
       # Track file edit
-      def track_edit(path, original_content)
-        push(:file_edit, { path: path, original: original_content })
+      def track_edit(path, original_content, modified_content)
+        push(:file_edit, { path: path, original: original_content, modified: modified_content })
       end
 
-      # Track file creation
-      def track_create(path)
-        push(:file_create, { path: path })
+      # Track file creation (store content for redo)
+      def track_create(path, content)
+        push(:file_create, { path: path, content: content })
       end
 
       # Track file deletion
@@ -104,11 +104,11 @@ module MASTER
       def apply(op)
         case op.type
         when :file_edit
-          # Can't redo edit without new content - this is a limitation
-          puts "  Warning: Cannot redo file edit"
+          # Redo edit by writing modified content
+          File.write(op.data[:path], op.data[:modified]) if op.data[:modified]
         when :file_create
-          # File was deleted on undo, would need content to recreate
-          puts "  Warning: Cannot redo file create"
+          # Redo create by writing content
+          File.write(op.data[:path], op.data[:content]) if op.data[:content]
         when :file_delete
           File.delete(op.data[:path]) if File.exist?(op.data[:path])
         end

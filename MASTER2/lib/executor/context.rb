@@ -2,14 +2,7 @@
 
 module MASTER
   class Executor
-    module Patterns
-      # Pattern methods are already defined in individual modules above
-      # This module exists for backward compatibility
-    end
-
-    # ═══════════════════════════════════════════════════════════════════════════
     # Context module - Context building and response parsing
-    # ═══════════════════════════════════════════════════════════════════════════
     module Context
       def self.system_prompt_config
         @system_prompt_config ||= if File.exist?(Executor::SYSTEM_PROMPT_FILE)

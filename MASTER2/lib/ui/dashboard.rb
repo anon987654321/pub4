@@ -40,7 +40,7 @@ module MASTER
     end
 
     def budget_box
-      cap = LLM.spending_cap
+      cap = LLM::SPENDING_CAP
       spent = cap - LLM.budget_remaining
       pct = (spent / cap * 100).round(1)
 
@@ -79,7 +79,7 @@ module MASTER
       {
         tier: LLM.tier,
         remaining: LLM.budget_remaining,
-        limit: LLM.spending_cap,
+        limit: LLM::SPENDING_CAP,
         circuits_ok: LLM.models.count { |m| LLM.circuit_closed?(m.id) },
         circuits_tripped: LLM.models.count { |m| !LLM.circuit_closed?(m.id) },
         axioms: DB.axioms.size,
