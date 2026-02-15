@@ -96,3 +96,72 @@ enforcement_layers:
     description: "Rails/Ruby/PWA/OpenBSD conventions"
   - name: security
     description: "Input validation, privilege separation"
+
+# Golden rule — restored from master.yml v71.3.0
+golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+
+# Convergence loop — iterate until no violations remain
+convergence:
+  enabled: true
+  algorithm: "Keep iterating until no violations remain and no further improvements possible"
+  max_iterations: 20
+  threshold: 0.001
+  on_stuck: [broaden_search, change_perspective, ask_user]
+  on_oscillation: [freeze, analyze_cycle, break_deadlock]
+
+# Anti-sprawl — prevent file proliferation
+anti_sprawl:
+  enabled: true
+  rationale: "File sprawl violates DRY — single source of truth"
+  enforcement: "Edit existing files directly, never create analysis/summary/report/todo files"
+  banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md]
+  exceptions: [test_files, user_requested_deliverables]
+
+# Self-protection — prevent destructive self-modification
+self_protection:
+  enabled: true
+  backup_before_modify: true
+  min_principle_count: 40
+  validation_rules:
+    - "golden_rule must exist"
+    - "axioms section immutable — add only, never delete"
+    - "version must increment on changes"
+
+# Deep trace logging — OpenBSD dmesg-inspired
+deep_trace:
+  enabled: true
+  style: "OpenBSD dmesg-inspired"
+  format: "component0 at tier: message"
+  levels: [info, warn, error, fatal]
+
+# Detectors — automated code quality checks
+detectors:
+  duplicate_code:
+    enabled: true
+    threshold: 0.03
+    description: "Flag code blocks repeated more than once"
+  complexity:
+    enabled: true
+    max_cyclomatic: 10
+    description: "Flag methods exceeding cyclomatic complexity limit"
+  unreferenced_code:
+    enabled: true
+    description: "Flag dead code, unused methods, unreachable branches"
+  security:
+    enabled: true
+    checks: [eval_usage, shell_injection, path_traversal, credential_exposure]
+  performance:
+    enabled: true
+    checks: [n_plus_one, unbounded_queries, missing_indexes]
+  style:
+    enabled: true
+    description: "Enforce naming conventions, formatting, idioms"
+
+# Language support
+language:
+  supported: [english, norwegian]
+  style: "Strunk & White"
+  rules: ["omit needless words", "active voice", "be clear"]
+  norwegian:
+    dialect: "bokmål"
+    rules: ["short sentences", "avoid anglicisms"]

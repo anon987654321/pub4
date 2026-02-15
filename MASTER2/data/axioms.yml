@@ -360,3 +360,71 @@
   title: "User-Friendly Design"
   statement: "Visibility. User control. Error prevention. Consistency. Recognition over recall."
   source: "10 Usability Heuristics by Jakob Nielsen"
+
+# ============================================================================
+# GOVERNANCE AXIOMS (Restored from master.yml v71.3.0)
+# ============================================================================
+
+- id: "PRESERVE_FIRST"
+  category: "governance"
+  protection: "ABSOLUTE"
+  priority: 10
+  title: "Preserve Then Improve"
+  statement: "Never break working code. Understand before changing. Improve without regressing."
+  source: "master.yml golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+
+- id: "CHESTERTONS_FENCE"
+  category: "governance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Understand Before Removing"
+  statement: "Before removing any code or feature, understand why it exists. If you cannot explain its purpose, do not remove it."
+  source: "G.K. Chesterton"
+
+- id: "PARETO"
+  category: "governance"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "80/20 Rule"
+  statement: "80% of value comes from 20% of effort. Focus on high-impact changes first."
+  source: "Vilfredo Pareto"
+
+- id: "LINDY"
+  category: "governance"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Lindy Effect"
+  statement: "Old solutions that still work will likely keep working. Prefer battle-tested over novel."
+  source: "Nassim Taleb"
+
+- id: "GALLS_LAW"
+  category: "governance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Complex From Simple"
+  statement: "A complex system that works evolved from a simple system that worked. Start simple."
+  source: "John Gall"
+
+- id: "HYRUMS_LAW"
+  category: "governance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Observable Behavior Becomes API"
+  statement: "With enough users, every observable behavior becomes a dependency. Guard public interfaces."
+  source: "Hyrum Wright"
+
+- id: "POSTELS_LAW"
+  category: "governance"
+  protection: "PROTECTED"
+  priority: 7
+  title: "Robustness Principle"
+  statement: "Be conservative in what you send, liberal in what you accept."
+  source: "Jon Postel (RFC 761)"
+
+- id: "OCCAMS_RAZOR"
+  category: "governance"
+  protection: "NEGOTIABLE"
+  priority: 5
+  title: "Simplest Explanation"
+  statement: "Among competing solutions, the one with fewest assumptions is usually correct."
+  source: "William of Ockham"

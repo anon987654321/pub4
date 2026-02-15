@@ -48,3 +48,20 @@ exceptions:
   - "Complex regex requiring PCRE"
   - "Multi-file operations beyond globbing"
   - "Binary data processing"
+
+# Banned commands — restored from master.yml v71.3.0
+banned_commands: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+
+# Auto-remediation — zsh-native replacements for banned commands
+auto_remediation:
+  sed: "${var//old/new}"
+  awk: "${${(s: :)line}[n]}"
+  tr: "${(U)var} or ${(L)var}"
+  wc: "${#lines}"
+  head: "${lines[1,n]}"
+  tail: "${lines[-n,-1]}"
+  grep: "${(M)lines:#*pattern*}"
+  cut: "${${(s:delim:)var}[N]}"
+  sort: "${(o)arr} or ${(O)arr}"
+  find: "**/*.ext(.)"
+  sudo: "doas"

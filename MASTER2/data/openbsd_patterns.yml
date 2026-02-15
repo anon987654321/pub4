@@ -49,6 +49,16 @@ forbidden:
     replacement: "pf"
   - command: "nginx"
     replacement: "httpd (OpenBSD native)"
+  - command: "docker"
+    replacement: "vmctl"
+  - command: "systemd"
+    replacement: "rcctl"
+  - command: "gsed"
+    replacement: "sed (POSIX)"
+  - command: "gawk"
+    replacement: "awk (POSIX)"
+  - command: "ggrep"
+    replacement: "grep (POSIX)"
 
 security:
   pledge: "pledge(2) restricts syscalls after initialization"
