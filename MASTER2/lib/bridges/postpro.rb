@@ -2,385 +2,407 @@
 
 module MASTER
   module Bridges
-    # Postpro Bridge - Post-processing and enhancement utilities
-    # Provides image and video enhancement capabilities
+    # Postpro Bridge - The Cinematic Emotion Engine
+    # Analog film emulation and psychological color grading
+    # Applied as final layer on all Replicate outputs
     module PostproBridge
       extend self
 
-      # Film stock presets with recomb matrices
-      FILM_STOCKS = {
-        kodak_portra_400: {
-          matrix: [[1.05, 0.02, -0.07], [-0.01, 1.03, -0.02], [0.01, -0.02, 1.01]],
-          grain: 0.2,
-          halation: 0.15
+      # Film stock emotional parameters
+      STOCKS = {
+        kodak_portra: {
+          grain: 15, gamma: 0.65, toe: 0.10, shoulder: 0.88, lift: 0.05,
+          feeling: "Warmth, intimacy, skin-friendly pastels"
+        },
+        kodak_vision3_50d: {
+          grain: 8, gamma: 0.63, toe: 0.08, shoulder: 0.92, lift: 0.02,
+          feeling: "Daylight clarity, natural saturation, crisp shadows"
         },
         kodak_vision3_500t: {
-          matrix: [[0.98, 0.05, -0.03], [0.02, 1.02, -0.04], [-0.01, 0.03, 1.08]],
-          grain: 0.3,
-          halation: 0.2
+          grain: 20, gamma: 0.65, toe: 0.12, shoulder: 0.88, lift: 0.08, blue_shift: 0.15,
+          feeling: "Tungsten warmth, night atmosphere, moody interiors"
         },
-        fuji_pro_400h: {
-          matrix: [[1.02, 0.03, -0.05], [-0.02, 1.05, -0.03], [0.01, -0.01, 1.00]],
-          grain: 0.15,
-          halation: 0.12
+        fuji_velvia: {
+          grain: 8, gamma: 0.75, toe: 0.05, shoulder: 0.95, lift: 0.03,
+          feeling: "Vivid saturation, punchy contrast, landscape drama"
         },
-        kodak_ektar_100: {
-          matrix: [[1.08, 0.01, -0.09], [-0.03, 1.06, -0.03], [0.02, -0.03, 1.01]],
-          grain: 0.1,
-          halation: 0.1
-        },
-        fuji_velvia_50: {
-          matrix: [[1.15, -0.05, -0.10], [-0.05, 1.10, -0.05], [0.03, -0.05, 1.12]],
-          grain: 0.08,
-          halation: 0.08
+        tri_x: {
+          grain: 25, gamma: 0.70, toe: 0.15, shoulder: 0.80, lift: 0.12,
+          feeling: "Gritty documentary, street photography, honest imperfection"
         },
         cinestill_800t: {
-          matrix: [[0.95, 0.08, -0.03], [0.03, 1.00, -0.03], [-0.02, 0.05, 1.12]],
-          grain: 0.35,
-          halation: 0.3
+          grain: 22, gamma: 0.68, toe: 0.14, shoulder: 0.85, lift: 0.10, halation: 0.8,
+          feeling: "Neon halation, urban night, nostalgic glow"
+        },
+        ektachrome_100: {
+          grain: 10, gamma: 0.72, toe: 0.06, shoulder: 0.94, lift: 0.04,
+          feeling: "Slide film transparency, rich blues, vintage travel"
         }
       }.freeze
 
-      # Enhancement operations
+      PRINTS = {
+        print_2383: { contrast: 1.1, saturation: 1.15, feeling: "Standard cinema projection" },
+        print_3510: { contrast: 1.05, saturation: 1.0, feeling: "Subtle archival look" },
+        vision_premiere: { contrast: 1.2, saturation: 1.1, feeling: "Modern theatrical release" }
+      }.freeze
+
+      LENSES = {
+        zeiss_planar: {
+          micro_contrast: 0.4, flare: 0.1, vignette: 0.15,
+          feeling: "Clinical sharpness with organic falloff"
+        },
+        helios_44: {
+          swirl_bokeh: 0.6, chromatic_aberration: 0.08, softness: 0.2,
+          feeling: "Soviet swirl, dreamy portraits, psychedelic edges"
+        },
+        leica_summilux: {
+          glow: 0.3, micro_contrast: 0.5, vignette: 0.08,
+          feeling: "Romantic highlight bloom, legendary rendering"
+        },
+        cooke_panchro: {
+          warmth: 0.15, softness: 0.1, skin_tone: 0.9,
+          feeling: "Hollywood golden age, flattering skin, cinematic warmth"
+        },
+        anamorphic_kowa: {
+          flare: 0.7, oval_bokeh: true, squeeze: 2.0,
+          feeling: "Widescreen epic, horizontal streaks, theatrical scope"
+        }
+      }.freeze
+
+      PRESETS = {
+        portrait: {
+          stock: :kodak_portra, print: :print_2383, lens: :zeiss_planar,
+          halation: 0.3, grain: 0.4, tint: [255, 250, 245],
+          feeling: "Intimacy, warmth, human connection"
+        },
+        blockbuster: {
+          stock: :kodak_vision3_500t, print: :vision_premiere, lens: :anamorphic_kowa,
+          halation: 0.7, grain: 0.5, teal_orange: 1.1,
+          feeling: "Awe, spectacle, larger than life"
+        },
+        street: {
+          stock: :tri_x, print: :print_3510, lens: :helios_44,
+          grain: 0.9, desaturate: 0.8,
+          feeling: "Immediacy, tension, documentary truth"
+        },
+        dream: {
+          stock: :ektachrome_100, print: :print_2383, lens: :leica_summilux,
+          halation: 0.5, grain: 0.3, shadow_lift: 0.25,
+          feeling: "Memory, reverie, subjective inner world"
+        },
+        neon_night: {
+          stock: :cinestill_800t, print: :vision_premiere, lens: :cooke_panchro,
+          halation: 0.9, grain: 0.6,
+          feeling: "Urban nocturne, neon glow, nostalgic future"
+        },
+        horror: {
+          stock: :tri_x, print: :print_3510, lens: :helios_44,
+          grain: 1.0, desaturate: 0.9, green_push: 0.15, contrast: 1.3,
+          feeling: "Dread, unease, unsettling atmosphere"
+        },
+        golden_age: {
+          stock: :kodak_vision3_50d, print: :print_2383, lens: :cooke_panchro,
+          halation: 0.4, grain: 0.3, warmth: 0.2,
+          feeling: "Classic Hollywood glamour, timeless elegance"
+        },
+        indie: {
+          stock: :kodak_portra, print: :print_3510, lens: :helios_44,
+          grain: 0.7, shadow_lift: 0.15,
+          feeling: "Authentic, unpolished, genuine humanity"
+        }
+      }.freeze
+
+      EFFECTS = %i[
+        grain halation vignette chromatic_aberration lens_flare
+        light_leak dust_scratches gate_weave color_bleed
+        teal_orange bleach_bypass cross_process day_for_night
+        infrared sepia cyanotype shadow_lift highlight_roll
+      ].freeze
+
+      # Replicate-backed enhancement operations
       OPERATIONS = {
-        upscale: {
-          name: "Upscale 4x",
-          models: ["nightmareai/real-esrgan", "lucataco/clarity-upscaler"]
-        },
-        face_restore: {
-          name: "Face Restoration",
-          models: ["tencentarc/gfpgan", "sczhou/codeformer"]
-        },
-        denoise: {
-          name: "Denoise",
-          description: "Remove noise from images"
-        },
-        color_grade: {
-          name: "Color Grading",
-          description: "Apply color grading presets"
-        },
-        sharpen: {
-          name: "Sharpen",
-          description: "Enhance image sharpness"
-        }
+        upscale: { name: "Upscale 4x", models: ["nightmareai/real-esrgan", "lucataco/clarity-upscaler"] },
+        face_restore: { name: "Face Restoration", models: ["tencentarc/gfpgan", "sczhou/codeformer"] }
       }.freeze
 
-      # Apply enhancement to image
+      # --- Main entry points ---
+
+      def apply_preset(path, preset: :portrait)
+        return Result.err("File not found") unless File.exist?(path)
+        return Result.err("ruby-vips not available") unless vips_available?
+
+        config = PRESETS[preset.to_sym]
+        return Result.err("Unknown preset: #{preset}") unless config
+
+        image = load_image(path)
+        return Result.err("Failed to load image") unless image
+
+        image = apply_stock(image, config[:stock]) if config[:stock]
+        image = apply_halation(image, config[:halation]) if config[:halation]
+        image = apply_grain(image, config[:grain], config[:stock]) if config[:grain]
+        image = apply_teal_orange(image, config[:teal_orange]) if config[:teal_orange]
+        image = apply_shadow_lift(image, config[:shadow_lift]) if config[:shadow_lift]
+        image = apply_desaturate(image, config[:desaturate]) if config[:desaturate]
+        image = apply_tint(image, config[:tint]) if config[:tint]
+        image = apply_lens(image, config[:lens]) if config[:lens]
+
+        output_path = generate_output_path(path, preset)
+        save_image(image, output_path)
+        Result.ok(output_path)
+      rescue StandardError => e
+        Result.err("Preset failed: #{e.message}")
+      end
+
+      def apply_random(path, count: 3)
+        return Result.err("File not found") unless File.exist?(path)
+        return Result.err("ruby-vips not available") unless vips_available?
+
+        image = load_image(path)
+        return Result.err("Failed to load image") unless image
+
+        effects = EFFECTS.sample(count)
+        effects.each do |effect|
+          intensity = rand(0.3..0.8)
+          image = apply_effect(image, effect, intensity)
+        end
+
+        output_path = generate_output_path(path, :random)
+        save_image(image, output_path)
+        Result.ok({ path: output_path, effects: effects })
+      rescue StandardError => e
+        Result.err("Random effects failed: #{e.message}")
+      end
+
+      def css_filter(preset: :portrait)
+        config = PRESETS[preset.to_sym] || PRESETS[:portrait]
+        stock = STOCKS[config[:stock]] || {}
+
+        filters = []
+        filters << "contrast(#{1 + (stock[:gamma] || 0.65) * 0.2})"
+        filters << "saturate(#{config[:teal_orange] || 1.0})"
+        filters << "sepia(#{config[:warmth] || 0})" if config[:warmth]
+        filters << "grayscale(#{config[:desaturate] || 0})" if config[:desaturate]
+        filters.join(" ")
+      end
+
+      def list_presets
+        PRESETS.map { |name, config| "  #{name}: #{config[:feeling]}" }.join("\n")
+      end
+
+      def list_stocks
+        STOCKS.map { |name, config| "  #{name}: #{config[:feeling]}" }.join("\n")
+      end
+
+      def list_lenses
+        LENSES.map { |name, config| "  #{name}: #{config[:feeling]}" }.join("\n")
+      end
+
+      def describe_preset(name)
+        config = PRESETS[name.to_sym]
+        return "Unknown preset: #{name}" unless config
+
+        stock = STOCKS[config[:stock]]
+        lens = LENSES[config[:lens]]
+
+        lines = ["Preset: #{name}"]
+        lines << "Feeling: #{config[:feeling]}"
+        lines << "Stock: #{config[:stock]} (#{stock[:feeling]})" if stock
+        lines << "Lens: #{config[:lens]} (#{lens[:feeling]})" if lens
+        lines << "Halation: #{config[:halation]}" if config[:halation]
+        lines << "Grain: #{config[:grain]}" if config[:grain]
+        lines.join("\n")
+      end
+
+      # --- Replicate-backed operations ---
+
       def enhance(image_url:, operation:, params: {})
         return Result.err("Unknown operation: #{operation}") unless OPERATIONS.key?(operation.to_sym)
 
         op = OPERATIONS[operation.to_sym]
+        return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
 
-        if op[:models]
-          # Use Replicate model
-          model = op[:models].first
-          return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-
-          Replicate.generate(
-            prompt: "",
-            model: model,
-            params: { image: image_url }.merge(params)
-          )
-        else
-          # Local processing (placeholder)
-          Result.err("Local processing not yet implemented for #{operation}")
-        end
+        Replicate.generate(prompt: "", model: op[:models].first, params: { image: image_url }.merge(params))
       end
 
-      # Batch enhance multiple images
-      def batch_enhance(image_urls:, operation:, params: {})
-        results = []
-
-        image_urls.each do |url|
-          result = enhance(image_url: url, operation: operation, params: params)
-          results << { url: url, result: result }
-        end
-
-        Result.ok(results)
-      end
-
-      # List available operations
-      def operations
-        OPERATIONS.map do |key, op|
-          {
-            id: key,
-            name: op[:name],
-            description: op[:description] || op[:name],
-            models: op[:models]
-          }
-        end
-      end
-
-      # Upscale shortcut
       def upscale(image_url:, scale: 4, model: nil)
         model_id = model || OPERATIONS[:upscale][:models].first
+        return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
 
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-
-        Replicate.generate(
-          prompt: "",
-          model: model_id,
-          params: { image: image_url, scale: scale }
-        )
+        Replicate.generate(prompt: "", model: model_id, params: { image: image_url, scale: scale })
       end
 
-      # Face restoration shortcut
       def restore_face(image_url:, model: nil)
         model_id = model || OPERATIONS[:face_restore][:models].first
+        return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
 
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-
-        Replicate.generate(
-          prompt: "",
-          model: model_id,
-          params: { image: image_url }
-        )
+        Replicate.generate(prompt: "", model: model_id, params: { image: image_url })
       end
 
-      # Check if ruby-vips is available
+      def operations
+        OPERATIONS.map { |key, op| { id: key, name: op[:name], models: op[:models] } }
+      end
+
+      # --- Private vips effects ---
+
       def vips_available?
         @vips_available ||= begin
-          require 'vips'
+          require "vips"
           true
         rescue LoadError
           false
         end
       end
 
-      # Film grain synthesis using Vips
-      def add_grain(image_path:, intensity: 0.2, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
+      private
 
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
+      def load_image(path)
+        require "vips"
+        Vips::Image.new_from_file(path, access: :sequential)
+      rescue StandardError
+        nil
+      end
 
-          # Generate gaussian noise
-          noise = Vips::Image.gaussnoise(img.width, img.height, mean: 128, sigma: intensity * 50)
+      def save_image(image, path)
+        image.write_to_file(path, Q: 95)
+        path
+      rescue StandardError
+        nil
+      end
 
-          # Composite with soft-light blend
-          result = img.composite([noise], :soft_light)
+      def generate_output_path(input_path, preset)
+        dir = File.dirname(input_path)
+        ext = File.extname(input_path)
+        base = File.basename(input_path, ext)
+        timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+        File.join(dir, "#{base}_#{preset}_#{timestamp}#{ext}")
+      end
 
-          out = output_path || image_path.sub(/(\.\w+)$/, '_grain\1')
-          result.write_to_file(out)
+      def apply_stock(image, stock_name)
+        stock = STOCKS[stock_name]
+        return image unless stock
 
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Grain synthesis failed: #{e.message}")
+        gamma = stock[:gamma] || 0.65
+        image = image.gamma(gamma: 1.0 / gamma)
+
+        lift = stock[:lift] || 0.0
+        image = image.linear([1.0], [lift * 255]) if lift > 0
+
+        image
+      rescue StandardError
+        image
+      end
+
+      def apply_halation(image, intensity)
+        return image unless intensity > 0
+
+        luminance = image.colourspace("grey16")
+        bright_mask = luminance.more(220)
+
+        glow1 = bright_mask.gaussblur(15) * 0.5
+        glow2 = bright_mask.gaussblur(35) * 0.3
+        glow3 = bright_mask.gaussblur(70) * 0.2
+        glow = glow1 + glow2 + glow3
+
+        warm_glow = glow.bandjoin([glow * 0.35, glow * 0.15])
+        image.composite2(warm_glow * intensity * 255, "screen")
+      rescue StandardError
+        image
+      end
+
+      def apply_grain(image, intensity, stock_name = :kodak_portra)
+        return image unless intensity > 0
+
+        stock = STOCKS[stock_name] || STOCKS[:kodak_portra]
+        grain_size = stock[:grain] || 15
+
+        noise = Vips::Image.gaussnoise(image.width, image.height, sigma: grain_size * intensity * 10)
+        noise = noise.gaussblur(1.2)
+        noise_rgb = noise.bandjoin([noise, noise])
+        image.composite2(noise_rgb.cast("uchar"), "soft-light", opacity: intensity * 0.5)
+      rescue StandardError
+        image
+      end
+
+      def apply_teal_orange(image, intensity)
+        return image unless intensity > 0
+
+        r, g, b = image.bandsplit
+        r = r.linear([1 + 0.2 * intensity], [5 * intensity])
+        b = b.linear([1 + 0.25 * intensity], [0])
+        Vips::Image.bandjoin([r, g, b])
+      rescue StandardError
+        image
+      end
+
+      def apply_shadow_lift(image, amount)
+        return image unless amount > 0
+
+        luminance = image.colourspace("grey16").cast("float") / 255.0
+        shadow_mask = (1.0 - luminance).pow(2.0)
+        lift_amount = shadow_mask * amount * 255
+        lift_rgb = lift_amount.bandjoin([lift_amount, lift_amount])
+        image + lift_rgb
+      rescue StandardError
+        image
+      end
+
+      def apply_desaturate(image, amount)
+        return image unless amount > 0
+
+        gray = image.colourspace("grey16").colourspace("srgb")
+        image * (1.0 - amount) + gray * amount
+      rescue StandardError
+        image
+      end
+
+      def apply_tint(image, tint_color)
+        return image unless tint_color.is_a?(Array)
+
+        tint_layer = Vips::Image.black(image.width, image.height, bands: 3) + tint_color
+        image * 0.95 + tint_layer * 0.05
+      rescue StandardError
+        image
+      end
+
+      def apply_lens(image, lens_name)
+        lens = LENSES[lens_name]
+        return image unless lens
+
+        image = apply_vignette_effect(image, lens[:vignette]) if lens[:vignette]&.positive?
+
+        if lens[:glow]&.positive?
+          glow = image.gaussblur(20) * lens[:glow]
+          image = image + glow
         end
+
+        image
+      rescue StandardError
+        image
       end
 
-      # Halation (highlight bloom)
-      def add_halation(image_path:, intensity: 0.15, tint: [255, 200, 180], output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
+      def apply_vignette_effect(image, intensity)
+        cx = image.width / 2.0
+        cy = image.height / 2.0
+        max_dist = Math.sqrt(cx * cx + cy * cy)
 
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
-
-          # Extract highlights
-          gray = img.colourspace(:b_w)
-          highlights = gray > (255 * 0.7)
-
-          # Blur highlights
-          bloom = highlights.gaussblur(15)
-
-          # Tint the bloom
-          tinted = bloom.bandjoin([bloom, bloom])
-          tinted = tinted.linear([tint[0]/255.0, tint[1]/255.0, tint[2]/255.0], [0, 0, 0])
-
-          # Composite
-          result = img + (tinted * intensity)
-
-          out = output_path || image_path.sub(/(\.\w+)$/, '_halation\1')
-          result.write_to_file(out)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Halation failed: #{e.message}")
-        end
+        x = Vips::Image.xyz(image.width, image.height)
+        dist = ((x[0] - cx).pow(2) + (x[1] - cy).pow(2)).pow(0.5)
+        vignette = 1.0 - (dist / max_dist * intensity).min(1.0)
+        vignette_rgb = vignette.bandjoin([vignette, vignette])
+        image * vignette_rgb
+      rescue StandardError
+        image
       end
 
-      # Color grading with film stock presets
-      def color_grade(image_path:, preset: :kodak_portra_400, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-        return Result.err("Unknown preset: #{preset}") unless FILM_STOCKS.key?(preset)
-
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
-          stock = FILM_STOCKS[preset]
-
-          # Apply 3x3 recomb matrix
-          result = img.recomb(stock[:matrix])
-
-          out = output_path || image_path.sub(/(\.\w+)$/, "_#{preset}\\1")
-          result.write_to_file(out)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Color grading failed: #{e.message}")
-        end
-      end
-
-      # Chromatic aberration
-      def add_chromatic_aberration(image_path:, offset: 2, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
-
-          # Split channels
-          bands = img.bandsplit
-          r, g, b = bands[0], bands[1], bands[2]
-
-          # Shift red and blue channels
-          r_shifted = r.affine([1, 0, 0, 1], oarea: [offset, 0, r.width, r.height])
-          b_shifted = b.affine([1, 0, 0, 1], oarea: [-offset, 0, b.width, b.height])
-
-          # Recombine
-          result = r_shifted.bandjoin([g, b_shifted])
-
-          out = output_path || image_path.sub(/(\.\w+)$/, '_chromatic\1')
-          result.write_to_file(out)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Chromatic aberration failed: #{e.message}")
-        end
-      end
-
-      # Vignette effect
-      def add_vignette(image_path:, intensity: 0.5, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
-
-          # Create radial gradient
-          w, h = img.width, img.height
-          cx, cy = w / 2.0, h / 2.0
-          max_r = Math.sqrt(cx * cx + cy * cy)
-
-          # Generate XY coordinate images
-          index = Vips::Image.xyz(w, h)
-          x = index[0] - cx
-          y = index[1] - cy
-          r = (x * x + y * y).pow(0.5)
-
-          # Create vignette mask
-          mask = 1 - ((r / max_r) * intensity).clip(0, 1)
-
-          # Apply
-          result = img * mask
-
-          out = output_path || image_path.sub(/(\.\w+)$/, '_vignette\1')
-          result.write_to_file(out)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Vignette failed: #{e.message}")
-        end
-      end
-
-      # Light leaks
-      def add_light_leaks(image_path:, intensity: 0.3, color: [255, 180, 120], output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-
-        begin
-          require 'vips'
-          img = Vips::Image.new_from_file(image_path)
-
-          # Create gradient overlay
-          w, h = img.width, img.height
-          gradient = Vips::Image.xyz(w, h)[0] / w.to_f
-
-          # Tint the gradient
-          leak = Vips::Image.black(w, h).bandjoin([Vips::Image.black(w, h), Vips::Image.black(w, h)])
-          leak = leak + gradient.bandjoin([gradient, gradient]) * [color[0], color[1], color[2]]
-
-          # Screen blend (approximation: A + B - A*B)
-          result = img + (leak * intensity)
-
-          out = output_path || image_path.sub(/(\.\w+)$/, '_lightleak\1')
-          result.write_to_file(out)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Light leak failed: #{e.message}")
-        end
-      end
-
-      # Full film stock pipeline
-      def apply_film_stock(image_path:, preset: :kodak_portra_400, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-        return Result.err("Unknown preset: #{preset}") unless FILM_STOCKS.key?(preset)
-
-        begin
-          stock = FILM_STOCKS[preset]
-          temp_dir = "/tmp/postpro_#{Time.now.to_i}_#{Process.pid}"
-          Dir.mkdir(temp_dir) unless Dir.exist?(temp_dir)
-
-          # Step 1: Color grade
-          step1 = File.join(temp_dir, "step1.jpg")
-          color_grade(image_path: image_path, preset: preset, output_path: step1)
-
-          # Step 2: Grain
-          step2 = File.join(temp_dir, "step2.jpg")
-          add_grain(image_path: step1, intensity: stock[:grain], output_path: step2)
-
-          # Step 3: Halation
-          step3 = File.join(temp_dir, "step3.jpg")
-          add_halation(image_path: step2, intensity: stock[:halation], output_path: step3)
-
-          # Step 4: Vignette
-          final = output_path || image_path.sub(/(\.\w+)$/, "_film_#{preset}\\1")
-          add_vignette(image_path: step3, intensity: 0.3, output_path: final)
-
-          # Cleanup
-          FileUtils.rm_rf(temp_dir)
-
-          Result.ok(final)
-        rescue StandardError => e
-          Result.err("Film stock pipeline failed: #{e.message}")
-        end
-      end
-
-      # Check if ffmpeg is available
-      def ffmpeg_available?
-        @ffmpeg_available ||= system("which ffmpeg > /dev/null 2>&1")
-      end
-
-      # Video frame processing via ffmpeg
-      def process_video_frames(video_path:, processor:, output_path: nil)
-        return Result.err("ruby-vips not available.") unless vips_available?
-        return Result.err("ffmpeg not available.") unless ffmpeg_available?
-
-        begin
-          temp_dir = "/tmp/video_frames_#{Time.now.to_i}_#{Process.pid}"
-          Dir.mkdir(temp_dir)
-
-          # Extract frames
-          system("ffmpeg", "-i", video_path, "#{temp_dir}/frame_%04d.png", err: File::NULL)
-
-          # Process each frame
-          Dir.glob("#{temp_dir}/frame_*.png").sort.each do |frame|
-            processor.call(frame, frame)
-          end
-
-          # Reassemble
-          out = output_path || video_path.sub(/(\.\w+)$/, '_processed\1')
-          system("ffmpeg", "-framerate", "30", "-i", "#{temp_dir}/frame_%04d.png",
-                 "-c:v", "libx264", "-pix_fmt", "yuv420p", out, err: File::NULL)
-
-          # Cleanup
-          FileUtils.rm_rf(temp_dir)
-
-          Result.ok(out)
-        rescue StandardError => e
-          Result.err("Video processing failed: #{e.message}")
+      def apply_effect(image, effect, intensity)
+        case effect
+        when :grain then apply_grain(image, intensity)
+        when :halation then apply_halation(image, intensity)
+        when :vignette then apply_vignette_effect(image, intensity)
+        when :teal_orange then apply_teal_orange(image, intensity)
+        when :shadow_lift then apply_shadow_lift(image, intensity)
+        when :desaturate then apply_desaturate(image, intensity)
+        else image
         end
       end
     end

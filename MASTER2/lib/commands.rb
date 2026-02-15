@@ -53,45 +53,54 @@ module MASTER
 
     # PostPro command handler
     def postpro_command(cmd, args)
-      require_relative "postpro_bridge"
-
       case cmd
       when "postpro"
         if args.nil? || args.empty?
-          puts "PostPro Operations:"
-          PostProBridge.operations.each do |op|
-            puts "  #{op[:id]} - #{op[:name]}"
-          end
+          puts "Operations:"
+          PostproBridge.operations.each { |op| puts "  #{op[:id]} - #{op[:name]}" }
+          puts "\nPresets:"
+          puts PostproBridge.list_presets
+          puts "\nStocks:"
+          puts PostproBridge.list_stocks
+          puts "\nLenses:"
+          puts PostproBridge.list_lenses
           return
         end
-        # Parse: postpro <operation> <image_url>
         parts = args.split(/\s+/, 2)
         operation = parts[0]
-        image_url = parts[1]
-        return puts "Usage: postpro <operation> <image_url>" if image_url.nil?
+        target = parts[1]
 
-        puts "🔧 Enhancing with #{operation}..."
-        result = PostProBridge.enhance(image_url: image_url, operation: operation)
-        if result.ok?
-          puts "✓ Enhanced: #{result.value[:urls]&.first || 'Success'}"
+        # Check if it's a preset name
+        if PostproBridge::PRESETS.key?(operation.to_sym) && target
+          result = PostproBridge.apply_preset(target, preset: operation.to_sym)
+          if result.ok?
+            puts "+ #{operation}: #{result.value}"
+          else
+            $stderr.puts "- #{result.error}"
+          end
+        elsif target
+          result = PostproBridge.enhance(image_url: target, operation: operation)
+          if result.ok?
+            puts "+ #{operation}: #{result.value[:urls]&.first || result.value}"
+          else
+            $stderr.puts "- #{result.error}"
+          end
         else
-          puts "✗ Error: #{result.error}"
+          puts "Usage: postpro <operation|preset> <path|url>"
         end
       when "enhance", "upscale"
         return puts "Usage: #{cmd} <image_url>" if args.nil? || args.empty?
-        puts "🔧 #{cmd.capitalize}ing image..."
         result = cmd == "upscale" ?
-          PostProBridge.upscale(image_url: args) :
-          PostProBridge.enhance(image_url: args, operation: :upscale)
+          PostproBridge.upscale(image_url: args) :
+          PostproBridge.enhance(image_url: args, operation: :upscale)
         if result.ok?
-          puts "✓ Done: #{result.value[:urls]&.first || 'Success'}"
+          puts "+ #{result.value[:urls]&.first || result.value}"
         else
-          puts "✗ Error: #{result.error}"
+          $stderr.puts "- #{result.error}"
         end
       end
     rescue StandardError => e
-      $stderr.puts "PostPro error: #{e.message}"
-      puts "✗ Failed: #{e.message}"
+      $stderr.puts "postpro: #{e.message}"
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
