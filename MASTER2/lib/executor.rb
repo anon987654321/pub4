@@ -177,7 +177,8 @@ module MASTER
           steps: 0,
           mode: :direct,
           pattern: :direct,
-          cost: result.value[:cost]
+          cost: result.value[:cost],
+          streamed: result.value[:streamed]
         )
       else
         result
