@@ -61,10 +61,7 @@ module MASTER
         end
 
         if large_files.any?
-          puts UI.yellow("\n⚠️  Sprawl detected (#{large_files.size} files > 500 lines):")
-          large_files.first(5).each do |f|
-            puts "  #{File.basename(f[:file])}: #{f[:lines]} lines"
-          end
+          UI.warn("sprawl: #{large_files.size} files >500 lines")
         end
 
         large_files
@@ -76,10 +73,9 @@ module MASTER
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
 
         if status.empty?
-          puts UI.green("\n✓ Git: Clean working tree")
+          UI.success("git clean")
         else
-          puts UI.yellow("\n⚠️  Git: Uncommitted changes:")
-          puts status.lines.first(5).map { |l| "  #{l}" }
+          UI.warn("git: #{status.lines.size} uncommitted")
         end
 
         status
@@ -95,17 +91,7 @@ module MASTER
       end
 
       def warn_if_issues(results)
-        warnings = []
-
-        warnings << "Large files detected" if results[:sprawl]&.any?
-        warnings << "Uncommitted changes" if results[:git_status] && !results[:git_status].empty?
-
-        if warnings.any?
-          puts UI.yellow("\n⚠️  Issues: #{warnings.join(', ')}")
-          puts UI.dim("Consider addressing these before proceeding.\n")
-        else
-          puts UI.green("\n✓ All clear\n")
-        end
+        # Individual checks already printed. Nothing extra needed.
       end
     end
   end

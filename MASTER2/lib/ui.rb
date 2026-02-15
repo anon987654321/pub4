@@ -14,21 +14,21 @@ module MASTER
     # --- Typography Icons (minimal vocabulary per Strunk & White) ---
     # --- Typography Icons (Starship-inspired, Nerd Font compatible) ---
     ICONS = {
-      success: "✓",
-      failure: "✗",
-      warning: "⚠",
-      bullet: "·",
-      arrow: "→",
-      thinking: "◐",
-      done: "●",
-      prompt_ok: "❯",
-      prompt_err: "❯",
+      success: "+",
+      failure: "-",
+      warning: "!",
+      bullet: "*",
+      arrow: "->",
+      thinking: ".",
+      done: "*",
+      prompt_ok: ">",
+      prompt_err: ">",
       branch: "",
-      lock: "󰌾",
-      separator: "│",
-      ellipsis: "…",
-      lightning: "⚡",
-      gear: "⚙",
+      lock: "#",
+      separator: "|",
+      ellipsis: "...",
+      lightning: "!",
+      gear: "*",
     }.freeze
 
     # --- TTY Component Lazy Loaders ---
@@ -285,19 +285,19 @@ module MASTER
     # --- High-level Convenience Methods ---
 
     def success(msg)
-      puts pastel.green("✓ #{msg}")
+      puts pastel.green("+ #{msg}")
     end
 
     def error(msg)
-      puts pastel.red("✗ #{msg}")
+      $stderr.puts pastel.red("- #{msg}")
     end
 
     def warn(msg)
-      puts pastel.yellow("⚠ #{msg}")
+      $stderr.puts pastel.yellow("! #{msg}")
     end
 
     def info(msg)
-      puts pastel.cyan("ℹ #{msg}")
+      puts pastel.dim("  #{msg}")
     end
 
     def dim(msg)

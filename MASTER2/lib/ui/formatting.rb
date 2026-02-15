@@ -75,14 +75,13 @@ module MASTER
     def colorize(text)
       return text unless color_enabled?
       text
-        .gsub(/^(MASTER .+)$/) { pastel.bold.magenta($1) }
-        .gsub(/^(\w+) at (\w+):(.*)/) { "#{pastel.blue($1)} #{pastel.bright_black('at')} #{pastel.cyan($2)}:#{pastel.white($3)}" }
+        .gsub(/^(MASTER .+)$/) { pastel.bold($1) }
+        .gsub(/^(\w+) at (\w+):(.*)/) { "#{pastel.blue($1)} at #{pastel.cyan($2)}:#{$3}" }
         .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta($1)} #{$2}" }
         .gsub(/(\$[\d.]+)/) { pastel.bright_cyan($1) }
         .gsub(/(armed|ok)\b/) { pastel.green($1) }
         .gsub(/(unavailable|error|FAIL)\b/) { pastel.red($1) }
         .gsub(/(\d+ms)$/) { pastel.bright_black($1) }
-        .gsub(/│/) { pastel.bright_black('│') }
     end
   end
 end

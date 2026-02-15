@@ -26,8 +26,8 @@ module MASTER
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
           # Show progress
-          UI.dim("  💭 #{@step}: #{parsed[:thought][0..80]}...")
-          UI.dim("  🔧 #{parsed[:action][0..60]}")
+          UI.dim("  #{@step}: #{parsed[:thought][0..80]}")
+          UI.dim("  > #{parsed[:action][0..60]}")
 
           # Check for completion
           if parsed[:action] =~ COMPLETION_PATTERN
@@ -44,7 +44,7 @@ module MASTER
           observation = execute_tool(parsed[:action])
           @history.last[:observation] = observation
 
-          UI.dim("  📊 #{observation[0..100]}...")
+          UI.dim("  = #{observation[0..100]}")
         end
 
         Result.err("Max steps (#{@max_steps}) reached without completion")

@@ -10,7 +10,7 @@ module MASTER
 
         while attempt < max_attempts
           attempt += 1
-          UI.dim("  🔄 Attempt #{attempt}/#{max_attempts}")
+          UI.dim("  attempt #{attempt}/#{max_attempts}")
 
           # Build augmented goal from original + all lessons so far
           augmented_goal = if @reflections.any?
@@ -28,7 +28,7 @@ module MASTER
           @reflections << reflection
 
           if reflection[:success]
-            UI.dim("  ✓ Reflection: Success")
+            UI.dim("  ok")
             return Result.ok(
               answer: result.ok? ? result.value[:answer] : reflection[:improved_answer],
               steps: @step,
@@ -39,7 +39,7 @@ module MASTER
             )
           end
 
-          UI.dim("  ⚠ Reflection: #{reflection[:critique][0..60]}...")
+          UI.dim("  #{reflection[:critique][0..60]}")
 
           @history = [] # Reset for fresh attempt
           @step = 0

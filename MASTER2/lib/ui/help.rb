@@ -65,14 +65,11 @@ module MASTER
 
       def show_all
         puts
-        GROUPS.each do |group, label|
-          cmds = COMMANDS.select { |_, v| v[:group] == group }
-          puts "  #{label}"
-          cmds.each do |cmd, info|
-            puts "    #{cmd.to_s.ljust(12)} #{info[:desc]}"
-          end
-          puts
+        max = COMMANDS.keys.map { |k| k.to_s.length }.max
+        COMMANDS.each do |cmd, info|
+          puts "  #{cmd.to_s.ljust(max)}  #{info[:desc]}"
         end
+        puts
       end
 
       def show_tips

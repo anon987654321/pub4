@@ -181,18 +181,15 @@ module MASTER
 
       def format_meta(value)
         parts = []
-        parts << "#{value[:tokens_in]}→#{value[:tokens_out]}tok" if value[:tokens_in]
+        parts << "#{value[:tokens_in]}+#{value[:tokens_out]}tok" if value[:tokens_in]
         parts << UI.currency_precise(value[:cost]) if value[:cost]
-        parts << value[:model]&.split("/")&.last if value[:model]
-        parts.join(" · ")
+        parts.join(" ")
       end
 
       def show_exit_summary(session)
         cost = session.total_cost
         msgs = session.message_count
-        puts
-        puts UI.dim("  #{msgs} messages · #{UI.currency(cost)} · session #{UI.truncate_id(session.id)}")
-        puts
+        puts UI.dim("#{msgs}msg #{UI.currency(cost)}")
       end
 
       def pipe

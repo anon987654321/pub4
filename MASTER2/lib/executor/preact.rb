@@ -4,30 +4,28 @@ module MASTER
   class Executor
     module PreAct
       def execute_pre_act(goal, tier:)
-        # Phase 1: Generate plan
-        UI.dim("  📋 Planning...")
+        UI.dim("  planning...")
         plan_result = generate_plan(goal, tier: tier)
         return plan_result unless plan_result.ok?
 
         @plan = plan_result.value[:steps]
-        UI.dim("  📋 Plan: #{@plan.size} steps")
+        UI.dim("  #{@plan.size} steps")
 
         # Phase 2: Execute plan step by step
         results = []
         @plan.each_with_index do |planned_step, idx|
           @step = idx + 1
-          UI.dim("  ▸ Step #{@step}/#{@plan.size}: #{planned_step[0..60]}...")
+          UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
 
           # Execute the planned action
           observation = execute_tool(planned_step)
           results << { step: @step, action: planned_step, observation: observation }
           record_history(results.last)
 
-          UI.dim("  📊 #{observation[0..80]}...")
+          UI.dim("  = #{observation[0..80]}")
 
-          # Check if we need to replan (unexpected result)
           if observation.include?("error") || observation.include?("not found")
-            UI.dim("  ⚠ Replanning due to unexpected result...")
+            UI.dim("  replanning...")
             replan_result = replan(goal, results, tier: tier)
             if replan_result.ok? && replan_result.value[:steps].any?
               @plan = @plan[0..idx] + replan_result.value[:steps]

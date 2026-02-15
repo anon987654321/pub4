@@ -24,50 +24,39 @@ module MASTER
         LLM.current_model = LLM.extract_model_name(initial_model) if initial_model
       end
 
-      # Add prescan before starting work
+      # Prescan
       if ENV['MASTER_PRESCAN'] != 'false'
         Prescan.run(MASTER.root) if defined?(Prescan)
       end
 
-      # Check for API key
       unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("OPENROUTER_API_KEY not set. Run: source ~/.zshrc")
+        UI.warn("OPENROUTER_API_KEY not set")
       end
 
-      puts "Session: #{UI.truncate_id(session.id)}"
-      puts "Type 'help' for commands, Ctrl+C twice to quit"
-      puts
-
-      # Initialize workflow if not present
+      # Initialize workflow
+      phase = nil
       if defined?(WorkflowEngine)
         workflow_result = WorkflowEngine.start_workflow(session)
-        if workflow_result.ok?
-          phase = WorkflowEngine.current_phase(session)
-          phase_info = Questions.for_phase(phase) if defined?(Questions)
-
-          puts UI.bold("Phase: #{phase.to_s.upcase}")
-          puts UI.dim("  Purpose: #{phase_info[:purpose]}") if phase_info
-          puts
-        end
+        phase = WorkflowEngine.current_phase(session) if workflow_result.ok?
       end
+
+      puts "session #{UI.truncate_id(session.id)}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
       loop do
-        # Budget-aware ❯ prompt — green >$5, yellow >$1, red <$1
         budget = LLM.budget_remaining rescue 10.0
         prompt_color = if budget > 5.0 then :green
                        elsif budget > 1.0 then :yellow
                        else :red
                        end
-        prompt_char = UI.pastel.bold.send(prompt_color, "❯")
         model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
-        model_tag = UI.pastel.bright_black(model_name)
-        prompt_str = if defined?(WorkflowEngine) && session.metadata[:workflow]
-                       phase = WorkflowEngine.current_phase(session)
-                       "#{UI.pastel.cyan(phase.to_s)} #{model_tag} #{prompt_char} "
+        budget_str = UI.pastel.send(prompt_color, "$#{format('%.2f', budget)}")
+
+        prompt_str = if phase
+                       "#{phase} #{model_name} #{budget_str}> "
                      else
-                       "#{model_tag} #{prompt_char} "
+                       "#{model_name} #{budget_str}> "
                      end
 
         begin
@@ -81,13 +70,11 @@ module MASTER
         rescue Interrupt
           now = Time.now
           if last_interrupt && (now - last_interrupt) < 1.0
-            # Double Ctrl+C within 1 second - exit
-            puts "\nExiting..."
+            puts
             session.save
             break
           else
-            # First Ctrl+C - warn user
-            puts "\nPress Ctrl+C again to exit"
+            puts " (again to quit)"
             last_interrupt = now
             next
           end
@@ -132,7 +119,6 @@ module MASTER
               end
               session.add_assistant(output, cost: cmd_result.value[:cost]) if output
             else
-              puts
               UI.error(cmd_result.failure)
             end
           elsif cmd_result.respond_to?(:err?) && cmd_result.err?
@@ -160,7 +146,6 @@ module MASTER
             cost: result.value[:cost],
           ) if output
         else
-          puts
           UI.error(result.failure)
         end
 
