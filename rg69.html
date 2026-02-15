@@ -299,7 +299,8 @@ let bpm=120,swing=0,rootNote=0,playing=false,recording=false,step=0,currentBank=
 let drumVol=80,bassVol=70,keysVol=60,padsVol=50,masterVol=75;
 let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
 let kickLag=0,snareRush=0,hatDrift=0,glide=0; // Micro-timing humanization
-let crackle=0,flutter=0,tapeDrive=0,lofiMix=0,reverbAmt=30,driveAmt=0,crushAmt=0,vinylAmt=0; // Lo-fi & FX
+let crackle=0,flutter=0,tapeDrive=0,lofiMix=0,driveAmt=0,crushAmt=0,vinylAmt=0; // Lo-fi & FX
+let reverbAmt=30; // Reverb amount (declare separately to avoid undefined reference)
 let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>SP[b][t]=Array(16).fill(0).map(()=>({on:0}))));
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
@@ -316,7 +317,7 @@ const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chor
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 
 // Init audio engine with analog summing and lo-fi character (KISS: Keep It Simple)
-const initAudio=()=>{
+const initAudio=async()=>{
   // Synths - Clear, self-explanatory names (POLA: Principle of Least Astonishment)
   // Kick: layered MembraneSynth (body) + NoiseSynth (click transient)
   kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}});
@@ -384,6 +385,7 @@ const initAudio=()=>{
   
   lofiFilter=new Tone.Filter(3500,'lowpass');
   lofiReverb=new Tone.Reverb(1.2);
+  await lofiReverb.generate();
   lofiReverb.wet.value=0.2;
   
   // Crackle noise (brown → 380Hz lowpass → gain 0.018)
@@ -402,7 +404,10 @@ const initAudio=()=>{
   // Flutter LFO (0.22Hz → pitch ±2.2 cents)
   flutterLFO=new Tone.LFO(0.22,-2.2,2.2);
   flutterLFO.start();
-  // Connect to Destination frequency for pitch modulation
+  // Create PitchShift for flutter effect
+  const flutterPitch=new Tone.PitchShift(0);
+  flutterPitch.wet.value=1;
+  flutterLFO.connect(flutterPitch.pitch);
   
   // VHS noise (white noise with LFO-modulated gain)
   vhsNoise=new Tone.Noise('white').start();
@@ -429,6 +434,7 @@ const initAudio=()=>{
   keysCrush.wet.value=0.15;
   
   masterReverb=new Tone.Reverb(2.5);
+  await masterReverb.generate();
   masterReverb.wet.value=reverbAmt/100;
   
   masterDrive=new Tone.Distortion(0.4);
@@ -445,6 +451,9 @@ const initAudio=()=>{
   keysN.disconnect();keysN.connect(keysG);
   padsFilter.disconnect();padsFilter.connect(padsG);
   
+  // Analog summing: all tracks merge into analogSum, then through master chain
+  analogSum=new Tone.Gain(1); // Summing node
+  
   // Wire additional FX into chains
   // Bass: gain → distortion → analogSum
   bassG.disconnect();
@@ -453,9 +462,6 @@ const initAudio=()=>{
   // Keys: gain → tremolo → bitcrusher → analogSum
   keysG.disconnect();
   keysG.chain(keysTrem,keysCrush,analogSum);
-  
-  // Analog summing: all tracks merge into analogSum, then through master chain
-  analogSum=new Tone.Gain(1); // Summing node
   drumG.connect(analogSum);
   // bassG and keysG connect through their FX chains (above)
   padsG.connect(analogSum);
@@ -467,7 +473,7 @@ const initAudio=()=>{
   
   // Main chain with lo-fi processing
   // feedbackDelay connects separately then merges at lofiFilter
-  analogSum.chain(vintageSat,phaserFX,lofiCompressor,tapeSat,lofiFilter);
+  analogSum.chain(vintageSat,phaserFX,lofiCompressor,tapeSat,flutterPitch,lofiFilter);
   delayLP.connect(lofiFilter);
   lofiFilter.chain(lofiReverb,masterReverb,masterDrive,masterCrush,masterG);
   
@@ -484,7 +490,7 @@ const initAudio=()=>{
 // FX randomizer - DRY principle with reusable helper functions
 const randomizeFX=()=>{
   // Clear existing FX (DRY: single cleanup function)
-  const clearFXArray=(arr)=>arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){}});
+  const clearFXArray=(arr)=>arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){log('FX cleanup: '+e.message);}});
   [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(clearFXArray);
   drumFX.length=bassFX.length=keysFX.length=padsFX.length=masterFX.length=0;
   
@@ -518,7 +524,7 @@ const randomizeFX=()=>{
           case'StereoWidener':eff=new Tone.StereoWidener(0.3+Math.random()*0.6);break;
         }
         if(eff){eff.wet.value=wet;fx.push(eff);}
-      }catch(e){} // Fail gracefully (POLA: no surprises)
+      }catch(e){log('FX create: '+e.message);} // Fail gracefully (POLA: no surprises)
     }
     return fx;
   };
@@ -532,8 +538,8 @@ const randomizeFX=()=>{
   
   // Chain FX helper (DRY: single chaining function)
   const chainFX=(g,fx,target)=>{
-    if(!fx.length)return;
     g.disconnect();
+    if(!fx.length){g.connect(target);return;}
     let last=g;
     fx.forEach(f=>{last.connect(f);last=f;});
     last.connect(target);
@@ -547,11 +553,15 @@ const randomizeFX=()=>{
   
   // Master FX on output (after summing/saturation)
   if(masterFX.length){
-    masterG.disconnect(limiter);
+    masterG.disconnect();
     let lastM=masterG;
     masterFX.forEach(f=>{lastM.connect(f);lastM=f;});
     lastM.connect(analyser);
     lastM.connect(limiter);
+  }else{
+    masterG.disconnect();
+    masterG.connect(analyser);
+    masterG.connect(limiter);
   }
   
   updateFXTags();
@@ -642,11 +652,11 @@ const attachEvents=()=>{
   document.getElementById('bassSel').onchange=e=>{curB=e.target.value;pushState();};
   document.getElementById('keysSel').onchange=e=>{curK=e.target.value;pushState();};
   document.getElementById('padsSel').onchange=e=>{curP=e.target.value;pushState();};
-  document.getElementById('drumVol').oninput=e=>{drumVol=+e.target.value;drumG.gain.value=drumVol/100;};
-  document.getElementById('bassVol').oninput=e=>{bassVol=+e.target.value;bassG.gain.value=bassVol/100;};
-  document.getElementById('keysVol').oninput=e=>{keysVol=+e.target.value;keysG.gain.value=keysVol/100;};
-  document.getElementById('padsVol').oninput=e=>{padsVol=+e.target.value;padsG.gain.value=padsVol/100;};
-  document.getElementById('masterVol').oninput=e=>{masterVol=+e.target.value;masterG.gain.value=masterVol/100;};
+  document.getElementById('drumVol').oninput=e=>{drumVol=+e.target.value;drumG.gain.value=(drumVol/100)**2;};
+  document.getElementById('bassVol').oninput=e=>{bassVol=+e.target.value;bassG.gain.value=(bassVol/100)**2;};
+  document.getElementById('keysVol').oninput=e=>{keysVol=+e.target.value;keysG.gain.value=(keysVol/100)**2;};
+  document.getElementById('padsVol').oninput=e=>{padsVol=+e.target.value;padsG.gain.value=(padsVol/100)**2;};
+  document.getElementById('masterVol').oninput=e=>{masterVol=+e.target.value;masterG.gain.value=(masterVol/100)**2;};
   document.getElementById('drumSwing').oninput=e=>{drumSwing=+e.target.value;};
   document.getElementById('bassSwing').oninput=e=>{bassSwing=+e.target.value;};
   document.getElementById('keysSwing').oninput=e=>{keysSwing=+e.target.value;};
@@ -665,9 +675,11 @@ const attachEvents=()=>{
   document.getElementById('crushAmt').oninput=e=>{crushAmt=+e.target.value;document.getElementById('crushVal').textContent=crushAmt;masterCrush.wet.value=crushAmt/100;};
   document.getElementById('vinylAmt').oninput=e=>{vinylAmt=+e.target.value;document.getElementById('vinylVal').textContent=vinylAmt;hissNoise.volume.value=-32+vinylAmt*0.15;};
   document.querySelectorAll('.step').forEach(s=>{
+    let lastToggle=0;
     const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;s.classList.toggle('on',SP[currentBank][t][i].on);pushState();};
-    s.onclick=toggle;
-    s.ontouchstart=e=>{e.preventDefault();toggle();};
+    const guardedToggle=()=>{const now=Date.now();if(now-lastToggle<100)return;lastToggle=now;toggle();};
+    s.onclick=guardedToggle;
+    s.ontouchstart=e=>{e.preventDefault();guardedToggle();};
     s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;el.classList.add('on');pushState();}};
   });
   document.querySelectorAll('.mood-btn').forEach(b=>b.onclick=e=>{applyMood(e.target.dataset.mood);document.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');});
@@ -679,7 +691,7 @@ const attachEvents=()=>{
 const applyMood=m=>{const mood=M[m];if(!mood)return;curD=mood.d;curB=mood.b;curK=mood.k;curP=mood.p;bpm=mood.bpm[0]+Math.random()*(mood.bpm[1]-mood.bpm[0]);swing=mood.sw[0]+Math.random()*(mood.sw[1]-mood.sw[0]);Tone.Transport.bpm.value=bpm;document.getElementById('drumSel').value=curD;document.getElementById('bassSel').value=curB;document.getElementById('keysSel').value=curK;document.getElementById('padsSel').value=curP;document.getElementById('bpmSlider').value=bpm;document.getElementById('bpmVal').textContent=Math.floor(bpm);document.getElementById('swingSlider').value=Math.floor(swing);document.getElementById('swingVal').textContent=Math.floor(swing);log(`🎭 Mood: ${m}`);pushState();};
 const randomizeAll=()=>{curD=Object.keys(D)[Math.floor(Math.random()*Object.keys(D).length)];curB=Object.keys(B)[Math.floor(Math.random()*Object.keys(B).length)];curK=Object.keys(K)[Math.floor(Math.random()*Object.keys(K).length)];curP=Object.keys(P)[Math.floor(Math.random()*Object.keys(P).length)];document.getElementById('drumSel').value=curD;document.getElementById('bassSel').value=curB;document.getElementById('keysSel').value=curK;document.getElementById('padsSel').value=curP;randomizeFX();log('⚡ Randomized');pushState();};
 const startRec=async()=>{if(!recording){try{const dest=Tone.context.createMediaStreamDestination();masterG.connect(dest);mediaStream=dest.stream;recorder=new MediaRecorder(mediaStream);const chunks=[];recorder.ondataavailable=e=>chunks.push(e.data);recorder.onstop=()=>{const blob=new Blob(chunks,{type:'audio/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.webm`;a.click();URL.revokeObjectURL(url);log('💾 Recording saved');};recorder.start();recording=true;document.getElementById('recBtn').classList.add('active');log('⏺ Recording...');}catch(e){log('❌ Recording error');}}else{recorder.stop();recording=false;document.getElementById('recBtn').classList.remove('active');}};
-const exportWAV=async()=>{log('📀 Exporting WAV...');const dur=4;const len=dur*4*(60/bpm);const sampleRate=44100;const offline=new OfflineAudioContext(2,sampleRate*len,sampleRate);const k=new Tone.MembraneSynth().connect(offline.destination);const s=new Tone.NoiseSynth().connect(offline.destination);const c=new Tone.NoiseSynth().connect(offline.destination);const h=new Tone.MetalSynth().connect(offline.destination);const o=new Tone.MetalSynth().connect(offline.destination);const b=new Tone.MonoSynth().connect(offline.destination);const ky=new Tone.PolySynth(Tone.Synth).connect(offline.destination);const pd=new Tone.PolySynth(Tone.Synth).connect(offline.destination);const steps=16;const stepTime=60/bpm/4;for(let bar=0;bar<dur;bar++){for(let st=0;st<steps;st++){const t=bar*steps*stepTime+st*stepTime;const dp=D[curD],bp=B[curB].split(','),kp=K[curK],pp=P[curP];if(dp.k[st])k.triggerAttackRelease('C1',.1,t,dp.k[st]);if(dp.s[st])s.triggerAttackRelease(.1,t,dp.s[st]);if(dp.c[st])c.triggerAttackRelease(.15,t,dp.c[st]);if(dp.h[st])h.triggerAttackRelease('16n',t,dp.h[st]);if(dp.o[st])o.triggerAttackRelease('8n',t,dp.o[st]);if(bp[st])b.triggerAttackRelease(transpose(bp[st],rootNote),'8n',t);if(kp[st]){if(Array.isArray(kp[st]))ky.triggerAttackRelease(kp[st].map(n=>transpose(n,rootNote)),'8n',t);else ky.triggerAttackRelease(transpose(kp[st],rootNote),'8n',t);}if(pp[st]&&Array.isArray(pp[st])&&pp[st].length)pd.triggerAttackRelease(pp[st].map(n=>transpose(n,rootNote)),'2n',t);}}const buffer=await offline.startRendering();const wav=audioBufferToWav(buffer);const url=URL.createObjectURL(wav);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.wav`;a.click();URL.revokeObjectURL(url);log('📀 WAV saved');};const audioBufferToWav=buffer=>{const nc=buffer.numberOfChannels,sr=buffer.sampleRate,fmt=1,bd=16;const bps=bd/8,ba=nc*bps,dl=buffer.length*ba,hl=44,tl=hl+dl;const ab=new ArrayBuffer(tl),view=new DataView(ab);const writeString=(offset,str)=>{for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));};writeString(0,'RIFF');view.setUint32(4,tl-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,fmt,true);view.setUint16(22,nc,true);view.setUint32(24,sr,true);view.setUint32(28,sr*ba,true);view.setUint16(32,ba,true);view.setUint16(34,bd,true);writeString(36,'data');view.setUint32(40,dl,true);const channels=[];for(let i=0;i<nc;i++)channels.push(buffer.getChannelData(i));let offset=44;for(let i=0;i<buffer.length;i++){for(let ch=0;ch<nc;ch++){const sample=Math.max(-1,Math.min(1,channels[ch][i]));view.setInt16(offset,sample<0?sample*0x8000:sample*0x7FFF,true);offset+=2;}}return new Blob([ab],{type:'audio/wav'});};
+const exportWAV=async()=>{log('📀 Exporting WAV...');const dur=4;const len=dur*4*(60/bpm);const sampleRate=44100;const buffer=await Tone.Offline(async({transport})=>{transport.bpm.value=bpm;const steps=16;const stepTime=60/bpm/4;for(let bar=0;bar<dur;bar++){for(let st=0;st<steps;st++){const t=bar*steps*stepTime+st*stepTime;const dp=D[curD],bp=B[curB].split(','),kp=K[curK],pp=P[curP];if(dp.k[st])kickN.triggerAttackRelease('C1',.1,t,dp.k[st]);if(dp.s[st])snareN.triggerAttackRelease(.1,t,dp.s[st]);if(dp.c[st])clapN.triggerAttackRelease(.15,t,dp.c[st]);if(dp.h[st])hatN.triggerAttackRelease('16n',t,dp.h[st]);if(dp.o[st])openN.triggerAttackRelease('8n',t,dp.o[st]);if(bp[st]){const n=transpose(bp[st],rootNote);bassN.triggerAttackRelease(n,'8n',t);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),t);}if(kp[st]){if(Array.isArray(kp[st]))keysN.triggerAttackRelease(kp[st].map(n=>transpose(n,rootNote)),'8n',t);else keysN.triggerAttackRelease(transpose(kp[st],rootNote),'8n',t);}if(pp[st]&&Array.isArray(pp[st])&&pp[st].length)padsN.triggerAttackRelease(pp[st].map(n=>transpose(n,rootNote)),'2n',t);}}},len,2,sampleRate);const wav=audioBufferToWav(buffer);const url=URL.createObjectURL(wav);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.wav`;a.click();URL.revokeObjectURL(url);log('📀 WAV saved');};const audioBufferToWav=buffer=>{const nc=buffer.numberOfChannels,sr=buffer.sampleRate,fmt=1,bd=16;const bps=bd/8,ba=nc*bps,dl=buffer.length*ba,hl=44,tl=hl+dl;const ab=new ArrayBuffer(tl),view=new DataView(ab);const writeString=(offset,str)=>{for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));};writeString(0,'RIFF');view.setUint32(4,tl-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,fmt,true);view.setUint16(22,nc,true);view.setUint32(24,sr,true);view.setUint32(28,sr*ba,true);view.setUint16(32,ba,true);view.setUint16(34,bd,true);writeString(36,'data');view.setUint32(40,dl,true);const channels=[];for(let i=0;i<nc;i++)channels.push(buffer.getChannelData(i));let offset=44;for(let i=0;i<buffer.length;i++){for(let ch=0;ch<nc;ch++){const sample=Math.max(-1,Math.min(1,channels[ch][i]));view.setInt16(offset,sample<0?sample*0x8000:sample*0x7FFF,true);offset+=2;}}return new Blob([ab],{type:'audio/wav'});};
 const shareURL=()=>{const state=encodeState();const url=`${location.origin}${location.pathname}#${state}`;navigator.clipboard.writeText(url).then(()=>log('🔗 URL copied')).catch(()=>log('❌ Copy failed'));};
 const encodeState=()=>{const s={d:curD,b:curB,k:curK,p:curP,bpm,swing,root:rootNote,vol:{d:drumVol,b:bassVol,k:keysVol,p:padsVol,m:masterVol},seq:SP[currentBank]};return btoa(JSON.stringify(s));};
 const decodeState=h=>{try{const s=JSON.parse(atob(h));curD=s.d;curB=s.b;curK=s.k;curP=s.p;bpm=s.bpm;swing=s.swing;rootNote=s.root;drumVol=s.vol.d;bassVol=s.vol.b;keysVol=s.vol.k;padsVol=s.vol.p;masterVol=s.vol.m;SP[currentBank]=s.seq;return true;}catch(e){return false;}};
@@ -757,14 +769,14 @@ document.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropE
 document.addEventListener('drop',async e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(!file||!file.type.startsWith('audio/'))return;try{const arrayBuffer=await file.arrayBuffer();const audioBuffer=await Tone.context.decodeAudioData(arrayBuffer);const player=new Tone.Player(audioBuffer).connect(drumG);log(`📂 Loaded: ${file.name}`);}catch(err){log('❌ Load failed');}});
 // CPU monitor
 let cpuWarning=false,lastFrame=performance.now();
-const monitorCPU=()=>{const now=performance.now();const delta=now-lastFrame;lastFrame=now;if(delta>50&&playing&&!cpuWarning){cpuWarning=true;log('⚠️ CPU high');[drumFX,bassFX,keysFX,padsFX].forEach(chain=>{while(chain.length>2){const fx=chain.pop();fx.disconnect();fx.dispose();}});updateFXTags();}else if(delta<40){cpuWarning=false;}requestAnimationFrame(monitorCPU);};
+const monitorCPU=()=>{const now=performance.now();const delta=now-lastFrame;lastFrame=now;if(delta>50&&playing&&!cpuWarning){cpuWarning=true;log('⚠️ CPU high');[drumFX,bassFX,keysFX,padsFX].forEach(chain=>{while(chain.length>2){const fx=chain.pop();fx.disconnect();fx.dispose();}});const reconnectChain=(g,fx,target)=>{g.disconnect();if(!fx.length){g.connect(target);}else{let last=g;fx.forEach(f=>{last.connect(f);last=f;});last.connect(target);}};reconnectChain(drumG,drumFX,analogSum);reconnectChain(bassG,bassFX,analogSum);reconnectChain(keysG,keysFX,analogSum);reconnectChain(padsG,padsFX,analogSum);updateFXTags();}else if(delta<40){cpuWarning=false;}requestAnimationFrame(monitorCPU);};
 // Tooltips
 const showTooltip=(el,text)=>{const tt=document.getElementById('tooltip');tt.textContent=text;tt.style.display='block';const rect=el.getBoundingClientRect();tt.style.left=`${rect.left}px`;tt.style.top=`${rect.bottom+5}px`;};
 const hideTooltip=()=>{document.getElementById('tooltip').style.display='none';};
 document.addEventListener('mouseover',e=>{if(e.target.title){showTooltip(e.target,e.target.title);}});
 document.addEventListener('mouseout',hideTooltip);
 // Init
-window.addEventListener('load',()=>{initAudio();buildUI();if(location.hash.length>1)decodeState(location.hash.slice(1));else autoload();monitorCPU();log('🎵 RG69 Ready');setInterval(()=>{if(playing)autosave();},10000);});
+window.addEventListener('load',async()=>{await initAudio();buildUI();if(location.hash.length>1)decodeState(location.hash.slice(1));else autoload();monitorCPU();log('🎵 RG69 Ready');setInterval(()=>{if(playing)autosave();},10000);});
 </script>
 </body>
 </html>
