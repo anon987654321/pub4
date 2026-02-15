@@ -257,7 +257,7 @@ module MASTER
         FileUtils.mkdir_p(File.dirname(path))
         File.binwrite(path, response.body)
         true
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
       end
@@ -289,7 +289,7 @@ module MASTER
         end
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Request timed out' }
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
       end
@@ -328,7 +328,7 @@ module MASTER
         { error: 'Max polls exceeded' }
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Poll request timed out' }
-      rescue => e
+      rescue StandardError => e
         $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
         { error: e.message }
       end

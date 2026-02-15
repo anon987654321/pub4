@@ -102,7 +102,7 @@ module MASTER
             result = search_repos(source, limit: 5)
             @harvested_data += result.value[:repos] if result.ok?
           end
-        rescue => e
+        rescue StandardError => e
           puts "  ✗ Error: #{e.message}"
           @stats[:errors] += 1
         end

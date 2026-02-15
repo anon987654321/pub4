@@ -157,7 +157,7 @@ module MASTER
 
         all_axioms = YAML.safe_load_file(axioms_path)
         all_axioms.select { |a| (a['priority'] || a[:priority] || 5) >= min_priority }
-      rescue => e
+      rescue StandardError => e
         UI.warn("Failed to load axioms: #{e.message}")
         nil
       end
@@ -216,7 +216,7 @@ module MASTER
         end
 
         issues
-      rescue => e
+      rescue StandardError => e
         [{ file: path, type: :error, message: e.message, severity: :low }]
       end
     end

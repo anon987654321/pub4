@@ -101,7 +101,7 @@ module MASTER
       result = yield
       s.success("Done")
       result
-    rescue => e
+    rescue StandardError => e
       s.error(e.message)
       raise
     end

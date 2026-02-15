@@ -373,7 +373,7 @@ module MASTER
       result = yield
       s.success
       result
-    rescue => e
+    rescue StandardError => e
       s.error
       raise
     end
@@ -422,7 +422,7 @@ module MASTER
     def render_response(text)
       # Try markdown rendering, fallback to plain
       markdown(text)
-    rescue => e
+    rescue StandardError => e
       text
     end
 
