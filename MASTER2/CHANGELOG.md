@@ -1,6 +1,23 @@
 # CHANGELOG - MASTER2
 
-## v1.0.0 - Architectural Consolidation (2026-02-15)
+## v1.0.0 - Stable Release (2026-02-15)
+
+### Repository Normalization
+- **Deleted MASTER/** - Removed legacy duplicate directory (388KB)
+- **Deleted root /test/** - Removed obsolete tests (60KB) 
+- **Consolidated documentation** - Moved all root docs to MASTER2/docs/
+- **Consolidated scripts** - Moved sh/ and scripts/ to MASTER2/
+- **Consolidated examples** - Moved root examples/ to MASTER2/examples_legacy/
+- **Updated .gitignore** - Prevents build artifacts and runtime files from being committed
+- **Documented archives** - Created ARCHIVE_README.md for non-core folders (.mp3, __lora, bp, deploy)
+
+### Architecture Already Complete (Prior Work)
+- **26 files → 8 consolidated modules** - Eliminated file sprawl
+- **Regex removed from axioms** - data/axioms.yml uses LLM reasoning instead of regex patterns
+- **Ruby-native tree walker** - No system dependencies, excludes dot folders/vendor/tmp
+- **Backward compatibility** - All old references work via aliases
+
+## v1.0.0 - Architectural Consolidation (Original Entry)
 
 This release consolidates MASTER2's architecture, eliminating file sprawl and adhering to core axioms: DRY, Single Responsibility, and One Source of Truth.
 
