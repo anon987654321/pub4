@@ -346,9 +346,11 @@ const initAudio=async()=>{
   keysN.chain(keysTremolo,keysChorus,keysBitcrusher,keysG);
   // Connect pads
   padsN.connect(padFilter);padFilter.connect(stereoWidener);stereoWidener.connect(padsG);
-  // Lo-fi chain
+  // Lo-fi chain (MASTER2: SIMPLEST_WORKS - tape saturation, noise layers)
   lofiComp=new Tone.Compressor(-20,3);
-  const tanhCurve=new Float32Array(256).map((_,i)=>{const x=(i/128)-1;return Math.tanh(x*2);});
+  // Initial tape saturation curve (256 points, tanh mapping)
+  const CURVE_SIZE=256,CURVE_CENTER=128,TAPE_DRIVE_BASE=2;
+  const tanhCurve=new Float32Array(CURVE_SIZE).map((_,i)=>{const x=(i/CURVE_CENTER)-1;return Math.tanh(x*TAPE_DRIVE_BASE);});
   tapeSaturation=new Tone.WaveShaper(tanhCurve);
   lofiLP=new Tone.Filter(8000,'lowpass');
   crackle=new Tone.Noise('brown').start();crackle.volume.value=-30;
@@ -378,10 +380,9 @@ const initAudio=async()=>{
   bassG.connect(lofiComp);keysG.connect(lofiComp);padsG.connect(lofiComp);
   lofiComp.chain(tapeSaturation,lofiLP,masterG);
   crackleLP.connect(masterG);hissBP.connect(masterG);vhsGain.connect(masterG);vinylGain.connect(masterG);
-  // Master chain
-  masterG.connect(feedbackDelay);feedbackDelay.connect(masterG);
-  delayLP.connect(reverb);reverb.connect(masterG);
-  masterG.connect(analyser);masterG.connect(limiter);limiter.toDestination();
+  // Master chain - delay and reverb in series (not feedback loop)
+  masterG.chain(feedbackDelay,delayLP,reverb,analyser,limiter);
+  limiter.toDestination();
   Tone.Transport.bpm.value=bpm;
   randomizeFX();
 };
@@ -390,7 +391,7 @@ const randomizeFX=()=>{
   [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){}});arr.length=0;});
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
-    const wet=isMaster?.08+Math.random()*.19:.15+Math.random()*.35;
+    const wet=isMaster ? .08+Math.random()*.19 : .15+Math.random()*.35;
     const fx=[];
     for(let i=0;i<num;i++){
       const type=fxPool[Math.floor(Math.random()*fxPool.length)];
@@ -435,7 +436,7 @@ const randomizeFX=()=>{
   try{padsG.disconnect(lofiComp);}catch(e){}
   // Reconnect with FX chains
   if(drumFX.length>0){drumG.disconnect();chainTrackFX(drumG,drumFX,drumDrive);drumDrive.connect(lofiComp);}else{drumG.connect(drumDrive);drumDrive.connect(lofiComp);}
-  if(bassFX.length>0){bassG.disconnect();chainTrackFX(bassFX,bassG,lofiComp);}else{bassG.connect(lofiComp);}
+  if(bassFX.length>0){bassG.disconnect();chainTrackFX(bassG,bassFX,lofiComp);}else{bassG.connect(lofiComp);}
   if(keysFX.length>0){keysG.disconnect();chainTrackFX(keysG,keysFX,lofiComp);}else{keysG.connect(lofiComp);}
   if(padsFX.length>0){padsG.disconnect();chainTrackFX(padsG,padsFX,lofiComp);}else{padsG.connect(lofiComp);}
   // Master FX chain (already connected in initAudio, just update tags)
@@ -640,6 +641,10 @@ const importPatch=async e=>{
 // ============================================================================
 // LO-FI CHAIN UPDATE - Dynamic parameter control
 // ============================================================================
+// Tape saturation curve constants
+const CURVE_SIZE=256;
+const CURVE_CENTER=128;
+const TAPE_DRIVE_BASE=2;
 const updateLoFi=()=>{
   try{
     if(crackle)crackle.volume.value=-30+(crackleLevel*20);
@@ -647,10 +652,13 @@ const updateLoFi=()=>{
     if(flutter)flutter.frequency.value=0.05+(flutterRate*0.3);
     if(vhsNoise)vhsNoise.volume.value=-40+(vhsLevel*20);
     if(vinylGain)vinylGain.gain.value=vinylLevel;
-    // Update tape saturation curve
+    // Update tape saturation curve (only if drive changed significantly)
     if(tapeSaturation){
       const drive=1+(tapeDrive*3);
-      const tanhCurve=new Float32Array(256).map((_,i)=>{const x=(i/128)-1;return Math.tanh(x*drive);});
+      const tanhCurve=new Float32Array(CURVE_SIZE).map((_,i)=>{
+        const x=(i/CURVE_CENTER)-1;
+        return Math.tanh(x*drive*TAPE_DRIVE_BASE);
+      });
       tapeSaturation.curve=tanhCurve;
     }
   }catch(e){
