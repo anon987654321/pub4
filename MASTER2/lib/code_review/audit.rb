@@ -89,7 +89,12 @@ module MASTER
     private
 
     def check_file_length(file, lines, report)
-      thresholds = if defined?(MASTER::Smells)
+      thresholds = if defined?(QualityStandards)
+        {
+          warn: QualityStandards.max_file_lines_warn,
+          error: QualityStandards.max_file_lines
+        }
+      elsif defined?(MASTER::Smells)
         smells_thresholds = MASTER::Smells.thresholds
         {
           warn: smells_thresholds[:max_file_lines],

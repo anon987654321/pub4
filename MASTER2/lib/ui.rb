@@ -65,13 +65,6 @@ module MASTER
       end
     end
 
-    def spinner(message = nil, format: :braille)
-      # Delegate to UI.spinner (class method defined in lib/ui/spinner.rb)
-      # This avoids duplication and uses the richer SubtleSpinner fallback
-      require_relative 'ui/spinner'
-      UI.spinner(message, format: format)
-    end
-
     def multi_spinner
       require 'tty-spinner'
       TTY::Spinner::Multi.new("[:spinner] Processing", format: :braille)
