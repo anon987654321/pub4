@@ -2,7 +2,7 @@
 
 require "json"
 require "yaml"
-require_relative "circuit_breaker"
+require_relative "llm/circuit_breaker"
 require "ruby_llm"
 
 module MASTER

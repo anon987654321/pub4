@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 # Load command modules
-require_relative "commands/session_commands"
-require_relative "commands/model_commands"
-require_relative "commands/budget_commands"
-require_relative "commands/code_commands"
-require_relative "commands/misc_commands"
-require_relative "commands/refactor_helpers"
-require_relative "commands/workflow_commands"
+require_relative "session_commands"
+require_relative "model_commands"
+require_relative "budget_commands"
+require_relative "code_commands"
+require_relative "misc_commands"
+require_relative "refactor_helpers"
+require_relative "workflow_commands"
 
 module MASTER
   # Commands - REPL command dispatcher
