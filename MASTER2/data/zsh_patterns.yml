@@ -44,9 +44,55 @@ native_patterns:
   array_filter_exclude: "${arr:#*pattern*}"
   remove_crlf: "${var//$'\\r'/}"
 
+glob_qualifiers:
+  files_only: "**/*.rb(.)"
+  dirs_only: "*(/)"
+  empty_files: "*(.L0)"
+  modified_today: "*(m0)"
+  modified_last_hour: "*(mh-1)"
+  larger_than_1m: "*(LM+1)"
+  executable: "*(*)"
+  symlinks: "*(@)"
+  owned_by_root: "*(U0)"
+  sort_by_size: "*(OL)"
+  sort_by_mtime: "*(Om)"
+  first_10: "*(.[1,10])"
+
+extended_globbing:
+  enable: "setopt extendedglob"
+  case_insensitive: "(#i)*.rb"
+  negation: "*~*.log"
+  numeric_range: "file<1-12>.txt"
+  repeat_min: "(#c2,)_"
+  approximate: "(#a1)color"
+  recursive_no_symlinks: "**/*.rb(.)"
+
+zmv:
+  enable: "autoload -Uz zmv"
+  rename: "zmv '(*).txt' '$1.md'"
+  lowercase: "zmv '(*)' '${(L)1}'"
+  add_prefix: "zmv '(*)' 'prefix_$1'"
+  dry_run: "zmv -n '(*).old' '$1.new'"
+
+advanced_expansion:
+  anchored_start: "${var/#pattern/replacement}"
+  anchored_end: "${var/%pattern/replacement}"
+  strip_prefix_greedy: "${var##*/}"
+  strip_suffix_greedy: "${var%%.*}"
+  nested_expansion: "${${var##*/}%.*}"
+  length_of_match: "${#var}"
+  default_value: "${var:-fallback}"
+  assign_default: "${var::=value}"
+  substring: "${var[2,5]}"
+  reverse: "${(Oa)arr}"
+  pad_left: "${(l:8::0:)var}"
+  pad_right: "${(r:20:: :)var}"
+  word_splitting: "${=var}"
+  quote_each: "${(q)var}"
+  expand_escapes: "${(e)var}"
+
 exceptions:
   - "Complex regex requiring PCRE"
-  - "Multi-file operations beyond globbing"
   - "Binary data processing"
 
 # Banned commands — restored from master.yml v71.3.0

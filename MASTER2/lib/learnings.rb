@@ -92,9 +92,9 @@ module MASTER
     # Quality evaluation methods (merged from LearningQuality)
     def evaluate(pattern)
       return :unrated if pattern["applications"].to_i < MINIMUM_APPLICATIONS
-      
+
       success_rate = calculate_success_rate(pattern)
-      
+
       case success_rate
       when 0.90..1.0 then :promote
       when 0.50...0.90 then :keep
@@ -112,9 +112,9 @@ module MASTER
         successes = pattern["successes"].to_i
         failures = pattern["failures"].to_i
         total = successes + failures
-        
+
         return 0.0 if total.zero?
-        
+
         successes.to_f / total
       else
         0.0
@@ -124,22 +124,22 @@ module MASTER
     # Prune retired patterns from database
     def prune!
       return Result.err("LearningFeedback not available") unless defined?(LearningFeedback)
-      
+
       patterns = LearningFeedback.load_patterns
-      
+
       # Group by category and fix_hash to aggregate stats
       grouped = patterns.group_by { |p| [p["category"], p["fix_hash"]] }
-      
+
       pruned = 0
       kept_patterns = []
-      
+
       grouped.each do |(_category, _hash), group|
         successes = group.count { |p| p["success"] }
         failures = group.count { |p| !p["success"] }
         applications = successes + failures
-        
+
         next if applications < MINIMUM_APPLICATIONS
-        
+
         aggregated = {
           "category" => group.first["category"],
           "fix_hash" => group.first["fix_hash"],
@@ -148,16 +148,16 @@ module MASTER
           "failures" => failures,
           "applications" => applications
         }
-        
+
         tier_result = evaluate(aggregated)
-        
+
         if tier_result == :retire
           pruned += 1
         else
           kept_patterns << aggregated
         end
       end
-      
+
       # Rewrite database with kept patterns only
       if pruned > 0
         db_path = File.join(MASTER.root, LearningFeedback::DB_FILE)
@@ -167,7 +167,7 @@ module MASTER
           end
         end
       end
-      
+
       Result.ok(pruned: pruned, kept: kept_patterns.size)
     rescue StandardError => e
       Result.err("Failed to prune: #{e.message}")
@@ -245,29 +245,29 @@ module MASTER
         record(**learning) unless exists?(learning[:description])
       end
     end
-    
+
     # Extract regex pattern from code diff (simple heuristic)
     def self.extract_pattern_from_fix(original, fixed)
       # Find the line that changed
       original_lines = original.lines
       fixed_lines = fixed.lines
-      
+
       # Handle length differences by iterating through the shorter array
       min_length = [original_lines.length, fixed_lines.length].min
       diff_line = nil
-      
+
       min_length.times do |i|
         if original_lines[i] != fixed_lines[i]
           diff_line = [original_lines[i], fixed_lines[i]]
           break
         end
       end
-      
+
       return nil unless diff_line
-      
+
       original_part = diff_line[0]&.strip
       return nil unless original_part
-      
+
       # Extract a simple regex pattern
       # Example: "foo.bar" becomes "foo\.bar"
       Regexp.escape(original_part[0..50]) # First 50 chars
@@ -297,7 +297,7 @@ module MASTER
     # Record a finding + fix pattern with success/fail
     def record(finding, fix, success:)
       ensure_db_exists
-      
+
       pattern = {
         category: finding.category,
         message_pattern: generalize_message(finding.message),
@@ -305,12 +305,12 @@ module MASTER
         success: success,
         timestamp: Time.now.to_i
       }
-      
+
       # Append to JSONL
       File.open(db_path, "a") do |f|
         f.puts(pattern.to_json)
       end
-      
+
       Result.ok
     rescue StandardError => e
       Result.err("Failed to record learning: #{e.message}")
@@ -319,15 +319,15 @@ module MASTER
     # Check if we have a known successful fix for this finding
     def known_fix?(finding)
       patterns = load_patterns
-      
+
       category_patterns = patterns.select do |p|
         p["category"] == finding.category.to_s
       end
-      
+
       # Count successes
       successes = category_patterns.count { |p| p["success"] }
       total = category_patterns.size
-      
+
       # Need at least 3 applications and >70% success rate
       total >= 3 && (successes.to_f / total) > 0.7
     end
@@ -335,16 +335,16 @@ module MASTER
     # Apply a known fix without LLM
     def apply_known(finding)
       patterns = load_patterns
-      
+
       successful_patterns = patterns.select do |p|
         p["category"] == finding.category.to_s && p["success"]
       end
-      
+
       return Result.err("No successful pattern found") if successful_patterns.empty?
-      
+
       # Use the most recent successful pattern
       pattern = successful_patterns.last
-      
+
       # This is a simplified implementation
       # In a real system, this would reconstruct and apply the actual fix
       Result.ok(applied: pattern["fix_hash"])
@@ -353,7 +353,7 @@ module MASTER
     # Load all patterns from DB
     def load_patterns
       return [] unless File.exist?(db_path)
-      
+
       File.readlines(db_path).map do |line|
         JSON.parse(line.strip)
       rescue JSON::ParserError
@@ -453,7 +453,7 @@ module MASTER
 
     def calculate_confidence(learning)
       return 0.0 unless learning.is_a?(Hash)
-      
+
       score = 0.0
       score += WEIGHT_CATEGORY if learning[:category]
       score += WEIGHT_SUCCESS if learning[:success]

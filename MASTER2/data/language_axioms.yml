@@ -553,10 +553,7 @@ universal:
     suggest: "Split files >300 lines at module boundaries"
     severity: warning
     autofix: false
-
-# ============================================================================
 # RUBY BEAUTY — Design philosophy (restored from master.yml v71.3.0)
-# ============================================================================
 
 ruby_beauty:
   frozen_string_literals:
@@ -589,10 +586,7 @@ ruby_beauty:
   boy_scout_rule:
     rule: "Leave code better than you found it"
     application: "Fix small issues while working on features"
-
-# ============================================================================
 # RAILS DOCTRINE — Framework philosophy (restored from master.yml v71.3.0)
-# ============================================================================
 
 rails_doctrine:
   convention_over_configuration:
@@ -618,10 +612,7 @@ rails_doctrine:
   beautiful_code:
     rule: "Code should be elegant, not just functional"
     criteria: [readable, maintainable, expressive, concise]
-
-# ============================================================================
 # HTML/CSS PRINCIPLES — Markup and styling philosophy
-# ============================================================================
 
 html_css_principles:
   semantic_html:
@@ -643,10 +634,7 @@ html_css_principles:
   mobile_first:
     rule: "Base styles mobile, @media min-width for desktop"
     pattern: "min-width media queries, not max-width"
-
-# ============================================================================
 # LARGE HTML DOCUMENTS — Inline CSS/JS strategy
-# ============================================================================
 
 large_html_documents:
   rationale: "Business plans, presentations, visualizations often require inline CSS/JS"
@@ -674,10 +662,7 @@ large_html_documents:
     production: "Minify JS/CSS, inline everything, optimize for size"
     business_plan: "Readable formatting, comments, educational"
     default: "Extract to separate files"
-
-# ============================================================================
 # NORWEGIAN LANGUAGE — Bokmål writing rules
-# ============================================================================
 
 norwegian:
   dialect: "bokmål"

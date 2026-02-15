@@ -43,14 +43,14 @@ module MASTER
     # JavaScript-rendered pages using Ferrum (optional)
     def browse_js(url)
       require "ferrum"
-      
+
       browser = Ferrum::Browser.new(headless: true, timeout: WEB_TIMEOUT)
       browser.go_to(url)
       browser.network.wait_for_idle
-      
+
       text = extract_text(browser.body)
       browser.quit
-      
+
       Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url)
     rescue LoadError
       Result.err("Ferrum gem not available - install for JS-rendered pages")
@@ -64,7 +64,7 @@ module MASTER
     # Instead of hardcoding selectors that break, ask LLM to find them
     def discover_selector(url, action)
       require "ferrum"
-      
+
       browser = Ferrum::Browser.new(headless: true)
       page = browser.create_page
       page.go_to(url)
@@ -72,15 +72,15 @@ module MASTER
 
       html_snippet = page.body[0..MAX_HTML_FOR_DISCOVERY]
       screenshot_b64 = page.screenshot(format: :png, encoding: :base64)
-      
+
       browser.quit
 
       prompt = <<~PROMPT
         Analyze this webpage to find the CSS selector for: #{action}
-        
+
         HTML (truncated):
         #{html_snippet}
-        
+
         Return ONLY the CSS selector, nothing else.
         Example: button.submit-btn, input#search, div.login-form
       PROMPT
@@ -121,7 +121,7 @@ module MASTER
 
       element.click
       sleep 1
-      
+
       result_html = page.body[0..MAX_PREVIEW_LENGTH]
       browser.quit
 
@@ -132,7 +132,7 @@ module MASTER
       Result.err("Click failed: #{e.message}")
     end
 
-    # Fill a form field discovered dynamically  
+    # Fill a form field discovered dynamically
     def fill_discovered(url, action, value)
       selector_result = discover_selector(url, action)
       return selector_result unless selector_result.ok?
@@ -166,7 +166,7 @@ module MASTER
 
     def extract_text(html)
       require "nokogiri"
-      
+
       doc = Nokogiri::HTML(html)
       doc.css("script, style").remove
       text = doc.text.squeeze(" \n").strip

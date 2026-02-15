@@ -107,26 +107,26 @@ when "selfrun", "self-run"
   # Full self-run: analyze and refactor the entire pub4 repo
   puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
   pub4_root = File.expand_path("../..", __dir__)  # Go up from MASTER2/bin/ to pub4/
-  
+
   # Phase 1: Self-refactor MASTER2 itself
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
   mr = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
   mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
-  
+
   # Phase 2: Deploy scripts
   puts "\n=== Phase 2: Deploy Scripts ==="
   mr2 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
   mr2.run(path: File.join(pub4_root, "deploy"))
-  
+
   # Phase 3: Business plans (HTML)
   puts "\n=== Phase 3: Business Plans ==="
   mr3 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 0.5)
   mr3.run(path: File.join(pub4_root, "bp"))
-  
+
   # Phase 4: Self-test
   puts "\n=== Phase 4: Self-Test ==="
   MASTER::Introspection.run if defined?(MASTER::Introspection)
-  
+
   exit 0
 
 when "version", "-v", "--version"
@@ -136,10 +136,10 @@ when "version", "-v", "--version"
 when "help", "-h", "--help"
   puts <<~HELP
     MASTER2 - Constitutional AI Code Quality System
-    
+
     Usage:
       master [command] [arguments]
-    
+
     Commands:
       refactor <file>             Refactor file with LLM guidance
       multi-refactor [path]       Refactor entire directory with dependency graph
@@ -158,13 +158,13 @@ when "help", "-h", "--help"
       axioms-stats                Display axiom violation statistics
       version                     Show version
       help                        Show this help
-    
+
     Legacy Options:
       -w, --web                   Start web-only mode (no REPL)
       -p, --pipe                  Pipe mode for automation
       -t, --tts [TOPIC]           TTS test mode
       -d, --daemon                Daemon mode for agentd
-    
+
     Examples:
       master refactor deploy/openbsd/openbsd.sh
       master fix --all
@@ -172,15 +172,15 @@ when "help", "-h", "--help"
       master chamber lib/master.rb
       master ideate "authentication system"
       master session save milestone-1
-    
+
     Environment Variables:
       OPENROUTER_API_KEY          Required for LLM operations
       MASTER_VOICE                Enable voice mode (true/false)
       MASTER_DEBUG                Debug logging (true/false)
-    
+
     Documentation:
       https://github.com/anon987654321/pub4/tree/main/MASTER2
-    
+
     No command specified starts REPL mode with integrated web server.
   HELP
   exit 0

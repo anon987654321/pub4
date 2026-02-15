@@ -63,7 +63,7 @@ module MASTER
         sanitized = sanitize(cmd)
         output = nil
         status = nil
-        
+
         Timeout.timeout(timeout) do
           # Use Open3 for safer shell execution
           output, status = Open3.capture2e(sanitized)
@@ -101,7 +101,7 @@ module MASTER
   # Ported from MASTER v1 cli.rb shell_mode
   class InteractiveShell
     UNIX_COMMANDS = %w[ls cd pwd cat grep find wc head tail tree file stat].freeze
-    
+
     attr_reader :context
 
     def initialize
@@ -126,7 +126,7 @@ module MASTER
 
         result = execute(input)
         @context[:last_result] = result
-        
+
         break if result == :exit
       end
 
@@ -176,7 +176,7 @@ module MASTER
 
         Unix Commands:
           ls, pwd, cd, cat, grep, find, wc, head, tail, tree, file, stat
-          
+
         MASTER Commands:
           scan <file>       Scan file for issues
           analyze <file>    Deep analysis with LLM
@@ -184,11 +184,11 @@ module MASTER
           session <cmd>     Session management (info, save, list)
           ask <question>    Ask LLM a question (optional - any text is treated as a question)
           history           Show command history
-          
+
         Control:
           help, ?           Show this help
           exit, quit, q     Exit shell
-          
+
         Tip: You can ask questions directly without the 'ask' command.
              Example: Just type "hello, what's up?" instead of "ask hello, what's up?"
       HELP
@@ -221,7 +221,7 @@ module MASTER
 
     def scan_file(path)
       return UI.error("File not found: #{path}") unless File.exist?(path)
-      
+
       puts UI.dim("Scanning #{path}...")
       if defined?(Engine)
         result = Engine.scan(path)
@@ -245,13 +245,13 @@ module MASTER
 
     def analyze_file(path)
       return UI.error("File not found: #{path}") unless File.exist?(path)
-      
+
       puts UI.dim("Analyzing #{path}...")
       content = File.read(path)
-      
+
       prompt = "Analyze this code and provide insights:\n\n#{content[0..2000]}"
       result = LLM.ask(prompt, tier: :smart)
-      
+
       if result.ok?
         puts "\n#{result.value[:content]}\n"
       else
@@ -261,7 +261,7 @@ module MASTER
 
     def fix_file(path)
       return UI.error("File not found: #{path}") unless File.exist?(path)
-      
+
       puts UI.dim("Fixing #{path}...")
       if defined?(AutoFixer)
         fixer = AutoFixer.new(mode: :moderate)
@@ -301,7 +301,7 @@ module MASTER
     def ask_llm(question)
       puts UI.dim("Asking LLM...")
       result = LLM.ask(question, tier: :fast)
-      
+
       if result.ok?
         puts "\n#{result.value[:content]}\n"
       else
@@ -318,7 +318,7 @@ module MASTER
         cmd << "--title" << title
         cmd << "--body" << body
         cmd << "--draft" if draft
-        
+
         system(*cmd)
       end
 

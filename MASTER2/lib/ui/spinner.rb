@@ -19,7 +19,7 @@ module MASTER
         failure: "✗",
         pending: "⋯"
       }.freeze
-      
+
       def initialize(message)
         @message = message
         @running = false

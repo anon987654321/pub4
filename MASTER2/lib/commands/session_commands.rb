@@ -74,9 +74,9 @@ module MASTER
           end
         else
           puts <<~HELP
-            
+
             Session Commands:
-            
+
               session new                  Start new session
               session save                 Save current session
               session load <id>            Load saved session
@@ -85,7 +85,7 @@ module MASTER
               session ls                   List sessions with details
               session diff <a> <b>         Diff two sessions
               session export [id] [--md]   Export session as JSON or Markdown
-            
+
           HELP
         end
       end

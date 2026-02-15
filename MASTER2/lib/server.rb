@@ -226,7 +226,7 @@ module MASTER
         else
           clean_path = File.basename(path)
           view_path = File.expand_path(clean_path, VIEWS_DIR)
-          
+
           if view_path.start_with?(VIEWS_DIR) && File.exist?(view_path) && File.file?(view_path)
             ext = File.extname(path)
             type = { ".html" => "text/html", ".js" => "application/javascript", ".css" => "text/css" }[ext] || "text/plain"
@@ -253,10 +253,10 @@ module MASTER
         while (message = connection.read)
           begin
             data = JSON.parse(message)
-            
+
             if data["type"] == "chat"
               user_message = data["message"].to_s.strip
-              
+
               if user_message.empty?
                 connection.write({ type: "error", message: "Empty message" }.to_json)
                 connection.flush
@@ -265,15 +265,15 @@ module MASTER
 
               # Process message through pipeline
               result = pipeline.call({ text: user_message })
-              
+
               if result.ok?
                 response_text = result.value[:rendered] || result.value[:text] || ""
-                
+
                 # Stream response in chunks (simulate streaming by sending full response)
                 # In a real implementation, you'd hook into the LLM's streaming API
                 connection.write({ type: "chunk", text: response_text }.to_json)
                 connection.flush
-                
+
                 # Send done message with metadata
                 meta = {
                   tier: LLM.tier,
@@ -303,7 +303,7 @@ module MASTER
       rescue StandardError => e
         Logging.warn("WebSocket", "Connection error: #{e.message}")
       end
-      
+
       # Return nil to indicate WebSocket handled the request
       nil
     end

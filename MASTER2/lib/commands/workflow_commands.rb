@@ -10,7 +10,7 @@ module MASTER
 
         phase = WorkflowEngine.current_phase(session)
         history = WorkflowEngine.phase_history(session)
-        
+
         puts UI.bold("Workflow Status")
         puts "Current Phase: #{phase.to_s.upcase}"
         puts "Progress: #{history.size}/7 phases completed"
@@ -28,16 +28,16 @@ module MASTER
         return Result.err("Workflow not started") unless session.metadata[:workflow]
 
         result = WorkflowEngine.advance_phase(session, outputs: outputs)
-        
+
         if result.ok?
           new_phase = result.value[:phase]
           puts UI.green("✓ Advanced to #{new_phase.to_s.upcase}")
-          
+
           # Show phase questions
           if defined?(Questions)
             Questions.ask_phase(new_phase)
           end
-          
+
           session.save
           Result.ok(result.value)
         else

@@ -33,7 +33,7 @@ module MASTER
       def forced_tier
         @forced_tier
       end
-      
+
       # Set persona prompt (called from Personas module)
       def persona_prompt=(value)
         @persona_prompt = value
@@ -82,15 +82,15 @@ module MASTER
       def classify_tier(model)
         # For configured models, look up tier from models.yml with O(1) hash access
         return :cheap unless model.is_a?(String) || model&.id
-        
+
         model_id = model.is_a?(String) ? model : model.id
         configured_model = configured_models_by_id[model_id]
         return configured_model[:tier].to_sym if configured_model&.dig(:tier)
-        
+
         # Fallback to price-based classification for models not in models.yml
         # This applies to any model (string ID or object) not found in the configured models
         price = model.is_a?(String) ? 0 : model.input_price_per_million || 0
-        
+
         case price
         when (10.0..) then :premium
         when (2.0...10.0) then :strong

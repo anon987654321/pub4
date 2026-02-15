@@ -21,13 +21,13 @@ module MASTER
       kandinsky:    'ai-forever/kandinsky-2.2',
       ideogram_v2:  'ideogram-ai/ideogram-v2',
       recraft_v3:   'recraft-ai/recraft-v3',
-      
+
       # Upscaling
       esrgan:       'nightmareai/real-esrgan',
       gfpgan:       'tencentarc/gfpgan',
       codeformer:   'sczhou/codeformer',
       clarity:      'lucataco/clarity-upscaler',
-      
+
       # Video generation
       svd:          'stability-ai/stable-video-diffusion',
       hailuo:       'minimax/video-01',
@@ -35,17 +35,17 @@ module MASTER
       luma_ray:     'luma/ray-2',
       wan:          'wan-video/wan-2.5-i2v',
       sora:         'openai/sora-2',
-      
+
       # Audio
       musicgen:     'meta/musicgen',
       bark:         'suno/bark',
-      
+
       # Transcription
       whisper:      'openai/whisper',
-      
+
       # Captioning
       blip:         'salesforce/blip',
-      
+
       # 3D
       shap_e:       'openai/shap-e'
     }.freeze
@@ -250,10 +250,10 @@ module MASTER
         uri = URI(url)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
-        
+
         response = http.get(uri.path)
         return false unless response.is_a?(Net::HTTPSuccess)
-        
+
         FileUtils.mkdir_p(File.dirname(path))
         File.binwrite(path, response.body)
         true
@@ -274,7 +274,7 @@ module MASTER
         request = Net::HTTP::Post.new(uri)
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
-        
+
         body = { input: input }
         body[:version] = model if model
         request.body = body.to_json

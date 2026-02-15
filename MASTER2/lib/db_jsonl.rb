@@ -36,7 +36,7 @@ module MASTER
     def load_yml(name)
       yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
       return {} unless File.exist?(yml_path)
-      
+
       YAML.safe_load_file(yml_path) || {}
     rescue StandardError => e
       Logging.error("Failed to load #{name}.yml: #{e.message}")
@@ -54,7 +54,7 @@ module MASTER
     end
 
     # --- Axioms (cached) ---
-    
+
     # Get all axioms (cached)
     # @return [Array<Hash>] Array of axiom records
     def axioms
@@ -80,7 +80,7 @@ module MASTER
     end
 
     # --- Council (cached) ---
-    
+
     # Get all council personas (cached)
     # @return [Array<Hash>] Array of persona records
     def council
@@ -112,7 +112,7 @@ module MASTER
     end
 
     # --- Costs ---
-    
+
     # Log LLM API cost
     # @param model [String] Model identifier
     # @param tokens_in [Integer] Input tokens
@@ -277,7 +277,7 @@ module MASTER
     def write_collection(name, data)
       path = file_path(name)
       temp_path = "#{path}.tmp"
-      
+
       synchronize do
         File.open(temp_path, "w") do |f|
           f.flock(File::LOCK_EX)
@@ -307,7 +307,7 @@ module MASTER
 
     def seed_axioms
       return unless read_collection("axioms").empty?
-      
+
       axioms_file = File.join(MASTER.root, "data", "axioms.yml")
       if File.exist?(axioms_file)
         axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)

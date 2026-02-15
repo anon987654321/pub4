@@ -60,7 +60,7 @@ module MASTER
         UI.header("Ideating on: #{topic}")
         prompt = <<~PROMPT
           Brainstorm 5 creative ideas for: #{topic}
-          
+
           Format:
           1. Idea name — brief description
           ...
@@ -166,16 +166,16 @@ module MASTER
 
       def show_cinematic_help
         puts <<~HELP
-          
+
           Cinematic AI Pipeline Commands:
-          
+
             cinematic list                     List available presets
             cinematic apply <preset> <input>   Apply preset to image
             cinematic discover <input> [n]     Discover new styles (n samples)
             cinematic build                    Interactive pipeline builder
-          
+
           Presets: blade-runner, wes-anderson, noir, golden-hour, teal-orange
-          
+
         HELP
       end
 
@@ -202,9 +202,9 @@ module MASTER
         end
 
         puts "  Applying preset '#{preset_name}' to #{input_path}..."
-        
+
         result = Cinematic.apply_preset(input_path, preset_name)
-        
+
         if result.ok?
           output = result.value[:final]
           puts "  ✓ Pipeline complete!"
@@ -224,11 +224,11 @@ module MASTER
         end
 
         result = Cinematic.discover_style(input_path, samples: samples)
-        
+
         if result.ok?
           discoveries = result.value[:discoveries]
           puts "  ✓ Discovered #{discoveries.size} styles!"
-          
+
           discoveries.each_with_index do |d, i|
             puts "  #{i + 1}. Score: #{d[:score].round(2)} | #{d[:pipeline].stages.size} stages"
           end
@@ -259,7 +259,7 @@ module MASTER
         case command
         when "activate"
           return puts "  Usage: persona activate <name>" unless name
-          
+
           if defined?(Personas)
             result = Personas.activate(name)
             if result.err?
@@ -283,7 +283,7 @@ module MASTER
 
       def list_personas
         return puts "  Personas module not available" unless defined?(Personas)
-        
+
         personas = Personas.list
         if personas.empty?
           puts "  No personas available"
@@ -298,13 +298,13 @@ module MASTER
 
       def show_persona_help
         puts <<~HELP
-          
+
           Persona Commands:
-          
+
             persona activate <name>    Activate a persona
             persona deactivate         Deactivate current persona
             persona list               List available personas
-          
+
         HELP
       end
 
@@ -334,13 +334,13 @@ module MASTER
 
       def show_workflow_help
         puts <<~HELP
-          
+
           Workflow Commands:
-          
+
             workflow status     Show current workflow phase and history
             workflow advance    Advance to next workflow phase
             workflow reset      Reset workflow to initial state
-          
+
         HELP
       end
 
@@ -381,26 +381,26 @@ module MASTER
 
         puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
         pub4_root = File.expand_path("../..", MASTER.root)  # Go up from MASTER2/ to pub4/
-        
+
         # Phase 1: Self-refactor MASTER2 itself
         puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
         mr = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
         mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
-        
+
         # Phase 2: Deploy scripts
         puts "\n=== Phase 2: Deploy Scripts ==="
         mr2 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
         mr2.run(path: File.join(pub4_root, "deploy"))
-        
+
         # Phase 3: Business plans (HTML)
         puts "\n=== Phase 3: Business Plans ==="
         mr3 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 0.5)
         mr3.run(path: File.join(pub4_root, "bp"))
-        
+
         # Phase 4: Self-test
         puts "\n=== Phase 4: Self-Test ==="
         Introspection.run if defined?(Introspection)
-        
+
         Result.ok("Self-run complete")
       end
     end

@@ -8,16 +8,16 @@ module MASTER
   # Ported from MASTER v1, adapted for MASTER2's architecture
   class Personas
     PERSONAS_FILE = File.join(Paths.data, 'personas.yml')
-    
+
     class << self
       # Load all personas from YAML file
       def load_all
         return [] unless File.exist?(PERSONAS_FILE)
-        
+
         data = load_personas_data
         personas_hash = data['personas'] || data[:personas]
         return [] unless personas_hash
-        
+
         personas_hash.map do |key, persona|
           normalize_persona(key, persona)
         end
@@ -26,26 +26,26 @@ module MASTER
       # Load specific persona by name
       def load(name)
         return nil unless File.exist?(PERSONAS_FILE)
-        
+
         data = load_personas_data
         personas_hash = data['personas'] || data[:personas]
         return nil unless personas_hash
-        
+
         # Try both string and symbol keys
         persona = personas_hash[name] || personas_hash[name.to_s] || personas_hash[name.to_sym]
         return nil unless persona
-        
+
         normalize_persona(name, persona)
       end
 
       # List all available persona names
       def list
         return [] unless File.exist?(PERSONAS_FILE)
-        
+
         data = load_personas_data
         personas_hash = data['personas'] || data[:personas]
         return [] unless personas_hash
-        
+
         personas_hash.keys.map(&:to_s).sort
       end
 
@@ -58,7 +58,7 @@ module MASTER
       def system_prompt(name)
         persona = load(name)
         return nil unless persona
-        
+
         persona[:system_prompt] || build_system_prompt(persona)
       end
 
@@ -103,19 +103,19 @@ module MASTER
         parts = []
         parts << "You are #{persona[:name]}."
         parts << persona[:description] if persona[:description]
-        
+
         if persona[:traits] && !persona[:traits].empty?
           parts << "Traits: #{persona[:traits].join(', ')}"
         end
-        
+
         if persona[:style]
           parts << "Style: #{persona[:style]}"
         end
-        
+
         if persona[:focus] && !persona[:focus].empty?
           parts << "Focus: #{persona[:focus].join(', ')}"
         end
-        
+
         parts.join(' ')
       end
     end
@@ -181,7 +181,7 @@ module MASTER
         return Result.err("Persona '#{name}' not found") unless persona
 
         @active_persona = persona
-        
+
         # Set LLM system prompt via proper accessor
         if defined?(LLM) && persona[:system_prompt]
           LLM.persona_prompt = persona[:system_prompt]
@@ -192,7 +192,7 @@ module MASTER
 
         puts UI.green("✓ Activated persona: #{persona[:name]}")
         puts UI.dim("  #{persona[:description]}")
-        
+
         Result.ok(persona)
       end
 
@@ -200,7 +200,7 @@ module MASTER
         @active_persona = nil
         LLM.persona_prompt = nil if defined?(LLM)
         unregister_behaviors
-        
+
         puts UI.dim("Persona deactivated")
         Result.ok(true)
       end
@@ -245,7 +245,7 @@ module MASTER
 
       def check_for_gaps(data)
         puts UI.dim("\n[Persona] Checking for common gaps...")
-        
+
         gaps = []
         gaps << "No tests found" unless File.exist?("test")
         gaps << "No README" unless File.exist?("README.md")

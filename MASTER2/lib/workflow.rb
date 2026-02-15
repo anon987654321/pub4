@@ -199,7 +199,7 @@ module MASTER
 
       def self.parse_plan(text)
         return [] if text.nil? || text.empty?
-        
+
         steps = text.scan(/^\s*(\d+)[.)]\s*(.+?)$/m).map { |_num, step| step.strip }
         steps.reject(&:empty?)
       end
@@ -209,25 +209,25 @@ module MASTER
 
         prompt = <<~PROMPT
           Create a step-by-step plan to accomplish this goal:
-          
+
           GOAL: #{goal}
-          
+
           Provide a numbered list of steps (maximum #{max_steps} steps).
           Each step should be clear and actionable.
-          
+
           Format:
           1. First step
           2. Second step
           3. Third step
           ...
-          
+
           PLAN:
         PROMPT
 
         if defined?(LLM)
           result = LLM.ask(prompt, tier: :fast)
           return result unless result.ok?
-          
+
           steps = parse_plan(result.value[:content])
           Result.ok(steps: steps)
         else
@@ -309,7 +309,7 @@ module MASTER
         Result.try do
           current = current_phase(session)
           current_idx = PHASES.index(current)
-          
+
           raise "Already at final phase" if current_idx.nil? || current_idx >= PHASES.size - 1
 
           next_phase = PHASES[current_idx + 1]
@@ -318,7 +318,7 @@ module MASTER
 
           record_transition(session, current, next_phase, gate: gate, outputs: outputs)
           session.metadata[:workflow][:current_phase] = next_phase
-          
+
           { phase: next_phase, gate: gate, previous: current }
         end
       end
@@ -327,7 +327,7 @@ module MASTER
         Result.try do
           questions_config = load_questions
           phase_data = questions_config[phase.to_s] || questions_config[phase]
-          
+
           {
             phase: phase,
             purpose: phase_data&.dig('purpose'),
@@ -343,7 +343,7 @@ module MASTER
 
           phase_data = phases.find { |p| (p['id'] || p[:id]).to_sym == phase.to_sym }
           questions = phase_questions(phase).value_or({})
-          
+
           trigger_hook(:before_phase, phase: phase, session: session, context: context)
 
           result = {
@@ -355,7 +355,7 @@ module MASTER
           }
 
           trigger_hook(:after_phase, phase: phase, session: session, result: result)
-          
+
           result
         end
       end
@@ -482,26 +482,26 @@ module MASTER
         def oscillating_diffs?(history)
           return false if history.size < 4
           return false unless history.last(4).all? { |h| h[:diff] }
-          
+
           recent_diffs = history.last(4).map { |h| h[:diff] }
-          
+
           similarity_03 = diff_similarity(recent_diffs[0], recent_diffs[2])
           similarity_13 = diff_similarity(recent_diffs[1], recent_diffs[3])
-          
+
           similarity_03 > 0.9 && similarity_13 > 0.9
         end
 
         def diff_similarity(diff1, diff2)
           return 1.0 if diff1 == diff2
           return 0.0 if diff1.nil? || diff2.nil?
-          
+
           max_len = [diff1.length, diff2.length].max
           return 0.0 if max_len == 0
-          
+
           unless defined?(Utils) && Utils.respond_to?(:levenshtein)
             return 0.0
           end
-          
+
           distance = Utils.levenshtein(diff1, diff2)
           1.0 - (distance.to_f / max_len)
         end
@@ -573,15 +573,15 @@ module MASTER
 
         def change_ratio(content1, content2)
           return 0.0 if content1 == content2
-          
+
           max_len = 10_000
           str1 = content1[0, max_len]
           str2 = content2[0, max_len]
-          
+
           distance = Utils.levenshtein(str1, str2)
           max_length = [str1.length, str2.length].max
           return 1.0 if max_length == 0
-          
+
           distance.to_f / max_length
         end
 
@@ -640,15 +640,15 @@ module MASTER
   WorkflowEngine = Workflow::Engine
   Convergence = Workflow::Convergence
   Converge = Workflow::Convergence
-  
+
   # Backward compatibility for PlannerHelper module
   module PlannerHelper
     extend self
-    
+
     def parse_plan(text)
       Workflow::Planner.parse_plan(text)
     end
-    
+
     def generate_plan(goal, max_steps: 10)
       Workflow::Planner.generate_plan(goal, max_steps: max_steps)
     end

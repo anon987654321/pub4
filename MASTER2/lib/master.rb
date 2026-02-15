@@ -285,9 +285,9 @@ module MASTER
         puts c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}")
         puts c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}")
         puts c("smoke0 at executor0: #{smoke_result}")
-        
+
         yield if block_given?  # Allow caller to inject web line before boot summary
-        
+
         elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round
         puts c("boot: #{elapsed}ms")
         puts
@@ -303,7 +303,7 @@ module MASTER
       # Verify critical methods exist at runtime
       def smoke_test
         missing = []
-        
+
         smoke_test_methods.each do |mod, methods|
           methods.each do |method|
             unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.instance_methods.include?(method))
@@ -311,13 +311,13 @@ module MASTER
             end
           end
         end
-        
+
         # Also check optional modules
         optional_checks = []
         optional_checks << "Chamber" if defined?(Chamber) && !Chamber.respond_to?(:council_review)
         optional_checks << "CodeReview" if defined?(CodeReview) && !CodeReview.respond_to?(:analyze)
         optional_checks << "AutoFixer" if defined?(AutoFixer) && !AutoFixer.instance_methods.include?(:fix)
-        
+
         if missing.any?
           UI.warn("Missing methods: #{missing.join(', ')}")
           "FAIL #{missing.size}"

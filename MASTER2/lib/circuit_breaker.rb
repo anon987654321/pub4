@@ -6,7 +6,7 @@ begin
   STOPLIGHT_AVAILABLE = true
 rescue LoadError
   STOPLIGHT_AVAILABLE = false
-  
+
   # Simple mock for when Stoplight is not available
   module Stoplight
     class Light
@@ -14,25 +14,25 @@ rescue LoadError
         nil
       end
     end
-    
+
     module Error
       class RedLight < StandardError; end
     end
   end
-  
+
   def Stoplight(name, threshold: 3, cool_off_time: 300)
     StoplightMock.new(name, threshold, cool_off_time)
   end
-  
+
   class StoplightMock
     attr_reader :name
-    
+
     def initialize(name, threshold = 3, cool_off_time = 300)
       @name = name
       @threshold = threshold
       @cool_off_time = cool_off_time
     end
-    
+
     def run
       yield
     end

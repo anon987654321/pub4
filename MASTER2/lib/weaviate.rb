@@ -15,7 +15,7 @@ module MASTER
     API_KEY = ENV['WEAVIATE_API_KEY']
 
     CLASS_NAME = 'MasterMemory'
-    
+
     # Retry configuration
     MAX_RETRIES = 3
     RETRY_BACKOFF_BASE = 2  # seconds, exponential
@@ -31,7 +31,7 @@ module MASTER
         uri = URI("#{base_url}/v1/.well-known/ready")
         request = Net::HTTP::Get.new(uri)
         add_auth_headers(request)
-        
+
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
         http.open_timeout = 5
@@ -67,9 +67,9 @@ module MASTER
       # Create a custom schema class
       def create_schema(schema_def)
         return Result.err("Weaviate not available") unless available?
-        
+
         response = post('/v1/schema', schema_def)
-        
+
         if response['error']
           Result.err("Failed to create schema: #{response['error']}")
         else
@@ -224,7 +224,7 @@ module MASTER
       def post(path, body, retries: MAX_RETRIES)
         uri = URI("#{base_url}#{path}")
         last_error = nil
-        
+
         retries.times do |attempt|
           begin
             http = Net::HTTP.new(uri.host, uri.port)
@@ -245,7 +245,7 @@ module MASTER
             sleep(RETRY_BACKOFF_BASE ** attempt) if attempt < retries - 1
           end
         end
-        
+
         { 'error' => "Failed after #{retries} retries: #{last_error}" }
       end
 

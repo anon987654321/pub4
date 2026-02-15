@@ -27,7 +27,7 @@ module MASTER
 
           begin
             pattern = Regexp.new(pattern_str, Regexp::MULTILINE)
-            
+
             # Check if code matches the violation pattern
             if code.match?(pattern)
               # If there's a negative pattern, check that too
@@ -102,7 +102,7 @@ module MASTER
         # Check if private methods are called before they're defined
         public_section = code.split(/^\s*private\s*$/).first || code
         private_methods = code.scan(/^\s*private[\s\S]*?def\s+(\w+)/).flatten
-        
+
         private_methods.each do |method|
           if public_section.match?(/\b#{method}\b/) && !public_section.match?(/def\s+#{method}/)
             # Method called in public section but defined in private - this is fine
@@ -199,10 +199,7 @@ module MASTER
           []
         end
       end
-
-      # ========================================================================
       # Additional checks from Validator (merged for ONE_SOURCE compliance)
-      # ========================================================================
 
       # KISS: Only flag unnecessary complexity in internal logic
       # Never remove: UI/UX features, user-facing functionality, accessibility, error messages

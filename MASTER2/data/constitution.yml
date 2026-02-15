@@ -62,7 +62,7 @@ quality_gates:
     method_lines: 5
     params: 4
     ivars: 2
-  
+
   martin_pragmatic:
     description: "For bin/ and test/ - Robert Martin's pragmatic limits"
     method_lines: 20

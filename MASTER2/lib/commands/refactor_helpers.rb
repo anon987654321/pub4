@@ -52,7 +52,7 @@ module MASTER
       def display_preview(path, original, proposed, result, council_info)
         require_relative "diff_view"
         diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
-        
+
         puts "\n  Proposals: #{result.value[:proposals].size}"
         puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
         if (summary = format_council_summary(council_info))
@@ -65,25 +65,25 @@ module MASTER
       def apply_refactor(path, original, proposed, result, council_info)
         require_relative "diff_view"
         diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
-        
+
         puts "\n  Proposals: #{result.value[:proposals].size}"
         puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
         if (summary = format_council_summary(council_info))
           puts summary
         end
         puts "\n#{diff}"
-        
+
         # Prompt for confirmation
         print "\n  Apply these changes? [y/N] "
         response = $stdin.gets&.strip&.downcase
-        
+
         if response == "y" || response == "yes"
           # Track original content for undo
           Undo.track_edit(path, original)
-          
+
           # Write changes to disk
           File.write(path, proposed)
-          
+
           puts "  ✓ Changes applied to #{path}"
           puts "  (Use 'undo' command to revert)"
         else

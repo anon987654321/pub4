@@ -31,7 +31,7 @@ module MASTER
         rails = config['rails_specific'] || {}
         pwa = config['pwa_specific'] || {}
         html_css = config['html_css_quality'] || {}
-        
+
         bloaters.merge(couplers).merge(dispensables).merge(architecture)
                 .merge(rails).merge(pwa).merge(html_css)
       end

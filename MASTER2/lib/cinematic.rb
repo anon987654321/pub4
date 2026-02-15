@@ -204,10 +204,10 @@ module MASTER
 
         model_name = model_id.split('/').last.gsub(/[^a-z0-9]/i, '_')
         filename = "stage_#{stage_idx}_#{model_name}.png"
-        
+
         intermediate_dir = File.join(Paths.var, 'pipeline')
         FileUtils.mkdir_p(intermediate_dir)
-        
+
         path = File.join(intermediate_dir, filename)
         Replicate.download_file(output, path)
       rescue => e
@@ -217,7 +217,7 @@ module MASTER
 
       def generate_embedding(text)
         return nil unless defined?(LLM) && LLM.configured?
-        
+
         # Use OpenRouter for embeddings if available
         # For now, return nil - embeddings can be added later
         nil
@@ -311,10 +311,10 @@ module MASTER
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
           preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
-          { 
-            name: preset['name'], 
-            description: preset['description'], 
-            source: 'custom' 
+          {
+            name: preset['name'],
+            description: preset['description'],
+            source: 'custom'
           }
         end
       else

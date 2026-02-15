@@ -26,7 +26,7 @@ module MASTER
     # RepLigen command handler
     def repligen_command(cmd, args)
       require_relative "repligen_bridge"
-      
+
       case cmd
       when "repligen", "generate-image"
         return puts "Usage: repligen <prompt>" if args.nil? || args.empty?
@@ -55,7 +55,7 @@ module MASTER
     # PostPro command handler
     def postpro_command(cmd, args)
       require_relative "postpro_bridge"
-      
+
       case cmd
       when "postpro"
         if args.nil? || args.empty?
@@ -70,7 +70,7 @@ module MASTER
         operation = parts[0]
         image_url = parts[1]
         return puts "Usage: postpro <operation> <image_url>" if image_url.nil?
-        
+
         puts "🔧 Enhancing with #{operation}..."
         result = PostProBridge.enhance(image_url: image_url, operation: operation)
         if result.ok?
@@ -81,8 +81,8 @@ module MASTER
       when "enhance", "upscale"
         return puts "Usage: #{cmd} <image_url>" if args.nil? || args.empty?
         puts "🔧 #{cmd.capitalize}ing image..."
-        result = cmd == "upscale" ? 
-          PostProBridge.upscale(image_url: args) : 
+        result = cmd == "upscale" ?
+          PostProBridge.upscale(image_url: args) :
           PostProBridge.enhance(image_url: args, operation: :upscale)
         if result.ok?
           puts "✓ Done: #{result.value[:urls]&.first || 'Success'}"

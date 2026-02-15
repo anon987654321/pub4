@@ -11,13 +11,10 @@ module MASTER
   #   3. OpenBSD kernel-style dmesg - from dmesg.rb
   module Logging
     extend self
-
-    # ========================================================================
     # CONFIGURATION
-    # ========================================================================
 
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
-    
+
     @level = :info
     @format = :human  # :json or :human
     @output = $stderr
@@ -50,10 +47,7 @@ module MASTER
       def enabled?(level = LLM_ONLY)
         trace_level >= level
       end
-
-      # ========================================================================
       # STANDARD LOGGING (from log.rb + logging.rb)
-      # ========================================================================
 
       def debug(message, **context)
         log(:debug, message, **context)
@@ -85,7 +79,7 @@ module MASTER
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         result = yield
         duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start) * 1000).round(2)
-        
+
         info("#{operation} completed", duration_ms: duration_ms, **context)
         result
       rescue StandardError => e
@@ -111,10 +105,7 @@ module MASTER
         end
         error_msg
       end
-
-      # ========================================================================
       # DOMAIN-SPECIFIC LOGGING (from log.rb)
-      # ========================================================================
 
       # Log LLM call with tier/model information
       def llm(tier:, model:, tokens_in: 0, tokens_out: 0, cost: 0, latency: nil)
@@ -122,14 +113,14 @@ module MASTER
         details += ", $#{cost.round(4)}" if cost.positive?
         details += ", #{latency}ms" if latency
         dmesg_log('llm0', parent: tier.to_s, message: "#{model}, #{details}", level: LLM_ONLY)
-        
+
         if logging_enabled?
-          info("LLM call", 
-            tier: tier, 
-            model: model, 
-            tokens_in: tokens_in, 
-            tokens_out: tokens_out, 
-            cost: cost, 
+          info("LLM call",
+            tier: tier,
+            model: model,
+            tokens_in: tokens_in,
+            tokens_out: tokens_out,
+            cost: cost,
             latency: latency
           )
         end
@@ -222,10 +213,7 @@ module MASTER
         dmesg_log('boot', message: "#{duration_ms}ms", level: SILENT)
         info("Boot complete", duration_ms: duration_ms) if logging_enabled?
       end
-
-      # ========================================================================
       # CONVENIENCE METHODS (from logging.rb)
-      # ========================================================================
 
       # Convenience: log LLM calls (alternative signature)
       def llm_call(model:, tokens_in:, tokens_out:, cost:, duration_ms:, success:)
@@ -246,10 +234,7 @@ module MASTER
           warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
         end
       end
-
-      # ========================================================================
       # DMESG-STYLE LOGGING (from dmesg.rb)
-      # ========================================================================
 
       # Core dmesg logging - OpenBSD kernel style
       def dmesg_log(device, parent: nil, message: nil, level: ALL_EVENTS)
@@ -296,16 +281,13 @@ module MASTER
       end
 
       private
-
-      # ========================================================================
       # PRIVATE HELPERS
-      # ========================================================================
 
       def log(severity, message, **context)
         return if LEVELS[severity] < LEVELS[@level]
 
         entry = build_entry(severity, message, context)
-        
+
         case @format
         when :json
           @output.puts(JSON.generate(entry))
@@ -334,11 +316,11 @@ module MASTER
                  else ""
                  end
         reset = "\e[0m"
-        
+
         ctx = entry.except(:timestamp, :level, :message, :request_id)
         ctx_str = ctx.any? ? " #{ctx.map { |k, v| "#{k}=#{v}" }.join(' ')}" : ""
         rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
-        
+
         "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
       end
 
@@ -348,10 +330,7 @@ module MASTER
       end
     end
   end
-
-  # ========================================================================
   # BACKWARD COMPATIBILITY ALIASES
-  # ========================================================================
 
   # Alias for old Log module
   Log = Logging

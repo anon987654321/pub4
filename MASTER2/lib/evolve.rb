@@ -81,7 +81,7 @@ module MASTER
             stage_result = staging.staged_modify(file, validation_command: @validation_command) do |staged_path|
               File.write(staged_path, result.value[:final])
             end
-            
+
             unless stage_result.ok?
               return { file: file, improved: false, error: stage_result.error }
             end
@@ -90,7 +90,7 @@ module MASTER
             File.write(file, result.value[:final])
           end
         end
-        
+
         @cost += result.value[:cost]
         { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
       else
@@ -119,7 +119,7 @@ module MASTER
 
       ruby_blocks.each do |block|
         result = @chamber.deliberate(block[:code], filename: "#{File.basename(file)}:#{block[:start_line]}")
-        
+
         if result.ok? && result.value[:final] != block[:code]
           improved_blocks << { original: block, improved: result.value[:final] }
           total_cost += result.value[:cost]
@@ -151,7 +151,7 @@ module MASTER
 
     def create_safety_checkpoint
       return unless system("git rev-parse --git-dir > /dev/null 2>&1")
-      
+
       tag_name = "evolve_checkpoint_#{Time.now.to_i}"
       success = system("git", "tag", tag_name, out: File::NULL, err: File::NULL)
       success ? tag_name : nil

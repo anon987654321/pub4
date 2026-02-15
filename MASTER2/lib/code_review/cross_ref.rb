@@ -20,10 +20,10 @@ module MASTER
 
       def analyze(files)
         files = [files] unless files.is_a?(Array)
-        
+
         files.each do |file|
           next unless File.exist?(file) && file.end_with?(".rb")
-          
+
           begin
             content = File.read(file)
             analyze_file(file, content)
@@ -32,7 +32,7 @@ module MASTER
             next
           end
         end
-        
+
         Result.ok(analyzer: self)
       end
 
@@ -50,22 +50,22 @@ module MASTER
       def duplicate_calls
         # Simplified: find methods that call the same method multiple times
         duplicates = []
-        
+
         @method_defs.each do |method_name, location|
           # This is a simplified heuristic - proper implementation would need AST
           file, _line = location
           next unless File.exist?(file)
-          
+
           content = File.read(file)
           method_match = content.match(/def\s+#{Regexp.escape(method_name)}.*?(?=def\s+|\z)/m)
           next unless method_match
-          
+
           method_body = method_match[0]
           calls = method_body.scan(/\b([a-z_][a-z0-9_]*)\s*\(/).flatten
-          
+
           call_counts = calls.group_by(&:itself).transform_values(&:count)
           repeated = call_counts.select { |_name, count| count > 2 }
-          
+
           repeated.each do |called, count|
             duplicates << {
               method: method_name,
@@ -75,7 +75,7 @@ module MASTER
             }
           end
         end
-        
+
         duplicates
       end
 
@@ -129,10 +129,10 @@ module MASTER
 
       def analyze_file(file, content)
         lines = content.lines
-        
+
         lines.each_with_index do |line, idx|
           line_num = idx + 1
-          
+
           # Detect constant definitions (simplified)
           defined_const = nil
           if line =~ /^\s*([A-Z][A-Z0-9_]*)\s*=/
@@ -140,7 +140,7 @@ module MASTER
             @constant_defs[const_name] = [file, line_num]
             defined_const = const_name
           end
-          
+
           # Detect constant uses (excluding the one being defined on this line)
           line.scan(/\b([A-Z][A-Z0-9_]*)\b/) do |match|
             const_name = match[0]
@@ -148,13 +148,13 @@ module MASTER
             @constant_uses[const_name] ||= []
             @constant_uses[const_name] << [file, line_num]
           end
-          
+
           # Detect method definitions
           if line =~ /^\s*def\s+([a-z_][a-z0-9_?!]*)/
             method_name = $1
             @method_defs[method_name] = [file, line_num]
           end
-          
+
           # Detect method calls (simplified)
           line.scan(/\b([a-z_][a-z0-9_]*)\s*\(/) do |match|
             method_name = match[0]

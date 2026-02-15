@@ -10,7 +10,7 @@ module MASTER
   # Executes registered actions at key pipeline moments
   module Hooks
     HOOKS_FILE = File.join(__dir__, "..", "data", "hooks.yml")
-    
+
     # Events supported by the hook system
     EVENTS = %i[
       before_edit after_edit
@@ -77,7 +77,7 @@ module MASTER
           @handlers ||= {}
           @handlers[event.to_sym] ||= []
           @handlers[event.to_sym] << handler
-          
+
           { event: event, handlers: @handlers[event.to_sym].size }
         end
       end
@@ -90,7 +90,7 @@ module MASTER
           else
             @handlers[event.to_sym] = []
           end
-          
+
           { event: event, cleared: handler.nil? }
         end
       end
@@ -101,7 +101,7 @@ module MASTER
 
           results = []
           hook_names = config[event.to_s] || []
-          
+
           hook_names.each do |hook_name|
             result = execute_hook(hook_name, data)
             results << { hook: hook_name, result: result }
@@ -125,7 +125,7 @@ module MASTER
 
       def dispatch_with_rollback(event, data = {}, &rollback_block)
         result = dispatch(event, data)
-        
+
         if result.ok? && result.value[:success]
           result
         else
@@ -234,7 +234,7 @@ module MASTER
 
       def validate_syntax(code)
         return Result.err("No code provided") unless code
-        
+
         # Ruby syntax check using safe compilation
         begin
           RubyVM::InstructionSequence.compile(code)

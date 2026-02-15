@@ -13,26 +13,26 @@ module MASTER
 
       begin
         require 'rubocop'
-        
+
         # Configure RuboCop
         config_store = RuboCop::ConfigStore.new
         options = {
           formatters: [],
           force_exclusion: false,
         }
-        
+
         # Create runner and process file
         runner = RuboCop::Runner.new(options, config_store)
         results = []
-        
+
         # Temporarily capture offenses
         original_stdout = $stdout
         $stdout = StringIO.new
-        
+
         begin
           # Run RuboCop on the file
           runner.run([file_path])
-          
+
           # Access offenses through the runner's result cache
           if runner.instance_variable_defined?(:@result_cache)
             cache = runner.instance_variable_get(:@result_cache)
@@ -45,7 +45,7 @@ module MASTER
         ensure
           $stdout = original_stdout
         end
-        
+
         Result.ok(violations: results, file: file_path, count: results.size)
       rescue LoadError
         Result.err("RuboCop gem not available")
@@ -59,7 +59,7 @@ module MASTER
     # @return [Result] Ok with aggregated results, or Err
     def self.scan_multiple(file_paths)
       return Result.err("RuboCop not installed") unless installed?
-      
+
       all_results = []
       file_paths.each do |path|
         result = scan(path)
@@ -69,7 +69,7 @@ module MASTER
           return result  # Early exit on error
         end
       end
-      
+
       total_violations = all_results.sum { |r| r[:count] }
       Result.ok(
         files: all_results,

@@ -49,7 +49,7 @@ module MASTER
           files.each do |f|
             content = File.read(f) rescue next
             issues += scan_file(f)
-            
+
             # Add smell analysis if module is available
             if defined?(Smells)
               smells = Smells.detect(content, path: f) rescue []
@@ -65,7 +65,7 @@ module MASTER
         else
           content = File.read(path)
           issues = scan_file(path)
-          
+
           if defined?(Smells)
             smells = Smells.detect(content, path: path) rescue []
             issues += smells.map { |s| s.merge(file: path, type: :smell) }
@@ -80,7 +80,7 @@ module MASTER
         return Result.err('Path not found') unless File.exist?(path)
 
         files = File.directory?(path) ? Dir[File.join(path, '**', '*.rb')] : [path]
-        
+
         stats = {
           files: files.size,
           total_lines: files.sum { |f| File.read(f).lines.size rescue 0 },
@@ -148,13 +148,13 @@ module MASTER
       # Load axioms filtered by scan profile priority
       def load_axioms_for_profile(profile)
         return nil unless SCAN_PROFILES.key?(profile)
-        
+
         config = SCAN_PROFILES[profile]
         min_priority = config[:min_priority]
-        
+
         axioms_path = File.join(MASTER.root, 'data', 'axioms.yml')
         return nil unless File.exist?(axioms_path)
-        
+
         all_axioms = YAML.safe_load_file(axioms_path)
         all_axioms.select { |a| (a['priority'] || a[:priority] || 5) >= min_priority }
       rescue => e
@@ -171,9 +171,9 @@ module MASTER
         content.scan(/^\s*def\s+\w+.*?^\s*end/m).each do |method|
           lines = method.lines.size
           if lines > MAX_METHOD_LINES
-            issues << { 
-              file: path, 
-              type: :long_method, 
+            issues << {
+              file: path,
+              type: :long_method,
               lines: lines,
               severity: lines > 50 ? :high : :medium,
               message: "Method has #{lines} lines (max: #{MAX_METHOD_LINES})"
@@ -184,9 +184,9 @@ module MASTER
         # God class
         lines = content.lines.size
         if lines > MAX_FILE_LINES
-          issues << { 
-            file: path, 
-            type: :god_class, 
+          issues << {
+            file: path,
+            type: :god_class,
             lines: lines,
             severity: lines > 500 ? :high : :medium,
             message: "File has #{lines} lines (max: #{MAX_FILE_LINES})"
@@ -206,9 +206,9 @@ module MASTER
         end
 
         if max_nesting > 3
-          issues << { 
-            file: path, 
-            type: :deep_nesting, 
+          issues << {
+            file: path,
+            type: :deep_nesting,
             depth: max_nesting,
             severity: max_nesting > 5 ? :high : :medium,
             message: "Maximum nesting depth: #{max_nesting}"

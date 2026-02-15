@@ -22,15 +22,15 @@ module MASTER
       # Create unique staging path
       basename = File.basename(path)
       staged_path = File.join(@staging_dir, "#{Time.now.to_i}_#{basename}")
-      
+
       # Create backup of original
       backup_path = "#{staged_path}.backup"
-      
+
       begin
         FileUtils.cp(path, staged_path)
         FileUtils.cp(path, backup_path)
         @backups[path] = backup_path
-        
+
         Result.ok(staged_path: staged_path, backup: backup_path)
       rescue StandardError => e
         Result.err("Failed to stage file: #{e.message}")
@@ -51,7 +51,7 @@ module MASTER
       begin
         # Run validation command
         stdout, stderr, status = Open3.capture3("#{validation_cmd} #{staged_path}")
-        
+
         if status.success?
           Result.ok(output: stdout)
         else
@@ -91,16 +91,16 @@ module MASTER
     # Rollback all files modified in this staging session
     def rollback_all
       return Result.err("No backups to rollback") if @backups.empty?
-      
+
       results = []
       @backups.each do |original_path, backup_path|
         result = rollback(original_path)
         results << { path: original_path, success: result.ok?, error: result.error }
       end
-      
+
       successes = results.count { |r| r[:success] }
       failures = results.reject { |r| r[:success] }
-      
+
       if successes == results.size
         Result.ok(restored: successes, details: results)
       else
@@ -119,27 +119,27 @@ module MASTER
       # Stage the file
       stage_result = stage_file(path)
       return stage_result unless stage_result.ok?
-      
+
       staged_path = stage_result.value[:staged_path]
-      
+
       begin
         # Yield to the block for modification
         block.call(staged_path) if block
-        
+
         # Validate the changes
         validate_result = validate(staged_path, command: validation_command)
         unless validate_result.ok?
           rollback(path)
           return validate_result
         end
-        
+
         # Promote to original location
         promote_result = promote(staged_path, path)
         unless promote_result.ok?
           rollback(path)
           return promote_result
         end
-        
+
         Result.ok(modified: path)
       rescue StandardError => e
         rollback(path)

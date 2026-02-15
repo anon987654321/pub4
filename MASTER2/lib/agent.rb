@@ -200,15 +200,15 @@ module MASTER
     extend self
 
     LEARNING_FILE = File.join(MASTER.root, 'data', 'agent_learning.yml')
-    
+
     # Goal decomposition - break complex goals into subtasks via LLM
     def decompose_goal(goal)
       prompt = <<~PROMPT
         Break this goal into 3-7 concrete, actionable subtasks.
         Each subtask should be completable in one step.
-        
+
         Goal: #{goal}
-        
+
         Return as numbered list, one task per line.
         No explanations, just the tasks.
       PROMPT
@@ -230,10 +230,10 @@ module MASTER
       attr_accessor :progress
 
       def track_start(task_id, description)
-        @progress[:pending] << { 
-          id: task_id, 
-          description: description, 
-          started_at: Time.now 
+        @progress[:pending] << {
+          id: task_id,
+          description: description,
+          started_at: Time.now
         }
       end
 
@@ -285,13 +285,13 @@ module MASTER
     def self_correct(original_output, error)
       prompt = <<~PROMPT
         Your previous output caused an error. Fix it.
-        
+
         Original output:
         #{original_output[0..1000]}
-        
+
         Error:
         #{error[0..500]}
-        
+
         Provide corrected output only, no explanations.
       PROMPT
 
@@ -365,7 +365,7 @@ module MASTER
         current recent previous existing
         this that these those
       ]
-      
+
       task.downcase.split.any? { |word| context_keywords.include?(word) }
     end
 

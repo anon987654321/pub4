@@ -71,14 +71,14 @@ module MASTER
       # Search past sessions for relevant content
       def search(query, limit: 3)
         return [] if query.nil? || query.strip.empty?
-        
+
         results = []
         query_words = query.downcase.split(/\s+/)
-        
+
         list_sessions.each do |session_id|
           data = load_session(session_id)
           next unless data && data[:history]
-          
+
           data[:history].each do |msg|
             content = msg[:content].to_s.downcase
             # Score by number of matching words
@@ -88,7 +88,7 @@ module MASTER
             end
           end
         end
-        
+
         results.sort_by { |r| -r[:score] }
                .first(limit)
                .map { |r| r[:content] }
@@ -138,20 +138,20 @@ module MASTER
     # Run session capture (call after successful work session)
     def capture(session_id: nil)
       session_id ||= Session.current.id
-      
+
       puts UI.bold("\n📚 Session Capture")
       puts UI.dim("Extracting patterns from this session...\n")
 
       answers = {}
-      
+
       QUESTIONS.each do |q|
         puts UI.yellow("\n#{q[:question]}")
         puts UI.dim("  Action: #{q[:action]}")
         print "  Answer (or skip): "
-        
+
         answer = $stdin.gets&.chomp&.strip
         next if answer.nil? || answer.empty? || answer.downcase == 'skip'
-        
+
         answers[q[:category]] = answer
       end
 
@@ -185,7 +185,7 @@ module MASTER
       end
 
       puts UI.green("\n✓ Session insights captured and added to learnings")
-      
+
       Result.ok(captured: true, insights: answers.size)
     end
 
@@ -248,7 +248,7 @@ module MASTER
     AUTOSAVE_INTERVAL = 30  # seconds
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
     SUPPORTED_PERSONAS = %i[ronin lawyer hacker architect sysadmin trader medic].freeze
-    
+
     NORWEGIAN_RULES = [
       "Use bokmål, not nynorsk",
       "Prefer short sentences",
@@ -276,7 +276,7 @@ module MASTER
 
       @history << entry
       @dirty = true
-      
+
       # Auto-save periodically
       autosave_if_needed
       entry
@@ -422,8 +422,8 @@ module MASTER
       # @return [void]
       def save_on_crash
         return unless @current&.dirty?
-        
-        @current.instance_variable_set(:@metadata, 
+
+        @current.instance_variable_set(:@metadata,
           @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
       rescue StandardError
@@ -446,11 +446,11 @@ module MASTER
       # Norwegian indicators
       norwegian_words = %w[og men er på av til fra med som den det]
       norwegian_count = norwegian_words.count { |word| text.downcase.include?(word) }
-      
+
       # English indicators
       english_words = %w[the and but are on of to from with as that this]
       english_count = english_words.count { |word| text.downcase.include?(word) }
-      
+
       if norwegian_count > english_count
         Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))
       else
@@ -460,7 +460,7 @@ module MASTER
 
     def self.norwegian_style_check(text)
       issues = []
-      
+
       # Check for common anglicisms
       anglicisms = {
         "meeting" => "møte",
@@ -468,20 +468,20 @@ module MASTER
         "deadline" => "frist",
         "feedback" => "tilbakemelding"
       }
-      
+
       anglicisms.each do |english, norwegian|
         if text.downcase.include?(english)
           issues << "Replace '#{english}' with '#{norwegian}'"
         end
       end
-      
+
       Result.ok(issues: issues)
     end
 
     # Persona management
     def self.set_persona(persona)
       return Result.err("Unknown persona: #{persona}") unless SUPPORTED_PERSONAS.include?(persona)
-      
+
       current.write_metadata(:persona, persona)
       Result.ok(persona: persona)
     end

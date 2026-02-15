@@ -2,10 +2,7 @@
 # Timeless, universal axioms from authoritative sources.
 # 6 categories, 32 axioms. Each is actionable and validatable.
 # Priority: 10=critical (always scan), 7=important (standard), 5=normal, 3=deep-only
-
-# ============================================================================
 # ENGINEERING AXIOMS (Core principles)
-# ============================================================================
 
 - id: "ONE_SOURCE"
   category: "engineering"
@@ -98,10 +95,7 @@
   statement: "External calls have explicit timeouts. Infinity is not a timeout. Hanging is worse than failing."
   source: "Release It! by Michael Nygard"
   suggest: "Add explicit timeout to external call (e.g., open_timeout: 5, read_timeout: 10)."
-
-# ============================================================================
 # STRUCTURAL AXIOMS (Refactoring operations - the HOW)
-# ============================================================================
 
 - id: "MERGE"
   category: "structural"
@@ -168,10 +162,7 @@
   title: "Reflow by Importance"
   statement: "Order by importance, then chronology. Public API at top, helpers at bottom. Constants before methods."
   source: "Clean Code by Robert C. Martin"
-
-# ============================================================================
 # PROCESS AXIOMS (How we work)
-# ============================================================================
 
 - id: "LEAVE_BETTER"
   category: "process"
@@ -220,10 +211,7 @@
   title: "Make It Reversible"
   statement: "Every action can be undone. Edits, config changes, state mutations need rollback."
   source: "The Pragmatic Programmer"
-
-# ============================================================================
 # COMMUNICATION AXIOMS (Code as literature)
-# ============================================================================
 
 - id: "BE_CONCISE"
   category: "communication"
@@ -256,10 +244,7 @@
   title: "Steady Rhythm"
   statement: "Spacing and arrangement create steady visual and logical rhythm."
   source: "The Elements of Typographic Style by Robert Bringhurst"
-
-# ============================================================================
 # RESILIENCE AXIOMS (Systems that survive)
-# ============================================================================
 
 - id: "DEGRADE_GRACEFULLY"
   category: "resilience"
@@ -284,10 +269,7 @@
   title: "Append-Only History"
   statement: "History is never mutated. Append-only enables replay, prevents data loss."
   source: "Event Sourcing Principles"
-
-# ============================================================================
 # AESTHETIC AXIOMS (Beauty in craft)
-# ============================================================================
 
 - id: "JUST_ENOUGH"
   category: "aesthetic"
@@ -328,10 +310,7 @@
   title: "Don't Force It"
   statement: "Don't force solutions. The right solution flows naturally."
   source: "Taoist Philosophy"
-
-# ============================================================================
 # META AXIOMS (Self-governance)
-# ============================================================================
 
 - id: "SELF_APPLY"
   category: "meta"
@@ -360,10 +339,7 @@
   title: "User-Friendly Design"
   statement: "Visibility. User control. Error prevention. Consistency. Recognition over recall."
   source: "10 Usability Heuristics by Jakob Nielsen"
-
-# ============================================================================
 # GOVERNANCE AXIOMS (Restored from master.yml v71.3.0)
-# ============================================================================
 
 - id: "PRESERVE_FIRST"
   category: "governance"
@@ -428,10 +404,7 @@
   title: "Simplest Explanation"
   statement: "Among competing solutions, the one with fewest assumptions is usually correct."
   source: "William of Ockham"
-
-# ============================================================================
 # FUNCTIONAL AXIOMS (Restored from MASTER/data/principles.yml)
-# ============================================================================
 
 - id: "FUNCTIONAL_CORE"
   category: "functional"
@@ -480,10 +453,7 @@
   title: "Immutability by Default"
   statement: "Freeze data on creation. Mutate only when necessary and document why."
   source: "Functional Programming"
-
-# ============================================================================
 # PERFORMANCE AXIOMS (Restored from MASTER/data/principles.yml)
-# ============================================================================
 
 - id: "CACHE_FIRST"
   category: "performance"
@@ -508,10 +478,7 @@
   title: "Precompute Expensive Math"
   statement: "Move invariant calculations outside loops. Lookup tables over repeated computation."
   source: "MASTER/principles.yml"
-
-# ============================================================================
 # COMMUNICATION AXIOMS (Restored from MASTER/data/principles.yml)
-# ============================================================================
 
 - id: "PROSE_NOT_LISTS"
   category: "communication"
@@ -536,10 +503,7 @@
   title: "No Abbreviations"
   statement: "Spell it out. Abbreviations exclude newcomers and create ambiguity."
   source: "MASTER/principles.yml"
-
-# ============================================================================
 # AESTHETIC AXIOMS (Restored from MASTER/data/principles.yml)
-# ============================================================================
 
 - id: "SQUINT_TEST"
   category: "aesthetic"
@@ -572,10 +536,7 @@
   title: "Audio-Reactive Smoothing"
   statement: "Audio visualizations use exponential smoothing. Never raw FFT data."
   source: "MASTER/principles.yml"
-
-# ============================================================================
 # VERIFICATION AXIOMS (Restored from MASTER/data/principles.yml + chat insights)
-# ============================================================================
 
 - id: "DUAL_DETECT"
   category: "verification"

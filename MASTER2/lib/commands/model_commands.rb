@@ -68,7 +68,7 @@ module MASTER
           reflexion: "Self-critique and retry. Best for fixing/debugging.",
           auto: "Auto-select based on task characteristics (default)."
         }
-        
+
         current = Pipeline.current_pattern rescue :auto
         patterns.each do |name, desc|
           marker = name == current ? "▸" : " "

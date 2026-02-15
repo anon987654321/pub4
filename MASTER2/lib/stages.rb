@@ -84,7 +84,7 @@ module MASTER
         text = input[:text] || ""
         tier = LLM.tier
         model = nil
-        
+
         # Find an available model for the current tier
         LLM::TIER_ORDER.each do |t|
           LLM.model_tiers[t]&.each do |m|
@@ -95,7 +95,7 @@ module MASTER
           end
           break if model
         end
-        
+
         return Result.err("All models unavailable.") unless model
 
         Result.ok(input.merge(

@@ -34,7 +34,7 @@ module MASTER
         @findings.sort_by do |f|
           severity_score = { critical: 4, high: 3, medium: 2, low: 1 }[f.severity] || 1
           effort_score = { easy: 1, moderate: 2, hard: 3 }[f.effort] || 2
-          
+
           # Higher severity and lower effort = higher priority
           -(severity_score * 10 / effort_score)
         end
@@ -43,7 +43,7 @@ module MASTER
       def summary
         by_severity = @findings.group_by(&:severity)
         by_category = @findings.group_by(&:category)
-        
+
         {
           total: @findings.size,
           by_severity: by_severity.transform_values(&:count),
@@ -56,20 +56,20 @@ module MASTER
     def scan(files)
       report = Report.new
       files = [files] unless files.is_a?(Array)
-      
+
       files.each do |file|
         next unless File.exist?(file) && file.end_with?(".rb")
-        
+
         begin
           content = File.read(file)
           lines = content.lines
-          
+
           # Check file length
           check_file_length(file, lines, report)
-          
+
           # Check method and variable names
           check_naming(file, content, report)
-          
+
         rescue StandardError => e
           report.add(Finding.new(
             file: file,
@@ -82,7 +82,7 @@ module MASTER
           ))
         end
       end
-      
+
       Result.ok(report: report)
     end
 
@@ -91,16 +91,16 @@ module MASTER
     def check_file_length(file, lines, report)
       thresholds = if defined?(MASTER::Smells)
         smells_thresholds = MASTER::Smells.thresholds
-        { 
+        {
           warn: smells_thresholds[:max_file_lines],
           error: smells_thresholds[:max_file_lines] * 2
         }
       else
         { warn: 250, error: 500 }
       end
-      
+
       length = lines.size
-      
+
       if length > thresholds[:error]
         report.add(Finding.new(
           file: file,
@@ -127,11 +127,11 @@ module MASTER
     def check_naming(file, content, report)
       # Generic verb patterns
       generic_verbs = %w[handle process manage do execute perform run]
-      
+
       # Check method names for generic verbs
       content.scan(/^\s*def\s+([a-z_]+[a-z0-9_]*)/i).each do |match|
         method_name = match[0]
-        
+
         generic_verbs.each do |verb|
           if method_name.start_with?(verb) && method_name.length < 15
             report.add(Finding.new(
@@ -146,14 +146,14 @@ module MASTER
           end
         end
       end
-      
+
       # Vague noun patterns
       vague_nouns = %w[data info item thing stuff object element]
-      
+
       # Check variable names for vague nouns
       content.scan(/^\s*([a-z_]+[a-z0-9_]*)\s*=/).each do |match|
         var_name = match[0]
-        
+
         vague_nouns.each do |noun|
           if var_name.include?(noun) && var_name.length < 10
             report.add(Finding.new(

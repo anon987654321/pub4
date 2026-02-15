@@ -35,12 +35,12 @@ module MASTER
         files.each do |file|
           content = File.read(file)
           result = process(content, filename: file, dry_run: dry_run)
-          
+
           if result[:changed] && !dry_run
             File.write(file, result[:final])
             log("file0: wrote #{File.basename(file)}")
           end
-          
+
           results << result if result[:changed]
         end
 

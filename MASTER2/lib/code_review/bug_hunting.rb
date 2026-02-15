@@ -131,7 +131,7 @@ module MASTER
 
       def level_syntax(target)
         puts UI.dim("  Level 1: Syntax check...")
-        
+
         if target.end_with?('.rb')
           output = `ruby -c #{Shellwords.escape(target)} 2>&1`
           if $?.success?
@@ -149,7 +149,7 @@ module MASTER
 
       def level_logic(target)
         puts UI.dim("  Level 2: Logic check (tests)...")
-        
+
         test_file = target.sub('/lib/', '/test/').sub('.rb', '_test.rb')
         if File.exist?(test_file)
           require 'open3'
@@ -166,7 +166,7 @@ module MASTER
 
       def level_history(target)
         puts UI.dim("  Level 3: Git history...")
-        
+
         if system("git rev-parse --git-dir > /dev/null 2>&1")
           # Check if file was recently modified
           log = `git log --oneline -5 -- #{target}`.strip
@@ -182,7 +182,7 @@ module MASTER
 
       def level_llm(target)
         puts UI.dim("  Level 4: LLM analysis (costs $$$)...")
-        
+
         # Fall back to existing analyze method
         if File.exist?(target)
           code = File.read(target)
@@ -246,10 +246,10 @@ module MASTER
 
           # Wagner-Fischer dynamic programming algorithm
           matrix = Array.new(a.length + 1) { Array.new(b.length + 1) }
-          
+
           (0..a.length).each { |i| matrix[i][0] = i }
           (0..b.length).each { |j| matrix[0][j] = j }
-          
+
           (1..a.length).each do |i|
             (1..b.length).each do |j|
               cost = a[i - 1] == b[j - 1] ? 0 : 1
@@ -260,7 +260,7 @@ module MASTER
               ].min
             end
           end
-          
+
           matrix[a.length][b.length]
         end
       end

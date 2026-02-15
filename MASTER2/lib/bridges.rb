@@ -70,14 +70,14 @@ module MASTER
       # Apply enhancement to image
       def enhance(image_url:, operation:, params: {})
         return Result.err("Unknown operation: #{operation}") unless OPERATIONS.key?(operation.to_sym)
-        
+
         op = OPERATIONS[operation.to_sym]
-        
+
         if op[:models]
           # Use Replicate model
           model = op[:models].first
           return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-          
+
           Replicate.generate(
             prompt: "",
             model: model,
@@ -92,12 +92,12 @@ module MASTER
       # Batch enhance multiple images
       def batch_enhance(image_urls:, operation:, params: {})
         results = []
-        
+
         image_urls.each do |url|
           result = enhance(image_url: url, operation: operation, params: params)
           results << { url: url, result: result }
         end
-        
+
         Result.ok(results)
       end
 
@@ -116,9 +116,9 @@ module MASTER
       # Upscale shortcut
       def upscale(image_url:, scale: 4, model: nil)
         model_id = model || OPERATIONS[:upscale][:models].first
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.generate(
           prompt: "",
           model: model_id,
@@ -129,9 +129,9 @@ module MASTER
       # Face restoration shortcut
       def restore_face(image_url:, model: nil)
         model_id = model || OPERATIONS[:face_restore][:models].first
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.generate(
           prompt: "",
           model: model_id,
@@ -152,20 +152,20 @@ module MASTER
       # Film grain synthesis using Vips
       def add_grain(image_path:, intensity: 0.2, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
-          
+
           # Generate gaussian noise
           noise = Vips::Image.gaussnoise(img.width, img.height, mean: 128, sigma: intensity * 50)
-          
+
           # Composite with soft-light blend
           result = img.composite([noise], :soft_light)
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, '_grain\1')
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Grain synthesis failed: #{e.message}")
@@ -175,28 +175,28 @@ module MASTER
       # Halation (highlight bloom)
       def add_halation(image_path:, intensity: 0.15, tint: [255, 200, 180], output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
-          
+
           # Extract highlights
           gray = img.colourspace(:b_w)
           highlights = gray > (255 * 0.7)
-          
+
           # Blur highlights
           bloom = highlights.gaussblur(15)
-          
+
           # Tint the bloom
           tinted = bloom.bandjoin([bloom, bloom])
           tinted = tinted.linear([tint[0]/255.0, tint[1]/255.0, tint[2]/255.0], [0, 0, 0])
-          
+
           # Composite
           result = img + (tinted * intensity)
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, '_halation\1')
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Halation failed: #{e.message}")
@@ -207,18 +207,18 @@ module MASTER
       def color_grade(image_path:, preset: :kodak_portra_400, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
         return Result.err("Unknown preset: #{preset}") unless FILM_STOCKS.key?(preset)
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
           stock = FILM_STOCKS[preset]
-          
+
           # Apply 3x3 recomb matrix
           result = img.recomb(stock[:matrix])
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, "_#{preset}\\1")
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Color grading failed: #{e.message}")
@@ -228,25 +228,25 @@ module MASTER
       # Chromatic aberration
       def add_chromatic_aberration(image_path:, offset: 2, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
-          
+
           # Split channels
           bands = img.bandsplit
           r, g, b = bands[0], bands[1], bands[2]
-          
+
           # Shift red and blue channels
           r_shifted = r.affine([1, 0, 0, 1], oarea: [offset, 0, r.width, r.height])
           b_shifted = b.affine([1, 0, 0, 1], oarea: [-offset, 0, b.width, b.height])
-          
+
           # Recombine
           result = r_shifted.bandjoin([g, b_shifted])
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, '_chromatic\1')
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Chromatic aberration failed: #{e.message}")
@@ -256,31 +256,31 @@ module MASTER
       # Vignette effect
       def add_vignette(image_path:, intensity: 0.5, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
-          
+
           # Create radial gradient
           w, h = img.width, img.height
           cx, cy = w / 2.0, h / 2.0
           max_r = Math.sqrt(cx * cx + cy * cy)
-          
+
           # Generate XY coordinate images
           index = Vips::Image.xyz(w, h)
           x = index[0] - cx
           y = index[1] - cy
           r = (x * x + y * y).pow(0.5)
-          
+
           # Create vignette mask
           mask = 1 - ((r / max_r) * intensity).clip(0, 1)
-          
+
           # Apply
           result = img * mask
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, '_vignette\1')
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Vignette failed: #{e.message}")
@@ -290,25 +290,25 @@ module MASTER
       # Light leaks
       def add_light_leaks(image_path:, intensity: 0.3, color: [255, 180, 120], output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
-        
+
         begin
           require 'vips'
           img = Vips::Image.new_from_file(image_path)
-          
+
           # Create gradient overlay
           w, h = img.width, img.height
           gradient = Vips::Image.xyz(w, h)[0] / w.to_f
-          
+
           # Tint the gradient
           leak = Vips::Image.black(w, h).bandjoin([Vips::Image.black(w, h), Vips::Image.black(w, h)])
           leak = leak + gradient.bandjoin([gradient, gradient]) * [color[0], color[1], color[2]]
-          
+
           # Screen blend (approximation: A + B - A*B)
           result = img + (leak * intensity)
-          
+
           out = output_path || image_path.sub(/(\.\w+)$/, '_lightleak\1')
           result.write_to_file(out)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Light leak failed: #{e.message}")
@@ -319,31 +319,31 @@ module MASTER
       def apply_film_stock(image_path:, preset: :kodak_portra_400, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
         return Result.err("Unknown preset: #{preset}") unless FILM_STOCKS.key?(preset)
-        
+
         begin
           stock = FILM_STOCKS[preset]
           temp_dir = "/tmp/postpro_#{Time.now.to_i}_#{Process.pid}"
           Dir.mkdir(temp_dir) unless Dir.exist?(temp_dir)
-          
+
           # Step 1: Color grade
           step1 = File.join(temp_dir, "step1.jpg")
           color_grade(image_path: image_path, preset: preset, output_path: step1)
-          
+
           # Step 2: Grain
           step2 = File.join(temp_dir, "step2.jpg")
           add_grain(image_path: step1, intensity: stock[:grain], output_path: step2)
-          
+
           # Step 3: Halation
           step3 = File.join(temp_dir, "step3.jpg")
           add_halation(image_path: step2, intensity: stock[:halation], output_path: step3)
-          
+
           # Step 4: Vignette
           final = output_path || image_path.sub(/(\.\w+)$/, "_film_#{preset}\\1")
           add_vignette(image_path: step3, intensity: 0.3, output_path: final)
-          
+
           # Cleanup
           FileUtils.rm_rf(temp_dir)
-          
+
           Result.ok(final)
         rescue => e
           Result.err("Film stock pipeline failed: #{e.message}")
@@ -359,27 +359,27 @@ module MASTER
       def process_video_frames(video_path:, processor:, output_path: nil)
         return Result.err("ruby-vips not available") unless vips_available?
         return Result.err("ffmpeg not available") unless ffmpeg_available?
-        
+
         begin
           temp_dir = "/tmp/video_frames_#{Time.now.to_i}_#{Process.pid}"
           Dir.mkdir(temp_dir)
-          
+
           # Extract frames
           system("ffmpeg", "-i", video_path, "#{temp_dir}/frame_%04d.png", err: File::NULL)
-          
+
           # Process each frame
           Dir.glob("#{temp_dir}/frame_*.png").sort.each do |frame|
             processor.call(frame, frame)
           end
-          
+
           # Reassemble
           out = output_path || video_path.sub(/(\.\w+)$/, '_processed\1')
-          system("ffmpeg", "-framerate", "30", "-i", "#{temp_dir}/frame_%04d.png", 
+          system("ffmpeg", "-framerate", "30", "-i", "#{temp_dir}/frame_%04d.png",
                  "-c:v", "libx264", "-pix_fmt", "yuv420p", out, err: File::NULL)
-          
+
           # Cleanup
           FileUtils.rm_rf(temp_dir)
-          
+
           Result.ok(out)
         rescue => e
           Result.err("Video processing failed: #{e.message}")
@@ -439,27 +439,27 @@ module MASTER
       # Generate image using Replicate API
       def generate_image(prompt:, model: nil)
         model_id = model || self.class.wild_chain[:image_gen].first[:model]
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.generate(prompt: prompt, model: model_id)
       end
 
       # Generate video using Replicate API
       def generate_video(prompt:, model: nil)
         model_id = model || self.class.wild_chain[:video_gen].first[:model]
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.run(model_id: model_id, input: { prompt: prompt })
       end
 
       # Enhance image using upscaling models
       def enhance_image(image_url:, model: nil)
         model_id = model || self.class.wild_chain[:enhance].first[:model]
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.run(model_id: model_id, input: { image: image_url })
       end
 
@@ -491,15 +491,15 @@ module MASTER
       # Wild chain - random creative pipeline combos
       def wild_chain(steps: 3, seed: nil)
         rng = seed ? Random.new(seed) : Random.new
-        
+
         chain = []
         steps.times do
           # Randomly pick a category (prefer image gen and enhance)
           category = [:image_gen, :enhance, :video_gen].sample(random: rng)
           models = self.class.wild_chain[category]
-          
+
           next if models.nil? || models.empty?
-          
+
           model = models.sample(random: rng)
           chain << {
             step: chain.length + 1,
@@ -508,7 +508,7 @@ module MASTER
             name: model[:name]
           }
         end
-        
+
         Result.ok(chain)
       end
 
@@ -516,27 +516,27 @@ module MASTER
       def execute_chain(chain)
         return Result.err("Chain cannot be empty") if chain.nil? || chain.empty?
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         results = []
         current_output = nil
-        
+
         chain.each_with_index do |step, idx|
           params = {}
-          
+
           # If not first step and previous output exists, use it as input
           if idx > 0 && current_output
             params[:image] = current_output if step[:category] == :enhance
             params[:init_image] = current_output if step[:category] == :image_gen
           end
-          
+
           # Execute step
           result = Replicate.run(
             model_id: step[:model],
             input: { prompt: step[:prompt] || "" }.merge(params)
           )
-          
+
           return result if result.err?
-          
+
           current_output = result.value[:output]
           results << {
             step: idx + 1,
@@ -544,7 +544,7 @@ module MASTER
             output: current_output
           }
         end
-        
+
         Result.ok(results)
       end
 
@@ -552,15 +552,15 @@ module MASTER
       def generate_catwalk(prompt:, style: nil, lighting: nil, model: nil)
         style ||= CATWALK_STYLES.sample
         lighting ||= CATWALK_LIGHTING.sample
-        
+
         return Result.err("Unknown style: #{style}") unless CATWALK_STYLES.include?(style.to_s)
         return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
-        
+
         full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
         model_id = model || self.class.wild_chain[:image_gen].first[:model]
-        
+
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
-        
+
         Replicate.generate(
           prompt: full_prompt,
           model: model_id,
@@ -572,7 +572,7 @@ module MASTER
       def search_models(query)
         query_lower = query.to_s.downcase
         matches = []
-        
+
         self.class.wild_chain.each do |category, models|
           models.each do |m|
             if m[:name].downcase.include?(query_lower) || m[:model].downcase.include?(query_lower)
@@ -580,7 +580,7 @@ module MASTER
             end
           end
         end
-        
+
         Result.ok(matches)
       end
 
@@ -589,7 +589,7 @@ module MASTER
         return Result.err("Replicate not available") unless defined?(Replicate) && Replicate.available?
         return Result.err("Training data cannot be empty") if training_data.nil? || training_data.empty?
         return Result.err("Trigger word required") if trigger_word.nil? || trigger_word.empty?
-        
+
         Replicate.run(
           model_id: model,
           input: {
@@ -606,7 +606,7 @@ module MASTER
   # ═══════════════════════════════════════════════════════════════════
   # BACKWARD COMPATIBILITY ALIASES
   # ═══════════════════════════════════════════════════════════════════
-  
+
   PostproBridge = Bridges::PostproBridge
   RepligenBridge = Bridges::RepligenBridge
 end

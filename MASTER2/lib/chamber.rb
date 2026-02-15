@@ -463,7 +463,7 @@ module MASTER
 
         others = proposals.reject.with_index { |_, j| j == i }.map { |p| p[:ideas][0...MAX_IDEA_PREVIEW] }.join("\n\n")
         critique_prompt = "You proposed these ideas:\n#{prop[:ideas][0...MAX_PROPOSAL_PREVIEW]}\n\nOthers proposed:\n#{others}\n\nCritique the other ideas and explain why yours are better. Be constructive but persuasive."
-        
+
         result = ask_llm(critique_prompt, tier: :fast)
         if result.ok?
           prop[:critique] = result.value[:content]
@@ -532,7 +532,7 @@ module MASTER
 
           context = dialogue.map { |d| "#{d[:speaker]}: #{d[:text]}" }.join("\n")
           prompt = "Scenario: #{scenario}\n\nConversation so far:\n#{context}\n\nYou are Speaker #{speaker + 1}. Respond naturally to continue the conversation."
-          
+
           result = ask_llm(prompt, tier: :fast)
           if result.ok?
             line = { speaker: speaker + 1, turn: turn + 1, text: result.value[:content] }
@@ -581,7 +581,7 @@ module MASTER
 
         prompt = "Analyze this competitor: #{competitor}\n\nIn the context of building: #{product}\n\nIdentify their strengths, weaknesses, and unique features. Be specific and critical."
         result = ask_llm(prompt, tier: :strong)
-        
+
         if result.ok?
           analysis = { competitor: competitor, analysis: result.value[:content] }
           @results << { type: :competitor_analysis, **analysis }
@@ -593,7 +593,7 @@ module MASTER
       if analyses.any? && !over_budget?
         all_analyses = analyses.map { |a| "#{a[:competitor]}:\n#{a[:analysis][0...MAX_DETAIL_PREVIEW]}" }.join("\n\n")
         synthesis_prompt = "Based on these competitor analyses:\n\n#{all_analyses}\n\nFor building: #{product}\n\nIdentify 5 key opportunities or gaps in the market. What features or approaches are missing?"
-        
+
         synthesis_result = ask_llm(synthesis_prompt, tier: :strong)
         if synthesis_result.ok?
           @results << { type: :synthesis, content: synthesis_result.value[:content] }
@@ -667,7 +667,7 @@ module MASTER
       # Fan out - get multiple responses using different approaches
       @size.times do |i|
         tier = i < 2 ? :strong : :fast  # Mix of tiers for diversity
-        
+
         begin
           result = LLM.ask(prompt, tier: tier)
           next unless result.ok?
@@ -707,7 +707,7 @@ module MASTER
       return { selected: responses.first, reasoning: "Only one response", curation_cost: 0 } if responses.size == 1
 
       curation_prompt = build_curation_prompt(responses, prompt)
-      
+
       result = LLM.ask(curation_prompt, tier: :fast)
       return { selected: responses.first, reasoning: "Curation failed", curation_cost: 0 } unless result.ok?
 

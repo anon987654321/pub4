@@ -35,24 +35,24 @@ module MASTER
           .gsub("{{title}}", title)
           .gsub("{{content}}", content)
           .gsub("{{styles}}", styles)
-        
+
         Result.ok(html: html)
       end
 
       def validate(html)
         errors = []
-        
+
         # Check semantic structure
         errors << "Missing semantic elements" if html !~ /<(header|nav|main|article|section|aside|footer)/
-        
+
         # Check for div soup
         div_count = html.scan(/<div/).length
         errors << "Too many divs (#{div_count}) - use semantic HTML" if div_count > 10
-        
+
         # Check accessibility
         errors << "Images missing alt text" if html =~ /<img(?![^>]*alt=)/
         errors << "Form inputs missing labels" if html =~ /<input(?![^>]*aria-label)/
-        
+
         errors.empty? ? Result.ok : Result.err(errors.join(", "))
       end
     end

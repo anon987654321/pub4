@@ -30,7 +30,7 @@ module MASTER
 
       def show_tree(path)
         puts UI.dim("Structure:")
-        
+
         # Ruby-native tree walker - no system dependencies
         tree = file_tree(path, max_depth: 3, exclude: %w[. .. .git vendor tmp node_modules var])
         puts tree.join("\n")
@@ -40,28 +40,28 @@ module MASTER
       # Ruby-native tree walker
       def file_tree(root, indent: "", max_depth: 3, depth: 0, exclude: [])
         return [] if depth >= max_depth
-        
+
         entries = Dir.children(root).sort.reject { |e| exclude.include?(e) }
         lines = []
-        
+
         entries.each_with_index do |entry, i|
           path = File.join(root, entry)
           last = i == entries.size - 1
           connector = last ? "└── " : "├── "
           lines << "#{indent}#{connector}#{entry}"
-          
+
           if File.directory?(path)
             extension = last ? "    " : "│   "
             lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1, exclude: exclude))
           end
         end
-        
+
         lines
       end
 
       def detect_sprawl(path)
         large_files = []
-        
+
         Dir.glob(File.join(path, "**", "*.rb")).each do |file|
           lines = File.readlines(file).size
           if lines > 500
@@ -83,7 +83,7 @@ module MASTER
         return nil unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
-        
+
         if status.empty?
           puts UI.green("\n✓ Git: Clean working tree")
         else
@@ -99,13 +99,13 @@ module MASTER
 
         puts UI.dim("\nRecent commits:")
         system("git", "-C", path, "log", "--oneline", "--decorate", "-5")
-        
+
         true
       end
 
       def warn_if_issues(results)
         warnings = []
-        
+
         warnings << "Large files detected" if results[:sprawl]&.any?
         warnings << "Uncommitted changes" if results[:git_status] && !results[:git_status].empty?
 
@@ -127,9 +127,9 @@ module MASTER
         # ═══════════════════════════════════════════════════════════════════
         # SECTION 1: Structure Mapping (from self_map.rb)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         IGNORED = %w[.git node_modules vendor tmp log .bundle].freeze
-        
+
         # Generate summary of MASTER's structure for boot display
         # @return [String] Brief summary "X lib, Y test"
         def summary(root = MASTER.root)
@@ -138,7 +138,7 @@ module MASTER
         rescue StandardError
           "unavailable"
         end
-        
+
         # Generate complete map of MASTER's structure
         # @return [Hash] Structure map with files, ruby_files, lib_files, test_files
         def generate_map(root = MASTER.root)
@@ -149,7 +149,7 @@ module MASTER
             test_files: collect_files(root, root).select { |f| (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb") }
           }
         end
-        
+
         # Generate tree string representation of directory
         # @param dir [String] Directory to scan
         # @param prefix [String] Prefix for indentation
@@ -172,14 +172,14 @@ module MASTER
 
           result.join("\n")
         end
-        
+
         # ═══════════════════════════════════════════════════════════════════
         # SECTION 2: Self-Critique (from self_critique.rb)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         CONFIDENCE_THRESHOLD = 0.6
         MAX_RETRIES = 3
-        
+
         # LLM evaluates its own work with confidence scoring
         # @param task [String] The task description
         # @param response [String] The response to critique
@@ -215,7 +215,7 @@ module MASTER
 
           parse_critique(result.value)
         end
-        
+
         # Check if response should be retried based on confidence
         # @param critique [Hash] Critique hash
         # @return [Boolean] True if should retry
@@ -224,7 +224,7 @@ module MASTER
 
           critique[:overall_confidence] < CONFIDENCE_THRESHOLD
         end
-        
+
         # Extract strength score from critique
         # @param critique [Hash] Critique hash
         # @return [Float] Weighted strength score 0.0-1.0
@@ -239,11 +239,11 @@ module MASTER
 
           weighted_sum.clamp(0.0, 1.0)
         end
-        
+
         # ═══════════════════════════════════════════════════════════════════
         # SECTION 3: Self-Repair (from self_repair.rb)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         # Full repair pipeline with audit → confirm → fix → test → learn
         # @param files [String, Array<String>] File(s) to repair
         # @param dry_run [Boolean] Preview changes without writing
@@ -251,25 +251,25 @@ module MASTER
         # @return [Result] Ok with repair summary or Err
         def repair(files, dry_run: true, auto_confirm: false)
           files = [files] unless files.is_a?(Array)
-          
+
           repaired = 0
           failed = 0
           skipped = 0
-          
+
           # Step 1: Audit scan
           audit_result = if defined?(Audit)
             Audit.scan(files)
           else
             return Result.err("Audit module not available")
           end
-          
+
           return audit_result unless audit_result.ok?
-          
+
           report = audit_result.value[:report]
           findings = report.prioritized
-          
+
           UI.dim("  🔍 Found #{findings.size} issues") if defined?(UI)
-          
+
           # Step 2: Process each finding
           findings.each do |finding|
             # Skip if dry_run
@@ -278,7 +278,7 @@ module MASTER
               skipped += 1
               next
             end
-            
+
             # Step 3: Confirmation gate (unless auto_confirm)
             unless auto_confirm
               if defined?(ConfirmationGate)
@@ -286,17 +286,17 @@ module MASTER
                   "Repair #{finding.category}",
                   description: finding.message
                 ) { true }
-                
+
                 unless gate_result.ok?
                   skipped += 1
                   next
                 end
               end
             end
-            
+
             # Step 4: Attempt fix
             fix_result = attempt_fix(finding)
-            
+
             if fix_result.ok?
               # Step 5: Run self-test if available
               if respond_to?(:run)
@@ -305,15 +305,15 @@ module MASTER
                   # Rollback on test failure
                   rollback_fix(finding)
                   failed += 1
-                  
+
                   # Record failure
                   record_learning(finding, fix_result.value, success: false)
                   next
                 end
               end
-              
+
               repaired += 1
-              
+
               # Step 6: Record success
               record_learning(finding, fix_result.value, success: true)
             else
@@ -321,7 +321,7 @@ module MASTER
               skipped += 1 if fix_result.error.include?("not available")
             end
           end
-          
+
           Result.ok(
             repaired: repaired,
             failed: failed,
@@ -329,7 +329,7 @@ module MASTER
             total: findings.size
           )
         end
-        
+
         require_relative 'introspection/self_map'
       end
 
@@ -423,11 +423,11 @@ module MASTER
 
       class << self
         private
-        
+
         # ═══════════════════════════════════════════════════════════════════
         # PRIVATE HELPERS - Section 1 (SelfMap)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         def collect_files(dir, root = dir)
           result = []
 
@@ -444,11 +444,11 @@ module MASTER
 
           result
         end
-        
+
         # ═══════════════════════════════════════════════════════════════════
         # PRIVATE HELPERS - Section 2 (SelfCritique)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         def parse_critique(text)
           json_match = text.match(/\{[^{}]*\}/m)
           return default_critique unless json_match
@@ -477,29 +477,29 @@ module MASTER
             suggestions: []
           }
         end
-        
+
         # ═══════════════════════════════════════════════════════════════════
         # PRIVATE HELPERS - Section 3 (SelfRepair)
         # ═══════════════════════════════════════════════════════════════════
-        
+
         def attempt_fix(finding)
           # Try AutoFixer if available
           if defined?(AutoFixer)
             fixer = AutoFixer.new(mode: :moderate)
-            
+
             if File.exist?(finding.file)
               result = fixer.fix(finding.file)
               return result if result.ok?
             end
           end
-          
+
           # Try known fix from learning
           if defined?(LearningFeedback)
             if LearningFeedback.known_fix?(finding)
               return LearningFeedback.apply_known(finding)
             end
           end
-          
+
           Result.err("No fix available for this finding")
         end
 
@@ -524,7 +524,7 @@ module MASTER
   # ═══════════════════════════════════════════════════════════════════
   # BACKWARD COMPATIBILITY ALIASES
   # ═══════════════════════════════════════════════════════════════════
-  
+
   Prescan = Analysis::Prescan
   Introspection = Analysis::Introspection
   SelfMap = Analysis::Introspection
