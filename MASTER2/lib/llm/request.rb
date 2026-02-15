@@ -79,11 +79,22 @@ module MASTER
         # Preserve full message history
         msg_content = build_message_content(prompt, messages)
 
+        # Extract system message if present (proper role separation)
+        user_content = msg_content
+        if msg_content.start_with?("[system]")
+          parts = msg_content.split("\n\n[user] ", 2)
+          if parts.size == 2
+            system_text = parts[0].sub(/^\[system\]\s*/, "")
+            user_content = parts[1]
+            chat = chat.with_instructions(system_text)
+          end
+        end
+
         # Execute query
         if stream
-          execute_streaming_ruby_llm(chat, msg_content, model)
+          execute_streaming_ruby_llm(chat, user_content, model)
         else
-          execute_blocking_ruby_llm(chat, msg_content, model)
+          execute_blocking_ruby_llm(chat, user_content, model)
         end
       rescue StandardError => e
         Result.err(Logging.format_error(e))
@@ -106,20 +117,7 @@ module MASTER
       end
 
       def execute_blocking_ruby_llm(chat, content, model)
-        # If content starts with [system], extract and set as system message
-        if content.start_with?("[system]")
-          parts = content.split("\n\n[user] ", 2)
-          if parts.size == 2
-            system_text = parts[0].sub(/^\[system\]\s*/, "")
-            user_text = parts[1]
-            chat.with_instructions(system_text)
-            response = chat.ask(user_text)
-          else
-            response = chat.ask(content)
-          end
-        else
-          response = chat.ask(content)
-        end
+        response = chat.ask(content)
 
         response_data = {
           content: response.content,
