@@ -8,14 +8,9 @@ module MASTER
       extend self
 
       def run(path = MASTER.root)
-        puts UI.bold("\n🔍 Prescan")
-        puts UI.dim("Understanding codebase state before proceeding...\n")
-
         results = {
-          tree: show_tree(path),
           sprawl: detect_sprawl(path),
           git_status: check_git_status(path),
-          recent_commits: show_recent_commits(path)
         }
 
         warn_if_issues(results)

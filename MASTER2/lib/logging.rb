@@ -110,15 +110,15 @@ module MASTER
       # Log LLM call with tier/model information
       def llm(tier:, model:, tokens_in: 0, tokens_out: 0, cost: 0, latency: nil)
         details = "#{tokens_in}→#{tokens_out}tok"
-        details += ", $#{cost.round(4)}" if cost.positive?
-        details += ", #{latency}ms" if latency
-        dmesg_log('llm0', parent: tier.to_s, message: "#{model}, #{details}", level: LLM_ONLY)
+        details += " $#{cost.round(4)}" if cost.positive?
+        details += " #{latency}ms" if latency
+        dmesg_log('llm0', parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
       end
 
       # Log LLM error
       def llm_error(tier:, error:)
         msg = error.to_s.gsub(/\s+/, ' ')[0..60]
-        dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: LLM_ONLY)
+        dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: ALL_EVENTS)
       end
 
       # Log autonomy event

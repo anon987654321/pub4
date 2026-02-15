@@ -103,8 +103,6 @@ module MASTER
         primary, selected_tier = resolve_model(model, tier)
         return Result.err("No model available.") unless primary
 
-        Dmesg.llm(tier: selected_tier, model: @current_model, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
-
         models_to_try = [primary] + (fallbacks || [])
         last_error = nil
 
