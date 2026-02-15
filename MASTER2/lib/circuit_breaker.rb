@@ -88,9 +88,16 @@ module MASTER
       end
     end
 
-    # Check if circuit is closed for a model (P2 fix #7: use Stoplight execution)
+    # Build a Stoplight light with standard thresholds (Stoplight 4.x API)
+    def build_light(model)
+      Stoplight("llm-#{model}")
+        .with_threshold(FAILURES_BEFORE_TRIP)
+        .with_cool_off_time(CIRCUIT_RESET_SECONDS)
+    end
+
+    # Check if circuit is closed for a model
     def circuit_closed?(model)
-      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
+      light = build_light(model)
       begin
         light.run { PROBE_VALUE }
         true
@@ -99,44 +106,31 @@ module MASTER
       end
     end
 
-    # Run a block with circuit breaker protection (backward compatibility for tests)
+    # Run a block with circuit breaker protection
     def run(model, &block)
       check_rate_limit!
-
-      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
-
-      light.run(&block)
+      build_light(model).run(&block)
     end
 
-    # P1 fix #1: Record only ONE failure per request (not in a loop)
+    # Record a failure to potentially trip the circuit
     def open_circuit!(model)
-      # Note: In Stoplight v4/v5, we cannot directly access default_data_store to record failures.
-      # Instead, we use the execution API to trigger a failure. This is the recommended approach
-      # when the data store API is not available or has changed between versions.
-      # The circuit breaker will record this as a failure and potentially trip the circuit.
-      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
-      
+      light = build_light(model)
       begin
-        light.run { raise TestFailure, "Intentional failure for circuit breaker state management" }
+        light.run { raise TestFailure, "Intentional circuit breaker trip" }
       rescue TestFailure, Stoplight::Error::RedLight
-        # Expected - TestFailure triggers the failure, RedLight means circuit was already open
+        # Expected
       end
     rescue StandardError => e
       Logging.warn("Failed to open circuit", model: model, error: e.message)
     end
 
-    # P2 fix #8: Add nil check and rescue in close_circuit!
+    # Run a successful probe to clear failure counts
     def close_circuit!(model)
-      # Note: In Stoplight v4/v5, successful runs automatically clear failure counts.
-      # We cannot directly access default_data_store.clear_failures() in v5.
-      # Per Stoplight documentation, running a successful execution is the standard way
-      # to reset the circuit breaker state. The PROBE_VALUE ensures a no-op execution.
-      light = Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
-      
+      light = build_light(model)
       begin
         light.run { PROBE_VALUE }
       rescue Stoplight::Error::RedLight
-        # Circuit may still be open, that's ok
+        # Circuit may still be open
       end
     rescue StandardError => e
       Logging.warn("Failed to close circuit", model: model, error: e.message)

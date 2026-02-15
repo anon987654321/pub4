@@ -179,31 +179,41 @@ module MASTER
           }
 
           current_category = nil
+          current_item = nil
+
+          # Known sub-fields that should not start new items
+          sub_fields = %w[description location effort impact]
 
           response.each_line do |line|
             case line
             when /ARCHITECTURAL/i
               current_category = :architectural
+              current_item = nil
             when /MICRO/i
               current_category = :micro
+              current_item = nil
             when /UI.?UX/i
               current_category = :ui_ux
+              current_item = nil
             when /TYPO/i
               current_category = :typography
-            when /^\s*-\s*\*\*(.+?)\*\*:\s*(.+)/
+              current_item = nil
+            when /^\s*(?:\d+\.|-)\s*\*\*(.+?)\*\*\s*[-–—:]\s*(.*)/
               next unless current_category
+              key = Regexp.last_match(1).to_s.strip
+              val = Regexp.last_match(2).to_s.strip
 
-              categories[current_category] << {
-                id: Regexp.last_match(1).strip.downcase.gsub(/\s+/, "_"),
-                description: Regexp.last_match(2).strip,
-              }
-            when /^\d+\.\s*\*\*(.+?)\*\*\s*[-–—]\s*(.+)/
-              next unless current_category
-
-              categories[current_category] << {
-                id: Regexp.last_match(1).strip.downcase.gsub(/\s+/, "_"),
-                description: Regexp.last_match(2).strip,
-              }
+              case key.downcase
+              when "id"
+                current_item = { id: val.downcase.gsub(/\s+/, "_"), description: "" }
+                categories[current_category] << current_item
+              when *sub_fields
+                current_item[key.downcase.to_sym] = val if current_item
+              else
+                # Single-line format: **Name** — description
+                current_item = { id: key.downcase.gsub(/\s+/, "_"), description: val }
+                categories[current_category] << current_item
+              end
             end
           end
 

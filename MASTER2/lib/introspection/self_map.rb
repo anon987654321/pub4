@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
+  module Analysis
   class Introspection
     class << self
       # SECTION 4: Self-Test (from self_test.rb)
@@ -580,5 +581,6 @@ module MASTER
         }
       end
     end
+  end
   end
 end

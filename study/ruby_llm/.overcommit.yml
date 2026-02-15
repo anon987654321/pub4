@@ -1,0 +1,32 @@
+PreCommit:
+  RuboCop:
+    enabled: true
+    auto_correct: true
+    on_warn: fail # Treat all warnings as failures
+
+  Flay:
+    enabled: true
+
+  RSpec:
+    enabled: true
+    command: ['bundle', 'exec', 'rspec', '--tag', '~generator']
+    on_warn: fail
+
+  TrailingWhitespace:
+    enabled: true
+    auto_correct: true
+    exclude:
+     - '**/db/structure.sql' # Ignore trailing whitespace in generated files
+
+
+  AppraisalUpdate:
+    enabled: true
+    description: 'Update appraisal gemfiles'
+    command: ['bundle', 'exec', 'appraisal', 'update']
+
+PostCheckout:
+  ALL: # Special hook name that customizes all hooks of this type
+    quiet: true # Change all post-checkout hooks to only display output on failure
+
+  IndexTags:
+    enabled: true # Generate a tags file with `ctags` each time HEAD changes

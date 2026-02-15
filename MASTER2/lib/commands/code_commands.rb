@@ -182,24 +182,26 @@ module MASTER
         puts "  This may take a moment...\n\n"
 
         result = CodeReview.opportunities(path)
-        if result[:error]
-          puts "  Error: #{result[:error]}"
-        else
-          %i[architectural micro_refinement ui_ux typography].each do |cat|
-            items = result[cat] || []
-            next if items.empty?
-
-            puts "  #{cat.to_s.gsub('_', ' ').upcase} (#{items.size})"
-            items.first(5).each { |item| puts "    • #{item}" }
-            puts
-          end
+        if result.err?
+          puts "  Error: #{result.error}"
+          return result
         end
 
-        Result.ok(result)
+        categories = result.value
+        %i[architectural micro micro_refinement ui_ux typography].each do |cat|
+          items = categories[cat] || []
+          next if items.empty?
+
+          puts "  #{cat.to_s.gsub('_', ' ').upcase} (#{items.size})"
+          items.first(5).each { |item| puts "    • #{item[:description] || item}" }
+          puts
+        end
+
+        result
       end
 
       def print_axiom_stats
-        summary = AxiomStats.summary
+        summary = Review::AxiomStats.summary
         puts
         puts summary
         puts

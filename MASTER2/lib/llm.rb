@@ -136,7 +136,6 @@ module MASTER
           return if @ruby_llm_configured
           RubyLLM.configure do |c|
             c.openrouter_api_key = api_key
-            c.default_provider = :openrouter
           end
           @ruby_llm_configured = true
         end
@@ -405,11 +404,11 @@ module MASTER
 
         response_data = {
           content: response.content,
-          reasoning: response.reasoning || nil,
+          reasoning: (response.thinking if response.respond_to?(:thinking)),
           model: model,
           tokens_in: response.input_tokens || 0,
           tokens_out: response.output_tokens || 0,
-          cost: response.cost || nil,
+          cost: nil,
           finish_reason: "stop"
         }
 
@@ -450,7 +449,7 @@ module MASTER
           model: model,
           tokens_in: final_response.input_tokens || 0,
           tokens_out: final_response.output_tokens || 0,
-          cost: final_response.cost || nil,
+          cost: nil,
           finish_reason: "stop"
         }
 
