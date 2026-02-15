@@ -672,3 +672,43 @@ norwegian:
     - "Active voice preferred"
     - "Plain language over academic"
   style: "Omit needless words, be direct"
+
+  # From ruby-style-guide and rails-style-guide (study repos)
+  style_guide_rules:
+    ruby:
+      - id: method_length_limit
+        rule: "Methods must not exceed 10 lines"
+        severity: warning
+      - id: predicate_naming
+        rule: "Predicate methods end with ? — no is_/has_/can_ prefix"
+        detect: 'def\s+(is_|has_|can_|does_)\w+'
+        severity: warning
+      - id: no_and_or
+        rule: "Use && and || — never and/or for control flow"
+        detect: '\b(and|or)\b'
+        severity: warning
+      - id: no_nested_ternary
+        rule: "Never nest ternary operators"
+        detect: '\?.*\?.*:'
+        severity: error
+      - id: trailing_comma
+        rule: "Use trailing commas in multiline literals"
+        severity: info
+    rails:
+      - id: skinny_controllers
+        rule: "Controllers delegate to models/services — no business logic"
+        severity: warning
+      - id: no_inline_render
+        rule: "Never render inline: in controllers"
+        detect: 'render\s+inline:'
+        severity: error
+      - id: extract_callbacks
+        rule: "Extract callbacks >5 lines to service objects"
+        severity: info
+      - id: scope_over_class_method
+        rule: "Prefer scope over class method for queries"
+        severity: info
+      - id: no_default_scope
+        rule: "Avoid default_scope — use explicit scopes"
+        detect: '\bdefault_scope\b'
+        severity: warning

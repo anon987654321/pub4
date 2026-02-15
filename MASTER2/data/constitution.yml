@@ -243,3 +243,36 @@ heredoc_editing:
     analyze: "Apply appropriate language axioms per block"
     edit: "Atomic in-place replacement preserving heredoc structure"
     validate: "Shell syntax check + embedded language check"
+
+llm_output_handling:
+  principle: "Outsource pattern detection and parsing to the LLM itself"
+  rules:
+    - "Request structured JSON output instead of markdown or prose"
+    - "Never regex-parse free-form LLM text — let the LLM reason about structure"
+    - "Validate JSON schema on receipt, reject and retry on malformed output"
+    - "Keep prompts terse — specify keys and types, not formatting examples"
+  rationale: >
+    LLMs produce inconsistent markdown across providers and temperatures.
+    Regex parsers break on every format variation. Requesting JSON
+    moves structural reasoning to the LLM where it belongs, and
+    reduces client code to a single JSON.parse call.
+
+gem_outsourcing:
+  principle: "Prefer battle-tested gems over hand-rolled implementations"
+  candidates:
+    - area: "Result monad"
+      current: "lib/result.rb"
+      gem: "dry-monads"
+      status: "evaluate — current impl is 122L and sufficient"
+    - area: "Code formatting"
+      current: "lib/reflow.rb"
+      gem: "rubocop --autocorrect"
+      status: "evaluate — rubocop already detected"
+    - area: "JSONL persistence"
+      current: "lib/db_jsonl.rb"
+      gem: "sqlite3 or lmdb"
+      status: "evaluate — JSONL is simple and portable"
+  keep_custom:
+    - "lib/pledge.rb — OpenBSD-specific, no gem"
+    - "lib/harvester.rb — domain-specific file collection"
+    - "lib/staging.rb — git-free staging with rollback"

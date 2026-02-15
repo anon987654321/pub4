@@ -7,38 +7,13 @@ module MASTER
 
       # The analysis prompt template - generates categorized opportunities
       OPPORTUNITY_PROMPT = <<~PROMPT
-        Analyze this codebase and identify concrete improvement opportunities.
+        Analyze this code. Return ONLY a JSON object with four keys:
+        architectural, micro, ui_ux, typography.
+        Each key maps to an array of objects with: id, description, location, effort, impact.
+        id: short_snake_case. description: one sentence. location: file/line or "throughout".
+        effort: small/medium/large. impact: low/medium/high.
+        5-15 items per category. No markdown, no explanation, just JSON.
 
-        For each category, list 5-15 specific, actionable items.
-        Be precise - reference specific files, line numbers, patterns.
-        Prioritize by impact and effort.
-
-        ## Categories:
-
-        ### MAJOR ARCHITECTURAL OPPORTUNITIES
-        Large-scale structural improvements: consolidation, patterns, abstractions,
-        module boundaries, data flow, concurrency, APIs.
-
-        ### MICRO-REFINEMENT OPPORTUNITIES
-        Small code-level improvements: idioms, naming, constants, memoization,
-        type safety, error handling, Ruby style guide adherence.
-
-        ### CLI UI/UX OPPORTUNITIES
-        User experience improvements: feedback, discoverability, shortcuts,
-        progress indication, error messages, help system, accessibility.
-
-        ### TYPOGRAPHICAL OPPORTUNITIES
-        Text presentation: smart quotes, dashes, symbols, Unicode,
-        formatting, box drawing, bullets, spacing.
-
-        ## Format each item as:
-        - **ID**: short_snake_case_id
-        - **Description**: One clear sentence
-        - **Location**: File/line or "throughout"
-        - **Effort**: small/medium/large
-        - **Impact**: low/medium/high
-
-        ## Codebase to analyze:
         %{code}
       PROMPT
 
@@ -86,7 +61,7 @@ module MASTER
           result = llm.ask(prompt, tier: :fast)
           return Result.err("No model available") unless result.ok?
 
-          parse_opportunities(result.value[:content])
+          parse_opportunities_json(result.value[:content])
         rescue StandardError => e
           Result.err("Analysis failed: #{e.message}")
         end
@@ -153,54 +128,29 @@ module MASTER
           code[0, max_chars] + "\n\n# ... truncated (#{code.length - max_chars} more chars)"
         end
 
-        def parse_opportunities(response)
-          categories = {
-            architectural: [],
-            micro: [],
-            ui_ux: [],
-            typography: [],
-          }
+        def parse_opportunities_json(response)
+          json_str = response[/\{.*\}/m]
+          return Result.err("No JSON in response") unless json_str
 
-          current_category = nil
-          current_item = nil
+          data = JSON.parse(json_str, symbolize_names: true)
+          categories = { architectural: [], micro: [], ui_ux: [], typography: [] }
 
-          # Known sub-fields that should not start new items
-          sub_fields = %w[description location effort impact]
-
-          response.each_line do |line|
-            case line
-            when /ARCHITECTURAL/i
-              current_category = :architectural
-              current_item = nil
-            when /MICRO/i
-              current_category = :micro
-              current_item = nil
-            when /UI.?UX/i
-              current_category = :ui_ux
-              current_item = nil
-            when /TYPO/i
-              current_category = :typography
-              current_item = nil
-            when /^\s*(?:\d+\.|-)\s*\*\*(.+?)\*\*\s*[-–—:]\s*(.*)/
-              next unless current_category
-              key = Regexp.last_match(1).to_s.strip
-              val = Regexp.last_match(2).to_s.strip
-
-              case key.downcase
-              when "id"
-                current_item = { id: val.downcase.gsub(/\s+/, "_"), description: "" }
-                categories[current_category] << current_item
-              when *sub_fields
-                current_item[key.downcase.to_sym] = val if current_item
-              else
-                # Single-line format: **Name** — description
-                current_item = { id: key.downcase.gsub(/\s+/, "_"), description: val }
-                categories[current_category] << current_item
-              end
+          categories.each_key do |cat|
+            items = data[cat] || data[cat.to_s] || []
+            categories[cat] = items.map do |item|
+              {
+                id: (item[:id] || "unknown").to_s,
+                description: (item[:description] || "").to_s,
+                location: (item[:location] || "throughout").to_s,
+                effort: (item[:effort] || "medium").to_s,
+                impact: (item[:impact] || "medium").to_s,
+              }
             end
           end
 
           Result.ok(categories)
+        rescue JSON::ParserError => e
+          Result.err("JSON parse failed: #{e.message}")
         end
 
         def grade_for(score)
