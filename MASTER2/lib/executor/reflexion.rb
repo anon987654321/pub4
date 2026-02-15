@@ -51,14 +51,13 @@ module MASTER
       def execute_react_inner(goal, tier:)
         # Simplified ReAct without the outer Result wrapper
         # Intentionally cap inner loop to respect overall step budget
-        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        start_time = MASTER::Utils.monotonic_now
 
         [5, @max_steps - @step].max.times do
-          # Check wall clock timeout
-          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-          if elapsed > WALL_CLOCK_LIMIT_SECONDS
-            best_answer = @history.last&.[](:observation) || "Timed out"
-            return Result.err("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
           end
 
           @step += 1
@@ -70,8 +69,8 @@ module MASTER
           parsed = parse_response(result.value[:content])
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
-          if parsed[:action] =~ /^(ANSWER|DONE|COMPLETE):/i
-            answer = parsed[:action].sub(/^(ANSWER|DONE|COMPLETE):\s*/i, "")
+          if parsed[:action] =~ COMPLETION_PATTERN
+            answer = parsed[:action].sub(COMPLETION_PATTERN, "")
             return Result.ok(answer: answer, steps: @step)
           end
 

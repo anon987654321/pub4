@@ -44,6 +44,11 @@ module MASTER
       ICONS[name.to_sym] || "·"
     end
 
+    def render_bar(pct, width: 30)
+      filled = (pct / 100.0 * width).round
+      "[#{'█' * filled}#{'░' * (width - filled)}]"
+    end
+
     def status(prefix, message, success: true)
       i = success ? icon(:success) : icon(:failure)
       "#{prefix}: #{message} #{i}"

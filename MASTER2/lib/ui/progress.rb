@@ -85,9 +85,7 @@ module MASTER
 
       def render
         pct = (@current.to_f / @total * 100).round(1)
-        bar_width = 30
-        filled = (pct / 100.0 * bar_width).round
-        bar = "[#{'█' * filled}#{'░' * (bar_width - filled)}]"
+        bar = UI.render_bar(pct)
 
         elapsed = Time.now - @start_time
         eta = @current > 0 ? (elapsed / @current * (@total - @current)).round : 0

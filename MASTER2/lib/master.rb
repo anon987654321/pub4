@@ -8,6 +8,17 @@ module MASTER
   module Utils
     module_function
 
+    def monotonic_now
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+
+    def valid_ruby?(code)
+      RubyVM::InstructionSequence.compile(code)
+      true
+    rescue SyntaxError
+      false
+    end
+
     def levenshtein(a, b)
       return b.length if a.empty?
       return a.length if b.empty?

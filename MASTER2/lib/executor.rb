@@ -25,6 +25,8 @@ module MASTER
     SIMPLE_QUERY_LENGTH_THRESHOLD = 200
     MAX_PARSE_FALLBACK_LENGTH = 100
 
+    COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i.freeze
+
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
@@ -118,6 +120,14 @@ module MASTER
       end
     end
 
+    def check_timeout!(start_time)
+      elapsed = MASTER::Utils.monotonic_now - start_time
+      if elapsed > WALL_CLOCK_LIMIT_SECONDS
+        best_answer = @history.last&.[](:observation) || "Timed out"
+        raise Result::Error.new("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
+      end
+    end
+
     def self.call(goal, **opts)
       new.call(goal, **opts)
     end
@@ -170,14 +180,6 @@ module MASTER
         )
       else
         result
-      end
-    end
-
-    def self.system_prompt_config
-      @system_prompt_config ||= if File.exist?(SYSTEM_PROMPT_FILE)
-        YAML.safe_load_file(SYSTEM_PROMPT_FILE) rescue {}
-      else
-        {}
       end
     end
 

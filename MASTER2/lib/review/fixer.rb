@@ -161,10 +161,7 @@ module MASTER
       end
 
       def valid_ruby?(code)
-        RubyVM::InstructionSequence.compile(code)
-        true
-      rescue SyntaxError
-        false
+        MASTER::Utils.valid_ruby?(code)
       end
 
       def valid_yaml?(code)
