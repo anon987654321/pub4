@@ -260,44 +260,106 @@ let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
 // Tone.js setup
-let kickN,snareN,clapN,hatN,openN,bassN,bassSub,keysN,padsN,drumG,bassG,keysG,padsG,masterG,limiter,analyser;
+let kickN,kickClick,snareBody,snareRing,clapN,hatN,openN,bassN,bassSub,keysN,padsN,drumG,bassG,keysG,padsG,masterG,limiter,analyser;
+let reverb,feedbackDelay,delayLP,hatIsOpen=false;
+let drumDrive,bassDistortion,keysTremolo,keysChorus,keysBitcrusher,padFilter,padLFO,stereoWidener;
+let tapeSaturation,crackle,hiss,flutter,vhsNoise,vinyl,vinylGain,lofiComp,lofiLP;
+let tapeDrive=0.5,crackleLevel=0.3,hissLevel=0.2,flutterRate=0.1,vhsLevel=0.15,vinylLevel=0.25;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 // Init audio
-const initAudio=()=>{
-  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}}).toDestination();
-  snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}}).toDestination();
-  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
-  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
-  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
-  bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}}).toDestination();
-  bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
-  keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}}).toDestination();
-  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'sine'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}}).toDestination();
+const initAudio=async()=>{
+  // Layered kick: MembraneSynth + NoiseSynth click
+  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}});
+  kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.01,sustain:0}});
+  // Layered snare: NoiseSynth body (bandpass) + Synth ring
+  snareBody=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}});
+  const snareBP=new Tone.Filter(1500,'bandpass');
+  snareBody.connect(snareBP);
+  snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0,release:.05}});
+  // Clap with bandpass
+  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}});
+  const clapBP=new Tone.Filter(2000,'bandpass');
+  clapN.connect(clapBP);
+  // MetalSynth hats
+  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
+  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
+  // Bass with sub-oscillator
+  bassN=new Tone.MonoSynth({oscillator:{type:'fatsawtooth'},envelope:{attack:.01,decay:.3,sustain:.4,release:.1},filterEnvelope:{attack:.005,decay:.2,sustain:.3,release:.1,baseFrequency:100,octaves:4},portamento:.02});
+  bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-15;
+  bassDistortion=new Tone.Distortion(0.3);
+  // Keys with FX chain
+  keysN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1}});
+  keysTremolo=new Tone.Tremolo(4,.3).start();
+  keysChorus=new Tone.Chorus(2,2.5,.5).start();
+  keysBitcrusher=new Tone.BitCrusher(4);
+  // Pads with LFO filter and widener
+  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth'},envelope:{attack:.5,decay:.2,sustain:.7,release:2}});
+  padFilter=new Tone.Filter(800,'lowpass');
+  padLFO=new Tone.LFO(0.1,200,1200).start();
+  padLFO.connect(padFilter.frequency);
+  stereoWidener=new Tone.StereoWidener(0.5);
+  // Gain nodes
   drumG=new Tone.Gain(.8);bassG=new Tone.Gain(.7);keysG=new Tone.Gain(.6);padsG=new Tone.Gain(.5);masterG=new Tone.Gain(.75);
-  kickN.disconnect();kickN.connect(drumG);
-  snareN.disconnect();snareN.connect(drumG);
-  clapN.disconnect();clapN.connect(drumG);
-  hatN.disconnect();hatN.connect(drumG);
-  openN.disconnect();openN.connect(drumG);
-  bassN.disconnect();bassN.connect(bassG);
-  bassSub.disconnect();bassSub.connect(bassG);
-  keysN.disconnect();keysN.connect(keysG);
-  padsN.disconnect();padsN.connect(padsG);
+  drumDrive=new Tone.Distortion(0.15);
+  // Connect drums to drumG
+  kickN.connect(drumG);kickClick.connect(drumG);
+  snareBP.connect(drumG);snareRing.connect(drumG);
+  clapBP.connect(drumG);
+  hatN.connect(drumG);openN.connect(drumG);
+  // Connect bass
+  bassN.connect(bassDistortion);bassDistortion.connect(bassG);
+  bassSub.connect(bassG);
+  // Connect keys
+  keysN.chain(keysTremolo,keysChorus,keysBitcrusher,keysG);
+  // Connect pads
+  padsN.connect(padFilter);padFilter.connect(stereoWidener);stereoWidener.connect(padsG);
+  // Lo-fi chain
+  lofiComp=new Tone.Compressor(-20,3);
+  const tanhCurve=new Float32Array(256).map((_,i)=>{const x=(i/128)-1;return Math.tanh(x*2);});
+  tapeSaturation=new Tone.WaveShaper(tanhCurve);
+  lofiLP=new Tone.Filter(8000,'lowpass');
+  crackle=new Tone.Noise('brown').start();crackle.volume.value=-30;
+  const crackleLP=new Tone.Filter(500,'lowpass');crackle.connect(crackleLP);
+  hiss=new Tone.Noise('pink').start();hiss.volume.value=-35;
+  const hissBP=new Tone.Filter(5000,'bandpass');hiss.connect(hissBP);
+  flutter=new Tone.LFO(0.1,-12,12);
+  vhsNoise=new Tone.Noise('white').start();vhsNoise.volume.value=-40;
+  const vhsGain=new Tone.Gain(0);
+  const vhsLFO=new Tone.LFO(0.05,0,0.3).start();
+  vhsLFO.connect(vhsGain.gain);
+  vhsNoise.connect(vhsGain);
+  vinyl=new Tone.Noise('brown').start();vinyl.volume.value=-32;
+  const vinylLP=new Tone.Filter(300,'lowpass');
+  vinylGain=new Tone.Gain(0.25);
+  vinyl.connect(vinylLP);vinylLP.connect(vinylGain);
+  // Master FX chain
+  feedbackDelay=new Tone.FeedbackDelay('8n.',0.3);
+  delayLP=new Tone.Filter(4000,'lowpass');
+  feedbackDelay.connect(delayLP);
+  reverb=new Tone.Reverb(2.5);
+  await reverb.generate();
   limiter=new Tone.Limiter(-1);
   analyser=new Tone.Analyser('waveform',256);
-  drumG.connect(masterG);bassG.connect(masterG);keysG.connect(masterG);padsG.connect(masterG);
+  // Connect tracks to master through lofi
+  drumG.connect(drumDrive);drumDrive.connect(lofiComp);
+  bassG.connect(lofiComp);keysG.connect(lofiComp);padsG.connect(lofiComp);
+  lofiComp.chain(tapeSaturation,lofiLP,masterG);
+  crackleLP.connect(masterG);hissBP.connect(masterG);vhsGain.connect(masterG);vinylGain.connect(masterG);
+  // Master chain
+  masterG.connect(feedbackDelay);feedbackDelay.connect(masterG);
+  delayLP.connect(reverb);reverb.connect(masterG);
   masterG.connect(analyser);masterG.connect(limiter);limiter.toDestination();
   Tone.Transport.bpm.value=bpm;
   randomizeFX();
 };
 // FX randomizer
 const randomizeFX=()=>{
-  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{fx.disconnect();fx.dispose();});arr.length=0;});
+  [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(arr=>{arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){}});arr.length=0;});
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
-    const wet=isMaster?.08+Math.random()*.27:.15+Math.random()*.35;
+    const wet=isMaster?.08+Math.random()*.19:.15+Math.random()*.35;
     const fx=[];
     for(let i=0;i<num;i++){
       const type=fxPool[Math.floor(Math.random()*fxPool.length)];
@@ -328,9 +390,24 @@ const randomizeFX=()=>{
     return fx;
   };
   drumFX=createFX(0);bassFX=createFX(0);keysFX=createFX(0);padsFX=createFX(0);masterFX=createFX(1);
-  const chainFX=(g,fx)=>{g.disconnect();let last=g;fx.forEach(f=>{last.connect(f);last=f;});last.connect(masterG);};
-  chainFX(drumG,drumFX);chainFX(bassG,bassFX);chainFX(keysG,keysFX);chainFX(padsG,padsFX);
-  masterG.disconnect(limiter);let lastM=masterG;masterFX.forEach(f=>{lastM.connect(f);lastM=f;});lastM.connect(analyser);lastM.connect(limiter);
+  // Chain per-track FX properly without creating feedback loops
+  const chainTrackFX=(g,fx,target)=>{
+    if(fx.length===0)return;
+    let last=g;
+    fx.forEach(f=>{last.connect(f);last=f;});
+    last.connect(target);
+  };
+  // Disconnect existing FX connections first
+  try{drumG.disconnect(drumDrive);drumDrive.disconnect(lofiComp);}catch(e){}
+  try{bassG.disconnect(lofiComp);}catch(e){}
+  try{keysG.disconnect(lofiComp);}catch(e){}
+  try{padsG.disconnect(lofiComp);}catch(e){}
+  // Reconnect with FX chains
+  if(drumFX.length>0){drumG.disconnect();chainTrackFX(drumG,drumFX,drumDrive);drumDrive.connect(lofiComp);}else{drumG.connect(drumDrive);drumDrive.connect(lofiComp);}
+  if(bassFX.length>0){bassG.disconnect();chainTrackFX(bassFX,bassG,lofiComp);}else{bassG.connect(lofiComp);}
+  if(keysFX.length>0){keysG.disconnect();chainTrackFX(keysG,keysFX,lofiComp);}else{keysG.connect(lofiComp);}
+  if(padsFX.length>0){padsG.disconnect();chainTrackFX(padsG,padsFX,lofiComp);}else{padsG.connect(lofiComp);}
+  // Master FX chain (already connected in initAudio, just update tags)
   updateFXTags();
 };
 const updateFXTags=()=>{
@@ -350,11 +427,11 @@ const loop=new Tone.Sequence((time,s)=>{
   const playP=isSolo?muteSolo.p.s:!muteSolo.p.m;
   if(playD){
     const sd=getSwingDelay('d',s);
-    if((d.k[s]||SP[currentBank].kick[s].on)&&d.k[s])kickN.triggerAttackRelease('C1',.1,time+sd,d.k[s]);
-    if((d.s[s]||SP[currentBank].snare[s].on)&&d.s[s])snareN.triggerAttackRelease(.1,time+sd,d.s[s]);
-    if((d.c[s]||SP[currentBank].clap[s].on)&&d.c[s])clapN.triggerAttackRelease(.15,time+sd,d.c[s]);
-    if((d.h[s]||SP[currentBank].hat[s].on)&&d.h[s])hatN.triggerAttackRelease('16n',time+sd,d.h[s]);
-    if((d.o[s]||SP[currentBank].open[s].on)&&d.o[s])openN.triggerAttackRelease('8n',time+sd,d.o[s]);
+    if(d.k[s]>0||SP[currentBank].kick[s].on){kickN.triggerAttackRelease('C1',.1,time+sd,d.k[s]||.8);kickClick.triggerAttackRelease(.05,time+sd,.5);}
+    if(d.s[s]>0||SP[currentBank].snare[s].on){snareBody.triggerAttackRelease(.1,time+sd,d.s[s]||.8);snareRing.triggerAttackRelease('C5',.15,time+sd,(d.s[s]||.8)*.7);}
+    if(d.c[s]>0||SP[currentBank].clap[s].on)clapN.triggerAttackRelease(.15,time+sd,d.c[s]||.7);
+    if(d.h[s]>0||SP[currentBank].hat[s].on){if(hatIsOpen)openN.triggerRelease(time+sd);hatN.triggerAttackRelease('16n',time+sd,d.h[s]||.6);hatIsOpen=false;}
+    if(d.o[s]>0||SP[currentBank].open[s].on){if(!hatIsOpen)hatN.triggerRelease(time+sd);openN.triggerAttackRelease('8n',time+sd,d.o[s]||.7);hatIsOpen=true;}
   }
   if(playB&&bp[s]){const sd=getSwingDelay('b',s);const n=transpose(bp[s],rootNote);bassN.triggerAttackRelease(n,'8n',time+sd);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),time+sd);}
   if(playK&&kp[s]){const sd=getSwingDelay('k',s);if(Array.isArray(kp[s]))keysN.triggerAttackRelease(kp[s].map(n=>transpose(n,rootNote)),'8n',time+sd);else if(kp[s])keysN.triggerAttackRelease(transpose(kp[s],rootNote),'8n',time+sd);}
