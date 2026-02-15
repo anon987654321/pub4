@@ -1,563 +1,516 @@
-# MASTER/data/axioms.yml
-# Timeless, universal axioms from authoritative sources.
-# 11 categories, 68 axioms. Each is actionable and validatable.
-# Priority: 10=critical (always scan), 7=important (standard), 5=normal, 3=deep-only
-# ENGINEERING AXIOMS (Core principles)
-
-- id: "ONE_SOURCE"
-  category: "engineering"
-  protection: "PROTECTED"
+---
+- id: ONE_SOURCE
+  category: engineering
+  protection: PROTECTED
   priority: 10
-  title: "One Source of Truth"
-  statement: "Every piece of knowledge has exactly one authoritative representation. Extract on second use."
-  source: "The Pragmatic Programmer"
-  suggest: "Possible duplicate constant. Consider extracting to a shared location."
-
-- id: "SIMPLEST_WORKS"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: One Source of Truth
+  statement: Every piece of knowledge has exactly one authoritative representation.
+    Extract on second use.
+  source: The Pragmatic Programmer
+  suggest: Possible duplicate constant. Consider extracting to a shared location.
+- id: SIMPLEST_WORKS
+  category: engineering
+  protection: PROTECTED
   priority: 10
-  title: "Simplest Thing That Works"
-  statement: "The simplest working solution wins. Complexity multiplies failure modes."
-  source: "Unix Philosophy"
-
-- id: "ONE_JOB"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Simplest Thing That Works
+  statement: The simplest working solution wins. Complexity multiplies failure modes.
+  source: Unix Philosophy
+- id: ONE_JOB
+  category: engineering
+  protection: PROTECTED
   priority: 10
-  title: "One Job Per Thing"
-  statement: "A module, class, or function has one reason to change. Do one thing well."
-  source: "Clean Code by Robert C. Martin"
-  suggest: "Multiple classes in one file. Consider splitting into separate files."
-
-- id: "EXTEND_DONT_MODIFY"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: One Job Per Thing
+  statement: A module, class, or function has one reason to change. Do one thing well.
+  source: Clean Code by Robert C. Martin
+  suggest: Multiple classes in one file. Consider splitting into separate files.
+- id: EXTEND_DONT_MODIFY
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Extend, Don't Modify"
-  statement: "Open for extension, closed for modification. Add behavior without changing existing code."
-  source: "SOLID Principles"
-
-- id: "SUBSTITUTABLE"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Extend, Don't Modify
+  statement: Open for extension, closed for modification. Add behavior without changing
+    existing code.
+  source: SOLID Principles
+- id: SUBSTITUTABLE
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Children Honor Parents"
-  statement: "Subtypes must be substitutable for their base types. A child class never breaks parent's contract."
-  source: "SOLID Principles"
-
-- id: "SMALL_INTERFACES"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Children Honor Parents
+  statement: Subtypes must be substitutable for their base types. A child class never
+    breaks parent's contract.
+  source: SOLID Principles
+- id: SMALL_INTERFACES
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Small Specific Interfaces"
-  statement: "Many specific interfaces beat one general interface. Clients shouldn't depend on methods they don't use."
-  source: "SOLID Principles"
-
-- id: "DEPEND_ON_ABSTRACTIONS"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Small Specific Interfaces
+  statement: Many specific interfaces beat one general interface. Clients shouldn't
+    depend on methods they don't use.
+  source: SOLID Principles
+- id: DEPEND_ON_ABSTRACTIONS
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Depend on Abstractions"
-  statement: "Depend on abstractions, not concretions. High-level modules don't depend on low-level modules."
-  source: "SOLID Principles"
-
-- id: "NO_SURPRISES"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Depend on Abstractions
+  statement: Depend on abstractions, not concretions. High-level modules don't depend
+    on low-level modules.
+  source: SOLID Principles
+- id: NO_SURPRISES
+  category: engineering
+  protection: PROTECTED
   priority: 10
-  title: "No Surprises"
-  statement: "Systems behave as users expect. Match mental models. Surprising behavior is a bug."
-  source: "The Pragmatic Programmer"
-
-- id: "COMPOSABLE"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: No Surprises
+  statement: Systems behave as users expect. Match mental models. Surprising behavior
+    is a bug.
+  source: The Pragmatic Programmer
+- id: COMPOSABLE
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Design for Composition"
-  statement: "Components work standalone and combined. Independently testable. Freely composable."
-  source: "Unix Philosophy"
-
-- id: "FAIL_VISIBLY"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Design for Composition
+  statement: Components work standalone and combined. Independently testable. Freely
+    composable.
+  source: Unix Philosophy
+- id: FAIL_VISIBLY
+  category: engineering
+  protection: PROTECTED
   priority: 10
-  title: "Fail Visibly"
-  statement: "Errors surface immediately. Never swallow exceptions. Silent failures compound into disasters."
-  source: "Release It! by Michael Nygard"
-  suggest: "Don't use bare rescue. Specify exception type and handle or re-raise."
-
-- id: "DEADLINES"
-  category: "engineering"
-  protection: "PROTECTED"
+  title: Fail Visibly
+  statement: Errors surface immediately. Never swallow exceptions. Silent failures
+    compound into disasters.
+  source: Release It! by Michael Nygard
+  suggest: Don't use bare rescue. Specify exception type and handle or re-raise.
+- id: DEADLINES
+  category: engineering
+  protection: PROTECTED
   priority: 7
-  title: "Every Call Has a Deadline"
-  statement: "External calls have explicit timeouts. Infinity is not a timeout. Hanging is worse than failing."
-  source: "Release It! by Michael Nygard"
-  suggest: "Add explicit timeout to external call (e.g., open_timeout: 5, read_timeout: 10)."
-# STRUCTURAL AXIOMS (Refactoring operations - the HOW)
-
-- id: "MERGE"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Every Call Has a Deadline
+  statement: External calls have explicit timeouts. Infinity is not a timeout. Hanging
+    is worse than failing.
+  source: Release It! by Michael Nygard
+  suggest: 'Add explicit timeout to external call (e.g., open_timeout: 5, read_timeout:
+    10).'
+- id: MERGE
+  category: structural
+  protection: PROTECTED
   priority: 5
-  title: "Merge Duplicates"
-  statement: "Combine duplicates into one source. Two representations of the same knowledge become one."
-  source: "Refactoring by Martin Fowler"
-
-- id: "FLATTEN"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Merge Duplicates
+  statement: Combine duplicates into one source. Two representations of the same knowledge
+    become one.
+  source: Refactoring by Martin Fowler
+- id: FLATTEN
+  category: structural
+  protection: PROTECTED
   priority: 5
-  title: "Flatten Nesting"
-  statement: "Remove unnecessary nesting levels. Deep hierarchies obscure intent and multiply complexity."
-  source: "Refactoring by Martin Fowler"
-  suggest: "Deep nesting detected (>6 levels). Consider extracting methods or using guard clauses."
-
-- id: "DEFRAGMENT"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Flatten Nesting
+  statement: Remove unnecessary nesting levels. Deep hierarchies obscure intent and
+    multiply complexity.
+  source: Refactoring by Martin Fowler
+  suggest: Deep nesting detected (>6 levels). Consider extracting methods or using
+    guard clauses.
+- id: DEFRAGMENT
+  category: structural
+  protection: PROTECTED
   priority: 5
-  title: "Group Related Code"
-  statement: "Move related things adjacent. Scattered code forces readers to reconstruct context."
-  source: "Refactoring by Martin Fowler"
-
-- id: "DECOUPLE"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Group Related Code
+  statement: Move related things adjacent. Scattered code forces readers to reconstruct
+    context.
+  source: Refactoring by Martin Fowler
+- id: DECOUPLE
+  category: structural
+  protection: PROTECTED
   priority: 7
-  title: "Decouple Dependencies"
-  statement: "Hidden dependencies become explicit. Every coupling point is a failure point."
-  source: "Refactoring by Martin Fowler"
-
-- id: "HOIST"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Decouple Dependencies
+  statement: Hidden dependencies become explicit. Every coupling point is a failure
+    point.
+  source: Refactoring by Martin Fowler
+- id: HOIST
+  category: structural
+  protection: PROTECTED
   priority: 3
-  title: "Hoist Invariants"
-  statement: "Move invariants out of repetition. Computation inside loops wastes resources and obscures intent."
-  source: "Refactoring by Martin Fowler"
-
-- id: "PRUNE"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Hoist Invariants
+  statement: Move invariants out of repetition. Computation inside loops wastes resources
+    and obscures intent.
+  source: Refactoring by Martin Fowler
+- id: PRUNE
+  category: structural
+  protection: PROTECTED
   priority: 5
-  title: "Prune Dead Paths"
-  statement: "Remove dead and unreachable code. Dead code hides bugs and burdens maintenance."
-  source: "Refactoring by Martin Fowler"
-  suggest: "Dead code marker found. Remove or fix the code."
-
-- id: "COALESCE"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Prune Dead Paths
+  statement: Remove dead and unreachable code. Dead code hides bugs and burdens maintenance.
+  source: Refactoring by Martin Fowler
+  suggest: Dead code marker found. Remove or fix the code.
+- id: COALESCE
+  category: structural
+  protection: PROTECTED
   priority: 3
-  title: "Coalesce Operations"
-  statement: "Merge sequential same-type operations. Five inserts become one bulk. Three API calls become one batch."
-  source: "Refactoring by Martin Fowler"
-
-- id: "REFLOW"
-  category: "structural"
-  protection: "PROTECTED"
+  title: Coalesce Operations
+  statement: Merge sequential same-type operations. Five inserts become one bulk.
+    Three API calls become one batch.
+  source: Refactoring by Martin Fowler
+- id: REFLOW
+  category: structural
+  protection: PROTECTED
   priority: 3
-  title: "Reflow by Importance"
-  statement: "Order by importance, then chronology. Public API at top, helpers at bottom. Constants before methods."
-  source: "Clean Code by Robert C. Martin"
-# PROCESS AXIOMS (How we work)
-
-- id: "LEAVE_BETTER"
-  category: "process"
-  protection: "PROTECTED"
+  title: Reflow by Importance
+  statement: Order by importance, then chronology. Public API at top, helpers at bottom.
+    Constants before methods.
+  source: Clean Code by Robert C. Martin
+- id: LEAVE_BETTER
+  category: process
+  protection: PROTECTED
   priority: 7
-  title: "Leave It Better"
-  statement: "Every change improves the codebase. Fix nearby broken windows. Never degrade."
-  source: "Clean Code by Robert C. Martin"
-
-- id: "ONE_CHANGE"
-  category: "process"
-  protection: "PROTECTED"
+  title: Leave It Better
+  statement: Every change improves the codebase. Fix nearby broken windows. Never
+    degrade.
+  source: Clean Code by Robert C. Martin
+- id: ONE_CHANGE
+  category: process
+  protection: PROTECTED
   priority: 5
-  title: "Change One Thing"
-  statement: "Modify one thing at a time. Commit often. Verify each step."
-  source: "Refactoring by Martin Fowler"
-
-- id: "TEST_FIRST"
-  category: "process"
-  protection: "PROTECTED"
+  title: Change One Thing
+  statement: Modify one thing at a time. Commit often. Verify each step.
+  source: Refactoring by Martin Fowler
+- id: TEST_FIRST
+  category: process
+  protection: PROTECTED
   priority: 7
-  title: "Test Before Fix"
-  statement: "Write the failing test before the fix. If you can't test it, you can't prove it."
-  source: "Test-Driven Development by Kent Beck"
-
-- id: "SKELETON_FIRST"
-  category: "process"
-  protection: "PROTECTED"
+  title: Test Before Fix
+  statement: Write the failing test before the fix. If you can't test it, you can't
+    prove it.
+  source: Test-Driven Development by Kent Beck
+- id: SKELETON_FIRST
+  category: process
+  protection: PROTECTED
   priority: 5
-  title: "Build Skeleton First"
-  statement: "Build the thinnest working slice first. Skeleton before flesh. Validate the path before optimizing."
-  source: "The Pragmatic Programmer"
-
-- id: "MEASURE_THEN_OPTIMIZE"
-  category: "process"
-  protection: "PROTECTED"
+  title: Build Skeleton First
+  statement: Build the thinnest working slice first. Skeleton before flesh. Validate
+    the path before optimizing.
+  source: The Pragmatic Programmer
+- id: MEASURE_THEN_OPTIMIZE
+  category: process
+  protection: PROTECTED
   priority: 5
-  title: "Measure Before Optimizing"
-  statement: "No optimization without metrics. Measure, don't guess."
-  source: "Unix Philosophy"
-
-- id: "REVERSIBLE"
-  category: "process"
-  protection: "PROTECTED"
+  title: Measure Before Optimizing
+  statement: No optimization without metrics. Measure, don't guess.
+  source: Unix Philosophy
+- id: REVERSIBLE
+  category: process
+  protection: PROTECTED
   priority: 5
-  title: "Make It Reversible"
-  statement: "Every action can be undone. Edits, config changes, state mutations need rollback."
-  source: "The Pragmatic Programmer"
-# COMMUNICATION AXIOMS (Code as literature)
-
-- id: "BE_CONCISE"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Make It Reversible
+  statement: Every action can be undone. Edits, config changes, state mutations need
+    rollback.
+  source: The Pragmatic Programmer
+- id: BE_CONCISE
+  category: communication
+  protection: PROTECTED
   priority: 7
-  title: "Be Concise"
-  statement: "Vigorous writing is concise. No unnecessary words, sentences, or tokens."
-  source: "The Elements of Style by Strunk & White"
-
-- id: "SELF_EXPLAINING"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Be Concise
+  statement: Vigorous writing is concise. No unnecessary words, sentences, or tokens.
+  source: The Elements of Style by Strunk & White
+- id: SELF_EXPLAINING
+  category: communication
+  protection: PROTECTED
   priority: 10
-  title: "Code Explains Itself"
-  statement: "Code is self-explanatory. Comments explain why, not what."
-  source: "Clean Code by Robert C. Martin"
-
-- id: "VISUAL_HIERARCHY"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Code Explains Itself
+  statement: Code is self-explanatory. Comments explain why, not what.
+  source: Clean Code by Robert C. Martin
+- id: VISUAL_HIERARCHY
+  category: communication
+  protection: PROTECTED
   priority: 3
-  title: "Clear Visual Hierarchy"
-  statement: "Structure defines importance. Important code is visually prominent."
-  source: "The Elements of Typographic Style by Robert Bringhurst"
-
-- id: "STEADY_RHYTHM"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Clear Visual Hierarchy
+  statement: Structure defines importance. Important code is visually prominent.
+  source: The Elements of Typographic Style by Robert Bringhurst
+- id: STEADY_RHYTHM
+  category: communication
+  protection: PROTECTED
   priority: 3
-  title: "Steady Rhythm"
-  statement: "Spacing and arrangement create steady visual and logical rhythm."
-  source: "The Elements of Typographic Style by Robert Bringhurst"
-# RESILIENCE AXIOMS (Systems that survive)
-
-- id: "DEGRADE_GRACEFULLY"
-  category: "resilience"
-  protection: "PROTECTED"
+  title: Steady Rhythm
+  statement: Spacing and arrangement create steady visual and logical rhythm.
+  source: The Elements of Typographic Style by Robert Bringhurst
+- id: DEGRADE_GRACEFULLY
+  category: resilience
+  protection: PROTECTED
   priority: 7
-  title: "Degrade Gracefully"
-  statement: "Works offline. Works without API. Works with failures. Never fully broken."
-  source: "Release It! by Michael Nygard"
-
-- id: "EXPECT_FAILURE"
-  category: "resilience"
-  protection: "PROTECTED"
+  title: Degrade Gracefully
+  statement: Works offline. Works without API. Works with failures. Never fully broken.
+  source: Release It! by Michael Nygard
+- id: EXPECT_FAILURE
+  category: resilience
+  protection: PROTECTED
   priority: 7
-  title: "Expect Failure"
-  statement: "Every operation considers: what if this fails? Plan the unhappy path."
-  source: "Stoic Philosophy"
-
-- id: "APPEND_ONLY"
-  category: "resilience"
-  protection: "PROTECTED"
+  title: Expect Failure
+  statement: 'Every operation considers: what if this fails? Plan the unhappy path.'
+  source: Stoic Philosophy
+- id: APPEND_ONLY
+  category: resilience
+  protection: PROTECTED
   priority: 5
-  title: "Append-Only History"
-  statement: "History is never mutated. Append-only enables replay, prevents data loss."
-  source: "Event Sourcing Principles"
-# AESTHETIC AXIOMS (Beauty in craft)
-
-- id: "JUST_ENOUGH"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Append-Only History
+  statement: History is never mutated. Append-only enables replay, prevents data loss.
+  source: Event Sourcing Principles
+- id: JUST_ENOUGH
+  category: aesthetic
+  protection: PROTECTED
   priority: 5
-  title: "Just Enough"
-  statement: "Not too much, not too little. Right-sized responses, complexity, intervention."
-  source: "Swedish Design Philosophy"
-
-- id: "LEAST_POWER"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Just Enough
+  statement: Not too much, not too little. Right-sized responses, complexity, intervention.
+  source: Swedish Design Philosophy
+- id: LEAST_POWER
+  category: aesthetic
+  protection: PROTECTED
   priority: 7
-  title: "Use Least Power"
-  statement: "Choose the weakest tool that works. Use :cheap before :strong. Use grep before LLM."
-  source: "W3C Design Principles"
-
-- id: "VISIBLE_REPAIRS"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Use Least Power
+  statement: Choose the weakest tool that works. Use :cheap before :strong. Use grep
+    before LLM.
+  source: W3C Design Principles
+- id: VISIBLE_REPAIRS
+  category: aesthetic
+  protection: PROTECTED
   priority: 3
-  title: "Visible Repairs"
-  statement: "Fixes are features. Document repairs visibly. Addressed debt is beautiful."
-  source: "Japanese Aesthetics"
-
-- id: "ANTICIPATE_NEEDS"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Visible Repairs
+  statement: Fixes are features. Document repairs visibly. Addressed debt is beautiful.
+  source: Japanese Aesthetics
+- id: ANTICIPATE_NEEDS
+  category: aesthetic
+  protection: PROTECTED
   priority: 5
-  title: "Anticipate Needs"
-  statement: "Predict what the user needs next. Suggest before asked. Prepare before requested."
-  source: "Japanese Hospitality"
-
-- id: "DONT_FORCE"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Anticipate Needs
+  statement: Predict what the user needs next. Suggest before asked. Prepare before
+    requested.
+  source: Japanese Hospitality
+- id: DONT_FORCE
+  category: aesthetic
+  protection: PROTECTED
   priority: 3
-  title: "Don't Force It"
-  statement: "Don't force solutions. The right solution flows naturally."
-  source: "Taoist Philosophy"
-# META AXIOMS (Self-governance)
-
-- id: "SELF_APPLY"
-  category: "meta"
-  protection: "ABSOLUTE"
-  title: "Apply to Itself"
-  statement: "A system that asserts quality must achieve its own standards. MASTER passes through MASTER."
-  source: "Recursive Quality"
-
-- id: "SHOW_COST_FIRST"
-  category: "meta"
-  protection: "PROTECTED"
-  title: "Show Cost First"
-  statement: "Show what operations cost before execution. No surprise spend or side effects."
-  source: "User Trust Principles"
-
-- id: "DEPTH_ON_DEMAND"
-  category: "meta"
-  protection: "PROTECTED"
-  title: "Depth on Demand"
-  statement: "Simple by default. Essential first. Complexity only when requested."
-  source: "Interaction Design Principles"
-
-- id: "USER_FRIENDLY"
-  category: "meta"
-  protection: "PROTECTED"
-  title: "User-Friendly Design"
-  statement: "Visibility. User control. Error prevention. Consistency. Recognition over recall."
-  source: "10 Usability Heuristics by Jakob Nielsen"
-# GOVERNANCE AXIOMS (Restored from master.yml v71.3.0)
-
-- id: "PRESERVE_FIRST"
-  category: "governance"
-  protection: "ABSOLUTE"
+  title: Don't Force It
+  statement: Don't force solutions. The right solution flows naturally.
+  source: Taoist Philosophy
+- id: SELF_APPLY
+  category: meta
+  protection: ABSOLUTE
+  title: Apply to Itself
+  statement: A system that asserts quality must achieve its own standards. MASTER
+    passes through MASTER.
+  source: Recursive Quality
+- id: SHOW_COST_FIRST
+  category: meta
+  protection: PROTECTED
+  title: Show Cost First
+  statement: Show what operations cost before execution. No surprise spend or side
+    effects.
+  source: User Trust Principles
+- id: DEPTH_ON_DEMAND
+  category: meta
+  protection: PROTECTED
+  title: Depth on Demand
+  statement: Simple by default. Essential first. Complexity only when requested.
+  source: Interaction Design Principles
+- id: USER_FRIENDLY
+  category: meta
+  protection: PROTECTED
+  title: User-Friendly Design
+  statement: Visibility. User control. Error prevention. Consistency. Recognition
+    over recall.
+  source: 10 Usability Heuristics by Jakob Nielsen
+- id: PRESERVE_FIRST
+  category: governance
+  protection: ABSOLUTE
   priority: 10
-  title: "Preserve Then Improve"
-  statement: "Never break working code. Understand before changing. Improve without regressing."
-  source: "master.yml golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-
-- id: "CHESTERTONS_FENCE"
-  category: "governance"
-  protection: "PROTECTED"
+  title: Preserve Then Improve
+  statement: Never break working code. Understand before changing. Improve without
+    regressing.
+  source: 'master.yml golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK'
+- id: CHESTERTONS_FENCE
+  category: governance
+  protection: PROTECTED
   priority: 7
-  title: "Understand Before Removing"
-  statement: "Before removing any code or feature, understand why it exists. If you cannot explain its purpose, do not remove it."
-  source: "G.K. Chesterton"
-
-- id: "PARETO"
-  category: "governance"
-  protection: "NEGOTIABLE"
+  title: Understand Before Removing
+  statement: Before removing any code or feature, understand why it exists. If you
+    cannot explain its purpose, do not remove it.
+  source: G.K. Chesterton
+- id: PARETO
+  category: governance
+  protection: NEGOTIABLE
   priority: 5
-  title: "80/20 Rule"
-  statement: "80% of value comes from 20% of effort. Focus on high-impact changes first."
-  source: "Vilfredo Pareto"
-
-- id: "LINDY"
-  category: "governance"
-  protection: "NEGOTIABLE"
+  title: 80/20 Rule
+  statement: 80% of value comes from 20% of effort. Focus on high-impact changes first.
+  source: Vilfredo Pareto
+- id: LINDY
+  category: governance
+  protection: NEGOTIABLE
   priority: 5
-  title: "Lindy Effect"
-  statement: "Old solutions that still work will likely keep working. Prefer battle-tested over novel."
-  source: "Nassim Taleb"
-
-- id: "GALLS_LAW"
-  category: "governance"
-  protection: "PROTECTED"
+  title: Lindy Effect
+  statement: Old solutions that still work will likely keep working. Prefer battle-tested
+    over novel.
+  source: Nassim Taleb
+- id: GALLS_LAW
+  category: governance
+  protection: PROTECTED
   priority: 7
-  title: "Complex From Simple"
-  statement: "A complex system that works evolved from a simple system that worked. Start simple."
-  source: "John Gall"
-
-- id: "HYRUMS_LAW"
-  category: "governance"
-  protection: "PROTECTED"
+  title: Complex From Simple
+  statement: A complex system that works evolved from a simple system that worked.
+    Start simple.
+  source: John Gall
+- id: HYRUMS_LAW
+  category: governance
+  protection: PROTECTED
   priority: 7
-  title: "Observable Behavior Becomes API"
-  statement: "With enough users, every observable behavior becomes a dependency. Guard public interfaces."
-  source: "Hyrum Wright"
-
-- id: "POSTELS_LAW"
-  category: "governance"
-  protection: "PROTECTED"
+  title: Observable Behavior Becomes API
+  statement: With enough users, every observable behavior becomes a dependency. Guard
+    public interfaces.
+  source: Hyrum Wright
+- id: POSTELS_LAW
+  category: governance
+  protection: PROTECTED
   priority: 7
-  title: "Robustness Principle"
-  statement: "Be conservative in what you send, liberal in what you accept."
-  source: "Jon Postel (RFC 761)"
-
-- id: "OCCAMS_RAZOR"
-  category: "governance"
-  protection: "NEGOTIABLE"
+  title: Robustness Principle
+  statement: Be conservative in what you send, liberal in what you accept.
+  source: Jon Postel (RFC 761)
+- id: OCCAMS_RAZOR
+  category: governance
+  protection: NEGOTIABLE
   priority: 5
-  title: "Simplest Explanation"
-  statement: "Among competing solutions, the one with fewest assumptions is usually correct."
-  source: "William of Ockham"
-# FUNCTIONAL AXIOMS (Restored from MASTER/data/principles.yml)
-
-- id: "FUNCTIONAL_CORE"
-  category: "functional"
-  protection: "PROTECTED"
+  title: Simplest Explanation
+  statement: Among competing solutions, the one with fewest assumptions is usually
+    correct.
+  source: William of Ockham
+- id: FUNCTIONAL_CORE
+  category: functional
+  protection: PROTECTED
   priority: 7
-  title: "Functional Core, Imperative Shell"
-  statement: "Pure logic at the center, side effects at the edges. Testable core, thin IO boundary."
-  source: "Gary Bernhardt"
-
-- id: "IDEMPOTENT"
-  category: "functional"
-  protection: "PROTECTED"
+  title: Functional Core, Imperative Shell
+  statement: Pure logic at the center, side effects at the edges. Testable core, thin
+    IO boundary.
+  source: Gary Bernhardt
+- id: IDEMPOTENT
+  category: functional
+  protection: PROTECTED
   priority: 7
-  title: "Idempotent Operations"
-  statement: "Same input produces same result regardless of repetition. Safe to retry."
-  source: "Distributed Systems"
-
-- id: "EXPLICIT"
-  category: "functional"
-  protection: "PROTECTED"
+  title: Idempotent Operations
+  statement: Same input produces same result regardless of repetition. Safe to retry.
+  source: Distributed Systems
+- id: EXPLICIT
+  category: functional
+  protection: PROTECTED
   priority: 7
-  title: "Explicit Over Implicit"
-  statement: "Make behavior visible. Hidden magic creates hidden bugs."
-  source: "Python Zen / Clean Code"
-
-- id: "CQS"
-  category: "functional"
-  protection: "PROTECTED"
+  title: Explicit Over Implicit
+  statement: Make behavior visible. Hidden magic creates hidden bugs.
+  source: Python Zen / Clean Code
+- id: CQS
+  category: functional
+  protection: PROTECTED
   priority: 5
-  title: "Command-Query Separation"
-  statement: "Methods either change state or return data, never both."
-  source: "Bertrand Meyer"
-
-- id: "PURE_FUNCTIONS"
-  category: "functional"
-  protection: "NEGOTIABLE"
+  title: Command-Query Separation
+  statement: Methods either change state or return data, never both.
+  source: Bertrand Meyer
+- id: PURE_FUNCTIONS
+  category: functional
+  protection: NEGOTIABLE
   priority: 5
-  title: "Pure Functions"
-  statement: "No side effects, deterministic output. Prefer pure transforms over stateful procedures."
-  source: "Functional Programming"
-
-- id: "IMMUTABLE"
-  category: "functional"
-  protection: "NEGOTIABLE"
+  title: Pure Functions
+  statement: No side effects, deterministic output. Prefer pure transforms over stateful
+    procedures.
+  source: Functional Programming
+- id: IMMUTABLE
+  category: functional
+  protection: NEGOTIABLE
   priority: 5
-  title: "Immutability by Default"
-  statement: "Freeze data on creation. Mutate only when necessary and document why."
-  source: "Functional Programming"
-# PERFORMANCE AXIOMS (Restored from MASTER/data/principles.yml)
-
-- id: "CACHE_FIRST"
-  category: "performance"
-  protection: "PROTECTED"
+  title: Immutability by Default
+  statement: Freeze data on creation. Mutate only when necessary and document why.
+  source: Functional Programming
+- id: CACHE_FIRST
+  category: performance
+  protection: PROTECTED
   priority: 7
-  title: "Cache Aggressively"
-  statement: "Cache LLM responses, computations, and lookups. Semantic cache before API call."
-  source: "MASTER/principles.yml"
-
-- id: "GUARD_EXPENSIVE"
-  category: "performance"
-  protection: "PROTECTED"
+  title: Cache Aggressively
+  statement: Cache LLM responses, computations, and lookups. Semantic cache before
+    API call.
+  source: MASTER/principles.yml
+- id: GUARD_EXPENSIVE
+  category: performance
+  protection: PROTECTED
   priority: 7
-  title: "Guard Expensive Operations"
-  statement: "Check preconditions before costly work. Fail fast, fail cheap."
-  source: "MASTER/principles.yml"
-
-- id: "PRECOMPUTE"
-  category: "performance"
-  protection: "NEGOTIABLE"
+  title: Guard Expensive Operations
+  statement: Check preconditions before costly work. Fail fast, fail cheap.
+  source: MASTER/principles.yml
+- id: PRECOMPUTE
+  category: performance
+  protection: NEGOTIABLE
   priority: 5
-  title: "Precompute Expensive Math"
-  statement: "Move invariant calculations outside loops. Lookup tables over repeated computation."
-  source: "MASTER/principles.yml"
-# COMMUNICATION AXIOMS (Restored from MASTER/data/principles.yml)
-
-- id: "PROSE_NOT_LISTS"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Precompute Expensive Math
+  statement: Move invariant calculations outside loops. Lookup tables over repeated
+    computation.
+  source: MASTER/principles.yml
+- id: PROSE_NOT_LISTS
+  category: communication
+  protection: PROTECTED
   priority: 7
-  title: "Prose Over Lists"
-  statement: "Write connected prose. Bullet lists fragment reasoning and hide relationships."
-  source: "MASTER/principles.yml"
-
-- id: "ACCESSIBLE_FIRST"
-  category: "communication"
-  protection: "PROTECTED"
+  title: Prose Over Lists
+  statement: Write connected prose. Bullet lists fragment reasoning and hide relationships.
+  source: MASTER/principles.yml
+- id: ACCESSIBLE_FIRST
+  category: communication
+  protection: PROTECTED
   priority: 7
-  title: "Accessible Then Technical"
-  statement: "Lead with plain language, layer in technical detail. Never jargon-first."
-  source: "MASTER/principles.yml"
-
-- id: "NO_ABBREVIATIONS"
-  category: "communication"
-  protection: "NEGOTIABLE"
+  title: Accessible Then Technical
+  statement: Lead with plain language, layer in technical detail. Never jargon-first.
+  source: MASTER/principles.yml
+- id: NO_ABBREVIATIONS
+  category: communication
+  protection: NEGOTIABLE
   priority: 5
-  title: "No Abbreviations"
-  statement: "Spell it out. Abbreviations exclude newcomers and create ambiguity."
-  source: "MASTER/principles.yml"
-# AESTHETIC AXIOMS (Restored from MASTER/data/principles.yml)
-
-- id: "SQUINT_TEST"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: No Abbreviations
+  statement: Spell it out. Abbreviations exclude newcomers and create ambiguity.
+  source: MASTER/principles.yml
+- id: SQUINT_TEST
+  category: aesthetic
+  protection: PROTECTED
   priority: 7
-  title: "Squint Test"
-  statement: "Code should reveal structure when squinted at. Visual rhythm matters."
-  source: "Sandi Metz"
-
-- id: "ANALOG_WARMTH"
-  category: "aesthetic"
-  protection: "NEGOTIABLE"
+  title: Squint Test
+  statement: Code should reveal structure when squinted at. Visual rhythm matters.
+  source: Sandi Metz
+- id: ANALOG_WARMTH
+  category: aesthetic
+  protection: NEGOTIABLE
   priority: 5
-  title: "Analog Warmth Over Digital Perfection"
-  statement: "Slight imperfection feels human. Over-polished feels sterile."
-  source: "MASTER/principles.yml"
-
-- id: "TYPOGRAPHY"
-  category: "aesthetic"
-  protection: "PROTECTED"
+  title: Analog Warmth Over Digital Perfection
+  statement: Slight imperfection feels human. Over-polished feels sterile.
+  source: MASTER/principles.yml
+- id: TYPOGRAPHY
+  category: aesthetic
+  protection: PROTECTED
   priority: 7
-  title: "Typography Discipline"
-  statement: "Curly quotes, em dashes, proper ellipsis. Typographic care signals quality."
-  source: "MASTER/principles.yml"
-
-- id: "AUDIO_SMOOTH"
-  category: "aesthetic"
-  protection: "NEGOTIABLE"
+  title: Typography Discipline
+  statement: Curly quotes, em dashes, proper ellipsis. Typographic care signals quality.
+  source: MASTER/principles.yml
+- id: AUDIO_SMOOTH
+  category: aesthetic
+  protection: NEGOTIABLE
   priority: 3
-  title: "Audio-Reactive Smoothing"
-  statement: "Audio visualizations use exponential smoothing. Never raw FFT data."
-  source: "MASTER/principles.yml"
-# VERIFICATION AXIOMS (Restored from MASTER/data/principles.yml + chat insights)
-
-- id: "DUAL_DETECT"
-  category: "verification"
-  protection: "PROTECTED"
+  title: Audio-Reactive Smoothing
+  statement: Audio visualizations use exponential smoothing. Never raw FFT data.
+  source: MASTER/principles.yml
+- id: DUAL_DETECT
+  category: verification
+  protection: PROTECTED
   priority: 7
-  title: "Dual Detection"
-  statement: "Check both literal patterns and conceptual violations. Regex + LLM together."
-  source: "MASTER/principles.yml"
-
-- id: "SILENCE_DEFAULT"
-  category: "verification"
-  protection: "PROTECTED"
+  title: Dual Detection
+  statement: Check both literal patterns and conceptual violations. Regex + LLM together.
+  source: MASTER/principles.yml
+- id: SILENCE_DEFAULT
+  category: verification
+  protection: PROTECTED
   priority: 7
-  title: "Silence by Default"
-  statement: "Only report actionable findings. No noise, no filler, no congratulations."
-  source: "MASTER/principles.yml"
-
-- id: "MASS_CURATE"
-  category: "verification"
-  protection: "NEGOTIABLE"
+  title: Silence by Default
+  statement: Only report actionable findings. No noise, no filler, no congratulations.
+  source: MASTER/principles.yml
+- id: MASS_CURATE
+  category: verification
+  protection: NEGOTIABLE
   priority: 5
-  title: "Mass Generation with Curation"
-  statement: "Generate many alternatives, curate ruthlessly. Quantity enables quality."
-  source: "MASTER/principles.yml"
+  title: Mass Generation with Curation
+  statement: Generate many alternatives, curate ruthlessly. Quantity enables quality.
+  source: MASTER/principles.yml

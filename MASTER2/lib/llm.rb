@@ -39,89 +39,6 @@ module MASTER
         @persona_prompt = value
       end
 
-      def models
-        RubyLLM.models
-      end
-
-      def chat_models
-        @chat_models ||= models.chat_models
-      end
-
-      # Load model configuration from models.yml
-      def load_models_config
-        @models_config ||= begin
-          models_file = File.join(__dir__, "..", "data", "models.yml")
-          return [] unless File.exist?(models_file)
-          begin
-            YAML.safe_load_file(models_file, symbolize_names: true) || []
-          rescue StandardError => e
-            warn "Failed to load models.yml: #{e.message}"
-            []
-          end
-        end
-      end
-
-      # Get curated models from models.yml
-      def configured_models
-        load_models_config
-      end
-
-      # Hash lookup for O(1) access to configured models by ID
-      def configured_models_by_id
-        @configured_models_by_id ||= configured_models.each_with_object({}) { |m, h| h[m[:id]] = m }
-      end
-
-      def budget_thresholds
-        @budget_thresholds ||= begin
-          return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
-          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-          data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
-        end
-      end
-      # Classify a model into a tier based on models.yml configuration
-      def classify_tier(model)
-        # For configured models, look up tier from models.yml with O(1) hash access
-        return :cheap unless model.is_a?(String) || model&.id
-
-        model_id = model.is_a?(String) ? model : model.id
-        configured_model = configured_models_by_id[model_id]
-        return configured_model[:tier].to_sym if configured_model&.dig(:tier)
-
-        # Fallback to price-based classification for models not in models.yml
-        # This applies to any model (string ID or object) not found in the configured models
-        price = model.is_a?(String) ? 0 : model.input_price_per_million || 0
-
-        case price
-        when (10.0..) then :premium
-        when (2.0...10.0) then :strong
-        when (0.1...2.0) then :fast
-        else :cheap
-        end
-      end
-
-      def model_tiers
-        @model_tiers ||= TIER_ORDER.each_with_object({}) do |tier, hash|
-          # Get models from models.yml for this tier (tier values are strings in YAML)
-          hash[tier] = configured_models.select { |m| m[:tier].to_s == tier.to_s }.map { |m| m[:id] }
-        end
-      end
-
-      def model_rates
-        @model_rates ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = {
-            in: m[:input_cost] || 0,
-            out: m[:output_cost] || 0,
-            tier: m[:tier]&.to_sym || :cheap
-          }
-        end
-      end
-
-      def context_limits
-        @context_limits ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = m[:context_window] || 32_000
-        end
-      end
-
       def api_key
         ENV.fetch("OPENROUTER_API_KEY", nil)
       end
@@ -143,12 +60,10 @@ module MASTER
 
       # Check API key status with lightweight test
       def check_key
-        return Result.err("No API key") unless configured?
+        return Result.err("No API key.") unless configured?
 
         begin
           configure_ruby_llm
-          # Use a simple test chat to verify key is valid
-          # In real implementation, RubyLLM might provide a direct validation method
           Result.ok(
             label: "OpenRouter API Key",
             limit: nil,
@@ -161,7 +76,6 @@ module MASTER
         end
       end
 
-      # Main ask method with OpenRouter features
       # Options:
       #   tier: :strong/:fast/:cheap - model tier selection
       #   model: explicit model ID
@@ -174,92 +88,95 @@ module MASTER
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
               json_schema: nil, provider: nil, stream: false, online: false, messages: nil)
 
-        return Result.err("Missing OPENROUTER_API_KEY") unless configured?
+        return Result.err("Missing OPENROUTER_API_KEY.") unless configured?
 
-        # Configure ruby_llm if not already done
         configure_ruby_llm
-
-        # Rate limit check
         CircuitBreaker.check_rate_limit!
 
-        # Cost firewall - abort if cumulative spend exceeds cap
         if total_spent >= spending_cap
           return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}. Session terminated.")
         end
 
-        # Check semantic cache before making API call
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
-        if cache_result&.ok?
-          return cache_result
-        end
+        return cache_result if cache_result&.ok?
 
-        # Model selection (single call - no TOCTOU)
-        primary = model || select_model_for_tier(tier || self.tier)
-        return Result.err("No model available") unless primary
+        primary, selected_tier = resolve_model(model, tier)
+        return Result.err("No model available.") unless primary
 
-        model_short = extract_model_name(primary)
-        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+        Dmesg.llm(tier: selected_tier, model: @current_model, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
 
-        # Update current state for prompt display
-        @current_model = model_short
-        @current_tier = selected_tier
-
-        Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: 0, tokens_out: 0) if defined?(Dmesg)
-
-        # Manual fallback logic
         models_to_try = [primary] + (fallbacks || [])
         last_error = nil
 
         models_to_try.each do |current_model|
           next unless CircuitBreaker.circuit_closed?(current_model)
 
-          spinner = nil
-          unless stream
-            spinner = UI.spinner(extract_model_name(current_model))
-            spinner.auto_spin
-          end
-
-          # Retry logic with exponential backoff
-          result = execute_with_retry(
-            prompt: prompt,
-            messages: messages,
-            model: current_model,
-            reasoning: reasoning,
-            json_schema: json_schema,
-            provider: provider,
-            stream: stream
-          )
+          result = try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
 
           if result.ok?
-            data = result.value
-            spinner&.success
-
-            tokens_in = data[:tokens_in]
-            tokens_out = data[:tokens_out]
-            cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
-
-            Dmesg.llm(tier: selected_tier, model: model_short, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
-
-            # Store in semantic cache
-            SemanticCache.store(prompt, data, tier: selected_tier) if defined?(SemanticCache) && !stream
-
-            CircuitBreaker.close_circuit!(current_model)
-            return Result.ok(data)
+            process_llm_response(result, current_model, prompt, selected_tier, stream)
+            return Result.ok(result.value)
           else
-            spinner&.error
-            CircuitBreaker.open_circuit!(current_model)
+            handle_llm_failure(result, current_model, selected_tier)
             last_error = result.error
-            Dmesg.llm_error(tier: selected_tier, error: result.error) if defined?(Dmesg)
-            # Try next fallback model
           end
         end
 
-        # All models failed
         Result.err("All models failed. Last error: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
         Result.err(Logging.format_error(e))
       end
+
+      private
+
+      def resolve_model(model, tier)
+        primary = model || select_model_for_tier(tier || self.tier)
+        return [nil, nil] unless primary
+
+        model_short = extract_model_name(primary)
+        selected_tier = model_rates[primary.split(":").first]&.[](:tier) || tier || :unknown
+
+        @current_model = model_short
+        @current_tier = selected_tier
+
+        [primary, selected_tier]
+      end
+
+      def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
+        spinner = nil
+        unless stream
+          spinner = UI.spinner(extract_model_name(current_model))
+          spinner.auto_spin
+        end
+
+        result = execute_with_retry(
+          prompt: prompt, messages: messages, model: current_model,
+          reasoning: reasoning, json_schema: json_schema,
+          provider: provider, stream: stream
+        )
+
+        result.ok? ? spinner&.success : spinner&.error
+        result
+      end
+
+      def process_llm_response(result, current_model, prompt, selected_tier, stream)
+        data = result.value
+        tokens_in = data[:tokens_in]
+        tokens_out = data[:tokens_out]
+        cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
+
+        Dmesg.llm(tier: selected_tier, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+        SemanticCache.store(prompt, data, tier: selected_tier) if defined?(SemanticCache) && !stream
+        CircuitBreaker.close_circuit!(current_model)
+      end
+
+      def handle_llm_failure(result, current_model, selected_tier)
+        CircuitBreaker.open_circuit!(current_model)
+        Dmesg.llm_error(tier: selected_tier, error: result.error) if defined?(Dmesg)
+      end
+
+      public
 
       # Structured output helper - guarantees valid JSON matching schema
       def ask_json(prompt, schema:, tier: :fast, **opts)
@@ -281,340 +198,15 @@ module MASTER
         ask(prompt, model: "openrouter/auto", **opts)
       end
 
-      def extract_model_name(model_id)
-        # Remove provider prefix and suffixes
-        name = model_id.split("/").last
-        name = name.split(":").first  # Remove :nitro, :floor, :online
-        name
-      end
-
-      def prompt_model_name
-        @current_model || "unknown"
-      end
-
       # Delegate circuit_closed? to CircuitBreaker for callers that use LLM.circuit_closed?
       def circuit_closed?(model)
         CircuitBreaker.circuit_closed?(model)
       end
-
-      private
-
-      # Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
-      def execute_with_retry(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
-        max_retries = 3
-        retry_count = 0
-        last_error = nil
-
-        while retry_count < max_retries
-          begin
-            result = execute_ruby_llm_request(
-              prompt: prompt,
-              messages: messages,
-              model: model,
-              reasoning: reasoning,
-              json_schema: json_schema,
-              provider: provider,
-              stream: stream
-            )
-
-            # Success or non-retryable error
-            return result if result.ok? || !retryable_error?(result.error)
-
-            last_error = result.error
-          rescue StandardError => e
-            last_error = e.message
-          end
-
-          retry_count += 1
-          break if retry_count >= max_retries
-
-          # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2 ** (retry_count - 1)
-          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
-          sleep(sleep_time)
-        end
-
-        Result.err("Failed after #{max_retries} retries: #{last_error}")
-      end
-
-      def retryable_error?(error)
-        return false unless error.is_a?(String) || error.is_a?(Hash)
-        error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
-        error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
-      end
-
-      # Execute request using ruby_llm
-      def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
-        configure_ruby_llm
-
-        chat = RubyLLM.chat(model: model)
-
-        # Validate reasoning effort values
-        if reasoning
-          effort = reasoning.is_a?(Hash) ? reasoning[:effort] : reasoning
-          effort_str = effort.to_s
-          unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
-            return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
-          end
-          chat = chat.with_thinking(effort_str)
-        end
-
-        # JSON schema support
-        if json_schema
-          schema_data = json_schema[:schema] || json_schema
-          chat = chat.with_json_schema(schema_data)
-        end
-
-        # Provider preferences
-        if provider && provider.is_a?(Hash)
-          chat = chat.with_params(provider: provider)
-        end
-
-        # Preserve full message history
-        msg_content = build_message_content(prompt, messages)
-
-        # Execute query
-        if stream
-          execute_streaming_ruby_llm(chat, msg_content, model)
-        else
-          execute_blocking_ruby_llm(chat, msg_content, model)
-        end
-      rescue StandardError => e
-        Result.err(Logging.format_error(e))
-      end
-
-      # Build message content preserving full conversation history
-      def build_message_content(prompt, messages)
-        if messages && messages.is_a?(Array) && !messages.empty?
-          history = messages.map do |m|
-            role = (m[:role] || m["role"]).to_s
-            content = m[:content] || m["content"]
-            next unless content
-            "[#{role}] #{content}"
-          end.compact
-          history << "[user] #{prompt}" if prompt && !prompt.to_s.empty?
-          history.join("\n\n")
-        else
-          prompt.to_s
-        end
-      end
-
-      def execute_blocking_ruby_llm(chat, content, model)
-        response = chat.ask(content)
-
-        response_data = {
-          content: response.content,
-          reasoning: (response.thinking if response.respond_to?(:thinking)),
-          model: model,
-          tokens_in: response.input_tokens || 0,
-          tokens_out: response.output_tokens || 0,
-          cost: nil,
-          finish_reason: "stop"
-        }
-
-        validate_response(response_data, model)
-      rescue StandardError => e
-        Result.err("ruby_llm error: #{e.message}")
-      end
-
-      # Streaming with size limits and proper token counts
-      def execute_streaming_ruby_llm(chat, content, model)
-        content_parts = []
-        reasoning_parts = []
-        total_size = 0
-        final_response = nil
-
-        response = chat.ask(content) do |chunk|
-          if chunk.is_a?(String)
-            $stderr.print chunk
-            content_parts << chunk
-            total_size += chunk.bytesize
-
-            # Abort if response exceeds MAX_RESPONSE_SIZE
-            if total_size > MAX_RESPONSE_SIZE
-              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-              break
-            end
-          end
-        end
-
-        # Use final response object for token counts
-        final_response = response
-
-        $stderr.puts
-
-        response_data = {
-          content: content_parts.join,
-          reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
-          model: model,
-          tokens_in: final_response.input_tokens || 0,
-          tokens_out: final_response.output_tokens || 0,
-          cost: nil,
-          finish_reason: "stop"
-        }
-
-        validate_response(response_data, model)
-      rescue StandardError => e
-        Result.err("ruby_llm streaming error: #{e.message}")
-      end
-
-      def select_model_for_tier(tier)
-        tier = tier.to_sym
-        tier = :fast unless TIER_ORDER.include?(tier)
-
-        # Try requested tier first, then fall back to cheaper tiers
-        start_idx = TIER_ORDER.index(tier) || 1
-        TIER_ORDER[start_idx..].each do |t|
-          model_tiers[t]&.each do |m|
-            return m if CircuitBreaker.circuit_closed?(m)
-          end
-        end
-
-        # Try stronger tiers as last resort
-        TIER_ORDER[0...start_idx].reverse_each do |t|
-          model_tiers[t]&.each do |m|
-            return m if CircuitBreaker.circuit_closed?(m)
-          end
-        end
-
-        nil
-      end
-
-      public
-
-      def spending_cap
-        SPENDING_CAP
-      end
-
-      def total_spent
-        return 0.0 unless defined?(DB)
-        DB.total_cost
-      end
-
-      def budget_remaining
-        [spending_cap - total_spent, 0.0].max
-      end
-
-      # Pick best available model for given tier (or current)
-      def pick(tier_override = nil)
-        select_model_for_tier(tier_override || tier)
-      end
-
-      # Alias for pick (used by Chamber)
-      def select_available_model
-        pick
-      end
-
-      def tier
-        return @forced_tier if @forced_tier
-        r = budget_remaining
-        thresholds = budget_thresholds
-        if r > thresholds[:premium]
-          :premium
-        elsif r > thresholds[:strong]
-          :strong
-        elsif r > thresholds[:fast]
-          :fast
-        else
-          :cheap
-        end
-      end
-
-      def record_cost(model:, tokens_in:, tokens_out:)
-        # Simplified cost recording - prefer using response.cost from RubyLLM
-        # Fallback to manual calculation if needed
-        base_model = model.split(":").first  # Remove suffixes
-        rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
-        cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
-        DB.log_cost(model: base_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(DB)
-        cost
-      end
-
-      # Response validation with proper checks
-      def validate_response(data, model_id)
-        content = data[:content]
-        if content.nil? || (content.is_a?(String) && content.strip.empty?)
-          return Result.err("Empty response from #{extract_model_name(model_id)}")
-        end
-
-        unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
-          data[:tokens_in] = 0
-        end
-
-        unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
-          data[:tokens_out] = 0
-        end
-
-        if data[:cost] && !data[:cost].is_a?(Numeric)
-          data[:cost] = nil
-        end
-
-        Result.ok(data)
-      end
-    end
-  end
-
-  # ContextWindow - Track and display token usage
-  # Uses LLM.context_limits as single source of truth
-  module ContextWindow
-    DEFAULT_LIMIT = 32_000
-
-    class << self
-      def estimate_tokens(char_count)
-        (char_count.to_i / 4.0).ceil
-      end
-
-      def limit_for(model)
-        LLM.context_limits[model] || DEFAULT_LIMIT
-      end
-
-      def usage(session, model: nil)
-        model ||= LLM.model_tiers[:strong]&.first
-        limit = limit_for(model)
-
-        total_chars = session.history.sum { |h| h[:content].to_s.length }
-        used = estimate_tokens(total_chars)
-        percent = ((used.to_f / limit) * 100).round(1)
-
-        {
-          used: used,
-          limit: limit,
-          percent: percent,
-          remaining: limit - used,
-        }
-      end
-
-      def bar(session, model: nil, width: 20)
-        u = usage(session, model: model)
-        filled = ((u[:percent] / 100.0) * width).round
-        empty = width - filled
-
-        color = if u[:percent] > 90
-                  :red
-                elsif u[:percent] > 70
-                  :yellow
-                else
-                  :green
-                end
-
-        bar_str = "█" * filled + "░" * empty
-        "#{bar_str} #{u[:percent]}%"
-      end
-
-      def status(session, model: nil)
-        u = usage(session, model: model)
-        "Context: #{format_tokens(u[:used])}/#{format_tokens(u[:limit])} (#{u[:percent]}%)"
-      end
-
-      private
-
-      def format_tokens(n)
-        if n >= 1000
-          "#{(n / 1000.0).round(1)}k"
-        else
-          n.to_s
-        end
-      end
     end
   end
 end
+
+require_relative "llm/models"
+require_relative "llm/budget"
+require_relative "llm/request"
+require_relative "llm/context_window"

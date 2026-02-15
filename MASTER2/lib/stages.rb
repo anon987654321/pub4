@@ -19,13 +19,11 @@ module MASTER
       COMPRESSION_FILE = File.join(__dir__, "..", "data", "compression.yml")
 
       class << self
-        # Load compression patterns from YAML
         # @return [Hash] Hash with :fillers and :phrases arrays
         def patterns
           @patterns ||= load_patterns
         end
 
-        # Load and compile compression patterns from file
         # @return [Hash] Compiled regex patterns
         def load_patterns
           return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
@@ -261,7 +259,7 @@ module MASTER
           begin
             Pledge.unveil(f.path, "r")
             Pledge.pledge("stdio rpath")
-          rescue StandardError
+          rescue StandardError => e
             # Not on OpenBSD
           end
           output = IO.popen([RbConfig::CONFIG['ruby_install_name'], f.path], err: %i[child out], &:read)

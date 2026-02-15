@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Merged from autocomplete.rb
   module Autocomplete
     extend self
 
@@ -44,7 +43,7 @@ module MASTER
          .reject { |e| e.start_with?('.') }
          .select { |e| e.start_with?(base) }
          .map { |e| File.join(dir, e) }
-    rescue StandardError
+    rescue StandardError => e
       []
     end
 

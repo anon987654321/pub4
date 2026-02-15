@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Merged from progress.rb
   module Progress
     extend self
 

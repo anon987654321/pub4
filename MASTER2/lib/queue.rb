@@ -136,11 +136,10 @@ module MASTER
       Result.err("Failed to save checkpoint: #{e.message}")
     end
 
-    # Load checkpoint from disk
     def load_checkpoint
-      return Result.err("Checkpoint file not found") unless File.exist?(@checkpoint_file)
+      return Result.err("Checkpoint file not found.") unless File.exist?(@checkpoint_file)
 
-      data = JSON.parse(File.read(@checkpoint_file), symbolize_names: true)
+      data = JSON.parse(File.read(@checkpoint_file, symbolize_names: true), symbolize_names: true)
       @items = data[:items] || []
       @completed = data[:completed] || []
       @failed = data[:failed] || []
@@ -222,7 +221,7 @@ module MASTER
       begin
         chunk = File.read(file, 8192)
         chunk&.include?("\x00")
-      rescue StandardError
+      rescue StandardError => e
         true
       end
     end

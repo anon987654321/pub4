@@ -114,7 +114,7 @@ class TestIntegration < Minitest::Test
   def test_dmesg_works
     assert defined?(MASTER::Dmesg), "Dmesg must exist"
     # Should not raise
-    MASTER::Dmesg.log("test", message: "integration test")
+    MASTER::Dmesg.dmesg_log("test", message: "integration test")
   end
 
   def test_swarm_uses_new_api

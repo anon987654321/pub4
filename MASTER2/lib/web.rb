@@ -53,11 +53,11 @@ module MASTER
 
       Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url)
     rescue LoadError
-      Result.err("Ferrum gem not available - install for JS-rendered pages")
+      Result.err("Ferrum gem not available - install for JS-rendered pages.")
     rescue StandardError => e
       Result.err("Browse JS failed: #{e.message}")
     ensure
-      browser&.quit rescue StandardError
+      browser&.quit rescue StandardError => e
     end
 
     # Dynamic CSS selector discovery using LLM + vision
@@ -87,7 +87,7 @@ module MASTER
 
       # Use vision model if possible for better accuracy
       result = LLM.ask(prompt, tier: :fast)
-      return Result.err("LLM request failed") unless result.ok?
+      return Result.err("LLM request failed.") unless result.ok?
 
       # Clean up response - extract just the selector
       selector = result.value[:content].to_s.strip.split("\n").first.to_s.strip
@@ -95,7 +95,7 @@ module MASTER
 
       Result.ok(selector: selector)
     rescue LoadError
-      Result.err("Ferrum not available - install gem 'ferrum' for browser automation")
+      Result.err("Ferrum not available - install gem 'ferrum' for browser automation.")
     rescue StandardError => e
       Result.err("Selector discovery failed: #{e.message}")
     end
@@ -127,7 +127,7 @@ module MASTER
 
       Result.ok(selector: selector, result: result_html)
     rescue LoadError
-      Result.err("Ferrum not available - install gem 'ferrum'")
+      Result.err("Ferrum not available - install gem 'ferrum'.")
     rescue StandardError => e
       Result.err("Click failed: #{e.message}")
     end
@@ -157,7 +157,7 @@ module MASTER
       browser.quit
       Result.ok(selector: selector, filled: value)
     rescue LoadError
-      Result.err("Ferrum not available - install gem 'ferrum'")
+      Result.err("Ferrum not available - install gem 'ferrum'.")
     rescue StandardError => e
       Result.err("Fill failed: #{e.message}")
     end

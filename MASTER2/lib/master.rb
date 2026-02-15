@@ -52,6 +52,11 @@ require_relative "hooks"
 require_relative "questions"
 require_relative "workflow"
 
+# Proactive autonomy (stolen from OpenClaw)
+require_relative "heartbeat"
+require_relative "scheduler"
+require_relative "triggers"
+
 # Deliberation engines
 require_relative "chamber"
 
@@ -117,4 +122,12 @@ if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
       warn "MASTER: self_check! failed (#{e.message})"
     end
   end
+end
+
+# Boot-time proactive autonomy setup
+if ENV["MASTER_HEARTBEAT"] == "true"
+  MASTER::Triggers.install_defaults
+  MASTER::Scheduler.load
+  MASTER::Heartbeat.register("scheduler") { MASTER::Scheduler.tick }
+  MASTER::Heartbeat.start(interval: (ENV["MASTER_HEARTBEAT_INTERVAL"] || "60").to_i)
 end

@@ -49,7 +49,7 @@ module MASTER
       # Uses Result monad
       points += 1 if code.match?(/Result\.(ok|err)/)
 
-      # No bare rescue
+      # No bare rescue StandardError => e
       points += 1 unless code.match?(/rescue\s*$/)
 
       # Uses guard clauses

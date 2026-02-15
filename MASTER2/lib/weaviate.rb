@@ -9,6 +9,8 @@ module MASTER
   module Weaviate
     extend self
 
+    NOT_AVAILABLE = "Weaviate not available.".freeze
+
     HOST = ENV['WEAVIATE_HOST'] || 'localhost'
     PORT = (ENV['WEAVIATE_PORT'] || 8080).to_i
     SCHEME = ENV['WEAVIATE_SCHEME'] || 'http'
@@ -23,7 +25,7 @@ module MASTER
     class << self
       def available?
         health_check
-      rescue StandardError
+      rescue StandardError => e
         false
       end
 
@@ -38,7 +40,7 @@ module MASTER
         http.read_timeout = 10
         response = http.request(request)
         response.is_a?(Net::HTTPSuccess)
-      rescue StandardError
+      rescue StandardError => e
         false
       end
 
@@ -66,7 +68,7 @@ module MASTER
 
       # Create a custom schema class
       def create_schema(schema_def)
-        return Result.err("Weaviate not available") unless available?
+        return Result.err(NOT_AVAILABLE) unless available?
 
         response = post('/v1/schema', schema_def)
 
@@ -81,7 +83,7 @@ module MASTER
 
       # Index an object in a specific class
       def index(class_name, properties, vector: nil)
-        return Result.err("Weaviate not available") unless available?
+        return Result.err(NOT_AVAILABLE) unless available?
 
         object = {
           class: class_name,
@@ -102,7 +104,7 @@ module MASTER
 
       # Search in a specific class
       def search_class(class_name, query:, limit: 10, filters: {})
-        return Result.err("Weaviate not available") unless available?
+        return Result.err(NOT_AVAILABLE) unless available?
 
         filter_clause = if filters.any?
           filter_conditions = filters.map do |field, value|
@@ -143,7 +145,7 @@ module MASTER
       end
 
       def store(content:, type: 'chat', source: nil, metadata: {})
-        return Result.err("Weaviate not available") unless available?
+        return Result.err(NOT_AVAILABLE) unless available?
 
         object = {
           class: CLASS_NAME,
@@ -168,7 +170,7 @@ module MASTER
       end
 
       def search(query:, limit: 5, type: nil)
-        return Result.err("Weaviate not available") unless available?
+        return Result.err(NOT_AVAILABLE) unless available?
 
         gql = build_search_query(query, limit, type)
         response = post('/v1/graphql', { query: gql })
@@ -206,7 +208,7 @@ module MASTER
 
         response = http.request(request)
         response.is_a?(Net::HTTPSuccess)
-      rescue StandardError
+      rescue StandardError => e
         false
       end
 

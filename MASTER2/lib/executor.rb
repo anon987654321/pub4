@@ -6,7 +6,6 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
-require_relative "stages"
 require_relative "executor/momentum"
 require_relative "executor/react"
 require_relative "executor/preact"
@@ -80,9 +79,13 @@ module MASTER
 
     include Context
     include Tools
+    include React
+    include PreAct
+    include ReWOO
+    include Reflexion
 
-    # Main entry - auto-selects pattern or uses specified
     def call(goal, pattern: :auto, tier: nil)
+      Logging.dmesg_log('executor', message: 'ENTER executor.call')
       @history = []
       @reflections = []
       @plan = []

@@ -3,42 +3,13 @@
 require 'fileutils'
 require 'yaml'
 
+require_relative "cinematic/templates"
+
 module MASTER
   # Cinematic - AI-powered cinematic pipeline and color grading
   # Chains Replicate models to create film-quality image/video transformations
   module Cinematic
     extend self
-
-    # Cinematic presets - film looks and color grades
-    def self.presets
-      @presets ||= {
-        'blade-runner' => {
-          description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
-          models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
-          params: { guidance_scale: 12.0, strength: 0.6 }
-        },
-        'wes-anderson' => {
-          description: 'Symmetrical, pastel palette, centered compositions',
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 8.0, strength: 0.5 }
-        },
-        'noir' => {
-          description: 'High contrast black and white, dramatic shadows',
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 10.0, strength: 0.7 }
-        },
-        'golden-hour' => {
-          description: 'Warm, soft, glowing light',
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 9.0, strength: 0.5 }
-        },
-        'teal-orange' => {
-          description: 'Hollywood blockbuster: teal shadows, orange highlights',
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 11.0, strength: 0.6 }
-        }
-      }.freeze
-    end
 
     # Pipeline builder class
     class Pipeline
@@ -59,7 +30,7 @@ module MASTER
 
       # Execute pipeline on input
       def execute(input, save_intermediates: false)
-        return Result.err("Empty pipeline") if @stages.empty?
+        return Result.err("Empty pipeline.") if @stages.empty?
 
         results = []
         current_output = input
@@ -132,7 +103,6 @@ module MASTER
         Result.err("Failed to save preset: #{e.message}")
       end
 
-      # Load preset by name
       def self.load(name)
         pipelines_dir = File.join(Paths.data, 'pipelines')
         filename = name.downcase.gsub(/[^a-z0-9]+/, '-') + '.yml'
@@ -151,22 +121,6 @@ module MASTER
       rescue StandardError => e
         $stderr.puts "Cinematic: load preset error: #{e.class} - #{e.message}"
         Result.err("Failed to load preset: #{e.message}")
-      end
-
-      # Generate random creative pipeline
-      def self.random(length: 5, category: :all)
-        pipeline = new
-        models = discover_models(category)
-
-        return Result.err("No models found") if models.empty?
-
-        length.times do
-          model = models.sample
-          params = generate_creative_params
-          pipeline.chain(model, params)
-        end
-
-        Result.ok(pipeline)
       end
 
       private
@@ -222,36 +176,6 @@ module MASTER
         nil
       end
 
-      def self.discover_models(category)
-        # Use Replicate.models_for to get model IDs from categories
-        case category
-        when :image
-          Replicate.models_for(:image).map { |m| m[:id] }
-        when :video
-          Replicate.models_for(:video).map { |m| m[:id] }
-        when :enhance
-          Replicate.models_for(:upscale).map { |m| m[:id] }
-        when :audio
-          Replicate.models_for(:audio).map { |m| m[:id] }
-        when :transcribe
-          Replicate.models_for(:transcribe).map { |m| m[:id] }
-        when :color
-          [Replicate::MODELS[:sdxl]]
-        else
-          # All models combined
-          [:image, :video, :upscale, :audio, :transcribe].flat_map do |cat|
-            Replicate.models_for(cat).map { |m| m[:id] }
-          end
-        end
-      end
-
-      def self.generate_creative_params
-        {
-          'seed' => rand(1..999999),
-          'guidance_scale' => rand(5.0..15.0).round(1),
-          'num_inference_steps' => rand(20..50)
-        }
-      end
     end
 
     # Apply a named preset
@@ -291,7 +215,7 @@ module MASTER
         }
       end
 
-      return Result.err("No successful pipelines generated") if results.empty?
+      return Result.err("No successful pipelines generated.") if results.empty?
 
       # Sort by score and return top results
       top = results.sort_by { |r| -r[:score] }.first(3)
@@ -305,7 +229,6 @@ module MASTER
         { name: name, description: self.class.presets[name][:description], source: 'builtin' }
       end
 
-      # Load custom presets from disk
       pipelines_dir = File.join(Paths.data, 'pipelines')
       custom = if Dir.exist?(pipelines_dir)
         Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|

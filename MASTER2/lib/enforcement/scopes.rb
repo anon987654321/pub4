@@ -23,7 +23,7 @@ module MASTER
             violations << { scope: :line, line: num, message: "Line too long (#{line.chomp.length} chars)", file: filename }
           end
 
-          # Bare rescue
+          # Bare rescue StandardError => e
           if line.match?(/rescue\s*$/)
             violations << { scope: :line, line: num, message: "Bare rescue catches all errors", file: filename }
           end
@@ -76,7 +76,6 @@ module MASTER
           end
         end
 
-        # Class method count
         class_methods = code.scan(/^\s*def\s+self\.(\w+)/).size
         if class_methods > (thresholds["class_methods"] || 15)
           violations << { scope: :unit, message: "Too many class methods (#{class_methods})", file: filename }

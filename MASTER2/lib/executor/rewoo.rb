@@ -6,8 +6,24 @@ module MASTER
       def execute_rewoo(goal, tier:)
         tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
 
-        # Single LLM call to plan ALL actions with placeholders
-        prompt = <<~REWOO
+        prompt = build_rewoo_prompt(goal, tool_list)
+
+        UI.dim("  🧠 Batch reasoning...")
+        result = LLM.ask(prompt, tier: tier)
+        return result unless result.ok?
+
+        plan_text, actions = parse_rewoo_plan(result.value[:content])
+        UI.dim("  📋 Plan: #{actions.size} actions")
+
+        evidence = execute_rewoo_steps(actions)
+
+        synthesize_rewoo(goal, plan_text, evidence)
+      end
+
+      private
+
+      def build_rewoo_prompt(goal, tool_list)
+        <<~REWOO
           Task: #{goal}
 
           Tools: #{tool_list}
@@ -27,35 +43,30 @@ module MASTER
           #E2 = analyze_code "src/app.rb"
           #E3 = fix_code "src/app.rb"
         REWOO
+      end
 
-        UI.dim("  🧠 Batch reasoning...")
-        result = LLM.ask(prompt, tier: tier)
-        return result unless result.ok?
-
-        # Parse the plan
-        content = result.value[:content]
+      def parse_rewoo_plan(content)
         plan_text = content[/Plan:\s*(.+?)(?=#E1|$)/mi, 1]&.strip
         actions = content.scan(/#E(\d+)\s*=\s*(.+)$/i)
+        [plan_text, actions]
+      end
 
-        UI.dim("  📋 Plan: #{actions.size} actions")
-
-        # Execute all actions, substituting placeholders
+      def execute_rewoo_steps(actions)
         evidence = {}
         actions.each do |num, action_str|
           @step = num.to_i
-
-          # Substitute any #E{n} references with actual results
           resolved = action_str.gsub(/#E(\d+)/) { evidence[$1.to_i] || "" }
 
           UI.dim("  ▸ #E#{num}: #{resolved[0..60]}...")
           observation = execute_tool(resolved.strip)
           evidence[num.to_i] = observation
           record_history({ step: @step, action: resolved, observation: observation })
-
           UI.dim("  📊 #{observation[0..60]}...")
         end
+        evidence
+      end
 
-        # Final synthesis with all evidence
+      def synthesize_rewoo(goal, plan_text, evidence)
         synth_prompt = <<~SYNTH
           Task: #{goal}
           Plan: #{plan_text}

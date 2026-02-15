@@ -4,6 +4,8 @@ module MASTER
   module Commands
     # Session management commands
     module SessionCommands
+      REPLAY_UNAVAILABLE = "  SessionReplay not available."
+
       def manage_session(args)
         parts = args&.split || []
         case parts.first
@@ -31,11 +33,11 @@ module MASTER
           ].join("\n")
           puts
         when "replay"
-          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
           id = parts[1] || Session.current.id
           SessionReplay.replay(id)
         when "list-detail", "ls"
-          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
           result = SessionReplay.list_with_summaries
           if result.ok?
             UI.header("Sessions (detailed)")
@@ -47,7 +49,7 @@ module MASTER
             puts
           end
         when "diff"
-          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
           if parts.size >= 3
             result = SessionReplay.diff_sessions(parts[1], parts[2])
             if result.ok?
@@ -64,7 +66,7 @@ module MASTER
             puts "  Usage: session diff <id_a> <id_b>"
           end
         when "export"
-          return puts "  SessionReplay not available" unless defined?(SessionReplay)
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
           id = parts[1] || Session.current.id
           format = args&.include?("--md") ? :markdown : :json
           result = SessionReplay.replay(id, format: format)

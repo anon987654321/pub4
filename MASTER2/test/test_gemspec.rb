@@ -3,6 +3,10 @@
 require_relative "test_helper"
 
 class TestGemspec < Minitest::Test
+  def assert_nothing_raised
+    yield
+  end
+
   def setup
     @gemspec_path = File.expand_path("../../master2.gemspec", __FILE__)
   end

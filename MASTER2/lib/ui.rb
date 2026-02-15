@@ -22,43 +22,6 @@ module MASTER
       done: "●",
     }.freeze
 
-    # --- Formatting Helpers (DRY) ---
-    def currency(n)
-      format("$%.2f", n)
-    end
-
-    def currency_precise(n)
-      format("$%.4f", n)
-    end
-
-    def truncate_id(id, len = 8)
-      "#{id[0, len]}..."
-    end
-
-    def header(title, width: 40)
-      puts "\n  #{bold(title)}"
-      puts "  #{'-' * width}"
-    end
-
-    def icon(name)
-      ICONS[name.to_sym] || "·"
-    end
-
-    def render_bar(pct, width: 30)
-      filled = (pct / 100.0 * width).round
-      "[#{'█' * filled}#{'░' * (width - filled)}]"
-    end
-
-    def status(prefix, message, success: true)
-      i = success ? icon(:success) : icon(:failure)
-      "#{prefix}: #{message} #{i}"
-    end
-
-    def progress_line(current, total, message = nil)
-      msg = message ? " #{message}" : ""
-      "  [#{current}/#{total}]#{msg}"
-    end
-
     # --- TTY Component Lazy Loaders ---
 
     def prompt
@@ -310,12 +273,6 @@ module MASTER
       end
     end
 
-    def color_enabled?
-      return false if ENV["NO_COLOR"]
-      return false if ENV["TERM"] == "dumb"
-      true
-    end
-
     # --- High-level Convenience Methods ---
 
     def success(msg)
@@ -340,31 +297,6 @@ module MASTER
 
     def bold(msg)
       pastel.bold(msg)
-    end
-
-    # Color delegate methods - return colored strings without printing
-    def yellow(msg)
-      pastel.yellow(msg)
-    end
-
-    def green(msg)
-      pastel.green(msg)
-    end
-
-    def red(msg)
-      pastel.red(msg)
-    end
-
-    def cyan(msg)
-      pastel.cyan(msg)
-    end
-
-    def magenta(msg)
-      pastel.magenta(msg)
-    end
-
-    def blue(msg)
-      pastel.blue(msg)
     end
 
     def with_spinner(message, &block)
@@ -417,65 +349,11 @@ module MASTER
       print cursor.show
     end
 
-    # --- Special rendering methods ---
-
-    def render_response(text)
-      # Try markdown rendering, fallback to plain
-      markdown(text)
-    rescue StandardError => e
-      text
-    end
-
-    def token_chart(prompt_tokens:, completion_tokens:, cached: 0)
-      total = prompt_tokens + completion_tokens
-      data = [
-        { name: 'prompt', value: prompt_tokens, color: :blue },
-        { name: 'completion', value: completion_tokens, color: :green }
-      ]
-      data << { name: 'cached', value: cached, color: :cyan } if cached > 0
-
-      puts pie(data).render
-      puts dim("Total: #{total} tokens")
-    end
-
-    def show_tree(path, depth: 3)
-      require 'tty-tree'
-      tree_obj = TTY::Tree.new(path, level: depth)
-      puts tree_obj.render
-    rescue LoadError
-      # Simple fallback
-      Dir.glob(File.join(path, '*')).each do |f|
-        puts "  #{File.basename(f)}"
-      end
-    end
-
-    # --- Colorization for dmesg and system output ---
-
-    def dmesg(subsystem, message, level: :info)
-      elapsed = (Time.now - MASTER_BOOT_TIME).round(6)
-      prefix = format("[%12.6f]", elapsed)
-      line = "#{prefix} #{subsystem}: #{message}"
-      case level
-      when :error, :warn then $stderr.puts line
-      else puts line
-      end
-    end
-
-    def colorize(text)
-      return text unless color_enabled?
-      text
-        .gsub(/^(\w+) at (\w+):/) { "#{pastel.blue($1)} at #{pastel.cyan($2)}:" }
-        .gsub(/^(MASTER .+)$/) { pastel.bold.magenta($1) }
-        .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta($1)} #{$2}" }
-        .gsub(/(\$[\d.]+)/) { pastel.bright_cyan($1) }
-        .gsub(/(armed|available)/) { pastel.green($1) }
-        .gsub(/(unavailable|error)/) { pastel.red($1) }
-        .gsub(/(\d+ms)$/) { pastel.bright_black($1) }
-    end
-
   end
 end
 
+require_relative "ui/formatting"
+require_relative "ui/output"
 require_relative "ui/help"
 require_relative "ui/errors"
 require_relative "ui/nng"

@@ -173,7 +173,6 @@ module MASTER
 
         # STRUCTURAL_FLATTEN: early returns
         # Simple pattern: if condition / long block / else / short / end
-        # This is heuristic - real implementation would use AST
 
         { phase: :transform, changes: changes, output: output }
       end

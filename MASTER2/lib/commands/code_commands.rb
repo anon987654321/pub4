@@ -4,83 +4,22 @@ module MASTER
   module Commands
     # Code analysis and refactoring commands
     module CodeCommands
+      REFACTOR_USAGE = "Usage: refactor <file> [--preview|--raw|--apply]"
+
       def refactor(args)
-        return Result.err("Usage: refactor <file> [--preview|--raw|--apply]") unless args
-
-        parts = args.strip.split(/\s+/)
-        return Result.err("Usage: refactor <file> [--preview|--raw|--apply]") if parts.empty?
-
-        file = parts.first
-
-        # Check if the first argument looks like a flag
-        if file&.start_with?("--")
-          return Result.err("Usage: refactor <file> [--preview|--raw|--apply]")
-        end
-
-        mode = extract_mode(parts[1..-1])
-
-        return Result.err("File path cannot be empty") if file.nil? || file.empty?
+        file, mode = validate_file_arg(args, "refactor")
+        return file if file.is_a?(Result) # early return on validation error
 
         path = File.expand_path(file)
         return Result.err("File not found: #{file}") unless File.exist?(path)
 
         original_code = File.read(path)
 
-        # PHASE 1: Bug Hunting (8-phase analysis)
-        puts UI.bold("🔍 PHASE 1: Bug Hunting (8-phase analysis)...")
-        hunt_result = BugHunting.analyze(original_code, file_path: file)
+        bugs_found, hunt_result, pattern_matches = run_bug_hunting(original_code, file)
+        critical_count = run_constitutional_validation(original_code, file)
+        learned_issues = run_learnings_check(original_code)
+        smells = run_smell_detection(original_code, file)
 
-        # Count actual bugs from patterns
-        pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
-        verification_bugs = hunt_result.dig(:findings, :verification, :bugs_found) || 0
-        bugs_found = pattern_matches.size + verification_bugs
-
-        if bugs_found > 0
-          puts "⚠️  Found #{bugs_found} potential bugs"
-          puts BugHunting.format(hunt_result)
-        else
-          puts "✓ No bugs detected"
-        end
-
-        # PHASE 2: Constitutional Validation
-        puts "\n" + UI.bold("🧠 PHASE 2: Constitutional Validation...")
-        violations = Violations.analyze(original_code, path: file, llm: nil, conceptual: false)
-        critical_count = violations[:literal].count { |v| v[:severity] == :error }
-
-        if critical_count > 0
-          puts "🚨 #{critical_count} critical violations"
-          puts Violations.report(violations)
-        else
-          puts "✓ No constitutional violations"
-        end
-
-        # PHASE 3: Checking Learnings Database
-        puts "\n" + UI.bold("📚 PHASE 3: Checking Learnings Database...")
-        learned_issues = Learnings.apply_to(original_code)
-
-        if learned_issues.any?
-          puts "💡 Found #{learned_issues.size} known patterns:"
-          learned_issues.each do |issue|
-            puts "  • #{issue[:description]} (#{issue[:severity]})"
-          end
-        else
-          puts "✓ No known patterns detected"
-        end
-
-        # PHASE 4: Code Smell Detection
-        puts "\n" + UI.bold("👃 PHASE 4: Code Smell Detection...")
-        smells = Smells.analyze(original_code, file)
-
-        if smells.any?
-          puts "📋 Found #{smells.size} code smells"
-          smells.first(5).each do |smell|
-            puts "  • #{smell[:smell]}: #{smell[:message]}"
-          end
-        else
-          puts "✓ No code smells"
-        end
-
-        # Summary
         total_issues = bugs_found + critical_count + learned_issues.size + smells.size
 
         if total_issues == 0
@@ -88,16 +27,8 @@ module MASTER
           return Result.ok({ message: "No issues found" })
         end
 
-        puts [
-          "\n" + UI.bold("📊 SUMMARY:"),
-          "  Bugs: #{bugs_found}",
-          "  Critical Violations: #{critical_count}",
-          "  Known Patterns: #{learned_issues.size}",
-          "  Code Smells: #{smells.size}",
-          "  TOTAL: #{total_issues} issues"
-        ].join("\n")
+        print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
 
-        # Confirmation gate
         print "\n🤔 Proceed with automatic fixes? (y/n): "
         response = get_user_input&.chomp&.downcase
 
@@ -106,56 +37,8 @@ module MASTER
           return Result.ok({ message: "Cancelled by user" })
         end
 
-        # PHASE 5: Generating Fixes
-        puts "\n" + UI.bold("🤖 PHASE 5: Generating Fixes...")
-        chamber = Chamber.new
-        result = chamber.deliberate(original_code, filename: File.basename(path))
-
-        return result unless result.ok? && result.value[:final]
-
-        proposed_code = result.value[:final]
-        council_info = result.value[:council]
-
-        # Pass through lint + render stages for governance
-        linted = lint_output(proposed_code)
-        rendered = render_output(linted)
-
-        fix_successful = false
-
-        # Format output based on mode
-        case mode
-        when :raw
-          display_raw_output(result, rendered, council_info)
-          fix_successful = true
-        when :apply
-          apply_refactor(path, original_code, rendered, result, council_info)
-          fix_successful = true
-        else # :preview (default)
-          display_preview(path, original_code, rendered, result, council_info)
-          fix_successful = true
-        end
-
-        # PHASE 6: Recording Learnings
-        if fix_successful && bugs_found > 0
-          puts "\n" + UI.bold("📝 PHASE 6: Recording Learnings...")
-
-          # Extract pattern from bugs that were fixed
-          pattern_matches.first(3).each do |match|
-            pattern = Learnings.extract_pattern_from_fix(original_code, rendered)
-            if pattern
-              Learnings.record(
-                category: :bug_pattern,
-                pattern: pattern,
-                description: "Auto-discovered during refactor of #{file}: #{match[:name]}",
-                example: "Fixed in #{file}",
-                severity: :info
-              )
-            end
-          end
-
-          puts "✓ Learnings updated"
-        end
-
+        result = generate_and_apply_fixes(path, original_code, mode)
+        record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
         result
       end
 
@@ -258,7 +141,6 @@ module MASTER
         puts "Analyzing constitution for principle conflicts..."
         puts
 
-        # This would require analyzing the constitution file
         # For now, provide a simple implementation
         constitution_path = File.join(MASTER.root, 'data', 'constitution.yml')
 
@@ -293,6 +175,126 @@ module MASTER
       end
 
       private
+
+      def validate_file_arg(args, command)
+        usage = "Usage: #{command} <file> [--preview|--raw|--apply]."
+        return [Result.err(usage), nil] unless args
+
+        parts = args.strip.split(/\s+/)
+        return [Result.err(usage), nil] if parts.empty?
+
+        file = parts.first
+        return [Result.err(usage), nil] if file&.start_with?("--")
+        return [Result.err("File path cannot be empty."), nil] if file.nil? || file.empty?
+
+        [file, extract_mode(parts[1..-1])]
+      end
+
+      def run_bug_hunting(code, file)
+        puts UI.bold("🔍 PHASE 1: Bug Hunting (8-phase analysis)...")
+        hunt_result = BugHunting.analyze(code, file_path: file)
+        pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
+        verification_bugs = hunt_result.dig(:findings, :verification, :bugs_found) || 0
+        bugs_found = pattern_matches.size + verification_bugs
+
+        if bugs_found > 0
+          puts "⚠️  Found #{bugs_found} potential bugs"
+          puts BugHunting.format(hunt_result)
+        else
+          puts "✓ No bugs detected"
+        end
+        [bugs_found, hunt_result, pattern_matches]
+      end
+
+      def run_constitutional_validation(code, file)
+        puts "\n" + UI.bold("🧠 PHASE 2: Constitutional Validation...")
+        violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
+        critical_count = violations[:literal].count { |v| v[:severity] == :error }
+
+        if critical_count > 0
+          puts "🚨 #{critical_count} critical violations"
+          puts Violations.report(violations)
+        else
+          puts "✓ No constitutional violations"
+        end
+        critical_count
+      end
+
+      def run_learnings_check(code)
+        puts "\n" + UI.bold("📚 PHASE 3: Checking Learnings Database...")
+        learned_issues = Learnings.apply_to(code)
+
+        if learned_issues.any?
+          puts "💡 Found #{learned_issues.size} known patterns:"
+          learned_issues.each { |issue| puts "  • #{issue[:description]} (#{issue[:severity]})" }
+        else
+          puts "✓ No known patterns detected"
+        end
+        learned_issues
+      end
+
+      def run_smell_detection(code, file)
+        puts "\n" + UI.bold("👃 PHASE 4: Code Smell Detection...")
+        smells = Smells.analyze(code, file)
+
+        if smells.any?
+          puts "📋 Found #{smells.size} code smells"
+          smells.first(5).each { |smell| puts "  • #{smell[:smell]}: #{smell[:message]}" }
+        else
+          puts "✓ No code smells"
+        end
+        smells
+      end
+
+      def print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
+        puts [
+          "\n" + UI.bold("📊 SUMMARY:"),
+          "  Bugs: #{bugs_found}",
+          "  Critical Violations: #{critical_count}",
+          "  Known Patterns: #{learned_issues.size}",
+          "  Code Smells: #{smells.size}",
+          "  TOTAL: #{total_issues} issues"
+        ].join("\n")
+      end
+
+      def generate_and_apply_fixes(path, original_code, mode)
+        puts "\n" + UI.bold("🤖 PHASE 5: Generating Fixes...")
+        chamber = Chamber.new
+        result = chamber.deliberate(original_code, filename: File.basename(path))
+
+        return result unless result.ok? && result.value[:final]
+
+        proposed_code = result.value[:final]
+        council_info = result.value[:council]
+        linted = lint_output(proposed_code)
+        rendered = render_output(linted)
+
+        case mode
+        when :raw   then display_raw_output(result, rendered, council_info)
+        when :apply then apply_refactor(path, original_code, rendered, result, council_info)
+        else             display_preview(path, original_code, rendered, result, council_info)
+        end
+        result
+      end
+
+      def record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
+        return unless result.ok? && result.value[:final] && bugs_found > 0
+
+        puts "\n" + UI.bold("📝 PHASE 6: Recording Learnings...")
+        rendered = render_output(lint_output(result.value[:final]))
+
+        pattern_matches.first(3).each do |match|
+          pattern = Learnings.extract_pattern_from_fix(original_code, rendered)
+          next unless pattern
+
+          Learnings.record(
+            category: :bug_pattern, pattern: pattern,
+            description: "Auto-discovered during refactor of #{file}: #{match[:name]}",
+            example: "Fixed in #{file}", severity: :info
+          )
+        end
+        puts "✓ Learnings updated"
+      end
 
       # Abstraction for user input to improve testability
       def get_user_input

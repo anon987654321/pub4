@@ -174,7 +174,7 @@ module MASTER
         if defined?(Pledge)
           begin
             Pledge.pledge("stdio rpath")
-          rescue StandardError
+          rescue StandardError => e
             # Pledge not available or failed, continue without it
           end
         end

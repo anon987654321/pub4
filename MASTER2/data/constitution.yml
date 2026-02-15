@@ -276,3 +276,11 @@ gem_outsourcing:
     - "lib/pledge.rb — OpenBSD-specific, no gem"
     - "lib/harvester.rb — domain-specific file collection"
     - "lib/staging.rb — git-free staging with rollback"
+
+metaprogramming_policy:
+  banned_patterns:
+    - method_missing
+    - const_missing
+    - define_method
+  reason: "Violates EXPLICIT axiom — prefer explicit method definitions"
+  severity: error

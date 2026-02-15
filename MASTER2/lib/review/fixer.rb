@@ -65,7 +65,7 @@ module MASTER
         return Result.ok(file: file, fixed: 0, message: "No changes needed") if code == original
 
         unless valid_syntax?(code, file)
-          return Result.err("Fix produced invalid syntax - not writing")
+          return Result.err("Fix produced invalid syntax - not writing.")
         end
 
         File.write(file, code)
@@ -168,15 +168,15 @@ module MASTER
         require "yaml"
         YAML.safe_load(code)
         true
-      rescue StandardError
+      rescue StandardError => e
         false
       end
 
       def valid_json?(code)
         require "json"
-        JSON.parse(code)
+        JSON.parse(code, symbolize_names: true)
         true
-      rescue StandardError
+      rescue StandardError => e
         false
       end
     end

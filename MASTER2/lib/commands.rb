@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# Load command modules
 require_relative "commands/session_commands"
 require_relative "commands/model_commands"
 require_relative "commands/budget_commands"
@@ -126,7 +125,7 @@ module MASTER
     def dispatch(input, pipeline:)
       # Handle shortcuts
       if input.strip == "!!"
-        return Result.err("No previous command") unless @last_command
+        return Result.err("No previous command.") unless @last_command
         input = @last_command
       elsif (shortcut = SHORTCUTS[input.strip])
         input = shortcut.is_a?(Symbol) ? @last_command : shortcut

@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Merged from diff_view.rb
   module DiffView
     extend self
 
     # Generate a unified diff between original and modified content
-    # Returns a string in unified diff format
     def unified_diff(original, modified, filename: "file", context_lines: 3)
       original_lines = original.lines.map(&:chomp)
       modified_lines = modified.lines.map(&:chomp)

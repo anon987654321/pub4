@@ -50,7 +50,6 @@ module MASTER
       end
 
       def display_preview(path, original, proposed, result, council_info)
-        require_relative "diff_view"
         diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
 
         puts "\n  Proposals: #{result.value[:proposals].size}"
@@ -63,7 +62,6 @@ module MASTER
       end
 
       def apply_refactor(path, original, proposed, result, council_info)
-        require_relative "diff_view"
         diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
 
         puts "\n  Proposals: #{result.value[:proposals].size}"

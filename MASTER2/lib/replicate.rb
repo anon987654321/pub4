@@ -10,6 +10,8 @@ module MASTER
   module Replicate
     extend self
 
+    TOKEN_NOT_SET = "REPLICATE_API_TOKEN not set."
+
     API_URL = 'https://api.replicate.com/v1/predictions'
 
     MODELS = {
@@ -78,7 +80,7 @@ module MASTER
       end
 
       def generate(prompt:, model: DEFAULT_MODEL, params: {})
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         model_id = MODELS[model.to_sym] || MODELS[DEFAULT_MODEL]
 
@@ -101,7 +103,7 @@ module MASTER
       end
 
       def upscale(image_url:, scale: 4)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         model_id = MODELS[:esrgan]
         input = { image: image_url, scale: scale }
@@ -116,7 +118,7 @@ module MASTER
       end
 
       def describe(image_url:)
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         model_id = MODELS[:blip]
         input = { image: image_url }
@@ -132,7 +134,7 @@ module MASTER
 
       # Generic model runner - supports any Replicate model
       def run(model_id:, input:, params: {})
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         combined_input = input.merge(params)
 
@@ -177,7 +179,7 @@ module MASTER
       # @param params [Hash] Additional parameters to pass to the model
       # @return [Result] Result object with video URL or error
       def generate_video(prompt:, model: :svd, params: {})
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         model_sym = model.to_sym
         return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
@@ -206,7 +208,7 @@ module MASTER
       # @param params [Hash] Additional parameters to pass to the model
       # @return [Result] Result object with audio URL or error
       def generate_music(prompt:, duration: 10, model: :musicgen, params: {})
-        return Result.err("REPLICATE_API_TOKEN not set") unless available?
+        return Result.err(TOKEN_NOT_SET) unless available?
 
         model_sym = model.to_sym
         return Result.err("Unknown model: #{model}") unless MODELS.key?(model_sym)
@@ -237,7 +239,7 @@ module MASTER
       def batch_generate(prompts, model: DEFAULT_MODEL, params: {})
         unless available?
           # Return an error result for each prompt
-          return prompts.map { Result.err("REPLICATE_API_TOKEN not set") }
+          return prompts.map { Result.err(TOKEN_NOT_SET) }
         end
 
         prompts.map do |prompt|

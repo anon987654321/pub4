@@ -55,7 +55,7 @@ module MASTER
 
       def ideate(args)
         topic = args&.strip
-        return Result.err("Usage: ideate <topic>") unless topic && !topic.empty?
+        return Result.err("Usage: ideate <topic>.") unless topic && !topic.empty?
 
         UI.header("Ideating on: #{topic}")
         prompt = <<~PROMPT

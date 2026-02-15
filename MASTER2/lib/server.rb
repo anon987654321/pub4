@@ -6,6 +6,10 @@ require "socket"
 module MASTER
   # Server - Multimodal web UI with Falcon
   class Server
+    JSON_TYPE = "application/json".freeze
+    HTML_TYPE = "text/html".freeze
+    TEXT_TYPE = "text/plain".freeze
+    CT_HEADER = "content-type".freeze
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
     VIEWS_DIR = File.join(File.dirname(__FILE__), "views")
 
@@ -48,7 +52,7 @@ module MASTER
       port = server.addr[1]
       server.close
       port
-    rescue StandardError
+    rescue StandardError => e
       8080
     end
 
@@ -79,19 +83,19 @@ module MASTER
       )
 
       # Health endpoint - no auth required
-      server.mount_proc("/health") { |_, res| res.body = health_json; res.content_type = "application/json" }
+      server.mount_proc("/health") { |_, res| res.body = health_json; res.content_type = JSON_TYPE }
 
       # Protected endpoints
       server.mount_proc("/") do |req, res|
         next unless webrick_check_auth(req, res)
         res.body = read_view("cli.html")
-        res.content_type = "text/html"
+        res.content_type = HTML_TYPE
       end
 
       server.mount_proc("/poll") do |req, res|
         next unless webrick_check_auth(req, res)
         res.body = poll_json
-        res.content_type = "application/json"
+        res.content_type = JSON_TYPE
       end
 
       # Serve orb views - protected
@@ -100,7 +104,7 @@ module MASTER
         server.mount_proc(name) do |req, res|
           next unless webrick_check_auth(req, res)
           res.body = File.read(file)
-          res.content_type = "text/html"
+          res.content_type = HTML_TYPE
         end
       end
 
@@ -125,7 +129,6 @@ module MASTER
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
 
-        # Auth check for all endpoints except /health
         unless path == "/health"
           token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
           return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
@@ -133,109 +136,114 @@ module MASTER
 
         case [method, path]
         when ["GET", "/"]
-          [200, { "content-type" => "text/html" }, [read_view("cli.html")]]
-
+          [200, { CT_HEADER => HTML_TYPE }, [read_view("cli.html")]]
         when ["GET", "/health"]
-          [200, { "content-type" => "application/json" }, [health_json]]
-
+          [200, { CT_HEADER => JSON_TYPE }, [health_json]]
         when ["GET", "/poll"]
-          text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-          body = {
-            text: text,
-            tier: LLM.tier,
-            budget: LLM.budget_remaining,
-            version: VERSION,
-          }.to_json
-          [200, { "content-type" => "application/json" }, [body]]
-
+          handle_poll(queue)
         when ["POST", "/chat"]
-          body = env["rack.input"].read
-          data = JSON.parse(body) rescue {}
-          message = data["message"].to_s.strip
-
-          if message.empty?
-            [400, { "content-type" => "application/json" }, ['{"error":"no message"}']]
-          else
-            Thread.new do
-              result = pipeline.call({ text: message })
-              output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
-              queue.push(output)
-            rescue StandardError => e
-              queue.push("Error: #{e.message}")
-            end
-            [200, { "content-type" => "application/json" }, ['{"status":"processing"}']]
-          end
-
+          handle_chat(env, pipeline, queue)
         when ["GET", "/metrics"]
-          metrics = {
-            version: VERSION,
-            tier: LLM.tier,
-            budget_remaining: LLM.budget_remaining,
-            models: LLM.models.size,
-            tts: defined?(Audio) ? Audio.engine_status : "unavailable",
-            self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
-          }.to_json
-          [200, { "content-type" => "application/json" }, [metrics]]
-
+          handle_metrics
         when ["POST", "/tts"]
-          # Simple TTS endpoint - accepts JSON with text, returns audio
-          body = env["rack.input"].read
-          data = JSON.parse(body) rescue {}
-          text = data["text"].to_s.strip
-
-          return [400, { "content-type" => "application/json" }, ['{"error":"no text provided"}']] if text.empty?
-
-          unless defined?(Speech) && Speech.respond_to?(:synthesize)
-            return [501, { "content-type" => "application/json" }, ['{"error":"TTS not available"}']]
-          end
-
-          result = Speech.synthesize(text)
-          if result.respond_to?(:ok?) && result.ok?
-            audio_data = result.value[:audio] || result.value[:data]
-            [200, { "content-type" => "audio/mpeg" }, [audio_data]]
-          else
-            error = result.respond_to?(:error) ? result.error : "TTS failed"
-            [500, { "content-type" => "application/json" }, [{ error: error }.to_json]]
-          end
-
+          handle_tts(env)
         when ["GET", "/tts/stream"]
-          # SSE endpoint for TTS streaming
-          text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
-          return [400, {}, ["Missing text"]] unless text
-
-          unless defined?(Web::OrbTTS)
-            return [501, { "content-type" => "text/plain" }, ["TTS not available"]]
-          end
-
-          headers = {
-            "Content-Type" => "text/event-stream",
-            "Cache-Control" => "no-cache",
-            "Connection" => "keep-alive",
-          }
-          body = Web::OrbTTS.stream(text)
-          [200, headers, body]
-
+          handle_tts_stream(env)
         when ["GET", "/ws"]
-          # WebSocket endpoint for real-time streaming
           handle_websocket(env, pipeline)
-
         when ["GET", "/ws-test"]
-          # Test page for WebSocket functionality
-          [200, { "content-type" => "text/html" }, [read_view("ws_test.html")]]
-
+          [200, { CT_HEADER => HTML_TYPE }, [read_view("ws_test.html")]]
         else
-          clean_path = File.basename(path)
-          view_path = File.expand_path(clean_path, VIEWS_DIR)
-
-          if view_path.start_with?(VIEWS_DIR) && File.exist?(view_path) && File.file?(view_path)
-            ext = File.extname(path)
-            type = { ".html" => "text/html", ".js" => "application/javascript", ".css" => "text/css" }[ext] || "text/plain"
-            [200, { "content-type" => type }, [File.read(view_path)]]
-          else
-            [404, { "content-type" => "text/plain" }, ["Not found"]]
-          end
+          serve_static_file(path)
         end
       }
+    end
+
+    def handle_poll(queue)
+      text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
+      body = {
+        text: text, tier: LLM.tier,
+        budget: LLM.budget_remaining, version: VERSION,
+      }.to_json
+      [200, { CT_HEADER => JSON_TYPE }, [body]]
+    end
+
+    def handle_chat(env, pipeline, queue)
+      body = env["rack.input"].read
+      data = JSON.parse(body) rescue {}
+      message = data[:message].to_s.strip
+
+      if message.empty?
+        [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']]
+      else
+        Thread.new do
+          result = pipeline.call({ text: message })
+          output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
+          queue.push(output)
+        rescue StandardError => e
+          queue.push("Error: #{e.message}")
+        end
+        [200, { CT_HEADER => JSON_TYPE }, ['{"status":"processing"}']]
+      end
+    end
+
+    def handle_metrics
+      metrics = {
+        version: VERSION, tier: LLM.tier,
+        budget_remaining: LLM.budget_remaining,
+        models: LLM.models.size,
+        tts: defined?(Audio) ? Audio.engine_status : "unavailable",
+        self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
+      }.to_json
+      [200, { CT_HEADER => JSON_TYPE }, [metrics]]
+    end
+
+    def handle_tts(env)
+      body = env["rack.input"].read
+      data = JSON.parse(body) rescue {}
+      text = data[:text].to_s.strip
+
+      return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
+      unless defined?(Speech) && Speech.respond_to?(:synthesize)
+        return [501, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS not available"}']]
+      end
+
+      result = Speech.synthesize(text)
+      if result.respond_to?(:ok?) && result.ok?
+        audio_data = result.value[:audio] || result.value[:data]
+        [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
+      else
+        error = result.respond_to?(:error) ? result.error : "TTS failed"
+        [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
+      end
+    end
+
+    def handle_tts_stream(env)
+      text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
+      return [400, {}, ["Missing text"]] unless text
+      unless defined?(Web::OrbTTS)
+        return [501, { CT_HEADER => TEXT_TYPE }, ["TTS not available"]]
+      end
+
+      headers = {
+        "Content-Type" => "text/event-stream",
+        "Cache-Control" => "no-cache",
+        "Connection" => "keep-alive",
+      }
+      [200, headers, Web::OrbTTS.stream(text)]
+    end
+
+    def serve_static_file(path)
+      clean_path = File.basename(path)
+      view_path = File.expand_path(clean_path, VIEWS_DIR)
+
+      if view_path.start_with?(VIEWS_DIR) && File.exist?(view_path) && File.file?(view_path)
+        ext = File.extname(path)
+        type = { ".html" => HTML_TYPE, ".js" => "application/javascript", ".css" => "text/css" }[ext] || TEXT_TYPE
+        [200, { CT_HEADER => type }, [File.read(view_path)]]
+      else
+        [404, { CT_HEADER => TEXT_TYPE }, ["Not found"]]
+      end
     end
 
     def handle_websocket(env, pipeline)
@@ -245,17 +253,17 @@ module MASTER
         require "async/websocket/adapters/rack"
       rescue LoadError
         Logging.warn("WebSocket", "async-websocket not available")
-        return [501, { "content-type" => "text/plain" }, ["WebSocket not available"]]
+        return [501, { CT_HEADER => TEXT_TYPE }, ["WebSocket not available"]]
       end
 
       Async::WebSocket::Adapters::Rack.open(env, protocols: ["chat"]) do |connection|
         # WebSocket connection established
         while (message = connection.read)
           begin
-            data = JSON.parse(message)
+            data = JSON.parse(message, symbolize_names: true)
 
-            if data["type"] == "chat"
-              user_message = data["message"].to_s.strip
+            if data[:type] == "chat"
+              user_message = data[:message].to_s.strip
 
               if user_message.empty?
                 connection.write({ type: "error", message: "Empty message" }.to_json)
@@ -319,7 +327,7 @@ module MASTER
 
     def read_view(name)
       File.read(File.join(VIEWS_DIR, name))
-    rescue StandardError
+    rescue StandardError => e
       "<!DOCTYPE html><html><body><h1>MASTER #{VERSION}</h1><p>View not found: #{name}</p></body></html>"
     end
   end

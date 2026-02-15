@@ -20,8 +20,8 @@ module MASTER
     end
 
     # Refactor all supported files under path
-    # Returns Result.ok with summary
     def run(path:, pattern: nil, exclude: nil)
+      Logging.dmesg_log('multi_refactor', message: 'ENTER multi_refactor.run')
       files = discover_files(path, pattern: pattern, exclude: exclude)
       return Result.err("No supported files found in #{path}") if files.empty?
       return Result.err("Too many files (#{files.size} > #{MAX_FILES}). Use a more specific path.") if files.size > MAX_FILES

@@ -2,7 +2,6 @@
 
 module MASTER
   module UI
-    # Merged from error_suggestions.rb
     module ErrorSuggestions
       extend self
 

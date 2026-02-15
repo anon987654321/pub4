@@ -10,7 +10,6 @@ module MASTER
     PERSONAS_FILE = File.join(Paths.data, 'personas.yml')
 
     class << self
-      # Load all personas from YAML file
       def load_all
         return [] unless File.exist?(PERSONAS_FILE)
 
@@ -23,7 +22,6 @@ module MASTER
         end
       end
 
-      # Load specific persona by name
       def load(name)
         return nil unless File.exist?(PERSONAS_FILE)
 

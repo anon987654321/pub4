@@ -95,7 +95,7 @@ module MASTER
             File.write(op.data[:path], op.data[:original])
             Result.ok(restored: op.data[:path])
           else
-            Result.err("No original content to restore")
+            Result.err("No original content to restore.")
           end
         when :file_create
           if File.exist?(op.data[:path])
@@ -115,9 +115,9 @@ module MASTER
       def apply(op)
         case op.type
         when :file_edit
-          Result.err("Cannot redo file edit without new content")
+          Result.err("Cannot redo file edit without new content.")
         when :file_create
-          Result.err("Cannot redo file create without content")
+          Result.err("Cannot redo file create without content.")
         when :file_delete
           if File.exist?(op.data[:path])
             File.delete(op.data[:path])

@@ -6,7 +6,6 @@ require "fileutils"
 
 module MASTER
   # Hooks - Lifecycle event handlers
-  # Merged from hooks_manager.rb for DRY compliance
   # Executes registered actions at key pipeline moments
   module Hooks
     HOOKS_FILE = File.join(__dir__, "..", "data", "hooks.yml")
@@ -32,6 +31,7 @@ module MASTER
       end
 
       def run(event, context = {})
+        Logging.dmesg_log('hooks', message: 'ENTER hooks.run')
         actions = config[event.to_s] || []
         results = []
 
@@ -68,7 +68,6 @@ module MASTER
         run(:on_budget_low, context)
       end
 
-      # Merged from hooks_manager.rb - Runtime handler registration
       def register(event, handler)
         Result.try do
           raise "Unknown event: #{event}" unless EVENTS.include?(event.to_sym)
@@ -195,7 +194,7 @@ module MASTER
 
       def run_tests
         # Placeholder - not yet implemented
-        Result.err("run_tests not yet implemented")
+        Result.err("run_tests not yet implemented.")
       end
 
       def log(msg)

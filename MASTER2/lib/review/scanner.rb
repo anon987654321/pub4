@@ -5,7 +5,6 @@ module MASTER
     module Scanner
       extend self
 
-      # The analysis prompt template - generates categorized opportunities
       OPPORTUNITY_PROMPT = <<~PROMPT
         Analyze this code. Return ONLY a JSON object with four keys:
         architectural, micro, ui_ux, typography.
@@ -59,7 +58,7 @@ module MASTER
           prompt = format(OPPORTUNITY_PROMPT, code: truncate_code(code))
 
           result = llm.ask(prompt, tier: :fast)
-          return Result.err("No model available") unless result.ok?
+          return Result.err("No model available.") unless result.ok?
 
           parse_opportunities_json(result.value[:content])
         rescue StandardError => e
@@ -113,12 +112,18 @@ module MASTER
         private
 
         def aggregate_code(path)
-          if File.directory?(path)
-            Dir.glob(File.join(path, "**", "*.rb")).map do |f|
+          resolved = File.expand_path(path)
+          root = File.expand_path(MASTER.root)
+          unless resolved.start_with?(root) || resolved.start_with?(Dir.pwd)
+            return "# PATH REJECTED: #{path} (outside project root)"
+          end
+
+          if File.directory?(resolved)
+            Dir.glob(File.join(resolved, "**", "*.rb")).map do |f|
               "# FILE: #{f}\n#{File.read(f)}"
             end.join("\n\n")
           else
-            "# FILE: #{path}\n#{File.read(path)}"
+            "# FILE: #{resolved}\n#{File.read(resolved)}"
           end
         end
 
@@ -130,7 +135,7 @@ module MASTER
 
         def parse_opportunities_json(response)
           json_str = response[/\{.*\}/m]
-          return Result.err("No JSON in response") unless json_str
+          return Result.err("No JSON in response.") unless json_str
 
           data = JSON.parse(json_str, symbolize_names: true)
           categories = { architectural: [], micro: [], ui_ux: [], typography: [] }

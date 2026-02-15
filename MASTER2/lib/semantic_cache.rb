@@ -16,7 +16,6 @@ module MASTER
 
     class << self
       # Check cache for a similar prompt
-      # Returns Result.ok(cached_response) or Result.err("cache miss")
       def lookup(prompt, tier: nil)
         # Step 1: Exact match by SHA256 hash
         exact = exact_lookup(prompt)
@@ -28,7 +27,7 @@ module MASTER
           return Result.ok(semantic) if semantic
         end
 
-        Result.err("cache miss")
+        Result.err("cache miss.")
       rescue StandardError => e
         Logging.warn("SemanticCache lookup failed: #{e.message}") if defined?(Logging)
         Result.err("cache error: #{e.message}")
@@ -106,7 +105,7 @@ module MASTER
         path = entry_path(key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path), symbolize_names: true)
+        entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
         return nil if entry[:version] != CACHE_VERSION
         return nil if expired?(entry)
 
@@ -132,14 +131,13 @@ module MASTER
         best = matches.first
         return nil if best[:distance] && best[:distance] > (1.0 - SIMILARITY_THRESHOLD)
 
-        # Load the cached entry from file
         source_key = best[:source]
         return nil unless source_key
 
         path = entry_path(source_key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path), symbolize_names: true)
+        entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
         return nil if expired?(entry)
 
         Dmesg.log("cache0", message: "semantic hit: #{source_key} (dist=#{best[:distance]})") if defined?(Dmesg)
@@ -162,13 +160,13 @@ module MASTER
         # Evict entries with lowest hit count, then oldest last_hit
         entries_with_data = entries.map do |path|
           begin
-            entry = JSON.parse(File.read(path), symbolize_names: true)
+            entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
             {
               path: path,
               hit_count: entry[:hit_count] || 0,
               last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path)
             }
-          rescue StandardError
+          rescue StandardError => e
             { path: path, hit_count: 0, last_hit: File.mtime(path) }
           end
         end

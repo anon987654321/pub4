@@ -2,7 +2,6 @@
 
 module MASTER
   module UI
-    # Merged from help.rb
     module Help
       extend self
 

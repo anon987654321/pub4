@@ -2,7 +2,6 @@
 
 module MASTER
   module UI
-    # Merged from nng_checklist.rb
     module NNGChecklist
       HEURISTICS = {
         visibility: {

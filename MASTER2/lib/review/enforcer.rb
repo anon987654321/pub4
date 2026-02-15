@@ -9,7 +9,7 @@ module MASTER
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
-      SMELLS_FILE = File.join(__dir__, "..", "data", "smells.yml")
+      SMELLS_FILE = File.join(MASTER.root, "data", "smells.yml")
 
       # MASTER2 contribution rules and architecture
       ARCHITECTURE = {
@@ -51,7 +51,6 @@ module MASTER
 
       # Simulated execution scenarios for safety pre-checks
       # SECURITY NOTE: simulate_with_input() evaluates arbitrary code in a controlled binding.
-      # This is intentional for pre-execution safety validation. Code must be trusted.
       # For production use, consider subprocess execution with timeouts.
       SIMULATED_SCENARIOS = [
         {
@@ -83,12 +82,12 @@ module MASTER
       class << self
         def smells
           @smells_mutex.synchronize do
-            @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE) : {}
+            @smells ||= File.exist?(SMELLS_FILE) ? YAML.safe_load_file(SMELLS_FILE, symbolize_names: true) : {}
           end
         end
 
         def thresholds
-          smells["thresholds"] || {}
+          smells[:thresholds] || {}
         end
 
         # Full analysis: all layers, all scopes
@@ -122,7 +121,7 @@ module MASTER
 
         # Run all 6 layers on single file
         def check(code, axioms: nil, filename: "code")
-          # Load axioms from Constitution.axioms if not provided (includes YAML with detect patterns)
+          Logging.dmesg_log('enforcer', message: 'ENTER enforcer.check')
           axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
           violations = []
 
@@ -141,7 +140,6 @@ module MASTER
         end
 
         # Validate LLM response text by extracting and checking code blocks
-        # Merged from Validator for ONE_SOURCE compliance
         def validate_llm_response(text)
           issues = []
 
@@ -161,58 +159,53 @@ module MASTER
         # Checks key source files for ABSOLUTE protection violations only
         # Does NOT halt boot - warns only via Dmesg if violations found
         def self_check!
-          # Skip if already ran
           return @last_self_check if @last_self_check
 
-          # Check only result.rb to keep boot fast and avoid recursion
-          # result.rb is the core monad/result type used throughout - critical to validate
-          # Checking enforcement.rb itself would create recursion risk
+          violations = collect_self_check_violations
+          @last_self_check = build_self_check_result(violations)
+
+          warn_self_check_violations(violations)
+          @last_self_check
+        end
+
+        def collect_self_check_violations
           key_files = %w[result.rb]
           violations = []
 
-          begin
-            key_files.each do |f|
-              path = File.join(MASTER.root, "lib", f)
-              next unless File.exist?(path)
+          key_files.each do |f|
+            path = File.join(MASTER.root, "lib", f)
+            next unless File.exist?(path)
 
-              code = File.read(path)
-
-              result = check(code, filename: f)
-
-              # Filter for ABSOLUTE protection violations only
-              absolute_violations = result[:violations].select do |v|
-                v[:protection] == "ABSOLUTE"
-              end
-
-              violations.concat(absolute_violations)
-            end
-          rescue StandardError => e
-            # Gracefully handle any errors during self-check
-            @last_self_check = {
-              timestamp: Time.now,
-              files_checked: 0,
-              absolute_violations: [],
-              passed: false,
-              error: e.message
-            }
-            return @last_self_check
+            result = check(File.read(path), filename: f)
+            absolute = result[:violations].select { |v| v[:protection] == "ABSOLUTE" }
+            violations.concat(absolute)
           end
-
+          violations
+        rescue StandardError => e
           @last_self_check = {
+            timestamp: Time.now, files_checked: 0,
+            absolute_violations: [], passed: false, error: e.message
+          }
+          nil
+        end
+
+        def build_self_check_result(violations)
+          return @last_self_check unless violations
+
+          {
             timestamp: Time.now,
-            files_checked: key_files.size,
+            files_checked: 1,
             absolute_violations: violations,
             passed: violations.empty?
           }
+        end
 
-          # Warn if violations found (don't halt boot)
-          unless violations.empty?
-            if defined?(Dmesg)
-              Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source")
-            end
+        def warn_self_check_violations(violations)
+          return unless violations && !violations.empty?
+
+          if defined?(Dmesg)
+            Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source")
           end
-
-          @last_self_check
         end
 
         # Get last self-check result
@@ -258,13 +251,12 @@ module MASTER
         private
 
         # SECURITY NOTE: This uses eval() to execute code in a controlled binding.
-        # The code parameter must be trusted. For untrusted code, use RubyVM::InstructionSequence.compile
         # for syntax-only validation, or execute in a subprocess with timeout.
         def simulate_with_input(code, input)
           binding_obj = binding
           binding_obj.local_variable_set(:input, input)
           eval(code, binding_obj)
-        rescue StandardError
+        rescue StandardError => e
           :error
         end
       end
@@ -274,7 +266,7 @@ module MASTER
     module QualityStandards
       extend self
 
-      THRESHOLDS_FILE = File.join(__dir__, "..", "data", "quality_thresholds.yml")
+      THRESHOLDS_FILE = File.join(MASTER.root, "data", "quality_thresholds.yml")
 
       def thresholds
         @thresholds ||= begin
@@ -324,7 +316,7 @@ module MASTER
     # LanguageAxioms - Language-specific beauty rules
     # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
     module LanguageAxioms
-      AXIOMS_FILE = File.join(__dir__, "..", "data", "language_axioms.yml")
+      AXIOMS_FILE = File.join(MASTER.root, "data", "language_axioms.yml")
 
       EXTENSION_MAP = {
         ".rb"    => %w[ruby rails universal],
@@ -348,15 +340,15 @@ module MASTER
 
       class << self
         def axioms_data
-          @axioms_data ||= File.exist?(AXIOMS_FILE) ? YAML.safe_load_file(AXIOMS_FILE) : {}
+          @axioms_data ||= File.exist?(AXIOMS_FILE) ? YAML.safe_load_file(AXIOMS_FILE, symbolize_names: true) : {}
         end
 
         def all_axioms
-          axioms_data.flat_map { |lang, rules| (rules || []).map { |r| r.merge("language" => lang) } }
+          axioms_data.flat_map { |lang, rules| (rules || []).map { |r| r.merge(language: lang) } }
         end
 
         def axioms_for(language)
-          axioms_data[language.to_s] || []
+          axioms_data[language.to_sym] || []
         end
 
         def languages_for_file(filename)
@@ -370,7 +362,7 @@ module MASTER
 
           languages.each do |lang|
             axioms_for(lang).each do |axiom|
-              pattern_str = axiom["detect"]
+              pattern_str = axiom[:detect]
               next if pattern_str.nil? # Advisory-only axioms
 
               begin
@@ -384,11 +376,11 @@ module MASTER
               violations << {
                 layer: :language_axiom,
                 language: lang,
-                axiom_id: axiom["id"],
-                axiom_name: axiom["name"],
-                message: axiom["suggest"],
-                severity: axiom["severity"]&.to_sym || :info,
-                autofix: axiom["autofix"] || false,
+                axiom_id: axiom[:id],
+                axiom_name: axiom[:name],
+                message: axiom[:suggest],
+                severity: axiom[:severity]&.to_sym || :info,
+                autofix: axiom[:autofix] || false,
                 file: filename,
               }
             end
@@ -400,7 +392,7 @@ module MASTER
         def summary
           counts = {}
           axioms_data.each { |lang, rules| counts[lang] = (rules || []).size }
-          counts["total"] = counts.values.sum
+          counts[:total] = counts.values.sum
           counts
         end
       end

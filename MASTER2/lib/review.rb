@@ -2,7 +2,6 @@
 
 require "yaml"
 
-# Load all code review sub-modules
 require_relative "code_review/violations"
 require_relative "code_review/smells"
 require_relative "code_review/bug_hunting"
@@ -11,7 +10,6 @@ require_relative "code_review/llm_friendly"
 require_relative "code_review/audit"
 require_relative "code_review/cross_ref"
 
-# Load enforcement modules
 require_relative "enforcement/layers"
 require_relative "enforcement/scopes"
 
@@ -32,5 +30,13 @@ require_relative "review/constitution"
 CodeReview = MASTER::Review::Scanner
 AutoFixer = MASTER::Review::Fixer
 Enforcement = MASTER::Review::Enforcer
-QualityStandards = MASTER::Review::Enforcer
+QualityStandards = MASTER::Review::QualityStandards
 FileHygiene = MASTER::Review::Scanner::FileHygiene
+
+module MASTER
+  Constitution = Review::Constitution
+  AxiomStats = Review::AxiomStats
+  LanguageAxioms = Review::LanguageAxioms
+  QualityStandards = Review::QualityStandards
+  CodeReview = Review::Scanner
+end

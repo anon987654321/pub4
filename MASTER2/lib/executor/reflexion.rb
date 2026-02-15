@@ -64,7 +64,7 @@ module MASTER
           context = build_context(goal)
 
           result = LLM.ask(context, tier: tier)
-          return Result.err("LLM error") unless result.ok?
+          return Result.err("LLM error.") unless result.ok?
 
           parsed = parse_response(result.value[:content])
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
@@ -78,7 +78,7 @@ module MASTER
           @history.last[:observation] = observation
         end
 
-        Result.err("No answer in 5 steps")
+        Result.err("No answer in 5 steps.")
       end
 
       def reflect_on_result(goal, result, tier:)

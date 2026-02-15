@@ -2,6 +2,18 @@
 
 module MASTER
   module Enforcement
+    extend self
+
+    def self_check!
+      MASTER::Review::Enforcer.self_check!
+    end
+
+    def check(code, **opts)
+      MASTER::Review::Enforcer.check(code, **opts)
+    end
+
+    LAYERS = %i[literal lexical structural semantic behavioral cognitive].freeze
+
     # Six axiom enforcement layers
     module Layers
       # Layer 1: Literal - exact string/pattern matching

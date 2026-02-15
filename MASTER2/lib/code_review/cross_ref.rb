@@ -27,7 +27,7 @@ module MASTER
           begin
             content = File.read(file)
             analyze_file(file, content)
-          rescue StandardError
+          rescue StandardError => e
             # Skip files that can't be read
             next
           end
@@ -52,7 +52,6 @@ module MASTER
         duplicates = []
 
         @method_defs.each do |method_name, location|
-          # This is a simplified heuristic - proper implementation would need AST
           file, _line = location
           next unless File.exist?(file)
 

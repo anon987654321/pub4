@@ -19,6 +19,7 @@ module MASTER
     end
 
     def run(path: MASTER.root, dry_run: true)
+      Logging.dmesg_log('evolve', message: 'ENTER evolve.run')
       @iteration = 0
       @checkpoint = create_safety_checkpoint unless dry_run
       files = find_files(path)

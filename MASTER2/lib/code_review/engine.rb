@@ -22,9 +22,9 @@ module MASTER
       # Basic structural scan - long methods, god classes, deep nesting
       # Now supports profile parameter for axiom filtering
       def scan(path, profile: :standard, silent: false)
+        Logging.dmesg_log('code_review', message: 'ENTER code_review.scan')
         return Result.err('Path not found') unless File.exist?(path)
 
-        # Load and filter axioms by profile
         axioms = load_axioms_for_profile(profile)
         puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
 
@@ -145,7 +145,6 @@ module MASTER
 
       private
 
-      # Load axioms filtered by scan profile priority
       def load_axioms_for_profile(profile)
         return nil unless SCAN_PROFILES.key?(profile)
 

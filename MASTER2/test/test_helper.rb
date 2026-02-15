@@ -19,3 +19,13 @@ end
 class Minitest::Test
   include TestHelper
 end
+
+# Unified boot
+require_relative "../lib/master"
+
+# Skip guard for integration tests needing API key
+LLM_AVAILABLE = ENV.key?("OPENROUTER_API_KEY")
+
+def skip_unless_llm(msg = "Requires OPENROUTER_API_KEY")
+  skip msg unless LLM_AVAILABLE
+end

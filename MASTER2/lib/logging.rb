@@ -236,7 +236,6 @@ module MASTER
       end
       # DMESG-STYLE LOGGING (from dmesg.rb)
 
-      # Core dmesg logging - OpenBSD kernel style
       def dmesg_log(device, parent: nil, message: nil, level: ALL_EVENTS)
         timestamp = ((Time.now - @start_time) * 1000).round
 
@@ -280,9 +279,7 @@ module MASTER
         @start_time = Time.now
       end
 
-      private
-      # PRIVATE HELPERS
-
+      public
       def log(severity, message, **context)
         return if LEVELS[severity] < LEVELS[@level]
 
@@ -295,6 +292,8 @@ module MASTER
           @output.puts(format_human(entry))
         end
       end
+
+      private
 
       def build_entry(severity, message, context)
         {

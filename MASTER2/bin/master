@@ -7,6 +7,13 @@ Encoding.default_internal = Encoding::UTF_8
 $stdout.set_encoding(Encoding::UTF_8)
 $stderr.set_encoding(Encoding::UTF_8)
 
+# CLI flags
+if ARGV.delete("--verbose") || ARGV.delete("-v")
+  ENV["MASTER_TRACE"] = "3"
+elsif ARGV.delete("--quiet") || ARGV.delete("-q")
+  ENV["MASTER_TRACE"] = "0"
+end
+
 require "json"
 require_relative "../lib/master"
 
@@ -208,6 +215,74 @@ when "--tts", "-t"
 when "--daemon", "-d"
   # Daemon mode for agentd
   require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
+
+when "schedule"
+  # Job scheduler: master schedule list|add|remove|enable|disable
+  subcmd = args.shift
+  MASTER::Scheduler.load
+  case subcmd
+  when "list"
+    jobs = MASTER::Scheduler.list
+    if jobs.empty?
+      puts "No scheduled jobs"
+    else
+      jobs.each { |j| puts "#{j[:id]}  #{j[:enabled] ? '✓' : '✗'}  every #{j[:interval]}s  #{j[:command]}" }
+    end
+  when "add"
+    cmd = args[0]
+    interval = (args[1] || "3600").to_i
+    result = MASTER::Scheduler.add(cmd, interval: interval)
+    puts result.ok? ? "Scheduled: #{result.value[:job_id]}" : result.error
+  when "remove"
+    result = MASTER::Scheduler.remove(args[0])
+    puts result.ok? ? "Removed" : result.error
+  when "enable"
+    result = MASTER::Scheduler.enable(args[0])
+    puts result.ok? ? "Enabled" : result.error
+  when "disable"
+    result = MASTER::Scheduler.disable(args[0])
+    puts result.ok? ? "Disabled" : result.error
+  else
+    puts "Usage: master schedule list|add <cmd> [interval_sec]|remove <id>|enable <id>|disable <id>"
+  end
+  exit 0
+
+when "heartbeat"
+  # Heartbeat control: master heartbeat start|stop|status
+  subcmd = args.shift
+  case subcmd
+  when "start"
+    interval = (args[0] || "60").to_i
+    MASTER::Triggers.install_defaults
+    MASTER::Scheduler.load
+    MASTER::Heartbeat.register("scheduler") { MASTER::Scheduler.tick }
+    MASTER::Heartbeat.start(interval: interval)
+    puts "Heartbeat started (#{interval}s interval). Press Ctrl+C to stop."
+    sleep
+  when "stop"
+    MASTER::Heartbeat.stop
+    puts "Heartbeat stopped"
+  when "status"
+    s = MASTER::Heartbeat.status
+    puts "running=#{s[:running]} interval=#{s[:interval]}s checks=#{s[:checks].size}"
+    s[:checks].each { |c| puts "  #{c[:name]} last=#{c[:last_run]} failures=#{c[:failures]}" }
+  else
+    puts "Usage: master heartbeat start [interval_sec]|stop|status"
+  end
+  exit 0
+
+when "policy"
+  # Policy profile: master policy [set <profile>]
+  subcmd = args.shift
+  case subcmd
+  when "set"
+    result = MASTER::AgentFirewall::Policy.set(args[0]&.to_sym)
+    puts result.ok? ? "Policy: #{result.value[:profile]}" : result.error
+  else
+    puts "Current policy: #{MASTER::AgentFirewall::Policy.current}"
+    puts "Available: #{MASTER::AgentFirewall::Policy::PROFILES.keys.join(', ')}"
+  end
+  exit 0
 
 else
   if command.nil?

@@ -33,7 +33,7 @@ module MASTER
       uri.query = URI.encode_www_form(q: query, per_page: limit, sort: 'stars')
 
       response = github_request(uri)
-      return Result.err("Search failed") unless response
+      return Result.err("Search failed.") unless response
 
       repos = response['items']&.map do |item|
         {
@@ -56,7 +56,7 @@ module MASTER
     def get_repo_info(owner, repo)
       uri = URI("#{GITHUB_API}/repos/#{owner}/#{repo}")
       response = github_request(uri)
-      return Result.err("Repository not found") unless response
+      return Result.err("Repository not found.") unless response
 
       info = {
         name: response['full_name'],
@@ -84,7 +84,7 @@ module MASTER
         return Web::GitHub.trending(language: language, since: since)
       end
 
-      Result.err("Web::GitHub module not available")
+      Result.err("Web::GitHub module not available.")
     end
 
     # Harvest data from multiple sources

@@ -10,6 +10,9 @@ module MASTER
   module Speech
     extend self
 
+    ZERO_RATE = "+0%".freeze
+    ZERO_PITCH = "+0Hz".freeze
+
     # Engine selection priority
     ENGINES = %i[piper edge replicate].freeze
 
@@ -25,11 +28,11 @@ module MASTER
 
     # Voice styles (rate/pitch adjustments for Edge)
     STYLES = {
-      normal: { rate: "+0%", pitch: "+0Hz" }.freeze,
-      fast: { rate: "+25%", pitch: "+0Hz" }.freeze,
-      slow: { rate: "-20%", pitch: "+0Hz" }.freeze,
-      high: { rate: "+0%", pitch: "+50Hz" }.freeze,
-      low: { rate: "+0%", pitch: "-50Hz" }.freeze,
+      normal: { rate: ZERO_RATE, pitch: ZERO_PITCH }.freeze,
+      fast: { rate: "+25%", pitch: ZERO_PITCH }.freeze,
+      slow: { rate: "-20%", pitch: ZERO_PITCH }.freeze,
+      high: { rate: ZERO_RATE, pitch: "+50Hz" }.freeze,
+      low: { rate: ZERO_RATE, pitch: "-50Hz" }.freeze,
       excited: { rate: "+15%", pitch: "+30Hz" }.freeze,
       calm: { rate: "-10%", pitch: "-20Hz" }.freeze,
       whisper: { rate: "-15%", pitch: "-30Hz" }.freeze,
@@ -63,10 +66,10 @@ module MASTER
 
     # Speak text using best available engine
     def speak(text, engine: nil, voice: nil, style: :normal, play: true)
-      return Result.err("Empty text") if text.nil? || text.strip.empty?
+      return Result.err("Empty text.") if text.nil? || text.strip.empty?
 
       engine ||= best_engine
-      return Result.err("No TTS engine available") unless engine
+      return Result.err("No TTS engine available.") unless engine
 
       case engine
       when :piper then speak_piper(text, voice: voice, preset: style, play: play)
@@ -79,8 +82,8 @@ module MASTER
     # Stream with real-time FFmpeg effects (requires edge-tts + ffmpeg)
     def stream(text, effect: :dark, voice: :guy, rate: "-25%", pitch: "-25Hz")
       python = find_python
-      return Result.err("Python not found") unless python
-      return Result.err("edge-tts not installed") unless edge_installed?
+      return Result.err("Python not found.") unless python
+      return Result.err("edge-tts not installed.") unless edge_installed?
 
       voice_id = EDGE_VOICES[voice.to_sym] || EDGE_VOICES[:guy]
       fx_filter = STREAM_EFFECTS[effect.to_sym] || STREAM_EFFECTS[:dark]
@@ -206,7 +209,7 @@ module MASTER
             end
 
       success = system(cmd)
-      return Result.err("Piper generation failed") unless success && File.exist?(output)
+      return Result.err("Piper generation failed.") unless success && File.exist?(output)
 
       play_audio(output) if play
       FileUtils.rm_f(output) if play
@@ -217,7 +220,7 @@ module MASTER
     # Edge TTS (free cloud)
     def speak_edge(text, voice: nil, style: :normal, play: true)
       python = find_python
-      return Result.err("Python not found") unless python
+      return Result.err("Python not found.") unless python
 
       voice_id = EDGE_VOICES[voice&.to_sym] || EDGE_VOICES[:aria]
       params = STYLES[style.to_sym] || STYLES[:normal]
@@ -241,7 +244,7 @@ module MASTER
       PY
 
       success = system("#{python} -c #{script.inspect} 2>/dev/null")
-      return Result.err("Edge TTS generation failed") unless success && File.exist?(output)
+      return Result.err("Edge TTS generation failed.") unless success && File.exist?(output)
 
       play_audio(output) if play
       FileUtils.rm_f(output) if play
@@ -255,7 +258,7 @@ module MASTER
       require "json"
 
       token = ENV["REPLICATE_API_TOKEN"]
-      return Result.err("No REPLICATE_API_TOKEN") unless token
+      return Result.err("No REPLICATE_API_TOKEN.") unless token
 
       uri = URI("https://api.replicate.com/v1/models/minimax/speech-02-turbo/predictions")
       http = Net::HTTP.new(uri.host, uri.port)
@@ -268,10 +271,10 @@ module MASTER
       request.body = { input: { text: text, voice_id: "Casual_Guy" } }.to_json
 
       response = http.request(request)
-      data = JSON.parse(response.body)
+      data = JSON.parse(response.body, symbolize_names: true)
 
-      audio_url = data["output"]
-      return Result.err("No audio URL returned") unless audio_url
+      audio_url = data[:output]
+      return Result.err("No audio URL returned.") unless audio_url
 
       if play
         temp = File.join(Dir.tmpdir, "replicate_#{SecureRandom.hex(4)}.wav")

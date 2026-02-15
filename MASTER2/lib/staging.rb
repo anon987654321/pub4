@@ -90,7 +90,7 @@ module MASTER
 
     # Rollback all files modified in this staging session
     def rollback_all
-      return Result.err("No backups to rollback") if @backups.empty?
+      return Result.err("No backups to rollback.") if @backups.empty?
 
       results = []
       @backups.each do |original_path, backup_path|

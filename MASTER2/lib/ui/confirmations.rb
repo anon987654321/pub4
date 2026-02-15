@@ -2,7 +2,6 @@
 
 module MASTER
   module UI
-    # Merged from confirmations.rb
     module Confirmations
       extend self
 
@@ -62,7 +61,7 @@ module MASTER
       end
 
       def gate(operation_name, description: nil, &block)
-        return Result.err("No block provided") unless block
+        return Result.err("No block provided.") unless block
 
         # Phase 1: Propose
         if description
@@ -79,7 +78,7 @@ module MASTER
           confirmed = Confirmations.confirm("Proceed with this operation?")
 
           unless confirmed
-            return Result.err("Cancelled by user")
+            return Result.err("Cancelled by user.")
           end
         end
 

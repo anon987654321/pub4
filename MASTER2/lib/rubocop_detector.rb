@@ -8,7 +8,7 @@ module MASTER
     # @param file_path [String] Path to Ruby file to scan
     # @return [Result] Ok with violations array, or Err with error message
     def self.scan(file_path)
-      return Result.err("RuboCop not installed") unless installed?
+      return Result.err("RuboCop not installed.") unless installed?
       return Result.err("File not found: #{file_path}") unless File.exist?(file_path)
 
       begin
@@ -48,7 +48,7 @@ module MASTER
 
         Result.ok(violations: results, file: file_path, count: results.size)
       rescue LoadError
-        Result.err("RuboCop gem not available")
+        Result.err("RuboCop gem not available.")
       rescue StandardError => e
         Result.err("RuboCop scan failed: #{e.message}")
       end
@@ -58,7 +58,7 @@ module MASTER
     # @param file_paths [Array<String>] Paths to Ruby files
     # @return [Result] Ok with aggregated results, or Err
     def self.scan_multiple(file_paths)
-      return Result.err("RuboCop not installed") unless installed?
+      return Result.err("RuboCop not installed.") unless installed?
 
       all_results = []
       file_paths.each do |path|

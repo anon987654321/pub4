@@ -11,7 +11,6 @@ module MASTER
       @principles_cache = nil
       @workflows_cache = nil
 
-      # Load and cache constitution rules, with sensible defaults if file is missing
       def rules
         return @rules_cache if @rules_cache
 
@@ -52,7 +51,6 @@ module MASTER
         @rules_cache
       end
 
-      # Load axioms from constitution or fallback to axioms.yml
       def axioms
         return @axioms_cache if @axioms_cache
 
@@ -68,7 +66,6 @@ module MASTER
         @axioms_cache
       end
 
-      # Load council from constitution or fallback to council.yml
       def council
         return @council_cache if @council_cache
 
@@ -84,7 +81,6 @@ module MASTER
         @council_cache
       end
 
-      # Load principles from constitution (SOLID, Clean Code, etc.)
       def principles
         return @principles_cache if @principles_cache
 
@@ -92,7 +88,6 @@ module MASTER
         @principles_cache
       end
 
-      # Load workflows from constitution (8-phase workflow)
       def workflows
         return @workflows_cache if @workflows_cache
 
@@ -116,14 +111,14 @@ module MASTER
         when :self_modification
           if rules.dig("safety_policies", "self_modification", "require_staging")
             unless context[:staged]
-              return Result.err("Self-modification requires staging")
+              return Result.err("Self-modification requires staging.")
             end
           end
           Result.ok
 
         when :environment_control
           if rules.dig("safety_policies", "environment_control", "direct_control") == false
-            return Result.err("Direct environment control not permitted")
+            return Result.err("Direct environment control not permitted.")
           end
           Result.ok
 
@@ -184,7 +179,7 @@ module MASTER
         # Check allowed patterns
         if allowed.any?
           unless allowed.any? { |pattern| cmd.match?(Regexp.new(pattern)) }
-            return Result.err("Shell command not in allowed list")
+            return Result.err("Shell command not in allowed list.")
           end
         end
 

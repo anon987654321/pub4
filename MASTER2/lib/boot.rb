@@ -101,13 +101,13 @@ module MASTER
 
       def tts_status
         Speech.engine_status
-      rescue StandardError
+      rescue StandardError => e
         "off"
       end
 
       def self_awareness_summary
         SelfMap.summary
-      rescue StandardError
+      rescue StandardError => e
         "unavailable"
       end
     end

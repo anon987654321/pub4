@@ -84,7 +84,6 @@ module MASTER
       Result.err("#{label ? "#{label}: " : ""}#{e.message}")
     end
 
-    # Class methods for creating Results
     class << self
       # Create successful result
       # @param value [Object] Success value (defaults to nil)

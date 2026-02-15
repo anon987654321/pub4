@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Merged from keybindings.rb
   module Keybindings
     BINDINGS = {
       ctrl_c:    { action: :interrupt,   desc: "Cancel current operation" },
