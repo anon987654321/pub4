@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'yaml'
+require_relative 'analyzers'
 
 module MASTER
   # Code smell detection - complements Violations with structural analysis
@@ -77,12 +78,11 @@ module MASTER
           }
         end
 
-        strings = code.scan(/"[^"]{10,}"/).flatten
-        dupes = strings.group_by(&:itself).select { |_, v| v.size >= t[:min_duplicate_count] }
-        dupes.each do |str, occurrences|
+        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 10, min_count: t[:min_duplicate_count])
+        duplicates.each do |dup|
           results << {
             smell: :primitive_obsession,
-            message: "String #{str[0..30]}... repeated #{occurrences.size}x",
+            message: "String #{dup[:string][0..30]}... repeated #{dup[:count]}x",
             fix: 'Extract to constant'
           }
         end
@@ -92,33 +92,18 @@ module MASTER
 
       def analyze_ruby_methods(code, lines)
         results = []
-        method_starts = []
-        nesting = 0
         t = thresholds
         p = patterns
 
-        lines.each_with_index do |line, idx|
-          stripped = line.strip
-
-          if stripped =~ /^\s*def\s+/
-            method_starts << { line: idx + 1, nesting: nesting, name: stripped }
-            nesting += 1
-          elsif stripped == 'end'
-            if method_starts.any? && nesting.positive?
-              start = method_starts.pop
-              length = idx - start[:line]
-              if length > t[:max_method_lines]
-                results << {
-                  smell: :long_method,
-                  message: "#{start[:name]} is #{length} lines (> #{t[:max_method_lines]})",
-                  line: start[:line],
-                  fix: p.dig(:long_method, :fix) || p.dig(:long_method, 'fix') || 'Extract method'
-                }
-              end
-            end
-            nesting = [0, nesting - 1].max
-          elsif stripped =~ /^\s*(class|module|if|unless|case|while|until|for|begin|do)\b/
-            nesting += 1
+        methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
+        methods_info.each do |method|
+          if method[:length] > t[:max_method_lines]
+            results << {
+              smell: :long_method,
+              message: "def #{method[:name]} is #{method[:length]} lines (> #{t[:max_method_lines]})",
+              line: method[:start_line],
+              fix: p.dig(:long_method, :fix) || p.dig(:long_method, 'fix') || 'Extract method'
+            }
           end
         end
 
@@ -127,19 +112,7 @@ module MASTER
 
       def deep_nesting?(code, max_depth = nil)
         max_depth ||= thresholds[:max_nesting]
-        nesting = 0
-        max_seen = 0
-
-        code.each_line do |line|
-          stripped = line.strip
-          if stripped =~ /^\s*(def|class|module|if|unless|case|while|until|for|begin|do)\b/
-            nesting += 1
-            max_seen = [max_seen, nesting].max
-          elsif stripped == 'end'
-            nesting = [0, nesting - 1].max
-          end
-        end
-
+        max_seen = Analyzers::NestingAnalyzer.depth(code)
         max_seen > max_depth
       end
 

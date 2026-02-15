@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../code_review/analyzers'
+
 module MASTER
   module Enforcement
     extend self
@@ -80,26 +82,16 @@ module MASTER
         end
 
         # STRUCTURAL_FLATTEN: excessive nesting
-        max_indent = code.lines.map { |l| l[/^\s*/].length }.max || 0
-        if max_indent > (nesting_limit * 4)
-          violations << { layer: :lexical, axiom: "STRUCTURAL_FLATTEN", message: "Excessive nesting (#{max_indent / 4} levels)", file: filename }
+        max_nesting = Analyzers::NestingAnalyzer.depth(code)
+        if max_nesting > nesting_limit
+          violations << { layer: :lexical, axiom: "STRUCTURAL_FLATTEN", message: "Excessive nesting (#{max_nesting} levels)", file: filename }
         end
 
         # KISS: overly long methods
-        in_method = false
-        method_lines = 0
-        method_name = nil
-        code.each_line do |line|
-          if line.match?(/^\s*def\s+\w+/)
-            in_method = true
-            method_lines = 0
-            method_name = line[/def\s+(\w+)/, 1]
-          elsif in_method
-            method_lines += 1
-            if line.strip == "end" && method_lines > method_limit
-              violations << { layer: :lexical, axiom: "KISS", message: "Method too long: #{method_name} (#{method_lines} lines)", file: filename }
-              in_method = false
-            end
+        methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
+        methods_info.each do |method|
+          if method[:length] > method_limit
+            violations << { layer: :lexical, axiom: "KISS", message: "Method too long: #{method[:name]} (#{method[:length]} lines)", file: filename }
           end
         end
 
@@ -247,11 +239,9 @@ module MASTER
         # Skip KISS checks for UI/UX related code
         return violations if KISS_PROTECTED_PATTERNS.any? { |pat| code.match?(pat) }
 
-        lines = code.lines
-
         # Check for deeply nested code (internal logic complexity)
-        max_indent = lines.map { |l| l.match(/^(\s*)/)[1].length }.max || 0
-        if max_indent > 24
+        max_nesting = Analyzers::NestingAnalyzer.depth(code)
+        if max_nesting > 6
           violations << { layer: :lexical, axiom: "KISS", message: "Deeply nested internal logic (>6 levels)", file: filename }
         end
 
@@ -263,11 +253,10 @@ module MASTER
         violations = []
 
         # Look for duplicate string literals (both single and double quotes)
-        strings = code.scan(/"([^"]+)"/).flatten + code.scan(/'([^']+)'/).flatten
-        duplicates = strings.group_by(&:itself).select { |_, v| v.size > 2 }
+        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 8, min_count: 3)
 
-        duplicates.each do |str, occurrences|
-          violations << { layer: :lexical, axiom: "ONE_SOURCE", message: "Repeated string: '#{str}' (#{occurrences.size} times)", file: filename }
+        duplicates.each do |dup|
+          violations << { layer: :lexical, axiom: "ONE_SOURCE", message: "Repeated string: '#{dup[:string][0..30]}...' (#{dup[:count]} times)", file: filename }
         end
 
         violations
