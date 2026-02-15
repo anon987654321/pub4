@@ -75,7 +75,7 @@ module MASTER
         else
           Result.ok({ class: schema_def[:class] })
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("Schema creation failed: #{e.message}")
       end
 
@@ -96,7 +96,7 @@ module MASTER
         else
           Result.err("Failed to index: #{response['error'] || 'unknown error'}")
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("Index failed: #{e.message}")
       end
 
@@ -138,7 +138,7 @@ module MASTER
         else
           Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("Search failed: #{e.message}")
       end
 
@@ -163,7 +163,7 @@ module MASTER
         else
           Result.err("Failed to store: #{response['error'] || 'unknown error'}")
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("Store failed: #{e.message}")
       end
 
@@ -186,7 +186,7 @@ module MASTER
         else
           Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("Search failed: #{e.message}")
       end
 

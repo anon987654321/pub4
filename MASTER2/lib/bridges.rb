@@ -167,7 +167,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Grain synthesis failed: #{e.message}")
         end
       end
@@ -198,7 +198,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Halation failed: #{e.message}")
         end
       end
@@ -220,7 +220,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Color grading failed: #{e.message}")
         end
       end
@@ -248,7 +248,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Chromatic aberration failed: #{e.message}")
         end
       end
@@ -282,7 +282,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Vignette failed: #{e.message}")
         end
       end
@@ -310,7 +310,7 @@ module MASTER
           result.write_to_file(out)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Light leak failed: #{e.message}")
         end
       end
@@ -345,7 +345,7 @@ module MASTER
           FileUtils.rm_rf(temp_dir)
 
           Result.ok(final)
-        rescue => e
+        rescue StandardError => e
           Result.err("Film stock pipeline failed: #{e.message}")
         end
       end
@@ -381,7 +381,7 @@ module MASTER
           FileUtils.rm_rf(temp_dir)
 
           Result.ok(out)
-        rescue => e
+        rescue StandardError => e
           Result.err("Video processing failed: #{e.message}")
         end
       end

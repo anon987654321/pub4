@@ -65,7 +65,7 @@ module MASTER
 
         begin
           YAML.safe_load_file(axioms_file) || []
-        rescue => e
+        rescue StandardError => e
           []
         end
       end
