@@ -47,7 +47,7 @@ module MASTER
           puts "✗ Error: #{result.error}"
         end
       end
-    rescue => e
+    rescue StandardError => e
       $stderr.puts "RepLigen error: #{e.message}"
       puts "✗ Failed: #{e.message}"
     end
@@ -90,7 +90,7 @@ module MASTER
           puts "✗ Error: #{result.error}"
         end
       end
-    rescue => e
+    rescue StandardError => e
       $stderr.puts "PostPro error: #{e.message}"
       puts "✗ Failed: #{e.message}"
     end
