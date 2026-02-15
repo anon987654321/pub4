@@ -15,9 +15,9 @@ module MASTER
 
           @step += 1
 
-          context = build_context(goal)
+          msgs = build_context_messages(goal)
 
-          result = LLM.ask(context, tier: tier)
+          result = LLM.ask(msgs.last[:content], messages: [msgs.first], tier: tier)
           unless result.ok?
             return Result.err("LLM error at step #{@step}: #{result.error}")
           end

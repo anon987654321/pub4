@@ -52,8 +52,13 @@ module MASTER
                 result.and_then(stage_name) { |data| stage.call(data) }
               end
             when :direct
-              # Simple: Direct LLM call, no tools
-              LLM.ask(text, stream: true)
+              # Simple: Direct LLM call with system context
+              sys = Executor::Context.build_system_message(include_commands: false) rescue nil
+              if sys
+                LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
+              else
+                LLM.ask(text, stream: true)
+              end
             else
               Executor.call(text, pattern: self.class.current_pattern)
             end

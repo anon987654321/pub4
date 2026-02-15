@@ -61,9 +61,9 @@ module MASTER
           end
 
           @step += 1
-          context = build_context(goal)
+          msgs = build_context_messages(goal)
 
-          result = LLM.ask(context, tier: tier)
+          result = LLM.ask(msgs.last[:content], messages: [msgs.first], tier: tier)
           return Result.err("LLM error.") unless result.ok?
 
           parsed = parse_response(result.value[:content])
