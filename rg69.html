@@ -65,16 +65,19 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
   .transport{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
   .container{padding-bottom:80px}
 }
+.btn-help{font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px}
+.btn-quickstart{background:var(--pink);color:var(--bg);border-color:var(--pink)}
+.btn-full{width:100%;margin-top:10px}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>RG69 <button class="btn" id="helpBtn" style="font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px" title="Show help and tips">?</button></h1>
+<h1>RG69 <button class="btn btn-help" id="helpBtn" title="Show help and tips">?</button></h1>
 <canvas id="viz" title="Audio waveform visualizer - shows the sound waves in real-time"></canvas>
 <div class="transport">
 <button class="btn" id="playBtn" title="Play/Pause - Start or stop the music (Spacebar)">▶</button>
 <button class="btn" id="stopBtn" title="Stop - Stop playback and return to beginning">■</button>
-<button class="btn" id="quickStartBtn" title="Quick Start - Load a preset and start playing!" style="background:var(--pink);color:var(--bg);border-color:var(--pink)">🚀 START</button>
+<button class="btn btn-quickstart" id="quickStartBtn" title="Quick Start - Load a preset and start playing!">🚀 START</button>
 <button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file">⏺</button>
 <button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file">📀</button>
 <button class="btn" id="shareBtn" title="Share - Copy link to share your creation">🔗</button>
@@ -99,7 +102,7 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label title="Bass Pattern - Low-end groove">🎸 Bass Pattern</label><select id="bassSel" title="Choose a bassline"></select><div id="bassFx" class="fx-tags"></div></div>
 <div class="control"><label title="Melody Pattern - Melodic/harmonic parts">🎹 Keys Pattern</label><select id="keysSel" title="Choose a melody or chord pattern"></select><div id="keysFx" class="fx-tags"></div></div>
 <div class="control"><label title="Background Pad - Atmospheric textures">🎼 Pads Pattern</label><select id="padsSel" title="Choose an atmospheric pad sound"></select><div id="padsFx" class="fx-tags"></div></div>
-<button class="btn" id="randomBtn" style="width:100%;margin-top:10px" title="Generate random combination of patterns and effects">⚡ SURPRISE ME!</button>
+<button class="btn btn-full" id="randomBtn" title="Generate random combination of patterns and effects">⚡ SURPRISE ME!</button>
 </div></div>
 </div>
 <div class="panel">
@@ -333,17 +336,17 @@ const initAudio=async()=>{
   snareRingBP.Q.value=3;
   snareRing.connect(snareRingBP);
   
-  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
+  clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}});
   
   // Hats: MetalSynth with higher harmonicity and resonance
-  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
-  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5}).toDestination();
+  hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
+  openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
   
-  bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}}).toDestination();
+  bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}});
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
   
   // Keys: FM synth with velocity-reactive parameters
-  keysN=new Tone.PolySynth(Tone.FMSynth,{harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}}).toDestination();
+  keysN=new Tone.PolySynth(Tone.FMSynth,{harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
   
   // Pads: fatsawtooth (count:3, spread:25) with LFO-modulated lowpass filter
   padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
