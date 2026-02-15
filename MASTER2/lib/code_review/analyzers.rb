@@ -44,7 +44,7 @@ module MASTER
           elsif stripped == 'end'
             if method_starts.any? && nesting.positive?
               start = method_starts.pop
-              length = idx - start[:line] + 1
+              length = idx - start[:line]
               results << {
                 name: start[:name],
                 start_line: start[:line],
@@ -65,7 +65,9 @@ module MASTER
     # Scans both single and double quoted strings
     module RepeatedStringDetector
       def self.find(code, min_length: 8, min_count: 3)
-        strings = code.scan(/"[^"]{#{min_length},}"|'[^']{#{min_length},}'/).flatten
+        # Scan double and single quoted strings separately with the min_length requirement
+        pattern = /"[^"]{#{min_length},}"|'[^']{#{min_length},}'/
+        strings = code.scan(pattern).flatten
         counts = strings.tally
 
         counts.select { |_, count| count >= min_count }

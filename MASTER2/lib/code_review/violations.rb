@@ -289,7 +289,7 @@ module MASTER
 
       def check_repeated_strings(code)
         violations = []
-        
+
         duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 8, min_count: 3)
         duplicates.each do |dup|
           violations << {
