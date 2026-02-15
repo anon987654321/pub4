@@ -319,19 +319,17 @@ let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 const initAudio=()=>{
   // Synths - Clear, self-explanatory names (POLA: Principle of Least Astonishment)
   // Kick: layered MembraneSynth (body) + NoiseSynth (click transient)
-  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}}).toDestination();
-  const kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}}).toDestination();
-  const kickClickBP=new Tone.Filter(1200,'bandpass');
+  kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}});
+  kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}});
+  kickClickBP=new Tone.Filter(1200,'bandpass');
   kickClickBP.Q.value=5;
-  kickClick.disconnect();
   kickClick.connect(kickClickBP);
   
   // Snare: layered NoiseSynth (body) + triangle ring (E4)
-  snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}}).toDestination();
-  const snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
-  const snareRingBP=new Tone.Filter(400,'bandpass');
+  snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}});
+  snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0}});
+  snareRingBP=new Tone.Filter(400,'bandpass');
   snareRingBP.Q.value=3;
-  snareRing.disconnect();
   snareRing.connect(snareRingBP);
   
   clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}}).toDestination();
@@ -347,12 +345,11 @@ const initAudio=()=>{
   keysN=new Tone.PolySynth(Tone.FMSynth,{harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}}).toDestination();
   
   // Pads: fatsawtooth (count:3, spread:25) with LFO-modulated lowpass filter
-  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}}).toDestination();
-  const padsFilter=new Tone.Filter(1000,'lowpass');
-  const padsLFO=new Tone.LFO(0.12,600,1400);
+  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
+  padsFilter=new Tone.Filter(1000,'lowpass');
+  padsLFO=new Tone.LFO(0.12,600,1400);
   padsLFO.start();
   padsLFO.connect(padsFilter.frequency);
-  padsN.disconnect();
   padsN.connect(padsFilter);
   
   // Per-track gain nodes (analog-style summing mixer)
@@ -441,6 +438,7 @@ const initAudio=()=>{
   masterCrush.wet.value=0;
   
   // Connect synths to gain stages (DRY: reusable connection pattern)
+  // Layered kick and snare connect their filter outputs
   [kickN,kickClickBP,snareN,snareRingBP,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
   bassN.disconnect();bassN.connect(bassG);
   bassSub.disconnect();bassSub.connect(bassG);
@@ -456,10 +454,10 @@ const initAudio=()=>{
   keysG.disconnect();
   keysG.chain(keysTrem,keysCrush,analogSum);
   
-  // Analog summing: all tracks → vintage saturation → phaser → feedbackDelay → master (KISS)
+  // Analog summing: all tracks merge into analogSum, then through master chain
   analogSum=new Tone.Gain(1); // Summing node
   drumG.connect(analogSum);
-  // bassG and keysG already connected above
+  // bassG and keysG connect through their FX chains (above)
   padsG.connect(analogSum);
   noiseLP.connect(analogSum); // Lo-fi noise floor
   crackleLP.connect(analogSum);
@@ -468,8 +466,7 @@ const initAudio=()=>{
   rumbleOsc.connect(analogSum);
   
   // Main chain with lo-fi processing
-  analogSum.disconnect();
-  delayLP.disconnect();
+  // feedbackDelay connects separately then merges at lofiFilter
   analogSum.chain(vintageSat,phaserFX,lofiCompressor,tapeSat,lofiFilter);
   delayLP.connect(lofiFilter);
   lofiFilter.chain(lofiReverb,masterReverb,masterDrive,masterCrush,masterG);
@@ -658,7 +655,7 @@ const attachEvents=()=>{
   document.getElementById('kickLag').oninput=e=>{kickLag=+e.target.value;document.getElementById('kickLagVal').textContent=kickLag;};
   document.getElementById('snareRush').oninput=e=>{snareRush=+e.target.value;document.getElementById('snareRushVal').textContent=snareRush;};
   document.getElementById('hatDrift').oninput=e=>{hatDrift=+e.target.value;document.getElementById('hatDriftVal').textContent=hatDrift;};
-  document.getElementById('glide').oninput=e=>{glide=+e.target.value;document.getElementById('glideVal').textContent=glide;bassN.portamento=Math.pow(glide/200,1.6)*0.3;};
+  document.getElementById('glide').oninput=e=>{glide=+e.target.value;document.getElementById('glideVal').textContent=glide;bassN.portamento=Math.min(0.3,Math.pow(glide/200,1.6)*0.3);};
   document.getElementById('crackle').oninput=e=>{crackle=+e.target.value;document.getElementById('crackleVal').textContent=crackle;crackleNoise.volume.value=-35+crackle*0.2;};
   document.getElementById('flutter').oninput=e=>{flutter=+e.target.value;document.getElementById('flutterVal').textContent=flutter;flutterLFO.frequency.value=0.22*(1+flutter/100);};
   document.getElementById('tapeDrive').oninput=e=>{tapeDrive=+e.target.value;document.getElementById('tapeDriveVal').textContent=tapeDrive;vintageSat.wet.value=0.3+tapeDrive*0.005;};
