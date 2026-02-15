@@ -1,43 +1,95 @@
-MASTER2
+# MASTER2
 
-Constitutional AI code quality system. Reads your code. Runs it through twelve adversarial personas. Enforces thirty-two axioms. Writes the fix. Rolls back on failure. Stops on loops.
+Constitutional AI code quality system. Twelve adversarial personas review your code against 68 axioms drawn from authoritative sources. The system enforces rules, proposes fixes, validates syntax, and rolls back on failure. Built for OpenBSD in Ruby.
 
-Built in Ruby. OpenBSD first.
+## Architecture
 
-Setup: export OPENROUTER_API_KEY="sk-..." then ./bin/master refactor lib/session.rb
+Seven-stage pipeline. Your code enters through Intake, then Guard, Route, Debate, Ask, Lint, Render. Each stage returns `Result.ok` or `Result.err` using a Result monad. First error halts the pipeline. No exceptions thrown. Explicit error handling throughout.
 
-Seven stages. Your code goes through Intake, Guard, Route, Debate, Ask, Lint, Render. Each returns Result.ok or Result.err. First error stops everything. No exceptions.
+The Result monad flows through `workflow.rb`, `session.rb`, `review.rb`, `ui.rb`, `bridges.rb`, `analysis.rb`, and `executor.rb`. Architectural consolidation eliminated file sprawl. Ruby tree walker replaced regex-based axiom detection.
 
-Three personas can veto: Security Officer, The Attacker, The Maintainer. Consensus requires seventy percent weighted agreement from all twelve.
+## Axioms
 
-Four thinking modes. ReAct for exploring. PreAct for planning. ReWOO for saving money. Reflexion for fixing bugs. MASTER2 picks the mode automatically.
+68 axioms across 11 categories: engineering, structural, process, communication, resilience, aesthetic, meta, governance, functional, performance, verification. Each axiom is actionable and validatable.
 
-Guardrails. Ten dollar session cap. Circuit breaker opens after three failures with five minute cooldown. Self modifications go to var/staging, validated with ruby -c, promoted or rolled back. Pledge two for system call restrictions. Convergence detector stops oscillation.
+Enforcement operates at six layers: Literal, Lexical, Conceptual, Semantic, Cognitive, Language Axiom. Four scopes: Line, Unit, File, Framework. Priority levels—10 (critical), 7 (important), 5 (normal), 3 (deep-only)—control scan depth.
 
-Commands: refactor, fix, ideate, hunt, critique, scan, health, selftest. Run ./bin/master for interactive REPL.
+Sources include *The Pragmatic Programmer*, SOLID Principles, *Clean Code*, Strunk & White, Bringhurst's *The Elements of Typographic Style*, and Nielsen's usability guidelines.
 
-Model tiers. Premium for high quality. Strong for balance. Fast for iteration. Cheap for bulk. Four tiers balanced by cost and quality.
+## Council
 
-The council has twelve personas. Architect, Security Officer, The Attacker, Optimizer, The Minimalist, Accessibility Advocate, Documentation Specialist, Test Engineer, Ops Engineer, The Maintainer, Product Manager, End User.
+12 personas deliberate. Three hold veto power: Security Officer (weight 0.30), The Attacker (0.20), The Maintainer (0.20). Remaining nine contribute weighted votes. Consensus requires 70% weighted agreement.
 
-Thirty-two axioms from authoritative sources. Enforced at six layers: Literal, Lexical, Conceptual, Semantic, Cognitive, Language Axiom. Four scopes: Line, Unit, File, Framework. Sources include The Pragmatic Programmer, SOLID Principles, Clean Code, Strunk and White, Bringhurst, Nielsen.
+Personas include Architect, Performance Analyst, Optimizer, The Minimalist, Accessibility Advocate, Documentation Specialist, Test Engineer, Ops Engineer, Product Manager, and End User. Each operates at a distinct temperature (0.2 to 0.7) reflecting their role.
 
-Installation: git clone, cd pub4/MASTER2, bundle install, export OPENROUTER_API_KEY. Requires Ruby three point three or newer. OpenBSD seven point six or newer recommended.
+## Executor Patterns
 
-Budget and rate limiting. Session cap is ten dollars. Rate limit is thirty requests per minute. Circuit breaker trips after three failures with five minute cooldown. Auto-retry uses exponential backoff.
+Four thinking modes. MASTER2 selects automatically based on task context.
 
-Safe autonomy. All self-edits write to var/staging first. Syntax validation with ruby -c before promotion. Rollback support if tests fail. OpenBSD pledge restricts system calls.
+**ReAct** (Reason + Act) — Iterative exploration. The executor reasons about the problem, takes an action, observes the result, then reasons again. Best for discovery and debugging.
 
-Self test. Run selftest to validate zero violations, zero issues. If MASTER fails its own review, it has failed.
+**PreAct** (Plan + Act) — Upfront planning. Generates a complete plan before execution. If a step fails, replans. Best for tasks with clear structure and dependencies.
 
-Architecture. Core modules consolidated. workflow.rb, session.rb, review.rb, ui.rb, bridges.rb, analysis.rb, executor.rb. Result monad flows through everything. No exceptions. Explicit error handling.
+**ReWOO** (Reasoning WithOut Observation) — Single LLM call to plan all actions with placeholder references (#E1, #E2, ...). Minimizes LLM costs. Best for budget-constrained batch operations.
 
-Dependencies. ruby_llm for OpenRouter, Falcon for async web server, TTY toolkit for terminal UI, Stoplight for circuit breaker, Pastel for colors, Rouge for syntax highlighting, Nokogiri for HTML and XML. OpenBSD first design with doas, pledge, rcctl. Portable to macOS, Linux, Unix.
+**Reflexion** — Self-correction through reflection. Attempts a task, evaluates the outcome, extracts lessons, and retries with augmented context. Maximum 3 attempts. Best for fixing bugs and improving on failure.
 
-Optional web UI on port nine thousand. Run ./bin/master --web then open localhost:9000
+## Guardrails
 
-Speech synthesis. Three engines: Piper for local, Edge TTS for cloud, Replicate for premium voices. Auto-selects based on availability and budget.
+Session cap: $10. Circuit breaker trips after 3 failures with 5-minute cooldown. Rate limit: 30 requests per minute. Auto-retry uses exponential backoff.
 
-Version one point zero point zero. Stable release. Frozen API. Architectural consolidation complete. File sprawl eliminated. Regex removed from axioms. Ruby tree walker. Single README documentation.
+All self-modifications write to `var/staging` first. Syntax validation with `ruby -c` before promotion. Rollback support if tests fail. OpenBSD `pledge(2)` restricts system calls to `stdio rpath wpath cpath inet dns proc exec`.
 
-MIT License
+Convergence detector stops oscillation. If the system loops between the same states, execution halts.
+
+## Commands
+
+```
+refactor <file>           Refactor file with LLM guidance
+multi-refactor [path]     Refactor entire directory with dependency graph
+selfrun [--apply]         Full self-run across entire pub4 repository
+fix [--all|<path>]        Fix violations in files or directory
+scan [directory]          Scan for code smells (default: .)
+chamber <file>            Chamber review with multi-model deliberation
+ideate <topic>            Generate 15+ alternatives for a topic
+evolve [args]             Evolve entire codebase
+browse <url>              Browse and extract web content
+speak <text>              Text-to-speech output
+session <cmd>             Session management (replay|ls|diff|export)
+cache [stats|clear]       Semantic cache management
+health                    System health check
+opportunities [path]      Find improvement opportunities
+axioms-stats              Display axiom violation statistics
+version                   Show version
+help                      Show this help
+```
+
+No command starts REPL mode with integrated web server on port 9000.
+
+## Installation
+
+```sh
+git clone https://github.com/anon987654321/pub4
+cd pub4/MASTER2
+bundle install
+export OPENROUTER_API_KEY="sk-..."
+./bin/master help
+```
+
+Requires Ruby 3.4+. OpenBSD 7.8+ recommended. Portable to macOS, Linux, other Unix systems.
+
+## Dependencies
+
+**LLM & Circuit Breaking**: `ruby_llm` (1.11+), `stoplight` (4.0+)
+
+**Web Server**: `falcon` (0.47+), `async-websocket`
+
+**Terminal UI**: `tty-reader`, `tty-spinner`, `tty-table`, `tty-box`, `tty-markdown`, `tty-prompt`, `tty-progressbar`, `tty-cursor`, `tty-tree`, `tty-pie`, `tty-pager`, `tty-link`, `tty-font`, `tty-editor`, `tty-command`, `tty-screen`, `tty-platform`, `tty-which`, `pastel`, `rouge`
+
+**HTML/XML**: `nokogiri` (1.19+)
+
+**Testing**: `minitest`, `rake`, `webmock`
+
+## License
+
+MIT
