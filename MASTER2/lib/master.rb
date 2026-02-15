@@ -205,13 +205,12 @@ require_relative "chamber"
 
 # Tools
 require_relative "shell"
-require_relative "introspection"  # Includes self_map functionality (consolidated)
+require_relative "analysis"  # Consolidated: Prescan + Introspection (includes self_map)
 require_relative "problem_solver"
 require_relative "evolve"
 require_relative "queue"              # Priority task queue (restored from MASTER v1)
 require_relative "personas"           # Persona management (restored from MASTER v1)
 require_relative "harvester"          # Ecosystem intelligence (restored from MASTER v1)
-require_relative "prescan"            # Situational awareness ritual (restored from MASTER v1)
 
 # Web browsing (restored from MASTER)
 require_relative "web"
@@ -219,9 +218,8 @@ require_relative "web"
 # Speech (unified TTS - replaces edge_tts, piper_tts, stream_tts, tts)
 require_relative "speech"
 
-# Media generation and post-processing bridges
-require_relative "postpro_bridge"
-require_relative "repligen_bridge"
+# Media generation and post-processing bridges - Consolidated
+require_relative "bridges"  # Consolidated: PostproBridge + RepligenBridge
 
 # External services
 %w[weaviate replicate cinematic semantic_cache].each do |mod|
