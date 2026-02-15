@@ -2,6 +2,8 @@
 
 module MASTER
   module PipelineRepl
+    MAX_INPUT_LENGTH = 10_000
+
     def repl
       begin
         require "tty-reader"
