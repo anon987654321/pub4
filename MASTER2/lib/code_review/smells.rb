@@ -80,9 +80,10 @@ module MASTER
 
         duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 10, min_count: t[:min_duplicate_count])
         duplicates.each do |dup|
+          str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
           results << {
             smell: :primitive_obsession,
-            message: "String #{dup[:string][0..30]}... repeated #{dup[:count]}x",
+            message: "String #{str_preview} repeated #{dup[:count]}x",
             fix: 'Extract to constant'
           }
         end
