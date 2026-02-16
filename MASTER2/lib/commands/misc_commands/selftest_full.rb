@@ -8,6 +8,7 @@ module MASTER
         root = MASTER.root
         apply = args&.include?("-a") || args&.include?("--apply")
         lib_dir = File.join(root, "lib")
+        Thread.current[:llm_quiet] = true
 
         rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb")).sort
         puts "self: #{rb_files.count} files, mode: #{apply ? 'apply' : 'dry-run'}"
@@ -57,7 +58,11 @@ module MASTER
 
           total_violations += violations.count
           puts "  #{rel}: #{violations.count} violations"
-          violations.each { |v| puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{v[:message]}" }
+          violations.each do |v|
+            msg = v[:message].to_s.strip
+            next if msg.empty?
+            puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{msg}"
+          end
 
           next unless apply && defined?(LLM) && LLM.configured?
 
@@ -96,8 +101,10 @@ module MASTER
           puts r.value[:content] if r&.ok?
         end
 
+        Thread.current[:llm_quiet] = false
         Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
       rescue StandardError => e
+        Thread.current[:llm_quiet] = false
         Result.err("self failed: #{e.message}")
       end
     end

@@ -180,7 +180,7 @@ module MASTER
 
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
-        unless stream
+        unless stream || Thread.current[:llm_quiet]
           spinner = UI.spinner(extract_model_name(current_model))
           spinner.auto_spin
         end
