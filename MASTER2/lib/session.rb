@@ -197,7 +197,7 @@ module MASTER
           @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
       rescue StandardError => e
-        # Best effort on crash
+        $stderr.puts "session: crash save failed: #{e.message}"
       end
     end
 
@@ -220,6 +220,10 @@ module MASTER
       # English indicators
       english_words = %w[the and but are on of to from with as that this]
       english_count = english_words.count { |word| text.downcase.include?(word) }
+
+      # Safety: avoid division by zero
+      total_indicators = norwegian_count + english_count
+      return Result.ok(language: :english, confidence: 0.0) if total_indicators == 0
 
       if norwegian_count > english_count
         Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))

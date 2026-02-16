@@ -28,10 +28,6 @@ module MASTER
     # @return [Boolean] true if err
     def err? = @kind == :err
 
-    # Alias for ok?
-    # @return [Boolean] true if successful
-    def success? = ok?
-
     # Get error (alias for error)
     # @return [String, nil] Error message if err
     def failure = @error

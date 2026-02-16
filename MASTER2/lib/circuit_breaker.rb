@@ -3,10 +3,7 @@
 # Try to load Stoplight, fall back to simple implementation if not available
 begin
   require "stoplight"
-  STOPLIGHT_AVAILABLE = true
 rescue LoadError
-  STOPLIGHT_AVAILABLE = false
-
   # Simple mock for when Stoplight is not available
   module Stoplight
     class Light
