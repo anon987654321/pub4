@@ -40,3 +40,50 @@ graduation:
   master:
     requires: [200_successful_tasks, zero_reverts_90d, positive_user_feedback]
     autonomy: apply_all
+
+# Profile system — from pub2 master.json v225.0.0
+# Different quality gate profiles for different project types
+profiles:
+  minimal:
+    description: "Bare minimum checks for prototypes and experiments"
+    file_lines_max: 500
+    method_lines_max: 30
+    cyclomatic_max: 15
+    test_coverage_min: 0
+    enable_gates: [syntax, security]
+  standard:
+    description: "Default profile for most projects"
+    file_lines_max: 300
+    method_lines_max: 20
+    cyclomatic_max: 10
+    test_coverage_min: 80
+    enable_gates: [syntax, security, complexity, style]
+  complete:
+    description: "Full enforcement for production code"
+    file_lines_max: 300
+    method_lines_max: 15
+    cyclomatic_max: 8
+    test_coverage_min: 95
+    enable_gates: [syntax, security, complexity, style, duplication, performance]
+  startup:
+    description: "Fast iteration with core quality gates"
+    file_lines_max: 400
+    method_lines_max: 25
+    cyclomatic_max: 12
+    test_coverage_min: 70
+    enable_gates: [syntax, security, critical_bugs]
+  enterprise:
+    description: "Maximum rigor for enterprise codebases"
+    file_lines_max: 250
+    method_lines_max: 12
+    cyclomatic_max: 6
+    test_coverage_min: 98
+    enable_gates: [syntax, security, complexity, style, duplication, performance, documentation]
+  research:
+    description: "Flexible for research code with core safety"
+    file_lines_max: 600
+    method_lines_max: 40
+    cyclomatic_max: 20
+    test_coverage_min: 50
+    enable_gates: [syntax, security]
+  default_profile: "standard"

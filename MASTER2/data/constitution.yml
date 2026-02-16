@@ -285,3 +285,52 @@ metaprogramming_policy:
     - define_method
   reason: "Violates EXPLICIT axiom — prefer explicit method definitions"
   severity: error
+
+# Principle interactions — from pub2 master.json v225.0.0
+# Documents how principles reinforce or conflict with each other
+principle_interactions:
+  conflicts:
+    minimalism_vs_explicit:
+      winner: "explicit"
+      reason: "Explicitness wins for safety and debugging"
+      example: "Prefer explicit method names over method_missing"
+    dry_vs_readable:
+      winner: "readable"
+      reason: "Readability trumps DRY when abstraction obscures intent"
+      example: "Duplicate simple code rather than create unclear abstraction"
+    performance_vs_simplicity:
+      winner: "simplicity"
+      reason: "Optimize only when measured bottleneck found"
+      example: "Clear code first, then profile and optimize"
+  reinforcements:
+    dry_and_kiss:
+      effect: "multiply_effectiveness"
+      description: "DRY + KISS = maintainable abstractions"
+    solid_and_explicit:
+      effect: "strong_synergy"
+      description: "SOLID principles + explicit code = self-documenting architecture"
+    testing_and_refactoring:
+      effect: "safe_evolution"
+      description: "Tests enable confident refactoring"
+
+# Approval taxonomy — from pub2 governance.approval
+# Defines which changes can auto-proceed vs require manual approval
+approval_taxonomy:
+  auto_proceed:
+    - syntax_fixes
+    - formatting_changes
+    - dead_code_removal
+    - comment_typos
+    - import_organization
+    - whitespace_normalization
+  ask_approval:
+    - logic_changes
+    - deletions_of_working_code
+    - new_features
+    - security_sensitive_changes
+    - schema_migrations
+    - database_changes
+    - configuration_changes
+    - dependency_updates
+  rationale: "Auto-proceed for safe, reversible, cosmetic changes. Ask for structural or risky changes."
+  enforcement: "ABSOLUTE"

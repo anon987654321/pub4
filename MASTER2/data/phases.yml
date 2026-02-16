@@ -1,9 +1,26 @@
 # MASTER2 Development Phases - Systematic workflow
 # Used by planner.rb and introspection.rb
 
+# Cognitive load distribution — from pub master_framework_efficient.rb
+# 15% reconnaissance, 25% architecture, 45% implementation, 15% delivery
+cognitive_load:
+  total_budget: 1.0
+  distribution:
+    reconnaissance: 0.15  # 15% - understand problem space
+    architecture: 0.25    # 25% - design solution
+    implementation: 0.45  # 45% - build and test
+    delivery: 0.15        # 15% - validate and ship
+  rationale: "Front-load understanding and design to minimize rework in implementation"
+  monitoring:
+    enabled: true
+    alert_threshold: 0.1  # Alert if phase exceeds budget by 10%
+    recovery_strategy: "pause_and_reassess"
+
 phases:
   - id: discover
     name: Discover
+    cognitive_phase: reconnaissance
+    cognitive_budget: 0.15
     gate: requirements_clear
     introspection: "What problem am I solving? Who benefits?"
     outputs:
@@ -12,6 +29,8 @@ phases:
 
   - id: analyze
     name: Analyze
+    cognitive_phase: reconnaissance
+    cognitive_budget: 0.15
     gate: codebase_understood
     introspection: "What exists? What patterns are in use?"
     outputs:
@@ -21,6 +40,8 @@ phases:
 
   - id: ideate
     name: Ideate
+    cognitive_phase: architecture
+    cognitive_budget: 0.125
     gate: options_explored
     introspection: "What are 3 different approaches? Trade-offs?"
     outputs:
@@ -29,6 +50,8 @@ phases:
 
   - id: design
     name: Design
+    cognitive_phase: architecture
+    cognitive_budget: 0.125
     gate: design_approved
     introspection: "Is this minimal? Does it fit existing patterns?"
     outputs:
@@ -37,6 +60,8 @@ phases:
 
   - id: implement
     name: Implement
+    cognitive_phase: implementation
+    cognitive_budget: 0.45
     gate: code_complete
     introspection: "Did I change only what was needed? Tests pass?"
     outputs:
@@ -45,6 +70,8 @@ phases:
 
   - id: validate
     name: Validate
+    cognitive_phase: delivery
+    cognitive_budget: 0.10
     gate: quality_verified
     introspection: "Does it work? Is it safe? Would I approve this PR?"
     outputs:
@@ -54,6 +81,8 @@ phases:
 
   - id: deliver
     name: Deliver
+    cognitive_phase: delivery
+    cognitive_budget: 0.05
     gate: user_satisfied
     introspection: "Is the user happy? What did I learn?"
     outputs:
