@@ -180,8 +180,10 @@ module MASTER
       def install_crash_handlers
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
-            save_on_crash
-            exit(signal == "INT" ? 130 : 143)
+            # Use exit! to avoid deadlock - skips finalizers but safe in signal handler
+            # Do not call save_on_crash here as it acquires mutexes
+            exit_code = signal == "INT" ? 130 : 143
+            exit!(exit_code)
           end
         end
       rescue ArgumentError
@@ -190,6 +192,7 @@ module MASTER
 
       # Save current session on crash
       # @return [void]
+      # NOTE: Should not be called from signal handler - use exit! instead
       def save_on_crash
         return unless @current&.dirty?
 

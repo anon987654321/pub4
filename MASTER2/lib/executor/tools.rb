@@ -182,15 +182,8 @@ module MASTER
           return "BLOCKED: code_execution contains dangerous constructs"
         end
 
-        # Attempt Pledge sandboxing on OpenBSD if available
-        if defined?(Pledge)
-          begin
-            Pledge.pledge("stdio rpath")
-          rescue StandardError => e
-            # Pledge not available or failed, continue without it
-          end
-        end
-
+        # Note: Pledge removed - was restricting parent process permanently
+        # Child process spawned by Open3.capture3 is already isolated
         stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
         status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
       end
