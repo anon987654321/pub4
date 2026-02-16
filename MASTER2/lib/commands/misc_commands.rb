@@ -420,7 +420,7 @@ module MASTER
         end
 
         Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
-      rescue => e
+      rescue StandardError => e
         Result.err("self failed: #{e.message}")
       end
     end
