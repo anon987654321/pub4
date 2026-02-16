@@ -24,31 +24,26 @@ module MASTER
 
     # RepLigen command handler
     def repligen_command(cmd, args)
-      require_relative "repligen_bridge"
-
       case cmd
       when "repligen", "generate-image"
         return puts "Usage: repligen <prompt>" if args.nil? || args.empty?
-        puts "🎨 Generating image: #{args}"
-        result = RepLigenBridge.generate_image(prompt: args)
+        result = RepligenBridge.generate_image(prompt: args)
         if result.ok?
-          puts "✓ Image generated: #{result.value[:urls]&.first || 'Success'}"
+          puts "+ image: #{result.value[:urls]&.first || result.value}"
         else
-          puts "✗ Error: #{result.error}"
+          $stderr.puts "- #{result.error}"
         end
       when "generate-video"
         return puts "Usage: generate-video <prompt>" if args.nil? || args.empty?
-        puts "🎬 Generating video: #{args}"
-        result = RepLigenBridge.generate_video(prompt: args)
+        result = RepligenBridge.generate_video(prompt: args)
         if result.ok?
-          puts "✓ Video generated: #{result.value[:urls]&.first || 'Success'}"
+          puts "+ video: #{result.value[:urls]&.first || result.value}"
         else
-          puts "✗ Error: #{result.error}"
+          $stderr.puts "- #{result.error}"
         end
       end
     rescue StandardError => e
-      $stderr.puts "RepLigen error: #{e.message}"
-      puts "✗ Failed: #{e.message}"
+      $stderr.puts "repligen: #{e.message}"
     end
 
     # PostPro command handler

@@ -62,7 +62,7 @@ module MASTER
           unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
             return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
           end
-          chat = chat.with_thinking(effort_str)
+          chat = chat.with_thinking(effort: effort_str)
         end
 
         # JSON schema support

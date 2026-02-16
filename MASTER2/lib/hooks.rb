@@ -3,6 +3,7 @@
 require "yaml"
 require "time"
 require "fileutils"
+require "shellwords"
 
 module MASTER
   # Hooks - Lifecycle event handlers
@@ -193,8 +194,15 @@ module MASTER
       end
 
       def run_tests
-        # Placeholder - not yet implemented
-        Result.err("run_tests not yet implemented.")
+        test_dir = File.join(MASTER::Paths.root, "test")
+        return Result.err("No test directory") unless Dir.exist?(test_dir)
+
+        test_files = Dir[File.join(test_dir, "**", "*_test.rb")] +
+                     Dir[File.join(test_dir, "**", "test_*.rb")]
+        return Result.err("No test files found") if test_files.empty?
+
+        output = `ruby -e "ARGV.each { |f| load f }" #{test_files.map { |f| Shellwords.escape(f) }.join(" ")} 2>&1`
+        $?.success? ? Result.ok("Tests passed") : Result.err("Tests failed: #{output.lines.last(5).join}")
       end
 
       def log(msg)
