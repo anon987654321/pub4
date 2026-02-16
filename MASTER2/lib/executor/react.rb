@@ -41,7 +41,7 @@ module MASTER
           end
 
           # Execute tool and get observation
-          observation = execute_tool(parsed[:action])
+          observation = dispatch_action(parsed[:action])
           @history.last[:observation] = observation
 
           UI.dim("  = #{observation[0..100]}")

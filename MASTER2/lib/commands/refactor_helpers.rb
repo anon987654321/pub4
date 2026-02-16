@@ -5,11 +5,11 @@ module MASTER
     # Helper methods for refactor command
     module RefactorHelpers
       def extract_mode(args)
-        mode_arg = args.find { |a| a.start_with?("--") }
+        mode_arg = args.find { |a| a.start_with?("-") }
         case mode_arg
-        when "--raw" then :raw
-        when "--apply" then :apply
-        when "--preview" then :preview
+        when "-r", "--raw" then :raw
+        when "-a", "--apply" then :apply
+        when "-p", "--preview" then :preview
         else :preview # default
         end
       end
@@ -58,7 +58,7 @@ module MASTER
           puts summary
         end
         puts "\n#{diff}"
-        puts "  Use --apply to write changes, --raw to see full output"
+        puts "  Use -a to write changes, -r to see full output"
       end
 
       def apply_refactor(path, original, proposed, result, council_info)
@@ -82,7 +82,7 @@ module MASTER
           # Write changes to disk
           File.write(path, proposed)
 
-          puts "  + Changes applied to #{path}"
+          puts "  refactor: applied to #{path}"
           puts "  (Use 'undo' command to revert)"
         else
           puts "  Changes not applied"

@@ -8,8 +8,13 @@ module MASTER
   # Ported from MASTER v1, adapted for MASTER2's architecture
   class Personas
     PERSONAS_FILE = File.join(Paths.data, 'personas.yml')
+    SUPPORTED_PERSONAS = %i[ronin lawyer hacker architect sysadmin trader medic].freeze
 
     class << self
+      def supported_list
+        SUPPORTED_PERSONAS
+      end
+
       def load_all
         return [] unless File.exist?(PERSONAS_FILE)
 

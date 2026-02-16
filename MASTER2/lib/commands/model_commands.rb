@@ -16,7 +16,7 @@ module MASTER
 
         if found
           LLM.current_model = LLM.extract_model_name(found.id)
-          puts "\n  + Switched to #{found.id}\n"
+          puts "\n  model: switched to #{found.id}\n"
         else
           puts "\n  - No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"

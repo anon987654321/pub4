@@ -372,7 +372,7 @@ module MASTER
           end
 
           if defined?(MASTER::CodeQuality)
-            r = CodeQuality.scan(rel, silent: true) rescue nil
+            r = CodeQuality.quality_scan(rel, silent: true) rescue nil
             violations.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
           end
 

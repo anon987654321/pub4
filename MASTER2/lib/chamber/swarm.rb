@@ -78,7 +78,7 @@ module MASTER
 
     def build_curation_prompt(responses, original_prompt)
       options = responses.map.with_index do |r, i|
-        "=== Response [#{i}] (#{r[:model]}) ===\n#{r[:content][0, 500]}"
+        "response[#{i}] (#{r[:model]})\n#{r[:content][0, 500]}"
       end.join("\n\n")
 
       <<~PROMPT

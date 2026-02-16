@@ -74,7 +74,7 @@ module MASTER
             return Result.ok(answer: answer, steps: @step)
           end
 
-          observation = execute_tool(parsed[:action])
+          observation = dispatch_action(parsed[:action])
           @history.last[:observation] = observation
         end
 

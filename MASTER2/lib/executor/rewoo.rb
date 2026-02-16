@@ -58,7 +58,7 @@ module MASTER
           resolved = action_str.gsub(/#E(\d+)/) { evidence[$1.to_i] || "" }
 
           UI.dim("  #E#{num}: #{resolved[0..60]}")
-          observation = execute_tool(resolved.strip)
+          observation = dispatch_action(resolved.strip)
           evidence[num.to_i] = observation
           record_history({ step: @step, action: resolved, observation: observation })
           UI.dim("  = #{observation[0..60]}")

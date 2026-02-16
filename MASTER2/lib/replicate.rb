@@ -292,7 +292,7 @@ module MASTER
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Request timed out' }
       rescue StandardError => e
-        $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
+        $stderr.puts "replicate: #{e.message}"
         { error: e.message }
       end
 
@@ -331,7 +331,7 @@ module MASTER
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Poll request timed out' }
       rescue StandardError => e
-        $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
+        $stderr.puts "replicate: #{e.message}"
         { error: e.message }
       end
     end

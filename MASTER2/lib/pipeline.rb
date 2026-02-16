@@ -53,7 +53,7 @@ module MASTER
               end
             when :direct
               # Simple: Direct LLM call with system context
-              sys = Executor::Context.build_system_message(include_commands: false) rescue nil
+              sys = ExecutionContext.build_system_message(include_commands: false) rescue nil
               if sys
                 LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
               else

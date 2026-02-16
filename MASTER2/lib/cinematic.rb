@@ -99,7 +99,7 @@ module MASTER
 
         Result.ok({ path: path })
       rescue StandardError => e
-        $stderr.puts "Cinematic: save preset error: #{e.class} - #{e.message}"
+        $stderr.puts "cinematic: #{e.message}"
         Result.err("Failed to save preset: #{e.message}")
       end
 
@@ -119,7 +119,7 @@ module MASTER
 
         Result.ok(pipeline)
       rescue StandardError => e
-        $stderr.puts "Cinematic: load preset error: #{e.class} - #{e.message}"
+        $stderr.puts "cinematic: #{e.message}"
         Result.err("Failed to load preset: #{e.message}")
       end
 

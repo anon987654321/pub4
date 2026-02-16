@@ -42,14 +42,12 @@ module MASTER
     def capture(session_id: nil)
       session_id ||= Session.current.id
 
-      puts UI.bold("\nSession Capture")
-      puts UI.dim("Extracting patterns from this session...\n")
+      puts UI.bold("Session Capture") + " " + UI.dim("extracting patterns...")
 
       answers = {}
 
       QUESTIONS.each do |q|
-        puts UI.yellow("\n#{q[:question]}")
-        puts UI.dim("  Action: #{q[:action]}")
+        puts UI.yellow("#{q[:question]}") + " " + UI.dim("Action: #{q[:action]}")
         print "  Answer (or skip): "
 
         answer = $stdin.gets&.chomp&.strip
@@ -59,7 +57,7 @@ module MASTER
       end
 
       if answers.empty?
-        puts UI.dim("\nNo insights captured")
+        puts UI.dim("no insights captured")
         return Result.ok(captured: false)
       end
 
@@ -87,7 +85,7 @@ module MASTER
         end
       end
 
-      puts UI.green("\n+ Session insights captured and added to learnings")
+      puts UI.green("session: #{answers.size} insights captured")
 
       Result.ok(captured: true, insights: answers.size)
     end
@@ -98,7 +96,7 @@ module MASTER
       return unless session
       return unless session.metadata_value(:successful)
 
-      puts UI.dim("\n[Auto-capture triggered for successful session]")
+      puts UI.dim("[auto-capture triggered]")
       capture(session_id: session.id)
     end
 

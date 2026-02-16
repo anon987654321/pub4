@@ -19,7 +19,9 @@ module MASTER
 
     AUTOSAVE_INTERVAL = 30  # seconds
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
-    SUPPORTED_PERSONAS = %i[ronin lawyer hacker architect sysadmin trader medic].freeze
+
+    # SUPPORTED_PERSONAS moved to Personas module; kept here for backward compat
+    SUPPORTED_PERSONAS = Personas.respond_to?(:supported_list) ? Personas.supported_list : %i[ronin lawyer hacker architect sysadmin trader medic].freeze # deprecated: use Personas::SUPPORTED_PERSONAS
 
     NORWEGIAN_RULES = [
       "Use bokmål, not nynorsk",
@@ -250,7 +252,7 @@ module MASTER
 
     # Persona management
     def self.set_persona(persona)
-      return Result.err("Unknown persona: #{persona}") unless SUPPORTED_PERSONAS.include?(persona)
+      return Result.err("Unknown persona: #{persona}") unless Personas::SUPPORTED_PERSONAS.include?(persona)
 
       current.write_metadata(:persona, persona)
       Result.ok(persona: persona)

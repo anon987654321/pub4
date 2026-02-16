@@ -77,8 +77,8 @@ module MASTER
       @step = 0
     end
 
-    include Context
-    include Tools
+    include ExecutionContext
+    include ToolDispatch
     include React
     include PreAct
     include ReWOO
@@ -165,7 +165,7 @@ module MASTER
     end
 
     def direct_ask(goal, tier: nil)
-      system_msg = Context.build_system_message(include_commands: false)
+      system_msg = ExecutionContext.build_system_message(include_commands: false)
 
       result = LLM.ask(goal, messages: [
         { role: "system", content: system_msg }

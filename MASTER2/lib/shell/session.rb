@@ -128,7 +128,7 @@ module MASTER
 
       puts UI.dim("Scanning #{path}...")
       if defined?(Engine)
-        result = CodeQuality.scan(path)
+        result = CodeQuality.quality_scan(path)
         if result.ok?
           issues = result.value[:issues]
           if issues.empty?

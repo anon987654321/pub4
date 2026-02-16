@@ -18,8 +18,7 @@ module MASTER
     end
 
     def header(title, width: 40)
-      puts "\n  #{bold(title)}"
-      puts "  #{'-' * width}"
+      puts bold(title)
     end
 
     def icon(name)
@@ -42,6 +41,7 @@ module MASTER
     end
 
     def color_enabled?
+      return false unless $stdout.tty?
       return false if ENV["NO_COLOR"]
       return false if ENV["TERM"] == "dumb"
       true

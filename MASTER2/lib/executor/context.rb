@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module MASTER
-  class Executor
-    module Context
+  # ExecutionContext - extracted from Executor::Context for module-level access
+  module ExecutionContext
       SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
       LABELED_SECTIONS = {
         "task_workflow" => "TASK WORKFLOW",
@@ -12,8 +12,8 @@ module MASTER
       }.freeze
 
       def self.system_prompt_config
-        @system_prompt_config ||= if File.exist?(Executor::SYSTEM_PROMPT_FILE)
-          YAML.safe_load_file(Executor::SYSTEM_PROMPT_FILE) rescue {}
+        @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)
+          YAML.safe_load_file(MASTER::Executor::SYSTEM_PROMPT_FILE) rescue {}
         else
           {}
         end
@@ -101,7 +101,7 @@ module MASTER
 
       def build_context(goal, system_only: false)
         # Get comprehensive system message
-        system_msg = Context.build_system_message(include_commands: true)
+        system_msg = ExecutionContext.build_system_message(include_commands: true)
 
         # If system_only flag set, return just system message (for messages array usage)
         return system_msg if system_only
@@ -113,7 +113,7 @@ module MASTER
       # Build context as messages array with system/user separation
       def build_context_messages(goal)
         [
-          { role: "system", content: Context.build_system_message(include_commands: true) },
+          { role: "system", content: ExecutionContext.build_system_message(include_commands: true) },
           { role: "user", content: build_task_context(goal) }
         ]
       end
@@ -149,5 +149,8 @@ module MASTER
         { thought: thought, action: action }
       end
     end
+
+  class Executor
+    Context = ExecutionContext # deprecated: use MASTER::ExecutionContext
   end
 end

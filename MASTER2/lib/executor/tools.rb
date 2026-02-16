@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
-  class Executor
-    module Tools
-      def execute_tool(action_str)
+  # ToolDispatch - extracted from Executor::Tools for module-level access
+  module ToolDispatch
+      def dispatch_action(action_str)
         # Sanitize input before processing
         action_str = sanitize_tool_input(action_str)
         return action_str if action_str.start_with?("BLOCKED:")
@@ -230,6 +230,12 @@ module MASTER
         @history << entry
         @history.shift if @history.size > MAX_HISTORY_ENTRIES
       end
+
+      # deprecated: use dispatch_action
+      alias execute_tool dispatch_action
     end
+
+  class Executor
+    Tools = ToolDispatch # deprecated: use MASTER::ToolDispatch
   end
 end

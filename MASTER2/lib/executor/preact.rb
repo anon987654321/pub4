@@ -18,7 +18,7 @@ module MASTER
           UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
 
           # Execute the planned action
-          observation = execute_tool(planned_step)
+          observation = dispatch_action(planned_step)
           results << { step: @step, action: planned_step, observation: observation }
           record_history(results.last)
 

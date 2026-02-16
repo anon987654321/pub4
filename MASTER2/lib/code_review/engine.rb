@@ -20,9 +20,32 @@ module MASTER
     }.freeze
 
     class << self
+      # Unified entry point: runs Smells + Violations + BugHunting and merges results
+      def analyze_all(code, path: nil)
+        results = { smells: [], violations: [], bugs: [], summary: {} }
+
+        if defined?(Smells)
+          results[:smells] = Smells.analyze(code, path) rescue []
+        end
+
+        if defined?(Violations)
+          v = Violations.analyze(code, path: path) rescue {}
+          results[:violations] = (v[:literal] || []) + (v[:conceptual] || [])
+        end
+
+        if defined?(BugHunting)
+          report = BugHunting.analyze(code, file_path: path || 'inline') rescue {}
+          results[:bugs] = report.is_a?(Hash) ? report : []
+        end
+
+        total = results[:smells].size + results[:violations].size
+        results[:summary] = { smells: results[:smells].size, violations: results[:violations].size, total: total }
+        Result.ok(results)
+      end
+
       # Basic structural scan - long methods, god classes, deep nesting
       # Now supports profile parameter for axiom filtering
-      def scan(path, profile: :standard, silent: false)
+      def quality_scan(path, profile: :standard, silent: false)
         Logging.dmesg_log('code_review', message: 'ENTER code_review.scan')
         return Result.err('Path not found') unless File.exist?(path)
 
@@ -35,8 +58,10 @@ module MASTER
         Result.ok(issues)
       end
 
+      alias scan quality_scan # deprecated: use quality_scan
+
       # Deep scan - adds smell analysis and cyclic dependency detection
-      def deep_scan(path)
+      def deep_quality_scan(path)
         return Result.err('Path not found') unless File.exist?(path)
 
         issues = []
@@ -62,8 +87,10 @@ module MASTER
         Result.ok(issues.uniq { |i| [i[:file], i[:type] || i[:smell], i[:line]] })
       end
 
+      alias deep_scan deep_quality_scan # deprecated: use deep_quality_scan
+
       # Quick scan - fast summary stats without detailed analysis
-      def quick_scan(path)
+      def quick_quality_scan(path)
         return Result.err('Path not found') unless File.exist?(path)
 
         files = Analyzers::FileCollector.ruby_files(path)
@@ -89,6 +116,8 @@ module MASTER
         Result.ok(stats)
       end
 
+      alias quick_scan quick_quality_scan # deprecated: use quick_quality_scan
+
       # Scan with specific focus areas
       def focused_scan(path, focus: [:complexity, :duplication, :security])
         return Result.err('Path not found') unless File.exist?(path)
@@ -109,8 +138,8 @@ module MASTER
           end
 
           if focus.include?(:security) && defined?(BugHunting)
-            bugs = BugHunting.scan(content, path: file) rescue []
-            issues += bugs.map { |b| b.merge(file: file, type: :security) }
+            bugs = BugHunting.analyze(content, file_path: file) rescue []
+            issues += (bugs.is_a?(Hash) ? bugs[:findings]&.values&.flatten || [] : [bugs]).select { |b| b.is_a?(Hash) }.map { |b| b.merge(file: file, type: :security) }
           end
         end
 
