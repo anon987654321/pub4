@@ -2,8 +2,8 @@
 
 module MASTER
   class Server
-    # WebRick - WebRick server implementation (fallback)
-    module WebRick
+    # WEBrick - WEBrick server implementation (fallback)
+    module WEBrick
       def run_webrick
         require "webrick"
 

@@ -11,7 +11,7 @@ module MASTER
   class Server
     include Handlers
     include WebSocket
-    include WebRick
+    include WEBrick
     JSON_TYPE = "application/json".freeze
     HTML_TYPE = "text/html".freeze
     TEXT_TYPE = "text/plain".freeze

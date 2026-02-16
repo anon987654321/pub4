@@ -34,13 +34,33 @@ module MASTER
       end
 
       # Delegate dmesg methods
-      def trace_level = Dmesg.trace_level
-      def enabled?(level = LLM_ONLY) = Dmesg.enabled?(level)
-      def buffer = Dmesg.buffer
-      def dmesg_log(...) = Dmesg.dmesg_log(...)
-      def dump(...) = Dmesg.dump(...)
-      def clear = Dmesg.clear
-      def reset_timer = Dmesg.reset_timer
+      def trace_level
+        Dmesg.trace_level
+      end
+
+      def enabled?(level = LLM_ONLY)
+        Dmesg.enabled?(level)
+      end
+
+      def buffer
+        Dmesg.buffer
+      end
+
+      def dmesg_log(...)
+        Dmesg.dmesg_log(...)
+      end
+
+      def dump(...)
+        Dmesg.dump(...)
+      end
+
+      def clear
+        Dmesg.clear
+      end
+
+      def reset_timer
+        Dmesg.reset_timer
+      end
       # STANDARD LOGGING (from log.rb + logging.rb)
 
       def debug(message, **context)
