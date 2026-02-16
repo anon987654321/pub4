@@ -6,7 +6,6 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
-require_relative "executor/momentum"
 require_relative "executor/react"
 require_relative "executor/preact"
 require_relative "executor/rewoo"
@@ -17,6 +16,13 @@ require_relative "executor/context"
 module MASTER
 
   class Executor
+    # Include pattern modules
+    include Context
+    include Tools
+    include React
+    include PreAct
+    include ReWOO
+    include Reflexion
 
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
@@ -68,6 +74,11 @@ module MASTER
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
+
+    # Class method entry point
+    def self.call(goal, **opts)
+      new.call(goal, **opts)
+    end
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
@@ -134,11 +145,7 @@ module MASTER
       end
     end
 
-    def self.call(goal, **opts)
-      new.call(goal, **opts)
-    end
-
-    # Pattern selection heuristics
+    # Pattern selection heuristics - moved before private
     def select_pattern(goal)
       # Pre-Act: explicit multi-step tasks
       return :pre_act if goal.match?(/\b(then|after that|next|finally|step\s*\d|first.*then)\b/i)

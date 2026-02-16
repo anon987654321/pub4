@@ -164,7 +164,20 @@ language:
   rules: ["omit needless words", "active voice", "be clear"]
   norwegian:
     dialect: "bokmål"
-    rules: ["short sentences", "avoid anglicisms"]
+    rules: 
+      - "Use bokmål, not nynorsk"
+      - "Prefer short sentences"
+      - "Avoid anglicisms when Norwegian words exist"
+      - "Match user's formality level"
+    anglicisms:
+      meeting: "møte"
+      deal: "avtale"
+      deadline: "frist"
+      feedback: "tilbakemelding"
+      issue: "problem"
+      feature: "funksjon"
+      user: "bruker"
+      system: "system"
 
 # Self-improvement — convergence mandate
 self_improvement:

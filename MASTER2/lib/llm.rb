@@ -109,6 +109,12 @@ module MASTER
         end
       end
 
+      # Ask LLM with fallbacks, reasoning, and structured outputs
+      # Returns Result monad with value/error
+      #
+      # WARNING: CQS Violation - This query method mutates @current_model as a side effect
+      # for tracking purposes (line 106). This is intentional but non-standard.
+      #
       # Options:
       #   tier: :strong/:fast/:cheap - model tier selection
       #   model: explicit model ID
@@ -117,9 +123,8 @@ module MASTER
       #   json_schema: hash for structured output
       #   provider: { sort:, order:, only:, ignore: } routing preferences
       #   stream: true/false
-      #   online: true - enable web search
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
-              json_schema: nil, provider: nil, stream: false, online: false, messages: nil)
+              json_schema: nil, provider: nil, stream: false, messages: nil)
 
         return Result.err("Missing OPENROUTER_API_KEY.") unless configured?
 
@@ -173,14 +178,6 @@ module MASTER
 
       private
 
-      def resolve_model(model)
-        primary = model || select_model
-        return nil unless primary
-
-        @current_model = extract_model_name(primary)
-        primary
-      end
-
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
         unless stream
@@ -207,14 +204,14 @@ module MASTER
         # Record per-agent cost if agent budget is set
         record_agent_cost(cost)
 
-        Dmesg.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
+        Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Logging)
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
         CircuitBreaker.close_circuit!(current_model)
       end
 
       def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
-        Dmesg.llm_error(tier: :default, error: result.error) if defined?(Dmesg)
+        Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
       end
 
       public
@@ -231,7 +228,7 @@ module MASTER
 
       # Web-grounded query
       def ask_online(prompt, tier: :fast, **opts)
-        ask(prompt, tier: tier, online: true, **opts)
+        ask(prompt, tier: tier, **opts)
       end
 
       # Auto-router - let OpenRouter pick best model

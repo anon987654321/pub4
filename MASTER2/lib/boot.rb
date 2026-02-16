@@ -24,7 +24,11 @@ module MASTER
         start_time = MASTER::Utils.monotonic_now
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
         user = ENV["USER"] || ENV["USERNAME"] || "user"
-        host = `hostname`.strip rescue "localhost"
+        host = begin
+          `hostname`.strip
+        rescue StandardError
+          "localhost"
+        end
 
         smoke_result = smoke_test
 
@@ -91,18 +95,6 @@ module MASTER
 
       def tier_models
         LLM.all_models.map { |m| LLM.extract_model_name(m) }.first(6).join(", ")
-      end
-
-      def tts_status
-        Speech.engine_status
-      rescue StandardError => e
-        "off"
-      end
-
-      def self_awareness_summary
-        Introspection.summary
-      rescue StandardError => e
-        "unavailable"
       end
     end
   end

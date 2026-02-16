@@ -8,6 +8,8 @@ require "fileutils"
 require_relative "session/memory"
 require_relative "session/capture"
 require_relative "session/replay"
+require_relative "session/language"
+require_relative "session/persona"
 
 module MASTER
   # Session - Persistent session management with auto-save
@@ -202,7 +204,7 @@ module MASTER
           @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
       rescue StandardError => e
-        # Best effort on crash
+        $stderr.puts "session: crash save failed: #{e.message}"
       end
     end
 
@@ -216,55 +218,22 @@ module MASTER
       }
     end
 
-    # Language detection and multi-language support
+    # Delegate language methods to Language module
     def self.detect_language(text)
-      text_lower = text.downcase
-
-      # Norwegian indicators
-      norwegian_words = %w[og men er på av til fra med som den det]
-      norwegian_count = norwegian_words.count { |word| text_lower =~ /\b#{Regexp.escape(word)}\b/ }
-
-      # English indicators
-      english_words = %w[the and but are on of to from with as that this]
-      english_count = english_words.count { |word| text_lower =~ /\b#{Regexp.escape(word)}\b/ }
-
-      if norwegian_count > english_count
-        Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))
-      else
-        Result.ok(language: :english, confidence: english_count.to_f / (norwegian_count + english_count))
-      end
+      Language.detect_language(text)
     end
 
     def self.norwegian_style_check(text)
-      issues = []
-
-      # Check for common anglicisms
-      anglicisms = {
-        "meeting" => "møte",
-        "deal" => "avtale",
-        "deadline" => "frist",
-        "feedback" => "tilbakemelding"
-      }
-
-      anglicisms.each do |english, norwegian|
-        if text.downcase.include?(english)
-          issues << "Replace '#{english}' with '#{norwegian}'"
-        end
-      end
-
-      Result.ok(issues: issues)
+      Language.norwegian_style_check(text)
     end
 
-    # Persona management
+    # Delegate persona methods to Persona module
     def self.set_persona(persona)
-      return Result.err("Unknown persona: #{persona}") unless Personas::SUPPORTED_PERSONAS.include?(persona)
-
-      current.write_metadata(:persona, persona)
-      Result.ok(persona: persona)
+      Persona.set_persona(persona)
     end
 
     def self.current_persona
-      current.metadata_value(:persona) || :ronin
+      Persona.current_persona
     end
   end
 end

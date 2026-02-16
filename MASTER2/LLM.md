@@ -2,6 +2,56 @@
 
 Any LLM working in this repository must read, internalize, and follow MASTER2.
 
+## System Architecture at a Glance
+
+MASTER2 is a self-enforcing constitutional AI system that validates and improves code against 68 axioms. The data flow is:
+
+```
+User Input → Pipeline → Executor → LLM → Output
+             ↓          ↓         ↓
+          Stages     Patterns  CircuitBreaker
+             ↓          ↓         ↓
+          Guard      Tools    RateLimit
+             ↓          ↓         ↓
+          Council    Context  Logging
+```
+
+**Boot Flow:** `boot.rb` → loads `master.rb` → initializes `DB`, `LLM`, `Pipeline`, `Executor`
+
+**Request Flow:** `Pipeline.call(input)` → `Stages` (intake, guard, route, council, ask, lint, render) → `Executor` (React/PreAct/ReWOO/Reflexion patterns) → `LLM.ask` → `CircuitBreaker.run` → `ruby_llm` API call
+
+**Data Sources:** `data/*.yml` (constitution, axioms, council, language rules, patterns) are the single source of truth. No hardcoded fallbacks.
+
+## File Responsibilities & Axiom Categories
+
+Note: Line counts are approximate and may change as code evolves.
+
+| File | Responsibility | Primary Axioms | Lines |
+|------|---------------|----------------|-------|
+| `lib/master.rb` | Module loader, namespace | PRESERVE_THEN_IMPROVE_NEVER_BREAK | 100 |
+| `lib/boot.rb` | System initialization, banner | FAIL_VISIBLY | 98 |
+| `lib/pipeline.rb` | Request orchestration | ONE_JOB, REFLOW | 213 |
+| `lib/executor.rb` | Multi-pattern execution | PATTERNS_OVER_PROCEDURES | 290 |
+| `lib/llm.rb` | OpenRouter API client | CIRCUIT_BREAKER, GUARD_EXPENSIVE | 206 |
+| `lib/db_jsonl.rb` | JSONL database (axioms, council) | ONE_SOURCE | 209 |
+| `lib/session.rb` | Conversation state | AUTOSAVE | 222 |
+| `lib/result.rb` | Railway monad | EXPLICIT | 124 |
+| `lib/circuit_breaker.rb` | Failure handling, rate limits | DEADLINES | 145 |
+| `lib/logging.rb` | Unified logging (dmesg-style) | FAIL_VISIBLY | 257 |
+| `lib/stages.rb` | Pipeline stages (guard, lint) | GUARD, LINT_BEFORE_SHIP | 315 |
+| `lib/ui.rb` | Terminal UI, colors, spinners | UI_CONSISTENCY | 280 |
+| `lib/council.rb` | Adversarial review (12 personas) | COUNCIL_REVIEW | 198 |
+| `lib/shell.rb` | Safe command execution | GUARD | 135 |
+| `data/constitution.yml` | Golden rule, constraints | SELF_APPLY | 297 |
+| `data/axioms.yml` | 68 axioms across 11 categories | ALL | 2100 |
+| `data/council.yml` | 12 personas, 3 veto holders | COUNCIL_REVIEW | 234 |
+
+## Three Most Critical Axioms for Any Change
+
+1. **PRESERVE_THEN_IMPROVE_NEVER_BREAK** — Never delete working code. Never break existing behavior. Improve surgically.
+2. **SELF_APPLY** — MASTER2 must obey its own rules. All changes to `MASTER2/` itself must pass its own validators.
+3. **FAIL_VISIBLY** — Never swallow exceptions silently. Always log errors. No `rescue nil`, no bare `rescue`.
+
 ## Core files (read in order)
 
 1. `data/constitution.yml` — golden rule, convergence, anti-sprawl, constraints, detectors
