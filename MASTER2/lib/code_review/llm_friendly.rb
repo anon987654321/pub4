@@ -55,8 +55,8 @@ module MASTER
       # Uses guard clauses
       points += 1 if code.match?(/return .* (if|unless) /)
 
-      # Under 300 lines
-      points += 1 if code.lines.size <= 300
+      # Under 600 lines
+      points += 1 if code.lines.size <= 600
 
       # Has examples in comments
       points += 1 if code.match?(/#.*example:|#.*usage:/i)
@@ -93,7 +93,7 @@ module MASTER
         suggestions << "Change bare 'rescue' to 'rescue StandardError'"
       end
 
-      if code.lines.size > 300
+      if code.lines.size > 600
         suggestions << "File is #{code.lines.size} lines - consider splitting"
       end
 

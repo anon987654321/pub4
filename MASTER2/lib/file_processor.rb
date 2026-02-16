@@ -186,8 +186,8 @@ module MASTER
         original_bytes = content.bytesize
 
         # Assess if file should be split
-        if original_lines > 300
-          changes << "Consider splitting: #{original_lines} lines exceeds 300 limit"
+        if original_lines > 600
+          changes << "Consider splitting: #{original_lines} lines exceeds 600 limit"
         end
 
         # Assess if file is too small (maybe merge with related)

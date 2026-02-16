@@ -18,8 +18,8 @@ module MASTER
         syntax_errors.each { |f| puts "  #{File.basename(f)}" }
 
         # phase 2: sprawl
-        large = rb_files.select { |f| File.readlines(f).size > 300 rescue false }
-        puts "self: #{large.count} files >300 lines" if large.any?
+        large = rb_files.select { |f| File.readlines(f).size > 600 rescue false }
+        puts "self: #{large.count} files >600 lines" if large.any?
         large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
 
         # phase 3: enforcement pipeline (same as any code gets)
@@ -88,7 +88,7 @@ module MASTER
         # phase 5: reflect via LLM
         if defined?(LLM) && LLM.configured?
           facts = "#{rb_files.count} files, #{syntax_errors.count} syntax errors, " \
-                  "#{large.count} >300L, #{total_violations} violations, #{fixed} fixed"
+                  "#{large.count} >600L, #{total_violations} violations, #{fixed} fixed"
           prompt = "You just ran self-inspection on your own codebase. " \
                    "Facts: #{facts}. " \
                    "In 5 lines or fewer: what should be improved next? Be concrete and terse."

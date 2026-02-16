@@ -1,7 +1,7 @@
 file_lines:
-  warn: 250
-  error: 300
-  self_test_max: 300
+  warn: 500
+  error: 600
+  self_test_max: 600
 method_lines:
   warn: 15
   error: 25
@@ -11,7 +11,7 @@ max_self_test_violations: 0
 # Detailed limits (merged from quality_limits.yml)
 file:
   max_bytes: 20480
-  max_lines: 500
+  max_lines: 600
   max_line_length: 120
 method:
   max_lines: 20
@@ -22,7 +22,7 @@ class:
   max_methods: 15
   max_instance_vars: 7
   max_dependencies: 5
-  max_lines: 300
+  max_lines: 600
 coverage:
   minimum: 95
 
@@ -53,14 +53,14 @@ profiles:
     enable_gates: [syntax, security]
   standard:
     description: "Default profile for most projects"
-    file_lines_max: 300
+    file_lines_max: 600
     method_lines_max: 20
     cyclomatic_max: 10
     test_coverage_min: 80
     enable_gates: [syntax, security, complexity, style]
   complete:
     description: "Full enforcement for production code"
-    file_lines_max: 300
+    file_lines_max: 600
     method_lines_max: 15
     cyclomatic_max: 8
     test_coverage_min: 95

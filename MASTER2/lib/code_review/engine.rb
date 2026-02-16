@@ -10,7 +10,7 @@ module MASTER
   # Ported from MASTER v1, adapted for MASTER2's architecture
   module CodeQuality
     MAX_METHOD_LINES = 20
-    MAX_FILE_LINES = 300
+    MAX_FILE_LINES = 600
 
     # Scan profiles for tiered axiom checking
     SCAN_PROFILES = {

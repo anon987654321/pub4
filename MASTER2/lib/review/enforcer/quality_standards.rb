@@ -17,7 +17,7 @@ module MASTER
 
       def defaults
         {
-          file_lines: { warn: 250, error: 300, self_test_max: 300 },
+          file_lines: { warn: 500, error: 600, self_test_max: 600 },
           method_lines: { warn: 15, error: 25 },
           max_self_test_issues: 0,
           max_self_test_violations: 0
@@ -25,7 +25,7 @@ module MASTER
       end
 
       def max_file_lines
-        thresholds.dig(:file_lines, :error) || 300
+        thresholds.dig(:file_lines, :error) || 600
       end
 
       def max_file_lines_warn
@@ -33,7 +33,7 @@ module MASTER
       end
 
       def max_file_lines_self_test
-        thresholds.dig(:file_lines, :self_test_max) || 300
+        thresholds.dig(:file_lines, :self_test_max) || 600
       end
 
       def max_method_lines

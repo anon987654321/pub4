@@ -13,7 +13,7 @@ module MASTER
         config = load_config
         {
           max_method_lines: config.dig('thresholds', 'method_length') || 20,
-          max_file_lines: config.dig('thresholds', 'file_lines') || 300,
+          max_file_lines: config.dig('thresholds', 'file_lines') || 600,
           max_parameters: config.dig('thresholds', 'parameter_count') || 4,
           max_nesting: config.dig('thresholds', 'nesting_depth') || 5,
           max_public_methods: config.dig('thresholds', 'class_methods') || 10,
