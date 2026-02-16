@@ -96,18 +96,6 @@ module MASTER
       def tier_models
         LLM.all_models.map { |m| LLM.extract_model_name(m) }.first(6).join(", ")
       end
-
-      def tts_status
-        Speech.engine_status
-      rescue StandardError => e
-        "off"
-      end
-
-      def self_awareness_summary
-        Introspection.summary
-      rescue StandardError => e
-        "unavailable"
-      end
     end
   end
 end

@@ -91,10 +91,15 @@ module MASTER
 
     # Build a Stoplight light with standard thresholds
     # Supports Stoplight 4.x (chained), 5.x (keyword args, chained deprecated), 6.x+ (keyword only)
+    # Build or retrieve cached Stoplight instance for a model
     def build_light(model)
-      Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
-    rescue ArgumentError
-      Stoplight("llm-#{model}").with_threshold(FAILURES_BEFORE_TRIP).with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      @lights ||= {}
+      @lights[model] ||= begin
+        Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
+      rescue ArgumentError
+        # Older Stoplight API uses with_ methods
+        Stoplight("llm-#{model}").with_threshold(FAILURES_BEFORE_TRIP).with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      end
     end
 
     # Check if circuit is closed for a model

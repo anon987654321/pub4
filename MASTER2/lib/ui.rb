@@ -23,7 +23,6 @@ module MASTER
       done: "*",
       prompt_ok: ">",
       prompt_err: ">",
-      branch: "",
       lock: "#",
       separator: "|",
       ellipsis: "...",
