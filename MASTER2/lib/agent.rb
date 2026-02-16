@@ -42,6 +42,9 @@ module MASTER
       puts "agent0 at master0: #{@id} (parent:#{@parent_id}, scope:#{@scope}, " \
            "budget:$#{format('%.2f', @budget)})"
 
+      # Set per-agent budget in thread-local storage for enforcement
+      LLM.set_agent_budget(@budget) if defined?(LLM)
+
       pipeline = Pipeline.new
       @result = pipeline.call(@task)
 

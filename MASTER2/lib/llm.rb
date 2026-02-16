@@ -77,6 +77,38 @@ module MASTER
         end
       end
 
+      # Thread-local per-agent budget tracking
+      def current_agent_budget
+        Thread.current[:agent_budget]
+      end
+
+      def set_agent_budget(budget)
+        Thread.current[:agent_budget] = budget
+        Thread.current[:agent_spent] = 0.0
+      end
+
+      def agent_spent
+        Thread.current[:agent_spent] || 0.0
+      end
+
+      def record_agent_cost(cost)
+        if Thread.current[:agent_budget]
+          Thread.current[:agent_spent] = (Thread.current[:agent_spent] || 0.0) + cost
+        end
+      end
+
+      def check_agent_budget
+        agent_budget = Thread.current[:agent_budget]
+        return Result.ok unless agent_budget
+
+        spent = Thread.current[:agent_spent] || 0.0
+        if spent >= agent_budget
+          Result.err("Agent budget exhausted: $#{spent.round(2)}/$#{agent_budget}.")
+        else
+          Result.ok
+        end
+      end
+
       # Options:
       #   tier: :strong/:fast/:cheap - model tier selection
       #   model: explicit model ID
@@ -94,9 +126,14 @@ module MASTER
         configure_ruby_llm
         CircuitBreaker.check_rate_limit!
 
+        # Check global budget
         if total_spent >= spending_cap
           return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}.")
         end
+
+        # Check per-agent budget if set
+        budget_check = check_agent_budget
+        return budget_check unless budget_check.ok?
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
@@ -166,6 +203,9 @@ module MASTER
         tokens_in = data[:tokens_in]
         tokens_out = data[:tokens_out]
         cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
+
+        # Record per-agent cost if agent budget is set
+        record_agent_cost(cost)
 
         Dmesg.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Dmesg)
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
