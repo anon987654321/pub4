@@ -46,8 +46,6 @@ module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls using Stoplight
   # Prevents cascading failures and manages request throttling
   module CircuitBreaker
-    extend self
-
     # Custom exception for intentional circuit breaker state changes
     class TestFailure < StandardError; end
 
