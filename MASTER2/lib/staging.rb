@@ -66,6 +66,7 @@ module MASTER
     def promote(staged_path, original_path)
       return Result.err("Staged file not found: #{staged_path}") unless File.exist?(staged_path)
 
+      temp_path = nil
       begin
         # Atomic replace: create temp file on same filesystem, then rename
         original_dir = File.dirname(original_path)
@@ -80,7 +81,7 @@ module MASTER
         Result.ok(promoted: original_path)
       rescue StandardError => e
         # Clean up temp file if it exists
-        File.unlink(temp_path) if defined?(temp_path) && File.exist?(temp_path)
+        File.unlink(temp_path) if temp_path && File.exist?(temp_path)
         Result.err("Failed to promote: #{e.message}")
       end
     end

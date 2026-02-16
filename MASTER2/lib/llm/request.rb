@@ -119,16 +119,25 @@ module MASTER
         result
       end
 
+      # Prepare message for RubyLLM chat API
+      def prepare_chat_message(msg_array)
+        if msg_array.is_a?(Array) && msg_array.size > 1
+          # Multi-turn conversation: use array form
+          msg_array
+        elsif msg_array.is_a?(Array) && msg_array.size == 1
+          # Single message: extract content safely
+          first_msg = msg_array.first
+          first_msg.is_a?(Hash) ? (first_msg[:content] || first_msg["content"] || "") : ""
+        else
+          # Fallback to string
+          msg_array.to_s
+        end
+      end
+
       def execute_blocking_ruby_llm(chat, msg_array, model)
         # RubyLLM supports both string and message array
-        response = if msg_array.is_a?(Array) && msg_array.size > 1
-          # Multi-turn conversation: use array form
-          chat.ask(msg_array)
-        else
-          # Single message: extract content
-          content = msg_array.is_a?(Array) ? msg_array.first[:content] : msg_array
-          chat.ask(content)
-        end
+        message = prepare_chat_message(msg_array)
+        response = chat.ask(message)
 
         response_data = {
           content: response.content,
@@ -153,40 +162,20 @@ module MASTER
         final_response = nil
 
         # RubyLLM supports both string and message array
-        response = if msg_array.is_a?(Array) && msg_array.size > 1
-          # Multi-turn conversation: use array form
-          chat.ask(msg_array) do |chunk|
-            # RubyLLM yields Chunk objects (inherits from Message)
-            text = chunk.is_a?(String) ? chunk : chunk.content.to_s
-            next if text.empty?
+        message = prepare_chat_message(msg_array)
+        response = chat.ask(message) do |chunk|
+          # RubyLLM yields Chunk objects (inherits from Message)
+          text = chunk.is_a?(String) ? chunk : chunk.content.to_s
+          next if text.empty?
 
-            $stderr.print text
-            content_parts << text
-            total_size += text.bytesize
+          $stderr.print text
+          content_parts << text
+          total_size += text.bytesize
 
-            # Abort if response exceeds MAX_RESPONSE_SIZE
-            if total_size > MAX_RESPONSE_SIZE
-              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-              break
-            end
-          end
-        else
-          # Single message: extract content
-          content = msg_array.is_a?(Array) ? msg_array.first[:content] : msg_array
-          chat.ask(content) do |chunk|
-            # RubyLLM yields Chunk objects (inherits from Message)
-            text = chunk.is_a?(String) ? chunk : chunk.content.to_s
-            next if text.empty?
-
-            $stderr.print text
-            content_parts << text
-            total_size += text.bytesize
-
-            # Abort if response exceeds MAX_RESPONSE_SIZE
-            if total_size > MAX_RESPONSE_SIZE
-              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-              break
-            end
+          # Abort if response exceeds MAX_RESPONSE_SIZE
+          if total_size > MAX_RESPONSE_SIZE
+            Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+            break
           end
         end
 
