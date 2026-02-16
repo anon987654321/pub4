@@ -84,7 +84,7 @@ module MASTER
 
         # Validate encoding
         unless line.valid_encoding?
-          UI.warn("Invalid encoding in input — converting to UTF-8")
+          UI.warn("Invalid encoding in input -- converting to UTF-8")
           line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
         end
 

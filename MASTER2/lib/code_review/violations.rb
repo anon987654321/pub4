@@ -225,9 +225,9 @@ module MASTER
           output << "Literal (#{results[:literal].size})"
           results[:literal].each do |v|
             icon = case v[:severity]
-                   when :error then '✗'
+                   when :error then '-'
                    when :warning then '!'
-                   else '·'
+                   else '.'
                    end
             output << "  #{icon} #{v[:principle]}  #{v[:message]}"
             output << "    Line #{v[:line]}: #{v[:match]}" if v[:line]
@@ -238,7 +238,7 @@ module MASTER
           output << ""
           output << "Conceptual (#{results[:conceptual].size})"
           results[:conceptual].each do |v|
-            output << "  · #{v[:principle]}"
+            output << "  . #{v[:principle]}"
             output << "    #{v[:analysis]}..."
           end
         end

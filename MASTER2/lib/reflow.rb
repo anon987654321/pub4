@@ -2,7 +2,7 @@
 
 module MASTER
   # Reflow - Reorder any code or content by importance and chronology
-  # Part of 4-phase file processing: Clean → Rename/Rephrase → Structural Transform → Expand/Contract
+  # Part of 4-phase file processing: Clean -> Rename/Rephrase -> Structural Transform -> Expand/Contract
   module Reflow
     # Universal ordering principles (language-agnostic)
     IMPORTANCE_ORDER = [
@@ -185,7 +185,7 @@ module MASTER
       end
 
       def extract_markdown_sections(content)
-        # For markdown: frontmatter → h1 → h2 → h3 → content
+        # For markdown: frontmatter -> h1 -> h2 -> h3 -> content
         sections = []
         current = { type: :unknown, lines: [] }
         in_frontmatter = false

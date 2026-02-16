@@ -89,7 +89,7 @@ module MASTER
 
     # Harvest data from multiple sources
     def harvest(sources: [])
-      puts "🌾 Starting ecosystem harvest..."
+      puts "Starting ecosystem harvest..."
 
       sources.each do |source|
         begin
@@ -103,7 +103,7 @@ module MASTER
             @harvested_data += result.value[:repos] if result.ok?
           end
         rescue StandardError => e
-          puts "  ✗ Error: #{e.message}"
+          puts "  - Error: #{e.message}"
           @stats[:errors] += 1
         end
 
@@ -114,7 +114,7 @@ module MASTER
       @stats[:duration] = (@stats[:completed_at] - @stats[:started_at]).round(2)
       @stats[:items_found] = @harvested_data.size
 
-      puts "\n✓ Harvest complete:"
+      puts "\n+ Harvest complete:"
       puts "  Items: #{@stats[:items_found]}"
       puts "  Duration: #{@stats[:duration]}s"
       puts "  Errors: #{@stats[:errors]}"
@@ -137,7 +137,7 @@ module MASTER
       }
 
       File.write(output_path, YAML.dump(data))
-      puts "💾 Saved to: #{output_path}"
+      puts "Saved to: #{output_path}"
 
       Result.ok(path: output_path)
     rescue StandardError => e

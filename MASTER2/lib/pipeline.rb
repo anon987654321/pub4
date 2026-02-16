@@ -122,15 +122,15 @@ module MASTER
 
           # Ruby version segment
           ruby_version = RUBY_VERSION
-          segments << pastel.cyan("🔧 ruby #{ruby_version}")
+          segments << pastel.cyan("ruby #{ruby_version}")
 
           # Model + tier segment
           tier_label = tier ? "(#{tier})" : ""
-          segments << pastel.yellow("🤖 #{model} #{tier_label}".strip)
+          segments << pastel.yellow("#{model} #{tier_label}".strip)
 
           # Turn count
           if tokens > 0
-            segments << "↑#{format_tokens(tokens)}"
+            segments << "^#{format_tokens(tokens)}"
           end
 
           # Budget
@@ -139,7 +139,7 @@ module MASTER
           end
 
           # Circuit breaker status
-          status_icon = tripped ? pastel.red("⚡tripped") : pastel.green("⚡ok")
+          status_icon = tripped ? pastel.red("tripped") : pastel.green("ok")
           segments << status_icon
 
           # Git branch (if in repo)
@@ -147,9 +147,9 @@ module MASTER
           segments << git_segment if git_segment
 
           # Build prompt
-          sep = pastel.dim(" · ")
-          info_line = "┌─ #{segments.join(sep)}"
-          input_line = "└─ master »"
+          sep = pastel.dim(" . ")
+          info_line = "+- #{segments.join(sep)}"
+          input_line = "+- master >>"
 
           "#{info_line}\n#{input_line}"
         rescue StandardError => e

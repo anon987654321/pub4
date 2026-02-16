@@ -62,7 +62,7 @@ module MASTER
           Brainstorm 5 creative ideas for: #{topic}
 
           Format:
-          1. Idea name — brief description
+          1. Idea name -- brief description
           ...
         PROMPT
 
@@ -131,7 +131,7 @@ module MASTER
         checks << { name: "Budget remaining", ok: budget_ok }
 
         checks.each do |c|
-          status = c[:ok] ? UI.pastel.green("✓") : UI.pastel.red("✗")
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
           puts "  #{status} #{c[:name]}"
         end
 
@@ -186,7 +186,7 @@ module MASTER
         puts "\nCinematic Presets\n" + ("-" * 40)
         result.value[:presets].each do |preset|
           source = preset[:source] == 'builtin' ? '[builtin]' : '[custom]'
-          puts "  • #{preset[:name]} #{source}"
+          puts "  * #{preset[:name]} #{source}"
           puts "    #{preset[:description]}"
           puts
         end
@@ -207,10 +207,10 @@ module MASTER
 
         if result.ok?
           output = result.value[:final]
-          puts "  ✓ Pipeline complete!"
+          puts "  + Pipeline complete!"
           puts "  Output: #{output}"
         else
-          puts "  ✗ Pipeline failed: #{result.error}"
+          puts "  - Pipeline failed: #{result.error}"
         end
       end
 
@@ -227,13 +227,13 @@ module MASTER
 
         if result.ok?
           discoveries = result.value[:discoveries]
-          puts "  ✓ Discovered #{discoveries.size} styles!"
+          puts "  + Discovered #{discoveries.size} styles!"
 
           discoveries.each_with_index do |d, i|
             puts "  #{i + 1}. Score: #{d[:score].round(2)} | #{d[:pipeline].stages.size} stages"
           end
         else
-          puts "  ✗ Discovery failed: #{result.error}"
+          puts "  - Discovery failed: #{result.error}"
         end
       end
 
@@ -291,7 +291,7 @@ module MASTER
           puts "\nAvailable Personas:"
           personas.each do |name|
             active_marker = defined?(Personas.active) && Personas.active&.dig(:name) == name ? " *" : ""
-            puts "  • #{name}#{active_marker}"
+            puts "  * #{name}#{active_marker}"
           end
         end
       end

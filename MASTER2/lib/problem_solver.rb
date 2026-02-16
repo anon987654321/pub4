@@ -10,7 +10,7 @@ module MASTER
       "What if your fix creates a worse bug?",
       "What if the 'bug' is correct behavior?",
       "What if 5 other places have this bug?",
-      "What if it worked yesterday—what changed?",
+      "What if it worked yesterday--what changed?",
       "What if the error message lies?",
       "What if it's data, not code?",
       "What if it only works on your machine?",

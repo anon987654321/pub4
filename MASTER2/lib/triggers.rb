@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Triggers — proactive event-driven actions without user prompting
+  # Triggers -- proactive event-driven actions without user prompting
   # Stolen from OpenClaw: auto-reply on patterns, file changes, system events
   module Triggers
     extend self
@@ -31,7 +31,7 @@ module MASTER
         @rules = []
       end
 
-      # Built-in triggers — wire these at boot
+      # Built-in triggers -- wire these at boot
       def install_defaults
         # After scan completes, if violations found, offer auto-fix
         register(:after_scan) do |ctx|
@@ -51,7 +51,7 @@ module MASTER
           ) if defined?(AgentAutonomy)
         end
 
-        # Budget low — switch to cheap tier proactively
+        # Budget low -- switch to cheap tier proactively
         register(:budget_low) do |_ctx|
           Logging.dmesg_log("triggers", message: "budget low, switching to fast tier")
         end

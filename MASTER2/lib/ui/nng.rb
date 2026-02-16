@@ -9,7 +9,7 @@ module MASTER
           checks: [
             { feature: 'progress_indicators', desc: 'Show progress during LLM calls', file: 'progress.rb' }.freeze,
             { feature: 'prompt_status', desc: 'Prompt shows tier and budget', file: 'pipeline.rb' }.freeze,
-            { feature: 'circuit_indicator', desc: '⚡ shows tripped circuits', file: 'pipeline.rb' }.freeze
+            { feature: 'circuit_indicator', desc: ' shows tripped circuits', file: 'pipeline.rb' }.freeze
           ].freeze
         }.freeze,
         match: {
@@ -126,7 +126,7 @@ module MASTER
           lines << "#{result[:name]} (#{status_count}/#{total})"
 
           result[:checks].each do |check|
-            icon = check[:status] == :pass ? "✓" : "✗"
+            icon = check[:status] == :pass ? "+" : "-"
             lines << "  #{icon} #{check[:desc]}"
           end
           lines << ""

@@ -5,11 +5,11 @@ module MASTER
     extend self
 
     SPINNERS = {
-      dots:    %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏],
+      dots:    %w[| / - \ | / - \ | /],
       line:    %w[- \\ | /],
-      blocks:  %w[▏ ▎ ▍ ▌ ▋ ▊ ▉ █],
-      arrows:  %w[← ↖ ↑ ↗ → ↘ ↓ ↙],
-      circuit: %w[◯ ◔ ◑ ◕ ●]
+      blocks:  %w[| | | | | | | #],
+      arrows:  %w[<- <- ^ -> -> -> v <-],
+      circuit: %w[o o o o *]
     }.freeze
 
     class Spinner
@@ -41,7 +41,7 @@ module MASTER
         @running = false
         @thread&.join
         print "\r#{' ' * 60}\r"
-        puts "  ✓ #{final_message}" if final_message
+        puts "  + #{final_message}" if final_message
       end
 
       def success(message)
@@ -52,7 +52,7 @@ module MASTER
         @running = false
         @thread&.join
         print "\r#{' ' * 60}\r"
-        puts "  ✗ #{message}"
+        puts "  - #{message}"
       end
     end
 

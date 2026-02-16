@@ -188,7 +188,7 @@ module MASTER
         # Register behavior hooks
         register_behaviors(persona) if persona[:behaviors]
 
-        puts UI.green("✓ Activated persona: #{persona[:name]}")
+        puts UI.green("+ Activated persona: #{persona[:name]}")
         puts UI.dim("  #{persona[:description]}")
 
         Result.ok(persona)

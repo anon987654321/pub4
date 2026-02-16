@@ -152,14 +152,14 @@ module MASTER
 
         @current_plan[:tasks].each_with_index do |task, i|
           marker = case task[:status]
-                   when :complete then '✓'
-                   when :running then '→'
-                   when :failed then '✗'
-                   when :skipped then '○'
-                   else '·'
+                   when :complete then '+'
+                   when :running then '->'
+                   when :failed then '-'
+                   when :skipped then 'o'
+                   else '.'
                    end
 
-          current = i == @current_plan[:current_task] ? ' ←' : ''
+          current = i == @current_plan[:current_task] ? ' <-' : ''
           lines << "  #{marker} #{i + 1}. #{task[:action]}#{current}"
         end
 

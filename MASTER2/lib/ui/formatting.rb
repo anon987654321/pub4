@@ -23,12 +23,12 @@ module MASTER
     end
 
     def icon(name)
-      ICONS[name.to_sym] || "·"
+      ICONS[name.to_sym] || "."
     end
 
     def render_bar(pct, width: 30)
       filled = (pct / 100.0 * width).round
-      "[#{'█' * filled}#{'░' * (width - filled)}]"
+      "[#{'#' * filled}#{'.' * (width - filled)}]"
     end
 
     def status(prefix, message, success: true)

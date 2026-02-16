@@ -95,7 +95,7 @@ module MASTER
       # Quick path: simple queries
       return direct_ask(goal, tier: tier) if simple_query?(goal)
 
-      UI.dim("  ⚡ Pattern: #{@pattern}") if ENV["DEBUG"]
+      UI.dim("   Pattern: #{@pattern}") if ENV["DEBUG"]
 
       result = execute_pattern(@pattern, goal, tier: tier || :strong)
 

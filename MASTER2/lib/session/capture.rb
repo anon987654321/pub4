@@ -42,7 +42,7 @@ module MASTER
     def capture(session_id: nil)
       session_id ||= Session.current.id
 
-      puts UI.bold("\n📚 Session Capture")
+      puts UI.bold("\nSession Capture")
       puts UI.dim("Extracting patterns from this session...\n")
 
       answers = {}
@@ -87,7 +87,7 @@ module MASTER
         end
       end
 
-      puts UI.green("\n✓ Session insights captured and added to learnings")
+      puts UI.green("\n+ Session insights captured and added to learnings")
 
       Result.ok(captured: true, insights: answers.size)
     end

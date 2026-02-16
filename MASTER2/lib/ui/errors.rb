@@ -95,7 +95,7 @@ module MASTER
         if suggestions.any?
           lines << ""
           lines << "Suggestions:"
-          suggestions.each { |s| lines << "  • #{s}" }
+          suggestions.each { |s| lines << "  * #{s}" }
         end
 
         lines.join("\n")

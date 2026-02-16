@@ -219,7 +219,7 @@ module MASTER
           suggestions || []
         end
 
-        # Get canonical file→responsibility mapping
+        # Get canonical file->responsibility mapping
         def architecture_map
           ARCHITECTURE[:canonical_map]
         end

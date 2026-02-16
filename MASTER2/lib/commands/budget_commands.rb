@@ -47,7 +47,7 @@ module MASTER
             tokens_out = row[:tokens_out]
             cost = row[:cost]
             created = row[:created_at]
-            puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}→#{tokens_out} | #{UI.currency_precise(cost)}"
+            puts "  #{created[0, 16]} | #{model.ljust(12)} | #{tokens_in}->#{tokens_out} | #{UI.currency_precise(cost)}"
           end
           puts
         end

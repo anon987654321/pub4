@@ -5,7 +5,7 @@ require "securerandom"
 
 module MASTER
   # Speech - Unified TTS interface with multiple engines
-  # Priority: Piper (local) → Edge (free cloud) → Replicate (paid cloud)
+  # Priority: Piper (local) -> Edge (free cloud) -> Replicate (paid cloud)
   # Stream mode uses FFmpeg for real-time effects
   module Speech
     extend self

@@ -17,7 +17,7 @@ module MASTER
         puts
         puts "History:"
         history.each do |transition|
-          puts "  #{transition[:from]} → #{transition[:to]} (#{transition[:gate]})"
+          puts "  #{transition[:from]} -> #{transition[:to]} (#{transition[:gate]})"
         end
 
         Result.ok(phase: phase, history: history)
@@ -31,7 +31,7 @@ module MASTER
 
         if result.ok?
           new_phase = result.value[:phase]
-          puts UI.green("✓ Advanced to #{new_phase.to_s.upcase}")
+          puts UI.green("+ Advanced to #{new_phase.to_s.upcase}")
 
           # Show phase questions
           if defined?(Questions)

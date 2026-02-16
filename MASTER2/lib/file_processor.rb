@@ -2,7 +2,7 @@
 
 module MASTER
   # FileProcessor - 4-phase file processing
-  # Clean → Rename/Rephrase → Structural Transform → Expand/Contract
+  # Clean -> Rename/Rephrase -> Structural Transform -> Expand/Contract
   module FileProcessor
     PHASES = %i[clean rename transform assess].freeze
 
@@ -58,10 +58,10 @@ module MASTER
         changes = []
         output = content.dup
 
-        # CRLF → LF
+        # CRLF -> LF
         if output.include?("\r\n")
           output.gsub!("\r\n", "\n")
-          changes << "CRLF → LF"
+          changes << "CRLF -> LF"
         end
 
         # Trailing whitespace
@@ -88,10 +88,10 @@ module MASTER
           changes << "Final newline added"
         end
 
-        # Normalize indentation (tabs → spaces for non-Makefile)
+        # Normalize indentation (tabs -> spaces for non-Makefile)
         if !filename.include?("Makefile") && output.include?("\t")
           output.gsub!(/\t/, "  ")
-          changes << "Tabs → spaces"
+          changes << "Tabs -> spaces"
         end
 
         { phase: :clean, changes: changes, output: output }
@@ -108,7 +108,7 @@ module MASTER
           # Only rename if not a collision
           unless output.match?(/def\s+#{name}\b/)
             output.gsub!(/\bget_#{name}\b/, name)
-            changes << "get_#{name} → #{name}"
+            changes << "get_#{name} -> #{name}"
           end
         end
 
@@ -123,7 +123,7 @@ module MASTER
             new_name = method.sub(suffix, replacement)
             unless output.match?(/def\s+#{new_name}\b/)
               output.gsub!(/\b#{method}\b/, new_name)
-              changes << "#{method} → #{new_name}"
+              changes << "#{method} -> #{new_name}"
             end
           end
         end
@@ -133,7 +133,7 @@ module MASTER
           new_name = method.sub(/^is_/, "") + "?"
           unless output.match?(/def\s+#{Regexp.escape(new_name)}\b/)
             output.gsub!(/\b#{method}\b(?!\?)/, new_name)
-            changes << "#{method} → #{new_name}"
+            changes << "#{method} -> #{new_name}"
           end
         end
 

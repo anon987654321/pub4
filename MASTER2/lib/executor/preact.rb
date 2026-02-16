@@ -70,7 +70,7 @@ module MASTER
       end
 
       def replan(goal, completed, tier:)
-        history_text = completed.map { |r| "#{r[:action]} → #{r[:observation][0..100]}" }.join("\n")
+        history_text = completed.map { |r| "#{r[:action]} -> #{r[:observation][0..100]}" }.join("\n")
 
         prompt = <<~REPLAN
           Original task: #{goal}

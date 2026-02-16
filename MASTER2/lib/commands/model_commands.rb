@@ -16,9 +16,9 @@ module MASTER
 
         if found
           LLM.current_model = LLM.extract_model_name(found.id)
-          puts "\n  ✓ Switched to #{found.id}\n"
+          puts "\n  + Switched to #{found.id}\n"
         else
-          puts "\n  ✗ No model matching '#{args}' found."
+          puts "\n  - No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"
         end
       end
@@ -26,7 +26,7 @@ module MASTER
       def list_models
         UI.header("Available Models")
         LLM.all_models.each do |m|
-          status = CircuitBreaker.circuit_closed?(m) ? "✓" : "✗"
+          status = CircuitBreaker.circuit_closed?(m) ? "+" : "-"
           rate = LLM.model_rates[m]
           cost = rate ? "$#{rate[:in]}/$#{rate[:out]}" : ""
           short = m.split("/").last[0, 30]
@@ -47,9 +47,9 @@ module MASTER
         pattern = args.strip.downcase.to_sym
         if pattern == :auto || Executor::PATTERNS.include?(pattern)
           Pipeline.current_pattern = pattern
-          puts "\n  ✓ Pattern set to: #{pattern}\n"
+          puts "\n  + Pattern set to: #{pattern}\n"
         else
-          puts "\n  ✗ Unknown pattern '#{args}'."
+          puts "\n  - Unknown pattern '#{args}'."
           puts "  Available: #{Executor::PATTERNS.join(', ')}, auto\n"
         end
       end
@@ -66,7 +66,7 @@ module MASTER
 
         current = Pipeline.current_pattern rescue :auto
         patterns.each do |name, desc|
-          marker = name == current ? "▸" : " "
+          marker = name == current ? ">" : " "
           puts "  #{marker} #{name.to_s.ljust(10)} #{desc}"
         end
         puts

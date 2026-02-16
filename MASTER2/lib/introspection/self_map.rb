@@ -8,7 +8,7 @@ module MASTER
   class Introspection
     class << self
       # SECTION 4: Self-Test (from self_test.rb)
-      # ═══════════════════════════════════════════════════════════════════
+      # ===================================================================
 
       BARE_RESCUE_ALLOWED = %w[
         result.rb boot.rb autocomplete.rb speech.rb momentum.rb weaviate.rb

@@ -47,7 +47,7 @@ module MASTER
           return { verdict: :pass } if rule.action == :pass
         end
 
-        { verdict: :block, reason: "Default deny — no rule matched" }
+        { verdict: :block, reason: "Default deny -- no rule matched" }
       end
 
       def sanitize(agent_result, direction: :out)

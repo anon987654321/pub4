@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Heartbeat — background timer that checks for pending work
+  # Heartbeat -- background timer that checks for pending work
   # Inspired by OpenClaw's heartbeat-runner: fires periodically,
   # evaluates what needs doing, acts without user prompting
   module Heartbeat
@@ -36,7 +36,7 @@ module MASTER
         Logging.dmesg_log("heartbeat", message: "EXIT stop")
       end
 
-      # Register a check — callable that returns work items or nil
+      # Register a check -- callable that returns work items or nil
       def register(name, &block)
         @checks << { name: name, callable: block, last_run: nil, failures: 0 }
       end

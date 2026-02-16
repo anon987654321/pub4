@@ -40,7 +40,7 @@ module MASTER
       end
 
       def confirm_destructive(action, details: nil)
-        puts "\n  ⚠️  Destructive Action: #{action}"
+        puts "\n  ! Destructive Action: #{action}"
         puts "  #{details}" if details
         puts
 
@@ -66,11 +66,11 @@ module MASTER
         # Phase 1: Propose
         if description
           puts "\n"
-          puts "  ⚠️  Operation: #{operation_name}"
-          puts "  📋 Description: #{description}"
+          puts "  ! Operation: #{operation_name}"
+          puts "  Description: #{description}"
           puts "\n"
         else
-          puts "\n  ⚠️  Operation: #{operation_name}\n\n"
+          puts "\n  ! Operation: #{operation_name}\n\n"
         end
 
         # Phase 2: Confirm

@@ -39,7 +39,7 @@ module MASTER
         actions.each do |action|
           result = execute_action(action, context)
           results << { action: action, result: result }
-          log("hooks0: #{event}.#{action} #{result ? '✓' : '✗'}")
+          log("hooks0: #{event}.#{action} #{result ? '+' : '-'}")
         end
 
         results

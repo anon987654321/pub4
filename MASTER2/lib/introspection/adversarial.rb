@@ -5,7 +5,7 @@ module MASTER
   class Introspection
     class << self
       # SECTION 5: Adversarial Questioning (original introspection)
-      # ═══════════════════════════════════════════════════════════════════
+      # ===================================================================
 
       def hostile_questions
         @hostile_questions ||= begin
@@ -118,9 +118,9 @@ module MASTER
 
     class << self
       private
-      # ═══════════════════════════════════════════════════════════════════
+      # ===================================================================
       # PRIVATE HELPERS - Section 5 (Adversarial Questioning)
-      # ═══════════════════════════════════════════════════════════════════
+      # ===================================================================
 
       FAST_CHECKS = {
         /assumption.*wrong/i => {

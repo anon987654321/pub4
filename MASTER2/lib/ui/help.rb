@@ -74,7 +74,7 @@ module MASTER
 
       def show_tips
         puts
-        TIPS.each { |t| puts "  · #{t}" }
+        TIPS.each { |t| puts "  . #{t}" }
         puts
       end
 

@@ -3,7 +3,7 @@
 module MASTER
   module Workflow
     # Engine - 8-phase workflow orchestrator
-    # Orchestrates: discover → analyze → ideate → design → implement → validate → deliver → reflect
+    # Orchestrates: discover -> analyze -> ideate -> design -> implement -> validate -> deliver -> reflect
     module Engine
       extend self
 

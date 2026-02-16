@@ -14,9 +14,9 @@ module MASTER
 
     class SubtleSpinner
       ICONS = {
-        success: "✓",
-        failure: "✗",
-        pending: "⋯"
+        success: "+",
+        failure: "-",
+        pending: "..."
       }.freeze
 
       def initialize(message)

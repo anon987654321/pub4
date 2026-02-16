@@ -44,7 +44,7 @@ module MASTER
                   :green
                 end
 
-        bar_str = "█" * filled + "░" * empty
+        bar_str = "#" * filled + "." * empty
         "#{bar_str} #{u[:percent]}%"
       end
 

@@ -135,7 +135,7 @@ module MASTER
           tokens_out = data[:tokens_out] || 0
           cost = data[:cost] || 0
 
-          puts UI.dim("llm0: #{tokens_in}→#{tokens_out} tok, #{UI.currency_precise(cost)}")
+          puts UI.dim("llm0: #{tokens_in}->#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
             response: data[:content],

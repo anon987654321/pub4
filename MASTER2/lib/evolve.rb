@@ -44,7 +44,7 @@ module MASTER
 
     private
 
-    # Only evolve lib/ files — bin/, test/, and sbin/ are excluded for safety
+    # Only evolve lib/ files -- bin/, test/, and sbin/ are excluded for safety
     def find_lib_ruby_files(path)
       Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| -File.size(f) }
     end

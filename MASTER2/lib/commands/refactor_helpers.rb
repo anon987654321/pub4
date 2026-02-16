@@ -82,7 +82,7 @@ module MASTER
           # Write changes to disk
           File.write(path, proposed)
 
-          puts "  ✓ Changes applied to #{path}"
+          puts "  + Changes applied to #{path}"
           puts "  (Use 'undo' command to revert)"
         else
           puts "  Changes not applied"

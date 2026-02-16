@@ -29,7 +29,7 @@ module MASTER
         @findings << finding
       end
 
-      # Return findings sorted by priority (severity × effort score)
+      # Return findings sorted by priority (severity x effort score)
       def prioritized
         @findings.sort_by do |f|
           severity_score = { critical: 4, high: 3, medium: 2, low: 1 }[f.severity] || 1

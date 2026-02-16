@@ -91,11 +91,11 @@ module MASTER
         # Role indicator
         role_prefix = case role
                       when "user"
-                        UI.cyan("▶ USER")
+                        UI.cyan("> USER")
                       when "assistant"
-                        UI.green("◀ ASSISTANT")
+                        UI.green("< ASSISTANT")
                       when "system"
-                        UI.yellow("⚙ SYSTEM")
+                        UI.yellow("SYSTEM")
                       else
                         UI.dim("? #{role.upcase}")
                       end
@@ -118,7 +118,7 @@ module MASTER
       end
 
       # Summary footer
-      output << UI.bold("─" * 40)
+      output << UI.bold("-" * 40)
       output << "  Total cost: #{UI.currency_precise(total_cost)}"
       output << "  Messages: #{history.size}"
       output << "  Duration: #{calculate_duration(history)}"

@@ -132,7 +132,7 @@ module MASTER
         if result.ok?
           issues = result.value[:issues]
           if issues.empty?
-            puts UI.green("✓ No issues found")
+            puts UI.green("+ No issues found")
           else
             puts "\nFound #{issues.size} issues:"
             issues.each do |issue|

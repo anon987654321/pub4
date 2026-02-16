@@ -38,11 +38,11 @@ module MASTER
         entries.each_with_index do |entry, i|
           path = File.join(root, entry)
           last = i == entries.size - 1
-          connector = last ? "└── " : "├── "
+          connector = last ? "+-- " : "|-- "
           lines << "#{indent}#{connector}#{entry}"
 
           if File.directory?(path)
-            extension = last ? "    " : "│   "
+            extension = last ? "    " : "|   "
             lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1, exclude: exclude))
           end
         end

@@ -5,7 +5,7 @@ require_relative "chamber/swarm"
 
 module MASTER
   # Chamber - Multi-model deliberation with council personas
-  # Implements multi-round debate: Independent → Synthesis → Convergence
+  # Implements multi-round debate: Independent -> Synthesis -> Convergence
   class Chamber
     MAX_ROUNDS = 25
     MAX_COST = 0.50
@@ -171,7 +171,7 @@ module MASTER
       }
     end
 
-    # Creative mode: Brainstorm → Critique → Synthesize cycle
+    # Creative mode: Brainstorm -> Critique -> Synthesize cycle
     def ideate(prompt:, constraints: [], cycles: 2)
       ideas = []
       critiques = []
@@ -350,7 +350,7 @@ module MASTER
       if result.ok?
         data = result.value
         content = data[:content].to_s
-        parsed = content.scan(/^[\-\*•]\s*(.+)/).flatten
+        parsed = content.scan(/^[\-\**]\s*(.+)/).flatten
         parsed = [content] if parsed.empty?
         Result.ok(ideas: parsed, cost: data[:cost] || 0)
       else

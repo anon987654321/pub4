@@ -36,7 +36,7 @@ module MASTER
     def prompt
       @prompt ||= begin
         require 'tty-prompt'
-        TTY::Prompt.new(symbols: { marker: '›' }, active_color: :cyan)
+        TTY::Prompt.new(symbols: { marker: '>' }, active_color: :cyan)
       rescue LoadError
         nil
       end
@@ -48,8 +48,8 @@ module MASTER
     rescue LoadError
       Object.new.tap do |s|
         s.define_singleton_method(:auto_spin) {}
-        s.define_singleton_method(:success) { puts "✓" }
-        s.define_singleton_method(:error) { puts "✗" }
+        s.define_singleton_method(:success) { puts "+" }
+        s.define_singleton_method(:error) { puts "-" }
       end
     end
 

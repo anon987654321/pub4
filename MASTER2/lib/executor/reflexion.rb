@@ -83,7 +83,7 @@ module MASTER
 
       def reflect_on_result(goal, result, tier:)
         history_text = @history.map do |h|
-          "#{h[:thought]} → #{h[:action]} → #{h[:observation]&.[](0..200)}"
+          "#{h[:thought]} -> #{h[:action]} -> #{h[:observation]&.[](0..200)}"
         end.join("\n")
 
         prompt = <<~REFLECT

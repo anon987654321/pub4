@@ -2,7 +2,7 @@
 
 module MASTER
   class AgentFirewall
-    # Policy — tiered autonomy profiles
+    # Policy -- tiered autonomy profiles
     # Stolen from OpenClaw: minimal/coding/full profiles with group-based tool access
     module Policy
       TOOL_GROUPS = {

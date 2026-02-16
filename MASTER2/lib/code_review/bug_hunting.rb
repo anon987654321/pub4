@@ -60,8 +60,8 @@ module MASTER
 
         if (lex = report[:findings][:lexical])
           lines << "1. LEXICAL (#{lex[:count]} identifiers)"
-          lex[:issues].each { |i| lines << "   ✗ #{i}" }
-          lines << '   ✓ clean' if lex[:issues].empty?
+          lex[:issues].each { |i| lines << "   - #{i}" }
+          lines << '   + clean' if lex[:issues].empty?
         end
 
         if (exec = report[:findings][:execution])
@@ -71,13 +71,13 @@ module MASTER
 
         if (assume = report[:findings][:assumptions])
           lines << '3. ASSUMPTIONS'
-          assume[:found].each { |a| lines << "   ⚠ #{a[:category]}: #{a[:desc]}" }
-          lines << '   ✓ none risky' if assume[:found].empty?
+          assume[:found].each { |a| lines << "   ! #{a[:category]}: #{a[:desc]}" }
+          lines << '   + none risky' if assume[:found].empty?
         end
 
         if (flow = report[:findings][:dataflow])
           lines << "4. DATA FLOW (#{flow[:count]} traces)"
-          flow[:traces].first(5).each { |t| lines << "   #{t[:var]} ← #{t[:source][0..40]}" }
+          flow[:traces].first(5).each { |t| lines << "   #{t[:var]} <- #{t[:source][0..40]}" }
         end
 
         if (state = report[:findings][:state])
@@ -91,16 +91,16 @@ module MASTER
             lines << "   #{m[:confidence]} #{m[:name]}"
             lines << "      fix: #{m[:fix]}"
           end
-          lines << '   ✓ no patterns matched' if pats[:matches].empty?
+          lines << '   + no patterns matched' if pats[:matches].empty?
         end
 
         if (proof = report[:findings][:understanding])
-          status = proof[:complete] ? '✓' : '✗'
+          status = proof[:complete] ? '+' : '-'
           lines << "7. UNDERSTANDING #{status}"
         end
 
         if (verify = report[:findings][:verification])
-          status = verify[:passed] ? '✓ COMPLETE' : '✗ INCOMPLETE'
+          status = verify[:passed] ? '+ COMPLETE' : '- INCOMPLETE'
           lines << "8. VERIFICATION #{status}"
         end
 
@@ -111,7 +111,7 @@ module MASTER
       private
 
       def escalate(target)
-        puts UI.dim("🔍 Diagnostic escalation...")
+        puts UI.dim("Diagnostic escalation...")
 
         # Level 1: Syntax (2 sec, $0)
         result = level_syntax(target)

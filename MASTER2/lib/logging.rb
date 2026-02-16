@@ -109,7 +109,7 @@ module MASTER
 
       # Log LLM call with tier/model information
       def llm(tier:, model:, tokens_in: 0, tokens_out: 0, cost: 0, latency: nil)
-        details = "#{tokens_in}→#{tokens_out}tok"
+        details = "#{tokens_in}->#{tokens_out}tok"
         details += " $#{cost.round(4)}" if cost.positive?
         details += " #{latency}ms" if latency
         dmesg_log('llm0', parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
@@ -148,7 +148,7 @@ module MASTER
       end
 
       def fallback(from, to)
-        dmesg_log('fallback0', parent: 'autonomy0', message: "#{from} → #{to}", level: LLM_ONLY)
+        dmesg_log('fallback0', parent: 'autonomy0', message: "#{from} -> #{to}", level: LLM_ONLY)
       end
 
       # Log tool execution
@@ -175,7 +175,7 @@ module MASTER
       end
 
       def prune(before, after)
-        dmesg_log('mem0', parent: 'agent0', message: "pruned #{before} → #{after}", level: ALL_EVENTS)
+        dmesg_log('mem0', parent: 'agent0', message: "pruned #{before} -> #{after}", level: ALL_EVENTS)
       end
 
       # Learning events

@@ -4,7 +4,7 @@ require "json"
 require "fileutils"
 
 module MASTER
-  # Scheduler — persistent job scheduling (cron-style)
+  # Scheduler -- persistent job scheduling (cron-style)
   # Stolen from OpenClaw: agents schedule their own future work,
   # jobs persist across restarts, exponential backoff on failure
   module Scheduler
@@ -76,7 +76,7 @@ module MASTER
         end
       end
 
-      # Check and run due jobs — called by Heartbeat
+      # Check and run due jobs -- called by Heartbeat
       def tick
         now = Time.now
         due = @jobs.select { |j| j.enabled && j.next_at <= now }
