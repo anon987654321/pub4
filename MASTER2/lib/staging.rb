@@ -81,7 +81,11 @@ module MASTER
         Result.ok(promoted: original_path)
       rescue StandardError => e
         # Clean up temp file if it exists
-        File.unlink(temp_path) if temp_path && File.exist?(temp_path)
+        begin
+          File.unlink(temp_path) if temp_path && File.exist?(temp_path)
+        rescue StandardError
+          # Ignore cleanup errors
+        end
         Result.err("Failed to promote: #{e.message}")
       end
     end

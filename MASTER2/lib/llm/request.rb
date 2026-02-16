@@ -121,13 +121,17 @@ module MASTER
 
       # Prepare message for RubyLLM chat API
       def prepare_chat_message(msg_array)
-        if msg_array.is_a?(Array) && msg_array.size > 1
-          # Multi-turn conversation: use array form
-          msg_array
-        elsif msg_array.is_a?(Array) && msg_array.size == 1
-          # Single message: extract content safely
-          first_msg = msg_array.first
-          first_msg.is_a?(Hash) ? (first_msg[:content] || first_msg["content"] || "") : ""
+        if msg_array.is_a?(Array)
+          return "" if msg_array.empty?
+
+          if msg_array.size > 1
+            # Multi-turn conversation: use array form
+            msg_array
+          else
+            # Single message: extract content safely
+            first_msg = msg_array.first
+            first_msg.is_a?(Hash) ? (first_msg[:content] || first_msg["content"] || "") : ""
+          end
         else
           # Fallback to string
           msg_array.to_s

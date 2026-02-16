@@ -103,7 +103,7 @@ module MASTER
 
         spent = Thread.current[:agent_spent] || 0.0
         if spent >= agent_budget
-          Result.err("Agent budget exhausted: $#{spent.round(2)}/$#{agent_budget}.")
+          Result.err("Agent budget exhausted: $#{spent.round(2)}/$#{agent_budget.round(2)}.")
         else
           Result.ok
         end
