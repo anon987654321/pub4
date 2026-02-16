@@ -15,7 +15,7 @@ module MASTER
 
       def handle_chat(env, pipeline, queue)
         body = env["rack.input"].read
-        data = JSON.parse(body) rescue {}
+        data = JSON.parse(body, symbolize_names: true) rescue {}
         message = data[:message].to_s.strip
 
         if message.empty?
@@ -36,7 +36,7 @@ module MASTER
         metrics = {
           version: VERSION, tier: LLM.tier,
           budget_remaining: LLM.budget_remaining,
-          models: LLM.models.size,
+          models: LLM.models.count,
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
         }.to_json
@@ -45,7 +45,7 @@ module MASTER
 
       def handle_tts(env)
         body = env["rack.input"].read
-        data = JSON.parse(body) rescue {}
+        data = JSON.parse(body, symbolize_names: true) rescue {}
         text = data[:text].to_s.strip
 
         return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?

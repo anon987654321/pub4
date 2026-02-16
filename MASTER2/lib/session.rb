@@ -23,7 +23,7 @@ module MASTER
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
 
     # SUPPORTED_PERSONAS moved to Personas module; kept here for backward compat
-    SUPPORTED_PERSONAS = Personas.respond_to?(:supported_list) ? Personas.supported_list : %i[ronin lawyer hacker architect sysadmin trader medic].freeze # deprecated: use Personas::SUPPORTED_PERSONAS
+    SUPPORTED_PERSONAS = (defined?(Personas) && Personas.respond_to?(:supported_list) ? Personas.supported_list : %i[ronin lawyer hacker architect sysadmin trader medic]).freeze # deprecated: use Personas::SUPPORTED_PERSONAS
 
     NORWEGIAN_RULES = [
       "Use bokmål, not nynorsk",

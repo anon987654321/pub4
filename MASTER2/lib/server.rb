@@ -94,7 +94,7 @@ module MASTER
       # Protected endpoints
       server.mount_proc("/") do |req, res|
         next unless webrick_check_auth(req, res)
-        res.body = read_view("cli.html")
+        res.body = read_view("cli.html").sub("</head>", "<script>window.MASTER_TOKEN='#{AUTH_TOKEN}';</script></head>")
         res.content_type = HTML_TYPE
       end
 
@@ -142,7 +142,8 @@ module MASTER
 
         case [method, path]
         when ["GET", "/"]
-          [200, { CT_HEADER => HTML_TYPE }, [read_view("cli.html")]]
+          html = read_view("cli.html").sub("</head>", "<script>window.MASTER_TOKEN='#{AUTH_TOKEN}';</script></head>")
+          [200, { CT_HEADER => HTML_TYPE }, [html]]
         when ["GET", "/health"]
           [200, { CT_HEADER => JSON_TYPE }, [health_json]]
         when ["GET", "/poll"]

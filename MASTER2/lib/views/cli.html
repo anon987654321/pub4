@@ -38,11 +38,15 @@ output .loader span:nth-child(2){animation-delay:0.1s}
 output .loader span:nth-child(3){animation-delay:0.2s}
 output .loader span:nth-child(4){animation-delay:0.3s}
 output .loader span:nth-child(5){animation-delay:0.4s}
-input{position:fixed;left:0;right:0;bottom:0;background:transparent;border:none;border-top:1px solid var(--mint-ghost);color:var(--text);font:inherit;padding:8px 12px;outline:none;z-index:20}
+input{position:fixed;left:0;right:36px;bottom:0;background:transparent;border:none;border-top:1px solid var(--mint-ghost);color:var(--text);font:inherit;padding:8px 12px;outline:none;z-index:20}
 input::placeholder{color:var(--text-2)}
 input:focus{outline:2px solid var(--mint);outline-offset:2px}
 input:focus-visible{box-shadow:0 0 0 2px var(--mint);outline:none}
 input:disabled{opacity:0.6;cursor:not-allowed}
+#mic{position:fixed;right:0;bottom:0;width:36px;height:36px;background:transparent;border:none;border-top:1px solid var(--mint-ghost);color:var(--text-2);font-size:14px;cursor:pointer;z-index:20;display:flex;align-items:center;justify-content:center}
+#mic:hover{color:var(--mint)}
+#mic.active{color:var(--error);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 #hint{position:fixed;left:12px;bottom:34px;color:var(--text-2);font-size:9px;z-index:20;pointer-events:none}
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -55,10 +59,11 @@ input:disabled{opacity:0.6;cursor:not-allowed}
 <canvas id="grain"></canvas>
 <div id="status"><span id="status-left"></span><span id="status-right"></span></div>
 <div id="toast"></div>
-<dialog id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></dialog>
+<dialog id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, v voice input, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></dialog>
 <output id="out"></output>
-<div id="hint">Type a message and press Enter</div>
+<div id="hint">Type a message, press Enter, or click the mic for voice input</div>
 <input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
+<button id="mic" title="Voice input (v)">&#9679;</button>
 <script>
 const ORBS=['orb_blob','orb_particle','orb_3d','orb_retro'];
 let currentOrb=0;
@@ -205,7 +210,7 @@ inp.addEventListener('keydown',e=>{
   inp.value='';
   showLoader();
   setPending(true);
-  fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
+  fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(window.MASTER_TOKEN||'')},body:JSON.stringify({message:m})})
     .then(r=>r.ok?r.json():r.json().then(err=>Promise.reject(err)))
     .catch(err=>{
       removeLoader();
@@ -219,7 +224,7 @@ inp.addEventListener('keydown',e=>{
 (function poll(){
   // Exponential backoff: 800ms when online, increases from 3s to 30s max when offline
   const pollDelay=offlineCount===0?800:Math.min(3000*Math.pow(2,offlineCount-1),30000);
-  fetch('/poll',{signal:AbortSignal.timeout(10000)})
+  fetch('/poll',{signal:AbortSignal.timeout(10000),headers:{'Authorization':'Bearer '+(window.MASTER_TOKEN||'')}})
     .then(r=>r.json())
     .then(d=>{
       offlineCount=0;
@@ -260,6 +265,54 @@ function toggleGrain(){
 
 const savedGrain=localStorage.getItem('grain');
 if(savedGrain==='block'||savedGrain==='none'){grainCanvas.style.display=savedGrain}
+
+// Voice input via Web Speech API
+const micBtn=document.getElementById('mic');
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SpeechRecognition){
+  const recognition=new SpeechRecognition();
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.lang='en-US';
+  let listening=false;
+
+  function startVoice(){
+    if(pending)return;
+    recognition.start();
+    listening=true;
+    micBtn.classList.add('active');
+    micBtn.title='Listening... click to stop';
+    showToast('listening');
+  }
+  function stopVoice(){
+    recognition.stop();
+    listening=false;
+    micBtn.classList.remove('active');
+    micBtn.title='Voice input (v)';
+  }
+
+  micBtn.addEventListener('click',()=>{listening?stopVoice():startVoice()});
+
+  recognition.addEventListener('result',e=>{
+    const transcript=Array.from(e.results).map(r=>r[0].transcript).join('');
+    inp.value=transcript;
+    if(e.results[e.results.length-1].isFinal){
+      stopVoice();
+      if(transcript.trim()){
+        inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}));
+      }
+    }
+  });
+  recognition.addEventListener('end',()=>{stopVoice()});
+  recognition.addEventListener('error',e=>{stopVoice();if(e.error!=='aborted')showToast('mic: '+e.error)});
+
+  document.addEventListener('keydown',e=>{
+    if(document.activeElement===inp&&e.key==='v'&&inp.value===''){return}
+    if(e.key==='v'&&document.activeElement!==inp){listening?stopVoice():startVoice()}
+  });
+} else {
+  micBtn.style.display='none';
+}
 </script>
 </body>
 </html>
