@@ -32,6 +32,7 @@ h1{font-size:2em;margin:10px 0;background:linear-gradient(45deg,var(--cyan),var(
 .steps{display:grid;grid-template-columns:repeat(16,minmax(20px,1fr));gap:2px;min-width:340px}
 .step{min-width:20px;min-height:36px;background:var(--bg);border:1px solid var(--border);cursor:pointer;border-radius:2px;transition:all .1s;touch-action:manipulation}
 .step.on{background:var(--cyan);border-color:var(--cyan)}
+.step.custom{border:2px solid var(--orange)}
 .step.playing{box-shadow:0 0 10px var(--pink)}
 .track{margin-bottom:10px}
 .track-name{font-size:.8em;margin-bottom:5px;color:var(--text-dim);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
@@ -64,10 +65,13 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 @media(max-width:767px){
   .transport{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
   .container{padding-bottom:80px}
+  input[type=range]::-webkit-slider-thumb{width:28px;height:28px}
+  input[type=range]::-moz-range-thumb{width:28px;height:28px}
 }
 .btn-help{font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px}
 .btn-quickstart{background:var(--pink);color:var(--bg);border-color:var(--pink)}
 .btn-full{width:100%;margin-top:10px}
+.btn:focus-visible,.step:focus-visible,.mood-btn:focus-visible,.track-btn:focus-visible,select:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -81,8 +85,8 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file">⏺</button>
 <button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file">📀</button>
 <button class="btn" id="shareBtn" title="Share - Copy link to share your creation">🔗</button>
-<button class="btn" id="undoBtn" title="Undo - Go back one step (Ctrl+Z)">↶</button>
-<button class="btn" id="redoBtn" title="Redo - Go forward one step (Ctrl+Shift+Z)">↷</button>
+<button class="btn" id="undoBtn" title="Undo - Go back one step (Ctrl+Z)" aria-label="Undo">↶</button>
+<button class="btn" id="redoBtn" title="Redo - Go forward one step (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
 <button class="btn" id="tapBtn" title="Tap Tempo - Tap repeatedly to set tempo (T key)">🥁</button>
 <button class="btn" id="themeBtn" title="Toggle light/dark theme (L key)">🌓</button>
 </div>
@@ -304,7 +308,7 @@ let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
 let kickLag=0,snareRush=0,hatDrift=0,glide=0; // Micro-timing humanization
 let crackle=0,flutter=0,tapeDrive=0,lofiMix=0,driveAmt=0,crushAmt=0,vinylAmt=0; // Lo-fi & FX
 let reverbAmt=30; // Reverb amount (declare separately to avoid undefined reference)
-let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>SP[b][t]=Array(16).fill(0).map(()=>({on:0}))));
+let SP={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>SP[b][t]=Array(16).fill(0).map(()=>({on:0,velocity:1,custom:0}))));
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
 // Tone.js setup - Audio components (SOLID: Single Responsibility)
@@ -346,10 +350,10 @@ const initAudio=async()=>{
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
   
   // Keys: FM synth with velocity-reactive parameters
-  keysN=new Tone.PolySynth(Tone.FMSynth,{harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
+  keysN=new Tone.PolySynth(Tone.FMSynth,{maxPolyphony:16,harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
   
   // Pads: fatsawtooth (count:3, spread:25) with LFO-modulated lowpass filter
-  padsN=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
+  padsN=new Tone.PolySynth(Tone.Synth,{maxPolyphony:16,oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
   padsFilter=new Tone.Filter(1000,'lowpass');
   padsLFO=new Tone.LFO(0.12,600,1400);
   padsLFO.start();
@@ -607,11 +611,33 @@ const loop=new Tone.Sequence((time,s)=>{
     if((d.o[s]||SP[currentBank].open[s].on)&&d.o[s])openN.triggerAttackRelease('8n',time+sd,d.o[s]);
   }
   if(playB&&bp[s]){const sd=getSwingDelay('b',s);const n=transpose(bp[s],rootNote);bassN.triggerAttackRelease(n,'8n',time+sd);bassSub.frequency.setValueAtTime(Tone.Frequency(n).toFrequency(),time+sd);}
-  if(playK&&kp[s]){const sd=getSwingDelay('k',s);if(Array.isArray(kp[s]))keysN.triggerAttackRelease(kp[s].map(n=>transpose(n,rootNote)),'8n',time+sd);else if(kp[s])keysN.triggerAttackRelease(transpose(kp[s],rootNote),'8n',time+sd);}
-  if(playP&&pp[s]){const sd=getSwingDelay('p',s);if(Array.isArray(pp[s])&&pp[s].length)padsN.triggerAttackRelease(pp[s].map(n=>transpose(n,rootNote)),'2n',time+sd);}
+  if(playK&&kp[s]){const sd=getSwingDelay('k',s);if(Array.isArray(kp[s])){keysN.releaseAll();keysN.triggerAttackRelease(kp[s].map(n=>transpose(n,rootNote)),'8n',time+sd);}else if(kp[s])keysN.triggerAttackRelease(transpose(kp[s],rootNote),'8n',time+sd);}
+  if(playP&&pp[s]){const sd=getSwingDelay('p',s);if(Array.isArray(pp[s])&&pp[s].length){padsN.releaseAll();padsN.triggerAttackRelease(pp[s].map(n=>transpose(n,rootNote)),'2n',time+sd);}}
   updateStepViz(s);
 },Array.from({length:16},(_,i)=>i),'16n');
-const updateStepViz=(s)=>{document.querySelectorAll('.step').forEach((el,i)=>{el.classList.toggle('playing',i===s);});};
+const updateStepViz=(s)=>{
+  document.querySelectorAll('.step').forEach((el,i)=>{el.classList.toggle('playing',i===s);});
+  // Update velocity visualization for all steps
+  document.querySelectorAll('.step').forEach(el=>{
+    const t=el.dataset.track,i=+el.dataset.step;
+    const d=D[curD];
+    const trackMap={kick:'k',snare:'s',clap:'c',hat:'h',open:'o'};
+    const tk=trackMap[t];
+    if(tk&&d[tk]){
+      const velocity=d[tk][i];
+      const isOn=velocity>0||SP[currentBank][t][i].on;
+      el.classList.toggle('on',isOn);
+      if(isOn){
+        const opacity=Math.max(0.3,velocity||SP[currentBank][t][i].velocity||1);
+        el.style.opacity=opacity;
+      }else{
+        el.style.opacity='';
+      }
+      // Show custom indicator if manually edited
+      el.classList.toggle('custom',SP[currentBank][t][i].custom);
+    }
+  });
+};
 // UI
 const buildUI=()=>{
   const seq=document.getElementById('sequencer');
@@ -679,11 +705,11 @@ const attachEvents=()=>{
   document.getElementById('vinylAmt').oninput=e=>{vinylAmt=+e.target.value;document.getElementById('vinylVal').textContent=vinylAmt;hissNoise.volume.value=-32+vinylAmt*0.15;};
   document.querySelectorAll('.step').forEach(s=>{
     let lastToggle=0;
-    const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;s.classList.toggle('on',SP[currentBank][t][i].on);pushState();};
+    const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;SP[currentBank][t][i].custom=1;s.classList.toggle('on',SP[currentBank][t][i].on);s.classList.toggle('custom',SP[currentBank][t][i].custom);pushState();updateStepViz(step);};
     const guardedToggle=()=>{const now=Date.now();if(now-lastToggle<100)return;lastToggle=now;toggle();};
     s.onclick=guardedToggle;
     s.ontouchstart=e=>{e.preventDefault();guardedToggle();};
-    s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;el.classList.add('on');pushState();}};
+    s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;SP[currentBank][t][i].custom=1;el.classList.add('on');el.classList.add('custom');pushState();updateStepViz(step);}};
   });
   document.querySelectorAll('.mood-btn').forEach(b=>b.onclick=e=>{applyMood(e.target.dataset.mood);document.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');});
   document.querySelectorAll('.track-btn').forEach(b=>b.onclick=e=>{const tr=e.target.dataset.track,act=e.target.dataset.action;if(act==='m'){muteSolo[tr].m=1-muteSolo[tr].m;e.target.classList.toggle('active',muteSolo[tr].m);}else{muteSolo[tr].s=1-muteSolo[tr].s;e.target.classList.toggle('active',muteSolo[tr].s);}});
