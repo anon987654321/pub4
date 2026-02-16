@@ -89,7 +89,9 @@ module MASTER
 
       # Apply typography rendering if we have a response but no rendered version
       if normalized[:response] && !normalized[:rendered]
-        normalized[:rendered] = normalized[:response]
+        normalized[:rendered] = strip_tool_blocks(normalized[:response])
+      elsif normalized[:rendered]
+        normalized[:rendered] = strip_tool_blocks(normalized[:rendered])
       end
 
       # Preserve any custom keys from the original value
@@ -98,6 +100,26 @@ module MASTER
       end
 
       Result.ok(normalized)
+    end
+
+    # Strip tool invocation blocks from LLM output so users see only the summary
+    def strip_tool_blocks(text)
+      return text unless text.is_a?(String)
+
+      # Remove ```sh/```ruby blocks containing tool calls (file_read, file_write, shell_exec, etc)
+      tool_names = "file_read|file_write|shell_exec|browse_page|analyze_code|fix_code|search_code"
+      cleaned = text.gsub(/```(?:sh|ruby|bash|shell)?\n\s*(?:#{tool_names})\b.*?```/m, "")
+
+      # Remove tool output blocks: bare ``` blocks immediately after a tool call removal (>10 lines)
+      cleaned.gsub!(/```\n(?:[^\n]*\n){10,}```/m) { |block| lines = block.count("\n"); "[#{lines} lines omitted]" }
+
+      # Remove standalone tool call lines
+      cleaned.gsub!(/^\s*(?:#{tool_names})\s+["'].+$/m, "")
+
+      # Collapse triple+ newlines to double
+      cleaned.gsub!(/\n{3,}/, "\n\n")
+
+      cleaned.strip
     end
 
     class << self

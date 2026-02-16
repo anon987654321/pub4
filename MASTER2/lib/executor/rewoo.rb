@@ -74,6 +74,8 @@ module MASTER
           Evidence:
           #{evidence.map { |k, v| "#E#{k} = #{v[0..400]}" }.join("\n\n")}
 
+          Summarize what was done and the result. Be terse.
+          Do NOT repeat file contents or tool calls. Only show the key outcome.
           Final answer:
         SYNTH
 
