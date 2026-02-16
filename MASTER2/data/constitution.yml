@@ -204,21 +204,22 @@ constraints:
   enforcement: "critical"
 
 # Comment preservation policy
+# Strategy: Preserve valuable comments, remove noise
 comments:
   preserve: true
-  rule: "Preserve ALL existing comments when editing"
+  rule: "Preserve ALL existing comments when editing unless they fall into removal criteria"
   removal_criteria:
-    redundant: true
-    self_explanatory: true
-    keep: ["workarounds", "performance notes", "decision context", "warnings"]
-    remove: ["restates the code", "obvious getters/setters"]
+    redundant: true  # "Sets x to 5" next to x = 5
+    self_explanatory: true  # Getter/setter documentation
+    keep: ["workarounds", "performance notes", "decision context", "warnings", "TODO", "FIXME", "HACK"]
+    remove: ["restates the code", "obvious getters/setters", "auto-generated boilerplate"]
 
 # CLI integration — supported platforms
 cli_integration:
-  primary_platform: "OpenBSD 7.6+"
+  primary_platform: "OpenBSD 7.8+"
   primary_shell: "zsh"
   supported_platforms:
-    - "OpenBSD 7.6+ (primary)"
+    - "OpenBSD 7.8+ (primary)"
     - "Linux with Zsh"
     - "macOS with Zsh"
   session_management: true

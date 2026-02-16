@@ -267,7 +267,6 @@ module MASTER
         @start_time = Time.now
       end
 
-      public
       def log(severity, message, **context)
         return if LEVELS[severity] < LEVELS[@level]
 
@@ -279,6 +278,10 @@ module MASTER
         else
           @output.puts(format_human(entry))
         end
+      end
+
+      def logging_enabled?
+        @level != :silent && ENV['MASTER_LOG'] != '0'
       end
 
       private
@@ -309,11 +312,6 @@ module MASTER
         rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
 
         "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
-      end
-
-      # Check if structured logging is enabled
-      def logging_enabled?
-        @level != :silent && ENV['MASTER_LOG'] != '0'
       end
     end
   end
