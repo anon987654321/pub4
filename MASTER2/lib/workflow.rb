@@ -13,7 +13,6 @@ module MASTER
   module Workflow
   end
 
-  # Backward compatibility aliases
+  # Backward compatibility alias
   Planner = Workflow::Planner
-  WorkflowEngine = Workflow::Engine
 end
