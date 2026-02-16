@@ -316,7 +316,26 @@ let analogSum,vintageSat,phaserFX,lofiNoise;
 let crackleNoise,hissNoise,flutterLFO,vhsNoise,rumbleOsc,lofiCompressor,tapeSat,lofiFilter,lofiReverb;
 let feedbackDelay,bassDist,keysTrem,keysCrush,masterReverb,masterDrive,masterCrush;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
+const FX_REGISTRY={
+  AutoWah:(wet)=>{const fx=new Tone.AutoWah(60+Math.random()*340,2+Math.random()*4,-40+Math.random()*30);fx.wet.value=wet;return fx;},
+  AutoFilter:(wet)=>{const fx=new Tone.AutoFilter(0.1+Math.random()*7.9);fx.depth.value=0.3+Math.random()*0.7;fx.baseFrequency=100+Math.random()*1900;fx.start();fx.wet.value=wet;return fx;},
+  AutoPanner:(wet)=>{const fx=new Tone.AutoPanner(0.2+Math.random()*5.8);fx.depth.value=0.4+Math.random()*0.6;fx.start();fx.wet.value=wet;return fx;},
+  BitCrusher:(wet)=>{const fx=new Tone.BitCrusher(2+Math.floor(Math.random()*7));fx.wet.value=wet;return fx;},
+  Chebyshev:(wet)=>{const fx=new Tone.Chebyshev(2+Math.floor(Math.random()*29));fx.wet.value=wet;return fx;},
+  Chorus:(wet)=>{const fx=new Tone.Chorus(1+Math.random()*5,1+Math.random()*4,0.3+Math.random()*0.6);fx.start();fx.wet.value=wet;return fx;},
+  Distortion:(wet)=>{const fx=new Tone.Distortion(0.1+Math.random()*0.7);fx.wet.value=wet;return fx;},
+  FeedbackDelay:(wet)=>{const fx=new Tone.FeedbackDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.15+Math.random()*0.45);fx.wet.value=wet;return fx;},
+  Freeverb:(wet)=>{const fx=new Tone.Freeverb(0.3+Math.random()*0.65);fx.dampening=1000+Math.random()*7000;fx.wet.value=wet;return fx;},
+  FrequencyShifter:(wet)=>{const fx=new Tone.FrequencyShifter(-20+Math.random()*40);fx.wet.value=wet;return fx;},
+  JCReverb:(wet)=>{const fx=new Tone.JCReverb(0.3+Math.random()*0.55);fx.wet.value=wet;return fx;},
+  Phaser:(wet)=>{const fx=new Tone.Phaser({frequency:0.2+Math.random()*3.8,octaves:1+Math.random()*4,baseFrequency:200+Math.random()*1300});fx.start();fx.wet.value=wet;return fx;},
+  PingPongDelay:(wet)=>{const fx=new Tone.PingPongDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.1+Math.random()*0.4);fx.wet.value=wet;return fx;},
+  PitchShift:(wet)=>{const fx=new Tone.PitchShift([-12,-7,-5,5,7,12][Math.floor(Math.random()*6)]);fx.wet.value=wet;return fx;},
+  Tremolo:(wet)=>{const fx=new Tone.Tremolo(0.5+Math.random()*11.5,0.3+Math.random()*0.6);fx.start();fx.wet.value=wet;return fx;},
+  Vibrato:(wet)=>{const fx=new Tone.Vibrato(1+Math.random()*9,0.05+Math.random()*0.35);fx.start();fx.wet.value=wet;return fx;},
+  StereoWidener:(wet)=>{const fx=new Tone.StereoWidener(0.3+Math.random()*0.6);fx.wet.value=wet;return fx;}
+};
+const FX_NAMES=Object.keys(FX_REGISTRY);
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 
 const initAudio=async()=>{
@@ -342,9 +361,9 @@ const initAudio=async()=>{
   bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}});
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
   
-  keysN=new Tone.PolySynth(Tone.FMSynth,{maxPolyphony:16,harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
+  keysN=new Tone.PolySynth(Tone.FMSynth,{maxPolyphony:16,harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:1.2},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
   
-  padsN=new Tone.PolySynth(Tone.Synth,{maxPolyphony:16,oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
+  padsN=new Tone.PolySynth(Tone.Synth,{maxPolyphony:16,oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:2.5}});
   padsFilter=new Tone.Filter(1000,'lowpass');
   padsLFO=new Tone.LFO(0.12,600,1400);
   padsLFO.start();
@@ -479,34 +498,15 @@ const randomizeFX=()=>{
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
     const wet=isMaster?0.08+Math.random()*0.19:0.15+Math.random()*0.35;
-    const fx=[];
+    const fxArray=[];
     for(let i=0;i<num;i++){
-      const type=fxPool[Math.floor(Math.random()*fxPool.length)];
-      let eff;
+      const type=FX_NAMES[Math.floor(Math.random()*FX_NAMES.length)];
       try{
-        switch(type){
-          case'AutoWah':eff=new Tone.AutoWah(60+Math.random()*340,2+Math.random()*4,-40+Math.random()*30);break;
-          case'AutoFilter':eff=new Tone.AutoFilter(0.1+Math.random()*7.9);eff.depth.value=0.3+Math.random()*0.7;eff.baseFrequency=100+Math.random()*1900;eff.start();break;
-          case'AutoPanner':eff=new Tone.AutoPanner(0.2+Math.random()*5.8);eff.depth.value=0.4+Math.random()*0.6;eff.start();break;
-          case'BitCrusher':eff=new Tone.BitCrusher(2+Math.floor(Math.random()*7));break;
-          case'Chebyshev':eff=new Tone.Chebyshev(2+Math.floor(Math.random()*29));break;
-          case'Chorus':eff=new Tone.Chorus(1+Math.random()*5,1+Math.random()*4,0.3+Math.random()*0.6);eff.start();break;
-          case'Distortion':eff=new Tone.Distortion(0.1+Math.random()*0.7);break;
-          case'FeedbackDelay':eff=new Tone.FeedbackDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.15+Math.random()*0.45);break;
-          case'Freeverb':eff=new Tone.Freeverb(0.3+Math.random()*0.65);eff.dampening=1000+Math.random()*7000;break;
-          case'FrequencyShifter':eff=new Tone.FrequencyShifter(-20+Math.random()*40);break;
-          case'JCReverb':eff=new Tone.JCReverb(0.3+Math.random()*0.55);break;
-          case'Phaser':eff=new Tone.Phaser({frequency:0.2+Math.random()*3.8,octaves:1+Math.random()*4,baseFrequency:200+Math.random()*1300});eff.start();break;
-          case'PingPongDelay':eff=new Tone.PingPongDelay(['8n','16n','8n.','4n'][Math.floor(Math.random()*4)],0.1+Math.random()*0.4);break;
-          case'PitchShift':eff=new Tone.PitchShift([-12,-7,-5,5,7,12][Math.floor(Math.random()*6)]);break;
-          case'Tremolo':eff=new Tone.Tremolo(0.5+Math.random()*11.5,0.3+Math.random()*0.6);eff.start();break;
-          case'Vibrato':eff=new Tone.Vibrato(1+Math.random()*9,0.05+Math.random()*0.35);eff.start();break;
-          case'StereoWidener':eff=new Tone.StereoWidener(0.3+Math.random()*0.6);break;
-        }
-        if(eff){eff.wet.value=wet;fx.push(eff);}
+        const effect=FX_REGISTRY[type](wet);
+        fxArray.push(effect);
       }catch(error){log(`⚠️ FX ${type}: ${error.message}`);}
     }
-    return fx;
+    return fxArray;
   };
   
   drumFX=createFX(0);
@@ -686,7 +686,7 @@ const attachEvents=()=>{
 const applyMood=moodName=>{const mood=MOOD_PRESETS[moodName];if(!mood)return;currentDrumPattern=mood.d;currentBassPattern=mood.b;currentKeysPattern=mood.k;currentPadPattern=mood.p;bpm=mood.bpm[0]+Math.random()*(mood.bpm[1]-mood.bpm[0]);swing=mood.sw[0]+Math.random()*(mood.sw[1]-mood.sw[0]);Tone.Transport.bpm.value=bpm;document.getElementById('drumSel').value=currentDrumPattern;document.getElementById('bassSel').value=currentBassPattern;document.getElementById('keysSel').value=currentKeysPattern;document.getElementById('padsSel').value=currentPadPattern;document.getElementById('bpmSlider').value=bpm;document.getElementById('bpmVal').textContent=Math.floor(bpm);document.getElementById('swingSlider').value=Math.floor(swing);document.getElementById('swingVal').textContent=Math.floor(swing);log(`🎭 Mood: ${moodName}`);pushState();};
 const randomizeAll=()=>{currentDrumPattern=Object.keys(DRUM_PATTERNS)[Math.floor(Math.random()*Object.keys(DRUM_PATTERNS).length)];currentBassPattern=Object.keys(BASS_PATTERNS)[Math.floor(Math.random()*Object.keys(BASS_PATTERNS).length)];currentKeysPattern=Object.keys(KEYS_PATTERNS)[Math.floor(Math.random()*Object.keys(KEYS_PATTERNS).length)];currentPadPattern=Object.keys(PAD_PATTERNS)[Math.floor(Math.random()*Object.keys(PAD_PATTERNS).length)];document.getElementById('drumSel').value=currentDrumPattern;document.getElementById('bassSel').value=currentBassPattern;document.getElementById('keysSel').value=currentKeysPattern;document.getElementById('padsSel').value=currentPadPattern;randomizeFX();log('⚡ Randomized');pushState();};
 const startRec=async()=>{if(!recording){try{const dest=Tone.context.createMediaStreamDestination();masterG.connect(dest);mediaStream=dest.stream;recorder=new MediaRecorder(mediaStream);const chunks=[];recorder.ondataavailable=e=>chunks.push(e.data);recorder.onstop=()=>{const blob=new Blob(chunks,{type:'audio/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`rg69-${Date.now()}.webm`;a.click();URL.revokeObjectURL(url);log('💾 Recording saved');};recorder.start();recording=true;document.getElementById('recBtn').classList.add('active');log('⏺ Recording...');}catch(e){log('❌ Recording error');}}else{recorder.stop();recording=false;document.getElementById('recBtn').classList.remove('active');}};
-const exportWAV=async()=>{log('📀 Exporting WAV...');const duration=4;const length=duration*4*(60/bpm);const sampleRate=44100;const buffer=await Tone.Offline(async({transport})=>{transport.bpm.value=bpm;const steps=16;const stepTime=60/bpm/4;for(let barIndex=0;barIndex<duration;barIndex++){for(let stepIndex=0;stepIndex<steps;stepIndex++){const timeOffset=barIndex*steps*stepTime+stepIndex*stepTime;const drumPattern=DRUM_PATTERNS[currentDrumPattern],bassNotes=BASS_PATTERNS[currentBassPattern].split(','),keysPattern=KEYS_PATTERNS[currentKeysPattern],padPattern=PAD_PATTERNS[currentPadPattern];if(drumPattern.k[stepIndex])kickN.triggerAttackRelease('C1',.1,timeOffset,drumPattern.k[stepIndex]);if(drumPattern.s[stepIndex])snareN.triggerAttackRelease(.1,timeOffset,drumPattern.s[stepIndex]);if(drumPattern.c[stepIndex])clapN.triggerAttackRelease(.15,timeOffset,drumPattern.c[stepIndex]);if(drumPattern.h[stepIndex])hatN.triggerAttackRelease('16n',timeOffset,drumPattern.h[stepIndex]);if(drumPattern.o[stepIndex])openN.triggerAttackRelease('8n',timeOffset,drumPattern.o[stepIndex]);if(bassNotes[stepIndex]){const note=transpose(bassNotes[stepIndex],rootNote);bassN.triggerAttackRelease(note,'8n',timeOffset);bassSub.frequency.setValueAtTime(Tone.Frequency(note).toFrequency(),timeOffset);}if(keysPattern[stepIndex]){if(Array.isArray(keysPattern[stepIndex]))keysN.triggerAttackRelease(keysPattern[stepIndex].map(note=>transpose(note,rootNote)),'8n',timeOffset);else keysN.triggerAttackRelease(transpose(keysPattern[stepIndex],rootNote),'8n',timeOffset);}if(padPattern[stepIndex]&&Array.isArray(padPattern[stepIndex])&&padPattern[stepIndex].length)padsN.triggerAttackRelease(padPattern[stepIndex].map(note=>transpose(note,rootNote)),'2n',timeOffset);}}},length,2,sampleRate);const wav=audioBufferToWav(buffer);const url=URL.createObjectURL(wav);const anchor=document.createElement('a');anchor.href=url;anchor.download=`rg69-${Date.now()}.wav`;anchor.click();URL.revokeObjectURL(url);log('📀 WAV saved');};const audioBufferToWav=buffer=>{const numChannels=buffer.numberOfChannels,sampleRate=buffer.sampleRate,format=1,bitDepth=16;const bytesPerSample=bitDepth/8,blockAlign=numChannels*bytesPerSample,dataLength=buffer.length*blockAlign,headerLength=44,totalLength=headerLength+dataLength;const arrayBuffer=new ArrayBuffer(totalLength),view=new DataView(arrayBuffer);const writeString=(offset,str)=>{for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));};writeString(0,'RIFF');view.setUint32(4,totalLength-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,format,true);view.setUint16(22,numChannels,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*blockAlign,true);view.setUint16(32,blockAlign,true);view.setUint16(34,bitDepth,true);writeString(36,'data');view.setUint32(40,dataLength,true);const channels=[];for(let i=0;i<numChannels;i++)channels.push(buffer.getChannelData(i));let offset=44;for(let i=0;i<buffer.length;i++){for(let channelIndex=0;channelIndex<numChannels;channelIndex++){const sample=Math.max(-1,Math.min(1,channels[channelIndex][i]));view.setInt16(offset,sample<0?sample*0x8000:sample*0x7FFF,true);offset+=2;}}return new Blob([arrayBuffer],{type:'audio/wav'});};
+const exportWAV=async()=>{log('📀 Exporting WAV…');const duration=4;const length=duration*4*(60/bpm);const sampleRate=44100;const buffer=await Tone.Offline(async({transport})=>{transport.bpm.value=bpm;const steps=16;const stepTime=60/bpm/4;for(let barIndex=0;barIndex<duration;barIndex++){for(let stepIndex=0;stepIndex<steps;stepIndex++){const timeOffset=barIndex*steps*stepTime+stepIndex*stepTime;const drumPattern=DRUM_PATTERNS[currentDrumPattern],bassNotes=BASS_PATTERNS[currentBassPattern].split(','),keysPattern=KEYS_PATTERNS[currentKeysPattern],padPattern=PAD_PATTERNS[currentPadPattern];if(drumPattern.k[stepIndex])kickN.triggerAttackRelease('C1',.1,timeOffset,drumPattern.k[stepIndex]);if(drumPattern.s[stepIndex])snareN.triggerAttackRelease(.1,timeOffset,drumPattern.s[stepIndex]);if(drumPattern.c[stepIndex])clapN.triggerAttackRelease(.15,timeOffset,drumPattern.c[stepIndex]);if(drumPattern.h[stepIndex])hatN.triggerAttackRelease('16n',timeOffset,drumPattern.h[stepIndex]);if(drumPattern.o[stepIndex])openN.triggerAttackRelease('8n',timeOffset,drumPattern.o[stepIndex]);if(bassNotes[stepIndex]){const note=transpose(bassNotes[stepIndex],rootNote);bassN.triggerAttackRelease(note,'8n',timeOffset);bassSub.frequency.setValueAtTime(Tone.Frequency(note).toFrequency(),timeOffset);}if(keysPattern[stepIndex]){if(Array.isArray(keysPattern[stepIndex]))keysN.triggerAttackRelease(keysPattern[stepIndex].map(note=>transpose(note,rootNote)),'8n',timeOffset);else keysN.triggerAttackRelease(transpose(keysPattern[stepIndex],rootNote),'8n',timeOffset);}if(padPattern[stepIndex]&&Array.isArray(padPattern[stepIndex])&&padPattern[stepIndex].length)padsN.triggerAttackRelease(padPattern[stepIndex].map(note=>transpose(note,rootNote)),'2n',timeOffset);}}},length,2,sampleRate);const wav=audioBufferToWav(buffer);const url=URL.createObjectURL(wav);const anchor=document.createElement('a');anchor.href=url;anchor.download=`rg69-${Date.now()}.wav`;anchor.click();URL.revokeObjectURL(url);log('📀 WAV saved');};const audioBufferToWav=buffer=>{const numChannels=buffer.numberOfChannels,sampleRate=buffer.sampleRate,format=1,bitDepth=16;const bytesPerSample=bitDepth/8,blockAlign=numChannels*bytesPerSample,dataLength=buffer.length*blockAlign,headerLength=44,totalLength=headerLength+dataLength;const arrayBuffer=new ArrayBuffer(totalLength),view=new DataView(arrayBuffer);const writeString=(offset,str)=>{for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));};writeString(0,'RIFF');view.setUint32(4,totalLength-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,format,true);view.setUint16(22,numChannels,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*blockAlign,true);view.setUint16(32,blockAlign,true);view.setUint16(34,bitDepth,true);writeString(36,'data');view.setUint32(40,dataLength,true);const channels=[];for(let i=0;i<numChannels;i++)channels.push(buffer.getChannelData(i));let offset=44;for(let i=0;i<buffer.length;i++){for(let channelIndex=0;channelIndex<numChannels;channelIndex++){const sample=Math.max(-1,Math.min(1,channels[channelIndex][i]));view.setInt16(offset,sample<0?sample*0x8000:sample*0x7FFF,true);offset+=2;}}return new Blob([arrayBuffer],{type:'audio/wav'});};
 const shareURL=()=>{const state=encodeState();const url=`${location.origin}${location.pathname}#${state}`;navigator.clipboard.writeText(url).then(()=>log('🔗 URL copied')).catch(()=>log('❌ Copy failed'));};
 const encodeState=()=>{const stateObj={d:currentDrumPattern,b:currentBassPattern,k:currentKeysPattern,p:currentPadPattern,bpm,swing,root:rootNote,vol:{d:drumVol,b:bassVol,k:keysVol,p:padsVol,m:masterVol},seq:sequencerPages[currentBank]};return btoa(JSON.stringify(stateObj));};
 const decodeState=hash=>{try{const stateObj=JSON.parse(atob(hash));currentDrumPattern=stateObj.d;currentBassPattern=stateObj.b;currentKeysPattern=stateObj.k;currentPadPattern=stateObj.p;bpm=stateObj.bpm;swing=stateObj.swing;rootNote=stateObj.root;drumVol=stateObj.vol.d;bassVol=stateObj.vol.b;keysVol=stateObj.vol.k;padsVol=stateObj.vol.p;masterVol=stateObj.vol.m;sequencerPages[currentBank]=stateObj.seq;return true;}catch(error){return false;}};
