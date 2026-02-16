@@ -85,12 +85,15 @@ module MASTER
     # Get all council personas (cached)
     # @return [Array<Hash>] Array of persona records
     def council
-      # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
-      yml_data = load_yml("council")
-      if yml_data && yml_data["council"]
-        yml_data["council"]
-      else
-        @cache[:council] ||= read_collection("council")
+      # Cache the result regardless of source
+      @cache[:council] ||= begin
+        # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
+        yml_data = load_yml("council")
+        if yml_data && yml_data["council"]
+          yml_data["council"]
+        else
+          read_collection("council")
+        end
       end
     end
 
